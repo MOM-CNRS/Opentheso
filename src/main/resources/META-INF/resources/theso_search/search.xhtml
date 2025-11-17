@@ -16,13 +16,13 @@
 
         <!-- Colonne gauche : Select Projet / Thésaurus -->
         <div class="search-selects">
-            <p:selectOneMenu value="#{selectedThesaurus.projectIdSelected}" styleClass="search-select">
+            <p:selectOneMenu id="projectSelect" value="#{selectedThesaurus.projectIdSelected}" styleClass="search-select" style="max-width: 40%">
                 <f:selectItem itemLabel="Projet" itemValue="" noSelectionOption="true"/>
                 <f:selectItems value="#{currentUser.userPermissions.listProjects}" var="project"
                                itemLabel="#{project.label}" itemValue="#{project.id}" />
             </p:selectOneMenu>
 
-            <p:selectOneMenu value="#{selectedThesaurus.selectedIdTheso}" styleClass="search-select">
+            <p:selectOneMenu id="thesoSelect" value="#{selectedThesaurus.selectedIdTheso}" styleClass="search-select" style="max-width: 40%">
                 <f:selectItem itemLabel="Thésaurus" itemValue="" noSelectionOption="true"/>
                 <f:selectItems value="#{currentUser.userPermissions.listThesaurus}" var="theso"
                                itemLabel="#{theso.value} (#{theso.id})" itemValue="#{theso.id}" />
@@ -37,7 +37,7 @@
         </div>
 
         <!-- Colonne centre : zone de recherche -->
-        <div class="search-bar">
+        <div class="search-bar" >
             <p:inputText placeholder="Recherche..." styleClass="search-input"/>
             <p:commandButton icon="pi pi-search"
                              styleClass="search-button"
