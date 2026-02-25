@@ -368,7 +368,7 @@ public class TermService {
                         .modified(Date.from((Instant) row[6]))
                         .source((String) row[7])
                         .status((String) row[8])
-                        .contributor((Integer) row[9])
+                        .contributor(row[9] != null ? (Integer)row[9] : -1)
                         .creator(row[10] != null ? (Integer)row[10] : -1)
                         .build();
             }

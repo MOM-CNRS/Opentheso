@@ -24,7 +24,11 @@ import lombok.extern.slf4j.Slf4j;
 import org.apache.commons.collections4.CollectionUtils;
 import org.apache.commons.lang3.ObjectUtils;
 import org.apache.commons.lang3.StringUtils;
+import org.springframework.security.crypto.password.PasswordEncoder;
 import org.springframework.stereotype.Service;
+import org.springframework.transaction.annotation.Propagation;
+import org.springframework.transaction.annotation.Transactional;
+
 import java.util.ArrayList;
 import java.util.LinkedHashMap;
 import java.util.List;
@@ -47,6 +51,7 @@ public class UserService {
     private final UserRoleOnlyOnRepository userRoleOnlyOnRepository;
     private final UserGroupLabelRepository userGroupLabelRepository;
     private final UserGroupThesaurusRepository userGroupThesaurusRepository;
+    private final PasswordEncoder passwordEncoder; // BCrypt
 
 
     public Optional<User> findByMail(String mail) {
@@ -376,6 +381,7 @@ public class UserService {
         };
     }
 
+    @Transactional(propagation = Propagation.REQUIRES_NEW)
     public List<String> getThesaurusOfUserAsAdmin(int idUser) {
         log.debug("Recherche des thésaurus où l'utilisateur ID={} est administrateur...", idUser);
 
@@ -390,32 +396,33 @@ public class UserService {
     }
 
     public boolean updateUserInformation(Integer idUSer, String userName, String password, String email, Boolean alertMail) {
-
         log.debug("Mise à jour des données utilisateur avec id {}", idUSer);
-        var user = userRepository.findById(idUSer);
-        if (user.isEmpty()) {
+        var userOpt = userRepository.findById(idUSer);
+        if (userOpt.isEmpty()) {
             log.debug("L'utilisateur avec id {} n'existe pas", idUSer);
             return false;
         }
 
+        var user = userOpt.get();
+
         if (StringUtils.isNotEmpty(userName)) {
-            user.get().setUsername(userName);
+            user.setUsername(userName);
         }
 
         if (StringUtils.isNotEmpty(password)) {
-            user.get().setPassword(password);
+            // Ici, password est déjà encodé en BCrypt
+            user.setPassword(password);
         }
-
 
         if (StringUtils.isNotEmpty(email)) {
-            user.get().setMail(email);
+            user.setMail(email);
         }
 
-        if (ObjectUtils.isNotEmpty(alertMail)) {
-            user.get().setAlertMail(alertMail);
+        if (alertMail != null) {
+            user.setAlertMail(alertMail);
         }
 
-        userRepository.save(user.get());
+        userRepository.save(user);
         return true;
     }
 
@@ -443,11 +450,40 @@ public class UserService {
 
        var user = userRepository.findByUsernameAndPassword(userName, MD5Password.getEncodedPassword(password));
        if (user.isEmpty()) {
-           log.error("Aucun utilisateur n'existe avec l'username {} et le password {}", userName, password);
+           log.debug("Aucun utilisateur n'existe avec l'username {} et le password {}", userName, "*****");
            return null;
        }
        return user.get();
     }
+
+    /**
+     * Vérifie le mot de passe et migre MD5 vers BCrypt si nécessaire
+     */
+    public User findByUsernameAndPasswordMigrated(String username, String rawPassword) {
+        Optional<User> userOpt = userRepository.findByUsername(username);
+        if (userOpt.isEmpty()) return null;
+
+        User user = userOpt.get();
+        String storedHash = user.getPassword();
+        boolean matches = false;
+
+        if (storedHash.startsWith("$2a$") || storedHash.startsWith("$2b$")) {
+            // mot de passe déjà en BCrypt
+            matches = passwordEncoder.matches(rawPassword, storedHash);
+        } else {
+            // mot de passe MD5
+            matches = MD5Password.getEncodedPassword(rawPassword).equals(storedHash);
+
+            // Migration vers BCrypt
+            if (matches) {
+                user.setPassword(passwordEncoder.encode(rawPassword));
+                userRepository.save(user);
+            }
+        }
+
+        return matches ? user : null;
+    }
+
 
     public List<User> getUserByUserNameLike(String userName) {
 
@@ -517,7 +553,7 @@ public class UserService {
         log.debug("Recherche de l'utilisateur par mail {}", mail);
         var user = userRepository.findByMail(mail);
         if (user.isEmpty()) {
-            log.error("Aucun utilisateur n'existe avec le mail {}", mail);
+            log.debug("Aucun utilisateur n'existe avec le mail {}", mail);
             return null;
         }
         return user.get();

@@ -6,7 +6,7 @@
     <modelVersion>4.0.0</modelVersion>
     <groupId>cnrs.opentheso</groupId>
     <artifactId>opentheso</artifactId>
-    <version>25.10.01</version>
+    <version>26.02.09</version>
     <packaging>jar</packaging>
     <name>opentheso</name>
 
@@ -35,6 +35,11 @@
         <dependency>
             <groupId>org.springframework.boot</groupId>
             <artifactId>spring-boot-starter-oauth2-client</artifactId>
+        </dependency>
+
+        <dependency>
+            <groupId>org.springframework.boot</groupId>
+            <artifactId>spring-boot-starter-mail</artifactId>
         </dependency>
 
         <dependency>
@@ -177,6 +182,7 @@
             <version>${commons-compress.version}</version>
         </dependency>
 
+
         <dependency>
             <groupId>org.springframework.boot</groupId>
             <artifactId>spring-boot-starter-thymeleaf</artifactId>
@@ -191,7 +197,7 @@
         <dependency>
             <groupId>org.springframework.boot</groupId>
             <artifactId>spring-boot-starter-tomcat</artifactId>
-            <scope>provided</scope>
+           <!-- <scope>provided</scope> -->
         </dependency>
 
         <dependency>
@@ -242,10 +248,17 @@
             <version>${commons-csv.version}</version>
         </dependency>
 
-        <dependency>
+<!--        <dependency>
             <groupId>javax.mail</groupId>
             <artifactId>mail</artifactId>
             <version>${mail.version}</version>
+        </dependency>
+-->
+        <dependency>
+            <groupId>jakarta.mail</groupId>
+            <artifactId>jakarta.mail-api</artifactId>
+            <version>2.1.3</version>
+            <scope>compile</scope>
         </dependency>
 
         <dependency>
@@ -421,7 +434,7 @@
         <virtjdbc4.version>4.0</virtjdbc4.version>
         <websocket.version>2.2.0</websocket.version>
         <openapi.version>1.7.0</openapi.version>
-        <lombok.version>1.18.24</lombok.version>
+        <lombok.version>1.18.36</lombok.version>
         <deepl.version>1.5.0</deepl.version>
         <commons-io.version>2.16.1</commons-io.version>
         <qrcodegen.version>1.8.0</qrcodegen.version>
@@ -442,7 +455,7 @@
         <jakarta.ws.rs.version>4.0.0</jakarta.ws.rs.version>
         <jakarta.json.version>2.1.3</jakarta.json.version>
         <commons-csv.version>1.11.0</commons-csv.version>
-        <mail.version>1.4.7</mail.version>
+  <!--      <mail.version>1.4.7</mail.version> -->
         <itextpdf.version>5.5.13.4</itextpdf.version>
         <springdoc.version>2.5.0</springdoc.version>
         <httpclient.version>4.5.14</httpclient.version>
@@ -450,7 +463,7 @@
         <handle-client.version>9.3.1</handle-client.version>
         <rdf4j.version>5.0.1</rdf4j.version>
         <graphql-java.version>230521-nf-execution</graphql-java.version>
-        <jsoup.version>1.18.1</jsoup.version>
+        <jsoup.version>1.21.2</jsoup.version>
         <protobuf.version>4.29.0-RC1</protobuf.version>
         <leaflet.version>1.8.0</leaflet.version>
         <virt_jena3.version>3.0</virt_jena3.version>

@@ -11,6 +11,7 @@ import org.springframework.transaction.annotation.Transactional;
 public interface TermCandidatRepository extends JpaRepository<TermCandidat, Integer> {
 
     @Modifying
+    @Transactional
     void deleteAllByIdThesaurus(String idThesaurus);
 
     @Modifying

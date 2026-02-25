@@ -40,6 +40,7 @@
                                      style="color: #000; height: 28px; max-width: 400px">
                         <f:selectItem itemLabel="(#{langueBean.getMsg('menu.select_thesaurus')})" itemValue=""/>
                         <f:selectItems value="#{moveConcept.getListThesoAsAdmin()}" var="th" itemLabel="#{th.value} (#{th.id})" itemValue="#{th.id}"/>
+                        <p:ajax event="valueChange" listener="#{moveConcept.action()}" />
                     </p:selectOneMenu>
                 </div>                
             </div> 
@@ -73,9 +74,7 @@
                 </div>
             </h:panelGroup>                
 
-
-            <p:spacer height="20px;"/>
-            <div style="width: 100%; text-align: right; margin-top: 5px; margin-bottom: 5px;">
+            <div style="width: 100%; text-align: right; margin-top: 20px; margin-bottom: 5px;">
                 <p:commandButton value="#{langueBean.getMsg('btnCancel')}" styleClass="ui-button-secondary button" icon="fas fa-undo-alt" 
                                  style="margin-right: 10px" process="@this"
                                  oncomplete="PF('moveToAnotherTheso').hide();" update="containerIndex:idMoveToAnotherTheso"/>

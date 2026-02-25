@@ -63,9 +63,9 @@
                                             </div>
                                             <div class="col-1 offset-7">
                                                 <p:commandButton rendered="#{currentUser.getNodeUser().isSuperAdmin()}"
-                                                                 action="#{newUserBean.initForSuperAdmin()}"
+                                                                 actionListener="#{newUserBean.initForSuperAdmin()}"
                                                                  oncomplete="PF('addNewUser2').show();"
-                                                                 icon="fa fa-user-plus" update="idAddNewUser2 addNewUser2Form addNewUser2Form:userRoleDef"
+                                                                 icon="fa fa-user-plus" update="idAddNewUser2 "
                                                                  styleClass="rounded-button"
                                                                  title="#{langueBean.getMsg('profile.new_user')}"
                                                                  disabled="false"/>
@@ -88,7 +88,7 @@
                                         <h:outputText value="#{listUserRole.groupName}"/>
                                     </p:column>
                                     
-                                    <p:column width="10" headerText="#{langueBean.getMsg('profile.action')}">
+                                    <p:column width="40" headerText="#{langueBean.getMsg('profile.action')}">
                                         <p:commandButton rendered="#{currentUser.getNodeUser().isSuperAdmin()}"
                                                          action="#{modifyUserBean.setUserStringId(listUserRole.idUser)}"
                                                          oncomplete="PF('modifyUser2').show();"
@@ -96,6 +96,15 @@
                                                          styleClass="rounded-button ui-button-outlined"
                                                          update="idModifyUser2 modifyUser2Form"
                                                          title="#{langueBean.getMsg('candidat.edit')}"
+                                                         style="margin-right: 40px;color: #f47b2a"/>
+
+                                        <p:commandButton rendered="#{currentUser.getNodeUser().isSuperAdmin()}"
+                                                         action="#{modifyUserBean.setUserStringId(listUserRole.idUser)}"
+                                                         oncomplete="PF('modifyPassword').show();"
+                                                         icon="pi pi-key"
+                                                         styleClass="rounded-button ui-button-outlined"
+                                                         update="idModifyPassword modifyPasswordForm"
+                                                         title="#{langueBean.getMsg('password.reset')}"
                                                          style="margin-right: 40px;color: #f47b2a"/>
 
                                         <p:commandButton rendered="#{currentUser.getNodeUser().isSuperAdmin()}"
@@ -122,6 +131,8 @@
                     <input type="hidden" name="csrfToken" value="${sessionScope.CSRF_TOKEN}" />
                 </h:form>
             </div>
+
+            <ui:include src="../dialog/profile/modifyPassword.xhtml" />
         </h:panelGroup>
 
         <!-- Ajout d'un utilisateur -->
@@ -158,7 +169,18 @@
                         <h:outputText value="#{langueBean.getMsg('menu.password')} * " />
                     </div>
                     <div class="col-7">
-                        <p:password value="#{newUserBean.passWord1}" style="width: 100%" autocomplete="off"/>
+                        <p:password id="password11" value="#{newUserBean.passWord1}"
+                                    style="width:100%" autocomplete="off"
+                                    feedback="true"
+                                    promptLabel="#{langueBean.getMsg('password.prompt')}"
+                                    weakLabel="#{langueBean.getMsg('password.weak')}"
+                                    goodLabel="#{langueBean.getMsg('password.good')}"
+                                    strongLabel="#{langueBean.getMsg('password.strong')}">
+
+                            <f:validator validatorId="passwordValidator"/>
+                        </p:password>
+
+                        <p:message for="password11"/>
                     </div>
                 </div>
 
@@ -249,9 +271,9 @@
                                      ajax="true" process="@this" action="#{newUserBean.initForSuperAdmin()}" update="idAddNewUser2 addNewUser2Form" />
 
                     <p:commandButton id="addUserBtn" value="#{langueBean.getMsg('btnValidate')}"
-                                     icon="pi pi-check" oncomplete="PF('addNewUser2').hide();"
+                                     icon="pi pi-check"
                                      styleClass="ui-button-success"
-                                     update="messageIndex containerIndex" 
+                                     update="messageIndex containerIndex addNewUser2Form"
                                      action="#{newUserBean.addUser(true)}" />
                 </div>
                 <input type="hidden" name="csrfToken" value="${sessionScope.CSRF_TOKEN}" />
@@ -332,36 +354,6 @@
                 </div>
                 <p:separator title="-" />
 
-                <!-- Initialiser le passe de l'utilisateur -->
-                <div class="row" style="margin-top: 5px; margin-top: 30px">
-                    <div class="col-5" style="text-align: right">
-                        <h:outputText value="#{langueBean.getMsg('profile.new_password')} : " />
-                    </div>
-                    <div class="col-7">
-                        <p:password value="#{modifyUserBean.passWord1}" style="width: 100%" autocomplete="off"/>
-                    </div>
-                </div>
-
-                <div class="row" style="margin-top: 5px;;">
-                    <div class="col-5" style="text-align: right">
-                        <h:outputText value="#{langueBean.getMsg('profile.confirmation')} : " />
-                    </div>
-                    <div class="col-7">
-                        <p:password value="#{modifyUserBean.passWord2}" style="width: 100%" autocomplete="off"/>
-                    </div>
-                </div>
-
-                <div class="row" style="margin-top: 5px;">
-                    <div class="col-12" style="text-align: right" >
-                        <p:commandButton value="#{langueBean.getMsg('apply')}" update="containerIndex messageIndex"
-                                         icon="fa-regular fa-floppy-disk"
-                                         styleClass="ui-button-success" oncomplete="PF('modifyUser2').hide();"
-                                         actionListener="#{modifyUserBean.updatePassword()}">
-                            <p:tooltip value="#{langueBean.getMsg('profile.changeUserPassTooltip')}" showDelay="1000" />
-                        </p:commandButton>
-                    </div>
-                </div>
-                <p:separator title="-" />
                 <h:panelGroup id="userKey">
                     <div class="row" style="margin-top: 5px;">
                         <div class="col-5" style="text-align: right">

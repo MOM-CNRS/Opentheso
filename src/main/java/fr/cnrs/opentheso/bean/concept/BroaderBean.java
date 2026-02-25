@@ -164,8 +164,8 @@ public class BroaderBean implements Serializable {
 
         return idConcept.equalsIgnoreCase(idConceptToAdd)
                 || relationService.isConceptHaveRelationRT(idConcept, idConceptToAdd, idTheso)
-                || relationService.isConceptHaveRelationNTorBT(idConcept, idConceptToAdd, idTheso)
-                || relationService.isConceptHaveBrother(idConcept, idConceptToAdd, idTheso);
+                || relationService.isConceptHaveRelationNTorBT(idConcept, idConceptToAdd, idTheso);
+              //  || relationService.isConceptHaveBrother(idConcept, idConceptToAdd, idTheso);
     }
 
 }

@@ -23,6 +23,7 @@ public interface CandidatMessageRepository extends JpaRepository<CandidatMessage
     List<CandidatMessageProjection> findMessagesByConceptAndThesaurus(@Param("idConcept") String idConcept, @Param("idThesaurus") String idThesaurus);
 
     @Modifying
+    @Transactional
     void deleteAllByIdThesaurus(String idThesaurus);
 
     @Modifying

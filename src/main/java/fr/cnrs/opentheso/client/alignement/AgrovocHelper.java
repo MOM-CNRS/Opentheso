@@ -205,7 +205,7 @@ public class AgrovocHelper {
 
         try {
             InputStream inputStream = new ByteArrayInputStream(xmlDatas.getBytes("UTF-8"));
-            SKOSXmlDocument sxd = new ReadRDF4JNewGen().readRdfFlux(inputStream, RDFFormat.RDFXML, currentLang);
+            SKOSXmlDocument sxd = new ReadRDF4JNewGen().readRdfFlux(inputStream, RDFFormat.RDFXML, currentLang, new StringBuffer());
 
             for (SKOSResource resource : sxd.getConceptList()) {
                 for(SKOSLabel label : resource.getLabelsList()) {

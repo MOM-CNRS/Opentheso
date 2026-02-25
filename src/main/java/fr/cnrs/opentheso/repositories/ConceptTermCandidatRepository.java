@@ -14,6 +14,7 @@ import java.util.List;
 public interface ConceptTermCandidatRepository extends JpaRepository<ConceptTermCandidat, Integer> {
 
     @Modifying
+    @Transactional
     void deleteAllByIdThesaurus(String idThesaurus);
 
     @Modifying

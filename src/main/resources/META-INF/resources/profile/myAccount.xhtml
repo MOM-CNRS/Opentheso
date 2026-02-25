@@ -5,250 +5,296 @@
       xmlns:f="http://xmlns.jcp.org/jsf/core"
       xmlns:p="http://primefaces.org/ui">
 
-    <h:head>
-        <title>Opentheso</title>
+<h:head>
+    <title>Opentheso</title>
 
-        <link href="../resources/img/icon_opentheso2.png" rel="icon" />
+    <link href="../resources/img/icon_opentheso2.png" rel="icon"/>
 
-        <link rel="stylesheet" type="text/css" href="../resources/css/all.css" />
-        <link rel="stylesheet" type="text/css" href="../resources/css/theme_general.css" />
-        <link rel="stylesheet" type="text/css" href="../resources/css/theme_opentheso.css" />
-        <link rel="stylesheet" type="text/css" href="../resources/css/composants_opentheso.css" />
+    <link rel="stylesheet" type="text/css" href="../resources/css/all.css"/>
+    <link rel="stylesheet" type="text/css" href="../resources/css/theme_general.css"/>
+    <link rel="stylesheet" type="text/css" href="../resources/css/theme_opentheso.css"/>
+    <link rel="stylesheet" type="text/css" href="../resources/css/composants_opentheso.css"/>
 
-        <link rel="stylesheet" href="https://use.fontawesome.com/releases/v6.1.0/css/all.css"/> 
-        <link rel="stylesheet" href="https://use.fontawesome.com/releases/v6.1.0/css/v4-shims.css"/>
-    </h:head>
+    <link rel="stylesheet" href="https://use.fontawesome.com/releases/v6.1.0/css/all.css"/>
+    <link rel="stylesheet" href="https://use.fontawesome.com/releases/v6.1.0/css/v4-shims.css"/>
+</h:head>
 
-    <h:body id="page-top" onload="initMenu()" style="margin:0; padding:0; height:100%;">
+<h:body id="page-top" onload="initMenu()" style="margin:0; padding:0; height:100%;">
 
-        <p:growl id="messageIndex" globalOnly="true" showDetail="true"/>
+    <p:growl id="messageIndex" globalOnly="true" showDetail="true"/>
 
-        <h:panelGroup rendered="#{menuBean.checkIfUserIsConnected()}" id="wrapper" style="height: 100%" >
+    <h:panelGroup rendered="#{menuBean.checkIfUserIsConnected()}" id="wrapper" style="height: 100%">
 
-            <ui:include src="../commun/menu.xhtml" />
+        <ui:include src="../commun/menu.xhtml"/>
 
-            <div id="content-wrapper" style="min-height:100%; position:relative;">
+        <div id="content-wrapper" style="min-height:100%; position:relative;">
 
-                <h:form id="containerIndex">
-                    <h:panelGroup id="header">
-                        <ui:include src="../commun/header.xhtml" />
-                    </h:panelGroup>
+            <h:form id="containerIndex">
+                <h:panelGroup id="header">
+                    <ui:include src="../commun/header.xhtml"/>
+                </h:panelGroup>
 
-                    <div class="container-fluid" style="padding-bottom: 70px">
+                <div class="container-fluid" style="padding-bottom: 70px">
 
-                        <div class="d-sm-flex align-items-center justify-content-between mb-4" style="margin: 20px">
-                            <h1 class="h3 mb-0 text-gray-800">#{langueBean.getMsg('menu.profile')} / <span style="color: #f47b2a">#{langueBean.getMsg('profile.my_account')}</span></h1>
-                        </div>
+                    <div class="d-sm-flex align-items-center justify-content-between mb-4" style="margin: 20px">
+                        <h1 class="h3 mb-0 text-gray-800">#{langueBean.getMsg('menu.profile')} / <span
+                                style="color: #f47b2a">#{langueBean.getMsg('profile.my_account')}</span></h1>
+                    </div>
 
-                        <div class="col-12" style="height: 100%">
-                            
-                            <!-- Compte d'utilisateur -->
-                            <div class="card shadow mb-4" style="height: 100%;"> 
-                                <div class="card mb-4 py-3 border-left-success" style="margin-top: 5px; vertical-align: central; margin: 30px">
-                                    <div class="list-group" style="margin-top: -10px; margin-bottom: -10px">                                        
-                                        <div class="list-group-item list-group-item-action">
-                                            <div class="row" style="padding: 3px;">
-                                                <div class="col-3" style="text-align: right; margin-top: 4px;">
-                                                    <h:outputText value=" #{langueBean.getMsg('profile.user')}" title="#{langueBean.getMsg('profile.tootltip_user')}"
-                                                                  style="font-size: 14px; font-weight: bold;"/> 
-                                                </div>
+                    <div class="col-12" style="height: 100%">
 
-                                                <div class="col-8">
-                                                    <p:inputText value="#{myAccountBean.nodeUser.name}" title="#{langueBean.getMsg('profile.tootltip_user')}" 
-                                                                 style="width: 100%; height: 100%" />
-                                                </div>
-
-                                                <div class="col-1" style="vertical-align: central; margin-top: 3px; font-size: 12px">
-                                                    <p:commandButton action="#{myAccountBean.updateUserName()}" update="containerIndex"
-                                                        icon="pi pi-check" styleClass="rounded-button">
-                                                    </p:commandButton>
-                                                </div>
-                                            </div>
-                                        </div>                                     
-                                    </div>
-                                </div>
-
-                                <!-- Passe de l'utilisateur -->
-                                <div class="card mb-4 py-3 border-left-success" style="margin-top: -30px; vertical-align: central; 
-                                     margin: 30px; margin-top: -10px">
-                                    <div class="list-group" style="margin-top: -10px; margin-bottom: -10px">                                        
-                                        <div class="list-group-item list-group-item-action">
-                                            <div class="row" style="padding: 3px;">
-                                                <div class="col-3" style="text-align: right; margin-top: 4px;">
-                                                    <h:outputText value="#{langueBean.getMsg('profile.new_password')}" style="font-size: 14px; font-weight: bold;"/> 
-                                                </div>
-
-                                                <div class="col-8">
-                                                    <p:password value="#{myAccountBean.passWord1}" title="#{langueBean.getMsg('profile.tootltip_user')}" 
-                                                                 style="width: 100%; height: 100%" />
-                                                </div>
-                                            </div>
-                                        </div>
-                                        <div class="list-group-item list-group-item-action">
-                                            <div class="row" style="padding: 3px;">
-                                                <div class="col-3" style="text-align: right; margin-top: 4px;">
-                                                    <h:outputText value="#{langueBean.getMsg('profile.confirmation')}" style="font-size: 14px; font-weight: bold;"/> 
-                                                </div>
-
-                                                <div class="col-8">
-                                                    <p:password value="#{myAccountBean.passWord2}" style="width: 100%; height: 100%" />
-                                                </div>
-
-                                                <div class="col-1" style="vertical-align: central; margin-top: 3px">
-                                                    <p:commandButton action="#{myAccountBean.updatePassword()}" update="containerIndex"
-                                                        icon="pi pi-check" styleClass="rounded-button">
-                                                    </p:commandButton> 
-                                                </div>
-                                            </div>
-                                        </div>
-                                    </div>
-                                </div>
-
-                                <!-- Email -->
-                                <div class="card mb-4 py-3 border-left-success" style="margin-top: 5px; vertical-align: central; margin: 30px; margin-top: -10px">
-                                    <div class="list-group" style="margin-top: -10px; margin-bottom: -10px">                                        
-                                        <div class="list-group-item list-group-item-action">
-                                            <div class="row" style="padding: 3px;">
-                                                <div class="col-3" style="text-align: right; margin-top: 4px;">
-                                                    <h:outputText value="#{langueBean.getMsg('profile.email')}" style="font-size: 14px; font-weight: bold;"/> 
-                                                </div>
-
-                                                <div class="col-8">
-                                                    <p:inputText value="#{myAccountBean.nodeUser.mail}" style="width: 100%; height: 100%" />
-                                                </div>
-
-                                                <div class="col-1" style="vertical-align: central; margin-top: 3px">
-                                                    <p:commandButton action="#{myAccountBean.updateEmail()}" update="containerIndex"
-                                                        icon="pi pi-check" styleClass="rounded-button">
-                                                    </p:commandButton> 
-                                                </div>
-                                            </div>
-                                        </div>
-
-                                        <div class="list-group-item list-group-item-action">
-                                            <div class="row" style="padding: 3px;">
-                                                <div class="col-3" style="text-align: right; margin-top: 7px;">
-                                                    <h:outputText value="#{langueBean.getMsg('profile.alert_by_email')}" style="font-size: 14px; font-weight: bold;"/> 
-                                                </div>
-
-                                                <div class="col-8" style="margin-top: 4px;">
-                                                    <p:toggleSwitch value="#{myAccountBean.nodeUser.alertMail}" />
-                                                </div>
-
-                                                <div class="col-1" style="vertical-align: central; margin-top: 3px">
-                                                    <p:commandButton action="#{myAccountBean.updateAlertEmail()}" update="containerIndex"
-                                                        icon="pi pi-check" styleClass="rounded-button">
-                                                    </p:commandButton> 
-                                                </div>
-                                            </div>
-                                        </div>
-                                    </div>
-                                </div>
-
-                                <!-- Les rôles existants de l'utilisateur -->
-                                <div class="card mb-4 py-3 border-left-success" style="margin-top: 5px; vertical-align: central; margin: 30px; margin-top: -10px">
-                                    <div class="list-group" style="margin-top: -10px; margin-bottom: -10px">                                        
-                                        <div class="list-group-item list-group-item-action">
-                                            <div class="row" style="margin-left: 10px; "> 
-                                                <div class="col-11">
-                                                    <h:outputText value="#{langueBean.getMsg('profile.list_user_roles')}" style="font-size: 12px;" />
-                                                </div>
-                                            </div>
-                                            <div class="row" style="margin-left: 20px; margin-right: 20px"> 
-                                                <h:panelGroup rendered="#{!myAccountBean.nodeUser.isSuperAdmin()}">
-                        
-                                                    <div class="col-12">
-                                                        <p:dataTable id="tabUserProject" value="#{currentUser.userPermissions.nodeProjectsWithThesosRoles}" var="allProject" 
-                                                                     scrollable="true" resizableColumns="true" scrollHeight="450" lazy="false">
-                                                            <p:column width="40%" headerText="#{langueBean.getMsg('profile.project')}" >
-                                                                <h:outputText value="#{allProject.projectName}" style="font-size: 12px;" />
-                                                            </p:column>   
-                                                            <p:column width="60%" >
-                                                                <p:dataTable id="tabUserTheso" value="#{allProject.nodeThesoRoles}" var="allTheso" 
-                                                                             scrollable="true" resizableColumns="true" scrollHeight="450" lazy="false" >
-                                                                    <p:column width="70%" headerText="#{langueBean.getMsg('menu.thesaurus')}" >
-                                                                        <h:outputText value="#{allTheso.thesoName} (#{allTheso.idTheso})" style="font-size: 12px;" />
-                                                                    </p:column> 
-                                                                    <p:column width="30%" headerText="#{langueBean.getMsg('profile.role')}" >
-                                                                        <h:outputText value="#{allTheso.roleName}" style="font-size: 12px;" />
-                                                                    </p:column>  
-                                                                    
-                                                                </p:dataTable>
-                                                            </p:column>                                                              
-                                                        </p:dataTable>                                                         
-                                                    </div>
-                                                     
-                                                </h:panelGroup>
-                                                <h:panelGroup rendered="#{myAccountBean.nodeUser.isSuperAdmin()}">
-                                                    <div class="col-12">
-                                                        <h:outputText value="SuperAdmin" style="font-size: 12px; color: #C63632" />
-                                                    </div>    
-                                                </h:panelGroup>             
-                                            </div>
-                                        </div>                                     
-                                    </div>
-                                </div>
-                                <!-- Gestion de la clé d'API -->
-                                <div class="card mb-4 py-3 border-left-success" style="margin-top: 5px; vertical-align: central; margin: 30px; margin-top: -10px">
+                        <!-- Compte d'utilisateur -->
+                        <div class="card shadow mb-4" style="height: 100%;">
+                            <div class="card mb-4 py-3 border-left-success"
+                                 style="margin-top: 5px; vertical-align: central; margin: 30px">
+                                <div class="list-group" style="margin-top: -10px; margin-bottom: -10px">
                                     <div class="list-group-item list-group-item-action">
                                         <div class="row" style="padding: 3px;">
                                             <div class="col-3" style="text-align: right; margin-top: 4px;">
-                                                <h:outputText value="#{langueBean.getMsg('profile.apiKey')}" style="font-size: 14px; font-weight: bold;"/>
+                                                <h:outputText value=" #{langueBean.getMsg('profile.user')}"
+                                                              title="#{langueBean.getMsg('profile.tootltip_user')}"
+                                                              style="font-size: 14px; font-weight: bold;"/>
                                             </div>
 
-                                            <div class="col-5"  >
-                                                <!-- Si l'utilisateur a une clé -->
-                                                <p:inputText rendered="#{myAccountBean.nodeUser.apiKeyExpireDate!=null or myAccountBean.nodeUser.keyNeverExpire}" value="#{myAccountBean.displayedKey}" style="width: 100%; height: 100%" readonly="true" />
-
-                                                <!-- Si l'utilisateur n'a pas de clé -->
-                                                <p:inputText rendered="#{(myAccountBean.nodeUser.apiKeyExpireDate==null) and (!myAccountBean.nodeUser.keyNeverExpire) }" value="#{langueBean.getMsg('profile.noApiKeyMessage')}" style="width: 100%; height: 100%" readonly="true" />
+                                            <div class="col-8">
+                                                <p:inputText value="#{myAccountBean.nodeUser.name}"
+                                                             title="#{langueBean.getMsg('profile.tootltip_user')}"
+                                                             style="width: 100%; height: 100%"/>
                                             </div>
 
-                                            <!-- Si l'utilisateur a une clé on donne la possibilité de générer/copier sa clé -->
-                                            <h:panelGroup rendered="#{myAccountBean.nodeUser.apiKeyExpireDate!=null or myAccountBean.nodeUser.keyNeverExpire}">
+                                            <div class="col-1"
+                                                 style="vertical-align: central; margin-top: 3px; font-size: 12px">
+                                                <p:commandButton action="#{myAccountBean.updateUserName()}"
+                                                                 update="containerIndex"
+                                                                 icon="pi pi-check" styleClass="rounded-button">
+                                                </p:commandButton>
+                                            </div>
+                                        </div>
+                                    </div>
+                                </div>
+                            </div>
+
+
+                            <div class="card mb-4 py-3 border-left-success"
+                                 style="margin-top: 5px; vertical-align: central; margin: 30px">
+                                <div class="list-group" style="margin-top: -10px; margin-bottom: -10px">
+                                    <div class="list-group-item list-group-item-action">
+
+                                        <div class="row" style="padding: 3px;">
+                                            <div class="col-3" style="text-align: right; margin-top: 4px;">
+                                                <h:outputText value="Passe"
+                                                              style="font-size: 14px; font-weight: bold;"/>
+                                            </div>
+                                            <div class="col-8">
+                                            </div>
+
+                                            <div class="col-1"
+                                                 style="vertical-align: central; margin-top: 3px; font-size: 12px">
+                                                <p:commandButton
+                                                        actionListener="#{modifyUserBean.selectUser(currentUser.nodeUser.idUser)}"
+
+                                                        icon="pi pi-key" update="idModifyPassword messageIndex"
+                                                        oncomplete="PF('modifyPassword').show()" process="@this"
+                                                        styleClass="edit-button rounded-button"/>
+                                            </div>
+                                        </div>
+                                    </div>
+                                </div>
+                            </div>
+
+
+                            <!-- Email -->
+                            <div class="card mb-4 py-3 border-left-success"
+                                 style="margin-top: 5px; vertical-align: central; margin: 30px; margin-top: -10px">
+                                <div class="list-group" style="margin-top: -10px; margin-bottom: -10px">
+                                    <div class="list-group-item list-group-item-action">
+                                        <div class="row" style="padding: 3px;">
+                                            <div class="col-3" style="text-align: right; margin-top: 4px;">
+                                                <h:outputText value="#{langueBean.getMsg('profile.email')}"
+                                                              style="font-size: 14px; font-weight: bold;"/>
+                                            </div>
+
+                                            <div class="col-8">
+                                                <p:inputText value="#{myAccountBean.nodeUser.mail}"
+                                                             style="width: 100%; height: 100%"/>
+                                            </div>
+
+                                            <div class="col-1" style="vertical-align: central; margin-top: 3px">
+                                                <p:commandButton action="#{myAccountBean.updateEmail()}"
+                                                                 update="containerIndex"
+                                                                 icon="pi pi-check" styleClass="rounded-button">
+                                                </p:commandButton>
+                                            </div>
+                                        </div>
+                                    </div>
+
+                                    <div class="list-group-item list-group-item-action">
+                                        <div class="row" style="padding: 3px;">
+                                            <div class="col-3" style="text-align: right; margin-top: 7px;">
+                                                <h:outputText value="#{langueBean.getMsg('profile.alert_by_email')}"
+                                                              style="font-size: 14px; font-weight: bold;"/>
+                                            </div>
+
+                                            <div class="col-8" style="margin-top: 4px;">
+                                                <p:toggleSwitch value="#{myAccountBean.nodeUser.alertMail}"/>
+                                            </div>
+
+                                            <div class="col-1" style="vertical-align: central; margin-top: 3px">
+                                                <p:commandButton action="#{myAccountBean.updateAlertEmail()}"
+                                                                 update="containerIndex"
+                                                                 icon="pi pi-check" styleClass="rounded-button">
+                                                </p:commandButton>
+                                            </div>
+                                        </div>
+                                    </div>
+                                </div>
+                            </div>
+
+
+                            <!-- Les rôles existants de l'utilisateur -->
+                            <div class="card mb-4 py-3 border-left-success"
+                                 style="margin-top: 5px; vertical-align: central; margin: 30px; margin-top: -10px">
+                                <div class="list-group" style="margin-top: -10px; margin-bottom: -10px">
+                                    <div class="list-group-item list-group-item-action">
+                                        <div class="row" style="margin-left: 10px; ">
+                                            <div class="col-11">
+                                                <h:outputText value="#{langueBean.getMsg('profile.list_user_roles')}"
+                                                              style="font-size: 12px;"/>
+                                            </div>
+                                        </div>
+                                        <div class="row" style="margin-left: 20px; margin-right: 20px">
+                                            <h:panelGroup rendered="#{!myAccountBean.nodeUser.isSuperAdmin()}">
+
+                                                <div class="col-12">
+                                                    <p:dataTable id="tabUserProject"
+                                                                 value="#{currentUser.userPermissions.nodeProjectsWithThesosRoles}"
+                                                                 var="allProject"
+                                                                 scrollable="true" resizableColumns="true"
+                                                                 scrollHeight="450" lazy="false">
+                                                        <p:column width="40%"
+                                                                  headerText="#{langueBean.getMsg('profile.project')}">
+                                                            <h:outputText value="#{allProject.projectName}"
+                                                                          style="font-size: 12px;"/>
+                                                        </p:column>
+                                                        <p:column width="60%">
+                                                            <p:dataTable id="tabUserTheso"
+                                                                         value="#{allProject.nodeThesoRoles}"
+                                                                         var="allTheso"
+                                                                         scrollable="true" resizableColumns="true"
+                                                                         scrollHeight="450" lazy="false">
+                                                                <p:column width="70%"
+                                                                          headerText="#{langueBean.getMsg('menu.thesaurus')}">
+                                                                    <h:outputText
+                                                                            value="#{allTheso.thesoName} (#{allTheso.idTheso})"
+                                                                            style="font-size: 12px;"/>
+                                                                </p:column>
+                                                                <p:column width="30%"
+                                                                          headerText="#{langueBean.getMsg('profile.role')}">
+                                                                    <h:outputText value="#{allTheso.roleName}"
+                                                                                  style="font-size: 12px;"/>
+                                                                </p:column>
+
+                                                            </p:dataTable>
+                                                        </p:column>
+                                                    </p:dataTable>
+                                                </div>
+
+                                            </h:panelGroup>
+                                            <h:panelGroup rendered="#{myAccountBean.nodeUser.isSuperAdmin()}">
+                                                <div class="col-12">
+                                                    <h:outputText value="SuperAdmin"
+                                                                  style="font-size: 12px; color: #C63632"/>
+                                                </div>
+                                            </h:panelGroup>
+                                        </div>
+                                    </div>
+                                </div>
+                            </div>
+                            <!-- Gestion de la clé d'API -->
+                            <div class="card mb-4 py-3 border-left-success"
+                                 style="margin-top: 5px; vertical-align: central; margin: 30px; margin-top: -10px">
+                                <div class="list-group-item list-group-item-action">
+                                    <div class="row" style="padding: 3px;">
+                                        <div class="col-3" style="text-align: right; margin-top: 4px;">
+                                            <h:outputText value="#{langueBean.getMsg('profile.apiKey')}"
+                                                          style="font-size: 14px; font-weight: bold;"/>
+                                        </div>
+
+                                        <div class="col-5">
+                                            <!-- Si l'utilisateur a une clé -->
+                                            <p:inputText
+                                                    rendered="#{myAccountBean.nodeUser.apiKeyExpireDate!=null or myAccountBean.nodeUser.keyNeverExpire}"
+                                                    value="#{myAccountBean.displayedKey}"
+                                                    style="width: 100%; height: 100%" readonly="true"/>
+
+                                            <!-- Si l'utilisateur n'a pas de clé -->
+                                            <p:inputText
+                                                    rendered="#{(myAccountBean.nodeUser.apiKeyExpireDate==null) and (!myAccountBean.nodeUser.keyNeverExpire) }"
+                                                    value="#{langueBean.getMsg('profile.noApiKeyMessage')}"
+                                                    style="width: 100%; height: 100%" readonly="true"/>
+                                        </div>
+
+                                        <!-- Si l'utilisateur a une clé on donne la possibilité de générer/copier sa clé -->
+                                        <h:panelGroup
+                                                rendered="#{myAccountBean.nodeUser.apiKeyExpireDate!=null or myAccountBean.nodeUser.keyNeverExpire}">
                                             <div class="col-2 align-self-center">
                                                 <!-- Si la clé est définitive -->
-                                                <h:outputText rendered="#{myAccountBean.nodeUser.keyNeverExpire}" value="#{langueBean.getMsg('profile.noApiKeyExpireDate')}" style="font-size: 16px; font-style: italic;"/>
+                                                <h:outputText rendered="#{myAccountBean.nodeUser.keyNeverExpire}"
+                                                              value="#{langueBean.getMsg('profile.noApiKeyExpireDate')}"
+                                                              style="font-size: 16px; font-style: italic;"/>
                                                 <!-- Si la clé a une date d'expiration -->
-                                                <h:outputText rendered="#{!myAccountBean.nodeUser.keyNeverExpire and !myAccountBean.isKeyExpired()}" value="#{langueBean.getMsg('profile.apiKeyExpire')} #{myAccountBean.nodeUser.apiKeyExpireDate }" style="font-size: 16px; font-style: italic;"/>
+                                                <h:outputText
+                                                        rendered="#{!myAccountBean.nodeUser.keyNeverExpire and !myAccountBean.isKeyExpired()}"
+                                                        value="#{langueBean.getMsg('profile.apiKeyExpire')} #{myAccountBean.nodeUser.apiKeyExpireDate }"
+                                                        style="font-size: 16px; font-style: italic;"/>
                                                 <!-- Si la clé est expirée-->
-                                                <h:outputText rendered="#{myAccountBean.isKeyExpired()}" value="Clé expirée" style="font-size: 16px; font-style: italic;"/>
+                                                <h:outputText rendered="#{myAccountBean.isKeyExpired()}"
+                                                              value="Clé expirée"
+                                                              style="font-size: 16px; font-style: italic;"/>
                                             </div>
 
                                             <div class="col-1" style="vertical-align: central; margin-top: 3px">
                                                 <!-- Si la clé est expirée, l'utilisateur ne peut pas la regénérer -->
-                                                <p:commandButton action="#{myAccountBean.updateKey()}" update="containerIndex messageIndex"
+                                                <p:commandButton action="#{myAccountBean.updateKey()}"
+                                                                 update="containerIndex messageIndex"
                                                                  value="#{langueBean.getMsg('profile.regenerateApiKey')}"
                                                                  disabled="#{myAccountBean.isKeyExpired()}">
                                                 </p:commandButton>
                                             </div>
-                                            </h:panelGroup>
-                                        </div>
+                                        </h:panelGroup>
+                                    </div>
 
-                                        <!-- Si l'utilisateur a une clé -->
-                                        <h:panelGroup rendered="#{myAccountBean.nodeUser.apiKeyExpireDate !=null or myAccountBean.nodeUser.keyNeverExpire}">
+                                    <!-- Si l'utilisateur a une clé -->
+                                    <h:panelGroup
+                                            rendered="#{myAccountBean.nodeUser.apiKeyExpireDate !=null or myAccountBean.nodeUser.keyNeverExpire}">
                                         <div class="row" style="padding: 3px;">
                                             <div class="col-3"></div>
-                                            <p:staticMessage severity="info" detail="#{langueBean.getMsg('profile.apiKeyCopyMessage')}" class="col-auto " style="margin-top: 4px;"/>
+                                            <p:staticMessage severity="info"
+                                                             detail="#{langueBean.getMsg('profile.apiKeyCopyMessage')}"
+                                                             class="col-auto " style="margin-top: 4px;"/>
                                         </div>
 
                                         <div class="row" style="padding: 3px;">
                                             <div class="col-3"></div>
                                             <!-- Si la clé n'expire pas on a pas besoin de ce message -->
-                                            <p:staticMessage rendered="#{!myAccountBean.nodeUser.keyNeverExpire}" severity="warn" detail="#{langueBean.getMsg('profile.apiKeyWarningMessage')}" class="col-auto " style="margin-top: 4px;"/>
+                                            <p:staticMessage rendered="#{!myAccountBean.nodeUser.keyNeverExpire}"
+                                                             severity="warn"
+                                                             detail="#{langueBean.getMsg('profile.apiKeyWarningMessage')}"
+                                                             class="col-auto " style="margin-top: 4px;"/>
                                         </div>
-                                        </h:panelGroup>
+                                    </h:panelGroup>
 
-                                    </div>
                                 </div>
                             </div>
                         </div>
                     </div>
-                    <ui:include src="../commun/footer.xhtml" />
-                    <input type="hidden" name="csrfToken" value="${sessionScope.CSRF_TOKEN}" />
-                </h:form>
-                <ui:include src="../dialog/login/logout.xhtml" />
-            </div>
-        </h:panelGroup>
-    </h:body>
+                </div>
+                <ui:include src="../commun/footer.xhtml"/>
+                <input type="hidden" name="csrfToken" value="${sessionScope.CSRF_TOKEN}"/>
+            </h:form>
+            <ui:include src="../dialog/login/logout.xhtml"/>
+            <ui:include src="../dialog/profile/modifyPassword.xhtml"/>
+        </div>
+    </h:panelGroup>
+</h:body>
 </HTML>

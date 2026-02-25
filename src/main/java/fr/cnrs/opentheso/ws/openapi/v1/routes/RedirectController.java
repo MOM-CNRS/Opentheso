@@ -34,7 +34,13 @@ public class RedirectController {
     /**
      * permet de rediriger les URI ARK vers la bonne URL
      */
-    @GetMapping(value = "/ark:/{naan}/{idArk}", produces = CustomMediaType.APPLICATION_JSON_UTF_8)
+    @GetMapping(
+            value = {
+                    "/ark:/{naan}/{idArk}",   // ark:/naan/id
+                    "/ark:{naan}/{idArk}"     // ark:naan/id
+            },
+            produces = CustomMediaType.APPLICATION_JSON_UTF_8
+    )
     @Operation(summary = "Redirige vers la page de la ressource correspondant à l'identifiant ARK entré",
             description = "Ancienne version : `/api/ark:/{naan}/{idArk}`\\n\\nRedirige vers la page de la ressource correspondant à l'identifiant ARK entré",
             tags = {"Ark"},

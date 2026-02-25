@@ -135,7 +135,7 @@
                                                             <h:outputText value="#{langueBean.getMsg('setting.userArk')}" style="font-weight: bold;" />
                                                         </div>
                                                         <div class="col-8">
-                                                            <p:inputText value="#{preferenceBean.preferences.userArk}" style="width: 100%;"/>
+                                                            <p:inputText value="#{preferenceBean.preferences.userArk}"  style="width: 100%;"/>
                                                         </div>
                                                     </div>
                                                 </div>
@@ -146,7 +146,7 @@
                                                             <h:outputText value="#{langueBean.getMsg('setting.passArk')}" style="font-weight: bold;" />
                                                         </div>
                                                         <div class="col-8">
-                                                            <p:password value="#{preferenceBean.preferences.passArk}" style="width: 100%;" toggleMask="false" redisplay="false"/>
+                                                            <p:password value="#{preferenceBean.newPassArk}" style="width: 100%;" placeholder="••••••••••" feedback="false" />
                                                         </div>
                                                     </div>
                                                 </div>
@@ -259,11 +259,6 @@
                                     </p:panel>
                                 </div>
 
-
-
-
-
-
                                 <!--Serveur Handle-->
                                 <div class="card mb-4 py-3 border-left-success" style="margin-left: 30px; margin-right: 30px; margin-top: 5px;">
                                     <p:panel style="border-color: transparent">
@@ -371,7 +366,7 @@
                                                             <h:outputText value="#{langueBean.getMsg('identifier.handlePass')}" style="font-weight: bold;" />
                                                         </div>
                                                         <div class="col-8">
-                                                            <p:password value="#{preferenceBean.preferences.passHandle}" style="width: 100%;" toggleMask="false" redisplay="true"/>
+                                                            <p:password value="#{preferenceBean.newPassHandle}" placeholder="••••••••••" style="width: 100%;" feedback="false"/>
                                                         </div>
                                                     </div>
                                                 </div>                                                    
@@ -441,7 +436,90 @@
                                             </div>
                                         </h:panelGroup>                                            
                                     </p:panel>
-                                </div>                                
+                                </div>
+
+                                <!-- OpenArk -->
+                                <div class="card mb-4 py-3 border-left-success" style="margin-left: 30px; margin-right: 30px; margin-top: 10px;">
+                                    <p:panel style="border-color: transparent">
+                                        <div class="row" style="height: 32px; background: #ECF8F1 !important; margin-left: 5px; margin-right: 5px">
+                                            <div class="col-6" style="padding-top: 3px">
+                                                <h:outputText value="#{langueBean.getMsg('setting.openArkServer')}" style="font-weight: bold; color: #f47b2a !important;" />
+                                            </div>
+                                            <div class="col-6" style="text-align: right; padding-top: 3px">
+                                                <p:toggleSwitch  value="#{preferenceBean.preferences.useOpenArk}"
+                                                                 onIcon="pi pi-times" offIcon="pi pi-check"
+                                                                 style="height: 25px; width: 50px;">
+                                                    <p:ajax event="change" listener="#{preferenceBean.updateSelectedServer('openark')}" update="containerIndex" />
+                                                </p:toggleSwitch>
+                                            </div>
+                                        </div>
+
+                                        <h:panelGroup rendered="#{preferenceBean.preferences.useOpenArk}" >
+                                            <div class="list-group" >
+
+                                                <!-- Serveur Ark -->
+                                                <div class="list-group-item list-group-item-action">
+                                                    <div class="row" style="padding: 3px;">
+                                                        <div class="col-3" style="text-align: right; margin-top: 2px;">
+                                                            <h:outputText value="#{langueBean.getMsg('setting.arkServer')}" style="font-size: 14px; font-weight: bold;" />
+                                                        </div>
+                                                        <div class="col-8">
+                                                            <p:inputText value="#{preferenceBean.preferences.serverOpenArk}" style="width: 100%;">
+                                                                <p:tooltip value="#{langueBean.getMsg('setting.arkServerTooltip')}" showDelay="500" />
+                                                            </p:inputText>
+                                                        </div>
+                                                    </div>
+                                                </div>
+
+                                                <!-- Naan Ark -->
+                                                <div class="list-group-item list-group-item-action">
+                                                    <div class="row" style="padding: 3px;">
+                                                        <div class="col-3" style="text-align: right; margin-top: 2px;">
+                                                            <h:outputText value="#{langueBean.getMsg('setting.yourNaan')}" style="font-weight: bold;" />
+                                                        </div>
+                                                        <div class="col-8">
+                                                            <p:inputText value="#{preferenceBean.preferences.naanOpenArk}" style="width: 100%;"/>
+                                                        </div>
+                                                    </div>
+                                                </div>
+
+                                                <!-- Prefixe Ark -->
+                                                <div class="list-group-item list-group-item-action">
+                                                    <div class="row" style="padding: 3px;">
+                                                        <div class="col-3" style="text-align: right; margin-top: 2px;">
+                                                            <h:outputText value="#{langueBean.getMsg('setting.arkPrefix')}" style="font-weight: bold;" />
+                                                        </div>
+                                                        <div class="col-8">
+                                                            <p:inputText value="#{preferenceBean.preferences.prefixOpenArk}" style="width: 100%; font-size: 12px;"/>
+                                                        </div>
+                                                    </div>
+                                                </div>
+
+                                                <!-- pass Ark -->
+                                                <div class="list-group-item list-group-item-action">
+                                                    <div class="row" style="padding: 3px;">
+                                                        <div class="col-3" style="text-align: right; margin-top: 2px;">
+                                                            <h:outputText value="#{langueBean.getMsg('profile.apiKey')}" style="font-weight: bold;" />
+                                                        </div>
+                                                        <div class="col-8">
+                                                            <p:password value="#{preferenceBean.newApiKeyOpenArk}" style="width: 100%;" placeholder="••••••••••" feedback="false" />
+                                                        </div>
+                                                    </div>
+                                                </div>
+
+                                                <div class="row" style="padding: 3px;">
+                                                    <div class="col-11" style="text-align: right; margin-top: 2px;">
+                                                        <p:commandButton value="#{langueBean.getMsg('btnValidate')}" styleClass="ui-button-success" icon="pi pi-check"
+                                                                         update="containerIndex messageIndex"
+                                                                         actionListener="#{preferenceBean.savePreference()}" >
+                                                            <p:tooltip value="#{langueBean.getMsg('candidat.save')}" showDelay="500" />
+                                                        </p:commandButton>
+                                                    </div>
+                                                </div>
+                                            </div>
+                                        </h:panelGroup>
+                                    </p:panel>
+                                </div>
 
                             </div>
                         </div>

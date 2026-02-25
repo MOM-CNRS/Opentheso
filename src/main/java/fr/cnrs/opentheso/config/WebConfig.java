@@ -17,7 +17,7 @@ public class WebConfig implements WebMvcConfigurer {
     public void addInterceptors(InterceptorRegistry registry) {
         registry.addInterceptor(loggingInterceptor)
                 .addPathPatterns("/**") // Inclut toutes les requêtes
-                .excludePathPatterns("/resources/**", "/static/**", "/d3js/**", "/v3/**", "/swagger-ui/**"); // Exclut les ressources statiques
+                .excludePathPatterns("/resources/**", "/static/**", "/d3js/**","/.well-known/**", "/v3/**", "/swagger-ui/**"); // Exclut les ressources statiques
     }
 
     @Bean

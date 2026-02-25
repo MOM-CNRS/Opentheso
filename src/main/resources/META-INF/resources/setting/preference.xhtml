@@ -288,9 +288,21 @@
                                                         <p:toggleSwitch value="#{preferenceBean.preferences.showEditorialNote}" style="font-size: 12px;" />
                                                     </div>
                                                 </div>
-                                            </div>                                                
+                                            </div>
+                                            <!-- Activer le lien vers KohaPro -->
+                                            <div class="list-group-item list-group-item-action" style=" margin-top: 5px">
+                                                <div class="row" style="padding-top: 3px;">
+                                                    <div class="col-xl-3 col-lg-4 col-md-6 col-sm-6" style="text-align: right; margin-top: 6px">
+                                                        <h:outputText value="#{langueBean.getMsg('preferences.activateLinkToKohaPro')}"
+                                                                      style="font-size: 14px; font-weight: bold;"/>
+                                                    </div>
+                                                    <div class="col-xl-6 col-lg-6 col-md-5 col-sm-5">
+                                                        <p:toggleSwitch value="#{preferenceBean.preferences.kohaLink}" style="font-size: 12px;" />
+                                                    </div>
+                                                </div>
+                                            </div>
 
-                                            
+
                                             <!-- Activer/ désactiver le module Deepl -->
 
                                             <h:panelGroup id="deepl">
@@ -316,10 +328,7 @@
                                                                 <h:outputText value="#{langueBean.getMsg('preferences.deeplApiKey')}" style="font-size: 14px; font-weight: bold;"/>
                                                             </div>
                                                             <div class="col-xl-6 col-lg-6 col-md-5 col-sm-5">
-                                                                <p:password value="#{preferenceBean.preferences.deeplApiKey}"  style="width: 100%"/>
-                                                                
-                                                                <h:outputText rendered="#{preferenceBean.preferences.deeplApiKey != null and preferenceBean.preferences.deeplApiKey != '' }"
-                                                                              value="#{langueBean.getMsg('preferences.actualDeeplApiKey')} = ........#{preferenceBean.preferences.deeplApiKey.substring(preferenceBean.preferences.deeplApiKey.length()/2)}"/>
+                                                                <p:password value="#{preferenceBean.newDeeplApiKey}" placeholder="••••••••••" feedback="false"  style="width: 100%"/>
                                                             </div>
                                                         </div>
                                                     </div>  

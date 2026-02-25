@@ -28,5 +28,15 @@ public class AlignementSource {
         if(StringUtils.isEmpty(source_filter)) return "";
         return source_filter;
     }
-  
+
+    public AlignementSource(AlignementSource alignementSource) {
+        this.source = alignementSource.source;
+        this.source_filter = alignementSource.source_filter;
+        this.requete = alignementSource.requete;
+        this.typeRequete = alignementSource.typeRequete;
+        this.alignement_format = alignementSource.alignement_format;
+        this.id = alignementSource.id;
+        this.description = alignementSource.description;
+        this.isGps = alignementSource.isGps;
+    }
 }

@@ -59,6 +59,29 @@
                                     </div>
 
                                     <p:accordionPanel widgetVar="basic" style="width: 100%; margin-top: 10px">
+
+                                        <p:tab title="Corriger l'affichage des faux top termes" >
+                                            <div class="row" style="margin-top: 10px; margin-bottom: 10px">
+                                                <div class="col-12">
+                                                    <p:outputPanel deferred="true" style="color: black">
+                                                        <h5>Permet de corriger les incohérences dans le thésaurus en cours :</h5>
+                                                        <p>Si des tops termes s"affichent mais en réalité, ils le sont pas, cette action peut les corriger.<br/>
+                                                        </p>
+                                                        <p style="color:red;">!!! Ne pas oublier de recharger le thésaurus à la fin du traitement !!!</p>
+                                                    </p:outputPanel>
+                                                </div>
+                                            </div>
+
+                                            <div class="row" style="margin-top: 10px; margin-bottom: 10px">
+                                                <div class="col-12">
+                                                    <p:commandButton value="#{langueBean.getMsg('service.launchCorrection')}" icon="pi pi-check" iconPos="right"
+                                                                     action="#{restoreThesaurus.correctDisplayTopTerm()}"
+                                                                     update="containerIndex messageIndex"/>
+                                                </div>
+                                            </div>
+                                        </p:tab>
+
+
                                         <p:tab title="Correction 1 - Restructuration" >
                                             <div class="row" style="margin-top: 10px; margin-bottom: 10px">
                                                 <div class="col-12">

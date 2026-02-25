@@ -13,6 +13,22 @@ import java.util.Optional;
 
 public interface ConceptGroupRepository extends JpaRepository<ConceptGroup, Integer> {
 
+    @Query("""
+        SELECT cg
+        FROM ConceptGroup cg
+        JOIN ConceptGroupLabel cgl
+            ON cgl.idGroup = cg.idGroup
+           AND cgl.idThesaurus = cg.idThesaurus
+        WHERE cg.idThesaurus = :idThesaurus
+          AND cgl.lang = :lang
+        ORDER BY LOWER(cgl.lexicalValue)
+    """)
+    List<ConceptGroup> findGroupsSortedByLexicalValue(
+            @Param("idThesaurus") String idThesaurus,
+            @Param("lang") String lang
+    );
+
+
     @Modifying
     @Transactional
     @Query("UPDATE ConceptGroup cg SET cg.isPrivate = :isPrivate WHERE cg.idGroup = :idGroup AND cg.idThesaurus = :idThesaurus")
@@ -40,7 +56,8 @@ public interface ConceptGroupRepository extends JpaRepository<ConceptGroup, Inte
 
     @Modifying
     @Transactional
-    void deleteByIdThesaurus(String idThesaurus);
+    @Query(value = "DELETE FROM concept_group WHERE idthesaurus = :idThesaurus", nativeQuery = true)
+    void deleteByIdThesaurus(@Param("idThesaurus") String idThesaurus);
 
     @Query(value = """
         SELECT idthesaurus 
@@ -101,6 +118,7 @@ public interface ConceptGroupRepository extends JpaRepository<ConceptGroup, Inte
     void updateThesaurusId(@Param("newIdThesaurus") String newIdThesaurus, @Param("oldIdThesaurus") String oldIdThesaurus);
 
     @Modifying
+    @Transactional
     @Query(value = "UPDATE concept_group_concept SET idthesaurus = :target WHERE idconcept = :concept AND idthesaurus = :from", nativeQuery = true)
     void updateThesaurus(@Param("concept") String concept, @Param("from") String from, @Param("target") String target);
 }

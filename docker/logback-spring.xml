@@ -1,0 +1,68 @@
+<configuration>
+
+    <!-- Définir un appender pour la console avec des couleurs similaire à celui de Spring Boot par défaut -->
+    <appender name="CONSOLE" class="ch.qos.logback.core.ConsoleAppender">
+        <encoder>
+            <pattern>
+                %d{dd-MM-yyyy HH:mm:ss.SSS}  %highlight(%-5level) %magenta(${PID}) --- [%t] %cyan(%logger{45}) \t: %msg%n%throwable
+            </pattern>
+        </encoder>
+    </appender>
+
+    <!-- Définir un appender pour les fichiers de logs avec rotation et compression -->
+    <appender name="FILE" class="ch.qos.logback.core.rolling.RollingFileAppender">
+        <!-- Le fichier log du jour en cours -->
+        <file>${LOG_PATH:-./logs/opentheso.log}</file>
+
+        <!-- Politique de rotation basée sur la taille et le temps -->
+
+        <rollingPolicy class="ch.qos.logback.core.rolling.SizeAndTimeBasedRollingPolicy">
+            <!-- Nom des fichiers avec rotation journalière et compression -->
+            <fileNamePattern>${LOG_PATH:-./logs}/opentheso-%d{yyyy-MM}.%i.log.gz</fileNamePattern>
+
+
+            <!-- Taille maximale d'un fichier avant rotation -->
+            <maxFileSize>400mb</maxFileSize>
+
+
+            <!-- Nombre maximum de jours à conserver -->
+            <maxHistory>12</maxHistory>
+
+            <!-- Taille totale maximale des logs conservés -->
+            <totalSizeCap>4GB</totalSizeCap>
+        </rollingPolicy>
+
+
+        <!-- Format des logs dans le fichier  -->
+        <encoder>
+            <pattern>
+                %d{dd-MM-yyyy HH:mm:ss.SSS}  %highlight(%-5level) %magenta(${PID}) --- [%t] %cyan(%logger{45}) \t: %msg%n%throwable
+            </pattern>
+        </encoder>
+    </appender>
+
+    <!-- Définir le niveau de log pour les environnements -->
+
+    <!-- Configurer le niveau de log global -->
+    <root level="INFO">  <!-- Changer de DEBUG à INFO ou ERROR selon vos besoins -->
+        <appender-ref ref="CONSOLE" />
+        <appender-ref ref="FILE" />
+    </root>
+
+    <!-- Configurer les logs pour les profils -->
+    <springProfile name="local">
+        <root level="INFO">
+            <appender-ref ref="CONSOLE" />
+            <appender-ref ref="FILE" />
+        </root>
+    </springProfile>
+
+    <!-- Configurer les logs pour le profil 'prod' -->
+    <springProfile name="prod">
+        <root level="INFO">
+            <appender-ref ref="CONSOLE" />
+            <appender-ref ref="FILE" />
+        </root>
+    </springProfile>
+
+</configuration>

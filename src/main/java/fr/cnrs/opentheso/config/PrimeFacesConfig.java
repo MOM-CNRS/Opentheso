@@ -1,8 +1,11 @@
 package fr.cnrs.opentheso.config;
 
 import com.sun.faces.config.ConfigureListener;
+import jakarta.faces.lifecycle.Lifecycle;
+import jakarta.faces.lifecycle.LifecycleFactory;
 import jakarta.servlet.ServletContext;
 import jakarta.faces.webapp.FacesServlet;
+import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.boot.web.servlet.ServletContextInitializer;
 import org.springframework.boot.web.servlet.ServletListenerRegistrationBean;
 import org.springframework.boot.web.servlet.ServletRegistrationBean;
@@ -15,7 +18,6 @@ import org.springframework.web.context.ServletContextAware;
 
 @Configuration
 public class PrimeFacesConfig implements ServletContextAware {
-
 
     @Override
     public void setServletContext(ServletContext servletContext) {

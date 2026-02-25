@@ -147,7 +147,7 @@
                                      process="@this"
                                      update="messageIndex listAddConceptsCsvForm"
                                      disabled="#{!importFileBean.loadDone}"
-                                     actionListener="#{importFileBean.addListConceptsToTheso(selectedThesaurus.selectedIdThesor)}" />
+                                     actionListener="#{importFileBean.addListConceptsToTheso(selectedThesaurus.selectedIdTheso)}" />
                 </div> 
             </h:panelGroup>
             <input type="hidden" name="csrfToken" value="${sessionScope.CSRF_TOKEN}" />

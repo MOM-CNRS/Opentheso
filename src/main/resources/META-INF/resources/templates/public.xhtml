@@ -1,0 +1,22 @@
+<!DOCTYPE html>
+<html xmlns="http://www.w3.org/1999/xhtml"
+      xmlns:h="http://xmlns.jcp.org/jsf/html"
+      xmlns:ui="http://java.sun.com/jsf/facelets"
+      xmlns:f="http://xmlns.jcp.org/jsf/core">
+
+<h:head>
+    <title><ui:insert name="title"/></title>
+
+    <!-- CSS minimum -->
+    <link rel="stylesheet" type="text/css" href="resources/css/theme_general.css"/>
+    <link rel="stylesheet" type="text/css" href="resources/css/composants_opentheso.css"/>
+
+    <!-- PrimeFaces -->
+    <h:outputStylesheet library="primefaces" name="primefaces.css"/>
+    <h:outputScript library="primefaces" name="primefaces.js"/>
+</h:head>
+
+<h:body class="public-page">
+    <ui:insert name="content"/>
+</h:body>
+</html>

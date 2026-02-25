@@ -1,9 +1,17 @@
 package fr.cnrs.opentheso.services;
 
+import fr.cnrs.opentheso.client.ArkApiClient;
+import fr.cnrs.opentheso.client.ArkApiException;
+import fr.cnrs.opentheso.ws.dto.ArkRequest;
+import fr.cnrs.opentheso.ws.dto.ArkResponse;
+import fr.cnrs.opentheso.ws.dto.DeleteArkRequest;
+import fr.cnrs.opentheso.ws.dto.DeleteArkResponse;
 import fr.cnrs.opentheso.entites.Concept;
+import fr.cnrs.opentheso.entites.Preferences;
 import fr.cnrs.opentheso.models.nodes.NodeIdValue;
 import fr.cnrs.opentheso.repositories.ConceptRepository;
 import fr.cnrs.opentheso.repositories.UserRepository;
+import fr.cnrs.opentheso.utils.MessageUtils;
 import fr.cnrs.opentheso.utils.ToolsHelper;
 import fr.cnrs.opentheso.ws.ark.ArkHelper2;
 import jakarta.json.Json;
@@ -32,6 +40,9 @@ public class ArkService {
     private final ConceptRepository conceptRepository;
     private final TermService termService;
     private final UserRepository userRepository;
+    private final ArkApiClient arkApiClient;
+
+//    private final ArkApiClient arkApiClient;
 
     /**
      * Cette fonction regenerer tous les idArk des concepts fournis en paramètre
@@ -169,16 +180,7 @@ public class ArkService {
     public boolean updateArkIdOfConcept(String idConcept, String idThesaurus, String idArk) {
 
         log.debug("Mise à jour de l'id ark (nouvelle valeur {}) du concept id {}", idArk, idConcept);
-        var concept = conceptRepository.findByIdConceptAndIdThesaurus(idConcept, idThesaurus);
-        if (concept.isEmpty()) {
-            log.debug("Aucun concept n'est trouvé avec l'id {} dans le thesaurus id {}", idConcept, idThesaurus);
-            return false;
-        }
-
-        concept.get().setIdArk(idArk);
-        concept.get().setModified(new Date());
-        concept.get().setNotation(concept.get().getNotation() == null ? "" : concept.get().getNotation());
-        conceptRepository.save(concept.get());
+        conceptRepository.setIdArk(idArk, new Date(), idConcept, idThesaurus);
         log.debug("Mise à jou de l'id Ark dans le concept id {} est terminée", idConcept);
         return true;
     }
@@ -249,5 +251,179 @@ public class ArkService {
 
         return concept.get();
     }
+
+    /* Générer les identifiants Ark en utilisant le serveur OpenArk */
+    // Ajout d'un identifiant
+    public boolean generateArkWithOpenArk(String idThesaurus, List<String> idConcepts, String idLang, String creator,
+                                          String apiKey, Preferences preference) {
+
+        log.debug("Générer les idArk avec OpenArk");
+        if (preference == null || !preference.isUseOpenArk()) {
+            return false;
+        }
+
+        for (String idConcept : idConcepts) {
+            var concept = getConcept(idConcept, idThesaurus);
+            var idArk = concept.getIdArk();
+            String url = preference.getCheminSite() + "?idc=" + idConcept + "&idt=" + idThesaurus;
+            Integer naan;
+            try {
+                naan = Integer.parseInt(preference.getNaanOpenArk());
+            } catch (Exception e) {
+                return false;
+            }
+            if (StringUtils.isEmpty(idArk)) {
+                //on vérifie si l'URL et le NAAN existe déjà sur OpenArk, on récupère alors l'identifiant Ark et on met à jour le concept
+                if(arkApiClient.arkExistsByUrl(naan, url, preference.getServerOpenArk())){
+                    // Ark existe déjà sur le serveur mais pas en local, on met alors le Ark local à jour
+                    ArkResponse arkResponse= arkApiClient.getArkByNaanAndUrlWithApiKey(naan, url, preference.getServerOpenArk(), apiKey);
+                    if(arkResponse != null){
+                        if (!updateArkIdOfConcept(idConcept, idThesaurus, arkResponse.getArk().getArkId())) {
+                            MessageUtils.showErrorMessage("Génération ARK : " + " Erreur");
+                            return true;
+                        } else {
+                            MessageUtils.showWarnMessage("Génération ARK : " + "Une Url existe déjà avec ce NAAN, l'Ark est récupéré pour mise à jour locale");
+                            return true;
+                        }
+                    }
+                } else {
+                    //// Ark n'existe pas, ni en local ni sur le serveur, on crée un nouvel Ark
+                    // Construire la requête ARK
+                    ArkRequest request = new ArkRequest();
+                    request.setArk(""); // vide si serveur doit générer
+                    request.setNaan(naan);
+                    request.setType(preference.getPrefixOpenArk());
+                    request.setUrlTarget(url);
+                    request.setTitle(termService.getLexicalValueOfConcept(idConcept,idThesaurus, idLang));
+                    request.setCreator(creator);
+
+                    // Appeler le client
+                    try {
+                        ArkResponse response = arkApiClient.createArk(request, preference.getServerOpenArk(), apiKey);
+                        idArk =  response.getArk().getArkId();
+                        if (!updateArkIdOfConcept(idConcept, idThesaurus, idArk)) {
+                            return false;
+                        }
+                    }
+                    catch (ArkApiException e) {
+                        log.warn("Échec génération ARK : {}", e.getMessage());
+                        MessageUtils.showWarnMessage("Échec génération ARK : " + e.getMessage());
+                        return false;
+                    }
+                }
+            } else { // IdArk fournie
+                // ark exist en local, on vérifie si le Ark existe sur le serveur
+                if(arkApiClient.arkExistsById(idArk, naan, preference.getServerOpenArk())){
+                    // on met à jour les méta-données de l'Ark sur le serveur
+                    ArkRequest request = new ArkRequest();
+                    request.setArk(idArk);
+                    request.setNaan(naan);
+                    request.setType(preference.getPrefixOpenArk());
+                    request.setUrlTarget(url);
+                    request.setTitle(termService.getLexicalValueOfConcept(idConcept,idThesaurus, idLang));
+                    request.setCreator(creator);
+
+                    // Appeler le client
+                    try {
+                        ArkResponse response = arkApiClient.updateArk(request, preference.getServerOpenArk(), apiKey);
+                    }
+                    catch (ArkApiException e) {
+                        log.warn("Échec mise à jour ARK : {}", e.getMessage());
+                        MessageUtils.showWarnMessage("Échec mise à jour ARK : " + e.getMessage());
+                        return false;
+                    }
+
+                } else {
+                    //// Ark existe en local, mais pas sur le serveur, on ajoute cet Ark sur le serveur
+                    // Extraire uniquement l'identifiant
+                    String arkIdWithoutNaan = idArk.contains("/") ? idArk.split("/", 2)[1] : idArk;
+                    ArkRequest request = new ArkRequest();
+                    request.setArk(arkIdWithoutNaan);
+                    request.setNaan(naan);
+                    request.setType(preference.getPrefixOpenArk());
+                    request.setUrlTarget(url);
+                    request.setTitle(termService.getLexicalValueOfConcept(idConcept,idThesaurus, idLang));
+                    request.setCreator(creator);
+
+                    // Appeler le client
+                    try {
+                        ArkResponse response = arkApiClient.createArk(request, preference.getServerOpenArk(), apiKey);
+                    }
+                    catch (ArkApiException e) {
+                        log.warn("Échec génération ARK : {}", e.getMessage());
+                        MessageUtils.showWarnMessage("Échec génération ARK : " + e.getMessage());
+                        return false;
+                    }
+
+                }
+            }
+        }
+        return true;
+    }
+
+    public boolean deleteArkWithOpenArk(
+            String idThesaurus,
+            List<String> idConcepts,
+            String apiKey,
+            Preferences preference) {
+
+        log.debug("Suppression des ARK avec OpenArk");
+
+        if (preference == null || !preference.isUseOpenArk()) {
+            return false;
+        }
+        for (String idConcept : idConcepts) {
+            var concept = getConcept(idConcept, idThesaurus);
+            String idArk = concept.getIdArk();
+
+            // Aucun ARK → rien à faire
+            if (StringUtils.isEmpty(idArk)) {
+                continue;
+            }
+            try {
+                // Préparer la requête de suppression
+                DeleteArkRequest deleteRequest = new DeleteArkRequest();
+                deleteRequest.setArk(idArk);
+                deleteRequest.setNaan(preference.getNaanOpenArk());
+
+                // Appel OpenArk
+                DeleteArkResponse response = arkApiClient.deleteArk(
+                        deleteRequest,
+                        preference.getServerOpenArk(),
+                        apiKey
+                );
+
+                if (response == null || !"OK".equalsIgnoreCase(response.getStatus())) {
+                    MessageUtils.showErrorMessage(
+                            "Suppression ARK échouée : " +
+                                    (response != null ? response.getMessage() : "Réponse vide")
+                    );
+                    return false;
+                }
+
+                // Mise à jour locale : suppression de l’ARK du concept
+                if (!updateArkIdOfConcept(idConcept, idThesaurus, "")) {
+                    MessageUtils.showErrorMessage(
+                            "Erreur lors de la suppression locale de l'ARK"
+                    );
+                    return false;
+                }
+                MessageUtils.showInformationMessage(
+                        "ARK supprimé avec succès : " + idArk
+                );
+
+            } catch (ArkApiException e) {
+                log.warn("Erreur suppression ARK : {}", e.getMessage());
+                MessageUtils.showErrorMessage(
+                        "Erreur suppression ARK : " + e.getMessage()
+                );
+                return false;
+            }
+        }
+        return true;
+    }
+
+
+
 
 }

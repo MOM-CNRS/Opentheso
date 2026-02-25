@@ -52,37 +52,6 @@
                                      />
                 </div>
             </div>
-            <p:separator title="-" />
-
-            <!-- Initialiser le passe de l'utilisateur -->
-            <div class="row" style="margin-top: 5px; margin-top: 30px">
-                <div class="col-5">
-                    <h:outputText value="#{langueBean.getMsg('profile.new_password')} : " />
-                </div>
-                <div class="col-7">
-                    <p:password value="#{modifyUserBean.passWord1}" style="width: 100%"/>
-                </div>
-            </div>
-
-            <div class="row" style="margin-top: 5px;;">
-                <div class="col-5">
-                    <h:outputText value="#{langueBean.getMsg('profile.confirmation')} : " />
-                </div>
-                <div class="col-7">
-                    <p:password value="#{modifyUserBean.passWord2}" style="width: 100%"/>
-                </div>
-            </div>
-
-            <div class="row" style="margin-top: 5px;">
-                <div class="col-12" style="text-align: right" >
-                    <p:commandButton value="#{langueBean.getMsg('apply')}" update="containerIndex:tabViewRoles messageIndex"
-                                     icon="fa-regular fa-floppy-disk"
-                                     styleClass="ui-button-success"
-                                     actionListener="#{modifyUserBean.updatePassword()}">
-                        <p:tooltip value="#{langueBean.getMsg('profile.changeUserPassTooltip')}" showDelay="1000" />
-                    </p:commandButton>
-                </div>
-            </div>
 
             <!-- Clé d'API -->
             <p:separator title="-" />
@@ -119,7 +88,7 @@
                 </h:panelGroup>
                 <div class="row" style="margin-top: 5px;">
                     <div class="col-12" style="text-align: right" >
-                        <p:commandButton value="#{langueBean.getMsg('apply')}" update="containerIndex messageIndex"
+                        <p:commandButton value="#{langueBean.getMsg('apply')}" update="modifyUserForm messageIndex"
                                          icon="fa-regular fa-floppy-disk"
                                          styleClass="ui-button-success"
                                          actionListener="#{modifyUserBean.updateApiKey()}">

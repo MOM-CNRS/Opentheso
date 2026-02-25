@@ -50,7 +50,10 @@ import lombok.extern.slf4j.Slf4j;
 import org.apache.commons.collections4.CollectionUtils;
 import org.apache.commons.lang3.StringUtils;
 import org.springframework.stereotype.Service;
-import org.springframework.transaction.annotation.Transactional;
+
+import java.time.Instant;
+import java.time.ZoneId;
+import java.time.format.DateTimeFormatter;
 
 
 @Data
@@ -79,6 +82,10 @@ public class PropositionService {
     private final ConceptService conceptService;
     private final NoteService noteService;
 
+
+    private static final DateTimeFormatter FORMATTER =
+            DateTimeFormatter.ofPattern("yyyy-MM-dd HH:mm:ss")
+                    .withZone(ZoneId.systemDefault());
 
     public boolean envoyerProposition(Proposition proposition, String nom, String email, String commentaire, String thesaurusName) {
 
@@ -258,6 +265,7 @@ public class PropositionService {
                 && !currentUser.getNodeUser().getMail().equalsIgnoreCase(emailDestination)
                 && currentUser.getNodeUser().isAlertMail()) {
             new Thread(() -> mailBean.sendMail(emailDestination, subject, contentFile)).start();
+            //mailBean.sendMail(emailDestination, subject, contentFile);
         }
     }
 
@@ -913,11 +921,14 @@ public class PropositionService {
         dao.setEmail(projection.getEmail());
         dao.setCommentaire(projection.getCommentaire());
         dao.setUserAction(projection.getApprouvePar());
-        dao.setDateUpdate(projection.getApprouveDate());
+        dao.setDateUpdate(instantToString(projection.getApprouveDate()));
         dao.setAdminComment(projection.getAdminComment());
         dao.setNomConcept(projection.getLexicalValue());
         dao.setCodeDrapeau(projection.getCodePays());
         return dao;
+    }
+    private String instantToString(Instant instant) {
+        return instant != null ? FORMATTER.format(instant) : null;
     }
 
     public void createProposition(PropositionFromApi proposition, User user) {
@@ -963,6 +974,7 @@ public class PropositionService {
 
         log.debug("Mise à jour du thésaurus id pour les propositions présentes dans le thésaurus id {}", oldIdThesaurus);
         propositionRepository.updateThesaurusId(newIdThesaurus, oldIdThesaurus);
+        propositionModificationRepository.updateThesaurusId(newIdThesaurus, oldIdThesaurus);
     }
 
     public void deleteByThesaurus(String idThesaurus) {

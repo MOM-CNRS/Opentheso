@@ -23,4 +23,16 @@ public interface ThesaurusHomePageRepository extends JpaRepository<ThesaurusHome
     @Query("UPDATE ThesaurusHomePage t SET t.idTheso = :newIdThesaurus WHERE t.idTheso = :oldIdThesaurus")
     void updateThesaurusId(@Param("newIdThesaurus") String newIdThesaurus, @Param("oldIdThesaurus") String oldIdThesaurus);
 
+    @Modifying
+    @Transactional
+    @Query(value = """
+    INSERT INTO thesohomepage (idtheso, lang, htmlcode)
+    VALUES (:idTheso, :idLang, :htmlCode)
+    ON CONFLICT (idtheso, lang)
+    DO UPDATE SET htmlcode = :htmlCode
+    """, nativeQuery = true)
+    int upsertHtmlCode(@Param("idTheso") String idTheso,
+                       @Param("idLang") String idLang,
+                       @Param("htmlCode") String htmlCode);
+
 }

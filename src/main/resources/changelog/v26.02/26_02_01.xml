@@ -1,0 +1,26 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<databaseChangeLog
+        xmlns="http://www.liquibase.org/xml/ns/dbchangelog"
+        xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance"
+        xsi:schemaLocation="
+        http://www.liquibase.org/xml/ns/dbchangelog
+        http://www.liquibase.org/xml/ns/dbchangelog/dbchangelog-4.23.xsd">
+
+    <changeSet id="26_02_01" author="miled.rousset">
+
+        <preConditions onFail="MARK_RAN">
+            <sqlCheck expectedResult="1">
+                SELECT COUNT(*)
+                FROM languages_iso639
+                WHERE iso639_1 = 'metadata'
+                  AND id = 2000
+            </sqlCheck>
+        </preConditions>
+
+        <delete tableName="languages_iso639">
+            <where>iso639_1 = 'metadata' AND id = 2000</where>
+        </delete>
+
+    </changeSet>
+
+</databaseChangeLog>

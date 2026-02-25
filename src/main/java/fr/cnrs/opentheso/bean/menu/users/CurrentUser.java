@@ -29,15 +29,13 @@ import fr.cnrs.opentheso.bean.rightbody.viewhome.ProjectBean;
 import fr.cnrs.opentheso.bean.rightbody.viewhome.ViewEditorHomeBean;
 import fr.cnrs.opentheso.bean.search.SearchBean;
 import fr.cnrs.opentheso.entites.UserGroupLabel;
-import fr.cnrs.opentheso.services.LdapService;
 
 import java.io.IOException;
 import java.io.Serializable;
-import java.util.ArrayList;
-import java.util.Collections;
-import java.util.Optional;
+import java.util.*;
 import java.util.stream.Collectors;
 
+import jakarta.annotation.PostConstruct;
 import jakarta.enterprise.context.SessionScoped;
 import jakarta.inject.Named;
 import jakarta.faces.application.FacesMessage;
@@ -45,16 +43,17 @@ import jakarta.faces.context.FacesContext;
 import lombok.Getter;
 import lombok.RequiredArgsConstructor;
 import lombok.Setter;
+import lombok.extern.slf4j.Slf4j;
 import org.apache.commons.collections4.CollectionUtils;
+import org.apache.jena.sparql.function.library.leviathan.log;
 import org.primefaces.PrimeFaces;
 import org.springframework.beans.factory.annotation.Value;
-import java.util.List;
 import org.apache.commons.lang3.ObjectUtils;
 import org.apache.commons.lang3.StringUtils;
 import org.springframework.context.annotation.Scope;
 import org.springframework.context.annotation.ScopedProxyMode;
 
-
+@Slf4j
 @Getter
 @Setter
 @SessionScoped
@@ -83,7 +82,6 @@ public class CurrentUser implements Serializable {
     private final ViewEditorHomeBean viewEditorHomeBean;
     private final ProjectService projectService;
     private final UserService userService;
-    private final LdapService ldapService;
     private final ThesaurusService thesaurusService;
     private final PreferenceService preferenceService;
     private final UserRoleGroupService userRoleGroupService;
@@ -96,6 +94,38 @@ public class CurrentUser implements Serializable {
     //pour KeyCloak
     private boolean keyCloak = false;
     private String mail;
+
+
+
+    // gestion des messages d'erreurs de KeyCloak'
+    public String getLoginError() {
+        // Lire la session à chaque rendu
+        FacesContext fc = FacesContext.getCurrentInstance();
+        Map<String, Object> sessionMap = fc.getExternalContext().getSessionMap();
+
+        String messageError = (String) sessionMap.remove("LOGIN_ERROR_MESSAGE");
+        String messageInfo = (String) sessionMap.remove("LOGIN_INFO_MESSAGE");
+
+        if (messageError != null && !messageError.isEmpty()) {
+         //   loginError = message;
+
+            // Ajouter le message global pour PrimeFaces growl
+            fc.addMessage(null, new FacesMessage(FacesMessage.SEVERITY_ERROR,
+                    "Connexion impossible",
+                    messageError));
+        }
+        if (messageInfo != null && !messageInfo.isEmpty()) {
+            //   loginError = message;
+
+            // Ajouter le message global pour PrimeFaces growl
+            fc.addMessage(null, new FacesMessage(FacesMessage.SEVERITY_INFO,
+                    "",
+                    messageInfo));
+        }
+        return "";
+    }
+
+
 
     public void clear() {
         if (allAuthorizedProjectAsAdmin != null) {
@@ -171,17 +201,21 @@ public class CurrentUser implements Serializable {
 
         var groups = groupService.getListGroupOfConcept(selectedTheso.getCurrentIdTheso(),
                 conceptView.getNodeFullConcept().getIdentifier(), selectedTheso.getCurrentLang());
-        if (CollectionUtils.isNotEmpty(groups) && groups.stream().anyMatch(NodeGroup::isGroupPrivate)) {
-            indexSetting.setIsSelectedTheso(true);
-            indexSetting.setIsValueSelected(false);
-            indexSetting.setIsHomeSelected(true);
-            indexSetting.setIsThesoActive(true);
-            indexSetting.setProjectSelected(false);
+        try {
+            if (CollectionUtils.isNotEmpty(groups) && groups.stream().anyMatch(NodeGroup::isGroupPrivate)) {
+                indexSetting.setIsSelectedTheso(true);
+                indexSetting.setIsValueSelected(false);
+                indexSetting.setIsHomeSelected(true);
+                indexSetting.setIsThesoActive(true);
+                indexSetting.setProjectSelected(false);
+            }
+        } catch (Exception e) {
+            log.error("Erreur d'initialisation des groupes privés", e.getMessage());
         }
 
         conceptView.setNodeFullConcept(conceptService.getConcept(conceptView.getIdConceptSelected(),
                 selectedTheso.getCurrentIdTheso(), conceptView.getSelectedLang(), 0, 1, false));
-
+        tree.reloadSelectedConcept();
 
         if (!"index".equals(menuBean.getActivePageName())) {
             menuBean.redirectToThesaurus();
@@ -224,7 +258,11 @@ public class CurrentUser implements Serializable {
                 user = user2.get();
             }
         } else {
-            user = userService.findByUsernameAndPassword(username, password);
+            // ancienne méthode d'authentification MD5, déprécié par #MR
+           // user = userService.findByUsernameAndPassword(username, password);
+
+            // Passage en BCrypt
+            user = userService.findByUsernameAndPasswordMigrated(username, password);
         }
 
         if (user == null) {
@@ -288,6 +326,7 @@ public class CurrentUser implements Serializable {
 
         conceptView.setNodeFullConcept(conceptService.getConcept(conceptView.getIdConceptSelected(),
                 selectedTheso.getCurrentIdTheso(), conceptView.getSelectedLang(), 0, 1, true));
+        tree.reloadSelectedConcept();
 
         PrimeFaces.current().executeScript("PF('login').hide();");
 

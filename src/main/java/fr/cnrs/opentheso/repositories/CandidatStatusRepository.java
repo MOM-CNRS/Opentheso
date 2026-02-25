@@ -19,6 +19,7 @@ public interface CandidatStatusRepository extends JpaRepository<CandidatStatus, 
     Optional<CandidatStatus> findAllByIdConceptAndIdThesaurus(String idConcept, String idThesaurus);
 
     @Modifying
+    @Transactional
     void deleteAllByIdThesaurus(String idThesaurus);
 
     @Modifying
@@ -36,6 +37,7 @@ public interface CandidatStatusRepository extends JpaRepository<CandidatStatus, 
     List<CandidateProjection> findCandidatesByStatus(@Param("thesaurusId") String thesaurusId, @Param("status") int status);
 
     @Modifying
+    @Transactional
     @Query(value = "UPDATE candidat_status SET id_thesaurus = :target WHERE id_concept = :concept AND id_thesaurus = :from", nativeQuery = true)
     void updateThesaurus(@Param("concept") String concept, @Param("from") String from, @Param("target") String target);
 }

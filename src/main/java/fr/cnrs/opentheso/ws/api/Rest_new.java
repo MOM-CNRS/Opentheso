@@ -1005,7 +1005,12 @@ public class Rest_new {
 ////////////////////////////////////////////////////////////////////////////////////
 
     // pour faire la redirection entre un IdArk et l'URL Opentheso
-    @GetMapping(value = "ark:/{naan}/{idArk}", produces = MediaType.APPLICATION_JSON_VALUE)
+    @GetMapping(
+            value = {
+                    "/ark:/{naan}/{idArk}",   // ark:/naan/id
+                    "/ark:{naan}/{idArk}"     // ark:naan/id
+            },
+            produces = MediaType.APPLICATION_JSON_VALUE)
     public ResponseEntity<?> getUriFromArk(@PathVariable("naan") String naan,
                                            @PathVariable("idArk") String arkId) throws URISyntaxException {
 

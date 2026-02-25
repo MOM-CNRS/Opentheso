@@ -6,6 +6,8 @@ import fr.cnrs.opentheso.repositories.ThesaurusDcTermRepository;
 import fr.cnrs.opentheso.repositories.ThesaurusHomePageRepository;
 
 import java.util.List;
+
+import fr.cnrs.opentheso.utils.MessageUtils;
 import lombok.RequiredArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
 import org.apache.commons.collections4.CollectionUtils;
@@ -36,21 +38,18 @@ public class ThesaurusEditService {
     public ThesaurusHomePage updateThesaurusHomePage(String idThesaurus, String idLanguage, String text) {
 
         idLanguage = StringUtils.isEmpty(idLanguage) ? workLanguage : idLanguage;
+        ThesaurusHomePage thesaurusToSave = new ThesaurusHomePage();
+        thesaurusToSave.setHtmlCode(text);
+        thesaurusToSave.setIdTheso(idThesaurus);
+        thesaurusToSave.setLang(idLanguage);
 
-        var thesaurusHomePage = thesaurusHomePageRepository.findByIdThesoAndLang(idThesaurus, idLanguage);
-        ThesaurusHomePage thesaurusToSave;
-        if (thesaurusHomePage.isEmpty()) {
-            thesaurusToSave = ThesaurusHomePage.builder()
-                    .idTheso(idThesaurus)
-                    .lang(idLanguage)
-                    .htmlCode(text)
-                    .build();
-        } else {
-            thesaurusHomePage.get().setHtmlCode(text);
-            thesaurusToSave = thesaurusHomePage.get();
+        int updated = thesaurusHomePageRepository.upsertHtmlCode(idThesaurus, idLanguage, text);
+
+        if (updated == 0) {
+            MessageUtils.showErrorMessage("La mise à jour a échoué");
+            return null;
         }
-
-        return thesaurusHomePageRepository.save(thesaurusToSave);
+        return thesaurusToSave;
     }
 
     public List<DcElement> getThesaurusMetaDatas(String idThesaurus){

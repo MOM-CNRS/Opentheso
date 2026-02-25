@@ -48,7 +48,7 @@
 
                     <div class="row" >
                         <div class="col-12" style="text-align: right">
-                            <p:dataTable value="#{modifyRoleBean.listeLimitedThesaurusRoleForUser}" var="limitedThesoRole"  size="small"
+                            <p:dataTable value="#{modifyRoleBean.selectedNodeUserRole}" var="limitedThesoRole"  size="small"
                                          widgetVar="limitedThesoRole" styleClass="products-table"
                                          resizableColumns="true" scrollHeight="450" reflow="true"
                                          rowSelectMode="add"
@@ -62,7 +62,8 @@
                                                      style="width: 100%; background: none;  box-shadow: none;"
                                                      panelStyle="border: none; box-shadow: none; max-width: 300px">
                                         <f:selectItems value="#{modifyRoleBean.myAuthorizedRolesLimited}" var="myRoles" itemLabel="#{myRoles.value}" itemValue="#{myRoles.id}"/>
-                                    </p:selectOneMenu> 
+                                        <p:ajax event="valueChange" listener="#{modifyRoleBean.updateAjax()}"/>
+                                    </p:selectOneMenu>
                                 </p:column>   
                                
                                 <p:column width="60" headerText="#{langueBean.getMsg('menu.thesaurus')}" style="text-align: left">
@@ -90,6 +91,7 @@
                                              style="width: 100%; background: none;  box-shadow: none; "
                                              panelStyle="border: none; box-shadow: none; max-width: 300px">
                                 <f:selectItems value="#{myProjectBean.myAuthorizedRoles}" var="myRoles" itemLabel="#{myRoles.value}" itemValue="#{myRoles.id}"/>
+                                <p:ajax event="valueChange" listener="#{modifyRoleBean.updateAjax()}"/>
                             </p:selectOneMenu>
                         </div> 
                     </div>    
@@ -107,7 +109,7 @@
                 <div class="col-12" style="text-align: right" >
                     <p:commandButton value="#{langueBean.getMsg('apply')}" styleClass="ui-button-success" icon="pi pi-check"
                                      update="containerIndex:tabViewRoles messageIndex" 
-                                     action="#{modifyRoleBean.updateLimitedRoleOnThesosForUser()}"
+                                     action="#{modifyRoleBean.updateLimitedRoleOnThesaurusForUser()}"
                                      process="@this" ajax="true"
                                      oncomplete="PF('modifyLimitedRole').hide();">
                         <p:tooltip value="#{langueBean.getMsg('profile.modify_roles')}" showDelay="1000" />

@@ -2,6 +2,7 @@ package fr.cnrs.opentheso.config;
 
 import fr.cnrs.opentheso.bean.menu.users.CurrentUser;
 import fr.cnrs.opentheso.repositories.UserRepository;
+import jakarta.servlet.http.HttpSession;
 import lombok.RequiredArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
 import org.apache.commons.lang3.StringUtils;
@@ -76,11 +77,16 @@ public class SecurityConfigKeycloak {
 
                 if (session != null) {
                     if (StringUtils.isNotEmpty(email)) {
+                        // pour Stocker le message dans la session suivant la connexion via SSO
+                        HttpSession session2 = request.getSession(true); // IMPORTANT
+
                         var user = userRepository.findByMail(email);
                         if (user.isPresent()) {
                             log.debug("Utilisateur trouvé dans la base Opentheso, chargement de la session ...");
+                            session2.setAttribute("LOGIN_INFO_MESSAGE", "Connexion réussie via KeyCloak");
                             currentUser.setUser(user.get());
                         } else {
+                            session2.setAttribute("LOGIN_ERROR_MESSAGE", "Connexion réussie, mais vous n'avez pas de compte dans Opentheso ! demandez à un Admin de vous donner des droits");
                             log.error("Utilisateur avec email : {} non trouvé", email);
                         }
                     }

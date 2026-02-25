@@ -14,7 +14,7 @@
                     <p:commandButton styleClass="ui-button-success rounded-button" icon="pi pi-plus" style="padding: 0.5rem; margin-top: 10px; margin-bottom: 0px;"
                                      title="#{langueBean.getMsg('rightbody.concept.addNewConceptType')}"
                                      update="containerIndex:idAddNewConceptType" 
-                                     actionListener="#{editConcept.initNodeConceptTypeToAdd()}"
+                                     actionListener="#{editConcept.initForConceptType()}"
                                      ajax="true" process="@form"
                                      oncomplete="PF('addNewConceptType').show();"/>                        
                 </div> 

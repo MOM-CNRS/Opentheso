@@ -47,4 +47,7 @@ public interface UserRepository extends JpaRepository<User, Integer>, JpaSpecifi
         WHERE LOWER(u.username) LIKE LOWER(CONCAT('%', :username, '%'))
     """)
     List<User> findAllByUsernameLikeIgnoreCase(@Param("username") String username);
+
+    @Query("SELECT u FROM User u WHERE LOWER(u.username) = LOWER(:username)")
+    Optional<User> findByUsername(@Param("username") String username);
 }

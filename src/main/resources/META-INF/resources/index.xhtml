@@ -48,6 +48,20 @@
 
     <h:body id="page-top" onload="initMenu();" style="overflow-x: hidden;">
 
+        <!-- Message pour controler les connexions de KeyCloak -->
+        <p:growl id="messageConnect"
+                 globalOnly="true"
+                 showDetail="true"
+                 sticky="false"
+                 life="5000"
+                 autoUpdate="true" />
+        <!-- Optional : afficher le message dans le corps si besoin -->
+        <h:outputText value="#{currentUser.loginError}"
+                      rendered="#{not empty currentUser.loginError}"
+                      style="color:red;" />
+
+
+
         <h:panelGroup class="notification-bar" id="listPropositionsBar">
             <ui:include src="/thesaurus/rightBodyView/proposition/listPropositions.xhtml" class="card py-3"  />
         </h:panelGroup>
@@ -166,5 +180,34 @@
                 resultSearchBar.style.transform = "translateX(100%)"; // Glisse vers la droite pour se cacher
             }
         </script>
+
+        <!-- gestion de changement d'onglet pour éviter le conflit des données -->
+        <script>
+            // Un ID propre à chaque onglet
+            if (!sessionStorage.tabId) {
+                sessionStorage.tabId = crypto.randomUUID();
+            }
+        </script>
+        <p:remoteCommand name="registerTab"
+                         actionListener="#{sessionManager.registerTab}"
+                         autoRun="true">
+            <f:param name="tabId" value="#{null}"/>
+        </p:remoteCommand>
+        <script>
+            window.addEventListener("DOMContentLoaded", function () {
+                registerTab([{name: 'tabId', value: sessionStorage.tabId }]);
+            });
+        </script>
+        <script>
+            document.addEventListener("visibilitychange", function () {
+                if (!document.hidden) {
+                    // On revient sur cet onglet → vérifier l'état sur le serveur
+                    checkTabState([{name: 'tabId', value: sessionStorage.tabId }]);
+                }
+            });
+        </script>
+        <p:remoteCommand name="checkTabState"
+                         actionListener="#{sessionManager.checkTabState}"
+                         update="@none"/>
     </h:body>
 </HTML>

@@ -143,7 +143,7 @@ public class HandleConceptService {
 
         log.debug("Ajout d'un nouveau idHandle pour le concept (id : {})", idConcept);
         var preference = preferenceService.getThesaurusPreferences(idThesaurus);
-        if (preference == null || !preference.isUseArkLocal()) {
+        if (preference == null || !preference.isUseHandle()) {
             return true;
         }
 

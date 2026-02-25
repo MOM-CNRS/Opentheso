@@ -172,7 +172,6 @@
                             </div>
                         </h:panelGroup>
 
-
                         <!-- infos -->
                         <h:panelGroup rendered="#{importFileBean.loadDone or importFileBean.importDone}" style="margin-left: 30px; margin-right: 30px;">
                             <div class="row" style="margin-top: 5px">             
@@ -185,23 +184,15 @@
                                                 <pre><h:outputText rendered="#{!importFileBean.warningIsEmpty()}" value="Warning : #{importFileBean.warning}" styleClass="warningAcordionPanel" /></pre>
                                             </p:scrollPanel>
                                         </p:tab>
-                                        <p:tab title="#{langueBean.getMsg('error')}" titleStyleClass="errorAcordionPanel">
+                                        <p:tab rendered="#{importFileBean.error != null and importFileBean.error != ''}" title="#{langueBean.getMsg('error')}" titleStyleClass="errorAcordionPanel" titleStyle="color: red">
                                             <p:scrollPanel mode="native" style="height:200px">
                                                 <pre><h:outputText value="#{importFileBean.error}" styleClass="errorAcordionPanel" /></pre>
                                             </p:scrollPanel>
                                         </p:tab>
-                                    </p:accordionPanel> 
+                                    </p:accordionPanel>
                                 </div>
                             </div>
                         </h:panelGroup>
-
-
-                        <div class="row" style="margin-top: 20px; padding: 20px">
-                            <div class="col-12">
-                                <p:progressBar widgetVar="pbAjax" ajax="true" value="#{importFileBean.progress}" 
-                                               labelTemplate="{value}%" styleClass="animated" global="false" style="height: 20px;" />
-                            </div>
-                        </div>
 
                         <div class="row" style="margin: 20px">
                             <div class="col-12" style="text-align: center">

@@ -32,6 +32,11 @@ import java.util.Date;
 @EntityListeners(AuditingEntityListener.class)
 public class Concept implements Serializable {
 
+    @Id
+    @GeneratedValue(strategy = GenerationType.IDENTITY)
+    @Column(name = "id")
+    private Integer id;
+
     @Column(name = "id_concept", nullable = false)
     private String idConcept;
 
@@ -76,7 +81,4 @@ public class Concept implements Serializable {
 
     @Column(name = "concept_type", nullable = false)
     private String conceptType = "concept";
-
-    @Id
-    private Integer id;
 }

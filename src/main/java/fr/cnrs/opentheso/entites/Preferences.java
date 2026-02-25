@@ -100,4 +100,24 @@ public class Preferences {
     private String deeplApiKey;
 
     private boolean webservices;
+
+    // Permet d'afficher un lien vers la ressource dans Koha Pro
+    @Column(name = "koha_link")
+    private boolean kohaLink;
+
+    // Pour la gestion des identifiants Ark via le serveur OpenArk
+    @Column(name = "use_openark")
+    private boolean useOpenArk;
+
+    @Column(name = "server_openark")
+    private String serverOpenArk;
+
+    @Column(name = "naan_openark")
+    private String naanOpenArk;
+
+    @Column(name = "prefix_openark")
+    private String prefixOpenArk;
+
+    @Column(name = "api_key_openark")
+    private String apiKeyOpenArk;
 }

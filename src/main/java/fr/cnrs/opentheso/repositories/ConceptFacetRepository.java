@@ -61,6 +61,7 @@ public interface ConceptFacetRepository extends JpaRepository<ConceptFacet, Inte
     int countFacets(@Param("idThesaurus") String idThesaurus, @Param("idConcept") String idConcept);
 
     @Modifying
+    @Transactional
     @Query(value = "UPDATE concept_facet SET id_thesaurus = :target WHERE id_concept = :concept AND id_thesaurus = :from", nativeQuery = true)
     void updateThesaurus(@Param("concept") String concept, @Param("from") String from, @Param("target") String target);
 

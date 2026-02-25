@@ -69,12 +69,12 @@
                             update="idApproveConcept" action="#{editConcept.reset('')}"
                             oncomplete="PF('approveConcept').show();"  />
 
-                <p:menuitem disabled="false" rendered="#{!copyAndPasteBetweenTheso.isCopyOn()}"
+                <p:menuitem disabled="false" rendered="#{!copyAndPasteBetweenThesaurus.isCopyOn()}"
                             value="#{langueBean.getMsg('rightbody.concept.copy_to_another_thesaurus')}"
                             actionListener="#{copyAndPasteBetweenThesaurus.onStartCopy()}"
                             icon="fas fa-regular fa-copy" update="containerIndex:rightTab messageIndex" />
 
-                <p:menuitem rendered="#{(copyAndPasteBetweenTheso.isCopyOn()) and (copyAndPasteBetweenTheso.idThesaurusOrigin != selectedThesaurus.currentIdTheso) }"
+                <p:menuitem rendered="#{(copyAndPasteBetweenThesaurus.isCopyOn()) and (copyAndPasteBetweenThesaurus.idThesaurusOrigin != selectedThesaurus.currentIdTheso) }"
                             value="#{langueBean.getMsg('rightbody.concept.paste')} (#{copyAndPasteBetweenThesaurus.nodeConceptDrag.term.lexicalValue}) #{langueBean.getMsg('rightbody.concept.here')} !!"
                             actionListener="#{copyAndPasteBetweenThesaurus.validatePaste()}" icon="fas fa-paste"
                             action="#{copyAndPasteBetweenThesaurus.setIsDropToRoot(false)}"
@@ -98,13 +98,20 @@
                 <p:separator style="border-bottom: 2px solid #d8d8dc; margin-bottom: 5px;"/>
 
                 <!-- Gestion Ark -->
-                <p:menuitem rendered="#{(roleOnThesaurus.nodePreference.useArk or roleOnThesaurus.nodePreference.useArkLocal) and (currentUser.nodeUser.isSuperAdmin() or roleOnThesaurus.isAdminOnThisThesaurus())}"
+                <p:menuitem rendered="#{(roleOnThesaurus.nodePreference.useArk or roleOnThesaurus.nodePreference.useArkLocal or roleOnThesaurus.nodePreference.useOpenArk) and (currentUser.nodeUser.isSuperAdmin() or roleOnThesaurus.isAdminOnThisThesaurus())}"
                             value="#{langueBean.getMsg('rightbody.concept.generate_ark')}"
                             disabled="false"
-                            actionListener="#{editConcept.infosArk()}"
                             update="idGenerateArk"
                             action="#{editConcept.reset('')}"
                             oncomplete="PF('generateArk').show();"
+                            style="font-size: 12px;" />
+
+                <p:menuitem rendered="#{(roleOnThesaurus.nodePreference.useOpenArk) and (currentUser.nodeUser.isSuperAdmin() or roleOnThesaurus.isAdminOnThisThesaurus())}"
+                            value="#{langueBean.getMsg('rightbody.concept.delete_ark')}"
+                            disabled="false"
+                            update="idDeleteArk"
+                            action="#{editConcept.reset('')}"
+                            oncomplete="PF('deleteArk').show();"
                             style="font-size: 12px;" />
 
                 <p:menuitem rendered="#{(roleOnThesaurus.nodePreference.useArk or roleOnThesaurus.nodePreference.useArkLocal) and (currentUser.nodeUser.isSuperAdmin() or roleOnThesaurus.isAdminOnThisThesaurus())}"
@@ -219,6 +226,7 @@
 
     <ui:include src="../../../dialog/concept/approveConcept.xhtml" />
     <ui:include src="../../../dialog/concept/generateArk.xhtml" />
+    <ui:include src="../../../dialog/concept/deleteArk.xhtml" />
     <ui:include src="../../../dialog/concept/generateHandle.xhtml" />
     <ui:include src="../../../dialog/concept/deleteHandle.xhtml" />
     <ui:include src="../../../dialog/concept/generateAllArk.xhtml" />    

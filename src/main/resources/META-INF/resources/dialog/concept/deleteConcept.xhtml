@@ -40,7 +40,7 @@
                                  update="containerIndex messageIndex containerIndex:formRightTab" 
                                  styleClass="ui-button-success" style="background-color: red; border-color: red"
                                  oncomplete="PF('deleteConcept').hide();" icon="pi pi-check"
-                                 actionListener="#{editConcept.deleteConcept(selectedThesaurus.currentIdTheso, currentUser.nodeUser.idUser)}"/>
+                                 actionListener="#{editConcept.deleteConcept()}"/>
             </div>
             <input type="hidden" name="csrfToken" value="${sessionScope.CSRF_TOKEN}" />
         </h:form>

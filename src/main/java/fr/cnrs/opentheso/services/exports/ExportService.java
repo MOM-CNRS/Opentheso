@@ -32,8 +32,10 @@ import jakarta.faces.application.FacesMessage;
 import jakarta.faces.context.FacesContext;
 import jakarta.servlet.http.HttpServletRequest;
 import lombok.RequiredArgsConstructor;
+import lombok.extern.slf4j.Slf4j;
 import org.apache.commons.collections4.CollectionUtils;
 import org.apache.commons.lang3.ObjectUtils;
+import org.apache.jena.sparql.function.library.leviathan.log;
 import org.eclipse.rdf4j.rio.RDFFormat;
 import org.eclipse.rdf4j.rio.Rio;
 import org.jsoup.Jsoup;
@@ -55,7 +57,7 @@ import java.util.logging.Logger;
 import java.util.zip.ZipEntry;
 import java.util.zip.ZipOutputStream;
 
-
+@Slf4j
 @Service
 @RequiredArgsConstructor
 public class ExportService {
@@ -107,7 +109,7 @@ public class ExportService {
 
                 resource.addLabel(p.getLexicalvalue(), p.getLang(), SKOSProperty.PREF_LABEL);
 
-                SimpleDateFormat dateFormat = new SimpleDateFormat("yyyy-mm-dd");
+                SimpleDateFormat dateFormat = new SimpleDateFormat("yyyy-MM-dd");
                 resource.addDate(dateFormat.format(p.getCreated()), SKOSProperty.CREATED);
                 resource.addDate(dateFormat.format(p.getModified()), SKOSProperty.MODIFIED);
 
@@ -247,7 +249,7 @@ public class ExportService {
                 }
             }
 
-            SimpleDateFormat dateFormat = new SimpleDateFormat("yyyy-mm-dd");
+            SimpleDateFormat dateFormat = new SimpleDateFormat("yyyy-MM-dd");
             if (ObjectUtils.isNotEmpty(p.getCreated())) {
                 sKOSResource.addDate(dateFormat.format(p.getCreated()), SKOSProperty.CREATED);
             }
@@ -268,12 +270,16 @@ public class ExportService {
     private void addDoc(String content, SKOSResource resource, int type) {
         if (StringUtils.isNotEmpty(content)) {
             String[] tabs = content.split(SEPARATOR);
-            for (String tab : tabs) {
-                String[] parts = tab.split(SUB_SEPARATOR);
-                if (parts.length == 2) {
-                    String cleanText = Jsoup.parse(parts[0]).text();
-                    resource.addDocumentation(cleanText, parts[1], type);
+            try {
+                for (String tab : tabs) {
+                    String[] parts = tab.split(SUB_SEPARATOR);
+                    if (parts.length == 2) {
+                        String cleanText = Jsoup.parse(parts[0]).text();
+                        resource.addDocumentation(cleanText, parts[1], type);
+                    }
                 }
+            } catch (Exception e) {
+                log.error("Erreur export Concept _ doc = " + resource.getIdentifier() + "  " + content );
             }
         }
     }
@@ -281,13 +287,16 @@ public class ExportService {
     private void addGps(SKOSResource sKOSResource, String str) {
         if (StringUtils.isNotEmpty(str)) {
             String[] tabs = str.split(SEPARATOR);
-
-            List<SKOSGPSCoordinates> tmp = new ArrayList<>();
-            for (String tab : tabs) {
-                String[] element = tab.split(SUB_SEPARATOR);
-                tmp.add(new SKOSGPSCoordinates(Double.parseDouble(element[0]), Double.parseDouble(element[1])));
+            try {
+                List<SKOSGPSCoordinates> tmp = new ArrayList<>();
+                for (String tab : tabs) {
+                    String[] element = tab.split(SUB_SEPARATOR);
+                    tmp.add(new SKOSGPSCoordinates(Double.parseDouble(element[0]), Double.parseDouble(element[1])));
+                }
+                sKOSResource.setGpsCoordinates(tmp);
+            } catch (Exception e) {
+                log.error("Erreur export Concept _ gps = " + sKOSResource.getIdentifier() + "  " + str );
             }
-            sKOSResource.setGpsCoordinates(tmp);
         }
     }
 
@@ -303,37 +312,49 @@ public class ExportService {
     private void addImages(SKOSResource resource, String textBrut) {
         if (StringUtils.isNotEmpty(textBrut)) {
             String[] images = textBrut.split(SEPARATOR);
-            ArrayList<NodeImage> nodeImages = new ArrayList<>();
-            for (String image : images) {
-                String[] imageDetail = image.split(SUB_SEPARATOR);
-                // if(imageDetail.length != 4) return;
+            try {
+                ArrayList<NodeImage> nodeImages = new ArrayList<>();
+                for (String image : images) {
+                    String[] imageDetail = image.split(SUB_SEPARATOR);
+                    // if(imageDetail.length != 4) return;
 
-                NodeImage nodeImage = new NodeImage();
-                nodeImage.setImageName(imageDetail[0]);
-                nodeImage.setCopyRight(imageDetail[1]);
-                nodeImage.setUri(imageDetail[2]);
-                if(imageDetail.length >= 4)
-                    nodeImage.setCreator(imageDetail[3]);
-                nodeImages.add(nodeImage);
+                    NodeImage nodeImage = new NodeImage();
+                    nodeImage.setImageName(imageDetail[0]);
+                    nodeImage.setCopyRight(imageDetail[1]);
+                    nodeImage.setUri(imageDetail[2]);
+                    if (imageDetail.length >= 4)
+                        nodeImage.setCreator(imageDetail[3]);
+                    nodeImages.add(nodeImage);
+                }
+                resource.setNodeImages(nodeImages);
+            } catch (Exception e) {
+                log.error("Erreur export Concept _ images = " + resource.getIdentifier() + "  " + textBrut );
             }
-            resource.setNodeImages(nodeImages);
         }
     }
 
     private void addFacets(SKOSResource resource, String textBrut, String idTheso, String originalUri) {
         if (StringUtils.isNotEmpty(textBrut)) {
             String[] idFacettes = textBrut.split(SEPARATOR);
-            for (String idFacette : idFacettes) {
-                String url = getPath(originalUri)+ "/?idf=" + idFacette + "&idt=" +idTheso;
-                resource.addRelation(idFacette, url, SKOSProperty.SUB_ORDINATE_ARRAY);
+            try {
+                for (String idFacette : idFacettes) {
+                    String url = getPath(originalUri) + "/?idf=" + idFacette + "&idt=" + idTheso;
+                    resource.addRelation(idFacette, url, SKOSProperty.SUB_ORDINATE_ARRAY);
+                }
+            } catch (Exception e) {
+                log.error("Erreur export Concept _ facets = " + resource.getIdentifier() + "  " + textBrut );
             }
         }
     }
     private void addExternalResources(SKOSResource resource, String textBrut) {
         if (StringUtils.isNotEmpty(textBrut)) {
             String[] externalResources = textBrut.split(SEPARATOR);
-            for (String externalResource : externalResources) {
-                resource.addExternalResource(externalResource);
+            try {
+                for (String externalResource : externalResources) {
+                    resource.addExternalResource(externalResource);
+                }
+            } catch (Exception e) {
+                log.error("Erreur export Concept _ externalResources = " + resource.getIdentifier() + "  " + textBrut );
             }
         }
     }
@@ -357,10 +378,13 @@ public class ExportService {
 
         if (StringUtils.isNotEmpty(textBrut)) {
             String[] tabs = textBrut.split(SEPARATOR);
-
-            for (String tab : tabs) {
-                String[] element = tab.split(SUB_SEPARATOR);
-                sKOSResource.addRelation(element[2], element[0], getType(element[1]));
+            try {
+                for (String tab : tabs) {
+                    String[] element = tab.split(SUB_SEPARATOR);
+                    sKOSResource.addRelation(element[2], element[0], getType(element[1]));
+                }
+            } catch (Exception e) {
+                log.error("Erreur export Concept _ relations = " + sKOSResource.getIdentifier() + "  " + textBrut );
             }
         }
     }
@@ -396,9 +420,12 @@ public class ExportService {
 
         if (StringUtils.isNotEmpty(textBrut)) {
             String[] tabs = textBrut.split(SEPARATOR);
-
-            for (String tab : tabs) {
-                sKOSResource.addReplaces(tab, type);
+            try {
+                for (String tab : tabs) {
+                    sKOSResource.addReplaces(tab, type);
+                }
+            } catch (Exception e) {
+                log.error("Erreur export Concept _ replaced = " + sKOSResource.getIdentifier() + "  " + textBrut );
             }
         }
     }
@@ -407,9 +434,13 @@ public class ExportService {
 
         if (StringUtils.isNotEmpty(textBrut)) {
             String[] tabs = textBrut.split(SEPARATOR);
-
-            for (String tab : tabs) {
-                sKOSResource.addMatch(tab.trim(), type);
+            try {
+                for (String tab : tabs) {
+                    sKOSResource.addMatch(tab.trim(), type);
+                    //    log.info(textBrut);
+                }
+            } catch (Exception e) {
+                log.error("Erreur export Concept _ alignement = " + sKOSResource.getIdentifier() + "  " + textBrut );
             }
         }
     }
@@ -419,9 +450,14 @@ public class ExportService {
         if (StringUtils.isNotEmpty(textBrut)) {
             String[] tabs = textBrut.split(SEPARATOR);
             for (String tab : tabs) {
-                String[] element = tab.split(SUB_SEPARATOR);
-                String str = fr.cnrs.opentheso.utils.StringUtils.normalizeStringForXml(element[0]);
-                sKOSResource.addDocumentation(str, element[1], type);
+                try {
+                    String[] element = tab.split(SUB_SEPARATOR);
+                    String str = fr.cnrs.opentheso.utils.StringUtils.normalizeStringForXml(element[0]);
+                    sKOSResource.addDocumentation(str, element[1], type);
+                } catch (Exception e) {
+                    System.out.println("Erreur export Concept _ note = " + sKOSResource.getIdentifier() + " _____ " + textBrut );
+                }
+
             }
         }
     }
@@ -445,9 +481,12 @@ public class ExportService {
     private void addMembres(SKOSResource sKOSResource, String textBrut, String idConcept) {
         if (StringUtils.isNotEmpty(textBrut)) {
             String[] tabs = textBrut.split(SEPARATOR);
-
-            for (String tab : tabs) {
-                sKOSResource.addRelation(idConcept, tab, SKOSProperty.MEMBER_OF);
+            try {
+                for (String tab : tabs) {
+                    sKOSResource.addRelation(idConcept, tab, SKOSProperty.MEMBER_OF);
+                }
+            } catch (Exception e) {
+                log.error("Erreur export Concept _ membres = " + sKOSResource.getIdentifier() + "  " + textBrut );
             }
         }
     }

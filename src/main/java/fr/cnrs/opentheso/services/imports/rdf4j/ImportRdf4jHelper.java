@@ -78,6 +78,7 @@ import lombok.RequiredArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
 import org.apache.commons.collections4.CollectionUtils;
 import org.apache.commons.lang3.StringUtils;
+import org.springframework.dao.DataIntegrityViolationException;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
 
@@ -185,13 +186,17 @@ public class ImportRdf4jHelper {
 
         // intégration des métadonnées DC
         for (DcElement dcElement : skosXmlDocument.getConceptScheme().getThesaurus().getDcElement()) {
-            thesaurusDcTermRepository.save(ThesaurusDcTerm.builder()
-                    .idThesaurus(idTheso1)
-                    .name(dcElement.getName())
-                    .value(dcElement.getValue())
-                    .language(dcElement.getLanguage())
-                    .dataType(dcElement.getType())
-                    .build());
+            try {
+                thesaurusDcTermRepository.save(ThesaurusDcTerm.builder()
+                        .idThesaurus(idTheso1)
+                        .name(dcElement.getName())
+                        .value(dcElement.getValue())
+                        .language(dcElement.getLanguage())
+                        .dataType(dcElement.getType())
+                        .build());
+            } catch (DataIntegrityViolationException e) {
+
+            }
         }
 
         // boucler pour les traductions
@@ -232,28 +237,6 @@ public class ImportRdf4jHelper {
             nodePreference.setOriginalUriIsDoi(true);
         }
         preferenceService.updateAllPreferenceUser(nodePreference);
-    }
-
-    private void setPreferences(String idThesaurus, String uri) {
-
-        if (nodePreference == null) {
-            initPreferencesThesaurus(idThesaurus, uri);
-        } else {
-            nodePreference.setCheminSite(uri);
-            nodePreference.setSourceLang(langueSource);
-            nodePreference.setPreferredName(idThesaurus);
-            nodePreference.setOriginalUri(uri);
-            if (selectedIdentifier.equalsIgnoreCase("ark")) {
-                nodePreference.setOriginalUriIsArk(true);
-            }
-            if (selectedIdentifier.equalsIgnoreCase("handle")) {
-                nodePreference.setOriginalUriIsHandle(true);
-            }
-            if (selectedIdentifier.equalsIgnoreCase("doi")) {
-                nodePreference.setOriginalUriIsDoi(true);
-            }
-            preferenceService.addPreference(nodePreference, idThesaurus);
-        }
     }
 
     private void setOriginalUri(String idTheso, String uri) {

@@ -99,6 +99,18 @@ public class RestoreThesaurus implements Serializable {
         MessageUtils.showInformationMessage("Correction réussie !!!");
     }
 
+    public void correctDisplayTopTerm() {
+
+        var idThesaurus = selectedTheso.getCurrentIdTheso();
+        if (StringUtils.isEmpty(idThesaurus)) {
+            log.error("Aucun thésaurus n'est présent");
+            return;
+        }
+
+        int count = restoreThesaurusService.correctDisplayTopTerm(idThesaurus);
+        MessageUtils.showInformationMessage("Correction réussie, concepts affecté : " + count);
+    }
+
     public void switchRolesFromTermToConcept() {
 
         var idThesaurus = selectedTheso.getCurrentIdTheso();

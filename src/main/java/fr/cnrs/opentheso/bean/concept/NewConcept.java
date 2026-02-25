@@ -4,12 +4,18 @@ import fr.cnrs.opentheso.bean.leftbody.viewtree.Tree;
 import fr.cnrs.opentheso.bean.menu.theso.SelectedTheso;
 import fr.cnrs.opentheso.bean.menu.users.CurrentUser;
 import fr.cnrs.opentheso.bean.rightbody.viewconcept.ConceptView;
+import fr.cnrs.opentheso.entites.ConceptDcTerm;
+import fr.cnrs.opentheso.entites.ThesaurusDcTerm;
 import fr.cnrs.opentheso.models.concept.Concept;
+import fr.cnrs.opentheso.models.concept.DCMIResource;
 import fr.cnrs.opentheso.models.facets.NodeFacet;
 import fr.cnrs.opentheso.models.group.NodeGroup;
+import fr.cnrs.opentheso.models.nodes.DcElement;
 import fr.cnrs.opentheso.models.relations.NodeTypeRelation;
 import fr.cnrs.opentheso.models.search.NodeSearchMini;
 import fr.cnrs.opentheso.models.terms.Term;
+import fr.cnrs.opentheso.repositories.ConceptDcTermRepository;
+import fr.cnrs.opentheso.repositories.ThesaurusDcTermRepository;
 import fr.cnrs.opentheso.services.ConceptAddService;
 import fr.cnrs.opentheso.services.ConceptService;
 import fr.cnrs.opentheso.services.GroupService;
@@ -30,6 +36,8 @@ import org.apache.commons.lang3.StringUtils;
 import org.primefaces.PrimeFaces;
 
 import java.io.Serializable;
+import java.text.SimpleDateFormat;
+import java.util.Date;
 import java.util.List;
 
 
@@ -50,6 +58,8 @@ public class NewConcept implements Serializable {
     private final ConceptService conceptService;
     private final TermService termService;
     private final RelationService relationService;
+    private final ConceptDcTermRepository conceptDcTermRepository;
+    private final ThesaurusDcTermRepository thesaurusDcTermRepository;
 
     private boolean isCreated, duplicate, isConceptUnderFacet;
     private String prefLabel, notation, idNewConcept, source, relationType, idGroup, idBTfacet, idFacet;
@@ -101,6 +111,14 @@ public class NewConcept implements Serializable {
             MessageUtils.showInformationMessage("Erreur pendant la création du concept");
             return;
         }
+
+        log.debug("Enregistrement du trace de l'action");
+        conceptDcTermRepository.save(ConceptDcTerm.builder()
+                .name(DCMIResource.CREATOR)
+                .value(currentUser.getNodeUser().getName())
+                .idConcept(idNewConcept)
+                .idThesaurus(idThesaurus)
+                .build());
 
         conceptBean.getConcept(idThesaurus, idNewConcept, idLang, currentUser);
         isCreated = true;

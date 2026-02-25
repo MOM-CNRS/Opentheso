@@ -2,6 +2,7 @@ package fr.cnrs.opentheso.services;
 
 import fr.cnrs.opentheso.entites.HierarchicalRelationship;
 import fr.cnrs.opentheso.repositories.ConceptRepository;
+import fr.cnrs.opentheso.repositories.ThesaurusRepository;
 import fr.cnrs.opentheso.utils.DateUtils;
 import fr.cnrs.opentheso.utils.MessageUtils;
 import fr.cnrs.opentheso.utils.ToolsHelper;
@@ -39,7 +40,15 @@ public class RestoreThesaurusService {
     private final PreferenceService preferenceService;
     private final TermService termService;
     private final ConceptRepository conceptRepository;
+    private final ThesaurusRepository thesaurusRepository;
 
+
+    @Transactional
+    public int correctDisplayTopTerm(String idThesaurus) {
+        int modified = thesaurusRepository.resetTopConceptsWithRelations(idThesaurus);
+        log.info("Top concepts corrigés: {}", modified);
+        return modified;
+    }
 
     @Transactional
     public void reorganizing(String idThesaurus) {

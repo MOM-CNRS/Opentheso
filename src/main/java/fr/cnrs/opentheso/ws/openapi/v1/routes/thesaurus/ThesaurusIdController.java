@@ -13,6 +13,7 @@ import io.swagger.v3.oas.annotations.media.Content;
 import io.swagger.v3.oas.annotations.responses.ApiResponse;
 import io.swagger.v3.oas.annotations.tags.Tag;
 import lombok.extern.slf4j.Slf4j;
+
 import java.util.List;
 
 import jakarta.json.Json;
@@ -128,7 +129,7 @@ public class ThesaurusIdController {
     public ResponseEntity<Object> getInfoLastUpdate(@Parameter(name = "thesaurusId", description = "Identifiant du thesaurus à récupérer.", required = true) @PathVariable("thesaurusId") String thesaurusId) {
 
         var date = conceptService.getLastModification(thesaurusId);
-        var datas = "{\"lastUpdate\":\"" + date.toString() + "\"}";
+        var datas = "{\"lastUpdate\":\"" + date + "\"}";
         return ResponseEntity.ok().contentType(MediaType.APPLICATION_JSON).body(datas);
     }
 

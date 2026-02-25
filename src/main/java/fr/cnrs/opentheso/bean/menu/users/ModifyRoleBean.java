@@ -49,6 +49,7 @@ public class ModifyRoleBean implements Serializable {
     private NodeUserRole selectedNodeUserRole;
     private List<NodeUserRole> listeLimitedThesaurusRoleForUser;
 
+    private int oldIdRole;
 
     /**
      * permet de selectionner l'utilisateur dans la liste avec toutes les informations nécessaires pour sa modification
@@ -66,6 +67,10 @@ public class ModifyRoleBean implements Serializable {
         selectedThesaurus = null;    
         myAuthorizedRolesLimited = null;
     }
+
+    public void updateAjax(){
+        int i = 0;
+    }
     
     /**
      * permet de selectionner l'utilisateur qui a des droits limités 
@@ -74,6 +79,7 @@ public class ModifyRoleBean implements Serializable {
     public void selectUserWithLimitedRole(NodeUserRole selectedNodeUserRole, String selectedProject) {
 
         this.selectedNodeUserRole = selectedNodeUserRole;
+        this.oldIdRole = selectedNodeUserRole.getIdRole();
         this.selectedProject = selectedProject;
         this.limitOnThesaurus = true;
         this.myAuthorizedRolesLimited = null;
@@ -103,14 +109,27 @@ public class ModifyRoleBean implements Serializable {
      */
     public void updateLimitedRoleOnThesaurusForUser() {
         
-        if(CollectionUtils.isEmpty(listeLimitedThesaurusRoleForUser))  {
+         if(CollectionUtils.isEmpty(listeLimitedThesaurusRoleForUser))  {
             MessageUtils.showErrorMessage("Aucun utilisateur sélectionné !!!");
             return;              
         }
+       // var idRole2 = Integer.parseInt(roleOfSelectedUser);
+        int newRole;
+        if(limitOnThesaurus){
+            newRole = selectedNodeUserRole.getIdRole();
+        } else {
+            newRole = Integer.parseInt(roleOfSelectedUser);
+        }
 
         var idRole = myProjectBean.getMyAuthorizedRoles().get(0).getId();
-        if (userRoleGroupService.updateLimitedRoleOnThesaurusForUser(selectedNodeUserRole.getIdUser(), Integer.parseInt(selectedProject),
-                idRole, roleOfSelectedUser, limitOnThesaurus, listeLimitedThesaurusRoleForUser)) {
+            if (userRoleGroupService.updateLimitedRoleOnThesaurusForUser(
+                    selectedNodeUserRole.getIdUser(),
+                    oldIdRole,
+                    newRole,
+                    selectedNodeUserRole.getIdTheso(),
+                    Integer.parseInt(selectedProject),
+                    limitOnThesaurus)) {
+
 
             if(limitOnThesaurus) {
                 myProjectBean.setSelectedIndex("2");

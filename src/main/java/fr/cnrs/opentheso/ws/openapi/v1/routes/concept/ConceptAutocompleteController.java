@@ -44,7 +44,7 @@ public class ConceptAutocompleteController {
     private final SearchService searchService;
 
 
-    @GetMapping
+    @GetMapping(value = "/{input}", produces = APPLICATION_JSON_UTF_8)
     @Operation(summary = "Recherche les termes proches du terme en entré",
             description = "Ancienne version : `/api/autocomplete?input=<input>&theso=<idTheso>` ou `/api/autocomplete?value=<input>&theso=<idTheso>`<br/>Permet de  récupérer les termes proches du terme entré pour ainsi pouvoir effectuer de l'auto-complétion avec possibilité de filtrer par langue et groupe",
             tags = {"Concept"},
@@ -55,7 +55,7 @@ public class ConceptAutocompleteController {
             })
     public ResponseEntity<Object> searchAutocomplete(
             @Parameter(name = "idTheso", required = true, description = "Thésaurus dans lequel chercher la saisie de l'utilisateur") @PathVariable("idTheso") String idTheso,
-            @Parameter(name = "input", in = ParameterIn.QUERY, schema = @Schema(type = "string"), description = "Saisie de l'utilisateur") @RequestParam(value = "input") String input,
+            @Parameter(name = "input", required = true, description = "Saisie de l'utilisateur") @PathVariable("input") String input,
             @Parameter(name = "lang", in = ParameterIn.QUERY, schema = @Schema(type = "string"), description = "Langue dans laquelle chercher la saisie de l'utilisateur") @RequestParam(value = "lang", required = false) String lang,
             @Parameter(name = "group", in = ParameterIn.QUERY, schema = @Schema(type = "string"), description = "Groupe dans lequel chercher la saisie de l'utilisateur") @RequestParam(value = "group", required = false) String groupsString,
             @Parameter(name = "full", in = ParameterIn.QUERY, schema = @Schema(type = "boolean"), description = "`true` si l'on souhaite retourner plus d'informations sur le concept. Les informations supplémentaires sont le `prefLabel`, `altLabel` et la définition du concept") @RequestParam(value = "full", required = false) String fullString) {

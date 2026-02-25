@@ -13,31 +13,50 @@ server:
     path: /errorPages/error500.xhtml
     whitelabel:
       enabled: false
+
+primefaces:
+  uploader: native
+
+app:
+  security:
+    keycloak-enabled: false  # ou false pour désactiver
+  neo4j:
+    enabled: false
+
+management:
+  health:
+    neo4j:
+      enabled: false
+
 spring:
+  application:
+    name: opentheso
+
+  servlet:
+    multipart:
+      enabled: true
+      max-file-size: 100MB  # Définit la taille max d'un fichier
+      max-request-size: 100MB  # Taille totale max de la requête
   datasource:
-    url: jdbc:postgresql://localhost:5431/opentheso
+    url: jdbc:postgresql://localhost:5432/opentheso
     password: opentheso
     username: opentheso
   jpa:
-    show-sql: true
+    show-sql: false
     generate-ddl: true
     hibernate:
       ddl-auto: validate
     properties:
       hibernate:
         format_sql: true
-        dialect: org.hibernate.dialect.PostgreSQLDialect
   liquibase:
     enabled: true
     change-log: classpath:/changelog/db.changelog.xml
   graphql:
-    path: /graphql # Chemin de l'API GraphQL
     graphiql:
-      enabled: true # Active l'interface graphiql pour tester les requêtes
-      path: /graphiql # Chemin de l'interface graphiql
-    schema:
-      printer:
-        enabled: false # Active l'impression du schéma au démarrage dans les logs
+      enabled: true
+      path: /graphiql
+      endpoint: /graphql
 
 settings:
   workLanguage: fr
@@ -77,3 +96,4 @@ ldap:
     trust:
       password: changeit
       path: /usr/lib/jvm/java-11-openjdk-amd64/lib/security/cacerts
+

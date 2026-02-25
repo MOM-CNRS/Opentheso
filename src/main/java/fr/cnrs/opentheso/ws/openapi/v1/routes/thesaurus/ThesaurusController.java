@@ -1,5 +1,6 @@
 package fr.cnrs.opentheso.ws.openapi.v1.routes.thesaurus;
 
+import fr.cnrs.opentheso.entites.ThesaurusDcTerm;
 import fr.cnrs.opentheso.models.thesaurus.Thesaurus;
 
 import fr.cnrs.opentheso.services.ThesaurusService;
@@ -18,6 +19,8 @@ import org.springframework.web.bind.annotation.GetMapping;
 import org.springframework.web.bind.annotation.RequestMapping;
 import org.springframework.web.bind.annotation.RequestMethod;
 import org.springframework.web.bind.annotation.RestController;
+
+import java.util.List;
 
 import static fr.cnrs.opentheso.ws.openapi.helper.CustomMediaType.APPLICATION_JSON_UTF_8;
 
@@ -55,6 +58,17 @@ public class ThesaurusController {
             var job = Json.createObjectBuilder();
             job.add("idTheso", idTheso);
             var jsonArrayBuilderLang = Json.createArrayBuilder();
+
+            // pour indiquer le type du thésaurus (exemple pour Siamois ...)
+            List<ThesaurusDcTerm> thesaurusDcTerms = thesaurusService.getDcTermsOfThesaurus(idTheso);
+            String type = "";
+            for (ThesaurusDcTerm term : thesaurusDcTerms) {
+                if ("type".equalsIgnoreCase(term.getName())) {
+                    type = term.getValue();
+                    break; // on sort dès qu'on a trouvé
+                }
+            }
+            job.add("type", type);
 
             var nodeThesaurus = thesaurusService.getNodeThesaurus(idTheso);
             for (Thesaurus thesaurus : nodeThesaurus.getListThesaurusTraduction()) {

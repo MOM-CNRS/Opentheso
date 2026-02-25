@@ -13,6 +13,8 @@ import java.util.List;
 
 public interface ConceptCandidatRepository extends JpaRepository<ConceptCandidat, Integer> {
 
+    @Modifying
+    @Transactional
     void deleteAllByIdThesaurus(String idThesaurus);
 
     @Modifying
@@ -41,6 +43,7 @@ public interface ConceptCandidatRepository extends JpaRepository<ConceptCandidat
             @Param("lang") String lang, @Param("status") int status, @Param("statut") String statut);
 
     @Modifying
+    @Transactional
     @Query(value = "UPDATE concept_candidat SET id_thesaurus = :target WHERE id_concept = :concept AND id_thesaurus = :from", nativeQuery = true)
     void updateThesaurus(@Param("concept") String concept, @Param("from") String from, @Param("target") String target);
 

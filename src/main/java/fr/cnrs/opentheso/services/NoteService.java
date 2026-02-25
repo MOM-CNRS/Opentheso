@@ -16,6 +16,7 @@ import org.apache.commons.text.StringEscapeUtils;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
 
+import java.util.Comparator;
 import java.util.Date;
 import java.util.List;
 
@@ -36,7 +37,7 @@ public class NoteService {
         idLang = normalizeIdLang(idLang);
         var note = noteRepository.findAllByIdentifierAndIdThesaurusAndNoteTypeCodeAndLang(idConcept, idThesaurus, noteType, idLang);
         if (note.isEmpty()) {
-            log.error("Aucune note n'est trouvée");
+            log.debug("Aucune note n'est trouvée");
             return null;
         }
 
@@ -240,7 +241,7 @@ public class NoteService {
 
     public List<NodeNote> getNoteByConceptAndThesaurusAndLangAndType(String idConcept, String idThesaurus, String idLang, String typeCode) {
         log.debug("Recherche des notes par concept {}, thésaurus {} et NoteType {}", idConcept, idThesaurus, typeCode);
-        var notes = noteRepository.findAllByIdentifierAndIdThesaurusAndNoteTypeCodeAndLang(idConcept, idThesaurus, idLang, typeCode);
+        var notes = noteRepository.findAllByIdentifierAndIdThesaurusAndNoteTypeCodeAndLang(idConcept, idThesaurus, typeCode, idLang);
         if (CollectionUtils.isEmpty(notes)) {
             log.debug("Aucune note n'est trouvée !");
             return List.of();
@@ -316,7 +317,7 @@ public class NoteService {
     public int getNbrNoteByGroup(String idGroup, String idThesaurus, String idLang) {
 
         log.debug("Recherche du nombre de notes dans les concepts qui appartiennent au groupe {}", idGroup);
-        var notesCount = noteRepository.countNotesByGroupAndLangAndThesaurus(idGroup, idLang, idThesaurus);
+        var notesCount = noteRepository.countNotesByGroupAndLangAndThesaurus(idGroup, idThesaurus, idLang);
         log.debug("{} notes trouvées", notesCount);
         return notesCount;
     }
@@ -347,7 +348,19 @@ public class NoteService {
     public List<NoteType> getNotesType() {
 
         log.debug("Recherche de tous les types note");
-        return noteTypeRepository.findAll();
+
+        List<NoteType> noteTypes = noteTypeRepository.findAll();
+        List<NoteType> sorted = noteTypes.stream()
+                .sorted(Comparator.comparingInt((NoteType n) -> {
+                    // Priorité spéciale pour "definition" et "scopeNote" et ...
+                    if ("definition".equals(n.getCode())) return 0;
+                    if ("scopeNote".equals(n.getCode())) return 1;
+                    if ("note".equals(n.getCode())) return 2;
+                    if ("editorialNote".equals(n.getCode())) return 3;
+                    return 4; // tous les autres après
+                }).thenComparing(NoteType::getCode))
+                .toList();
+        return sorted;
     }
 
 }

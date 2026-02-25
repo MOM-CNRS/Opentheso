@@ -513,8 +513,10 @@ public class CandidatBean implements Serializable {
         }
 
         if (initialCandidat == null) {
-            candidatService.saveNewCandidat(candidatSelected, selectedTheso.getCurrentIdTheso(), getIdLang(),
-                    currentUser.getNodeUser().getIdUser(), currentUser.getUsername(), selectedTheso.getCurrentLang(), definition);
+            if(!candidatService.saveNewCandidat(candidatSelected, selectedTheso.getCurrentIdTheso(), getIdLang(),
+                    currentUser.getNodeUser().getIdUser(), currentUser.getUsername(), selectedTheso.getCurrentLang(), definition)){
+                return;
+            }
             setIsListCandidatsActivate(true);
         } else {
             if (!initialCandidat.getNomPref().equals(candidatSelected.getNomPref())) {
@@ -747,12 +749,15 @@ public class CandidatBean implements Serializable {
             } else {
                 try {
                     termService.addSynonyme(employePour, candidatSelected.getIdThesaurus(), candidatSelected.getLang(), candidatSelected.getIdTerm());
-                    candidatSelected.getEmployePourList().add(employePour);
+                } catch (Exception ex) {
+                    log.debug("Erreur pendant l'ajout du nouveau synonyme !");
+                } finally {
+                    List<String> modifiableList = new ArrayList<>(candidatSelected.getEmployePourList());
+                    modifiableList.add(employePour);
+                    candidatSelected.setEmployePourList(modifiableList);
                     employePour = "";
                     PrimeFaces.current().ajax().update("tabViewCandidat");
                     MessageUtils.showInformationMessage("Synonyme ajouté avec succès !");
-                } catch (Exception ex) {
-                    MessageUtils.showErrorMessage("Erreur pendant l'ajout du nouveau synonyme !");
                 }
             }
         }
@@ -762,9 +767,10 @@ public class CandidatBean implements Serializable {
 
         if (CollectionUtils.isNotEmpty(candidatSelected.getEmployePourList())) {
             try {
-                nonPreferredTermService.deleteEMByIdTermAndLang(candidatSelected.getIdTerm(), candidatSelected.getIdThesaurus(), candidatSelected.getLang());
+                nonPreferredTermService.deleteEMByIdTermAndLangAndLexical(candidatSelected.getIdTerm(),
+                        candidatSelected.getIdThesaurus(), candidatSelected.getLang(), synonyme);
                 candidatSelected.setEmployePourList(candidatSelected.getEmployePourList().stream()
-                        .filter(element -> element.equals(synonyme))
+                        .filter(element -> !element.equals(synonyme))
                         .toList());
                 PrimeFaces.current().ajax().update("tabViewCandidat:containerIndexCandidat:candidatSynonym");
                 MessageUtils.showInformationMessage("Synonyme supprimé avec succès !");

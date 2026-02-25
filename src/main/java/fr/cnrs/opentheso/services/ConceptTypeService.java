@@ -82,7 +82,7 @@ public class ConceptTypeService {
         log.debug("Recherche du concept type {} dans le thésaurus {}", conceptType, idThesaurus);
         var result = conceptTypeRepository.findByCodeAndIdThesaurusIn(conceptType, List.of(idThesaurus, "all"));
         if (result.isEmpty()) {
-            log.error("Aucune concept type n'est trouvé avec le code {} dans le thésaurus {}", conceptType, idThesaurus);
+            log.debug("Aucune concept type n'est trouvé avec le code {} dans le thésaurus {}", conceptType, idThesaurus);
             return null;
         }
         return NodeConceptType.builder()

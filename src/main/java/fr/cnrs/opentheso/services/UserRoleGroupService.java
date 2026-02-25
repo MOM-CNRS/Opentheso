@@ -153,46 +153,54 @@ public class UserRoleGroupService {
     }
 
     @Transactional
-    public boolean updateLimitedRoleOnThesaurusForUser(int idUser, int idGroup, String idRole, String roleOfSelectedUser,
-                                                    boolean limitOnThesaurus, List<NodeUserRole> listeLimitedThesaurusRoleForUser) {
-
-        // suppression de tous les rôles
+    public boolean updateLimitedRoleOnThesaurusForUser(int idUser,
+                                                       int oldIdRole, int newIdRole,
+                                                       String idTheso, int idGroup,
+                                                       boolean limitOnThesaurus) {
         var user = userRepository.findById(idUser);
         if (user.isEmpty()) {
             log.error("L'utilisateur id {} n'existe pas", idUser);
             return false;
         }
-
+        if(newIdRole == -1) {
+            log.error("Le role n'est pas connue {} ", newIdRole);
+            return false;
+        }
         var group = userGroupLabelRepository.findById(idGroup);
         if (group.isEmpty()) {
             log.error("Le group id {} n'existe pas", idGroup);
             return false;
         }
 
-        userRoleOnlyOnRepository.deleteByUserAndGroup(user.get(), group.get());
-
-        // contrôle si le role est uniquement sur une liste des thésaurus ou le projet entier
         if(limitOnThesaurus) {
-            // ajout des rôles pour l'utilisateur sur les thésaurus
-            for (NodeUserRole nodeThesaurusRole : listeLimitedThesaurusRoleForUser) {
-                if(nodeThesaurusRole.getIdRole() != -1) {
-                    var role = roleRepository.findById(nodeThesaurusRole.getIdRole());
-                    if (role.isEmpty()) {
-                        log.error("Le rôle id {} n'existe pas", nodeThesaurusRole.getIdRole());
-                        continue;
-                    }
-                    var thesaurus = thesaurusService.getThesaurusById(nodeThesaurusRole.getIdTheso());
-                    userRoleOnlyOnRepository.save(UserRoleOnlyOn.builder()
-                            .user(user.get())
-                            .role(role.get())
-                            .group(group.get())
-                            .thesaurus(thesaurus)
-                            .build());
-                }
+            var role_old = roleRepository.findById(oldIdRole);
+            if (role_old.isEmpty()) {
+                log.error("Le rôle id {} n'existe pas", oldIdRole);
+                return false;
             }
+            var thesaurus = thesaurusService.getThesaurusById(idTheso);
+
+            // supprimer l'ancien role
+            userRoleOnlyOnRepository.deleteByUserAndGroupAndRoleAndThesaurus(
+                    user.get(),
+                    group.get(),
+                    role_old.get(),
+                    thesaurus
+            );
+            var role_new = roleRepository.findById(newIdRole);
+            if (role_old.isEmpty()) {
+                log.error("Le rôle id {} n'existe pas", newIdRole);
+                return false;
+            }
+            userRoleOnlyOnRepository.save(UserRoleOnlyOn.builder()
+                    .user(user.get())
+                    .role(role_new.get())
+                    .group(group.get())
+                    .thesaurus(thesaurus)
+                    .build());
         } else {
-            var roleSelected = StringUtils.isEmpty(roleOfSelectedUser) ? idRole : roleOfSelectedUser;
-            addUserRoleOnGroup(user.get().getId(), Integer.parseInt(roleSelected), idGroup);
+            userRoleOnlyOnRepository.deleteByUserAndGroup(user.get(), group.get());
+            addUserRoleOnGroup(user.get().getId(), newIdRole, idGroup);
         }
         return true;
     }
@@ -236,7 +244,7 @@ public class UserRoleGroupService {
         }
 
         var thesaurus = thesaurusService.getThesaurusById(idThesaurus);
-        if (thesaurus != null) {
+        if (thesaurus == null) {
             log.error("Le thésaurus id {} n'existe pas", idThesaurus);
             return false;
         }

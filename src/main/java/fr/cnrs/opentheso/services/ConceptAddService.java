@@ -6,19 +6,15 @@ import fr.cnrs.opentheso.bean.menu.theso.RoleOnThesaurusBean;
 import fr.cnrs.opentheso.bean.menu.theso.SelectedTheso;
 import fr.cnrs.opentheso.bean.menu.users.CurrentUser;
 import fr.cnrs.opentheso.bean.rightbody.viewconcept.ConceptView;
-import fr.cnrs.opentheso.entites.ConceptDcTerm;
-import fr.cnrs.opentheso.entites.ConceptHistorique;
-import fr.cnrs.opentheso.entites.HierarchicalRelationship;
-import fr.cnrs.opentheso.entites.Preferences;
+import fr.cnrs.opentheso.entites.*;
 import fr.cnrs.opentheso.models.concept.Concept;
 import fr.cnrs.opentheso.models.concept.DCMIResource;
 import fr.cnrs.opentheso.models.concept.NodeMetaData;
+import fr.cnrs.opentheso.models.nodes.DcElement;
 import fr.cnrs.opentheso.models.nodes.NodeIdValue;
 import fr.cnrs.opentheso.models.terms.Term;
-import fr.cnrs.opentheso.repositories.ConceptDcTermRepository;
-import fr.cnrs.opentheso.repositories.ConceptHistoriqueRepository;
-import fr.cnrs.opentheso.repositories.ConceptRepository;
-import fr.cnrs.opentheso.repositories.UserRepository;
+import fr.cnrs.opentheso.repositories.*;
+import fr.cnrs.opentheso.services.security.CryptoService;
 import fr.cnrs.opentheso.utils.MessageUtils;
 import fr.cnrs.opentheso.utils.ToolsHelper;
 import fr.cnrs.opentheso.ws.ark.ArkHelper2;
@@ -29,8 +25,10 @@ import lombok.extern.slf4j.Slf4j;
 import org.apache.commons.collections4.CollectionUtils;
 import org.apache.commons.lang3.StringUtils;
 import org.primefaces.PrimeFaces;
+import org.springframework.dao.DataIntegrityViolationException;
 import org.springframework.stereotype.Service;
 import java.beans.Transient;
+import java.text.SimpleDateFormat;
 import java.util.ArrayList;
 import java.util.Date;
 import java.util.List;
@@ -57,6 +55,9 @@ public class ConceptAddService {
     private final ConceptHistoriqueRepository conceptHistoriqueRepository;
     private final HandleConceptService handleConceptService;
     private final FacetService facetService;
+    private final ThesaurusDcTermRepository thesaurusDcTermRepository;
+    private final CurrentUser currentUser;
+    private final CryptoService cryptoService;
 
 
     public boolean addNewConcept(String idThesaurus, String idNewConcept, String idGroup, String idLang, String prefLabel,
@@ -120,6 +121,9 @@ public class ConceptAddService {
                 .idConcept(idNewConcept)
                 .idThesaurus(idThesaurus)
                 .build());
+        // ajout de l'info de la dernière modification du concept dans les DC du thésaurus
+        createAndSaveDcTerm(idThesaurus, DCMIResource.MODIFIED,
+                new SimpleDateFormat("yyyy-MM-dd").format(new Date()), "", "date");
 
         if (isConceptUnderFacet) {
             facetService.addConceptToFacet(idFacet, idThesaurus, idNewConcept);
@@ -221,7 +225,16 @@ public class ConceptAddService {
             // création de l'identifiant Handle
             if (preferences.isUseHandle()) {
                 if (!handleConceptService.addIdHandle(idConcept, concept.getIdThesaurus())) {
-                    MessageUtils.showErrorMessage("La création du Ark local a échoué");
+                    MessageUtils.showErrorMessage("La création de Handle a échoué");
+                }
+            }
+            if (preferences.isUseOpenArk()) {
+                ArrayList<String> idConcepts = new ArrayList<>();
+                idConcepts.add(idConcept);
+                String apiKeyOpenArk = cryptoService.decrypt(preferences.getApiKeyOpenArk());
+                if(generateOpenArkId(concept.getIdThesaurus(), idConcepts,
+                        selectedTheso.getCurrentLang(), preferences, apiKeyOpenArk) == null){
+                    MessageUtils.showErrorMessage("La création du Ark a échoué");
                 }
             }
 
@@ -238,14 +251,12 @@ public class ConceptAddService {
                 ArrayList<String> idConcepts = new ArrayList<>();
                 idConcepts.add(idConcept);
                 if (!arkService.generateArkIdLocal(concept.getIdThesaurus(), idConcepts)) {
-                    MessageUtils.showErrorMessage("La création du Ark local a échouée");
+                    MessageUtils.showErrorMessage("La création du Ark a échouée");
                     log.error("La création du Ark local a échouée");
                 }
             }
         }
-
         return idConcept;
-
     }
 
     public String addConceptInTable(Concept concept, int idUser) {
@@ -272,7 +283,6 @@ public class ConceptAddService {
         }
 
         conceptRepository.save(fr.cnrs.opentheso.entites.Concept.builder()
-                .id(idSequenceConcept)
                 .idConcept(concept.getIdConcept())
                 .idThesaurus(concept.getIdThesaurus())
                 .idArk(concept.getIdArk())
@@ -294,6 +304,28 @@ public class ConceptAddService {
         return concept.getIdConcept();
     }
 
+    private void createAndSaveDcTerm(String idThesaurus, String name, String value, String language, String type) {
+        DcElement dcElement = new DcElement(name, value, language, type);
+
+        boolean exists = thesaurusDcTermRepository.existsByIdThesaurusAndNameAndValue(idThesaurus, name, value);
+        if (exists) {
+            log.debug("DC Term déjà existant, insertion ignorée : {} {} {}", idThesaurus, name, value);
+            return;
+        }
+
+        ThesaurusDcTerm tmp = thesaurusDcTermRepository.save(
+                ThesaurusDcTerm.builder()
+                        .idThesaurus(idThesaurus)
+                        .name(dcElement.getName())
+                        .value(dcElement.getValue())
+                        .language(dcElement.getLanguage())
+                        .dataType(dcElement.getType())
+                        .build()
+        );
+        dcElement.setId(tmp.getId().intValue());
+    }
+
+
     public void addConceptHistorique(Concept concept, int idUser) {
 
         log.debug("Ajout d'une trace dans la table historique des concepts (concept id {})", concept.getIdThesaurus());
@@ -308,6 +340,29 @@ public class ConceptAddService {
                 .idUser(idUser)
                 .modified(new Date())
                 .build());
+    }
+
+
+    // nouvelle version pour OpenArk
+    public List<NodeIdValue> generateOpenArkId(String idThesaurus, List<String> idConcepts, String idLang, Preferences preferences, String apiKey) {
+        if (preferences.isUseOpenArk()) {
+            if(!arkService.generateArkWithOpenArk(idThesaurus, idConcepts, idLang,
+                    currentUser.getNodeUser().getName(), apiKey, preferenceService.getThesaurusPreferences(idThesaurus))){
+                return null;
+            }
+            return new ArrayList<>();
+        }
+        return null;
+    }
+
+    public List<NodeIdValue> deleteArkWithOpenArk(String idThesaurus, List<String> idConcepts, String idLang, Preferences preferences, String apiKey) {
+        if (preferences.isUseOpenArk()) {
+            if(!arkService.deleteArkWithOpenArk(idThesaurus, idConcepts, apiKey, preferenceService.getThesaurusPreferences(idThesaurus))){
+                return null;
+            }
+            return new ArrayList<>();
+        }
+        return null;
     }
 
     public List<NodeIdValue> generateArkId(String idThesaurus, List<String> idConcepts, String idLang, Preferences preferences) {
@@ -330,6 +385,7 @@ public class ConceptAddService {
             log.error("Il faut activer Ark pour le thésaurus id {}", idThesaurus);
             return nodeIdValues;
         }
+
         if (preferences.isUseArkLocal()) {
             arkService.generateArkIdLocal(idThesaurus, idConcepts);
             return null;

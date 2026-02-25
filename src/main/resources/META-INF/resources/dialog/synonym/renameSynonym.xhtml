@@ -36,7 +36,7 @@
                     <p:column width="20">
                         <p:commandLink style="color: #F7A269;" update="containerIndex:formRightTab messageIndex"
                                        ajax="true" process="@form" oncomplete="PF('renameSynonym').show();"
-                                       action="#{synonymBean.updateSynonym(synonymToEdit,currentUser.nodeUser.idUser)}">
+                                       action="#{synonymBean.updateSynonym(synonymToEdit,currentUser.nodeUser.idUser, false)}">
                             <i class="pi pi-check-circle" />
                         </p:commandLink> 
                     </p:column>                   
@@ -47,12 +47,11 @@
                 <p:commandButton rendered="#{!synonymBean.duplicate}" value="#{langueBean.getMsg('btnCancel')}"
                                  icon="fas fa-undo-alt" styleClass="ui-button-secondary button" 
                                  style="margin-right: 10px" ajax="true" process="@form" 
-                                 actionListener="PF('renameSynonym').hide();" update="messageIndex containerIndex:idRenameSynonym"/>
+                                 actionListener="PF('renameSynonym').hide();" update="containerIndex:idRenameSynonym"/>
 
                 <p:commandButton rendered="#{!synonymBean.duplicate}" id="renameSynonymValidate"
                                  value="#{langueBean.getMsg('rightbody.conceptdialog.modify_all')}"
-                                 update="containerIndex:idRenameSynonym messageIndex"
-                                 oncomplete="PF('renameSynonym').show();" ajax="true" process="@form" 
+                                 update="containerIndex:idRenameSynonym " ajax="true" process="@form"
                                  icon="pi pi-check" styleClass="ui-button-success" 
                                  actionListener="#{synonymBean.updateAllSynonyms(currentUser.nodeUser.idUser)}" />
 

@@ -11,6 +11,7 @@ import java.util.List;
 
 
 public interface ThesaurusDcTermRepository extends JpaRepository<ThesaurusDcTerm, Integer> {
+    boolean existsByIdThesaurusAndNameAndValue(String idThesaurus, String name, String value);
 
     List<ThesaurusDcTerm> findAllByIdThesaurus(String idThesaurus);
 

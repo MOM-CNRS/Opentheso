@@ -538,7 +538,7 @@ public class RestRDFHelper {
         if (nodePreference == null) {
             return null;
         }
-
+        exportRdf4jHelperNew.setInfos(nodePreference);
         var skosXmlDocument = new SKOSXmlDocument();
         for (String idConcept : ids) {
             skosXmlDocument.addconcept(exportRdf4jHelperNew.exportConceptV2(idThesaurus, idConcept, false));

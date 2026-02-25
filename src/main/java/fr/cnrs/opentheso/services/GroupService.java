@@ -422,7 +422,9 @@ public class GroupService {
 
     public List<String> getGroupsByThesaurus(String idThesaurus) {
 
+      //  var groups = conceptGroupRepository.findAllByIdThesaurus(idThesaurus);
         var groups = conceptGroupRepository.findAllByIdThesaurus(idThesaurus);
+
         if (CollectionUtils.isEmpty(groups)) {
             log.debug("Aucun group n'est disponible dans le thésaurus id {}", idThesaurus);
             return new ArrayList<>();
@@ -493,7 +495,7 @@ public class GroupService {
         log.debug("Rechercher du group id {}", idGroup);
         var conceptGroup = conceptGroupRepository.findByIdGroupAndIdThesaurus(idGroup, idThesaurus);
         if (conceptGroup.isEmpty()) {
-            log.error("Aucun group n'est trouvé pour l'id Group {}", idGroup);
+            log.debug("Aucun group n'est trouvé pour l'id Group {}", idGroup);
             return null;
         }
 
@@ -907,20 +909,11 @@ public class GroupService {
         log.debug("Suppression de tous les traduction des groups du thésaurus {}", idThesaurus);
         conceptGroupLabelRepository.deleteByIdThesaurus(idThesaurus);
 
-        log.debug("Suppression de tous les labels des groups du thésaurus {}", idThesaurus);
-        conceptGroupLabelHistoriqueRepository.deleteAllByIdThesaurus(idThesaurus);
-
-        log.debug("Suppression de tous les relations entre les groups et les concepts du thésaurus {}", idThesaurus);
-        conceptGroupConceptRepository.deleteAllByIdThesaurus(idThesaurus);
-
         log.debug("Suppression des relations entre les groups");
         relationGroupService.deleteRelationGroupByThesaurus(idThesaurus);
-
-        log.debug("Suppression des historiques des groups du thésaurus id {}", idThesaurus);
-        conceptGroupHistoriqueRepository.deleteAllByIdThesaurus(idThesaurus);
     }
 
-    public void updateThesaurusId(String oldThesaurusID, String newThesaurusID) {
+    public void updateThesaurusId(String newThesaurusID, String oldThesaurusID) {
 
         log.debug("Mise à jour du thésaurus id pour les groups (du {} vers {})", oldThesaurusID, newThesaurusID);
         conceptGroupRepository.updateThesaurusId(newThesaurusID, oldThesaurusID);

@@ -55,6 +55,9 @@ public class CopyAndPasteBetweenThesaurus implements Serializable {
         idThesaurusOrigin = null;
         conceptsToCopy = null;
     }
+    public void setIsDropToRoot(boolean isDropToRoot) {
+        this.dropToRoot = isDropToRoot;
+    }
 
     /**
      * permet de préparer le concept ou la branche pour le déplacement vers un autre endroit #MR

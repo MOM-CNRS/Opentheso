@@ -35,6 +35,8 @@ import fr.cnrs.opentheso.repositories.ConceptCandidatRepository;
 import fr.cnrs.opentheso.repositories.ConceptDcTermRepository;
 import fr.cnrs.opentheso.repositories.ConceptFacetRepository;
 import fr.cnrs.opentheso.repositories.ConceptGroupConceptRepository;
+import fr.cnrs.opentheso.repositories.ConceptGroupHistoriqueRepository;
+import fr.cnrs.opentheso.repositories.ConceptGroupLabelHistoriqueRepository;
 import fr.cnrs.opentheso.repositories.ConceptHistoriqueRepository;
 import fr.cnrs.opentheso.repositories.ConceptReplacedByRepository;
 import fr.cnrs.opentheso.repositories.ConceptRepository;
@@ -53,6 +55,8 @@ import fr.cnrs.opentheso.repositories.NoteHistoriqueRepository;
 import fr.cnrs.opentheso.repositories.NoteRepository;
 import fr.cnrs.opentheso.repositories.PermutedRepository;
 import fr.cnrs.opentheso.repositories.PreferredTermRepository;
+import fr.cnrs.opentheso.repositories.PropositionModificationDetailRepository;
+import fr.cnrs.opentheso.repositories.PropositionModificationRepository;
 import fr.cnrs.opentheso.repositories.PropositionRepository;
 import fr.cnrs.opentheso.repositories.TermRepository;
 import fr.cnrs.opentheso.repositories.ThesaurusArrayRepository;
@@ -64,19 +68,17 @@ import lombok.RequiredArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
 import org.apache.commons.collections4.CollectionUtils;
 import org.apache.commons.lang3.StringUtils;
+import org.springframework.dao.DataIntegrityViolationException;
 import org.springframework.data.domain.PageRequest;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
 
 import java.text.SimpleDateFormat;
+import java.time.Instant;
 import java.time.LocalDate;
+import java.time.ZoneOffset;
 import java.time.format.DateTimeParseException;
-import java.util.ArrayList;
-import java.util.Arrays;
-import java.util.Collections;
-import java.util.Date;
-import java.util.List;
-import java.util.Optional;
+import java.util.*;
 import java.util.regex.Matcher;
 import java.util.regex.Pattern;
 import java.util.stream.Collectors;
@@ -133,6 +135,10 @@ public class ConceptService {
     private final ExternalImageRepository externalImageRepository;
     private final ConceptAddService conceptAddService;
     private final ThesaurusRepository thesaurusRepository;
+    private final PropositionModificationRepository propositionModificationRepository;
+    private final PropositionModificationDetailRepository propositionModificationDetailRepository;
+    private final ConceptGroupHistoriqueRepository conceptGroupHistoriqueRepository;
+    private final ConceptGroupLabelHistoriqueRepository conceptGroupLabelHistoriqueRepository;
 
 
     public NodeFullConcept getConcept(String idConcept, String idThesaurus, String idLang, int offset, int step, boolean isPrivate) {
@@ -174,7 +180,7 @@ public class ConceptService {
         log.debug("Vérifier si le concept id {} est un top concept {}", idConcept, idThesaurus);
         var concept = conceptRepository.findByIdConceptAndIdThesaurus(idConcept, idThesaurus);
         if (concept.isEmpty()) {
-            log.error("Aucun concept n'est trouvé avec l'id {}", idConcept);
+            log.debug("Aucun concept n'est trouvé avec l'id {}", idConcept);
             return false;
         }
 
@@ -214,12 +220,8 @@ public class ConceptService {
     public void setConceptType(String idThesaurus, String idConcept, String type) {
 
         log.debug("Mise à jour du type de concept {} pour le concept id {}", type, idConcept);
-        var concept = getConcept(idConcept, idThesaurus);
-        if (concept == null) {
-            return;
-        }
-        concept.setConceptType(type);
-        conceptRepository.save(concept);
+        conceptRepository.setConceptType(type, new Date(), idConcept, idThesaurus);
+        log.debug("Mise à jour du type de concept {} est terminée pour le concept id {}", type, idConcept);
     }
 
     public void setTopConceptTag(boolean status, String idConcept, String idThesaurus) {
@@ -228,6 +230,7 @@ public class ConceptService {
         conceptRepository.setTopConceptTag(status, idConcept, idThesaurus);
     }
 
+    @Transactional
     public void deleteByThesaurus(String idThesaurus) {
 
         log.debug("Suppression de tous les concepts présents dans le thésaurus id {}", idThesaurus);
@@ -236,13 +239,22 @@ public class ConceptService {
         corpusLinkRepository.deleteAllByIdThesaurus(idThesaurus);
         conceptDcTermRepository.deleteAllByIdThesaurus(idThesaurus);
         conceptHistoriqueRepository.deleteAllByIdThesaurus(idThesaurus);
-        try {
-            conceptRepository.deleteAllByIdThesaurus(idThesaurus);
-        } catch (Exception ex) {
-            log.debug("Aucun thésaurus n'est présent dans le thésaurus");
-        }
         conceptTypeRepository.deleteAllByIdThesaurus(idThesaurus);
         conceptFacetRepository.deleteAllByIdThesaurus(idThesaurus);
+        try {
+            log.debug("Suppression des historiques des groups du thésaurus id {}", idThesaurus);
+            conceptGroupHistoriqueRepository.deleteAllByIdThesaurus(idThesaurus);
+
+            log.debug("Suppression de tous les labels des groups du thésaurus {}", idThesaurus);
+            conceptGroupLabelHistoriqueRepository.deleteAllByIdThesaurus(idThesaurus);
+
+            log.debug("Suppression de tous les relations entre les groups et les concepts du thésaurus {}", idThesaurus);
+            conceptGroupConceptRepository.deleteAllByIdThesaurus(idThesaurus);
+
+            conceptRepository.deleteAllByIdThesaurus(idThesaurus);
+        } catch (Exception ex) {
+            log.error(ex.getMessage());
+        }
     }
 
     public void updateThesaurusId(String oldThesaurusId, String newThesaurusId) {
@@ -331,21 +343,28 @@ public class ConceptService {
         return conceptRepository.findConceptIdFromLabel(idTheso, normalizedLabel, idLang).orElse(null);
     }
 
+    @Transactional
     public boolean deleteConcept(String idConcept, String idThesaurus) {
 
         log.debug("Suppression du Concept id {} avec ses relations et traductions", idConcept);
         var preferredTerm = preferredTermRepository.findByIdThesaurusAndIdConcept(idThesaurus, idConcept);
-        if (preferredTerm.isEmpty()) {
-            return false;
+        if (preferredTerm.isPresent()) {
+            termService.deleteTerm(preferredTerm.get().getIdTerm(), idThesaurus);
         }
 
-        termService.deleteTerm(preferredTerm.get().getIdTerm(), idThesaurus);
         relationService.deleteAllRelationOfConcept(idConcept, idThesaurus);
         noteService.deleteNotes(idConcept, idThesaurus);
         alignmentService.deleteAlignmentOfConcept(idConcept, idThesaurus);
         conceptRepository.deleteAllByIdThesaurusAndIdConcept(idThesaurus, idConcept);
         facetService.deleteFacetsByConceptAndThesaurus(idConcept, idThesaurus);
         groupService.deleteAllGroupOfConcept(idConcept, idThesaurus);
+        gpsRepository.deleteByIdConceptAndIdTheso(idConcept, idThesaurus);
+        externalImageRepository.deleteAllByIdConceptAndIdThesaurus(idConcept, idThesaurus);
+        externalResourceRepository.deleteAllByIdConceptAndIdThesaurus(idConcept, idThesaurus);
+        propositionModificationDetailRepository.deleteByIdConceptAndIdThesaurus(idConcept, idThesaurus);
+        propositionModificationRepository.deleteAllByIdConceptAndIdTheso(idConcept, idThesaurus);
+        propositionRepository.deleteAllByIdConceptAndIdThesaurus(idConcept, idThesaurus);
+
         deleteConceptReplacedby(idThesaurus, idConcept);
 
         var preferences = preferenceService.getThesaurusPreferences(idThesaurus);
@@ -447,22 +466,15 @@ public class ConceptService {
     }
 
     public boolean updateDateOfConcept(String idThesaurus, String idConcept, int contributor) {
-
-        log.debug("Mise à jour de la date de mise à jour du concept id {}", idConcept);
-        var concept = conceptRepository.findByIdConceptAndIdThesaurus(idConcept, idThesaurus);
-        if (concept.isEmpty()) {
-            log.error("Aucun concept n'est trouvé avec l'id {}", idConcept);
+        log.debug("Mise à jour de la date du concept id {}", idConcept);
+        int rows = conceptRepository.updateDateOfConcept(idThesaurus, idConcept, contributor);
+        if (rows > 0) {
+            log.debug("Mise à jour réussie pour le concept {}", idConcept);
+            return true;
+        } else {
+            log.warn("Aucun concept trouvé pour idConcept={} et thesaurus={}", idConcept, idThesaurus);
             return false;
         }
-
-        concept.get().setModified(new Date());
-        concept.get().setContributor(contributor);
-        concept.get().setNotation(concept.get().getNotation() == null ? "" : concept.get().getNotation());
-        concept.get().setIdDoi(concept.get().getIdDoi() == null ? "" : concept.get().getIdDoi());
-        concept.get().setIdArk(concept.get().getIdArk() == null ? "" : concept.get().getIdArk());
-        conceptRepository.save(concept.get());
-        log.debug("Mise à jour de la date de modification du concept id {}", idConcept);
-        return true;
     }
 
     public List<String> getIdsOfBranchWithoutLoop(String idConceptDeTete, String idThesaurus) {
@@ -668,22 +680,11 @@ public class ConceptService {
         return CollectionUtils.isNotEmpty(concept);
     }
 
+    @Transactional
     public boolean setTopConcept(String idConcept, String idThesaurus, boolean isTopConcept) {
-
         log.debug("Mise à jour du status 'TopConcept' pour le concept {}", idConcept);
-        var concept = getConcept(idConcept, idThesaurus);
-        if (concept != null) {
-            concept.setTopConcept(isTopConcept);
-            concept.setNotation(StringUtils.isEmpty(concept.getNotation()) ? "" : concept.getNotation());
-            concept.setIdArk(StringUtils.isEmpty(concept.getIdArk()) ? "" : concept.getIdArk());
-            concept.setIdDoi(StringUtils.isEmpty(concept.getIdDoi()) ? "" : concept.getIdDoi());
-            concept.setIdHandle(StringUtils.isEmpty(concept.getIdHandle()) ? "" : concept.getIdHandle());
-            concept.setConceptType(StringUtils.isEmpty(concept.getConceptType()) ? "" : concept.getConceptType());
-            concept.setModified(new Date());
-            conceptRepository.save(concept);
-            return true;
-        }
-        return false;
+        int updated = conceptRepository.updateTopConcept(idConcept, idThesaurus, isTopConcept);
+        return updated > 0;
     }
 
     @Transactional
@@ -702,13 +703,17 @@ public class ConceptService {
     public boolean updateNotation(String idConcept, String idThesaurus, String notation) {
 
         log.debug("Mise à jour du notation pour le concept {}", idConcept);
-        var concept = getConcept(idConcept, idThesaurus);
-        if (concept != null) {
-            concept.setNotation(notation);
-            conceptRepository.save(concept);
+        conceptRepository.updateNotation(idConcept, idThesaurus, notation);
+
+        int rowsAffected = conceptRepository.updateNotation(idConcept, idThesaurus, notation);
+
+        if (rowsAffected > 0) {
+            log.debug("Aucun concept trouvé avec cet idConcept/idThesaurus.");
             return true;
+        } else {
+            log.debug("Aucun concept trouvé avec cet idConcept/idThesaurus.");
+            return false;
         }
-        return false;
     }
 
     public boolean moveBranchFromConceptToConcept(String idConcept, List<String> idOldBTsToDelete, String idNewConceptBT,
@@ -852,7 +857,6 @@ public class ConceptService {
      * IdArk si Ark est actif
      */
     public NodeConceptExport getConceptForExport(String idConcept, String idThesaurus, boolean isCandidatExport) {
-
         NodeConceptExport nodeConceptExport = new NodeConceptExport();
 
         String htmlTagsRegEx = "<[^>]*>";
@@ -895,7 +899,7 @@ public class ConceptService {
         List<Gps> nodeGps = gpsService.findByIdConceptAndIdThesoOrderByPosition(idConcept, idThesaurus);
         if (CollectionUtils.isNotEmpty(nodeGps)) {
             nodeConceptExport.setNodeGps(nodeGps.stream().map(element -> NodeGps.builder()
-                            .position(element.getPosition())
+                            .position(element.getPosition() != null ? element.getPosition() : 0)
                             .longitude(element.getLongitude())
                             .latitude(element.getLatitude())
                             .build())
@@ -912,7 +916,7 @@ public class ConceptService {
             if (CollectionUtils.isNotEmpty(messages)) {
                 nodeConceptExport.setMessages(messages.stream().map(element -> MessageDto.builder()
                                 .msg(element.getValue())
-                                .date(new SimpleDateFormat("yyyy-MM-dd HH:mm").format(element.getDate()))
+                                .date(element.getDate())
                                 .idUser(element.getIdUser())
                                 .build())
                         .toList());
@@ -1162,8 +1166,11 @@ public class ConceptService {
 
     public List<String> getIdConceptFromDate(String idThesaurus, String dateStr) {
         try {
-            var startDate = LocalDate.parse(dateStr);
-            return conceptRepository.findConceptIdsModifiedSince(idThesaurus, startDate);
+            LocalDate localDate = LocalDate.parse(dateStr);
+            Date startDate = Date.from(
+                    localDate.atStartOfDay(ZoneOffset.UTC).toInstant()
+            );
+            return conceptRepository.findConceptsModifiedSince(idThesaurus, startDate);
         } catch (DateTimeParseException e) {
             log.error("Format de date invalide : {}", dateStr, e);
             return Collections.emptyList();
@@ -1417,5 +1424,37 @@ public class ConceptService {
             relation.setUri(uri);
             return relation;
         }).toList();
+    }
+
+    public Map<String, String> getIdConceptsFromArkIds(Set<String> arkIds, String idTheso) {
+        if (arkIds == null || arkIds.isEmpty()) {
+            return Collections.emptyMap();
+        }
+
+        List<Object[]> list = conceptRepository.findArkIds(arkIds, idTheso);
+
+        Map<String, String> result = new HashMap<>();
+        for (Object[] row : list) {
+            String arkId = (String) row[0];
+            String idConcept = (String) row[1];
+            result.put(arkId, idConcept);
+        }
+
+        return result;
+    }
+
+    public Map<String, String> getArkIdsFromIdConcepts(Set<String> idConcepts, String idTheso) {
+        if (idConcepts == null || idConcepts.isEmpty()) {
+            return Collections.emptyMap();
+        }
+
+        List<Object[]> list = conceptRepository.findArkFromIdConcepts(idConcepts, idTheso);
+        Map<String, String> result = new HashMap<>();
+        for (Object[] row : list) {
+            String idConcept = (String) row[0];
+            String idArk = (String) row[1];
+            result.put(idConcept, idArk);
+        }
+        return result;
     }
 }

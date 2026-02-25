@@ -17,6 +17,7 @@ import lombok.Setter;
 import org.apache.commons.lang3.ObjectUtils;
 import org.apache.commons.lang3.StringUtils;
 import org.primefaces.PrimeFaces;
+import org.springframework.security.crypto.password.PasswordEncoder;
 
 
 @Getter
@@ -29,6 +30,7 @@ public class ModifyUserBean implements Serializable {
     private final MyProjectBean myProjectBean;
     private final SuperAdminBean superAdminBean;
     private final UserService userService;
+    private final PasswordEncoder passwordEncoder;
 
     private User nodeUser;
     private String passWord1, passWord2;
@@ -95,29 +97,45 @@ public class ModifyUserBean implements Serializable {
         userService.saveUser(nodeUser);
         MessageUtils.showInformationMessage("Utilisateur changé avec succès");
         superAdminBean.init();
-    }     
-    
-    public void updatePassword(){
+    }
 
-        if(StringUtils.isEmpty(passWord1)) {
+    public boolean updatePassword() {
+
+        if (StringUtils.isEmpty(passWord1)) {
             MessageUtils.showErrorMessage("Un mot de passe est obligatoire");
-            return;              
+            return false;
         }
 
-        if(StringUtils.isEmpty(passWord2)) {
+        if (StringUtils.isEmpty(passWord2)) {
             MessageUtils.showErrorMessage("Un mot de passe est obligatoire");
-            return;              
+            return false;
         }
 
-        if(!passWord1.equals(passWord2)) {
+        if (!passWord1.equals(passWord2)) {
             MessageUtils.showErrorMessage("Mot de passe non identique");
-            return;              
+            return false;
         }
 
-        nodeUser.setPassword(MD5Password.getEncodedPassword(passWord2));
+        if (!passWord1.matches(".*[A-Z].*") ||
+                !passWord1.matches(".*[a-z].*") ||
+                !passWord1.matches(".*\\d.*") ||
+                !passWord1.matches(".*[^A-Za-z\\d].*")) {
+            MessageUtils.showErrorMessage("Le mot de passe doit contenir au moins 8 caractères, une majuscule, une minuscule, un chiffre et un caractère spécial");
+            return false;
+        }
+
+        // On encode le mot de passe avec BCrypt
+        String encodedPassword = passwordEncoder.encode(passWord2);
+        nodeUser.setPassword(encodedPassword);
+
+        // Sauvegarde
         userService.saveUser(nodeUser);
+
         MessageUtils.showInformationMessage("Mot de passe changé avec succès");
+
+        // Rafraîchir la sélection ou l'affichage si nécessaire
         selectUser(nodeUser.getId());
+        return true;
     }
 
     public void updateApiKey() {

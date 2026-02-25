@@ -132,6 +132,13 @@ public class NonPreferredTermService {
     }
 
     @Transactional
+    public void deleteEMByIdTermAndLangAndLexical(String idTerm, String idThesaurus, String idLang, String lexicalValue) {
+
+        log.debug("Suppression du terme id {} (langue : {} et thésaurus id {} et lexicalValue {})", idTerm, idLang, idThesaurus, lexicalValue);
+        nonPreferredTermRepository.deleteByIdThesaurusAndIdTermAndLangAndLexicalValue(idThesaurus, idTerm, idLang, lexicalValue);
+    }
+
+    @Transactional
     public void deleteEMByIdTermAndLang(String idTerm, String idThesaurus, String idLang) {
 
         log.debug("Suppression du terme id {} (langue : {} et thésaurus id {})", idTerm, idLang, idThesaurus);

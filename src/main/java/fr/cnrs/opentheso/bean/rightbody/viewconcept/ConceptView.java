@@ -444,9 +444,10 @@ public class ConceptView implements Serializable {
 
     private void logConcept(){
         String ipAddress = ipAddressService.getClientIpAddress();
-        log.info("Concept: {}, identifier: {}, Thesaurus: {}, Idt: {}, IP: {}",
-                (nodeFullConcept.getPrefLabel() == null ? "" : nodeFullConcept.getPrefLabel().getLabel()),
-                (nodeFullConcept.getPrefLabel() == null ? "(" + nodeFullConcept.getIdentifier() + ")" : nodeFullConcept.getPrefLabel().getId()),
+        log.info("Concept: {}, Langue: {}, identifier: {}, Thesaurus: {}, Idt: {}, IP: {}",
+                (nodeFullConcept.getPrefLabel() == null ? "(" + nodeFullConcept.getIdentifier() + ")" : nodeFullConcept.getPrefLabel().getLabel()),
+                (nodeFullConcept.getPrefLabel() == null ? selectedTheso.getCurrentLang() : nodeFullConcept.getPrefLabel().getIdLang()),
+                nodeFullConcept.getIdentifier(),
                 selectedTheso.getThesoName(),
                 selectedTheso.getCurrentIdTheso(),
                 ipAddress);

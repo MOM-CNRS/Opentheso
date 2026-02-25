@@ -38,7 +38,18 @@
                     <h:outputText value="#{langueBean.getMsg('menu.password')} *" />
                 </div>
                 <div class="col-7">
-                    <p:password value="#{newUserBean.passWord1}" style="width: 100%" autocomplete="off"/>
+                    <p:password id="password1" value="#{newUserBean.passWord1}"
+                                style="width:100%" autocomplete="off"
+                                feedback="true"
+                                promptLabel="#{langueBean.getMsg('password.prompt')}"
+                                weakLabel="#{langueBean.getMsg('password.weak')}"
+                                goodLabel="#{langueBean.getMsg('password.good')}"
+                                strongLabel="#{langueBean.getMsg('password.strong')}">
+
+                        <f:validator validatorId="passwordValidator"/>
+                    </p:password>
+
+                    <p:message for="password1"/>
                 </div>
             </div>
 

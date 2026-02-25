@@ -63,6 +63,7 @@ public class MoveConcept implements Serializable {
         idConceptsToMove = new ArrayList<>();
         this.idConceptsToMove = idConcepts1;
         this.idThesoFrom = idThesoFrom;
+        nodeSearchSelected = null;
     }
     
     public void initForConcept(String idConcept, String idThesoFrom) {
@@ -71,6 +72,7 @@ public class MoveConcept implements Serializable {
         this.idConceptsToMove = conceptService.getIdsOfBranch(idConcept, selectedTheso.getCurrentIdTheso());
         this.idThesoFrom = idThesoFrom;
         this.idThesoTo = null;
+        nodeSearchSelected = null;
     }
 
     /**
@@ -84,7 +86,7 @@ public class MoveConcept implements Serializable {
         }
 
         for (String idConcept : idConceptsToMove) {
-            if(conceptService.moveConceptToAnotherThesaurus(idConcept, idThesoFrom, idThesoTo)) {
+            if(!conceptService.moveConceptToAnotherThesaurus(idConcept, idThesoFrom, idThesoTo)) {
                 MessageUtils.showErrorMessage(" Le déplacement a échoué !");
                 return;
             }
@@ -114,7 +116,7 @@ public class MoveConcept implements Serializable {
         List<String> lisIdGroup;
         var nodePreference = preferenceService.getThesaurusPreferences(idThesoTo);
         for (String idConcept : idConceptsToMove) {
-            if(conceptService.moveConceptToAnotherThesaurus(idConcept, idThesoFrom, idThesoTo)) {
+            if(!conceptService.moveConceptToAnotherThesaurus(idConcept, idThesoFrom, idThesoTo)) {
                 MessageUtils.showErrorMessage("Le déplacement a échoué !");
                 return;
             }
@@ -171,7 +173,7 @@ public class MoveConcept implements Serializable {
         }
 
         return authorizedThesaurusAsAdmin.stream()
-                .filter(idThesaurus -> selectedTheso.getCurrentIdTheso().equalsIgnoreCase(idThesaurus))
+                .filter(idThesaurus -> !selectedTheso.getCurrentIdTheso().equalsIgnoreCase(idThesaurus))
                 .map(idThesaurus -> NodeIdValue.builder()
                         .id(idThesaurus)
                         .value(thesaurusService.getTitleOfThesaurus(idThesaurus, preferenceService.getWorkLanguageOfThesaurus(idThesaurus)))

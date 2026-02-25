@@ -116,7 +116,7 @@ public class OpenthesoHelper {
         SKOSXmlDocument sxd;
         try {
             inputStream = new ByteArrayInputStream(xmlDatas.getBytes("UTF-8"));
-            sxd = new ReadRDF4JNewGen().readRdfFlux(inputStream, RDFFormat.RDFXML, idLang);
+            sxd = new ReadRDF4JNewGen().readRdfFlux(inputStream, RDFFormat.RDFXML, idLang, new StringBuffer());
 
             for (SKOSResource resource : sxd.getConceptList()) {
                 NodeAlignment na = new NodeAlignment();

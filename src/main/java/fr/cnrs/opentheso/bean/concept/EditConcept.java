@@ -1,6 +1,8 @@
 package fr.cnrs.opentheso.bean.concept;
 
+import fr.cnrs.opentheso.bean.setting.PreferenceBean;
 import fr.cnrs.opentheso.entites.ConceptDcTerm;
+import fr.cnrs.opentheso.entites.Preferences;
 import fr.cnrs.opentheso.entites.PreferredTerm;
 import fr.cnrs.opentheso.models.concept.DCMIResource;
 import fr.cnrs.opentheso.models.concept.NodeConceptType;
@@ -13,6 +15,7 @@ import fr.cnrs.opentheso.bean.menu.theso.RoleOnThesaurusBean;
 import fr.cnrs.opentheso.bean.menu.theso.SelectedTheso;
 import fr.cnrs.opentheso.bean.menu.users.CurrentUser;
 import fr.cnrs.opentheso.bean.rightbody.viewconcept.ConceptView;
+import fr.cnrs.opentheso.models.terms.Term;
 import fr.cnrs.opentheso.repositories.ConceptDcTermRepository;
 import fr.cnrs.opentheso.repositories.NonPreferredTermRepository;
 import fr.cnrs.opentheso.repositories.PreferredTermRepository;
@@ -27,6 +30,7 @@ import fr.cnrs.opentheso.services.RelationService;
 import fr.cnrs.opentheso.services.SearchService;
 import fr.cnrs.opentheso.services.TermService;
 import fr.cnrs.opentheso.services.exports.csv.CsvWriteHelper;
+import fr.cnrs.opentheso.services.security.CryptoService;
 import fr.cnrs.opentheso.utils.MessageUtils;
 import fr.cnrs.opentheso.services.HandleService;
 
@@ -82,6 +86,10 @@ public class EditConcept implements Serializable {
     private final ArkService arkService;
     private final ConceptTypeService conceptTypeService;
     private final SearchService searchService;
+    private final SelectedTheso selectedThesaurus;
+    private final CryptoService cryptoService;
+
+    private final PreferenceBean preferenceBean;
 
     private String prefLabel, source, notation, selectedConceptType;
     private boolean applyToBranch, reciprocalRelationship, isCreated, duplicate, forDelete, inProgress, replacedByRTRelation;
@@ -103,7 +111,7 @@ public class EditConcept implements Serializable {
         selectedConceptType = null;
         nodeIdValues = null;
         nodeConceptTypeToDelete = null;
-        nodeConceptTypeToAdd = null;
+        nodeConceptTypeToAdd = new NodeConceptType();
     }
 
     public void reset(String label) {
@@ -116,7 +124,7 @@ public class EditConcept implements Serializable {
         inProgress = false;
         nodeIdValues = null;
         nodeConceptTypeToDelete = null;
-        nodeConceptTypeToAdd = null;
+        nodeConceptTypeToAdd = new NodeConceptType();
 
         nodeReplaceBy = conceptView.getNodeConcept().getReplacedBy();
     }
@@ -128,7 +136,7 @@ public class EditConcept implements Serializable {
         applyToBranch = false;
         reciprocalRelationship = false;
         nodeConceptTypeToDelete = null;
-        nodeConceptTypeToAdd = null;
+        nodeConceptTypeToAdd = new NodeConceptType();
     }
 
     public void removeAllConceptFromCollection(String idGroup){
@@ -272,26 +280,37 @@ public class EditConcept implements Serializable {
         var preferredTerm = preferredTermRepository.findByIdThesaurusAndIdConcept(idTheso, conceptView.getNodeConcept().getConcept().getIdConcept());
         String idTerm = preferredTerm.map(PreferredTerm::getIdTerm).orElse(null);
         if (idTerm == null) {
-            MessageUtils.showErrorMessage("Erreur de cohérence de BDD !!");
-            PrimeFaces.current().ajax().update("messageIndex");
-            return;
-        }
+            // le concept n'a aucun label, on lui en ajoute un
 
-        // on vérifie si la tradcution existe, on la met à jour, sinon, on en ajoute une
-        if (termService.isTermExistInLangAndThesaurus(idTerm, idTheso, idLang)) {
-            termService.updateTermTraduction(prefLabel, idTerm, idLang, idTheso, idUser);
-        } else {
-            var term = fr.cnrs.opentheso.models.terms.Term.builder()
-                    .lexicalValue(prefLabel)
-                    .idTerm(idTerm)
+            var terme = Term.builder()
+                    .idThesaurus(idTheso)
                     .lang(idLang)
-                    .idThesaurus(selectedTheso.getCurrentIdTheso())
-                    .source("")
                     .status("")
-                    .created(new Date())
-                    .modified(new Date())
+                    .lexicalValue(prefLabel.trim())
+                    .source(StringUtils.isEmpty(source) ? "" : source)
                     .build();
-            termService.addTermTraduction(term, idUser);
+            termService.addTerm(terme, conceptView.getNodeConcept().getConcept().getIdConcept(), idUser);
+            /*MessageUtils.showErrorMessage("Erreur de cohérence de BDD !!");
+            PrimeFaces.current().ajax().update("messageIndex");
+            return;*/
+        } else {
+
+            // on vérifie si la tradcution existe, on la met à jour, sinon, on en ajoute une
+            if (termService.isTermExistInLangAndThesaurus(idTerm, idTheso, idLang)) {
+                termService.updateTermTraduction(prefLabel, idTerm, idLang, idTheso, idUser);
+            } else {
+                var term = fr.cnrs.opentheso.models.terms.Term.builder()
+                        .lexicalValue(prefLabel)
+                        .idTerm(idTerm)
+                        .lang(idLang)
+                        .idThesaurus(selectedTheso.getCurrentIdTheso())
+                        .source("")
+                        .status("")
+                        .created(new Date())
+                        .modified(new Date())
+                        .build();
+                termService.addTermTraduction(term, idUser);
+            }
         }
 
         conceptService.updateDateOfConcept(idTheso, conceptView.getNodeConcept().getConcept().getIdConcept(), idUser);
@@ -336,8 +355,12 @@ public class EditConcept implements Serializable {
         forDelete = true;
     }
 
-    public void deleteConcept(String idThesaurus, int idUser) {
-
+    public void deleteConcept() {
+        if(!selectedTheso.getCurrentIdTheso().equalsIgnoreCase(conceptView.getNodeConcept().getConcept().getIdThesaurus())) {
+            MessageUtils.showWarnMessage("Attention !! un autre onglet utilise un autre thésaurus, veuillez le fermer pour éviter les erreurs");
+            PrimeFaces.current().executeScript("window.location.reload();");
+            return;
+        }
         if (roleOnThesaurusBean.getNodePreference() == null) {
             MessageUtils.showErrorMessage("Le thésaurus n'a pas de préférences !");
             return;
@@ -345,13 +368,15 @@ public class EditConcept implements Serializable {
 
         if (conceptView.getNodeConcept().getNodeNT().isEmpty()) {
             // suppression du concept
-            if (!conceptService.deleteConcept(conceptView.getNodeConcept().getConcept().getIdConcept(), idThesaurus)) {
+            if (!conceptService.deleteConcept(conceptView.getNodeConcept().getConcept().getIdConcept(),
+                    selectedThesaurus.getCurrentIdTheso())) {
                 MessageUtils.showErrorMessage("La suppression a échoué !!");
                 return;
             }
         } else {
             /// suppression d'une branche
-            if(!conceptService.deleteBranchConcept(conceptView.getNodeConcept().getConcept().getIdConcept(), idThesaurus)){
+            if(!conceptService.deleteBranchConcept(conceptView.getNodeConcept().getConcept().getIdConcept(),
+                    selectedThesaurus.getCurrentIdTheso())){
                 MessageUtils.showErrorMessage("La suppression a échoué, vérifier la poly-hiérarchie pour le concept");
                 return;                
             }
@@ -362,7 +387,8 @@ public class EditConcept implements Serializable {
             // si le concept en cours n'est pas celui sélectionné dans l'arbre, on se positionne sur le concept en cours dans l'arbre
             if (!((TreeNodeData) tree.getSelectedNode().getData()).getNodeId().equalsIgnoreCase(
                     conceptView.getNodeConcept().getConcept().getIdConcept())) {
-                tree.expandTreeToPath(conceptView.getNodeConcept().getConcept().getIdConcept(), idThesaurus, selectedTheso.getCurrentLang());
+                tree.expandTreeToPath(conceptView.getNodeConcept().getConcept().getIdConcept(),
+                        selectedThesaurus.getCurrentIdTheso(), selectedTheso.getCurrentLang());
             }
             TreeNode parent = tree.getSelectedNode().getParent();
             if (parent != null) {
@@ -372,7 +398,7 @@ public class EditConcept implements Serializable {
         }
 
         if (CollectionUtils.isNotEmpty(conceptView.getNodeConcept().getNodeBT())){// !conceptView.getNodeConcept().getNodeBT().isEmpty()) {
-            conceptView.getConcept(idThesaurus, conceptView.getNodeConcept().getNodeBT().get(0).getIdConcept(),
+            conceptView.getConcept(selectedThesaurus.getCurrentIdTheso(), conceptView.getNodeConcept().getNodeBT().get(0).getIdConcept(),
                     selectedTheso.getCurrentLang(), currentUser);
         }
 
@@ -535,13 +561,35 @@ public class EditConcept implements Serializable {
      */
     public void generateArk() {
         ArrayList<String> idConcepts = new ArrayList<>();
+        if(roleOnThesaurusBean.getNodePreference() == null) return;
         idConcepts.add(conceptView.getNodeConcept().getConcept().getIdConcept());
-        generateArkIds(idConcepts);
+        if(roleOnThesaurusBean.getNodePreference().isUseOpenArk()) {
+            String apiKeyOpenArk = cryptoService.decrypt(roleOnThesaurusBean.getNodePreference().getApiKeyOpenArk());
+            generateOpenArkIds(idConcepts, apiKeyOpenArk, roleOnThesaurusBean.getNodePreference());
+        } else {
+            generateArkIds(idConcepts);
+        }
 
         conceptView.getConcept(conceptView.getNodeConcept().getConcept().getIdThesaurus(),
                 conceptView.getNodeConcept().getConcept().getIdConcept(),
                 conceptView.getSelectedLang(), currentUser);
     }
+
+    public void deleteArkWithOpenArk() {
+        ArrayList<String> idConcepts = new ArrayList<>();
+        if(roleOnThesaurusBean.getNodePreference() == null) return;
+        idConcepts.add(conceptView.getNodeConcept().getConcept().getIdConcept());
+        if(roleOnThesaurusBean.getNodePreference().isUseOpenArk()) {
+            String apiKeyOpenArk = cryptoService.decrypt(roleOnThesaurusBean.getNodePreference().getApiKeyOpenArk());
+            arkService.deleteArkWithOpenArk(conceptView.getNodeConcept().getConcept().getIdThesaurus(),
+                    idConcepts, apiKeyOpenArk, roleOnThesaurusBean.getNodePreference());
+        }
+
+        conceptView.getConcept(conceptView.getNodeConcept().getConcept().getIdThesaurus(),
+                conceptView.getNodeConcept().getConcept().getIdConcept(),
+                conceptView.getSelectedLang(), currentUser);
+    }
+
 
     /**
      * permet de générer les identifiants Ark pour les concepts qui n'en ont pas
@@ -632,7 +680,19 @@ public class EditConcept implements Serializable {
         conceptView.getConcept(conceptView.getNodeConcept().getConcept().getIdThesaurus(),
                 conceptView.getNodeConcept().getConcept().getIdConcept(),
                 conceptView.getSelectedLang(), currentUser);
-    }    
+    }
+
+    private List<NodeIdValue> generateOpenArkIds(List<String> idConcepts, String apiKeyOpenArk, Preferences preference) {
+        nodeIdValues = conceptAddService.generateOpenArkId(selectedTheso.getCurrentIdTheso(),
+                idConcepts, selectedTheso.getCurrentLang(), preference, apiKeyOpenArk);
+        if(nodeIdValues != null) {
+            MessageUtils.showInformationMessage("L'opération est terminée avec succès !!");
+        }
+        /*else {
+            MessageUtils.showInformationMessage("L'opération est terminée, vérifier le fichier de résultat téléchargé !!");
+        }*/
+        return nodeIdValues;
+    }
 
     private List<NodeIdValue> generateArkIds(List<String> idConcepts) {
         nodeIdValues = conceptAddService.generateArkId(selectedTheso.getCurrentIdTheso(), idConcepts, selectedTheso.getCurrentLang(), null);

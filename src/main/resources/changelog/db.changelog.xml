@@ -153,21 +153,21 @@
     <include file="/changelog/v25.02/25-02_02.xml"/>
     <include file="/changelog/v25.02/25-02_03.xml"/>
     <include file="/changelog/v25.04/25-04_01.xml"/>
-    <include file="/changelog/v25.04/25-04_02.sql"/>
+    <include file="/changelog/v25.04/25-04_02_updated.sql"/>
     <changeSet id="25.05.1" author="Miled">
         <sqlFile path="../changelog/v25.05/25-05_01.sql" relativeToChangelogFile="true" splitStatements="false"/>
     </changeSet>
     <include file="/changelog/v25.05/25-05_02.xml"/>
     <include file="/changelog/v25.05/25-05_03.sql"/>
     <include file="/changelog/v25.08/25-08_01.sql"/>
-    <include file="/changelog/v25.05/25-08_19.sql"/>
+    <include file="/changelog/v25.05/25-08_19_updated.sql"/>
     <include file="/changelog/v25.08/25-08_22.sql"/>
     <include file="/changelog/v25.08/25-08_25.sql"/>
     <include file="/changelog/v25.08/25-08_27.sql"/>
     <include file="/changelog/v25.08/25-08_28.sql"/>
     <include file="/changelog/v25.08/25-08_29.sql"/>
-    <include file="/changelog/v25.08/25-09_01.sql"/>
-    <include file="/changelog/v25.08/25-09_02.sql"/>
+    <include file="/changelog/v25.08/25-09_01_updated.sql"/>
+    <include file="/changelog/v25.08/25-09_02_updated.sql"/>
     <include file="/changelog/v25.08/25-09_03.sql"/>
     <changeSet id="25.10.1" author="Miled">
         <sqlFile path="../changelog/v25.10/25-10_01.sql" relativeToChangelogFile="true" splitStatements="false"/>
@@ -175,4 +175,43 @@
     <changeSet id="25.10.2" author="Miled">
         <sqlFile path="../changelog/v25.10/25-10_02.sql" relativeToChangelogFile="true" splitStatements="false"/>
     </changeSet>
+    <changeSet id="25.10.4" author="Miled">
+        <sqlFile path="../changelog/v25.10/25-10_04.sql" relativeToChangelogFile="true" splitStatements="false"/>
+    </changeSet>
+    <changeSet id="25.10.5" author="Miled">
+        <sqlFile path="v25.10/25-10_05.sql" relativeToChangelogFile="true" splitStatements="false"/>
+    </changeSet>
+    <changeSet id="25.10.6" author="Miled">
+        <sqlFile path="v25.10/25-10_06.sql" relativeToChangelogFile="true" splitStatements="false"/>
+    </changeSet>
+    <changeSet id="25.11.5" author="Miled">
+        <sqlFile path="v25.10/25-11_06.sql" relativeToChangelogFile="true" splitStatements="false"/>
+    </changeSet>
+    <changeSet id="25.11.7" author="Miled">
+        <sqlFile path="v25.11/25-11_07.sql" relativeToChangelogFile="true" splitStatements="false"/>
+    </changeSet>
+    <changeSet id="25.11.10" author="Miled">
+        <sqlFile path="v25.11/25-11_10.sql" relativeToChangelogFile="true" splitStatements="false"/>
+    </changeSet>
+    <changeSet id="25.11.9" author="Miled">
+        <sqlFile path="v25.11/25-11_09.sql" relativeToChangelogFile="true" splitStatements="false"/>
+    </changeSet>
+    <changeSet id="25.12.1" author="Miled">
+        <sqlFile path="v25.11/25-12_01.sql" relativeToChangelogFile="true" splitStatements="false"/>
+    </changeSet>
+
+    <changeSet id="26.01.1" author="Miled">
+        <sqlFile path="v26.01/26-01_01.sql" relativeToChangelogFile="true" splitStatements="false"/>
+    </changeSet>
+
+    <changeSet id="26.01.2" author="Miled">
+        <sqlFile path="v26.01/26-01_02.sql" relativeToChangelogFile="true" splitStatements="false"/>
+    </changeSet>
+    <changeSet id="26.01.3" author="Miled">
+        <sqlFile path="v26.01/26-01_03.sql" relativeToChangelogFile="true" splitStatements="false"/>
+    </changeSet>
+    <changeSet id="26.01.4" author="Miled">
+        <sqlFile path="v26.01/26-01_04.sql" relativeToChangelogFile="true" splitStatements="false"/>
+    </changeSet>
+    <include file="/changelog/v26.02/26_02_01.xml"/>
 </databaseChangeLog>

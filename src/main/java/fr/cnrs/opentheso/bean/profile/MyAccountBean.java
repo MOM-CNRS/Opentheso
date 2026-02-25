@@ -20,6 +20,7 @@ import lombok.extern.slf4j.Slf4j;
 import org.apache.commons.lang3.ObjectUtils;
 import org.apache.commons.lang3.StringUtils;
 import org.primefaces.PrimeFaces;
+import org.springframework.security.crypto.password.PasswordEncoder;
 
 /**
  * Bean pour la gestion des actions de compte utilisateur telles que la mise à jour des informations de profil et des clés API.
@@ -38,6 +39,7 @@ public class MyAccountBean implements Serializable {
     private final CurrentUser currentUser;
     private final UserService userService;
     private final ApiKeyService apiKeyService;
+    private final PasswordEncoder passwordEncoder;
 
     private NodeUser nodeUser;
     private String passWord1, passWord2, displayedKey;
@@ -108,12 +110,7 @@ public class MyAccountBean implements Serializable {
 
     public void updatePassword() {
 
-        if (StringUtils.isEmpty(passWord1)) {
-            MessageUtils.showErrorMessage("Un mot de passe est obligatoire !!!");
-            return;
-        }
-
-        if (StringUtils.isEmpty(passWord2)) {
+        if (StringUtils.isEmpty(passWord1) || StringUtils.isEmpty(passWord2)) {
             MessageUtils.showErrorMessage("Un mot de passe est obligatoire !!!");
             return;
         }
@@ -123,8 +120,18 @@ public class MyAccountBean implements Serializable {
             return;
         }
 
-        if (userService.updateUserInformation(currentUser.getNodeUser().getIdUser(), null,
-                MD5Password.getEncodedPassword(passWord2), null, null)) {
+        // Encode le mot de passe avec BCrypt
+        String encodedPassword = passwordEncoder.encode(passWord2);
+
+        boolean result = userService.updateUserInformation(
+                currentUser.getNodeUser().getIdUser(),
+                null,
+                encodedPassword,
+                null,
+                null
+        );
+
+        if (result) {
             MessageUtils.showInformationMessage("Mot de passe changé avec succès");
             PrimeFaces.current().ajax().update("containerIndex");
         } else {

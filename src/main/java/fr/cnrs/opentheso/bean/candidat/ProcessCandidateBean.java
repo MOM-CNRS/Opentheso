@@ -107,7 +107,9 @@ public class ProcessCandidateBean implements Serializable {
         var nodeUser = userService.getUser(selectedCandidate.getCreatedById());
 
         if(nodeUser != null && nodeUser.isAlertMail()) {
-            new Thread(() -> sendMailCandidateAccepted(nodeUser.getMail(), selectedCandidate)).start();
+            // provoque une erreur d'Objets NULL
+            //new Thread(() -> sendMailCandidateAccepted(nodeUser.getMail(), selectedCandidate)).start();
+            sendMailCandidateAccepted(nodeUser.getMail(), selectedCandidate);
         }
         
         generateArk(roleOnThesaurus.getNodePreference(), selectedCandidate);
@@ -122,7 +124,7 @@ public class ProcessCandidateBean implements Serializable {
                 .idThesaurus(selectedCandidate.getIdThesaurus())
                 .build());
 
-        MessageUtils.showInformationMessage("Candidat inséré avec succès");
+    //    MessageUtils.showInformationMessage("Candidat inséré avec succès");
 
         reset(null);
 
@@ -133,6 +135,7 @@ public class ProcessCandidateBean implements Serializable {
         tree.loadConceptTree();
 
         PrimeFaces.current().ajax().update("containerIndex:tabViewCandidat");
+        MessageUtils.showInformationMessage("Candidat inséré avec succès");
     }
     
     private void generateArk(Preferences nodePreference, CandidatDto selectedCandidateTemp){

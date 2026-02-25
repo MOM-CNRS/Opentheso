@@ -217,8 +217,8 @@ public class NarrowerBean implements Serializable {
 
         return idConcept.equalsIgnoreCase(idConceptToAdd)
                 || relationService.isConceptHaveRelationRT(idConcept, idConceptToAdd, idThesaurus)
-                || relationService.isConceptHaveRelationNTorBT(idConcept, idConceptToAdd, idThesaurus)
-                || relationService.isConceptHaveBrother(idConcept, idConceptToAdd, idThesaurus);
+                || relationService.isConceptHaveRelationNTorBT(idConcept, idConceptToAdd, idThesaurus);
+             //   || relationService.isConceptHaveBrother(idConcept, idConceptToAdd, idThesaurus);
     }
 
     private void applyRelationToBranch__(String idConceptParent, String relation, String inverseRelation, int idUser) {

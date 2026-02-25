@@ -7,8 +7,6 @@ import lombok.AllArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
 import org.apache.commons.lang3.StringUtils;
 import org.springframework.stereotype.Service;
-import org.springframework.transaction.annotation.Transactional;
-
 
 @Slf4j
 @Service
@@ -16,7 +14,6 @@ import org.springframework.transaction.annotation.Transactional;
 public class PreferenceService {
 
     private final PreferencesRepository preferencesRepository;
-
 
     public void initPreferences(String idThesaurus, String workLanguage) {
 
@@ -87,7 +84,7 @@ public class PreferenceService {
         return preference.get();
     }
 
-    public void setIdentifierFlags(String idThesaurus, boolean useArk, boolean useArkLocal, boolean useHandle) {
+    public void setIdentifierFlags(String idThesaurus, boolean useArk, boolean useArkLocal, boolean useHandle, boolean useOpenArk) {
 
         log.debug("Mise à jour des flags d'identifier du thésaurus {}", idThesaurus);
         var preference = preferencesRepository.findByIdThesaurus(idThesaurus);
@@ -100,6 +97,7 @@ public class PreferenceService {
         preference.get().setUseArk(useArk);
         preference.get().setUseArkLocal(useArkLocal);
         preference.get().setUseHandle(useHandle);
+        preference.get().setUseOpenArk(useOpenArk);
         preferencesRepository.save(preference.get());
     }
 

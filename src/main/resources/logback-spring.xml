@@ -9,6 +9,8 @@
         </encoder>
     </appender>
 
+
+
     <!-- Définir un appender pour les fichiers de logs avec rotation et compression -->
     <appender name="FILE" class="ch.qos.logback.core.rolling.RollingFileAppender">
         <!-- Le fichier log du jour en cours -->
@@ -20,8 +22,10 @@
             <!-- Nom des fichiers avec rotation journalière et compression -->
             <fileNamePattern>${LOG_PATH:-./logs}/opentheso-%d{yyyy-MM}.%i.log.gz</fileNamePattern>
 
+
             <!-- Taille maximale d'un fichier avant rotation -->
-            <maxFileSize>200mb</maxFileSize>
+            <maxFileSize>400mb</maxFileSize>
+
 
             <!-- Nombre maximum de jours à conserver -->
             <maxHistory>12</maxHistory>
@@ -29,6 +33,7 @@
             <!-- Taille totale maximale des logs conservés -->
             <totalSizeCap>4GB</totalSizeCap>
         </rollingPolicy>
+
 
         <!-- Format des logs dans le fichier  -->
         <encoder>
@@ -38,15 +43,12 @@
         </encoder>
     </appender>
 
+    <logger name="org.springframework.web.servlet.resource.NoResourceFoundException" level="ERROR" additivity="false" />
+
     <!-- Définir le niveau de log pour les environnements -->
 
     <!-- Configurer le niveau de log global -->
     <root level="INFO">  <!-- Changer de DEBUG à INFO ou ERROR selon vos besoins -->
-        <appender-ref ref="CONSOLE" />
-        <appender-ref ref="FILE" />
-    </root>
-
-    <root level="ERROR">  <!-- Changer de DEBUG à INFO ou ERROR selon vos besoins -->
         <appender-ref ref="CONSOLE" />
         <appender-ref ref="FILE" />
     </root>
@@ -61,7 +63,7 @@
 
     <!-- Configurer les logs pour le profil 'prod' -->
     <springProfile name="prod">
-        <root level="ERROR">
+        <root level="INFO">
             <appender-ref ref="CONSOLE" />
             <appender-ref ref="FILE" />
         </root>

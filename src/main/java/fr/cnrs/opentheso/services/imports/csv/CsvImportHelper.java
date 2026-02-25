@@ -243,7 +243,7 @@ public class CsvImportHelper {
         }
         
         if (StringUtils.isEmpty(formatDate)) {
-            formatDate = "yyyy-mm-dd";
+            formatDate = "yyyy-MM-dd";
         }
         Date created = null;
         Date modified = null;

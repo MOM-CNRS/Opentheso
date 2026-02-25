@@ -1,0 +1,1 @@
+ALTER TABLE preferences ADD COLUMN koha_link BOOLEAN DEFAULT FALSE;

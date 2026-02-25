@@ -21,6 +21,15 @@ public interface PropositionModificationRepository extends JpaRepository<Proposi
 
     @Modifying
     @Transactional
+    void deleteAllByIdConceptAndIdTheso(String idConcept, String idThesaurus);
+
+    @Modifying
+    @Transactional
+    @Query("UPDATE PropositionModification pm SET pm.idTheso = :newThesaurus WHERE pm.idTheso = :oldThesaurus")
+    void updateThesaurusId(@Param("newThesaurus") String newThesaurus, @Param("oldThesaurus") String oldThesaurus);
+
+    @Modifying
+    @Transactional
     @Query("UPDATE PropositionModification pm SET pm.status = :newStatus WHERE pm.id = :idProposition")
     void updateStatus(@Param("idProposition") Integer idProposition, @Param("newStatus") String newStatus);
 

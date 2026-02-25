@@ -20,6 +20,7 @@ import fr.cnrs.opentheso.services.ThesaurusService;
 import java.io.IOException;
 
 import fr.cnrs.opentheso.utils.MessageUtils;
+import jakarta.annotation.PostConstruct;
 import jakarta.inject.Named;
 import jakarta.enterprise.context.SessionScoped;
 import java.io.Serializable;
@@ -27,13 +28,15 @@ import java.util.ArrayList;
 import java.util.Collections;
 import java.util.List;
 import java.util.stream.Collectors;
+
+import lombok.Data;
 import lombok.RequiredArgsConstructor;
 import org.apache.commons.lang3.ObjectUtils;
 import org.apache.commons.collections4.CollectionUtils;
 import org.apache.commons.lang3.StringUtils;
 import org.primefaces.PrimeFaces;
 
-
+@Data
 @Named(value = "searchBean")
 @SessionScoped
 @RequiredArgsConstructor
@@ -70,7 +73,6 @@ public class SearchBean implements Serializable {
     private boolean withNote;
     private boolean withId;
     private boolean isSearchInSpecificThesaurus;
-
 
     public void clear() {
         if (listResultAutoComplete != null) {
@@ -123,6 +125,8 @@ public class SearchBean implements Serializable {
 
         selectedItem = false;
         listResultAutoComplete = new ArrayList<>();
+        if(StringUtils.isEmpty(value)) return List.of();
+        value = value.trim();
 
         if (selectedTheso.getCurrentIdTheso() != null && selectedTheso.getSelectedLang() != null) {
 
@@ -141,8 +145,12 @@ public class SearchBean implements Serializable {
                 listResultAutoComplete = searchService.searchByAllId(value, idLang, selectedTheso.getCurrentIdTheso(), isCollectionPrivate);
             }
 
+            if (withNote) {
+                listResultAutoComplete = searchService.searchNotes(value, idLang, selectedTheso.getCurrentIdTheso());
+            }
+
             if (!withId && !withNote && !indexMatch && !exactMatch) {
-                listResultAutoComplete = searchService.searchElastic(value, currentUser.getNodeUser());
+                listResultAutoComplete = searchService.searchFullTextElastic(value, idLang, selectedTheso.getCurrentIdTheso(), isCollectionPrivate);
             }
         }
 
@@ -602,15 +610,6 @@ public class SearchBean implements Serializable {
     public void setNodeConceptSearchs(ArrayList<NodeConceptSearch> nodeConceptSearchs) {
         this.nodeConceptSearchs = nodeConceptSearchs;
     }
-
-    public String getSearchValue() {
-        return searchValue;
-    }
-
-    public void setSearchValue(String searchValue) {
-        this.searchValue = searchValue;
-    }
-
     public boolean isIsSelectedItem() {
         return selectedItem;
     }

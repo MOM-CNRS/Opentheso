@@ -94,7 +94,7 @@ public class TraductionBean implements Serializable {
         }
 
         if (CollectionUtils.isEmpty(nodeLangsFiltered)) {
-            log.warn(languageBean.getMsg("concept.translate.isTranslatedIntoAllLang"));
+            log.debug(languageBean.getMsg("concept.translate.isTranslatedIntoAllLang"));
             MessageUtils.showInformationMessage(languageBean.getMsg("concept.translate.isTranslatedIntoAllLang"));
         } else {
             PrimeFaces.current().executeScript("PF('addTraduction').show();");

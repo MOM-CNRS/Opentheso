@@ -7,7 +7,6 @@
     xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance"
     xsi:schemaLocation="http://xmlns.jcp.org/xml/ns/javaee http://xmlns.jcp.org/xml/ns/javaee/web-facesconfig_2_3.xsd"
     version="2.3">
-
      <application>
         <resource-bundle>
             <base-name>hikari</base-name>
@@ -61,14 +60,6 @@
         <message-bundle>language/site_ar</message-bundle>
     </application>
 
-    <filter>
-        <filter-name>PrimeFaces FileUpload Filter</filter-name>
-        <filter-class>org.primefaces.webapp.filter.FileUploadFilter</filter-class>
-    </filter>
-    <filter-mapping>
-        <filter-name>PrimeFaces FileUpload Filter</filter-name>
-        <servler-name>Faces Servlet</servler-name>
-    </filter-mapping>
     <factory>
         <exception-handler-factory>fr.cnrs.opentheso.bean.session.ViewExpiredExceptionHandlerFactory</exception-handler-factory>
     </factory>    

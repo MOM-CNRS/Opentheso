@@ -188,6 +188,15 @@
                                                                                      styleClass="edit-button rounded-button" />
                                                                 </p:column>
 
+                                                                <p:column width="10" headerText="#{langueBean.getMsg('password.reset')}" style="text-align: center">
+                                                                    <p:commandButton
+                                                                            actionListener="#{modifyUserBean.selectUser(listUser.idUser)}"
+
+                                                                            icon="pi pi-key" update="idModifyPassword"
+                                                                            oncomplete="PF('modifyPassword').show()" process="@this"
+                                                                            styleClass="edit-button rounded-button" />
+                                                                </p:column>
+
                                                                 <p:column width="10" headerText="#{langueBean.getMsg('profile.modify_roles')}" style="text-align: center">
                                                                     <p:commandButton rendered="#{currentUser.nodeUser.idUser != listUser.idUser}"
                                                                                      actionListener="#{modifyRoleBean.selectUser(listUser.idUser, listUser.idRole , myProjectBean.selectedProject)}"
@@ -294,7 +303,8 @@
 
                 <ui:include src="../dialog/profile/addExistingUserToProject.xhtml" />
 
-                <ui:include src="../dialog/profile/modifyUser.xhtml" /> 
+                <ui:include src="../dialog/profile/modifyUser.xhtml" />
+                <ui:include src="../dialog/profile/modifyPassword.xhtml" />
                 <ui:include src="../dialog/profile/modifyRole.xhtml" />  
                 <ui:include src="../dialog/profile/modifyLimitedRole.xhtml" />                
                 <ui:include src="../dialog/profile/confirmRemoveUserFromProject.xhtml" /> 

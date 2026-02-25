@@ -40,5 +40,3 @@ BEGIN
     END;
 $BODY$;
 
-ALTER FUNCTION public.opentheso_get_facets_of_concept(character varying, character varying, character varying)
-    OWNER TO postgres;

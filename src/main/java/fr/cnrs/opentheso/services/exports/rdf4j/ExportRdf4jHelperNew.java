@@ -492,7 +492,7 @@ public class ExportRdf4jHelperNew {
         sKOSResource.setProperty(SKOSProperty.CONCEPT_GROUP);
 
         //dates
-        SimpleDateFormat dateFormat = new SimpleDateFormat("yyyy-mm-dd");
+        SimpleDateFormat dateFormat = new SimpleDateFormat("yyyy-MM-dd");
         if(nodeGroupLabel.getCreated()!=null) {
             sKOSResource.addDate(dateFormat.format(nodeGroupLabel.getCreated()), SKOSProperty.CREATED);
         }

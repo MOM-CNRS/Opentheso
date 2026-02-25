@@ -1,0 +1,38 @@
+<ui:fragment xmlns="http://www.w3.org/1999/xhtml"  
+             xmlns:ui="http://java.sun.com/jsf/facelets"
+             xmlns:p="http://primefaces.org/ui"
+             xmlns:h="http://xmlns.jcp.org/jsf/html"
+             xmlns:f="http://xmlns.jcp.org/jsf/core">
+
+    <p:dialog id="idDeleteArk" header="#{langueBean.getMsg('rightbody.concept.delete_ark')}" widgetVar="deleteArk"
+              width="450" showEffect="fade" modal="true" resizable="false" position="top" style="margin-top: 30px" >
+
+        <div class="row">
+            <div class="col-12" >
+                <h:outputText value="#{langueBean.getMsg('rightbody.concept.delete_ark')} #{langueBean.getMsg('search.for')} : "
+                              style="font-size: 13px; margin-left: 10px; color: black;"/>
+
+                <h:outputText value=" #{conceptView.nodeConcept.term.lexicalValue}"
+                              style="font-size: 13px; color: #FF7979;">
+                </h:outputText >
+            </div>
+        </div>
+
+        <p:spacer/>
+
+        <div class="row">
+            <div class="col-12" style="text-align: right">
+                <p:commandButton value="#{langueBean.getMsg('candidat.close')}"
+                                 styleClass="ui-button-secondary button" icon="fas fa-undo-alt"
+                                 style="margin-right: 10px"
+                                 oncomplete="PF('deleteArk').hide();" />
+
+                <p:commandButton value="#{langueBean.getMsg('candidat.remove')}"
+                                 styleClass="ui-button-success" icon="pi pi-check"
+                                 update="containerIndex"
+                                 actionListener="#{editConcept.deleteArkWithOpenArk()}" oncomplete="PF('deleteArk').hide();"/>
+            </div>
+        </div>
+
+    </p:dialog> 
+</ui:fragment>

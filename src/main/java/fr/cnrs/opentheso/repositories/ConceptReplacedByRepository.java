@@ -35,10 +35,12 @@ public interface ConceptReplacedByRepository extends JpaRepository<ConceptReplac
     void deleteAllByIdConcept1AndIdConcept2AndIdThesaurus(String idConcept1, String idConcept2, String idThesaurus);
 
     @Modifying
+    @Transactional
     @Query(value = "UPDATE concept_replacedby SET id_thesaurus = :target WHERE id_concept1 = :concept AND id_thesaurus = :from", nativeQuery = true)
     void updateThesaurusByConcept1(@Param("concept") String concept, @Param("from") String from, @Param("target") String target);
 
     @Modifying
+    @Transactional
     @Query(value = "UPDATE concept_replacedby SET id_thesaurus = :target WHERE id_concept2 = :concept AND id_thesaurus = :from", nativeQuery = true)
     void updateThesaurusByConcept2(@Param("concept") String concept, @Param("from") String from, @Param("target") String target);
 

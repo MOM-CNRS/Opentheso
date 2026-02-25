@@ -133,12 +133,6 @@ SELECT narrower_text;
 END;
 $BODY$;
 
-ALTER FUNCTION public.opentheso_get_next_nt(character varying, character varying, character varying, integer, integer, boolean)
-    OWNER TO postgres;
-
-
-
-
 
 
 

@@ -306,7 +306,8 @@ public class Tree implements Serializable {
                         dataService.addNodeWithChild("concept", data, parent);
                     }
                 } else {
-                    if (nodeConceptTree.getStatusConcept().equalsIgnoreCase("dep")) {
+                    if (nodeConceptTree.getStatusConcept() != null
+                            && nodeConceptTree.getStatusConcept().equalsIgnoreCase("dep")) {
                         dataService.addNodeWithoutChild("deprecated", data, parent);
                     } else {
                         dataService.addNodeWithoutChild("file", data, parent);
@@ -365,7 +366,7 @@ public class Tree implements Serializable {
     public void addNewFacet(TreeNode parent, String facetName, String idFacet) {
         if (parent.getChildCount() == 1 && ((TreeNode)parent.getChildren().get(0)).getData().toString().equals("DUMMY")) {
             return;
-        }        
+        }
         TreeNodeData data = new TreeNodeData(
                 idFacet,
                 facetName,
@@ -446,6 +447,12 @@ public class Tree implements Serializable {
 
         propositionBean.setRubriqueVisible(false);
 
+        if(selectedNode == null) {
+            try {
+                selectedTheso.reloadSelectedTheso();
+            } catch (Exception ex){}
+            return;
+        }
         treeNodeDataSelect = (TreeNodeData) selectedNode.getData();
 
         if (!"facet".equals(node.getType())) {

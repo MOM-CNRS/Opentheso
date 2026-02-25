@@ -74,14 +74,9 @@ public class DeleteThesaurusBean implements Serializable {
 
         thesaurusService.deleteDroitByThesaurus(idThesaurusToDelete);
 
-        try {
-            // suppression complète du thésaurus
-            if(!thesaurusService.deleteThesaurus(idThesaurusToDelete)){
-                MessageUtils.showErrorMessage("Erreur pendant la suppression !!!");
-                return;
-            }
-        } catch (Exception exception) {
-            log.error("Erreur de suppression : " + exception.getMessage());
+        if(!thesaurusService.deleteThesaurus(idThesaurusToDelete)){
+            MessageUtils.showErrorMessage("Erreur pendant la suppression !!!");
+            return;
         }
 
         // vérification si le thésaurus supprimé est en cours de consultation, alors il faut nettoyer l'écran

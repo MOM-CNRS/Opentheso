@@ -55,16 +55,14 @@ public class AlignmentManualBean implements Serializable {
         manualAlignmentSource = "";
         manualAlignmentUri = "";
         manualAlignmentType = -1;
-        nodeAlignments = alignmentService.getAllAlignmentOfConcept(conceptView.getNodeFullConcept().getIdentifier(),selectedTheso.getCurrentIdTheso());
+        if(conceptView.getNodeFullConcept() != null) {
+            nodeAlignments = alignmentService.getAllAlignmentOfConcept(conceptView.getNodeFullConcept().getIdentifier(), selectedTheso.getCurrentIdTheso());
+        }
     }
 
     public void showManuelAlignmentDialog() {
         reset();
-        if (CollectionUtils.isEmpty(alignmentBean.getAlignmentTypes())) {
-            MessageUtils.showWarnMessage("Vous devez choisir le type d'alignement d'abord !");
-        } else {
-            PrimeFaces.current().executeScript("PF('addManualAlignment').show();");
-        }
+        PrimeFaces.current().executeScript("PF('addManualAlignment').show();");
     }
 
     public void infos() {

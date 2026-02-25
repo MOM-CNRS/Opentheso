@@ -12,11 +12,11 @@
             }
         </style>
 
-        <h:panelGroup rendered="#{(currentUser.nodeUser != null) and (currentUser.hasRoleAsAdmin) and !(viewEditorThesoHomeBean.isInEditing())}">
+        <h:panelGroup rendered="#{(currentUser.nodeUser != null) and (currentUser.hasRoleAsAdmin) and !(viewEditorThesaurusHomeBean.isInEditing())}">
             <div class="row">
                 <div class="col-xl-2 col-lg-2 col-md-2 col-sm-2 offset-xl-10 offset-lg-9 offset-md-9 offset-sm-8" style="text-align: right">
                     <p:commandButton value="#{langueBean.getMsg('candidat.edit')}" 
-                                     update="containerIndex:formRightTab"
+                                     update="containerIndex:formRightTab "
                                      icon="pi pi-pencil"
                                      styleClass="ui-button-success" ajax="true" 
                                      actionListener="#{viewEditorThesaurusHomeBean.initText(selectedThesaurus.getSelectedLang(), selectedThesaurus.getCurrentIdTheso())}"/>
@@ -26,7 +26,7 @@
         </h:panelGroup>
 
         <!-- vue pulic non connectée -->
-        <h:panelGroup id="thesoHomeData" rendered="#{!(viewEditorThesoHomeBean.isInEditing())}" style="border: none; margin-top: 20px">
+        <h:panelGroup id="thesoHomeData" rendered="#{!(viewEditorThesaurusHomeBean.isInEditing())}" style="border: none; margin-top: 20px">
             <div class="row" style="background-color: #F5F2F2">
                 <div class="col-1"  style="margin-top: 3px">
                     <i class="fas fa-info-circle fa-2x" style="color: #43B572" />
@@ -57,12 +57,20 @@
                     <div class="row">
                         <div class="col-10" style="margin-top: 3px">
                             <h:outputText value="#{langueBean.getMsg('home.permalink')}: " style="font-size: 13px; color: #858796"/>
-
                             <h:panelGroup rendered="#{roleOnThesaurus.nodePreference.originalUriIsArk}">
-                                <i class="pi pi-link" style="margin-right: 5px; color: #f47b2a; font-size: 13px;"/>
-                                <p:link href="#{not empty selectedThesaurus.getUriOfTheso(roleOnThesaurus.nodePreference) ? selectedThesaurus.getUriOfTheso(roleOnThesaurus.nodePreference) : '#'}"
-                                        value="#{selectedThesaurus.getUriOfTheso(roleOnThesaurus.nodePreference)}"
-                                        style="color: #164A78; font-size: 13px;color: #F47B2A;" />
+                                <h:panelGroup rendered="#{selectedThesaurus.arkId != null}">
+                                    <i class="pi pi-link" style="margin-right: 5px; color: #f47b2a; font-size: 13px;"/>
+                                    <p:link href="#{not empty selectedThesaurus.getUriOfTheso(roleOnThesaurus.nodePreference) ? selectedThesaurus.getUriOfTheso(roleOnThesaurus.nodePreference) : '#'}"
+                                            value="#{selectedThesaurus.getUriOfTheso(roleOnThesaurus.nodePreference)}"
+                                            style="color: #164A78; font-size: 13px;color: #F47B2A;" />
+                                </h:panelGroup>
+                                <h:panelGroup rendered="#{selectedThesaurus.arkId == null}">
+                                    <p:link href="#{request.contextPath}/?idt=#{selectedThesaurus.currentIdTheso}"
+                                            value="#{request.serverName}#{request.contextPath}/?idt=#{selectedThesaurus.currentIdTheso}"
+                                            style="font-size: 13px; color: #F47B2A;" >
+                                        <i class="pi pi-link" style="color: #43B572;" />
+                                    </p:link>
+                                </h:panelGroup>
                             </h:panelGroup>
                             <h:panelGroup rendered="#{!roleOnThesaurus.nodePreference.originalUriIsArk}">
                                 <p:link href="#{request.contextPath}/?idt=#{selectedThesaurus.currentIdTheso}"
@@ -136,7 +144,7 @@
         <!-- vue connectée pour édition -->
 
 
-        <h:panelGroup id="thesoHomePageEdition" rendered="#{(viewEditorThesoHomeBean.isInEditing())}" >
+        <h:panelGroup id="thesoHomePageEdition" rendered="#{(viewEditorThesaurusHomeBean.isInEditing())}" >
 
             <div class="row">
                 <div class="col-xl-4 col-lg-4 col-md-6 col-sm-6" >
@@ -154,7 +162,7 @@
                 </div>
             </div>
 
-            <h:panelGroup rendered="#{!viewEditorThesoHomeBean.isViewPlainText()}">
+            <h:panelGroup rendered="#{!viewEditorThesaurusHomeBean.isViewPlainText()}">
                 <div class="row" style="margin-top: 10px">
                     <div class="col-12">
                         <p:textEditor widgetVar="editor1" value="#{viewEditorThesaurusHomeBean.text}" secure="false" height="300" style="margin-bottom:5px; margin-right: 5px"/>

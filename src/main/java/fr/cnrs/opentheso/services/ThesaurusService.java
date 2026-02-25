@@ -2,10 +2,12 @@ package fr.cnrs.opentheso.services;
 
 import fr.cnrs.opentheso.entites.LanguageIso639;
 import fr.cnrs.opentheso.entites.Thesaurus;
+import fr.cnrs.opentheso.entites.ThesaurusDcTerm;
 import fr.cnrs.opentheso.entites.ThesaurusLabel;
 import fr.cnrs.opentheso.models.nodes.NodeIdValue;
 import fr.cnrs.opentheso.models.thesaurus.NodeLangTheso;
 import fr.cnrs.opentheso.models.thesaurus.NodeThesaurus;
+import fr.cnrs.opentheso.repositories.ExternalImageRepository;
 import fr.cnrs.opentheso.repositories.ExternalResourceRepository;
 import fr.cnrs.opentheso.repositories.GraphViewExportedConceptBranchRepository;
 import fr.cnrs.opentheso.repositories.LanguageIso639Repository;
@@ -20,9 +22,12 @@ import fr.cnrs.opentheso.repositories.ThesaurusRepository;
 import fr.cnrs.opentheso.repositories.UserGroupThesaurusRepository;
 import fr.cnrs.opentheso.repositories.UserRoleOnlyOnRepository;
 
+import jakarta.persistence.EntityManager;
+import jakarta.persistence.PersistenceContext;
 import org.apache.commons.collections4.CollectionUtils;
 import org.apache.commons.lang3.StringUtils;
 import org.springframework.stereotype.Service;
+import org.springframework.transaction.annotation.Propagation;
 import org.springframework.transaction.annotation.Transactional;
 
 import lombok.AllArgsConstructor;
@@ -65,7 +70,11 @@ public class ThesaurusService {
     private final PreferenceService preferenceService;
     private final NoteService noteService;
     private final UserRoleOnlyOnRepository userRoleOnlyOnRepository;
+    private final ExternalImageRepository externalImageRepository;
 
+    public List<ThesaurusDcTerm> getDcTermsOfThesaurus(String idThesaurus) {
+        return thesaurusDcTermRepository.findAllByIdThesaurus(idThesaurus);
+    }
 
     public Thesaurus getThesaurusById(String idThesaurus) {
 
@@ -204,7 +213,7 @@ public class ThesaurusService {
 
         var thesaurusLabel = thesaurusLabelRepository.findByIdThesaurusAndLang(idThesaurus, idLang);
         if (thesaurusLabel.isEmpty()) {
-            log.error("Le thésaurus n'a pas de Label dans sa langue source, id {}", idThesaurus);
+            log.debug("Le thésaurus n'a pas de Label dans sa langue source, id {}", idThesaurus);
             return "";
         }
 
@@ -226,7 +235,7 @@ public class ThesaurusService {
                 .id((int)thesaurusSeq)
                 .idThesaurus(idThesaurus)
                 .idArk("")
-                .isPrivate(false)
+                .isPrivate(true)
                 .created(new Date())
                 .modified(new Date())
                 .build());
@@ -234,6 +243,7 @@ public class ThesaurusService {
         log.debug("Enregistrement terminé du nouveau thésaurus {}", thesaurus.getIdThesaurus());
         return thesaurus.getIdThesaurus();
     }
+
 
     public void setThesaurusVisibility(String idThesaurus, boolean isPrivateTheso) {
 
@@ -461,42 +471,31 @@ public class ThesaurusService {
         }
 
         idThesaurus = fr.cnrs.opentheso.utils.StringUtils.convertString(idThesaurus);
-        thesaurusRepository.deleteById(idThesaurus);
-        thesaurusLabelRepository.deleteByIdThesaurus(idThesaurus);
         thesaurusHomePageRepository.deleteAllByIdTheso(idThesaurus);
         userGroupThesaurusRepository.deleteByIdThesaurus(idThesaurus);
         userRoleOnlyOnRepository.deleteByThesaurusIdThesaurus(idThesaurus);
         thesaurusAlignementSourceRepository.deleteAllByIdThesaurus(idThesaurus);
-        thesaurusDcTermRepository.deleteAllByIdThesaurus(idThesaurus);
         thesaurusArrayRepository.deleteAllByIdThesaurus(idThesaurus);
         nodeLabelRepository.deleteAllByIdThesaurus(idThesaurus);
+        thesaurusDcTermRepository.deleteAllByIdThesaurus(idThesaurus);
         thesaurusAlignementRepository.deleteAllByIdThesaurus(idThesaurus);
         graphViewExportedConceptBranchRepository.deleteAllByTopConceptThesaurusId(idThesaurus);
         routineMailRepository.deleteAllByIdThesaurus(idThesaurus);
-
         termService.deleteAllTermsInThesaurus(idThesaurus);
-
         groupService.deleteAllGroupsByThesaurus(idThesaurus);
-
         candidatService.deleteAllCandidatsByThesaurus(idThesaurus);
-
-        preferenceService.deletePreferenceThesaurus(idThesaurus);
-
         gpsService.deleteGpsByThesaurus(idThesaurus);
-
         alignmentService.deleteAllAlignmentsByThesaurus(idThesaurus);
-
         propositionService.deleteByThesaurus(idThesaurus);
-
         relationService.deleteAllByThesaurus(idThesaurus);
-
         imageService.deleteImagesByThesaurus(idThesaurus);
-
         externalResourceRepository.deleteAllByIdThesaurus(idThesaurus);
-
+        externalImageRepository.deleteAllByIdThesaurus(idThesaurus);
         noteService.deleteByThesaurus(idThesaurus);
-
         conceptService.deleteByThesaurus(idThesaurus);
+        thesaurusRepository.deleteById(idThesaurus);
+        thesaurusLabelRepository.deleteByIdThesaurus(idThesaurus);
+        preferenceService.deletePreferenceThesaurus(idThesaurus);
         return true;
     }
 
@@ -511,41 +510,28 @@ public class ThesaurusService {
 
         thesaurusRepository.updateThesaurusId(newIdThesaurus, oldIdThesaurus);
         thesaurusLabelRepository.updateThesaurusId(newIdThesaurus, oldIdThesaurus);
-        thesaurusArrayRepository.updateThesaurusId(newIdThesaurus, oldIdThesaurus);
-        nodeLabelRepository.updateThesaurusId(newIdThesaurus, oldIdThesaurus);
         thesaurusHomePageRepository.updateThesaurusId(newIdThesaurus, oldIdThesaurus);
         userGroupThesaurusRepository.updateThesaurusId(newIdThesaurus, oldIdThesaurus);
         userRoleOnlyOnRepository.updateThesaurusId(newIdThesaurus, oldIdThesaurus);
         thesaurusAlignementSourceRepository.updateThesaurusId(newIdThesaurus, oldIdThesaurus);
+        thesaurusArrayRepository.updateThesaurusId(newIdThesaurus, oldIdThesaurus);
+        nodeLabelRepository.updateThesaurusId(newIdThesaurus, oldIdThesaurus);
         thesaurusDcTermRepository.updateThesaurusId(newIdThesaurus, oldIdThesaurus);
         thesaurusAlignementRepository.updateThesaurusId(newIdThesaurus, oldIdThesaurus);
         graphViewExportedConceptBranchRepository.updateThesaurusId(newIdThesaurus, oldIdThesaurus);
         routineMailRepository.updateThesaurusId(newIdThesaurus, oldIdThesaurus);
-
         termService.updateThesaurusId(newIdThesaurus, oldIdThesaurus);
-
         groupService.updateThesaurusId(newIdThesaurus, oldIdThesaurus);
-
-        gpsService.updateThesaurusId(oldIdThesaurus, newIdThesaurus);
-
         candidatService.updateThesaurusId(oldIdThesaurus, newIdThesaurus);
-
         preferenceService.updateThesaurusId(oldIdThesaurus, newIdThesaurus);
-
         gpsService.updateThesaurusId(oldIdThesaurus, newIdThesaurus);
-
         alignmentService.updateThesaurusId(oldIdThesaurus, newIdThesaurus);
-
         propositionService.updateThesaurusId(oldIdThesaurus, newIdThesaurus);
-
         relationService.updateThesaurusId(oldIdThesaurus, newIdThesaurus);
-
         imageService.updateThesaurusId(oldIdThesaurus, newIdThesaurus);
-
-        externalResourceRepository.updateThesaurusId(newIdThesaurus, newIdThesaurus);
-
+        externalResourceRepository.updateThesaurusId(newIdThesaurus, oldIdThesaurus);
+        externalImageRepository.updateThesaurusId(newIdThesaurus, oldIdThesaurus);
         noteService.updateThesaurusId(oldIdThesaurus, newIdThesaurus);
-
         conceptService.updateThesaurusId(oldIdThesaurus, newIdThesaurus);
 
         return true;

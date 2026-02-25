@@ -108,8 +108,8 @@ public class StringUtils {
         }
         // normalisation of words for XML
         s = s.replaceAll("&", "&amp;");
-        s = s.replaceAll("\"", " ");
-        s = s.replace("\"", " ");
+     //   s = s.replaceAll("\"", " ");
+     //   s = s.replace("\"", " ");
         s = s.replaceAll("\n", " ");
         s = s.replaceAll("\t", " ");
         return s.trim();

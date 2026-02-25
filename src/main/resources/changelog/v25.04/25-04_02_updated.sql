@@ -52,7 +52,7 @@ END IF;
 END;
 $$;
 
-alter function opentheso_get_concept_son(varchar, varchar, boolean) owner to postgres;
+alter function opentheso_get_concept_son(varchar, varchar, boolean) owner to opentheso;
 
 
 
@@ -92,4 +92,4 @@ END LOOP;
 END;
 $$;
 
-alter function opentheso_get_list_narrower_fortree(varchar, varchar, varchar, boolean) owner to postgres;
+alter function opentheso_get_list_narrower_fortree(varchar, varchar, varchar, boolean) owner to opentheso;

@@ -50,12 +50,12 @@ import org.apache.commons.collections4.CollectionUtils;
 import org.apache.commons.lang3.StringUtils;
 import org.springframework.stereotype.Service;
 
-import javax.mail.Message;
-import javax.mail.MessagingException;
-import javax.mail.Session;
-import javax.mail.Transport;
-import javax.mail.internet.InternetAddress;
-import javax.mail.internet.MimeMessage;
+import jakarta.mail.Message;
+import jakarta.mail.MessagingException;
+import jakarta.mail.Session;
+import jakarta.mail.Transport;
+import jakarta.mail.internet.InternetAddress;
+import jakarta.mail.internet.MimeMessage;
 
 
 @Slf4j
@@ -89,6 +89,8 @@ public class CandidatService {
     private final NonPreferredTermRepository nonPreferredTermRepository;
     private final NoteRepository noteRepository;
     private final ThesaurusRepository thesaurusRepository;
+
+    private final MailService mailService;
 
 
     public List<CandidatDto> getCandidatsByStatus(String idThesaurus, String lang, int stat) {
@@ -730,8 +732,13 @@ public class CandidatService {
     }
 
     public void sendMailInvitation(String email) {
-
         try {
+            mailService.sendMail(email, "Invitation à une conversation !", "C'est le body du message");
+            MessageUtils.showInformationMessage(languageBean.getMsg("candidat.send_message.msg5"));
+        } catch (Exception mex) {
+            MessageUtils.showWarnMessage(languageBean.getMsg(mex.getMessage() + "candidat.send_message.msg6"));
+        }
+   /*     try {
             var properties = System.getProperties();
             var props = mailBean.getPrefMail();
             var message = new MimeMessage(Session.getDefaultInstance(properties));
@@ -744,22 +751,22 @@ public class CandidatService {
             MessageUtils.showInformationMessage(languageBean.getMsg("candidat.send_message.msg5"));
         } catch (MessagingException mex) {
             MessageUtils.showWarnMessage(languageBean.getMsg("candidat.send_message.msg6"));
-        }
+        }*/
     }
 
-    public void saveNewCandidat(CandidatDto candidatSelected, String idThesaurus, String idLang, Integer idUser,
+    public boolean saveNewCandidat(CandidatDto candidatSelected, String idThesaurus, String idLang, Integer idUser,
                                 String userName, String currentLang, String definition) throws SQLException {
 
         log.debug("Vérification de l'existance du term (recherche dans prefLabels)");
         if (termService.existsPrefLabel(candidatSelected.getNomPref().trim(), idLang, idThesaurus)) {
             MessageUtils.showWarnMessage(languageBean.getMsg("candidat.save.msg3"));
-            return;
+            return false;
         }
 
         log.debug("Vérification de l'existance du term (recherche dans altLabels)");
         if (termService.isAltLabelExist(candidatSelected.getNomPref().trim(), idThesaurus, idLang)) {
             MessageUtils.showWarnMessage(languageBean.getMsg("candidat.save.msg4"));
-            return;
+            return false;
         }
 
         var idNewConcept = saveNewCandidat(Concept.builder()
@@ -775,7 +782,7 @@ public class CandidatService {
 
         if (idNewConcept == null) {
             MessageUtils.showErrorMessage(languageBean.getMsg("candidat.save.msg5"));
-            return;
+            return false;
         }
         candidatSelected.setIdConcepte(idNewConcept);
 
@@ -793,5 +800,6 @@ public class CandidatService {
 
         noteService.addNote(candidatSelected.getIdConcepte(), currentLang, idThesaurus,
                 definition, "definition", "", idUser);
+        return true;
     }
 }

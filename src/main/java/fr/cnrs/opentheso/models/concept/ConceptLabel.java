@@ -2,7 +2,6 @@ package fr.cnrs.opentheso.models.concept;
 
 import lombok.Data;
 
-
 @Data
 public class ConceptLabel implements Comparable<ConceptLabel>{
 
@@ -11,8 +10,7 @@ public class ConceptLabel implements Comparable<ConceptLabel>{
     private String label;    
     private String idLang;
     private String codeFlag;
- 
-    
+
     @Override
     public int compareTo(ConceptLabel other) {
         // Trier par le champ 'label'

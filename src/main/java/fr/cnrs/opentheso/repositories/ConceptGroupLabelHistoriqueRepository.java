@@ -12,6 +12,7 @@ public interface ConceptGroupLabelHistoriqueRepository extends JpaRepository<Con
 
     @Modifying
     @Transactional
+    @Query("DELETE FROM ConceptGroupLabelHistorique c WHERE c.idThesaurus = :idThesaurus")
     void deleteAllByIdThesaurus(String idThesaurus);
 
     @Modifying

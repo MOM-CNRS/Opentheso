@@ -221,13 +221,15 @@
                         </div>
                     </div>
                 </div>
-                <div class="row" style="margin-left: 2px;">
-                    <div class="col-xl-3 col-lg-3 col-md-3 col-sm-4 offset-xl-0 offset-lg-0 offset-md-0 offset-sm-0" style="text-align:left;">
-                        <p:link href="https://pro.frantiq.fr/cgi-bin/koha/catalogue/search.pl?q=an:#{conceptView.nodeFullConcept.permanentId}"
-                                target="_blank"  value="Lien vers KohaPro" style="color: #164A78; font-size: 14px;">
-                        </p:link>
+                <h:panelGroup rendered="#{roleOnThesaurus.nodePreference.kohaLink}">
+                    <div class="row" style="margin-left: 2px;">
+                        <div class="col-xl-3 col-lg-3 col-md-3 col-sm-4 offset-xl-0 offset-lg-0 offset-md-0 offset-sm-0" style="text-align:left;">
+                            <p:link href="https://pro.frantiq.fr/cgi-bin/koha/catalogue/search.pl?q=an:#{conceptView.nodeFullConcept.permanentId}"
+                                    target="_blank"  value="Lien vers KohaPro" style="color: #164A78; font-size: 14px;">
+                            </p:link>
+                        </div>
                     </div>
-                </div>
+                </h:panelGroup>
             </div>
         </div>
     </div>

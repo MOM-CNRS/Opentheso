@@ -323,6 +323,7 @@ public class ConceptReader {
 
         } catch (Exception e) {
             log.error("Error while reading concept " + skosConcept.getUri() + value + " : " + e.getMessage());
+            throw e;
         }
 
 

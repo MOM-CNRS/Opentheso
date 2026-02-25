@@ -20,6 +20,7 @@ public interface NoteHistoriqueRepository extends JpaRepository<NoteHistorique, 
     void updateThesaurusId(@Param("newIdThesaurus") String newIdThesaurus, @Param("oldIdThesaurus") String oldIdThesaurus);
 
     @Modifying
+    @Transactional
     @Query(value = "UPDATE note_historique SET id_thesaurus = :target WHERE id_concept = :concept AND id_thesaurus = :from", nativeQuery = true)
     void updateThesaurus(@Param("concept") String concept, @Param("from") String from, @Param("target") String target);
 

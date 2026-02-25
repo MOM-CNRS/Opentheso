@@ -79,7 +79,7 @@ public class SynonymBean implements Serializable {
         this.nodeEM = null;
     }
    
-    public void prepareNodeEMForEdit() {
+        public void prepareNodeEMForEdit() {
 
         log.debug("Charger la liste des synonymes disponibles pour le concept {}", conceptBean.getNodeConcept().getConcept().getIdConcept());
         nodeEMsForEdit = new ArrayList<>();
@@ -119,6 +119,10 @@ public class SynonymBean implements Serializable {
 
         refreshConceptDatas(idUser);
 
+        conceptBean.getConcept(selectedTheso.getCurrentIdTheso(),
+                conceptBean.getNodeConcept().getConcept().getIdConcept(),
+                selectedTheso.getCurrentLang(), currentUser);
+
         MessageUtils.showInformationMessage("Synonyme ajouté avec succès");
 
         init();
@@ -130,7 +134,7 @@ public class SynonymBean implements Serializable {
     /**
      * permet de modifier un synonyme
      */
-    public void updateSynonym(NodeEM nodeEMLocal, int idUser) {
+    public void updateSynonym(NodeEM nodeEMLocal, int idUser, boolean isMultiple) {
 
         log.debug("Début de la modification du synonyme {}", nodeEMLocal.getLexicalValue());
 
@@ -156,8 +160,10 @@ public class SynonymBean implements Serializable {
             }
         }
 
-        reset();
-        prepareNodeEMForEdit();
+        if (!isMultiple) {
+            reset();
+            prepareNodeEMForEdit();
+        }
         PrimeFaces.current().ajax().update("containerIndex:formRightTab");
     }
 
@@ -176,6 +182,9 @@ public class SynonymBean implements Serializable {
         }
 
         refreshConceptDatas(idUser);
+        conceptBean.getConcept(selectedTheso.getCurrentIdTheso(),
+                conceptBean.getNodeConcept().getConcept().getIdConcept(),
+                selectedTheso.getCurrentLang(), currentUser);
 
         MessageUtils.showInformationMessage("Synonyme modifié avec succès");
         PrimeFaces.current().ajax().update("containerIndex:formRightTab");
@@ -284,12 +293,15 @@ public class SynonymBean implements Serializable {
 
         log.debug("Début de la modification de la liste des synonyms !");
         for (NodeEM nodeEM1 : nodeEMsForEdit) {
-            updateSynonym(nodeEM1, idUser);
+            updateSynonym(nodeEM1, idUser, true);
         }
 
+        conceptBean.getConcept(selectedTheso.getCurrentIdTheso(),
+                conceptBean.getNodeConcept().getConcept().getIdConcept(),
+                selectedTheso.getCurrentLang(), currentUser);
         reset();
-
         prepareNodeEMForEdit();
+        PrimeFaces.current().executeScript("PF('renameSynonym').hide();");
     }
 
 
@@ -395,14 +407,7 @@ public class SynonymBean implements Serializable {
     }
 
     private void refreshConceptDatas(int idUser) {
-
-        log.debug("Recherche des données du concept {}", conceptBean.getNodeConcept().getConcept().getIdConcept());
-        conceptBean.getConcept(selectedTheso.getCurrentIdTheso(), conceptBean.getNodeConcept().getConcept().getIdConcept(),
-                conceptBean.getSelectedLang(), currentUser);
-
-        log.debug("Mise à jour de la date de modification du concept {}", conceptBean.getNodeConcept().getConcept().getIdConcept());
-        conceptService.updateDateOfConcept(selectedTheso.getCurrentIdTheso(), conceptBean.getNodeConcept().getConcept().getIdConcept(), idUser);
-
+        conceptService.updateDateOfConcept(selectedTheso.getCurrentIdTheso(),conceptBean.getNodeConcept().getConcept().getIdConcept(), idUser);
         conceptDcTermRepository.save(ConceptDcTerm.builder()
                 .name(DCMIResource.CONTRIBUTOR)
                 .value(currentUser.getNodeUser().getName())

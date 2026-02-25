@@ -8,14 +8,16 @@ import fr.cnrs.opentheso.models.nodes.NodeIdValue;
 import fr.cnrs.opentheso.models.nodes.NodeImage;
 import fr.cnrs.opentheso.models.relations.NodeReplaceValueByValue;
 import fr.cnrs.opentheso.models.notes.NodeNote;
+
+import java.io.BufferedReader;
 import java.io.IOException;
 import java.io.Reader;
-import java.util.ArrayList;
-import java.util.List;
-import java.util.Map;
+import java.util.*;
 import java.util.logging.Level;
 
 import fr.cnrs.opentheso.models.skosapi.SKOSProperty;
+import fr.cnrs.opentheso.utils.ToolsHelper;
+import jakarta.faces.context.FacesContext;
 import lombok.Data;
 import lombok.extern.slf4j.Slf4j;
 import org.apache.commons.csv.CSVFormat;
@@ -199,30 +201,42 @@ public class CsvReadHelper {
     public boolean readFileIdentifier(Reader in) {
         try {
             CSVFormat cSVFormat = CSVFormat.DEFAULT.builder().setHeader()
-                    .setIgnoreEmptyLines(true).setIgnoreHeaderCase(true).setTrim(true).build();
+                    .setIgnoreEmptyLines(true)
+                    .setIgnoreHeaderCase(true)
+                    .setTrim(true)
+                    .build();
+
             CSVParser cSVParser = cSVFormat.parse(in);
-            String value;
             nodeIdValues = new ArrayList<>();
+            Set<String> uniqueIds = new HashSet<>(); // pour éviter les doublons sur l'id
+
             for (CSVRecord record : cSVParser) {
-                NodeIdValue nodeIdValue = new NodeIdValue();
-                // setId, si l'identifiant n'est pas renseigné, on récupère un NULL
+                String id;
                 try {
-                    value = record.get("identifier");
-                    if (value == null) {
+                    id = record.get("identifier");
+                    if (id == null || id.isEmpty()) {
                         continue;
                     }
-                    nodeIdValue.setId(value);
                 } catch (Exception e) {
                     continue;
                 }
-                nodeIdValues.add(nodeIdValue);
+
+                // Vérification doublon
+                if (!uniqueIds.contains(id)) {
+                    NodeIdValue nodeIdValue = new NodeIdValue();
+                    nodeIdValue.setId(id);
+                    nodeIdValues.add(nodeIdValue);
+                    uniqueIds.add(id); // marque comme déjà ajouté
+                }
             }
             return true;
         } catch (IOException ex) {
-            java.util.logging.Logger.getLogger(CsvReadHelper.class.getName()).log(Level.SEVERE, null, ex);
+            java.util.logging.Logger.getLogger(CsvReadHelper.class.getName())
+                    .log(Level.SEVERE, null, ex);
         }
         return false;
     }
+
 
     /**
      * permet de lire un fichier CSV complet pour importer les alignements
@@ -309,7 +323,7 @@ public class CsvReadHelper {
      * @param in
      * @return
      */
-    public boolean readFileAlignmentToDelete(Reader in) {
+/*    public boolean readFileAlignmentToDelete(Reader in) {
         try {
             CSVFormat cSVFormat = CSVFormat.DEFAULT.builder().setHeader().setDelimiter(delimiter)
                     .setIgnoreEmptyLines(true).setIgnoreHeaderCase(true).setTrim(true).build();
@@ -349,6 +363,87 @@ public class CsvReadHelper {
             java.util.logging.Logger.getLogger(CsvReadHelper.class.getName()).log(Level.SEVERE, null, ex);
         }
         return false;
+    }*/
+
+    public boolean readFileAlignmentToDelete(Reader in) {
+        conceptObjects = new ArrayList<>();
+
+        try {
+            // Nettoyer le flux au cas où il contient un BOM
+            BufferedReader br = new BufferedReader(in);
+            br.mark(1);
+            if (br.read() != '\uFEFF') {
+                br.reset(); // pas de BOM, on revient au début
+            }
+
+            // Construction du format CSV
+            CSVFormat csvFormat = CSVFormat.DEFAULT.builder()
+                    .setHeader() // utilise la première ligne comme header
+                    .setDelimiter(delimiter)
+                    .setIgnoreEmptyLines(true)
+                    .setIgnoreHeaderCase(true)
+                    .setTrim(true)
+                    .build();
+
+            CSVParser csvParser = csvFormat.parse(br);
+
+            for (CSVRecord record : csvParser) {
+                ConceptObject conceptObject = new ConceptObject();
+
+                // Lecture du localId (gestion de la casse et BOM)
+                String localId = getSafe(record, "localId");
+                if (localId == null || localId.isEmpty()) {
+                    localId = getSafe(record, "localid"); // fallback
+                }
+
+                if (localId == null || localId.isEmpty()) {
+                    continue;
+                }
+                conceptObject.setLocalId(localId.trim());
+
+                // Lecture de l'URI à supprimer
+                String uri = getSafe(record, "Uri");
+                if (uri == null || uri.isEmpty()) {
+                    uri = getSafe(record, "uri");
+                }
+
+                if (uri != null && !uri.isEmpty()) {
+                    NodeIdValue nodeIdValue = new NodeIdValue();
+                    nodeIdValue.setId("");
+                    nodeIdValue.setValue(uri.trim());
+                    conceptObject.alignments.add(nodeIdValue);
+                }
+
+                conceptObjects.add(conceptObject);
+            }
+
+            return true;
+
+        } catch (IOException ex) {
+            log.error(CsvReadHelper.class.getName() +  ex.getMessage());
+            message = "Erreur lors de la lecture du fichier CSV : " + ex.getMessage();
+            return false;
+        }
+    }
+    /**
+     * Récupère la valeur d'une colonne de façon sécurisée,
+     * en gérant les BOM éventuels dans le nom de colonne.
+     */
+    private String getSafe(CSVRecord record, String header) {
+        try {
+            // Essai direct
+            if (record.isMapped(header)) {
+                return record.get(header);
+            }
+            // Essai avec un éventuel BOM
+            String withBom = "\uFEFF" + header;
+            if (record.isMapped(withBom)) {
+                return record.get(withBom);
+            }
+        } catch (Exception e) {
+            // ignore
+        }
+        return null;
     }
 
     /**
@@ -509,6 +604,85 @@ public class CsvReadHelper {
         }
         return null;        
     }
+
+    public ArrayList<String > readHeadersFileRelated (Reader in){
+        try {
+            CSVFormat cSVFormat = CSVFormat.DEFAULT.builder().setHeader().setDelimiter(delimiter)
+                    .setIgnoreEmptyLines(true).setIgnoreHeaderCase(true).setTrim(true).build();
+            CSVParser cSVParser = cSVFormat.parse(in);
+            Map<String, Integer> headers = cSVParser.getHeaderMap();
+
+            ArrayList<String> headersRelated = new ArrayList<>();
+            for (String columnName : headers.keySet()) {
+                headersRelated.add(columnName);
+            }
+            return headersRelated;
+        } catch (IOException ex) {
+            java.util.logging.Logger.getLogger(CsvReadHelper.class.getName()).log(Level.SEVERE, null, ex);
+        }
+        return null;
+    }
+
+    /**
+     * permet de lire un fichier CSV complet pour importer les RT
+     *
+     * @param in
+     * @param headerSourceAlign
+     * @return
+     */
+    public boolean readFileRelated(Reader in, ArrayList<String> headerSourceAlign) {
+        try {
+            CSVFormat format = CSVFormat.DEFAULT.builder()
+                    .setHeader()
+                    .setDelimiter(delimiter)
+                    .setIgnoreEmptyLines(true)
+                    .setIgnoreHeaderCase(true)
+                    .setTrim(true)
+                    .build();
+
+            CSVParser parser = format.parse(in);
+
+            // id -> valeurs related uniques
+            Map<String, Set<String>> relatedById = new HashMap<>();
+
+            for (CSVRecord record : parser) {
+
+                String id;
+                String related;
+
+                try {
+                    id = record.get("localid");
+                    related = record.get("skos:related");
+                } catch (Exception e) {
+                    continue;
+                }
+
+                if (StringUtils.isBlank(id) || StringUtils.isBlank(related)) {
+                    continue;
+                }
+
+                relatedById
+                        .computeIfAbsent(id, k -> new HashSet<>())
+                        .add(related);
+            }
+
+            // Si tu as besoin d'une structure finale plate (id, value)
+            nodeIdValues = new ArrayList<>();
+            relatedById.forEach((id, values) ->
+                    values.forEach(value ->
+                            nodeIdValues.add(new NodeIdValue(id, value))
+                    )
+            );
+
+            return true;
+
+        } catch (IOException ex) {
+            log.error(ex.getMessage());
+        }
+        return false;
+    }
+
+
     /**
      * permet de lire un fichier CSV complet pour importer les alignements
      *
@@ -557,11 +731,17 @@ public class CsvReadHelper {
             NodeAlignmentImport nodeAlignmentImport,
             CSVRecord record, ArrayList<String> headerSourceAlign) {
         String uri1;
+        ToolsHelper toolsHelper = new ToolsHelper();
 
         /// types alignements 1=exactMatch ; 2=closeMatch ; 3=broadMatch ; 4=relatedMatch ; 5=narrowMatch
         for (String alignSource : headerSourceAlign) {
             try {
                 uri1 = record.get(alignSource);
+                if(toolsHelper.isValidURI(uri1) == false) {
+                    log.error("Erreur lors de la lecture du fichier CSV : l'URI " + uri1 + " n'est pas valide.");
+                    message = "Erreur lors de la lecture du fichier CSV : l'URI " + uri1 + " n'est pas valide.";
+                    return null;
+                }
                 nodeAlignmentImport = getAlignmentSource(nodeAlignmentImport, alignSource, uri1);
             } catch (Exception e) {
             }            

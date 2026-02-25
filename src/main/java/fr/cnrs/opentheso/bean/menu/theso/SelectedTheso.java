@@ -1,6 +1,7 @@
 package fr.cnrs.opentheso.bean.menu.theso;
 
 import fr.cnrs.opentheso.entites.Preferences;
+import fr.cnrs.opentheso.entites.Thesaurus;
 import fr.cnrs.opentheso.models.nodes.NodeIdValue;
 import fr.cnrs.opentheso.models.thesaurus.NodeLangTheso;
 import fr.cnrs.opentheso.models.alignment.ResultatAlignement;
@@ -88,7 +89,7 @@ public class SelectedTheso implements Serializable {
 
     private boolean fromUrl, isActionFromConcept, sortByNotation, isNetworkAvailable, isUriRequest, haveActiveCorpus;
     private String selectedIdTheso, currentIdTheso, optionThesoSelected, idConceptFromUri, idThesoFromUri, idGroupFromUri,
-            thesoName, projectIdSelected, localUri, selectedLang, currentLang;
+            thesoName, projectIdSelected, localUri, selectedLang, currentLang, arkId;
 
     private List<UserGroupLabel> projects, projectsList;
     private List<ResultatAlignement> resultAlignementList;
@@ -137,9 +138,15 @@ public class SelectedTheso implements Serializable {
             return baseUrl + "/?idt=" + currentIdTheso;
         } else {
             var thesaurus = thesaurusService.getThesaurusById(currentIdTheso);
-            return (StringUtils.isEmpty(thesaurus.getIdArk()))
-                    ? baseUrl + "/?idt=" + currentIdTheso
-                    : baseUrl + "/api/ark:/" + thesaurus.getIdArk();
+            if(nodePreference.isOriginalUriIsArk()){
+                String base = nodePreference.getOriginalUri();
+                String ark = thesaurus.getIdArk();
+                return base.replaceAll("/$", "") + "/" + ark.replaceAll("^/", "");
+            } else {
+                return (StringUtils.isEmpty(thesaurus.getIdArk()))
+                        ? baseUrl + "/?idt=" + currentIdTheso
+                        : baseUrl + "/api/ark:/" + thesaurus.getIdArk();
+            }
         }
     }
     
@@ -420,7 +427,12 @@ public class SelectedTheso implements Serializable {
         currentLang = idLang;
         selectedLang = idLang;
         thesoName = thesaurusService.getTitleOfThesaurus(selectedIdTheso, selectedLang);
-
+        Thesaurus thesaurus = thesaurusService.getThesaurusById(selectedIdTheso);
+        if (thesaurus != null && StringUtils.isNotEmpty(thesaurus.getIdArk())) {
+            arkId = thesaurus.getIdArk();
+        } else {
+            arkId = null;
+        }
         // initialisation de l'arbre des groupes
         treeGroups.reset();
         treeGroups.initialise(selectedIdTheso, selectedLang);
@@ -532,8 +544,10 @@ public class SelectedTheso implements Serializable {
                     if(StringUtils.isNotEmpty(idGroupFromUri)) {
                         treeGroups.selectThisGroup(idGroupFromUri.trim());
                         rightBodySetting.setIndex("1");
-                    } else 
+                    } else {
                         indexSetting.setIsHomeSelected(true);
+                        conceptBean.setNodeConcept(null);
+                    }
                 }
             } else {
                 return;

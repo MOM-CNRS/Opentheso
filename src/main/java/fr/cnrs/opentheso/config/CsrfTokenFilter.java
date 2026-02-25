@@ -35,30 +35,6 @@ public class CsrfTokenFilter implements Filter {
                 return;
             }
         }
-
         chain.doFilter(httpRequest, httpResponse);
     }
-
-    /*
-    @Override
-    public void doFilter(ServletRequest request, ServletResponse response, FilterChain chain)
-            throws IOException, ServletException {
-        HttpServletRequest httpRequest = (HttpServletRequest) request;
-        HttpServletResponse httpResponse = (HttpServletResponse) response;
-        HttpSession session = httpRequest.getSession();
-
-        // Vérifiez si le token CSRF existe déjà
-        if (session.getAttribute(CSRF_TOKEN_ATTRIBUTE) == null) {
-            String csrfToken = generateToken();
-            session.setAttribute(CSRF_TOKEN_ATTRIBUTE, csrfToken);
-        }
-
-        chain.doFilter(httpRequest, httpResponse);
-    }
-
-    private String generateToken() {
-        byte[] randomBytes = new byte[32];
-        secureRandom.nextBytes(randomBytes);
-        return Base64.getUrlEncoder().withoutPadding().encodeToString(randomBytes);
-    }*/
 }

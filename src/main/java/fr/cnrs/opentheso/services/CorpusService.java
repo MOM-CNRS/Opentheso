@@ -47,7 +47,7 @@ public class CorpusService {
         log.debug("Recherche de corpus {} dans le thésaurus {}", name, idThesaurus);
         var corpus = corpusLinkRepository.findByIdThesaurusAndCorpusName(idThesaurus, name);
         if (corpus.isEmpty()) {
-            log.error("Aucun corpus n'est trouvé avec le nom {} dans le thésaurus id {}", name, idThesaurus);
+            log.debug("Aucun corpus n'est trouvé avec le nom {} dans le thésaurus id {}", name, idThesaurus);
             return null;
         }
         return corpus.get();

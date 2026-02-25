@@ -5,13 +5,22 @@ services:
     environment:
       POSTGRES_USER: opentheso
       POSTGRES_PASSWORD: opentheso
+      POSTGRES_DB: opentheso
+    volumes:
+      - opentheso-data:/var/lib/postgresql/data
 
   opentheso:
-    image: opentheso:local
     build: .
-    restart: always
+    image: opentheso:local
     depends_on:
       - opentheso-db
     ports:
-      - 8090:8099
+      - "8099:8080" # ou 8099 est le port d'écoute dans application-prod.yaml
+    environment:
+      SPRING_DATASOURCE_URL: jdbc:postgresql://opentheso-db:5432/opentheso
+      SPRING_DATASOURCE_USERNAME: opentheso
+      SPRING_DATASOURCE_PASSWORD: opentheso
+
+volumes:
+  opentheso-data:
 

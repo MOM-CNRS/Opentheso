@@ -8,7 +8,7 @@ import fr.cnrs.opentheso.models.users.NodeUser;
 import fr.cnrs.opentheso.services.ThesaurusService;
 import fr.cnrs.opentheso.services.UserRoleGroupService;
 import fr.cnrs.opentheso.services.UserService;
-import fr.cnrs.opentheso.utils.MD5Password;
+
 import fr.cnrs.opentheso.bean.profile.MyProjectBean;
 import fr.cnrs.opentheso.bean.profile.SuperAdminBean;
 import fr.cnrs.opentheso.utils.MessageUtils;
@@ -26,6 +26,7 @@ import org.apache.commons.lang3.ObjectUtils;
 import org.apache.commons.lang3.StringUtils;
 import org.springframework.beans.factory.annotation.Value;
 import org.primefaces.PrimeFaces;
+import org.springframework.security.crypto.password.PasswordEncoder;
 
 
 @Getter
@@ -35,6 +36,7 @@ import org.primefaces.PrimeFaces;
 @Named(value = "newUserBean")
 public class NewUserBean implements Serializable {
 
+    private final PasswordEncoder passwordEncoder;
     @Value("${settings.workLanguage:fr}")
     private String workLanguage;
 
@@ -51,7 +53,6 @@ public class NewUserBean implements Serializable {
     private List<Roles> nodeAllRoles;
     private List<NodeIdValue> listThesaurusOfProject;
     private List<String> selectedThesaurus;
-
 
     public void init(String selectedProject) {
         nodeUser = new NodeUser();
@@ -102,6 +103,7 @@ public class NewUserBean implements Serializable {
 
             if (bySuperAdmin) {
                 superAdminBean.init();
+                initForSuperAdmin();
             } else {
                 myProjectBean.setLists();
             }
@@ -114,7 +116,7 @@ public class NewUserBean implements Serializable {
         var user = User.builder()
                 .mail(nodeUser.getMail())
                 .username(nodeUser.getName())
-                .password(MD5Password.getEncodedPassword(passWord1))
+                .password(passwordEncoder.encode(passWord1))//MD5Password.getEncodedPassword(passWord1))
                 .isSuperAdmin(nodeUser.isSuperAdmin())
                 .alertMail(nodeUser.isAlertMail())
                 .isServiceAccount(nodeUser.isServiceAccount())
@@ -143,6 +145,14 @@ public class NewUserBean implements Serializable {
 
         if(StringUtils.isEmpty(passWord1)) {
             MessageUtils.showErrorMessage("Le mot de passe est obligatoire");
+            return false;
+        }
+
+        if (!passWord1.matches(".*[A-Z].*") ||
+                !passWord1.matches(".*[a-z].*") ||
+                !passWord1.matches(".*\\d.*") ||
+                !passWord1.matches(".*[^A-Za-z\\d].*")) {
+            MessageUtils.showErrorMessage("Le mot de passe doit contenir au moins 8 caractères, une majuscule, une minuscule, un chiffre et un caractère spécial");
             return false;
         }
 

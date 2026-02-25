@@ -4,6 +4,7 @@ import fr.cnrs.opentheso.entites.Alignement;
 import fr.cnrs.opentheso.entites.Concept;
 import fr.cnrs.opentheso.models.ConceptGroupProjection;
 import fr.cnrs.opentheso.models.candidats.DomaineDto;
+import fr.cnrs.opentheso.models.group.NodeGroup;
 import fr.cnrs.opentheso.models.statistiques.ConceptStatisticData;
 import fr.cnrs.opentheso.models.statistiques.GenericStatistiqueData;
 import fr.cnrs.opentheso.repositories.ConceptRepository;
@@ -17,6 +18,7 @@ import fr.cnrs.opentheso.utils.MessageUtils;
 
 import java.text.SimpleDateFormat;
 import java.util.ArrayList;
+import java.util.Comparator;
 import java.util.Date;
 import java.util.List;
 
@@ -47,7 +49,15 @@ public class StatistiqueService {
 
         List<GenericStatistiqueData> result = new ArrayList<>();
         
-        var listGroup = groupService.getListConceptGroup(idThesaurus, idLang);
+        //var listGroup = groupService.getListConceptGroup(idThesaurus, idLang);
+
+        var listGroup = new ArrayList<>(
+                groupService.getListConceptGroup(idThesaurus, idLang)
+        );
+
+        listGroup.sort(
+                Comparator.comparing(NodeGroup::getLexicalValue, String.CASE_INSENSITIVE_ORDER)
+        );
 
         listGroup.forEach(group -> {
 

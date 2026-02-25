@@ -19,6 +19,7 @@ import fr.cnrs.opentheso.models.skosapi.SKOSResource;
 import fr.cnrs.opentheso.models.skosapi.SKOSVote;
 import fr.cnrs.opentheso.models.skosapi.SKOSXmlDocument;
 
+import fr.cnrs.opentheso.utils.ToolsHelper;
 import lombok.Data;
 import org.apache.commons.collections4.CollectionUtils;
 import org.apache.commons.lang3.ObjectUtils;
@@ -183,8 +184,12 @@ public class WriteRdf4j {
             return;
         }
         SKOSResource conceptScheme = xmlDocument.getConceptScheme();
-        builder.subject(vf.createIRI(conceptScheme.getUri()));//createURI(conceptScheme.getUri()));
 
+        if (new ToolsHelper().isValidURI(conceptScheme.getUri())) {
+            builder.subject(vf.createIRI(conceptScheme.getUri()));
+        } else {
+            throw new IllegalArgumentException("URI invalide : " + conceptScheme.getUri());
+        }
         builder.add(RDF.TYPE, SKOS.CONCEPT_SCHEME);
 
         writeLabel(conceptScheme);
