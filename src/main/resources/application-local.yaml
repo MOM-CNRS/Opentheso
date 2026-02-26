@@ -8,11 +8,18 @@ server:
   servlet:
     context-path: /
     session:
-      timeout: 120m
+      cookie:
+        name: ${random.value}
+      timeout: 30m
   error:
     path: /errorPages/error500.xhtml
     whitelabel:
       enabled: false
+
+logging:
+  level:
+    org.springframework.web.servlet.resource: ERROR
+    org.springframework.web.servlet.mvc.method.annotation.ExceptionHandlerExceptionResolver: ERROR
 
 primefaces:
   uploader: native
@@ -32,30 +39,16 @@ spring:
   application:
     name: opentheso
 
-  # Connexion de KeyCloak
-  security:
-    oauth2:
-      client:
-        registration:
-          keycloak:
-            client-id: opentheso
-            client-secret:
-            provider: keycloak
-            authorization-grant-type: authorization_code
-            redirect-uri: "{baseUrl}/login/oauth2/code/keycloak"
-            scope: openid, profile, email
-        provider:
-          keycloak:
-            issuer-uri: https://login.espadon.net/realms/espadon
-
-
+  thymeleaf:
+    check-template-location: false
   servlet:
     multipart:
       enabled: true
       max-file-size: 100MB  # Définit la taille max d'un fichier
       max-request-size: 100MB  # Taille totale max de la requête
   datasource:
-    url: jdbc:postgresql://localhost:5433/humanum
+    url: jdbc:postgresql://localhost:5433/opentheso
+
     password: opentheso
     username: opentheso
   jpa:
@@ -69,27 +62,58 @@ spring:
   liquibase:
     enabled: true
     change-log: classpath:/changelog/db.changelog.xml
+
   graphql:
     graphiql:
       enabled: true
       path: /graphiql
       endpoint: /graphql
 
+  mail:
+    host: ${smpt.hostname}
+    port: ${smpt.portNumber}
+    protocol: ${smpt.protocol}
+    properties:
+      mail.smtp.auth: ${smpt.authorization}
+      mail.smtp.starttls.enable: false
+    default-encoding: UTF-8
+
+  # Connexion de KeyCloak
+  #security:
+  #  oauth2:
+  #    client:
+  #      registration:
+  #        keycloak:
+  #          client-id: opentheso
+  #          client-secret:
+  #          provider: keycloak
+  #          authorization-grant-type: authorization_code
+  #          redirect-uri: "{baseUrl}/login/oauth2/code/keycloak"
+  #          scope: openid, profile, email
+  #      provider:
+  #        keycloak:
+  #          issuer-uri: https://login.mondomain.net/realms/espadon
+
+
 settings:
   workLanguage: fr
 
+# clé de cryptage pour les clés d'API OpenARK
+crypto:
+  openark:
+    key: 12345678901234567890123456789012 # 32 caractères exactement
+
 certificats:
   admpriv: ./certificats/admpriv.bin
-  cacerts2: ./certificats/cacerts2
-  key: ./certificats/key.p12
+  cacerts2: /Users/miledrousset/NetBeansProjects22/Opentheso/src/main/resources/certificats/cacerts2
+  key: /Users/miledrousset/NetBeansProjects22/Opentheso/src/main/resources/certificats/key.p12
 
 smpt:
-  protocol: smtp
-  hostname: smtprelay.mondomaine.fr
+  mailFrom: opentheso@mom.fr
+  hostname: smtprelay.cnrs.fr
   portNumber: 25
+  protocol: smtp
   authorization: false
-  mailFrom: opentheso@mondomaine.fr
-  transportMail: smtp
 
 neo4j:
   serverName: localhost
@@ -98,19 +122,5 @@ neo4j:
   user: neo4j
   password: neo4j1234
 
-ldap:
-  security:
-    authentication: simple
-  server:
-    url: ldapr3.mondomaine.fr
-  initial:
-    context:
-      factory: com.sun.jndi.ldap.LdapCtxFactory
-  key:
-    store:
-      password: changeit
-      path: /usr/lib/jvm/java-11-openjdk-amd64/lib/security/cacerts
-    trust:
-      password: changeit
-      path: /usr/lib/jvm/java-11-openjdk-amd64/lib/security/cacerts
+
 
