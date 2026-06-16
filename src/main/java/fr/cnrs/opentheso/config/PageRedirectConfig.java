@@ -13,6 +13,7 @@ public class PageRedirectConfig implements WebMvcConfigurer {
     public void addViewControllers(ViewControllerRegistry registry) {
         registry.addViewController("/").setViewName("forward:/index.xhtml");
         registry.addViewController("/profile").setViewName("forward:/profile/myAccount.xhtml");
+        registry.addViewController("/v2/profile").setViewName("forward:/v2/user/my-account.xhtml");
         registry.addViewController("/toolbox/edition").setViewName("forward:/toolbox/edition.xhtml");
         registry.setOrder(Ordered.HIGHEST_PRECEDENCE);
     }

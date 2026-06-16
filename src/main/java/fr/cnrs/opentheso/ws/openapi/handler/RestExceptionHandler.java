@@ -1,8 +1,13 @@
 package fr.cnrs.opentheso.ws.openapi.handler;
 
+import fr.cnrs.opentheso.v2.user.exception.ApiKeyRegenerationException;
+import fr.cnrs.opentheso.v2.user.exception.InvalidPasswordException;
+import fr.cnrs.opentheso.v2.user.exception.InvalidProfileDataException;
+import fr.cnrs.opentheso.v2.user.exception.UserNotFoundException;
 import fr.cnrs.opentheso.ws.openapi.exception.*;
 import fr.cnrs.opentheso.ws.openapi.helper.ApiKeyState;
 import jakarta.servlet.http.HttpServletRequest;
+import org.springframework.web.bind.MethodArgumentNotValidException;
 import org.springframework.core.annotation.Order;
 import org.springframework.http.HttpStatus;
 import org.springframework.http.ProblemDetail;
@@ -92,6 +97,65 @@ public class RestExceptionHandler {
         problem.setInstance(URI.create(request.getRequestURI()));
         problem.setProperty("timestamp", OffsetDateTime.now());
         problem.setProperty("errorCode", "No right");
+        return problem;
+    }
+
+    @ExceptionHandler(InvalidProfileDataException.class)
+    public ProblemDetail handleInvalidProfile(InvalidProfileDataException ex, HttpServletRequest request) {
+        ProblemDetail problem = ProblemDetail.forStatus(HttpStatus.CONFLICT);
+        problem.setTitle("Invalid profile data");
+        problem.setDetail(ex.getMessage());
+        problem.setInstance(URI.create(request.getRequestURI()));
+        problem.setProperty("timestamp", OffsetDateTime.now());
+        problem.setProperty("errorCode", "INVALID_PROFILE_DATA");
+        return problem;
+    }
+
+    @ExceptionHandler(InvalidPasswordException.class)
+    public ProblemDetail handleInvalidPassword(InvalidPasswordException ex, HttpServletRequest request) {
+        ProblemDetail problem = ProblemDetail.forStatus(HttpStatus.BAD_REQUEST);
+        problem.setTitle("Invalid password");
+        problem.setDetail(ex.getMessage());
+        problem.setInstance(URI.create(request.getRequestURI()));
+        problem.setProperty("timestamp", OffsetDateTime.now());
+        problem.setProperty("errorCode", "INVALID_PASSWORD");
+        return problem;
+    }
+
+    @ExceptionHandler(ApiKeyRegenerationException.class)
+    public ProblemDetail handleApiKeyRegeneration(ApiKeyRegenerationException ex, HttpServletRequest request) {
+        ProblemDetail problem = ProblemDetail.forStatus(HttpStatus.CONFLICT);
+        problem.setTitle("API key regeneration refused");
+        problem.setDetail(ex.getMessage());
+        problem.setInstance(URI.create(request.getRequestURI()));
+        problem.setProperty("timestamp", OffsetDateTime.now());
+        problem.setProperty("errorCode", "API_KEY_REGENERATION_REFUSED");
+        return problem;
+    }
+
+    @ExceptionHandler(UserNotFoundException.class)
+    public ProblemDetail handleUserNotFound(UserNotFoundException ex, HttpServletRequest request) {
+        ProblemDetail problem = ProblemDetail.forStatus(HttpStatus.NOT_FOUND);
+        problem.setTitle("User not found");
+        problem.setDetail(ex.getMessage());
+        problem.setInstance(URI.create(request.getRequestURI()));
+        problem.setProperty("timestamp", OffsetDateTime.now());
+        problem.setProperty("errorCode", "USER_NOT_FOUND");
+        return problem;
+    }
+
+    @ExceptionHandler(MethodArgumentNotValidException.class)
+    public ProblemDetail handleValidation(MethodArgumentNotValidException ex, HttpServletRequest request) {
+        String detail = ex.getBindingResult().getFieldErrors().stream()
+                .map(error -> error.getField() + ": " + error.getDefaultMessage())
+                .reduce((first, second) -> first + "; " + second)
+                .orElse("Données invalides");
+        ProblemDetail problem = ProblemDetail.forStatus(HttpStatus.BAD_REQUEST);
+        problem.setTitle("Validation error");
+        problem.setDetail(detail);
+        problem.setInstance(URI.create(request.getRequestURI()));
+        problem.setProperty("timestamp", OffsetDateTime.now());
+        problem.setProperty("errorCode", "VALIDATION_ERROR");
         return problem;
     }
 
