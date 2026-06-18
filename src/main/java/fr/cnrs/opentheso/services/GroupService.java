@@ -936,6 +936,7 @@ public class GroupService {
 
         List<NodeIdValue> nodeIdValues = new ArrayList<>();
         for (NodeGroup nodeGroup : nodeGroups) {
+            if(nodeGroup == null) continue;
             NodeIdValue nodeIdValue = new NodeIdValue();
             nodeIdValue.setValue(nodeGroup.getLexicalValue());
             nodeIdValue.setId(nodeGroup.getConceptGroup().getIdGroup());
