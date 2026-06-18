@@ -70,7 +70,7 @@ public class MailService implements Serializable {
             mailSender.send(message);
             return true;
 
-        } catch (MessagingException e) {
+        } catch (Exception e) {
             FacesMessage fm = new FacesMessage(FacesMessage.SEVERITY_FATAL, "", e.toString());
             FacesContext.getCurrentInstance().addMessage(null, fm);
             return false;
