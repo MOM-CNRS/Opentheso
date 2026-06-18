@@ -47,19 +47,13 @@ public class CandidatController {
             requestBody = @io.swagger.v3.oas.annotations.parameters.RequestBody(description = "JSON représentant le candidat à ajouter"),
             security = { @SecurityRequirement(name = "API-KEY") })
     public ResponseEntity addCandidate(@RequestHeader(value = "API-KEY") String apiKey, @RequestBody Candidate candidate) {
-
-        var keyState = apiKeyHelper.checkApiKey(apiKey);
-
-        if (keyState != ApiKeyState.VALID){
-            return ResponseEntity.badRequest().contentType(MediaType.APPLICATION_JSON).body(apiKeyHelper.errorResponse(keyState));
+        var user = userService.getUserByApiKeyBcrypt(apiKey);
+        if (user == null) {
+            return ResponseEntity.badRequest().contentType(MediaType.APPLICATION_JSON).body("Clé d'API invalide");
         }
-
-        var user = userService.getUserByApiKey(MD5Password.getEncodedPassword(apiKey));
-
         if (!candidatService.saveCandidat(candidate, user.getId())) {
             return ResponseEntity.badRequest().contentType(MediaType.APPLICATION_JSON).body("");
         }
-
         return ResponseEntity.ok().body("");
     }
 

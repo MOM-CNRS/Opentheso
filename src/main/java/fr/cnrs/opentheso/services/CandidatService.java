@@ -449,11 +449,13 @@ public class CandidatService {
                 .contributor(userId)
                 .build());
 
-        conceptGroupConceptRepository.save(ConceptGroupConcept.builder()
-                .idGroup(candidate.getCollectionId())
-                .idThesaurus(candidate.getThesoId())
-                .idConcept(idConcept)
-                .build());
+        if(candidate.getCollectionId() != null && candidate.getCollectionId().length() > 0) {
+            conceptGroupConceptRepository.save(ConceptGroupConcept.builder()
+                    .idGroup(candidate.getCollectionId())
+                    .idThesaurus(candidate.getThesoId())
+                    .idConcept(idConcept)
+                    .build());
+        }
 
         if (CollectionUtils.isNotEmpty(candidate.getDefinition())) {
             for (Element definition : candidate.getDefinition()) {
