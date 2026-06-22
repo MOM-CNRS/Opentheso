@@ -1,101 +1,33 @@
-CREATE EXTENSION IF NOT EXISTS "pgcrypto";
-DROP table if exists ai_provider;
-CREATE TABLE ai_provider (
-                             id UUID PRIMARY KEY DEFAULT gen_random_uuid(),
-                             name VARCHAR(255) NOT NULL UNIQUE,
-                             provider_type VARCHAR(50) NOT NULL,
-                             base_url TEXT NOT NULL,
-                             method VARCHAR(10) NOT NULL
-                                 CHECK (method IN ('GET', 'POST', 'PUT', 'DELETE')),
-                             headers_template TEXT,
-                             body_template TEXT,
-                             response_path TEXT NOT NULL,
-                             response_format VARCHAR(20) NOT NULL
-                                 CHECK (response_format IN ('TEXT', 'JSON', 'JSON_PATH')),
-                             active BOOLEAN NOT NULL DEFAULT TRUE,
-                             created_at TIMESTAMP NOT NULL DEFAULT now(),
-                             updated_at TIMESTAMP NOT NULL DEFAULT now()
-);
+DROP PROCEDURE IF EXISTS public.opentheso_add_terms(character varying, character varying, character varying, integer, text);
 
-CREATE INDEX idx_ai_provider_active ON ai_provider(active);
-CREATE INDEX idx_ai_provider_type ON ai_provider(provider_type);
-ALTER TABLE ai_provider ADD CONSTRAINT chk_base_url_not_empty CHECK (length(base_url) > 0);
+CREATE OR REPLACE PROCEDURE public.opentheso_add_terms(
+    IN id_term character varying,
+    IN id_thesaurus character varying,
+    IN id_concept character varying,
+    IN id_user integer,
+    IN terms text)
+    LANGUAGE 'plpgsql'
+AS $BODY$
+DECLARE
+    seperateur constant varchar := '##';
+    sous_seperateur constant varchar := '@@';
+    term_rec record;
+    array_string   text[];
+BEGIN
+    --label.getLabel() + SOUS_SEPERATEUR + label.getLanguage()
+    FOR term_rec IN SELECT unnest(string_to_array(terms, seperateur)) AS term_value
+        LOOP
+            SELECT string_to_array(term_rec.term_value, sous_seperateur) INTO array_string;
 
-CREATE TABLE ai_provider_secret (
-                                    id UUID PRIMARY KEY DEFAULT gen_random_uuid(),
-                                    provider_id UUID NOT NULL,
-                                    tenant_id UUID NOT NULL,
-                                    encrypted_api_key TEXT NOT NULL,
-                                    created_at TIMESTAMP DEFAULT now(),
-                                    updated_at TIMESTAMP DEFAULT now(),
-                                    CONSTRAINT fk_provider
-                                        FOREIGN KEY (provider_id)
-                                            REFERENCES ai_provider(id)
-);
+            Insert into term (id_term, lexical_value, lang, id_thesaurus, created, modified, source, status, contributor)
+            values (id_term, array_string[1], array_string[2], id_thesaurus, CURRENT_DATE, CURRENT_DATE, '', '', id_user)
+            ON CONFLICT ON CONSTRAINT term_id_term_key
+                DO NOTHING;
+        END LOOP;
 
-CREATE TABLE thesaurus_ai_config (
-                                     id UUID PRIMARY KEY DEFAULT gen_random_uuid(),
-                                     thesaurus_id VARCHAR NOT NULL,
-                                     provider_id UUID NOT NULL,
-                                     provider_secret_id UUID,
-                                     is_default BOOLEAN NOT NULL DEFAULT FALSE,
-                                     enabled BOOLEAN NOT NULL DEFAULT TRUE,
-                                     created_at TIMESTAMP DEFAULT now(),
-                                     updated_at TIMESTAMP DEFAULT now(),
-                                     CONSTRAINT fk_provider
-                                         FOREIGN KEY (provider_id)
-                                             REFERENCES ai_provider(id),
-                                     CONSTRAINT fk_secret
-                                         FOREIGN KEY (provider_secret_id)
-                                             REFERENCES ai_provider_secret(id)
-);
-
-
-INSERT INTO ai_provider (
-    name,
-    provider_type,
-    base_url,
-    method,
-    headers_template,
-    body_template,
-    response_path,
-    response_format,
-    active
-)
-VALUES (
-           'Ollama GPT OSS',
-           'OLLAMA',
-           'https://ollama.com/api/generate',
-           'POST',
-           '{"Authorization":"Bearer {{apiKey}}","Content-Type":"application/json"}',
-           '{"model":"gpt-oss:120b","prompt":"{{prompt}}","stream":false}',
-           'response',
-           'TEXT',
-           true
-       );
-
-INSERT INTO ai_provider_secret (
-    provider_id,
-    tenant_id,
-    encrypted_api_key
-)
-VALUES (
-           (SELECT id FROM ai_provider WHERE name = 'Ollama GPT OSS'),
-           '11111111-1111-1111-1111-111111111111',
-           'ENCRYPTED_OLLAMA_KEY_HERE'
-       );
-
-INSERT INTO thesaurus_ai_config (
-    thesaurus_id,
-    provider_id,
-    provider_secret_id,
-    is_default,
-    enabled
-)
-VALUES (
-           'th2',
-           (SELECT id FROM ai_provider WHERE name = 'Ollama GPT OSS'),
-           (SELECT id FROM ai_provider_secret WHERE encrypted_api_key = 'ENCRYPTED_OLLAMA_KEY_HERE'),
-           true,
-           true
-       );
+    -- Insert link term
+    Insert into preferred_term (id_concept, id_term, id_thesaurus) values (id_concept, id_term, id_thesaurus)
+    ON CONFLICT ON CONSTRAINT preferred_term_pkey
+        DO NOTHING;
+END;
+$BODY$;

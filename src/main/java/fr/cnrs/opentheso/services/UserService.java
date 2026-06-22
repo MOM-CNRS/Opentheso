@@ -13,8 +13,11 @@ import fr.cnrs.opentheso.models.users.NodeUserRole;
 import fr.cnrs.opentheso.models.users.NodeUserRoleGroup;
 import fr.cnrs.opentheso.repositories.*;
 import fr.cnrs.opentheso.utils.MD5Password;
-
+import fr.cnrs.opentheso.ws.openapi.exception.ApiKeyInvalidException;
+import fr.cnrs.opentheso.ws.openapi.exception.ApiKeyMissingException;
+import fr.cnrs.opentheso.ws.openapi.helper.ApiKeyState;
 import fr.cnrs.opentheso.v2.user.policy.RoleLabels;
+
 import lombok.AllArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
 import org.apache.commons.collections4.CollectionUtils;
@@ -49,7 +52,20 @@ public class UserService {
     private final UserGroupThesaurusRepository userGroupThesaurusRepository;
     private final PasswordEncoder passwordEncoder; // BCrypt
     private final PasswordResetTokenRepository passwordResetTokenRepository;
+    private final ApiKeyService apiKeyService;
 
+
+    public User getUserByApiKeyBcrypt(String apiKey) {
+        if (apiKey == null || apiKey.isBlank()) {
+            throw new ApiKeyMissingException();
+        }
+
+        Optional<User> userOpt = apiKeyService.findUserByApiKey(apiKey);
+        if (userOpt.isEmpty()) {
+            throw new ApiKeyInvalidException(ApiKeyState.INVALID);
+        }
+        return userOpt.get();
+    }
 
     public Optional<User> findByMail(String mail) {
         return userRepository.findByMail(mail);
