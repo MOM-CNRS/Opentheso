@@ -139,6 +139,15 @@ public class MenuBean implements Serializable {
         ExternalContext context = FacesContext.getCurrentInstance().getExternalContext();
         context.redirect(context.getRequestContextPath() + "/profile/myAccount.xhtml");
     }
+
+    public void redirectToMyProfileV2Page() throws IOException {
+        activePageName = "myAccountV2";
+        notificationPanelVisible = false;
+        propositionBean.searchNewPropositions();
+        propositionBean.setRubriqueVisible(false);
+        ExternalContext context = FacesContext.getCurrentInstance().getExternalContext();
+        context.redirect(context.getRequestContextPath() + "/v2/user/my-account.xhtml");
+    }
     
     public void redirectToMesProjectsPage() throws IOException {
         activePageName = "myProject";
