@@ -35,6 +35,7 @@ import java.io.Serializable;
 import java.util.*;
 import java.util.stream.Collectors;
 
+import fr.cnrs.opentheso.v2.user.policy.RoleLabels;
 import jakarta.annotation.PostConstruct;
 import jakarta.enterprise.context.SessionScoped;
 import jakarta.inject.Named;
@@ -62,12 +63,12 @@ import org.springframework.context.annotation.ScopedProxyMode;
 @Scope(value = "session", proxyMode = ScopedProxyMode.TARGET_CLASS)
 public class CurrentUser implements Serializable {
 
-    private final ConceptView conceptView;
-    private final GroupService groupService;
-    private final ConceptService conceptService;
     @Value("${settings.workLanguage:fr}")
     private String workLanguage;
 
+    private final ConceptView conceptView;
+    private final GroupService groupService;
+    private final ConceptService conceptService;
     private final Tree tree;
     private final MenuBean menuBean;
     private final SearchBean searchBean;
@@ -107,16 +108,12 @@ public class CurrentUser implements Serializable {
         String messageInfo = (String) sessionMap.remove("LOGIN_INFO_MESSAGE");
 
         if (messageError != null && !messageError.isEmpty()) {
-         //   loginError = message;
-
             // Ajouter le message global pour PrimeFaces growl
             fc.addMessage(null, new FacesMessage(FacesMessage.SEVERITY_ERROR,
                     "Connexion impossible",
                     messageError));
         }
         if (messageInfo != null && !messageInfo.isEmpty()) {
-            //   loginError = message;
-
             // Ajouter le message global pour PrimeFaces growl
             fc.addMessage(null, new FacesMessage(FacesMessage.SEVERITY_INFO,
                     "",
@@ -124,8 +121,6 @@ public class CurrentUser implements Serializable {
         }
         return "";
     }
-
-
 
     public void clear() {
         if (allAuthorizedProjectAsAdmin != null) {
@@ -471,7 +466,7 @@ public class CurrentUser implements Serializable {
             } else {
                 idRole = userService.getRoleOnThisThesaurus(nodeUser.getIdUser(), idProject, idTheso);
                 userPermissions.setRole(idRole);
-                userPermissions.setRoleName(userService.getRoleName(idRole));
+                userPermissions.setRoleName(RoleLabels.fromRoleId(idRole));
             }
         }
 

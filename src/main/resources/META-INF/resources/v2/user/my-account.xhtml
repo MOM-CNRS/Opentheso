@@ -1,0 +1,299 @@
+<!DOCTYPE HTML>
+<HTML xmlns="http://www.w3.org/1999/xhtml"
+      xmlns:h="http://xmlns.jcp.org/jsf/html"
+      xmlns:ui="http://xmlns.jcp.org/jsf/facelets"
+      xmlns:f="http://xmlns.jcp.org/jsf/core"
+      xmlns:p="http://primefaces.org/ui">
+
+<f:metadata>
+    <f:viewAction action="#{v2MyAccountBean.load()}"/>
+</f:metadata>
+
+<h:head>
+    <title>Opentheso</title>
+
+    <link href="../../resources/img/icon_opentheso2.png" rel="icon"/>
+
+    <link rel="stylesheet" type="text/css" href="../../resources/css/all.css"/>
+    <link rel="stylesheet" type="text/css" href="../../resources/css/theme_general.css"/>
+    <link rel="stylesheet" type="text/css" href="../../resources/css/theme_opentheso.css"/>
+    <link rel="stylesheet" type="text/css" href="../../resources/css/composants_opentheso.css"/>
+
+    <link rel="stylesheet" href="https://use.fontawesome.com/releases/v6.1.0/css/all.css"/>
+    <link rel="stylesheet" href="https://use.fontawesome.com/releases/v6.1.0/css/v4-shims.css"/>
+</h:head>
+
+<h:body id="page-top" onload="initMenu()" style="margin:0; padding:0; height:100%;">
+
+    <p:growl id="messageIndex" globalOnly="true" showDetail="true"/>
+
+    <h:panelGroup rendered="#{menuBean.checkIfUserIsConnected()}" id="wrapper" style="height: 100%">
+
+        <ui:include src="../../commun/menu.xhtml"/>
+
+        <div id="content-wrapper" style="min-height:100%; position:relative;">
+
+            <h:form id="containerIndex">
+                <h:panelGroup id="header">
+                    <ui:include src="../../commun/header.xhtml"/>
+                </h:panelGroup>
+
+                <div class="container-fluid" style="padding-bottom: 70px">
+
+                    <div class="d-sm-flex align-items-center justify-content-between mb-4" style="margin: 20px">
+                        <h1 class="h3 mb-0 text-gray-800">#{langueBean.getMsg('menu.profile')} / <span
+                                style="color: #f47b2a">#{langueBean.getMsg('profile.my_account')}</span></h1>
+                    </div>
+
+                    <h:panelGroup rendered="#{v2MyAccountBean.profile != null}">
+                        <div class="col-12" style="height: 100%">
+
+                            <div class="card shadow mb-4" style="height: 100%;">
+                                <div class="card mb-4 py-3 border-left-success"
+                                     style="margin-top: 5px; vertical-align: central; margin: 30px">
+                                    <div class="list-group" style="margin-top: -10px; margin-bottom: -10px">
+                                        <div class="list-group-item list-group-item-action">
+                                            <div class="row" style="padding: 3px;">
+                                                <div class="col-3" style="text-align: right; margin-top: 4px;">
+                                                    <h:outputText value=" #{langueBean.getMsg('profile.user')}"
+                                                                  title="#{langueBean.getMsg('profile.tootltip_user')}"
+                                                                  style="font-size: 14px; font-weight: bold;"/>
+                                                </div>
+
+                                                <div class="col-8">
+                                                    <p:inputText value="#{v2MyAccountBean.editableUsername}"
+                                                                 title="#{langueBean.getMsg('profile.tootltip_user')}"
+                                                                 style="width: 100%; height: 100%"/>
+                                                </div>
+
+                                                <div class="col-1"
+                                                     style="vertical-align: central; margin-top: 3px; font-size: 12px">
+                                                    <p:commandButton action="#{v2MyAccountBean.updateUsername()}"
+                                                                     update="containerIndex messageIndex"
+                                                                     icon="pi pi-check" styleClass="rounded-button"/>
+                                                </div>
+                                            </div>
+                                        </div>
+                                    </div>
+                                </div>
+
+                                <div class="card mb-4 py-3 border-left-success"
+                                     style="margin-top: 5px; vertical-align: central; margin: 30px">
+                                    <div class="list-group" style="margin-top: -10px; margin-bottom: -10px">
+                                        <div class="list-group-item list-group-item-action">
+
+                                            <div class="row" style="padding: 3px;">
+                                                <div class="col-3" style="text-align: right; margin-top: 4px;">
+                                                    <h:outputText value="#{langueBean.getMsg('profile.password')}"
+                                                                  style="font-size: 14px; font-weight: bold;"/>
+                                                </div>
+                                                <div class="col-8">
+                                                </div>
+
+                                                <div class="col-1"
+                                                     style="vertical-align: central; margin-top: 3px; font-size: 12px">
+                                                    <p:commandButton
+                                                            actionListener="#{v2ModifyPasswordBean.prepareDialog()}"
+                                                            icon="pi pi-key" update="idV2ModifyPassword messageIndex"
+                                                            oncomplete="PF('v2ModifyPassword').show()" process="@this"
+                                                            styleClass="edit-button rounded-button"/>
+                                                </div>
+                                            </div>
+                                        </div>
+                                    </div>
+                                </div>
+
+                                <div class="card mb-4 py-3 border-left-success"
+                                     style="margin-top: 5px; vertical-align: central; margin: 30px; margin-top: -10px">
+                                    <div class="list-group" style="margin-top: -10px; margin-bottom: -10px">
+                                        <div class="list-group-item list-group-item-action">
+                                            <div class="row" style="padding: 3px;">
+                                                <div class="col-3" style="text-align: right; margin-top: 4px;">
+                                                    <h:outputText value="#{langueBean.getMsg('profile.email')}"
+                                                                  style="font-size: 14px; font-weight: bold;"/>
+                                                </div>
+
+                                                <div class="col-8">
+                                                    <p:inputText value="#{v2MyAccountBean.editableEmail}"
+                                                                 style="width: 100%; height: 100%"/>
+                                                </div>
+
+                                                <div class="col-1" style="vertical-align: central; margin-top: 3px">
+                                                    <p:commandButton action="#{v2MyAccountBean.updateEmail()}"
+                                                                     update="containerIndex messageIndex"
+                                                                     icon="pi pi-check" styleClass="rounded-button"/>
+                                                </div>
+                                            </div>
+                                        </div>
+
+                                        <div class="list-group-item list-group-item-action">
+                                            <div class="row" style="padding: 3px;">
+                                                <div class="col-3" style="text-align: right; margin-top: 7px;">
+                                                    <h:outputText value="#{langueBean.getMsg('profile.alert_by_email')}"
+                                                                  style="font-size: 14px; font-weight: bold;"/>
+                                                </div>
+
+                                                <div class="col-8" style="margin-top: 4px;">
+                                                    <p:toggleSwitch value="#{v2MyAccountBean.editableAlertMail}"/>
+                                                </div>
+
+                                                <div class="col-1" style="vertical-align: central; margin-top: 3px">
+                                                    <p:commandButton action="#{v2MyAccountBean.updateAlertMail()}"
+                                                                     update="containerIndex messageIndex"
+                                                                     icon="pi pi-check" styleClass="rounded-button"/>
+                                                </div>
+                                            </div>
+                                        </div>
+                                    </div>
+                                </div>
+
+                                <div class="card mb-4 py-3 border-left-success"
+                                     style="margin-top: 5px; vertical-align: central; margin: 30px; margin-top: -10px">
+                                    <div class="list-group" style="margin-top: -10px; margin-bottom: -10px">
+                                        <div class="list-group-item list-group-item-action">
+                                            <div class="row" style="margin-left: 10px; ">
+                                                <div class="col-11">
+                                                    <h:outputText value="#{langueBean.getMsg('profile.list_user_roles')}"
+                                                                  style="font-size: 12px;"/>
+                                                </div>
+                                            </div>
+                                            <div class="row" style="margin-left: 20px; margin-right: 20px">
+                                                <h:panelGroup rendered="#{!v2MyAccountBean.superAdmin}">
+
+                                                    <div class="col-12">
+                                                        <p:dataTable id="v2TabUserProject"
+                                                                     value="#{v2MyAccountBean.projectRoles}"
+                                                                     var="projectRole"
+                                                                     scrollable="true" resizableColumns="true"
+                                                                     scrollHeight="450" lazy="false">
+                                                            <p:column width="40%"
+                                                                      headerText="#{langueBean.getMsg('profile.project')}">
+                                                                <h:outputText value="#{projectRole.projectName}"
+                                                                              style="font-size: 12px;"/>
+                                                            </p:column>
+                                                            <p:column width="60%">
+                                                                <p:dataTable id="v2TabUserTheso"
+                                                                             value="#{projectRole.thesaurusRoles}"
+                                                                             var="thesoRole"
+                                                                             scrollable="true" resizableColumns="true"
+                                                                             scrollHeight="450" lazy="false">
+                                                                    <p:column width="70%"
+                                                                              headerText="#{langueBean.getMsg('menu.thesaurus')}">
+                                                                        <h:outputText
+                                                                                value="#{thesoRole.thesaurusName} (#{thesoRole.thesaurusId})"
+                                                                                style="font-size: 12px;"/>
+                                                                    </p:column>
+                                                                    <p:column width="30%"
+                                                                              headerText="#{langueBean.getMsg('profile.role')}">
+                                                                        <h:outputText value="#{thesoRole.roleName}"
+                                                                                      style="font-size: 12px;"/>
+                                                                    </p:column>
+
+                                                                </p:dataTable>
+                                                            </p:column>
+                                                        </p:dataTable>
+                                                    </div>
+
+                                                </h:panelGroup>
+                                                <h:panelGroup rendered="#{v2MyAccountBean.superAdmin}">
+                                                    <div class="col-12">
+                                                        <h:outputText value="SuperAdmin"
+                                                                      style="font-size: 12px; color: #C63632"/>
+                                                    </div>
+                                                </h:panelGroup>
+                                            </div>
+                                        </div>
+                                    </div>
+                                </div>
+
+                                <div class="card mb-4 py-3 border-left-success"
+                                     style="margin-top: 5px; vertical-align: central; margin: 30px; margin-top: -10px">
+                                    <div class="list-group-item list-group-item-action">
+                                        <div class="row" style="padding: 3px;">
+                                            <div class="col-3" style="text-align: right; margin-top: 4px;">
+                                                <h:outputText value="#{langueBean.getMsg('profile.apiKey')}"
+                                                              style="font-size: 14px; font-weight: bold;"/>
+                                            </div>
+
+                                            <div class="col-5">
+                                                <p:inputText
+                                                        rendered="#{v2MyAccountBean.apiKeySectionVisible}"
+                                                        value="#{v2MyAccountBean.apiKeyPlain}"
+                                                        style="width: 100%; height: 100%" readonly="true"/>
+
+                                                <p:inputText
+                                                        rendered="#{!v2MyAccountBean.apiKeySectionVisible}"
+                                                        value="#{langueBean.getMsg('profile.noApiKeyMessage')}"
+                                                        style="width: 100%; height: 100%" readonly="true"/>
+                                            </div>
+
+                                            <h:panelGroup rendered="#{v2MyAccountBean.apiKeySectionVisible}">
+                                                <div class="col-2 align-self-center">
+                                                    <h:outputText rendered="#{v2MyAccountBean.keyNeverExpire}"
+                                                                  value="#{langueBean.getMsg('profile.noApiKeyExpireDate')}"
+                                                                  style="font-size: 16px; font-style: italic;"/>
+                                                    <h:outputText
+                                                            rendered="#{!v2MyAccountBean.keyNeverExpire and !v2MyAccountBean.keyExpired}"
+                                                            value="#{langueBean.getMsg('profile.apiKeyExpire')} #{v2MyAccountBean.keyExpiresAt}"
+                                                            style="font-size: 16px; font-style: italic;"/>
+                                                    <h:outputText rendered="#{v2MyAccountBean.keyExpired}"
+                                                                  value="#{langueBean.getMsg('profile.apiKeyExpired')}"
+                                                                  style="font-size: 16px; font-style: italic;"/>
+                                                </div>
+
+                                                <div class="col-1" style="vertical-align: central; margin-top: 3px">
+                                                    <p:commandButton action="#{v2MyAccountBean.regenerateApiKey()}"
+                                                                     update="containerIndex messageIndex"
+                                                                     value="#{langueBean.getMsg('profile.regenerateApiKey')}"
+                                                                     disabled="#{v2MyAccountBean.keyExpired}"/>
+                                                </div>
+                                            </h:panelGroup>
+                                        </div>
+
+                                        <h:panelGroup rendered="#{v2MyAccountBean.apiKeySectionVisible}">
+                                            <div class="row" style="padding: 3px;">
+                                                <div class="col-3"></div>
+                                                <p:staticMessage severity="info"
+                                                                 detail="#{langueBean.getMsg('profile.apiKeyCopyMessage')}"
+                                                                 class="col-auto " style="margin-top: 4px;"/>
+                                            </div>
+
+                                            <div class="row" style="padding: 3px;">
+                                                <div class="col-3"></div>
+                                                <p:staticMessage rendered="#{!v2MyAccountBean.keyNeverExpire}"
+                                                                 severity="warn"
+                                                                 detail="#{langueBean.getMsg('profile.apiKeyWarningMessage')}"
+                                                                 class="col-auto " style="margin-top: 4px;"/>
+                                            </div>
+                                        </h:panelGroup>
+
+                                    </div>
+                                </div>
+                            </div>
+
+                            <div style="margin: 30px;">
+                                <p:commandLink actionListener="#{menuBean.redirectToMyProfilePage()}"
+                                               process="@this"
+                                               style="font-size: 13px;">
+                                    ← #{langueBean.getMsg('profile.my_account')} (version actuelle)
+                                </p:commandLink>
+                            </div>
+                        </div>
+                    </h:panelGroup>
+
+                    <h:panelGroup rendered="#{v2MyAccountBean.profile == null}">
+                        <p:staticMessage severity="warn" styleClass="col-12" style="margin: 30px;"
+                                         summary="#{langueBean.getMsg('profile.profileUnavailableSummary')}"
+                                         detail="#{langueBean.getMsg('profile.profileUnavailableDetail')}"/>
+                    </h:panelGroup>
+
+                </div>
+                <ui:include src="../../commun/footer.xhtml"/>
+                <input type="hidden" name="csrfToken" value="#{sessionScope.CSRF_TOKEN}"/>
+            </h:form>
+            <ui:include src="../../dialog/login/logout.xhtml"/>
+            <ui:include src="modify-password-dialog.xhtml"/>
+        </div>
+    </h:panelGroup>
+</h:body>
+</HTML>

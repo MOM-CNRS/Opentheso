@@ -13,6 +13,10 @@ import fr.cnrs.opentheso.models.users.NodeUserRole;
 import fr.cnrs.opentheso.models.users.NodeUserRoleGroup;
 import fr.cnrs.opentheso.repositories.*;
 import fr.cnrs.opentheso.utils.MD5Password;
+import fr.cnrs.opentheso.ws.openapi.exception.ApiKeyInvalidException;
+import fr.cnrs.opentheso.ws.openapi.exception.ApiKeyMissingException;
+import fr.cnrs.opentheso.ws.openapi.helper.ApiKeyState;
+import fr.cnrs.opentheso.v2.user.policy.RoleLabels;
 
 import fr.cnrs.opentheso.ws.openapi.exception.ApiKeyInvalidException;
 import fr.cnrs.opentheso.ws.openapi.exception.ApiKeyMissingException;
@@ -402,7 +406,7 @@ public class UserService {
             if (idRole != -1) {
                 NodeThesoRole nodeThesoRole = new NodeThesoRole();
                 nodeThesoRole.setIdRole(idRole);
-                nodeThesoRole.setRoleName(getRoleName(idRole));
+                nodeThesoRole.setRoleName(RoleLabels.fromRoleId(idRole));
                 nodeThesoRole.setIdTheso(idThesaurus);
                 var idLang = preferenceService.getWorkLanguageOfThesaurus(idThesaurus);
                 nodeThesoRole.setThesoName(thesaurusService.getTitleOfThesaurus(idThesaurus, idLang));
@@ -418,16 +422,6 @@ public class UserService {
         List<String> thesaurusIds = userGroupThesaurusRepository.findThesaurusIdsByGroupId(idProject);
         log.debug("{} thésaurus trouvés pour le projet ID={}", thesaurusIds.size(), idProject);
         return thesaurusIds;
-    }
-
-    public String getRoleName(int idRole) {
-        return switch (idRole) {
-            case 1 -> "superAdmin";
-            case 2 -> "admin";
-            case 3 -> "manager";
-            case 4 -> "contributor";
-            default -> "";
-        };
     }
 
     @Transactional(propagation = Propagation.REQUIRES_NEW)

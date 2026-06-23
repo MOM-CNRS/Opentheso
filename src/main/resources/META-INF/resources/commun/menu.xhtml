@@ -75,6 +75,9 @@
                             <p:commandLink class="collapse-item" actionListener="#{menuBean.redirectToMyProfilePage()}" 
                                            process="@this" style="font-size: 12px;">#{langueBean.getMsg('profile.my_account')}
                             </p:commandLink>
+                            <p:commandLink class="collapse-item" actionListener="#{menuBean.redirectToMyProfileV2Page()}"
+                                           process="@this" style="font-size: 12px;">#{langueBean.getMsg('profile.my_account')} (v2)
+                            </p:commandLink>
                             <p:commandLink rendered="#{(currentUser.nodeUser != null) and (currentUser.allAuthorizedProjectAsAdmin.size() > 0 or currentUser.hasRoleAsAdmin)}"
                                            class="collapse-item" actionListener="#{menuBean.redirectToMesProjectsPage()}"
                                            style="font-size: 12px;" process="@this">#{langueBean.getMsg('profile.my_projects_users')}
