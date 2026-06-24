@@ -82,17 +82,33 @@
                                            class="collapse-item" actionListener="#{menuBean.redirectToMesProjectsPage()}"
                                            style="font-size: 12px;" process="@this">#{langueBean.getMsg('profile.my_projects_users')}
                             </p:commandLink>
+                            <p:commandLink rendered="#{(currentUser.nodeUser != null) and (currentUser.allAuthorizedProjectAsAdmin.size() > 0 or currentUser.hasRoleAsAdmin)}"
+                                           class="collapse-item" actionListener="#{menuBean.redirectToMesProjectsV2Page()}"
+                                           style="font-size: 12px;" process="@this">#{langueBean.getMsg('profile.my_projects_users')} (v2)
+                            </p:commandLink>
                             <hr class="sidebar-divider">
                                 <p:commandLink rendered="#{(currentUser.nodeUser != null) and (currentUser.hasRoleAsSuperAdmin)}"
                                                class="collapse-item" actionListener="#{menuBean.redirectToUsersPage()}" 
                                                style="font-size: 12px;" process="@this">#{langueBean.getMsg('profile.tooltip_all_users')}
                                 </p:commandLink>
                                 <p:commandLink rendered="#{(currentUser.nodeUser != null) and (currentUser.hasRoleAsSuperAdmin)}"
+                                               class="collapse-item" actionListener="#{menuBean.redirectToUsersV2Page()}"
+                                               style="font-size: 12px;" process="@this">#{langueBean.getMsg('profile.tooltip_all_users')} (v2)
+                                </p:commandLink>
+                                <p:commandLink rendered="#{(currentUser.nodeUser != null) and (currentUser.hasRoleAsSuperAdmin)}"
                                                class="collapse-item" actionListener="#{menuBean.redirectToProjetsPage()}"
                                                style="font-size: 12px;" process="@this">#{langueBean.getMsg('profile.all_projects')}</p:commandLink>
                                 <p:commandLink rendered="#{(currentUser.nodeUser != null) and (currentUser.hasRoleAsSuperAdmin)}"
+                                               class="collapse-item" actionListener="#{menuBean.redirectToProjectsV2Page()}"
+                                               style="font-size: 12px;" process="@this">#{langueBean.getMsg('profile.all_projects')} (v2)
+                                </p:commandLink>
+                                <p:commandLink rendered="#{(currentUser.nodeUser != null) and (currentUser.hasRoleAsSuperAdmin)}"
                                                class="collapse-item" actionListener="#{menuBean.redirectToThesorusPage()}"
                                                style="font-size: 12px;" process="@this">#{langueBean.getMsg('profile.all_thesauri')}
+                                </p:commandLink>
+                                <p:commandLink rendered="#{(currentUser.nodeUser != null) and (currentUser.hasRoleAsSuperAdmin)}"
+                                               class="collapse-item" actionListener="#{menuBean.redirectToThesauriV2Page()}"
+                                               style="font-size: 12px;" process="@this">#{langueBean.getMsg('profile.all_thesauri')} (v2)
                                 </p:commandLink>
                             </hr>
                         </div>

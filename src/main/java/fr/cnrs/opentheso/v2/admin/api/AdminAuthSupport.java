@@ -1,0 +1,17 @@
+package fr.cnrs.opentheso.v2.admin.api;
+
+import fr.cnrs.opentheso.v2.project.api.ProjectAuthSupport;
+import fr.cnrs.opentheso.v2.user.api.AccountAuthSupport;
+import lombok.RequiredArgsConstructor;
+import org.springframework.stereotype.Component;
+
+@Component
+@RequiredArgsConstructor
+public class AdminAuthSupport {
+
+    private final AccountAuthSupport accountAuthSupport;
+
+    public int resolveUserId(String xApiKey, String legacyApiKey) {
+        return accountAuthSupport.resolveUserId(xApiKey, legacyApiKey);
+    }
+}

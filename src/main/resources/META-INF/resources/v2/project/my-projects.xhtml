@@ -1,0 +1,213 @@
+<!DOCTYPE HTML>
+<HTML xmlns="http://www.w3.org/1999/xhtml"
+      xmlns:h="http://xmlns.jcp.org/jsf/html"
+      xmlns:ui="http://xmlns.jcp.org/jsf/facelets"
+      xmlns:f="http://xmlns.jcp.org/jsf/core"
+      xmlns:p="http://primefaces.org/ui">
+
+<f:metadata>
+    <f:viewAction action="#{v2MyProjectsBean.load()}"/>
+</f:metadata>
+
+<h:head>
+    <title>Opentheso</title>
+    <link href="../../resources/img/icon_opentheso2.png" rel="icon"/>
+    <link rel="stylesheet" type="text/css" href="../../resources/css/all.css"/>
+    <link rel="stylesheet" type="text/css" href="../../resources/css/theme_general.css"/>
+    <link rel="stylesheet" type="text/css" href="../../resources/css/theme_opentheso.css"/>
+    <link rel="stylesheet" type="text/css" href="../../resources/css/composants_opentheso.css"/>
+    <link rel="stylesheet" href="https://use.fontawesome.com/releases/v6.1.0/css/all.css"/>
+    <link rel="stylesheet" href="https://use.fontawesome.com/releases/v6.1.0/css/v4-shims.css"/>
+</h:head>
+
+<h:body id="page-top" onload="initMenu()" style="margin:0; padding:0; height:100%;">
+
+    <p:growl id="messageIndex" globalOnly="true" showDetail="true"/>
+
+    <h:panelGroup rendered="#{menuBean.checkIfUserIsConnected() and v2UserSession.canAccessProjectAdminScreen()}"
+                  id="wrapper" style="height: 100%">
+
+        <ui:include src="../../commun/menu.xhtml"/>
+
+        <div id="content-wrapper" style="min-height:100%; position:relative;">
+            <h:form id="containerIndex">
+                <h:panelGroup id="header">
+                    <ui:include src="../../commun/header.xhtml"/>
+                </h:panelGroup>
+
+                <div class="container-fluid" style="padding-bottom: 70px">
+                    <div class="d-sm-flex align-items-center justify-content-between mb-4" style="margin: 20px">
+                        <h1 class="h3 mb-0 text-gray-800">#{langueBean.getMsg('menu.profile')} / <span
+                                style="color: #f47b2a">#{langueBean.getMsg('profile.my_authorized_projects')}</span></h1>
+                    </div>
+
+                    <div class="card mb-4 py-3 border-left-success"
+                         style="margin-top: 5px; margin-left: 20px; margin-right: 20px;">
+                        <div class="row" style="margin-left: 30px; margin-right: 30px;">
+                            <div class="col-3">
+                                <h:outputText value="#{langueBean.getMsg('profile.my_authorized_projects')} : "/>
+                            </div>
+                        </div>
+                        <div class="row" style="margin-left: 30px;">
+                            <div class="col-4" style="height: 35px">
+                                <p:selectOneMenu id="selectProjects" value="#{v2MyProjectsBean.selectedProjectId}"
+                                                 styleClass="selectOneMenu_custom"
+                                                 panelStyleClass="selectOneMenu_panelStyle_custom"
+                                                 style="width: 100%; height: 35px; background: none; box-shadow: none;"
+                                                 panelStyle="border: none; box-shadow: none; width: 300px"
+                                                 filter="true" filterMatchMode="contains">
+                                    <f:selectItem itemLabel="...." itemValue=""/>
+                                    <f:selectItems value="#{v2MyProjectsBean.projects}" var="project"
+                                                   itemLabel="#{project.name()} (#{project.id()})"
+                                                   itemValue="#{project.id()}"/>
+                                    <p:ajax event="change" listener="#{v2MyProjectsBean.onProjectChanged()}"
+                                            update="containerIndex"/>
+                                </p:selectOneMenu>
+                            </div>
+                            <div class="col-2" style="height: 35px">
+                                <p:commandButton rendered="#{v2MyProjectsBean.superAdmin}"
+                                                 actionListener="#{v2MyProjectsBean.prepareCreateDialog()}"
+                                                 oncomplete="PF('v2NewProject').show();"
+                                                 class="btn btn-primary" icon="fas fa-plus" update="idV2NewProject"
+                                                 process="@this"
+                                                 style="color: #FFF; background-color: #f47b2a; border-color: #f47b2a; height: 100%; margin-left: -5px"
+                                                 title="#{langueBean.getMsg('profile.create_new_project')}"/>
+                                <p:commandButton rendered="#{v2UserSession.canAccessProjectAdminScreen()}"
+                                                 actionListener="#{v2MyProjectsBean.prepareRenameDialog()}"
+                                                 oncomplete="PF('v2RenameProject').show();"
+                                                 class="btn btn-primary" update="idV2RenameProject" icon="fas fa-pen"
+                                                 process="@this"
+                                                 title="#{langueBean.getMsg('profile.change_label_projects')}"
+                                                 style="color: #FFF; background-color: #f47b2a; border-color: #f47b2a; height: 100%; margin-left: 5px"/>
+                            </div>
+                        </div>
+                    </div>
+
+                    <h:panelGroup rendered="#{v2MyProjectsBean.projectAdminScreen}">
+                        <div class="card mb-4 py-3 border-left-success"
+                             style="margin-top: 5px; vertical-align: central; margin-left: 20px; margin-right: 20px;">
+                            <div class="row" style="margin-left: 30px; margin-right: 30px;">
+                                <div class="col-12">
+                                    <p:toolbar>
+                                        <p:toolbarGroup align="right">
+                                            <p:commandButton value="#{langueBean.getMsg('profile.new_userOnProject')}"
+                                                             icon="fas fa-user-plus"
+                                                             actionListener="#{v2MyProjectsBean.prepareNewMemberDialog()}"
+                                                             style="padding-left: 35px; padding-right: 10px; padding-top: 5px; padding-bottom: 5px;"
+                                                             update="idV2NewProjectMember v2NewProjectMemberForm"
+                                                             oncomplete="PF('v2NewProjectMember').show();"
+                                                             process="@this"
+                                                             styleClass="ui-button-success"
+                                                             title="#{langueBean.getMsg('profile.new_userOnProject')}"/>
+
+                                            <p:commandButton value="#{langueBean.getMsg('profile.add_existing_user')}"
+                                                             actionListener="#{v2MyProjectsBean.prepareAddExistingMemberDialog()}"
+                                                             icon="fas fa-user"
+                                                             style="padding-left: 35px; padding-right: 10px; padding-top: 5px; padding-bottom: 5px; margin-left: 10px"
+                                                             update="idV2AddExistingMember v2AddExistingMemberForm"
+                                                             oncomplete="PF('v2AddExistingMember').show();"
+                                                             process="@this"
+                                                             styleClass="ui-button-success"/>
+                                        </p:toolbarGroup>
+                                    </p:toolbar>
+                                </div>
+                            </div>
+
+                            <div class="row" style="margin-left: 30px; margin-right: 30px;">
+                                <div class="col-12">
+                                    <p:tabView id="tabViewRoles" activeIndex="#{v2MyProjectsBean.activeTabIndex}">
+                                        <p:tab title="#{langueBean.getMsg('profile.list_of_thesauri')}"
+                                               titleStyle="font-size: 12px;">
+                                            <p:dataTable value="#{v2MyProjectsBean.dashboard.thesauri()}" var="theso"
+                                                         size="small" paginator="true" rows="10"
+                                                         emptyMessage="#{langueBean.getMsg('toolbox.noThesaurus')}"
+                                                         stripedRows="true">
+                                                <p:column headerText="Id" width="10%">
+                                                    <h:outputText value="#{theso.id()}"/>
+                                                </p:column>
+                                                <p:column headerText="#{langueBean.getMsg('statistique.thesaurus.name')}"
+                                                          width="90%">
+                                                    <h:outputText rendered="#{!theso.privateThesaurus()}"
+                                                                  value="#{theso.title()}"/>
+                                                    <h:outputText rendered="#{theso.privateThesaurus()}"
+                                                                  value="#{theso.title()}"
+                                                                  style="color: red; font-style: italic"/>
+                                                </p:column>
+                                            </p:dataTable>
+                                        </p:tab>
+
+                                        <p:tab title="#{langueBean.getMsg('profile.listUserByProject')}"
+                                               titleStyle="font-size: 12px;">
+                                            <p:dataTable value="#{v2MyProjectsBean.dashboard.members()}" var="member"
+                                                         size="small" paginator="true" rows="10"
+                                                         emptyMessage="#{langueBean.getMsg('rightbody.concept.no_value')}..."
+                                                         stripedRows="true">
+                                                <p:column headerText="#{langueBean.getMsg('profile.pseudo')}">
+                                                    <h:outputText rendered="#{!member.active()}"
+                                                                  value="#{member.username()}"
+                                                                  title="#{langueBean.getMsg('profile.user_disabled')}"
+                                                                  style="color: red; font-style: oblique"/>
+                                                    <h:outputText rendered="#{member.active()}"
+                                                                  value="#{member.username()} (#{member.userId()})"/>
+                                                </p:column>
+                                                <p:column headerText="#{langueBean.getMsg('profile.role')}">
+                                                    <h:outputText value="#{member.roleName()}"/>
+                                                </p:column>
+                                                <f:facet name="footer">
+                                                    <span class="p-text-bold">#{langueBean.getMsg('profile.totalOfUsers')}: #{v2MyProjectsBean.dashboard.members().size()}</span>
+                                                </f:facet>
+                                            </p:dataTable>
+                                        </p:tab>
+
+                                        <p:tab title="#{langueBean.getMsg('profile.listUserRestrictedRole')}"
+                                               titleStyle="font-size: 12px;">
+                                            <p:dataTable value="#{v2MyProjectsBean.dashboard.limitedMembers()}"
+                                                         var="limited" size="small" paginator="true" rows="10"
+                                                         emptyMessage="#{langueBean.getMsg('rightbody.concept.no_value')}..."
+                                                         stripedRows="true">
+                                                <p:column headerText="#{langueBean.getMsg('profile.pseudo')}">
+                                                    <h:outputText rendered="#{!limited.active()}"
+                                                                  value="#{limited.username()}"
+                                                                  title="#{langueBean.getMsg('profile.user_disabled')}"
+                                                                  style="color: red; font-style: oblique"/>
+                                                    <h:outputText rendered="#{limited.active()}"
+                                                                  value="#{limited.username()} (#{limited.userId()})"/>
+                                                </p:column>
+                                                <p:column headerText="#{langueBean.getMsg('profile.role')}">
+                                                    <h:outputText value="#{limited.roleName()}"/>
+                                                </p:column>
+                                                <p:column headerText="#{langueBean.getMsg('menu.thesaurus')}">
+                                                    <h:outputText
+                                                            value="#{limited.thesaurusName()} (#{limited.thesaurusId()})"/>
+                                                </p:column>
+                                                <f:facet name="footer">
+                                                    <span class="p-text-bold">#{langueBean.getMsg('profile.totalOfUsers')}: #{v2MyProjectsBean.dashboard.limitedMembers().size()}</span>
+                                                </f:facet>
+                                            </p:dataTable>
+                                        </p:tab>
+                                    </p:tabView>
+                                </div>
+                            </div>
+                        </div>
+                    </h:panelGroup>
+
+                    <h:panelGroup rendered="#{!v2UserSession.canAccessProjectAdminScreen()}">
+                        <p:staticMessage severity="warn"
+                                         summary="#{langueBean.getMsg('project.accessDeniedSummary')}"
+                                         detail="#{langueBean.getMsg('project.accessDeniedDetail')}"/>
+                    </h:panelGroup>
+                </div>
+
+                <ui:include src="../../commun/footer.xhtml"/>
+                <input type="hidden" name="csrfToken" value="#{sessionScope.CSRF_TOKEN}"/>
+            </h:form>
+
+            <ui:include src="new-project-dialog.xhtml"/>
+            <ui:include src="rename-project-dialog.xhtml"/>
+            <ui:include src="new-project-member-dialog.xhtml"/>
+            <ui:include src="add-existing-member-dialog.xhtml"/>
+            <ui:include src="../../dialog/login/logout.xhtml"/>
+        </div>
+    </h:panelGroup>
+</h:body>
+</HTML>

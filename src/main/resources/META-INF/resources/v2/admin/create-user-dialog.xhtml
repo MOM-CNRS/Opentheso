@@ -1,0 +1,50 @@
+<ui:fragment xmlns="http://www.w3.org/1999/xhtml"
+             xmlns:ui="http://xmlns.jcp.org/jsf/facelets"
+             xmlns:h="http://xmlns.jcp.org/jsf/html"
+             xmlns:p="http://primefaces.org/ui"
+             xmlns:f="http://xmlns.jcp.org/jsf/core">
+
+    <p:dialog id="idV2CreateUser" header="#{langueBean.getMsg('profile.new_user')}" widgetVar="v2CreateUser"
+              width="550" modal="true" resizable="false" position="top">
+        <h:form id="v2CreateUserForm">
+            <div class="row mb-2">
+                <div class="col-4 text-right"><h:outputText value="#{langueBean.getMsg('profile.pseudo')} *"/></div>
+                <div class="col-8"><p:inputText value="#{v2AllUsersBean.newUsername}" style="width:100%"/></div>
+            </div>
+            <div class="row mb-2">
+                <div class="col-4 text-right"><h:outputText value="#{langueBean.getMsg('profile.email')} *"/></div>
+                <div class="col-8"><p:inputText value="#{v2AllUsersBean.newEmail}" style="width:100%"/></div>
+            </div>
+            <div class="row mb-2">
+                <div class="col-4 text-right"><h:outputText value="#{langueBean.getMsg('menu.password')} *"/></div>
+                <div class="col-8"><p:password value="#{v2AllUsersBean.newPassword}" style="width:100%"/></div>
+            </div>
+            <div class="row mb-2">
+                <div class="col-4 text-right"><h:outputText value="#{langueBean.getMsg('profile.confirmation')}"/></div>
+                <div class="col-8"><p:password value="#{v2AllUsersBean.newPasswordConfirmation}" style="width:100%"/></div>
+            </div>
+            <div class="row mb-2">
+                <div class="col-4 text-right"><h:outputText value="#{langueBean.getMsg('profile.role')}"/></div>
+                <div class="col-8">
+                    <p:selectOneMenu value="#{v2AllUsersBean.newRoleId}" style="width:100%">
+                        <f:selectItem itemLabel="..." itemValue=""/>
+                        <f:selectItems value="#{v2AllUsersBean.roles}" var="role" itemLabel="#{role.name()}" itemValue="#{role.id()}"/>
+                    </p:selectOneMenu>
+                </div>
+            </div>
+            <div class="row mb-2">
+                <div class="col-4 text-right"><h:outputText value="#{langueBean.getMsg('profile.project')}"/></div>
+                <div class="col-8">
+                    <p:selectOneMenu value="#{v2AllUsersBean.newProjectId}" style="width:100%">
+                        <f:selectItem itemLabel="..." itemValue=""/>
+                        <f:selectItems value="#{v2AllUsersBean.projects}" var="project" itemLabel="#{project.name()}" itemValue="#{project.id()}"/>
+                    </p:selectOneMenu>
+                </div>
+            </div>
+            <div class="text-right mt-3">
+                <p:commandButton value="#{langueBean.getMsg('btnValidate')}" icon="pi pi-check"
+                                 action="#{v2AllUsersBean.createUser()}" update=":containerIndex :messageIndex"/>
+            </div>
+        </h:form>
+    </p:dialog>
+</ui:fragment>

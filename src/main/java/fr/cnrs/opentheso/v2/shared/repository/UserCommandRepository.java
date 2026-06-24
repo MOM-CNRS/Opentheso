@@ -1,0 +1,177 @@
+package fr.cnrs.opentheso.v2.shared.repository;
+
+import fr.cnrs.opentheso.v2.shared.repository.projection.UserSearchRow;
+import jakarta.persistence.EntityManager;
+import jakarta.persistence.PersistenceContext;
+import org.springframework.stereotype.Repository;
+import org.springframework.transaction.annotation.Transactional;
+
+import java.util.List;
+
+@Repository
+public class UserCommandRepository {
+
+    @PersistenceContext
+    private EntityManager entityManager;
+
+    public boolean existsByUsernameIgnoreCase(String username) {
+        String sql = """
+                SELECT CASE WHEN COUNT(*) > 0 THEN true ELSE false END
+                FROM users
+                WHERE LOWER(username) = LOWER(:username)
+                """;
+        return Boolean.TRUE.equals(entityManager.createNativeQuery(sql)
+                .setParameter("username", username)
+                .getSingleResult());
+    }
+
+    public boolean existsByMailIgnoreCase(String mail) {
+        String sql = """
+                SELECT CASE WHEN COUNT(*) > 0 THEN true ELSE false END
+                FROM users
+                WHERE LOWER(mail) = LOWER(:mail)
+                """;
+        return Boolean.TRUE.equals(entityManager.createNativeQuery(sql)
+                .setParameter("mail", mail)
+                .getSingleResult());
+    }
+
+    @SuppressWarnings("unchecked")
+    public List<UserSearchRow> searchByUsernameLike(String username, int limit) {
+        String sql = """
+                SELECT id_user, username, mail
+                FROM users
+                WHERE LOWER(username) LIKE LOWER(:pattern)
+                  AND issuperadmin = false
+                ORDER BY LOWER(username)
+                LIMIT :limit
+                """;
+        List<Object[]> rows = entityManager.createNativeQuery(sql)
+                .setParameter("pattern", "%" + username + "%")
+                .setParameter("limit", limit)
+                .getResultList();
+        return rows.stream()
+                .map(row -> new UserSearchRow(
+                        ((Number) row[0]).intValue(),
+                        (String) row[1],
+                        (String) row[2]
+                ))
+                .toList();
+    }
+
+    @Transactional
+    public int createUser(
+            String username,
+            String mail,
+            String password,
+            boolean alertMail,
+            String institution,
+            boolean active,
+            boolean passToModify,
+            boolean verified
+    ) {
+        String sql = """
+                INSERT INTO users (
+                    username, password, mail, alertmail, issuperadmin, active,
+                    passtomodify, verified, key_never_expire, isservice_account, rgpd_consent, institution
+                )
+                VALUES (
+                    :username, :password, :mail, :alertMail, false, :active,
+                    :passToModify, :verified, false, false, true, :institution
+                )
+                RETURNING id_user
+                """;
+        Number id = (Number) entityManager.createNativeQuery(sql)
+                .setParameter("username", username)
+                .setParameter("password", password != null ? password : "")
+                .setParameter("mail", mail)
+                .setParameter("alertMail", alertMail)
+                .setParameter("active", active)
+                .setParameter("passToModify", passToModify)
+                .setParameter("verified", verified)
+                .setParameter("institution", institution)
+                .getSingleResult();
+        return id.intValue();
+    }
+
+    @Transactional
+    public void updateUserProfile(
+            int userId,
+            String username,
+            String mail,
+            boolean alertMail,
+            String institution,
+            boolean active
+    ) {
+        entityManager.createNativeQuery("""
+                        UPDATE users
+                        SET username = :username,
+                            mail = :mail,
+                            alertmail = :alertMail,
+                            institution = :institution,
+                            active = :active
+                        WHERE id_user = :userId
+                        """)
+                .setParameter("userId", userId)
+                .setParameter("username", username)
+                .setParameter("mail", mail)
+                .setParameter("alertMail", alertMail)
+                .setParameter("institution", institution)
+                .setParameter("active", active)
+                .executeUpdate();
+    }
+
+    @Transactional
+    public void updatePassword(int userId, String encodedPassword) {
+        entityManager.createNativeQuery("""
+                        UPDATE users
+                        SET password = :password, passtomodify = false
+                        WHERE id_user = :userId
+                        """)
+                .setParameter("userId", userId)
+                .setParameter("password", encodedPassword)
+                .executeUpdate();
+    }
+
+    @Transactional
+    public void updateApiKeySettings(int userId, boolean hasApiKey, boolean keyNeverExpire, java.time.LocalDate keyExpiresAt) {
+        entityManager.createNativeQuery("""
+                        UPDATE users
+                        SET key_never_expire = :keyNeverExpire,
+                            key_expires_at = :keyExpiresAt,
+                            apikey = CASE WHEN :hasApiKey THEN apikey ELSE NULL END
+                        WHERE id_user = :userId
+                        """)
+                .setParameter("userId", userId)
+                .setParameter("hasApiKey", hasApiKey)
+                .setParameter("keyNeverExpire", keyNeverExpire)
+                .setParameter("keyExpiresAt", keyExpiresAt)
+                .executeUpdate();
+    }
+
+    @Transactional
+    public void deleteUserCascade(int userId) {
+        entityManager.createNativeQuery("DELETE FROM password_reset_token WHERE id_user = :userId")
+                .setParameter("userId", userId)
+                .executeUpdate();
+        entityManager.createNativeQuery("DELETE FROM user_role_only_on WHERE id_user = :userId")
+                .setParameter("userId", userId)
+                .executeUpdate();
+        entityManager.createNativeQuery("DELETE FROM user_role_group WHERE id_user = :userId")
+                .setParameter("userId", userId)
+                .executeUpdate();
+        entityManager.createNativeQuery("DELETE FROM users WHERE id_user = :userId")
+                .setParameter("userId", userId)
+                .executeUpdate();
+    }
+
+    @Transactional
+    public void setSuperAdmin(int userId, boolean superAdmin) {
+        entityManager.createNativeQuery("""
+                        UPDATE users SET issuperadmin = :superAdmin WHERE id_user = :userId
+                        """)
+                .setParameter("userId", userId)
+                .setParameter("superAdmin", superAdmin)
+                .executeUpdate();
+    }
+}

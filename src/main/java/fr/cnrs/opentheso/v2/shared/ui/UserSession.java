@@ -53,4 +53,19 @@ public class UserSession implements Serializable {
             currentUser.getNodeUser().setAlertMail(alertMail);
         }
     }
+
+    public boolean isSuperAdmin() {
+        return currentUser.getNodeUser() != null && currentUser.getNodeUser().isSuperAdmin();
+    }
+
+    public boolean canAccessProjectAdminScreen() {
+        if (!isLoggedIn()) {
+            return false;
+        }
+        return isSuperAdmin() || currentUser.isHasRoleAsAdmin();
+    }
+
+    public boolean canAccessSuperAdminScreen() {
+        return isSuperAdmin();
+    }
 }

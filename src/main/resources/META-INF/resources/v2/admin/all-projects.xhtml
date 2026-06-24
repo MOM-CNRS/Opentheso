@@ -1,0 +1,65 @@
+<!DOCTYPE HTML>
+<HTML xmlns="http://www.w3.org/1999/xhtml"
+      xmlns:h="http://xmlns.jcp.org/jsf/html"
+      xmlns:ui="http://xmlns.jcp.org/jsf/facelets"
+      xmlns:f="http://xmlns.jcp.org/jsf/core"
+      xmlns:p="http://primefaces.org/ui">
+
+<f:metadata>
+    <f:viewAction action="#{v2AllProjectsBean.load()}"/>
+</f:metadata>
+
+<h:head>
+    <title>Opentheso</title>
+    <link href="../../resources/img/icon_opentheso2.png" rel="icon"/>
+    <link rel="stylesheet" type="text/css" href="../../resources/css/all.css"/>
+    <link rel="stylesheet" type="text/css" href="../../resources/css/theme_general.css"/>
+    <link rel="stylesheet" type="text/css" href="../../resources/css/theme_opentheso.css"/>
+    <link rel="stylesheet" type="text/css" href="../../resources/css/composants_opentheso.css"/>
+</h:head>
+
+<h:body id="page-top" onload="initMenu()" style="margin:0; padding:0; height:100%;">
+    <p:growl id="messageIndex" globalOnly="true" showDetail="true"/>
+
+    <h:panelGroup rendered="#{menuBean.checkIfUserIsConnected() and v2UserSession.canAccessSuperAdminScreen()}"
+                  id="wrapper" style="height: 100%">
+        <ui:include src="../../commun/menu.xhtml"/>
+
+        <div id="content-wrapper" style="min-height:100%; position:relative;">
+            <h:form id="containerIndex">
+                <h:panelGroup id="header">
+                    <ui:include src="../../commun/header.xhtml"/>
+                </h:panelGroup>
+
+                <div class="container-fluid" style="padding-bottom: 70px">
+                    <div class="d-sm-flex align-items-center justify-content-between mb-4" style="margin: 20px">
+                        <h1 class="h3 mb-0 text-gray-800">#{langueBean.getMsg('menu.profile')} / <span
+                                style="color: #f47b2a">#{langueBean.getMsg('profile.all_projects')}</span></h1>
+                    </div>
+
+                    <div class="card shadow mb-4" style="margin: 20px;">
+                        <p:dataTable value="#{v2AllProjectsBean.projects}" var="project" size="small"
+                                     paginator="true" rows="20" stripedRows="true">
+                            <f:facet name="header">
+                                <span class="font-weight-bold">#{langueBean.getMsg('profile.listOfProjects')}</span>
+                            </f:facet>
+                            <p:column headerText="Id" width="15%">
+                                <h:outputText value="#{project.id()}"/>
+                            </p:column>
+                            <p:column headerText="#{langueBean.getMsg('profile.project')}" sortBy="#{project.name()}">
+                                <h:outputText value="#{project.name()}"/>
+                            </p:column>
+                            <f:facet name="footer">
+                                <span class="p-text-bold">#{langueBean.getMsg('profile.totalOfProjects')}: #{v2AllProjectsBean.projects.size()}</span>
+                            </f:facet>
+                        </p:dataTable>
+                    </div>
+                </div>
+            </h:form>
+
+            <ui:include src="../../commun/footer.xhtml"/>
+            <ui:include src="../../dialog/login/logout.xhtml"/>
+        </div>
+    </h:panelGroup>
+</h:body>
+</HTML>

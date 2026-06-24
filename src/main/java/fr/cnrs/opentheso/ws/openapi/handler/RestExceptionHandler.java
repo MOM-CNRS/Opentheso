@@ -4,6 +4,10 @@ import fr.cnrs.opentheso.v2.user.exception.ApiKeyRegenerationException;
 import fr.cnrs.opentheso.v2.user.exception.InvalidPasswordException;
 import fr.cnrs.opentheso.v2.user.exception.InvalidProfileDataException;
 import fr.cnrs.opentheso.v2.user.exception.UserNotFoundException;
+import fr.cnrs.opentheso.v2.admin.exception.AdminAccessDeniedException;
+import fr.cnrs.opentheso.v2.project.exception.InvalidProjectDataException;
+import fr.cnrs.opentheso.v2.project.exception.ProjectAccessDeniedException;
+import fr.cnrs.opentheso.v2.project.exception.ProjectNotFoundException;
 import fr.cnrs.opentheso.ws.openapi.exception.*;
 import fr.cnrs.opentheso.ws.openapi.helper.ApiKeyState;
 import jakarta.servlet.http.HttpServletRequest;
@@ -141,6 +145,50 @@ public class RestExceptionHandler {
         problem.setInstance(URI.create(request.getRequestURI()));
         problem.setProperty("timestamp", OffsetDateTime.now());
         problem.setProperty("errorCode", "USER_NOT_FOUND");
+        return problem;
+    }
+
+    @ExceptionHandler(ProjectNotFoundException.class)
+    public ProblemDetail handleProjectNotFound(ProjectNotFoundException ex, HttpServletRequest request) {
+        ProblemDetail problem = ProblemDetail.forStatus(HttpStatus.NOT_FOUND);
+        problem.setTitle("Project not found");
+        problem.setDetail(ex.getMessage());
+        problem.setInstance(URI.create(request.getRequestURI()));
+        problem.setProperty("timestamp", OffsetDateTime.now());
+        problem.setProperty("errorCode", "PROJECT_NOT_FOUND");
+        return problem;
+    }
+
+    @ExceptionHandler(ProjectAccessDeniedException.class)
+    public ProblemDetail handleProjectAccessDenied(ProjectAccessDeniedException ex, HttpServletRequest request) {
+        ProblemDetail problem = ProblemDetail.forStatus(HttpStatus.FORBIDDEN);
+        problem.setTitle("Project access denied");
+        problem.setDetail(ex.getMessage());
+        problem.setInstance(URI.create(request.getRequestURI()));
+        problem.setProperty("timestamp", OffsetDateTime.now());
+        problem.setProperty("errorCode", "PROJECT_ACCESS_DENIED");
+        return problem;
+    }
+
+    @ExceptionHandler(InvalidProjectDataException.class)
+    public ProblemDetail handleInvalidProjectData(InvalidProjectDataException ex, HttpServletRequest request) {
+        ProblemDetail problem = ProblemDetail.forStatus(HttpStatus.BAD_REQUEST);
+        problem.setTitle("Invalid project data");
+        problem.setDetail(ex.getMessage());
+        problem.setInstance(URI.create(request.getRequestURI()));
+        problem.setProperty("timestamp", OffsetDateTime.now());
+        problem.setProperty("errorCode", "INVALID_PROJECT_DATA");
+        return problem;
+    }
+
+    @ExceptionHandler(AdminAccessDeniedException.class)
+    public ProblemDetail handleAdminAccessDenied(AdminAccessDeniedException ex, HttpServletRequest request) {
+        ProblemDetail problem = ProblemDetail.forStatus(HttpStatus.FORBIDDEN);
+        problem.setTitle("Admin access denied");
+        problem.setDetail(ex.getMessage());
+        problem.setInstance(URI.create(request.getRequestURI()));
+        problem.setProperty("timestamp", OffsetDateTime.now());
+        problem.setProperty("errorCode", "ADMIN_ACCESS_DENIED");
         return problem;
     }
 

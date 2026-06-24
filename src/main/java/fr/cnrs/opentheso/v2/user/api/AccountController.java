@@ -28,7 +28,7 @@ import org.springframework.web.bind.annotation.RequestMapping;
 import org.springframework.web.bind.annotation.RestController;
 
 @RestController
-@RequestMapping("/openapi/v3/account/me")
+@RequestMapping("/openapi/v2/account/me")
 @RequiredArgsConstructor
 @Tag(name = "Mon compte", description = "Gestion du profil de l'utilisateur connecté (écran Mon compte)")
 @SecurityRequirement(name = "ApiKeyAuth")

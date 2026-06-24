@@ -1,6 +1,5 @@
 package fr.cnrs.opentheso.v2.user.service;
 
-import fr.cnrs.opentheso.v2.user.exception.InvalidPasswordException;
 import fr.cnrs.opentheso.v2.shared.persistence.UserEntity;
 import fr.cnrs.opentheso.v2.user.validation.PasswordPolicy;
 import lombok.RequiredArgsConstructor;

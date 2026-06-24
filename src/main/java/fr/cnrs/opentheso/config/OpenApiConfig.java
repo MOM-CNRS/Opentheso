@@ -62,7 +62,7 @@ public class OpenApiConfig {
                         "/api/**",
                         "/Auth"
                 )
-                .pathsToExclude("/openapi/v3/**")
+                .pathsToExclude("/openapi/v2/**")
                 .addOpenApiCustomizer(openApi -> {
                     openApi.info(new io.swagger.v3.oas.models.info.Info()
                             .title("Opentheso — API V1 (legacy)")
@@ -84,23 +84,25 @@ public class OpenApiConfig {
 
     /**
      * V2 — nouvelle API construite module par module (fr.cnrs.opentheso.v2).
-     * Préfixe URL : /openapi/v3/**
+     * Préfixe URL : /openapi/v2/**
      */
     @Bean
     public GroupedOpenApi apiV2OpenApi() {
         return GroupedOpenApi.builder()
                 .group("V2")
-                .pathsToMatch("/openapi/v3/**")
+                .pathsToMatch("/openapi/v2/**")
                 .addOpenApiCustomizer(openApi -> {
                     openApi.info(new io.swagger.v3.oas.models.info.Info()
                             .title("Opentheso — API V2")
                             .version("2.0")
                             .description("""
                                     Nouvelle API de la réécriture OpenTheso (architecture modulaire v2).
-                                    Chaque module fonctionnel expose ses endpoints sous `/openapi/v3/`.
+                                    Chaque module fonctionnel expose ses endpoints sous `/openapi/v2/`.
 
                                     Modules disponibles :
                                     - `account` : Mon compte (profil, mot de passe, rôles, clé API)
+                                    - `projects` : Mes projets/utilisateurs (projets, membres, rôles, thésaurus)
+                                    - `admin` : Administration super-admin (tous les utilisateurs, projets, thésaurus)
 
                                     Authentification : en-tête `X-API-KEY` (ou `API-KEY` en fallback).
                                     """));

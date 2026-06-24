@@ -69,4 +69,45 @@ class UserSessionTest {
         userSession.refreshEmail("new@example.com");
         userSession.refreshAlertMail(true);
     }
+
+    @Test
+    void isSuperAdmin_returnsLegacyFlag() {
+        NodeUser nodeUser = NodeUser.builder().idUser(1).name("root").superAdmin(true).build();
+        when(currentUser.getNodeUser()).thenReturn(nodeUser);
+
+        assertTrue(userSession.isSuperAdmin());
+    }
+
+    @Test
+    void canAccessProjectAdminScreen_allowsSuperAdmin() {
+        NodeUser nodeUser = NodeUser.builder().idUser(1).name("root").superAdmin(true).build();
+        when(currentUser.getNodeUser()).thenReturn(nodeUser);
+
+        assertTrue(userSession.canAccessProjectAdminScreen());
+    }
+
+    @Test
+    void canAccessProjectAdminScreen_allowsProjectAdmin() {
+        NodeUser nodeUser = NodeUser.builder().idUser(2).name("admin").superAdmin(false).build();
+        when(currentUser.getNodeUser()).thenReturn(nodeUser);
+        when(currentUser.isHasRoleAsAdmin()).thenReturn(true);
+
+        assertTrue(userSession.canAccessProjectAdminScreen());
+    }
+
+    @Test
+    void canAccessProjectAdminScreen_deniesContributor() {
+        NodeUser nodeUser = NodeUser.builder().idUser(3).name("user").superAdmin(false).build();
+        when(currentUser.getNodeUser()).thenReturn(nodeUser);
+        when(currentUser.isHasRoleAsAdmin()).thenReturn(false);
+
+        assertFalse(userSession.canAccessProjectAdminScreen());
+    }
+
+    @Test
+    void canAccessProjectAdminScreen_deniesWhenNotLoggedIn() {
+        when(currentUser.getNodeUser()).thenReturn(null);
+
+        assertFalse(userSession.canAccessProjectAdminScreen());
+    }
 }

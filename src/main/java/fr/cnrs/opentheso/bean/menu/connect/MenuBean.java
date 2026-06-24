@@ -129,6 +129,33 @@ public class MenuBean implements Serializable {
         ExternalContext context = FacesContext.getCurrentInstance().getExternalContext();
         context.redirect(context.getRequestContextPath() + "/profile/thesaurus.xhtml");
     }
+
+    public void redirectToUsersV2Page() throws IOException {
+        activePageName = "usersV2";
+        notificationPanelVisible = false;
+        propositionBean.searchNewPropositions();
+        propositionBean.setRubriqueVisible(false);
+        ExternalContext context = FacesContext.getCurrentInstance().getExternalContext();
+        context.redirect(context.getRequestContextPath() + "/v2/admin/all-users.xhtml");
+    }
+
+    public void redirectToProjectsV2Page() throws IOException {
+        activePageName = "projectsV2";
+        notificationPanelVisible = false;
+        propositionBean.searchNewPropositions();
+        propositionBean.setRubriqueVisible(false);
+        ExternalContext context = FacesContext.getCurrentInstance().getExternalContext();
+        context.redirect(context.getRequestContextPath() + "/v2/admin/all-projects.xhtml");
+    }
+
+    public void redirectToThesauriV2Page() throws IOException {
+        activePageName = "thesauriV2";
+        notificationPanelVisible = false;
+        propositionBean.searchNewPropositions();
+        propositionBean.setRubriqueVisible(false);
+        ExternalContext context = FacesContext.getCurrentInstance().getExternalContext();
+        context.redirect(context.getRequestContextPath() + "/v2/admin/all-thesauri.xhtml");
+    }
     
     public void redirectToMyProfilePage() throws IOException {
         activePageName = "myAccount";
@@ -147,6 +174,15 @@ public class MenuBean implements Serializable {
         propositionBean.setRubriqueVisible(false);
         ExternalContext context = FacesContext.getCurrentInstance().getExternalContext();
         context.redirect(context.getRequestContextPath() + "/v2/user/my-account.xhtml");
+    }
+
+    public void redirectToMesProjectsV2Page() throws IOException {
+        activePageName = "myProjectV2";
+        notificationPanelVisible = false;
+        propositionBean.searchNewPropositions();
+        propositionBean.setRubriqueVisible(false);
+        ExternalContext context = FacesContext.getCurrentInstance().getExternalContext();
+        context.redirect(context.getRequestContextPath() + "/v2/project/my-projects.xhtml");
     }
     
     public void redirectToMesProjectsPage() throws IOException {
