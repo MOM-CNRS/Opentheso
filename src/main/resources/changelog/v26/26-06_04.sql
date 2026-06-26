@@ -1,3 +1,18 @@
+-- nettoyage des blancs (données historiques invalides)
+
+DELETE FROM public.note
+WHERE lang IS NULL
+   OR btrim(lang) = ''
+   OR id_thesaurus IS NULL
+   OR btrim(id_thesaurus) = '';
+
+UPDATE public.note
+SET identifier = NULL
+WHERE identifier IS NOT NULL
+  AND btrim(identifier) = '';
+
+-- protection des identifiants contre les blancs
+
 DO $$
     BEGIN
 
