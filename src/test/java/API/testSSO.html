@@ -1,0 +1,96 @@
+<!DOCTYPE html>
+<html lang="fr">
+<head>
+    <meta charset="UTF-8">
+    <title>Test SSO - Application Tierce</title>
+    <style>
+        body { font-family: Arial, sans-serif; max-width: 600px; margin: 50px auto; padding: 20px; }
+        button { padding: 12px 24px; background: #007bff; color: white; border: none; border-radius: 6px; cursor: pointer; font-size: 16px; }
+        button:hover { background: #0056b3; }
+        pre { background: #f4f4f4; padding: 15px; border-radius: 6px; overflow-x: auto; }
+        .success { color: green; }
+        .error { color: red; }
+        input { padding: 8px; margin: 5px 0 15px 0; width: 100%; border: 1px solid #ccc; border-radius: 4px; box-sizing: border-box; }
+        label { font-weight: bold; font-size: 14px; }
+        hr { margin: 20px 0; border: none; border-top: 1px solid #eee; }
+    </style>
+</head>
+<body>
+
+    <h2>Application Tierce — Test SSO</h2>
+
+    <label>Clé API</label>
+    <input type="password" id="apiKey" placeholder="Votre clé API..." />
+
+    <hr>
+
+    <label>ID Concept (idc)</label>
+    <input type="text" id="idc" value="42470" />
+
+    <label>ID Thésaurus (idt)</label>
+    <input type="text" id="idt" value="th3" />
+
+    <br>
+    <button onclick="connecter()">🔗 Se connecter à OpenTheso</button>
+
+    <br><br>
+    <div id="resultat"></div>
+
+    <script>
+        async function connecter() {
+            const resultat = document.getElementById('resultat');
+            const apiKey = document.getElementById('apiKey').value;
+            const idc = document.getElementById('idc').value;
+            const idt = document.getElementById('idt').value;
+
+            if (!apiKey) {
+                resultat.innerHTML = '<p class="error">❌ Veuillez saisir une clé API</p>';
+                return;
+            }
+
+            resultat.innerHTML = '⏳ Connexion en cours...';
+
+            try {
+                const response = await fetch('http://localhost:8099/api/v2/auth/token', {
+                    method: 'POST',
+                    headers: {
+                        'X-API-Key': apiKey,
+                        'Content-Type': 'application/json'
+                    },
+                    body: JSON.stringify({ idc, idt })
+                });
+
+                const data = await response.json();
+
+                if (response.ok) {
+                    resultat.innerHTML = `
+                        <p class="success">✅ Token généré avec succès !</p>
+                        <pre>${JSON.stringify(data, null, 2)}</pre>
+                        <p>Redirection dans <span id="compte">3</span> secondes...</p>
+                    `;
+
+                    let secondes = 3;
+                    const interval = setInterval(() => {
+                        secondes--;
+                        document.getElementById('compte').textContent = secondes;
+                        if (secondes <= 0) {
+                            clearInterval(interval);
+                            window.open('http://localhost:8099' + data.redirectUrl, '_blank');
+                        }
+                    }, 1000);
+
+                } else {
+                    resultat.innerHTML = `<p class="error">❌ Erreur : ${JSON.stringify(data)}</p>`;
+                }
+
+            } catch (err) {
+                resultat.innerHTML = `
+                    <p class="error">❌ Erreur réseau : ${err.message}</p>
+                    <p>Vérifiez que Spring Boot est démarré et que le CORS est activé.</p>
+                `;
+            }
+        }
+    </script>
+
+</body>
+</html>

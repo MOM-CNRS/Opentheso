@@ -110,6 +110,9 @@ public class UserService {
         return matches ? user : null;
     }
 
+    public Optional<User> findById(Integer idUser) {
+        return userRepository.findById(idUser);
+    }
 
     public NodeUser getUserById(Integer userId) {
 

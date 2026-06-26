@@ -236,4 +236,8 @@
         <sqlFile path="v26/26-06_04.sql" relativeToChangelogFile="true" splitStatements="false"/>
     </changeSet>
 
+    <changeSet id="26.06.05" author="Miled">
+        <sqlFile path="v26/26-06_05.sql" relativeToChangelogFile="true" splitStatements="false"/>
+    </changeSet>
+
 </databaseChangeLog>

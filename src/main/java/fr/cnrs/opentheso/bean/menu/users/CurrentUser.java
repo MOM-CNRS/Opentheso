@@ -53,6 +53,7 @@ import org.apache.commons.lang3.ObjectUtils;
 import org.apache.commons.lang3.StringUtils;
 import org.springframework.context.annotation.Scope;
 import org.springframework.context.annotation.ScopedProxyMode;
+import jakarta.servlet.http.HttpSession;
 
 @Slf4j
 @Getter
@@ -96,6 +97,90 @@ public class CurrentUser implements Serializable {
     private boolean keyCloak = false;
     private String mail;
 
+
+
+    @PostConstruct
+    public void init() {
+        checkAndLoginFromSso();
+    }
+
+    public void onPageLoad() {
+        HttpSession session = (HttpSession) FacesContext.getCurrentInstance()
+                .getExternalContext().getSession(false);
+
+        if (session == null) return;
+
+        // Si déjà traité dans cette session, on ne fait rien
+        if (Boolean.TRUE.equals(session.getAttribute("ssoProcessed"))) return; // déjà traité
+
+        Integer ssoUserId = (Integer) session.getAttribute("ssoUserId");
+        if (ssoUserId == null) return;
+
+        // Marquer comme traité AVANT le login (évite les doubles appels)
+        session.setAttribute("ssoProcessed", true);
+        session.removeAttribute("ssoUserId");
+
+        userService.findById(ssoUserId).ifPresent(user -> {
+            try {
+                // Si un utilisateur différent est déjà connecté → déconnexion propre d'abord
+                if (nodeUser != null && nodeUser.getIdUser() != user.getId().intValue()){
+                    log.info("SSO : changement d'utilisateur {} → {}", nodeUser.getName(), user.getUsername());
+                    disconnectForSso();
+                    loginWithUser(user);
+                } else if (nodeUser == null) {
+                    // Pas d'utilisateur connecté → login direct
+                    loginWithUser(user);
+                } else {
+                    // Même utilisateur déjà connecté → on ne fait rien
+                    log.info("SSO : utilisateur {} déjà connecté, pas de reconnexion", user.getUsername());
+                }
+            } catch (Exception e) {
+                log.error("Erreur SSO login", e);
+            }
+        });
+    }
+    private void disconnectForSso() throws IOException{
+        if (nodeUser == null) return;
+
+        nodeUser = null;
+
+        // Réinitialisation des permissions
+        resetPermissionsAfterLogout();
+
+        // Réinitialisation de l'état
+        roleOnThesaurusBean.setAndClearThesoInAuthorizedList(selectedTheso);
+        rightBodySetting.setIndex("0");
+        viewEditorHomeBean.reset();
+
+        // Réinitialisation du projet
+        selectedTheso.loadProject();
+        selectedTheso.setSelectedProject();
+
+        roleOnThesaurusBean.setAuthorizedThesaurus(Collections.emptyList());
+
+        log.info("SSO : session réinitialisée pour nouveau login");
+    }
+
+
+    // pour capter les connexions qui arrivent du SSO via un Bouton et clé d'API
+    private void checkAndLoginFromSso() {
+        HttpSession session = (HttpSession) FacesContext.getCurrentInstance()
+                .getExternalContext().getSession(false);
+
+        if (session != null) {
+            Integer ssoUserId = (Integer) session.getAttribute("ssoUserId");
+            if (ssoUserId != null) {
+                session.removeAttribute("ssoUserId"); // usage unique
+                userService.findById(ssoUserId).ifPresent(user -> {
+                    try {
+                        loginWithUser(user);
+                    } catch (Exception e) {
+                        log.error("Erreur SSO login", e);
+                    }
+                });
+            }
+        }
+    }
 
 
     // gestion des messages d'erreurs de KeyCloak'
@@ -330,7 +415,76 @@ public class CurrentUser implements Serializable {
         PrimeFaces.current().ajax().update("containerIndex:header");
         PrimeFaces.current().ajax().update("containerIndex:formLeftTab");
     }
-  
+
+
+    // Nouvelle méthode appelable depuis le filtre SSO
+    private void loginWithUser(User user) throws Exception {
+        nodeUser = new NodeUser(user.getId(), user.getUsername(), user.getMail(),
+                user.getInstitution(), user.getActive(),
+                user.getAlertMail(), user.getIsSuperAdmin(), user.getPassToModify(),
+                user.getApiKey(), user.getKeyNeverExpire(), user.getKeyExpiresAt(),
+                user.getIsServiceAccount(), user.getKeyDescription());
+
+        FacesMessage facesMessage = new FacesMessage(FacesMessage.SEVERITY_INFO,
+                languageBean.getMsg("connect.welcome"), user.getUsername());
+        FacesContext.getCurrentInstance().addMessage(null, facesMessage);
+
+        if ("index".equals(menuBean.getActivePageName())) {
+            menuBean.setNotificationPanelVisible(true);
+        }
+
+        setInfos();
+
+        if ("2".equals(rightBodySetting.getIndex())) {
+            rightBodySetting.setIndex("0");
+        }
+
+        propositionBean.searchNewPropositions();
+        propositionBean.setRubriqueVisible(false);
+
+        selectedTheso.loadProject();
+
+        if ("-1".equals(selectedTheso.getProjectIdSelected()) ||
+                StringUtils.isEmpty(selectedTheso.getProjectIdSelected())) {
+            indexSetting.setProjectSelected(false);
+            if (!StringUtils.isEmpty(selectedTheso.getCurrentIdTheso())) {
+                var thesaurus = thesaurusService.getThesaurusById(selectedTheso.getCurrentIdTheso());
+                if (thesaurus.getIsPrivate()) {
+                    selectedTheso.setCurrentIdTheso(null);
+                    indexSetting.setSelectedTheso(false);
+                } else {
+                    indexSetting.setSelectedTheso(true);
+                }
+            }
+        } else {
+            projectBean.initProject(selectedTheso.getProjectIdSelected(), this);
+
+            if (!projectBean.getListeThesoOfProject().isEmpty()) {
+                roleOnThesaurusBean.setAuthorizedThesaurus(projectBean.getListeThesoOfProject().stream()
+                        .map(NodeIdValue::getId)
+                        .collect(Collectors.toList()));
+            } else {
+                roleOnThesaurusBean.setAuthorizedThesaurus(Collections.emptyList());
+            }
+            roleOnThesaurusBean.addAuthorizedThesoToHM();
+            roleOnThesaurusBean.setUserRoleOnThisThesaurus(this, selectedTheso.getCurrentIdTheso());
+            projectBean.init();
+        }
+
+        treeGroups.initialise(selectedTheso.getCurrentIdTheso(), selectedTheso.getCurrentLang());
+        tree.loadConceptTree();
+
+        conceptView.setNodeFullConcept(conceptService.getConcept(conceptView.getIdConceptSelected(),
+                selectedTheso.getCurrentIdTheso(), conceptView.getSelectedLang(), 0, 1, true));
+        tree.reloadSelectedConcept();
+
+        PrimeFaces.current().executeScript("PF('login').hide();");
+        PrimeFaces.current().ajax().update("idLogin");
+        PrimeFaces.current().ajax().update("containerIndex:header");
+        PrimeFaces.current().ajax().update("containerIndex:formLeftTab");
+    }
+
+
     /**
      * initialisation des permissions suivant l'utilisateur connecté 
      */

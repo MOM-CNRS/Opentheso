@@ -13,6 +13,7 @@
 
             <!--- Ne surtout pas enlever cette action, les Uris qui arrivent de l'extérieur ne marchent plus -->
             <f:viewAction action="#{selectedThesaurus.preRenderView()}"/>
+            <f:event type="preRenderView" listener="#{currentUser.onPageLoad}" />
         </f:metadata>
     </f:view>
 
