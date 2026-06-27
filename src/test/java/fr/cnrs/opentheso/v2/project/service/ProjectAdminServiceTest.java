@@ -27,7 +27,6 @@ import static org.junit.jupiter.api.Assertions.assertFalse;
 import static org.junit.jupiter.api.Assertions.assertThrows;
 import static org.junit.jupiter.api.Assertions.assertTrue;
 import static org.mockito.ArgumentMatchers.anyInt;
-import static org.mockito.Mockito.doNothing;
 import static org.mockito.Mockito.never;
 import static org.mockito.Mockito.verify;
 import static org.mockito.Mockito.when;
@@ -84,9 +83,8 @@ class ProjectAdminServiceTest {
     @Test
     void loadDashboard_buildsDashboardForProjectAdmin() {
         when(userProfileService.getProfile(5)).thenReturn(regularProfile(5));
-        doNothing().when(projectLookupService).requireAccessibleProject(5, false, 3);
+        when(projectLookupService.requireAccessibleProject(5, false, 3)).thenReturn(buildEntity(3, "Projet X"));
         when(projectAdminQueryRepository.findCallerRoleOnProject(5, 3)).thenReturn(Optional.of(2));
-        when(projectLookupService.requireEntity(3)).thenReturn(buildEntity(3, "Projet X"));
         when(projectAdminQueryRepository.findThesauriOfProject(3, "fr")).thenReturn(
                 List.of(new ProjectThesaurusRow("TH1", "Thésaurus 1", false))
         );
@@ -115,7 +113,7 @@ class ProjectAdminServiceTest {
     @Test
     void loadDashboard_throwsWhenUserIsNotProjectAdmin() {
         when(userProfileService.getProfile(5)).thenReturn(regularProfile(5));
-        doNothing().when(projectLookupService).requireAccessibleProject(5, false, 3);
+        when(projectLookupService.requireAccessibleProject(5, false, 3)).thenReturn(buildEntity(3, "Projet X"));
         when(projectAdminQueryRepository.findCallerRoleOnProject(5, 3)).thenReturn(Optional.of(4));
 
         assertThrows(ProjectAccessDeniedException.class,
@@ -125,8 +123,7 @@ class ProjectAdminServiceTest {
     @Test
     void loadDashboard_usesSuperAdminRoleForVisibility() {
         when(userProfileService.getProfile(1)).thenReturn(superAdminProfile(1));
-        doNothing().when(projectLookupService).requireAccessibleProject(1, true, 3);
-        when(projectLookupService.requireEntity(3)).thenReturn(buildEntity(3, "Projet X"));
+        when(projectLookupService.requireAccessibleProject(1, true, 3)).thenReturn(buildEntity(3, "Projet X"));
         when(projectAdminQueryRepository.findThesauriOfProject(3, "fr")).thenReturn(List.of());
         when(projectAdminQueryRepository.findMembersOfProject(3, 1)).thenReturn(List.of());
         when(projectAdminQueryRepository.findLimitedMembersOfProject(3, "fr")).thenReturn(List.of());

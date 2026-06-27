@@ -2,9 +2,9 @@ package fr.cnrs.opentheso.v2.shared.ui;
 
 import fr.cnrs.opentheso.bean.menu.users.CurrentUser;
 import fr.cnrs.opentheso.models.users.NodeUser;
+import org.junit.jupiter.api.BeforeEach;
 import org.junit.jupiter.api.Test;
 import org.junit.jupiter.api.extension.ExtendWith;
-import org.mockito.InjectMocks;
 import org.mockito.Mock;
 import org.mockito.junit.jupiter.MockitoExtension;
 
@@ -20,8 +20,12 @@ class UserSessionTest {
     @Mock
     private CurrentUser currentUser;
 
-    @InjectMocks
     private UserSession userSession;
+
+    @BeforeEach
+    void setUp() {
+        userSession = new UserSession(currentUser);
+    }
 
     @Test
     void isLoggedIn_returnsFalseWhenNoNodeUser() {

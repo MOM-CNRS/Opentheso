@@ -20,36 +20,36 @@ public class UserRoleQueryRepository {
                     ugl.id_group,
                     ugl.label_group,
                     ugt.id_thesaurus,
-                    COALESCE(
-                        (SELECT tl.title
-                         FROM thesaurus_label tl
-                         LEFT JOIN preferences p ON p.id_thesaurus = tl.id_thesaurus
-                         WHERE tl.id_thesaurus = ugt.id_thesaurus
-                           AND tl.lang = COALESCE(p.source_lang, 'fr')
-                         LIMIT 1),
-                        ugt.id_thesaurus
-                    ) AS thesaurus_title,
-                    COALESCE(
-                        (SELECT uro.id_role
-                         FROM user_role_only_on uro
-                         WHERE uro.id_user = :userId
-                           AND uro.id_group = ugl.id_group
-                           AND uro.id_theso = ugt.id_thesaurus
-                         LIMIT 1),
-                        (SELECT urg.id_role
-                         FROM user_role_group urg
-                         JOIN user_group_thesaurus ugt2 ON urg.id_group = ugt2.id_group
-                         WHERE urg.id_user = :userId
-                           AND urg.id_group = ugl.id_group
-                           AND ugt2.id_thesaurus = ugt.id_thesaurus
-                         LIMIT 1)
-                    ) AS id_role
+                    COALESCE(tl_sub.title, ugt.id_thesaurus) AS thesaurus_title,
+                    COALESCE(limited_role.id_role, project_role.id_role) AS id_role
                 FROM user_group_label ugl
                 JOIN user_group_thesaurus ugt ON ugt.id_group = ugl.id_group
-                WHERE ugl.id_group IN (
-                    SELECT urg2.id_group FROM user_role_group urg2 WHERE urg2.id_user = :userId
-                    UNION
-                    SELECT uro2.id_group FROM user_role_only_on uro2 WHERE uro2.id_user = :userId
+                LEFT JOIN LATERAL (
+                    SELECT tl.title
+                    FROM thesaurus_label tl
+                    LEFT JOIN preferences p ON p.id_thesaurus = tl.id_thesaurus
+                    WHERE tl.id_thesaurus = ugt.id_thesaurus
+                      AND tl.lang = COALESCE(p.source_lang, 'fr')
+                    LIMIT 1
+                ) tl_sub ON true
+                LEFT JOIN LATERAL (
+                    SELECT uro.id_role
+                    FROM user_role_only_on uro
+                    WHERE uro.id_user = :userId
+                      AND uro.id_group = ugl.id_group
+                      AND uro.id_theso = ugt.id_thesaurus
+                    LIMIT 1
+                ) limited_role ON true
+                LEFT JOIN LATERAL (
+                    SELECT urg.id_role
+                    FROM user_role_group urg
+                    WHERE urg.id_user = :userId
+                      AND urg.id_group = ugl.id_group
+                    LIMIT 1
+                ) project_role ON true
+                WHERE (
+                    EXISTS (SELECT 1 FROM user_role_group urg2 WHERE urg2.id_user = :userId AND urg2.id_group = ugl.id_group)
+                    OR EXISTS (SELECT 1 FROM user_role_only_on uro2 WHERE uro2.id_user = :userId AND uro2.id_group = ugl.id_group)
                 )
                 ORDER BY LOWER(ugl.label_group), LOWER(ugt.id_thesaurus)
                 """;

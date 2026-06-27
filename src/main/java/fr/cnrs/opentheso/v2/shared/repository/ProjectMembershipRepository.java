@@ -92,16 +92,32 @@ public class ProjectMembershipRepository {
     @Transactional
     public void replaceLimitedRoles(int userId, int roleId, int projectId, List<String> thesaurusIds) {
         deleteAllLimitedRoles(userId, projectId);
-        for (String thesaurusId : thesaurusIds) {
-            assignLimitedRole(userId, roleId, projectId, thesaurusId);
+        if (thesaurusIds.isEmpty()) {
+            return;
         }
+        StringBuilder sql = new StringBuilder(
+                "INSERT INTO user_role_only_on (id_user, id_role, id_group, id_theso) VALUES "
+        );
+        for (int i = 0; i < thesaurusIds.size(); i++) {
+            if (i > 0) sql.append(", ");
+            sql.append("(:userId, :roleId, :projectId, :t").append(i).append(")");
+        }
+        var query = entityManager.createNativeQuery(sql.toString())
+                .setParameter("userId", userId)
+                .setParameter("roleId", roleId)
+                .setParameter("projectId", projectId);
+        for (int i = 0; i < thesaurusIds.size(); i++) {
+            query.setParameter("t" + i, thesaurusIds.get(i));
+        }
+        query.executeUpdate();
     }
 
     public boolean isThesaurusInProject(String thesaurusId, int projectId) {
         String sql = """
-                SELECT CASE WHEN COUNT(*) > 0 THEN true ELSE false END
-                FROM user_group_thesaurus
-                WHERE id_thesaurus = :thesaurusId AND id_group = :projectId
+                SELECT EXISTS(
+                    SELECT 1 FROM user_group_thesaurus
+                    WHERE id_thesaurus = :thesaurusId AND id_group = :projectId
+                )
                 """;
         return Boolean.TRUE.equals(entityManager.createNativeQuery(sql)
                 .setParameter("thesaurusId", thesaurusId)

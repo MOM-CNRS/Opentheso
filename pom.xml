@@ -481,6 +481,8 @@
         <project.build.sourceEncoding>UTF-8</project.build.sourceEncoding>
         <tomcat-embed-jasper.version>11.0.0-M22</tomcat-embed-jasper.version>
         <project.reporting.outputEncoding>UTF-8</project.reporting.outputEncoding>
+        <jacoco.version>0.8.12</jacoco.version>
+        <sonar.maven.plugin.version>4.0.0.4121</sonar.maven.plugin.version>
     </properties>
 
     <build>
@@ -507,7 +509,88 @@
                     </annotationProcessorPaths>
                 </configuration>
             </plugin>
+
+            <plugin>
+                <groupId>org.jacoco</groupId>
+                <artifactId>jacoco-maven-plugin</artifactId>
+                <version>${jacoco.version}</version>
+                <executions>
+                    <execution>
+                        <id>prepare-agent</id>
+                        <goals>
+                            <goal>prepare-agent</goal>
+                        </goals>
+                    </execution>
+                    <execution>
+                        <id>report</id>
+                        <phase>test</phase>
+                        <goals>
+                            <goal>report</goal>
+                        </goals>
+                        <configuration>
+                            <formats>
+                                <format>HTML</format>
+                                <format>XML</format>
+                            </formats>
+                        </configuration>
+                    </execution>
+                </executions>
+            </plugin>
+
+            <plugin>
+                <groupId>org.sonarsource.scanner.maven</groupId>
+                <artifactId>sonar-maven-plugin</artifactId>
+                <version>${sonar.maven.plugin.version}</version>
+            </plugin>
         </plugins>
     </build>
+
+    <profiles>
+        <profile>
+            <id>coverage-check-v2-setting</id>
+            <build>
+                <plugins>
+                    <plugin>
+                        <groupId>org.jacoco</groupId>
+                        <artifactId>jacoco-maven-plugin</artifactId>
+                        <executions>
+                            <execution>
+                                <id>check-v2-setting</id>
+                                <phase>verify</phase>
+                                <goals>
+                                    <goal>check</goal>
+                                </goals>
+                                <configuration>
+                                    <includes>
+                                        <include>fr/cnrs/opentheso/v2/setting/**</include>
+                                    </includes>
+                                    <excludes>
+                                        <exclude>fr/cnrs/opentheso/v2/setting/api/dto/**</exclude>
+                                        <exclude>fr/cnrs/opentheso/v2/setting/model/**</exclude>
+                                        <exclude>fr/cnrs/opentheso/v2/setting/exception/**</exclude>
+                                    </excludes>
+                                    <rules>
+                                        <rule>
+                                            <element>CLASS</element>
+                                            <limits>
+                                                <limit>
+                                                    <counter>LINE</counter>
+                                                    <value>COVEREDRATIO</value>
+                                                    <minimum>0.90</minimum>
+                                                </limit>
+                                            </limits>
+                                        </rule>
+                                    </rules>
+                                </configuration>
+                            </execution>
+                        </executions>
+                    </plugin>
+                </plugins>
+            </build>
+        </profile>
+    </profiles>
+
+    <!-- Propriétés SonarQube v2 (surcharge possibles en ligne de commande) -->
+    <!-- mvn sonar:sonar -Dsonar.token=... lit aussi sonar-project.properties -->
 
 </project>

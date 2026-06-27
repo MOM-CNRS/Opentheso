@@ -22,7 +22,6 @@ import static org.junit.jupiter.api.Assertions.assertEquals;
 import static org.junit.jupiter.api.Assertions.assertThrows;
 import static org.mockito.ArgumentMatchers.any;
 import static org.mockito.ArgumentMatchers.anyInt;
-import static org.mockito.Mockito.doNothing;
 import static org.mockito.Mockito.never;
 import static org.mockito.Mockito.verify;
 import static org.mockito.Mockito.when;
@@ -108,7 +107,7 @@ class ProjectManagementServiceTest {
 
     @Test
     void renameProject_updatesLabelWhenAuthorized() {
-        doNothing().when(projectLookupService).requireAccessibleProject(5, false, 3);
+        when(projectLookupService.requireAccessibleProject(5, false, 3)).thenReturn(buildEntity(3, "Ancien"));
         when(projectAdminQueryRepository.findCallerRoleOnProject(5, 3)).thenReturn(Optional.of(2));
         when(projectRepository.existsByLabelIgnoreCaseExcludingId("Renommé", 3)).thenReturn(false);
         ProjectEntity entity = buildEntity(3, "Ancien");
@@ -123,7 +122,7 @@ class ProjectManagementServiceTest {
 
     @Test
     void renameProject_throwsWhenDuplicateLabel() {
-        doNothing().when(projectLookupService).requireAccessibleProject(5, false, 3);
+        when(projectLookupService.requireAccessibleProject(5, false, 3)).thenReturn(buildEntity(3, "Ancien"));
         when(projectAdminQueryRepository.findCallerRoleOnProject(5, 3)).thenReturn(Optional.of(2));
         when(projectRepository.existsByLabelIgnoreCaseExcludingId("Existant", 3)).thenReturn(true);
 
@@ -133,7 +132,7 @@ class ProjectManagementServiceTest {
 
     @Test
     void renameProject_throwsWhenNotProjectAdmin() {
-        doNothing().when(projectLookupService).requireAccessibleProject(5, false, 3);
+        when(projectLookupService.requireAccessibleProject(5, false, 3)).thenReturn(buildEntity(3, "Projet"));
         when(projectAdminQueryRepository.findCallerRoleOnProject(5, 3)).thenReturn(Optional.of(4));
 
         assertThrows(ProjectAccessDeniedException.class,
@@ -142,7 +141,7 @@ class ProjectManagementServiceTest {
 
     @Test
     void renameProject_throwsWhenLabelBlank() {
-        doNothing().when(projectLookupService).requireAccessibleProject(1, true, 3);
+        when(projectLookupService.requireAccessibleProject(1, true, 3)).thenReturn(buildEntity(3, "Projet"));
 
         assertThrows(InvalidProjectDataException.class,
                 () -> projectManagementService.renameProject(1, true, 3, null));

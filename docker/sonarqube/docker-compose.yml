@@ -1,0 +1,39 @@
+services:
+  sonarqube-db:
+    image: postgres:15-alpine
+    restart: unless-stopped
+    environment:
+      POSTGRES_USER: sonar
+      POSTGRES_PASSWORD: sonar
+      POSTGRES_DB: sonar
+    volumes:
+      - sonarqube-db-data:/var/lib/postgresql/data
+    healthcheck:
+      test: ["CMD-SHELL", "pg_isready -U sonar -d sonar"]
+      interval: 10s
+      timeout: 5s
+      retries: 5
+
+  sonarqube:
+    image: sonarqube:community
+    restart: unless-stopped
+    depends_on:
+      sonarqube-db:
+        condition: service_healthy
+    ports:
+      - "9000:9000"
+    environment:
+      SONAR_JDBC_URL: jdbc:postgresql://sonarqube-db:5432/sonar
+      SONAR_JDBC_USERNAME: sonar
+      SONAR_JDBC_PASSWORD: sonar
+      SONAR_ES_BOOTSTRAP_CHECKS_DISABLE: "true"
+    volumes:
+      - sonarqube-data:/opt/sonarqube/data
+      - sonarqube-extensions:/opt/sonarqube/extensions
+      - sonarqube-logs:/opt/sonarqube/logs
+
+volumes:
+  sonarqube-db-data:
+  sonarqube-data:
+  sonarqube-extensions:
+  sonarqube-logs:

@@ -4,6 +4,7 @@ import fr.cnrs.opentheso.v2.admin.model.CreatedAdminUser;
 import fr.cnrs.opentheso.v2.admin.policy.SuperAdminAccessPolicy;
 import fr.cnrs.opentheso.v2.project.exception.InvalidProjectDataException;
 import fr.cnrs.opentheso.v2.project.policy.ProjectAccessPolicy;
+import fr.cnrs.opentheso.v2.shared.repository.ProjectAdminQueryRepository;
 import fr.cnrs.opentheso.v2.shared.repository.ProjectMembershipRepository;
 import fr.cnrs.opentheso.v2.shared.repository.UserCommandRepository;
 import fr.cnrs.opentheso.v2.user.exception.InvalidProfileDataException;
@@ -13,7 +14,6 @@ import fr.cnrs.opentheso.v2.user.validation.PasswordPolicy;
 import fr.cnrs.opentheso.v2.user.validation.ProfileValidator;
 import lombok.RequiredArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
-import org.apache.commons.collections4.CollectionUtils;
 import org.springframework.security.crypto.password.PasswordEncoder;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
@@ -30,6 +30,7 @@ public class AdminUserService {
     private final UserLookupService userLookupService;
     private final UserCommandRepository userCommandRepository;
     private final ProjectMembershipRepository projectMembershipRepository;
+    private final ProjectAdminQueryRepository projectAdminQueryRepository;
     private final PasswordEncoder passwordEncoder;
 
     @Transactional
@@ -76,7 +77,6 @@ public class AdminUserService {
             boolean alertMail
     ) {
         SuperAdminAccessPolicy.requireSuperAdmin(superAdmin);
-        userLookupService.requireEntity(userId);
         String validUsername = ProfileValidator.requireUsername(username);
         String validEmail = ProfileValidator.requireEmail(email);
         var current = userProfileService.getProfile(userId);
@@ -94,7 +94,7 @@ public class AdminUserService {
     @Transactional
     public void updatePassword(boolean superAdmin, int userId, String password, String confirmation) {
         SuperAdminAccessPolicy.requireSuperAdmin(superAdmin);
-        userLookupService.requireEntity(userId);
+        userLookupService.requireEntity(userId); // existence check only — no profile needed
         PasswordPolicy.validate(password, confirmation);
         userCommandRepository.updatePassword(userId, passwordEncoder.encode(password));
     }
@@ -141,13 +141,12 @@ public class AdminUserService {
             throw new InvalidProjectDataException("Un projet est requis pour attribuer un rôle.");
         }
         if (limitedOnThesaurus) {
-            if (CollectionUtils.isEmpty(thesaurusIds)) {
+            if (thesaurusIds == null || thesaurusIds.isEmpty()) {
                 throw new InvalidProjectDataException("Au moins un thésaurus est requis pour un rôle limité.");
             }
-            for (String thesaurusId : thesaurusIds) {
-                if (!projectMembershipRepository.isThesaurusInProject(thesaurusId, projectId)) {
-                    throw new InvalidProjectDataException("Le thésaurus " + thesaurusId + " n'appartient pas au projet.");
-                }
+            var missing = projectAdminQueryRepository.findThesauriNotInProject(thesaurusIds, projectId);
+            if (!missing.isEmpty()) {
+                throw new InvalidProjectDataException("Les thésaurus suivants n'appartiennent pas au projet : " + missing);
             }
             projectMembershipRepository.replaceLimitedRoles(userId, roleId, projectId, thesaurusIds);
             return;

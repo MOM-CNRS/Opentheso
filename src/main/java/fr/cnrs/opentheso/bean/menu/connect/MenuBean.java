@@ -225,6 +225,39 @@ public class MenuBean implements Serializable {
         ExternalContext context = FacesContext.getCurrentInstance().getExternalContext();
         context.redirect(context.getRequestContextPath() + "/setting/corpus.xhtml");
     }
+
+    public void redirectToPreferenceV2Page() throws IOException {
+        activePageName = "preferenceV2";
+        notificationPanelVisible = false;
+        propositionBean.searchNewPropositions();
+        propositionBean.setRubriqueVisible(false);
+        redirectToV2SettingPage("/v2/setting/preference.xhtml");
+    }
+
+    public void redirectToIdentifierV2Page() throws IOException {
+        activePageName = "identifierV2";
+        notificationPanelVisible = false;
+        propositionBean.searchNewPropositions();
+        propositionBean.setRubriqueVisible(false);
+        redirectToV2SettingPage("/v2/setting/identifier.xhtml");
+    }
+
+    public void redirectToCorpusV2Page() throws IOException {
+        activePageName = "corpusV2";
+        notificationPanelVisible = false;
+        propositionBean.searchNewPropositions();
+        propositionBean.setRubriqueVisible(false);
+        redirectToV2SettingPage("/v2/setting/corpus.xhtml");
+    }
+
+    private void redirectToV2SettingPage(String path) throws IOException {
+        ExternalContext context = FacesContext.getCurrentInstance().getExternalContext();
+        StringBuilder url = new StringBuilder(context.getRequestContextPath()).append(path);
+        if (StringUtils.isNotBlank(selectedTheso.getCurrentIdTheso())) {
+            url.append("?idt=").append(selectedTheso.getCurrentIdTheso());
+        }
+        context.redirect(url.toString());
+    }
     
     ///Boite à outils
     public void redirectToEditionPage() throws IOException {

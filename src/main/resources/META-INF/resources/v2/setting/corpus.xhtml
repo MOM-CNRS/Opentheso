@@ -1,0 +1,139 @@
+<!DOCTYPE HTML>
+<HTML xmlns="http://www.w3.org/1999/xhtml"
+      xmlns:h="http://xmlns.jcp.org/jsf/html"
+      xmlns:ui="http://xmlns.jcp.org/jsf/facelets"
+      xmlns:f="http://xmlns.jcp.org/jsf/core"
+      xmlns:p="http://primefaces.org/ui">
+
+    <f:view>
+        <f:metadata>
+            <f:viewAction action="#{v2CorpusSettingsBean.load()}"/>
+            <f:viewParam name="idc" value="#{v2ThesaurusContext.idConceptFromUri}"/>
+            <f:viewParam name="idg" value="#{v2ThesaurusContext.idGroupFromUri}"/>
+            <f:viewParam name="idt" value="#{v2ThesaurusContext.idThesoFromUri}"/>
+        </f:metadata>
+    </f:view>
+    <h:head>
+        <title>Opentheso</title>
+
+        <link href="../../resources/img/icon_opentheso2.png" rel="icon" />
+
+        <link rel="stylesheet" type="text/css" href="../../resources/css/all.css" />
+        <link rel="stylesheet" type="text/css" href="../../resources/css/theme_general.css" />
+        <link rel="stylesheet" type="text/css" href="../../resources/css/theme_opentheso.css" />
+        <link rel="stylesheet" type="text/css" href="../../resources/css/composants_opentheso.css" />
+
+        <link rel="stylesheet" href="https://use.fontawesome.com/releases/v6.1.0/css/all.css"/>
+        <link rel="stylesheet" href="https://use.fontawesome.com/releases/v6.1.0/css/v4-shims.css"/>
+    </h:head>
+
+    <h:body id="page-top" onload="initMenu()">
+
+        <p:growl id="messageIndex" globalOnly="true" showDetail="true"/>
+
+        <h:panelGroup rendered="#{menuBean.checkIfUserIsConnected() and currentUser.hasRoleAsAdmin}" id="wrapper" style="height: 100%" >
+
+            <ui:include src="../../commun/menu.xhtml" />
+
+            <div id="content-wrapper" style="width: 100%">
+
+                <h:form id="containerIndex" style="min-height:100%; position:relative;">
+                    
+                    <h:panelGroup id="header">
+                        <ui:include src="../../commun/header.xhtml" />
+                    </h:panelGroup>
+
+                    <div class="container-fluid">
+
+                        <div class="d-sm-flex align-items-center justify-content-between mb-4" style="margin: 20px">
+                            <h1 class="h3 mb-0 text-gray-800">#{langueBean.getMsg('menu.setting')} / <span style="color: #f47b2a">#{langueBean.getMsg('menu.corpus')}</span></h1>
+                        </div>
+
+                        <div class="col-12" style="height: 100%">
+                            <div class="card shadow mb-4" style="height: 100%;">
+
+                                <div class="row" style="padding-left: 20px; margin-top: 20px; margin-left: 10px; font-size: 16px">
+                                    <div class="col-12">
+                                        <h:outputText value="#{langueBean.getMsg('setting.manageCorpusFor')}  " />
+                                        <h:outputText value="#{v2ThesaurusContext.currentThesaurusTitle} (#{v2ThesaurusContext.currentThesaurusId})" style="color: #f47b2a" />
+                                    </div>
+                                </div>
+
+                                <div class="card mb-4 py-3 border-left-success" style="margin-top: 20px; vertical-align: central;
+                                     margin-left: 30px; margin-right: 30px; padding: 20px">
+                                    
+                                    <div class="row" style="text-align: right;margin-bottom: 5px; ">
+                                        <div class="col-1 offset-11"  >
+                                            <p:linkButton  href="https://opentheso.hypotheses.org/946" target="_blank" icon="fa-solid fa-circle-question" styleClass="rounded-button ui-button-outlined" />                                         
+                                        </div>
+                                    </div>
+
+                                    
+                                    <p:toolbar>
+                                        <p:toolbarGroup align="left" />
+                                        <p:toolbarGroup align="right">
+                                            <p:commandButton rendered="#{v2CorpusSettingsBean.screenAvailable}"
+                                                             actionListener="#{v2CorpusSettingsBean.prepareCreate()}"
+                                                             styleClass="ui-button-success" icon="pi pi-check"
+                                                             value="#{langueBean.getMsg('setting.newCorpus')}"
+                                                             update="idV2NewCorpus v2NewCorpusForm" process="@this"
+                                                             oncomplete="PF('v2NewCorpus').show();">
+                                                <p:tooltip value="#{langueBean.getMsg('setting.newCorpusTooltip')}" showDelay="1000" />
+                                            </p:commandButton>
+                                        </p:toolbarGroup>
+                                    </p:toolbar>
+                                    
+
+                                    <p:dataTable value="#{v2CorpusSettingsBean.corpusList}" var="corpus" scrollable="true"
+                                                 resizableColumns="true" scrollHeight="450" style="margin-top: 10px"
+                                                 reflow="true" lazy="false">
+
+                                        <p:column headerText="#{langueBean.getMsg('statistique.label')}">
+                                            <h:outputText value="#{corpus.corpusName}" title="Obligatoire"/>
+                                        </p:column>
+
+                                        <p:column headerText="#{langueBean.getMsg('setting.UriToGetTotal')}">
+                                            <h:outputText value="#{corpus.uriCount}" title="facultatif"/>
+                                        </p:column>
+
+                                        <p:column headerText="#{langueBean.getMsg('setting.UriToLink')}" >
+                                            <h:outputText value="#{corpus.uriLink}" title="Obligatoire"/>
+                                        </p:column>
+
+                                        <p:column headerText="#{langueBean.getMsg('candidat.state')}">
+                                            <p:toggleSwitch value="#{corpus.active}" style="font-size: 10px;" disabled="true" />
+                                        </p:column>
+
+                                        <p:column exportable="false">
+                                            <p:commandButton icon="pi pi-pencil" update="idV2EditCorpus v2EditCorpusForm"
+                                                             oncomplete="PF('v2EditCorpus').show()" style="margin-right: 10px"
+                                                             actionListener="#{v2CorpusSettingsBean.prepareEdit(corpus)}" process="@this" ajax="true"
+                                                             styleClass="rounded-button"/>
+
+                                            <p:commandButton class="ui-button-danger rounded-button" icon="pi pi-trash" process="@this" ajax="true"
+                                                             actionListener="#{v2CorpusSettingsBean.prepareEdit(corpus)}"
+                                                             update="idV2ConfirmDeleteCorpus"
+                                                             oncomplete="PF('v2ConfirmDeleteCorpus').show()"/>
+                                        </p:column>
+
+                                        <f:facet name="footer">
+                                            <span class="p-text-bold">#{langueBean.getMsg('setting.totalCorpus')} :  #{v2CorpusSettingsBean.corpusList.size()}</span>
+                                        </f:facet>
+                                    </p:dataTable>
+                                </div>
+                            </div>
+                        </div>
+                    </div>
+
+                    <ui:include src="../../commun/footer.xhtml"/>
+                    <input type="hidden" name="csrfToken" value="#{sessionScope.CSRF_TOKEN}"/>
+                </h:form>
+
+                <ui:include src="new-corpus-dialog.xhtml"/>
+                <ui:include src="edit-corpus-dialog.xhtml"/>
+                <ui:include src="confirm-delete-corpus-dialog.xhtml"/>
+                <ui:include src="../../dialog/login/logout.xhtml"/>
+            </div>
+        </h:panelGroup>
+    </h:body>
+</HTML>

@@ -1,4 +1,5 @@
 /target/
+/.scannerwork/
 /.idea/
 /nbproject/
 /src/test/java/deepl/

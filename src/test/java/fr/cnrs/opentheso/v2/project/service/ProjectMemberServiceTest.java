@@ -32,7 +32,6 @@ import static org.mockito.ArgumentMatchers.anyBoolean;
 import static org.mockito.ArgumentMatchers.anyInt;
 import static org.mockito.ArgumentMatchers.anyString;
 import static org.mockito.ArgumentMatchers.eq;
-import static org.mockito.Mockito.doNothing;
 import static org.mockito.Mockito.never;
 import static org.mockito.Mockito.verify;
 import static org.mockito.Mockito.when;
@@ -75,7 +74,7 @@ class ProjectMemberServiceTest {
 
     @Test
     void searchUsers_requiresProjectAdmin() {
-        doNothing().when(projectLookupService).requireAccessibleProject(5, false, 3);
+        when(projectLookupService.requireAccessibleProject(5, false, 3)).thenReturn(buildProject(3, "Projet"));
         when(projectAdminQueryRepository.findCallerRoleOnProject(5, 3)).thenReturn(Optional.of(4));
 
         assertThrows(ProjectAccessDeniedException.class,
@@ -169,7 +168,7 @@ class ProjectMemberServiceTest {
         stubProjectAdmin(5, 3, 2);
         when(projectMembershipRepository.isThesaurusInProject("TH1", 3)).thenReturn(true);
         when(projectLookupService.requireEntity(7)).thenReturn(buildProject(7, "Cible"));
-        doNothing().when(projectLookupService).requireAccessibleProject(5, false, 7);
+        when(projectLookupService.requireAccessibleProject(5, false, 7)).thenReturn(buildProject(7, "Cible"));
         when(projectAdminQueryRepository.findCallerRoleOnProject(5, 7)).thenReturn(Optional.of(2));
 
         projectMemberService.moveThesaurus(5, false, 3, "TH1", 7);
@@ -191,7 +190,6 @@ class ProjectMemberServiceTest {
     @Test
     void updateMemberProfile_updatesUserFields() {
         stubProjectAdmin(5, 3, 2);
-        when(userLookupService.requireEntity(10)).thenReturn(new UserEntity());
         when(userProfileService.getProfile(10)).thenReturn(
                 new UserProfile(10, "bob", "bob@example.com", true, false, true, null, true)
         );
@@ -214,7 +212,8 @@ class ProjectMemberServiceTest {
     }
 
     private void stubProjectAdmin(int callerId, int projectId, int roleId) {
-        doNothing().when(projectLookupService).requireAccessibleProject(callerId, false, projectId);
+        when(projectLookupService.requireAccessibleProject(callerId, false, projectId))
+                .thenReturn(buildProject(projectId, "Projet"));
         when(projectAdminQueryRepository.findCallerRoleOnProject(callerId, projectId))
                 .thenReturn(Optional.of(roleId));
     }

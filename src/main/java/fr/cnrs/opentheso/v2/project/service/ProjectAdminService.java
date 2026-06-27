@@ -36,7 +36,7 @@ public class ProjectAdminService {
     @Transactional(readOnly = true)
     public ProjectDashboard loadDashboard(int userId, int projectId, String workLanguage) {
         var profile = userProfileService.getProfile(userId);
-        projectLookupService.requireAccessibleProject(userId, profile.superAdmin(), projectId);
+        var entity = projectLookupService.requireAccessibleProject(userId, profile.superAdmin(), projectId);
 
         Optional<Integer> callerRoleId = profile.superAdmin()
                 ? Optional.of(ProjectAccessPolicy.ROLE_SUPER_ADMIN)
@@ -56,7 +56,6 @@ public class ProjectAdminService {
                 callerRoleId.orElse(null)
         );
 
-        var entity = projectLookupService.requireEntity(projectId);
         log.debug("Chargement tableau de bord projet id={} pour l'utilisateur id={}", projectId, userId);
 
         return new ProjectDashboard(

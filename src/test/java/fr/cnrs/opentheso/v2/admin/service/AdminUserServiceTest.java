@@ -5,6 +5,7 @@ import fr.cnrs.opentheso.v2.admin.model.CreatedAdminUser;
 import fr.cnrs.opentheso.v2.project.exception.InvalidProjectDataException;
 import fr.cnrs.opentheso.v2.project.policy.ProjectAccessPolicy;
 import fr.cnrs.opentheso.v2.shared.persistence.UserEntity;
+import fr.cnrs.opentheso.v2.shared.repository.ProjectAdminQueryRepository;
 import fr.cnrs.opentheso.v2.shared.repository.ProjectMembershipRepository;
 import fr.cnrs.opentheso.v2.shared.repository.UserCommandRepository;
 import fr.cnrs.opentheso.v2.user.exception.InvalidPasswordException;
@@ -44,6 +45,8 @@ class AdminUserServiceTest {
     @Mock
     private ProjectMembershipRepository projectMembershipRepository;
     @Mock
+    private ProjectAdminQueryRepository projectAdminQueryRepository;
+    @Mock
     private PasswordEncoder passwordEncoder;
 
     private AdminUserService adminUserService;
@@ -55,6 +58,7 @@ class AdminUserServiceTest {
                 userLookupService,
                 userCommandRepository,
                 projectMembershipRepository,
+                projectAdminQueryRepository,
                 passwordEncoder
         );
     }
@@ -157,7 +161,6 @@ class AdminUserServiceTest {
 
     @Test
     void updateUser_updatesProfileWhenDataIsValid() {
-        when(userLookupService.requireEntity(3)).thenReturn(new UserEntity());
         when(userProfileService.getProfile(3)).thenReturn(profile(3, "alice", "alice@test.fr"));
         when(userCommandRepository.existsByUsernameIgnoreCase("alice2")).thenReturn(false);
         when(userCommandRepository.existsByMailIgnoreCase("alice2@test.fr")).thenReturn(false);

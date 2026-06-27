@@ -198,7 +198,6 @@ public class ProjectMemberService {
             boolean active
     ) {
         requireProjectAdmin(callerId, superAdmin, projectId);
-        ensureUserExists(userId);
         String validUsername = ProfileValidator.requireUsername(username);
         String validEmail = ProfileValidator.requireEmail(email);
         var current = userProfileService.getProfile(userId);

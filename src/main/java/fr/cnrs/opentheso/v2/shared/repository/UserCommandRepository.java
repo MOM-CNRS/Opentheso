@@ -16,9 +16,7 @@ public class UserCommandRepository {
 
     public boolean existsByUsernameIgnoreCase(String username) {
         String sql = """
-                SELECT CASE WHEN COUNT(*) > 0 THEN true ELSE false END
-                FROM users
-                WHERE LOWER(username) = LOWER(:username)
+                SELECT EXISTS(SELECT 1 FROM users WHERE LOWER(username) = LOWER(:username))
                 """;
         return Boolean.TRUE.equals(entityManager.createNativeQuery(sql)
                 .setParameter("username", username)
@@ -27,9 +25,7 @@ public class UserCommandRepository {
 
     public boolean existsByMailIgnoreCase(String mail) {
         String sql = """
-                SELECT CASE WHEN COUNT(*) > 0 THEN true ELSE false END
-                FROM users
-                WHERE LOWER(mail) = LOWER(:mail)
+                SELECT EXISTS(SELECT 1 FROM users WHERE LOWER(mail) = LOWER(:mail))
                 """;
         return Boolean.TRUE.equals(entityManager.createNativeQuery(sql)
                 .setParameter("mail", mail)

@@ -181,6 +181,13 @@
                                            style="font-size: 12px;" process="@this">#{langueBean.getMsg('menu.identifier')}</p:commandLink>
                             <p:commandLink class="collapse-item" actionListener="#{menuBean.redirectToCorpusPage()}" 
                                            style="font-size: 12px;" process="@this">#{langueBean.getMsg('menu.corpus')}</p:commandLink>
+                            <hr class="sidebar-divider" style="margin: 5px 0"/>
+                            <p:commandLink class="collapse-item" actionListener="#{menuBean.redirectToPreferenceV2Page()}"
+                                           style="font-size: 12px;" process="@this">#{langueBean.getMsg('menu.preference')} (v2)</p:commandLink>
+                            <p:commandLink class="collapse-item" actionListener="#{menuBean.redirectToIdentifierV2Page()}"
+                                           style="font-size: 12px;" process="@this">#{langueBean.getMsg('menu.identifier')} (v2)</p:commandLink>
+                            <p:commandLink class="collapse-item" actionListener="#{menuBean.redirectToCorpusV2Page()}"
+                                           style="font-size: 12px;" process="@this">#{langueBean.getMsg('menu.corpus')} (v2)</p:commandLink>
                         </div>
                     </div>
                 </li>

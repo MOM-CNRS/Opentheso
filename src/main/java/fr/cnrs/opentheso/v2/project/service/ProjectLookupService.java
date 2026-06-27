@@ -22,11 +22,15 @@ public class ProjectLookupService {
                 .orElseThrow(() -> new ProjectNotFoundException(projectId));
     }
 
+    /**
+     * Vérifie que le projet existe et que l'utilisateur y a accès.
+     * Retourne l'entité déjà chargée pour éviter un second SELECT au niveau appelant.
+     */
     @Transactional(readOnly = true)
-    public void requireAccessibleProject(int userId, boolean superAdmin, int projectId) {
-        requireEntity(projectId);
+    public ProjectEntity requireAccessibleProject(int userId, boolean superAdmin, int projectId) {
+        ProjectEntity entity = requireEntity(projectId);
         if (superAdmin || projectAdminQueryRepository.isProjectAccessible(userId, projectId)) {
-            return;
+            return entity;
         }
         throw new ProjectAccessDeniedException();
     }

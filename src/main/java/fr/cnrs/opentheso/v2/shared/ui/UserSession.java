@@ -68,4 +68,8 @@ public class UserSession implements Serializable {
     public boolean canAccessSuperAdminScreen() {
         return isSuperAdmin();
     }
+
+    public boolean hasRoleAsAdmin() {
+        return currentUser.isHasRoleAsAdmin();
+    }
 }

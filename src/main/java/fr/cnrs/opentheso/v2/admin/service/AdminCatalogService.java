@@ -71,12 +71,12 @@ public class AdminCatalogService {
     public List<AdminThesaurus> listAllThesauri(boolean superAdmin, String workLanguage) {
         SuperAdminAccessPolicy.requireSuperAdmin(superAdmin);
         String lang = workLanguage != null ? workLanguage : defaultWorkLanguage;
-        Comparator<AdminThesaurus> byCreatedAtDescThenId = Comparator
-                .comparing(AdminThesaurus::createdAt, Comparator.nullsLast(Comparator.reverseOrder()))
-                .thenComparing(t -> t.id().toLowerCase());
         return adminQueryRepository.findAllThesauri(lang).stream()
                 .map(AdminMapper::toThesaurus)
-                .sorted(byCreatedAtDescThenId)
+                .sorted(Comparator.comparing(
+                        AdminThesaurus::createdAt,
+                        Comparator.nullsLast(Comparator.reverseOrder())
+                ))
                 .toList();
     }
 
