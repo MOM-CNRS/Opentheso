@@ -1,0 +1,43 @@
+<ui:fragment xmlns="http://www.w3.org/1999/xhtml"  
+             xmlns:ui="http://java.sun.com/jsf/facelets"
+             xmlns:h="http://xmlns.jcp.org/jsf/html"
+             xmlns:p="http://primefaces.org/ui">
+
+    <p:dialog id="idProcessCandidateList" header="#{langueBean.getMsg('candidat.submitList')}" widgetVar="processCandidateList" 
+              modal="true" resizable="true" position="top" width="650"  style="margin-top: 50px;" > 
+
+        <h:form id="processCandidateListForm">
+
+            <div class="row">
+                <div class="col-12" style="margin-top: 3px">
+                    <h:outputText value="Message" style="font-weight: bold;"/>
+                </div>
+            </div>
+
+            <div class="row" style="margin-top: 10px">
+                <div class="col-12">
+                    <p:inputTextarea value="#{v2ProcessCandidateBean.adminMessage}"
+                             style="width: 100%; resize: none; font-size: 13px; background: white;" />
+                </div>
+            </div>
+            <p:spacer height="20px;"/>
+            <div style="width: 100%; text-align: right; margin-top: 5px; margin-bottom: 5px;">
+                <p:commandButton value="#{langueBean.getMsg('candidat.close')}" styleClass="ui-button-secondary button" icon="fas fa-undo-alt" 
+                                 style="margin-right: 10px" process="@this"
+                                 actionListener="PF('processCandidateList').hide();" update="idProcessCandidateList"/>
+
+                <p:commandButton value="#{langueBean.getMsg('reject')}" class="ui-button-danger-private" icon="pi pi-trash"
+                                 style="margin-right: 10px"
+                                 update="processCandidateListForm tabViewCandidat messageIndex" 
+                                 oncomplete="PF('processCandidateList').hide();" process="@this"
+                                 actionListener="#{v2ProcessCandidateBean.rejectCandidatList()}"  />
+
+                <p:commandButton value="#{langueBean.getMsg('insert')}" styleClass="ui-button-success" icon="pi pi-check"
+                                 update="processCandidateListForm tabViewCandidat messageIndex" 
+                                 oncomplete="PF('processCandidateList').hide();" process="@this" 
+                                 actionListener="#{v2ProcessCandidateBean.insertListCandidat(currentUser.nodeUser.idUser, roleOnThesaurus.nodePreference)}" />
+            </div>
+            <input type="hidden" name="csrfToken" value="${sessionScope.CSRF_TOKEN}" />
+        </h:form>
+    </p:dialog>   
+</ui:fragment>

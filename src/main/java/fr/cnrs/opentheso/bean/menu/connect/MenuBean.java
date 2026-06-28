@@ -83,11 +83,31 @@ public class MenuBean implements Serializable {
     public void redirectToCandidatPage() throws IOException {
         activePageName = "candidat";
         notificationPanelVisible = false;
+        if (StringUtils.isEmpty(selectedTheso.getCurrentIdTheso())) {
+            warnThesaurusRequired();
+            return;
+        }
         candidatBean.initCandidatModule();
         propositionBean.searchNewPropositions();
         propositionBean.setRubriqueVisible(false);
         ExternalContext context = FacesContext.getCurrentInstance().getExternalContext();
-        context.redirect(context.getRequestContextPath() + "/candidat/candidat.xhtml");
+        StringBuilder url = new StringBuilder(context.getRequestContextPath()).append("/candidat");
+        if (StringUtils.isNotBlank(selectedTheso.getCurrentIdTheso())) {
+            url.append("?idt=").append(selectedTheso.getCurrentIdTheso());
+        }
+        context.redirect(url.toString());
+    }
+
+    public void redirectToCandidatV2Page() throws IOException {
+        activePageName = "candidatV2";
+        notificationPanelVisible = false;
+        if (StringUtils.isEmpty(selectedTheso.getCurrentIdTheso())) {
+            warnThesaurusRequired();
+            return;
+        }
+        propositionBean.searchNewPropositions();
+        propositionBean.setRubriqueVisible(false);
+        redirectToV2SettingPage("/v2/candidat");
     }
     
     // LOGIN Page

@@ -1,0 +1,51 @@
+<ui:fragment xmlns="http://www.w3.org/1999/xhtml"  
+             xmlns:ui="http://java.sun.com/jsf/facelets"
+             xmlns:p="http://primefaces.org/ui"
+             xmlns:f="http://xmlns.jcp.org/jsf/core"
+             xmlns:h="http://xmlns.jcp.org/jsf/html">
+
+    <p:dialog id="idDeleteImage" header="#{langueBean.getMsg('rightbody.conceptdialog.deleting_images')}"
+              widgetVar="deleteImage" width="750" showEffect="fade" modal="true"
+              resizable="false" position="top" style="margin-top: 30px" >
+        <h:form>
+            <div class="card mb-4 py-3 border-left-success" style="border-color: #43B572; margin-top: 10px; margin-bottom: 20px;">
+                <p:dataTable size="small" var="imageToEdit" value="#{v2CandidatBean.candidatSelected.images}"
+                             widgetVar="listThesoTable" styleClass="products-table"
+                             style="margin-bottom: -17px; margin-top: -16px;" lazy="false">
+
+                    <f:facet name="header">
+                        <div class="products-table-header">
+                            <span style="font-weight: bold">
+                                #{langueBean.getMsg('rightbody.conceptdialog.imageList')}
+                            </span>
+                        </div>
+                    </f:facet>
+
+                    <p:column width="70%" headerText="#{langueBean.getMsg('candidat.url')}">
+                        <h:outputText value="#{imageToEdit.uri}" style="color: #43B572; font-size: 14px;" />
+                    </p:column>
+
+                    <p:column width="20%" headerText="#{langueBean.getMsg('rightbody.concept.image')}">
+                        <p:graphicImage value="#{imageToEdit.uri}" style="width: 80px; height: 40px"/>
+                    </p:column>
+
+                    <p:column width="10%" headerText="#{langueBean.getMsg('profile.action')}" >
+                        <p:commandLink title="#{langueBean.getMsg('candidat.remove')}" ajax="true" process="@form"
+                                       action="#{imageCandidatBean.deleteImage(imageToEdit.uri)}"
+                                       update="tabViewCandidat messageIndex">
+                            <i class="pi pi-trash" style="color: #C63632; font-size: 1.1rem; padding-top: 4px;"/>
+                            <p:confirm type="popup" header="#{langueBean.getMsg('profile.confirmation')}" icon="pi pi-info-circle"
+                                       message="#{langueBean.getMsg('candidat.photo.delete_conform')}"/>
+                        </p:commandLink>
+
+                        <p:confirmPopup global="true" showEffect="fade" hideEffect="fade">
+                            <p:commandButton value="#{langueBean.getMsg('no')}" type="button" styleClass="ui-confirm-popup-no ui-button-flat"/>
+                            <p:commandButton value="#{langueBean.getMsg('yes')}" type="button" styleClass="ui-confirm-popup-yes" />
+                        </p:confirmPopup>
+                    </p:column>
+                </p:dataTable>
+            </div>
+            <input type="hidden" name="csrfToken" value="${sessionScope.CSRF_TOKEN}" />
+        </h:form>
+    </p:dialog>
+</ui:fragment>

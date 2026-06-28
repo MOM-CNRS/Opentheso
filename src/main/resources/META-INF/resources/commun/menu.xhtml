@@ -42,18 +42,23 @@
             <h:panelGroup rendered="#{(currentUser.nodeUser != null and selectedThesaurus.currentIdTheso != null) and
                                       (currentUser.hasRoleAsContributor)}" >
                 <li class="nav-item">
-                    <span class="nav-link">
-                        <p:commandLink id="candidatButton1" class="collapse-item" actionListener="#{menuBean.redirectToCandidatPage()}" process="@this" 
-                                       style="color: #fff; text-decoration: none; font-size: 14px;; display: none; margin-left: 5px">
-                            <i class="fa-solid fa-plus" style="font-size: 1rem" />
-                            <span style="color: #fff; text-decoration: none; font-size: 12px;">#{langueBean.getMsg('candidat.titre')}</span>
-                        </p:commandLink>
-                        <p:commandLink id="candidatButton2" class="collapse-item" actionListener="#{menuBean.redirectToCandidatPage()}"
-                                       style="color: #fff; text-decoration: none;" process="@this"
-                                       title="#{langueBean.getMsg('candidat.titre')}">
-                            <i class="fa-solid fa-plus" style="font-size: 1.2rem" />
-                        </p:commandLink>
-                    </span>
+                    <a id="candidatButton1" class="nav-link collapsed" href="#" data-toggle="collapse" data-target="#collapseCandidat"
+                       aria-expanded="true" aria-controls="collapseCandidat" style="display: none">
+                        <i class="fa-solid fa-plus" style="font-size: 1rem" />
+                        <span style="color: #fff; text-decoration: none; font-size: 12px;">#{langueBean.getMsg('candidat.titre')}</span>
+                    </a>
+                    <a id="candidatButton2" class="nav-link collapsed" href="#" data-toggle="collapse" data-target="#collapseCandidat"
+                       aria-expanded="true" aria-controls="collapseCandidat" title="#{langueBean.getMsg('candidat.titre')}">
+                        <i class="fa-solid fa-plus" style="font-size: 1.2rem" />
+                    </a>
+                    <div id="collapseCandidat" class="collapse" aria-labelledby="headingCandidat" data-parent="#accordionSidebar">
+                        <div class="bg-white py-2 collapse-inner rounded">
+                            <p:commandLink class="collapse-item" actionListener="#{menuBean.redirectToCandidatPage()}"
+                                           process="@this" style="font-size: 12px;">#{langueBean.getMsg('candidat.titre')}</p:commandLink>
+                            <p:commandLink class="collapse-item" actionListener="#{menuBean.redirectToCandidatV2Page()}"
+                                           process="@this" style="font-size: 12px;">#{langueBean.getMsg('candidat.titre')} (v2)</p:commandLink>
+                        </div>
+                    </div>
                 </li>
             </h:panelGroup>
             <!-- Fin candidat -->

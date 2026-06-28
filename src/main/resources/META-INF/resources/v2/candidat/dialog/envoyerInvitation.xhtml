@@ -1,0 +1,30 @@
+<ui:fragment xmlns="http://www.w3.org/1999/xhtml"  
+             xmlns:ui="http://java.sun.com/jsf/facelets"
+             xmlns:h="http://xmlns.jcp.org/jsf/html"
+             xmlns:p="http://primefaces.org/ui">
+
+    <p:dialog id="idSendChatInvitation" header="Envoyer une invitation" widgetVar="sendChatInvitation" 
+              width="450" showEffect="fade" modal="true" resizable="false" position="top" style="margin-top: 30px" >
+
+        <h:form id="sendChatInvitationForm">
+            
+            <div class="row">
+                <div class="col-5" style="margin-top: 3px">
+                    <h:outputText value="E-mail" style="font-weight: bold;"/>
+                </div>
+                <div class="col-7">
+                    <p:inputText placeholder="toto@gmail.com" value="#{discussionCandidatBean.email}" style="width: 100%"/>
+                </div>
+            </div>
+            
+            <div style="width: 100%; text-align: right; margin-top: 15px; margin-bottom: 5px;">
+                <p:commandButton title="Fermer" class="btn btn-secondary" style="margin-right: 10px"
+                                 actionListener="PF('participantsList').hide();" update="idSendChatInvitation"/>
+
+                <p:commandButton class="btn btn-primary" title="Envoyer" oncomplete="PF('participantsList').hide();" ajax="true"
+                                 update="tabViewCandidat messageIndex" actionListener="#{discussionCandidatBean.sendInvitation()}"/>
+            </div>
+            <input type="hidden" name="csrfToken" value="${sessionScope.CSRF_TOKEN}" />
+        </h:form>
+    </p:dialog>   
+</ui:fragment>

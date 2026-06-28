@@ -1,0 +1,22 @@
+<ui:fragment xmlns="http://www.w3.org/1999/xhtml"  
+             xmlns:ui="http://java.sun.com/jsf/facelets"
+             xmlns:h="http://xmlns.jcp.org/jsf/html"
+             xmlns:p="http://primefaces.org/ui">
+
+    <p:dialog id="idParticipantsList" header="Liste des participants" widgetVar="participantsList"
+              width="450" showEffect="fade" modal="true" resizable="false" position="top" style="margin-top: 30px" > 
+
+        <ui:repeat var="participant" value="#{discussionCandidatBean.nodeUsers}">
+            <div class="row" style="background-color: #{viewEditionBean.newAlternateColor}; padding-top: 5px; margin-bottom: 5px">
+                <div class="col-12" >
+                    <h:outputText value="#{participant.name} (#{participant.idUser})"/>
+                </div>                        
+            </div>   
+        </ui:repeat>
+
+        <div style="width: 100%; text-align: right; margin-top: 5px; margin-bottom: 5px;">
+            <p:commandButton title="#{langueBean.getMsg('candidat.close')}" class="btn btn-secondary"
+                             actionListener="PF('participantsList').hide();" update="idParticipantsList"/>
+        </div>
+    </p:dialog>   
+</ui:fragment>

@@ -1,0 +1,135 @@
+<!DOCTYPE HTML>
+<html xmlns="http://www.w3.org/1999/xhtml"
+      xmlns:h="http://xmlns.jcp.org/jsf/html"
+      xmlns:ui="http://xmlns.jcp.org/jsf/facelets"
+      xmlns:f="http://xmlns.jcp.org/jsf/core"
+      xmlns:p="http://primefaces.org/ui">
+
+    <f:view>
+        <f:metadata>
+            <f:viewAction action="#{v2CandidatBean.load()}"/>
+            <f:viewParam name="idc" value="#{v2ThesaurusContext.idConceptFromUri}"/>
+            <f:viewParam name="idg" value="#{v2ThesaurusContext.idGroupFromUri}"/>
+            <f:viewParam name="idt" value="#{v2ThesaurusContext.idThesoFromUri}"/>
+        </f:metadata>
+    </f:view>
+    <h:head>
+        <title>Opentheso</title>
+
+        <link href="../../resources/img/icon_opentheso2.png" rel="icon" />
+
+        <link rel="stylesheet" type="text/css" href="../../resources/css/all.css" />
+        <link rel="stylesheet" type="text/css" href="../../resources/css/theme_general.css" />
+        <link rel="stylesheet" type="text/css" href="../../resources/css/theme_opentheso.css" />
+        <link rel="stylesheet" type="text/css" href="../../resources/css/composants_opentheso.css" />
+
+        <link rel="stylesheet" href="https://use.fontawesome.com/releases/v6.1.0/css/all.css"/> 
+        <link rel="stylesheet" href="https://use.fontawesome.com/releases/v6.1.0/css/v4-shims.css"/>
+    </h:head>
+
+    <h:body id="page-top" onload="initMenu()">
+
+        <p:growl id="messageIndex" globalOnly="true" showDetail="true"/>
+
+        <h:panelGroup rendered="#{menuBean.checkIfUserIsConnected() and v2CandidatBean.screenAvailable}" id="wrapper" style="height: 100%" >
+
+            <ui:include src="../../commun/menu.xhtml" />
+
+            <div id="content-wrapper" style="width: 100%; min-height:100%; position:relative;">
+
+                <h:form id="containerIndex" >             
+                    <h:panelGroup id="header">
+                        <ui:include src="../../commun/header.xhtml" />
+                    </h:panelGroup>
+                    <input type="hidden" name="csrfToken" value="${sessionScope.CSRF_TOKEN}" />
+                </h:form>
+
+                <div class="container-fluid">
+
+                    <div class="d-sm-flex align-items-center justify-content-between mb-4" style="margin: 20px">
+                        <h1 class="h3 mb-0 text-gray-800"><span style="color: #f47b2a">#{langueBean.getMsg('candidat.titre')}</span> (v2)</h1>
+                    </div>
+
+                    <div class="row" style="margin-left: 15px; margin-right: 15px; margin-top: 5px;">
+                        <div class="col-xl-12 col-lg-12 col-md-12 col-sm-12 card shadow mb-1">
+                            <p:tabView id="tabViewCandidat" activeIndex="#{v2CandidatBean.tabViewIndexSelected}" style="background-color: #FAFAFA;">
+
+                                <p:ajax event="tabChange" listener="#{v2CandidatBean.onTabChange}" update="tabViewCandidat"/>
+
+                                <p:tab id="tab1" title="#{langueBean.getMsg('candidat.proposal')}" titleStyleClass="tab1">
+                                    <h:panelGroup rendered="#{v2CandidatBean.isListCandidatsActivate() ||
+                                                              v2CandidatBean.isExportViewActivate() || v2CandidatBean.isImportViewActivate()}">
+                                        <ui:include src="candidatsList.xhtml" />
+                                    </h:panelGroup>
+
+                                    <h:panelGroup rendered="#{v2CandidatBean.isShowCandidatActivate() || v2CandidatBean.isNewCandidatActivate()}">
+                                        <h:form id="containerIndexCandidat">
+
+                                            <ui:include src="candidatDetails.xhtml" />
+
+                                            <h:panelGroup rendered="#{(currentUser.hasRoleAsAdmin and v2CandidatBean.isShowCandidatActivate())}">
+                                                <div class="row" style="margin-bottom: 20px">
+                                                    <div class="col-12" style="align-content: center; margin-top: 10px;">
+                                                        <p:commandButton value="#{langueBean.getMsg('candidat.submit')}"
+                                                                         icon="pi pi-check" styleClass="ui-button-success"
+                                                                         ajax="true" process="@this"
+                                                                         actionListener="#{v2ProcessCandidateBean.reset(v2CandidatBean.candidatSelected)}"
+                                                                         update="idProcessCandidate processCandidateForm" oncomplete="PF('processCandidate').show();"/>
+                                                    </div>
+                                                </div>
+                                            </h:panelGroup>
+                                            <input type="hidden" name="csrfToken" value="${sessionScope.CSRF_TOKEN}" />
+                                        </h:form>
+                                    </h:panelGroup>
+                                </p:tab>
+
+                                <p:tab id="accept" title="#{langueBean.getMsg('candidat.inserted_concepts')}" >
+                                    <h:panelGroup rendered="#{v2CandidatBean.isAcceptedCandidatsActivate()}">
+                                        <ui:include src="candidatAcceptedList.xhtml" />
+                                    </h:panelGroup>
+                                    <h:panelGroup rendered="#{!v2CandidatBean.isAcceptedCandidatsActivate()}">
+                                        <ui:include src="acceptedCandidatDetails.xhtml" />
+                                    </h:panelGroup>
+                                </p:tab>
+
+                                <p:tab id="reject" title="#{langueBean.getMsg('candidat.rejected_concepts')}" titleStyleClass="tab1">
+                                    <h:panelGroup rendered="#{v2CandidatBean.isRejectCandidatsActivate()}">
+                                        <ui:include src="candidatRejectesList.xhtml" />
+                                    </h:panelGroup>
+
+                                    <h:panelGroup rendered="#{!v2CandidatBean.isRejectCandidatsActivate()}">
+                                        <ui:include src="rejectCandidatDetails.xhtml" />
+                                    </h:panelGroup>
+                                </p:tab>
+                            </p:tabView>
+                        </div>
+                    </div>
+                </div>
+                <ui:include src="../../commun/footer.xhtml" />
+
+                <ui:include src="dialog/newNote.xhtml" />
+                <ui:include src="dialog/deleteNote.xhtml" />
+                <ui:include src="dialog/editNote.xhtml" />
+
+                <ui:include src="dialog/showVoteNote.xhtml" />
+
+                <ui:include src="dialog/newTraduction.xhtml" />
+                <ui:include src="dialog/editTraduction.xhtml" />
+                <ui:include src="dialog/deleteTraduction.xhtml" />
+
+                <ui:include src="dialog/participantsList.xhtml" />
+                <ui:include src="dialog/envoyerInvitation.xhtml" />
+
+                <ui:include src="dialog/processCandidate.xhtml" />
+                <ui:include src="dialog/processCandidateList.xhtml" />
+
+                <ui:include src="dialog/moveToAnotherThesoCA.xhtml" />
+
+
+                <ui:include src="dialog/deleteCandidate.xhtml" />
+
+                <ui:include src="../../dialog/login/logout.xhtml" />
+            </div>
+        </h:panelGroup> 
+    </h:body>
+</html>

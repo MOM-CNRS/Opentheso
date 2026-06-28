@@ -26,6 +26,8 @@ public class PageRedirectConfig implements WebMvcConfigurer {
         registry.addViewController("/v2/toolbox/workshop").setViewName("forward:/v2/toolbox/workshop.xhtml");
         registry.addViewController("/v2/toolbox/maintenance").setViewName("forward:/v2/toolbox/maintenance.xhtml");
         registry.addViewController("/v2/toolbox/statistics").setViewName("forward:/v2/toolbox/statistics.xhtml");
+        registry.addViewController("/candidat").setViewName("forward:/candidat/candidat.xhtml");
+        registry.addViewController("/v2/candidat").setViewName("forward:/v2/candidat/candidat.xhtml");
         registry.addViewController("/toolbox/edition").setViewName("forward:/toolbox/edition.xhtml");
         registry.setOrder(Ordered.HIGHEST_PRECEDENCE);
     }

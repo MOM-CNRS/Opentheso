@@ -209,7 +209,9 @@
         </ul>
     </nav>
 
-    <ui:include src="../dialog/session/clearSession.xhtml" />
+    <h:panelGroup rendered="#{currentUser.nodeUser != null}">
+        <ui:include src="../dialog/session/clearSession.xhtml" />
+    </h:panelGroup>
 
 </ui:composition>
 

@@ -1,0 +1,58 @@
+<ui:fragment xmlns="http://www.w3.org/1999/xhtml"  
+             xmlns:ui="http://java.sun.com/jsf/facelets"
+             xmlns:h="http://xmlns.jcp.org/jsf/html"
+             xmlns:p="http://primefaces.org/ui"
+             xmlns:f="http://xmlns.jcp.org/jsf/core">
+
+    <p:dialog id="idMoveToAnotherThesoCA" header="#{langueBean.getMsg('concept.moveToAnotherThesoTooltip')}" widgetVar="moveToAnotherThesoCA" 
+              modal="true" resizable="true" position="top" width="650"  style="margin-top: 50px;" > 
+
+        <h:form id="moveToAnotherThesoCAForm">
+
+            <div class="row">
+                <div class="col-4" style="margin-top: 3px; text-align: right">
+                    <h:outputText value="#{langueBean.getMsg('concept.candidatesToMove')} : "/>
+                </div>
+                <div class="col-8" style="margin-top: 3px; font-weight: bold">
+                    <ui:repeat var="listConcept" value="#{moveConcept.idConceptsToMove}" varStatus="status">
+                        <h:outputText value="#{listConcept}"/>
+                        <h:outputText rendered="#{!status.last}" value="; "/>
+                    </ui:repeat>
+                </div>
+            </div>
+
+            <div class="row">
+                <div class="col-4" style="margin-top: 3px; text-align: right">
+                    <h:outputText value="#{langueBean.getMsg('concept.fromTheso')} : "/>
+                </div>
+                <div class="col-4" style="margin-top: 3px; font-weight: bold">
+                    <h:outputText value="#{selectedThesaurus.thesoName} (#{moveConcept.idThesoFrom})"/>
+                </div>                    
+            </div>     
+
+            <div class="row">
+                <div class="col-4" style="margin-top: 3px; text-align: right">
+                    <h:outputText value="#{langueBean.getMsg('concept.toTheso')}  : "/>
+                </div>
+                <div class="col-8" style="margin-top: 3px">
+                    <p:selectOneMenu id="thesoToSelect" value="#{moveConcept.idThesoTo}" 
+                                     style="color: #000; height: 28px; max-width: 400px">
+                        <p:ajax event="valueChange" listener="#{moveConcept.action()}" />
+                        <f:selectItems value="#{moveConcept.listThesoAsAdmin}" var="th" itemLabel="#{th.value} (#{th.id})" itemValue="#{th.id}"/>
+                    </p:selectOneMenu>
+                </div>                
+            </div> 
+            <div style="width: 100%; text-align: right; margin-top: 5px; margin-bottom: 5px;">
+                <p:commandButton value="#{langueBean.getMsg('btnCancel')}" styleClass="ui-button-secondary button" icon="fas fa-undo-alt" 
+                                 style="margin-right: 10px" process="@this"
+                                 oncomplete="PF('moveToAnotherThesoCA').hide();" update="idMoveToAnotherThesoCA"/>
+
+                <p:commandButton value="#{langueBean.getMsg('btnValidate')}" styleClass="ui-button-success" icon="pi pi-check"
+                                 update="moveToAnotherThesoCAForm tabViewCandidat messageIndex" 
+                                 oncomplete="PF('moveToAnotherThesoCA').hide();" process="@this"
+                                 action="#{moveConcept.moveConceptCA()}" />
+            </div>
+            <input type="hidden" name="csrfToken" value="${sessionScope.CSRF_TOKEN}" />
+        </h:form>
+    </p:dialog>   
+</ui:fragment>

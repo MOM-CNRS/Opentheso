@@ -1,0 +1,160 @@
+<ui:fragment xmlns="http://www.w3.org/1999/xhtml"
+             xmlns:h="http://java.sun.com/jsf/html"  
+             xmlns:ui="http://java.sun.com/jsf/facelets"
+             xmlns:p="http://primefaces.org/ui"
+             xmlns:f="http://xmlns.jcp.org/jsf/core">
+
+    <div class="row">
+        <div class="col-12">
+            <p:commandLink value="#{langueBean.getMsg('candidat.return')}" 
+                           update="tabViewCandidat" style="color: #F47B2A" process="@this"
+                           action= "#{v2CandidatBean.getAcceptedCandidatByThesoAndLangue()}"
+                           actionListener="#{v2CandidatBean.setIsNewCandidatActivate(true)}" />
+        </div>
+    </div>
+
+    <div class="row" style="margin-top: 20px">
+        <div class="col-6">
+            <div class="card mb-4 py-3 border-left-success">
+                <div class="list-group" style="padding-left: 10px; margin-right: 10px">
+                    <div class="row">
+                        <div class="col-12">
+                            <h:outputText style="font-weight: bold; font-weight: bold; margin-top: 10px; color: #43B572"
+                                          value="#{langueBean.getMsg('candidat.file')}"/>
+                            <h:outputText style="font-size: 14px; color: #f47b2a;" value=" (#{v2CandidatBean.candidatSelected.createdBy})" 
+                                          title="#{langueBean.getMsg('rightbody.concept.createdBy')} #{v2CandidatBean.candidatSelected.createdBy}"/> 
+                        </div>
+                    </div>
+                    <div class="row">
+                        <div class="col-12">
+                            <h:outputText style="font-weight: bold; font-weight: bold; margin-top: 10px; color: #43B572"
+                                          value="#{langueBean.getMsg('candidat.adminMessage')}"/>
+                            <h:outputText style="font-size: 14px; color: #f47b2a;" value=" (#{v2CandidatBean.candidatSelected.adminMessage})" />
+                        </div>
+                    </div>                    
+
+                    <!-- prefLabel -->
+                    <div class="row" style="margin-top: 10px">
+                        <div class="col-12">
+                            <h:outputText value="#{langueBean.getMsg('candidat.title')} : " style="font-weight: bold;"/>
+                            <h:outputText value="#{v2CandidatBean.candidatSelected.nomPref}" style="font-size: 15px; font-weight: bold; color: #f47b2a" />
+                        </div>
+                    </div>
+
+                    <!-- pour les Employé -->   
+                    <div class="row" style="margin-top: 10px;">
+                        <div class="col-12">
+                            <h:outputText value="#{langueBean.getMsg('candidat.used_for')} : " style="margin-top: 15px;"/>
+                            <h:outputText value="#{v2CandidatBean.candidatSelected.employePour}" />
+                        </div>
+                    </div>
+
+                    <!-- collection -->
+                    <div class="row" style="margin-top: 10px">
+                        <div class="col-12">
+                            <p:dataList value="#{v2CandidatBean.candidatSelected.collections}" var="collection" type="ordered"
+                                        emptyMessage="Aucune collection n'est disponible ...">
+                                <f:facet name="header">
+                                    #{langueBean.getMsg('candidat.domaine')}
+                                </f:facet>
+                                #{collection.value}
+                            </p:dataList>
+                        </div>
+                    </div>
+
+                    <!-- pour les relations BT -->    
+                    <div class="row" style="margin-top: 10px">
+                        <div class="col-12">
+                            <p:dataList value="#{v2CandidatBean.candidatSelected.termesGenerique}" var="term" type="ordered"
+                                        emptyMessage="Aucun terme génerique n'est disponible ...">
+                                <f:facet name="header">
+                                    #{langueBean.getMsg('candidat.generic_term')}
+                                </f:facet>
+                                #{term.value}
+                            </p:dataList>
+                        </div>
+                    </div>  
+
+                    <!-- pour les relations RT -->       
+                    <div class="row" style="margin-top: 10px;">
+                        <div class="col-12">
+                            <p:dataList value="#{v2CandidatBean.candidatSelected.termesAssocies}" var="term" type="ordered"
+                                        emptyMessage="Aucun terme associés n'est disponible ...">
+                                <f:facet name="header">
+                                    #{langueBean.getMsg('candidat.associeted_terms')}
+                                </f:facet>
+                                #{term.value}
+                            </p:dataList>
+                        </div>
+                    </div> 
+
+                    <!-- pour les notes -->       
+                    <div class="row" style="margin-top: 10px;">
+                        <div class="col-12">
+                            <p:dataList value="#{v2CandidatBean.candidatSelected.nodeNotes}" var="note" type="ordered"
+                                        emptyMessage="Aucune note n'est disponible ...">
+                                <f:facet name="header">Notes</f:facet>
+                                <h:outputText value="#{note.lexicalValue}" style="width: 100%; resize: none; font-size: 13px;" escape="false" />
+                            </p:dataList>
+                        </div>
+                    </div>
+
+                    <!-- gestion des traductions -->
+                    <h:panelGroup rendered="#{v2CandidatBean.candidatSelected.traductions.size() == 0}">
+                        <div class="row" style="margin-top: 10px;">
+                            <div class="col-12">
+                                <p:dataList value="#{v2CandidatBean.candidatSelected.traductions}" var="traduction" type="ordered"
+                                            emptyMessage="Aucune traduction n'est disponible ...">
+                                    <f:facet name="header">Traductions</f:facet>
+                                    {#{traduction.langue}} #{traduction.traduction}
+                                </p:dataList>
+                            </div>
+                        </div>
+                    </h:panelGroup>
+                </div>
+            </div>
+        </div>
+
+        <h:panelGroup >
+            <div class="col-6">
+                <div class="card mb-4 py-3 border-left-success">
+                    <div class="list-group" style="padding-left: 10px; margin-right: 10px">
+                        <div class="row" style="font-weight: bold; width: 100%">
+                            <div class="col-12">
+                                <h:outputLabel value="#{langueBean.getMsg('candidat.discussion')}" style="margin-left: 10px; font-weight: bold; color: #43B572"/>
+                            </div>
+                        </div>
+
+                        <div class="row" style="background-color: #FFFFFF; margin-left: 10px; margin-right: 10px">
+                            <div class="col-12">
+                                <p:scrollPanel mode="native" style="max-height: 940px; width: 100%; border: #FAFAFA; background-color: #FFFFFF;">
+                                    <ui:repeat var="msg" value="#{v2CandidatBean.candidatSelected.messages}">
+                                        <div class="row" style="float: #{msg.getMessagePossition()}; font-size: 15px; width: 80%;
+                                             background-color: #{msg.getMessageColor()}; margin-top: 5px; font-weight: bold; margin-left: 5px;
+                                             margin-right: 5px">
+
+                                            <div class="col-3">
+                                                <h:outputText value="#{msg.nom}"/>
+                                            </div>
+                                            <div class="col-9" style="text-align: right; font-style: italic; color: #8C8C8C">
+                                                <h:outputText value="#{msg.date}"/>
+                                            </div> 
+                                        </div>  
+                                        <div class="row" style="float: #{msg.getMessagePossition()}; font-size: 12px; width: 80%;
+                                             background-color: #{msg.getMessageColor()}; margin-bottom: 5px; text-align: justify;
+                                             text-justify: inter-word; margin-left: 5px; margin-right: 5px">
+
+                                            <div class="col-10">
+                                                <h:outputText value="#{msg.msg}"/>
+                                            </div>
+                                        </div>
+                                    </ui:repeat>
+                                </p:scrollPanel>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+            </div>
+        </h:panelGroup>
+    </div>
+</ui:fragment>
