@@ -1,5 +1,13 @@
 package fr.cnrs.opentheso.ws.openapi.handler;
 
+import fr.cnrs.opentheso.v2.setting.exception.InvalidSettingDataException;
+import fr.cnrs.opentheso.v2.setting.exception.SettingAccessDeniedException;
+import fr.cnrs.opentheso.v2.shared.exception.ModuleAccessDeniedException;
+import fr.cnrs.opentheso.v2.candidat.exception.CandidateNotFoundException;
+import fr.cnrs.opentheso.v2.graph.exception.GraphViewNotFoundException;
+import fr.cnrs.opentheso.v2.graph.exception.InvalidGraphDataException;
+import fr.cnrs.opentheso.v2.toolbox.exception.ToolboxAccessDeniedException;
+import fr.cnrs.opentheso.v2.toolbox.exception.InvalidToolboxDataException;
 import fr.cnrs.opentheso.v2.user.exception.ApiKeyRegenerationException;
 import fr.cnrs.opentheso.v2.user.exception.InvalidPasswordException;
 import fr.cnrs.opentheso.v2.user.exception.InvalidProfileDataException;
@@ -189,6 +197,94 @@ public class RestExceptionHandler {
         problem.setInstance(URI.create(request.getRequestURI()));
         problem.setProperty("timestamp", OffsetDateTime.now());
         problem.setProperty("errorCode", "ADMIN_ACCESS_DENIED");
+        return problem;
+    }
+
+    @ExceptionHandler(SettingAccessDeniedException.class)
+    public ProblemDetail handleSettingAccessDenied(SettingAccessDeniedException ex, HttpServletRequest request) {
+        ProblemDetail problem = ProblemDetail.forStatus(HttpStatus.FORBIDDEN);
+        problem.setTitle("Setting access denied");
+        problem.setDetail(ex.getMessage());
+        problem.setInstance(URI.create(request.getRequestURI()));
+        problem.setProperty("timestamp", OffsetDateTime.now());
+        problem.setProperty("errorCode", "SETTING_ACCESS_DENIED");
+        return problem;
+    }
+
+    @ExceptionHandler(InvalidSettingDataException.class)
+    public ProblemDetail handleInvalidSettingData(InvalidSettingDataException ex, HttpServletRequest request) {
+        ProblemDetail problem = ProblemDetail.forStatus(HttpStatus.BAD_REQUEST);
+        problem.setTitle("Invalid setting data");
+        problem.setDetail(ex.getMessage());
+        problem.setInstance(URI.create(request.getRequestURI()));
+        problem.setProperty("timestamp", OffsetDateTime.now());
+        problem.setProperty("errorCode", "INVALID_SETTING_DATA");
+        return problem;
+    }
+
+    @ExceptionHandler(ModuleAccessDeniedException.class)
+    public ProblemDetail handleModuleAccessDenied(ModuleAccessDeniedException ex, HttpServletRequest request) {
+        ProblemDetail problem = ProblemDetail.forStatus(HttpStatus.FORBIDDEN);
+        problem.setTitle("Module access denied");
+        problem.setDetail(ex.getMessage());
+        problem.setInstance(URI.create(request.getRequestURI()));
+        problem.setProperty("timestamp", OffsetDateTime.now());
+        problem.setProperty("errorCode", "MODULE_ACCESS_DENIED");
+        return problem;
+    }
+
+    @ExceptionHandler(GraphViewNotFoundException.class)
+    public ProblemDetail handleGraphViewNotFound(GraphViewNotFoundException ex, HttpServletRequest request) {
+        ProblemDetail problem = ProblemDetail.forStatus(HttpStatus.NOT_FOUND);
+        problem.setTitle("Graph view not found");
+        problem.setDetail(ex.getMessage());
+        problem.setInstance(URI.create(request.getRequestURI()));
+        problem.setProperty("timestamp", OffsetDateTime.now());
+        problem.setProperty("errorCode", "GRAPH_VIEW_NOT_FOUND");
+        return problem;
+    }
+
+    @ExceptionHandler(InvalidGraphDataException.class)
+    public ProblemDetail handleInvalidGraphData(InvalidGraphDataException ex, HttpServletRequest request) {
+        ProblemDetail problem = ProblemDetail.forStatus(HttpStatus.CONFLICT);
+        problem.setTitle("Invalid graph data");
+        problem.setDetail(ex.getMessage());
+        problem.setInstance(URI.create(request.getRequestURI()));
+        problem.setProperty("timestamp", OffsetDateTime.now());
+        problem.setProperty("errorCode", "INVALID_GRAPH_DATA");
+        return problem;
+    }
+
+    @ExceptionHandler(CandidateNotFoundException.class)
+    public ProblemDetail handleCandidateNotFound(CandidateNotFoundException ex, HttpServletRequest request) {
+        ProblemDetail problem = ProblemDetail.forStatus(HttpStatus.NOT_FOUND);
+        problem.setTitle("Candidate not found");
+        problem.setDetail(ex.getMessage());
+        problem.setInstance(URI.create(request.getRequestURI()));
+        problem.setProperty("timestamp", OffsetDateTime.now());
+        problem.setProperty("errorCode", "CANDIDATE_NOT_FOUND");
+        return problem;
+    }
+
+    @ExceptionHandler(ToolboxAccessDeniedException.class)
+    public ProblemDetail handleToolboxAccessDenied(ToolboxAccessDeniedException ex, HttpServletRequest request) {
+        ProblemDetail problem = ProblemDetail.forStatus(HttpStatus.FORBIDDEN);
+        problem.setTitle("Toolbox access denied");
+        problem.setDetail(ex.getMessage());
+        problem.setInstance(URI.create(request.getRequestURI()));
+        problem.setProperty("timestamp", OffsetDateTime.now());
+        problem.setProperty("errorCode", "TOOLBOX_ACCESS_DENIED");
+        return problem;
+    }
+
+    @ExceptionHandler(InvalidToolboxDataException.class)
+    public ProblemDetail handleInvalidToolboxData(InvalidToolboxDataException ex, HttpServletRequest request) {
+        ProblemDetail problem = ProblemDetail.forStatus(HttpStatus.BAD_REQUEST);
+        problem.setTitle("Invalid toolbox data");
+        problem.setDetail(ex.getMessage());
+        problem.setInstance(URI.create(request.getRequestURI()));
+        problem.setProperty("timestamp", OffsetDateTime.now());
+        problem.setProperty("errorCode", "INVALID_TOOLBOX_DATA");
         return problem;
     }
 

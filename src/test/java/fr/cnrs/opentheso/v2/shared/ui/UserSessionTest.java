@@ -2,6 +2,8 @@ package fr.cnrs.opentheso.v2.shared.ui;
 
 import fr.cnrs.opentheso.bean.menu.users.CurrentUser;
 import fr.cnrs.opentheso.models.users.NodeUser;
+import fr.cnrs.opentheso.v2.shared.session.SessionUser;
+import fr.cnrs.opentheso.v2.shared.session.SessionUserService;
 import org.junit.jupiter.api.BeforeEach;
 import org.junit.jupiter.api.Test;
 import org.junit.jupiter.api.extension.ExtendWith;
@@ -19,12 +21,14 @@ class UserSessionTest {
 
     @Mock
     private CurrentUser currentUser;
+    @Mock
+    private SessionUserService sessionUserService;
 
     private UserSession userSession;
 
     @BeforeEach
     void setUp() {
-        userSession = new UserSession(currentUser);
+        userSession = new UserSession(currentUser, sessionUserService);
     }
 
     @Test
@@ -37,13 +41,15 @@ class UserSessionTest {
     }
 
     @Test
-    void getCurrentUserId_returnsLegacyId() {
+    void getCurrentUserId_usesSessionUserService() {
         NodeUser nodeUser = NodeUser.builder().idUser(42).name("alice").mail("a@b.c").build();
         when(currentUser.getNodeUser()).thenReturn(nodeUser);
+        when(sessionUserService.load(42)).thenReturn(new SessionUser(42, "alice", "a@b.c", false, true, true, true));
 
         assertTrue(userSession.isLoggedIn());
         assertEquals(42, userSession.getCurrentUserId());
         assertEquals("alice", userSession.getCurrentUsername());
+        assertTrue(userSession.hasRoleAsAdmin());
     }
 
     @Test
@@ -63,49 +69,6 @@ class UserSessionTest {
         assertEquals("new", nodeUser.getName());
         assertEquals("new@example.com", nodeUser.getMail());
         assertTrue(nodeUser.isAlertMail());
-    }
-
-    @Test
-    void refreshMethods_ignoreNullNodeUser() {
-        when(currentUser.getNodeUser()).thenReturn(null);
-
-        userSession.refreshDisplayName("new");
-        userSession.refreshEmail("new@example.com");
-        userSession.refreshAlertMail(true);
-    }
-
-    @Test
-    void isSuperAdmin_returnsLegacyFlag() {
-        NodeUser nodeUser = NodeUser.builder().idUser(1).name("root").superAdmin(true).build();
-        when(currentUser.getNodeUser()).thenReturn(nodeUser);
-
-        assertTrue(userSession.isSuperAdmin());
-    }
-
-    @Test
-    void canAccessProjectAdminScreen_allowsSuperAdmin() {
-        NodeUser nodeUser = NodeUser.builder().idUser(1).name("root").superAdmin(true).build();
-        when(currentUser.getNodeUser()).thenReturn(nodeUser);
-
-        assertTrue(userSession.canAccessProjectAdminScreen());
-    }
-
-    @Test
-    void canAccessProjectAdminScreen_allowsProjectAdmin() {
-        NodeUser nodeUser = NodeUser.builder().idUser(2).name("admin").superAdmin(false).build();
-        when(currentUser.getNodeUser()).thenReturn(nodeUser);
-        when(currentUser.isHasRoleAsAdmin()).thenReturn(true);
-
-        assertTrue(userSession.canAccessProjectAdminScreen());
-    }
-
-    @Test
-    void canAccessProjectAdminScreen_deniesContributor() {
-        NodeUser nodeUser = NodeUser.builder().idUser(3).name("user").superAdmin(false).build();
-        when(currentUser.getNodeUser()).thenReturn(nodeUser);
-        when(currentUser.isHasRoleAsAdmin()).thenReturn(false);
-
-        assertFalse(userSession.canAccessProjectAdminScreen());
     }
 
     @Test

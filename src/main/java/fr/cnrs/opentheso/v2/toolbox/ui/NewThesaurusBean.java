@@ -43,7 +43,7 @@ public class NewThesaurusBean implements Serializable {
     }
 
     public boolean isFormAvailable() {
-        return ToolboxAccessPolicy.canCreateOrImportThesaurus(userSession, currentUser);
+        return ToolboxAccessPolicy.canCreateOrImportThesaurus(userSession);
     }
 
     public void prepareForm() {

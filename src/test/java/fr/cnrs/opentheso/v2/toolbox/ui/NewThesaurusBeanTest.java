@@ -1,7 +1,6 @@
 package fr.cnrs.opentheso.v2.toolbox.ui;
 
 import fr.cnrs.opentheso.bean.menu.users.CurrentUser;
-import fr.cnrs.opentheso.models.users.NodeUserRoleGroup;
 import fr.cnrs.opentheso.utils.MessageUtils;
 import fr.cnrs.opentheso.v2.shared.ui.UserSession;
 import fr.cnrs.opentheso.v2.toolbox.exception.InvalidToolboxDataException;
@@ -94,7 +93,7 @@ class NewThesaurusBeanTest {
     void prepareForm_deniedWhenUserCannotCreate() {
         when(userSession.isLoggedIn()).thenReturn(true);
         when(userSession.isSuperAdmin()).thenReturn(false);
-        when(currentUser.getAllAuthorizedProjectAsAdmin()).thenReturn(List.of());
+        when(userSession.hasRoleAsAdmin()).thenReturn(false);
 
         bean.prepareForm();
 
@@ -162,14 +161,14 @@ class NewThesaurusBeanTest {
         when(userSession.isLoggedIn()).thenReturn(true);
         when(userSession.getCurrentUserId()).thenReturn(2);
         when(userSession.isSuperAdmin()).thenReturn(false);
-        when(currentUser.getAllAuthorizedProjectAsAdmin()).thenReturn(List.of(new NodeUserRoleGroup()));
+        when(userSession.hasRoleAsAdmin()).thenReturn(true);
     }
 
     private void stubCreateAccessWithUsername() {
         when(userSession.isLoggedIn()).thenReturn(true);
         when(userSession.isSuperAdmin()).thenReturn(false);
+        when(userSession.hasRoleAsAdmin()).thenReturn(true);
         when(userSession.getCurrentUsername()).thenReturn("admin");
-        when(currentUser.getAllAuthorizedProjectAsAdmin()).thenReturn(List.of(new NodeUserRoleGroup()));
     }
 
     private void stubEditionBeanLookup(MockedStatic<FacesContext> faces) {

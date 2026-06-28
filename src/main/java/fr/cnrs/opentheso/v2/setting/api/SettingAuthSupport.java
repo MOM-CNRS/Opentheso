@@ -1,9 +1,7 @@
 package fr.cnrs.opentheso.v2.setting.api;
 
-import fr.cnrs.opentheso.v2.setting.exception.SettingAccessDeniedException;
-import fr.cnrs.opentheso.v2.setting.service.ThesaurusAccessService;
-import fr.cnrs.opentheso.v2.user.api.AccountAuthSupport;
-import fr.cnrs.opentheso.v2.user.service.UserProfileService;
+import fr.cnrs.opentheso.v2.shared.auth.ApiKeyAuthenticationService;
+import fr.cnrs.opentheso.v2.shared.auth.ThesaurusScopedAuthSupport;
 import lombok.RequiredArgsConstructor;
 import org.springframework.stereotype.Component;
 
@@ -11,18 +9,14 @@ import org.springframework.stereotype.Component;
 @RequiredArgsConstructor
 public class SettingAuthSupport {
 
-    private final AccountAuthSupport accountAuthSupport;
-    private final UserProfileService userProfileService;
-    private final ThesaurusAccessService thesaurusAccessService;
+    private final ApiKeyAuthenticationService apiKeyAuthenticationService;
+    private final ThesaurusScopedAuthSupport thesaurusScopedAuthSupport;
 
     public int resolveUserId(String xApiKey, String legacyApiKey) {
-        return accountAuthSupport.resolveUserId(xApiKey, legacyApiKey);
+        return apiKeyAuthenticationService.resolveUserId(xApiKey, legacyApiKey);
     }
 
     public void requireThesaurusManager(int userId, String thesaurusId) {
-        var profile = userProfileService.getProfile(userId);
-        if (!thesaurusAccessService.canManageThesaurus(userId, profile.superAdmin(), thesaurusId)) {
-            throw new SettingAccessDeniedException();
-        }
+        thesaurusScopedAuthSupport.requireThesaurusManager(userId, thesaurusId);
     }
 }

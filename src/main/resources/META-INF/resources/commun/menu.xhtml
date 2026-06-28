@@ -217,18 +217,23 @@
             <!-- Affichage module graphe -->
            <h:panelGroup rendered="#{(currentUser.nodeUser != null)}">
                 <li class="nav-item">
-                    <span class="nav-link">
-                        <p:commandLink id="graph1" class="collapse-item" actionListener="#{menuBean.redirectToGraphPage()}"
-                                       style="color: #fff; text-decoration: none; font-size: 14px; display: none" process="@this">
-                            <i class="fa-solid fa-diagram-project" style="font-size: 1rem; margin-left: 5px" />
-                            <span style="color: #fff; text-decoration: none; font-size: 12px;">#{langueBean.getMsg('graph')}</span>
-                        </p:commandLink>
-                        <p:commandLink id="graph2" class="collapse-item" actionListener="#{menuBean.redirectToGraphPage()}"
-                                       style="color: #fff; text-decoration: none;" process="@this"
-                                       title="#{langueBean.getMsg('graph')}">
-                            <i class="fa-solid fa-diagram-project" style="font-size: 1.2rem" />
-                        </p:commandLink>
-                    </span>
+                    <a id="graphButton1" class="nav-link collapsed" href="#" data-toggle="collapse" data-target="#collapseGraph"
+                       aria-expanded="true" aria-controls="collapseGraph" style="display: none">
+                        <i class="fa-solid fa-diagram-project" style="font-size: 1rem" />
+                        <span style="color: #fff; text-decoration: none; font-size: 12px;">#{langueBean.getMsg('graph')}</span>
+                    </a>
+                    <a id="graphButton2" class="nav-link collapsed" href="#" data-toggle="collapse" data-target="#collapseGraph"
+                       aria-expanded="true" aria-controls="collapseGraph" title="#{langueBean.getMsg('graph')}">
+                        <i class="fa-solid fa-diagram-project" style="font-size: 1.2rem" />
+                    </a>
+                    <div id="collapseGraph" class="collapse" aria-labelledby="headingGraph" data-parent="#accordionSidebar">
+                        <div class="bg-white py-2 collapse-inner rounded">
+                            <p:commandLink class="collapse-item" actionListener="#{menuBean.redirectToGraphPage()}"
+                                           process="@this" style="font-size: 12px;">#{langueBean.getMsg('graph')}</p:commandLink>
+                            <p:commandLink class="collapse-item" actionListener="#{menuBean.redirectToGraphV2Page()}"
+                                           process="@this" style="font-size: 12px;">#{langueBean.getMsg('graph')} (v2)</p:commandLink>
+                        </div>
+                    </div>
                 </li>
                 <hr class="sidebar-divider"/>
             </h:panelGroup>

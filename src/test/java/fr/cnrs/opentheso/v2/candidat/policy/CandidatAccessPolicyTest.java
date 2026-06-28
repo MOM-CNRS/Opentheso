@@ -1,6 +1,5 @@
 package fr.cnrs.opentheso.v2.candidat.policy;
 
-import fr.cnrs.opentheso.bean.menu.users.CurrentUser;
 import fr.cnrs.opentheso.v2.shared.ui.UserSession;
 import org.junit.jupiter.api.Test;
 import org.junit.jupiter.api.extension.ExtendWith;
@@ -17,23 +16,20 @@ class CandidatAccessPolicyTest {
     @Mock
     private UserSession userSession;
 
-    @Mock
-    private CurrentUser currentUser;
-
     @Test
     void canAccessModule_requiresContributorRole() {
         when(userSession.isLoggedIn()).thenReturn(true);
-        when(currentUser.isHasRoleAsContributor()).thenReturn(true);
+        when(userSession.isContributor()).thenReturn(true);
 
-        assertTrue(CandidatAccessPolicy.canAccessModule(userSession, currentUser));
+        assertTrue(CandidatAccessPolicy.canAccessModule(userSession));
     }
 
     @Test
     void canAccessModule_deniesWhenNotContributor() {
         when(userSession.isLoggedIn()).thenReturn(true);
-        when(currentUser.isHasRoleAsContributor()).thenReturn(false);
+        when(userSession.isContributor()).thenReturn(false);
 
-        assertFalse(CandidatAccessPolicy.canAccessModule(userSession, currentUser));
+        assertFalse(CandidatAccessPolicy.canAccessModule(userSession));
     }
 
     @Test

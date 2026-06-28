@@ -88,7 +88,7 @@ public class EditionBean implements Serializable {
     }
 
     public boolean isCanCreateOrImport() {
-        return ToolboxAccessPolicy.canCreateOrImportThesaurus(userSession, currentUser);
+        return ToolboxAccessPolicy.canCreateOrImportThesaurus(userSession);
     }
 
     public boolean isListView() {
@@ -242,6 +242,6 @@ public class EditionBean implements Serializable {
     }
 
     private boolean canAccessScreen() {
-        return ToolboxAccessPolicy.canAccessEditionScreen(userSession, currentUser);
+        return ToolboxAccessPolicy.canAccessEditionScreen(userSession);
     }
 }

@@ -1,18 +1,17 @@
 package fr.cnrs.opentheso.v2.setting.ui;
 
 import fr.cnrs.opentheso.bean.menu.theso.SelectedTheso;
-import fr.cnrs.opentheso.v2.shared.repository.ThesaurusSettingsQueryRepository;
+import fr.cnrs.opentheso.v2.shared.session.ThesaurusSelection;
+import fr.cnrs.opentheso.v2.shared.session.ThesaurusSelectionService;
 import org.junit.jupiter.api.BeforeEach;
 import org.junit.jupiter.api.Test;
 import org.junit.jupiter.api.extension.ExtendWith;
 import org.mockito.Mock;
 import org.mockito.junit.jupiter.MockitoExtension;
-import org.springframework.test.util.ReflectionTestUtils;
-
-import java.util.Optional;
 
 import static org.junit.jupiter.api.Assertions.assertEquals;
 import static org.junit.jupiter.api.Assertions.assertNull;
+import static org.mockito.ArgumentMatchers.anyString;
 import static org.mockito.Mockito.never;
 import static org.mockito.Mockito.verify;
 import static org.mockito.Mockito.when;
@@ -21,7 +20,7 @@ import static org.mockito.Mockito.when;
 class ThesaurusContextTest {
 
     @Mock
-    private ThesaurusSettingsQueryRepository thesaurusSettingsQueryRepository;
+    private ThesaurusSelectionService thesaurusSelectionService;
     @Mock
     private SelectedTheso selectedTheso;
 
@@ -29,8 +28,7 @@ class ThesaurusContextTest {
 
     @BeforeEach
     void setUp() {
-        thesaurusContext = new ThesaurusContext(thesaurusSettingsQueryRepository, selectedTheso);
-        ReflectionTestUtils.setField(thesaurusContext, "workLanguage", "fr");
+        thesaurusContext = new ThesaurusContext(thesaurusSelectionService, selectedTheso);
     }
 
     @Test
@@ -40,7 +38,7 @@ class ThesaurusContextTest {
         thesaurusContext.syncFromViewParams();
 
         assertNull(thesaurusContext.getCurrentThesaurusId());
-        verify(thesaurusSettingsQueryRepository, never()).findThesaurusTitle(org.mockito.ArgumentMatchers.any(), org.mockito.ArgumentMatchers.any());
+        verify(thesaurusSelectionService, never()).resolve(anyString());
     }
 
     @Test
@@ -48,8 +46,8 @@ class ThesaurusContextTest {
         thesaurusContext.setIdThesoFromUri(" TH1 ");
         thesaurusContext.setIdConceptFromUri("C1");
         thesaurusContext.setIdGroupFromUri("G1");
-        when(thesaurusSettingsQueryRepository.findThesaurusTitle("TH1", "fr"))
-                .thenReturn(Optional.of("Mon thésaurus"));
+        when(thesaurusSelectionService.resolve("TH1"))
+                .thenReturn(new ThesaurusSelection("TH1", "Mon thésaurus"));
 
         thesaurusContext.syncFromViewParams();
 
@@ -58,13 +56,14 @@ class ThesaurusContextTest {
         assertNull(thesaurusContext.getIdThesoFromUri());
         assertNull(thesaurusContext.getIdConceptFromUri());
         assertNull(thesaurusContext.getIdGroupFromUri());
+        verify(selectedTheso).setCurrentIdTheso("TH1");
     }
 
     @Test
     void syncFromViewParams_fallsBackToIdWhenTitleMissing() {
         thesaurusContext.setIdThesoFromUri("TH1");
-        when(thesaurusSettingsQueryRepository.findThesaurusTitle("TH1", "fr"))
-                .thenReturn(Optional.empty());
+        when(thesaurusSelectionService.resolve("TH1"))
+                .thenReturn(new ThesaurusSelection("TH1", "TH1"));
 
         thesaurusContext.syncFromViewParams();
 
@@ -74,8 +73,8 @@ class ThesaurusContextTest {
     @Test
     void syncFromViewParams_usesSelectedThesaurusWhenNoViewParam() {
         when(selectedTheso.getCurrentIdTheso()).thenReturn("TH2");
-        when(thesaurusSettingsQueryRepository.findThesaurusTitle("TH2", "fr"))
-                .thenReturn(Optional.of("Thésaurus 2"));
+        when(thesaurusSelectionService.resolve("TH2"))
+                .thenReturn(new ThesaurusSelection("TH2", "Thésaurus 2"));
 
         thesaurusContext.syncFromViewParams();
 

@@ -1,13 +1,13 @@
 package fr.cnrs.opentheso.v2.setting.ui;
 
 import fr.cnrs.opentheso.bean.menu.theso.SelectedTheso;
-import fr.cnrs.opentheso.v2.shared.repository.ThesaurusSettingsQueryRepository;
+import fr.cnrs.opentheso.v2.shared.session.ThesaurusSelection;
+import fr.cnrs.opentheso.v2.shared.session.ThesaurusSelectionService;
 import jakarta.enterprise.context.SessionScoped;
 import jakarta.inject.Named;
 import lombok.Getter;
 import lombok.Setter;
 import org.apache.commons.lang3.StringUtils;
-import org.springframework.beans.factory.annotation.Value;
 
 import java.io.Serializable;
 
@@ -17,11 +17,8 @@ import java.io.Serializable;
 @Named("v2ThesaurusContext")
 public class ThesaurusContext implements Serializable {
 
-    private final ThesaurusSettingsQueryRepository thesaurusSettingsQueryRepository;
+    private final ThesaurusSelectionService thesaurusSelectionService;
     private final SelectedTheso selectedTheso;
-
-    @Value("${settings.workLanguage:fr}")
-    private String workLanguage;
 
     private String idConceptFromUri;
     private String idGroupFromUri;
@@ -31,10 +28,10 @@ public class ThesaurusContext implements Serializable {
     private String currentThesaurusTitle;
 
     public ThesaurusContext(
-            ThesaurusSettingsQueryRepository thesaurusSettingsQueryRepository,
+            ThesaurusSelectionService thesaurusSelectionService,
             SelectedTheso selectedTheso
     ) {
-        this.thesaurusSettingsQueryRepository = thesaurusSettingsQueryRepository;
+        this.thesaurusSelectionService = thesaurusSelectionService;
         this.selectedTheso = selectedTheso;
     }
 
@@ -54,9 +51,14 @@ public class ThesaurusContext implements Serializable {
     }
 
     private void applyThesaurus(String thesaurusId) {
-        currentThesaurusId = thesaurusId;
-        currentThesaurusTitle = thesaurusSettingsQueryRepository
-                .findThesaurusTitle(currentThesaurusId, workLanguage)
-                .orElse(currentThesaurusId);
+        ThesaurusSelection selection = thesaurusSelectionService.resolve(thesaurusId);
+        if (selection == null) {
+            return;
+        }
+        currentThesaurusId = selection.thesaurusId();
+        currentThesaurusTitle = selection.title();
+        if (selectedTheso != null) {
+            selectedTheso.setCurrentIdTheso(selection.thesaurusId());
+        }
     }
 }

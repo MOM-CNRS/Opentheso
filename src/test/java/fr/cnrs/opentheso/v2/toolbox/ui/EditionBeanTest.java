@@ -3,7 +3,6 @@ package fr.cnrs.opentheso.v2.toolbox.ui;
 import fr.cnrs.opentheso.bean.language.LanguageBean;
 import fr.cnrs.opentheso.bean.menu.theso.SelectedTheso;
 import fr.cnrs.opentheso.bean.menu.users.CurrentUser;
-import fr.cnrs.opentheso.models.users.NodeUserRoleGroup;
 import fr.cnrs.opentheso.utils.MessageUtils;
 import fr.cnrs.opentheso.v2.setting.ui.ThesaurusContext;
 import fr.cnrs.opentheso.v2.shared.ui.UserSession;
@@ -98,7 +97,6 @@ class EditionBeanTest {
         when(userSession.isLoggedIn()).thenReturn(true);
         when(userSession.isSuperAdmin()).thenReturn(false);
         when(userSession.hasRoleAsAdmin()).thenReturn(false);
-        when(currentUser.getAllAuthorizedProjectAsAdmin()).thenReturn(List.of());
 
         bean.load();
 
@@ -144,7 +142,7 @@ class EditionBeanTest {
     void showNewThesaurus_deniedWhenUserCannotCreate() {
         when(userSession.isLoggedIn()).thenReturn(true);
         when(userSession.isSuperAdmin()).thenReturn(false);
-        when(currentUser.getAllAuthorizedProjectAsAdmin()).thenReturn(List.of());
+        when(userSession.hasRoleAsAdmin()).thenReturn(false);
 
         bean.showNewThesaurus();
 
@@ -310,6 +308,6 @@ class EditionBeanTest {
     private void stubCreateAccess() {
         when(userSession.isLoggedIn()).thenReturn(true);
         when(userSession.isSuperAdmin()).thenReturn(false);
-        when(currentUser.getAllAuthorizedProjectAsAdmin()).thenReturn(List.of(new NodeUserRoleGroup()));
+        when(userSession.hasRoleAsAdmin()).thenReturn(true);
     }
 }

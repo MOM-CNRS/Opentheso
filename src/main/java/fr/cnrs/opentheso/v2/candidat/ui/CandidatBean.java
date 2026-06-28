@@ -121,7 +121,7 @@ public class CandidatBean implements Serializable {
     }
 
     public boolean isScreenAvailable() {
-        return CandidatAccessPolicy.canAccessModule(userSession, currentUser)
+        return CandidatAccessPolicy.canAccessModule(userSession)
                 && CandidatAccessPolicy.hasSelectedThesaurus(getListThesaurusId());
     }
 

@@ -140,8 +140,9 @@ class StatisticsBeanTest {
     @Test
     void load_showsErrorWhenThesaurusMissing() {
         when(userSession.isLoggedIn()).thenReturn(true);
-        when(currentUser.isHasRoleAsManager()).thenReturn(true);
+        when(userSession.isManager()).thenReturn(true);
         when(thesaurusContext.getCurrentThesaurusId()).thenReturn("");
+        when(selectedTheso.getCurrentIdTheso()).thenReturn("");
 
         try (MockedStatic<MessageUtils> messages = mockStatic(MessageUtils.class)) {
             bean.load();
@@ -152,7 +153,7 @@ class StatisticsBeanTest {
 
     private void stubAccess() {
         when(userSession.isLoggedIn()).thenReturn(true);
-        when(currentUser.isHasRoleAsManager()).thenReturn(true);
+        when(userSession.isManager()).thenReturn(true);
         when(thesaurusContext.getCurrentThesaurusId()).thenReturn("TH1");
     }
 }

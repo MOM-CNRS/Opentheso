@@ -117,7 +117,15 @@ public class MenuBean implements Serializable {
         dataGraphView.init();
         ExternalContext context = FacesContext.getCurrentInstance().getExternalContext();
         context.redirect(context.getRequestContextPath() + "/graphview/graph.xhtml");
-    }    
+    }
+
+    public void redirectToGraphV2Page() throws IOException {
+        activePageName = "graphV2";
+        notificationPanelVisible = false;
+        propositionBean.searchNewPropositions();
+        propositionBean.setRubriqueVisible(false);
+        redirectToV2SettingPage("/v2/graph");
+    }
     
     // MENU Profile
     public void redirectToUsersPage() throws IOException {

@@ -6,6 +6,7 @@ import jakarta.persistence.PersistenceContext;
 import org.springframework.stereotype.Repository;
 
 import java.util.List;
+import java.util.OptionalInt;
 
 @Repository
 public class UserRoleQueryRepository {
@@ -67,5 +68,22 @@ public class UserRoleQueryRepository {
                         ((Number) row[4]).intValue()
                 ))
                 .toList();
+    }
+
+    public OptionalInt findBestRoleId(int userId) {
+        String sql = """
+                SELECT MIN(role_id) FROM (
+                    SELECT id_role AS role_id FROM user_role_group WHERE id_user = :userId
+                    UNION ALL
+                    SELECT id_role AS role_id FROM user_role_only_on WHERE id_user = :userId
+                ) roles
+                """;
+        Object result = entityManager.createNativeQuery(sql)
+                .setParameter("userId", userId)
+                .getSingleResult();
+        if (result == null) {
+            return OptionalInt.empty();
+        }
+        return OptionalInt.of(((Number) result).intValue());
     }
 }

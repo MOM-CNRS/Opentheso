@@ -85,7 +85,7 @@ public class StatisticsBean implements Serializable {
     }
 
     public boolean isScreenAvailable() {
-        return ToolboxAccessPolicy.canViewStatistics(userSession, currentUser)
+        return ToolboxAccessPolicy.canViewStatistics(userSession)
                 && ToolboxAccessPolicy.hasSelectedThesaurus(getActiveThesaurusId());
     }
 

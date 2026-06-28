@@ -199,8 +199,8 @@
                                                         <p:commandButton id="btnAjaxCopyArk" icon="fa-solid fa-copy" styleClass="rounded-button ui-button-flat" style="color: #f47b2a; background-color: transparent;"
                                                                          onclick="return false;" />
                                                         <pe:clipboard id="clipAjaxArk" trigger="btnAjaxCopyArk" action="copy" text="#{conceptView.nodeFullConcept.permanentId}" >
-                                                            <p:ajax event="success" listener="#{dataGraphView.successListener}" update="messageIndex"/>
-                                                            <p:ajax event="error" listener="#{dataGraphView.errorListener}" update="messageIndex" />
+                                                            <p:ajax event="success" listener="#{clipboardFeedbackBean.onSuccess}" update="messageIndex"/>
+                                                            <p:ajax event="error" listener="#{clipboardFeedbackBean.onError}" update="messageIndex" />
                                                         </pe:clipboard>
                                                         <p:tooltip for="btnAjaxCopyArk" value="#{langueBean.getMsg('copy')}" />
                                                     </div>
