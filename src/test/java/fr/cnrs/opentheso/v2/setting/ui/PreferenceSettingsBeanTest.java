@@ -8,13 +8,13 @@ import fr.cnrs.opentheso.v2.setting.model.IdentifierServerType;
 import fr.cnrs.opentheso.v2.setting.model.ThesaurusPreferences;
 import fr.cnrs.opentheso.v2.setting.service.ThesaurusPreferenceService;
 import fr.cnrs.opentheso.v2.shared.ui.UserSession;
+import fr.cnrs.opentheso.v2.test.support.PrimeFacesTestSupport;
 import org.junit.jupiter.api.BeforeEach;
 import org.junit.jupiter.api.Test;
 import org.junit.jupiter.api.extension.ExtendWith;
 import org.mockito.Mock;
 import org.mockito.MockedStatic;
 import org.mockito.junit.jupiter.MockitoExtension;
-import org.primefaces.PrimeFaces;
 
 import static fr.cnrs.opentheso.v2.setting.fixtures.SettingTestFixtures.samplePreferences;
 import static org.junit.jupiter.api.Assertions.assertEquals;
@@ -27,7 +27,6 @@ import static org.mockito.ArgumentMatchers.anyString;
 import static org.mockito.ArgumentMatchers.eq;
 import static org.mockito.ArgumentMatchers.nullable;
 import static org.mockito.Mockito.lenient;
-import static org.mockito.Mockito.mock;
 import static org.mockito.Mockito.mockStatic;
 import static org.mockito.Mockito.never;
 import static org.mockito.Mockito.verify;
@@ -104,7 +103,7 @@ class PreferenceSettingsBeanTest {
                 nullable(String.class), nullable(String.class), eq("fr")
         )).thenReturn(samplePreferences());
 
-        try (MockedStatic<PrimeFaces> primeFaces = mockPrimeFaces();
+        try (var primeFaces = PrimeFacesTestSupport.open();
              MockedStatic<MessageUtils> messageUtils = mockStatic(MessageUtils.class)) {
             bean.save();
             verify(thesaurusPreferenceService).savePreferences(
@@ -204,14 +203,5 @@ class PreferenceSettingsBeanTest {
     private void grantAccess() {
         when(userSession.hasRoleAsAdmin()).thenReturn(true);
         when(thesaurusContext.getCurrentThesaurusId()).thenReturn("TH1");
-    }
-
-    private MockedStatic<PrimeFaces> mockPrimeFaces() {
-        MockedStatic<PrimeFaces> primeFaces = mockStatic(PrimeFaces.class);
-        PrimeFaces.Ajax ajax = mock(PrimeFaces.Ajax.class);
-        PrimeFaces primeFacesInstance = mock(PrimeFaces.class);
-        primeFaces.when(PrimeFaces::current).thenReturn(primeFacesInstance);
-        when(primeFacesInstance.ajax()).thenReturn(ajax);
-        return primeFaces;
     }
 }

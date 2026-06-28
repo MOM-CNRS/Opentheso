@@ -7,13 +7,13 @@ import fr.cnrs.opentheso.v2.setting.model.ThesaurusCorpus;
 import fr.cnrs.opentheso.v2.setting.service.ThesaurusAccessService;
 import fr.cnrs.opentheso.v2.setting.service.ThesaurusCorpusService;
 import fr.cnrs.opentheso.v2.shared.ui.UserSession;
+import fr.cnrs.opentheso.v2.test.support.PrimeFacesTestSupport;
 import org.junit.jupiter.api.BeforeEach;
 import org.junit.jupiter.api.Test;
 import org.junit.jupiter.api.extension.ExtendWith;
 import org.mockito.Mock;
 import org.mockito.MockedStatic;
 import org.mockito.junit.jupiter.MockitoExtension;
-import org.primefaces.PrimeFaces;
 
 import java.util.List;
 
@@ -25,7 +25,6 @@ import static org.mockito.ArgumentMatchers.any;
 import static org.mockito.ArgumentMatchers.anyInt;
 import static org.mockito.ArgumentMatchers.eq;
 import static org.mockito.Mockito.doThrow;
-import static org.mockito.Mockito.mock;
 import static org.mockito.Mockito.mockStatic;
 import static org.mockito.Mockito.never;
 import static org.mockito.Mockito.verify;
@@ -60,7 +59,7 @@ class CorpusSettingsBeanTest {
         grantAccess();
         when(thesaurusCorpusService.listCorpus("TH1")).thenReturn(List.of(SettingTestFixtures.sampleCorpus()));
 
-        try (MockedStatic<PrimeFaces> primeFaces = mockPrimeFaces()) {
+        try (var primeFaces = PrimeFacesTestSupport.open()) {
             bean.load();
         }
 
@@ -107,7 +106,7 @@ class CorpusSettingsBeanTest {
         ));
         when(thesaurusCorpusService.listCorpus("TH1")).thenReturn(List.of());
 
-        try (MockedStatic<PrimeFaces> primeFaces = mockPrimeFaces();
+        try (var primeFaces = PrimeFacesTestSupport.open();
              MockedStatic<MessageUtils> messageUtils = mockStatic(MessageUtils.class)) {
             bean.create();
 
@@ -138,7 +137,7 @@ class CorpusSettingsBeanTest {
         bean.getCorpusEditor().setUriLink("http://updated");
         when(thesaurusCorpusService.listCorpus("TH1")).thenReturn(List.of());
 
-        try (MockedStatic<PrimeFaces> primeFaces = mockPrimeFaces();
+        try (var primeFaces = PrimeFacesTestSupport.open();
              MockedStatic<MessageUtils> messageUtils = mockStatic(MessageUtils.class)) {
             bean.update();
 
@@ -162,7 +161,7 @@ class CorpusSettingsBeanTest {
         bean.prepareEdit(SettingTestFixtures.sampleCorpus());
         when(thesaurusCorpusService.listCorpus("TH1")).thenReturn(List.of());
 
-        try (MockedStatic<PrimeFaces> primeFaces = mockPrimeFaces();
+        try (var primeFaces = PrimeFacesTestSupport.open();
              MockedStatic<MessageUtils> messageUtils = mockStatic(MessageUtils.class)) {
             bean.delete();
 
@@ -191,12 +190,4 @@ class CorpusSettingsBeanTest {
         when(thesaurusAccessService.canManageThesaurus(2, false, "TH1")).thenReturn(true);
     }
 
-    private MockedStatic<PrimeFaces> mockPrimeFaces() {
-        MockedStatic<PrimeFaces> primeFaces = mockStatic(PrimeFaces.class);
-        PrimeFaces.Ajax ajax = mock(PrimeFaces.Ajax.class);
-        PrimeFaces primeFacesInstance = mock(PrimeFaces.class);
-        primeFaces.when(PrimeFaces::current).thenReturn(primeFacesInstance);
-        when(primeFacesInstance.ajax()).thenReturn(ajax);
-        return primeFaces;
-    }
 }

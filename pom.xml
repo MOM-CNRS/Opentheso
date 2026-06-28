@@ -588,6 +588,47 @@
                 </plugins>
             </build>
         </profile>
+        <profile>
+            <id>coverage-check-v2-toolbox</id>
+            <build>
+                <plugins>
+                    <plugin>
+                        <groupId>org.jacoco</groupId>
+                        <artifactId>jacoco-maven-plugin</artifactId>
+                        <executions>
+                            <execution>
+                                <id>check-v2-toolbox</id>
+                                <phase>verify</phase>
+                                <goals>
+                                    <goal>check</goal>
+                                </goals>
+                                <configuration>
+                                    <includes>
+                                        <include>fr/cnrs/opentheso/v2/toolbox/**</include>
+                                    </includes>
+                                    <excludes>
+                                        <exclude>fr/cnrs/opentheso/v2/toolbox/model/**</exclude>
+                                        <exclude>fr/cnrs/opentheso/v2/toolbox/exception/**</exclude>
+                                    </excludes>
+                                    <rules>
+                                        <rule>
+                                            <element>CLASS</element>
+                                            <limits>
+                                                <limit>
+                                                    <counter>LINE</counter>
+                                                    <value>COVEREDRATIO</value>
+                                                    <minimum>0.90</minimum>
+                                                </limit>
+                                            </limits>
+                                        </rule>
+                                    </rules>
+                                </configuration>
+                            </execution>
+                        </executions>
+                    </plugin>
+                </plugins>
+            </build>
+        </profile>
     </profiles>
 
     <!-- Propriétés SonarQube v2 (surcharge possibles en ligne de commande) -->

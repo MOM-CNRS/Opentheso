@@ -1,0 +1,102 @@
+<ui:fragment xmlns="http://www.w3.org/1999/xhtml"
+             xmlns:h="http://java.sun.com/jsf/html"
+             xmlns:ui="http://java.sun.com/jsf/facelets"
+             xmlns:p="http://primefaces.org/ui"
+             xmlns:f="http://xmlns.jcp.org/jsf/core">
+
+    <h:panelGroup rendered="#{v2NewThesaurusBean.formAvailable}">
+        <div class="card shadow mb-4" style="padding: 15px; margin: 20px">
+            <div class="row" style="text-align: right; margin-right: 20px">
+                <div class="col-1 offset-11">
+                    <p:linkButton href="https://opentheso.hypotheses.org/2991" target="_blank"
+                                    icon="fa-solid fa-circle-question" styleClass="rounded-button ui-button-outlined" />
+                </div>
+            </div>
+
+            <div class="row">
+                <div class="col-12" style="padding-left: 30px">
+                    <h:outputText value="#{langueBean.getMsg('toolbox.newTheso')}" class="h5 mb-0 text-gray-800"/>
+                </div>
+            </div>
+
+            <div class="card mb-4 py-3 border-left-success" style="margin-top: 20px; margin-left: 10px; margin-right: 10px; padding: 20px">
+
+                <div class="row" style="margin-top: 10px">
+                    <div class="col-3" style="text-align: right; padding-top: 4px">
+                        <h:outputText value="#{langueBean.getMsg('statistique.label')}" style="margin-right: -6px" />
+                    </div>
+                    <div class="col-5">
+                        <p:inputText id="v2NewThesoTitle"
+                                     placeholder="#{langueBean.getMsg('statistique.thesaurus.name')}"
+                                     value="#{v2NewThesaurusBean.editor.title}" style="width: 100%"
+                                     required="true" requiredMessage="Le label est obligatoire"/>
+                    </div>
+                </div>
+
+                <div class="row" style="margin-top: 10px">
+                    <div class="col-3" style="text-align: right; padding-top: 4px">
+                        <h:outputText value="#{langueBean.getMsg('rightbody.conceptdialog.language')}" style="margin-right: -6px"/>
+                    </div>
+                    <div class="col-5">
+                        <p:selectOneMenu id="v2NewThesoLang"
+                                         value="#{v2NewThesaurusBean.editor.selectedLanguage}"
+                                         styleClass="selectOneMenu_custom"
+                                         panelStyleClass="selectOneMenu_panelStyle_custom"
+                                         style="width: 100%; background: none; box-shadow: none; padding: 0rem 0.5rem;"
+                                         panelStyle="border: none; box-shadow: none; max-width: 300px"
+                                         required="true" requiredMessage="La langue est obligatoire">
+                            <f:selectItem itemLabel="..." itemValue="" noSelectionOption="true"/>
+                            <f:selectItems value="#{v2NewThesaurusBean.languages}" var="lang" itemValue="#{lang.code}"
+                                           itemLabel="#{lang.code} _ #{lang.frenchName} (#{lang.englishName})"/>
+                        </p:selectOneMenu>
+                    </div>
+                </div>
+
+                <div class="row" style="margin-top: 10px">
+                    <div class="col-3" style="text-align: right; padding-top: 4px">
+                        <h:outputText value="#{langueBean.getMsg('profile.project')}"
+                                      title="#{langueBean.getMsg('profile.projectTooltip')}"
+                                      style="margin-right: -6px"/>
+                    </div>
+                    <div class="col-5">
+                        <p:selectOneMenu id="v2NewThesoProjectSuperAdmin"
+                                         rendered="#{v2NewThesaurusBean.superAdmin}"
+                                         value="#{v2NewThesaurusBean.editor.selectedProjectId}"
+                                         styleClass="selectOneMenu_custom"
+                                         panelStyleClass="selectOneMenu_panelStyle_custom"
+                                         style="font-size: 12px; width: 100%; background: none; box-shadow: none;"
+                                         panelStyle="font-size: 12px; border: none; box-shadow: none;">
+                            <f:selectItem itemLabel="..." itemValue="" />
+                            <f:selectItems value="#{v2NewThesaurusBean.projects}" var="project"
+                                           itemLabel="#{project.name}" itemValue="#{project.idAsString}"/>
+                        </p:selectOneMenu>
+
+                        <p:selectOneMenu id="v2NewThesoProject"
+                                         rendered="#{!v2NewThesaurusBean.superAdmin}"
+                                         value="#{v2NewThesaurusBean.editor.selectedProjectId}"
+                                         styleClass="selectOneMenu_custom"
+                                         panelStyleClass="selectOneMenu_panelStyle_custom"
+                                         style="font-size: 12px; width: 100%; background: none; box-shadow: none;"
+                                         panelStyle="font-size: 12px; border: none; box-shadow: none;">
+                            <f:selectItems value="#{v2NewThesaurusBean.projects}" var="project"
+                                           itemLabel="#{project.name}" itemValue="#{project.idAsString}"/>
+                        </p:selectOneMenu>
+                    </div>
+                </div>
+            </div>
+
+            <div class="row" style="margin-top: 30px;">
+                <div class="col-6" style="text-align: right">
+                    <p:commandButton value="#{langueBean.getMsg('btnBack')}" styleClass="ui-button-secondary button"
+                                     icon="fas fa-undo-alt" update="containerIndex"
+                                     action="#{v2NewThesaurusBean.cancel()}" process="@this"/>
+                </div>
+                <p:commandButton value="Créer" icon="pi pi-check"
+                                 update="containerIndex messageIndex formMenu:idListTheso"
+                                 styleClass="ui-button-success"
+                                 action="#{v2NewThesaurusBean.create()}" />
+                <div class="col-6"></div>
+            </div>
+        </div>
+    </h:panelGroup>
+</ui:fragment>

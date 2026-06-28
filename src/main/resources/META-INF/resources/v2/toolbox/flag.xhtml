@@ -1,0 +1,67 @@
+<!DOCTYPE HTML>
+<HTML xmlns="http://www.w3.org/1999/xhtml"
+      xmlns:h="http://xmlns.jcp.org/jsf/html"
+      xmlns:ui="http://xmlns.jcp.org/jsf/facelets"
+      xmlns:f="http://xmlns.jcp.org/jsf/core"
+      xmlns:p="http://primefaces.org/ui">
+
+    <f:view>
+        <f:metadata>
+            <f:viewAction action="#{v2FlagManagementBean.load()}"/>
+            <f:viewParam name="idc" value="#{v2ThesaurusContext.idConceptFromUri}"/>
+            <f:viewParam name="idg" value="#{v2ThesaurusContext.idGroupFromUri}"/>
+            <f:viewParam name="idt" value="#{v2ThesaurusContext.idThesoFromUri}"/>
+        </f:metadata>
+    </f:view>
+    <h:head>
+        <title>Opentheso</title>
+        <link href="../../resources/img/icon_opentheso2.png" rel="icon"/>
+        <link rel="stylesheet" type="text/css" href="../../resources/css/all.css"/>
+        <link rel="stylesheet" type="text/css" href="../../resources/css/theme_general.css"/>
+        <link rel="stylesheet" type="text/css" href="../../resources/css/theme_opentheso.css"/>
+        <link rel="stylesheet" type="text/css" href="../../resources/css/composants_opentheso.css"/>
+        <link rel="stylesheet" href="https://use.fontawesome.com/releases/v6.1.0/css/all.css"/>
+        <link rel="stylesheet" href="https://use.fontawesome.com/releases/v6.1.0/css/v4-shims.css"/>
+    </h:head>
+
+    <h:body id="page-top" onload="initMenu()">
+        <p:growl id="messageIndex" globalOnly="true" showDetail="true"/>
+        <h:panelGroup rendered="#{menuBean.checkIfUserIsConnected() and v2FlagManagementBean.screenAvailable}" id="wrapper" style="height: 100%">
+            <ui:include src="../../commun/menu.xhtml"/>
+            <div id="content-wrapper" style="min-height:100%; position:relative;">
+                <h:form id="containerIndex">
+                    <h:panelGroup id="header">
+                        <ui:include src="../../commun/header.xhtml"/>
+                    </h:panelGroup>
+                    <div class="d-sm-flex align-items-center justify-content-between mb-4" style="margin-top: 20px; margin-bottom: 15px">
+                        <h1 class="h3 mb-0 text-gray-800">#{langueBean.getMsg('menu.toolbox')} / <span style="color: #f47b2a">#{langueBean.getMsg('toolbox.manageFlags')}</span></h1>
+                    </div>
+                    <div class="card mb-4 py-3 border-left-success" style="margin-left: 30px; margin-right: 30px; margin-top: 10px;">
+                        <p:dataTable id="v2FlagTable" var="lang" value="#{v2FlagManagementBean.languages}"
+                                     widgetVar="v2FlagTable" scrollable="true" scrollHeight="450"
+                                     editMode="cell" editable="true" lazy="false">
+                            <p:ajax event="cellEdit" listener="#{v2FlagManagementBean.onCellEdit(lang)}" update="containerIndex messageIndex"/>
+                            <p:column width="50" headerText="iso1" filterBy="#{lang.iso6391}">
+                                <h:outputText value="#{lang.iso6391}"/>
+                            </p:column>
+                            <p:column width="40" headerText="drapeau">
+                                <p:cellEditor>
+                                    <f:facet name="output"><h:outputText value="#{lang.countryCode}"/></f:facet>
+                                    <f:facet name="input">
+                                        <p:inputText value="#{lang.countryCode}" style="width:100%"/>
+                                    </f:facet>
+                                </p:cellEditor>
+                            </p:column>
+                            <p:column width="10" headerText="image">
+                                <img src="#{request.contextPath}/resources/img/flag/#{lang.countryCode}.png" width="27" height="22"/>
+                            </p:column>
+                        </p:dataTable>
+                    </div>
+                    <ui:include src="../../commun/footer.xhtml"/>
+                    <input type="hidden" name="csrfToken" value="${sessionScope.CSRF_TOKEN}"/>
+                </h:form>
+                <ui:include src="../../dialog/login/logout.xhtml"/>
+            </div>
+        </h:panelGroup>
+    </h:body>
+</HTML>

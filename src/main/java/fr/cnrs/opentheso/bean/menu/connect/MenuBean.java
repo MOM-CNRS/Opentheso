@@ -270,6 +270,65 @@ public class MenuBean implements Serializable {
         context.redirect(context.getRequestContextPath() + "/toolbox/edition.xhtml");
     }
 
+    public void redirectToEditionV2Page() throws IOException {
+        activePageName = "editionV2";
+        notificationPanelVisible = false;
+        propositionBean.searchNewPropositions();
+        propositionBean.setRubriqueVisible(false);
+        redirectToV2SettingPage("/v2/toolbox/edition.xhtml");
+    }
+
+    public void redirectToFlagV2Page() throws IOException {
+        activePageName = "flagV2";
+        notificationPanelVisible = false;
+        propositionBean.searchNewPropositions();
+        propositionBean.setRubriqueVisible(false);
+        redirectToV2SettingPage("/v2/toolbox/flag.xhtml");
+    }
+
+    public void redirectToWorkshopV2Page() throws IOException {
+        activePageName = "atelierV2";
+        notificationPanelVisible = false;
+        if (StringUtils.isEmpty(selectedTheso.getCurrentIdTheso())) {
+            warnThesaurusRequired();
+            return;
+        }
+        propositionBean.searchNewPropositions();
+        propositionBean.setRubriqueVisible(false);
+        redirectToV2SettingPage("/v2/toolbox/workshop.xhtml");
+    }
+
+    public void redirectToMaintenanceV2Page() throws IOException {
+        activePageName = "serviceV2";
+        notificationPanelVisible = false;
+        if (StringUtils.isEmpty(selectedTheso.getCurrentIdTheso())) {
+            warnThesaurusRequired();
+            return;
+        }
+        atelierThesBean.init();
+        propositionBean.searchNewPropositions();
+        propositionBean.setRubriqueVisible(false);
+        redirectToV2SettingPage("/v2/toolbox/maintenance.xhtml");
+    }
+
+    public void redirectToStatisticsV2Page() throws IOException {
+        activePageName = "statisticV2";
+        notificationPanelVisible = false;
+        if (StringUtils.isEmpty(selectedTheso.getCurrentIdTheso())) {
+            warnThesaurusRequired();
+            return;
+        }
+        propositionBean.searchNewPropositions();
+        propositionBean.setRubriqueVisible(false);
+        redirectToV2SettingPage("/v2/toolbox/statistics.xhtml");
+    }
+
+    private void warnThesaurusRequired() {
+        FacesContext.getCurrentInstance().addMessage(null, new FacesMessage(FacesMessage.SEVERITY_WARN, "",
+                "Vous devez choisir un Thesorus avant !"));
+        PrimeFaces.current().ajax().update("messageIndex");
+    }
+
     public void redirectToFlagPage() throws IOException {
         activePageName = "flag";
         notificationPanelVisible = false;

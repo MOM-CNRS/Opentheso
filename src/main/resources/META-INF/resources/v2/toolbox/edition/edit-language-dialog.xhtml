@@ -1,0 +1,41 @@
+<ui:fragment xmlns="http://www.w3.org/1999/xhtml"
+             xmlns:ui="http://java.sun.com/jsf/facelets"
+             xmlns:p="http://primefaces.org/ui"
+             xmlns:h="http://xmlns.jcp.org/jsf/html">
+
+    <p:dialog id="v2EditLanguageDialog" header="#{langueBean.getMsg('editTheso.editThesoLang')}"
+              widgetVar="v2EditLanguage" width="550" showEffect="fade" modal="true" resizable="false"
+              position="top" style="margin-top: 30px">
+
+        <h:form>
+            <div class="row">
+                <div class="col-5">
+                    <h:outputText value="#{langueBean.getMsg('rightbody.conceptdialog.language')}:"/>
+                </div>
+                <div class="col-7">
+                    <h:outputText value="#{v2ModifyThesaurusBean.editLanguageEditor.value} (#{v2ModifyThesaurusBean.editLanguageEditor.code})"
+                                  style="width: 100%"/>
+                </div>
+            </div>
+
+            <div class="row" style="margin-top: 10px">
+                <div class="col-5">
+                    <h:outputText value="#{langueBean.getMsg('statistique.thesaurus.name')}: "/>
+                </div>
+                <div class="col-7">
+                    <p:inputText value="#{v2ModifyThesaurusBean.editLanguageEditor.label}" style="width: 100%"/>
+                </div>
+            </div>
+
+            <div style="width: 100%; text-align: right; margin-top: 15px; margin-bottom: 5px;">
+                <p:commandButton value="#{langueBean.getMsg('candidat.close')}" style="margin-right: 10px"
+                                 icon="fas fa-undo-alt" styleClass="ui-button-secondary button"
+                                 onclick="PF('v2EditLanguage').hide(); return false;" type="button"/>
+                <p:commandButton value="#{langueBean.getMsg('apply')}" update="containerIndex messageIndex"
+                                 styleClass="ui-button-success" oncomplete="PF('v2EditLanguage').hide();"
+                                 process="@form" ajax="true" icon="pi pi-check"
+                                 actionListener="#{v2ModifyThesaurusBean.updateLanguage()}"/>
+            </div>
+        </h:form>
+    </p:dialog>
+</ui:fragment>

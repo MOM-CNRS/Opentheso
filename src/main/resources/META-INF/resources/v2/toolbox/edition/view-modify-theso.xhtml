@@ -1,0 +1,257 @@
+<ui:fragment xmlns="http://www.w3.org/1999/xhtml"
+             xmlns:h="http://java.sun.com/jsf/html"
+             xmlns:ui="http://java.sun.com/jsf/facelets"
+             xmlns:p="http://primefaces.org/ui"
+             xmlns:f="http://xmlns.jcp.org/jsf/core">
+
+    <h:panelGroup rendered="#{v2ModifyThesaurusBean.formAvailable}">
+        <div class="col-12" style="height: 100%; padding-bottom: 60px">
+            <div class="card shadow mb-4" style="height: 100%;">
+                <div class="row" style="margin-left: 20px; margin-right: 20px; margin-top: 10px; margin-bottom: 10px">
+                    <div class="col-2">
+                        <p:commandButton value="#{langueBean.getMsg('btnBack')}" icon="pi pi-angle-left"
+                                         process="@this" ajax="true"
+                                         action="#{v2ModifyThesaurusBean.backToList()}"
+                                         update="containerIndex"
+                                         styleClass="ui-button-outlined ui-button-secondary" />
+                    </div>
+                    <div class="col-8" style="font-size: 14px; text-align: center">
+                        <h:outputText value="#{v2ModifyThesaurusBean.details.title} (#{v2ModifyThesaurusBean.details.id})"
+                                      style="color: #C63632; font-weight: bold; font-size: 1.2rem"/>
+                    </div>
+                    <div class="col-2" style="text-align: right">
+                        <p:linkButton href="https://opentheso.hypotheses.org/2991"
+                                      target="_blank" icon="fa-solid fa-circle-question"
+                                      styleClass="rounded-button ui-button-outlined" />
+                    </div>
+                </div>
+
+                <div class="card mb-4 py-3 border-left-success" style="margin-left: 30px; margin-right: 30px;">
+                    <div class="row" style="margin-top: 10px">
+                        <div class="col-3" style="text-align: right">
+                            <h:outputText value="#{langueBean.getMsg('toolbox.defaultLanguage')}"/>
+                        </div>
+                        <div class="col-5">
+                            <h:panelGroup>
+                                <h:panelGroup id="v2ModifySourceLangIcon" style="margin-right: 5px;">
+                                    <img src="#{conceptView.getDrapeauImgLocal(v2ModifyThesaurusBean.sourceLang)}" width="27" height="22"/>
+                                </h:panelGroup>
+                                <p:selectOneMenu value="#{v2ModifyThesaurusBean.sourceLang}" styleClass="selectOneMenu_custom"
+                                                 panelStyleClass="selectOneMenu_panelStyle_custom"
+                                                 style="min-width: 200px; background: none; box-shadow: none;"
+                                                 panelStyle="border: none; box-shadow: none;" var="lang">
+                                    <f:selectItem itemValue="" itemLabel="Choisir…" noSelectionOption="true"/>
+                                    <f:selectItems value="#{v2ModifyThesaurusBean.languages}" itemValue="#{lang.code}"
+                                                   itemLabelEscaped="false" var="lang" itemLabel=" #{lang.value}"/>
+                                    <p:column style="padding: 0.4rem 0.4rem;">
+                                        <img src="#{conceptView.getDrapeauImgLocal(lang)}" width="25" height="20" style="margin-right: 10px;"/> #{lang}
+                                    </p:column>
+                                    <p:ajax event="change" listener="#{v2ModifyThesaurusBean.changeSourceLanguage()}"
+                                            update="containerIndex messageIndex"/>
+                                </p:selectOneMenu>
+                            </h:panelGroup>
+                        </div>
+                    </div>
+
+                    <div class="row" style="margin-top: 10px">
+                        <div class="col-3" style="text-align: right">
+                            <h:outputText value="#{langueBean.getMsg('toolbox.makeThesaurusPrivate')}"/>
+                        </div>
+                        <div class="col-5">
+                            <p:toggleSwitch label="Public/Privé" value="#{v2ModifyThesaurusBean.privateThesaurus}" style="height: 25px;">
+                                <p:ajax listener="#{v2ModifyThesaurusBean.changeVisibility()}" update="containerIndex messageIndex"/>
+                            </p:toggleSwitch>
+                        </div>
+                    </div>
+
+                    <div class="row" style="margin-top: 10px">
+                        <div class="col-3" style="text-align: right">
+                            <h:outputText value="#{langueBean.getMsg('rightbody.concept.generate_ark')}"/>
+                        </div>
+                        <div class="col-1">
+                            <p:commandButton value="#{langueBean.getMsg('service.generate')}"
+                                             action="#{v2ModifyThesaurusBean.generateArkId()}"
+                                             update="containerIndex messageIndex"/>
+                        </div>
+                        <div class="col-4">
+                            <h:outputText value="#{v2ModifyThesaurusBean.arkId}"/>
+                        </div>
+                    </div>
+
+                    <div class="row" style="margin-top: 10px">
+                        <div class="col-3" style="text-align: right">
+                            <h:outputText value="#{langueBean.getMsg('toolbox.modifyThesaurusId')}"/>
+                        </div>
+                        <div class="col-1">
+                            <p:commandButton value="#{langueBean.getMsg('candidat.edit')}"
+                                             actionListener="#{v2ModifyThesaurusBean.prepareChangeId()}"
+                                             update="v2ChangeThesaurusIdDialog"
+                                             oncomplete="PF('v2ChangeThesaurusId').show();" process="@this"/>
+                        </div>
+                    </div>
+                </div>
+
+                <div class="card mb-4 py-3 border-left-success" style="margin-left: 30px; margin-right: 30px; margin-top: 10px; margin-bottom: 30px;">
+                    <div class="row" style="margin-left: 20px; margin-right: 20px;">
+                        <div class="col-12">
+                            <p:tabView id="v2ModifySettingsPanels" dynamic="true" cache="true"
+                                       activeIndex="#{v2ModifyThesaurusBean.activeTabIndex}">
+                                <p:tab title="Langues">
+                                    <div class="row" style="margin-bottom: 10px; text-align: right;">
+                                        <div class="col-12">
+                                            <p:commandButton value="#{langueBean.getMsg('toolbox.addLanguage')}"
+                                                             styleClass="ui-button-success" icon="fas fa-plus-circle"
+                                                             update="v2AddLanguageDialog"
+                                                             actionListener="#{v2ModifyThesaurusBean.prepareAddLanguage()}"
+                                                             oncomplete="PF('v2AddLanguage').show();" process="@this"/>
+                                        </div>
+                                    </div>
+
+                                    <p:dataTable id="v2ListLangThes" value="#{v2ModifyThesaurusBean.languages}" var="langOfTheso"
+                                                 scrollable="true" resizableColumns="true" scrollHeight="250" reflow="true" lazy="false">
+                                        <p:column width="55" headerText="#{langueBean.getMsg('statistique.label')}">
+                                            <h:outputLabel value="#{langOfTheso.label}"/>
+                                        </p:column>
+                                        <p:column width="15" headerText="#{langueBean.getMsg('rightbody.conceptdialog.language')}">
+                                            <img src="#{conceptView.getDrapeauImgLocal(langOfTheso.code)}" width="25" height="20"/>
+                                            <h:outputLabel value=" (#{langOfTheso.code})" style="font-size: 14px; margin-left: 10px;"/>
+                                        </p:column>
+                                        <p:column width="15" headerText="#{langueBean.getMsg('candidat.edit')}">
+                                            <p:commandButton icon="fa-solid fa-pencil"
+                                                             update="v2EditLanguageDialog"
+                                                             oncomplete="PF('v2EditLanguage').show()" process="@this"
+                                                             style="color: #f47b2a" styleClass="rounded-button ui-button-outlined"
+                                                             actionListener="#{v2ModifyThesaurusBean.prepareEditLanguage(langOfTheso)}"/>
+                                        </p:column>
+                                        <p:column width="15" headerText="#{langueBean.getMsg('candidat.remove')}">
+                                            <p:commandButton styleClass="ui-button-danger rounded-button" icon="pi pi-trash"
+                                                             actionListener="#{v2ModifyThesaurusBean.deleteLanguage(langOfTheso.code)}"
+                                                             update="containerIndex messageIndex" process="@this"/>
+                                        </p:column>
+                                    </p:dataTable>
+                                </p:tab>
+
+                                <p:tab title="Métadonnées">
+                                    <div class="row" style="margin-bottom: 10px; text-align: right;">
+                                        <div class="col-12">
+                                            <p:commandButton value="#{langueBean.getMsg('toolbox.addMetadata')}"
+                                                             styleClass="ui-button-success" icon="fas fa-plus-circle"
+                                                             process="@this" ajax="true" update="containerIndex messageIndex"
+                                                             action="#{v2ModifyThesaurusBean.addMetadataRow()}"/>
+                                        </div>
+                                    </div>
+                                    <p:dataTable id="v2MetadataTheso" widgetVar="v2MetadataTheso" var="dcElement"
+                                                 value="#{v2ModifyThesaurusBean.metadata}"
+                                                 editable="true" scrollHeight="250" scrollable="true" lazy="false">
+                                        <p:ajax event="rowEdit" listener="#{v2ModifyThesaurusBean.onMetadataRowEdit}"
+                                                process="@this" update="containerIndex:v2MetadataTheso messageIndex"/>
+
+                                        <p:column width="10%" headerText="#{langueBean.getMsg('toolbox.metadata_property')}">
+                                            <p:cellEditor>
+                                                <f:facet name="output"><h:outputText value="#{dcElement.name}"/></f:facet>
+                                                <f:facet name="input">
+                                                    <p:selectOneMenu value="#{dcElement.name}" styleClass="selectOneMenu_custom"
+                                                                     panelStyleClass="selectOneMenu_panelStyle_custom"
+                                                                     style="background: none; box-shadow: none;"
+                                                                     panelStyle="border: none; box-shadow: none;">
+                                                        <f:selectItems value="#{v2ModifyThesaurusBean.dcmiResources}" var="dcmi"
+                                                                       itemValue="#{dcmi}" itemLabel=" #{dcmi}"/>
+                                                    </p:selectOneMenu>
+                                                </f:facet>
+                                            </p:cellEditor>
+                                        </p:column>
+
+                                        <p:column width="40%" headerText="#{langueBean.getMsg('candidat.value')}">
+                                            <p:cellEditor>
+                                                <f:facet name="output"><h:outputText value="#{dcElement.value}"/></f:facet>
+                                                <f:facet name="input">
+                                                    <p:inputText value="#{dcElement.value}" style="width:100%"/>
+                                                </f:facet>
+                                            </p:cellEditor>
+                                        </p:column>
+
+                                        <p:column width="12%" headerText="#{langueBean.getMsg('rightbody.conceptdialog.language')}">
+                                            <p:cellEditor>
+                                                <f:facet name="output"><h:outputText value="#{dcElement.language}"/></f:facet>
+                                                <f:facet name="input">
+                                                    <p:selectOneMenu id="v2LanguageDc" value="#{dcElement.language}"
+                                                                     styleClass="selectOneMenu_custom"
+                                                                     panelStyleClass="selectOneMenu_panelStyle_custom"
+                                                                     style="background: none; box-shadow: none;"
+                                                                     panelStyle="border: none; box-shadow: none;" var="lang">
+                                                        <f:selectItem itemLabel="..." itemValue=""/>
+                                                        <f:selectItems value="#{v2ModifyThesaurusBean.languages}" itemValue="#{lang.code}"
+                                                                       itemLabelEscaped="false" var="lang" itemLabel=" #{lang.value}"/>
+                                                        <p:column style="padding: 0.4rem 0.4rem;">
+                                                            <img src="#{conceptView.getDrapeauImgLocal(lang)}" width="25" height="20"
+                                                                 style="margin-right: 10px;"/> #{lang}
+                                                        </p:column>
+                                                        <p:ajax event="change" update="v2PropertyDc"
+                                                                listener="#{v2ModifyThesaurusBean.clearMetadataType(dcElement)}"/>
+                                                    </p:selectOneMenu>
+                                                </f:facet>
+                                            </p:cellEditor>
+                                        </p:column>
+
+                                        <p:column width="15%" headerText="#{langueBean.getMsg('statistique.type')}">
+                                            <p:cellEditor>
+                                                <f:facet name="output"><h:outputText value="#{dcElement.type}"/></f:facet>
+                                                <f:facet name="input">
+                                                    <p:selectOneMenu id="v2PropertyDc" value="#{dcElement.type}"
+                                                                     styleClass="selectOneMenu_custom"
+                                                                     panelStyleClass="selectOneMenu_panelStyle_custom"
+                                                                     style="background: none; box-shadow: none;"
+                                                                     panelStyle="border: none; box-shadow: none;">
+                                                        <f:selectItem itemLabel="..." itemValue=""/>
+                                                        <f:selectItems value="#{v2ModifyThesaurusBean.dcmiTypes}" var="dcmitype"
+                                                                       itemValue="#{dcmitype}" itemLabel=" #{dcmitype}"/>
+                                                        <p:ajax event="change" update="v2LanguageDc"
+                                                                listener="#{v2ModifyThesaurusBean.clearMetadataLanguage(dcElement)}"/>
+                                                    </p:selectOneMenu>
+                                                </f:facet>
+                                            </p:cellEditor>
+                                        </p:column>
+
+                                        <p:column width="15%" style="text-align: right">
+                                            <p:rowEditor/>
+                                        </p:column>
+
+                                        <p:column width="5%" style="text-align: right">
+                                            <p:cellEditor>
+                                                <f:facet name="output">
+                                                    <p:commandButton styleClass="ui-button-danger rounded-button" icon="pi pi-trash"
+                                                                     actionListener="#{v2ModifyThesaurusBean.deleteMetadata(dcElement)}"
+                                                                     update="containerIndex:v2MetadataTheso messageIndex" process="@this"/>
+                                                </f:facet>
+                                                <f:facet name="input">
+                                                    <p:commandButton disabled="true" styleClass="ui-button-danger rounded-button"
+                                                                     icon="pi pi-trash" process="@this"/>
+                                                </f:facet>
+                                            </p:cellEditor>
+                                        </p:column>
+                                    </p:dataTable>
+                                </p:tab>
+
+                                <p:tab title="Collections">
+                                    <p:treeTable id="v2ListGroupsThes" value="#{v2ModifyThesaurusBean.collectionRoot}"
+                                                 var="groupThesaurus" emptyMessage="Aucune collection n'est disponible">
+                                        <p:column headerText="#{langueBean.getMsg('statistique.label')}">
+                                            <h:outputLabel value="#{groupThesaurus.label}"/>
+                                        </p:column>
+                                        <p:column headerText="#{langueBean.getMsg('toolbox.publicPrivate')}">
+                                            <p:toggleSwitch value="#{groupThesaurus.privateCollection}" style="margin-top: 5px">
+                                                <p:ajax listener="#{v2ModifyThesaurusBean.updateCollectionStatus(groupThesaurus)}"
+                                                        update="messageIndex containerIndex:v2ModifySettingsPanels"/>
+                                            </p:ajax>
+                                        </p:toggleSwitch>
+                                        </p:column>
+                                    </p:treeTable>
+                                </p:tab>
+                            </p:tabView>
+                        </div>
+                    </div>
+                </div>
+            </div>
+        </div>
+    </h:panelGroup>
+</ui:fragment>

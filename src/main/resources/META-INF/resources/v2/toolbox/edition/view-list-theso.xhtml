@@ -1,0 +1,119 @@
+<ui:fragment xmlns="http://www.w3.org/1999/xhtml"
+             xmlns:h="http://java.sun.com/jsf/html"
+             xmlns:ui="http://java.sun.com/jsf/facelets"
+             xmlns:f="http://xmlns.jcp.org/jsf/core"
+             xmlns:p="http://primefaces.org/ui">
+
+    <div class="col-12" style="height: 100%;">
+        <div class="card shadow mb-4" style="height: 100%; padding-top: 20px">
+
+            <p:toolbar rendered="#{v2EditionBean.canCreateOrImport}"
+                       style="margin-left: 30px; margin-right: 30px; margin-top: 10px; margin-bottom: -10px">
+                <p:toolbarGroup align="left">
+                    <p:commandButton value="#{langueBean.getMsg('toolbox.newTheso')}" icon="fas fa-plus-circle"
+                                     title="#{langueBean.getMsg('toolbox.newThesoTooltip')}"
+                                     styleClass="ui-button-success"
+                                     action="#{v2EditionBean.showNewThesaurus()}"
+                                     update="containerIndex" />
+                </p:toolbarGroup>
+                <p:toolbarGroup align="right">
+                    <p:menuButton icon="fas fa-download" value="#{langueBean.getMsg('candidat.import')}" style="padding-left: 35px">
+                        <p:menuitem value="#{langueBean.getMsg('toolbox.skosFormat')}" icon="fas fa-download"
+                                    action="#{v2EditionBean.showImportSkos()}" ajax="true" process="@this"
+                                    update="containerIndex" style="padding-left: 35px" />
+
+                        <p:menuitem value="#{langueBean.getMsg('toolbox.csvFormat')}" icon="fas fa-download"
+                                    action="#{v2EditionBean.showImportCsv()}"
+                                    update="containerIndex" style="padding-left: 35px" />
+
+                        <p:menuitem value="#{langueBean.getMsg('toolbox.structuredCsvFormat')}" icon="fas fa-download"
+                                    action="#{v2EditionBean.showImportCsvStructure()}"
+                                    update="containerIndex" style="padding-left: 35px" />
+                    </p:menuButton>
+                </p:toolbarGroup>
+            </p:toolbar>
+
+            <div class="card mb-4 py-3 border-left-success" style="margin: 30px; border-color: #43B572">
+                <p:dataTable value="#{v2EditionBean.thesaurusList}" var="thesaurus"
+                             filteredValue="#{v2EditionBean.filteredThesaurusList}" size="small"
+                             widgetVar="v2ListThesoTable" styleClass="products-table"
+                             resizableColumns="true" scrollHeight="450" reflow="true"
+                             paginator="true" rows="10" rowSelectMode="add" paginatorPosition="bottom"
+                             emptyMessage="#{langueBean.getMsg('toolbox.noThesaurus')}"
+                             stripedRows="true"
+                             style="margin-bottom: -17px; margin-top: -16px;" lazy="false">
+
+                    <f:facet name="header">
+                        <div class="products-table-header">
+                            <span style="font-weight: bold">#{langueBean.getMsg('profile.list_of_thesauri')}</span>
+                        </div>
+                    </f:facet>
+
+                    <p:column width="10" headerText="Id" filterBy="#{thesaurus.id}" sortBy="#{thesaurus.id}" filterMatchMode="contains">
+                        <h:outputText value="#{thesaurus.id}" style="font-size: 14px"/>
+                    </p:column>
+
+                    <p:column width="60" headerText="#{langueBean.getMsg('statistique.thesaurus.name')}" filterBy="#{thesaurus.title}" sortBy="#{thesaurus.title}" filterMatchMode="contains">
+                        <h:outputText value="#{thesaurus.title}" style="font-size: 14px"/>
+                        <p:commandButton icon="fa-solid fa-circle-info" styleClass="rounded-button ui-button-flat" style="margin-left: 5px; color: #f47b2a"
+                                         action="#{v2EditionBean.showThesaurusStatistics(thesaurus)}"
+                                         update="messageIndex" process="@this"/>
+                    </p:column>
+
+                    <p:column width="10" headerText="#{langueBean.getMsg('toolbox.publicPrivate')}">
+                        <p:toggleSwitch value="#{thesaurus.privateThesaurus}" disabled="true" style="margin-top: 5px" />
+                    </p:column>
+
+                    <p:column width="10" headerText="#{langueBean.getMsg('candidat.export')}">
+                        <p:menuButton icon="fas fa-upload" value="Export" style="margin-left: -10px">
+                            <p:menuitem value="#{langueBean.getMsg('toolbox.skosFormat')}"
+                                        action="#{v2EditionBean.showExport(thesaurus, 'EXPORT_SKOS')}"
+                                        icon="fas fa-upload"
+                                        title="#{langueBean.getMsg('toolbox.skosFormatTooltip')}" update="containerIndex" />
+
+                            <p:menuitem value="#{langueBean.getMsg('toolbox.pdfFormat')}"
+                                        action="#{v2EditionBean.showExport(thesaurus, 'EXPORT_PDF')}"
+                                        update="containerIndex"
+                                        title="#{langueBean.getMsg('toolbox.pdfFormatTooltip')}" icon="fas fa-upload" />
+
+                            <p:menuitem value="#{langueBean.getMsg('toolbox.csvFormat')}"
+                                        action="#{v2EditionBean.showExport(thesaurus, 'EXPORT_CSV')}"
+                                        update="containerIndex"
+                                        title="#{langueBean.getMsg('toolbox.csvFormatTooltip')}" icon="fas fa-upload" />
+
+                            <p:menuitem value="#{langueBean.getMsg('toolbox.structuredCsvFormat')}"
+                                        action="#{v2EditionBean.showExport(thesaurus, 'EXPORT_CSV_STRUCTURE')}"
+                                        update="containerIndex" icon="fas fa-upload"
+                                        title="#{langueBean.getMsg('toolbox.structuredCsvFormatTooltip')}"/>
+
+                            <p:menuitem value="#{langueBean.getMsg('toolbox.smallCsv')}"
+                                        action="#{v2EditionBean.showExport(thesaurus, 'EXPORT_CSV_ID')}"
+                                        update="containerIndex" icon="fas fa-upload"
+                                        title="#{langueBean.getMsg('toolbox.smallCsvTooltip')}"/>
+                        </p:menuButton>
+                    </p:column>
+
+                    <p:column width="5" headerText="#{langueBean.getMsg('candidat.edit')}" style="margin-top: 5px">
+                        <p:commandButton icon="fa-solid fa-pencil" styleClass="rounded-button ui-button-outlined"
+                                         update="containerIndex" ajax="true" process="@this" style="color: #f47b2a"
+                                         action="#{v2EditionBean.showModifyThesaurus(thesaurus)}"/>
+                    </p:column>
+
+                    <p:column width="5" headerText="#{langueBean.getMsg('candidat.remove')}" style="margin-top: 5px">
+                        <p:commandButton icon="pi pi-trash" styleClass="rounded-button ui-button-danger"
+                                         update="idV2ConfirmDeleteThesaurus" process="@this" ajax="true"
+                                         actionListener="#{v2EditionBean.prepareDelete(thesaurus)}"
+                                         oncomplete="PF('v2ConfirmDeleteThesaurus').show();" />
+                    </p:column>
+
+                    <f:facet name="footer">
+                        <span class="p-text-bold">
+                            <h:outputText value="#{langueBean.getMsg('toolbox.totalOfTheso')} : " style="font-size: 14px;"/>
+                            <h:outputText value="#{v2EditionBean.thesaurusList.size()}" style="font-size: 16px; color: #f47b2a"/>
+                        </span>
+                    </f:facet>
+                </p:dataTable>
+            </div>
+        </div>
+    </div>
+</ui:fragment>

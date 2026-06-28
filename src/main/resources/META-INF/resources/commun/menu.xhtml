@@ -137,20 +137,35 @@
                         <div class="bg-white py-2 collapse-inner rounded">
                             <p:commandLink class="collapse-item" actionListener="#{menuBean.redirectToEditionPage()}" 
                                            style="font-size: 12px;" process="@this">#{langueBean.getMsg('menu.edition')}</p:commandLink>
+                            <hr class="sidebar-divider" style="margin: 5px 0"/>
+                            <p:commandLink class="collapse-item" actionListener="#{menuBean.redirectToEditionV2Page()}"
+                                           style="font-size: 12px;" process="@this">#{langueBean.getMsg('menu.edition')} (v2)</p:commandLink>
 
                             <p:commandLink rendered="#{currentUser.hasRoleAsSuperAdmin}"
                                            class="collapse-item" actionListener="#{menuBean.redirectToFlagPage()}"
                                            style="font-size: 12px;" process="@this">#{langueBean.getMsg('toolbox.manageFlags')}</p:commandLink>
+                            <p:commandLink rendered="#{currentUser.hasRoleAsSuperAdmin}"
+                                           class="collapse-item" actionListener="#{menuBean.redirectToFlagV2Page()}"
+                                           style="font-size: 12px;" process="@this">#{langueBean.getMsg('toolbox.manageFlags')} (v2)</p:commandLink>
 
                             <p:commandLink rendered="#{selectedThesaurus.currentIdTheso != null}"
                                            class="collapse-item" actionListener="#{menuBean.redirectToAtelierPage()}"
                                            style="font-size: 12px;" process="@this">#{langueBean.getMsg('menu.thesaurusWorkshop')}</p:commandLink>
                             <p:commandLink rendered="#{selectedThesaurus.currentIdTheso != null}"
+                                           class="collapse-item" actionListener="#{menuBean.redirectToWorkshopV2Page()}"
+                                           style="font-size: 12px;" process="@this">#{langueBean.getMsg('menu.thesaurusWorkshop')} (v2)</p:commandLink>
+                            <p:commandLink rendered="#{selectedThesaurus.currentIdTheso != null}"
                                            class="collapse-item" actionListener="#{menuBean.redirectToMaintenancePage()}" 
                                            style="font-size: 12px;"  process="@this">#{langueBean.getMsg('menu.service')}</p:commandLink>
                             <p:commandLink rendered="#{selectedThesaurus.currentIdTheso != null}"
+                                           class="collapse-item" actionListener="#{menuBean.redirectToMaintenanceV2Page()}" 
+                                           style="font-size: 12px;"  process="@this">#{langueBean.getMsg('menu.service')} (v2)</p:commandLink>
+                            <p:commandLink rendered="#{selectedThesaurus.currentIdTheso != null}"
                                            class="collapse-item" actionListener="#{menuBean.redirectToStatistiquePage()}" 
                                            style="font-size: 12px;"  process="@this">#{langueBean.getMsg('statistique.statistic')}</p:commandLink>
+                            <p:commandLink rendered="#{selectedThesaurus.currentIdTheso != null}"
+                                           class="collapse-item" actionListener="#{menuBean.redirectToStatisticsV2Page()}" 
+                                           style="font-size: 12px;"  process="@this">#{langueBean.getMsg('statistique.statistic')} (v2)</p:commandLink>
                         </div>
                     </div>
                 </li>
