@@ -240,4 +240,8 @@
         <sqlFile path="v26/26-06_05.sql" relativeToChangelogFile="true" splitStatements="false"/>
     </changeSet>
 
+    <changeSet id="26.07.01" author="Miled">
+        <sqlFile path="v26/26-07_01.sql" relativeToChangelogFile="true" splitStatements="false"/>
+    </changeSet>
+
 </databaseChangeLog>

@@ -131,7 +131,8 @@ public class SearchCorpus2 {
             HttpURLConnection conn = (HttpURLConnection) url.openConnection();
 
             conn.setRequestMethod("GET");
-            conn.setRequestProperty("Accept", "application/json");
+            conn.setRequestProperty("User-Agent",
+                    "Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 Chrome/137.0 Safari/537.36");
             conn.setRequestProperty("User-Agent", "JavaHttpClient"); // optionnel mais recommandé
             conn.setUseCaches(false);
             conn.setDoInput(true);
