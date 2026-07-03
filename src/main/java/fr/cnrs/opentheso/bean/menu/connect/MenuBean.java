@@ -71,12 +71,20 @@ public class MenuBean implements Serializable {
     
     // LOGIN Page
     public void redirectToThesaurus() throws IOException {
-        activePageName = "index";
-        notificationPanelVisible = true;
+        redirectToThesaurusV2Page();
+    }
+
+    public void redirectToThesaurusV2Page() throws IOException {
+        activePageName = "thesaurusV2";
+        notificationPanelVisible = false;
         propositionBean.searchNewPropositions();
         propositionBean.setRubriqueVisible(false);
         ExternalContext context = FacesContext.getCurrentInstance().getExternalContext();
-        context.redirect(context.getRequestContextPath() + "/index.xhtml");
+        StringBuilder url = new StringBuilder(context.getRequestContextPath()).append("/v2/thesaurus");
+        if (StringUtils.isNotEmpty(selectedTheso.getCurrentIdTheso())) {
+            url.append("?idt=").append(selectedTheso.getCurrentIdTheso());
+        }
+        context.redirect(url.toString());
     }
     
     // LOGIN Page

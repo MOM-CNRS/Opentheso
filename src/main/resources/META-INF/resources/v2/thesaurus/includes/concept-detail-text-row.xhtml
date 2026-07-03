@@ -1,0 +1,20 @@
+<ui:fragment xmlns="http://www.w3.org/1999/xhtml"
+             xmlns:h="http://xmlns.jcp.org/jsf/html"
+             xmlns:ui="http://xmlns.jcp.org/jsf/facelets">
+
+  <h:panelGroup rendered="#{empty rowRendered or rowRendered}">
+  <div class="list-group-item list-group-item-action">
+    <div class="row" style="margin-left: 0;">
+      <div class="col-xl-3 col-lg-4 col-md-5 col-sm-5">
+        <h:outputText value="#{rowLabel}" style="font-size: 14px; font-weight: bold; color: #8f8f8f;"/>
+      </div>
+      <div class="col-xl-9 col-lg-8 col-md-7 col-sm-7" style="margin-left: -10px;">
+        <h:panelGroup rendered="#{empty rowValue}">
+          <h:outputText value="....." style="font-size: 14px; color: grey; font-style: italic;"/>
+        </h:panelGroup>
+        <h:outputText value="#{rowValue}" rendered="#{not empty rowValue}" escape="#{rowEscape != false}" style="font-size: 14px;"/>
+      </div>
+    </div>
+  </div>
+  </h:panelGroup>
+</ui:fragment>

@@ -1,6 +1,6 @@
 package fr.cnrs.opentheso.v2.admin.ui;
 
-import fr.cnrs.opentheso.bean.language.LanguageBean;
+import fr.cnrs.opentheso.v2.shared.ui.V2LocaleBean;
 import fr.cnrs.opentheso.utils.MessageUtils;
 import fr.cnrs.opentheso.v2.admin.model.AdminUserMembership;
 import fr.cnrs.opentheso.v2.admin.service.AdminCatalogService;
@@ -38,7 +38,7 @@ class AllUsersBeanTest {
     @Mock
     private UserSession userSession;
     @Mock
-    private LanguageBean languageBean;
+    private V2LocaleBean localeBean;
     @Mock
     private AdminCatalogService adminCatalogService;
     @Mock
@@ -50,10 +50,10 @@ class AllUsersBeanTest {
 
     @BeforeEach
     void setUp() {
-        lenient().when(languageBean.getMsg(anyString())).thenAnswer(invocation -> invocation.getArgument(0));
+        lenient().when(localeBean.getMsg(anyString())).thenAnswer(invocation -> invocation.getArgument(0));
         allUsersBean = new AllUsersBean(
                 userSession,
-                languageBean,
+                localeBean,
                 adminCatalogService,
                 adminUserService,
                 userProfileService

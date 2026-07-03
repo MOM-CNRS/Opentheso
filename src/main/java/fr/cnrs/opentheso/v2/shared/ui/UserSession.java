@@ -1,6 +1,6 @@
 package fr.cnrs.opentheso.v2.shared.ui;
 
-import fr.cnrs.opentheso.bean.menu.users.CurrentUser;
+import fr.cnrs.opentheso.v2.shared.session.AuthenticatedUserSource;
 import fr.cnrs.opentheso.v2.shared.session.SessionUser;
 import fr.cnrs.opentheso.v2.shared.session.SessionUserService;
 import jakarta.enterprise.context.SessionScoped;
@@ -8,24 +8,23 @@ import jakarta.inject.Named;
 import lombok.RequiredArgsConstructor;
 
 import java.io.Serializable;
+import java.util.Optional;
 
 /**
  * Point d'accès unique à la session utilisateur pour la v2.
- * Les capacités sont résolues via {@link SessionUserService} ; {@link CurrentUser}
- * reste synchronisé pour la compatibilité avec le login legacy.
  */
 @SessionScoped
 @Named("v2UserSession")
 @RequiredArgsConstructor
 public class UserSession implements Serializable {
 
-    private final CurrentUser currentUser;
+    private final AuthenticatedUserSource authenticatedUserSource;
     private final SessionUserService sessionUserService;
 
     private SessionUser cachedSessionUser;
 
     public boolean isLoggedIn() {
-        return currentUser.getNodeUser() != null;
+        return authenticatedUserSource.isLoggedIn();
     }
 
     public Integer getCurrentUserId() {
@@ -36,24 +35,22 @@ public class UserSession implements Serializable {
         return resolveSessionUser().map(SessionUser::username).orElse(null);
     }
 
+    public String getCurrentUserEmail() {
+        return resolveSessionUser().map(SessionUser::email).orElse(null);
+    }
+
     public void refreshDisplayName(String name) {
-        if (currentUser.getNodeUser() != null) {
-            currentUser.getNodeUser().setName(name);
-            invalidateCache();
-        }
+        authenticatedUserSource.refreshDisplayName(name);
+        invalidateCache();
     }
 
     public void refreshEmail(String email) {
-        if (currentUser.getNodeUser() != null) {
-            currentUser.getNodeUser().setMail(email);
-            invalidateCache();
-        }
+        authenticatedUserSource.refreshEmail(email);
+        invalidateCache();
     }
 
     public void refreshAlertMail(boolean alertMail) {
-        if (currentUser.getNodeUser() != null) {
-            currentUser.getNodeUser().setAlertMail(alertMail);
-        }
+        authenticatedUserSource.refreshAlertMail(alertMail);
     }
 
     public boolean isSuperAdmin() {
@@ -83,16 +80,16 @@ public class UserSession implements Serializable {
         return resolveSessionUser().map(SessionUser::manager).orElse(false);
     }
 
-    private java.util.Optional<SessionUser> resolveSessionUser() {
+    private Optional<SessionUser> resolveSessionUser() {
         if (!isLoggedIn()) {
             cachedSessionUser = null;
-            return java.util.Optional.empty();
+            return Optional.empty();
         }
-        int userId = currentUser.getNodeUser().getIdUser();
+        int userId = authenticatedUserSource.getUserId().orElseThrow();
         if (cachedSessionUser == null || cachedSessionUser.userId() != userId) {
             cachedSessionUser = sessionUserService.load(userId);
         }
-        return java.util.Optional.of(cachedSessionUser);
+        return Optional.of(cachedSessionUser);
     }
 
     private void invalidateCache() {

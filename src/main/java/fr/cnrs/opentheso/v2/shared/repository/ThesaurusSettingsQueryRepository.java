@@ -94,4 +94,24 @@ public class ThesaurusSettingsQueryRepository {
                 ))
                 .toList();
     }
+
+    public Optional<String> findSourceLanguage(String thesaurusId) {
+        if (StringUtils.isBlank(thesaurusId)) {
+            return Optional.empty();
+        }
+        String sql = """
+                SELECT source_lang
+                FROM preferences
+                WHERE id_thesaurus = :thesaurusId
+                LIMIT 1
+                """;
+        @SuppressWarnings("unchecked")
+        List<String> rows = entityManager.createNativeQuery(sql)
+                .setParameter("thesaurusId", thesaurusId.trim())
+                .getResultList();
+        if (rows.isEmpty() || rows.get(0) == null) {
+            return Optional.empty();
+        }
+        return Optional.of(rows.get(0));
+    }
 }

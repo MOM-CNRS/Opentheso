@@ -2,16 +2,12 @@ package fr.cnrs.opentheso.v2.candidat.service;
 
 import fr.cnrs.opentheso.models.candidats.CandidatDto;
 import fr.cnrs.opentheso.models.skosapi.SKOSXmlDocument;
-import fr.cnrs.opentheso.services.PreferenceService;
-import fr.cnrs.opentheso.services.exports.rdf4j.ExportRdf4jHelperNew;
-import fr.cnrs.opentheso.services.exports.rdf4j.WriteRdf4j;
+import fr.cnrs.opentheso.v2.candidat.session.CandidatExportLegacySupport;
 import lombok.RequiredArgsConstructor;
 import org.apache.commons.collections4.CollectionUtils;
 import org.eclipse.rdf4j.rio.RDFFormat;
-import org.eclipse.rdf4j.rio.Rio;
 import org.springframework.stereotype.Service;
 
-import java.io.ByteArrayOutputStream;
 import java.io.IOException;
 import java.util.List;
 import java.util.function.IntConsumer;
@@ -20,8 +16,7 @@ import java.util.function.IntConsumer;
 @RequiredArgsConstructor
 public class CandidatExportService {
 
-    private final ExportRdf4jHelperNew exportRdf4jHelperNew;
-    private final PreferenceService preferenceService;
+    private final CandidatExportLegacySupport legacySupport;
 
     public ExportResult exportPendingCandidates(
             String thesaurusId,
@@ -33,17 +28,16 @@ public class CandidatExportService {
             throw new IllegalStateException("Aucun candidat à exporter");
         }
 
-        var preferences = preferenceService.getThesaurusPreferences(thesaurusId);
+        var preferences = legacySupport.loadThesaurusPreferences(thesaurusId);
         if (preferences == null) {
             throw new IllegalStateException("Préférences du thésaurus introuvables");
         }
 
         var skosDocument = buildSkosDocument(thesaurusId, candidates, progressConsumer);
         var format = resolveFormat(formatCode);
-        ByteArrayOutputStream out = new ByteArrayOutputStream();
-        Rio.write(new WriteRdf4j(skosDocument).getModel(), out, format.rdfFormat());
+        byte[] content = legacySupport.serializeSkos(skosDocument, format.rdfFormat());
 
-        return new ExportResult(out.toByteArray(), "candidats" + format.extension(), "application/xml");
+        return new ExportResult(content, "candidats" + format.extension(), "application/xml");
     }
 
     private SKOSXmlDocument buildSkosDocument(
@@ -52,8 +46,8 @@ public class CandidatExportService {
             IntConsumer progressConsumer
     ) {
         var skosXmlDocument = new SKOSXmlDocument();
-        var preferences = preferenceService.getThesaurusPreferences(thesaurusId);
-        skosXmlDocument.setConceptScheme(exportRdf4jHelperNew.exportThesoV2(thesaurusId, preferences));
+        var preferences = legacySupport.loadThesaurusPreferences(thesaurusId);
+        skosXmlDocument.setConceptScheme(legacySupport.exportConceptScheme(thesaurusId, preferences));
 
         int step = candidates.isEmpty() ? 0 : 100 / candidates.size();
         int progress = 0;
@@ -63,7 +57,7 @@ public class CandidatExportService {
                 progressConsumer.accept(progress);
             }
             skosXmlDocument.addconcept(
-                    exportRdf4jHelperNew.exportConceptV2(thesaurusId, candidat.getIdConcepte(), true)
+                    legacySupport.exportConcept(thesaurusId, candidat.getIdConcepte(), true)
             );
         }
         return skosXmlDocument;

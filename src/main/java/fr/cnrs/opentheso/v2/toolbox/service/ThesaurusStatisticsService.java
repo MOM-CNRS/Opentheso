@@ -3,13 +3,11 @@ package fr.cnrs.opentheso.v2.toolbox.service;
 import fr.cnrs.opentheso.models.candidats.DomaineDto;
 import fr.cnrs.opentheso.models.statistiques.ConceptStatisticData;
 import fr.cnrs.opentheso.models.statistiques.GenericStatistiqueData;
-import fr.cnrs.opentheso.services.ConceptService;
-import fr.cnrs.opentheso.services.ThesaurusService;
-import fr.cnrs.opentheso.services.statistiques.StatistiqueService;
-import fr.cnrs.opentheso.services.statistiques.StatistiquesRapportCSV;
+import fr.cnrs.opentheso.models.thesaurus.NodeLangTheso;
 import fr.cnrs.opentheso.v2.shared.repository.EditionQueryRepository;
 import fr.cnrs.opentheso.v2.toolbox.model.EditionStatistics;
 import fr.cnrs.opentheso.v2.toolbox.model.StatisticsSummary;
+import fr.cnrs.opentheso.v2.toolbox.session.ThesaurusStatisticsLegacySupport;
 import lombok.RequiredArgsConstructor;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
@@ -22,30 +20,28 @@ import java.util.List;
 @RequiredArgsConstructor
 public class ThesaurusStatisticsService {
 
-    private final StatistiqueService statistiqueService;
-    private final ThesaurusService thesaurusService;
-    private final ConceptService conceptService;
+    private final ThesaurusStatisticsLegacySupport thesaurusStatisticsLegacySupport;
     private final EditionQueryRepository editionQueryRepository;
 
     @Transactional(readOnly = true)
-    public List<fr.cnrs.opentheso.models.thesaurus.NodeLangTheso> loadLanguages(String thesaurusId, String workLang) {
-        return thesaurusService.getAllUsedLanguagesOfThesaurusNode(thesaurusId, workLang);
+    public List<NodeLangTheso> loadLanguages(String thesaurusId, String workLang) {
+        return thesaurusStatisticsLegacySupport.loadUsedLanguages(thesaurusId, workLang);
     }
 
     @Transactional(readOnly = true)
     public List<DomaineDto> loadCollections(String thesaurusId, String workLang) {
-        return statistiqueService.getListGroupes(thesaurusId, workLang);
+        return thesaurusStatisticsLegacySupport.loadCollections(thesaurusId, workLang);
     }
 
     @Transactional(readOnly = true)
     public List<GenericStatistiqueData> loadCollectionStatistics(String thesaurusId, String language) {
-        return statistiqueService.searchAllCollectionsByThesaurus(thesaurusId, language);
+        return thesaurusStatisticsLegacySupport.loadCollectionStatistics(thesaurusId, language);
     }
 
     @Transactional(readOnly = true)
     public StatisticsSummary loadSummary(String thesaurusId) {
         int[] stats = editionQueryRepository.countAllConceptStats(thesaurusId);
-        Date lastModification = conceptService.getLastModification(thesaurusId);
+        Date lastModification = thesaurusStatisticsLegacySupport.loadLastModification(thesaurusId);
         return new StatisticsSummary(
                 new EditionStatistics(stats[0], stats[1], stats[2]),
                 lastModification
@@ -61,7 +57,7 @@ public class ThesaurusStatisticsService {
             String collectionId,
             String resultLimit
     ) {
-        return statistiqueService.searchAllConceptsByThesaurus(
+        return thesaurusStatisticsLegacySupport.loadConceptStatistics(
                 thesaurusId,
                 language,
                 startDate,
@@ -72,15 +68,11 @@ public class ThesaurusStatisticsService {
     }
 
     public byte[] exportGenericReport(List<GenericStatistiqueData> rows) {
-        var report = new StatistiquesRapportCSV();
-        report.createGenericStatistiquesRapport(rows);
-        return report.getOutput().toByteArray();
+        return thesaurusStatisticsLegacySupport.exportGenericReport(rows);
     }
 
     public byte[] exportConceptReport(List<ConceptStatisticData> rows) {
-        var report = new StatistiquesRapportCSV();
-        report.createConceptsStatistiquesRapport(rows);
-        return report.getOutput().toByteArray();
+        return thesaurusStatisticsLegacySupport.exportConceptReport(rows);
     }
 
     public ByteArrayInputStream toStream(byte[] content) {

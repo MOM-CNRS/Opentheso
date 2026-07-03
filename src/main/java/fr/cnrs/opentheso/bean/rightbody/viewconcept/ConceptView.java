@@ -411,6 +411,10 @@ public class ConceptView implements Serializable {
         nodeConcept = nodeFullConceptMapper.getConceptFromNodeFullConcept(nodeFullConcept, idTheso, idLang);
         if (nodeConcept == null) return;
 
+        if (roleOnThesoBean.getNodePreference() == null) {
+            roleOnThesoBean.initNodePref(idTheso);
+        }
+
         // permet de récupérer les qualificatifs
         if (roleOnThesoBean.getNodePreference().isUseCustomRelation()) {
             nodeCustomRelations = relationsService.getAllNodeCustomRelation(idConcept, idTheso, idLang, getIdLangOfInterface());

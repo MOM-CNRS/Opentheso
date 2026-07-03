@@ -7,6 +7,7 @@
 
     <f:view>
         <f:metadata>
+    <f:viewAction action="#{v2ConsultationShellBean.load()}"/>
             <f:viewAction action="#{v2EditionBean.load()}"/>
             <f:viewParam name="idc" value="#{v2ThesaurusContext.idConceptFromUri}"/>
             <f:viewParam name="idg" value="#{v2ThesaurusContext.idGroupFromUri}"/>
@@ -31,23 +32,23 @@
 
         <p:growl id="messageIndex" globalOnly="true" showDetail="true"/>
 
-        <h:panelGroup rendered="#{menuBean.checkIfUserIsConnected() and v2EditionBean.screenAvailable}" id="wrapper" style="height: 100%">
+        <h:panelGroup rendered="#{v2UserSession.isLoggedIn() and v2EditionBean.screenAvailable}" id="wrapper" style="height: 100%">
 
-            <ui:include src="../../commun/menu.xhtml" />
+            <ui:include src="../thesaurus/includes/layout/menu.xhtml" />
 
             <div id="content-wrapper" style="min-height:100%; position:relative;">
 
                 <h:form id="containerIndex" style="min-height:100%; position:relative;">
 
                     <h:panelGroup id="header">
-                        <ui:include src="../../commun/header.xhtml" />
+                        <ui:include src="../thesaurus/includes/layout/header.xhtml" />
                     </h:panelGroup>
 
                     <div class="container-fluid">
 
                         <div class="d-sm-flex align-items-center justify-content-between mb-4"
                              style="margin-top: 20px; margin-bottom: 15px">
-                            <h1 class="h3 mb-0 text-gray-800">#{langueBean.getMsg('menu.toolbox')} / <span style="color: #f47b2a">#{langueBean.getMsg('menu.edition')}</span></h1>
+                            <h1 class="h3 mb-0 text-gray-800">#{v2LocaleBean.getMsg('menu.toolbox')} / <span style="color: #f47b2a">#{v2LocaleBean.getMsg('menu.edition')}</span></h1>
                         </div>
 
                         <p:panel rendered="#{v2EditionBean.listView}">
@@ -78,15 +79,21 @@
                             <ui:include src="edition/view-export-thesaurus.xhtml" />
                         </p:panel>
                     </div>
-                    <ui:include src="../../commun/footer.xhtml" />
+                    <ui:include src="../thesaurus/includes/layout/footer.xhtml" />
                     <input type="hidden" name="csrfToken" value="${sessionScope.CSRF_TOKEN}" />
                 </h:form>
                 <ui:include src="edition/confirm-delete-thesaurus-dialog.xhtml" />
                 <ui:include src="edition/add-language-dialog.xhtml" />
                 <ui:include src="edition/edit-language-dialog.xhtml" />
                 <ui:include src="edition/change-id-dialog.xhtml" />
-                <ui:include src="../../dialog/login/logout.xhtml" />
+                <ui:include src="../thesaurus/includes/layout/logout-dialog.xhtml" />
             </div>
         </h:panelGroup>
+
+        <p:dialog widgetVar="waitDialog" modal="false" draggable="false" width="80"
+                  closable="false" resizable="false" showHeader="false" position="top"
+                  style="margin-top:250px; border:none;">
+            <p:graphicImage value="../../resources/img/wait.gif" width="100%" style="margin-top:15px;"/>
+        </p:dialog>
     </h:body>
 </HTML>

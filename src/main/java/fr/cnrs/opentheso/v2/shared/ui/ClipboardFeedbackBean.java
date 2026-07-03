@@ -1,6 +1,6 @@
 package fr.cnrs.opentheso.v2.shared.ui;
 
-import fr.cnrs.opentheso.bean.language.LanguageBean;
+import fr.cnrs.opentheso.v2.shared.ui.V2LocaleBean;
 import fr.cnrs.opentheso.utils.MessageUtils;
 import jakarta.enterprise.context.ApplicationScoped;
 import jakarta.inject.Named;
@@ -15,10 +15,10 @@ import java.io.Serializable;
 @RequiredArgsConstructor
 public class ClipboardFeedbackBean implements Serializable {
 
-    private final LanguageBean languageBean;
+    private final V2LocaleBean localeBean;
 
     public void onSuccess(final ClipboardSuccessEvent successEvent) {
-        MessageUtils.showInformationMessage(languageBean.getMsg("copied"));
+        MessageUtils.showInformationMessage(localeBean.getMsg("copied"));
     }
 
     public void onError(final ClipboardErrorEvent errorEvent) {

@@ -1,0 +1,50 @@
+<ui:fragment xmlns="http://www.w3.org/1999/xhtml"
+             xmlns:h="http://xmlns.jcp.org/jsf/html"
+             xmlns:ui="http://xmlns.jcp.org/jsf/facelets"
+             xmlns:p="http://primefaces.org/ui">
+
+  <div class="list-group-item list-group-item-action">
+    <div class="row align-items-start mb-0" style="margin-left: 0; font-size: 14px;">
+      <div class="col-xl-3 col-lg-4 col-md-5 col-sm-5" style="font-weight: bold; color: #8f8f8f;">
+        <h:panelGroup rendered="#{not empty rowIcon}">
+          <i class="#{rowIcon}" style="color: #78261f; margin-right: 6px;"/>
+        </h:panelGroup>
+        #{rowLabel}
+      </div>
+      <div class="col-xl-9 col-lg-8 col-md-7 col-sm-7" style="margin-left: -10px;">
+        <h:panelGroup rendered="#{empty relations}">
+          <h:outputText value="....." style="font-size: 14px; color: grey; font-style: italic;"/>
+        </h:panelGroup>
+        <h:panelGroup rendered="#{not empty relations}">
+          <ui:repeat value="#{relations}" var="relation" varStatus="status">
+            <h:panelGroup rendered="#{empty relationLinkType or relationLinkType == 'concept'}">
+              <p:commandLink value="#{relation.displayLabel}"
+                             title="#{relation.conceptId}"
+                             action="#{v2ThesaurusBrowseBean.openConcept(relation.conceptId)}"
+                             process="@this"
+                             update=":formRightTab :formLeftTab:tabTree"
+                             style="#{deprecatedStyle ? 'color:#C63632;font-weight:bold;font-style:italic;text-decoration:line-through;font-size:14px;' : ''}"/>
+            </h:panelGroup>
+            <h:panelGroup rendered="#{relationLinkType == 'group'}">
+              <p:commandLink value="#{relation.displayLabel}"
+                             title="#{relation.conceptId}"
+                             action="#{v2ThesaurusBrowseBean.focusGroup(relation.conceptId)}"
+                             process="@this"
+                             update=":formRightTab :formLeftTab:tabTree"
+                             style="font-size:14px; color:#601e18;"/>
+            </h:panelGroup>
+            <h:panelGroup rendered="#{relationLinkType == 'facet'}">
+              <p:commandLink value="#{relation.displayLabel}"
+                             title="#{relation.conceptId}"
+                             action="#{v2ThesaurusBrowseBean.focusFacet(relation.conceptId)}"
+                             process="@this"
+                             update=":formRightTab :formLeftTab:tabTree"
+                             style="font-size:14px; color:#601e18;"/>
+            </h:panelGroup>
+            <h:outputText value=", " rendered="#{not status.last}" style="color: #FF7979;"/>
+          </ui:repeat>
+        </h:panelGroup>
+      </div>
+    </div>
+  </div>
+</ui:fragment>

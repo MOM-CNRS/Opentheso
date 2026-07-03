@@ -1,13 +1,12 @@
 package fr.cnrs.opentheso.v2.toolbox.ui;
 
-import fr.cnrs.opentheso.bean.language.LanguageBean;
-import fr.cnrs.opentheso.bean.menu.theso.SelectedTheso;
-import fr.cnrs.opentheso.bean.menu.users.CurrentUser;
+import fr.cnrs.opentheso.v2.shared.ui.V2LocaleBean;
 import fr.cnrs.opentheso.utils.MessageUtils;
 import fr.cnrs.opentheso.v2.setting.ui.ThesaurusContext;
 import fr.cnrs.opentheso.v2.shared.ui.UserSession;
 import fr.cnrs.opentheso.v2.toolbox.exception.InvalidToolboxDataException;
 import fr.cnrs.opentheso.v2.toolbox.fixtures.ToolboxTestFixtures;
+import fr.cnrs.opentheso.v2.toolbox.export.ui.ThesaurusExportBean;
 import fr.cnrs.opentheso.v2.toolbox.model.EditionView;
 import fr.cnrs.opentheso.v2.toolbox.service.EditionThesaurusService;
 import fr.cnrs.opentheso.v2.test.support.PrimeFacesTestSupport;
@@ -46,19 +45,17 @@ class EditionBeanTest {
     @Mock
     private UserSession userSession;
     @Mock
-    private CurrentUser currentUser;
-    @Mock
     private ThesaurusContext thesaurusContext;
     @Mock
-    private SelectedTheso selectedTheso;
-    @Mock
-    private LanguageBean languageBean;
+    private V2LocaleBean localeBean;
     @Mock
     private EditionThesaurusService editionThesaurusService;
     @Mock
     private NewThesaurusBean newThesaurusBean;
     @Mock
     private ModifyThesaurusBean modifyThesaurusBean;
+    @Mock
+    private ThesaurusExportBean thesaurusExportBean;
     @Mock
     private FacesContext facesContext;
 
@@ -68,13 +65,12 @@ class EditionBeanTest {
     void setUp() {
         bean = new EditionBean(
                 userSession,
-                currentUser,
                 thesaurusContext,
-                selectedTheso,
-                languageBean,
+                localeBean,
                 editionThesaurusService,
                 newThesaurusBean,
-                modifyThesaurusBean
+                modifyThesaurusBean,
+                thesaurusExportBean
         );
     }
 
@@ -239,8 +235,7 @@ class EditionBeanTest {
     void deleteThesaurus_clearsSelectedThesaurusWhenDeleted() throws Exception {
         stubListAccess();
         bean.setThesaurusIdToDelete("TH1");
-        when(selectedTheso.getCurrentIdTheso()).thenReturn("TH1");
-        doAnswer(invocation -> null).when(selectedTheso).setSelectedTheso();
+        when(thesaurusContext.matchesCurrentThesaurus("TH1")).thenReturn(true);
 
         try (MockedStatic<MessageUtils> messages = mockStatic(MessageUtils.class);
              var primeFaces = PrimeFacesTestSupport.open()) {
@@ -248,8 +243,7 @@ class EditionBeanTest {
         }
 
         verify(editionThesaurusService).deleteThesaurus("TH1", false);
-        verify(selectedTheso).setSelectedIdTheso("");
-        verify(thesaurusContext).setCurrentThesaurusId(null);
+        verify(thesaurusContext).clearSelection();
     }
 
     @Test
@@ -278,10 +272,10 @@ class EditionBeanTest {
     @Test
     void showThesaurusStatistics_addsFacesMessage() {
         when(editionThesaurusService.loadStatistics("TH1")).thenReturn(ToolboxTestFixtures.sampleStatistics());
-        when(languageBean.getMsg("info")).thenReturn("Info");
-        when(languageBean.getMsg("candidat.total_concepts")).thenReturn("Concepts");
-        when(languageBean.getMsg("candidat.titre")).thenReturn("Candidats");
-        when(languageBean.getMsg("search.deprecated")).thenReturn("Dépréciés");
+        when(localeBean.getMsg("info")).thenReturn("Info");
+        when(localeBean.getMsg("candidat.total_concepts")).thenReturn("Concepts");
+        when(localeBean.getMsg("candidat.titre")).thenReturn("Candidats");
+        when(localeBean.getMsg("search.deprecated")).thenReturn("Dépréciés");
 
         try (MockedStatic<FacesContext> faces = mockStatic(FacesContext.class)) {
             faces.when(FacesContext::getCurrentInstance).thenReturn(facesContext);

@@ -1,0 +1,26 @@
+<ui:composition
+    xmlns:ui="http://xmlns.jcp.org/jsf/facelets"
+    xmlns:p="http://primefaces.org/ui"
+    xmlns:h="http://xmlns.jcp.org/jsf/html">
+
+    <p:idleMonitor timeout="#{v2NavigationBean.sessionTimeoutInMilliseconds}" onidle="handleSessionTimeout()"/>
+    <h:outputScript>
+        function handleSessionTimeout() {
+            window.location.href = '/v2/thesaurus';
+        }
+    </h:outputScript>
+
+    <footer class="sticky-footer bg-white" style="position:absolute; margin-top: 10px; width:100%;">
+        <div class="container my-auto">
+            <div class="copyright text-center my-auto">
+                <h:outputText value="Copyright ©CNRS _ version: #{v2ConsultationShellBean.applicationVersion}"
+                              style="font-size: 12px;"/>
+            </div>
+        </div>
+    </footer>
+
+    <script src="#{request.contextPath}/resources/js/bootstrap.bundle.min.js"/>
+    <script src="#{request.contextPath}/resources/js/jquery.easing.min.js"/>
+    <script src="#{request.contextPath}/resources/js/sb-admin-2.js"/>
+
+</ui:composition>

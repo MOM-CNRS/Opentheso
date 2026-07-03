@@ -1,5 +1,6 @@
 package fr.cnrs.opentheso.v2.setting.service;
 
+import fr.cnrs.opentheso.config.CacheConfig;
 import fr.cnrs.opentheso.utils.SimpleCrypto;
 import fr.cnrs.opentheso.v2.setting.exception.InvalidSettingDataException;
 import fr.cnrs.opentheso.v2.setting.mapper.SettingMapper;
@@ -11,6 +12,8 @@ import fr.cnrs.opentheso.v2.shared.repository.ThesaurusSettingsQueryRepository;
 import lombok.extern.slf4j.Slf4j;
 import org.apache.commons.lang3.StringUtils;
 import org.springframework.beans.factory.annotation.Value;
+import org.springframework.cache.annotation.CacheEvict;
+import org.springframework.cache.annotation.Cacheable;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
 
@@ -44,12 +47,34 @@ public class ThesaurusPreferenceService {
         return SettingMapper.toPreferences(entity, languages);
     }
 
+    /**
+     * Same as {@link #loadPreferences(String, String)} but returns null instead of throwing
+     * when the thesaurus has no preferences row configured yet (consultation read paths).
+     * Cached because consultation pages (concept detail, thesaurus home, tree loading) call
+     * this on every request while preferences change rarely; evicted by the save* methods.
+     */
+    @Transactional(readOnly = true)
+    @Cacheable(cacheNames = CacheConfig.THESAURUS_PREFERENCES_CACHE, key = "#thesaurusId + '|' + #workLang")
+    public ThesaurusPreferences loadPreferencesOrNull(String thesaurusId, String workLang) {
+        try {
+            PreferencesEntity entity = requirePreferences(thesaurusId);
+            var languages = thesaurusSettingsQueryRepository.findUsedLanguages(thesaurusId, workLang).stream()
+                    .map(SettingMapper::toLanguage)
+                    .toList();
+            return SettingMapper.toPreferences(entity, languages);
+        } catch (InvalidSettingDataException noPreferencesConfigured) {
+            return null;
+        }
+    }
+
     @Transactional
+    @CacheEvict(cacheNames = CacheConfig.THESAURUS_PREFERENCES_CACHE, allEntries = true)
     public ThesaurusPreferences savePreferences(String thesaurusId, ThesaurusPreferences preferences, String workLang) {
         return savePreferences(thesaurusId, preferences, null, null, null, null, workLang);
     }
 
     @Transactional
+    @CacheEvict(cacheNames = CacheConfig.THESAURUS_PREFERENCES_CACHE, allEntries = true)
     public ThesaurusPreferences savePreferences(
             String thesaurusId,
             ThesaurusPreferences preferences,
@@ -80,6 +105,7 @@ public class ThesaurusPreferenceService {
     }
 
     @Transactional
+    @CacheEvict(cacheNames = CacheConfig.THESAURUS_PREFERENCES_CACHE, allEntries = true)
     public ThesaurusPreferences updateIdentifierServer(
             String thesaurusId,
             IdentifierServerType serverType,
@@ -93,6 +119,7 @@ public class ThesaurusPreferenceService {
     }
 
     @Transactional
+    @CacheEvict(cacheNames = CacheConfig.THESAURUS_PREFERENCES_CACHE, allEntries = true)
     public ThesaurusPreferences saveIdentifierSettings(
             String thesaurusId,
             ThesaurusPreferences preferences,

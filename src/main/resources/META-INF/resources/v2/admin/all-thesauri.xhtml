@@ -6,6 +6,7 @@
       xmlns:p="http://primefaces.org/ui">
 
 <f:metadata>
+    <f:viewAction action="#{v2ConsultationShellBean.load()}"/>
     <f:viewAction action="#{v2AllThesauriBean.load()}"/>
 </f:metadata>
 
@@ -23,20 +24,20 @@
 <h:body id="page-top" onload="initMenu()" style="margin:0; padding:0; height:100%;">
     <p:growl id="messageIndex" globalOnly="true" showDetail="true"/>
 
-    <h:panelGroup rendered="#{menuBean.checkIfUserIsConnected() and v2UserSession.canAccessSuperAdminScreen()}"
+    <h:panelGroup rendered="#{v2UserSession.isLoggedIn() and v2UserSession.canAccessSuperAdminScreen()}"
                   id="wrapper" style="height: 100%">
-        <ui:include src="../../commun/menu.xhtml"/>
+        <ui:include src="../thesaurus/includes/layout/menu.xhtml"/>
 
         <div id="content-wrapper" style="min-height:100%; position:relative;">
             <h:form id="containerIndex">
                 <h:panelGroup id="header">
-                    <ui:include src="../../commun/header.xhtml"/>
+                    <ui:include src="../thesaurus/includes/layout/header.xhtml"/>
                 </h:panelGroup>
 
                 <div class="container-fluid" style="padding-bottom: 70px">
                     <div class="d-sm-flex align-items-center justify-content-between mb-4" style="margin: 20px">
-                        <h1 class="h3 mb-0 text-gray-800">#{langueBean.getMsg('menu.profile')} / <span
-                                style="color: #f47b2a">#{langueBean.getMsg('profile.all_thesauri')}</span></h1>
+                        <h1 class="h3 mb-0 text-gray-800">#{v2LocaleBean.getMsg('menu.profile')} / <span
+                                style="color: #f47b2a">#{v2LocaleBean.getMsg('profile.all_thesauri')}</span></h1>
                     </div>
 
                     <div class="card shadow mb-4" style="height: 100%;">
@@ -46,39 +47,39 @@
                                          widgetVar="listThesoTable" styleClass="products-table"
                                          resizableColumns="true" scrollHeight="450" reflow="true"
                                          paginator="true" rows="10" paginatorPosition="bottom"
-                                         emptyMessage="#{langueBean.getMsg('toolbox.noThesaurus')}"
+                                         emptyMessage="#{v2LocaleBean.getMsg('toolbox.noThesaurus')}"
                                          stripedRows="true"
                                          style="margin-bottom: -17px; margin-top: -16px;">
                                 <f:facet name="header">
                                     <div class="products-table-header">
-                                        <span style="font-weight: bold">#{langueBean.getMsg('profile.list_of_thesauri')}</span>
+                                        <span style="font-weight: bold">#{v2LocaleBean.getMsg('profile.list_of_thesauri')}</span>
                                     </div>
                                 </f:facet>
                                 <p:column width="10" headerText="Id" sortBy="#{theso.id()}">
                                     <h:outputText value="#{theso.id()}" style="font-weight: bold"/>
                                 </p:column>
-                                <p:column width="40" headerText="#{langueBean.getMsg('menu.thesaurus')}" sortBy="#{theso.title()}">
+                                <p:column width="40" headerText="#{v2LocaleBean.getMsg('menu.thesaurus')}" sortBy="#{theso.title()}">
                                     <h:outputText rendered="#{!theso.privateThesaurus()}" value="#{theso.title()}"/>
                                     <h:outputText rendered="#{theso.privateThesaurus()}" value="#{theso.title()}"
                                                   style="color: red; font-style: italic"/>
                                 </p:column>
-                                <p:column width="50" headerText="#{langueBean.getMsg('profile.project')}" sortBy="#{theso.projectName()}">
+                                <p:column width="50" headerText="#{v2LocaleBean.getMsg('profile.project')}" sortBy="#{theso.projectName()}">
                                     <h:outputText value="#{theso.projectName()}"/>
                                 </p:column>
-                                <p:column width="10" headerText="#{langueBean.getMsg('toolbox.publicPrivate')}">
+                                <p:column width="10" headerText="#{v2LocaleBean.getMsg('toolbox.publicPrivate')}">
                                     <p:toggleSwitch disabled="true" value="#{theso.privateThesaurus()}"/>
                                 </p:column>
-                                <p:column width="1" headerText="#{langueBean.getMsg('profile.action')}" style="text-align: center">
+                                <p:column width="1" headerText="#{v2LocaleBean.getMsg('profile.action')}" style="text-align: center">
                                     <p:commandButton icon="fas fa-people-carry" styleClass="edit-button rounded-button"
                                                      process="@this" ajax="true"
-                                                     title="#{langueBean.getMsg('profile.move_thesaurus_to_another_project')}"
+                                                     title="#{v2LocaleBean.getMsg('profile.move_thesaurus_to_another_project')}"
                                                      update="containerIndex:idV2MoveThesaurus containerIndex:v2MoveThesaurusForm"
                                                      oncomplete="PF('v2MoveThesaurus').show();"
                                                      actionListener="#{v2AllThesauriBean.prepareMoveDialog(theso.id(), theso.title())}"/>
                                 </p:column>
                                 <f:facet name="footer">
                                     <span class="p-text-bold">
-                                        <h:outputText value="#{langueBean.getMsg('toolbox.totalOfTheso')} : " style="font-size: 14px;"/>
+                                        <h:outputText value="#{v2LocaleBean.getMsg('toolbox.totalOfTheso')} : " style="font-size: 14px;"/>
                                         <h:outputText value="#{v2AllThesauriBean.thesauri.size()}" style="font-size: 16px; color: #f47b2a"/>
                                     </span>
                                 </f:facet>
@@ -92,8 +93,10 @@
                 <input type="hidden" name="csrfToken" value="#{sessionScope.CSRF_TOKEN}"/>
             </h:form>
 
-            <ui:include src="../../commun/footer.xhtml"/>
-            <ui:include src="../../dialog/login/logout.xhtml"/>
+            <ui:include src="../thesaurus/includes/layout/footer.xhtml"/>
+            <ui:include src="../thesaurus/includes/layout/logout-dialog.xhtml"/>
+            <ui:include src="../thesaurus/includes/layout/login-dialog.xhtml"/>
+            <ui:include src="../thesaurus/includes/layout/forget-password-dialog.xhtml"/>
         </div>
     </h:panelGroup>
 </h:body>

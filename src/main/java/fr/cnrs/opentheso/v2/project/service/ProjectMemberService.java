@@ -1,6 +1,6 @@
 package fr.cnrs.opentheso.v2.project.service;
 
-import fr.cnrs.opentheso.services.PasswordResetService;
+import fr.cnrs.opentheso.v2.user.service.AccountPasswordResetService;
 import fr.cnrs.opentheso.v2.project.exception.InvalidProjectDataException;
 import fr.cnrs.opentheso.v2.project.exception.ProjectAccessDeniedException;
 import fr.cnrs.opentheso.v2.project.model.CreatedProjectMember;
@@ -39,7 +39,7 @@ public class ProjectMemberService {
     private final ProjectMembershipRepository projectMembershipRepository;
     private final UserCommandRepository userCommandRepository;
     private final PasswordEncoder passwordEncoder;
-    private final PasswordResetService passwordResetService;
+    private final AccountPasswordResetService accountPasswordResetService;
 
     @Transactional(readOnly = true)
     public List<UserSearchResult> searchUsers(int callerId, boolean superAdmin, int projectId, String username) {
@@ -267,7 +267,7 @@ public class ProjectMemberService {
                     username, email, "", alertMail, institution, false, true, false
             );
             try {
-                passwordResetService.requestPasswordReset(email, true);
+                accountPasswordResetService.requestPasswordReset(email, true);
             } catch (Exception e) {
                 log.warn("Utilisateur id={} créé mais l'envoi du mail a échoué", userId, e);
             }

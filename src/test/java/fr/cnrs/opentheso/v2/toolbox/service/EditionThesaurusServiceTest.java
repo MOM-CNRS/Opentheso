@@ -1,10 +1,9 @@
 package fr.cnrs.opentheso.v2.toolbox.service;
 
-import fr.cnrs.opentheso.services.ConceptService;
-import fr.cnrs.opentheso.services.ThesaurusService;
 import fr.cnrs.opentheso.v2.shared.repository.EditionQueryRepository;
 import fr.cnrs.opentheso.v2.toolbox.exception.InvalidToolboxDataException;
 import fr.cnrs.opentheso.v2.toolbox.fixtures.ToolboxTestFixtures;
+import fr.cnrs.opentheso.v2.toolbox.session.EditionThesaurusLegacySupport;
 import org.junit.jupiter.api.BeforeEach;
 import org.junit.jupiter.api.Test;
 import org.junit.jupiter.api.extension.ExtendWith;
@@ -17,6 +16,7 @@ import java.util.List;
 import static org.junit.jupiter.api.Assertions.assertEquals;
 import static org.junit.jupiter.api.Assertions.assertThrows;
 import static org.junit.jupiter.api.Assertions.assertTrue;
+import static org.mockito.Mockito.never;
 import static org.mockito.Mockito.verify;
 import static org.mockito.Mockito.when;
 
@@ -26,19 +26,13 @@ class EditionThesaurusServiceTest {
     @Mock
     private EditionQueryRepository editionQueryRepository;
     @Mock
-    private ThesaurusService thesaurusService;
-    @Mock
-    private ConceptService conceptService;
+    private EditionThesaurusLegacySupport editionThesaurusLegacySupport;
 
     private EditionThesaurusService service;
 
     @BeforeEach
     void setUp() {
-        service = new EditionThesaurusService(
-                editionQueryRepository,
-                thesaurusService,
-                conceptService
-        );
+        service = new EditionThesaurusService(editionQueryRepository, editionThesaurusLegacySupport);
         ReflectionTestUtils.setField(service, "workLanguage", "fr");
     }
 
@@ -68,22 +62,22 @@ class EditionThesaurusServiceTest {
 
     @Test
     void deleteThesaurus_deletesRightsAndThesaurus() {
-        when(thesaurusService.deleteThesaurus("TH1")).thenReturn(true);
+        when(editionThesaurusLegacySupport.deleteThesaurus("TH1")).thenReturn(true);
 
         service.deleteThesaurus("TH1", false);
 
-        verify(thesaurusService).deleteDroitByThesaurus("TH1");
-        verify(thesaurusService).deleteThesaurus("TH1");
-        verify(conceptService, org.mockito.Mockito.never()).deleteAllIdHandle("TH1");
+        verify(editionThesaurusLegacySupport).deleteRights("TH1");
+        verify(editionThesaurusLegacySupport).deleteThesaurus("TH1");
+        verify(editionThesaurusLegacySupport, never()).deleteAllHandleIds("TH1");
     }
 
     @Test
     void deleteThesaurus_deletesPerennialIdentifiersWhenRequested() {
-        when(thesaurusService.deleteThesaurus("TH1")).thenReturn(true);
+        when(editionThesaurusLegacySupport.deleteThesaurus("TH1")).thenReturn(true);
 
         service.deleteThesaurus("TH1", true);
 
-        verify(conceptService).deleteAllIdHandle("TH1");
+        verify(editionThesaurusLegacySupport).deleteAllHandleIds("TH1");
     }
 
     @Test
@@ -93,7 +87,7 @@ class EditionThesaurusServiceTest {
 
     @Test
     void deleteThesaurus_failsWhenDeletionReturnsFalse() {
-        when(thesaurusService.deleteThesaurus("TH1")).thenReturn(false);
+        when(editionThesaurusLegacySupport.deleteThesaurus("TH1")).thenReturn(false);
 
         assertThrows(InvalidToolboxDataException.class, () -> service.deleteThesaurus("TH1", false));
     }

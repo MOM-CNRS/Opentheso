@@ -1,6 +1,6 @@
 package fr.cnrs.opentheso.v2.user.ui;
 
-import fr.cnrs.opentheso.bean.language.LanguageBean;
+import fr.cnrs.opentheso.v2.shared.ui.V2LocaleBean;
 import fr.cnrs.opentheso.utils.MessageUtils;
 import fr.cnrs.opentheso.v2.shared.ui.UserSession;
 import fr.cnrs.opentheso.v2.user.exception.ApiKeyRegenerationException;
@@ -38,7 +38,7 @@ class MyAccountBeanTest {
     @Mock
     private UserSession userSession;
     @Mock
-    private LanguageBean languageBean;
+    private V2LocaleBean localeBean;
     @Mock
     private UserProfileService userProfileService;
     @Mock
@@ -52,11 +52,11 @@ class MyAccountBeanTest {
 
     @BeforeEach
     void setUp() {
-        lenient().when(languageBean.getMsg(org.mockito.ArgumentMatchers.anyString()))
+        lenient().when(localeBean.getMsg(org.mockito.ArgumentMatchers.anyString()))
                 .thenAnswer(invocation -> invocation.getArgument(0));
         myAccountBean = new MyAccountBean(
                 userSession,
-                languageBean,
+                localeBean,
                 userProfileService,
                 userApiKeyService
         );

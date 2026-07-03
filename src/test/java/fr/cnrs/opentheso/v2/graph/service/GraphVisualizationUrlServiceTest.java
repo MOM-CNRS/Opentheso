@@ -1,6 +1,6 @@
 package fr.cnrs.opentheso.v2.graph.service;
 
-import fr.cnrs.opentheso.services.PreferenceService;
+import fr.cnrs.opentheso.v2.setting.service.ThesaurusWorkLanguageService;
 import fr.cnrs.opentheso.v2.graph.model.GraphExportEntry;
 import fr.cnrs.opentheso.v2.graph.model.GraphViewSummary;
 import org.junit.jupiter.api.BeforeEach;
@@ -28,13 +28,13 @@ class GraphVisualizationUrlServiceTest {
     private GraphViewReadService graphViewReadService;
 
     @Mock
-    private PreferenceService preferenceService;
+    private ThesaurusWorkLanguageService thesaurusWorkLanguageService;
 
     private GraphVisualizationUrlService service;
 
     @BeforeEach
     void setUp() {
-        service = new GraphVisualizationUrlService(graphViewReadService, preferenceService);
+        service = new GraphVisualizationUrlService(graphViewReadService, thesaurusWorkLanguageService);
         ReflectionTestUtils.setField(service, "defaultWorkLanguage", "fr");
     }
 
@@ -55,7 +55,7 @@ class GraphVisualizationUrlServiceTest {
 
     @Test
     void resolveWorkLanguageForThesaurus_usesPreferenceWhenAvailable() {
-        when(preferenceService.getWorkLanguageOfThesaurus("TH1")).thenReturn("en");
+        when(thesaurusWorkLanguageService.resolveForThesaurus("TH1")).thenReturn("en");
 
         assertTrue("en".equals(service.resolveWorkLanguageForThesaurus("TH1")));
     }
@@ -130,7 +130,7 @@ class GraphVisualizationUrlServiceTest {
 
     @Test
     void resolveWorkLanguageForThesaurus_fallsBackToDefaultWhenPreferenceMissing() {
-        when(preferenceService.getWorkLanguageOfThesaurus("TH1")).thenReturn(null);
+        when(thesaurusWorkLanguageService.resolveForThesaurus("TH1")).thenReturn("fr");
 
         assertEquals("fr", service.resolveWorkLanguageForThesaurus("TH1"));
     }

@@ -199,7 +199,7 @@ public class SelectedTheso implements Serializable {
 
         // après un raffraichissement F5
         if (selectedIdTheso.equalsIgnoreCase(currentIdTheso)) {
-            if (!selectedLang.equalsIgnoreCase(currentLang)) {
+            if (!StringUtils.equalsIgnoreCase(selectedLang, currentLang)) {
                 startNewLang();
             }
 
@@ -319,7 +319,7 @@ public class SelectedTheso implements Serializable {
 
         // après un raffraichissement F5
         if (selectedIdTheso.equalsIgnoreCase(currentIdTheso)) {
-            if (!selectedLang.equalsIgnoreCase(currentLang)) {
+            if (!StringUtils.equalsIgnoreCase(selectedLang, currentLang)) {
                 startNewLang();
             }
             return;

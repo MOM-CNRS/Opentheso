@@ -1,46 +1,26 @@
 package fr.cnrs.opentheso.v2.toolbox.ui;
 
-import fr.cnrs.opentheso.bean.importexport.ImportFileBean;
-import fr.cnrs.opentheso.bean.menu.theso.SelectedTheso;
-import fr.cnrs.opentheso.bean.toolbox.atelier.AtelierThesBean;
 import fr.cnrs.opentheso.utils.MessageUtils;
 import fr.cnrs.opentheso.v2.setting.ui.ThesaurusContext;
 import fr.cnrs.opentheso.v2.shared.ui.UserSession;
 import fr.cnrs.opentheso.v2.toolbox.policy.ToolboxAccessPolicy;
-import fr.cnrs.opentheso.v2.toolbox.service.WorkshopService;
+import fr.cnrs.opentheso.v2.toolbox.session.WorkshopLegacySupport;
 import jakarta.faces.view.ViewScoped;
 import jakarta.inject.Named;
 import lombok.Getter;
+import lombok.RequiredArgsConstructor;
 
 import java.io.Serializable;
 
 @Getter
 @ViewScoped
 @Named("v2WorkshopBean")
+@RequiredArgsConstructor
 public class WorkshopBean implements Serializable {
 
     private final UserSession userSession;
     private final ThesaurusContext thesaurusContext;
-    private final SelectedTheso selectedTheso;
-    private final ImportFileBean importFileBean;
-    private final AtelierThesBean atelierThesBean;
-    private final WorkshopService workshopService;
-
-    public WorkshopBean(
-            UserSession userSession,
-            ThesaurusContext thesaurusContext,
-            SelectedTheso selectedTheso,
-            ImportFileBean importFileBean,
-            AtelierThesBean atelierThesBean,
-            WorkshopService workshopService
-    ) {
-        this.userSession = userSession;
-        this.thesaurusContext = thesaurusContext;
-        this.selectedTheso = selectedTheso;
-        this.importFileBean = importFileBean;
-        this.atelierThesBean = atelierThesBean;
-        this.workshopService = workshopService;
-    }
+    private final WorkshopLegacySupport workshopLegacySupport;
 
     public boolean isScreenAvailable() {
         return ToolboxAccessPolicy.canAccessWorkshop(userSession)
@@ -52,19 +32,13 @@ public class WorkshopBean implements Serializable {
     }
 
     public String getThesaurusTitle() {
-        return workshopService.resolveThesaurusTitle(
-                thesaurusContext.getCurrentThesaurusTitle(),
-                thesaurusContext.getCurrentThesaurusId(),
-                selectedTheso.getThesoName(),
-                selectedTheso.getCurrentIdTheso()
-        );
+        return thesaurusContext.getCurrentThesaurusTitle() != null
+                ? thesaurusContext.getCurrentThesaurusTitle()
+                : getThesaurusId();
     }
 
     public String getThesaurusId() {
-        return workshopService.resolveThesaurusId(
-                thesaurusContext.getCurrentThesaurusId(),
-                selectedTheso.getCurrentIdTheso()
-        );
+        return thesaurusContext.resolveThesaurusId();
     }
 
     public void load() {
@@ -73,7 +47,7 @@ public class WorkshopBean implements Serializable {
             MessageUtils.showErrorMessage("Vous devez choisir un Thésaurus avant !");
             return;
         }
-        atelierThesBean.init();
+        workshopLegacySupport.initAtelier();
         prepareBulkActions();
     }
 
@@ -81,6 +55,6 @@ public class WorkshopBean implements Serializable {
         if (!isActionsAvailable()) {
             return;
         }
-        importFileBean.init();
+        workshopLegacySupport.initBulkImport();
     }
 }

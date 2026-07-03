@@ -1,25 +1,23 @@
 package fr.cnrs.opentheso.v2.graph.ui;
 
-import fr.cnrs.opentheso.bean.menu.users.CurrentUser;
-import fr.cnrs.opentheso.models.search.NodeSearchMini;
-import fr.cnrs.opentheso.services.PreferenceService;
-import fr.cnrs.opentheso.services.SearchService;
-import fr.cnrs.opentheso.services.TermService;
-import fr.cnrs.opentheso.services.ThesaurusService;
+import fr.cnrs.opentheso.v2.concept.search.model.ConceptSearchSuggestion;
 import fr.cnrs.opentheso.utils.MessageUtils;
+import fr.cnrs.opentheso.v2.concept.service.ConceptReadService;
 import fr.cnrs.opentheso.v2.graph.model.GraphExportEntry;
 import fr.cnrs.opentheso.v2.graph.model.GraphViewSummary;
 import fr.cnrs.opentheso.v2.graph.policy.GraphAccessPolicy;
+import fr.cnrs.opentheso.v2.graph.service.GraphConceptSearchService;
 import fr.cnrs.opentheso.v2.graph.service.GraphNeo4jExportService;
 import fr.cnrs.opentheso.v2.graph.service.GraphViewCommandService;
 import fr.cnrs.opentheso.v2.graph.service.GraphViewReadService;
 import fr.cnrs.opentheso.v2.graph.service.GraphVisualizationUrlService;
+import fr.cnrs.opentheso.v2.setting.service.ThesaurusWorkLanguageService;
+import fr.cnrs.opentheso.v2.shared.session.ThesaurusSelectionService;
 import fr.cnrs.opentheso.v2.shared.ui.UserSession;
-import jakarta.faces.context.FacesContext;
+import fr.cnrs.opentheso.v2.shared.web.ApplicationUriService;
 import jakarta.faces.event.AjaxBehaviorEvent;
 import jakarta.faces.view.ViewScoped;
 import jakarta.inject.Named;
-import jakarta.servlet.http.HttpServletRequest;
 import lombok.Getter;
 import lombok.RequiredArgsConstructor;
 import lombok.Setter;
@@ -39,22 +37,22 @@ import java.util.List;
 public class GraphViewBean implements Serializable {
 
     private final UserSession userSession;
-    private final CurrentUser currentUser;
     private final GraphViewReadService graphViewReadService;
     private final GraphViewCommandService graphViewCommandService;
     private final GraphVisualizationUrlService graphVisualizationUrlService;
     private final GraphNeo4jExportService graphNeo4jExportService;
-    private final ThesaurusService thesaurusService;
-    private final PreferenceService preferenceService;
-    private final TermService termService;
-    private final SearchService searchService;
+    private final GraphConceptSearchService graphConceptSearchService;
+    private final ThesaurusSelectionService thesaurusSelectionService;
+    private final ThesaurusWorkLanguageService thesaurusWorkLanguageService;
+    private final ConceptReadService conceptReadService;
+    private final ApplicationUriService applicationUriService;
 
     private int selectedViewId = -1;
     private String newViewName;
     private String newViewDescription;
     private String selectedIdTheso;
     private List<GraphExportEntry> newViewExports = new ArrayList<>();
-    private NodeSearchMini searchSelected;
+    private ConceptSearchSuggestion searchSelected;
     private List<GraphViewSummary> graphViews = new ArrayList<>();
 
     public boolean isScreenAvailable() {
@@ -69,7 +67,12 @@ public class GraphViewBean implements Serializable {
     }
 
     public void refreshViews() {
-        graphViews = graphViewReadService.reloadViewsForUser(currentUser.getNodeUser().getIdUser());
+        Integer userId = userSession.getCurrentUserId();
+        if (userId == null) {
+            graphViews = List.of();
+            return;
+        }
+        graphViews = graphViewReadService.reloadViewsForUser(userId);
         selectedIdTheso = null;
         searchSelected = null;
     }
@@ -92,40 +95,39 @@ public class GraphViewBean implements Serializable {
         newViewExports = new ArrayList<>(view.getExports());
     }
 
-    public List<NodeSearchMini> getAutoComplete(String value) {
+    public List<ConceptSearchSuggestion> getAutoComplete(String value) {
         if (StringUtils.isBlank(selectedIdTheso)) {
             return List.of();
         }
-        String idLang = preferenceService.getWorkLanguageOfThesaurus(selectedIdTheso);
-        if (idLang == null) {
-            return List.of();
-        }
-        return searchService.searchAutoCompletionForRelation(value, idLang, selectedIdTheso, true);
+        return graphConceptSearchService.searchForRelation(value, selectedIdTheso);
     }
 
     public void onSelectThesaurus(AjaxBehaviorEvent event) {
         String idTheso = ((Chip) event.getSource()).getLabel();
-        String idLang = preferenceService.getWorkLanguageOfThesaurus(idTheso);
-        MessageUtils.showInformationMessage("Thesaurus : " + thesaurusService.getTitleOfThesaurus(idTheso, idLang));
+        String title = thesaurusSelectionService.resolve(idTheso).title();
+        MessageUtils.showInformationMessage("Thesaurus : " + title);
     }
 
     public void onSelectThesaurusConcept(AjaxBehaviorEvent event) {
         var idValue = ((Chip) event.getSource()).getLabel().split(",");
         var idThesaurus = idValue[0].trim();
         var idConcept = idValue[1].trim();
-        var idLang = preferenceService.getWorkLanguageOfThesaurus(idThesaurus);
-        MessageUtils.showInformationMessage("Thesaurus : " + thesaurusService.getTitleOfThesaurus(idThesaurus, idLang));
-        MessageUtils.showInformationMessage("Concept : "
-                + termService.getLexicalValueOfConcept(idConcept, idThesaurus, idLang));
+        String title = thesaurusSelectionService.resolve(idThesaurus).title();
+        String lang = thesaurusWorkLanguageService.resolveForThesaurus(idThesaurus);
+        String conceptLabel = conceptReadService.loadSummary(idThesaurus, idConcept, lang)
+                .map(summary -> summary.preferredLabel())
+                .orElse(idConcept);
+        MessageUtils.showInformationMessage("Thesaurus : " + title);
+        MessageUtils.showInformationMessage("Concept : " + conceptLabel);
     }
 
     public String generateGraphVisualizationUrl(String viewId) throws URISyntaxException {
         String lang = graphVisualizationUrlService.resolveWorkLanguageForThesaurus(selectedThesoFromView(viewId));
-        return graphVisualizationUrlService.buildVisualizationUrl(viewId, resolveOpenthesoBaseUrl(), lang);
+        return graphVisualizationUrlService.buildVisualizationUrl(viewId, applicationUriService.resolveApplicationBaseUrl(), lang);
     }
 
     public void exportToNeo4J(String viewId) {
-        graphNeo4jExportService.exportView(viewId, resolveOpenthesoBaseUrl());
+        graphNeo4jExportService.exportView(viewId, applicationUriService.resolveApplicationBaseUrl());
         refreshViews();
     }
 
@@ -140,9 +142,9 @@ public class GraphViewBean implements Serializable {
             return;
         }
 
-        String conceptId = searchSelected == null || StringUtils.isBlank(searchSelected.getIdConcept())
+        String conceptId = searchSelected == null || StringUtils.isBlank(searchSelected.conceptId())
                 ? null
-                : searchSelected.getIdConcept();
+                : searchSelected.conceptId();
 
         if (!graphViewCommandService.addExportEntry(selectedViewId, selectedIdTheso, conceptId)) {
             MessageUtils.showWarnMessage("Cette combinaison existe déjà !");
@@ -161,8 +163,12 @@ public class GraphViewBean implements Serializable {
             return;
         }
 
+        Integer userId = userSession.getCurrentUserId();
+        if (userId == null) {
+            return;
+        }
+
         if (selectedViewId == -1) {
-            int userId = currentUser.getNodeUser().getIdUser();
             selectedViewId = graphViewCommandService.createView(newViewName, newViewDescription, userId);
             MessageUtils.showInformationMessage("Vue créée avec succès");
         } else {
@@ -186,12 +192,6 @@ public class GraphViewBean implements Serializable {
         if (selectedViewId != -1) {
             initEditViewDialog(String.valueOf(selectedViewId));
         }
-    }
-
-    private String resolveOpenthesoBaseUrl() {
-        var request = (HttpServletRequest) FacesContext.getCurrentInstance().getExternalContext().getRequest();
-        var protocol = request.isSecure() ? "https://" : "http://";
-        return protocol + request.getHeader("host") + request.getContextPath();
     }
 
     private String selectedThesoFromView(String viewId) {

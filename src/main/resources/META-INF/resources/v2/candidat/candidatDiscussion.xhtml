@@ -9,7 +9,7 @@
                 <div class="row" style="font-weight: bold;">
                     <div class="col-6">
                         <i class="pi pi-send" style="color: #78261f; margin-right: 10px" />
-                        <h:outputLabel value="#{langueBean.getMsg('candidat.discussion')}"/>
+                        <h:outputLabel value="#{v2LocaleBean.getMsg('candidat.discussion')}"/>
                     </div>
                     <div class="col-6" style="text-align: right;">
                         <p:commandButton actionListener="#{discussionCandidatBean.reloadMessage()}"
@@ -49,19 +49,19 @@
                 <div class="row" id="rowValue">
                     <div class="col-12">
                         <p:textEditor id="float-input" widgetVar="ChatCandidateEditor" value="#{v2CandidatBean.message}" allowLinks="true"
-                                      secure="false" height="200" placeholder="#{langueBean.getMsg('candidat.write_here')}"/>
+                                      secure="false" height="200" placeholder="#{v2LocaleBean.getMsg('candidat.write_here')}"/>
                     </div>
                 </div>
 
                 <div class="row" style="margin-top: 20px">
                     <div class="col-6" style="text-align: left">
-                        <p:commandButton value="#{langueBean.getMsg('candidat.show_participants')}" styleClass="ui-button-success"
+                        <p:commandButton value="#{v2LocaleBean.getMsg('candidat.show_participants')}" styleClass="ui-button-success"
                                          icon="fa-solid fa-user" update="idParticipantsList"
                                          actionListener="#{discussionCandidatBean.getParticipantsInConversation()}" />
                     </div>
                     
                     <div class="col-3 offset-3" style=" text-align: right">
-                        <p:commandButton value="#{langueBean.getMsg('candidat.send')}"
+                        <p:commandButton value="#{v2LocaleBean.getMsg('candidat.send')}"
                                          styleClass="ui-button-success" icon="fa-solid fa-paper-plane"
                                          update="tabViewCandidat:containerIndexCandidat:idDiscussion"
                                          actionListener="#{discussionCandidatBean.sendMessage()}"/>
@@ -69,7 +69,7 @@
 
                     <div class="col-6" style="text-align: right">
                         <p:commandButton rendered="zzz" disabled="true"
-                                         value="#{langueBean.getMsg('candidat.send_invitation')}" styleClass="ui-button-success" icon="fa-solid fa-paper-plane"
+                                         value="#{v2LocaleBean.getMsg('candidat.send_invitation')}" styleClass="ui-button-success" icon="fa-solid fa-paper-plane"
                                          update="idSendChatInvitation" ajax="true"
                                          oncomplete="PF('sendChatInvitation').show();" />
                     </div>

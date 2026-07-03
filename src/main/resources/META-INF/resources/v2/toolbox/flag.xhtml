@@ -7,6 +7,7 @@
 
     <f:view>
         <f:metadata>
+    <f:viewAction action="#{v2ConsultationShellBean.load()}"/>
             <f:viewAction action="#{v2FlagManagementBean.load()}"/>
             <f:viewParam name="idc" value="#{v2ThesaurusContext.idConceptFromUri}"/>
             <f:viewParam name="idg" value="#{v2ThesaurusContext.idGroupFromUri}"/>
@@ -26,15 +27,15 @@
 
     <h:body id="page-top" onload="initMenu()">
         <p:growl id="messageIndex" globalOnly="true" showDetail="true"/>
-        <h:panelGroup rendered="#{menuBean.checkIfUserIsConnected() and v2FlagManagementBean.screenAvailable}" id="wrapper" style="height: 100%">
-            <ui:include src="../../commun/menu.xhtml"/>
+        <h:panelGroup rendered="#{v2UserSession.isLoggedIn() and v2FlagManagementBean.screenAvailable}" id="wrapper" style="height: 100%">
+            <ui:include src="../thesaurus/includes/layout/menu.xhtml"/>
             <div id="content-wrapper" style="min-height:100%; position:relative;">
                 <h:form id="containerIndex">
                     <h:panelGroup id="header">
-                        <ui:include src="../../commun/header.xhtml"/>
+                        <ui:include src="../thesaurus/includes/layout/header.xhtml"/>
                     </h:panelGroup>
                     <div class="d-sm-flex align-items-center justify-content-between mb-4" style="margin-top: 20px; margin-bottom: 15px">
-                        <h1 class="h3 mb-0 text-gray-800">#{langueBean.getMsg('menu.toolbox')} / <span style="color: #f47b2a">#{langueBean.getMsg('toolbox.manageFlags')}</span></h1>
+                        <h1 class="h3 mb-0 text-gray-800">#{v2LocaleBean.getMsg('menu.toolbox')} / <span style="color: #f47b2a">#{v2LocaleBean.getMsg('toolbox.manageFlags')}</span></h1>
                     </div>
                     <div class="card mb-4 py-3 border-left-success" style="margin-left: 30px; margin-right: 30px; margin-top: 10px;">
                         <p:dataTable id="v2FlagTable" var="lang" value="#{v2FlagManagementBean.languages}"
@@ -57,10 +58,12 @@
                             </p:column>
                         </p:dataTable>
                     </div>
-                    <ui:include src="../../commun/footer.xhtml"/>
+                    <ui:include src="../thesaurus/includes/layout/footer.xhtml"/>
                     <input type="hidden" name="csrfToken" value="${sessionScope.CSRF_TOKEN}"/>
                 </h:form>
-                <ui:include src="../../dialog/login/logout.xhtml"/>
+                <ui:include src="../thesaurus/includes/layout/logout-dialog.xhtml"/>
+            <ui:include src="../thesaurus/includes/layout/login-dialog.xhtml"/>
+            <ui:include src="../thesaurus/includes/layout/forget-password-dialog.xhtml"/>
             </div>
         </h:panelGroup>
     </h:body>

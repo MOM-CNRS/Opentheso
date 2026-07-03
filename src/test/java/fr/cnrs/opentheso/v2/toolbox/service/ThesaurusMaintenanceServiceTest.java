@@ -1,8 +1,8 @@
 package fr.cnrs.opentheso.v2.toolbox.service;
 
-import fr.cnrs.opentheso.services.RestoreThesaurusService;
 import fr.cnrs.opentheso.v2.setting.fixtures.SettingTestFixtures;
 import fr.cnrs.opentheso.v2.setting.service.ThesaurusPreferenceService;
+import fr.cnrs.opentheso.v2.toolbox.session.ThesaurusMaintenanceLegacySupport;
 import org.junit.jupiter.api.BeforeEach;
 import org.junit.jupiter.api.Test;
 import org.junit.jupiter.api.extension.ExtendWith;
@@ -18,7 +18,7 @@ import static org.mockito.Mockito.when;
 class ThesaurusMaintenanceServiceTest {
 
     @Mock
-    private RestoreThesaurusService restoreThesaurusService;
+    private ThesaurusMaintenanceLegacySupport thesaurusMaintenanceLegacySupport;
     @Mock
     private ThesaurusPreferenceService thesaurusPreferenceService;
 
@@ -26,7 +26,7 @@ class ThesaurusMaintenanceServiceTest {
 
     @BeforeEach
     void setUp() {
-        service = new ThesaurusMaintenanceService(restoreThesaurusService, thesaurusPreferenceService);
+        service = new ThesaurusMaintenanceService(thesaurusMaintenanceLegacySupport, thesaurusPreferenceService);
         ReflectionTestUtils.setField(service, "workLanguage", "fr");
     }
 
@@ -42,16 +42,16 @@ class ThesaurusMaintenanceServiceTest {
 
     @Test
     void correctDisplayTopTerm_delegatesToRestoreService() {
-        when(restoreThesaurusService.correctDisplayTopTerm("TH1")).thenReturn(3);
+        when(thesaurusMaintenanceLegacySupport.correctDisplayTopTerm("TH1")).thenReturn(3);
 
         assertEquals(3, service.correctDisplayTopTerm("TH1"));
     }
 
     @Test
     void generateArkFromConceptId_trimsPrefix() {
-        when(restoreThesaurusService.generateArkFromConceptId("TH1", "ark", "12345", true)).thenReturn(5);
+        when(thesaurusMaintenanceLegacySupport.generateArkFromConceptId("TH1", "ark", "12345", true)).thenReturn(5);
 
         assertEquals(5, service.generateArkFromConceptId("TH1", " ark ", "12345", true));
-        verify(restoreThesaurusService).generateArkFromConceptId("TH1", "ark", "12345", true);
+        verify(thesaurusMaintenanceLegacySupport).generateArkFromConceptId("TH1", "ark", "12345", true);
     }
 }

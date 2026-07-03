@@ -22,9 +22,21 @@ public class ThesaurusCorpusService {
 
     @Transactional(readOnly = true)
     public List<ThesaurusCorpus> listCorpus(String thesaurusId) {
+        if (StringUtils.isBlank(thesaurusId)) {
+            return List.of();
+        }
         return corpusLinkJpaRepository.findAllByIdThesaurusOrderBySortAsc(thesaurusId).stream()
                 .map(SettingMapper::toCorpus)
                 .toList();
+    }
+
+    @Transactional(readOnly = true)
+    public boolean hasActiveCorpus(String thesaurusId) {
+        if (StringUtils.isBlank(thesaurusId)) {
+            return false;
+        }
+        return corpusLinkJpaRepository.findAllByIdThesaurusOrderBySortAsc(thesaurusId).stream()
+                .anyMatch(CorpusLinkEntity::isActive);
     }
 
     @Transactional

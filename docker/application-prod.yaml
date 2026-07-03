@@ -4,6 +4,7 @@
 
 server:
   port: 8099
+  max-http-header-size: 256KB
   forward-headers-strategy: native
   servlet:
     context-path: /

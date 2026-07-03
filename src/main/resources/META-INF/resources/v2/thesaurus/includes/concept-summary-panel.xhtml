@@ -1,0 +1,380 @@
+<ui:fragment xmlns="http://www.w3.org/1999/xhtml"
+             xmlns:h="http://xmlns.jcp.org/jsf/html"
+             xmlns:ui="http://xmlns.jcp.org/jsf/facelets"
+             xmlns:p="http://primefaces.org/ui"
+             xmlns:pe="http://primefaces.org/ui/extensions">
+
+  <h:panelGroup id="conceptSummaryPanel" rendered="#{v2ThesaurusBrowseBean.selectedConcept != null}">
+
+    <h:panelGroup rendered="#{v2ThesaurusBrowseBean.selectedConcept.deprecated}"
+                  style="background-color: #C63632; color: white; font-size: 12px; margin-bottom: 10px; padding: 8px 12px;">
+      #{v2LocaleBean.getMsg('rightbody.concept.concept_deprecated')}
+    </h:panelGroup>
+
+    <ui:include src="concept-breadcrumb-panel.xhtml"/>
+
+    <!-- Bloc 1 : libellé, synonymes, collections -->
+    <div class="card mb-4 py-3 border-left-success" style="margin: 20px;">
+      <div class="list-group" style="margin-top: -10px; margin-bottom: -10px;">
+
+        <div class="list-group-item list-group-item-action">
+          <div class="row" style="margin-left: 0;">
+            <div class="col-xl-3 col-lg-4 col-md-5 col-sm-5">
+              <h:outputText value="#{v2LocaleBean.getMsg('rightbody.concept.preferred_term')}"
+                            style="font-size: 14px; font-weight: bold; color: #8f8f8f;"/>
+            </div>
+            <div class="col-xl-9 col-lg-8 col-md-7 col-sm-7" style="margin-left: -6px;">
+              <h:outputText id="v2TextPrefLabel" rendered="#{not v2ThesaurusBrowseBean.selectedConcept.deprecated}"
+                            value="#{v2ThesaurusBrowseBean.selectedConcept.summary.preferredLabel}"
+                            style="font-size: 1.1rem; font-weight: bold; color: #666666;"/>
+              <h:outputText id="v2TextPrefLabelDep" rendered="#{v2ThesaurusBrowseBean.selectedConcept.deprecated}"
+                            value="#{v2ThesaurusBrowseBean.selectedConcept.summary.preferredLabel}"
+                            style="font-size: 1.1rem; font-weight: bold; color: #C63632; font-style: italic; text-decoration: line-through;"/>
+              <h:outputText value=" (#{v2ThesaurusBrowseBean.selectedConcept.summary.lang})" style="font-size: 1rem; font-weight: 300;"/>
+              <p:tag rendered="#{v2ThesaurusBrowseBean.conceptTypeBadgeVisible}"
+                     styleClass="mr-2"
+                     severity="warning"
+                     style="font-style: italic; margin-left: 5px; font-weight: 300;"
+                     rounded="true"
+                     value=" #{v2ThesaurusBrowseBean.conceptTypeLabel}"/>
+              <p:commandButton id="v2BtnCopyConcept" icon="fa-solid fa-copy"
+                               styleClass="rounded-button ui-button-flat"
+                               style="color: #f47b2a; background-color: transparent;"
+                               onclick="return false;"/>
+              <pe:clipboard trigger="v2BtnCopyConcept" action="copy"
+                            text="#{v2ThesaurusBrowseBean.preferredLabelForCopy}">
+                <p:ajax event="success" listener="#{clipboardFeedbackBean.onSuccess}" update="messageIndex"/>
+                <p:ajax event="error" listener="#{clipboardFeedbackBean.onError}" update="messageIndex"/>
+              </pe:clipboard>
+              <p:tooltip for="v2BtnCopyConcept" value="#{v2LocaleBean.getMsg('copy')}"/>
+              <p:commandButton id="v2BtnFocusInTree" icon="fas fa-sitemap"
+                               action="#{v2ThesaurusBrowseBean.focusConceptInTree()}"
+                               process="@this"
+                               update=":formLeftTab:tabTree"
+                               style="color:#f47b2a; background:none; border:none; box-shadow:none; margin-left:1px;"/>
+              <p:tooltip for="v2BtnFocusInTree" value="#{v2LocaleBean.getMsg('rightbody.concept.replace_in_tree')}"/>
+            </div>
+          </div>
+        </div>
+
+        <h:panelGroup rendered="#{v2ThesaurusBrowseBean.selectedConcept.deprecated}">
+          <ui:include src="concept-detail-relation-row.xhtml">
+            <ui:param name="rowLabel" value="#{v2LocaleBean.getMsg('rightbody.concept.replace_with')}"/>
+            <ui:param name="rowIcon" value=""/>
+            <ui:param name="relations" value="#{v2ThesaurusBrowseBean.selectedConcept.replacedBy}"/>
+          </ui:include>
+        </h:panelGroup>
+
+        <h:panelGroup rendered="#{not empty v2ThesaurusBrowseBean.selectedConcept.replaces}">
+          <ui:include src="concept-detail-relation-row.xhtml">
+            <ui:param name="rowLabel" value="#{v2LocaleBean.getMsg('rightbody.concept.replace')}"/>
+            <ui:param name="rowIcon" value=""/>
+            <ui:param name="relations" value="#{v2ThesaurusBrowseBean.selectedConcept.replaces}"/>
+            <ui:param name="deprecatedStyle" value="true"/>
+          </ui:include>
+        </h:panelGroup>
+
+        <div class="list-group-item list-group-item-action">
+          <div class="row" style="margin-left: 0;">
+            <div class="col-xl-3 col-lg-4 col-md-5 col-sm-5">
+              <h:outputText value="#{v2LocaleBean.getMsg('rightbody.concept.synonym')}"
+                            style="font-size: 14px; font-weight: bold; color: #8f8f8f;"/>
+            </div>
+            <div class="col-xl-8 col-lg-7 col-md-6 col-sm-6" style="margin-left: -10px;">
+              <h:panelGroup rendered="#{not v2ThesaurusBrowseBean.hasDisplayedSynonyms}">
+                <h:outputText value="....." style="font-size: 14px; color: grey; font-style: italic;"/>
+              </h:panelGroup>
+              <h:panelGroup rendered="#{v2ThesaurusBrowseBean.showAllSynonymLanguages}">
+                <ui:repeat value="#{v2ThesaurusBrowseBean.visibleSynonymLabels}" var="synonym" varStatus="status">
+                  <h:outputText value="(#{synonym.lang}) " style="font-size: 14px; font-weight: 300;"/>
+                  <h:outputText value="#{synonym.value}" style="font-size: 14px; color: #666666;"/>
+                  <h:outputText value=", " rendered="#{not status.last or not empty v2ThesaurusBrowseBean.hiddenSynonymLabels}" style="color: #FF7979;"/>
+                </ui:repeat>
+                <ui:repeat value="#{v2ThesaurusBrowseBean.hiddenSynonymLabels}" var="hiddenSynonym" varStatus="status">
+                  <h:outputText value="(#{hiddenSynonym.lang}) " style="font-size: 14px; font-weight: 300;"/>
+                  <h:outputText value="#{hiddenSynonym.value}" style="font-size: 14px; color: #FF7979; font-style: italic;"/>
+                  <h:outputText value=", " rendered="#{not status.last}" style="color: #FF7979;"/>
+                </ui:repeat>
+              </h:panelGroup>
+              <h:panelGroup rendered="#{not v2ThesaurusBrowseBean.showAllSynonymLanguages}">
+                <ui:repeat value="#{v2ThesaurusBrowseBean.visibleSynonymLabels}" var="synonym" varStatus="status">
+                  <h:outputText value="#{synonym.value}" style="font-size: 14px; color: #666666;"/>
+                  <h:outputText value=", " rendered="#{not status.last or not empty v2ThesaurusBrowseBean.hiddenSynonymLabels}" style="color: #FF7979;"/>
+                </ui:repeat>
+                <ui:repeat value="#{v2ThesaurusBrowseBean.hiddenSynonymLabels}" var="hiddenSynonym" varStatus="status">
+                  <h:outputText value="#{hiddenSynonym.value}" style="font-size: 14px; color: #FF7979; font-style: italic;"/>
+                  <h:outputText value=", " rendered="#{not status.last}" style="color: #FF7979;"/>
+                </ui:repeat>
+              </h:panelGroup>
+            </div>
+            <div class="col-xl-1 col-lg-1 col-md-1 col-sm-1" style="text-align: right;">
+              <p:inputSwitch id="v2SynonymLangSwitch" value="#{v2ThesaurusBrowseBean.showAllSynonymLanguages}" style="margin-top: 7px;">
+                <p:ajax listener="#{v2ThesaurusBrowseBean.onSynonymLanguageToggle()}"
+                        update=":formRightTab"/>
+              </p:inputSwitch>
+              <p:tooltip for="v2SynonymLangSwitch" value="#{v2LocaleBean.getMsg('concept.showEMOtherLang')}" showDelay="1000"/>
+            </div>
+          </div>
+        </div>
+
+        <ui:include src="concept-detail-relation-row.xhtml">
+          <ui:param name="rowLabel" value="#{v2LocaleBean.getMsg('leftbody.collection')}"/>
+          <ui:param name="rowIcon" value=""/>
+          <ui:param name="relations" value="#{v2ThesaurusBrowseBean.selectedConcept.collections}"/>
+          <ui:param name="relationLinkType" value="group"/>
+        </ui:include>
+
+        <h:panelGroup rendered="#{not empty v2ThesaurusBrowseBean.selectedConcept.facets}">
+          <ui:include src="concept-detail-relation-row.xhtml">
+            <ui:param name="rowLabel" value="#{v2LocaleBean.getMsg('leftbody.isPartOfFacets')}"/>
+            <ui:param name="rowIcon" value=""/>
+            <ui:param name="relations" value="#{v2ThesaurusBrowseBean.selectedConcept.facets}"/>
+            <ui:param name="relationLinkType" value="facet"/>
+          </ui:include>
+        </h:panelGroup>
+
+        <div class="list-group-item list-group-item-action">
+          <div class="row" style="margin-left: 0;">
+            <div class="col-xl-3 col-lg-4 col-md-5 col-sm-5">
+              <h:outputText value="#{v2LocaleBean.getMsg('rightbody.concept.branch_count')}"
+                            title="#{v2LocaleBean.getMsg('rightbody.concept.tootltip_branch_count')}"
+                            style="font-size: 14px; font-weight: bold; color: #8f8f8f;"/>
+            </div>
+            <div class="col-xl-9 col-lg-8 col-md-7 col-sm-7" style="margin-left: -10px;">
+              <p:commandLink actionListener="#{v2ThesaurusBrowseBean.countBranchConcepts()}"
+                             process="@this"
+                             update=":formRightTab"
+                             title="#{v2LocaleBean.getMsg('rightbody.concept.tootltip_branch_count')}">
+                <i class="fas fa-calculator" style="color: #F7A269; font-size: 14px;"/>
+              </p:commandLink>
+              <h:outputText rendered="#{v2ThesaurusBrowseBean.branchConceptCount != 0}"
+                            value=" #{v2ThesaurusBrowseBean.branchConceptCount} concept(s)"
+                            title="#{v2LocaleBean.getMsg('rightbody.concept.clic_branch_count')}"
+                            style="font-size: 14px; padding-left: 10px;"/>
+            </div>
+          </div>
+        </div>
+
+        <ui:include src="concept-detail-corpus-row.xhtml"/>
+
+      </div>
+    </div>
+
+    <!-- Bloc 2 : relations + traductions -->
+    <div class="card mb-4 py-3 border-left-success" style="margin: 20px;">
+      <div class="list-group" style="margin-top: -10px; margin-bottom: -10px;">
+        <ui:include src="concept-detail-relation-row.xhtml">
+          <ui:param name="rowLabel" value="#{v2LocaleBean.getMsg('rightbody.concept.broader')}"/>
+          <ui:param name="rowIcon" value="fas fa-level-up-alt"/>
+          <ui:param name="relations" value="#{v2ThesaurusBrowseBean.selectedConcept.broaderTerms}"/>
+        </ui:include>
+        <ui:include src="concept-detail-relation-row.xhtml">
+          <ui:param name="rowLabel" value="#{v2LocaleBean.getMsg('rightbody.concept.narrower')}"/>
+          <ui:param name="rowIcon" value="fas fa-level-down-alt"/>
+          <ui:param name="relations" value="#{v2ThesaurusBrowseBean.selectedConcept.narrowerTerms}"/>
+        </ui:include>
+        <h:panelGroup rendered="#{v2ThesaurusBrowseBean.haveMoreNarrowers}">
+          <div class="list-group-item list-group-item-action border-0 pt-0">
+            <div class="row" style="margin-left: 0;">
+              <div class="col-xl-3 col-lg-4 col-md-5 col-sm-5"/>
+              <div class="col-xl-1 col-lg-1 col-md-1 col-sm-1"/>
+              <div class="col-xl-8 col-lg-7 col-md-6 col-sm-6" style="margin-left: -10px;">
+                <p:commandLink value="..."
+                               action="#{v2ThesaurusBrowseBean.loadMoreNarrowers()}"
+                               process="@this"
+                               update=":formRightTab"
+                               style="color: #FF7979"
+                               styleClass="textOpentheso">
+                  <i class="fa-solid fa-forward" style="color:#f47b2a; font-size: 14px;"/>
+                </p:commandLink>
+              </div>
+            </div>
+          </div>
+        </h:panelGroup>
+        <ui:include src="concept-detail-relation-row.xhtml">
+          <ui:param name="rowLabel" value="#{v2LocaleBean.getMsg('rightbody.concept.related')}"/>
+          <ui:param name="rowIcon" value="fas fa-arrows-alt-h"/>
+          <ui:param name="relations" value="#{v2ThesaurusBrowseBean.selectedConcept.relatedTerms}"/>
+        </ui:include>
+
+        <ui:include src="concept-detail-custom-relations.xhtml"/>
+      </div>
+    </div>
+
+    <!-- Traductions (carte séparée, comme le legacy) -->
+    <div class="card mb-4 py-3 border-left-success" style="margin: 20px;">
+      <div class="list-group" style="margin-top: -10px; margin-bottom: -10px;">
+        <div class="list-group-item list-group-item-action">
+          <div class="row" style="margin-left: 0;">
+            <div class="col-xl-3 col-lg-4 col-md-5 col-sm-5">
+              <h:outputText value="#{v2LocaleBean.getMsg('rightbody.concept.traduction')}"
+                            style="font-size: 14px; font-weight: bold; color: #8f8f8f;"/>
+            </div>
+            <div class="col-xl-1 col-lg-1 col-md-1 col-sm-1" style="text-align: end;">
+              <i class="fa fa-language" style="color: #78261f; margin-right: 10px;"/>
+            </div>
+            <div class="col-xl-8 col-lg-7 col-md-6 col-sm-6" style="margin-left: -10px;">
+              <h:panelGroup rendered="#{empty v2ThesaurusBrowseBean.preferredTranslations}">
+                <h:outputText value="....." style="font-size: 14px; color: grey; font-style: italic;"/>
+              </h:panelGroup>
+              <ui:repeat value="#{v2ThesaurusBrowseBean.preferredTranslations}" var="translation">
+                <img src="#{v2ThesaurusBrowseBean.getFlagImageUrl(translation.codeFlag)}"
+                     width="20" height="15" style="margin-right: 7px;" alt="#{translation.lang}"/>
+                <p:commandLink value="#{translation.value} "
+                               title="#{v2ThesaurusBrowseBean.selectedConcept.summary.conceptId}"
+                               action="#{v2ThesaurusBrowseBean.openConceptInTranslationLanguage(translation.lang)}"
+                               process="@this"
+                               update=":formRightTab :formLeftTab:tabTree :containerIndex:thesoSelect"
+                               style="font-size: 14px;"/>
+                <h:outputText value=" (#{translation.lang})" style="font-size: 14px; font-weight: 300; margin-left: 5px;"/>
+                <br/>
+              </ui:repeat>
+            </div>
+          </div>
+        </div>
+      </div>
+    </div>
+
+    <!-- Bloc 3 : notes par type -->
+    <h:panelGroup rendered="#{v2ThesaurusBrowseBean.hasDisplayedNotes}">
+      <div class="card mb-4 py-3 border-left-success" style="margin: 20px;">
+        <div class="list-group" style="margin-top: -10px; margin-bottom: -10px;">
+          <div class="list-group-item list-group-item-action">
+            <div class="row" style="margin-left: 0;">
+              <div class="col-xl-10 col-lg-10 col-md-10 col-sm-10">
+                <h:outputText value="#{v2LocaleBean.getMsg('rightbody.concept.all_note')}"
+                              style="color: #78261f; font-size: 14px; font-weight: bold;"/>
+              </div>
+              <div class="col-xl-2 col-lg-2 col-md-2 col-sm-2" style="text-align: right;">
+                <p:inputSwitch id="v2NoteLangSwitch" value="#{v2ThesaurusBrowseBean.showAllNoteLanguages}">
+                  <p:ajax listener="#{v2ThesaurusBrowseBean.onNoteLanguageToggle()}"
+                          update=":formRightTab"/>
+                </p:inputSwitch>
+                <p:tooltip for="v2NoteLangSwitch" value="#{v2LocaleBean.getMsg('concept.showEMOtherLang')}" showDelay="1000"/>
+              </div>
+            </div>
+          </div>
+          <ui:include src="concept-detail-note-row.xhtml"><ui:param name="noteType" value="note"/><ui:param name="noteMessageKey" value="rightbody.concept.note"/></ui:include>
+          <ui:include src="concept-detail-note-row.xhtml"><ui:param name="noteType" value="changeNote"/><ui:param name="noteMessageKey" value="rightbody.concept.change_note"/></ui:include>
+          <ui:include src="concept-detail-note-row.xhtml"><ui:param name="noteType" value="definition"/><ui:param name="noteMessageKey" value="rightbody.concept.definition"/></ui:include>
+          <ui:include src="concept-detail-note-row.xhtml"><ui:param name="noteType" value="scopeNote"/><ui:param name="noteMessageKey" value="rightbody.concept.scope_note"/></ui:include>
+          <ui:include src="concept-detail-note-row.xhtml"><ui:param name="noteType" value="example"/><ui:param name="noteMessageKey" value="rightbody.concept.example_note"/></ui:include>
+          <h:panelGroup rendered="#{v2ThesaurusBrowseBean.editorialNoteVisible}">
+            <ui:include src="concept-detail-note-row.xhtml"><ui:param name="noteType" value="editorialNote"/><ui:param name="noteMessageKey" value="rightbody.concept.editorial_note"/></ui:include>
+          </h:panelGroup>
+          <h:panelGroup rendered="#{v2ThesaurusBrowseBean.historyNoteVisible}">
+            <ui:include src="concept-detail-note-row.xhtml"><ui:param name="noteType" value="historyNote"/><ui:param name="noteMessageKey" value="rightbody.concept.history_note"/></ui:include>
+          </h:panelGroup>
+        </div>
+      </div>
+    </h:panelGroup>
+
+    <!-- Bloc 5 : alignements + identifiants -->
+    <h:panelGroup rendered="#{v2ThesaurusBrowseBean.alignmentPanelVisible}">
+      <div class="card mb-4 py-3 border-left-success" style="margin: 20px;">
+        <div class="list-group" style="margin-top: -10px; margin-bottom: -10px;">
+          <div class="list-group-item list-group-item-action">
+            <h:outputText value="#{v2LocaleBean.getMsg('rightbody.concept.alignment')}"
+                          style="color: #78261f; font-size: 14px; font-weight: bold;"/>
+            <h:panelGroup rendered="#{v2ConceptAlignmentBean.managerActionsAvailable}" style="display: inline-block; margin-left: 8px;">
+              <p:menuButton icon="pi pi-cog" style="background: none; border: none; color: #000; box-shadow: none;">
+                <p:menuitem value="#{v2LocaleBean.getMsg('rightbody.concept.add_alignment_manual')}"
+                            actionListener="#{v2ConceptAlignmentBean.prepareManualAlignment()}"
+                            oncomplete="PF('v2AddManualAlignment').show();"
+                            update="v2AddManualAlignmentDlg" icon="fas fa-pen"/>
+                <p:menuitem value="#{v2LocaleBean.getMsg('rightbody.concept.add_alignment_auto')}"
+                            actionListener="#{v2ConceptAlignmentBean.prepareAutoAlignment()}"
+                            oncomplete="PF('v2AddAutoAlignment').show();"
+                            update="v2AddAutoAlignmentDlg" icon="fas fa-magic"/>
+              </p:menuButton>
+            </h:panelGroup>
+          </div>
+          <ui:repeat value="#{v2ThesaurusBrowseBean.selectedConcept.alignmentGroups}" var="group">
+            <h:panelGroup rendered="#{not empty group.items}">
+              <ui:repeat value="#{group.items}" var="alignment">
+                <div class="list-group-item list-group-item-action" style="margin-left: 20px;">
+                  <h:outputText value="#{v2LocaleBean.getMsg(group.messageKey)} : " style="font-size: 14px; color: #8f8f8f;"/>
+                  <i class="pi pi-link" style="margin-right: 5px; color: #f47b2a; font-size: 14px;"/>
+                  <h:outputLink value="#{alignment.uri}" target="_blank" rendered="#{alignment.urlAvailable}" style="font-size: 14px; color: #164A78;">
+                    #{alignment.uri}
+                  </h:outputLink>
+                  <h:outputText value="#{alignment.uri}" rendered="#{not alignment.urlAvailable}" style="font-size: 14px;"/>
+                  <h:outputText value=" (#{alignment.sourceName})" rendered="#{not empty alignment.sourceName}" style="font-size: 14px;"/>
+                  <h:panelGroup rendered="#{v2ConceptAlignmentBean.managerActionsAvailable}" style="display: inline-block; margin-left: 10px;">
+                    <p:menuButton icon="pi pi-cog" style="background: none; border: none; color: #666; box-shadow: none; font-size: 12px;">
+                      <p:menuitem value="#{v2LocaleBean.getMsg('rightbody.concept.edit_alignment')}"
+                                  actionListener="#{v2ConceptAlignmentBean.prepareEdit(alignment)}"
+                                  oncomplete="PF('v2EditAlignment').show();"
+                                  update="v2EditAlignmentDlg" icon="fas fa-edit"/>
+                      <p:menuitem value="#{v2LocaleBean.getMsg('rightbody.concept.delete_alignment')}"
+                                  actionListener="#{v2ConceptAlignmentBean.prepareDelete(alignment)}"
+                                  oncomplete="PF('v2DeleteAlignment').show();"
+                                  update="v2DeleteAlignmentDlg" icon="fas fa-minus"/>
+                    </p:menuButton>
+                  </h:panelGroup>
+                </div>
+              </ui:repeat>
+            </h:panelGroup>
+          </ui:repeat>
+        </div>
+      </div>
+    </h:panelGroup>
+
+    <ui:include src="concept-detail-media-panel.xhtml"/>
+
+    <ui:include src="concept-detail-identifiers-panel.xhtml"/>
+
+    <ui:include src="concept-skos-export-panel.xhtml"/>
+
+    <!-- Bloc 6 : dates -->
+    <div class="card mb-4 py-3 border-left-success" style="margin: 20px;">
+      <div class="list-group" style="margin-top: -10px; margin-bottom: -10px;">
+        <div class="list-group-item list-group-item-action">
+          <div class="row" style="margin-left:0;">
+            <div class="col-10">
+              <h:outputText value="#{v2LocaleBean.getMsg('rightbody.concept.created')}: " style="font-size: 12px; color: grey; font-style: italic;"/>
+              <h:outputText value="#{v2ThesaurusBrowseBean.selectedConcept.summary.created}" style="font-size: 12px; color: #43B572;"/>
+              <h:outputText value="  #{v2LocaleBean.getMsg('rightbody.concept.last_modification')}: " style="font-size: 12px; color: grey; font-style: italic; margin-left: 10px;"/>
+              <h:outputText value="#{v2ThesaurusBrowseBean.selectedConcept.summary.modified}" style="font-size: 12px; color: #43B572;"/>
+              <h:panelGroup rendered="#{v2ThesaurusBrowseBean.displayUserName and (not empty v2ThesaurusBrowseBean.selectedConcept.summary.creatorName or not empty v2ThesaurusBrowseBean.selectedConcept.contributors)}">
+                <br/>
+                <h:outputText rendered="#{not empty v2ThesaurusBrowseBean.selectedConcept.summary.creatorName}"
+                              value="#{v2LocaleBean.getMsg('rightbody.concept.createdBy')}: " style="font-size: 12px; color: grey; font-style: italic;"/>
+                <h:outputText rendered="#{not empty v2ThesaurusBrowseBean.selectedConcept.summary.creatorName}"
+                              value="#{v2ThesaurusBrowseBean.selectedConcept.summary.creatorName}" style="font-size: 12px; color: #43B572;"/>
+                <h:outputText rendered="#{not empty v2ThesaurusBrowseBean.selectedConcept.contributors}"
+                              value="#{v2LocaleBean.getMsg('concept.contributors')}: " style="font-size: 12px; color: grey; font-style: italic; margin-left: 10px;"/>
+                <h:outputText rendered="#{not empty v2ThesaurusBrowseBean.selectedConcept.contributors}"
+                              value="#{v2ThesaurusBrowseBean.selectedConcept.contributors}" style="font-size: 12px; color: #43B572;"/>
+              </h:panelGroup>
+            </div>
+            <div class="col-2" style="text-align:right;">
+              <p:commandButton icon="fa fa-history" styleClass="rounded-button ui-button-outlined"
+                               actionListener="#{v2ThesaurusBrowseBean.openConceptHistory()}"
+                               update="v2HistoricalView"
+                               oncomplete="PF('v2HistoricalView').show();"
+                               style="margin-right:10px; height:2rem; width:2rem; color:#43B572;"
+                               title="#{v2LocaleBean.getMsg('rightbody.concept.view_change_history')}"
+                               rendered="#{not empty v2ThesaurusBrowseBean.selectedConcept.preferredTermId}"/>
+            </div>
+          </div>
+        </div>
+      </div>
+    </div>
+
+    <ui:include src="concept-history-dialog.xhtml"/>
+
+    <h:panelGroup rendered="#{v2ThesaurusBrowseBean.propositionAuthorized}">
+      <div class="col-12" style="text-align: right; padding: 20px;">
+        <p:commandButton icon="pi pi-send" value="#{v2LocaleBean.getMsg('rightbody.suggestImprovement')}"
+                         styleClass="ui-button-success" process="@this"
+                         actionListener="#{v2PropositionSubmitBean.prepare()}"
+                         update="v2SuggestImprovementDlg"
+                         oncomplete="PF('v2SuggestImprovement').show();"/>
+      </div>
+    </h:panelGroup>
+
+    <ui:include src="dialogs/proposition-submit-dialog.xhtml"/>
+
+  </h:panelGroup>
+</ui:fragment>

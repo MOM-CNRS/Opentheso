@@ -3,7 +3,7 @@
              xmlns:h="http://xmlns.jcp.org/jsf/html"
              xmlns:p="http://primefaces.org/ui">
 
-    <p:dialog id="idProcessCandidateList" header="#{langueBean.getMsg('candidat.submitList')}" widgetVar="processCandidateList" 
+    <p:dialog id="idProcessCandidateList" header="#{v2LocaleBean.getMsg('candidat.submitList')}" widgetVar="processCandidateList" 
               modal="true" resizable="true" position="top" width="650"  style="margin-top: 50px;" > 
 
         <h:form id="processCandidateListForm">
@@ -22,17 +22,17 @@
             </div>
             <p:spacer height="20px;"/>
             <div style="width: 100%; text-align: right; margin-top: 5px; margin-bottom: 5px;">
-                <p:commandButton value="#{langueBean.getMsg('candidat.close')}" styleClass="ui-button-secondary button" icon="fas fa-undo-alt" 
+                <p:commandButton value="#{v2LocaleBean.getMsg('candidat.close')}" styleClass="ui-button-secondary button" icon="fas fa-undo-alt" 
                                  style="margin-right: 10px" process="@this"
                                  actionListener="PF('processCandidateList').hide();" update="idProcessCandidateList"/>
 
-                <p:commandButton value="#{langueBean.getMsg('reject')}" class="ui-button-danger-private" icon="pi pi-trash"
+                <p:commandButton value="#{v2LocaleBean.getMsg('reject')}" class="ui-button-danger-private" icon="pi pi-trash"
                                  style="margin-right: 10px"
                                  update="processCandidateListForm tabViewCandidat messageIndex" 
                                  oncomplete="PF('processCandidateList').hide();" process="@this"
                                  actionListener="#{v2ProcessCandidateBean.rejectCandidatList()}"  />
 
-                <p:commandButton value="#{langueBean.getMsg('insert')}" styleClass="ui-button-success" icon="pi pi-check"
+                <p:commandButton value="#{v2LocaleBean.getMsg('insert')}" styleClass="ui-button-success" icon="pi pi-check"
                                  update="processCandidateListForm tabViewCandidat messageIndex" 
                                  oncomplete="PF('processCandidateList').hide();" process="@this" 
                                  actionListener="#{v2ProcessCandidateBean.insertListCandidat(currentUser.nodeUser.idUser, roleOnThesaurus.nodePreference)}" />

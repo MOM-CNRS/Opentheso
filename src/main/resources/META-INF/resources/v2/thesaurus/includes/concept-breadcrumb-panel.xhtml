@@ -1,0 +1,47 @@
+<ui:fragment xmlns="http://www.w3.org/1999/xhtml"
+             xmlns:h="http://xmlns.jcp.org/jsf/html"
+             xmlns:ui="http://xmlns.jcp.org/jsf/facelets"
+             xmlns:p="http://primefaces.org/ui">
+
+  <h:panelGroup rendered="#{v2ThesaurusBrowseBean.breadcrumbEnabled and not empty v2ThesaurusBrowseBean.selectedConcept.breadcrumbPaths}"
+                style="width:100%; display:flex; background-color:#ecf8f1; padding:6px 8px; margin-bottom:10px;">
+    <p:commandLink rendered="#{v2ThesaurusBrowseBean.thesaurusHome != null}"
+                   action="#{v2ThesaurusBrowseBean.openThesaurusHome()}"
+                   process="@this"
+                   update=":formRightTab"
+                   style="color:#164A78; background:none; border:none; box-shadow:none; font-size:13px; margin-right:4px;"
+                   title="#{v2LocaleBean.getMsg('home.permalink')}">
+      <i class="fas fa-home" style="color:#f47b2a; font-size:15px;"/>
+    </p:commandLink>
+
+    <ui:repeat value="#{v2ThesaurusBrowseBean.selectedConcept.breadcrumbPaths}" var="path" varStatus="pathStatus">
+      <ui:repeat value="#{path}" var="step" varStatus="stepStatus">
+        <h:panelGroup rendered="#{step.startOfPath and not pathStatus.first}">
+          <br/>
+        </h:panelGroup>
+        <h:panelGroup rendered="#{step.startOfPath and pathStatus.first}">
+          <h:outputText value=" " rendered="#{v2ThesaurusBrowseBean.thesaurusHome != null}"/>
+        </h:panelGroup>
+
+        <h:panelGroup rendered="#{not stepStatus.last or step.startOfPath}">
+          <p:commandLink value="#{step.startOfPath ? ' '.concat(step.label) : step.label}"
+                         action="#{v2ThesaurusBrowseBean.openConcept(step.conceptId)}"
+                         process="@this"
+                         update=":formRightTab :formLeftTab:tabTree"
+                         style="color:#164A78; background:none; border:none; box-shadow:none; font-size:13px;"
+                         title="#{step.conceptId}"/>
+          <h:outputText rendered="#{not stepStatus.last}" value=" &gt; " style="font-size:13px; font-weight:bold;"/>
+        </h:panelGroup>
+
+        <h:panelGroup rendered="#{stepStatus.last and not step.startOfPath}">
+          <h:outputText rendered="#{not empty v2ThesaurusBrowseBean.selectedConcept.summary.preferredLabel}"
+                        value=" #{v2ThesaurusBrowseBean.selectedConcept.summary.preferredLabel}"
+                        style="font-size:13px;"/>
+          <h:outputText rendered="#{empty v2ThesaurusBrowseBean.selectedConcept.summary.preferredLabel}"
+                        value=" (#{v2ThesaurusBrowseBean.selectedConcept.summary.conceptId})"
+                        style="font-size:13px;"/>
+        </h:panelGroup>
+      </ui:repeat>
+    </ui:repeat>
+  </h:panelGroup>
+</ui:fragment>

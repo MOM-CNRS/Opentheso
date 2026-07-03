@@ -1,0 +1,65 @@
+<ui:fragment xmlns="http://www.w3.org/1999/xhtml"
+             xmlns:h="http://xmlns.jcp.org/jsf/html"
+             xmlns:ui="http://xmlns.jcp.org/jsf/facelets"
+             xmlns:f="http://xmlns.jcp.org/jsf/core"
+             xmlns:p="http://primefaces.org/ui">
+
+    <p:tree id="#{treeId}"
+            value="#{treeRoot}"
+            var="nodetree"
+            dynamic="true"
+            cache="#{v2ThesaurusBrowseBean.treeCacheEnabled}"
+            selectionMode="single"
+            selection="#{v2ThesaurusBrowseBean.selectedNode}"
+            style="width:auto; border:none; min-height:925px; max-height:925px; overflow:auto; font-size:12px;">
+        <f:attribute name="treeMode" value="#{treeMode}"/>
+        <p:ajax event="expand" listener="#{v2ThesaurusBrowseBean.onNodeExpand}" process="@this"/>
+        <p:ajax event="select"
+                listener="#{v2ThesaurusBrowseBean.onNodeSelect}"
+                process="@this"
+                update=":formRightTab :formLeftTab:tabTree :messageIndex"
+                global="true"/>
+
+        <p:treeNode expandedIcon="pi pi-folder-open"
+                    collapsedIcon="pi pi-folder">
+            <h:outputText value="#{nodetree.notation} "
+                          style="color:blue; font-size:12px;"
+                          rendered="#{not empty nodetree.notation}"/>
+            <h:outputText value="#{nodetree.label}" style="font-size:12px;"/>
+        </p:treeNode>
+
+        <p:treeNode type="concept"
+                    expandedIcon="pi pi-folder-open pi_custom_open"
+                    collapsedIcon="pi pi-folder pi_custom_collapse">
+            <h:outputText value="#{nodetree.notation} "
+                          style="color:blue; font-size:12px;"
+                          rendered="#{not empty nodetree.notation}"/>
+            <h:outputText value="#{nodetree.label}" style="font-size:12px;"/>
+        </p:treeNode>
+
+        <p:treeNode type="file"
+                    icon="pi pi-file pi_custom_file">
+            <h:outputText value="#{nodetree.notation} "
+                          style="color:blue; font-size:12px;"
+                          rendered="#{not empty nodetree.notation}"/>
+            <h:outputText value="#{nodetree.label}" style="font-size:12px;"/>
+        </p:treeNode>
+
+        <p:treeNode type="facet"
+                    icon="fa fa-magnet fa_custom_magnet">
+            <h:outputText value="#{nodetree.notation} "
+                          style="color:blue; font-size:12px;"
+                          rendered="#{not empty nodetree.notation}"/>
+            <h:outputText value="#{nodetree.label}" style="font-size:12px;"/>
+        </p:treeNode>
+
+        <p:treeNode type="deprecated"
+                    icon="fa fa-solid fa-ban fa_custom_ban">
+            <h:outputText value="#{nodetree.notation} "
+                          style="color:blue; font-size:12px;"
+                          rendered="#{not empty nodetree.notation}"/>
+            <h:outputText value="#{nodetree.label}"
+                          style="font-size:12px; color:#C63632; font-weight:bold; font-style:italic;"/>
+        </p:treeNode>
+    </p:tree>
+</ui:fragment>

@@ -1,13 +1,12 @@
 package fr.cnrs.opentheso.v2.toolbox.ui;
 
-import fr.cnrs.opentheso.bean.language.LanguageBean;
-import fr.cnrs.opentheso.bean.menu.theso.SelectedTheso;
-import fr.cnrs.opentheso.bean.menu.users.CurrentUser;
 import fr.cnrs.opentheso.utils.MessageUtils;
 import fr.cnrs.opentheso.v2.setting.ui.ThesaurusContext;
 import fr.cnrs.opentheso.v2.shared.ui.UserSession;
+import fr.cnrs.opentheso.v2.shared.ui.V2LocaleBean;
 import fr.cnrs.opentheso.v2.toolbox.exception.InvalidToolboxDataException;
 import fr.cnrs.opentheso.v2.toolbox.model.EditionThesaurusSummary;
+import fr.cnrs.opentheso.v2.toolbox.export.ui.ThesaurusExportBean;
 import fr.cnrs.opentheso.v2.toolbox.model.EditionView;
 import fr.cnrs.opentheso.v2.toolbox.policy.ToolboxAccessPolicy;
 import fr.cnrs.opentheso.v2.toolbox.service.EditionThesaurusService;
@@ -33,10 +32,8 @@ import java.util.List;
 public class EditionBean implements Serializable {
 
     private final UserSession userSession;
-    private final CurrentUser currentUser;
     private final ThesaurusContext thesaurusContext;
-    private final SelectedTheso selectedTheso;
-    private final LanguageBean languageBean;
+    private final V2LocaleBean localeBean;
     private final EditionThesaurusService editionThesaurusService;
 
     private EditionView currentView = EditionView.LIST;
@@ -49,27 +46,26 @@ public class EditionBean implements Serializable {
 
     private final NewThesaurusBean newThesaurusBean;
     private final ModifyThesaurusBean modifyThesaurusBean;
+    private final ThesaurusExportBean thesaurusExportBean;
 
     private EditionThesaurusSummary selectedThesaurusForAction;
 
     public EditionBean(
             UserSession userSession,
-            CurrentUser currentUser,
             ThesaurusContext thesaurusContext,
-            SelectedTheso selectedTheso,
-            LanguageBean languageBean,
+            V2LocaleBean localeBean,
             EditionThesaurusService editionThesaurusService,
             NewThesaurusBean newThesaurusBean,
-            ModifyThesaurusBean modifyThesaurusBean
+            ModifyThesaurusBean modifyThesaurusBean,
+            ThesaurusExportBean thesaurusExportBean
     ) {
         this.userSession = userSession;
-        this.currentUser = currentUser;
         this.thesaurusContext = thesaurusContext;
-        this.selectedTheso = selectedTheso;
-        this.languageBean = languageBean;
+        this.localeBean = localeBean;
         this.editionThesaurusService = editionThesaurusService;
         this.newThesaurusBean = newThesaurusBean;
         this.modifyThesaurusBean = modifyThesaurusBean;
+        this.thesaurusExportBean = thesaurusExportBean;
     }
 
     public void load() {
@@ -123,6 +119,10 @@ public class EditionBean implements Serializable {
                 || currentView == EditionView.EXPORT_CSV_STRUCTURE;
     }
 
+    public boolean isExportSkosView() {
+        return currentView == EditionView.EXPORT_SKOS;
+    }
+
     public void showList() {
         resetToListView();
         if (canAccessScreen()) {
@@ -162,11 +162,13 @@ public class EditionBean implements Serializable {
     public void showExport(EditionThesaurusSummary thesaurus, EditionView exportView) {
         selectedThesaurusForAction = thesaurus;
         currentView = exportView;
+        if (exportView == EditionView.EXPORT_SKOS && thesaurus != null) {
+            thesaurusExportBean.init(thesaurus.id(), thesaurus.title());
+        }
     }
 
     public void showExport(EditionThesaurusSummary thesaurus, String exportViewName) {
-        selectedThesaurusForAction = thesaurus;
-        currentView = EditionView.valueOf(exportViewName);
+        showExport(thesaurus, EditionView.valueOf(exportViewName));
     }
 
     public void prepareDelete(EditionThesaurusSummary thesaurus) {
@@ -181,8 +183,8 @@ public class EditionBean implements Serializable {
         }
         try {
             editionThesaurusService.deleteThesaurus(thesaurusIdToDelete, deletePerennialIdentifiers);
-            if (thesaurusIdToDelete.equalsIgnoreCase(selectedTheso.getCurrentIdTheso())) {
-                clearCurrentThesaurusSelection();
+            if (thesaurusContext.matchesCurrentThesaurus(thesaurusIdToDelete)) {
+                thesaurusContext.clearSelection();
             }
             thesaurusIdToDelete = null;
             thesaurusTitleToDelete = null;
@@ -199,26 +201,12 @@ public class EditionBean implements Serializable {
         var stats = editionThesaurusService.loadStatistics(thesaurus.id());
         var message = new FacesMessage(
                 FacesMessage.SEVERITY_INFO,
-                languageBean.getMsg("info"),
-                languageBean.getMsg("candidat.total_concepts") + " = " + stats.conceptCount() + "\n"
-                        + languageBean.getMsg("candidat.titre") + " = " + stats.candidateCount() + "\n"
-                        + languageBean.getMsg("search.deprecated") + " = " + stats.deprecatedCount()
+                localeBean.getMsg("info"),
+                localeBean.getMsg("candidat.total_concepts") + " = " + stats.conceptCount() + "\n"
+                        + localeBean.getMsg("candidat.titre") + " = " + stats.candidateCount() + "\n"
+                        + localeBean.getMsg("search.deprecated") + " = " + stats.deprecatedCount()
         );
         FacesContext.getCurrentInstance().addMessage(null, message);
-    }
-
-    private void clearCurrentThesaurusSelection() {
-        selectedTheso.setSelectedIdTheso("");
-        selectedTheso.setSelectedLang(null);
-        selectedTheso.setProjectIdSelected("-1");
-        selectedTheso.setSelectedProject();
-        thesaurusContext.setCurrentThesaurusId(null);
-        thesaurusContext.setCurrentThesaurusTitle(null);
-        try {
-            selectedTheso.setSelectedTheso();
-        } catch (java.io.IOException e) {
-            log.warn("Réinitialisation du thésaurus sélectionné impossible après suppression", e);
-        }
     }
 
     private void navigateIfCanCreate(EditionView view) {

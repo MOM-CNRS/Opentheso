@@ -3,12 +3,12 @@
       xmlns:h="http://xmlns.jcp.org/jsf/html"
       xmlns:p="http://primefaces.org/ui">
 
-<p:dialog id="idV2NewProject" header="#{langueBean.getMsg('profile.create_new_project')}" widgetVar="v2NewProject"
+<p:dialog id="idV2NewProject" header="#{v2LocaleBean.getMsg('profile.create_new_project')}" widgetVar="v2NewProject"
           modal="true" resizable="false" width="450">
     <h:form id="v2NewProjectForm">
         <div class="row" style="margin-top: 10px">
             <div class="col-4">
-                <h:outputText value="#{langueBean.getMsg('profile.name')} : "/>
+                <h:outputText value="#{v2LocaleBean.getMsg('profile.name')} : "/>
             </div>
             <div class="col-8">
                 <p:inputText value="#{v2MyProjectsBean.newProjectName}" style="width: 100%"/>
@@ -16,7 +16,7 @@
         </div>
         <div class="row" style="margin-top: 15px">
             <div class="col-12" style="text-align: right">
-                <p:commandButton value="#{langueBean.getMsg('apply')}"
+                <p:commandButton value="#{v2LocaleBean.getMsg('apply')}"
                                  action="#{v2MyProjectsBean.createProject()}"
                                  process="@form" update="containerIndex idV2NewProject"/>
             </div>

@@ -1,6 +1,6 @@
 package fr.cnrs.opentheso.v2.toolbox.service;
 
-import fr.cnrs.opentheso.services.RestoreThesaurusService;
+import fr.cnrs.opentheso.v2.toolbox.session.ThesaurusMaintenanceLegacySupport;
 import fr.cnrs.opentheso.v2.setting.model.ThesaurusPreferences;
 import fr.cnrs.opentheso.v2.setting.service.ThesaurusPreferenceService;
 import fr.cnrs.opentheso.v2.toolbox.model.LocalArkSettings;
@@ -14,7 +14,7 @@ import org.springframework.transaction.annotation.Transactional;
 @RequiredArgsConstructor
 public class ThesaurusMaintenanceService {
 
-    private final RestoreThesaurusService restoreThesaurusService;
+    private final ThesaurusMaintenanceLegacySupport thesaurusMaintenanceLegacySupport;
     private final ThesaurusPreferenceService thesaurusPreferenceService;
 
     @Value("${settings.workLanguage:fr}")
@@ -32,27 +32,27 @@ public class ThesaurusMaintenanceService {
 
     @Transactional
     public int correctDisplayTopTerm(String thesaurusId) {
-        return restoreThesaurusService.correctDisplayTopTerm(thesaurusId);
+        return thesaurusMaintenanceLegacySupport.correctDisplayTopTerm(thesaurusId);
     }
 
     @Transactional
     public void reorganizeHierarchy(String thesaurusId) {
-        restoreThesaurusService.reorganizing(thesaurusId);
+        thesaurusMaintenanceLegacySupport.reorganizeHierarchy(thesaurusId);
     }
 
     @Transactional
     public void reorganizeConceptsAndCollections(String thesaurusId) {
-        restoreThesaurusService.reorganizeConceptsAndCollections(thesaurusId);
+        thesaurusMaintenanceLegacySupport.reorganizeConceptsAndCollections(thesaurusId);
     }
 
     @Transactional
     public void switchRolesFromTermToConcept(String thesaurusId) {
-        restoreThesaurusService.switchRolesFromTermToConcept(thesaurusId, workLanguage);
+        thesaurusMaintenanceLegacySupport.switchRolesFromTermToConcept(thesaurusId, workLanguage);
     }
 
     @Transactional
     public int generateArkFromConceptId(String thesaurusId, String prefix, String naan, boolean overwrite) {
-        return restoreThesaurusService.generateArkFromConceptId(
+        return thesaurusMaintenanceLegacySupport.generateArkFromConceptId(
                 thesaurusId,
                 StringUtils.trimToEmpty(prefix),
                 naan,
@@ -62,11 +62,11 @@ public class ThesaurusMaintenanceService {
 
     @Transactional
     public int generateLocalArk(String thesaurusId, boolean overwrite) {
-        return restoreThesaurusService.generateArkLacal(thesaurusId, overwrite);
+        return thesaurusMaintenanceLegacySupport.generateLocalArk(thesaurusId, overwrite);
     }
 
     @Transactional
     public void generateSitemap(String thesaurusId) {
-        restoreThesaurusService.generateSitemap(thesaurusId);
+        thesaurusMaintenanceLegacySupport.generateSitemap(thesaurusId);
     }
 }

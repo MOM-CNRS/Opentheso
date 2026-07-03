@@ -6,6 +6,7 @@
       xmlns:p="http://primefaces.org/ui">
 
 <f:metadata>
+    <f:viewAction action="#{v2ConsultationShellBean.load()}"/>
     <f:viewAction action="#{v2MyAccountBean.load()}"/>
 </f:metadata>
 
@@ -27,22 +28,22 @@
 
     <p:growl id="messageIndex" globalOnly="true" showDetail="true"/>
 
-    <h:panelGroup rendered="#{menuBean.checkIfUserIsConnected()}" id="wrapper" style="height: 100%">
+    <h:panelGroup rendered="#{v2UserSession.isLoggedIn()}" id="wrapper" style="height: 100%">
 
-        <ui:include src="../../commun/menu.xhtml"/>
+        <ui:include src="../thesaurus/includes/layout/menu.xhtml"/>
 
         <div id="content-wrapper" style="min-height:100%; position:relative;">
 
             <h:form id="containerIndex">
                 <h:panelGroup id="header">
-                    <ui:include src="../../commun/header.xhtml"/>
+                    <ui:include src="../thesaurus/includes/layout/header.xhtml"/>
                 </h:panelGroup>
 
                 <div class="container-fluid" style="padding-bottom: 70px">
 
                     <div class="d-sm-flex align-items-center justify-content-between mb-4" style="margin: 20px">
-                        <h1 class="h3 mb-0 text-gray-800">#{langueBean.getMsg('menu.profile')} / <span
-                                style="color: #f47b2a">#{langueBean.getMsg('profile.my_account')}</span></h1>
+                        <h1 class="h3 mb-0 text-gray-800">#{v2LocaleBean.getMsg('menu.profile')} / <span
+                                style="color: #f47b2a">#{v2LocaleBean.getMsg('profile.my_account')}</span></h1>
                     </div>
 
                     <h:panelGroup rendered="#{v2MyAccountBean.profile != null}">
@@ -55,14 +56,14 @@
                                         <div class="list-group-item list-group-item-action">
                                             <div class="row" style="padding: 3px;">
                                                 <div class="col-3" style="text-align: right; margin-top: 4px;">
-                                                    <h:outputText value=" #{langueBean.getMsg('profile.user')}"
-                                                                  title="#{langueBean.getMsg('profile.tootltip_user')}"
+                                                    <h:outputText value=" #{v2LocaleBean.getMsg('profile.user')}"
+                                                                  title="#{v2LocaleBean.getMsg('profile.tootltip_user')}"
                                                                   style="font-size: 14px; font-weight: bold;"/>
                                                 </div>
 
                                                 <div class="col-8">
                                                     <p:inputText value="#{v2MyAccountBean.editableUsername}"
-                                                                 title="#{langueBean.getMsg('profile.tootltip_user')}"
+                                                                 title="#{v2LocaleBean.getMsg('profile.tootltip_user')}"
                                                                  style="width: 100%; height: 100%"/>
                                                 </div>
 
@@ -84,7 +85,7 @@
 
                                             <div class="row" style="padding: 3px;">
                                                 <div class="col-3" style="text-align: right; margin-top: 4px;">
-                                                    <h:outputText value="#{langueBean.getMsg('profile.password')}"
+                                                    <h:outputText value="#{v2LocaleBean.getMsg('profile.password')}"
                                                                   style="font-size: 14px; font-weight: bold;"/>
                                                 </div>
                                                 <div class="col-8">
@@ -109,7 +110,7 @@
                                         <div class="list-group-item list-group-item-action">
                                             <div class="row" style="padding: 3px;">
                                                 <div class="col-3" style="text-align: right; margin-top: 4px;">
-                                                    <h:outputText value="#{langueBean.getMsg('profile.email')}"
+                                                    <h:outputText value="#{v2LocaleBean.getMsg('profile.email')}"
                                                                   style="font-size: 14px; font-weight: bold;"/>
                                                 </div>
 
@@ -129,7 +130,7 @@
                                         <div class="list-group-item list-group-item-action">
                                             <div class="row" style="padding: 3px;">
                                                 <div class="col-3" style="text-align: right; margin-top: 7px;">
-                                                    <h:outputText value="#{langueBean.getMsg('profile.alert_by_email')}"
+                                                    <h:outputText value="#{v2LocaleBean.getMsg('profile.alert_by_email')}"
                                                                   style="font-size: 14px; font-weight: bold;"/>
                                                 </div>
 
@@ -153,7 +154,7 @@
                                         <div class="list-group-item list-group-item-action">
                                             <div class="row" style="margin-left: 10px; ">
                                                 <div class="col-11">
-                                                    <h:outputText value="#{langueBean.getMsg('profile.list_user_roles')}"
+                                                    <h:outputText value="#{v2LocaleBean.getMsg('profile.list_user_roles')}"
                                                                   style="font-size: 12px;"/>
                                                 </div>
                                             </div>
@@ -167,7 +168,7 @@
                                                                      scrollable="true" resizableColumns="true"
                                                                      scrollHeight="450" lazy="false">
                                                             <p:column width="40%"
-                                                                      headerText="#{langueBean.getMsg('profile.project')}">
+                                                                      headerText="#{v2LocaleBean.getMsg('profile.project')}">
                                                                 <h:outputText value="#{projectRole.projectName}"
                                                                               style="font-size: 12px;"/>
                                                             </p:column>
@@ -178,13 +179,13 @@
                                                                              scrollable="true" resizableColumns="true"
                                                                              scrollHeight="450" lazy="false">
                                                                     <p:column width="70%"
-                                                                              headerText="#{langueBean.getMsg('menu.thesaurus')}">
+                                                                              headerText="#{v2LocaleBean.getMsg('menu.thesaurus')}">
                                                                         <h:outputText
                                                                                 value="#{thesoRole.thesaurusName} (#{thesoRole.thesaurusId})"
                                                                                 style="font-size: 12px;"/>
                                                                     </p:column>
                                                                     <p:column width="30%"
-                                                                              headerText="#{langueBean.getMsg('profile.role')}">
+                                                                              headerText="#{v2LocaleBean.getMsg('profile.role')}">
                                                                         <h:outputText value="#{thesoRole.roleName}"
                                                                                       style="font-size: 12px;"/>
                                                                     </p:column>
@@ -211,7 +212,7 @@
                                     <div class="list-group-item list-group-item-action">
                                         <div class="row" style="padding: 3px;">
                                             <div class="col-3" style="text-align: right; margin-top: 4px;">
-                                                <h:outputText value="#{langueBean.getMsg('profile.apiKey')}"
+                                                <h:outputText value="#{v2LocaleBean.getMsg('profile.apiKey')}"
                                                               style="font-size: 14px; font-weight: bold;"/>
                                             </div>
 
@@ -223,28 +224,28 @@
 
                                                 <p:inputText
                                                         rendered="#{!v2MyAccountBean.apiKeySectionVisible}"
-                                                        value="#{langueBean.getMsg('profile.noApiKeyMessage')}"
+                                                        value="#{v2LocaleBean.getMsg('profile.noApiKeyMessage')}"
                                                         style="width: 100%; height: 100%" readonly="true"/>
                                             </div>
 
                                             <h:panelGroup rendered="#{v2MyAccountBean.apiKeySectionVisible}">
                                                 <div class="col-2 align-self-center">
                                                     <h:outputText rendered="#{v2MyAccountBean.keyNeverExpire}"
-                                                                  value="#{langueBean.getMsg('profile.noApiKeyExpireDate')}"
+                                                                  value="#{v2LocaleBean.getMsg('profile.noApiKeyExpireDate')}"
                                                                   style="font-size: 16px; font-style: italic;"/>
                                                     <h:outputText
                                                             rendered="#{!v2MyAccountBean.keyNeverExpire and !v2MyAccountBean.keyExpired}"
-                                                            value="#{langueBean.getMsg('profile.apiKeyExpire')} #{v2MyAccountBean.keyExpiresAt}"
+                                                            value="#{v2LocaleBean.getMsg('profile.apiKeyExpire')} #{v2MyAccountBean.keyExpiresAt}"
                                                             style="font-size: 16px; font-style: italic;"/>
                                                     <h:outputText rendered="#{v2MyAccountBean.keyExpired}"
-                                                                  value="#{langueBean.getMsg('profile.apiKeyExpired')}"
+                                                                  value="#{v2LocaleBean.getMsg('profile.apiKeyExpired')}"
                                                                   style="font-size: 16px; font-style: italic;"/>
                                                 </div>
 
                                                 <div class="col-1" style="vertical-align: central; margin-top: 3px">
                                                     <p:commandButton action="#{v2MyAccountBean.regenerateApiKey()}"
                                                                      update="containerIndex messageIndex"
-                                                                     value="#{langueBean.getMsg('profile.regenerateApiKey')}"
+                                                                     value="#{v2LocaleBean.getMsg('profile.regenerateApiKey')}"
                                                                      disabled="#{v2MyAccountBean.keyExpired}"/>
                                                 </div>
                                             </h:panelGroup>
@@ -254,7 +255,7 @@
                                             <div class="row" style="padding: 3px;">
                                                 <div class="col-3"></div>
                                                 <p:staticMessage severity="info"
-                                                                 detail="#{langueBean.getMsg('profile.apiKeyCopyMessage')}"
+                                                                 detail="#{v2LocaleBean.getMsg('profile.apiKeyCopyMessage')}"
                                                                  class="col-auto " style="margin-top: 4px;"/>
                                             </div>
 
@@ -262,7 +263,7 @@
                                                 <div class="col-3"></div>
                                                 <p:staticMessage rendered="#{!v2MyAccountBean.keyNeverExpire}"
                                                                  severity="warn"
-                                                                 detail="#{langueBean.getMsg('profile.apiKeyWarningMessage')}"
+                                                                 detail="#{v2LocaleBean.getMsg('profile.apiKeyWarningMessage')}"
                                                                  class="col-auto " style="margin-top: 4px;"/>
                                             </div>
                                         </h:panelGroup>
@@ -275,7 +276,7 @@
                                 <p:commandLink actionListener="#{menuBean.redirectToMyProfilePage()}"
                                                process="@this"
                                                style="font-size: 13px;">
-                                    ← #{langueBean.getMsg('profile.my_account')} (version actuelle)
+                                    ← #{v2LocaleBean.getMsg('profile.my_account')} (version actuelle)
                                 </p:commandLink>
                             </div>
                         </div>
@@ -283,15 +284,17 @@
 
                     <h:panelGroup rendered="#{v2MyAccountBean.profile == null}">
                         <p:staticMessage severity="warn" styleClass="col-12" style="margin: 30px;"
-                                         summary="#{langueBean.getMsg('profile.profileUnavailableSummary')}"
-                                         detail="#{langueBean.getMsg('profile.profileUnavailableDetail')}"/>
+                                         summary="#{v2LocaleBean.getMsg('profile.profileUnavailableSummary')}"
+                                         detail="#{v2LocaleBean.getMsg('profile.profileUnavailableDetail')}"/>
                     </h:panelGroup>
 
                 </div>
-                <ui:include src="../../commun/footer.xhtml"/>
+                <ui:include src="../thesaurus/includes/layout/footer.xhtml"/>
                 <input type="hidden" name="csrfToken" value="#{sessionScope.CSRF_TOKEN}"/>
             </h:form>
-            <ui:include src="../../dialog/login/logout.xhtml"/>
+            <ui:include src="../thesaurus/includes/layout/logout-dialog.xhtml"/>
+            <ui:include src="../thesaurus/includes/layout/login-dialog.xhtml"/>
+            <ui:include src="../thesaurus/includes/layout/forget-password-dialog.xhtml"/>
             <ui:include src="modify-password-dialog.xhtml"/>
         </div>
     </h:panelGroup>

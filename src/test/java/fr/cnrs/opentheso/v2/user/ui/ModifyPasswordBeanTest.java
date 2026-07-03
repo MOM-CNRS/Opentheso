@@ -1,6 +1,6 @@
 package fr.cnrs.opentheso.v2.user.ui;
 
-import fr.cnrs.opentheso.bean.language.LanguageBean;
+import fr.cnrs.opentheso.v2.shared.ui.V2LocaleBean;
 import fr.cnrs.opentheso.utils.MessageUtils;
 import fr.cnrs.opentheso.v2.shared.ui.UserSession;
 import fr.cnrs.opentheso.v2.user.exception.InvalidPasswordException;
@@ -28,7 +28,7 @@ class ModifyPasswordBeanTest {
     @Mock
     private UserSession userSession;
     @Mock
-    private LanguageBean languageBean;
+    private V2LocaleBean localeBean;
     @Mock
     private UserPasswordService userPasswordService;
 
@@ -36,10 +36,10 @@ class ModifyPasswordBeanTest {
 
     @BeforeEach
     void setUp() {
-        lenient().when(languageBean.getMsg("profile.userNotConnected")).thenReturn("Utilisateur non connecté.");
-        lenient().when(languageBean.getMsg("profile.passwordChangedSuccess")).thenReturn("Mot de passe changé avec succès");
-        lenient().when(languageBean.getMsg("profile.unexpectedError")).thenReturn("Une erreur inattendue est survenue.");
-        modifyPasswordBean = new ModifyPasswordBean(userSession, languageBean, userPasswordService);
+        lenient().when(localeBean.getMsg("profile.userNotConnected")).thenReturn("Utilisateur non connecté.");
+        lenient().when(localeBean.getMsg("profile.passwordChangedSuccess")).thenReturn("Mot de passe changé avec succès");
+        lenient().when(localeBean.getMsg("profile.unexpectedError")).thenReturn("Une erreur inattendue est survenue.");
+        modifyPasswordBean = new ModifyPasswordBean(userSession, localeBean, userPasswordService);
     }
 
     @Test

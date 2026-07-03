@@ -7,6 +7,7 @@
 
     <f:view>
         <f:metadata>
+    <f:viewAction action="#{v2ConsultationShellBean.load()}"/>
             <f:viewAction action="#{v2PreferenceSettingsBean.load()}"/>
             <f:viewParam name="idc" value="#{v2ThesaurusContext.idConceptFromUri}"/>
             <f:viewParam name="idg" value="#{v2ThesaurusContext.idGroupFromUri}"/>
@@ -31,21 +32,21 @@
 
         <p:growl id="messageIndex" globalOnly="true" showDetail="true"/>
 
-        <h:panelGroup rendered="#{menuBean.checkIfUserIsConnected() and currentUser.hasRoleAsAdmin}" id="wrapper" style="height: 100%" >
+        <h:panelGroup rendered="#{v2UserSession.isLoggedIn() and currentUser.hasRoleAsAdmin}" id="wrapper" style="height: 100%" >
 
-            <ui:include src="../../commun/menu.xhtml" />
+            <ui:include src="../thesaurus/includes/layout/menu.xhtml" />
 
             <div id="content-wrapper" style="width: 100%">
 
                 <h:form id="containerIndex" style="min-height:100%; position:relative;">
 
                     <h:panelGroup id="header">
-                        <ui:include src="../../commun/header.xhtml" />
+                        <ui:include src="../thesaurus/includes/layout/header.xhtml" />
                     </h:panelGroup>
 
                     <div class="container-fluid">
                         <div class="d-sm-flex align-items-center justify-content-between mb-4" style="margin: 20px">
-                            <h1 class="h3 mb-0 text-gray-800">#{langueBean.getMsg('menu.setting')} / <span style="color: #f47b2a">#{langueBean.getMsg('menu.preference')}</span></h1>
+                            <h1 class="h3 mb-0 text-gray-800">#{v2LocaleBean.getMsg('menu.setting')} / <span style="color: #f47b2a">#{v2LocaleBean.getMsg('menu.preference')}</span></h1>
                         </div>
                         <p:scrollPanel mode="native" style="width:100%; max-height: 600px" rendered="#{v2PreferenceSettingsBean.editor != null}">
                             <div class="col-12" style="height: 100%">
@@ -57,33 +58,33 @@
                                             <div class="list-group-item list-group-item-action" style=" margin-top: 5px">
                                                 <div class="row" style="padding-top: 3px;">
                                                     <div class="col-3" style="text-align: right; margin-top: 6px">
-                                                        <h:outputText value="#{langueBean.getMsg('preferences.localUrl')}" style="font-size: 14px; font-weight: bold;"
-                                                                      title="#{langueBean.getMsg('preferences.localUrlTooltip')} (exp: https://monsite.fr/opentheso/)"/>
+                                                        <h:outputText value="#{v2LocaleBean.getMsg('preferences.localUrl')}" style="font-size: 14px; font-weight: bold;"
+                                                                      title="#{v2LocaleBean.getMsg('preferences.localUrlTooltip')} (exp: https://monsite.fr/opentheso/)"/>
                                                     </div>
                                                     <div class="col-6">
                                                         <p:inputText id="inputTextCheminSite" value="#{v2PreferenceSettingsBean.editor.cheminSite}" style="width: 100%;"/>
                                                     </div>
                                                 </div>
                                             </div>
-                                            <p:tooltip for="inputTextCheminSite" value="#{langueBean.getMsg('preferences.serverAdress')} (exp: https://monsite.fr/opentheso/)" 
+                                            <p:tooltip for="inputTextCheminSite" value="#{v2LocaleBean.getMsg('preferences.serverAdress')} (exp: https://monsite.fr/opentheso/)" 
                                                        position="top" showDelay="500"/>
 
                                             <!-- Uri d'export -->
                                             <div class="list-group-item list-group-item-action" style="margin-top: 20px; margin-bottom: 20px; background-color: #ecf8f1">
                                                 <div class="row" >
                                                     <div class="col-3"  style="text-align: right;  ">
-                                                        <h:outputText value="#{langueBean.getMsg('preferences.exportUri')} "
-                                                                      title="#{langueBean.getMsg('preferences.exportUriInfo')}"
+                                                        <h:outputText value="#{v2LocaleBean.getMsg('preferences.exportUri')} "
+                                                                      title="#{v2LocaleBean.getMsg('preferences.exportUriInfo')}"
                                                                       style="font-size: 14px; font-weight: bold;"/>
                                                         <p:commandButton id="infoUri" type="button" icon="fas fa-info-circle"  styleClass="rounded-button ui-button-flat"/>
                                                         <p:tooltip for="infoUri" 
-                                                                   value="#{langueBean.getMsg('preferences.uriInfo')} 
-                                                                   https://ark.mondomaine.fr/ark:  #{langueBean.getMsg('preferences.uriInfo2')} https://mondomaine.fr/opentheso2"
+                                                                   value="#{v2LocaleBean.getMsg('preferences.uriInfo')} 
+                                                                   https://ark.mondomaine.fr/ark:  #{v2LocaleBean.getMsg('preferences.uriInfo2')} https://mondomaine.fr/opentheso2"
                                                                    showDelay="1000" style="max-width: 300px;"/>
                                                     </div>
                                                     <div class="col-6">
                                                         <p:selectOneRadio id="customRadioUri" value="#{v2PreferenceSettingsBean.editor.uriType}"  >
-                                                            <f:selectItem itemLabel="#{langueBean.getMsg('preferences.uri')}" itemValue="uri" />
+                                                            <f:selectItem itemLabel="#{v2LocaleBean.getMsg('preferences.uri')}" itemValue="uri" />
                                                             <f:selectItem itemLabel="Ark" itemValue="ark" />
                                                             <f:selectItem itemLabel="Handle" itemValue="handle"/>
                                                             <!-- <f:selectItem itemLabel="Doi" itemValue="doi" itemDisabled="true"/> -->   
@@ -105,7 +106,7 @@
                                             <div class="list-group-item list-group-item-action" style=" margin-top: 5px">
                                                 <div class="row" style="padding-top: 3px;">
                                                     <div class="col-3" style="text-align: right; margin-top: 6px">
-                                                        <h:outputText value="#{langueBean.getMsg('toolbox.defaultLanguage')}" style="font-size: 14px; font-weight: bold;"/>
+                                                        <h:outputText value="#{v2LocaleBean.getMsg('toolbox.defaultLanguage')}" style="font-size: 14px; font-weight: bold;"/>
                                                     </div>
                                                     <div class="col-6">
                                                         <p:selectOneMenu id="langOfTheso" value="#{v2PreferenceSettingsBean.editor.sourceLang}" styleClass="selectOneMenu_custom" panelStyleClass="selectOneMenu_panelStyle_custom"
@@ -121,14 +122,14 @@
                                             <div class="list-group-item list-group-item-action" style=" margin-top: 5px">
                                                 <div class="row" style="padding-top: 3px;">
                                                     <div class="col-3" style="text-align: right; margin-top: 6px">
-                                                        <h:outputText value="#{langueBean.getMsg('preferences.identifierType')}" style="font-size: 14px; font-weight: bold;"/>
+                                                        <h:outputText value="#{v2LocaleBean.getMsg('preferences.identifierType')}" style="font-size: 14px; font-weight: bold;"/>
                                                     </div>
                                                     <div class="col-6">
                                                         <p:selectOneMenu value="#{v2PreferenceSettingsBean.editor.identifierType}" 
                                                                          styleClass="selectOneMenu_custom" panelStyleClass="selectOneMenu_panelStyle_custom"
                                                                          style="width: 100%; background: none;  box-shadow: none; ">
-                                                            <f:selectItem itemLabel="#{langueBean.getMsg('preferences.alphanumeric')}" itemValue="1" />
-                                                            <f:selectItem itemLabel="#{langueBean.getMsg('preferences.numeric')}" itemValue="2" />                        
+                                                            <f:selectItem itemLabel="#{v2LocaleBean.getMsg('preferences.alphanumeric')}" itemValue="1" />
+                                                            <f:selectItem itemLabel="#{v2LocaleBean.getMsg('preferences.numeric')}" itemValue="2" />                        
                                                         </p:selectOneMenu>
                                                     </div>
                                                 </div>
@@ -138,14 +139,14 @@
                                             <div class="list-group-item list-group-item-action" style=" margin-top: 5px">
                                                 <div class="row" style="padding-top: 3px;">
                                                     <div class="col-3" style="text-align: right; margin-top: 6px">
-                                                        <h:outputText value="#{langueBean.getMsg('preferences.persistentNameTheso')}" style="font-size: 14px; font-weight: bold;"/>
+                                                        <h:outputText value="#{v2LocaleBean.getMsg('preferences.persistentNameTheso')}" style="font-size: 14px; font-weight: bold;"/>
                                                     </div>
                                                     <div class="col-6">
                                                         <p:inputText value="#{v2PreferenceSettingsBean.editor.preferredName}" style="width: 100%;"/>
                                                     </div>
                                                     <div class="col-3" style="text-align: left; margin-top: 6px;">
                                                         <a class="fas fa-link" style="font-size: 12px; color: #43B572;" />
-                                                        <p:link href="#{request.contextPath}/api/theso/#{v2PreferenceSettingsBean.editor.preferredName}" value="#{langueBean.getMsg('preferences.testLink')}" style="font-size: 12px; margin-left: 5px; color: #601e18"/>
+                                                        <p:link href="#{request.contextPath}/api/theso/#{v2PreferenceSettingsBean.editor.preferredName}" value="#{v2LocaleBean.getMsg('preferences.testLink')}" style="font-size: 12px; margin-left: 5px; color: #601e18"/>
                                                     </div>                                                
                                                 </div>
 
@@ -155,7 +156,7 @@
                                             <div class="list-group-item list-group-item-action" style=" margin-top: 5px">
                                                 <div class="row" style="padding-top: 3px;">
                                                     <div class="col-xl-3 col-lg-4 col-md-6 col-sm-6" style="text-align: right; margin-top: 6px">
-                                                        <h:outputText value="#{langueBean.getMsg('preferences.activateAutoTreeDeployment')}" style="font-size: 14px; font-weight: bold;"/>
+                                                        <h:outputText value="#{v2LocaleBean.getMsg('preferences.activateAutoTreeDeployment')}" style="font-size: 14px; font-weight: bold;"/>
                                                     </div>
                                                     <div class="col-xl-6 col-lg-6 col-md-5 col-sm-5">
                                                         <p:toggleSwitch value="#{v2PreferenceSettingsBean.editor.autoExpandTree}" style="font-size: 12px;" />
@@ -167,8 +168,8 @@
                                             <div class="list-group-item list-group-item-action" style=" margin-top: 5px">
                                                 <div class="row" style="padding-top: 3px;">
                                                     <div class="col-xl-3 col-lg-4 col-md-6 col-sm-6" style="text-align: right; margin-top: 6px">
-                                                        <h:outputText value="#{langueBean.getMsg('preferences.activateTreeCache')}" 
-                                                                      title="#{langueBean.getMsg('preferences.activateTreeCacheTooltip')}" 
+                                                        <h:outputText value="#{v2LocaleBean.getMsg('preferences.activateTreeCache')}" 
+                                                                      title="#{v2LocaleBean.getMsg('preferences.activateTreeCacheTooltip')}" 
                                                                       style="font-size: 14px; font-weight: bold;"/>
                                                     </div>
                                                     <div class="col-xl-6 col-lg-6 col-md-5 col-sm-5">
@@ -181,7 +182,7 @@
                                             <div class="list-group-item list-group-item-action" style=" margin-top: 5px">
                                                 <div class="row" style="padding-top: 3px;">
                                                     <div class="col-xl-3 col-lg-4 col-md-6 col-sm-6" style="text-align: right; margin-top: 6px">
-                                                        <h:outputText value="#{langueBean.getMsg('preferences.activateNotationSort')}"
+                                                        <h:outputText value="#{v2LocaleBean.getMsg('preferences.activateNotationSort')}"
                                                                       style="font-size: 14px; font-weight: bold;"/>
                                                     </div>
                                                     <div class="col-xl-6 col-lg-6 col-md-5 col-sm-5">
@@ -194,7 +195,7 @@
                                             <div class="list-group-item list-group-item-action" style=" margin-top: 5px">
                                                 <div class="row" style="padding-top: 3px;">
                                                     <div class="col-xl-3 col-lg-4 col-md-6 col-sm-6" style="text-align: right; margin-top: 6px">
-                                                        <h:outputText value="#{langueBean.getMsg('preferences.activateWebservices')}"
+                                                        <h:outputText value="#{v2LocaleBean.getMsg('preferences.activateWebservices')}"
                                                                       style="font-size: 14px; font-weight: bold;"/>
                                                     </div>
                                                     <div class="col-xl-6 col-lg-6 col-md-5 col-sm-5">
@@ -207,7 +208,7 @@
                                             <div class="list-group-item list-group-item-action" style=" margin-top: 5px">
                                                 <div class="row" style="padding-top: 3px;">
                                                     <div class="col-xl-3 col-lg-4 col-md-6 col-sm-6" style="text-align: right; margin-top: 6px">
-                                                        <h:outputText value="#{langueBean.getMsg('preferences.activateBreadCrumb')}"
+                                                        <h:outputText value="#{v2LocaleBean.getMsg('preferences.activateBreadCrumb')}"
                                                                       style="font-size: 14px; font-weight: bold;"/>
                                                     </div>
                                                     <div class="col-xl-6 col-lg-6 col-md-5 col-sm-5">
@@ -219,7 +220,7 @@
                                             <div class="list-group-item list-group-item-action" style=" margin-top: 5px">
                                                 <div class="row" style="padding-top: 3px;">
                                                     <div class="col-xl-3 col-lg-4 col-md-6 col-sm-6" style="text-align: right; margin-top: 6px">
-                                                        <h:outputText value="#{langueBean.getMsg('preferences.activateTreeCollection')}"
+                                                        <h:outputText value="#{v2LocaleBean.getMsg('preferences.activateTreeCollection')}"
                                                                       style="font-size: 14px; font-weight: bold;"/>
                                                     </div>
                                                     <div class="col-xl-6 col-lg-6 col-md-5 col-sm-5">
@@ -232,7 +233,7 @@
                                             <div class="list-group-item list-group-item-action" style=" margin-top: 5px">
                                                 <div class="row" style="padding-top: 3px;">
                                                     <div class="col-xl-3 col-lg-4 col-md-6 col-sm-6" style="text-align: right; margin-top: 6px">
-                                                        <h:outputText value="#{langueBean.getMsg('preferences.nameOfContributor')}"
+                                                        <h:outputText value="#{v2LocaleBean.getMsg('preferences.nameOfContributor')}"
                                                                       style="font-size: 14px; font-weight: bold;"/>
                                                     </div>
                                                     <div class="col-xl-6 col-lg-6 col-md-5 col-sm-5">
@@ -245,7 +246,7 @@
                                             <div class="list-group-item list-group-item-action" style=" margin-top: 5px">
                                                 <div class="row" style="padding-top: 3px;">
                                                     <div class="col-xl-3 col-lg-4 col-md-6 col-sm-6" style="text-align: right; margin-top: 6px">
-                                                        <h:outputText value="#{langueBean.getMsg('preferences.propositions')}"
+                                                        <h:outputText value="#{v2LocaleBean.getMsg('preferences.propositions')}"
                                                                       style="font-size: 14px; font-weight: bold;"/>
                                                     </div>
                                                     <div class="col-xl-6 col-lg-6 col-md-5 col-sm-5">
@@ -258,7 +259,7 @@
                                             <div class="list-group-item list-group-item-action" style=" margin-top: 5px">
                                                 <div class="row" style="padding-top: 3px;">
                                                     <div class="col-xl-3 col-lg-4 col-md-6 col-sm-6" style="text-align: right; margin-top: 6px">
-                                                        <h:outputText value="#{langueBean.getMsg('preferences.activateCustomRelation')}"
+                                                        <h:outputText value="#{v2LocaleBean.getMsg('preferences.activateCustomRelation')}"
                                                                       style="font-size: 14px; font-weight: bold;"/>
                                                     </div>
                                                     <div class="col-xl-6 col-lg-6 col-md-5 col-sm-5">
@@ -271,7 +272,7 @@
                                             <div class="list-group-item list-group-item-action" style=" margin-top: 5px">
                                                 <div class="row" style="padding-top: 3px;">
                                                     <div class="col-xl-3 col-lg-4 col-md-6 col-sm-6" style="text-align: right; margin-top: 6px">
-                                                        <h:outputText value="#{langueBean.getMsg('preferences.activateShowHhistoryNote')}"
+                                                        <h:outputText value="#{v2LocaleBean.getMsg('preferences.activateShowHhistoryNote')}"
                                                                       style="font-size: 14px; font-weight: bold;"/>
                                                     </div>
                                                     <div class="col-xl-6 col-lg-6 col-md-5 col-sm-5">
@@ -282,7 +283,7 @@
                                             <div class="list-group-item list-group-item-action" style=" margin-top: 5px">
                                                 <div class="row" style="padding-top: 3px;">
                                                     <div class="col-xl-3 col-lg-4 col-md-6 col-sm-6" style="text-align: right; margin-top: 6px">
-                                                        <h:outputText value="#{langueBean.getMsg('preferences.activateShowEditorialNote')}"
+                                                        <h:outputText value="#{v2LocaleBean.getMsg('preferences.activateShowEditorialNote')}"
                                                                       style="font-size: 14px; font-weight: bold;"/>
                                                     </div>
                                                     <div class="col-xl-6 col-lg-6 col-md-5 col-sm-5">
@@ -294,7 +295,7 @@
                                             <div class="list-group-item list-group-item-action" style=" margin-top: 5px">
                                                 <div class="row" style="padding-top: 3px;">
                                                     <div class="col-xl-3 col-lg-4 col-md-6 col-sm-6" style="text-align: right; margin-top: 6px">
-                                                        <h:outputText value="#{langueBean.getMsg('preferences.activateLinkToKohaPro')}"
+                                                        <h:outputText value="#{v2LocaleBean.getMsg('preferences.activateLinkToKohaPro')}"
                                                                       style="font-size: 14px; font-weight: bold;"/>
                                                     </div>
                                                     <div class="col-xl-6 col-lg-6 col-md-5 col-sm-5">
@@ -310,7 +311,7 @@
                                                 <div class="list-group-item list-group-item-action" style=" margin-top: 5px">
                                                     <div class="row" style="padding-top: 3px;">
                                                         <div class="col-xl-3 col-lg-4 col-md-6 col-sm-6" style="text-align: right; margin-top: 6px">
-                                                            <h:outputText value="#{langueBean.getMsg('preferences.activateDeeplTranlation')}"
+                                                            <h:outputText value="#{v2LocaleBean.getMsg('preferences.activateDeeplTranlation')}"
                                                                           style="font-size: 14px; font-weight: bold;"/>
                                                         </div>
                                                         <div class="col-xl-6 col-lg-6 col-md-5 col-sm-5">
@@ -326,7 +327,7 @@
                                                     <div class="list-group-item list-group-item-action" style=" margin-top: 5px">
                                                         <div class="row" style="padding-top: 3px;">
                                                             <div class="col-xl-3 col-lg-4 col-md-6 col-sm-6" style="text-align: right; margin-top: 6px">
-                                                                <h:outputText value="#{langueBean.getMsg('preferences.deeplApiKey')}" style="font-size: 14px; font-weight: bold;"/>
+                                                                <h:outputText value="#{v2LocaleBean.getMsg('preferences.deeplApiKey')}" style="font-size: 14px; font-weight: bold;"/>
                                                             </div>
                                                             <div class="col-xl-6 col-lg-6 col-md-5 col-sm-5">
                                                                 <p:password value="#{v2PreferenceSettingsBean.editor.newDeeplApiKey}" placeholder="••••••••••" feedback="false"  style="width: 100%"/>
@@ -342,7 +343,7 @@
                         </p:scrollPanel>
                         <div class="row" style="padding-top: 5px; " rendered="#{v2PreferenceSettingsBean.editor != null}">
                             <div class="col-12" style="text-align: center;width: 100%">
-                                <p:commandButton value="#{langueBean.getMsg('candidat.save')}" styleClass="ui-button-success"
+                                <p:commandButton value="#{v2LocaleBean.getMsg('candidat.save')}" styleClass="ui-button-success"
                                                  actionListener="#{v2PreferenceSettingsBean.save()}"
                                                  oncomplete="PF('waitDialog').hide();"
                                                  update="containerIndex messageIndex"
@@ -352,11 +353,11 @@
                         </div>
                         <p:spacer height="10px;" />
                     </div>
-                    <ui:include src="../../commun/footer.xhtml" />
+                    <ui:include src="../thesaurus/includes/layout/footer.xhtml" />
                     <input type="hidden" name="csrfToken" value="${sessionScope.CSRF_TOKEN}" />
                 </h:form>
             </div>
-            <ui:include src="../../dialog/login/logout.xhtml" />
+            <ui:include src="../thesaurus/includes/layout/logout-dialog.xhtml" />
         </h:panelGroup>
     </h:body>
 </HTML>

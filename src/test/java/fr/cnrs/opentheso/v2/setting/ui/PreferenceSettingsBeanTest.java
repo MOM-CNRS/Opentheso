@@ -1,6 +1,6 @@
 package fr.cnrs.opentheso.v2.setting.ui;
 
-import fr.cnrs.opentheso.bean.language.LanguageBean;
+import fr.cnrs.opentheso.v2.shared.ui.V2LocaleBean;
 import fr.cnrs.opentheso.utils.MessageUtils;
 import fr.cnrs.opentheso.v2.setting.fixtures.SettingTestFixtures;
 import fr.cnrs.opentheso.v2.setting.exception.InvalidSettingDataException;
@@ -40,7 +40,7 @@ class PreferenceSettingsBeanTest {
     @Mock
     private ThesaurusContext thesaurusContext;
     @Mock
-    private LanguageBean languageBean;
+    private V2LocaleBean localeBean;
     @Mock
     private ThesaurusPreferenceService thesaurusPreferenceService;
 
@@ -51,10 +51,10 @@ class PreferenceSettingsBeanTest {
         bean = new PreferenceSettingsBean(
                 userSession,
                 thesaurusContext,
-                languageBean,
+                localeBean,
                 thesaurusPreferenceService
         );
-        lenient().when(languageBean.getIdLangue()).thenReturn("fr");
+        lenient().when(localeBean.getIdLangue()).thenReturn("fr");
     }
 
     @Test

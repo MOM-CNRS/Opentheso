@@ -4,12 +4,12 @@
              xmlns:p="http://primefaces.org/ui"
              xmlns:f="http://xmlns.jcp.org/jsf/core">
 
-    <p:dialog id="idNewNote" header="#{langueBean.getMsg('rightbody.concept.add_note')}" widgetVar="newNote" 
+    <p:dialog id="idNewNote" header="#{v2LocaleBean.getMsg('rightbody.concept.add_note')}" widgetVar="newNote" 
               width="450" showEffect="fade" modal="true" resizable="false" position="top" style="margin-top: 30px" > 
         <h:form id="newNoteForm">
             <div class="row">
                 <div class="col-12" >
-                    <h:outputText value="#{langueBean.getMsg('rightbody.conceptdialog.term')} : " style="color: #000;"/>
+                    <h:outputText value="#{v2LocaleBean.getMsg('rightbody.conceptdialog.term')} : " style="color: #000;"/>
                     <b><h:outputText value="#{v2CandidatBean.candidatSelected.nomPref}" style="font-size: 13px; color: #f47b2a; margin-left: 4px;"/></b>
                 </div>
             </div>
@@ -48,9 +48,9 @@
             </div>
 
             <div style="width: 100%; text-align: right; margin-top: 10px;">
-                <p:commandButton value="#{langueBean.getMsg('candidat.close')}" styleClass="ui-button-secondary button" icon="fas fa-undo-alt" 
+                <p:commandButton value="#{v2LocaleBean.getMsg('candidat.close')}" styleClass="ui-button-secondary button" icon="fas fa-undo-alt" 
                                  actionListener="PF('newNote').hide();" update="idNewNote" style="margin-right: 10px"/>
-                <p:commandButton value="#{langueBean.getMsg('btnAdd')}" styleClass="ui-button-success" icon="pi pi-check"
+                <p:commandButton value="#{v2LocaleBean.getMsg('btnAdd')}" styleClass="ui-button-success" icon="pi pi-check"
                                  update="tabViewCandidat messageIndex"
                                  ajax="true"  
                                  oncomplete="PF('newNote').hide();"

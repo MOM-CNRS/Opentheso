@@ -1,6 +1,6 @@
 package fr.cnrs.opentheso.v2.project.service;
 
-import fr.cnrs.opentheso.services.PasswordResetService;
+import fr.cnrs.opentheso.v2.user.service.AccountPasswordResetService;
 import fr.cnrs.opentheso.v2.project.exception.InvalidProjectDataException;
 import fr.cnrs.opentheso.v2.project.exception.ProjectAccessDeniedException;
 import fr.cnrs.opentheso.v2.project.model.CreatedProjectMember;
@@ -54,7 +54,7 @@ class ProjectMemberServiceTest {
     @Mock
     private PasswordEncoder passwordEncoder;
     @Mock
-    private PasswordResetService passwordResetService;
+    private AccountPasswordResetService accountPasswordResetService;
 
     private ProjectMemberService projectMemberService;
 
@@ -68,7 +68,7 @@ class ProjectMemberServiceTest {
                 projectMembershipRepository,
                 userCommandRepository,
                 passwordEncoder,
-                passwordResetService
+                accountPasswordResetService
         );
     }
 

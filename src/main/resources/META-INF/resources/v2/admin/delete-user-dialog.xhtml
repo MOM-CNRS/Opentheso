@@ -3,13 +3,13 @@
              xmlns:h="http://xmlns.jcp.org/jsf/html"
              xmlns:p="http://primefaces.org/ui">
 
-    <p:dialog id="idV2DeleteUser" header="#{langueBean.getMsg('candidat.remove')}" widgetVar="v2DeleteUser"
+    <p:dialog id="idV2DeleteUser" header="#{v2LocaleBean.getMsg('candidat.remove')}" widgetVar="v2DeleteUser"
               width="400" modal="true" resizable="false" position="top">
         <h:form id="v2DeleteUserForm">
             <h:outputText value="#{v2AllUsersBean.editUsername} (#{v2AllUsersBean.selectedUserId})"
                           style="color:#f47b2a; font-weight:bold;"/>
             <div class="text-right mt-3">
-                <p:commandButton value="#{langueBean.getMsg('btnValidate')}" icon="pi pi-check"
+                <p:commandButton value="#{v2LocaleBean.getMsg('btnValidate')}" icon="pi pi-check"
                                  styleClass="ui-button-danger"
                                  action="#{v2AllUsersBean.deleteUser()}" update=":containerIndex :messageIndex"/>
             </div>

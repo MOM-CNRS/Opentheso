@@ -4,13 +4,13 @@
              xmlns:p="http://primefaces.org/ui"
              xmlns:f="http://xmlns.jcp.org/jsf/core">
 
-    <p:dialog id="idEditTraduction" header="#{langueBean.getMsg('rightbody.concept.edit_traduction')}" widgetVar="editTraduction" 
+    <p:dialog id="idEditTraduction" header="#{v2LocaleBean.getMsg('rightbody.concept.edit_traduction')}" widgetVar="editTraduction" 
               width="450" showEffect="fade" modal="true" resizable="false" position="top" style="margin-top: 30px" > 
 
         <h:form id="manage-traduction-content">
             <div class="row">
                 <div class="col-5" style="margin-top: 3px; width: 100%;">
-                    <h:outputText value="#{langueBean.getMsg('rightbody.conceptdialog.language')}" style="font-weight: bold;"/>
+                    <h:outputText value="#{v2LocaleBean.getMsg('rightbody.conceptdialog.language')}" style="font-weight: bold;"/>
                 </div>
                 <div class="col-7">
                     <h:outputText value="#{traductionCandidatBean.langage}" style="width: 100%;"/>
@@ -19,7 +19,7 @@
 
             <div class="row" style="margin-top: 10px;width: 100%;">
                 <div class="col-5" style="margin-top: 3px">
-                    <h:outputText value="#{langueBean.getMsg('candidat.traduction')}" style="font-weight: bold;"/>
+                    <h:outputText value="#{v2LocaleBean.getMsg('candidat.traduction')}" style="font-weight: bold;"/>
                 </div>
                 <div class="col-7">
                     <p:inputText value="#{traductionCandidatBean.traduction}" style="width: 100%;" required="true" />
@@ -27,11 +27,11 @@
             </div>
 
             <div style="width: 100%; text-align: right; margin-top: 20px;">
-                <p:commandButton value="#{langueBean.getMsg('candidat.close')}" styleClass="ui-button-secondary button" icon="fas fa-undo-alt" 
+                <p:commandButton value="#{v2LocaleBean.getMsg('candidat.close')}" styleClass="ui-button-secondary button" icon="fas fa-undo-alt" 
                                  style="margin-right: 10px" ajax="true"
                                  update="idEditTraduction" actionListener="PF('editTraduction').hide();"/>
 
-                <p:commandButton value="#{langueBean.getMsg('btnValidate')}" styleClass="ui-button-success" icon="pi pi-check"
+                <p:commandButton value="#{v2LocaleBean.getMsg('btnValidate')}" styleClass="ui-button-success" icon="pi pi-check"
                                  ajax="true"
                                  oncomplete="PF('editTraduction').hide();" update="tabViewCandidat messageIndex"
                                  actionListener="#{traductionCandidatBean.updateTraduction()}"/>

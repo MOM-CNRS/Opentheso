@@ -1,6 +1,6 @@
 package fr.cnrs.opentheso.v2.setting.ui;
 
-import fr.cnrs.opentheso.bean.language.LanguageBean;
+import fr.cnrs.opentheso.v2.shared.ui.V2LocaleBean;
 import fr.cnrs.opentheso.utils.MessageUtils;
 import fr.cnrs.opentheso.v2.setting.exception.InvalidSettingDataException;
 import fr.cnrs.opentheso.v2.setting.exception.SettingAccessDeniedException;
@@ -24,7 +24,7 @@ public class PreferenceSettingsBean implements Serializable {
 
     private final UserSession userSession;
     private final ThesaurusContext thesaurusContext;
-    private final LanguageBean languageBean;
+    private final V2LocaleBean localeBean;
     private final ThesaurusPreferenceService thesaurusPreferenceService;
 
     private PreferenceEditor editor;
@@ -32,12 +32,12 @@ public class PreferenceSettingsBean implements Serializable {
     public PreferenceSettingsBean(
             UserSession userSession,
             ThesaurusContext thesaurusContext,
-            LanguageBean languageBean,
+            V2LocaleBean localeBean,
             ThesaurusPreferenceService thesaurusPreferenceService
     ) {
         this.userSession = userSession;
         this.thesaurusContext = thesaurusContext;
-        this.languageBean = languageBean;
+        this.localeBean = localeBean;
         this.thesaurusPreferenceService = thesaurusPreferenceService;
     }
 
@@ -84,7 +84,7 @@ public class PreferenceSettingsBean implements Serializable {
             ThesaurusPreferences updated = thesaurusPreferenceService.updateIdentifierServer(
                     thesaurusContext.getCurrentThesaurusId(),
                     serverType,
-                    languageBean.getIdLangue()
+                    localeBean.getIdLangue()
             );
             editor = PreferenceEditor.from(updated);
             editor.setUseArk(serverType == IdentifierServerType.ARK);
@@ -124,7 +124,7 @@ public class PreferenceSettingsBean implements Serializable {
                     editor.getNewPassHandle(),
                     editor.getNewDeeplApiKey(),
                     editor.getNewApiKeyOpenArk(),
-                    languageBean.getIdLangue()
+                    localeBean.getIdLangue()
             );
             editor = PreferenceEditor.from(saved);
             editor.setNewPassArk(null);
@@ -154,7 +154,7 @@ public class PreferenceSettingsBean implements Serializable {
     private void reloadEditor() {
         ThesaurusPreferences preferences = thesaurusPreferenceService.loadPreferences(
                 thesaurusContext.getCurrentThesaurusId(),
-                languageBean.getIdLangue()
+                localeBean.getIdLangue()
         );
         editor = PreferenceEditor.from(preferences);
     }

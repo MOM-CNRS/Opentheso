@@ -26,7 +26,7 @@
         <div class="row">
             <div class="col-6">
                 <i class="pi pi-arrow-left" style="color: #F47B2A; margin-right: 5px; margin-left: 15px"></i>
-                <p:commandLink value="#{langueBean.getMsg('candidat.return')}"
+                <p:commandLink value="#{v2LocaleBean.getMsg('candidat.return')}"
                                update="tabViewCandidat" style="color: #F47B2A" ajax="true" process="@this"
                                action= "#{v2CandidatBean.getAllCandidatsByThesoAndLangue()}"
                                actionListener="#{v2CandidatBean.setIsListCandidatsActivate(true)}" />
@@ -43,7 +43,7 @@
         <div class="card mb-4 py-3 border-left-success" style="padding-left: 20px; padding-right: 20px; margin-top: 20px">
             <!-- prefLabel -->
             <h:panelGroup id="vote" class="grid ui-fluid">
-                <b><h:outputText value="#{langueBean.getMsg('candidat.title')} *" style="margin-top: 14px;"/></b>
+                <b><h:outputText value="#{v2LocaleBean.getMsg('candidat.title')} *" style="margin-top: 14px;"/></b>
                 <div class="grid ui-fluid ui-inputgroup" style="height: 35px; margin-bottom: 3px">
                     <h:panelGroup rendered="#{!v2CandidatBean.isNewCandidatActivate()}">
                         <p:inputText id="inputTextCandidate" readonly="#{!v2CandidatBean.isMyCandidate() }"
@@ -51,7 +51,7 @@
                             <p:ajax event="keyup" listener="#{v2CandidatBean.changeStateOfLabel()}"
                                     update="validateBtn"/>
                         </p:inputText>
-                        <p:tooltip for="inputTextCandidate" value="#{langueBean.getMsg('candidat.term.no_edit')}"
+                        <p:tooltip for="inputTextCandidate" value="#{v2LocaleBean.getMsg('candidat.term.no_edit')}"
                                    showDelay="1000" position="top"/>
                     </h:panelGroup>
 
@@ -72,20 +72,20 @@
                                      disabled="#{!v2CandidatBean.isModifiedLabel()}"
                                      update="vote"
                                      action="#{v2CandidatBean.updateCandidateLabel()}"
-                                     value="#{langueBean.getMsg('btnValidate')}" styleClass="ui-button-success" icon="fa-solid fa-save"
+                                     value="#{v2LocaleBean.getMsg('btnValidate')}" styleClass="ui-button-success" icon="fa-solid fa-save"
                                      ajax="true" process="@this" style="margin-left: 20px"/>
                     <p:commandButton id="deleteBtn" rendered="#{v2CandidatBean.isMyCandidate() and !v2CandidatBean.isNewCandidatActivate()}"
                                      update="tabViewCandidat"
                                      actionListener="#{v2CandidatBean.deleteCandidate(currentUser.nodeUser.idUser)}"
                                      action="#{v2CandidatBean.setIsListCandidatsActivate(true)}"
-                                     value="#{langueBean.getMsg('candidat.remove')}" styleClass="ui-button-danger-private" icon="fa-solid fa-remove"
+                                     value="#{v2LocaleBean.getMsg('candidat.remove')}" styleClass="ui-button-danger-private" icon="fa-solid fa-remove"
                                      ajax="true" process="@this" style="margin-left: 20px">
-                        <p:confirm header="#{langueBean.getMsg('profile.confirmation')}"
-                                   message="#{langueBean.getMsg('confirmDelele')} ?" icon="pi pi-info-circle"/>
+                        <p:confirm header="#{v2LocaleBean.getMsg('profile.confirmation')}"
+                                   message="#{v2LocaleBean.getMsg('confirmDelele')} ?" icon="pi pi-info-circle"/>
                     </p:commandButton>
                     <p:confirmDialog global="true" showEffect="fade" hideEffect="fade" responsive="true" width="350">
-                        <p:commandButton value="#{langueBean.getMsg('no')}" type="button" styleClass="ui-confirmdialog-no ui-button-flat"/>
-                        <p:commandButton value="#{langueBean.getMsg('yes')}" type="button" styleClass="ui-confirmdialog-yes" />
+                        <p:commandButton value="#{v2LocaleBean.getMsg('no')}" type="button" styleClass="ui-confirmdialog-no ui-button-flat"/>
+                        <p:commandButton value="#{v2LocaleBean.getMsg('yes')}" type="button" styleClass="ui-confirmdialog-yes" />
                     </p:confirmDialog>
 
                 </div>
@@ -95,14 +95,14 @@
             <h:panelGroup rendered="#{v2CandidatBean.isNewCandidatActivate()}" style="margin-top: 10px">
                 <div class="row">
                     <div class="col-12 md:col-4">
-                        <b><h:outputText value="#{langueBean.getMsg('candidat.definition')} *" style="font-size: 14px; "/></b>
+                        <b><h:outputText value="#{v2LocaleBean.getMsg('candidat.definition')} *" style="font-size: 14px; "/></b>
                     </div>
                     <div class="col-12 md:col-4">
                         <div class="ui-inputgroup">
                             <p:textEditor id="textEditorDef" widgetVar="DefinitionNew"
                                           value="#{v2CandidatBean.definition}" allowLinks="true"
                                           secure="false" height="100px" style="font-size: 12px; color: black; border-color: #43B572; width: 100%;"
-                                          placeholder="#{langueBean.getMsg('rightbody.conceptdialog.type_value')}" />
+                                          placeholder="#{v2LocaleBean.getMsg('rightbody.conceptdialog.type_value')}" />
                         </div>
                     </div>
                 </div>
@@ -110,13 +110,13 @@
                 <!-- Validation et enregistrement des nouvelles données ci-dessus -->
                 <div class="row">
                     <div class="col-12" style="text-align: right; margin-top: 10px" >
-                        <p:commandButton value="#{langueBean.getMsg('candidat.close')}" style="margin-right: 10px"
+                        <p:commandButton value="#{v2LocaleBean.getMsg('candidat.close')}" style="margin-right: 10px"
                                          icon="fas fa-undo-alt" styleClass="ui-button-secondary button"
                                          actionListener="#{v2CandidatBean.setIsListCandidatsActivate(true)}"
                                          action="#{v2CandidatBean.getAllCandidatsByThesoAndLangue()}"
                                          update="tabViewCandidat"/>
 
-                        <p:commandButton value="#{langueBean.getMsg('candidat.create')}"
+                        <p:commandButton value="#{v2LocaleBean.getMsg('candidat.create')}"
                                          icon="pi pi-check"
                                          styleClass="ui-button-success" action="#{v2CandidatBean.saveConcept()}"
                                          update="tabViewCandidat " />
@@ -133,7 +133,7 @@
                     <div class="col-6">
                         <h:panelGroup id="candidatCollection">
                             <div class="card mb-4 py-3 border-left-success" style="background: #ECF8F1; padding: 20px;">
-                                <b><h:outputText value="#{langueBean.getMsg('candidat.domaine')}" style="font-size: 14px;"/></b>
+                                <b><h:outputText value="#{v2LocaleBean.getMsg('candidat.domaine')}" style="font-size: 14px;"/></b>
 
                                 <p:autoComplete value="#{v2CandidatBean.collectionSelected}" style="width: 100%; margin-bottom: 3px"
                                                 var="values" forceSelection="true" completeMethod="#{v2CandidatBean.searchCollection}"
@@ -149,14 +149,14 @@
                                     <div class="list-group" style="margin-top: -10px; margin-bottom: -10px; margin-left: 12px; margin-right: 12px">
                                         <p:dataView id="collectionList" var="collection"
                                                     value="#{v2CandidatBean.candidatSelected.collections}"
-                                                    emptyMessage="#{langueBean.getMsg('rightbody.concept.no_value')}">
+                                                    emptyMessage="#{v2LocaleBean.getMsg('rightbody.concept.no_value')}">
                                             <p:dataViewListItem>
                                                 <div class="product-list-item" style="display: flex; justify-content: space-between;">
                                                     <div class="product-list-detail">
                                                         <h:outputText value="#{collection.value}" style="font-weight: bold"/>
                                                     </div>
                                                     <div class="product-list-detail">
-                                                        <p:commandLink title="#{langueBean.getMsg('candidat.delete_collection')} : #{collection.value}"
+                                                        <p:commandLink title="#{v2LocaleBean.getMsg('candidat.delete_collection')} : #{collection.value}"
                                                                        action="#{v2CandidatBean.removeCollection(collection)}"
                                                                        update="@this" ajax="true" process="@this">
                                                             <h:outputText styleClass="ui-icon pi pi-times" style="margin:0 auto;"/>
@@ -174,7 +174,7 @@
                     <div class="col-6">
                         <h:panelGroup id="candidatSynonym" >
                             <div class="card mb-4 py-3 border-left-success" style="background: #ECF8F1; padding: 20px;">
-                                <b><h:outputText value="#{langueBean.getMsg('candidat.used_for')}" style="margin-top: 14px;"/></b>
+                                <b><h:outputText value="#{v2LocaleBean.getMsg('candidat.used_for')}" style="margin-top: 14px;"/></b>
 
                                 <!-- pour les synonymes -->
                                 <div class="grid ui-fluid ui-inputgroup" style="height: 35px; margin-bottom: 3px">
@@ -186,14 +186,14 @@
                                 <div class="card mb-4 py-3 border-left-success">
                                     <div class="list-group" style="margin-top: -10px; margin-bottom: -10px; margin-left: 12px; margin-right: 12px">
                                         <p:dataView var="synonyme" value="#{v2CandidatBean.candidatSelected.employePourList}"
-                                                    emptyMessage="#{langueBean.getMsg('rightbody.concept.no_value')}">
+                                                    emptyMessage="#{v2LocaleBean.getMsg('rightbody.concept.no_value')}">
                                             <p:dataViewListItem>
                                                 <div class="product-list-item" style="display: flex; justify-content: space-between;">
                                                     <div class="product-list-detail">
                                                         <h:outputText value="#{synonyme}" style="font-weight: bold"/>
                                                     </div>
                                                     <div class="product-list-detail">
-                                                        <p:commandLink title="#{langueBean.getMsg('candidat.delete_synonym')} : #{synonyme}"
+                                                        <p:commandLink title="#{v2LocaleBean.getMsg('candidat.delete_synonym')} : #{synonyme}"
                                                                        process="@this" ajax="true" update="tabViewCandidat:containerIndexCandidat:candidatSynonym"
                                                                        action="#{v2CandidatBean.removeSynonyme(synonyme)}">
                                                             <h:outputText styleClass="ui-icon pi pi-times" style="margin:0 auto;"/>
@@ -213,7 +213,7 @@
                     <div class="col-6">
                         <h:panelGroup id="candidatBT" >
                             <div class="card mb-4 py-3 border-left-success" style="background: #ECF8F1; padding: 20px; margin-top: 10px">
-                                <b><h:outputText value="#{langueBean.getMsg('candidat.generic_term')}" style="font-size: 14px;" /></b>
+                                <b><h:outputText value="#{v2LocaleBean.getMsg('candidat.generic_term')}" style="font-size: 14px;" /></b>
 
                                 <!-- pour les relations BT -->
                                 <p:autoComplete id="autoBroaderLink" value="#{v2CandidatBean.traductionSelected}"
@@ -231,14 +231,14 @@
                                 <div class="card mb-4 py-3 border-left-success">
                                     <div class="list-group" style="margin-top: -10px; margin-bottom: -10px; margin-left: 12px; margin-right: 12px">
                                         <p:dataView var="terme" value="#{v2CandidatBean.candidatSelected.termesGenerique}"
-                                                    emptyMessage="#{langueBean.getMsg('rightbody.concept.no_value')}">
+                                                    emptyMessage="#{v2LocaleBean.getMsg('rightbody.concept.no_value')}">
                                             <p:dataViewListItem>
                                                 <div class="product-list-item" style="display: flex; justify-content: space-between;">
                                                     <div class="product-list-detail">
                                                         <h:outputText value="#{terme.value}" style="font-weight: bold"/>
                                                     </div>
                                                     <div class="product-list-detail">
-                                                        <p:commandLink title="#{langueBean.getMsg('candidat.delete_term')} : #{terme.value}"
+                                                        <p:commandLink title="#{v2LocaleBean.getMsg('candidat.delete_term')} : #{terme.value}"
                                                                        action="#{v2CandidatBean.removeGenericTerm(terme)}"
                                                                        update="tabViewCandidat:containerIndexCandidat:candidatBT" ajax="true" process="@this">
                                                             <h:outputText styleClass="ui-icon pi pi-times" style="margin:0 auto;"/>
@@ -256,7 +256,7 @@
                         <h:panelGroup id="candidatRT" >
                             <div class="card mb-4 py-3 border-left-success" style="background: #ECF8F1; padding: 20px; margin-top: 10px">
                                 <!-- pour les relations RT -->
-                                <b><h:outputText value="#{langueBean.getMsg('candidat.associeted_terms')}" style="font-size: 14px;" /></b>
+                                <b><h:outputText value="#{v2LocaleBean.getMsg('candidat.associeted_terms')}" style="font-size: 14px;" /></b>
 
                                 <p:autoComplete value="#{v2CandidatBean.termesAssociesSelected}"
                                                 var="values" forceSelection="true" style="width: 100%"
@@ -272,14 +272,14 @@
                                 <div class="card mb-4 py-3 border-left-success">
                                     <div class="list-group" style="margin-top: -10px; margin-bottom: -10px; margin-left: 12px; margin-right: 12px">
                                         <p:dataView var="terme" value="#{v2CandidatBean.candidatSelected.termesAssocies}"
-                                                    emptyMessage="#{langueBean.getMsg('rightbody.concept.no_value')}">
+                                                    emptyMessage="#{v2LocaleBean.getMsg('rightbody.concept.no_value')}">
                                             <p:dataViewListItem>
                                                 <div class="product-list-item" style="display: flex; justify-content: space-between;">
                                                     <div class="product-list-detail">
                                                         <h:outputText value="#{terme.value}" style="font-weight: bold"/>
                                                     </div>
                                                     <div class="product-list-detail">
-                                                        <p:commandLink title="#{langueBean.getMsg('candidat.delete_term')} : #{terme.value}"
+                                                        <p:commandLink title="#{v2LocaleBean.getMsg('candidat.delete_term')} : #{terme.value}"
                                                                        action="#{v2CandidatBean.removeAssociesTerm(terme)}"
                                                                        update="tabViewCandidat:containerIndexCandidat:candidatRT" ajax="true" process="@this">
                                                             <h:outputText styleClass="ui-icon pi pi-times" style="margin:0 auto;"/>
@@ -303,7 +303,7 @@
                     <div class="row" style="margin-bottom: 10px">
                         <div class="col-12">
                             <i class="pi pi-copy" style="color: #78261f; margin-right: 10px" />
-                            <p:commandButton value="#{langueBean.getMsg('rightbody.concept.add_note')}"
+                            <p:commandButton value="#{v2LocaleBean.getMsg('rightbody.concept.add_note')}"
                                              actionListener="#{noteBeanCandidat.reset()}"
                                              oncomplete="PF('newNote').show();"
                                              update="idNewNote"
@@ -315,7 +315,7 @@
                     <h:panelGroup rendered="#{v2CandidatBean.candidatSelected.nodeNotes == null || v2CandidatBean.candidatSelected.nodeNotes.size() == 0}">
                         <div class="row">
                             <div class="col-12">
-                                <h:outputText value="#{langueBean.getMsg('candidat.note.no_data')}..." style="color: grey; font-style: italic"/>
+                                <h:outputText value="#{v2LocaleBean.getMsg('candidat.note.no_data')}..." style="color: grey; font-style: italic"/>
                             </div>
                         </div>
                     </h:panelGroup>
@@ -323,32 +323,32 @@
                     <h:panelGroup rendered="#{v2CandidatBean.candidatSelected.nodeNotes.size() > 0}" >
                         <div class="row" style="font-size: 12px; color: #601e18; margin-bottom: 5px">
                             <div class="col-3">
-                                <b><h:outputText value="#{langueBean.getMsg('candidat.value')}"/></b>
+                                <b><h:outputText value="#{v2LocaleBean.getMsg('candidat.value')}"/></b>
                             </div>
                             <div class="col-2">
-                                <b><h:outputText value="#{langueBean.getMsg('statistique.user')}"/></b>
+                                <b><h:outputText value="#{v2LocaleBean.getMsg('statistique.user')}"/></b>
                             </div>
                             <div class="col-2">
-                                <b><h:outputText value="#{langueBean.getMsg('statistique.type')}"/></b>
+                                <b><h:outputText value="#{v2LocaleBean.getMsg('statistique.type')}"/></b>
                             </div>
                             <div class="col-2">
-                                <b><h:outputText value="#{langueBean.getMsg('candidat.language')}"/></b>
+                                <b><h:outputText value="#{v2LocaleBean.getMsg('candidat.language')}"/></b>
                             </div>
                             <div class="col-1">
-                                <b><h:outputText value="#{langueBean.getMsg('candidat.edit')}"/></b>
+                                <b><h:outputText value="#{v2LocaleBean.getMsg('candidat.edit')}"/></b>
                             </div>
                             <div class="col-1">
-                                <b><h:outputText value="#{langueBean.getMsg('candidat.remove')}"/></b>
+                                <b><h:outputText value="#{v2LocaleBean.getMsg('candidat.remove')}"/></b>
                             </div>
                             <div class="col-1">
-                                <b><h:outputText value="#{langueBean.getMsg('candidate.vote')}"/></b>
+                                <b><h:outputText value="#{v2LocaleBean.getMsg('candidate.vote')}"/></b>
                             </div>
                         </div>
 
                         <ui:repeat id="listNotes" var="note" value="#{v2CandidatBean.candidatSelected.nodeNotes}" >
-                            <div title="#{langueBean.getMsg('candidat.term.no_edit')}" class="row" style="padding-top: 5px; background-color: #{viewEditionBean.getAlternateColor(v2CandidatBean.candidatSelected.nodeNotes.indexOf(note))}" >
+                            <div title="#{v2LocaleBean.getMsg('candidat.term.no_edit')}" class="row" style="padding-top: 5px; background-color: #{viewEditionBean.getAlternateColor(v2CandidatBean.candidatSelected.nodeNotes.indexOf(note))}" >
                                 <div class="col-3" >
-                                    <h:outputText value="#{note.lexicalValue}" escape="false" style="font-size: 14px;" title="#{langueBean.getMsg('rightbody.concept.by')} #{v2CandidatBean.getUserName(note.idUser)}"/>
+                                    <h:outputText value="#{note.lexicalValue}" escape="false" style="font-size: 14px;" title="#{v2LocaleBean.getMsg('rightbody.concept.by')} #{v2CandidatBean.getUserName(note.idUser)}"/>
                                 </div>
                                 <div class="col-2" >
                                     <h:outputText value="#{v2CandidatBean.getUserName(note.idUser)}" escape="false" style="font-size: 14px;"/>
@@ -398,7 +398,7 @@
                     <div class="row">
                         <div class="col-12">
                             <i class="fa fa-language" style="color: #78261f; margin-right: 10px" />
-                            <p:commandButton value="#{langueBean.getMsg('rightbody.concept.add_traduction')}"
+                            <p:commandButton value="#{v2LocaleBean.getMsg('rightbody.concept.add_traduction')}"
                                              update="idNewTraduction newTraductionForm"
                                              actionListener="#{traductionCandidatBean.init()}"
                                              styleClass="rounded-button ui-button-outlined"
@@ -409,7 +409,7 @@
                     <h:panelGroup rendered="#{v2CandidatBean.candidatSelected.traductions.size() == 0}" style="margin-top: 10px">
                         <div class="row">
                             <div class="col-12">
-                                <h:outputText  value="#{langueBean.getMsg('rightbody.concept.no_value')} ..." style="color: grey; font-style: italic " />
+                                <h:outputText  value="#{v2LocaleBean.getMsg('rightbody.concept.no_value')} ..." style="color: grey; font-style: italic " />
                             </div>
                         </div>
                     </h:panelGroup>
@@ -417,16 +417,16 @@
                     <h:panelGroup rendered="#{v2CandidatBean.candidatSelected.traductions.size() > 0}" style="margin-top: 10px">
                         <div class="row" style="font-size: 12px; color: #601e18; margin-bottom: 5px">
                             <div class="col-6">
-                                <b><h:outputText value="#{langueBean.getMsg('candidat.traduction')}"/></b>
+                                <b><h:outputText value="#{v2LocaleBean.getMsg('candidat.traduction')}"/></b>
                             </div>
                             <div class="col-2" style="margin-top: -2px;">
-                                <b><h:outputText value="#{langueBean.getMsg('candidat.language')}"/></b>
+                                <b><h:outputText value="#{v2LocaleBean.getMsg('candidat.language')}"/></b>
                             </div>
                             <div class="col-2">
-                                <b><h:outputText value="#{langueBean.getMsg('candidat.edit')}"/></b>
+                                <b><h:outputText value="#{v2LocaleBean.getMsg('candidat.edit')}"/></b>
                             </div>
                             <div class="col-2">
-                                <b><h:outputText value="#{langueBean.getMsg('candidat.remove')}"/></b>
+                                <b><h:outputText value="#{v2LocaleBean.getMsg('candidat.remove')}"/></b>
                             </div>
                         </div>
 
@@ -468,13 +468,13 @@
                     <div class="row">
                         <div class="col-12" style="padding: 5px">
                             <i class="pi pi-align-justify" style="color: #78261f; margin-right: 10px; margin-left: 10px" />
-                            <p:commandButton value="#{langueBean.getMsg('alignment.addNewAlignment')}"
+                            <p:commandButton value="#{v2LocaleBean.getMsg('alignment.addNewAlignment')}"
                                              update="idAddManualAlignment" process="@this" ajax="true"
                                              actionListener="#{alignmentManualBean.showManuelAlignmentDialog()}"
                                              styleClass="rounded-button ui-button-outlined"
                                              style="color: #f47b2a;" />
 
-                            <p:commandButton value="#{langueBean.getMsg('alignment.addNewAutoAlignment')}"
+                            <p:commandButton value="#{v2LocaleBean.getMsg('alignment.addNewAutoAlignment')}"
                                              update="tabViewCandidat" process="@this"
                                              actionListener="#{v2CandidatBean.openAddAlignementWindow()}"
                                              styleClass="rounded-button ui-button-outlined"
@@ -487,7 +487,7 @@
                     <h:panelGroup rendered="#{v2CandidatBean.candidatSelected.alignments.size() == 0}" style="margin-top: 10px">
                         <div class="row">
                             <div class="col-12">
-                                <h:outputText  value="#{langueBean.getMsg('rightbody.concept.no_value')} ..." style="color: grey; font-style: italic " />
+                                <h:outputText  value="#{v2LocaleBean.getMsg('rightbody.concept.no_value')} ..." style="color: grey; font-style: italic " />
                             </div>
                         </div>
                     </h:panelGroup>
@@ -498,13 +498,13 @@
                                 <b><h:outputText value="Type"/></b>
                             </div>
                             <div class="col-5">
-                                <b><h:outputText value="#{langueBean.getMsg('rightbody.concept.original_uri')}"/></b>
+                                <b><h:outputText value="#{v2LocaleBean.getMsg('rightbody.concept.original_uri')}"/></b>
                             </div>
                             <div class="col-2">
-                                <b><h:outputText value="#{langueBean.getMsg('candidat.edit')}"/></b>
+                                <b><h:outputText value="#{v2LocaleBean.getMsg('candidat.edit')}"/></b>
                             </div>
                             <div class="col-2">
-                                <b><h:outputText value="#{langueBean.getMsg('candidat.remove')}"/></b>
+                                <b><h:outputText value="#{v2LocaleBean.getMsg('candidat.remove')}"/></b>
                             </div>
                         </div>
 
@@ -545,12 +545,12 @@
                         <div class="col-12">
                             <i class="pi pi-images" style="color: #78261f; margin-right: 10px" />
 
-                            <p:commandButton value="#{langueBean.getMsg('rightbody.concept.add_image')}"
+                            <p:commandButton value="#{v2LocaleBean.getMsg('rightbody.concept.add_image')}"
                                              actionListener="#{v2CandidatBean.initImageDialog()}" oncomplete="PF('addImage').show();"
                                              styleClass="rounded-button ui-button-outlined" update="idAddImage"
                                              style="color: #f47b2a;" />
 
-                            <p:commandButton value="#{langueBean.getMsg('candidat.photo.delete')}" ajax="true" process="@this"
+                            <p:commandButton value="#{v2LocaleBean.getMsg('candidat.photo.delete')}" ajax="true" process="@this"
                                              oncomplete="PF('deleteImage').show();"
                                              styleClass="rounded-button ui-button-outlined" update="tabViewCandidat"
                                              style="color: #f47b2a; margin-left: 10px" />
@@ -560,7 +560,7 @@
                     <h:panelGroup rendered="#{v2CandidatBean.candidatSelected.images.size() == 0}" style="margin-top: 10px">
                         <div class="row">
                             <div class="col-12">
-                                <h:outputText  value="#{langueBean.getMsg('rightbody.concept.no_value')}..." style="color: grey; font-style: italic " />
+                                <h:outputText  value="#{v2LocaleBean.getMsg('rightbody.concept.no_value')}..." style="color: grey; font-style: italic " />
                             </div>
                         </div>
                     </h:panelGroup>
@@ -593,18 +593,18 @@
                                                     </h4>
                                                 </div>
                                                 <div class="col-2" style="text-align: right">
-                                                    <p:commandButton value="#{langueBean.getMsg('candidat.remove')}" process="@this" ajax="true"
+                                                    <p:commandButton value="#{v2LocaleBean.getMsg('candidat.remove')}" process="@this" ajax="true"
                                                                      update="tabViewCandidat"
                                                                      action="#{imageCandidatBean.deleteImage(photo.uri)}"
                                                                      styleClass="rounded-button ui-button-outlined"
                                                                      style="color: #f47b2a;">
-                                                        <p:confirm type="popup" header="#{langueBean.getMsg('profile.confirmation')}" icon="pi pi-info-circle"
-                                                                   message="#{langueBean.getMsg('candidat.photo.delete_conform')}"/>
+                                                        <p:confirm type="popup" header="#{v2LocaleBean.getMsg('profile.confirmation')}" icon="pi pi-info-circle"
+                                                                   message="#{v2LocaleBean.getMsg('candidat.photo.delete_conform')}"/>
                                                     </p:commandButton>
 
                                                     <p:confirmPopup global="true" showEffect="fade" hideEffect="fade">
-                                                        <p:commandButton value="#{langueBean.getMsg('no')}" type="button" styleClass="ui-confirm-popup-no ui-button-flat"/>
-                                                        <p:commandButton value="#{langueBean.getMsg('yes')}" type="button" styleClass="ui-confirm-popup-yes" />
+                                                        <p:commandButton value="#{v2LocaleBean.getMsg('no')}" type="button" styleClass="ui-confirm-popup-no ui-button-flat"/>
+                                                        <p:commandButton value="#{v2LocaleBean.getMsg('yes')}" type="button" styleClass="ui-confirm-popup-yes" />
                                                     </p:confirmPopup>
                                                 </div>
                                             </div>

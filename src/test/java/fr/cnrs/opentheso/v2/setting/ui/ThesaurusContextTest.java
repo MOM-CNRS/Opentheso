@@ -1,6 +1,6 @@
 package fr.cnrs.opentheso.v2.setting.ui;
 
-import fr.cnrs.opentheso.bean.menu.theso.SelectedTheso;
+import fr.cnrs.opentheso.v2.setting.service.ThesaurusWorkLanguageService;
 import fr.cnrs.opentheso.v2.shared.session.ThesaurusSelection;
 import fr.cnrs.opentheso.v2.shared.session.ThesaurusSelectionService;
 import org.junit.jupiter.api.BeforeEach;
@@ -8,9 +8,12 @@ import org.junit.jupiter.api.Test;
 import org.junit.jupiter.api.extension.ExtendWith;
 import org.mockito.Mock;
 import org.mockito.junit.jupiter.MockitoExtension;
+import org.springframework.test.util.ReflectionTestUtils;
 
 import static org.junit.jupiter.api.Assertions.assertEquals;
+import static org.junit.jupiter.api.Assertions.assertFalse;
 import static org.junit.jupiter.api.Assertions.assertNull;
+import static org.junit.jupiter.api.Assertions.assertTrue;
 import static org.mockito.ArgumentMatchers.anyString;
 import static org.mockito.Mockito.never;
 import static org.mockito.Mockito.verify;
@@ -22,13 +25,14 @@ class ThesaurusContextTest {
     @Mock
     private ThesaurusSelectionService thesaurusSelectionService;
     @Mock
-    private SelectedTheso selectedTheso;
+    private ThesaurusWorkLanguageService thesaurusWorkLanguageService;
 
     private ThesaurusContext thesaurusContext;
 
     @BeforeEach
     void setUp() {
-        thesaurusContext = new ThesaurusContext(thesaurusSelectionService, selectedTheso);
+        thesaurusContext = new ThesaurusContext(thesaurusSelectionService, thesaurusWorkLanguageService);
+        ReflectionTestUtils.setField(thesaurusContext, "defaultWorkLanguage", "fr");
     }
 
     @Test
@@ -38,6 +42,7 @@ class ThesaurusContextTest {
         thesaurusContext.syncFromViewParams();
 
         assertNull(thesaurusContext.getCurrentThesaurusId());
+        assertFalse(thesaurusContext.isFromUrl());
         verify(thesaurusSelectionService, never()).resolve(anyString());
     }
 
@@ -48,15 +53,17 @@ class ThesaurusContextTest {
         thesaurusContext.setIdGroupFromUri("G1");
         when(thesaurusSelectionService.resolve("TH1"))
                 .thenReturn(new ThesaurusSelection("TH1", "Mon thésaurus"));
+        when(thesaurusWorkLanguageService.resolveForThesaurus("TH1")).thenReturn("fr");
 
         thesaurusContext.syncFromViewParams();
 
+        assertTrue(thesaurusContext.isFromUrl());
         assertEquals("TH1", thesaurusContext.getCurrentThesaurusId());
         assertEquals("Mon thésaurus", thesaurusContext.getCurrentThesaurusTitle());
+        assertEquals("fr", thesaurusContext.resolveWorkLanguage());
         assertNull(thesaurusContext.getIdThesoFromUri());
         assertNull(thesaurusContext.getIdConceptFromUri());
         assertNull(thesaurusContext.getIdGroupFromUri());
-        verify(selectedTheso).setCurrentIdTheso("TH1");
     }
 
     @Test
@@ -71,14 +78,35 @@ class ThesaurusContextTest {
     }
 
     @Test
-    void syncFromViewParams_usesSelectedThesaurusWhenNoViewParam() {
-        when(selectedTheso.getCurrentIdTheso()).thenReturn("TH2");
-        when(thesaurusSelectionService.resolve("TH2"))
-                .thenReturn(new ThesaurusSelection("TH2", "Thésaurus 2"));
+    void syncFromViewParams_keepsExistingSelectionWhenNoViewParam() {
+        thesaurusContext.setCurrentThesaurusId("TH2");
+        thesaurusContext.setCurrentThesaurusTitle("Thésaurus 2");
 
         thesaurusContext.syncFromViewParams();
 
+        assertFalse(thesaurusContext.isFromUrl());
         assertEquals("TH2", thesaurusContext.getCurrentThesaurusId());
         assertEquals("Thésaurus 2", thesaurusContext.getCurrentThesaurusTitle());
+        verify(thesaurusSelectionService, never()).resolve(anyString());
+    }
+
+    @Test
+    void resolveWorkLanguage_usesCurrentLanguageWhenPresent() {
+        thesaurusContext.setCurrentLanguage("en");
+
+        assertEquals("en", thesaurusContext.resolveWorkLanguage());
+    }
+
+    @Test
+    void clearSelection_resetsContext() {
+        thesaurusContext.setCurrentThesaurusId("TH1");
+        thesaurusContext.setCurrentThesaurusTitle("Test");
+        thesaurusContext.setFromUrl(true);
+
+        thesaurusContext.clearSelection();
+
+        assertNull(thesaurusContext.getCurrentThesaurusId());
+        assertNull(thesaurusContext.getCurrentThesaurusTitle());
+        assertFalse(thesaurusContext.isFromUrl());
     }
 }

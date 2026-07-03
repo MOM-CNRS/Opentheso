@@ -1,13 +1,12 @@
 package fr.cnrs.opentheso.v2.candidat.ui;
 
-import fr.cnrs.opentheso.bean.menu.theso.RoleOnThesaurusBean;
-import fr.cnrs.opentheso.bean.menu.theso.SelectedTheso;
-import fr.cnrs.opentheso.bean.menu.users.CurrentUser;
-import fr.cnrs.opentheso.entites.LanguageIso639;
 import fr.cnrs.opentheso.models.skosapi.SKOSXmlDocument;
-import fr.cnrs.opentheso.repositories.LanguageRepository;
 import fr.cnrs.opentheso.utils.MessageUtils;
+import fr.cnrs.opentheso.v2.candidat.model.CandidatImportLanguage;
+import fr.cnrs.opentheso.v2.candidat.service.CandidatLanguageService;
 import fr.cnrs.opentheso.v2.candidat.service.CandidatSkosImportService;
+import fr.cnrs.opentheso.v2.setting.ui.ThesaurusContext;
+import fr.cnrs.opentheso.v2.shared.ui.UserSession;
 import jakarta.faces.application.FacesMessage;
 import jakarta.faces.context.FacesContext;
 import jakarta.faces.event.AjaxBehaviorEvent;
@@ -15,10 +14,10 @@ import jakarta.faces.event.PhaseId;
 import jakarta.faces.view.ViewScoped;
 import jakarta.inject.Named;
 import lombok.Getter;
+import lombok.RequiredArgsConstructor;
 import lombok.Setter;
 import org.primefaces.PrimeFaces;
 import org.primefaces.event.FileUploadEvent;
-import org.springframework.beans.factory.annotation.Value;
 
 import java.io.IOException;
 import java.io.InputStream;
@@ -27,18 +26,15 @@ import java.util.List;
 
 @Getter
 @Setter
-@Named("v2CandidatImportBean")
 @ViewScoped
+@Named("v2CandidatImportBean")
+@RequiredArgsConstructor
 public class CandidatImportBean implements Serializable {
 
-    @Value("${settings.workLanguage:fr}")
-    private String workLanguage;
-
     private final CandidatSkosImportService candidatSkosImportService;
-    private final LanguageRepository languageRepository;
-    private final RoleOnThesaurusBean roleOnThesaurus;
-    private final SelectedTheso selectedTheso;
-    private final CurrentUser currentUser;
+    private final CandidatLanguageService candidatLanguageService;
+    private final ThesaurusContext thesaurusContext;
+    private final UserSession userSession;
     private final CandidatBean candidatBean;
 
     private int typeImport;
@@ -47,37 +43,18 @@ public class CandidatImportBean implements Serializable {
     private String selectedLang;
     private boolean loadDone;
 
-    private List<LanguageIso639> allLangs;
+    private List<CandidatImportLanguage> allLangs;
     private SKOSXmlDocument skosXmlDocument;
 
-    public CandidatImportBean(
-            CandidatSkosImportService candidatSkosImportService,
-            LanguageRepository languageRepository,
-            RoleOnThesaurusBean roleOnThesaurus,
-            SelectedTheso selectedTheso,
-            CurrentUser currentUser,
-            CandidatBean candidatBean
-    ) {
-        this.candidatSkosImportService = candidatSkosImportService;
-        this.languageRepository = languageRepository;
-        this.roleOnThesaurus = roleOnThesaurus;
-        this.selectedTheso = selectedTheso;
-        this.currentUser = currentUser;
-        this.candidatBean = candidatBean;
-    }
-
     public void init() {
+        thesaurusContext.syncFromViewParams();
         typeImport = 0;
         total = 0;
         uri = "";
         loadDone = false;
         skosXmlDocument = null;
-        allLangs = languageRepository.findAll();
-        if (roleOnThesaurus.getNodePreference() != null) {
-            selectedLang = roleOnThesaurus.getNodePreference().getSourceLang();
-        } else {
-            selectedLang = workLanguage;
-        }
+        allLangs = candidatLanguageService.listAllLanguages();
+        selectedLang = thesaurusContext.resolveWorkLanguage();
     }
 
     public void stateChangeListener(AjaxBehaviorEvent event) {
@@ -114,21 +91,21 @@ public class CandidatImportBean implements Serializable {
             MessageUtils.showErrorMessage("Aucun fichier candidat chargé");
             return;
         }
-        if (roleOnThesaurus.getNodePreference() == null) {
-            MessageUtils.showErrorMessage("Préférences du thésaurus introuvables");
+        String thesaurusId = thesaurusContext.resolveThesaurusId();
+        Integer userId = userSession.getCurrentUserId();
+        if (thesaurusId == null || thesaurusId.isBlank() || userId == null) {
+            MessageUtils.showErrorMessage("Contexte thésaurus ou utilisateur invalide");
             return;
         }
 
         try {
             var concepts = skosXmlDocument.getConceptList();
             candidatBean.prepareImportProgress(concepts.size());
-            candidatSkosImportService.importCandidates(
+            candidatSkosImportService.importCandidatesForThesaurus(
                     skosXmlDocument,
-                    selectedTheso.getCurrentIdTheso(),
-                    currentUser.getNodeUser().getIdUser(),
-                    -1,
-                    roleOnThesaurus.getNodePreference().getSourceLang(),
-                    roleOnThesaurus.getNodePreference(),
+                    thesaurusId,
+                    userId,
+                    thesaurusContext.resolveWorkLanguage(),
                     candidatBean::updateImportProgress
             );
             candidatBean.setListCandidatsActivate(true);

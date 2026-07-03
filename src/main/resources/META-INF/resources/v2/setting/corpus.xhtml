@@ -7,6 +7,7 @@
 
     <f:view>
         <f:metadata>
+    <f:viewAction action="#{v2ConsultationShellBean.load()}"/>
             <f:viewAction action="#{v2CorpusSettingsBean.load()}"/>
             <f:viewParam name="idc" value="#{v2ThesaurusContext.idConceptFromUri}"/>
             <f:viewParam name="idg" value="#{v2ThesaurusContext.idGroupFromUri}"/>
@@ -31,22 +32,22 @@
 
         <p:growl id="messageIndex" globalOnly="true" showDetail="true"/>
 
-        <h:panelGroup rendered="#{menuBean.checkIfUserIsConnected() and currentUser.hasRoleAsAdmin}" id="wrapper" style="height: 100%" >
+        <h:panelGroup rendered="#{v2UserSession.isLoggedIn() and currentUser.hasRoleAsAdmin}" id="wrapper" style="height: 100%" >
 
-            <ui:include src="../../commun/menu.xhtml" />
+            <ui:include src="../thesaurus/includes/layout/menu.xhtml" />
 
             <div id="content-wrapper" style="width: 100%">
 
                 <h:form id="containerIndex" style="min-height:100%; position:relative;">
                     
                     <h:panelGroup id="header">
-                        <ui:include src="../../commun/header.xhtml" />
+                        <ui:include src="../thesaurus/includes/layout/header.xhtml" />
                     </h:panelGroup>
 
                     <div class="container-fluid">
 
                         <div class="d-sm-flex align-items-center justify-content-between mb-4" style="margin: 20px">
-                            <h1 class="h3 mb-0 text-gray-800">#{langueBean.getMsg('menu.setting')} / <span style="color: #f47b2a">#{langueBean.getMsg('menu.corpus')}</span></h1>
+                            <h1 class="h3 mb-0 text-gray-800">#{v2LocaleBean.getMsg('menu.setting')} / <span style="color: #f47b2a">#{v2LocaleBean.getMsg('menu.corpus')}</span></h1>
                         </div>
 
                         <div class="col-12" style="height: 100%">
@@ -54,7 +55,7 @@
 
                                 <div class="row" style="padding-left: 20px; margin-top: 20px; margin-left: 10px; font-size: 16px">
                                     <div class="col-12">
-                                        <h:outputText value="#{langueBean.getMsg('setting.manageCorpusFor')}  " />
+                                        <h:outputText value="#{v2LocaleBean.getMsg('setting.manageCorpusFor')}  " />
                                         <h:outputText value="#{v2ThesaurusContext.currentThesaurusTitle} (#{v2ThesaurusContext.currentThesaurusId})" style="color: #f47b2a" />
                                     </div>
                                 </div>
@@ -75,10 +76,10 @@
                                             <p:commandButton rendered="#{v2CorpusSettingsBean.screenAvailable}"
                                                              actionListener="#{v2CorpusSettingsBean.prepareCreate()}"
                                                              styleClass="ui-button-success" icon="pi pi-check"
-                                                             value="#{langueBean.getMsg('setting.newCorpus')}"
+                                                             value="#{v2LocaleBean.getMsg('setting.newCorpus')}"
                                                              update="idV2NewCorpus v2NewCorpusForm" process="@this"
                                                              oncomplete="PF('v2NewCorpus').show();">
-                                                <p:tooltip value="#{langueBean.getMsg('setting.newCorpusTooltip')}" showDelay="1000" />
+                                                <p:tooltip value="#{v2LocaleBean.getMsg('setting.newCorpusTooltip')}" showDelay="1000" />
                                             </p:commandButton>
                                         </p:toolbarGroup>
                                     </p:toolbar>
@@ -88,19 +89,19 @@
                                                  resizableColumns="true" scrollHeight="450" style="margin-top: 10px"
                                                  reflow="true" lazy="false">
 
-                                        <p:column headerText="#{langueBean.getMsg('statistique.label')}">
+                                        <p:column headerText="#{v2LocaleBean.getMsg('statistique.label')}">
                                             <h:outputText value="#{corpus.corpusName}" title="Obligatoire"/>
                                         </p:column>
 
-                                        <p:column headerText="#{langueBean.getMsg('setting.UriToGetTotal')}">
+                                        <p:column headerText="#{v2LocaleBean.getMsg('setting.UriToGetTotal')}">
                                             <h:outputText value="#{corpus.uriCount}" title="facultatif"/>
                                         </p:column>
 
-                                        <p:column headerText="#{langueBean.getMsg('setting.UriToLink')}" >
+                                        <p:column headerText="#{v2LocaleBean.getMsg('setting.UriToLink')}" >
                                             <h:outputText value="#{corpus.uriLink}" title="Obligatoire"/>
                                         </p:column>
 
-                                        <p:column headerText="#{langueBean.getMsg('candidat.state')}">
+                                        <p:column headerText="#{v2LocaleBean.getMsg('candidat.state')}">
                                             <p:toggleSwitch value="#{corpus.active}" style="font-size: 10px;" disabled="true" />
                                         </p:column>
 
@@ -117,7 +118,7 @@
                                         </p:column>
 
                                         <f:facet name="footer">
-                                            <span class="p-text-bold">#{langueBean.getMsg('setting.totalCorpus')} :  #{v2CorpusSettingsBean.corpusList.size()}</span>
+                                            <span class="p-text-bold">#{v2LocaleBean.getMsg('setting.totalCorpus')} :  #{v2CorpusSettingsBean.corpusList.size()}</span>
                                         </f:facet>
                                     </p:dataTable>
                                 </div>
@@ -125,14 +126,16 @@
                         </div>
                     </div>
 
-                    <ui:include src="../../commun/footer.xhtml"/>
+                    <ui:include src="../thesaurus/includes/layout/footer.xhtml"/>
                     <input type="hidden" name="csrfToken" value="#{sessionScope.CSRF_TOKEN}"/>
                 </h:form>
 
                 <ui:include src="new-corpus-dialog.xhtml"/>
                 <ui:include src="edit-corpus-dialog.xhtml"/>
                 <ui:include src="confirm-delete-corpus-dialog.xhtml"/>
-                <ui:include src="../../dialog/login/logout.xhtml"/>
+                <ui:include src="../thesaurus/includes/layout/logout-dialog.xhtml"/>
+            <ui:include src="../thesaurus/includes/layout/login-dialog.xhtml"/>
+            <ui:include src="../thesaurus/includes/layout/forget-password-dialog.xhtml"/>
             </div>
         </h:panelGroup>
     </h:body>

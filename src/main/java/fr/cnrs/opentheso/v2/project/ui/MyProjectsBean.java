@@ -1,6 +1,6 @@
 package fr.cnrs.opentheso.v2.project.ui;
 
-import fr.cnrs.opentheso.bean.language.LanguageBean;
+import fr.cnrs.opentheso.v2.shared.ui.V2LocaleBean;
 import fr.cnrs.opentheso.utils.MessageUtils;
 import fr.cnrs.opentheso.v2.project.exception.InvalidProjectDataException;
 import fr.cnrs.opentheso.v2.project.exception.ProjectAccessDeniedException;
@@ -33,7 +33,7 @@ import java.util.List;
 public class MyProjectsBean implements Serializable {
 
     private final UserSession userSession;
-    private final LanguageBean languageBean;
+    private final V2LocaleBean localeBean;
     private final ProjectAdminService projectAdminService;
     private final ProjectManagementService projectManagementService;
     private final ProjectMemberService projectMemberService;
@@ -60,13 +60,13 @@ public class MyProjectsBean implements Serializable {
 
     public MyProjectsBean(
             UserSession userSession,
-            LanguageBean languageBean,
+            V2LocaleBean localeBean,
             ProjectAdminService projectAdminService,
             ProjectManagementService projectManagementService,
             ProjectMemberService projectMemberService
     ) {
         this.userSession = userSession;
-        this.languageBean = languageBean;
+        this.localeBean = localeBean;
         this.projectAdminService = projectAdminService;
         this.projectManagementService = projectManagementService;
         this.projectMemberService = projectMemberService;
@@ -158,7 +158,7 @@ public class MyProjectsBean implements Serializable {
                         "Un mail a été envoyé pour définir le mot de passe et activer le compte"
                 );
             } else {
-                MessageUtils.showInformationMessage(languageBean.getMsg("profile.userCreatedSuccess"));
+                MessageUtils.showInformationMessage(localeBean.getMsg("profile.userCreatedSuccess"));
             }
             prepareNewMemberDialog();
             reloadDashboard(userId);
@@ -227,7 +227,7 @@ public class MyProjectsBean implements Serializable {
         }
         try {
             projectManagementService.createProject(userId, userSession.isSuperAdmin(), newProjectName);
-            MessageUtils.showInformationMessage(languageBean.getMsg("project.createdSuccess"));
+            MessageUtils.showInformationMessage(localeBean.getMsg("project.createdSuccess"));
             prepareCreateDialog();
             load();
             PrimeFaces.current().executeScript("PF('v2NewProject').hide();");
@@ -249,7 +249,7 @@ public class MyProjectsBean implements Serializable {
                     selectedProjectId,
                     renameProjectLabel
             );
-            MessageUtils.showInformationMessage(languageBean.getMsg("project.renamedSuccess"));
+            MessageUtils.showInformationMessage(localeBean.getMsg("project.renamedSuccess"));
             prepareRenameDialog();
             load();
             PrimeFaces.current().executeScript("PF('v2RenameProject').hide();");
@@ -274,7 +274,7 @@ public class MyProjectsBean implements Serializable {
 
     private void loadDashboard(int userId) {
         try {
-            dashboard = projectAdminService.loadDashboard(userId, selectedProjectId, languageBean.getIdLangue());
+            dashboard = projectAdminService.loadDashboard(userId, selectedProjectId, localeBean.getIdLangue());
         } catch (ProjectAccessDeniedException e) {
             dashboard = null;
             MessageUtils.showErrorMessage(e.getMessage());
@@ -305,7 +305,7 @@ public class MyProjectsBean implements Serializable {
     private Integer requireConnectedUserId() {
         Integer userId = userSession.getCurrentUserId();
         if (userId == null) {
-            MessageUtils.showErrorMessage(languageBean.getMsg("profile.userNotConnected"));
+            MessageUtils.showErrorMessage(localeBean.getMsg("profile.userNotConnected"));
         }
         return userId;
     }

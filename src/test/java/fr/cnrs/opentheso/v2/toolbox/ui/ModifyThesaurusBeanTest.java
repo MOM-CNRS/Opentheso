@@ -1,6 +1,5 @@
 package fr.cnrs.opentheso.v2.toolbox.ui;
 
-import fr.cnrs.opentheso.bean.menu.users.CurrentUser;
 import fr.cnrs.opentheso.utils.MessageUtils;
 import fr.cnrs.opentheso.v2.setting.service.ThesaurusAccessService;
 import fr.cnrs.opentheso.v2.shared.ui.UserSession;
@@ -44,8 +43,6 @@ class ModifyThesaurusBeanTest {
     @Mock
     private UserSession userSession;
     @Mock
-    private CurrentUser currentUser;
-    @Mock
     private ThesaurusAccessService thesaurusAccessService;
     @Mock
     private ModifyThesaurusService modifyThesaurusService;
@@ -60,7 +57,7 @@ class ModifyThesaurusBeanTest {
 
     @BeforeEach
     void setUp() {
-        bean = new ModifyThesaurusBean(userSession, currentUser, thesaurusAccessService, modifyThesaurusService);
+        bean = new ModifyThesaurusBean(userSession, thesaurusAccessService, modifyThesaurusService);
     }
 
     @Test

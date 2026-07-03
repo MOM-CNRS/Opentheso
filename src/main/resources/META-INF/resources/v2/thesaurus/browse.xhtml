@@ -1,0 +1,270 @@
+<!DOCTYPE HTML>
+<html xmlns="http://www.w3.org/1999/xhtml"
+      xmlns:h="http://xmlns.jcp.org/jsf/html"
+      xmlns:ui="http://xmlns.jcp.org/jsf/facelets"
+      xmlns:f="http://xmlns.jcp.org/jsf/core"
+      xmlns:p="http://primefaces.org/ui">
+
+    <f:view>
+        <f:metadata>
+            <f:viewAction action="#{v2ThesaurusBrowseBean.load()}"/>
+            <f:viewAction action="#{v2ConsultationShellBean.load()}"/>
+            <f:viewAction action="#{v2GlobalConceptSearchBean.init()}"/>
+            <f:viewAction action="#{v2ConceptSearchBean.syncFromContext()}"/>
+            <f:viewAction action="#{v2PropositionBean.refresh()}"/>
+            <f:viewParam name="idc" value="#{v2ThesaurusBrowseBean.conceptIdFromUri}"/>
+            <f:viewParam name="idg" value="#{v2ThesaurusBrowseBean.groupIdFromUri}"/>
+            <f:viewParam name="idf" value="#{v2ThesaurusBrowseBean.facetIdFromUri}"/>
+            <f:viewParam name="idt" value="#{v2ThesaurusContext.idThesoFromUri}"/>
+        </f:metadata>
+    </f:view>
+
+    <h:head>
+        <h:panelGroup id="indexTitle">
+            <title>#{v2ThesaurusBrowseBean.pageTitle}</title>
+        </h:panelGroup>
+        <link href="#{request.contextPath}/resources/img/icon_opentheso2.png" rel="icon"/>
+        <link rel="stylesheet" type="text/css" href="#{request.contextPath}/resources/css/all.css"/>
+        <link rel="stylesheet" type="text/css" href="#{request.contextPath}/resources/css/theme_general.css"/>
+        <link rel="stylesheet" type="text/css" href="#{request.contextPath}/resources/css/theme_opentheso.css"/>
+        <link rel="stylesheet" type="text/css" href="#{request.contextPath}/resources/css/composants_opentheso.css"/>
+        <h:outputStylesheet library="primefaces" name="primeicons/primeicons.css"/>
+        <link rel="stylesheet" href="https://use.fontawesome.com/releases/v6.1.0/css/all.css"/>
+        <link rel="stylesheet" href="https://use.fontawesome.com/releases/v6.1.0/css/v4-shims.css"/>
+        <link rel="stylesheet" href="#{resource['webjars:leaflet/1.8.0/leaflet.css']}"/>
+        <script src="#{resource['webjars:leaflet/1.8.0/leaflet.js']}"></script>
+        <style>
+            .search-form {
+                width: 80%;
+                height: 33px;
+                margin: 0 auto;
+                margin-top: 1rem;
+            }
+            .search-form input {
+                height: 100%;
+                background: transparent;
+                border: 0;
+                display: block;
+                width: 100%;
+                padding: 1rem;
+                height: 33px;
+                font-size: 1rem;
+                margin-top: -3px;
+            }
+            .search-form button {
+                height: 33px;
+                width: 100%;
+                font-size: 1rem;
+            }
+            .ui-selectonemenu.form-control {
+                border-color: transparent !important;
+                border: transparent !important;
+                height: 33px;
+            }
+            .card-margin { margin-bottom: 1.875rem; }
+        </style>
+    </h:head>
+
+    <h:body id="page-top" onload="initMenu();" style="overflow-x:hidden;">
+
+        <p:growl id="messageIndex" globalOnly="true" showDetail="true"/>
+
+        <ui:include src="includes/proposition-list-drawer.xhtml"/>
+
+        <h:panelGroup class="notification-bar" id="resultSearchBar">
+            <h:panelGroup rendered="#{not v2ThesaurusBrowseBean.screenAvailable}">
+                <ui:include src="includes/layout/global-search-results-bar.xhtml"/>
+            </h:panelGroup>
+            <h:panelGroup rendered="#{v2ThesaurusBrowseBean.screenAvailable}">
+                <ui:include src="includes/search/thesaurus-search-results-bar.xhtml"/>
+            </h:panelGroup>
+        </h:panelGroup>
+
+        <h:panelGroup id="wrapper" style="height:100%">
+            <ui:include src="includes/layout/menu.xhtml"/>
+
+            <div id="content-wrapper" style="width:100%">
+                <h:form id="containerIndex">
+
+                    <h:panelGroup id="header">
+                        <ui:include src="includes/layout/header.xhtml"/>
+                    </h:panelGroup>
+
+                    <p:panel id="searchBar" style="margin-left:10px; margin-right:10px;">
+                        <div class="d-sm-flex align-items-center justify-content-between mb-4"
+                             style="height:45px; width:100%; margin:20px;">
+                            <div style="position:relative; height:100%; width:100%;">
+                                <div style="position:absolute; width:100%; height:100%; top:0; left:0; z-index:1;">
+                                    <h:panelGroup rendered="#{not v2ThesaurusBrowseBean.screenAvailable}">
+                                        <ui:include src="includes/layout/global-search-bar.xhtml"/>
+                                    </h:panelGroup>
+                                    <h:panelGroup rendered="#{v2ThesaurusBrowseBean.screenAvailable}">
+                                        <ui:include src="includes/search/search-bar.xhtml"/>
+                                    </h:panelGroup>
+                                </div>
+                            </div>
+                        </div>
+                    </p:panel>
+
+                    <h:panelGroup id="contentConcept" rendered="#{not v2ThesaurusBrowseBean.screenAvailable}">
+                        <ui:include src="includes/layout/platform-landing.xhtml"/>
+                    </h:panelGroup>
+
+                    <ui:include src="includes/layout/footer.xhtml"/>
+                    <input type="hidden" name="csrfToken" value="${sessionScope.CSRF_TOKEN}"/>
+
+                </h:form>
+
+                <h:panelGroup rendered="#{v2ThesaurusBrowseBean.screenAvailable}">
+                    <div style="margin-top:-8px; margin-left:10px; margin-right:10px;">
+                        <div class="row" style="margin-left:15px; margin-right:15px; margin-top:5px;">
+
+                            <div class="col-xl-3 col-lg-3 col-md-3 hidden-sm card shadow mb-1"
+                                 style="overflow:hidden; padding-right:0; padding-left:0; height:100%;">
+                                <h:form id="formLeftTab">
+                                    <ui:include src="includes/left-tree-menu.xhtml"/>
+
+                                    <p:tabView id="tabTree" activeIndex="#{v2ThesaurusBrowseBean.leftTabIndex}">
+                                        <p:ajax event="tabChange"
+                                                listener="#{v2ThesaurusBrowseBean.onLeftTabChange}"
+                                                update=":formRightTab"/>
+
+                                        <p:tab id="viewTabTree">
+                                            <f:facet name="title">
+                                                <i class="pi pi-sitemap"/>
+                                                <h:outputText value=" #{v2LocaleBean.getMsg('leftbody.concept')}"/>
+                                            </f:facet>
+                                            <ui:include src="includes/left-tree-concept.xhtml">
+                                                <ui:param name="treeId" value="conceptTree"/>
+                                                <ui:param name="treeRoot" value="#{v2ThesaurusBrowseBean.conceptRoot}"/>
+                                                <ui:param name="treeMode" value="CONCEPT"/>
+                                            </ui:include>
+                                        </p:tab>
+
+                                        <p:tab id="viewTabList">
+                                            <f:facet name="title">
+                                                <i class="pi pi-list"/>
+                                                <h:outputText value=" #{v2LocaleBean.getMsg('leftbody.index')}"/>
+                                            </f:facet>
+                                            <ui:include src="includes/left-index-panel.xhtml"/>
+                                        </p:tab>
+
+                                        <p:tab id="viewTabGroups">
+                                            <f:facet name="title">
+                                                <i class="fas fa-object-group" style="font-size:1rem;"/>
+                                                <h:outputText value=" #{v2LocaleBean.getMsg('leftbody.collection')}"/>
+                                            </f:facet>
+                                            <ui:include src="includes/left-tree-collection.xhtml">
+                                                <ui:param name="treeId" value="collectionTree"/>
+                                                <ui:param name="treeRoot" value="#{v2ThesaurusBrowseBean.collectionRoot}"/>
+                                                <ui:param name="treeMode" value="COLLECTION"/>
+                                            </ui:include>
+                                        </p:tab>
+
+                                        <p:tab id="viewTabConceptTree" rendered="#{v2ThesaurusBrowseBean.useConceptTree}">
+                                            <f:facet name="title">
+                                                <i class="pi pi-sitemap"/>
+                                                <h:outputText value=" #{v2LocaleBean.getMsg('leftbody.tree')}"/>
+                                            </f:facet>
+                                            <ui:include src="includes/left-tree-arbre.xhtml">
+                                                <ui:param name="treeId" value="arbreTree"/>
+                                                <ui:param name="treeRoot" value="#{v2ThesaurusBrowseBean.arbreRoot}"/>
+                                                <ui:param name="treeMode" value="ARBRE"/>
+                                            </ui:include>
+                                        </p:tab>
+                                    </p:tabView>
+                                    <input type="hidden" name="csrfToken" value="${sessionScope.CSRF_TOKEN}"/>
+                                </h:form>
+                            </div>
+
+                            <div class="col-xl-9 col-lg-9 col-md-9 col-sm-12">
+                                <h:form id="formRightTab">
+                                    <div class="card shadow mb-4">
+                                        <p:tabView id="rightTab">
+                                            <p:tab id="viewTabConcept"
+                                                   title="#{v2LocaleBean.getMsg('leftbody.concept')}">
+                                                <f:facet name="anchor">
+                                                    <i class="pi pi-sitemap" style="color:#f47b2a;"/>
+                                                </f:facet>
+
+                                                <h:panelGroup rendered="#{v2ThesaurusBrowseBean.homePanel}">
+                                                    <ui:include src="includes/thesaurus-home-panel.xhtml"/>
+                                                </h:panelGroup>
+
+                                                <h:panelGroup rendered="#{v2ThesaurusBrowseBean.conceptPanel}"
+                                                              style="margin-bottom:70px;">
+                                                    <ui:include src="includes/concept-summary-panel.xhtml"/>
+                                                </h:panelGroup>
+
+                                                <h:panelGroup rendered="#{v2ThesaurusBrowseBean.groupPanel}"
+                                                              style="margin-bottom:70px;">
+                                                    <ui:include src="includes/collection-detail-panel.xhtml"/>
+                                                </h:panelGroup>
+
+                                                <h:panelGroup rendered="#{v2ThesaurusBrowseBean.facetPanel}"
+                                                              style="margin-bottom:70px;">
+                                                    <ui:include src="includes/facet-detail-panel.xhtml"/>
+                                                </h:panelGroup>
+                                            </p:tab>
+                                        </p:tabView>
+                                    </div>
+                                    <input type="hidden" name="csrfToken" value="${sessionScope.CSRF_TOKEN}"/>
+                                </h:form>
+                            </div>
+
+                        </div>
+                    </div>
+                </h:panelGroup>
+
+
+                <ui:include src="includes/layout/login-dialog.xhtml"/>
+                <ui:include src="includes/layout/logout-dialog.xhtml"/>
+                <ui:include src="includes/layout/forget-password-dialog.xhtml"/>
+                <ui:include src="includes/dialogs/concept-alignment-dialogs.xhtml"/>
+
+            </div>
+        </h:panelGroup>
+
+        <a class="scroll-to-top rounded" href="#page-top">
+            <i class="pi pi-angle-up"/>
+        </a>
+
+        <p:ajaxStatus onstart="PF('waitDialog').show()" onsuccess="PF('waitDialog').hide()"/>
+        <p:dialog widgetVar="waitDialog" modal="false" draggable="false" width="80"
+                  closable="false" resizable="false" showHeader="false" position="top"
+                  style="margin-top:250px; border:none;">
+            <p:graphicImage value="../../resources/img/wait.gif" width="100%" style="margin-top:15px;"/>
+        </p:dialog>
+
+        <script>
+            function showV2PropositionListBar() {
+                var bar = document.getElementById("v2PropositionListBar");
+                if (bar) {
+                    bar.style.transform = "translateX(0)";
+                }
+            }
+
+            function hideV2PropositionListBar() {
+                var bar = document.getElementById("v2PropositionListBar");
+                if (bar) {
+                    bar.style.transform = "translateX(100%)";
+                }
+            }
+
+            function showResultSearchBar() {
+                var resultSearchBar = document.getElementById("resultSearchBar");
+                if (resultSearchBar) {
+                    resultSearchBar.style.transform = "translateX(0)";
+                }
+            }
+
+            function hideResultSearchBar() {
+                var resultSearchBar = document.getElementById("resultSearchBar");
+                if (resultSearchBar) {
+                    resultSearchBar.style.transform = "translateX(100%)";
+                }
+            }
+        </script>
+
+    </h:body>
+</html>

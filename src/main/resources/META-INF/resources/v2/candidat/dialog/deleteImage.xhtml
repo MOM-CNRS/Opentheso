@@ -4,7 +4,7 @@
              xmlns:f="http://xmlns.jcp.org/jsf/core"
              xmlns:h="http://xmlns.jcp.org/jsf/html">
 
-    <p:dialog id="idDeleteImage" header="#{langueBean.getMsg('rightbody.conceptdialog.deleting_images')}"
+    <p:dialog id="idDeleteImage" header="#{v2LocaleBean.getMsg('rightbody.conceptdialog.deleting_images')}"
               widgetVar="deleteImage" width="750" showEffect="fade" modal="true"
               resizable="false" position="top" style="margin-top: 30px" >
         <h:form>
@@ -16,31 +16,31 @@
                     <f:facet name="header">
                         <div class="products-table-header">
                             <span style="font-weight: bold">
-                                #{langueBean.getMsg('rightbody.conceptdialog.imageList')}
+                                #{v2LocaleBean.getMsg('rightbody.conceptdialog.imageList')}
                             </span>
                         </div>
                     </f:facet>
 
-                    <p:column width="70%" headerText="#{langueBean.getMsg('candidat.url')}">
+                    <p:column width="70%" headerText="#{v2LocaleBean.getMsg('candidat.url')}">
                         <h:outputText value="#{imageToEdit.uri}" style="color: #43B572; font-size: 14px;" />
                     </p:column>
 
-                    <p:column width="20%" headerText="#{langueBean.getMsg('rightbody.concept.image')}">
+                    <p:column width="20%" headerText="#{v2LocaleBean.getMsg('rightbody.concept.image')}">
                         <p:graphicImage value="#{imageToEdit.uri}" style="width: 80px; height: 40px"/>
                     </p:column>
 
-                    <p:column width="10%" headerText="#{langueBean.getMsg('profile.action')}" >
-                        <p:commandLink title="#{langueBean.getMsg('candidat.remove')}" ajax="true" process="@form"
+                    <p:column width="10%" headerText="#{v2LocaleBean.getMsg('profile.action')}" >
+                        <p:commandLink title="#{v2LocaleBean.getMsg('candidat.remove')}" ajax="true" process="@form"
                                        action="#{imageCandidatBean.deleteImage(imageToEdit.uri)}"
                                        update="tabViewCandidat messageIndex">
                             <i class="pi pi-trash" style="color: #C63632; font-size: 1.1rem; padding-top: 4px;"/>
-                            <p:confirm type="popup" header="#{langueBean.getMsg('profile.confirmation')}" icon="pi pi-info-circle"
-                                       message="#{langueBean.getMsg('candidat.photo.delete_conform')}"/>
+                            <p:confirm type="popup" header="#{v2LocaleBean.getMsg('profile.confirmation')}" icon="pi pi-info-circle"
+                                       message="#{v2LocaleBean.getMsg('candidat.photo.delete_conform')}"/>
                         </p:commandLink>
 
                         <p:confirmPopup global="true" showEffect="fade" hideEffect="fade">
-                            <p:commandButton value="#{langueBean.getMsg('no')}" type="button" styleClass="ui-confirm-popup-no ui-button-flat"/>
-                            <p:commandButton value="#{langueBean.getMsg('yes')}" type="button" styleClass="ui-confirm-popup-yes" />
+                            <p:commandButton value="#{v2LocaleBean.getMsg('no')}" type="button" styleClass="ui-confirm-popup-no ui-button-flat"/>
+                            <p:commandButton value="#{v2LocaleBean.getMsg('yes')}" type="button" styleClass="ui-confirm-popup-yes" />
                         </p:confirmPopup>
                     </p:column>
                 </p:dataTable>

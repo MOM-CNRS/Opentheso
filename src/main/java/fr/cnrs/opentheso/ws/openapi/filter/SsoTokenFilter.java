@@ -43,10 +43,11 @@ public class SsoTokenFilter implements Filter {
                 if (idc != null && !idc.isBlank()) session.setAttribute("ssoIdc", idc);
                 if (idt != null && !idt.isBlank()) session.setAttribute("ssoIdt", idt);
 
-                // Construire la redirection finale avec idc et idt
-                StringBuilder redirect = new StringBuilder(request.getContextPath() + "/index.xhtml");
-                if (idc != null && idt != null) {
-                    redirect.append("?idc=").append(idc).append("&idt=").append(idt);
+                StringBuilder redirect = new StringBuilder(request.getContextPath() + "/v2/thesaurus");
+                if (idc != null && !idc.isBlank() && idt != null && !idt.isBlank()) {
+                    redirect.append("?idt=").append(idt).append("&idc=").append(idc);
+                } else if (idt != null && !idt.isBlank()) {
+                    redirect.append("?idt=").append(idt);
                 }
 
                 response.sendRedirect(redirect.toString());
@@ -54,7 +55,7 @@ public class SsoTokenFilter implements Filter {
             }
 
             log.warn("SSO token invalide ou expiré : {}", ssoToken);
-            response.sendRedirect(request.getContextPath() + "/index.xhtml?ssoError=true");
+            response.sendRedirect(request.getContextPath() + "/v2/thesaurus?ssoError=true");
             return;
         }
 

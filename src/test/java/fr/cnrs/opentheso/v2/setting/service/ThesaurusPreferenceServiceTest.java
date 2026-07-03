@@ -18,6 +18,8 @@ import java.util.List;
 import java.util.Optional;
 
 import static org.junit.jupiter.api.Assertions.assertEquals;
+import static org.junit.jupiter.api.Assertions.assertNotNull;
+import static org.junit.jupiter.api.Assertions.assertNull;
 import static org.junit.jupiter.api.Assertions.assertThrows;
 import static org.junit.jupiter.api.Assertions.assertTrue;
 import static org.mockito.ArgumentMatchers.any;
@@ -140,6 +142,26 @@ class ThesaurusPreferenceServiceTest {
         ArgumentCaptor<PreferencesEntity> captor = ArgumentCaptor.forClass(PreferencesEntity.class);
         verify(preferencesJpaRepository).save(captor.capture());
         assertTrue(captor.getValue().getApiKeyOpenArk().length() > "plain-api-key".length());
+    }
+
+    @Test
+    void loadPreferencesOrNull_returnsNullWhenEntityMissing() {
+        when(preferencesJpaRepository.findByIdThesaurus("TH1")).thenReturn(Optional.empty());
+
+        var result = thesaurusPreferenceService.loadPreferencesOrNull("TH1", "fr");
+
+        assertNull(result);
+    }
+
+    @Test
+    void loadPreferencesOrNull_returnsMappedPreferencesWhenEntityExists() {
+        when(preferencesJpaRepository.findByIdThesaurus("TH1")).thenReturn(Optional.of(SettingTestFixtures.samplePreferencesEntity()));
+        when(thesaurusSettingsQueryRepository.findUsedLanguages("TH1", "fr")).thenReturn(List.of());
+
+        var result = thesaurusPreferenceService.loadPreferencesOrNull("TH1", "fr");
+
+        assertNotNull(result);
+        assertEquals("TH1", result.thesaurusId());
     }
 
     private void stubReload(PreferencesEntity entity) {

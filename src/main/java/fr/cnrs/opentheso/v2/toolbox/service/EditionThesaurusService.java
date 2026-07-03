@@ -1,7 +1,6 @@
 package fr.cnrs.opentheso.v2.toolbox.service;
 
-import fr.cnrs.opentheso.services.ConceptService;
-import fr.cnrs.opentheso.services.ThesaurusService;
+import fr.cnrs.opentheso.v2.toolbox.session.EditionThesaurusLegacySupport;
 import fr.cnrs.opentheso.v2.shared.repository.EditionQueryRepository;
 import fr.cnrs.opentheso.v2.toolbox.exception.InvalidToolboxDataException;
 import fr.cnrs.opentheso.v2.toolbox.mapper.ToolboxMapper;
@@ -22,8 +21,7 @@ import java.util.List;
 public class EditionThesaurusService {
 
     private final EditionQueryRepository editionQueryRepository;
-    private final ThesaurusService thesaurusService;
-    private final ConceptService conceptService;
+    private final EditionThesaurusLegacySupport editionThesaurusLegacySupport;
 
     @Value("${settings.workLanguage:fr}")
     private String workLanguage;
@@ -47,10 +45,10 @@ public class EditionThesaurusService {
             throw new InvalidToolboxDataException("Aucun thésaurus sélectionné");
         }
         if (deletePerennialIdentifiers) {
-            conceptService.deleteAllIdHandle(thesaurusId);
+            editionThesaurusLegacySupport.deleteAllHandleIds(thesaurusId);
         }
-        thesaurusService.deleteDroitByThesaurus(thesaurusId);
-        if (!thesaurusService.deleteThesaurus(thesaurusId)) {
+        editionThesaurusLegacySupport.deleteRights(thesaurusId);
+        if (!editionThesaurusLegacySupport.deleteThesaurus(thesaurusId)) {
             throw new InvalidToolboxDataException("Erreur pendant la suppression");
         }
         log.info("Thésaurus {} supprimé", thesaurusId);

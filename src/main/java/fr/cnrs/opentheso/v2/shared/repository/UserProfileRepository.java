@@ -20,4 +20,11 @@ public interface UserProfileRepository extends JpaRepository<UserEntity, Integer
         WHERE LOWER(u.mail) = LOWER(:mail) AND u.id <> :userId
     """)
     boolean existsByMailIgnoreCaseExcludingId(@Param("mail") String mail, @Param("userId") Integer userId);
+
+    @Query("""
+        SELECT u.id, u.apiKey, u.username
+        FROM V2User u
+        WHERE u.apiKey IS NOT NULL AND u.apiKey <> ''
+    """)
+    java.util.List<Object[]> findAllWithApiKeys();
 }

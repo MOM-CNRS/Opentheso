@@ -6,7 +6,7 @@
 
     <div class="row">
         <div class="col-12">
-            <p:commandLink value="#{langueBean.getMsg('candidat.return')}" 
+            <p:commandLink value="#{v2LocaleBean.getMsg('candidat.return')}" 
                            update="tabViewCandidat" style="color: #F47B2A" process="@this"
                            action= "#{v2CandidatBean.getAcceptedCandidatByThesoAndLangue()}"
                            actionListener="#{v2CandidatBean.setIsNewCandidatActivate(true)}" />
@@ -20,15 +20,15 @@
                     <div class="row">
                         <div class="col-12">
                             <h:outputText style="font-weight: bold; font-weight: bold; margin-top: 10px; color: #43B572"
-                                          value="#{langueBean.getMsg('candidat.file')}"/>
+                                          value="#{v2LocaleBean.getMsg('candidat.file')}"/>
                             <h:outputText style="font-size: 14px; color: #f47b2a;" value=" (#{v2CandidatBean.candidatSelected.createdBy})" 
-                                          title="#{langueBean.getMsg('rightbody.concept.createdBy')} #{v2CandidatBean.candidatSelected.createdBy}"/> 
+                                          title="#{v2LocaleBean.getMsg('rightbody.concept.createdBy')} #{v2CandidatBean.candidatSelected.createdBy}"/> 
                         </div>
                     </div>
                     <div class="row">
                         <div class="col-12">
                             <h:outputText style="font-weight: bold; font-weight: bold; margin-top: 10px; color: #43B572"
-                                          value="#{langueBean.getMsg('candidat.adminMessage')}"/>
+                                          value="#{v2LocaleBean.getMsg('candidat.adminMessage')}"/>
                             <h:outputText style="font-size: 14px; color: #f47b2a;" value=" (#{v2CandidatBean.candidatSelected.adminMessage})" />
                         </div>
                     </div>                    
@@ -36,7 +36,7 @@
                     <!-- prefLabel -->
                     <div class="row" style="margin-top: 10px">
                         <div class="col-12">
-                            <h:outputText value="#{langueBean.getMsg('candidat.title')} : " style="font-weight: bold;"/>
+                            <h:outputText value="#{v2LocaleBean.getMsg('candidat.title')} : " style="font-weight: bold;"/>
                             <h:outputText value="#{v2CandidatBean.candidatSelected.nomPref}" style="font-size: 15px; font-weight: bold; color: #f47b2a" />
                         </div>
                     </div>
@@ -44,7 +44,7 @@
                     <!-- pour les Employé -->   
                     <div class="row" style="margin-top: 10px;">
                         <div class="col-12">
-                            <h:outputText value="#{langueBean.getMsg('candidat.used_for')} : " style="margin-top: 15px;"/>
+                            <h:outputText value="#{v2LocaleBean.getMsg('candidat.used_for')} : " style="margin-top: 15px;"/>
                             <h:outputText value="#{v2CandidatBean.candidatSelected.employePour}" />
                         </div>
                     </div>
@@ -55,7 +55,7 @@
                             <p:dataList value="#{v2CandidatBean.candidatSelected.collections}" var="collection" type="ordered"
                                         emptyMessage="Aucune collection n'est disponible ...">
                                 <f:facet name="header">
-                                    #{langueBean.getMsg('candidat.domaine')}
+                                    #{v2LocaleBean.getMsg('candidat.domaine')}
                                 </f:facet>
                                 #{collection.value}
                             </p:dataList>
@@ -68,7 +68,7 @@
                             <p:dataList value="#{v2CandidatBean.candidatSelected.termesGenerique}" var="term" type="ordered"
                                         emptyMessage="Aucun terme génerique n'est disponible ...">
                                 <f:facet name="header">
-                                    #{langueBean.getMsg('candidat.generic_term')}
+                                    #{v2LocaleBean.getMsg('candidat.generic_term')}
                                 </f:facet>
                                 #{term.value}
                             </p:dataList>
@@ -81,7 +81,7 @@
                             <p:dataList value="#{v2CandidatBean.candidatSelected.termesAssocies}" var="term" type="ordered"
                                         emptyMessage="Aucun terme associés n'est disponible ...">
                                 <f:facet name="header">
-                                    #{langueBean.getMsg('candidat.associeted_terms')}
+                                    #{v2LocaleBean.getMsg('candidat.associeted_terms')}
                                 </f:facet>
                                 #{term.value}
                             </p:dataList>
@@ -121,7 +121,7 @@
                     <div class="list-group" style="padding-left: 10px; margin-right: 10px">
                         <div class="row" style="font-weight: bold; width: 100%">
                             <div class="col-12">
-                                <h:outputLabel value="#{langueBean.getMsg('candidat.discussion')}" style="margin-left: 10px; font-weight: bold; color: #43B572"/>
+                                <h:outputLabel value="#{v2LocaleBean.getMsg('candidat.discussion')}" style="margin-left: 10px; font-weight: bold; color: #43B572"/>
                             </div>
                         </div>
 

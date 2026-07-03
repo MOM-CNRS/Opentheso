@@ -1,21 +1,66 @@
 <ui:fragment xmlns="http://www.w3.org/1999/xhtml"
              xmlns:h="http://java.sun.com/jsf/html"
              xmlns:ui="http://java.sun.com/jsf/facelets"
-             xmlns:p="http://primefaces.org/ui">
+             xmlns:p="http://primefaces.org/ui"
+             xmlns:f="http://xmlns.jcp.org/jsf/core">
+
+    <f:metadata>
+        <f:viewAction action="#{v2ThesaurusExportBean.init(v2EditionBean.selectedThesaurusForAction.id, v2EditionBean.selectedThesaurusForAction.title)}"
+                      rendered="#{v2EditionBean.exportSkosView and v2EditionBean.selectedThesaurusForAction != null}"/>
+    </f:metadata>
 
     <div class="card shadow mb-4" style="padding: 15px; margin: 20px">
         <div class="row" style="margin-bottom: 15px">
             <div class="col-12" style="padding-left: 30px">
-                <h:outputText value="#{langueBean.getMsg('candidat.export')} : " class="h5 mb-0 text-gray-800"/>
+                <h:outputText value="#{v2LocaleBean.getMsg('export.thesaurusExport')} : " class="h5 mb-0 text-gray-800"/>
                 <h:outputText value="#{v2EditionBean.selectedThesaurusForAction.title} (#{v2EditionBean.selectedThesaurusForAction.id})"
                               style="color: #f47b2a" class="h5 mb-0"/>
             </div>
         </div>
+
+        <h:panelGroup rendered="#{v2EditionBean.exportSkosView}">
+            <div class="row mb-3">
+                <div class="col-3 text-right">
+                    <h:outputText value="#{v2LocaleBean.getMsg('candidat.output_format')} SKOS"/>
+                </div>
+                <div class="col-5">
+                    <p:selectOneMenu value="#{v2ThesaurusExportBean.formatCode}" style="width: 100%;">
+                        <f:selectItem itemLabel="RDF/XML" itemValue="rdf"/>
+                        <f:selectItem itemLabel="JSON-LD" itemValue="jsonld"/>
+                        <f:selectItem itemLabel="Turtle" itemValue="turtle"/>
+                        <f:selectItem itemLabel="RDF/JSON" itemValue="json"/>
+                    </p:selectOneMenu>
+                </div>
+            </div>
+
+            <div class="row mb-3">
+                <div class="col-12 text-center">
+                    <p:commandButton value="#{v2LocaleBean.getMsg('candidat.export')}" icon="fas fa-download"
+                                     ajax="false" styleClass="ui-button-success"
+                                     actionListener="#{v2ThesaurusExportBean.prepare(
+                                         v2EditionBean.selectedThesaurusForAction.id,
+                                         v2EditionBean.selectedThesaurusForAction.title)}"
+                                     onclick="PF('waitDialog').show();"
+                                     oncomplete="PF('waitDialog').hide();">
+                        <p:fileDownload value="#{v2ThesaurusExportBean.downloadSkos()}"/>
+                    </p:commandButton>
+                </div>
+            </div>
+        </h:panelGroup>
+
+        <h:panelGroup rendered="#{not v2EditionBean.exportSkosView}">
+            <div class="row mb-3">
+                <div class="col-12 text-center text-muted">
+                    <h:outputText value="Export #{v2EditionBean.currentView} — à venir"/>
+                </div>
+            </div>
+        </h:panelGroup>
+
         <div class="row" style="margin-top: 30px;">
-            <div class="col-12" style="text-align: center">
-                <p:commandButton value="#{langueBean.getMsg('btnBack')}" styleClass="ui-button-secondary button"
+            <div class="col-12 text-center">
+                <p:commandButton value="#{v2LocaleBean.getMsg('btnBack')}" styleClass="ui-button-secondary button"
                                  icon="fas fa-undo-alt" update="containerIndex"
-                                 action="#{v2EditionBean.showList()}" />
+                                 action="#{v2EditionBean.showList()}"/>
             </div>
         </div>
     </div>

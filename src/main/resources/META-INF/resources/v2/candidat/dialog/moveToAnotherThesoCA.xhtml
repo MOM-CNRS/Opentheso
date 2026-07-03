@@ -4,14 +4,14 @@
              xmlns:p="http://primefaces.org/ui"
              xmlns:f="http://xmlns.jcp.org/jsf/core">
 
-    <p:dialog id="idMoveToAnotherThesoCA" header="#{langueBean.getMsg('concept.moveToAnotherThesoTooltip')}" widgetVar="moveToAnotherThesoCA" 
+    <p:dialog id="idMoveToAnotherThesoCA" header="#{v2LocaleBean.getMsg('concept.moveToAnotherThesoTooltip')}" widgetVar="moveToAnotherThesoCA" 
               modal="true" resizable="true" position="top" width="650"  style="margin-top: 50px;" > 
 
         <h:form id="moveToAnotherThesoCAForm">
 
             <div class="row">
                 <div class="col-4" style="margin-top: 3px; text-align: right">
-                    <h:outputText value="#{langueBean.getMsg('concept.candidatesToMove')} : "/>
+                    <h:outputText value="#{v2LocaleBean.getMsg('concept.candidatesToMove')} : "/>
                 </div>
                 <div class="col-8" style="margin-top: 3px; font-weight: bold">
                     <ui:repeat var="listConcept" value="#{moveConcept.idConceptsToMove}" varStatus="status">
@@ -23,7 +23,7 @@
 
             <div class="row">
                 <div class="col-4" style="margin-top: 3px; text-align: right">
-                    <h:outputText value="#{langueBean.getMsg('concept.fromTheso')} : "/>
+                    <h:outputText value="#{v2LocaleBean.getMsg('concept.fromTheso')} : "/>
                 </div>
                 <div class="col-4" style="margin-top: 3px; font-weight: bold">
                     <h:outputText value="#{selectedThesaurus.thesoName} (#{moveConcept.idThesoFrom})"/>
@@ -32,7 +32,7 @@
 
             <div class="row">
                 <div class="col-4" style="margin-top: 3px; text-align: right">
-                    <h:outputText value="#{langueBean.getMsg('concept.toTheso')}  : "/>
+                    <h:outputText value="#{v2LocaleBean.getMsg('concept.toTheso')}  : "/>
                 </div>
                 <div class="col-8" style="margin-top: 3px">
                     <p:selectOneMenu id="thesoToSelect" value="#{moveConcept.idThesoTo}" 
@@ -43,11 +43,11 @@
                 </div>                
             </div> 
             <div style="width: 100%; text-align: right; margin-top: 5px; margin-bottom: 5px;">
-                <p:commandButton value="#{langueBean.getMsg('btnCancel')}" styleClass="ui-button-secondary button" icon="fas fa-undo-alt" 
+                <p:commandButton value="#{v2LocaleBean.getMsg('btnCancel')}" styleClass="ui-button-secondary button" icon="fas fa-undo-alt" 
                                  style="margin-right: 10px" process="@this"
                                  oncomplete="PF('moveToAnotherThesoCA').hide();" update="idMoveToAnotherThesoCA"/>
 
-                <p:commandButton value="#{langueBean.getMsg('btnValidate')}" styleClass="ui-button-success" icon="pi pi-check"
+                <p:commandButton value="#{v2LocaleBean.getMsg('btnValidate')}" styleClass="ui-button-success" icon="pi pi-check"
                                  update="moveToAnotherThesoCAForm tabViewCandidat messageIndex" 
                                  oncomplete="PF('moveToAnotherThesoCA').hide();" process="@this"
                                  action="#{moveConcept.moveConceptCA()}" />

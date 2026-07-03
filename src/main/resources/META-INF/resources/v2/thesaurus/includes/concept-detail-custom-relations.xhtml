@@ -1,0 +1,64 @@
+<ui:fragment xmlns="http://www.w3.org/1999/xhtml"
+             xmlns:h="http://xmlns.jcp.org/jsf/html"
+             xmlns:ui="http://xmlns.jcp.org/jsf/facelets"
+             xmlns:p="http://primefaces.org/ui">
+
+  <h:panelGroup rendered="#{v2ThesaurusBrowseBean.customRelationVisible and v2ThesaurusBrowseBean.standardConceptType and (v2ThesaurusBrowseBean.loggedIn or v2ThesaurusBrowseBean.selectedConcept.hasOutgoingCustomRelations())}">
+    <div class="list-group-item list-group-item-action">
+      <div class="row" style="margin-left:0;">
+        <div class="col-xl-3 col-lg-4 col-md-5 col-sm-5">
+          <h:outputText value="#{v2LocaleBean.getMsg('rightbody.concept.customRelation')}"
+                        style="font-size:14px; font-weight:bold; color:#8f8f8f;"/>
+        </div>
+        <div class="col-xl-1 col-lg-1 col-md-1 col-sm-1" style="text-align:end;">
+          <i class="fas fa-arrows-alt-h" style="color:#78261f; margin-right:10px;"/>
+        </div>
+        <div class="col-xl-8 col-lg-7 col-md-6 col-sm-6" style="margin-left:-10px;">
+          <h:panelGroup rendered="#{not v2ThesaurusBrowseBean.selectedConcept.hasOutgoingCustomRelations()}">
+            <h:outputText value="....." style="font-size:14px; color:grey; font-style:italic;"/>
+          </h:panelGroup>
+          <ui:repeat value="#{v2ThesaurusBrowseBean.selectedConcept.outgoingCustomRelations}" var="custom" varStatus="status">
+            <h:outputText value="#{custom.relationLabel}: " style="font-size:14px; color:#8f8f8f;"/>
+            <p:commandLink value="#{empty custom.targetLabel ? '('.concat(custom.targetConceptId).concat(')') : custom.targetLabel}"
+                           action="#{v2ThesaurusBrowseBean.openConcept(custom.targetConceptId)}"
+                           process="@this"
+                           update=":formRightTab :formLeftTab:tabTree"
+                           style="color:#601e18; font-size:14px;"/>
+            <h:outputText value=", " rendered="#{not status.last}" style="color:#FF7979;"/>
+          </ui:repeat>
+        </div>
+      </div>
+    </div>
+  </h:panelGroup>
+
+  <h:panelGroup rendered="#{v2ThesaurusBrowseBean.customRelationVisible and v2ThesaurusBrowseBean.specificConceptType and (v2ThesaurusBrowseBean.loggedIn or v2ThesaurusBrowseBean.selectedConcept.hasReciprocalCustomRelations())}">
+    <div class="list-group-item list-group-item-action">
+      <div class="row" style="margin-left:0;">
+        <div class="col-xl-3 col-lg-4 col-md-5 col-sm-5">
+          <h:outputText value="#{v2LocaleBean.getMsg('rightbody.concept.customRelation')}"
+                        style="font-size:14px; font-weight:bold; color:#8f8f8f;"/>
+        </div>
+        <div class="col-xl-1 col-lg-1 col-md-1 col-sm-1" style="text-align:end;">
+          <i class="fas fa-arrows-alt-h" style="color:#78261f; margin-right:10px;"/>
+        </div>
+        <div class="col-xl-8 col-lg-7 col-md-6 col-sm-6" style="margin-left:-10px;">
+          <ui:repeat value="#{v2ThesaurusBrowseBean.selectedConcept.reciprocalCustomRelations}" var="custom" varStatus="status">
+            <h:outputText value="#{v2ThesaurusBrowseBean.selectedConcept.summary.preferredLabel}"
+                          style="color:#78261f; font-size:14px;"/>
+            <i class="fas fa-arrows-alt-h" style="color:#78261f; margin-right:10px; margin-left:10px;"/>
+            <p:commandLink value="#{empty custom.targetLabel ? '('.concat(custom.targetConceptId).concat(')') : custom.targetLabel}"
+                           action="#{v2ThesaurusBrowseBean.openConcept(custom.targetConceptId)}"
+                           process="@this"
+                           update=":formRightTab :formLeftTab:tabTree"
+                           style="color:#601e18; font-size:14px;"/>
+            <p:tag styleClass="mr-2"
+                   severity="warning"
+                   style="font-style:italic; margin-left:5px; font-weight:300; height:20px;"
+                   value=" #{custom.relationLabel}"/>
+            <br/>
+          </ui:repeat>
+        </div>
+      </div>
+    </div>
+  </h:panelGroup>
+</ui:fragment>

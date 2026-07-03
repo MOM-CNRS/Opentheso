@@ -1,0 +1,141 @@
+<ui:composition
+    xmlns="http://www.w3.org/1999/xhtml"
+    xmlns:h="http://xmlns.jcp.org/jsf/html"
+    xmlns:ui="http://xmlns.jcp.org/jsf/facelets"
+    xmlns:p="http://primefaces.org/ui">
+
+    <ul class="navbar-nav bg-gradient-primary sidebar sidebar-dark accordion toggled" id="accordionSidebar">
+
+        <h:panelGroup id="menuBar">
+
+            <a class="sidebar-brand d-flex align-items-center justify-content-center" style="height: 60px"
+               href="#{request.contextPath}/v2/thesaurus">
+                <div id="logoOpenTheso">
+                    <img src="#{request.contextPath}/resources/img/icon_opentheso.png" style="width:40px"/>
+                </div>
+                <div class="sidebar-brand-text mx-3">
+                    <img src="#{request.contextPath}/resources/img/logo_Opentheso.png" style="height: 35px"/>
+                </div>
+            </a>
+
+            <hr class="sidebar-divider my-0"/>
+
+            <li class="nav-item" style="margin-top: 20px;">
+                <a class="nav-link collapsed" href="#{request.contextPath}/v2/thesaurus"
+                   title="#{v2LocaleBean.getMsg('menu.thesaurus')}">
+                    <i class="fa-solid fa-folder-tree" style="font-size: 1.2rem"/>
+                </a>
+            </li>
+
+            <h:panelGroup rendered="#{v2UserSession.loggedIn and v2ConsultationShellBean.hasSelectedThesaurus() and v2UserSession.contributor}">
+                <li class="nav-item">
+                    <p:commandLink class="nav-link collapsed" actionListener="#{v2NavigationBean.redirectToCandidat()}"
+                                   process="@this" title="#{v2LocaleBean.getMsg('candidat.titre')}">
+                        <i class="fa-solid fa-plus" style="font-size: 1.2rem"/>
+                    </p:commandLink>
+                </li>
+            </h:panelGroup>
+
+            <h:panelGroup rendered="#{v2UserSession.loggedIn}">
+                <li class="nav-item">
+                    <a id="profileButton2" class="nav-link collapsed" href="#" data-toggle="collapse" data-target="#collapseTwo"
+                       aria-expanded="true" aria-controls="collapseTwo" title="#{v2LocaleBean.getMsg('menu.profile')}">
+                        <i class="fas fa-fw fa-user" style="font-size: 1.2rem"/>
+                    </a>
+                    <div id="collapseTwo" class="collapse" aria-labelledby="headingTwo" data-parent="#accordionSidebar">
+                        <div class="bg-white py-2 collapse-inner rounded">
+                            <p:commandLink class="collapse-item" actionListener="#{v2NavigationBean.redirectToMyProfile()}"
+                                           process="@this" style="font-size: 12px;">#{v2LocaleBean.getMsg('profile.my_account')}
+                            </p:commandLink>
+                            <p:commandLink rendered="#{v2UserSession.canAccessProjectAdminScreen()}"
+                                           class="collapse-item" actionListener="#{v2NavigationBean.redirectToMyProjects()}"
+                                           style="font-size: 12px;" process="@this">#{v2LocaleBean.getMsg('profile.my_projects_users')}
+                            </p:commandLink>
+                            <hr class="sidebar-divider"/>
+                            <p:commandLink rendered="#{v2UserSession.superAdmin}"
+                                           class="collapse-item" actionListener="#{v2NavigationBean.redirectToAllUsers()}"
+                                           style="font-size: 12px;" process="@this">#{v2LocaleBean.getMsg('profile.tooltip_all_users')}
+                            </p:commandLink>
+                            <p:commandLink rendered="#{v2UserSession.superAdmin}"
+                                           class="collapse-item" actionListener="#{v2NavigationBean.redirectToAllProjects()}"
+                                           style="font-size: 12px;" process="@this">#{v2LocaleBean.getMsg('profile.all_projects')}
+                            </p:commandLink>
+                            <p:commandLink rendered="#{v2UserSession.superAdmin}"
+                                           class="collapse-item" actionListener="#{v2NavigationBean.redirectToAllThesauri()}"
+                                           style="font-size: 12px;" process="@this">#{v2LocaleBean.getMsg('profile.all_thesauri')}
+                            </p:commandLink>
+                        </div>
+                    </div>
+                </li>
+            </h:panelGroup>
+
+            <h:panelGroup rendered="#{v2UserSession.canAccessProjectAdminScreen()}">
+                <li class="nav-item">
+                    <a id="toolboxButton2" class="nav-link collapsed" href="#" data-toggle="collapse" data-target="#collapseUtilities"
+                       aria-expanded="true" aria-controls="collapseUtilities" title="#{v2LocaleBean.getMsg('menu.toolbox')}">
+                        <i class="fas fa-fw fa-briefcase" style="font-size: 1.2rem"/>
+                    </a>
+                    <div id="collapseUtilities" class="collapse" aria-labelledby="headingUtilities"
+                         data-parent="#accordionSidebar">
+                        <div class="bg-white py-2 collapse-inner rounded">
+                            <p:commandLink class="collapse-item" actionListener="#{v2NavigationBean.redirectToEdition()}"
+                                           style="font-size: 12px;" process="@this">#{v2LocaleBean.getMsg('menu.edition')}
+                            </p:commandLink>
+                            <p:commandLink rendered="#{v2UserSession.superAdmin}"
+                                           class="collapse-item" actionListener="#{v2NavigationBean.redirectToFlag()}"
+                                           style="font-size: 12px;" process="@this">#{v2LocaleBean.getMsg('toolbox.manageFlags')}
+                            </p:commandLink>
+                            <p:commandLink rendered="#{v2ConsultationShellBean.hasSelectedThesaurus()}"
+                                           class="collapse-item" actionListener="#{v2NavigationBean.redirectToWorkshop()}"
+                                           style="font-size: 12px;" process="@this">#{v2LocaleBean.getMsg('menu.thesaurusWorkshop')}
+                            </p:commandLink>
+                            <p:commandLink rendered="#{v2ConsultationShellBean.hasSelectedThesaurus()}"
+                                           class="collapse-item" actionListener="#{v2NavigationBean.redirectToMaintenance()}"
+                                           style="font-size: 12px;" process="@this">#{v2LocaleBean.getMsg('menu.service')}
+                            </p:commandLink>
+                            <p:commandLink rendered="#{v2ConsultationShellBean.hasSelectedThesaurus()}"
+                                           class="collapse-item" actionListener="#{v2NavigationBean.redirectToStatistics()}"
+                                           style="font-size: 12px;" process="@this">#{v2LocaleBean.getMsg('statistique.statistic')}
+                            </p:commandLink>
+                        </div>
+                    </div>
+                </li>
+            </h:panelGroup>
+
+            <h:panelGroup rendered="#{v2UserSession.loggedIn and v2ConsultationShellBean.hasSelectedThesaurus() and v2ConsultationShellBean.adminOnCurrentThesaurus}">
+                <li class="nav-item">
+                    <a id="settingButton2" class="nav-link collapsed" href="#" data-toggle="collapse" data-target="#collapseParams"
+                       aria-expanded="true" aria-controls="collapseParams" title="#{v2LocaleBean.getMsg('menu.setting')}">
+                        <i class="fas fa-fw fa-wrench" style="font-size: 1.2rem"/>
+                    </a>
+                    <div id="collapseParams" class="collapse" aria-labelledby="headingUtilities"
+                         data-parent="#accordionSidebar">
+                        <div class="bg-white py-2 collapse-inner rounded">
+                            <p:commandLink class="collapse-item" actionListener="#{v2NavigationBean.redirectToPreference()}"
+                                           style="font-size: 12px;" process="@this">#{v2LocaleBean.getMsg('menu.preference')}
+                            </p:commandLink>
+                            <p:commandLink class="collapse-item" actionListener="#{v2NavigationBean.redirectToIdentifier()}"
+                                           style="font-size: 12px;" process="@this">#{v2LocaleBean.getMsg('menu.identifier')}
+                            </p:commandLink>
+                            <p:commandLink class="collapse-item" actionListener="#{v2NavigationBean.redirectToCorpus()}"
+                                           style="font-size: 12px;" process="@this">#{v2LocaleBean.getMsg('menu.corpus')}
+                            </p:commandLink>
+                        </div>
+                    </div>
+                </li>
+                <hr class="sidebar-divider"/>
+            </h:panelGroup>
+
+            <h:panelGroup rendered="#{v2UserSession.loggedIn}">
+                <li class="nav-item">
+                    <p:commandLink class="nav-link collapsed" actionListener="#{v2NavigationBean.redirectToGraph()}"
+                                   process="@this" title="#{v2LocaleBean.getMsg('graph')}">
+                        <i class="fa-solid fa-diagram-project" style="font-size: 1.2rem"/>
+                    </p:commandLink>
+                </li>
+                <hr class="sidebar-divider"/>
+            </h:panelGroup>
+
+        </h:panelGroup>
+    </ul>
+</ui:composition>

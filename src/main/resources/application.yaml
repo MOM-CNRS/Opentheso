@@ -3,3 +3,6 @@ info:
     name: '@project.name@'
     description: '@project.description@'
     version: '@project.version@'
+
+server:
+  max-http-header-size: 256KB

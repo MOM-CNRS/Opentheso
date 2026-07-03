@@ -1,6 +1,5 @@
 package fr.cnrs.opentheso.v2.toolbox.ui;
 
-import fr.cnrs.opentheso.bean.menu.users.CurrentUser;
 import fr.cnrs.opentheso.utils.MessageUtils;
 import fr.cnrs.opentheso.v2.shared.ui.UserSession;
 import fr.cnrs.opentheso.v2.toolbox.exception.InvalidToolboxDataException;
@@ -36,8 +35,6 @@ class NewThesaurusBeanTest {
     @Mock
     private UserSession userSession;
     @Mock
-    private CurrentUser currentUser;
-    @Mock
     private NewThesaurusService newThesaurusService;
     @Mock
     private EditionBean editionBean;
@@ -50,7 +47,7 @@ class NewThesaurusBeanTest {
 
     @BeforeEach
     void setUp() {
-        bean = new NewThesaurusBean(userSession, currentUser, newThesaurusService);
+        bean = new NewThesaurusBean(userSession, newThesaurusService);
     }
 
     @Test

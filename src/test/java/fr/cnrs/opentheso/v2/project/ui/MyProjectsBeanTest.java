@@ -1,6 +1,6 @@
 package fr.cnrs.opentheso.v2.project.ui;
 
-import fr.cnrs.opentheso.bean.language.LanguageBean;
+import fr.cnrs.opentheso.v2.shared.ui.V2LocaleBean;
 import fr.cnrs.opentheso.utils.MessageUtils;
 import fr.cnrs.opentheso.v2.project.exception.InvalidProjectDataException;
 import fr.cnrs.opentheso.v2.project.exception.ProjectAccessDeniedException;
@@ -40,7 +40,7 @@ class MyProjectsBeanTest {
     @Mock
     private UserSession userSession;
     @Mock
-    private LanguageBean languageBean;
+    private V2LocaleBean localeBean;
     @Mock
     private ProjectAdminService projectAdminService;
     @Mock
@@ -52,11 +52,11 @@ class MyProjectsBeanTest {
 
     @BeforeEach
     void setUp() {
-        lenient().when(languageBean.getMsg(anyString())).thenAnswer(invocation -> invocation.getArgument(0));
-        lenient().when(languageBean.getIdLangue()).thenReturn("fr");
+        lenient().when(localeBean.getMsg(anyString())).thenAnswer(invocation -> invocation.getArgument(0));
+        lenient().when(localeBean.getIdLangue()).thenReturn("fr");
         myProjectsBean = new MyProjectsBean(
                 userSession,
-                languageBean,
+                localeBean,
                 projectAdminService,
                 projectManagementService,
                 projectMemberService

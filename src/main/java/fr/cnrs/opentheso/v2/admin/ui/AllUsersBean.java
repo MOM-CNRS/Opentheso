@@ -1,6 +1,6 @@
 package fr.cnrs.opentheso.v2.admin.ui;
 
-import fr.cnrs.opentheso.bean.language.LanguageBean;
+import fr.cnrs.opentheso.v2.shared.ui.V2LocaleBean;
 import fr.cnrs.opentheso.utils.MessageUtils;
 import fr.cnrs.opentheso.v2.admin.model.AdminUserMembership;
 import fr.cnrs.opentheso.v2.admin.service.AdminCatalogService;
@@ -31,7 +31,7 @@ import java.util.List;
 public class AllUsersBean implements Serializable {
 
     private final UserSession userSession;
-    private final LanguageBean languageBean;
+    private final V2LocaleBean localeBean;
     private final AdminCatalogService adminCatalogService;
     private final AdminUserService adminUserService;
     private final UserProfileService userProfileService;
@@ -57,13 +57,13 @@ public class AllUsersBean implements Serializable {
 
     public AllUsersBean(
             UserSession userSession,
-            LanguageBean languageBean,
+            V2LocaleBean localeBean,
             AdminCatalogService adminCatalogService,
             AdminUserService adminUserService,
             fr.cnrs.opentheso.v2.user.service.UserProfileService userProfileService
     ) {
         this.userSession = userSession;
-        this.languageBean = languageBean;
+        this.localeBean = localeBean;
         this.adminCatalogService = adminCatalogService;
         this.adminUserService = adminUserService;
         this.userProfileService = userProfileService;
@@ -125,7 +125,7 @@ public class AllUsersBean implements Serializable {
                     newPassword,
                     newPasswordConfirmation
             );
-            MessageUtils.showInformationMessage(languageBean.getMsg("profile.userCreatedSuccess"));
+            MessageUtils.showInformationMessage(localeBean.getMsg("profile.userCreatedSuccess"));
             prepareCreateDialog();
             load();
             PrimeFaces.current().executeScript("PF('v2CreateUser').hide();");
@@ -141,7 +141,7 @@ public class AllUsersBean implements Serializable {
         }
         try {
             adminUserService.updateUser(true, selectedUserId, editUsername, editEmail, editAlertMail);
-            MessageUtils.showInformationMessage(languageBean.getMsg("profile.usernameChangedSuccess"));
+            MessageUtils.showInformationMessage(localeBean.getMsg("profile.usernameChangedSuccess"));
             load();
             PrimeFaces.current().executeScript("PF('v2EditUser').hide();");
             refreshPage();
@@ -156,7 +156,7 @@ public class AllUsersBean implements Serializable {
         }
         try {
             adminUserService.updatePassword(true, selectedUserId, resetPassword, resetPasswordConfirmation);
-            MessageUtils.showInformationMessage(languageBean.getMsg("profile.passwordChangedSuccess"));
+            MessageUtils.showInformationMessage(localeBean.getMsg("profile.passwordChangedSuccess"));
             PrimeFaces.current().executeScript("PF('v2ResetPassword').hide();");
         } catch (InvalidPasswordException e) {
             MessageUtils.showErrorMessage(e.getMessage());
@@ -173,7 +173,7 @@ public class AllUsersBean implements Serializable {
         }
         try {
             adminUserService.deleteUser(true, selectedUserId, callerId);
-            MessageUtils.showInformationMessage(languageBean.getMsg("profile.userDeletedSuccess"));
+            MessageUtils.showInformationMessage(localeBean.getMsg("profile.userDeletedSuccess"));
             load();
             PrimeFaces.current().executeScript("PF('v2DeleteUser').hide();");
             refreshPage();
@@ -190,7 +190,7 @@ public class AllUsersBean implements Serializable {
         if (userSession.canAccessSuperAdminScreen()) {
             return true;
         }
-        MessageUtils.showErrorMessage(languageBean.getMsg("project.accessDeniedDetail"));
+        MessageUtils.showErrorMessage(localeBean.getMsg("project.accessDeniedDetail"));
         return false;
     }
 

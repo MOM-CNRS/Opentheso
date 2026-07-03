@@ -22,18 +22,23 @@
 
             <!-- Debut Thesaurus -->
             <li class="nav-item" style="margin-top: 20px;">
-                <span class="nav-link">
-                    <p:commandLink id="thesoButton1" class="collapse-item" actionListener="#{menuBean.redirectToThesaurus()}"
-                                   style="color: #fff; text-decoration: none; font-size: 14px; display: none" process="@this">
-                        <i class="fa-solid fa-folder-tree" style="font-size: 1rem; margin-left: 5px" />
-                        <span style="color: #fff; text-decoration: none; font-size: 12px;">#{langueBean.getMsg('menu.thesaurus')}</span>
-                    </p:commandLink>
-                    <p:commandLink id="thesoButton2" class="collapse-item" actionListener="#{menuBean.redirectToThesaurus()}"
-                                   style="color: #fff; text-decoration: none;" process="@this"
-                                   title="#{langueBean.getMsg('menu.thesaurus')}">
-                        <i class="fa-solid fa-folder-tree" style="font-size: 1.2rem" />
-                    </p:commandLink>
-                </span>
+                <a id="thesoButton1" class="nav-link collapsed" href="#" data-toggle="collapse" data-target="#collapseThesaurus"
+                   aria-expanded="true" aria-controls="collapseThesaurus" style="display: none">
+                    <i class="fa-solid fa-folder-tree" style="font-size: 1rem"/>
+                    <span style="color: #fff; text-decoration: none; font-size: 12px;">#{langueBean.getMsg('menu.thesaurus')}</span>
+                </a>
+                <a id="thesoButton2" class="nav-link collapsed" href="#" data-toggle="collapse" data-target="#collapseThesaurus"
+                   aria-expanded="true" aria-controls="collapseThesaurus" title="#{langueBean.getMsg('menu.thesaurus')}">
+                    <i class="fa-solid fa-folder-tree" style="font-size: 1.2rem"/>
+                </a>
+                <div id="collapseThesaurus" class="collapse" aria-labelledby="headingThesaurus" data-parent="#accordionSidebar">
+                    <div class="bg-white py-2 collapse-inner rounded">
+                        <p:commandLink class="collapse-item" actionListener="#{menuBean.redirectToThesaurus()}"
+                                       style="font-size: 12px;" process="@this">#{langueBean.getMsg('menu.thesaurus')}</p:commandLink>
+                        <p:commandLink class="collapse-item" actionListener="#{menuBean.redirectToThesaurusV2Page()}"
+                                       style="font-size: 12px;" process="@this">#{langueBean.getMsg('menu.thesaurus')} (v2)</p:commandLink>
+                    </div>
+                </div>
             </li>
             <!-- Fin Thesaurus -->
             
