@@ -1,5 +1,8 @@
 package fr.cnrs.opentheso.v2.concept.ui;
 
+import fr.cnrs.opentheso.bean.alignment.AlignmentBean;
+import fr.cnrs.opentheso.legacybridge.LegacyConceptSync;
+import fr.cnrs.opentheso.legacybridge.LegacyThesaurusSync;
 import fr.cnrs.opentheso.v2.concept.model.ConceptFullSnapshot;
 import fr.cnrs.opentheso.v2.concept.mapper.ConceptMapper;
 import fr.cnrs.opentheso.v2.concept.model.BreadcrumbStep;
@@ -32,7 +35,9 @@ import jakarta.inject.Named;
 import lombok.Getter;
 import lombok.RequiredArgsConstructor;
 import lombok.Setter;
+import lombok.extern.slf4j.Slf4j;
 import org.apache.commons.lang3.StringUtils;
+import org.primefaces.PrimeFaces;
 import org.primefaces.event.NodeExpandEvent;
 import org.primefaces.event.NodeSelectEvent;
 import org.primefaces.event.TabChangeEvent;
@@ -45,6 +50,7 @@ import java.util.Collections;
 import java.util.List;
 import java.util.Optional;
 
+@Slf4j
 @Getter
 @Setter
 @ViewScoped
@@ -61,6 +67,9 @@ public class ThesaurusBrowseBean implements Serializable, ConceptNavigationSuppo
     private final ThesaurusPreferenceService thesaurusPreferenceService;
     private final UserSession userSession;
     private final ConceptTypeReadService conceptTypeReadService;
+    private final LegacyThesaurusSync legacyThesaurusSync;
+    private final LegacyConceptSync legacyConceptSync;
+    private final AlignmentBean alignmentBean;
 
     private String conceptIdFromUri;
     private String groupIdFromUri;
@@ -80,6 +89,7 @@ public class ThesaurusBrowseBean implements Serializable, ConceptNavigationSuppo
     private LeftTreeMode activeLeftTreeMode = LeftTreeMode.CONCEPT;
     private RightPanelMode rightPanelMode = RightPanelMode.HOME;
     private int leftTabIndex;
+    private int rightTabIndex;
 
     private String indexQuery;
     private boolean indexPermuted;
@@ -121,6 +131,7 @@ public class ThesaurusBrowseBean implements Serializable, ConceptNavigationSuppo
             return;
         }
         loadConsultationPreferences();
+        syncLegacyThesaurusContext();
         refreshActiveCorpusState();
         ensureTreeBuilt(activeLeftTreeMode);
         loadThesaurusHome();
@@ -198,6 +209,19 @@ public class ThesaurusBrowseBean implements Serializable, ConceptNavigationSuppo
         openThesaurusHome();
     }
 
+    public void onRightTabChange(TabChangeEvent<?> event) {
+        if (event.getTab() == null) {
+            return;
+        }
+        rightTabIndex = "viewTabAlignement".equals(event.getTab().getId()) ? 1 : 0;
+        if (rightTabIndex != 1) {
+            return;
+        }
+        syncLegacyThesaurusContext();
+        syncLegacyConceptContext();
+        initAlignmentWorkshop();
+    }
+
     public void onNodeExpand(NodeExpandEvent event) {
         LeftTreeMode mode = resolveTreeModeFromComponent(event);
         DefaultTreeNode node = (DefaultTreeNode) event.getTreeNode();
@@ -214,17 +238,35 @@ public class ThesaurusBrowseBean implements Serializable, ConceptNavigationSuppo
         ConceptTreeNodeData data = (ConceptTreeNodeData) event.getTreeNode().getData();
         if (data == null || data.isDummy() || "root".equals(data.nodeType())) {
             openThesaurusHome();
+            refreshAfterTreeSelection();
             return;
         }
         if (data.isGroup() && (mode == LeftTreeMode.COLLECTION || mode == LeftTreeMode.ARBRE)) {
             openGroup(data.nodeId());
+            refreshAfterTreeSelection();
             return;
         }
         if ("facet".equals(data.nodeType())) {
             openFacet(data.nodeId());
+            refreshAfterTreeSelection();
             return;
         }
         openConcept(data.nodeId(), false);
+        refreshAfterTreeSelection();
+    }
+
+    private void refreshAfterTreeSelection() {
+        if (rightTabIndex != 1) {
+            rightTabIndex = 0;
+        }
+        if (!PrimeFaces.current().isAjaxRequest()) {
+            return;
+        }
+        PrimeFaces.current().ajax().update(
+                "indexTitle",
+                "containerIndex:rightTab",
+                "containerIndex:tabTree"
+        );
     }
 
     public void onIndexChange() {
@@ -253,6 +295,7 @@ public class ThesaurusBrowseBean implements Serializable, ConceptNavigationSuppo
 
     public void openThesaurusHome() {
         rightPanelMode = RightPanelMode.HOME;
+        rightTabIndex = 0;
         conceptSelectionContext.clear();
         selectedConcept = null;
         selectedFullConcept = null;
@@ -272,6 +315,72 @@ public class ThesaurusBrowseBean implements Serializable, ConceptNavigationSuppo
         }
     }
 
+    @Override
+    public void refreshAfterRename(String conceptId, String newLabel) {
+        openConcept(conceptId, false);
+        updateSelectedTreeNodeLabel(conceptId, newLabel);
+    }
+
+    @Override
+    public void refreshAfterNotationUpdate(String conceptId, String notation) {
+        openConcept(conceptId, false);
+        updateSelectedTreeNodeNotation(conceptId, notation);
+    }
+
+    private void updateSelectedTreeNodeLabel(String conceptId, String newLabel) {
+        if (!(selectedNode instanceof DefaultTreeNode defaultNode)) {
+            return;
+        }
+        if (!(defaultNode.getData() instanceof ConceptTreeNodeData data)) {
+            return;
+        }
+        if (!conceptId.equalsIgnoreCase(data.nodeId())) {
+            return;
+        }
+        defaultNode.setData(new ConceptTreeNodeData(
+                data.nodeId(),
+                newLabel,
+                data.notation(),
+                data.nodeType(),
+                data.hasChildren()
+        ));
+    }
+
+    private void updateSelectedTreeNodeNotation(String conceptId, String notation) {
+        if (!(selectedNode instanceof DefaultTreeNode defaultNode)) {
+            return;
+        }
+        if (!(defaultNode.getData() instanceof ConceptTreeNodeData data)) {
+            return;
+        }
+        if (!conceptId.equalsIgnoreCase(data.nodeId())) {
+            return;
+        }
+        defaultNode.setData(new ConceptTreeNodeData(
+                data.nodeId(),
+                data.label(),
+                notation,
+                data.nodeType(),
+                data.hasChildren()
+        ));
+    }
+
+    @Override
+    public void invalidateConceptTree() {
+        conceptRoot = null;
+    }
+
+    @Override
+    public void afterConceptDeleted(String fallbackConceptId) {
+        invalidateConceptTree();
+        selectedNode = null;
+        if (org.apache.commons.lang3.StringUtils.isNotBlank(fallbackConceptId)) {
+            openConcept(fallbackConceptId);
+        } else {
+            openThesaurusHome();
+        }
+    }
+
     public boolean isPropositionAuthorized() {
         return suggestionEnabled;
     }
@@ -288,8 +397,13 @@ public class ThesaurusBrowseBean implements Serializable, ConceptNavigationSuppo
         rightPanelMode = RightPanelMode.CONCEPT;
         selectedGroup = null;
         selectedFacet = null;
-        activeLeftTreeMode = LeftTreeMode.CONCEPT;
-        leftTabIndex = 0;
+        if (syncTree) {
+            activeLeftTreeMode = LeftTreeMode.CONCEPT;
+            leftTabIndex = 0;
+        }
+        if (rightTabIndex != 1) {
+            rightTabIndex = 0;
+        }
         corpusSearched = false;
         displayedCorpusLinks = Collections.emptyList();
         Optional<ConceptReadService.ConceptDetailLoadResult> loaded = conceptReadService.loadDetailWithSource(
@@ -306,6 +420,15 @@ public class ThesaurusBrowseBean implements Serializable, ConceptNavigationSuppo
         }
         refreshConceptDisplayData();
         conceptSelectionContext.update(thesaurusContext.resolveThesaurusId(), selectedConcept);
+        try {
+            syncLegacyThesaurusContext();
+            syncLegacyConceptContext();
+        } catch (RuntimeException ex) {
+            log.warn("Synchronisation legacy ignorée pour le concept {}", conceptId, ex);
+        }
+        if (rightTabIndex == 1) {
+            initAlignmentWorkshop();
+        }
         if (syncTree && autoExpandTree) {
             syncConceptTreeSelection(conceptId);
         }
@@ -834,5 +957,57 @@ public class ThesaurusBrowseBean implements Serializable, ConceptNavigationSuppo
         corpusSearched = false;
         haveActiveCorpus = false;
         homePagePlainTextView = false;
+        rightTabIndex = 0;
+    }
+
+    private void syncLegacyThesaurusContext() {
+        String thesaurusId = thesaurusContext.resolveThesaurusId();
+        if (StringUtils.isBlank(thesaurusId)) {
+            return;
+        }
+        legacyThesaurusSync.applyThesaurusId(thesaurusId, thesaurusContext.resolveWorkLanguage());
+    }
+
+    private void syncLegacyConceptContext() {
+        if (selectedConcept == null || selectedConcept.summary() == null) {
+            return;
+        }
+        legacyConceptSync.syncConceptSelection(
+                thesaurusContext.resolveThesaurusId(),
+                selectedConcept.summary().conceptId(),
+                thesaurusContext.resolveWorkLanguage()
+        );
+    }
+
+    private void initAlignmentWorkshop() {
+        String thesaurusId = thesaurusContext.resolveThesaurusId();
+        String lang = thesaurusContext.resolveWorkLanguage();
+        if (StringUtils.isBlank(thesaurusId)) {
+            return;
+        }
+
+        alignmentBean.setAllAlignementVisible(true);
+        alignmentBean.setPropositionAlignementVisible(false);
+        alignmentBean.setManageAlignmentVisible(false);
+        alignmentBean.setComparaisonVisible(false);
+
+        String conceptId = resolveSelectedConceptIdForAlignment();
+        if (StringUtils.isBlank(conceptId)) {
+            alignmentBean.initAlignmentSources(thesaurusId, lang);
+            return;
+        }
+
+        alignmentBean.initAlignementByStep(thesaurusId, conceptId, lang);
+        alignmentBean.getIdsAndValues2(lang, thesaurusId);
+    }
+
+    private String resolveSelectedConceptIdForAlignment() {
+        if (selectedConcept != null && selectedConcept.summary() != null) {
+            return selectedConcept.summary().conceptId();
+        }
+        if (conceptSelectionContext.hasSelection()) {
+            return conceptSelectionContext.getConceptId();
+        }
+        return null;
     }
 }

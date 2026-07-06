@@ -25,7 +25,7 @@
                     <p:column width="10" headerText="#{langueBean.getMsg('profile.action')}">
                         <p:commandButton style="color: #C63632" action="#{alignmentManualBean.deleteAlignment(alignment)}"
                                        icon="pi pi-trash" styleClass="rounded-button ui-button-outlined"
-                                       update="containerIndex:deleteAlignment containerIndex:formRightTab containerIndex:idDeleteAlignment"
+                                       update=":containerIndex:deleteAlignment :containerIndex:rightTab :containerIndex:idDeleteAlignment"
                                        ajax="true" process="@form"
                                        oncomplete="PF('deleteAlignment').show();"
                         >

@@ -47,12 +47,23 @@ public class AlignementAutomatique {
         thesaurusLangs.remove(idCurrentLang);
         var allLangsTheso = thesaurusService.getIsoLanguagesOfThesaurus(idTheso);
 
-        var listConcepts = new HashSet<>(allignementsList);
+        if (CollectionUtils.isEmpty(allignementsList)) {
+            return allAlignementFound;
+        }
 
-        ExecutorService executor = Executors.newFixedThreadPool(listConcepts.size());
+        var listConcepts = new HashSet<>(allignementsList);
+        if (listConcepts.isEmpty()) {
+            return allAlignementFound;
+        }
+
+        ExecutorService executor = Executors.newFixedThreadPool(Math.max(1, listConcepts.size()));
         List<Callable<List<NodeAlignment>>> callables = new ArrayList<>();
 
         if ("alignement-comparaison".equalsIgnoreCase(alignementMode)) {
+            if (CollectionUtils.isEmpty(idsAndValues)) {
+                executor.shutdown();
+                return allAlignementFound;
+            }
             //Supprimer l'alignement déjà ajouté dans la liste des alignements proposés
             idsAndValues = idsAndValues.stream()
                     .peek(element -> {
@@ -87,10 +98,19 @@ public class AlignementAutomatique {
                 }
             }
         } else {
+            if (CollectionUtils.isEmpty(idsAndValues)) {
+                executor.shutdown();
+                return allAlignementFound;
+            }
             for (AlignementElement alignementElement : listConcepts) {
-                var concept = idsAndValues.stream().filter(element -> element.getId().equals(alignementElement.getIdConceptOrig())).findFirst().get();
+                var concept = idsAndValues.stream()
+                        .filter(element -> element.getId().equals(alignementElement.getIdConceptOrig()))
+                        .findFirst();
+                if (concept.isEmpty()) {
+                    continue;
+                }
                 callables.add(new SearchAllignementByConceptCallable(alignementSource, dataSource, allLangsTheso, thesaurusLangs, idTheso,
-                        concept, idCurrentLang, nom, prenom, null, null, alignementMode));
+                        concept.get(), idCurrentLang, nom, prenom, null, null, alignementMode));
             }
         }
 

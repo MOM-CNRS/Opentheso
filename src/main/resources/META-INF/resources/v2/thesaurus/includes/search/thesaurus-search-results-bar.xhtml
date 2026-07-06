@@ -34,13 +34,13 @@
                                                title="#{result.conceptId}"
                                                style="color:#C63632; font-weight:bold; font-style:italic; font-size:12px;"
                                                actionListener="#{v2ConceptSearchBean.selectResult(result)}"
-                                               update="resultSearchBar :formRightTab :formLeftTab:tabTree messageIndex"
+                                               update="resultSearchBar :containerIndex:rightTab :containerIndex:formLeftTab messageIndex"
                                                process="@form"/>
                                 <p:commandLink rendered="#{empty result.preferredLabel}"
                                                value=" (#{result.conceptId})"
                                                style="color:#601e18; font-size:12px; font-weight:bold;"
                                                actionListener="#{v2ConceptSearchBean.selectResult(result)}"
-                                               update="resultSearchBar :formRightTab :formLeftTab:tabTree messageIndex"
+                                               update="resultSearchBar :containerIndex:rightTab :containerIndex:formLeftTab messageIndex"
                                                process="@form"/>
                             </h:panelGroup>
 
@@ -50,13 +50,13 @@
                                                title="#{result.conceptId}"
                                                style="color:#601e18; font-size:12px; font-weight:bold;"
                                                actionListener="#{v2ConceptSearchBean.selectResult(result)}"
-                                               update="resultSearchBar :formRightTab :formLeftTab:tabTree messageIndex"
+                                               update="resultSearchBar :containerIndex:rightTab :containerIndex:formLeftTab messageIndex"
                                                process="@form"/>
                                 <p:commandLink rendered="#{empty result.preferredLabel}"
                                                value=" (#{result.conceptId})"
                                                style="color:#601e18; font-size:12px; font-weight:bold;"
                                                actionListener="#{v2ConceptSearchBean.selectResult(result)}"
-                                               update="resultSearchBar :formRightTab :formLeftTab:tabTree messageIndex"
+                                               update="resultSearchBar :containerIndex:rightTab :containerIndex:formLeftTab messageIndex"
                                                process="@form"/>
                             </h:panelGroup>
                         </div>

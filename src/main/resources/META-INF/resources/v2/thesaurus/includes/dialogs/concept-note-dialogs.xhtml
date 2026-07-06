@@ -1,0 +1,103 @@
+<ui:fragment xmlns="http://www.w3.org/1999/xhtml"
+             xmlns:ui="http://xmlns.jcp.org/jsf/facelets"
+             xmlns:p="http://primefaces.org/ui"
+             xmlns:h="http://xmlns.jcp.org/jsf/html"
+             xmlns:f="http://xmlns.jcp.org/jsf/core">
+
+    <p:dialog id="v2ManageNoteDlg" header="#{v2LocaleBean.getMsg('rightbody.concept.manage_note')}"
+              widgetVar="v2ManageNoteDlg" width="680" modal="true" resizable="true">
+        <h:form id="v2ManageNoteForm">
+            <p:defaultCommand target="v2ManageNoteSubmit"/>
+            <div class="row mb-2">
+                <div class="col-12">
+                    <h:outputText value="#{v2LocaleBean.getMsg('rightbody.conceptdialog.nameOfConcept')} : "/>
+                    <h:outputText value="#{v2ConceptNoteEditorBean.currentConceptLabel}" style="color:#C63632;"/>
+                </div>
+            </div>
+            <div class="row mb-2">
+                <div class="col-4"><h:outputText value="#{v2LocaleBean.getMsg('candidat.language')}"/></div>
+                <div class="col-8">
+                    <p:selectOneMenu value="#{v2ConceptNoteEditorBean.selectedLang}" style="width:100%;">
+                        <p:ajax event="change" listener="#{v2ConceptNoteEditorBean.onNoteTypeOrLangChange()}"
+                                update="v2ManageNoteEditorPanel"/>
+                        <f:selectItems value="#{v2ConceptNoteEditorBean.availableLanguages}" var="lang"
+                                       itemLabel="#{lang.value}" itemValue="#{lang.code}"/>
+                    </p:selectOneMenu>
+                </div>
+            </div>
+            <div class="row mb-2">
+                <div class="col-4"><h:outputText value="Type"/></div>
+                <div class="col-8">
+                    <p:selectOneMenu value="#{v2ConceptNoteEditorBean.selectedTypeCode}" style="width:100%;">
+                        <p:ajax event="change" listener="#{v2ConceptNoteEditorBean.onNoteTypeOrLangChange()}"
+                                update="v2ManageNoteEditorPanel"/>
+                        <f:selectItems value="#{v2ConceptNoteEditorBean.noteTypes}" var="type"
+                                       itemLabel="#{type.code}" itemValue="#{type.code}"/>
+                    </p:selectOneMenu>
+                </div>
+            </div>
+            <h:panelGroup id="v2ManageNoteEditorPanel">
+                <div class="row mb-2">
+                    <div class="col-12">
+                        <p:textEditor value="#{v2ConceptNoteEditorBean.noteValue}" height="120" secure="false"
+                                      styleClass="scrollable-editor"/>
+                    </div>
+                </div>
+                <div class="row mb-2">
+                    <div class="col-4"><h:outputText value="#{v2LocaleBean.getMsg('alignment.source')}"/></div>
+                    <div class="col-8">
+                        <p:inputText value="#{v2ConceptNoteEditorBean.noteSource}" style="width:100%;"/>
+                    </div>
+                </div>
+            </h:panelGroup>
+            <div class="text-right mt-3">
+                <p:commandButton value="#{v2LocaleBean.getMsg('btnCancel')}" styleClass="ui-button-secondary"
+                                 type="button" onclick="PF('v2ManageNoteDlg').hide();" style="margin-right:8px;"/>
+                <p:commandButton id="v2ManageNoteSubmit" value="#{v2LocaleBean.getMsg('btnValidate')}"
+                                 styleClass="ui-button-success"
+                                 actionListener="#{v2ConceptNoteEditorBean.submitSaveNote()}"
+                                 update="v2ManageNoteForm :containerIndex:rightTab :messageIndex"
+                                 process="@form"/>
+            </div>
+        </h:form>
+    </p:dialog>
+
+    <p:dialog id="v2DeleteNoteDlg" header="#{v2LocaleBean.getMsg('rightbody.concept.delete_note')}"
+              widgetVar="v2DeleteNoteDlg" width="650" modal="true" resizable="false" position="top" style="margin-top:30px;">
+        <h:form id="v2DeleteNoteForm">
+            <div class="row">
+                <div class="col-12">
+                    <h:outputText value="#{v2LocaleBean.getMsg('rightbody.conceptdialog.term')} : "/>
+                    <h:outputText value="#{v2ConceptNoteEditorBean.currentConceptLabel}" style="color:#C63632;"/>
+                </div>
+            </div>
+            <div class="card mb-4 py-3 border-left-success" style="border-color:#43B572; margin-top:10px">
+                <p:dataTable size="small" var="noteToDelete" value="#{v2ConceptNoteEditorBean.notesToDelete}"
+                             styleClass="products-table" style="margin-left:10px; margin-right:10px;" lazy="false">
+                    <p:column width="55%" headerText="#{v2LocaleBean.getMsg('candidat.value')}">
+                        <h:outputText value="#{noteToDelete.value}" escape="false"/>
+                    </p:column>
+                    <p:column width="15%" headerText="#{v2LocaleBean.getMsg('rightbody.conceptdialog.language')}">
+                        <h:outputText value="#{noteToDelete.lang}"/>
+                    </p:column>
+                    <p:column width="20%" headerText="Type">
+                        <h:outputText value="#{v2LocaleBean.getMsg(noteToDelete.messageKey)}"/>
+                    </p:column>
+                    <p:column width="10%">
+                        <p:commandButton icon="pi pi-trash" styleClass="rounded-button ui-button-danger"
+                                         process="@this" ajax="true"
+                                         actionListener="#{v2ConceptNoteEditorBean.submitDeleteNote(noteToDelete)}"
+                                         update="v2DeleteNoteForm :containerIndex:rightTab :messageIndex"/>
+                    </p:column>
+                </p:dataTable>
+            </div>
+            <div class="row" style="margin-top:10px;">
+                <div class="col-12" style="text-align:center">
+                    <p:commandButton value="#{v2LocaleBean.getMsg('candidat.close')}"
+                                     icon="fas fa-undo-alt" styleClass="ui-button-secondary button"
+                                     type="button" onclick="PF('v2DeleteNoteDlg').hide();"/>
+                </div>
+            </div>
+        </h:form>
+    </p:dialog>
+</ui:fragment>

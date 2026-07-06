@@ -51,10 +51,10 @@
             <div style="width: 100%; text-align: right; margin-top: 15px; margin-bottom: 5px;">
                 <p:commandButton value="#{langueBean.getMsg('candidat.close')}" style="margin-right: 10px"
                                  icon="fas fa-undo-alt" styleClass="ui-button-secondary button" 
-                                 actionListener="PF('addManualAlignment').hide();" update="containerIndex:idAddManualAlignment"/>
+                                 actionListener="PF('addManualAlignment').hide();" update=":containerIndex:idAddManualAlignment"/>
 
                 <p:commandButton id="addAlignementManuelBtn" value="#{langueBean.getMsg('btnValidate')}" 
-                                 update="containerIndex:formRightTab messageIndex"
+                                 update=":containerIndex:rightTab messageIndex"
                                  oncomplete="PF('addManualAlignment').hide();"
                                  icon="pi pi-check" styleClass="ui-button-success" ajax="true" process="@form"
                                  actionListener="#{alignmentManualBean.addManualAlignement(null, conceptView.nodeConcept.concept.idConcept, true)}" />

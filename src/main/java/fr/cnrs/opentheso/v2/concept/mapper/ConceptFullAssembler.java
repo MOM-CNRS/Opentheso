@@ -395,11 +395,11 @@ public class ConceptFullAssembler {
 
         for (Object[] row : conceptFullQueryRepository.findAlignments(conceptId, thesaurusId)) {
             ConceptUriLabel item = new ConceptUriLabel(
+                    stringAt(row, 1),
                     stringAt(row, 0),
-                    conceptId,
-                    stringAt(row, 2)
+                    stringAt(row, 3)
             );
-            int type = parseInt(stringAt(row, 1));
+            int type = parseInt(stringAt(row, 2));
             switch (type) {
                 case 1 -> exact.add(item);
                 case 2 -> close.add(item);

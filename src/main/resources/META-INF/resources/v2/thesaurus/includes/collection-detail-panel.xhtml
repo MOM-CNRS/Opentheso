@@ -99,7 +99,7 @@
                   <p:commandLink value="#{empty member.label ? '('.concat(member.conceptId).concat(')') : member.label}"
                                  action="#{v2ThesaurusBrowseBean.openConcept(member.conceptId)}"
                                  process="@this"
-                                 update=":formRightTab :formLeftTab:tabTree"
+                                 update=":containerIndex:rightTab :containerIndex:formLeftTab"
                                  style="color:#601e18; font-size:14px;"/>
                   <h:outputText value=", " rendered="#{not status.last}" style="color:#FF7979;"/>
                 </ui:repeat>

@@ -1,7 +1,10 @@
 package fr.cnrs.opentheso.v2.concept.ui;
 
-import fr.cnrs.opentheso.v2.concept.model.ConceptSnapshotNote;
+import fr.cnrs.opentheso.bean.alignment.AlignmentBean;
+import fr.cnrs.opentheso.legacybridge.LegacyConceptSync;
+import fr.cnrs.opentheso.legacybridge.LegacyThesaurusSync;
 import fr.cnrs.opentheso.v2.concept.model.ConceptFullSnapshot;
+import fr.cnrs.opentheso.v2.concept.model.ConceptSnapshotNote;
 import fr.cnrs.opentheso.v2.concept.model.CorpusSearchContext;
 import fr.cnrs.opentheso.v2.concept.model.BreadcrumbStep;
 import fr.cnrs.opentheso.v2.concept.model.ConceptCorpusLinkItem;
@@ -68,6 +71,12 @@ class ThesaurusBrowseBeanTest {
     private ConceptTypeReadService conceptTypeReadService;
     @Mock
     private ConceptSelectionContext conceptSelectionContext;
+    @Mock
+    private LegacyThesaurusSync legacyThesaurusSync;
+    @Mock
+    private LegacyConceptSync legacyConceptSync;
+    @Mock
+    private AlignmentBean alignmentBean;
 
     private ThesaurusBrowseBean bean;
 
@@ -82,7 +91,10 @@ class ThesaurusBrowseBeanTest {
                 conceptHistoryBean,
                 thesaurusPreferenceService,
                 userSession,
-                conceptTypeReadService
+                conceptTypeReadService,
+                legacyThesaurusSync,
+                legacyConceptSync,
+                alignmentBean
         );
     }
 
@@ -504,6 +516,42 @@ class ThesaurusBrowseBeanTest {
 
         assertEquals("C1", bean.getSelectedConcept().summary().conceptId());
         assertTrue(bean.isConceptPanel());
+    }
+
+    @Test
+    void load_syncsLegacyThesaurusContext() {
+        when(thesaurusContext.resolveThesaurusId()).thenReturn("TH1");
+        when(thesaurusContext.getCurrentThesaurusTitle()).thenReturn("Test");
+        when(thesaurusContext.resolveWorkLanguage()).thenReturn("fr");
+        when(conceptReadService.loadRootNodes("TH1", "fr", LeftTreeMode.CONCEPT)).thenReturn(List.of());
+        when(thesaurusHomeReadService.loadOverview("TH1", "fr", "Test"))
+                .thenReturn(new ThesaurusHomeOverview("Test", 0, "", "", "", "", List.of(), List.of(), ""));
+        when(thesaurusPreferenceService.loadPreferencesOrNull("TH1", "fr"))
+                .thenReturn(consultationPreferences(true));
+
+        bean.load();
+
+        verify(legacyThesaurusSync).applyThesaurusId("TH1", "fr");
+    }
+
+    @Test
+    void onRightTabChange_initializesAlignmentWorkshop() {
+        when(thesaurusContext.resolveThesaurusId()).thenReturn("TH1");
+        when(thesaurusContext.resolveWorkLanguage()).thenReturn("fr");
+        var summary = new ConceptSummary("C1", "TH1", "Label", "fr", "C", "", "concept", "", "", "", "");
+        bean.setSelectedConcept(minimalConceptDetail(summary));
+
+        var event = org.mockito.Mockito.mock(org.primefaces.event.TabChangeEvent.class);
+        var tab = org.mockito.Mockito.mock(org.primefaces.component.tabview.Tab.class);
+        when(event.getTab()).thenReturn(tab);
+        when(tab.getId()).thenReturn("viewTabAlignement");
+
+        bean.onRightTabChange(event);
+
+        verify(legacyThesaurusSync).applyThesaurusId("TH1", "fr");
+        verify(legacyConceptSync).syncConceptSelection("TH1", "C1", "fr");
+        verify(alignmentBean).initAlignementByStep("TH1", "C1", "fr");
+        verify(alignmentBean).getIdsAndValues2("fr", "TH1");
     }
 
     @Test

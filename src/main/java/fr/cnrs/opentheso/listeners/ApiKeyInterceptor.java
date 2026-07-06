@@ -58,34 +58,4 @@ public class ApiKeyInterceptor implements HandlerInterceptor {
 
         return true;
     }
-
-    /*
-
-    @Override
-    public boolean preHandle(HttpServletRequest request, HttpServletResponse response, Object handler) throws Exception {
-
-        if (allowedMethods.contains(request.getMethod().toUpperCase())) {
-
-            String apiKey = request.getHeader("X-API-KEY"); // V2
-
-            if (apiKey == null || apiKey.isBlank()) {
-                apiKey = request.getHeader("API-KEY"); // fallback V1
-            }
-
-            request.setAttribute("apiKey", apiKey);
-
-            if (apiKey == null || apiKey.isBlank()) {
-                throw new ApiKeyMissingException();
-            }
-
-            Optional<User> userOpt = apiKeyService.findUserByApiKey(apiKey);
-            if (userOpt.isEmpty()) {
-                throw new ApiKeyInvalidException(ApiKeyState.INVALID);
-            }
-
-            request.setAttribute("authenticatedUser", userOpt.get());
-        }
-
-        return true;
-    }*/
 }

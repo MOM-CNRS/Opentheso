@@ -69,6 +69,10 @@
 
         <p:growl id="messageIndex" globalOnly="true" showDetail="true"/>
 
+        <ui:include src="includes/layout/login-dialog.xhtml"/>
+        <ui:include src="includes/layout/logout-dialog.xhtml"/>
+        <ui:include src="includes/layout/forget-password-dialog.xhtml"/>
+
         <ui:include src="includes/proposition-list-drawer.xhtml"/>
 
         <h:panelGroup class="notification-bar" id="resultSearchBar">
@@ -111,9 +115,6 @@
                     </h:panelGroup>
 
                     <ui:include src="includes/layout/footer.xhtml"/>
-                    <input type="hidden" name="csrfToken" value="${sessionScope.CSRF_TOKEN}"/>
-
-                </h:form>
 
                 <h:panelGroup rendered="#{v2ThesaurusBrowseBean.screenAvailable}">
                     <div style="margin-top:-8px; margin-left:10px; margin-right:10px;">
@@ -121,13 +122,13 @@
 
                             <div class="col-xl-3 col-lg-3 col-md-3 hidden-sm card shadow mb-1"
                                  style="overflow:hidden; padding-right:0; padding-left:0; height:100%;">
-                                <h:form id="formLeftTab">
+                                <h:panelGroup id="formLeftTab">
                                     <ui:include src="includes/left-tree-menu.xhtml"/>
 
                                     <p:tabView id="tabTree" activeIndex="#{v2ThesaurusBrowseBean.leftTabIndex}">
                                         <p:ajax event="tabChange"
                                                 listener="#{v2ThesaurusBrowseBean.onLeftTabChange}"
-                                                update=":formRightTab"/>
+                                                update=":containerIndex:rightTab"/>
 
                                         <p:tab id="viewTabTree">
                                             <f:facet name="title">
@@ -173,14 +174,17 @@
                                             </ui:include>
                                         </p:tab>
                                     </p:tabView>
-                                    <input type="hidden" name="csrfToken" value="${sessionScope.CSRF_TOKEN}"/>
-                                </h:form>
+                                </h:panelGroup>
                             </div>
 
                             <div class="col-xl-9 col-lg-9 col-md-9 col-sm-12">
-                                <h:form id="formRightTab">
+                                <h:panelGroup id="formRightTab">
                                     <div class="card shadow mb-4">
-                                        <p:tabView id="rightTab">
+                                        <p:tabView id="rightTab" activeIndex="#{v2ThesaurusBrowseBean.rightTabIndex}">
+                                            <p:ajax event="tabChange"
+                                                    listener="#{v2ThesaurusBrowseBean.onRightTabChange}"
+                                                    update=":containerIndex:rightTab"/>
+
                                             <p:tab id="viewTabConcept"
                                                    title="#{v2LocaleBean.getMsg('leftbody.concept')}">
                                                 <f:facet name="anchor">
@@ -206,10 +210,18 @@
                                                     <ui:include src="includes/facet-detail-panel.xhtml"/>
                                                 </h:panelGroup>
                                             </p:tab>
+
+                                            <p:tab id="viewTabAlignement"
+                                                   title="#{v2LocaleBean.getMsg('rightbody.alignement')}"
+                                                   rendered="#{v2ConsultationShellBean.adminOnCurrentThesaurus}">
+                                                <f:facet name="anchor">
+                                                    <i class="pi pi-sitemap" style="color:#f47b2a;"/>
+                                                </f:facet>
+                                                <ui:include src="../../thesaurus/rightBodyView/alignement/alignement.xhtml"/>
+                                            </p:tab>
                                         </p:tabView>
                                     </div>
-                                    <input type="hidden" name="csrfToken" value="${sessionScope.CSRF_TOKEN}"/>
-                                </h:form>
+                                </h:panelGroup>
                             </div>
 
                         </div>
@@ -217,10 +229,15 @@
                 </h:panelGroup>
 
 
-                <ui:include src="includes/layout/login-dialog.xhtml"/>
-                <ui:include src="includes/layout/logout-dialog.xhtml"/>
-                <ui:include src="includes/layout/forget-password-dialog.xhtml"/>
+                <ui:include src="../../dialog/alignment/addAlignmentDialog.xhtml"/>
+                <ui:include src="../../dialog/alignment/updateSingleAlignment.xhtml"/>
+                <ui:include src="../../dialog/alignment/addManualAlignment.xhtml"/>
+                <ui:include src="../../dialog/alignment/deleteAlignment.xhtml"/>
+                <ui:include src="../../dialog/alignment/updateAlignment.xhtml"/>
+                <ui:include src="../../dialog/alignment/AddAlignement.xhtml"/>
                 <ui:include src="includes/dialogs/concept-alignment-dialogs.xhtml"/>
+                <input type="hidden" name="csrfToken" value="${sessionScope.CSRF_TOKEN}"/>
+                </h:form>
 
             </div>
         </h:panelGroup>
@@ -229,7 +246,9 @@
             <i class="pi pi-angle-up"/>
         </a>
 
-        <p:ajaxStatus onstart="PF('waitDialog').show()" onsuccess="PF('waitDialog').hide()"/>
+        <p:ajaxStatus onstart="PF('waitDialog').show()"
+                      onsuccess="PF('waitDialog').hide()"
+                      onerror="PF('waitDialog').hide()"/>
         <p:dialog widgetVar="waitDialog" modal="false" draggable="false" width="80"
                   closable="false" resizable="false" showHeader="false" position="top"
                   style="margin-top:250px; border:none;">

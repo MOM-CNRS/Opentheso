@@ -24,6 +24,15 @@
                             style="font-size: 14px; font-weight: bold; color: #8f8f8f;"/>
             </div>
             <div class="col-xl-9 col-lg-8 col-md-7 col-sm-7" style="margin-left: -6px;">
+              <h:panelGroup rendered="#{v2ConceptLifecycleEditorBean.renameAvailable}">
+                <p:commandButton title="#{v2LocaleBean.getMsg('rightbody.concept.rename_concept')}"
+                                 icon="fas fa-cog" style="color:#f47b2a"
+                                 styleClass="rounded-button ui-button-warning ui-button-flat"
+                                 process="@this"
+                                 actionListener="#{v2ConceptLifecycleEditorBean.prepareRename()}"
+                                 update="v2RenameConceptForm"
+                                 oncomplete="PF('v2RenameConceptDlg').show();"/>
+              </h:panelGroup>
               <h:outputText id="v2TextPrefLabel" rendered="#{not v2ThesaurusBrowseBean.selectedConcept.deprecated}"
                             value="#{v2ThesaurusBrowseBean.selectedConcept.summary.preferredLabel}"
                             style="font-size: 1.1rem; font-weight: bold; color: #666666;"/>
@@ -37,6 +46,14 @@
                      style="font-style: italic; margin-left: 5px; font-weight: 300;"
                      rounded="true"
                      value=" #{v2ThesaurusBrowseBean.conceptTypeLabel}"/>
+              <p:commandButton rendered="#{v2ConceptAttributeEditorBean.conceptTypeEditAvailable}"
+                               title="#{v2LocaleBean.getMsg('concept.editConceptType')}"
+                               icon="fas fa-edit" style="color:#f47b2a; margin-left:4px;"
+                               styleClass="rounded-button ui-button-warning ui-button-flat"
+                               process="@this"
+                               actionListener="#{v2ConceptAttributeEditorBean.prepareEditConceptType()}"
+                               update="v2EditConceptTypeForm"
+                               oncomplete="PF('v2EditConceptTypeDlg').show();"/>
               <p:commandButton id="v2BtnCopyConcept" icon="fa-solid fa-copy"
                                styleClass="rounded-button ui-button-flat"
                                style="color: #f47b2a; background-color: transparent;"
@@ -50,7 +67,7 @@
               <p:commandButton id="v2BtnFocusInTree" icon="fas fa-sitemap"
                                action="#{v2ThesaurusBrowseBean.focusConceptInTree()}"
                                process="@this"
-                               update=":formLeftTab:tabTree"
+                               update=":containerIndex:tabTree"
                                style="color:#f47b2a; background:none; border:none; box-shadow:none; margin-left:1px;"/>
               <p:tooltip for="v2BtnFocusInTree" value="#{v2LocaleBean.getMsg('rightbody.concept.replace_in_tree')}"/>
             </div>
@@ -62,6 +79,7 @@
             <ui:param name="rowLabel" value="#{v2LocaleBean.getMsg('rightbody.concept.replace_with')}"/>
             <ui:param name="rowIcon" value=""/>
             <ui:param name="relations" value="#{v2ThesaurusBrowseBean.selectedConcept.replacedBy}"/>
+            <ui:param name="relationEditKind" value="replacedBy"/>
           </ui:include>
         </h:panelGroup>
 
@@ -81,6 +99,30 @@
                             style="font-size: 14px; font-weight: bold; color: #8f8f8f;"/>
             </div>
             <div class="col-xl-8 col-lg-7 col-md-6 col-sm-6" style="margin-left: -10px;">
+              <h:panelGroup rendered="#{v2ConceptLexicalEditorBean.lexicalActionsAvailable}"
+                            style="display:inline-block; margin-right:6px;">
+                <p:menuButton icon="fas fa-cog"
+                              style="color:#F7A269; background:none; border:none; box-shadow:none; font-size:12px;">
+                  <p:menuitem value="#{v2LocaleBean.getMsg('rightbody.concept.add_synonym')}"
+                              process="@this"
+                              actionListener="#{v2ConceptLexicalEditorBean.prepareAddSynonym()}"
+                              update="v2AddSynonymForm"
+                              oncomplete="PF('v2AddSynonymDlg').show();"
+                              icon="fas fa-plus"/>
+                  <p:menuitem value="#{v2LocaleBean.getMsg('rightbody.concept.modify_synonym')}"
+                              process="@this"
+                              actionListener="#{v2ConceptLexicalEditorBean.prepareEditSynonyms()}"
+                              update="v2EditSynonymForm"
+                              oncomplete="PF('v2EditSynonymDlg').show();"
+                              icon="fas fa-edit"/>
+                  <p:menuitem value="#{v2LocaleBean.getMsg('rightbody.concept.delete_synonym')}"
+                              process="@this"
+                              actionListener="#{v2ConceptLexicalEditorBean.prepareDeleteSynonyms()}"
+                              update="v2DeleteSynonymForm"
+                              oncomplete="PF('v2DeleteSynonymDlg').show();"
+                              icon="fas fa-minus"/>
+                </p:menuButton>
+              </h:panelGroup>
               <h:panelGroup rendered="#{not v2ThesaurusBrowseBean.hasDisplayedSynonyms}">
                 <h:outputText value="....." style="font-size: 14px; color: grey; font-style: italic;"/>
               </h:panelGroup>
@@ -110,7 +152,7 @@
             <div class="col-xl-1 col-lg-1 col-md-1 col-sm-1" style="text-align: right;">
               <p:inputSwitch id="v2SynonymLangSwitch" value="#{v2ThesaurusBrowseBean.showAllSynonymLanguages}" style="margin-top: 7px;">
                 <p:ajax listener="#{v2ThesaurusBrowseBean.onSynonymLanguageToggle()}"
-                        update=":formRightTab"/>
+                        update=":containerIndex:rightTab"/>
               </p:inputSwitch>
               <p:tooltip for="v2SynonymLangSwitch" value="#{v2LocaleBean.getMsg('concept.showEMOtherLang')}" showDelay="1000"/>
             </div>
@@ -122,6 +164,7 @@
           <ui:param name="rowIcon" value=""/>
           <ui:param name="relations" value="#{v2ThesaurusBrowseBean.selectedConcept.collections}"/>
           <ui:param name="relationLinkType" value="group"/>
+          <ui:param name="relationEditKind" value="collection"/>
         </ui:include>
 
         <h:panelGroup rendered="#{not empty v2ThesaurusBrowseBean.selectedConcept.facets}">
@@ -143,7 +186,7 @@
             <div class="col-xl-9 col-lg-8 col-md-7 col-sm-7" style="margin-left: -10px;">
               <p:commandLink actionListener="#{v2ThesaurusBrowseBean.countBranchConcepts()}"
                              process="@this"
-                             update=":formRightTab"
+                             update=":containerIndex:rightTab"
                              title="#{v2LocaleBean.getMsg('rightbody.concept.tootltip_branch_count')}">
                 <i class="fas fa-calculator" style="color: #F7A269; font-size: 14px;"/>
               </p:commandLink>
@@ -167,11 +210,13 @@
           <ui:param name="rowLabel" value="#{v2LocaleBean.getMsg('rightbody.concept.broader')}"/>
           <ui:param name="rowIcon" value="fas fa-level-up-alt"/>
           <ui:param name="relations" value="#{v2ThesaurusBrowseBean.selectedConcept.broaderTerms}"/>
+          <ui:param name="relationEditKind" value="broader"/>
         </ui:include>
         <ui:include src="concept-detail-relation-row.xhtml">
           <ui:param name="rowLabel" value="#{v2LocaleBean.getMsg('rightbody.concept.narrower')}"/>
           <ui:param name="rowIcon" value="fas fa-level-down-alt"/>
           <ui:param name="relations" value="#{v2ThesaurusBrowseBean.selectedConcept.narrowerTerms}"/>
+          <ui:param name="relationEditKind" value="narrower"/>
         </ui:include>
         <h:panelGroup rendered="#{v2ThesaurusBrowseBean.haveMoreNarrowers}">
           <div class="list-group-item list-group-item-action border-0 pt-0">
@@ -182,7 +227,7 @@
                 <p:commandLink value="..."
                                action="#{v2ThesaurusBrowseBean.loadMoreNarrowers()}"
                                process="@this"
-                               update=":formRightTab"
+                               update=":containerIndex:rightTab"
                                style="color: #FF7979"
                                styleClass="textOpentheso">
                   <i class="fa-solid fa-forward" style="color:#f47b2a; font-size: 14px;"/>
@@ -195,6 +240,7 @@
           <ui:param name="rowLabel" value="#{v2LocaleBean.getMsg('rightbody.concept.related')}"/>
           <ui:param name="rowIcon" value="fas fa-arrows-alt-h"/>
           <ui:param name="relations" value="#{v2ThesaurusBrowseBean.selectedConcept.relatedTerms}"/>
+          <ui:param name="relationEditKind" value="related"/>
         </ui:include>
 
         <ui:include src="concept-detail-custom-relations.xhtml"/>
@@ -206,14 +252,38 @@
       <div class="list-group" style="margin-top: -10px; margin-bottom: -10px;">
         <div class="list-group-item list-group-item-action">
           <div class="row" style="margin-left: 0;">
-            <div class="col-xl-3 col-lg-4 col-md-5 col-sm-5">
+            <div class="col-xl-2 col-lg-3 col-md-4 col-sm-4">
               <h:outputText value="#{v2LocaleBean.getMsg('rightbody.concept.traduction')}"
                             style="font-size: 14px; font-weight: bold; color: #8f8f8f;"/>
             </div>
             <div class="col-xl-1 col-lg-1 col-md-1 col-sm-1" style="text-align: end;">
               <i class="fa fa-language" style="color: #78261f; margin-right: 10px;"/>
             </div>
-            <div class="col-xl-8 col-lg-7 col-md-6 col-sm-6" style="margin-left: -10px;">
+            <div class="col-xl-9 col-lg-8 col-md-7 col-sm-7" style="margin-left: -10px;">
+              <h:panelGroup rendered="#{v2ConceptLexicalEditorBean.lexicalActionsAvailable}"
+                            style="display:inline-block; margin-right:6px;">
+                <p:menuButton icon="fas fa-cog"
+                              style="color:#F7A269; background:none; border:none; box-shadow:none; font-size:12px;">
+                  <p:menuitem value="#{v2LocaleBean.getMsg('rightbody.conceptdialog.add_translation')}"
+                              process="@this"
+                              actionListener="#{v2ConceptLexicalEditorBean.prepareAddTranslation()}"
+                              update="v2AddTranslationForm"
+                              oncomplete="PF('v2AddTranslationDlg').show();"
+                              icon="fas fa-plus"/>
+                  <p:menuitem value="#{v2LocaleBean.getMsg('rightbody.conceptdialog.modify_translation')}"
+                              process="@this"
+                              actionListener="#{v2ConceptLexicalEditorBean.prepareEditTranslations()}"
+                              update="v2EditTranslationForm"
+                              oncomplete="PF('v2EditTranslationDlg').show();"
+                              icon="fas fa-edit"/>
+                  <p:menuitem value="#{v2LocaleBean.getMsg('rightbody.conceptdialog.delete_translation')}"
+                              process="@this"
+                              actionListener="#{v2ConceptLexicalEditorBean.prepareDeleteTranslations()}"
+                              update="v2DeleteTranslationForm"
+                              oncomplete="PF('v2DeleteTranslationDlg').show();"
+                              icon="fas fa-minus"/>
+                </p:menuButton>
+              </h:panelGroup>
               <h:panelGroup rendered="#{empty v2ThesaurusBrowseBean.preferredTranslations}">
                 <h:outputText value="....." style="font-size: 14px; color: grey; font-style: italic;"/>
               </h:panelGroup>
@@ -224,7 +294,7 @@
                                title="#{v2ThesaurusBrowseBean.selectedConcept.summary.conceptId}"
                                action="#{v2ThesaurusBrowseBean.openConceptInTranslationLanguage(translation.lang)}"
                                process="@this"
-                               update=":formRightTab :formLeftTab:tabTree :containerIndex:thesoSelect"
+                               update=":containerIndex:rightTab :containerIndex:tabTree :containerIndex:thesoSelect"
                                style="font-size: 14px;"/>
                 <h:outputText value=" (#{translation.lang})" style="font-size: 14px; font-weight: 300; margin-left: 5px;"/>
                 <br/>
@@ -244,11 +314,21 @@
               <div class="col-xl-10 col-lg-10 col-md-10 col-sm-10">
                 <h:outputText value="#{v2LocaleBean.getMsg('rightbody.concept.all_note')}"
                               style="color: #78261f; font-size: 14px; font-weight: bold;"/>
+                <h:panelGroup rendered="#{v2ConceptNoteEditorBean.noteActionsAvailable}"
+                              style="display:inline-block; margin-left:8px;">
+                  <p:commandButton title="#{v2LocaleBean.getMsg('rightbody.concept.manage_note')}"
+                                   styleClass="rounded-button ui-button-warning ui-button-flat"
+                                   icon="fas fa-cog" style="color:#f47b2a"
+                                   process="@this"
+                                   actionListener="#{v2ConceptNoteEditorBean.prepareManageNote()}"
+                                   update="v2ManageNoteForm"
+                                   oncomplete="PF('v2ManageNoteDlg').show();"/>
+                </h:panelGroup>
               </div>
               <div class="col-xl-2 col-lg-2 col-md-2 col-sm-2" style="text-align: right;">
                 <p:inputSwitch id="v2NoteLangSwitch" value="#{v2ThesaurusBrowseBean.showAllNoteLanguages}">
                   <p:ajax listener="#{v2ThesaurusBrowseBean.onNoteLanguageToggle()}"
-                          update=":formRightTab"/>
+                          update=":containerIndex:rightTab"/>
                 </p:inputSwitch>
                 <p:tooltip for="v2NoteLangSwitch" value="#{v2LocaleBean.getMsg('concept.showEMOtherLang')}" showDelay="1000"/>
               </div>
@@ -277,15 +357,11 @@
             <h:outputText value="#{v2LocaleBean.getMsg('rightbody.concept.alignment')}"
                           style="color: #78261f; font-size: 14px; font-weight: bold;"/>
             <h:panelGroup rendered="#{v2ConceptAlignmentBean.managerActionsAvailable}" style="display: inline-block; margin-left: 8px;">
-              <p:menuButton icon="pi pi-cog" style="background: none; border: none; color: #000; box-shadow: none;">
+              <p:menuButton icon="fas fa-cog" style="color:#F7A269; background:none; border:none; box-shadow:none; font-size:12px;">
                 <p:menuitem value="#{v2LocaleBean.getMsg('rightbody.concept.add_alignment_manual')}"
                             actionListener="#{v2ConceptAlignmentBean.prepareManualAlignment()}"
                             oncomplete="PF('v2AddManualAlignment').show();"
-                            update="v2AddManualAlignmentDlg" icon="fas fa-pen"/>
-                <p:menuitem value="#{v2LocaleBean.getMsg('rightbody.concept.add_alignment_auto')}"
-                            actionListener="#{v2ConceptAlignmentBean.prepareAutoAlignment()}"
-                            oncomplete="PF('v2AddAutoAlignment').show();"
-                            update="v2AddAutoAlignmentDlg" icon="fas fa-magic"/>
+                            update=":containerIndex:v2AddManualAlignmentDlg" icon="fas fa-pen"/>
               </p:menuButton>
             </h:panelGroup>
           </div>
@@ -301,15 +377,15 @@
                   <h:outputText value="#{alignment.uri}" rendered="#{not alignment.urlAvailable}" style="font-size: 14px;"/>
                   <h:outputText value=" (#{alignment.sourceName})" rendered="#{not empty alignment.sourceName}" style="font-size: 14px;"/>
                   <h:panelGroup rendered="#{v2ConceptAlignmentBean.managerActionsAvailable}" style="display: inline-block; margin-left: 10px;">
-                    <p:menuButton icon="pi pi-cog" style="background: none; border: none; color: #666; box-shadow: none; font-size: 12px;">
+                    <p:menuButton icon="fas fa-cog" style="color:#F7A269; background:none; border:none; box-shadow:none; font-size:12px;">
                       <p:menuitem value="#{v2LocaleBean.getMsg('rightbody.concept.edit_alignment')}"
                                   actionListener="#{v2ConceptAlignmentBean.prepareEdit(alignment)}"
                                   oncomplete="PF('v2EditAlignment').show();"
-                                  update="v2EditAlignmentDlg" icon="fas fa-edit"/>
+                                  update=":containerIndex:v2EditAlignmentDlg" icon="fas fa-edit"/>
                       <p:menuitem value="#{v2LocaleBean.getMsg('rightbody.concept.delete_alignment')}"
                                   actionListener="#{v2ConceptAlignmentBean.prepareDelete(alignment)}"
                                   oncomplete="PF('v2DeleteAlignment').show();"
-                                  update="v2DeleteAlignmentDlg" icon="fas fa-minus"/>
+                                  update=":containerIndex:v2DeleteAlignmentDlg" icon="fas fa-minus"/>
                     </p:menuButton>
                   </h:panelGroup>
                 </div>
@@ -375,6 +451,16 @@
     </h:panelGroup>
 
     <ui:include src="dialogs/proposition-submit-dialog.xhtml"/>
+    <ui:include src="dialogs/concept-lifecycle-dialogs.xhtml"/>
+    <ui:include src="dialogs/concept-relation-dialogs.xhtml"/>
+    <ui:include src="dialogs/concept-lexical-dialogs.xhtml"/>
+    <ui:include src="dialogs/concept-note-dialogs.xhtml"/>
+    <ui:include src="dialogs/concept-custom-relation-dialogs.xhtml"/>
+    <ui:include src="dialogs/concept-identifier-dialogs.xhtml"/>
+    <ui:include src="dialogs/concept-media-dialogs.xhtml"/>
+    <ui:include src="dialogs/concept-transfer-dialogs.xhtml"/>
+    <ui:include src="dialogs/concept-attribute-dialogs.xhtml"/>
+    <ui:include src="dialogs/concept-collection-dialogs.xhtml"/>
 
   </h:panelGroup>
 </ui:fragment>

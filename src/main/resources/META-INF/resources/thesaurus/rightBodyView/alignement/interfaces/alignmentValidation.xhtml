@@ -52,13 +52,13 @@
                 <p:column  style="background-color: #ecf8f1; border-top: 1px solid #43B572;border-bottom: 1px solid #43B572; color: #143a1e; text-align: right">
 
                     <p:commandButton value="#{langueBean.getMsg('candidat.close')}"
-                                     update="containerIndex:rightTab:checkboxDT"
+                                     update=":containerIndex:rightTab:checkboxDT"
                                      actionListener="#{alignmentBean.removeAlignmentFromTab(alignement)}"
                                      styleClass="rounded-button ui-button-outlined"
                                      style="color: white; background-color: #617D8B" >
                     </p:commandButton>
                     <p:commandButton value="#{langueBean.getMsg('statistique.validate')}"
-                                     update=":containerIndex:addAlignementID containerIndex:remplacerAlignementID"
+                                     update=":containerIndex:addAlignementID :containerIndex:remplacerAlignementID"
                                      actionListener="#{alignmentBean.addAlignementByConcept()}"
                                      styleClass="rounded-button ui-button-outlined"
                                      style="color: white; background-color: #f47b2a ;margin-left: 10px;" >

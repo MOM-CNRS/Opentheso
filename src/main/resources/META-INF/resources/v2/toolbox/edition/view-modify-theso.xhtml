@@ -144,7 +144,7 @@
                                                  value="#{v2ModifyThesaurusBean.metadata}"
                                                  editable="true" scrollHeight="250" scrollable="true" lazy="false">
                                         <p:ajax event="rowEdit" listener="#{v2ModifyThesaurusBean.onMetadataRowEdit}"
-                                                process="@this" update="containerIndex:v2MetadataTheso messageIndex"/>
+                                                process="@this" update=":containerIndex:v2MetadataTheso messageIndex"/>
 
                                         <p:column width="10%" headerText="#{v2LocaleBean.getMsg('toolbox.metadata_property')}">
                                             <p:cellEditor>
@@ -221,7 +221,7 @@
                                                 <f:facet name="output">
                                                     <p:commandButton styleClass="ui-button-danger rounded-button" icon="pi pi-trash"
                                                                      actionListener="#{v2ModifyThesaurusBean.deleteMetadata(dcElement)}"
-                                                                     update="containerIndex:v2MetadataTheso messageIndex" process="@this"/>
+                                                                     update=":containerIndex:v2MetadataTheso messageIndex" process="@this"/>
                                                 </f:facet>
                                                 <f:facet name="input">
                                                     <p:commandButton disabled="true" styleClass="ui-button-danger rounded-button"
@@ -241,7 +241,7 @@
                                         <p:column headerText="#{v2LocaleBean.getMsg('toolbox.publicPrivate')}">
                                             <p:toggleSwitch value="#{groupThesaurus.privateCollection}" style="margin-top: 5px">
                                                 <p:ajax listener="#{v2ModifyThesaurusBean.updateCollectionStatus(groupThesaurus)}"
-                                                        update="messageIndex containerIndex:v2ModifySettingsPanels"/>
+                                                        update="messageIndex :containerIndex:v2ModifySettingsPanels"/>
                                             </p:ajax>
                                         </p:toggleSwitch>
                                         </p:column>

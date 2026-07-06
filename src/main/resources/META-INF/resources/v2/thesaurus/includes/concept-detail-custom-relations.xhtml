@@ -10,10 +10,26 @@
           <h:outputText value="#{v2LocaleBean.getMsg('rightbody.concept.customRelation')}"
                         style="font-size:14px; font-weight:bold; color:#8f8f8f;"/>
         </div>
-        <div class="col-xl-1 col-lg-1 col-md-1 col-sm-1" style="text-align:end;">
-          <i class="fas fa-arrows-alt-h" style="color:#78261f; margin-right:10px;"/>
-        </div>
-        <div class="col-xl-8 col-lg-7 col-md-6 col-sm-6" style="margin-left:-10px;">
+        <div class="col-xl-9 col-lg-8 col-md-7 col-sm-7" style="margin-left:-10px;">
+          <h:panelGroup rendered="#{v2ConceptRelationEditorBean.customRelationActionsAvailable}"
+                        style="display:inline-block; margin-right:6px;">
+            <p:menuButton icon="fas fa-cog"
+                          style="color:#F7A269; background:none; border:none; box-shadow:none; font-size:12px;">
+              <p:menuitem value="#{v2LocaleBean.getMsg('rightbody.concept.addCustomRelation')}"
+                          process="@this"
+                          actionListener="#{v2ConceptRelationEditorBean.prepareAddCustomRelation()}"
+                          update="v2AddCustomRelationForm"
+                          oncomplete="PF('v2AddCustomRelationDlg').show();"
+                          icon="fas fa-plus"/>
+              <p:menuitem value="#{v2LocaleBean.getMsg('rightbody.concept.deleteCustomRelation')}"
+                          process="@this"
+                          actionListener="#{v2ConceptRelationEditorBean.prepareDeleteCustomRelation()}"
+                          update="v2DeleteCustomRelationForm"
+                          oncomplete="PF('v2DeleteCustomRelationDlg').show();"
+                          icon="fas fa-minus"
+                          disabled="#{not v2ThesaurusBrowseBean.selectedConcept.hasOutgoingCustomRelations()}"/>
+            </p:menuButton>
+          </h:panelGroup>
           <h:panelGroup rendered="#{not v2ThesaurusBrowseBean.selectedConcept.hasOutgoingCustomRelations()}">
             <h:outputText value="....." style="font-size:14px; color:grey; font-style:italic;"/>
           </h:panelGroup>
@@ -22,7 +38,7 @@
             <p:commandLink value="#{empty custom.targetLabel ? '('.concat(custom.targetConceptId).concat(')') : custom.targetLabel}"
                            action="#{v2ThesaurusBrowseBean.openConcept(custom.targetConceptId)}"
                            process="@this"
-                           update=":formRightTab :formLeftTab:tabTree"
+                           update=":containerIndex:rightTab :containerIndex:formLeftTab"
                            style="color:#601e18; font-size:14px;"/>
             <h:outputText value=", " rendered="#{not status.last}" style="color:#FF7979;"/>
           </ui:repeat>
@@ -38,10 +54,7 @@
           <h:outputText value="#{v2LocaleBean.getMsg('rightbody.concept.customRelation')}"
                         style="font-size:14px; font-weight:bold; color:#8f8f8f;"/>
         </div>
-        <div class="col-xl-1 col-lg-1 col-md-1 col-sm-1" style="text-align:end;">
-          <i class="fas fa-arrows-alt-h" style="color:#78261f; margin-right:10px;"/>
-        </div>
-        <div class="col-xl-8 col-lg-7 col-md-6 col-sm-6" style="margin-left:-10px;">
+        <div class="col-xl-9 col-lg-8 col-md-7 col-sm-7" style="margin-left:-10px;">
           <ui:repeat value="#{v2ThesaurusBrowseBean.selectedConcept.reciprocalCustomRelations}" var="custom" varStatus="status">
             <h:outputText value="#{v2ThesaurusBrowseBean.selectedConcept.summary.preferredLabel}"
                           style="color:#78261f; font-size:14px;"/>
@@ -49,7 +62,7 @@
             <p:commandLink value="#{empty custom.targetLabel ? '('.concat(custom.targetConceptId).concat(')') : custom.targetLabel}"
                            action="#{v2ThesaurusBrowseBean.openConcept(custom.targetConceptId)}"
                            process="@this"
-                           update=":formRightTab :formLeftTab:tabTree"
+                           update=":containerIndex:rightTab :containerIndex:formLeftTab"
                            style="color:#601e18; font-size:14px;"/>
             <p:tag styleClass="mr-2"
                    severity="warning"

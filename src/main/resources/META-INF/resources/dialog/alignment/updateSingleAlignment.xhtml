@@ -34,12 +34,12 @@
             <div style="width: 100%; text-align: right; margin-top: 20px; margin-bottom: 5px;">
                 <p:commandButton value="#{langueBean.getMsg('candidat.close')}" style="margin-right: 10px"
                                  icon="fas fa-undo-alt" styleClass="ui-button-secondary button" 
-                                 oncomplete="PF('updateSingleAlignment').hide();" update="containerIndex:formRightTab"/>
+                                 oncomplete="PF('updateSingleAlignment').hide();" update=":containerIndex:rightTab"/>
 
                 <p:commandButton value="#{langueBean.getMsg('btnValidate')}" 
                                  icon="pi pi-check" styleClass="ui-button-success" 
                                  ajax="true" process="@form"
-                                 update="containerIndex:formRightTab messageIndex" 
+                                 update=":containerIndex:rightTab messageIndex" 
                                  oncomplete="PF('updateSingleAlignment').hide();"
                                  actionListener="#{alignmentManualBean.updateAlignementFromConceptInterface()}" />
             </div>

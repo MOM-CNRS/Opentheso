@@ -66,7 +66,7 @@
 
                 <p:commandButton id="removeAlignmentBtn" icon="pi pi-times"
                                  actionListener="#{alignmentBean.supprimerPropositionAlignement(alignement)}"
-                                 update="containerIndex messageIndex"
+                                 update=":containerIndex messageIndex"
                                  style="margin-left: 5px" ajax="true" process="@this"
                                  styleClass="rounded-button ui-button-danger">
                     <p:confirm type="popup" header="" icon="pi pi-info-circle"

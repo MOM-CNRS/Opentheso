@@ -41,7 +41,7 @@
                                  oncomplete="PF('selectSourceManagement').hide();" update="containerIndex"/>
 
                 <p:commandButton styleClass="ui-button-success" value="#{langueBean.getMsg('btnValidate')}"
-                                 update="containerIndex messageIndex"
+                                 update=":containerIndex messageIndex"
                                  actionListener="#{setAlignmentSourceBean.startAlignementAutomatique()}"
                                  icon="pi pi-check" ajax="true" process="@form"/>
             </div>

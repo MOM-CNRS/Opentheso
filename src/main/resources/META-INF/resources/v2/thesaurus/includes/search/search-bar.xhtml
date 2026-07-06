@@ -22,7 +22,7 @@
                                                          style="background:transparent; border-color:transparent; font-size:12px; padding-top:2px; width:100%; padding-left:5px; height:33px;">
                                             <p:ajax event="valueChange"
                                                     listener="#{v2ConceptSearchBean.onLanguageChange()}"
-                                                    update=":formRightTab resultSearchBar"/>
+                                                    update=":containerIndex:rightTab resultSearchBar"/>
                                             <f:selectItems value="#{v2ConceptSearchBean.availableLanguages}"
                                                            var="lang"
                                                            itemLabel="#{lang.value}"
@@ -92,7 +92,7 @@
 
                                             <p:ajax event="itemSelect"
                                                     listener="#{v2ConceptSearchBean.onSuggestionSelect}"
-                                                    update="containerIndex messageIndex :formRightTab resultSearchBar :formLeftTab:tabTree"/>
+                                                    update=":containerIndex messageIndex :containerIndex:rightTab resultSearchBar :containerIndex:formLeftTab"/>
                                         </p:autoComplete>
                                     </div>
 
@@ -102,7 +102,7 @@
                                                          style="color:#f47b2a; background:transparent; border:none; box-shadow:none; font-size:14px;"
                                                          actionListener="#{v2ConceptSearchBean.applySearch()}"
                                                          process="containerIndex:v2SearchAutocomplete @this"
-                                                         update="resultSearchBar :formRightTab messageIndex"/>
+                                                         update="resultSearchBar :containerIndex:rightTab messageIndex"/>
                                     </div>
                                 </div>
                             </div>
@@ -157,22 +157,22 @@
                           icon="pi pi-align-justify">
                 <p:menuitem value="#{v2LocaleBean.getMsg('search.deprecated')}"
                             actionListener="#{v2ConceptSearchBean.runDeprecatedSearch()}"
-                            update="resultSearchBar :formRightTab messageIndex"/>
+                            update="resultSearchBar :containerIndex:rightTab messageIndex"/>
                 <p:menuitem value="#{v2LocaleBean.getMsg('search.polyhierarchy')}"
                             actionListener="#{v2ConceptSearchBean.runPolyhierarchySearch()}"
-                            update="resultSearchBar :formRightTab messageIndex"/>
+                            update="resultSearchBar :containerIndex:rightTab messageIndex"/>
                 <p:menuitem value="#{v2LocaleBean.getMsg('search.multiGroups')}"
                             actionListener="#{v2ConceptSearchBean.runMultiGroupsSearch()}"
-                            update="resultSearchBar :formRightTab messageIndex"/>
+                            update="resultSearchBar :containerIndex:rightTab messageIndex"/>
                 <p:menuitem value="#{v2LocaleBean.getMsg('search.withoutGroups')}"
                             actionListener="#{v2ConceptSearchBean.runWithoutGroupsSearch()}"
-                            update="resultSearchBar :formRightTab messageIndex"/>
+                            update="resultSearchBar :containerIndex:rightTab messageIndex"/>
                 <p:menuitem value="#{v2LocaleBean.getMsg('search.duplicates')}"
                             actionListener="#{v2ConceptSearchBean.runDuplicatesSearch()}"
-                            update="resultSearchBar :formRightTab messageIndex"/>
+                            update="resultSearchBar :containerIndex:rightTab messageIndex"/>
                 <p:menuitem value="#{v2LocaleBean.getMsg('search.forbiddenRelationships')}"
                             actionListener="#{v2ConceptSearchBean.runForbiddenRelationshipsSearch()}"
-                            update="resultSearchBar :formRightTab messageIndex"/>
+                            update="resultSearchBar :containerIndex:rightTab messageIndex"/>
             </p:menuButton>
             <p:tooltip for="v2SearchProgrammed"
                        value="#{v2LocaleBean.getMsg('search.preprogrammedSearch')}"

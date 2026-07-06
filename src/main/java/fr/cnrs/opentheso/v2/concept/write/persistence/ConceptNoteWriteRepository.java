@@ -1,0 +1,191 @@
+package fr.cnrs.opentheso.v2.concept.write.persistence;
+
+import jakarta.persistence.EntityManager;
+import jakarta.persistence.PersistenceContext;
+import org.springframework.stereotype.Repository;
+import org.springframework.transaction.annotation.Transactional;
+
+import java.util.Date;
+import java.util.Optional;
+
+@Repository
+public class ConceptNoteWriteRepository {
+
+    @PersistenceContext
+    private EntityManager entityManager;
+
+    public Optional<String> findNoteLexicalValue(
+            String conceptId,
+            String thesaurusId,
+            String lang,
+            String typeCode
+    ) {
+        return entityManager.createNativeQuery("""
+                        SELECT lexicalvalue
+                        FROM note
+                        WHERE identifier = :conceptId
+                          AND id_thesaurus = :thesaurusId
+                          AND notetypecode = :typeCode
+                          AND lang = :lang
+                        LIMIT 1
+                        """)
+                .setParameter("conceptId", conceptId)
+                .setParameter("thesaurusId", thesaurusId)
+                .setParameter("typeCode", typeCode)
+                .setParameter("lang", lang)
+                .getResultStream()
+                .map(String.class::cast)
+                .findFirst();
+    }
+
+    public Optional<Integer> findNoteId(
+            String conceptId,
+            String thesaurusId,
+            String lang,
+            String typeCode
+    ) {
+        Number id = (Number) entityManager.createNativeQuery("""
+                        SELECT id
+                        FROM note
+                        WHERE identifier = :conceptId
+                          AND id_thesaurus = :thesaurusId
+                          AND notetypecode = :typeCode
+                          AND lang = :lang
+                        LIMIT 1
+                        """)
+                .setParameter("conceptId", conceptId)
+                .setParameter("thesaurusId", thesaurusId)
+                .setParameter("typeCode", typeCode)
+                .setParameter("lang", lang)
+                .getResultStream()
+                .findFirst()
+                .orElse(null);
+        return id == null ? Optional.empty() : Optional.of(id.intValue());
+    }
+
+    public boolean existsWithValue(
+            String conceptId,
+            String thesaurusId,
+            String lang,
+            String typeCode,
+            String lexicalValue
+    ) {
+        return Boolean.TRUE.equals(entityManager.createNativeQuery("""
+                        SELECT EXISTS(
+                            SELECT 1
+                            FROM note
+                            WHERE identifier = :conceptId
+                              AND id_thesaurus = :thesaurusId
+                              AND notetypecode = :typeCode
+                              AND lang = :lang
+                              AND lexicalvalue = :lexicalValue
+                        )
+                        """)
+                .setParameter("conceptId", conceptId)
+                .setParameter("thesaurusId", thesaurusId)
+                .setParameter("typeCode", typeCode)
+                .setParameter("lang", lang)
+                .setParameter("lexicalValue", lexicalValue)
+                .getSingleResult());
+    }
+
+    @Transactional
+    public void insertNote(
+            String conceptId,
+            String thesaurusId,
+            String lang,
+            String typeCode,
+            String lexicalValue,
+            String noteSource,
+            int userId
+    ) {
+        Date now = new Date();
+        entityManager.createNativeQuery("""
+                        INSERT INTO note (
+                            notetypecode, id_thesaurus, lang, lexicalvalue,
+                            identifier, notesource, id_user, created, modified
+                        )
+                        VALUES (
+                            :typeCode, :thesaurusId, :lang, :lexicalValue,
+                            :conceptId, :noteSource, :userId, :created, :modified
+                        )
+                        """)
+                .setParameter("typeCode", typeCode)
+                .setParameter("thesaurusId", thesaurusId)
+                .setParameter("lang", lang)
+                .setParameter("lexicalValue", lexicalValue)
+                .setParameter("conceptId", conceptId)
+                .setParameter("noteSource", noteSource)
+                .setParameter("userId", userId)
+                .setParameter("created", now)
+                .setParameter("modified", now)
+                .executeUpdate();
+    }
+
+    @Transactional
+    public boolean updateNote(
+            int noteId,
+            String thesaurusId,
+            String lexicalValue,
+            String noteSource
+    ) {
+        int updated = entityManager.createNativeQuery("""
+                        UPDATE note
+                        SET lexicalvalue = :lexicalValue,
+                            notesource = :noteSource,
+                            modified = :modified
+                        WHERE id = :noteId
+                          AND id_thesaurus = :thesaurusId
+                        """)
+                .setParameter("lexicalValue", lexicalValue)
+                .setParameter("noteSource", noteSource)
+                .setParameter("modified", new Date())
+                .setParameter("noteId", noteId)
+                .setParameter("thesaurusId", thesaurusId)
+                .executeUpdate();
+        return updated > 0;
+    }
+
+    @Transactional
+    public void deleteNote(int noteId, String thesaurusId) {
+        entityManager.createNativeQuery("""
+                        DELETE FROM note
+                        WHERE id = :noteId
+                          AND id_thesaurus = :thesaurusId
+                        """)
+                .setParameter("noteId", noteId)
+                .setParameter("thesaurusId", thesaurusId)
+                .executeUpdate();
+    }
+
+    @Transactional
+    public void insertNoteHistory(
+            String conceptId,
+            String thesaurusId,
+            String lang,
+            String typeCode,
+            String lexicalValue,
+            String action,
+            int userId
+    ) {
+        entityManager.createNativeQuery("""
+                        INSERT INTO note_historique (
+                            notetypecode, id_thesaurus, id_concept, lang,
+                            lexicalvalue, action_performed, id_user, modified
+                        )
+                        VALUES (
+                            :typeCode, :thesaurusId, :conceptId, :lang,
+                            :lexicalValue, :action, :userId, :modified
+                        )
+                        """)
+                .setParameter("typeCode", typeCode)
+                .setParameter("thesaurusId", thesaurusId)
+                .setParameter("conceptId", conceptId)
+                .setParameter("lang", lang)
+                .setParameter("lexicalValue", lexicalValue)
+                .setParameter("action", action)
+                .setParameter("userId", userId)
+                .setParameter("modified", new Date())
+                .executeUpdate();
+    }
+}

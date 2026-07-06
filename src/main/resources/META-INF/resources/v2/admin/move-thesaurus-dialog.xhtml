@@ -41,7 +41,7 @@
                 <p:commandButton value="#{v2LocaleBean.getMsg('candidat.close')}" styleClass="ui-button-secondary button"
                                  icon="fas fa-undo-alt" style="margin-right: 10px"
                                  oncomplete="PF('v2MoveThesaurus').hide();"
-                                 update="containerIndex:idV2MoveThesaurus" process="@this"/>
+                                 update=":containerIndex:idV2MoveThesaurus" process="@this"/>
                 <p:commandButton id="v2MoveThesaurusBtn" value="#{v2LocaleBean.getMsg('btnValidate')}"
                                  styleClass="ui-button-success" icon="pi pi-check"
                                  action="#{v2AllThesauriBean.moveThesaurus()}" process="@form"

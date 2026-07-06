@@ -13,7 +13,7 @@
                                  process="@this" ajax="true"
                                  actionListener="#{setAlignmentSourceBean.clearValues()}"
                                  oncomplete="PF('addSource').show();"
-                                 update="containerIndex:rightTab:addSourceID"
+                                 update=":containerIndex:rightTab:addSourceID"
                                  style="background: white !important; color: #f47b2a;" />
             </div>
         </div>
@@ -65,7 +65,7 @@
                                 id="removeAlignmentSourceBtn" styleClass="ui-button-danger rounded-button" icon="pi pi-trash" ajax="true" process="@this"
                                          action="#{setAlignmentSourceBean.deleteAlignmentSource(sourceAlign)}"
                                          style="margin-right: 5px"
-                                         update="messageIndex containerIndex:formRightTab">
+                                         update="messageIndex :containerIndex:rightTab">
 
                             <p:confirm type="popup" header="#{langueBean.getMsg('profile.confirmation')}" icon="pi pi-info-circle"
                                        message="#{langueBean.getMsg('rightbody.concept.alignement.delete-confirmation-msg')}"/>
@@ -88,7 +88,7 @@
                 <p:commandButton value="#{langueBean.getMsg('btnBack')}"
                                  icon="fas fa-undo-alt" styleClass="ui-button-secondary button"
                                  actionListener="#{alignmentBean.cancelForManageAlignment()}"
-                                 update="containerIndex:formRightTab" style="margin-right: 10px" />
+                                 update=":containerIndex:rightTab" style="margin-right: 10px" />
             </div>
         </div>
     </div>

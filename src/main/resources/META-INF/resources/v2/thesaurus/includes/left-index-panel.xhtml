@@ -40,7 +40,7 @@
                      style="width:auto; border:none; font-size:12px; min-height:400px; max-height:800px; overflow-y:auto;">
             <p:ajax event="rowSelect"
                     listener="#{v2ThesaurusBrowseBean.onIndexSelect}"
-                    update=":formRightTab :formLeftTab:tabTree"/>
+                    update="indexTitle containerIndex:rightTab containerIndex:tabTree messageIndex"/>
             <p:column>
                 <h:outputText value="#{entry.label}" title="#{entry.nodeId}" style="font-size:12px;"/>
             </p:column>

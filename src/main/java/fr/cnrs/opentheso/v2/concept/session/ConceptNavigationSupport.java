@@ -15,4 +15,14 @@ public interface ConceptNavigationSupport {
     void focusFacet(String facetId);
 
     void refreshSelectedConcept();
+
+    void refreshAfterRename(String conceptId, String newLabel);
+
+    void refreshAfterNotationUpdate(String conceptId, String notation);
+
+    void invalidateConceptTree();
+
+    void openThesaurusHome();
+
+    void afterConceptDeleted(String fallbackConceptId);
 }

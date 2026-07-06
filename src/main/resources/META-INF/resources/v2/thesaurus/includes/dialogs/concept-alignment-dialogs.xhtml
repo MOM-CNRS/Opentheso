@@ -33,7 +33,7 @@
             <div class="text-right mt-3">
                 <p:commandButton value="#{v2LocaleBean.getMsg('btnValidate')}" styleClass="ui-button-success"
                                  actionListener="#{v2ConceptAlignmentBean.addManualAlignment()}" process="@form"
-                                 update="conceptSummaryPanel messageIndex"/>
+                                 update=":containerIndex:conceptSummaryPanel messageIndex"/>
             </div>
         </h:form>
     </p:dialog>
@@ -61,7 +61,7 @@
             <div class="text-right mt-3">
                 <p:commandButton value="#{v2LocaleBean.getMsg('btnValidate')}" styleClass="ui-button-success"
                                  actionListener="#{v2ConceptAlignmentBean.updateAlignment()}" process="@form"
-                                 update="conceptSummaryPanel messageIndex"/>
+                                 update=":containerIndex:conceptSummaryPanel messageIndex"/>
             </div>
         </h:form>
     </p:dialog>
@@ -74,24 +74,7 @@
                 <p:commandButton value="#{v2LocaleBean.getMsg('btnValidate')}" styleClass="ui-button-danger"
                                  actionListener="#{v2ConceptAlignmentBean.deleteAlignment()}"
                                  oncomplete="PF('v2DeleteAlignment').hide();"
-                                 update="conceptSummaryPanel messageIndex"/>
-            </div>
-        </h:form>
-    </p:dialog>
-
-    <p:dialog id="v2AddAutoAlignmentDlg" header="#{v2LocaleBean.getMsg('rightbody.concept.add_alignment_auto')}"
-              widgetVar="v2AddAutoAlignment" width="450" modal="true" resizable="false">
-        <h:form>
-            <h:outputText value="Confirmer l'ajout d'alignements automatiques depuis les sources configurées ?"
-                          rendered="#{v2ConceptAlignmentBean.hasAlignmentSources}"/>
-            <h:outputText value="Aucune source d'alignement n'est configurée pour ce thésaurus."
-                          rendered="#{not v2ConceptAlignmentBean.hasAlignmentSources}"/>
-            <div class="text-right mt-3">
-                <p:commandButton value="#{v2LocaleBean.getMsg('btnValidate')}" styleClass="ui-button-success"
-                                 rendered="#{v2ConceptAlignmentBean.hasAlignmentSources}"
-                                 actionListener="#{v2ConceptAlignmentBean.addAutoAlignment()}"
-                                 oncomplete="PF('v2AddAutoAlignment').hide();"
-                                 update="conceptSummaryPanel messageIndex"/>
+                                 update=":containerIndex:conceptSummaryPanel messageIndex"/>
             </div>
         </h:form>
     </p:dialog>

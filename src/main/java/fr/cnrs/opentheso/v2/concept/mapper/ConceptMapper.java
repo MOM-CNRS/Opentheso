@@ -182,7 +182,8 @@ public final class ConceptMapper {
                 .map(relation -> new ConceptRelation(
                         StringUtils.defaultString(relation.getIdConcept()),
                         StringUtils.defaultString(relation.getLabel()),
-                        StringUtils.defaultString(relation.getUri())
+                        StringUtils.defaultString(relation.getUri()),
+                        StringUtils.defaultString(relation.getRole())
                 ))
                 .toList();
     }
@@ -284,13 +285,19 @@ public final class ConceptMapper {
                 .forEach(target::add);
     }
 
+    /**
+     * Les identifiants numériques (1..5) correspondent aux lignes de seed de la table
+     * {@code alignement_type} et doivent rester alignés avec le switch de
+     * {@code ConceptFullAssembler.mapAlignments}, qui répartit les alignements par type dans
+     * ces mêmes 5 catégories SKOS.
+     */
     private static List<ConceptAlignmentGroup> mapAlignmentGroupsFromFullConcept(ConceptFullSnapshot fullConcept) {
         var groups = new ArrayList<ConceptAlignmentGroup>();
-        addAlignmentGroup(groups, "exactMatch", "skos:exactMatch", fullConcept.getExactMatchs());
-        addAlignmentGroup(groups, "closeMatch", "skos:closeMatch", fullConcept.getCloseMatchs());
-        addAlignmentGroup(groups, "broadMatch", "skos:broadMatch", fullConcept.getBroadMatchs());
-        addAlignmentGroup(groups, "relatedMatch", "skos:relatedMatch", fullConcept.getRelatedMatchs());
-        addAlignmentGroup(groups, "narrowMatch", "skos:narrowMatch", fullConcept.getNarrowMatchs());
+        addAlignmentGroup(groups, "exactMatch", "skos:exactMatch", 1, fullConcept.getExactMatchs());
+        addAlignmentGroup(groups, "closeMatch", "skos:closeMatch", 2, fullConcept.getCloseMatchs());
+        addAlignmentGroup(groups, "broadMatch", "skos:broadMatch", 3, fullConcept.getBroadMatchs());
+        addAlignmentGroup(groups, "relatedMatch", "skos:relatedMatch", 4, fullConcept.getRelatedMatchs());
+        addAlignmentGroup(groups, "narrowMatch", "skos:narrowMatch", 5, fullConcept.getNarrowMatchs());
         return List.copyOf(groups);
     }
 
@@ -298,25 +305,27 @@ public final class ConceptMapper {
             List<ConceptAlignmentGroup> groups,
             String typeKey,
             String typeLabel,
+            int typeId,
             List<ConceptUriLabel> items
     ) {
         if (CollectionUtils.isEmpty(items)) {
             return;
         }
         var alignments = items.stream()
-                .map(item -> toAlignmentFromUriLabel(item, typeLabel))
+                .map(item -> toAlignmentFromUriLabel(item, typeLabel, typeId))
                 .toList();
         groups.add(new ConceptAlignmentGroup(typeKey, typeLabel, alignments));
     }
 
-    private static ConceptAlignment toAlignmentFromUriLabel(ConceptUriLabel item, String typeLabel) {
+    private static ConceptAlignment toAlignmentFromUriLabel(ConceptUriLabel item, String typeLabel, int typeId) {
         String uri = StringUtils.defaultString(item.getUri());
         return new ConceptAlignment(
                 StringUtils.defaultString(item.getIdentifier()),
                 uri,
                 typeLabel,
                 StringUtils.defaultString(item.getLabel()),
-                StringUtils.startsWithIgnoreCase(uri, "http")
+                StringUtils.startsWithIgnoreCase(uri, "http"),
+                typeId
         );
     }
 

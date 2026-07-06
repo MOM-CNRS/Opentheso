@@ -4,16 +4,129 @@
              xmlns:p="http://primefaces.org/ui">
 
   <div class="list-group-item list-group-item-action">
-    <div class="row align-items-start mb-0" style="margin-left: 0; font-size: 14px;">
-      <div class="col-xl-3 col-lg-4 col-md-5 col-sm-5" style="font-weight: bold; color: #8f8f8f;">
-        <h:panelGroup rendered="#{not empty rowIcon}">
-          <i class="#{rowIcon}" style="color: #78261f; margin-right: 6px;"/>
-        </h:panelGroup>
+    <div class="row align-items-start mb-0" style="margin-left:0; font-size:14px;">
+      <div class="#{empty rowIcon ? 'col-xl-3 col-lg-4 col-md-5 col-sm-5' : 'col-xl-2 col-lg-3 col-md-4 col-sm-4'}"
+           style="font-weight:bold; color:#8f8f8f;">
         #{rowLabel}
       </div>
-      <div class="col-xl-9 col-lg-8 col-md-7 col-sm-7" style="margin-left: -10px;">
+      <h:panelGroup rendered="#{not empty rowIcon}">
+        <div class="col-xl-1 col-lg-1 col-md-1 col-sm-1" style="text-align:end;">
+          <i class="#{rowIcon}" style="color:#78261f; margin-right:10px;"/>
+        </div>
+      </h:panelGroup>
+      <div class="#{empty rowIcon ? 'col-xl-9 col-lg-8 col-md-7 col-sm-7' : 'col-xl-9 col-lg-8 col-md-7 col-sm-7'}"
+           style="margin-left:-10px;">
+        <h:panelGroup rendered="#{relationEditKind eq 'replacedBy' and v2ConceptLifecycleEditorBean.statusActionsAvailable}"
+                      style="display:inline-block; margin-right:6px;">
+          <p:menuButton icon="fas fa-cog"
+                        style="background:none; border:none; color:#000; box-shadow:none; font-size:12px;">
+            <p:menuitem value="#{v2LocaleBean.getMsg('rightbody.concept.replace_with2')}"
+                        process="@this"
+                        actionListener="#{v2ConceptLifecycleEditorBean.prepareAddReplacedBy()}"
+                        update="v2AddReplacedByForm"
+                        oncomplete="PF('v2AddReplacedByDlg').show();"/>
+            <p:menuitem value="#{v2LocaleBean.getMsg('rightbody.concept.delere_replace_with')}"
+                        process="@this"
+                        actionListener="#{v2ConceptLifecycleEditorBean.prepareDeleteReplacedBy()}"
+                        update="v2DeleteReplacedByForm"
+                        oncomplete="PF('v2DeleteReplacedByDlg').show();"
+                        disabled="#{empty relations}"/>
+          </p:menuButton>
+        </h:panelGroup>
+        <h:panelGroup rendered="#{relationEditKind eq 'collection' and v2ConceptCollectionEditorBean.collectionActionsAvailable}"
+                      style="display:inline-block; margin-right:6px;">
+          <p:menuButton icon="fas fa-cog"
+                        style="color:#F7A269; background:none; border:none; box-shadow:none; font-size:12px;">
+            <p:menuitem value="#{v2LocaleBean.getMsg('rightbody.conceptdialog.add_concept_to_group')}"
+                        process="@this"
+                        actionListener="#{v2ConceptCollectionEditorBean.prepareAddToCollection()}"
+                        update="v2AddToCollectionForm"
+                        oncomplete="PF('v2AddToCollectionDlg').show();"
+                        icon="fas fa-plus"/>
+            <p:menuitem value="#{v2LocaleBean.getMsg('rightbody.concept.add_concept_to_group')}"
+                        process="@this"
+                        actionListener="#{v2ConceptCollectionEditorBean.prepareAddBranchToCollection()}"
+                        update="v2AddBranchToCollectionForm"
+                        oncomplete="PF('v2AddBranchToCollectionDlg').show();"
+                        icon="fas fa-code-branch"/>
+            <p:menuitem value="#{v2LocaleBean.getMsg('rightbody.concept.remove_from_group')}"
+                        process="@this"
+                        actionListener="#{v2ConceptCollectionEditorBean.prepareRemoveFromCollection()}"
+                        update="v2RemoveFromCollectionForm"
+                        oncomplete="PF('v2RemoveFromCollectionDlg').show();"
+                        icon="fas fa-minus"
+                        disabled="#{empty relations}"/>
+            <p:menuitem value="#{v2LocaleBean.getMsg('rightbody.concept.remove_concept_fom_group')}"
+                        process="@this"
+                        actionListener="#{v2ConceptCollectionEditorBean.prepareRemoveBranchFromCollection()}"
+                        update="v2RemoveBranchFromCollectionForm"
+                        oncomplete="PF('v2RemoveBranchFromCollectionDlg').show();"
+                        icon="fas fa-code-branch"
+                        disabled="#{empty relations}"/>
+          </p:menuButton>
+        </h:panelGroup>
+        <h:panelGroup rendered="#{not empty relationEditKind and relationEditKind ne 'replacedBy' and relationEditKind ne 'collection' and v2ConceptRelationEditorBean.relationActionsAvailable}"
+                      style="display:inline-block; margin-right:6px;">
+          <p:menuButton icon="fas fa-cog"
+                        style="color:#F7A269; background:none; border:none; box-shadow:none; font-size:12px;">
+            <p:menuitem rendered="#{relationEditKind eq 'broader'}"
+                        value="#{v2LocaleBean.getMsg('rightbody.concept.add_generic_relation')}"
+                        process="@this"
+                        actionListener="#{v2ConceptRelationEditorBean.prepareAddBroader()}"
+                        update="v2AddBroaderRelationForm"
+                        oncomplete="PF('v2AddBroaderRelationDlg').show();"
+                        icon="fas fa-plus"/>
+            <p:menuitem rendered="#{relationEditKind eq 'broader'}"
+                        value="#{v2LocaleBean.getMsg('rightbody.concept.delete_generic_relation')}"
+                        process="@this"
+                        actionListener="#{v2ConceptRelationEditorBean.prepareDeleteBroader()}"
+                        update="v2DeleteBroaderRelationForm"
+                        oncomplete="PF('v2DeleteBroaderRelationDlg').show();"
+                        icon="fas fa-minus"
+                        disabled="#{empty relations}"/>
+            <p:menuitem rendered="#{relationEditKind eq 'narrower'}"
+                        value="#{v2LocaleBean.getMsg('rightbody.concept.add_narrower_relation')}"
+                        process="@this"
+                        actionListener="#{v2ConceptRelationEditorBean.prepareAddNarrower()}"
+                        update="v2AddNarrowerRelationForm"
+                        oncomplete="PF('v2AddNarrowerRelationDlg').show();"
+                        icon="fas fa-plus"/>
+            <p:menuitem rendered="#{relationEditKind eq 'narrower'}"
+                        value="#{v2LocaleBean.getMsg('rightbody.concept.changing_relationships')}"
+                        title="#{v2LocaleBean.getMsg('rightbody.concept.tooltip_changing_relationships')}"
+                        process="@this"
+                        actionListener="#{v2ConceptRelationEditorBean.prepareChangeNarrowerTypes()}"
+                        update="v2ChangeNarrowerRelationForm"
+                        oncomplete="PF('v2ChangeNarrowerRelationDlg').show();"
+                        icon="fas fa-edit"
+                        disabled="#{empty relations}"/>
+            <p:menuitem rendered="#{relationEditKind eq 'narrower'}"
+                        value="#{v2LocaleBean.getMsg('rightbody.concept.delete_narrower_relation')}"
+                        process="@this"
+                        actionListener="#{v2ConceptRelationEditorBean.prepareDeleteNarrower()}"
+                        update="v2DeleteNarrowerRelationForm"
+                        oncomplete="PF('v2DeleteNarrowerRelationDlg').show();"
+                        icon="fas fa-minus"
+                        disabled="#{empty relations}"/>
+            <p:menuitem rendered="#{relationEditKind eq 'related'}"
+                        value="#{v2LocaleBean.getMsg('rightbody.concept.add_related_relation')}"
+                        process="@this"
+                        actionListener="#{v2ConceptRelationEditorBean.prepareAddRelated()}"
+                        update="v2AddRelatedRelationForm"
+                        oncomplete="PF('v2AddRelatedRelationDlg').show();"
+                        icon="fas fa-plus"/>
+            <p:menuitem rendered="#{relationEditKind eq 'related'}"
+                        value="#{v2LocaleBean.getMsg('rightbody.concept.delete_related_relation')}"
+                        process="@this"
+                        actionListener="#{v2ConceptRelationEditorBean.prepareDeleteRelated()}"
+                        update="v2DeleteRelatedRelationForm"
+                        oncomplete="PF('v2DeleteRelatedRelationDlg').show();"
+                        icon="fas fa-minus"
+                        disabled="#{empty relations}"/>
+          </p:menuButton>
+        </h:panelGroup>
         <h:panelGroup rendered="#{empty relations}">
-          <h:outputText value="....." style="font-size: 14px; color: grey; font-style: italic;"/>
+          <h:outputText value="....." style="font-size:14px; color:grey; font-style:italic;"/>
         </h:panelGroup>
         <h:panelGroup rendered="#{not empty relations}">
           <ui:repeat value="#{relations}" var="relation" varStatus="status">
@@ -22,7 +135,7 @@
                              title="#{relation.conceptId}"
                              action="#{v2ThesaurusBrowseBean.openConcept(relation.conceptId)}"
                              process="@this"
-                             update=":formRightTab :formLeftTab:tabTree"
+                             update=":containerIndex:rightTab :containerIndex:formLeftTab"
                              style="#{deprecatedStyle ? 'color:#C63632;font-weight:bold;font-style:italic;text-decoration:line-through;font-size:14px;' : ''}"/>
             </h:panelGroup>
             <h:panelGroup rendered="#{relationLinkType == 'group'}">
@@ -30,7 +143,7 @@
                              title="#{relation.conceptId}"
                              action="#{v2ThesaurusBrowseBean.focusGroup(relation.conceptId)}"
                              process="@this"
-                             update=":formRightTab :formLeftTab:tabTree"
+                             update=":containerIndex:rightTab :containerIndex:formLeftTab"
                              style="font-size:14px; color:#601e18;"/>
             </h:panelGroup>
             <h:panelGroup rendered="#{relationLinkType == 'facet'}">
@@ -38,10 +151,10 @@
                              title="#{relation.conceptId}"
                              action="#{v2ThesaurusBrowseBean.focusFacet(relation.conceptId)}"
                              process="@this"
-                             update=":formRightTab :formLeftTab:tabTree"
+                             update=":containerIndex:rightTab :containerIndex:formLeftTab"
                              style="font-size:14px; color:#601e18;"/>
             </h:panelGroup>
-            <h:outputText value=", " rendered="#{not status.last}" style="color: #FF7979;"/>
+            <h:outputText value=", " rendered="#{not status.last}" style="color:#FF7979;"/>
           </ui:repeat>
         </h:panelGroup>
       </div>

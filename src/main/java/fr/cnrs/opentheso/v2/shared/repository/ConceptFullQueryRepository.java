@@ -231,7 +231,7 @@ public class ConceptFullQueryRepository {
 
     public List<Object[]> findAlignments(String conceptId, String thesaurusId) {
         return em.createNativeQuery("""
-            SELECT a.uri_target, a.alignement_id_type, COALESCE(a.thesaurus_target, '')
+            SELECT a.id, a.uri_target, a.alignement_id_type, COALESCE(a.thesaurus_target, '')
             FROM alignement a
             WHERE a.internal_id_concept = :conceptId
               AND a.internal_id_thesaurus = :thesaurusId

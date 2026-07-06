@@ -2,6 +2,7 @@ package fr.cnrs.opentheso.legacybridge;
 
 import fr.cnrs.opentheso.bean.menu.theso.RoleOnThesaurusBean;
 import fr.cnrs.opentheso.bean.menu.theso.SelectedTheso;
+import fr.cnrs.opentheso.bean.menu.users.CurrentUser;
 import fr.cnrs.opentheso.v2.shared.session.ThesaurusLegacySync;
 import lombok.RequiredArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
@@ -18,6 +19,7 @@ public class LegacyThesaurusSync implements ThesaurusLegacySync {
 
     private final SelectedTheso selectedTheso;
     private final RoleOnThesaurusBean roleOnThesaurusBean;
+    private final CurrentUser currentUser;
 
     @Override
     public void applyThesaurusId(String thesaurusId) {
@@ -33,7 +35,13 @@ public class LegacyThesaurusSync implements ThesaurusLegacySync {
         selectedTheso.setSelectedIdTheso(id);
         selectedTheso.setCurrentIdTheso(id);
         roleOnThesaurusBean.initNodePref(id);
-        applyLanguage(language);
+        roleOnThesaurusBean.setUserRoleOnThisThesaurus(currentUser, id);
+        if (StringUtils.isNotBlank(language)) {
+            selectedTheso.setSelectedLang(language.trim());
+            selectedTheso.setCurrentLang(language.trim());
+        } else {
+            applyLanguage(null);
+        }
     }
 
     @Override

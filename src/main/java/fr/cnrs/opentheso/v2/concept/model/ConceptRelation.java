@@ -3,8 +3,13 @@ package fr.cnrs.opentheso.v2.concept.model;
 public record ConceptRelation(
         String conceptId,
         String label,
-        String arkId
+        String arkId,
+        String role
 ) {
+
+    public ConceptRelation(String conceptId, String label, String arkId) {
+        this(conceptId, label, arkId, null);
+    }
 
     public String getConceptId() {
         return conceptId;
@@ -16,6 +21,10 @@ public record ConceptRelation(
 
     public String getArkId() {
         return arkId;
+    }
+
+    public String getRole() {
+        return role;
     }
 
     public String displayLabel() {

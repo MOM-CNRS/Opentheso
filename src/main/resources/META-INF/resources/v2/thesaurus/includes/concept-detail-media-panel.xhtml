@@ -5,8 +5,58 @@
              xmlns:f="http://xmlns.jcp.org/jsf/core">
 
   <h:panelGroup id="v2ConceptMediaPanel">
-  <h:panelGroup rendered="#{v2ThesaurusBrowseBean.selectedConcept.hasMediaData()}">
+  <h:panelGroup rendered="#{v2ThesaurusBrowseBean.selectedConcept.hasMediaData() or v2ConceptMediaEditorBean.mediaActionsAvailable}">
     <div class="card mb-4 py-3 border-left-success" style="margin:20px;">
+      <h:panelGroup rendered="#{v2ConceptMediaEditorBean.mediaActionsAvailable}" style="text-align:right; margin:0 20px 10px;">
+        <p:menuButton icon="pi pi-cog" styleClass="ui-button-warning ui-button-flat">
+          <p:menuitem value="#{v2LocaleBean.getMsg('rightbody.concept.gps_coordinates')}"
+                      process="@this"
+                      actionListener="#{v2ConceptMediaEditorBean.prepareEditGps()}"
+                      update="v2EditGpsForm"
+                      oncomplete="PF('v2EditGpsDlg').show();"
+                      icon="fas fa-map-marker-alt"/>
+          <p:menuitem value="#{v2LocaleBean.getMsg('rightbody.conceptdialog.add_image')}"
+                      process="@this"
+                      actionListener="#{v2ConceptMediaEditorBean.prepareAddImage()}"
+                      update="v2AddImageForm"
+                      oncomplete="PF('v2AddImageDlg').show();"
+                      icon="fas fa-image"/>
+          <p:menuitem value="#{v2LocaleBean.getMsg('rightbody.concept.edit_image')}"
+                      rendered="#{not empty v2ThesaurusBrowseBean.selectedConcept.images}"
+                      process="@this"
+                      actionListener="#{v2ConceptMediaEditorBean.prepareEditImages()}"
+                      update="v2EditImageForm"
+                      oncomplete="PF('v2EditImageDlg').show();"
+                      icon="fas fa-edit"/>
+          <p:menuitem value="#{v2LocaleBean.getMsg('rightbody.concept.delete_image')}"
+                      rendered="#{not empty v2ThesaurusBrowseBean.selectedConcept.images}"
+                      process="@this"
+                      actionListener="#{v2ConceptMediaEditorBean.prepareDeleteImages()}"
+                      update="v2DeleteImageForm"
+                      oncomplete="PF('v2DeleteImageDlg').show();"
+                      icon="far fa-trash-alt"/>
+          <p:menuitem value="#{v2LocaleBean.getMsg('rightbody.concept.addExternalResource')}"
+                      process="@this"
+                      actionListener="#{v2ConceptMediaEditorBean.prepareAddExternalResource()}"
+                      update="v2AddExternalResourceForm"
+                      oncomplete="PF('v2AddExternalResourceDlg').show();"
+                      icon="fas fa-external-link-alt"/>
+          <p:menuitem value="#{v2LocaleBean.getMsg('rightbody.concept.modifyExternalResource')}"
+                      rendered="#{not empty v2ThesaurusBrowseBean.selectedConcept.externalResources}"
+                      process="@this"
+                      actionListener="#{v2ConceptMediaEditorBean.prepareEditExternalResources()}"
+                      update="v2EditExternalResourceForm"
+                      oncomplete="PF('v2EditExternalResourceDlg').show();"
+                      icon="fas fa-edit"/>
+          <p:menuitem value="#{v2LocaleBean.getMsg('rightbody.concept.deleteExternalResource')}"
+                      rendered="#{not empty v2ThesaurusBrowseBean.selectedConcept.externalResources}"
+                      process="@this"
+                      actionListener="#{v2ConceptMediaEditorBean.prepareDeleteExternalResources()}"
+                      update="v2DeleteExternalResourceForm"
+                      oncomplete="PF('v2DeleteExternalResourceDlg').show();"
+                      icon="far fa-trash-alt"/>
+        </p:menuButton>
+      </h:panelGroup>
       <div class="list-group" style="margin-top:-10px; margin-bottom:-10px;">
 
         <h:panelGroup id="v2ConceptGalleriaPanel" rendered="#{not empty v2ThesaurusBrowseBean.selectedConcept.images}">

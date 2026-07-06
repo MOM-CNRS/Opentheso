@@ -13,10 +13,12 @@ import jakarta.enterprise.context.SessionScoped;
 import jakarta.faces.context.ExternalContext;
 import jakarta.faces.context.FacesContext;
 import jakarta.inject.Named;
+import jakarta.servlet.http.HttpServletRequest;
 import lombok.Getter;
 import lombok.RequiredArgsConstructor;
 import lombok.Setter;
 import org.apache.commons.lang3.StringUtils;
+import org.primefaces.PrimeFaces;
 
 import java.io.IOException;
 import java.io.Serializable;
@@ -69,26 +71,28 @@ public class ConsultationShellBean implements Serializable {
             selectedThesaurusId = null;
             thesaurusContext.clearSelection();
         }
-        redirectToBrowse();
+        applyBrowseRefresh();
     }
 
     public void onThesaurusChange() throws IOException {
+        thesaurusContext.setFromUrl(false);
         if (StringUtils.isBlank(selectedThesaurusId)) {
             thesaurusContext.clearSelection();
-            redirectToBrowse();
+            applyBrowseRefresh();
             return;
         }
         applyThesaurusSelection(selectedThesaurusId);
-        redirectToBrowse();
+        applyBrowseRefresh();
     }
 
     public void reloadThesaurus() throws IOException {
-        redirectToBrowse();
+        thesaurusContext.setFromUrl(false);
+        applyBrowseRefresh();
     }
 
     public void clearFromUrl() throws IOException {
         thesaurusContext.setFromUrl(false);
-        redirectToBrowse();
+        applyBrowseRefresh();
     }
 
     public void clearSession() throws IOException {
@@ -196,12 +200,45 @@ public class ConsultationShellBean implements Serializable {
         thesaurusContext.selectThesaurus(thesaurusId);
     }
 
-    private void redirectToBrowse() throws IOException {
-        ExternalContext context = FacesContext.getCurrentInstance().getExternalContext();
-        StringBuilder url = new StringBuilder(context.getRequestContextPath()).append("/v2/thesaurus");
-        if (StringUtils.isNotBlank(thesaurusContext.resolveThesaurusId())) {
-            url.append("?idt=").append(thesaurusContext.resolveThesaurusId());
+    private void applyBrowseRefresh() throws IOException {
+        FacesContext facesContext = FacesContext.getCurrentInstance();
+        if (facesContext == null) {
+            return;
         }
-        context.redirect(url.toString());
+        if (isBrowseView(facesContext)) {
+            refreshBrowseView();
+            return;
+        }
+        redirectWithoutQueryParams();
+    }
+
+    private boolean isBrowseView(FacesContext facesContext) {
+        String viewId = facesContext.getViewRoot().getViewId();
+        return viewId != null && viewId.contains("thesaurus/browse");
+    }
+
+    private void refreshBrowseView() {
+        invokeViewAction("#{v2ThesaurusBrowseBean.load()}");
+        invokeViewAction("#{v2GlobalConceptSearchBean.init()}");
+        invokeViewAction("#{v2ConceptSearchBean.syncFromContext()}");
+        invokeViewAction("#{v2PropositionBean.refresh()}");
+        if (PrimeFaces.current().isAjaxRequest()) {
+            PrimeFaces.current().ajax().update("indexTitle", "menuBar", "containerIndex", "resultSearchBar");
+        }
+    }
+
+    private void invokeViewAction(String expression) {
+        FacesContext context = FacesContext.getCurrentInstance();
+        if (context == null) {
+            return;
+        }
+        context.getApplication().evaluateExpressionGet(context, expression, Object.class);
+    }
+
+    private void redirectWithoutQueryParams() throws IOException {
+        ExternalContext context = FacesContext.getCurrentInstance().getExternalContext();
+        HttpServletRequest request = (HttpServletRequest) context.getRequest();
+        String path = request.getRequestURI().substring(request.getContextPath().length());
+        context.redirect(request.getContextPath() + path);
     }
 }

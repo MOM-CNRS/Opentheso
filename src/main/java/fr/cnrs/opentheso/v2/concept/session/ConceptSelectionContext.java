@@ -22,6 +22,9 @@ public class ConceptSelectionContext implements Serializable {
     private String thesaurusId;
     private String conceptId;
     private ConceptSummary summary;
+    private boolean hasNarrowers;
+    private String defaultGroupId;
+    private String firstBroaderConceptId;
 
     public void update(String thesaurusId, ConceptDetail detail) {
         if (detail == null || detail.summary() == null) {
@@ -29,6 +32,9 @@ public class ConceptSelectionContext implements Serializable {
             return;
         }
         update(thesaurusId, detail.summary().conceptId(), detail.summary());
+        hasNarrowers = !detail.narrowerTerms().isEmpty();
+        defaultGroupId = detail.collections().isEmpty() ? null : detail.collections().get(0).conceptId();
+        firstBroaderConceptId = detail.broaderTerms().isEmpty() ? null : detail.broaderTerms().get(0).conceptId();
     }
 
     public void update(String thesaurusId, String conceptId, ConceptSummary summary) {
@@ -41,6 +47,9 @@ public class ConceptSelectionContext implements Serializable {
         thesaurusId = null;
         conceptId = null;
         summary = null;
+        hasNarrowers = false;
+        defaultGroupId = null;
+        firstBroaderConceptId = null;
     }
 
     public boolean hasSelection() {

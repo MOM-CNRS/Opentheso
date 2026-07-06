@@ -5,7 +5,8 @@ public record ConceptAlignment(
         String uri,
         String typeLabel,
         String sourceName,
-        boolean urlAvailable
+        boolean urlAvailable,
+        int typeId
 ) {
 
     public String getId() {
@@ -26,5 +27,9 @@ public record ConceptAlignment(
 
     public boolean isUrlAvailable() {
         return urlAvailable;
+    }
+
+    public int getTypeId() {
+        return typeId;
     }
 }

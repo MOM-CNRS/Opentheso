@@ -5,10 +5,118 @@
 
   <h:panelGroup rendered="#{v2ThesaurusBrowseBean.breadcrumbEnabled and not empty v2ThesaurusBrowseBean.selectedConcept.breadcrumbPaths}"
                 style="width:100%; display:flex; background-color:#ecf8f1; padding:6px 8px; margin-bottom:10px;">
+
+    <h:panelGroup id="v2ConceptViewActions" rendered="#{v2ConceptLifecycleEditorBean.writeActionsAvailable}">
+      <p:commandButton id="v2ConceptActionsButton" type="button" icon="pi pi-align-justify"
+                       style="width:1.5rem; height:1.5rem; margin-left:5px; margin-right:5px; background:#ecf8f1; color:#f47b2a; border:1px solid #ecf8f1;"/>
+      <p:menu overlay="true" trigger="v2ConceptActionsButton" my="left top" at="left bottom">
+        <p:menuitem value="#{v2LocaleBean.getMsg('rightbody.concept.new_concept')}"
+                    rendered="#{v2ConceptLifecycleEditorBean.activeConceptWriteAvailable}"
+                    process="@this"
+                    actionListener="#{v2ConceptLifecycleEditorBean.prepareAddChild()}"
+                    update="v2AddChildConceptForm"
+                    oncomplete="PF('v2AddChildConceptDlg').show();"
+                    icon="fas fa-plus"/>
+        <p:menuitem value="#{v2LocaleBean.getMsg('rightbody.concept.addTopConcept')}"
+                    process="@this"
+                    actionListener="#{v2ConceptLifecycleEditorBean.prepareAddTopConcept()}"
+                    update="v2AddTopConceptForm"
+                    oncomplete="PF('v2AddTopConceptDlg').show();"
+                    icon="fas fa-plus"/>
+        <p:separator style="border-bottom:2px solid #d8d8dc; margin-bottom:5px;"/>
+        <p:menuitem value="#{v2LocaleBean.getMsg('rightbody.concept.delete_concept')}"
+                    process="@this"
+                    actionListener="#{v2ConceptLifecycleEditorBean.prepareDelete()}"
+                    update="v2DeleteConceptForm"
+                    oncomplete="PF('v2DeleteConceptDlg').show();"
+                    icon="far fa-trash-alt"/>
+        <p:menuitem rendered="#{v2ConceptLifecycleEditorBean.statusActionsAvailable and not v2ThesaurusBrowseBean.selectedConcept.deprecated}"
+                    value="#{v2LocaleBean.getMsg('rightbody.concept.deprecate_concept')}"
+                    process="@this"
+                    actionListener="#{v2ConceptLifecycleEditorBean.prepareDeprecate()}"
+                    update="v2DeprecateConceptForm"
+                    oncomplete="PF('v2DeprecateConceptDlg').show();"
+                    icon="fa fa-times-circle"/>
+        <p:menuitem rendered="#{v2ConceptLifecycleEditorBean.statusActionsAvailable and v2ThesaurusBrowseBean.selectedConcept.deprecated}"
+                    value="#{v2LocaleBean.getMsg('rightbody.concept.approve_concept')}"
+                    process="@this"
+                    actionListener="#{v2ConceptLifecycleEditorBean.prepareApprove()}"
+                    update="v2ApproveConceptForm"
+                    oncomplete="PF('v2ApproveConceptDlg').show();"
+                    icon="fa fa-check-circle"/>
+
+        <p:menuitem rendered="#{v2ConceptAttributeEditorBean.conceptTypeEditAvailable}"
+                    value="#{v2LocaleBean.getMsg('concept.editConceptType')}"
+                    process="@this"
+                    actionListener="#{v2ConceptAttributeEditorBean.prepareEditConceptType()}"
+                    update="v2EditConceptTypeForm"
+                    oncomplete="PF('v2EditConceptTypeDlg').show();"
+                    icon="fas fa-edit"/>
+
+        <p:separator rendered="#{v2ConceptTransferEditorBean.transferActionsAvailable}"
+                    style="border-bottom:2px solid #d8d8dc; margin-bottom:5px;"/>
+        <p:menuitem rendered="#{v2ConceptTransferEditorBean.transferActionsAvailable}"
+                    value="#{v2LocaleBean.getMsg('concept.moveToAnotherThesoTooltip')}"
+                    process="@this"
+                    actionListener="#{v2ConceptTransferEditorBean.prepareMoveToAnotherThesaurus()}"
+                    update="v2MoveToAnotherThesoForm"
+                    oncomplete="PF('v2MoveToAnotherThesoDlg').show();"
+                    icon="fas fa-truck-moving"/>
+
+        <p:separator rendered="#{v2ConceptIdentifierEditorBean.identifierActionsAvailable}"
+                    style="border-bottom:2px solid #d8d8dc; margin-bottom:5px;"/>
+        <p:menuitem rendered="#{v2ConceptIdentifierEditorBean.arkGenerationAvailable}"
+                    value="#{v2LocaleBean.getMsg('rightbody.concept.generate_ark')}"
+                    process="@this"
+                    actionListener="#{v2ConceptIdentifierEditorBean.prepareGenerateArk()}"
+                    update="v2GenerateArkForm"
+                    oncomplete="PF('v2GenerateArkDlg').show();"
+                    icon="fas fa-fingerprint"/>
+        <p:menuitem rendered="#{v2ConceptIdentifierEditorBean.arkDeletionAvailable}"
+                    value="#{v2LocaleBean.getMsg('rightbody.concept.delete_ark')}"
+                    process="@this"
+                    actionListener="#{v2ConceptIdentifierEditorBean.prepareDeleteArk()}"
+                    update="v2DeleteArkForm"
+                    oncomplete="PF('v2DeleteArkDlg').show();"
+                    icon="fas fa-eraser"/>
+        <p:menuitem rendered="#{v2ConceptIdentifierEditorBean.arkGenerationAvailable}"
+                    value="#{v2LocaleBean.getMsg('rightbody.concept.generate_ark_for_branch')}"
+                    process="@this"
+                    actionListener="#{v2ConceptIdentifierEditorBean.prepareGenerateArkForBranch()}"
+                    update="v2GenerateArkBranchForm"
+                    oncomplete="PF('v2GenerateArkBranchDlg').show();"
+                    icon="fas fa-code-branch"/>
+        <p:menuitem rendered="#{v2ConceptIdentifierEditorBean.handleGenerationAvailable}"
+                    value="#{v2LocaleBean.getMsg('rightbody.concept.generate_handle')}"
+                    process="@this"
+                    actionListener="#{v2ConceptIdentifierEditorBean.prepareGenerateHandle()}"
+                    update="v2GenerateHandleForm"
+                    oncomplete="PF('v2GenerateHandleDlg').show();"
+                    icon="fas fa-link"/>
+        <p:menuitem rendered="#{v2ConceptIdentifierEditorBean.handleDeletionAvailable}"
+                    value="#{v2LocaleBean.getMsg('rightbody.concept.delete_handle')}"
+                    process="@this"
+                    actionListener="#{v2ConceptIdentifierEditorBean.prepareDeleteHandle()}"
+                    update="v2DeleteHandleForm"
+                    oncomplete="PF('v2DeleteHandleDlg').show();"
+                    icon="fas fa-unlink"/>
+        <p:menuitem rendered="#{v2ConceptIdentifierEditorBean.handleGenerationAvailable}"
+                    value="#{v2LocaleBean.getMsg('rightbody.concept.generate_handle_for_branch')}"
+                    process="@this"
+                    actionListener="#{v2ConceptIdentifierEditorBean.prepareGenerateHandleForBranch()}"
+                    update="v2GenerateHandleBranchForm"
+                    oncomplete="PF('v2GenerateHandleBranchDlg').show();"
+                    icon="fas fa-sitemap"/>
+      </p:menu>
+      <p:tooltip for="v2ConceptActionsButton"
+                 value="#{v2LocaleBean.getMsg('rightbody.concept.tooltip_new_concept')} #{v2ThesaurusBrowseBean.selectedConcept.summary.preferredLabel}"
+                 showDelay="1000"/>
+    </h:panelGroup>
+
     <p:commandLink rendered="#{v2ThesaurusBrowseBean.thesaurusHome != null}"
                    action="#{v2ThesaurusBrowseBean.openThesaurusHome()}"
                    process="@this"
-                   update=":formRightTab"
+                   update=":containerIndex:rightTab"
                    style="color:#164A78; background:none; border:none; box-shadow:none; font-size:13px; margin-right:4px;"
                    title="#{v2LocaleBean.getMsg('home.permalink')}">
       <i class="fas fa-home" style="color:#f47b2a; font-size:15px;"/>
@@ -27,7 +135,7 @@
           <p:commandLink value="#{step.startOfPath ? ' '.concat(step.label) : step.label}"
                          action="#{v2ThesaurusBrowseBean.openConcept(step.conceptId)}"
                          process="@this"
-                         update=":formRightTab :formLeftTab:tabTree"
+                         update=":containerIndex:rightTab :containerIndex:formLeftTab"
                          style="color:#164A78; background:none; border:none; box-shadow:none; font-size:13px;"
                          title="#{step.conceptId}"/>
           <h:outputText rendered="#{not stepStatus.last}" value=" &gt; " style="font-size:13px; font-weight:bold;"/>

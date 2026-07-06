@@ -197,6 +197,9 @@ public record ConceptDetail(
     }
 
     public List<ConceptCustomRelationItem> outgoingCustomRelations() {
+        if (customRelations == null || customRelations.isEmpty()) {
+            return Collections.emptyList();
+        }
         return customRelations.stream()
                 .filter(relation -> !relation.reciprocal())
                 .toList();

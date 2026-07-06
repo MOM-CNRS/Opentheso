@@ -73,7 +73,7 @@
                                     <p:commandButton icon="fas fa-people-carry" styleClass="edit-button rounded-button"
                                                      process="@this" ajax="true"
                                                      title="#{v2LocaleBean.getMsg('profile.move_thesaurus_to_another_project')}"
-                                                     update="containerIndex:idV2MoveThesaurus containerIndex:v2MoveThesaurusForm"
+                                                     update=":containerIndex:idV2MoveThesaurus :containerIndex:v2MoveThesaurusForm"
                                                      oncomplete="PF('v2MoveThesaurus').show();"
                                                      actionListener="#{v2AllThesauriBean.prepareMoveDialog(theso.id(), theso.title())}"/>
                                 </p:column>

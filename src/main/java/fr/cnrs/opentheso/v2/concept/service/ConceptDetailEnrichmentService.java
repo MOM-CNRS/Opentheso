@@ -28,12 +28,7 @@ public class ConceptDetailEnrichmentService {
     private final ConceptCorpusSearchService conceptCorpusSearchService;
 
     @Transactional(readOnly = true)
-    public Optional<ConceptFullSnapshot> loadFullConcept(
-            String thesaurusId,
-            String conceptId,
-            String lang,
-            boolean authenticated
-    ) {
+    public Optional<ConceptFullSnapshot> loadFullConcept(String thesaurusId, String conceptId, String lang, boolean authenticated) {
         if (StringUtils.isAnyBlank(thesaurusId, conceptId, lang)) {
             return Optional.empty();
         }
@@ -68,11 +63,7 @@ public class ConceptDetailEnrichmentService {
     }
 
     @Transactional(readOnly = true)
-    public List<ConceptCustomRelationItem> loadCustomRelations(
-            String thesaurusId,
-            String conceptId,
-            String lang
-    ) {
+    public List<ConceptCustomRelationItem> loadCustomRelations(String thesaurusId, String conceptId, String lang) {
         return conceptCustomRelationReadService.loadCustomRelations(thesaurusId, conceptId, lang);
     }
 
