@@ -33,7 +33,7 @@ import java.util.List;
 @RequiredArgsConstructor
 @Tag(name = "Candidats", description = "Consultation et export des candidats (v2)")
 @SecurityRequirement(name = "ApiKeyAuth")
-public class CandidatController {
+public class CandidatControllerV2 {
 
     private final CandidatAuthSupport candidatAuthSupport;
     private final CandidatReadService candidatReadService;

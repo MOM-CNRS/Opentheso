@@ -23,7 +23,7 @@ import static org.mockito.Mockito.verify;
 import static org.mockito.Mockito.when;
 
 @ExtendWith(MockitoExtension.class)
-class CandidatControllerTest {
+class CandidatControllerV2Test {
 
     @Mock
     private CandidatAuthSupport candidatAuthSupport;
@@ -32,11 +32,11 @@ class CandidatControllerTest {
     @Mock
     private CandidatExportService candidatExportService;
 
-    private CandidatController controller;
+    private CandidatControllerV2 controller;
 
     @BeforeEach
     void setUp() {
-        controller = new CandidatController(candidatAuthSupport, candidatReadService, candidatExportService);
+        controller = new CandidatControllerV2(candidatAuthSupport, candidatReadService, candidatExportService);
         ReflectionTestUtils.setField(controller, "defaultWorkLanguage", "fr");
         when(candidatAuthSupport.resolveUserId("api-key", null)).thenReturn(4);
     }
