@@ -9,6 +9,8 @@ import lombok.Getter;
 import lombok.Setter;
 import org.apache.commons.lang3.StringUtils;
 import org.springframework.beans.factory.annotation.Value;
+import org.springframework.context.annotation.Scope;
+import org.springframework.context.annotation.ScopedProxyMode;
 
 import java.io.Serializable;
 
@@ -16,6 +18,7 @@ import java.io.Serializable;
 @Setter
 @SessionScoped
 @Named("v2ThesaurusContext")
+@Scope(value = "session", proxyMode = ScopedProxyMode.TARGET_CLASS)
 public class ThesaurusContext implements Serializable {
 
     private final ThesaurusSelectionService thesaurusSelectionService;

@@ -9,6 +9,7 @@ import fr.cnrs.opentheso.bean.profile.MyProjectBean;
 import fr.cnrs.opentheso.bean.profile.SuperAdminBean;
 import fr.cnrs.opentheso.bean.proposition.PropositionBean;
 import fr.cnrs.opentheso.bean.setting.CorpusBean;
+import fr.cnrs.opentheso.legacybridge.ConsultationVersionSwitchSupport;
 import fr.cnrs.opentheso.bean.setting.PreferenceBean;
 import fr.cnrs.opentheso.bean.toolbox.atelier.AtelierThesBean;
 import fr.cnrs.opentheso.bean.toolbox.edition.FlagBean;
@@ -22,7 +23,6 @@ import jakarta.enterprise.context.SessionScoped;
 import jakarta.faces.application.FacesMessage;
 import jakarta.faces.context.ExternalContext;
 import jakarta.faces.context.FacesContext;
-import lombok.Data;
 import lombok.Getter;
 import lombok.RequiredArgsConstructor;
 import lombok.Setter;
@@ -55,6 +55,7 @@ public class MenuBean implements Serializable {
     private final CurrentUser currentUser;
     private final PropositionBean propositionBean;
     private final DataGraphView dataGraphView;
+    private final ConsultationVersionSwitchSupport consultationVersionSwitchSupport;
 
     private boolean notificationPanelVisible;
     private String activePageName = "index";
@@ -71,7 +72,12 @@ public class MenuBean implements Serializable {
     
     // LOGIN Page
     public void redirectToThesaurus() throws IOException {
-        redirectToThesaurusV2Page();
+        activePageName = "index";
+        notificationPanelVisible = false;
+        propositionBean.searchNewPropositions();
+        propositionBean.setRubriqueVisible(false);
+        ExternalContext context = FacesContext.getCurrentInstance().getExternalContext();
+        context.redirect(context.getRequestContextPath() + "/index.xhtml");
     }
 
     public void redirectToThesaurusV2Page() throws IOException {
@@ -79,12 +85,9 @@ public class MenuBean implements Serializable {
         notificationPanelVisible = false;
         propositionBean.searchNewPropositions();
         propositionBean.setRubriqueVisible(false);
+        consultationVersionSwitchSupport.syncV2FromLegacy();
         ExternalContext context = FacesContext.getCurrentInstance().getExternalContext();
-        StringBuilder url = new StringBuilder(context.getRequestContextPath()).append("/v2/thesaurus");
-        if (StringUtils.isNotEmpty(selectedTheso.getCurrentIdTheso())) {
-            url.append("?idt=").append(selectedTheso.getCurrentIdTheso());
-        }
-        context.redirect(url.toString());
+        context.redirect(context.getRequestContextPath() + "/v2/thesaurus");
     }
     
     // LOGIN Page

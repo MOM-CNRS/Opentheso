@@ -21,10 +21,18 @@
             <hr class="sidebar-divider my-0"/>
 
             <li class="nav-item" style="margin-top: 20px;">
-                <a class="nav-link collapsed" href="#{request.contextPath}/v2/thesaurus"
-                   title="#{v2LocaleBean.getMsg('menu.thesaurus')}">
+                <a id="thesoButton2" class="nav-link collapsed" href="#" data-toggle="collapse" data-target="#collapseThesaurus"
+                   aria-expanded="true" aria-controls="collapseThesaurus" title="#{v2LocaleBean.getMsg('menu.thesaurus')}">
                     <i class="fa-solid fa-folder-tree" style="font-size: 1.2rem"/>
                 </a>
+                <div id="collapseThesaurus" class="collapse" aria-labelledby="headingThesaurus" data-parent="#accordionSidebar">
+                    <div class="bg-white py-2 collapse-inner rounded">
+                        <p:commandLink class="collapse-item" actionListener="#{v2NavigationBean.redirectToThesaurus()}"
+                                       style="font-size: 12px;" process="@this">#{v2LocaleBean.getMsg('menu.thesaurus')} (v2)</p:commandLink>
+                        <p:commandLink class="collapse-item" actionListener="#{v2NavigationBean.redirectToThesaurusLegacy()}"
+                                       style="font-size: 12px;" process="@this">#{v2LocaleBean.getMsg('menu.thesaurus')} (legacy)</p:commandLink>
+                    </div>
+                </div>
             </li>
 
             <h:panelGroup rendered="#{v2UserSession.loggedIn and v2ConsultationShellBean.hasSelectedThesaurus() and v2UserSession.contributor}">

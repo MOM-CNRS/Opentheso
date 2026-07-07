@@ -6,6 +6,8 @@ import jakarta.enterprise.context.SessionScoped;
 import jakarta.inject.Named;
 import lombok.Getter;
 import org.apache.commons.lang3.StringUtils;
+import org.springframework.context.annotation.Scope;
+import org.springframework.context.annotation.ScopedProxyMode;
 
 import java.io.Serializable;
 
@@ -17,6 +19,7 @@ import java.io.Serializable;
 @Getter
 @SessionScoped
 @Named("v2ConceptSelectionContext")
+@Scope(value = "session", proxyMode = ScopedProxyMode.TARGET_CLASS)
 public class ConceptSelectionContext implements Serializable {
 
     private String thesaurusId;
