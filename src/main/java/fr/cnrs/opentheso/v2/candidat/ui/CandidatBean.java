@@ -10,11 +10,10 @@ import fr.cnrs.opentheso.models.candidats.CandidatDto;
 import fr.cnrs.opentheso.models.candidats.DomaineDto;
 import fr.cnrs.opentheso.models.candidats.enumeration.VoteType;
 import fr.cnrs.opentheso.v2.candidat.model.CandidatStatusCode;
-import fr.cnrs.opentheso.v2.candidat.session.CandidatAlignmentSupport;
-import fr.cnrs.opentheso.v2.shared.repository.PreferencesJpaRepository;
 import fr.cnrs.opentheso.v2.candidat.policy.CandidatAccessPolicy;
 import fr.cnrs.opentheso.v2.candidat.service.CandidatMutationService;
 import fr.cnrs.opentheso.v2.candidat.service.CandidatReadService;
+import fr.cnrs.opentheso.v2.shared.repository.PreferencesJpaRepository;
 import fr.cnrs.opentheso.v2.setting.ui.ThesaurusContext;
 import fr.cnrs.opentheso.v2.shared.ui.UserSession;
 import fr.cnrs.opentheso.v2.shared.ui.V2LocaleBean;
@@ -64,7 +63,8 @@ public class CandidatBean implements Serializable {
     private final ThesaurusContext thesaurusContext;
     private final CandidatReadService candidatReadService;
     private final CandidatMutationService candidatMutationService;
-    private final CandidatAlignmentSupport candidatAlignmentSupport;
+    private final CandidatAutoAlignmentBean candidatAutoAlignmentBean;
+    private final CandidatAlignmentBean candidatAlignmentBean;
     private final V2LocaleBean localeBean;
     private final PreferencesJpaRepository preferencesJpaRepository;
 
@@ -410,7 +410,7 @@ public class CandidatBean implements Serializable {
         isNewCandidatActivate = false;
         isListCandidatsActivate = false;
 
-        candidatAlignmentSupport.resetManualAlignment();
+        candidatAlignmentBean.reset();
     }
 
     public CandidatDto getAllInfosOfCandidate(CandidatDto candidatDto) {
@@ -885,8 +885,12 @@ public class CandidatBean implements Serializable {
         return listIdOfConcept;
     }
 
-    public void deleteAlignement() {
+    public void selectAlignmentForEdit(NodeAlignment alignment) {
+        this.alignementSelected = alignment;
+        candidatAlignmentBean.loadAlignmentTypes();
+    }
 
+    public void deleteAlignement() {
         candidatMutationService.deleteAlignment(alignementSelected.getId_alignement(), resolveThesaurusId());
         candidatSelected.setAlignments(candidatMutationService.loadAlignments(candidatSelected.getIdConcepte(),
                 resolveThesaurusId()));
@@ -920,21 +924,35 @@ public class CandidatBean implements Serializable {
     }
 
     public void openAddAlignementWindow() {
-        candidatAlignmentSupport.prepareAutoAlignment(
+        candidatAutoAlignmentBean.prepareForCandidate(
                 candidatSelected.getNomPref(),
-                candidatSelected.getIdConcepte(),
-                resolveThesaurusId(),
-                thesaurusContext.resolveWorkLanguage()
+                candidatSelected.getIdConcepte()
         );
-        if (!candidatAlignmentSupport.hasAlignmentSources()) {
+        if (!candidatAutoAlignmentBean.hasAlignmentSources()) {
             MessageUtils.showWarnMessage("Vous devez choisir le type d'alignement d'abord !");
         } else {
             PrimeFaces.current().executeScript("PF('searchAlignement').show();");
         }
     }
 
+    public void searchAlignements() {
+        candidatAutoAlignmentBean.searchAlignments();
+        if (CollectionUtils.isEmpty(candidatAutoAlignmentBean.getListAlignValues())) {
+            candidatAlignmentBean.reset();
+            candidatAlignmentBean.setManualAlignmentSource(candidatAutoAlignmentBean.getSelectedAlignement());
+        }
+    }
+
+    public void addManualAlignmentFromAutoSearch() {
+        candidatAlignmentBean.setManualAlignmentType(candidatAutoAlignmentBean.getSelectedAlignementType());
+        candidatAlignmentBean.setManualAlignmentUri(candidatAutoAlignmentBean.getManualAlignmentUri());
+        candidatAlignmentBean.setManualAlignmentSource(candidatAutoAlignmentBean.getSelectedAlignement());
+        candidatAlignmentBean.addManualAlignment(candidatSelected);
+        candidatAutoAlignmentBean.cancelManualAlignment();
+    }
+
     public void searchAlignementAuto() {
-        candidatAlignmentSupport.addAlignment(resolveThesaurusId(), candidatSelected.getIdConcepte(), requireUserId());
+        candidatAutoAlignmentBean.addAlignment(candidatSelected.getIdConcepte(), requireUserId());
         MessageUtils.showInformationMessage("Alignement ajouté avec sucée !");
         candidatReadService.loadDetails(candidatSelected, resolveThesaurusId());
         PrimeFaces.current().ajax().update("tabViewCandidat");

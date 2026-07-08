@@ -4,7 +4,6 @@ import fr.cnrs.opentheso.utils.MessageUtils;
 import fr.cnrs.opentheso.v2.setting.ui.ThesaurusContext;
 import fr.cnrs.opentheso.v2.shared.ui.UserSession;
 import fr.cnrs.opentheso.v2.toolbox.policy.ToolboxAccessPolicy;
-import fr.cnrs.opentheso.v2.toolbox.session.WorkshopLegacySupport;
 import jakarta.faces.view.ViewScoped;
 import jakarta.inject.Named;
 import lombok.Getter;
@@ -20,7 +19,7 @@ public class WorkshopBean implements Serializable {
 
     private final UserSession userSession;
     private final ThesaurusContext thesaurusContext;
-    private final WorkshopLegacySupport workshopLegacySupport;
+    private final WorkshopImportBean workshopImportBean;
 
     public boolean isScreenAvailable() {
         return ToolboxAccessPolicy.canAccessWorkshop(userSession)
@@ -47,7 +46,6 @@ public class WorkshopBean implements Serializable {
             MessageUtils.showErrorMessage("Vous devez choisir un Thésaurus avant !");
             return;
         }
-        workshopLegacySupport.initAtelier();
         prepareBulkActions();
     }
 
@@ -55,6 +53,6 @@ public class WorkshopBean implements Serializable {
         if (!isActionsAvailable()) {
             return;
         }
-        workshopLegacySupport.initBulkImport();
+        workshopImportBean.prepare();
     }
 }

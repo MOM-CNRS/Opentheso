@@ -1,6 +1,6 @@
 package fr.cnrs.opentheso.v2.concept.write.persistence;
 
-import fr.cnrs.opentheso.legacybridge.LegacyConceptCreationSupport;
+import fr.cnrs.opentheso.v2.concept.identifier.ConceptIdentifierAssignmentService;
 import fr.cnrs.opentheso.v2.concept.write.model.MutationResult;
 import fr.cnrs.opentheso.v2.concept.write.model.command.AddChildConceptCommand;
 import fr.cnrs.opentheso.v2.concept.write.model.command.AddTopConceptCommand;
@@ -26,7 +26,7 @@ public class ConceptStructureNativeWriteService {
     private final ConceptRenameWriteRepository conceptRenameWriteRepository;
     private final ConceptRelationWriteRepository conceptRelationWriteRepository;
     private final ConceptWritePostMutationRepository conceptWritePostMutationRepository;
-    private final LegacyConceptCreationSupport legacyConceptCreationSupport;
+    private final ConceptIdentifierAssignmentService conceptIdentifierAssignmentService;
 
     @Transactional
     public MutationResult addChildConcept(AddChildConceptCommand command) {
@@ -143,7 +143,7 @@ public class ConceptStructureNativeWriteService {
         }
 
         try {
-            legacyConceptCreationSupport.assignIdentifiers(thesaurusId, conceptId, lang);
+            conceptIdentifierAssignmentService.assignIdentifiers(thesaurusId, conceptId, lang);
         } catch (RuntimeException exception) {
             return MutationResult.failure(topConcept
                     ? "Erreur pendant la création du concept"

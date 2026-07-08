@@ -1,8 +1,5 @@
 package fr.cnrs.opentheso.v2.concept.ui;
 
-import fr.cnrs.opentheso.bean.alignment.AlignmentBean;
-import fr.cnrs.opentheso.legacybridge.LegacyConceptSync;
-import fr.cnrs.opentheso.legacybridge.LegacyThesaurusSync;
 import fr.cnrs.opentheso.v2.concept.model.ConceptFullSnapshot;
 import fr.cnrs.opentheso.v2.concept.model.ConceptSnapshotNote;
 import fr.cnrs.opentheso.v2.concept.model.CorpusSearchContext;
@@ -12,6 +9,8 @@ import fr.cnrs.opentheso.v2.concept.model.ConceptDetail;
 import fr.cnrs.opentheso.v2.concept.model.ConceptSummary;
 import fr.cnrs.opentheso.v2.concept.model.ConceptTreeNodeData;
 import fr.cnrs.opentheso.v2.concept.model.FacetDetailOverview;
+import fr.cnrs.opentheso.v2.collection.read.CollectionReadService;
+import fr.cnrs.opentheso.v2.facet.read.FacetReadService;
 import fr.cnrs.opentheso.v2.concept.model.GroupDetailOverview;
 import fr.cnrs.opentheso.v2.concept.model.LeftTreeMode;
 import fr.cnrs.opentheso.v2.concept.model.RightPanelMode;
@@ -58,6 +57,10 @@ class ThesaurusBrowseBeanTest {
     @Mock
     private ConceptReadService conceptReadService;
     @Mock
+    private CollectionReadService collectionReadService;
+    @Mock
+    private FacetReadService facetReadService;
+    @Mock
     private ConceptFullReadService conceptFullReadService;
     @Mock
     private ThesaurusHomeReadService thesaurusHomeReadService;
@@ -71,12 +74,6 @@ class ThesaurusBrowseBeanTest {
     private ConceptTypeReadService conceptTypeReadService;
     @Mock
     private ConceptSelectionContext conceptSelectionContext;
-    @Mock
-    private LegacyThesaurusSync legacyThesaurusSync;
-    @Mock
-    private LegacyConceptSync legacyConceptSync;
-    @Mock
-    private AlignmentBean alignmentBean;
 
     private ThesaurusBrowseBean bean;
 
@@ -86,15 +83,14 @@ class ThesaurusBrowseBeanTest {
                 thesaurusContext,
                 conceptSelectionContext,
                 conceptReadService,
+                collectionReadService,
+                facetReadService,
                 conceptFullReadService,
                 thesaurusHomeReadService,
                 conceptHistoryBean,
                 thesaurusPreferenceService,
                 userSession,
-                conceptTypeReadService,
-                legacyThesaurusSync,
-                legacyConceptSync,
-                alignmentBean
+                conceptTypeReadService
         );
     }
 
@@ -192,7 +188,7 @@ class ThesaurusBrowseBeanTest {
         when(thesaurusContext.resolveThesaurusId()).thenReturn("TH1");
         when(thesaurusContext.resolveWorkLanguage()).thenReturn("fr");
         var group = new GroupDetailOverview("G1", "Groupe", "fr", "Type", "skos:Collection", 3, "", "", "", List.of(), List.of(), List.of());
-        when(conceptReadService.loadGroupDetail("TH1", "G1", "fr")).thenReturn(Optional.of(group));
+        when(collectionReadService.loadDetail("TH1", "G1", "fr")).thenReturn(Optional.of(group));
 
         var nodeData = new ConceptTreeNodeData("G1", "Groupe", "G1", "group", true);
         var event = org.mockito.Mockito.mock(NodeSelectEvent.class);
@@ -271,7 +267,7 @@ class ThesaurusBrowseBeanTest {
         when(thesaurusContext.resolveThesaurusId()).thenReturn("TH1");
         when(thesaurusContext.resolveWorkLanguage()).thenReturn("fr");
         var facet = new FacetDetailOverview("F1", "Facette", "fr", "C1", "Parent", List.of(), List.of(), List.of());
-        when(conceptReadService.loadFacetDetail("TH1", "F1", "fr")).thenReturn(Optional.of(facet));
+        when(facetReadService.loadDetail("TH1", "F1", "fr")).thenReturn(Optional.of(facet));
 
         var nodeData = new ConceptTreeNodeData("F1", "Facette", "F1", "facet", false);
         var event = org.mockito.Mockito.mock(NodeSelectEvent.class);
@@ -381,7 +377,7 @@ class ThesaurusBrowseBeanTest {
         when(thesaurusPreferenceService.loadPreferencesOrNull("TH1", "fr"))
                 .thenReturn(consultationPreferences(true));
         var group = new GroupDetailOverview("G1", "Collection", "fr", "", "", 0, "", "", "", List.of(), List.of(), List.of());
-        when(conceptReadService.loadGroupDetail("TH1", "G1", "fr")).thenReturn(Optional.of(group));
+        when(collectionReadService.loadDetail("TH1", "G1", "fr")).thenReturn(Optional.of(group));
         bean.setGroupIdFromUri("G1");
 
         bean.load();
@@ -519,7 +515,7 @@ class ThesaurusBrowseBeanTest {
     }
 
     @Test
-    void load_syncsLegacyThesaurusContext() {
+    void load_doesNotRequireLegacySync() {
         when(thesaurusContext.resolveThesaurusId()).thenReturn("TH1");
         when(thesaurusContext.getCurrentThesaurusTitle()).thenReturn("Test");
         when(thesaurusContext.resolveWorkLanguage()).thenReturn("fr");
@@ -531,16 +527,11 @@ class ThesaurusBrowseBeanTest {
 
         bean.load();
 
-        verify(legacyThesaurusSync).applyThesaurusId("TH1", "fr");
+        assertTrue(bean.isHomePanel());
     }
 
     @Test
-    void onRightTabChange_initializesAlignmentWorkshop() {
-        when(thesaurusContext.resolveThesaurusId()).thenReturn("TH1");
-        when(thesaurusContext.resolveWorkLanguage()).thenReturn("fr");
-        var summary = new ConceptSummary("C1", "TH1", "Label", "fr", "C", "", "concept", "", "", "", "");
-        bean.setSelectedConcept(minimalConceptDetail(summary));
-
+    void onRightTabChange_setsAlignmentTabIndex() {
         var event = org.mockito.Mockito.mock(org.primefaces.event.TabChangeEvent.class);
         var tab = org.mockito.Mockito.mock(org.primefaces.component.tabview.Tab.class);
         when(event.getTab()).thenReturn(tab);
@@ -548,10 +539,7 @@ class ThesaurusBrowseBeanTest {
 
         bean.onRightTabChange(event);
 
-        verify(legacyThesaurusSync).applyThesaurusId("TH1", "fr");
-        verify(legacyConceptSync).syncConceptSelection("TH1", "C1", "fr");
-        verify(alignmentBean).initAlignementByStep("TH1", "C1", "fr");
-        verify(alignmentBean).getIdsAndValues2("fr", "TH1");
+        assertEquals(1, bean.getRightTabIndex());
     }
 
     @Test
@@ -650,7 +638,7 @@ class ThesaurusBrowseBeanTest {
         when(thesaurusContext.resolveThesaurusId()).thenReturn("TH1");
         when(thesaurusContext.resolveWorkLanguage()).thenReturn("fr");
         var group = new GroupDetailOverview("G1", "Groupe", "fr", "", "", 0, "", "", "", List.of(), List.of(), List.of());
-        when(conceptReadService.loadGroupDetail("TH1", "G1", "fr")).thenReturn(Optional.of(group));
+        when(collectionReadService.loadDetail("TH1", "G1", "fr")).thenReturn(Optional.of(group));
 
         bean.focusGroup("G1");
 
@@ -671,7 +659,7 @@ class ThesaurusBrowseBeanTest {
         when(thesaurusContext.resolveThesaurusId()).thenReturn("TH1");
         when(thesaurusContext.resolveWorkLanguage()).thenReturn("fr");
         var group = new GroupDetailOverview("G1", "Groupe", "fr", "Type", "skos:Collection", 3, "", "", "", List.of(), List.of(), List.of());
-        when(conceptReadService.loadGroupDetail("TH1", "G1", "fr")).thenReturn(Optional.of(group));
+        when(collectionReadService.loadDetail("TH1", "G1", "fr")).thenReturn(Optional.of(group));
 
         var nodeData = new ConceptTreeNodeData("G1", "Groupe", "G1", "group", true);
         var event = org.mockito.Mockito.mock(NodeSelectEvent.class);

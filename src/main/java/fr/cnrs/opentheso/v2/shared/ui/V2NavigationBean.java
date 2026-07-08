@@ -1,7 +1,6 @@
 package fr.cnrs.opentheso.v2.shared.ui;
 
 import fr.cnrs.opentheso.config.SessionConfig;
-import fr.cnrs.opentheso.legacybridge.ConsultationVersionSwitchSupport;
 import fr.cnrs.opentheso.v2.concept.ui.ThesaurusBrowseBean;
 import fr.cnrs.opentheso.v2.setting.ui.ThesaurusContext;
 import jakarta.enterprise.context.SessionScoped;
@@ -25,7 +24,6 @@ public class V2NavigationBean implements Serializable {
 
     private final ThesaurusContext thesaurusContext;
     private final SessionConfig sessionConfig;
-    private final ConsultationVersionSwitchSupport consultationVersionSwitchSupport;
 
     @Autowired @Lazy
     private ThesaurusBrowseBean thesaurusBrowseBean;
@@ -39,8 +37,27 @@ public class V2NavigationBean implements Serializable {
 
     public void redirectToThesaurusLegacy() throws IOException {
         activePageName = "index";
-        consultationVersionSwitchSupport.syncLegacyFromV2(thesaurusBrowseBean);
-        redirect("/index.xhtml");
+        String thesaurusId = thesaurusContext.resolveThesaurusId();
+        String conceptId = thesaurusBrowseBean != null && thesaurusBrowseBean.isConceptPanel()
+                && thesaurusBrowseBean.getSelectedConcept() != null
+                && thesaurusBrowseBean.getSelectedConcept().summary() != null
+                ? thesaurusBrowseBean.getSelectedConcept().summary().conceptId()
+                : null;
+        String groupId = thesaurusBrowseBean != null && thesaurusBrowseBean.isGroupPanel()
+                && thesaurusBrowseBean.getSelectedGroup() != null
+                ? thesaurusBrowseBean.getSelectedGroup().groupId()
+                : null;
+
+        StringBuilder target = new StringBuilder("/index.xhtml");
+        if (StringUtils.isNotBlank(thesaurusId)) {
+            target.append("?idt=").append(thesaurusId);
+            if (StringUtils.isNotBlank(conceptId)) {
+                target.append("&idc=").append(conceptId);
+            } else if (StringUtils.isNotBlank(groupId)) {
+                target.append("&idg=").append(groupId);
+            }
+        }
+        redirect(target.toString());
     }
 
     public void redirectToCandidat() throws IOException {

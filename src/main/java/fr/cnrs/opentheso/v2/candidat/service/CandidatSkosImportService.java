@@ -1,7 +1,7 @@
 package fr.cnrs.opentheso.v2.candidat.service;
 
 import fr.cnrs.opentheso.entites.Preferences;
-import fr.cnrs.opentheso.legacybridge.LegacyThesaurusPreferencesProvider;
+import fr.cnrs.opentheso.v2.shared.session.ThesaurusPreferencesProvider;
 import fr.cnrs.opentheso.models.skosapi.SKOSResource;
 import fr.cnrs.opentheso.models.skosapi.SKOSXmlDocument;
 import fr.cnrs.opentheso.v2.candidat.session.CandidatSkosImportLegacySupport;
@@ -18,7 +18,7 @@ import java.io.InputStream;
 public class CandidatSkosImportService {
 
     private final CandidatSkosImportLegacySupport legacySupport;
-    private final LegacyThesaurusPreferencesProvider legacyThesaurusPreferencesProvider;
+    private final ThesaurusPreferencesProvider thesaurusPreferencesProvider;
 
     public SkosLoadResult loadSkosFile(InputStream inputStream, int typeImport, String selectedLang, StringBuffer errorBuffer) throws IOException {
         String lang = StringUtils.isBlank(selectedLang) ? "fr" : selectedLang;
@@ -37,7 +37,7 @@ public class CandidatSkosImportService {
             String sourceLang,
             ProgressCallback progressCallback
     ) throws IOException {
-        var preferences = legacyThesaurusPreferencesProvider.findPreferences(thesaurusId)
+        var preferences = thesaurusPreferencesProvider.findPreferences(thesaurusId)
                 .orElseThrow(() -> new IOException("Préférences du thésaurus introuvables"));
         importCandidates(document, thesaurusId, userId, -1, sourceLang, preferences, progressCallback);
     }

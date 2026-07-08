@@ -470,7 +470,7 @@
                             <i class="pi pi-align-justify" style="color: #78261f; margin-right: 10px; margin-left: 10px" />
                             <p:commandButton value="#{v2LocaleBean.getMsg('alignment.addNewAlignment')}"
                                              update="idAddManualAlignment" process="@this" ajax="true"
-                                             actionListener="#{alignmentManualBean.showManuelAlignmentDialog()}"
+                                             actionListener="#{v2CandidatAlignmentBean.showManualAlignmentDialog()}"
                                              styleClass="rounded-button ui-button-outlined"
                                              style="color: #f47b2a;" />
 
@@ -519,7 +519,7 @@
                                 <div class="col-2" style="margin-top: -5px">
                                     <p:commandButton icon="fas fa-pen"
                                                      style="color: #43B572"
-                                                     actionListener="#{v2CandidatBean.setAlignementSelected(alignment)}"
+                                                     actionListener="#{v2CandidatBean.selectAlignmentForEdit(alignment)}"
                                                      oncomplete="PF('editManualAlignment').show();"
                                                      process="@this" ajax="true"
                                                      update="tabViewCandidat"

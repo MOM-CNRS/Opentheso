@@ -13,17 +13,7 @@
             <div class="row">
                 <div class="col-12">
                     <h:outputText value="#{v2LocaleBean.getMsg('rightbody.conceptdialog.term')} : " />
-
-                    <h:panelGroup rendered="#{not empty conceptView.nodeConcept.concept.idConcept}">
-                        <h:outputText value="#{conceptView.nodeConcept.term.lexicalValue}" style="color: #C63632;" />
-                    </h:panelGroup>
-
-                    <h:panelGroup rendered="#{empty conceptView.nodeConcept.concept.idConcept}">
-                        <h:outputText value="#{v2CandidatBean.getCandidatSelected().getNomPref()}" style="color: #C63632;" />
-                    </h:panelGroup>
-
-
-
+                    <h:outputText value="#{v2CandidatBean.candidatSelected.nomPref}" style="color: #C63632;" />
                 </div>
             </div>
 
@@ -32,9 +22,9 @@
                     <p:outputLabel value="#{v2LocaleBean.getMsg('rightbody.conceptdialog.equivalence_type')} : " />
                 </div>
                 <div class="col-7">
-                    <p:selectOneMenu value="#{alignmentManualBean.manualAlignmentType}"
+                    <p:selectOneMenu value="#{v2CandidatAlignmentBean.manualAlignmentType}"
                                      style="font-size: 12px; background: white; border-color: #43B572; width: 100%">
-                        <f:selectItems value="#{alignmentManualBean.nodeAlignmentTypes}" var="types"
+                        <f:selectItems value="#{v2CandidatAlignmentBean.alignmentTypes}" var="types"
                                        itemLabel="#{types.label} (#{types.labelSkos})" itemValue="#{types.id}"/>
                     </p:selectOneMenu>
                 </div>
@@ -45,7 +35,7 @@
                     <p:outputLabel value="#{v2LocaleBean.getMsg('rightbody.conceptdialog.distant_uri')} : " />
                 </div>
                 <div class="col-7">
-                    <p:inputText value="#{alignmentManualBean.manualAlignmentUri}" style="width: 100%" />
+                    <p:inputText value="#{v2CandidatAlignmentBean.manualAlignmentUri}" style="width: 100%" />
                 </div>
             </div>
 
@@ -54,7 +44,7 @@
                     <p:outputLabel value="#{v2LocaleBean.getMsg('rightbody.conceptdialog.source_name')} : " />
                 </div>
                 <div class="col-7">
-                    <p:inputText value="#{alignmentManualBean.manualAlignmentSource}" style="width: 100%" />
+                    <p:inputText value="#{v2CandidatAlignmentBean.manualAlignmentSource}" style="width: 100%" />
                 </div>
             </div>
 
@@ -67,7 +57,7 @@
                                  update="tabViewCandidat messageIndex"
                                  oncomplete="PF('addManualAlignment').hide();"
                                  icon="pi pi-check" styleClass="ui-button-success" ajax="true" process="@form"
-                                 actionListener="#{alignmentManualBean.addManualAlignement(v2CandidatBean, null, false)}" />
+                                 actionListener="#{v2CandidatAlignmentBean.addManualAlignment(v2CandidatBean.candidatSelected)}" />
             </div>
             <input type="hidden" name="csrfToken" value="${sessionScope.CSRF_TOKEN}" />
         </h:form>

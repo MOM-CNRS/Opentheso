@@ -4,7 +4,7 @@ import fr.cnrs.opentheso.entites.Preferences;
 import fr.cnrs.opentheso.models.candidats.CandidatDto;
 import fr.cnrs.opentheso.utils.MessageUtils;
 import fr.cnrs.opentheso.v2.candidat.service.CandidatProcessService;
-import fr.cnrs.opentheso.legacybridge.LegacyThesaurusPreferencesProvider;
+import fr.cnrs.opentheso.v2.shared.session.ThesaurusPreferencesProvider;
 import fr.cnrs.opentheso.v2.setting.ui.ThesaurusContext;
 import fr.cnrs.opentheso.v2.shared.ui.UserSession;
 import jakarta.faces.context.FacesContext;
@@ -37,7 +37,7 @@ public class ProcessCandidateBean implements Serializable {
     private final CandidatProcessService candidatProcessService;
     private final ThesaurusContext thesaurusContext;
     private final UserSession userSession;
-    private final LegacyThesaurusPreferencesProvider legacyThesaurusPreferencesProvider;
+    private final ThesaurusPreferencesProvider thesaurusPreferencesProvider;
 
     private CandidatDto selectedCandidate;
     private String adminMessage;
@@ -85,7 +85,7 @@ public class ProcessCandidateBean implements Serializable {
             }
         }
 
-        legacyThesaurusPreferencesProvider.findPreferences(selectedCandidate.getIdThesaurus())
+        thesaurusPreferencesProvider.findPreferences(selectedCandidate.getIdThesaurus())
                 .ifPresent(preferences -> candidatProcessService.afterCandidateAccepted(
                         selectedCandidate,
                         userId,

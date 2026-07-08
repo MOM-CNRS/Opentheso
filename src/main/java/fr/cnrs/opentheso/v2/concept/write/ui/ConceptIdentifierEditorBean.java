@@ -1,6 +1,6 @@
 package fr.cnrs.opentheso.v2.concept.write.ui;
 
-import fr.cnrs.opentheso.services.ConceptService;
+import fr.cnrs.opentheso.v2.concept.write.persistence.BranchConceptSupport;
 import fr.cnrs.opentheso.utils.MessageUtils;
 import fr.cnrs.opentheso.v2.concept.model.ConceptIdentifiers;
 import fr.cnrs.opentheso.v2.concept.session.ConceptNavigationSupport;
@@ -44,7 +44,7 @@ public class ConceptIdentifierEditorBean implements Serializable {
     private final UserSession userSession;
     private final ThesaurusAccessService thesaurusAccessService;
     private final ThesaurusPreferenceService thesaurusPreferenceService;
-    private final ConceptService conceptService;
+    private final BranchConceptSupport branchConceptSupport;
     private final ThesaurusBrowseBean thesaurusBrowseBean;
 
     private String currentConceptLabel;
@@ -199,7 +199,7 @@ public class ConceptIdentifierEditorBean implements Serializable {
             branchConceptIds = Collections.emptyList();
             return;
         }
-        branchConceptIds = conceptService.getIdsOfBranch(conceptId, thesaurusId);
+        branchConceptIds = branchConceptSupport.collectBranchConceptIds(thesaurusId, conceptId);
     }
 
     private String resolveHandleId() {

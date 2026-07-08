@@ -1,6 +1,6 @@
 package fr.cnrs.opentheso.v2.user.service;
 
-import fr.cnrs.opentheso.services.MailService;
+import fr.cnrs.opentheso.v2.shared.mail.SystemMailSender;
 import fr.cnrs.opentheso.v2.shared.repository.PasswordResetCommandRepository;
 import fr.cnrs.opentheso.v2.shared.repository.UserAuthQueryRepository;
 import fr.cnrs.opentheso.v2.shared.repository.projection.UserCredentialRow;
@@ -31,7 +31,7 @@ class AccountPasswordResetServiceTest {
     @Mock
     private PasswordResetCommandRepository passwordResetCommandRepository;
     @Mock
-    private MailService mailService;
+    private SystemMailSender systemMailSender;
     @Mock
     private ApplicationUriService applicationUriService;
 
@@ -42,7 +42,7 @@ class AccountPasswordResetServiceTest {
         accountPasswordResetService = new AccountPasswordResetService(
                 userAuthQueryRepository,
                 passwordResetCommandRepository,
-                mailService,
+                systemMailSender,
                 applicationUriService
         );
     }
@@ -54,7 +54,7 @@ class AccountPasswordResetServiceTest {
         accountPasswordResetService.requestPasswordReset("missing@example.com", false);
 
         verify(passwordResetCommandRepository, never()).invalidateActiveTokens(any(Integer.class));
-        verify(mailService, never()).sendMail(any(), any(), any());
+        verify(systemMailSender, never()).sendHtmlMail(any(), any(), any());
     }
 
     @Test
@@ -69,7 +69,7 @@ class AccountPasswordResetServiceTest {
         ArgumentCaptor<String> tokenCaptor = ArgumentCaptor.forClass(String.class);
         verify(passwordResetCommandRepository).insertToken(eq(5), tokenCaptor.capture(), any(LocalDateTime.class));
         assertTrue(tokenCaptor.getValue().length() >= 32);
-        verify(mailService).sendMail(
+        verify(systemMailSender).sendHtmlMail(
                 eq("alice@example.com"),
                 eq("Réinitialisation de votre mot de passe Opentheso"),
                 contains("https://opentheso.example/reset-password.xhtml?token=" + tokenCaptor.getValue())

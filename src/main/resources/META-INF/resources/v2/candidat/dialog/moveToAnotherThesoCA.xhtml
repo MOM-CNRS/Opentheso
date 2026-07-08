@@ -14,7 +14,7 @@
                     <h:outputText value="#{v2LocaleBean.getMsg('concept.candidatesToMove')} : "/>
                 </div>
                 <div class="col-8" style="margin-top: 3px; font-weight: bold">
-                    <ui:repeat var="listConcept" value="#{moveConcept.idConceptsToMove}" varStatus="status">
+                    <ui:repeat var="listConcept" value="#{v2CandidatTransferBean.conceptIdsToMove}" varStatus="status">
                         <h:outputText value="#{listConcept}"/>
                         <h:outputText rendered="#{!status.last}" value="; "/>
                     </ui:repeat>
@@ -26,7 +26,7 @@
                     <h:outputText value="#{v2LocaleBean.getMsg('concept.fromTheso')} : "/>
                 </div>
                 <div class="col-4" style="margin-top: 3px; font-weight: bold">
-                    <h:outputText value="#{selectedThesaurus.thesoName} (#{moveConcept.idThesoFrom})"/>
+                    <h:outputText value="#{v2CandidatTransferBean.sourceThesaurusTitle} (#{v2CandidatTransferBean.sourceThesaurusId})"/>
                 </div>                    
             </div>     
 
@@ -35,10 +35,10 @@
                     <h:outputText value="#{v2LocaleBean.getMsg('concept.toTheso')}  : "/>
                 </div>
                 <div class="col-8" style="margin-top: 3px">
-                    <p:selectOneMenu id="thesoToSelect" value="#{moveConcept.idThesoTo}" 
+                    <p:selectOneMenu id="thesoToSelect" value="#{v2CandidatTransferBean.targetThesaurusId}" 
                                      style="color: #000; height: 28px; max-width: 400px">
-                        <p:ajax event="valueChange" listener="#{moveConcept.action()}" />
-                        <f:selectItems value="#{moveConcept.listThesoAsAdmin}" var="th" itemLabel="#{th.value} (#{th.id})" itemValue="#{th.id}"/>
+                        <p:ajax event="valueChange" listener="#{v2CandidatTransferBean.onTargetThesaurusChange()}" />
+                        <f:selectItems value="#{v2CandidatTransferBean.availableThesauri}" var="th" itemLabel="#{th.title} (#{th.id})" itemValue="#{th.id}"/>
                     </p:selectOneMenu>
                 </div>                
             </div> 
@@ -49,8 +49,8 @@
 
                 <p:commandButton value="#{v2LocaleBean.getMsg('btnValidate')}" styleClass="ui-button-success" icon="pi pi-check"
                                  update="moveToAnotherThesoCAForm tabViewCandidat messageIndex" 
-                                 oncomplete="PF('moveToAnotherThesoCA').hide();" process="@this"
-                                 action="#{moveConcept.moveConceptCA()}" />
+                                 oncomplete="PF('moveToAnotherThesoCA').hide();" process="@form"
+                                 actionListener="#{v2CandidatTransferBean.moveCandidates()}" />
             </div>
             <input type="hidden" name="csrfToken" value="${sessionScope.CSRF_TOKEN}" />
         </h:form>

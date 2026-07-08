@@ -1,8 +1,5 @@
 package fr.cnrs.opentheso.v2.concept.ui;
 
-import fr.cnrs.opentheso.bean.alignment.AlignmentBean;
-import fr.cnrs.opentheso.legacybridge.LegacyConceptSync;
-import fr.cnrs.opentheso.legacybridge.LegacyThesaurusSync;
 import fr.cnrs.opentheso.v2.concept.model.ConceptFullSnapshot;
 import fr.cnrs.opentheso.v2.concept.mapper.ConceptMapper;
 import fr.cnrs.opentheso.v2.concept.model.BreadcrumbStep;
@@ -12,6 +9,8 @@ import fr.cnrs.opentheso.v2.concept.model.ConceptLabel;
 import fr.cnrs.opentheso.v2.concept.model.ConceptNote;
 import fr.cnrs.opentheso.v2.concept.model.ConceptTreeNodeData;
 import fr.cnrs.opentheso.v2.concept.model.FacetDetailOverview;
+import fr.cnrs.opentheso.v2.collection.read.CollectionReadService;
+import fr.cnrs.opentheso.v2.facet.read.FacetReadService;
 import fr.cnrs.opentheso.v2.concept.model.GroupDetailOverview;
 import fr.cnrs.opentheso.v2.concept.model.LeftTreeMode;
 import fr.cnrs.opentheso.v2.concept.model.RightPanelMode;
@@ -61,15 +60,14 @@ public class ThesaurusBrowseBean implements Serializable, ConceptNavigationSuppo
     private final ThesaurusContext thesaurusContext;
     private final ConceptSelectionContext conceptSelectionContext;
     private final ConceptReadService conceptReadService;
+    private final CollectionReadService collectionReadService;
+    private final FacetReadService facetReadService;
     private final ConceptFullReadService conceptFullReadService;
     private final ThesaurusHomeReadService thesaurusHomeReadService;
     private final ConceptHistoryBean conceptHistoryBean;
     private final ThesaurusPreferenceService thesaurusPreferenceService;
     private final UserSession userSession;
     private final ConceptTypeReadService conceptTypeReadService;
-    private final LegacyThesaurusSync legacyThesaurusSync;
-    private final LegacyConceptSync legacyConceptSync;
-    private final AlignmentBean alignmentBean;
 
     private String conceptIdFromUri;
     private String groupIdFromUri;
@@ -131,7 +129,6 @@ public class ThesaurusBrowseBean implements Serializable, ConceptNavigationSuppo
             return;
         }
         loadConsultationPreferences();
-        syncLegacyThesaurusContext();
         refreshActiveCorpusState();
         ensureTreeBuilt(activeLeftTreeMode);
         loadThesaurusHome();
@@ -214,12 +211,6 @@ public class ThesaurusBrowseBean implements Serializable, ConceptNavigationSuppo
             return;
         }
         rightTabIndex = "viewTabAlignement".equals(event.getTab().getId()) ? 1 : 0;
-        if (rightTabIndex != 1) {
-            return;
-        }
-        syncLegacyThesaurusContext();
-        syncLegacyConceptContext();
-        initAlignmentWorkshop();
     }
 
     public void onNodeExpand(NodeExpandEvent event) {
@@ -370,6 +361,10 @@ public class ThesaurusBrowseBean implements Serializable, ConceptNavigationSuppo
         conceptRoot = null;
     }
 
+    public void invalidateCollectionTree() {
+        collectionRoot = null;
+    }
+
     @Override
     public void afterConceptDeleted(String fallbackConceptId) {
         invalidateConceptTree();
@@ -420,15 +415,6 @@ public class ThesaurusBrowseBean implements Serializable, ConceptNavigationSuppo
         }
         refreshConceptDisplayData();
         conceptSelectionContext.update(thesaurusContext.resolveThesaurusId(), selectedConcept);
-        try {
-            syncLegacyThesaurusContext();
-            syncLegacyConceptContext();
-        } catch (RuntimeException ex) {
-            log.warn("Synchronisation legacy ignorée pour le concept {}", conceptId, ex);
-        }
-        if (rightTabIndex == 1) {
-            initAlignmentWorkshop();
-        }
         if (syncTree && autoExpandTree) {
             syncConceptTreeSelection(conceptId);
         }
@@ -493,7 +479,7 @@ public class ThesaurusBrowseBean implements Serializable, ConceptNavigationSuppo
         selectedConcept = null;
         selectedFullConcept = null;
         selectedFacet = null;
-        selectedGroup = conceptReadService.loadGroupDetail(
+        selectedGroup = collectionReadService.loadDetail(
                 thesaurusContext.resolveThesaurusId(),
                 groupId,
                 thesaurusContext.resolveWorkLanguage()
@@ -507,7 +493,7 @@ public class ThesaurusBrowseBean implements Serializable, ConceptNavigationSuppo
         selectedConcept = null;
         selectedFullConcept = null;
         selectedGroup = null;
-        selectedFacet = conceptReadService.loadFacetDetail(
+        selectedFacet = facetReadService.loadDetail(
                 thesaurusContext.resolveThesaurusId(),
                 facetId,
                 thesaurusContext.resolveWorkLanguage()
@@ -958,56 +944,5 @@ public class ThesaurusBrowseBean implements Serializable, ConceptNavigationSuppo
         haveActiveCorpus = false;
         homePagePlainTextView = false;
         rightTabIndex = 0;
-    }
-
-    private void syncLegacyThesaurusContext() {
-        String thesaurusId = thesaurusContext.resolveThesaurusId();
-        if (StringUtils.isBlank(thesaurusId)) {
-            return;
-        }
-        legacyThesaurusSync.applyThesaurusId(thesaurusId, thesaurusContext.resolveWorkLanguage());
-    }
-
-    private void syncLegacyConceptContext() {
-        if (selectedConcept == null || selectedConcept.summary() == null) {
-            return;
-        }
-        legacyConceptSync.syncConceptSelection(
-                thesaurusContext.resolveThesaurusId(),
-                selectedConcept.summary().conceptId(),
-                thesaurusContext.resolveWorkLanguage()
-        );
-    }
-
-    private void initAlignmentWorkshop() {
-        String thesaurusId = thesaurusContext.resolveThesaurusId();
-        String lang = thesaurusContext.resolveWorkLanguage();
-        if (StringUtils.isBlank(thesaurusId)) {
-            return;
-        }
-
-        alignmentBean.setAllAlignementVisible(true);
-        alignmentBean.setPropositionAlignementVisible(false);
-        alignmentBean.setManageAlignmentVisible(false);
-        alignmentBean.setComparaisonVisible(false);
-
-        String conceptId = resolveSelectedConceptIdForAlignment();
-        if (StringUtils.isBlank(conceptId)) {
-            alignmentBean.initAlignmentSources(thesaurusId, lang);
-            return;
-        }
-
-        alignmentBean.initAlignementByStep(thesaurusId, conceptId, lang);
-        alignmentBean.getIdsAndValues2(lang, thesaurusId);
-    }
-
-    private String resolveSelectedConceptIdForAlignment() {
-        if (selectedConcept != null && selectedConcept.summary() != null) {
-            return selectedConcept.summary().conceptId();
-        }
-        if (conceptSelectionContext.hasSelection()) {
-            return conceptSelectionContext.getConceptId();
-        }
-        return null;
     }
 }

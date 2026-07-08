@@ -1,6 +1,6 @@
 package fr.cnrs.opentheso.v2.user.service;
 
-import fr.cnrs.opentheso.services.MailService;
+import fr.cnrs.opentheso.v2.shared.mail.SystemMailSender;
 import fr.cnrs.opentheso.v2.shared.repository.PasswordResetCommandRepository;
 import fr.cnrs.opentheso.v2.shared.repository.UserAuthQueryRepository;
 import fr.cnrs.opentheso.v2.shared.web.ApplicationUriService;
@@ -19,7 +19,7 @@ public class AccountPasswordResetService {
 
     private final UserAuthQueryRepository userAuthQueryRepository;
     private final PasswordResetCommandRepository passwordResetCommandRepository;
-    private final MailService mailService;
+    private final SystemMailSender systemMailSender;
     private final ApplicationUriService applicationUriService;
 
     @Transactional
@@ -38,7 +38,7 @@ public class AccountPasswordResetService {
                     + "/reset-password.xhtml?token=" + token;
 
             if (activation) {
-                mailService.sendMail(
+                systemMailSender.sendHtmlMail(
                         credential.mail(),
                         "Activation de votre compte Opentheso",
                         String.format(
@@ -57,7 +57,7 @@ public class AccountPasswordResetService {
                 return;
             }
 
-            mailService.sendMail(
+            systemMailSender.sendHtmlMail(
                     credential.mail(),
                     "Réinitialisation de votre mot de passe Opentheso",
                     String.format(

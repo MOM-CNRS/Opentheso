@@ -1,8 +1,7 @@
 package fr.cnrs.opentheso.ws.openapi.v2;
 
 import fr.cnrs.opentheso.entites.User;
-import fr.cnrs.opentheso.services.UserService;
-import fr.cnrs.opentheso.services.security.SsoTokenService;
+import fr.cnrs.opentheso.v2.shared.auth.SsoTokenService;
 import fr.cnrs.opentheso.ws.openapi.exception.ApiKeyInvalidException;
 import fr.cnrs.opentheso.ws.openapi.helper.ApiKeyState;
 import io.swagger.v3.oas.annotations.Operation;
@@ -44,8 +43,7 @@ async function connecter(idConcept, idThesaurus) {
 @Tag(name = "Api v2")
 public class ApiAuthController {
 
-    private final UserService userService;
-    private final SsoTokenService ssoTokenService; // service à créer (voir plus bas)
+    private final SsoTokenService ssoTokenService;
 
     @PostMapping(value = "/token", produces = MediaType.APPLICATION_JSON_VALUE)
     @Operation(
@@ -65,7 +63,7 @@ public class ApiAuthController {
         }
 
         // Générer et stocker le token SSO en base (expire dans 5 minutes)
-        String token = ssoTokenService.createToken(user);
+        String token = ssoTokenService.createToken(user.getId());
 
         // Récupérer idc et idt depuis le body
         String idc = params != null ? params.getOrDefault("idc", "") : "";

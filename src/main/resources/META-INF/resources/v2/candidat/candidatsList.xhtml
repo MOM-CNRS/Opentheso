@@ -166,7 +166,7 @@
                                          styleClass="ui-button-secondary button" icon="fa-solid fa-paper-plane"
                                          update="idMoveToAnotherThesoCA moveToAnotherThesoCAForm"
                                          title="#{v2LocaleBean.getMsg('concept.moveToAnotherThesoTooltip')}"
-                                         action="#{moveConcept.initForCandidate(v2CandidatBean.selectedCandidatesAsId, selectedThesaurus.currentIdTheso)}"
+                                         action="#{v2CandidatTransferBean.initForCandidates(v2CandidatBean.selectedCandidatesAsId, v2ThesaurusContext.resolveThesaurusId())}"
                                          oncomplete="PF('moveToAnotherThesoCA').show();" style="width: 100%"/> 
                     </div>
                 </div>

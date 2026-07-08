@@ -1,0 +1,143 @@
+<ui:fragment xmlns="http://www.w3.org/1999/xhtml"  
+             xmlns:ui="http://java.sun.com/jsf/facelets"
+             xmlns:p="http://primefaces.org/ui"
+             xmlns:h="http://xmlns.jcp.org/jsf/html"
+             xmlns:f="http://xmlns.jcp.org/jsf/core">
+
+    <p:dialog id="idCompareListToTheso" header="#{v2LocaleBean.getMsg('actions.compareListToTheso')}" widgetVar="compareListToTheso"  
+              width="850" showEffect="fade" modal="true" resizable="false" position="top" style="margin-top: 30px" >
+
+        <h:panelGroup id="compareListToThesoForm">              
+
+            <p:outputPanel deferred="true"  style="border: 1px solid #43B572; border-radius: 10px; padding: 10px; margin-top: 5px; font-size: 12px; overflow-y: auto; max-height: 300px;">
+
+                <fieldset>
+                    <p:scrollPanel mode="native">
+                        <h:panelGrid columns="4" styleClass="customTable">
+                            <h:outputText value="skos:prefLabel@fr" />
+                            <h:outputText value="conceptId (+)" style="color: red" />
+                            <h:outputText value="prefLabel (+)" style="color: red" />
+                            <h:outputText value="variantes (+)" style="color: red" />
+
+                            <h:outputText value="Espagne" />
+                            <h:outputText value="" />
+                            <h:outputText value="" />
+                            <h:outputText value="" />
+                        </h:panelGrid>
+                    </p:scrollPanel>
+
+                    <style>
+                        .customTable {
+                            border-collapse: collapse;
+                        }
+
+                        .customTable td, .customTable th {
+                            border: 0.5px solid black; /* Bordure de 0.5px */
+                            padding: 5px; /* Espace intérieur */
+                        }
+
+                        /* Cible la première ligne du tableau (9 cellules) */
+                        .customTable tr:first-child td {
+                            background-color: #f0f0f0; /* Arrière-plan gris clair */
+                            font-weight: bold; /* Texte en gras */
+                            text-align: center; /* Texte centré */
+                        }
+                    </style>
+
+                    <p:panel style="border: 1px solid #43B572; border-radius: 10px; padding: 10px; margin-top: 10px; font-size: 12px;">
+                        <p style="color: #000;">
+                            Permet de récupérer les Id d'après le prefLabel et altLabel avec plusieurs mode de recherche.<br/>
+                            Si un label identique est trouvé, on récupère uniquement cette valeur<br/>
+                            Si on trouve plusieurs valeurs, on les ajoute en lignes supplémentaires<br/>
+                            Les colonnes conceptId et variantes seront ajoutées au tableau<br/>
+                            L'Id est vide si : pas de résultat ni en label ni en variantes 
+                        </p>
+                    </p:panel>                
+                </fieldset>
+
+            </p:outputPanel>
+
+            <!-- Choix de la comparaison (exacte, approximative) -->
+            <div class="row" style="padding-top: 10px;">
+                <div class="col-3" style="text-align: right;">
+                    <h:outputText value="Type de comparaison: " 
+                                  title="On ignore les accents et le minuscule/majuscule" 
+                                  style="font-size: 14px;"/>
+                </div>
+                <div class="col9">
+                    <p:selectOneRadio id="console" value="#{v2WorkshopImportBean.selectedSearchType}">
+                        <f:selectItem itemLabel="#{v2LocaleBean.getMsg('search.exactSentence')}" itemValue="exactWord" itemDescription="#{v2LocaleBean.getMsg('search.tooltip_excatSentence')}"/>                        
+                        <f:selectItem itemLabel="#{v2LocaleBean.getMsg('search.exact')}" itemValue="containsExactWord" itemDescription="#{v2LocaleBean.getMsg('search.tooltip_excat')}"/>
+                        <f:selectItem itemLabel="#{v2LocaleBean.getMsg('search.startWith')}" itemValue="startWith" />                        
+                        <f:selectItem itemLabel="#{v2LocaleBean.getMsg('search.elastic')}" itemValue="elastic" />
+                    </p:selectOneRadio>
+                </div>
+            </div>
+
+
+            <h:panelGroup id="panelCompareListToTheso">
+                <!-- Choix du fichier -->   
+                <div class="row" style="margin-left: 30px; margin-right: 30px; margin-top: 10px">
+                    <div class="col-12" > 
+                        <p:fileUpload listener="#{v2WorkshopImportBean.loadFileCsvForGetIdFromPrefLabel}" 
+                                      label="#{v2LocaleBean.getMsg('candidat.parcourir')}"  style="padding-left: 10px; padding-right: 10px; font-size: 12px;"
+                                      mode="advanced" auto="true"
+                                      styleClass="browserbutton"
+                                      allowTypes="/(\.|\/)(csv|txt)$/"
+                                      update="panelCompareListToTheso_result" disabled="#{v2WorkshopImportBean.loadDone}"/>  
+                    </div>
+                </div> 
+            </h:panelGroup>                
+            <h:panelGroup id="panelCompareListToTheso_result">
+                <h:panelGroup rendered="#{v2WorkshopImportBean.loadDone}" style="margin-top: 10px" >
+                    <div class="row" style="margin-left: 30px; margin-right: 30px;">
+                        <div class="col-5">
+                            <h:outputText value="Nome du fichier: " />
+                            <h:outputText value="#{v2WorkshopImportBean.fileName}" style="color: #C63632"/>
+                        </div>
+                    </div>
+                    <div class="row" style="margin-left: 30px; margin-right: 30px;">
+                        <div class="col-5">
+                            <h:outputText value="Total des actions " />
+                            <h:outputText value="#{v2WorkshopImportBean.totalInt}" style="color: #C63632"/>
+                        </div>
+                    </div> 
+                </h:panelGroup>
+                <p:spacer />
+
+                <div style="width: 100%; text-align: right; margin-top: 5px; margin-bottom: 5px;">
+                    <p:commandButton value="#{v2LocaleBean.getMsg('candidat.close')}" icon="fas fa-undo-alt" styleClass="ui-button-secondary button"
+                                     style="margin-right: 10px"
+                                     actionListener="#{v2WorkshopImportBean.init()}"
+                                     oncomplete="PF('compareListToTheso').hide();"
+                                     update="compareListToThesoForm"/>
+
+                    <p:commandButton value="#{v2LocaleBean.getMsg('actions.compare')}"
+                                     onclick="PrimeFaces.monitorDownload(start, stop);"
+                                     disabled="#{!v2WorkshopImportBean.loadDone}" ajax="false"
+                                     styleClass="ui-button-success" icon="fa fa-upload" 
+                                     update="compareListToThesoForm"
+                                     title="#{v2LocaleBean.getMsg('actions.compareListToTheso')}" style="margin-left: 20px">
+                        <p:fileDownload value="#{v2WorkshopImportBean.compareListToCurrentTheso}" />
+                    </p:commandButton>                     
+
+                </div> 
+                
+                <p:dialog widgetVar="waitDialogListToTheso" modal="true" draggable="false"  closable="false" resizable="false" showHeader="false" position="top" 
+                          style="margin-top: 250px; border: none;">
+                    <i class="pi pi-spinner pi-spin" style="font-size:2rem; color: #43B572; margin-top: 15px"></i>
+                </p:dialog>  
+                <script type="text/javascript">
+                    function start() {
+                        PF('waitDialogListToTheso').show();
+                    }
+
+                    function stop() {
+                        PF('waitDialogListToTheso').hide();
+                        PF('compareListToTheso').hide();
+                    }
+                </script>                
+            </h:panelGroup>
+        </h:panelGroup>
+    </p:dialog> 
+</ui:fragment>

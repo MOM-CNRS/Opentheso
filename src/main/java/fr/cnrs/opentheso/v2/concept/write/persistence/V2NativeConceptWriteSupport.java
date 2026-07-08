@@ -1,6 +1,5 @@
 package fr.cnrs.opentheso.v2.concept.write.persistence;
 
-import fr.cnrs.opentheso.legacybridge.LegacyConceptWriteSupport;
 import fr.cnrs.opentheso.v2.concept.write.model.MutationResult;
 import fr.cnrs.opentheso.v2.concept.write.model.command.AddBroaderRelationCommand;
 import fr.cnrs.opentheso.v2.concept.write.model.command.AddChildConceptCommand;
@@ -30,17 +29,15 @@ import fr.cnrs.opentheso.v2.concept.write.model.command.UpdateTranslationCommand
 import fr.cnrs.opentheso.v2.concept.write.model.command.UpsertNoteCommand;
 import fr.cnrs.opentheso.v2.concept.write.session.ConceptWritePort;
 import lombok.RequiredArgsConstructor;
-import org.springframework.boot.autoconfigure.condition.ConditionalOnProperty;
 import org.springframework.context.annotation.Primary;
 import org.springframework.stereotype.Component;
 
 /**
- * Native {@link ConceptWritePort} implementation used when native persistence is enabled.
+ * Native {@link ConceptWritePort} implementation.
  */
 @Component
 @Primary
 @RequiredArgsConstructor
-@ConditionalOnProperty(prefix = "opentheso.concept-write", name = "native-persistence-enabled", havingValue = "true")
 public class V2NativeConceptWriteSupport implements ConceptWritePort {
 
     private final ConceptNoteNativeWriteService conceptNoteNativeWriteService;

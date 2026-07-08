@@ -1,6 +1,6 @@
 package fr.cnrs.opentheso.v2.concept.write.persistence;
 
-import fr.cnrs.opentheso.legacybridge.LegacyConceptCreationSupport;
+import fr.cnrs.opentheso.v2.concept.identifier.ConceptIdentifierAssignmentService;
 import fr.cnrs.opentheso.v2.concept.write.model.MutationOutcome;
 import fr.cnrs.opentheso.v2.concept.write.model.command.AddChildConceptCommand;
 import fr.cnrs.opentheso.v2.concept.write.model.command.AddTopConceptCommand;
@@ -40,7 +40,7 @@ class ConceptStructureNativeWriteServiceTest {
     @Mock
     private ConceptWritePostMutationRepository conceptWritePostMutationRepository;
     @Mock
-    private LegacyConceptCreationSupport legacyConceptCreationSupport;
+    private ConceptIdentifierAssignmentService conceptIdentifierAssignmentService;
 
     @InjectMocks
     private ConceptStructureNativeWriteService service;
@@ -72,7 +72,7 @@ class ConceptStructureNativeWriteServiceTest {
         verify(conceptCreationWriteRepository).insertConcept(
                 eq("C99"), eq("TH1"), eq("D"), eq(""), eq(true), eq(7));
         verify(conceptCreationWriteRepository).linkConceptToGroup("GRP1", "C99", "TH1");
-        verify(legacyConceptCreationSupport).assignIdentifiers("TH1", "C99", "fr");
+        verify(conceptIdentifierAssignmentService).assignIdentifiers("TH1", "C99", "fr");
         verify(conceptWritePostMutationRepository).saveCreatorDcTerm("TH1", "C99", "admin");
         verify(conceptRelationWriteRepository, never()).addHierarchicalLink(
                 anyString(), anyString(), anyString(), anyString(), anyInt());

@@ -63,6 +63,30 @@ public class ConceptNoteWriteRepository {
         return id == null ? Optional.empty() : Optional.of(id.intValue());
     }
 
+    public Optional<String> findNoteSource(
+            String conceptId,
+            String thesaurusId,
+            String lang,
+            String typeCode
+    ) {
+        return entityManager.createNativeQuery("""
+                        SELECT notesource
+                        FROM note
+                        WHERE identifier = :conceptId
+                          AND id_thesaurus = :thesaurusId
+                          AND notetypecode = :typeCode
+                          AND lang = :lang
+                        LIMIT 1
+                        """)
+                .setParameter("conceptId", conceptId)
+                .setParameter("thesaurusId", thesaurusId)
+                .setParameter("typeCode", typeCode)
+                .setParameter("lang", lang)
+                .getResultStream()
+                .map(value -> value != null ? (String) value : "")
+                .findFirst();
+    }
+
     public boolean existsWithValue(
             String conceptId,
             String thesaurusId,

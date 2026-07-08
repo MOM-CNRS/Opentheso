@@ -4,7 +4,6 @@ import fr.cnrs.opentheso.utils.MessageUtils;
 import fr.cnrs.opentheso.v2.setting.ui.ThesaurusContext;
 import fr.cnrs.opentheso.v2.shared.ui.UserSession;
 import fr.cnrs.opentheso.v2.toolbox.policy.ToolboxAccessPolicy;
-import fr.cnrs.opentheso.v2.toolbox.session.WorkshopLegacySupport;
 import org.junit.jupiter.api.BeforeEach;
 import org.junit.jupiter.api.Test;
 import org.junit.jupiter.api.extension.ExtendWith;
@@ -28,13 +27,13 @@ class WorkshopBeanTest {
     @Mock
     private ThesaurusContext thesaurusContext;
     @Mock
-    private WorkshopLegacySupport workshopLegacySupport;
+    private WorkshopImportBean workshopImportBean;
 
     private WorkshopBean bean;
 
     @BeforeEach
     void setUp() {
-        bean = new WorkshopBean(userSession, thesaurusContext, workshopLegacySupport);
+        bean = new WorkshopBean(userSession, thesaurusContext, workshopImportBean);
     }
 
     @Test
@@ -94,7 +93,7 @@ class WorkshopBeanTest {
     }
 
     @Test
-    void load_initializesWorkshopWhenAccessGranted() {
+    void load_preparesBulkImportWhenAccessGranted() {
         when(userSession.isLoggedIn()).thenReturn(true);
         when(userSession.hasRoleAsAdmin()).thenReturn(true);
         when(thesaurusContext.resolveThesaurusId()).thenReturn("TH1");
@@ -102,20 +101,18 @@ class WorkshopBeanTest {
         bean.load();
 
         verify(thesaurusContext).syncFromViewParams();
-        verify(workshopLegacySupport).initAtelier();
-        verify(workshopLegacySupport).initBulkImport();
+        verify(workshopImportBean).prepare();
     }
 
     @Test
-    void load_initializesAtelierOnlyForNonAdmin() {
+    void load_skipsBulkImportForNonAdmin() {
         when(userSession.isLoggedIn()).thenReturn(true);
         when(userSession.hasRoleAsAdmin()).thenReturn(false);
         when(thesaurusContext.resolveThesaurusId()).thenReturn("TH1");
 
         bean.load();
 
-        verify(workshopLegacySupport).initAtelier();
-        verify(workshopLegacySupport, never()).initBulkImport();
+        verify(workshopImportBean, never()).prepare();
     }
 
     @Test
@@ -127,8 +124,7 @@ class WorkshopBeanTest {
             bean.load();
         }
 
-        verify(workshopLegacySupport, never()).initAtelier();
-        verify(workshopLegacySupport, never()).initBulkImport();
+        verify(workshopImportBean, never()).prepare();
     }
 
     @Test
@@ -139,7 +135,7 @@ class WorkshopBeanTest {
 
         bean.prepareBulkActions();
 
-        verify(workshopLegacySupport).initBulkImport();
+        verify(workshopImportBean).prepare();
     }
 
     @Test
@@ -150,6 +146,6 @@ class WorkshopBeanTest {
 
         bean.prepareBulkActions();
 
-        verify(workshopLegacySupport, never()).initBulkImport();
+        verify(workshopImportBean, never()).prepare();
     }
 }

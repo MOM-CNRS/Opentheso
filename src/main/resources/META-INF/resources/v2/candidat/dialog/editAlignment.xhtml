@@ -24,7 +24,7 @@
                 <div class="col-7">
                     <p:selectOneMenu value="#{v2CandidatBean.alignementSelected.alignement_id_type}"
                                      style="font-size: 12px; background: white; border-color: #43B572; width: 100%">
-                        <f:selectItems value="#{alignmentManualBean.nodeAlignmentTypes}" var="types"
+                        <f:selectItems value="#{v2CandidatAlignmentBean.alignmentTypes}" var="types"
                                        itemLabel="#{types.label} (#{types.labelSkos})" itemValue="#{types.id}"/>
                     </p:selectOneMenu>
                 </div>

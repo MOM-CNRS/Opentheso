@@ -4,7 +4,7 @@ import fr.cnrs.opentheso.entites.PropositionModification;
 import fr.cnrs.opentheso.models.PropositionProjection;
 import fr.cnrs.opentheso.repositories.PropositionModificationDetailRepository;
 import fr.cnrs.opentheso.repositories.PropositionModificationRepository;
-import fr.cnrs.opentheso.services.MailService;
+import fr.cnrs.opentheso.v2.shared.mail.SystemMailSender;
 import fr.cnrs.opentheso.v2.proposition.model.PropositionSubmission;
 import org.junit.jupiter.api.BeforeEach;
 import org.junit.jupiter.api.Test;
@@ -31,13 +31,13 @@ class PropositionMutationServiceTest {
     @Mock
     private PropositionModificationDetailRepository detailRepository;
     @Mock
-    private MailService mailService;
+    private SystemMailSender systemMailSender;
 
     private PropositionMutationService service;
 
     @BeforeEach
     void setUp() {
-        service = new PropositionMutationService(repository, detailRepository, mailService);
+        service = new PropositionMutationService(repository, detailRepository, systemMailSender);
     }
 
     private PropositionSubmission submission(String comment, String email) {

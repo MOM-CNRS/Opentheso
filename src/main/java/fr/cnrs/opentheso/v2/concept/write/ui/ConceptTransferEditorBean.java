@@ -1,6 +1,6 @@
 package fr.cnrs.opentheso.v2.concept.write.ui;
 
-import fr.cnrs.opentheso.services.ConceptService;
+import fr.cnrs.opentheso.v2.concept.write.persistence.BranchConceptSupport;
 import fr.cnrs.opentheso.utils.MessageUtils;
 import fr.cnrs.opentheso.v2.concept.session.ConceptNavigationSupport;
 import fr.cnrs.opentheso.v2.concept.session.ConceptSelectionContext;
@@ -40,7 +40,7 @@ public class ConceptTransferEditorBean implements Serializable {
     private final ThesaurusContext thesaurusContext;
     private final UserSession userSession;
     private final ThesaurusAccessService thesaurusAccessService;
-    private final ConceptService conceptService;
+    private final BranchConceptSupport branchConceptSupport;
 
     private String targetThesaurusId;
     private ConceptSearchSuggestion parentSearchSelected;
@@ -57,7 +57,7 @@ public class ConceptTransferEditorBean implements Serializable {
         }
         String thesaurusId = thesaurusContext.resolveThesaurusId();
         String conceptId = conceptSelectionContext.getConceptId();
-        branchConceptIds = conceptService.getIdsOfBranch(conceptId, thesaurusId);
+        branchConceptIds = branchConceptSupport.collectBranchConceptIds(thesaurusId, conceptId);
         targetThesaurusId = null;
         parentSearchSelected = null;
         loadAvailableThesauri();

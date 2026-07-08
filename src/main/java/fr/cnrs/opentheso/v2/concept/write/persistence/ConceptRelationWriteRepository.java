@@ -180,6 +180,20 @@ public class ConceptRelationWriteRepository {
                 .getResultList();
     }
 
+    @SuppressWarnings("unchecked")
+    public List<String> listBroaderParentConceptIds(String narrowerConceptId, String thesaurusId) {
+        return entityManager.createNativeQuery("""
+                        SELECT id_concept2
+                        FROM hierarchical_relationship
+                        WHERE id_thesaurus = :thesaurusId
+                          AND id_concept1 = :narrowerConceptId
+                          AND role LIKE 'BT%'
+                        """)
+                .setParameter("thesaurusId", thesaurusId)
+                .setParameter("narrowerConceptId", narrowerConceptId)
+                .getResultList();
+    }
+
     @Transactional
     public void addCustomRelation(
             String conceptId1,

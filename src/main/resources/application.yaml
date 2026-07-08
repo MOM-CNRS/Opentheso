@@ -4,5 +4,9 @@ info:
     description: '@project.description@'
     version: '@project.version@'
 
+opentheso:
+  concept-write:
+    native-persistence-enabled: true
+
 server:
   max-http-header-size: 256KB

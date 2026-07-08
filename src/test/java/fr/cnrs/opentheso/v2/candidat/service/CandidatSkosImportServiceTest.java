@@ -5,7 +5,7 @@ import fr.cnrs.opentheso.models.skosapi.SKOSLabel;
 import fr.cnrs.opentheso.models.skosapi.SKOSProperty;
 import fr.cnrs.opentheso.models.skosapi.SKOSResource;
 import fr.cnrs.opentheso.models.skosapi.SKOSXmlDocument;
-import fr.cnrs.opentheso.legacybridge.LegacyThesaurusPreferencesProvider;
+import fr.cnrs.opentheso.v2.shared.session.ThesaurusPreferencesProvider;
 import fr.cnrs.opentheso.v2.candidat.session.CandidatSkosImportLegacySupport;
 import org.junit.jupiter.api.BeforeEach;
 import org.junit.jupiter.api.Test;
@@ -26,13 +26,13 @@ class CandidatSkosImportServiceTest {
     @Mock
     private CandidatSkosImportLegacySupport candidatSkosImportLegacySupport;
     @Mock
-    private LegacyThesaurusPreferencesProvider legacyThesaurusPreferencesProvider;
+    private ThesaurusPreferencesProvider thesaurusPreferencesProvider;
 
     private CandidatSkosImportService service;
 
     @BeforeEach
     void setUp() {
-        service = new CandidatSkosImportService(candidatSkosImportLegacySupport, legacyThesaurusPreferencesProvider);
+        service = new CandidatSkosImportService(candidatSkosImportLegacySupport, thesaurusPreferencesProvider);
     }
 
     @Test

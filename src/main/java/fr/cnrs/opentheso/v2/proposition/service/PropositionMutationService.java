@@ -4,7 +4,7 @@ import fr.cnrs.opentheso.entites.PropositionModification;
 import fr.cnrs.opentheso.models.propositions.PropositionStatusEnum;
 import fr.cnrs.opentheso.repositories.PropositionModificationDetailRepository;
 import fr.cnrs.opentheso.repositories.PropositionModificationRepository;
-import fr.cnrs.opentheso.services.MailService;
+import fr.cnrs.opentheso.v2.shared.mail.SystemMailSender;
 import fr.cnrs.opentheso.v2.proposition.model.PropositionSubmission;
 import lombok.RequiredArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
@@ -23,7 +23,7 @@ public class PropositionMutationService {
 
     private final PropositionModificationRepository propositionModificationRepository;
     private final PropositionModificationDetailRepository propositionModificationDetailRepository;
-    private final MailService mailService;
+    private final SystemMailSender systemMailSender;
 
     private static final String DATE_PATTERN = "dd-MM-yyyy HH:mm";
 
@@ -165,7 +165,7 @@ public class PropositionMutationService {
     private void sendMailAsync(String to, String subject, String content) {
         new Thread(() -> {
             try {
-                mailService.sendMail(to, subject, content);
+                systemMailSender.sendHtmlMail(to, subject, content);
             } catch (Exception ex) {
                 log.warn("Envoi de mail de proposition échoué vers {}", to, ex);
             }
