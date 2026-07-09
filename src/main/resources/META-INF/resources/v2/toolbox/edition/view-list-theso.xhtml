@@ -90,6 +90,10 @@
                                         action="#{v2EditionBean.showExport(thesaurus, 'EXPORT_CSV_ID')}"
                                         update="containerIndex" icon="fas fa-upload"
                                         title="#{v2LocaleBean.getMsg('toolbox.smallCsvTooltip')}"/>
+
+                            <p:menuitem value="#{v2LocaleBean.getMsg('toolbox.deprecated')}"
+                                        action="#{v2EditionBean.showExport(thesaurus, 'EXPORT_DEPRECATED')}"
+                                        update="containerIndex" icon="fas fa-upload"/>
                         </p:menuButton>
                     </p:column>
 

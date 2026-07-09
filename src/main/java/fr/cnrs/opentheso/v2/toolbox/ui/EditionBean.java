@@ -116,11 +116,32 @@ public class EditionBean implements Serializable {
                 || currentView == EditionView.EXPORT_PDF
                 || currentView == EditionView.EXPORT_CSV
                 || currentView == EditionView.EXPORT_CSV_ID
-                || currentView == EditionView.EXPORT_CSV_STRUCTURE;
+                || currentView == EditionView.EXPORT_CSV_STRUCTURE
+                || currentView == EditionView.EXPORT_DEPRECATED;
     }
 
     public boolean isExportSkosView() {
         return currentView == EditionView.EXPORT_SKOS;
+    }
+
+    public boolean isExportCsvView() {
+        return currentView == EditionView.EXPORT_CSV;
+    }
+
+    public boolean isExportCsvIdView() {
+        return currentView == EditionView.EXPORT_CSV_ID;
+    }
+
+    public boolean isExportCsvStructureView() {
+        return currentView == EditionView.EXPORT_CSV_STRUCTURE;
+    }
+
+    public boolean isExportPdfView() {
+        return currentView == EditionView.EXPORT_PDF;
+    }
+
+    public boolean isExportDeprecatedView() {
+        return currentView == EditionView.EXPORT_DEPRECATED;
     }
 
     public void showList() {
@@ -162,8 +183,21 @@ public class EditionBean implements Serializable {
     public void showExport(EditionThesaurusSummary thesaurus, EditionView exportView) {
         selectedThesaurusForAction = thesaurus;
         currentView = exportView;
-        if (exportView == EditionView.EXPORT_SKOS && thesaurus != null) {
+        if (thesaurus == null) {
+            return;
+        }
+        if (exportView == EditionView.EXPORT_SKOS) {
             thesaurusExportBean.init(thesaurus.id(), thesaurus.title());
+        } else if (exportView == EditionView.EXPORT_CSV) {
+            thesaurusExportBean.initCsv(thesaurus.id(), thesaurus.title());
+        } else if (exportView == EditionView.EXPORT_CSV_ID) {
+            thesaurusExportBean.initCsvById(thesaurus.id(), thesaurus.title());
+        } else if (exportView == EditionView.EXPORT_CSV_STRUCTURE) {
+            thesaurusExportBean.initCsvStructured(thesaurus.id(), thesaurus.title());
+        } else if (exportView == EditionView.EXPORT_PDF) {
+            thesaurusExportBean.initPdf(thesaurus.id(), thesaurus.title());
+        } else if (exportView == EditionView.EXPORT_DEPRECATED) {
+            thesaurusExportBean.initDeprecated(thesaurus.id(), thesaurus.title());
         }
     }
 

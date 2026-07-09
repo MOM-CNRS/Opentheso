@@ -1,6 +1,6 @@
 package fr.cnrs.opentheso.v2.toolbox.ui;
 
-import fr.cnrs.opentheso.toolbox.operations.WorkshopBulkImportOperations;
+import fr.cnrs.opentheso.v2.toolbox.workshop.WorkshopBulkImportOperations;
 import fr.cnrs.opentheso.utils.MessageUtils;
 import fr.cnrs.opentheso.v2.setting.ui.ThesaurusContext;
 import fr.cnrs.opentheso.v2.shared.ui.UserSession;
@@ -23,155 +23,131 @@ public class WorkshopImportBean implements Serializable {
     private final UserSession userSession;
 
     public void prepare() {
-        workshopBulkImportOperations.syncContext(
-                thesaurusContext.resolveThesaurusId(),
-                thesaurusContext.resolveWorkLanguage()
+        String thesaurusId = thesaurusContext.resolveThesaurusId();
+        Integer userId = userSession.getCurrentUserId();
+        if (StringUtils.isBlank(thesaurusId) || userId == null) {
+            return;
+        }
+        workshopBulkImportOperations.prepare(
+                thesaurusId,
+                thesaurusContext.resolveWorkLanguage(),
+                userId
         );
-        workshopBulkImportOperations.init();
     }
 
     public void actionChoice() {
-        syncContext();
         workshopBulkImportOperations.actionChoice();
     }
 
     public void actionChoiceIdentifier() {
-        syncContext();
         workshopBulkImportOperations.actionChoiceIdentifier();
     }
 
     public void loadFileAlignmentCsv(FileUploadEvent event) {
-        syncContext();
         workshopBulkImportOperations.loadFileAlignmentCsv(event);
     }
 
     public void loadFileAlignmentCsvToDelete(FileUploadEvent event) {
-        syncContext();
         workshopBulkImportOperations.loadFileAlignmentCsvToDelete(event);
     }
 
     public void loadFileNoteCsv(FileUploadEvent event) {
-        syncContext();
         workshopBulkImportOperations.loadFileNoteCsv(event);
     }
 
     public void loadFileAltlabelCsv(FileUploadEvent event) {
-        syncContext();
         workshopBulkImportOperations.loadFileAltlabelCsv(event);
     }
 
     public void loadFileArkCsv(FileUploadEvent event) {
-        syncContext();
         workshopBulkImportOperations.loadFileArkCsv(event);
     }
 
     public void loadFileTraductionCsv(FileUploadEvent event) {
-        syncContext();
         workshopBulkImportOperations.loadFileTraductionCsv(event);
     }
 
     public void loadFileRelatedCsv(FileUploadEvent event) {
-        syncContext();
         workshopBulkImportOperations.loadFileRelatedCsv(event);
     }
 
     public void loadFileIdentifierCsv(FileUploadEvent event) {
-        syncContext();
         workshopBulkImportOperations.loadFileIdentifierCsv(event);
     }
 
     public void loadFileImageCsv(FileUploadEvent event) {
-        syncContext();
         workshopBulkImportOperations.loadFileImageCsv(event);
     }
 
     public void loadFileNotationCsv(FileUploadEvent event) {
-        syncContext();
         workshopBulkImportOperations.loadFileNotationCsv(event);
     }
 
     public void loadFileCollectionCsv(FileUploadEvent event) {
-        syncContext();
         workshopBulkImportOperations.loadFileCollectionCsv(event);
     }
 
     public void loadFileCsvForMerge(FileUploadEvent event) {
-        syncContext();
         workshopBulkImportOperations.loadFileCsvForMerge(event);
     }
 
     public void loadFileCsvForReplaceValueByNewValue(FileUploadEvent event) {
-        syncContext();
         workshopBulkImportOperations.loadFileCsvForReplaceValueByNewValue(event);
     }
 
     public void loadFileCsvDeprecateConcepts(FileUploadEvent event) {
-        syncContext();
         workshopBulkImportOperations.loadFileCsvDeprecateConcepts(event);
     }
 
     public void loadFileCsv(FileUploadEvent event) {
-        syncContext();
         workshopBulkImportOperations.loadFileCsv(event);
     }
 
     public void loadFileCsvForGetIdFromPrefLabel(FileUploadEvent event) {
-        syncContext();
         workshopBulkImportOperations.loadFileCsvForGetIdFromPrefLabel(event);
     }
 
     public void addAlignmentList() {
-        syncContext();
         workshopBulkImportOperations.addAlignmentList();
     }
 
     public void deleteAlignmentFromCsv() {
-        syncContext();
         workshopBulkImportOperations.deleteAlignmentFromCsv();
     }
 
     public void addNoteList() {
-        syncContext();
         workshopBulkImportOperations.addNoteList();
     }
 
     public void addAltLabelList() {
-        syncContext();
         workshopBulkImportOperations.addAltLabelList();
     }
 
     public void deleteAltLabelList() {
-        syncContext();
         workshopBulkImportOperations.deleteAltLabelList();
     }
 
     public void addArkList() {
-        syncContext();
         workshopBulkImportOperations.addArkList();
     }
 
     public void addTraductionList() {
-        syncContext();
         workshopBulkImportOperations.addTraductionList();
     }
 
     public void addRelatedList() {
-        syncContext();
         workshopBulkImportOperations.addRelatedList();
     }
 
     public void addImageList() {
-        syncContext();
         workshopBulkImportOperations.addImageList();
     }
 
     public void addNotationList() {
-        syncContext();
         workshopBulkImportOperations.addNotationList();
     }
 
     public void addCollectionListToConcept() {
-        syncContext();
         workshopBulkImportOperations.addCollectionListToConcept();
     }
 
@@ -195,7 +171,6 @@ public class WorkshopImportBean implements Serializable {
         if (thesaurusId == null) {
             return;
         }
-        syncContext();
         workshopBulkImportOperations.addListConceptsToTheso(thesaurusId);
     }
 
@@ -204,7 +179,6 @@ public class WorkshopImportBean implements Serializable {
         if (thesaurusId == null) {
             return null;
         }
-        syncContext();
         return workshopBulkImportOperations.getAlignmentsOfTheso(thesaurusId);
     }
 
@@ -213,17 +187,14 @@ public class WorkshopImportBean implements Serializable {
         if (thesaurusId == null) {
             return null;
         }
-        syncContext();
         return workshopBulkImportOperations.compareListToTheso(thesaurusId);
     }
 
     public StreamedContent getArkFromConceptId() {
-        syncContext();
         return workshopBulkImportOperations.getArkFromConceptId();
     }
 
     public StreamedContent getConceptIdFromArk() {
-        syncContext();
         return workshopBulkImportOperations.getConceptIdFromArk();
     }
 
@@ -299,13 +270,6 @@ public class WorkshopImportBean implements Serializable {
         workshopBulkImportOperations.setAlignmentSource(value);
     }
 
-    private void syncContext() {
-        workshopBulkImportOperations.syncContext(
-                thesaurusContext.resolveThesaurusId(),
-                thesaurusContext.resolveWorkLanguage()
-        );
-    }
-
     private String requireThesaurusId() {
         String thesaurusId = thesaurusContext.resolveThesaurusId();
         if (StringUtils.isBlank(thesaurusId)) {
@@ -322,7 +286,11 @@ public class WorkshopImportBean implements Serializable {
             MessageUtils.showErrorMessage("Action non autorisée");
             return;
         }
-        syncContext();
+        workshopBulkImportOperations.prepare(
+                thesaurusId,
+                thesaurusContext.resolveWorkLanguage(),
+                userId
+        );
         action.run(thesaurusId, userId);
     }
 
