@@ -61,6 +61,14 @@
             <h:outputText value="#{nodetree.label}" style="font-size:12px;"/>
         </p:treeNode>
 
+        <p:treeNode type="facet"
+                    icon="fa fa-magnet fa_custom_magnet">
+            <h:outputText value="#{nodetree.notation} "
+                          style="color:blue; font-size:12px;"
+                          rendered="#{not empty nodetree.notation}"/>
+            <h:outputText value="#{nodetree.label}" style="font-size:12px;"/>
+        </p:treeNode>
+
         <p:treeNode type="deprecated"
                     icon="fa fa-solid fa-ban fa_custom_ban">
             <h:outputText value="#{nodetree.notation} "

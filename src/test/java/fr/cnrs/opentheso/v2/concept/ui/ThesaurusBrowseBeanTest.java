@@ -17,6 +17,7 @@ import fr.cnrs.opentheso.v2.concept.model.RightPanelMode;
 import fr.cnrs.opentheso.v2.concept.model.ThesaurusHomeOverview;
 import fr.cnrs.opentheso.v2.concept.service.ConceptTypeReadService;
 import fr.cnrs.opentheso.v2.concept.session.ConceptSelectionContext;
+import fr.cnrs.opentheso.v2.shared.session.ConceptTreeRefreshState;
 import fr.cnrs.opentheso.v2.concept.service.ConceptFullReadService;
 import fr.cnrs.opentheso.v2.concept.service.ConceptReadService;
 import fr.cnrs.opentheso.v2.concept.service.ThesaurusHomeReadService;
@@ -74,6 +75,8 @@ class ThesaurusBrowseBeanTest {
     private ConceptTypeReadService conceptTypeReadService;
     @Mock
     private ConceptSelectionContext conceptSelectionContext;
+    @Mock
+    private ConceptTreeRefreshState conceptTreeRefreshState;
 
     private ThesaurusBrowseBean bean;
 
@@ -90,7 +93,8 @@ class ThesaurusBrowseBeanTest {
                 conceptHistoryBean,
                 thesaurusPreferenceService,
                 userSession,
-                conceptTypeReadService
+                conceptTypeReadService,
+                conceptTreeRefreshState
         );
     }
 
@@ -364,6 +368,48 @@ class ThesaurusBrowseBeanTest {
         bean.setSelectedConcept(detail);
 
         assertEquals("Mon concept", bean.getPageTitle());
+    }
+
+    @Test
+    void load_opensFacetFromUriParameter() {
+        when(thesaurusContext.resolveThesaurusId()).thenReturn("TH1");
+        when(thesaurusContext.getCurrentThesaurusTitle()).thenReturn("Test");
+        when(thesaurusContext.resolveWorkLanguage()).thenReturn("fr");
+        when(conceptReadService.loadRootNodes("TH1", "fr", LeftTreeMode.CONCEPT)).thenReturn(List.of());
+        when(thesaurusHomeReadService.loadOverview("TH1", "fr", "Test"))
+                .thenReturn(new ThesaurusHomeOverview("Test", 0, "", "", "", "", List.of(), List.of(), ""));
+        when(thesaurusPreferenceService.loadPreferencesOrNull("TH1", "fr"))
+                .thenReturn(consultationPreferences(true));
+        var facet = new FacetDetailOverview("F1", "Facette", "fr", "C1", "Parent", List.of(), List.of(), List.of());
+        when(facetReadService.loadDetail("TH1", "F1", "fr")).thenReturn(Optional.of(facet));
+        bean.setFacetIdFromUri("F1");
+
+        bean.load();
+
+        assertEquals(facet, bean.getSelectedFacet());
+        assertTrue(bean.isFacetPanel());
+        assertEquals(LeftTreeMode.CONCEPT, bean.getActiveLeftTreeMode());
+        assertEquals(0, bean.getLeftTabIndex());
+    }
+
+    @Test
+    void invalidateConceptTree_clearsArbreRoot() {
+        bean.setArbreRoot(new org.primefaces.model.DefaultTreeNode<>("root", null, null));
+
+        bean.invalidateConceptTree();
+
+        assertNull(bean.getConceptRoot());
+        assertNull(bean.getArbreRoot());
+    }
+
+    @Test
+    void invalidateCollectionTree_clearsArbreRoot() {
+        bean.setArbreRoot(new org.primefaces.model.DefaultTreeNode<>("root", null, null));
+
+        bean.invalidateCollectionTree();
+
+        assertNull(bean.getCollectionRoot());
+        assertNull(bean.getArbreRoot());
     }
 
     @Test

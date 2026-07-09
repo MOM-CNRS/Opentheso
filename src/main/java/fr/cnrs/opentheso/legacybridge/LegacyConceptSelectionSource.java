@@ -4,11 +4,13 @@ import fr.cnrs.opentheso.bean.leftbody.viewtree.Tree;
 import fr.cnrs.opentheso.v2.shared.session.ConceptSelectionSource;
 import lombok.RequiredArgsConstructor;
 import org.apache.commons.lang3.StringUtils;
-import org.springframework.stereotype.Component;
 
 import java.util.Optional;
 
-@Component
+/**
+ * @deprecated Conservé pour l'UI legacy v1 ; la consultation V2 utilise {@link fr.cnrs.opentheso.v2.shared.session.SessionConceptSelectionSource}.
+ */
+@Deprecated
 @RequiredArgsConstructor
 public class LegacyConceptSelectionSource implements ConceptSelectionSource {
 

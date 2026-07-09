@@ -23,6 +23,7 @@ import fr.cnrs.opentheso.v2.concept.service.ConceptReadService;
 import fr.cnrs.opentheso.v2.concept.service.ThesaurusHomeReadService;
 import fr.cnrs.opentheso.v2.concept.session.ConceptNavigationSupport;
 import fr.cnrs.opentheso.v2.concept.session.ConceptSelectionContext;
+import fr.cnrs.opentheso.v2.shared.session.ConceptTreeRefreshState;
 import fr.cnrs.opentheso.v2.concept.support.ConceptGpsMapRenderer;
 import fr.cnrs.opentheso.v2.setting.model.ThesaurusPreferences;
 import fr.cnrs.opentheso.v2.setting.service.ThesaurusPreferenceService;
@@ -68,6 +69,7 @@ public class ThesaurusBrowseBean implements Serializable, ConceptNavigationSuppo
     private final ThesaurusPreferenceService thesaurusPreferenceService;
     private final UserSession userSession;
     private final ConceptTypeReadService conceptTypeReadService;
+    private final ConceptTreeRefreshState conceptTreeRefreshState;
 
     private String conceptIdFromUri;
     private String groupIdFromUri;
@@ -125,6 +127,9 @@ public class ThesaurusBrowseBean implements Serializable, ConceptNavigationSuppo
             thesaurusContext.setIdGroupFromUri(null);
         }
         resetState();
+        if (conceptTreeRefreshState.consumeRefresh()) {
+            invalidateConceptTree();
+        }
         if (!isScreenAvailable()) {
             return;
         }
@@ -139,7 +144,7 @@ public class ThesaurusBrowseBean implements Serializable, ConceptNavigationSuppo
             focusGroup(groupIdFromUri.trim());
             groupIdFromUri = null;
         } else if (StringUtils.isNotBlank(facetIdFromUri)) {
-            openFacet(facetIdFromUri.trim());
+            focusFacet(facetIdFromUri.trim());
             facetIdFromUri = null;
         }
     }
@@ -359,10 +364,12 @@ public class ThesaurusBrowseBean implements Serializable, ConceptNavigationSuppo
     @Override
     public void invalidateConceptTree() {
         conceptRoot = null;
+        arbreRoot = null;
     }
 
     public void invalidateCollectionTree() {
         collectionRoot = null;
+        arbreRoot = null;
     }
 
     @Override
