@@ -8,7 +8,7 @@ import fr.cnrs.opentheso.v2.concept.write.model.command.DeleteSynonymCommand;
 import fr.cnrs.opentheso.v2.concept.write.model.command.DeleteTranslationCommand;
 import fr.cnrs.opentheso.v2.concept.write.model.command.UpdateSynonymCommand;
 import fr.cnrs.opentheso.v2.concept.write.model.command.UpdateTranslationCommand;
-import fr.cnrs.opentheso.v2.concept.write.session.ConceptWritePort;
+import fr.cnrs.opentheso.v2.concept.write.persistence.ConceptLexicalNativeWriteService;
 import lombok.RequiredArgsConstructor;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
@@ -19,37 +19,37 @@ import java.util.List;
 @RequiredArgsConstructor
 public class ConceptLexicalMutationService {
 
-    private final ConceptWritePort conceptWritePort;
+    private final ConceptLexicalNativeWriteService conceptLexicalNativeWriteService;
     private final ConceptWriteMetadataService conceptWriteMetadataService;
 
     @Transactional
     public MutationResult addSynonym(AddSynonymCommand command) {
-        return conceptWritePort.addSynonym(command);
+        return conceptLexicalNativeWriteService.addSynonym(command);
     }
 
     @Transactional
     public MutationResult updateSynonym(UpdateSynonymCommand command) {
-        return conceptWritePort.updateSynonym(command);
+        return conceptLexicalNativeWriteService.updateSynonym(command);
     }
 
     @Transactional
     public MutationResult deleteSynonym(DeleteSynonymCommand command) {
-        return conceptWritePort.deleteSynonym(command);
+        return conceptLexicalNativeWriteService.deleteSynonym(command);
     }
 
     @Transactional
     public MutationResult addTranslation(AddTranslationCommand command) {
-        return conceptWritePort.addTranslation(command);
+        return conceptLexicalNativeWriteService.addTranslation(command);
     }
 
     @Transactional
     public MutationResult updateTranslation(UpdateTranslationCommand command) {
-        return conceptWritePort.updateTranslation(command);
+        return conceptLexicalNativeWriteService.updateTranslation(command);
     }
 
     @Transactional
     public MutationResult deleteTranslation(DeleteTranslationCommand command) {
-        return conceptWritePort.deleteTranslation(command);
+        return conceptLexicalNativeWriteService.deleteTranslation(command);
     }
 
     @Transactional(readOnly = true)

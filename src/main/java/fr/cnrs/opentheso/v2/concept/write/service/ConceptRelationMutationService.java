@@ -12,7 +12,7 @@ import fr.cnrs.opentheso.v2.concept.write.model.command.DeleteCustomRelationComm
 import fr.cnrs.opentheso.v2.concept.write.model.command.DeleteNarrowerRelationCommand;
 import fr.cnrs.opentheso.v2.concept.write.model.command.DeleteRelatedRelationCommand;
 import fr.cnrs.opentheso.v2.concept.write.model.command.UpdateNarrowerRelationTypeCommand;
-import fr.cnrs.opentheso.v2.concept.write.session.ConceptWritePort;
+import fr.cnrs.opentheso.v2.concept.write.persistence.ConceptRelationNativeWriteService;
 import lombok.RequiredArgsConstructor;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
@@ -23,57 +23,57 @@ import java.util.List;
 @RequiredArgsConstructor
 public class ConceptRelationMutationService {
 
-    private final ConceptWritePort conceptWritePort;
+    private final ConceptRelationNativeWriteService conceptRelationNativeWriteService;
     private final ConceptWriteMetadataService conceptWriteMetadataService;
 
     @Transactional
     public MutationResult addBroaderRelation(AddBroaderRelationCommand command) {
-        return conceptWritePort.addBroaderRelation(command);
+        return conceptRelationNativeWriteService.addBroaderRelation(command);
     }
 
     @Transactional
     public MutationResult addNarrowerRelation(AddNarrowerRelationCommand command) {
-        return conceptWritePort.addNarrowerRelation(command);
+        return conceptRelationNativeWriteService.addNarrowerRelation(command);
     }
 
     @Transactional
     public MutationResult deleteBroaderRelation(DeleteBroaderRelationCommand command) {
-        return conceptWritePort.deleteBroaderRelation(command);
+        return conceptRelationNativeWriteService.deleteBroaderRelation(command);
     }
 
     @Transactional
     public MutationResult deleteNarrowerRelation(DeleteNarrowerRelationCommand command) {
-        return conceptWritePort.deleteNarrowerRelation(command);
+        return conceptRelationNativeWriteService.deleteNarrowerRelation(command);
     }
 
     @Transactional
     public MutationResult updateNarrowerRelationType(UpdateNarrowerRelationTypeCommand command) {
-        return conceptWritePort.updateNarrowerRelationType(command);
+        return conceptRelationNativeWriteService.updateNarrowerRelationType(command);
     }
 
     @Transactional
     public MutationResult applyNarrowerRelationToBranch(ApplyNarrowerRelationToBranchCommand command) {
-        return conceptWritePort.applyNarrowerRelationToBranch(command);
+        return conceptRelationNativeWriteService.applyNarrowerRelationToBranch(command);
     }
 
     @Transactional
     public MutationResult addRelatedRelation(AddRelatedRelationCommand command) {
-        return conceptWritePort.addRelatedRelation(command);
+        return conceptRelationNativeWriteService.addRelatedRelation(command);
     }
 
     @Transactional
     public MutationResult deleteRelatedRelation(DeleteRelatedRelationCommand command) {
-        return conceptWritePort.deleteRelatedRelation(command);
+        return conceptRelationNativeWriteService.deleteRelatedRelation(command);
     }
 
     @Transactional
     public MutationResult addCustomRelation(AddCustomRelationCommand command) {
-        return conceptWritePort.addCustomRelation(command);
+        return conceptRelationNativeWriteService.addCustomRelation(command);
     }
 
     @Transactional
     public MutationResult deleteCustomRelation(DeleteCustomRelationCommand command) {
-        return conceptWritePort.deleteCustomRelation(command);
+        return conceptRelationNativeWriteService.deleteCustomRelation(command);
     }
 
     @Transactional(readOnly = true)

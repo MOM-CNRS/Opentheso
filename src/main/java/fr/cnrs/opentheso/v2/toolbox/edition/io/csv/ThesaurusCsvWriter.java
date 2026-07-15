@@ -8,7 +8,7 @@ import fr.cnrs.opentheso.models.thesaurus.NodeLangTheso;
 import fr.cnrs.opentheso.models.candidats.CandidatDto;
 import fr.cnrs.opentheso.v2.toolbox.edition.model.ThesaurusCsvAlignmentRow;
 import fr.cnrs.opentheso.v2.toolbox.edition.model.ThesaurusCsvByIdRow;
-import fr.cnrs.opentheso.v2.toolbox.edition.session.ThesaurusEditionCsvExportQuerySupport;
+import fr.cnrs.opentheso.v2.toolbox.edition.persistence.ThesaurusEditionCsvExportPersistence;
 import fr.cnrs.opentheso.models.skosapi.SKOSDate;
 import fr.cnrs.opentheso.models.skosapi.SKOSDocumentation;
 import fr.cnrs.opentheso.models.skosapi.SKOSGPSCoordinates;
@@ -42,7 +42,7 @@ import lombok.RequiredArgsConstructor;
 @RequiredArgsConstructor
 public class ThesaurusCsvWriter {
 
-    private final ThesaurusEditionCsvExportQuerySupport csvExportQuerySupport;
+    private final ThesaurusEditionCsvExportPersistence csvExportQuerySupport;
     private final String delim_multi_datas = "##";
 
     /**

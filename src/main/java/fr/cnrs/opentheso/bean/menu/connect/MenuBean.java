@@ -15,6 +15,7 @@ import fr.cnrs.opentheso.bean.toolbox.atelier.AtelierThesBean;
 import fr.cnrs.opentheso.bean.toolbox.edition.FlagBean;
 import fr.cnrs.opentheso.bean.toolbox.edition.ViewEditionBean;
 import fr.cnrs.opentheso.bean.toolbox.statistique.StatistiqueBean;
+import fr.cnrs.opentheso.v2.concept.ui.ThesaurusBrowseBean;
 
 import java.io.Serializable;
 import java.io.IOException;
@@ -41,6 +42,9 @@ public class MenuBean implements Serializable {
 
     @Autowired @Lazy
     private AtelierThesBean atelierThesBean;
+
+    @Autowired @Lazy
+    private ThesaurusBrowseBean thesaurusBrowseBean;
 
     private final SuperAdminBean superAdminBean;
     private final MyAccountBean myAccountBean;
@@ -88,6 +92,86 @@ public class MenuBean implements Serializable {
         consultationVersionSwitchSupport.syncV2FromLegacy();
         ExternalContext context = FacesContext.getCurrentInstance().getExternalContext();
         context.redirect(context.getRequestContextPath() + "/v2/thesaurus");
+    }
+
+    public void redirectToThesaurusLegacyFromV2() throws IOException {
+        consultationVersionSwitchSupport.syncLegacyFromV2(thesaurusBrowseBean);
+        redirectToThesaurus();
+    }
+
+    public void redirectToCandidatLegacyFromV2() throws IOException {
+        consultationVersionSwitchSupport.syncLegacyFromV2(thesaurusBrowseBean);
+        redirectToCandidatPage();
+    }
+
+    public void redirectToGraphLegacyFromV2() throws IOException {
+        consultationVersionSwitchSupport.syncLegacyFromV2(thesaurusBrowseBean);
+        redirectToGraphPage();
+    }
+
+    public void redirectToMyProfileLegacyFromV2() throws IOException {
+        consultationVersionSwitchSupport.syncLegacyFromV2(thesaurusBrowseBean);
+        redirectToMyProfilePage();
+    }
+
+    public void redirectToMyProjectsLegacyFromV2() throws IOException {
+        consultationVersionSwitchSupport.syncLegacyFromV2(thesaurusBrowseBean);
+        redirectToMesProjectsPage();
+    }
+
+    public void redirectToAllUsersLegacyFromV2() throws IOException {
+        consultationVersionSwitchSupport.syncLegacyFromV2(thesaurusBrowseBean);
+        redirectToUsersPage();
+    }
+
+    public void redirectToAllProjectsLegacyFromV2() throws IOException {
+        consultationVersionSwitchSupport.syncLegacyFromV2(thesaurusBrowseBean);
+        redirectToProjetsPage();
+    }
+
+    public void redirectToAllThesauriLegacyFromV2() throws IOException {
+        consultationVersionSwitchSupport.syncLegacyFromV2(thesaurusBrowseBean);
+        redirectToThesorusPage();
+    }
+
+    public void redirectToPreferenceLegacyFromV2() throws IOException {
+        consultationVersionSwitchSupport.syncLegacyFromV2(thesaurusBrowseBean);
+        redirectToPreferencePage();
+    }
+
+    public void redirectToIdentifierLegacyFromV2() throws IOException {
+        consultationVersionSwitchSupport.syncLegacyFromV2(thesaurusBrowseBean);
+        redirectToIdetifiantPage();
+    }
+
+    public void redirectToCorpusLegacyFromV2() throws IOException {
+        consultationVersionSwitchSupport.syncLegacyFromV2(thesaurusBrowseBean);
+        redirectToCorpusPage();
+    }
+
+    public void redirectToEditionLegacyFromV2() throws IOException {
+        consultationVersionSwitchSupport.syncLegacyFromV2(thesaurusBrowseBean);
+        redirectToEditionPage();
+    }
+
+    public void redirectToFlagLegacyFromV2() throws IOException {
+        consultationVersionSwitchSupport.syncLegacyFromV2(thesaurusBrowseBean);
+        redirectToFlagPage();
+    }
+
+    public void redirectToWorkshopLegacyFromV2() throws IOException {
+        consultationVersionSwitchSupport.syncLegacyFromV2(thesaurusBrowseBean);
+        redirectToAtelierPage();
+    }
+
+    public void redirectToMaintenanceLegacyFromV2() throws IOException {
+        consultationVersionSwitchSupport.syncLegacyFromV2(thesaurusBrowseBean);
+        redirectToMaintenancePage();
+    }
+
+    public void redirectToStatisticsLegacyFromV2() throws IOException {
+        consultationVersionSwitchSupport.syncLegacyFromV2(thesaurusBrowseBean);
+        redirectToStatistiquePage();
     }
     
     // LOGIN Page
@@ -359,7 +443,8 @@ public class MenuBean implements Serializable {
         }
         propositionBean.searchNewPropositions();
         propositionBean.setRubriqueVisible(false);
-        redirectToV2SettingPage("/v2/toolbox/statistics.xhtml");
+        ExternalContext context = FacesContext.getCurrentInstance().getExternalContext();
+        context.redirect(context.getRequestContextPath() + "/v2/toolbox/statistics.xhtml");
     }
 
     private void warnThesaurusRequired() {

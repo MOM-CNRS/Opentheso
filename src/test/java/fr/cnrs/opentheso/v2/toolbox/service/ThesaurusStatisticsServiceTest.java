@@ -5,7 +5,7 @@ import fr.cnrs.opentheso.models.statistiques.ConceptStatisticData;
 import fr.cnrs.opentheso.models.statistiques.GenericStatistiqueData;
 import fr.cnrs.opentheso.models.thesaurus.NodeLangTheso;
 import fr.cnrs.opentheso.v2.shared.repository.EditionQueryRepository;
-import fr.cnrs.opentheso.v2.toolbox.session.ThesaurusStatisticsLegacySupport;
+import fr.cnrs.opentheso.v2.toolbox.persistence.ToolboxStatisticsPersistence;
 import org.junit.jupiter.api.BeforeEach;
 import org.junit.jupiter.api.Test;
 import org.junit.jupiter.api.extension.ExtendWith;
@@ -23,7 +23,7 @@ import static org.mockito.Mockito.when;
 class ThesaurusStatisticsServiceTest {
 
     @Mock
-    private ThesaurusStatisticsLegacySupport thesaurusStatisticsLegacySupport;
+    private ToolboxStatisticsPersistence toolboxStatisticsPersistence;
     @Mock
     private EditionQueryRepository editionQueryRepository;
 
@@ -31,14 +31,14 @@ class ThesaurusStatisticsServiceTest {
 
     @BeforeEach
     void setUp() {
-        service = new ThesaurusStatisticsService(thesaurusStatisticsLegacySupport, editionQueryRepository);
+        service = new ThesaurusStatisticsService(toolboxStatisticsPersistence, editionQueryRepository);
     }
 
     @Test
     void loadSummary_aggregatesCounts() {
         var lastModification = new Date();
         when(editionQueryRepository.countAllConceptStats("TH1")).thenReturn(new int[]{10, 2, 1});
-        when(thesaurusStatisticsLegacySupport.loadLastModification("TH1")).thenReturn(lastModification);
+        when(toolboxStatisticsPersistence.loadLastModification("TH1")).thenReturn(lastModification);
 
         var summary = service.loadSummary("TH1");
 
@@ -51,7 +51,7 @@ class ThesaurusStatisticsServiceTest {
     @Test
     void loadCollectionStatistics_delegatesToStatistiqueService() {
         var row = GenericStatistiqueData.builder().collection("Collection A").build();
-        when(thesaurusStatisticsLegacySupport.loadCollectionStatistics("TH1", "fr")).thenReturn(List.of(row));
+        when(toolboxStatisticsPersistence.loadCollectionStatistics("TH1", "fr")).thenReturn(List.of(row));
 
         var result = service.loadCollectionStatistics("TH1", "fr");
 
@@ -65,7 +65,7 @@ class ThesaurusStatisticsServiceTest {
                 .collection("Collection A")
                 .conceptsNbr(3)
                 .build();
-        when(thesaurusStatisticsLegacySupport.exportGenericReport(List.of(row))).thenReturn(new byte[]{1, 2});
+        when(toolboxStatisticsPersistence.exportGenericReport(List.of(row))).thenReturn(new byte[]{1, 2});
 
         byte[] content = service.exportGenericReport(List.of(row));
 
@@ -77,7 +77,7 @@ class ThesaurusStatisticsServiceTest {
     void loadLanguages_delegatesToThesaurusService() {
         var language = new NodeLangTheso();
         language.setCode("fr");
-        when(thesaurusStatisticsLegacySupport.loadUsedLanguages("TH1", "fr")).thenReturn(List.of(language));
+        when(toolboxStatisticsPersistence.loadUsedLanguages("TH1", "fr")).thenReturn(List.of(language));
 
         var languages = service.loadLanguages("TH1", "fr");
 
@@ -88,7 +88,7 @@ class ThesaurusStatisticsServiceTest {
     @Test
     void loadConceptStatistics_delegatesToStatistiqueService() {
         var concept = ConceptStatisticData.builder().idConcept("C1").build();
-        when(thesaurusStatisticsLegacySupport.loadConceptStatistics("TH1", "fr", null, null, "", "100"))
+        when(toolboxStatisticsPersistence.loadConceptStatistics("TH1", "fr", null, null, "", "100"))
                 .thenReturn(List.of(concept));
 
         var result = service.loadConceptStatistics("TH1", "fr", null, null, "", "100");
@@ -100,7 +100,7 @@ class ThesaurusStatisticsServiceTest {
     @Test
     void loadCollections_delegatesToStatistiqueService() {
         var collection = DomaineDto.builder().id("G1").name("Domaine").build();
-        when(thesaurusStatisticsLegacySupport.loadCollections("TH1", "fr")).thenReturn(List.of(collection));
+        when(toolboxStatisticsPersistence.loadCollections("TH1", "fr")).thenReturn(List.of(collection));
 
         var collections = service.loadCollections("TH1", "fr");
 

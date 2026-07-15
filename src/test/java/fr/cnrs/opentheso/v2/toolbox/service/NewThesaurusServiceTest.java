@@ -6,7 +6,8 @@ import fr.cnrs.opentheso.v2.shared.repository.ProjectAdminQueryRepository;
 import fr.cnrs.opentheso.v2.toolbox.exception.InvalidToolboxDataException;
 import fr.cnrs.opentheso.v2.toolbox.fixtures.ToolboxTestFixtures;
 import fr.cnrs.opentheso.v2.toolbox.model.NewThesaurusRequest;
-import fr.cnrs.opentheso.v2.toolbox.session.NewThesaurusLegacySupport;
+import fr.cnrs.opentheso.v2.toolbox.persistence.ToolboxPreferencePersistence;
+import fr.cnrs.opentheso.v2.toolbox.persistence.ToolboxThesaurusPersistence;
 import org.junit.jupiter.api.Test;
 import org.junit.jupiter.api.extension.ExtendWith;
 import org.mockito.ArgumentCaptor;
@@ -31,7 +32,9 @@ class NewThesaurusServiceTest {
     @Mock
     private ProjectAdminQueryRepository projectAdminQueryRepository;
     @Mock
-    private NewThesaurusLegacySupport newThesaurusLegacySupport;
+    private ToolboxThesaurusPersistence toolboxThesaurusPersistence;
+    @Mock
+    private ToolboxPreferencePersistence toolboxPreferencePersistence;
     @Mock
     private ThesaurusDcTermRepository thesaurusDcTermRepository;
 
@@ -83,7 +86,7 @@ class NewThesaurusServiceTest {
 
     @Test
     void create_failsWhenThesaurusCannotBeCreated() {
-        when(newThesaurusLegacySupport.createThesaurusId()).thenReturn(null);
+        when(toolboxThesaurusPersistence.createThesaurusId()).thenReturn(null);
 
         assertThrows(
                 InvalidToolboxDataException.class,
@@ -93,26 +96,26 @@ class NewThesaurusServiceTest {
 
     @Test
     void create_linksProjectWhenProvided() {
-        when(newThesaurusLegacySupport.createThesaurusId()).thenReturn("th99");
+        when(toolboxThesaurusPersistence.createThesaurusId()).thenReturn("th99");
 
         String createdId = service.create(new NewThesaurusRequest("Test", "fr", 5), "admin");
 
         assertEquals("th99", createdId);
         ArgumentCaptor<fr.cnrs.opentheso.entites.UserGroupThesaurus> captor =
                 ArgumentCaptor.forClass(fr.cnrs.opentheso.entites.UserGroupThesaurus.class);
-        verify(newThesaurusLegacySupport).linkToProject(captor.capture());
+        verify(toolboxThesaurusPersistence).linkToProject(captor.capture());
         assertEquals(5, captor.getValue().getIdGroup());
-        verify(newThesaurusLegacySupport).initPreferences("th99", "fr");
-        verify(newThesaurusLegacySupport).addTranslation(any());
+        verify(toolboxPreferencePersistence).initPreferences("th99", "fr");
+        verify(toolboxThesaurusPersistence).addTranslation(any());
     }
 
     @Test
     void create_skipsProjectLinkWhenProjectIsNull() {
-        when(newThesaurusLegacySupport.createThesaurusId()).thenReturn("th100");
+        when(toolboxThesaurusPersistence.createThesaurusId()).thenReturn("th100");
 
         service.create(new NewThesaurusRequest("Test", "en", null), "creator");
 
-        verify(newThesaurusLegacySupport, never()).linkToProject(any());
-        verify(newThesaurusLegacySupport).initPreferences("th100", "en");
+        verify(toolboxThesaurusPersistence, never()).linkToProject(any());
+        verify(toolboxPreferencePersistence).initPreferences("th100", "en");
     }
 }

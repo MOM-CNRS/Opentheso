@@ -1,7 +1,7 @@
 package fr.cnrs.opentheso.v2.toolbox.edition.service;
 
 import fr.cnrs.opentheso.models.nodes.NodeIdValue;
-import fr.cnrs.opentheso.v2.toolbox.edition.session.ThesaurusEditionCsvDeprecatedExportSupport;
+import fr.cnrs.opentheso.v2.toolbox.edition.io.csv.ThesaurusCsvWriter;
 import lombok.RequiredArgsConstructor;
 import org.apache.commons.lang3.StringUtils;
 import org.primefaces.model.DefaultStreamedContent;
@@ -14,7 +14,7 @@ import java.io.ByteArrayInputStream;
 @RequiredArgsConstructor
 public class ThesaurusEditionCsvDeprecatedExportService {
 
-    private final ThesaurusEditionCsvDeprecatedExportSupport thesaurusEditionCsvDeprecatedExportSupport;
+    private final ThesaurusCsvWriter thesaurusCsvWriter;
 
     public StreamedContent exportThesaurus(
             String thesaurusId,
@@ -29,11 +29,7 @@ public class ThesaurusEditionCsvDeprecatedExportService {
             throw new IllegalStateException("Langue manquante");
         }
 
-        byte[] csvBytes = thesaurusEditionCsvDeprecatedExportSupport.writeCsvByDeprecated(
-                thesaurusId,
-                languageCode,
-                delimiter
-        );
+        byte[] csvBytes = thesaurusCsvWriter.writeCsvByDeprecated(thesaurusId, languageCode, delimiter);
         if (csvBytes == null || csvBytes.length == 0) {
             throw new IllegalStateException("Export concepts dépréciés vide");
         }

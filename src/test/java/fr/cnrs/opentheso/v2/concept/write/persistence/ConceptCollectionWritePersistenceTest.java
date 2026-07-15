@@ -21,7 +21,7 @@ import static org.mockito.Mockito.verify;
 import static org.mockito.Mockito.when;
 
 @ExtendWith(MockitoExtension.class)
-class V2NativeConceptCollectionWriteSupportTest {
+class ConceptCollectionWritePersistenceTest {
 
     @Mock
     private ConceptGroupConceptRepository conceptGroupConceptRepository;
@@ -31,7 +31,7 @@ class V2NativeConceptCollectionWriteSupportTest {
     private ConceptWritePostMutationRepository conceptWritePostMutationRepository;
 
     @InjectMocks
-    private V2NativeConceptCollectionWriteSupport support;
+    private ConceptCollectionWritePersistence support;
 
     @Test
     void addToCollection_rejectsMissingCollection() {

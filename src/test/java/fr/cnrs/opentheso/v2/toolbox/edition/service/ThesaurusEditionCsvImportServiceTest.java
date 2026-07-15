@@ -3,7 +3,7 @@ package fr.cnrs.opentheso.v2.toolbox.edition.service;
 import fr.cnrs.opentheso.v2.toolbox.edition.model.ThesaurusCsvConceptObject;
 import fr.cnrs.opentheso.v2.toolbox.edition.model.ThesaurusEditionCsvImportResult;
 import fr.cnrs.opentheso.v2.toolbox.edition.model.ThesaurusEditionCsvParseResult;
-import fr.cnrs.opentheso.v2.toolbox.edition.session.ThesaurusEditionCsvImportSupport;
+import fr.cnrs.opentheso.v2.toolbox.edition.persistence.ThesaurusEditionCsvImportPersistence;
 import fr.cnrs.opentheso.v2.toolbox.service.NewThesaurusService;
 import org.junit.jupiter.api.BeforeEach;
 import org.junit.jupiter.api.Test;
@@ -26,7 +26,7 @@ import static org.mockito.Mockito.when;
 class ThesaurusEditionCsvImportServiceTest {
 
     @Mock
-    private ThesaurusEditionCsvImportSupport thesaurusEditionCsvImportSupport;
+    private ThesaurusEditionCsvImportPersistence thesaurusEditionCsvImportPersistence;
     @Mock
     private NewThesaurusService newThesaurusService;
 
@@ -34,13 +34,13 @@ class ThesaurusEditionCsvImportServiceTest {
 
     @BeforeEach
     void setUp() {
-        service = new ThesaurusEditionCsvImportService(thesaurusEditionCsvImportSupport, newThesaurusService);
+        service = new ThesaurusEditionCsvImportService(thesaurusEditionCsvImportPersistence, newThesaurusService);
     }
 
     @Test
-    void loadCsvFile_delegatesToSupport() {
+    void loadCsvFile_delegatesToPersistence() {
         var concepts = List.<ThesaurusCsvConceptObject>of();
-        when(thesaurusEditionCsvImportSupport.parse(any(), eq(',')))
+        when(thesaurusEditionCsvImportPersistence.parse(any(), eq(',')))
                 .thenReturn(new ThesaurusEditionCsvParseResult(
                         concepts, List.of("fr"), 0, "warn", null
                 ));
@@ -52,8 +52,8 @@ class ThesaurusEditionCsvImportServiceTest {
     }
 
     @Test
-    void loadCsvFile_returnsErrorFromSupport() {
-        when(thesaurusEditionCsvImportSupport.parse(any(), eq(';')))
+    void loadCsvFile_returnsErrorFromPersistence() {
+        when(thesaurusEditionCsvImportPersistence.parse(any(), eq(';')))
                 .thenReturn(ThesaurusEditionCsvParseResult.error("bad csv"));
 
         var result = service.loadCsvFile("x".getBytes(), ';');
@@ -63,8 +63,8 @@ class ThesaurusEditionCsvImportServiceTest {
     }
 
     @Test
-    void importNewThesaurus_surfacesSupportFailure() {
-        when(thesaurusEditionCsvImportSupport.importNewThesaurus(
+    void importNewThesaurus_surfacesPersistenceFailure() {
+        when(thesaurusEditionCsvImportPersistence.importNewThesaurus(
                 any(), any(), any(), any(), anyInt(), any(), any(), any()
         )).thenReturn(ThesaurusEditionCsvImportResult.error("failed"));
 
@@ -75,7 +75,7 @@ class ThesaurusEditionCsvImportServiceTest {
 
     @Test
     void importNewThesaurus_returnsCreatedThesaurusId() {
-        when(thesaurusEditionCsvImportSupport.importNewThesaurus(
+        when(thesaurusEditionCsvImportPersistence.importNewThesaurus(
                 any(), any(), any(), any(), anyInt(), any(), any(), any()
         )).thenReturn(new ThesaurusEditionCsvImportResult("TH42", 3, ""));
 

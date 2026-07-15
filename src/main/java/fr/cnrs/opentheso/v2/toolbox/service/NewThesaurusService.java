@@ -1,23 +1,25 @@
 package fr.cnrs.opentheso.v2.toolbox.service;
 
-import fr.cnrs.opentheso.entites.ThesaurusDcTerm;
 import fr.cnrs.opentheso.entites.UserGroupThesaurus;
-import fr.cnrs.opentheso.models.concept.DCMIResource;
-import fr.cnrs.opentheso.models.nodes.DcElement;
 import fr.cnrs.opentheso.repositories.ThesaurusDcTermRepository;
-import fr.cnrs.opentheso.v2.toolbox.session.NewThesaurusLegacySupport;
 import fr.cnrs.opentheso.v2.shared.repository.EditionQueryRepository;
 import fr.cnrs.opentheso.v2.shared.repository.ProjectAdminQueryRepository;
 import fr.cnrs.opentheso.v2.toolbox.exception.InvalidToolboxDataException;
 import fr.cnrs.opentheso.v2.toolbox.mapper.ToolboxMapper;
 import fr.cnrs.opentheso.v2.toolbox.model.NewThesaurusFormOptions;
 import fr.cnrs.opentheso.v2.toolbox.model.NewThesaurusRequest;
+import fr.cnrs.opentheso.v2.toolbox.persistence.ToolboxPreferencePersistence;
+import fr.cnrs.opentheso.v2.toolbox.persistence.ToolboxThesaurusPersistence;
 import lombok.RequiredArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
 import org.apache.commons.lang3.StringUtils;
 import org.springframework.dao.DataIntegrityViolationException;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
+
+import fr.cnrs.opentheso.entites.ThesaurusDcTerm;
+import fr.cnrs.opentheso.models.concept.DCMIResource;
+import fr.cnrs.opentheso.models.nodes.DcElement;
 
 import java.text.SimpleDateFormat;
 import java.util.Date;
@@ -29,7 +31,8 @@ public class NewThesaurusService {
 
     private final EditionQueryRepository editionQueryRepository;
     private final ProjectAdminQueryRepository projectAdminQueryRepository;
-    private final NewThesaurusLegacySupport newThesaurusLegacySupport;
+    private final ToolboxThesaurusPersistence toolboxThesaurusPersistence;
+    private final ToolboxPreferencePersistence toolboxPreferencePersistence;
     private final ThesaurusDcTermRepository thesaurusDcTermRepository;
 
     @Transactional(readOnly = true)
@@ -49,7 +52,7 @@ public class NewThesaurusService {
     public String create(NewThesaurusRequest request, String creatorName) {
         validate(request);
 
-        String thesaurusId = newThesaurusLegacySupport.createThesaurusId();
+        String thesaurusId = toolboxThesaurusPersistence.createThesaurusId();
         if (thesaurusId == null) {
             throw new InvalidToolboxDataException("Erreur pendant la création");
         }
@@ -60,10 +63,10 @@ public class NewThesaurusService {
         thesaurus.setId_thesaurus(thesaurusId);
         thesaurus.setTitle(request.title());
         thesaurus.setLanguage(request.language());
-        newThesaurusLegacySupport.addTranslation(thesaurus);
+        toolboxThesaurusPersistence.addTranslation(thesaurus);
 
         if (request.projectId() != null) {
-            newThesaurusLegacySupport.linkToProject(
+            toolboxThesaurusPersistence.linkToProject(
                     UserGroupThesaurus.builder()
                             .idThesaurus(thesaurusId)
                             .idGroup(request.projectId())
@@ -71,7 +74,7 @@ public class NewThesaurusService {
             );
         }
 
-        newThesaurusLegacySupport.initPreferences(thesaurusId, request.language());
+        toolboxPreferencePersistence.initPreferences(thesaurusId, request.language());
         createAndSaveDcTerm(thesaurusId, DCMIResource.CREATOR, creatorName, "", "string");
         createAndSaveDcTerm(thesaurusId, DCMIResource.TITLE, request.title(), request.language(), "string");
         createAndSaveDcTerm(thesaurusId, DCMIResource.LANGUAGE, request.language(), "", "string");

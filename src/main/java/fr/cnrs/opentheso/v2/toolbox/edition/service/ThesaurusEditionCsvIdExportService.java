@@ -1,7 +1,7 @@
 package fr.cnrs.opentheso.v2.toolbox.edition.service;
 
 import fr.cnrs.opentheso.models.nodes.NodeIdValue;
-import fr.cnrs.opentheso.v2.toolbox.edition.session.ThesaurusEditionCsvIdExportSupport;
+import fr.cnrs.opentheso.v2.toolbox.edition.io.csv.ThesaurusCsvWriter;
 import lombok.RequiredArgsConstructor;
 import org.apache.commons.lang3.StringUtils;
 import org.primefaces.model.DefaultStreamedContent;
@@ -15,7 +15,7 @@ import java.util.List;
 @RequiredArgsConstructor
 public class ThesaurusEditionCsvIdExportService {
 
-    private final ThesaurusEditionCsvIdExportSupport thesaurusEditionCsvIdExportSupport;
+    private final ThesaurusCsvWriter thesaurusCsvWriter;
 
     public StreamedContent exportThesaurus(
             String thesaurusId,
@@ -33,7 +33,7 @@ public class ThesaurusEditionCsvIdExportService {
         }
 
         List<String> groupIds = filterByGroup ? selectedGroupIds : null;
-        byte[] csvBytes = thesaurusEditionCsvIdExportSupport.writeCsvById(thesaurusId, languageCode, groupIds, delimiter);
+        byte[] csvBytes = thesaurusCsvWriter.writeCsvById(thesaurusId, languageCode, groupIds, delimiter);
         if (csvBytes == null || csvBytes.length == 0) {
             throw new IllegalStateException("Export CSV par ID vide");
         }

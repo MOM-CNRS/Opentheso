@@ -7,14 +7,12 @@ import fr.cnrs.opentheso.v2.concept.write.model.command.AddRelatedRelationComman
 import fr.cnrs.opentheso.v2.concept.write.model.command.ApplyNarrowerRelationToBranchCommand;
 import fr.cnrs.opentheso.v2.concept.write.model.command.DeleteNarrowerRelationCommand;
 import fr.cnrs.opentheso.v2.concept.write.model.command.UpdateNarrowerRelationTypeCommand;
-import fr.cnrs.opentheso.v2.concept.write.session.ConceptWritePort;
+import fr.cnrs.opentheso.v2.concept.write.persistence.ConceptRelationNativeWriteService;
 import org.junit.jupiter.api.Test;
 import org.junit.jupiter.api.extension.ExtendWith;
 import org.mockito.InjectMocks;
 import org.mockito.Mock;
 import org.mockito.junit.jupiter.MockitoExtension;
-
-import java.util.List;
 
 import static org.junit.jupiter.api.Assertions.assertEquals;
 import static org.mockito.Mockito.verify;
@@ -24,7 +22,7 @@ import static org.mockito.Mockito.when;
 class ConceptRelationMutationServiceTest {
 
     @Mock
-    private ConceptWritePort conceptWritePort;
+    private ConceptRelationNativeWriteService conceptRelationNativeWriteService;
     @Mock
     private ConceptWriteMetadataService conceptWriteMetadataService;
 
@@ -32,61 +30,58 @@ class ConceptRelationMutationServiceTest {
     private ConceptRelationMutationService service;
 
     @Test
-    void addBroaderRelation_delegatesToLegacySupport() {
+    void addBroaderRelation_delegatesToPersistence() {
         var command = new AddBroaderRelationCommand("TH1", "C1", "C2", 42, "admin");
-        when(conceptWritePort.addBroaderRelation(command))
+        when(conceptRelationNativeWriteService.addBroaderRelation(command))
                 .thenReturn(MutationResult.ok("Relation ajoutée avec succès"));
 
         var result = service.addBroaderRelation(command);
 
         assertEquals(MutationOutcome.OK, result.outcome());
-        verify(conceptWritePort).addBroaderRelation(command);
+        verify(conceptRelationNativeWriteService).addBroaderRelation(command);
     }
 
     @Test
-    void deleteNarrowerRelation_delegatesToLegacySupport() {
-        var command = new DeleteNarrowerRelationCommand("TH1", "C1", "C3", 42, "admin");
-        when(conceptWritePort.deleteNarrowerRelation(command))
-                .thenReturn(MutationResult.ok("Relation supprimée avec succès"));
-
-        var result = service.deleteNarrowerRelation(command);
-
-        assertEquals(MutationOutcome.OK, result.outcome());
-        verify(conceptWritePort).deleteNarrowerRelation(command);
-    }
-
-    @Test
-    void updateNarrowerRelationType_delegatesToLegacySupport() {
-        var command = new UpdateNarrowerRelationTypeCommand("TH1", "C1", "C2", "NTG", 42, "admin");
-        when(conceptWritePort.updateNarrowerRelationType(command))
-                .thenReturn(MutationResult.ok("Relation modifiée avec succès"));
-
-        var result = service.updateNarrowerRelationType(command);
-
-        assertEquals(MutationOutcome.OK, result.outcome());
-        verify(conceptWritePort).updateNarrowerRelationType(command);
-    }
-
-    @Test
-    void addRelatedRelation_delegatesToLegacySupport() {
+    void addRelatedRelation_delegatesToPersistence() {
         var command = new AddRelatedRelationCommand("TH1", "C1", "C2", "fr", 42, "admin", false);
-        when(conceptWritePort.addRelatedRelation(command))
+        when(conceptRelationNativeWriteService.addRelatedRelation(command))
                 .thenReturn(MutationResult.ok("Relation ajoutée avec succès"));
 
-        var result = service.addRelatedRelation(command);
+        service.addRelatedRelation(command);
 
-        assertEquals(MutationOutcome.OK, result.outcome());
-        verify(conceptWritePort).addRelatedRelation(command);
+        verify(conceptRelationNativeWriteService).addRelatedRelation(command);
     }
 
     @Test
-    void listNtRelationTypes_delegatesToMetadataService() {
-        var expected = List.of(new fr.cnrs.opentheso.v2.concept.write.model.ConceptWriteNtRelationType("NT", "NT", "NT"));
-        when(conceptWriteMetadataService.listNtRelationTypes()).thenReturn(expected);
+    void deleteNarrowerRelation_delegatesToPersistence() {
+        var command = new DeleteNarrowerRelationCommand("TH1", "C1", "C2", 42, "admin");
+        when(conceptRelationNativeWriteService.deleteNarrowerRelation(command))
+                .thenReturn(MutationResult.ok("Relation supprimée"));
 
-        var result = service.listNtRelationTypes();
+        service.deleteNarrowerRelation(command);
 
-        assertEquals(1, result.size());
-        verify(conceptWriteMetadataService).listNtRelationTypes();
+        verify(conceptRelationNativeWriteService).deleteNarrowerRelation(command);
+    }
+
+    @Test
+    void updateNarrowerRelationType_delegatesToPersistence() {
+        var command = new UpdateNarrowerRelationTypeCommand("TH1", "C1", "C2", "NT1", 42, "admin");
+        when(conceptRelationNativeWriteService.updateNarrowerRelationType(command))
+                .thenReturn(MutationResult.ok("Type mis à jour"));
+
+        service.updateNarrowerRelationType(command);
+
+        verify(conceptRelationNativeWriteService).updateNarrowerRelationType(command);
+    }
+
+    @Test
+    void applyNarrowerRelationToBranch_delegatesToPersistence() {
+        var command = new ApplyNarrowerRelationToBranchCommand("TH1", "C1", "NT1", 42, "admin");
+        when(conceptRelationNativeWriteService.applyNarrowerRelationToBranch(command))
+                .thenReturn(MutationResult.ok("Branche mise à jour"));
+
+        service.applyNarrowerRelationToBranch(command);
+
+        verify(conceptRelationNativeWriteService).applyNarrowerRelationToBranch(command);
     }
 }

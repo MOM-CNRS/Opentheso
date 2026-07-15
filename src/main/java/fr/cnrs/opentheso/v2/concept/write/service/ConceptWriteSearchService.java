@@ -2,7 +2,7 @@ package fr.cnrs.opentheso.v2.concept.write.service;
 
 import fr.cnrs.opentheso.v2.concept.write.model.ConceptSearchSuggestion;
 import fr.cnrs.opentheso.v2.concept.write.model.ConceptWriteCollection;
-import fr.cnrs.opentheso.v2.concept.write.session.ConceptWriteSearchPort;
+import fr.cnrs.opentheso.v2.concept.write.persistence.ConceptWriteSearchPersistence;
 import lombok.RequiredArgsConstructor;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
@@ -13,7 +13,7 @@ import java.util.List;
 @RequiredArgsConstructor
 public class ConceptWriteSearchService {
 
-    private final ConceptWriteSearchPort conceptWriteSearchPort;
+    private final ConceptWriteSearchPersistence conceptWriteSearchPersistence;
 
     @Transactional(readOnly = true)
     public List<ConceptSearchSuggestion> autocompleteRelationTarget(
@@ -22,7 +22,7 @@ public class ConceptWriteSearchService {
             String thesaurusId,
             boolean includeDeprecated
     ) {
-        return conceptWriteSearchPort.autocompleteRelationTarget(query, lang, thesaurusId, includeDeprecated);
+        return conceptWriteSearchPersistence.autocompleteRelationTarget(query, lang, thesaurusId, includeDeprecated);
     }
 
     @Transactional(readOnly = true)
@@ -31,7 +31,7 @@ public class ConceptWriteSearchService {
             String lang,
             String thesaurusId
     ) {
-        return conceptWriteSearchPort.autocompleteReplacedByTarget(query, lang, thesaurusId);
+        return conceptWriteSearchPersistence.autocompleteReplacedByTarget(query, lang, thesaurusId);
     }
 
     @Transactional(readOnly = true)
@@ -40,6 +40,6 @@ public class ConceptWriteSearchService {
             String lang,
             String thesaurusId
     ) {
-        return conceptWriteSearchPort.autocompleteCollection(query, lang, thesaurusId);
+        return conceptWriteSearchPersistence.autocompleteCollection(query, lang, thesaurusId);
     }
 }

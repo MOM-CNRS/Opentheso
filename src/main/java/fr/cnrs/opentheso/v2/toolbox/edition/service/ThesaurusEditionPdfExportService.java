@@ -1,9 +1,10 @@
 package fr.cnrs.opentheso.v2.toolbox.edition.service;
 
 import fr.cnrs.opentheso.models.nodes.NodeIdValue;
+import fr.cnrs.opentheso.v2.toolbox.edition.io.pdf.ThesaurusPdfExportType;
+import fr.cnrs.opentheso.v2.toolbox.edition.io.pdf.ThesaurusPdfWriter;
 import fr.cnrs.opentheso.v2.toolbox.edition.model.ThesaurusEditionExportOptions;
 import fr.cnrs.opentheso.v2.toolbox.edition.persistence.ThesaurusSkosDocumentBuilder;
-import fr.cnrs.opentheso.v2.toolbox.edition.session.ThesaurusEditionPdfExportSupport;
 import lombok.RequiredArgsConstructor;
 import org.apache.commons.lang3.StringUtils;
 import org.primefaces.model.DefaultStreamedContent;
@@ -17,7 +18,7 @@ import java.io.ByteArrayInputStream;
 public class ThesaurusEditionPdfExportService {
 
     private final ThesaurusSkosDocumentBuilder thesaurusSkosDocumentBuilder;
-    private final ThesaurusEditionPdfExportSupport thesaurusEditionPdfExportSupport;
+    private final ThesaurusPdfWriter thesaurusPdfWriter;
 
     public StreamedContent exportThesaurus(
             String thesaurusId,
@@ -39,11 +40,14 @@ public class ThesaurusEditionPdfExportService {
                 thesaurusId,
                 exportOptions == null ? ThesaurusEditionExportOptions.full() : exportOptions
         );
-        byte[] pdfBytes = thesaurusEditionPdfExportSupport.createPdf(
+        ThesaurusPdfExportType exportType = hierarchical
+                ? ThesaurusPdfExportType.HIERARCHIQUE
+                : ThesaurusPdfExportType.ALPHABETIQUE;
+        byte[] pdfBytes = thesaurusPdfWriter.createPdfFile(
                 document,
                 languageCode1,
                 StringUtils.defaultString(languageCode2),
-                hierarchical,
+                exportType,
                 includeImages
         );
         if (pdfBytes == null || pdfBytes.length == 0) {

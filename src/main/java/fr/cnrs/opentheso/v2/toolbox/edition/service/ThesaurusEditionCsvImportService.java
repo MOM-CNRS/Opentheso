@@ -1,7 +1,7 @@
 package fr.cnrs.opentheso.v2.toolbox.edition.service;
 
 import fr.cnrs.opentheso.v2.toolbox.edition.model.ThesaurusCsvConceptObject;
-import fr.cnrs.opentheso.v2.toolbox.edition.session.ThesaurusEditionCsvImportSupport;
+import fr.cnrs.opentheso.v2.toolbox.edition.persistence.ThesaurusEditionCsvImportPersistence;
 import fr.cnrs.opentheso.v2.toolbox.model.NewThesaurusFormOptions;
 import fr.cnrs.opentheso.v2.toolbox.service.NewThesaurusService;
 import lombok.RequiredArgsConstructor;
@@ -14,11 +14,11 @@ import java.util.List;
 @RequiredArgsConstructor
 public class ThesaurusEditionCsvImportService {
 
-    private final ThesaurusEditionCsvImportSupport thesaurusEditionCsvImportSupport;
+    private final ThesaurusEditionCsvImportPersistence thesaurusEditionCsvImportPersistence;
     private final NewThesaurusService newThesaurusService;
 
     public CsvLoadResult loadCsvFile(byte[] content, char delimiter) {
-        var result = thesaurusEditionCsvImportSupport.parse(content, delimiter);
+        var result = thesaurusEditionCsvImportPersistence.parse(content, delimiter);
         return new CsvLoadResult(
                 result.conceptObjects(),
                 result.languages(),
@@ -48,7 +48,7 @@ public class ThesaurusEditionCsvImportService {
             }
         }
 
-        var result = thesaurusEditionCsvImportSupport.importNewThesaurus(
+        var result = thesaurusEditionCsvImportPersistence.importNewThesaurus(
                 thesaurusName,
                 StringUtils.defaultIfBlank(sourceLang, "fr"),
                 StringUtils.defaultIfBlank(formatDate, "yyyy-MM-dd"),

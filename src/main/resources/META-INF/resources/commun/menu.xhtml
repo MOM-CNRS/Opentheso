@@ -20,62 +20,25 @@
 
             <hr class="sidebar-divider my-0"/>
 
-            <!-- Debut Thesaurus -->
             <li class="nav-item" style="margin-top: 20px;">
-                <a id="thesoButton1" class="nav-link collapsed" href="#" data-toggle="collapse" data-target="#collapseThesaurus"
-                   aria-expanded="true" aria-controls="collapseThesaurus" style="display: none">
-                    <i class="fa-solid fa-folder-tree" style="font-size: 1rem"/>
-                    <span style="color: #fff; text-decoration: none; font-size: 12px;">#{langueBean.getMsg('menu.thesaurus')}</span>
-                </a>
-                <a id="thesoButton2" class="nav-link collapsed" href="#" data-toggle="collapse" data-target="#collapseThesaurus"
-                   aria-expanded="true" aria-controls="collapseThesaurus" title="#{langueBean.getMsg('menu.thesaurus')}">
+                <p:commandLink class="nav-link collapsed" actionListener="#{menuBean.redirectToThesaurus()}"
+                               process="@this" title="#{langueBean.getMsg('menu.thesaurus')}">
                     <i class="fa-solid fa-folder-tree" style="font-size: 1.2rem"/>
-                </a>
-                <div id="collapseThesaurus" class="collapse" aria-labelledby="headingThesaurus" data-parent="#accordionSidebar">
-                    <div class="bg-white py-2 collapse-inner rounded">
-                        <p:commandLink class="collapse-item" actionListener="#{menuBean.redirectToThesaurus()}"
-                                       style="font-size: 12px;" process="@this">#{langueBean.getMsg('menu.thesaurus')}</p:commandLink>
-                        <p:commandLink class="collapse-item" actionListener="#{menuBean.redirectToThesaurusV2Page()}"
-                                       style="font-size: 12px;" process="@this">#{langueBean.getMsg('menu.thesaurus')} (v2)</p:commandLink>
-                    </div>
-                </div>
+                </p:commandLink>
             </li>
-            <!-- Fin Thesaurus -->
-            
 
-            <!-- Debut Candidat -->
             <h:panelGroup rendered="#{(currentUser.nodeUser != null and selectedThesaurus.currentIdTheso != null) and
                                       (currentUser.hasRoleAsContributor)}" >
                 <li class="nav-item">
-                    <a id="candidatButton1" class="nav-link collapsed" href="#" data-toggle="collapse" data-target="#collapseCandidat"
-                       aria-expanded="true" aria-controls="collapseCandidat" style="display: none">
-                        <i class="fa-solid fa-plus" style="font-size: 1rem" />
-                        <span style="color: #fff; text-decoration: none; font-size: 12px;">#{langueBean.getMsg('candidat.titre')}</span>
-                    </a>
-                    <a id="candidatButton2" class="nav-link collapsed" href="#" data-toggle="collapse" data-target="#collapseCandidat"
-                       aria-expanded="true" aria-controls="collapseCandidat" title="#{langueBean.getMsg('candidat.titre')}">
+                    <p:commandLink class="nav-link collapsed" actionListener="#{menuBean.redirectToCandidatPage()}"
+                                   process="@this" title="#{langueBean.getMsg('candidat.titre')}">
                         <i class="fa-solid fa-plus" style="font-size: 1.2rem" />
-                    </a>
-                    <div id="collapseCandidat" class="collapse" aria-labelledby="headingCandidat" data-parent="#accordionSidebar">
-                        <div class="bg-white py-2 collapse-inner rounded">
-                            <p:commandLink class="collapse-item" actionListener="#{menuBean.redirectToCandidatPage()}"
-                                           process="@this" style="font-size: 12px;">#{langueBean.getMsg('candidat.titre')}</p:commandLink>
-                            <p:commandLink class="collapse-item" actionListener="#{menuBean.redirectToCandidatV2Page()}"
-                                           process="@this" style="font-size: 12px;">#{langueBean.getMsg('candidat.titre')} (v2)</p:commandLink>
-                        </div>
-                    </div>
+                    </p:commandLink>
                 </li>
             </h:panelGroup>
-            <!-- Fin candidat -->
 
-            <!-- Debut profile -->
             <h:panelGroup rendered="#{currentUser.nodeUser != null}" > 
                 <li class="nav-item">
-                    <a id="profileButton1" class="nav-link collapsed" href="#" data-toggle="collapse" data-target="#collapseTwo"
-                       aria-expanded="true" aria-controls="collapseTwo" style="display: none">
-                        <i class="fas fa-fw fa-user" style="font-size: 1rem" />
-                        <span style="color: #fff; text-decoration: none; font-size: 12px;">#{langueBean.getMsg('menu.profile')}</span>
-                    </a>
                     <a id="profileButton2" class="nav-link collapsed" href="#" data-toggle="collapse" data-target="#collapseTwo"
                        aria-expanded="true" aria-controls="collapseTwo" title="#{langueBean.getMsg('menu.profile')}">
                         <i class="fas fa-fw fa-user" style="font-size: 1.2rem" />
@@ -85,59 +48,31 @@
                             <p:commandLink class="collapse-item" actionListener="#{menuBean.redirectToMyProfilePage()}" 
                                            process="@this" style="font-size: 12px;">#{langueBean.getMsg('profile.my_account')}
                             </p:commandLink>
-                            <p:commandLink class="collapse-item" actionListener="#{menuBean.redirectToMyProfileV2Page()}"
-                                           process="@this" style="font-size: 12px;">#{langueBean.getMsg('profile.my_account')} (v2)
-                            </p:commandLink>
                             <p:commandLink rendered="#{(currentUser.nodeUser != null) and (currentUser.allAuthorizedProjectAsAdmin.size() > 0 or currentUser.hasRoleAsAdmin)}"
                                            class="collapse-item" actionListener="#{menuBean.redirectToMesProjectsPage()}"
                                            style="font-size: 12px;" process="@this">#{langueBean.getMsg('profile.my_projects_users')}
                             </p:commandLink>
-                            <p:commandLink rendered="#{(currentUser.nodeUser != null) and (currentUser.allAuthorizedProjectAsAdmin.size() > 0 or currentUser.hasRoleAsAdmin)}"
-                                           class="collapse-item" actionListener="#{menuBean.redirectToMesProjectsV2Page()}"
-                                           style="font-size: 12px;" process="@this">#{langueBean.getMsg('profile.my_projects_users')} (v2)
+                            <hr class="sidebar-divider"/>
+                            <p:commandLink rendered="#{(currentUser.nodeUser != null) and (currentUser.hasRoleAsSuperAdmin)}"
+                                           class="collapse-item" actionListener="#{menuBean.redirectToUsersPage()}" 
+                                           style="font-size: 12px;" process="@this">#{langueBean.getMsg('profile.tooltip_all_users')}
                             </p:commandLink>
-                            <hr class="sidebar-divider">
-                                <p:commandLink rendered="#{(currentUser.nodeUser != null) and (currentUser.hasRoleAsSuperAdmin)}"
-                                               class="collapse-item" actionListener="#{menuBean.redirectToUsersPage()}" 
-                                               style="font-size: 12px;" process="@this">#{langueBean.getMsg('profile.tooltip_all_users')}
-                                </p:commandLink>
-                                <p:commandLink rendered="#{(currentUser.nodeUser != null) and (currentUser.hasRoleAsSuperAdmin)}"
-                                               class="collapse-item" actionListener="#{menuBean.redirectToUsersV2Page()}"
-                                               style="font-size: 12px;" process="@this">#{langueBean.getMsg('profile.tooltip_all_users')} (v2)
-                                </p:commandLink>
-                                <p:commandLink rendered="#{(currentUser.nodeUser != null) and (currentUser.hasRoleAsSuperAdmin)}"
-                                               class="collapse-item" actionListener="#{menuBean.redirectToProjetsPage()}"
-                                               style="font-size: 12px;" process="@this">#{langueBean.getMsg('profile.all_projects')}</p:commandLink>
-                                <p:commandLink rendered="#{(currentUser.nodeUser != null) and (currentUser.hasRoleAsSuperAdmin)}"
-                                               class="collapse-item" actionListener="#{menuBean.redirectToProjectsV2Page()}"
-                                               style="font-size: 12px;" process="@this">#{langueBean.getMsg('profile.all_projects')} (v2)
-                                </p:commandLink>
-                                <p:commandLink rendered="#{(currentUser.nodeUser != null) and (currentUser.hasRoleAsSuperAdmin)}"
-                                               class="collapse-item" actionListener="#{menuBean.redirectToThesorusPage()}"
-                                               style="font-size: 12px;" process="@this">#{langueBean.getMsg('profile.all_thesauri')}
-                                </p:commandLink>
-                                <p:commandLink rendered="#{(currentUser.nodeUser != null) and (currentUser.hasRoleAsSuperAdmin)}"
-                                               class="collapse-item" actionListener="#{menuBean.redirectToThesauriV2Page()}"
-                                               style="font-size: 12px;" process="@this">#{langueBean.getMsg('profile.all_thesauri')} (v2)
-                                </p:commandLink>
-                            </hr>
+                            <p:commandLink rendered="#{(currentUser.nodeUser != null) and (currentUser.hasRoleAsSuperAdmin)}"
+                                           class="collapse-item" actionListener="#{menuBean.redirectToProjetsPage()}"
+                                           style="font-size: 12px;" process="@this">#{langueBean.getMsg('profile.all_projects')}
+                            </p:commandLink>
+                            <p:commandLink rendered="#{(currentUser.nodeUser != null) and (currentUser.hasRoleAsSuperAdmin)}"
+                                           class="collapse-item" actionListener="#{menuBean.redirectToThesorusPage()}"
+                                           style="font-size: 12px;" process="@this">#{langueBean.getMsg('profile.all_thesauri')}
+                            </p:commandLink>
                         </div>
                     </div>
                 </li>
             </h:panelGroup>
-            <!-- Fin profil -->
 
-            <!-- Debut boite à outils -->
             <h:panelGroup rendered="#{(currentUser.nodeUser != null) and 
                                       (currentUser.allAuthorizedProjectAsAdmin.size() > 0 or currentUser.hasRoleAsAdmin)}" >
                 <li class="nav-item">
-                    <a id="toolboxButton1" class="nav-link collapsed" href="#" data-toggle="collapse" data-target="#collapseUtilities"
-                       aria-expanded="true" aria-controls="collapseUtilities" style="; display: none">
-                        <i class="fas fa-fw fa-briefcase" style="font-size: 1rem;" />
-                        <span style="color: #fff; text-decoration: none; font-size: 12px;">
-                            #{langueBean.getMsg('menu.toolbox')}
-                        </span>
-                    </a>
                     <a id="toolboxButton2" class="nav-link collapsed" href="#" data-toggle="collapse" data-target="#collapseUtilities"
                        aria-expanded="true" aria-controls="collapseUtilities" title="#{langueBean.getMsg('menu.toolbox')}">
                         <i class="fas fa-fw fa-briefcase" style="font-size: 1.2rem" />
@@ -146,99 +81,60 @@
                          data-parent="#accordionSidebar">
                         <div class="bg-white py-2 collapse-inner rounded">
                             <p:commandLink class="collapse-item" actionListener="#{menuBean.redirectToEditionPage()}" 
-                                           style="font-size: 12px;" process="@this">#{langueBean.getMsg('menu.edition')}</p:commandLink>
-                            <hr class="sidebar-divider" style="margin: 5px 0"/>
-                            <p:commandLink class="collapse-item" actionListener="#{menuBean.redirectToEditionV2Page()}"
-                                           style="font-size: 12px;" process="@this">#{langueBean.getMsg('menu.edition')} (v2)</p:commandLink>
-
+                                           style="font-size: 12px;" process="@this">#{langueBean.getMsg('menu.edition')}
+                            </p:commandLink>
                             <p:commandLink rendered="#{currentUser.hasRoleAsSuperAdmin}"
                                            class="collapse-item" actionListener="#{menuBean.redirectToFlagPage()}"
-                                           style="font-size: 12px;" process="@this">#{langueBean.getMsg('toolbox.manageFlags')}</p:commandLink>
-                            <p:commandLink rendered="#{currentUser.hasRoleAsSuperAdmin}"
-                                           class="collapse-item" actionListener="#{menuBean.redirectToFlagV2Page()}"
-                                           style="font-size: 12px;" process="@this">#{langueBean.getMsg('toolbox.manageFlags')} (v2)</p:commandLink>
-
+                                           style="font-size: 12px;" process="@this">#{langueBean.getMsg('toolbox.manageFlags')}
+                            </p:commandLink>
                             <p:commandLink rendered="#{selectedThesaurus.currentIdTheso != null}"
                                            class="collapse-item" actionListener="#{menuBean.redirectToAtelierPage()}"
-                                           style="font-size: 12px;" process="@this">#{langueBean.getMsg('menu.thesaurusWorkshop')}</p:commandLink>
-                            <p:commandLink rendered="#{selectedThesaurus.currentIdTheso != null}"
-                                           class="collapse-item" actionListener="#{menuBean.redirectToWorkshopV2Page()}"
-                                           style="font-size: 12px;" process="@this">#{langueBean.getMsg('menu.thesaurusWorkshop')} (v2)</p:commandLink>
+                                           style="font-size: 12px;" process="@this">#{langueBean.getMsg('menu.thesaurusWorkshop')}
+                            </p:commandLink>
                             <p:commandLink rendered="#{selectedThesaurus.currentIdTheso != null}"
                                            class="collapse-item" actionListener="#{menuBean.redirectToMaintenancePage()}" 
-                                           style="font-size: 12px;"  process="@this">#{langueBean.getMsg('menu.service')}</p:commandLink>
-                            <p:commandLink rendered="#{selectedThesaurus.currentIdTheso != null}"
-                                           class="collapse-item" actionListener="#{menuBean.redirectToMaintenanceV2Page()}" 
-                                           style="font-size: 12px;"  process="@this">#{langueBean.getMsg('menu.service')} (v2)</p:commandLink>
+                                           style="font-size: 12px;" process="@this">#{langueBean.getMsg('menu.service')}
+                            </p:commandLink>
                             <p:commandLink rendered="#{selectedThesaurus.currentIdTheso != null}"
                                            class="collapse-item" actionListener="#{menuBean.redirectToStatistiquePage()}" 
-                                           style="font-size: 12px;"  process="@this">#{langueBean.getMsg('statistique.statistic')}</p:commandLink>
-                            <p:commandLink rendered="#{selectedThesaurus.currentIdTheso != null}"
-                                           class="collapse-item" actionListener="#{menuBean.redirectToStatisticsV2Page()}" 
-                                           style="font-size: 12px;"  process="@this">#{langueBean.getMsg('statistique.statistic')} (v2)</p:commandLink>
+                                           style="font-size: 12px;" process="@this">#{langueBean.getMsg('statistique.statistic')}
+                            </p:commandLink>
                         </div>
                     </div>
                 </li>
             </h:panelGroup>
-            <!-- Fin boite à outils -->
 
-            <!-- Debut setting -->
             <h:panelGroup rendered="#{(currentUser.nodeUser != null) and (selectedThesaurus.currentIdTheso != null)
                                       and (currentUser.hasRoleAsAdmin)}" >
                 <li class="nav-item">
-                    <a id="settingButton1" class="nav-link collapsed" href="#" data-toggle="collapse" data-target="#collapseParams"
-                       aria-expanded="true" aria-controls="collapseParams" style="display: none">
-                        <i class="fas fa-fw fa-wrench" style="font-size: 1rem;" />
-                        <span style="color: #fff; text-decoration: none; font-size: 12px;">
-                            #{langueBean.getMsg('menu.setting')}
-                        </span>
-                    </a>
                     <a id="settingButton2" class="nav-link collapsed" href="#" data-toggle="collapse" data-target="#collapseParams"
-                       aria-expanded="true" aria-controls="collapseParams"  title="#{langueBean.getMsg('menu.setting')}">
+                       aria-expanded="true" aria-controls="collapseParams" title="#{langueBean.getMsg('menu.setting')}">
                         <i class="fas fa-fw fa-wrench" style="font-size: 1.2rem" />
                     </a>
                     <div id="collapseParams" class="collapse" aria-labelledby="headingUtilities"
                          data-parent="#accordionSidebar">
                         <div class="bg-white py-2 collapse-inner rounded">
                             <p:commandLink class="collapse-item" actionListener="#{menuBean.redirectToPreferencePage()}" 
-                                           style="font-size: 12px;" process="@this">#{langueBean.getMsg('menu.preference')}</p:commandLink>
+                                           style="font-size: 12px;" process="@this">#{langueBean.getMsg('menu.preference')}
+                            </p:commandLink>
                             <p:commandLink class="collapse-item" actionListener="#{menuBean.redirectToIdetifiantPage()}" 
-                                           style="font-size: 12px;" process="@this">#{langueBean.getMsg('menu.identifier')}</p:commandLink>
+                                           style="font-size: 12px;" process="@this">#{langueBean.getMsg('menu.identifier')}
+                            </p:commandLink>
                             <p:commandLink class="collapse-item" actionListener="#{menuBean.redirectToCorpusPage()}" 
-                                           style="font-size: 12px;" process="@this">#{langueBean.getMsg('menu.corpus')}</p:commandLink>
-                            <hr class="sidebar-divider" style="margin: 5px 0"/>
-                            <p:commandLink class="collapse-item" actionListener="#{menuBean.redirectToPreferenceV2Page()}"
-                                           style="font-size: 12px;" process="@this">#{langueBean.getMsg('menu.preference')} (v2)</p:commandLink>
-                            <p:commandLink class="collapse-item" actionListener="#{menuBean.redirectToIdentifierV2Page()}"
-                                           style="font-size: 12px;" process="@this">#{langueBean.getMsg('menu.identifier')} (v2)</p:commandLink>
-                            <p:commandLink class="collapse-item" actionListener="#{menuBean.redirectToCorpusV2Page()}"
-                                           style="font-size: 12px;" process="@this">#{langueBean.getMsg('menu.corpus')} (v2)</p:commandLink>
+                                           style="font-size: 12px;" process="@this">#{langueBean.getMsg('menu.corpus')}
+                            </p:commandLink>
                         </div>
                     </div>
                 </li>
                 <hr class="sidebar-divider"/>
             </h:panelGroup>
             
-            <!-- Affichage module graphe -->
-           <h:panelGroup rendered="#{(currentUser.nodeUser != null)}">
+            <h:panelGroup rendered="#{(currentUser.nodeUser != null)}">
                 <li class="nav-item">
-                    <a id="graphButton1" class="nav-link collapsed" href="#" data-toggle="collapse" data-target="#collapseGraph"
-                       aria-expanded="true" aria-controls="collapseGraph" style="display: none">
-                        <i class="fa-solid fa-diagram-project" style="font-size: 1rem" />
-                        <span style="color: #fff; text-decoration: none; font-size: 12px;">#{langueBean.getMsg('graph')}</span>
-                    </a>
-                    <a id="graphButton2" class="nav-link collapsed" href="#" data-toggle="collapse" data-target="#collapseGraph"
-                       aria-expanded="true" aria-controls="collapseGraph" title="#{langueBean.getMsg('graph')}">
+                    <p:commandLink class="nav-link collapsed" actionListener="#{menuBean.redirectToGraphPage()}"
+                                   process="@this" title="#{langueBean.getMsg('graph')}">
                         <i class="fa-solid fa-diagram-project" style="font-size: 1.2rem" />
-                    </a>
-                    <div id="collapseGraph" class="collapse" aria-labelledby="headingGraph" data-parent="#accordionSidebar">
-                        <div class="bg-white py-2 collapse-inner rounded">
-                            <p:commandLink class="collapse-item" actionListener="#{menuBean.redirectToGraphPage()}"
-                                           process="@this" style="font-size: 12px;">#{langueBean.getMsg('graph')}</p:commandLink>
-                            <p:commandLink class="collapse-item" actionListener="#{menuBean.redirectToGraphV2Page()}"
-                                           process="@this" style="font-size: 12px;">#{langueBean.getMsg('graph')} (v2)</p:commandLink>
-                        </div>
-                    </div>
+                    </p:commandLink>
                 </li>
                 <hr class="sidebar-divider"/>
             </h:panelGroup>

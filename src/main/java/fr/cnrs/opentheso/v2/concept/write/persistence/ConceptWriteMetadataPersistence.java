@@ -9,12 +9,10 @@ import fr.cnrs.opentheso.v2.concept.write.model.ConceptWriteLanguage;
 import fr.cnrs.opentheso.v2.concept.write.model.ConceptWriteNoteDraft;
 import fr.cnrs.opentheso.v2.concept.write.model.ConceptWriteNoteType;
 import fr.cnrs.opentheso.v2.concept.write.model.ConceptWriteNtRelationType;
-import fr.cnrs.opentheso.v2.concept.write.session.ConceptWriteMetadataPort;
 import fr.cnrs.opentheso.v2.setting.mapper.SettingMapper;
 import fr.cnrs.opentheso.v2.shared.repository.ThesaurusSettingsQueryRepository;
 import lombok.RequiredArgsConstructor;
 import org.apache.commons.lang3.StringUtils;
-import org.springframework.context.annotation.Primary;
 import org.springframework.stereotype.Component;
 
 import java.util.Collections;
@@ -22,9 +20,8 @@ import java.util.List;
 import java.util.Optional;
 
 @Component
-@Primary
 @RequiredArgsConstructor
-public class V2ConceptWriteMetadataAdapter implements ConceptWriteMetadataPort {
+public class ConceptWriteMetadataPersistence {
 
     private final ThesaurusSettingsQueryRepository thesaurusSettingsQueryRepository;
     private final NoteTypeRepository noteTypeRepository;
@@ -32,7 +29,6 @@ public class V2ConceptWriteMetadataAdapter implements ConceptWriteMetadataPort {
     private final ConceptTypeRepository conceptTypeRepository;
     private final ConceptNoteWriteRepository conceptNoteWriteRepository;
 
-    @Override
     public List<ConceptWriteLanguage> listUsedLanguages(String thesaurusId, String workLang) {
         if (StringUtils.isAnyBlank(thesaurusId, workLang)) {
             return Collections.emptyList();
@@ -43,14 +39,12 @@ public class V2ConceptWriteMetadataAdapter implements ConceptWriteMetadataPort {
                 .toList();
     }
 
-    @Override
     public List<ConceptWriteNoteType> listNoteTypes() {
         return noteTypeRepository.findAll().stream()
                 .map(type -> new ConceptWriteNoteType(type.getCode()))
                 .toList();
     }
 
-    @Override
     public List<ConceptWriteNtRelationType> listNtRelationTypes() {
         return ntTypeRepository.findAll().stream()
                 .map(type -> new ConceptWriteNtRelationType(
@@ -60,7 +54,6 @@ public class V2ConceptWriteMetadataAdapter implements ConceptWriteMetadataPort {
                 .toList();
     }
 
-    @Override
     public List<ConceptWriteConceptType> listConceptTypes(String thesaurusId) {
         if (StringUtils.isBlank(thesaurusId)) {
             return Collections.emptyList();
@@ -70,7 +63,6 @@ public class V2ConceptWriteMetadataAdapter implements ConceptWriteMetadataPort {
                 .toList();
     }
 
-    @Override
     public Optional<ConceptWriteNoteDraft> loadNoteDraft(
             String thesaurusId,
             String conceptId,

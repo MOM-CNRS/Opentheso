@@ -1,11 +1,12 @@
 package fr.cnrs.opentheso.v2.toolbox.service;
 
-import fr.cnrs.opentheso.v2.toolbox.session.EditionThesaurusLegacySupport;
 import fr.cnrs.opentheso.v2.shared.repository.EditionQueryRepository;
 import fr.cnrs.opentheso.v2.toolbox.exception.InvalidToolboxDataException;
 import fr.cnrs.opentheso.v2.toolbox.mapper.ToolboxMapper;
 import fr.cnrs.opentheso.v2.toolbox.model.EditionStatistics;
 import fr.cnrs.opentheso.v2.toolbox.model.EditionThesaurusSummary;
+import fr.cnrs.opentheso.v2.toolbox.persistence.ThesaurusLifecyclePersistence;
+import fr.cnrs.opentheso.v2.toolbox.persistence.ToolboxPreferencePersistence;
 import lombok.RequiredArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
 import org.apache.commons.lang3.StringUtils;
@@ -21,7 +22,8 @@ import java.util.List;
 public class EditionThesaurusService {
 
     private final EditionQueryRepository editionQueryRepository;
-    private final EditionThesaurusLegacySupport editionThesaurusLegacySupport;
+    private final ThesaurusLifecyclePersistence thesaurusLifecyclePersistence;
+    private final ToolboxPreferencePersistence toolboxPreferencePersistence;
 
     @Value("${settings.workLanguage:fr}")
     private String workLanguage;
@@ -45,10 +47,11 @@ public class EditionThesaurusService {
             throw new InvalidToolboxDataException("Aucun thésaurus sélectionné");
         }
         if (deletePerennialIdentifiers) {
-            editionThesaurusLegacySupport.deleteAllHandleIds(thesaurusId);
+            thesaurusLifecyclePersistence.deleteAllHandleIds(
+                    thesaurusId, toolboxPreferencePersistence.findPreferences(thesaurusId));
         }
-        editionThesaurusLegacySupport.deleteRights(thesaurusId);
-        if (!editionThesaurusLegacySupport.deleteThesaurus(thesaurusId)) {
+        thesaurusLifecyclePersistence.deleteRights(thesaurusId);
+        if (!thesaurusLifecyclePersistence.deleteThesaurus(thesaurusId)) {
             throw new InvalidToolboxDataException("Erreur pendant la suppression");
         }
         log.info("Thésaurus {} supprimé", thesaurusId);

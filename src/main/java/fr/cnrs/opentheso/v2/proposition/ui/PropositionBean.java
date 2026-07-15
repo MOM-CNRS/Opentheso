@@ -59,7 +59,7 @@ public class PropositionBean implements Serializable {
 
     public void showPropositionDrawer() {
         refresh();
-        PrimeFaces.current().ajax().update("v2ListPropositionsPanel");
+        PrimeFaces.current().ajax().update(":v2ListPropositionsPanel", ":containerIndex:header:v2NotificationProp");
         PrimeFaces.current().executeScript("showV2PropositionListBar();");
     }
 
@@ -121,7 +121,7 @@ public class PropositionBean implements Serializable {
         selectedProposition = null;
         reviewComment = "";
         refresh();
-        PrimeFaces.current().ajax().update("v2ListPropositionsPanel", "v2NotificationProp");
+        PrimeFaces.current().ajax().update(":v2ListPropositionsPanel", ":containerIndex:header:v2NotificationProp");
     }
 
     public void openProposition(PropositionSummary proposition) throws IOException {

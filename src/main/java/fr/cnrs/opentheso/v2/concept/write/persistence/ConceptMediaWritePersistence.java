@@ -15,27 +15,23 @@ import fr.cnrs.opentheso.v2.concept.write.model.command.DeleteExternalResourceCo
 import fr.cnrs.opentheso.v2.concept.write.model.command.ReplaceGpsCoordinatesCommand;
 import fr.cnrs.opentheso.v2.concept.write.model.command.UpdateConceptImageCommand;
 import fr.cnrs.opentheso.v2.concept.write.model.command.UpdateExternalResourceCommand;
-import fr.cnrs.opentheso.v2.concept.write.session.ConceptMediaWritePort;
 import fr.cnrs.opentheso.v2.concept.write.support.ConceptGpsCoordinateParser;
 import lombok.RequiredArgsConstructor;
 import org.apache.commons.collections4.CollectionUtils;
 import org.apache.commons.lang3.ObjectUtils;
-import org.springframework.context.annotation.Primary;
 import org.springframework.stereotype.Component;
 
 import java.util.List;
 
 @Component
-@Primary
 @RequiredArgsConstructor
-public class V2NativeConceptMediaWriteSupport implements ConceptMediaWritePort {
+public class ConceptMediaWritePersistence {
 
     private final GpsRepository gpsRepository;
     private final ImagesRepository imagesRepository;
     private final ExternalResourcesRepository externalResourcesRepository;
     private final ConceptWritePostMutationRepository conceptWritePostMutationRepository;
 
-    @Override
     public MutationResult replaceGpsCoordinates(ReplaceGpsCoordinatesCommand command) {
         if (org.apache.commons.lang3.StringUtils.isBlank(command.coordinatesText())) {
             gpsRepository.deleteByIdConceptAndIdTheso(command.conceptId(), command.thesaurusId());
@@ -60,7 +56,6 @@ public class V2NativeConceptMediaWriteSupport implements ConceptMediaWritePort {
         return MutationResult.ok("Coordonnée GPS modifiés !");
     }
 
-    @Override
     public MutationResult addImage(AddConceptImageCommand command) {
         if (org.apache.commons.lang3.StringUtils.isBlank(command.uri())) {
             return MutationResult.validationError("Aucune URI insérée !");
@@ -78,7 +73,6 @@ public class V2NativeConceptMediaWriteSupport implements ConceptMediaWritePort {
         return MutationResult.ok("Image ajoutée avec succès");
     }
 
-    @Override
     public MutationResult updateImage(UpdateConceptImageCommand command) {
         if (org.apache.commons.lang3.StringUtils.isBlank(command.uri())) {
             return MutationResult.validationError("Aucune image sélectionnée !");
@@ -96,7 +90,6 @@ public class V2NativeConceptMediaWriteSupport implements ConceptMediaWritePort {
         return MutationResult.ok("L'URI du l'image est modifiée avec succès");
     }
 
-    @Override
     public MutationResult deleteImage(DeleteConceptImageCommand command) {
         if (org.apache.commons.lang3.StringUtils.isBlank(command.uri())) {
             return MutationResult.validationError("Aucune sélection !");
@@ -107,7 +100,6 @@ public class V2NativeConceptMediaWriteSupport implements ConceptMediaWritePort {
         return MutationResult.ok("Image supprimée avec succès");
     }
 
-    @Override
     public MutationResult addExternalResource(AddExternalResourceCommand command) {
         if (org.apache.commons.lang3.StringUtils.isBlank(command.uri())) {
             return MutationResult.validationError("Pas de sélection !");
@@ -125,7 +117,6 @@ public class V2NativeConceptMediaWriteSupport implements ConceptMediaWritePort {
         return MutationResult.ok("Ressource ajoutée avec succès");
     }
 
-    @Override
     public MutationResult updateExternalResource(UpdateExternalResourceCommand command) {
         if (org.apache.commons.lang3.StringUtils.isBlank(command.uri())) {
             return MutationResult.validationError("Pas de sélection !");
@@ -145,7 +136,6 @@ public class V2NativeConceptMediaWriteSupport implements ConceptMediaWritePort {
         return MutationResult.ok("Ressource modifiée avec succès");
     }
 
-    @Override
     public MutationResult deleteExternalResource(DeleteExternalResourceCommand command) {
         if (ObjectUtils.isEmpty(command.uri())) {
             return MutationResult.validationError("Aucune resource n'est sélectionnée !");

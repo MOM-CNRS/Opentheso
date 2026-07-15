@@ -1,7 +1,6 @@
 package fr.cnrs.opentheso.v2.shared.ui;
 
 import fr.cnrs.opentheso.config.SessionConfig;
-import fr.cnrs.opentheso.v2.concept.ui.ThesaurusBrowseBean;
 import fr.cnrs.opentheso.v2.setting.ui.ThesaurusContext;
 import jakarta.enterprise.context.SessionScoped;
 import jakarta.faces.context.ExternalContext;
@@ -10,8 +9,6 @@ import jakarta.inject.Named;
 import lombok.Getter;
 import lombok.RequiredArgsConstructor;
 import org.apache.commons.lang3.StringUtils;
-import org.springframework.beans.factory.annotation.Autowired;
-import org.springframework.context.annotation.Lazy;
 
 import java.io.IOException;
 import java.io.Serializable;
@@ -25,39 +22,11 @@ public class V2NavigationBean implements Serializable {
     private final ThesaurusContext thesaurusContext;
     private final SessionConfig sessionConfig;
 
-    @Autowired @Lazy
-    private ThesaurusBrowseBean thesaurusBrowseBean;
-
     private String activePageName = "thesaurusV2";
 
     public void redirectToThesaurus() throws IOException {
         activePageName = "thesaurusV2";
         redirect("/v2/thesaurus");
-    }
-
-    public void redirectToThesaurusLegacy() throws IOException {
-        activePageName = "index";
-        String thesaurusId = thesaurusContext.resolveThesaurusId();
-        String conceptId = thesaurusBrowseBean != null && thesaurusBrowseBean.isConceptPanel()
-                && thesaurusBrowseBean.getSelectedConcept() != null
-                && thesaurusBrowseBean.getSelectedConcept().summary() != null
-                ? thesaurusBrowseBean.getSelectedConcept().summary().conceptId()
-                : null;
-        String groupId = thesaurusBrowseBean != null && thesaurusBrowseBean.isGroupPanel()
-                && thesaurusBrowseBean.getSelectedGroup() != null
-                ? thesaurusBrowseBean.getSelectedGroup().groupId()
-                : null;
-
-        StringBuilder target = new StringBuilder("/index.xhtml");
-        if (StringUtils.isNotBlank(thesaurusId)) {
-            target.append("?idt=").append(thesaurusId);
-            if (StringUtils.isNotBlank(conceptId)) {
-                target.append("&idc=").append(conceptId);
-            } else if (StringUtils.isNotBlank(groupId)) {
-                target.append("&idg=").append(groupId);
-            }
-        }
-        redirect(target.toString());
     }
 
     public void redirectToCandidat() throws IOException {
@@ -136,7 +105,7 @@ public class V2NavigationBean implements Serializable {
     public void redirectToStatistics() throws IOException {
         requireThesaurus();
         activePageName = "statisticV2";
-        redirect(buildSettingUrl("/v2/toolbox/statistics.xhtml"));
+        redirect("/v2/toolbox/statistics.xhtml");
     }
 
     public int getSessionTimeoutInMilliseconds() {

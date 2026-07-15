@@ -3,7 +3,7 @@ package fr.cnrs.opentheso.v2.toolbox.edition.io.csv;
 import fr.cnrs.opentheso.models.relations.NodeDeprecated;
 import fr.cnrs.opentheso.v2.toolbox.edition.model.ThesaurusCsvAlignmentRow;
 import fr.cnrs.opentheso.v2.toolbox.edition.model.ThesaurusCsvByIdRow;
-import fr.cnrs.opentheso.v2.toolbox.edition.session.ThesaurusEditionCsvExportQuerySupport;
+import fr.cnrs.opentheso.v2.toolbox.edition.persistence.ThesaurusEditionCsvExportPersistence;
 import org.junit.jupiter.api.BeforeEach;
 import org.junit.jupiter.api.Test;
 import org.junit.jupiter.api.extension.ExtendWith;
@@ -22,7 +22,7 @@ import static org.mockito.Mockito.when;
 class ThesaurusCsvWriterExportTest {
 
     @Mock
-    private ThesaurusEditionCsvExportQuerySupport csvExportQuerySupport;
+    private ThesaurusEditionCsvExportPersistence csvExportQuerySupport;
 
     private ThesaurusCsvWriter writer;
 

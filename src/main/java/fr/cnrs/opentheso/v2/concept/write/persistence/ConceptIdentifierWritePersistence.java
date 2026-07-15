@@ -8,23 +8,19 @@ import fr.cnrs.opentheso.v2.concept.write.model.command.DeleteArkCommand;
 import fr.cnrs.opentheso.v2.concept.write.model.command.DeleteHandleCommand;
 import fr.cnrs.opentheso.v2.concept.write.model.command.GenerateArkCommand;
 import fr.cnrs.opentheso.v2.concept.write.model.command.GenerateHandleCommand;
-import fr.cnrs.opentheso.v2.concept.write.session.ConceptIdentifierWritePort;
 import lombok.RequiredArgsConstructor;
 import org.apache.commons.collections4.CollectionUtils;
 import org.apache.commons.lang3.StringUtils;
-import org.springframework.context.annotation.Primary;
 import org.springframework.stereotype.Component;
 
 @Component
-@Primary
 @RequiredArgsConstructor
-public class V2NativeConceptIdentifierWriteSupport implements ConceptIdentifierWritePort {
+public class ConceptIdentifierWritePersistence {
 
     private final ConceptArkWriteService conceptArkWriteService;
     private final ConceptHandleWriteService conceptHandleWriteService;
     private final PreferencesRepository preferencesRepository;
 
-    @Override
     public MutationResult generateArk(GenerateArkCommand command) {
         if (CollectionUtils.isEmpty(command.conceptIds())) {
             return MutationResult.validationError("Aucune sélection !");
@@ -40,7 +36,6 @@ public class V2NativeConceptIdentifierWriteSupport implements ConceptIdentifierW
         return MutationResult.ok("L'opération est terminée, vérifier le fichier de résultat téléchargé !!");
     }
 
-    @Override
     public MutationResult deleteArk(DeleteArkCommand command) {
         if (CollectionUtils.isEmpty(command.conceptIds())) {
             return MutationResult.validationError("Aucune sélection !");
@@ -58,7 +53,6 @@ public class V2NativeConceptIdentifierWriteSupport implements ConceptIdentifierW
         return MutationResult.ok("L'opération est terminée avec succès !!");
     }
 
-    @Override
     public MutationResult generateHandle(GenerateHandleCommand command) {
         if (CollectionUtils.isEmpty(command.conceptIds())) {
             return MutationResult.validationError("Aucune sélection !");
@@ -69,7 +63,6 @@ public class V2NativeConceptIdentifierWriteSupport implements ConceptIdentifierW
         return MutationResult.ok("La génération de Handle a réussi !!");
     }
 
-    @Override
     public MutationResult deleteHandle(DeleteHandleCommand command) {
         if (StringUtils.isBlank(command.handleId())) {
             return MutationResult.validationError("Pas d'identifiant Handle à supprimer !!");

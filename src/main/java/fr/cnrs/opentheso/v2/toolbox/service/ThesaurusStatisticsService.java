@@ -7,7 +7,7 @@ import fr.cnrs.opentheso.models.thesaurus.NodeLangTheso;
 import fr.cnrs.opentheso.v2.shared.repository.EditionQueryRepository;
 import fr.cnrs.opentheso.v2.toolbox.model.EditionStatistics;
 import fr.cnrs.opentheso.v2.toolbox.model.StatisticsSummary;
-import fr.cnrs.opentheso.v2.toolbox.session.ThesaurusStatisticsLegacySupport;
+import fr.cnrs.opentheso.v2.toolbox.persistence.ToolboxStatisticsPersistence;
 import lombok.RequiredArgsConstructor;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
@@ -20,28 +20,28 @@ import java.util.List;
 @RequiredArgsConstructor
 public class ThesaurusStatisticsService {
 
-    private final ThesaurusStatisticsLegacySupport thesaurusStatisticsLegacySupport;
+    private final ToolboxStatisticsPersistence toolboxStatisticsPersistence;
     private final EditionQueryRepository editionQueryRepository;
 
     @Transactional(readOnly = true)
     public List<NodeLangTheso> loadLanguages(String thesaurusId, String workLang) {
-        return thesaurusStatisticsLegacySupport.loadUsedLanguages(thesaurusId, workLang);
+        return toolboxStatisticsPersistence.loadUsedLanguages(thesaurusId, workLang);
     }
 
     @Transactional(readOnly = true)
     public List<DomaineDto> loadCollections(String thesaurusId, String workLang) {
-        return thesaurusStatisticsLegacySupport.loadCollections(thesaurusId, workLang);
+        return toolboxStatisticsPersistence.loadCollections(thesaurusId, workLang);
     }
 
     @Transactional(readOnly = true)
     public List<GenericStatistiqueData> loadCollectionStatistics(String thesaurusId, String language) {
-        return thesaurusStatisticsLegacySupport.loadCollectionStatistics(thesaurusId, language);
+        return toolboxStatisticsPersistence.loadCollectionStatistics(thesaurusId, language);
     }
 
     @Transactional(readOnly = true)
     public StatisticsSummary loadSummary(String thesaurusId) {
         int[] stats = editionQueryRepository.countAllConceptStats(thesaurusId);
-        Date lastModification = thesaurusStatisticsLegacySupport.loadLastModification(thesaurusId);
+        Date lastModification = toolboxStatisticsPersistence.loadLastModification(thesaurusId);
         return new StatisticsSummary(
                 new EditionStatistics(stats[0], stats[1], stats[2]),
                 lastModification
@@ -57,7 +57,7 @@ public class ThesaurusStatisticsService {
             String collectionId,
             String resultLimit
     ) {
-        return thesaurusStatisticsLegacySupport.loadConceptStatistics(
+        return toolboxStatisticsPersistence.loadConceptStatistics(
                 thesaurusId,
                 language,
                 startDate,
@@ -68,11 +68,11 @@ public class ThesaurusStatisticsService {
     }
 
     public byte[] exportGenericReport(List<GenericStatistiqueData> rows) {
-        return thesaurusStatisticsLegacySupport.exportGenericReport(rows);
+        return toolboxStatisticsPersistence.exportGenericReport(rows);
     }
 
     public byte[] exportConceptReport(List<ConceptStatisticData> rows) {
-        return thesaurusStatisticsLegacySupport.exportConceptReport(rows);
+        return toolboxStatisticsPersistence.exportConceptReport(rows);
     }
 
     public ByteArrayInputStream toStream(byte[] content) {

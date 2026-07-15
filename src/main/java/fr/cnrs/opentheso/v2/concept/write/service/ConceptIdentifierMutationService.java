@@ -5,7 +5,7 @@ import fr.cnrs.opentheso.v2.concept.write.model.command.DeleteArkCommand;
 import fr.cnrs.opentheso.v2.concept.write.model.command.DeleteHandleCommand;
 import fr.cnrs.opentheso.v2.concept.write.model.command.GenerateArkCommand;
 import fr.cnrs.opentheso.v2.concept.write.model.command.GenerateHandleCommand;
-import fr.cnrs.opentheso.v2.concept.write.session.ConceptIdentifierWritePort;
+import fr.cnrs.opentheso.v2.concept.write.persistence.ConceptIdentifierWritePersistence;
 import lombok.RequiredArgsConstructor;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
@@ -14,25 +14,25 @@ import org.springframework.transaction.annotation.Transactional;
 @RequiredArgsConstructor
 public class ConceptIdentifierMutationService {
 
-    private final ConceptIdentifierWritePort conceptIdentifierWritePort;
+    private final ConceptIdentifierWritePersistence conceptIdentifierWritePersistence;
 
     @Transactional
     public MutationResult generateArk(GenerateArkCommand command) {
-        return conceptIdentifierWritePort.generateArk(command);
+        return conceptIdentifierWritePersistence.generateArk(command);
     }
 
     @Transactional
     public MutationResult deleteArk(DeleteArkCommand command) {
-        return conceptIdentifierWritePort.deleteArk(command);
+        return conceptIdentifierWritePersistence.deleteArk(command);
     }
 
     @Transactional
     public MutationResult generateHandle(GenerateHandleCommand command) {
-        return conceptIdentifierWritePort.generateHandle(command);
+        return conceptIdentifierWritePersistence.generateHandle(command);
     }
 
     @Transactional
     public MutationResult deleteHandle(DeleteHandleCommand command) {
-        return conceptIdentifierWritePort.deleteHandle(command);
+        return conceptIdentifierWritePersistence.deleteHandle(command);
     }
 }

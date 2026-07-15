@@ -19,20 +19,23 @@ public class AdminQueryRepository {
     @SuppressWarnings("unchecked")
     public List<AdminUserRow> findAllUsers() {
         String sql = """
-                SELECT u.id_user, u.username, g.id_group, g.label_group, r.id, r.name
-                FROM user_role_group urg
-                JOIN users u ON urg.id_user = u.id_user
-                JOIN user_group_label g ON urg.id_group = g.id_group
-                JOIN roles r ON urg.id_role = r.id
-                UNION ALL
-                SELECT u.id_user, u.username, -1, '', 0, ''
-                FROM users u
-                WHERE COALESCE(u.issuperadmin, false) = false
-                  AND NOT EXISTS (SELECT 1 FROM user_role_group urg WHERE urg.id_user = u.id_user)
-                UNION ALL
-                SELECT u.id_user, u.username, -1, '', 1, 'superAdmin'
-                FROM users u
-                WHERE COALESCE(u.issuperadmin, false) = true
+                SELECT id_user, username, id_group, label_group, id_role, role_name
+                FROM (
+                    SELECT u.id_user, u.username, g.id_group, g.label_group, r.id AS id_role, r.name AS role_name
+                    FROM user_role_group urg
+                    JOIN users u ON urg.id_user = u.id_user
+                    JOIN user_group_label g ON urg.id_group = g.id_group
+                    JOIN roles r ON urg.id_role = r.id
+                    UNION ALL
+                    SELECT u.id_user, u.username, -1, '', 0, ''
+                    FROM users u
+                    WHERE COALESCE(u.issuperadmin, false) = false
+                      AND NOT EXISTS (SELECT 1 FROM user_role_group urg WHERE urg.id_user = u.id_user)
+                    UNION ALL
+                    SELECT u.id_user, u.username, -1, '', 1, 'superAdmin'
+                    FROM users u
+                    WHERE COALESCE(u.issuperadmin, false) = true
+                ) all_users
                 ORDER BY LOWER(username)
                 """;
         List<Object[]> rows = entityManager.createNativeQuery(sql).getResultList();

@@ -3,25 +3,21 @@ package fr.cnrs.opentheso.v2.concept.write.persistence;
 import fr.cnrs.opentheso.v2.concept.write.model.MutationResult;
 import fr.cnrs.opentheso.v2.concept.write.model.command.UpdateConceptTypeCommand;
 import fr.cnrs.opentheso.v2.concept.write.model.command.UpdateNotationCommand;
-import fr.cnrs.opentheso.v2.concept.write.session.ConceptAttributeWritePort;
 import lombok.RequiredArgsConstructor;
 import org.apache.commons.collections4.CollectionUtils;
 import org.apache.commons.lang3.StringUtils;
-import org.springframework.context.annotation.Primary;
 import org.springframework.stereotype.Component;
 
 import java.util.List;
 
 @Component
-@Primary
 @RequiredArgsConstructor
-public class V2NativeConceptAttributeWriteSupport implements ConceptAttributeWritePort {
+public class ConceptAttributeWritePersistence {
 
     private final ConceptAttributeWriteRepository conceptAttributeWriteRepository;
     private final ConceptWritePostMutationRepository conceptWritePostMutationRepository;
     private final BranchConceptSupport branchConceptSupport;
 
-    @Override
     public MutationResult updateNotation(UpdateNotationCommand command) {
         String notation = StringUtils.trimToEmpty(command.notation());
         if (StringUtils.isNotBlank(notation)
@@ -36,7 +32,6 @@ public class V2NativeConceptAttributeWriteSupport implements ConceptAttributeWri
         return MutationResult.ok("La notation a bien été modifiée");
     }
 
-    @Override
     public MutationResult updateConceptType(UpdateConceptTypeCommand command) {
         if (StringUtils.isBlank(command.conceptTypeCode())) {
             return MutationResult.validationError("aucune relation n'est définie !");

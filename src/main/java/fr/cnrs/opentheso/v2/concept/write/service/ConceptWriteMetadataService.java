@@ -7,7 +7,7 @@ import fr.cnrs.opentheso.v2.concept.write.model.ConceptWriteLanguage;
 import fr.cnrs.opentheso.v2.concept.write.model.ConceptWriteNoteDraft;
 import fr.cnrs.opentheso.v2.concept.write.model.ConceptWriteNoteType;
 import fr.cnrs.opentheso.v2.concept.write.model.ConceptWriteNtRelationType;
-import fr.cnrs.opentheso.v2.concept.write.session.ConceptWriteMetadataPort;
+import fr.cnrs.opentheso.v2.concept.write.persistence.ConceptWriteMetadataPersistence;
 import fr.cnrs.opentheso.v2.shared.repository.ConceptQueryRepository;
 import lombok.RequiredArgsConstructor;
 import org.apache.commons.lang3.StringUtils;
@@ -22,22 +22,22 @@ import java.util.Optional;
 @RequiredArgsConstructor
 public class ConceptWriteMetadataService {
 
-    private final ConceptWriteMetadataPort conceptWriteMetadataPort;
+    private final ConceptWriteMetadataPersistence conceptWriteMetadataPersistence;
     private final ConceptQueryRepository conceptQueryRepository;
 
     @Transactional(readOnly = true)
     public List<ConceptWriteLanguage> listUsedLanguages(String thesaurusId, String workLang) {
-        return conceptWriteMetadataPort.listUsedLanguages(thesaurusId, workLang);
+        return conceptWriteMetadataPersistence.listUsedLanguages(thesaurusId, workLang);
     }
 
     @Transactional(readOnly = true)
     public List<ConceptWriteNoteType> listNoteTypes() {
-        return conceptWriteMetadataPort.listNoteTypes();
+        return conceptWriteMetadataPersistence.listNoteTypes();
     }
 
     @Transactional(readOnly = true)
     public List<ConceptWriteNtRelationType> listNtRelationTypes() {
-        return conceptWriteMetadataPort.listNtRelationTypes();
+        return conceptWriteMetadataPersistence.listNtRelationTypes();
     }
 
     @Transactional(readOnly = true)
@@ -45,7 +45,7 @@ public class ConceptWriteMetadataService {
         if (StringUtils.isBlank(thesaurusId)) {
             return Collections.emptyList();
         }
-        return conceptWriteMetadataPort.listConceptTypes(thesaurusId);
+        return conceptWriteMetadataPersistence.listConceptTypes(thesaurusId);
     }
 
     @Transactional(readOnly = true)
@@ -68,6 +68,6 @@ public class ConceptWriteMetadataService {
             String lang,
             String typeCode
     ) {
-        return conceptWriteMetadataPort.loadNoteDraft(thesaurusId, conceptId, lang, typeCode);
+        return conceptWriteMetadataPersistence.loadNoteDraft(thesaurusId, conceptId, lang, typeCode);
     }
 }

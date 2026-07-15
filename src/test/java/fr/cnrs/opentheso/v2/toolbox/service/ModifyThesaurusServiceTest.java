@@ -3,7 +3,10 @@ package fr.cnrs.opentheso.v2.toolbox.service;
 import fr.cnrs.opentheso.entites.ThesaurusDcTerm;
 import fr.cnrs.opentheso.models.thesaurus.Thesaurus;
 import fr.cnrs.opentheso.repositories.ThesaurusDcTermRepository;
-import fr.cnrs.opentheso.v2.toolbox.session.ModifyThesaurusLegacySupport;
+import fr.cnrs.opentheso.v2.toolbox.persistence.ThesaurusLifecyclePersistence;
+import fr.cnrs.opentheso.v2.toolbox.persistence.ToolboxPreferencePersistence;
+import fr.cnrs.opentheso.v2.toolbox.persistence.ToolboxThesaurusArkPersistence;
+import fr.cnrs.opentheso.v2.toolbox.persistence.ToolboxThesaurusPersistence;
 import fr.cnrs.opentheso.v2.shared.repository.EditionQueryRepository;
 import fr.cnrs.opentheso.v2.shared.repository.ThesaurusSettingsQueryRepository;
 import fr.cnrs.opentheso.v2.shared.repository.projection.EditionCollectionRow;
@@ -39,7 +42,13 @@ class ModifyThesaurusServiceTest {
     @Mock
     private ThesaurusSettingsQueryRepository thesaurusSettingsQueryRepository;
     @Mock
-    private ModifyThesaurusLegacySupport modifyThesaurusLegacySupport;
+    private ToolboxPreferencePersistence toolboxPreferencePersistence;
+    @Mock
+    private ToolboxThesaurusPersistence toolboxThesaurusPersistence;
+    @Mock
+    private ToolboxThesaurusArkPersistence toolboxThesaurusArkPersistence;
+    @Mock
+    private ThesaurusLifecyclePersistence thesaurusLifecyclePersistence;
     @Mock
     private ThesaurusDcTermRepository thesaurusDcTermRepository;
 
@@ -50,7 +59,10 @@ class ModifyThesaurusServiceTest {
         service = new ModifyThesaurusService(
                 editionQueryRepository,
                 thesaurusSettingsQueryRepository,
-                modifyThesaurusLegacySupport,
+                toolboxPreferencePersistence,
+                toolboxThesaurusPersistence,
+                toolboxThesaurusArkPersistence,
+                thesaurusLifecyclePersistence,
                 thesaurusDcTermRepository
         );
         ReflectionTestUtils.setField(service, "workLanguage", "fr");
@@ -83,7 +95,7 @@ class ModifyThesaurusServiceTest {
 
     @Test
     void changeThesaurusId_returnsNewIdOnSuccess() {
-        when(modifyThesaurusLegacySupport.changeThesaurusId("TH1", "TH2")).thenReturn(true);
+        when(thesaurusLifecyclePersistence.changeThesaurusId("TH1", "TH2")).thenReturn(true);
 
         assertEquals("TH2", service.changeThesaurusId("TH1", "TH2"));
     }
@@ -93,7 +105,7 @@ class ModifyThesaurusServiceTest {
         service.addLanguage("TH1", "Label FR", "fr", "admin");
 
         ArgumentCaptor<Thesaurus> captor = ArgumentCaptor.forClass(Thesaurus.class);
-        verify(modifyThesaurusLegacySupport).addLanguageTranslation(captor.capture());
+        verify(toolboxThesaurusPersistence).addTranslation(captor.capture());
         assertEquals("TH1", captor.getValue().getId_thesaurus());
         assertEquals("fr", captor.getValue().getLanguage());
         assertEquals("Label FR", captor.getValue().getTitle());
@@ -142,7 +154,7 @@ class ModifyThesaurusServiceTest {
 
     @Test
     void loadLanguages_usesSourceLanguageFromPreferences() {
-        when(modifyThesaurusLegacySupport.getWorkLanguage("TH1")).thenReturn("en");
+        when(toolboxPreferencePersistence.getWorkLanguage("TH1")).thenReturn("en");
         when(thesaurusSettingsQueryRepository.findUsedLanguages("TH1", "en"))
                 .thenReturn(List.of(new ThesaurusLanguageRow(1L, "en", "gb", "Thesaurus EN", "English")));
 
@@ -156,6 +168,6 @@ class ModifyThesaurusServiceTest {
     @Test
     void deleteLanguage_validatesBlankCode() {
         assertThrows(InvalidToolboxDataException.class, () -> service.deleteLanguage("TH1", ""));
-        verify(modifyThesaurusLegacySupport, never()).deleteLanguageTranslation(any(), any());
+        verify(toolboxThesaurusPersistence, never()).deleteTranslation(any(), any());
     }
 }

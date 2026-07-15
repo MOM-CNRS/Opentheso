@@ -3,7 +3,7 @@ package fr.cnrs.opentheso.v2.candidat.service;
 import fr.cnrs.opentheso.entites.ConceptDcTerm;
 import fr.cnrs.opentheso.models.concept.DCMIResource;
 import fr.cnrs.opentheso.repositories.ConceptDcTermRepository;
-import fr.cnrs.opentheso.v2.candidat.session.CandidatMutationLegacySupport;
+import fr.cnrs.opentheso.v2.candidat.persistence.CandidatMutationPersistence;
 import org.junit.jupiter.api.BeforeEach;
 import org.junit.jupiter.api.Test;
 import org.junit.jupiter.api.extension.ExtendWith;
@@ -20,7 +20,7 @@ import static org.mockito.Mockito.when;
 class CandidatMutationServiceTest {
 
     @Mock
-    private CandidatMutationLegacySupport legacySupport;
+    private CandidatMutationPersistence candidatMutationPersistence;
     @Mock
     private ConceptDcTermRepository conceptDcTermRepository;
 
@@ -28,12 +28,12 @@ class CandidatMutationServiceTest {
 
     @BeforeEach
     void setUp() {
-        service = new CandidatMutationService(legacySupport, conceptDcTermRepository);
+        service = new CandidatMutationService(candidatMutationPersistence, conceptDcTermRepository);
     }
 
     @Test
-    void deleteConcept_delegatesToLegacySupport() {
-        when(legacySupport.deleteConcept("C1", "TH1")).thenReturn(true);
+    void deleteConcept_delegatesToPersistence() {
+        when(candidatMutationPersistence.deleteConcept("C1", "TH1")).thenReturn(true);
 
         assertTrue(service.deleteConcept("C1", "TH1"));
     }
@@ -50,8 +50,8 @@ class CandidatMutationServiceTest {
     }
 
     @Test
-    void resolveUserName_delegatesToLegacySupport() {
-        when(legacySupport.resolveUserName(7)).thenReturn("admin");
+    void resolveUserName_delegatesToPersistence() {
+        when(candidatMutationPersistence.resolveUserName(7)).thenReturn("admin");
 
         assertEquals("admin", service.resolveUserName(7));
     }

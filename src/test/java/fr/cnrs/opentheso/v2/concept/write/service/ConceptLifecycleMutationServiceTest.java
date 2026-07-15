@@ -3,7 +3,7 @@ package fr.cnrs.opentheso.v2.concept.write.service;
 import fr.cnrs.opentheso.v2.concept.write.model.MutationOutcome;
 import fr.cnrs.opentheso.v2.concept.write.model.MutationResult;
 import fr.cnrs.opentheso.v2.concept.write.model.command.RenamePreferredLabelCommand;
-import fr.cnrs.opentheso.v2.concept.write.session.ConceptWritePort;
+import fr.cnrs.opentheso.v2.concept.write.persistence.ConceptLifecycleNativeWriteService;
 import org.junit.jupiter.api.BeforeEach;
 import org.junit.jupiter.api.Test;
 import org.junit.jupiter.api.extension.ExtendWith;
@@ -19,25 +19,28 @@ import static org.mockito.Mockito.when;
 class ConceptLifecycleMutationServiceTest {
 
     @Mock
-    private ConceptWritePort conceptWriteLegacySupport;
+    private ConceptLifecycleNativeWriteService conceptLifecycleNativeWriteService;
 
     private ConceptLifecycleMutationService service;
 
     @BeforeEach
     void setUp() {
-        service = new ConceptLifecycleMutationService(conceptWriteLegacySupport);
+        service = new ConceptLifecycleMutationService(
+                conceptLifecycleNativeWriteService,
+                org.mockito.Mockito.mock(fr.cnrs.opentheso.v2.concept.write.persistence.ConceptStructureNativeWriteService.class)
+        );
     }
 
     @Test
-    void renamePreferredLabel_delegatesToLegacySupport() {
+    void renamePreferredLabel_delegatesToPersistence() {
         var command = new RenamePreferredLabelCommand("TH1", "C1", "fr", 42, "admin", "Label", "", false);
-        when(conceptWriteLegacySupport.renamePreferredLabel(command))
+        when(conceptLifecycleNativeWriteService.renamePreferredLabel(command))
                 .thenReturn(MutationResult.ok("Le concept a bien été modifié"));
 
         var result = service.renamePreferredLabel(command);
 
         assertTrue(result.success());
         assertEquals(MutationOutcome.OK, result.outcome());
-        verify(conceptWriteLegacySupport).renamePreferredLabel(command);
+        verify(conceptLifecycleNativeWriteService).renamePreferredLabel(command);
     }
 }

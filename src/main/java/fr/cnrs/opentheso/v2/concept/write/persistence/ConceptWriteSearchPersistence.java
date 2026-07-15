@@ -4,22 +4,19 @@ import fr.cnrs.opentheso.repositories.ConceptGroupLabelRepository;
 import fr.cnrs.opentheso.v2.concept.mapper.ConceptMapper;
 import fr.cnrs.opentheso.v2.concept.write.model.ConceptSearchSuggestion;
 import fr.cnrs.opentheso.v2.concept.write.model.ConceptWriteCollection;
-import fr.cnrs.opentheso.v2.concept.write.session.ConceptWriteSearchPort;
 import fr.cnrs.opentheso.v2.shared.repository.ConceptQueryRepository;
 import jakarta.persistence.EntityManager;
 import jakarta.persistence.PersistenceContext;
 import lombok.RequiredArgsConstructor;
 import org.apache.commons.lang3.StringUtils;
-import org.springframework.context.annotation.Primary;
 import org.springframework.stereotype.Component;
 
 import java.util.Collections;
 import java.util.List;
 
 @Component
-@Primary
 @RequiredArgsConstructor
-public class V2ConceptWriteSearchAdapter implements ConceptWriteSearchPort {
+public class ConceptWriteSearchPersistence {
 
     private static final int SEARCH_LIMIT = 40;
 
@@ -29,7 +26,6 @@ public class V2ConceptWriteSearchAdapter implements ConceptWriteSearchPort {
     @PersistenceContext
     private EntityManager entityManager;
 
-    @Override
     public List<ConceptSearchSuggestion> autocompleteRelationTarget(
             String query,
             String lang,
@@ -59,7 +55,6 @@ public class V2ConceptWriteSearchAdapter implements ConceptWriteSearchPort {
                 .toList();
     }
 
-    @Override
     public List<ConceptSearchSuggestion> autocompleteReplacedByTarget(
             String query,
             String lang,
@@ -68,7 +63,6 @@ public class V2ConceptWriteSearchAdapter implements ConceptWriteSearchPort {
         return autocompleteRelationTarget(query, lang, thesaurusId, false);
     }
 
-    @Override
     public List<ConceptWriteCollection> autocompleteCollection(
             String query,
             String lang,

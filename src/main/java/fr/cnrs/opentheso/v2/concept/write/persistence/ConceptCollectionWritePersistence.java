@@ -5,25 +5,21 @@ import fr.cnrs.opentheso.repositories.ConceptGroupConceptRepository;
 import fr.cnrs.opentheso.v2.concept.write.model.MutationResult;
 import fr.cnrs.opentheso.v2.concept.write.model.command.AddConceptToCollectionCommand;
 import fr.cnrs.opentheso.v2.concept.write.model.command.RemoveConceptFromCollectionCommand;
-import fr.cnrs.opentheso.v2.concept.write.session.ConceptCollectionWritePort;
 import lombok.RequiredArgsConstructor;
 import org.apache.commons.collections4.CollectionUtils;
 import org.apache.commons.lang3.StringUtils;
-import org.springframework.context.annotation.Primary;
 import org.springframework.stereotype.Component;
 
 import java.util.List;
 
 @Component
-@Primary
 @RequiredArgsConstructor
-public class V2NativeConceptCollectionWriteSupport implements ConceptCollectionWritePort {
+public class ConceptCollectionWritePersistence {
 
     private final ConceptGroupConceptRepository conceptGroupConceptRepository;
     private final BranchConceptSupport branchConceptSupport;
     private final ConceptWritePostMutationRepository conceptWritePostMutationRepository;
 
-    @Override
     public MutationResult addToCollection(AddConceptToCollectionCommand command) {
         if (StringUtils.isBlank(command.collectionId())) {
             return MutationResult.validationError("Aucune sélection !!");
@@ -47,7 +43,6 @@ public class V2NativeConceptCollectionWriteSupport implements ConceptCollectionW
                 : "Le concept a été ajouté à la collection");
     }
 
-    @Override
     public MutationResult removeFromCollection(RemoveConceptFromCollectionCommand command) {
         if (StringUtils.isBlank(command.collectionId())) {
             return MutationResult.validationError("Aucune sélection !!");

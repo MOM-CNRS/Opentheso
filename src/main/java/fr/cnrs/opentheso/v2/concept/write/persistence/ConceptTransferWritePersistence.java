@@ -8,20 +8,17 @@ import fr.cnrs.opentheso.v2.concept.identifier.ConceptArkWriteService;
 import fr.cnrs.opentheso.v2.concept.write.model.ConceptWriteThesaurusOption;
 import fr.cnrs.opentheso.v2.concept.write.model.MutationResult;
 import fr.cnrs.opentheso.v2.concept.write.model.command.MoveConceptToThesaurusCommand;
-import fr.cnrs.opentheso.v2.concept.write.session.ConceptTransferWritePort;
 import fr.cnrs.opentheso.v2.shared.repository.EditionQueryRepository;
 import lombok.RequiredArgsConstructor;
 import org.apache.commons.collections4.CollectionUtils;
 import org.apache.commons.lang3.StringUtils;
-import org.springframework.context.annotation.Primary;
 import org.springframework.stereotype.Component;
 
 import java.util.List;
 
 @Component
-@Primary
 @RequiredArgsConstructor
-public class V2NativeConceptTransferWriteSupport implements ConceptTransferWritePort {
+public class ConceptTransferWritePersistence {
 
     private final ConceptTransferWriteRepository conceptTransferWriteRepository;
     private final ConceptRelationWriteRepository conceptRelationWriteRepository;
@@ -33,7 +30,6 @@ public class V2NativeConceptTransferWriteSupport implements ConceptTransferWrite
     private final ConceptArkWriteService conceptArkWriteService;
     private final EditionQueryRepository editionQueryRepository;
 
-    @Override
     public MutationResult moveConceptToThesaurus(MoveConceptToThesaurusCommand command) {
         if (StringUtils.isAnyBlank(command.sourceThesaurusId(), command.targetThesaurusId(), command.headConceptId())
                 || CollectionUtils.isEmpty(command.branchConceptIds())) {
@@ -87,7 +83,6 @@ public class V2NativeConceptTransferWriteSupport implements ConceptTransferWrite
         return MutationResult.ok("Le déplacement a réussi");
     }
 
-    @Override
     public List<ConceptWriteThesaurusOption> listAdminThesauri(
             int userId,
             boolean superAdmin,

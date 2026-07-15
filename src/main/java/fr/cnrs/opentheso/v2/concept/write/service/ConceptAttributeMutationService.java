@@ -3,7 +3,7 @@ package fr.cnrs.opentheso.v2.concept.write.service;
 import fr.cnrs.opentheso.v2.concept.write.model.MutationResult;
 import fr.cnrs.opentheso.v2.concept.write.model.command.UpdateConceptTypeCommand;
 import fr.cnrs.opentheso.v2.concept.write.model.command.UpdateNotationCommand;
-import fr.cnrs.opentheso.v2.concept.write.session.ConceptAttributeWritePort;
+import fr.cnrs.opentheso.v2.concept.write.persistence.ConceptAttributeWritePersistence;
 import lombok.RequiredArgsConstructor;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
@@ -12,15 +12,15 @@ import org.springframework.transaction.annotation.Transactional;
 @RequiredArgsConstructor
 public class ConceptAttributeMutationService {
 
-    private final ConceptAttributeWritePort conceptAttributeWritePort;
+    private final ConceptAttributeWritePersistence conceptAttributeWritePersistence;
 
     @Transactional
     public MutationResult updateNotation(UpdateNotationCommand command) {
-        return conceptAttributeWritePort.updateNotation(command);
+        return conceptAttributeWritePersistence.updateNotation(command);
     }
 
     @Transactional
     public MutationResult updateConceptType(UpdateConceptTypeCommand command) {
-        return conceptAttributeWritePort.updateConceptType(command);
+        return conceptAttributeWritePersistence.updateConceptType(command);
     }
 }

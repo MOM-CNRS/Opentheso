@@ -4,7 +4,10 @@ import fr.cnrs.opentheso.entites.ThesaurusDcTerm;
 import fr.cnrs.opentheso.models.concept.DCMIResource;
 import fr.cnrs.opentheso.models.thesaurus.Thesaurus;
 import fr.cnrs.opentheso.repositories.ThesaurusDcTermRepository;
-import fr.cnrs.opentheso.v2.toolbox.session.ModifyThesaurusLegacySupport;
+import fr.cnrs.opentheso.v2.toolbox.persistence.ThesaurusLifecyclePersistence;
+import fr.cnrs.opentheso.v2.toolbox.persistence.ToolboxPreferencePersistence;
+import fr.cnrs.opentheso.v2.toolbox.persistence.ToolboxThesaurusArkPersistence;
+import fr.cnrs.opentheso.v2.toolbox.persistence.ToolboxThesaurusPersistence;
 import fr.cnrs.opentheso.v2.shared.repository.EditionQueryRepository;
 import fr.cnrs.opentheso.v2.shared.repository.ThesaurusSettingsQueryRepository;
 import fr.cnrs.opentheso.v2.shared.repository.projection.EditionCollectionRow;
@@ -40,7 +43,10 @@ public class ModifyThesaurusService {
 
     private final EditionQueryRepository editionQueryRepository;
     private final ThesaurusSettingsQueryRepository thesaurusSettingsQueryRepository;
-    private final ModifyThesaurusLegacySupport modifyThesaurusLegacySupport;
+    private final ToolboxPreferencePersistence toolboxPreferencePersistence;
+    private final ToolboxThesaurusPersistence toolboxThesaurusPersistence;
+    private final ToolboxThesaurusArkPersistence toolboxThesaurusArkPersistence;
+    private final ThesaurusLifecyclePersistence thesaurusLifecyclePersistence;
     private final ThesaurusDcTermRepository thesaurusDcTermRepository;
 
     @Value("${settings.workLanguage:fr}")
@@ -55,7 +61,7 @@ public class ModifyThesaurusService {
 
     @Transactional(readOnly = true)
     public List<EditionThesaurusLanguage> loadLanguages(String thesaurusId) {
-        String sourceLang = modifyThesaurusLegacySupport.getWorkLanguage(thesaurusId);
+        String sourceLang = toolboxPreferencePersistence.getWorkLanguage(thesaurusId);
         String lang = StringUtils.isBlank(sourceLang) ? workLanguage : sourceLang;
         return thesaurusSettingsQueryRepository.findUsedLanguages(thesaurusId, lang).stream()
                 .map(ToolboxMapper::toEditionLanguage)
@@ -94,7 +100,7 @@ public class ModifyThesaurusService {
 
     @Transactional(readOnly = true)
     public TreeNode<EditionCollectionNode> loadCollectionTree(String thesaurusId) {
-        String sourceLang = modifyThesaurusLegacySupport.getWorkLanguage(thesaurusId);
+        String sourceLang = toolboxPreferencePersistence.getWorkLanguage(thesaurusId);
         String lang = StringUtils.isBlank(sourceLang) ? workLanguage : sourceLang;
         List<EditionCollectionRow> rows = editionQueryRepository.findCollections(thesaurusId, lang);
         return buildCollectionTree(rows);
@@ -105,19 +111,19 @@ public class ModifyThesaurusService {
         if (StringUtils.isBlank(languageCode)) {
             throw new InvalidToolboxDataException("La langue source est obligatoire");
         }
-        if (!modifyThesaurusLegacySupport.setWorkLanguage(languageCode, thesaurusId)) {
+        if (!toolboxPreferencePersistence.setWorkLanguage(languageCode, thesaurusId)) {
             throw new InvalidToolboxDataException("Erreur pendant la modification de la langue source");
         }
     }
 
     @Transactional
     public void changeVisibility(String thesaurusId, boolean privateThesaurus) {
-        modifyThesaurusLegacySupport.setVisibility(thesaurusId, privateThesaurus);
+        toolboxThesaurusPersistence.setVisibility(thesaurusId, privateThesaurus);
     }
 
     @Transactional
     public String generateArkId(String thesaurusId) {
-        return modifyThesaurusLegacySupport.generateArkIdForThesaurus(thesaurusId);
+        return toolboxThesaurusArkPersistence.generateArkIdForThesaurus(thesaurusId);
     }
 
     @Transactional
@@ -125,7 +131,7 @@ public class ModifyThesaurusService {
         if (StringUtils.isBlank(newId)) {
             throw new InvalidToolboxDataException("Le nouvel identifiant est obligatoire");
         }
-        if (!modifyThesaurusLegacySupport.changeThesaurusId(currentId, newId)) {
+        if (!thesaurusLifecyclePersistence.changeThesaurusId(currentId, newId)) {
             throw new InvalidToolboxDataException("Erreur de changement d'identifiant, vérifiez que l'identifiant est unique");
         }
         return newId;
@@ -145,7 +151,7 @@ public class ModifyThesaurusService {
         thesaurus.setId_thesaurus(thesaurusId);
         thesaurus.setTitle(title);
         thesaurus.setLanguage(languageCode);
-        modifyThesaurusLegacySupport.addLanguageTranslation(thesaurus);
+        toolboxThesaurusPersistence.addTranslation(thesaurus);
     }
 
     @Transactional
@@ -159,7 +165,7 @@ public class ModifyThesaurusService {
         thesaurus.setId_thesaurus(thesaurusId);
         thesaurus.setTitle(title);
         thesaurus.setLanguage(languageCode);
-        if (!modifyThesaurusLegacySupport.updateLanguageTranslation(thesaurus)) {
+        if (!toolboxThesaurusPersistence.updateTranslation(thesaurus)) {
             throw new InvalidToolboxDataException("Erreur pendant la modification");
         }
     }
@@ -169,7 +175,7 @@ public class ModifyThesaurusService {
         if (StringUtils.isBlank(languageCode)) {
             throw new InvalidToolboxDataException("Pas de langue sélectionnée");
         }
-        modifyThesaurusLegacySupport.deleteLanguageTranslation(thesaurusId, languageCode);
+        toolboxThesaurusPersistence.deleteTranslation(thesaurusId, languageCode);
     }
 
     @Transactional

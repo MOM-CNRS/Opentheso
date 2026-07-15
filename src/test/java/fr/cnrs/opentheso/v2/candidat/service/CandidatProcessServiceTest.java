@@ -5,7 +5,7 @@ import fr.cnrs.opentheso.entites.Preferences;
 import fr.cnrs.opentheso.models.candidats.CandidatDto;
 import fr.cnrs.opentheso.models.concept.DCMIResource;
 import fr.cnrs.opentheso.repositories.ConceptDcTermRepository;
-import fr.cnrs.opentheso.v2.candidat.session.CandidatProcessLegacySupport;
+import fr.cnrs.opentheso.v2.candidat.persistence.CandidatProcessPersistence;
 import fr.cnrs.opentheso.v2.shared.session.ConceptTreeRefreshSupport;
 import org.junit.jupiter.api.BeforeEach;
 import org.junit.jupiter.api.Test;
@@ -25,7 +25,7 @@ import static org.mockito.Mockito.when;
 class CandidatProcessServiceTest {
 
     @Mock
-    private CandidatProcessLegacySupport legacySupport;
+    private CandidatProcessPersistence candidatProcessPersistence;
     @Mock
     private CandidatReadService candidatReadService;
     @Mock
@@ -38,7 +38,7 @@ class CandidatProcessServiceTest {
     @BeforeEach
     void setUp() {
         service = new CandidatProcessService(
-                legacySupport,
+                candidatProcessPersistence,
                 candidatReadService,
                 conceptDcTermRepository,
                 conceptTreeRefreshSupport
@@ -46,9 +46,9 @@ class CandidatProcessServiceTest {
     }
 
     @Test
-    void exportProcessedCandidatesCsv_delegatesToLegacySupport() {
+    void exportProcessedCandidatesCsv_delegatesToPersistence() {
         var candidates = List.of(new CandidatDto());
-        when(legacySupport.exportProcessedCandidatesCsv(candidates)).thenReturn(new byte[]{1, 2});
+        when(candidatProcessPersistence.exportProcessedCandidatesCsv(candidates)).thenReturn(new byte[]{1, 2});
 
         assertEquals(2, service.exportProcessedCandidatesCsv(candidates).length);
     }
@@ -62,8 +62,8 @@ class CandidatProcessServiceTest {
 
         service.afterCandidateAccepted(candidate, 7, "admin", preferences);
 
-        verify(legacySupport).updateConceptDate("TH1", "C1", 7);
-        verify(legacySupport).generatePersistentIds(preferences, candidate);
+        verify(candidatProcessPersistence).updateConceptDate("TH1", "C1", 7);
+        verify(candidatProcessPersistence).generatePersistentIds(preferences, candidate);
         verify(conceptTreeRefreshSupport).refreshConceptTree();
         ArgumentCaptor<ConceptDcTerm> captor = ArgumentCaptor.forClass(ConceptDcTerm.class);
         verify(conceptDcTermRepository).save(captor.capture());
@@ -81,8 +81,8 @@ class CandidatProcessServiceTest {
     }
 
     @Test
-    void sendMail_delegatesToLegacySupport() {
-        when(legacySupport.sendMail("a@b.c", "subject", "body")).thenReturn(true);
+    void sendMail_delegatesToPersistence() {
+        when(candidatProcessPersistence.sendMail("a@b.c", "subject", "body")).thenReturn(true);
 
         assertTrue(service.sendMail("a@b.c", "subject", "body"));
     }

@@ -8,7 +8,7 @@ import fr.cnrs.opentheso.v2.concept.write.model.command.DeleteExternalResourceCo
 import fr.cnrs.opentheso.v2.concept.write.model.command.ReplaceGpsCoordinatesCommand;
 import fr.cnrs.opentheso.v2.concept.write.model.command.UpdateConceptImageCommand;
 import fr.cnrs.opentheso.v2.concept.write.model.command.UpdateExternalResourceCommand;
-import fr.cnrs.opentheso.v2.concept.write.session.ConceptMediaWritePort;
+import fr.cnrs.opentheso.v2.concept.write.persistence.ConceptMediaWritePersistence;
 import lombok.RequiredArgsConstructor;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
@@ -17,40 +17,40 @@ import org.springframework.transaction.annotation.Transactional;
 @RequiredArgsConstructor
 public class ConceptMediaMutationService {
 
-    private final ConceptMediaWritePort conceptMediaWritePort;
+    private final ConceptMediaWritePersistence conceptMediaWritePersistence;
 
     @Transactional
     public MutationResult replaceGpsCoordinates(ReplaceGpsCoordinatesCommand command) {
-        return conceptMediaWritePort.replaceGpsCoordinates(command);
+        return conceptMediaWritePersistence.replaceGpsCoordinates(command);
     }
 
     @Transactional
     public MutationResult addImage(AddConceptImageCommand command) {
-        return conceptMediaWritePort.addImage(command);
+        return conceptMediaWritePersistence.addImage(command);
     }
 
     @Transactional
     public MutationResult updateImage(UpdateConceptImageCommand command) {
-        return conceptMediaWritePort.updateImage(command);
+        return conceptMediaWritePersistence.updateImage(command);
     }
 
     @Transactional
     public MutationResult deleteImage(DeleteConceptImageCommand command) {
-        return conceptMediaWritePort.deleteImage(command);
+        return conceptMediaWritePersistence.deleteImage(command);
     }
 
     @Transactional
     public MutationResult addExternalResource(AddExternalResourceCommand command) {
-        return conceptMediaWritePort.addExternalResource(command);
+        return conceptMediaWritePersistence.addExternalResource(command);
     }
 
     @Transactional
     public MutationResult updateExternalResource(UpdateExternalResourceCommand command) {
-        return conceptMediaWritePort.updateExternalResource(command);
+        return conceptMediaWritePersistence.updateExternalResource(command);
     }
 
     @Transactional
     public MutationResult deleteExternalResource(DeleteExternalResourceCommand command) {
-        return conceptMediaWritePort.deleteExternalResource(command);
+        return conceptMediaWritePersistence.deleteExternalResource(command);
     }
 }

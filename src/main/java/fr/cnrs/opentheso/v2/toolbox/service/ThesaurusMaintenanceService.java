@@ -1,9 +1,9 @@
 package fr.cnrs.opentheso.v2.toolbox.service;
 
-import fr.cnrs.opentheso.v2.toolbox.session.ThesaurusMaintenanceLegacySupport;
 import fr.cnrs.opentheso.v2.setting.model.ThesaurusPreferences;
 import fr.cnrs.opentheso.v2.setting.service.ThesaurusPreferenceService;
 import fr.cnrs.opentheso.v2.toolbox.model.LocalArkSettings;
+import fr.cnrs.opentheso.v2.toolbox.persistence.ThesaurusMaintenancePersistence;
 import lombok.RequiredArgsConstructor;
 import org.apache.commons.lang3.StringUtils;
 import org.springframework.beans.factory.annotation.Value;
@@ -14,7 +14,7 @@ import org.springframework.transaction.annotation.Transactional;
 @RequiredArgsConstructor
 public class ThesaurusMaintenanceService {
 
-    private final ThesaurusMaintenanceLegacySupport thesaurusMaintenanceLegacySupport;
+    private final ThesaurusMaintenancePersistence thesaurusMaintenancePersistence;
     private final ThesaurusPreferenceService thesaurusPreferenceService;
 
     @Value("${settings.workLanguage:fr}")
@@ -32,27 +32,27 @@ public class ThesaurusMaintenanceService {
 
     @Transactional
     public int correctDisplayTopTerm(String thesaurusId) {
-        return thesaurusMaintenanceLegacySupport.correctDisplayTopTerm(thesaurusId);
+        return thesaurusMaintenancePersistence.correctDisplayTopTerm(thesaurusId);
     }
 
     @Transactional
     public void reorganizeHierarchy(String thesaurusId) {
-        thesaurusMaintenanceLegacySupport.reorganizeHierarchy(thesaurusId);
+        thesaurusMaintenancePersistence.reorganizeHierarchy(thesaurusId);
     }
 
     @Transactional
     public void reorganizeConceptsAndCollections(String thesaurusId) {
-        thesaurusMaintenanceLegacySupport.reorganizeConceptsAndCollections(thesaurusId);
+        thesaurusMaintenancePersistence.reorganizeConceptsAndCollections(thesaurusId);
     }
 
     @Transactional
     public void switchRolesFromTermToConcept(String thesaurusId) {
-        thesaurusMaintenanceLegacySupport.switchRolesFromTermToConcept(thesaurusId, workLanguage);
+        thesaurusMaintenancePersistence.switchRolesFromTermToConcept(thesaurusId, workLanguage);
     }
 
     @Transactional
     public int generateArkFromConceptId(String thesaurusId, String prefix, String naan, boolean overwrite) {
-        return thesaurusMaintenanceLegacySupport.generateArkFromConceptId(
+        return thesaurusMaintenancePersistence.generateArkFromConceptId(
                 thesaurusId,
                 StringUtils.trimToEmpty(prefix),
                 naan,
@@ -62,11 +62,11 @@ public class ThesaurusMaintenanceService {
 
     @Transactional
     public int generateLocalArk(String thesaurusId, boolean overwrite) {
-        return thesaurusMaintenanceLegacySupport.generateLocalArk(thesaurusId, overwrite);
+        return thesaurusMaintenancePersistence.generateLocalArk(thesaurusId, overwrite);
     }
 
     @Transactional
     public void generateSitemap(String thesaurusId) {
-        thesaurusMaintenanceLegacySupport.generateSitemap(thesaurusId);
+        thesaurusMaintenancePersistence.generateSitemap(thesaurusId);
     }
 }

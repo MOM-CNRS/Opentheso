@@ -3,7 +3,7 @@ package fr.cnrs.opentheso.v2.candidat.service;
 import fr.cnrs.opentheso.entites.Preferences;
 import fr.cnrs.opentheso.models.candidats.CandidatDto;
 import fr.cnrs.opentheso.models.skosapi.SKOSResource;
-import fr.cnrs.opentheso.v2.candidat.session.CandidatExportLegacySupport;
+import fr.cnrs.opentheso.v2.concept.export.rdf.ConceptSkosExportPersistence;
 import org.eclipse.rdf4j.rio.RDFFormat;
 import org.junit.jupiter.api.BeforeEach;
 import org.junit.jupiter.api.Test;
@@ -12,6 +12,7 @@ import org.mockito.Mock;
 import org.mockito.junit.jupiter.MockitoExtension;
 
 import java.util.List;
+import java.util.Optional;
 import java.util.concurrent.atomic.AtomicInteger;
 
 import static org.junit.jupiter.api.Assertions.assertEquals;
@@ -25,13 +26,13 @@ import static org.mockito.Mockito.when;
 class CandidatExportServiceTest {
 
     @Mock
-    private CandidatExportLegacySupport legacySupport;
+    private ConceptSkosExportPersistence conceptSkosExportPersistence;
 
     private CandidatExportService service;
 
     @BeforeEach
     void setUp() {
-        service = new CandidatExportService(legacySupport);
+        service = new CandidatExportService(conceptSkosExportPersistence);
     }
 
     @Test
@@ -45,7 +46,7 @@ class CandidatExportServiceTest {
         var candidat = new CandidatDto();
         candidat.setIdConcepte("C1");
 
-        when(legacySupport.loadThesaurusPreferences("TH1")).thenReturn(null);
+        when(conceptSkosExportPersistence.findThesaurusPreferences("TH1")).thenReturn(Optional.empty());
 
         assertThrows(IllegalStateException.class, () ->
                 service.exportPendingCandidates("TH1", List.of(candidat), "skos", null));
@@ -61,10 +62,10 @@ class CandidatExportServiceTest {
         var concept = new SKOSResource();
         concept.setUri("http://example.org/thesaurus/TH1/concept/C1");
 
-        when(legacySupport.loadThesaurusPreferences("TH1")).thenReturn(preferences);
-        when(legacySupport.exportConceptScheme("TH1", preferences)).thenReturn(scheme);
-        when(legacySupport.exportConcept("TH1", "C1", true)).thenReturn(concept);
-        when(legacySupport.serializeSkos(any(), eq(RDFFormat.RDFXML))).thenReturn("<rdf/>".getBytes());
+        when(conceptSkosExportPersistence.findThesaurusPreferences("TH1")).thenReturn(Optional.of(preferences));
+        when(conceptSkosExportPersistence.exportConceptScheme("TH1", preferences)).thenReturn(scheme);
+        when(conceptSkosExportPersistence.exportConcept("TH1", "C1", true)).thenReturn(concept);
+        when(conceptSkosExportPersistence.serializeSkos(any(), eq(RDFFormat.RDFXML))).thenReturn("<rdf/>".getBytes());
 
         var progress = new AtomicInteger();
         var result = service.exportPendingCandidates("TH1", List.of(candidat), "skos", progress::set);

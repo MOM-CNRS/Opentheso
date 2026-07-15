@@ -1,10 +1,10 @@
 package fr.cnrs.opentheso.v2.candidat.service;
 
 import fr.cnrs.opentheso.entites.Preferences;
-import fr.cnrs.opentheso.v2.shared.session.ThesaurusPreferencesProvider;
 import fr.cnrs.opentheso.models.skosapi.SKOSResource;
 import fr.cnrs.opentheso.models.skosapi.SKOSXmlDocument;
-import fr.cnrs.opentheso.v2.candidat.session.CandidatSkosImportLegacySupport;
+import fr.cnrs.opentheso.v2.concept.io.rdf.ConceptSkosRdfImportEngine;
+import fr.cnrs.opentheso.v2.shared.session.ThesaurusPreferencesProvider;
 import lombok.RequiredArgsConstructor;
 import org.apache.commons.lang3.StringUtils;
 import org.eclipse.rdf4j.rio.RDFFormat;
@@ -17,12 +17,12 @@ import java.io.InputStream;
 @RequiredArgsConstructor
 public class CandidatSkosImportService {
 
-    private final CandidatSkosImportLegacySupport legacySupport;
+    private final ConceptSkosRdfImportEngine conceptSkosRdfImportEngine;
     private final ThesaurusPreferencesProvider thesaurusPreferencesProvider;
 
     public SkosLoadResult loadSkosFile(InputStream inputStream, int typeImport, String selectedLang, StringBuffer errorBuffer) throws IOException {
         String lang = StringUtils.isBlank(selectedLang) ? "fr" : selectedLang;
-        var document = legacySupport.readSkos(inputStream, resolveFormat(typeImport), lang, errorBuffer);
+        var document = conceptSkosRdfImportEngine.readSkos(inputStream, resolveFormat(typeImport), lang, errorBuffer);
         return new SkosLoadResult(
                 document,
                 document.getTitle(),
@@ -51,8 +51,8 @@ public class CandidatSkosImportService {
             Preferences preferences,
             ProgressCallback progressCallback
     ) throws IOException {
-        legacySupport.configureImport("yyyy-MM-dd", userId, groupId, sourceLang, preferences);
-        legacySupport.setImportDocument(document);
+        conceptSkosRdfImportEngine.configureImport("yyyy-MM-dd", userId, groupId, sourceLang, preferences);
+        conceptSkosRdfImportEngine.setImportDocument(document);
 
         var concepts = document.getConceptList();
         if (concepts == null || concepts.isEmpty()) {
@@ -66,7 +66,7 @@ public class CandidatSkosImportService {
                 progressCallback.onProgress(index, concepts.size());
             }
             if (!resource.getLabelsList().isEmpty()) {
-                legacySupport.importConcept(resource, thesaurusId, true);
+                conceptSkosRdfImportEngine.importConcept(resource, thesaurusId, true);
             }
         }
     }

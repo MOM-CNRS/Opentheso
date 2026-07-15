@@ -1,7 +1,7 @@
 package fr.cnrs.opentheso.v2.toolbox.edition.service;
 
 import fr.cnrs.opentheso.models.nodes.NodeTree;
-import fr.cnrs.opentheso.v2.toolbox.edition.session.ThesaurusEditionCsvStructuredImportSupport;
+import fr.cnrs.opentheso.v2.toolbox.edition.persistence.ThesaurusEditionCsvStructuredImportPersistence;
 import fr.cnrs.opentheso.v2.toolbox.model.NewThesaurusFormOptions;
 import fr.cnrs.opentheso.v2.toolbox.service.NewThesaurusService;
 import lombok.RequiredArgsConstructor;
@@ -12,11 +12,11 @@ import org.springframework.stereotype.Service;
 @RequiredArgsConstructor
 public class ThesaurusEditionCsvStructuredImportService {
 
-    private final ThesaurusEditionCsvStructuredImportSupport thesaurusEditionCsvStructuredImportSupport;
+    private final ThesaurusEditionCsvStructuredImportPersistence thesaurusEditionCsvStructuredImportPersistence;
     private final NewThesaurusService newThesaurusService;
 
     public StructuredLoadResult loadCsvFile(byte[] content, char delimiter) {
-        var result = thesaurusEditionCsvStructuredImportSupport.parse(content, delimiter);
+        var result = thesaurusEditionCsvStructuredImportPersistence.parse(content, delimiter);
         return new StructuredLoadResult(result.root(), result.totalConcepts(), result.error(), result.isSuccess());
     }
 
@@ -37,7 +37,7 @@ public class ThesaurusEditionCsvStructuredImportService {
             }
         }
 
-        var result = thesaurusEditionCsvStructuredImportSupport.importNewThesaurus(
+        var result = thesaurusEditionCsvStructuredImportPersistence.importNewThesaurus(
                 thesaurusName,
                 StringUtils.defaultIfBlank(sourceLang, "fr"),
                 groupId,

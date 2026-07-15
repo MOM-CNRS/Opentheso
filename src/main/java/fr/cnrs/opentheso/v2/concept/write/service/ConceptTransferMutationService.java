@@ -3,7 +3,7 @@ package fr.cnrs.opentheso.v2.concept.write.service;
 import fr.cnrs.opentheso.v2.concept.write.model.ConceptWriteThesaurusOption;
 import fr.cnrs.opentheso.v2.concept.write.model.MutationResult;
 import fr.cnrs.opentheso.v2.concept.write.model.command.MoveConceptToThesaurusCommand;
-import fr.cnrs.opentheso.v2.concept.write.session.ConceptTransferWritePort;
+import fr.cnrs.opentheso.v2.concept.write.persistence.ConceptTransferWritePersistence;
 import lombok.RequiredArgsConstructor;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
@@ -14,11 +14,11 @@ import java.util.List;
 @RequiredArgsConstructor
 public class ConceptTransferMutationService {
 
-    private final ConceptTransferWritePort conceptTransferWritePort;
+    private final ConceptTransferWritePersistence conceptTransferWritePersistence;
 
     @Transactional
     public MutationResult moveConceptToThesaurus(MoveConceptToThesaurusCommand command) {
-        return conceptTransferWritePort.moveConceptToThesaurus(command);
+        return conceptTransferWritePersistence.moveConceptToThesaurus(command);
     }
 
     @Transactional(readOnly = true)
@@ -28,6 +28,6 @@ public class ConceptTransferMutationService {
             String currentThesaurusId,
             String lang
     ) {
-        return conceptTransferWritePort.listAdminThesauri(userId, superAdmin, currentThesaurusId, lang);
+        return conceptTransferWritePersistence.listAdminThesauri(userId, superAdmin, currentThesaurusId, lang);
     }
 }
