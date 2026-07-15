@@ -1,6 +1,6 @@
 package fr.cnrs.opentheso.v2.user.ui;
 
-import fr.cnrs.opentheso.bean.language.LanguageBean;
+import fr.cnrs.opentheso.v2.shared.ui.V2LocaleBean;
 import fr.cnrs.opentheso.utils.MessageUtils;
 import fr.cnrs.opentheso.v2.shared.ui.UserSession;
 import fr.cnrs.opentheso.v2.user.exception.InvalidPasswordException;
@@ -22,7 +22,7 @@ import java.io.Serializable;
 public class ModifyPasswordBean implements Serializable {
 
     private final UserSession userSession;
-    private final LanguageBean languageBean;
+    private final V2LocaleBean localeBean;
     private final UserPasswordService userPasswordService;
 
     private String password;
@@ -30,11 +30,11 @@ public class ModifyPasswordBean implements Serializable {
 
     public ModifyPasswordBean(
             UserSession userSession,
-            LanguageBean languageBean,
+            V2LocaleBean localeBean,
             UserPasswordService userPasswordService
     ) {
         this.userSession = userSession;
-        this.languageBean = languageBean;
+        this.localeBean = localeBean;
         this.userPasswordService = userPasswordService;
     }
 
@@ -46,12 +46,12 @@ public class ModifyPasswordBean implements Serializable {
     public void apply() {
         Integer userId = userSession.getCurrentUserId();
         if (userId == null) {
-            MessageUtils.showErrorMessage(languageBean.getMsg("profile.userNotConnected"));
+            MessageUtils.showErrorMessage(localeBean.getMsg("profile.userNotConnected"));
             return;
         }
         try {
             userPasswordService.changePassword(userId, password, confirmation);
-            MessageUtils.showInformationMessage(languageBean.getMsg("profile.passwordChangedSuccess"));
+            MessageUtils.showInformationMessage(localeBean.getMsg("profile.passwordChangedSuccess"));
             prepareDialog();
             PrimeFaces.current().ajax().update("containerIndex");
             PrimeFaces.current().executeScript("PF('v2ModifyPassword').hide();");
@@ -59,7 +59,7 @@ public class ModifyPasswordBean implements Serializable {
             MessageUtils.showErrorMessage(e.getMessage());
         } catch (RuntimeException e) {
             log.error("Erreur inattendue lors du changement de mot de passe pour l'utilisateur id={}", userId, e);
-            MessageUtils.showErrorMessage(languageBean.getMsg("profile.unexpectedError"));
+            MessageUtils.showErrorMessage(localeBean.getMsg("profile.unexpectedError"));
         }
     }
 }

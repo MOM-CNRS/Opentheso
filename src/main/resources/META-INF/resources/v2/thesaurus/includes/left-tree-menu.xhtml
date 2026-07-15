@@ -1,0 +1,25 @@
+<ui:fragment xmlns="http://www.w3.org/1999/xhtml"
+             xmlns:h="http://xmlns.jcp.org/jsf/html"
+             xmlns:ui="http://xmlns.jcp.org/jsf/facelets"
+             xmlns:p="http://primefaces.org/ui">
+
+    <div class="row" style="height:28px; margin-top:-10px; margin-bottom:5px;">
+        <div class="col-12" style="text-align:right;">
+            <p:commandButton id="v2ConceptTreeMenuButton" type="button" icon="pi pi-align-justify"
+                             style="width:1.5rem; height:1.5rem; margin-right:5px; background:white; color:#f47b2a; border:1px solid #ffffff;"/>
+            <p:menu overlay="true" trigger="v2ConceptTreeMenuButton" my="left top" at="left bottom">
+                <p:menuitem value="#{v2LocaleBean.getMsg('conceptsview.view_theso_as_graph')}"
+                            icon="fa-solid fa-diagram-project"
+                            url="#{request.contextPath}/v2/graph/visualize/thesaurus?idtheso=#{v2ThesaurusBrowseBean.thesaurusId}"
+                            target="_blank"
+                            title="#{v2LocaleBean.getMsg('conceptsview.view_theso_as_graph_tooltip')}"/>
+                <p:menuitem value="#{v2LocaleBean.getMsg('conceptsview.view_branch_as_graph')}"
+                            icon="fa-solid fa-folder-tree"
+                            url="#{request.contextPath}/v2/graph/visualize/branch?idtheso=#{v2ThesaurusBrowseBean.thesaurusId}&amp;idc=#{v2ThesaurusBrowseBean.branchGraphConceptId}"
+                            target="_blank"
+                            disabled="#{not v2ThesaurusBrowseBean.branchGraphEnabled}"
+                            title="#{v2LocaleBean.getMsg('conceptsview.view_branch_as_graph_tooltip')}"/>
+            </p:menu>
+        </div>
+    </div>
+</ui:fragment>

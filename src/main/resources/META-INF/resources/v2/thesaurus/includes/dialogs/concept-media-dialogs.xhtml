@@ -1,0 +1,189 @@
+<ui:fragment xmlns="http://www.w3.org/1999/xhtml"
+             xmlns:ui="http://xmlns.jcp.org/jsf/facelets"
+             xmlns:p="http://primefaces.org/ui"
+             xmlns:h="http://xmlns.jcp.org/jsf/html"
+             xmlns:f="http://xmlns.jcp.org/jsf/core">
+
+    <p:dialog id="v2EditGpsDlg" header="#{v2LocaleBean.getMsg('rightbody.concept.gps_coordinates')}"
+              widgetVar="v2EditGpsDlg" width="650" modal="true" resizable="true">
+        <h:form id="v2EditGpsForm">
+            <div class="row mb-2">
+                <div class="col-12">
+                    <h:outputText value="#{v2LocaleBean.getMsg('rightbody.conceptdialog.nameOfConcept')} : "/>
+                    <h:outputText value="#{v2ConceptMediaEditorBean.currentConceptLabel}" style="color:#C63632;"/>
+                </div>
+            </div>
+            <div class="row mb-2">
+                <div class="col-12">
+                    <p:inputTextarea value="#{v2ConceptMediaEditorBean.gpsCoordinatesText}"
+                                     rows="5" style="width:100%;"
+                                     placeholder="(48.922548 2.145240, 48.897888 2.242193)"/>
+                </div>
+            </div>
+            <div class="text-right mt-3">
+                <p:commandButton value="#{v2LocaleBean.getMsg('btnCancel')}" styleClass="ui-button-secondary"
+                                 type="button" onclick="PF('v2EditGpsDlg').hide();" style="margin-right:8px;"/>
+                <p:commandButton value="#{v2LocaleBean.getMsg('btnValidate')}" styleClass="ui-button-success"
+                                 actionListener="#{v2ConceptMediaEditorBean.submitSaveGps()}"
+                                 update="v2EditGpsForm :containerIndex:rightTab :messageIndex"
+                                 process="@form"/>
+            </div>
+        </h:form>
+    </p:dialog>
+
+    <p:dialog id="v2AddImageDlg" header="#{v2LocaleBean.getMsg('rightbody.conceptdialog.add_image')}"
+              widgetVar="v2AddImageDlg" width="650" modal="true" resizable="false">
+        <h:form id="v2AddImageForm">
+            <p:defaultCommand target="v2AddImageSubmit"/>
+            <div class="row mb-2">
+                <div class="col-12">
+                    <h:outputText value="#{v2LocaleBean.getMsg('rightbody.conceptdialog.nameOfConcept')} : "/>
+                    <h:outputText value="#{v2ConceptMediaEditorBean.currentConceptLabel}" style="color:#C63632;"/>
+                </div>
+            </div>
+            <div class="row mb-2">
+                <div class="col-4"><h:outputText value="#{v2LocaleBean.getMsg('rightbody.conceptdialog.uri_image')} *"/></div>
+                <div class="col-8"><p:inputText value="#{v2ConceptMediaEditorBean.imageUri}" style="width:100%;"/></div>
+            </div>
+            <div class="row mb-2">
+                <div class="col-4"><h:outputText value="#{v2LocaleBean.getMsg('statistique.label')}"/></div>
+                <div class="col-8"><p:inputText value="#{v2ConceptMediaEditorBean.imageName}" style="width:100%;"/></div>
+            </div>
+            <div class="row mb-2">
+                <div class="col-4"><h:outputText value="#{v2LocaleBean.getMsg('dublincore.creator')}"/></div>
+                <div class="col-8"><p:inputText value="#{v2ConceptMediaEditorBean.imageCreator}" style="width:100%;"/></div>
+            </div>
+            <div class="row mb-2">
+                <div class="col-4"><h:outputText value="#{v2LocaleBean.getMsg('rightbody.conceptdialog.copyright')}"/></div>
+                <div class="col-8"><p:inputText value="#{v2ConceptMediaEditorBean.imageCopyright}" style="width:100%;"/></div>
+            </div>
+            <div class="text-right mt-3">
+                <p:commandButton value="#{v2LocaleBean.getMsg('btnCancel')}" styleClass="ui-button-secondary"
+                                 type="button" onclick="PF('v2AddImageDlg').hide();" style="margin-right:8px;"/>
+                <p:commandButton id="v2AddImageSubmit" value="#{v2LocaleBean.getMsg('btnValidate')}" styleClass="ui-button-success"
+                                 actionListener="#{v2ConceptMediaEditorBean.submitAddImage()}"
+                                 update="v2AddImageForm :containerIndex:rightTab :messageIndex"
+                                 process="@form"/>
+            </div>
+        </h:form>
+    </p:dialog>
+
+    <p:dialog id="v2EditImageDlg" header="#{v2LocaleBean.getMsg('rightbody.concept.edit_image')}"
+              widgetVar="v2EditImageDlg" width="700" modal="true" resizable="false">
+        <h:form id="v2EditImageForm">
+            <p:dataTable var="imageEdit" value="#{v2ConceptMediaEditorBean.imageEdits}" size="small">
+                <p:column headerText="#{v2LocaleBean.getMsg('rightbody.conceptdialog.uri_image')}">
+                    <p:inputText value="#{imageEdit.uri}" style="width:100%;"/>
+                </p:column>
+                <p:column headerText="#{v2LocaleBean.getMsg('statistique.label')}">
+                    <p:inputText value="#{imageEdit.name}" style="width:100%;"/>
+                </p:column>
+                <p:column headerText="#{v2LocaleBean.getMsg('dublincore.creator')}">
+                    <p:inputText value="#{imageEdit.creator}" style="width:100%;"/>
+                </p:column>
+                <p:column headerText="#{v2LocaleBean.getMsg('rightbody.conceptdialog.copyright')}">
+                    <p:inputText value="#{imageEdit.copyright}" style="width:100%;"/>
+                </p:column>
+                <p:column width="90">
+                    <p:commandButton icon="pi pi-check" styleClass="ui-button-success"
+                                     actionListener="#{v2ConceptMediaEditorBean.submitUpdateImage(imageEdit)}"
+                                     update="v2EditImageForm :containerIndex:rightTab :messageIndex"
+                                     process="@form"/>
+                </p:column>
+            </p:dataTable>
+            <div class="text-right mt-3">
+                <p:commandButton value="#{v2LocaleBean.getMsg('btnCancel')}" styleClass="ui-button-secondary"
+                                 type="button" onclick="PF('v2EditImageDlg').hide();"/>
+            </div>
+        </h:form>
+    </p:dialog>
+
+    <p:dialog id="v2DeleteImageDlg" header="#{v2LocaleBean.getMsg('rightbody.concept.delete_image')}"
+              widgetVar="v2DeleteImageDlg" width="600" modal="true" resizable="false">
+        <h:form id="v2DeleteImageForm">
+            <p:dataTable var="imageDelete" value="#{v2ConceptMediaEditorBean.imagesToDelete}" size="small">
+                <p:column headerText="#{v2LocaleBean.getMsg('rightbody.conceptdialog.uri_image')}">
+                    <h:outputText value="#{imageDelete.uri}"/>
+                </p:column>
+                <p:column width="90">
+                    <p:commandButton icon="pi pi-trash" styleClass="ui-button-danger"
+                                     actionListener="#{v2ConceptMediaEditorBean.submitDeleteImage(imageDelete)}"
+                                     update="v2DeleteImageForm :containerIndex:rightTab :messageIndex"
+                                     process="@form"/>
+                </p:column>
+            </p:dataTable>
+            <div class="text-right mt-3">
+                <p:commandButton value="#{v2LocaleBean.getMsg('btnCancel')}" styleClass="ui-button-secondary"
+                                 type="button" onclick="PF('v2DeleteImageDlg').hide();"/>
+            </div>
+        </h:form>
+    </p:dialog>
+
+    <p:dialog id="v2AddExternalResourceDlg" header="#{v2LocaleBean.getMsg('rightbody.concept.addExternalResource')}"
+              widgetVar="v2AddExternalResourceDlg" width="650" modal="true" resizable="false">
+        <h:form id="v2AddExternalResourceForm">
+            <p:defaultCommand target="v2AddExternalResourceSubmit"/>
+            <div class="row mb-2">
+                <div class="col-4"><h:outputText value="#{v2LocaleBean.getMsg('rightbody.conceptdialog.uri')} *"/></div>
+                <div class="col-8"><p:inputText value="#{v2ConceptMediaEditorBean.resourceUri}" style="width:100%;"/></div>
+            </div>
+            <div class="row mb-2">
+                <div class="col-4"><h:outputText value="#{v2LocaleBean.getMsg('rightbody.conceptdialog.description')}"/></div>
+                <div class="col-8"><p:inputText value="#{v2ConceptMediaEditorBean.resourceDescription}" style="width:100%;"/></div>
+            </div>
+            <div class="text-right mt-3">
+                <p:commandButton value="#{v2LocaleBean.getMsg('btnCancel')}" styleClass="ui-button-secondary"
+                                 type="button" onclick="PF('v2AddExternalResourceDlg').hide();" style="margin-right:8px;"/>
+                <p:commandButton id="v2AddExternalResourceSubmit" value="#{v2LocaleBean.getMsg('btnValidate')}" styleClass="ui-button-success"
+                                 actionListener="#{v2ConceptMediaEditorBean.submitAddExternalResource()}"
+                                 update="v2AddExternalResourceForm :containerIndex:rightTab :messageIndex"
+                                 process="@form"/>
+            </div>
+        </h:form>
+    </p:dialog>
+
+    <p:dialog id="v2EditExternalResourceDlg" header="#{v2LocaleBean.getMsg('rightbody.concept.modifyExternalResource')}"
+              widgetVar="v2EditExternalResourceDlg" width="700" modal="true" resizable="false">
+        <h:form id="v2EditExternalResourceForm">
+            <p:dataTable var="resourceEdit" value="#{v2ConceptMediaEditorBean.resourceEdits}" size="small">
+                <p:column headerText="#{v2LocaleBean.getMsg('rightbody.conceptdialog.uri')}">
+                    <p:inputText value="#{resourceEdit.uri}" style="width:100%;"/>
+                </p:column>
+                <p:column headerText="#{v2LocaleBean.getMsg('rightbody.conceptdialog.description')}">
+                    <p:inputText value="#{resourceEdit.description}" style="width:100%;"/>
+                </p:column>
+                <p:column width="90">
+                    <p:commandButton icon="pi pi-check" styleClass="ui-button-success"
+                                     actionListener="#{v2ConceptMediaEditorBean.submitUpdateExternalResource(resourceEdit)}"
+                                     update="v2EditExternalResourceForm :containerIndex:rightTab :messageIndex"
+                                     process="@form"/>
+                </p:column>
+            </p:dataTable>
+            <div class="text-right mt-3">
+                <p:commandButton value="#{v2LocaleBean.getMsg('btnCancel')}" styleClass="ui-button-secondary"
+                                 type="button" onclick="PF('v2EditExternalResourceDlg').hide();"/>
+            </div>
+        </h:form>
+    </p:dialog>
+
+    <p:dialog id="v2DeleteExternalResourceDlg" header="#{v2LocaleBean.getMsg('rightbody.concept.deleteExternalResource')}"
+              widgetVar="v2DeleteExternalResourceDlg" width="600" modal="true" resizable="false">
+        <h:form id="v2DeleteExternalResourceForm">
+            <p:dataTable var="resourceDelete" value="#{v2ConceptMediaEditorBean.resourcesToDelete}" size="small">
+                <p:column headerText="#{v2LocaleBean.getMsg('rightbody.conceptdialog.uri')}">
+                    <h:outputText value="#{resourceDelete.uri}"/>
+                </p:column>
+                <p:column width="90">
+                    <p:commandButton icon="pi pi-trash" styleClass="ui-button-danger"
+                                     actionListener="#{v2ConceptMediaEditorBean.submitDeleteExternalResource(resourceDelete)}"
+                                     update="v2DeleteExternalResourceForm :containerIndex:rightTab :messageIndex"
+                                     process="@form"/>
+                </p:column>
+            </p:dataTable>
+            <div class="text-right mt-3">
+                <p:commandButton value="#{v2LocaleBean.getMsg('btnCancel')}" styleClass="ui-button-secondary"
+                                 type="button" onclick="PF('v2DeleteExternalResourceDlg').hide();"/>
+            </div>
+        </h:form>
+    </p:dialog>
+</ui:fragment>

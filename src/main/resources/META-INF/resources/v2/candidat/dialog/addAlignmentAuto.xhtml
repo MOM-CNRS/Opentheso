@@ -5,43 +5,43 @@
              xmlns:h="http://xmlns.jcp.org/jsf/html">
 
     <p:dialog id="searchAlignementID" widgetVar="searchAlignement" width="850" minHeight="400" showEffect="fade" modal="true"
-              header="#{langueBean.getMsg('rightbody.conceptdialog.alignment_with_external_thesauri')}"
+              header="#{v2LocaleBean.getMsg('rightbody.conceptdialog.alignment_with_external_thesauri')}"
               resizable="false" position="top" style="margin-top: 30px" >
         <h:form id="searchAlignementForm">
             <p:outputPanel class="ui-fluid">
 
                 <p:defaultCommand target="searchAlignmentBtn" />
                 <div class="row" style="margin-top: 5px; margin-bottom: -10px;">
-                    <h:panelGroup rendered="#{!alignmentBean.isNameAlignment()}">
+                    <h:panelGroup rendered="#{!v2CandidatAutoAlignmentBean.isNameAlignment()}">
                         <div class="col-6" style="margin-top: 3px">
-                            <p:inputText value="#{alignmentBean.conceptValueForAlignment}" style="height: 35px; font-size: 14px;"/>
+                            <p:inputText value="#{v2CandidatAutoAlignmentBean.conceptValueForAlignment}" style="height: 35px; font-size: 14px;"/>
                         </div>
                     </h:panelGroup>
 
                     <!-- nom et prénom pour IdRef -->
-                    <h:panelGroup rendered="#{alignmentBean.isNameAlignment()}" >
+                    <h:panelGroup rendered="#{v2CandidatAutoAlignmentBean.isNameAlignment()}" >
                         <div class="col-3" style="margin-top: 3px">
-                            <p:inputText placeholder="#{langueBean.getMsg('rightbody.conceptdialog.name')}"
-                                         value="#{alignmentBean.nom}" style="height: 35px; font-size: 14px;"/>
+                            <p:inputText placeholder="#{v2LocaleBean.getMsg('rightbody.conceptdialog.name')}"
+                                         value="#{v2CandidatAutoAlignmentBean.nom}" style="height: 35px; font-size: 14px;"/>
                         </div>
                         <div class="col-3">
-                            <p:inputText placeholder="#{langueBean.getMsg('rightbody.conceptdialog.first_name')}"
-                                         value="#{alignmentBean.prenom}" style="height: 35px; font-size: 14px;"/>
+                            <p:inputText placeholder="#{v2LocaleBean.getMsg('rightbody.conceptdialog.first_name')}"
+                                         value="#{v2CandidatAutoAlignmentBean.prenom}" style="height: 35px; font-size: 14px;"/>
                         </div>
                     </h:panelGroup>
 
                     <div class="col-5" style="margin-top: 3px">
-                        <p:selectOneMenu value="#{alignmentBean.selectedAlignement}" style="width: 100%; background: white; border-color: #43B572"
-                                         title="#{alignmentBean.alertWikidata}">
-                            <f:selectItems value="#{alignmentBean.alignementSources}" var="alig" itemLabel="#{alig.source}" itemValue="#{alig.source}"/>
-                            <p:ajax event="change" listener="#{alignmentBean.actionChoix()}" update="searchAlignementForm messageIndex"/>
+                        <p:selectOneMenu value="#{v2CandidatAutoAlignmentBean.selectedAlignement}" style="width: 100%; background: white; border-color: #43B572"
+                                         title="#{v2CandidatAutoAlignmentBean.alertWikidata}">
+                            <f:selectItems value="#{v2CandidatAutoAlignmentBean.alignementSources}" var="alig" itemLabel="#{alig.source}" itemValue="#{alig.source}"/>
+                            <p:ajax event="change" listener="#{v2CandidatAutoAlignmentBean.actionChoix()}" update="searchAlignementForm messageIndex"/>
                         </p:selectOneMenu>
                     </div>
 
                     <div class="col-1">
                         <p:commandButton id="searchAlignmentBtn" icon="pi pi-search" styleClass="rounded-button ui-button-outlined"
                                          ajax="true" process="@form"
-                                         actionListener="#{alignmentBean.searchAlignments(alignmentManualBean)}"
+                                         actionListener="#{v2CandidatBean.searchAlignements()}"
                                          style="color: #f47b2a; margin-left: 5px"
                                          update="searchAlignementForm messageIndex" />
                     </div>
@@ -49,31 +49,31 @@
 
                 <p:separator/>
 
-                <h:panelGroup id="columnRightPanelResult" rendered="#{alignmentBean.isViewResult()}">
+                <h:panelGroup id="columnRightPanelResult" rendered="#{v2CandidatAutoAlignmentBean.isViewResult()}">
                     <!-- Ajout d'alignement manuel -->
-                    <p:panel rendered="#{(alignmentBean.listAlignValues.size() == 0)}" style="border: solid 1px; padding: 20px">
+                    <p:panel rendered="#{(v2CandidatAutoAlignmentBean.listAlignValues.size() == 0)}" style="border: solid 1px; padding: 20px">
                         <div class="row">
                             <div class="col-12" style="color: #000;">
-                                <strong style="color: red"> #{langueBean.getMsg('search.noResult')}! </strong>
+                                <strong style="color: red"> #{v2LocaleBean.getMsg('search.noResult')}! </strong>
                             </div>
                         </div>
 
                         <div class="row" style="margin-top: 5px">
                             <div class="col-12">
-                                <h:outputText value="#{langueBean.getMsg('alignment.addManualMessage1')}: " style="color: #000;"/>
-                                <h:outputText value="#{conceptView.nodeConcept.term.lexicalValue}" style="color: #43B572;"/>
+                                <h:outputText value="#{v2LocaleBean.getMsg('alignment.addManualMessage1')}: " style="color: #000;"/>
+                                <h:outputText value="#{v2CandidatBean.candidatSelected.nomPref}" style="color: #43B572;"/>
                             </div>
                         </div>
 
                         <div class="row" style="margin-top: 5px">
                             <div class="col-6">
-                                <p:outputLabel value="#{langueBean.getMsg('rightbody.conceptdialog.equivalence_type')}" style="color: #000;"/>
+                                <p:outputLabel value="#{v2LocaleBean.getMsg('rightbody.conceptdialog.equivalence_type')}" style="color: #000;"/>
                             </div>
                             <div class="col-6">
-                                <p:selectOneMenu value="#{alignmentBean.selectedAlignementType}"
-                                                 title="#{langueBean.getMsg('rightbody.conceptdialog.type_of_alignmnent')}"
+                                <p:selectOneMenu value="#{v2CandidatAutoAlignmentBean.selectedAlignementType}"
+                                                 title="#{v2LocaleBean.getMsg('rightbody.conceptdialog.type_of_alignmnent')}"
                                                  style="background: white; border-color: #43B572; font-size: 12px; height: 32px; margin-top: -5px;">
-                                    <f:selectItems value="#{alignmentBean.alignmentTypes}" var="type" itemLabel="#{type.value}" itemValue="#{type.key}" />
+                                    <f:selectItems value="#{v2CandidatAutoAlignmentBean.alignmentTypes}" var="type" itemLabel="#{type.value}" itemValue="#{type.key}" />
                                 </p:selectOneMenu>
 
                             </div>
@@ -81,53 +81,51 @@
 
                         <div class="row" style="margin-top: 5px">
                             <div class="col-6">
-                                <p:outputLabel value="#{langueBean.getMsg('rightbody.conceptdialog.distant_uri')}" style="color: #000;"/>
+                                <p:outputLabel value="#{v2LocaleBean.getMsg('rightbody.conceptdialog.distant_uri')}" style="color: #000;"/>
                             </div>
                             <div class="col-6">
-                                <p:inputText value="#{alignmentBean.manualAlignmentUri}"/>
+                                <p:inputText value="#{v2CandidatAutoAlignmentBean.manualAlignmentUri}"/>
                             </div>
                         </div>
 
                         <div class="row" style="margin-top: 5px">
                             <div class="col-6">
-                                <p:outputLabel value="#{langueBean.getMsg('rightbody.conceptdialog.source_name')}"  style="color: #000;"/>
+                                <p:outputLabel value="#{v2LocaleBean.getMsg('rightbody.conceptdialog.source_name')}"  style="color: #000;"/>
                             </div>
                             <div class="col-6">
-                                <p:inputText value="#{alignmentBean.selectedAlignement}" />
+                                <p:inputText value="#{v2CandidatAutoAlignmentBean.selectedAlignement}" />
                             </div>
                         </div>
                         <p:spacer height="20px" />
                         <div class="row" style="width: 100%; text-align: right; margin-top: 5px; margin-bottom: 5px;">
                             <div class="col-3 offset-6">
-                                <p:commandButton value="#{langueBean.getMsg('candidat.close')}" styleClass="ui-button-secondary button" icon="fas fa-undo-alt"
+                                <p:commandButton value="#{v2LocaleBean.getMsg('candidat.close')}" styleClass="ui-button-secondary button" icon="fas fa-undo-alt"
                                                  style="margin-right: 10px"
                                                  process="@this" ajax="true" update="tabViewCandidat:containerIndexCandidat:searchAlignementForm"
                                                  oncomplete="PF('searchAlignement').hide();"
-                                                 actionListener="#{alignmentBean.cancelManualAlignment()}"/>
+                                                 actionListener="#{v2CandidatAutoAlignmentBean.cancelManualAlignment()}"/>
                             </div>
                             <div class="col-3">
-                                <p:commandButton value="#{langueBean.getMsg('btnValidate')}" styleClass="ui-button-success" icon="pi pi-check"
+                                <p:commandButton value="#{v2LocaleBean.getMsg('btnValidate')}" styleClass="ui-button-success" icon="pi pi-check"
                                                  ajax="true" process="@form"
                                                  update="tabViewCandidat:containerIndexCandidat:searchAlignementForm messageIndex"
-                                                 action="#{alignmentBean.addManualAlignement(selectedThesaurus.selectedIdTheso,
-                                                           alignmentBean.idConceptSelectedForAlignment,
-                                                           currentUser.nodeUser.idUser)}"
+                                                 actionListener="#{v2CandidatBean.addManualAlignmentFromAutoSearch()}"
                                                  oncomplete="PF('searchAlignement').hide();"/>
                             </div>
                         </div>
                     </p:panel>
                     <!-- Fin Ajout d'alignement manuel -->
 
-                    <h:panelGroup id="alignementChoiceConfStep" rendered="#{alignmentBean.alignementSources == null || alignmentBean.alignementSources.size() == 0}">
+                    <h:panelGroup id="alignementChoiceConfStep" rendered="#{v2CandidatAutoAlignmentBean.alignementSources == null || v2CandidatAutoAlignmentBean.alignementSources.size() == 0}">
                         <div class="row">
                             <div class="col-12" style="text-align: center">
-                                <p:outputLabel value="!! #{langueBean.getMsg('alig.NeedToParameter')}" style="color: #D32F2F; font-size: 16px; font-weight: bold"/>
+                                <p:outputLabel value="!! #{v2LocaleBean.getMsg('alig.NeedToParameter')}" style="color: #D32F2F; font-size: 16px; font-weight: bold"/>
                             </div>
                         </div>
                     </h:panelGroup>
 
                     <p:panel style="max-height: 600px; color: #000">
-                        <ui:repeat rendered="#{alignmentBean.listAlignValues != null}" value="#{alignmentBean.listAlignValues}" var='nodeAlign'>
+                        <ui:repeat rendered="#{v2CandidatAutoAlignmentBean.listAlignValues != null}" value="#{v2CandidatAutoAlignmentBean.listAlignValues}" var='nodeAlign'>
                             <div class="row">
                                 <div class="col-11">
                                     <div class="row">
@@ -138,7 +136,7 @@
                                     <h:panelGroup rendered="#{nodeAlign.concept_target_alt.trim() != null and nodeAlign.concept_target_alt.trim() != ''}">
                                         <div class="row">
                                             <div class="col-12" >
-                                                <h:outputText value="#{langueBean.getMsg('indexview.synonym')} : #{nodeAlign.concept_target_alt}&lt;br/&gt;" escape="false"  style="font-size: 12px"/>
+                                                <h:outputText value="#{v2LocaleBean.getMsg('indexview.synonym')} : #{nodeAlign.concept_target_alt}&lt;br/&gt;" escape="false"  style="font-size: 12px"/>
                                             </div>
                                         </div>
                                     </h:panelGroup>
@@ -157,7 +155,7 @@
                                     </div>
                                 </div>
                                 <div class="col-1">
-                                    <p:commandLink actionListener="#{alignmentBean.getUriAndOptions(nodeAlign, selectedThesaurus.selectedIdTheso)}"
+                                    <p:commandLink actionListener="#{v2CandidatAutoAlignmentBean.getUriAndOptions(nodeAlign)}"
                                                    ajax="true" process="@this"
                                                    update="tabViewCandidat:containerIndexCandidat:searchAlignementForm">
                                         <i class="pi pi-cloud-download" style="color: #f47b2a; font-size: 1.5rem; margin-top: 20px;"/>
@@ -170,23 +168,23 @@
                 </h:panelGroup>
 
                 <!-- panel de validation d'un alignement avec les options-->
-                <h:panelGroup rendered="#{alignmentBean.isViewSelection()}">
+                <h:panelGroup rendered="#{v2CandidatAutoAlignmentBean.isViewSelection()}">
 
                     <div class="row" style="margin-top: -5px; margin-bottom: -10px;">
                         <div class="col-3">
-                            <p:outputLabel value="#{alignmentBean.conceptValueForAlignment} " style="color: #000; font-size: 14px; padding-left: 5px;"/>
+                            <p:outputLabel value="#{v2CandidatAutoAlignmentBean.conceptValueForAlignment} " style="color: #000; font-size: 14px; padding-left: 5px;"/>
                         </div>
                         <div class="col-3">
-                            <p:selectOneMenu value="#{alignmentBean.selectedAlignementType}"
-                                             title="#{langueBean.getMsg('rightbody.conceptdialog.type_of_alignmnent')}"
+                            <p:selectOneMenu value="#{v2CandidatAutoAlignmentBean.selectedAlignementType}"
+                                             title="#{v2LocaleBean.getMsg('rightbody.conceptdialog.type_of_alignmnent')}"
                                              style="background: white; border-color: #43B572; font-size: 12px; height: 32px; margin-top: -5px;">
-                                <f:selectItems value="#{alignmentBean.alignmentTypes}" var="type" itemLabel="#{type.value}" itemValue="#{type.key}" />
+                                <f:selectItems value="#{v2CandidatAutoAlignmentBean.alignmentTypes}" var="type" itemLabel="#{type.value}" itemValue="#{type.key}" />
                             </p:selectOneMenu>
                         </div>
 
                         <div class="col-6">
-                            <h:outputText value=" #{alignmentBean.selectedNodeAlignment.concept_target} (#{alignmentBean.selectedAlignement})"
-                                          title="#{alignmentBean.selectedNodeAlignment.uri_target}" style="color: #000; font-size: 14px;"/>
+                            <h:outputText value=" #{v2CandidatAutoAlignmentBean.selectedNodeAlignment.concept_target} (#{v2CandidatAutoAlignmentBean.selectedAlignement})"
+                                          title="#{v2CandidatAutoAlignmentBean.selectedNodeAlignment.uri_target}" style="color: #000; font-size: 14px;"/>
                         </div>
                     </div>
 
@@ -194,13 +192,13 @@
 
                     <p:scrollPanel style="width:100%; height:400px">
                         <!-- langues externes -->
-                        <h:panelGroup rendered="#{(alignmentBean.traductionsOfAlignment != null) and (alignmentBean.traductionsOfAlignment.size() != 0)}">
-                            <p:dataTable var="externalTraductions" value="#{alignmentBean.traductionsOfAlignment}"
+                        <h:panelGroup rendered="#{(v2CandidatAutoAlignmentBean.traductionsOfAlignment != null) and (v2CandidatAutoAlignmentBean.traductionsOfAlignment.size() != 0)}">
+                            <p:dataTable var="externalTraductions" value="#{v2CandidatAutoAlignmentBean.traductionsOfAlignment}"
                                          resizableColumns="true" showGridlines="true" size="small" scrollable="true" scrollHeight="350" style="line-height: 12px;" lazy="false">
 
                                 <f:facet name="header">
                                     <div class="p-d-flex p-jc-between p-ai-center">
-                                        <h:outputText value="#{langueBean.getMsg('rightbody.conceptdialog.translations_of')} #{alignmentBean.selectedAlignement}" style="font-size: 14px;"/>
+                                        <h:outputText value="#{v2LocaleBean.getMsg('rightbody.conceptdialog.translations_of')} #{v2CandidatAutoAlignmentBean.selectedAlignement}" style="font-size: 14px;"/>
                                     </div>
                                 </f:facet>
 
@@ -223,14 +221,14 @@
                         </h:panelGroup>
 
                         <!-- Notes externes -->
-                        <h:panelGroup rendered="#{(alignmentBean.descriptionsOfAlignment != null) and (alignmentBean.descriptionsOfAlignment.size() != 0)}"
+                        <h:panelGroup rendered="#{(v2CandidatAutoAlignmentBean.descriptionsOfAlignment != null) and (v2CandidatAutoAlignmentBean.descriptionsOfAlignment.size() != 0)}"
                                       style="margin-top: 10px">
-                            <p:dataTable var="notes" value="#{alignmentBean.descriptionsOfAlignment}"
+                            <p:dataTable var="notes" value="#{v2CandidatAutoAlignmentBean.descriptionsOfAlignment}"
                                          resizableColumns="true" showGridlines="true" size="small" scrollable="true" scrollHeight="350" style="line-height: 12px;margin-top: 10px;" lazy="false">
 
                                 <f:facet name="header">
                                     <div class="p-d-flex p-jc-between p-ai-center">
-                                        <h:outputText value="#{langueBean.getMsg('rightbody.conceptdialog.definition_of')} #{alignmentBean.selectedAlignement}" style="font-size: 14px;"/>
+                                        <h:outputText value="#{v2LocaleBean.getMsg('rightbody.conceptdialog.definition_of')} #{v2CandidatAutoAlignmentBean.selectedAlignement}" style="font-size: 14px;"/>
                                     </div>
                                 </f:facet>
 
@@ -249,13 +247,13 @@
                         </h:panelGroup>
 
                         <!-- images externes -->
-                        <h:panelGroup rendered="#{(alignmentBean.imagesOfAlignment != null) and (alignmentBean.imagesOfAlignment.size() != 0)}">
-                            <p:dataTable var="images" value="#{alignmentBean.imagesOfAlignment}"
+                        <h:panelGroup rendered="#{(v2CandidatAutoAlignmentBean.imagesOfAlignment != null) and (v2CandidatAutoAlignmentBean.imagesOfAlignment.size() != 0)}">
+                            <p:dataTable var="images" value="#{v2CandidatAutoAlignmentBean.imagesOfAlignment}"
                                          resizableColumns="true" showGridlines="true" size="small" scrollable="true" scrollHeight="350" style="line-height: 12px; margin-top: 10px;" lazy="false">
 
                                 <f:facet name="header">
                                     <div class="p-d-flex p-jc-between p-ai-center">
-                                        <h:outputText value="#{langueBean.getMsg('rightbody.conceptdialog.images_of')} #{alignmentBean.selectedAlignement}"  style="font-size: 14px;"/>
+                                        <h:outputText value="#{v2LocaleBean.getMsg('rightbody.conceptdialog.images_of')} #{v2CandidatAutoAlignmentBean.selectedAlignement}"  style="font-size: 14px;"/>
                                     </div>
                                 </f:facet>
 
@@ -276,12 +274,12 @@
 
                     <div class="row" style="width: 100%; text-align: right; margin-top: 15px; margin-bottom: 5px;">
                         <div class="col-3 offset-6">
-                            <p:commandButton value="#{langueBean.getMsg('candidat.close')}" styleClass="ui-button-secondary button" icon="fas fa-undo-alt"
+                            <p:commandButton value="#{v2LocaleBean.getMsg('candidat.close')}" styleClass="ui-button-secondary button" icon="fas fa-undo-alt"
                                              style="margin-right: 10px"
                                              actionListener="PF('searchAlignement').hide();" update="tabViewCandidat"/>
                         </div>
                         <div class="col-3">
-                            <p:commandButton id="addTraductionBtn" value="#{langueBean.getMsg('btnValidate')}" styleClass="ui-button-success" icon="pi pi-check"
+                            <p:commandButton id="addTraductionBtn" value="#{v2LocaleBean.getMsg('btnValidate')}" styleClass="ui-button-success" icon="pi pi-check"
                                              update="tabViewCandidat"
                                              oncomplete="PF('searchAlignement').hide();"
                                              ajax="true" process="@form"

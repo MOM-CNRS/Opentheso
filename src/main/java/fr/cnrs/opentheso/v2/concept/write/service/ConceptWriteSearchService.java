@@ -1,0 +1,45 @@
+package fr.cnrs.opentheso.v2.concept.write.service;
+
+import fr.cnrs.opentheso.v2.concept.write.model.ConceptSearchSuggestion;
+import fr.cnrs.opentheso.v2.concept.write.model.ConceptWriteCollection;
+import fr.cnrs.opentheso.v2.concept.write.session.ConceptWriteSearchPort;
+import lombok.RequiredArgsConstructor;
+import org.springframework.stereotype.Service;
+import org.springframework.transaction.annotation.Transactional;
+
+import java.util.List;
+
+@Service
+@RequiredArgsConstructor
+public class ConceptWriteSearchService {
+
+    private final ConceptWriteSearchPort conceptWriteSearchPort;
+
+    @Transactional(readOnly = true)
+    public List<ConceptSearchSuggestion> autocompleteRelationTarget(
+            String query,
+            String lang,
+            String thesaurusId,
+            boolean includeDeprecated
+    ) {
+        return conceptWriteSearchPort.autocompleteRelationTarget(query, lang, thesaurusId, includeDeprecated);
+    }
+
+    @Transactional(readOnly = true)
+    public List<ConceptSearchSuggestion> autocompleteReplacedByTarget(
+            String query,
+            String lang,
+            String thesaurusId
+    ) {
+        return conceptWriteSearchPort.autocompleteReplacedByTarget(query, lang, thesaurusId);
+    }
+
+    @Transactional(readOnly = true)
+    public List<ConceptWriteCollection> autocompleteCollection(
+            String query,
+            String lang,
+            String thesaurusId
+    ) {
+        return conceptWriteSearchPort.autocompleteCollection(query, lang, thesaurusId);
+    }
+}

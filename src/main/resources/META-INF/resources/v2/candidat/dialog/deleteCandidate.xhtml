@@ -21,12 +21,12 @@
             </div>
 
             <div style="width: 100%; text-align: right; margin-top: 5px; margin-bottom: 5px;">
-                <p:commandButton value="#{langueBean.getMsg('candidat.close')}" styleClass="ui-button-secondary"
+                <p:commandButton value="#{v2LocaleBean.getMsg('candidat.close')}" styleClass="ui-button-secondary"
                                  style="margin-right: 10px" process="@this"
                                  oncomplete="PF('deleteCandidate').hide();" update="idDeleteNote"/>
 
                 <p:commandButton styleClass="ui-button-danger"
-                                 value="#{langueBean.getMsg('candidat.remove')}" oncomplete="PF('deleteCandidate').hide();"
+                                 value="#{v2LocaleBean.getMsg('candidat.remove')}" oncomplete="PF('deleteCandidate').hide();"
                                  update="tabViewCandidat tabViewCandidat:panelCandidateList messageIndex" process="@this"
                                  actionListener="#{v2CandidatBean.deleteSelectedCandidate(currentUser.nodeUser.idUser)}"/>
             </div>    

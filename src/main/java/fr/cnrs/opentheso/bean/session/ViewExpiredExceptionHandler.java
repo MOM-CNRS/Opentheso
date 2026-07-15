@@ -43,7 +43,7 @@ public class ViewExpiredExceptionHandler extends ExceptionHandlerWrapper {
                         .getApplication().getNavigationHandler();
                 try {
                     map.put("currentViewId", viewExpiredException.getViewId());
-                    navigationHandler.handleNavigation(facesContext, null, "/index.xhtml?faces-redirect=true");
+                    navigationHandler.handleNavigation(facesContext, null, "/v2/thesaurus?faces-redirect=true");
                     facesContext.renderResponse();
                 } finally {
                     i.remove();

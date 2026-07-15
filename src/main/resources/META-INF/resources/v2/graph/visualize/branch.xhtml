@@ -5,6 +5,8 @@
 
     <f:view>
         <f:metadata>
+            <f:viewParam name="idc" value="#{v2GraphExploreBean.conceptIdFromUri}"/>
+            <f:viewParam name="idtheso" value="#{v2ThesaurusContext.idThesoFromUri}"/>
             <f:viewAction action="#{v2GraphExploreBean.loadBranchGraph()}"/>
         </f:metadata>
     </f:view>

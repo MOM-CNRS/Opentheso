@@ -11353,6 +11353,19 @@ body.sidebar-toggled footer.sticky-footer {
     font-size: 0.8rem !important;
 }
 
+/* Collections (onglet Collection / Arbre) */
+.fa-solid.fa-object-ungroup.fa_custom_open,
+.fa.fa-object-ungroup.fa_custom_open {
+    color: #169b6b !important;
+    font-size: 0.8rem !important;
+}
+
+.fa-solid.fa-object-group.fa_custom_collapse,
+.fa.fa-object-group.fa_custom_collapse {
+    color: #164A78 !important;
+    font-size: 0.8rem !important;
+}
+
 body .ui-button.ui-button-icon-only .ui-button-text {
     padding: 0;
 }

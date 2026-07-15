@@ -5,7 +5,8 @@ import fr.cnrs.opentheso.models.skosapi.SKOSLabel;
 import fr.cnrs.opentheso.models.skosapi.SKOSProperty;
 import fr.cnrs.opentheso.models.skosapi.SKOSResource;
 import fr.cnrs.opentheso.models.skosapi.SKOSXmlDocument;
-import fr.cnrs.opentheso.services.imports.rdf4j.ImportRdf4jHelper;
+import fr.cnrs.opentheso.v2.shared.session.ThesaurusPreferencesProvider;
+import fr.cnrs.opentheso.v2.candidat.session.CandidatSkosImportLegacySupport;
 import org.junit.jupiter.api.BeforeEach;
 import org.junit.jupiter.api.Test;
 import org.junit.jupiter.api.extension.ExtendWith;
@@ -23,13 +24,15 @@ import static org.mockito.Mockito.verify;
 class CandidatSkosImportServiceTest {
 
     @Mock
-    private ImportRdf4jHelper importRdf4jHelper;
+    private CandidatSkosImportLegacySupport candidatSkosImportLegacySupport;
+    @Mock
+    private ThesaurusPreferencesProvider thesaurusPreferencesProvider;
 
     private CandidatSkosImportService service;
 
     @BeforeEach
     void setUp() {
-        service = new CandidatSkosImportService(importRdf4jHelper);
+        service = new CandidatSkosImportService(candidatSkosImportLegacySupport, thesaurusPreferencesProvider);
     }
 
     @Test
@@ -57,10 +60,9 @@ class CandidatSkosImportServiceTest {
                 (current, total) -> progress.set(current * 100 / total)
         );
 
-        verify(importRdf4jHelper).setInfos(eq("yyyy-MM-dd"), eq(7), eq(-1), eq("fr"));
-        verify(importRdf4jHelper).setNodePreference(preferences);
-        verify(importRdf4jHelper).setRdf4jThesaurus(document);
-        verify(importRdf4jHelper).addConcept(withLabel, "TH1", true);
+        verify(candidatSkosImportLegacySupport).configureImport(eq("yyyy-MM-dd"), eq(7), eq(-1), eq("fr"), eq(preferences));
+        verify(candidatSkosImportLegacySupport).setImportDocument(document);
+        verify(candidatSkosImportLegacySupport).importConcept(withLabel, "TH1", true);
         assertEquals(100, progress.get());
     }
 }

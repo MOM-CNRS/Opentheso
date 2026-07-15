@@ -1,0 +1,182 @@
+<ui:fragment xmlns="http://www.w3.org/1999/xhtml"
+             xmlns:ui="http://xmlns.jcp.org/jsf/facelets"
+             xmlns:f="http://xmlns.jcp.org/jsf/core"
+             xmlns:h="http://xmlns.jcp.org/jsf/html"
+             xmlns:p="http://primefaces.org/ui">
+
+    <p:defaultCommand target="v2ApplySearch"/>
+
+    <div class="container" style="margin-top:-25px; z-index:9;">
+        <div class="row">
+            <div class="col-lg-12 card-margin">
+                <div class="card search-form">
+                    <div class="card-body p-0">
+                        <div class="row">
+                            <div class="col-12">
+                                <div class="row no-gutters">
+
+                                    <div style="width:30%; z-index:100;">
+                                        <p:selectOneMenu id="v2SearchLanguage"
+                                                         value="#{v2ConceptSearchBean.searchLang}"
+                                                         title="#{v2LocaleBean.getMsg('search.change_thesaurus_language')}"
+                                                         style="background:transparent; border-color:transparent; font-size:12px; padding-top:2px; width:100%; padding-left:5px; height:33px;">
+                                            <p:ajax event="valueChange"
+                                                    listener="#{v2ConceptSearchBean.onLanguageChange()}"
+                                                    update=":containerIndex:rightTab resultSearchBar"/>
+                                            <f:selectItems value="#{v2ConceptSearchBean.availableLanguages}"
+                                                           var="lang"
+                                                           itemLabel="#{lang.value}"
+                                                           itemValue="#{lang.code}"/>
+                                            <f:selectItem itemLabel="#{v2LocaleBean.getMsg('search.any_language')}" itemValue="all"/>
+                                        </p:selectOneMenu>
+                                    </div>
+
+                                    <div style="width:55%; z-index:100;">
+                                        <p:autoComplete id="v2SearchAutocomplete"
+                                                        value="#{v2ConceptSearchBean.selectedSuggestion}"
+                                                        var="suggestion"
+                                                        placeholder="#{v2LocaleBean.getMsg('candidat.search')}..."
+                                                        delay="400"
+                                                        minQueryLength="1"
+                                                        completeMethod="#{v2ConceptSearchBean.complete}"
+                                                        itemLabel="#{suggestion.preferredLabel}"
+                                                        itemValue="#{suggestion}"
+                                                        converter="v2ConceptSearchSuggestionConverter"
+                                                        scrollHeight="600"
+                                                        emptyMessage=" "
+                                                        inputStyle="font-size:14px; width:100%; height:100%; box-shadow:none; padding-top:10px;"
+                                                        style="background-color:transparent; border-color:transparent; width:100%; font-size:12px;">
+
+                                            <p:column rendered="#{suggestion.concept}">
+                                                <h:panelGroup rendered="#{suggestion.deprecated}">
+                                                    <i class="fa fa-solid fa-ban fa_custom_ban"/>
+                                                    <h:outputText title="#{suggestion.refId}"
+                                                                  value=" #{suggestion.preferredLabel}"
+                                                                  style="font-size:12px; color:#C63632; font-weight:bold; font-style:italic;"/>
+                                                </h:panelGroup>
+                                                <h:outputText rendered="#{not suggestion.deprecated}"
+                                                              title="#{suggestion.refId}"
+                                                              value="#{suggestion.preferredLabel}"
+                                                              style="font-size:12px;"/>
+                                            </p:column>
+
+                                            <p:column rendered="#{suggestion.altLabel}">
+                                                <h:outputText title="#{suggestion.refId}"
+                                                              value="#{suggestion.altLabel} -&gt; "
+                                                              style="font-style:italic; font-size:12px; color:blue;"/>
+                                                <h:panelGroup rendered="#{suggestion.deprecated}">
+                                                    <i class="fa fa-solid fa-ban fa_custom_ban"/>
+                                                    <h:outputText title="#{suggestion.refId}"
+                                                                  value=" #{suggestion.preferredLabel}"
+                                                                  style="font-size:12px; color:#C63632; font-weight:bold; font-style:italic;"/>
+                                                </h:panelGroup>
+                                                <h:outputText rendered="#{not suggestion.deprecated}"
+                                                              title="#{suggestion.refId}"
+                                                              value="#{suggestion.preferredLabel}"
+                                                              style="font-size:12px;"/>
+                                            </p:column>
+
+                                            <p:column rendered="#{suggestion.group}">
+                                                <i class="fa fa-folder fa_custom_collapse"/>
+                                                <h:outputText title="#{suggestion.refId}"
+                                                              value=" #{suggestion.preferredLabel}"
+                                                              style="font-size:12px; color:#093b29; font-weight:bold; font-style:italic;"/>
+                                            </p:column>
+
+                                            <p:column rendered="#{suggestion.facet}">
+                                                <i class="fa fa-magnet fa_custom_magnet"/>
+                                                <h:outputText title="#{suggestion.refId}"
+                                                              value=" #{suggestion.preferredLabel}"
+                                                              style="font-size:12px; color:#78261f; font-weight:bold; font-style:italic;"/>
+                                            </p:column>
+
+                                            <p:ajax event="itemSelect"
+                                                    listener="#{v2ConceptSearchBean.onSuggestionSelect}"
+                                                    update=":containerIndex messageIndex :containerIndex:rightTab resultSearchBar :containerIndex:formLeftTab"/>
+                                        </p:autoComplete>
+                                    </div>
+
+                                    <div style="width:15%; text-align:right; z-index:100; position:relative; display:inline-block;">
+                                        <p:commandButton id="v2ApplySearch"
+                                                         icon="fas fa-search fa-1x"
+                                                         style="color:#f47b2a; background:transparent; border:none; box-shadow:none; font-size:14px;"
+                                                         actionListener="#{v2ConceptSearchBean.applySearch()}"
+                                                         process="containerIndex:v2SearchAutocomplete @this"
+                                                         update="resultSearchBar :containerIndex:rightTab messageIndex"/>
+                                    </div>
+                                </div>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <div id="v2ChoixPanelDiv" class="col-lg-auto researchAdvanceClass"
+         style="display:flex; flex-direction:row; justify-content:center; align-items:center; visibility:visible;">
+        <h:panelGroup id="v2ChoixPanel"
+                      style="background-color:#ECF8F1; padding-left:20px; padding-right:20px; z-index:1; padding-bottom:5px; padding-top:3px; border-radius:0 0 7px 7px; margin-top:-28px;">
+            <p:selectBooleanCheckbox id="v2StartWith"
+                                     itemLabel="#{v2LocaleBean.getMsg('search.startWith')}"
+                                     value="#{v2ConceptSearchBean.startWithMatch}"
+                                     style="color:#143a1e; background-color:transparent; font-size:12px;">
+                <p:ajax listener="#{v2ConceptSearchBean.activateStartWithMatch()}" update="v2ChoixPanel"/>
+                <p:tooltip for="v2StartWith" value="#{v2LocaleBean.getMsg('search.tooltip_startWith')}" showDelay="1000" position="bottom"/>
+            </p:selectBooleanCheckbox>
+
+            <p:selectBooleanCheckbox id="v2Exact"
+                                     itemLabel="#{v2LocaleBean.getMsg('search.exact')}"
+                                     value="#{v2ConceptSearchBean.exactMatch}"
+                                     style="color:#143a1e; background-color:transparent; font-size:12px;">
+                <p:ajax listener="#{v2ConceptSearchBean.activateExactMatch()}" update="v2ChoixPanel"/>
+                <p:tooltip for="v2Exact" value="#{v2LocaleBean.getMsg('search.search_exact_word')}" showDelay="1000" position="bottom"/>
+            </p:selectBooleanCheckbox>
+
+            <p:selectBooleanCheckbox id="v2Note"
+                                     itemLabel="#{v2LocaleBean.getMsg('search.note')}"
+                                     value="#{v2ConceptSearchBean.noteMatch}"
+                                     style="color:#143a1e; background-color:transparent; font-size:12px;">
+                <p:ajax listener="#{v2ConceptSearchBean.activateNoteMatch()}" update="v2ChoixPanel"/>
+                <p:tooltip for="v2Note" value="#{v2LocaleBean.getMsg('search.search_only_note')}" showDelay="1000" position="bottom"/>
+            </p:selectBooleanCheckbox>
+
+            <p:selectBooleanCheckbox id="v2Identifier"
+                                     itemLabel="#{v2LocaleBean.getMsg('search.identifier')}"
+                                     value="#{v2ConceptSearchBean.identifierMatch}"
+                                     style="color:#143a1e; background-color:transparent; font-size:12px;">
+                <p:ajax listener="#{v2ConceptSearchBean.activateIdentifierMatch()}" update="v2ChoixPanel"/>
+                <p:tooltip for="v2Identifier"
+                           value="#{v2LocaleBean.getMsg('search.search_by_identifier')} (Id, Ark, Handle, Notation)"
+                           showDelay="1000" position="bottom"/>
+            </p:selectBooleanCheckbox>
+
+            <p:menuButton rendered="#{v2ConceptSearchBean.preprogrammedSearchAvailable}"
+                          id="v2SearchProgrammed"
+                          style="font-size:12px; margin-top:-0.33rem;"
+                          icon="pi pi-align-justify">
+                <p:menuitem value="#{v2LocaleBean.getMsg('search.deprecated')}"
+                            actionListener="#{v2ConceptSearchBean.runDeprecatedSearch()}"
+                            update="resultSearchBar :containerIndex:rightTab messageIndex"/>
+                <p:menuitem value="#{v2LocaleBean.getMsg('search.polyhierarchy')}"
+                            actionListener="#{v2ConceptSearchBean.runPolyhierarchySearch()}"
+                            update="resultSearchBar :containerIndex:rightTab messageIndex"/>
+                <p:menuitem value="#{v2LocaleBean.getMsg('search.multiGroups')}"
+                            actionListener="#{v2ConceptSearchBean.runMultiGroupsSearch()}"
+                            update="resultSearchBar :containerIndex:rightTab messageIndex"/>
+                <p:menuitem value="#{v2LocaleBean.getMsg('search.withoutGroups')}"
+                            actionListener="#{v2ConceptSearchBean.runWithoutGroupsSearch()}"
+                            update="resultSearchBar :containerIndex:rightTab messageIndex"/>
+                <p:menuitem value="#{v2LocaleBean.getMsg('search.duplicates')}"
+                            actionListener="#{v2ConceptSearchBean.runDuplicatesSearch()}"
+                            update="resultSearchBar :containerIndex:rightTab messageIndex"/>
+                <p:menuitem value="#{v2LocaleBean.getMsg('search.forbiddenRelationships')}"
+                            actionListener="#{v2ConceptSearchBean.runForbiddenRelationshipsSearch()}"
+                            update="resultSearchBar :containerIndex:rightTab messageIndex"/>
+            </p:menuButton>
+            <p:tooltip for="v2SearchProgrammed"
+                       value="#{v2LocaleBean.getMsg('search.preprogrammedSearch')}"
+                       showDelay="1000" position="bottom"/>
+        </h:panelGroup>
+    </div>
+</ui:fragment>

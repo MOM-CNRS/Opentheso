@@ -2,9 +2,8 @@ package fr.cnrs.opentheso.v2.candidat.service;
 
 import fr.cnrs.opentheso.models.candidats.CandidatDto;
 import fr.cnrs.opentheso.models.nodes.NodeIdValue;
-import fr.cnrs.opentheso.services.AlignmentService;
-import fr.cnrs.opentheso.services.ImageService;
 import fr.cnrs.opentheso.v2.candidat.mapper.CandidatDetailJsonParser;
+import fr.cnrs.opentheso.v2.candidat.session.CandidatReadLegacySupport;
 import fr.cnrs.opentheso.v2.shared.repository.CandidatQueryRepository;
 import fr.cnrs.opentheso.v2.shared.repository.projection.CandidatConceptRelationRow;
 import fr.cnrs.opentheso.v2.shared.repository.projection.CandidatDetailBundle;
@@ -34,16 +33,13 @@ class CandidatReadServiceTest {
     private CandidatQueryRepository candidatQueryRepository;
 
     @Mock
-    private AlignmentService alignmentService;
-
-    @Mock
-    private ImageService imageService;
+    private CandidatReadLegacySupport candidatReadLegacySupport;
 
     private CandidatReadService service;
 
     @BeforeEach
     void setUp() {
-        service = new CandidatReadService(candidatQueryRepository, alignmentService, imageService);
+        service = new CandidatReadService(candidatQueryRepository, candidatReadLegacySupport);
     }
 
     @Test
@@ -86,8 +82,8 @@ class CandidatReadServiceTest {
         );
         when(candidatQueryRepository.findCandidateDetailBundle("TH1", "C1", "fr", 5))
                 .thenReturn(Optional.of(new CandidatDetailBundle("T1", true, parsed)));
-        when(alignmentService.getAllAlignmentOfConcept("C1", "TH1")).thenReturn(List.of());
-        when(imageService.getAllExternalImages("TH1", "C1")).thenReturn(List.of());
+        when(candidatReadLegacySupport.loadAlignments("C1", "TH1")).thenReturn(List.of());
+        when(candidatReadLegacySupport.loadExternalImages("TH1", "C1")).thenReturn(List.of());
 
         service.loadDetails(candidat, "TH1");
 

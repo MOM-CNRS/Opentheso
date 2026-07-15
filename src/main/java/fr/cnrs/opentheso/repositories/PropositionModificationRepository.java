@@ -78,4 +78,47 @@ public interface PropositionModificationRepository extends JpaRepository<Proposi
     """, nativeQuery = true)
     List<PropositionProjection> findAllPropositionsByStatusAndTheso(@Param("status") String status, @Param("idTheso") String idTheso);
 
+    @Query(value = """
+        SELECT pro.id, pro.id_concept AS idConcept, pro.lang, pro.id_theso AS idTheso, pro.status, pro.date, pro.nom,
+            pro.email, pro.commentaire, pro.approuve_par AS approuvePar, pro.approuve_date AS approuveDate,
+            pro.admin_comment AS adminComment, t.lexical_value AS lexicalValue, l.code_pays AS codePays
+        FROM proposition_modification pro 
+                    LEFT JOIN preferred_term pre ON pro.id_concept = pre.id_concept AND pro.id_theso = pre.id_thesaurus
+                    LEFT JOIN term t ON pre.id_term = t.id_term AND pro.lang = t.lang AND pro.id_theso = t.id_thesaurus
+                    LEFT JOIN languages_iso639 l ON l.iso639_1 = t.lang
+        WHERE t.id_thesaurus LIKE :idTheso
+        ORDER BY pro.id DESC
+    """, nativeQuery = true)
+    List<PropositionProjection> findAllPropositionsByTheso(@Param("idTheso") String idTheso);
+
+    @Query(value = """
+        SELECT pro.id, pro.id_concept AS idConcept, pro.lang, pro.id_theso AS idTheso, pro.status, pro.date, pro.nom,
+            pro.email, pro.commentaire, pro.approuve_par AS approuvePar, pro.approuve_date AS approuveDate,
+            pro.admin_comment AS adminComment, t.lexical_value AS lexicalValue, l.code_pays AS codePays
+        FROM proposition_modification pro 
+                    LEFT JOIN preferred_term pre ON pro.id_concept = pre.id_concept AND pro.id_theso = pre.id_thesaurus
+                    LEFT JOIN term t ON pre.id_term = t.id_term AND pro.lang = t.lang AND pro.id_theso = t.id_thesaurus
+                    LEFT JOIN languages_iso639 l ON l.iso639_1 = t.lang
+        WHERE pro.id = :id
+    """, nativeQuery = true)
+    PropositionProjection findProjectionById(@Param("id") Integer id);
+
+    @Query(value = """
+        SELECT pro.id, pro.id_concept AS idConcept, pro.lang, pro.id_theso AS idTheso, pro.status, pro.date, pro.nom,
+            pro.email, pro.commentaire, pro.approuve_par AS approuvePar, pro.approuve_date AS approuveDate,
+            pro.admin_comment AS adminComment, t.lexical_value AS lexicalValue, l.code_pays AS codePays
+        FROM proposition_modification pro 
+                    LEFT JOIN preferred_term pre ON pro.id_concept = pre.id_concept AND pro.id_theso = pre.id_thesaurus
+                    LEFT JOIN term t ON pre.id_term = t.id_term AND pro.lang = t.lang AND pro.id_theso = t.id_thesaurus
+                    LEFT JOIN languages_iso639 l ON l.iso639_1 = t.lang
+        WHERE pro.id_concept = :idConcept AND pro.id_theso = :idTheso AND pro.lang = :lang
+        AND pro.status IN ('ENVOYER', 'LU')
+        LIMIT 1
+    """, nativeQuery = true)
+    PropositionProjection findPendingByConcept(
+            @Param("idConcept") String idConcept,
+            @Param("idTheso") String idTheso,
+            @Param("lang") String lang
+    );
+
 }

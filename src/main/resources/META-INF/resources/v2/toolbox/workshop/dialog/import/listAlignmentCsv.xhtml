@@ -1,0 +1,158 @@
+<ui:fragment xmlns="http://www.w3.org/1999/xhtml"  
+             xmlns:ui="http://java.sun.com/jsf/facelets"
+             xmlns:p="http://primefaces.org/ui"
+             xmlns:h="http://xmlns.jcp.org/jsf/html"
+             xmlns:f="http://xmlns.jcp.org/jsf/core">
+
+    <p:dialog id="idListAlignmentCsv" header="Importer des alignements" widgetVar="listAlignmentCsv" 
+              modal="true" resizable="true" position="top" width="650" style="margin-top: 50px; " >         
+
+        <h:form id="listAlignmentCsvForm">   
+            <div class="row">                
+                <div class="col-12" >
+                    <fieldset>
+                        <p:scrollPanel mode="native">
+                            <h:panelGrid columns="9" styleClass="customTable">
+                                <h:outputText value="localId" />
+                                <h:outputText value="Wikidata" />
+                                <h:outputText value="AAT" />
+                                <h:outputText value="BNF" />
+                                <h:outputText value="idRef" />
+                                <h:outputText value="Joconde" />
+                                <h:outputText value="Pleiades" />
+                                <h:outputText value="PeriodO" />
+                                <h:outputText value="Geonames" />
+
+                                <h:outputText value="26678/crtcg26jeN4R9" />
+                                <h:outputText value="https://www.wikidata.org/wiki/Q65955" />
+                                <h:outputText value="http://vocab.getty.edu/aat/300391468##1" />
+                                <h:outputText value="https://catalogue.bnf.fr/ark:/12148/cb13516297v##2" />
+                                <h:outputText value="https://www.idref.fr/241395046" />
+                                <h:outputText value="http://data.culture.fr/thesaurus/page/ark:/67717/9f07583b-1be9-4dab-95d4-c46dce9b20dd" />
+                                <h:outputText value="https://pleiades.stoa.org/places/570577" />
+                                <h:outputText value="http://n2t.net/ark:/99152/6c6g3fz6m" />
+                                <h:outputText value="https://www.geonames.org/9062330" />
+                            </h:panelGrid>
+                        </p:scrollPanel>
+
+                        <style>
+                            .customTable {
+                                border-collapse: collapse;
+                            }
+
+                            .customTable td, .customTable th {
+                                border: 0.5px solid black; /* Bordure de 0.5px */
+                                padding: 5px; /* Espace intérieur */
+                            }
+
+                            /* Cible la première ligne du tableau (9 cellules) */
+                            .customTable tr:first-child td {
+                                background-color: #f0f0f0; /* Arrière-plan gris clair */
+                                font-weight: bold; /* Texte en gras */
+                                text-align: center; /* Texte centré */
+                            }
+                        </style>
+
+                        <p:panel style="border: 1px solid #43B572; border-radius: 10px; padding: 10px; margin-top: 10px; font-size: 12px;">
+                            <p style="color: #000;">
+                                Les termes doivent avoir un séparateur (virgule, point-virgule ou tabulé) dans le fichier à uploader.<br/>
+                                Si l'identifiant n'existe pas dans le thésaurus, l'alignement sera rejeté.<br/>
+                                Si le concept a déjà le même alignement, le lien ne sera pas changé  <br/>
+                                Pour l'information sur le type d'alignement, il faut ajouter (##) puis le code du type d'alignement : <br/>
+                                1=exactMatch ; 2=closeMatch ; 3=broadMatch ; 4=relatedMatch ; 5=narrowMatch <br/>
+                                exemple : https://www.wikidata.org/wiki/Q65955##1 pour une relation exactMatch <br/>
+                                S'il n'y a aucune information sur le type d'alignement, exactMatch sera appliqué par défaut.
+                            </p>
+                        </p:panel>
+                    </fieldset>
+                </div>  
+            </div> 
+
+            <!-- choix du l'identifiant Ark ou Id ou Handle -->
+            <div class="row" style="margin-top: 10px; font-size: 14px;" >
+                <div class="col-5">
+                    <h:outputText value="L'identifiant est de type:" />
+                </div>
+                <div class="col-7">
+                    <p:selectOneMenu value="#{v2WorkshopImportBean.selectedIdentifierImportAlign}" 
+                                     styleClass="selectOneMenu_custom" 
+                                     panelStyleClass="selectOneMenu_panelStyle_custom" style="width: 100%;"
+                                     title="Choix de l'identifiant pour détecter le concept">
+                        <f:selectItem itemLabel="identifier" itemValue="identifier" itemDescription="L'identifiant interne du concept"/>
+                        <f:selectItem itemLabel="ark" itemValue="ark" itemDescription="L'identifiant ark du concept"/>
+                        <f:selectItem itemLabel="handle" itemValue="handle" itemDescription="L'identifiant handle du concept"/>
+                        <p:ajax event="change" listener="#{v2WorkshopImportBean.actionChoiceIdentifier()}"  />
+                    </p:selectOneMenu>
+                </div>
+            </div>                   
+
+            <!-- délimiteur CSV -->
+            <div class="row" style="font-size: 14px;" >
+                <div class="col-5" offset="5">
+                    <h:outputText value="Délimiteur Csv :" />
+                </div>
+                <div class="col-7">
+                    <p:selectOneMenu value="#{v2WorkshopImportBean.choiceDelimiter}" styleClass="selectOneMenu_custom" 
+                                     panelStyleClass="selectOneMenu_panelStyle_custom" style="width: 100%;">
+                        <f:selectItem itemLabel="," itemValue="0" />
+                        <f:selectItem itemLabel=";" itemValue="1" />
+                        <f:selectItem itemLabel="\t" itemValue="2" />
+                        <p:ajax event="change" listener="#{v2WorkshopImportBean.actionChoice()}"  />
+                    </p:selectOneMenu>
+                </div>
+            </div>
+
+            <h:panelGroup id="panelListAlignCsv">
+                <!-- Choix du fichier -->   
+                <div class="row" style="margin-top: 10px; font-size: 12px;">
+                    <div class="col-12" style="font-size: 12px;"> 
+                        <p:fileUpload listener="#{v2WorkshopImportBean.loadFileAlignmentCsv}" 
+                                      label="parcourir" 
+                                      mode="advanced" auto="true"
+                                      allowTypes="/(\.|\/)(csv|txt)$/"
+                                      update="panelListAlignCsv_result"
+                                      disabled="#{v2WorkshopImportBean.loadDone}"
+                                      style="font-size: 12px;" />  
+                    </div>
+                </div>              
+            </h:panelGroup>            
+            <h:panelGroup id="panelListAlignCsv_result">
+                <h:panelGroup rendered="#{v2WorkshopImportBean.loadDone}">
+                    <div class="row" style="margin-left: 30px; margin-right: 30px;">
+                        <div class="col-5">
+                            <h:outputText value="URI: " />
+                            <h:outputText value="#{v2WorkshopImportBean.uri}" style="color: #C63632"/>
+                        </div>
+                    </div>
+                    <div class="row" style="margin-left: 30px; margin-right: 30px; font-size: 12px;">
+                        <div class="col-5">
+                            <h:outputText value="Total des concepts: " />
+                            <h:outputText value="#{v2WorkshopImportBean.total}" style="color: #C63632"/>
+                        </div>
+                    </div>                    
+                </h:panelGroup>
+                <div class="row" style="margin-left: 30px; margin-right: 30px; font-size: 12px;">
+                    <div class="col-11">
+                        <p:messages id="messages" showDetail="true" closable="true" style="font-size: 12px;">
+                            <p:autoUpdate/>
+                        </p:messages>
+                    </div>
+                </div>                      
+              
+                <div class="row" style="margin-top: 10px">
+                    <div class="col-12" style="text-align: right"> 
+                        <p:commandButton value="#{v2LocaleBean.getMsg('candidat.close')}" icon="fas fa-undo-alt" styleClass="ui-button-secondary button"  
+                                         actionListener="#{v2WorkshopImportBean.init()}" style="margin-right: 10px"
+                                         update="listAlignmentCsvForm" oncomplete="PF('listAlignmentCsv').hide();"/>
+
+                        <p:commandButton  value="#{v2LocaleBean.getMsg('candidat.import')}" styleClass="ui-button-success" icon="pi pi-check"
+                                          widgetVar="buttonImportCsv"
+                                          update="listAlignmentCsvForm" actionListener="#{v2WorkshopImportBean.addAlignmentList()}"
+                                          process="@this" disabled="#{!v2WorkshopImportBean.loadDone}" />   
+                    </div>
+                </div>
+            </h:panelGroup>
+            <input type="hidden" name="csrfToken" value="${sessionScope.CSRF_TOKEN}" />
+        </h:form>
+    </p:dialog> 
+</ui:fragment>

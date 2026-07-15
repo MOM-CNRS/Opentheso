@@ -1,6 +1,5 @@
 package fr.cnrs.opentheso.v2.toolbox.ui;
 
-import fr.cnrs.opentheso.bean.menu.users.CurrentUser;
 import fr.cnrs.opentheso.utils.MessageUtils;
 import fr.cnrs.opentheso.v2.setting.service.ThesaurusAccessService;
 import fr.cnrs.opentheso.v2.shared.ui.UserSession;
@@ -35,7 +34,6 @@ import java.util.List;
 public class ModifyThesaurusBean implements Serializable {
 
     private final UserSession userSession;
-    private final CurrentUser currentUser;
     private final ThesaurusAccessService thesaurusAccessService;
     private final ModifyThesaurusService modifyThesaurusService;
 
@@ -59,12 +57,10 @@ public class ModifyThesaurusBean implements Serializable {
 
     public ModifyThesaurusBean(
             UserSession userSession,
-            CurrentUser currentUser,
             ThesaurusAccessService thesaurusAccessService,
             ModifyThesaurusService modifyThesaurusService
     ) {
         this.userSession = userSession;
-        this.currentUser = currentUser;
         this.thesaurusAccessService = thesaurusAccessService;
         this.modifyThesaurusService = modifyThesaurusService;
     }

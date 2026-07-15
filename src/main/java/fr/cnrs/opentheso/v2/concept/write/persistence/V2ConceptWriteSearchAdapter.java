@@ -1,0 +1,112 @@
+package fr.cnrs.opentheso.v2.concept.write.persistence;
+
+import fr.cnrs.opentheso.repositories.ConceptGroupLabelRepository;
+import fr.cnrs.opentheso.v2.concept.mapper.ConceptMapper;
+import fr.cnrs.opentheso.v2.concept.write.model.ConceptSearchSuggestion;
+import fr.cnrs.opentheso.v2.concept.write.model.ConceptWriteCollection;
+import fr.cnrs.opentheso.v2.concept.write.session.ConceptWriteSearchPort;
+import fr.cnrs.opentheso.v2.shared.repository.ConceptQueryRepository;
+import jakarta.persistence.EntityManager;
+import jakarta.persistence.PersistenceContext;
+import lombok.RequiredArgsConstructor;
+import org.apache.commons.lang3.StringUtils;
+import org.springframework.context.annotation.Primary;
+import org.springframework.stereotype.Component;
+
+import java.util.Collections;
+import java.util.List;
+
+@Component
+@Primary
+@RequiredArgsConstructor
+public class V2ConceptWriteSearchAdapter implements ConceptWriteSearchPort {
+
+    private static final int SEARCH_LIMIT = 40;
+
+    private final ConceptQueryRepository conceptQueryRepository;
+    private final ConceptGroupLabelRepository conceptGroupLabelRepository;
+
+    @PersistenceContext
+    private EntityManager entityManager;
+
+    @Override
+    public List<ConceptSearchSuggestion> autocompleteRelationTarget(
+            String query,
+            String lang,
+            String thesaurusId,
+            boolean includeDeprecated
+    ) {
+        if (StringUtils.isAnyBlank(thesaurusId, lang, query)) {
+            return Collections.emptyList();
+        }
+        if (includeDeprecated) {
+            return searchConceptsIncludingDeprecated(thesaurusId, lang, query.trim()).stream()
+                    .map(row -> new ConceptSearchSuggestion(
+                            ConceptMapper.stringAt(row, 0),
+                            ConceptMapper.stringAt(row, 1),
+                            "",
+                            false
+                    ))
+                    .toList();
+        }
+        return conceptQueryRepository.searchByLabel(thesaurusId, lang, query.trim(), SEARCH_LIMIT).stream()
+                .map(row -> new ConceptSearchSuggestion(
+                        row.conceptId(),
+                        row.label(),
+                        "",
+                        false
+                ))
+                .toList();
+    }
+
+    @Override
+    public List<ConceptSearchSuggestion> autocompleteReplacedByTarget(
+            String query,
+            String lang,
+            String thesaurusId
+    ) {
+        return autocompleteRelationTarget(query, lang, thesaurusId, false);
+    }
+
+    @Override
+    public List<ConceptWriteCollection> autocompleteCollection(
+            String query,
+            String lang,
+            String thesaurusId
+    ) {
+        if (StringUtils.isAnyBlank(thesaurusId, lang)) {
+            return Collections.emptyList();
+        }
+        String cleaned = fr.cnrs.opentheso.utils.StringUtils.convertString(StringUtils.defaultString(query));
+        return conceptGroupLabelRepository.searchGroups(thesaurusId, lang, cleaned).stream()
+                .map(row -> new ConceptWriteCollection(
+                        ConceptMapper.stringAt(row, 0),
+                        ConceptMapper.stringAt(row, 1)
+                ))
+                .toList();
+    }
+
+    @SuppressWarnings("unchecked")
+    private List<Object[]> searchConceptsIncludingDeprecated(String thesaurusId, String lang, String query) {
+        return entityManager.createNativeQuery("""
+                        SELECT DISTINCT c.id_concept, t.lexical_value AS label
+                        FROM concept c
+                        JOIN preferred_term pt
+                            ON pt.id_concept = c.id_concept
+                           AND pt.id_thesaurus = c.id_thesaurus
+                        JOIN term t
+                            ON t.id_term = pt.id_term
+                           AND t.id_thesaurus = c.id_thesaurus
+                        WHERE c.id_thesaurus = :thesaurusId
+                          AND t.lang = :lang
+                          AND f_unaccent(LOWER(t.lexical_value)) LIKE f_unaccent(LOWER(:query))
+                        ORDER BY label
+                        LIMIT :limit
+                        """)
+                .setParameter("thesaurusId", thesaurusId)
+                .setParameter("lang", lang)
+                .setParameter("query", "%" + query + "%")
+                .setParameter("limit", SEARCH_LIMIT)
+                .getResultList();
+    }
+}

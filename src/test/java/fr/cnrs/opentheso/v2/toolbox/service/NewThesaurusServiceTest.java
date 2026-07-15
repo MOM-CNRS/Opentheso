@@ -1,15 +1,12 @@
 package fr.cnrs.opentheso.v2.toolbox.service;
 
-import fr.cnrs.opentheso.entites.UserGroupThesaurus;
 import fr.cnrs.opentheso.repositories.ThesaurusDcTermRepository;
-import fr.cnrs.opentheso.services.GroupService;
-import fr.cnrs.opentheso.services.PreferenceService;
-import fr.cnrs.opentheso.services.ThesaurusService;
 import fr.cnrs.opentheso.v2.shared.repository.EditionQueryRepository;
 import fr.cnrs.opentheso.v2.shared.repository.ProjectAdminQueryRepository;
 import fr.cnrs.opentheso.v2.toolbox.exception.InvalidToolboxDataException;
 import fr.cnrs.opentheso.v2.toolbox.fixtures.ToolboxTestFixtures;
 import fr.cnrs.opentheso.v2.toolbox.model.NewThesaurusRequest;
+import fr.cnrs.opentheso.v2.toolbox.session.NewThesaurusLegacySupport;
 import org.junit.jupiter.api.Test;
 import org.junit.jupiter.api.extension.ExtendWith;
 import org.mockito.ArgumentCaptor;
@@ -34,11 +31,7 @@ class NewThesaurusServiceTest {
     @Mock
     private ProjectAdminQueryRepository projectAdminQueryRepository;
     @Mock
-    private ThesaurusService thesaurusService;
-    @Mock
-    private GroupService groupService;
-    @Mock
-    private PreferenceService preferenceService;
+    private NewThesaurusLegacySupport newThesaurusLegacySupport;
     @Mock
     private ThesaurusDcTermRepository thesaurusDcTermRepository;
 
@@ -90,7 +83,7 @@ class NewThesaurusServiceTest {
 
     @Test
     void create_failsWhenThesaurusCannotBeCreated() {
-        when(thesaurusService.addThesaurusRollBack()).thenReturn(null);
+        when(newThesaurusLegacySupport.createThesaurusId()).thenReturn(null);
 
         assertThrows(
                 InvalidToolboxDataException.class,
@@ -100,25 +93,26 @@ class NewThesaurusServiceTest {
 
     @Test
     void create_linksProjectWhenProvided() {
-        when(thesaurusService.addThesaurusRollBack()).thenReturn("th99");
+        when(newThesaurusLegacySupport.createThesaurusId()).thenReturn("th99");
 
         String createdId = service.create(new NewThesaurusRequest("Test", "fr", 5), "admin");
 
         assertEquals("th99", createdId);
-        ArgumentCaptor<UserGroupThesaurus> captor = ArgumentCaptor.forClass(UserGroupThesaurus.class);
-        verify(groupService).saveUserGroupThesaurus(captor.capture());
+        ArgumentCaptor<fr.cnrs.opentheso.entites.UserGroupThesaurus> captor =
+                ArgumentCaptor.forClass(fr.cnrs.opentheso.entites.UserGroupThesaurus.class);
+        verify(newThesaurusLegacySupport).linkToProject(captor.capture());
         assertEquals(5, captor.getValue().getIdGroup());
-        verify(preferenceService).initPreferences("th99", "fr");
-        verify(thesaurusService).addThesaurusTraductionRollBack(any());
+        verify(newThesaurusLegacySupport).initPreferences("th99", "fr");
+        verify(newThesaurusLegacySupport).addTranslation(any());
     }
 
     @Test
     void create_skipsProjectLinkWhenProjectIsNull() {
-        when(thesaurusService.addThesaurusRollBack()).thenReturn("th100");
+        when(newThesaurusLegacySupport.createThesaurusId()).thenReturn("th100");
 
         service.create(new NewThesaurusRequest("Test", "en", null), "creator");
 
-        verify(groupService, never()).saveUserGroupThesaurus(any());
-        verify(preferenceService).initPreferences("th100", "en");
+        verify(newThesaurusLegacySupport, never()).linkToProject(any());
+        verify(newThesaurusLegacySupport).initPreferences("th100", "en");
     }
 }

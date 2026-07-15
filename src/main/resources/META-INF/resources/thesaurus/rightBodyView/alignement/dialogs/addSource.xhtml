@@ -58,9 +58,9 @@
                                  icon="fas fa-undo-alt" styleClass="ui-button-secondary button"
                                  actionListener="#{setAlignmentSourceBean.cancel()}"
                                  oncomplete="PF('addSource').hide();"
-                                 update="containerIndex:formRightTab" style="margin-right: 10px" />
+                                 update=":containerIndex:rightTab" style="margin-right: 10px" />
 
-                <p:commandButton value="#{langueBean.getMsg('btnAdd')}" update="containerIndex:formRightTab messageIndex"
+                <p:commandButton value="#{langueBean.getMsg('btnAdd')}" update=":containerIndex:rightTab messageIndex"
                                  oncomplete="PF('addSource').hide();" ajax="true" process="@form"
                                  styleClass="ui-button-success" icon="pi pi-check"
                                  actionListener="#{setAlignmentSourceBean.addAlignmentSource()}"/>

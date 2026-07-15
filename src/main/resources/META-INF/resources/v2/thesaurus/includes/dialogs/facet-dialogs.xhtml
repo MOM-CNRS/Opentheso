@@ -1,0 +1,206 @@
+<ui:fragment xmlns="http://www.w3.org/1999/xhtml"
+             xmlns:ui="http://xmlns.jcp.org/jsf/facelets"
+             xmlns:p="http://primefaces.org/ui"
+             xmlns:f="http://xmlns.jcp.org/jsf/core"
+             xmlns:h="http://xmlns.jcp.org/jsf/html">
+
+    <p:dialog id="v2ModifyFacetDlg" header="#{v2LocaleBean.getMsg('candidat.edit')}"
+              widgetVar="v2ModifyFacetDlg" width="500" modal="true" resizable="false" position="top">
+        <h:form>
+            <div class="row mb-2">
+                <div class="col-4"><h:outputText value="#{v2LocaleBean.getMsg('statistique.label')}"/></div>
+                <div class="col-8"><p:inputText value="#{v2FacetDetailEditorBean.label}" style="width:100%"/></div>
+            </div>
+            <div class="text-right mt-3">
+                <p:commandButton value="#{v2LocaleBean.getMsg('btnValidate')}" styleClass="ui-button-success"
+                                 actionListener="#{v2FacetDetailEditorBean.submitModify()}"
+                                 process="@form" update=":containerIndex:rightTab :containerIndex:formLeftTab :messageIndex"/>
+            </div>
+        </h:form>
+    </p:dialog>
+
+    <p:dialog id="v2DeleteFacetDlg" header="#{v2LocaleBean.getMsg('btnDelete')}"
+              widgetVar="v2DeleteFacetDlg" width="450" modal="true" resizable="false" position="top">
+        <h:form>
+            <h:outputText value="Confirmer la suppression de la facette ?"/>
+            <div class="text-right mt-3">
+                <p:commandButton value="#{v2LocaleBean.getMsg('btnValidate')}" styleClass="ui-button-danger"
+                                 actionListener="#{v2FacetDetailEditorBean.submitDelete()}"
+                                 process="@form" update=":containerIndex:rightTab :containerIndex:formLeftTab :messageIndex"/>
+            </div>
+        </h:form>
+    </p:dialog>
+
+    <p:dialog id="v2AddFacetTranslationDlg" header="#{v2LocaleBean.getMsg('rightbody.concept.add_traduction')}"
+              widgetVar="v2AddFacetTranslationDlg" width="500" modal="true" resizable="false" position="top">
+        <h:form>
+            <div class="row mb-2">
+                <div class="col-4"><h:outputText value="#{v2LocaleBean.getMsg('candidat.traduction')}"/></div>
+                <div class="col-8">
+                    <p:selectOneMenu value="#{v2FacetDetailEditorBean.translationLang}" style="width:100%">
+                        <f:selectItems value="#{v2FacetDetailEditorBean.availableTranslationLanguages}" var="lang"
+                                       itemLabel="#{lang.value}" itemValue="#{lang.code}"/>
+                    </p:selectOneMenu>
+                </div>
+            </div>
+            <div class="row mb-2">
+                <div class="col-4"><h:outputText value="#{v2LocaleBean.getMsg('statistique.label')}"/></div>
+                <div class="col-8"><p:inputText value="#{v2FacetDetailEditorBean.translationValue}" style="width:100%"/></div>
+            </div>
+            <div class="text-right mt-3">
+                <p:commandButton value="#{v2LocaleBean.getMsg('btnValidate')}" styleClass="ui-button-success"
+                                 actionListener="#{v2FacetDetailEditorBean.submitAddTranslation()}"
+                                 process="@form" update=":containerIndex:rightTab :messageIndex"/>
+            </div>
+        </h:form>
+    </p:dialog>
+
+    <p:dialog id="v2EditFacetTranslationsDlg" header="#{v2LocaleBean.getMsg('rightbody.concept.edit_traduction')}"
+              widgetVar="v2EditFacetTranslationsDlg" width="560" modal="true" resizable="false" position="top">
+        <h:form>
+            <ui:repeat value="#{v2FacetDetailEditorBean.translationsToEdit}" var="translation">
+                <div class="row mb-2">
+                    <div class="col-3"><h:outputText value="#{translation.lang}"/></div>
+                    <div class="col-7"><p:inputText value="#{translation.value}" style="width:100%"/></div>
+                    <div class="col-2">
+                        <p:commandLink actionListener="#{v2FacetDetailEditorBean.submitUpdateTranslation(translation)}"
+                                       process="@form" update=":containerIndex:rightTab :messageIndex">
+                            <i class="pi pi-check" style="color:#43B572;"/>
+                        </p:commandLink>
+                    </div>
+                </div>
+            </ui:repeat>
+        </h:form>
+    </p:dialog>
+
+    <p:dialog id="v2DeleteFacetTranslationDlg" header="#{v2LocaleBean.getMsg('rightbody.concept.delete_traduction')}"
+              widgetVar="v2DeleteFacetTranslationDlg" width="450" modal="true" resizable="false" position="top">
+        <h:form>
+            <p:selectOneMenu value="#{v2FacetDetailEditorBean.selectedTranslationLang}" style="width:100%">
+                <f:selectItems value="#{v2ThesaurusBrowseBean.selectedFacet.translations}" var="translation"
+                               itemLabel="#{translation.value} (#{translation.lang})" itemValue="#{translation.lang}"/>
+            </p:selectOneMenu>
+            <div class="text-right mt-3">
+                <p:commandButton value="#{v2LocaleBean.getMsg('btnValidate')}" styleClass="ui-button-danger"
+                                 actionListener="#{v2FacetDetailEditorBean.submitDeleteTranslation()}"
+                                 process="@form" update=":containerIndex:rightTab :messageIndex"/>
+            </div>
+        </h:form>
+    </p:dialog>
+
+    <p:dialog id="v2AddMemberToFacetDlg" header="#{v2LocaleBean.getMsg('group.members')}"
+              widgetVar="v2AddMemberToFacetDlg" width="500" modal="true" resizable="false" position="top">
+        <h:form>
+            <p:autoComplete value="#{v2FacetDetailEditorBean.selectedConcept}"
+                            completeMethod="#{v2FacetDetailEditorBean.autocompleteConcept}"
+                            var="concept" forceSelection="true" scrollHeight="300"
+                            converter="v2ConceptSearchConverter" style="width:100%;" inputStyle="width:100%;">
+                <p:column><h:outputText value="#{concept.displayLabel}"/></p:column>
+                <p:column><h:outputText value="#{concept.conceptId}"/></p:column>
+            </p:autoComplete>
+            <div class="row mb-2 mt-2">
+                <div class="col-12">
+                    <p:selectBooleanCheckbox value="#{v2FacetDetailEditorBean.applyToBranch}"/>
+                    <h:outputText value=" #{v2LocaleBean.getMsg('branch')}" style="margin-left:8px;"/>
+                </div>
+            </div>
+            <div class="text-right mt-3">
+                <p:commandButton value="#{v2LocaleBean.getMsg('btnValidate')}" styleClass="ui-button-success"
+                                 actionListener="#{v2FacetDetailEditorBean.submitAddMember()}"
+                                 process="@form" update=":containerIndex:rightTab :messageIndex"/>
+            </div>
+        </h:form>
+    </p:dialog>
+
+    <p:dialog id="v2FacetAddBranchMemberDlg" header="#{v2LocaleBean.getMsg('rightbody.conceptdialog.add_all_to_group')}"
+              widgetVar="v2FacetAddBranchMemberDlg" width="500" modal="true" resizable="false" position="top">
+        <h:form>
+            <p:autoComplete value="#{v2FacetDetailEditorBean.selectedConcept}"
+                            completeMethod="#{v2FacetDetailEditorBean.autocompleteConcept}"
+                            var="concept" forceSelection="true" scrollHeight="300"
+                            converter="v2ConceptSearchConverter" style="width:100%;" inputStyle="width:100%;">
+                <p:column><h:outputText value="#{concept.displayLabel}"/></p:column>
+                <p:column><h:outputText value="#{concept.conceptId}"/></p:column>
+            </p:autoComplete>
+            <div class="text-right mt-3">
+                <p:commandButton value="#{v2LocaleBean.getMsg('btnValidate')}" styleClass="ui-button-success"
+                                 actionListener="#{v2FacetDetailEditorBean.submitAddMember()}"
+                                 process="@form" update=":containerIndex:rightTab :messageIndex"/>
+            </div>
+        </h:form>
+    </p:dialog>
+
+    <p:dialog id="v2FacetRemoveBranchMemberDlg" header="#{v2LocaleBean.getMsg('rightbody.conceptdialog.remove_all_from_group')}"
+              widgetVar="v2FacetRemoveBranchMemberDlg" width="500" modal="true" resizable="false" position="top">
+        <h:form>
+            <p:autoComplete value="#{v2FacetDetailEditorBean.selectedConcept}"
+                            completeMethod="#{v2FacetDetailEditorBean.autocompleteConcept}"
+                            var="concept" forceSelection="true" scrollHeight="300"
+                            converter="v2ConceptSearchConverter" style="width:100%;" inputStyle="width:100%;">
+                <p:column><h:outputText value="#{concept.displayLabel}"/></p:column>
+                <p:column><h:outputText value="#{concept.conceptId}"/></p:column>
+            </p:autoComplete>
+            <div class="text-right mt-3">
+                <p:commandButton value="#{v2LocaleBean.getMsg('btnValidate')}" styleClass="ui-button-danger"
+                                 actionListener="#{v2FacetDetailEditorBean.submitRemoveBranchMember()}"
+                                 process="@form" update=":containerIndex:rightTab :messageIndex"/>
+            </div>
+        </h:form>
+    </p:dialog>
+
+    <p:dialog id="v2RemoveAllMembersFromFacetDlg" header="#{v2LocaleBean.getMsg('group.members')}"
+              widgetVar="v2RemoveAllMembersFromFacetDlg" width="450" modal="true" resizable="false" position="top">
+        <h:form>
+            <h:outputText value="Retirer tous les concepts de cette facette ?"/>
+            <div class="text-right mt-3">
+                <p:commandButton value="#{v2LocaleBean.getMsg('btnValidate')}" styleClass="ui-button-danger"
+                                 actionListener="#{v2FacetDetailEditorBean.submitRemoveAllMembers()}"
+                                 process="@form" update=":containerIndex:rightTab :messageIndex"/>
+            </div>
+        </h:form>
+    </p:dialog>
+
+    <p:dialog id="v2ChangeFacetParentDlg" header="#{v2LocaleBean.getMsg('rightbody.facetdialog.parent_concept')}"
+              widgetVar="v2ChangeFacetParentDlg" width="500" modal="true" resizable="false" position="top">
+        <h:form>
+            <p:autoComplete value="#{v2FacetDetailEditorBean.selectedParentConcept}"
+                            completeMethod="#{v2FacetDetailEditorBean.autocompleteConcept}"
+                            var="concept" forceSelection="true" scrollHeight="300"
+                            converter="v2ConceptSearchConverter" style="width:100%;" inputStyle="width:100%;">
+                <p:column><h:outputText value="#{concept.displayLabel}"/></p:column>
+                <p:column><h:outputText value="#{concept.conceptId}"/></p:column>
+            </p:autoComplete>
+            <div class="text-right mt-3">
+                <p:commandButton value="#{v2LocaleBean.getMsg('btnValidate')}" styleClass="ui-button-success"
+                                 actionListener="#{v2FacetDetailEditorBean.submitChangeParent()}"
+                                 process="@form" update=":containerIndex:rightTab :containerIndex:formLeftTab :messageIndex"/>
+            </div>
+        </h:form>
+    </p:dialog>
+
+    <p:dialog id="v2CreateFacetDlg" header="#{v2LocaleBean.getMsg('leftbody.facet')}"
+              widgetVar="v2CreateFacetDlg" width="520" modal="true" resizable="false" position="top">
+        <h:form>
+            <div class="row mb-2">
+                <div class="col-4"><h:outputText value="#{v2LocaleBean.getMsg('statistique.label')}"/></div>
+                <div class="col-8"><p:inputText value="#{v2FacetDetailEditorBean.label}" style="width:100%"/></div>
+            </div>
+            <div class="row mb-2">
+                <div class="col-4"><h:outputText value="#{v2LocaleBean.getMsg('rightbody.facetdialog.parent_concept')}"/></div>
+                <div class="col-8">
+                    <p:autoComplete value="#{v2FacetDetailEditorBean.selectedParentConcept}"
+                                    completeMethod="#{v2FacetDetailEditorBean.autocompleteConcept}"
+                                    var="concept" forceSelection="true" scrollHeight="300"
+                                    converter="v2ConceptSearchConverter" style="width:100%;" inputStyle="width:100%;">
+                        <p:column><h:outputText value="#{concept.displayLabel}"/></p:column>
+                    </p:autoComplete>
+                </div>
+            </div>
+            <div class="text-right mt-3">
+                <p:commandButton value="#{v2LocaleBean.getMsg('btnValidate')}" styleClass="ui-button-success"
+                                 actionListener="#{v2FacetDetailEditorBean.submitCreate()}"
+                                 process="@form" update=":containerIndex:rightTab :containerIndex:formLeftTab :messageIndex"/>
+            </div>
+        </h:form>
+    </p:dialog>
+</ui:fragment>

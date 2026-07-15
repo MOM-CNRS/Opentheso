@@ -1,7 +1,5 @@
 package fr.cnrs.opentheso.v2.toolbox.ui;
 
-import fr.cnrs.opentheso.bean.menu.theso.SelectedTheso;
-import fr.cnrs.opentheso.bean.menu.users.CurrentUser;
 import fr.cnrs.opentheso.models.candidats.DomaineDto;
 import fr.cnrs.opentheso.models.statistiques.ConceptStatisticData;
 import fr.cnrs.opentheso.models.statistiques.GenericStatistiqueData;
@@ -37,9 +35,7 @@ import java.util.stream.Collectors;
 public class StatisticsBean implements Serializable {
 
     private final UserSession userSession;
-    private final CurrentUser currentUser;
     private final ThesaurusContext thesaurusContext;
-    private final SelectedTheso selectedTheso;
     private final ThesaurusStatisticsService thesaurusStatisticsService;
 
     private boolean genericTypeVisible;
@@ -72,15 +68,11 @@ public class StatisticsBean implements Serializable {
 
     public StatisticsBean(
             UserSession userSession,
-            CurrentUser currentUser,
             ThesaurusContext thesaurusContext,
-            SelectedTheso selectedTheso,
             ThesaurusStatisticsService thesaurusStatisticsService
     ) {
         this.userSession = userSession;
-        this.currentUser = currentUser;
         this.thesaurusContext = thesaurusContext;
-        this.selectedTheso = selectedTheso;
         this.thesaurusStatisticsService = thesaurusStatisticsService;
     }
 
@@ -275,16 +267,11 @@ public class StatisticsBean implements Serializable {
     }
 
     private String getActiveThesaurusId() {
-        if (StringUtils.isNotBlank(thesaurusContext.getCurrentThesaurusId())) {
-            return thesaurusContext.getCurrentThesaurusId();
-        }
-        return selectedTheso.getCurrentIdTheso();
+        return thesaurusContext.resolveThesaurusId();
     }
 
     private String resolveInterfaceLanguage() {
-        return StringUtils.isNotBlank(selectedTheso.getCurrentLang())
-                ? selectedTheso.getCurrentLang()
-                : "fr";
+        return thesaurusContext.resolveWorkLanguage();
     }
 
     private String resolveCollectionId(String label) {

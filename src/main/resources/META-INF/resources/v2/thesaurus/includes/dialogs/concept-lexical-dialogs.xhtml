@@ -1,0 +1,236 @@
+<ui:fragment xmlns="http://www.w3.org/1999/xhtml"
+             xmlns:ui="http://xmlns.jcp.org/jsf/facelets"
+             xmlns:p="http://primefaces.org/ui"
+             xmlns:h="http://xmlns.jcp.org/jsf/html"
+             xmlns:f="http://xmlns.jcp.org/jsf/core">
+
+    <p:dialog id="v2AddSynonymDlg" header="#{v2LocaleBean.getMsg('rightbody.conceptdialog.add_synonym')}"
+              widgetVar="v2AddSynonymDlg" width="480" modal="true" resizable="false">
+        <h:form id="v2AddSynonymForm">
+            <p:defaultCommand target="v2AddSynonymSubmit"/>
+            <div class="row mb-2">
+                <div class="col-12">
+                    <h:outputText value="#{v2LocaleBean.getMsg('rightbody.conceptdialog.nameOfConcept')} : "/>
+                    <h:outputText value="#{v2ConceptLexicalEditorBean.currentConceptLabel}" style="color:#C63632;"/>
+                </div>
+            </div>
+            <div class="row mb-2">
+                <div class="col-4"><h:outputText value="#{v2LocaleBean.getMsg('candidat.value')}"/></div>
+                <div class="col-8">
+                    <p:inputText value="#{v2ConceptLexicalEditorBean.synonymValue}" style="width:100%;"/>
+                </div>
+            </div>
+            <div class="row mb-2">
+                <div class="col-4"><h:outputText value="#{v2LocaleBean.getMsg('rightbody.conceptdialog.language')}"/></div>
+                <div class="col-8">
+                    <p:selectOneMenu value="#{v2ConceptLexicalEditorBean.selectedLang}" style="width:100%;">
+                        <f:selectItems value="#{v2ConceptLexicalEditorBean.availableLanguages}" var="lang"
+                                       itemLabel="#{lang.value}" itemValue="#{lang.code}"/>
+                    </p:selectOneMenu>
+                </div>
+            </div>
+            <div class="row mb-2">
+                <div class="col-4"><h:outputText value="#{v2LocaleBean.getMsg('rightbody.conceptdialog.hidden')}"/></div>
+                <div class="col-8">
+                    <p:toggleSwitch value="#{v2ConceptLexicalEditorBean.synonymHidden}"/>
+                </div>
+            </div>
+            <h:panelGroup rendered="#{v2ConceptLexicalEditorBean.duplicateLabelWarning}" style="color:#C63632; margin-bottom:10px;">
+                <h:outputText value="Un libellé identique existe. Confirmer pour continuer ?"/>
+            </h:panelGroup>
+            <div class="text-right mt-3">
+                <p:commandButton rendered="#{v2ConceptLexicalEditorBean.duplicateLabelWarning}"
+                                 value="#{v2LocaleBean.getMsg('btnCancel')}" styleClass="ui-button-secondary"
+                                 actionListener="#{v2ConceptLexicalEditorBean.cancelDuplicate()}"
+                                 update="v2AddSynonymForm" process="@form" style="margin-right:8px;"/>
+                <p:commandButton rendered="#{not v2ConceptLexicalEditorBean.duplicateLabelWarning}"
+                                 value="#{v2LocaleBean.getMsg('btnCancel')}" styleClass="ui-button-secondary"
+                                 type="button" onclick="PF('v2AddSynonymDlg').hide();" style="margin-right:8px;"/>
+                <p:commandButton id="v2AddSynonymSubmit"
+                                 rendered="#{not v2ConceptLexicalEditorBean.duplicateLabelWarning}"
+                                 value="#{v2LocaleBean.getMsg('btnValidate')}" styleClass="ui-button-success"
+                                 actionListener="#{v2ConceptLexicalEditorBean.submitAddSynonym()}"
+                                 update="v2AddSynonymForm :containerIndex:rightTab :messageIndex"
+                                 process="@form"/>
+                <p:commandButton rendered="#{v2ConceptLexicalEditorBean.duplicateLabelWarning}"
+                                 value="#{v2LocaleBean.getMsg('rightbody.conceptdialog.force')}"
+                                 styleClass="ui-button-warning"
+                                 actionListener="#{v2ConceptLexicalEditorBean.submitAddSynonymForced()}"
+                                 update="v2AddSynonymForm :containerIndex:rightTab :messageIndex"
+                                 process="@form"/>
+            </div>
+        </h:form>
+    </p:dialog>
+
+    <p:dialog id="v2EditSynonymDlg" header="#{v2LocaleBean.getMsg('rightbody.concept.modify_synonym')}"
+              widgetVar="v2EditSynonymDlg" width="560" modal="true" resizable="false">
+        <h:form id="v2EditSynonymForm">
+            <div class="row mb-2">
+                <div class="col-12">
+                    <h:outputText value="#{v2LocaleBean.getMsg('rightbody.conceptdialog.nameOfConcept')} : "/>
+                    <h:outputText value="#{v2ConceptLexicalEditorBean.currentConceptLabel}" style="color:#C63632;"/>
+                </div>
+            </div>
+            <p:dataTable var="row" value="#{v2ConceptLexicalEditorBean.synonymEdits}" size="small" styleClass="products-table">
+                <p:column headerText="#{v2LocaleBean.getMsg('indexview.synonym')}">
+                    <p:inputText value="#{row.value}" style="width:100%;"/>
+                </p:column>
+                <p:column headerText="#{v2LocaleBean.getMsg('rightbody.conceptdialog.language')}" width="80">
+                    <h:outputText value="#{row.lang}"/>
+                </p:column>
+                <p:column headerText="#{v2LocaleBean.getMsg('rightbody.conceptdialog.hidden')}" width="80">
+                    <p:toggleSwitch value="#{row.hidden}"/>
+                </p:column>
+                <p:column width="60">
+                    <p:commandLink style="color:#43B572;" process="@form" ajax="true"
+                                   actionListener="#{v2ConceptLexicalEditorBean.submitUpdateSynonym(row)}"
+                                   update="v2EditSynonymForm :containerIndex:rightTab :messageIndex">
+                        <i class="pi pi-check-circle"/>
+                    </p:commandLink>
+                </p:column>
+            </p:dataTable>
+            <div class="text-right mt-3">
+                <p:commandButton rendered="#{not v2ConceptLexicalEditorBean.duplicateLabelWarning}"
+                                 value="#{v2LocaleBean.getMsg('btnCancel')}" styleClass="ui-button-secondary"
+                                 type="button" onclick="PF('v2EditSynonymDlg').hide();" style="margin-right:8px;"/>
+                <p:commandButton rendered="#{v2ConceptLexicalEditorBean.duplicateLabelWarning}"
+                                 value="#{v2LocaleBean.getMsg('btnCancel')}" styleClass="ui-button-secondary"
+                                 actionListener="#{v2ConceptLexicalEditorBean.cancelDuplicate()}"
+                                 update="v2EditSynonymForm" oncomplete="PF('v2EditSynonymDlg').show();"
+                                 process="@form" style="margin-right:8px;"/>
+                <p:commandButton rendered="#{v2ConceptLexicalEditorBean.duplicateLabelWarning}"
+                                 value="#{v2LocaleBean.getMsg('rightbody.conceptdialog.force')}"
+                                 styleClass="ui-button-warning"
+                                 actionListener="#{v2ConceptLexicalEditorBean.submitUpdateSynonymForcedFromEdit()}"
+                                 update="v2EditSynonymForm :containerIndex:rightTab :messageIndex"
+                                 process="@form"/>
+            </div>
+        </h:form>
+    </p:dialog>
+
+    <p:dialog id="v2DeleteSynonymDlg" header="#{v2LocaleBean.getMsg('rightbody.conceptdialog.synonym_deletion')}"
+              widgetVar="v2DeleteSynonymDlg" width="560" modal="true" resizable="false">
+        <h:form id="v2DeleteSynonymForm">
+            <div class="row mb-2">
+                <div class="col-12">
+                    <h:outputText value="#{v2LocaleBean.getMsg('rightbody.conceptdialog.nameOfConcept')} : "/>
+                    <h:outputText value="#{v2ConceptLexicalEditorBean.currentConceptLabel}" style="color:#C63632;"/>
+                </div>
+            </div>
+            <p:dataTable var="row" value="#{v2ConceptLexicalEditorBean.synonymEdits}" size="small" styleClass="products-table">
+                <f:facet name="header">
+                    <h:outputText value="#{v2LocaleBean.getMsg('rightbody.conceptdialog.listOfSynonyms')}" style="font-weight:bold;"/>
+                </f:facet>
+                <p:column headerText="Label">
+                    <h:outputText value="#{row.value} (#{row.lang})"/>
+                </p:column>
+                <p:column width="80" headerText="#{v2LocaleBean.getMsg('btnDelete')}">
+                    <p:commandLink style="color:#FF7979;" process="@form" ajax="true"
+                                   actionListener="#{v2ConceptLexicalEditorBean.submitDeleteSynonym(row)}"
+                                   update="v2DeleteSynonymForm :containerIndex:rightTab :messageIndex">
+                        <i class="pi pi-trash"/>
+                    </p:commandLink>
+                </p:column>
+            </p:dataTable>
+        </h:form>
+    </p:dialog>
+
+    <p:dialog id="v2AddTranslationDlg" header="#{v2LocaleBean.getMsg('rightbody.conceptdialog.add_translation')}"
+              widgetVar="v2AddTranslationDlg" width="480" modal="true" resizable="false">
+        <h:form id="v2AddTranslationForm">
+            <p:defaultCommand target="v2AddTranslationSubmit"/>
+            <div class="row mb-2">
+                <div class="col-12">
+                    <h:outputText value="#{v2LocaleBean.getMsg('rightbody.conceptdialog.nameOfConcept')} : "/>
+                    <h:outputText value="#{v2ConceptLexicalEditorBean.currentConceptLabel}" style="color:#C63632;"/>
+                </div>
+            </div>
+            <h:panelGroup rendered="#{empty v2ConceptLexicalEditorBean.availableTranslationLanguages}">
+                <h:outputText value="#{v2LocaleBean.getMsg('concept.translate.isTranslatedIntoAllLang')}"
+                              style="color:#0388D1; display:block; margin:10px 0;"/>
+            </h:panelGroup>
+            <h:panelGroup rendered="#{not empty v2ConceptLexicalEditorBean.availableTranslationLanguages}">
+                <div class="row mb-2">
+                    <div class="col-4"><h:outputText value="#{v2LocaleBean.getMsg('candidat.traduction')}"/></div>
+                    <div class="col-8">
+                        <p:inputText value="#{v2ConceptLexicalEditorBean.translationValue}" style="width:100%;"/>
+                    </div>
+                </div>
+                <div class="row mb-2">
+                    <div class="col-4"><h:outputText value="#{v2LocaleBean.getMsg('candidat.language')}"/></div>
+                    <div class="col-8">
+                        <p:selectOneMenu value="#{v2ConceptLexicalEditorBean.translationLang}" style="width:100%;">
+                            <f:selectItems value="#{v2ConceptLexicalEditorBean.availableTranslationLanguages}" var="lang"
+                                           itemLabel="#{lang.value}" itemValue="#{lang.code}"/>
+                        </p:selectOneMenu>
+                    </div>
+                </div>
+            </h:panelGroup>
+            <div class="text-right mt-3">
+                <p:commandButton value="#{v2LocaleBean.getMsg('btnCancel')}" styleClass="ui-button-secondary"
+                                 type="button" onclick="PF('v2AddTranslationDlg').hide();" style="margin-right:8px;"/>
+                <p:commandButton id="v2AddTranslationSubmit"
+                                 rendered="#{not empty v2ConceptLexicalEditorBean.availableTranslationLanguages}"
+                                 value="#{v2LocaleBean.getMsg('btnValidate')}" styleClass="ui-button-success"
+                                 actionListener="#{v2ConceptLexicalEditorBean.submitAddTranslation()}"
+                                 update="v2AddTranslationForm :containerIndex:rightTab :messageIndex"
+                                 process="@form"/>
+            </div>
+        </h:form>
+    </p:dialog>
+
+    <p:dialog id="v2EditTranslationDlg" header="#{v2LocaleBean.getMsg('rightbody.conceptdialog.modify_translation')}"
+              widgetVar="v2EditTranslationDlg" width="560" modal="true" resizable="false">
+        <h:form id="v2EditTranslationForm">
+            <div class="row mb-2">
+                <div class="col-12">
+                    <h:outputText value="#{v2LocaleBean.getMsg('rightbody.conceptdialog.nameOfConcept')} : "/>
+                    <h:outputText value="#{v2ConceptLexicalEditorBean.currentConceptLabel}" style="color:#C63632;"/>
+                </div>
+            </div>
+            <p:dataTable var="row" value="#{v2ConceptLexicalEditorBean.translationEdits}" size="small" styleClass="products-table">
+                <p:column headerText="#{v2LocaleBean.getMsg('candidat.traduction')}">
+                    <p:inputText value="#{row.value}" style="width:100%;"/>
+                </p:column>
+                <p:column headerText="#{v2LocaleBean.getMsg('rightbody.conceptdialog.language')}" width="80">
+                    <h:outputText value="#{row.lang}"/>
+                </p:column>
+                <p:column width="60">
+                    <p:commandLink style="color:#43B572;" process="@form" ajax="true"
+                                   actionListener="#{v2ConceptLexicalEditorBean.submitUpdateTranslation(row)}"
+                                   update="v2EditTranslationForm :containerIndex:rightTab :messageIndex">
+                        <i class="pi pi-check-circle"/>
+                    </p:commandLink>
+                </p:column>
+            </p:dataTable>
+            <div class="text-right mt-3">
+                <p:commandButton value="#{v2LocaleBean.getMsg('btnCancel')}" styleClass="ui-button-secondary"
+                                 type="button" onclick="PF('v2EditTranslationDlg').hide();"/>
+            </div>
+        </h:form>
+    </p:dialog>
+
+    <p:dialog id="v2DeleteTranslationDlg" header="#{v2LocaleBean.getMsg('rightbody.conceptdialog.delete_translation')}"
+              widgetVar="v2DeleteTranslationDlg" width="560" modal="true" resizable="false">
+        <h:form id="v2DeleteTranslationForm">
+            <div class="row mb-2">
+                <div class="col-12">
+                    <h:outputText value="#{v2LocaleBean.getMsg('rightbody.conceptdialog.nameOfConcept')} : "/>
+                    <h:outputText value="#{v2ConceptLexicalEditorBean.currentConceptLabel}" style="color:#C63632;"/>
+                </div>
+            </div>
+            <p:dataTable var="row" value="#{v2ConceptLexicalEditorBean.translationEdits}" size="small" styleClass="products-table">
+                <p:column headerText="Label">
+                    <h:outputText value="#{row.value} (#{row.lang})"/>
+                </p:column>
+                <p:column width="80" headerText="#{v2LocaleBean.getMsg('btnDelete')}">
+                    <p:commandLink style="color:#FF7979;" process="@form" ajax="true"
+                                   action="#{v2ConceptLexicalEditorBean.submitDeleteTranslation(row.lang)}"
+                                   update="v2DeleteTranslationForm :containerIndex:rightTab :messageIndex">
+                        <i class="pi pi-trash"/>
+                    </p:commandLink>
+                </p:column>
+            </p:dataTable>
+        </h:form>
+    </p:dialog>
+</ui:fragment>

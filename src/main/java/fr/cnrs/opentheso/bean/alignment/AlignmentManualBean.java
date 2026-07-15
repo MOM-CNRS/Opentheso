@@ -203,11 +203,14 @@ public class AlignmentManualBean implements Serializable {
 
         conceptService.updateDateOfConcept(idThesaurus, idConcept, idUser);
 
-        conceptDcTermRepository.save(ConceptDcTerm.builder()
-                .name(DCMIResource.CONTRIBUTOR)
-                .value(currentUser.getNodeUser().getName())
-                .idConcept(idConcept)
-                .idThesaurus(idThesaurus)
-                .build());
+        var nodeUser = currentUser.getNodeUser();
+        if (nodeUser != null && StringUtils.isNotBlank(nodeUser.getName())) {
+            conceptDcTermRepository.save(ConceptDcTerm.builder()
+                    .name(DCMIResource.CONTRIBUTOR)
+                    .value(nodeUser.getName())
+                    .idConcept(idConcept)
+                    .idThesaurus(idThesaurus)
+                    .build());
+        }
     }
 }

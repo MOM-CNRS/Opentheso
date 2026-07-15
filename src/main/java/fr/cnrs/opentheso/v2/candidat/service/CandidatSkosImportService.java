@@ -1,10 +1,10 @@
 package fr.cnrs.opentheso.v2.candidat.service;
 
 import fr.cnrs.opentheso.entites.Preferences;
+import fr.cnrs.opentheso.v2.shared.session.ThesaurusPreferencesProvider;
 import fr.cnrs.opentheso.models.skosapi.SKOSResource;
 import fr.cnrs.opentheso.models.skosapi.SKOSXmlDocument;
-import fr.cnrs.opentheso.services.imports.rdf4j.ImportRdf4jHelper;
-import fr.cnrs.opentheso.services.imports.rdf4j.ReadRDF4JNewGen;
+import fr.cnrs.opentheso.v2.candidat.session.CandidatSkosImportLegacySupport;
 import lombok.RequiredArgsConstructor;
 import org.apache.commons.lang3.StringUtils;
 import org.eclipse.rdf4j.rio.RDFFormat;
@@ -17,16 +17,29 @@ import java.io.InputStream;
 @RequiredArgsConstructor
 public class CandidatSkosImportService {
 
-    private final ImportRdf4jHelper importRdf4jHelper;
+    private final CandidatSkosImportLegacySupport legacySupport;
+    private final ThesaurusPreferencesProvider thesaurusPreferencesProvider;
 
     public SkosLoadResult loadSkosFile(InputStream inputStream, int typeImport, String selectedLang, StringBuffer errorBuffer) throws IOException {
         String lang = StringUtils.isBlank(selectedLang) ? "fr" : selectedLang;
-        var document = new ReadRDF4JNewGen().readRdfFlux(inputStream, resolveFormat(typeImport), lang, errorBuffer);
+        var document = legacySupport.readSkos(inputStream, resolveFormat(typeImport), lang, errorBuffer);
         return new SkosLoadResult(
                 document,
                 document.getTitle(),
                 document.getConceptList() == null ? 0 : document.getConceptList().size()
         );
+    }
+
+    public void importCandidatesForThesaurus(
+            SKOSXmlDocument document,
+            String thesaurusId,
+            int userId,
+            String sourceLang,
+            ProgressCallback progressCallback
+    ) throws IOException {
+        var preferences = thesaurusPreferencesProvider.findPreferences(thesaurusId)
+                .orElseThrow(() -> new IOException("Préférences du thésaurus introuvables"));
+        importCandidates(document, thesaurusId, userId, -1, sourceLang, preferences, progressCallback);
     }
 
     public void importCandidates(
@@ -38,9 +51,8 @@ public class CandidatSkosImportService {
             Preferences preferences,
             ProgressCallback progressCallback
     ) throws IOException {
-        importRdf4jHelper.setInfos("yyyy-MM-dd", userId, groupId, sourceLang);
-        importRdf4jHelper.setNodePreference(preferences);
-        importRdf4jHelper.setRdf4jThesaurus(document);
+        legacySupport.configureImport("yyyy-MM-dd", userId, groupId, sourceLang, preferences);
+        legacySupport.setImportDocument(document);
 
         var concepts = document.getConceptList();
         if (concepts == null || concepts.isEmpty()) {
@@ -54,7 +66,7 @@ public class CandidatSkosImportService {
                 progressCallback.onProgress(index, concepts.size());
             }
             if (!resource.getLabelsList().isEmpty()) {
-                importRdf4jHelper.addConcept(resource, thesaurusId, true);
+                legacySupport.importConcept(resource, thesaurusId, true);
             }
         }
     }

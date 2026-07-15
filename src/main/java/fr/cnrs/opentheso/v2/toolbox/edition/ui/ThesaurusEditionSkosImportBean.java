@@ -1,0 +1,159 @@
+package fr.cnrs.opentheso.v2.toolbox.edition.ui;
+
+import fr.cnrs.opentheso.models.skosapi.SKOSXmlDocument;
+import fr.cnrs.opentheso.utils.MessageUtils;
+import fr.cnrs.opentheso.v2.shared.ui.UserSession;
+import fr.cnrs.opentheso.v2.toolbox.model.LanguageOption;
+import fr.cnrs.opentheso.v2.toolbox.model.ProjectOption;
+import fr.cnrs.opentheso.v2.toolbox.policy.ToolboxAccessPolicy;
+import fr.cnrs.opentheso.v2.toolbox.service.NewThesaurusService;
+import fr.cnrs.opentheso.v2.toolbox.edition.service.ThesaurusEditionSkosImportService;
+import fr.cnrs.opentheso.v2.toolbox.ui.EditionBean;
+import jakarta.faces.application.FacesMessage;
+import jakarta.faces.context.FacesContext;
+import jakarta.faces.event.AjaxBehaviorEvent;
+import jakarta.faces.event.PhaseId;
+import jakarta.faces.view.ViewScoped;
+import jakarta.inject.Named;
+import lombok.Getter;
+import lombok.Setter;
+import lombok.RequiredArgsConstructor;
+import org.apache.commons.lang3.StringUtils;
+import org.primefaces.PrimeFaces;
+import org.primefaces.event.FileUploadEvent;
+
+import java.io.InputStream;
+import java.io.Serializable;
+import java.util.Collections;
+import java.util.List;
+
+@Getter
+@Setter
+@ViewScoped
+@Named("v2ThesaurusEditionSkosImportBean")
+@RequiredArgsConstructor
+public class ThesaurusEditionSkosImportBean implements Serializable {
+
+    private final ThesaurusEditionSkosImportService thesaurusEditionSkosImportService;
+    private final NewThesaurusService newThesaurusService;
+    private final UserSession userSession;
+
+    private int typeImport;
+    private int total;
+    private String uri;
+    private String selectedLang;
+    private String formatDate = "yyyy-MM-dd";
+    private String selectedIdentifier = "sans";
+    private String prefixHandle = "";
+    private String prefixDoi = "";
+    private String selectedProjectId;
+    private boolean loadDone;
+    private int progressValue;
+
+    private List<LanguageOption> allLangs = Collections.emptyList();
+    private List<ProjectOption> projects = Collections.emptyList();
+    private boolean superAdmin;
+    private SKOSXmlDocument skosXmlDocument;
+
+    public void init() {
+        if (!ToolboxAccessPolicy.canCreateOrImportThesaurus(userSession)) {
+            return;
+        }
+        typeImport = 0;
+        total = 0;
+        uri = "";
+        loadDone = false;
+        progressValue = 0;
+        skosXmlDocument = null;
+        formatDate = "yyyy-MM-dd";
+        selectedIdentifier = "sans";
+        prefixHandle = "";
+        prefixDoi = "";
+        selectedProjectId = null;
+
+        var options = newThesaurusService.loadFormOptions(
+                userSession.getCurrentUserId(),
+                userSession.isSuperAdmin()
+        );
+        allLangs = options.languages();
+        projects = options.projects();
+        superAdmin = options.superAdmin();
+        selectedLang = allLangs.isEmpty() ? "fr" : allLangs.get(0).code();
+        if (!superAdmin && projects.size() == 1) {
+            selectedProjectId = String.valueOf(projects.get(0).id());
+        }
+    }
+
+    public void stateChangeListener(AjaxBehaviorEvent event) {
+        // Conservé pour compatibilité avec le composant JSF.
+    }
+
+    public void loadFileSkos(FileUploadEvent event) {
+        if (!PhaseId.INVOKE_APPLICATION.equals(event.getPhaseId())) {
+            event.setPhaseId(PhaseId.INVOKE_APPLICATION);
+            event.queue();
+            return;
+        }
+
+        var error = new StringBuffer();
+        try (InputStream inputStream = event.getFile().getInputStream()) {
+            var result = thesaurusEditionSkosImportService.loadSkosFile(inputStream, typeImport, selectedLang, error);
+            skosXmlDocument = result.document();
+            total = result.totalConcepts();
+            uri = result.uri();
+            loadDone = true;
+        } catch (Exception ex) {
+            loadDone = true;
+            error.append(ex.getMessage());
+        }
+
+        if (!error.isEmpty()) {
+            MessageUtils.showErrorMessage(error.toString());
+        }
+        PrimeFaces.current().executeScript("PF('waitDialog').hide();");
+    }
+
+    public void importThesaurus() {
+        if (skosXmlDocument == null) {
+            MessageUtils.showErrorMessage("Aucun fichier SKOS chargé");
+            return;
+        }
+        Integer userId = userSession.getCurrentUserId();
+        if (userId == null) {
+            MessageUtils.showErrorMessage("Utilisateur invalide");
+            return;
+        }
+
+        try {
+            Integer projectId = StringUtils.isBlank(selectedProjectId) ? null : Integer.parseInt(selectedProjectId);
+            String thesaurusId = thesaurusEditionSkosImportService.importNewThesaurus(
+                    skosXmlDocument,
+                    formatDate,
+                    userId,
+                    superAdmin,
+                    projectId,
+                    selectedLang,
+                    selectedIdentifier,
+                    prefixHandle,
+                    prefixDoi
+            );
+            progressValue = 100;
+            FacesContext.getCurrentInstance().addMessage(null, new FacesMessage(
+                    FacesMessage.SEVERITY_INFO,
+                    "Le thésaurus " + thesaurusId + " est correctement ajouté !",
+                    "import réussi"
+            ));
+            editionBean().showList();
+            PrimeFaces.current().ajax().update("messageIndex formMenu:idListTheso");
+        } catch (NumberFormatException ex) {
+            MessageUtils.showErrorMessage("Projet invalide");
+        } catch (Exception ex) {
+            MessageUtils.showErrorMessage(StringUtils.defaultIfBlank(ex.getMessage(), "Erreur pendant l'import SKOS"));
+        }
+    }
+
+    private EditionBean editionBean() {
+        FacesContext context = FacesContext.getCurrentInstance();
+        return context.getApplication().evaluateExpressionGet(context, "#{v2EditionBean}", EditionBean.class);
+    }
+}

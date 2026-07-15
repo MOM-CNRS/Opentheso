@@ -33,7 +33,7 @@
                     </p:column>
 
                     <p:column width="5" headerText="Modifier">
-                        <p:commandButton update="containerIndex:formRightTab containerIndex:idUpdateAlignment"
+                        <p:commandButton update=":containerIndex:rightTab :containerIndex:idUpdateAlignment"
                                          action="#{alignmentManualBean.reset()}"
                                          actionListener="#{alignmentManualBean.updateAlignement(alignment)}"
                                          oncomplete="PF('updateAlignment').show();"
@@ -47,7 +47,7 @@
                 <p:commandButton value="#{langueBean.getMsg('btnBack')}" styleClass="ui-button-secondary button" icon="fas fa-undo-alt"
                                  style="margin-right: 10px; margin-top: 20px;"
                                  actionListener="PF('updateAlignment').hide();"
-                                 update="containerIndex:idUpdateAlignment"/>
+                                 update=":containerIndex:idUpdateAlignment"/>
             </div>
             <input type="hidden" name="csrfToken" value="${sessionScope.CSRF_TOKEN}" />
         </h:form>

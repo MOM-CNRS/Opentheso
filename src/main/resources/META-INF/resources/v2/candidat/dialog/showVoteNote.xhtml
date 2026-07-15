@@ -3,19 +3,19 @@
              xmlns:h="http://xmlns.jcp.org/jsf/html"
              xmlns:p="http://primefaces.org/ui">
 
-    <p:dialog id="idShowVoteNote" header="#{langueBean.getMsg('candidate.voteForNote')}" widgetVar="showVoteNote"
+    <p:dialog id="idShowVoteNote" header="#{v2LocaleBean.getMsg('candidate.voteForNote')}" widgetVar="showVoteNote"
               width="850" showEffect="fade" modal="true" resizable="false" position="top" style="margin-top: 30px" > 
 
         <h:form id="showVoteNoteForm">
             <div class="row">
                 <div class="col-12" style="margin-top: 3px">
-                    <h:outputText value="#{langueBean.getMsg('candidat.titre')}: " style="font-size: 12px;"/>
+                    <h:outputText value="#{v2LocaleBean.getMsg('candidat.titre')}: " style="font-size: 12px;"/>
                     <h:outputText value="#{showVoteNote.candidat}" style="font-size: 12px; font-weight: bold;"/>
                 </div>
             </div>
             <div class="row">
                 <div class="col-12" style="margin-top: 3px">
-                    <h:outputText value="#{langueBean.getMsg('rightbody.concept.createdBy')}: " style="font-size: 12px;"/>
+                    <h:outputText value="#{v2LocaleBean.getMsg('rightbody.concept.createdBy')}: " style="font-size: 12px;"/>
                     <h:outputText value="#{showVoteNote.userName}" style="font-size: 12px; font-weight: bold;"/>                    
                 </div>
             </div>            
@@ -27,20 +27,20 @@
                         <p:dataTable id="listVotes" var="listVotes" value="#{showVoteNote.nodeTabVotes}" 
                                      style="font-size: 13px; width: 100%" rows="10"  lazy="false">
 
-                            <p:column  headerText="#{langueBean.getMsg('statistique.user')}">
+                            <p:column  headerText="#{v2LocaleBean.getMsg('statistique.user')}">
                                 <i class="pi pi-user" style="font-size: 0.8rem"/>                         
                                 <h:outputText value=" #{listVotes.userName}" style="font-size: 13px;"/>
                             </p:column>
 
-                            <p:column   headerText="#{langueBean.getMsg('rightbody.conceptdialog.type_note')}">
+                            <p:column   headerText="#{v2LocaleBean.getMsg('rightbody.conceptdialog.type_note')}">
                                 <h:outputText value="#{listVotes.typeNote}" style="font-size: 13px;"/>
                             </p:column>
 
-                            <p:column   headerText="#{langueBean.getMsg('candidat.value')}">
+                            <p:column   headerText="#{v2LocaleBean.getMsg('candidat.value')}">
                                 <h:outputText value="#{listVotes.noteValue}" escape="false" style="font-size: 13px;"/>
                             </p:column>
                             <p:column  headerText="Status">
-                                <p:tag styleClass="p-mr-2" severity="success" value="#{langueBean.getMsg('candidate.voted')}" rounded="true"></p:tag>
+                                <p:tag styleClass="p-mr-2" severity="success" value="#{v2LocaleBean.getMsg('candidate.voted')}" rounded="true"></p:tag>
                             </p:column>                        
 
                         </p:dataTable>  
@@ -49,7 +49,7 @@
             </p:scrollPanel>                 
             
             <div style="width: 100%; text-align: right; margin-top: 5px; margin-bottom: 5px;">
-                <p:commandButton value="#{langueBean.getMsg('candidat.close')}" styleClass="ui-button-secondary button" icon="fas fa-undo-alt" 
+                <p:commandButton value="#{v2LocaleBean.getMsg('candidat.close')}" styleClass="ui-button-secondary button" icon="fas fa-undo-alt" 
                                  style="margin-right: 10px;"
                                  actionListener="PF('showVoteNote').hide();" update="idShowVoteNote tabViewCandidat messageIndex"
                                  process="@this" ajax="true"/>

@@ -4,9 +4,7 @@ import fr.cnrs.opentheso.entites.ThesaurusDcTerm;
 import fr.cnrs.opentheso.models.concept.DCMIResource;
 import fr.cnrs.opentheso.models.thesaurus.Thesaurus;
 import fr.cnrs.opentheso.repositories.ThesaurusDcTermRepository;
-import fr.cnrs.opentheso.services.EditThesaurusService;
-import fr.cnrs.opentheso.services.PreferenceService;
-import fr.cnrs.opentheso.services.ThesaurusService;
+import fr.cnrs.opentheso.v2.toolbox.session.ModifyThesaurusLegacySupport;
 import fr.cnrs.opentheso.v2.shared.repository.EditionQueryRepository;
 import fr.cnrs.opentheso.v2.shared.repository.ThesaurusSettingsQueryRepository;
 import fr.cnrs.opentheso.v2.shared.repository.projection.EditionCollectionRow;
@@ -42,9 +40,7 @@ public class ModifyThesaurusService {
 
     private final EditionQueryRepository editionQueryRepository;
     private final ThesaurusSettingsQueryRepository thesaurusSettingsQueryRepository;
-    private final ThesaurusService thesaurusService;
-    private final PreferenceService preferenceService;
-    private final EditThesaurusService editThesaurusService;
+    private final ModifyThesaurusLegacySupport modifyThesaurusLegacySupport;
     private final ThesaurusDcTermRepository thesaurusDcTermRepository;
 
     @Value("${settings.workLanguage:fr}")
@@ -59,7 +55,7 @@ public class ModifyThesaurusService {
 
     @Transactional(readOnly = true)
     public List<EditionThesaurusLanguage> loadLanguages(String thesaurusId) {
-        String sourceLang = preferenceService.getWorkLanguageOfThesaurus(thesaurusId);
+        String sourceLang = modifyThesaurusLegacySupport.getWorkLanguage(thesaurusId);
         String lang = StringUtils.isBlank(sourceLang) ? workLanguage : sourceLang;
         return thesaurusSettingsQueryRepository.findUsedLanguages(thesaurusId, lang).stream()
                 .map(ToolboxMapper::toEditionLanguage)
@@ -98,7 +94,7 @@ public class ModifyThesaurusService {
 
     @Transactional(readOnly = true)
     public TreeNode<EditionCollectionNode> loadCollectionTree(String thesaurusId) {
-        String sourceLang = preferenceService.getWorkLanguageOfThesaurus(thesaurusId);
+        String sourceLang = modifyThesaurusLegacySupport.getWorkLanguage(thesaurusId);
         String lang = StringUtils.isBlank(sourceLang) ? workLanguage : sourceLang;
         List<EditionCollectionRow> rows = editionQueryRepository.findCollections(thesaurusId, lang);
         return buildCollectionTree(rows);
@@ -109,19 +105,19 @@ public class ModifyThesaurusService {
         if (StringUtils.isBlank(languageCode)) {
             throw new InvalidToolboxDataException("La langue source est obligatoire");
         }
-        if (!preferenceService.setWorkLanguageOfThesaurus(languageCode, thesaurusId)) {
+        if (!modifyThesaurusLegacySupport.setWorkLanguage(languageCode, thesaurusId)) {
             throw new InvalidToolboxDataException("Erreur pendant la modification de la langue source");
         }
     }
 
     @Transactional
     public void changeVisibility(String thesaurusId, boolean privateThesaurus) {
-        thesaurusService.setThesaurusVisibility(thesaurusId, privateThesaurus);
+        modifyThesaurusLegacySupport.setVisibility(thesaurusId, privateThesaurus);
     }
 
     @Transactional
     public String generateArkId(String thesaurusId) {
-        return editThesaurusService.generateArkIdForThesaurus(thesaurusId);
+        return modifyThesaurusLegacySupport.generateArkIdForThesaurus(thesaurusId);
     }
 
     @Transactional
@@ -129,7 +125,7 @@ public class ModifyThesaurusService {
         if (StringUtils.isBlank(newId)) {
             throw new InvalidToolboxDataException("Le nouvel identifiant est obligatoire");
         }
-        if (!thesaurusService.changeIdOfThesaurus(currentId, newId)) {
+        if (!modifyThesaurusLegacySupport.changeThesaurusId(currentId, newId)) {
             throw new InvalidToolboxDataException("Erreur de changement d'identifiant, vérifiez que l'identifiant est unique");
         }
         return newId;
@@ -149,7 +145,7 @@ public class ModifyThesaurusService {
         thesaurus.setId_thesaurus(thesaurusId);
         thesaurus.setTitle(title);
         thesaurus.setLanguage(languageCode);
-        thesaurusService.addThesaurusTraductionRollBack(thesaurus);
+        modifyThesaurusLegacySupport.addLanguageTranslation(thesaurus);
     }
 
     @Transactional
@@ -163,7 +159,7 @@ public class ModifyThesaurusService {
         thesaurus.setId_thesaurus(thesaurusId);
         thesaurus.setTitle(title);
         thesaurus.setLanguage(languageCode);
-        if (!thesaurusService.updateThesaurus(thesaurus)) {
+        if (!modifyThesaurusLegacySupport.updateLanguageTranslation(thesaurus)) {
             throw new InvalidToolboxDataException("Erreur pendant la modification");
         }
     }
@@ -173,7 +169,7 @@ public class ModifyThesaurusService {
         if (StringUtils.isBlank(languageCode)) {
             throw new InvalidToolboxDataException("Pas de langue sélectionnée");
         }
-        thesaurusService.deleteThesaurusTraduction(thesaurusId, languageCode);
+        modifyThesaurusLegacySupport.deleteLanguageTranslation(thesaurusId, languageCode);
     }
 
     @Transactional
@@ -265,12 +261,6 @@ public class ModifyThesaurusService {
         TreeNode<EditionCollectionNode> treeNode = new DefaultTreeNode<>(data, parent);
         for (String childId : childrenByParent.getOrDefault(nodeId, List.of())) {
             appendCollectionNode(treeNode, childId, nodesById, childrenByParent, visited);
-        }
-    }
-
-    private void ensurePreferences(String thesaurusId) {
-        if (preferenceService.getThesaurusPreferences(thesaurusId) == null) {
-            preferenceService.initPreferences(thesaurusId, workLanguage);
         }
     }
 }

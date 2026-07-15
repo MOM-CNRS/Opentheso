@@ -7,6 +7,7 @@
 
     <f:view>
         <f:metadata>
+    <f:viewAction action="#{v2ConsultationShellBean.load()}"/>
             <f:viewAction action="#{v2PreferenceSettingsBean.load()}"/>
             <f:viewParam name="idc" value="#{v2ThesaurusContext.idConceptFromUri}"/>
             <f:viewParam name="idg" value="#{v2ThesaurusContext.idGroupFromUri}"/>
@@ -31,22 +32,22 @@
 
         <p:growl id="messageIndex" globalOnly="true" showDetail="true"/>
 
-        <h:panelGroup rendered="#{menuBean.checkIfUserIsConnected() and currentUser.hasRoleAsAdmin}" id="wrapper" style="height: 100%" >
+        <h:panelGroup rendered="#{v2UserSession.isLoggedIn() and currentUser.hasRoleAsAdmin}" id="wrapper" style="height: 100%" >
 
-            <ui:include src="../../commun/menu.xhtml" />
+            <ui:include src="../thesaurus/includes/layout/menu.xhtml" />
 
             <div id="content-wrapper" style="width: 100%">
 
                 <h:form id="containerIndex" style="min-height:100%; position:relative;">
 
                     <h:panelGroup id="header">
-                        <ui:include src="../../commun/header.xhtml" />
+                        <ui:include src="../thesaurus/includes/layout/header.xhtml" />
                     </h:panelGroup>
 
                     <div class="container-fluid" style="padding-bottom: 70px">
 
                         <div class="d-sm-flex align-items-center justify-content-between mb-4" style="margin: 20px">
-                            <h1 class="h3 mb-0 text-gray-800">#{langueBean.getMsg('menu.setting')} / <span style="color: #f47b2a">#{langueBean.getMsg('menu.identifier')}</span></h1>
+                            <h1 class="h3 mb-0 text-gray-800">#{v2LocaleBean.getMsg('menu.setting')} / <span style="color: #f47b2a">#{v2LocaleBean.getMsg('menu.identifier')}</span></h1>
                         </div>
 
                         <div class="col-12" style="height: 100%">
@@ -63,7 +64,7 @@
                                     <p:panel style="border-color: transparent">
                                         <div class="row" style="height: 32px; background: #ECF8F1 !important; margin-left: 5px; margin-right: 5px">
                                             <div class="col-6" style="padding-top: 3px">
-                                                <h:outputText value="#{langueBean.getMsg('setting.arkServer')}" style="font-weight: bold; color: #f47b2a !important;" />
+                                                <h:outputText value="#{v2LocaleBean.getMsg('setting.arkServer')}" style="font-weight: bold; color: #f47b2a !important;" />
                                             </div>
                                             <div class="col-6" style="text-align: right; padding-top: 3px">
                                                 <p:toggleSwitch  value="#{v2PreferenceSettingsBean.editor.useArk}" 
@@ -81,11 +82,11 @@
                                                 <div class="list-group-item list-group-item-action">
                                                     <div class="row" style="padding: 3px;">
                                                         <div class="col-3" style="text-align: right; margin-top: 2px;">
-                                                            <h:outputText value="#{langueBean.getMsg('setting.arkServer')}" style="font-size: 14px; font-weight: bold;" />
+                                                            <h:outputText value="#{v2LocaleBean.getMsg('setting.arkServer')}" style="font-size: 14px; font-weight: bold;" />
                                                         </div>
                                                         <div class="col-8">
                                                             <p:inputText value="#{v2PreferenceSettingsBean.editor.serverArk}" style="width: 100%;">
-                                                                <p:tooltip value="#{langueBean.getMsg('setting.arkServerTooltip')}" showDelay="500" />
+                                                                <p:tooltip value="#{v2LocaleBean.getMsg('setting.arkServerTooltip')}" showDelay="500" />
                                                             </p:inputText>
                                                         </div>
                                                     </div>
@@ -95,11 +96,11 @@
                                                 <div class="list-group-item list-group-item-action">
                                                     <div class="row" style="padding: 3px;">
                                                         <div class="col-3" style="text-align: right; margin-top: 2px;">
-                                                            <h:outputText value="#{langueBean.getMsg('setting.uriArk')}" style="font-weight: bold;" />
+                                                            <h:outputText value="#{v2LocaleBean.getMsg('setting.uriArk')}" style="font-weight: bold;" />
                                                         </div>
                                                         <div class="col-8">
                                                             <p:inputText value="#{v2PreferenceSettingsBean.editor.uriArk}" style="width: 100%;">
-                                                                <p:tooltip value="#{langueBean.getMsg('setting.uriArkTooltip')}" showDelay="500" />
+                                                                <p:tooltip value="#{v2LocaleBean.getMsg('setting.uriArkTooltip')}" showDelay="500" />
                                                             </p:inputText>
                                                         </div>
                                                     </div>
@@ -109,7 +110,7 @@
                                                 <div class="list-group-item list-group-item-action">
                                                     <div class="row" style="padding: 3px;">
                                                         <div class="col-3" style="text-align: right; margin-top: 2px;">
-                                                            <h:outputText value="#{langueBean.getMsg('setting.yourNaan')}" style="font-weight: bold;" />
+                                                            <h:outputText value="#{v2LocaleBean.getMsg('setting.yourNaan')}" style="font-weight: bold;" />
                                                         </div>
                                                         <div class="col-8">
                                                             <p:inputText value="#{v2PreferenceSettingsBean.editor.idNaan}" style="width: 100%;"/>
@@ -121,7 +122,7 @@
                                                 <div class="list-group-item list-group-item-action">
                                                     <div class="row" style="padding: 3px;">
                                                         <div class="col-3" style="text-align: right; margin-top: 2px;">
-                                                            <h:outputText value="#{langueBean.getMsg('setting.arkPrefix')}" style="font-weight: bold;" />
+                                                            <h:outputText value="#{v2LocaleBean.getMsg('setting.arkPrefix')}" style="font-weight: bold;" />
                                                         </div>
                                                         <div class="col-8">
                                                             <p:inputText value="#{v2PreferenceSettingsBean.editor.prefixArk}" style="width: 100%; font-size: 12px;"/>
@@ -133,7 +134,7 @@
                                                 <div class="list-group-item list-group-item-action">
                                                     <div class="row" style="padding: 3px;">
                                                         <div class="col-3" style="text-align: right; margin-top: 2px;">
-                                                            <h:outputText value="#{langueBean.getMsg('setting.userArk')}" style="font-weight: bold;" />
+                                                            <h:outputText value="#{v2LocaleBean.getMsg('setting.userArk')}" style="font-weight: bold;" />
                                                         </div>
                                                         <div class="col-8">
                                                             <p:inputText value="#{v2PreferenceSettingsBean.editor.userArk}"  style="width: 100%;"/>
@@ -144,7 +145,7 @@
                                                 <div class="list-group-item list-group-item-action">
                                                     <div class="row" style="padding: 3px;">
                                                         <div class="col-3" style="text-align: right; margin-top: 2px;">
-                                                            <h:outputText value="#{langueBean.getMsg('setting.passArk')}" style="font-weight: bold;" />
+                                                            <h:outputText value="#{v2LocaleBean.getMsg('setting.passArk')}" style="font-weight: bold;" />
                                                         </div>
                                                         <div class="col-8">
                                                             <p:password value="#{v2PreferenceSettingsBean.editor.newPassArk}" style="width: 100%;" placeholder="••••••••••" feedback="false" />
@@ -154,10 +155,10 @@
 
                                                 <div class="row" style="padding: 3px;">
                                                     <div class="col-11" style="text-align: right; margin-top: 2px;">
-                                                        <p:commandButton value="#{langueBean.getMsg('btnValidate')}" styleClass="ui-button-success" icon="pi pi-check" 
+                                                        <p:commandButton value="#{v2LocaleBean.getMsg('btnValidate')}" styleClass="ui-button-success" icon="pi pi-check" 
                                                                          update="containerIndex messageIndex"
                                                                          action="#{v2PreferenceSettingsBean.save()}" >
-                                                            <p:tooltip value="#{langueBean.getMsg('candidat.save')}" showDelay="500" />
+                                                            <p:tooltip value="#{v2LocaleBean.getMsg('candidat.save')}" showDelay="500" />
                                                         </p:commandButton>
                                                     </div>
                                                 </div>
@@ -171,8 +172,8 @@
                                     <p:panel style="border-color: transparent">
                                         <div class="row" style="height: 32px; background: #ECF8F1 !important; margin-left: 5px; margin-right: 5px">
                                             <div class="col-6" style="padding-top: 3px">
-                                                <h:outputText value="#{langueBean.getMsg('setting.localArkServer')} *" style="font-size: 14px; font-weight: bold; color: #f47b2a !important;"
-                                                              title="#{langueBean.getMsg('setting.localArkServerTooltip')}"/>
+                                                <h:outputText value="#{v2LocaleBean.getMsg('setting.localArkServer')} *" style="font-size: 14px; font-weight: bold; color: #f47b2a !important;"
+                                                              title="#{v2LocaleBean.getMsg('setting.localArkServerTooltip')}"/>
                                             </div>
                                             <div class="col-6" style="text-align: right; padding-top: 3px">
                                                 <p:toggleSwitch  value="#{v2PreferenceSettingsBean.editor.useArkLocal}" 
@@ -189,7 +190,7 @@
                                                 <div class="list-group-item list-group-item-action">
                                                     <div class="row" style="padding: 3px;">
                                                         <div class="col-3" style="text-align: right; margin-top: 2px;">
-                                                            <h:outputText value="#{langueBean.getMsg('setting.yourNaan')}" style="font-weight: bold;" />
+                                                            <h:outputText value="#{v2LocaleBean.getMsg('setting.yourNaan')}" style="font-weight: bold;" />
                                                         </div>
                                                         <div class="col-8">
                                                             <p:inputText value="#{v2PreferenceSettingsBean.editor.naanArkLocal}" style="width: 100%;"/>
@@ -201,7 +202,7 @@
                                                 <div class="list-group-item list-group-item-action">
                                                     <div class="row" style="padding: 3px;">
                                                         <div class="col-3" style="text-align: right; margin-top: 2px;">
-                                                            <h:outputText value="#{langueBean.getMsg('setting.arkPrefix')}" style="font-weight: bold;" />
+                                                            <h:outputText value="#{v2LocaleBean.getMsg('setting.arkPrefix')}" style="font-weight: bold;" />
                                                         </div>
                                                         <div class="col-8">
                                                             <p:inputText value="#{v2PreferenceSettingsBean.editor.prefixArkLocal}" style="width: 100%;"/>
@@ -213,8 +214,8 @@
                                                 <div class="list-group-item list-group-item-action">
                                                     <div class="row" style="padding: 3px;">
                                                         <div class="col-3" style="text-align: right; margin-top: 2px;">
-                                                            <h:outputText value="#{langueBean.getMsg('setting.sizeOfArkIdentifier')}"
-                                                                          title="#{langueBean.getMsg('setting.sizeOfArkIdentifierTooltip')}" style="font-weight: bold;" />
+                                                            <h:outputText value="#{v2LocaleBean.getMsg('setting.sizeOfArkIdentifier')}"
+                                                                          title="#{v2LocaleBean.getMsg('setting.sizeOfArkIdentifierTooltip')}" style="font-weight: bold;" />
                                                         </div>
                                                         <div class="col-8">
                                                             <p:inputText value="#{v2PreferenceSettingsBean.editor.sizeIdArkLocal}" style="width: 100%;"/>
@@ -225,8 +226,8 @@
                                                 <div class="list-group-item list-group-item-action">
                                                     <div class="row" style="padding: 3px;">
                                                         <div class="col-3" style="text-align: right; margin-top: 2px;">
-                                                            <h:outputText value="#{langueBean.getMsg('setting.isUpperCaseForArk')}"
-                                                                          title="#{langueBean.getMsg('setting.isUpperCaseForArkTooltip')}" style="font-weight: bold;" />
+                                                            <h:outputText value="#{v2LocaleBean.getMsg('setting.isUpperCaseForArk')}"
+                                                                          title="#{v2LocaleBean.getMsg('setting.isUpperCaseForArkTooltip')}" style="font-weight: bold;" />
                                                         </div>
                                                         <div class="col-8">
                                                             <p:toggleSwitch value="#{v2PreferenceSettingsBean.editor.uppercaseForArk}" style="font-size: 12px;" />
@@ -236,7 +237,7 @@
                                                 <div class="list-group-item list-group-item-action">
                                                     <div class="row" style="padding: 3px;">
                                                         <div class="col-9 offset-3" style=" margin-top: 2px;">
-                                                            <h:outputText value="(*) #{langueBean.getMsg('setting.localArkInfo')}"
+                                                            <h:outputText value="(*) #{v2LocaleBean.getMsg('setting.localArkInfo')}"
                                                                           style="font-style: italic" />
                                                         </div>
                                                     </div>
@@ -250,7 +251,7 @@
                                                 <!-- size of Id Ark -->
                                                 <div class="row" style="padding: 3px;">
                                                     <div class="col-11" style="text-align: right; margin-top: 2px;">
-                                                        <p:commandButton value="#{langueBean.getMsg('btnValidate')}" styleClass="ui-button-success" icon="pi pi-check"
+                                                        <p:commandButton value="#{v2LocaleBean.getMsg('btnValidate')}" styleClass="ui-button-success" icon="pi pi-check"
                                                                          action="#{v2PreferenceSettingsBean.save()}"
                                                                          update="containerIndex messageIndex"/>
                                                     </div>
@@ -265,7 +266,7 @@
                                     <p:panel style="border-color: transparent">
                                         <div class="row" style="height: 32px; background: #ECF8F1 !important; margin-left: 5px; margin-right: 5px">
                                             <div class="col-6" style="padding-top: 3px">
-                                                <h:outputText value="#{langueBean.getMsg('identifier.handleServer')}" style="font-size: 14px; font-weight: bold; color:#f47b2a  !important;" />
+                                                <h:outputText value="#{v2LocaleBean.getMsg('identifier.handleServer')}" style="font-size: 14px; font-weight: bold; color:#f47b2a  !important;" />
                                             </div>
                                             <div class="col-6" style="text-align: right; padding-top: 3px">
                                                 <p:toggleSwitch  value="#{v2PreferenceSettingsBean.editor.useHandle}" 
@@ -284,7 +285,7 @@
                                                 <div class="list-group-item list-group-item-action">
                                                     <div class="row" style="padding: 3px; margin-top: 10px;">
                                                         <div class="col-3" style="text-align: right; margin-top: 2px;">
-                                                            <h:outputText value="#{langueBean.getMsg('identifier.useHandleWithCertificate')}" style="font-weight: bold;" />
+                                                            <h:outputText value="#{v2LocaleBean.getMsg('identifier.useHandleWithCertificate')}" style="font-weight: bold;" />
                                                         </div>
                                                         <div class="col-8">
                                                             <p:inputSwitch value="#{v2PreferenceSettingsBean.editor.useHandleWithCertificat}" style="color: #f47b2a" onLabel="OUI" offLabel="NON" >
@@ -300,7 +301,7 @@
                                                 <div class="list-group-item list-group-item-action">
                                                     <div class="row" style="padding: 3px;">
                                                         <div class="col-3" style="text-align: right; margin-top: 2px;">
-                                                            <h:outputText value="#{langueBean.getMsg('identifier.handleServer')}" style="font-weight: bold;" title="exemple: https://handle.mondomaine.fr:8000/api/handles/"/>
+                                                            <h:outputText value="#{v2LocaleBean.getMsg('identifier.handleServer')}" style="font-weight: bold;" title="exemple: https://handle.mondomaine.fr:8000/api/handles/"/>
                                                         </div>
                                                         <div class="col-8">
                                                             <p:inputText value="#{v2PreferenceSettingsBean.editor.urlApiHandle}" title="exemple: https://handle.mondomaine.fr:8000/api/handles/" 
@@ -313,7 +314,7 @@
                                                 <div class="list-group-item list-group-item-action">
                                                     <div class="row" style="padding: 3px;">
                                                         <div class="col-3" style="text-align: right; margin-top: 2px;">
-                                                            <h:outputText value="#{langueBean.getMsg('identifier.handlePrefix')}" style="font-weight: bold;" title="exemple: 20.500.11111"/>
+                                                            <h:outputText value="#{v2LocaleBean.getMsg('identifier.handlePrefix')}" style="font-weight: bold;" title="exemple: 20.500.11111"/>
                                                         </div>
                                                         <div class="col-8">
                                                             <p:inputText value="#{v2PreferenceSettingsBean.editor.prefixIdHandle}" style="width: 100%;" 
@@ -327,7 +328,7 @@
                                                     <div class="list-group-item list-group-item-action">
                                                         <div class="row" style="padding: 3px;">
                                                             <div class="col-3" style="text-align: right; margin-top: 2px;">
-                                                                <h:outputText value="#{langueBean.getMsg('identifier.handleIndex')}" style="font-weight: bold;"  title="exemple: 300"/>
+                                                                <h:outputText value="#{v2LocaleBean.getMsg('identifier.handleIndex')}" style="font-weight: bold;"  title="exemple: 300"/>
                                                             </div>
                                                             <div class="col-8">
                                                                 <p:inputText value="#{v2PreferenceSettingsBean.editor.indexHandle}" title="exemple: 300" style="width: 100%;" />
@@ -339,7 +340,7 @@
                                                     <div class="list-group-item list-group-item-action">
                                                         <div class="row" style="padding: 3px;">
                                                             <div class="col-3" style="text-align: right; margin-top: 2px;">
-                                                                <h:outputText value="#{langueBean.getMsg('identifier.handleAdmin')}" style="font-weight: bold;" title="exemple: 0.NA/20.500.11111"/>
+                                                                <h:outputText value="#{v2LocaleBean.getMsg('identifier.handleAdmin')}" style="font-weight: bold;" title="exemple: 0.NA/20.500.11111"/>
                                                             </div>
                                                             <div class="col-8">
                                                                 <p:inputText value="#{v2PreferenceSettingsBean.editor.adminHandle}" style="width: 100%;" title="exemple: 0.NA/20.500.11111"/>
@@ -352,7 +353,7 @@
                                                 <div class="list-group-item list-group-item-action">
                                                     <div class="row" style="padding: 3px;">
                                                         <div class="col-3" style="text-align: right; margin-top: 2px;">
-                                                            <h:outputText value="#{langueBean.getMsg('identifier.handlePrivatePrefix')}" title="#{langueBean.getMsg('identifier.handlePrivatePrefixTooltip')}"
+                                                            <h:outputText value="#{v2LocaleBean.getMsg('identifier.handlePrivatePrefix')}" title="#{v2LocaleBean.getMsg('identifier.handlePrivatePrefixTooltip')}"
                                                                           style="font-size: 14px; font-weight: bold;" />
                                                         </div>
                                                         <div class="col-8">
@@ -364,7 +365,7 @@
                                                 <div class="list-group-item list-group-item-action">
                                                     <div class="row" style="padding: 3px;">
                                                         <div class="col-3" style="text-align: right; margin-top: 2px;">
-                                                            <h:outputText value="#{langueBean.getMsg('identifier.handlePass')}" style="font-weight: bold;" />
+                                                            <h:outputText value="#{v2LocaleBean.getMsg('identifier.handlePass')}" style="font-weight: bold;" />
                                                         </div>
                                                         <div class="col-8">
                                                             <p:password value="#{v2PreferenceSettingsBean.editor.newPassHandle}" placeholder="••••••••••" style="width: 100%;" feedback="false"/>
@@ -382,12 +383,12 @@
                                                     <div class="list-group-item list-group-item-action">
                                                         <div class="row" style="padding: 3px;">
                                                             <div class="col-3" style="text-align: right; margin-top: 2px;">
-                                                                <h:outputText value="#{langueBean.getMsg('identifier.handlePathToKey')}" style="font-weight: bold;" 
-                                                                              title="#{langueBean.getMsg('identifier.handlePathToKeyTooltip')}"/>
+                                                                <h:outputText value="#{v2LocaleBean.getMsg('identifier.handlePathToKey')}" style="font-weight: bold;" 
+                                                                              title="#{v2LocaleBean.getMsg('identifier.handlePathToKeyTooltip')}"/>
                                                             </div>
                                                             <div class="col-8">
                                                                 <h:outputText value="./certificats/admpriv.bin" style="width: 100%; color: #C34A2C; font-weight: bold"
-                                                                              title="#{langueBean.getMsg('identifier.handlePathToKeyTooltip')}"/>
+                                                                              title="#{v2LocaleBean.getMsg('identifier.handlePathToKeyTooltip')}"/>
                                                             </div>
                                                         </div>
                                                     </div>
@@ -400,8 +401,8 @@
                                                     <div class="list-group-item list-group-item-action">
                                                         <div class="row" style="padding: 3px;">
                                                             <div class="col-3" style="text-align: right; margin-top: 2px;">
-                                                                <h:outputText value="#{langueBean.getMsg('identifier.handleKey')}" style="font-weight: bold;"
-                                                                              title="#{langueBean.getMsg('identifier.handleKeyTooltip')}"/>
+                                                                <h:outputText value="#{v2LocaleBean.getMsg('identifier.handleKey')}" style="font-weight: bold;"
+                                                                              title="#{v2LocaleBean.getMsg('identifier.handleKeyTooltip')}"/>
                                                             </div>
                                                             <div class="col-8">
                                                                 <p:inputText value="#{v2PreferenceSettingsBean.editor.pathKeyHandle}" style="width: 100%;"/>
@@ -413,8 +414,8 @@
                                                     <div class="list-group-item list-group-item-action">
                                                         <div class="row" style="padding: 3px;">
                                                             <div class="col-3" style="text-align: right; margin-top: 2px;">
-                                                                <h:outputText value="#{langueBean.getMsg('identifier.handleCertificate')}" style="font-weight: bold;"
-                                                                              title="#{langueBean.getMsg('identifier.handleCertificateTooltip')}"/>
+                                                                <h:outputText value="#{v2LocaleBean.getMsg('identifier.handleCertificate')}" style="font-weight: bold;"
+                                                                              title="#{v2LocaleBean.getMsg('identifier.handleCertificateTooltip')}"/>
                                                             </div>
                                                             <div class="col-8">
                                                                 <p:inputText value="#{v2PreferenceSettingsBean.editor.pathCertHandle}" style="width: 100%;" />
@@ -428,7 +429,7 @@
                                                 <!-- enregistrer les changements -->
                                                 <div class="row" style="padding: 3px;">
                                                     <div class="col-11" style="text-align: right; margin-top: 2px;">
-                                                        <p:commandButton value="#{langueBean.getMsg('btnValidate')}" styleClass="ui-button-success" icon="pi pi-check"
+                                                        <p:commandButton value="#{v2LocaleBean.getMsg('btnValidate')}" styleClass="ui-button-success" icon="pi pi-check"
                                                                          action="#{v2PreferenceSettingsBean.save()}"
                                                                          update="containerIndex messageIndex"/>
                                                     </div>
@@ -444,7 +445,7 @@
                                     <p:panel style="border-color: transparent">
                                         <div class="row" style="height: 32px; background: #ECF8F1 !important; margin-left: 5px; margin-right: 5px">
                                             <div class="col-6" style="padding-top: 3px">
-                                                <h:outputText value="#{langueBean.getMsg('setting.openArkServer')}" style="font-weight: bold; color: #f47b2a !important;" />
+                                                <h:outputText value="#{v2LocaleBean.getMsg('setting.openArkServer')}" style="font-weight: bold; color: #f47b2a !important;" />
                                             </div>
                                             <div class="col-6" style="text-align: right; padding-top: 3px">
                                                 <p:toggleSwitch  value="#{v2PreferenceSettingsBean.editor.useOpenArk}"
@@ -462,11 +463,11 @@
                                                 <div class="list-group-item list-group-item-action">
                                                     <div class="row" style="padding: 3px;">
                                                         <div class="col-3" style="text-align: right; margin-top: 2px;">
-                                                            <h:outputText value="#{langueBean.getMsg('setting.arkServer')}" style="font-size: 14px; font-weight: bold;" />
+                                                            <h:outputText value="#{v2LocaleBean.getMsg('setting.arkServer')}" style="font-size: 14px; font-weight: bold;" />
                                                         </div>
                                                         <div class="col-8">
                                                             <p:inputText value="#{v2PreferenceSettingsBean.editor.serverOpenArk}" style="width: 100%;">
-                                                                <p:tooltip value="#{langueBean.getMsg('setting.arkServerTooltip')}" showDelay="500" />
+                                                                <p:tooltip value="#{v2LocaleBean.getMsg('setting.arkServerTooltip')}" showDelay="500" />
                                                             </p:inputText>
                                                         </div>
                                                     </div>
@@ -476,7 +477,7 @@
                                                 <div class="list-group-item list-group-item-action">
                                                     <div class="row" style="padding: 3px;">
                                                         <div class="col-3" style="text-align: right; margin-top: 2px;">
-                                                            <h:outputText value="#{langueBean.getMsg('setting.yourNaan')}" style="font-weight: bold;" />
+                                                            <h:outputText value="#{v2LocaleBean.getMsg('setting.yourNaan')}" style="font-weight: bold;" />
                                                         </div>
                                                         <div class="col-8">
                                                             <p:inputText value="#{v2PreferenceSettingsBean.editor.naanOpenArk}" style="width: 100%;"/>
@@ -488,7 +489,7 @@
                                                 <div class="list-group-item list-group-item-action">
                                                     <div class="row" style="padding: 3px;">
                                                         <div class="col-3" style="text-align: right; margin-top: 2px;">
-                                                            <h:outputText value="#{langueBean.getMsg('setting.arkPrefix')}" style="font-weight: bold;" />
+                                                            <h:outputText value="#{v2LocaleBean.getMsg('setting.arkPrefix')}" style="font-weight: bold;" />
                                                         </div>
                                                         <div class="col-8">
                                                             <p:inputText value="#{v2PreferenceSettingsBean.editor.prefixOpenArk}" style="width: 100%; font-size: 12px;"/>
@@ -500,7 +501,7 @@
                                                 <div class="list-group-item list-group-item-action">
                                                     <div class="row" style="padding: 3px;">
                                                         <div class="col-3" style="text-align: right; margin-top: 2px;">
-                                                            <h:outputText value="#{langueBean.getMsg('profile.apiKey')}" style="font-weight: bold;" />
+                                                            <h:outputText value="#{v2LocaleBean.getMsg('profile.apiKey')}" style="font-weight: bold;" />
                                                         </div>
                                                         <div class="col-8">
                                                             <p:password value="#{v2PreferenceSettingsBean.editor.newApiKeyOpenArk}" style="width: 100%;" placeholder="••••••••••" feedback="false" />
@@ -510,10 +511,10 @@
 
                                                 <div class="row" style="padding: 3px;">
                                                     <div class="col-11" style="text-align: right; margin-top: 2px;">
-                                                        <p:commandButton value="#{langueBean.getMsg('btnValidate')}" styleClass="ui-button-success" icon="pi pi-check"
+                                                        <p:commandButton value="#{v2LocaleBean.getMsg('btnValidate')}" styleClass="ui-button-success" icon="pi pi-check"
                                                                          update="containerIndex messageIndex"
                                                                          action="#{v2PreferenceSettingsBean.save()}" >
-                                                            <p:tooltip value="#{langueBean.getMsg('candidat.save')}" showDelay="500" />
+                                                            <p:tooltip value="#{v2LocaleBean.getMsg('candidat.save')}" showDelay="500" />
                                                         </p:commandButton>
                                                     </div>
                                                 </div>
@@ -525,11 +526,11 @@
                             </div>
                         </div>
                     </div>
-                    <ui:include src="../../commun/footer.xhtml" />
+                    <ui:include src="../thesaurus/includes/layout/footer.xhtml" />
                     <input type="hidden" name="csrfToken" value="${sessionScope.CSRF_TOKEN}" />
                 </h:form>
             </div>
-            <ui:include src="../../dialog/login/logout.xhtml" />
+            <ui:include src="../thesaurus/includes/layout/logout-dialog.xhtml" />
         </h:panelGroup>
     </h:body>
 </html>

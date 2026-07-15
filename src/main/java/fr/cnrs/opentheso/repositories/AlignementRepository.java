@@ -33,6 +33,8 @@ public interface AlignementRepository extends JpaRepository<Alignement, Integer>
 
     Optional<Alignement> findByInternalIdThesaurusAndInternalIdConceptAndId(String internalIdThesaurus, String internalIdConcept, Integer id);
 
+    boolean existsByInternalIdThesaurusAndInternalIdConceptAndUriTarget(String internalIdThesaurus, String internalIdConcept, String uriTarget);
+
     @Transactional
     @Modifying
     @Query("DELETE FROM Alignement a WHERE a.id = :idAlignment AND a.internalIdThesaurus = :idThesaurus")

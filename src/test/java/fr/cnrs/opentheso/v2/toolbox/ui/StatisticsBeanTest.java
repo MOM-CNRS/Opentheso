@@ -1,7 +1,6 @@
 package fr.cnrs.opentheso.v2.toolbox.ui;
 
-import fr.cnrs.opentheso.bean.menu.theso.SelectedTheso;
-import fr.cnrs.opentheso.bean.menu.users.CurrentUser;
+import fr.cnrs.opentheso.v2.setting.ui.ThesaurusContext;
 import fr.cnrs.opentheso.models.candidats.DomaineDto;
 import fr.cnrs.opentheso.models.statistiques.ConceptStatisticData;
 import fr.cnrs.opentheso.models.statistiques.GenericStatistiqueData;
@@ -38,11 +37,7 @@ class StatisticsBeanTest {
     @Mock
     private UserSession userSession;
     @Mock
-    private CurrentUser currentUser;
-    @Mock
     private ThesaurusContext thesaurusContext;
-    @Mock
-    private SelectedTheso selectedTheso;
     @Mock
     private ThesaurusStatisticsService thesaurusStatisticsService;
 
@@ -52,9 +47,7 @@ class StatisticsBeanTest {
     void setUp() {
         bean = new StatisticsBean(
                 userSession,
-                currentUser,
                 thesaurusContext,
-                selectedTheso,
                 thesaurusStatisticsService
         );
     }
@@ -62,7 +55,7 @@ class StatisticsBeanTest {
     @Test
     void load_initializesReferenceDataWhenAccessGranted() {
         stubAccess();
-        when(selectedTheso.getCurrentLang()).thenReturn("fr");
+        when(thesaurusContext.resolveWorkLanguage()).thenReturn("fr");
         var language = new NodeLangTheso();
         language.setCode("fr");
         language.setValue("français");
@@ -81,7 +74,7 @@ class StatisticsBeanTest {
     @Test
     void initOnModeChange_reloadsReferenceData() {
         stubAccess();
-        when(selectedTheso.getCurrentLang()).thenReturn("fr");
+        when(thesaurusContext.resolveWorkLanguage()).thenReturn("fr");
         when(thesaurusStatisticsService.loadLanguages("TH1", "fr")).thenReturn(List.of());
         when(thesaurusStatisticsService.loadCollections("TH1", "fr")).thenReturn(List.of());
 
@@ -141,8 +134,7 @@ class StatisticsBeanTest {
     void load_showsErrorWhenThesaurusMissing() {
         when(userSession.isLoggedIn()).thenReturn(true);
         when(userSession.isManager()).thenReturn(true);
-        when(thesaurusContext.getCurrentThesaurusId()).thenReturn("");
-        when(selectedTheso.getCurrentIdTheso()).thenReturn("");
+        when(thesaurusContext.resolveThesaurusId()).thenReturn("");
 
         try (MockedStatic<MessageUtils> messages = mockStatic(MessageUtils.class)) {
             bean.load();
@@ -154,6 +146,6 @@ class StatisticsBeanTest {
     private void stubAccess() {
         when(userSession.isLoggedIn()).thenReturn(true);
         when(userSession.isManager()).thenReturn(true);
-        when(thesaurusContext.getCurrentThesaurusId()).thenReturn("TH1");
+        when(thesaurusContext.resolveThesaurusId()).thenReturn("TH1");
     }
 }

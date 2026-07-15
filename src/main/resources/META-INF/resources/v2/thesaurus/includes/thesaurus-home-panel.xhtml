@@ -1,0 +1,152 @@
+<ui:fragment xmlns="http://www.w3.org/1999/xhtml"
+             xmlns:h="http://xmlns.jcp.org/jsf/html"
+             xmlns:ui="http://xmlns.jcp.org/jsf/facelets"
+             xmlns:p="http://primefaces.org/ui"
+             xmlns:f="http://xmlns.jcp.org/jsf/core">
+
+    <div style="margin: 20px; color: #000">
+
+        <style>
+            body .ui-accordion .ui-accordion-header>.ui-icon.ui-icon-triangle-1-e {
+                font-size: 12px;
+            }
+        </style>
+
+        <h:panelGroup id="thesoHomeData" style="border: none; margin-top: 20px">
+            <div class="row" style="background-color: #F5F2F2">
+                <div class="col-1" style="margin-top: 3px">
+                    <i class="fas fa-info-circle fa-2x" style="color: #43B572"/>
+                </div>
+                <div class="col-11" style="margin-left: -10px;">
+                    <div class="row">
+                        <div class="col-6" style="margin-top: 3px">
+                            <h:outputText value="#{v2ThesaurusBrowseBean.thesaurusHome.thesaurusTitle}: "
+                                          style="font-size: 13px; font-weight: bold"/>
+                            <h:outputText value="#{v2ThesaurusBrowseBean.thesaurusHome.conceptCount}"
+                                          title="#{v2LocaleBean.getMsg('thesohome.totalConcepts')} #{v2ThesaurusBrowseBean.thesaurusHome.thesaurusTitle}"
+                                          style="font-size: 13px; color: #F47B2A; font-weight: bold;"/>
+                            <h:outputText value=" Concepts" style="font-size: 13px; color: #858796"/>
+
+                            <h:outputText value="; #{v2LocaleBean.getMsg('profile.project')}:"
+                                          style="font-size: 13px;"/>
+                            <h:outputText value=" #{v2ThesaurusBrowseBean.thesaurusHome.projectName}"
+                                          style="font-size: 13px; color: #F47B2A; font-weight: bold"/>
+                            <p:commandButton icon="fa-solid fa-circle-question"
+                                             styleClass="rounded-button ui-button-flat"
+                                             style="margin-left: 5px; color: #f47b2a;"
+                                             action="#{v2ThesaurusHomeStatsBean.showInfos(v2ThesaurusBrowseBean.thesaurusId)}"/>
+                        </div>
+
+                        <div class="col-6" style="text-align: right">
+                            <h:outputText value="#{v2LocaleBean.getMsg('thesohome.modified')}: "
+                                          style="font-size: 13px; color: #858796"/>
+                            <h:outputText value="#{v2ThesaurusBrowseBean.thesaurusHome.lastModifiedDate}"
+                                          style="font-size: 13px; color: #601e18;"/>
+                        </div>
+                    </div>
+
+                    <div class="row">
+                        <div class="col-10" style="margin-top: 3px">
+                            <h:outputText value="#{v2LocaleBean.getMsg('home.permalink')}: "
+                                          style="font-size: 13px; color: #858796"/>
+                            <h:panelGroup rendered="#{not empty v2ThesaurusBrowseBean.thesaurusHome.permalinkUrl}">
+                                <i class="pi pi-link" style="margin-right: 5px; color: #f47b2a; font-size: 13px;"/>
+                                <p:link href="#{v2ThesaurusBrowseBean.thesaurusHome.permalinkUrl}"
+                                        value="#{v2ThesaurusBrowseBean.thesaurusHome.permalinkLabel}"
+                                        style="color: #F47B2A; font-size: 13px;"/>
+                            </h:panelGroup>
+                        </div>
+                    </div>
+
+                    <div class="row">
+                        <div class="col-12">
+                            <h:outputText value="#{v2LocaleBean.getMsg('thesohome.lastModificationConcepts')}: "
+                                          style="font-size: 13px; color: #858796"/>
+
+                            <ui:repeat var="recentConcept"
+                                       varStatus="recentStatus"
+                                       value="#{v2ThesaurusBrowseBean.thesaurusHome.lastModifiedConcepts}">
+                                <p:commandLink rendered="#{not empty recentConcept.label}"
+                                               value="#{recentConcept.label}"
+                                               style="font-size: 13px; color: #601e18;"
+                                               title="#{recentConcept.conceptId}"
+                                               actionListener="#{v2ThesaurusBrowseBean.openConcept(recentConcept.conceptId)}"
+                                               update=":containerIndex:rightTab :containerIndex:tabTree"
+                                               process="@this"/>
+                                <h:outputText rendered="#{not recentStatus.last and not empty recentConcept.label}"
+                                              value=", "
+                                              style="color: #FF7979"/>
+                            </ui:repeat>
+                        </div>
+                    </div>
+
+                    <div class="row" style="margin-top: 10px;">
+                        <div class="col-2">
+                            <img src="#{request.contextPath}/resources/img/dcmi_logo.png" style="height: 17px;"/>
+                        </div>
+                        <div class="col-10" style="margin-top: -2px;">
+                            <p:accordionPanel id="meta" widgetVar="thesoHomeMeta" activeIndex="-2" style="font-size: 12px;">
+                                <p:tab title="#{v2LocaleBean.getMsg('thesohome.metadata')}"
+                                       titleStyle="color: #858796; background-color: #F5F2F2; font-size: 12px; border: none">
+                                    <p:dataTable id="metadataTheso"
+                                                 var="dcElement"
+                                                 value="#{v2ThesaurusBrowseBean.thesaurusHome.metadata}"
+                                                 editable="false"
+                                                 scrollHeight="250"
+                                                 scrollable="true"
+                                                 showGridlines="true"
+                                                 lazy="false">
+                                        <p:column width="20%" headerText="#{v2LocaleBean.getMsg('toolbox.metadata_property')}">
+                                            <h:outputText value="#{dcElement.name}"/>
+                                        </p:column>
+                                        <p:column width="60%" headerText="#{v2LocaleBean.getMsg('candidat.value')}">
+                                            <h:outputText value="#{dcElement.value}"/>
+                                        </p:column>
+                                        <p:column width="10%" headerText="#{v2LocaleBean.getMsg('rightbody.conceptdialog.language')}">
+                                            <h:outputText value="#{dcElement.language}"/>
+                                        </p:column>
+                                        <p:column width="10%" headerText="#{v2LocaleBean.getMsg('statistique.type')}">
+                                            <h:outputText value="#{dcElement.type}"/>
+                                        </p:column>
+                                    </p:dataTable>
+                                </p:tab>
+                            </p:accordionPanel>
+                        </div>
+                    </div>
+                </div>
+            </div>
+
+            <p:separator style="color: #F47B2A"/>
+
+            <div class="row" style="margin-bottom: 10px;">
+                <div class="col-xl-6 col-lg-6 col-md-6 col-sm-6">
+                    <p:commandButton value="#{v2LocaleBean.getMsg('thesohome.interpretedHTMLView')}"
+                                     styleClass="ui-button-success"
+                                     action="#{v2ThesaurusBrowseBean.setHomePagePlainTextView(false)}"
+                                     update=":containerIndex:rightTab"/>
+                </div>
+                <div class="col-xl-6 col-lg-6 col-md-6 col-sm-6" style="text-align: right;">
+                    <p:commandButton value="#{v2LocaleBean.getMsg('thesohome.rawHTMLView')}"
+                                     styleClass="ui-button-success"
+                                     action="#{v2ThesaurusBrowseBean.setHomePagePlainTextView(true)}"
+                                     update=":containerIndex:rightTab"/>
+                </div>
+            </div>
+
+            <div class="row">
+                <div class="col-12">
+                    <h:panelGroup rendered="#{not v2ThesaurusBrowseBean.homePagePlainTextView}">
+                        <h:outputText escape="false"
+                                      style="font-size: 14px;"
+                                      value="#{v2ThesaurusBrowseBean.thesaurusHome.homePageHtml}"/>
+                    </h:panelGroup>
+                    <h:panelGroup rendered="#{v2ThesaurusBrowseBean.homePagePlainTextView}">
+                        <h:outputText escape="true"
+                                      style="font-size: 14px; white-space: pre-wrap;"
+                                      value="#{v2ThesaurusBrowseBean.thesaurusHome.homePageHtml}"/>
+                    </h:panelGroup>
+                </div>
+            </div>
+        </h:panelGroup>
+    </div>
+</ui:fragment>

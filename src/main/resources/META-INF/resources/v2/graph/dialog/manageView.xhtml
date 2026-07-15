@@ -4,7 +4,7 @@
              xmlns:p="http://primefaces.org/ui"
              xmlns:f="http://xmlns.jcp.org/jsf/core">
 
-    <p:dialog id="idManageView" header="#{langueBean.getMsg('graphdialog.manage_view')}" widgetVar="manageView"
+    <p:dialog id="idManageView" header="#{v2LocaleBean.getMsg('graphdialog.manage_view')}" widgetVar="manageView"
               width="650" showEffect="fade" modal="true" resizable="false" position="top" style="margin-top: 30px" >
 
         <h:form id="manageViewForm" >
@@ -13,10 +13,10 @@
             <h:panelGroup >
                 <div class="row" style="margin-top: 10px">
                     <div class="col-5" style="margin-top: 3px">
-                        <h:outputText value="#{langueBean.getMsg('graphdialog.manage_view.name')} : " />
+                        <h:outputText value="#{v2LocaleBean.getMsg('graphdialog.manage_view.name')} : " />
                     </div>
                     <div class="col-7">
-                        <p:inputText placeholder="#{langueBean.getMsg('graphdialog.manage_view.name.placeholder')} ..."
+                        <p:inputText placeholder="#{v2LocaleBean.getMsg('graphdialog.manage_view.name.placeholder')} ..."
                                      value="#{v2GraphViewBean.newViewName}"
                                      style="width: 100%"/>
                     </div>
@@ -24,16 +24,16 @@
 
                 <div class="row" style="margin-top: 10px">
                     <div class="col-5" style="margin-top: 3px">
-                        <h:outputText value="#{langueBean.getMsg('graphdialog.manage_view.description')} : " />
+                        <h:outputText value="#{v2LocaleBean.getMsg('graphdialog.manage_view.description')} : " />
                     </div>
                     <div class="col-7">
                         <p:inputText value="#{v2GraphViewBean.newViewDescription}"
-                                     placeholder="#{langueBean.getMsg('graphdialog.manage_view.description.placeholder')} ..."
+                                     placeholder="#{v2LocaleBean.getMsg('graphdialog.manage_view.description.placeholder')} ..."
                                      style="width: 100%"/>
                     </div>
                 </div>
                 <div style="width: 100%; text-align: right; margin-top: 15px; margin-bottom: 5px;">
-                    <p:commandButton id="manageViewBtn" value="#{langueBean.getMsg('apply')}" styleClass="ui-button-success" icon="fa fa-floppy-disk"
+                    <p:commandButton id="manageViewBtn" value="#{v2LocaleBean.getMsg('apply')}" styleClass="ui-button-success" icon="fa fa-floppy-disk"
                                      ajax="true" process="@form" oncomplete="PF('manageView').show();"
                                      update="messageIndex idManageView graph-form"
                                      actionListener="#{v2GraphViewBean.applyView()}" />
@@ -45,7 +45,7 @@
             <h:panelGroup id="ViewSelect" rendered="#{v2GraphViewBean.selectedViewId != -1}">
                 <div class="row" style="margin-top: 10px">
                     <div class="col-5" style="margin-top: 3px">
-                        <h:outputText value="#{langueBean.getMsg('menu.select_thesaurus')}: (*)" />
+                        <h:outputText value="#{v2LocaleBean.getMsg('menu.select_thesaurus')}: (*)" />
                     </div>
 
                     <div class="col-7" style="margin-top: 3px">
@@ -62,7 +62,7 @@
                 <h:panelGroup id="viewConcept" rendered="#{v2GraphViewBean.selectedIdTheso != null and v2GraphViewBean.selectedIdTheso != ''}">
                     <div class="row" style="margin-top: 10px">
                         <div class="col-5" style="margin-top: 3px">
-                            <h:outputText value="#{langueBean.getMsg('conceptsview.view_branch_as_graph')}: " />
+                            <h:outputText value="#{v2LocaleBean.getMsg('conceptsview.view_branch_as_graph')}: " />
                         </div>
                         <div class="col-7" style="margin-top: 3px">
                             <p:autoComplete id="autoBroaderLink" value="#{v2GraphViewBean.searchSelected}"
@@ -70,16 +70,16 @@
                                             panelStyle="border: none; box-shadow: none;"
                                             forceSelection="true"
                                             completeMethod="#{v2GraphViewBean.getAutoComplete}"
-                                            minQueryLength="1" itemLabel="#{values.prefLabel}" itemValue="#{values}" converter="searchConverter"
+                                            minQueryLength="1" itemLabel="#{values.preferredLabel}" itemValue="#{values}" converter="v2ConceptSearchSuggestionConverter"
                                             scrollHeight="600" inputStyle="font-size: 12px; width: 100%; height: 34px;box-shadow: none;">
-                                <p:column rendered="#{values.isAltLabel()}" style="font-size: 12px;">
-                                    <h:outputText title="#{values.idConcept}" value="#{values.altLabel}"
+                                <p:column rendered="#{values.altLabel}" style="font-size: 12px;">
+                                    <h:outputText title="#{values.conceptId}" value="#{values.altLabel}"
                                                   style="font-style: italic;" />
-                                    <h:outputText title="#{values.idConcept}" value=" -> #{values.prefLabel} (#{values.idConcept})" style="color: blue" />
+                                    <h:outputText title="#{values.conceptId}" value=" -> #{values.preferredLabel} (#{values.conceptId})" style="color: blue" />
                                 </p:column>
 
-                                <p:column rendered="#{!values.isAltLabel()}" style="font-size: 12px;">
-                                    <h:outputText title="#{values.idConcept}" value="#{values.prefLabel} (#{values.idConcept})" />
+                                <p:column rendered="#{!values.altLabel}" style="font-size: 12px;">
+                                    <h:outputText title="#{values.conceptId}" value="#{values.preferredLabel} (#{values.conceptId})" />
                                 </p:column>
                             </p:autoComplete>
                         </div>
@@ -88,7 +88,7 @@
 
                 <div class="row" style="margin-top: 10px;">
                     <div class="col-12" style="text-align: right" >
-                        <p:commandButton value="#{langueBean.getMsg('btnAdd')}"
+                        <p:commandButton value="#{v2LocaleBean.getMsg('btnAdd')}"
                                          icon="fa fa-plus"
                                          styleClass="ui-button-success"
                                          update="manageViewForm graph-form"
@@ -97,8 +97,8 @@
                 </div>
                 <p:dataList value="#{v2GraphViewBean.newViewExports}" var="viewExport" style="margin-top: 10px">
                     <div style="margin-top: 5px; display: flex; justify-content: space-between; align-items: center;">
-                        <h:outputText rendered="#{empty viewExport.conceptId()}" value="#{langueBean.getMsg('menu.thesaurus')}: #{viewExport.thesaurusId()}"/>
-                        <h:outputText rendered="#{not empty viewExport.conceptId()}" value="#{langueBean.getMsg('branch')}: #{viewExport.thesaurusId()}, #{viewExport.conceptId()}"/>
+                        <h:outputText rendered="#{empty viewExport.conceptId()}" value="#{v2LocaleBean.getMsg('menu.thesaurus')}: #{viewExport.thesaurusId()}"/>
+                        <h:outputText rendered="#{not empty viewExport.conceptId()}" value="#{v2LocaleBean.getMsg('branch')}: #{viewExport.thesaurusId()}, #{viewExport.conceptId()}"/>
                         <p:commandButton
                             icon="fa fa-minus"
                             styleClass="ui-button-danger rounded-button"
@@ -111,7 +111,7 @@
             </h:panelGroup>
 
             <div style="width: 100%; text-align: right; margin-top: 15px; margin-bottom: 5px;">
-                <p:commandButton value="#{langueBean.getMsg('candidat.close')}" styleClass="ui-button-secondary button" icon="fas fa-undo-alt"
+                <p:commandButton value="#{v2LocaleBean.getMsg('candidat.close')}" styleClass="ui-button-secondary button" icon="fas fa-undo-alt"
                                  style="margin-right: 10px"
                                  oncomplete="PF('manageView').hide();"
                                  update="idManageView"/>

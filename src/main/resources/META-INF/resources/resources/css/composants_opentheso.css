@@ -761,6 +761,54 @@ body .ui-tree .ui-tree-container .ui-treenode .ui-treenode-content .ui-treenode-
     margin-left: -10px;
 }
 
+/* PrimeFaces impose primeicons sur .ui-treenode-icon : rétablir Font Awesome */
+body .ui-tree .ui-tree-container .ui-treenode .ui-treenode-content .ui-treenode-icon.fa,
+body .ui-tree .ui-tree-container .ui-treenode .ui-treenode-content .ui-treenode-icon.fas,
+body .ui-tree .ui-tree-container .ui-treenode .ui-treenode-content .ui-treenode-icon.far,
+body .ui-tree .ui-tree-container .ui-treenode .ui-treenode-content .ui-treenode-icon.fab,
+body .ui-tree .ui-tree-container .ui-treenode .ui-treenode-content .ui-treenode-icon.fa-solid,
+body .ui-tree .ui-tree-container .ui-treenode .ui-treenode-content .ui-treenode-icon.fa-regular,
+body .ui-tree .ui-tree-container .ui-treenode .ui-treenode-content .ui-treenode-icon.fa-brands {
+    font-family: "Font Awesome 6 Free" !important;
+    font-weight: 900;
+    font-style: normal;
+}
+
+body .ui-tree .ui-tree-container .ui-treenode .ui-treenode-content .ui-treenode-icon.fa-regular,
+body .ui-tree .ui-tree-container .ui-treenode .ui-treenode-content .ui-treenode-icon.far {
+    font-weight: 400;
+}
+
+body .ui-tree .ui-tree-container .ui-treenode .ui-treenode-content .ui-treenode-icon.fa-brands,
+body .ui-tree .ui-tree-container .ui-treenode .ui-treenode-content .ui-treenode-icon.fab {
+    font-family: "Font Awesome 6 Brands" !important;
+    font-weight: 400;
+}
+
+/* Icônes Font Awesome dans les titres d'onglets (volet gauche) */
+body .ui-tabs .ui-tabs-nav li.ui-tabs-header a .fa,
+body .ui-tabs .ui-tabs-nav li.ui-tabs-header a .fas,
+body .ui-tabs .ui-tabs-nav li.ui-tabs-header a .far,
+body .ui-tabs .ui-tabs-nav li.ui-tabs-header a .fab,
+body .ui-tabs .ui-tabs-nav li.ui-tabs-header a .fa-solid,
+body .ui-tabs .ui-tabs-nav li.ui-tabs-header a .fa-regular,
+body .ui-tabs .ui-tabs-nav li.ui-tabs-header a .fa-brands {
+    font-family: "Font Awesome 6 Free" !important;
+    font-weight: 900;
+    font-style: normal;
+}
+
+body .ui-tabs .ui-tabs-nav li.ui-tabs-header a .fa-regular,
+body .ui-tabs .ui-tabs-nav li.ui-tabs-header a .far {
+    font-weight: 400;
+}
+
+body .ui-tabs .ui-tabs-nav li.ui-tabs-header a .fa-brands,
+body .ui-tabs .ui-tabs-nav li.ui-tabs-header a .fab {
+    font-family: "Font Awesome 6 Brands" !important;
+    font-weight: 400;
+}
+
 /**Button*/
 .ui-button-success {
     background-color: #F47B2A !important;

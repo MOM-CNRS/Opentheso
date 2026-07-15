@@ -28,7 +28,7 @@ import org.springframework.web.bind.annotation.RestController;
 import java.io.IOException;
 import java.util.List;
 
-@RestController
+@RestController("v2CandidatController")
 @RequestMapping("/openapi/v2/thesauri/{thesaurusId}/candidates")
 @RequiredArgsConstructor
 @Tag(name = "Candidats", description = "Consultation et export des candidats (v2)")

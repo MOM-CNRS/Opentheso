@@ -1,10 +1,11 @@
 package fr.cnrs.opentheso.ws.openapi.filter;
 
-import fr.cnrs.opentheso.bean.menu.users.CurrentUser;
-import fr.cnrs.opentheso.services.UserService;
-import fr.cnrs.opentheso.entites.User;
-import fr.cnrs.opentheso.services.security.SsoTokenService;
-import jakarta.servlet.*;
+import fr.cnrs.opentheso.v2.shared.auth.SsoTokenService;
+import jakarta.servlet.Filter;
+import jakarta.servlet.FilterChain;
+import jakarta.servlet.ServletException;
+import jakarta.servlet.ServletRequest;
+import jakarta.servlet.ServletResponse;
 import jakarta.servlet.http.HttpServletRequest;
 import jakarta.servlet.http.HttpServletResponse;
 import jakarta.servlet.http.HttpSession;
@@ -14,11 +15,10 @@ import lombok.extern.slf4j.Slf4j;
 import java.io.IOException;
 
 @Slf4j
-@RequiredArgsConstructor  // injection via constructeur (Spring)
+@RequiredArgsConstructor
 public class SsoTokenFilter implements Filter {
 
     private final SsoTokenService ssoTokenService;
-    private final UserService userService;
 
     @Override
     public void doFilter(ServletRequest req, ServletResponse res,
@@ -36,17 +36,21 @@ public class SsoTokenFilter implements Filter {
                 session.setAttribute("ssoUserId", userId);
                 session.setAttribute("ssoProcessed", false);
 
-                // Récupérer idc et idt depuis l'URL
                 String idc = request.getParameter("idc");
                 String idt = request.getParameter("idt");
 
-                if (idc != null && !idc.isBlank()) session.setAttribute("ssoIdc", idc);
-                if (idt != null && !idt.isBlank()) session.setAttribute("ssoIdt", idt);
+                if (idc != null && !idc.isBlank()) {
+                    session.setAttribute("ssoIdc", idc);
+                }
+                if (idt != null && !idt.isBlank()) {
+                    session.setAttribute("ssoIdt", idt);
+                }
 
-                // Construire la redirection finale avec idc et idt
-                StringBuilder redirect = new StringBuilder(request.getContextPath() + "/index.xhtml");
-                if (idc != null && idt != null) {
-                    redirect.append("?idc=").append(idc).append("&idt=").append(idt);
+                StringBuilder redirect = new StringBuilder(request.getContextPath() + "/v2/thesaurus");
+                if (idc != null && !idc.isBlank() && idt != null && !idt.isBlank()) {
+                    redirect.append("?idt=").append(idt).append("&idc=").append(idc);
+                } else if (idt != null && !idt.isBlank()) {
+                    redirect.append("?idt=").append(idt);
                 }
 
                 response.sendRedirect(redirect.toString());
@@ -54,7 +58,7 @@ public class SsoTokenFilter implements Filter {
             }
 
             log.warn("SSO token invalide ou expiré : {}", ssoToken);
-            response.sendRedirect(request.getContextPath() + "/index.xhtml?ssoError=true");
+            response.sendRedirect(request.getContextPath() + "/v2/thesaurus?ssoError=true");
             return;
         }
 

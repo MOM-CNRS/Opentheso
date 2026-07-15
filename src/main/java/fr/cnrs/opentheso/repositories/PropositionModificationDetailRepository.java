@@ -15,6 +15,10 @@ public interface PropositionModificationDetailRepository extends JpaRepository<P
 
     @Modifying
     @Transactional
+    void deleteAllByIdProposition(Integer propositionId);
+
+    @Modifying
+    @Transactional
     @Query("DELETE FROM PropositionModificationDetail pmd WHERE pmd.idProposition IN (SELECT pm.id FROM PropositionModification pm where pm.idTheso = :idThesaurus)")
     void deleteByIdThesaurus(String idThesaurus);
 

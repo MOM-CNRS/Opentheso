@@ -1,0 +1,159 @@
+<ui:fragment xmlns="http://www.w3.org/1999/xhtml"  
+             xmlns:ui="http://java.sun.com/jsf/facelets"
+             xmlns:p="http://primefaces.org/ui"
+             xmlns:h="http://xmlns.jcp.org/jsf/html"
+             xmlns:f="http://xmlns.jcp.org/jsf/core">
+
+    <p:dialog id="idListForMergeCsv" header="#{v2LocaleBean.getMsg('actions.importListForMerging')}" widgetVar="listForMergeCsv"  
+              width="850" showEffect="fade" modal="true" resizable="false" position="top" style="margin-top: 30px" >
+
+        <h:form id="listForMergeCsvForm">              
+
+            <p:outputPanel deferred="true"  style="border: 1px solid #43B572; border-radius: 10px; padding: 10px; margin-top: 5px; font-size: 12px; overflow-y: auto; max-height: 300px;">
+                <fieldset>
+                    <p:scrollPanel mode="native">
+                        <h:panelGrid columns="5" styleClass="customTable">
+                            <h:outputText value="identifier" />
+                            <h:outputText value="skos:prefLabel@fr" />
+                            <h:outputText value="skos:prefLabel@it" />
+                            <h:outputText value="skos:altLabel@en" />
+                            <h:outputText value="skos:altLabel@fr" style="color: #C63632" />
+
+                            <h:outputText value="4587" />
+                            <h:outputText value="astre" />
+                            <h:outputText value="astro" />
+                            <h:outputText value="heavenly body##astronomical body" />
+                            <h:outputText value="..... si la valeur est vide, on supprime le contenu existant" style="color: #C63632"/>
+                        </h:panelGrid>
+                    </p:scrollPanel>
+
+                    <style>
+                        .customTable {
+                            border-collapse: collapse;
+                        }
+
+                        .customTable td, .customTable th {
+                            border: 0.5px solid black; /* Bordure de 0.5px */
+                            padding: 5px; /* Espace intérieur */
+                        }
+
+                        /* Cible la première ligne du tableau (9 cellules) */
+                        .customTable tr:first-child td {
+                            background-color: #f0f0f0; /* Arrière-plan gris clair */
+                            font-weight: bold; /* Texte en gras */
+                            text-align: center; /* Texte centré */
+                        }
+                    </style>
+
+                    <p:panel style="border: 1px solid #43B572; border-radius: 10px; padding: 10px; margin-top: 10px; font-size: 12px;">
+                        Les champs pris en charge pour la fusion sont : prefLabel, altLabel, toutes les notes, les alignements, <br/> 
+                            les coordonnées GPS, les images et les ressources externes. <br/><br/>
+                            
+                        Les termes doivent avoir un séparateur (virgule, point-virgule ou tabulé) dans le fichier à uploader.<br/>
+                        Si l'identifiant n'existe pas dans le thésaurus, la ligne sera rejetée.<br/>
+                        Chaque concept trouvé par identifiant sera mise à jour avec les nouvelles valeurs du tableau.<br/>
+                        !!!! Les concepts qui ne figurent pas dans le fichier ne sont pas modifiés !!!<br/>
+                        Le format accepté est le même pour importer un thésaurus en CSV.<br/>
+                        exemple :<br/>
+                        Si nous avons un concept comme suit :<br/>
+                        Id = 300<br/>
+                        prefLabel@fr = gourde<br/>
+                        altLabel@fr = récipient de transport, contenant, vase fermé<br/>
+                        Définition@fr = vase à col étroit<br/>
+
+                        Et si nous souhaitons mettre à jour ce concept, on propose alors les informations suivantes :<br/>
+                        Id = 300<br/>
+                        prefLabel@fr = récipient de transport<br/>
+                        prefLabel@en = flask<br/>                
+                        altLabel@fr = douïre, gourde, contenant, vase fermé<br/>
+                        altLabel@en = costrel<br/>
+                        Définition@fr = Récipient muni d'un goulot<br/>
+                        Définition@en = Definition in english<br/>                
+                        Le résultat final, le concept devient comme suit :<br/>
+
+                        Id = 300<br/>
+                        prefLabel = (fr) récipient de transport, (en) flask<br/>
+                        altLabel =  (fr) douïre, gourde, contenant, vase fermé (en) costrel<br/>
+                        Définition = (fr) Récipient muni d'un goulot (en) Definition in english<br/>
+
+                        Tous les champs fournis par l’utilisateur remplacent l’existant.<br/>
+                        si on souhaite supprimer une valeur dans une langue donnée, on fourni la colonne vide exp :<br/>
+                        altLabel@en = <br/>
+                        C’est à dire, si nous avons un champ (Note d’application), il ne sera pas modifié.
+
+                    </p:panel>            
+                </fieldset>
+
+            </p:outputPanel>            
+
+
+
+
+            <p:panel style="border: 1px solid #43B572; border-radius: 10px; padding: 10px; margin-top: 5px">
+
+                <!-- délimiteur CSV -->
+                <div class="row" style="margin-top: 5px;">
+                    <div class="col-5" offset="5">
+                        <h:outputText value="Délimiteur Csv :" style="color: #000; font-size: 12px"  />
+                    </div>
+                    <div class="col-7">
+                        <p:selectOneMenu value="#{v2WorkshopImportBean.choiceDelimiter}" 
+                                         styleClass="selectOneMenu_custom" panelStyleClass="selectOneMenu_panelStyle_custom"
+                                         style="width: 100%; background: none;  box-shadow: none;">
+                            <f:selectItem itemLabel="," itemValue="0" />
+                            <f:selectItem itemLabel=";" itemValue="1" />
+                            <f:selectItem itemLabel="\t" itemValue="2" />
+                            <p:ajax event="change" listener="#{v2WorkshopImportBean.actionChoice()}"  />
+                        </p:selectOneMenu>
+                    </div>
+                </div>             
+
+            </p:panel>
+
+            <h:panelGroup id="panelListForMergeCsv">
+                <!-- Choix du fichier -->   
+                <div class="row" style="margin-left: 30px; margin-right: 30px; margin-top: 10px">
+                    <div class="col-12" > 
+                        <p:fileUpload listener="#{v2WorkshopImportBean.loadFileCsvForMerge}" 
+                                      label="#{v2LocaleBean.getMsg('candidat.parcourir')}"  style="padding-left: 10px; padding-right: 10px; font-size: 12px;"
+                                      mode="advanced" auto="true"
+                                      styleClass="browserbutton"
+                                      allowTypes="/(\.|\/)(csv|txt)$/"
+                                      update="panelListForMergeCsv_result" disabled="#{v2WorkshopImportBean.loadDone}"/>  
+                    </div>
+                </div> 
+            </h:panelGroup>                
+            <h:panelGroup id="panelListForMergeCsv_result">
+                <h:panelGroup rendered="#{v2WorkshopImportBean.loadDone}" style="margin-top: 10px" >
+                    <div class="row" style="margin-left: 30px; margin-right: 30px;">
+                        <div class="col-5">
+                            <h:outputText value="URI: " />
+                            <h:outputText value="#{v2WorkshopImportBean.uri}" style="color: #C63632"/>
+                        </div>
+                    </div>
+                    <div class="row" style="margin-left: 30px; margin-right: 30px;">
+                        <div class="col-5">
+                            <h:outputText value="Total des concepts: " />
+                            <h:outputText value="#{v2WorkshopImportBean.total}" style="color: #C63632"/>
+                        </div>
+                    </div> 
+                </h:panelGroup>
+
+                <div style="width: 100%; text-align: right; margin-top: 5px; margin-bottom: 5px;">
+                    <p:commandButton value="#{v2LocaleBean.getMsg('candidat.close')}" icon="fas fa-undo-alt" styleClass="ui-button-secondary button"
+                                     style="margin-right: 10px"
+                                     actionListener="#{v2WorkshopImportBean.init()}"
+                                     oncomplete="PF('listForMergeCsv').hide();"
+                                     update="listForMergeCsvForm"/>
+
+                    <p:commandButton value="#{v2LocaleBean.getMsg('candidat.import')}" styleClass="ui-button-success" icon="pi pi-check"
+                                     process="@this"
+                                     update="messageIndex listForMergeCsvForm"
+                                     disabled="#{!v2WorkshopImportBean.loadDone}"
+                                     actionListener="#{v2WorkshopImportBean.mergeCsvThesoToBDD()}" />
+                </div> 
+            </h:panelGroup>
+            <input type="hidden" name="csrfToken" value="${sessionScope.CSRF_TOKEN}" />
+        </h:form>
+    </p:dialog> 
+</ui:fragment>

@@ -18,7 +18,7 @@
                              icon="pi pi-megaphone" styleClass="ui-button-success"
                              process="@this" ajax="true"
                              actionListener="#{setAlignmentSourceBean.initAlignementAutomatique('alignement-comparaison')}"
-                             update="containerIndex:formRightTab"
+                             update=":containerIndex:rightTab"
                              style="margin-left: 10px; " />
         </p:toolbarGroup>        
 
@@ -26,7 +26,7 @@
             <p:commandButton value="#{langueBean.getMsg('rightbody.conceptdialog.manage_alignment_sources')}" 
                              icon="fa-solid fa-gear" styleClass="ui-button-success"
                              actionListener="#{setAlignmentSourceBean.initForManage()}" process="@this" ajax="true"
-                             update="containerIndex:formRightTab"/>
+                             update=":containerIndex:rightTab"/>
         </p:toolbarGroup>
 
     </p:toolbar>

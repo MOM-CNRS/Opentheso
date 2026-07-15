@@ -1,0 +1,72 @@
+<ui:fragment xmlns="http://www.w3.org/1999/xhtml"
+             xmlns:h="http://java.sun.com/jsf/html"
+             xmlns:ui="http://java.sun.com/jsf/facelets"
+             xmlns:p="http://primefaces.org/ui"
+             xmlns:f="http://xmlns.jcp.org/jsf/core">
+
+    <h:panelGroup rendered="#{v2EditionBean.exportSkosView or v2EditionBean.exportCsvView or v2EditionBean.exportPdfView}">
+        <div class="row mb-3">
+            <div class="col-3 text-right">
+                <h:outputText value="#{v2LocaleBean.getMsg('statistique.filtre_collection')}"/>
+            </div>
+            <div class="col-5">
+                <p:toggleSwitch value="#{v2ThesaurusExportBean.filterByGroup}"/>
+            </div>
+        </div>
+        <h:panelGroup rendered="#{v2ThesaurusExportBean.filterByGroup}">
+            <div class="row mb-3">
+                <div class="col-3"/>
+                <div class="col-5">
+                    <p:selectCheckboxMenu value="#{v2ThesaurusExportBean.selectedGroupIds}"
+                                          label="#{v2LocaleBean.getMsg('select')}"
+                                          style="width: 100%;" multiple="true" filter="true">
+                        <f:selectItems value="#{v2ThesaurusExportBean.groupList}" var="group"
+                                       itemLabel="#{group.lexicalValue}" itemValue="#{group.conceptGroup.idGroup}"/>
+                    </p:selectCheckboxMenu>
+                </div>
+            </div>
+        </h:panelGroup>
+
+        <div class="row mb-3" rendered="#{v2EditionBean.exportSkosView or v2EditionBean.exportCsvView}">
+            <div class="col-3 text-right">
+                <h:outputText value="#{v2LocaleBean.getMsg('export.exportThesaurusByCollection')}"/>
+            </div>
+            <div class="col-5">
+                <p:toggleSwitch value="#{v2ThesaurusExportBean.exportByGroup}"/>
+            </div>
+        </div>
+
+        <div class="row mb-3">
+            <div class="col-3 text-right">
+                <h:outputText value="#{v2LocaleBean.getMsg('export.filterHtmlCharacter')}"/>
+            </div>
+            <div class="col-5">
+                <p:toggleSwitch value="#{v2ThesaurusExportBean.clearHtml}"/>
+            </div>
+        </div>
+    </h:panelGroup>
+
+    <h:panelGroup rendered="#{v2EditionBean.exportCsvIdView}">
+        <div class="row mb-3">
+            <div class="col-3 text-right">
+                <h:outputText value="#{v2LocaleBean.getMsg('statistique.filtre_collection')}"/>
+            </div>
+            <div class="col-5">
+                <p:toggleSwitch value="#{v2ThesaurusExportBean.filterByGroup}"/>
+            </div>
+        </div>
+        <h:panelGroup rendered="#{v2ThesaurusExportBean.filterByGroup}">
+            <div class="row mb-3">
+                <div class="col-3"/>
+                <div class="col-5">
+                    <p:selectCheckboxMenu value="#{v2ThesaurusExportBean.selectedGroupIds}"
+                                          label="#{v2LocaleBean.getMsg('select')}"
+                                          style="width: 100%;" multiple="true" filter="true">
+                        <f:selectItems value="#{v2ThesaurusExportBean.groupList}" var="group"
+                                       itemLabel="#{group.lexicalValue}" itemValue="#{group.conceptGroup.idGroup}"/>
+                    </p:selectCheckboxMenu>
+                </div>
+            </div>
+        </h:panelGroup>
+    </h:panelGroup>
+</ui:fragment>

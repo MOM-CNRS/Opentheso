@@ -1,11 +1,9 @@
 package fr.cnrs.opentheso.ws.openapi.v2;
 
 import fr.cnrs.opentheso.entites.User;
-import fr.cnrs.opentheso.models.skos.SkosConceptDto;
 import fr.cnrs.opentheso.models.skos.SkosConceptUpdateDto;
-import fr.cnrs.opentheso.services.ConceptAddServiceWS;
-import fr.cnrs.opentheso.services.ConceptUpdateServiceWS;
-import fr.cnrs.opentheso.services.security.AuthorizationService;
+import fr.cnrs.opentheso.skos.api.OpenApiConceptUpdateOperations;
+import fr.cnrs.opentheso.v2.shared.auth.ThesaurusWriteAuthorizationService;
 import fr.cnrs.opentheso.ws.openapi.exception.ApiKeyInvalidException;
 import fr.cnrs.opentheso.ws.openapi.exception.UserCantWriteOnThesaurusException;
 import org.springframework.http.MediaType;
@@ -26,9 +24,8 @@ import jakarta.validation.Valid;
 @Tag(name = "Api v2")
 public class UpdateConceptController {
 
-    private final ConceptAddServiceWS conceptAddServiceWS;
-    private final ConceptUpdateServiceWS conceptUpdateServiceWS;
-    private final AuthorizationService authorizationService;
+    private final OpenApiConceptUpdateOperations openApiConceptUpdateOperations;
+    private final ThesaurusWriteAuthorizationService thesaurusWriteAuthorizationService;
 
     @PutMapping(
             value = "/{idConcept}",
@@ -52,15 +49,15 @@ public class UpdateConceptController {
             throw new ApiKeyInvalidException(ApiKeyState.INVALID);
         }
 
-        if (!authorizationService.canUserWrite(user.getId(), idThesaurus)) {
+        if (!thesaurusWriteAuthorizationService.canUserWrite(user.getId(), idThesaurus)) {
             throw new UserCantWriteOnThesaurusException();
         }
 
-        if (!conceptUpdateServiceWS.exists(idConcept, idThesaurus)) {
+        if (!openApiConceptUpdateOperations.exists(idConcept, idThesaurus)) {
             throw new RuntimeException("Ce concept n'existe pas dans le thésaurus ! : " + idConcept);
         }
 
-        SkosConceptUpdateDto updated = conceptUpdateServiceWS.updateConcept(
+        SkosConceptUpdateDto updated = openApiConceptUpdateOperations.updateConcept(
                 dto,
                 idThesaurus,
                 idConcept,

@@ -1,6 +1,5 @@
 package fr.cnrs.opentheso.v2.toolbox.ui;
 
-import fr.cnrs.opentheso.bean.menu.users.CurrentUser;
 import fr.cnrs.opentheso.utils.MessageUtils;
 import fr.cnrs.opentheso.v2.shared.ui.UserSession;
 import fr.cnrs.opentheso.v2.toolbox.exception.InvalidToolboxDataException;
@@ -24,7 +23,6 @@ import java.util.List;
 public class NewThesaurusBean implements Serializable {
 
     private final UserSession userSession;
-    private final CurrentUser currentUser;
     private final NewThesaurusService newThesaurusService;
 
     private NewThesaurusEditor editor = NewThesaurusEditor.empty();
@@ -34,11 +32,9 @@ public class NewThesaurusBean implements Serializable {
 
     public NewThesaurusBean(
             UserSession userSession,
-            CurrentUser currentUser,
             NewThesaurusService newThesaurusService
     ) {
         this.userSession = userSession;
-        this.currentUser = currentUser;
         this.newThesaurusService = newThesaurusService;
     }
 

@@ -6,6 +6,7 @@
       xmlns:p="http://primefaces.org/ui">
 
 <f:metadata>
+    <f:viewAction action="#{v2ConsultationShellBean.load()}"/>
     <f:viewAction action="#{v2AllProjectsBean.load()}"/>
 </f:metadata>
 
@@ -21,44 +22,46 @@
 <h:body id="page-top" onload="initMenu()" style="margin:0; padding:0; height:100%;">
     <p:growl id="messageIndex" globalOnly="true" showDetail="true"/>
 
-    <h:panelGroup rendered="#{menuBean.checkIfUserIsConnected() and v2UserSession.canAccessSuperAdminScreen()}"
+    <h:panelGroup rendered="#{v2UserSession.isLoggedIn() and v2UserSession.canAccessSuperAdminScreen()}"
                   id="wrapper" style="height: 100%">
-        <ui:include src="../../commun/menu.xhtml"/>
+        <ui:include src="../thesaurus/includes/layout/menu.xhtml"/>
 
         <div id="content-wrapper" style="min-height:100%; position:relative;">
             <h:form id="containerIndex">
                 <h:panelGroup id="header">
-                    <ui:include src="../../commun/header.xhtml"/>
+                    <ui:include src="../thesaurus/includes/layout/header.xhtml"/>
                 </h:panelGroup>
 
                 <div class="container-fluid" style="padding-bottom: 70px">
                     <div class="d-sm-flex align-items-center justify-content-between mb-4" style="margin: 20px">
-                        <h1 class="h3 mb-0 text-gray-800">#{langueBean.getMsg('menu.profile')} / <span
-                                style="color: #f47b2a">#{langueBean.getMsg('profile.all_projects')}</span></h1>
+                        <h1 class="h3 mb-0 text-gray-800">#{v2LocaleBean.getMsg('menu.profile')} / <span
+                                style="color: #f47b2a">#{v2LocaleBean.getMsg('profile.all_projects')}</span></h1>
                     </div>
 
                     <div class="card shadow mb-4" style="margin: 20px;">
                         <p:dataTable value="#{v2AllProjectsBean.projects}" var="project" size="small"
                                      paginator="true" rows="20" stripedRows="true">
                             <f:facet name="header">
-                                <span class="font-weight-bold">#{langueBean.getMsg('profile.listOfProjects')}</span>
+                                <span class="font-weight-bold">#{v2LocaleBean.getMsg('profile.listOfProjects')}</span>
                             </f:facet>
                             <p:column headerText="Id" width="15%">
                                 <h:outputText value="#{project.id()}"/>
                             </p:column>
-                            <p:column headerText="#{langueBean.getMsg('profile.project')}" sortBy="#{project.name()}">
+                            <p:column headerText="#{v2LocaleBean.getMsg('profile.project')}" sortBy="#{project.name()}">
                                 <h:outputText value="#{project.name()}"/>
                             </p:column>
                             <f:facet name="footer">
-                                <span class="p-text-bold">#{langueBean.getMsg('profile.totalOfProjects')}: #{v2AllProjectsBean.projects.size()}</span>
+                                <span class="p-text-bold">#{v2LocaleBean.getMsg('profile.totalOfProjects')}: #{v2AllProjectsBean.projects.size()}</span>
                             </f:facet>
                         </p:dataTable>
                     </div>
                 </div>
             </h:form>
 
-            <ui:include src="../../commun/footer.xhtml"/>
-            <ui:include src="../../dialog/login/logout.xhtml"/>
+            <ui:include src="../thesaurus/includes/layout/footer.xhtml"/>
+            <ui:include src="../thesaurus/includes/layout/logout-dialog.xhtml"/>
+            <ui:include src="../thesaurus/includes/layout/login-dialog.xhtml"/>
+            <ui:include src="../thesaurus/includes/layout/forget-password-dialog.xhtml"/>
         </div>
     </h:panelGroup>
 </h:body>

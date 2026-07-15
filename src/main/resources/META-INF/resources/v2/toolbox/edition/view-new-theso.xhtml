@@ -15,7 +15,7 @@
 
             <div class="row">
                 <div class="col-12" style="padding-left: 30px">
-                    <h:outputText value="#{langueBean.getMsg('toolbox.newTheso')}" class="h5 mb-0 text-gray-800"/>
+                    <h:outputText value="#{v2LocaleBean.getMsg('toolbox.newTheso')}" class="h5 mb-0 text-gray-800"/>
                 </div>
             </div>
 
@@ -23,11 +23,11 @@
 
                 <div class="row" style="margin-top: 10px">
                     <div class="col-3" style="text-align: right; padding-top: 4px">
-                        <h:outputText value="#{langueBean.getMsg('statistique.label')}" style="margin-right: -6px" />
+                        <h:outputText value="#{v2LocaleBean.getMsg('statistique.label')}" style="margin-right: -6px" />
                     </div>
                     <div class="col-5">
                         <p:inputText id="v2NewThesoTitle"
-                                     placeholder="#{langueBean.getMsg('statistique.thesaurus.name')}"
+                                     placeholder="#{v2LocaleBean.getMsg('statistique.thesaurus.name')}"
                                      value="#{v2NewThesaurusBean.editor.title}" style="width: 100%"
                                      required="true" requiredMessage="Le label est obligatoire"/>
                     </div>
@@ -35,7 +35,7 @@
 
                 <div class="row" style="margin-top: 10px">
                     <div class="col-3" style="text-align: right; padding-top: 4px">
-                        <h:outputText value="#{langueBean.getMsg('rightbody.conceptdialog.language')}" style="margin-right: -6px"/>
+                        <h:outputText value="#{v2LocaleBean.getMsg('rightbody.conceptdialog.language')}" style="margin-right: -6px"/>
                     </div>
                     <div class="col-5">
                         <p:selectOneMenu id="v2NewThesoLang"
@@ -54,8 +54,8 @@
 
                 <div class="row" style="margin-top: 10px">
                     <div class="col-3" style="text-align: right; padding-top: 4px">
-                        <h:outputText value="#{langueBean.getMsg('profile.project')}"
-                                      title="#{langueBean.getMsg('profile.projectTooltip')}"
+                        <h:outputText value="#{v2LocaleBean.getMsg('profile.project')}"
+                                      title="#{v2LocaleBean.getMsg('profile.projectTooltip')}"
                                       style="margin-right: -6px"/>
                     </div>
                     <div class="col-5">
@@ -87,7 +87,7 @@
 
             <div class="row" style="margin-top: 30px;">
                 <div class="col-6" style="text-align: right">
-                    <p:commandButton value="#{langueBean.getMsg('btnBack')}" styleClass="ui-button-secondary button"
+                    <p:commandButton value="#{v2LocaleBean.getMsg('btnBack')}" styleClass="ui-button-secondary button"
                                      icon="fas fa-undo-alt" update="containerIndex"
                                      action="#{v2NewThesaurusBean.cancel()}" process="@this"/>
                 </div>

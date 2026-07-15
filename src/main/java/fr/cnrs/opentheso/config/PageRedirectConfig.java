@@ -5,13 +5,13 @@ import org.springframework.core.Ordered;
 import org.springframework.web.servlet.config.annotation.ViewControllerRegistry;
 import org.springframework.web.servlet.config.annotation.WebMvcConfigurer;
 
-
 @Configuration
 public class PageRedirectConfig implements WebMvcConfigurer {
 
     @Override
     public void addViewControllers(ViewControllerRegistry registry) {
-        registry.addViewController("/").setViewName("forward:/index.xhtml");
+        registry.addViewController("/").setViewName("forward:/v2/thesaurus/browse.xhtml");
+        registry.addViewController("/reset-password").setViewName("forward:/reset-password.xhtml");
         registry.addViewController("/profile").setViewName("forward:/profile/myAccount.xhtml");
         registry.addViewController("/v2/profile").setViewName("forward:/v2/user/my-account.xhtml");
         registry.addViewController("/v2/projects-users").setViewName("forward:/v2/project/my-projects.xhtml");
@@ -32,8 +32,8 @@ public class PageRedirectConfig implements WebMvcConfigurer {
         registry.addViewController("/v2/graph/visualize/thesaurus").setViewName("forward:/v2/graph/visualize/thesaurus.xhtml");
         registry.addViewController("/v2/graph/visualize/branch").setViewName("forward:/v2/graph/visualize/branch.xhtml");
         registry.addViewController("/v2/graph/visualize/force").setViewName("forward:/v2/graph/visualize/force.xhtml");
+        registry.addViewController("/v2/thesaurus").setViewName("forward:/v2/thesaurus/browse.xhtml");
         registry.addViewController("/toolbox/edition").setViewName("forward:/toolbox/edition.xhtml");
         registry.setOrder(Ordered.HIGHEST_PRECEDENCE);
     }
-
 }

@@ -1,7 +1,7 @@
 package fr.cnrs.opentheso.v2.graph.service;
 
-import fr.cnrs.opentheso.services.PreferenceService;
 import fr.cnrs.opentheso.v2.graph.model.GraphExportEntry;
+import fr.cnrs.opentheso.v2.setting.service.ThesaurusWorkLanguageService;
 import fr.cnrs.opentheso.v2.graph.model.GraphViewSummary;
 import lombok.RequiredArgsConstructor;
 import org.apache.commons.lang3.StringUtils;
@@ -21,7 +21,7 @@ public class GraphVisualizationUrlService {
     private String defaultWorkLanguage;
 
     private final GraphViewReadService graphViewReadService;
-    private final PreferenceService preferenceService;
+    private final ThesaurusWorkLanguageService thesaurusWorkLanguageService;
 
     public String buildForceGraphViewerPath() {
         return "/v2/graph/visualize/force.xhtml";
@@ -87,7 +87,6 @@ public class GraphVisualizationUrlService {
         if (StringUtils.isBlank(thesaurusId)) {
             return defaultWorkLanguage;
         }
-        String lang = preferenceService.getWorkLanguageOfThesaurus(thesaurusId);
-        return StringUtils.isBlank(lang) ? defaultWorkLanguage : lang;
+        return thesaurusWorkLanguageService.resolveForThesaurus(thesaurusId);
     }
 }

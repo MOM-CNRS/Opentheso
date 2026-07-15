@@ -1,0 +1,35 @@
+<ui:fragment xmlns="http://www.w3.org/1999/xhtml"
+             xmlns:h="http://xmlns.jcp.org/jsf/html"
+             xmlns:ui="http://xmlns.jcp.org/jsf/facelets"
+             xmlns:p="http://primefaces.org/ui">
+
+    <p:panel style="margin: 20px;">
+        <h:outputText value="#{v2LocaleBean.getMsg('rightbody.alignement')}"
+                      style="font-size: 16px; font-weight: bold; display: block; margin-bottom: 12px;"/>
+
+        <p:messages id="alignmentAdminMessages" showDetail="true" closable="true"/>
+
+        <h:outputText value="#{v2LocaleBean.getMsg('rightbody.concept.alignment')}"
+                      style="display: block; margin-bottom: 8px;"/>
+
+        <p style="margin: 0 0 12px 0; color: #555; font-size: 14px;">
+            L'atelier d'alignement automatique et la gestion des sources d'alignement sont disponibles
+            depuis le panneau concept (ajout / édition / suppression manuelle des alignements).
+        </p>
+
+        <h:panelGroup rendered="#{v2ThesaurusBrowseBean.conceptPanel}">
+            <p:commandButton value="#{v2LocaleBean.getMsg('rightbody.concept.add_alignment_manual')}"
+                             icon="pi pi-plus"
+                             styleClass="ui-button-success"
+                             actionListener="#{v2ConceptAlignmentBean.prepareManualAlignment()}"
+                             process="@this"
+                             update="v2ManualAlignmentDlg"
+                             oncomplete="PF('v2ManualAlignmentDlg').show();"/>
+        </h:panelGroup>
+
+        <h:panelGroup rendered="#{not v2ThesaurusBrowseBean.conceptPanel}">
+            <h:outputText value="Sélectionnez un concept pour gérer ses alignements."
+                          style="font-size: 14px; color: #777;"/>
+        </h:panelGroup>
+    </p:panel>
+</ui:fragment>

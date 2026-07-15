@@ -1,0 +1,49 @@
+<ui:fragment xmlns="http://www.w3.org/1999/xhtml"
+             xmlns:h="http://xmlns.jcp.org/jsf/html"
+             xmlns:ui="http://xmlns.jcp.org/jsf/facelets"
+             xmlns:p="http://primefaces.org/ui">
+
+    <h:panelGroup id="indexPanel" class="user">
+        <div class="form-group">
+            <p:inputText id="indexInput"
+                         placeholder="#{v2LocaleBean.getMsg('indexview.type_character')}"
+                         value="#{v2ThesaurusBrowseBean.indexQuery}"
+                         styleClass="form-control form-control-user"
+                         style="font-size:12px; border-color:#43B572">
+                <p:ajax event="keyup"
+                        listener="#{v2ThesaurusBrowseBean.onIndexChange()}"
+                        update="indexPanel"
+                        delay="500"/>
+            </p:inputText>
+        </div>
+
+        <div style="margin-top:-15px; margin-left:10px; width:100%; text-align:left;">
+            <p:selectBooleanCheckbox value="#{v2ThesaurusBrowseBean.indexPermuted}"
+                                     itemLabel="#{v2LocaleBean.getMsg('indexview.permuted')}"
+                                     style="color:#43B572; font-size:12px;">
+                <p:ajax update="indexPanel" listener="#{v2ThesaurusBrowseBean.onIndexChange()}"/>
+            </p:selectBooleanCheckbox>
+            <p:selectBooleanCheckbox value="#{v2ThesaurusBrowseBean.indexWithAltLabel}"
+                                     itemLabel="#{v2LocaleBean.getMsg('indexview.synonym')}"
+                                     style="color:#43B572; font-size:12px;">
+                <p:ajax update="indexPanel" listener="#{v2ThesaurusBrowseBean.onIndexChange()}"/>
+            </p:selectBooleanCheckbox>
+        </div>
+
+        <p:dataTable id="indexTable"
+                     var="entry"
+                     value="#{v2ThesaurusBrowseBean.indexResults}"
+                     selectionMode="single"
+                     selection="#{v2ThesaurusBrowseBean.indexSelected}"
+                     rowKey="#{entry.nodeId}"
+                     styleClass="borderless"
+                     style="width:auto; border:none; font-size:12px; min-height:400px; max-height:800px; overflow-y:auto;">
+            <p:ajax event="rowSelect"
+                    listener="#{v2ThesaurusBrowseBean.onIndexSelect}"
+                    update="indexTitle containerIndex:rightTab containerIndex:tabTree messageIndex"/>
+            <p:column>
+                <h:outputText value="#{entry.label}" title="#{entry.nodeId}" style="font-size:12px;"/>
+            </p:column>
+        </p:dataTable>
+    </h:panelGroup>
+</ui:fragment>

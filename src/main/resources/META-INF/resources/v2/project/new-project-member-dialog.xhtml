@@ -5,7 +5,7 @@
              xmlns:p="http://primefaces.org/ui">
 
     <p:dialog id="idV2NewProjectMember"
-              header="#{langueBean.getMsg('profile.new_userOnProject')}"
+              header="#{v2LocaleBean.getMsg('profile.new_userOnProject')}"
               widgetVar="v2NewProjectMember"
               width="650" showEffect="fade" modal="true"
               resizable="false" position="top" style="margin-top: 30px">
@@ -15,8 +15,8 @@
 
             <div class="row">
                 <div class="col-5" style="text-align: right">
-                    <h:outputText value="#{langueBean.getMsg('profile.pseudo')} *"
-                                  title="#{langueBean.getMsg('profile.tootltip_user')}"/>
+                    <h:outputText value="#{v2LocaleBean.getMsg('profile.pseudo')} *"
+                                  title="#{v2LocaleBean.getMsg('profile.tootltip_user')}"/>
                 </div>
                 <div class="col-7">
                     <p:inputText value="#{v2MyProjectsBean.memberUsername}" style="width: 100%"/>
@@ -25,7 +25,7 @@
 
             <div class="row" style="margin-top: 5px;">
                 <div class="col-5" style="text-align: right">
-                    <h:outputText value="#{langueBean.getMsg('profile.email')} *"/>
+                    <h:outputText value="#{v2LocaleBean.getMsg('profile.email')} *"/>
                 </div>
                 <div class="col-7">
                     <p:inputText value="#{v2MyProjectsBean.memberEmail}" style="width: 100%" autocomplete="off"/>
@@ -34,7 +34,7 @@
 
             <div class="row" style="margin-top: 5px;">
                 <div class="col-5" style="text-align: right">
-                    <h:outputText value="#{langueBean.getMsg('profile.institution')}"/>
+                    <h:outputText value="#{v2LocaleBean.getMsg('profile.institution')}"/>
                 </div>
                 <div class="col-7">
                     <p:inputText value="#{v2MyProjectsBean.memberInstitution}" style="width: 100%"/>
@@ -43,12 +43,12 @@
 
             <div class="row" style="margin-top: 10px;">
                 <div class="col-5" style="text-align: right">
-                    <h:outputText value="#{langueBean.getMsg('profile.account_creation_method')}"/>
+                    <h:outputText value="#{v2LocaleBean.getMsg('profile.account_creation_method')}"/>
                 </div>
                 <div class="col-7">
                     <p:selectOneRadio value="#{v2MyProjectsBean.memberCreationMode}" layout="lineDirection">
-                        <f:selectItem itemLabel="#{langueBean.getMsg('profile.localPassword')}" itemValue="DIRECT"/>
-                        <f:selectItem itemLabel="#{langueBean.getMsg('profile.emailValidation')}" itemValue="EMAIL"/>
+                        <f:selectItem itemLabel="#{v2LocaleBean.getMsg('profile.localPassword')}" itemValue="DIRECT"/>
+                        <f:selectItem itemLabel="#{v2LocaleBean.getMsg('profile.emailValidation')}" itemValue="EMAIL"/>
                         <p:ajax listener="#{v2MyProjectsBean.updateMemberPasswordFields()}"
                                 update="v2NewProjectMemberForm:passwordChoice"/>
                     </p:selectOneRadio>
@@ -59,16 +59,16 @@
                 <h:panelGroup id="passwordSection" rendered="#{v2MyProjectsBean.memberCreationMode eq 'DIRECT'}">
                     <div class="row" style="margin-top: 5px;">
                         <div class="col-5" style="text-align: right">
-                            <h:outputText value="#{langueBean.getMsg('menu.password')} *"/>
+                            <h:outputText value="#{v2LocaleBean.getMsg('menu.password')} *"/>
                         </div>
                         <div class="col-7">
                             <p:password id="password1" value="#{v2MyProjectsBean.memberPassword1}"
                                         style="width:100%" autocomplete="off"
                                         feedback="true"
-                                        promptLabel="#{langueBean.getMsg('password.prompt')}"
-                                        weakLabel="#{langueBean.getMsg('password.weak')}"
-                                        goodLabel="#{langueBean.getMsg('password.good')}"
-                                        strongLabel="#{langueBean.getMsg('password.strong')}">
+                                        promptLabel="#{v2LocaleBean.getMsg('password.prompt')}"
+                                        weakLabel="#{v2LocaleBean.getMsg('password.weak')}"
+                                        goodLabel="#{v2LocaleBean.getMsg('password.good')}"
+                                        strongLabel="#{v2LocaleBean.getMsg('password.strong')}">
                                 <f:validator validatorId="passwordValidator"/>
                             </p:password>
                             <p:message for="password1"/>
@@ -78,7 +78,7 @@
                     <div class="row" style="margin-top: 5px;">
                         <div class="col-5" style="text-align: right">
                             <h:outputText
-                                    value="#{langueBean.getMsg('profile.confirmation')} #{langueBean.getMsg('menu.password')} * "/>
+                                    value="#{v2LocaleBean.getMsg('profile.confirmation')} #{v2LocaleBean.getMsg('menu.password')} * "/>
                         </div>
                         <div class="col-7">
                             <p:password value="#{v2MyProjectsBean.memberPassword2}" style="width: 100%" autocomplete="off"/>
@@ -89,20 +89,20 @@
 
             <div class="row" style="margin-top: 5px;">
                 <div class="col-5" style="text-align: right">
-                    <h:outputText value="#{langueBean.getMsg('profile.alert_by_email')}"
-                                  title="#{langueBean.getMsg('profile.alert_by_emailTooltip')}"/>
+                    <h:outputText value="#{v2LocaleBean.getMsg('profile.alert_by_email')}"
+                                  title="#{v2LocaleBean.getMsg('profile.alert_by_emailTooltip')}"/>
                 </div>
                 <div class="col-7">
                     <p:toggleSwitch id="isAlertMail" value="#{v2MyProjectsBean.memberAlertMail}" onIcon="pi pi-times"
                                     offIcon="pi pi-check"/>
                 </div>
-                <p:tooltip value="#{langueBean.getMsg('profile.alert_by_emailTooltip')}" showDelay="500"
+                <p:tooltip value="#{v2LocaleBean.getMsg('profile.alert_by_emailTooltip')}" showDelay="500"
                            for="isAlertMail"/>
             </div>
 
             <div class="row" style="margin-top: 5px;">
                 <div class="col-5" style="text-align: right">
-                    <h:outputText value="#{langueBean.getMsg('profile.currentProject')}" style="font-size: 12px;"/>
+                    <h:outputText value="#{v2LocaleBean.getMsg('profile.currentProject')}" style="font-size: 12px;"/>
                 </div>
                 <div class="col-7">
                     <h:outputText value="#{v2MyProjectsBean.selectedProjectName}"/>
@@ -112,7 +112,7 @@
             <h:panelGroup id="userRoleDef">
                 <div class="row" style="margin-top: 5px;">
                     <div class="col-5" style="text-align: right">
-                        <h:outputText value="#{langueBean.getMsg('profile.role')} "/>
+                        <h:outputText value="#{v2LocaleBean.getMsg('profile.role')} "/>
                     </div>
                     <div class="col-7">
                         <p:selectOneMenu value="#{v2MyProjectsBean.memberRoleId}"
@@ -130,8 +130,8 @@
                 <h:panelGroup rendered="#{v2MyProjectsBean.memberRoleLimitedSectionVisible}">
                     <div class="row" style="margin-top: 5px;">
                         <div class="col-5" style="text-align: right">
-                            <h:outputText value="#{langueBean.getMsg('profile.limitRoleOnTheso')}"
-                                          title="#{langueBean.getMsg('profile.limitRoleOnThesoTooltip')}"/>
+                            <h:outputText value="#{v2LocaleBean.getMsg('profile.limitRoleOnTheso')}"
+                                          title="#{v2LocaleBean.getMsg('profile.limitRoleOnThesoTooltip')}"/>
                         </div>
                         <div class="col-7">
                             <p:toggleSwitch id="limitToThesaurus" value="#{v2MyProjectsBean.memberLimitOnThesaurus}"
@@ -140,14 +140,14 @@
                                         update="v2NewProjectMemberForm:userRoleDef"/>
                             </p:toggleSwitch>
                         </div>
-                        <p:tooltip value="#{langueBean.getMsg('profile.limitRoleOnThesoTooltip')}" showDelay="500"
+                        <p:tooltip value="#{v2LocaleBean.getMsg('profile.limitRoleOnThesoTooltip')}" showDelay="500"
                                    for="limitToThesaurus"/>
                     </div>
 
                     <h:panelGroup rendered="#{v2MyProjectsBean.memberLimitOnThesaurus}">
                         <div class="row" style="margin-top: 5px;">
                             <div class="col-5" style="text-align: right">
-                                <h:outputText value="#{langueBean.getMsg('profile.list_of_thesauri')}"
+                                <h:outputText value="#{v2LocaleBean.getMsg('profile.list_of_thesauri')}"
                                               style="font-size: 12px;"/>
                             </div>
                             <div class="col-7">
@@ -165,11 +165,11 @@
             </h:panelGroup>
 
             <div style="width: 100%; text-align: right; margin-top: 15px; margin-bottom: 5px;">
-                <p:commandButton value="#{langueBean.getMsg('candidat.close')}" style="margin-right: 10px"
+                <p:commandButton value="#{v2LocaleBean.getMsg('candidat.close')}" style="margin-right: 10px"
                                  icon="fas fa-undo-alt" styleClass="ui-button-secondary button"
                                  ajax="true" oncomplete="PF('v2NewProjectMember').hide();" update="idV2NewProjectMember"/>
 
-                <p:commandButton id="v2AddMemberBtn" value="#{langueBean.getMsg('btnValidate')}"
+                <p:commandButton id="v2AddMemberBtn" value="#{v2LocaleBean.getMsg('btnValidate')}"
                                  icon="pi pi-check"
                                  styleClass="ui-button-success"
                                  update="messageIndex v2NewProjectMemberForm containerIndex"

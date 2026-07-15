@@ -1,0 +1,185 @@
+<ui:composition
+    xmlns="http://www.w3.org/1999/xhtml"
+    xmlns:p="http://primefaces.org/ui"
+    xmlns:h="http://xmlns.jcp.org/jsf/html"
+    xmlns:f="http://xmlns.jcp.org/jsf/core"
+    xmlns:ui="http://xmlns.jcp.org/jsf/facelets">
+
+    <script>
+        function changeUrl() {
+            const currentUrl = window.location.href;
+            const baseUrl = currentUrl.split('?')[0];
+            history.replaceState(null, '', baseUrl);
+        }
+    </script>
+
+    <nav class="navbar navbar-expand navbar-light bg-white topbar mb-4 static-top shadow" style="height: 40px">
+
+        <button id="sidebarToggleTop" class="btn btn-link d-md-none rounded-circle mr-3" type="button">
+            <i class="fa fa-bars"/>
+        </button>
+
+        <h:panelGroup rendered="#{v2ThesaurusContext.fromUrl}">
+            <p:commandButton icon="pi pi-arrow-circle-left" style="margin-right: 15px"
+                             actionListener="#{v2ConsultationShellBean.clearFromUrl()}" process="@this"
+                             update="menuBar containerIndex indexTitle resultSearchBar"
+                             oncomplete="changeUrl();"/>
+            <h:outputLabel value="#{v2ConsultationShellBean.currentThesaurusTitle}"
+                           style="margin-bottom: 0rem; color: #226b40; font-weight: bold;"/>
+        </h:panelGroup>
+
+        <h:panelGroup rendered="#{not v2ThesaurusContext.fromUrl}">
+            <p:selectOneMenu value="#{v2ConsultationShellBean.selectedProjectId}" filter="true" filterMatchMode="contains"
+                             style="height: 28px; max-width: 400px; border-radius: 50px 0px 0px 50px;
+                                    background-color: #ECF8F1; color: #FFF !important; margin-top: 0px;">
+                <p:ajax event="valueChange" listener="#{v2ConsultationShellBean.onProjectChange()}" process="@this"
+                        update="menuBar containerIndex indexTitle resultSearchBar"
+                        oncomplete="changeUrl();"/>
+                <f:selectItem itemLabel="#{v2LocaleBean.getMsg('menu.all_project')}" itemValue="-1"/>
+                <f:selectItems value="#{v2ConsultationShellBean.projects}" var="project"
+                               itemLabel="#{project.label}" itemValue="#{project.id}"/>
+            </p:selectOneMenu>
+
+            <p:selectOneMenu id="thesoSelect" value="#{v2ConsultationShellBean.selectedThesaurusId}"
+                             style="height: 28px; max-width: 400px; border-radius: 0px 50px 50px 0px; background-color: #ECF8F1;
+                                    color: #FFF !important;"
+                             filter="true" filterMatchMode="contains">
+                <p:ajax event="valueChange" listener="#{v2ConsultationShellBean.onThesaurusChange()}" process="@this"
+                        update="menuBar containerIndex indexTitle resultSearchBar"
+                        oncomplete="changeUrl();"/>
+                <f:selectItem itemLabel="(#{v2LocaleBean.getMsg('menu.select_thesaurus')})" itemValue=""/>
+                <f:selectItems value="#{v2ConsultationShellBean.thesaurusOptions}" var="theso"
+                               itemLabel="#{theso.displayLabel}" itemValue="#{theso.id}"/>
+            </p:selectOneMenu>
+
+            <p:commandLink actionListener="#{v2ConsultationShellBean.reloadThesaurus()}" style="margin-left: 15px;"
+                             update="menuBar containerIndex indexTitle resultSearchBar"
+                             oncomplete="changeUrl();">
+                <i class="fas fa-refresh" style="color: #d1d3e2; font-size: 1.1rem"
+                   title="#{v2LocaleBean.getMsg('menu.reload_thesaurus')}"/>
+            </p:commandLink>
+        </h:panelGroup>
+
+        <p:commandLink update="idClearSession" oncomplete="PF('clearSession').show();"
+                       style="margin-left: 25px;" rendered="#{not v2ThesaurusContext.fromUrl}">
+            <i class="fa fa-eraser" style="color: #78261f; font-size: 1rem;"
+               title="#{v2LocaleBean.getMsg('menu.cleanSession')}"/>
+        </p:commandLink>
+
+        <ul class="navbar-nav ml-auto">
+
+            <h:panelGroup rendered="#{v2PropositionBean.managerOnCurrentThesaurus}"
+                          style="margin-top: 25px; margin-right: 10px" id="v2NotificationProp">
+                <p:commandLink actionListener="#{v2PropositionBean.showPropositionDrawer()}"
+                               rendered="#{v2PropositionBean.pendingCount > 0}" process="@this"
+                               update="v2ListPropositionsPanel">
+                    <p:badge value="#{v2PropositionBean.pendingCount}"
+                             style="background: #ff0000; color: #ffffff; font-size: 0.6rem;
+                             font-weight: 700; min-width: 1rem; height: 1rem; line-height: 1rem;">
+                        <i class="pi pi-bell"/>
+                    </p:badge>
+                </p:commandLink>
+                <p:commandLink actionListener="#{v2PropositionBean.showPropositionDrawer()}"
+                               rendered="#{v2PropositionBean.pendingCount == 0}" process="@this"
+                               update="v2ListPropositionsPanel">
+                    <i class="pi pi-bell" style="color: #d1d3e2; font-size: 1.1rem"/>
+                </p:commandLink>
+            </h:panelGroup>
+
+            <h:panelGroup style="margin-top: 25px; margin-right: 10px" id="openAPIAction">
+                <p:link id="linkOpenApi" href="#{request.contextPath}/swagger-ui/index.html" target="_blank"
+                        style="text-decoration: none;">
+                    <img src="#{request.contextPath}/resources/img/openapi2.png" style="height:20px; margin-right: 10px;" alt="Swagger UI"/>
+                </p:link>
+                <p:tooltip value="OpenApi" for="linkOpenApi"/>
+
+                <p:link id="linkGraphQL" href="#{request.contextPath}/graphiql.html" target="_blank"
+                        style="text-decoration: none;">
+                    <img src="#{request.contextPath}/resources/img/graphql.png" style="height:20px; margin-right: 10px;" alt="GraphQL"/>
+                </p:link>
+                <p:tooltip value="GraphQL" for="linkGraphQL"/>
+            </h:panelGroup>
+
+            <li class="nav-item dropdown no-arrow mx-1">
+                <a class="nav-link dropdown-toggle" href="#" role="button"
+                   data-toggle="dropdown" aria-haspopup="true" aria-expanded="false"
+                   style="margin-top: 3px; font-size: 12px;">
+                    <img src="#{request.contextPath}/resources/img/#{v2LocaleBean.idLangue}.png" width="25px" alt=""/>
+                </a>
+                <div class="dropdown-list dropdown-menu dropdown-menu-right shadow animated--grow-in"
+                     style="font-size: 12px;">
+                    <h6 class="dropdown-header" style="font-size: 12px;">
+                        #{v2LocaleBean.getMsg('menu.availableLanguages')}
+                    </h6>
+                    <p:commandLink class="dropdown-item d-flex align-items-center"
+                                   actionListener="#{v2LocaleBean.changeLangue('fr')}" update="menuBar containerIndex">
+                        <img src="#{request.contextPath}/resources/img/fr.png" width="25px" class="mr-3" alt=""/>
+                        <span class="font-weight-bold" style="font-size: 12px;">#{v2LocaleBean.getMsg('menu.french')}</span>
+                    </p:commandLink>
+                    <p:commandLink class="dropdown-item d-flex align-items-center"
+                                   actionListener="#{v2LocaleBean.changeLangue('en')}" update="menuBar containerIndex">
+                        <img src="#{request.contextPath}/resources/img/en.png" width="25px" class="mr-3" alt=""/>
+                        <span class="font-weight-bold" style="font-size: 12px;">#{v2LocaleBean.getMsg('menu.english')}</span>
+                    </p:commandLink>
+                    <p:commandLink class="dropdown-item d-flex align-items-center"
+                                   actionListener="#{v2LocaleBean.changeLangue('es')}" update="menuBar containerIndex">
+                        <img src="#{request.contextPath}/resources/img/es.png" width="25px" class="mr-3" alt=""/>
+                        <span class="font-weight-bold" style="font-size: 12px;">#{v2LocaleBean.getMsg('menu.spanish')}</span>
+                    </p:commandLink>
+                    <p:commandLink class="dropdown-item d-flex align-items-center"
+                                   actionListener="#{v2LocaleBean.changeLangue('de')}" update="menuBar containerIndex">
+                        <img src="#{request.contextPath}/resources/img/de.png" width="25px" class="mr-3" alt=""/>
+                        <span class="font-weight-bold" style="font-size: 12px;">#{v2LocaleBean.getMsg('menu.german')}</span>
+                    </p:commandLink>
+                    <p:commandLink class="dropdown-item d-flex align-items-center"
+                                   actionListener="#{v2LocaleBean.changeLangue('ar')}" update="menuBar containerIndex">
+                        <img src="#{request.contextPath}/resources/img/flag/dad.png" width="25px" class="mr-3" alt=""/>
+                        <span class="font-weight-bold" style="font-size: 12px;">#{v2LocaleBean.getMsg('menu.arabic')}</span>
+                    </p:commandLink>
+                </div>
+            </li>
+
+            <div class="topbar-divider d-none d-sm-block"/>
+
+            <p:panel rendered="#{not v2UserSession.loggedIn}" style="padding: 0; border: none; background: none;">
+                <li class="nav-item dropdown no-arrow">
+                    <p:commandLink class="nav-link dropdown-toggle" update="idLogin" oncomplete="PF('login').show();">
+                        <span class="mr-2 d-none d-lg-inline text-gray-600 small"
+                              style="font-size: 12px; margin-top: 7px">#{v2LocaleBean.getMsg('menu.login')}</span>
+                        <img class="img-profile rounded-circle" src="#{request.contextPath}/resources/img/logout.png"
+                             style="margin-top: 7px; font-size: 12px;" alt=""/>
+                    </p:commandLink>
+                </li>
+            </p:panel>
+
+            <p:panel rendered="#{v2UserSession.loggedIn}" style="padding: 0; border: none; background: none; font-size: 12px;">
+                <li class="nav-item dropdown no-arrow">
+                    <a class="nav-link dropdown-toggle" href="#" role="button"
+                       data-toggle="dropdown" aria-haspopup="true" aria-expanded="false">
+                        <span class="mr-2 d-none d-lg-inline text-gray-600 small" style="font-size: 14px; margin-top: 7px;">
+                            #{v2UserSession.currentUsername}
+                        </span>
+                        <img class="img-profile rounded-circle" src="#{request.contextPath}/resources/img/undraw_profile.svg"
+                             style="margin-top: 5px; font-size: 12px;" alt=""/>
+                    </a>
+                    <div class="dropdown-menu dropdown-menu-right shadow animated--grow-in">
+                        <p:commandLink class="dropdown-item" actionListener="#{v2NavigationBean.redirectToMyProfile()}"
+                                       style="font-size: 12px; text-decoration:none; color: #818183">
+                            <i class="fas fa-user fa-sm fa-fw mr-2 text-gray-400"/>
+                            #{v2LocaleBean.getMsg('menu.profile')}
+                        </p:commandLink>
+                        <div class="dropdown-divider"/>
+                        <p:commandLink class="dropdown-item" update="idLogout" oncomplete="PF('logout').show();"
+                                       style="font-size: 12px; color: #818183">
+                            <i class="fas fa-sign-out-alt fa-sm fa-fw mr-2 text-gray-400"/>
+                            #{v2LocaleBean.getMsg('menu.logout')}
+                        </p:commandLink>
+                    </div>
+                </li>
+            </p:panel>
+        </ul>
+    </nav>
+
+    <ui:include src="clear-session-dialog.xhtml"/>
+
+</ui:composition>

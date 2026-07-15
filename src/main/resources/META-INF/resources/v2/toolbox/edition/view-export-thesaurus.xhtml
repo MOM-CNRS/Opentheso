@@ -1,21 +1,210 @@
 <ui:fragment xmlns="http://www.w3.org/1999/xhtml"
              xmlns:h="http://java.sun.com/jsf/html"
              xmlns:ui="http://java.sun.com/jsf/facelets"
-             xmlns:p="http://primefaces.org/ui">
+             xmlns:p="http://primefaces.org/ui"
+             xmlns:f="http://xmlns.jcp.org/jsf/core">
+
+    <f:metadata>
+        <f:viewAction action="#{v2ThesaurusExportBean.init(v2EditionBean.selectedThesaurusForAction.id, v2EditionBean.selectedThesaurusForAction.title)}"
+                      rendered="#{v2EditionBean.exportSkosView and v2EditionBean.selectedThesaurusForAction != null}"/>
+        <f:viewAction action="#{v2ThesaurusExportBean.initCsv(v2EditionBean.selectedThesaurusForAction.id, v2EditionBean.selectedThesaurusForAction.title)}"
+                      rendered="#{v2EditionBean.exportCsvView and v2EditionBean.selectedThesaurusForAction != null}"/>
+        <f:viewAction action="#{v2ThesaurusExportBean.initCsvById(v2EditionBean.selectedThesaurusForAction.id, v2EditionBean.selectedThesaurusForAction.title)}"
+                      rendered="#{v2EditionBean.exportCsvIdView and v2EditionBean.selectedThesaurusForAction != null}"/>
+        <f:viewAction action="#{v2ThesaurusExportBean.initCsvStructured(v2EditionBean.selectedThesaurusForAction.id, v2EditionBean.selectedThesaurusForAction.title)}"
+                      rendered="#{v2EditionBean.exportCsvStructureView and v2EditionBean.selectedThesaurusForAction != null}"/>
+        <f:viewAction action="#{v2ThesaurusExportBean.initPdf(v2EditionBean.selectedThesaurusForAction.id, v2EditionBean.selectedThesaurusForAction.title)}"
+                      rendered="#{v2EditionBean.exportPdfView and v2EditionBean.selectedThesaurusForAction != null}"/>
+        <f:viewAction action="#{v2ThesaurusExportBean.initDeprecated(v2EditionBean.selectedThesaurusForAction.id, v2EditionBean.selectedThesaurusForAction.title)}"
+                      rendered="#{v2EditionBean.exportDeprecatedView and v2EditionBean.selectedThesaurusForAction != null}"/>
+    </f:metadata>
 
     <div class="card shadow mb-4" style="padding: 15px; margin: 20px">
         <div class="row" style="margin-bottom: 15px">
             <div class="col-12" style="padding-left: 30px">
-                <h:outputText value="#{langueBean.getMsg('candidat.export')} : " class="h5 mb-0 text-gray-800"/>
+                <h:outputText value="#{v2LocaleBean.getMsg('export.thesaurusExport')} : " class="h5 mb-0 text-gray-800"/>
                 <h:outputText value="#{v2EditionBean.selectedThesaurusForAction.title} (#{v2EditionBean.selectedThesaurusForAction.id})"
                               style="color: #f47b2a" class="h5 mb-0"/>
             </div>
         </div>
+
+        <ui:include src="includes/export-options.xhtml"/>
+
+        <h:panelGroup rendered="#{v2EditionBean.exportSkosView}">
+            <div class="row mb-3">
+                <div class="col-3 text-right">
+                    <h:outputText value="#{v2LocaleBean.getMsg('candidat.output_format')} SKOS"/>
+                </div>
+                <div class="col-5">
+                    <p:selectOneMenu value="#{v2ThesaurusExportBean.formatCode}" style="width: 100%;">
+                        <f:selectItem itemLabel="RDF/XML" itemValue="rdf"/>
+                        <f:selectItem itemLabel="JSON-LD" itemValue="jsonld"/>
+                        <f:selectItem itemLabel="Turtle" itemValue="turtle"/>
+                        <f:selectItem itemLabel="RDF/JSON" itemValue="json"/>
+                    </p:selectOneMenu>
+                </div>
+            </div>
+            <ui:include src="includes/export-download-button.xhtml">
+                <ui:param name="downloadMethod" value="#{v2ThesaurusExportBean.downloadSkos()}"/>
+            </ui:include>
+        </h:panelGroup>
+
+        <h:panelGroup rendered="#{v2EditionBean.exportCsvView}">
+            <div class="row mb-3">
+                <div class="col-3 text-right">
+                    <h:outputText value="#{v2LocaleBean.getMsg('actions.csvDdelimiter')}"/>
+                </div>
+                <div class="col-5">
+                    <p:selectOneMenu value="#{v2ThesaurusExportBean.csvDelimiter}" style="width: 100%;">
+                        <f:selectItem itemLabel="," itemValue=","/>
+                        <f:selectItem itemLabel=";" itemValue=";"/>
+                        <f:selectItem itemLabel="Tab" itemValue="\t"/>
+                    </p:selectOneMenu>
+                </div>
+            </div>
+            <div class="row mb-3">
+                <div class="col-3 text-right">
+                    <h:outputText value="#{v2LocaleBean.getMsg('candidat.language')}"/>
+                </div>
+                <div class="col-5">
+                    <p:selectCheckboxMenu value="#{v2ThesaurusExportBean.selectedLanguageCodes}"
+                                          label="#{v2LocaleBean.getMsg('select')}"
+                                          style="width: 100%;" multiple="true" filter="true">
+                        <f:selectItems value="#{v2ThesaurusExportBean.exportLanguages}" var="lang"
+                                       itemLabel="#{lang.value}" itemValue="#{lang.code}"/>
+                    </p:selectCheckboxMenu>
+                </div>
+            </div>
+            <ui:include src="includes/export-download-button.xhtml">
+                <ui:param name="downloadMethod" value="#{v2ThesaurusExportBean.downloadCsv()}"/>
+            </ui:include>
+        </h:panelGroup>
+
+        <h:panelGroup rendered="#{v2EditionBean.exportCsvIdView}">
+            <div class="row mb-3">
+                <div class="col-3 text-right">
+                    <h:outputText value="#{v2LocaleBean.getMsg('actions.csvDdelimiter')}"/>
+                </div>
+                <div class="col-5">
+                    <p:selectOneMenu value="#{v2ThesaurusExportBean.csvDelimiter}" style="width: 100%;">
+                        <f:selectItem itemLabel="," itemValue=","/>
+                        <f:selectItem itemLabel=";" itemValue=";"/>
+                        <f:selectItem itemLabel="Tab" itemValue="\t"/>
+                    </p:selectOneMenu>
+                </div>
+            </div>
+            <div class="row mb-3">
+                <div class="col-3 text-right">
+                    <h:outputText value="#{v2LocaleBean.getMsg('candidat.language')}"/>
+                </div>
+                <div class="col-5">
+                    <p:selectOneMenu value="#{v2ThesaurusExportBean.csvIdLanguage}" style="width: 100%;">
+                        <f:selectItems value="#{v2ThesaurusExportBean.exportLanguages}" var="lang"
+                                       itemLabel="#{lang.value}" itemValue="#{lang.code}"/>
+                    </p:selectOneMenu>
+                </div>
+            </div>
+            <ui:include src="includes/export-download-button.xhtml">
+                <ui:param name="downloadMethod" value="#{v2ThesaurusExportBean.downloadCsvById()}"/>
+            </ui:include>
+        </h:panelGroup>
+
+        <h:panelGroup rendered="#{v2EditionBean.exportCsvStructureView}">
+            <div class="row mb-3">
+                <div class="col-3 text-right">
+                    <h:outputText value="#{v2LocaleBean.getMsg('candidat.language')}"/>
+                </div>
+                <div class="col-5">
+                    <p:selectOneMenu value="#{v2ThesaurusExportBean.structuredCsvLanguage}" style="width: 100%;">
+                        <f:selectItems value="#{v2ThesaurusExportBean.exportLanguages}" var="lang"
+                                       itemLabel="#{lang.value}" itemValue="#{lang.code}"/>
+                    </p:selectOneMenu>
+                </div>
+            </div>
+            <ui:include src="includes/export-download-button.xhtml">
+                <ui:param name="downloadMethod" value="#{v2ThesaurusExportBean.downloadCsvStructured()}"/>
+            </ui:include>
+        </h:panelGroup>
+
+        <h:panelGroup rendered="#{v2EditionBean.exportPdfView}">
+            <div class="row mb-3">
+                <div class="col-3 text-right">
+                    <h:outputText value="#{v2LocaleBean.getMsg('statistique.type')}"/>
+                </div>
+                <div class="col-5">
+                    <p:selectBooleanCheckbox value="#{v2ThesaurusExportBean.pdfHierarchical}" itemLabel="Hiérarchique"/>
+                </div>
+            </div>
+            <div class="row mb-3">
+                <div class="col-3 text-right">
+                    <h:outputText value="#{v2LocaleBean.getMsg('candidat.language')} 1"/>
+                </div>
+                <div class="col-5">
+                    <p:selectOneMenu value="#{v2ThesaurusExportBean.pdfLanguage1}" style="width: 100%;">
+                        <f:selectItems value="#{v2ThesaurusExportBean.exportLanguages}" var="lang"
+                                       itemLabel="#{lang.value}" itemValue="#{lang.code}"/>
+                    </p:selectOneMenu>
+                </div>
+            </div>
+            <div class="row mb-3">
+                <div class="col-3 text-right">
+                    <h:outputText value="#{v2LocaleBean.getMsg('candidat.language')} 2"/>
+                </div>
+                <div class="col-5">
+                    <p:selectOneMenu value="#{v2ThesaurusExportBean.pdfLanguage2}" style="width: 100%;">
+                        <f:selectItem itemLabel="..." itemValue=""/>
+                        <f:selectItems value="#{v2ThesaurusExportBean.exportLanguages}" var="lang2"
+                                       itemLabel="#{lang2.value}" itemValue="#{lang2.code}"/>
+                    </p:selectOneMenu>
+                </div>
+            </div>
+            <div class="row mb-3">
+                <div class="col-3 text-right">
+                    <h:outputText value="#{v2LocaleBean.getMsg('export.filterAddImage')}"/>
+                </div>
+                <div class="col-5">
+                    <p:toggleSwitch value="#{v2ThesaurusExportBean.includeImages}"/>
+                </div>
+            </div>
+            <ui:include src="includes/export-download-button.xhtml">
+                <ui:param name="downloadMethod" value="#{v2ThesaurusExportBean.downloadPdf()}"/>
+            </ui:include>
+        </h:panelGroup>
+
+        <h:panelGroup rendered="#{v2EditionBean.exportDeprecatedView}">
+            <div class="row mb-3">
+                <div class="col-3 text-right">
+                    <h:outputText value="#{v2LocaleBean.getMsg('candidat.language')}"/>
+                </div>
+                <div class="col-5">
+                    <p:selectOneMenu value="#{v2ThesaurusExportBean.deprecatedLanguage}" style="width: 100%;">
+                        <f:selectItems value="#{v2ThesaurusExportBean.exportLanguages}" var="lang"
+                                       itemLabel="#{lang.value}" itemValue="#{lang.code}"/>
+                    </p:selectOneMenu>
+                </div>
+            </div>
+            <div class="row mb-3">
+                <div class="col-3 text-right">
+                    <h:outputText value="#{v2LocaleBean.getMsg('actions.csvDdelimiter')}"/>
+                </div>
+                <div class="col-5">
+                    <p:selectOneMenu value="#{v2ThesaurusExportBean.csvDelimiter}" style="width: 100%;">
+                        <f:selectItem itemLabel="," itemValue=","/>
+                        <f:selectItem itemLabel=";" itemValue=";"/>
+                        <f:selectItem itemLabel="Tab" itemValue="\t"/>
+                    </p:selectOneMenu>
+                </div>
+            </div>
+            <ui:include src="includes/export-download-button.xhtml">
+                <ui:param name="downloadMethod" value="#{v2ThesaurusExportBean.downloadCsvDeprecated()}"/>
+            </ui:include>
+        </h:panelGroup>
+
         <div class="row" style="margin-top: 30px;">
-            <div class="col-12" style="text-align: center">
-                <p:commandButton value="#{langueBean.getMsg('btnBack')}" styleClass="ui-button-secondary button"
+            <div class="col-12 text-center">
+                <p:commandButton value="#{v2LocaleBean.getMsg('btnBack')}" styleClass="ui-button-secondary button"
                                  icon="fas fa-undo-alt" update="containerIndex"
-                                 action="#{v2EditionBean.showList()}" />
+                                 action="#{v2EditionBean.showList()}"/>
             </div>
         </div>
     </div>

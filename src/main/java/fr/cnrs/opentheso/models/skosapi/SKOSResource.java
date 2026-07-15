@@ -1,6 +1,7 @@
 package fr.cnrs.opentheso.models.skosapi;
 
 
+import fr.cnrs.opentheso.models.terms.ConceptPreferredTermLookup;
 import fr.cnrs.opentheso.models.terms.Term;
 import fr.cnrs.opentheso.models.thesaurus.Thesaurus;
 import fr.cnrs.opentheso.models.nodes.NodeImage;
@@ -357,9 +358,18 @@ public class SKOSResource {
             HashMap<String, ArrayList<String>> idToMatch, HashMap<String, List<String>> idToGPS,
             HashMap<String, ArrayList<NodeImage>> idToImg, ArrayList<String> resourceChecked,
             HashMap<String, ArrayList<Integer>> idToIsTradDiff, TermService termService) {
+        return sortForHiera(isTrad, langCode, langCode2, idToNameHashMap, idToChildId, idToDocumentation,
+                idToMatch, idToGPS, idToImg, resourceChecked, idToIsTradDiff, termService::getThisTerm);
+    }
+
+    public static Comparator<SKOSResource> sortForHiera(boolean isTrad, String langCode,
+            String langCode2, HashMap<String, String> idToNameHashMap, HashMap<String, List<String>> idToChildId, HashMap<String, ArrayList<String>> idToDocumentation,
+            HashMap<String, ArrayList<String>> idToMatch, HashMap<String, List<String>> idToGPS,
+            HashMap<String, ArrayList<NodeImage>> idToImg, ArrayList<String> resourceChecked,
+            HashMap<String, ArrayList<Integer>> idToIsTradDiff, ConceptPreferredTermLookup termLookup) {
 
         return new HieraComparator(isTrad, langCode, langCode2, idToNameHashMap, idToChildId, idToDocumentation,
-                idToMatch, idToGPS, idToImg, resourceChecked, idToIsTradDiff, termService);
+                idToMatch, idToGPS, idToImg, resourceChecked, idToIsTradDiff, termLookup);
     }
 
     private static class HieraComparator implements Comparator<SKOSResource> {
@@ -374,16 +384,16 @@ public class SKOSResource {
         HashMap<String, ArrayList<NodeImage>> idToImg;
         boolean isTrad;
         ArrayList<String> resourceChecked;
-        TermService termService;
+        ConceptPreferredTermLookup termLookup;
         HashMap<String, ArrayList<Integer>> idToIsTradDiff;
 
         public HieraComparator(boolean isTrad, String langCode, String langCode2,
                 HashMap<String, String> idToNameHashMap, HashMap<String, List<String>> idToChildId,
                 HashMap<String, ArrayList<String>> idToDocumentation, HashMap<String, ArrayList<String>> idToMatch,
                 HashMap<String, List<String>> idToGPS, HashMap<String, ArrayList<NodeImage>> idToImg, ArrayList<String> resourceChecked,
-                HashMap<String, ArrayList<Integer>> idToIsTradDiff, TermService termService) {
+                HashMap<String, ArrayList<Integer>> idToIsTradDiff, ConceptPreferredTermLookup termLookup) {
 
-            this.termService = termService;
+            this.termLookup = termLookup;
             this.langCode = langCode;
             this.langCode2 = langCode2;
             this.idToNameHashMap = idToNameHashMap;
@@ -618,7 +628,7 @@ public class SKOSResource {
                 ArrayList<TermTemp> conceptIdsTemps = new ArrayList<>();
                 for (String child : childs) {
                     String idTheso = resource.getLocalUri().substring(resource.getLocalUri().indexOf("idt=") + 4);
-                    Term term = termService.getThisTerm(child, idTheso, langCode);
+                    Term term = termLookup.getThisTerm(child, idTheso, langCode);
                     if (term != null) {
                         TermTemp termTemp = new TermTemp();
                         termTemp.idConcept = child;

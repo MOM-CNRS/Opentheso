@@ -2,10 +2,9 @@ package fr.cnrs.opentheso.v2.candidat.service;
 
 import fr.cnrs.opentheso.models.candidats.CandidatDto;
 import fr.cnrs.opentheso.models.nodes.NodeIdValue;
-import fr.cnrs.opentheso.services.AlignmentService;
-import fr.cnrs.opentheso.services.ImageService;
 import fr.cnrs.opentheso.v2.candidat.mapper.CandidatDetailMapper;
 import fr.cnrs.opentheso.v2.candidat.mapper.CandidatMapper;
+import fr.cnrs.opentheso.v2.candidat.session.CandidatReadLegacySupport;
 import fr.cnrs.opentheso.v2.shared.repository.CandidatQueryRepository;
 import lombok.RequiredArgsConstructor;
 import org.apache.commons.lang3.StringUtils;
@@ -21,8 +20,7 @@ import java.util.Map;
 public class CandidatReadService {
 
     private final CandidatQueryRepository candidatQueryRepository;
-    private final AlignmentService alignmentService;
-    private final ImageService imageService;
+    private final CandidatReadLegacySupport candidatReadLegacySupport;
 
     @Transactional(readOnly = true)
     public List<CandidatDto> loadByStatus(String thesaurusId, String lang, int statusId) {
@@ -57,8 +55,8 @@ public class CandidatReadService {
         }
 
         var detail = bundle.detail();
-        var alignments = alignmentService.getAllAlignmentOfConcept(conceptId, thesaurusId);
-        var images = imageService.getAllExternalImages(thesaurusId, conceptId);
+        var alignments = candidatReadLegacySupport.loadAlignments(conceptId, thesaurusId);
+        var images = candidatReadLegacySupport.loadExternalImages(thesaurusId, conceptId);
 
         CandidatDetailMapper.applyDetails(
                 candidat,

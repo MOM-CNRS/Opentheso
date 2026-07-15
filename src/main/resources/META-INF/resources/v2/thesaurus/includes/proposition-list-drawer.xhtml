@@ -1,0 +1,105 @@
+<ui:fragment xmlns="http://www.w3.org/1999/xhtml"
+             xmlns:h="http://java.sun.com/jsf/html"
+             xmlns:ui="http://java.sun.com/jsf/facelets"
+             xmlns:f="http://xmlns.jcp.org/jsf/core"
+             xmlns:p="http://primefaces.org/ui">
+
+    <h:panelGroup class="notification-bar" id="v2PropositionListBar">
+        <button type="button" onclick="hideV2PropositionListBar()" style="margin: 10px;">Fermer →</button>
+
+        <h:form id="v2ListPropositionsPanel">
+
+            <div style="padding: 5px 15px;">
+                <p:selectOneButton value="#{v2PropositionBean.showAll}">
+                    <f:selectItem itemLabel="#{v2LocaleBean.getMsg('proposition.nouvelles')}" itemValue="#{false}"/>
+                    <f:selectItem itemLabel="#{v2LocaleBean.getMsg('proposition.toutes')}" itemValue="#{true}"/>
+                    <p:ajax event="change" listener="#{v2PropositionBean.toggleShowAll()}" update="v2ListPropositionsPanel"/>
+                </p:selectOneButton>
+            </div>
+
+            <p:scrollPanel style="border: none; padding-left: 10px; max-height: 82vh; overflow-y: auto;" mode="native">
+
+                <p:panel rendered="#{empty v2PropositionBean.propositions}"
+                         style="width: 100%; margin-top: 80px; text-align: center; color: #43B572">
+                    #{v2LocaleBean.getMsg('proposition.aucune_proposition')}
+                </p:panel>
+
+                <ui:repeat var="proposition" value="#{v2PropositionBean.propositions}">
+                    <div class="card py-3 border-left-success" style="margin-top: 5px;">
+                        <div class="list-group" style="margin-left: 10px">
+                            <div class="row">
+                                <div class="col-12">
+                                    <p:tag severity="success" value="#{proposition.thesaurusId}" style="margin-right: 5px"/>
+                                    <p:tag severity="info" value="#{proposition.status}" style="margin-right: 5px"/>
+                                    <p:commandLink value="#{proposition.conceptLabel}"
+                                                   style="font-size: 14px; font-weight: bold; color: #8f8f8f"
+                                                   ajax="false"
+                                                   action="#{v2PropositionBean.openProposition(proposition)}"/>
+                                </div>
+                            </div>
+                            <div class="row">
+                                <div class="col-9">
+                                    <h:outputText value="#{proposition.publishedAt} - #{proposition.authorName}"
+                                                  style="font-size: 14px; color: #8f8f8f"/>
+                                </div>
+                                <div class="col-3" style="text-align: right;">
+                                    <p:commandButton icon="pi pi-eye" styleClass="rounded-button ui-button-flat"
+                                                     title="#{v2LocaleBean.getMsg('proposition.consulter')}"
+                                                     process="@this"
+                                                     actionListener="#{v2PropositionBean.openReview(proposition)}"
+                                                     update=":v2ReviewPropositionForm"
+                                                     oncomplete="PF('v2ReviewProposition').show();"/>
+                                </div>
+                            </div>
+                        </div>
+                    </div>
+                </ui:repeat>
+            </p:scrollPanel>
+        </h:form>
+
+        <p:dialog id="v2ReviewPropositionDlg" header="#{v2LocaleBean.getMsg('proposition.consulter')}"
+                  widgetVar="v2ReviewProposition" width="560" modal="true" resizable="false">
+            <h:form id="v2ReviewPropositionForm">
+                <h:panelGroup rendered="#{v2PropositionBean.selectedProposition != null}">
+                    <div class="row mb-2">
+                        <div class="col-12">
+                            <h:outputText value="#{v2PropositionBean.selectedProposition.conceptLabel}"
+                                          style="color: #C63632; font-weight: bold; font-size: 1.1rem;"/>
+                        </div>
+                    </div>
+                    <div class="row mb-2">
+                        <div class="col-4"><h:outputText value="#{v2LocaleBean.getMsg('profile.name')}"/></div>
+                        <div class="col-8"><h:outputText value="#{v2PropositionBean.selectedProposition.authorName} (#{v2PropositionBean.selectedProposition.authorEmail})"/></div>
+                    </div>
+                    <div class="row mb-2">
+                        <div class="col-4"><h:outputText value="#{v2LocaleBean.getMsg('proposition.commentaire')}"/></div>
+                        <div class="col-8"><h:outputText value="#{v2PropositionBean.selectedProposition.comment}" style="white-space: pre-wrap;"/></div>
+                    </div>
+                    <div class="row mb-3">
+                        <div class="col-4"><h:outputText value="#{v2LocaleBean.getMsg('proposition.reponse')}"/></div>
+                        <div class="col-8">
+                            <p:inputTextarea value="#{v2PropositionBean.reviewComment}" rows="4" style="width: 100%;" autoResize="false"/>
+                        </div>
+                    </div>
+                    <div class="text-right mt-3">
+                        <p:commandButton value="#{v2LocaleBean.getMsg('btnDelete')}" styleClass="ui-button-secondary"
+                                         icon="pi pi-trash" style="margin-right: 8px;"
+                                         actionListener="#{v2PropositionBean.deleteSelected()}"
+                                         oncomplete="PF('v2ReviewProposition').hide();"
+                                         update=":v2ListPropositionsPanel :messageIndex"/>
+                        <p:commandButton value="#{v2LocaleBean.getMsg('proposition.refuser')}" styleClass="ui-button-danger"
+                                         icon="pi pi-times" style="margin-right: 8px;"
+                                         actionListener="#{v2PropositionBean.refuseSelected()}"
+                                         oncomplete="PF('v2ReviewProposition').hide();"
+                                         update=":v2ListPropositionsPanel :messageIndex"/>
+                        <p:commandButton value="#{v2LocaleBean.getMsg('proposition.approuver')}" styleClass="ui-button-success"
+                                         icon="pi pi-check"
+                                         actionListener="#{v2PropositionBean.approveSelected()}"
+                                         oncomplete="PF('v2ReviewProposition').hide();"
+                                         update=":v2ListPropositionsPanel :messageIndex"/>
+                    </div>
+                </h:panelGroup>
+            </h:form>
+        </p:dialog>
+    </h:panelGroup>
+</ui:fragment>

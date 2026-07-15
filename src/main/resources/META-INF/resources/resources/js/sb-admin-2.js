@@ -201,7 +201,10 @@ function closeMenu() {
 }
 
 function initMenu() {
-    document.getElementById("thesoButton1").style.display = "none";
+    var thesoButton1 = document.getElementById("thesoButton1");
+    if (thesoButton1 !== null) {
+        thesoButton1.style.display = "none";
+    }
 
     var candidatButton1 = document.getElementById("candidatButton1");
     if (candidatButton1 !== null) {

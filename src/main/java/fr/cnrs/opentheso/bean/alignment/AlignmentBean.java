@@ -371,6 +371,14 @@ public class AlignmentBean implements Serializable {
         this.alignementSource = alignementSource;
         selectAlignementForAdd = new ArrayList<>();
 
+        ensureAlignementsListLoaded();
+        if (CollectionUtils.isEmpty(allignementsList)) {
+            showMessage(FacesMessage.SEVERITY_WARN,
+                    "Sélectionnez d'abord un concept dans l'arbre avant de lancer une recherche d'alignements.");
+            PrimeFaces.current().ajax().update("messageIndex");
+            return;
+        }
+
         allAlignementFound = alignementAutomatique.searchAlignementsAutomatique(selectedTheso.getCurrentIdTheso(),
                 selectedTheso.getSelectedLang(), allignementsList, alignementSource, nom, prenom, mode, idsAndValues);
 
@@ -384,11 +392,30 @@ public class AlignmentBean implements Serializable {
                 propositionAlignementVisible = false;
                 comparaisonVisible = true;
             }
-            PrimeFaces.current().ajax().update("containerIndex:formRightTab");
+            PrimeFaces.current().ajax().update("containerIndex:rightTab");
         } else {
             FacesContext.getCurrentInstance().addMessage(null, new FacesMessage(FacesMessage.SEVERITY_ERROR,
                     "", "Aucun alignement trouvé !"));
             PrimeFaces.current().ajax().update("messageIndex");
+        }
+    }
+
+    private void ensureAlignementsListLoaded() {
+        if (allignementsList != null) {
+            return;
+        }
+        String idTheso = selectedTheso.getCurrentIdTheso();
+        String lang = selectedTheso.getSelectedLang();
+        if (StringUtils.isAnyBlank(idConceptSelectedForAlignment, idTheso, lang)) {
+            allignementsList = new ArrayList<>();
+            return;
+        }
+        if (CollectionUtils.isEmpty(allIdsOfBranch)) {
+            initAlignementByStep(idTheso, idConceptSelectedForAlignment, lang);
+        }
+        getIdsAndValues2(lang, idTheso);
+        if (allignementsList == null) {
+            allignementsList = new ArrayList<>();
         }
     }
 
@@ -412,7 +439,7 @@ public class AlignmentBean implements Serializable {
         if (CollectionUtils.isNotEmpty(selectAlignementForAdd)) {
             for (NodeAlignment alignment : selectAlignementForAdd) {
                 addSingleAlignment(alignment, selectedTheso.getCurrentIdTheso(), alignment.getInternal_id_concept(),
-                        selectedTheso.getCurrentUser().getNodeUser().getIdUser());
+                        resolveContributorUserId());
             }
 
             allAlignementVisible = true;
@@ -496,7 +523,7 @@ public class AlignmentBean implements Serializable {
             for (SelectedResource selectedResource : alignment.getSelectedImagesList()) {
                 imageService.addExternalImage(idConcept, idTheso, selectedResource.getLocalValue(),
                         alignementSource.getSource(), selectedResource.getGettedValue(), "",
-                        currentUser.getNodeUser().getIdUser());
+                        idUser);
             }
         }
 
@@ -510,7 +537,7 @@ public class AlignmentBean implements Serializable {
         supprimerAlignementLocal(alignementSelect, selectedTheso.getCurrentIdTheso());
 
         addSingleAlignment(alignementSelect, selectedTheso.getCurrentIdTheso(),
-                alignementSelect.getInternal_id_concept(), selectedTheso.getCurrentUser().getNodeUser().getIdUser());
+                alignementSelect.getInternal_id_concept(), resolveContributorUserId());
 
         // Supprimer le nouvel alignement de la liste des propositions des alignements
         allAlignementFound = allAlignementFound.stream()
@@ -567,7 +594,7 @@ public class AlignmentBean implements Serializable {
         addSingleAlignment(alignementSelect,
                 selectedTheso.getCurrentIdTheso(),
                 alignementSelect.getInternal_id_concept(),
-                selectedTheso.getCurrentUser().getNodeUser().getIdUser());
+                resolveContributorUserId());
 
         allAlignementFound = allAlignementFound.stream()
                 .filter(element -> !element.getUri_target().equals(alignementSelect.getUri_target()))
@@ -696,6 +723,9 @@ public class AlignmentBean implements Serializable {
         reset();
         resetAlignmentResult();
         manualAlignmentUri = null;
+        if (allignementsList == null) {
+            allignementsList = new ArrayList<>();
+        }
     }
     
     public void initAlignmentType(){
@@ -1486,7 +1516,7 @@ public class AlignmentBean implements Serializable {
         }
 
         // ajout des images
-        if (!addImages__(idTheso, idConcept)) {
+        if (!addImages__(idTheso, idConcept, idUser)) {
             FacesMessage msg = new FacesMessage(FacesMessage.SEVERITY_ERROR, "Erreur !", " l'ajout des images a achoué !");
             FacesContext.getCurrentInstance().addMessage(null, msg);
             return;
@@ -1554,16 +1584,24 @@ public class AlignmentBean implements Serializable {
         resetVariables();
     }
 
+    private int resolveContributorUserId() {
+        var nodeUser = currentUser.getNodeUser();
+        return nodeUser != null ? nodeUser.getIdUser() : 0;
+    }
+
     private void updateDateOfConcept(String idTheso, String idConcept, int idUser) {
 
         conceptService.updateDateOfConcept(idTheso, idConcept, idUser);
 
-        conceptDcTermRepository.save(ConceptDcTerm.builder()
-                .name(DCMIResource.CONTRIBUTOR)
-                .value(currentUser.getNodeUser().getName())
-                .idConcept(idConcept)
-                .idThesaurus(idTheso)
-                .build());
+        var nodeUser = currentUser.getNodeUser();
+        if (nodeUser != null && StringUtils.isNotBlank(nodeUser.getName())) {
+            conceptDcTermRepository.save(ConceptDcTerm.builder()
+                    .name(DCMIResource.CONTRIBUTOR)
+                    .value(nodeUser.getName())
+                    .idConcept(idConcept)
+                    .idThesaurus(idTheso)
+                    .build());
+        }
     }
 
     /**
@@ -1656,13 +1694,13 @@ public class AlignmentBean implements Serializable {
         return true;
     }
 
-    private boolean addImages__(String idTheso, String idConcept) {
+    private boolean addImages__(String idTheso, String idConcept, int idUser) {
 
         for (SelectedResource selectedResource : imagesOfAlignment) {
             if (selectedResource.isSelected()) {
                 if (ObjectUtils.isEmpty(imageService.addExternalImage(idConcept, idTheso, conceptValueForAlignment,
                         selectedAlignement, selectedResource.getGettedValue(), "",
-                         currentUser.getNodeUser().getIdUser()))) {
+                         idUser))) {
                     error = true;
                     alignementResult = alignementResult + ": Erreur dans l'ajout des images";
                 }

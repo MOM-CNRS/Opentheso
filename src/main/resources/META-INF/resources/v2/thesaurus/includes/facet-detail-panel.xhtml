@@ -1,0 +1,207 @@
+<ui:fragment xmlns="http://www.w3.org/1999/xhtml"
+             xmlns:h="http://xmlns.jcp.org/jsf/html"
+             xmlns:ui="http://xmlns.jcp.org/jsf/facelets"
+             xmlns:p="http://primefaces.org/ui">
+
+  <h:panelGroup rendered="#{v2ThesaurusBrowseBean.selectedFacet != null}" styleClass="textOpentheso" style="margin:30px;">
+    <h:panelGroup rendered="#{v2FacetDetailEditorBean.managerActionsAvailable}" style="margin-bottom:10px;">
+      <p:menuButton icon="pi pi-align-justify" styleClass="ui-button-secondary">
+        <p:menuitem value="#{v2LocaleBean.getMsg('leftbody.facet')}" icon="fas fa-plus"
+                    actionListener="#{v2FacetDetailEditorBean.prepareCreate()}"
+                    oncomplete="PF('v2CreateFacetDlg').show();"
+                    update=":containerIndex:v2CreateFacetDlg"/>
+        <p:menuitem value="#{v2LocaleBean.getMsg('btnDelete')}" icon="fas fa-minus"
+                    oncomplete="PF('v2DeleteFacetDlg').show();"
+                    update=":containerIndex:v2DeleteFacetDlg"/>
+        <p:menuitem value="#{v2LocaleBean.getMsg('group.members')}" icon="fas fa-trash-alt"
+                    oncomplete="PF('v2RemoveAllMembersFromFacetDlg').show();"
+                    update=":containerIndex:v2RemoveAllMembersFromFacetDlg"/>
+      </p:menuButton>
+    </h:panelGroup>
+
+    <div class="row" style="margin-left:0;">
+      <div class="col-12" style="text-align:left;">
+        <h:outputText value="#{v2LocaleBean.getMsg('leftbody.facet')}"
+                      style="font-size:14px; font-weight:bold; font-style:italic;"/>
+      </div>
+    </div>
+
+    <div class="card mb-4 py-3 border-left-success" style="margin:20px;">
+      <div class="list-group">
+
+        <div class="list-group-item list-group-item-action">
+          <div class="row" style="margin-left:0;">
+            <div class="col-xl-3 col-lg-4 col-md-5 col-sm-5">
+              <h:outputText value="#{v2LocaleBean.getMsg('statistique.label')}"
+                            style="font-size:14px; font-weight:bold; color:#8f8f8f;"/>
+            </div>
+            <h:panelGroup rendered="#{v2FacetDetailEditorBean.managerActionsAvailable}">
+              <div class="col-xl-1 col-lg-1 col-md-1 col-sm-1" style="text-align:right;">
+                <p:menuButton icon="fas fa-cog"
+                              style="color:#F7A269; background:none; border:none; box-shadow:none; font-size:12px;">
+                  <p:menuitem value="#{v2LocaleBean.getMsg('candidat.edit')}" icon="fas fa-pen"
+                              actionListener="#{v2FacetDetailEditorBean.prepareModify()}"
+                              oncomplete="PF('v2ModifyFacetDlg').show();"
+                              update=":containerIndex:v2ModifyFacetDlg"/>
+                </p:menuButton>
+              </div>
+            </h:panelGroup>
+            <div class="col-xl-9 col-lg-8 col-md-7 col-sm-7" style="margin-left:-10px;">
+              <h:outputText value="#{v2ThesaurusBrowseBean.selectedFacet.label} (#{v2ThesaurusBrowseBean.selectedFacet.lang})"
+                            style="font-size:14px;"/>
+            </div>
+          </div>
+        </div>
+
+        <div class="list-group-item list-group-item-action">
+          <div class="row" style="margin-left:0; margin-top:10px;">
+            <div class="col-xl-3 col-lg-4 col-md-5 col-sm-5">
+              <h:outputText value="#{v2LocaleBean.getMsg('rightbody.facetdialog.parent_concept')}"
+                            style="font-size:14px; font-weight:bold; color:#8f8f8f;"/>
+            </div>
+            <h:panelGroup rendered="#{v2FacetDetailEditorBean.managerActionsAvailable}">
+              <div class="col-xl-1 col-lg-1 col-md-1 col-sm-1" style="text-align:right;">
+                <p:menuButton icon="fas fa-cog"
+                              style="color:#F7A269; background:none; border:none; box-shadow:none; font-size:12px;">
+                  <p:menuitem value="#{v2LocaleBean.getMsg('candidat.edit')}" icon="fas fa-pen"
+                              actionListener="#{v2FacetDetailEditorBean.prepareChangeParent()}"
+                              oncomplete="PF('v2ChangeFacetParentDlg').show();"
+                              update=":containerIndex:v2ChangeFacetParentDlg"/>
+                </p:menuButton>
+              </div>
+            </h:panelGroup>
+            <div class="col-xl-9 col-lg-8 col-md-7 col-sm-7" style="margin-left:-10px;">
+              <p:commandLink value="#{empty v2ThesaurusBrowseBean.selectedFacet.parentConceptLabel
+                                      ? '('.concat(v2ThesaurusBrowseBean.selectedFacet.parentConceptId).concat(')')
+                                      : v2ThesaurusBrowseBean.selectedFacet.parentConceptLabel}"
+                             action="#{v2ThesaurusBrowseBean.openConcept(v2ThesaurusBrowseBean.selectedFacet.parentConceptId)}"
+                             process="@this"
+                             update=":containerIndex:rightTab :containerIndex:formLeftTab"
+                             style="color:#601e18; font-size:14px;"/>
+            </div>
+          </div>
+        </div>
+
+        <div class="list-group-item list-group-item-action">
+          <div class="row" style="margin-left:0; margin-top:10px;">
+            <div class="col-xl-3 col-lg-4 col-md-5 col-sm-5">
+              <h:outputText value="#{v2LocaleBean.getMsg('group.members')}"
+                            style="font-size:14px; font-weight:bold; color:#8f8f8f;"/>
+            </div>
+            <h:panelGroup rendered="#{v2FacetDetailEditorBean.managerActionsAvailable}">
+              <div class="col-xl-1 col-lg-1 col-md-1 col-sm-1" style="text-align:right;">
+                <p:menuButton icon="fas fa-cog"
+                              style="color:#F7A269; background:none; border:none; box-shadow:none; font-size:12px;">
+                  <p:menuitem value="#{v2LocaleBean.getMsg('group.members')}" icon="fas fa-plus"
+                              actionListener="#{v2FacetDetailEditorBean.prepareAddMember()}"
+                              oncomplete="PF('v2AddMemberToFacetDlg').show();"
+                              update=":containerIndex:v2AddMemberToFacetDlg"/>
+                  <p:menuitem value="#{v2LocaleBean.getMsg('rightbody.conceptdialog.add_all_to_group')}" icon="fas fa-sitemap"
+                              actionListener="#{v2FacetDetailEditorBean.prepareAddBranchMember()}"
+                              oncomplete="PF('v2FacetAddBranchMemberDlg').show();"
+                              update=":containerIndex:v2FacetAddBranchMemberDlg"/>
+                  <p:menuitem value="#{v2LocaleBean.getMsg('rightbody.conceptdialog.remove_all_from_group')}" icon="fas fa-cut"
+                              actionListener="#{v2FacetDetailEditorBean.prepareRemoveBranchMember()}"
+                              oncomplete="PF('v2FacetRemoveBranchMemberDlg').show();"
+                              update=":containerIndex:v2FacetRemoveBranchMemberDlg"/>
+                </p:menuButton>
+              </div>
+            </h:panelGroup>
+            <div class="col-xl-9 col-lg-8 col-md-7 col-sm-7" style="margin-left:-10px;">
+              <h:panelGroup rendered="#{empty v2ThesaurusBrowseBean.selectedFacet.members}">
+                <h:outputText value="....." style="color:grey; font-style:italic;"/>
+              </h:panelGroup>
+              <ui:repeat value="#{v2ThesaurusBrowseBean.selectedFacet.members}" var="member" varStatus="status">
+                <p:commandLink value="#{empty member.label ? '('.concat(member.conceptId).concat(')') : member.label}"
+                               action="#{v2ThesaurusBrowseBean.openConcept(member.conceptId)}"
+                               process="@this"
+                               update=":containerIndex:rightTab :containerIndex:formLeftTab"
+                               style="color:#601e18; font-size:14px;"/>
+                <p:commandLink rendered="#{v2FacetDetailEditorBean.managerActionsAvailable}"
+                               actionListener="#{v2FacetDetailEditorBean.submitRemoveMember(member.conceptId)}"
+                               process="@this" update=":containerIndex:rightTab :messageIndex"
+                               style="margin-left:4px; color:#FF7979;">
+                  <i class="pi pi-times"/>
+                </p:commandLink>
+                <h:outputText value=", " rendered="#{not status.last}" style="color:#FF7979;"/>
+              </ui:repeat>
+            </div>
+          </div>
+        </div>
+
+        <h:panelGroup rendered="#{not empty v2ThesaurusBrowseBean.selectedFacet.translations}">
+          <div class="list-group-item list-group-item-action">
+            <div class="row" style="margin-left:0; margin-top:10px;">
+              <div class="col-xl-3 col-lg-4 col-md-5 col-sm-5">
+                <h:outputText value="#{v2LocaleBean.getMsg('candidat.traduction')}"
+                              style="font-size:14px; font-weight:bold; color:#8f8f8f;"/>
+              </div>
+              <h:panelGroup rendered="#{v2FacetDetailEditorBean.managerActionsAvailable}">
+                <div class="col-xl-1 col-lg-1 col-md-1 col-sm-1" style="text-align:right;">
+                  <p:menuButton icon="fas fa-cog"
+                                style="color:#F7A269; background:none; border:none; box-shadow:none; font-size:12px;">
+                    <p:menuitem value="#{v2LocaleBean.getMsg('rightbody.concept.add_traduction')}" icon="fas fa-plus"
+                                actionListener="#{v2FacetDetailEditorBean.prepareAddTranslation()}"
+                                oncomplete="PF('v2AddFacetTranslationDlg').show();"
+                                update=":containerIndex:v2AddFacetTranslationDlg"/>
+                    <p:menuitem value="#{v2LocaleBean.getMsg('rightbody.concept.edit_traduction')}" icon="fas fa-pen"
+                                actionListener="#{v2FacetDetailEditorBean.prepareEditTranslations()}"
+                                oncomplete="PF('v2EditFacetTranslationsDlg').show();"
+                                update=":containerIndex:v2EditFacetTranslationsDlg"/>
+                    <p:menuitem value="#{v2LocaleBean.getMsg('rightbody.concept.delete_traduction')}" icon="fas fa-trash-alt"
+                                actionListener="#{v2FacetDetailEditorBean.prepareDeleteTranslation()}"
+                                oncomplete="PF('v2DeleteFacetTranslationDlg').show();"
+                                update=":containerIndex:v2DeleteFacetTranslationDlg"/>
+                  </p:menuButton>
+                </div>
+              </h:panelGroup>
+              <div class="col-xl-9 col-lg-8 col-md-7 col-sm-7" style="margin-left:-10px;">
+                <ui:repeat value="#{v2ThesaurusBrowseBean.selectedFacet.translations}" var="translation">
+                  <h:outputText value="#{translation.value} (#{translation.lang})" style="font-size:14px;"/>
+                  <br/>
+                </ui:repeat>
+              </div>
+            </div>
+          </div>
+        </h:panelGroup>
+
+      </div>
+    </div>
+
+    <h:panelGroup rendered="#{not empty v2ThesaurusBrowseBean.selectedFacet.notes or v2FacetNoteEditorBean.noteActionsAvailable}">
+      <div class="card mb-4 py-3 border-left-success" style="margin:20px;">
+        <div class="list-group">
+          <div class="list-group-item list-group-item-action">
+            <h:outputText value="#{v2LocaleBean.getMsg('rightbody.concept.all_note')}"
+                          style="color:#78261f; font-size:14px; font-weight:bold;"/>
+            <h:panelGroup rendered="#{v2FacetNoteEditorBean.noteActionsAvailable}"
+                          style="display:inline-block; margin-left:8px;">
+              <p:commandButton title="#{v2LocaleBean.getMsg('rightbody.concept.manage_note')}"
+                               styleClass="rounded-button ui-button-warning ui-button-flat"
+                               icon="fas fa-cog" style="color:#f47b2a"
+                               process="@this"
+                               actionListener="#{v2FacetNoteEditorBean.prepareManageNote()}"
+                               update="v2FacetManageNoteForm"
+                               oncomplete="PF('v2FacetManageNoteDlg').show();"/>
+              <p:commandButton title="#{v2LocaleBean.getMsg('rightbody.concept.delete_note')}"
+                               styleClass="rounded-button ui-button-danger ui-button-flat"
+                               icon="fas fa-trash-alt" style="color:#C63632; margin-left:4px;"
+                               process="@this"
+                               actionListener="#{v2FacetNoteEditorBean.prepareDeleteNotes()}"
+                               update="v2FacetDeleteNoteForm"
+                               oncomplete="PF('v2FacetDeleteNoteDlg').show();"/>
+            </h:panelGroup>
+          </div>
+          <ui:repeat value="#{v2ThesaurusBrowseBean.selectedFacet.notes}" var="note">
+            <div class="list-group-item list-group-item-action" style="margin-left:20px;">
+              <h:outputText value="#{note.typeCode}: " style="font-size:14px; color:#8f8f8f;"/>
+              <h:outputText value="#{note.value}" escape="false" style="font-size:14px;"/>
+              <h:outputText value=" (#{note.lang})" style="font-size:14px; font-weight:300;"/>
+            </div>
+          </ui:repeat>
+        </div>
+      </div>
+    </h:panelGroup>
+    <ui:include src="dialogs/facet-note-dialogs.xhtml"/>
+  </h:panelGroup>
+</ui:fragment>

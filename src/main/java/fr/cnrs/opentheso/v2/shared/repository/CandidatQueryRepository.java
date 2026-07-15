@@ -231,6 +231,9 @@ public class CandidatQueryRepository {
                      JOIN users u ON c.id_user = u.id_user
                      WHERE c.id_concept = :conceptId
                        AND c.id_thesaurus = :thesaurusId) AS messages_json
+                FROM concept anchor
+                WHERE anchor.id_concept = :conceptId
+                  AND anchor.id_thesaurus = :thesaurusId
                 """;
         try {
             Object[] row = (Object[]) entityManager.createNativeQuery(sql)

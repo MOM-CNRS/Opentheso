@@ -4,7 +4,7 @@
              xmlns:p="http://primefaces.org/ui"
              xmlns:f="http://xmlns.jcp.org/jsf/core">
 
-    <p:dialog id="idV2AddExistingMember" header="#{langueBean.getMsg('profile.tooltip_add_existing_user')}"
+    <p:dialog id="idV2AddExistingMember" header="#{v2LocaleBean.getMsg('profile.tooltip_add_existing_user')}"
               widgetVar="v2AddExistingMember"
               width="450" showEffect="fade" modal="true" resizable="false" position="top"
               style="margin-top: 30px">
@@ -12,7 +12,7 @@
         <h:form id="v2AddExistingMemberForm">
             <div class="row">
                 <div class="col-5">
-                    <h:outputText value="#{langueBean.getMsg('profile.project')} : " style="font-size: 12px;"/>
+                    <h:outputText value="#{v2LocaleBean.getMsg('profile.project')} : " style="font-size: 12px;"/>
                 </div>
                 <div class="col-7">
                     <h:outputText value="#{v2MyProjectsBean.selectedProjectName}"
@@ -22,7 +22,7 @@
 
             <div class="row" style="margin-top: 5px;">
                 <div class="col-5">
-                    <h:outputText value="#{langueBean.getMsg('profile.user')} : " style="font-size: 12px;"/>
+                    <h:outputText value="#{v2LocaleBean.getMsg('profile.user')} : " style="font-size: 12px;"/>
                 </div>
                 <div class="col-7">
                     <p:autoComplete value="#{v2MyProjectsBean.selectedExistingUser}" var="user"
@@ -42,7 +42,7 @@
 
             <div class="row" style="margin-top: 5px;">
                 <div class="col-5">
-                    <h:outputText value="#{langueBean.getMsg('profile.role')} : " style="font-size: 12px;"/>
+                    <h:outputText value="#{v2LocaleBean.getMsg('profile.role')} : " style="font-size: 12px;"/>
                 </div>
                 <div class="col-7">
                     <p:selectOneMenu value="#{v2MyProjectsBean.existingMemberRoleId}"
@@ -58,12 +58,12 @@
 
             <p:spacer/>
             <div style="width: 100%; text-align: right; margin-top: 5px; margin-bottom: 5px;">
-                <p:commandButton value="#{langueBean.getMsg('candidat.close')}" style="margin-right: 10px"
+                <p:commandButton value="#{v2LocaleBean.getMsg('candidat.close')}" style="margin-right: 10px"
                                  icon="fas fa-undo-alt" styleClass="ui-button-secondary button"
                                  oncomplete="PF('v2AddExistingMember').hide();"
                                  update="idV2AddExistingMember"/>
 
-                <p:commandButton value="#{langueBean.getMsg('btnAdd')}" styleClass="ui-button-success"
+                <p:commandButton value="#{v2LocaleBean.getMsg('btnAdd')}" styleClass="ui-button-success"
                                  update="containerIndex messageIndex" icon="pi pi-check"
                                  action="#{v2MyProjectsBean.addExistingMember()}"/>
             </div>

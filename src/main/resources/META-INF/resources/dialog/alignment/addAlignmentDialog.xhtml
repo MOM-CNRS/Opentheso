@@ -108,7 +108,7 @@
                             <div class="col-3">
                                 <p:commandButton value="#{langueBean.getMsg('btnValidate')}" styleClass="ui-button-success" icon="pi pi-check"
                                                  ajax="true" process="@form"
-                                                 update="containerIndex:searchAlignementForm containerIndex:formRightTab messageIndex"
+                                                 update=":containerIndex:searchAlignementForm :containerIndex:rightTab messageIndex"
                                                  action="#{alignmentBean.addManualAlignement(selectedThesaurus.selectedIdTheso,
                                                            alignmentBean.idConceptSelectedForAlignment,
                                                            currentUser.nodeUser.idUser)}"
@@ -299,11 +299,11 @@
                         <div class="col-3 offset-6">
                         <p:commandButton value="#{langueBean.getMsg('candidat.close')}" styleClass="ui-button-secondary button" icon="fas fa-undo-alt"
                                          style="margin-right: 10px"
-                                         actionListener="PF('searchAlignement').hide();" update="containerIndex:searchAlignementID"/>
+                                         actionListener="PF('searchAlignement').hide();" update=":containerIndex:searchAlignementID"/>
                         </div>
                         <div class="col-3">
                         <p:commandButton id="addTraductionBtn" value="#{langueBean.getMsg('btnValidate')}" styleClass="ui-button-success" icon="pi pi-check"
-                                         update=":containerIndex:searchAlignementForm containerIndex:formRightTab messageIndex"
+                                         update=":containerIndex:searchAlignementForm :containerIndex:rightTab messageIndex"
                                          oncomplete="PF('searchAlignement').hide();"
                                          ajax="true" process="@form"
                                          actionListener="#{alignmentBean.addAlignment(

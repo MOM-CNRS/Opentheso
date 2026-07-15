@@ -1,6 +1,6 @@
 package fr.cnrs.opentheso.v2.admin.ui;
 
-import fr.cnrs.opentheso.bean.language.LanguageBean;
+import fr.cnrs.opentheso.v2.shared.ui.V2LocaleBean;
 import fr.cnrs.opentheso.utils.MessageUtils;
 import fr.cnrs.opentheso.v2.admin.model.AdminThesaurus;
 import fr.cnrs.opentheso.v2.admin.service.AdminCatalogService;
@@ -23,16 +23,16 @@ import java.util.List;
 public class AllThesauriBean implements Serializable {
 
     private final UserSession userSession;
-    private final LanguageBean languageBean;
+    private final V2LocaleBean localeBean;
     private final AdminCatalogService adminCatalogService;
 
     public AllThesauriBean(
             UserSession userSession,
-            LanguageBean languageBean,
+            V2LocaleBean localeBean,
             AdminCatalogService adminCatalogService
     ) {
         this.userSession = userSession;
-        this.languageBean = languageBean;
+        this.localeBean = localeBean;
         this.adminCatalogService = adminCatalogService;
     }
 
@@ -46,7 +46,7 @@ public class AllThesauriBean implements Serializable {
             clearState();
             return;
         }
-        thesauri = adminCatalogService.listAllThesauri(true, languageBean.getIdLangue());
+        thesauri = adminCatalogService.listAllThesauri(true, localeBean.getIdLangue());
     }
 
     public void prepareMoveDialog(String thesaurusId, String thesaurusTitle) {
@@ -72,7 +72,7 @@ public class AllThesauriBean implements Serializable {
             return;
         }
         adminCatalogService.moveThesaurus(true, selectedThesaurusId, targetProject.id());
-        MessageUtils.showInformationMessage(languageBean.getMsg("project.thesaurusMovedSuccess"));
+        MessageUtils.showInformationMessage(localeBean.getMsg("project.thesaurusMovedSuccess"));
         load();
         PrimeFaces.current().ajax().update("containerIndex messageIndex");
     }

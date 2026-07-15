@@ -1,7 +1,5 @@
 package fr.cnrs.opentheso.v2.shared.auth;
 
-import fr.cnrs.opentheso.entites.User;
-import fr.cnrs.opentheso.services.ApiKeyService;
 import fr.cnrs.opentheso.ws.openapi.exception.ApiKeyInvalidException;
 import fr.cnrs.opentheso.ws.openapi.exception.ApiKeyMissingException;
 import fr.cnrs.opentheso.ws.openapi.helper.ApiKeyState;
@@ -12,15 +10,14 @@ import org.springframework.stereotype.Service;
 @RequiredArgsConstructor
 public class ApiKeyAuthenticationService {
 
-    private final ApiKeyService apiKeyService;
+    private final ApiKeyLookupService apiKeyLookupService;
 
     public int resolveUserId(String xApiKey, String legacyApiKey) {
         String apiKey = firstNonBlank(xApiKey, legacyApiKey);
         if (apiKey == null) {
             throw new ApiKeyMissingException();
         }
-        return apiKeyService.findUserByApiKey(apiKey)
-                .map(User::getId)
+        return apiKeyLookupService.findUserIdByApiKey(apiKey)
                 .orElseThrow(() -> new ApiKeyInvalidException(ApiKeyState.INVALID));
     }
 

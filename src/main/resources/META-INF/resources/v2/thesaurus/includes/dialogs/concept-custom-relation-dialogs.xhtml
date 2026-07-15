@@ -1,0 +1,78 @@
+<ui:fragment xmlns="http://www.w3.org/1999/xhtml"
+             xmlns:ui="http://xmlns.jcp.org/jsf/facelets"
+             xmlns:p="http://primefaces.org/ui"
+             xmlns:h="http://xmlns.jcp.org/jsf/html"
+             xmlns:f="http://xmlns.jcp.org/jsf/core">
+
+    <p:dialog id="v2AddCustomRelationDlg" header="#{v2LocaleBean.getMsg('rightbody.concept.addCustomRelation')}"
+              widgetVar="v2AddCustomRelationDlg" width="520" modal="true" resizable="false">
+        <h:form id="v2AddCustomRelationForm">
+            <p:defaultCommand target="v2AddCustomRelationSubmit"/>
+            <div class="row mb-2">
+                <div class="col-12">
+                    <h:outputText value="#{v2LocaleBean.getMsg('rightbody.conceptdialog.nameOfConcept')} : "/>
+                    <h:outputText value="#{v2ConceptRelationEditorBean.currentConceptLabel}" style="color:#C63632;"/>
+                </div>
+            </div>
+            <div class="row mb-2">
+                <div class="col-4">
+                    <h:outputText value="#{v2LocaleBean.getMsg('rightbody.concept.customRelation')} : "/>
+                </div>
+                <div class="col-8">
+                    <p:autoComplete value="#{v2ConceptRelationEditorBean.searchSelected}"
+                                    var="values" style="width:100%;"
+                                    forceSelection="true"
+                                    completeMethod="#{v2ConceptRelationEditorBean.autocompleteRelationTarget}"
+                                    minQueryLength="1" itemLabel="#{values.prefLabel}" itemValue="#{values}"
+                                    converter="v2ConceptSearchConverter" scrollHeight="400"
+                                    inputStyle="width:100%;">
+                        <p:column rendered="#{values.isAltLabel()}">
+                            <h:outputText title="#{values.idConcept}" value="#{values.altLabel}" style="font-style:italic;"/>
+                            <h:outputText title="#{values.idConcept}" value=" -&gt; #{values.prefLabel}" style="color:blue;"/>
+                        </p:column>
+                        <p:column rendered="#{not values.isAltLabel()}">
+                            <h:outputText title="#{values.idConcept}" value="#{values.prefLabel}"/>
+                        </p:column>
+                    </p:autoComplete>
+                </div>
+            </div>
+            <div class="text-right mt-3">
+                <p:commandButton value="#{v2LocaleBean.getMsg('btnCancel')}" styleClass="ui-button-secondary"
+                                 type="button" onclick="PF('v2AddCustomRelationDlg').hide();" style="margin-right:8px;"/>
+                <p:commandButton id="v2AddCustomRelationSubmit" value="#{v2LocaleBean.getMsg('btnValidate')}"
+                                 styleClass="ui-button-success"
+                                 actionListener="#{v2ConceptRelationEditorBean.submitAddCustomRelation()}"
+                                 update="v2AddCustomRelationForm :containerIndex:rightTab :containerIndex:formLeftTab :messageIndex"
+                                 process="@form"/>
+            </div>
+        </h:form>
+    </p:dialog>
+
+    <p:dialog id="v2DeleteCustomRelationDlg" header="#{v2LocaleBean.getMsg('rightbody.concept.deleteCustomRelation')}"
+              widgetVar="v2DeleteCustomRelationDlg" width="560" modal="true" resizable="false">
+        <h:form id="v2DeleteCustomRelationForm">
+            <div class="row mb-2">
+                <div class="col-12">
+                    <h:outputText value="#{v2LocaleBean.getMsg('rightbody.conceptdialog.nameOfConcept')} : "/>
+                    <h:outputText value="#{v2ConceptRelationEditorBean.currentConceptLabel}" style="color:#C63632;"/>
+                </div>
+            </div>
+            <p:dataTable var="custom" value="#{v2ConceptRelationEditorBean.customRelationsToDelete}"
+                         lazy="false" size="small" styleClass="products-table">
+                <p:column headerText="#{v2LocaleBean.getMsg('rightbody.concept.customRelation')}">
+                    <h:outputText value="#{custom.relationLabel}"/>
+                </p:column>
+                <p:column headerText="Label">
+                    <h:outputText value="#{empty custom.targetLabel ? '('.concat(custom.targetConceptId).concat(')') : custom.targetLabel}"/>
+                </p:column>
+                <p:column width="80" headerText="#{v2LocaleBean.getMsg('btnDelete')}">
+                    <p:commandLink style="color:#FF7979;" process="@form" ajax="true"
+                                   actionListener="#{v2ConceptRelationEditorBean.submitDeleteCustomRelation(custom.targetConceptId, custom.relationCode, custom.reciprocal)}"
+                                   update="v2DeleteCustomRelationForm :containerIndex:rightTab :containerIndex:formLeftTab :messageIndex">
+                        <i class="pi pi-trash"/>
+                    </p:commandLink>
+                </p:column>
+            </p:dataTable>
+        </h:form>
+    </p:dialog>
+</ui:fragment>

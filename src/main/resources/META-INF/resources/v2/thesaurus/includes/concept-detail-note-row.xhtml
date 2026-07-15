@@ -1,0 +1,23 @@
+<ui:fragment xmlns="http://www.w3.org/1999/xhtml"
+             xmlns:h="http://xmlns.jcp.org/jsf/html"
+             xmlns:ui="http://xmlns.jcp.org/jsf/facelets"
+             xmlns:p="http://primefaces.org/ui">
+
+  <h:panelGroup rendered="#{v2ThesaurusBrowseBean.hasNotesOfType(noteType)}">
+    <div class="list-group-item list-group-item-action">
+      <div class="row" style="margin-left: 0; margin-bottom: 5px;">
+        <div class="col-xl-3 col-lg-4 col-md-5 col-sm-5">
+          <h:outputText value="#{v2LocaleBean.getMsg(noteMessageKey)}"
+                        style="font-size: 14px; font-weight: bold; color: #8f8f8f;"/>
+        </div>
+        <div class="col-xl-9 col-lg-8 col-md-7 col-sm-7" style="margin-left: -10px;">
+          <ui:repeat value="#{v2ThesaurusBrowseBean.notesOfType(noteType)}" var="note">
+            <h:outputText value="#{note.value}" escape="false" style="font-size: 14px; white-space: pre-wrap;"/>
+            <h:outputText value=" (#{note.lang})" style="font-size: 14px; font-weight: 300;"/>
+            <br/>
+          </ui:repeat>
+        </div>
+      </div>
+    </div>
+  </h:panelGroup>
+</ui:fragment>

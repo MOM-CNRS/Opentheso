@@ -30,7 +30,7 @@ public class ResetPasswordBean implements Serializable {
     public void redirectToHome() {
         try {
             FacesContext.getCurrentInstance().getExternalContext().redirect(
-                    FacesContext.getCurrentInstance().getExternalContext().getRequestContextPath() + "/index.xhtml"
+                    FacesContext.getCurrentInstance().getExternalContext().getRequestContextPath() + "/v2/thesaurus"
             );
         } catch (IOException e) {
             e.printStackTrace();

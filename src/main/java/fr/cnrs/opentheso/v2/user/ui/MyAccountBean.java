@@ -1,6 +1,6 @@
 package fr.cnrs.opentheso.v2.user.ui;
 
-import fr.cnrs.opentheso.bean.language.LanguageBean;
+import fr.cnrs.opentheso.v2.shared.ui.V2LocaleBean;
 import fr.cnrs.opentheso.utils.MessageUtils;
 import fr.cnrs.opentheso.v2.shared.ui.UserSession;
 import fr.cnrs.opentheso.v2.user.exception.ApiKeyRegenerationException;
@@ -32,7 +32,7 @@ public class MyAccountBean implements Serializable {
     private static final String HEADER_UPDATE_TARGET = "containerIndex";
 
     private final UserSession userSession;
-    private final LanguageBean languageBean;
+    private final V2LocaleBean localeBean;
     private final UserProfileService userProfileService;
     private final UserApiKeyService userApiKeyService;
 
@@ -45,12 +45,12 @@ public class MyAccountBean implements Serializable {
 
     public MyAccountBean(
             UserSession userSession,
-            LanguageBean languageBean,
+            V2LocaleBean localeBean,
             UserProfileService userProfileService,
             UserApiKeyService userApiKeyService
     ) {
         this.userSession = userSession;
-        this.languageBean = languageBean;
+        this.localeBean = localeBean;
         this.userProfileService = userProfileService;
         this.userApiKeyService = userApiKeyService;
     }
@@ -71,7 +71,7 @@ public class MyAccountBean implements Serializable {
     public void updateUsername() {
         applyProfileUpdate(
                 userId -> userProfileService.updateUsername(userId, editableUsername),
-                languageBean.getMsg("profile.usernameChangedSuccess"),
+                localeBean.getMsg("profile.usernameChangedSuccess"),
                 () -> userSession.refreshDisplayName(profile.username())
         );
     }
@@ -79,7 +79,7 @@ public class MyAccountBean implements Serializable {
     public void updateEmail() {
         applyProfileUpdate(
                 userId -> userProfileService.updateEmail(userId, editableEmail),
-                languageBean.getMsg("profile.emailChangedSuccess"),
+                localeBean.getMsg("profile.emailChangedSuccess"),
                 () -> userSession.refreshEmail(profile.email())
         );
     }
@@ -87,7 +87,7 @@ public class MyAccountBean implements Serializable {
     public void updateAlertMail() {
         applyProfileUpdate(
                 userId -> userProfileService.updateAlertMail(userId, editableAlertMail),
-                languageBean.getMsg("profile.alertChangedSuccess"),
+                localeBean.getMsg("profile.alertChangedSuccess"),
                 () -> userSession.refreshAlertMail(profile.alertMail())
         );
     }
@@ -101,7 +101,7 @@ public class MyAccountBean implements Serializable {
             var result = userApiKeyService.regenerateApiKey(userId);
             profile = result.profile();
             apiKeyPlain = result.plainTextKey();
-            MessageUtils.showInformationMessage(languageBean.getMsg("profile.apiKeySavedSuccess"));
+            MessageUtils.showInformationMessage(localeBean.getMsg("profile.apiKeySavedSuccess"));
         } catch (ApiKeyRegenerationException e) {
             MessageUtils.showErrorMessage(e.getMessage());
         }
@@ -174,7 +174,7 @@ public class MyAccountBean implements Serializable {
     private Integer requireConnectedUserId() {
         Integer userId = userSession.getCurrentUserId();
         if (userId == null) {
-            MessageUtils.showErrorMessage(languageBean.getMsg("profile.userNotConnected"));
+            MessageUtils.showErrorMessage(localeBean.getMsg("profile.userNotConnected"));
         }
         return userId;
     }

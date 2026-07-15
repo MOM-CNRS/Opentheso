@@ -3,8 +3,8 @@ package fr.cnrs.opentheso.v2.candidat.service;
 import fr.cnrs.opentheso.entites.Preferences;
 import fr.cnrs.opentheso.models.candidats.CandidatDto;
 import fr.cnrs.opentheso.models.skosapi.SKOSResource;
-import fr.cnrs.opentheso.services.PreferenceService;
-import fr.cnrs.opentheso.services.exports.rdf4j.ExportRdf4jHelperNew;
+import fr.cnrs.opentheso.v2.candidat.session.CandidatExportLegacySupport;
+import org.eclipse.rdf4j.rio.RDFFormat;
 import org.junit.jupiter.api.BeforeEach;
 import org.junit.jupiter.api.Test;
 import org.junit.jupiter.api.extension.ExtendWith;
@@ -17,22 +17,21 @@ import java.util.concurrent.atomic.AtomicInteger;
 import static org.junit.jupiter.api.Assertions.assertEquals;
 import static org.junit.jupiter.api.Assertions.assertNotNull;
 import static org.junit.jupiter.api.Assertions.assertThrows;
+import static org.mockito.ArgumentMatchers.any;
+import static org.mockito.ArgumentMatchers.eq;
 import static org.mockito.Mockito.when;
 
 @ExtendWith(MockitoExtension.class)
 class CandidatExportServiceTest {
 
     @Mock
-    private ExportRdf4jHelperNew exportRdf4jHelperNew;
-
-    @Mock
-    private PreferenceService preferenceService;
+    private CandidatExportLegacySupport legacySupport;
 
     private CandidatExportService service;
 
     @BeforeEach
     void setUp() {
-        service = new CandidatExportService(exportRdf4jHelperNew, preferenceService);
+        service = new CandidatExportService(legacySupport);
     }
 
     @Test
@@ -46,7 +45,7 @@ class CandidatExportServiceTest {
         var candidat = new CandidatDto();
         candidat.setIdConcepte("C1");
 
-        when(preferenceService.getThesaurusPreferences("TH1")).thenReturn(null);
+        when(legacySupport.loadThesaurusPreferences("TH1")).thenReturn(null);
 
         assertThrows(IllegalStateException.class, () ->
                 service.exportPendingCandidates("TH1", List.of(candidat), "skos", null));
@@ -62,9 +61,10 @@ class CandidatExportServiceTest {
         var concept = new SKOSResource();
         concept.setUri("http://example.org/thesaurus/TH1/concept/C1");
 
-        when(preferenceService.getThesaurusPreferences("TH1")).thenReturn(preferences);
-        when(exportRdf4jHelperNew.exportThesoV2("TH1", preferences)).thenReturn(scheme);
-        when(exportRdf4jHelperNew.exportConceptV2("TH1", "C1", true)).thenReturn(concept);
+        when(legacySupport.loadThesaurusPreferences("TH1")).thenReturn(preferences);
+        when(legacySupport.exportConceptScheme("TH1", preferences)).thenReturn(scheme);
+        when(legacySupport.exportConcept("TH1", "C1", true)).thenReturn(concept);
+        when(legacySupport.serializeSkos(any(), eq(RDFFormat.RDFXML))).thenReturn("<rdf/>".getBytes());
 
         var progress = new AtomicInteger();
         var result = service.exportPendingCandidates("TH1", List.of(candidat), "skos", progress::set);

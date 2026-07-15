@@ -5,9 +5,7 @@ import fr.cnrs.opentheso.entites.UserGroupThesaurus;
 import fr.cnrs.opentheso.models.concept.DCMIResource;
 import fr.cnrs.opentheso.models.nodes.DcElement;
 import fr.cnrs.opentheso.repositories.ThesaurusDcTermRepository;
-import fr.cnrs.opentheso.services.GroupService;
-import fr.cnrs.opentheso.services.PreferenceService;
-import fr.cnrs.opentheso.services.ThesaurusService;
+import fr.cnrs.opentheso.v2.toolbox.session.NewThesaurusLegacySupport;
 import fr.cnrs.opentheso.v2.shared.repository.EditionQueryRepository;
 import fr.cnrs.opentheso.v2.shared.repository.ProjectAdminQueryRepository;
 import fr.cnrs.opentheso.v2.toolbox.exception.InvalidToolboxDataException;
@@ -31,9 +29,7 @@ public class NewThesaurusService {
 
     private final EditionQueryRepository editionQueryRepository;
     private final ProjectAdminQueryRepository projectAdminQueryRepository;
-    private final ThesaurusService thesaurusService;
-    private final GroupService groupService;
-    private final PreferenceService preferenceService;
+    private final NewThesaurusLegacySupport newThesaurusLegacySupport;
     private final ThesaurusDcTermRepository thesaurusDcTermRepository;
 
     @Transactional(readOnly = true)
@@ -53,7 +49,7 @@ public class NewThesaurusService {
     public String create(NewThesaurusRequest request, String creatorName) {
         validate(request);
 
-        String thesaurusId = thesaurusService.addThesaurusRollBack();
+        String thesaurusId = newThesaurusLegacySupport.createThesaurusId();
         if (thesaurusId == null) {
             throw new InvalidToolboxDataException("Erreur pendant la création");
         }
@@ -64,10 +60,10 @@ public class NewThesaurusService {
         thesaurus.setId_thesaurus(thesaurusId);
         thesaurus.setTitle(request.title());
         thesaurus.setLanguage(request.language());
-        thesaurusService.addThesaurusTraductionRollBack(thesaurus);
+        newThesaurusLegacySupport.addTranslation(thesaurus);
 
         if (request.projectId() != null) {
-            groupService.saveUserGroupThesaurus(
+            newThesaurusLegacySupport.linkToProject(
                     UserGroupThesaurus.builder()
                             .idThesaurus(thesaurusId)
                             .idGroup(request.projectId())
@@ -75,7 +71,7 @@ public class NewThesaurusService {
             );
         }
 
-        preferenceService.initPreferences(thesaurusId, request.language());
+        newThesaurusLegacySupport.initPreferences(thesaurusId, request.language());
         createAndSaveDcTerm(thesaurusId, DCMIResource.CREATOR, creatorName, "", "string");
         createAndSaveDcTerm(thesaurusId, DCMIResource.TITLE, request.title(), request.language(), "string");
         createAndSaveDcTerm(thesaurusId, DCMIResource.LANGUAGE, request.language(), "", "string");
