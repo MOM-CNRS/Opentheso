@@ -367,7 +367,7 @@ public class TermService {
     public boolean isTermExistIgnoreCase(String title, String idThesaurus, String idLang) {
         try {
             String convertedTitle = fr.cnrs.opentheso.utils.StringUtils.convertString(title);
-            return termRepository.existsTermIgnoreCase(convertedTitle, idLang, idThesaurus);
+            return termRepository.existsTermIgnoreCase(convertedTitle, idThesaurus, idLang);
         } catch (Exception e) {
             log.error("Error pendant la vérification de l'existence d'un term (ignore case) pour " + title, e);
             return false;
