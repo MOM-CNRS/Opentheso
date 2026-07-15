@@ -1,0 +1,112 @@
+<ui:composition
+    xmlns="http://www.w3.org/1999/xhtml"
+    xmlns:h="http://xmlns.jcp.org/jsf/html"
+    xmlns:ui="http://xmlns.jcp.org/jsf/facelets"
+    xmlns:p="http://primefaces.org/ui">
+
+    <style>
+        .ui-version-switch {
+            display: inline-flex;
+            align-items: center;
+            gap: 8px;
+            margin-left: 20px;
+            vertical-align: middle;
+        }
+
+        .ui-version-switch__label {
+            font-size: 10px;
+            font-weight: 600;
+            letter-spacing: 0.08em;
+            text-transform: uppercase;
+            color: #95a5a6;
+            user-select: none;
+        }
+
+        .ui-version-switch__track {
+            display: inline-flex;
+            align-items: center;
+            background: #ECF8F1;
+            border-radius: 999px;
+            padding: 3px;
+            border: 1px solid #cfe8d8;
+            box-shadow: inset 0 1px 2px rgba(34, 107, 64, 0.07);
+        }
+
+        .ui-version-switch__option {
+            display: inline-flex !important;
+            align-items: center;
+            gap: 5px;
+            padding: 5px 14px !important;
+            border-radius: 999px !important;
+            font-size: 11px !important;
+            font-weight: 600 !important;
+            color: #5a8f72 !important;
+            text-decoration: none !important;
+            background: transparent !important;
+            border: none !important;
+            box-shadow: none !important;
+            cursor: pointer;
+            transition: color 0.2s ease, background 0.2s ease, box-shadow 0.2s ease;
+            line-height: 1.2;
+        }
+
+        .ui-version-switch__option:hover {
+            color: #226b40 !important;
+            background: rgba(255, 255, 255, 0.55) !important;
+        }
+
+        .ui-version-switch__option--active {
+            background: #ffffff !important;
+            color: #226b40 !important;
+            box-shadow: 0 1px 4px rgba(34, 107, 64, 0.18) !important;
+            cursor: default;
+            pointer-events: none;
+        }
+
+        .ui-version-switch__option--active:hover {
+            background: #ffffff !important;
+        }
+
+        .ui-version-switch__option i {
+            font-size: 10px;
+            opacity: 0.9;
+        }
+    </style>
+
+    <div class="ui-version-switch">
+        <span class="ui-version-switch__label">Interface</span>
+        <div class="ui-version-switch__track" role="group" aria-label="Interface version">
+
+            <h:panelGroup rendered="#{uiVersionSwitcher.v2View}" styleClass="ui-version-switch__option ui-version-switch__option--active">
+                <i class="fa-solid fa-wand-magic-sparkles"/>
+                <span>V2</span>
+            </h:panelGroup>
+
+            <p:commandLink rendered="#{not uiVersionSwitcher.v2View}"
+                           action="#{uiVersionSwitcher.switchToV2()}"
+                           ajax="false"
+                           styleClass="ui-version-switch__option"
+                           title="Passer à la nouvelle interface">
+                <i class="fa-solid fa-wand-magic-sparkles"/>
+                <span>V2</span>
+            </p:commandLink>
+
+            <p:commandLink rendered="#{uiVersionSwitcher.v2View}"
+                           action="#{uiVersionSwitcher.switchToLegacy()}"
+                           ajax="false"
+                           styleClass="ui-version-switch__option"
+                           title="Passer à l'interface classique">
+                <i class="fa-solid fa-clock-rotate-left"/>
+                <span>Legacy</span>
+            </p:commandLink>
+
+            <h:panelGroup rendered="#{not uiVersionSwitcher.v2View}"
+                          styleClass="ui-version-switch__option ui-version-switch__option--active">
+                <i class="fa-solid fa-clock-rotate-left"/>
+                <span>Legacy</span>
+            </h:panelGroup>
+
+        </div>
+    </div>
+
+</ui:composition>
