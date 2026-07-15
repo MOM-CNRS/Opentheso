@@ -1,0 +1,87 @@
+<!DOCTYPE html>
+<html xmlns="http://www.w3.org/1999/xhtml"
+      xmlns:h="jakarta.faces.html"
+      xmlns:f="jakarta.faces.core"
+      xmlns:p="primefaces">
+
+<h:head>
+    <title>Test - Dashboard statistique Opentheso</title>
+</h:head>
+
+<h:body>
+
+    <h:form id="testForm">
+
+        <h1>Test du tableau de bord statistique</h1>
+
+        <!-- Sélecteur de période -->
+        <p:outputLabel value="Période : " for="periodMenu"/>
+        <p:selectOneMenu id="periodMenu" value="#{dashboardBean.selectedPeriod}">
+            <f:selectItems value="#{dashboardBean.availablePeriods}"
+                           var="p" itemLabel="#{p.label}" itemValue="#{p}"/>
+            <p:ajax listener="#{dashboardBean.onPeriodChange}"
+                    update="trafficChart pieChart apiChart wordCloudZone rawDebug"/>
+        </p:selectOneMenu>
+
+        <p:separator/>
+
+        <!-- Graphique de tendance -->
+        <h3>Évolution des consultations</h3>
+        <h:panelGroup id="trafficChart" layout="block">
+            <p:chart value="#{dashboardBean.dailyTrafficChartJson}" style="height:300px; width:600px;"/>
+        </h:panelGroup>
+
+        <p:separator/>
+
+        <!-- Répartition par thésaurus -->
+        <h3>Répartition par thésaurus</h3>
+        <h:panelGroup id="pieChart" layout="block">
+            <p:chart value="#{dashboardBean.thesaurusPieChartJson}" style="height:300px; width:400px;"/>
+        </h:panelGroup>
+
+        <p:separator/>
+
+        <!-- Usage API -->
+        <h3>Endpoints API les plus appelés</h3>
+        <h:panelGroup id="apiChart" layout="block">
+            <p:chart value="#{dashboardBean.apiUsageChartJson}" style="height:300px; width:600px;"/>
+        </h:panelGroup>
+
+        <p:separator/>
+
+        <!-- Nuage de mots (test minimal, sans wordcloud2.js pour l'instant) -->
+        <h3>Concepts les plus consultés (données brutes)</h3>
+        <h:panelGroup id="wordCloudZone" layout="block">
+            <p:dataTable value="#{dashboardBean.topConcepts}" var="c" rows="10" paginator="true">
+                <p:column headerText="Concept">
+                    <h:outputText value="#{c.label}"/>
+                </p:column>
+                <p:column headerText="Thésaurus">
+                    <h:outputText value="#{c.thesaurusLabel}"/>
+                </p:column>
+                <p:column headerText="Nb vues">
+                    <h:outputText value="#{c.totalVues}"/>
+                </p:column>
+            </p:dataTable>
+        </h:panelGroup>
+
+        <p:separator/>
+
+        <!-- Zone de debug : vérifie que le JSON est bien généré -->
+        <h3>Debug : JSON brut des graphiques</h3>
+        <h:panelGroup id="rawDebug" layout="block">
+            <p><b>Trafic quotidien :</b></p>
+            <p:outputPanel style="font-family:monospace; font-size:11px; word-break:break-all;">
+                <h:outputText value="#{dashboardBean.dailyTrafficChartJson}"/>
+            </p:outputPanel>
+
+            <p><b>Répartition thésaurus :</b></p>
+            <p:outputPanel style="font-family:monospace; font-size:11px; word-break:break-all;">
+                <h:outputText value="#{dashboardBean.thesaurusPieChartJson}"/>
+            </p:outputPanel>
+        </h:panelGroup>
+
+    </h:form>
+
+</h:body>
+</html>

@@ -236,5 +236,11 @@
         <sqlFile path="v26/26-07_01.sql" relativeToChangelogFile="true" splitStatements="false"/>
     </changeSet>
 
+    <!-- Pour les stats -->
+    <changeSet id="stat_26.07.02" author="Miled">
+        <sqlFile path="v26/stat_26-07_02.sql" relativeToChangelogFile="true" splitStatements="false"/>
+    </changeSet>
+
+
 
 </databaseChangeLog>

@@ -23,19 +23,12 @@ import fr.cnrs.opentheso.bean.rightbody.viewhome.ViewEditorThesaurusHomeBean;
 import fr.cnrs.opentheso.entites.Gps;
 import fr.cnrs.opentheso.repositories.CorpusLinkRepository;
 import fr.cnrs.opentheso.repositories.LanguageRepository;
-import fr.cnrs.opentheso.services.ConceptService;
-import fr.cnrs.opentheso.services.ConceptTypeService;
-import fr.cnrs.opentheso.services.FacetService;
-import fr.cnrs.opentheso.services.GpsService;
-import fr.cnrs.opentheso.services.IpAddressService;
-import fr.cnrs.opentheso.services.PathService;
-import fr.cnrs.opentheso.services.RelationService;
-import fr.cnrs.opentheso.services.ResourceService;
+import fr.cnrs.opentheso.services.*;
 
+import fr.cnrs.opentheso.stats.services.StatEventService;
 import jakarta.inject.Named;
 import jakarta.enterprise.context.SessionScoped;
 
-import java.io.File;
 import java.io.InputStream;
 import java.io.Serializable;
 import java.util.ArrayList;
@@ -91,6 +84,7 @@ public class ConceptView implements Serializable {
     private final ConceptTypeService conceptTypeService;
     private final NodeFullConceptMapper nodeFullConceptMapper;
     private final SelectedTheso selectedThesaurus;
+    private final StatEventService statEventService;
 
     private int step, countOfBranch, offset;
     private String mapScripte = "";
@@ -443,13 +437,28 @@ public class ConceptView implements Serializable {
 
     private void logConcept(){
         String ipAddress = ipAddressService.getClientIpAddress();
+
+        String label = (nodeFullConcept.getPrefLabel() == null
+                ? "(" + nodeFullConcept.getIdentifier() + ")"
+                : nodeFullConcept.getPrefLabel().getLabel());
+        String lang = (nodeFullConcept.getPrefLabel() == null
+                ? selectedTheso.getCurrentLang()
+                : nodeFullConcept.getPrefLabel().getIdLang());
+
         log.info("Concept: {}, Langue: {}, identifier: {}, Thesaurus: {}, Idt: {}, IP: {}",
-                (nodeFullConcept.getPrefLabel() == null ? "(" + nodeFullConcept.getIdentifier() + ")" : nodeFullConcept.getPrefLabel().getLabel()),
-                (nodeFullConcept.getPrefLabel() == null ? selectedTheso.getCurrentLang() : nodeFullConcept.getPrefLabel().getIdLang()),
+                label,
+                lang,
                 nodeFullConcept.getIdentifier(),
                 selectedTheso.getThesoName(),
                 selectedTheso.getCurrentIdTheso(),
                 ipAddress);
+
+        statEventService.logConceptView(
+                nodeFullConcept.getIdentifier(),
+                label,
+                lang,
+                selectedTheso.getThesoName(),
+                selectedTheso.getCurrentIdTheso());
     }
 
     /**

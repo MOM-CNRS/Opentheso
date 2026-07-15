@@ -9,11 +9,9 @@ import fr.cnrs.opentheso.models.notes.NodeNote;
 import fr.cnrs.opentheso.bean.index.IndexSetting;
 import fr.cnrs.opentheso.bean.rightbody.viewhome.ViewEditorHomeBean;
 import fr.cnrs.opentheso.bean.rightbody.viewhome.ViewEditorThesaurusHomeBean;
-import fr.cnrs.opentheso.services.GroupService;
-import fr.cnrs.opentheso.services.GroupTypeService;
-import fr.cnrs.opentheso.services.IpAddressService;
-import fr.cnrs.opentheso.services.NoteService;
+import fr.cnrs.opentheso.services.*;
 
+import fr.cnrs.opentheso.stats.services.StatEventService;
 import jakarta.inject.Named;
 import jakarta.enterprise.context.SessionScoped;
 import java.io.Serializable;
@@ -43,6 +41,7 @@ public class GroupView implements Serializable {
     private final ViewEditorHomeBean viewEditorHomeBean;
     private final ConceptStatusRepository conceptStatusRepository;
     private final ViewEditorThesaurusHomeBean viewEditorThesaurusHomeBean;
+    private final StatEventService statEventService;
 
     private NodeGroup nodeGroup;
     private List<NodeGroupTraductions> nodeGroupTraductions;
@@ -101,9 +100,28 @@ public class GroupView implements Serializable {
     }
 
     private void logGroup() {
-        var ipAddress = ipAddressService.getClientIpAddress();
-        log.info("Group: {}, identifier: {}, Thesaurus: {}, Idt: {}, IP: {}", nodeGroup.getLexicalValue(), nodeGroup.getConceptGroup().getIdGroup(),
-                selectedTheso.getThesoName(), selectedTheso.getCurrentIdTheso(), ipAddress);
+        String ipAddress = ipAddressService.getClientIpAddress();
+        String label = (nodeGroup.getLexicalValue() == null
+                ? "(" + nodeGroup.getConceptGroup().getIdGroup() + ")"
+                : nodeGroup.getLexicalValue());
+        String lang = (nodeGroup.getLexicalValue() == null
+                ? selectedTheso.getCurrentLang()
+                : nodeGroup.getIdLang());
+
+        log.info("Group: {}, Langue: {}, identifier: {}, Thesaurus: {}, Idt: {}, IP: {}",
+                label,
+                lang,
+                nodeGroup.getConceptGroup().getIdGroup(),
+                selectedTheso.getThesoName(),
+                selectedTheso.getCurrentIdTheso(),
+                ipAddress);
+
+        statEventService.logCollectionView(
+                nodeGroup.getConceptGroup().getIdGroup(),
+                label,
+                lang,
+                selectedTheso.getThesoName(),
+                selectedTheso.getCurrentIdTheso());
     }
 
     public void setNotes(String idThesaurus, String idGroup, String idLang) {
