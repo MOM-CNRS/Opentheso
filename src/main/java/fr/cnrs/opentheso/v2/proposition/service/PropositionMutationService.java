@@ -34,10 +34,24 @@ public class PropositionMutationService {
      */
     @Transactional
     public boolean submit(PropositionSubmission submission) {
+        return trySave(submission).isPresent();
+    }
+
+    /**
+     * Enregistre une nouvelle proposition et retourne son identifiant, pour permettre
+     * l'enregistrement des changements structurés (libellé/synonymes/traductions/notes) qui
+     * l'accompagnent.
+     */
+    @Transactional
+    public Optional<Integer> submitDraft(PropositionSubmission submission) {
+        return trySave(submission).map(PropositionModification::getId);
+    }
+
+    private Optional<PropositionModification> trySave(PropositionSubmission submission) {
         if (submission == null
                 || StringUtils.isAnyBlank(submission.thesaurusId(), submission.conceptId(), submission.lang())
                 || StringUtils.isBlank(submission.comment())) {
-            return false;
+            return Optional.empty();
         }
 
         var existing = propositionModificationRepository.findPendingByConcept(
@@ -48,7 +62,7 @@ public class PropositionMutationService {
         if (existing != null && StringUtils.isNotBlank(submission.authorEmail())
                 && submission.authorEmail().equalsIgnoreCase(existing.getEmail())) {
             log.debug("Proposition déjà en cours pour le concept {} ({})", submission.conceptId(), submission.lang());
-            return false;
+            return Optional.empty();
         }
 
         var proposition = PropositionModification.builder()
@@ -62,9 +76,9 @@ public class PropositionMutationService {
                 .date(new SimpleDateFormat(DATE_PATTERN).format(new Date()))
                 .build();
 
-        propositionModificationRepository.save(proposition);
+        var saved = propositionModificationRepository.save(proposition);
         notifyAuthorOfSubmission(submission);
-        return true;
+        return Optional.ofNullable(saved);
     }
 
     @Transactional

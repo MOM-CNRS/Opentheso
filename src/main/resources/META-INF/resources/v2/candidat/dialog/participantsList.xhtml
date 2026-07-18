@@ -6,7 +6,7 @@
     <p:dialog id="idParticipantsList" header="Liste des participants" widgetVar="participantsList"
               width="450" showEffect="fade" modal="true" resizable="false" position="top" style="margin-top: 30px" > 
 
-        <ui:repeat var="participant" value="#{discussionCandidatBean.nodeUsers}">
+        <ui:repeat var="participant" value="#{v2DiscussionCandidatBean.nodeUsers}">
             <div class="row" style="background-color: #{viewEditionBean.newAlternateColor}; padding-top: 5px; margin-bottom: 5px">
                 <div class="col-12" >
                     <h:outputText value="#{participant.name} (#{participant.idUser})"/>

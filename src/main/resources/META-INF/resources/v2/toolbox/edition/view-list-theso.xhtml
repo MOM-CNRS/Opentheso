@@ -17,17 +17,17 @@
                                      update="containerIndex" />
                 </p:toolbarGroup>
                 <p:toolbarGroup align="right">
-                    <p:menuButton icon="fas fa-download" value="#{v2LocaleBean.getMsg('candidat.import')}" style="padding-left: 35px">
-                        <p:menuitem value="#{v2LocaleBean.getMsg('toolbox.skosFormat')}" icon="fas fa-download"
+                    <p:menuButton icon="fas fa-file-import" value="#{v2LocaleBean.getMsg('candidat.import')}" style="padding-left: 35px">
+                        <p:menuitem value="#{v2LocaleBean.getMsg('toolbox.skosFormat')}" icon="fas fa-file-import"
                                     action="#{v2EditionBean.showImportSkos()}" ajax="true" process="@this"
                                     update="containerIndex" style="padding-left: 35px" />
 
-                        <p:menuitem value="#{v2LocaleBean.getMsg('toolbox.csvFormat')}" icon="fas fa-download"
-                                    action="#{v2EditionBean.showImportCsv()}"
+                        <p:menuitem value="#{v2LocaleBean.getMsg('toolbox.csvFormat')}" icon="fas fa-file-import"
+                                    action="#{v2EditionBean.showImportCsv()}" ajax="true" process="@this"
                                     update="containerIndex" style="padding-left: 35px" />
 
-                        <p:menuitem value="#{v2LocaleBean.getMsg('toolbox.structuredCsvFormat')}" icon="fas fa-download"
-                                    action="#{v2EditionBean.showImportCsvStructure()}"
+                        <p:menuitem value="#{v2LocaleBean.getMsg('toolbox.structuredCsvFormat')}" icon="fas fa-file-import"
+                                    action="#{v2EditionBean.showImportCsvStructure()}" ajax="true" process="@this"
                                     update="containerIndex" style="padding-left: 35px" />
                     </p:menuButton>
                 </p:toolbarGroup>
@@ -65,35 +65,35 @@
                     </p:column>
 
                     <p:column width="10" headerText="#{v2LocaleBean.getMsg('candidat.export')}">
-                        <p:menuButton icon="fas fa-upload" value="Export" style="margin-left: -10px">
+                        <p:menuButton icon="fas fa-download" value="#{v2LocaleBean.getMsg('candidat.export')}" style="margin-left: -10px">
                             <p:menuitem value="#{v2LocaleBean.getMsg('toolbox.skosFormat')}"
                                         action="#{v2EditionBean.showExport(thesaurus, 'EXPORT_SKOS')}"
-                                        icon="fas fa-upload"
+                                        icon="fas fa-download" process="@this" ajax="true"
                                         title="#{v2LocaleBean.getMsg('toolbox.skosFormatTooltip')}" update="containerIndex" />
 
                             <p:menuitem value="#{v2LocaleBean.getMsg('toolbox.pdfFormat')}"
                                         action="#{v2EditionBean.showExport(thesaurus, 'EXPORT_PDF')}"
-                                        update="containerIndex"
-                                        title="#{v2LocaleBean.getMsg('toolbox.pdfFormatTooltip')}" icon="fas fa-upload" />
+                                        update="containerIndex" process="@this" ajax="true"
+                                        title="#{v2LocaleBean.getMsg('toolbox.pdfFormatTooltip')}" icon="fas fa-download" />
 
                             <p:menuitem value="#{v2LocaleBean.getMsg('toolbox.csvFormat')}"
                                         action="#{v2EditionBean.showExport(thesaurus, 'EXPORT_CSV')}"
-                                        update="containerIndex"
-                                        title="#{v2LocaleBean.getMsg('toolbox.csvFormatTooltip')}" icon="fas fa-upload" />
+                                        update="containerIndex" process="@this" ajax="true"
+                                        title="#{v2LocaleBean.getMsg('toolbox.csvFormatTooltip')}" icon="fas fa-download" />
 
                             <p:menuitem value="#{v2LocaleBean.getMsg('toolbox.structuredCsvFormat')}"
                                         action="#{v2EditionBean.showExport(thesaurus, 'EXPORT_CSV_STRUCTURE')}"
-                                        update="containerIndex" icon="fas fa-upload"
+                                        update="containerIndex" process="@this" ajax="true" icon="fas fa-download"
                                         title="#{v2LocaleBean.getMsg('toolbox.structuredCsvFormatTooltip')}"/>
 
                             <p:menuitem value="#{v2LocaleBean.getMsg('toolbox.smallCsv')}"
                                         action="#{v2EditionBean.showExport(thesaurus, 'EXPORT_CSV_ID')}"
-                                        update="containerIndex" icon="fas fa-upload"
+                                        update="containerIndex" process="@this" ajax="true" icon="fas fa-download"
                                         title="#{v2LocaleBean.getMsg('toolbox.smallCsvTooltip')}"/>
 
                             <p:menuitem value="#{v2LocaleBean.getMsg('toolbox.deprecated')}"
                                         action="#{v2EditionBean.showExport(thesaurus, 'EXPORT_DEPRECATED')}"
-                                        update="containerIndex" icon="fas fa-upload"/>
+                                        update="containerIndex" process="@this" ajax="true" icon="fas fa-download"/>
                         </p:menuButton>
                     </p:column>
 

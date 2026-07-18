@@ -4,132 +4,162 @@
              xmlns:p="http://primefaces.org/ui"
              xmlns:f="http://xmlns.jcp.org/jsf/core">
 
-    <f:metadata>
-        <f:viewAction action="#{v2ThesaurusEditionSkosImportBean.init()}"/>
-    </f:metadata>
+    <div class="card shadow mb-4" style="height: 100%;">
+        <div class="card mb-4 py-3 border-left-success" style="margin: 30px; border-color: #43B572;">
 
-    <div class="card shadow mb-4" style="padding: 15px; margin: 20px">
-        <div class="row" style="margin-top: 10px;">
-            <div class="col-12">
-                <h:outputText value="#{v2LocaleBean.getMsg('import.skosFormat')}" styleClass="h5 mb-3 text-gray-800"/>
+            <div class="row mb-4">
+                <div class="col-12" style="padding-left: 30px;">
+                    <h:outputText value="#{v2LocaleBean.getMsg('import.skosFormat')}"
+                                  styleClass="h5 mb-0 text-gray-800"/>
+                </div>
             </div>
-        </div>
 
-        <div class="row mb-3">
-            <div class="col-3 text-right">
-                <h:outputText value="#{v2LocaleBean.getMsg('csvExport.dateFormat')}"/>
+            <div class="row mb-3 align-items-center">
+                <div class="col-3 text-right">
+                    <h:outputText value="#{v2LocaleBean.getMsg('csvExport.dateFormat')}"/>
+                </div>
+                <div class="col-5">
+                    <p:inputText placeholder="yyyy-MM-dd"
+                                 value="#{v2ThesaurusEditionSkosImportBean.formatDate}"
+                                 title="#{v2LocaleBean.getMsg('import.dateFormatTooltip')}"
+                                 style="width: 100%;"/>
+                </div>
             </div>
-            <div class="col-5">
-                <p:inputText placeholder="yyyy-MM-dd" value="#{v2ThesaurusEditionSkosImportBean.formatDate}"
-                             title="#{v2LocaleBean.getMsg('import.dateFormatTooltip')}"/>
-            </div>
-        </div>
 
-        <div class="row mb-3">
-            <div class="col-3 text-right">
-                <h:outputText value="#{v2LocaleBean.getMsg('import.getPermanentIdentifier')}"/>
-            </div>
-            <div class="col-8">
-                <p:selectOneRadio value="#{v2ThesaurusEditionSkosImportBean.selectedIdentifier}" layout="lineDirection">
-                    <f:selectItem itemLabel="#{v2LocaleBean.getMsg('without')}" itemValue="sans"/>
-                    <f:selectItem itemLabel="Ark" itemValue="ark"/>
-                    <f:selectItem itemLabel="Handle" itemValue="handle"/>
-                </p:selectOneRadio>
-                <p:inputText value="#{v2ThesaurusEditionSkosImportBean.prefixHandle}"
-                             placeholder="22.600.11111"
-                             rendered="#{v2ThesaurusEditionSkosImportBean.selectedIdentifier eq 'handle'}"
-                             style="margin-top: 8px; width: 100%;"/>
-            </div>
-        </div>
+            <h:panelGroup id="skosIdentifierPanel" layout="block">
+                <div class="row mb-3 align-items-center">
+                    <div class="col-3 text-right">
+                        <h:outputText value="#{v2LocaleBean.getMsg('import.getPermanentIdentifier')}"/>
+                    </div>
+                    <div class="col-8">
+                        <p:selectOneRadio value="#{v2ThesaurusEditionSkosImportBean.selectedIdentifier}"
+                                          layout="lineDirection">
+                            <f:selectItem itemLabel="#{v2LocaleBean.getMsg('without')}" itemValue="sans"/>
+                            <f:selectItem itemLabel="Ark" itemValue="ark"/>
+                            <f:selectItem itemLabel="Handle" itemValue="handle"/>
+                            <p:ajax update="skosIdentifierPanel"/>
+                        </p:selectOneRadio>
+                        <p:inputText value="#{v2ThesaurusEditionSkosImportBean.prefixHandle}"
+                                     placeholder="22.600.11111"
+                                     rendered="#{v2ThesaurusEditionSkosImportBean.selectedIdentifier eq 'handle'}"
+                                     style="margin-top: 8px; width: 100%;"/>
+                    </div>
+                </div>
+            </h:panelGroup>
 
-        <div class="row mb-3">
-            <div class="col-3 text-right">
-                <h:outputText value="#{v2LocaleBean.getMsg('rightbody.conceptdialog.language')}"/>
+            <div class="row mb-3 align-items-center">
+                <div class="col-3 text-right">
+                    <h:outputText value="#{v2LocaleBean.getMsg('rightbody.conceptdialog.language')}"/>
+                </div>
+                <div class="col-5">
+                    <p:selectOneMenu value="#{v2ThesaurusEditionSkosImportBean.selectedLang}" style="width: 100%;">
+                        <f:selectItems value="#{v2ThesaurusEditionSkosImportBean.allLangs}" var="lang"
+                                       itemLabel="#{lang.code} _ #{lang.frenchName}" itemValue="#{lang.code}"/>
+                    </p:selectOneMenu>
+                </div>
             </div>
-            <div class="col-5">
-                <p:selectOneMenu value="#{v2ThesaurusEditionSkosImportBean.selectedLang}" style="width: 100%;">
-                    <f:selectItems value="#{v2ThesaurusEditionSkosImportBean.allLangs}" var="lang"
-                                   itemLabel="#{lang.code} _ #{lang.frenchName}" itemValue="#{lang.code}"/>
-                </p:selectOneMenu>
-            </div>
-        </div>
 
-        <div class="row mb-3">
-            <div class="col-3 text-right">
-                <h:outputText value="Format"/>
+            <div class="row mb-3 align-items-center">
+                <div class="col-3 text-right">
+                    <h:outputText value="#{v2LocaleBean.getMsg('candidat.output_format')}"/>
+                </div>
+                <div class="col-5">
+                    <p:selectOneMenu value="#{v2ThesaurusEditionSkosImportBean.typeImport}" style="width: 100%;">
+                        <f:selectItem itemLabel="RDF/XML" itemValue="0"/>
+                        <f:selectItem itemLabel="JSON-LD" itemValue="1"/>
+                        <f:selectItem itemLabel="Turtle" itemValue="2"/>
+                        <f:selectItem itemLabel="RDF/JSON" itemValue="3"/>
+                    </p:selectOneMenu>
+                </div>
             </div>
-            <div class="col-5">
-                <p:selectOneMenu value="#{v2ThesaurusEditionSkosImportBean.typeImport}" style="width: 100%;">
-                    <f:selectItem itemLabel="Rdf" itemValue="0"/>
-                    <f:selectItem itemLabel="Json-ld" itemValue="1"/>
-                    <f:selectItem itemLabel="Turtle" itemValue="2"/>
-                    <f:selectItem itemLabel="Json" itemValue="3"/>
-                </p:selectOneMenu>
-            </div>
-        </div>
 
-        <div class="row mb-3">
-            <div class="col-3 text-right">
-                <h:outputText value="#{v2LocaleBean.getMsg('profile.project')}"/>
+            <div class="row mb-3 align-items-center">
+                <div class="col-3 text-right">
+                    <h:outputText value="#{v2LocaleBean.getMsg('profile.project')}"/>
+                </div>
+                <div class="col-5">
+                    <p:selectOneMenu value="#{v2ThesaurusEditionSkosImportBean.selectedProjectId}"
+                                     rendered="#{v2ThesaurusEditionSkosImportBean.superAdmin}"
+                                     style="width: 100%;">
+                        <f:selectItem itemLabel="..." itemValue=""/>
+                        <f:selectItems value="#{v2ThesaurusEditionSkosImportBean.projects}" var="project"
+                                       itemLabel="#{project.name}" itemValue="#{project.id}"/>
+                    </p:selectOneMenu>
+                    <p:selectOneMenu value="#{v2ThesaurusEditionSkosImportBean.selectedProjectId}"
+                                     rendered="#{not v2ThesaurusEditionSkosImportBean.superAdmin}"
+                                     style="width: 100%;">
+                        <f:selectItems value="#{v2ThesaurusEditionSkosImportBean.projects}" var="project"
+                                       itemLabel="#{project.name}" itemValue="#{project.id}"/>
+                    </p:selectOneMenu>
+                </div>
             </div>
-            <div class="col-5">
-                <p:selectOneMenu value="#{v2ThesaurusEditionSkosImportBean.selectedProjectId}"
-                                 rendered="#{v2ThesaurusEditionSkosImportBean.superAdmin}"
-                                 style="width: 100%;">
-                    <f:selectItem itemLabel="..." itemValue=""/>
-                    <f:selectItems value="#{v2ThesaurusEditionSkosImportBean.projects}" var="project"
-                                   itemLabel="#{project.name}" itemValue="#{project.id}"/>
-                </p:selectOneMenu>
-                <p:selectOneMenu value="#{v2ThesaurusEditionSkosImportBean.selectedProjectId}"
-                                 rendered="#{not v2ThesaurusEditionSkosImportBean.superAdmin}"
-                                 style="width: 100%;">
-                    <f:selectItems value="#{v2ThesaurusEditionSkosImportBean.projects}" var="project"
-                                   itemLabel="#{project.name}" itemValue="#{project.id}"/>
-                </p:selectOneMenu>
-            </div>
-        </div>
 
-        <div class="row mb-3">
-            <div class="col-3 text-right">
-                <h:outputText value="Fichier"/>
+            <div class="row mb-3 align-items-center">
+                <div class="col-3 text-right">
+                    <h:outputText value="#{v2LocaleBean.getMsg('candidat.parcourir')}"/>
+                </div>
+                <div class="col-8">
+                    <p:fileUpload listener="#{v2ThesaurusEditionSkosImportBean.loadFileSkos}"
+                                  label="#{v2LocaleBean.getMsg('candidat.parcourir')}"
+                                  mode="advanced"
+                                  auto="true"
+                                  process="@form"
+                                  update="importResume messageIndex"
+                                  onstart="PF('waitDialog').show();"
+                                  oncomplete="PF('waitDialog').hide();"
+                                  allowTypes="/(\.|\/)(rdf|xml|ttl|json|jsonld|skos)$/"
+                                  styleClass="browserbutton"/>
+                </div>
             </div>
-            <div class="col-8">
-                <p:fileUpload listener="#{v2ThesaurusEditionSkosImportBean.loadFileSkos}"
-                              label="#{v2LocaleBean.getMsg('candidat.parcourir')}"
-                              mode="advanced" auto="true" update="importResume"
-                              onstart="PF('waitDialog').show();" allowTypes="/(\.|\/)(rdf|xml|ttl|json|jsonld)$/"/>
-            </div>
-        </div>
 
-        <h:panelGroup id="importResume" rendered="#{v2ThesaurusEditionSkosImportBean.loadDone}">
-            <div class="row mb-2">
-                <div class="col-3 text-right"><h:outputText value="URI"/></div>
-                <div class="col-8"><h:outputText value="#{v2ThesaurusEditionSkosImportBean.uri}"/></div>
-            </div>
-            <div class="row mb-3">
-                <div class="col-3 text-right"><h:outputText value="Nombre de concepts"/></div>
-                <div class="col-8"><h:outputText value="#{v2ThesaurusEditionSkosImportBean.total}"/></div>
-            </div>
-            <div class="row mb-3" rendered="#{v2ThesaurusEditionSkosImportBean.total > 0}">
+            <h:panelGroup id="importResume" layout="block">
+                <h:panelGroup rendered="#{v2ThesaurusEditionSkosImportBean.loadDone}" layout="block">
+                    <div class="row mb-2 align-items-center">
+                        <div class="col-3 text-right"><h:outputText value="URI"/></div>
+                        <div class="col-8">
+                            <h:outputText value="#{v2ThesaurusEditionSkosImportBean.uri}" style="color: #C63632;"/>
+                        </div>
+                    </div>
+                    <div class="row mb-3 align-items-center">
+                        <div class="col-3 text-right">
+                            <h:outputText value="#{v2LocaleBean.getMsg('toolbox.totalOfTheso')}"/>
+                        </div>
+                        <div class="col-8">
+                            <h:outputText value="#{v2ThesaurusEditionSkosImportBean.total}" style="color: #C63632;"/>
+                        </div>
+                    </div>
+                    <h:panelGroup rendered="#{v2ThesaurusEditionSkosImportBean.total gt 0}" layout="block">
+                        <div class="row mb-3">
+                            <div class="col-12 text-center">
+                                <p:commandButton value="#{v2LocaleBean.getMsg('candidat.import')}"
+                                                 icon="fas fa-file-import"
+                                                 styleClass="ui-button-success"
+                                                 actionListener="#{v2ThesaurusEditionSkosImportBean.importThesaurus()}"
+                                                 update="importResume containerIndex messageIndex"
+                                                 onstart="PF('waitDialog').show();"
+                                                 oncomplete="PF('waitDialog').hide();"/>
+                            </div>
+                        </div>
+                    </h:panelGroup>
+                    <h:panelGroup rendered="#{v2ThesaurusEditionSkosImportBean.progressValue gt 0}" layout="block">
+                        <div class="row">
+                            <div class="col-12">
+                                <p:progressBar value="#{v2ThesaurusEditionSkosImportBean.progressValue}"
+                                               labelTemplate="{value}%"/>
+                            </div>
+                        </div>
+                    </h:panelGroup>
+                </h:panelGroup>
+            </h:panelGroup>
+
+            <div class="row" style="margin-top: 30px;">
                 <div class="col-12 text-center">
-                    <p:commandButton value="Importer"
-                                     icon="fas fa-file-import"
-                                     actionListener="#{v2ThesaurusEditionSkosImportBean.importThesaurus()}"
-                                     update="importResume importProgress containerIndex messageIndex"/>
+                    <p:commandButton value="#{v2LocaleBean.getMsg('btnBack')}"
+                                     styleClass="ui-button-secondary button"
+                                     icon="fas fa-undo-alt"
+                                     update="containerIndex"
+                                     action="#{v2EditionBean.showList()}"/>
                 </div>
-            </div>
-            <div class="row" rendered="#{v2ThesaurusEditionSkosImportBean.progressValue > 0}">
-                <div class="col-12">
-                    <p:progressBar id="importProgress" value="#{v2ThesaurusEditionSkosImportBean.progressValue}" labelTemplate="{value}%"/>
-                </div>
-            </div>
-        </h:panelGroup>
-
-        <div class="row" style="margin-top: 30px;">
-            <div class="col-12 text-center">
-                <p:commandButton value="#{v2LocaleBean.getMsg('btnBack')}" styleClass="ui-button-secondary button"
-                                 icon="fas fa-undo-alt" update="containerIndex"
-                                 action="#{v2EditionBean.showList()}"/>
             </div>
         </div>
     </div>

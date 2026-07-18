@@ -15,7 +15,10 @@ import org.springframework.test.util.ReflectionTestUtils;
 import java.util.Date;
 import java.util.List;
 
+import fr.cnrs.opentheso.v2.candidat.exception.CandidateNotFoundException;
+
 import static org.junit.jupiter.api.Assertions.assertEquals;
+import static org.junit.jupiter.api.Assertions.assertThrows;
 import static org.junit.jupiter.api.Assertions.assertTrue;
 import static org.mockito.ArgumentMatchers.any;
 import static org.mockito.ArgumentMatchers.eq;
@@ -58,6 +61,32 @@ class CandidatControllerV2Test {
         assertEquals(1, response.size());
         assertEquals("C1", response.get(0).conceptId());
         verify(candidatAuthSupport).requireContributor(4, "TH1");
+    }
+
+    @Test
+    void getCandidate_returnsMatchingCandidate() {
+        CandidatDto candidat = new CandidatDto();
+        candidat.setIdConcepte("C1");
+        candidat.setNomPref("Label");
+        candidat.setLang("fr");
+        candidat.setStatut(String.valueOf(CandidatStatusCode.PENDING));
+        when(candidatReadService.searchByStatus("TH1", "fr", CandidatStatusCode.PENDING, null))
+                .thenReturn(List.of(candidat));
+
+        var response = controller.getCandidate("api-key", null, "TH1", "C1", "pending", null);
+
+        assertEquals("C1", response.conceptId());
+        verify(candidatReadService).loadDetails(candidat, "TH1");
+        verify(candidatAuthSupport).requireContributor(4, "TH1");
+    }
+
+    @Test
+    void getCandidate_throwsWhenConceptNotFound() {
+        when(candidatReadService.searchByStatus("TH1", "fr", CandidatStatusCode.PENDING, null))
+                .thenReturn(List.of());
+
+        assertThrows(CandidateNotFoundException.class,
+                () -> controller.getCandidate("api-key", null, "TH1", "C1", "pending", null));
     }
 
     @Test

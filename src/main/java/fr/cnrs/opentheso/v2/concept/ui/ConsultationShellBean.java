@@ -114,6 +114,14 @@ public class ConsultationShellBean implements Serializable {
         }
     }
 
+    /**
+     * Recharge projets + thésaurus du sélecteur header (après create/import/delete).
+     */
+    public void refreshHeaderCatalog() {
+        refreshCatalog();
+        syncSelectionFromContext();
+    }
+
     public boolean hasSelectedThesaurus() {
         return StringUtils.isNotBlank(thesaurusContext.resolveThesaurusId());
     }

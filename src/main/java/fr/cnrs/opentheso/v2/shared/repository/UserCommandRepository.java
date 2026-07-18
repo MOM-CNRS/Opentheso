@@ -33,6 +33,15 @@ public class UserCommandRepository {
     }
 
     @SuppressWarnings("unchecked")
+    public String findInstitution(int userId) {
+        String sql = "SELECT institution FROM users WHERE id_user = :userId";
+        List<Object> result = entityManager.createNativeQuery(sql)
+                .setParameter("userId", userId)
+                .getResultList();
+        return result.isEmpty() ? null : (String) result.get(0);
+    }
+
+    @SuppressWarnings("unchecked")
     public List<UserSearchRow> searchByUsernameLike(String username, int limit) {
         String sql = """
                 SELECT id_user, username, mail

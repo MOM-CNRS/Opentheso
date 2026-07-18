@@ -16,7 +16,7 @@
                 </div>
                 <div class="col-9">
                     <p:inputText placeholder="#{v2LocaleBean.getMsg('rightbody.conceptdialog.type_uri')} ..."
-                                 value="#{imageBean.uri}" style="width: 100%;"/>
+                                 value="#{v2ImageCandidatBean.uri}" style="width: 100%;"/>
                 </div>
             </div>
 
@@ -27,7 +27,7 @@
                 </div>
                 <div class="col-9">
                     <p:inputText placeholder="..."
-                                 value="#{imageBean.name}" style="width: 100%;"/>
+                                 value="#{v2ImageCandidatBean.name}" style="width: 100%;"/>
                 </div>
             </div>
 
@@ -38,7 +38,7 @@
                 </div>
                 <div class="col-9">
                     <p:inputText placeholder="..."
-                                 value="#{imageBean.creator}" style="width: 100%;"/>
+                                 value="#{v2ImageCandidatBean.creator}" style="width: 100%;"/>
                 </div>
             </div>
 
@@ -48,7 +48,7 @@
                 </div>
                 <div class="col-9">
                     <p:inputText placeholder="#{v2LocaleBean.getMsg('rightbody.conceptdialog.copyright')} ..."
-                                 value="#{imageBean.copyright}" style="width: 100%;"/>
+                                 value="#{v2ImageCandidatBean.copyright}" style="width: 100%;"/>
                 </div>
             </div>
 
@@ -61,7 +61,7 @@
                                  update="tabViewCandidat messageIndex"
                                  oncomplete="PF('addImage').hide();"
                                  icon="pi pi-check" styleClass="ui-button-success" ajax="true" process="@form"
-                                 actionListener="#{imageCandidatBean.addNewImage(currentUser.nodeUser.idUser)}" />
+                                 actionListener="#{v2ImageCandidatBean.addNewImage(v2UserSession.currentUserId)}" />
             </div>
             <input type="hidden" name="csrfToken" value="${sessionScope.CSRF_TOKEN}" />
         </h:form>

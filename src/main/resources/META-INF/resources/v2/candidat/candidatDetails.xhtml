@@ -304,7 +304,7 @@
                         <div class="col-12">
                             <i class="pi pi-copy" style="color: #78261f; margin-right: 10px" />
                             <p:commandButton value="#{v2LocaleBean.getMsg('rightbody.concept.add_note')}"
-                                             actionListener="#{noteBeanCandidat.reset()}"
+                                             actionListener="#{v2NoteBeanCandidat.reset()}"
                                              oncomplete="PF('newNote').show();"
                                              update="idNewNote"
                                              styleClass="rounded-button ui-button-outlined"
@@ -363,14 +363,14 @@
                                 <div class="col-1" style="margin-top: -5px">
                                     <p:commandButton rendered="#{(v2CandidatBean.candidatSelected.userId == note.idUser) or (currentUser.hasRoleAsAdmin)}"
                                                      styleClass="rounded-button ui-button-outlined" icon="fas fa-pen" process="@this"
-                                                     actionListener="#{noteBeanCandidat.resetEditNode(note)}" update="editNoteForm"
+                                                     actionListener="#{v2NoteBeanCandidat.resetEditNode(note)}" update="editNoteForm"
                                                      oncomplete="PF('editNote').show();" style="color: #43B572"/>
 
                                 </div>
                                 <div class="col-1" style="margin-top: -5px">
                                     <p:commandButton rendered="#{(v2CandidatBean.candidatSelected.userId == note.idUser) or (currentUser.hasRoleAsAdmin)}" icon="pi pi-trash"
                                                      styleClass="rounded-button ui-button-danger ui-button-outlined" process="@this" ajax="true"
-                                                     actionListener="#{noteBeanCandidat.setSelectedNodeNote(note)}" update="idDeleteNote"
+                                                     actionListener="#{v2NoteBeanCandidat.setSelectedNodeNote(note)}" update="idDeleteNote"
                                                      oncomplete="PF('deleteNote').show();" />
                                 </div>
                                 <div class="col-1" style="margin-top: -5px">
@@ -400,7 +400,7 @@
                             <i class="fa fa-language" style="color: #78261f; margin-right: 10px" />
                             <p:commandButton value="#{v2LocaleBean.getMsg('rightbody.concept.add_traduction')}"
                                              update="idNewTraduction newTraductionForm"
-                                             actionListener="#{traductionCandidatBean.init()}"
+                                             actionListener="#{v2TraductionCandidatBean.init()}"
                                              styleClass="rounded-button ui-button-outlined"
                                              style="color: #f47b2a;" />
                         </div>
@@ -445,7 +445,7 @@
                                                      style="color: #43B572"
                                                      update=":manage-traduction-content"
                                                      oncomplete="PF('editTraduction').show();"
-                                                     actionListener="#{traductionCandidatBean.init(traduction)}" process="@this"
+                                                     actionListener="#{v2TraductionCandidatBean.init(traduction)}" process="@this"
                                                      styleClass="rounded-button ui-button-outlined">
                                         <p:resetInput target=":manage-traduction-content"/>
                                     </p:commandButton>
@@ -453,7 +453,7 @@
 
                                 <div class="col-2" style="margin-top: -5px">
                                     <p:commandButton icon="pi pi-trash" styleClass="rounded-button ui-button-danger ui-button-outlined"
-                                                     actionListener="#{traductionCandidatBean.init(traduction)}" update="confirmDeleteForm"
+                                                     actionListener="#{v2TraductionCandidatBean.init(traduction)}" update="confirmDeleteForm"
                                                      oncomplete="PF('confirmDeleteTraduction').show();" />
                                 </div>
                             </div>
@@ -546,7 +546,7 @@
                             <i class="pi pi-images" style="color: #78261f; margin-right: 10px" />
 
                             <p:commandButton value="#{v2LocaleBean.getMsg('rightbody.concept.add_image')}"
-                                             actionListener="#{v2CandidatBean.initImageDialog()}" oncomplete="PF('addImage').show();"
+                                             actionListener="#{v2ImageCandidatBean.initImageDialog()}" oncomplete="PF('addImage').show();"
                                              styleClass="rounded-button ui-button-outlined" update="idAddImage"
                                              style="color: #f47b2a;" />
 
@@ -595,7 +595,7 @@
                                                 <div class="col-2" style="text-align: right">
                                                     <p:commandButton value="#{v2LocaleBean.getMsg('candidat.remove')}" process="@this" ajax="true"
                                                                      update="tabViewCandidat"
-                                                                     action="#{imageCandidatBean.deleteImage(photo.uri)}"
+                                                                     action="#{v2ImageCandidatBean.deleteImage(photo.uri)}"
                                                                      styleClass="rounded-button ui-button-outlined"
                                                                      style="color: #f47b2a;">
                                                         <p:confirm type="popup" header="#{v2LocaleBean.getMsg('profile.confirmation')}" icon="pi pi-info-circle"

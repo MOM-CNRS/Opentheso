@@ -144,11 +144,13 @@ public class ThesaurusEditionSkosImportBean implements Serializable {
                     "import réussi"
             ));
             editionBean().showList();
-            PrimeFaces.current().ajax().update("messageIndex formMenu:idListTheso");
+            PrimeFaces.current().ajax().update("messageIndex", "containerIndex");
         } catch (NumberFormatException ex) {
             MessageUtils.showErrorMessage("Projet invalide");
         } catch (Exception ex) {
             MessageUtils.showErrorMessage(StringUtils.defaultIfBlank(ex.getMessage(), "Erreur pendant l'import SKOS"));
+        } finally {
+            PrimeFaces.current().executeScript("PF('waitDialog').hide();");
         }
     }
 

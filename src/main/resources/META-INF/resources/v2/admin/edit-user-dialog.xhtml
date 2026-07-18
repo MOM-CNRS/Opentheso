@@ -22,6 +22,40 @@
                 <p:commandButton value="#{v2LocaleBean.getMsg('apply')}" icon="pi pi-check"
                                  action="#{v2AllUsersBean.updateUser()}" update=":containerIndex :messageIndex"/>
             </div>
+
+            <p:separator/>
+
+            <h:panelGroup id="v2EditUserApiKey">
+                <div class="row mb-2">
+                    <div class="col-4 text-right"><h:outputText value="#{v2LocaleBean.getMsg('profile.apiKeyAuthorize')}"/></div>
+                    <div class="col-8">
+                        <p:toggleSwitch value="#{v2AllUsersBean.editHasApiKey}">
+                            <p:ajax update="v2EditUserApiKey"/>
+                        </p:toggleSwitch>
+                    </div>
+                </div>
+                <h:panelGroup rendered="#{v2AllUsersBean.editHasApiKey}">
+                    <div class="row mb-2">
+                        <div class="col-4 text-right"><h:outputText value="#{v2LocaleBean.getMsg('profile.defApiKey')}"/></div>
+                        <div class="col-8">
+                            <p:toggleSwitch value="#{v2AllUsersBean.editKeyNeverExpire}">
+                                <p:ajax update="v2EditUserApiKey"/>
+                            </p:toggleSwitch>
+                        </div>
+                    </div>
+                    <div class="row mb-2">
+                        <div class="col-4 text-right"><h:outputText value="#{v2LocaleBean.getMsg('profile.apiKeyExpireDate')}"/></div>
+                        <div class="col-8">
+                            <p:datePicker value="#{v2AllUsersBean.editApiKeyExpiresAt}"
+                                          disabled="#{v2AllUsersBean.editKeyNeverExpire}"/>
+                        </div>
+                    </div>
+                </h:panelGroup>
+                <div class="text-right mt-3">
+                    <p:commandButton value="#{v2LocaleBean.getMsg('apply')}" icon="pi pi-check"
+                                     action="#{v2AllUsersBean.updateApiKey()}" update=":containerIndex :messageIndex"/>
+                </div>
+            </h:panelGroup>
         </h:form>
     </p:dialog>
 </ui:fragment>

@@ -44,17 +44,45 @@ class AdminCatalogControllerTest {
     }
 
     @Test
-    void listUsers_delegatesToService() {
+    void listUsers_delegatesToServiceWhenNoCriteria() {
         when(adminAuthSupport.resolveUserId("key", null)).thenReturn(1);
         when(userProfileService.getProfile(1)).thenReturn(superAdminProfile(1));
         when(adminCatalogService.listAllUsers(true)).thenReturn(
                 List.of(new AdminUserMembership(2, "alice", 3, "Projet", 4, "Admin"))
         );
 
-        var response = adminCatalogController.listUsers("key", null);
+        var response = adminCatalogController.listUsers("key", null, null, null);
 
         assertEquals(1, response.size());
         assertEquals("alice", response.get(0).username());
+    }
+
+    @Test
+    void listUsers_delegatesToSearchWhenMailProvided() {
+        when(adminAuthSupport.resolveUserId("key", null)).thenReturn(1);
+        when(userProfileService.getProfile(1)).thenReturn(superAdminProfile(1));
+        when(adminCatalogService.searchUsers(true, "alice@example.com", null)).thenReturn(
+                List.of(new AdminUserMembership(2, "alice", 3, "Projet", 4, "Admin"))
+        );
+
+        var response = adminCatalogController.listUsers("key", null, "alice@example.com", null);
+
+        assertEquals(1, response.size());
+        verify(adminCatalogService).searchUsers(true, "alice@example.com", null);
+    }
+
+    @Test
+    void listUsers_delegatesToSearchWhenUsernameProvided() {
+        when(adminAuthSupport.resolveUserId("key", null)).thenReturn(1);
+        when(userProfileService.getProfile(1)).thenReturn(superAdminProfile(1));
+        when(adminCatalogService.searchUsers(true, null, "ali")).thenReturn(
+                List.of(new AdminUserMembership(2, "alice", 3, "Projet", 4, "Admin"))
+        );
+
+        var response = adminCatalogController.listUsers("key", null, null, "ali");
+
+        assertEquals(1, response.size());
+        verify(adminCatalogService).searchUsers(true, null, "ali");
     }
 
     @Test

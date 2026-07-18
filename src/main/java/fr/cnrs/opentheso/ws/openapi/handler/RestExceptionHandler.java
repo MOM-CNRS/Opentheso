@@ -16,6 +16,7 @@ import fr.cnrs.opentheso.v2.admin.exception.AdminAccessDeniedException;
 import fr.cnrs.opentheso.v2.project.exception.InvalidProjectDataException;
 import fr.cnrs.opentheso.v2.project.exception.ProjectAccessDeniedException;
 import fr.cnrs.opentheso.v2.project.exception.ProjectNotFoundException;
+import fr.cnrs.opentheso.v2.publicapi.exception.PublicResourceNotFoundException;
 import fr.cnrs.opentheso.ws.openapi.exception.*;
 import fr.cnrs.opentheso.ws.openapi.helper.ApiKeyState;
 import jakarta.servlet.http.HttpServletRequest;
@@ -285,6 +286,17 @@ public class RestExceptionHandler {
         problem.setInstance(URI.create(request.getRequestURI()));
         problem.setProperty("timestamp", OffsetDateTime.now());
         problem.setProperty("errorCode", "INVALID_TOOLBOX_DATA");
+        return problem;
+    }
+
+    @ExceptionHandler(PublicResourceNotFoundException.class)
+    public ProblemDetail handlePublicResourceNotFound(PublicResourceNotFoundException ex, HttpServletRequest request) {
+        ProblemDetail problem = ProblemDetail.forStatus(HttpStatus.NOT_FOUND);
+        problem.setTitle("Resource not found");
+        problem.setDetail(ex.getMessage());
+        problem.setInstance(URI.create(request.getRequestURI()));
+        problem.setProperty("timestamp", OffsetDateTime.now());
+        problem.setProperty("errorCode", "PUBLIC_RESOURCE_NOT_FOUND");
         return problem;
     }
 

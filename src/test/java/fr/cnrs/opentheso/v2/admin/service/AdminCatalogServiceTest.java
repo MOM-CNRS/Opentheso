@@ -2,6 +2,7 @@ package fr.cnrs.opentheso.v2.admin.service;
 
 import fr.cnrs.opentheso.v2.admin.exception.AdminAccessDeniedException;
 import fr.cnrs.opentheso.v2.admin.model.AdminThesaurus;
+import fr.cnrs.opentheso.v2.admin.model.AdminThesaurusOption;
 import fr.cnrs.opentheso.v2.admin.model.AdminUserMembership;
 import fr.cnrs.opentheso.v2.project.model.AssignableRole;
 import fr.cnrs.opentheso.v2.project.model.ProjectSummary;
@@ -14,6 +15,7 @@ import fr.cnrs.opentheso.v2.shared.repository.projection.AdminThesaurusRow;
 import fr.cnrs.opentheso.v2.shared.repository.projection.AdminUserRow;
 import fr.cnrs.opentheso.v2.shared.repository.projection.AssignableRoleRow;
 import fr.cnrs.opentheso.v2.shared.repository.projection.ProjectSummaryRow;
+import fr.cnrs.opentheso.v2.shared.repository.projection.ProjectThesaurusRow;
 import org.junit.jupiter.api.BeforeEach;
 import org.junit.jupiter.api.Test;
 import org.junit.jupiter.api.extension.ExtendWith;
@@ -72,6 +74,32 @@ class AdminCatalogServiceTest {
     }
 
     @Test
+    void searchUsers_returnsMatchingUsersForSuperAdmin() {
+        when(adminQueryRepository.searchUsersByMailAndUsername("alice@example.com", "ali"))
+                .thenReturn(List.of(new AdminUserRow(1, "alice", 2, "Projet A", 3, "Manager")));
+
+        List<AdminUserMembership> users = adminCatalogService.searchUsers(true, "alice@example.com", "ali");
+
+        assertEquals(1, users.size());
+        assertEquals("alice", users.get(0).username());
+    }
+
+    @Test
+    void searchUsers_treatsNullCriteriaAsMatchAll() {
+        when(adminQueryRepository.searchUsersByMailAndUsername("", ""))
+                .thenReturn(List.of(new AdminUserRow(1, "alice", 2, "Projet A", 3, "Manager")));
+
+        List<AdminUserMembership> users = adminCatalogService.searchUsers(true, null, null);
+
+        assertEquals(1, users.size());
+    }
+
+    @Test
+    void searchUsers_rejectsNonSuperAdmin() {
+        assertThrows(AdminAccessDeniedException.class, () -> adminCatalogService.searchUsers(false, "a", "b"));
+    }
+
+    @Test
     void listAllProjects_returnsMappedProjectsForSuperAdmin() {
         when(projectAdminQueryRepository.findAllProjects()).thenReturn(
                 List.of(new ProjectSummaryRow(1, "Projet A"))
@@ -93,6 +121,24 @@ class AdminCatalogServiceTest {
 
         assertEquals(1, roles.size());
         assertEquals("Admin", roles.get(0).name());
+    }
+
+    @Test
+    void listThesauriOfProject_returnsMappedOptionsForSuperAdmin() {
+        when(projectAdminQueryRepository.findThesauriOfProject(2, "fr")).thenReturn(
+                List.of(new ProjectThesaurusRow("th1", "Thésaurus 1", false))
+        );
+
+        List<AdminThesaurusOption> options = adminCatalogService.listThesauriOfProject(true, 2);
+
+        assertEquals(1, options.size());
+        assertEquals("th1", options.get(0).id());
+        assertEquals("Thésaurus 1", options.get(0).title());
+    }
+
+    @Test
+    void listThesauriOfProject_rejectsNonSuperAdmin() {
+        assertThrows(AdminAccessDeniedException.class, () -> adminCatalogService.listThesauriOfProject(false, 2));
     }
 
     @Test

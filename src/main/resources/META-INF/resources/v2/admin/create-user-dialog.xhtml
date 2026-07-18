@@ -24,6 +24,10 @@
                 <div class="col-8"><p:password value="#{v2AllUsersBean.newPasswordConfirmation}" style="width:100%"/></div>
             </div>
             <div class="row mb-2">
+                <div class="col-4 text-right"><h:outputText value="#{v2LocaleBean.getMsg('profile.alert_by_email')}"/></div>
+                <div class="col-8"><p:toggleSwitch value="#{v2AllUsersBean.newAlertMail}"/></div>
+            </div>
+            <div class="row mb-2">
                 <div class="col-4 text-right"><h:outputText value="#{v2LocaleBean.getMsg('profile.role')}"/></div>
                 <div class="col-8">
                     <p:selectOneMenu value="#{v2AllUsersBean.newRoleId}" style="width:100%">
@@ -36,11 +40,39 @@
                 <div class="col-4 text-right"><h:outputText value="#{v2LocaleBean.getMsg('profile.project')}"/></div>
                 <div class="col-8">
                     <p:selectOneMenu value="#{v2AllUsersBean.newProjectId}" style="width:100%">
+                        <p:ajax event="change" listener="#{v2AllUsersBean.onNewProjectChange()}" update="newThesaurusLimit"/>
                         <f:selectItem itemLabel="..." itemValue=""/>
                         <f:selectItems value="#{v2AllUsersBean.projects}" var="project" itemLabel="#{project.name()}" itemValue="#{project.id()}"/>
                     </p:selectOneMenu>
                 </div>
             </div>
+            <h:panelGroup id="newThesaurusLimit">
+                <h:panelGroup rendered="#{v2AllUsersBean.newProjectId != null}">
+                    <div class="row mb-2">
+                        <div class="col-4 text-right">
+                            <h:outputText value="#{v2LocaleBean.getMsg('profile.limitRoleOnTheso')}"
+                                          title="#{v2LocaleBean.getMsg('profile.limitRoleOnThesoTooltip')}"/>
+                        </div>
+                        <div class="col-8">
+                            <p:toggleSwitch value="#{v2AllUsersBean.newLimitedOnThesaurus}">
+                                <p:ajax update="newThesaurusLimit"/>
+                            </p:toggleSwitch>
+                        </div>
+                    </div>
+                    <h:panelGroup rendered="#{v2AllUsersBean.newLimitedOnThesaurus}">
+                        <div class="row mb-2">
+                            <div class="col-4 text-right"><h:outputText value="#{v2LocaleBean.getMsg('profile.list_of_thesauri')}"/></div>
+                            <div class="col-8">
+                                <p:selectManyMenu value="#{v2AllUsersBean.newSelectedThesaurusIds}"
+                                                  showCheckbox="true" style="width:100%">
+                                    <f:selectItems value="#{v2AllUsersBean.newProjectThesauri}" var="theso"
+                                                   itemLabel="#{theso.title()} (#{theso.id()})" itemValue="#{theso.id()}"/>
+                                </p:selectManyMenu>
+                            </div>
+                        </div>
+                    </h:panelGroup>
+                </h:panelGroup>
+            </h:panelGroup>
             <div class="text-right mt-3">
                 <p:commandButton value="#{v2LocaleBean.getMsg('btnValidate')}" icon="pi pi-check"
                                  action="#{v2AllUsersBean.createUser()}" update=":containerIndex :messageIndex"/>

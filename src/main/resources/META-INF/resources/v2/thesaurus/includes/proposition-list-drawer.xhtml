@@ -81,6 +81,92 @@
                             <p:inputTextarea value="#{v2PropositionBean.reviewComment}" rows="4" style="width: 100%;" autoResize="false"/>
                         </div>
                     </div>
+
+                    <h:panelGroup rendered="#{v2PropositionBean.selectedDraft != null and not v2PropositionBean.selectedDraft.isEmpty()}">
+                        <p:separator/>
+                        <div class="row mb-2"><div class="col-12"><b>#{v2LocaleBean.getMsg('proposition.changes.title')}</b></div></div>
+
+                        <h:panelGroup rendered="#{v2PropositionBean.selectedDraft.preferredLabelChange != null}">
+                            <div class="row mb-1">
+                                <div class="col-1"><p:selectBooleanCheckbox value="#{v2PropositionBean.prefTermeAccepted}"/></div>
+                                <div class="col-11">#{v2LocaleBean.getMsg('proposition.accept.label')} : « #{v2PropositionBean.selectedDraft.preferredLabelChange.value} »</div>
+                            </div>
+                        </h:panelGroup>
+
+                        <h:panelGroup rendered="#{not empty v2PropositionBean.selectedDraft.synonymChanges}">
+                            <div class="row mb-1">
+                                <div class="col-1"><p:selectBooleanCheckbox value="#{v2PropositionBean.varianteAccepted}"/></div>
+                                <div class="col-11">
+                                    #{v2LocaleBean.getMsg('proposition.accept.synonyms')}
+                                    <ui:repeat var="change" value="#{v2PropositionBean.selectedDraft.synonymChanges}">
+                                        <div style="font-size: 12px; color: #8f8f8f;">[#{change.action}] #{change.value} (#{change.lang})</div>
+                                    </ui:repeat>
+                                </div>
+                            </div>
+                        </h:panelGroup>
+
+                        <h:panelGroup rendered="#{not empty v2PropositionBean.selectedDraft.translationChanges}">
+                            <div class="row mb-1">
+                                <div class="col-1"><p:selectBooleanCheckbox value="#{v2PropositionBean.traductionAccepted}"/></div>
+                                <div class="col-11">
+                                    #{v2LocaleBean.getMsg('proposition.accept.translations')}
+                                    <ui:repeat var="change" value="#{v2PropositionBean.selectedDraft.translationChanges}">
+                                        <div style="font-size: 12px; color: #8f8f8f;">[#{change.action}] #{change.value} (#{change.lang})</div>
+                                    </ui:repeat>
+                                </div>
+                            </div>
+                        </h:panelGroup>
+
+                        <ui:fragment rendered="#{v2PropositionBean.selectedDraft.getNoteChange('note') != null}">
+                            <div class="row mb-1">
+                                <div class="col-1"><p:selectBooleanCheckbox value="#{v2PropositionBean.noteAccepted}"/></div>
+                                <div class="col-11">#{v2LocaleBean.getMsg('proposition.accept.note')} : #{v2PropositionBean.selectedDraft.getNoteChange('note').value}</div>
+                            </div>
+                        </ui:fragment>
+
+                        <ui:fragment rendered="#{v2PropositionBean.selectedDraft.getNoteChange('definition') != null}">
+                            <div class="row mb-1">
+                                <div class="col-1"><p:selectBooleanCheckbox value="#{v2PropositionBean.definitionAccepted}"/></div>
+                                <div class="col-11">#{v2LocaleBean.getMsg('proposition.accept.definition')} : #{v2PropositionBean.selectedDraft.getNoteChange('definition').value}</div>
+                            </div>
+                        </ui:fragment>
+
+                        <ui:fragment rendered="#{v2PropositionBean.selectedDraft.getNoteChange('changeNote') != null}">
+                            <div class="row mb-1">
+                                <div class="col-1"><p:selectBooleanCheckbox value="#{v2PropositionBean.changeNoteAccepted}"/></div>
+                                <div class="col-11">#{v2LocaleBean.getMsg('proposition.accept.changeNote')} : #{v2PropositionBean.selectedDraft.getNoteChange('changeNote').value}</div>
+                            </div>
+                        </ui:fragment>
+
+                        <ui:fragment rendered="#{v2PropositionBean.selectedDraft.getNoteChange('scopeNote') != null}">
+                            <div class="row mb-1">
+                                <div class="col-1"><p:selectBooleanCheckbox value="#{v2PropositionBean.scopeAccepted}"/></div>
+                                <div class="col-11">#{v2LocaleBean.getMsg('proposition.accept.scopeNote')} : #{v2PropositionBean.selectedDraft.getNoteChange('scopeNote').value}</div>
+                            </div>
+                        </ui:fragment>
+
+                        <ui:fragment rendered="#{v2PropositionBean.selectedDraft.getNoteChange('editorialNote') != null}">
+                            <div class="row mb-1">
+                                <div class="col-1"><p:selectBooleanCheckbox value="#{v2PropositionBean.editorialNotesAccepted}"/></div>
+                                <div class="col-11">#{v2LocaleBean.getMsg('proposition.accept.editorialNote')} : #{v2PropositionBean.selectedDraft.getNoteChange('editorialNote').value}</div>
+                            </div>
+                        </ui:fragment>
+
+                        <ui:fragment rendered="#{v2PropositionBean.selectedDraft.getNoteChange('example') != null}">
+                            <div class="row mb-1">
+                                <div class="col-1"><p:selectBooleanCheckbox value="#{v2PropositionBean.examplesAccepted}"/></div>
+                                <div class="col-11">#{v2LocaleBean.getMsg('proposition.accept.example')} : #{v2PropositionBean.selectedDraft.getNoteChange('example').value}</div>
+                            </div>
+                        </ui:fragment>
+
+                        <ui:fragment rendered="#{v2PropositionBean.selectedDraft.getNoteChange('historyNote') != null}">
+                            <div class="row mb-1">
+                                <div class="col-1"><p:selectBooleanCheckbox value="#{v2PropositionBean.historyAccepted}"/></div>
+                                <div class="col-11">#{v2LocaleBean.getMsg('proposition.accept.historyNote')} : #{v2PropositionBean.selectedDraft.getNoteChange('historyNote').value}</div>
+                            </div>
+                        </ui:fragment>
+                    </h:panelGroup>
+
                     <div class="text-right mt-3">
                         <p:commandButton value="#{v2LocaleBean.getMsg('btnDelete')}" styleClass="ui-button-secondary"
                                          icon="pi pi-trash" style="margin-right: 8px;"

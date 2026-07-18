@@ -127,12 +127,22 @@
                                                     <h:outputText value="#{theso.id()}"/>
                                                 </p:column>
                                                 <p:column headerText="#{v2LocaleBean.getMsg('statistique.thesaurus.name')}"
-                                                          width="90%">
+                                                          width="80%">
                                                     <h:outputText rendered="#{!theso.privateThesaurus()}"
                                                                   value="#{theso.title()}"/>
                                                     <h:outputText rendered="#{theso.privateThesaurus()}"
                                                                   value="#{theso.title()}"
                                                                   style="color: red; font-style: italic"/>
+                                                </p:column>
+                                                <p:column headerText="#{v2LocaleBean.getMsg('profile.action')}" width="10%"
+                                                          style="text-align: center">
+                                                    <p:commandButton icon="fas fa-people-carry"
+                                                                     styleClass="edit-button rounded-button"
+                                                                     process="@this" ajax="true"
+                                                                     title="#{v2LocaleBean.getMsg('profile.move_thesaurus_to_another_project')}"
+                                                                     update="idV2MoveProjectThesaurus v2MoveProjectThesaurusForm"
+                                                                     oncomplete="PF('v2MoveProjectThesaurus').show();"
+                                                                     actionListener="#{v2MyProjectsBean.prepareMoveThesaurus(theso)}"/>
                                                 </p:column>
                                             </p:dataTable>
                                         </p:tab>
@@ -153,6 +163,33 @@
                                                 </p:column>
                                                 <p:column headerText="#{v2LocaleBean.getMsg('profile.role')}">
                                                     <h:outputText value="#{member.roleName()}"/>
+                                                </p:column>
+                                                <p:column headerText="#{v2LocaleBean.getMsg('profile.modify_user')}" style="text-align: center">
+                                                    <p:commandButton actionListener="#{v2MyProjectsBean.prepareEditMemberProfile(member)}"
+                                                                     icon="pi pi-user-edit" update="idV2EditMemberProfile v2EditMemberProfileForm"
+                                                                     oncomplete="PF('v2EditMemberProfile').show()" process="@this"
+                                                                     styleClass="edit-button rounded-button"/>
+                                                </p:column>
+                                                <p:column headerText="#{v2LocaleBean.getMsg('password.reset')}" style="text-align: center">
+                                                    <p:commandButton actionListener="#{v2MyProjectsBean.prepareResetMemberPassword(member)}"
+                                                                     icon="pi pi-key" update="idV2ResetMemberPassword v2ResetMemberPasswordForm"
+                                                                     oncomplete="PF('v2ResetMemberPassword').show()" process="@this"
+                                                                     styleClass="edit-button rounded-button"/>
+                                                </p:column>
+                                                <p:column headerText="#{v2LocaleBean.getMsg('profile.modify_roles')}" style="text-align: center">
+                                                    <p:commandButton rendered="#{v2MyProjectsBean.currentUserId != member.userId()}"
+                                                                     actionListener="#{v2MyProjectsBean.prepareEditMemberRole(member)}"
+                                                                     icon="pi pi-users" update="idV2EditMemberRole v2EditMemberRoleForm"
+                                                                     oncomplete="PF('v2EditMemberRole').show()" process="@this"
+                                                                     styleClass="edit-button rounded-button"/>
+                                                </p:column>
+                                                <p:column headerText="#{v2LocaleBean.getMsg('profile.removeUserFromProjet')}" style="text-align: center">
+                                                    <p:commandButton rendered="#{v2MyProjectsBean.currentUserId != member.userId()}"
+                                                                     styleClass="ui-button-danger rounded-button" icon="pi pi-user-minus" process="@this"
+                                                                     actionListener="#{v2MyProjectsBean.prepareRemoveMember(member)}"
+                                                                     update="idV2RemoveMember v2RemoveMemberForm"
+                                                                     title="#{v2LocaleBean.getMsg('profile.removeUserFromProjet')}"
+                                                                     oncomplete="PF('v2RemoveMember').show()"/>
                                                 </p:column>
                                                 <f:facet name="footer">
                                                     <span class="p-text-bold">#{v2LocaleBean.getMsg('profile.totalOfUsers')}: #{v2MyProjectsBean.dashboard.members().size()}</span>
@@ -181,6 +218,19 @@
                                                     <h:outputText
                                                             value="#{limited.thesaurusName()} (#{limited.thesaurusId()})"/>
                                                 </p:column>
+                                                <p:column headerText="#{v2LocaleBean.getMsg('profile.modify_roles')}" style="text-align: center">
+                                                    <p:commandButton actionListener="#{v2MyProjectsBean.prepareEditLimitedRole(limited)}"
+                                                                     icon="pi pi-users" update="idV2EditLimitedRole v2EditLimitedRoleForm"
+                                                                     oncomplete="PF('v2EditLimitedRole').show()" process="@this"
+                                                                     styleClass="edit-button rounded-button"/>
+                                                </p:column>
+                                                <p:column headerText="#{v2LocaleBean.getMsg('profile.deleteRole')}" style="text-align: center">
+                                                    <p:commandButton styleClass="ui-button-danger rounded-button" icon="pi pi-user-minus" process="@this"
+                                                                     actionListener="#{v2MyProjectsBean.prepareRemoveLimitedRole(limited)}"
+                                                                     update="idV2RemoveLimitedRole v2RemoveLimitedRoleForm"
+                                                                     title="#{v2LocaleBean.getMsg('profile.deleteRoleTooltip')}"
+                                                                     oncomplete="PF('v2RemoveLimitedRole').show()"/>
+                                                </p:column>
                                                 <f:facet name="footer">
                                                     <span class="p-text-bold">#{v2LocaleBean.getMsg('profile.totalOfUsers')}: #{v2MyProjectsBean.dashboard.limitedMembers().size()}</span>
                                                 </f:facet>
@@ -207,6 +257,13 @@
             <ui:include src="rename-project-dialog.xhtml"/>
             <ui:include src="new-project-member-dialog.xhtml"/>
             <ui:include src="add-existing-member-dialog.xhtml"/>
+            <ui:include src="edit-member-role-dialog.xhtml"/>
+            <ui:include src="remove-member-dialog.xhtml"/>
+            <ui:include src="edit-member-profile-dialog.xhtml"/>
+            <ui:include src="reset-member-password-dialog.xhtml"/>
+            <ui:include src="edit-limited-role-dialog.xhtml"/>
+            <ui:include src="remove-limited-role-dialog.xhtml"/>
+            <ui:include src="move-project-thesaurus-dialog.xhtml"/>
             <ui:include src="../thesaurus/includes/layout/logout-dialog.xhtml"/>
             <ui:include src="../thesaurus/includes/layout/login-dialog.xhtml"/>
             <ui:include src="../thesaurus/includes/layout/forget-password-dialog.xhtml"/>

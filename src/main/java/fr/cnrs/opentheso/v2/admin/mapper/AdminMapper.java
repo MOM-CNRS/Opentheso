@@ -1,11 +1,13 @@
 package fr.cnrs.opentheso.v2.admin.mapper;
 
 import fr.cnrs.opentheso.v2.admin.model.AdminThesaurus;
+import fr.cnrs.opentheso.v2.admin.model.AdminThesaurusOption;
 import fr.cnrs.opentheso.v2.admin.model.AdminUserMembership;
 import fr.cnrs.opentheso.v2.project.model.ProjectSummary;
 import fr.cnrs.opentheso.v2.shared.repository.projection.AdminThesaurusRow;
 import fr.cnrs.opentheso.v2.shared.repository.projection.AdminUserRow;
 import fr.cnrs.opentheso.v2.shared.repository.projection.ProjectSummaryRow;
+import fr.cnrs.opentheso.v2.shared.repository.projection.ProjectThesaurusRow;
 
 public final class AdminMapper {
 
@@ -36,5 +38,9 @@ public final class AdminMapper {
 
     public static ProjectSummary toProjectSummary(ProjectSummaryRow row) {
         return new ProjectSummary(row.id(), row.name());
+    }
+
+    public static AdminThesaurusOption toThesaurusOption(ProjectThesaurusRow row) {
+        return new AdminThesaurusOption(row.id(), row.title());
     }
 }

@@ -12,7 +12,7 @@
                         <h:outputLabel value="#{v2LocaleBean.getMsg('candidat.discussion')}"/>
                     </div>
                     <div class="col-6" style="text-align: right;">
-                        <p:commandButton actionListener="#{discussionCandidatBean.reloadMessage()}"
+                        <p:commandButton actionListener="#{v2DiscussionCandidatBean.reloadMessage()}"
                                          icon="fas fa-sync" styleClass="rounded-button ui-button-outlined"
                                          style="color: #F47B2A"
                                          update="tabViewCandidat:containerIndexCandidat:idDiscussion messageIndex" />
@@ -57,14 +57,14 @@
                     <div class="col-6" style="text-align: left">
                         <p:commandButton value="#{v2LocaleBean.getMsg('candidat.show_participants')}" styleClass="ui-button-success"
                                          icon="fa-solid fa-user" update="idParticipantsList"
-                                         actionListener="#{discussionCandidatBean.getParticipantsInConversation()}" />
+                                         actionListener="#{v2DiscussionCandidatBean.getParticipantsInConversation()}" />
                     </div>
                     
                     <div class="col-3 offset-3" style=" text-align: right">
                         <p:commandButton value="#{v2LocaleBean.getMsg('candidat.send')}"
                                          styleClass="ui-button-success" icon="fa-solid fa-paper-plane"
                                          update="tabViewCandidat:containerIndexCandidat:idDiscussion"
-                                         actionListener="#{discussionCandidatBean.sendMessage()}"/>
+                                         actionListener="#{v2DiscussionCandidatBean.sendMessage()}"/>
                     </div>
 
                     <div class="col-6" style="text-align: right">

@@ -1,11 +1,15 @@
 package fr.cnrs.opentheso.v2.toolbox.ui;
 
 import fr.cnrs.opentheso.utils.MessageUtils;
+import fr.cnrs.opentheso.v2.concept.ui.ConsultationShellBean;
 import fr.cnrs.opentheso.v2.setting.ui.ThesaurusContext;
 import fr.cnrs.opentheso.v2.shared.ui.UserSession;
 import fr.cnrs.opentheso.v2.shared.ui.V2LocaleBean;
 import fr.cnrs.opentheso.v2.toolbox.exception.InvalidToolboxDataException;
 import fr.cnrs.opentheso.v2.toolbox.model.EditionThesaurusSummary;
+import fr.cnrs.opentheso.v2.toolbox.edition.ui.ThesaurusEditionCsvImportBean;
+import fr.cnrs.opentheso.v2.toolbox.edition.ui.ThesaurusEditionCsvStructuredImportBean;
+import fr.cnrs.opentheso.v2.toolbox.edition.ui.ThesaurusEditionSkosImportBean;
 import fr.cnrs.opentheso.v2.toolbox.export.ui.ThesaurusExportBean;
 import fr.cnrs.opentheso.v2.toolbox.model.EditionView;
 import fr.cnrs.opentheso.v2.toolbox.policy.ToolboxAccessPolicy;
@@ -35,6 +39,7 @@ public class EditionBean implements Serializable {
     private final ThesaurusContext thesaurusContext;
     private final V2LocaleBean localeBean;
     private final EditionThesaurusService editionThesaurusService;
+    private final ConsultationShellBean consultationShellBean;
 
     private EditionView currentView = EditionView.LIST;
     private List<EditionThesaurusSummary> thesaurusList = Collections.emptyList();
@@ -47,6 +52,9 @@ public class EditionBean implements Serializable {
     private final NewThesaurusBean newThesaurusBean;
     private final ModifyThesaurusBean modifyThesaurusBean;
     private final ThesaurusExportBean thesaurusExportBean;
+    private final ThesaurusEditionSkosImportBean skosImportBean;
+    private final ThesaurusEditionCsvImportBean csvImportBean;
+    private final ThesaurusEditionCsvStructuredImportBean csvStructuredImportBean;
 
     private EditionThesaurusSummary selectedThesaurusForAction;
 
@@ -55,17 +63,25 @@ public class EditionBean implements Serializable {
             ThesaurusContext thesaurusContext,
             V2LocaleBean localeBean,
             EditionThesaurusService editionThesaurusService,
+            ConsultationShellBean consultationShellBean,
             NewThesaurusBean newThesaurusBean,
             ModifyThesaurusBean modifyThesaurusBean,
-            ThesaurusExportBean thesaurusExportBean
+            ThesaurusExportBean thesaurusExportBean,
+            ThesaurusEditionSkosImportBean skosImportBean,
+            ThesaurusEditionCsvImportBean csvImportBean,
+            ThesaurusEditionCsvStructuredImportBean csvStructuredImportBean
     ) {
         this.userSession = userSession;
         this.thesaurusContext = thesaurusContext;
         this.localeBean = localeBean;
         this.editionThesaurusService = editionThesaurusService;
+        this.consultationShellBean = consultationShellBean;
         this.newThesaurusBean = newThesaurusBean;
         this.modifyThesaurusBean = modifyThesaurusBean;
         this.thesaurusExportBean = thesaurusExportBean;
+        this.skosImportBean = skosImportBean;
+        this.csvImportBean = csvImportBean;
+        this.csvStructuredImportBean = csvStructuredImportBean;
     }
 
     public void load() {
@@ -160,15 +176,27 @@ public class EditionBean implements Serializable {
     }
 
     public void showImportSkos() {
-        navigateIfCanCreate(EditionView.IMPORT_SKOS);
+        if (!isCanCreateOrImport()) {
+            return;
+        }
+        skosImportBean.init();
+        currentView = EditionView.IMPORT_SKOS;
     }
 
     public void showImportCsv() {
-        navigateIfCanCreate(EditionView.IMPORT_CSV);
+        if (!isCanCreateOrImport()) {
+            return;
+        }
+        csvImportBean.init();
+        currentView = EditionView.IMPORT_CSV;
     }
 
     public void showImportCsvStructure() {
-        navigateIfCanCreate(EditionView.IMPORT_CSV_STRUCTURE);
+        if (!isCanCreateOrImport()) {
+            return;
+        }
+        csvStructuredImportBean.init();
+        currentView = EditionView.IMPORT_CSV_STRUCTURE;
     }
 
     public void showModifyThesaurus(EditionThesaurusSummary thesaurus) {
@@ -243,13 +271,6 @@ public class EditionBean implements Serializable {
         FacesContext.getCurrentInstance().addMessage(null, message);
     }
 
-    private void navigateIfCanCreate(EditionView view) {
-        if (!isCanCreateOrImport()) {
-            return;
-        }
-        currentView = view;
-    }
-
     private void resetToListView() {
         currentView = EditionView.LIST;
         selectedThesaurusForAction = null;
@@ -261,6 +282,7 @@ public class EditionBean implements Serializable {
                 userSession.isSuperAdmin()
         );
         filteredThesaurusList = null;
+        consultationShellBean.refreshHeaderCatalog();
     }
 
     private boolean canAccessScreen() {

@@ -2,6 +2,7 @@ package fr.cnrs.opentheso.v2.admin.ui;
 
 import fr.cnrs.opentheso.v2.shared.ui.V2LocaleBean;
 import fr.cnrs.opentheso.utils.MessageUtils;
+import fr.cnrs.opentheso.v2.admin.model.AdminThesaurusOption;
 import fr.cnrs.opentheso.v2.admin.model.AdminUserMembership;
 import fr.cnrs.opentheso.v2.admin.service.AdminCatalogService;
 import fr.cnrs.opentheso.v2.admin.service.AdminUserService;
@@ -20,6 +21,7 @@ import lombok.extern.slf4j.Slf4j;
 import org.primefaces.PrimeFaces;
 
 import java.io.Serializable;
+import java.time.LocalDate;
 import java.util.Collections;
 import java.util.List;
 
@@ -45,6 +47,9 @@ public class AllUsersBean implements Serializable {
     private boolean newAlertMail;
     private Integer newRoleId;
     private Integer newProjectId;
+    private boolean newLimitedOnThesaurus;
+    private List<AdminThesaurusOption> newProjectThesauri = Collections.emptyList();
+    private List<String> newSelectedThesaurusIds = Collections.emptyList();
     private String newPassword;
     private String newPasswordConfirmation;
 
@@ -52,6 +57,9 @@ public class AllUsersBean implements Serializable {
     private String editUsername;
     private String editEmail;
     private boolean editAlertMail;
+    private boolean editHasApiKey;
+    private boolean editKeyNeverExpire;
+    private LocalDate editApiKeyExpiresAt;
     private String resetPassword;
     private String resetPasswordConfirmation;
 
@@ -85,8 +93,21 @@ public class AllUsersBean implements Serializable {
         newAlertMail = false;
         newRoleId = null;
         newProjectId = null;
+        newLimitedOnThesaurus = false;
+        newProjectThesauri = Collections.emptyList();
+        newSelectedThesaurusIds = Collections.emptyList();
         newPassword = null;
         newPasswordConfirmation = null;
+    }
+
+    public void onNewProjectChange() {
+        newLimitedOnThesaurus = false;
+        newSelectedThesaurusIds = Collections.emptyList();
+        if (newProjectId == null || !userSession.canAccessSuperAdminScreen()) {
+            newProjectThesauri = Collections.emptyList();
+            return;
+        }
+        newProjectThesauri = adminCatalogService.listThesauriOfProject(true, newProjectId);
     }
 
     public void prepareEditDialog(int userId) {
@@ -95,6 +116,9 @@ public class AllUsersBean implements Serializable {
         editUsername = profile.username();
         editEmail = profile.email();
         editAlertMail = profile.alertMail();
+        editHasApiKey = profile.hasApiKey();
+        editKeyNeverExpire = profile.keyNeverExpire();
+        editApiKeyExpiresAt = profile.keyExpiresAt();
     }
 
     public void preparePasswordDialog(int userId) {
@@ -120,8 +144,8 @@ public class AllUsersBean implements Serializable {
                     newAlertMail,
                     newRoleId,
                     newProjectId,
-                    false,
-                    List.of(),
+                    newLimitedOnThesaurus,
+                    newSelectedThesaurusIds,
                     newPassword,
                     newPasswordConfirmation
             );
@@ -145,6 +169,20 @@ public class AllUsersBean implements Serializable {
             load();
             PrimeFaces.current().executeScript("PF('v2EditUser').hide();");
             refreshPage();
+        } catch (InvalidProfileDataException e) {
+            MessageUtils.showErrorMessage(e.getMessage());
+        }
+    }
+
+    public void updateApiKey() {
+        if (!requireSuperAdmin() || selectedUserId == null) {
+            return;
+        }
+        try {
+            adminUserService.updateApiKeySettings(
+                    true, selectedUserId, editHasApiKey, editKeyNeverExpire, editApiKeyExpiresAt);
+            MessageUtils.showInformationMessage(localeBean.getMsg("profile.apiKeyUpdatedSuccess"));
+            PrimeFaces.current().executeScript("PF('v2EditUser').hide();");
         } catch (InvalidProfileDataException e) {
             MessageUtils.showErrorMessage(e.getMessage());
         }

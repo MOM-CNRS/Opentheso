@@ -35,7 +35,7 @@
                 <p:commandButton value="#{v2LocaleBean.getMsg('insert')}" styleClass="ui-button-success" icon="pi pi-check"
                                  update="processCandidateListForm tabViewCandidat messageIndex" 
                                  oncomplete="PF('processCandidateList').hide();" process="@this" 
-                                 actionListener="#{v2ProcessCandidateBean.insertListCandidat(currentUser.nodeUser.idUser, roleOnThesaurus.nodePreference)}" />
+                                 actionListener="#{v2ProcessCandidateBean.insertListCandidat()}" />
             </div>
             <input type="hidden" name="csrfToken" value="${sessionScope.CSRF_TOKEN}" />
         </h:form>

@@ -13,7 +13,7 @@
                     <h:outputText value="#{v2LocaleBean.getMsg('rightbody.conceptdialog.language')}" style="font-weight: bold;"/>
                 </div>
                 <div class="col-7">
-                    <h:outputText value="#{traductionCandidatBean.langage}" style="width: 100%;"/>
+                    <h:outputText value="#{v2TraductionCandidatBean.langage}" style="width: 100%;"/>
                 </div>
             </div>
 
@@ -22,7 +22,7 @@
                     <h:outputText value="#{v2LocaleBean.getMsg('candidat.traduction')}" style="font-weight: bold;"/>
                 </div>
                 <div class="col-7">
-                    <p:inputText value="#{traductionCandidatBean.traduction}" style="width: 100%;" required="true" />
+                    <p:inputText value="#{v2TraductionCandidatBean.traduction}" style="width: 100%;" required="true" />
                 </div>
             </div>
 
@@ -34,7 +34,7 @@
                 <p:commandButton value="#{v2LocaleBean.getMsg('btnValidate')}" styleClass="ui-button-success" icon="pi pi-check"
                                  ajax="true"
                                  oncomplete="PF('editTraduction').hide();" update="tabViewCandidat messageIndex"
-                                 actionListener="#{traductionCandidatBean.updateTraduction()}"/>
+                                 actionListener="#{v2TraductionCandidatBean.updateTraduction()}"/>
             </div>
             <input type="hidden" name="csrfToken" value="${sessionScope.CSRF_TOKEN}" />
         </h:form>

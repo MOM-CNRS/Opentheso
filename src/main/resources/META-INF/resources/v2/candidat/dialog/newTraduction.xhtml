@@ -13,9 +13,9 @@
                     <h:outputText value="#{v2LocaleBean.getMsg('rightbody.conceptdialog.language')}"/>
                 </div>
                 <div class="col-7">
-                    <p:selectOneMenu id="collection" label="#{v2LocaleBean.getMsg('rightbody.conceptdialog.language')}" value="#{traductionCandidatBean.newLangage}"
+                    <p:selectOneMenu id="collection" label="#{v2LocaleBean.getMsg('rightbody.conceptdialog.language')}" value="#{v2TraductionCandidatBean.newLangage}"
                                      style="width: 100%; background: white; border-color: #43B572">
-                        <f:selectItems  value="#{traductionCandidatBean.nodeLanguesFiltered}" var="lang" itemLabel="#{lang.value}" itemValue="#{lang.code}" />
+                        <f:selectItems  value="#{v2TraductionCandidatBean.nodeLanguesFiltered}" var="lang" itemLabel="#{lang.value}" itemValue="#{lang.code}" />
                     </p:selectOneMenu>
                 </div>
             </div>
@@ -23,10 +23,10 @@
             <!-- traduction à ajouter -->
             <div class="row" style="margin-top: 10px">
                 <div class="col-5">
-                    <h:outputText value="#{traductionCandidatBean.traduction}" />
+                    <h:outputText value="#{v2TraductionCandidatBean.traduction}" />
                 </div>
                 <div class="col-7">
-                    <p:inputText value="#{traductionCandidatBean.newTraduction}" required="true" style="width: 100%" />
+                    <p:inputText value="#{v2TraductionCandidatBean.newTraduction}" required="true" style="width: 100%" />
                 </div>
             </div>       
 
@@ -37,7 +37,7 @@
 
                 <p:commandButton value="#{v2LocaleBean.getMsg('btnAdd')}" styleClass="ui-button-success" icon="pi pi-check"
                                  oncomplete="PF('newTraduction').hide();" ajax="true" update="tabViewCandidat"
-                                 actionListener="#{traductionCandidatBean.addTraductionCandidat()}"/>
+                                 actionListener="#{v2TraductionCandidatBean.addTraductionCandidat()}"/>
             </div>
             <input type="hidden" name="csrfToken" value="${sessionScope.CSRF_TOKEN}" />
         </h:form>

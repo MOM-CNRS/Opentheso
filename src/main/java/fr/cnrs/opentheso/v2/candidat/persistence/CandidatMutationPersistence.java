@@ -5,23 +5,30 @@ import fr.cnrs.opentheso.entites.CandidatStatus;
 import fr.cnrs.opentheso.entites.CandidatVote;
 import fr.cnrs.opentheso.entites.ConceptGroupConcept;
 import fr.cnrs.opentheso.entites.HierarchicalRelationship;
+import fr.cnrs.opentheso.entites.ImageExterne;
 import fr.cnrs.opentheso.entites.NonPreferredTerm;
 import fr.cnrs.opentheso.entites.Note;
+import fr.cnrs.opentheso.entites.NoteHistorique;
+import fr.cnrs.opentheso.entites.NoteType;
 import fr.cnrs.opentheso.entites.Preferences;
 import fr.cnrs.opentheso.entites.PreferredTerm;
 import fr.cnrs.opentheso.entites.TermHistorique;
 import fr.cnrs.opentheso.models.alignment.AlignementElement;
 import fr.cnrs.opentheso.models.alignment.NodeAlignment;
 import fr.cnrs.opentheso.models.candidats.CandidatDto;
+import fr.cnrs.opentheso.models.candidats.MessageDto;
 import fr.cnrs.opentheso.models.candidats.NodeCandidateOld;
 import fr.cnrs.opentheso.models.candidats.NodeProposition;
 import fr.cnrs.opentheso.models.candidats.NodeTraductionCandidat;
+import fr.cnrs.opentheso.models.candidats.TraductionDto;
 import fr.cnrs.opentheso.models.candidats.enumeration.VoteType;
 import fr.cnrs.opentheso.models.concept.Concept;
 import fr.cnrs.opentheso.models.nodes.NodeIdValue;
+import fr.cnrs.opentheso.models.nodes.NodeImage;
 import fr.cnrs.opentheso.models.notes.NodeNote;
 import fr.cnrs.opentheso.models.terms.Term;
 import fr.cnrs.opentheso.models.thesaurus.NodeLangTheso;
+import fr.cnrs.opentheso.models.users.NodeUser;
 import fr.cnrs.opentheso.repositories.AlignementRepository;
 import fr.cnrs.opentheso.repositories.AlignementTypeRepository;
 import fr.cnrs.opentheso.repositories.CandidatMessageRepository;
@@ -34,8 +41,11 @@ import fr.cnrs.opentheso.repositories.ConceptHistoriqueRepository;
 import fr.cnrs.opentheso.repositories.ConceptRepository;
 import fr.cnrs.opentheso.repositories.ConceptTermCandidatRepository;
 import fr.cnrs.opentheso.repositories.HierarchicalRelationshipRepository;
+import fr.cnrs.opentheso.repositories.ImagesRepository;
 import fr.cnrs.opentheso.repositories.NonPreferredTermRepository;
+import fr.cnrs.opentheso.repositories.NoteHistoriqueRepository;
 import fr.cnrs.opentheso.repositories.NoteRepository;
+import fr.cnrs.opentheso.repositories.NoteTypeRepository;
 import fr.cnrs.opentheso.repositories.PreferredTermRepository;
 import fr.cnrs.opentheso.repositories.PreferencesRepository;
 import fr.cnrs.opentheso.repositories.PropositionRepository;
@@ -47,6 +57,7 @@ import fr.cnrs.opentheso.repositories.UserRepository;
 import fr.cnrs.opentheso.utils.MessageUtils;
 import fr.cnrs.opentheso.utils.ToolsHelper;
 import fr.cnrs.opentheso.v2.concept.write.persistence.ConceptDeletionWriteRepository;
+import fr.cnrs.opentheso.v2.shared.mail.SystemMailSender;
 import fr.cnrs.opentheso.v2.toolbox.persistence.ToolboxThesaurusPersistence;
 import lombok.RequiredArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
@@ -93,6 +104,10 @@ public class CandidatMutationPersistence {
     private final ConceptTermCandidatRepository conceptTermCandidatRepository;
     private final PropositionRepository propositionRepository;
     private final CandidatReadPersistence candidatReadPersistence;
+    private final NoteTypeRepository noteTypeRepository;
+    private final NoteHistoriqueRepository noteHistoriqueRepository;
+    private final ImagesRepository imagesRepository;
+    private final SystemMailSender systemMailSender;
 
     public boolean deleteConcept(String conceptId, String thesaurusId) {
         try {
@@ -492,6 +507,207 @@ public class CandidatMutationPersistence {
             return false;
         }
         return true;
+    }
+
+    public List<NoteType> loadNoteTypes() {
+        return noteTypeRepository.findAll().stream()
+                .sorted(Comparator.comparingInt((NoteType type) -> {
+                    if ("definition".equals(type.getCode())) return 0;
+                    if ("scopeNote".equals(type.getCode())) return 1;
+                    if ("note".equals(type.getCode())) return 2;
+                    if ("editorialNote".equals(type.getCode())) return 3;
+                    return 4;
+                }).thenComparing(NoteType::getCode))
+                .toList();
+    }
+
+    public void addOrUpdateCandidateNote(String identifier, String idLang, String idThesaurus, String note,
+                                          String noteTypeCode, String noteSource, int idUser) {
+        idLang = normalizeIdLang(idLang);
+        note = fr.cnrs.opentheso.utils.StringUtils.clearValue(note);
+        note = fr.cnrs.opentheso.utils.StringUtils.clearNoteFromP(note);
+        note = StringEscapeUtils.unescapeXml(note);
+
+        var existing = noteRepository.findAllByIdentifierAndIdThesaurusAndNoteTypeCodeAndLang(
+                identifier, idThesaurus, noteTypeCode, idLang);
+        if (!existing.isEmpty()) {
+            existing.get(0).setLexicalValue(note);
+            existing.get(0).setNoteSource(noteSource);
+            noteRepository.save(existing.get(0));
+        } else {
+            noteRepository.save(Note.builder()
+                    .noteTypeCode(noteTypeCode)
+                    .idThesaurus(idThesaurus)
+                    .lang(idLang)
+                    .lexicalValue(note)
+                    .identifier(identifier)
+                    .noteSource(noteSource)
+                    .idUser(idUser)
+                    .created(new Date())
+                    .modified(new Date())
+                    .build());
+        }
+        addNoteHistorique(identifier, idLang, idThesaurus, note, noteTypeCode, "add", idUser);
+    }
+
+    public boolean updateCandidateNote(int idNote, String idConcept, String idLang, String idThesaurus,
+                                        String note, String noteSource, String noteTypeCode, int idUser) {
+        var noteValue = noteRepository.findByIdAndIdThesaurus(idNote, idThesaurus);
+        if (noteValue.isEmpty()) {
+            return false;
+        }
+        noteValue.get().setLexicalValue(fr.cnrs.opentheso.utils.StringUtils.clearNoteFromP(note));
+        noteValue.get().setNoteSource(noteSource);
+        noteValue.get().setModified(new Date());
+        noteRepository.save(noteValue.get());
+        addNoteHistorique(idConcept, normalizeIdLang(idLang), idThesaurus, note, noteTypeCode, "update", idUser);
+        return true;
+    }
+
+    public void deleteCandidateNote(int idNote, String identifier, String idLang, String idThesaurus,
+                                     String noteTypeCode, String oldNote, int idUser) {
+        noteRepository.deleteByIdAndIdThesaurus(idNote, idThesaurus);
+        addNoteHistorique(identifier, normalizeIdLang(idLang), idThesaurus, oldNote, noteTypeCode, "delete", idUser);
+        candidatVoteRepository.deleteAllByIdThesaurusAndIdConceptAndIdNote(idThesaurus, identifier, String.valueOf(idNote));
+    }
+
+    public boolean isLabelExistIgnoreCase(String label, String thesaurusId, String lang) {
+        return termRepository.existsTermIgnoreCase(
+                fr.cnrs.opentheso.utils.StringUtils.convertString(label), thesaurusId, lang);
+    }
+
+    public void deleteCandidateTranslation(String thesaurusId, String termId, String lang) {
+        termRepository.deleteByIdTermAndLangAndIdThesaurus(termId, lang, thesaurusId);
+    }
+
+    public void addCandidateTranslation(Term term, int userId) {
+        addTermTranslation(term, userId);
+    }
+
+    public List<TraductionDto> loadCandidateTranslations(String conceptId, String thesaurusId, String lang) {
+        List<TraductionDto> results = new ArrayList<>();
+        for (Object[] row : termRepository.getConceptTranslationsRaw(conceptId, thesaurusId, lang)) {
+            results.add(TraductionDto.builder()
+                    .langue((String) row[0])
+                    .traduction((String) row[1])
+                    .codePays((String) row[2])
+                    .build());
+        }
+        return results;
+    }
+
+    public List<NodeImage> loadExternalImages(String thesaurusId, String conceptId) {
+        return candidatReadPersistence.loadExternalImages(thesaurusId, conceptId);
+    }
+
+    public void addExternalImage(String conceptId, String thesaurusId, String imageName, String copyright,
+                                  String uri, String creator, int userId) {
+        imagesRepository.save(ImageExterne.builder()
+                .imageCreator(creator)
+                .idUser(userId)
+                .idConcept(conceptId)
+                .idThesaurus(thesaurusId)
+                .imageName(StringUtils.isEmpty(imageName) ? "" : imageName)
+                .imageCopyright(copyright)
+                .externalUri(uri.trim())
+                .build());
+    }
+
+    public void deleteExternalImage(String thesaurusId, String conceptId, String uri) {
+        if (StringUtils.isEmpty(uri)) {
+            imagesRepository.deleteAllByIdThesaurusAndIdConcept(thesaurusId, conceptId);
+        } else {
+            imagesRepository.deleteByIdThesaurusAndIdConceptAndExternalUri(thesaurusId, conceptId, uri);
+        }
+    }
+
+    public void sendDiscussionMessage(String conceptId, String thesaurusId, String message, int userId) {
+        candidatMessageRepository.save(CandidatMessages.builder()
+                .value(message)
+                .idConcept(conceptId)
+                .idThesaurus(thesaurusId)
+                .idUser(userId)
+                .date(new SimpleDateFormat("yyyy-MM-dd HH:mm").format(new Date()))
+                .build());
+    }
+
+    public List<NodeUser> loadDiscussionParticipants(String conceptId, String thesaurusId) {
+        var messages = candidatMessageRepository.findMessagesByConceptAndThesaurus(conceptId, thesaurusId);
+        if (CollectionUtils.isEmpty(messages)) {
+            return new ArrayList<>();
+        }
+        return messages.stream()
+                .map(fr.cnrs.opentheso.models.CandidatMessageProjection::getIdUser)
+                .distinct()
+                .map(idUser -> userRepository.findById(idUser)
+                        .map(user -> NodeUser.builder().idUser(idUser).name(user.getUsername()).build())
+                        .orElse(NodeUser.builder().idUser(idUser).build()))
+                .toList();
+    }
+
+    public List<MessageDto> loadDiscussionMessages(String conceptId, String thesaurusId, int currentUserId) {
+        var messages = candidatMessageRepository.findMessagesByConceptAndThesaurus(conceptId, thesaurusId);
+        if (CollectionUtils.isEmpty(messages)) {
+            return List.of();
+        }
+        return messages.stream()
+                .map(message -> MessageDto.builder()
+                        .idUser(message.getIdUser())
+                        .nom(message.getUsername())
+                        .msg(message.getValue())
+                        .date(message.getDate())
+                        .mine(currentUserId == message.getIdUser())
+                        .build())
+                .toList();
+    }
+
+    public void notifyDiscussionParticipants(String conceptId, String thesaurusId, String conceptLabel) {
+        var subject = "Nouveau message module candidat";
+        var body = "Vous avez participé à la discussion pour ce candidat " + conceptLabel
+                + ", id= " + conceptId + ". Sachez qu'un nouveau message a été posté.";
+        loadDiscussionParticipants(conceptId, thesaurusId).forEach(participant ->
+                userRepository.findById(participant.getIdUser())
+                        .filter(user -> Boolean.TRUE.equals(user.getAlertMail()))
+                        .map(user -> user.getMail())
+                        .filter(StringUtils::isNotBlank)
+                        .ifPresent(mail -> sendMailAsync(mail, subject, body)));
+    }
+
+    public boolean sendMailInvitation(String email) {
+        return sendMailAsync(email, "Invitation à une conversation !", "C'est le body du message");
+    }
+
+    private boolean sendMailAsync(String recipient, String subject, String body) {
+        new Thread(() -> {
+            try {
+                systemMailSender.sendHtmlMail(recipient, subject, body);
+            } catch (Exception ex) {
+                log.warn("Envoi de mail échoué vers {}", recipient, ex);
+            }
+        }).start();
+        return true;
+    }
+
+    private void addNoteHistorique(String idConcept, String idLang, String idThesaurus, String note,
+                                    String noteTypeCode, String action, int idUser) {
+        noteHistoriqueRepository.save(NoteHistorique.builder()
+                .idThesaurus(idThesaurus)
+                .idConcept(idConcept)
+                .lang(idLang)
+                .lexicalvalue(fr.cnrs.opentheso.utils.StringUtils.convertString(note))
+                .actionPerformed(action)
+                .idUser(idUser)
+                .notetypecode(noteTypeCode)
+                .modified(new Date())
+                .build());
+    }
+
+    private String normalizeIdLang(String idLang) {
+        return switch (idLang) {
+            case "en-GB", "en-US" -> "en";
+            case "pt-BR", "pt-PT" -> "pt";
+            default -> idLang;
+        };
     }
 
     public void generateLocalArkForConcepts(String thesaurusId, List<String> conceptIds, Preferences preferences) {

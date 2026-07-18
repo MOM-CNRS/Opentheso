@@ -1,6 +1,7 @@
 package fr.cnrs.opentheso.v2.toolbox.ui;
 
 import fr.cnrs.opentheso.utils.MessageUtils;
+import fr.cnrs.opentheso.v2.concept.ui.ConsultationShellBean;
 import fr.cnrs.opentheso.v2.setting.service.ThesaurusAccessService;
 import fr.cnrs.opentheso.v2.shared.ui.UserSession;
 import fr.cnrs.opentheso.v2.toolbox.exception.InvalidToolboxDataException;
@@ -329,7 +330,11 @@ public class ModifyThesaurusBean implements Serializable {
     }
 
     private void refreshMenuThesaurusList() {
-        PrimeFaces.current().ajax().update("formMenu:idListTheso");
+        FacesContext context = FacesContext.getCurrentInstance();
+        ConsultationShellBean shellBean = context.getApplication().evaluateExpressionGet(
+                context, "#{v2ConsultationShellBean}", ConsultationShellBean.class);
+        shellBean.refreshHeaderCatalog();
+        PrimeFaces.current().ajax().update("containerIndex:header");
     }
 
     private EditionBean editionBean() {

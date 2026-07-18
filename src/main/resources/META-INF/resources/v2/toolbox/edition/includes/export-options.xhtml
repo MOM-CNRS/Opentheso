@@ -5,38 +5,53 @@
              xmlns:f="http://xmlns.jcp.org/jsf/core">
 
     <h:panelGroup rendered="#{v2EditionBean.exportSkosView or v2EditionBean.exportCsvView or v2EditionBean.exportPdfView}">
-        <div class="row mb-3">
-            <div class="col-3 text-right">
-                <h:outputText value="#{v2LocaleBean.getMsg('statistique.filtre_collection')}"/>
-            </div>
-            <div class="col-5">
-                <p:toggleSwitch value="#{v2ThesaurusExportBean.filterByGroup}"/>
-            </div>
-        </div>
-        <h:panelGroup rendered="#{v2ThesaurusExportBean.filterByGroup}">
-            <div class="row mb-3">
-                <div class="col-3"/>
+        <h:panelGroup id="exportFilterByGroupPanel" layout="block">
+            <div class="row mb-3 align-items-center">
+                <div class="col-3 text-right">
+                    <h:outputText value="#{v2LocaleBean.getMsg('statistique.filtre_collection')}"/>
+                </div>
                 <div class="col-5">
-                    <p:selectCheckboxMenu value="#{v2ThesaurusExportBean.selectedGroupIds}"
-                                          label="#{v2LocaleBean.getMsg('select')}"
-                                          style="width: 100%;" multiple="true" filter="true">
-                        <f:selectItems value="#{v2ThesaurusExportBean.groupList}" var="group"
-                                       itemLabel="#{group.lexicalValue}" itemValue="#{group.conceptGroup.idGroup}"/>
-                    </p:selectCheckboxMenu>
+                    <p:toggleSwitch value="#{v2ThesaurusExportBean.filterByGroup}">
+                        <p:ajax listener="#{v2ThesaurusExportBean.onFilterByGroupToggle()}"
+                                update="exportFilterByGroupPanel exportByGroupPanel"/>
+                    </p:toggleSwitch>
                 </div>
             </div>
+            <h:panelGroup rendered="#{v2ThesaurusExportBean.filterByGroup}" layout="block">
+                <div class="row mb-3">
+                    <div class="col-3"/>
+                    <div class="col-5">
+                        <p:selectCheckboxMenu value="#{v2ThesaurusExportBean.selectedGroupIds}"
+                                              label="#{v2LocaleBean.getMsg('select')}"
+                                              style="width: 100%;" multiple="true" filter="true"
+                                              filterMatchMode="startsWith">
+                            <f:selectItems value="#{v2ThesaurusExportBean.groupList}" var="group"
+                                           itemLabel="#{group.lexicalValue}"
+                                           itemValue="#{group.conceptGroup.idGroup}"/>
+                        </p:selectCheckboxMenu>
+                    </div>
+                </div>
+            </h:panelGroup>
         </h:panelGroup>
 
-        <div class="row mb-3" rendered="#{v2EditionBean.exportSkosView or v2EditionBean.exportCsvView}">
-            <div class="col-3 text-right">
-                <h:outputText value="#{v2LocaleBean.getMsg('export.exportThesaurusByCollection')}"/>
-            </div>
-            <div class="col-5">
-                <p:toggleSwitch value="#{v2ThesaurusExportBean.exportByGroup}"/>
-            </div>
-        </div>
+        <h:panelGroup id="exportByGroupPanel" layout="block">
+            <h:panelGroup rendered="#{v2EditionBean.exportSkosView or v2EditionBean.exportCsvView}" layout="block">
+                <div class="row mb-3 align-items-center">
+                    <div class="col-3 text-right">
+                        <h:outputText value="#{v2LocaleBean.getMsg('export.exportThesaurusByCollection')}"
+                                      title="#{v2LocaleBean.getMsg('export.exportThesaurusByCollectionTooltip')}"/>
+                    </div>
+                    <div class="col-5">
+                        <p:toggleSwitch value="#{v2ThesaurusExportBean.exportByGroup}">
+                            <p:ajax listener="#{v2ThesaurusExportBean.onExportByGroupToggle()}"
+                                    update="exportFilterByGroupPanel exportByGroupPanel"/>
+                        </p:toggleSwitch>
+                    </div>
+                </div>
+            </h:panelGroup>
+        </h:panelGroup>
 
-        <div class="row mb-3">
+        <div class="row mb-3 align-items-center">
             <div class="col-3 text-right">
                 <h:outputText value="#{v2LocaleBean.getMsg('export.filterHtmlCharacter')}"/>
             </div>
@@ -47,26 +62,32 @@
     </h:panelGroup>
 
     <h:panelGroup rendered="#{v2EditionBean.exportCsvIdView}">
-        <div class="row mb-3">
-            <div class="col-3 text-right">
-                <h:outputText value="#{v2LocaleBean.getMsg('statistique.filtre_collection')}"/>
-            </div>
-            <div class="col-5">
-                <p:toggleSwitch value="#{v2ThesaurusExportBean.filterByGroup}"/>
-            </div>
-        </div>
-        <h:panelGroup rendered="#{v2ThesaurusExportBean.filterByGroup}">
-            <div class="row mb-3">
-                <div class="col-3"/>
+        <h:panelGroup id="exportCsvIdFilterByGroupPanel" layout="block">
+            <div class="row mb-3 align-items-center">
+                <div class="col-3 text-right">
+                    <h:outputText value="#{v2LocaleBean.getMsg('statistique.filtre_collection')}"/>
+                </div>
                 <div class="col-5">
-                    <p:selectCheckboxMenu value="#{v2ThesaurusExportBean.selectedGroupIds}"
-                                          label="#{v2LocaleBean.getMsg('select')}"
-                                          style="width: 100%;" multiple="true" filter="true">
-                        <f:selectItems value="#{v2ThesaurusExportBean.groupList}" var="group"
-                                       itemLabel="#{group.lexicalValue}" itemValue="#{group.conceptGroup.idGroup}"/>
-                    </p:selectCheckboxMenu>
+                    <p:toggleSwitch value="#{v2ThesaurusExportBean.filterByGroup}">
+                        <p:ajax update="exportCsvIdFilterByGroupPanel"/>
+                    </p:toggleSwitch>
                 </div>
             </div>
+            <h:panelGroup rendered="#{v2ThesaurusExportBean.filterByGroup}" layout="block">
+                <div class="row mb-3">
+                    <div class="col-3"/>
+                    <div class="col-5">
+                        <p:selectCheckboxMenu value="#{v2ThesaurusExportBean.selectedGroupIds}"
+                                              label="#{v2LocaleBean.getMsg('select')}"
+                                              style="width: 100%;" multiple="true" filter="true"
+                                              filterMatchMode="startsWith">
+                            <f:selectItems value="#{v2ThesaurusExportBean.groupList}" var="group"
+                                           itemLabel="#{group.lexicalValue}"
+                                           itemValue="#{group.conceptGroup.idGroup}"/>
+                        </p:selectCheckboxMenu>
+                    </div>
+                </div>
+            </h:panelGroup>
         </h:panelGroup>
     </h:panelGroup>
 </ui:fragment>

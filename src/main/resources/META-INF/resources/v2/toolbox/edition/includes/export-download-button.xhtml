@@ -5,14 +5,16 @@
 
     <div class="row mb-3">
         <div class="col-12 text-center">
-            <p:commandButton value="#{v2LocaleBean.getMsg('candidat.export')}" icon="fas fa-download"
-                             ajax="false" styleClass="ui-button-success"
+            <p:commandButton value="#{v2LocaleBean.getMsg('candidat.export')}"
+                             icon="fas fa-download"
+                             ajax="false"
+                             styleClass="ui-button-success"
                              actionListener="#{v2ThesaurusExportBean.prepare(
                                  v2EditionBean.selectedThesaurusForAction.id,
-                                 v2EditionBean.selectedThesaurusForAction.title)}"
-                             onclick="PF('waitDialog').show();"
-                             oncomplete="PF('waitDialog').hide();">
-                <p:fileDownload value="#{downloadMethod}"/>
+                                 v2EditionBean.selectedThesaurusForAction.title,
+                                 downloadMode)}"
+                             onclick="PrimeFaces.monitorDownload(startExport, stopExport);">
+                <p:fileDownload value="#{v2ThesaurusExportBean.downloadFile}"/>
             </p:commandButton>
         </div>
     </div>

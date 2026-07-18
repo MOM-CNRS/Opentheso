@@ -20,7 +20,10 @@ import org.springframework.web.bind.annotation.PutMapping;
 import org.springframework.web.bind.annotation.RequestBody;
 import org.springframework.web.bind.annotation.RequestHeader;
 import org.springframework.web.bind.annotation.RequestMapping;
+import org.springframework.web.bind.annotation.RequestParam;
 import org.springframework.web.bind.annotation.RestController;
+
+import org.apache.commons.lang3.StringUtils;
 
 import java.util.List;
 
@@ -36,13 +39,19 @@ public class AdminCatalogController {
     private final AdminCatalogService adminCatalogService;
 
     @GetMapping(value = "/users", produces = MediaType.APPLICATION_JSON_VALUE)
-    @Operation(summary = "Lister tous les utilisateurs")
+    @Operation(summary = "Lister ou rechercher les utilisateurs",
+            description = "Sans paramètre : liste tous les utilisateurs. Avec mail et/ou username : recherche partielle insensible à la casse sur les deux critères.")
     public List<AdminUserMembershipResponse> listUsers(
             @RequestHeader(value = "X-API-KEY", required = false) String xApiKey,
-            @RequestHeader(value = "API-KEY", required = false) String legacyApiKey
+            @RequestHeader(value = "API-KEY", required = false) String legacyApiKey,
+            @RequestParam(required = false) String mail,
+            @RequestParam(required = false) String username
     ) {
         int callerId = adminAuthSupport.resolveUserId(xApiKey, legacyApiKey);
         var profile = userProfileService.getProfile(callerId);
+        if (StringUtils.isNotBlank(mail) || StringUtils.isNotBlank(username)) {
+            return AdminApiMapper.toUserResponses(adminCatalogService.searchUsers(profile.superAdmin(), mail, username));
+        }
         return AdminApiMapper.toUserResponses(adminCatalogService.listAllUsers(profile.superAdmin()));
     }
 

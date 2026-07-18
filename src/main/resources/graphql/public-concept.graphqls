@@ -1,0 +1,73 @@
+# Types et requêtes publiques (v2, sans authentification) pour la lecture de concepts
+
+type PublicConceptLabel {
+    lang: String
+    value: String
+}
+
+type PublicConceptNote {
+    typeCode: String
+    lang: String
+    value: String
+}
+
+type PublicConceptRelation {
+    conceptId: String
+    label: String
+    arkId: String
+}
+
+type PublicConceptImage {
+    uri: String
+    imageName: String
+    copyright: String
+    creator: String
+}
+
+type PublicConceptGps {
+    latitude: Float
+    longitude: Float
+}
+
+type PublicConceptNode {
+    conceptId: String
+    thesaurusId: String
+    prefLabel: String
+    notation: String
+    conceptType: String
+    status: String
+    arkId: String
+    created: String
+    modified: String
+
+    translations: [PublicConceptLabel]
+    synonyms: [String]
+    hiddenSynonyms: [String]
+
+    broaders: [PublicConceptRelation]
+    narrowers: [PublicConceptRelation]
+    relateds: [PublicConceptRelation]
+    collections: [PublicConceptRelation]
+    facets: [PublicConceptRelation]
+    replacedBy: [PublicConceptRelation]
+    replaces: [PublicConceptRelation]
+    exactMatches: [PublicConceptRelation]
+
+    definitions: [PublicConceptNote]
+    examples: [PublicConceptNote]
+    editorialNotes: [PublicConceptNote]
+    scopeNotes: [PublicConceptNote]
+    historyNotes: [PublicConceptNote]
+    changeNotes: [PublicConceptNote]
+
+    images: [PublicConceptImage]
+    gpsPoints: [PublicConceptGps]
+}
+
+extend type Query {
+    """Concept complet (v2, lecture publique, sans authentification) à partir de son identifiant."""
+    publicConcept(thesaurusId: String!, conceptId: String!, lang: String): PublicConceptNode
+
+    """Recherche de concepts (v2, lecture publique) par libellé, avec filtrage optionnel par groupe."""
+    publicConceptSearch(thesaurusId: String!, value: String!, groupIds: [String!], lang: String): [PublicConceptNode]
+}

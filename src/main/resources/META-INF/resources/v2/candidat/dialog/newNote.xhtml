@@ -16,10 +16,10 @@
 
             <div class="row" style="margin-top: 10px">
                 <div class="col-12" >
-                    <p:selectOneMenu id="typeNote" label="Type note" value="#{noteBeanCandidat.selectedTypeNote}"
+                    <p:selectOneMenu id="typeNote" label="Type note" value="#{v2NoteBeanCandidat.selectedTypeNote}"
                                      style="width: 100%; background: white; border-color: #43B572">
 
-                        <f:selectItems value="#{noteBeanCandidat.noteTypes}" var="typeNote"
+                        <f:selectItems value="#{v2NoteBeanCandidat.noteTypes}" var="typeNote"
                                        itemLabel="#{typeNote.labelFr} (#{typeNote.labelEn})" itemValue="#{typeNote.code}"/>
                     </p:selectOneMenu>
                 </div>
@@ -27,15 +27,15 @@
 
             <div class="row" style="margin-top:10px">
                 <div class="col-12" >
-                    <p:selectOneMenu label="Langue" value="#{noteBeanCandidat.selectedLang}" style="width: 100%; border-color: #43B572">
-                        <f:selectItems  value="#{noteBeanCandidat.nodeLangues}" var="lang" itemLabel="#{lang.value}" itemValue="#{lang.code}" />
+                    <p:selectOneMenu label="Langue" value="#{v2NoteBeanCandidat.selectedLang}" style="width: 100%; border-color: #43B572">
+                        <f:selectItems  value="#{v2CandidatBean.languagesOfTheso}" var="lang" itemLabel="#{lang.value}" itemValue="#{lang.code}" />
                     </p:selectOneMenu>
                 </div>
             </div>
 
             <div class="row" style="margin-top:10px">
                 <div class="col-12" >
-                    <p:textEditor value="#{noteBeanCandidat.noteValue}"
+                    <p:textEditor value="#{v2NoteBeanCandidat.noteValue}"
                                   secure="false" height="150" style="width: 100%; font-size: 12px; color: black" placeholder="Ajouter votre note" styleClass="scrollable-editor">
                         <f:facet name="toolbar">
                             <span class="ql-formats">
@@ -54,7 +54,7 @@
                                  update="tabViewCandidat messageIndex"
                                  ajax="true"  
                                  oncomplete="PF('newNote').hide();"
-                                 action="#{noteBeanCandidat.addNewNote()}"/>
+                                 action="#{v2NoteBeanCandidat.addNewNote()}"/>
             </div>
             <input type="hidden" name="csrfToken" value="${sessionScope.CSRF_TOKEN}" />
         </h:form>

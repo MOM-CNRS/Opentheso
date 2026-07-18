@@ -134,11 +134,16 @@ public class ProcessCandidateBean implements Serializable {
         PrimeFaces.current().ajax().update("containerIndex:tabViewCandidat");
     }
 
-    public void insertListCandidat(int idUser, Preferences nodePreference) throws IOException {
+    public void insertListCandidat() throws IOException {
         if (candidatBean.getSelectedCandidates() == null || candidatBean.getSelectedCandidates().isEmpty()) {
             MessageUtils.showErrorMessage("Pas de candidat sélectionné");
             return;
         }
+
+        int idUser = requireUserId();
+        Preferences nodePreference = thesaurusPreferencesProvider
+                .findPreferences(thesaurusContext.resolveThesaurusId())
+                .orElse(null);
 
         var candidates = new ArrayList<>(candidatBean.getSelectedCandidates());
         candidatProcessService.prepareCandidatesForAccept(

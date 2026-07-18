@@ -6,6 +6,7 @@
 
     <ul class="navbar-nav bg-gradient-primary sidebar sidebar-dark accordion toggled" id="accordionSidebar">
 
+        <h:form id="menuForm" prependId="false">
         <h:panelGroup id="menuBar">
 
             <a class="sidebar-brand d-flex align-items-center justify-content-center" style="height: 60px"
@@ -22,7 +23,8 @@
 
             <li class="nav-item" style="margin-top: 20px;">
                 <p:commandLink class="nav-link collapsed" actionListener="#{v2NavigationBean.redirectToThesaurus()}"
-                               process="@this" title="#{v2LocaleBean.getMsg('menu.thesaurus')}">
+                               process="@this" ajax="false"
+                               title="#{v2LocaleBean.getMsg('menu.thesaurus')}">
                     <i class="fa-solid fa-folder-tree" style="font-size: 1.2rem"/>
                 </p:commandLink>
             </li>
@@ -30,7 +32,8 @@
             <h:panelGroup rendered="#{v2UserSession.loggedIn and v2ConsultationShellBean.hasSelectedThesaurus() and v2UserSession.contributor}">
                 <li class="nav-item">
                     <p:commandLink class="nav-link collapsed" actionListener="#{v2NavigationBean.redirectToCandidat()}"
-                                   process="@this" title="#{v2LocaleBean.getMsg('candidat.titre')}">
+                                   process="@this" ajax="false"
+                                   title="#{v2LocaleBean.getMsg('candidat.titre')}">
                         <i class="fa-solid fa-plus" style="font-size: 1.2rem"/>
                     </p:commandLink>
                 </li>
@@ -129,7 +132,8 @@
             <h:panelGroup rendered="#{v2UserSession.loggedIn}">
                 <li class="nav-item">
                     <p:commandLink class="nav-link collapsed" actionListener="#{v2NavigationBean.redirectToGraph()}"
-                                   process="@this" title="#{v2LocaleBean.getMsg('graph')}">
+                                   process="@this" ajax="false"
+                                   title="#{v2LocaleBean.getMsg('graph')}">
                         <i class="fa-solid fa-diagram-project" style="font-size: 1.2rem"/>
                     </p:commandLink>
                 </li>
@@ -137,5 +141,6 @@
             </h:panelGroup>
 
         </h:panelGroup>
+        </h:form>
     </ul>
 </ui:composition>

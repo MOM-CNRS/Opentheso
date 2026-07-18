@@ -43,6 +43,41 @@ public class AdminQueryRepository {
     }
 
     @SuppressWarnings("unchecked")
+    public List<AdminUserRow> searchUsersByMailAndUsername(String mail, String username) {
+        String sql = """
+                SELECT id_user, username, id_group, label_group, id_role, role_name
+                FROM (
+                    SELECT u.id_user, u.username, g.id_group, g.label_group, r.id AS id_role, r.name AS role_name
+                    FROM user_role_group urg
+                    JOIN users u ON urg.id_user = u.id_user
+                    JOIN user_group_label g ON urg.id_group = g.id_group
+                    JOIN roles r ON urg.id_role = r.id
+                    WHERE LOWER(u.mail) LIKE LOWER(CONCAT('%', :mail, '%'))
+                      AND LOWER(u.username) LIKE LOWER(CONCAT('%', :username, '%'))
+                    UNION ALL
+                    SELECT u.id_user, u.username, -1, '', 0, ''
+                    FROM users u
+                    WHERE COALESCE(u.issuperadmin, false) = false
+                      AND NOT EXISTS (SELECT 1 FROM user_role_group urg WHERE urg.id_user = u.id_user)
+                      AND LOWER(u.mail) LIKE LOWER(CONCAT('%', :mail, '%'))
+                      AND LOWER(u.username) LIKE LOWER(CONCAT('%', :username, '%'))
+                    UNION ALL
+                    SELECT u.id_user, u.username, -1, '', 1, 'superAdmin'
+                    FROM users u
+                    WHERE COALESCE(u.issuperadmin, false) = true
+                      AND LOWER(u.mail) LIKE LOWER(CONCAT('%', :mail, '%'))
+                      AND LOWER(u.username) LIKE LOWER(CONCAT('%', :username, '%'))
+                ) all_users
+                ORDER BY LOWER(username)
+                """;
+        List<Object[]> rows = entityManager.createNativeQuery(sql)
+                .setParameter("mail", mail)
+                .setParameter("username", username)
+                .getResultList();
+        return rows.stream().map(this::toAdminUserRow).toList();
+    }
+
+    @SuppressWarnings("unchecked")
     public List<AdminThesaurusRow> findAllThesauri(String lang) {
         String sql = """
                 SELECT

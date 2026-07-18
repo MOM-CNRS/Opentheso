@@ -1,15 +1,20 @@
 package fr.cnrs.opentheso.v2.candidat.service;
 
 import fr.cnrs.opentheso.entites.ConceptDcTerm;
+import fr.cnrs.opentheso.entites.NoteType;
 import fr.cnrs.opentheso.models.alignment.AlignementElement;
 import fr.cnrs.opentheso.models.alignment.NodeAlignment;
 import fr.cnrs.opentheso.models.candidats.CandidatDto;
+import fr.cnrs.opentheso.models.candidats.MessageDto;
+import fr.cnrs.opentheso.models.candidats.TraductionDto;
 import fr.cnrs.opentheso.models.candidats.enumeration.VoteType;
 import fr.cnrs.opentheso.models.concept.DCMIResource;
 import fr.cnrs.opentheso.models.nodes.NodeIdValue;
+import fr.cnrs.opentheso.models.nodes.NodeImage;
 import fr.cnrs.opentheso.models.notes.NodeNote;
 import fr.cnrs.opentheso.models.terms.Term;
 import fr.cnrs.opentheso.models.thesaurus.NodeLangTheso;
+import fr.cnrs.opentheso.models.users.NodeUser;
 import fr.cnrs.opentheso.repositories.ConceptDcTermRepository;
 import fr.cnrs.opentheso.v2.candidat.persistence.CandidatMutationPersistence;
 import lombok.RequiredArgsConstructor;
@@ -161,5 +166,73 @@ public class CandidatMutationService {
 
     public void deleteRelatedTerm(String conceptId, String thesaurusId, String targetConceptId, int userId) throws SQLException {
         candidatMutationPersistence.deleteRelatedTerm(conceptId, thesaurusId, targetConceptId, userId);
+    }
+
+    public List<NoteType> loadNoteTypes() {
+        return candidatMutationPersistence.loadNoteTypes();
+    }
+
+    public void addOrUpdateCandidateNote(String identifier, String idLang, String idThesaurus, String note,
+                                          String noteTypeCode, String noteSource, int idUser) {
+        candidatMutationPersistence.addOrUpdateCandidateNote(identifier, idLang, idThesaurus, note, noteTypeCode, noteSource, idUser);
+    }
+
+    public boolean updateCandidateNote(int idNote, String idConcept, String idLang, String idThesaurus,
+                                        String note, String noteSource, String noteTypeCode, int idUser) {
+        return candidatMutationPersistence.updateCandidateNote(idNote, idConcept, idLang, idThesaurus, note, noteSource, noteTypeCode, idUser);
+    }
+
+    public void deleteCandidateNote(int idNote, String identifier, String idLang, String idThesaurus,
+                                     String noteTypeCode, String oldNote, int idUser) {
+        candidatMutationPersistence.deleteCandidateNote(idNote, identifier, idLang, idThesaurus, noteTypeCode, oldNote, idUser);
+    }
+
+    public boolean isLabelExistIgnoreCase(String label, String thesaurusId, String lang) {
+        return candidatMutationPersistence.isLabelExistIgnoreCase(label, thesaurusId, lang);
+    }
+
+    public void deleteCandidateTranslation(String thesaurusId, String termId, String lang) {
+        candidatMutationPersistence.deleteCandidateTranslation(thesaurusId, termId, lang);
+    }
+
+    public void addCandidateTranslation(Term term, int userId) {
+        candidatMutationPersistence.addCandidateTranslation(term, userId);
+    }
+
+    public List<TraductionDto> loadCandidateTranslations(String conceptId, String thesaurusId, String lang) {
+        return candidatMutationPersistence.loadCandidateTranslations(conceptId, thesaurusId, lang);
+    }
+
+    public List<NodeImage> loadExternalImages(String thesaurusId, String conceptId) {
+        return candidatMutationPersistence.loadExternalImages(thesaurusId, conceptId);
+    }
+
+    public void addExternalImage(String conceptId, String thesaurusId, String imageName, String copyright,
+                                  String uri, String creator, int userId) {
+        candidatMutationPersistence.addExternalImage(conceptId, thesaurusId, imageName, copyright, uri, creator, userId);
+    }
+
+    public void deleteExternalImage(String thesaurusId, String conceptId, String uri) {
+        candidatMutationPersistence.deleteExternalImage(thesaurusId, conceptId, uri);
+    }
+
+    public void sendDiscussionMessage(String conceptId, String thesaurusId, String message, int userId) {
+        candidatMutationPersistence.sendDiscussionMessage(conceptId, thesaurusId, message, userId);
+    }
+
+    public List<NodeUser> loadDiscussionParticipants(String conceptId, String thesaurusId) {
+        return candidatMutationPersistence.loadDiscussionParticipants(conceptId, thesaurusId);
+    }
+
+    public List<MessageDto> loadDiscussionMessages(String conceptId, String thesaurusId, int currentUserId) {
+        return candidatMutationPersistence.loadDiscussionMessages(conceptId, thesaurusId, currentUserId);
+    }
+
+    public void notifyDiscussionParticipants(String conceptId, String thesaurusId, String conceptLabel) {
+        candidatMutationPersistence.notifyDiscussionParticipants(conceptId, thesaurusId, conceptLabel);
+    }
+
+    public void sendMailInvitation(String email) {
+        candidatMutationPersistence.sendMailInvitation(email);
     }
 }

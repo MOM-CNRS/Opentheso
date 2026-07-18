@@ -2,6 +2,7 @@ package fr.cnrs.opentheso.v2.admin.ui;
 
 import fr.cnrs.opentheso.v2.shared.ui.V2LocaleBean;
 import fr.cnrs.opentheso.utils.MessageUtils;
+import fr.cnrs.opentheso.v2.admin.model.AdminThesaurusOption;
 import fr.cnrs.opentheso.v2.admin.model.AdminUserMembership;
 import fr.cnrs.opentheso.v2.admin.service.AdminCatalogService;
 import fr.cnrs.opentheso.v2.admin.service.AdminUserService;
@@ -97,6 +98,69 @@ class AllUsersBeanTest {
         assertEquals("alice", allUsersBean.getEditUsername());
         assertEquals("alice@test.fr", allUsersBean.getEditEmail());
         assertTrue(allUsersBean.isEditAlertMail());
+        assertTrue(allUsersBean.isEditHasApiKey());
+        assertTrue(allUsersBean.isEditKeyNeverExpire());
+    }
+
+    @Test
+    void onNewProjectChange_loadsThesauriForSelectedProject() {
+        when(userSession.canAccessSuperAdminScreen()).thenReturn(true);
+        allUsersBean.setNewProjectId(2);
+        when(adminCatalogService.listThesauriOfProject(true, 2)).thenReturn(
+                List.of(new AdminThesaurusOption("TH1", "Thésaurus 1"))
+        );
+
+        allUsersBean.onNewProjectChange();
+
+        assertEquals(1, allUsersBean.getNewProjectThesauri().size());
+        assertEquals("TH1", allUsersBean.getNewProjectThesauri().get(0).id());
+    }
+
+    @Test
+    void onNewProjectChange_clearsListWhenNoProjectSelected() {
+        allUsersBean.setNewProjectId(null);
+
+        allUsersBean.onNewProjectChange();
+
+        assertTrue(allUsersBean.getNewProjectThesauri().isEmpty());
+        verify(adminCatalogService, never()).listThesauriOfProject(anyBoolean(), org.mockito.ArgumentMatchers.anyInt());
+    }
+
+    @Test
+    void updateApiKey_notAuthorized_showsErrorAndSkipsService() {
+        when(userSession.canAccessSuperAdminScreen()).thenReturn(false);
+        allUsersBean.setSelectedUserId(5);
+
+        try (MockedStatic<MessageUtils> messageUtils = mockStatic(MessageUtils.class)) {
+            allUsersBean.updateApiKey();
+
+            messageUtils.verify(() -> MessageUtils.showErrorMessage(anyString()));
+        }
+        verify(adminUserService, never()).updateApiKeySettings(
+                anyBoolean(), org.mockito.ArgumentMatchers.anyInt(), anyBoolean(), anyBoolean(), org.mockito.ArgumentMatchers.any());
+    }
+
+    @Test
+    void updateApiKey_success_callsService() {
+        when(userSession.canAccessSuperAdminScreen()).thenReturn(true);
+        allUsersBean.setSelectedUserId(5);
+        allUsersBean.setEditHasApiKey(true);
+        allUsersBean.setEditKeyNeverExpire(false);
+        LocalDate expiry = LocalDate.of(2027, 1, 1);
+        allUsersBean.setEditApiKeyExpiresAt(expiry);
+
+        PrimeFaces.Ajax ajax = mock(PrimeFaces.Ajax.class);
+        PrimeFaces primeFaces = mock(PrimeFaces.class);
+        lenient().when(primeFaces.ajax()).thenReturn(ajax);
+        try (MockedStatic<PrimeFaces> primeFacesStatic = mockStatic(PrimeFaces.class);
+             MockedStatic<MessageUtils> messageUtils = mockStatic(MessageUtils.class)) {
+            primeFacesStatic.when(PrimeFaces::current).thenReturn(primeFaces);
+
+            allUsersBean.updateApiKey();
+
+            verify(adminUserService).updateApiKeySettings(true, 5, true, false, expiry);
+            messageUtils.verify(() -> MessageUtils.showInformationMessage(anyString()));
+        }
     }
 
     @Test
@@ -131,6 +195,44 @@ class AllUsersBeanTest {
                     "Secret1!"
             );
             verify(adminCatalogService).listAllUsers(true);
+        }
+    }
+
+    @Test
+    void createUser_withThesaurusLimit_passesSelectedThesauri() {
+        when(userSession.canAccessSuperAdminScreen()).thenReturn(true);
+        allUsersBean.setNewUsername("bob");
+        allUsersBean.setNewEmail("bob@test.fr");
+        allUsersBean.setNewPassword("Secret1!");
+        allUsersBean.setNewPasswordConfirmation("Secret1!");
+        allUsersBean.setNewRoleId(3);
+        allUsersBean.setNewProjectId(2);
+        allUsersBean.setNewLimitedOnThesaurus(true);
+        allUsersBean.setNewSelectedThesaurusIds(List.of("TH1", "TH2"));
+
+        PrimeFaces.Ajax ajax = mock(PrimeFaces.Ajax.class);
+        PrimeFaces primeFaces = mock(PrimeFaces.class);
+        when(primeFaces.ajax()).thenReturn(ajax);
+
+        try (MockedStatic<PrimeFaces> primeFacesStatic = mockStatic(PrimeFaces.class);
+             MockedStatic<MessageUtils> messageUtils = mockStatic(MessageUtils.class)) {
+            primeFacesStatic.when(PrimeFaces::current).thenReturn(primeFaces);
+            when(adminCatalogService.listAllUsers(true)).thenReturn(List.of());
+
+            allUsersBean.createUser();
+
+            verify(adminUserService).createUser(
+                    true,
+                    "bob",
+                    "bob@test.fr",
+                    false,
+                    3,
+                    2,
+                    true,
+                    List.of("TH1", "TH2"),
+                    "Secret1!",
+                    "Secret1!"
+            );
         }
     }
 }

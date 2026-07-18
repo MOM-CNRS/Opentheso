@@ -31,7 +31,7 @@
 
                     <p:column width="10%" headerText="#{v2LocaleBean.getMsg('profile.action')}" >
                         <p:commandLink title="#{v2LocaleBean.getMsg('candidat.remove')}" ajax="true" process="@form"
-                                       action="#{imageCandidatBean.deleteImage(imageToEdit.uri)}"
+                                       action="#{v2ImageCandidatBean.deleteImage(imageToEdit.uri)}"
                                        update="tabViewCandidat messageIndex">
                             <i class="pi pi-trash" style="color: #C63632; font-size: 1.1rem; padding-top: 4px;"/>
                             <p:confirm type="popup" header="#{v2LocaleBean.getMsg('profile.confirmation')}" icon="pi pi-info-circle"

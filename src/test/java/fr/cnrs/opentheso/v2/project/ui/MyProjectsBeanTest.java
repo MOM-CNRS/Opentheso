@@ -4,12 +4,17 @@ import fr.cnrs.opentheso.v2.shared.ui.V2LocaleBean;
 import fr.cnrs.opentheso.utils.MessageUtils;
 import fr.cnrs.opentheso.v2.project.exception.InvalidProjectDataException;
 import fr.cnrs.opentheso.v2.project.exception.ProjectAccessDeniedException;
+import fr.cnrs.opentheso.v2.project.model.LimitedProjectMember;
 import fr.cnrs.opentheso.v2.project.model.ProjectDashboard;
+import fr.cnrs.opentheso.v2.project.model.ProjectMember;
 import fr.cnrs.opentheso.v2.project.model.ProjectSummary;
+import fr.cnrs.opentheso.v2.project.model.ProjectThesaurus;
 import fr.cnrs.opentheso.v2.project.service.ProjectAdminService;
 import fr.cnrs.opentheso.v2.project.service.ProjectManagementService;
 import fr.cnrs.opentheso.v2.project.service.ProjectMemberService;
 import fr.cnrs.opentheso.v2.shared.ui.UserSession;
+import fr.cnrs.opentheso.v2.user.model.UserProfile;
+import fr.cnrs.opentheso.v2.user.service.UserProfileService;
 import org.junit.jupiter.api.BeforeEach;
 import org.junit.jupiter.api.Test;
 import org.junit.jupiter.api.extension.ExtendWith;
@@ -47,6 +52,8 @@ class MyProjectsBeanTest {
     private ProjectManagementService projectManagementService;
     @Mock
     private ProjectMemberService projectMemberService;
+    @Mock
+    private UserProfileService userProfileService;
 
     private MyProjectsBean myProjectsBean;
 
@@ -59,7 +66,8 @@ class MyProjectsBeanTest {
                 localeBean,
                 projectAdminService,
                 projectManagementService,
-                projectMemberService
+                projectMemberService,
+                userProfileService
         );
     }
 
@@ -230,6 +238,232 @@ class MyProjectsBeanTest {
         assertNull(myProjectsBean.getDashboard());
     }
 
+    @Test
+    void prepareEditMemberRole_populatesFieldsFromMember() {
+        var member = new ProjectMember(7, "bob", true, 3, "Manager");
+
+        myProjectsBean.prepareEditMemberRole(member);
+
+        assertEquals(7, myProjectsBean.getEditMemberUserId());
+        assertEquals("bob", myProjectsBean.getEditMemberUsername());
+        assertEquals(3, myProjectsBean.getEditMemberRoleId());
+        assertFalse(myProjectsBean.isEditMemberLimitOnThesaurus());
+    }
+
+    @Test
+    void submitUpdateMemberRole_success_reloadsDashboard() {
+        when(userSession.getCurrentUserId()).thenReturn(5);
+        when(userSession.isSuperAdmin()).thenReturn(false);
+        myProjectsBean.setSelectedProjectId(3);
+        myProjectsBean.prepareEditMemberRole(new ProjectMember(7, "bob", true, 3, "Manager"));
+        when(projectAdminService.loadDashboard(5, 3, "fr")).thenReturn(buildDashboard());
+
+        try (MockedStatic<MessageUtils> messages = mockStatic(MessageUtils.class);
+             MockedStatic<PrimeFaces> primeFaces = mockPrimeFaces()) {
+            myProjectsBean.submitUpdateMemberRole();
+            messages.verify(() -> MessageUtils.showInformationMessage("project.memberRoleUpdatedSuccess"));
+        }
+
+        verify(projectMemberService).updateMemberRole(5, false, 3, 7, 3, false, null);
+    }
+
+    @Test
+    void prepareRemoveMember_populatesTargetFields() {
+        var member = new ProjectMember(7, "bob", true, 3, "Manager");
+
+        myProjectsBean.prepareRemoveMember(member);
+
+        assertEquals(7, myProjectsBean.getMemberToRemoveId());
+        assertEquals("bob", myProjectsBean.getMemberToRemoveName());
+    }
+
+    @Test
+    void submitRemoveMember_success_callsService() {
+        when(userSession.getCurrentUserId()).thenReturn(5);
+        when(userSession.isSuperAdmin()).thenReturn(false);
+        myProjectsBean.setSelectedProjectId(3);
+        myProjectsBean.prepareRemoveMember(new ProjectMember(7, "bob", true, 3, "Manager"));
+        when(projectAdminService.loadDashboard(5, 3, "fr")).thenReturn(buildDashboard());
+
+        try (MockedStatic<MessageUtils> messages = mockStatic(MessageUtils.class);
+             MockedStatic<PrimeFaces> primeFaces = mockPrimeFaces()) {
+            myProjectsBean.submitRemoveMember();
+            messages.verify(() -> MessageUtils.showInformationMessage("project.memberRemovedSuccess"));
+        }
+
+        verify(projectMemberService).removeMember(5, false, 3, 7);
+    }
+
+    @Test
+    void prepareEditMemberProfile_loadsProfileAndInstitution() {
+        when(userSession.getCurrentUserId()).thenReturn(5);
+        when(userSession.isSuperAdmin()).thenReturn(false);
+        myProjectsBean.setSelectedProjectId(3);
+        when(userProfileService.getProfile(7)).thenReturn(
+                new UserProfile(7, "bob", "bob@test.fr", true, false, false, null, false)
+        );
+        when(projectMemberService.getMemberInstitution(5, false, 3, 7)).thenReturn("CNRS");
+
+        myProjectsBean.prepareEditMemberProfile(new ProjectMember(7, "bob", true, 3, "Manager"));
+
+        assertEquals(7, myProjectsBean.getEditProfileUserId());
+        assertEquals("bob", myProjectsBean.getEditProfileUsername());
+        assertEquals("bob@test.fr", myProjectsBean.getEditProfileEmail());
+        assertEquals("CNRS", myProjectsBean.getEditProfileInstitution());
+        assertTrue(myProjectsBean.isEditProfileActive());
+    }
+
+    @Test
+    void submitUpdateMemberProfile_success_callsService() {
+        when(userSession.getCurrentUserId()).thenReturn(5);
+        when(userSession.isSuperAdmin()).thenReturn(false);
+        myProjectsBean.setSelectedProjectId(3);
+        myProjectsBean.setEditProfileUserId(7);
+        myProjectsBean.setEditProfileUsername("bob2");
+        myProjectsBean.setEditProfileEmail("bob2@test.fr");
+        myProjectsBean.setEditProfileAlertMail(true);
+        myProjectsBean.setEditProfileInstitution("CNRS");
+        myProjectsBean.setEditProfileActive(true);
+        when(projectAdminService.loadDashboard(5, 3, "fr")).thenReturn(buildDashboard());
+
+        try (MockedStatic<MessageUtils> messages = mockStatic(MessageUtils.class);
+             MockedStatic<PrimeFaces> primeFaces = mockPrimeFaces()) {
+            myProjectsBean.submitUpdateMemberProfile();
+            messages.verify(() -> MessageUtils.showInformationMessage("project.memberProfileUpdatedSuccess"));
+        }
+
+        verify(projectMemberService).updateMemberProfile(5, false, 3, 7, "bob2", "bob2@test.fr", true, "CNRS", true);
+    }
+
+    @Test
+    void submitResetMemberPassword_success_callsService() {
+        when(userSession.getCurrentUserId()).thenReturn(5);
+        when(userSession.isSuperAdmin()).thenReturn(false);
+        myProjectsBean.setSelectedProjectId(3);
+        myProjectsBean.prepareResetMemberPassword(new ProjectMember(7, "bob", true, 3, "Manager"));
+        myProjectsBean.setMemberResetPassword1("Secret1!");
+        myProjectsBean.setMemberResetPassword2("Secret1!");
+
+        try (MockedStatic<MessageUtils> messages = mockStatic(MessageUtils.class);
+             MockedStatic<PrimeFaces> primeFaces = mockPrimeFaces()) {
+            myProjectsBean.submitResetMemberPassword();
+            messages.verify(() -> MessageUtils.showInformationMessage("project.memberPasswordUpdatedSuccess"));
+        }
+
+        verify(projectMemberService).setMemberPassword(5, false, 3, 7, "Secret1!", "Secret1!");
+    }
+
+    @Test
+    void prepareEditLimitedRole_populatesFieldsFromMember() {
+        var limited = new LimitedProjectMember(7, "bob", true, 3, "Manager", "TH1", "Thésaurus 1");
+
+        myProjectsBean.prepareEditLimitedRole(limited);
+
+        assertEquals(7, myProjectsBean.getEditLimitedUserId());
+        assertEquals(3, myProjectsBean.getEditLimitedOldRoleId());
+        assertEquals(3, myProjectsBean.getEditLimitedNewRoleId());
+        assertEquals("TH1", myProjectsBean.getEditLimitedThesaurusId());
+        assertTrue(myProjectsBean.isEditLimitedKeepRestricted());
+    }
+
+    @Test
+    void submitUpdateLimitedRole_success_callsService() {
+        when(userSession.getCurrentUserId()).thenReturn(5);
+        when(userSession.isSuperAdmin()).thenReturn(false);
+        myProjectsBean.setSelectedProjectId(3);
+        myProjectsBean.prepareEditLimitedRole(new LimitedProjectMember(7, "bob", true, 3, "Manager", "TH1", "Thésaurus 1"));
+        when(projectAdminService.loadDashboard(5, 3, "fr")).thenReturn(buildDashboard());
+
+        try (MockedStatic<MessageUtils> messages = mockStatic(MessageUtils.class);
+             MockedStatic<PrimeFaces> primeFaces = mockPrimeFaces()) {
+            myProjectsBean.submitUpdateLimitedRole();
+            messages.verify(() -> MessageUtils.showInformationMessage("project.limitedRoleUpdatedSuccess"));
+        }
+
+        verify(projectMemberService).updateLimitedMemberRole(5, false, 3, 7, 3, 3, "TH1", true);
+    }
+
+    @Test
+    void prepareRemoveLimitedRole_populatesTargetFields() {
+        var limited = new LimitedProjectMember(7, "bob", true, 3, "Manager", "TH1", "Thésaurus 1");
+
+        myProjectsBean.prepareRemoveLimitedRole(limited);
+
+        assertEquals(7, myProjectsBean.getLimitedRoleToRemoveUserId());
+        assertEquals(3, myProjectsBean.getLimitedRoleToRemoveRoleId());
+        assertEquals("TH1", myProjectsBean.getLimitedRoleToRemoveThesaurusId());
+    }
+
+    @Test
+    void submitRemoveLimitedRole_success_callsService() {
+        when(userSession.getCurrentUserId()).thenReturn(5);
+        when(userSession.isSuperAdmin()).thenReturn(false);
+        myProjectsBean.setSelectedProjectId(3);
+        myProjectsBean.prepareRemoveLimitedRole(new LimitedProjectMember(7, "bob", true, 3, "Manager", "TH1", "Thésaurus 1"));
+        when(projectAdminService.loadDashboard(5, 3, "fr")).thenReturn(buildDashboard());
+
+        try (MockedStatic<MessageUtils> messages = mockStatic(MessageUtils.class);
+             MockedStatic<PrimeFaces> primeFaces = mockPrimeFaces()) {
+            myProjectsBean.submitRemoveLimitedRole();
+            messages.verify(() -> MessageUtils.showInformationMessage("project.limitedRoleRemovedSuccess"));
+        }
+
+        verify(projectMemberService).removeLimitedRole(5, false, 3, 7, 3, "TH1");
+    }
+
+    @Test
+    void prepareMoveThesaurus_populatesTargetFields() {
+        var thesaurus = new ProjectThesaurus("TH1", "Thésaurus 1", false);
+
+        myProjectsBean.prepareMoveThesaurus(thesaurus);
+
+        assertEquals("TH1", myProjectsBean.getThesaurusToMoveId());
+        assertEquals("Thésaurus 1", myProjectsBean.getThesaurusToMoveTitle());
+        assertNull(myProjectsBean.getMoveTargetProjectId());
+    }
+
+    @Test
+    void submitMoveThesaurus_noTargetSelected_showsError() {
+        when(userSession.getCurrentUserId()).thenReturn(5);
+        myProjectsBean.setSelectedProjectId(3);
+        myProjectsBean.prepareMoveThesaurus(new ProjectThesaurus("TH1", "Thésaurus 1", false));
+
+        try (MockedStatic<MessageUtils> messages = mockStatic(MessageUtils.class)) {
+            myProjectsBean.submitMoveThesaurus();
+            messages.verify(() -> MessageUtils.showErrorMessage(anyString()));
+        }
+        verify(projectMemberService, never()).moveThesaurus(anyInt(), org.mockito.ArgumentMatchers.anyBoolean(), anyInt(), anyString(), anyInt());
+    }
+
+    @Test
+    void submitMoveThesaurus_success_callsService() {
+        when(userSession.getCurrentUserId()).thenReturn(5);
+        when(userSession.isSuperAdmin()).thenReturn(true);
+        myProjectsBean.setSelectedProjectId(3);
+        myProjectsBean.prepareMoveThesaurus(new ProjectThesaurus("TH1", "Thésaurus 1", false));
+        myProjectsBean.setMoveTargetProjectId(9);
+        when(projectAdminService.loadDashboard(5, 3, "fr")).thenReturn(buildDashboard());
+
+        try (MockedStatic<MessageUtils> messages = mockStatic(MessageUtils.class);
+             MockedStatic<PrimeFaces> primeFaces = mockPrimeFaces()) {
+            myProjectsBean.submitMoveThesaurus();
+            messages.verify(() -> MessageUtils.showInformationMessage("project.thesaurusMovedSuccess"));
+        }
+
+        verify(projectMemberService).moveThesaurus(5, true, 3, "TH1", 9);
+    }
+
+    @Test
+    void getMoveTargetProjects_excludesCurrentProject() {
+        myProjectsBean.setSelectedProjectId(3);
+        myProjectsBean.setProjects(List.of(new ProjectSummary(3, "Actuel"), new ProjectSummary(9, "Autre")));
+
+        var result = myProjectsBean.getMoveTargetProjects();
+
+        assertEquals(1, result.size());
+        assertEquals(9, result.get(0).id());
+    }
+
     private static ProjectDashboard buildDashboard() {
         return new ProjectDashboard(3, "Projet X", true, 2, List.of(), List.of(), List.of(), List.of());
     }
@@ -239,7 +473,7 @@ class MyProjectsBeanTest {
         PrimeFaces instance = mock(PrimeFaces.class);
         PrimeFaces.Ajax ajax = mock(PrimeFaces.Ajax.class);
         primeFaces.when(PrimeFaces::current).thenReturn(instance);
-        when(instance.ajax()).thenReturn(ajax);
+        lenient().when(instance.ajax()).thenReturn(ajax);
         return primeFaces;
     }
 }

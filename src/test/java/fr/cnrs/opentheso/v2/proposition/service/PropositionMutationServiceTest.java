@@ -47,6 +47,7 @@ class PropositionMutationServiceTest {
     @Test
     void submit_savesNewProposition() {
         when(repository.findPendingByConcept("C1", "TH1", "fr")).thenReturn(null);
+        when(repository.save(any())).thenAnswer(invocation -> invocation.getArgument(0));
 
         boolean saved = service.submit(submission("Please add a synonym", "a@b.fr"));
 
@@ -55,6 +56,29 @@ class PropositionMutationServiceTest {
         verify(repository).save(captor.capture());
         assertEquals("ENVOYER", captor.getValue().getStatus());
         assertEquals("C1", captor.getValue().getIdConcept());
+    }
+
+    @Test
+    void submitDraft_returnsCreatedPropositionId() {
+        when(repository.findPendingByConcept("C1", "TH1", "fr")).thenReturn(null);
+        when(repository.save(any())).thenAnswer(invocation -> {
+            PropositionModification entity = invocation.getArgument(0);
+            entity.setId(42);
+            return entity;
+        });
+
+        var createdId = service.submitDraft(submission("Please add a synonym", "a@b.fr"));
+
+        assertTrue(createdId.isPresent());
+        assertEquals(42, createdId.get());
+    }
+
+    @Test
+    void submitDraft_returnsEmptyWhenValidationFails() {
+        var createdId = service.submitDraft(submission("  ", "a@b.fr"));
+
+        assertTrue(createdId.isEmpty());
+        verify(repository, never()).save(any());
     }
 
     @Test

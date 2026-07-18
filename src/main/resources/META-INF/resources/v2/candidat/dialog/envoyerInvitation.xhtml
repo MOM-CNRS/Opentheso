@@ -13,7 +13,7 @@
                     <h:outputText value="E-mail" style="font-weight: bold;"/>
                 </div>
                 <div class="col-7">
-                    <p:inputText placeholder="toto@gmail.com" value="#{discussionCandidatBean.email}" style="width: 100%"/>
+                    <p:inputText placeholder="toto@gmail.com" value="#{v2DiscussionCandidatBean.email}" style="width: 100%"/>
                 </div>
             </div>
             
@@ -22,7 +22,7 @@
                                  actionListener="PF('participantsList').hide();" update="idSendChatInvitation"/>
 
                 <p:commandButton class="btn btn-primary" title="Envoyer" oncomplete="PF('participantsList').hide();" ajax="true"
-                                 update="tabViewCandidat messageIndex" actionListener="#{discussionCandidatBean.sendInvitation()}"/>
+                                 update="tabViewCandidat messageIndex" actionListener="#{v2DiscussionCandidatBean.sendInvitation()}"/>
             </div>
             <input type="hidden" name="csrfToken" value="${sessionScope.CSRF_TOKEN}" />
         </h:form>

@@ -1,10 +1,11 @@
 <ui:fragment xmlns="http://www.w3.org/1999/xhtml"
              xmlns:ui="http://xmlns.jcp.org/jsf/facelets"
              xmlns:p="http://primefaces.org/ui"
+             xmlns:f="http://xmlns.jcp.org/jsf/core"
              xmlns:h="http://xmlns.jcp.org/jsf/html">
 
     <p:dialog id="v2SuggestImprovementDlg" header="#{v2LocaleBean.getMsg('rightbody.suggestImprovement')}"
-              widgetVar="v2SuggestImprovement" width="560" modal="true" resizable="false">
+              widgetVar="v2SuggestImprovement" width="680" modal="true" resizable="false">
         <h:form>
             <div class="row mb-3">
                 <div class="col-12">
@@ -30,10 +31,120 @@
             <div class="row mb-2">
                 <div class="col-4"><h:outputText value="#{v2LocaleBean.getMsg('proposition.commentaire')}"/></div>
                 <div class="col-8">
-                    <p:inputTextarea value="#{v2PropositionSubmitBean.comment}" rows="6" style="width: 100%;"
+                    <p:inputTextarea value="#{v2PropositionSubmitBean.comment}" rows="4" style="width: 100%;"
                                      autoResize="false"/>
                 </div>
             </div>
+
+            <p:accordionPanel style="margin-top: 15px;" multiple="true" activeIndex="">
+
+                <p:tab title="#{v2LocaleBean.getMsg('proposition.renameLabel')}">
+                    <div class="row mb-2">
+                        <div class="col-12">
+                            <p:inputText value="#{v2PropositionSubmitBean.proposedPreferredLabel}" style="width: 100%;"/>
+                        </div>
+                    </div>
+                </p:tab>
+
+                <p:tab title="#{v2LocaleBean.getMsg('proposition.synonyms')}">
+                    <ui:repeat var="option" value="#{v2PropositionSubmitBean.synonymOptions}">
+                        <div class="row mb-1" style="opacity: #{option.toRemove ? '0.5' : '1'}">
+                            <div class="col-7">
+                                <p:inputText value="#{option.value}" style="width: 100%;"
+                                             disabled="#{option.toRemove}"
+                                             valueChangeListener="#{v2PropositionSubmitBean.markSynonymUpdated(option)}"/>
+                            </div>
+                            <div class="col-2">
+                                <h:outputText value="(#{option.lang})"/>
+                            </div>
+                            <div class="col-3 text-right">
+                                <p:commandButton icon="pi pi-undo" rendered="#{option.toRemove}" type="button"
+                                                 styleClass="ui-button-flat"
+                                                 onclick="return false;"
+                                                 actionListener="#{v2PropositionSubmitBean.undoRemoveSynonymOption(option)}"/>
+                                <p:commandButton icon="pi pi-trash" rendered="#{!option.toRemove}" type="button"
+                                                 styleClass="ui-button-flat"
+                                                 onclick="return false;"
+                                                 actionListener="#{v2PropositionSubmitBean.removeSynonymOption(option)}"/>
+                            </div>
+                        </div>
+                    </ui:repeat>
+                    <div class="row mt-2">
+                        <div class="col-5">
+                            <p:inputText value="#{v2PropositionSubmitBean.newSynonymValue}"
+                                         placeholder="#{v2LocaleBean.getMsg('candidat.traduction')}" style="width: 100%;"/>
+                        </div>
+                        <div class="col-3">
+                            <p:selectOneMenu value="#{v2PropositionSubmitBean.newSynonymLang}" style="width: 100%;">
+                                <f:selectItems value="#{v2PropositionSubmitBean.availableLanguages}" var="lang"
+                                               itemLabel="#{lang.value}" itemValue="#{lang.code}"/>
+                            </p:selectOneMenu>
+                        </div>
+                        <div class="col-2">
+                            <p:selectBooleanCheckbox value="#{v2PropositionSubmitBean.newSynonymHidden}"/>
+                            <h:outputText value=" #{v2LocaleBean.getMsg('rightbody.conceptdialog.hidden')}"/>
+                        </div>
+                        <div class="col-2 text-right">
+                            <p:commandButton icon="pi pi-plus" type="button" styleClass="ui-button-success"
+                                             actionListener="#{v2PropositionSubmitBean.addSynonymOption()}"/>
+                        </div>
+                    </div>
+                </p:tab>
+
+                <p:tab title="#{v2LocaleBean.getMsg('proposition.translations')}">
+                    <ui:repeat var="option" value="#{v2PropositionSubmitBean.translationOptions}">
+                        <div class="row mb-1" style="opacity: #{option.toRemove ? '0.5' : '1'}">
+                            <div class="col-7">
+                                <p:inputText value="#{option.value}" style="width: 100%;"
+                                             disabled="#{option.toRemove}"
+                                             valueChangeListener="#{v2PropositionSubmitBean.markTranslationUpdated(option)}"/>
+                            </div>
+                            <div class="col-2">
+                                <h:outputText value="(#{option.lang})"/>
+                            </div>
+                            <div class="col-3 text-right">
+                                <p:commandButton icon="pi pi-undo" rendered="#{option.toRemove}" type="button"
+                                                 styleClass="ui-button-flat"
+                                                 onclick="return false;"
+                                                 actionListener="#{v2PropositionSubmitBean.undoRemoveTranslationOption(option)}"/>
+                                <p:commandButton icon="pi pi-trash" rendered="#{!option.toRemove}" type="button"
+                                                 styleClass="ui-button-flat"
+                                                 onclick="return false;"
+                                                 actionListener="#{v2PropositionSubmitBean.removeTranslationOption(option)}"/>
+                            </div>
+                        </div>
+                    </ui:repeat>
+                    <div class="row mt-2">
+                        <div class="col-6">
+                            <p:inputText value="#{v2PropositionSubmitBean.newTranslationValue}"
+                                         placeholder="#{v2LocaleBean.getMsg('candidat.traduction')}" style="width: 100%;"/>
+                        </div>
+                        <div class="col-4">
+                            <p:selectOneMenu value="#{v2PropositionSubmitBean.newTranslationLang}" style="width: 100%;">
+                                <f:selectItems value="#{v2PropositionSubmitBean.availableLanguages}" var="lang"
+                                               itemLabel="#{lang.value}" itemValue="#{lang.code}"/>
+                            </p:selectOneMenu>
+                        </div>
+                        <div class="col-2 text-right">
+                            <p:commandButton icon="pi pi-plus" type="button" styleClass="ui-button-success"
+                                             actionListener="#{v2PropositionSubmitBean.addTranslationOption()}"/>
+                        </div>
+                    </div>
+                </p:tab>
+
+                <p:tab title="#{v2LocaleBean.getMsg('proposition.notes')}">
+                    <ui:repeat var="option" value="#{v2PropositionSubmitBean.noteOptions}">
+                        <div class="row mb-2">
+                            <div class="col-3">
+                                <h:outputText value="#{v2LocaleBean.getMsg(option.messageKey)}"/>
+                            </div>
+                            <div class="col-9">
+                                <p:inputTextarea value="#{option.value}" rows="2" style="width: 100%;" autoResize="false"/>
+                            </div>
+                        </div>
+                    </ui:repeat>
+                </p:tab>
+            </p:accordionPanel>
 
             <div class="text-right mt-3">
                 <p:commandButton value="#{v2LocaleBean.getMsg('btnCancel')}" styleClass="ui-button-secondary"

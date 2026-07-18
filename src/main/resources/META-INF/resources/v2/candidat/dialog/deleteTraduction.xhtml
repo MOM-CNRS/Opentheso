@@ -16,7 +16,7 @@
             
             <div class="row" style="margin-top: 10px">
                 <div class="col-12">
-                    <h:outputText value="#{traductionCandidatBean.langage} : #{traductionCandidatBean.traduction}"
+                    <h:outputText value="#{v2TraductionCandidatBean.langage} : #{v2TraductionCandidatBean.traduction}"
                                   style="font-size: 13px; color: #C63632;"/>
                 </div>
             </div>
@@ -34,7 +34,7 @@
                 <p:commandButton class="btn btn-danger" title="Supprimer" ajax="true"
                                  oncomplete="PF('confirmDeleteTraduction').hide();"
                                  update="tabViewCandidat messageIndex"
-                                 actionListener="#{traductionCandidatBean.deleteTraduction()}" />
+                                 actionListener="#{v2TraductionCandidatBean.deleteTraduction()}" />
             </div>   
             <input type="hidden" name="csrfToken" value="${sessionScope.CSRF_TOKEN}" />
         </h:form>

@@ -152,6 +152,26 @@ class ProjectMemberServiceTest {
     }
 
     @Test
+    void getMemberInstitution_returnsValueForProjectAdmin() {
+        stubProjectAdmin(5, 3, 2);
+        when(userLookupService.requireEntity(10)).thenReturn(new UserEntity());
+        when(userCommandRepository.findInstitution(10)).thenReturn("CNRS");
+
+        String institution = projectMemberService.getMemberInstitution(5, false, 3, 10);
+
+        assertEquals("CNRS", institution);
+    }
+
+    @Test
+    void getMemberInstitution_requiresProjectAdmin() {
+        when(projectLookupService.requireAccessibleProject(5, false, 3)).thenReturn(buildProject(3, "Projet"));
+        when(projectAdminQueryRepository.findCallerRoleOnProject(5, 3)).thenReturn(Optional.of(4));
+
+        assertThrows(ProjectAccessDeniedException.class,
+                () -> projectMemberService.getMemberInstitution(5, false, 3, 10));
+    }
+
+    @Test
     void updateMemberRole_switchesToProjectWideRole() {
         stubProjectAdmin(5, 3, 2);
         when(userLookupService.requireEntity(10)).thenReturn(new UserEntity());

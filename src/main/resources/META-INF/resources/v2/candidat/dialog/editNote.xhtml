@@ -16,7 +16,7 @@
                 <div class="col-12">
                     
                     <p:textEditor widgetVar="Definition1"
-                                  value="#{noteBeanCandidat.selectedNodeNote.lexicalValue}" allowLinks="true" required="true"
+                                  value="#{v2NoteBeanCandidat.selectedNodeNote.lexicalValue}" allowLinks="true" required="true"
                                   secure="false" height="200" style="font-size: 12px; color: black; border-color: #43B572" 
                                   placeholder="#{v2LocaleBean.getMsg('rightbody.conceptdialog.type_value')}" styleClass="scrollable-editor">
                     </p:textEditor>      
@@ -32,7 +32,7 @@
                 <p:commandButton value="#{v2LocaleBean.getMsg('btnValidate')}" styleClass="ui-button-success" icon="pi pi-check"
                                  oncomplete="PF('editNote').hide();"
                                  update="tabViewCandidat messageIndex"
-                                 actionListener="#{noteBeanCandidat.updateNote()}"/>
+                                 actionListener="#{v2NoteBeanCandidat.updateNote()}"/>
             </div>
             <input type="hidden" name="csrfToken" value="${sessionScope.CSRF_TOKEN}" />
         </h:form>

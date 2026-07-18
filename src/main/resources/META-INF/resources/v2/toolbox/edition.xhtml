@@ -90,10 +90,12 @@
             </div>
         </h:panelGroup>
 
-        <p:dialog widgetVar="waitDialog" modal="false" draggable="false" width="80"
+        <p:dialog widgetVar="waitDialog" modal="true" draggable="false" width="120"
                   closable="false" resizable="false" showHeader="false" position="top"
-                  style="margin-top:250px; border:none;">
-            <p:graphicImage value="../../resources/img/wait.gif" width="100%" style="margin-top:15px;"/>
+                  style="margin-top:250px; border:none; box-shadow:none; background:transparent;">
+            <div style="text-align:center;">
+                <p:graphicImage value="../../resources/img/wait.gif" width="100%" style="margin-top:15px;"/>
+            </div>
         </p:dialog>
     </h:body>
 </HTML>

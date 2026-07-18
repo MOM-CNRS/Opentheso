@@ -4,8 +4,10 @@ import fr.cnrs.opentheso.models.candidats.CandidatDto;
 import org.junit.jupiter.api.Test;
 
 import java.util.Date;
+import java.util.List;
 
 import static org.junit.jupiter.api.Assertions.assertEquals;
+import static org.junit.jupiter.api.Assertions.assertTrue;
 
 class CandidatApiMapperTest {
 
@@ -24,5 +26,21 @@ class CandidatApiMapperTest {
         assertEquals("C1", response.conceptId());
         assertEquals("Label", response.preferredLabel());
         assertEquals("alice", response.createdBy());
+    }
+
+    @Test
+    void toSummaries_mapsWholeList() {
+        CandidatDto candidat1 = new CandidatDto();
+        candidat1.setIdConcepte("C1");
+        candidat1.setNomPref("Label 1");
+        CandidatDto candidat2 = new CandidatDto();
+        candidat2.setIdConcepte("C2");
+        candidat2.setNomPref("Label 2");
+
+        var responses = CandidatApiMapper.toSummaries(List.of(candidat1, candidat2));
+
+        assertEquals(2, responses.size());
+        assertTrue(responses.stream().anyMatch(r -> "C1".equals(r.conceptId())));
+        assertTrue(responses.stream().anyMatch(r -> "C2".equals(r.conceptId())));
     }
 }

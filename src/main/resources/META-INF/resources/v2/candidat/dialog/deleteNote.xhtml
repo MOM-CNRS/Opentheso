@@ -16,7 +16,7 @@
             
             <div class="row">
                 <div class="col-12">
-                    <h:outputText value="#{noteBeanCandidat.selectedNodeNote.lexicalValue}"
+                    <h:outputText value="#{v2NoteBeanCandidat.selectedNodeNote.lexicalValue}"
                                   style="font-size: 13px; color: #C63632;"/>
                 </div>
             </div>
@@ -33,7 +33,7 @@
 
                 <p:commandButton class="btn btn-danger" title="Supprimer" oncomplete="PF('deleteNote').hide();"
                                  update="tabViewCandidat messageIndex" process="@this"
-                                 actionListener="#{noteBeanCandidat.deleteNote()}"/>
+                                 actionListener="#{v2NoteBeanCandidat.deleteNote()}"/>
             </div>    
             <input type="hidden" name="csrfToken" value="${sessionScope.CSRF_TOKEN}" />
         </h:form>

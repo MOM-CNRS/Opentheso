@@ -9,12 +9,18 @@ import fr.cnrs.opentheso.repositories.ConceptGroupLabelRepository;
 import fr.cnrs.opentheso.repositories.ConceptGroupRepository;
 import fr.cnrs.opentheso.repositories.RelationGroupRepository;
 import fr.cnrs.opentheso.v2.collection.identifier.CollectionIdentifierAssignmentService;
+import fr.cnrs.opentheso.v2.collection.write.model.command.AddCollectionTranslationCommand;
 import fr.cnrs.opentheso.v2.collection.write.model.command.AddMemberToCollectionCommand;
 import fr.cnrs.opentheso.v2.collection.write.model.command.CreateCollectionCommand;
+import fr.cnrs.opentheso.v2.collection.write.model.command.CreateSubgroupCommand;
+import fr.cnrs.opentheso.v2.collection.write.model.command.DeleteCollectionCommand;
+import fr.cnrs.opentheso.v2.collection.write.model.command.DeleteCollectionTranslationCommand;
 import fr.cnrs.opentheso.v2.collection.write.model.command.MoveCollectionCommand;
+import fr.cnrs.opentheso.v2.collection.write.model.command.RemoveAllMembersFromCollectionCommand;
 import fr.cnrs.opentheso.v2.collection.write.model.command.RemoveMemberFromCollectionCommand;
 import fr.cnrs.opentheso.v2.collection.write.model.command.RenameCollectionLabelCommand;
 import fr.cnrs.opentheso.v2.collection.write.model.command.UpdateCollectionNotationCommand;
+import fr.cnrs.opentheso.v2.collection.write.model.command.UpdateCollectionTranslationCommand;
 import fr.cnrs.opentheso.v2.collection.write.model.command.UpdateCollectionTypeCommand;
 import fr.cnrs.opentheso.v2.concept.write.model.MutationOutcome;
 import fr.cnrs.opentheso.v2.concept.write.persistence.BranchConceptSupport;
@@ -159,6 +165,138 @@ class CollectionMutationServiceTest {
         assertEquals(MutationOutcome.OK, created.outcome());
         assertEquals("g42", created.createdConceptId());
         verify(collectionIdentifierAssignmentService).assignOnCreation("TH1", "g42", "Collection");
+    }
+
+    @Test
+    void deleteCollection_returnsValidationError_whenCollectionNotFound() {
+        when(conceptGroupRepository.findByIdGroupAndIdThesaurus("g1", "TH1")).thenReturn(Optional.empty());
+
+        var result = service.deleteCollection(new DeleteCollectionCommand("TH1", "g1"));
+
+        assertEquals(MutationOutcome.VALIDATION_ERROR, result.outcome());
+        verify(conceptGroupRepository, never()).deleteByIdThesaurusAndIdGroup(any(), any());
+    }
+
+    @Test
+    void deleteCollection_deletesMembersLabelsRelationsAndGroup() {
+        when(conceptGroupRepository.findByIdGroupAndIdThesaurus("g1", "TH1"))
+                .thenReturn(Optional.of(ConceptGroup.builder().idGroup("g1").idThesaurus("TH1").build()));
+
+        var result = service.deleteCollection(new DeleteCollectionCommand("TH1", "g1"));
+
+        assertEquals(MutationOutcome.OK, result.outcome());
+        verify(conceptGroupConceptRepository).deleteAllByIdGroupAndIdThesaurus("g1", "TH1");
+        verify(conceptGroupLabelRepository).deleteByIdThesaurusAndIdGroup("TH1", "g1");
+        verify(relationGroupRepository).deleteByIdThesaurusAndIdGroup2("TH1", "g1");
+        verify(conceptGroupRepository).deleteByIdThesaurusAndIdGroup("TH1", "g1");
+    }
+
+    @Test
+    void addTranslation_rejectsDuplicateLanguage() {
+        when(conceptGroupLabelRepository.findAllByIdThesaurusAndIdGroupAndLang("TH1", "g1", "en"))
+                .thenReturn(List.of(ConceptGroupLabel.builder().build()));
+
+        var result = service.addTranslation(new AddCollectionTranslationCommand("TH1", "g1", "en", "Coll"));
+
+        assertEquals(MutationOutcome.DUPLICATE_LABEL, result.outcome());
+        verify(conceptGroupLabelRepository, never()).save(any());
+    }
+
+    @Test
+    void addTranslation_savesNewLabelAndTouchesCollection() {
+        when(conceptGroupLabelRepository.findAllByIdThesaurusAndIdGroupAndLang("TH1", "g1", "en"))
+                .thenReturn(List.of());
+
+        var result = service.addTranslation(new AddCollectionTranslationCommand("TH1", "g1", "en", "Coll"));
+
+        assertEquals(MutationOutcome.OK, result.outcome());
+        var captor = ArgumentCaptor.forClass(ConceptGroupLabel.class);
+        verify(conceptGroupLabelRepository).save(captor.capture());
+        assertEquals("g1", captor.getValue().getIdGroup());
+        assertEquals("en", captor.getValue().getLang());
+        assertEquals("Coll", captor.getValue().getLexicalValue());
+        verify(conceptGroupRepository).updateModifiedDate("g1", "TH1");
+    }
+
+    @Test
+    void updateTranslation_returnsValidationError_whenTranslationNotFound() {
+        when(conceptGroupLabelRepository.findAllByIdThesaurusAndIdGroupAndLang("TH1", "g1", "en"))
+                .thenReturn(List.of());
+
+        var result = service.updateTranslation(new UpdateCollectionTranslationCommand("TH1", "g1", "en", "New", 7));
+
+        assertEquals(MutationOutcome.VALIDATION_ERROR, result.outcome());
+        verify(conceptGroupLabelRepository, never()).save(any());
+    }
+
+    @Test
+    void updateTranslation_updatesExistingLabel() {
+        var label = ConceptGroupLabel.builder().idGroup("g1").idThesaurus("TH1").lang("en").lexicalValue("Old").build();
+        when(conceptGroupLabelRepository.findAllByIdThesaurusAndIdGroupAndLang("TH1", "g1", "en"))
+                .thenReturn(List.of(label));
+
+        var result = service.updateTranslation(new UpdateCollectionTranslationCommand("TH1", "g1", "en", "New", 7));
+
+        assertEquals(MutationOutcome.OK, result.outcome());
+        assertEquals("New", label.getLexicalValue());
+        verify(conceptGroupLabelRepository).save(label);
+        verify(conceptGroupRepository).updateModifiedDate("g1", "TH1");
+    }
+
+    @Test
+    void deleteTranslation_returnsValidationError_whenTranslationNotFound() {
+        when(conceptGroupLabelRepository.findAllByIdThesaurusAndIdGroupAndLang("TH1", "g1", "en"))
+                .thenReturn(List.of());
+
+        var result = service.deleteTranslation(new DeleteCollectionTranslationCommand("TH1", "g1", "en"));
+
+        assertEquals(MutationOutcome.VALIDATION_ERROR, result.outcome());
+        verify(conceptGroupLabelRepository, never()).deleteAllByIdGroupAndIdThesaurusAndLang(any(), any(), any());
+    }
+
+    @Test
+    void deleteTranslation_deletesLabelAndTouchesCollection() {
+        when(conceptGroupLabelRepository.findAllByIdThesaurusAndIdGroupAndLang("TH1", "g1", "en"))
+                .thenReturn(List.of(ConceptGroupLabel.builder().build()));
+
+        var result = service.deleteTranslation(new DeleteCollectionTranslationCommand("TH1", "g1", "en"));
+
+        assertEquals(MutationOutcome.OK, result.outcome());
+        verify(conceptGroupLabelRepository).deleteAllByIdGroupAndIdThesaurusAndLang("g1", "TH1", "en");
+        verify(conceptGroupRepository).updateModifiedDate("g1", "TH1");
+    }
+
+    @Test
+    void removeAllMembers_deletesAllMembershipsAndTouchesCollection() {
+        var result = service.removeAllMembers(new RemoveAllMembersFromCollectionCommand("TH1", "g1"));
+
+        assertEquals(MutationOutcome.OK, result.outcome());
+        verify(conceptGroupConceptRepository).deleteAllByIdGroupAndIdThesaurus("g1", "TH1");
+        verify(conceptGroupRepository).updateModifiedDate("g1", "TH1");
+    }
+
+    @Test
+    void createSubgroup_rejectsMissingParent() {
+        var result = service.createSubgroup(new CreateSubgroupCommand("TH1", "", "fr", "Sub", "", "MT", 7));
+
+        assertEquals(MutationOutcome.VALIDATION_ERROR, result.outcome());
+        verify(conceptGroupRepository, never()).save(any());
+    }
+
+    @Test
+    void createSubgroup_createsGroupAndSubRelation() {
+        when(conceptGroupRepository.getNextConceptGroupSequence()).thenReturn(9L);
+
+        var result = service.createSubgroup(new CreateSubgroupCommand("TH1", "g1", "fr", "Sub", "", "MT", 7));
+
+        assertEquals(MutationOutcome.OK, result.outcome());
+        assertEquals("g9", result.createdConceptId());
+        var captor = ArgumentCaptor.forClass(RelationGroup.class);
+        verify(relationGroupRepository).save(captor.capture());
+        assertEquals("g1", captor.getValue().getIdGroup1());
+        assertEquals("g9", captor.getValue().getIdGroup2());
+        assertEquals("sub", captor.getValue().getRelation());
+        verify(collectionIdentifierAssignmentService).assignOnCreation("TH1", "g9", "Sub");
     }
 
     @Test

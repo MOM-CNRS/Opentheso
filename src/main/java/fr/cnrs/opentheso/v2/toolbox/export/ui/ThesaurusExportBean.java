@@ -47,6 +47,7 @@ public class ThesaurusExportBean implements Serializable {
     private String thesaurusTitle;
     private String formatCode = "rdf";
     private String csvDelimiter = ",";
+    private String downloadMode = "skos";
     private List<String> selectedLanguageCodes = new ArrayList<>();
     private List<NodeLangTheso> exportLanguages = Collections.emptyList();
     private List<NodeGroup> groupList = Collections.emptyList();
@@ -89,29 +90,35 @@ public class ThesaurusExportBean implements Serializable {
     public void init(String thesaurusId, String thesaurusTitle) {
         resetCommon(thesaurusId, thesaurusTitle);
         this.formatCode = "rdf";
+        this.downloadMode = "skos";
+        loadLanguagesAndGroups();
     }
 
     public void initCsv(String thesaurusId, String thesaurusTitle) {
         resetCommon(thesaurusId, thesaurusTitle);
         this.csvDelimiter = ",";
+        this.downloadMode = "csv";
         loadLanguagesAndGroups();
     }
 
     public void initCsvById(String thesaurusId, String thesaurusTitle) {
         resetCommon(thesaurusId, thesaurusTitle);
         this.csvDelimiter = ",";
+        this.downloadMode = "csvId";
         loadLanguagesAndGroups();
         this.csvIdLanguage = resolveDefaultLanguage();
     }
 
     public void initCsvStructured(String thesaurusId, String thesaurusTitle) {
         resetCommon(thesaurusId, thesaurusTitle);
+        this.downloadMode = "csvStructured";
         loadLanguagesAndGroups();
         this.structuredCsvLanguage = resolveDefaultLanguage();
     }
 
     public void initPdf(String thesaurusId, String thesaurusTitle) {
         resetCommon(thesaurusId, thesaurusTitle);
+        this.downloadMode = "pdf";
         loadLanguagesAndGroups();
         this.pdfLanguage1 = resolveDefaultLanguage();
         this.pdfLanguage2 = null;
@@ -122,6 +129,7 @@ public class ThesaurusExportBean implements Serializable {
     public void initDeprecated(String thesaurusId, String thesaurusTitle) {
         resetCommon(thesaurusId, thesaurusTitle);
         this.csvDelimiter = ";";
+        this.downloadMode = "deprecated";
         exportLanguages = thesaurusEditionCsvExportService.listExportLanguages(thesaurusId);
         this.deprecatedLanguage = resolveDefaultLanguage();
     }
@@ -129,6 +137,36 @@ public class ThesaurusExportBean implements Serializable {
     public void prepare(String thesaurusId, String thesaurusTitle) {
         this.thesaurusId = thesaurusId;
         this.thesaurusTitle = thesaurusTitle;
+    }
+
+    public void prepare(String thesaurusId, String thesaurusTitle, String downloadMode) {
+        prepare(thesaurusId, thesaurusTitle);
+        if (StringUtils.isNotBlank(downloadMode)) {
+            this.downloadMode = downloadMode;
+        }
+    }
+
+    public void onFilterByGroupToggle() {
+        if (filterByGroup) {
+            exportByGroup = false;
+        }
+    }
+
+    public void onExportByGroupToggle() {
+        if (exportByGroup) {
+            filterByGroup = false;
+        }
+    }
+
+    public StreamedContent getDownloadFile() {
+        return switch (StringUtils.defaultIfBlank(downloadMode, "skos")) {
+            case "csv" -> downloadCsv();
+            case "csvId" -> downloadCsvById();
+            case "csvStructured" -> downloadCsvStructured();
+            case "pdf" -> downloadPdf();
+            case "deprecated" -> downloadCsvDeprecated();
+            default -> downloadSkos();
+        };
     }
 
     public StreamedContent downloadSkos() {

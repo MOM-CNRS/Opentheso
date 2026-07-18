@@ -185,6 +185,13 @@ public class ProjectMemberService {
         log.info("Rôle limité supprimé pour l'utilisateur id={} sur le thésaurus {}", userId, thesaurusId);
     }
 
+    @Transactional(readOnly = true)
+    public String getMemberInstitution(int callerId, boolean superAdmin, int projectId, int userId) {
+        requireProjectAdmin(callerId, superAdmin, projectId);
+        ensureUserExists(userId);
+        return userCommandRepository.findInstitution(userId);
+    }
+
     @Transactional
     public void updateMemberProfile(
             int callerId,

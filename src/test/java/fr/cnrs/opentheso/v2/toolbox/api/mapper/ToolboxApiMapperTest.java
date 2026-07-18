@@ -1,12 +1,16 @@
 package fr.cnrs.opentheso.v2.toolbox.api.mapper;
 
 import fr.cnrs.opentheso.v2.toolbox.model.EditionStatistics;
+import fr.cnrs.opentheso.v2.toolbox.model.EditionThesaurusSummary;
 import fr.cnrs.opentheso.v2.toolbox.model.StatisticsSummary;
 import org.junit.jupiter.api.Test;
 
+import java.time.LocalDateTime;
 import java.util.Date;
+import java.util.List;
 
 import static org.junit.jupiter.api.Assertions.assertEquals;
+import static org.junit.jupiter.api.Assertions.assertNull;
 
 class ToolboxApiMapperTest {
 
@@ -18,5 +22,46 @@ class ToolboxApiMapperTest {
 
         assertEquals(8, response.counts().conceptCount());
         assertEquals(2, response.counts().candidateCount());
+    }
+
+    @Test
+    void toSummaryResponse_mapsNullLastModificationToNullInstant() {
+        var summary = new StatisticsSummary(new EditionStatistics(1, 0, 0), null);
+
+        var response = ToolboxApiMapper.toSummaryResponse(summary);
+
+        assertNull(response.lastModification());
+    }
+
+    @Test
+    void toStatisticsResponse_mapsAllCounts() {
+        var response = ToolboxApiMapper.toStatisticsResponse(new EditionStatistics(10, 3, 2));
+
+        assertEquals(10, response.conceptCount());
+        assertEquals(3, response.candidateCount());
+        assertEquals(2, response.deprecatedCount());
+    }
+
+    @Test
+    void toThesaurusResponse_mapsFields() {
+        var created = LocalDateTime.of(2024, 1, 1, 0, 0);
+        var summary = new EditionThesaurusSummary("TH1", "Test", true, created);
+
+        var response = ToolboxApiMapper.toThesaurusResponse(summary);
+
+        assertEquals("TH1", response.id());
+        assertEquals("Test", response.title());
+        assertEquals(true, response.privateThesaurus());
+        assertEquals(created, response.createdAt());
+    }
+
+    @Test
+    void toThesaurusResponses_mapsWholeList() {
+        var summary = new EditionThesaurusSummary("TH1", "Test", false, LocalDateTime.now());
+
+        var responses = ToolboxApiMapper.toThesaurusResponses(List.of(summary));
+
+        assertEquals(1, responses.size());
+        assertEquals("TH1", responses.get(0).id());
     }
 }

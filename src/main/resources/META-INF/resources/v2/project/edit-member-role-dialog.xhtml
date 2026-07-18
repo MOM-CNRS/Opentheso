@@ -1,0 +1,88 @@
+<ui:fragment xmlns="http://www.w3.org/1999/xhtml"
+             xmlns:ui="http://xmlns.jcp.org/jsf/facelets"
+             xmlns:f="http://xmlns.jcp.org/jsf/core"
+             xmlns:h="http://xmlns.jcp.org/jsf/html"
+             xmlns:p="http://primefaces.org/ui">
+
+    <p:dialog id="idV2EditMemberRole"
+              header="#{v2LocaleBean.getMsg('profile.modify_roles')}"
+              widgetVar="v2EditMemberRole"
+              width="550" showEffect="fade" modal="true"
+              resizable="false" position="top" style="margin-top: 30px">
+
+        <h:form id="v2EditMemberRoleForm">
+            <div class="row">
+                <div class="col-5" style="text-align: right">
+                    <h:outputText value="#{v2LocaleBean.getMsg('profile.pseudo')} : "/>
+                </div>
+                <div class="col-7">
+                    <h:outputText value="#{v2MyProjectsBean.editMemberUsername}" style="font-weight: bold"/>
+                </div>
+            </div>
+
+            <h:panelGroup id="v2EditMemberRoleDef">
+                <div class="row" style="margin-top: 5px;">
+                    <div class="col-5" style="text-align: right">
+                        <h:outputText value="#{v2LocaleBean.getMsg('profile.role')} "/>
+                    </div>
+                    <div class="col-7">
+                        <p:selectOneMenu value="#{v2MyProjectsBean.editMemberRoleId}"
+                                         styleClass="selectOneMenu_custom"
+                                         panelStyleClass="selectOneMenu_panelStyle_custom"
+                                         style="width: 100%; background: none; box-shadow: none;"
+                                         panelStyle="border: none; box-shadow: none; max-width: 300px">
+                            <p:ajax event="change" update="v2EditMemberRoleForm:v2EditMemberRoleDef"/>
+                            <f:selectItems value="#{v2MyProjectsBean.assignableRoles}" var="role"
+                                           itemLabel="#{role.name()}" itemValue="#{role.id()}"/>
+                        </p:selectOneMenu>
+                    </div>
+                </div>
+
+                <div class="row" style="margin-top: 5px;">
+                    <div class="col-5" style="text-align: right">
+                        <h:outputText value="#{v2LocaleBean.getMsg('profile.limitRoleOnTheso')}"
+                                      title="#{v2LocaleBean.getMsg('profile.limitRoleOnThesoTooltip')}"/>
+                    </div>
+                    <div class="col-7">
+                        <p:toggleSwitch id="v2EditLimitToThesaurus" value="#{v2MyProjectsBean.editMemberLimitOnThesaurus}"
+                                        onIcon="pi pi-times" offIcon="pi pi-check">
+                            <p:ajax update="v2EditMemberRoleForm:v2EditMemberRoleDef"/>
+                        </p:toggleSwitch>
+                    </div>
+                    <p:tooltip value="#{v2LocaleBean.getMsg('profile.limitRoleOnThesoTooltip')}" showDelay="500"
+                               for="v2EditLimitToThesaurus"/>
+                </div>
+
+                <h:panelGroup rendered="#{v2MyProjectsBean.editMemberLimitOnThesaurus}">
+                    <div class="row" style="margin-top: 5px;">
+                        <div class="col-5" style="text-align: right">
+                            <h:outputText value="#{v2LocaleBean.getMsg('profile.list_of_thesauri')}"
+                                          style="font-size: 12px;"/>
+                        </div>
+                        <div class="col-7">
+                            <p:selectManyMenu value="#{v2MyProjectsBean.editMemberThesaurusIds}"
+                                              styleClass="manymenu-advanced" showCheckbox="true"
+                                              style="width: 100%;">
+                                <f:selectItems value="#{v2MyProjectsBean.projectThesauri}" var="theso"
+                                               itemLabel="#{theso.title()} (#{theso.id()})"
+                                               itemValue="#{theso.id()}"/>
+                            </p:selectManyMenu>
+                        </div>
+                    </div>
+                </h:panelGroup>
+            </h:panelGroup>
+
+            <div style="width: 100%; text-align: right; margin-top: 15px; margin-bottom: 5px;">
+                <p:commandButton value="#{v2LocaleBean.getMsg('candidat.close')}" style="margin-right: 10px"
+                                 icon="fas fa-undo-alt" styleClass="ui-button-secondary button"
+                                 ajax="true" oncomplete="PF('v2EditMemberRole').hide();" update="idV2EditMemberRole"/>
+
+                <p:commandButton value="#{v2LocaleBean.getMsg('btnValidate')}"
+                                 icon="pi pi-check"
+                                 styleClass="ui-button-success"
+                                 update="messageIndex v2EditMemberRoleForm containerIndex"
+                                 action="#{v2MyProjectsBean.submitUpdateMemberRole()}"/>
+            </div>
+        </h:form>
+    </p:dialog>
+</ui:fragment>

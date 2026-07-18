@@ -163,20 +163,20 @@ public class EditionQueryRepository {
         String sql = """
                 SELECT
                     cg.idgroup,
-                    COALESCE(cgl.lexical_value, cg.idgroup) AS label,
+                    COALESCE(cgl.lexicalvalue, cg.idgroup) AS label,
                     COALESCE(cg."private", false) AS is_private,
                     parent_rg.id_group1 AS parent_id
                 FROM concept_group cg
                 LEFT JOIN concept_group_label cgl
                     ON LOWER(cgl.idgroup) = LOWER(cg.idgroup)
-                    AND cgl.id_thesaurus = cg.idthesaurus
+                    AND cgl.idthesaurus = cg.idthesaurus
                     AND cgl.lang = :lang
                 LEFT JOIN relation_group parent_rg
                     ON LOWER(parent_rg.id_group2) = LOWER(cg.idgroup)
                     AND parent_rg.id_thesaurus = cg.idthesaurus
                     AND parent_rg.relation = 'sub'
                 WHERE cg.idthesaurus = :thesaurusId
-                ORDER BY LOWER(COALESCE(cgl.lexical_value, cg.idgroup))
+                ORDER BY LOWER(COALESCE(cgl.lexicalvalue, cg.idgroup))
                 """;
         List<Object[]> rows = entityManager.createNativeQuery(sql)
                 .setParameter("thesaurusId", thesaurusId)

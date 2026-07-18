@@ -1,0 +1,48 @@
+<ui:fragment xmlns="http://www.w3.org/1999/xhtml"
+             xmlns:ui="http://xmlns.jcp.org/jsf/facelets"
+             xmlns:f="http://xmlns.jcp.org/jsf/core"
+             xmlns:h="http://xmlns.jcp.org/jsf/html"
+             xmlns:p="http://primefaces.org/ui">
+
+    <p:dialog id="idV2EditMemberProfile"
+              header="#{v2LocaleBean.getMsg('profile.modify_user')}"
+              widgetVar="v2EditMemberProfile"
+              width="550" showEffect="fade" modal="true"
+              resizable="false" position="top" style="margin-top: 30px">
+
+        <h:form id="v2EditMemberProfileForm">
+            <div class="row">
+                <div class="col-5"><h:outputText value="#{v2LocaleBean.getMsg('profile.pseudo')} : "/></div>
+                <div class="col-7"><p:inputText value="#{v2MyProjectsBean.editProfileUsername}" style="width: 100%"/></div>
+            </div>
+            <div class="row" style="margin-top: 5px;">
+                <div class="col-5"><h:outputText value="#{v2LocaleBean.getMsg('profile.email')} : "/></div>
+                <div class="col-7"><p:inputText value="#{v2MyProjectsBean.editProfileEmail}" style="width: 100%" autocomplete="off"/></div>
+            </div>
+            <div class="row" style="margin-top: 5px;">
+                <div class="col-5"><h:outputText value="#{v2LocaleBean.getMsg('profile.institution')} : "/></div>
+                <div class="col-7"><p:inputText value="#{v2MyProjectsBean.editProfileInstitution}" style="width: 100%"/></div>
+            </div>
+            <div class="row" style="margin-top: 5px;">
+                <div class="col-5"><h:outputText value="#{v2LocaleBean.getMsg('profile.alert_by_email')} : "/></div>
+                <div class="col-7"><p:toggleSwitch value="#{v2MyProjectsBean.editProfileAlertMail}" onIcon="pi pi-times" offIcon="pi pi-check"/></div>
+            </div>
+            <div class="row" style="margin-top: 5px;">
+                <div class="col-5"><h:outputText value="#{v2LocaleBean.getMsg('profile.activateAccount')} : "/></div>
+                <div class="col-7"><p:toggleSwitch value="#{v2MyProjectsBean.editProfileActive}" onIcon="pi pi-times" offIcon="pi pi-check"/></div>
+            </div>
+
+            <div style="width: 100%; text-align: right; margin-top: 15px; margin-bottom: 5px;">
+                <p:commandButton value="#{v2LocaleBean.getMsg('candidat.close')}" style="margin-right: 10px"
+                                 icon="fas fa-undo-alt" styleClass="ui-button-secondary button"
+                                 ajax="true" oncomplete="PF('v2EditMemberProfile').hide();" update="idV2EditMemberProfile"/>
+
+                <p:commandButton value="#{v2LocaleBean.getMsg('apply')}"
+                                 icon="fa-regular fa-floppy-disk"
+                                 styleClass="ui-button-success"
+                                 update="messageIndex v2EditMemberProfileForm containerIndex"
+                                 action="#{v2MyProjectsBean.submitUpdateMemberProfile()}"/>
+            </div>
+        </h:form>
+    </p:dialog>
+</ui:fragment>

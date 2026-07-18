@@ -98,8 +98,9 @@ public class ThesaurusEditionCsvImportBean implements Serializable {
         } catch (Exception ex) {
             loadDone = false;
             MessageUtils.showErrorMessage(ex.getMessage());
+        } finally {
+            PrimeFaces.current().executeScript("PF('waitDialog').hide();");
         }
-        PrimeFaces.current().executeScript("PF('waitDialog').hide();");
     }
 
     public void importThesaurus() {
@@ -138,11 +139,13 @@ public class ThesaurusEditionCsvImportBean implements Serializable {
                 ));
             }
             editionBean().showList();
-            PrimeFaces.current().ajax().update("messageIndex formMenu:idListTheso");
+            PrimeFaces.current().ajax().update("messageIndex", "containerIndex");
         } catch (NumberFormatException ex) {
             MessageUtils.showErrorMessage("Projet invalide");
         } catch (Exception ex) {
             MessageUtils.showErrorMessage(StringUtils.defaultIfBlank(ex.getMessage(), "Erreur pendant l'import CSV"));
+        } finally {
+            PrimeFaces.current().executeScript("PF('waitDialog').hide();");
         }
     }
 

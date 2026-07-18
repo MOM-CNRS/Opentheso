@@ -1,0 +1,69 @@
+<ui:fragment xmlns="http://www.w3.org/1999/xhtml"
+             xmlns:ui="http://xmlns.jcp.org/jsf/facelets"
+             xmlns:f="http://xmlns.jcp.org/jsf/core"
+             xmlns:h="http://xmlns.jcp.org/jsf/html"
+             xmlns:p="http://primefaces.org/ui">
+
+    <p:dialog id="idV2EditLimitedRole"
+              header="#{v2LocaleBean.getMsg('profile.modify_roles')}"
+              widgetVar="v2EditLimitedRole"
+              width="550" showEffect="fade" modal="true"
+              resizable="false" position="top" style="margin-top: 30px">
+
+        <h:form id="v2EditLimitedRoleForm">
+            <div class="row">
+                <div class="col-5" style="text-align: right">
+                    <h:outputText value="#{v2LocaleBean.getMsg('profile.pseudo')} : "/>
+                </div>
+                <div class="col-7">
+                    <h:outputText value="#{v2MyProjectsBean.editLimitedUsername}" style="font-weight: bold"/>
+                </div>
+            </div>
+            <div class="row" style="margin-top: 5px;">
+                <div class="col-5" style="text-align: right">
+                    <h:outputText value="#{v2LocaleBean.getMsg('menu.thesaurus')} : "/>
+                </div>
+                <div class="col-7">
+                    <h:outputText value="#{v2MyProjectsBean.editLimitedThesaurusName} (#{v2MyProjectsBean.editLimitedThesaurusId})"/>
+                </div>
+            </div>
+            <div class="row" style="margin-top: 5px;">
+                <div class="col-5" style="text-align: right">
+                    <h:outputText value="#{v2LocaleBean.getMsg('profile.role')} "/>
+                </div>
+                <div class="col-7">
+                    <p:selectOneMenu value="#{v2MyProjectsBean.editLimitedNewRoleId}"
+                                     styleClass="selectOneMenu_custom"
+                                     panelStyleClass="selectOneMenu_panelStyle_custom"
+                                     style="width: 100%; background: none; box-shadow: none;"
+                                     panelStyle="border: none; box-shadow: none; max-width: 300px">
+                        <f:selectItems value="#{v2MyProjectsBean.assignableRoles}" var="role"
+                                       itemLabel="#{role.name()}" itemValue="#{role.id()}"/>
+                    </p:selectOneMenu>
+                </div>
+            </div>
+            <div class="row" style="margin-top: 5px;">
+                <div class="col-5" style="text-align: right">
+                    <h:outputText value="#{v2LocaleBean.getMsg('profile.limitRoleOnTheso')}"
+                                  title="#{v2LocaleBean.getMsg('profile.limitRoleOnThesoTooltip')}"/>
+                </div>
+                <div class="col-7">
+                    <p:toggleSwitch value="#{v2MyProjectsBean.editLimitedKeepRestricted}"
+                                    onIcon="pi pi-times" offIcon="pi pi-check"/>
+                </div>
+            </div>
+
+            <div style="width: 100%; text-align: right; margin-top: 15px; margin-bottom: 5px;">
+                <p:commandButton value="#{v2LocaleBean.getMsg('candidat.close')}" style="margin-right: 10px"
+                                 icon="fas fa-undo-alt" styleClass="ui-button-secondary button"
+                                 ajax="true" oncomplete="PF('v2EditLimitedRole').hide();" update="idV2EditLimitedRole"/>
+
+                <p:commandButton value="#{v2LocaleBean.getMsg('btnValidate')}"
+                                 icon="pi pi-check"
+                                 styleClass="ui-button-success"
+                                 update="messageIndex v2EditLimitedRoleForm containerIndex"
+                                 action="#{v2MyProjectsBean.submitUpdateLimitedRole()}"/>
+            </div>
+        </h:form>
+    </p:dialog>
+</ui:fragment>

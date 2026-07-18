@@ -71,4 +71,16 @@ class ToolboxControllerTest {
         assertEquals(10, response.counts().conceptCount());
         verify(toolboxAuthSupport).requireStatisticsAccess(2);
     }
+
+    @Test
+    void editionStatistics_returnsMappedStatistics() {
+        when(editionThesaurusService.loadStatistics("TH1")).thenReturn(new EditionStatistics(10, 3, 2));
+
+        var response = controller.editionStatistics("api-key", null, "TH1");
+
+        assertEquals(10, response.conceptCount());
+        assertEquals(3, response.candidateCount());
+        assertEquals(2, response.deprecatedCount());
+        verify(toolboxAuthSupport).requireEditionAccess(2);
+    }
 }
