@@ -7,7 +7,7 @@
     <p:dialog id="idCompareListToTheso" header="#{v2LocaleBean.getMsg('actions.compareListToTheso')}" widgetVar="compareListToTheso"  
               width="850" showEffect="fade" modal="true" resizable="false" position="top" style="margin-top: 30px" >
 
-        <h:panelGroup id="compareListToThesoForm">              
+        <h:form id="compareListToThesoForm">
 
             <p:outputPanel deferred="true"  style="border: 1px solid #43B572; border-radius: 10px; padding: 10px; margin-top: 5px; font-size: 12px; overflow-y: auto; max-height: 300px;">
 
@@ -138,6 +138,7 @@
                     }
                 </script>                
             </h:panelGroup>
-        </h:panelGroup>
+            <input type="hidden" name="csrfToken" value="${sessionScope.CSRF_TOKEN}" />
+        </h:form>
     </p:dialog> 
 </ui:fragment>

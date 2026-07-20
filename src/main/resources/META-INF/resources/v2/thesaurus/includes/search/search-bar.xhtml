@@ -22,7 +22,8 @@
                                                          style="background:transparent; border-color:transparent; font-size:12px; padding-top:2px; width:100%; padding-left:5px; height:33px;">
                                             <p:ajax event="valueChange"
                                                     listener="#{v2ConceptSearchBean.onLanguageChange()}"
-                                                    update=":containerIndex:rightTab resultSearchBar"/>
+                                                    process="@this"
+                                                    update=":containerIndex :indexTitle :resultSearchBar :messageIndex :menuBar"/>
                                             <f:selectItems value="#{v2ConceptSearchBean.availableLanguages}"
                                                            var="lang"
                                                            itemLabel="#{lang.value}"

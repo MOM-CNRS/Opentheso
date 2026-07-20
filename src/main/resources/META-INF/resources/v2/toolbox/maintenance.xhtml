@@ -46,23 +46,45 @@
                                     </div>
                                     <p:accordionPanel widgetVar="v2MaintenancePanel" style="width: 100%; margin-top: 10px">
                                         <p:tab title="Corriger l'affichage des faux top termes">
+                                            <p:outputPanel style="color: black; margin-bottom: 10px">
+                                                <h:outputText value="Corrige les concepts marqués top terme alors qu'ils ont déjà une relation BT."/>
+                                            </p:outputPanel>
                                             <p:commandButton value="#{v2LocaleBean.getMsg('service.launchCorrection')}" icon="pi pi-check"
                                                              action="#{v2MaintenanceBean.correctDisplayTopTerm()}" update="containerIndex messageIndex"/>
                                         </p:tab>
                                         <p:tab title="Correction 1 - Restructuration">
+                                            <p:outputPanel style="color: black; margin-bottom: 10px">
+                                                <h:outputText value="Nettoie et réorganise la hiérarchie (TT / BT / NT) et les relations en boucle."/>
+                                                <br/>
+                                                <h:outputText value="!!! Recharger le thésaurus à la fin du traitement !!!" style="color: red"/>
+                                            </p:outputPanel>
                                             <p:commandButton value="#{v2LocaleBean.getMsg('service.launchCorrection')}" icon="pi pi-check"
                                                              action="#{v2MaintenanceBean.reorganizeHierarchy()}" update="containerIndex messageIndex"/>
                                         </p:tab>
                                         <p:tab title="Correction 2 - Collections">
+                                            <p:outputPanel style="color: black; margin-bottom: 10px">
+                                                <h:outputText value="Supprime les liens concept/collection incohérents (collection ou concept absent)."/>
+                                                <br/>
+                                                <h:outputText value="Réservé aux super-administrateurs. Recharger le thésaurus après traitement." style="color: red"/>
+                                            </p:outputPanel>
                                             <p:commandButton rendered="#{v2MaintenanceBean.superAdmin}" value="#{v2LocaleBean.getMsg('service.launchCorrection')}"
                                                              icon="pi pi-check" action="#{v2MaintenanceBean.reorganizeConceptsAndCollections()}"
                                                              update="containerIndex messageIndex"/>
+                                            <h:outputText rendered="#{not v2MaintenanceBean.superAdmin}"
+                                                          value="Action réservée aux super-administrateurs."
+                                                          style="color: #666; font-style: italic"/>
                                         </p:tab>
                                         <p:tab title="Correction 3 - Créateur/contributeur">
+                                            <p:outputPanel style="color: black; margin-bottom: 10px">
+                                                <h:outputText value="Transfère créateur et contributeur du terme préféré vers le concept."/>
+                                            </p:outputPanel>
                                             <p:commandButton value="#{v2LocaleBean.getMsg('service.launchCorrection')}" icon="pi pi-check"
                                                              action="#{v2MaintenanceBean.switchRolesFromTermToConcept()}" update="containerIndex messageIndex"/>
                                         </p:tab>
                                         <p:tab title="Correction 4 - Les identifiants Ark">
+                                            <p:outputPanel style="color: black; margin-bottom: 10px">
+                                                <h:outputText value="Génération ARK à partir de l'id concept (NAAN + préfixe + id), ou ARK local selon les préférences."/>
+                                            </p:outputPanel>
                                             <div class="row" style="color: black; margin-top: 10px">
                                                 <div class="col-3">
                                                     <h:outputText value="*Naan: "/>
@@ -98,6 +120,9 @@
                                                              update="containerIndex messageIndex" style="margin-top: 10px"/>
                                         </p:tab>
                                         <p:tab title="Générer le sitemap.xml pour le thésaurus en cours">
+                                            <p:outputPanel style="color: black; margin-bottom: 10px">
+                                                <h:outputText value="Fonctionnalité temporairement désactivée (comme en V1)."/>
+                                            </p:outputPanel>
                                             <p:commandButton disabled="true" value="#{v2LocaleBean.getMsg('service.generate')}" icon="pi pi-check"
                                                              action="#{v2MaintenanceBean.generateSitemap()}" update="containerIndex messageIndex"/>
                                         </p:tab>

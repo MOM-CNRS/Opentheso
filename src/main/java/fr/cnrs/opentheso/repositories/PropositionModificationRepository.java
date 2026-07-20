@@ -15,6 +15,8 @@ public interface PropositionModificationRepository extends JpaRepository<Proposi
 
     List<PropositionModification> findAllByIdThesoAndStatus(String idTheso, String status);
 
+    long countByIdThesoAndStatus(String idTheso, String status);
+
     @Modifying
     @Transactional
     void deleteAllByIdTheso(String idThesaurus);

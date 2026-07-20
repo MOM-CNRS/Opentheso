@@ -1,10 +1,11 @@
 package fr.cnrs.opentheso.v2.toolbox.ui;
 
 import fr.cnrs.opentheso.utils.MessageUtils;
+import fr.cnrs.opentheso.v2.concept.ui.ConsultationShellBean;
 import fr.cnrs.opentheso.v2.shared.ui.UserSession;
 import fr.cnrs.opentheso.v2.toolbox.exception.InvalidToolboxDataException;
-import fr.cnrs.opentheso.v2.toolbox.model.LanguageOption;
 import fr.cnrs.opentheso.v2.toolbox.model.NewThesaurusFormOptions;
+import fr.cnrs.opentheso.v2.toolbox.model.LanguageOption;
 import fr.cnrs.opentheso.v2.toolbox.model.ProjectOption;
 import fr.cnrs.opentheso.v2.toolbox.service.NewThesaurusService;
 import fr.cnrs.opentheso.v2.test.support.PrimeFacesTestSupport;
@@ -24,7 +25,6 @@ import static org.junit.jupiter.api.Assertions.assertTrue;
 import static org.mockito.ArgumentMatchers.any;
 import static org.mockito.ArgumentMatchers.eq;
 import static org.mockito.Mockito.doThrow;
-import static org.mockito.Mockito.mock;
 import static org.mockito.Mockito.mockStatic;
 import static org.mockito.Mockito.verify;
 import static org.mockito.Mockito.when;
@@ -38,6 +38,8 @@ class NewThesaurusBeanTest {
     private NewThesaurusService newThesaurusService;
     @Mock
     private EditionBean editionBean;
+    @Mock
+    private ConsultationShellBean consultationShellBean;
     @Mock
     private FacesContext facesContext;
     @Mock
@@ -107,13 +109,14 @@ class NewThesaurusBeanTest {
         try (MockedStatic<FacesContext> faces = mockStatic(FacesContext.class);
              MockedStatic<MessageUtils> messages = mockStatic(MessageUtils.class);
              var primeFaces = PrimeFacesTestSupport.open()) {
-            stubEditionBeanLookup(faces);
+            stubFacesLookups(faces);
             when(newThesaurusService.create(any(), eq("admin"))).thenReturn("th1");
 
             bean.create();
         }
 
         verify(editionBean).showList();
+        verify(consultationShellBean).refreshHeaderCatalog();
         verify(newThesaurusService).create(any(), eq("admin"));
     }
 
@@ -173,5 +176,14 @@ class NewThesaurusBeanTest {
         when(facesContext.getApplication()).thenReturn(application);
         when(application.evaluateExpressionGet(eq(facesContext), eq("#{v2EditionBean}"), eq(EditionBean.class)))
                 .thenReturn(editionBean);
+    }
+
+    private void stubFacesLookups(MockedStatic<FacesContext> faces) {
+        stubEditionBeanLookup(faces);
+        when(application.evaluateExpressionGet(
+                eq(facesContext),
+                eq("#{v2ConsultationShellBean}"),
+                eq(ConsultationShellBean.class)
+        )).thenReturn(consultationShellBean);
     }
 }

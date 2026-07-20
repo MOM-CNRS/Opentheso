@@ -111,9 +111,7 @@ class PropositionReadServiceTest {
 
     @Test
     void countPending_delegatesToRepository() {
-        when(repository.findAllByIdThesoAndStatus("TH1", "ENVOYER"))
-                .thenReturn(List.of(new fr.cnrs.opentheso.entites.PropositionModification(),
-                        new fr.cnrs.opentheso.entites.PropositionModification()));
+        when(repository.countByIdThesoAndStatus("TH1", "ENVOYER")).thenReturn(2L);
 
         assertEquals(2, service.countPending("TH1"));
     }

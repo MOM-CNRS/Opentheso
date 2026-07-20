@@ -51,6 +51,8 @@ import fr.cnrs.opentheso.repositories.ThesaurusRepository;
 import fr.cnrs.opentheso.repositories.UserGroupThesaurusRepository;
 import fr.cnrs.opentheso.repositories.UserRoleOnlyOnRepository;
 import fr.cnrs.opentheso.v2.concept.identifier.handle.ConceptHandleConnectionService;
+import jakarta.persistence.EntityManager;
+import jakarta.persistence.PersistenceContext;
 import lombok.RequiredArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
 import org.springframework.stereotype.Component;
@@ -60,6 +62,68 @@ import org.springframework.transaction.annotation.Transactional;
 @Component
 @RequiredArgsConstructor
 public class ThesaurusLifecyclePersistence {
+
+    /**
+     * Bulk native deletes (one statement per table) — avoids Spring Data derived deletes
+     * that load every entity then delete row-by-row.
+     */
+    private static final String[] THESAURUS_BULK_DELETE_SQL = {
+            "DELETE FROM thesohomepage WHERE idtheso = :id",
+            "DELETE FROM user_group_thesaurus WHERE id_thesaurus = :id",
+            "DELETE FROM user_role_only_on WHERE id_theso = :id",
+            "DELETE FROM thesaurus_alignement_source WHERE id_thesaurus = :id",
+            "DELETE FROM thesaurus_array WHERE id_thesaurus = :id",
+            "DELETE FROM node_label WHERE id_thesaurus = :id",
+            "DELETE FROM thesaurus_dcterms WHERE id_thesaurus = :id",
+            "DELETE FROM graph_view_exported_concept_branch WHERE top_concept_thesaurus_id = :id",
+            "DELETE FROM routine_mail WHERE id_thesaurus = :id",
+            // terms
+            "DELETE FROM preferred_term WHERE id_thesaurus = :id",
+            "DELETE FROM non_preferred_term WHERE id_thesaurus = :id",
+            "DELETE FROM non_preferred_term_historique WHERE id_thesaurus = :id",
+            "DELETE FROM term WHERE id_thesaurus = :id",
+            "DELETE FROM term_historique WHERE id_thesaurus = :id",
+            // groups
+            "DELETE FROM concept_group_concept WHERE idthesaurus = :id",
+            "DELETE FROM concept_group_label_historique WHERE idthesaurus = :id",
+            "DELETE FROM concept_group_label WHERE idthesaurus = :id",
+            "DELETE FROM concept_group_historique WHERE idthesaurus = :id",
+            "DELETE FROM relation_group WHERE id_thesaurus = :id",
+            "DELETE FROM concept_group WHERE idthesaurus = :id",
+            // candidats
+            "DELETE FROM candidat_vote WHERE id_thesaurus = :id",
+            "DELETE FROM candidat_status WHERE id_thesaurus = :id",
+            "DELETE FROM candidat_messages WHERE id_thesaurus = :id",
+            "DELETE FROM concept_term_candidat WHERE id_thesaurus = :id",
+            "DELETE FROM concept_candidat WHERE id_thesaurus = :id",
+            "DELETE FROM term_candidat WHERE id_thesaurus = :id",
+            // concept-related
+            "DELETE FROM gps WHERE id_theso = :id",
+            "DELETE FROM alignement WHERE internal_id_thesaurus = :id",
+            "DELETE FROM alignement_preferences WHERE id_thesaurus = :id",
+            "DELETE FROM proposition_modification_detail WHERE id_proposition IN "
+                    + "(SELECT id FROM proposition_modification WHERE id_theso = :id)",
+            "DELETE FROM proposition_modification WHERE id_theso = :id",
+            "DELETE FROM proposition WHERE id_thesaurus = :id",
+            "DELETE FROM hierarchical_relationship WHERE id_thesaurus = :id",
+            "DELETE FROM hierarchical_relationship_historique WHERE id_thesaurus = :id",
+            "DELETE FROM external_images WHERE id_thesaurus = :id",
+            "DELETE FROM external_resources WHERE id_thesaurus = :id",
+            "DELETE FROM note WHERE id_thesaurus = :id",
+            "DELETE FROM note_historique WHERE id_thesaurus = :id",
+            "DELETE FROM permuted WHERE id_thesaurus = :id",
+            "DELETE FROM concept_replacedby WHERE id_thesaurus = :id",
+            "DELETE FROM corpus_link WHERE id_theso = :id",
+            "DELETE FROM concept_dcterms WHERE id_thesaurus = :id",
+            "DELETE FROM concept_historique WHERE id_thesaurus = :id",
+            "DELETE FROM concept_type WHERE id_theso = :id",
+            "DELETE FROM concept_facet WHERE id_thesaurus = :id",
+            "DELETE FROM concept WHERE id_thesaurus = :id",
+            // thesaurus root
+            "DELETE FROM thesaurus_label WHERE id_thesaurus = :id",
+            "DELETE FROM preferences WHERE id_thesaurus = :id",
+            "DELETE FROM thesaurus WHERE id_thesaurus = :id"
+    };
 
     private final ThesaurusRepository thesaurusRepository;
     private final ThesaurusLabelRepository thesaurusLabelRepository;
@@ -114,8 +178,13 @@ public class ThesaurusLifecyclePersistence {
     private final ToolboxThesaurusPersistence toolboxThesaurusPersistence;
     private final ConceptHandleConnectionService conceptHandleConnectionService;
 
+    @PersistenceContext
+    private EntityManager entityManager;
+
     public void deleteRights(String thesaurusId) {
-        userGroupThesaurusRepository.deleteByIdThesaurus(thesaurusId);
+        entityManager.createNativeQuery("DELETE FROM user_group_thesaurus WHERE id_thesaurus = :id")
+                .setParameter("id", thesaurusId)
+                .executeUpdate();
     }
 
     public void deleteAllHandleIds(String thesaurusId, Preferences preferences) {
@@ -146,35 +215,15 @@ public class ThesaurusLifecyclePersistence {
             return false;
         }
         thesaurusId = fr.cnrs.opentheso.utils.StringUtils.convertString(thesaurusId);
-        thesaurusHomePageRepository.deleteAllByIdTheso(thesaurusId);
-        userGroupThesaurusRepository.deleteByIdThesaurus(thesaurusId);
-        userRoleOnlyOnRepository.deleteByThesaurusIdThesaurus(thesaurusId);
-        thesaurusAlignementSourceRepository.deleteAllByIdThesaurus(thesaurusId);
-        thesaurusArrayRepository.deleteAllByIdThesaurus(thesaurusId);
-        nodeLabelRepository.deleteAllByIdThesaurus(thesaurusId);
-        thesaurusDcTermRepository.deleteAllByIdThesaurus(thesaurusId);
-        graphViewExportedConceptBranchRepository.deleteAllByTopConceptThesaurusId(thesaurusId);
-        routineMailRepository.deleteAllByIdThesaurus(thesaurusId);
-        deleteAllTerms(thesaurusId);
-        deleteAllGroups(thesaurusId);
-        deleteAllCandidats(thesaurusId);
-        gpsRepository.deleteByIdTheso(thesaurusId);
-        alignementRepository.deleteByThesaurus(thesaurusId);
-        alignementPreferencesRepository.deleteByIdThesaurus(thesaurusId);
-        propositionModificationDetailRepository.deleteByIdThesaurus(thesaurusId);
-        propositionModificationRepository.deleteAllByIdTheso(thesaurusId);
-        propositionRepository.deleteAllByIdThesaurus(thesaurusId);
-        hierarchicalRelationshipRepository.deleteAllByIdThesaurus(thesaurusId);
-        hierarchicalRelationshipHistoriqueRepository.deleteAllByIdThesaurus(thesaurusId);
-        imagesRepository.deleteByIdThesaurus(thesaurusId);
-        externalResourceRepository.deleteAllByIdThesaurus(thesaurusId);
-        externalImageRepository.deleteAllByIdThesaurus(thesaurusId);
-        noteRepository.deleteAllByIdThesaurus(thesaurusId);
-        noteHistoriqueRepository.deleteAllByIdThesaurus(thesaurusId);
-        deleteAllConcepts(thesaurusId);
-        thesaurusRepository.deleteById(thesaurusId);
-        thesaurusLabelRepository.deleteByIdThesaurus(thesaurusId);
-        toolboxPreferencePersistence.deletePreferences(thesaurusId);
+        long started = System.currentTimeMillis();
+        for (String sql : THESAURUS_BULK_DELETE_SQL) {
+            entityManager.createNativeQuery(sql)
+                    .setParameter("id", thesaurusId)
+                    .executeUpdate();
+        }
+        entityManager.flush();
+        entityManager.clear();
+        log.info("Thésaurus {} supprimé en {} ms (bulk SQL)", thesaurusId, System.currentTimeMillis() - started);
         return true;
     }
 
@@ -213,47 +262,6 @@ public class ThesaurusLifecyclePersistence {
         noteHistoriqueRepository.updateThesaurusId(newIdThesaurus, oldIdThesaurus);
         updateConceptsThesaurusId(newIdThesaurus, oldIdThesaurus);
         return true;
-    }
-
-    private void deleteAllTerms(String thesaurusId) {
-        preferredTermRepository.deleteByIdThesaurus(thesaurusId);
-        nonPreferredTermRepository.deleteByIdThesaurus(thesaurusId);
-        nonPreferredTermHistoriqueRepository.deleteAllByIdThesaurus(thesaurusId);
-        termRepository.deleteByIdThesaurus(thesaurusId);
-        termHistoriqueRepository.deleteAllByIdThesaurus(thesaurusId);
-    }
-
-    private void deleteAllGroups(String thesaurusId) {
-        conceptGroupRepository.deleteByIdThesaurus(thesaurusId);
-        conceptGroupLabelRepository.deleteByIdThesaurus(thesaurusId);
-        relationGroupRepository.deleteByIdThesaurus(thesaurusId);
-    }
-
-    private void deleteAllCandidats(String thesaurusId) {
-        candidatVoteRepository.deleteAllByIdThesaurus(thesaurusId);
-        candidatStatusRepository.deleteAllByIdThesaurus(thesaurusId);
-        candidatMessageRepository.deleteAllByIdThesaurus(thesaurusId);
-        conceptCandidatRepository.deleteAllByIdThesaurus(thesaurusId);
-        conceptTermCandidatRepository.deleteAllByIdThesaurus(thesaurusId);
-        termCandidatRepository.deleteAllByIdThesaurus(thesaurusId);
-    }
-
-    private void deleteAllConcepts(String thesaurusId) {
-        permutedRepository.deleteAllByIdThesaurus(thesaurusId);
-        conceptReplacedByRepository.deleteAllByIdThesaurus(thesaurusId);
-        corpusLinkRepository.deleteAllByIdThesaurus(thesaurusId);
-        conceptDcTermRepository.deleteAllByIdThesaurus(thesaurusId);
-        conceptHistoriqueRepository.deleteAllByIdThesaurus(thesaurusId);
-        conceptTypeRepository.deleteAllByIdThesaurus(thesaurusId);
-        conceptFacetRepository.deleteAllByIdThesaurus(thesaurusId);
-        try {
-            conceptGroupHistoriqueRepository.deleteAllByIdThesaurus(thesaurusId);
-            conceptGroupLabelHistoriqueRepository.deleteAllByIdThesaurus(thesaurusId);
-            conceptGroupConceptRepository.deleteAllByIdThesaurus(thesaurusId);
-            conceptRepository.deleteAllByIdThesaurus(thesaurusId);
-        } catch (Exception ex) {
-            log.error(ex.getMessage());
-        }
     }
 
     private void updateTermsThesaurusId(String newIdThesaurus, String oldIdThesaurus) {

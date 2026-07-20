@@ -115,8 +115,12 @@ public class ConceptFullAssembler {
         concept.setNotation(stringAt(core, 5));
         concept.setCreated(formatDate(core[6]));
         concept.setModified(formatDate(core[7]));
-        concept.setCreatorName(conceptFullQueryRepository.findCreator(conceptId, thesaurusId).orElse(null));
-        concept.setContributorName(nullIfEmpty(conceptFullQueryRepository.findContributors(conceptId, thesaurusId)));
+        concept.setCreatorName(preferences != null && preferences.displayUserName()
+                ? conceptFullQueryRepository.findCreator(conceptId, thesaurusId).orElse(null)
+                : null);
+        concept.setContributorName(preferences != null && preferences.displayUserName()
+                ? nullIfEmpty(conceptFullQueryRepository.findContributors(conceptId, thesaurusId))
+                : null);
 
         concept.setPrefLabel(mapPreferredLabel(conceptId, thesaurusId, lang));
         concept.setAltLabels(mapAltLabels(conceptId, thesaurusId, lang, false));
@@ -126,17 +130,15 @@ public class ConceptFullAssembler {
         concept.setHiddenLabelTraduction(mapAltTranslations(conceptId, thesaurusId, lang, true));
 
         mapNotes(concept, conceptId, thesaurusId);
-        concept.setBroaders(mapHierarchicalRelations(
-                conceptFullQueryRepository.findBroaderRelations(conceptId, thesaurusId, includePrivateGroups),
+        concept.setBroaders(mapNarrowerRelations(
+                conceptFullQueryRepository.findBroaderRelations(conceptId, thesaurusId, lang, includePrivateGroups),
                 thesaurusId,
-                lang,
                 preferences,
                 applicationBaseUrl
         ));
-        concept.setRelateds(mapHierarchicalRelations(
-                conceptFullQueryRepository.findRelatedRelations(conceptId, thesaurusId),
+        concept.setRelateds(mapNarrowerRelations(
+                conceptFullQueryRepository.findRelatedRelations(conceptId, thesaurusId, lang),
                 thesaurusId,
-                lang,
                 preferences,
                 applicationBaseUrl
         ));
@@ -159,16 +161,14 @@ public class ConceptFullAssembler {
         concept.setMembres(mapGroupMemberships(conceptId, thesaurusId, lang, preferences, applicationBaseUrl));
         concept.setImages(mapImages(conceptId, thesaurusId));
         concept.setReplaces(mapReplacementRelations(
-                conceptFullQueryRepository.findReplaces(conceptId, thesaurusId),
+                conceptFullQueryRepository.findReplaces(conceptId, thesaurusId, lang),
                 thesaurusId,
-                lang,
                 preferences,
                 applicationBaseUrl
         ));
         concept.setReplacedBy(mapReplacementRelations(
-                conceptFullQueryRepository.findReplacedBy(conceptId, thesaurusId),
+                conceptFullQueryRepository.findReplacedBy(conceptId, thesaurusId, lang),
                 thesaurusId,
-                lang,
                 preferences,
                 applicationBaseUrl
         ));
@@ -274,25 +274,6 @@ public class ConceptFullAssembler {
         );
     }
 
-    private List<ConceptHierarchicalRelation> mapHierarchicalRelations(
-            List<Object[]> rows,
-            String thesaurusId,
-            String lang,
-            ThesaurusPreferences preferences,
-            String applicationBaseUrl
-    ) {
-        if (rows.isEmpty()) {
-            return null;
-        }
-        Set<ConceptHierarchicalRelation> relations = new LinkedHashSet<>();
-        for (Object[] row : rows) {
-            relations.add(toHierarchicalRelation(row, thesaurusId, lang, preferences, applicationBaseUrl));
-        }
-        List<ConceptHierarchicalRelation> sorted = new ArrayList<>(relations);
-        Collections.sort(sorted);
-        return sorted;
-    }
-
     private List<ConceptHierarchicalRelation> mapNarrowerRelations(
             List<Object[]> rows,
             String thesaurusId,
@@ -325,37 +306,9 @@ public class ConceptFullAssembler {
         return sorted;
     }
 
-    private ConceptHierarchicalRelation toHierarchicalRelation(
-            Object[] row,
-            String thesaurusId,
-            String lang,
-            ThesaurusPreferences preferences,
-            String applicationBaseUrl
-    ) {
-        String relatedConceptId = stringAt(row, 0);
-        String label = conceptFullQueryRepository
-                .findConceptPreferredLabel(relatedConceptId, thesaurusId, lang)
-                .orElse("");
-        return new ConceptHierarchicalRelation(
-                ConceptUriBuilder.buildConceptUri(
-                        preferences,
-                        applicationBaseUrl,
-                        relatedConceptId,
-                        thesaurusId,
-                        stringAt(row, 2),
-                        stringAt(row, 3),
-                        stringAt(row, 4)
-                ),
-                relatedConceptId,
-                label,
-                stringAt(row, 1)
-        );
-    }
-
     private List<ConceptUriLabel> mapReplacementRelations(
             List<Object[]> rows,
             String thesaurusId,
-            String lang,
             ThesaurusPreferences preferences,
             String applicationBaseUrl
     ) {
@@ -365,9 +318,6 @@ public class ConceptFullAssembler {
         List<ConceptUriLabel> items = new ArrayList<>();
         for (Object[] row : rows) {
             String relatedConceptId = stringAt(row, 0);
-            String label = conceptFullQueryRepository
-                    .findConceptPreferredLabel(relatedConceptId, thesaurusId, lang)
-                    .orElse("");
             items.add(new ConceptUriLabel(
                     ConceptUriBuilder.buildConceptUri(
                             preferences,
@@ -379,7 +329,7 @@ public class ConceptFullAssembler {
                             stringAt(row, 3)
                     ),
                     relatedConceptId,
-                    label
+                    stringAt(row, 4)
             ));
         }
         Collections.sort(items);
@@ -437,9 +387,8 @@ public class ConceptFullAssembler {
             String applicationBaseUrl
     ) {
         List<ConceptUriLabel> members = new ArrayList<>();
-        for (Object[] row : conceptFullQueryRepository.findGroupMemberships(conceptId, thesaurusId)) {
+        for (Object[] row : conceptFullQueryRepository.findGroupMemberships(conceptId, thesaurusId, lang)) {
             String groupId = stringAt(row, 0);
-            String label = conceptFullQueryRepository.findGroupLabel(groupId, thesaurusId, lang).orElse("");
             members.add(new ConceptUriLabel(
                     ConceptUriBuilder.buildGroupUri(
                             preferences,
@@ -450,7 +399,7 @@ public class ConceptFullAssembler {
                             stringAt(row, 2)
                     ),
                     groupId,
-                    label
+                    stringAt(row, 4)
             ));
         }
         if (members.isEmpty()) {
@@ -477,9 +426,9 @@ public class ConceptFullAssembler {
 
     private List<ConceptUriLabel> mapFacets(String conceptId, String thesaurusId, String lang) {
         List<ConceptUriLabel> facets = new ArrayList<>();
-        for (String facetId : conceptFullQueryRepository.findFacets(conceptId, thesaurusId)) {
-            String label = conceptFullQueryRepository.findFacetLabel(facetId, thesaurusId, lang).orElse("");
-            facets.add(new ConceptUriLabel(facetId, facetId, label));
+        for (Object[] row : conceptFullQueryRepository.findFacets(conceptId, thesaurusId, lang)) {
+            String facetId = stringAt(row, 0);
+            facets.add(new ConceptUriLabel(facetId, facetId, stringAt(row, 1)));
         }
         if (facets.isEmpty()) {
             return null;

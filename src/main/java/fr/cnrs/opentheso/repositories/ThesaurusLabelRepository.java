@@ -15,6 +15,8 @@ public interface ThesaurusLabelRepository extends JpaRepository<ThesaurusLabel, 
 
     Optional<ThesaurusLabel> findByIdThesaurusAndLang(String idThesaurus, String lang);
 
+    List<ThesaurusLabel> findByIdThesaurus(String idThesaurus);
+
     @Modifying
     @Transactional
     void deleteByIdThesaurusAndLang(String idThesaurus, String lang);

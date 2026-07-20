@@ -25,4 +25,9 @@ public interface ConceptNavigationSupport {
     void openThesaurusHome();
 
     void afterConceptDeleted(String fallbackConceptId);
+
+    /**
+     * Recharge arbres et panneau droit après un changement de langue de consultation.
+     */
+    void reloadAfterLanguageChange();
 }

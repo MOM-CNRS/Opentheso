@@ -60,7 +60,6 @@ class StatisticsBeanTest {
         language.setCode("fr");
         language.setValue("français");
         when(thesaurusStatisticsService.loadLanguages("TH1", "fr")).thenReturn(List.of(language));
-        when(thesaurusStatisticsService.loadCollections("TH1", "fr")).thenReturn(List.of());
 
         bean.load();
 
@@ -72,16 +71,29 @@ class StatisticsBeanTest {
     }
 
     @Test
-    void initOnModeChange_reloadsReferenceData() {
+    void initOnModeChange_reloadsLanguagesWithoutCollectionsInGeneralMode() {
         stubAccess();
         when(thesaurusContext.resolveWorkLanguage()).thenReturn("fr");
         when(thesaurusStatisticsService.loadLanguages("TH1", "fr")).thenReturn(List.of());
-        when(thesaurusStatisticsService.loadCollections("TH1", "fr")).thenReturn(List.of());
+        bean.setSelectedStatistiqueTypeCode("0");
 
         bean.initOnModeChange();
 
         assertEquals("fr", bean.getSelectedLanguage());
         verify(thesaurusStatisticsService).loadLanguages("TH1", "fr");
+        verify(thesaurusStatisticsService, never()).loadCollections(anyString(), anyString());
+    }
+
+    @Test
+    void initOnModeChange_loadsCollectionsInConceptMode() {
+        stubAccess();
+        when(thesaurusContext.resolveWorkLanguage()).thenReturn("fr");
+        when(thesaurusStatisticsService.loadLanguages("TH1", "fr")).thenReturn(List.of());
+        when(thesaurusStatisticsService.loadCollections("TH1", "fr")).thenReturn(List.of());
+        bean.setSelectedStatistiqueTypeCode("1");
+
+        bean.initOnModeChange();
+
         verify(thesaurusStatisticsService).loadCollections("TH1", "fr");
     }
 

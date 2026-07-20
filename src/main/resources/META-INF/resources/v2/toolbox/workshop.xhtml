@@ -52,13 +52,13 @@
                             </h:panelGroup>
                         </div>
                     </div>
-                    <ui:include src="workshop/import-dialogs.xhtml"/>
                     <input type="hidden" name="csrfToken" value="${sessionScope.CSRF_TOKEN}"/>
                 </h:form>
+                <ui:include src="workshop/import-dialogs.xhtml"/>
                 <ui:include src="../thesaurus/includes/layout/footer.xhtml"/>
                 <ui:include src="../thesaurus/includes/layout/logout-dialog.xhtml"/>
-            <ui:include src="../thesaurus/includes/layout/login-dialog.xhtml"/>
-            <ui:include src="../thesaurus/includes/layout/forget-password-dialog.xhtml"/>
+                <ui:include src="../thesaurus/includes/layout/login-dialog.xhtml"/>
+                <ui:include src="../thesaurus/includes/layout/forget-password-dialog.xhtml"/>
             </div>
         </h:panelGroup>
     </h:body>

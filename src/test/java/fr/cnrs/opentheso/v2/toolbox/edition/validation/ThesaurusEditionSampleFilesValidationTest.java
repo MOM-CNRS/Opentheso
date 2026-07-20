@@ -30,7 +30,7 @@ class ThesaurusEditionSampleFilesValidationTest {
     @Test
     void sampleFlatCsv_parsesSuccessfully() throws IOException {
         byte[] content = readSample("samples/sampleCSV.csv");
-        var persistence = new ThesaurusEditionCsvImportPersistence(mock(), mock());
+        var persistence = new ThesaurusEditionCsvImportPersistence(mock(), mock(), mock());
 
         var result = persistence.parse(content, ',');
 
@@ -42,7 +42,7 @@ class ThesaurusEditionSampleFilesValidationTest {
     @Test
     void sampleFlatCsvWithCollections_parsesSuccessfully() throws IOException {
         byte[] content = readSample("samples/sampleCSV_avecCollections.csv");
-        var persistence = new ThesaurusEditionCsvImportPersistence(mock(), mock());
+        var persistence = new ThesaurusEditionCsvImportPersistence(mock(), mock(), mock());
 
         var result = persistence.parse(content, ',');
 
@@ -53,7 +53,7 @@ class ThesaurusEditionSampleFilesValidationTest {
     @Test
     void sampleStructuredCsv_parsesSuccessfully() throws IOException {
         byte[] content = readSample("samples/theso/structuredList.csv");
-        var persistence = new ThesaurusEditionCsvStructuredImportPersistence(mock(), mock(), mock());
+        var persistence = new ThesaurusEditionCsvStructuredImportPersistence(mock(), mock(), mock(), mock());
 
         var result = persistence.parse(content, '\t');
 

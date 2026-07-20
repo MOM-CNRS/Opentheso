@@ -22,7 +22,10 @@ public class ThesaurusMaintenanceService {
 
     @Transactional(readOnly = true)
     public LocalArkSettings loadLocalArkSettings(String thesaurusId) {
-        ThesaurusPreferences preferences = thesaurusPreferenceService.loadPreferences(thesaurusId, workLanguage);
+        ThesaurusPreferences preferences = thesaurusPreferenceService.loadPreferencesOrNull(thesaurusId, workLanguage);
+        if (preferences == null) {
+            return new LocalArkSettings("", "", 0);
+        }
         return new LocalArkSettings(
                 preferences.naanArkLocal(),
                 preferences.prefixArkLocal(),
@@ -41,13 +44,14 @@ public class ThesaurusMaintenanceService {
     }
 
     @Transactional
-    public void reorganizeConceptsAndCollections(String thesaurusId) {
-        thesaurusMaintenancePersistence.reorganizeConceptsAndCollections(thesaurusId);
+    public int reorganizeConceptsAndCollections(String thesaurusId) {
+        return thesaurusMaintenancePersistence.reorganizeConceptsAndCollections(thesaurusId);
     }
 
     @Transactional
     public void switchRolesFromTermToConcept(String thesaurusId) {
-        thesaurusMaintenancePersistence.switchRolesFromTermToConcept(thesaurusId, workLanguage);
+        String lang = resolveWorkLanguage(thesaurusId);
+        thesaurusMaintenancePersistence.switchRolesFromTermToConcept(thesaurusId, lang);
     }
 
     @Transactional
@@ -68,5 +72,13 @@ public class ThesaurusMaintenanceService {
     @Transactional
     public void generateSitemap(String thesaurusId) {
         thesaurusMaintenancePersistence.generateSitemap(thesaurusId);
+    }
+
+    private String resolveWorkLanguage(String thesaurusId) {
+        ThesaurusPreferences preferences = thesaurusPreferenceService.loadPreferencesOrNull(thesaurusId, workLanguage);
+        if (preferences != null && StringUtils.isNotBlank(preferences.sourceLang())) {
+            return preferences.sourceLang();
+        }
+        return workLanguage;
     }
 }

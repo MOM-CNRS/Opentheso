@@ -1,11 +1,11 @@
 package fr.cnrs.opentheso.v2.toolbox.edition.service;
 
-import fr.cnrs.opentheso.entites.Preferences;
 import fr.cnrs.opentheso.models.skosapi.SKOSLabel;
 import fr.cnrs.opentheso.models.skosapi.SKOSProperty;
 import fr.cnrs.opentheso.models.skosapi.SKOSResource;
 import fr.cnrs.opentheso.models.skosapi.SKOSXmlDocument;
 import fr.cnrs.opentheso.v2.toolbox.edition.io.skos.ThesaurusEditionSkosImportEngine;
+import fr.cnrs.opentheso.v2.toolbox.edition.support.ThesaurusImportBatchSupport;
 import fr.cnrs.opentheso.v2.toolbox.model.NewThesaurusFormOptions;
 import fr.cnrs.opentheso.v2.toolbox.model.ProjectOption;
 import fr.cnrs.opentheso.v2.toolbox.service.NewThesaurusService;
@@ -17,6 +17,8 @@ import org.mockito.junit.jupiter.MockitoExtension;
 
 import java.util.ArrayList;
 import java.util.List;
+import java.util.function.BiConsumer;
+import java.util.function.Supplier;
 
 import static org.junit.jupiter.api.Assertions.assertEquals;
 import static org.junit.jupiter.api.Assertions.assertThrows;
@@ -37,7 +39,11 @@ class ThesaurusEditionSkosImportServiceTest {
 
     @BeforeEach
     void setUp() {
-        service = new ThesaurusEditionSkosImportService(thesaurusEditionSkosImportEngine, newThesaurusService);
+        service = new ThesaurusEditionSkosImportService(
+                thesaurusEditionSkosImportEngine,
+                newThesaurusService,
+                new SyncImportBatchSupport()
+        );
     }
 
     @Test
@@ -103,5 +109,39 @@ class ThesaurusEditionSkosImportServiceTest {
         concept.getLabelsList().add(new SKOSLabel("Chat", "fr", SKOSProperty.PREF_LABEL));
         document.setConceptList(new ArrayList<>(List.of(concept)));
         return document;
+    }
+
+    /**
+     * Exécute les callbacks immédiatement, sans transaction Spring ni EntityManager.
+     */
+    private static final class SyncImportBatchSupport extends ThesaurusImportBatchSupport {
+
+        private SyncImportBatchSupport() {
+            super(null);
+        }
+
+        @Override
+        public <T> T inTransaction(Supplier<T> work) {
+            return work.get();
+        }
+
+        @Override
+        public void inTransaction(Runnable work) {
+            work.run();
+        }
+
+        @Override
+        public <T> int forEachBatched(List<T> items, BiConsumer<List<T>, Integer> batchConsumer) {
+            if (items == null || items.isEmpty()) {
+                return 0;
+            }
+            batchConsumer.accept(items, items.size());
+            return items.size();
+        }
+
+        @Override
+        public void flushAndClear() {
+            // no-op in unit tests
+        }
     }
 }

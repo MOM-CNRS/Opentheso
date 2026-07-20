@@ -1,6 +1,7 @@
 package fr.cnrs.opentheso.v2.toolbox.persistence;
 
 import fr.cnrs.opentheso.entites.Concept;
+import fr.cnrs.opentheso.entites.ConceptGroupConcept;
 import fr.cnrs.opentheso.entites.HierarchicalRelationship;
 import fr.cnrs.opentheso.entites.Preferences;
 import fr.cnrs.opentheso.repositories.ConceptGroupConceptRepository;
@@ -30,11 +31,11 @@ import java.net.URI;
 import java.nio.charset.StandardCharsets;
 import java.util.ArrayList;
 import java.util.Date;
-import java.util.HashSet;
 import java.util.LinkedHashSet;
 import java.util.List;
 import java.util.Objects;
 import java.util.Set;
+import java.util.stream.Collectors;
 
 @Slf4j
 @Component
@@ -59,42 +60,35 @@ public class ThesaurusMaintenancePersistence {
     }
 
     @Transactional
-    public void reorganizeHierarchy(String thesaurusId) {
+    public boolean reorganizeHierarchy(String thesaurusId) {
         if (StringUtils.isEmpty(thesaurusId)) {
-            return;
+            return false;
         }
         if (!cleanThesaurus(thesaurusId)) {
-            MessageUtils.showErrorMessage("Erreur pendant la suppression des espaces et des null");
-            return;
+            throw new IllegalStateException("Erreur pendant la suppression des espaces et des null");
         }
         if (!reorganizingTopTermInThesaurus(thesaurusId)) {
-            MessageUtils.showErrorMessage("Erreur pendant la correction des TT");
-            return;
+            throw new IllegalStateException("Erreur pendant la correction des TT");
         }
         if (!reorganizingThesaurus(thesaurusId)) {
-            MessageUtils.showErrorMessage("Erreur pendant la correction des NT BT");
-            return;
+            throw new IllegalStateException("Erreur pendant la correction des NT BT");
         }
         if (!removeTopTermForConceptWithBT(thesaurusId)) {
-            MessageUtils.showErrorMessage("Erreur pendant la suppression des BT pour les topTermes");
-            return;
+            throw new IllegalStateException("Erreur pendant la suppression des BT pour les topTermes");
         }
         if (!removeSameRelations(thesaurusId)) {
-            MessageUtils.showErrorMessage("Erreur pendant la suppression des relations en boucle");
+            throw new IllegalStateException("Erreur pendant la suppression des relations en boucle");
         }
+        return true;
     }
 
     @Transactional
-    public void reorganizeConceptsAndCollections(String thesaurusId) {
-        if (!deleteConceptsWithEmptyRelation(thesaurusId)) {
-            MessageUtils.showErrorMessage("Erreur pendant la suppression des relations vides");
-        }
-        if (!deleteConceptsHavingRelationShipWithDeletedGroup(thesaurusId)) {
-            MessageUtils.showErrorMessage("Erreur pendant la suppression des relations interdites");
-        }
-        if (!deleteConceptsHavingRelationShipWithDeletedConcept(thesaurusId)) {
-            MessageUtils.showErrorMessage("Erreur pendant la suppression des relations interdites");
-        }
+    public int reorganizeConceptsAndCollections(String thesaurusId) {
+        int cleaned = 0;
+        cleaned += deleteConceptsWithEmptyRelation(thesaurusId);
+        cleaned += deleteConceptsHavingRelationShipWithDeletedGroup(thesaurusId);
+        cleaned += deleteConceptsHavingRelationShipWithDeletedConcept(thesaurusId);
+        return cleaned;
     }
 
     @Transactional
@@ -110,32 +104,43 @@ public class ThesaurusMaintenancePersistence {
             }
             var term = termRepository.findByIdTermAndIdThesaurusAndLang(
                     preferredTerm.getIdTerm(), thesaurusId, workLanguage).orElse(null);
-            if (concept.getCreator() != null && concept.getCreator() > 0 && term != null
-                    && term.getCreator() != null && term.getCreator() > 0) {
-                concept.setContributor(term.getCreator());
+            if (term == null) {
+                continue;
             }
-            if (concept.getContributor() != null && concept.getContributor() > 0 && term != null
-                    && term.getContributor() != null && term.getContributor() > 0) {
+            boolean changed = false;
+            if (term.getCreator() != null && term.getCreator() > 0) {
+                concept.setCreator(term.getCreator());
+                changed = true;
+            }
+            if (term.getContributor() != null && term.getContributor() > 0) {
                 concept.setContributor(term.getContributor());
+                changed = true;
             }
-            conceptRepository.save(concept);
+            if (changed) {
+                conceptRepository.save(concept);
+            }
         }
     }
 
     public int generateArkFromConceptId(String thesaurusId, String prefix, String naan, boolean overwrite) {
         int count = 0;
+        if (StringUtils.isBlank(naan)) {
+            MessageUtils.showErrorMessage("Le NAAN est obligatoire");
+            return count;
+        }
         Preferences preference = toolboxPreferencePersistence.findPreferences(thesaurusId);
-        if (preference == null || StringUtils.isEmpty(preference.getNaanArkLocal())) {
+        if (preference == null) {
             MessageUtils.showErrorMessage("Pas de paramètres !! ");
             return count;
         }
+        String safePrefix = StringUtils.trimToEmpty(prefix);
         for (String conceptId : loadAllConceptIds(thesaurusId)) {
             var concept = conceptRepository.findByIdConceptAndIdThesaurus(conceptId, thesaurusId).orElse(null);
             if (concept == null) {
                 continue;
             }
             if (overwrite || StringUtils.isEmpty(concept.getIdArk())) {
-                conceptRepository.setIdArk(naan + "/" + prefix + conceptId, new Date(), conceptId, thesaurusId);
+                conceptRepository.setIdArk(naan.trim() + "/" + safePrefix + conceptId, new Date(), conceptId, thesaurusId);
                 count++;
             }
         }
@@ -217,7 +222,11 @@ public class ThesaurusMaintenancePersistence {
     private boolean removeSameRelations(String idTheso) {
         return removeSameRelations("BT", idTheso)
                 && removeSameRelations("NT", idTheso)
-                && removeSameRelations("RT", idTheso);
+                && removeSameRelations("RT", idTheso)
+                && removeSameRelations("BTG", idTheso)
+                && removeSameRelations("NTG", idTheso)
+                && removeSameRelations("BTP", idTheso)
+                && removeSameRelations("NTP", idTheso);
     }
 
     private boolean removeSameRelations(String role, String thesaurusId) {
@@ -231,66 +240,115 @@ public class ThesaurusMaintenancePersistence {
         return true;
     }
 
+    /**
+     * Complete missing BT/NT pairs and promote orphans to top concepts.
+     * Handles specialized roles (BTG/NTG, BTP/NTP) as well as BT/NT.
+     */
     @Transactional
     public boolean reorganizingThesaurus(String thesaurusId) {
         for (String idConcept : loadAllConceptIds(thesaurusId)) {
-            var idBT = loadBtIds(idConcept, thesaurusId);
-            var idConcept1WhereIsNT = loadNtParentIds(idConcept, thesaurusId);
-            if (idBT.isEmpty() && idConcept1WhereIsNT.isEmpty()) {
+            List<HierarchicalRelationship> btRelations = loadBtRelations(idConcept, thesaurusId);
+            List<HierarchicalRelationship> ntParentRelations = loadNtParentRelations(idConcept, thesaurusId);
+
+            if (btRelations.isEmpty() && ntParentRelations.isEmpty()) {
                 if (!isTopConcept(idConcept, thesaurusId)) {
                     conceptRepository.setTopConceptTag(true, idConcept, thesaurusId);
                 }
-            } else {
-                if (!(new HashSet<>(idBT).containsAll(idConcept1WhereIsNT))) {
-                    ArrayList<String> btMiss = new ArrayList<>(idConcept1WhereIsNT);
-                    btMiss.removeAll(idBT);
-                    for (String miss : btMiss) {
-                        saveRelation(idConcept, thesaurusId, "BT", miss);
-                    }
+                continue;
+            }
+
+            Set<String> existingBtKeys = btRelations.stream()
+                    .map(rel -> relationKey(rel.getIdConcept2(), rel.getRole()))
+                    .collect(Collectors.toSet());
+            Set<String> existingNtParentKeys = ntParentRelations.stream()
+                    .map(rel -> relationKey(rel.getIdConcept1(), rel.getRole()))
+                    .collect(Collectors.toSet());
+
+            for (HierarchicalRelationship ntParent : ntParentRelations) {
+                String expectedBtRole = inverseHierarchicalRole(ntParent.getRole());
+                if (expectedBtRole == null) {
+                    continue;
                 }
-                if (!(new HashSet<>(idConcept1WhereIsNT).containsAll(idBT))) {
-                    ArrayList<String> ntMiss = new ArrayList<>(idBT);
-                    ntMiss.removeAll(idConcept1WhereIsNT);
-                    for (String miss : ntMiss) {
-                        saveRelation(miss, thesaurusId, "NT", idConcept);
-                    }
+                String key = relationKey(ntParent.getIdConcept1(), expectedBtRole);
+                if (!existingBtKeys.contains(key)) {
+                    saveRelationIfAbsent(idConcept, thesaurusId, expectedBtRole, ntParent.getIdConcept1());
+                    existingBtKeys.add(key);
+                }
+            }
+
+            for (HierarchicalRelationship bt : btRelations) {
+                String expectedNtRole = inverseHierarchicalRole(bt.getRole());
+                if (expectedNtRole == null) {
+                    continue;
+                }
+                String key = relationKey(bt.getIdConcept2(), expectedNtRole);
+                if (!existingNtParentKeys.contains(key)) {
+                    saveRelationIfAbsent(bt.getIdConcept2(), thesaurusId, expectedNtRole, idConcept);
+                    existingNtParentKeys.add(key);
                 }
             }
         }
         return true;
     }
 
-    private boolean deleteConceptsWithEmptyRelation(String thesaurusId) {
-        conceptGroupConceptRepository.deleteAllByIdThesaurusAndIdGroup(thesaurusId, "");
-        return true;
+    private int deleteConceptsWithEmptyRelation(String thesaurusId) {
+        try {
+            List<ConceptGroupConcept> emptyLinks = conceptGroupConceptRepository
+                    .findByIdGroupAndIdThesaurus("", thesaurusId);
+            if (CollectionUtils.isEmpty(emptyLinks)) {
+                // also remove blank-only ids if any were stored as whitespace-only via native cleanup
+                conceptGroupConceptRepository.deleteAllByIdThesaurusAndIdGroup(thesaurusId, "");
+                return 0;
+            }
+            int count = emptyLinks.size();
+            conceptGroupConceptRepository.deleteAllByIdThesaurusAndIdGroup(thesaurusId, "");
+            return count;
+        } catch (Exception e) {
+            log.error("Error while deleting empty group relations for thesaurus: {}", thesaurusId, e);
+            throw new IllegalStateException("Erreur pendant la suppression des relations vides", e);
+        }
     }
 
-    private boolean deleteConceptsHavingRelationShipWithDeletedGroup(String thesaurusId) {
+    private int deleteConceptsHavingRelationShipWithDeletedGroup(String thesaurusId) {
         try {
-            var orphanLinks = conceptGroupConceptRepository.findGroupConceptLinksWithMissingConcepts(thesaurusId);
-            for (Object[] row : orphanLinks) {
-                String idGroup = (String) row[0];
+            var missingGroupIds = conceptGroupConceptRepository.findGroupIdsMissingFromConceptGroup(thesaurusId);
+            int cleaned = 0;
+            for (String idGroup : missingGroupIds) {
+                if (StringUtils.isBlank(idGroup)) {
+                    continue;
+                }
+                List<ConceptGroupConcept> links = conceptGroupConceptRepository
+                        .findByIdGroupAndIdThesaurus(idGroup, thesaurusId);
+                cleaned += links.size();
                 removeAllConceptsFromGroup(idGroup, thesaurusId);
             }
-            return true;
+            return cleaned;
         } catch (Exception e) {
             log.error("Error while deleting invalid group-concept relations for thesaurus: {}", thesaurusId, e);
-            return false;
+            throw new IllegalStateException(
+                    "Erreur pendant la suppression des relations vers collections absentes", e);
         }
     }
 
-    private boolean deleteConceptsHavingRelationShipWithDeletedConcept(String thesaurusId) {
+    private int deleteConceptsHavingRelationShipWithDeletedConcept(String thesaurusId) {
         try {
             var orphanLinks = conceptGroupConceptRepository.findGroupConceptLinksWithMissingConcepts(thesaurusId);
+            int cleaned = 0;
             for (Object[] row : orphanLinks) {
-                String idGroup = (String) row[0];
-                String idConcept = (String) row[1];
-                conceptGroupConceptRepository.deleteByIdGroupAndIdConceptAndIdThesaurus(idGroup, idConcept, thesaurusId);
+                String idGroup = row[0] != null ? row[0].toString() : null;
+                String idConcept = row[1] != null ? row[1].toString() : null;
+                if (StringUtils.isAnyBlank(idGroup, idConcept)) {
+                    continue;
+                }
+                conceptGroupConceptRepository.deleteByIdGroupAndIdConceptAndIdThesaurus(
+                        idGroup, idConcept, thesaurusId);
+                cleaned++;
             }
-            return true;
+            return cleaned;
         } catch (Exception e) {
             log.error("Error while deleting invalid group-concept relations for thesaurus: {}", thesaurusId, e);
-            return false;
+            throw new IllegalStateException(
+                    "Erreur pendant la suppression des relations vers concepts absents", e);
         }
     }
 
@@ -319,23 +377,17 @@ public class ThesaurusMaintenancePersistence {
     }
 
     private boolean hasRelationBt(String conceptId, String thesaurusId) {
-        return CollectionUtils.isNotEmpty(
-                hierarchicalRelationshipRepository.findAllByIdThesaurusAndIdConcept1AndRoleLike(
-                        thesaurusId, conceptId, "BT"));
+        return CollectionUtils.isNotEmpty(loadBtRelations(conceptId, thesaurusId));
     }
 
-    private List<String> loadBtIds(String conceptId, String thesaurusId) {
-        return hierarchicalRelationshipRepository.findAllByIdThesaurusAndIdConcept1AndRoleLike(thesaurusId, conceptId, "BT")
-                .stream()
-                .map(HierarchicalRelationship::getIdConcept2)
-                .toList();
+    private List<HierarchicalRelationship> loadBtRelations(String conceptId, String thesaurusId) {
+        return hierarchicalRelationshipRepository.findAllByIdThesaurusAndIdConcept1AndRoleLike(
+                thesaurusId, conceptId, "BT%");
     }
 
-    private List<String> loadNtParentIds(String conceptId, String thesaurusId) {
-        return hierarchicalRelationshipRepository.findAllByIdThesaurusAndIdConcept2AndRoleLike(thesaurusId, conceptId, "NT")
-                .stream()
-                .map(HierarchicalRelationship::getIdConcept1)
-                .toList();
+    private List<HierarchicalRelationship> loadNtParentRelations(String conceptId, String thesaurusId) {
+        return hierarchicalRelationshipRepository.findAllByIdThesaurusAndIdConcept2AndRoleLike(
+                thesaurusId, conceptId, "NT%");
     }
 
     private boolean isTopConcept(String conceptId, String thesaurusId) {
@@ -344,13 +396,47 @@ public class ThesaurusMaintenancePersistence {
                 .orElse(false);
     }
 
-    private void saveRelation(String concept1, String thesaurusId, String role, String concept2) {
+    private void saveRelationIfAbsent(String concept1, String thesaurusId, String role, String concept2) {
+        if (StringUtils.isAnyBlank(concept1, thesaurusId, role, concept2)) {
+            return;
+        }
+        if (hierarchicalRelationshipRepository.existsByIdThesaurusAndIdConcept1AndIdConcept2AndRole(
+                thesaurusId, concept1, concept2, role)) {
+            return;
+        }
         hierarchicalRelationshipRepository.save(HierarchicalRelationship.builder()
                 .idConcept1(concept1)
                 .idConcept2(concept2)
                 .idThesaurus(thesaurusId)
                 .role(role)
                 .build());
+    }
+
+    private static String inverseHierarchicalRole(String role) {
+        if (StringUtils.isBlank(role)) {
+            return null;
+        }
+        return switch (role) {
+            case "BT" -> "NT";
+            case "NT" -> "BT";
+            case "BTG" -> "NTG";
+            case "NTG" -> "BTG";
+            case "BTP" -> "NTP";
+            case "NTP" -> "BTP";
+            default -> {
+                if (role.startsWith("BT")) {
+                    yield "NT" + role.substring(2);
+                }
+                if (role.startsWith("NT")) {
+                    yield "BT" + role.substring(2);
+                }
+                yield null;
+            }
+        };
+    }
+
+    private static String relationKey(String otherConceptId, String role) {
+        return otherConceptId + "|" + role;
     }
 
     private String getDatas(List<String> conceptIds, String thesaurusId) {

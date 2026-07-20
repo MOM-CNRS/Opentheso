@@ -38,7 +38,7 @@ public class ConsultationCatalogQueryRepository {
         String sql = """
                 SELECT
                     t.id_thesaurus,
-                    COALESCE(tl_sub.title, t.id_thesaurus) AS thesaurus_title,
+                    COALESCE(tl_sub.title, NULLIF(p.preferredname, t.id_thesaurus), t.id_thesaurus) AS thesaurus_title,
                     COALESCE(p.source_lang, :lang) AS default_lang
                 FROM thesaurus t
                 JOIN user_group_thesaurus ugt ON ugt.id_thesaurus = t.id_thesaurus
@@ -47,7 +47,14 @@ public class ConsultationCatalogQueryRepository {
                     SELECT tl.title
                     FROM thesaurus_label tl
                     WHERE tl.id_thesaurus = t.id_thesaurus
-                      AND tl.lang = COALESCE(p.source_lang, :lang)
+                      AND tl.title IS NOT NULL
+                      AND BTRIM(tl.title) <> ''
+                    ORDER BY
+                      CASE
+                        WHEN tl.lang = COALESCE(p.source_lang, :lang) THEN 0
+                        WHEN tl.lang = :lang THEN 1
+                        ELSE 2
+                      END
                     LIMIT 1
                 ) tl_sub ON true
                 WHERE COALESCE(t."private", false) = false
@@ -72,7 +79,7 @@ public class ConsultationCatalogQueryRepository {
         String sql = """
                 SELECT
                     ugt.id_thesaurus,
-                    COALESCE(tl_sub.title, ugt.id_thesaurus) AS thesaurus_title,
+                    COALESCE(tl_sub.title, NULLIF(p.preferredname, ugt.id_thesaurus), ugt.id_thesaurus) AS thesaurus_title,
                     COALESCE(p.source_lang, :lang) AS default_lang
                 FROM user_group_label ugl
                 JOIN user_group_thesaurus ugt ON ugt.id_group = ugl.id_group
@@ -82,7 +89,14 @@ public class ConsultationCatalogQueryRepository {
                     SELECT tl.title
                     FROM thesaurus_label tl
                     WHERE tl.id_thesaurus = ugt.id_thesaurus
-                      AND tl.lang = COALESCE(p.source_lang, :lang)
+                      AND tl.title IS NOT NULL
+                      AND BTRIM(tl.title) <> ''
+                    ORDER BY
+                      CASE
+                        WHEN tl.lang = COALESCE(p.source_lang, :lang) THEN 0
+                        WHEN tl.lang = :lang THEN 1
+                        ELSE 2
+                      END
                     LIMIT 1
                 ) tl_sub ON true
                 WHERE (:projectId < 0 OR ugl.id_group = :projectId)

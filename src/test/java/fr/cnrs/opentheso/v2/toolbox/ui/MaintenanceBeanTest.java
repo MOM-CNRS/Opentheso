@@ -65,9 +65,25 @@ class MaintenanceBeanTest {
         stubAccess();
         when(userSession.isSuperAdmin()).thenReturn(false);
 
-        bean.reorganizeConceptsAndCollections();
+        try (MockedStatic<MessageUtils> messages = mockStatic(MessageUtils.class)) {
+            bean.reorganizeConceptsAndCollections();
+            messages.verify(() -> MessageUtils.showWarnMessage("Action réservée aux super-administrateurs"));
+        }
 
         verify(thesaurusMaintenanceService, never()).reorganizeConceptsAndCollections("TH1");
+    }
+
+    @Test
+    void reorganizeConceptsAndCollections_reportsCleanedCountForSuperAdmin() {
+        stubAccess();
+        when(userSession.isSuperAdmin()).thenReturn(true);
+        when(thesaurusMaintenanceService.reorganizeConceptsAndCollections("TH1")).thenReturn(7);
+
+        try (MockedStatic<MessageUtils> messages = mockStatic(MessageUtils.class)) {
+            bean.reorganizeConceptsAndCollections();
+            messages.verify(() -> MessageUtils.showInformationMessage(
+                    "Correction réussie !!! Liens collection/concept nettoyés : 7"));
+        }
     }
 
     @Test

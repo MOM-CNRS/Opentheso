@@ -6,17 +6,18 @@ import fr.cnrs.opentheso.models.skosapi.SKOSXmlDocument;
 import fr.cnrs.opentheso.v2.concept.io.rdf.parser.ReadRdf4jDocument;
 import fr.cnrs.opentheso.v2.shared.io.SkosRdfFormatSupport;
 import fr.cnrs.opentheso.v2.toolbox.edition.io.skos.ThesaurusEditionSkosImportEngine;
+import fr.cnrs.opentheso.v2.toolbox.edition.support.ThesaurusImportBatchSupport;
 import fr.cnrs.opentheso.v2.toolbox.model.NewThesaurusFormOptions;
 import fr.cnrs.opentheso.v2.toolbox.service.NewThesaurusService;
 import lombok.RequiredArgsConstructor;
 import org.apache.commons.lang3.StringUtils;
 import org.springframework.stereotype.Service;
-import org.springframework.transaction.annotation.Transactional;
 
 import java.io.IOException;
 import java.io.InputStream;
 import java.sql.SQLException;
 import java.util.ArrayList;
+import java.util.List;
 
 @Service
 @RequiredArgsConstructor
@@ -24,6 +25,7 @@ public class ThesaurusEditionSkosImportService {
 
     private final ThesaurusEditionSkosImportEngine thesaurusEditionSkosImportEngine;
     private final NewThesaurusService newThesaurusService;
+    private final ThesaurusImportBatchSupport importBatchSupport;
 
     public SkosLoadResult loadSkosFile(
             InputStream inputStream,
@@ -45,7 +47,6 @@ public class ThesaurusEditionSkosImportService {
         );
     }
 
-    @Transactional
     public String importNewThesaurus(
             SKOSXmlDocument document,
             String formatDate,
@@ -105,36 +106,61 @@ public class ThesaurusEditionSkosImportService {
         thesaurusEditionSkosImportEngine.setNodePreference(preferences);
         thesaurusEditionSkosImportEngine.setRdf4jThesaurus(document);
 
-        String thesaurusId = thesaurusEditionSkosImportEngine.addThesaurus();
+        String thesaurusId;
+        try {
+            thesaurusId = importBatchSupport.inTransaction(() -> {
+                try {
+                    return thesaurusEditionSkosImportEngine.addThesaurus();
+                } catch (SQLException e) {
+                    throw new IllegalStateException(e);
+                }
+            });
+        } catch (IllegalStateException ex) {
+            if (ex.getCause() instanceof SQLException sqlException) {
+                throw sqlException;
+            }
+            throw ex;
+        }
         if (thesaurusId == null) {
             return null;
         }
 
         var concepts = document.getConceptList();
-        if (concepts != null) {
+        if (concepts != null && !concepts.isEmpty()) {
+            List<SKOSResource> withLabels = new ArrayList<>();
             for (SKOSResource resource : concepts) {
                 if (!resource.getLabelsList().isEmpty()) {
-                    thesaurusEditionSkosImportEngine.addConceptV2(resource, thesaurusId);
+                    withLabels.add(resource);
                 }
             }
+            String finalThesaurusId = thesaurusId;
+            importBatchSupport.forEachBatched(withLabels, (batch, ignored) -> {
+                for (SKOSResource resource : batch) {
+                    thesaurusEditionSkosImportEngine.addConceptV2(resource, finalThesaurusId);
+                }
+            });
         }
 
-        var facets = document.getFacetList();
-        if (facets != null) {
-            thesaurusEditionSkosImportEngine.addFacetsV2(new ArrayList<>(facets), thesaurusId);
-        }
+        String finalThesaurusId = thesaurusId;
+        importBatchSupport.inTransaction(() -> {
+            var facets = document.getFacetList();
+            if (facets != null) {
+                thesaurusEditionSkosImportEngine.addFacetsV2(new ArrayList<>(facets), finalThesaurusId);
+            }
 
-        var groups = document.getGroupList();
-        if (groups != null) {
-            thesaurusEditionSkosImportEngine.addGroups(new ArrayList<>(groups), thesaurusId);
-        }
+            var groups = document.getGroupList();
+            if (groups != null) {
+                thesaurusEditionSkosImportEngine.addGroups(new ArrayList<>(groups), finalThesaurusId);
+            }
 
-        thesaurusEditionSkosImportEngine.addLangsToThesaurus(thesaurusId);
+            thesaurusEditionSkosImportEngine.addLangsToThesaurus(finalThesaurusId);
 
-        var foafImages = document.getFoafImage();
-        if (foafImages != null) {
-            thesaurusEditionSkosImportEngine.addFoafImages(new ArrayList<>(foafImages), thesaurusId);
-        }
+            var foafImages = document.getFoafImage();
+            if (foafImages != null) {
+                thesaurusEditionSkosImportEngine.addFoafImages(new ArrayList<>(foafImages), finalThesaurusId);
+            }
+            importBatchSupport.flushAndClear();
+        });
 
         return thesaurusId;
     }

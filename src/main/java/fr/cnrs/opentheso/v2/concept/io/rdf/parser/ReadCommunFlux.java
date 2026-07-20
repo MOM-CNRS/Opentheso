@@ -119,7 +119,20 @@ public class ReadCommunFlux extends AbstractRDFHandler {
         // finalisation de l'objet lu suivant le type de l'objet et démarrage d'un nouvel objet
         if (isConceptScheme) {
             isConceptScheme = false;
-            skosXmlDocument.setTitle(subject.stringValue());
+            // Titre humain (dcterms:title / prefLabel), pas l'URI du ConceptScheme
+            String schemeTitle = null;
+            if (skosResource != null && skosResource.getThesaurus() != null
+                    && skosResource.getThesaurus().getTitle() != null
+                    && !skosResource.getThesaurus().getTitle().isBlank()) {
+                schemeTitle = skosResource.getThesaurus().getTitle().trim();
+            } else if (skosResource != null && skosResource.getLabelsList() != null
+                    && !skosResource.getLabelsList().isEmpty()
+                    && skosResource.getLabelsList().get(0).getLabel() != null) {
+                schemeTitle = skosResource.getLabelsList().get(0).getLabel().trim();
+            }
+            if (schemeTitle != null && !schemeTitle.isBlank()) {
+                skosXmlDocument.setTitle(schemeTitle);
+            }
             fileManager.addStructData(skosResource, skosXmlDocument, SKOSProperty.CONCEPT_SCHEME);
         } else if (isFacet) {
             isFacet = false;

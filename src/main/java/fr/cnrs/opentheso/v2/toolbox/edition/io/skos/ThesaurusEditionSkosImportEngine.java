@@ -8,6 +8,7 @@ import fr.cnrs.opentheso.entites.Note;
 import fr.cnrs.opentheso.entites.Preferences;
 import fr.cnrs.opentheso.entites.RelationGroup;
 import fr.cnrs.opentheso.entites.ThesaurusDcTerm;
+import fr.cnrs.opentheso.entites.ThesaurusLabel;
 import fr.cnrs.opentheso.entites.UserGroupThesaurus;
 import fr.cnrs.opentheso.models.group.ConceptGroupLabel;
 import fr.cnrs.opentheso.models.nodes.DcElement;
@@ -57,7 +58,9 @@ import java.text.SimpleDateFormat;
 import java.util.ArrayList;
 import java.util.Date;
 import java.util.HashMap;
+import java.util.HashSet;
 import java.util.List;
+import java.util.Set;
 import java.util.logging.Level;
 import java.util.logging.Logger;
 
@@ -88,15 +91,18 @@ public class ThesaurusEditionSkosImportEngine {
     private final NoteRepository noteRepository;
 
 
-    private List<String> idGroups = new ArrayList<>();
+    private final Set<String> idGroups = new HashSet<>();
     private int idUser, idGroupUser;
-    private List<String> idLangsFound = new ArrayList<>(), hasTopConcceptList = new ArrayList<>();;
+    private final Set<String> idLangsFound = new HashSet<>();
+    private Set<String> hasTopConcceptList = new HashSet<>();
     private String langueSource, formatDate, selectedIdentifier, prefixHandle, prefixDoi;
     private Preferences nodePreference;
     private StringBuilder message = new StringBuilder();
     private HashMap<String, String> memberHashMap = new HashMap<>();
     private HashMap<String, String> groupSubGroup = new HashMap<>(); // pour garder en mémoire les relations de types (member) pour détecter ce qui est groupe ou concept
+    private final List<ConceptGroupConcept> pendingGroupConcepts = new ArrayList<>();
     private SKOSXmlDocument skosXmlDocument;
+    private SimpleDateFormat dateFormat;
     boolean isFirst = true;
 
 
@@ -106,6 +112,14 @@ public class ThesaurusEditionSkosImportEngine {
         this.idGroupUser = idGroupUser;
         this.langueSource = langueSource;
         this.isFirst = true;
+        this.idGroups.clear();
+        this.idLangsFound.clear();
+        this.hasTopConcceptList.clear();
+        this.memberHashMap.clear();
+        this.groupSubGroup.clear();
+        this.pendingGroupConcepts.clear();
+        this.message = new StringBuilder();
+        this.dateFormat = new SimpleDateFormat(StringUtils.defaultIfBlank(formatDate, "yyyy-MM-dd"));
     }
 
     public String addThesaurus() throws SQLException {
@@ -133,6 +147,7 @@ public class ThesaurusEditionSkosImportEngine {
         thesaurus.setContributor(contributor);
 
         String idTheso1;
+        langueSource = StringUtils.defaultIfBlank(normalizeLangCode(langueSource), "fr");
         if (thesaurus.getLanguage() == null) {
             thesaurus.setLanguage(langueSource);
         }
@@ -141,13 +156,15 @@ public class ThesaurusEditionSkosImportEngine {
             return null;
         }
 
-        // Si le Titre du thésaurus n'est pas detecter, on donne un nom par defaut
-        if (skosXmlDocument.getConceptScheme().getLabelsList().isEmpty()) {
-            if (thesaurus.getTitle().isEmpty()) {
-                thesaurus.setTitle("theso_" + idTheso1);
-            }
+        // Titre initial : prefLabel source, puis dcterms:title, puis défaut
+        String dctermsTitle = StringUtils.trimToNull(thesaurus.getTitle());
+        if (looksLikeUri(dctermsTitle)) {
+            dctermsTitle = null;
+            thesaurus.setTitle(null);
         }
+        String displayTitle = resolveImportDisplayTitle(conceptScheme, dctermsTitle, idTheso1);
         thesaurus.setId_thesaurus(idTheso1);
+        thesaurus.setTitle(displayTitle);
 
         // intégration des métadonnées DC
         for (DcElement dcElement : skosXmlDocument.getConceptScheme().getThesaurus().getDcElement()) {
@@ -164,13 +181,48 @@ public class ThesaurusEditionSkosImportEngine {
             }
         }
 
-        // boucler pour les traductions
+        // boucler pour les traductions (skos:prefLabel du ConceptScheme)
+        boolean titlePersisted = false;
+        boolean sourceLangTitlePersisted = false;
+        java.util.Set<String> persistedLangs = new java.util.HashSet<>();
         for (SKOSLabel label : skosXmlDocument.getConceptScheme().getLabelsList()) {
-            thesaurus.setTitle(label.getLabel());
-            thesaurus.setLanguage(label.getLanguage());
-            if (thesaurus.getLanguage() == null) {
-                thesaurus.setLanguage("fr"); // cas où la langue n'est pas définie dans le SKOS
+            if (StringUtils.isBlank(label.getLabel()) || looksLikeUri(label.getLabel())) {
+                continue;
             }
+            String labelLang = normalizeLangCode(label.getLanguage());
+            if (!persistedLangs.add(labelLang)) {
+                continue;
+            }
+            thesaurus.setTitle(label.getLabel().trim());
+            thesaurus.setLanguage(labelLang);
+            toolboxThesaurusPersistence.addTranslation(thesaurus);
+            titlePersisted = true;
+            if (langueSource.equalsIgnoreCase(labelLang)) {
+                sourceLangTitlePersisted = true;
+                displayTitle = label.getLabel().trim();
+            }
+        }
+
+        // Cas dcterms:title sans prefLabel : persister quand même le titre détecté
+        if (!titlePersisted && StringUtils.isNotBlank(displayTitle)) {
+            thesaurus.setTitle(displayTitle);
+            thesaurus.setLanguage(langueSource);
+            toolboxThesaurusPersistence.addTranslation(thesaurus);
+            titlePersisted = true;
+            sourceLangTitlePersisted = true;
+        }
+
+        if (!titlePersisted) {
+            thesaurus.setTitle(displayTitle);
+            thesaurus.setLanguage(langueSource);
+            toolboxThesaurusPersistence.addTranslation(thesaurus);
+            sourceLangTitlePersisted = true;
+        }
+
+        // Les listes UI lisent le titre via preferences.source_lang : garantir une ligne pour cette langue
+        if (!sourceLangTitlePersisted) {
+            thesaurus.setTitle(displayTitle);
+            thesaurus.setLanguage(langueSource);
             toolboxThesaurusPersistence.addTranslation(thesaurus);
         }
 
@@ -183,15 +235,66 @@ public class ThesaurusEditionSkosImportEngine {
         for (SKOSRelation relation : skosXmlDocument.getConceptScheme().getRelationsList()) {
             hasTopConcceptList.add(relation.getTargetUri());
         }
-        initPreferencesThesaurus(idTheso1, skosXmlDocument.getTitle());
+        initPreferencesThesaurus(idTheso1, displayTitle);
         return idTheso1;
     }
 
-    private void initPreferencesThesaurus(String idThesaurus, String uri) {
+    private String resolveImportDisplayTitle(SKOSResource conceptScheme, String dctermsTitle, String idTheso) {
+        if (conceptScheme.getLabelsList() != null) {
+            for (SKOSLabel label : conceptScheme.getLabelsList()) {
+                if (StringUtils.isBlank(label.getLabel()) || looksLikeUri(label.getLabel())) {
+                    continue;
+                }
+                if (langueSource.equalsIgnoreCase(normalizeLangCode(label.getLanguage()))) {
+                    return label.getLabel().trim();
+                }
+            }
+            for (SKOSLabel label : conceptScheme.getLabelsList()) {
+                if (StringUtils.isNotBlank(label.getLabel()) && !looksLikeUri(label.getLabel())) {
+                    return label.getLabel().trim();
+                }
+            }
+        }
+        if (StringUtils.isNotBlank(dctermsTitle)) {
+            return dctermsTitle.trim();
+        }
+        if (conceptScheme.getThesaurus() != null && CollectionUtils.isNotEmpty(conceptScheme.getThesaurus().getDcElement())) {
+            for (DcElement dcElement : conceptScheme.getThesaurus().getDcElement()) {
+                if ("title".equalsIgnoreCase(dcElement.getName())
+                        && StringUtils.isNotBlank(dcElement.getValue())
+                        && !looksLikeUri(dcElement.getValue())) {
+                    return dcElement.getValue().trim();
+                }
+            }
+        }
+        return "theso_" + idTheso;
+    }
+
+    private String normalizeLangCode(String lang) {
+        if (StringUtils.isBlank(lang)) {
+            return langueSource;
+        }
+        String normalized = lang.trim().toLowerCase();
+        int dash = normalized.indexOf('-');
+        if (dash > 0) {
+            normalized = normalized.substring(0, dash);
+        }
+        return normalized;
+    }
+
+    private boolean looksLikeUri(String value) {
+        if (StringUtils.isBlank(value)) {
+            return false;
+        }
+        String trimmed = value.trim();
+        return trimmed.startsWith("http://") || trimmed.startsWith("https://") || trimmed.startsWith("urn:");
+    }
+
+    private void initPreferencesThesaurus(String idThesaurus, String preferredTitle) {
         langueSource = StringUtils.isEmpty(langueSource) ? "fr" : langueSource;
         toolboxPreferencePersistence.initPreferences(idThesaurus, langueSource);
+        toolboxPreferencePersistence.updatePreferredName(idThesaurus, preferredTitle);
         nodePreference = toolboxPreferencePersistence.findPreferences(idThesaurus);
-        nodePreference.setPreferredName(idThesaurus);
         if (selectedIdentifier.equalsIgnoreCase("ark")) {
             nodePreference.setOriginalUriIsArk(true);
         }
@@ -210,7 +313,7 @@ public class ThesaurusEditionSkosImportEngine {
             return;
         }
         nodePreference.setCheminSite(uri+"/");
-        nodePreference.setPreferredName(idTheso);
+        // Ne pas écraser le nom préféré avec l'identifiant technique
         nodePreference.setOriginalUri(uri);
         preferencesRepository.save(nodePreference);
     }
@@ -262,19 +365,19 @@ public class ThesaurusEditionSkosImportEngine {
 
             if (StringUtils.isEmpty(formatDate)) {
                 formatDate = "dd-mm-yyyy";
+                dateFormat = new SimpleDateFormat(formatDate);
             }
             Date created = null;
             Date modified = null;
 
-            SimpleDateFormat simpleDateFormat = new SimpleDateFormat(formatDate);
             for (SKOSDate sKOSDate : group.getDateList()) {
                 try {
                     if (!StringUtils.isEmpty(sKOSDate.getDate())) {
                         if (sKOSDate.getProperty() == SKOSProperty.CREATED) {
-                            created = simpleDateFormat.parse(sKOSDate.getDate());
+                            created = dateFormat.parse(sKOSDate.getDate());
                         }
                         if (sKOSDate.getProperty() == SKOSProperty.MODIFIED) {
-                            modified = simpleDateFormat.parse(sKOSDate.getDate());
+                            modified = dateFormat.parse(sKOSDate.getDate());
                         }
                     }
                 } catch (ParseException ex) {
@@ -288,8 +391,9 @@ public class ThesaurusEditionSkosImportEngine {
                 log.error(ex.getMessage());
                 insertGroup(idGroup, idTheso, idArkHandle, type, notationValue, created, modified);
             }
+            idGroups.add(idGroup);
 
-            // group/sous_group
+            // group/sous_group — memberships différés (évite double insert + N+1)
             for (SKOSRelation relation : group.getRelationsList()) {
                 int prop = relation.getProperty();
                 switch (prop) {
@@ -301,7 +405,6 @@ public class ThesaurusEditionSkosImportEngine {
                         // Récupération de l'Id d'origine sauvegardé à l'import (idArk -> identifier)
                         idSubConcept = getOriginalId(relation.getTargetUri());
                         groupSubGroup.put(idSubConcept, idGroup);
-                        saveConceptGroupConcept(idGroup, idSubConcept, idTheso);
                         break;
                     default:
                         break;
@@ -328,6 +431,7 @@ public class ThesaurusEditionSkosImportEngine {
             }
         }
         addGroupConceptGroup(idTheso);
+        flushPendingGroupConcepts();
     }
 
     private String getString(String noteTypeCode, int prop) {
@@ -365,7 +469,7 @@ public class ThesaurusEditionSkosImportEngine {
                 // si la relation member est vers un sous groupe, alors on créé une relation groupe/sousGroupe
                 addSubGroup(groupSubGroup.get(idSubGroup), idSubGroup, idTheso);
             } else {
-                saveConceptGroupConcept(groupSubGroup.get(idSubGroup), idSubGroup, idTheso);
+                queueConceptGroupConcept(groupSubGroup.get(idSubGroup), idSubGroup, idTheso);
             }
         }
     }
@@ -498,6 +602,7 @@ public class ThesaurusEditionSkosImportEngine {
         //-- 'id_concept1@role@id_concept2'
         String collectionToAdd;
         String relations = null;
+        boolean isSchemeTopConcept = hasTopConcceptList.contains(conceptResource.getUri());
         if (CollectionUtils.isNotEmpty(conceptResource.getRelationsList())) {
             relations = "";
             for (SKOSRelation relation : conceptResource.getRelationsList()) {
@@ -533,14 +638,13 @@ public class ThesaurusEditionSkosImportEngine {
                 } else if (relation.getProperty() == SKOSProperty.MEMBER_OF) {
                     collectionToAdd = getIdFromUri(relation.getTargetUri());
                 }
-
-                if (hasTopConcceptList.contains(conceptResource.getUri())) {
-                    isTopConcept = true;
-                }
             }
             if (!relations.isEmpty()) {
                 relations = relations.substring(SEPERATEUR.length());
             }
+        }
+        if (isSchemeTopConcept) {
+            isTopConcept = true;
         }
 
         //CustomRelation
@@ -609,16 +713,16 @@ public class ThesaurusEditionSkosImportEngine {
 
         if (StringUtils.isEmpty(formatDate)) {
             formatDate = "dd-mm-yyyy";
+            dateFormat = new SimpleDateFormat(formatDate);
         }
         try {
-            SimpleDateFormat simpleDateFormat = new SimpleDateFormat(formatDate);
             for (SKOSDate date : conceptResource.getDateList()) {
                 if (date.getDate() != null && !date.getDate().isEmpty()) {
                     if (date.getProperty() == SKOSProperty.CREATED) {
-                        created = simpleDateFormat.parse(date.getDate());
+                        created = dateFormat.parse(date.getDate());
                     }
                     if ((date.getProperty() == SKOSProperty.MODIFIED)) {
-                        modified = simpleDateFormat.parse(date.getDate());
+                        modified = dateFormat.parse(date.getDate());
                     }
                 }
             }
@@ -910,6 +1014,7 @@ public class ThesaurusEditionSkosImportEngine {
     }
 
     public void addLangsToThesaurus(String idTheso) {
+        String primaryTitle = resolvePrimaryThesaurusTitle(idTheso);
 
         for (String idLang : idLangsFound) {
             if (thesaurusLabelRepository.findByIdThesaurusAndLang(idTheso, idLang).isEmpty()) {
@@ -926,11 +1031,25 @@ public class ThesaurusEditionSkosImportEngine {
                 thesaurus1.setRights("");
                 thesaurus1.setSource("");
                 thesaurus1.setSubject("");
-                thesaurus1.setTitle("theso_" + idTheso + "_" + idLang);
+                thesaurus1.setTitle(primaryTitle);
                 thesaurus1.setType("");
                 toolboxThesaurusPersistence.addTranslation(thesaurus1);
             }
         }
+    }
+
+    private String resolvePrimaryThesaurusTitle(String idTheso) {
+        if (StringUtils.isNotBlank(langueSource)) {
+            var sourceLabel = thesaurusLabelRepository.findByIdThesaurusAndLang(idTheso, langueSource);
+            if (sourceLabel.isPresent() && StringUtils.isNotBlank(sourceLabel.get().getTitle())) {
+                return sourceLabel.get().getTitle();
+            }
+        }
+        return thesaurusLabelRepository.findByIdThesaurus(idTheso).stream()
+                .map(ThesaurusLabel::getTitle)
+                .filter(StringUtils::isNotBlank)
+                .findFirst()
+                .orElse("theso_" + idTheso);
     }
 
     public void setRdf4jThesaurus(SKOSXmlDocument rdf4jThesaurus) {
@@ -939,9 +1058,7 @@ public class ThesaurusEditionSkosImportEngine {
 
     private void insertGroup(String idGroup, String idThesaurus, String idArk, String typeCode, String notation,
                              Date created, Date modified) {
-        if (conceptGroupRepository.findByIdGroupAndIdThesaurus(idGroup, idThesaurus).isPresent()) {
-            return;
-        }
+        // Import nouveau thésaurus : pas de find préalable
         conceptGroupRepository.save(ConceptGroup.builder()
                 .id(conceptGroupRepository.getNextConceptGroupSequence().intValue())
                 .idGroup(idGroup.toLowerCase())
@@ -956,12 +1073,24 @@ public class ThesaurusEditionSkosImportEngine {
                 .build());
     }
 
-    private void saveConceptGroupConcept(String idGroup, String idConcept, String idThesaurus) {
-        conceptGroupConceptRepository.save(ConceptGroupConcept.builder()
+    private void queueConceptGroupConcept(String idGroup, String idConcept, String idThesaurus) {
+        pendingGroupConcepts.add(ConceptGroupConcept.builder()
                 .idGroup(idGroup)
                 .idThesaurus(idThesaurus)
                 .idConcept(idConcept)
                 .build());
+    }
+
+    private void flushPendingGroupConcepts() {
+        if (pendingGroupConcepts.isEmpty()) {
+            return;
+        }
+        conceptGroupConceptRepository.saveAll(pendingGroupConcepts);
+        pendingGroupConcepts.clear();
+    }
+
+    private void saveConceptGroupConcept(String idGroup, String idConcept, String idThesaurus) {
+        queueConceptGroupConcept(idGroup, idConcept, idThesaurus);
     }
 
     private void addSubGroup(String fatherGroupId, String childGroupId, String thesaurusId) {
@@ -994,26 +1123,20 @@ public class ThesaurusEditionSkosImportEngine {
     }
 
     private void addGroupNote(String idGroup, String idLang, String idTheso, String text, String noteTypeCode) {
+        // Import d'un thésaurus neuf : pas de find-before-insert (évite N+1)
         String lexicalValue = StringEscapeUtils.unescapeXml(
                 fr.cnrs.opentheso.utils.StringUtils.clearNoteFromP(
                         fr.cnrs.opentheso.utils.StringUtils.clearValue(text)));
-        var existing = noteRepository.findAllByIdentifierAndIdThesaurusAndNoteTypeCodeAndLang(
-                idGroup, idTheso, noteTypeCode, idLang);
-        if (!existing.isEmpty()) {
-            existing.get(0).setLexicalValue(lexicalValue);
-            noteRepository.save(existing.get(0));
-        } else {
-            noteRepository.save(Note.builder()
-                    .noteTypeCode(noteTypeCode)
-                    .idThesaurus(idTheso)
-                    .lang(idLang)
-                    .lexicalValue(lexicalValue)
-                    .identifier(idGroup)
-                    .noteSource("")
-                    .idUser(idUser)
-                    .created(new Date())
-                    .modified(new Date())
-                    .build());
-        }
+        noteRepository.save(Note.builder()
+                .noteTypeCode(noteTypeCode)
+                .idThesaurus(idTheso)
+                .lang(idLang)
+                .lexicalValue(lexicalValue)
+                .identifier(idGroup)
+                .noteSource("")
+                .idUser(idUser)
+                .created(new Date())
+                .modified(new Date())
+                .build());
     }
 }

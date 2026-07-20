@@ -32,7 +32,7 @@
 
         <p:growl id="messageIndex" globalOnly="true" showDetail="true"/>
 
-        <h:panelGroup rendered="#{v2UserSession.isLoggedIn() and currentUser.hasRoleAsManager}" id="wrapper" style="height: 100%" >
+        <h:panelGroup rendered="#{v2UserSession.isLoggedIn() and v2StatisticsBean.screenAvailable}" id="wrapper" style="height: 100%" >
 
             <ui:include src="../thesaurus/includes/layout/menu.xhtml" />
 
@@ -327,7 +327,7 @@
                     <p:dialog id="noteChartID" widgetVar="noteChart" modal="true" resizable="false" 
                               position="top" width="600" style="margin-top: 50px" header="Diagramme des notes" >
                         <div class="card">
-                            <p:donutChart widgetVar="chart" model="#{v2StatisticsBean.createChartModel(4)}" style="width: 100%; height: 500px;"/>
+                            <p:donutChart widgetVar="chart" model="#{v2StatisticsBean.notesChartModel}" style="width: 100%; height: 500px;"/>
                         </div>
                         <div style="text-align: right" >
                             <p:commandLink update="containerIndex" onclick="PF('noteChart').hide();" value="Fermer" />
@@ -337,7 +337,7 @@
                     <p:dialog id="termChartID" widgetVar="termChart" modal="true" resizable="false" 
                               position="top" width="600" style="margin-top: 50px" header="Diagramme des termes non traduits" >
                         <div class="card">
-                            <p:donutChart model="#{v2StatisticsBean.createChartModel(3)}" style="width: 100%; height: 500px;"/>
+                            <p:donutChart model="#{v2StatisticsBean.untranslatedChartModel}" style="width: 100%; height: 500px;"/>
                         </div>
                         <div style="text-align: right" >
                             <p:commandLink update="containerIndex" onclick="PF('termChart').hide();" value="Fermer" />
@@ -347,7 +347,7 @@
                     <p:dialog id="synonymChartID" widgetVar="synonymChart" modal="true" resizable="false" 
                               position="top" width="600" style="margin-top: 50px" header="Diagramme des synonymes" >
                         <div class="card">
-                            <p:donutChart model="#{v2StatisticsBean.createChartModel(2)}" style="width: 100%; height: 500px;"/>
+                            <p:donutChart model="#{v2StatisticsBean.synonymsChartModel}" style="width: 100%; height: 500px;"/>
                         </div>
                         <div style="text-align: right" >
                             <p:commandLink update="containerIndex" onclick="PF('synonymChart').hide();" value="Fermer" />
@@ -357,7 +357,7 @@
                     <p:dialog id="conceptChartID" widgetVar="conceptChart" resizable="false" 
                               position="top" width="600" style="margin-top: 50px" header="Diagramme des concepts"  >
                         <div class="card">
-                            <p:donutChart model="#{v2StatisticsBean.createChartModel(1)}" style="width: 100%; height: 500px;"/>
+                            <p:donutChart model="#{v2StatisticsBean.conceptsChartModel}" style="width: 100%; height: 500px;"/>
                         </div>
                         <div style="text-align: right" >
                             <p:commandLink update="containerIndex" onclick="PF('conceptChart').hide();" value="Fermer" />

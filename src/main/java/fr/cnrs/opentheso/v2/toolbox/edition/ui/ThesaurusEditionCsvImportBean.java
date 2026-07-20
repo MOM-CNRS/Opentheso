@@ -66,10 +66,21 @@ public class ThesaurusEditionCsvImportBean implements Serializable {
         allLangs = options.languages();
         projects = options.projects();
         superAdmin = options.superAdmin();
-        selectedLang = allLangs.isEmpty() ? "fr" : allLangs.get(0).code();
+        selectedLang = resolveDefaultSourceLang();
         if (!superAdmin && projects.size() == 1) {
             selectedProjectId = String.valueOf(projects.get(0).id());
         }
+    }
+
+    private String resolveDefaultSourceLang() {
+        if (allLangs == null || allLangs.isEmpty()) {
+            return "fr";
+        }
+        return allLangs.stream()
+                .map(LanguageOption::code)
+                .filter(code -> "fr".equalsIgnoreCase(code))
+                .findFirst()
+                .orElse(allLangs.get(0).code());
     }
 
     public void loadFileCsv(FileUploadEvent event) {
@@ -115,6 +126,9 @@ public class ThesaurusEditionCsvImportBean implements Serializable {
         }
 
         try {
+            if (StringUtils.isBlank(selectedLang)) {
+                selectedLang = resolveDefaultSourceLang();
+            }
             Integer projectId = StringUtils.isBlank(selectedProjectId) ? null : Integer.parseInt(selectedProjectId);
             var outcome = thesaurusEditionCsvImportService.importNewThesaurus(
                     thesaurusName,

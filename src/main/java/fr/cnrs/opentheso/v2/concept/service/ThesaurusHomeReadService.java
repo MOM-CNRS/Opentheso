@@ -34,7 +34,11 @@ public class ThesaurusHomeReadService {
         String baseUrl = applicationUriService.resolveApplicationBaseUrl();
         String permalinkUrl = buildPermalinkUrl(thesaurusId, preferences, arkId, baseUrl);
         String permalinkLabel = buildPermalinkLabel(thesaurusId, preferences, arkId, baseUrl);
-        Date lastModified = thesaurusHomeQueryRepository.findLastModificationDate(thesaurusId).orElse(null);
+        var lastModifiedBundle = thesaurusHomeQueryRepository.findLastModifiedConceptsBundle(thesaurusId, workLang);
+        Date lastModified = lastModifiedBundle.lastModified();
+        if (lastModified == null) {
+            lastModified = thesaurusHomeQueryRepository.findLastModificationDate(thesaurusId).orElse(null);
+        }
 
         return new ThesaurusHomeOverview(
                 title,
@@ -43,7 +47,7 @@ public class ThesaurusHomeReadService {
                 lastModified != null ? lastModified.toString() : "",
                 permalinkUrl,
                 permalinkLabel,
-                thesaurusHomeQueryRepository.findLastModifiedConcepts(thesaurusId, workLang),
+                lastModifiedBundle.concepts(),
                 thesaurusHomeQueryRepository.findMetadata(thesaurusId),
                 thesaurusHomeQueryRepository.findHomePageHtml(thesaurusId, workLang)
         );

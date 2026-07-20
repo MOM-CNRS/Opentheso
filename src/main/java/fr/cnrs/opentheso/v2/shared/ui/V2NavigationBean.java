@@ -67,39 +67,39 @@ public class V2NavigationBean implements Serializable {
 
     public void redirectToPreference() throws IOException {
         activePageName = "preferenceV2";
-        redirect(buildSettingUrl("/v2/setting/preference.xhtml"));
+        redirect("/v2/setting/preference.xhtml");
     }
 
     public void redirectToIdentifier() throws IOException {
         activePageName = "identifierV2";
-        redirect(buildSettingUrl("/v2/setting/identifier.xhtml"));
+        redirect("/v2/setting/identifier.xhtml");
     }
 
     public void redirectToCorpus() throws IOException {
         activePageName = "corpusV2";
-        redirect(buildSettingUrl("/v2/setting/corpus.xhtml"));
+        redirect("/v2/setting/corpus.xhtml");
     }
 
     public void redirectToEdition() throws IOException {
         activePageName = "editionV2";
-        redirect(buildSettingUrl("/v2/toolbox/edition.xhtml"));
+        redirect("/v2/toolbox/edition.xhtml");
     }
 
     public void redirectToFlag() throws IOException {
         activePageName = "flagV2";
-        redirect(buildSettingUrl("/v2/toolbox/flag.xhtml"));
+        redirect("/v2/toolbox/flag.xhtml");
     }
 
     public void redirectToWorkshop() throws IOException {
         requireThesaurus();
         activePageName = "atelierV2";
-        redirect(buildSettingUrl("/v2/toolbox/workshop.xhtml"));
+        redirect("/v2/toolbox/workshop.xhtml");
     }
 
     public void redirectToMaintenance() throws IOException {
         requireThesaurus();
         activePageName = "serviceV2";
-        redirect(buildSettingUrl("/v2/toolbox/maintenance.xhtml"));
+        redirect("/v2/toolbox/maintenance.xhtml");
     }
 
     public void redirectToStatistics() throws IOException {

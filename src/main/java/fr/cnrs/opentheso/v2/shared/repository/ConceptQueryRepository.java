@@ -10,10 +10,12 @@ import fr.cnrs.opentheso.v2.concept.model.ConceptHeaderRow;
 import fr.cnrs.opentheso.v2.concept.model.ConceptTreeRow;
 
 import java.util.ArrayList;
+import java.util.HashSet;
 import java.util.LinkedHashMap;
 import java.util.List;
 import java.util.Map;
 import java.util.Optional;
+import java.util.Set;
 
 @Repository
 @Transactional(readOnly = true)
@@ -635,6 +637,7 @@ public class ConceptQueryRepository {
     }
 
     public List<ConceptTreeRow> findTopConceptsForTree(String thesaurusId, String lang, boolean includePrivateGroups) {
+        // has_children is resolved in one bulk query (avoids correlated EXISTS per top concept).
         List<Object[]> rows;
         if (includePrivateGroups) {
             rows = em.createNativeQuery("""
@@ -642,7 +645,7 @@ public class ConceptQueryRepository {
                        COALESCE(c.notation, '') AS notation,
                        COALESCE(t.lexical_value, c.id_concept) AS label,
                        c.status,
-                       """ + hasChildrenExpression() + """
+                       false AS has_children
                 FROM concept c
                 LEFT JOIN preferred_term pt
                     ON pt.id_concept = c.id_concept
@@ -666,7 +669,7 @@ public class ConceptQueryRepository {
                        COALESCE(c.notation, '') AS notation,
                        COALESCE(t.lexical_value, c.id_concept) AS label,
                        c.status,
-                       """ + hasChildrenExpression() + """
+                       false AS has_children
                 FROM concept c
                 LEFT JOIN preferred_term pt
                     ON pt.id_concept = c.id_concept
@@ -692,7 +695,7 @@ public class ConceptQueryRepository {
                     .setParameter("lang", lang)
                     .getResultList();
         }
-        return toConceptTreeRows(rows);
+        return withBulkHasChildren(thesaurusId, toConceptTreeRows(rows));
     }
 
     public List<ConceptTreeRow> findFacetMembersForTree(String thesaurusId, String facetId, String lang) {
@@ -915,6 +918,61 @@ public class ConceptQueryRepository {
                         "true".equalsIgnoreCase(str(r[4])) || "t".equalsIgnoreCase(str(r[4]))
                 ))
                 .toList();
+    }
+
+    private List<ConceptTreeRow> withBulkHasChildren(String thesaurusId, List<ConceptTreeRow> rows) {
+        if (rows.isEmpty()) {
+            return rows;
+        }
+        List<String> parentIds = rows.stream()
+                .map(ConceptTreeRow::conceptId)
+                .filter(id -> id != null && !id.isBlank())
+                .toList();
+        if (parentIds.isEmpty()) {
+            return rows;
+        }
+        Set<String> withChildren = findParentIdsHavingChildren(thesaurusId, parentIds);
+        if (withChildren.isEmpty()) {
+            return rows;
+        }
+        return rows.stream()
+                .map(row -> withChildren.contains(row.conceptId())
+                        ? new ConceptTreeRow(row.conceptId(), row.notation(), row.label(), row.status(), true)
+                        : row)
+                .toList();
+    }
+
+    @SuppressWarnings("unchecked")
+    private Set<String> findParentIdsHavingChildren(String thesaurusId, List<String> parentIds) {
+        List<String> found = em.createNativeQuery("""
+                SELECT DISTINCT parent_id
+                FROM (
+                    SELECT hr.id_concept1 AS parent_id
+                    FROM hierarchical_relationship hr
+                    JOIN concept child
+                        ON child.id_concept = hr.id_concept2
+                        AND child.id_thesaurus = hr.id_thesaurus
+                    WHERE hr.id_thesaurus = :thesaurusId
+                      AND hr.role LIKE 'NT%'
+                      AND hr.id_concept1 IN (:parentIds)
+                      AND child.status != 'CA'
+                    UNION
+                    SELECT ta.id_concept_parent AS parent_id
+                    FROM thesaurus_array ta
+                    WHERE ta.id_thesaurus = :thesaurusId
+                      AND ta.id_concept_parent IN (:parentIds)
+                ) parents
+                """)
+                .setParameter("thesaurusId", thesaurusId)
+                .setParameter("parentIds", parentIds)
+                .getResultList();
+        Set<String> result = new HashSet<>(found.size());
+        for (Object value : found) {
+            if (value != null) {
+                result.add(value.toString());
+            }
+        }
+        return result;
     }
 
     private static String str(Object o) {

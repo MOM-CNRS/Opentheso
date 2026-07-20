@@ -6,7 +6,9 @@ import jakarta.persistence.PersistenceContext;
 import org.springframework.stereotype.Repository;
 import org.springframework.transaction.annotation.Transactional;
 
+import java.util.ArrayList;
 import java.util.Date;
+import java.util.List;
 import java.util.Optional;
 
 @Repository
@@ -69,6 +71,29 @@ public class ConceptCreationWriteRepository {
     public Long nextNumericConceptId() {
         return ((Number) entityManager.createNativeQuery("SELECT nextval('concept__id_seq')")
                 .getSingleResult()).longValue();
+    }
+
+    /**
+     * Réserve {@code count} identifiants numériques en une seule requête (évite N× nextval).
+     */
+    public List<Long> reserveNumericConceptIds(int count) {
+        if (count <= 0) {
+            return List.of();
+        }
+        if (count == 1) {
+            return List.of(nextNumericConceptId());
+        }
+        Number end = (Number) entityManager.createNativeQuery(
+                        "SELECT setval('concept__id_seq', nextval('concept__id_seq') + :extra)")
+                .setParameter("extra", count - 1)
+                .getSingleResult();
+        long endId = end.longValue();
+        long startId = endId - count + 1;
+        List<Long> ids = new ArrayList<>(count);
+        for (long id = startId; id <= endId; id++) {
+            ids.add(id);
+        }
+        return ids;
     }
 
     public String generateConceptId(String thesaurusId, String customConceptId) {

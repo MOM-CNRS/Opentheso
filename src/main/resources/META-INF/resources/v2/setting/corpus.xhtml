@@ -32,7 +32,7 @@
 
         <p:growl id="messageIndex" globalOnly="true" showDetail="true"/>
 
-        <h:panelGroup rendered="#{v2UserSession.isLoggedIn() and currentUser.hasRoleAsAdmin}" id="wrapper" style="height: 100%" >
+        <h:panelGroup rendered="#{v2UserSession.isLoggedIn() and v2CorpusSettingsBean.screenAvailable}" id="wrapper" style="height: 100%" >
 
             <ui:include src="../thesaurus/includes/layout/menu.xhtml" />
 

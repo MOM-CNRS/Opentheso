@@ -1,14 +1,12 @@
 package fr.cnrs.opentheso.v2.toolbox.persistence;
 
-import fr.cnrs.opentheso.entites.Alignement;
+import fr.cnrs.opentheso.entites.ConceptGroup;
 import fr.cnrs.opentheso.entites.ConceptGroupLabel;
 import fr.cnrs.opentheso.models.ConceptGroupProjection;
 import fr.cnrs.opentheso.models.candidats.DomaineDto;
-import fr.cnrs.opentheso.models.group.NodeGroup;
 import fr.cnrs.opentheso.models.statistiques.ConceptStatisticData;
 import fr.cnrs.opentheso.models.statistiques.GenericStatistiqueData;
 import fr.cnrs.opentheso.models.thesaurus.NodeLangTheso;
-import fr.cnrs.opentheso.repositories.AlignementRepository;
 import fr.cnrs.opentheso.repositories.ConceptGroupLabelRepository;
 import fr.cnrs.opentheso.repositories.ConceptGroupRepository;
 import fr.cnrs.opentheso.repositories.ConceptRepository;
@@ -26,18 +24,21 @@ import java.text.SimpleDateFormat;
 import java.util.ArrayList;
 import java.util.Comparator;
 import java.util.Date;
+import java.util.HashMap;
 import java.util.List;
+import java.util.Locale;
+import java.util.Map;
 
 @Component
 @RequiredArgsConstructor
 public class ToolboxStatisticsPersistence {
 
     private final ToolboxThesaurusPersistence toolboxThesaurusPersistence;
+    private final ToolboxStatisticsQueryRepository toolboxStatisticsQueryRepository;
     private final ConceptGroupRepository conceptGroupRepository;
     private final ConceptGroupLabelRepository conceptGroupLabelRepository;
     private final ConceptStatusRepository conceptStatusRepository;
     private final NoteRepository noteRepository;
-    private final AlignementRepository alignementRepository;
     private final ConceptRepository conceptRepository;
 
     public List<NodeLangTheso> loadUsedLanguages(String thesaurusId, String workLang) {
@@ -57,41 +58,37 @@ public class ToolboxStatisticsPersistence {
     }
 
     public List<GenericStatistiqueData> loadCollectionStatistics(String thesaurusId, String language) {
-        List<GenericStatistiqueData> result = new ArrayList<>();
-        var listGroup = new ArrayList<>(loadConceptGroups(thesaurusId, language));
-        listGroup.sort(Comparator.comparing(NodeGroup::getLexicalValue, String.CASE_INSENSITIVE_ORDER));
+        List<ConceptGroup> groups = conceptGroupRepository.findAllByIdThesaurus(thesaurusId);
+        Map<String, String> labelsByGroup = loadLabelsByGroup(thesaurusId, language);
 
-        listGroup.forEach(group -> {
-            String groupId = group.getConceptGroup().getIdGroup();
-            var noteNbr = noteRepository.countNotesByGroupAndLangAndThesaurus(groupId, thesaurusId, language);
-            var conceptNbr = conceptStatusRepository.countConceptsInGroup(thesaurusId, groupId);
-            var traductionOfGroupNbr = conceptStatusRepository.countNonPreferredTermsByLangAndGroup(
-                    thesaurusId, groupId, language);
-            var wikidataAlignNbr = countWikidataAlignments(thesaurusId, groupId);
-            var totalAlignmentNbr = loadAlignments(thesaurusId, groupId).size();
+        Map<String, Integer> conceptsByGroup = toolboxStatisticsQueryRepository.countConceptsByGroup(thesaurusId);
+        Map<String, Integer> notesByGroup = toolboxStatisticsQueryRepository.countNotesByGroup(thesaurusId, language);
+        Map<String, Integer> synonymsByGroup = toolboxStatisticsQueryRepository.countSynonymsByGroup(thesaurusId, language);
+        Map<String, int[]> alignmentsByGroup = toolboxStatisticsQueryRepository.countAlignmentsByGroup(thesaurusId);
+
+        List<GenericStatistiqueData> result = new ArrayList<>(groups.size() + 1);
+        for (ConceptGroup group : groups) {
+            String groupId = group.getIdGroup();
+            String key = normalizeGroupKey(groupId);
+            int conceptNbr = conceptsByGroup.getOrDefault(key, 0);
+            int synonymNbr = synonymsByGroup.getOrDefault(key, 0);
+            int[] alignments = alignmentsByGroup.getOrDefault(key, new int[]{0, 0});
             result.add(GenericStatistiqueData.builder()
                     .idCollection(groupId)
-                    .collection(group.getLexicalValue())
-                    .notesNbr(noteNbr)
-                    .synonymesNbr(traductionOfGroupNbr)
+                    .collection(labelsByGroup.getOrDefault(key, ""))
+                    .notesNbr(notesByGroup.getOrDefault(key, 0))
+                    .synonymesNbr(synonymNbr)
                     .conceptsNbr(conceptNbr)
-                    .termesNonTraduitsNbr(conceptNbr - traductionOfGroupNbr)
-                    .wikidataAlignNbr(wikidataAlignNbr)
-                    .totalAlignment(totalAlignmentNbr)
+                    .termesNonTraduitsNbr(Math.max(0, conceptNbr - synonymNbr))
+                    .totalAlignment(alignments[0])
+                    .wikidataAlignNbr(alignments[1])
                     .build());
-        });
-
-        var conceptNbr = conceptStatusRepository.countConceptsWithoutGroup(thesaurusId);
-        result.add(GenericStatistiqueData.builder()
-                .collection("Sans collection")
-                .conceptsNbr(conceptNbr)
-                .notesNbr(countNotesWithoutGroup(thesaurusId, language))
-                .synonymesNbr(conceptStatusRepository.countNonPreferredTermsNotInGroup(thesaurusId, language))
-                .termesNonTraduitsNbr(conceptNbr - conceptStatusRepository.countConceptsWithoutGroupByLangAndThesaurus(
-                        thesaurusId, language))
-                .wikidataAlignNbr(countWikidataAlignments(thesaurusId, null))
-                .totalAlignment(loadAlignments(thesaurusId, null).size())
-                .build());
+        }
+        result.sort(Comparator.comparing(
+                GenericStatistiqueData::getCollection,
+                Comparator.nullsLast(String.CASE_INSENSITIVE_ORDER)
+        ));
+        result.add(buildWithoutGroupStatistics(thesaurusId, language));
         return result;
     }
 
@@ -148,46 +145,37 @@ public class ToolboxStatisticsPersistence {
         return report.getOutput().toByteArray();
     }
 
-    private List<NodeGroup> loadConceptGroups(String thesaurusId, String language) {
-        var groupIds = conceptGroupRepository.findAllByIdThesaurus(thesaurusId).stream()
-                .map(group -> group.getIdGroup())
-                .toList();
-        return groupIds.stream()
-                .map(idGroup -> {
-                    var conceptGroup = conceptGroupRepository.findByIdGroupAndIdThesaurus(idGroup, thesaurusId);
-                    if (conceptGroup.isEmpty()) {
-                        return null;
-                    }
-                    var labels = conceptGroupLabelRepository.findAllByIdThesaurusAndIdGroupAndLang(
-                            thesaurusId, idGroup, language);
-                    return NodeGroup.builder()
-                            .groupPrivate(conceptGroup.get().isPrivate())
-                            .conceptGroup(conceptGroup.get())
-                            .lexicalValue(CollectionUtils.isNotEmpty(labels) ? labels.get(0).getLexicalValue() : "")
-                            .idLang(language)
-                            .build();
-                })
-                .filter(java.util.Objects::nonNull)
-                .toList();
+    private GenericStatistiqueData buildWithoutGroupStatistics(String thesaurusId, String language) {
+        int conceptNbr = conceptStatusRepository.countConceptsWithoutGroup(thesaurusId);
+        int translatedConcepts = conceptStatusRepository.countConceptsWithoutGroupByLangAndThesaurus(
+                thesaurusId, language);
+        int[] alignments = toolboxStatisticsQueryRepository.countAlignmentsWithoutGroup(thesaurusId);
+        return GenericStatistiqueData.builder()
+                .collection("Sans collection")
+                .conceptsNbr(conceptNbr)
+                .notesNbr(countNotesWithoutGroup(thesaurusId, language))
+                .synonymesNbr(conceptStatusRepository.countNonPreferredTermsNotInGroup(language, thesaurusId))
+                .termesNonTraduitsNbr(Math.max(0, conceptNbr - translatedConcepts))
+                .totalAlignment(alignments[0])
+                .wikidataAlignNbr(alignments[1])
+                .build();
+    }
+
+    private Map<String, String> loadLabelsByGroup(String thesaurusId, String language) {
+        List<ConceptGroupLabel> labels = conceptGroupLabelRepository.findAllByIdThesaurusAndLang(thesaurusId, language);
+        Map<String, String> labelsByGroup = new HashMap<>();
+        for (ConceptGroupLabel label : labels) {
+            if (label.getIdGroup() == null) {
+                continue;
+            }
+            labelsByGroup.putIfAbsent(normalizeGroupKey(label.getIdGroup()), StringUtils.defaultString(label.getLexicalValue()));
+        }
+        return labelsByGroup;
     }
 
     private int countNotesWithoutGroup(String thesaurusId, String language) {
         return noteRepository.countNotesWithoutGroupByLangAndThesaurus(thesaurusId, language)
                 + noteRepository.countNotesOfTermsWithoutGroup(thesaurusId, language);
-    }
-
-    private int countWikidataAlignments(String thesaurusId, String groupId) {
-        return (int) loadAlignments(thesaurusId, groupId).stream()
-                .filter(element -> StringUtils.isNotEmpty(element.getUriTarget())
-                        && element.getUriTarget().contains("wikidata.org"))
-                .count();
-    }
-
-    private List<Alignement> loadAlignments(String thesaurusId, String groupId) {
-        var alignements = StringUtils.isEmpty(groupId)
-                ? alignementRepository.findAlignementsNotInConceptGroup(thesaurusId)
-                : alignementRepository.findAlignementsByGroupAndThesaurus(groupId, thesaurusId);
-        return CollectionUtils.isNotEmpty(alignements) ? alignements : List.of();
     }
 
     private List<ConceptStatisticData> mapConceptStatistics(List<ConceptGroupProjection> rows) {
@@ -206,5 +194,9 @@ public class ToolboxStatisticsPersistence {
                                 .type("skos:prefLabel")
                                 .build())
                         .toList();
+    }
+
+    private static String normalizeGroupKey(String groupId) {
+        return groupId == null ? "" : groupId.toLowerCase(Locale.ROOT);
     }
 }

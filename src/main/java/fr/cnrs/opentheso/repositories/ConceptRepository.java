@@ -139,6 +139,8 @@ public interface ConceptRepository extends JpaRepository<Concept, Integer> {
 
     List<Concept> findAllByIdThesaurusAndStatusNot(String idThesaurus, String status);
 
+    List<Concept> findAllByIdThesaurus(String idThesaurus);
+
     @Query(value = "SELECT nextval('concept__id_seq')", nativeQuery = true)
     Long getNextConceptNumericId();
 

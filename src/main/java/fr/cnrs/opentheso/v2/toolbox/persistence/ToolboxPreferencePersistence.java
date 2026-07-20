@@ -4,6 +4,7 @@ import fr.cnrs.opentheso.entites.Preferences;
 import fr.cnrs.opentheso.repositories.PreferencesRepository;
 import lombok.RequiredArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
+import org.apache.commons.lang3.StringUtils;
 import org.springframework.stereotype.Component;
 
 @Slf4j
@@ -71,5 +72,25 @@ public class ToolboxPreferencePersistence {
 
     public Preferences findPreferences(String thesaurusId) {
         return preferencesRepository.findByIdThesaurus(thesaurusId).orElse(null);
+    }
+
+    public void updatePreferredName(String thesaurusId, String preferredName) {
+        if (StringUtils.isBlank(thesaurusId) || StringUtils.isBlank(preferredName)) {
+            return;
+        }
+        var preference = preferencesRepository.findByIdThesaurus(thesaurusId);
+        if (preference.isEmpty()) {
+            return;
+        }
+        String candidate = preferredName.trim();
+        String uniqueName = candidate;
+        int index = 1;
+        while (preferencesRepository.existsByPreferredName(uniqueName)
+                && !uniqueName.equals(preference.get().getPreferredName())) {
+            uniqueName = candidate + "_" + index;
+            index++;
+        }
+        preference.get().setPreferredName(uniqueName);
+        preferencesRepository.save(preference.get());
     }
 }

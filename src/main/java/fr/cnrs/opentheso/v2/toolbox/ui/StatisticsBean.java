@@ -58,6 +58,11 @@ public class StatisticsBean implements Serializable {
     private List<fr.cnrs.opentheso.models.thesaurus.NodeLangTheso> languages = Collections.emptyList();
     private List<DomaineDto> collections = Collections.emptyList();
 
+    private DonutChartModel conceptsChartModel = emptyChartModel();
+    private DonutChartModel synonymsChartModel = emptyChartModel();
+    private DonutChartModel untranslatedChartModel = emptyChartModel();
+    private DonutChartModel notesChartModel = emptyChartModel();
+
     private final List<String> chartColors = new ArrayList<>(List.of(
             "rgb(255, 99, 132)", "rgb(54, 162, 235)", "rgb(75, 192, 192)", "rgb(158, 14, 64)",
             "rgb(136, 66, 29)", "rgb(240, 195, 0)", "rgb(63, 34, 4)", "rgb(29, 96, 198)",
@@ -99,27 +104,28 @@ public class StatisticsBean implements Serializable {
         selectedLanguage = resolveInterfaceLanguage();
         selectedStatistiqueTypeCode = "0";
         resultLimit = "100";
-        loadReferenceData();
+        loadReferenceData(false);
     }
 
     public void initOnModeChange() {
         genericTypeVisible = false;
         conceptTypeVisible = false;
-        collectionStatistics = new ArrayList<>();
-        conceptStatistics = new ArrayList<>();
+        clearStatisticsResults();
 
         if (!isScreenAvailable()) {
             MessageUtils.showErrorMessage("Vous devez choisir un Thésaurus avant !");
             return;
         }
 
-        selectedLanguage = resolveInterfaceLanguage();
-        loadReferenceData();
+        if (StringUtils.isBlank(selectedLanguage)) {
+            selectedLanguage = resolveInterfaceLanguage();
+        }
+        // Collections are only needed for "by concept" filters.
+        loadReferenceData("1".equals(selectedStatistiqueTypeCode));
     }
 
     public void onSelectStatType() {
-        collectionStatistics = new ArrayList<>();
-        conceptStatistics = new ArrayList<>();
+        clearStatisticsResults();
         genericTypeVisible = false;
         conceptTypeVisible = false;
         if (!isScreenAvailable()) {
@@ -127,7 +133,7 @@ public class StatisticsBean implements Serializable {
             return;
         }
         if (CollectionUtils.isEmpty(languages)) {
-            loadReferenceData();
+            loadReferenceData(false);
         }
     }
 
@@ -137,6 +143,7 @@ public class StatisticsBean implements Serializable {
         selectedCollection = "";
         conceptStatistics = new ArrayList<>();
         collectionStatistics = new ArrayList<>();
+        clearCharts();
     }
 
     public void applyLanguageSelection() {
@@ -155,6 +162,9 @@ public class StatisticsBean implements Serializable {
             loadGeneralStatistics();
             genericTypeVisible = true;
         } else {
+            if (CollectionUtils.isEmpty(collections)) {
+                loadCollectionsOnly();
+            }
             conceptTypeVisible = true;
         }
         PrimeFaces.current().ajax().update("containerIndex messageIndex");
@@ -198,35 +208,6 @@ public class StatisticsBean implements Serializable {
         return CollectionUtils.isNotEmpty(collectionStatistics) || CollectionUtils.isNotEmpty(conceptStatistics);
     }
 
-    public DonutChartModel createChartModel(int model) {
-        List<Number> values = new ArrayList<>();
-        List<String> labels = new ArrayList<>();
-        List<String> bgColors = new ArrayList<>();
-        int pos = 0;
-        for (GenericStatistiqueData row : collectionStatistics) {
-            switch (model) {
-                case 1 -> values.add(row.getConceptsNbr());
-                case 2 -> values.add(row.getSynonymesNbr());
-                case 3 -> values.add(row.getTermesNonTraduitsNbr());
-                case 4 -> values.add(row.getNotesNbr());
-                default -> {
-                }
-            }
-            labels.add(row.getCollection());
-            bgColors.add(chartColors.get(pos));
-            pos = (pos + 1) % chartColors.size();
-        }
-        var dataSet = new DonutChartDataSet();
-        dataSet.setData(values);
-        dataSet.setBackgroundColor(bgColors);
-        var data = new ChartData();
-        data.addChartDataSet(dataSet);
-        data.setLabels(labels);
-        var donutModel = new DonutChartModel();
-        donutModel.setData(data);
-        return donutModel;
-    }
-
     public StreamedContent exportStatistics() {
         byte[] content = genericTypeVisible
                 ? thesaurusStatisticsService.exportGenericReport(collectionStatistics)
@@ -257,13 +238,25 @@ public class StatisticsBean implements Serializable {
         candidateCount = summary.counts().candidateCount();
         deprecatedCount = summary.counts().deprecatedCount();
         lastModification = summary.lastModification();
+        refreshCharts();
     }
 
-    private void loadReferenceData() {
+    private void loadReferenceData(boolean includeCollections) {
         String thesaurusId = getActiveThesaurusId();
         String interfaceLanguage = resolveInterfaceLanguage();
-        languages = thesaurusStatisticsService.loadLanguages(thesaurusId, interfaceLanguage);
-        collections = thesaurusStatisticsService.loadCollections(thesaurusId, interfaceLanguage);
+        if (CollectionUtils.isEmpty(languages)) {
+            languages = thesaurusStatisticsService.loadLanguages(thesaurusId, interfaceLanguage);
+        }
+        if (includeCollections) {
+            loadCollectionsOnly();
+        }
+    }
+
+    private void loadCollectionsOnly() {
+        collections = thesaurusStatisticsService.loadCollections(
+                getActiveThesaurusId(),
+                resolveInterfaceLanguage()
+        );
     }
 
     private String getActiveThesaurusId() {
@@ -288,9 +281,65 @@ public class StatisticsBean implements Serializable {
     private void resetState() {
         genericTypeVisible = false;
         conceptTypeVisible = false;
-        collectionStatistics = new ArrayList<>();
-        conceptStatistics = new ArrayList<>();
+        clearStatisticsResults();
         languages = Collections.emptyList();
         collections = Collections.emptyList();
+    }
+
+    private void clearStatisticsResults() {
+        collectionStatistics = new ArrayList<>();
+        conceptStatistics = new ArrayList<>();
+        clearCharts();
+    }
+
+    private void clearCharts() {
+        conceptsChartModel = emptyChartModel();
+        synonymsChartModel = emptyChartModel();
+        untranslatedChartModel = emptyChartModel();
+        notesChartModel = emptyChartModel();
+    }
+
+    private void refreshCharts() {
+        conceptsChartModel = buildChartModel(1);
+        synonymsChartModel = buildChartModel(2);
+        untranslatedChartModel = buildChartModel(3);
+        notesChartModel = buildChartModel(4);
+    }
+
+    private DonutChartModel buildChartModel(int model) {
+        List<Number> values = new ArrayList<>();
+        List<String> labels = new ArrayList<>();
+        List<String> bgColors = new ArrayList<>();
+        int pos = 0;
+        for (GenericStatistiqueData row : collectionStatistics) {
+            switch (model) {
+                case 1 -> values.add(row.getConceptsNbr());
+                case 2 -> values.add(row.getSynonymesNbr());
+                case 3 -> values.add(row.getTermesNonTraduitsNbr());
+                case 4 -> values.add(row.getNotesNbr());
+                default -> {
+                }
+            }
+            labels.add(row.getCollection());
+            bgColors.add(chartColors.get(pos));
+            pos = (pos + 1) % chartColors.size();
+        }
+        return toDonutModel(values, labels, bgColors);
+    }
+
+    private static DonutChartModel emptyChartModel() {
+        return toDonutModel(List.of(), List.of(), List.of());
+    }
+
+    private static DonutChartModel toDonutModel(List<Number> values, List<String> labels, List<String> bgColors) {
+        var dataSet = new DonutChartDataSet();
+        dataSet.setData(values);
+        dataSet.setBackgroundColor(bgColors);
+        var data = new ChartData();
+        data.addChartDataSet(dataSet);
+        data.setLabels(labels);
+        var donutModel = new DonutChartModel();
+        donutModel.setData(data);
+        return donutModel;
     }
 }

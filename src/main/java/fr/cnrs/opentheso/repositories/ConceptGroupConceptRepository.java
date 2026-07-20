@@ -34,7 +34,8 @@ public interface ConceptGroupConceptRepository extends JpaRepository<ConceptGrou
 
     @Modifying
     @Transactional
-    void deleteAllByIdThesaurus(String idThesaurus);
+    @Query("DELETE FROM ConceptGroupConcept c WHERE c.idThesaurus = :idThesaurus")
+    void deleteAllByIdThesaurus(@Param("idThesaurus") String idThesaurus);
 
     @Query(value = """
         SELECT idgroup, idconcept
@@ -43,6 +44,16 @@ public interface ConceptGroupConceptRepository extends JpaRepository<ConceptGrou
         AND idconcept NOT IN (SELECT id_concept FROM concept WHERE id_thesaurus = :idThesaurus)
     """, nativeQuery = true)
     List<Object[]> findGroupConceptLinksWithMissingConcepts(@Param("idThesaurus") String idThesaurus);
+
+    @Query(value = """
+        SELECT DISTINCT idgroup
+        FROM concept_group_concept
+        WHERE idthesaurus = :idThesaurus
+          AND LOWER(idgroup) NOT IN (
+              SELECT LOWER(idgroup) FROM concept_group WHERE idthesaurus = :idThesaurus
+          )
+    """, nativeQuery = true)
+    List<String> findGroupIdsMissingFromConceptGroup(@Param("idThesaurus") String idThesaurus);
 
     @Modifying
     @Transactional

@@ -32,7 +32,7 @@ class ThesaurusMaintenanceServiceTest {
 
     @Test
     void loadLocalArkSettings_mapsPreferences() {
-        when(thesaurusPreferenceService.loadPreferences("TH1", "fr"))
+        when(thesaurusPreferenceService.loadPreferencesOrNull("TH1", "fr"))
                 .thenReturn(SettingTestFixtures.samplePreferences());
 
         var settings = service.loadLocalArkSettings("TH1");

@@ -28,16 +28,23 @@ public class EditionQueryRepository {
         String sql = """
                 SELECT
                     t.id_thesaurus,
-                    COALESCE(tl_sub.title, t.id_thesaurus) AS thesaurus_title,
+                    COALESCE(tl_sub.title, NULLIF(pref.preferredname, t.id_thesaurus), t.id_thesaurus) AS thesaurus_title,
                     COALESCE(t."private", false) AS is_private,
                     t.created
                 FROM thesaurus t
+                LEFT JOIN preferences pref ON pref.id_thesaurus = t.id_thesaurus
                 LEFT JOIN LATERAL (
                     SELECT tl.title
                     FROM thesaurus_label tl
-                    LEFT JOIN preferences p ON p.id_thesaurus = tl.id_thesaurus
                     WHERE tl.id_thesaurus = t.id_thesaurus
-                      AND tl.lang = COALESCE(p.source_lang, :lang)
+                      AND tl.title IS NOT NULL
+                      AND BTRIM(tl.title) <> ''
+                    ORDER BY
+                      CASE
+                        WHEN tl.lang = COALESCE(pref.source_lang, :lang) THEN 0
+                        WHEN tl.lang = :lang THEN 1
+                        ELSE 2
+                      END
                     LIMIT 1
                 ) tl_sub ON true
                 WHERE (
@@ -128,15 +135,26 @@ public class EditionQueryRepository {
         String sql = """
                 SELECT
                     t.id_thesaurus,
-                    COALESCE(tl.title, t.id_thesaurus) AS title,
+                    COALESCE(tl_sub.title, NULLIF(p.preferredname, t.id_thesaurus), t.id_thesaurus) AS title,
                     COALESCE(t.id_ark, '') AS ark_id,
                     COALESCE(t."private", false) AS is_private,
                     COALESCE(p.source_lang, :lang) AS source_lang
                 FROM thesaurus t
                 LEFT JOIN preferences p ON p.id_thesaurus = t.id_thesaurus
-                LEFT JOIN thesaurus_label tl
-                    ON tl.id_thesaurus = t.id_thesaurus
-                    AND tl.lang = COALESCE(p.source_lang, :lang)
+                LEFT JOIN LATERAL (
+                    SELECT tl.title
+                    FROM thesaurus_label tl
+                    WHERE tl.id_thesaurus = t.id_thesaurus
+                      AND tl.title IS NOT NULL
+                      AND BTRIM(tl.title) <> ''
+                    ORDER BY
+                      CASE
+                        WHEN tl.lang = COALESCE(p.source_lang, :lang) THEN 0
+                        WHEN tl.lang = :lang THEN 1
+                        ELSE 2
+                      END
+                    LIMIT 1
+                ) tl_sub ON true
                 WHERE t.id_thesaurus = :thesaurusId
                 """;
         @SuppressWarnings("unchecked")

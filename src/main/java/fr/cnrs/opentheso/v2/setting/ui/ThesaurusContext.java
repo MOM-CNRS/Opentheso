@@ -95,6 +95,30 @@ public class ThesaurusContext implements Serializable {
         applyThesaurus(thesaurusId.trim());
     }
 
+    /**
+     * Sélection depuis le catalogue header (évite les requêtes title / source_lang).
+     */
+    public void selectThesaurus(String thesaurusId, String title, String workLanguage) {
+        if (StringUtils.isBlank(thesaurusId)) {
+            clearSelection();
+            return;
+        }
+        String id = thesaurusId.trim();
+        if (StringUtils.isNotBlank(title) && StringUtils.isNotBlank(workLanguage)) {
+            currentThesaurusId = id;
+            currentThesaurusTitle = title.trim();
+            currentLanguage = workLanguage.trim();
+            return;
+        }
+        applyThesaurus(id);
+        if (StringUtils.isNotBlank(title)) {
+            currentThesaurusTitle = title.trim();
+        }
+        if (StringUtils.isNotBlank(workLanguage)) {
+            currentLanguage = workLanguage.trim();
+        }
+    }
+
     private void applyThesaurus(String thesaurusId) {
         ThesaurusSelection selection = thesaurusSelectionService.resolve(thesaurusId);
         if (selection == null) {

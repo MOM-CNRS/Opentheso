@@ -133,13 +133,27 @@ public class ConceptFullQueryRepository {
                 .getResultList();
     }
 
-    public List<Object[]> findBroaderRelations(String conceptId, String thesaurusId, boolean includePrivateGroups) {
+    public List<Object[]> findBroaderRelations(
+            String conceptId,
+            String thesaurusId,
+            String lang,
+            boolean includePrivateGroups
+    ) {
         return em.createNativeQuery("""
-            SELECT hr.id_concept2, hr.role, c.id_ark, c.id_handle, c.id_doi
+            SELECT DISTINCT COALESCE(t.lexical_value, hr.id_concept2), hr.id_concept2, hr.role,
+                   c.id_ark, c.id_handle, c.id_doi,
+                   CASE WHEN t.lexical_value ~ '^[0-9]+$' THEN t.lexical_value::int ELSE NULL END AS sort_key
             FROM hierarchical_relationship hr
             JOIN concept c
                 ON hr.id_concept2 = c.id_concept
                 AND hr.id_thesaurus = c.id_thesaurus
+            LEFT JOIN preferred_term pt
+                ON pt.id_concept = c.id_concept
+                AND pt.id_thesaurus = c.id_thesaurus
+            LEFT JOIN term t
+                ON t.id_term = pt.id_term
+                AND t.id_thesaurus = pt.id_thesaurus
+                AND t.lang = :lang
             LEFT JOIN concept_group_concept cgc
                 ON cgc.idconcept = hr.id_concept2
                 AND cgc.idthesaurus = hr.id_thesaurus
@@ -155,29 +169,39 @@ public class ConceptFullQueryRepository {
                   OR cg.private = false
                   OR cg.private IS NULL
               )
-            ORDER BY hr.role, hr.id_concept2
+            ORDER BY sort_key, COALESCE(t.lexical_value, hr.id_concept2)
             """)
                 .setParameter("conceptId", conceptId)
                 .setParameter("thesaurusId", thesaurusId)
+                .setParameter("lang", lang)
                 .setParameter("includePrivateGroups", includePrivateGroups)
                 .getResultList();
     }
 
-    public List<Object[]> findRelatedRelations(String conceptId, String thesaurusId) {
+    public List<Object[]> findRelatedRelations(String conceptId, String thesaurusId, String lang) {
         return em.createNativeQuery("""
-            SELECT hr.id_concept2, hr.role, c.id_ark, c.id_handle, c.id_doi
+            SELECT COALESCE(t.lexical_value, hr.id_concept2), hr.id_concept2, hr.role,
+                   c.id_ark, c.id_handle, c.id_doi
             FROM hierarchical_relationship hr
             JOIN concept c
                 ON hr.id_concept2 = c.id_concept
                 AND hr.id_thesaurus = c.id_thesaurus
+            LEFT JOIN preferred_term pt
+                ON pt.id_concept = c.id_concept
+                AND pt.id_thesaurus = c.id_thesaurus
+            LEFT JOIN term t
+                ON t.id_term = pt.id_term
+                AND t.id_thesaurus = pt.id_thesaurus
+                AND t.lang = :lang
             WHERE hr.id_thesaurus = :thesaurusId
               AND hr.id_concept1 = :conceptId
               AND c.status != 'CA'
               AND hr.role LIKE 'RT%'
-            ORDER BY hr.role, hr.id_concept2
+            ORDER BY COALESCE(t.lexical_value, hr.id_concept2), hr.role
             """)
                 .setParameter("conceptId", conceptId)
                 .setParameter("thesaurusId", thesaurusId)
+                .setParameter("lang", lang)
                 .getResultList();
     }
 
@@ -255,19 +279,24 @@ public class ConceptFullQueryRepository {
                 .getResultList();
     }
 
-    public List<Object[]> findGroupMemberships(String conceptId, String thesaurusId) {
+    public List<Object[]> findGroupMemberships(String conceptId, String thesaurusId, String lang) {
         return em.createNativeQuery("""
-            SELECT cg.idgroup, cg.id_ark, cg.id_handle, cg.id_doi
+            SELECT cg.idgroup, cg.id_ark, cg.id_handle, cg.id_doi, COALESCE(cgl.lexicalvalue, cg.idgroup)
             FROM concept_group_concept cgc
             JOIN concept_group cg
                 ON cg.idgroup = cgc.idgroup
                 AND cg.idthesaurus = cgc.idthesaurus
+            LEFT JOIN concept_group_label cgl
+                ON cgl.idgroup = cg.idgroup
+                AND cgl.idthesaurus = cg.idthesaurus
+                AND cgl.lang = :lang
             WHERE cgc.idthesaurus = :thesaurusId
               AND cgc.idconcept = :conceptId
-            ORDER BY cg.idgroup
+            ORDER BY COALESCE(cgl.lexicalvalue, cg.idgroup)
             """)
                 .setParameter("conceptId", conceptId)
                 .setParameter("thesaurusId", thesaurusId)
+                .setParameter("lang", lang)
                 .getResultList();
     }
 
@@ -329,65 +358,70 @@ public class ConceptFullQueryRepository {
                 .getResultList();
     }
 
-    public List<Object[]> findReplaces(String conceptId, String thesaurusId) {
+    public List<Object[]> findReplaces(String conceptId, String thesaurusId, String lang) {
         return em.createNativeQuery("""
-            SELECT c.id_concept, c.id_ark, c.id_handle, c.id_doi
+            SELECT c.id_concept, c.id_ark, c.id_handle, c.id_doi, COALESCE(t.lexical_value, c.id_concept)
             FROM concept_replacedby cr
             JOIN concept c
                 ON c.id_concept = cr.id_concept1
                 AND c.id_thesaurus = cr.id_thesaurus
+            LEFT JOIN preferred_term pt
+                ON pt.id_concept = c.id_concept
+                AND pt.id_thesaurus = c.id_thesaurus
+            LEFT JOIN term t
+                ON t.id_term = pt.id_term
+                AND t.id_thesaurus = pt.id_thesaurus
+                AND t.lang = :lang
             WHERE cr.id_concept2 = :conceptId
               AND cr.id_thesaurus = :thesaurusId
-            ORDER BY c.id_concept
+            ORDER BY COALESCE(t.lexical_value, c.id_concept)
             """)
                 .setParameter("conceptId", conceptId)
                 .setParameter("thesaurusId", thesaurusId)
+                .setParameter("lang", lang)
                 .getResultList();
     }
 
-    public List<Object[]> findReplacedBy(String conceptId, String thesaurusId) {
+    public List<Object[]> findReplacedBy(String conceptId, String thesaurusId, String lang) {
         return em.createNativeQuery("""
-            SELECT c.id_concept, c.id_ark, c.id_handle, c.id_doi
+            SELECT c.id_concept, c.id_ark, c.id_handle, c.id_doi, COALESCE(t.lexical_value, c.id_concept)
             FROM concept_replacedby cr
             JOIN concept c
                 ON c.id_concept = cr.id_concept2
                 AND c.id_thesaurus = cr.id_thesaurus
+            LEFT JOIN preferred_term pt
+                ON pt.id_concept = c.id_concept
+                AND pt.id_thesaurus = c.id_thesaurus
+            LEFT JOIN term t
+                ON t.id_term = pt.id_term
+                AND t.id_thesaurus = pt.id_thesaurus
+                AND t.lang = :lang
             WHERE cr.id_concept1 = :conceptId
               AND cr.id_thesaurus = :thesaurusId
-            ORDER BY c.id_concept
+            ORDER BY COALESCE(t.lexical_value, c.id_concept)
             """)
                 .setParameter("conceptId", conceptId)
-                .setParameter("thesaurusId", thesaurusId)
-                .getResultList();
-    }
-
-    public List<String> findFacets(String conceptId, String thesaurusId) {
-        return em.createNativeQuery("""
-            SELECT ta.id_facet
-            FROM thesaurus_array ta
-            WHERE ta.id_thesaurus = :thesaurusId
-              AND ta.id_concept_parent = :conceptId
-            ORDER BY ta.id_facet
-            """)
-                .setParameter("conceptId", conceptId)
-                .setParameter("thesaurusId", thesaurusId)
-                .getResultList();
-    }
-
-    public Optional<String> findFacetLabel(String facetId, String thesaurusId, String lang) {
-        List<?> rows = em.createNativeQuery("""
-            SELECT nl.lexical_value
-            FROM node_label nl
-            WHERE nl.id_facet = :facetId
-              AND nl.id_thesaurus = :thesaurusId
-              AND nl.lang = :lang
-            LIMIT 1
-            """)
-                .setParameter("facetId", facetId)
                 .setParameter("thesaurusId", thesaurusId)
                 .setParameter("lang", lang)
                 .getResultList();
-        return firstScalarAsString(rows);
+    }
+
+    public List<Object[]> findFacets(String conceptId, String thesaurusId, String lang) {
+        return em.createNativeQuery("""
+            SELECT ta.id_facet, COALESCE(nl.lexical_value, ta.id_facet)
+            FROM thesaurus_array ta
+            LEFT JOIN node_label nl
+                ON nl.id_facet = ta.id_facet
+                AND nl.id_thesaurus = ta.id_thesaurus
+                AND nl.lang = :lang
+            WHERE ta.id_thesaurus = :thesaurusId
+              AND ta.id_concept_parent = :conceptId
+            ORDER BY COALESCE(nl.lexical_value, ta.id_facet)
+            """)
+                .setParameter("conceptId", conceptId)
+                .setParameter("thesaurusId", thesaurusId)
+                .setParameter("lang", lang)
+                .getResultList();
     }
 
     public List<Object[]> findExternalResources(String conceptId, String thesaurusId) {

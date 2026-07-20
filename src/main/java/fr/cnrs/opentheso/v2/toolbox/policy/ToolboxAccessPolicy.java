@@ -30,10 +30,6 @@ public final class ToolboxAccessPolicy {
         return userSession.isLoggedIn();
     }
 
-    public static boolean canManageWorkshopActions(UserSession userSession) {
-        return userSession.isLoggedIn() && userSession.hasRoleAsAdmin();
-    }
-
     public static boolean canAccessMaintenance(UserSession userSession) {
         return userSession.isLoggedIn() && userSession.hasRoleAsAdmin();
     }

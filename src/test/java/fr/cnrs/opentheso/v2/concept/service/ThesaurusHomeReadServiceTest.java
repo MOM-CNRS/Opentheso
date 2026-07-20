@@ -49,10 +49,11 @@ class ThesaurusHomeReadServiceTest {
         when(thesaurusHomeQueryRepository.findArkId("TH1")).thenReturn(Optional.empty());
         when(thesaurusHomeQueryRepository.countValidConcepts("TH1")).thenReturn(42);
         when(thesaurusHomeQueryRepository.findProjectName("TH1")).thenReturn(Optional.of("Projet A"));
-        when(thesaurusHomeQueryRepository.findLastModificationDate("TH1"))
-                .thenReturn(Optional.of(new Date(1_700_000_000_000L)));
-        when(thesaurusHomeQueryRepository.findLastModifiedConcepts("TH1", "fr"))
-                .thenReturn(List.of(new ConceptLinkItem("C1", "Chat")));
+        when(thesaurusHomeQueryRepository.findLastModifiedConceptsBundle("TH1", "fr"))
+                .thenReturn(new ThesaurusHomeQueryRepository.LastModifiedConceptsBundle(
+                        new Date(1_700_000_000_000L),
+                        List.of(new ConceptLinkItem("C1", "Chat"))
+                ));
         when(thesaurusHomeQueryRepository.findMetadata("TH1"))
                 .thenReturn(List.of(new ThesaurusMetadataItem(1, "title", "Thésaurus", "fr", "string")));
         when(thesaurusHomeQueryRepository.findHomePageHtml("TH1", "fr")).thenReturn("<p>Bienvenue</p>");
@@ -74,8 +75,9 @@ class ThesaurusHomeReadServiceTest {
         when(thesaurusHomeQueryRepository.findArkId("TH1")).thenReturn(Optional.of("12345/abc"));
         when(thesaurusHomeQueryRepository.countValidConcepts("TH1")).thenReturn(1);
         when(thesaurusHomeQueryRepository.findProjectName("TH1")).thenReturn(Optional.empty());
+        when(thesaurusHomeQueryRepository.findLastModifiedConceptsBundle("TH1", "fr"))
+                .thenReturn(ThesaurusHomeQueryRepository.LastModifiedConceptsBundle.empty());
         when(thesaurusHomeQueryRepository.findLastModificationDate("TH1")).thenReturn(Optional.empty());
-        when(thesaurusHomeQueryRepository.findLastModifiedConcepts("TH1", "fr")).thenReturn(Collections.emptyList());
         when(thesaurusHomeQueryRepository.findMetadata("TH1")).thenReturn(Collections.emptyList());
         when(thesaurusHomeQueryRepository.findHomePageHtml("TH1", "fr")).thenReturn("");
         when(applicationUriService.resolveApplicationBaseUrl()).thenReturn("http://localhost/opentheso");

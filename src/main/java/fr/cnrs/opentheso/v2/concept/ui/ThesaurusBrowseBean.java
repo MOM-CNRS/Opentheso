@@ -383,6 +383,45 @@ public class ThesaurusBrowseBean implements Serializable, ConceptNavigationSuppo
         }
     }
 
+    @Override
+    public void reloadAfterLanguageChange() {
+        if (!isScreenAvailable()) {
+            return;
+        }
+        String conceptId = selectedConcept != null && selectedConcept.summary() != null
+                ? selectedConcept.summary().conceptId()
+                : null;
+        String groupId = selectedGroup != null ? selectedGroup.groupId() : null;
+        String facetId = selectedFacet != null ? selectedFacet.facetId() : null;
+        RightPanelMode previousPanel = rightPanelMode;
+        LeftTreeMode previousTree = activeLeftTreeMode;
+        int previousLeftTab = leftTabIndex;
+        int previousRightTab = rightTabIndex;
+
+        invalidateConceptTree();
+        invalidateCollectionTree();
+        indexResults = Collections.emptyList();
+        indexSelected = null;
+        selectedNode = null;
+        conceptSelectionContext.clear();
+
+        activeLeftTreeMode = previousTree;
+        leftTabIndex = previousLeftTab;
+        rightTabIndex = previousRightTab;
+        ensureTreeBuilt(activeLeftTreeMode);
+
+        if (previousPanel == RightPanelMode.CONCEPT && StringUtils.isNotBlank(conceptId)) {
+            openConcept(conceptId, true);
+        } else if (previousPanel == RightPanelMode.GROUP && StringUtils.isNotBlank(groupId)) {
+            focusGroup(groupId);
+        } else if (previousPanel == RightPanelMode.FACET && StringUtils.isNotBlank(facetId)) {
+            focusFacet(facetId);
+        } else {
+            openThesaurusHome();
+        }
+        PrimeFaces.current().executeScript("typeof srollToSelected === 'function' && srollToSelected();");
+    }
+
     public boolean isPropositionAuthorized() {
         return suggestionEnabled;
     }

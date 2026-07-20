@@ -41,6 +41,7 @@ import java.text.SimpleDateFormat;
 import java.util.ArrayList;
 import java.util.HashMap;
 import java.util.List;
+import java.util.Map;
 
 @Slf4j
 @Component
@@ -61,8 +62,6 @@ public class ThesaurusSkosDocumentBuilder {
     private final NoteRepository noteRepository;
     private final ThesaurusArrayRepository thesaurusArrayRepository;
     private final ToolboxPreferencePersistence toolboxPreferencePersistence;
-
-    private final HashMap<String, String> superGroupHashMap = new HashMap<>();
 
     public SKOSXmlDocument buildFullDocument(String thesaurusId) throws Exception {
         return buildDocument(thesaurusId, ThesaurusEditionExportOptions.full());
@@ -147,54 +146,80 @@ public class ThesaurusSkosDocumentBuilder {
                 ThesaurusSkosUriSupport.uriFromGroup(groupLabel, preferences, baseUrl),
                 SKOSProperty.MICROTHESAURUS_OF
         );
-        return exportCollectionRecursive(thesaurusId, groupId, resource, preferences, baseUrl);
+        return writeGroupInfo(resource, thesaurusId, groupId, preferences, baseUrl, new HashMap<>());
     }
 
     public List<SKOSResource> getAllFacettes(String idThesaurus, String baseUrl, String originalUri, Preferences nodePreference) throws Exception {
 
         var projections = exportRepository.getAllFacettes(idThesaurus, baseUrl);
         List<SKOSResource> result = new ArrayList<>();
+        Map<String, SKOSResource> byUri = new HashMap<>();
+
+        // Précharge tous les membres de facettes + URI concepts en 2 requêtes
+        Map<String, List<ConceptFacet>> membersByFacet = new HashMap<>();
+        for (ConceptFacet member : conceptFacetRepository.findAllByIdThesaurus(idThesaurus)) {
+            membersByFacet.computeIfAbsent(member.getIdFacet(), key -> new ArrayList<>()).add(member);
+        }
+        Map<String, NodeUri> conceptUriById = loadConceptUriMap(idThesaurus);
 
         for (SkosFacetProjection p : projections) {
-            boolean isExist = false;
-            for (SKOSResource skosResource : result) {
-                var uri = getUriForFacette(p.getId_facet(), idThesaurus, originalUri);
-                if (uri.equalsIgnoreCase(skosResource.getUri())) {
-                    skosResource.addLabel(p.getLexicalvalue(), p.getLang(), SKOSProperty.PREF_LABEL);
-                    isExist = true;
-                    break;
-                }
+            var uri = getUriForFacette(p.getId_facet(), idThesaurus, originalUri);
+            SKOSResource existing = byUri.get(uri);
+            if (existing != null) {
+                existing.addLabel(p.getLexicalvalue(), p.getLang(), SKOSProperty.PREF_LABEL);
+                continue;
             }
 
-            if (!isExist) {
-                var resource = new SKOSResource(getUriForFacette(p.getId_facet(), idThesaurus, originalUri), SKOSProperty.FACET);
-                resource.setIdentifier(p.getId_facet());
-                resource.addRelation(p.getId_concept_parent(), p.getUri_value(), SKOSProperty.SUPER_ORDINATE);
+            var resource = new SKOSResource(uri, SKOSProperty.FACET);
+            resource.setIdentifier(p.getId_facet());
+            resource.addRelation(p.getId_concept_parent(), p.getUri_value(), SKOSProperty.SUPER_ORDINATE);
 
-                var members = conceptFacetRepository.findAllByIdFacetAndIdThesaurus(p.getId_facet(), idThesaurus);
-                for (ConceptFacet member : members) {
-                    var nodeUri = resolveConceptUri(member.getIdConcept(), idThesaurus);
-                    resource.addRelation(nodeUri.getIdConcept(), buildUri(nodeUri, idThesaurus, member.getIdConcept(), originalUri, nodePreference), SKOSProperty.MEMBER);
-                }
-
-                resource.addLabel(p.getLexicalvalue(), p.getLang(), SKOSProperty.PREF_LABEL);
-
-                SimpleDateFormat dateFormat = new SimpleDateFormat("yyyy-MM-dd");
-                resource.addDate(dateFormat.format(p.getCreated()), SKOSProperty.CREATED);
-                resource.addDate(dateFormat.format(p.getModified()), SKOSProperty.MODIFIED);
-
-                addDoc(p.getDefinition(), resource, SKOSProperty.DEFINITION);
-                addDoc(p.getNote(), resource, SKOSProperty.NOTE);
-                addDoc(p.getEditorialnote(), resource, SKOSProperty.EDITORIAL_NOTE);
-                addDoc(p.getSecopenote(), resource, SKOSProperty.SCOPE_NOTE);
-                addDoc(p.getHistorynote(), resource, SKOSProperty.HISTORY_NOTE);
-                addDoc(p.getExample(), resource, SKOSProperty.EXAMPLE);
-                addDoc(p.getChangenote(), resource, SKOSProperty.CHANGE_NOTE);
-
-                result.add(resource);
+            for (ConceptFacet member : membersByFacet.getOrDefault(p.getId_facet(), List.of())) {
+                var nodeUri = conceptUriById.getOrDefault(member.getIdConcept(), bareConceptUri(member.getIdConcept()));
+                resource.addRelation(
+                        nodeUri.getIdConcept(),
+                        buildUri(nodeUri, idThesaurus, member.getIdConcept(), originalUri, nodePreference),
+                        SKOSProperty.MEMBER
+                );
             }
+
+            resource.addLabel(p.getLexicalvalue(), p.getLang(), SKOSProperty.PREF_LABEL);
+
+            SimpleDateFormat dateFormat = new SimpleDateFormat("yyyy-MM-dd");
+            resource.addDate(dateFormat.format(p.getCreated()), SKOSProperty.CREATED);
+            resource.addDate(dateFormat.format(p.getModified()), SKOSProperty.MODIFIED);
+
+            addDoc(p.getDefinition(), resource, SKOSProperty.DEFINITION);
+            addDoc(p.getNote(), resource, SKOSProperty.NOTE);
+            addDoc(p.getEditorialnote(), resource, SKOSProperty.EDITORIAL_NOTE);
+            addDoc(p.getSecopenote(), resource, SKOSProperty.SCOPE_NOTE);
+            addDoc(p.getHistorynote(), resource, SKOSProperty.HISTORY_NOTE);
+            addDoc(p.getExample(), resource, SKOSProperty.EXAMPLE);
+            addDoc(p.getChangenote(), resource, SKOSProperty.CHANGE_NOTE);
+
+            byUri.put(uri, resource);
+            result.add(resource);
         }
         return result;
+    }
+
+    private Map<String, NodeUri> loadConceptUriMap(String thesaurusId) {
+        Map<String, NodeUri> map = new HashMap<>();
+        for (var concept : conceptRepository.findAllByIdThesaurus(thesaurusId)) {
+            var nodeUri = new NodeUri();
+            nodeUri.setIdConcept(concept.getIdConcept());
+            nodeUri.setIdArk(concept.getIdArk());
+            nodeUri.setIdHandle(concept.getIdHandle());
+            nodeUri.setIdDoi(concept.getIdDoi());
+            map.put(concept.getIdConcept(), nodeUri);
+        }
+        return map;
+    }
+
+    private NodeUri bareConceptUri(String conceptId) {
+        var nodeUri = new NodeUri();
+        nodeUri.setIdConcept(conceptId);
+        return nodeUri;
     }
 
     public List<SKOSResource> getAllConcepts(String idThesaurus, String baseUrl, String idGroup, String originalUri,
@@ -729,6 +754,8 @@ public class ThesaurusSkosDocumentBuilder {
 
     private List<SKOSResource> exportCollections(String thesaurusId, Preferences preferences, String baseUrl) {
         var resources = new ArrayList<SKOSResource>();
+        // Map locale (évite l'état partagé du bean singleton entre exports concurrents)
+        Map<String, String> parentByGroupId = new HashMap<>();
         for (String rootGroupId : conceptGroupRepository.findRootGroups(thesaurusId)) {
             var groupLabel = loadGroupLabel(rootGroupId, thesaurusId);
             if (groupLabel == null) {
@@ -744,24 +771,15 @@ public class ThesaurusSkosDocumentBuilder {
                     ThesaurusSkosUriSupport.uriFromGroup(groupLabel, preferences, baseUrl),
                     SKOSProperty.MICROTHESAURUS_OF
             );
-            resources.add(exportCollectionRecursive(thesaurusId, rootGroupId, resource, preferences, baseUrl));
+            // Seulement les racines sont exportées : pas de récursion coûteuse sur des enfants jetés
+            resources.add(writeGroupInfo(resource, thesaurusId, rootGroupId, preferences, baseUrl, parentByGroupId));
         }
         return resources;
     }
 
-    private SKOSResource exportCollectionRecursive(String thesaurusId, String groupId, SKOSResource resource,
-                                                   Preferences preferences, String baseUrl) {
-        var written = writeGroupInfo(resource, thesaurusId, groupId, preferences, baseUrl);
-        for (String childGroupId : relationGroupRepository.findChildGroupIds(thesaurusId, groupId)) {
-            var child = new SKOSResource();
-            child.setIdentifier(childGroupId);
-            exportCollectionRecursive(thesaurusId, childGroupId, child, preferences, baseUrl);
-        }
-        return written;
-    }
-
     private SKOSResource writeGroupInfo(SKOSResource resource, String thesaurusId, String groupId,
-                                        Preferences preferences, String baseUrl) {
+                                        Preferences preferences, String baseUrl,
+                                        Map<String, String> parentByGroupId) {
         var groupLabel = loadGroupLabel(groupId, thesaurusId);
         if (groupLabel == null) {
             return resource;
@@ -804,10 +822,10 @@ public class ThesaurusSkosDocumentBuilder {
                     ThesaurusSkosUriSupport.uriGroupFromNodeUri(childUri, thesaurusId, preferences, baseUrl),
                     SKOSProperty.SUBGROUP
             );
-            superGroupHashMap.put(childUri.getIdConcept(), groupId);
+            parentByGroupId.put(childUri.getIdConcept(), groupId);
         }
 
-        var parentGroupId = superGroupHashMap.get(groupId);
+        var parentGroupId = parentByGroupId.get(groupId);
         if (parentGroupId != null) {
             conceptGroupRepository.findByIdGroupAndIdThesaurus(parentGroupId, thesaurusId).ifPresent(parent -> {
                 var parentUri = NodeUri.builder()
@@ -821,7 +839,7 @@ public class ThesaurusSkosDocumentBuilder {
                         ThesaurusSkosUriSupport.uriGroupFromNodeUri(parentUri, thesaurusId, preferences, baseUrl),
                         SKOSProperty.SUPERGROUP
                 );
-                superGroupHashMap.remove(groupId);
+                parentByGroupId.remove(groupId);
             });
         }
 

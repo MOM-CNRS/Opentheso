@@ -1,6 +1,7 @@
 package fr.cnrs.opentheso.v2.toolbox.ui;
 
 import fr.cnrs.opentheso.utils.MessageUtils;
+import fr.cnrs.opentheso.v2.setting.service.ThesaurusAccessService;
 import fr.cnrs.opentheso.v2.setting.ui.ThesaurusContext;
 import fr.cnrs.opentheso.v2.shared.ui.UserSession;
 import fr.cnrs.opentheso.v2.toolbox.policy.ToolboxAccessPolicy;
@@ -8,6 +9,7 @@ import jakarta.faces.view.ViewScoped;
 import jakarta.inject.Named;
 import lombok.Getter;
 import lombok.RequiredArgsConstructor;
+import org.apache.commons.lang3.StringUtils;
 
 import java.io.Serializable;
 
@@ -20,6 +22,7 @@ public class WorkshopBean implements Serializable {
     private final UserSession userSession;
     private final ThesaurusContext thesaurusContext;
     private final WorkshopImportBean workshopImportBean;
+    private final ThesaurusAccessService thesaurusAccessService;
 
     public boolean isScreenAvailable() {
         return ToolboxAccessPolicy.canAccessWorkshop(userSession)
@@ -27,7 +30,7 @@ public class WorkshopBean implements Serializable {
     }
 
     public boolean isActionsAvailable() {
-        return isScreenAvailable() && ToolboxAccessPolicy.canManageWorkshopActions(userSession);
+        return isScreenAvailable() && isAdminOnCurrentThesaurus();
     }
 
     public String getThesaurusTitle() {
@@ -54,5 +57,18 @@ public class WorkshopBean implements Serializable {
             return;
         }
         workshopImportBean.prepare();
+    }
+
+    private boolean isAdminOnCurrentThesaurus() {
+        Integer userId = userSession.getCurrentUserId();
+        String thesaurusId = getThesaurusId();
+        if (userId == null || StringUtils.isBlank(thesaurusId)) {
+            return false;
+        }
+        return thesaurusAccessService.canManageThesaurus(
+                userId,
+                userSession.isSuperAdmin(),
+                thesaurusId
+        );
     }
 }

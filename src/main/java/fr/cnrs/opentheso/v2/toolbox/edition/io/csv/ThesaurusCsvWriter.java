@@ -566,14 +566,11 @@ public class ThesaurusCsvWriter {
                 csvFilePrinter.printRecord(header);
 
                 List<String> idConcepts = csvExportQuerySupport.listConceptIds(idTheso, idGroups);
+                List<ThesaurusCsvByIdRow> conceptRows = csvExportQuerySupport.loadConceptsForCsvById(idTheso, idLang, idConcepts);
 
                 ArrayList<Object> record = new ArrayList<>();
-                for (String idConcept : idConcepts) {
-                    var conceptRow = csvExportQuerySupport.loadConceptForCsvById(idConcept, idTheso, idLang);
-                    if (conceptRow.isEmpty()) {
-                        continue;
-                    }
-                    appendCsvByIdRow(record, csvFilePrinter, conceptRow.get());
+                for (ThesaurusCsvByIdRow conceptRow : conceptRows) {
+                    appendCsvByIdRow(record, csvFilePrinter, conceptRow);
                 }
             }
             return os.toByteArray();

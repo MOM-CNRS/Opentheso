@@ -2,6 +2,7 @@ package fr.cnrs.opentheso.v2.toolbox.ui;
 
 import fr.cnrs.opentheso.v2.shared.ui.V2LocaleBean;
 import fr.cnrs.opentheso.utils.MessageUtils;
+import fr.cnrs.opentheso.v2.concept.ui.ConsultationShellBean;
 import fr.cnrs.opentheso.v2.setting.ui.ThesaurusContext;
 import fr.cnrs.opentheso.v2.shared.ui.UserSession;
 import fr.cnrs.opentheso.v2.toolbox.exception.InvalidToolboxDataException;
@@ -54,6 +55,8 @@ class EditionBeanTest {
     @Mock
     private EditionThesaurusService editionThesaurusService;
     @Mock
+    private ConsultationShellBean consultationShellBean;
+    @Mock
     private NewThesaurusBean newThesaurusBean;
     @Mock
     private ModifyThesaurusBean modifyThesaurusBean;
@@ -77,6 +80,7 @@ class EditionBeanTest {
                 thesaurusContext,
                 localeBean,
                 editionThesaurusService,
+                consultationShellBean,
                 newThesaurusBean,
                 modifyThesaurusBean,
                 thesaurusExportBean,
@@ -98,6 +102,7 @@ class EditionBeanTest {
         assertTrue(bean.isScreenAvailable());
         assertEquals(EditionView.LIST, bean.getCurrentView());
         verify(thesaurusContext).syncFromViewParams();
+        verify(consultationShellBean).refreshHeaderCatalog();
     }
 
     @Test
@@ -124,6 +129,7 @@ class EditionBeanTest {
         assertEquals(EditionView.LIST, bean.getCurrentView());
         assertEquals(1, bean.getThesaurusList().size());
         assertNull(bean.getSelectedThesaurusForAction());
+        verify(consultationShellBean).refreshHeaderCatalog();
     }
 
     @Test

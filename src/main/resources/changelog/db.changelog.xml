@@ -248,4 +248,26 @@
         <sqlFile path="v26/26-07_01.sql" relativeToChangelogFile="true" splitStatements="false"/>
     </changeSet>
 
+    <changeSet id="26.07.02" author="Firas">
+        <validCheckSum>9:c3592235979c9358d5dbcc7a8991216d</validCheckSum>
+        <validCheckSum>9:dc977af14251bc699b20cf8c9c99e2a9</validCheckSum>
+        <comment>Set-based rewrite of opentheso_get_concepts / opentheso_get_concepts_by_group for faster export</comment>
+        <sqlFile path="v26/26-07_02.sql" relativeToChangelogFile="true" splitStatements="false"/>
+    </changeSet>
+
+    <changeSet id="26.07.03" author="Firas">
+        <comment>Re-apply set-based opentheso_get_concepts after checksum fix (VOLATILE)</comment>
+        <sqlFile path="v26/26-07_03.sql" relativeToChangelogFile="true" splitStatements="false"/>
+    </changeSet>
+
+    <changeSet id="26.07.04" author="Firas">
+        <comment>Fix ambiguous id_theso in set-based opentheso_get_concepts (#variable_conflict)</comment>
+        <sqlFile path="v26/26-07_04.sql" relativeToChangelogFile="true" splitStatements="false"/>
+    </changeSet>
+
+    <changeSet id="26.07.05" author="Firas">
+        <comment>Faster import: set-based child inserts, skip historiques, drop redundant SELECT in opentheso_add_new_concept</comment>
+        <sqlFile path="v26/26-07_05.sql" relativeToChangelogFile="true" splitStatements="false"/>
+    </changeSet>
+
 </databaseChangeLog>

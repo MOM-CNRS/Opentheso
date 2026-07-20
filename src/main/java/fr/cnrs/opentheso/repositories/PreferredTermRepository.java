@@ -18,7 +18,8 @@ public interface PreferredTermRepository extends JpaRepository<PreferredTerm, In
 
     @Modifying
     @Transactional
-    void deleteByIdThesaurus(String idThesaurus);
+    @Query("DELETE FROM PreferredTerm p WHERE p.idThesaurus = :idThesaurus")
+    void deleteByIdThesaurus(@Param("idThesaurus") String idThesaurus);
 
     Optional<PreferredTerm> findByIdThesaurusAndIdConcept(String idThesaurus, String idConcept);
 

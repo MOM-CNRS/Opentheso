@@ -44,9 +44,12 @@
 
             <div id="content-wrapper" style="width: 100%; height:100%; position:relative; overflow: hidden;">
 
-                <h:panelGroup id="header">
-                    <ui:include src="../thesaurus/includes/layout/header.xhtml"/>
-                </h:panelGroup>
+                <h:form id="containerIndex">
+                    <h:panelGroup id="header">
+                        <ui:include src="../thesaurus/includes/layout/header.xhtml"/>
+                    </h:panelGroup>
+                    <input type="hidden" name="csrfToken" value="${sessionScope.CSRF_TOKEN}" />
+                </h:form>
 
                 <div class="container-fluid">
 

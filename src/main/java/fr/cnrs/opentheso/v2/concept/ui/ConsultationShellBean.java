@@ -205,7 +205,15 @@ public class ConsultationShellBean implements Serializable {
     }
 
     private void applyThesaurusSelection(String thesaurusId) {
-        thesaurusContext.selectThesaurus(thesaurusId);
+        ConsultationThesaurusOption option = thesaurusOptions.stream()
+                .filter(item -> item.id().equals(thesaurusId))
+                .findFirst()
+                .orElse(null);
+        if (option != null) {
+            thesaurusContext.selectThesaurus(option.id(), option.title(), option.defaultLang());
+        } else {
+            thesaurusContext.selectThesaurus(thesaurusId);
+        }
     }
 
     private void applyBrowseRefresh() throws IOException {
@@ -227,9 +235,8 @@ public class ConsultationShellBean implements Serializable {
 
     private void refreshBrowseView() {
         invokeViewAction("#{v2ThesaurusBrowseBean.load()}");
-        invokeViewAction("#{v2GlobalConceptSearchBean.init()}");
         invokeViewAction("#{v2ConceptSearchBean.syncFromContext()}");
-        invokeViewAction("#{v2PropositionBean.refresh()}");
+        invokeViewAction("#{v2PropositionBean.refreshPendingCount()}");
         if (PrimeFaces.current().isAjaxRequest()) {
             PrimeFaces.current().ajax().update("indexTitle", "menuBar", "containerIndex", "resultSearchBar");
         }

@@ -12,7 +12,8 @@ public interface PermutedRepository extends JpaRepository<Permuted, Integer> {
 
     @Modifying
     @Transactional
-    void deleteAllByIdThesaurus(String thesaurusId);
+    @Query("DELETE FROM Permuted p WHERE p.idThesaurus = :thesaurusId")
+    void deleteAllByIdThesaurus(@Param("thesaurusId") String thesaurusId);
 
     @Modifying
     @Transactional

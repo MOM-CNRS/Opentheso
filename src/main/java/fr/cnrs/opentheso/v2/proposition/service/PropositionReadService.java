@@ -23,9 +23,8 @@ public class PropositionReadService {
         if (StringUtils.isBlank(thesaurusId)) {
             return 0;
         }
-        return propositionModificationRepository
-                .findAllByIdThesoAndStatus(thesaurusId, PropositionStatusEnum.ENVOYER.name())
-                .size();
+        return (int) propositionModificationRepository
+                .countByIdThesoAndStatus(thesaurusId, PropositionStatusEnum.ENVOYER.name());
     }
 
     @Transactional(readOnly = true)

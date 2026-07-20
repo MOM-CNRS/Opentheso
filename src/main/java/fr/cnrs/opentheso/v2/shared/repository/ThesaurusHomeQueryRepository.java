@@ -136,8 +136,16 @@ public class ThesaurusHomeQueryRepository {
 
     @SuppressWarnings("unchecked")
     public List<ConceptLinkItem> findLastModifiedConcepts(String thesaurusId, String lang) {
+        return findLastModifiedConceptsBundle(thesaurusId, lang).concepts();
+    }
+
+    /**
+     * Last modified concepts + most recent modification date in a single ordered query.
+     */
+    @SuppressWarnings("unchecked")
+    public LastModifiedConceptsBundle findLastModifiedConceptsBundle(String thesaurusId, String lang) {
         String sql = """
-                SELECT c.id_concept, t.lexical_value
+                SELECT c.id_concept, t.lexical_value, c.modified
                 FROM concept c
                 JOIN preferred_term pt ON c.id_concept = pt.id_concept AND c.id_thesaurus = pt.id_thesaurus
                 JOIN term t ON pt.id_term = t.id_term AND pt.id_thesaurus = t.id_thesaurus
@@ -153,15 +161,23 @@ public class ThesaurusHomeQueryRepository {
                 .setParameter("lang", lang)
                 .getResultList();
         if (rows.isEmpty()) {
-            return Collections.emptyList();
+            return LastModifiedConceptsBundle.empty();
         }
-        return rows.stream()
+        Date lastModified = toDate(rows.get(0)[2]);
+        List<ConceptLinkItem> concepts = rows.stream()
                 .map(row -> new ConceptLinkItem(
                         row[0] != null ? (String) row[0] : "",
                         row[1] != null ? (String) row[1] : ""
                 ))
                 .filter(item -> StringUtils.isNotBlank(item.label()))
                 .toList();
+        return new LastModifiedConceptsBundle(lastModified, concepts);
+    }
+
+    public record LastModifiedConceptsBundle(Date lastModified, List<ConceptLinkItem> concepts) {
+        public static LastModifiedConceptsBundle empty() {
+            return new LastModifiedConceptsBundle(null, Collections.emptyList());
+        }
     }
 
     private Date toDate(Object value) {

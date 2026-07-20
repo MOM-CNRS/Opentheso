@@ -70,6 +70,12 @@ public class ThesaurusCsvImportEngine {
     private Preferences nodePreference;
     private String formatDate;
     private int idUser;
+    private SimpleDateFormat dateFormat;
+
+    public void setFormatDate(String formatDate) {
+        this.formatDate = formatDate;
+        this.dateFormat = new SimpleDateFormat(StringUtils.defaultIfBlank(formatDate, "yyyy-MM-dd"));
+    }
 
     public String createThesaurus(String thesoName, String idLang, int idProject, String userName) {
         String idThesaurus = toolboxThesaurusPersistence.createThesaurusId();
@@ -202,9 +208,15 @@ public class ThesaurusCsvImportEngine {
     private boolean addMembers(String idTheso, ThesaurusCsvConceptObject conceptObject) {
 
         if (!conceptObject.getMembers().isEmpty()) {
+            List<ConceptGroupConcept> links = new ArrayList<>();
             for (String member : conceptObject.getMembers()) {
-                saveConceptGroupConcept(member.trim(), conceptObject.getIdConcept(), idTheso);
+                links.add(ConceptGroupConcept.builder()
+                        .idGroup(member.trim())
+                        .idThesaurus(idTheso)
+                        .idConcept(conceptObject.getIdConcept())
+                        .build());
             }
+            conceptGroupConceptRepository.saveAll(links);
         }
         return true;
     }
@@ -218,23 +230,29 @@ public class ThesaurusCsvImportEngine {
         
         // ajout des concepts à la collection
         if (!conceptObject.getMembers().isEmpty()) {
+            List<ConceptGroupConcept> links = new ArrayList<>();
             for (String conceptId : conceptObject.getMembers()) {
-                saveConceptGroupConcept(idGroup, conceptId, idTheso);
+                links.add(ConceptGroupConcept.builder()
+                        .idGroup(idGroup)
+                        .idThesaurus(idTheso)
+                        .idConcept(conceptId)
+                        .build());
             }
+            conceptGroupConceptRepository.saveAll(links);
         }
         
         if (StringUtils.isEmpty(formatDate)) {
             formatDate = "yyyy-MM-dd";
+            dateFormat = new SimpleDateFormat(formatDate);
         }
         Date created = null;
         Date modified = null;
 
-        SimpleDateFormat simpleDateFormat = new SimpleDateFormat(formatDate);        
         try {
             if(conceptObject.getCreated() != null && !conceptObject.getCreated().isEmpty())
-                created = simpleDateFormat.parse(conceptObject.getCreated());
+                created = dateFormat.parse(conceptObject.getCreated());
             if(conceptObject.getModified() != null && !conceptObject.getModified().isEmpty())
-                modified = simpleDateFormat.parse(conceptObject.getModified());            
+                modified = dateFormat.parse(conceptObject.getModified());            
         } catch (ParseException ex) {
             Logger.getLogger(ThesaurusCsvImportEngine.class.getName()).log(Level.SEVERE, null, ex);
         }        
@@ -271,29 +289,22 @@ public class ThesaurusCsvImportEngine {
         if (CollectionUtils.isEmpty(notes)) {
             return;
         }
+        // Import d'un thésaurus neuf : insert direct sans find-before-insert (évite N+1)
         for (ThesaurusCsvConceptLabel note : notes) {
             String lexicalValue = StringEscapeUtils.unescapeXml(
                     fr.cnrs.opentheso.utils.StringUtils.clearNoteFromP(
                             fr.cnrs.opentheso.utils.StringUtils.clearValue(note.getLabel())));
-            var existing = noteRepository.findAllByIdentifierAndIdThesaurusAndNoteTypeCodeAndLang(
-                    identifier, idTheso, noteTypeCode, note.getLang());
-            if (!existing.isEmpty()) {
-                existing.get(0).setLexicalValue(lexicalValue);
-                existing.get(0).setNoteSource("");
-                noteRepository.save(existing.get(0));
-            } else {
-                noteRepository.save(Note.builder()
-                        .noteTypeCode(noteTypeCode)
-                        .idThesaurus(idTheso)
-                        .lang(note.getLang())
-                        .lexicalValue(lexicalValue)
-                        .identifier(identifier)
-                        .noteSource("")
-                        .idUser(idUser)
-                        .created(new Date())
-                        .modified(new Date())
-                        .build());
-            }
+            noteRepository.save(Note.builder()
+                    .noteTypeCode(noteTypeCode)
+                    .idThesaurus(idTheso)
+                    .lang(note.getLang())
+                    .lexicalValue(lexicalValue)
+                    .identifier(identifier)
+                    .noteSource("")
+                    .idUser(idUser)
+                    .created(new Date())
+                    .modified(new Date())
+                    .build());
         }
     }
 
@@ -593,6 +604,9 @@ public class ThesaurusCsvImportEngine {
         }
 
         try {
+            if (dateFormat == null) {
+                dateFormat = new SimpleDateFormat(StringUtils.defaultIfBlank(formatDate, "yyyy-MM-dd"));
+            }
             conceptRepository.addNewConcept(
                     idTheso,
                     conceptObject.getIdConcept(),
@@ -614,8 +628,8 @@ public class ThesaurusCsvImportEngine {
                     replacedBy,
                     gps != null,
                     gps,
-                    (conceptObject.getCreated()== null ? null : new SimpleDateFormat(formatDate).parse(conceptObject.getCreated())),
-                    (conceptObject.getModified()== null ? null : new SimpleDateFormat(formatDate).parse(conceptObject.getModified())),
+                    (conceptObject.getCreated()== null ? null : dateFormat.parse(conceptObject.getCreated())),
+                    (conceptObject.getModified()== null ? null : dateFormat.parse(conceptObject.getModified())),
                     null);
 
         } catch (Exception e) {
@@ -630,6 +644,7 @@ public class ThesaurusCsvImportEngine {
     }
 
     public void addLangsToThesaurus(List<String> langs, String idTheso) {
+        String primaryTitle = resolvePrimaryThesaurusTitle(idTheso);
 
         for (String idLang : langs) {
             if (thesaurusLabelRepository.findByIdThesaurusAndLang(idTheso, idLang).isEmpty()) {
@@ -646,11 +661,19 @@ public class ThesaurusCsvImportEngine {
                 thesaurus1.setRights("");
                 thesaurus1.setSource("");
                 thesaurus1.setSubject("");
-                thesaurus1.setTitle("theso_" + idTheso + "_" + idLang);
+                thesaurus1.setTitle(primaryTitle);
                 thesaurus1.setType("");
                 toolboxThesaurusPersistence.addTranslation(thesaurus1);
             }
         }
+    }
+
+    private String resolvePrimaryThesaurusTitle(String idTheso) {
+        return thesaurusLabelRepository.findByIdThesaurus(idTheso).stream()
+                .map(ThesaurusLabel::getTitle)
+                .filter(org.apache.commons.lang3.StringUtils::isNotBlank)
+                .findFirst()
+                .orElse("theso_" + idTheso);
     }
 
     private void saveConceptGroupConcept(String idGroup, String idConcept, String idThesaurus) {
@@ -663,9 +686,6 @@ public class ThesaurusCsvImportEngine {
 
     private void insertGroup(String idGroup, String idThesaurus, String idArk, String typeCode, String notation,
                              Date created, Date modified) {
-        if (conceptGroupRepository.findByIdGroupAndIdThesaurus(idGroup, idThesaurus).isPresent()) {
-            return;
-        }
         conceptGroupRepository.save(ConceptGroup.builder()
                 .id(conceptGroupRepository.getNextConceptGroupSequence().intValue())
                 .idGroup(idGroup.toLowerCase())

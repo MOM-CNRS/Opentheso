@@ -78,10 +78,22 @@ public class ThesaurusEditionSkosImportBean implements Serializable {
         allLangs = options.languages();
         projects = options.projects();
         superAdmin = options.superAdmin();
-        selectedLang = allLangs.isEmpty() ? "fr" : allLangs.get(0).code();
+        // fr si présent dans la liste, sinon première langue disponible
+        selectedLang = resolveDefaultSourceLang();
         if (!superAdmin && projects.size() == 1) {
             selectedProjectId = String.valueOf(projects.get(0).id());
         }
+    }
+
+    private String resolveDefaultSourceLang() {
+        if (allLangs == null || allLangs.isEmpty()) {
+            return "fr";
+        }
+        return allLangs.stream()
+                .map(LanguageOption::code)
+                .filter(code -> "fr".equalsIgnoreCase(code))
+                .findFirst()
+                .orElse(allLangs.get(0).code());
     }
 
     public void stateChangeListener(AjaxBehaviorEvent event) {
@@ -97,6 +109,9 @@ public class ThesaurusEditionSkosImportBean implements Serializable {
 
         var error = new StringBuffer();
         try (InputStream inputStream = event.getFile().getInputStream()) {
+            if (StringUtils.isBlank(selectedLang)) {
+                selectedLang = resolveDefaultSourceLang();
+            }
             var result = thesaurusEditionSkosImportService.loadSkosFile(inputStream, typeImport, selectedLang, error);
             skosXmlDocument = result.document();
             total = result.totalConcepts();
@@ -125,6 +140,9 @@ public class ThesaurusEditionSkosImportBean implements Serializable {
         }
 
         try {
+            if (StringUtils.isBlank(selectedLang)) {
+                selectedLang = resolveDefaultSourceLang();
+            }
             Integer projectId = StringUtils.isBlank(selectedProjectId) ? null : Integer.parseInt(selectedProjectId);
             String thesaurusId = thesaurusEditionSkosImportService.importNewThesaurus(
                     skosXmlDocument,

@@ -1,9 +1,9 @@
 package fr.cnrs.opentheso.v2.toolbox.ui;
 
 import fr.cnrs.opentheso.utils.MessageUtils;
+import fr.cnrs.opentheso.v2.concept.ui.ConsultationShellBean;
 import fr.cnrs.opentheso.v2.setting.service.ThesaurusAccessService;
 import fr.cnrs.opentheso.v2.shared.ui.UserSession;
-import fr.cnrs.opentheso.v2.toolbox.exception.InvalidToolboxDataException;
 import fr.cnrs.opentheso.v2.toolbox.model.EditionCollectionNode;
 import fr.cnrs.opentheso.v2.toolbox.model.EditionMetadata;
 import fr.cnrs.opentheso.v2.toolbox.model.EditionThesaurusDetails;
@@ -22,7 +22,6 @@ import org.primefaces.event.RowEditEvent;
 import org.primefaces.model.DefaultTreeNode;
 import org.primefaces.model.TreeNode;
 
-import java.util.ArrayList;
 import java.util.List;
 
 import static org.junit.jupiter.api.Assertions.assertEquals;
@@ -48,6 +47,8 @@ class ModifyThesaurusBeanTest {
     private ModifyThesaurusService modifyThesaurusService;
     @Mock
     private EditionBean editionBean;
+    @Mock
+    private ConsultationShellBean consultationShellBean;
     @Mock
     private FacesContext facesContext;
     @Mock
@@ -129,12 +130,15 @@ class ModifyThesaurusBeanTest {
         when(modifyThesaurusService.loadLanguages("TH1"))
                 .thenReturn(List.of(new EditionThesaurusLanguage("fr", "fr", "Label", "Français")));
 
-        try (MockedStatic<MessageUtils> messages = mockStatic(MessageUtils.class);
+        try (MockedStatic<FacesContext> faces = mockStatic(FacesContext.class);
+             MockedStatic<MessageUtils> messages = mockStatic(MessageUtils.class);
              var primeFaces = PrimeFacesTestSupport.open()) {
+            stubConsultationShellLookup(faces);
             bean.addLanguage();
         }
 
         verify(modifyThesaurusService).addLanguage("TH1", "Label", "fr", "admin");
+        verify(consultationShellBean).refreshHeaderCatalog();
         assertEquals(1, bean.getLanguages().size());
     }
 
@@ -186,10 +190,7 @@ class ModifyThesaurusBeanTest {
     @Test
     void backToList_delegatesToEditionBean() {
         try (MockedStatic<FacesContext> faces = mockStatic(FacesContext.class)) {
-            faces.when(FacesContext::getCurrentInstance).thenReturn(facesContext);
-            when(facesContext.getApplication()).thenReturn(application);
-            when(application.evaluateExpressionGet(eq(facesContext), eq("#{v2EditionBean}"), eq(EditionBean.class)))
-                    .thenReturn(editionBean);
+            stubEditionBeanLookup(faces);
 
             bean.backToList();
         }
@@ -202,5 +203,25 @@ class ModifyThesaurusBeanTest {
         when(userSession.getCurrentUserId()).thenReturn(2);
         when(userSession.isSuperAdmin()).thenReturn(false);
         when(thesaurusAccessService.canManageThesaurus(2, false, "TH1")).thenReturn(true);
+    }
+
+    private void stubFacesContext(MockedStatic<FacesContext> faces) {
+        faces.when(FacesContext::getCurrentInstance).thenReturn(facesContext);
+        when(facesContext.getApplication()).thenReturn(application);
+    }
+
+    private void stubEditionBeanLookup(MockedStatic<FacesContext> faces) {
+        stubFacesContext(faces);
+        when(application.evaluateExpressionGet(eq(facesContext), eq("#{v2EditionBean}"), eq(EditionBean.class)))
+                .thenReturn(editionBean);
+    }
+
+    private void stubConsultationShellLookup(MockedStatic<FacesContext> faces) {
+        stubFacesContext(faces);
+        when(application.evaluateExpressionGet(
+                eq(facesContext),
+                eq("#{v2ConsultationShellBean}"),
+                eq(ConsultationShellBean.class)
+        )).thenReturn(consultationShellBean);
     }
 }

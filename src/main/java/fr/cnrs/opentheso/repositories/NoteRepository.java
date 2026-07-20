@@ -31,7 +31,8 @@ public interface NoteRepository extends JpaRepository<Note, Integer> {
 
     @Modifying
     @Transactional
-    void deleteAllByIdThesaurus(String idThesaurus);
+    @Query("DELETE FROM Note n WHERE n.idThesaurus = :idThesaurus")
+    void deleteAllByIdThesaurus(@Param("idThesaurus") String idThesaurus);
 
     @Modifying
     @Transactional

@@ -12,7 +12,6 @@ import org.mockito.junit.jupiter.MockitoExtension;
 
 import java.nio.charset.StandardCharsets;
 import java.util.List;
-import java.util.Optional;
 
 import static org.junit.jupiter.api.Assertions.assertNotNull;
 import static org.junit.jupiter.api.Assertions.assertTrue;
@@ -34,8 +33,8 @@ class ThesaurusCsvWriterExportTest {
     @Test
     void writeCsvById_serializesConceptRow() {
         when(csvExportQuerySupport.listConceptIds("TH1", null)).thenReturn(List.of("C1"));
-        when(csvExportQuerySupport.loadConceptForCsvById("C1", "TH1", "fr"))
-                .thenReturn(Optional.of(sampleConceptRow()));
+        when(csvExportQuerySupport.loadConceptsForCsvById("TH1", "fr", List.of("C1")))
+                .thenReturn(List.of(sampleConceptRow()));
 
         byte[] csv = writer.writeCsvById("TH1", "fr", null, ',');
 

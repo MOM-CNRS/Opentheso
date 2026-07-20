@@ -1,9 +1,9 @@
 package fr.cnrs.opentheso.v2.toolbox.ui;
 
 import fr.cnrs.opentheso.utils.MessageUtils;
+import fr.cnrs.opentheso.v2.setting.service.ThesaurusAccessService;
 import fr.cnrs.opentheso.v2.setting.ui.ThesaurusContext;
 import fr.cnrs.opentheso.v2.shared.ui.UserSession;
-import fr.cnrs.opentheso.v2.toolbox.policy.ToolboxAccessPolicy;
 import org.junit.jupiter.api.BeforeEach;
 import org.junit.jupiter.api.Test;
 import org.junit.jupiter.api.extension.ExtendWith;
@@ -28,12 +28,14 @@ class WorkshopBeanTest {
     private ThesaurusContext thesaurusContext;
     @Mock
     private WorkshopImportBean workshopImportBean;
+    @Mock
+    private ThesaurusAccessService thesaurusAccessService;
 
     private WorkshopBean bean;
 
     @BeforeEach
     void setUp() {
-        bean = new WorkshopBean(userSession, thesaurusContext, workshopImportBean);
+        bean = new WorkshopBean(userSession, thesaurusContext, workshopImportBean, thesaurusAccessService);
     }
 
     @Test
@@ -60,19 +62,23 @@ class WorkshopBeanTest {
     }
 
     @Test
-    void actionsAvailable_requiresAdmin() {
+    void actionsAvailable_requiresAdminOnCurrentThesaurus() {
         when(userSession.isLoggedIn()).thenReturn(true);
-        when(userSession.hasRoleAsAdmin()).thenReturn(true);
+        when(userSession.getCurrentUserId()).thenReturn(7);
+        when(userSession.isSuperAdmin()).thenReturn(false);
         when(thesaurusContext.resolveThesaurusId()).thenReturn("TH1");
+        when(thesaurusAccessService.canManageThesaurus(7, false, "TH1")).thenReturn(true);
 
         assertTrue(bean.isActionsAvailable());
     }
 
     @Test
-    void actionsUnavailableForNonAdmin() {
+    void actionsUnavailableWithoutThesaurusAdmin() {
         when(userSession.isLoggedIn()).thenReturn(true);
-        when(userSession.hasRoleAsAdmin()).thenReturn(false);
+        when(userSession.getCurrentUserId()).thenReturn(7);
+        when(userSession.isSuperAdmin()).thenReturn(false);
         when(thesaurusContext.resolveThesaurusId()).thenReturn("TH1");
+        when(thesaurusAccessService.canManageThesaurus(7, false, "TH1")).thenReturn(false);
 
         assertFalse(bean.isActionsAvailable());
     }
@@ -95,8 +101,10 @@ class WorkshopBeanTest {
     @Test
     void load_preparesBulkImportWhenAccessGranted() {
         when(userSession.isLoggedIn()).thenReturn(true);
-        when(userSession.hasRoleAsAdmin()).thenReturn(true);
+        when(userSession.getCurrentUserId()).thenReturn(7);
+        when(userSession.isSuperAdmin()).thenReturn(false);
         when(thesaurusContext.resolveThesaurusId()).thenReturn("TH1");
+        when(thesaurusAccessService.canManageThesaurus(7, false, "TH1")).thenReturn(true);
 
         bean.load();
 
@@ -107,8 +115,10 @@ class WorkshopBeanTest {
     @Test
     void load_skipsBulkImportForNonAdmin() {
         when(userSession.isLoggedIn()).thenReturn(true);
-        when(userSession.hasRoleAsAdmin()).thenReturn(false);
+        when(userSession.getCurrentUserId()).thenReturn(7);
+        when(userSession.isSuperAdmin()).thenReturn(false);
         when(thesaurusContext.resolveThesaurusId()).thenReturn("TH1");
+        when(thesaurusAccessService.canManageThesaurus(7, false, "TH1")).thenReturn(false);
 
         bean.load();
 
@@ -130,8 +140,10 @@ class WorkshopBeanTest {
     @Test
     void prepareBulkActions_initializesImportForAdmin() {
         when(userSession.isLoggedIn()).thenReturn(true);
-        when(userSession.hasRoleAsAdmin()).thenReturn(true);
+        when(userSession.getCurrentUserId()).thenReturn(7);
+        when(userSession.isSuperAdmin()).thenReturn(false);
         when(thesaurusContext.resolveThesaurusId()).thenReturn("TH1");
+        when(thesaurusAccessService.canManageThesaurus(7, false, "TH1")).thenReturn(true);
 
         bean.prepareBulkActions();
 
@@ -141,8 +153,10 @@ class WorkshopBeanTest {
     @Test
     void prepareBulkActions_skipsImportForNonAdmin() {
         when(userSession.isLoggedIn()).thenReturn(true);
-        when(userSession.hasRoleAsAdmin()).thenReturn(false);
+        when(userSession.getCurrentUserId()).thenReturn(7);
+        when(userSession.isSuperAdmin()).thenReturn(false);
         when(thesaurusContext.resolveThesaurusId()).thenReturn("TH1");
+        when(thesaurusAccessService.canManageThesaurus(7, false, "TH1")).thenReturn(false);
 
         bean.prepareBulkActions();
 

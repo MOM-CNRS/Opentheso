@@ -59,13 +59,17 @@ public class PropositionBean implements Serializable {
     private boolean historyAccepted;
 
     public void refresh() {
+        refreshPendingCount();
+        loadPropositionList();
+    }
+
+    /**
+     * Léger : uniquement le badge header (appelé au changement de thésaurus).
+     */
+    public void refreshPendingCount() {
         String thesaurusId = thesaurusContext.resolveThesaurusId();
         pendingCount = propositionReadService.countPending(thesaurusId);
-        if (isManagerOnCurrentThesaurus()) {
-            propositions = showAll
-                    ? propositionReadService.listAll(thesaurusId)
-                    : propositionReadService.listPending(thesaurusId);
-        } else {
+        if (!isManagerOnCurrentThesaurus()) {
             propositions = Collections.emptyList();
         }
     }
@@ -81,7 +85,19 @@ public class PropositionBean implements Serializable {
     }
 
     public void toggleShowAll() {
-        refresh();
+        refreshPendingCount();
+        loadPropositionList();
+    }
+
+    private void loadPropositionList() {
+        String thesaurusId = thesaurusContext.resolveThesaurusId();
+        if (!isManagerOnCurrentThesaurus() || StringUtils.isBlank(thesaurusId)) {
+            propositions = Collections.emptyList();
+            return;
+        }
+        propositions = showAll
+                ? propositionReadService.listAll(thesaurusId)
+                : propositionReadService.listPending(thesaurusId);
     }
 
     public void openReview(PropositionSummary proposition) {

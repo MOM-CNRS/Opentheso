@@ -23,8 +23,8 @@
                              styleClass="ui-button-success"
                              actionListener="#{v2ConceptAlignmentBean.prepareManualAlignment()}"
                              process="@this"
-                             update="v2ManualAlignmentDlg"
-                             oncomplete="PF('v2ManualAlignmentDlg').show();"/>
+                             update=":containerIndex:v2AddManualAlignmentDlg"
+                             oncomplete="PF('v2AddManualAlignment').show();"/>
         </h:panelGroup>
 
         <h:panelGroup rendered="#{not v2ThesaurusBrowseBean.conceptPanel}">

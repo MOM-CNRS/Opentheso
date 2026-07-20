@@ -39,6 +39,8 @@ public interface ConceptFacetRepository extends JpaRepository<ConceptFacet, Inte
 
     List<ConceptFacet> findAllByIdFacetAndIdThesaurus(String idFacet, String idThesaurus);
 
+    List<ConceptFacet> findAllByIdThesaurus(String idThesaurus);
+
     List<ConceptFacet> findAllByIdConceptAndIdThesaurusAndIdFacet(String idConcept, String idThesaurus, String idFacet);
 
     Optional<ConceptFacet> findByIdFacet(String idFacet);

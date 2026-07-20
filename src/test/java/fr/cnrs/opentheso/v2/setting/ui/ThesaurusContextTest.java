@@ -109,4 +109,15 @@ class ThesaurusContextTest {
         assertNull(thesaurusContext.getCurrentThesaurusTitle());
         assertFalse(thesaurusContext.isFromUrl());
     }
+
+    @Test
+    void selectThesaurus_withCatalogData_skipsResolveQueries() {
+        thesaurusContext.selectThesaurus("TH1", "Catalogue title", "en");
+
+        assertEquals("TH1", thesaurusContext.getCurrentThesaurusId());
+        assertEquals("Catalogue title", thesaurusContext.getCurrentThesaurusTitle());
+        assertEquals("en", thesaurusContext.getCurrentLanguage());
+        verify(thesaurusSelectionService, never()).resolve(anyString());
+        verify(thesaurusWorkLanguageService, never()).resolveForThesaurus(anyString());
+    }
 }

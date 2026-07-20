@@ -52,14 +52,23 @@ public class ConceptSearchBean implements Serializable {
     private boolean singleResultSelected;
 
     public void syncFromContext() {
-        if (StringUtils.isBlank(searchLang)) {
-            searchLang = thesaurusContext.resolveWorkLanguage();
-        }
+        searchLang = thesaurusContext.resolveWorkLanguage();
         loadLanguages();
     }
 
     public void onLanguageChange() {
-        thesaurusContext.setCurrentLanguage("all".equalsIgnoreCase(searchLang) ? null : searchLang);
+        results = Collections.emptyList();
+        resultsVisible = false;
+        singleResultSelected = false;
+        selectedSuggestion = null;
+
+        if ("all".equalsIgnoreCase(searchLang)) {
+            // Recherche multi-langue : on ne change pas la langue d'affichage des arbres.
+            return;
+        }
+
+        thesaurusContext.changeWorkLanguage(searchLang);
+        conceptNavigationSupport.reloadAfterLanguageChange();
     }
 
     public List<ConceptSearchSuggestion> complete(String query) {
@@ -263,9 +272,11 @@ public class ConceptSearchBean implements Serializable {
             return;
         }
         try {
-            availableLanguages = thesaurusPreferenceService
-                    .loadPreferences(thesaurusId, thesaurusContext.resolveWorkLanguage())
-                    .languages();
+            var preferences = thesaurusPreferenceService
+                    .loadPreferencesOrNull(thesaurusId, thesaurusContext.resolveWorkLanguage());
+            availableLanguages = preferences != null && preferences.languages() != null
+                    ? preferences.languages()
+                    : Collections.emptyList();
         } catch (RuntimeException ex) {
             availableLanguages = Collections.emptyList();
         }

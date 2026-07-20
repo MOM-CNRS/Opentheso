@@ -216,7 +216,7 @@ class ConceptSearchBeanTest {
     void syncFromContext_loadsLanguages() {
         when(thesaurusContext.resolveThesaurusId()).thenReturn("TH1");
         when(thesaurusContext.resolveWorkLanguage()).thenReturn("fr");
-        when(thesaurusPreferenceService.loadPreferences("TH1", "fr"))
+        when(thesaurusPreferenceService.loadPreferencesOrNull("TH1", "fr"))
                 .thenReturn(SettingTestFixtures.samplePreferences());
 
         bean.syncFromContext();
@@ -274,21 +274,23 @@ class ConceptSearchBeanTest {
     }
 
     @Test
-    void onLanguageChange_updatesContextLanguage() {
+    void onLanguageChange_updatesContextLanguageAndReloadsPage() {
         bean.setSearchLang("en");
 
         bean.onLanguageChange();
 
-        verify(thesaurusContext).setCurrentLanguage("en");
+        verify(thesaurusContext).changeWorkLanguage("en");
+        verify(conceptNavigationSupport).reloadAfterLanguageChange();
     }
 
     @Test
-    void onLanguageChange_resetsAllLanguageInContext() {
+    void onLanguageChange_keepsDisplayLanguageWhenAllSelected() {
         bean.setSearchLang("all");
 
         bean.onLanguageChange();
 
-        verify(thesaurusContext).setCurrentLanguage(null);
+        verify(thesaurusContext, never()).changeWorkLanguage(org.mockito.ArgumentMatchers.anyString());
+        verify(conceptNavigationSupport, never()).reloadAfterLanguageChange();
     }
 
     @Test
@@ -414,7 +416,7 @@ class ConceptSearchBeanTest {
     void syncFromContext_handlesPreferenceFailure() {
         when(thesaurusContext.resolveThesaurusId()).thenReturn("TH1");
         when(thesaurusContext.resolveWorkLanguage()).thenReturn("fr");
-        when(thesaurusPreferenceService.loadPreferences("TH1", "fr")).thenThrow(new RuntimeException("db"));
+        when(thesaurusPreferenceService.loadPreferencesOrNull("TH1", "fr")).thenThrow(new RuntimeException("db"));
 
         bean.syncFromContext();
 

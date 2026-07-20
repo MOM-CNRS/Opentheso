@@ -52,7 +52,8 @@ public interface TermRepository extends JpaRepository<Term, Integer> {
 
     @Transactional
     @Modifying
-    void deleteByIdThesaurus(String idThesaurus);
+    @Query("DELETE FROM Term t WHERE t.idThesaurus = :idThesaurus")
+    void deleteByIdThesaurus(@Param("idThesaurus") String idThesaurus);
 
     @Transactional
     @Modifying

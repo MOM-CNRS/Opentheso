@@ -19,13 +19,17 @@ import java.util.Optional;
 
 public interface HierarchicalRelationshipRepository extends JpaRepository<HierarchicalRelationship, Integer> {
 
+    boolean existsByIdThesaurusAndIdConcept1AndIdConcept2AndRole(
+            String idThesaurus, String idConcept1, String idConcept2, String role);
+
     List<HierarchicalRelationship> findAllByIdThesaurusAndIdConcept1AndRoleLike(String idThesaurus, String idConcept1, String roleLike);
 
     List<HierarchicalRelationship> findAllByIdThesaurusAndIdConcept2AndRoleLike(String idThesaurus, String idConcept2, String roleLike);
 
     @Modifying
     @Transactional
-    void deleteAllByIdThesaurus(String idThesaurus);
+    @Query("DELETE FROM HierarchicalRelationship h WHERE h.idThesaurus = :idThesaurus")
+    void deleteAllByIdThesaurus(@Param("idThesaurus") String idThesaurus);
 
     @Modifying
     @Transactional

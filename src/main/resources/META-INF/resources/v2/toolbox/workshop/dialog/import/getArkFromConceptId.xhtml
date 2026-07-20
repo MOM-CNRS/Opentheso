@@ -72,11 +72,16 @@
                                      update="getArkFromConceptIdForm"/>
 
                     <p:commandButton value="#{v2LocaleBean.getMsg('apply')}" styleClass="ui-button-success" icon="fa fa-upload"
+                                     onclick="PrimeFaces.monitorDownload(startGetArk, stopGetArk);"
                                      update="messageIndex getArkFromConceptIdForm"
-                                     ajax="true" process="@form"
+                                     ajax="false" process="@form"
                                      disabled="#{!v2WorkshopImportBean.loadDone}" >
                         <p:fileDownload value="#{v2WorkshopImportBean.getArkFromConceptId()}" />
                     </p:commandButton>
+                    <script type="text/javascript">
+                        function startGetArk() { PF('getArkFromConceptId').hide(); }
+                        function stopGetArk() {}
+                    </script>
                 </div>
             </h:panelGroup>
             <input type="hidden" name="csrfToken" value="${sessionScope.CSRF_TOKEN}" />

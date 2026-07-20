@@ -81,19 +81,27 @@ public class MaintenanceBean implements Serializable {
             thesaurusMaintenanceService.reorganizeHierarchy(thesaurusContext.getCurrentThesaurusId());
             MessageUtils.showInformationMessage("Correction réussie !!!");
         } catch (RuntimeException e) {
-            MessageUtils.showErrorMessage("Erreur lors de la réorganisation de la hiérarchie");
+            MessageUtils.showErrorMessage(StringUtils.defaultIfBlank(e.getMessage(),
+                    "Erreur lors de la réorganisation de la hiérarchie"));
         }
     }
 
     public void reorganizeConceptsAndCollections() {
-        if (!isScreenAvailable() || !isSuperAdmin()) {
+        if (!isScreenAvailable()) {
+            return;
+        }
+        if (!isSuperAdmin()) {
+            MessageUtils.showWarnMessage("Action réservée aux super-administrateurs");
             return;
         }
         try {
-            thesaurusMaintenanceService.reorganizeConceptsAndCollections(thesaurusContext.getCurrentThesaurusId());
-            MessageUtils.showInformationMessage("Correction réussie !!!");
+            int cleaned = thesaurusMaintenanceService.reorganizeConceptsAndCollections(
+                    thesaurusContext.getCurrentThesaurusId());
+            MessageUtils.showInformationMessage(
+                    "Correction réussie !!! Liens collection/concept nettoyés : " + cleaned);
         } catch (RuntimeException e) {
-            MessageUtils.showErrorMessage("Erreur lors de la réorganisation des concepts et collections");
+            MessageUtils.showErrorMessage(StringUtils.defaultIfBlank(e.getMessage(),
+                    "Erreur lors de la réorganisation des concepts et collections"));
         }
     }
 
@@ -111,6 +119,10 @@ public class MaintenanceBean implements Serializable {
 
     public void generateArkFromConceptId() {
         if (!isScreenAvailable()) {
+            return;
+        }
+        if (StringUtils.isBlank(arkEditor.getNaan())) {
+            MessageUtils.showErrorMessage("Le NAAN est obligatoire");
             return;
         }
         int count = thesaurusMaintenanceService.generateArkFromConceptId(

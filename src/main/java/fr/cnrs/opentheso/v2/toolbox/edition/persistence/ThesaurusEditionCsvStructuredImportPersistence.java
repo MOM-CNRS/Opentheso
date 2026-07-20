@@ -1,12 +1,13 @@
 package fr.cnrs.opentheso.v2.toolbox.edition.persistence;
 
 import fr.cnrs.opentheso.models.nodes.NodeTree;
-import fr.cnrs.opentheso.v2.concept.write.model.command.AddChildConceptCommand;
-import fr.cnrs.opentheso.v2.concept.write.model.command.AddTopConceptCommand;
-import fr.cnrs.opentheso.v2.concept.write.persistence.ConceptStructureNativeWriteService;
+import fr.cnrs.opentheso.v2.concept.write.persistence.ConceptCreationWriteRepository;
 import fr.cnrs.opentheso.v2.toolbox.edition.io.csv.ThesaurusCsvImportEngine;
+import fr.cnrs.opentheso.v2.toolbox.edition.model.ThesaurusCsvConceptLabel;
+import fr.cnrs.opentheso.v2.toolbox.edition.model.ThesaurusCsvConceptObject;
 import fr.cnrs.opentheso.v2.toolbox.edition.model.ThesaurusEditionStructuredImportResult;
 import fr.cnrs.opentheso.v2.toolbox.edition.model.ThesaurusEditionStructuredParseResult;
+import fr.cnrs.opentheso.v2.toolbox.edition.support.ThesaurusImportBatchSupport;
 import fr.cnrs.opentheso.v2.toolbox.persistence.ToolboxPreferencePersistence;
 import lombok.RequiredArgsConstructor;
 import org.apache.commons.collections4.CollectionUtils;
@@ -18,15 +19,20 @@ import java.io.ByteArrayInputStream;
 import java.io.InputStreamReader;
 import java.nio.charset.StandardCharsets;
 import java.util.ArrayList;
+import java.util.Iterator;
 import java.util.List;
+import java.util.concurrent.atomic.AtomicInteger;
 
 @Component
 @RequiredArgsConstructor
 public class ThesaurusEditionCsvStructuredImportPersistence {
 
+    private static final String FORMAT_DATE = "yyyy-MM-dd";
+
     private final ThesaurusCsvImportEngine thesaurusCsvImportEngine;
     private final ToolboxPreferencePersistence toolboxPreferencePersistence;
-    private final ConceptStructureNativeWriteService conceptStructureNativeWriteService;
+    private final ConceptCreationWriteRepository conceptCreationWriteRepository;
+    private final ThesaurusImportBatchSupport importBatchSupport;
 
     public ThesaurusEditionStructuredParseResult parse(byte[] content, char delimiter) {
         if (content == null || content.length == 0) {
@@ -93,80 +99,110 @@ public class ThesaurusEditionCsvStructuredImportPersistence {
         int projectId = projectGroupId == null ? -1 : projectGroupId;
         String normalizedSourceLang = StringUtils.defaultIfBlank(sourceLang, "fr");
 
-        String thesaurusId = thesaurusCsvImportEngine.createThesaurus(
-                StringUtils.defaultString(thesaurusName),
-                normalizedSourceLang,
-                projectId,
-                userName
-        );
+        String thesaurusId = importBatchSupport.inTransaction(() -> {
+            String id = thesaurusCsvImportEngine.createThesaurus(
+                    StringUtils.defaultString(thesaurusName),
+                    normalizedSourceLang,
+                    projectId,
+                    userName
+            );
+            if (StringUtils.isBlank(id)) {
+                return null;
+            }
+            String resolvedName = StringUtils.defaultIfBlank(thesaurusName, "theso_" + id);
+            toolboxPreferencePersistence.initPreferences(id, normalizedSourceLang);
+            toolboxPreferencePersistence.updatePreferredName(id, resolvedName);
+            thesaurusCsvImportEngine.setFormatDate(FORMAT_DATE);
+            thesaurusCsvImportEngine.setIdUser(userId);
+            thesaurusCsvImportEngine.setNodePreference(toolboxPreferencePersistence.findPreferences(id));
+            return id;
+        });
+
         if (StringUtils.isBlank(thesaurusId)) {
             return ThesaurusEditionStructuredImportResult.error("Erreur lors de la création du thésaurus");
         }
 
-        toolboxPreferencePersistence.initPreferences(thesaurusId, normalizedSourceLang);
+        int conceptCount = countConcepts(root);
+        List<Long> reservedIds = conceptCreationWriteRepository.reserveNumericConceptIds(conceptCount);
+        Iterator<Long> idIterator = reservedIds.iterator();
 
-        int importedConcepts = 0;
+        List<ThesaurusCsvConceptObject> concepts = new ArrayList<>(conceptCount);
         for (NodeTree child : root.getChildrens()) {
-            importedConcepts += insertTree(child, thesaurusId, null, normalizedSourceLang, userId, userName);
+            flattenTree(child, null, normalizedSourceLang, concepts, idIterator);
         }
 
-        return new ThesaurusEditionStructuredImportResult(thesaurusId, importedConcepts, null);
+        AtomicInteger importedConcepts = new AtomicInteger();
+        String finalThesaurusId = thesaurusId;
+        importBatchSupport.forEachBatched(concepts, (batch, ignored) -> {
+            for (ThesaurusCsvConceptObject concept : batch) {
+                if (thesaurusCsvImportEngine.addConceptV2(finalThesaurusId, concept, userId, FORMAT_DATE)) {
+                    importedConcepts.incrementAndGet();
+                }
+            }
+        });
+
+        return new ThesaurusEditionStructuredImportResult(thesaurusId, importedConcepts.get(), null);
     }
 
-    private int insertTree(
+    private int countConcepts(NodeTree root) {
+        int count = 0;
+        for (NodeTree child : root.getChildrens()) {
+            count += countNode(child);
+        }
+        return count;
+    }
+
+    private int countNode(NodeTree node) {
+        if (node == null || StringUtils.isBlank(node.getPreferredTerm())) {
+            return 0;
+        }
+        int count = 1;
+        if (CollectionUtils.isNotEmpty(node.getChildrens())) {
+            for (NodeTree child : node.getChildrens()) {
+                count += countNode(child);
+            }
+        }
+        return count;
+    }
+
+    private void flattenTree(
             NodeTree nodeTree,
-            String thesaurusId,
             String parentConceptId,
             String sourceLang,
-            int userId,
-            String userName
+            List<ThesaurusCsvConceptObject> concepts,
+            Iterator<Long> idIterator
     ) {
-        String conceptId;
-        if (parentConceptId == null) {
-            var result = conceptStructureNativeWriteService.addTopConcept(new AddTopConceptCommand(
-                    thesaurusId,
-                    sourceLang,
-                    userId,
-                    userName,
-                    nodeTree.getPreferredTerm().trim(),
-                    null,
-                    null,
-                    "",
-                    null,
-                    false
-            ));
-            if (!result.success() || StringUtils.isBlank(result.createdConceptId())) {
-                return 0;
-            }
-            conceptId = result.createdConceptId();
-        } else {
-            var result = conceptStructureNativeWriteService.addChildConcept(new AddChildConceptCommand(
-                    thesaurusId,
-                    parentConceptId,
-                    sourceLang,
-                    userId,
-                    userName,
-                    nodeTree.getPreferredTerm().trim(),
-                    null,
-                    null,
-                    "",
-                    null,
-                    "NT",
-                    false
-            ));
-            if (!result.success() || StringUtils.isBlank(result.createdConceptId())) {
-                return 0;
-            }
-            conceptId = result.createdConceptId();
+        if (nodeTree == null || StringUtils.isBlank(nodeTree.getPreferredTerm())) {
+            return;
+        }
+        if (!idIterator.hasNext()) {
+            throw new IllegalStateException("Réservation d'identifiants insuffisante pour l'import structuré");
         }
 
-        int imported = 1;
+        String conceptId = String.valueOf(idIterator.next());
+        nodeTree.setIdConcept(conceptId);
+
+        var concept = new ThesaurusCsvConceptObject();
+        concept.setIdConcept(conceptId);
+        concept.setType("skos:Concept");
+        concept.setConceptType("concept");
+
+        var prefLabel = new ThesaurusCsvConceptLabel();
+        prefLabel.setLabel(nodeTree.getPreferredTerm().trim());
+        prefLabel.setLang(sourceLang);
+        concept.getPrefLabels().add(prefLabel);
+
+        if (StringUtils.isNotBlank(parentConceptId)) {
+            concept.getBroaders().add(parentConceptId);
+        }
+
+        concepts.add(concept);
+
         if (CollectionUtils.isNotEmpty(nodeTree.getChildrens())) {
             for (NodeTree child : nodeTree.getChildrens()) {
-                imported += insertTree(child, thesaurusId, conceptId, sourceLang, userId, userName);
+                flattenTree(child, conceptId, sourceLang, concepts, idIterator);
             }
         }
-        return imported;
     }
 
     private NodeTree createTree(String[][] matrix, int row, int column) {
