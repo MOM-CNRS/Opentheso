@@ -33,9 +33,6 @@ import java.util.logging.Logger;
 
 import jakarta.inject.Named;
 import jakarta.faces.view.ViewScoped;
-import jakarta.faces.context.FacesContext;
-import jakarta.faces.context.ExternalContext;
-import jakarta.servlet.http.HttpServletRequest;
 import lombok.Getter;
 import lombok.RequiredArgsConstructor;
 import lombok.Setter;
@@ -634,13 +631,12 @@ public class CandidatBean implements Serializable {
         }
     }
 
-    public void initialNewCandidat() throws IOException {
+    public void initialNewCandidat() {
 
         if (StringUtils.isEmpty(resolveThesaurusId())) {
             MessageUtils.showWarnMessage(localeBean.getMsg("candidat.save.msg9"));
             return;
         }
-        setIsNewCandidatActivate(true);
 
         candidatSelected = new CandidatDto();
         candidatSelected.setIdConcepte(null);
@@ -653,8 +649,8 @@ public class CandidatBean implements Serializable {
         initialCandidat = null;
         definition = null;
 
-        ExternalContext ec = FacesContext.getCurrentInstance().getExternalContext();
-        ec.redirect(((HttpServletRequest) ec.getRequest()).getRequestURI());
+        isShowCandidatActivate = false;
+        setIsNewCandidatActivate(true);
     }
 
     /**

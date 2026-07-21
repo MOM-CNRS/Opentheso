@@ -759,6 +759,7 @@ public class CandidatMutationPersistence {
                 .status(concept.getStatus())
                 .notation(concept.getNotation())
                 .topConcept(concept.isTopConcept())
+                .idGroup(concept.getIdGroup() == null ? "" : concept.getIdGroup())
                 .idUser(concept.getIdUser())
                 .modified(new Date())
                 .build());

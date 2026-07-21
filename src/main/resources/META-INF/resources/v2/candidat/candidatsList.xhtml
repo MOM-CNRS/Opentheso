@@ -26,7 +26,7 @@
                     <p:commandButton value="#{v2LocaleBean.getMsg('candidat.add')}" 
                                      styleClass="ui-button-success" process="@this"
                                      icon="fas fa-plus-circle"
-                                     actionListener="#{v2CandidatBean.initialNewCandidat()}" update="tabViewCandidat tabViewCandidat:panelCandidateList" style="font-size: 13px;"/>
+                                     actionListener="#{v2CandidatBean.initialNewCandidat()}" update="tabViewCandidat messageIndex" style="font-size: 13px;"/>
                 </p:toolbarGroup>
                 <p:toolbarGroup align="right" style="font-size: 13px;">
                     <p:menuButton  value="#{v2LocaleBean.getMsg('candidat.import_export_candidates')}" icon="fas fa-download"

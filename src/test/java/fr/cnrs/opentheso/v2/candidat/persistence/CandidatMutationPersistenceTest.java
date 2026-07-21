@@ -366,6 +366,10 @@ class CandidatMutationPersistenceTest {
         assertTrue(persistence.saveNewCandidat(candidat, "TH1", "fr", 7, "admin", "fr", "Une définition"));
 
         verify(conceptRepository).save(any(Concept.class));
+        ArgumentCaptor<fr.cnrs.opentheso.entites.ConceptHistorique> historyCaptor =
+                ArgumentCaptor.forClass(fr.cnrs.opentheso.entites.ConceptHistorique.class);
+        verify(conceptHistoriqueRepository).save(historyCaptor.capture());
+        assertEquals("", historyCaptor.getValue().getIdGroup());
         verify(termRepository, org.mockito.Mockito.atLeastOnce()).save(any(fr.cnrs.opentheso.entites.Term.class));
         verify(preferredTermRepository).save(any());
         ArgumentCaptor<fr.cnrs.opentheso.entites.Note> noteCaptor = ArgumentCaptor.forClass(fr.cnrs.opentheso.entites.Note.class);
