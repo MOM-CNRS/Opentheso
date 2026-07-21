@@ -32,17 +32,7 @@ public class ConceptSearchQueryRepository {
                 WHERE c.status != 'CA'
                   AND pt.id_thesaurus = :thesaurusId
                   AND (:lang IS NULL OR t.lang = :lang)
-                  AND (
-                      unaccent(lower(t.lexical_value)) ILIKE CONCAT(unaccent(lower(:value)), '%')
-                      OR unaccent(lower(t.lexical_value)) ILIKE CONCAT('% ', unaccent(lower(:value)), '%')
-                      OR unaccent(lower(t.lexical_value)) ILIKE CONCAT('%-', unaccent(lower(:value)), '%')
-                      OR unaccent(lower(t.lexical_value)) ILIKE CONCAT('%_', unaccent(lower(:value)), '%')
-                      OR unaccent(lower(t.lexical_value)) ILIKE CONCAT('%;', unaccent(lower(:value)), '%')
-                      OR unaccent(lower(t.lexical_value)) ILIKE CONCAT('%''', unaccent(lower(:value)), '%')
-                      OR unaccent(lower(t.lexical_value)) ILIKE CONCAT('%ʿ', unaccent(lower(:value)), '%')
-                      OR unaccent(lower(t.lexical_value)) ILIKE CONCAT('%[', unaccent(lower(:value)), '%')
-                      OR unaccent(lower(t.lexical_value)) ILIKE CONCAT('%(', unaccent(lower(:value)), '%')
-                  )
+                  AND unaccent(lower(t.lexical_value)) ~* ('(^|[^[:alpha:]])' || unaccent(lower(:value)))
             ) x
             ORDER BY x.sort_norm
             LIMIT 50
@@ -66,27 +56,7 @@ public class ConceptSearchQueryRepository {
                 WHERE c.status != 'CA'
                   AND npt.id_thesaurus = :thesaurusId
                   AND (:lang IS NULL OR npt.lang = :lang)
-                  AND (
-                      unaccent(lower(npt.lexical_value)) ILIKE CONCAT(unaccent(lower(:value)), '%')
-                      OR unaccent(lower(npt.lexical_value)) ILIKE CONCAT('% ', unaccent(lower(:value)), '%')
-                      OR unaccent(lower(npt.lexical_value)) ILIKE CONCAT('%-', unaccent(lower(:value)), '%')
-                      OR unaccent(lower(npt.lexical_value)) ILIKE CONCAT('%_', unaccent(lower(:value)), '%')
-                      OR unaccent(lower(npt.lexical_value)) ILIKE CONCAT('%;', unaccent(lower(:value)), '%')
-                      OR unaccent(lower(npt.lexical_value)) ILIKE CONCAT('%''', unaccent(lower(:value)), '%')
-                      OR unaccent(lower(npt.lexical_value)) ILIKE CONCAT('%ʿ', unaccent(lower(:value)), '%')
-                      OR unaccent(lower(npt.lexical_value)) ILIKE CONCAT('%[', unaccent(lower(:value)), '%')
-                      OR unaccent(lower(npt.lexical_value)) ILIKE CONCAT('%(', unaccent(lower(:value)), '%')
-                  )
-                  AND NOT EXISTS (
-                      SELECT 1
-                      FROM concept_group_concept cgc2
-                      JOIN concept_group cg2
-                        ON cgc2.idgroup = cg2.idgroup
-                       AND cgc2.idthesaurus = cg2.idthesaurus
-                      WHERE cgc2.idconcept = c.id_concept
-                        AND cgc2.idthesaurus = c.id_thesaurus
-                        AND cg2.private = true
-                  )
+                  AND unaccent(lower(npt.lexical_value)) ~* ('(^|[^[:alpha:]])' || unaccent(lower(:value)))
             ) x
             ORDER BY x.sort_norm
             LIMIT 50
