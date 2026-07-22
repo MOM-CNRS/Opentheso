@@ -1,25 +1,32 @@
 package fr.cnrs.opentheso.v2.concept.ui;
 
+import fr.cnrs.opentheso.utils.MessageUtils;
 import fr.cnrs.opentheso.v2.concept.model.ConsultationThesaurusOption;
 import fr.cnrs.opentheso.v2.concept.service.ConsultationCatalogService;
 import fr.cnrs.opentheso.v2.setting.ui.ThesaurusContext;
 import fr.cnrs.opentheso.v2.shared.repository.ThesaurusSettingsQueryRepository;
 import fr.cnrs.opentheso.v2.shared.service.PlatformHomeReadService;
+import fr.cnrs.opentheso.v2.shared.session.SessionLifecycleService;
 import fr.cnrs.opentheso.v2.shared.session.SsoSessionBridge;
 import fr.cnrs.opentheso.v2.shared.ui.UserSession;
 import fr.cnrs.opentheso.v2.shared.ui.V2LocaleBean;
+import jakarta.faces.context.ExternalContext;
+import jakarta.faces.context.FacesContext;
 import org.junit.jupiter.api.BeforeEach;
 import org.junit.jupiter.api.Test;
 import org.junit.jupiter.api.extension.ExtendWith;
 import org.mockito.Mock;
+import org.mockito.MockedStatic;
 import org.mockito.junit.jupiter.MockitoExtension;
 
 import java.util.List;
+import java.util.Map;
 import java.util.Optional;
 
 import static org.junit.jupiter.api.Assertions.assertEquals;
 import static org.junit.jupiter.api.Assertions.assertFalse;
 import static org.junit.jupiter.api.Assertions.assertTrue;
+import static org.mockito.Mockito.mockStatic;
 import static org.mockito.Mockito.verify;
 import static org.mockito.Mockito.when;
 
@@ -40,6 +47,12 @@ class ConsultationShellBeanTest {
     private PlatformHomeReadService platformHomeReadService;
     @Mock
     private SsoSessionBridge ssoSessionBridge;
+    @Mock
+    private SessionLifecycleService sessionLifecycleService;
+    @Mock
+    private FacesContext facesContext;
+    @Mock
+    private ExternalContext externalContext;
 
     private ConsultationShellBean consultationShellBean;
 
@@ -52,7 +65,8 @@ class ConsultationShellBeanTest {
                 v2LocaleBean,
                 thesaurusSettingsQueryRepository,
                 platformHomeReadService,
-                ssoSessionBridge
+                ssoSessionBridge,
+                sessionLifecycleService
         );
     }
 
@@ -131,5 +145,63 @@ class ConsultationShellBeanTest {
         consultationShellBean.afterLogout();
 
         verify(thesaurusContext).clearSelection();
+    }
+
+    @Test
+    void clearSession_clearsSelectionThenDelegatesToLifecycle() throws Exception {
+        consultationShellBean.clearSession();
+
+        verify(thesaurusContext).clearSelection();
+        verify(sessionLifecycleService).clearAndRedirectFromFaces();
+    }
+
+    @Test
+    void load_showsWarningWhenSessionExpiredParamPresent() {
+        when(facesContext.getExternalContext()).thenReturn(externalContext);
+        when(externalContext.getRequestParameterMap())
+                .thenReturn(Map.of(SessionLifecycleService.PARAM_SESSION_EXPIRED, "1"));
+        when(v2LocaleBean.getMsg("session.expired")).thenReturn("Session expirée");
+        when(ssoSessionBridge.consumePendingThesaurusId()).thenReturn(null);
+        when(ssoSessionBridge.consumePendingConceptId()).thenReturn(null);
+        when(v2LocaleBean.getIdLangue()).thenReturn("fr");
+        when(userSession.isLoggedIn()).thenReturn(false);
+        when(userSession.isSuperAdmin()).thenReturn(false);
+        when(consultationCatalogService.listProjects(null, false)).thenReturn(List.of());
+        when(consultationCatalogService.listThesauri(null, false, -1, "fr")).thenReturn(List.of());
+        when(platformHomeReadService.loadHomePageHtml("fr")).thenReturn("");
+
+        try (MockedStatic<FacesContext> faces = mockStatic(FacesContext.class);
+             MockedStatic<MessageUtils> messages = mockStatic(MessageUtils.class)) {
+            faces.when(FacesContext::getCurrentInstance).thenReturn(facesContext);
+
+            consultationShellBean.load();
+
+            messages.verify(() -> MessageUtils.showWarnMessage("Session expirée"));
+        }
+    }
+
+    @Test
+    void load_showsInfoWhenLogoutParamPresent() {
+        when(facesContext.getExternalContext()).thenReturn(externalContext);
+        when(externalContext.getRequestParameterMap())
+                .thenReturn(Map.of(SessionLifecycleService.PARAM_LOGOUT, "1"));
+        when(v2LocaleBean.getMsg("connect.goodbye")).thenReturn("Au revoir");
+        when(ssoSessionBridge.consumePendingThesaurusId()).thenReturn(null);
+        when(ssoSessionBridge.consumePendingConceptId()).thenReturn(null);
+        when(v2LocaleBean.getIdLangue()).thenReturn("fr");
+        when(userSession.isLoggedIn()).thenReturn(false);
+        when(userSession.isSuperAdmin()).thenReturn(false);
+        when(consultationCatalogService.listProjects(null, false)).thenReturn(List.of());
+        when(consultationCatalogService.listThesauri(null, false, -1, "fr")).thenReturn(List.of());
+        when(platformHomeReadService.loadHomePageHtml("fr")).thenReturn("");
+
+        try (MockedStatic<FacesContext> faces = mockStatic(FacesContext.class);
+             MockedStatic<MessageUtils> messages = mockStatic(MessageUtils.class)) {
+            faces.when(FacesContext::getCurrentInstance).thenReturn(facesContext);
+
+            consultationShellBean.load();
+
+            messages.verify(() -> MessageUtils.showInformationMessage("Au revoir"));
+        }
     }
 }

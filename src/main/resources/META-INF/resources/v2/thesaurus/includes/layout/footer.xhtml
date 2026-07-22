@@ -6,7 +6,7 @@
     <p:idleMonitor timeout="#{v2NavigationBean.sessionTimeoutInMilliseconds}" onidle="handleSessionTimeout()"/>
     <h:outputScript>
         function handleSessionTimeout() {
-            window.location.href = '/v2/thesaurus';
+            window.location.href = '#{v2NavigationBean.sessionExpireUrl}';
         }
     </h:outputScript>
 

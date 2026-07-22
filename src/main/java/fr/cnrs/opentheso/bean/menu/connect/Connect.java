@@ -17,7 +17,7 @@ public class Connect implements Serializable{
     @Value("${settings.workLanguage:fr}")
     private String workLanguage;
 
-    @Value("${info.application.version}")
+    @Value("${info.application.version:dev}")
     private String buildVersion;
 
     //Retourne la version actuelle d'Opentheso d'après le WAR

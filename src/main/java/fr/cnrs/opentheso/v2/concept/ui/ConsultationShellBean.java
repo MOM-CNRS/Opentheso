@@ -1,8 +1,10 @@
 package fr.cnrs.opentheso.v2.concept.ui;
 
+import fr.cnrs.opentheso.utils.MessageUtils;
 import fr.cnrs.opentheso.v2.concept.model.ConsultationProjectOption;
 import fr.cnrs.opentheso.v2.concept.model.ConsultationThesaurusOption;
 import fr.cnrs.opentheso.v2.concept.service.ConsultationCatalogService;
+import fr.cnrs.opentheso.v2.shared.session.SessionLifecycleService;
 import fr.cnrs.opentheso.v2.shared.session.SsoSessionBridge;
 import fr.cnrs.opentheso.v2.setting.ui.ThesaurusContext;
 import fr.cnrs.opentheso.v2.shared.repository.ThesaurusSettingsQueryRepository;
@@ -24,6 +26,7 @@ import java.io.IOException;
 import java.io.Serializable;
 import java.util.Collections;
 import java.util.List;
+import java.util.Map;
 
 @Getter
 @Setter
@@ -41,6 +44,7 @@ public class ConsultationShellBean implements Serializable {
     private final ThesaurusSettingsQueryRepository thesaurusSettingsQueryRepository;
     private final PlatformHomeReadService platformHomeReadService;
     private final SsoSessionBridge ssoSessionBridge;
+    private final SessionLifecycleService sessionLifecycleService;
 
     private int selectedProjectId = ALL_PROJECTS_ID;
     private String selectedThesaurusId;
@@ -50,6 +54,7 @@ public class ConsultationShellBean implements Serializable {
     private List<ConsultationThesaurusOption> thesaurusOptions = Collections.emptyList();
 
     public void load() {
+        notifySessionLifecycleMessages();
         ssoSessionBridge.consumePendingSsoLogin();
         String ssoThesaurusId = ssoSessionBridge.consumePendingThesaurusId();
         if (StringUtils.isNotBlank(ssoThesaurusId)) {
@@ -97,9 +102,7 @@ public class ConsultationShellBean implements Serializable {
 
     public void clearSession() throws IOException {
         thesaurusContext.clearSelection();
-        ExternalContext externalContext = FacesContext.getCurrentInstance().getExternalContext();
-        externalContext.invalidateSession();
-        externalContext.redirect(externalContext.getRequestContextPath() + "/v2/thesaurus");
+        sessionLifecycleService.clearAndRedirectFromFaces();
     }
 
     public void afterLogout() {
@@ -111,6 +114,19 @@ public class ConsultationShellBean implements Serializable {
             selectedThesaurusId = null;
         } else {
             syncSelectionFromContext();
+        }
+    }
+
+    private void notifySessionLifecycleMessages() {
+        FacesContext facesContext = FacesContext.getCurrentInstance();
+        if (facesContext == null) {
+            return;
+        }
+        Map<String, String> params = facesContext.getExternalContext().getRequestParameterMap();
+        if ("1".equals(params.get(SessionLifecycleService.PARAM_SESSION_EXPIRED))) {
+            MessageUtils.showWarnMessage(v2LocaleBean.getMsg("session.expired"));
+        } else if ("1".equals(params.get(SessionLifecycleService.PARAM_LOGOUT))) {
+            MessageUtils.showInformationMessage(v2LocaleBean.getMsg("connect.goodbye"));
         }
     }
 

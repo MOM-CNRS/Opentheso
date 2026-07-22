@@ -5,6 +5,7 @@ import fr.cnrs.opentheso.utils.MessageUtils;
 import fr.cnrs.opentheso.v2.concept.ui.ConsultationShellBean;
 import fr.cnrs.opentheso.v2.shared.auth.AuthenticationService;
 import fr.cnrs.opentheso.v2.shared.session.SessionAuthenticatedUserSource;
+import fr.cnrs.opentheso.v2.shared.session.SessionLifecycleService;
 import jakarta.enterprise.context.SessionScoped;
 import jakarta.faces.application.FacesMessage;
 import jakarta.faces.context.FacesContext;
@@ -30,6 +31,7 @@ public class LoginBean implements Serializable {
     private final V2LocaleBean v2LocaleBean;
     private final ConsultationShellBean consultationShellBean;
     private final AppConfig appConfig;
+    private final SessionLifecycleService sessionLifecycleService;
 
     private String username;
     private String password;
@@ -59,18 +61,9 @@ public class LoginBean implements Serializable {
     }
 
     public void logout() throws IOException {
-        String displayName = StringUtils.defaultIfBlank(userSession.getCurrentUsername(), username);
-        sessionAuthenticatedUserSource.setUserId(null);
         username = null;
         password = null;
-        consultationShellBean.afterLogout();
-        FacesContext.getCurrentInstance().addMessage(null, new FacesMessage(
-                FacesMessage.SEVERITY_INFO,
-                v2LocaleBean.getMsg("connect.goodbye"),
-                displayName
-        ));
-        FacesContext.getCurrentInstance().getExternalContext().redirect(
-                FacesContext.getCurrentInstance().getExternalContext().getRequestContextPath() + "/v2/thesaurus"
-        );
+        sessionAuthenticatedUserSource.setUserId(null);
+        sessionLifecycleService.logoutAndRedirectFromFaces();
     }
 }
