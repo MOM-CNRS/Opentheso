@@ -150,6 +150,12 @@ public class PreferenceBean implements Serializable {
         if (uriType == null) {
             return;
         }
+
+        if(preferenceService.isPreferredNameExist(preferences.getPreferredName())){
+            MessageUtils.showErrorMessage("PreferredName existe déjà, veuillez en choisir un autre ! ");
+            return;
+        }
+
         // contrôle du mot de passe Ark
         if(StringUtils.isNotBlank(newPassArk)){
             preferences.setPassArk(newPassArk);

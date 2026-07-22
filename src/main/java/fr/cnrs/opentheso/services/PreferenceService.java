@@ -59,6 +59,14 @@ public class PreferenceService {
         preferencesRepository.save(preferenceToSave);
     }
 
+    public boolean isPreferredNameExist(String preferredName) {
+        return preferencesRepository.existsByPreferredName(preferredName);
+    }
+
+    public String getThesaurusIdFromPersistentName(String persistentThesaurusName) {
+        return preferencesRepository.findIdThesaurusByPreferredName(persistentThesaurusName);
+    }
+
     public void updateAllPreferenceUser(Preferences preference) {
 
         log.debug("Mise à jour des preferences du thésaurus {}", preference.getIdThesaurus());

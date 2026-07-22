@@ -16,6 +16,13 @@ public interface PreferencesRepository extends JpaRepository<Preferences, Intege
 
     Optional<Preferences> findByIdThesaurus(String idThesaurus);
 
+    @Query("""
+            select p.idThesaurus
+            from Preferences p
+            where p.preferredName = :preferredName
+            """)
+    String findIdThesaurusByPreferredName(@Param("preferredName") String preferredName);
+
     @Transactional
     @Modifying
     void deleteByIdThesaurus(String idThesaurus);
