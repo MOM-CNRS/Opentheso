@@ -9,6 +9,7 @@ public class GraphViewSummary implements Serializable {
     private int id;
     private String name;
     private String description;
+    private String visualizationUrl;
     private List<GraphExportEntry> exports = new ArrayList<>();
 
     public GraphViewSummary() {
@@ -42,6 +43,14 @@ public class GraphViewSummary implements Serializable {
 
     public void setDescription(String description) {
         this.description = description;
+    }
+
+    public String getVisualizationUrl() {
+        return visualizationUrl;
+    }
+
+    public void setVisualizationUrl(String visualizationUrl) {
+        this.visualizationUrl = visualizationUrl;
     }
 
     public List<GraphExportEntry> getExports() {

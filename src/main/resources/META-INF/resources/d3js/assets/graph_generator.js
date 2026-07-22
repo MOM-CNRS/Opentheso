@@ -30,8 +30,8 @@ export class Graph {
         console.log(data);
 
         if(format === "opentheso"){
-            this.dataNodes = data.nodes
-            this.dataLinks = data.relationships
+            this.dataNodes = Array.isArray(data?.nodes) ? data.nodes : []
+            this.dataLinks = Array.isArray(data?.relationships) ? data.relationships : []
             this.dataLinks.forEach(function (l) {
                 l.source = l.start;
                 l.target = l.end;

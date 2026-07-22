@@ -4,7 +4,10 @@ let generatedGraph;
 const urlParams = new URLSearchParams(window.location.search)
 const dataUrl = urlParams.get("dataUrl")
 const title = urlParams.get("title");
-document.querySelector("#data-url").value = dataUrl.replace(/\s/, "")
+const dataUrlInput = document.querySelector("#data-url");
+if (dataUrlInput && dataUrl) {
+    dataUrlInput.value = dataUrl.replace(/\s/, "")
+}
 console.log('URL = ' + dataUrl)
 console.log('Titre =' + title)
 
@@ -14,8 +17,8 @@ if (title) {
     document.title = decodedTitle; // Définir le titre de la page
 }
 
-if(dataUrl !== undefined){
-    const dataUrlParams = new URLSearchParams(dataUrl.split("?")[1])
+if(dataUrl){
+    const dataUrlParams = new URLSearchParams(dataUrl.split("?")[1] || "")
     dataUrlParams.forEach((dataUrlParam, index) => console.log(`${index}, ${dataUrlParam}`))
     initGraph()
 }
@@ -43,8 +46,16 @@ function initGraph(){
         return;
     }
     fetch(input.value)
-        .then((res) => res.json())
+        .then((res) => {
+            if (!res.ok) {
+                throw new Error(`Erreur HTTP ${res.status} lors du chargement des données du graphe`);
+            }
+            return res.json();
+        })
         .then((data) => {
+            if (!data || !Array.isArray(data.nodes) || !Array.isArray(data.relationships)) {
+                throw new Error("Réponse graphe invalide (nodes/relationships manquants)");
+            }
             const graph = document.querySelector("#graph");
             if (graph.hasChildNodes()) {
                 graph.removeChild(graph.firstChild);

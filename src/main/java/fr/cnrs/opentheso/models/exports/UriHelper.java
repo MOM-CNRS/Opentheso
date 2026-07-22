@@ -148,9 +148,9 @@ public class UriHelper {
     }
     
     public String getIdArk(String idConcept) {
-        if(nodePreference.isOriginalUriIsArk()){
+        if(nodePreference != null && nodePreference.isOriginalUriIsArk()){
             var concept = conceptService.getConcept(idConcept, idTheso);
-            return concept.getIdArk();
+            return concept != null ? concept.getIdArk() : null;
         }
         return null;
     }
@@ -161,17 +161,22 @@ public class UriHelper {
      * @return
      */
     private String getPath(){
+        if (nodePreference == null) {
+            return "";
+        }
         if(FacesContext.getCurrentInstance() == null) {
             if(StringUtils.isNotEmpty(nodePreference.getOriginalUri())){
                 if(nodePreference.getOriginalUri().endsWith("/")) {
                     return nodePreference.getOriginalUri().substring(0, nodePreference.getOriginalUri().length() - 1);
                 } else 
                     return nodePreference.getOriginalUri();
-            } else {
+            } else if (StringUtils.isNotEmpty(nodePreference.getCheminSite())) {
                 if(nodePreference.getCheminSite().endsWith("/")) {
                     return nodePreference.getCheminSite().substring(0, nodePreference.getCheminSite().length() - 1);
                 } else 
                     return nodePreference.getCheminSite();
+            } else {
+                return "";
             }
         }
         String path = FacesContext.getCurrentInstance().getExternalContext().getRequestHeaderMap().get("origin");

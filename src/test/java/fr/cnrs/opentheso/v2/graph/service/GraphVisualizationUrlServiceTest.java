@@ -81,6 +81,7 @@ class GraphVisualizationUrlServiceTest {
         String dataUrl = extractDataUrlParameter(url);
 
         assertTrue(dataUrl.contains("lang=en"));
+        assertTrue(dataUrl.contains("limit=true"));
         assertTrue(dataUrl.contains("idThesoConcept=TH1:C1")
                 || dataUrl.contains("idThesoConcept=TH1%3AC1"));
     }

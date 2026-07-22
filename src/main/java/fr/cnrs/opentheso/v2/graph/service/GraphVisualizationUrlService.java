@@ -42,6 +42,8 @@ public class GraphVisualizationUrlService {
 
         var dataUrlBuilder = new URIBuilder(baseUrl + "/openapi/v1/graph/getData");
         dataUrlBuilder.addParameter("lang", resolveLanguage(lang));
+        // Limite le volume renvoyé pour accélérer le premier rendu D3js.
+        dataUrlBuilder.addParameter("limit", "true");
 
         appendExportParameters(dataUrlBuilder, view.getExports());
 

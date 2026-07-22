@@ -5,18 +5,19 @@
 <h:head>
     <meta charset="UTF-8"/>
     <title>Opentheso Graphe force (v2)</title>
-    <link rel="stylesheet" href="../../../d3js/assets/style.css"/>
+    <base href="#{request.contextPath}/d3js/"/>
+    <link rel="stylesheet" href="#{request.contextPath}/d3js/assets/style.css"/>
     <meta name="viewport" content="width=device-width, initial-scale=1.0"/>
     <script type="text/javascript" src="https://cdn.jsdelivr.net/npm/d3@7"></script>
-    <script type="module" src="../../../d3js/assets/main.js"></script>
-    <script type="module" src="../../../d3js/assets/graph_generator.js"></script>
-    <script type="text/javascript" src="../../../d3js/assets/multiselect-dropdown.js"></script>
+    <script type="module" src="#{request.contextPath}/d3js/assets/main.js"></script>
+    <script type="module" src="#{request.contextPath}/d3js/assets/graph_generator.js"></script>
+    <script type="text/javascript" src="#{request.contextPath}/d3js/assets/multiselect-dropdown.js"></script>
 </h:head>
 <h:body>
     <div id="graph"></div>
     <div id="loader-annel"
          style="position: absolute; top: 0; left: 0; width: 100vw; height: 100vh; display: flex; justify-content: center; align-items: center">
-        <img src="../../../resources/img/wait.gif" width="100px" alt=""/>
+        <img src="#{request.contextPath}/resources/img/wait.gif" width="100px" alt=""/>
     </div>
     <div id="button-group" style="position: absolute; top: 5px; left: 5px; display: flex; gap: 5px">
         <button id="back-button" style="font-size: 0.8rem;" type="button">

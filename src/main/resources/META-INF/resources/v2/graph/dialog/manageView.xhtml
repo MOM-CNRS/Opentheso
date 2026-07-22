@@ -54,8 +54,9 @@
                                          panelStyle="border: none; box-shadow: none;">
                             <p:ajax event="valueChange" update="manageViewForm" />
                             <f:selectItem itemValue="" itemLabel="..." />
-                            <f:selectItems value="#{currentUser.userPermissions.listThesaurus}" var="idTheso" itemValue="#{idTheso.id}"
-                                           itemLabel="#{idTheso.value} (#{idTheso.id})" />
+                            <f:selectItems value="#{v2ConsultationShellBean.thesaurusOptions}" var="theso"
+                                           itemValue="#{theso.id}"
+                                           itemLabel="#{theso.displayLabel}" />
                         </p:selectOneMenu>
                     </div>
                 </div>

@@ -59,38 +59,51 @@ public class GraphController {
             @Parameter(name = "limit", example = "true", in = ParameterIn.QUERY, schema = @Schema(type = "boolean"), required = false, description = "pour limiter ou non le nombre de concepts à récupérer")
             @RequestParam(value = "limit", required = false, defaultValue = "false") Boolean limit
     ) {
+        try {
+            List<IdValuePair> idValuePairs = new ArrayList<>();
 
-        List<IdValuePair> idValuePairs = new ArrayList<>();
-
-        if(idThesoConcepts == null) { return null;}
-        for (String idThesoConcept : idThesoConcepts) {
-            String[] elements = idThesoConcept.split(":");
-
-            if(elements.length == 2){
-                IdValuePair idValuePair = new IdValuePair();
-                idValuePair.setIdTheso(elements[0]);
-                idValuePair.setIdConcept(elements[1]);
-                idValuePairs.add(idValuePair);
+            if (idThesoConcepts == null || idThesoConcepts.isEmpty()) {
+                return ResponseEntity.ok().contentType(MediaType.APPLICATION_JSON)
+                        .body("{\"nodes\":[],\"relationships\":[]}");
             }
-            if(elements.length == 1){
-                IdValuePair idValuePair = new IdValuePair();
-                idValuePair.setIdTheso(elements[0]);
-                idValuePairs.add(idValuePair);
-            }            
-        }
+            for (String idThesoConcept : idThesoConcepts) {
+                String[] elements = idThesoConcept.split(":");
 
-        graphD3jsHelper.initGraph();        
-
-        for (IdValuePair idValuePair : idValuePairs) {
-            if(StringUtils.isEmpty(idValuePair.getIdConcept())){
-                graphD3jsHelper.getGraphByTheso(idValuePair.getIdTheso(), lang, limit);
-            } else {
-                graphD3jsHelper.getGraphByConcept(idValuePair.getIdTheso(), idValuePair.getIdConcept(), lang);
+                if (elements.length == 2) {
+                    IdValuePair idValuePair = new IdValuePair();
+                    idValuePair.setIdTheso(elements[0]);
+                    idValuePair.setIdConcept(elements[1]);
+                    idValuePairs.add(idValuePair);
+                }
+                if (elements.length == 1) {
+                    IdValuePair idValuePair = new IdValuePair();
+                    idValuePair.setIdTheso(elements[0]);
+                    idValuePairs.add(idValuePair);
+                }
             }
-        }
 
-        var datas = graphD3jsHelper.getJsonFromNodeGraphD3js();
-        return ResponseEntity.ok().contentType(MediaType.APPLICATION_JSON).body(datas);
-    }        
+            graphD3jsHelper.initGraph();
+
+            boolean applyLimit = Boolean.TRUE.equals(limit);
+            for (IdValuePair idValuePair : idValuePairs) {
+                if (StringUtils.isEmpty(idValuePair.getIdConcept())) {
+                    graphD3jsHelper.getGraphByTheso(idValuePair.getIdTheso(), lang, applyLimit);
+                } else {
+                    graphD3jsHelper.getGraphByConcept(
+                            idValuePair.getIdTheso(), idValuePair.getIdConcept(), lang, applyLimit);
+                }
+            }
+
+            var datas = graphD3jsHelper.getJsonFromNodeGraphD3js();
+            if (datas == null) {
+                datas = "{\"nodes\":[],\"relationships\":[]}";
+            }
+            return ResponseEntity.ok().contentType(MediaType.APPLICATION_JSON).body(datas);
+        } catch (Exception e) {
+            log.error("Erreur lors de la construction du graphe D3js pour {}", idThesoConcepts, e);
+            return ResponseEntity.ok().contentType(MediaType.APPLICATION_JSON)
+                    .body("{\"nodes\":[],\"relationships\":[]}");
+        }
+    }
 }
 

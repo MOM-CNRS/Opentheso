@@ -72,12 +72,15 @@ public class NodeGraphD3js {
     private Set<Node> nodeSet = new HashSet<>();    
     
     public boolean addNewNode(Node node) {
+        if (node == null || node.getId() == null) {
+            return false;
+        }
         if (nodeSet.add(node)) {
             nodes.add(node);
             return true; 
         }
         // Node with the same id exists, find and replace it
-        if(node.getLabels().size() > 1){
+        if(node.getLabels() != null && node.getLabels().size() > 1){
             if("skos__Concept".equalsIgnoreCase(node.getLabels().get(1))){
                 int index = findNodeIndexById(node.getId());
                 if (index != -1) {
@@ -91,7 +94,7 @@ public class NodeGraphD3js {
     
     private int findNodeIndexById(String id) {
         for (int i = 0; i < nodes.size(); i++) {
-            if (nodes.get(i).getId().equals(id)) {
+            if (nodes.get(i) != null && id.equals(nodes.get(i).getId())) {
                 return i;
             }
         }

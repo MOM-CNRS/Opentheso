@@ -139,15 +139,20 @@ class GraphViewBeanTest {
     }
 
     @Test
-    void refreshViews_loadsViewsAndResetsSelection() {
+    void refreshViews_loadsViewsAndResetsSelection() throws Exception {
         when(userSession.getCurrentUserId()).thenReturn(7);
         var summary = new GraphViewSummary(1, "Vue", "desc");
         when(graphViewReadService.reloadViewsForUser(7)).thenReturn(List.of(summary));
+        when(applicationUriService.resolveApplicationBaseUrl()).thenReturn("http://localhost:8080/opentheso");
+        when(graphVisualizationUrlService.resolveWorkLanguageForThesaurus(null)).thenReturn("fr");
+        when(graphVisualizationUrlService.buildVisualizationUrl(summary, "http://localhost:8080/opentheso", "fr"))
+                .thenReturn("http://localhost:8080/opentheso/v2/graph/visualize/force.xhtml?dataUrl=x");
         bean.setSelectedIdTheso("TH1");
 
         bean.refreshViews();
 
         assertEquals(List.of(summary), bean.getGraphViews());
+        assertEquals("http://localhost:8080/opentheso/v2/graph/visualize/force.xhtml?dataUrl=x", summary.getVisualizationUrl());
         assertNull(bean.getSelectedIdTheso());
         assertNull(bean.getSearchSelected());
     }

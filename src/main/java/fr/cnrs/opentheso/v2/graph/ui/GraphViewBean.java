@@ -73,6 +73,7 @@ public class GraphViewBean implements Serializable {
             return;
         }
         graphViews = graphViewReadService.reloadViewsForUser(userId);
+        attachVisualizationUrls(graphViews);
         selectedIdTheso = null;
         searchSelected = null;
     }
@@ -122,6 +123,11 @@ public class GraphViewBean implements Serializable {
     }
 
     public String generateGraphVisualizationUrl(String viewId) throws URISyntaxException {
+        for (GraphViewSummary view : graphViews) {
+            if (String.valueOf(view.getId()).equals(viewId) && StringUtils.isNotBlank(view.getVisualizationUrl())) {
+                return view.getVisualizationUrl();
+            }
+        }
         String lang = graphVisualizationUrlService.resolveWorkLanguageForThesaurus(selectedThesoFromView(viewId));
         return graphVisualizationUrlService.buildVisualizationUrl(viewId, applicationUriService.resolveApplicationBaseUrl(), lang);
     }
@@ -191,6 +197,22 @@ public class GraphViewBean implements Serializable {
         refreshViews();
         if (selectedViewId != -1) {
             initEditViewDialog(String.valueOf(selectedViewId));
+        }
+    }
+
+    private void attachVisualizationUrls(List<GraphViewSummary> views) {
+        if (views == null || views.isEmpty()) {
+            return;
+        }
+        String baseUrl = applicationUriService.resolveApplicationBaseUrl();
+        for (GraphViewSummary view : views) {
+            try {
+                String thesaurusId = view.hasExports() ? view.getExports().get(0).thesaurusId() : null;
+                String lang = graphVisualizationUrlService.resolveWorkLanguageForThesaurus(thesaurusId);
+                view.setVisualizationUrl(graphVisualizationUrlService.buildVisualizationUrl(view, baseUrl, lang));
+            } catch (Exception ignored) {
+                view.setVisualizationUrl(null);
+            }
         }
     }
 

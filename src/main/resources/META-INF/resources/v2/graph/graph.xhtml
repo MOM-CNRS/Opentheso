@@ -114,7 +114,7 @@
                                         <div style="height: 10px; text-align: right;">
                                             <p:commandButton id="btnAjaxCopy" icon="fa-solid fa-copy fa-2xl" styleClass="rounded-button ui-button-flat" style="font-size: 2rem; color: #f47b2a; background-color: transparent;"
                                                              onclick="return false;" />
-                                            <pe:clipboard id="clipAjax" trigger="btnAjaxCopy" action="copy" text="#{v2GraphViewBean.generateGraphVisualizationUrl(graph_view.id)}&amp;title=#{graph_view.name}" >
+                                            <pe:clipboard id="clipAjax" trigger="btnAjaxCopy" action="copy" text="#{graph_view.visualizationUrl}&amp;title=#{graph_view.name}" >
                                                 <p:ajax event="success" listener="#{clipboardFeedbackBean.onSuccess}" update="messageIndex"/>
                                                 <p:ajax event="error" listener="#{clipboardFeedbackBean.onError}" update="messageIndex" />
                                             </pe:clipboard>
@@ -137,7 +137,7 @@
                                                                  icon="fa fa-diagram-project"
                                                                  style="margin-left: 0px;" ajax="true" process="@this"
                                                                  rendered="#{not empty graph_view.exports}"
-                                                                 onclick="openInNewTab('#{v2GraphViewBean.generateGraphVisualizationUrl(graph_view.id)}', '#{graph_view.name}'); return false;" />
+                                                                 onclick="openInNewTab('#{graph_view.visualizationUrl}', '#{graph_view.name}'); return false;" />
                                             </div>
 
                                             <div class="col-6" style="text-align: right">
