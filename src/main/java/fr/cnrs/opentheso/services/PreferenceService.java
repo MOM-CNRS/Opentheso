@@ -24,7 +24,7 @@ public class PreferenceService {
         int index = 1;
 
         // Vérifie les doublons et incrémente
-        while (preferencesRepository.existsByPreferredName(preferredName)) {
+        while (preferencesRepository.existsInAnotherThesaurus(idThesaurus, preferredName)) {
             preferredName = basePreferredName + "_" + index;
             index++;
         }
@@ -59,8 +59,8 @@ public class PreferenceService {
         preferencesRepository.save(preferenceToSave);
     }
 
-    public boolean isPreferredNameExist(String preferredName) {
-        return preferencesRepository.existsByPreferredName(preferredName);
+    public boolean isPreferredNameExist(String idThesaurus, String preferredName) {
+        return preferencesRepository.existsInAnotherThesaurus(idThesaurus, preferredName);
     }
 
     public String getThesaurusIdFromPersistentName(String persistentThesaurusName) {

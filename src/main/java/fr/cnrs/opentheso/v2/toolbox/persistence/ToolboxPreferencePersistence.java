@@ -18,7 +18,7 @@ public class ToolboxPreferencePersistence {
         String basePreferredName = thesaurusId;
         String preferredName = basePreferredName;
         int index = 1;
-        while (preferencesRepository.existsByPreferredName(preferredName)) {
+        while (preferencesRepository.existsInAnotherThesaurus(thesaurusId, preferredName)) {
             preferredName = basePreferredName + "_" + index;
             index++;
         }
@@ -85,7 +85,7 @@ public class ToolboxPreferencePersistence {
         String candidate = preferredName.trim();
         String uniqueName = candidate;
         int index = 1;
-        while (preferencesRepository.existsByPreferredName(uniqueName)
+        while (preferencesRepository.existsInAnotherThesaurus(thesaurusId, uniqueName)
                 && !uniqueName.equals(preference.get().getPreferredName())) {
             uniqueName = candidate + "_" + index;
             index++;
