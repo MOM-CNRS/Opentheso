@@ -12,6 +12,18 @@ import java.util.Optional;
 
 public interface PreferencesRepository extends JpaRepository<Preferences, Integer> {
 
+
+    @Modifying
+    @Transactional
+    @Query("""
+            UPDATE Preferences p
+            SET p.preferredName = :preferredName
+            WHERE p.idThesaurus = :idThesaurus
+            """)
+    int updatePreferredName(
+            @Param("idThesaurus") String idThesaurus,
+            @Param("preferredName") String preferredName);
+
     @Query("""
             SELECT COUNT(p) > 0
             FROM Preferences p

@@ -39,7 +39,7 @@ public class EditThesaurusService {
     private final ThesaurusDcTermRepository thesaurusDcTermRepository;
 
 
-    public void addNewThesaurus(String title, String selectedLang, String selectedProject, String userName) {
+    public String addNewThesaurus(String title, String selectedLang, String selectedProject, String userName) {
 
         int idProject = -1;
         try {
@@ -54,7 +54,7 @@ public class EditThesaurusService {
         var idNewThesaurus = thesaurusService.addThesaurusRollBack();
         if(idNewThesaurus == null) {
             MessageUtils.showErrorMessage("Erreur pendant la création");
-            return;
+            return null;
         }
 
         var thesaurus = new fr.cnrs.opentheso.models.thesaurus.Thesaurus();
@@ -80,6 +80,8 @@ public class EditThesaurusService {
         createAndSaveDcTerm(idNewThesaurus, DCMIResource.LANGUAGE, selectedLang, "", "string");
         createAndSaveDcTerm(idNewThesaurus, DCMIResource.CREATED,
                 new SimpleDateFormat("yyyy-MM-dd").format(new Date()), "", "date");
+
+        return idNewThesaurus;
     }
 
     private void createAndSaveDcTerm(String idThesaurus, String name, String value, String language, String type) {

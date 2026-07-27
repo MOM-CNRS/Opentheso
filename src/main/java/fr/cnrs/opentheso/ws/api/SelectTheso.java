@@ -1,5 +1,6 @@
 package fr.cnrs.opentheso.ws.api;
 
+import fr.cnrs.opentheso.services.PreferenceService;
 import io.swagger.v3.oas.annotations.Operation;
 import io.swagger.v3.oas.annotations.Parameter;
 import io.swagger.v3.oas.annotations.responses.ApiResponse;
@@ -9,7 +10,6 @@ import lombok.extern.slf4j.Slf4j;
 import java.net.URI;
 import java.net.URISyntaxException;
 
-import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.http.ResponseEntity;
 import org.springframework.web.bind.annotation.CrossOrigin;
 import org.springframework.web.bind.annotation.GetMapping;
@@ -26,6 +26,11 @@ import org.springframework.web.bind.annotation.RestController;
 @Tag(name = "Thesaurus", description = "Contient toutes les actions en liens avec les thesaurus.")
 public class SelectTheso {
 
+    private final PreferenceService preferenceService;
+
+    public SelectTheso(PreferenceService preferenceService) {
+        this.preferenceService = preferenceService;
+    }
     // Cette fonction permet de se diriger vers le bon thésaurus en passant par son nom VIA REST ceci permet de gérer
     // les noms de domaines et filtrer les thésaurus dans un parc important
 
@@ -40,15 +45,16 @@ public class SelectTheso {
             description = "Redirection temporaire vers l'URL du thésaurus"
     )
 
-    @GetMapping(value = "{theso}", produces = "application/xml;charset=UTF-8")
+    @GetMapping(value = "{persistentName}", produces = "application/xml;charset=UTF-8")
     public ResponseEntity<Object> getThesoUri(
-            @Parameter(description = "Identifiant du thésaurus (nom du theso).")
-            @PathVariable("theso") String idTheso,
+            @Parameter(description = "Nome prérenne du thésaurus / Persistent Name / Acronyme.")
+            @PathVariable("persistentName") String persistentName,
             HttpServletRequest request) throws URISyntaxException {
 
         // Récupération de l'URL de la requête
         String requestUrl = request.getRequestURL().toString();
-        String newUrl = requestUrl.replace("/api/theso/" +idTheso, "/") + "?idt=" + idTheso;
+        String idTheso = preferenceService.getThesaurusIdFromPersistentName(persistentName);
+        String newUrl = requestUrl.replace("/api/theso/" +persistentName, "/") + "?idt=" + idTheso;
         return ResponseEntity.status(307).location(new URI(newUrl)).build();
     }
 }

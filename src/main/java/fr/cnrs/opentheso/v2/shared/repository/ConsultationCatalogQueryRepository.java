@@ -34,36 +34,23 @@ public class ConsultationCatalogQueryRepository {
     }
 
     @SuppressWarnings("unchecked")
+    // modifié par #MR, c'est la bonne approche pour récupérer les thésaurus publics
     public List<ConsultationThesaurusOption> findPublicThesauri(int projectId, String lang) {
         String sql = """
                 SELECT
                     t.id_thesaurus,
-                    COALESCE(tl_sub.title, NULLIF(p.preferredname, t.id_thesaurus), t.id_thesaurus) AS thesaurus_title,
-                    COALESCE(p.source_lang, :lang) AS default_lang
-                FROM thesaurus t
-                JOIN user_group_thesaurus ugt ON ugt.id_thesaurus = t.id_thesaurus
-                LEFT JOIN preferences p ON p.id_thesaurus = t.id_thesaurus
-                LEFT JOIN LATERAL (
-                    SELECT tl.title
-                    FROM thesaurus_label tl
-                    WHERE tl.id_thesaurus = t.id_thesaurus
-                      AND tl.title IS NOT NULL
-                      AND BTRIM(tl.title) <> ''
-                    ORDER BY
-                      CASE
-                        WHEN tl.lang = COALESCE(p.source_lang, :lang) THEN 0
-                        WHEN tl.lang = :lang THEN 1
-                        ELSE 2
-                      END
-                    LIMIT 1
-                ) tl_sub ON true
-                WHERE COALESCE(t."private", false) = false
-                  AND (:projectId < 0 OR ugt.id_group = :projectId)
-                ORDER BY LOWER(t.id_thesaurus)
+                    tl.title,
+                    p.source_lang
+                 FROM thesaurus t
+                 JOIN preferences p ON p.id_thesaurus = t.id_thesaurus
+                 JOIN thesaurus_label tl ON tl.id_thesaurus = t.id_thesaurus AND tl.lang = p.source_lang
+                 LEFT JOIN user_group_thesaurus gt ON gt.id_thesaurus = t.id_thesaurus
+                     WHERE t.private = false
+                     AND (:projectId = -1 OR gt.id_group = :projectId)
+                ORDER BY CAST(regexp_replace(t.id_thesaurus, '\\D', '', 'g') AS INTEGER) DESC;           
                 """;
         List<Object[]> rows = entityManager.createNativeQuery(sql)
                 .setParameter("projectId", projectId)
-                .setParameter("lang", lang)
                 .getResultList();
         return rows.stream()
                 .map(row -> new ConsultationThesaurusOption(

@@ -15,6 +15,10 @@ public class PreferenceService {
 
     private final PreferencesRepository preferencesRepository;
 
+    public void updatePersistentNameTheso(String idTheso, String persistentNameTheso) {
+        preferencesRepository.updatePreferredName(idTheso, persistentNameTheso);
+    }
+
     public void initPreferences(String idThesaurus, String workLanguage) {
 
         // contrôle du (preferredname s'il existe avant), si oui, il faut l'incrémenter

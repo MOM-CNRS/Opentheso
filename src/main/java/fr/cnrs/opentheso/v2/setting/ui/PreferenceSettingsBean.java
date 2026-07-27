@@ -116,6 +116,14 @@ public class PreferenceSettingsBean implements Serializable {
         if (!canManage() || editor == null) {
             return;
         }
+
+        if(thesaurusPreferenceService.isPreferredNameExist(
+                thesaurusContext.getCurrentThesaurusId(),
+                editor.getPreferredName())){
+            MessageUtils.showErrorMessage("PreferredName existe déjà, veuillez en choisir un autre ! ");
+            return;
+        }
+
         try {
             ThesaurusPreferences saved = thesaurusPreferenceService.savePreferences(
                     thesaurusContext.getCurrentThesaurusId(),

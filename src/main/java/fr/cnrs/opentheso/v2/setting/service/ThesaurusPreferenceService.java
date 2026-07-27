@@ -38,6 +38,10 @@ public class ThesaurusPreferenceService {
         this.crypto = new SimpleCrypto(secretKey);
     }
 
+    public boolean isPreferredNameExist(String idThesaurus, String preferredName) {
+        return preferencesJpaRepository.existsInAnotherThesaurus(idThesaurus, preferredName);
+    }
+
     @Transactional(readOnly = true)
     public ThesaurusPreferences loadPreferences(String thesaurusId, String workLang) {
         PreferencesEntity entity = requirePreferences(thesaurusId);

@@ -44,7 +44,7 @@ public class NewThesaurusBean implements Serializable {
 
     private List<LanguageIso639> allLangs;
     private List<UserGroupLabel> nodeProjects;
-    private String title, selectedLang, selectedProject;
+    private String title, selectedLang, selectedProject, persistentNameTheso;
 
 
     public void init() {
@@ -79,7 +79,11 @@ public class NewThesaurusBean implements Serializable {
             return;
         }
 
-        editThesaurusService.addNewThesaurus(title, selectedLang, selectedProject, currentUser.getNodeUser().getName());
+        String idTheso = editThesaurusService.addNewThesaurus(title, selectedLang, selectedProject, currentUser.getNodeUser().getName());
+
+        if(StringUtils.isNotBlank(persistentNameTheso)) {
+            preferenceService.updatePersistentNameTheso(idTheso, persistentNameTheso);
+        }
 
         MessageUtils.showInformationMessage("Thesaurus ajouté avec succès");
 

@@ -29,9 +29,9 @@
                         <div class="list-group" style="margin-left: 10px">
                             <div class="row">
                                 <div class="col-12">
-                                    <p:tag severity="success" value="#{proposition.thesaurusId}" style="margin-right: 5px"/>
-                                    <p:tag severity="info" value="#{proposition.status}" style="margin-right: 5px"/>
-                                    <p:commandLink value="#{proposition.conceptLabel}"
+                                    <p:tag severity="success" value="#{proposition.thesaurusId()}" style="margin-right: 5px"/>
+                                    <p:tag severity="info" value="#{proposition.status()}" style="margin-right: 5px"/>
+                                    <p:commandLink value="#{proposition.conceptLabel()}"
                                                    style="font-size: 14px; font-weight: bold; color: #8f8f8f"
                                                    ajax="false"
                                                    action="#{v2PropositionBean.openProposition(proposition)}"/>

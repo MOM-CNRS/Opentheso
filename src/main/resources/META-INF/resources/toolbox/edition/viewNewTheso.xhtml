@@ -20,17 +20,30 @@
         <!-- Nom du thésaurus -->
         <div class="row" style="margin-top: 10px">
             <div class="col-3" style="text-align: right; padding-top: 4px">
-                <h:outputText value="#{langueBean.getMsg('statistique.label')}" style="margin-right: -6px" />
+                <h:outputText value="#{langueBean.getMsg('statistique.label')}"  />
+                <span style="color:#dc3545; font-weight:bold;">*</span>
             </div>
             <div class="col-5">
-                <p:inputText placeholder="#{langueBean.getMsg('statistique.thesaurus.name')}" value="#{newThesaurusBean.title}" style="width: 100%"/>
+                <p:inputText placeholder="#{langueBean.getMsg('statistique.thesaurus.name')}"
+                             value="#{newThesaurusBean.title}" style="width: 100%"/>
+            </div>
+        </div>
+
+        <!-- Nom pérenne ou Acronyme du thésaurus -->
+        <div class="row" style="margin-top: 10px">
+            <div class="col-3" style="text-align: right; padding-top: 4px">
+                <h:outputText value="Acronyme" />
+            </div>
+            <div class="col-5">
+                <p:inputText placeholder="#{langueBean.getMsg('preferences.persistentNameTheso')}"
+                             value="#{newThesaurusBean.persistentNameTheso}" style="width: 100%"/>
             </div>
         </div>
 
         <!-- Langue par defaut -->
         <div class="row" style="margin-top: 10px">
             <div class="col-3" style="text-align: right; padding-top: 4px">
-                <h:outputText value="#{langueBean.getMsg('rightbody.conceptdialog.language')}" style="margin-right: -6px"/>
+                <h:outputText value="#{langueBean.getMsg('rightbody.conceptdialog.language')}"/>
             </div>
 
             <div class="col-5" >
@@ -48,8 +61,7 @@
         <div class="row" style="margin-top: 10px">
             <div class="col-3" style="text-align: right; padding-top: 4px">
                 <h:outputText value="#{langueBean.getMsg('profile.project')}" 
-                              title="#{langueBean.getMsg('profile.projectTooltip')}"
-                              style="margin-right: -6px"/>
+                              title="#{langueBean.getMsg('profile.projectTooltip')}"/>
             </div>
             <div class="col-5">
                 <p:selectOneMenu rendered="#{currentUser.nodeUser.isSuperAdmin()}" styleClass="selectOneMenu_custom"

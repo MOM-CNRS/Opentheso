@@ -120,7 +120,7 @@ public class ImportFileBean implements Serializable {
     private String formatDate = "yyyy-MM-dd";
     private String selectedIdentifier = "sans";
     private String prefixHandle, selectedIdentifierImportAlign, prefixDoi, uri, thesaurusName, selectedUserProject,
-            selectedConcept, alignmentSource, selectedLang, fileName, selectedSearchType, idLang;
+            selectedConcept, alignmentSource, selectedLang, fileName, selectedSearchType, idLang, persistentNameTheso;
     private boolean loadDone, BDDinsertEnable, importDone, importInProgress, isCandidatImport, haveError, clearBefore;
     private char delimiterCsv = ',';
     private int choiceDelimiter = 0;
@@ -143,6 +143,7 @@ public class ImportFileBean implements Serializable {
 
 
     public void init() {
+        persistentNameTheso = null;
         selectedSearchType = "exactWord"; // containsExactWord, startWith, elastic
         selectedIdentifierImportAlign = "identifier";
         choiceDelimiter = 0;
@@ -1300,6 +1301,10 @@ public class ImportFileBean implements Serializable {
 
         if (idNewTheso == null || idNewTheso.isEmpty()) {
             return;
+        }
+
+        if(StringUtils.isEmpty(persistentNameTheso)) {
+            preferenceService.initPreferences(idNewTheso, persistentNameTheso);
         }
 
         csvImportHelper.addLangsToThesaurus(langs, idNewTheso);
@@ -3337,6 +3342,10 @@ public class ImportFileBean implements Serializable {
             return;
         }
 
+        if (StringUtils.isNotBlank(persistentNameTheso)) {
+            preferenceService.updatePersistentNameTheso(idTheso, persistentNameTheso);
+        }
+
         for (SKOSResource sKOSResource : sKOSXmlDocument.getConceptList()) {
             if (!sKOSResource.getLabelsList().isEmpty()) {
                 importRdf4jHelper.addConceptV2(sKOSResource, idTheso);
@@ -3459,6 +3468,14 @@ public class ImportFileBean implements Serializable {
         info = "";
         error = new StringBuffer();
         warning = "";
+    }
+
+    public String getPersistentNameTheso() {
+        return persistentNameTheso;
+    }
+
+    public void setPersistentNameTheso(String persistentNameTheso) {
+        this.persistentNameTheso = persistentNameTheso;
     }
 
     public String getFormatDate() {
