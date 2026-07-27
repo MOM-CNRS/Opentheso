@@ -132,21 +132,29 @@
                   <h:outputText value="#{synonym.value}" style="font-size: 14px; color: #666666;"/>
                   <h:outputText value=", " rendered="#{not status.last or not empty v2ThesaurusBrowseBean.hiddenSynonymLabels}" style="color: #FF7979;"/>
                 </ui:repeat>
-                <ui:repeat value="#{v2ThesaurusBrowseBean.hiddenSynonymLabels}" var="hiddenSynonym" varStatus="status">
-                  <h:outputText value="(#{hiddenSynonym.lang}) " style="font-size: 14px; font-weight: 300;"/>
-                  <h:outputText value="#{hiddenSynonym.value}" style="font-size: 14px; color: #FF7979; font-style: italic;"/>
-                  <h:outputText value=", " rendered="#{not status.last}" style="color: #FF7979;"/>
-                </ui:repeat>
+
+                <h:panelGroup rendered="#{v2ConceptLexicalEditorBean.lexicalActionsAvailable}">
+                  <ui:repeat value="#{v2ThesaurusBrowseBean.hiddenSynonymLabels}" var="hiddenSynonym" varStatus="status">
+                    <h:outputText value="(#{hiddenSynonym.lang}) " style="font-size: 14px; font-weight: 300;"/>
+                    <h:outputText value="#{hiddenSynonym.value}" style="font-size: 14px; color: #FF7979; font-style: italic;"/>
+                    <h:outputText value=", " rendered="#{not status.last}" style="color: #FF7979;"/>
+                  </ui:repeat>
+                </h:panelGroup>
+
               </h:panelGroup>
               <h:panelGroup rendered="#{not v2ThesaurusBrowseBean.showAllSynonymLanguages}">
                 <ui:repeat value="#{v2ThesaurusBrowseBean.visibleSynonymLabels}" var="synonym" varStatus="status">
                   <h:outputText value="#{synonym.value}" style="font-size: 14px; color: #666666;"/>
                   <h:outputText value=", " rendered="#{not status.last or not empty v2ThesaurusBrowseBean.hiddenSynonymLabels}" style="color: #FF7979;"/>
                 </ui:repeat>
+
+              <h:panelGroup rendered="#{v2ConceptLexicalEditorBean.lexicalActionsAvailable}">
                 <ui:repeat value="#{v2ThesaurusBrowseBean.hiddenSynonymLabels}" var="hiddenSynonym" varStatus="status">
                   <h:outputText value="#{hiddenSynonym.value}" style="font-size: 14px; color: #FF7979; font-style: italic;"/>
                   <h:outputText value=", " rendered="#{not status.last}" style="color: #FF7979;"/>
                 </ui:repeat>
+              </h:panelGroup>
+
               </h:panelGroup>
             </div>
             <div class="col-xl-1 col-lg-1 col-md-1 col-sm-1" style="text-align: right;">
