@@ -33,6 +33,10 @@ public class ImportRdf4jHelper {
         thesaurusSkosImportEngine.setPrefixHandle(prefixHandle);
     }
 
+    public void setPersistentName(String persistentName) {
+        thesaurusSkosImportEngine.setPersistentName(persistentName);
+    }
+
     public void setPrefixDoi(String prefixDoi) {
         thesaurusSkosImportEngine.setPrefixDoi(prefixDoi);
     }

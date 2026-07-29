@@ -172,7 +172,6 @@ public class PreferenceBean implements Serializable {
         }
 
         preferences.setApiKeyOpenArk(valueToStore);
-        preferenceService.updateAllPreferenceUser(preferences);
 
         // contrôle du mot de passe Handle
         if(StringUtils.isNotBlank(newPassHandle)){

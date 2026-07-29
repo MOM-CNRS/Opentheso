@@ -346,7 +346,7 @@
                                 <p:commandButton value="#{v2LocaleBean.getMsg('candidat.save')}" styleClass="ui-button-success"
                                                  actionListener="#{v2PreferenceSettingsBean.save()}"
                                                  oncomplete="PF('waitDialog').hide();"
-                                                 update="containerIndex messageIndex"
+                                                 update="@this :containerIndex :messageIndex"
                                                  icon="fas fa-save">
                                 </p:commandButton>
                             </div>

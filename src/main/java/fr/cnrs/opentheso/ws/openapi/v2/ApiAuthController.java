@@ -70,9 +70,9 @@ public class ApiAuthController {
         String idt = params != null ? params.getOrDefault("idt", "") : "";
 
         // Construire l'URL avec les paramètres
-        StringBuilder redirectUrl = new StringBuilder("/v2/thesaurus?ssoToken=").append(token);
-        if (!idc.isEmpty()) redirectUrl.append("&idc=").append(idc);
+        StringBuilder redirectUrl = new StringBuilder("/?ssoToken=").append(token);
         if (!idt.isEmpty()) redirectUrl.append("&idt=").append(idt);
+        if (!idc.isEmpty()) redirectUrl.append("&idc=").append(idc);
 
         return ResponseEntity.ok(Map.of(
                 "token", token,

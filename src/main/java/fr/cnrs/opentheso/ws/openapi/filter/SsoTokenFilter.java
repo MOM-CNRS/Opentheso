@@ -46,11 +46,12 @@ public class SsoTokenFilter implements Filter {
                     session.setAttribute("ssoIdt", idt);
                 }
 
-                StringBuilder redirect = new StringBuilder(request.getContextPath() + "/v2/thesaurus");
-                if (idc != null && !idc.isBlank() && idt != null && !idt.isBlank()) {
-                    redirect.append("?idt=").append(idt).append("&idc=").append(idc);
-                } else if (idt != null && !idt.isBlank()) {
+                StringBuilder redirect = new StringBuilder(request.getContextPath() + "/index.xhtml");
+                if (idt != null && !idt.isBlank()) {
                     redirect.append("?idt=").append(idt);
+                    if (idc != null && !idc.isBlank()) {
+                        redirect.append("&idc=").append(idc);
+                    }
                 }
 
                 response.sendRedirect(redirect.toString());

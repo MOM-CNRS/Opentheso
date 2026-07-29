@@ -27,6 +27,11 @@ import fr.cnrs.opentheso.repositories.UserGroupLabelRepository;
 import fr.cnrs.opentheso.services.ProjectService;
 import fr.cnrs.opentheso.services.ThesaurusService;
 
+import fr.cnrs.opentheso.services.UserRoleGroupService;
+import fr.cnrs.opentheso.services.UserService;
+import fr.cnrs.opentheso.services.security.PermissionService;
+import fr.cnrs.opentheso.services.security.RoleType;
+
 import java.io.IOException;
 import java.io.Serializable;
 import java.util.ArrayList;
@@ -64,6 +69,10 @@ public class SelectedTheso implements Serializable {
 
     @Value("${settings.workLanguage:fr}")
     private String workLanguage;
+
+    private final UserService userService;
+    private final UserRoleGroupService userRoleGroupService;
+    private final PermissionService permissionService;
 
     private final LanguageBean languageBean;
     private final IndexSetting indexSetting;
@@ -524,33 +533,49 @@ public class SelectedTheso implements Serializable {
         } else {
             // gestion de l'accès par thésaurus d'un identifiant différent
             var thesaurus = thesaurusService.getThesaurusById(idThesoFromUri);
-            if (thesaurus != null && !thesaurus.getIsPrivate()) {
-                currentUser.resetUserPermissionsForThisThesaurus();
-                /// chargement du thésaurus
-                selectedIdTheso = idThesoFromUri;
-                roleOnThesoBean.initNodePref(selectedIdTheso);
-                startNewTheso(roleOnThesoBean.getNodePreference().getSourceLang());//currentLang);
-                indexSetting.setIsSelectedTheso(true);
-                indexSetting.setIsThesoActive(true);
-                rightBodySetting.setIndex("0");
-                haveActiveCorpus = CollectionUtils.isNotEmpty(corpusLinkRepository.findAllByIdThesaurusAndActive(getSelectedIdTheso(), true));
-                if (idConceptFromUri != null && !idConceptFromUri.isEmpty()) {
-                    // chargement du concept puisqu'il est renseigné
-                    conceptBean.getConcept(currentIdTheso, idConceptFromUri, currentLang, currentUser);
-                    isActionFromConcept = true;
-                    
-                } else {
-                    //cas d'appel pour une collection
-                    if(StringUtils.isNotEmpty(idGroupFromUri)) {
-                        treeGroups.selectThisGroup(idGroupFromUri.trim());
-                        rightBodySetting.setIndex("1");
-                    } else {
-                        indexSetting.setIsHomeSelected(true);
-                        conceptBean.setNodeConcept(null);
-                    }
-                }
-            } else {
+
+            if (thesaurus == null) {
                 return;
+            }
+            // Un utilisateur non gestionnaire ne peut pas ouvrir un thésaurus privé
+            if (currentUser.getNodeUser() == null && Boolean.TRUE.equals(thesaurus.getIsPrivate())) {
+                return;
+            }
+
+            if (currentUser.getNodeUser() != null) {
+                boolean canEdit = permissionService.getEffectiveRole(
+                                currentUser.getNodeUser().getIdUser(),
+                                thesaurus.getIdThesaurus())
+                        .map(r -> r.isAtLeast(RoleType.MANAGER))
+                        .orElse(false);
+
+                if (!canEdit) {
+                    return; // droit insuffisant, on sort
+                }
+            }
+            currentUser.resetUserPermissionsForThisThesaurus();
+            /// chargement du thésaurus
+            selectedIdTheso = idThesoFromUri;
+            roleOnThesoBean.initNodePref(selectedIdTheso);
+            startNewTheso(roleOnThesoBean.getNodePreference().getSourceLang());//currentLang);
+            indexSetting.setIsSelectedTheso(true);
+            indexSetting.setIsThesoActive(true);
+            rightBodySetting.setIndex("0");
+            haveActiveCorpus = CollectionUtils.isNotEmpty(corpusLinkRepository.findAllByIdThesaurusAndActive(getSelectedIdTheso(), true));
+            if (idConceptFromUri != null && !idConceptFromUri.isEmpty()) {
+                // chargement du concept puisqu'il est renseigné
+                conceptBean.getConcept(currentIdTheso, idConceptFromUri, currentLang, currentUser);
+                isActionFromConcept = true;
+
+            } else {
+                //cas d'appel pour une collection
+                if(StringUtils.isNotEmpty(idGroupFromUri)) {
+                    treeGroups.selectThisGroup(idGroupFromUri.trim());
+                    rightBodySetting.setIndex("1");
+                } else {
+                    indexSetting.setIsHomeSelected(true);
+                    conceptBean.setNodeConcept(null);
+                }
             }
         }
         haveActiveCorpus = CollectionUtils.isNotEmpty(corpusLinkRepository.findAllByIdThesaurusAndActive(getSelectedIdTheso(), true));

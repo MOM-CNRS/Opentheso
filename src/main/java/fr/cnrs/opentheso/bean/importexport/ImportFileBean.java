@@ -3331,6 +3331,7 @@ public class ImportFileBean implements Serializable {
         importRdf4jHelper.setInfos(formatDate, currentUser.getNodeUser().getIdUser(), idGroup, selectedLang);
         importRdf4jHelper.setSelectedIdentifier(selectedIdentifier);
         importRdf4jHelper.setPrefixHandle(prefixHandle);
+        importRdf4jHelper.setPersistentName(persistentNameTheso);
         importRdf4jHelper.setPrefixDoi(prefixDoi);
         importRdf4jHelper.setNodePreference(roleOnThesoBean.getNodePreference());
         importRdf4jHelper.setRdf4jThesaurus(sKOSXmlDocument);

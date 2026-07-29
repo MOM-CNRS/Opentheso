@@ -270,4 +270,9 @@
         <sqlFile path="v26/26-07_05.sql" relativeToChangelogFile="true" splitStatements="false"/>
     </changeSet>
 
+    <changeSet id="26.08.01" author="Miled">
+        <comment>Faster import: set-based child inserts, skip historiques, drop redundant SELECT in opentheso_add_new_concept</comment>
+        <sqlFile path="v26/26-08_01.sql" relativeToChangelogFile="true" splitStatements="false"/>
+    </changeSet>
+
 </databaseChangeLog>
