@@ -146,7 +146,7 @@ public class PreferenceSettingsBean implements Serializable {
             editor.setNewDeeplApiKey(null);
             editor.setNewApiKeyOpenArk(null);
             MessageUtils.showInformationMessage("Préférences enregistrées avec succès");
-            PrimeFaces.current().ajax().update("containerIndex messageIndex");
+            PrimeFaces.current().ajax().update("containerIndex", "messageIndex", "menuBar");
         } catch (SettingAccessDeniedException | InvalidSettingDataException e) {
             MessageUtils.showErrorMessage(e.getMessage());
         }

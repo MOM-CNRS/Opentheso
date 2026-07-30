@@ -107,7 +107,7 @@
                                  actionListener="PF('v2NewCorpus').hide();" update="idV2NewCorpus"/>
 
                 <p:commandButton value="#{v2LocaleBean.getMsg('btnAdd')}" styleClass="ui-button-success" icon="pi pi-check"
-                                 update="containerIndex messageIndex" process="@form"
+                                 update="containerIndex messageIndex menuBar" process="@form"
                                  action="#{v2CorpusSettingsBean.create()}"/>
             </div>
             <input type="hidden" name="csrfToken" value="${sessionScope.CSRF_TOKEN}" />

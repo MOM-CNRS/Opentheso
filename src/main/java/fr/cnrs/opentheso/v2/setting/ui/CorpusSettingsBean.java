@@ -116,7 +116,7 @@ public class CorpusSettingsBean implements Serializable {
 
     private void refreshList() {
         corpusList = thesaurusCorpusService.listCorpus(thesaurusContext.getCurrentThesaurusId());
-        PrimeFaces.current().ajax().update("containerIndex");
+        PrimeFaces.current().ajax().update("containerIndex", "menuBar");
     }
 
     private boolean canManage() {

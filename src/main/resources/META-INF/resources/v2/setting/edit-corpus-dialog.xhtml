@@ -89,7 +89,7 @@
                                  actionListener="PF('v2EditCorpus').hide();" update="idV2EditCorpus"/>
 
                 <p:commandButton value="#{v2LocaleBean.getMsg('apply')}" styleClass="ui-button-success" icon="pi pi-check"
-                                 update="containerIndex messageIndex"
+                                 update="containerIndex messageIndex menuBar"
                                  ajax="true" process="@form"
                                  action="#{v2CorpusSettingsBean.update()}"/>
             </div>              
