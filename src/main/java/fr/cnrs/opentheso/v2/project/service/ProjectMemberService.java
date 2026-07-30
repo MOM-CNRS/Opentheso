@@ -9,6 +9,7 @@ import fr.cnrs.opentheso.v2.project.policy.ProjectAccessPolicy;
 import fr.cnrs.opentheso.v2.shared.repository.ProjectAdminQueryRepository;
 import fr.cnrs.opentheso.v2.shared.repository.ProjectMembershipRepository;
 import fr.cnrs.opentheso.v2.shared.repository.UserCommandRepository;
+import fr.cnrs.opentheso.v2.rights.RightsService;
 import fr.cnrs.opentheso.v2.user.exception.UserNotFoundException;
 import fr.cnrs.opentheso.v2.user.service.UserLookupService;
 import fr.cnrs.opentheso.v2.user.service.UserProfileService;
@@ -40,6 +41,7 @@ public class ProjectMemberService {
     private final UserCommandRepository userCommandRepository;
     private final PasswordEncoder passwordEncoder;
     private final AccountPasswordResetService accountPasswordResetService;
+    private final RightsService rightsService;
 
     @Transactional(readOnly = true)
     public List<UserSearchResult> searchUsers(int callerId, boolean superAdmin, int projectId, String username) {
@@ -103,6 +105,7 @@ public class ProjectMemberService {
             throw new InvalidProjectDataException("Vous ne pouvez pas vous ajouter vous-même au projet.");
         }
         projectMembershipRepository.assignProjectRole(userId, roleId, projectId);
+        rightsService.invalidate(userId);
         log.info("Utilisateur id={} ajouté au projet id={} par l'utilisateur id={}", userId, projectId, callerId);
     }
 
@@ -128,6 +131,7 @@ public class ProjectMemberService {
             projectMembershipRepository.deleteProjectRole(userId, projectId);
             projectMembershipRepository.assignProjectRole(userId, roleId, projectId);
         }
+        rightsService.invalidate(userId);
         log.info("Rôle mis à jour pour l'utilisateur id={} sur le projet id={}", userId, projectId);
     }
 
@@ -155,6 +159,7 @@ public class ProjectMemberService {
             projectMembershipRepository.deleteAllLimitedRoles(userId, projectId);
             projectMembershipRepository.assignProjectRole(userId, newRoleId, projectId);
         }
+        rightsService.invalidate(userId);
         log.info("Rôle limité mis à jour pour l'utilisateur id={} sur le thésaurus {}", userId, thesaurusId);
     }
 
@@ -167,6 +172,7 @@ public class ProjectMemberService {
         }
         projectMembershipRepository.deleteProjectRole(userId, projectId);
         projectMembershipRepository.deleteAllLimitedRoles(userId, projectId);
+        rightsService.invalidate(userId);
         log.info("Utilisateur id={} retiré du projet id={}", userId, projectId);
     }
 
@@ -182,6 +188,7 @@ public class ProjectMemberService {
         requireProjectAdmin(callerId, superAdmin, projectId);
         ensureUserExists(userId);
         projectMembershipRepository.deleteLimitedRole(userId, roleId, projectId, thesaurusId);
+        rightsService.invalidate(userId);
         log.info("Rôle limité supprimé pour l'utilisateur id={} sur le thésaurus {}", userId, thesaurusId);
     }
 
@@ -305,6 +312,7 @@ public class ProjectMemberService {
         } else {
             projectMembershipRepository.assignProjectRole(userId, roleId, projectId);
         }
+        rightsService.invalidate(userId);
     }
 
     private AdminContext requireProjectAdmin(int callerId, boolean superAdmin, int projectId) {

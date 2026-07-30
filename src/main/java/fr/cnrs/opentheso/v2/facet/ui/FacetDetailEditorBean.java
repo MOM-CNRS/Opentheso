@@ -49,6 +49,7 @@ public class FacetDetailEditorBean implements Serializable {
     private final ConceptWriteMetadataService conceptWriteMetadataService;
     private final ThesaurusContext thesaurusContext;
     private final UserSession userSession;
+    private final ConceptWritePolicy conceptWritePolicy;
     private final ThesaurusBrowseBean thesaurusBrowseBean;
 
     private String label;
@@ -85,7 +86,7 @@ public class FacetDetailEditorBean implements Serializable {
     }
 
     public boolean isManagerActionsAvailable() {
-        return ConceptWritePolicy.canMutateHierarchicalRelations(userSession, false);
+        return conceptWritePolicy.canMutateHierarchicalRelations(userSession, false);
     }
 
     public void prepareModify() {

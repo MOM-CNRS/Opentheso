@@ -2,6 +2,9 @@ package fr.cnrs.opentheso.v2.setting.ui;
 
 import fr.cnrs.opentheso.v2.shared.ui.V2LocaleBean;
 import fr.cnrs.opentheso.utils.MessageUtils;
+import fr.cnrs.opentheso.v2.rights.AuthTarget;
+import fr.cnrs.opentheso.v2.rights.Permission;
+import fr.cnrs.opentheso.v2.rights.RightsService;
 import fr.cnrs.opentheso.v2.setting.exception.InvalidSettingDataException;
 import fr.cnrs.opentheso.v2.setting.exception.SettingAccessDeniedException;
 import fr.cnrs.opentheso.v2.setting.model.IdentifierServerType;
@@ -23,6 +26,7 @@ import java.io.Serializable;
 public class PreferenceSettingsBean implements Serializable {
 
     private final UserSession userSession;
+    private final RightsService rightsService;
     private final ThesaurusContext thesaurusContext;
     private final V2LocaleBean localeBean;
     private final ThesaurusPreferenceService thesaurusPreferenceService;
@@ -31,11 +35,13 @@ public class PreferenceSettingsBean implements Serializable {
 
     public PreferenceSettingsBean(
             UserSession userSession,
+            RightsService rightsService,
             ThesaurusContext thesaurusContext,
             V2LocaleBean localeBean,
             ThesaurusPreferenceService thesaurusPreferenceService
     ) {
         this.userSession = userSession;
+        this.rightsService = rightsService;
         this.thesaurusContext = thesaurusContext;
         this.localeBean = localeBean;
         this.thesaurusPreferenceService = thesaurusPreferenceService;
@@ -168,9 +174,10 @@ public class PreferenceSettingsBean implements Serializable {
     }
 
     private boolean canManage() {
-        if (!userSession.hasRoleAsAdmin()) {
+        String thesaurusId = thesaurusContext.getCurrentThesaurusId();
+        if (thesaurusId == null) {
             return false;
         }
-        return thesaurusContext.getCurrentThesaurusId() != null;
+        return rightsService.can(userSession, Permission.MANAGE_THESAURUS, AuthTarget.thesaurus(thesaurusId));
     }
 }

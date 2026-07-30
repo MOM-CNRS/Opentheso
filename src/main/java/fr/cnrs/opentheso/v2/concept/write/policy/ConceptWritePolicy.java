@@ -1,69 +1,87 @@
 package fr.cnrs.opentheso.v2.concept.write.policy;
 
+import fr.cnrs.opentheso.v2.rights.AuthTarget;
+import fr.cnrs.opentheso.v2.rights.Permission;
+import fr.cnrs.opentheso.v2.rights.RightsService;
+import fr.cnrs.opentheso.v2.setting.ui.ThesaurusContext;
 import fr.cnrs.opentheso.v2.shared.ui.UserSession;
+import lombok.RequiredArgsConstructor;
+import org.apache.commons.lang3.StringUtils;
+import org.springframework.stereotype.Component;
 
-public final class ConceptWritePolicy {
+/**
+ * Façade d'écriture concept : délègue les seuils à {@link RightsService}
+ * (rôle effectif sur le thésaurus courant) + règles UI (concept déprécié).
+ */
+@Component
+@RequiredArgsConstructor
+public class ConceptWritePolicy {
 
-    private ConceptWritePolicy() {
+    private final RightsService rightsService;
+    private final ThesaurusContext thesaurusContext;
+
+    public boolean canMutateConcept(UserSession userSession) {
+        return rightsService.can(userSession, Permission.MUTATE_CONCEPT, currentThesaurusTarget());
     }
 
-    public static boolean canMutateConcept(UserSession userSession) {
-        if (userSession == null || !userSession.isLoggedIn()) {
-            return false;
-        }
-        return userSession.isContributor() || userSession.isManager() || userSession.isSuperAdmin();
-    }
-
-    public static boolean canMutateActiveConcept(UserSession userSession, boolean deprecated) {
+    public boolean canMutateActiveConcept(UserSession userSession, boolean deprecated) {
         return canMutateConcept(userSession) && !deprecated;
     }
 
-    public static boolean canRenamePreferredLabel(UserSession userSession, boolean deprecated) {
-        if (userSession == null || !userSession.isLoggedIn() || deprecated) {
-            return false;
-        }
-        return userSession.isManager() || userSession.isSuperAdmin();
+    public boolean canRenamePreferredLabel(UserSession userSession, boolean deprecated) {
+        return !deprecated && rightsService.can(userSession, Permission.MUTATE_CONCEPT_STRUCTURE, currentThesaurusTarget());
     }
 
-    public static boolean canMutateHierarchicalRelations(UserSession userSession, boolean deprecated) {
-        if (userSession == null || !userSession.isLoggedIn() || deprecated) {
-            return false;
-        }
-        return userSession.isManager() || userSession.isSuperAdmin();
+    public boolean canMutateHierarchicalRelations(UserSession userSession, boolean deprecated) {
+        return !deprecated && rightsService.can(userSession, Permission.MUTATE_CONCEPT_STRUCTURE, currentThesaurusTarget());
     }
 
-    public static boolean canMutateLexicalContent(UserSession userSession, boolean deprecated) {
+    public boolean canMutateLexicalContent(UserSession userSession, boolean deprecated) {
         return canMutateHierarchicalRelations(userSession, deprecated);
     }
 
-    public static boolean canMutateConceptStatus(UserSession userSession) {
-        if (userSession == null || !userSession.isLoggedIn()) {
-            return false;
-        }
-        return userSession.isManager() || userSession.isSuperAdmin();
+    public boolean canMutateConceptStatus(UserSession userSession) {
+        return rightsService.can(userSession, Permission.MUTATE_CONCEPT_STRUCTURE, currentThesaurusTarget());
     }
 
-    public static boolean canMutateCustomRelations(UserSession userSession, boolean deprecated) {
+    public boolean canMutateCustomRelations(UserSession userSession, boolean deprecated) {
         return canMutateHierarchicalRelations(userSession, deprecated);
     }
 
-    public static boolean canMutateMedia(UserSession userSession, boolean deprecated) {
+    public boolean canMutateMedia(UserSession userSession, boolean deprecated) {
         return canMutateLexicalContent(userSession, deprecated);
     }
 
-    public static boolean canMutateAlignments(UserSession userSession, boolean deprecated) {
+    public boolean canMutateAlignments(UserSession userSession, boolean deprecated) {
         return canMutateHierarchicalRelations(userSession, deprecated);
     }
 
-    public static boolean canMutateConceptAttributes(UserSession userSession, boolean deprecated) {
+    public boolean canMutateConceptAttributes(UserSession userSession, boolean deprecated) {
         return canMutateLexicalContent(userSession, deprecated);
     }
 
-    public static boolean canMutateIdentifiers(UserSession userSession, boolean canManageThesaurus) {
+    public boolean canMutateIdentifiers(UserSession userSession) {
+        return rightsService.can(userSession, Permission.MANAGE_THESAURUS, currentThesaurusTarget());
+    }
+
+    /** @deprecated préférer {@link #canMutateIdentifiers(UserSession)} */
+    @Deprecated
+    public boolean canMutateIdentifiers(UserSession userSession, boolean canManageThesaurus) {
         return userSession != null && userSession.isLoggedIn() && canManageThesaurus;
     }
 
-    public static boolean canTransferConcept(UserSession userSession, boolean canManageThesaurus) {
+    public boolean canTransferConcept(UserSession userSession) {
+        return canMutateIdentifiers(userSession);
+    }
+
+    /** @deprecated préférer {@link #canTransferConcept(UserSession)} */
+    @Deprecated
+    public boolean canTransferConcept(UserSession userSession, boolean canManageThesaurus) {
         return canMutateIdentifiers(userSession, canManageThesaurus);
+    }
+
+    private AuthTarget currentThesaurusTarget() {
+        String thesaurusId = thesaurusContext.resolveThesaurusId();
+        return StringUtils.isNotBlank(thesaurusId) ? AuthTarget.thesaurus(thesaurusId) : AuthTarget.none();
     }
 }

@@ -42,6 +42,7 @@ public class ConceptAlignmentEditorBean implements Serializable {
     private final ConceptNavigationSupport conceptNavigationSupport;
     private final ThesaurusContext thesaurusContext;
     private final UserSession userSession;
+    private final ConceptWritePolicy conceptWritePolicy;
 
     private List<ConceptWriteAlignmentType> alignmentTypes = Collections.emptyList();
 
@@ -57,7 +58,7 @@ public class ConceptAlignmentEditorBean implements Serializable {
     private int alignmentToDeleteId = -1;
 
     public boolean isManagerActionsAvailable() {
-        return ConceptWritePolicy.canMutateAlignments(userSession, isSelectedDeprecated());
+        return conceptWritePolicy.canMutateAlignments(userSession, isSelectedDeprecated());
     }
 
     public void prepareManualAlignment() {

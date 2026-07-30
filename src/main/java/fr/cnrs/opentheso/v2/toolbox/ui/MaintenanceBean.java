@@ -22,6 +22,7 @@ import java.io.Serializable;
 public class MaintenanceBean implements Serializable {
 
     private final UserSession userSession;
+    private final ToolboxAccessPolicy toolboxAccessPolicy;
     private final ThesaurusContext thesaurusContext;
     private final ThesaurusMaintenanceService thesaurusMaintenanceService;
 
@@ -30,17 +31,19 @@ public class MaintenanceBean implements Serializable {
 
     public MaintenanceBean(
             UserSession userSession,
+            ToolboxAccessPolicy toolboxAccessPolicy,
             ThesaurusContext thesaurusContext,
             ThesaurusMaintenanceService thesaurusMaintenanceService
     ) {
         this.userSession = userSession;
+        this.toolboxAccessPolicy = toolboxAccessPolicy;
         this.thesaurusContext = thesaurusContext;
         this.thesaurusMaintenanceService = thesaurusMaintenanceService;
     }
 
     public boolean isScreenAvailable() {
-        return ToolboxAccessPolicy.canAccessMaintenance(userSession)
-                && ToolboxAccessPolicy.hasSelectedThesaurus(thesaurusContext.getCurrentThesaurusId());
+        return toolboxAccessPolicy.canAccessMaintenance(userSession)
+                && toolboxAccessPolicy.hasSelectedThesaurus(thesaurusContext.getCurrentThesaurusId());
     }
 
     public boolean isSuperAdmin() {

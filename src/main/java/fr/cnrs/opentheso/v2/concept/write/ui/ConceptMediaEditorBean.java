@@ -44,6 +44,7 @@ public class ConceptMediaEditorBean implements Serializable {
     private final ConceptNavigationSupport conceptNavigationSupport;
     private final ThesaurusContext thesaurusContext;
     private final UserSession userSession;
+    private final ConceptWritePolicy conceptWritePolicy;
     private final ThesaurusBrowseBean thesaurusBrowseBean;
 
     private String currentConceptLabel;
@@ -60,7 +61,7 @@ public class ConceptMediaEditorBean implements Serializable {
     private List<ExternalResourceEditRow> resourcesToDelete = Collections.emptyList();
 
     public boolean isMediaActionsAvailable() {
-        return ConceptWritePolicy.canMutateMedia(userSession, isSelectedDeprecated());
+        return conceptWritePolicy.canMutateMedia(userSession, isSelectedDeprecated());
     }
 
     public void prepareEditGps() {

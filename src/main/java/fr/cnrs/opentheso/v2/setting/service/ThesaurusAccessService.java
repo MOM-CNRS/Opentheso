@@ -1,7 +1,8 @@
 package fr.cnrs.opentheso.v2.setting.service;
 
-import fr.cnrs.opentheso.v2.setting.policy.ThesaurusAccessPolicy;
-import fr.cnrs.opentheso.v2.shared.repository.ThesaurusSettingsQueryRepository;
+import fr.cnrs.opentheso.v2.rights.AuthTarget;
+import fr.cnrs.opentheso.v2.rights.Permission;
+import fr.cnrs.opentheso.v2.rights.RightsService;
 import lombok.RequiredArgsConstructor;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
@@ -10,15 +11,13 @@ import org.springframework.transaction.annotation.Transactional;
 @RequiredArgsConstructor
 public class ThesaurusAccessService {
 
-    private final ThesaurusSettingsQueryRepository thesaurusSettingsQueryRepository;
+    private final RightsService rightsService;
 
     @Transactional(readOnly = true)
     public boolean canManageThesaurus(int userId, boolean superAdmin, String thesaurusId) {
         if (superAdmin) {
             return true;
         }
-        return thesaurusSettingsQueryRepository.findEffectiveRoleOnThesaurus(userId, thesaurusId)
-                .map(roleId -> ThesaurusAccessPolicy.isThesaurusAdmin(false, roleId))
-                .orElse(false);
+        return rightsService.can(userId, Permission.MANAGE_THESAURUS, AuthTarget.thesaurus(thesaurusId));
     }
 }

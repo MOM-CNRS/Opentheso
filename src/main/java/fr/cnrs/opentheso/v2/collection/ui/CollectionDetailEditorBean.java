@@ -56,6 +56,7 @@ public class CollectionDetailEditorBean implements Serializable {
     private final ConceptGroupTypeRepository conceptGroupTypeRepository;
     private final ThesaurusContext thesaurusContext;
     private final UserSession userSession;
+    private final ConceptWritePolicy conceptWritePolicy;
     private final ThesaurusBrowseBean thesaurusBrowseBean;
 
     private String label;
@@ -96,7 +97,7 @@ public class CollectionDetailEditorBean implements Serializable {
     }
 
     public boolean isManagerActionsAvailable() {
-        return ConceptWritePolicy.canMutateHierarchicalRelations(userSession, false);
+        return conceptWritePolicy.canMutateHierarchicalRelations(userSession, false);
     }
 
     public void prepareModify() {

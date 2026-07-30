@@ -7,6 +7,7 @@ import fr.cnrs.opentheso.v2.project.policy.ProjectAccessPolicy;
 import fr.cnrs.opentheso.v2.shared.repository.ProjectAdminQueryRepository;
 import fr.cnrs.opentheso.v2.shared.repository.ProjectMembershipRepository;
 import fr.cnrs.opentheso.v2.shared.repository.UserCommandRepository;
+import fr.cnrs.opentheso.v2.rights.RightsService;
 import fr.cnrs.opentheso.v2.user.exception.InvalidProfileDataException;
 import fr.cnrs.opentheso.v2.user.service.UserLookupService;
 import fr.cnrs.opentheso.v2.user.service.UserProfileService;
@@ -32,6 +33,7 @@ public class AdminUserService {
     private final ProjectMembershipRepository projectMembershipRepository;
     private final ProjectAdminQueryRepository projectAdminQueryRepository;
     private final PasswordEncoder passwordEncoder;
+    private final RightsService rightsService;
 
     @Transactional
     public CreatedAdminUser createUser(
@@ -135,6 +137,7 @@ public class AdminUserService {
         }
         if (roleId == ProjectAccessPolicy.ROLE_SUPER_ADMIN) {
             userCommandRepository.setSuperAdmin(userId, true);
+            rightsService.invalidate(userId);
             return;
         }
         if (projectId == null) {
@@ -149,9 +152,11 @@ public class AdminUserService {
                 throw new InvalidProjectDataException("Les thésaurus suivants n'appartiennent pas au projet : " + missing);
             }
             projectMembershipRepository.replaceLimitedRoles(userId, roleId, projectId, thesaurusIds);
+            rightsService.invalidate(userId);
             return;
         }
         projectMembershipRepository.assignProjectRole(userId, roleId, projectId);
+        rightsService.invalidate(userId);
     }
 
     private void ensureUsernameAvailable(String username) {

@@ -3,6 +3,7 @@ package fr.cnrs.opentheso.v2.toolbox.ui;
 import fr.cnrs.opentheso.utils.MessageUtils;
 import fr.cnrs.opentheso.v2.shared.ui.UserSession;
 import fr.cnrs.opentheso.v2.toolbox.model.LanguageFlag;
+import fr.cnrs.opentheso.v2.toolbox.policy.ToolboxAccessPolicy;
 import fr.cnrs.opentheso.v2.toolbox.service.LanguageFlagService;
 import org.junit.jupiter.api.BeforeEach;
 import org.junit.jupiter.api.Test;
@@ -26,19 +27,20 @@ class FlagManagementBeanTest {
     @Mock
     private UserSession userSession;
     @Mock
+    private ToolboxAccessPolicy toolboxAccessPolicy;
+    @Mock
     private LanguageFlagService languageFlagService;
 
     private FlagManagementBean bean;
 
     @BeforeEach
     void setUp() {
-        bean = new FlagManagementBean(userSession, languageFlagService);
+        bean = new FlagManagementBean(userSession, toolboxAccessPolicy, languageFlagService);
     }
 
     @Test
     void load_listsFlagsForSuperAdmin() {
-        when(userSession.isLoggedIn()).thenReturn(true);
-        when(userSession.isSuperAdmin()).thenReturn(true);
+        when(toolboxAccessPolicy.canManageLanguageFlags(userSession)).thenReturn(true);
         when(languageFlagService.listAll()).thenReturn(List.of(new LanguageFlag("fr", "FR")));
 
         bean.load();
@@ -49,8 +51,7 @@ class FlagManagementBeanTest {
 
     @Test
     void load_clearsListWhenAccessDenied() {
-        when(userSession.isLoggedIn()).thenReturn(true);
-        when(userSession.isSuperAdmin()).thenReturn(false);
+        when(toolboxAccessPolicy.canManageLanguageFlags(userSession)).thenReturn(false);
 
         bean.load();
 
@@ -60,8 +61,7 @@ class FlagManagementBeanTest {
 
     @Test
     void onCellEdit_updatesCountryCode() {
-        when(userSession.isLoggedIn()).thenReturn(true);
-        when(userSession.isSuperAdmin()).thenReturn(true);
+        when(toolboxAccessPolicy.canManageLanguageFlags(userSession)).thenReturn(true);
         var language = new LanguageFlag("fr", "CA");
         when(languageFlagService.listAll()).thenReturn(List.of(language));
 

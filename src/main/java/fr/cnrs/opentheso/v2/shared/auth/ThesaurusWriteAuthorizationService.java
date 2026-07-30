@@ -1,7 +1,8 @@
 package fr.cnrs.opentheso.v2.shared.auth;
 
-import fr.cnrs.opentheso.v2.project.policy.ProjectAccessPolicy;
-import fr.cnrs.opentheso.v2.shared.repository.ThesaurusSettingsQueryRepository;
+import fr.cnrs.opentheso.v2.rights.AuthTarget;
+import fr.cnrs.opentheso.v2.rights.Permission;
+import fr.cnrs.opentheso.v2.rights.RightsService;
 import lombok.RequiredArgsConstructor;
 import org.springframework.stereotype.Service;
 
@@ -9,11 +10,9 @@ import org.springframework.stereotype.Service;
 @RequiredArgsConstructor
 public class ThesaurusWriteAuthorizationService {
 
-    private final ThesaurusSettingsQueryRepository thesaurusSettingsQueryRepository;
+    private final RightsService rightsService;
 
     public boolean canUserWrite(int userId, String thesaurusId) {
-        return thesaurusSettingsQueryRepository.findEffectiveRoleOnThesaurus(userId, thesaurusId)
-                .map(role -> role <= ProjectAccessPolicy.ROLE_ADMIN)
-                .orElse(false);
+        return rightsService.can(userId, Permission.WRITE_THESAURUS, AuthTarget.thesaurus(thesaurusId));
     }
 }

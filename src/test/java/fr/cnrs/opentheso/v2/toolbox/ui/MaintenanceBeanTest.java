@@ -4,6 +4,7 @@ import fr.cnrs.opentheso.utils.MessageUtils;
 import fr.cnrs.opentheso.v2.setting.ui.ThesaurusContext;
 import fr.cnrs.opentheso.v2.shared.ui.UserSession;
 import fr.cnrs.opentheso.v2.toolbox.model.LocalArkSettings;
+import fr.cnrs.opentheso.v2.toolbox.policy.ToolboxAccessPolicy;
 import fr.cnrs.opentheso.v2.toolbox.service.ThesaurusMaintenanceService;
 import org.junit.jupiter.api.BeforeEach;
 import org.junit.jupiter.api.Test;
@@ -25,6 +26,8 @@ class MaintenanceBeanTest {
     @Mock
     private UserSession userSession;
     @Mock
+    private ToolboxAccessPolicy toolboxAccessPolicy;
+    @Mock
     private ThesaurusContext thesaurusContext;
     @Mock
     private ThesaurusMaintenanceService thesaurusMaintenanceService;
@@ -33,7 +36,7 @@ class MaintenanceBeanTest {
 
     @BeforeEach
     void setUp() {
-        bean = new MaintenanceBean(userSession, thesaurusContext, thesaurusMaintenanceService);
+        bean = new MaintenanceBean(userSession, toolboxAccessPolicy, thesaurusContext, thesaurusMaintenanceService);
     }
 
     @Test
@@ -88,16 +91,16 @@ class MaintenanceBeanTest {
 
     @Test
     void screenUnavailableWithoutThesaurus() {
-        when(userSession.isLoggedIn()).thenReturn(true);
-        when(userSession.hasRoleAsAdmin()).thenReturn(true);
+        when(toolboxAccessPolicy.canAccessMaintenance(userSession)).thenReturn(true);
+        when(toolboxAccessPolicy.hasSelectedThesaurus("")).thenReturn(false);
         when(thesaurusContext.getCurrentThesaurusId()).thenReturn("");
 
         assertFalse(bean.isScreenAvailable());
     }
 
     private void stubAccess() {
-        when(userSession.isLoggedIn()).thenReturn(true);
-        when(userSession.hasRoleAsAdmin()).thenReturn(true);
+        when(toolboxAccessPolicy.canAccessMaintenance(userSession)).thenReturn(true);
+        when(toolboxAccessPolicy.hasSelectedThesaurus("TH1")).thenReturn(true);
         when(thesaurusContext.getCurrentThesaurusId()).thenReturn("TH1");
     }
 }

@@ -1,6 +1,9 @@
 package fr.cnrs.opentheso.v2.toolbox.policy;
 
+import fr.cnrs.opentheso.v2.rights.Permission;
+import fr.cnrs.opentheso.v2.rights.RightsService;
 import fr.cnrs.opentheso.v2.shared.ui.UserSession;
+import org.junit.jupiter.api.BeforeEach;
 import org.junit.jupiter.api.Test;
 import org.junit.jupiter.api.extension.ExtendWith;
 import org.mockito.Mock;
@@ -8,86 +11,57 @@ import org.mockito.junit.jupiter.MockitoExtension;
 
 import static org.junit.jupiter.api.Assertions.assertFalse;
 import static org.junit.jupiter.api.Assertions.assertTrue;
+import static org.mockito.Mockito.verify;
 import static org.mockito.Mockito.when;
 
 @ExtendWith(MockitoExtension.class)
 class ToolboxAccessPolicyTest {
 
     @Mock
+    private RightsService rightsService;
+    @Mock
     private UserSession userSession;
 
-    @Test
-    void canAccessEditionScreen_allowsSuperAdmin() {
-        when(userSession.isLoggedIn()).thenReturn(true);
-        when(userSession.isSuperAdmin()).thenReturn(true);
+    private ToolboxAccessPolicy policy;
 
-        assertTrue(ToolboxAccessPolicy.canAccessEditionScreen(userSession));
+    @BeforeEach
+    void setUp() {
+        policy = new ToolboxAccessPolicy(rightsService);
     }
 
     @Test
-    void canAccessEditionScreen_allowsProjectAdmin() {
-        when(userSession.isLoggedIn()).thenReturn(true);
-        when(userSession.isSuperAdmin()).thenReturn(false);
-        when(userSession.hasRoleAsAdmin()).thenReturn(true);
+    void canAccessEditionScreen_delegatesToRightsService() {
+        when(rightsService.can(userSession, Permission.TOOLBOX_EDITION)).thenReturn(true);
 
-        assertTrue(ToolboxAccessPolicy.canAccessEditionScreen(userSession));
+        assertTrue(policy.canAccessEditionScreen(userSession));
+        verify(rightsService).can(userSession, Permission.TOOLBOX_EDITION);
     }
 
     @Test
-    void canAccessEditionScreen_deniesGuest() {
-        when(userSession.isLoggedIn()).thenReturn(false);
+    void canCreateOrImportThesaurus_usesEditionPermission() {
+        when(rightsService.can(userSession, Permission.TOOLBOX_EDITION)).thenReturn(true);
 
-        assertFalse(ToolboxAccessPolicy.canAccessEditionScreen(userSession));
+        assertTrue(policy.canCreateOrImportThesaurus(userSession));
     }
 
     @Test
-    void canAccessEditionScreen_deniesUserWithoutRights() {
-        when(userSession.isLoggedIn()).thenReturn(true);
-        when(userSession.isSuperAdmin()).thenReturn(false);
-        when(userSession.hasRoleAsAdmin()).thenReturn(false);
+    void canManageLanguageFlags_usesFlagsPermission() {
+        when(rightsService.can(userSession, Permission.TOOLBOX_FLAGS)).thenReturn(false);
 
-        assertFalse(ToolboxAccessPolicy.canAccessEditionScreen(userSession));
+        assertFalse(policy.canManageLanguageFlags(userSession));
     }
 
     @Test
-    void canCreateOrImportThesaurus_allowsSuperAdmin() {
-        when(userSession.isLoggedIn()).thenReturn(true);
-        when(userSession.isSuperAdmin()).thenReturn(true);
+    void canViewStatistics_usesStatisticsPermission() {
+        when(rightsService.can(userSession, Permission.TOOLBOX_STATISTICS)).thenReturn(true);
 
-        assertTrue(ToolboxAccessPolicy.canCreateOrImportThesaurus(userSession));
+        assertTrue(policy.canViewStatistics(userSession));
     }
 
     @Test
-    void canCreateOrImportThesaurus_allowsProjectAdmin() {
-        when(userSession.isLoggedIn()).thenReturn(true);
-        when(userSession.isSuperAdmin()).thenReturn(false);
-        when(userSession.hasRoleAsAdmin()).thenReturn(true);
-
-        assertTrue(ToolboxAccessPolicy.canCreateOrImportThesaurus(userSession));
-    }
-
-    @Test
-    void canCreateOrImportThesaurus_requiresProjectAdminOrSuperAdmin() {
-        when(userSession.isLoggedIn()).thenReturn(true);
-        when(userSession.isSuperAdmin()).thenReturn(false);
-        when(userSession.hasRoleAsAdmin()).thenReturn(false);
-
-        assertFalse(ToolboxAccessPolicy.canCreateOrImportThesaurus(userSession));
-    }
-
-    @Test
-    void canManageLanguageFlags_allowsSuperAdminOnly() {
-        when(userSession.isLoggedIn()).thenReturn(true);
-        when(userSession.isSuperAdmin()).thenReturn(true);
-
-        assertTrue(ToolboxAccessPolicy.canManageLanguageFlags(userSession));
-    }
-
-    @Test
-    void canViewStatistics_requiresManagerRole() {
-        when(userSession.isLoggedIn()).thenReturn(true);
-        when(userSession.isManager()).thenReturn(true);
-
-        assertTrue(ToolboxAccessPolicy.canViewStatistics(userSession));
+    void hasSelectedThesaurus_checksBlankValue() {
+        assertFalse(policy.hasSelectedThesaurus(null));
+        assertFalse(policy.hasSelectedThesaurus(" "));
+        assertTrue(policy.hasSelectedThesaurus("TH1"));
     }
 }

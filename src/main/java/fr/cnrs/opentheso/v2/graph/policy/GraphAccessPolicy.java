@@ -1,13 +1,21 @@
 package fr.cnrs.opentheso.v2.graph.policy;
 
+import fr.cnrs.opentheso.v2.rights.Permission;
+import fr.cnrs.opentheso.v2.rights.RightsService;
 import fr.cnrs.opentheso.v2.shared.ui.UserSession;
+import lombok.RequiredArgsConstructor;
+import org.springframework.stereotype.Component;
 
-public final class GraphAccessPolicy {
+/**
+ * Façade graphe : décisions via {@link RightsService}.
+ */
+@Component
+@RequiredArgsConstructor
+public class GraphAccessPolicy {
 
-    private GraphAccessPolicy() {
-    }
+    private final RightsService rightsService;
 
-    public static boolean canAccessModule(UserSession userSession) {
-        return userSession.isLoggedIn();
+    public boolean canAccessModule(UserSession userSession) {
+        return rightsService.can(userSession, Permission.ACCESS_GRAPH);
     }
 }

@@ -24,6 +24,7 @@ import java.util.List;
 public class NewThesaurusBean implements Serializable {
 
     private final UserSession userSession;
+    private final ToolboxAccessPolicy toolboxAccessPolicy;
     private final NewThesaurusService newThesaurusService;
 
     private NewThesaurusEditor editor = NewThesaurusEditor.empty();
@@ -33,14 +34,16 @@ public class NewThesaurusBean implements Serializable {
 
     public NewThesaurusBean(
             UserSession userSession,
+            ToolboxAccessPolicy toolboxAccessPolicy,
             NewThesaurusService newThesaurusService
     ) {
         this.userSession = userSession;
+        this.toolboxAccessPolicy = toolboxAccessPolicy;
         this.newThesaurusService = newThesaurusService;
     }
 
     public boolean isFormAvailable() {
-        return ToolboxAccessPolicy.canCreateOrImportThesaurus(userSession);
+        return toolboxAccessPolicy.canCreateOrImportThesaurus(userSession);
     }
 
     public void prepareForm() {

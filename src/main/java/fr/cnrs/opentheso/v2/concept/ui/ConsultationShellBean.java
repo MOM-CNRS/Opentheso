@@ -6,8 +6,9 @@ import fr.cnrs.opentheso.v2.concept.model.ConsultationThesaurusOption;
 import fr.cnrs.opentheso.v2.concept.service.ConsultationCatalogService;
 import fr.cnrs.opentheso.v2.shared.session.SessionLifecycleService;
 import fr.cnrs.opentheso.v2.shared.session.SsoSessionBridge;
+import fr.cnrs.opentheso.v2.rights.Permission;
+import fr.cnrs.opentheso.v2.rights.RightsService;
 import fr.cnrs.opentheso.v2.setting.ui.ThesaurusContext;
-import fr.cnrs.opentheso.v2.shared.repository.ThesaurusSettingsQueryRepository;
 import fr.cnrs.opentheso.v2.shared.service.PlatformHomeReadService;
 import fr.cnrs.opentheso.v2.shared.ui.UserSession;
 import fr.cnrs.opentheso.v2.shared.ui.V2LocaleBean;
@@ -41,10 +42,10 @@ public class ConsultationShellBean implements Serializable {
     private final ThesaurusContext thesaurusContext;
     private final UserSession userSession;
     private final V2LocaleBean v2LocaleBean;
-    private final ThesaurusSettingsQueryRepository thesaurusSettingsQueryRepository;
     private final PlatformHomeReadService platformHomeReadService;
     private final SsoSessionBridge ssoSessionBridge;
     private final SessionLifecycleService sessionLifecycleService;
+    private final RightsService rightsService;
 
     private int selectedProjectId = ALL_PROJECTS_ID;
     private String selectedThesaurusId;
@@ -161,16 +162,11 @@ public class ConsultationShellBean implements Serializable {
         if (!userSession.isLoggedIn() || StringUtils.isBlank(thesaurusContext.resolveThesaurusId())) {
             return false;
         }
-        if (userSession.isSuperAdmin()) {
-            return true;
-        }
         Integer userId = userSession.getCurrentUserId();
         if (userId == null) {
             return false;
         }
-        return thesaurusSettingsQueryRepository.findEffectiveRoleOnThesaurus(userId, thesaurusContext.resolveThesaurusId())
-                .map(roleId -> roleId <= 2)
-                .orElse(false);
+        return rightsService.canOnThesaurus(userId, Permission.MANAGE_THESAURUS, thesaurusContext.resolveThesaurusId());
     }
 
     public List<String> getSearchableThesaurusIds() {

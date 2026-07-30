@@ -7,6 +7,7 @@ import fr.cnrs.opentheso.models.candidats.enumeration.VoteType;
 import fr.cnrs.opentheso.models.nodes.NodeIdValue;
 import fr.cnrs.opentheso.utils.MessageUtils;
 import fr.cnrs.opentheso.v2.candidat.model.CandidatStatusCode;
+import fr.cnrs.opentheso.v2.candidat.policy.CandidatAccessPolicy;
 import fr.cnrs.opentheso.v2.candidat.service.CandidatMutationService;
 import fr.cnrs.opentheso.v2.candidat.service.CandidatReadService;
 import fr.cnrs.opentheso.v2.setting.ui.ThesaurusContext;
@@ -43,6 +44,7 @@ import static org.mockito.Mockito.when;
 class CandidatBeanTest {
 
     @Mock private UserSession userSession;
+    @Mock private CandidatAccessPolicy candidatAccessPolicy;
     @Mock private ThesaurusContext thesaurusContext;
     @Mock private CandidatReadService candidatReadService;
     @Mock private CandidatMutationService candidatMutationService;
@@ -59,7 +61,7 @@ class CandidatBeanTest {
     void setUp() {
         messageUtilsStatic = mockStatic(MessageUtils.class);
         primeFacesContext = PrimeFacesTestSupport.open();
-        bean = new CandidatBean(userSession, thesaurusContext, candidatReadService, candidatMutationService,
+        bean = new CandidatBean(userSession, candidatAccessPolicy, thesaurusContext, candidatReadService, candidatMutationService,
                 candidatAutoAlignmentBean, candidatAlignmentBean, localeBean, preferencesJpaRepository);
         lenient().when(thesaurusContext.resolveThesaurusId()).thenReturn("TH1");
         lenient().when(thesaurusContext.resolveWorkLanguage()).thenReturn("fr");
@@ -85,15 +87,16 @@ class CandidatBeanTest {
 
     @Test
     void isScreenAvailable_falseWhenNotLoggedIn() {
-        when(userSession.isLoggedIn()).thenReturn(false);
+        when(candidatAccessPolicy.canAccessModule(userSession, "TH1")).thenReturn(false);
+        when(thesaurusContext.resolveThesaurusId()).thenReturn("TH1");
 
         assertFalse(bean.isScreenAvailable());
     }
 
     @Test
     void isScreenAvailable_falseWhenNoThesaurusSelected() {
-        when(userSession.isLoggedIn()).thenReturn(true);
-        when(userSession.isContributor()).thenReturn(true);
+        when(candidatAccessPolicy.canAccessModule(userSession, "")).thenReturn(true);
+        when(candidatAccessPolicy.hasSelectedThesaurus("")).thenReturn(false);
         when(thesaurusContext.resolveThesaurusId()).thenReturn("");
 
         assertFalse(bean.isScreenAvailable());
@@ -101,23 +104,22 @@ class CandidatBeanTest {
 
     @Test
     void isScreenAvailable_falseWhenNotContributor() {
-        when(userSession.isLoggedIn()).thenReturn(true);
-        when(userSession.isContributor()).thenReturn(false);
+        when(candidatAccessPolicy.canAccessModule(userSession, "TH1")).thenReturn(false);
+        when(thesaurusContext.resolveThesaurusId()).thenReturn("TH1");
 
         assertFalse(bean.isScreenAvailable());
     }
 
     @Test
     void isScreenAvailable_trueWhenLoggedInAndThesaurusSelected() {
-        when(userSession.isLoggedIn()).thenReturn(true);
-        when(userSession.isContributor()).thenReturn(true);
+        stubScreenAccess();
 
         assertTrue(bean.isScreenAvailable());
     }
 
     @Test
     void load_doesNothingWhenScreenNotAvailable() {
-        when(userSession.isLoggedIn()).thenReturn(false);
+        when(candidatAccessPolicy.canAccessModule(userSession, "TH1")).thenReturn(false);
 
         bean.load();
 
@@ -127,8 +129,7 @@ class CandidatBeanTest {
 
     @Test
     void load_initializesModuleWhenScreenAvailable() {
-        when(userSession.isLoggedIn()).thenReturn(true);
-        when(userSession.isContributor()).thenReturn(true);
+        stubScreenAccess();
 
         bean.load();
 
@@ -628,5 +629,11 @@ class CandidatBeanTest {
 
         verify(candidatMutationService).updateCandidateLabel("Concept 1", "TH1", "fr", "T1");
         assertFalse(bean.isModifiedLabel());
+    }
+
+    private void stubScreenAccess() {
+        when(candidatAccessPolicy.canAccessModule(userSession, "TH1")).thenReturn(true);
+        when(candidatAccessPolicy.hasSelectedThesaurus("TH1")).thenReturn(true);
+        when(thesaurusContext.resolveThesaurusId()).thenReturn("TH1");
     }
 }

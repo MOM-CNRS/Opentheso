@@ -57,6 +57,7 @@ public class CandidatBean implements Serializable {
     private String workLanguage;
 
     private final UserSession userSession;
+    private final CandidatAccessPolicy candidatAccessPolicy;
     private final ThesaurusContext thesaurusContext;
     private final CandidatReadService candidatReadService;
     private final CandidatMutationService candidatMutationService;
@@ -87,8 +88,8 @@ public class CandidatBean implements Serializable {
     }
 
     public boolean isScreenAvailable() {
-        return CandidatAccessPolicy.canAccessModule(userSession)
-                && CandidatAccessPolicy.hasSelectedThesaurus(getListThesaurusId());
+        return candidatAccessPolicy.canAccessModule(userSession, getListThesaurusId())
+                && candidatAccessPolicy.hasSelectedThesaurus(getListThesaurusId());
     }
 
     public void load() {

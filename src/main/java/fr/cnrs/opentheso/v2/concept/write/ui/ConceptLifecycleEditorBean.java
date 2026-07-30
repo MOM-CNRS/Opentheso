@@ -46,6 +46,7 @@ public class ConceptLifecycleEditorBean implements Serializable {
     private final ConceptNavigationSupport conceptNavigationSupport;
     private final ThesaurusContext thesaurusContext;
     private final UserSession userSession;
+    private final ConceptWritePolicy conceptWritePolicy;
     private final ConceptWriteSearchService conceptWriteSearchService;
     private final ConceptWriteMetadataService conceptWriteMetadataService;
 
@@ -64,19 +65,19 @@ public class ConceptLifecycleEditorBean implements Serializable {
     private List<ConceptWriteNtRelationType> ntRelationTypes = Collections.emptyList();
 
     public boolean isWriteActionsAvailable() {
-        return ConceptWritePolicy.canMutateConcept(userSession);
+        return conceptWritePolicy.canMutateConcept(userSession);
     }
 
     public boolean isActiveConceptWriteAvailable() {
-        return ConceptWritePolicy.canMutateActiveConcept(userSession, isSelectedDeprecated());
+        return conceptWritePolicy.canMutateActiveConcept(userSession, isSelectedDeprecated());
     }
 
     public boolean isRenameAvailable() {
-        return ConceptWritePolicy.canRenamePreferredLabel(userSession, isSelectedDeprecated());
+        return conceptWritePolicy.canRenamePreferredLabel(userSession, isSelectedDeprecated());
     }
 
     public boolean isStatusActionsAvailable() {
-        return ConceptWritePolicy.canMutateConceptStatus(userSession);
+        return conceptWritePolicy.canMutateConceptStatus(userSession);
     }
 
     public List<ConceptSearchSuggestion> autocompleteReplacedByTarget(String query) {
@@ -257,7 +258,7 @@ public class ConceptLifecycleEditorBean implements Serializable {
     }
 
     public void submitDelete() {
-        if (!ConceptWritePolicy.canMutateConcept(userSession) || !conceptSelectionContext.hasSelection()) {
+        if (!conceptWritePolicy.canMutateConcept(userSession) || !conceptSelectionContext.hasSelection()) {
             MessageUtils.showErrorMessage("Action non autorisée");
             return;
         }

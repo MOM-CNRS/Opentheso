@@ -1,6 +1,6 @@
 package fr.cnrs.opentheso.v2.shared.session;
 
-import fr.cnrs.opentheso.v2.shared.auth.UserCapabilityService;
+import fr.cnrs.opentheso.v2.rights.RightsService;
 import lombok.RequiredArgsConstructor;
 import org.springframework.stereotype.Service;
 
@@ -8,9 +8,13 @@ import org.springframework.stereotype.Service;
 @RequiredArgsConstructor
 public class SessionUserService {
 
-    private final UserCapabilityService userCapabilityService;
+    private final RightsService rightsService;
 
     public SessionUser load(int userId) {
-        return userCapabilityService.loadSessionUser(userId);
+        return rightsService.capabilities(userId);
+    }
+
+    public void invalidate(int userId) {
+        rightsService.invalidate(userId);
     }
 }

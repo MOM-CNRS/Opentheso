@@ -10,6 +10,7 @@ import fr.cnrs.opentheso.v2.proposition.model.PropositionSummary;
 import fr.cnrs.opentheso.v2.proposition.service.PropositionDraftService;
 import fr.cnrs.opentheso.v2.proposition.service.PropositionMutationService;
 import fr.cnrs.opentheso.v2.proposition.service.PropositionReadService;
+import fr.cnrs.opentheso.v2.rights.RightsService;
 import fr.cnrs.opentheso.v2.setting.ui.ThesaurusContext;
 import fr.cnrs.opentheso.v2.shared.ui.UserSession;
 import fr.cnrs.opentheso.v2.test.support.PrimeFacesTestSupport;
@@ -39,6 +40,7 @@ class PropositionBeanTest {
     @Mock private PropositionDraftService propositionDraftService;
     @Mock private ThesaurusContext thesaurusContext;
     @Mock private UserSession userSession;
+    @Mock private RightsService rightsService;
 
     private PropositionBean bean;
     private MockedStatic<MessageUtils> messageUtilsStatic;
@@ -53,7 +55,7 @@ class PropositionBeanTest {
         messageUtilsStatic = mockStatic(MessageUtils.class);
         primeFacesContext = PrimeFacesTestSupport.open();
         bean = new PropositionBean(propositionReadService, propositionMutationService,
-                propositionDraftService, thesaurusContext, userSession);
+                propositionDraftService, thesaurusContext, userSession, rightsService);
     }
 
     @AfterEach

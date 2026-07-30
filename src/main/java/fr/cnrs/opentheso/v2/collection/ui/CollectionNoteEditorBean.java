@@ -38,6 +38,7 @@ public class CollectionNoteEditorBean implements Serializable {
     private final CollectionReadService collectionReadService;
     private final ThesaurusContext thesaurusContext;
     private final UserSession userSession;
+    private final ConceptWritePolicy conceptWritePolicy;
     private final ThesaurusBrowseBean thesaurusBrowseBean;
 
     private String currentLabel;
@@ -50,7 +51,7 @@ public class CollectionNoteEditorBean implements Serializable {
     private List<ConceptNote> notesToDelete = Collections.emptyList();
 
     public boolean isNoteActionsAvailable() {
-        return ConceptWritePolicy.canMutateLexicalContent(userSession, false);
+        return conceptWritePolicy.canMutateLexicalContent(userSession, false);
     }
 
     public void prepareManageNote() {

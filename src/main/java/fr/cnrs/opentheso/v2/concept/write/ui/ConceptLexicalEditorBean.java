@@ -45,6 +45,7 @@ public class ConceptLexicalEditorBean implements Serializable {
     private final ConceptNavigationSupport conceptNavigationSupport;
     private final ThesaurusContext thesaurusContext;
     private final UserSession userSession;
+    private final ConceptWritePolicy conceptWritePolicy;
     private final ConceptReadService conceptReadService;
     private final ConceptWriteMetadataService conceptWriteMetadataService;
 
@@ -62,7 +63,7 @@ public class ConceptLexicalEditorBean implements Serializable {
     private List<TranslationEditRow> translationEdits = Collections.emptyList();
 
     public boolean isLexicalActionsAvailable() {
-        return ConceptWritePolicy.canMutateLexicalContent(userSession, isSelectedDeprecated());
+        return conceptWritePolicy.canMutateLexicalContent(userSession, isSelectedDeprecated());
     }
 
     public void prepareAddSynonym() {

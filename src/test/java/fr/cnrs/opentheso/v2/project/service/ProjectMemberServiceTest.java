@@ -9,6 +9,7 @@ import fr.cnrs.opentheso.v2.shared.persistence.UserEntity;
 import fr.cnrs.opentheso.v2.shared.repository.ProjectAdminQueryRepository;
 import fr.cnrs.opentheso.v2.shared.repository.ProjectMembershipRepository;
 import fr.cnrs.opentheso.v2.shared.repository.UserCommandRepository;
+import fr.cnrs.opentheso.v2.rights.RightsService;
 import fr.cnrs.opentheso.v2.shared.repository.projection.UserSearchRow;
 import fr.cnrs.opentheso.v2.user.exception.UserNotFoundException;
 import fr.cnrs.opentheso.v2.user.model.UserProfile;
@@ -55,6 +56,8 @@ class ProjectMemberServiceTest {
     private PasswordEncoder passwordEncoder;
     @Mock
     private AccountPasswordResetService accountPasswordResetService;
+    @Mock
+    private RightsService rightsService;
 
     private ProjectMemberService projectMemberService;
 
@@ -68,7 +71,8 @@ class ProjectMemberServiceTest {
                 projectMembershipRepository,
                 userCommandRepository,
                 passwordEncoder,
-                accountPasswordResetService
+                accountPasswordResetService,
+                rightsService
         );
     }
 

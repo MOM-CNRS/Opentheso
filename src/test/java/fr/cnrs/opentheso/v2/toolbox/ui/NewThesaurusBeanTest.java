@@ -7,6 +7,7 @@ import fr.cnrs.opentheso.v2.toolbox.exception.InvalidToolboxDataException;
 import fr.cnrs.opentheso.v2.toolbox.model.NewThesaurusFormOptions;
 import fr.cnrs.opentheso.v2.toolbox.model.LanguageOption;
 import fr.cnrs.opentheso.v2.toolbox.model.ProjectOption;
+import fr.cnrs.opentheso.v2.toolbox.policy.ToolboxAccessPolicy;
 import fr.cnrs.opentheso.v2.toolbox.service.NewThesaurusService;
 import fr.cnrs.opentheso.v2.test.support.PrimeFacesTestSupport;
 import jakarta.faces.context.FacesContext;
@@ -35,6 +36,8 @@ class NewThesaurusBeanTest {
     @Mock
     private UserSession userSession;
     @Mock
+    private ToolboxAccessPolicy toolboxAccessPolicy;
+    @Mock
     private NewThesaurusService newThesaurusService;
     @Mock
     private EditionBean editionBean;
@@ -49,7 +52,7 @@ class NewThesaurusBeanTest {
 
     @BeforeEach
     void setUp() {
-        bean = new NewThesaurusBean(userSession, newThesaurusService);
+        bean = new NewThesaurusBean(userSession, toolboxAccessPolicy, newThesaurusService);
     }
 
     @Test
@@ -72,7 +75,7 @@ class NewThesaurusBeanTest {
 
     @Test
     void prepareForm_doesNotAutoSelectProjectForSuperAdmin() {
-        when(userSession.isLoggedIn()).thenReturn(true);
+        when(toolboxAccessPolicy.canCreateOrImportThesaurus(userSession)).thenReturn(true);
         when(userSession.getCurrentUserId()).thenReturn(2);
         when(userSession.isSuperAdmin()).thenReturn(true);
         when(newThesaurusService.loadFormOptions(2, true))
@@ -90,9 +93,7 @@ class NewThesaurusBeanTest {
 
     @Test
     void prepareForm_deniedWhenUserCannotCreate() {
-        when(userSession.isLoggedIn()).thenReturn(true);
-        when(userSession.isSuperAdmin()).thenReturn(false);
-        when(userSession.hasRoleAsAdmin()).thenReturn(false);
+        when(toolboxAccessPolicy.canCreateOrImportThesaurus(userSession)).thenReturn(false);
 
         bean.prepareForm();
 
@@ -137,7 +138,7 @@ class NewThesaurusBeanTest {
 
     @Test
     void create_skipsWhenAccessDenied() {
-        when(userSession.isLoggedIn()).thenReturn(false);
+        when(toolboxAccessPolicy.canCreateOrImportThesaurus(userSession)).thenReturn(false);
 
         bean.create();
 
@@ -158,16 +159,13 @@ class NewThesaurusBeanTest {
     }
 
     private void stubPrepareFormAccess() {
-        when(userSession.isLoggedIn()).thenReturn(true);
+        when(toolboxAccessPolicy.canCreateOrImportThesaurus(userSession)).thenReturn(true);
         when(userSession.getCurrentUserId()).thenReturn(2);
         when(userSession.isSuperAdmin()).thenReturn(false);
-        when(userSession.hasRoleAsAdmin()).thenReturn(true);
     }
 
     private void stubCreateAccessWithUsername() {
-        when(userSession.isLoggedIn()).thenReturn(true);
-        when(userSession.isSuperAdmin()).thenReturn(false);
-        when(userSession.hasRoleAsAdmin()).thenReturn(true);
+        when(toolboxAccessPolicy.canCreateOrImportThesaurus(userSession)).thenReturn(true);
         when(userSession.getCurrentUsername()).thenReturn("admin");
     }
 

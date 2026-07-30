@@ -19,17 +19,23 @@ import java.util.List;
 public class FlagManagementBean implements Serializable {
 
     private final UserSession userSession;
+    private final ToolboxAccessPolicy toolboxAccessPolicy;
     private final LanguageFlagService languageFlagService;
 
     private List<LanguageFlag> languages = Collections.emptyList();
 
-    public FlagManagementBean(UserSession userSession, LanguageFlagService languageFlagService) {
+    public FlagManagementBean(
+            UserSession userSession,
+            ToolboxAccessPolicy toolboxAccessPolicy,
+            LanguageFlagService languageFlagService
+    ) {
         this.userSession = userSession;
+        this.toolboxAccessPolicy = toolboxAccessPolicy;
         this.languageFlagService = languageFlagService;
     }
 
     public boolean isScreenAvailable() {
-        return ToolboxAccessPolicy.canManageLanguageFlags(userSession);
+        return toolboxAccessPolicy.canManageLanguageFlags(userSession);
     }
 
     public void load() {

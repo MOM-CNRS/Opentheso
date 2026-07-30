@@ -49,6 +49,7 @@ public class ConceptRelationEditorBean implements Serializable {
     private final ConceptNavigationSupport conceptNavigationSupport;
     private final ThesaurusContext thesaurusContext;
     private final UserSession userSession;
+    private final ConceptWritePolicy conceptWritePolicy;
     private final ConceptWriteSearchService conceptWriteSearchService;
     private final ConceptReadService conceptReadService;
     private final ThesaurusBrowseBean thesaurusBrowseBean;
@@ -63,11 +64,11 @@ public class ConceptRelationEditorBean implements Serializable {
     private List<ConceptCustomRelationItem> customRelationsToDelete = Collections.emptyList();
 
     public boolean isCustomRelationActionsAvailable() {
-        return ConceptWritePolicy.canMutateCustomRelations(userSession, isSelectedDeprecated());
+        return conceptWritePolicy.canMutateCustomRelations(userSession, isSelectedDeprecated());
     }
 
     public boolean isRelationActionsAvailable() {
-        return ConceptWritePolicy.canMutateHierarchicalRelations(userSession, isSelectedDeprecated());
+        return conceptWritePolicy.canMutateHierarchicalRelations(userSession, isSelectedDeprecated());
     }
 
     public List<ConceptSearchSuggestion> autocompleteRelationTarget(String query) {

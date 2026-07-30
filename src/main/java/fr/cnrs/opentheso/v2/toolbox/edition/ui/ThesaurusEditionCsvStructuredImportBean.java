@@ -36,6 +36,7 @@ public class ThesaurusEditionCsvStructuredImportBean implements Serializable {
     private final ThesaurusEditionCsvStructuredImportService thesaurusEditionCsvStructuredImportService;
     private final NewThesaurusService newThesaurusService;
     private final UserSession userSession;
+    private final ToolboxAccessPolicy toolboxAccessPolicy;
 
     private String thesaurusName;
     private String selectedLang;
@@ -50,7 +51,7 @@ public class ThesaurusEditionCsvStructuredImportBean implements Serializable {
     private NodeTree root;
 
     public void init() {
-        if (!ToolboxAccessPolicy.canCreateOrImportThesaurus(userSession)) {
+        if (!toolboxAccessPolicy.canCreateOrImportThesaurus(userSession)) {
             return;
         }
         resetForm();

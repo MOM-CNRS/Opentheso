@@ -1,5 +1,7 @@
 package fr.cnrs.opentheso.v2.shared.ui;
 
+import fr.cnrs.opentheso.v2.rights.Permission;
+import fr.cnrs.opentheso.v2.rights.RightsService;
 import fr.cnrs.opentheso.v2.shared.session.AuthenticatedUserSource;
 import fr.cnrs.opentheso.v2.shared.session.SessionUser;
 import fr.cnrs.opentheso.v2.shared.session.SessionUserService;
@@ -12,6 +14,7 @@ import java.util.Optional;
 
 /**
  * Point d'accès unique à la session utilisateur pour la v2.
+ * Les droits sont lus via {@link SessionUserService} / {@link RightsService} (cache Caffeine + TTL).
  */
 @SessionScoped
 @Named("v2UserSession")
@@ -20,8 +23,7 @@ public class UserSession implements Serializable {
 
     private final AuthenticatedUserSource authenticatedUserSource;
     private final SessionUserService sessionUserService;
-
-    private SessionUser cachedSessionUser;
+    private final RightsService rightsService;
 
     public boolean isLoggedIn() {
         return authenticatedUserSource.isLoggedIn();
@@ -58,14 +60,11 @@ public class UserSession implements Serializable {
     }
 
     public boolean canAccessProjectAdminScreen() {
-        if (!isLoggedIn()) {
-            return false;
-        }
-        return isSuperAdmin() || hasRoleAsAdmin();
+        return rightsService.can(this, Permission.MANAGE_PROJECT);
     }
 
     public boolean canAccessSuperAdminScreen() {
-        return isSuperAdmin();
+        return rightsService.can(this, Permission.SUPER_ADMIN);
     }
 
     public boolean hasRoleAsAdmin() {
@@ -80,19 +79,22 @@ public class UserSession implements Serializable {
         return resolveSessionUser().map(SessionUser::manager).orElse(false);
     }
 
+    /**
+     * Force le rechargement des droits (profil / rôles) au prochain accès.
+     */
+    public void invalidateRightsCache() {
+        invalidateCache();
+    }
+
     private Optional<SessionUser> resolveSessionUser() {
         if (!isLoggedIn()) {
-            cachedSessionUser = null;
             return Optional.empty();
         }
         int userId = authenticatedUserSource.getUserId().orElseThrow();
-        if (cachedSessionUser == null || cachedSessionUser.userId() != userId) {
-            cachedSessionUser = sessionUserService.load(userId);
-        }
-        return Optional.of(cachedSessionUser);
+        return Optional.of(sessionUserService.load(userId));
     }
 
     private void invalidateCache() {
-        cachedSessionUser = null;
+        authenticatedUserSource.getUserId().ifPresent(sessionUserService::invalidate);
     }
 }

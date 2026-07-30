@@ -7,6 +7,9 @@ import fr.cnrs.opentheso.v2.setting.exception.InvalidSettingDataException;
 import fr.cnrs.opentheso.v2.setting.model.IdentifierServerType;
 import fr.cnrs.opentheso.v2.setting.model.ThesaurusPreferences;
 import fr.cnrs.opentheso.v2.setting.service.ThesaurusPreferenceService;
+import fr.cnrs.opentheso.v2.rights.AuthTarget;
+import fr.cnrs.opentheso.v2.rights.Permission;
+import fr.cnrs.opentheso.v2.rights.RightsService;
 import fr.cnrs.opentheso.v2.shared.ui.UserSession;
 import fr.cnrs.opentheso.v2.test.support.PrimeFacesTestSupport;
 import org.junit.jupiter.api.BeforeEach;
@@ -38,6 +41,8 @@ class PreferenceSettingsBeanTest {
     @Mock
     private UserSession userSession;
     @Mock
+    private RightsService rightsService;
+    @Mock
     private ThesaurusContext thesaurusContext;
     @Mock
     private V2LocaleBean localeBean;
@@ -50,6 +55,7 @@ class PreferenceSettingsBeanTest {
     void setUp() {
         bean = new PreferenceSettingsBean(
                 userSession,
+                rightsService,
                 thesaurusContext,
                 localeBean,
                 thesaurusPreferenceService
@@ -72,7 +78,8 @@ class PreferenceSettingsBeanTest {
 
     @Test
     void load_clearsEditorWhenAccessDenied() {
-        when(userSession.hasRoleAsAdmin()).thenReturn(false);
+        when(thesaurusContext.getCurrentThesaurusId()).thenReturn("TH1");
+        when(rightsService.can(userSession, Permission.MANAGE_THESAURUS, AuthTarget.thesaurus("TH1"))).thenReturn(false);
 
         bean.load();
 
@@ -83,7 +90,6 @@ class PreferenceSettingsBeanTest {
 
     @Test
     void load_deniesWhenUserOrThesaurusMissing() {
-        when(userSession.hasRoleAsAdmin()).thenReturn(true);
         when(thesaurusContext.getCurrentThesaurusId()).thenReturn(null);
 
         bean.load();
@@ -201,7 +207,7 @@ class PreferenceSettingsBeanTest {
     }
 
     private void grantAccess() {
-        when(userSession.hasRoleAsAdmin()).thenReturn(true);
         when(thesaurusContext.getCurrentThesaurusId()).thenReturn("TH1");
+        when(rightsService.can(userSession, Permission.MANAGE_THESAURUS, AuthTarget.thesaurus("TH1"))).thenReturn(true);
     }
 }

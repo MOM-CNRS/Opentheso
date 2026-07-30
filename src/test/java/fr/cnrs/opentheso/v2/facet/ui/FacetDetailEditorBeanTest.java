@@ -11,6 +11,7 @@ import fr.cnrs.opentheso.v2.facet.read.FacetReadService;
 import fr.cnrs.opentheso.v2.facet.write.model.command.AddFacetMemberCommand;
 import fr.cnrs.opentheso.v2.facet.write.service.FacetMutationService;
 import fr.cnrs.opentheso.v2.setting.ui.ThesaurusContext;
+import fr.cnrs.opentheso.v2.concept.write.policy.ConceptWritePolicy;
 import fr.cnrs.opentheso.v2.shared.ui.UserSession;
 import org.junit.jupiter.api.BeforeEach;
 import org.junit.jupiter.api.Test;
@@ -43,6 +44,7 @@ class FacetDetailEditorBeanTest {
     @Mock private ConceptWriteMetadataService conceptWriteMetadataService;
     @Mock private ThesaurusContext thesaurusContext;
     @Mock private UserSession userSession;
+    @Mock private ConceptWritePolicy conceptWritePolicy;
     @Mock private ThesaurusBrowseBean thesaurusBrowseBean;
 
     private FacetDetailEditorBean bean;
@@ -54,22 +56,23 @@ class FacetDetailEditorBeanTest {
     void setUp() {
         bean = new FacetDetailEditorBean(
                 facetMutationService, facetReadService, conceptWriteSearchService,
-                conceptWriteMetadataService, thesaurusContext, userSession, thesaurusBrowseBean);
+                conceptWriteMetadataService, thesaurusContext, userSession,
+                conceptWritePolicy, thesaurusBrowseBean);
         lenient().when(thesaurusContext.resolveThesaurusId()).thenReturn("TH1");
         lenient().when(thesaurusContext.resolveWorkLanguage()).thenReturn("fr");
+        lenient().when(conceptWritePolicy.canMutateHierarchicalRelations(userSession, false)).thenReturn(true);
     }
 
     @Test
     void isManagerActionsAvailable_trueForManager() {
-        when(userSession.isLoggedIn()).thenReturn(true);
-        when(userSession.isManager()).thenReturn(true);
+        when(conceptWritePolicy.canMutateHierarchicalRelations(userSession, false)).thenReturn(true);
 
         assertTrue(bean.isManagerActionsAvailable());
     }
 
     @Test
     void isManagerActionsAvailable_falseForGuest() {
-        when(userSession.isLoggedIn()).thenReturn(false);
+        when(conceptWritePolicy.canMutateHierarchicalRelations(userSession, false)).thenReturn(false);
 
         assertFalse(bean.isManagerActionsAvailable());
     }
@@ -85,8 +88,6 @@ class FacetDetailEditorBeanTest {
 
     @Test
     void submitAddMember_rejectsMissingConcept() {
-        when(userSession.isLoggedIn()).thenReturn(true);
-        when(userSession.isManager()).thenReturn(true);
         when(thesaurusBrowseBean.getSelectedFacet()).thenReturn(FACET);
 
         try (MockedStatic<MessageUtils> messageUtils = mockStatic(MessageUtils.class)) {
@@ -98,8 +99,6 @@ class FacetDetailEditorBeanTest {
 
     @Test
     void submitAddMember_withBranch_delegatesToService() {
-        when(userSession.isLoggedIn()).thenReturn(true);
-        when(userSession.isManager()).thenReturn(true);
         when(thesaurusBrowseBean.getSelectedFacet()).thenReturn(FACET);
         bean.setSelectedConcept(new ConceptSearchSuggestion("C1", "Concept", null, false));
         bean.setApplyToBranch(true);

@@ -10,6 +10,7 @@ import fr.cnrs.opentheso.v2.concept.write.model.MutationResult;
 import fr.cnrs.opentheso.v2.concept.write.model.command.AddManualAlignmentCommand;
 import fr.cnrs.opentheso.v2.concept.write.model.command.DeleteAlignmentCommand;
 import fr.cnrs.opentheso.v2.concept.write.model.command.UpdateAlignmentCommand;
+import fr.cnrs.opentheso.v2.concept.write.policy.ConceptWritePolicy;
 import fr.cnrs.opentheso.v2.concept.write.service.ConceptAlignmentMutationService;
 import fr.cnrs.opentheso.v2.setting.ui.ThesaurusContext;
 import fr.cnrs.opentheso.v2.shared.ui.UserSession;
@@ -25,6 +26,8 @@ import java.util.List;
 
 import static org.junit.jupiter.api.Assertions.assertEquals;
 import static org.mockito.ArgumentMatchers.any;
+import static org.mockito.ArgumentMatchers.anyBoolean;
+import static org.mockito.ArgumentMatchers.eq;
 import static org.mockito.Mockito.lenient;
 import static org.mockito.Mockito.mock;
 import static org.mockito.Mockito.mockStatic;
@@ -45,6 +48,8 @@ class ConceptAlignmentEditorBeanTest {
     private ThesaurusContext thesaurusContext;
     @Mock
     private UserSession userSession;
+    @Mock
+    private ConceptWritePolicy conceptWritePolicy;
 
     private ConceptAlignmentEditorBean bean;
 
@@ -55,22 +60,22 @@ class ConceptAlignmentEditorBeanTest {
     void setUp() {
         bean = new ConceptAlignmentEditorBean(
                 conceptAlignmentMutationService, conceptSelectionContext, conceptNavigationSupport,
-                thesaurusContext, userSession);
+                thesaurusContext, userSession, conceptWritePolicy);
+        lenient().when(conceptWritePolicy.canMutateAlignments(eq(userSession), anyBoolean())).thenReturn(true);
+        lenient().when(conceptSelectionContext.hasSelection()).thenReturn(true);
+        lenient().when(conceptSelectionContext.getSummary()).thenReturn(ACTIVE_CONCEPT);
     }
 
     @Test
-    void isManagerActionsAvailable_falseWhenNotLoggedIn() {
-        when(userSession.isLoggedIn()).thenReturn(false);
+    void isManagerActionsAvailable_falseWhenDeniedByPolicy() {
+        when(conceptWritePolicy.canMutateAlignments(userSession, false)).thenReturn(false);
 
         assertEquals(false, bean.isManagerActionsAvailable());
     }
 
     @Test
-    void isManagerActionsAvailable_trueForManagerOnActiveConcept() {
-        when(userSession.isLoggedIn()).thenReturn(true);
-        when(userSession.isManager()).thenReturn(true);
-        when(conceptSelectionContext.hasSelection()).thenReturn(true);
-        when(conceptSelectionContext.getSummary()).thenReturn(ACTIVE_CONCEPT);
+    void isManagerActionsAvailable_trueWhenAllowedByPolicy() {
+        when(conceptWritePolicy.canMutateAlignments(userSession, false)).thenReturn(true);
 
         assertEquals(true, bean.isManagerActionsAvailable());
     }
@@ -90,7 +95,7 @@ class ConceptAlignmentEditorBeanTest {
     }
 
     @Test
-    void prepareDelete_storesTargetAlignmentId() {
+    void prepareDelete_setsTargetId() {
         var alignment = new ConceptAlignment("12", "http://example.org/y", "skos:closeMatch", "Getty", true, 2);
 
         bean.prepareDelete(alignment);
@@ -100,7 +105,7 @@ class ConceptAlignmentEditorBeanTest {
 
     @Test
     void addManualAlignment_notAuthorized_showsErrorAndSkipsService() {
-        when(userSession.isLoggedIn()).thenReturn(false);
+        when(conceptWritePolicy.canMutateAlignments(userSession, false)).thenReturn(false);
 
         try (MockedStatic<MessageUtils> messageUtils = mockStatic(MessageUtils.class)) {
             bean.addManualAlignment();
@@ -112,12 +117,8 @@ class ConceptAlignmentEditorBeanTest {
 
     @Test
     void addManualAlignment_success_buildsCommandAndRefreshesConcept() {
-        when(userSession.isLoggedIn()).thenReturn(true);
-        when(userSession.isManager()).thenReturn(true);
         when(userSession.getCurrentUserId()).thenReturn(42);
         when(userSession.getCurrentUsername()).thenReturn("admin");
-        when(conceptSelectionContext.hasSelection()).thenReturn(true);
-        when(conceptSelectionContext.getSummary()).thenReturn(ACTIVE_CONCEPT);
         when(thesaurusContext.resolveThesaurusId()).thenReturn("TH1");
         bean.setManualAlignmentType(1);
         bean.setManualAlignmentUri("http://example.org/x");
@@ -143,11 +144,6 @@ class ConceptAlignmentEditorBeanTest {
 
     @Test
     void updateAlignment_skipsServiceWhenNoAlignmentBeingEdited() {
-        when(userSession.isLoggedIn()).thenReturn(true);
-        when(userSession.isManager()).thenReturn(true);
-        when(conceptSelectionContext.hasSelection()).thenReturn(true);
-        when(conceptSelectionContext.getSummary()).thenReturn(ACTIVE_CONCEPT);
-
         try (MockedStatic<MessageUtils> messageUtils = mockStatic(MessageUtils.class)) {
             bean.updateAlignment();
 
@@ -158,11 +154,6 @@ class ConceptAlignmentEditorBeanTest {
 
     @Test
     void deleteAlignment_skipsServiceWhenNoTargetSelected() {
-        when(userSession.isLoggedIn()).thenReturn(true);
-        when(userSession.isManager()).thenReturn(true);
-        when(conceptSelectionContext.hasSelection()).thenReturn(true);
-        when(conceptSelectionContext.getSummary()).thenReturn(ACTIVE_CONCEPT);
-
         try (MockedStatic<MessageUtils> messageUtils = mockStatic(MessageUtils.class)) {
             bean.deleteAlignment();
 
