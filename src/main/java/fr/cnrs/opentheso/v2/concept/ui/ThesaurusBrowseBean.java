@@ -1,5 +1,6 @@
 package fr.cnrs.opentheso.v2.concept.ui;
 
+import fr.cnrs.opentheso.v2.concept.alignment.ui.ConceptAlignmentAdminBean;
 import fr.cnrs.opentheso.v2.concept.model.ConceptFullSnapshot;
 import fr.cnrs.opentheso.v2.concept.mapper.ConceptMapper;
 import fr.cnrs.opentheso.v2.concept.model.BreadcrumbStep;
@@ -46,6 +47,7 @@ import org.primefaces.event.TabChangeEvent;
 import org.primefaces.event.SelectEvent;
 import org.primefaces.model.DefaultTreeNode;
 import org.primefaces.model.TreeNode;
+import org.springframework.beans.factory.ObjectProvider;
 
 import java.io.Serializable;
 import java.util.ArrayList;
@@ -74,6 +76,7 @@ public class ThesaurusBrowseBean implements Serializable, ConceptNavigationSuppo
     private final ConceptTypeReadService conceptTypeReadService;
     private final ConceptTreeRefreshState conceptTreeRefreshState;
     private final RightsService rightsService;
+    private final ObjectProvider<ConceptAlignmentAdminBean> conceptAlignmentAdminBean;
 
     private String conceptIdFromUri;
     private String groupIdFromUri;
@@ -286,6 +289,7 @@ public class ThesaurusBrowseBean implements Serializable, ConceptNavigationSuppo
         String tabId = event.getTab().getId();
         if ("viewTabAlignement".equals(tabId)) {
             activateRightTab(RightTabKey.ALIGNMENT);
+            conceptAlignmentAdminBean.getObject().openForCurrentConcept();
         } else if ("viewTabGroup".equals(tabId)) {
             activateRightTab(RightTabKey.COLLECTION);
         } else if ("viewTabSuggestion".equals(tabId)) {
@@ -549,6 +553,8 @@ public class ThesaurusBrowseBean implements Serializable, ConceptNavigationSuppo
         // Comme legacy : rester sur Alignement si déjà ouvert, sinon onglet Concept
         if (rightTabKey != RightTabKey.ALIGNMENT) {
             activateRightTab(RightTabKey.CONCEPT);
+        } else {
+            conceptAlignmentAdminBean.getObject().openForCurrentConcept();
         }
         corpusSearched = false;
         displayedCorpusLinks = Collections.emptyList();

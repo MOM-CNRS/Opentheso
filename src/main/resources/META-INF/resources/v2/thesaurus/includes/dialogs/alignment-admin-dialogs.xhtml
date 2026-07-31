@@ -1,0 +1,81 @@
+<ui:fragment xmlns="http://www.w3.org/1999/xhtml"
+             xmlns:ui="http://xmlns.jcp.org/jsf/facelets"
+             xmlns:h="http://xmlns.jcp.org/jsf/html"
+             xmlns:p="http://primefaces.org/ui"
+             xmlns:f="http://xmlns.jcp.org/jsf/core">
+
+    <p:dialog id="v2SelectAlignmentSourceDlg"
+              header="#{v2LocaleBean.getMsg('alignment.source')}"
+              widgetVar="v2SelectAlignmentSource"
+              modal="true"
+              width="520"
+              resizable="false"
+              appendTo="@(body)">
+        <h:form id="v2SelectAlignmentSourceForm">
+            <p:selectOneMenu value="#{v2ConceptAlignmentAdminBean.selectedSourceIdForSearch}"
+                             style="width:100%; margin-bottom:16px;">
+                <f:selectItem itemLabel="-- #{v2LocaleBean.getMsg('alignment.source')} --" itemValue="#{null}"/>
+                <f:selectItems value="#{v2ConceptAlignmentAdminBean.selectableSources}"
+                               var="source"
+                               itemLabel="#{source.label}"
+                               itemValue="#{source.sourceId}"/>
+            </p:selectOneMenu>
+
+            <div style="text-align:right;">
+                <p:commandButton value="#{v2LocaleBean.getMsg('btnValidate')}"
+                                 styleClass="ui-button-success"
+                                 process="@form"
+                                 actionListener="#{v2ConceptAlignmentAdminBean.confirmSelectedSourceAndSearch()}"
+                                 update=":containerIndex:formRightTab :messageIndex"/>
+            </div>
+        </h:form>
+    </p:dialog>
+
+    <p:dialog id="v2AddAlignmentSourceDlg"
+              header="#{v2LocaleBean.getMsg('rightbody.conceptdialog.add_source')} Opentheso"
+              widgetVar="v2AddAlignmentSource"
+              modal="true"
+              width="520"
+              resizable="false"
+              appendTo="@(body)">
+        <h:form id="v2AddAlignmentSourceForm">
+            <div class="row mb-2">
+                <div class="col-4"><h:outputText value="#{v2LocaleBean.getMsg('statistique.label')} *"/></div>
+                <div class="col-8">
+                    <p:inputText value="#{v2ConceptAlignmentAdminBean.newSourceName}" style="width:100%;"/>
+                </div>
+            </div>
+            <div class="row mb-2">
+                <div class="col-4"><h:outputText value="#{v2LocaleBean.getMsg('rightbody.conceptdialog.uri')} *"/></div>
+                <div class="col-8">
+                    <p:inputText value="#{v2ConceptAlignmentAdminBean.newSourceUri}" style="width:100%;"
+                                 title="https://opentheso2.mom.fr/opentheso2"/>
+                </div>
+            </div>
+            <div class="row mb-2">
+                <div class="col-4"><h:outputText value="#{v2LocaleBean.getMsg('rightbody.conceptdialog.id_thesaurus')} *"/></div>
+                <div class="col-8">
+                    <p:inputText value="#{v2ConceptAlignmentAdminBean.newSourceThesaurusId}" style="width:100%;"/>
+                </div>
+            </div>
+            <div class="row mb-2">
+                <div class="col-4"><h:outputText value="#{v2LocaleBean.getMsg('rightbody.conceptdialog.description')}"/></div>
+                <div class="col-8">
+                    <p:inputText value="#{v2ConceptAlignmentAdminBean.newSourceDescription}" style="width:100%;"/>
+                </div>
+            </div>
+            <div style="text-align:right; margin-top:12px;">
+                <p:commandButton value="#{v2LocaleBean.getMsg('btnCancel')}"
+                                 type="button"
+                                 styleClass="ui-button-secondary"
+                                 style="margin-right:8px;"
+                                 onclick="PF('v2AddAlignmentSource').hide();"/>
+                <p:commandButton value="#{v2LocaleBean.getMsg('btnAdd')}"
+                                 styleClass="ui-button-success"
+                                 process="@form"
+                                 actionListener="#{v2ConceptAlignmentAdminBean.addOpenthesoSource()}"
+                                 update=":containerIndex:formRightTab :messageIndex"/>
+            </div>
+        </h:form>
+    </p:dialog>
+</ui:fragment>

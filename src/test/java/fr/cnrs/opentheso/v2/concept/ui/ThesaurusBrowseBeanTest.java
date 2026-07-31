@@ -21,6 +21,7 @@ import fr.cnrs.opentheso.v2.shared.session.ConceptTreeRefreshState;
 import fr.cnrs.opentheso.v2.concept.service.ConceptFullReadService;
 import fr.cnrs.opentheso.v2.concept.service.ConceptReadService;
 import fr.cnrs.opentheso.v2.concept.service.ThesaurusHomeReadService;
+import fr.cnrs.opentheso.v2.concept.alignment.ui.ConceptAlignmentAdminBean;
 import fr.cnrs.opentheso.v2.rights.RightsService;
 import fr.cnrs.opentheso.v2.setting.fixtures.SettingTestFixtures;
 import fr.cnrs.opentheso.v2.setting.model.ThesaurusPreferences;
@@ -35,6 +36,7 @@ import org.mockito.Mock;
 import org.mockito.junit.jupiter.MockitoExtension;
 import org.primefaces.event.NodeExpandEvent;
 import org.primefaces.event.NodeSelectEvent;
+import org.springframework.beans.factory.ObjectProvider;
 import org.springframework.test.util.ReflectionTestUtils;
 
 import java.util.Collections;
@@ -80,6 +82,8 @@ class ThesaurusBrowseBeanTest {
     private ConceptTreeRefreshState conceptTreeRefreshState;
     @Mock
     private RightsService rightsService;
+    @Mock
+    private ObjectProvider<ConceptAlignmentAdminBean> conceptAlignmentAdminBean;
 
     private ThesaurusBrowseBean bean;
 
@@ -98,7 +102,8 @@ class ThesaurusBrowseBeanTest {
                 userSession,
                 conceptTypeReadService,
                 conceptTreeRefreshState,
-                rightsService
+                rightsService,
+                conceptAlignmentAdminBean
         );
     }
 
@@ -587,6 +592,8 @@ class ThesaurusBrowseBeanTest {
         when(thesaurusContext.resolveThesaurusId()).thenReturn("TH1");
         when(rightsService.canOnThesaurus(1, fr.cnrs.opentheso.v2.rights.Permission.MANAGE_THESAURUS, "TH1"))
                 .thenReturn(true);
+        var adminBean = org.mockito.Mockito.mock(ConceptAlignmentAdminBean.class);
+        when(conceptAlignmentAdminBean.getObject()).thenReturn(adminBean);
 
         var event = org.mockito.Mockito.mock(org.primefaces.event.TabChangeEvent.class);
         var tab = org.mockito.Mockito.mock(org.primefaces.component.tabview.Tab.class);
@@ -597,6 +604,7 @@ class ThesaurusBrowseBeanTest {
 
         // Concept(0), Collection(1), Alignement(2)
         assertEquals(2, bean.getRightTabIndex());
+        verify(adminBean).openForCurrentConcept();
     }
 
     @Test

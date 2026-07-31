@@ -1,0 +1,79 @@
+<ui:fragment xmlns="http://www.w3.org/1999/xhtml"
+             xmlns:ui="http://xmlns.jcp.org/jsf/facelets"
+             xmlns:h="http://xmlns.jcp.org/jsf/html"
+             xmlns:p="http://primefaces.org/ui">
+
+    <div class="card mb-4 py-3 border-left-success" style="margin-right:20px; margin-left:20px; margin-top:15px;">
+        <div class="row" style="text-align:right; margin-right:10px; margin-bottom:5px; margin-top:15px;">
+            <div class="col-12">
+                <p:commandButton rendered="#{v2ConsultationShellBean.adminOnCurrentThesaurus}"
+                                 value="#{v2LocaleBean.getMsg('rightbody.conceptdialog.add_source')} (Opentheso)"
+                                 icon="fas fa-plus-circle"
+                                 styleClass="ui-button-success"
+                                 process="@this"
+                                 actionListener="#{v2ConceptAlignmentAdminBean.prepareAddSource()}"
+                                 update=":containerIndex:v2AddAlignmentSourceDlg"
+                                 oncomplete="PF('v2AddAlignmentSource').show();"
+                                 style="background:white !important; color:#f47b2a;"/>
+            </div>
+        </div>
+
+        <div class="row" style="margin-top:10px; margin-left:10px; margin-right:10px;">
+            <div class="col-12">
+                <p:dataTable value="#{v2ConceptAlignmentAdminBean.sourceItems}"
+                             var="sourceAlign"
+                             scrollable="true"
+                             scrollHeight="350"
+                             lazy="false"
+                             style="border:0.5px solid green;">
+
+                    <p:column headerText="#{v2LocaleBean.getMsg('activate')}" style="width:8%;">
+                        <p:toggleSwitch value="#{sourceAlign.selected}" style="width:45px; margin-left:5px;">
+                            <p:ajax listener="#{v2ConceptAlignmentAdminBean.onSourceToggle(sourceAlign)}"
+                                    update=":messageIndex"/>
+                        </p:toggleSwitch>
+                    </p:column>
+
+                    <p:column headerText="#{v2LocaleBean.getMsg('alignment.source')}" style="width:20%;">
+                        <h:outputText value="#{sourceAlign.label}"/>
+                    </p:column>
+
+                    <p:column headerText="#{v2LocaleBean.getMsg('rightbody.conceptdialog.description')}" style="width:62%;">
+                        <h:outputText value="#{sourceAlign.description}" style="font-size:14px;"/>
+                    </p:column>
+
+                    <p:column headerText="#{v2LocaleBean.getMsg('profile.action')}" style="width:10%; text-align:right;">
+                        <p:commandButton icon="pi pi-trash"
+                                         rendered="#{not sourceAlign.global and (v2UserSession.superAdmin or v2ConsultationShellBean.adminOnCurrentThesaurus)}"
+                                         process="@this"
+                                         actionListener="#{v2ConceptAlignmentAdminBean.deleteSource(sourceAlign)}"
+                                         update=":containerIndex:formRightTab :messageIndex"
+                                         styleClass="ui-button-danger rounded-button">
+                            <p:confirm type="popup"
+                                       header="#{v2LocaleBean.getMsg('profile.confirmation')}"
+                                       icon="pi pi-info-circle"
+                                       message="#{v2LocaleBean.getMsg('rightbody.concept.alignement.delete-confirmation-msg')}"/>
+                        </p:commandButton>
+                        <p:confirmPopup global="true">
+                            <p:commandButton value="#{v2LocaleBean.getMsg('no')}" type="button"
+                                             styleClass="ui-confirm-popup-no ui-button-flat"/>
+                            <p:commandButton value="#{v2LocaleBean.getMsg('yes')}" type="button"
+                                             styleClass="ui-confirm-popup-yes"/>
+                        </p:confirmPopup>
+                    </p:column>
+                </p:dataTable>
+            </div>
+        </div>
+
+        <div class="row" style="margin-top:20px; margin-left:20px; margin-right:20px;">
+            <div class="col-12" style="text-align:right;">
+                <p:commandButton value="#{v2LocaleBean.getMsg('btnBack')}"
+                                 icon="fas fa-undo-alt"
+                                 styleClass="ui-button-secondary"
+                                 process="@this"
+                                 actionListener="#{v2ConceptAlignmentAdminBean.backToSummary()}"
+                                 update=":containerIndex:formRightTab"/>
+            </div>
+        </div>
+    </div>
+</ui:fragment>

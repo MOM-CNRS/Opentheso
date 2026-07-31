@@ -16,6 +16,10 @@ public interface ThesaurusAlignementSourceRepository extends JpaRepository<Thesa
 
     @Modifying
     @Transactional
+    void deleteByIdThesaurusAndIdAlignementSource(String idThesaurus, Integer idAlignementSource);
+
+    @Modifying
+    @Transactional
     @Query("UPDATE ThesaurusAlignementSource t SET t.idThesaurus = :newIdThesaurus WHERE t.idThesaurus = :oldIdThesaurus")
     void updateThesaurusId(@Param("newIdThesaurus") String newIdThesaurus, @Param("oldIdThesaurus") String oldIdThesaurus);
 
