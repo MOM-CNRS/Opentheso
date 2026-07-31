@@ -38,6 +38,10 @@ public record ConceptSearchSuggestion(
         return preferredLabel;
     }
 
+    public String getDisplayLabel() {
+        return displayLabel();
+    }
+
     public boolean isAltLabel() {
         return altLabelMatch;
     }

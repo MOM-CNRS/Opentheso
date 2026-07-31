@@ -78,6 +78,22 @@ class FacetDetailEditorBeanTest {
     }
 
     @Test
+    void prepareCreateUnderCurrentConcept_prefillParentFromSelectedConcept() {
+        var summary = mock(fr.cnrs.opentheso.v2.concept.model.ConceptSummary.class);
+        when(summary.conceptId()).thenReturn("C9");
+        when(summary.preferredLabel()).thenReturn("Concept neuf");
+        var detail = mock(fr.cnrs.opentheso.v2.concept.model.ConceptDetail.class);
+        when(detail.summary()).thenReturn(summary);
+        when(thesaurusBrowseBean.getSelectedConcept()).thenReturn(detail);
+
+        bean.prepareCreateUnderCurrentConcept();
+
+        assertEquals("Concept neuf", bean.getParentConceptLabel());
+        assertEquals("C9", bean.getSelectedParentConcept().conceptId());
+        assertEquals("", bean.getLabel());
+    }
+
+    @Test
     void prepareModify_loadsFacetLabel() {
         when(thesaurusBrowseBean.getSelectedFacet()).thenReturn(FACET);
 

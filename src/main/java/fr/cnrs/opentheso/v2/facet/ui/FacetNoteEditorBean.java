@@ -60,6 +60,16 @@ public class FacetNoteEditorBean implements Serializable {
         reloadSelectedNote();
     }
 
+    /** Prépare l'édition d'une note d'un type donné (ligne typée comme legacy). */
+    public void prepareEditNoteType(String typeCode) {
+        refreshCurrentLabel();
+        loadNoteFormMetadata();
+        if (StringUtils.isNotBlank(typeCode)) {
+            selectedTypeCode = typeCode;
+        }
+        reloadSelectedNote();
+    }
+
     public void prepareDeleteNotes() {
         refreshCurrentLabel();
         if (thesaurusBrowseBean.getSelectedFacet() != null) {
@@ -164,7 +174,7 @@ public class FacetNoteEditorBean implements Serializable {
             return;
         }
         refreshSelectedFacet();
-        PrimeFaces.current().ajax().update(":containerIndex:formRightTab :messageIndex");
+        PrimeFaces.current().ajax().update(":containerIndex:formRightTab", ":messageIndex");
         MessageUtils.showInformationMessage(result.message());
         if (StringUtils.isNotBlank(hideDialogScript)) {
             PrimeFaces.current().executeScript(hideDialogScript);

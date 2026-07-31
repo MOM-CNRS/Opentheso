@@ -900,6 +900,23 @@ public class ThesaurusBrowseBean implements Serializable, ConceptNavigationSuppo
                 .toList();
     }
 
+    public boolean hasFacetNotesOfType(String typeCode) {
+        if (selectedFacet == null || selectedFacet.notes() == null) {
+            return false;
+        }
+        return selectedFacet.notes().stream()
+                .anyMatch(note -> StringUtils.equals(note.typeCode(), typeCode));
+    }
+
+    public List<ConceptNote> facetNotesOfType(String typeCode) {
+        if (selectedFacet == null || selectedFacet.notes() == null) {
+            return List.of();
+        }
+        return selectedFacet.notes().stream()
+                .filter(note -> StringUtils.equals(note.typeCode(), typeCode))
+                .toList();
+    }
+
     public boolean hasDisplayedSynonyms() {
         return !getVisibleSynonymLabels().isEmpty() || !getHiddenSynonymLabels().isEmpty();
     }

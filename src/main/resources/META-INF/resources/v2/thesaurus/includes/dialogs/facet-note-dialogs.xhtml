@@ -56,7 +56,7 @@
                 <p:commandButton id="v2FacetManageNoteSubmit" value="#{v2LocaleBean.getMsg('btnValidate')}"
                                  styleClass="ui-button-success"
                                  actionListener="#{v2FacetNoteEditorBean.submitSaveNote()}"
-                                 update="v2FacetManageNoteForm :containerIndex:rightTab :messageIndex"
+                                 update="v2FacetManageNoteForm :containerIndex:formRightTab :messageIndex"
                                  process="@form"/>
             </div>
         </h:form>
@@ -81,11 +81,11 @@
                         <h:outputText value="#{noteToDelete.lang}"/>
                     </p:column>
                     <p:column width="15%" headerText="Type">
-                        <h:outputText value="#{noteToDelete.typeCode}"/>
+                        <h:outputText value="#{v2LocaleBean.getMsg(noteToDelete.messageKey)}"/>
                     </p:column>
                     <p:column width="15%" headerText="#{v2LocaleBean.getMsg('btnDelete')}">
                         <p:commandLink actionListener="#{v2FacetNoteEditorBean.submitDeleteNote(noteToDelete)}"
-                                       process="@this" update="v2FacetDeleteNoteForm :containerIndex:rightTab :messageIndex">
+                                       process="@this" update="v2FacetDeleteNoteForm :containerIndex:formRightTab :messageIndex">
                             <i class="pi pi-trash" style="color:#C63632;"/>
                         </p:commandLink>
                     </p:column>

@@ -3,19 +3,19 @@
              xmlns:ui="http://xmlns.jcp.org/jsf/facelets"
              xmlns:p="http://primefaces.org/ui">
 
-  <!-- Barre d'actions + fil d'Ariane (menu indépendant du breadcrumb, comme legacy) -->
+  <!-- Barre d'actions + fil d'Ariane (structure legacy) -->
   <h:panelGroup rendered="#{v2ConceptLifecycleEditorBean.writeActionsAvailable
                               or (v2ThesaurusBrowseBean.breadcrumbEnabled
-                                  and not empty v2ThesaurusBrowseBean.selectedConcept.breadcrumbPaths)}"
-                style="width:100%; display:flex; flex-wrap:wrap; align-items:center;
-                       background-color:#ecf8f1; padding:6px 8px; margin-bottom:10px;">
+                                  and not empty v2ThesaurusBrowseBean.selectedConcept.breadcrumbPaths)}">
+  <div style="width: 100%; display: flex; background-color: #ecf8f1; padding-top: 3px; padding-bottom: 3px; margin-bottom: 10px;">
 
     <h:panelGroup id="v2ConceptViewActions" rendered="#{v2ConceptLifecycleEditorBean.writeActionsAvailable}">
       <p:commandButton id="v2ConceptActionsButton" type="button" icon="pi pi-align-justify"
-                       style="width:1.5rem; height:1.5rem; margin-left:5px; margin-right:5px;
-                              background:#ecf8f1; color:#f47b2a; border:1px solid #ecf8f1;"/>
+                       style="width: 1.5rem; height: 1.5rem; margin-left: 5px; margin-right: 5px;
+                              background: #ecf8f1; color: #f47b2a; border: 1px solid #ecf8f1;"/>
       <p:menu overlay="true" trigger="v2ConceptActionsButton" my="left top" at="left bottom">
         <p:menuitem value="#{v2LocaleBean.getMsg('rightbody.concept.new_concept')}"
+                    id="v2MenuNewConcept"
                     rendered="#{v2ConceptLifecycleEditorBean.activeConceptWriteAvailable}"
                     process="@this"
                     actionListener="#{v2ConceptLifecycleEditorBean.prepareAddChild()}"
@@ -28,7 +28,25 @@
                     update="v2AddTopConceptForm"
                     oncomplete="PF('v2AddTopConceptDlg').show();"
                     icon="fas fa-plus"/>
-        <p:separator style="border-bottom:2px solid #d8d8dc; margin-bottom:5px;"/>
+
+        <p:menuitem rendered="#{v2ConceptAttributeEditorBean.conceptTypeEditAvailable}"
+                    value="#{v2LocaleBean.getMsg('concept.editConceptType')}"
+                    process="@this"
+                    actionListener="#{v2ConceptAttributeEditorBean.prepareEditConceptType()}"
+                    update="v2EditConceptTypeForm"
+                    oncomplete="PF('v2EditConceptTypeDlg').show();"
+                    icon="fas fa-edit"/>
+
+        <p:menuitem id="v2MenuNewFacet"
+                    rendered="#{v2FacetDetailEditorBean.managerActionsAvailable}"
+                    value="#{v2LocaleBean.getMsg('rightbody.concept.new_facet')}"
+                    process="@this"
+                    actionListener="#{v2FacetDetailEditorBean.prepareCreateUnderCurrentConcept()}"
+                    update=":containerIndex:v2CreateFacetUnderConceptForm"
+                    oncomplete="PF('v2CreateFacetUnderConceptDlg').show();"
+                    icon="fas fa-magnet"/>
+
+        <p:separator style="border-bottom: 2px solid #d8d8dc; margin-bottom: 5px;"/>
         <p:menuitem value="#{v2LocaleBean.getMsg('rightbody.concept.delete_concept')}"
                     process="@this"
                     actionListener="#{v2ConceptLifecycleEditorBean.prepareDelete()}"
@@ -50,16 +68,8 @@
                     oncomplete="PF('v2ApproveConceptDlg').show();"
                     icon="fa fa-check-circle"/>
 
-        <p:menuitem rendered="#{v2ConceptAttributeEditorBean.conceptTypeEditAvailable}"
-                    value="#{v2LocaleBean.getMsg('concept.editConceptType')}"
-                    process="@this"
-                    actionListener="#{v2ConceptAttributeEditorBean.prepareEditConceptType()}"
-                    update="v2EditConceptTypeForm"
-                    oncomplete="PF('v2EditConceptTypeDlg').show();"
-                    icon="fas fa-edit"/>
-
         <p:separator rendered="#{v2ConceptTransferEditorBean.transferActionsAvailable}"
-                    style="border-bottom:2px solid #d8d8dc; margin-bottom:5px;"/>
+                    style="border-bottom: 2px solid #d8d8dc; margin-bottom: 5px;"/>
         <p:menuitem rendered="#{v2ConceptTransferEditorBean.transferActionsAvailable}"
                     value="#{v2LocaleBean.getMsg('concept.moveToAnotherThesoTooltip')}"
                     process="@this"
@@ -69,7 +79,7 @@
                     icon="fas fa-truck-moving"/>
 
         <p:separator rendered="#{v2ConceptIdentifierEditorBean.identifierActionsAvailable}"
-                    style="border-bottom:2px solid #d8d8dc; margin-bottom:5px;"/>
+                    style="border-bottom: 2px solid #d8d8dc; margin-bottom: 5px;"/>
         <p:menuitem rendered="#{v2ConceptIdentifierEditorBean.arkGenerationAvailable}"
                     value="#{v2LocaleBean.getMsg('rightbody.concept.generate_ark')}"
                     process="@this"
@@ -113,52 +123,62 @@
                     oncomplete="PF('v2GenerateHandleBranchDlg').show();"
                     icon="fas fa-sitemap"/>
       </p:menu>
+      <p:tooltip for="v2MenuNewConcept"
+                 value="#{v2LocaleBean.getMsg('rightbody.concept.tooltip_new_concept')} #{v2ThesaurusBrowseBean.selectedConcept.summary.preferredLabel}"
+                 showDelay="1000"/>
+      <p:tooltip for="v2MenuNewFacet"
+                 value="#{v2LocaleBean.getMsg('rightbody.concept.tooltip_new_facet')} #{v2ThesaurusBrowseBean.selectedConcept.summary.preferredLabel}"
+                 showDelay="1000"/>
       <p:tooltip for="v2ConceptActionsButton"
                  value="#{v2LocaleBean.getMsg('rightbody.concept.tooltip_new_concept')} #{v2ThesaurusBrowseBean.selectedConcept.summary.preferredLabel}"
                  showDelay="1000"/>
     </h:panelGroup>
 
+    <!-- Fil d'Ariane : même logique visuelle que legacy (home par chemin, liens, dernier en texte) -->
     <h:panelGroup rendered="#{v2ThesaurusBrowseBean.breadcrumbEnabled
                                 and not empty v2ThesaurusBrowseBean.selectedConcept.breadcrumbPaths}"
-                  style="display:flex; flex-wrap:wrap; align-items:center; flex:1;">
-      <p:commandLink rendered="#{v2ThesaurusBrowseBean.thesaurusHome != null}"
-                     action="#{v2ThesaurusBrowseBean.openThesaurusHome()}"
-                     process="@this"
-                     update=":containerIndex:formRightTab :containerIndex:formLeftTab"
-                     style="color:#164A78; background:none; border:none; box-shadow:none; font-size:13px; margin-right:4px;"
-                     title="#{v2LocaleBean.getMsg('home.permalink')}">
-        <i class="fas fa-home" style="color:#f47b2a; font-size:15px;"/>
-      </p:commandLink>
+                  style="padding-left: 5px;">
+      <ui:repeat value="#{v2ThesaurusBrowseBean.selectedConcept.breadcrumbPaths}" var="path" varStatus="status">
+        <ui:repeat value="#{path}" var="subPath" varStatus="substatus">
 
-      <ui:repeat value="#{v2ThesaurusBrowseBean.selectedConcept.breadcrumbPaths}" var="path" varStatus="pathStatus">
-        <ui:repeat value="#{path}" var="step" varStatus="stepStatus">
-          <h:panelGroup rendered="#{step.startOfPath and not pathStatus.first}">
-            <br/>
-          </h:panelGroup>
-          <h:panelGroup rendered="#{step.startOfPath and pathStatus.first}">
-            <h:outputText value=" " rendered="#{v2ThesaurusBrowseBean.thesaurusHome != null}"/>
+          <h:panelGroup rendered="#{subPath.startOfPath}">
+            <h:panelGroup rendered="#{not status.first}">
+              <br/>
+            </h:panelGroup>
+            <i class="fas fa-home" style="color: #f47b2a; font-size: 15px;"/>
           </h:panelGroup>
 
-          <h:panelGroup rendered="#{not stepStatus.last or step.startOfPath}">
-            <p:commandLink value="#{step.startOfPath ? ' '.concat(step.label) : step.label}"
-                           action="#{v2ThesaurusBrowseBean.openConcept(step.conceptId)}"
+          <p:commandLink rendered="#{subPath.startOfPath}"
+                         value=" #{subPath.label}"
+                         action="#{v2ThesaurusBrowseBean.openConcept(subPath.conceptId)}"
+                         process="@this"
+                         update=":containerIndex:formRightTab :containerIndex:formLeftTab"
+                         style="color:#164A78; background: none; border: none; box-shadow: none; font-size: 13px;"/>
+
+          <h:panelGroup rendered="#{not substatus.last}">
+            <p:commandLink rendered="#{not subPath.startOfPath}"
+                           value="#{subPath.label}"
+                           action="#{v2ThesaurusBrowseBean.openConcept(subPath.conceptId)}"
                            process="@this"
                            update=":containerIndex:formRightTab :containerIndex:formLeftTab"
-                           style="color:#164A78; background:none; border:none; box-shadow:none; font-size:13px;"
-                           title="#{step.conceptId}"/>
-            <h:outputText rendered="#{not stepStatus.last}" value=" &gt; " style="font-size:13px; font-weight:bold;"/>
+                           style="color:#164A78; background: none; border: none; box-shadow: none; font-size: 13px;"/>
+            <h:outputText rendered="#{not substatus.last}"
+                          value=" &gt; "
+                          style="font-size: 13px; font-weight: bold;"/>
           </h:panelGroup>
 
-          <h:panelGroup rendered="#{stepStatus.last and not step.startOfPath}">
+          <h:panelGroup rendered="#{substatus.last and not subPath.startOfPath}">
             <h:outputText rendered="#{not empty v2ThesaurusBrowseBean.selectedConcept.summary.preferredLabel}"
                           value=" #{v2ThesaurusBrowseBean.selectedConcept.summary.preferredLabel}"
-                          style="font-size:13px;"/>
+                          style="font-size: 13px;"/>
             <h:outputText rendered="#{empty v2ThesaurusBrowseBean.selectedConcept.summary.preferredLabel}"
                           value=" (#{v2ThesaurusBrowseBean.selectedConcept.summary.conceptId})"
-                          style="font-size:13px;"/>
+                          style="font-size: 13px;"/>
           </h:panelGroup>
+
         </ui:repeat>
       </ui:repeat>
     </h:panelGroup>
+  </div>
   </h:panelGroup>
 </ui:fragment>

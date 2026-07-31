@@ -3,9 +3,16 @@ package fr.cnrs.opentheso.v2.facet.ui;
 import fr.cnrs.opentheso.utils.MessageUtils;
 import fr.cnrs.opentheso.v2.concept.ui.ThesaurusBrowseBean;
 import fr.cnrs.opentheso.v2.concept.write.model.ConceptSearchSuggestion;
+import fr.cnrs.opentheso.v2.concept.write.model.ConceptWriteCollection;
 import fr.cnrs.opentheso.v2.concept.write.model.ConceptWriteLanguage;
+import fr.cnrs.opentheso.v2.concept.write.model.ConceptWriteNtRelationType;
+import fr.cnrs.opentheso.v2.concept.write.model.MutationOutcome;
 import fr.cnrs.opentheso.v2.concept.write.model.MutationResult;
+import fr.cnrs.opentheso.v2.concept.write.model.command.AddChildConceptCommand;
+import fr.cnrs.opentheso.v2.concept.write.model.command.UpsertNoteCommand;
 import fr.cnrs.opentheso.v2.concept.write.policy.ConceptWritePolicy;
+import fr.cnrs.opentheso.v2.concept.write.service.ConceptLifecycleMutationService;
+import fr.cnrs.opentheso.v2.concept.write.service.ConceptNoteMutationService;
 import fr.cnrs.opentheso.v2.concept.write.service.ConceptWriteMetadataService;
 import fr.cnrs.opentheso.v2.concept.write.service.ConceptWriteSearchService;
 import fr.cnrs.opentheso.v2.facet.read.FacetReadService;
@@ -47,12 +54,16 @@ public class FacetDetailEditorBean implements Serializable {
     private final FacetReadService facetReadService;
     private final ConceptWriteSearchService conceptWriteSearchService;
     private final ConceptWriteMetadataService conceptWriteMetadataService;
+    private final ConceptLifecycleMutationService conceptLifecycleMutationService;
+    private final ConceptNoteMutationService conceptNoteMutationService;
     private final ThesaurusContext thesaurusContext;
     private final UserSession userSession;
     private final ConceptWritePolicy conceptWritePolicy;
     private final ThesaurusBrowseBean thesaurusBrowseBean;
 
     private String label;
+    private String definition;
+    private String parentConceptLabel;
     private String translationLang;
     private String translationValue;
     private String selectedTranslationLang;
@@ -62,6 +73,17 @@ public class FacetDetailEditorBean implements Serializable {
     private List<ConceptWriteLanguage> availableLanguages = Collections.emptyList();
     private List<ConceptWriteLanguage> availableTranslationLanguages = Collections.emptyList();
     private List<TranslationEditRow> translationsToEdit = Collections.emptyList();
+
+    /** Création d'un concept membre sous la facette (équivalent legacy addNTFacette). */
+    private String childPreferredLabel;
+    private String childNotation;
+    private String childCustomConceptId;
+    private String childSource;
+    private String childSelectedGroupId;
+    private String childNarrowerRelationType = "NT";
+    private boolean childDuplicateLabelWarning;
+    private List<ConceptWriteCollection> availableCollections = Collections.emptyList();
+    private List<ConceptWriteNtRelationType> ntRelationTypes = Collections.emptyList();
 
     public static class TranslationEditRow implements Serializable {
         private String lang;
@@ -122,6 +144,96 @@ public class FacetDetailEditorBean implements Serializable {
         applyToBranch = false;
     }
 
+    /**
+     * Prépare la création d'un nouveau concept rattaché au parent de la facette puis ajouté comme membre.
+     */
+    public void prepareAddChildUnderFacet() {
+        if (thesaurusBrowseBean.getSelectedFacet() == null) {
+            return;
+        }
+        var facet = thesaurusBrowseBean.getSelectedFacet();
+        parentConceptLabel = StringUtils.isNotBlank(facet.parentConceptLabel())
+                ? facet.parentConceptLabel()
+                : "(" + facet.parentConceptId() + ")";
+        childPreferredLabel = "";
+        childNotation = "";
+        childCustomConceptId = "";
+        childSource = "";
+        childNarrowerRelationType = "NT";
+        childDuplicateLabelWarning = false;
+        availableCollections = conceptWriteMetadataService.listCollections(
+                thesaurusContext.resolveThesaurusId(),
+                thesaurusContext.resolveWorkLanguage()
+        );
+        ntRelationTypes = conceptWriteMetadataService.listNtRelationTypes();
+        childSelectedGroupId = "";
+    }
+
+    public void submitAddChildUnderFacet() {
+        submitAddChildUnderFacetInternal(false);
+    }
+
+    public void submitAddChildUnderFacetForced() {
+        submitAddChildUnderFacetInternal(true);
+    }
+
+    public void cancelChildDuplicate() {
+        childDuplicateLabelWarning = false;
+    }
+
+    private void submitAddChildUnderFacetInternal(boolean forced) {
+        if (!canMutateSelectedFacet()) {
+            return;
+        }
+        Integer userId = userSession.getCurrentUserId();
+        if (userId == null) {
+            MessageUtils.showErrorMessage("Action non autorisée");
+            return;
+        }
+        if (StringUtils.isBlank(childPreferredLabel)) {
+            MessageUtils.showWarnMessage("le label est obligatoire !");
+            return;
+        }
+        var facet = thesaurusBrowseBean.getSelectedFacet();
+        var command = new AddChildConceptCommand(
+                thesaurusContext.resolveThesaurusId(),
+                facet.parentConceptId(),
+                thesaurusContext.resolveWorkLanguage(),
+                userId,
+                StringUtils.defaultString(userSession.getCurrentUsername()),
+                childPreferredLabel,
+                childNotation,
+                childCustomConceptId,
+                childSource,
+                StringUtils.trimToNull(childSelectedGroupId),
+                StringUtils.defaultIfBlank(childNarrowerRelationType, "NT"),
+                forced
+        );
+        MutationResult createResult = conceptLifecycleMutationService.addChildConcept(command);
+        if (createResult.outcome() == MutationOutcome.DUPLICATE_LABEL) {
+            childDuplicateLabelWarning = true;
+            MessageUtils.showWarnMessage(createResult.message());
+            return;
+        }
+        childDuplicateLabelWarning = false;
+        if (!createResult.success() || StringUtils.isBlank(createResult.createdConceptId())) {
+            MessageUtils.showErrorMessage(createResult.message() != null ? createResult.message() : "Erreur");
+            return;
+        }
+        MutationResult memberResult = facetMutationService.addMember(new AddFacetMemberCommand(
+                thesaurusContext.resolveThesaurusId(),
+                facet.facetId(),
+                createResult.createdConceptId(),
+                false
+        ));
+        if (handleMutation(memberResult, "v2AddChildUnderFacetDlg")) {
+            childPreferredLabel = "";
+            childNotation = "";
+            childCustomConceptId = "";
+            childSource = "";
+        }
+    }
+
     public void prepareAddBranchMember() {
         selectedConcept = null;
         applyToBranch = true;
@@ -134,12 +246,41 @@ public class FacetDetailEditorBean implements Serializable {
 
     public void prepareChangeParent() {
         selectedParentConcept = null;
+        parentConceptLabel = "";
+        if (thesaurusBrowseBean.getSelectedFacet() == null) {
+            return;
+        }
+        var facet = thesaurusBrowseBean.getSelectedFacet();
+        parentConceptLabel = StringUtils.isNotBlank(facet.parentConceptLabel())
+                ? facet.parentConceptLabel()
+                : "(" + facet.parentConceptId() + ")";
     }
 
     public void prepareCreate() {
         loadLanguages();
         label = "";
+        definition = "";
+        parentConceptLabel = "";
         selectedParentConcept = null;
+    }
+
+    /**
+     * Création d'une facette sous le concept courant (menu contextuel fiche concept, comme legacy).
+     */
+    public void prepareCreateUnderCurrentConcept() {
+        label = "";
+        definition = "";
+        parentConceptLabel = "";
+        selectedParentConcept = null;
+        var concept = thesaurusBrowseBean.getSelectedConcept();
+        if (concept == null || concept.summary() == null || StringUtils.isBlank(concept.summary().conceptId())) {
+            MessageUtils.showErrorMessage("Aucun concept sélectionné");
+            return;
+        }
+        String conceptId = concept.summary().conceptId();
+        String preferredLabel = StringUtils.defaultString(concept.summary().preferredLabel());
+        parentConceptLabel = StringUtils.isNotBlank(preferredLabel) ? preferredLabel : "(" + conceptId + ")";
+        selectedParentConcept = new ConceptSearchSuggestion(conceptId, preferredLabel, "", false);
     }
 
     public List<ConceptSearchSuggestion> autocompleteConcept(String query) {
@@ -283,8 +424,13 @@ public class FacetDetailEditorBean implements Serializable {
     }
 
     public void submitCreate() {
-        if (!isManagerActionsAvailable() || selectedParentConcept == null) {
+        if (!isManagerActionsAvailable() || selectedParentConcept == null
+                || StringUtils.isBlank(selectedParentConcept.conceptId())) {
             MessageUtils.showErrorMessage("Action non autorisée");
+            return;
+        }
+        if (StringUtils.isBlank(label)) {
+            MessageUtils.showErrorMessage("Le libellé est obligatoire !");
             return;
         }
         MutationResult result = facetMutationService.createFacet(new CreateFacetCommand(
@@ -293,10 +439,38 @@ public class FacetDetailEditorBean implements Serializable {
                 thesaurusContext.resolveWorkLanguage(),
                 label
         ));
-        if (handleMutation(result, "v2CreateFacetDlg") && StringUtils.isNotBlank(result.createdConceptId())) {
+        String dialogWidget = StringUtils.isNotBlank(parentConceptLabel)
+                ? "v2CreateFacetUnderConceptDlg"
+                : "v2CreateFacetDlg";
+        if (handleMutation(result, dialogWidget) && StringUtils.isNotBlank(result.createdConceptId())) {
+            persistOptionalDefinition(result.createdConceptId());
             thesaurusBrowseBean.invalidateConceptTree();
             thesaurusBrowseBean.focusFacet(result.createdConceptId());
+            label = "";
+            definition = "";
+            parentConceptLabel = "";
+            selectedParentConcept = null;
         }
+    }
+
+    private void persistOptionalDefinition(String facetId) {
+        if (StringUtils.isBlank(definition) || StringUtils.isBlank(facetId)) {
+            return;
+        }
+        Integer userId = userSession.getCurrentUserId();
+        if (userId == null) {
+            return;
+        }
+        conceptNoteMutationService.upsertNote(new UpsertNoteCommand(
+                thesaurusContext.resolveThesaurusId(),
+                facetId,
+                thesaurusContext.resolveWorkLanguage(),
+                "definition",
+                definition,
+                null,
+                userId,
+                StringUtils.defaultString(userSession.getCurrentUsername())
+        ));
     }
 
     private boolean canMutateSelectedFacet() {
@@ -314,7 +488,11 @@ public class FacetDetailEditorBean implements Serializable {
         }
         refreshSelectedFacet();
         thesaurusBrowseBean.invalidateConceptTree();
-        PrimeFaces.current().ajax().update(":containerIndex:formRightTab :containerIndex:formLeftTab :messageIndex");
+        PrimeFaces.current().ajax().update(
+                ":containerIndex:formRightTab",
+                ":containerIndex:formLeftTab",
+                ":messageIndex"
+        );
         MessageUtils.showInformationMessage(result.message());
         if (StringUtils.isNotBlank(dialogWidget)) {
             PrimeFaces.current().executeScript("PF('" + dialogWidget + "').hide();");
