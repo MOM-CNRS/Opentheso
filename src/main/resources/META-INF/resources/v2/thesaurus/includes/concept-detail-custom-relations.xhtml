@@ -38,7 +38,7 @@
             <p:commandLink value="#{empty custom.targetLabel ? '('.concat(custom.targetConceptId).concat(')') : custom.targetLabel}"
                            action="#{v2ThesaurusBrowseBean.openConcept(custom.targetConceptId)}"
                            process="@this"
-                           update=":containerIndex:rightTab :containerIndex:formLeftTab"
+                           update=":containerIndex:formRightTab :containerIndex:formLeftTab"
                            style="color:#601e18; font-size:14px;"/>
             <h:outputText value=", " rendered="#{not status.last}" style="color:#FF7979;"/>
           </ui:repeat>
@@ -62,7 +62,7 @@
             <p:commandLink value="#{empty custom.targetLabel ? '('.concat(custom.targetConceptId).concat(')') : custom.targetLabel}"
                            action="#{v2ThesaurusBrowseBean.openConcept(custom.targetConceptId)}"
                            process="@this"
-                           update=":containerIndex:rightTab :containerIndex:formLeftTab"
+                           update=":containerIndex:formRightTab :containerIndex:formLeftTab"
                            style="color:#601e18; font-size:14px;"/>
             <p:tag styleClass="mr-2"
                    severity="warning"

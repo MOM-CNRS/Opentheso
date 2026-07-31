@@ -42,7 +42,7 @@
                 <p:commandButton id="v2AddCustomRelationSubmit" value="#{v2LocaleBean.getMsg('btnValidate')}"
                                  styleClass="ui-button-success"
                                  actionListener="#{v2ConceptRelationEditorBean.submitAddCustomRelation()}"
-                                 update="v2AddCustomRelationForm :containerIndex:rightTab :containerIndex:formLeftTab :messageIndex"
+                                 update="v2AddCustomRelationForm :containerIndex:formRightTab :containerIndex:formLeftTab :messageIndex"
                                  process="@form"/>
             </div>
         </h:form>
@@ -68,7 +68,7 @@
                 <p:column width="80" headerText="#{v2LocaleBean.getMsg('btnDelete')}">
                     <p:commandLink style="color:#FF7979;" process="@form" ajax="true"
                                    actionListener="#{v2ConceptRelationEditorBean.submitDeleteCustomRelation(custom.targetConceptId, custom.relationCode, custom.reciprocal)}"
-                                   update="v2DeleteCustomRelationForm :containerIndex:rightTab :containerIndex:formLeftTab :messageIndex">
+                                   update="v2DeleteCustomRelationForm :containerIndex:formRightTab :containerIndex:formLeftTab :messageIndex">
                         <i class="pi pi-trash"/>
                     </p:commandLink>
                 </p:column>

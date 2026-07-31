@@ -5,7 +5,8 @@
              xmlns:f="http://xmlns.jcp.org/jsf/core">
 
     <p:dialog id="v2ManageNoteDlg" header="#{v2LocaleBean.getMsg('rightbody.concept.manage_note')}"
-              widgetVar="v2ManageNoteDlg" width="680" modal="true" resizable="true">
+              widgetVar="v2ManageNoteDlg" width="680" modal="true" resizable="true"
+              position="top" style="margin-top:30px;">
         <h:form id="v2ManageNoteForm">
             <p:defaultCommand target="v2ManageNoteSubmit"/>
             <div class="row mb-2">
@@ -40,6 +41,8 @@
                 <div class="row mb-2">
                     <div class="col-12">
                         <p:textEditor value="#{v2ConceptNoteEditorBean.noteValue}" height="120" secure="false"
+                                      allowLinks="true"
+                                      placeholder="#{v2LocaleBean.getMsg('rightbody.conceptdialog.type_value')}"
                                       styleClass="scrollable-editor"/>
                     </div>
                 </div>
@@ -50,14 +53,33 @@
                     </div>
                 </div>
             </h:panelGroup>
-            <div class="text-right mt-3">
-                <p:commandButton value="#{v2LocaleBean.getMsg('btnCancel')}" styleClass="ui-button-secondary"
-                                 type="button" onclick="PF('v2ManageNoteDlg').hide();" style="margin-right:8px;"/>
-                <p:commandButton id="v2ManageNoteSubmit" value="#{v2LocaleBean.getMsg('btnValidate')}"
-                                 styleClass="ui-button-success"
-                                 actionListener="#{v2ConceptNoteEditorBean.submitSaveNote()}"
-                                 update="v2ManageNoteForm :containerIndex:rightTab :messageIndex"
-                                 process="@form"/>
+
+            <div class="row" style="margin-top:20px;">
+                <div class="col-2">
+                    <p:commandButton value="#{v2LocaleBean.getMsg('candidat.remove')}"
+                                     icon="fas fa-trash"
+                                     styleClass="ui-button-danger"
+                                     title="#{v2LocaleBean.getMsg('rightbody.concept.delete_thisnote')}"
+                                     disabled="#{v2ConceptNoteEditorBean.currentNoteId le 0}"
+                                     process="@form"
+                                     actionListener="#{v2ConceptNoteEditorBean.submitDeleteCurrentNote()}"
+                                     update="v2ManageNoteForm :containerIndex:formRightTab :messageIndex"/>
+                </div>
+                <div class="col-10" style="text-align:right;">
+                    <p:commandButton value="#{v2LocaleBean.getMsg('candidat.close')}"
+                                     icon="fas fa-undo-alt"
+                                     styleClass="ui-button-secondary"
+                                     type="button"
+                                     style="margin-right:8px;"
+                                     onclick="PF('v2ManageNoteDlg').hide();"/>
+                    <p:commandButton id="v2ManageNoteSubmit"
+                                     value="#{v2LocaleBean.getMsg('candidat.save')}"
+                                     icon="pi pi-save"
+                                     styleClass="ui-button-success"
+                                     process="@form"
+                                     actionListener="#{v2ConceptNoteEditorBean.submitSaveNote()}"
+                                     update="v2ManageNoteForm :containerIndex:formRightTab :messageIndex"/>
+                </div>
             </div>
         </h:form>
     </p:dialog>
@@ -87,7 +109,7 @@
                         <p:commandButton icon="pi pi-trash" styleClass="rounded-button ui-button-danger"
                                          process="@this" ajax="true"
                                          actionListener="#{v2ConceptNoteEditorBean.submitDeleteNote(noteToDelete)}"
-                                         update="v2DeleteNoteForm :containerIndex:rightTab :messageIndex"/>
+                                         update="v2DeleteNoteForm :containerIndex:formRightTab :messageIndex"/>
                     </p:column>
                 </p:dataTable>
             </div>

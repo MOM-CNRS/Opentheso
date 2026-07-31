@@ -81,7 +81,8 @@ public class ConceptNoteEditorBean implements Serializable {
         if (summary == null) {
             return;
         }
-        submitMutation(conceptNoteMutationService.upsertNote(new UpsertNoteCommand(
+        // Comme legacy : rester ouvert après sauvegarde (édition multi-langues)
+        if (submitMutation(conceptNoteMutationService.upsertNote(new UpsertNoteCommand(
                 thesaurusContext.resolveThesaurusId(),
                 summary.conceptId(),
                 selectedLang,
@@ -90,7 +91,40 @@ public class ConceptNoteEditorBean implements Serializable {
                 noteSource,
                 userId,
                 contributorName()
-        )), "PF('v2ManageNoteDlg').hide();");
+        )), null)) {
+            reloadSelectedNote();
+        }
+    }
+
+    /**
+     * Suppression de la note actuellement sélectionnée dans le dialogue manage (comme legacy).
+     */
+    public void submitDeleteCurrentNote() {
+        if (currentNoteId <= 0) {
+            MessageUtils.showErrorMessage("Aucune note sélectionnée !");
+            return;
+        }
+        Integer userId = requireUserId();
+        if (userId == null) {
+            return;
+        }
+        var summary = requireSummary();
+        if (summary == null) {
+            return;
+        }
+        if (submitMutation(conceptNoteMutationService.deleteNote(new DeleteNoteCommand(
+                thesaurusContext.resolveThesaurusId(),
+                summary.conceptId(),
+                currentNoteId,
+                selectedLang,
+                selectedTypeCode,
+                userId,
+                contributorName()
+        )), null)) {
+            noteValue = "";
+            noteSource = "";
+            currentNoteId = 0;
+        }
     }
 
     public void submitDeleteNote(ConceptNote note) {
@@ -162,22 +196,28 @@ public class ConceptNoteEditorBean implements Serializable {
         currentNoteId = existing.noteId();
     }
 
-    private void submitMutation(MutationResult result, String hideDialogScript) {
+    private boolean submitMutation(MutationResult result, String hideDialogScript) {
         if (result == null) {
-            return;
+            return false;
         }
         switch (result.outcome()) {
             case OK -> {
                 conceptNavigationSupport.openConcept(conceptSelectionContext.getSummary().conceptId());
-                PrimeFaces.current().ajax().update(":containerIndex:formRightTab :messageIndex");
+                PrimeFaces.current().ajax().update(
+                        ":containerIndex:formRightTab",
+                        ":messageIndex");
                 MessageUtils.showInformationMessage(result.message());
                 if (StringUtils.isNotBlank(hideDialogScript)) {
                     PrimeFaces.current().executeScript(hideDialogScript);
                 }
+                return true;
             }
-            case VALIDATION_ERROR, FAILURE, FORBIDDEN ->
-                    MessageUtils.showErrorMessage(result.message());
+            case VALIDATION_ERROR, FAILURE, FORBIDDEN -> {
+                MessageUtils.showErrorMessage(result.message());
+                return false;
+            }
             default -> {
+                return false;
             }
         }
     }

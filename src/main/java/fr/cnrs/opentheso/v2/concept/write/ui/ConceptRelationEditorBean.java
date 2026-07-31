@@ -445,7 +445,9 @@ public class ConceptRelationEditorBean implements Serializable {
                     }
                 }
                 PrimeFaces.current().ajax().update(
-                        ":containerIndex:formRightTab :containerIndex:tabTree :messageIndex");
+                        ":containerIndex:formRightTab",
+                        ":containerIndex:formLeftTab",
+                        ":messageIndex");
                 MessageUtils.showInformationMessage(result.message());
                 if (StringUtils.isNotBlank(hideDialogScript)) {
                     PrimeFaces.current().executeScript(hideDialogScript);

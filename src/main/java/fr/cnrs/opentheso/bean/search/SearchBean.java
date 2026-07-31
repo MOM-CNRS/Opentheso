@@ -221,8 +221,11 @@ public class SearchBean implements Serializable {
 
         if (CollectionUtils.isNotEmpty(nodeConceptSearchs)) {
             if (nodeConceptSearchs.size() == 1) {
-                conceptBean.getConcept(nodeConceptSearchs.get(0).getIdTheso(), nodeConceptSearchs.get(0).getIdConcept(),
-                        nodeConceptSearchs.get(0).getCurrentLang(), currentUser);
+                var single = nodeConceptSearchs.get(0);
+                conceptBean.getConcept(single.getIdTheso(), single.getIdConcept(),
+                        single.getCurrentLang(), currentUser);
+                tree.initAndExpandTreeToPath(single.getIdConcept(), single.getIdTheso(), single.getCurrentLang());
+                PrimeFaces.current().executeScript("typeof srollToSelected === 'function' && srollToSelected();");
                 selectedItem = true;
                 setViewsConcept();
             } else {
@@ -239,6 +242,7 @@ public class SearchBean implements Serializable {
         indexSetting.setIsValueSelected(true);
 
         PrimeFaces.current().ajax().update("resultSearchBar");
+        PrimeFaces.current().ajax().update("containerIndex");
     }
 
     private String searchLangOfTheso(List<RoleOnThesaurusBean.ThesaurusModel> listTheso, String idTheso) {
@@ -590,9 +594,14 @@ public class SearchBean implements Serializable {
                 .collect(Collectors.toList()));
         conceptBean.getConcept(idThesaurus, idConcept, idLang, currentUser);
         rightBodySetting.setIndex("0");
-        
+
+        // Sélectionner / déplier le concept dans l'arbre (comme après navigation BT/NT)
+        tree.initAndExpandTreeToPath(idConcept, idThesaurus, idLang);
+        PrimeFaces.current().executeScript("typeof srollToSelected === 'function' && srollToSelected();");
+
         PrimeFaces.current().ajax().update("containerIndex:contentConcept");
         PrimeFaces.current().ajax().update("containerIndex:thesoSelect");
+        PrimeFaces.current().ajax().update("containerIndex:formLeftTab");
     }
 
     public NodeSearchMini getSearchSelected() {

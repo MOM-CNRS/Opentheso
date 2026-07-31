@@ -5,16 +5,26 @@
 
   <h:panelGroup rendered="#{v2ThesaurusBrowseBean.hasNotesOfType(noteType)}">
     <div class="list-group-item list-group-item-action">
-      <div class="row" style="margin-left: 0; margin-bottom: 5px;">
+      <div class="row" style="margin-left:0; margin-bottom:5px;">
         <div class="col-xl-3 col-lg-4 col-md-5 col-sm-5">
           <h:outputText value="#{v2LocaleBean.getMsg(noteMessageKey)}"
-                        style="font-size: 14px; font-weight: bold; color: #8f8f8f;"/>
+                        title="#{v2LocaleBean.getMsg(noteMessageKey)}"
+                        style="font-size:14px; font-weight:bold; color:#8f8f8f;"/>
         </div>
-        <div class="col-xl-9 col-lg-8 col-md-7 col-sm-7" style="margin-left: -10px;">
+        <div class="col-xl-9 col-lg-8 col-md-7 col-sm-7" style="margin-left:-10px;">
           <ui:repeat value="#{v2ThesaurusBrowseBean.notesOfType(noteType)}" var="note">
-            <h:outputText value="#{note.value}" escape="false" style="font-size: 14px; white-space: pre-wrap;"/>
-            <h:outputText value=" (#{note.lang})" style="font-size: 14px; font-weight: 300;"/>
-            <br/>
+            <div class="row" style="margin-left:0; margin-bottom:2px;">
+              <div class="col-auto" style="padding-right:0; padding-left:0; min-width:28px;">
+                <img src="#{v2ThesaurusBrowseBean.getFlagImageUrl(note.lang)}"
+                     width="20" height="15" style="margin-right:7px;" alt=""/>
+              </div>
+              <div class="col" style="padding-left:0;">
+                <h:outputText value="#{note.value}#{note.sourceDisplay}" escape="false"
+                              style="font-size:14px; white-space:pre-wrap;"/>
+                <h:outputText value=" (#{note.lang}) "
+                              style="font-size:14px; font-weight:300;"/>
+              </div>
+            </div>
           </ui:repeat>
         </div>
       </div>

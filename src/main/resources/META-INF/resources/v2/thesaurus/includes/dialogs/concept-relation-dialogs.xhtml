@@ -43,7 +43,7 @@
                 <p:commandButton id="v2AddBroaderRelationSubmit" value="#{v2LocaleBean.getMsg('btnValidate')}"
                                  styleClass="ui-button-success"
                                  actionListener="#{v2ConceptRelationEditorBean.submitAddBroader()}"
-                                 update="v2AddBroaderRelationForm :containerIndex:rightTab :containerIndex:formLeftTab :messageIndex"
+                                 update="v2AddBroaderRelationForm :containerIndex:formRightTab :containerIndex:formLeftTab :messageIndex"
                                  process="@form"/>
             </div>
         </h:form>
@@ -70,7 +70,7 @@
                 <p:column width="80" headerText="#{v2LocaleBean.getMsg('btnDelete')}">
                     <p:commandLink style="color:#FF7979;" process="@form" ajax="true"
                                    action="#{v2ConceptRelationEditorBean.submitDeleteBroader(broader.conceptId)}"
-                                   update="v2DeleteBroaderRelationForm :containerIndex:rightTab :containerIndex:formLeftTab :messageIndex">
+                                   update="v2DeleteBroaderRelationForm :containerIndex:formRightTab :containerIndex:formLeftTab :messageIndex">
                         <i class="pi pi-trash"/>
                     </p:commandLink>
                 </p:column>
@@ -117,7 +117,7 @@
                 <p:commandButton id="v2AddNarrowerRelationSubmit" value="#{v2LocaleBean.getMsg('btnValidate')}"
                                  styleClass="ui-button-success"
                                  actionListener="#{v2ConceptRelationEditorBean.submitAddNarrower()}"
-                                 update="v2AddNarrowerRelationForm :containerIndex:rightTab :containerIndex:formLeftTab :messageIndex"
+                                 update="v2AddNarrowerRelationForm :containerIndex:formRightTab :containerIndex:formLeftTab :messageIndex"
                                  process="@form"/>
             </div>
         </h:form>
@@ -144,7 +144,7 @@
                 <p:column width="80" headerText="#{v2LocaleBean.getMsg('btnDelete')}">
                     <p:commandLink style="color:#FF7979;" process="@form" ajax="true"
                                    action="#{v2ConceptRelationEditorBean.submitDeleteNarrower(narrower.conceptId)}"
-                                   update="v2DeleteNarrowerRelationForm :containerIndex:rightTab :containerIndex:formLeftTab :messageIndex">
+                                   update="v2DeleteNarrowerRelationForm :containerIndex:formRightTab :containerIndex:formLeftTab :messageIndex">
                         <i class="pi pi-trash"/>
                     </p:commandLink>
                 </p:column>
@@ -196,7 +196,7 @@
                         <p:commandLink style="color:#F7A269;"
                                        actionListener="#{v2ConceptRelationEditorBean.submitUpdateNarrowerType(narrowerEdit)}"
                                        process="@form" ajax="true"
-                                       update="v2ChangeNarrowerRelationForm :containerIndex:rightTab :messageIndex">
+                                       update="v2ChangeNarrowerRelationForm :containerIndex:formRightTab :messageIndex">
                             <i class="pi pi-check-circle"/>
                         </p:commandLink>
                     </p:column>
@@ -209,7 +209,7 @@
                                  value="#{v2LocaleBean.getMsg('btnValidate')}" styleClass="ui-button-success"
                                  actionListener="#{v2ConceptRelationEditorBean.submitApplyNarrowerTypeToBranch()}"
                                  process="@form"
-                                 update="v2ChangeNarrowerRelationForm :containerIndex:rightTab :containerIndex:formLeftTab :messageIndex"/>
+                                 update="v2ChangeNarrowerRelationForm :containerIndex:formRightTab :containerIndex:formLeftTab :messageIndex"/>
             </div>
         </h:form>
     </p:dialog>
@@ -260,7 +260,7 @@
                 <p:commandButton id="v2AddRelatedRelationSubmit" value="#{v2LocaleBean.getMsg('btnValidate')}"
                                  styleClass="ui-button-success"
                                  actionListener="#{v2ConceptRelationEditorBean.submitAddRelated()}"
-                                 update="v2AddRelatedRelationForm :containerIndex:rightTab :containerIndex:formLeftTab :messageIndex"
+                                 update="v2AddRelatedRelationForm :containerIndex:formRightTab :containerIndex:formLeftTab :messageIndex"
                                  process="@form"/>
             </div>
         </h:form>
@@ -284,7 +284,7 @@
                 <p:column width="80" headerText="#{v2LocaleBean.getMsg('btnDelete')}">
                     <p:commandLink style="color:#FF7979;" process="@form" ajax="true"
                                    action="#{v2ConceptRelationEditorBean.submitDeleteRelated(related.conceptId)}"
-                                   update="v2DeleteRelatedRelationForm :containerIndex:rightTab :messageIndex">
+                                   update="v2DeleteRelatedRelationForm :containerIndex:formRightTab :messageIndex">
                         <i class="pi pi-trash"/>
                     </p:commandLink>
                 </p:column>

@@ -259,7 +259,8 @@ public final class ConceptMapper {
                         String.valueOf(note.getIdNote()),
                         typeCode,
                         StringUtils.defaultString(note.getIdLang()),
-                        StringUtils.defaultString(note.getLabel())
+                        StringUtils.defaultString(note.getLabel()),
+                        StringUtils.trimToNull(note.getNoteSource())
                 ))
                 .forEach(target::add);
     }

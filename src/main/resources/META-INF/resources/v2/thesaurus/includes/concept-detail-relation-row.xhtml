@@ -135,7 +135,7 @@
                              title="#{relation.conceptId}"
                              action="#{v2ThesaurusBrowseBean.openConcept(relation.conceptId)}"
                              process="@this"
-                             update=":containerIndex:rightTab :containerIndex:formLeftTab"
+                             update=":containerIndex:formRightTab :containerIndex:formLeftTab"
                              style="#{deprecatedStyle ? 'color:#C63632;font-weight:bold;font-style:italic;text-decoration:line-through;font-size:14px;' : ''}"/>
             </h:panelGroup>
             <h:panelGroup rendered="#{relationLinkType == 'group'}">
@@ -143,7 +143,7 @@
                              title="#{relation.conceptId}"
                              action="#{v2ThesaurusBrowseBean.focusGroup(relation.conceptId)}"
                              process="@this"
-                             update=":containerIndex:rightTab :containerIndex:formLeftTab"
+                             update=":containerIndex:formRightTab :containerIndex:formLeftTab"
                              style="font-size:14px; color:#601e18;"/>
             </h:panelGroup>
             <h:panelGroup rendered="#{relationLinkType == 'facet'}">
@@ -151,7 +151,7 @@
                              title="#{relation.conceptId}"
                              action="#{v2ThesaurusBrowseBean.focusFacet(relation.conceptId)}"
                              process="@this"
-                             update=":containerIndex:rightTab :containerIndex:formLeftTab"
+                             update=":containerIndex:formRightTab :containerIndex:formLeftTab"
                              style="font-size:14px; color:#601e18;"/>
             </h:panelGroup>
             <h:outputText value=", " rendered="#{not status.last}" style="color:#FF7979;"/>

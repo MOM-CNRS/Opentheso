@@ -315,14 +315,15 @@
       </div>
     </div>
 
-    <!-- Bloc 3 : notes par type -->
-    <h:panelGroup rendered="#{v2ThesaurusBrowseBean.hasDisplayedNotes}">
+    <!-- Bloc 3 : notes par type (toujours visible si notes présentes ou si édition possible) -->
+    <h:panelGroup rendered="#{v2ThesaurusBrowseBean.hasDisplayedNotes or v2ConceptNoteEditorBean.noteActionsAvailable}">
       <div class="card mb-4 py-3 border-left-success" style="margin: 20px;">
         <div class="list-group" style="margin-top: -10px; margin-bottom: -10px;">
           <div class="list-group-item list-group-item-action">
             <div class="row" style="margin-left: 0;">
               <div class="col-xl-10 col-lg-10 col-md-10 col-sm-10">
                 <h:outputText value="#{v2LocaleBean.getMsg('rightbody.concept.all_note')}"
+                              title="#{v2LocaleBean.getMsg('rightbody.concept.all_note')}"
                               style="color: #78261f; font-size: 14px; font-weight: bold;"/>
                 <h:panelGroup rendered="#{v2ConceptNoteEditorBean.noteActionsAvailable}"
                               style="display:inline-block; margin-left:8px;">
@@ -338,9 +339,9 @@
               <div class="col-xl-2 col-lg-2 col-md-2 col-sm-2" style="text-align: right;">
                 <p:inputSwitch id="v2NoteLangSwitch" value="#{v2ThesaurusBrowseBean.showAllNoteLanguages}">
                   <p:ajax listener="#{v2ThesaurusBrowseBean.onNoteLanguageToggle()}"
-                          update=":containerIndex:rightTab"/>
+                          update=":containerIndex:formRightTab"/>
                 </p:inputSwitch>
-                <p:tooltip for="v2NoteLangSwitch" value="#{v2LocaleBean.getMsg('concept.showEMOtherLang')}" showDelay="1000"/>
+                <p:tooltip for="v2NoteLangSwitch" value="#{v2LocaleBean.getMsg('concept.showNotesOtherLang')}" showDelay="1000"/>
               </div>
             </div>
           </div>
