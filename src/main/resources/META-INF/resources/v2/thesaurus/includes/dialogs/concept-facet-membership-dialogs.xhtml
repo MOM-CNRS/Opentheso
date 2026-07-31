@@ -1,0 +1,87 @@
+<ui:fragment xmlns="http://www.w3.org/1999/xhtml"
+             xmlns:ui="http://xmlns.jcp.org/jsf/facelets"
+             xmlns:p="http://primefaces.org/ui"
+             xmlns:h="http://xmlns.jcp.org/jsf/html">
+
+    <p:dialog id="v2AddConceptToFacetDlg" header="#{v2LocaleBean.getMsg('rightbody.conceptdialog.addToFacet')}"
+              widgetVar="v2AddConceptToFacetDlg" width="480" modal="true" resizable="false" position="top"
+              appendTo="@(body)">
+        <h:form id="v2AddConceptToFacetForm">
+            <p:defaultCommand target="v2AddConceptToFacetSubmit"/>
+            <div class="row mb-2">
+                <div class="col-12">
+                    <h:outputText value="#{v2LocaleBean.getMsg('btnAdd')} "/>
+                    <h:outputText value="#{v2ConceptFacetMembershipBean.currentConceptLabel}" style="color:#C63632;"/>
+                    <h:outputText value=" #{v2LocaleBean.getMsg('rightbody.conceptdialog.toFacet')} :"/>
+                </div>
+            </div>
+            <div class="row mb-2">
+                <div class="col-12">
+                    <h:outputText value="#{v2LocaleBean.getMsg('rightbody.conceptdialog.searchFacet')}"/>
+                </div>
+            </div>
+            <div class="row mb-2">
+                <div class="col-12">
+                    <p:autoComplete id="v2AddConceptToFacetAutocomplete"
+                                    value="#{v2ConceptFacetMembershipBean.selectedFacet}"
+                                    completeMethod="#{v2ConceptFacetMembershipBean.autocompleteFacet}"
+                                    var="facet"
+                                    itemLabel="#{facet.label}"
+                                    itemValue="#{facet}"
+                                    forceSelection="true"
+                                    minQueryLength="1"
+                                    scrollHeight="300"
+                                    converter="v2ConceptFacetConverter"
+                                    style="width:100%;"
+                                    inputStyle="width:100%;">
+                        <p:column>
+                            <h:outputText value="#{facet.label}" title="#{facet.id}"/>
+                        </p:column>
+                    </p:autoComplete>
+                </div>
+            </div>
+            <div class="text-right mt-3">
+                <p:commandButton value="#{v2LocaleBean.getMsg('btnCancel')}" styleClass="ui-button-secondary"
+                                 type="button" onclick="PF('v2AddConceptToFacetDlg').hide();" style="margin-right:8px;"/>
+                <p:commandButton id="v2AddConceptToFacetSubmit" value="#{v2LocaleBean.getMsg('btnAdd')}"
+                                 styleClass="ui-button-success"
+                                 actionListener="#{v2ConceptFacetMembershipBean.submitAddToFacet()}"
+                                 update="@form :containerIndex:formRightTab :containerIndex:formLeftTab :messageIndex"
+                                 process="@form"/>
+            </div>
+        </h:form>
+    </p:dialog>
+
+    <p:dialog id="v2RemoveConceptFromFacetsDlg" header="#{v2LocaleBean.getMsg('leftbody.removeTheConceptOfFacets')}"
+              widgetVar="v2RemoveConceptFromFacetsDlg" width="480" modal="true" resizable="false" position="top"
+              appendTo="@(body)">
+        <h:form id="v2RemoveConceptFromFacetsForm">
+            <div class="row mb-2">
+                <div class="col-12">
+                    <h:outputText value="#{v2LocaleBean.getMsg('rightbody.conceptdialog.nameOfConcept')} : "/>
+                    <h:outputText value="#{v2ConceptFacetMembershipBean.currentConceptLabel}" style="color:#C63632;"/>
+                </div>
+            </div>
+            <div class="card mb-3 py-2 border-left-success" style="border-color:#43B572;">
+                <p:dataTable size="small" var="facet" value="#{v2ConceptFacetMembershipBean.facetsToRemove}"
+                             style="margin-bottom:0;">
+                    <p:column headerText="#{v2LocaleBean.getMsg('leftbody.isPartOfFacets')}">
+                        <h:outputText value="#{facet.displayLabel}" title="#{facet.conceptId}"/>
+                    </p:column>
+                    <p:column width="60" headerText="#{v2LocaleBean.getMsg('btnDelete')}">
+                        <p:commandLink style="color:#C63632;"
+                                       actionListener="#{v2ConceptFacetMembershipBean.submitRemoveFromFacet(facet)}"
+                                       process="@form"
+                                       update="@form :containerIndex:formRightTab :containerIndex:formLeftTab :messageIndex">
+                            <i class="pi pi-trash"/>
+                        </p:commandLink>
+                    </p:column>
+                </p:dataTable>
+            </div>
+            <div class="text-right">
+                <p:commandButton value="#{v2LocaleBean.getMsg('candidat.close')}" styleClass="ui-button-secondary"
+                                 type="button" onclick="PF('v2RemoveConceptFromFacetsDlg').hide();"/>
+            </div>
+        </h:form>
+    </p:dialog>
+</ui:fragment>

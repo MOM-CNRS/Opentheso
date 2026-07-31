@@ -36,13 +36,13 @@
                                  rendered="#{not v2ConceptLifecycleEditorBean.duplicateLabelWarning}"
                                  value="#{v2LocaleBean.getMsg('btnValidate')}" styleClass="ui-button-success"
                                  actionListener="#{v2ConceptLifecycleEditorBean.submitRename()}"
-                                 update="v2RenameConceptForm :containerIndex:rightTab :containerIndex:tabTree :messageIndex"
+                                 update="v2RenameConceptForm :containerIndex:formRightTab :containerIndex:formLeftTab :messageIndex"
                                  process="@form"/>
                 <p:commandButton rendered="#{v2ConceptLifecycleEditorBean.duplicateLabelWarning}"
                                  value="#{v2LocaleBean.getMsg('rightbody.conceptdialog.force')}"
                                  styleClass="ui-button-warning"
                                  actionListener="#{v2ConceptLifecycleEditorBean.submitRenameForced()}"
-                                 update="v2RenameConceptForm :containerIndex:rightTab :containerIndex:tabTree :messageIndex"
+                                 update="v2RenameConceptForm :containerIndex:formRightTab :containerIndex:formLeftTab :messageIndex"
                                  process="@form"
                                  oncomplete="PF('v2RenameConceptDlg').hide();"/>
             </div>
@@ -127,7 +127,7 @@
                                  id="v2AddChildConceptSubmit" icon="pi pi-check" styleClass="ui-button-success"
                                  value="#{v2LocaleBean.getMsg('btnAdd')}"
                                  actionListener="#{v2ConceptLifecycleEditorBean.submitAddChild()}"
-                                 update="v2AddChildConceptForm :containerIndex:rightTab :containerIndex:tabTree :messageIndex"
+                                 update="v2AddChildConceptForm :containerIndex:formRightTab :containerIndex:formLeftTab :messageIndex"
                                  process="@form"/>
                 <p:commandButton rendered="#{v2ConceptLifecycleEditorBean.duplicateLabelWarning}"
                                  value="#{v2LocaleBean.getMsg('btnCancel')}" icon="fas fa-undo-alt"
@@ -139,7 +139,7 @@
                                  value="#{v2LocaleBean.getMsg('rightbody.conceptdialog.force')}"
                                  icon="pi pi-check" styleClass="ui-button-success"
                                  actionListener="#{v2ConceptLifecycleEditorBean.submitAddChildForced()}"
-                                 update="v2AddChildConceptForm :containerIndex:rightTab :containerIndex:tabTree :messageIndex"
+                                 update="v2AddChildConceptForm :containerIndex:formRightTab :containerIndex:formLeftTab :messageIndex"
                                  process="@form"/>
             </div>
         </h:form>
@@ -197,7 +197,7 @@
                                  id="v2AddTopConceptSubmit" value="#{v2LocaleBean.getMsg('btnAdd')}"
                                  icon="pi pi-check" styleClass="ui-button-success"
                                  actionListener="#{v2ConceptLifecycleEditorBean.submitAddTopConcept()}"
-                                 update="v2AddTopConceptForm :containerIndex:rightTab :containerIndex:tabTree :messageIndex"
+                                 update="v2AddTopConceptForm :containerIndex:formRightTab :containerIndex:formLeftTab :messageIndex"
                                  process="@form"/>
                 <p:commandButton rendered="#{v2ConceptLifecycleEditorBean.duplicateLabelWarning}"
                                  value="#{v2LocaleBean.getMsg('btnCancel')}" icon="fas fa-undo-alt"
@@ -209,7 +209,7 @@
                                  value="#{v2LocaleBean.getMsg('rightbody.conceptdialog.force')}"
                                  icon="pi pi-check" styleClass="ui-button-success"
                                  actionListener="#{v2ConceptLifecycleEditorBean.submitAddTopConceptForced()}"
-                                 update="v2AddTopConceptForm :containerIndex:rightTab :containerIndex:tabTree :messageIndex"
+                                 update="v2AddTopConceptForm :containerIndex:formRightTab :containerIndex:formLeftTab :messageIndex"
                                  process="@form"/>
             </div>
         </h:form>
@@ -229,7 +229,7 @@
                                  type="button" onclick="PF('v2DeleteConceptDlg').hide();" style="margin-right:8px;"/>
                 <p:commandButton value="#{v2LocaleBean.getMsg('btnDelete')}" styleClass="ui-button-danger"
                                  actionListener="#{v2ConceptLifecycleEditorBean.submitDelete()}"
-                                 update="v2DeleteConceptForm :containerIndex:rightTab :containerIndex:tabTree :messageIndex"
+                                 update="v2DeleteConceptForm :containerIndex:formRightTab :containerIndex:formLeftTab :messageIndex"
                                  oncomplete="if (!args.validationFailed) PF('v2DeleteConceptDlg').hide();"/>
             </div>
         </h:form>
@@ -249,7 +249,7 @@
                                  type="button" onclick="PF('v2DeprecateConceptDlg').hide();" style="margin-right:8px;"/>
                 <p:commandButton value="#{v2LocaleBean.getMsg('apply')}" styleClass="ui-button-success"
                                  actionListener="#{v2ConceptLifecycleEditorBean.submitDeprecate()}"
-                                 update="v2DeprecateConceptForm :containerIndex:rightTab :containerIndex:tabTree :messageIndex"
+                                 update="v2DeprecateConceptForm :containerIndex:formRightTab :containerIndex:formLeftTab :messageIndex"
                                  process="@form"/>
             </div>
         </h:form>
@@ -291,7 +291,7 @@
                                  type="button" onclick="PF('v2ApproveConceptDlg').hide();" style="margin-right:8px;"/>
                 <p:commandButton value="#{v2LocaleBean.getMsg('apply')}" styleClass="ui-button-success"
                                  actionListener="#{v2ConceptLifecycleEditorBean.submitApprove()}"
-                                 update="v2ApproveConceptForm :containerIndex:rightTab :containerIndex:tabTree :messageIndex"
+                                 update="v2ApproveConceptForm :containerIndex:formRightTab :containerIndex:formLeftTab :messageIndex"
                                  process="@form"/>
             </div>
         </h:form>
@@ -335,7 +335,7 @@
                 <p:commandButton id="v2AddReplacedBySubmit" value="#{v2LocaleBean.getMsg('btnValidate')}"
                                  styleClass="ui-button-success"
                                  actionListener="#{v2ConceptLifecycleEditorBean.submitAddReplacedBy()}"
-                                 update="v2AddReplacedByForm :containerIndex:rightTab :containerIndex:tabTree :messageIndex"
+                                 update="v2AddReplacedByForm :containerIndex:formRightTab :containerIndex:formLeftTab :messageIndex"
                                  process="@form"/>
             </div>
         </h:form>
@@ -361,7 +361,7 @@
                         <p:commandLink style="color:#FF7979;"
                                        process="@form"
                                        actionListener="#{v2ConceptLifecycleEditorBean.submitDeleteReplacedBy(replaceBy.conceptId)}"
-                                       update="v2DeleteReplacedByForm :containerIndex:rightTab :containerIndex:tabTree :messageIndex">
+                                       update="v2DeleteReplacedByForm :containerIndex:formRightTab :containerIndex:formLeftTab :messageIndex">
                             <i class="pi pi-trash"/>
                         </p:commandLink>
                     </div>

@@ -12,7 +12,8 @@
                              value="#{v2LocaleBean.getMsg('rightbody.concept.showLinked_corpus')}"
                              style="background-color: #f47b2a; border-color: #f47b2a; color: #fff;"
                              actionListener="#{v2ThesaurusBrowseBean.searchCorpusLinks()}"
-                             update="@this"/>
+                             process="@this"
+                             update="v2CorpusView"/>
           </div>
           <div class="col-xl-9 col-lg-8 col-md-7 col-sm-7" style="margin-left: -10px;">
             <h:panelGroup rendered="#{v2ThesaurusBrowseBean.hasDisplayedCorpusLinks()}">

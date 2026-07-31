@@ -51,7 +51,8 @@
                                           style="font-size: 13px; color: #858796"/>
                             <h:panelGroup rendered="#{not empty v2ThesaurusBrowseBean.thesaurusHome.permalinkUrl}">
                                 <i class="pi pi-link" style="margin-right: 5px; color: #f47b2a; font-size: 13px;"/>
-                                <p:link href="#{v2ThesaurusBrowseBean.thesaurusHome.permalinkUrl}"
+                                <p:link href="#{not empty v2ThesaurusBrowseBean.thesaurusHome.permalinkUrl
+                                                  ? v2ThesaurusBrowseBean.thesaurusHome.permalinkUrl : '#'}"
                                         value="#{v2ThesaurusBrowseBean.thesaurusHome.permalinkLabel}"
                                         style="color: #F47B2A; font-size: 13px;"/>
                             </h:panelGroup>

@@ -50,13 +50,13 @@
                                  rendered="#{not v2ConceptLexicalEditorBean.duplicateLabelWarning}"
                                  value="#{v2LocaleBean.getMsg('btnValidate')}" styleClass="ui-button-success"
                                  actionListener="#{v2ConceptLexicalEditorBean.submitAddSynonym()}"
-                                 update="v2AddSynonymForm :containerIndex:rightTab :messageIndex"
+                                 update="v2AddSynonymForm :containerIndex:formRightTab :messageIndex"
                                  process="@form"/>
                 <p:commandButton rendered="#{v2ConceptLexicalEditorBean.duplicateLabelWarning}"
                                  value="#{v2LocaleBean.getMsg('rightbody.conceptdialog.force')}"
                                  styleClass="ui-button-warning"
                                  actionListener="#{v2ConceptLexicalEditorBean.submitAddSynonymForced()}"
-                                 update="v2AddSynonymForm :containerIndex:rightTab :messageIndex"
+                                 update="v2AddSynonymForm :containerIndex:formRightTab :messageIndex"
                                  process="@form"/>
             </div>
         </h:form>
@@ -84,7 +84,7 @@
                 <p:column width="60">
                     <p:commandLink style="color:#43B572;" process="@form" ajax="true"
                                    actionListener="#{v2ConceptLexicalEditorBean.submitUpdateSynonym(row)}"
-                                   update="v2EditSynonymForm :containerIndex:rightTab :messageIndex">
+                                   update="v2EditSynonymForm :containerIndex:formRightTab :messageIndex">
                         <i class="pi pi-check-circle"/>
                     </p:commandLink>
                 </p:column>
@@ -102,7 +102,7 @@
                                  value="#{v2LocaleBean.getMsg('rightbody.conceptdialog.force')}"
                                  styleClass="ui-button-warning"
                                  actionListener="#{v2ConceptLexicalEditorBean.submitUpdateSynonymForcedFromEdit()}"
-                                 update="v2EditSynonymForm :containerIndex:rightTab :messageIndex"
+                                 update="v2EditSynonymForm :containerIndex:formRightTab :messageIndex"
                                  process="@form"/>
             </div>
         </h:form>
@@ -127,7 +127,7 @@
                 <p:column width="80" headerText="#{v2LocaleBean.getMsg('btnDelete')}">
                     <p:commandLink style="color:#FF7979;" process="@form" ajax="true"
                                    actionListener="#{v2ConceptLexicalEditorBean.submitDeleteSynonym(row)}"
-                                   update="v2DeleteSynonymForm :containerIndex:rightTab :messageIndex">
+                                   update="v2DeleteSynonymForm :containerIndex:formRightTab :messageIndex">
                         <i class="pi pi-trash"/>
                     </p:commandLink>
                 </p:column>
@@ -173,7 +173,7 @@
                                  rendered="#{not empty v2ConceptLexicalEditorBean.availableTranslationLanguages}"
                                  value="#{v2LocaleBean.getMsg('btnValidate')}" styleClass="ui-button-success"
                                  actionListener="#{v2ConceptLexicalEditorBean.submitAddTranslation()}"
-                                 update="v2AddTranslationForm :containerIndex:rightTab :messageIndex"
+                                 update="v2AddTranslationForm :containerIndex:formRightTab :messageIndex"
                                  process="@form"/>
             </div>
         </h:form>
@@ -198,7 +198,7 @@
                 <p:column width="60">
                     <p:commandLink style="color:#43B572;" process="@form" ajax="true"
                                    actionListener="#{v2ConceptLexicalEditorBean.submitUpdateTranslation(row)}"
-                                   update="v2EditTranslationForm :containerIndex:rightTab :messageIndex">
+                                   update="v2EditTranslationForm :containerIndex:formRightTab :messageIndex">
                         <i class="pi pi-check-circle"/>
                     </p:commandLink>
                 </p:column>
@@ -226,7 +226,7 @@
                 <p:column width="80" headerText="#{v2LocaleBean.getMsg('btnDelete')}">
                     <p:commandLink style="color:#FF7979;" process="@form" ajax="true"
                                    action="#{v2ConceptLexicalEditorBean.submitDeleteTranslation(row.lang)}"
-                                   update="v2DeleteTranslationForm :containerIndex:rightTab :messageIndex">
+                                   update="v2DeleteTranslationForm :containerIndex:formRightTab :messageIndex">
                         <i class="pi pi-trash"/>
                     </p:commandLink>
                 </p:column>

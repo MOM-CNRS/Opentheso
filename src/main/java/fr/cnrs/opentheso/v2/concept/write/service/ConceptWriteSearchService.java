@@ -2,6 +2,7 @@ package fr.cnrs.opentheso.v2.concept.write.service;
 
 import fr.cnrs.opentheso.v2.concept.write.model.ConceptSearchSuggestion;
 import fr.cnrs.opentheso.v2.concept.write.model.ConceptWriteCollection;
+import fr.cnrs.opentheso.v2.concept.write.model.ConceptWriteFacet;
 import fr.cnrs.opentheso.v2.concept.write.persistence.ConceptWriteSearchPersistence;
 import lombok.RequiredArgsConstructor;
 import org.springframework.stereotype.Service;
@@ -41,5 +42,14 @@ public class ConceptWriteSearchService {
             String thesaurusId
     ) {
         return conceptWriteSearchPersistence.autocompleteCollection(query, lang, thesaurusId);
+    }
+
+    @Transactional(readOnly = true)
+    public List<ConceptWriteFacet> autocompleteFacet(
+            String query,
+            String lang,
+            String thesaurusId
+    ) {
+        return conceptWriteSearchPersistence.autocompleteFacet(query, lang, thesaurusId);
     }
 }

@@ -3,12 +3,17 @@
              xmlns:ui="http://xmlns.jcp.org/jsf/facelets"
              xmlns:p="http://primefaces.org/ui">
 
-  <h:panelGroup rendered="#{v2ThesaurusBrowseBean.breadcrumbEnabled and not empty v2ThesaurusBrowseBean.selectedConcept.breadcrumbPaths}"
-                style="width:100%; display:flex; background-color:#ecf8f1; padding:6px 8px; margin-bottom:10px;">
+  <!-- Barre d'actions + fil d'Ariane (menu indépendant du breadcrumb, comme legacy) -->
+  <h:panelGroup rendered="#{v2ConceptLifecycleEditorBean.writeActionsAvailable
+                              or (v2ThesaurusBrowseBean.breadcrumbEnabled
+                                  and not empty v2ThesaurusBrowseBean.selectedConcept.breadcrumbPaths)}"
+                style="width:100%; display:flex; flex-wrap:wrap; align-items:center;
+                       background-color:#ecf8f1; padding:6px 8px; margin-bottom:10px;">
 
     <h:panelGroup id="v2ConceptViewActions" rendered="#{v2ConceptLifecycleEditorBean.writeActionsAvailable}">
       <p:commandButton id="v2ConceptActionsButton" type="button" icon="pi pi-align-justify"
-                       style="width:1.5rem; height:1.5rem; margin-left:5px; margin-right:5px; background:#ecf8f1; color:#f47b2a; border:1px solid #ecf8f1;"/>
+                       style="width:1.5rem; height:1.5rem; margin-left:5px; margin-right:5px;
+                              background:#ecf8f1; color:#f47b2a; border:1px solid #ecf8f1;"/>
       <p:menu overlay="true" trigger="v2ConceptActionsButton" my="left top" at="left bottom">
         <p:menuitem value="#{v2LocaleBean.getMsg('rightbody.concept.new_concept')}"
                     rendered="#{v2ConceptLifecycleEditorBean.activeConceptWriteAvailable}"
@@ -113,43 +118,47 @@
                  showDelay="1000"/>
     </h:panelGroup>
 
-    <p:commandLink rendered="#{v2ThesaurusBrowseBean.thesaurusHome != null}"
-                   action="#{v2ThesaurusBrowseBean.openThesaurusHome()}"
-                   process="@this"
-                   update=":containerIndex:rightTab"
-                   style="color:#164A78; background:none; border:none; box-shadow:none; font-size:13px; margin-right:4px;"
-                   title="#{v2LocaleBean.getMsg('home.permalink')}">
-      <i class="fas fa-home" style="color:#f47b2a; font-size:15px;"/>
-    </p:commandLink>
+    <h:panelGroup rendered="#{v2ThesaurusBrowseBean.breadcrumbEnabled
+                                and not empty v2ThesaurusBrowseBean.selectedConcept.breadcrumbPaths}"
+                  style="display:flex; flex-wrap:wrap; align-items:center; flex:1;">
+      <p:commandLink rendered="#{v2ThesaurusBrowseBean.thesaurusHome != null}"
+                     action="#{v2ThesaurusBrowseBean.openThesaurusHome()}"
+                     process="@this"
+                     update=":containerIndex:formRightTab :containerIndex:formLeftTab"
+                     style="color:#164A78; background:none; border:none; box-shadow:none; font-size:13px; margin-right:4px;"
+                     title="#{v2LocaleBean.getMsg('home.permalink')}">
+        <i class="fas fa-home" style="color:#f47b2a; font-size:15px;"/>
+      </p:commandLink>
 
-    <ui:repeat value="#{v2ThesaurusBrowseBean.selectedConcept.breadcrumbPaths}" var="path" varStatus="pathStatus">
-      <ui:repeat value="#{path}" var="step" varStatus="stepStatus">
-        <h:panelGroup rendered="#{step.startOfPath and not pathStatus.first}">
-          <br/>
-        </h:panelGroup>
-        <h:panelGroup rendered="#{step.startOfPath and pathStatus.first}">
-          <h:outputText value=" " rendered="#{v2ThesaurusBrowseBean.thesaurusHome != null}"/>
-        </h:panelGroup>
+      <ui:repeat value="#{v2ThesaurusBrowseBean.selectedConcept.breadcrumbPaths}" var="path" varStatus="pathStatus">
+        <ui:repeat value="#{path}" var="step" varStatus="stepStatus">
+          <h:panelGroup rendered="#{step.startOfPath and not pathStatus.first}">
+            <br/>
+          </h:panelGroup>
+          <h:panelGroup rendered="#{step.startOfPath and pathStatus.first}">
+            <h:outputText value=" " rendered="#{v2ThesaurusBrowseBean.thesaurusHome != null}"/>
+          </h:panelGroup>
 
-        <h:panelGroup rendered="#{not stepStatus.last or step.startOfPath}">
-          <p:commandLink value="#{step.startOfPath ? ' '.concat(step.label) : step.label}"
-                         action="#{v2ThesaurusBrowseBean.openConcept(step.conceptId)}"
-                         process="@this"
-                         update=":containerIndex:rightTab :containerIndex:formLeftTab"
-                         style="color:#164A78; background:none; border:none; box-shadow:none; font-size:13px;"
-                         title="#{step.conceptId}"/>
-          <h:outputText rendered="#{not stepStatus.last}" value=" &gt; " style="font-size:13px; font-weight:bold;"/>
-        </h:panelGroup>
+          <h:panelGroup rendered="#{not stepStatus.last or step.startOfPath}">
+            <p:commandLink value="#{step.startOfPath ? ' '.concat(step.label) : step.label}"
+                           action="#{v2ThesaurusBrowseBean.openConcept(step.conceptId)}"
+                           process="@this"
+                           update=":containerIndex:formRightTab :containerIndex:formLeftTab"
+                           style="color:#164A78; background:none; border:none; box-shadow:none; font-size:13px;"
+                           title="#{step.conceptId}"/>
+            <h:outputText rendered="#{not stepStatus.last}" value=" &gt; " style="font-size:13px; font-weight:bold;"/>
+          </h:panelGroup>
 
-        <h:panelGroup rendered="#{stepStatus.last and not step.startOfPath}">
-          <h:outputText rendered="#{not empty v2ThesaurusBrowseBean.selectedConcept.summary.preferredLabel}"
-                        value=" #{v2ThesaurusBrowseBean.selectedConcept.summary.preferredLabel}"
-                        style="font-size:13px;"/>
-          <h:outputText rendered="#{empty v2ThesaurusBrowseBean.selectedConcept.summary.preferredLabel}"
-                        value=" (#{v2ThesaurusBrowseBean.selectedConcept.summary.conceptId})"
-                        style="font-size:13px;"/>
-        </h:panelGroup>
+          <h:panelGroup rendered="#{stepStatus.last and not step.startOfPath}">
+            <h:outputText rendered="#{not empty v2ThesaurusBrowseBean.selectedConcept.summary.preferredLabel}"
+                          value=" #{v2ThesaurusBrowseBean.selectedConcept.summary.preferredLabel}"
+                          style="font-size:13px;"/>
+            <h:outputText rendered="#{empty v2ThesaurusBrowseBean.selectedConcept.summary.preferredLabel}"
+                          value=" (#{v2ThesaurusBrowseBean.selectedConcept.summary.conceptId})"
+                          style="font-size:13px;"/>
+          </h:panelGroup>
+        </ui:repeat>
       </ui:repeat>
-    </ui:repeat>
+    </h:panelGroup>
   </h:panelGroup>
 </ui:fragment>

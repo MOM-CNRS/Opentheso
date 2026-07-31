@@ -5,146 +5,203 @@
              xmlns:f="http://xmlns.jcp.org/jsf/core">
 
   <h:panelGroup id="v2ConceptMediaPanel">
-  <h:panelGroup rendered="#{v2ThesaurusBrowseBean.selectedConcept.hasMediaData() or v2ConceptMediaEditorBean.mediaActionsAvailable}">
-    <div class="card mb-4 py-3 border-left-success" style="margin:20px;">
-      <h:panelGroup rendered="#{v2ConceptMediaEditorBean.mediaActionsAvailable}" style="text-align:right; margin:0 20px 10px;">
-        <p:menuButton icon="pi pi-cog" styleClass="ui-button-warning ui-button-flat">
-          <p:menuitem value="#{v2LocaleBean.getMsg('rightbody.concept.gps_coordinates')}"
-                      process="@this"
-                      actionListener="#{v2ConceptMediaEditorBean.prepareEditGps()}"
-                      update="v2EditGpsForm"
-                      oncomplete="PF('v2EditGpsDlg').show();"
-                      icon="fas fa-map-marker-alt"/>
-          <p:menuitem value="#{v2LocaleBean.getMsg('rightbody.conceptdialog.add_image')}"
-                      process="@this"
-                      actionListener="#{v2ConceptMediaEditorBean.prepareAddImage()}"
-                      update="v2AddImageForm"
-                      oncomplete="PF('v2AddImageDlg').show();"
-                      icon="fas fa-image"/>
-          <p:menuitem value="#{v2LocaleBean.getMsg('rightbody.concept.edit_image')}"
-                      rendered="#{not empty v2ThesaurusBrowseBean.selectedConcept.images}"
-                      process="@this"
-                      actionListener="#{v2ConceptMediaEditorBean.prepareEditImages()}"
-                      update="v2EditImageForm"
-                      oncomplete="PF('v2EditImageDlg').show();"
-                      icon="fas fa-edit"/>
-          <p:menuitem value="#{v2LocaleBean.getMsg('rightbody.concept.delete_image')}"
-                      rendered="#{not empty v2ThesaurusBrowseBean.selectedConcept.images}"
-                      process="@this"
-                      actionListener="#{v2ConceptMediaEditorBean.prepareDeleteImages()}"
-                      update="v2DeleteImageForm"
-                      oncomplete="PF('v2DeleteImageDlg').show();"
-                      icon="far fa-trash-alt"/>
-          <p:menuitem value="#{v2LocaleBean.getMsg('rightbody.concept.addExternalResource')}"
-                      process="@this"
-                      actionListener="#{v2ConceptMediaEditorBean.prepareAddExternalResource()}"
-                      update="v2AddExternalResourceForm"
-                      oncomplete="PF('v2AddExternalResourceDlg').show();"
-                      icon="fas fa-external-link-alt"/>
-          <p:menuitem value="#{v2LocaleBean.getMsg('rightbody.concept.modifyExternalResource')}"
-                      rendered="#{not empty v2ThesaurusBrowseBean.selectedConcept.externalResources}"
-                      process="@this"
-                      actionListener="#{v2ConceptMediaEditorBean.prepareEditExternalResources()}"
-                      update="v2EditExternalResourceForm"
-                      oncomplete="PF('v2EditExternalResourceDlg').show();"
-                      icon="fas fa-edit"/>
-          <p:menuitem value="#{v2LocaleBean.getMsg('rightbody.concept.deleteExternalResource')}"
-                      rendered="#{not empty v2ThesaurusBrowseBean.selectedConcept.externalResources}"
-                      process="@this"
-                      actionListener="#{v2ConceptMediaEditorBean.prepareDeleteExternalResources()}"
-                      update="v2DeleteExternalResourceForm"
-                      oncomplete="PF('v2DeleteExternalResourceDlg').show();"
-                      icon="far fa-trash-alt"/>
-        </p:menuButton>
-      </h:panelGroup>
-      <div class="list-group" style="margin-top:-10px; margin-bottom:-10px;">
+    <h:panelGroup rendered="#{v2ConceptMediaEditorBean.mediaActionsAvailable
+                                or v2ThesaurusBrowseBean.selectedConcept.hasMediaData()}">
+      <div class="card mb-4 py-3 border-left-success" style="margin:20px;">
+        <div class="list-group" style="margin-top:-10px; margin-bottom:-10px;">
 
-        <h:panelGroup id="v2ConceptGalleriaPanel" rendered="#{not empty v2ThesaurusBrowseBean.selectedConcept.images}">
-          <div class="list-group-item list-group-item-action">
-            <div class="row" style="margin-left:0;">
-              <div class="col-xl-3 col-lg-4 col-md-5 col-sm-5">
-                <h:outputText value="#{v2LocaleBean.getMsg('rightbody.concept.images')}"
-                              style="font-size:14px; font-weight:bold; color:#8f8f8f;"/>
-              </div>
-              <div class="col-xl-9 col-lg-8 col-md-7 col-sm-7" style="margin-left:-10px;">
-                <p:remoteCommand name="v2RcGalleria" actionListener="#{v2ConceptGalleriaBean.changeActiveIndex}"
-                                 update="v2ConceptGalleriaPanel" oncomplete="PF('v2ConceptGalleria').show();"/>
-                <p:galleria id="v2ConceptGalleriaWidget" widgetVar="v2ConceptGalleria"
-                            value="#{v2ThesaurusBrowseBean.selectedConcept.images}" var="photo" numVisible="5"
-                            circular="true" fullScreen="true" showCaption="true" showItemNavigators="true"
-                            activeIndex="#{v2ConceptGalleriaBean.activeIndex}"
-                            responsiveOptions="#{v2ConceptGalleriaBean.responsiveOptions}"
-                            style="max-width:600px;">
-                  <p:graphicImage value="#{photo.uri}" alt="#{photo.uri}" style="width:100%; display:block;"/>
-                  <f:facet name="caption">
-                    <h4 class="mb-2">
-                      <a href="#{photo.uri}" target="_blank" style="color:#F7A269;">#{photo.imageName}</a>
-                    </h4>
-                    <i>
-                      <p:link href="#{not empty photo.uri ? photo.uri : '#'}"
-                              value="#{photo.uri} (@#{photo.copyright} _ #{photo.creator})"
-                              target="_blank" style="color:white;"/>
-                    </i>
-                  </f:facet>
-                </p:galleria>
-                <div class="row">
-                  <div class="col-12">
-                    <ui:repeat value="#{v2ThesaurusBrowseBean.selectedConcept.images}" var="photo" varStatus="status">
-                      <p:graphicImage value="#{photo.uri}" alt="#{photo.uri}"
-                                      style="cursor:pointer; max-height:200px; max-width:500px; margin-left:10px; margin-top:10px;"
-                                      onclick="v2RcGalleria([{'name':'index','value':#{status.index}}])"
-                                      title="#{photo.uri} (@#{photo.copyright} _ #{photo.creator})"/>
-                    </ui:repeat>
-                  </div>
+          <!-- Ressources externes (comme legacy : en premier, une par ligne) -->
+          <h:panelGroup rendered="#{v2ConceptMediaEditorBean.mediaActionsAvailable
+                                      or not empty v2ThesaurusBrowseBean.selectedConcept.externalResources}">
+            <div class="list-group-item list-group-item-action">
+              <div class="row" style="margin-left:0;">
+                <div class="col-xl-3 col-lg-4 col-md-5 col-sm-5">
+                  <h:outputText value="#{v2LocaleBean.getMsg('rightbody.concept.externalResources')}"
+                                title="#{v2LocaleBean.getMsg('rightbody.concept.externalResources')}"
+                                style="font-size:14px; font-weight:bold; color:#8f8f8f;"/>
+                </div>
+                <div class="col-xl-9 col-lg-8 col-md-7 col-sm-7" style="margin-left:-10px;">
+                  <h:panelGroup rendered="#{v2ConceptMediaEditorBean.mediaActionsAvailable}"
+                                style="display:inline-block; margin-right:6px;">
+                    <p:menuButton icon="fas fa-cog"
+                                  style="color:#F7A269; background:none; border:none; box-shadow:none; font-size:12px;">
+                      <p:menuitem value="#{v2LocaleBean.getMsg('rightbody.concept.addExternalResource')}"
+                                  process="@this"
+                                  actionListener="#{v2ConceptMediaEditorBean.prepareAddExternalResource()}"
+                                  update=":containerIndex:v2AddExternalResourceForm"
+                                  oncomplete="PF('v2AddExternalResourceDlg').show();"
+                                  icon="fas fa-plus"/>
+                      <p:menuitem value="#{v2LocaleBean.getMsg('rightbody.concept.modifyExternalResource')}"
+                                  process="@this"
+                                  actionListener="#{v2ConceptMediaEditorBean.prepareEditExternalResources()}"
+                                  update=":containerIndex:v2EditExternalResourceForm"
+                                  oncomplete="PF('v2EditExternalResourceDlg').show();"
+                                  icon="fas fa-edit"
+                                  disabled="#{empty v2ThesaurusBrowseBean.selectedConcept.externalResources}"/>
+                      <p:menuitem value="#{v2LocaleBean.getMsg('rightbody.concept.deleteExternalResource')}"
+                                  process="@this"
+                                  actionListener="#{v2ConceptMediaEditorBean.prepareDeleteExternalResources()}"
+                                  update=":containerIndex:v2DeleteExternalResourceForm"
+                                  oncomplete="PF('v2DeleteExternalResourceDlg').show();"
+                                  icon="fas fa-minus"
+                                  disabled="#{empty v2ThesaurusBrowseBean.selectedConcept.externalResources}"/>
+                    </p:menuButton>
+                  </h:panelGroup>
+
+                  <h:panelGroup rendered="#{empty v2ThesaurusBrowseBean.selectedConcept.externalResources}">
+                    <h:outputText value="....."
+                                  title="#{v2LocaleBean.getMsg('rightbody.concept.no_value')}"
+                                  style="font-size: 14px; color: grey; font-style: italic;"/>
+                  </h:panelGroup>
+
+                  <ui:repeat value="#{v2ThesaurusBrowseBean.selectedConcept.externalResources}"
+                             var="resources" varStatus="resourceStatus">
+                    <h:panelGroup rendered="#{v2ConceptMediaEditorBean.mediaActionsAvailable}">
+                      <p:spacer width="0" rendered="#{resourceStatus.first}"/>
+                      <p:spacer width="37" rendered="#{not resourceStatus.first}"/>
+                    </h:panelGroup>
+
+                    <i class="pi pi-link" style="margin-right: 5px; color: #f47b2a; font-size: 14px;"/>
+                    <p:link href="#{not empty resources.uri ? resources.uri : '#'}"
+                            value="#{resources.uri}"
+                            target="_blank"
+                            style="font-size: 14px; color: #164A78;"/>
+                    <h:outputText rendered="#{resources.label != ''}"
+                                  value=" (#{resources.label})"
+                                  style="font-size: 14px;"/>
+                    <br/>
+                  </ui:repeat>
                 </div>
               </div>
             </div>
-          </div>
-        </h:panelGroup>
+          </h:panelGroup>
 
-        <h:panelGroup rendered="#{not empty v2ThesaurusBrowseBean.selectedConcept.gpsPoints}">
-          <div class="list-group-item list-group-item-action">
-            <div class="row" style="margin-left:0;">
-              <div class="col-xl-3 col-lg-4 col-md-5 col-sm-5">
-                <h:outputText value="#{v2LocaleBean.getMsg('rightbody.concept.gps_coordinates')}"
-                              style="font-size:14px; font-weight:bold; color:#8f8f8f;"/>
-              </div>
-              <div class="col-xl-9 col-lg-8 col-md-7 col-sm-7" style="margin-left:-10px;">
-                <ui:repeat value="#{v2ThesaurusBrowseBean.selectedConcept.gpsPoints}" var="gps">
-                  <h:outputText value="#{gps.latitude}, #{gps.longitude}" style="font-size:14px;"/>
-                  <br/>
-                </ui:repeat>
-                <h:panelGroup rendered="#{v2ThesaurusBrowseBean.gpsMapVisible}">
-                  <div id="v2ConceptMap" style="height:350px; width:100%; margin-top:10px; z-index:0 !important;"></div>
-                  <h:outputScript rendered="#{v2ThesaurusBrowseBean.gpsMapVisible}">
-                    #{v2ThesaurusBrowseBean.gpsMapScript}
-                  </h:outputScript>
-                </h:panelGroup>
+          <!-- Images -->
+          <h:panelGroup id="v2ConceptGalleriaPanel"
+                        rendered="#{v2ConceptMediaEditorBean.mediaActionsAvailable
+                                      or not empty v2ThesaurusBrowseBean.selectedConcept.images}">
+            <div class="list-group-item list-group-item-action" style="padding-top:5px;">
+              <div class="row" style="margin-left:0;">
+                <div class="col-xl-3 col-lg-4 col-md-5 col-sm-5">
+                  <h:outputText value="#{v2LocaleBean.getMsg('rightbody.concept.image')}"
+                                style="font-size:14px; font-weight:bold; color:#8f8f8f;"/>
+                </div>
+                <div class="col-xl-9 col-lg-8 col-md-7 col-sm-7" style="margin-left:-10px;">
+                  <h:panelGroup rendered="#{v2ConceptMediaEditorBean.mediaActionsAvailable}"
+                                style="display:inline-block; margin-right:6px;">
+                    <p:menuButton title="#{v2LocaleBean.getMsg('rightbody.concept.tooltip_image')}"
+                                  icon="fas fa-cog"
+                                  style="color:#F7A269; background:none; border:none; box-shadow:none; font-size:12px;">
+                      <p:menuitem value="#{v2LocaleBean.getMsg('rightbody.concept.add_image')}"
+                                  process="@this"
+                                  actionListener="#{v2ConceptMediaEditorBean.prepareAddImage()}"
+                                  update=":containerIndex:v2AddImageForm"
+                                  oncomplete="PF('v2AddImageDlg').show();"
+                                  icon="fas fa-plus"/>
+                      <p:menuitem value="#{v2LocaleBean.getMsg('rightbody.concept.edit_image')}"
+                                  process="@this"
+                                  actionListener="#{v2ConceptMediaEditorBean.prepareEditImages()}"
+                                  update=":containerIndex:v2EditImageForm"
+                                  oncomplete="PF('v2EditImageDlg').show();"
+                                  icon="fas fa-edit"
+                                  disabled="#{empty v2ThesaurusBrowseBean.selectedConcept.images}"/>
+                      <p:menuitem value="#{v2LocaleBean.getMsg('rightbody.concept.delete_image')}"
+                                  process="@this"
+                                  actionListener="#{v2ConceptMediaEditorBean.prepareDeleteImages()}"
+                                  update=":containerIndex:v2DeleteImageForm"
+                                  oncomplete="PF('v2DeleteImageDlg').show();"
+                                  icon="fas fa-minus"
+                                  disabled="#{empty v2ThesaurusBrowseBean.selectedConcept.images}"/>
+                    </p:menuButton>
+                  </h:panelGroup>
+
+                  <h:panelGroup rendered="#{empty v2ThesaurusBrowseBean.selectedConcept.images}">
+                    <h:outputText value="....."
+                                  title="#{v2LocaleBean.getMsg('rightbody.concept.no_value')}"
+                                  style="font-size:12px; color:grey; font-style:italic;"/>
+                  </h:panelGroup>
+
+                  <h:panelGroup rendered="#{not empty v2ThesaurusBrowseBean.selectedConcept.images}">
+                    <p:remoteCommand name="v2RcGalleria" actionListener="#{v2ConceptGalleriaBean.changeActiveIndex}"
+                                     update="v2ConceptGalleriaPanel" oncomplete="PF('v2ConceptGalleria').show();"/>
+                    <p:galleria id="v2ConceptGalleriaWidget" widgetVar="v2ConceptGalleria"
+                                value="#{v2ThesaurusBrowseBean.selectedConcept.images}" var="photo" numVisible="5"
+                                circular="true" fullScreen="true" showCaption="true" showItemNavigators="true"
+                                activeIndex="#{v2ConceptGalleriaBean.activeIndex}"
+                                responsiveOptions="#{v2ConceptGalleriaBean.responsiveOptions}"
+                                style="max-width:600px;">
+                      <p:graphicImage value="#{photo.uri}" alt="#{photo.uri}" style="width:100%; display:block;"/>
+                      <f:facet name="caption">
+                        <h4 class="mb-2">
+                          <a href="#{photo.uri}" target="_blank" style="color:#F7A269;">#{photo.imageName}</a>
+                        </h4>
+                        <i>
+                          <p:link href="#{not empty photo.uri ? photo.uri : '#'}"
+                                  value="#{photo.uri} (@#{photo.copyright} _ #{photo.creator})"
+                                  target="_blank" style="color:white;"/>
+                        </i>
+                      </f:facet>
+                    </p:galleria>
+                    <div class="row">
+                      <div class="col-12">
+                        <ui:repeat value="#{v2ThesaurusBrowseBean.selectedConcept.images}" var="photo" varStatus="status">
+                          <p:graphicImage value="#{photo.uri}" alt="#{photo.uri}"
+                                          style="cursor:pointer; max-height:200px; max-width:500px; margin-left:10px; margin-top:10px;"
+                                          onclick="v2RcGalleria([{'name':'index','value':#{status.index}}])"
+                                          title="#{photo.uri} (@#{photo.copyright} _ #{photo.creator})"/>
+                        </ui:repeat>
+                      </div>
+                    </div>
+                  </h:panelGroup>
+                </div>
               </div>
             </div>
-          </div>
-        </h:panelGroup>
+          </h:panelGroup>
 
-        <h:panelGroup rendered="#{not empty v2ThesaurusBrowseBean.selectedConcept.externalResources}">
-          <div class="list-group-item list-group-item-action">
-            <div class="row" style="margin-left:0;">
-              <div class="col-xl-3 col-lg-4 col-md-5 col-sm-5">
-                <h:outputText value="#{v2LocaleBean.getMsg('rightbody.concept.externalResources')}"
-                              style="font-size:14px; font-weight:bold; color:#8f8f8f;"/>
-              </div>
-              <div class="col-xl-9 col-lg-8 col-md-7 col-sm-7" style="margin-left:-10px;">
-                <ui:repeat value="#{v2ThesaurusBrowseBean.selectedConcept.externalResources}" var="resource" varStatus="status">
-                  <p:link href="#{resource.uri}" target="_blank" value="#{resource.uri}" style="font-size:14px; color:#164A78;"/>
-                  <h:outputText rendered="#{not empty resource.description}" value=" (#{resource.description})" style="font-size:14px;"/>
-                  <h:outputText value=", " rendered="#{not status.last}" style="color:#FF7979;"/>
-                </ui:repeat>
+          <!-- GPS -->
+          <h:panelGroup rendered="#{v2ConceptMediaEditorBean.mediaActionsAvailable
+                                      or not empty v2ThesaurusBrowseBean.selectedConcept.gpsPoints}">
+            <div class="list-group-item list-group-item-action" style="margin-bottom:-5px;">
+              <div class="row" style="margin-left:0; padding-top:3px; padding-bottom:5px;">
+                <div class="col-xl-3 col-lg-4 col-md-5 col-sm-5">
+                  <h:outputText value="#{v2LocaleBean.getMsg('rightbody.concept.gps_coordinates')}"
+                                title="#{v2LocaleBean.getMsg('rightbody.concept.gps_coordinates')}"
+                                style="font-size:14px; font-weight:bold; color:#8f8f8f;"/>
+                </div>
+                <div class="col-xl-9 col-lg-8 col-md-7 col-sm-7" style="margin-left:-10px;">
+                  <h:panelGroup rendered="#{v2ConceptMediaEditorBean.mediaActionsAvailable}"
+                                style="display:inline-block; margin-right:6px;">
+                    <p:commandButton title="#{v2LocaleBean.getMsg('rightbody.concept.gps_coordinates')}"
+                                     icon="fas fa-map-marker-alt"
+                                     styleClass="rounded-button ui-button-warning ui-button-flat"
+                                     style="color:#f47b2a;"
+                                     process="@this"
+                                     actionListener="#{v2ConceptMediaEditorBean.prepareEditGps()}"
+                                     update=":containerIndex:v2EditGpsForm"
+                                     oncomplete="PF('v2EditGpsDlg').show();"/>
+                  </h:panelGroup>
+                  <h:panelGroup rendered="#{empty v2ThesaurusBrowseBean.selectedConcept.gpsPoints}">
+                    <h:outputText value="....."
+                                  title="#{v2LocaleBean.getMsg('rightbody.concept.no_value')}"
+                                  style="font-size:14px; color:grey; font-style:italic;"/>
+                  </h:panelGroup>
+                  <ui:repeat value="#{v2ThesaurusBrowseBean.selectedConcept.gpsPoints}" var="gps">
+                    <h:outputText value="#{gps.latitude}, #{gps.longitude}" style="font-size:14px;"/>
+                    <br/>
+                  </ui:repeat>
+                  <h:panelGroup rendered="#{v2ThesaurusBrowseBean.gpsMapVisible}">
+                    <div id="v2ConceptMap" style="height:350px; width:100%; margin-top:10px; z-index:0 !important;"></div>
+                    <h:outputScript rendered="#{v2ThesaurusBrowseBean.gpsMapVisible}">
+                      #{v2ThesaurusBrowseBean.gpsMapScript}
+                    </h:outputScript>
+                  </h:panelGroup>
+                </div>
               </div>
             </div>
-          </div>
-        </h:panelGroup>
+          </h:panelGroup>
 
+        </div>
       </div>
-    </div>
-  </h:panelGroup>
+    </h:panelGroup>
   </h:panelGroup>
 </ui:fragment>

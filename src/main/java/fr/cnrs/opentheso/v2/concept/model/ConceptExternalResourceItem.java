@@ -12,4 +12,9 @@ public record ConceptExternalResourceItem(
     public String getDescription() {
         return description;
     }
+
+    /** Alias legacy ({@code ConceptIdLabel.label}). */
+    public String getLabel() {
+        return description;
+    }
 }

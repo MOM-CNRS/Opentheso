@@ -34,12 +34,20 @@
                                  oncomplete="PF('v2RenameConceptDlg').show();"/>
               </h:panelGroup>
               <h:outputText id="v2TextPrefLabel" rendered="#{not v2ThesaurusBrowseBean.selectedConcept.deprecated}"
-                            value="#{v2ThesaurusBrowseBean.selectedConcept.summary.preferredLabel}"
+                            value="#{not empty v2ThesaurusBrowseBean.selectedConcept.summary.preferredLabel
+                                      ? v2ThesaurusBrowseBean.selectedConcept.summary.preferredLabel
+                                      : '('.concat(v2ThesaurusBrowseBean.selectedConcept.summary.conceptId).concat(')')}"
+                            title="#{v2ThesaurusBrowseBean.selectedConcept.summary.conceptId}"
                             style="font-size: 1.1rem; font-weight: bold; color: #666666;"/>
               <h:outputText id="v2TextPrefLabelDep" rendered="#{v2ThesaurusBrowseBean.selectedConcept.deprecated}"
-                            value="#{v2ThesaurusBrowseBean.selectedConcept.summary.preferredLabel}"
+                            value="#{not empty v2ThesaurusBrowseBean.selectedConcept.summary.preferredLabel
+                                      ? v2ThesaurusBrowseBean.selectedConcept.summary.preferredLabel
+                                      : '('.concat(v2ThesaurusBrowseBean.selectedConcept.summary.conceptId).concat(')')}"
+                            title="#{v2ThesaurusBrowseBean.selectedConcept.summary.conceptId}"
                             style="font-size: 1.1rem; font-weight: bold; color: #C63632; font-style: italic; text-decoration: line-through;"/>
               <h:outputText value=" (#{v2ThesaurusBrowseBean.selectedConcept.summary.lang})" style="font-size: 1rem; font-weight: 300;"/>
+              <p:tooltip for="v2TextPrefLabel" value="#{v2ThesaurusBrowseBean.selectedConcept.summary.conceptId}" showDelay="500"/>
+              <p:tooltip for="v2TextPrefLabelDep" value="#{v2ThesaurusBrowseBean.selectedConcept.summary.conceptId}" showDelay="500"/>
               <p:tag rendered="#{v2ThesaurusBrowseBean.conceptTypeBadgeVisible}"
                      styleClass="mr-2"
                      severity="warning"
@@ -67,7 +75,7 @@
               <p:commandButton id="v2BtnFocusInTree" icon="fas fa-sitemap"
                                action="#{v2ThesaurusBrowseBean.focusConceptInTree()}"
                                process="@this"
-                               update=":containerIndex:tabTree"
+                               update=":containerIndex:formLeftTab"
                                style="color:#f47b2a; background:none; border:none; box-shadow:none; margin-left:1px;"/>
               <p:tooltip for="v2BtnFocusInTree" value="#{v2LocaleBean.getMsg('rightbody.concept.replace_in_tree')}"/>
             </div>
@@ -160,7 +168,7 @@
             <div class="col-xl-1 col-lg-1 col-md-1 col-sm-1" style="text-align: right;">
               <p:inputSwitch id="v2SynonymLangSwitch" value="#{v2ThesaurusBrowseBean.showAllSynonymLanguages}" style="margin-top: 7px;">
                 <p:ajax listener="#{v2ThesaurusBrowseBean.onSynonymLanguageToggle()}"
-                        update=":containerIndex:rightTab"/>
+                        update=":containerIndex:formRightTab"/>
               </p:inputSwitch>
               <p:tooltip for="v2SynonymLangSwitch" value="#{v2LocaleBean.getMsg('concept.showEMOtherLang')}" showDelay="1000"/>
             </div>
@@ -177,13 +185,52 @@
           </ui:include>
         </h:panelGroup>
 
-        <h:panelGroup rendered="#{not empty v2ThesaurusBrowseBean.selectedConcept.facets}">
-          <ui:include src="concept-detail-relation-row.xhtml">
-            <ui:param name="rowLabel" value="#{v2LocaleBean.getMsg('leftbody.isPartOfFacets')}"/>
-            <ui:param name="rowIcon" value=""/>
-            <ui:param name="relations" value="#{v2ThesaurusBrowseBean.selectedConcept.facets}"/>
-            <ui:param name="relationLinkType" value="facet"/>
-          </ui:include>
+        <h:panelGroup rendered="#{v2ThesaurusBrowseBean.loggedIn or not empty v2ThesaurusBrowseBean.selectedConcept.facets}">
+          <div class="list-group-item list-group-item-action" style="padding-top: 5px;">
+            <div class="row" style="margin-left: 0;">
+              <div class="col-xl-3 col-lg-4 col-md-5 col-sm-5">
+                <h:outputText value="#{v2LocaleBean.getMsg('leftbody.isPartOfFacets')}"
+                              title="#{v2LocaleBean.getMsg('leftbody.isPartOfFacets_tooltip')}"
+                              style="font-size: 14px; font-weight: bold; color: #8f8f8f;"/>
+              </div>
+              <div class="col-xl-9 col-lg-8 col-md-7 col-sm-7" style="margin-left: -10px;">
+                <h:panelGroup rendered="#{v2ConceptFacetMembershipBean.facetActionsAvailable}"
+                              style="display:inline-block; margin-right:6px;">
+                  <p:menuButton icon="fas fa-cog"
+                                style="color:#F7A269; background:none; border:none; box-shadow:none; font-size:12px;">
+                    <p:menuitem value="#{v2LocaleBean.getMsg('rightbody.concept.addConceptTofacet')}"
+                                process="@this"
+                                actionListener="#{v2ConceptFacetMembershipBean.prepareAddToFacet()}"
+                                update=":containerIndex:v2AddConceptToFacetForm"
+                                oncomplete="PF('v2AddConceptToFacetDlg').show();"
+                                icon="fas fa-magnet"/>
+                    <p:menuitem value="#{v2LocaleBean.getMsg('leftbody.removeTheConceptOfFacets')}"
+                                process="@this"
+                                actionListener="#{v2ConceptFacetMembershipBean.prepareRemoveFromFacets()}"
+                                update=":containerIndex:v2RemoveConceptFromFacetsForm"
+                                oncomplete="PF('v2RemoveConceptFromFacetsDlg').show();"
+                                icon="far fa-trash-alt"/>
+                  </p:menuButton>
+                </h:panelGroup>
+                <h:panelGroup rendered="#{empty v2ThesaurusBrowseBean.selectedConcept.facets}">
+                  <h:outputText value="....."
+                                title="#{v2LocaleBean.getMsg('rightbody.concept.no_value')}"
+                                style="font-size: 14px; color: grey; font-style: italic;"/>
+                </h:panelGroup>
+                <h:panelGroup rendered="#{not empty v2ThesaurusBrowseBean.selectedConcept.facets}">
+                  <ui:repeat value="#{v2ThesaurusBrowseBean.selectedConcept.facets}" var="facet" varStatus="status">
+                    <p:commandLink value="#{facet.displayLabel}"
+                                   title="#{facet.conceptId}"
+                                   action="#{v2ThesaurusBrowseBean.openFacet(facet.conceptId)}"
+                                   process="@this"
+                                   update=":containerIndex:formRightTab :containerIndex:formLeftTab"
+                                   style="font-size: 14px; color: #164A78;"/>
+                    <h:outputText rendered="#{not status.last}" value=", " style="color: #FF7979;"/>
+                  </ui:repeat>
+                </h:panelGroup>
+              </div>
+            </div>
+          </div>
         </h:panelGroup>
 
         <div class="list-group-item list-group-item-action">
@@ -194,9 +241,10 @@
                             style="font-size: 14px; font-weight: bold; color: #8f8f8f;"/>
             </div>
             <div class="col-xl-9 col-lg-8 col-md-7 col-sm-7" style="margin-left: -10px;">
-              <p:commandLink actionListener="#{v2ThesaurusBrowseBean.countBranchConcepts()}"
+              <p:commandLink rendered="#{v2ThesaurusBrowseBean.loggedIn}"
+                             actionListener="#{v2ThesaurusBrowseBean.countBranchConcepts()}"
                              process="@this"
-                             update=":containerIndex:rightTab"
+                             update=":containerIndex:formRightTab"
                              title="#{v2LocaleBean.getMsg('rightbody.concept.tootltip_branch_count')}">
                 <i class="fas fa-calculator" style="color: #F7A269; font-size: 14px;"/>
               </p:commandLink>
@@ -237,7 +285,7 @@
                 <p:commandLink value="..."
                                action="#{v2ThesaurusBrowseBean.loadMoreNarrowers()}"
                                process="@this"
-                               update=":containerIndex:rightTab"
+                               update=":containerIndex:formRightTab"
                                style="color: #FF7979"
                                styleClass="textOpentheso">
                   <i class="fa-solid fa-forward" style="color:#f47b2a; font-size: 14px;"/>
@@ -304,7 +352,7 @@
                                title="#{v2ThesaurusBrowseBean.selectedConcept.summary.conceptId}"
                                action="#{v2ThesaurusBrowseBean.openConceptInTranslationLanguage(translation.lang)}"
                                process="@this"
-                               update=":containerIndex:rightTab :containerIndex:tabTree :containerIndex:thesoSelect"
+                               update=":containerIndex:formRightTab :containerIndex:formLeftTab :containerIndex:thesoSelect"
                                style="font-size: 14px;"/>
                 <h:outputText value=" (#{translation.lang})" style="font-size: 14px; font-weight: 300; margin-left: 5px;"/>
                 <br/>
@@ -376,6 +424,13 @@
               </p:menuButton>
             </h:panelGroup>
           </div>
+          <h:panelGroup rendered="#{not v2ThesaurusBrowseBean.selectedConcept.hasAlignments()}">
+            <div class="list-group-item list-group-item-action" style="margin-left: 20px;">
+              <h:outputText value="....."
+                            title="#{v2LocaleBean.getMsg('rightbody.concept.no_value')}"
+                            style="font-size: 12px; color: grey; font-style: italic;"/>
+            </div>
+          </h:panelGroup>
           <ui:repeat value="#{v2ThesaurusBrowseBean.selectedConcept.alignmentGroups}" var="group">
             <h:panelGroup rendered="#{not empty group.items}">
               <ui:repeat value="#{group.items}" var="alignment">
@@ -470,7 +525,6 @@
     <ui:include src="dialogs/concept-deepl-translate-dialog.xhtml"/>
     <ui:include src="dialogs/concept-custom-relation-dialogs.xhtml"/>
     <ui:include src="dialogs/concept-identifier-dialogs.xhtml"/>
-    <ui:include src="dialogs/concept-media-dialogs.xhtml"/>
     <ui:include src="dialogs/concept-transfer-dialogs.xhtml"/>
     <ui:include src="dialogs/concept-attribute-dialogs.xhtml"/>
 

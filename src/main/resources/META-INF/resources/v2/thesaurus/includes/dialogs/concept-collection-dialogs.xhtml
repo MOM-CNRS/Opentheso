@@ -47,7 +47,7 @@
                 <p:commandButton id="v2AddToCollectionSubmit" value="#{v2LocaleBean.getMsg('btnValidate')}"
                                  styleClass="ui-button-success"
                                  actionListener="#{v2ConceptCollectionEditorBean.submitAddToCollection()}"
-                                 update="@form :containerIndex:rightTab :messageIndex" ajax="true"
+                                 update="@form :containerIndex:formRightTab :messageIndex" ajax="true"
                                  process="@form"/>
             </div>
         </h:form>
@@ -100,7 +100,7 @@
                 <p:commandButton id="v2AddBranchToCollectionSubmit" value="#{v2LocaleBean.getMsg('btnValidate')}"
                                  styleClass="ui-button-success"
                                  actionListener="#{v2ConceptCollectionEditorBean.submitAddToCollection()}"
-                                 update="@form :containerIndex:rightTab :messageIndex"
+                                 update="@form :containerIndex:formRightTab :messageIndex"
                                  process="@form"/>
             </div>
         </h:form>
@@ -128,7 +128,7 @@
                 <p:column width="80" headerText="#{v2LocaleBean.getMsg('btnDelete')}">
                     <p:commandLink style="color:#FF7979;" process="@this"
                                    actionListener="#{v2ConceptCollectionEditorBean.submitRemoveFromCollection(collection)}"
-                                   update="@form :containerIndex:rightTab :messageIndex">
+                                   update="@form :containerIndex:formRightTab :messageIndex">
                         <i class="pi pi-trash"/>
                     </p:commandLink>
                 </p:column>
@@ -162,7 +162,7 @@
                 <p:column width="80" headerText="#{v2LocaleBean.getMsg('btnDelete')}">
                     <p:commandLink style="color:#FF7979;" process="@this"
                                    actionListener="#{v2ConceptCollectionEditorBean.submitRemoveFromCollection(collection)}"
-                                   update="@form :containerIndex:rightTab :messageIndex">
+                                   update="@form :containerIndex:formRightTab :messageIndex">
                         <i class="pi pi-trash"/>
                     </p:commandLink>
                 </p:column>

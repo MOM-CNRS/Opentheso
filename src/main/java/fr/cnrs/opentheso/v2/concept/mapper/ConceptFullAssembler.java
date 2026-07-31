@@ -1,5 +1,7 @@
 package fr.cnrs.opentheso.v2.concept.mapper;
 
+import fr.cnrs.opentheso.entites.ExternalResource;
+import fr.cnrs.opentheso.repositories.ExternalResourcesRepository;
 import fr.cnrs.opentheso.v2.concept.model.ConceptExternalResourceItem;
 import fr.cnrs.opentheso.v2.concept.model.ConceptFullSnapshot;
 import fr.cnrs.opentheso.v2.concept.model.ConceptGpsPoint;
@@ -20,6 +22,7 @@ import org.springframework.stereotype.Component;
 import java.sql.Date;
 import java.util.ArrayList;
 import java.util.Collections;
+import java.util.Comparator;
 import java.util.LinkedHashSet;
 import java.util.List;
 import java.util.Optional;
@@ -30,6 +33,7 @@ import java.util.Set;
 public class ConceptFullAssembler {
 
     private final ConceptFullQueryRepository conceptFullQueryRepository;
+    private final ExternalResourcesRepository externalResourcesRepository;
 
     public Optional<ConceptFullSnapshot> assemble(
             String thesaurusId,
@@ -438,17 +442,23 @@ public class ConceptFullAssembler {
     }
 
     private List<ConceptExternalResourceItem> mapExternalResources(String conceptId, String thesaurusId) {
-        List<ConceptExternalResourceItem> resources = new ArrayList<>();
-        for (Object[] row : conceptFullQueryRepository.findExternalResources(conceptId, thesaurusId)) {
-            resources.add(new ConceptExternalResourceItem(
-                    stringAt(row, 0),
-                    stringAt(row, 2)
-            ));
+        List<ExternalResource> entities = externalResourcesRepository
+                .findAllByIdConceptAndIdThesaurus(conceptId, thesaurusId);
+        if (CollectionUtils.isEmpty(entities)) {
+            return Collections.emptyList();
         }
-        if (resources.isEmpty()) {
-            return null;
-        }
-        return resources;
+        return entities.stream()
+                .filter(resource -> StringUtils.isNotBlank(resource.getExternalUri())
+                        || StringUtils.isNotBlank(resource.getDescription()))
+                .sorted(Comparator.comparing(
+                        resource -> StringUtils.defaultString(resource.getExternalUri()),
+                        String.CASE_INSENSITIVE_ORDER
+                ))
+                .map(resource -> new ConceptExternalResourceItem(
+                        StringUtils.defaultString(resource.getExternalUri()),
+                        StringUtils.defaultString(resource.getDescription())
+                ))
+                .toList();
     }
 
     private static String stringAt(Object[] row, int index) {

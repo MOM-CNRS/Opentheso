@@ -17,7 +17,7 @@
                                  type="button" onclick="PF('v2GenerateArkDlg').hide();" style="margin-right:8px;"/>
                 <p:commandButton value="#{v2LocaleBean.getMsg('service.generate')}" styleClass="ui-button-success"
                                  actionListener="#{v2ConceptIdentifierEditorBean.submitGenerateArk()}"
-                                 update="v2GenerateArkForm :containerIndex:rightTab :messageIndex"
+                                 update="v2GenerateArkForm :containerIndex:formRightTab :messageIndex"
                                  process="@form"/>
             </div>
         </h:form>
@@ -37,7 +37,7 @@
                                  type="button" onclick="PF('v2DeleteArkDlg').hide();" style="margin-right:8px;"/>
                 <p:commandButton value="#{v2LocaleBean.getMsg('btnValidate')}" styleClass="ui-button-danger"
                                  actionListener="#{v2ConceptIdentifierEditorBean.submitDeleteArk()}"
-                                 update="v2DeleteArkForm :containerIndex:rightTab :messageIndex"
+                                 update="v2DeleteArkForm :containerIndex:formRightTab :messageIndex"
                                  process="@form"/>
             </div>
         </h:form>
@@ -63,7 +63,7 @@
                                  type="button" onclick="PF('v2GenerateArkBranchDlg').hide();" style="margin-right:8px;"/>
                 <p:commandButton value="#{v2LocaleBean.getMsg('service.generate')}" styleClass="ui-button-success"
                                  actionListener="#{v2ConceptIdentifierEditorBean.submitGenerateArkForBranch()}"
-                                 update="v2GenerateArkBranchForm :containerIndex:rightTab :messageIndex"
+                                 update="v2GenerateArkBranchForm :containerIndex:formRightTab :messageIndex"
                                  process="@form"/>
             </div>
         </h:form>
@@ -83,7 +83,7 @@
                                  type="button" onclick="PF('v2GenerateHandleDlg').hide();" style="margin-right:8px;"/>
                 <p:commandButton value="#{v2LocaleBean.getMsg('service.generate')}" styleClass="ui-button-success"
                                  actionListener="#{v2ConceptIdentifierEditorBean.submitGenerateHandle()}"
-                                 update="v2GenerateHandleForm :containerIndex:rightTab :messageIndex"
+                                 update="v2GenerateHandleForm :containerIndex:formRightTab :messageIndex"
                                  process="@form"/>
             </div>
         </h:form>
@@ -103,7 +103,7 @@
                                  type="button" onclick="PF('v2DeleteHandleDlg').hide();" style="margin-right:8px;"/>
                 <p:commandButton value="#{v2LocaleBean.getMsg('btnValidate')}" styleClass="ui-button-danger"
                                  actionListener="#{v2ConceptIdentifierEditorBean.submitDeleteHandle()}"
-                                 update="v2DeleteHandleForm :containerIndex:rightTab :messageIndex"
+                                 update="v2DeleteHandleForm :containerIndex:formRightTab :messageIndex"
                                  process="@form"/>
             </div>
         </h:form>
@@ -129,7 +129,7 @@
                                  type="button" onclick="PF('v2GenerateHandleBranchDlg').hide();" style="margin-right:8px;"/>
                 <p:commandButton value="#{v2LocaleBean.getMsg('service.generate')}" styleClass="ui-button-success"
                                  actionListener="#{v2ConceptIdentifierEditorBean.submitGenerateHandleForBranch()}"
-                                 update="v2GenerateHandleBranchForm :containerIndex:rightTab :messageIndex"
+                                 update="v2GenerateHandleBranchForm :containerIndex:formRightTab :messageIndex"
                                  process="@form"/>
             </div>
         </h:form>

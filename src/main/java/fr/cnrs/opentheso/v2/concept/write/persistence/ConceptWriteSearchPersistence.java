@@ -4,6 +4,7 @@ import fr.cnrs.opentheso.repositories.ConceptGroupLabelRepository;
 import fr.cnrs.opentheso.v2.concept.mapper.ConceptMapper;
 import fr.cnrs.opentheso.v2.concept.write.model.ConceptSearchSuggestion;
 import fr.cnrs.opentheso.v2.concept.write.model.ConceptWriteCollection;
+import fr.cnrs.opentheso.v2.concept.write.model.ConceptWriteFacet;
 import fr.cnrs.opentheso.v2.shared.repository.ConceptQueryRepository;
 import jakarta.persistence.EntityManager;
 import jakarta.persistence.PersistenceContext;
@@ -74,6 +75,41 @@ public class ConceptWriteSearchPersistence {
         String cleaned = StringUtils.defaultString(query).trim();
         return conceptGroupLabelRepository.searchGroups(thesaurusId, lang, cleaned).stream()
                 .map(row -> new ConceptWriteCollection(
+                        ConceptMapper.stringAt(row, 0),
+                        ConceptMapper.stringAt(row, 1)
+                ))
+                .toList();
+    }
+
+    @SuppressWarnings("unchecked")
+    public List<ConceptWriteFacet> autocompleteFacet(
+            String query,
+            String lang,
+            String thesaurusId
+    ) {
+        if (StringUtils.isAnyBlank(thesaurusId, lang)) {
+            return Collections.emptyList();
+        }
+        String cleaned = StringUtils.defaultString(query).trim();
+        if (cleaned.isEmpty()) {
+            return Collections.emptyList();
+        }
+        List<Object[]> rows = entityManager.createNativeQuery("""
+                        SELECT DISTINCT nl.id_facet, nl.lexical_value
+                        FROM node_label nl
+                        WHERE nl.id_thesaurus = :thesaurusId
+                          AND nl.lang = :lang
+                          AND f_unaccent(LOWER(nl.lexical_value)) LIKE f_unaccent(LOWER(:query))
+                        ORDER BY nl.lexical_value
+                        LIMIT :limit
+                        """)
+                .setParameter("thesaurusId", thesaurusId)
+                .setParameter("lang", lang)
+                .setParameter("query", cleaned + "%")
+                .setParameter("limit", SEARCH_LIMIT)
+                .getResultList();
+        return rows.stream()
+                .map(row -> new ConceptWriteFacet(
                         ConceptMapper.stringAt(row, 0),
                         ConceptMapper.stringAt(row, 1)
                 ))

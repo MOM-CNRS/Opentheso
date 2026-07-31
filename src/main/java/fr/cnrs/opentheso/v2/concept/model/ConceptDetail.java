@@ -189,7 +189,9 @@ public record ConceptDetail(
     }
 
     public boolean hasMediaData() {
-        return !images.isEmpty() || !gpsPoints.isEmpty() || !externalResources.isEmpty();
+        return (images != null && !images.isEmpty())
+                || (gpsPoints != null && !gpsPoints.isEmpty())
+                || (externalResources != null && !externalResources.isEmpty());
     }
 
     public boolean hasCustomRelations() {

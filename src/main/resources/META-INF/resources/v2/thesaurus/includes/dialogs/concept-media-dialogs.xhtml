@@ -4,7 +4,7 @@
              xmlns:h="http://xmlns.jcp.org/jsf/html"
              xmlns:f="http://xmlns.jcp.org/jsf/core">
 
-    <p:dialog id="v2EditGpsDlg" header="#{v2LocaleBean.getMsg('rightbody.concept.gps_coordinates')}"
+    <p:dialog id="v2EditGpsDlg" appendTo="@(body)" header="#{v2LocaleBean.getMsg('rightbody.concept.gps_coordinates')}"
               widgetVar="v2EditGpsDlg" width="650" modal="true" resizable="true">
         <h:form id="v2EditGpsForm">
             <div class="row mb-2">
@@ -25,13 +25,13 @@
                                  type="button" onclick="PF('v2EditGpsDlg').hide();" style="margin-right:8px;"/>
                 <p:commandButton value="#{v2LocaleBean.getMsg('btnValidate')}" styleClass="ui-button-success"
                                  actionListener="#{v2ConceptMediaEditorBean.submitSaveGps()}"
-                                 update="v2EditGpsForm :containerIndex:rightTab :messageIndex"
+                                 update="v2EditGpsForm :containerIndex:formRightTab :messageIndex"
                                  process="@form"/>
             </div>
         </h:form>
     </p:dialog>
 
-    <p:dialog id="v2AddImageDlg" header="#{v2LocaleBean.getMsg('rightbody.conceptdialog.add_image')}"
+    <p:dialog id="v2AddImageDlg" appendTo="@(body)" header="#{v2LocaleBean.getMsg('rightbody.conceptdialog.add_image')}"
               widgetVar="v2AddImageDlg" width="650" modal="true" resizable="false">
         <h:form id="v2AddImageForm">
             <p:defaultCommand target="v2AddImageSubmit"/>
@@ -62,13 +62,13 @@
                                  type="button" onclick="PF('v2AddImageDlg').hide();" style="margin-right:8px;"/>
                 <p:commandButton id="v2AddImageSubmit" value="#{v2LocaleBean.getMsg('btnValidate')}" styleClass="ui-button-success"
                                  actionListener="#{v2ConceptMediaEditorBean.submitAddImage()}"
-                                 update="v2AddImageForm :containerIndex:rightTab :messageIndex"
+                                 update="v2AddImageForm :containerIndex:formRightTab :messageIndex"
                                  process="@form"/>
             </div>
         </h:form>
     </p:dialog>
 
-    <p:dialog id="v2EditImageDlg" header="#{v2LocaleBean.getMsg('rightbody.concept.edit_image')}"
+    <p:dialog id="v2EditImageDlg" appendTo="@(body)" header="#{v2LocaleBean.getMsg('rightbody.concept.edit_image')}"
               widgetVar="v2EditImageDlg" width="700" modal="true" resizable="false">
         <h:form id="v2EditImageForm">
             <p:dataTable var="imageEdit" value="#{v2ConceptMediaEditorBean.imageEdits}" size="small">
@@ -87,7 +87,7 @@
                 <p:column width="90">
                     <p:commandButton icon="pi pi-check" styleClass="ui-button-success"
                                      actionListener="#{v2ConceptMediaEditorBean.submitUpdateImage(imageEdit)}"
-                                     update="v2EditImageForm :containerIndex:rightTab :messageIndex"
+                                     update="v2EditImageForm :containerIndex:formRightTab :messageIndex"
                                      process="@form"/>
                 </p:column>
             </p:dataTable>
@@ -98,7 +98,7 @@
         </h:form>
     </p:dialog>
 
-    <p:dialog id="v2DeleteImageDlg" header="#{v2LocaleBean.getMsg('rightbody.concept.delete_image')}"
+    <p:dialog id="v2DeleteImageDlg" appendTo="@(body)" header="#{v2LocaleBean.getMsg('rightbody.concept.delete_image')}"
               widgetVar="v2DeleteImageDlg" width="600" modal="true" resizable="false">
         <h:form id="v2DeleteImageForm">
             <p:dataTable var="imageDelete" value="#{v2ConceptMediaEditorBean.imagesToDelete}" size="small">
@@ -108,7 +108,7 @@
                 <p:column width="90">
                     <p:commandButton icon="pi pi-trash" styleClass="ui-button-danger"
                                      actionListener="#{v2ConceptMediaEditorBean.submitDeleteImage(imageDelete)}"
-                                     update="v2DeleteImageForm :containerIndex:rightTab :messageIndex"
+                                     update="v2DeleteImageForm :containerIndex:formRightTab :messageIndex"
                                      process="@form"/>
                 </p:column>
             </p:dataTable>
@@ -119,7 +119,7 @@
         </h:form>
     </p:dialog>
 
-    <p:dialog id="v2AddExternalResourceDlg" header="#{v2LocaleBean.getMsg('rightbody.concept.addExternalResource')}"
+    <p:dialog id="v2AddExternalResourceDlg" appendTo="@(body)" header="#{v2LocaleBean.getMsg('rightbody.concept.addExternalResource')}"
               widgetVar="v2AddExternalResourceDlg" width="650" modal="true" resizable="false">
         <h:form id="v2AddExternalResourceForm">
             <p:defaultCommand target="v2AddExternalResourceSubmit"/>
@@ -136,13 +136,13 @@
                                  type="button" onclick="PF('v2AddExternalResourceDlg').hide();" style="margin-right:8px;"/>
                 <p:commandButton id="v2AddExternalResourceSubmit" value="#{v2LocaleBean.getMsg('btnValidate')}" styleClass="ui-button-success"
                                  actionListener="#{v2ConceptMediaEditorBean.submitAddExternalResource()}"
-                                 update="v2AddExternalResourceForm :containerIndex:rightTab :messageIndex"
+                                 update="v2AddExternalResourceForm :containerIndex:formRightTab :messageIndex"
                                  process="@form"/>
             </div>
         </h:form>
     </p:dialog>
 
-    <p:dialog id="v2EditExternalResourceDlg" header="#{v2LocaleBean.getMsg('rightbody.concept.modifyExternalResource')}"
+    <p:dialog id="v2EditExternalResourceDlg" appendTo="@(body)" header="#{v2LocaleBean.getMsg('rightbody.concept.modifyExternalResource')}"
               widgetVar="v2EditExternalResourceDlg" width="700" modal="true" resizable="false">
         <h:form id="v2EditExternalResourceForm">
             <p:dataTable var="resourceEdit" value="#{v2ConceptMediaEditorBean.resourceEdits}" size="small">
@@ -155,7 +155,7 @@
                 <p:column width="90">
                     <p:commandButton icon="pi pi-check" styleClass="ui-button-success"
                                      actionListener="#{v2ConceptMediaEditorBean.submitUpdateExternalResource(resourceEdit)}"
-                                     update="v2EditExternalResourceForm :containerIndex:rightTab :messageIndex"
+                                     update="v2EditExternalResourceForm :containerIndex:formRightTab :messageIndex"
                                      process="@form"/>
                 </p:column>
             </p:dataTable>
@@ -166,7 +166,7 @@
         </h:form>
     </p:dialog>
 
-    <p:dialog id="v2DeleteExternalResourceDlg" header="#{v2LocaleBean.getMsg('rightbody.concept.deleteExternalResource')}"
+    <p:dialog id="v2DeleteExternalResourceDlg" appendTo="@(body)" header="#{v2LocaleBean.getMsg('rightbody.concept.deleteExternalResource')}"
               widgetVar="v2DeleteExternalResourceDlg" width="600" modal="true" resizable="false">
         <h:form id="v2DeleteExternalResourceForm">
             <p:dataTable var="resourceDelete" value="#{v2ConceptMediaEditorBean.resourcesToDelete}" size="small">
@@ -176,7 +176,7 @@
                 <p:column width="90">
                     <p:commandButton icon="pi pi-trash" styleClass="ui-button-danger"
                                      actionListener="#{v2ConceptMediaEditorBean.submitDeleteExternalResource(resourceDelete)}"
-                                     update="v2DeleteExternalResourceForm :containerIndex:rightTab :messageIndex"
+                                     update="v2DeleteExternalResourceForm :containerIndex:formRightTab :messageIndex"
                                      process="@form"/>
                 </p:column>
             </p:dataTable>
