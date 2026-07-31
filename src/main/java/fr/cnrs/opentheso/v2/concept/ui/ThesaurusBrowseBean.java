@@ -1,6 +1,10 @@
 package fr.cnrs.opentheso.v2.concept.ui;
 
 import fr.cnrs.opentheso.v2.concept.alignment.ui.ConceptAlignmentAdminBean;
+import fr.cnrs.opentheso.v2.proposition.model.PropositionSummary;
+import fr.cnrs.opentheso.v2.proposition.ui.PropositionBean;
+import fr.cnrs.opentheso.v2.proposition.ui.PropositionSubmitBean;
+import fr.cnrs.opentheso.utils.MessageUtils;
 import fr.cnrs.opentheso.v2.concept.model.ConceptFullSnapshot;
 import fr.cnrs.opentheso.v2.concept.mapper.ConceptMapper;
 import fr.cnrs.opentheso.v2.concept.model.BreadcrumbStep;
@@ -77,6 +81,8 @@ public class ThesaurusBrowseBean implements Serializable, ConceptNavigationSuppo
     private final ConceptTreeRefreshState conceptTreeRefreshState;
     private final RightsService rightsService;
     private final ObjectProvider<ConceptAlignmentAdminBean> conceptAlignmentAdminBean;
+    private final ObjectProvider<PropositionSubmitBean> propositionSubmitBean;
+    private final ObjectProvider<PropositionBean> propositionBean;
 
     private String conceptIdFromUri;
     private String groupIdFromUri;
@@ -122,6 +128,8 @@ public class ThesaurusBrowseBean implements Serializable, ConceptNavigationSuppo
     private boolean autoExpandTree = true;
     private boolean treeCacheEnabled;
     private boolean suggestionEnabled;
+    /** Onglet Suggestion activé après clic sur « Proposer une amélioration » (comme legacy isRubriqueVisible). */
+    private boolean propositionRubriqueVisible;
     private boolean showAllNoteLanguages = true;
     private boolean showAllSynonymLanguages = true;
     private boolean homePagePlainTextView;
@@ -534,6 +542,83 @@ public class ThesaurusBrowseBean implements Serializable, ConceptNavigationSuppo
         return suggestionEnabled;
     }
 
+    /**
+     * Comme legacy {@code propositionBean.switchToNouvelleProposition} :
+     * prépare le formulaire et bascule sur l'onglet Suggestion.
+     */
+    public void openNouvelleProposition() {
+        if (!suggestionEnabled || !isConceptPanel()) {
+            return;
+        }
+        propositionBean.getObject().clearConsultation();
+        propositionSubmitBean.getObject().prepare();
+        propositionRubriqueVisible = true;
+        activateRightTab(RightTabKey.SUGGESTION);
+    }
+
+    /**
+     * Consultation d'une proposition depuis le tiroir (comme legacy {@code onSelectConcept}).
+     */
+    public void openPropositionConsultation(PropositionSummary proposition) {
+        if (proposition == null || StringUtils.isAnyBlank(proposition.thesaurusId(), proposition.conceptId())) {
+            return;
+        }
+
+        String thesaurusId = proposition.thesaurusId().trim();
+        boolean thesaurusChanged = !thesaurusId.equalsIgnoreCase(
+                StringUtils.defaultString(thesaurusContext.resolveThesaurusId()));
+
+        if (thesaurusChanged) {
+            thesaurusContext.selectThesaurus(thesaurusId);
+            if (StringUtils.isNotBlank(proposition.lang())) {
+                thesaurusContext.changeWorkLanguage(proposition.lang().trim());
+            }
+            loadConsultationPreferences();
+            invalidateConceptTree();
+            ensureTreeBuilt(activeLeftTreeMode);
+            loadThesaurusHome();
+        } else if (StringUtils.isNotBlank(proposition.lang())
+                && !proposition.lang().equalsIgnoreCase(thesaurusContext.resolveWorkLanguage())) {
+            thesaurusContext.changeWorkLanguage(proposition.lang().trim());
+        }
+
+        if (!suggestionEnabled) {
+            MessageUtils.showWarnMessage(
+                    // même message que legacy
+                    "La suggestion est désactivée pour le thésaurus dans lequel la proposition sélectionnée appartient !"
+            );
+            return;
+        }
+
+        openConcept(proposition.conceptId().trim(), true);
+        propositionBean.getObject().openReview(proposition);
+        propositionRubriqueVisible = true;
+        activateRightTab(RightTabKey.SUGGESTION);
+    }
+
+    /**
+     * Retour à l'onglet Concept (équivalent legacy {@code annuler} / switchToConceptOnglet).
+     */
+    public void closeProposition() {
+        propositionBean.getObject().clearConsultation();
+        propositionRubriqueVisible = false;
+        activateRightTab(RightTabKey.CONCEPT);
+    }
+
+    public void submitNouvelleProposition() {
+        if (propositionSubmitBean.getObject().submit()) {
+            closeProposition();
+        }
+    }
+
+    public void executePropositionDecision() {
+        propositionBean.getObject().executePendingAction();
+        if (!propositionBean.getObject().isConsultation()) {
+            propositionRubriqueVisible = false;
+            activateRightTab(RightTabKey.CONCEPT);
+        }
+    }
+
     public void openConcept(String conceptId) {
         openConcept(conceptId, true);
     }
@@ -556,6 +641,8 @@ public class ThesaurusBrowseBean implements Serializable, ConceptNavigationSuppo
         } else {
             conceptAlignmentAdminBean.getObject().openForCurrentConcept();
         }
+        propositionBean.getObject().clearConsultation();
+        propositionRubriqueVisible = false;
         corpusSearched = false;
         displayedCorpusLinks = Collections.emptyList();
         Optional<ConceptReadService.ConceptDetailLoadResult> loaded = conceptReadService.loadDetailWithSource(
@@ -1095,6 +1182,7 @@ public class ThesaurusBrowseBean implements Serializable, ConceptNavigationSuppo
         activeLeftTreeMode = LeftTreeMode.CONCEPT;
         rightPanelMode = RightPanelMode.HOME;
         leftTabIndex = 0;
+        propositionRubriqueVisible = false;
         branchConceptCount = 0;
         displayedNotes = Collections.emptyList();
         displayedSynonymLabels = Collections.emptyList();

@@ -22,6 +22,8 @@ import fr.cnrs.opentheso.v2.concept.service.ConceptFullReadService;
 import fr.cnrs.opentheso.v2.concept.service.ConceptReadService;
 import fr.cnrs.opentheso.v2.concept.service.ThesaurusHomeReadService;
 import fr.cnrs.opentheso.v2.concept.alignment.ui.ConceptAlignmentAdminBean;
+import fr.cnrs.opentheso.v2.proposition.ui.PropositionBean;
+import fr.cnrs.opentheso.v2.proposition.ui.PropositionSubmitBean;
 import fr.cnrs.opentheso.v2.rights.RightsService;
 import fr.cnrs.opentheso.v2.setting.fixtures.SettingTestFixtures;
 import fr.cnrs.opentheso.v2.setting.model.ThesaurusPreferences;
@@ -49,6 +51,7 @@ import static org.junit.jupiter.api.Assertions.assertFalse;
 import static org.junit.jupiter.api.Assertions.assertNotNull;
 import static org.junit.jupiter.api.Assertions.assertNull;
 import static org.junit.jupiter.api.Assertions.assertTrue;
+import static org.mockito.Mockito.lenient;
 import static org.mockito.Mockito.never;
 import static org.mockito.Mockito.verify;
 import static org.mockito.Mockito.when;
@@ -84,11 +87,18 @@ class ThesaurusBrowseBeanTest {
     private RightsService rightsService;
     @Mock
     private ObjectProvider<ConceptAlignmentAdminBean> conceptAlignmentAdminBean;
+    @Mock
+    private ObjectProvider<PropositionSubmitBean> propositionSubmitBean;
+    @Mock
+    private ObjectProvider<PropositionBean> propositionBean;
+    @Mock
+    private PropositionBean propositionBeanInstance;
 
     private ThesaurusBrowseBean bean;
 
     @BeforeEach
     void setUp() {
+        lenient().when(propositionBean.getObject()).thenReturn(propositionBeanInstance);
         bean = new ThesaurusBrowseBean(
                 thesaurusContext,
                 conceptSelectionContext,
@@ -103,7 +113,9 @@ class ThesaurusBrowseBeanTest {
                 conceptTypeReadService,
                 conceptTreeRefreshState,
                 rightsService,
-                conceptAlignmentAdminBean
+                conceptAlignmentAdminBean,
+                propositionSubmitBean,
+                propositionBean
         );
     }
 

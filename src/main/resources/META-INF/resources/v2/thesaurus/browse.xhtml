@@ -261,22 +261,17 @@
                                             <p:tab id="viewTabSuggestion"
                                                    title="#{v2LocaleBean.getMsg('rightbody.newSuggest')}"
                                                    rendered="#{v2ThesaurusBrowseBean.suggestionEnabled}"
-                                                   disabled="#{not v2ThesaurusBrowseBean.conceptPanel}">
+                                                   disabled="#{not v2ThesaurusBrowseBean.propositionRubriqueVisible}">
                                                 <f:facet name="anchor">
                                                     <i class="pi pi-sitemap" style="color:#f47b2a;"/>
                                                 </f:facet>
-                                                <h:panelGroup rendered="#{v2ThesaurusBrowseBean.conceptPanel}"
-                                                              style="margin:20px;">
-                                                    <p:staticMessage severity="warn" summary="Info"
-                                                                     detail="#{v2LocaleBean.getMsg('rightbody.proposal.info1')}"
-                                                                     style="width:100%; margin-bottom:16px;"/>
-                                                    <p:commandButton icon="pi pi-send"
-                                                                     value="#{v2LocaleBean.getMsg('rightbody.suggestImprovement')}"
-                                                                     styleClass="ui-button-success"
-                                                                     process="@this"
-                                                                     actionListener="#{v2PropositionSubmitBean.prepare()}"
-                                                                     update=":containerIndex:v2SuggestImprovementDlg"
-                                                                     oncomplete="PF('v2SuggestImprovement').show();"/>
+                                                <h:panelGroup rendered="#{v2ThesaurusBrowseBean.propositionRubriqueVisible}">
+                                                    <h:panelGroup rendered="#{v2PropositionBean.consultation}">
+                                                        <ui:include src="includes/proposition-review-form.xhtml"/>
+                                                    </h:panelGroup>
+                                                    <h:panelGroup rendered="#{not v2PropositionBean.consultation}">
+                                                        <ui:include src="includes/proposition-submit-form.xhtml"/>
+                                                    </h:panelGroup>
                                                 </h:panelGroup>
                                             </p:tab>
                                         </p:tabView>
@@ -295,7 +290,7 @@
                 <ui:include src="includes/dialogs/concept-collection-dialogs.xhtml"/>
                 <ui:include src="includes/dialogs/collection-dialogs.xhtml"/>
                 <ui:include src="includes/dialogs/facet-dialogs.xhtml"/>
-                <ui:include src="includes/dialogs/proposition-submit-dialog.xhtml"/>
+                <ui:include src="includes/dialogs/proposition-submit-dialogs.xhtml"/>
                 <input type="hidden" name="csrfToken" value="${sessionScope.CSRF_TOKEN}"/>
                 </h:form>
 
@@ -320,6 +315,7 @@
                 var bar = document.getElementById("v2PropositionListBar");
                 if (bar) {
                     bar.style.transform = "translateX(0)";
+                    bar.style.visibility = "visible";
                 }
             }
 

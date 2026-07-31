@@ -1,0 +1,71 @@
+<ui:fragment xmlns="http://www.w3.org/1999/xhtml"
+             xmlns:ui="http://xmlns.jcp.org/jsf/facelets"
+             xmlns:p="http://primefaces.org/ui"
+             xmlns:h="http://xmlns.jcp.org/jsf/html">
+
+    <div class="card mb-4 py-3 border-left-success" style="margin:10px;">
+        <div class="list-group" style="margin-top:-10px; margin-bottom:-10px;">
+
+            <div class="list-group-item list-group-item-action" style="margin-top:-5px; margin-bottom:-5px;">
+                <div class="row" style="padding:2px;">
+                    <div class="col-3" style="margin-left:10px;">
+                        <h:outputText value="#{v2LocaleBean.getMsg('rightbody.concept.notes')}"
+                                      style="color:#78261f; font-size:14px; font-weight:bold; margin-right:5px;"/>
+                        <p:menuButton icon="pi pi-cog"
+                                      style="background:none; border:none; color:#000; box-shadow:none;">
+                            <p:menuitem value="Proposer une nouvelle note"
+                                        icon="fas fa-plus"
+                                        process="@this"
+                                        actionListener="#{v2PropositionSubmitBean.prepareAddNote()}"
+                                        update=":containerIndex:v2PropAddNoteDlg"
+                                        oncomplete="PF('v2PropAddNote').show();"/>
+                        </p:menuButton>
+                    </div>
+                    <div class="col-9"/>
+                </div>
+            </div>
+
+            <ui:repeat var="noteOpt" value="#{v2PropositionSubmitBean.visibleNoteOptions}">
+                <div class="list-group-item list-group-item-action">
+                    <div class="row" style="margin-left:0; margin-bottom:5px;">
+                        <div class="col-xl-3 col-lg-4 col-md-5 col-sm-5">
+                            <p:menuButton icon="fas fa-cog"
+                                          style="color:#F7A269; background:none; border:none; box-shadow:none; font-size:12px;">
+                                <p:menuitem value="Modifier une note"
+                                            icon="fas fa-edit"
+                                            process="@this"
+                                            actionListener="#{v2PropositionSubmitBean.prepareEditNote(noteOpt)}"
+                                            update=":containerIndex:v2PropEditNoteDlg"
+                                            oncomplete="PF('v2PropEditNote').show();"/>
+                                <p:menuitem value="Supprimer une note"
+                                            icon="fas fa-minus"
+                                            process="@this"
+                                            actionListener="#{v2PropositionSubmitBean.clearNote(noteOpt)}"
+                                            update=":containerIndex:formRightTab"/>
+                            </p:menuButton>
+                            <h:outputText value="#{v2LocaleBean.getMsg(noteOpt.messageKey)}"
+                                          style="font-size:14px; font-weight:bold; color:#8f8f8f;"/>
+                        </div>
+                        <div class="col-xl-9 col-lg-8 col-md-7 col-sm-7" style="margin-left:-10px;">
+                            <h:panelGroup rendered="#{not noteOpt.hasChanged()}">
+                                <h:outputText value="#{noteOpt.value}" style="color:#666; font-size:14px;" escape="false"/>
+                            </h:panelGroup>
+                            <h:panelGroup rendered="#{noteOpt.hasChanged() and empty noteOpt.oldValue}">
+                                <h:outputText value="#{noteOpt.value}" style="font-size:14px; color:green;" escape="false"/>
+                            </h:panelGroup>
+                            <h:panelGroup rendered="#{noteOpt.hasChanged() and not empty noteOpt.oldValue and not empty noteOpt.value}">
+                                <h:outputText value="#{noteOpt.value} " style="font-size:14px; color:blue;" escape="false"/>
+                                <h:outputText value="(#{noteOpt.oldValue})"
+                                              style="font-size:14px; text-decoration:line-through; color:blue;" escape="false"/>
+                            </h:panelGroup>
+                            <h:panelGroup rendered="#{noteOpt.hasChanged() and empty noteOpt.value and not empty noteOpt.oldValue}">
+                                <h:outputText value="#{noteOpt.oldValue}"
+                                              style="font-size:14px; text-decoration:line-through; color:red;" escape="false"/>
+                            </h:panelGroup>
+                        </div>
+                    </div>
+                </div>
+            </ui:repeat>
+        </div>
+    </div>
+</ui:fragment>

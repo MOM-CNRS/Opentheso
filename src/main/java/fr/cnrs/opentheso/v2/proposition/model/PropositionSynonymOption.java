@@ -11,6 +11,7 @@ public class PropositionSynonymOption implements Serializable {
     private String value;
     private String oldValue;
     private boolean hidden;
+    private boolean oldHidden;
     private boolean toAdd;
     private boolean toUpdate;
     private boolean toRemove;

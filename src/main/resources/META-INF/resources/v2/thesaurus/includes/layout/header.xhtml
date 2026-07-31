@@ -74,7 +74,8 @@
                           style="margin-top: 25px; margin-right: 10px" id="v2NotificationProp">
                 <p:commandLink actionListener="#{v2PropositionBean.showPropositionDrawer()}"
                                rendered="#{v2PropositionBean.pendingCount > 0}" process="@this"
-                               update="@none">
+                               update=":v2PropositionListBar v2NotificationProp"
+                               oncomplete="showV2PropositionListBar();">
                     <p:badge value="#{v2PropositionBean.pendingCount}"
                              style="background: #ff0000; color: #ffffff; font-size: 0.6rem;
                              font-weight: 700; min-width: 1rem; height: 1rem; line-height: 1rem;">
@@ -83,7 +84,8 @@
                 </p:commandLink>
                 <p:commandLink actionListener="#{v2PropositionBean.showPropositionDrawer()}"
                                rendered="#{v2PropositionBean.pendingCount == 0}" process="@this"
-                               update="@none">
+                               update=":v2PropositionListBar v2NotificationProp"
+                               oncomplete="showV2PropositionListBar();">
                     <i class="pi pi-bell" style="color: #d1d3e2; font-size: 1.1rem"/>
                 </p:commandLink>
             </h:panelGroup>

@@ -8,32 +8,24 @@
         <p:dataTable id="v2AlignmentPropositionsTable"
                      var="alignement"
                      value="#{v2ConceptAlignmentAdminBean.propositions}"
-                     selection="#{v2ConceptAlignmentAdminBean.selectedPropositions}"
+                     selection="#{v2ConceptAlignmentAdminBean.selectedProposition}"
+                     selectionMode="single"
                      rowKey="#{alignement.conceptId}_#{alignement.targetUri}"
                      style="margin-bottom:-17px; margin-top:-16px; font-size:13px;"
                      lazy="false">
             <f:facet name="header">
-                <span style="font-weight:bold;">#{v2LocaleBean.getMsg('rightbody.alignmentList')}</span>
+                <div class="products-table-header">
+                    <span style="font-weight:bold;">#{v2LocaleBean.getMsg('rightbody.alignmentList')}</span>
+                    <h:outputText value=" — #{v2ConceptAlignmentAdminBean.selectedSourceName}"
+                                  rendered="#{not empty v2ConceptAlignmentAdminBean.selectedSourceName}"
+                                  style="color:#f47b2a; margin-left:6px;"/>
+                </div>
             </f:facet>
 
             <p:headerRow field="conceptId" expandable="true" expanded="true">
-                <p:column colspan="4"
+                <p:column colspan="5"
                           style="background-color:#ecf8f1; border-top:1px solid #43B572; border-bottom:1px solid #43B572; color:#143a1e;">
-                    <h:outputText value="#{alignement.localLabel} (#{alignement.conceptId})"/>
-                </p:column>
-                <p:column style="background-color:#ecf8f1; border-top:1px solid #43B572; border-bottom:1px solid #43B572; text-align:right;">
-                    <p:commandButton value="#{v2LocaleBean.getMsg('candidat.close')}"
-                                     process="@this"
-                                     actionListener="#{v2ConceptAlignmentAdminBean.closePropositionsForConcept(alignement.conceptId)}"
-                                     update=":containerIndex:formRightTab"
-                                     styleClass="rounded-button ui-button-outlined"
-                                     style="color:white; background-color:#617D8B; margin-right:6px;"/>
-                    <p:commandButton value="#{v2LocaleBean.getMsg('statistique.validate')}"
-                                     process="@this @form"
-                                     actionListener="#{v2ConceptAlignmentAdminBean.acceptPropositionsForConcept(alignement.conceptId)}"
-                                     update=":containerIndex:formRightTab :messageIndex"
-                                     styleClass="rounded-button ui-button-outlined"
-                                     style="color:white; background-color:#f47b2a;"/>
+                    <h:outputText styleClass="ml-2" value="#{alignement.localLabel}"/>
                 </p:column>
             </p:headerRow>
 
@@ -54,15 +46,39 @@
             </p:column>
 
             <p:column headerText="#{v2LocaleBean.getMsg('rightbody.conceptdialog.type_of_alignmnent')}" width="20">
-                <p:selectOneMenu value="#{alignement.alignmentTypeId}" style="width:100%; font-size:12px;">
+                <p:selectOneMenu value="#{alignement.alignmentTypeId}"
+                                 style="width:100%; font-size:12px; background:white; border-color:#43B572;">
                     <f:selectItems value="#{v2ConceptAlignmentBean.alignmentTypes}" var="type"
                                    itemLabel="#{type.label}" itemValue="#{type.id}"/>
                 </p:selectOneMenu>
             </p:column>
 
+            <p:summaryRow>
+                <p:column colspan="4"
+                          style="background-color:#ecf8f1; border-top:1px solid #43B572; border-bottom:1px solid #43B572; color:#143a1e;">
+                    <h:outputText value="#{v2LocaleBean.getMsg('alignment.totalFoundFor')} (#{alignement.localLabel}) : #{v2ConceptAlignmentAdminBean.getPropositionCountForConcept(alignement.conceptId)}"/>
+                </p:column>
+                <p:column style="background-color:#ecf8f1; border-top:1px solid #43B572; border-bottom:1px solid #43B572; color:#143a1e; text-align:right;">
+                    <p:commandButton value="#{v2LocaleBean.getMsg('candidat.close')}"
+                                     process="@this"
+                                     actionListener="#{v2ConceptAlignmentAdminBean.closePropositionsForConcept(alignement.conceptId)}"
+                                     update=":containerIndex:formRightTab"
+                                     styleClass="rounded-button ui-button-outlined"
+                                     style="color:white; background-color:#617D8B;"/>
+                    <p:commandButton value="#{v2LocaleBean.getMsg('statistique.validate')}"
+                                     process="@this @form"
+                                     actionListener="#{v2ConceptAlignmentAdminBean.prepareValidateForConcept(alignement.conceptId)}"
+                                     update=":containerIndex:v2ValidateAlignmentPropositionDlg :messageIndex"
+                                     styleClass="rounded-button ui-button-outlined"
+                                     style="color:white; background-color:#f47b2a; margin-left:10px;"/>
+                </p:column>
+            </p:summaryRow>
+
             <f:facet name="footer">
-                <h:outputText value="#{v2LocaleBean.getMsg('rightbody.alignmentNumber')} : " style="font-size:14px;"/>
-                <h:outputText value="#{v2ConceptAlignmentAdminBean.propositions.size()}" style="font-size:16px; color:#f47b2a;"/>
+                <span class="p-text-bold">
+                    <h:outputText value="#{v2LocaleBean.getMsg('rightbody.alignmentNumber')} : " style="font-size:14px;"/>
+                    <h:outputText value="#{v2ConceptAlignmentAdminBean.propositions.size()}" style="font-size:16px; color:#f47b2a;"/>
+                </span>
             </f:facet>
         </p:dataTable>
     </div>
@@ -76,11 +92,6 @@
                              process="@this"
                              actionListener="#{v2ConceptAlignmentAdminBean.backToSummary()}"
                              update=":containerIndex:formRightTab"/>
-            <p:commandButton value="#{v2LocaleBean.getMsg('statistique.validate')}"
-                             styleClass="ui-button-success"
-                             process="@this @form"
-                             actionListener="#{v2ConceptAlignmentAdminBean.acceptSelectedPropositions()}"
-                             update=":containerIndex:formRightTab :messageIndex"/>
         </p:toolbarGroup>
     </p:toolbar>
 </ui:fragment>

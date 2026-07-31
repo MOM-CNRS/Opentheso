@@ -1,0 +1,308 @@
+<ui:fragment xmlns="http://www.w3.org/1999/xhtml"
+             xmlns:ui="http://xmlns.jcp.org/jsf/facelets"
+             xmlns:p="http://primefaces.org/ui"
+             xmlns:f="http://xmlns.jcp.org/jsf/core"
+             xmlns:h="http://xmlns.jcp.org/jsf/html">
+
+    <!-- Rename preferred label -->
+    <p:dialog id="v2PropRenameLabelDlg"
+              header="#{v2LocaleBean.getMsg('rightbody.concept.rename_concept')}"
+              widgetVar="v2PropRenameLabel" width="450" modal="true" resizable="false"
+              appendTo="@(body)" position="top" style="margin-top:30px;">
+        <h:form id="v2PropRenameLabelForm">
+            <div class="row">
+                <div class="col-12">
+                    <h:outputText value="#{v2LocaleBean.getMsg('rightbody.conceptdialog.actualName')} : "/>
+                    <h:outputText value="#{v2PropositionSubmitBean.currentPreferredLabel}" style="color:#C63632;"/>
+                </div>
+            </div>
+            <div class="row" style="margin-top:6px;">
+                <div class="col-5">
+                    <h:outputText value="#{v2LocaleBean.getMsg('rightbody.conceptdialog.newName')}: "/>
+                </div>
+                <div class="col-7">
+                    <p:inputText value="#{v2PropositionSubmitBean.renameDraftLabel}" style="width:100%;"/>
+                </div>
+            </div>
+            <div style="text-align:right; margin-top:15px;">
+                <p:commandButton value="#{v2LocaleBean.getMsg('btnCancel')}" type="button"
+                                 styleClass="ui-button-secondary" style="margin-right:8px;"
+                                 onclick="PF('v2PropRenameLabel').hide();"/>
+                <p:commandButton value="#{v2LocaleBean.getMsg('btnValidate')}" styleClass="ui-button-success"
+                                 process="@form"
+                                 actionListener="#{v2PropositionSubmitBean.confirmRenamePreferredLabel()}"
+                                 update=":containerIndex:formRightTab :messageIndex"/>
+            </div>
+        </h:form>
+    </p:dialog>
+
+    <!-- Add synonym -->
+    <p:dialog id="v2PropAddSynonymDlg"
+              header="#{v2LocaleBean.getMsg('rightbody.concept.add_synonym')}"
+              widgetVar="v2PropAddSynonym" width="480" modal="true" resizable="false"
+              appendTo="@(body)" position="top" style="margin-top:30px;">
+        <h:form id="v2PropAddSynonymForm">
+            <div class="row mb-2">
+                <div class="col-4"><h:outputText value="#{v2LocaleBean.getMsg('candidat.value')}"/></div>
+                <div class="col-8">
+                    <p:inputText value="#{v2PropositionSubmitBean.newSynonymValue}" style="width:100%;"/>
+                </div>
+            </div>
+            <div class="row mb-2">
+                <div class="col-4"><h:outputText value="#{v2LocaleBean.getMsg('candidat.language')}"/></div>
+                <div class="col-8">
+                    <p:selectOneMenu value="#{v2PropositionSubmitBean.newSynonymLang}" style="width:100%;">
+                        <f:selectItems value="#{v2PropositionSubmitBean.availableLanguages}" var="lang"
+                                       itemLabel="#{lang.value}" itemValue="#{lang.code}"/>
+                    </p:selectOneMenu>
+                </div>
+            </div>
+            <div class="row mb-2">
+                <div class="col-4"><h:outputText value="#{v2LocaleBean.getMsg('rightbody.conceptdialog.hidden')}"/></div>
+                <div class="col-8">
+                    <p:selectBooleanCheckbox value="#{v2PropositionSubmitBean.newSynonymHidden}"/>
+                </div>
+            </div>
+            <div style="text-align:right; margin-top:15px;">
+                <p:commandButton value="#{v2LocaleBean.getMsg('btnCancel')}" type="button"
+                                 styleClass="ui-button-secondary" style="margin-right:8px;"
+                                 onclick="PF('v2PropAddSynonym').hide();"/>
+                <p:commandButton value="#{v2LocaleBean.getMsg('btnAdd')}" styleClass="ui-button-success"
+                                 process="@form"
+                                 actionListener="#{v2PropositionSubmitBean.addSynonymOption()}"
+                                 update=":containerIndex:formRightTab :messageIndex"/>
+            </div>
+        </h:form>
+    </p:dialog>
+
+    <!-- Rename synonyms -->
+    <p:dialog id="v2PropRenameSynonymDlg"
+              header="#{v2LocaleBean.getMsg('rightbody.concept.modify_synonym')}"
+              widgetVar="v2PropRenameSynonym" width="560" modal="true" resizable="false"
+              appendTo="@(body)" position="top" style="margin-top:30px;">
+        <h:form id="v2PropRenameSynonymForm">
+            <p:dataTable var="syn" value="#{v2PropositionSubmitBean.synonymOptions}"
+                         rendered="#{not empty v2PropositionSubmitBean.synonymOptions}" lazy="false">
+                <p:column headerText="#{v2LocaleBean.getMsg('candidat.value')}">
+                    <p:inputText value="#{syn.value}" style="width:100%; color:#43B572;"
+                                 disabled="#{syn.toRemove}"/>
+                </p:column>
+                <p:column headerText="#{v2LocaleBean.getMsg('candidat.language')}" width="70">
+                    <h:outputText value="#{syn.lang.toUpperCase()}"/>
+                </p:column>
+                <p:column headerText="#{v2LocaleBean.getMsg('rightbody.conceptdialog.hidden')}" width="70">
+                    <p:selectBooleanCheckbox value="#{syn.hidden}" disabled="#{syn.toRemove}"/>
+                </p:column>
+                <p:column width="40">
+                    <p:commandLink process="@form"
+                                   actionListener="#{v2PropositionSubmitBean.applySynonymEdit(syn)}"
+                                   update=":containerIndex:formRightTab">
+                        <i class="pi pi-check-circle" style="font-size:1rem; color:#C63632;"/>
+                    </p:commandLink>
+                </p:column>
+            </p:dataTable>
+            <div style="text-align:right; margin-top:12px;">
+                <p:commandButton value="#{v2LocaleBean.getMsg('candidat.close')}" type="button"
+                                 styleClass="ui-button-secondary"
+                                 onclick="PF('v2PropRenameSynonym').hide();"/>
+            </div>
+        </h:form>
+    </p:dialog>
+
+    <!-- Delete synonyms -->
+    <p:dialog id="v2PropDeleteSynonymDlg"
+              header="#{v2LocaleBean.getMsg('rightbody.concept.delete_synonym')}"
+              widgetVar="v2PropDeleteSynonym" width="520" modal="true" resizable="false"
+              appendTo="@(body)" position="top" style="margin-top:30px;">
+        <h:form id="v2PropDeleteSynonymForm">
+            <p:dataTable var="syn" value="#{v2PropositionSubmitBean.synonymOptions}" lazy="false">
+                <p:column headerText="#{v2LocaleBean.getMsg('candidat.value')}">
+                    <h:outputText value="#{syn.value}"
+                                  style="text-decoration:#{syn.toRemove ? 'line-through' : 'none'}; color:#{syn.toRemove ? 'red' : 'inherit'};"/>
+                </p:column>
+                <p:column width="60">
+                    <h:outputText value="#{syn.lang.toUpperCase()}"/>
+                </p:column>
+                <p:column width="50">
+                    <p:commandLink rendered="#{!syn.toRemove}" process="@this"
+                                   actionListener="#{v2PropositionSubmitBean.removeSynonymOption(syn)}"
+                                   update=":containerIndex:v2PropDeleteSynonymForm :containerIndex:formRightTab">
+                        <i class="pi pi-trash" style="color:#C63632;"/>
+                    </p:commandLink>
+                    <p:commandLink rendered="#{syn.toRemove}" process="@this"
+                                   actionListener="#{v2PropositionSubmitBean.undoRemoveSynonymOption(syn)}"
+                                   update=":containerIndex:v2PropDeleteSynonymForm :containerIndex:formRightTab">
+                        <i class="pi pi-undo" style="color:#43B572;"/>
+                    </p:commandLink>
+                </p:column>
+            </p:dataTable>
+            <div style="text-align:right; margin-top:12px;">
+                <p:commandButton value="#{v2LocaleBean.getMsg('candidat.close')}" type="button"
+                                 styleClass="ui-button-secondary"
+                                 onclick="PF('v2PropDeleteSynonym').hide();"/>
+            </div>
+        </h:form>
+    </p:dialog>
+
+    <!-- Add traduction -->
+    <p:dialog id="v2PropAddTraductionDlg"
+              header="#{v2LocaleBean.getMsg('rightbody.conceptdialog.add_translation')}"
+              widgetVar="v2PropAddTraduction" width="450" modal="true" resizable="false"
+              appendTo="@(body)" position="top" style="margin-top:30px;">
+        <h:form id="v2PropAddTraductionForm">
+            <div class="row mb-2">
+                <div class="col-4"><h:outputText value="#{v2LocaleBean.getMsg('candidat.traduction')}"/></div>
+                <div class="col-8">
+                    <p:inputText value="#{v2PropositionSubmitBean.newTranslationValue}" style="width:100%;"/>
+                </div>
+            </div>
+            <div class="row mb-2">
+                <div class="col-4"><h:outputText value="#{v2LocaleBean.getMsg('candidat.language')}"/></div>
+                <div class="col-8">
+                    <p:selectOneMenu value="#{v2PropositionSubmitBean.newTranslationLang}" style="width:100%;">
+                        <f:selectItems value="#{v2PropositionSubmitBean.languagesWithoutTranslation}" var="lang"
+                                       itemLabel="#{lang.value}" itemValue="#{lang.code}"/>
+                    </p:selectOneMenu>
+                </div>
+            </div>
+            <div style="text-align:right; margin-top:15px;">
+                <p:commandButton value="#{v2LocaleBean.getMsg('btnCancel')}" type="button"
+                                 styleClass="ui-button-secondary" style="margin-right:8px;"
+                                 onclick="PF('v2PropAddTraduction').hide();"/>
+                <p:commandButton value="#{v2LocaleBean.getMsg('btnAdd')}" styleClass="ui-button-success"
+                                 process="@form"
+                                 actionListener="#{v2PropositionSubmitBean.addTranslationOption()}"
+                                 update=":containerIndex:formRightTab :messageIndex"/>
+            </div>
+        </h:form>
+    </p:dialog>
+
+    <!-- Rename traductions -->
+    <p:dialog id="v2PropRenameTraductionDlg"
+              header="#{v2LocaleBean.getMsg('rightbody.conceptdialog.modify_translation')}"
+              widgetVar="v2PropRenameTraduction" width="550" modal="true" resizable="false"
+              appendTo="@(body)" position="top" style="margin-top:30px;">
+        <h:form id="v2PropRenameTraductionForm">
+            <p:dataTable var="trad" value="#{v2PropositionSubmitBean.translationOptions}" lazy="false">
+                <p:column headerText="#{v2LocaleBean.getMsg('candidat.traduction')}">
+                    <p:inputText value="#{trad.value}" style="width:100%; color:#43B572;"
+                                 disabled="#{trad.toRemove}"/>
+                </p:column>
+                <p:column width="60" headerText="#{v2LocaleBean.getMsg('rightbody.conceptdialog.language')}">
+                    <h:outputText value="#{trad.lang.toUpperCase()}"/>
+                </p:column>
+                <p:column width="40">
+                    <p:commandLink process="@form"
+                                   actionListener="#{v2PropositionSubmitBean.applyTranslationEdit(trad)}"
+                                   update=":containerIndex:formRightTab">
+                        <i class="pi pi-check-circle" style="font-size:1rem; color:#C63632;"/>
+                    </p:commandLink>
+                </p:column>
+            </p:dataTable>
+            <div style="text-align:right; margin-top:12px;">
+                <p:commandButton value="#{v2LocaleBean.getMsg('candidat.close')}" type="button"
+                                 styleClass="ui-button-secondary"
+                                 onclick="PF('v2PropRenameTraduction').hide();"/>
+            </div>
+        </h:form>
+    </p:dialog>
+
+    <!-- Delete traductions -->
+    <p:dialog id="v2PropDeleteTraductionDlg"
+              header="#{v2LocaleBean.getMsg('rightbody.concept.delete_traduction')}"
+              widgetVar="v2PropDeleteTraduction" width="520" modal="true" resizable="false"
+              appendTo="@(body)" position="top" style="margin-top:30px;">
+        <h:form id="v2PropDeleteTraductionForm">
+            <p:dataTable var="trad" value="#{v2PropositionSubmitBean.translationOptions}" lazy="false">
+                <p:column headerText="#{v2LocaleBean.getMsg('candidat.traduction')}">
+                    <h:outputText value="#{trad.value}"
+                                  style="text-decoration:#{trad.toRemove ? 'line-through' : 'none'}; color:#{trad.toRemove ? 'red' : 'inherit'};"/>
+                </p:column>
+                <p:column width="60">
+                    <h:outputText value="#{trad.lang.toUpperCase()}"/>
+                </p:column>
+                <p:column width="50">
+                    <p:commandLink rendered="#{!trad.toRemove}" process="@this"
+                                   actionListener="#{v2PropositionSubmitBean.removeTranslationOption(trad)}"
+                                   update=":containerIndex:v2PropDeleteTraductionForm :containerIndex:formRightTab">
+                        <i class="pi pi-trash" style="color:#C63632;"/>
+                    </p:commandLink>
+                    <p:commandLink rendered="#{trad.toRemove}" process="@this"
+                                   actionListener="#{v2PropositionSubmitBean.undoRemoveTranslationOption(trad)}"
+                                   update=":containerIndex:v2PropDeleteTraductionForm :containerIndex:formRightTab">
+                        <i class="pi pi-undo" style="color:#43B572;"/>
+                    </p:commandLink>
+                </p:column>
+            </p:dataTable>
+            <div style="text-align:right; margin-top:12px;">
+                <p:commandButton value="#{v2LocaleBean.getMsg('candidat.close')}" type="button"
+                                 styleClass="ui-button-secondary"
+                                 onclick="PF('v2PropDeleteTraduction').hide();"/>
+            </div>
+        </h:form>
+    </p:dialog>
+
+    <!-- Add note -->
+    <p:dialog id="v2PropAddNoteDlg"
+              header="Proposer une nouvelle note"
+              widgetVar="v2PropAddNote" width="560" modal="true" resizable="false"
+              appendTo="@(body)" position="top" style="margin-top:30px;">
+        <h:form id="v2PropAddNoteForm">
+            <div class="row mb-2">
+                <div class="col-3"><h:outputText value="Type"/></div>
+                <div class="col-9">
+                    <p:selectOneMenu value="#{v2PropositionSubmitBean.newNoteTypeCode}" style="width:100%;">
+                        <f:selectItems value="#{v2PropositionSubmitBean.noteOptions}" var="noteOpt"
+                                       itemLabel="#{v2LocaleBean.getMsg(noteOpt.messageKey)}"
+                                       itemValue="#{noteOpt.typeCode}"/>
+                    </p:selectOneMenu>
+                </div>
+            </div>
+            <div class="row mb-2">
+                <div class="col-12">
+                    <p:textEditor secure="false" value="#{v2PropositionSubmitBean.newNoteValue}" height="200"/>
+                </div>
+            </div>
+            <div style="text-align:right; margin-top:15px;">
+                <p:commandButton value="#{v2LocaleBean.getMsg('btnCancel')}" type="button"
+                                 styleClass="ui-button-secondary" style="margin-right:8px;"
+                                 onclick="PF('v2PropAddNote').hide();"/>
+                <p:commandButton value="#{v2LocaleBean.getMsg('btnAdd')}" styleClass="ui-button-success"
+                                 process="@form"
+                                 actionListener="#{v2PropositionSubmitBean.addNoteOption()}"
+                                 update=":containerIndex:formRightTab :messageIndex"/>
+            </div>
+        </h:form>
+    </p:dialog>
+
+    <!-- Edit note -->
+    <p:dialog id="v2PropEditNoteDlg"
+              header="Modifier une note"
+              widgetVar="v2PropEditNote" width="560" modal="true" resizable="false"
+              appendTo="@(body)" position="top" style="margin-top:30px;">
+        <h:form id="v2PropEditNoteForm">
+            <h:panelGroup rendered="#{v2PropositionSubmitBean.noteBeingEdited != null}">
+                <div class="row mb-2">
+                    <div class="col-12">
+                        <h:outputText value="#{v2LocaleBean.getMsg(v2PropositionSubmitBean.noteBeingEdited.messageKey)}"
+                                      style="font-weight:bold; color:#8f8f8f;"/>
+                    </div>
+                </div>
+                <div class="row mb-2">
+                    <div class="col-12">
+                        <p:textEditor secure="false" value="#{v2PropositionSubmitBean.noteBeingEdited.value}" height="200"/>
+                    </div>
+                </div>
+            </h:panelGroup>
+            <div style="text-align:right; margin-top:15px;">
+                <p:commandButton value="#{v2LocaleBean.getMsg('btnCancel')}" type="button"
+                                 styleClass="ui-button-secondary" style="margin-right:8px;"
+                                 onclick="PF('v2PropEditNote').hide();"/>
+                <p:commandButton value="#{v2LocaleBean.getMsg('btnValidate')}" styleClass="ui-button-success"
+                                 process="@form"
+                                 actionListener="#{v2PropositionSubmitBean.confirmEditNote()}"
+                                 update=":containerIndex:formRightTab"/>
+            </div>
+        </h:form>
+    </p:dialog>
+</ui:fragment>

@@ -78,4 +78,115 @@
             </div>
         </h:form>
     </p:dialog>
+
+    <p:dialog id="v2ValidateAlignmentPropositionDlg"
+              header="#{v2LocaleBean.getMsg('rightbody.concept.alignment.replace')}"
+              widgetVar="v2ValidateAlignmentProposition"
+              modal="true"
+              resizable="true"
+              width="640"
+              appendTo="@(body)"
+              style="margin-top:50px;">
+        <h:form id="v2ValidateAlignmentPropositionForm">
+            <h:panelGroup rendered="#{v2ConceptAlignmentAdminBean.propositionToValidate != null}">
+                <div class="row mb-2">
+                    <div class="col-12">
+                        <h:outputText value="Veuillez sélectionner les données de l'alignement : "/>
+                        <h:outputText value="#{v2ConceptAlignmentAdminBean.propositionToValidate.targetLabel}"
+                                      style="color:#f47b2a; font-weight:bold;"/>
+                    </div>
+                </div>
+
+                <div class="row mb-3">
+                    <div class="col-3">
+                        <h:outputText value="Type d'alignement :"/>
+                    </div>
+                    <div class="col-9">
+                        <p:selectOneMenu value="#{v2ConceptAlignmentAdminBean.propositionToValidate.alignmentTypeId}"
+                                         style="width:100%; font-size:12px;">
+                            <f:selectItems value="#{v2ConceptAlignmentBean.alignmentTypes}" var="type"
+                                           itemLabel="#{type.label}" itemValue="#{type.id}"/>
+                        </p:selectOneMenu>
+                    </div>
+                </div>
+
+                <p:accordionPanel multiple="true" activeIndex="0,1,2" style="margin-top:10px;">
+                    <p:tab title="#{v2LocaleBean.getMsg('candidat.traductions')}"
+                           disabled="#{empty v2ConceptAlignmentAdminBean.propositionToValidate.traductions}">
+                        <p:dataTable var="traduction"
+                                     value="#{v2ConceptAlignmentAdminBean.propositionToValidate.traductions}"
+                                     style="overflow:auto; max-height:320px;"
+                                     lazy="false">
+                            <p:column width="20">
+                                <p:selectBooleanCheckbox value="#{traduction.selected}"/>
+                            </p:column>
+                            <p:column width="40" headerText="#{v2LocaleBean.getMsg('candidat.language')}">
+                                <img src="#{v2ThesaurusBrowseBean.getFlagImageUrl(traduction.idLang)}"
+                                     width="27" height="22" alt=""/>
+                            </p:column>
+                            <p:column headerText="#{v2LocaleBean.getMsg('rightbody.conceptdialog.local_value')}">
+                                <h:outputText value="#{traduction.localValue}"/>
+                            </p:column>
+                            <p:column headerText="#{v2LocaleBean.getMsg('statistique.label')}">
+                                <h:outputText value="#{traduction.gettedValue}"/>
+                            </p:column>
+                        </p:dataTable>
+                    </p:tab>
+
+                    <p:tab title="#{v2LocaleBean.getMsg('rightbody.concept.definition')}"
+                           disabled="#{empty v2ConceptAlignmentAdminBean.propositionToValidate.definitions}">
+                        <p:dataTable var="definition"
+                                     value="#{v2ConceptAlignmentAdminBean.propositionToValidate.definitions}"
+                                     style="overflow:auto; max-height:320px;"
+                                     lazy="false">
+                            <p:column width="20">
+                                <p:selectBooleanCheckbox value="#{definition.selected}"/>
+                            </p:column>
+                            <p:column width="40">
+                                <img src="#{v2ThesaurusBrowseBean.getFlagImageUrl(definition.idLang)}"
+                                     width="27" height="22" alt=""/>
+                            </p:column>
+                            <p:column headerText="#{v2LocaleBean.getMsg('candidat.value')}">
+                                <h:outputText value="#{definition.gettedValue}"/>
+                            </p:column>
+                        </p:dataTable>
+                    </p:tab>
+
+                    <p:tab title="#{v2LocaleBean.getMsg('rightbody.concept.images')}"
+                           disabled="#{empty v2ConceptAlignmentAdminBean.propositionToValidate.images}">
+                        <p:dataTable var="image"
+                                     value="#{v2ConceptAlignmentAdminBean.propositionToValidate.images}"
+                                     style="overflow:auto; max-height:320px;"
+                                     lazy="false">
+                            <p:column width="20">
+                                <p:selectBooleanCheckbox value="#{image.selected}"/>
+                            </p:column>
+                            <p:column headerText="#{v2LocaleBean.getMsg('candidat.value')}">
+                                <h:outputText value="#{image.gettedValue}"/>
+                            </p:column>
+                            <p:column headerText="#{v2LocaleBean.getMsg('rightbody.concept.image')}">
+                                <p:graphicImage value="#{image.gettedValue}" width="100" height="100"/>
+                            </p:column>
+                        </p:dataTable>
+                    </p:tab>
+                </p:accordionPanel>
+            </h:panelGroup>
+
+            <div style="width:100%; text-align:right; margin-top:15px; margin-bottom:5px;">
+                <p:commandButton value="#{v2LocaleBean.getMsg('btnCancel')}"
+                                 style="margin-right:10px;"
+                                 icon="fas fa-undo-alt"
+                                 styleClass="ui-button-secondary"
+                                 process="@this"
+                                 actionListener="#{v2ConceptAlignmentAdminBean.cancelValidateProposition()}"
+                                 update="@none"/>
+                <p:commandButton value="#{v2LocaleBean.getMsg('btnValidate')}"
+                                 styleClass="ui-button-success"
+                                 icon="pi pi-check"
+                                 process="@form"
+                                 actionListener="#{v2ConceptAlignmentAdminBean.confirmValidateProposition()}"
+                                 update=":containerIndex:formRightTab :messageIndex"/>
+            </div>
+        </h:form>
+    </p:dialog>
 </ui:fragment>

@@ -4,11 +4,12 @@ import fr.cnrs.opentheso.models.NodeAlignmentProjection;
 import fr.cnrs.opentheso.repositories.AlignementRepository;
 import fr.cnrs.opentheso.repositories.AlignementSourceRepository;
 import fr.cnrs.opentheso.repositories.ThesaurusAlignementSourceRepository;
-import fr.cnrs.opentheso.services.AlignmentSourceService;
 import fr.cnrs.opentheso.v2.candidat.alignment.AlignmentAutoExternalSearch;
+import fr.cnrs.opentheso.v2.candidat.alignment.persistence.CandidatAutoAlignmentPersistence;
 import fr.cnrs.opentheso.v2.concept.alignment.model.AlignmentAdminRow;
 import fr.cnrs.opentheso.v2.concept.search.repository.ConceptSearchQueryRepository;
 import fr.cnrs.opentheso.v2.concept.write.persistence.BranchConceptSupport;
+import fr.cnrs.opentheso.v2.concept.write.service.ConceptAlignmentMutationService;
 import org.junit.jupiter.api.BeforeEach;
 import org.junit.jupiter.api.Test;
 import org.junit.jupiter.api.extension.ExtendWith;
@@ -37,11 +38,13 @@ class ConceptAlignmentAdminServiceTest {
     @Mock
     private ThesaurusAlignementSourceRepository thesaurusAlignementSourceRepository;
     @Mock
-    private AlignmentSourceService alignmentSourceService;
-    @Mock
     private AlignmentAutoExternalSearch alignmentAutoExternalSearch;
     @Mock
-    private fr.cnrs.opentheso.v2.concept.write.service.ConceptAlignmentMutationService conceptAlignmentMutationService;
+    private ConceptAlignmentMutationService conceptAlignmentMutationService;
+    @Mock
+    private CandidatAutoAlignmentPersistence candidatAutoAlignmentPersistence;
+    @Mock
+    private AlignmentPropositionEnricher alignmentPropositionEnricher;
 
     private ConceptAlignmentAdminService service;
 
@@ -53,9 +56,10 @@ class ConceptAlignmentAdminServiceTest {
                 alignementRepository,
                 alignementSourceRepository,
                 thesaurusAlignementSourceRepository,
-                alignmentSourceService,
                 alignmentAutoExternalSearch,
-                conceptAlignmentMutationService
+                conceptAlignmentMutationService,
+                candidatAutoAlignmentPersistence,
+                alignmentPropositionEnricher
         );
     }
 

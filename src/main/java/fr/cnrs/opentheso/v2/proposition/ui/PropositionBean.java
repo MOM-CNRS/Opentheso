@@ -1,9 +1,12 @@
 package fr.cnrs.opentheso.v2.proposition.ui;
 
 import fr.cnrs.opentheso.utils.MessageUtils;
+import fr.cnrs.opentheso.v2.proposition.model.NoteReviewEntry;
 import fr.cnrs.opentheso.v2.proposition.model.PropositionAcceptance;
 import fr.cnrs.opentheso.v2.proposition.model.PropositionDetail;
 import fr.cnrs.opentheso.v2.proposition.model.PropositionDraft;
+import fr.cnrs.opentheso.v2.proposition.model.PropositionFieldCategory;
+import fr.cnrs.opentheso.v2.proposition.model.PropositionFieldChange;
 import fr.cnrs.opentheso.v2.proposition.model.PropositionSummary;
 import fr.cnrs.opentheso.v2.proposition.service.PropositionDraftService;
 import fr.cnrs.opentheso.v2.proposition.service.PropositionMutationService;
@@ -13,9 +16,8 @@ import fr.cnrs.opentheso.v2.rights.Permission;
 import fr.cnrs.opentheso.v2.rights.RightsService;
 import fr.cnrs.opentheso.v2.setting.ui.ThesaurusContext;
 import fr.cnrs.opentheso.v2.shared.ui.UserSession;
+import fr.cnrs.opentheso.v2.shared.ui.V2LocaleBean;
 import jakarta.enterprise.context.SessionScoped;
-import jakarta.faces.context.ExternalContext;
-import jakarta.faces.context.FacesContext;
 import jakarta.inject.Named;
 import lombok.Getter;
 import lombok.RequiredArgsConstructor;
@@ -24,8 +26,8 @@ import org.apache.commons.collections4.CollectionUtils;
 import org.apache.commons.lang3.StringUtils;
 import org.primefaces.PrimeFaces;
 
-import java.io.IOException;
 import java.io.Serializable;
+import java.util.ArrayList;
 import java.util.Collections;
 import java.util.List;
 
@@ -42,6 +44,7 @@ public class PropositionBean implements Serializable {
     private final ThesaurusContext thesaurusContext;
     private final UserSession userSession;
     private final RightsService rightsService;
+    private final V2LocaleBean localeBean;
 
     private List<PropositionSummary> propositions = Collections.emptyList();
     private int pendingCount;
@@ -49,18 +52,16 @@ public class PropositionBean implements Serializable {
 
     private PropositionDetail selectedProposition;
     private PropositionDraft selectedDraft;
+    private List<NoteReviewEntry> noteChangeEntries = Collections.emptyList();
     private String reviewComment;
+    private boolean consultation;
 
     private boolean prefTermeAccepted;
     private boolean varianteAccepted;
     private boolean traductionAccepted;
-    private boolean noteAccepted;
-    private boolean definitionAccepted;
-    private boolean changeNoteAccepted;
-    private boolean scopeAccepted;
-    private boolean editorialNotesAccepted;
-    private boolean examplesAccepted;
-    private boolean historyAccepted;
+
+    private String confirmMessage;
+    private String pendingAction;
 
     public void refresh() {
         refreshPendingCount();
@@ -92,8 +93,6 @@ public class PropositionBean implements Serializable {
 
     public void showPropositionDrawer() {
         refresh();
-        PrimeFaces.current().ajax().update(":v2ListPropositionsPanel", ":containerIndex:header:v2NotificationProp");
-        PrimeFaces.current().executeScript("showV2PropositionListBar();");
     }
 
     public void toggleShowAll() {
@@ -112,34 +111,140 @@ public class PropositionBean implements Serializable {
                 : propositionReadService.listPending(thesaurusId);
     }
 
+    /**
+     * Ouvre une proposition en mode consultation (onglet Suggestion), comme le legacy.
+     */
     public void openReview(PropositionSummary proposition) {
         if (proposition == null) {
             return;
         }
         selectedProposition = propositionReadService.findDetail(proposition.id());
-        reviewComment = "";
-        if (selectedProposition != null && "ENVOYER".equals(selectedProposition.status())) {
-            propositionMutationService.markRead(selectedProposition.id());
+        if (selectedProposition == null) {
+            clearConsultation();
+            return;
         }
 
-        selectedDraft = selectedProposition != null
-                ? propositionDraftService.loadDraftChanges(selectedProposition.id())
-                : null;
+        consultation = true;
+        reviewComment = StringUtils.defaultString(selectedProposition.adminComment());
 
-        prefTermeAccepted = selectedDraft != null && selectedDraft.getPreferredLabelChange() != null;
-        varianteAccepted = selectedDraft != null && CollectionUtils.isNotEmpty(selectedDraft.getSynonymChanges());
-        traductionAccepted = selectedDraft != null && CollectionUtils.isNotEmpty(selectedDraft.getTranslationChanges());
-        noteAccepted = hasNoteChange("note");
-        definitionAccepted = hasNoteChange("definition");
-        changeNoteAccepted = hasNoteChange("changeNote");
-        scopeAccepted = hasNoteChange("scopeNote");
-        editorialNotesAccepted = hasNoteChange("editorialNote");
-        examplesAccepted = hasNoteChange("example");
-        historyAccepted = hasNoteChange("historyNote");
+        if ("ENVOYER".equals(selectedProposition.status())) {
+            propositionMutationService.markRead(selectedProposition.id());
+            selectedProposition = propositionReadService.findDetail(selectedProposition.id());
+        }
+
+        selectedDraft = propositionDraftService.loadDraftChanges(selectedProposition.id());
+        initAcceptanceDefaults();
+        loadPropositionList();
+        refreshPendingCount();
     }
 
-    private boolean hasNoteChange(String noteTypeCode) {
-        return selectedDraft != null && selectedDraft.getNoteChange(noteTypeCode) != null;
+    public void clearConsultation() {
+        consultation = false;
+        selectedProposition = null;
+        selectedDraft = null;
+        noteChangeEntries = Collections.emptyList();
+        reviewComment = "";
+        confirmMessage = null;
+        pendingAction = null;
+        resetAcceptanceFlags();
+    }
+
+    private void initAcceptanceDefaults() {
+        resetAcceptanceFlags();
+        if (selectedDraft == null) {
+            noteChangeEntries = Collections.emptyList();
+            return;
+        }
+
+        prefTermeAccepted = selectedDraft.getPreferredLabelChange() != null;
+        varianteAccepted = CollectionUtils.isNotEmpty(selectedDraft.getSynonymChanges());
+        traductionAccepted = CollectionUtils.isNotEmpty(selectedDraft.getTranslationChanges());
+
+        List<NoteReviewEntry> entries = new ArrayList<>();
+        for (PropositionFieldChange change : selectedDraft.getNoteChanges().values()) {
+            if (change == null) {
+                continue;
+            }
+            entries.add(new NoteReviewEntry(change, messageKeyFor(change.category()), true));
+        }
+        noteChangeEntries = entries;
+    }
+
+    private void resetAcceptanceFlags() {
+        prefTermeAccepted = false;
+        varianteAccepted = false;
+        traductionAccepted = false;
+    }
+
+    private static String messageKeyFor(PropositionFieldCategory category) {
+        return switch (category) {
+            case DEFINITION -> "rightbody.concept.definition";
+            case CHANGE_NOTE -> "rightbody.concept.change_note";
+            case SCOPE -> "rightbody.concept.scope_note";
+            case EDITORIAL_NOTE -> "rightbody.concept.editorial_note";
+            case EXAMPLE -> "rightbody.concept.example_note";
+            case HISTORY -> "rightbody.concept.history_note";
+            default -> "rightbody.concept.note";
+        };
+    }
+
+    public boolean isShowButtonDecision() {
+        if (selectedProposition == null) {
+            return false;
+        }
+        String status = selectedProposition.status();
+        return "LU".equalsIgnoreCase(status) || "ENVOYER".equalsIgnoreCase(status);
+    }
+
+    /**
+     * Admin (ou super-admin) autre que l'auteur : peut décider / supprimer.
+     */
+    public boolean isCanMakeAction() {
+        if (selectedProposition == null || !userSession.isLoggedIn()) {
+            return false;
+        }
+        if (isSameUser()) {
+            return false;
+        }
+        return userSession.isSuperAdmin() || isManagerOnCurrentThesaurus();
+    }
+
+    public boolean isSameUser() {
+        if (selectedProposition == null || StringUtils.isBlank(userSession.getCurrentUserEmail())) {
+            return false;
+        }
+        return userSession.getCurrentUserEmail().equalsIgnoreCase(selectedProposition.authorEmail());
+    }
+
+    public void prepareConfirm(String action) {
+        pendingAction = action;
+        confirmMessage = resolveConfirmMessage(action);
+        PrimeFaces.current().executeScript("PF('v2PropositionConfirmDialog').show();");
+    }
+
+    public void executePendingAction() {
+        if (StringUtils.isBlank(pendingAction)) {
+            return;
+        }
+        switch (pendingAction) {
+            case "approuverProposition" -> approveSelected();
+            case "refuserProposition" -> refuseSelected();
+            case "supprimerProposition" -> deleteSelected();
+            default -> {
+            }
+        }
+        pendingAction = null;
+        confirmMessage = null;
+    }
+
+    private String resolveConfirmMessage(String action) {
+        String key = switch (action) {
+            case "approuverProposition" -> "rightbody.proposal.confirmValidateProposal";
+            case "refuserProposition" -> "rightbody.proposal.confirmRejectProposal";
+            case "supprimerProposition" -> "rightbody.proposal.confirmDeleteProposal";
+            default -> "rightbody.proposal.confirmCancelProposal";
+        };
+        return localeBean.getMsg(key);
     }
 
     public void approveSelected() {
@@ -148,11 +253,6 @@ public class PropositionBean implements Serializable {
         }
 
         if (selectedDraft != null && !selectedDraft.isEmpty()) {
-            var acceptance = new PropositionAcceptance(
-                    prefTermeAccepted, varianteAccepted, traductionAccepted,
-                    noteAccepted, definitionAccepted, changeNoteAccepted, scopeAccepted,
-                    editorialNotesAccepted, examplesAccepted, historyAccepted
-            );
             var errors = propositionDraftService.applyAcceptedChanges(
                     selectedDraft,
                     selectedProposition.thesaurusId(),
@@ -160,7 +260,7 @@ public class PropositionBean implements Serializable {
                     selectedProposition.lang(),
                     userSession.getCurrentUserId(),
                     userSession.getCurrentUsername(),
-                    acceptance
+                    buildAcceptance()
             );
             errors.forEach(MessageUtils::showErrorMessage);
         }
@@ -200,21 +300,51 @@ public class PropositionBean implements Serializable {
         finishReview();
     }
 
-    private void finishReview() {
-        selectedProposition = null;
-        selectedDraft = null;
-        reviewComment = "";
-        refresh();
-        PrimeFaces.current().ajax().update(":v2ListPropositionsPanel", ":containerIndex:header:v2NotificationProp");
+    private PropositionAcceptance buildAcceptance() {
+        boolean note = false;
+        boolean definition = false;
+        boolean changeNote = false;
+        boolean scope = false;
+        boolean editorial = false;
+        boolean example = false;
+        boolean history = false;
+
+        for (NoteReviewEntry entry : noteChangeEntries) {
+            if (entry == null || !entry.isAccepted() || entry.getChange() == null) {
+                continue;
+            }
+            switch (entry.getChange().category()) {
+                case DEFINITION -> definition = true;
+                case CHANGE_NOTE -> changeNote = true;
+                case SCOPE -> scope = true;
+                case EDITORIAL_NOTE -> editorial = true;
+                case EXAMPLE -> example = true;
+                case HISTORY -> history = true;
+                default -> note = true;
+            }
+        }
+
+        return new PropositionAcceptance(
+                prefTermeAccepted,
+                varianteAccepted,
+                traductionAccepted,
+                note,
+                definition,
+                changeNote,
+                scope,
+                editorial,
+                example,
+                history
+        );
     }
 
-    public void openProposition(PropositionSummary proposition) throws IOException {
-        if (proposition == null || StringUtils.isAnyBlank(proposition.thesaurusId(), proposition.conceptId())) {
-            return;
-        }
-        ExternalContext context = FacesContext.getCurrentInstance().getExternalContext();
-        context.redirect(context.getRequestContextPath()
-                + "/v2/thesaurus?idt=" + proposition.thesaurusId().trim()
-                + "&idc=" + proposition.conceptId().trim());
+    private void finishReview() {
+        clearConsultation();
+        refresh();
+        PrimeFaces.current().ajax().update(
+                ":v2ListPropositionsPanel",
+                ":v2PropositionListBar",
+                "@([id$=v2NotificationProp])"
+        );
     }
 }

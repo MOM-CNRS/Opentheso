@@ -1,0 +1,134 @@
+<ui:fragment xmlns="http://www.w3.org/1999/xhtml"
+             xmlns:ui="http://xmlns.jcp.org/jsf/facelets"
+             xmlns:p="http://primefaces.org/ui"
+             xmlns:h="http://xmlns.jcp.org/jsf/html">
+
+    <div class="card mb-4 py-3 border-left-success" style="margin:10px;">
+        <div class="list-group" style="margin-top:-10px; margin-bottom:-10px;">
+
+            <!-- Terme préférentiel -->
+            <div class="list-group-item list-group-item-action" style="padding-top:-3px; padding-bottom:-3px;">
+                <div class="row" style="margin-left:0;">
+                    <div class="col-xl-3 col-lg-4 col-md-5 col-sm-5">
+                        <h:outputText value=" #{v2LocaleBean.getMsg('rightbody.concept.preferred_term')}"
+                                      title="#{v2LocaleBean.getMsg('rightbody.concept.tooltip_preferred_term')}"
+                                      style="font-size:14px; font-weight:bold; color:#8f8f8f; margin-left:5px;"/>
+                    </div>
+                    <div class="col-xl-9 col-lg-8 col-md-7 col-sm-7" style="margin-left:-10px;">
+                        <p:menuButton icon="fas fa-cog"
+                                      style="margin-top:-4px; font-size:10px !important; margin-left:-37px;">
+                            <p:menuitem value="#{v2LocaleBean.getMsg('rightbody.concept.rename_concept')}"
+                                        icon="fas fa-edit"
+                                        process="@this"
+                                        actionListener="#{v2PropositionSubmitBean.prepareRenamePreferredLabel()}"
+                                        update=":containerIndex:v2PropRenameLabelDlg"
+                                        oncomplete="PF('v2PropRenameLabel').show();"/>
+                        </p:menuButton>
+
+                        <h:outputText value="#{v2PropositionSubmitBean.currentPreferredLabel} (#{v2ThesaurusBrowseBean.selectedConcept.summary.lang})"
+                                      rendered="#{not v2PropositionSubmitBean.preferredLabelChanged}"
+                                      style="font-size:1.1rem; letter-spacing:.2px; color:#666; font-weight:bold;"/>
+
+                        <h:panelGroup rendered="#{v2PropositionSubmitBean.preferredLabelChanged}">
+                            <h:outputText value="#{v2PropositionSubmitBean.currentPreferredLabel} (#{v2ThesaurusBrowseBean.selectedConcept.summary.lang})"
+                                          style="font-size:0.8rem; text-decoration:line-through; letter-spacing:.2px; color:#666;"/>
+                            <h:outputText value="#{v2PropositionSubmitBean.proposedPreferredLabel} (#{v2ThesaurusBrowseBean.selectedConcept.summary.lang})"
+                                          style="font-size:1.1rem; margin-left:10px; letter-spacing:.2px; color:#43B572; font-weight:bold;"/>
+                        </h:panelGroup>
+                    </div>
+                </div>
+            </div>
+
+            <!-- Variantes / synonymes -->
+            <div class="list-group-item list-group-item-action" style="padding-top:-3px; padding-bottom:-3px;">
+                <div class="row" style="margin-left:0;">
+                    <div class="col-xl-3 col-lg-4 col-md-5 col-sm-5">
+                        <h:outputText value=" #{v2LocaleBean.getMsg('rightbody.concept.synonym')}"
+                                      style="font-size:14px; font-weight:bold; color:#8f8f8f; margin-left:5px;"/>
+                    </div>
+                    <div class="col-xl-9 col-lg-8 col-md-7 col-sm-7" style="margin-left:-10px;">
+                        <p:menuButton icon="fas fa-cog" style="margin-top:-4px; margin-left:-37px;">
+                            <p:menuitem value="#{v2LocaleBean.getMsg('rightbody.concept.add_synonym')}"
+                                        icon="fas fa-plus"
+                                        process="@this"
+                                        actionListener="#{v2PropositionSubmitBean.prepareAddSynonym()}"
+                                        update=":containerIndex:v2PropAddSynonymDlg"
+                                        oncomplete="PF('v2PropAddSynonym').show();"/>
+                            <p:menuitem value="#{v2LocaleBean.getMsg('rightbody.concept.modify_synonym')}"
+                                        icon="fas fa-edit"
+                                        process="@this"
+                                        disabled="#{v2PropositionSubmitBean.synonymMenuDisabled}"
+                                        update=":containerIndex:v2PropRenameSynonymDlg"
+                                        oncomplete="PF('v2PropRenameSynonym').show();"/>
+                            <p:menuitem value="#{v2LocaleBean.getMsg('rightbody.concept.delete_synonym')}"
+                                        icon="fas fa-minus"
+                                        process="@this"
+                                        disabled="#{v2PropositionSubmitBean.synonymMenuDisabled}"
+                                        update=":containerIndex:v2PropDeleteSynonymDlg"
+                                        oncomplete="PF('v2PropDeleteSynonym').show();"/>
+                        </p:menuButton>
+
+                        <h:panelGroup rendered="#{empty v2PropositionSubmitBean.synonymOptions}">
+                            <h:outputText value="....." title="#{v2LocaleBean.getMsg('rightbody.concept.no_value')}"
+                                          style="font-size:14px;"/>
+                        </h:panelGroup>
+
+                        <h:panelGroup rendered="#{not empty v2PropositionSubmitBean.synonymOptions}">
+                            <ui:repeat var="em" value="#{v2PropositionSubmitBean.synonymOptions}">
+                                <h:panelGroup rendered="#{!em.hidden and !em.toAdd and !em.toRemove and !em.toUpdate}">
+                                    <h:outputText value="[#{em.lang.toUpperCase()}] " style="color:#666; font-size:14px; font-weight:bold;"/>
+                                    <h:outputText value="#{em.value}" style="color:#666; font-size:14px;"/><br/>
+                                </h:panelGroup>
+                                <h:panelGroup rendered="#{!em.hidden and em.toAdd}">
+                                    <h:outputText value="[#{em.lang.toUpperCase()}] " style="font-size:14px; color:green; font-weight:bold;"/>
+                                    <h:outputText value="#{em.value}" style="font-size:14px; color:green;"/><br/>
+                                </h:panelGroup>
+                                <h:panelGroup rendered="#{!em.hidden and em.toUpdate}">
+                                    <h:outputText value="[#{em.lang.toUpperCase()}] " style="font-size:14px; color:blue; font-weight:bold;"/>
+                                    <h:outputText value="#{em.value} " style="font-size:14px; color:blue;"/>
+                                    <h:outputText value="(#{em.oldValue})" style="font-size:14px; color:blue;"/><br/>
+                                </h:panelGroup>
+                                <h:panelGroup rendered="#{!em.hidden and em.toRemove}">
+                                    <h:outputText value="[#{em.lang.toUpperCase()}] "
+                                                  style="font-size:14px; color:red; font-weight:bold; text-decoration:line-through;"/>
+                                    <h:outputText value="#{em.value}"
+                                                  style="font-size:14px; color:red; text-decoration:line-through;"/><br/>
+                                </h:panelGroup>
+                            </ui:repeat>
+
+                            <ui:repeat var="em2" value="#{v2PropositionSubmitBean.synonymOptions}">
+                                <h:panelGroup rendered="#{em2.hidden and !em2.toAdd and !em2.toRemove and !em2.toUpdate}">
+                                    <h:outputText value=" #{v2LocaleBean.getMsg('rightbody.concept.hidden_synonym')} : "
+                                                  style="font-size:12px; color:#FF7979; font-style:italic;"/>
+                                    <h:outputText value="[#{em2.lang.toUpperCase()}] " style="color:#666; font-size:14px; font-weight:bold;"/>
+                                    <h:outputText value=" #{em2.value}" style="color:#666; font-size:14px;"/><br/>
+                                </h:panelGroup>
+                                <h:panelGroup rendered="#{em2.hidden and em2.toAdd}">
+                                    <h:outputText value="#{v2LocaleBean.getMsg('rightbody.concept.hidden_synonym')} : "
+                                                  style="font-size:12px; color:#FF7979; font-style:italic;"/>
+                                    <h:outputText value="[#{em2.lang.toUpperCase()}] " style="font-size:14px; color:green; font-weight:bold;"/>
+                                    <h:outputText value="#{em2.value}" style="font-size:14px; color:green;"/><br/>
+                                </h:panelGroup>
+                                <h:panelGroup rendered="#{em2.hidden and em2.toUpdate}">
+                                    <h:outputText value="#{v2LocaleBean.getMsg('rightbody.concept.hidden_synonym')} : "
+                                                  style="font-size:12px; color:#FF7979; font-style:italic;"/>
+                                    <h:outputText value="[#{em2.lang.toUpperCase()}] " style="font-size:14px; color:blue; font-weight:bold;"/>
+                                    <h:outputText value=" #{em2.value} " style="font-size:14px; color:blue;"/>
+                                    <h:outputText value="(#{em2.oldValue})" style="font-size:14px; color:blue;"/><br/>
+                                </h:panelGroup>
+                                <h:panelGroup rendered="#{em2.hidden and em2.toRemove}">
+                                    <h:outputText value="#{v2LocaleBean.getMsg('rightbody.concept.hidden_synonym')} : "
+                                                  style="font-size:12px; color:#FF7979; font-style:italic;"/>
+                                    <h:outputText value="[#{em2.lang.toUpperCase()}] "
+                                                  style="font-size:14px; color:red; font-weight:bold; text-decoration:line-through;"/>
+                                    <h:outputText value=" #{em2.value}"
+                                                  style="font-size:14px; color:red; text-decoration:line-through;"/><br/>
+                                </h:panelGroup>
+                            </ui:repeat>
+                        </h:panelGroup>
+                    </div>
+                </div>
+            </div>
+        </div>
+    </div>
+</ui:fragment>

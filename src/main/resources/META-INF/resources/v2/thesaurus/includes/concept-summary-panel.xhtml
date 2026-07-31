@@ -450,6 +450,18 @@
 
     <ui:include src="concept-history-dialog.xhtml"/>
 
+    <!-- Proposition d'amélioration : bouton en bas du détail (comme legacy) -->
+    <h:panelGroup rendered="#{v2ThesaurusBrowseBean.propositionAuthorized}">
+      <div class="col-12" style="text-align:right; padding:0 20px 20px 20px;">
+        <p:commandButton icon="pi pi-send"
+                         value="#{v2LocaleBean.getMsg('rightbody.suggestImprovement')}"
+                         styleClass="ui-button-success"
+                         process="@this"
+                         actionListener="#{v2ThesaurusBrowseBean.openNouvelleProposition()}"
+                         update=":containerIndex:formRightTab"/>
+      </div>
+    </h:panelGroup>
+
     <ui:include src="dialogs/concept-lifecycle-dialogs.xhtml"/>
     <ui:include src="dialogs/concept-relation-dialogs.xhtml"/>
     <ui:include src="dialogs/concept-lexical-dialogs.xhtml"/>

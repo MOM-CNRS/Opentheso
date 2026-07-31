@@ -6,8 +6,8 @@ import fr.cnrs.opentheso.models.alignment.NodeAlignment;
 import fr.cnrs.opentheso.repositories.AlignementRepository;
 import fr.cnrs.opentheso.repositories.AlignementSourceRepository;
 import fr.cnrs.opentheso.repositories.ThesaurusAlignementSourceRepository;
-import fr.cnrs.opentheso.services.AlignmentSourceService;
 import fr.cnrs.opentheso.v2.candidat.alignment.AlignmentAutoExternalSearch;
+import fr.cnrs.opentheso.v2.candidat.alignment.persistence.CandidatAutoAlignmentPersistence;
 import fr.cnrs.opentheso.v2.concept.alignment.model.AlignmentAdminRow;
 import fr.cnrs.opentheso.v2.concept.alignment.model.AlignmentProposition;
 import fr.cnrs.opentheso.v2.concept.alignment.model.AlignmentSourceItem;
@@ -18,6 +18,7 @@ import fr.cnrs.opentheso.v2.concept.write.persistence.BranchConceptSupport;
 import fr.cnrs.opentheso.v2.concept.write.service.ConceptAlignmentMutationService;
 import lombok.RequiredArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
+import org.apache.commons.collections4.CollectionUtils;
 import org.apache.commons.lang3.StringUtils;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
@@ -31,6 +32,10 @@ import java.util.LinkedHashMap;
 import java.util.List;
 import java.util.Map;
 import java.util.Set;
+import java.util.concurrent.Callable;
+import java.util.concurrent.ExecutorService;
+import java.util.concurrent.Executors;
+import java.util.concurrent.Future;
 
 @Slf4j
 @Service
@@ -44,9 +49,10 @@ public class ConceptAlignmentAdminService {
     private final AlignementRepository alignementRepository;
     private final AlignementSourceRepository alignementSourceRepository;
     private final ThesaurusAlignementSourceRepository thesaurusAlignementSourceRepository;
-    private final AlignmentSourceService alignmentSourceService;
     private final AlignmentAutoExternalSearch alignmentAutoExternalSearch;
     private final ConceptAlignmentMutationService conceptAlignmentMutationService;
+    private final CandidatAutoAlignmentPersistence candidatAutoAlignmentPersistence;
+    private final AlignmentPropositionEnricher alignmentPropositionEnricher;
 
     @Transactional(readOnly = true)
     public List<AlignmentAdminRow> loadBranchSummary(String thesaurusId, String rootConceptId, String lang) {
@@ -141,7 +147,10 @@ public class ConceptAlignmentAdminService {
             return;
         }
         if (selected) {
-            alignmentSourceService.addSourceAlignementToThesaurus(thesaurusId, sourceId);
+            thesaurusAlignementSourceRepository.save(ThesaurusAlignementSource.builder()
+                    .idAlignementSource(sourceId)
+                    .idThesaurus(thesaurusId)
+                    .build());
         } else {
             thesaurusAlignementSourceRepository.deleteByIdThesaurusAndIdAlignementSource(thesaurusId, sourceId);
         }
@@ -149,12 +158,35 @@ public class ConceptAlignmentAdminService {
 
     @Transactional
     public boolean deleteLocalSource(int sourceId) {
-        return alignmentSourceService.deleteAlignmentSource(sourceId);
+        try {
+            return alignementSourceRepository.deleteByIdAlignementSource(sourceId) > 0;
+        } catch (Exception ex) {
+            log.error("Erreur lors de la suppression de la source d'alignement {}", sourceId, ex);
+            return false;
+        }
     }
 
     @Transactional(readOnly = true)
     public List<AlignementSource> listActiveSources(String thesaurusId) {
-        return alignmentSourceService.getAlignementSources(thesaurusId);
+        if (StringUtils.isBlank(thesaurusId)) {
+            return List.of();
+        }
+        var projections = alignementSourceRepository.findAllByThesaurus(thesaurusId);
+        if (CollectionUtils.isEmpty(projections)) {
+            return List.of();
+        }
+        return projections.stream()
+                .map(element -> AlignementSource.builder()
+                        .id(element.getId())
+                        .source(element.getSource())
+                        .requete(element.getRequete())
+                        .typeRequete(element.getTypeRequete())
+                        .alignement_format(element.getAlignement_format())
+                        .description(element.getDescription())
+                        .source_filter(element.getSource_filter())
+                        .isGps(element.getGps())
+                        .build())
+                .toList();
     }
 
     @Transactional(readOnly = true)
@@ -166,9 +198,9 @@ public class ConceptAlignmentAdminService {
     }
 
     /**
-     * Recherche automatique sur la branche (mode propositions).
+     * Recherche automatique sur la branche (mode propositions), en parallèle.
+     * L'enrichissement (traductions / notes / images) est différé à la validation.
      */
-    @Transactional(readOnly = true)
     public List<AlignmentProposition> searchPropositions(
             String thesaurusId,
             String lang,
@@ -182,36 +214,156 @@ public class ConceptAlignmentAdminService {
         for (AlignmentAdminRow row : summaryRows) {
             concepts.putIfAbsent(row.conceptId(), row.conceptLabel());
         }
-        List<AlignmentProposition> propositions = new ArrayList<>();
+        if (concepts.isEmpty()) {
+            return List.of();
+        }
+
+        int poolSize = Math.min(8, Math.max(1, concepts.size()));
+        ExecutorService executor = Executors.newFixedThreadPool(poolSize);
+        List<Callable<List<AlignmentProposition>>> tasks = new ArrayList<>();
         for (Map.Entry<String, String> entry : concepts.entrySet()) {
             String conceptId = entry.getKey();
             String label = entry.getValue();
             if (StringUtils.isBlank(label)) {
                 continue;
             }
-            var outcome = alignmentAutoExternalSearch.search(
-                    source,
-                    new AlignmentAutoExternalSearch.SearchContext(
-                            thesaurusId, conceptId, label, lang, "", ""
-                    )
-            );
-            if (outcome.results() == null || outcome.results().isEmpty()) {
-                continue;
+            tasks.add(() -> searchPropositionsForConcept(thesaurusId, lang, conceptId, label, source));
+        }
+
+        List<AlignmentProposition> propositions = new ArrayList<>();
+        try {
+            List<Future<List<AlignmentProposition>>> futures = executor.invokeAll(tasks);
+            for (Future<List<AlignmentProposition>> future : futures) {
+                propositions.addAll(future.get());
             }
-            for (NodeAlignment hit : outcome.results()) {
-                propositions.add(AlignmentProposition.builder()
-                        .conceptId(conceptId)
-                        .localLabel(label)
-                        .targetLabel(StringUtils.defaultString(hit.getConcept_target()))
-                        .targetUri(StringUtils.defaultString(hit.getUri_target()))
-                        .targetDefinition(StringUtils.defaultString(hit.getDef_target()))
-                        .sourceName(source.getSource())
-                        .alignmentTypeId(hit.getAlignement_id_type() > 0 ? hit.getAlignement_id_type() : 1)
-                        .alreadyAligned(false)
-                        .build());
-            }
+        } catch (Exception ex) {
+            log.error("Recherche automatique d'alignements interrompue", ex);
+        } finally {
+            executor.shutdownNow();
         }
         return propositions;
+    }
+
+    public void enrichProposition(
+            AlignmentProposition proposition,
+            AlignementSource source,
+            String thesaurusId,
+            String lang
+    ) {
+        alignmentPropositionEnricher.enrich(proposition, source, thesaurusId, lang);
+    }
+
+    /**
+     * Persiste l'alignement choisi et les enrichissements cochés.
+     */
+    @Transactional
+    public boolean acceptProposition(
+            String thesaurusId,
+            AlignmentProposition proposition,
+            int userId,
+            String contributorName
+    ) {
+        if (proposition == null
+                || StringUtils.isAnyBlank(thesaurusId, proposition.getConceptId(), proposition.getTargetUri())) {
+            return false;
+        }
+
+        int typeId = proposition.getAlignmentTypeId() > 0 ? proposition.getAlignmentTypeId() : 1;
+        if (proposition.getSourceId() > 0) {
+            if (!candidatAutoAlignmentPersistence.addAlignment(
+                    userId,
+                    proposition.getTargetLabel(),
+                    proposition.getSourceName(),
+                    proposition.getTargetUri(),
+                    typeId,
+                    proposition.getConceptId(),
+                    thesaurusId,
+                    proposition.getSourceId())) {
+                return false;
+            }
+        } else {
+            MutationResult alignmentResult = conceptAlignmentMutationService.addManualAlignment(
+                    new AddManualAlignmentCommand(
+                            thesaurusId,
+                            proposition.getConceptId(),
+                            typeId,
+                            proposition.getTargetUri(),
+                            proposition.getSourceName(),
+                            userId,
+                            StringUtils.defaultString(contributorName)
+                    )
+            );
+            if (alignmentResult == null || !alignmentResult.success()) {
+                return false;
+            }
+        }
+
+        if (!candidatAutoAlignmentPersistence.addSelectedTranslations(
+                thesaurusId, proposition.getConceptId(), userId, proposition.getTraductions())) {
+            return false;
+        }
+        if (!candidatAutoAlignmentPersistence.addSelectedDefinitions(
+                proposition.getConceptId(),
+                thesaurusId,
+                userId,
+                proposition.getSourceName(),
+                proposition.getDefinitions())) {
+            return false;
+        }
+        if (!candidatAutoAlignmentPersistence.addSelectedImages(
+                proposition.getConceptId(),
+                thesaurusId,
+                userId,
+                proposition.getLocalLabel(),
+                proposition.getSourceName(),
+                proposition.getImages())) {
+            return false;
+        }
+        if ("GeoNames".equalsIgnoreCase(proposition.getSourceName())
+                && (proposition.getLatitude() != 0 || proposition.getLongitude() != 0)) {
+            candidatAutoAlignmentPersistence.insertGpsCoordinates(
+                    proposition.getConceptId(),
+                    thesaurusId,
+                    proposition.getLatitude(),
+                    proposition.getLongitude());
+        }
+        candidatAutoAlignmentPersistence.touchConcept(thesaurusId, proposition.getConceptId(), userId);
+        return true;
+    }
+
+    private List<AlignmentProposition> searchPropositionsForConcept(
+            String thesaurusId,
+            String lang,
+            String conceptId,
+            String label,
+            AlignementSource source
+    ) {
+        var outcome = alignmentAutoExternalSearch.search(
+                source,
+                new AlignmentAutoExternalSearch.SearchContext(
+                        thesaurusId, conceptId, label, lang, "", ""
+                )
+        );
+        if (outcome.results() == null || outcome.results().isEmpty()) {
+            return List.of();
+        }
+        List<AlignmentProposition> hits = new ArrayList<>();
+        for (NodeAlignment hit : outcome.results()) {
+            hits.add(AlignmentProposition.builder()
+                    .conceptId(conceptId)
+                    .localLabel(label)
+                    .targetLabel(StringUtils.defaultString(hit.getConcept_target()))
+                    .targetUri(StringUtils.defaultString(hit.getUri_target()))
+                    .targetDefinition(StringUtils.defaultString(hit.getDef_target()))
+                    .sourceName(source.getSource())
+                    .sourceId(source.getId())
+                    .alignmentTypeId(hit.getAlignement_id_type() > 0 ? hit.getAlignement_id_type() : 1)
+                    .alreadyAligned(false)
+                    .latitude(hit.getLat())
+                    .longitude(hit.getLng())
+                    .build());
+        }
+        return hits;
     }
 
     /**
@@ -261,6 +413,7 @@ public class ConceptAlignmentAdminService {
                             : StringUtils.defaultString(existing.targetUri()))
                     .targetDefinition(best != null ? StringUtils.defaultString(best.getDef_target()) : "")
                     .sourceName(source.getSource())
+                    .sourceId(source.getId())
                     .alignmentTypeId(existing.typeId() > 0 ? existing.typeId() : 1)
                     .alreadyAligned(true)
                     .build());
@@ -369,7 +522,29 @@ public class ConceptAlignmentAdminService {
                 .alignement_format("skos")
                 .source_filter("Opentheso")
                 .build();
-        if (!alignmentSourceService.addNewAlignmentSource(alignementSource, thesaurusId, userId)) {
+        try {
+            var saved = alignementSourceRepository.save(fr.cnrs.opentheso.entites.AlignementSource.builder()
+                    .source(alignementSource.getSource())
+                    .requete(alignementSource.getRequete())
+                    .typeRqt(alignementSource.getTypeRequete())
+                    .alignementFormat(alignementSource.getAlignement_format())
+                    .description(alignementSource.getDescription())
+                    .idUser(userId)
+                    .gps(false)
+                    .sourceFilter(StringUtils.isEmpty(alignementSource.getSource_filter())
+                            ? "Opentheso"
+                            : alignementSource.getSource_filter())
+                    .isGlobal(false)
+                    .idThesaurusOwner(thesaurusId)
+                    .build());
+            if (StringUtils.isNotBlank(thesaurusId) && saved.getId() != null) {
+                thesaurusAlignementSourceRepository.save(ThesaurusAlignementSource.builder()
+                        .idAlignementSource(saved.getId())
+                        .idThesaurus(thesaurusId)
+                        .build());
+            }
+        } catch (Exception ex) {
+            log.error("Erreur lors de l'ajout de la source Opentheso", ex);
             return "Erreur côté base de données !";
         }
         return null;

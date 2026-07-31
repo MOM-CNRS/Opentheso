@@ -312,6 +312,8 @@ class PropositionSubmitBeanTest {
     @Test
     void submit_rejectsBlankComment() {
         when(conceptSelectionContext.hasSelection()).thenReturn(true);
+        bean.setAuthorName("Author");
+        bean.setAuthorEmail("a@b.fr");
         bean.setComment(" ");
 
         bean.submit();
@@ -323,6 +325,7 @@ class PropositionSubmitBeanTest {
     @Test
     void submit_rejectsBlankAuthorEmail() {
         when(conceptSelectionContext.hasSelection()).thenReturn(true);
+        bean.setAuthorName("Author");
         bean.setComment("A comment");
         bean.setAuthorEmail(" ");
 
@@ -337,6 +340,7 @@ class PropositionSubmitBeanTest {
         when(conceptSelectionContext.hasSelection()).thenReturn(true);
         when(conceptSelectionContext.getSummary()).thenReturn(SUMMARY);
         when(thesaurusContext.resolveThesaurusId()).thenReturn("TH1");
+        bean.setAuthorName("Author");
         bean.setComment("A comment");
         bean.setAuthorEmail("a@b.fr");
         when(propositionMutationService.submitDraft(any())).thenReturn(Optional.empty());
@@ -352,6 +356,7 @@ class PropositionSubmitBeanTest {
         when(conceptSelectionContext.hasSelection()).thenReturn(true);
         when(conceptSelectionContext.getSummary()).thenReturn(SUMMARY);
         when(thesaurusContext.resolveThesaurusId()).thenReturn("TH1");
+        bean.setAuthorName("Author");
         bean.setComment("A comment");
         bean.setAuthorEmail("a@b.fr");
         when(propositionMutationService.submitDraft(any())).thenReturn(Optional.of(42));

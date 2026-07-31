@@ -10,9 +10,6 @@ import fr.cnrs.opentheso.v2.concept.alignment.service.ConceptAlignmentAdminServi
 import fr.cnrs.opentheso.v2.concept.model.ConceptAlignment;
 import fr.cnrs.opentheso.v2.concept.session.ConceptNavigationSupport;
 import fr.cnrs.opentheso.v2.concept.session.ConceptSelectionContext;
-import fr.cnrs.opentheso.v2.concept.write.model.MutationResult;
-import fr.cnrs.opentheso.v2.concept.write.model.command.AddManualAlignmentCommand;
-import fr.cnrs.opentheso.v2.concept.write.service.ConceptAlignmentMutationService;
 import fr.cnrs.opentheso.v2.concept.write.ui.ConceptAlignmentEditorBean;
 import fr.cnrs.opentheso.v2.setting.ui.ThesaurusContext;
 import fr.cnrs.opentheso.v2.shared.ui.UserSession;
@@ -41,7 +38,6 @@ import java.util.List;
 public class ConceptAlignmentAdminBean implements Serializable {
 
     private final ConceptAlignmentAdminService conceptAlignmentAdminService;
-    private final ConceptAlignmentMutationService conceptAlignmentMutationService;
     private final ConceptAlignmentEditorBean conceptAlignmentEditorBean;
     private final ObjectProvider<ConceptAlignmentSearchBean> conceptAlignmentSearchBean;
     private final ConceptNavigationSupport conceptNavigationSupport;
@@ -54,14 +50,17 @@ public class ConceptAlignmentAdminBean implements Serializable {
     private List<AlignmentAdminRow> summaryRows = Collections.emptyList();
     private List<AlignmentAdminRow> filteredRows;
     private List<AlignmentSourceItem> sourceItems = Collections.emptyList();
-    private List<AlignmentProposition> propositions = Collections.emptyList();
-    private List<AlignmentProposition> selectedPropositions = new ArrayList<>();
+    private List<AlignmentProposition> propositions = new ArrayList<>();
+    /** Sélection unique (radio), comme le legacy. */
+    private AlignmentProposition selectedProposition;
+    /** Proposition en cours de validation (dialog enrichissement). */
+    private AlignmentProposition propositionToValidate;
+    private int activeSearchSourceId;
     private List<AlignmentSourceItem> selectableSources = Collections.emptyList();
     private Integer selectedSourceIdForSearch;
     private String pendingSearchMode;
     private String selectedSourceName;
 
-    // formulaire ajout source Opentheso
     private String newSourceName;
     private String newSourceUri;
     private String newSourceThesaurusId;
@@ -75,8 +74,7 @@ public class ConceptAlignmentAdminBean implements Serializable {
         rootConceptId = conceptSelectionContext.getSummary().conceptId();
         reloadSummary();
         mode = AlignmentWorkbenchMode.SUMMARY;
-        propositions = Collections.emptyList();
-        selectedPropositions = new ArrayList<>();
+        resetPropositionsState();
     }
 
     public void clear() {
@@ -84,8 +82,7 @@ public class ConceptAlignmentAdminBean implements Serializable {
         summaryRows = Collections.emptyList();
         filteredRows = null;
         sourceItems = Collections.emptyList();
-        propositions = Collections.emptyList();
-        selectedPropositions = new ArrayList<>();
+        resetPropositionsState();
         mode = AlignmentWorkbenchMode.SUMMARY;
     }
 
@@ -130,6 +127,13 @@ public class ConceptAlignmentAdminBean implements Serializable {
         return conceptAlignmentAdminService.countAlignmentsForConcept(summaryRows, conceptId);
     }
 
+    public int getPropositionCountForConcept(String conceptId) {
+        if (StringUtils.isBlank(conceptId) || propositions == null) {
+            return 0;
+        }
+        return (int) propositions.stream().filter(item -> conceptId.equals(item.getConceptId())).count();
+    }
+
     public void checkUrls(String conceptId) {
         int invalid = conceptAlignmentAdminService.checkUrlsForConcept(
                 thesaurusContext.resolveThesaurusId(), conceptId, summaryRows);
@@ -171,8 +175,7 @@ public class ConceptAlignmentAdminBean implements Serializable {
 
     public void backToSummary() {
         mode = AlignmentWorkbenchMode.SUMMARY;
-        propositions = Collections.emptyList();
-        selectedPropositions = new ArrayList<>();
+        resetPropositionsState();
         reloadSummary();
     }
 
@@ -218,61 +221,102 @@ public class ConceptAlignmentAdminBean implements Serializable {
         PrimeFaces.current().executeScript("PF('v2SelectAlignmentSource').hide();");
     }
 
-    public void acceptSelectedPropositions() {
-        if (selectedPropositions == null || selectedPropositions.isEmpty()) {
-            MessageUtils.showWarnMessage("Aucun alignement sélectionné.");
+    /**
+     * Fermer : retire toutes les propositions du concept (sans écriture en base).
+     */
+    public void closePropositionsForConcept(String conceptId) {
+        if (StringUtils.isBlank(conceptId) || propositions == null) {
             return;
         }
-        acceptPropositions(List.copyOf(selectedPropositions));
-        backToSummary();
+        propositions = new ArrayList<>(propositions.stream()
+                .filter(item -> !conceptId.equals(item.getConceptId()))
+                .toList());
+        if (selectedProposition != null && conceptId.equals(selectedProposition.getConceptId())) {
+            selectedProposition = null;
+        }
+        if (propositions.isEmpty()) {
+            backToSummary();
+        }
+    }
+
+    /**
+     * Valider : ouvre le dialog d'enrichissement pour la proposition sélectionnée du concept.
+     */
+    public void prepareValidateForConcept(String conceptId) {
+        if (StringUtils.isBlank(conceptId)) {
+            return;
+        }
+        if (selectedProposition == null
+                || !conceptId.equals(selectedProposition.getConceptId())) {
+            MessageUtils.showWarnMessage("Veuillez sélectionner un alignement pour ce concept.");
+            return;
+        }
+        AlignementSource source = resolveActiveSearchSource();
+        if (source == null) {
+            MessageUtils.showErrorMessage("Source d'alignement introuvable.");
+            return;
+        }
+        propositionToValidate = selectedProposition;
+        conceptAlignmentAdminService.enrichProposition(
+                propositionToValidate,
+                source,
+                thesaurusContext.resolveThesaurusId(),
+                thesaurusContext.resolveWorkLanguage()
+        );
+        PrimeFaces.current().executeScript("PF('v2ValidateAlignmentProposition').show();");
+        PrimeFaces.current().ajax().update(":containerIndex:v2ValidateAlignmentPropositionDlg");
+    }
+
+    /**
+     * Confirmation du dialog : persiste alignement + enrichissements cochés.
+     */
+    public void confirmValidateProposition() {
+        if (propositionToValidate == null) {
+            return;
+        }
+        Integer userId = userSession.getCurrentUserId();
+        if (userId == null) {
+            MessageUtils.showErrorMessage("Action non autorisée");
+            return;
+        }
+        boolean ok = conceptAlignmentAdminService.acceptProposition(
+                thesaurusContext.resolveThesaurusId(),
+                propositionToValidate,
+                userId,
+                StringUtils.defaultString(userSession.getCurrentUsername())
+        );
+        if (!ok) {
+            MessageUtils.showErrorMessage("L'ajout de l'alignement a échoué !");
+            return;
+        }
+        MessageUtils.showInformationMessage("Alignement ajouté avec succès");
+        String conceptId = propositionToValidate.getConceptId();
+        propositionToValidate = null;
+        selectedProposition = null;
+        closePropositionsForConcept(conceptId);
+        conceptNavigationSupport.openConcept(conceptId);
+        PrimeFaces.current().executeScript("PF('v2ValidateAlignmentProposition').hide();");
         PrimeFaces.current().ajax().update(":containerIndex:formRightTab :messageIndex");
+    }
+
+    public void cancelValidateProposition() {
+        propositionToValidate = null;
+        PrimeFaces.current().executeScript("PF('v2ValidateAlignmentProposition').hide();");
     }
 
     public void discardProposition(AlignmentProposition proposition) {
         if (proposition == null || propositions == null) {
             return;
         }
-        propositions = propositions.stream()
+        propositions = new ArrayList<>(propositions.stream()
                 .filter(item -> !(StringUtils.equals(item.getConceptId(), proposition.getConceptId())
                         && StringUtils.equals(item.getTargetUri(), proposition.getTargetUri())))
-                .toList();
-        selectedPropositions.removeIf(item ->
-                StringUtils.equals(item.getConceptId(), proposition.getConceptId())
-                        && StringUtils.equals(item.getTargetUri(), proposition.getTargetUri()));
-    }
-
-    public void closePropositionsForConcept(String conceptId) {
-        if (StringUtils.isBlank(conceptId) || propositions == null) {
-            return;
+                .toList());
+        if (selectedProposition != null
+                && StringUtils.equals(selectedProposition.getConceptId(), proposition.getConceptId())
+                && StringUtils.equals(selectedProposition.getTargetUri(), proposition.getTargetUri())) {
+            selectedProposition = null;
         }
-        propositions = propositions.stream()
-                .filter(item -> !conceptId.equals(item.getConceptId()))
-                .toList();
-        selectedPropositions.removeIf(item -> conceptId.equals(item.getConceptId()));
-        if (propositions.isEmpty()) {
-            backToSummary();
-        }
-    }
-
-    public void acceptPropositionsForConcept(String conceptId) {
-        if (StringUtils.isBlank(conceptId)) {
-            return;
-        }
-        List<AlignmentProposition> forConcept = propositions.stream()
-                .filter(item -> conceptId.equals(item.getConceptId()))
-                .toList();
-        if (forConcept.isEmpty()) {
-            return;
-        }
-        // si aucune sélection pour ce concept, tout accepter
-        List<AlignmentProposition> toAccept = selectedPropositions.stream()
-                .filter(item -> conceptId.equals(item.getConceptId()))
-                .toList();
-        if (toAccept.isEmpty()) {
-            toAccept = forConcept;
-        }
-        acceptPropositions(toAccept);
-        closePropositionsForConcept(conceptId);
     }
 
     public void replaceWithProposition(AlignmentProposition proposition) {
@@ -333,35 +377,6 @@ public class ConceptAlignmentAdminBean implements Serializable {
         PrimeFaces.current().executeScript("PF('v2AddAlignmentSource').hide();");
     }
 
-    private void acceptPropositions(List<AlignmentProposition> toAccept) {
-        Integer userId = userSession.getCurrentUserId();
-        if (userId == null) {
-            MessageUtils.showErrorMessage("Action non autorisée");
-            return;
-        }
-        int ok = 0;
-        for (AlignmentProposition proposition : toAccept) {
-            MutationResult result = conceptAlignmentMutationService.addManualAlignment(
-                    new AddManualAlignmentCommand(
-                            thesaurusContext.resolveThesaurusId(),
-                            proposition.getConceptId(),
-                            proposition.getAlignmentTypeId() > 0 ? proposition.getAlignmentTypeId() : 1,
-                            proposition.getTargetUri(),
-                            proposition.getSourceName(),
-                            userId,
-                            StringUtils.defaultString(userSession.getCurrentUsername())
-                    )
-            );
-            if (result != null && result.success()) {
-                ok++;
-            }
-        }
-        MessageUtils.showInformationMessage(ok + " alignement(s) ajouté(s)");
-        if (StringUtils.isNotBlank(rootConceptId)) {
-            conceptNavigationSupport.openConcept(rootConceptId);
-        }
-    }
-
     private void startSearchFlow(String searchMode) {
         if (!isReady()) {
             MessageUtils.showWarnMessage("Sélectionnez d'abord un concept dans l'arbre.");
@@ -404,20 +419,41 @@ public class ConceptAlignmentAdminBean implements Serializable {
         conceptAlignmentEditorBean.prepareManualAlignment();
         String lang = thesaurusContext.resolveWorkLanguage();
         String thesaurusId = thesaurusContext.resolveThesaurusId();
+        activeSearchSourceId = source.getId();
+        selectedSourceName = source.getSource();
+        selectedProposition = null;
+        propositionToValidate = null;
+
         if ("alignement-comparaison".equalsIgnoreCase(searchMode)) {
-            propositions = conceptAlignmentAdminService.searchComparisons(thesaurusId, lang, summaryRows, source);
+            propositions = new ArrayList<>(conceptAlignmentAdminService.searchComparisons(
+                    thesaurusId, lang, summaryRows, source));
             mode = AlignmentWorkbenchMode.COMPARISON;
         } else {
-            propositions = conceptAlignmentAdminService.searchPropositions(thesaurusId, lang, summaryRows, source);
+            propositions = new ArrayList<>(conceptAlignmentAdminService.searchPropositions(
+                    thesaurusId, lang, summaryRows, source));
             mode = AlignmentWorkbenchMode.PROPOSITIONS;
         }
-        selectedSourceName = source.getSource();
-        selectedPropositions = new ArrayList<>();
         if (propositions.isEmpty()) {
             MessageUtils.showErrorMessage("Aucun alignement trouvé !");
             mode = AlignmentWorkbenchMode.SUMMARY;
         }
         PrimeFaces.current().ajax().update(":containerIndex:formRightTab :messageIndex");
+    }
+
+    private void resetPropositionsState() {
+        propositions = new ArrayList<>();
+        selectedProposition = null;
+        propositionToValidate = null;
+        activeSearchSourceId = 0;
+        selectedSourceName = null;
+    }
+
+    private AlignementSource resolveActiveSearchSource() {
+        if (activeSearchSourceId <= 0) {
+            return null;
+        }
+        return conceptAlignmentAdminService.findActiveSource(
+                thesaurusContext.resolveThesaurusId(), activeSearchSourceId);
     }
 
     private ConceptAlignment toConceptAlignment(AlignmentAdminRow row) {

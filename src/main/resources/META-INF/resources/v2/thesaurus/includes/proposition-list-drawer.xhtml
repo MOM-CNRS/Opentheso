@@ -4,51 +4,80 @@
              xmlns:f="http://xmlns.jcp.org/jsf/core"
              xmlns:p="http://primefaces.org/ui">
 
-    <h:panelGroup class="notification-bar" id="v2PropositionListBar">
-        <button type="button" onclick="hideV2PropositionListBar()" style="margin: 10px;">Fermer →</button>
+    <h:panelGroup styleClass="notification-bar" id="v2PropositionListBar">
+        <button type="button" onclick="hideV2PropositionListBar()">Fermer →</button>
 
         <h:form id="v2ListPropositionsPanel">
+            <p:scrollPanel style="border:none; padding-left:10px; max-height:90vh; overflow-y:auto;" mode="native">
 
-            <div style="padding: 5px 15px;">
-                <p:selectOneButton value="#{v2PropositionBean.showAll}">
-                    <f:selectItem itemLabel="#{v2LocaleBean.getMsg('proposition.nouvelles')}" itemValue="#{false}"/>
-                    <f:selectItem itemLabel="#{v2LocaleBean.getMsg('proposition.toutes')}" itemValue="#{true}"/>
-                    <p:ajax event="change" listener="#{v2PropositionBean.toggleShowAll()}" update="v2ListPropositionsPanel"/>
-                </p:selectOneButton>
-            </div>
-
-            <p:scrollPanel style="border: none; padding-left: 10px; max-height: 82vh; overflow-y: auto;" mode="native">
+                <div style="width:100%; text-align:center;">
+                    <p:selectOneButton value="#{v2PropositionBean.showAll}" style="margin-bottom:5px;">
+                        <p:ajax update="v2ListPropositionsPanel" event="change"
+                                listener="#{v2PropositionBean.toggleShowAll()}"/>
+                        <f:selectItem itemLabel="#{v2LocaleBean.getMsg('proposal.news')}" itemValue="#{false}"/>
+                        <f:selectItem itemLabel="#{v2LocaleBean.getMsg('proposal.all')}" itemValue="#{true}"/>
+                    </p:selectOneButton>
+                </div>
 
                 <p:panel rendered="#{empty v2PropositionBean.propositions}"
-                         style="width: 100%; margin-top: 80px; text-align: center; color: #43B572">
+                         style="width:100%; margin-top:100px; text-align:center; color:#43B572;">
                     #{v2LocaleBean.getMsg('proposition.aucune_proposition')}
                 </p:panel>
 
-                <ui:repeat var="proposition" value="#{v2PropositionBean.propositions}">
-                    <div class="card py-3 border-left-success" style="margin-top: 5px;">
-                        <div class="list-group" style="margin-left: 10px">
+                <ui:repeat var="proposition" value="#{v2PropositionBean.propositions}"
+                           rendered="#{not empty v2PropositionBean.propositions}">
+                    <div class="card py-3 border-left-success"
+                         style="vertical-align:central; margin-top:5px; margin-bottom:0.2rem;">
+                        <div class="list-group" style="margin-top:-10px; margin-bottom:-5px; margin-left:10px;">
                             <div class="row">
                                 <div class="col-12">
-                                    <p:tag severity="success" value="#{proposition.thesaurusId()}" style="margin-right: 5px"/>
-                                    <p:tag severity="info" value="#{proposition.status()}" style="margin-right: 5px"/>
-                                    <p:commandLink value="#{proposition.conceptLabel()}"
-                                                   style="font-size: 14px; font-weight: bold; color: #8f8f8f"
-                                                   ajax="false"
-                                                   action="#{v2PropositionBean.openProposition(proposition)}"/>
+                                    <p:tag styleClass="p-mr-1" severity="success"
+                                           value="#{proposition.thesaurusId}" style="margin-right:5px;"/>
+
+                                    <h:panelGroup>
+                                        <img src="#{v2ThesaurusBrowseBean.getFlagImageUrl(proposition.flagCode)}"
+                                             width="20" height="15" style="margin-right:7px;" alt=""/>
+                                    </h:panelGroup>
+
+                                    <p:commandLink value="#{proposition.conceptLabel}"
+                                                   rendered="#{proposition.envoyer}"
+                                                   style="font-size:14px; font-weight:bold; color:#8f8f8f;"
+                                                   process="@this"
+                                                   actionListener="#{v2ThesaurusBrowseBean.openPropositionConsultation(proposition)}"
+                                                   update=":containerIndex:formRightTab @([id$=v2NotificationProp]) v2ListPropositionsPanel"
+                                                   oncomplete="hideV2PropositionListBar();"/>
+
+                                    <p:commandLink value="#{proposition.conceptLabel}"
+                                                   rendered="#{not proposition.envoyer}"
+                                                   style="font-size:14px; color:#8f8f8f;"
+                                                   process="@this"
+                                                   actionListener="#{v2ThesaurusBrowseBean.openPropositionConsultation(proposition)}"
+                                                   update=":containerIndex:formRightTab @([id$=v2NotificationProp]) v2ListPropositionsPanel"
+                                                   oncomplete="hideV2PropositionListBar();"/>
                                 </div>
                             </div>
-                            <div class="row">
-                                <div class="col-9">
-                                    <h:outputText value="#{proposition.publishedAt()} - #{proposition.authorName()}"
-                                                  style="font-size: 14px; color: #8f8f8f"/>
+                            <div class="row" style="margin-bottom:-4px;">
+                                <div class="col-10">
+                                    <h:outputText value="#{proposition.publishedAt} - #{proposition.authorName}"
+                                                  rendered="#{proposition.envoyer}"
+                                                  style="font-size:14px; font-weight:bold; color:#8f8f8f;"/>
+                                    <h:outputText value="#{proposition.publishedAt} - #{proposition.authorName}"
+                                                  rendered="#{not proposition.envoyer}"
+                                                  style="font-size:14px; color:#8f8f8f;"/>
                                 </div>
-                                <div class="col-3" style="text-align: right;">
-                                    <p:commandButton icon="pi pi-eye" styleClass="rounded-button ui-button-flat"
-                                                     title="#{v2LocaleBean.getMsg('proposition.consulter')}"
-                                                     process="@this"
-                                                     actionListener="#{v2PropositionBean.openReview(proposition)}"
-                                                     update=":v2ReviewPropositionForm"
-                                                     oncomplete="PF('v2ReviewProposition').show();"/>
+                                <div class="col-2">
+                                    <h:panelGroup rendered="#{proposition.envoyer}">
+                                        <i class="fa-solid fa-envelope" style="color:orange;"/>
+                                    </h:panelGroup>
+                                    <h:panelGroup rendered="#{proposition.lu}">
+                                        <i class="fa-solid fa-envelope-open-text"/>
+                                    </h:panelGroup>
+                                    <h:panelGroup rendered="#{proposition.approuver}">
+                                        <i class="fa-solid fa-thumbs-up" style="color:green;"/>
+                                    </h:panelGroup>
+                                    <h:panelGroup rendered="#{proposition.refuser}">
+                                        <i class="fa-solid fa-thumbs-down" style="color:red;"/>
+                                    </h:panelGroup>
                                 </div>
                             </div>
                         </div>
@@ -56,136 +85,5 @@
                 </ui:repeat>
             </p:scrollPanel>
         </h:form>
-
-        <p:dialog id="v2ReviewPropositionDlg" header="#{v2LocaleBean.getMsg('proposition.consulter')}"
-                  widgetVar="v2ReviewProposition" width="560" modal="true" resizable="false">
-            <h:form id="v2ReviewPropositionForm">
-                <h:panelGroup rendered="#{v2PropositionBean.selectedProposition != null}">
-                    <div class="row mb-2">
-                        <div class="col-12">
-                            <h:outputText value="#{v2PropositionBean.selectedProposition.conceptLabel}"
-                                          style="color: #C63632; font-weight: bold; font-size: 1.1rem;"/>
-                        </div>
-                    </div>
-                    <div class="row mb-2">
-                        <div class="col-4"><h:outputText value="#{v2LocaleBean.getMsg('profile.name')}"/></div>
-                        <div class="col-8"><h:outputText value="#{v2PropositionBean.selectedProposition.authorName} (#{v2PropositionBean.selectedProposition.authorEmail})"/></div>
-                    </div>
-                    <div class="row mb-2">
-                        <div class="col-4"><h:outputText value="#{v2LocaleBean.getMsg('proposition.commentaire')}"/></div>
-                        <div class="col-8"><h:outputText value="#{v2PropositionBean.selectedProposition.comment}" style="white-space: pre-wrap;"/></div>
-                    </div>
-                    <div class="row mb-3">
-                        <div class="col-4"><h:outputText value="#{v2LocaleBean.getMsg('proposition.reponse')}"/></div>
-                        <div class="col-8">
-                            <p:inputTextarea value="#{v2PropositionBean.reviewComment}" rows="4" style="width: 100%;" autoResize="false"/>
-                        </div>
-                    </div>
-
-                    <h:panelGroup rendered="#{v2PropositionBean.selectedDraft != null and not v2PropositionBean.selectedDraft.isEmpty()}">
-                        <p:separator/>
-                        <div class="row mb-2"><div class="col-12"><b>#{v2LocaleBean.getMsg('proposition.changes.title')}</b></div></div>
-
-                        <h:panelGroup rendered="#{v2PropositionBean.selectedDraft.preferredLabelChange != null}">
-                            <div class="row mb-1">
-                                <div class="col-1"><p:selectBooleanCheckbox value="#{v2PropositionBean.prefTermeAccepted}"/></div>
-                                <div class="col-11">#{v2LocaleBean.getMsg('proposition.accept.label')} : « #{v2PropositionBean.selectedDraft.preferredLabelChange.value} »</div>
-                            </div>
-                        </h:panelGroup>
-
-                        <h:panelGroup rendered="#{not empty v2PropositionBean.selectedDraft.synonymChanges}">
-                            <div class="row mb-1">
-                                <div class="col-1"><p:selectBooleanCheckbox value="#{v2PropositionBean.varianteAccepted}"/></div>
-                                <div class="col-11">
-                                    #{v2LocaleBean.getMsg('proposition.accept.synonyms')}
-                                    <ui:repeat var="change" value="#{v2PropositionBean.selectedDraft.synonymChanges}">
-                                        <div style="font-size: 12px; color: #8f8f8f;">[#{change.action}] #{change.value} (#{change.lang})</div>
-                                    </ui:repeat>
-                                </div>
-                            </div>
-                        </h:panelGroup>
-
-                        <h:panelGroup rendered="#{not empty v2PropositionBean.selectedDraft.translationChanges}">
-                            <div class="row mb-1">
-                                <div class="col-1"><p:selectBooleanCheckbox value="#{v2PropositionBean.traductionAccepted}"/></div>
-                                <div class="col-11">
-                                    #{v2LocaleBean.getMsg('proposition.accept.translations')}
-                                    <ui:repeat var="change" value="#{v2PropositionBean.selectedDraft.translationChanges}">
-                                        <div style="font-size: 12px; color: #8f8f8f;">[#{change.action}] #{change.value} (#{change.lang})</div>
-                                    </ui:repeat>
-                                </div>
-                            </div>
-                        </h:panelGroup>
-
-                        <ui:fragment rendered="#{v2PropositionBean.selectedDraft.getNoteChange('note') != null}">
-                            <div class="row mb-1">
-                                <div class="col-1"><p:selectBooleanCheckbox value="#{v2PropositionBean.noteAccepted}"/></div>
-                                <div class="col-11">#{v2LocaleBean.getMsg('proposition.accept.note')} : #{v2PropositionBean.selectedDraft.getNoteChange('note').value}</div>
-                            </div>
-                        </ui:fragment>
-
-                        <ui:fragment rendered="#{v2PropositionBean.selectedDraft.getNoteChange('definition') != null}">
-                            <div class="row mb-1">
-                                <div class="col-1"><p:selectBooleanCheckbox value="#{v2PropositionBean.definitionAccepted}"/></div>
-                                <div class="col-11">#{v2LocaleBean.getMsg('proposition.accept.definition')} : #{v2PropositionBean.selectedDraft.getNoteChange('definition').value}</div>
-                            </div>
-                        </ui:fragment>
-
-                        <ui:fragment rendered="#{v2PropositionBean.selectedDraft.getNoteChange('changeNote') != null}">
-                            <div class="row mb-1">
-                                <div class="col-1"><p:selectBooleanCheckbox value="#{v2PropositionBean.changeNoteAccepted}"/></div>
-                                <div class="col-11">#{v2LocaleBean.getMsg('proposition.accept.changeNote')} : #{v2PropositionBean.selectedDraft.getNoteChange('changeNote').value}</div>
-                            </div>
-                        </ui:fragment>
-
-                        <ui:fragment rendered="#{v2PropositionBean.selectedDraft.getNoteChange('scopeNote') != null}">
-                            <div class="row mb-1">
-                                <div class="col-1"><p:selectBooleanCheckbox value="#{v2PropositionBean.scopeAccepted}"/></div>
-                                <div class="col-11">#{v2LocaleBean.getMsg('proposition.accept.scopeNote')} : #{v2PropositionBean.selectedDraft.getNoteChange('scopeNote').value}</div>
-                            </div>
-                        </ui:fragment>
-
-                        <ui:fragment rendered="#{v2PropositionBean.selectedDraft.getNoteChange('editorialNote') != null}">
-                            <div class="row mb-1">
-                                <div class="col-1"><p:selectBooleanCheckbox value="#{v2PropositionBean.editorialNotesAccepted}"/></div>
-                                <div class="col-11">#{v2LocaleBean.getMsg('proposition.accept.editorialNote')} : #{v2PropositionBean.selectedDraft.getNoteChange('editorialNote').value}</div>
-                            </div>
-                        </ui:fragment>
-
-                        <ui:fragment rendered="#{v2PropositionBean.selectedDraft.getNoteChange('example') != null}">
-                            <div class="row mb-1">
-                                <div class="col-1"><p:selectBooleanCheckbox value="#{v2PropositionBean.examplesAccepted}"/></div>
-                                <div class="col-11">#{v2LocaleBean.getMsg('proposition.accept.example')} : #{v2PropositionBean.selectedDraft.getNoteChange('example').value}</div>
-                            </div>
-                        </ui:fragment>
-
-                        <ui:fragment rendered="#{v2PropositionBean.selectedDraft.getNoteChange('historyNote') != null}">
-                            <div class="row mb-1">
-                                <div class="col-1"><p:selectBooleanCheckbox value="#{v2PropositionBean.historyAccepted}"/></div>
-                                <div class="col-11">#{v2LocaleBean.getMsg('proposition.accept.historyNote')} : #{v2PropositionBean.selectedDraft.getNoteChange('historyNote').value}</div>
-                            </div>
-                        </ui:fragment>
-                    </h:panelGroup>
-
-                    <div class="text-right mt-3">
-                        <p:commandButton value="#{v2LocaleBean.getMsg('btnDelete')}" styleClass="ui-button-secondary"
-                                         icon="pi pi-trash" style="margin-right: 8px;"
-                                         actionListener="#{v2PropositionBean.deleteSelected()}"
-                                         oncomplete="PF('v2ReviewProposition').hide();"
-                                         update=":v2ListPropositionsPanel :messageIndex"/>
-                        <p:commandButton value="#{v2LocaleBean.getMsg('proposition.refuser')}" styleClass="ui-button-danger"
-                                         icon="pi pi-times" style="margin-right: 8px;"
-                                         actionListener="#{v2PropositionBean.refuseSelected()}"
-                                         oncomplete="PF('v2ReviewProposition').hide();"
-                                         update=":v2ListPropositionsPanel :messageIndex"/>
-                        <p:commandButton value="#{v2LocaleBean.getMsg('proposition.approuver')}" styleClass="ui-button-success"
-                                         icon="pi pi-check"
-                                         actionListener="#{v2PropositionBean.approveSelected()}"
-                                         oncomplete="PF('v2ReviewProposition').hide();"
-                                         update=":v2ListPropositionsPanel :messageIndex"/>
-                    </div>
-                </h:panelGroup>
-            </h:form>
-        </p:dialog>
     </h:panelGroup>
 </ui:fragment>
