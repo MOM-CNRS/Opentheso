@@ -21,6 +21,7 @@ import fr.cnrs.opentheso.v2.shared.session.ConceptTreeRefreshState;
 import fr.cnrs.opentheso.v2.concept.service.ConceptFullReadService;
 import fr.cnrs.opentheso.v2.concept.service.ConceptReadService;
 import fr.cnrs.opentheso.v2.concept.service.ThesaurusHomeReadService;
+import fr.cnrs.opentheso.v2.rights.RightsService;
 import fr.cnrs.opentheso.v2.setting.fixtures.SettingTestFixtures;
 import fr.cnrs.opentheso.v2.setting.model.ThesaurusPreferences;
 import fr.cnrs.opentheso.v2.setting.service.ThesaurusPreferenceService;
@@ -77,6 +78,8 @@ class ThesaurusBrowseBeanTest {
     private ConceptSelectionContext conceptSelectionContext;
     @Mock
     private ConceptTreeRefreshState conceptTreeRefreshState;
+    @Mock
+    private RightsService rightsService;
 
     private ThesaurusBrowseBean bean;
 
@@ -94,7 +97,8 @@ class ThesaurusBrowseBeanTest {
                 thesaurusPreferenceService,
                 userSession,
                 conceptTypeReadService,
-                conceptTreeRefreshState
+                conceptTreeRefreshState,
+                rightsService
         );
     }
 
@@ -191,7 +195,7 @@ class ThesaurusBrowseBeanTest {
     void onNodeSelect_loadsGroupDetailInCollectionTab() {
         when(thesaurusContext.resolveThesaurusId()).thenReturn("TH1");
         when(thesaurusContext.resolveWorkLanguage()).thenReturn("fr");
-        var group = new GroupDetailOverview("G1", "Groupe", "fr", "Type", "skos:Collection", 3, "", "", "", List.of(), List.of(), List.of());
+        var group = new GroupDetailOverview("G1", "Groupe", "fr", "C", "Type", "skos:Collection", 3, "", "", "", List.of(), List.of(), List.of());
         when(collectionReadService.loadDetail("TH1", "G1", "fr")).thenReturn(Optional.of(group));
 
         var nodeData = new ConceptTreeNodeData("G1", "Groupe", "G1", "group", true);
@@ -422,7 +426,7 @@ class ThesaurusBrowseBeanTest {
                 .thenReturn(new ThesaurusHomeOverview("Test", 0, "", "", "", "", List.of(), List.of(), ""));
         when(thesaurusPreferenceService.loadPreferencesOrNull("TH1", "fr"))
                 .thenReturn(consultationPreferences(true));
-        var group = new GroupDetailOverview("G1", "Collection", "fr", "", "", 0, "", "", "", List.of(), List.of(), List.of());
+        var group = new GroupDetailOverview("G1", "Collection", "fr", "", "", "", 0, "", "", "", List.of(), List.of(), List.of());
         when(collectionReadService.loadDetail("TH1", "G1", "fr")).thenReturn(Optional.of(group));
         bean.setGroupIdFromUri("G1");
 
@@ -578,6 +582,12 @@ class ThesaurusBrowseBeanTest {
 
     @Test
     void onRightTabChange_setsAlignmentTabIndex() {
+        ReflectionTestUtils.setField(bean, "rightPanelMode", RightPanelMode.CONCEPT);
+        when(userSession.getCurrentUserId()).thenReturn(1);
+        when(thesaurusContext.resolveThesaurusId()).thenReturn("TH1");
+        when(rightsService.canOnThesaurus(1, fr.cnrs.opentheso.v2.rights.Permission.MANAGE_THESAURUS, "TH1"))
+                .thenReturn(true);
+
         var event = org.mockito.Mockito.mock(org.primefaces.event.TabChangeEvent.class);
         var tab = org.mockito.Mockito.mock(org.primefaces.component.tabview.Tab.class);
         when(event.getTab()).thenReturn(tab);
@@ -585,6 +595,21 @@ class ThesaurusBrowseBeanTest {
 
         bean.onRightTabChange(event);
 
+        // Concept(0), Collection(1), Alignement(2)
+        assertEquals(2, bean.getRightTabIndex());
+    }
+
+    @Test
+    void openGroup_activatesCollectionTab() {
+        when(thesaurusContext.resolveThesaurusId()).thenReturn("TH1");
+        when(thesaurusContext.resolveWorkLanguage()).thenReturn("fr");
+        var group = new GroupDetailOverview("G1", "Groupe", "fr", "", "", "", 0, "", "", "", List.of(), List.of(), List.of());
+        when(collectionReadService.loadDetail("TH1", "G1", "fr")).thenReturn(Optional.of(group));
+
+        bean.openGroup("G1");
+
+        assertTrue(bean.isGroupPanel());
+        assertTrue(bean.isValueSelected());
         assertEquals(1, bean.getRightTabIndex());
     }
 
@@ -667,7 +692,7 @@ class ThesaurusBrowseBeanTest {
 
     @Test
     void getPageTitle_returnsGroupLabel() {
-        bean.setSelectedGroup(new GroupDetailOverview("G1", "Collection", "fr", "", "", 0, "", "", "", List.of(), List.of(), List.of()));
+        bean.setSelectedGroup(new GroupDetailOverview("G1", "Collection", "fr", "", "", "", 0, "", "", "", List.of(), List.of(), List.of()));
 
         assertEquals("Collection", bean.getPageTitle());
     }
@@ -683,7 +708,7 @@ class ThesaurusBrowseBeanTest {
     void focusGroup_loadsGroupDetail() {
         when(thesaurusContext.resolveThesaurusId()).thenReturn("TH1");
         when(thesaurusContext.resolveWorkLanguage()).thenReturn("fr");
-        var group = new GroupDetailOverview("G1", "Groupe", "fr", "", "", 0, "", "", "", List.of(), List.of(), List.of());
+        var group = new GroupDetailOverview("G1", "Groupe", "fr", "", "", "", 0, "", "", "", List.of(), List.of(), List.of());
         when(collectionReadService.loadDetail("TH1", "G1", "fr")).thenReturn(Optional.of(group));
 
         bean.focusGroup("G1");
@@ -704,7 +729,7 @@ class ThesaurusBrowseBeanTest {
     void onNodeSelect_loadsGroupDetailInArbreTab() {
         when(thesaurusContext.resolveThesaurusId()).thenReturn("TH1");
         when(thesaurusContext.resolveWorkLanguage()).thenReturn("fr");
-        var group = new GroupDetailOverview("G1", "Groupe", "fr", "Type", "skos:Collection", 3, "", "", "", List.of(), List.of(), List.of());
+        var group = new GroupDetailOverview("G1", "Groupe", "fr", "C", "Type", "skos:Collection", 3, "", "", "", List.of(), List.of(), List.of());
         when(collectionReadService.loadDetail("TH1", "G1", "fr")).thenReturn(Optional.of(group));
 
         var nodeData = new ConceptTreeNodeData("G1", "Groupe", "G1", "group", true);

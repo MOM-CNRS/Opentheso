@@ -26,11 +26,13 @@ public class CollectionReadService {
         }
         return conceptQueryRepository.findGroupHeader(groupId, thesaurusId, lang)
                 .map(header -> {
-                    var type = conceptQueryRepository.findGroupType(ConceptMapper.stringAt(header, 5));
+                    String typeCode = ConceptMapper.stringAt(header, 5);
+                    var type = conceptQueryRepository.findGroupType(typeCode);
                     return new GroupDetailOverview(
                             ConceptMapper.stringAt(header, 0),
                             ConceptMapper.stringAt(header, 1),
                             lang,
+                            typeCode,
                             type.map(row -> ConceptMapper.stringAt(row, 0)).orElse(""),
                             type.map(row -> ConceptMapper.stringAt(row, 1)).orElse(""),
                             conceptQueryRepository.countConceptsInGroup(thesaurusId, groupId),

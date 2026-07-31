@@ -164,7 +164,7 @@ public class FacetNoteEditorBean implements Serializable {
             return;
         }
         refreshSelectedFacet();
-        PrimeFaces.current().ajax().update(":containerIndex:rightTab :messageIndex");
+        PrimeFaces.current().ajax().update(":containerIndex:formRightTab :messageIndex");
         MessageUtils.showInformationMessage(result.message());
         if (StringUtils.isNotBlank(hideDialogScript)) {
             PrimeFaces.current().executeScript(hideDialogScript);

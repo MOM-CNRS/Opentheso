@@ -2,8 +2,10 @@ package fr.cnrs.opentheso.v2.collection.identifier;
 
 import fr.cnrs.opentheso.repositories.PreferencesRepository;
 import lombok.RequiredArgsConstructor;
+import lombok.extern.slf4j.Slf4j;
 import org.springframework.stereotype.Service;
 
+@Slf4j
 @Service
 @RequiredArgsConstructor
 public class CollectionIdentifierAssignmentService {
@@ -21,8 +23,10 @@ public class CollectionIdentifierAssignmentService {
             collectionArkWriteService.assignArkOnCreation(thesaurusId, collectionId, label);
         }
         if (preferences.isUseHandle() && !preferences.isGenerateHandle()) {
+            // Aligné sur le legacy : un échec Handle ne doit pas annuler la création de la collection.
             if (!collectionHandleWriteService.assignHandleOnCreation(collectionId, thesaurusId)) {
-                throw new IllegalStateException("La création du Handle a échoué");
+                log.warn("La création du Handle a échoué pour la collection {} (thésaurus {})",
+                        collectionId, thesaurusId);
             }
         }
     }

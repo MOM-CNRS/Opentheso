@@ -108,7 +108,7 @@ public class ConceptTransferEditorBean implements Serializable {
         }
         conceptNavigationSupport.invalidateConceptTree();
         conceptNavigationSupport.openThesaurusHome();
-        PrimeFaces.current().ajax().update(":containerIndex:rightTab :containerIndex:tabTree :messageIndex");
+        PrimeFaces.current().ajax().update(":containerIndex:formRightTab :containerIndex:tabTree :messageIndex");
         MessageUtils.showInformationMessage(result.message());
         PrimeFaces.current().executeScript("PF('v2MoveToAnotherThesoDlg').hide();");
     }

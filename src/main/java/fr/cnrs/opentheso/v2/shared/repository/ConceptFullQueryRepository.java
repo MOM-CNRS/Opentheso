@@ -291,7 +291,7 @@ public class ConceptFullQueryRepository {
                 AND cgl.idthesaurus = cg.idthesaurus
                 AND cgl.lang = :lang
             WHERE cgc.idthesaurus = :thesaurusId
-              AND cgc.idconcept = :conceptId
+              AND LOWER(cgc.idconcept) = LOWER(:conceptId)
             ORDER BY COALESCE(cgl.lexicalvalue, cg.idgroup)
             """)
                 .setParameter("conceptId", conceptId)

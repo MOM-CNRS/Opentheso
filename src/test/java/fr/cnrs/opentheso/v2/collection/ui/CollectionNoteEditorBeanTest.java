@@ -52,7 +52,7 @@ class CollectionNoteEditorBeanTest {
     private CollectionNoteEditorBean bean;
 
     private static final GroupDetailOverview GROUP = new GroupDetailOverview(
-            "g1", "Collection", "fr", "", "", 0, "", "", "",
+            "g1", "Collection", "fr", "MT", "Microthesaurus", "skos:Collection", 0, "", "", "",
             List.of(), List.of(new ConceptNote("1", "note", "fr", "Existing")), List.of());
 
     @BeforeEach

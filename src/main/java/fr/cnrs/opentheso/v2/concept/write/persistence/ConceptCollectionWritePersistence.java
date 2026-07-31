@@ -55,7 +55,7 @@ public class ConceptCollectionWritePersistence {
         }
         for (String conceptId : conceptIds) {
             conceptGroupConceptRepository.deleteByIdGroupAndIdConceptAndIdThesaurus(
-                    command.collectionId(),
+                    command.collectionId().toLowerCase(),
                     conceptId,
                     command.thesaurusId()
             );

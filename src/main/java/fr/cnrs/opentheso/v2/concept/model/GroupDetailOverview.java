@@ -6,6 +6,7 @@ public record GroupDetailOverview(
         String groupId,
         String label,
         String lang,
+        String typeCode,
         String typeLabel,
         String typeSkosLabel,
         int memberCount,
@@ -27,6 +28,10 @@ public record GroupDetailOverview(
 
     public String getLang() {
         return lang;
+    }
+
+    public String getTypeCode() {
+        return typeCode;
     }
 
     public String getTypeLabel() {

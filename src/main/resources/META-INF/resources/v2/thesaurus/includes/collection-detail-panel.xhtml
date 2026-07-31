@@ -38,8 +38,8 @@
               <h:outputText value="#{v2LocaleBean.getMsg('rightbody.concept.preferred_term')}"
                             style="font-size:14px; font-weight:bold; color:#8f8f8f;"/>
             </div>
-            <h:panelGroup rendered="#{v2CollectionDetailEditorBean.managerActionsAvailable}">
-              <div class="col-xl-1 col-lg-1 col-md-1 col-sm-1" style="text-align:right;">
+            <div class="col-xl-9 col-lg-8 col-md-7 col-sm-7" style="margin-left:-6px;">
+              <h:panelGroup rendered="#{v2CollectionDetailEditorBean.managerActionsAvailable}">
                 <p:menuButton icon="fas fa-cog"
                               style="color:#F7A269; background:none; border:none; box-shadow:none; font-size:12px;">
                   <p:menuitem value="#{v2LocaleBean.getMsg('candidat.edit')}" icon="fas fa-pen"
@@ -51,9 +51,7 @@
                               oncomplete="PF('v2CreateSubgroupDlg').show();"
                               update=":containerIndex:v2CreateSubgroupDlg"/>
                 </p:menuButton>
-              </div>
-            </h:panelGroup>
-            <div class="col-xl-9 col-lg-8 col-md-7 col-sm-7" style="margin-left:-10px;">
+              </h:panelGroup>
               <h:outputText value="#{v2ThesaurusBrowseBean.selectedGroup.label}" style="font-size:14px; color:#000;"/>
             </div>
           </div>
@@ -65,8 +63,10 @@
               <h:outputText value="#{v2LocaleBean.getMsg('statistique.type')}"
                             style="font-size:14px; font-weight:bold; color:#8f8f8f;"/>
             </div>
-            <div class="col-xl-9 col-lg-8 col-md-7 col-sm-7" style="margin-left:-10px;">
-              <h:outputText value="#{v2ThesaurusBrowseBean.selectedGroup.typeSkosLabel}" style="font-size:14px; color:#000;"/>
+            <div class="col-xl-9 col-lg-8 col-md-7 col-sm-7" style="margin-left:-6px;">
+              <h:outputText value="#{v2ThesaurusBrowseBean.selectedGroup.typeLabel}"
+                            title="#{v2ThesaurusBrowseBean.selectedGroup.typeSkosLabel}"
+                            style="font-size:14px; color:#000;"/>
             </div>
           </div>
         </div>
@@ -77,7 +77,7 @@
               <h:outputText value="#{v2LocaleBean.getMsg('group.members')}"
                             style="font-size:14px; font-weight:bold; color:#8f8f8f;"/>
             </div>
-            <div class="col-xl-9 col-lg-8 col-md-7 col-sm-7" style="margin-left:-10px;">
+            <div class="col-xl-9 col-lg-8 col-md-7 col-sm-7" style="margin-left:-6px;">
               <h:outputText value="#{v2ThesaurusBrowseBean.selectedGroup.memberCount}" style="font-size:14px; color:#000;"/>
             </div>
           </div>
@@ -90,8 +90,8 @@
                 <h:outputText value="#{v2LocaleBean.getMsg('rightbody.concept.traduction')}"
                               style="font-size:14px; font-weight:bold; color:#8f8f8f;"/>
               </div>
-              <h:panelGroup rendered="#{v2CollectionDetailEditorBean.managerActionsAvailable}">
-                <div class="col-xl-1 col-lg-1 col-md-1 col-sm-1" style="text-align:right;">
+              <div class="col-xl-9 col-lg-8 col-md-7 col-sm-7" style="margin-left:-6px;">
+                <h:panelGroup rendered="#{v2CollectionDetailEditorBean.managerActionsAvailable}">
                   <p:menuButton icon="fas fa-cog"
                                 style="color:#F7A269; background:none; border:none; box-shadow:none; font-size:12px;">
                     <p:menuitem value="#{v2LocaleBean.getMsg('rightbody.concept.add_traduction')}" icon="fas fa-plus"
@@ -107,9 +107,7 @@
                                 oncomplete="PF('v2DeleteCollectionTranslationDlg').show();"
                                 update=":containerIndex:v2DeleteCollectionTranslationDlg"/>
                   </p:menuButton>
-                </div>
-              </h:panelGroup>
-              <div class="col-xl-9 col-lg-8 col-md-7 col-sm-7" style="margin-left:-10px;">
+                </h:panelGroup>
                 <ui:repeat value="#{v2ThesaurusBrowseBean.selectedGroup.translations}" var="translation">
                   <h:outputText value="#{translation.value} (#{translation.lang})" style="font-size:14px;"/>
                   <br/>
@@ -136,7 +134,7 @@
                 <h:outputText value="IdHandle"
                               style="font-size:14px; font-weight:bold; color:#8f8f8f;"/>
               </div>
-              <div class="col-xl-9 col-lg-8 col-md-7 col-sm-7" style="margin-left:-10px;">
+              <div class="col-xl-9 col-lg-8 col-md-7 col-sm-7" style="margin-left:-6px;">
                 <p:link href="https://hdl.handle.net/#{v2ThesaurusBrowseBean.selectedGroup.handleId}"
                         value="https://hdl.handle.net/#{v2ThesaurusBrowseBean.selectedGroup.handleId}"
                         target="_blank" style="color:#43B572; font-size:14px;"/>
@@ -152,8 +150,8 @@
                 <h:outputText value="#{v2LocaleBean.getMsg('leftbody.concept')}"
                               style="font-size:14px; font-weight:bold; color:#8f8f8f;"/>
               </div>
-              <h:panelGroup rendered="#{v2CollectionDetailEditorBean.managerActionsAvailable}">
-                <div class="col-xl-1 col-lg-1 col-md-1 col-sm-1" style="text-align:right;">
+              <div class="col-xl-9 col-lg-8 col-md-7 col-sm-7" style="margin-left:-6px;">
+                <h:panelGroup rendered="#{v2CollectionDetailEditorBean.managerActionsAvailable}">
                   <p:menuButton icon="fas fa-cog"
                                 style="color:#F7A269; background:none; border:none; box-shadow:none; font-size:12px;">
                     <p:menuitem value="#{v2LocaleBean.getMsg('rightbody.conceptdialog.add_concept_to_group')}" icon="fas fa-plus"
@@ -169,9 +167,7 @@
                                 oncomplete="PF('v2CollectionRemoveBranchMemberDlg').show();"
                                 update=":containerIndex:v2CollectionRemoveBranchMemberDlg"/>
                   </p:menuButton>
-                </div>
-              </h:panelGroup>
-              <div class="col-xl-9 col-lg-8 col-md-7 col-sm-7" style="margin-left:-10px;">
+                </h:panelGroup>
                 <h:panelGroup rendered="#{empty v2ThesaurusBrowseBean.selectedGroup.members}">
                   <h:outputText value="....." style="color:grey; font-style:italic;"/>
                 </h:panelGroup>

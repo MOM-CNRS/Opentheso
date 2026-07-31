@@ -167,13 +167,15 @@
           </div>
         </div>
 
-        <ui:include src="concept-detail-relation-row.xhtml">
-          <ui:param name="rowLabel" value="#{v2LocaleBean.getMsg('leftbody.collection')}"/>
-          <ui:param name="rowIcon" value=""/>
-          <ui:param name="relations" value="#{v2ThesaurusBrowseBean.selectedConcept.collections}"/>
-          <ui:param name="relationLinkType" value="group"/>
-          <ui:param name="relationEditKind" value="collection"/>
-        </ui:include>
+        <h:panelGroup id="v2ConceptCollectionsRow">
+          <ui:include src="concept-detail-relation-row.xhtml">
+            <ui:param name="rowLabel" value="#{v2LocaleBean.getMsg('leftbody.collection')}"/>
+            <ui:param name="rowIcon" value=""/>
+            <ui:param name="relations" value="#{v2ThesaurusBrowseBean.selectedConcept.collections}"/>
+            <ui:param name="relationLinkType" value="group"/>
+            <ui:param name="relationEditKind" value="collection"/>
+          </ui:include>
+        </h:panelGroup>
 
         <h:panelGroup rendered="#{not empty v2ThesaurusBrowseBean.selectedConcept.facets}">
           <ui:include src="concept-detail-relation-row.xhtml">
@@ -448,17 +450,6 @@
 
     <ui:include src="concept-history-dialog.xhtml"/>
 
-    <h:panelGroup rendered="#{v2ThesaurusBrowseBean.propositionAuthorized}">
-      <div class="col-12" style="text-align: right; padding: 20px;">
-        <p:commandButton icon="pi pi-send" value="#{v2LocaleBean.getMsg('rightbody.suggestImprovement')}"
-                         styleClass="ui-button-success" process="@this"
-                         actionListener="#{v2PropositionSubmitBean.prepare()}"
-                         update="v2SuggestImprovementDlg"
-                         oncomplete="PF('v2SuggestImprovement').show();"/>
-      </div>
-    </h:panelGroup>
-
-    <ui:include src="dialogs/proposition-submit-dialog.xhtml"/>
     <ui:include src="dialogs/concept-lifecycle-dialogs.xhtml"/>
     <ui:include src="dialogs/concept-relation-dialogs.xhtml"/>
     <ui:include src="dialogs/concept-lexical-dialogs.xhtml"/>
@@ -468,7 +459,6 @@
     <ui:include src="dialogs/concept-media-dialogs.xhtml"/>
     <ui:include src="dialogs/concept-transfer-dialogs.xhtml"/>
     <ui:include src="dialogs/concept-attribute-dialogs.xhtml"/>
-    <ui:include src="dialogs/concept-collection-dialogs.xhtml"/>
 
   </h:panelGroup>
 </ui:fragment>

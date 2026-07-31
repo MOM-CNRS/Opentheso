@@ -235,7 +235,7 @@ public class ConceptMediaEditorBean implements Serializable {
             return false;
         }
         conceptNavigationSupport.refreshSelectedConcept();
-        PrimeFaces.current().ajax().update(":containerIndex:conceptSummaryPanel :messageIndex");
+        PrimeFaces.current().ajax().update(":containerIndex:formRightTab :messageIndex");
         MessageUtils.showInformationMessage(result.message());
         if (StringUtils.isNotBlank(dialogWidget)) {
             PrimeFaces.current().executeScript("PF('" + dialogWidget + "').hide();");

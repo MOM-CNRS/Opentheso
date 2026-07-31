@@ -40,29 +40,29 @@
             <p:menuitem value="#{v2LocaleBean.getMsg('rightbody.conceptdialog.add_concept_to_group')}"
                         process="@this"
                         actionListener="#{v2ConceptCollectionEditorBean.prepareAddToCollection()}"
-                        update="v2AddToCollectionForm"
+                        update=":containerIndex:v2AddToCollectionDlg"
                         oncomplete="PF('v2AddToCollectionDlg').show();"
                         icon="fas fa-plus"/>
             <p:menuitem value="#{v2LocaleBean.getMsg('rightbody.concept.add_concept_to_group')}"
                         process="@this"
                         actionListener="#{v2ConceptCollectionEditorBean.prepareAddBranchToCollection()}"
-                        update="v2AddBranchToCollectionForm"
+                        update=":containerIndex:v2AddBranchToCollectionDlg"
                         oncomplete="PF('v2AddBranchToCollectionDlg').show();"
                         icon="fas fa-code-branch"/>
             <p:menuitem value="#{v2LocaleBean.getMsg('rightbody.concept.remove_from_group')}"
                         process="@this"
                         actionListener="#{v2ConceptCollectionEditorBean.prepareRemoveFromCollection()}"
-                        update="v2RemoveFromCollectionForm"
+                        update=":containerIndex:v2RemoveFromCollectionDlg"
                         oncomplete="PF('v2RemoveFromCollectionDlg').show();"
                         icon="fas fa-minus"
-                        disabled="#{empty relations}"/>
+                        disabled="#{not v2ConceptCollectionEditorBean.hasCollections}"/>
             <p:menuitem value="#{v2LocaleBean.getMsg('rightbody.concept.remove_concept_fom_group')}"
                         process="@this"
                         actionListener="#{v2ConceptCollectionEditorBean.prepareRemoveBranchFromCollection()}"
-                        update="v2RemoveBranchFromCollectionForm"
+                        update=":containerIndex:v2RemoveBranchFromCollectionDlg"
                         oncomplete="PF('v2RemoveBranchFromCollectionDlg').show();"
                         icon="fas fa-code-branch"
-                        disabled="#{empty relations}"/>
+                        disabled="#{not v2ConceptCollectionEditorBean.hasCollections}"/>
           </p:menuButton>
         </h:panelGroup>
         <h:panelGroup rendered="#{not empty relationEditKind and relationEditKind ne 'replacedBy' and relationEditKind ne 'collection' and v2ConceptRelationEditorBean.relationActionsAvailable}"

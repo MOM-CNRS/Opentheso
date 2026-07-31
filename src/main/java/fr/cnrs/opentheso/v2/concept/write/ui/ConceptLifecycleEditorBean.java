@@ -424,7 +424,7 @@ public class ConceptLifecycleEditorBean implements Serializable {
                     }
                     case PANEL_ONLY -> conceptNavigationSupport.openConcept(conceptIdToOpen);
                 }
-                PrimeFaces.current().ajax().update(":containerIndex:conceptSummaryPanel :containerIndex:tabTree :messageIndex");
+                PrimeFaces.current().ajax().update(":containerIndex:formRightTab :containerIndex:tabTree :messageIndex");
                 MessageUtils.showInformationMessage(result.message());
                 return true;
             }

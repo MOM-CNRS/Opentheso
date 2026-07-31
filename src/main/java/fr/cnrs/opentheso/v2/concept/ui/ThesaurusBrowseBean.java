@@ -25,6 +25,8 @@ import fr.cnrs.opentheso.v2.concept.session.ConceptNavigationSupport;
 import fr.cnrs.opentheso.v2.concept.session.ConceptSelectionContext;
 import fr.cnrs.opentheso.v2.shared.session.ConceptTreeRefreshState;
 import fr.cnrs.opentheso.v2.concept.support.ConceptGpsMapRenderer;
+import fr.cnrs.opentheso.v2.rights.Permission;
+import fr.cnrs.opentheso.v2.rights.RightsService;
 import fr.cnrs.opentheso.v2.setting.model.ThesaurusPreferences;
 import fr.cnrs.opentheso.v2.setting.service.ThesaurusPreferenceService;
 import fr.cnrs.opentheso.v2.setting.ui.ThesaurusContext;
@@ -46,6 +48,7 @@ import org.primefaces.model.DefaultTreeNode;
 import org.primefaces.model.TreeNode;
 
 import java.io.Serializable;
+import java.util.ArrayList;
 import java.util.Collections;
 import java.util.List;
 import java.util.Optional;
@@ -70,6 +73,7 @@ public class ThesaurusBrowseBean implements Serializable, ConceptNavigationSuppo
     private final UserSession userSession;
     private final ConceptTypeReadService conceptTypeReadService;
     private final ConceptTreeRefreshState conceptTreeRefreshState;
+    private final RightsService rightsService;
 
     private String conceptIdFromUri;
     private String groupIdFromUri;
@@ -89,7 +93,15 @@ public class ThesaurusBrowseBean implements Serializable, ConceptNavigationSuppo
     private LeftTreeMode activeLeftTreeMode = LeftTreeMode.CONCEPT;
     private RightPanelMode rightPanelMode = RightPanelMode.HOME;
     private int leftTabIndex;
-    private int rightTabIndex;
+    /** Onglet logique du panneau droit (indépendant des onglets rendus dynamiquement). */
+    private RightTabKey rightTabKey = RightTabKey.CONCEPT;
+
+    private enum RightTabKey {
+        CONCEPT,
+        COLLECTION,
+        ALIGNMENT,
+        SUGGESTION
+    }
 
     private String indexQuery;
     private boolean indexPermuted;
@@ -169,6 +181,62 @@ public class ThesaurusBrowseBean implements Serializable, ConceptNavigationSuppo
         return rightPanelMode == RightPanelMode.FACET;
     }
 
+    /** Concept ou collection sélectionné : affiche la barre d'onglets (comme legacy). */
+    public boolean isValueSelected() {
+        return isConceptPanel() || isGroupPanel();
+    }
+
+    public boolean isSuggestionEnabled() {
+        return suggestionEnabled;
+    }
+
+    /** Visibilité de l'onglet Alignement (comme legacy alignementVisible / admin). */
+    public boolean isAlignmentTabVisible() {
+        Integer userId = userSession.getCurrentUserId();
+        String thesaurusId = thesaurusContext.resolveThesaurusId();
+        if (userId == null || StringUtils.isBlank(thesaurusId)) {
+            return false;
+        }
+        return rightsService.canOnThesaurus(userId, Permission.MANAGE_THESAURUS, thesaurusId);
+    }
+
+    /**
+     * Index PrimeFaces parmi les onglets visibles
+     * (Concept, Collection, Alignement?, Suggestion?).
+     */
+    public int getRightTabIndex() {
+        List<RightTabKey> visible = visibleRightTabs();
+        int index = visible.indexOf(rightTabKey);
+        return index >= 0 ? index : 0;
+    }
+
+    public void setRightTabIndex(int index) {
+        List<RightTabKey> visible = visibleRightTabs();
+        if (index >= 0 && index < visible.size()) {
+            rightTabKey = visible.get(index);
+        }
+    }
+
+    private List<RightTabKey> visibleRightTabs() {
+        if (!isValueSelected()) {
+            return List.of(RightTabKey.CONCEPT);
+        }
+        var tabs = new ArrayList<RightTabKey>();
+        tabs.add(RightTabKey.CONCEPT);
+        tabs.add(RightTabKey.COLLECTION);
+        if (isAlignmentTabVisible()) {
+            tabs.add(RightTabKey.ALIGNMENT);
+        }
+        if (suggestionEnabled) {
+            tabs.add(RightTabKey.SUGGESTION);
+        }
+        return List.copyOf(tabs);
+    }
+
+    private void activateRightTab(RightTabKey key) {
+        rightTabKey = key;
+    }
+
     public String getPageTitle() {
         if (selectedConcept != null && selectedConcept.summary() != null) {
             String label = selectedConcept.summary().preferredLabel();
@@ -215,7 +283,16 @@ public class ThesaurusBrowseBean implements Serializable, ConceptNavigationSuppo
         if (event.getTab() == null) {
             return;
         }
-        rightTabIndex = "viewTabAlignement".equals(event.getTab().getId()) ? 1 : 0;
+        String tabId = event.getTab().getId();
+        if ("viewTabAlignement".equals(tabId)) {
+            activateRightTab(RightTabKey.ALIGNMENT);
+        } else if ("viewTabGroup".equals(tabId)) {
+            activateRightTab(RightTabKey.COLLECTION);
+        } else if ("viewTabSuggestion".equals(tabId)) {
+            activateRightTab(RightTabKey.SUGGESTION);
+        } else {
+            activateRightTab(RightTabKey.CONCEPT);
+        }
     }
 
     public void onNodeExpand(NodeExpandEvent event) {
@@ -252,15 +329,12 @@ public class ThesaurusBrowseBean implements Serializable, ConceptNavigationSuppo
     }
 
     private void refreshAfterTreeSelection() {
-        if (rightTabIndex != 1) {
-            rightTabIndex = 0;
-        }
         if (!PrimeFaces.current().isAjaxRequest()) {
             return;
         }
         PrimeFaces.current().ajax().update(
                 "indexTitle",
-                "containerIndex:rightTab",
+                "containerIndex:formRightTab",
                 "containerIndex:tabTree"
         );
     }
@@ -291,7 +365,7 @@ public class ThesaurusBrowseBean implements Serializable, ConceptNavigationSuppo
 
     public void openThesaurusHome() {
         rightPanelMode = RightPanelMode.HOME;
-        rightTabIndex = 0;
+        activateRightTab(RightTabKey.CONCEPT);
         conceptSelectionContext.clear();
         selectedConcept = null;
         selectedFullConcept = null;
@@ -372,6 +446,36 @@ public class ThesaurusBrowseBean implements Serializable, ConceptNavigationSuppo
         arbreRoot = null;
     }
 
+    /**
+     * Lazy-builds the concept tree when the model was invalidated (create/delete/refresh)
+     * so AJAX updates of {@code formLeftTab} always receive a usable root.
+     */
+    public TreeNode getConceptRoot() {
+        if (conceptRoot == null && isScreenAvailable()) {
+            ensureTreeBuilt(LeftTreeMode.CONCEPT);
+        }
+        return conceptRoot;
+    }
+
+    /**
+     * Lazy-builds the collection tree after invalidation so newly created collections
+     * appear without requiring a tab switch.
+     */
+    public TreeNode getCollectionRoot() {
+        if (collectionRoot == null && isScreenAvailable()) {
+            ensureTreeBuilt(LeftTreeMode.COLLECTION);
+        }
+        return collectionRoot;
+    }
+
+    public TreeNode getArbreRoot() {
+        if (arbreRoot == null && isScreenAvailable() && useConceptTree
+                && activeLeftTreeMode == LeftTreeMode.ARBRE) {
+            ensureTreeBuilt(LeftTreeMode.ARBRE);
+        }
+        return arbreRoot;
+    }
+
     @Override
     public void afterConceptDeleted(String fallbackConceptId) {
         invalidateConceptTree();
@@ -396,7 +500,7 @@ public class ThesaurusBrowseBean implements Serializable, ConceptNavigationSuppo
         RightPanelMode previousPanel = rightPanelMode;
         LeftTreeMode previousTree = activeLeftTreeMode;
         int previousLeftTab = leftTabIndex;
-        int previousRightTab = rightTabIndex;
+        RightTabKey previousRightTab = rightTabKey;
 
         invalidateConceptTree();
         invalidateCollectionTree();
@@ -407,7 +511,7 @@ public class ThesaurusBrowseBean implements Serializable, ConceptNavigationSuppo
 
         activeLeftTreeMode = previousTree;
         leftTabIndex = previousLeftTab;
-        rightTabIndex = previousRightTab;
+        rightTabKey = previousRightTab;
         ensureTreeBuilt(activeLeftTreeMode);
 
         if (previousPanel == RightPanelMode.CONCEPT && StringUtils.isNotBlank(conceptId)) {
@@ -442,8 +546,9 @@ public class ThesaurusBrowseBean implements Serializable, ConceptNavigationSuppo
             activeLeftTreeMode = LeftTreeMode.CONCEPT;
             leftTabIndex = 0;
         }
-        if (rightTabIndex != 1) {
-            rightTabIndex = 0;
+        // Comme legacy : rester sur Alignement si déjà ouvert, sinon onglet Concept
+        if (rightTabKey != RightTabKey.ALIGNMENT) {
+            activateRightTab(RightTabKey.CONCEPT);
         }
         corpusSearched = false;
         displayedCorpusLinks = Collections.emptyList();
@@ -521,6 +626,7 @@ public class ThesaurusBrowseBean implements Serializable, ConceptNavigationSuppo
 
     public void openGroup(String groupId) {
         rightPanelMode = RightPanelMode.GROUP;
+        activateRightTab(RightTabKey.COLLECTION);
         conceptSelectionContext.clear();
         selectedConcept = null;
         selectedFullConcept = null;
@@ -535,6 +641,7 @@ public class ThesaurusBrowseBean implements Serializable, ConceptNavigationSuppo
 
     public void openFacet(String facetId) {
         rightPanelMode = RightPanelMode.FACET;
+        activateRightTab(RightTabKey.CONCEPT);
         conceptSelectionContext.clear();
         selectedConcept = null;
         selectedFullConcept = null;
@@ -989,6 +1096,6 @@ public class ThesaurusBrowseBean implements Serializable, ConceptNavigationSuppo
         corpusSearched = false;
         haveActiveCorpus = false;
         homePagePlainTextView = false;
-        rightTabIndex = 0;
+        activateRightTab(RightTabKey.CONCEPT);
     }
 }

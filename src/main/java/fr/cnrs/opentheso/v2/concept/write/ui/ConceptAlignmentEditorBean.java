@@ -171,7 +171,7 @@ public class ConceptAlignmentEditorBean implements Serializable {
         switch (result.outcome()) {
             case OK -> {
                 conceptNavigationSupport.openConcept(conceptId);
-                PrimeFaces.current().ajax().update(":containerIndex:conceptSummaryPanel :messageIndex");
+                PrimeFaces.current().ajax().update(":containerIndex:formRightTab :messageIndex");
                 MessageUtils.showInformationMessage(result.message());
                 if (StringUtils.isNotBlank(hideDialogScript)) {
                     PrimeFaces.current().executeScript(hideDialogScript);

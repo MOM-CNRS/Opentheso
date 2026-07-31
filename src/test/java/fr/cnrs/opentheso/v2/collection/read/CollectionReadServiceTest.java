@@ -48,6 +48,7 @@ class CollectionReadServiceTest {
         assertTrue(detail.isPresent());
         assertEquals("g1", detail.get().groupId());
         assertEquals("Collection", detail.get().label());
+        assertEquals("MT", detail.get().typeCode());
         assertEquals("Collection", detail.get().typeLabel());
         assertEquals("skos:Collection", detail.get().typeSkosLabel());
         assertEquals(2, detail.get().memberCount());

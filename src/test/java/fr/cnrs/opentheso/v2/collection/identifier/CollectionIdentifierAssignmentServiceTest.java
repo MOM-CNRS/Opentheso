@@ -10,7 +10,6 @@ import org.mockito.junit.jupiter.MockitoExtension;
 
 import java.util.Optional;
 
-import static org.junit.jupiter.api.Assertions.assertThrows;
 import static org.mockito.Mockito.never;
 import static org.mockito.Mockito.verify;
 import static org.mockito.Mockito.when;
@@ -72,7 +71,7 @@ class CollectionIdentifierAssignmentServiceTest {
     }
 
     @Test
-    void assignOnCreation_throwsWhenHandleCreationFails() {
+    void assignOnCreation_logsWhenHandleCreationFails() {
         var preferences = Preferences.builder()
                 .idThesaurus("TH1")
                 .useHandle(true)
@@ -81,7 +80,8 @@ class CollectionIdentifierAssignmentServiceTest {
         when(preferencesRepository.findByIdThesaurus("TH1")).thenReturn(Optional.of(preferences));
         when(collectionHandleWriteService.assignHandleOnCreation("g1", "TH1")).thenReturn(false);
 
-        assertThrows(IllegalStateException.class,
-                () -> service.assignOnCreation("TH1", "g1", "Label"));
+        service.assignOnCreation("TH1", "g1", "Label");
+
+        verify(collectionHandleWriteService).assignHandleOnCreation("g1", "TH1");
     }
 }

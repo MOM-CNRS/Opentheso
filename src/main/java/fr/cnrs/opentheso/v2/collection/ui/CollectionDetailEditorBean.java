@@ -107,7 +107,7 @@ public class CollectionDetailEditorBean implements Serializable {
         }
         label = thesaurusBrowseBean.getSelectedGroup().label();
         notation = thesaurusBrowseBean.getSelectedGroup().notation();
-        typeCode = StringUtils.defaultIfBlank(thesaurusBrowseBean.getSelectedGroup().typeLabel(), "MT");
+        typeCode = StringUtils.defaultIfBlank(thesaurusBrowseBean.getSelectedGroup().typeCode(), "MT");
     }
 
     public void prepareAddTranslation() {
@@ -345,13 +345,18 @@ public class CollectionDetailEditorBean implements Serializable {
             MessageUtils.showErrorMessage("Action non autorisée");
             return;
         }
+        Integer userId = requireUserId();
+        if (userId == null) {
+            MessageUtils.showErrorMessage("Action non autorisée");
+            return;
+        }
         MutationResult result = collectionMutationService.createCollection(new CreateCollectionCommand(
                 thesaurusContext.resolveThesaurusId(),
                 thesaurusContext.resolveWorkLanguage(),
                 label,
                 notation,
                 typeCode,
-                requireUserId()
+                userId
         ));
         if (handleMutation(result, "v2CreateCollectionDlg") && StringUtils.isNotBlank(result.createdConceptId())) {
             thesaurusBrowseBean.focusGroup(result.createdConceptId());
@@ -362,6 +367,11 @@ public class CollectionDetailEditorBean implements Serializable {
         if (!canMutateSelectedCollection()) {
             return;
         }
+        Integer userId = requireUserId();
+        if (userId == null) {
+            MessageUtils.showErrorMessage("Action non autorisée");
+            return;
+        }
         var group = thesaurusBrowseBean.getSelectedGroup();
         MutationResult result = collectionMutationService.createSubgroup(new CreateSubgroupCommand(
                 thesaurusContext.resolveThesaurusId(),
@@ -370,7 +380,7 @@ public class CollectionDetailEditorBean implements Serializable {
                 label,
                 notation,
                 typeCode,
-                requireUserId()
+                userId
         ));
         if (handleMutation(result, "v2CreateSubgroupDlg") && StringUtils.isNotBlank(result.createdConceptId())) {
             thesaurusBrowseBean.focusGroup(result.createdConceptId());
@@ -396,7 +406,7 @@ public class CollectionDetailEditorBean implements Serializable {
         }
         refreshSelectedCollection();
         thesaurusBrowseBean.invalidateCollectionTree();
-        PrimeFaces.current().ajax().update(":containerIndex:rightTab :containerIndex:formLeftTab :messageIndex");
+        PrimeFaces.current().ajax().update(":containerIndex:formRightTab :containerIndex:formLeftTab :messageIndex");
         MessageUtils.showInformationMessage(result.message());
         if (StringUtils.isNotBlank(dialogWidget)) {
             PrimeFaces.current().executeScript("PF('" + dialogWidget + "').hide();");

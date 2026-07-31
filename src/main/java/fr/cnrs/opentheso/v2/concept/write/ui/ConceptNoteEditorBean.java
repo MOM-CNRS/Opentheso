@@ -169,7 +169,7 @@ public class ConceptNoteEditorBean implements Serializable {
         switch (result.outcome()) {
             case OK -> {
                 conceptNavigationSupport.openConcept(conceptSelectionContext.getSummary().conceptId());
-                PrimeFaces.current().ajax().update(":containerIndex:conceptSummaryPanel :messageIndex");
+                PrimeFaces.current().ajax().update(":containerIndex:formRightTab :messageIndex");
                 MessageUtils.showInformationMessage(result.message());
                 if (StringUtils.isNotBlank(hideDialogScript)) {
                     PrimeFaces.current().executeScript(hideDialogScript);

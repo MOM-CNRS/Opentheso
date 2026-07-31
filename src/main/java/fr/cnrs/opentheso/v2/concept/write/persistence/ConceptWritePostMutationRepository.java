@@ -31,27 +31,28 @@ public class ConceptWritePostMutationRepository {
 
     @Transactional
     public void saveContributorDcTerm(String thesaurusId, String conceptId, String contributorName) {
-        entityManager.createNativeQuery("""
-                        INSERT INTO concept_dcterms (id_concept, id_thesaurus, name, value)
-                        VALUES (:conceptId, :thesaurusId, :name, :value)
-                        """)
-                .setParameter("conceptId", conceptId)
-                .setParameter("thesaurusId", thesaurusId)
-                .setParameter("name", CONTRIBUTOR_DC_TERM)
-                .setParameter("value", contributorName)
-                .executeUpdate();
+        insertDcTermIfAbsent(thesaurusId, conceptId, CONTRIBUTOR_DC_TERM, contributorName);
     }
 
     @Transactional
     public void saveCreatorDcTerm(String thesaurusId, String conceptId, String creatorName) {
+        insertDcTermIfAbsent(thesaurusId, conceptId, CREATOR_DC_TERM, creatorName);
+    }
+
+    /**
+     * La PK de {@code concept_dcterms} est (id_concept, id_thesaurus, name, value).
+     * Un même contributeur peut déjà être enregistré : on ignore alors le doublon.
+     */
+    private void insertDcTermIfAbsent(String thesaurusId, String conceptId, String name, String value) {
         entityManager.createNativeQuery("""
                         INSERT INTO concept_dcterms (id_concept, id_thesaurus, name, value)
                         VALUES (:conceptId, :thesaurusId, :name, :value)
+                        ON CONFLICT (id_concept, id_thesaurus, name, value) DO NOTHING
                         """)
                 .setParameter("conceptId", conceptId)
                 .setParameter("thesaurusId", thesaurusId)
-                .setParameter("name", CREATOR_DC_TERM)
-                .setParameter("value", creatorName)
+                .setParameter("name", name)
+                .setParameter("value", value)
                 .executeUpdate();
     }
 }

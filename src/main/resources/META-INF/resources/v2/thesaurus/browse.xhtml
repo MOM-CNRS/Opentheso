@@ -128,7 +128,7 @@
                                     <p:tabView id="tabTree" activeIndex="#{v2ThesaurusBrowseBean.leftTabIndex}">
                                         <p:ajax event="tabChange"
                                                 listener="#{v2ThesaurusBrowseBean.onLeftTabChange}"
-                                                update=":containerIndex:rightTab"/>
+                                                update=":containerIndex:formLeftTab :containerIndex:formRightTab"/>
 
                                         <p:tab id="viewTabTree">
                                             <f:facet name="title">
@@ -159,10 +159,10 @@
                                                 <div style="width:50%;"/>
                                                 <div style="width:75%; text-align:right;">
                                                     <p:commandButton icon="fas fa-refresh" styleClass="rounded-button ui-button-flat"
-                                                                     ajax="true" process="@form"
+                                                                     ajax="true" process="@this"
                                                                      title="#{v2LocaleBean.getMsg('tree.relaod')}"
                                                                      actionListener="#{v2ThesaurusBrowseBean.invalidateCollectionTree()}"
-                                                                     update="containerIndex:formLeftTab containerIndex:rightTab messageIndex"
+                                                                     update=":containerIndex:formLeftTab :containerIndex:formRightTab :messageIndex"
                                                                      style="color:#f47b2a;"/>
                                                     <p:commandButton id="v2CollectionMenuButton" type="button" icon="pi pi-align-justify"
                                                                      rendered="#{v2CollectionDetailEditorBean.managerActionsAvailable}"
@@ -207,44 +207,77 @@
                             <div class="col-xl-9 col-lg-9 col-md-9 col-sm-12">
                                 <h:panelGroup id="formRightTab">
                                     <div class="card shadow mb-4">
-                                        <p:tabView id="rightTab" activeIndex="#{v2ThesaurusBrowseBean.rightTabIndex}">
+
+                                        <!-- Accueil thésaurus : pas d'onglets (comme legacy) -->
+                                        <h:panelGroup rendered="#{v2ThesaurusBrowseBean.homePanel}">
+                                            <ui:include src="includes/thesaurus-home-panel.xhtml"/>
+                                        </h:panelGroup>
+
+                                        <!-- Facette : pas d'onglets (comme legacy) -->
+                                        <h:panelGroup rendered="#{v2ThesaurusBrowseBean.facetPanel}"
+                                                      style="margin-bottom:70px;">
+                                            <ui:include src="includes/facet-detail-panel.xhtml"/>
+                                        </h:panelGroup>
+
+                                        <!-- Concept / Collection : barre d'onglets comme legacy -->
+                                        <p:tabView id="rightTab"
+                                                   activeIndex="#{v2ThesaurusBrowseBean.rightTabIndex}"
+                                                   rendered="#{v2ThesaurusBrowseBean.valueSelected}">
                                             <p:ajax event="tabChange"
                                                     listener="#{v2ThesaurusBrowseBean.onRightTabChange}"
-                                                    update=":containerIndex:rightTab"/>
+                                                    update=":containerIndex:formRightTab"/>
 
                                             <p:tab id="viewTabConcept"
                                                    title="#{v2LocaleBean.getMsg('leftbody.concept')}">
                                                 <f:facet name="anchor">
                                                     <i class="pi pi-sitemap" style="color:#f47b2a;"/>
                                                 </f:facet>
-
-                                                <h:panelGroup rendered="#{v2ThesaurusBrowseBean.homePanel}">
-                                                    <ui:include src="includes/thesaurus-home-panel.xhtml"/>
-                                                </h:panelGroup>
-
                                                 <h:panelGroup rendered="#{v2ThesaurusBrowseBean.conceptPanel}"
                                                               style="margin-bottom:70px;">
                                                     <ui:include src="includes/concept-summary-panel.xhtml"/>
                                                 </h:panelGroup>
+                                            </p:tab>
 
+                                            <p:tab id="viewTabGroup"
+                                                   title="#{v2LocaleBean.getMsg('leftbody.collection')}">
+                                                <f:facet name="anchor">
+                                                    <i class="pi pi-sitemap" style="color:#f47b2a;"/>
+                                                </f:facet>
                                                 <h:panelGroup rendered="#{v2ThesaurusBrowseBean.groupPanel}"
                                                               style="margin-bottom:70px;">
                                                     <ui:include src="includes/collection-detail-panel.xhtml"/>
-                                                </h:panelGroup>
-
-                                                <h:panelGroup rendered="#{v2ThesaurusBrowseBean.facetPanel}"
-                                                              style="margin-bottom:70px;">
-                                                    <ui:include src="includes/facet-detail-panel.xhtml"/>
                                                 </h:panelGroup>
                                             </p:tab>
 
                                             <p:tab id="viewTabAlignement"
                                                    title="#{v2LocaleBean.getMsg('rightbody.alignement')}"
-                                                   rendered="#{v2ConsultationShellBean.adminOnCurrentThesaurus}">
+                                                   rendered="#{v2ThesaurusBrowseBean.alignmentTabVisible}">
                                                 <f:facet name="anchor">
                                                     <i class="pi pi-sitemap" style="color:#f47b2a;"/>
                                                 </f:facet>
                                                 <ui:include src="includes/alignment-admin-panel.xhtml"/>
+                                            </p:tab>
+
+                                            <p:tab id="viewTabSuggestion"
+                                                   title="#{v2LocaleBean.getMsg('rightbody.newSuggest')}"
+                                                   rendered="#{v2ThesaurusBrowseBean.suggestionEnabled}"
+                                                   disabled="#{not v2ThesaurusBrowseBean.conceptPanel}">
+                                                <f:facet name="anchor">
+                                                    <i class="pi pi-sitemap" style="color:#f47b2a;"/>
+                                                </f:facet>
+                                                <h:panelGroup rendered="#{v2ThesaurusBrowseBean.conceptPanel}"
+                                                              style="margin:20px;">
+                                                    <p:staticMessage severity="warn" summary="Info"
+                                                                     detail="#{v2LocaleBean.getMsg('rightbody.proposal.info1')}"
+                                                                     style="width:100%; margin-bottom:16px;"/>
+                                                    <p:commandButton icon="pi pi-send"
+                                                                     value="#{v2LocaleBean.getMsg('rightbody.suggestImprovement')}"
+                                                                     styleClass="ui-button-success"
+                                                                     process="@this"
+                                                                     actionListener="#{v2PropositionSubmitBean.prepare()}"
+                                                                     update=":containerIndex:v2SuggestImprovementDlg"
+                                                                     oncomplete="PF('v2SuggestImprovement').show();"/>
+                                                </h:panelGroup>
                                             </p:tab>
                                         </p:tabView>
                                     </div>
@@ -257,8 +290,10 @@
 
 
                 <ui:include src="includes/dialogs/concept-alignment-dialogs.xhtml"/>
+                <ui:include src="includes/dialogs/concept-collection-dialogs.xhtml"/>
                 <ui:include src="includes/dialogs/collection-dialogs.xhtml"/>
                 <ui:include src="includes/dialogs/facet-dialogs.xhtml"/>
+                <ui:include src="includes/dialogs/proposition-submit-dialog.xhtml"/>
                 <input type="hidden" name="csrfToken" value="${sessionScope.CSRF_TOKEN}"/>
                 </h:form>
 

@@ -131,7 +131,7 @@ public class ConceptAttributeEditorBean implements Serializable {
         String conceptId = conceptSelectionContext.getConceptId();
         String updatedNotation = StringUtils.trimToEmpty(notation);
         conceptNavigationSupport.refreshAfterNotationUpdate(conceptId, updatedNotation);
-        PrimeFaces.current().ajax().update(":containerIndex:containerIndex:conceptSummaryPanel :containerIndex:tabTree :messageIndex");
+        PrimeFaces.current().ajax().update(":containerIndex:formRightTab :containerIndex:tabTree :messageIndex");
         MessageUtils.showInformationMessage(result.message());
         PrimeFaces.current().executeScript("PF('v2EditNotationDlg').hide();");
         return true;
@@ -143,7 +143,7 @@ public class ConceptAttributeEditorBean implements Serializable {
             return false;
         }
         conceptNavigationSupport.refreshSelectedConcept();
-        PrimeFaces.current().ajax().update(":containerIndex:conceptSummaryPanel :messageIndex");
+        PrimeFaces.current().ajax().update(":containerIndex:formRightTab :messageIndex");
         MessageUtils.showInformationMessage(result.message());
         if (StringUtils.isNotBlank(dialogWidget)) {
             PrimeFaces.current().executeScript("PF('" + dialogWidget + "').hide();");

@@ -51,6 +51,14 @@ public class ConceptCollectionEditorBean implements Serializable {
         return conceptWritePolicy.canMutateConceptAttributes(userSession, isSelectedDeprecated());
     }
 
+    public boolean isHasCollections() {
+        if (thesaurusBrowseBean.getSelectedConcept() == null) {
+            return false;
+        }
+        List<ConceptRelation> collections = thesaurusBrowseBean.getSelectedConcept().collections();
+        return collections != null && !collections.isEmpty();
+    }
+
     public void prepareAddToCollection() {
         resetCollectionForm();
         refreshCurrentConceptLabel();
@@ -132,7 +140,7 @@ public class ConceptCollectionEditorBean implements Serializable {
             return;
         }
         List<ConceptRelation> collections = thesaurusBrowseBean.getSelectedConcept().collections();
-        collectionsToRemove = collections != null ? collections : Collections.emptyList();
+        collectionsToRemove = collections != null ? List.copyOf(collections) : Collections.emptyList();
     }
 
     private void resetCollectionForm() {
@@ -146,7 +154,13 @@ public class ConceptCollectionEditorBean implements Serializable {
             return false;
         }
         conceptNavigationSupport.refreshSelectedConcept();
-        PrimeFaces.current().ajax().update(":containerIndex:conceptSummaryPanel :messageIndex");
+        thesaurusBrowseBean.invalidateCollectionTree();
+        reloadCollectionsToRemove();
+        PrimeFaces.current().ajax().update(
+                ":containerIndex:formRightTab",
+                ":containerIndex:formLeftTab",
+                ":messageIndex"
+        );
         MessageUtils.showInformationMessage(result.message());
         if (StringUtils.isNotBlank(dialogWidget)) {
             PrimeFaces.current().executeScript("PF('" + dialogWidget + "').hide();");

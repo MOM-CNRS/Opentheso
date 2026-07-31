@@ -71,7 +71,7 @@
                                                style="font-size: 13px; color: #601e18;"
                                                title="#{recentConcept.conceptId}"
                                                actionListener="#{v2ThesaurusBrowseBean.openConcept(recentConcept.conceptId)}"
-                                               update=":containerIndex:rightTab :containerIndex:tabTree"
+                                               update=":containerIndex:formRightTab :containerIndex:tabTree"
                                                process="@this"/>
                                 <h:outputText rendered="#{not recentStatus.last and not empty recentConcept.label}"
                                               value=", "
@@ -123,13 +123,13 @@
                     <p:commandButton value="#{v2LocaleBean.getMsg('thesohome.interpretedHTMLView')}"
                                      styleClass="ui-button-success"
                                      action="#{v2ThesaurusBrowseBean.setHomePagePlainTextView(false)}"
-                                     update=":containerIndex:rightTab"/>
+                                     update=":containerIndex:formRightTab"/>
                 </div>
                 <div class="col-xl-6 col-lg-6 col-md-6 col-sm-6" style="text-align: right;">
                     <p:commandButton value="#{v2LocaleBean.getMsg('thesohome.rawHTMLView')}"
                                      styleClass="ui-button-success"
                                      action="#{v2ThesaurusBrowseBean.setHomePagePlainTextView(true)}"
-                                     update=":containerIndex:rightTab"/>
+                                     update=":containerIndex:formRightTab"/>
                 </div>
             </div>
 

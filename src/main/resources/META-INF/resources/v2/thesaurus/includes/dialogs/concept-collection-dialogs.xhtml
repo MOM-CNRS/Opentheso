@@ -5,7 +5,8 @@
              xmlns:f="http://xmlns.jcp.org/jsf/core">
 
     <p:dialog id="v2AddToCollectionDlg" header="#{v2LocaleBean.getMsg('rightbody.conceptdialog.add_concept_to_group')}"
-              widgetVar="v2AddToCollectionDlg" width="500" modal="true" resizable="false" position="top">
+              widgetVar="v2AddToCollectionDlg" width="500" modal="true" resizable="false" position="top"
+              appendTo="@(body)">
         <h:form id="v2AddToCollectionForm">
             <p:defaultCommand target="v2AddToCollectionSubmit"/>
             <div class="row mb-2">
@@ -19,10 +20,17 @@
                     <h:outputText value="#{v2LocaleBean.getMsg('rightbody.conceptdialog.group')} :"/>
                 </div>
                 <div class="col-8">
-                    <p:autoComplete value="#{v2ConceptCollectionEditorBean.selectedCollection}"
+                    <p:autoComplete id="v2AddToCollectionAutocomplete"
+                                    value="#{v2ConceptCollectionEditorBean.selectedCollection}"
                                     completeMethod="#{v2ConceptCollectionEditorBean.autocompleteCollection}"
-                                    var="collection" forceSelection="true" scrollHeight="300"
-                                    converter="v2ConceptCollectionConverter" style="width:100%;"
+                                    var="collection"
+                                    itemLabel="#{collection.label}"
+                                    itemValue="#{collection}"
+                                    forceSelection="true"
+                                    minQueryLength="1"
+                                    scrollHeight="300"
+                                    converter="v2ConceptCollectionConverter"
+                                    style="width:100%;"
                                     inputStyle="width:100%;">
                         <p:column>
                             <h:outputText value="#{collection.label}"/>
@@ -39,14 +47,15 @@
                 <p:commandButton id="v2AddToCollectionSubmit" value="#{v2LocaleBean.getMsg('btnValidate')}"
                                  styleClass="ui-button-success"
                                  actionListener="#{v2ConceptCollectionEditorBean.submitAddToCollection()}"
-                                 update="v2AddToCollectionForm :containerIndex:rightTab :messageIndex"
+                                 update="@form :containerIndex:rightTab :messageIndex" ajax="true"
                                  process="@form"/>
             </div>
         </h:form>
     </p:dialog>
 
     <p:dialog id="v2AddBranchToCollectionDlg" header="#{v2LocaleBean.getMsg('rightbody.conceptdialog.add_all_to_group')}"
-              widgetVar="v2AddBranchToCollectionDlg" width="500" modal="true" resizable="false" position="top">
+              widgetVar="v2AddBranchToCollectionDlg" width="500" modal="true" resizable="false" position="top"
+              appendTo="@(body)">
         <h:form id="v2AddBranchToCollectionForm">
             <p:defaultCommand target="v2AddBranchToCollectionSubmit"/>
             <div class="row mb-2">
@@ -63,16 +72,24 @@
             </div>
             <div class="row mb-2">
                 <div class="col-12">
-                    <p:autoComplete value="#{v2ConceptCollectionEditorBean.selectedCollection}"
+                    <p:autoComplete id="v2AddBranchToCollectionAutocomplete"
+                                    value="#{v2ConceptCollectionEditorBean.selectedCollection}"
                                     completeMethod="#{v2ConceptCollectionEditorBean.autocompleteCollection}"
-                                    var="collection" forceSelection="true" scrollHeight="300"
-                                    converter="v2ConceptCollectionConverter" style="width:100%;"
+                                    var="collection"
+                                    itemLabel="#{collection.label}"
+                                    itemValue="#{collection}"
+                                    forceSelection="true"
+                                    minQueryLength="1"
+                                    scrollHeight="300"
+                                    dropdown="true"
+                                    converter="v2ConceptCollectionConverter"
+                                    style="width:100%;"
                                     inputStyle="width:100%;">
                         <p:column>
-                            <h:outputText value="#{collection.id}"/>
+                            <h:outputText value="#{collection.label}"/>
                         </p:column>
                         <p:column>
-                            <h:outputText value="#{collection.label}"/>
+                            <h:outputText value="#{collection.id}"/>
                         </p:column>
                     </p:autoComplete>
                 </div>
@@ -83,14 +100,15 @@
                 <p:commandButton id="v2AddBranchToCollectionSubmit" value="#{v2LocaleBean.getMsg('btnValidate')}"
                                  styleClass="ui-button-success"
                                  actionListener="#{v2ConceptCollectionEditorBean.submitAddToCollection()}"
-                                 update="v2AddBranchToCollectionForm :containerIndex:rightTab :messageIndex"
+                                 update="@form :containerIndex:rightTab :messageIndex"
                                  process="@form"/>
             </div>
         </h:form>
     </p:dialog>
 
     <p:dialog id="v2RemoveFromCollectionDlg" header="#{v2LocaleBean.getMsg('rightbody.conceptdialog.delete_concept_from_group')}"
-              widgetVar="v2RemoveFromCollectionDlg" width="500" modal="true" resizable="false" position="top">
+              widgetVar="v2RemoveFromCollectionDlg" width="500" modal="true" resizable="false" position="top"
+              appendTo="@(body)">
         <h:form id="v2RemoveFromCollectionForm">
             <div class="row mb-2">
                 <div class="col-12">
@@ -110,7 +128,7 @@
                 <p:column width="80" headerText="#{v2LocaleBean.getMsg('btnDelete')}">
                     <p:commandLink style="color:#FF7979;" process="@this"
                                    actionListener="#{v2ConceptCollectionEditorBean.submitRemoveFromCollection(collection)}"
-                                   update="v2RemoveFromCollectionForm :containerIndex:rightTab :messageIndex">
+                                   update="@form :containerIndex:rightTab :messageIndex">
                         <i class="pi pi-trash"/>
                     </p:commandLink>
                 </p:column>
@@ -123,7 +141,8 @@
     </p:dialog>
 
     <p:dialog id="v2RemoveBranchFromCollectionDlg" header="#{v2LocaleBean.getMsg('rightbody.conceptdialog.remove_all_from_group')}"
-              widgetVar="v2RemoveBranchFromCollectionDlg" width="500" modal="true" resizable="false" position="top">
+              widgetVar="v2RemoveBranchFromCollectionDlg" width="500" modal="true" resizable="false" position="top"
+              appendTo="@(body)">
         <h:form id="v2RemoveBranchFromCollectionForm">
             <div class="row mb-2">
                 <div class="col-12">
@@ -143,7 +162,7 @@
                 <p:column width="80" headerText="#{v2LocaleBean.getMsg('btnDelete')}">
                     <p:commandLink style="color:#FF7979;" process="@this"
                                    actionListener="#{v2ConceptCollectionEditorBean.submitRemoveFromCollection(collection)}"
-                                   update="v2RemoveBranchFromCollectionForm :containerIndex:rightTab :messageIndex">
+                                   update="@form :containerIndex:rightTab :messageIndex">
                         <i class="pi pi-trash"/>
                     </p:commandLink>
                 </p:column>

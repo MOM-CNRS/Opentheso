@@ -314,7 +314,7 @@ public class FacetDetailEditorBean implements Serializable {
         }
         refreshSelectedFacet();
         thesaurusBrowseBean.invalidateConceptTree();
-        PrimeFaces.current().ajax().update(":containerIndex:rightTab :containerIndex:formLeftTab :messageIndex");
+        PrimeFaces.current().ajax().update(":containerIndex:formRightTab :containerIndex:formLeftTab :messageIndex");
         MessageUtils.showInformationMessage(result.message());
         if (StringUtils.isNotBlank(dialogWidget)) {
             PrimeFaces.current().executeScript("PF('" + dialogWidget + "').hide();");

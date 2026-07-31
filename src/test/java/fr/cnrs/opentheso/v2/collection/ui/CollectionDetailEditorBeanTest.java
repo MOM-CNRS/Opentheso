@@ -54,7 +54,7 @@ class CollectionDetailEditorBeanTest {
     private CollectionDetailEditorBean bean;
 
     private static final GroupDetailOverview GROUP = new GroupDetailOverview(
-            "g1", "Collection", "fr", "MT", "skos:Collection", 1, "N1", "", "",
+            "g1", "Collection", "fr", "MT", "Microthesaurus", "skos:Collection", 1, "N1", "", "",
             List.of(), List.of(), List.of());
 
     @BeforeEach

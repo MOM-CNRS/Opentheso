@@ -71,7 +71,7 @@ public class ConceptWriteSearchPersistence {
         if (StringUtils.isAnyBlank(thesaurusId, lang)) {
             return Collections.emptyList();
         }
-        String cleaned = fr.cnrs.opentheso.utils.StringUtils.convertString(StringUtils.defaultString(query));
+        String cleaned = StringUtils.defaultString(query).trim();
         return conceptGroupLabelRepository.searchGroups(thesaurusId, lang, cleaned).stream()
                 .map(row -> new ConceptWriteCollection(
                         ConceptMapper.stringAt(row, 0),

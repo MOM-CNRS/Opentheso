@@ -33,7 +33,7 @@
             <div class="text-right mt-3">
                 <p:commandButton value="#{v2LocaleBean.getMsg('btnValidate')}" styleClass="ui-button-success"
                                  actionListener="#{v2ConceptAlignmentBean.addManualAlignment()}" process="@form"
-                                 update=":containerIndex:conceptSummaryPanel messageIndex"/>
+                                 update=":containerIndex:rightTab messageIndex"/>
             </div>
         </h:form>
     </p:dialog>
@@ -61,7 +61,7 @@
             <div class="text-right mt-3">
                 <p:commandButton value="#{v2LocaleBean.getMsg('btnValidate')}" styleClass="ui-button-success"
                                  actionListener="#{v2ConceptAlignmentBean.updateAlignment()}" process="@form"
-                                 update=":containerIndex:conceptSummaryPanel messageIndex"/>
+                                 update=":containerIndex:rightTab messageIndex"/>
             </div>
         </h:form>
     </p:dialog>
@@ -74,7 +74,7 @@
                 <p:commandButton value="#{v2LocaleBean.getMsg('btnValidate')}" styleClass="ui-button-danger"
                                  actionListener="#{v2ConceptAlignmentBean.deleteAlignment()}"
                                  oncomplete="PF('v2DeleteAlignment').hide();"
-                                 update=":containerIndex:conceptSummaryPanel messageIndex"/>
+                                 update=":containerIndex:rightTab messageIndex"/>
             </div>
         </h:form>
     </p:dialog>
