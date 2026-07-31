@@ -42,6 +42,7 @@ public class ConceptIdentifierEditorBean implements Serializable {
     private final ConceptNavigationSupport conceptNavigationSupport;
     private final ThesaurusContext thesaurusContext;
     private final UserSession userSession;
+    private final ConceptWritePolicy conceptWritePolicy;
     private final ThesaurusAccessService thesaurusAccessService;
     private final ThesaurusPreferenceService thesaurusPreferenceService;
     private final BranchConceptSupport branchConceptSupport;
@@ -52,7 +53,7 @@ public class ConceptIdentifierEditorBean implements Serializable {
     private List<String> branchConceptIds = Collections.emptyList();
 
     public boolean isIdentifierActionsAvailable() {
-        return ConceptWritePolicy.canMutateIdentifiers(userSession, canManageCurrentThesaurus());
+        return conceptWritePolicy.canMutateIdentifiers(userSession);
     }
 
     public boolean isArkGenerationAvailable() {

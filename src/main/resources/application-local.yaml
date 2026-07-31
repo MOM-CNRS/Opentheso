@@ -4,6 +4,7 @@
 
 server:
   port: 8099
+  max-http-header-size: 256KB
   forward-headers-strategy: native
   servlet:
     context-path: /
@@ -93,9 +94,16 @@ spring:
 #          keycloak:
 #            issuer-uri: https://login.server.net/realms/server
 
-
 settings:
   workLanguage: fr
+
+opentheso:
+  concept-write:
+    native-persistence-enabled: true
+  auth:
+    # Durée de vie du cache des droits. 0s = pas d'expiration auto (invalidation manuelle seulement).
+    rights-cache-ttl: 5m
+    rights-cache-max-size: 10000
 
 crypto:
   key: 12345678901234567890123456789012 # 32 caractères exactement pour la clé d'API locale Opentheso

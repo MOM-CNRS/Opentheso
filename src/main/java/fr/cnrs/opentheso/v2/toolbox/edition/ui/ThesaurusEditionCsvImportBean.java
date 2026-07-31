@@ -37,6 +37,7 @@ public class ThesaurusEditionCsvImportBean implements Serializable {
     private final ThesaurusEditionCsvImportService thesaurusEditionCsvImportService;
     private final NewThesaurusService newThesaurusService;
     private final UserSession userSession;
+    private final ToolboxAccessPolicy toolboxAccessPolicy;
 
     private String thesaurusName;
     private String selectedLang;
@@ -55,7 +56,7 @@ public class ThesaurusEditionCsvImportBean implements Serializable {
     private List<ThesaurusCsvConceptObject> conceptObjects = Collections.emptyList();
 
     public void init() {
-        if (!ToolboxAccessPolicy.canCreateOrImportThesaurus(userSession)) {
+        if (!toolboxAccessPolicy.canCreateOrImportThesaurus(userSession)) {
             return;
         }
         resetForm();

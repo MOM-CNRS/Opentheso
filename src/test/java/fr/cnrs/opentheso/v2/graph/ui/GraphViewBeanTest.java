@@ -7,6 +7,7 @@ import fr.cnrs.opentheso.v2.concept.search.model.ConceptSearchSuggestion;
 import fr.cnrs.opentheso.v2.concept.service.ConceptReadService;
 import fr.cnrs.opentheso.v2.graph.model.GraphExportEntry;
 import fr.cnrs.opentheso.v2.graph.model.GraphViewSummary;
+import fr.cnrs.opentheso.v2.graph.policy.GraphAccessPolicy;
 import fr.cnrs.opentheso.v2.graph.service.GraphConceptSearchService;
 import fr.cnrs.opentheso.v2.graph.service.GraphNeo4jExportService;
 import fr.cnrs.opentheso.v2.graph.service.GraphViewCommandService;
@@ -47,6 +48,8 @@ class GraphViewBeanTest {
     @Mock
     private UserSession userSession;
     @Mock
+    private GraphAccessPolicy graphAccessPolicy;
+    @Mock
     private GraphViewReadService graphViewReadService;
     @Mock
     private GraphViewCommandService graphViewCommandService;
@@ -77,6 +80,7 @@ class GraphViewBeanTest {
         messageUtilsStatic = mockStatic(MessageUtils.class);
         bean = new GraphViewBean(
                 userSession,
+                graphAccessPolicy,
                 graphViewReadService,
                 graphViewCommandService,
                 graphVisualizationUrlService,
@@ -96,21 +100,21 @@ class GraphViewBeanTest {
 
     @Test
     void isScreenAvailable_falseWhenNotLoggedIn() {
-        when(userSession.isLoggedIn()).thenReturn(false);
+        when(graphAccessPolicy.canAccessModule(userSession)).thenReturn(false);
 
         assertEquals(false, bean.isScreenAvailable());
     }
 
     @Test
     void isScreenAvailable_trueWhenLoggedIn() {
-        when(userSession.isLoggedIn()).thenReturn(true);
+        when(graphAccessPolicy.canAccessModule(userSession)).thenReturn(true);
 
         assertTrue(bean.isScreenAvailable());
     }
 
     @Test
     void load_doesNothingWhenScreenNotAvailable() {
-        when(userSession.isLoggedIn()).thenReturn(false);
+        when(graphAccessPolicy.canAccessModule(userSession)).thenReturn(false);
 
         bean.load();
 
@@ -119,7 +123,7 @@ class GraphViewBeanTest {
 
     @Test
     void load_refreshesViewsWhenScreenAvailable() {
-        when(userSession.isLoggedIn()).thenReturn(true);
+        when(graphAccessPolicy.canAccessModule(userSession)).thenReturn(true);
         when(userSession.getCurrentUserId()).thenReturn(7);
         when(graphViewReadService.reloadViewsForUser(7)).thenReturn(List.of());
 

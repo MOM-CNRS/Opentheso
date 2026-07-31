@@ -8,6 +8,7 @@ import fr.cnrs.opentheso.v2.shared.persistence.UserEntity;
 import fr.cnrs.opentheso.v2.shared.repository.ProjectAdminQueryRepository;
 import fr.cnrs.opentheso.v2.shared.repository.ProjectMembershipRepository;
 import fr.cnrs.opentheso.v2.shared.repository.UserCommandRepository;
+import fr.cnrs.opentheso.v2.rights.RightsService;
 import fr.cnrs.opentheso.v2.user.exception.InvalidPasswordException;
 import fr.cnrs.opentheso.v2.user.exception.InvalidProfileDataException;
 import fr.cnrs.opentheso.v2.user.model.UserProfile;
@@ -48,6 +49,8 @@ class AdminUserServiceTest {
     private ProjectAdminQueryRepository projectAdminQueryRepository;
     @Mock
     private PasswordEncoder passwordEncoder;
+    @Mock
+    private RightsService rightsService;
 
     private AdminUserService adminUserService;
 
@@ -59,7 +62,8 @@ class AdminUserServiceTest {
                 userCommandRepository,
                 projectMembershipRepository,
                 projectAdminQueryRepository,
-                passwordEncoder
+                passwordEncoder,
+                rightsService
         );
     }
 

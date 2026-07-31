@@ -8,6 +8,9 @@ import fr.cnrs.opentheso.v2.proposition.model.PropositionSummary;
 import fr.cnrs.opentheso.v2.proposition.service.PropositionDraftService;
 import fr.cnrs.opentheso.v2.proposition.service.PropositionMutationService;
 import fr.cnrs.opentheso.v2.proposition.service.PropositionReadService;
+import fr.cnrs.opentheso.v2.rights.AuthTarget;
+import fr.cnrs.opentheso.v2.rights.Permission;
+import fr.cnrs.opentheso.v2.rights.RightsService;
 import fr.cnrs.opentheso.v2.setting.ui.ThesaurusContext;
 import fr.cnrs.opentheso.v2.shared.ui.UserSession;
 import jakarta.enterprise.context.SessionScoped;
@@ -38,6 +41,7 @@ public class PropositionBean implements Serializable {
     private final PropositionDraftService propositionDraftService;
     private final ThesaurusContext thesaurusContext;
     private final UserSession userSession;
+    private final RightsService rightsService;
 
     private List<PropositionSummary> propositions = Collections.emptyList();
     private int pendingCount;
@@ -75,7 +79,15 @@ public class PropositionBean implements Serializable {
     }
 
     public boolean isManagerOnCurrentThesaurus() {
-        return userSession.isLoggedIn() && userSession.isManager();
+        String thesaurusId = thesaurusContext.resolveThesaurusId();
+        if (StringUtils.isBlank(thesaurusId)) {
+            return rightsService.can(userSession, Permission.MUTATE_CONCEPT_STRUCTURE);
+        }
+        return rightsService.can(
+                userSession,
+                Permission.MUTATE_CONCEPT_STRUCTURE,
+                AuthTarget.thesaurus(thesaurusId)
+        );
     }
 
     public void showPropositionDrawer() {

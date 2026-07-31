@@ -37,6 +37,7 @@ import java.util.List;
 public class GraphViewBean implements Serializable {
 
     private final UserSession userSession;
+    private final GraphAccessPolicy graphAccessPolicy;
     private final GraphViewReadService graphViewReadService;
     private final GraphViewCommandService graphViewCommandService;
     private final GraphVisualizationUrlService graphVisualizationUrlService;
@@ -56,7 +57,7 @@ public class GraphViewBean implements Serializable {
     private List<GraphViewSummary> graphViews = new ArrayList<>();
 
     public boolean isScreenAvailable() {
-        return GraphAccessPolicy.canAccessModule(userSession);
+        return graphAccessPolicy.canAccessModule(userSession);
     }
 
     public void load() {

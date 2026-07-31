@@ -35,6 +35,7 @@ import java.util.stream.Collectors;
 public class StatisticsBean implements Serializable {
 
     private final UserSession userSession;
+    private final ToolboxAccessPolicy toolboxAccessPolicy;
     private final ThesaurusContext thesaurusContext;
     private final ThesaurusStatisticsService thesaurusStatisticsService;
 
@@ -73,17 +74,19 @@ public class StatisticsBean implements Serializable {
 
     public StatisticsBean(
             UserSession userSession,
+            ToolboxAccessPolicy toolboxAccessPolicy,
             ThesaurusContext thesaurusContext,
             ThesaurusStatisticsService thesaurusStatisticsService
     ) {
         this.userSession = userSession;
+        this.toolboxAccessPolicy = toolboxAccessPolicy;
         this.thesaurusContext = thesaurusContext;
         this.thesaurusStatisticsService = thesaurusStatisticsService;
     }
 
     public boolean isScreenAvailable() {
-        return ToolboxAccessPolicy.canViewStatistics(userSession)
-                && ToolboxAccessPolicy.hasSelectedThesaurus(getActiveThesaurusId());
+        return toolboxAccessPolicy.canViewStatistics(userSession)
+                && toolboxAccessPolicy.hasSelectedThesaurus(getActiveThesaurusId());
     }
 
     public String getThesaurusTitle() {

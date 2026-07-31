@@ -2,6 +2,8 @@ package fr.cnrs.opentheso.v2.shared.ui;
 
 import fr.cnrs.opentheso.v2.shared.session.AuthenticatedUserSource;
 import fr.cnrs.opentheso.v2.shared.session.SessionUser;
+import fr.cnrs.opentheso.v2.rights.Permission;
+import fr.cnrs.opentheso.v2.rights.RightsService;
 import fr.cnrs.opentheso.v2.shared.session.SessionUserService;
 import org.junit.jupiter.api.BeforeEach;
 import org.junit.jupiter.api.Test;
@@ -25,12 +27,14 @@ class UserSessionTest {
     private AuthenticatedUserSource authenticatedUserSource;
     @Mock
     private SessionUserService sessionUserService;
+    @Mock
+    private RightsService rightsService;
 
     private UserSession userSession;
 
     @BeforeEach
     void setUp() {
-        userSession = new UserSession(authenticatedUserSource, sessionUserService);
+        userSession = new UserSession(authenticatedUserSource, sessionUserService, rightsService);
     }
 
     @Test
@@ -56,6 +60,8 @@ class UserSessionTest {
 
     @Test
     void refreshMethods_delegateToAuthenticatedUserSource() {
+        when(authenticatedUserSource.getUserId()).thenReturn(Optional.of(42));
+
         userSession.refreshDisplayName("new");
         userSession.refreshEmail("new@example.com");
         userSession.refreshAlertMail(true);
@@ -63,12 +69,30 @@ class UserSessionTest {
         verify(authenticatedUserSource).refreshDisplayName("new");
         verify(authenticatedUserSource).refreshEmail("new@example.com");
         verify(authenticatedUserSource).refreshAlertMail(true);
+        verify(sessionUserService, org.mockito.Mockito.times(2)).invalidate(42);
     }
 
     @Test
-    void canAccessProjectAdminScreen_deniesWhenNotLoggedIn() {
-        when(authenticatedUserSource.isLoggedIn()).thenReturn(false);
+    void invalidateRightsCache_clearsCachedRights() {
+        when(authenticatedUserSource.getUserId()).thenReturn(Optional.of(42));
 
+        userSession.invalidateRightsCache();
+
+        verify(sessionUserService).invalidate(42);
+    }
+
+    @Test
+    void canAccessProjectAdminScreen_delegatesToRightsService() {
+        when(rightsService.can(userSession, Permission.MANAGE_PROJECT)).thenReturn(false);
         assertFalse(userSession.canAccessProjectAdminScreen());
+
+        when(rightsService.can(userSession, Permission.MANAGE_PROJECT)).thenReturn(true);
+        assertTrue(userSession.canAccessProjectAdminScreen());
+    }
+
+    @Test
+    void canAccessSuperAdminScreen_delegatesToRightsService() {
+        when(rightsService.can(userSession, Permission.SUPER_ADMIN)).thenReturn(true);
+        assertTrue(userSession.canAccessSuperAdminScreen());
     }
 }

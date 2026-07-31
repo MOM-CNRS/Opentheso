@@ -36,6 +36,7 @@ import java.util.List;
 public class EditionBean implements Serializable {
 
     private final UserSession userSession;
+    private final ToolboxAccessPolicy toolboxAccessPolicy;
     private final ThesaurusContext thesaurusContext;
     private final V2LocaleBean localeBean;
     private final EditionThesaurusService editionThesaurusService;
@@ -60,6 +61,7 @@ public class EditionBean implements Serializable {
 
     public EditionBean(
             UserSession userSession,
+            ToolboxAccessPolicy toolboxAccessPolicy,
             ThesaurusContext thesaurusContext,
             V2LocaleBean localeBean,
             EditionThesaurusService editionThesaurusService,
@@ -72,6 +74,7 @@ public class EditionBean implements Serializable {
             ThesaurusEditionCsvStructuredImportBean csvStructuredImportBean
     ) {
         this.userSession = userSession;
+        this.toolboxAccessPolicy = toolboxAccessPolicy;
         this.thesaurusContext = thesaurusContext;
         this.localeBean = localeBean;
         this.editionThesaurusService = editionThesaurusService;
@@ -100,7 +103,7 @@ public class EditionBean implements Serializable {
     }
 
     public boolean isCanCreateOrImport() {
-        return ToolboxAccessPolicy.canCreateOrImportThesaurus(userSession);
+        return toolboxAccessPolicy.canCreateOrImportThesaurus(userSession);
     }
 
     public boolean isListView() {
@@ -286,6 +289,6 @@ public class EditionBean implements Serializable {
     }
 
     private boolean canAccessScreen() {
-        return ToolboxAccessPolicy.canAccessEditionScreen(userSession);
+        return toolboxAccessPolicy.canAccessEditionScreen(userSession);
     }
 }

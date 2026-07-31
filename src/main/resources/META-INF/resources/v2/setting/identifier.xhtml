@@ -70,7 +70,7 @@
                                                 <p:toggleSwitch  value="#{v2PreferenceSettingsBean.editor.useArk}" 
                                                                  onIcon="pi pi-times" offIcon="pi pi-check"
                                                                  style="height: 25px; width: 50px;">
-                                                    <p:ajax event="change" listener="#{v2PreferenceSettingsBean.updateSelectedServer('ark')}" update="containerIndex" />
+                                                    <p:ajax event="change" listener="#{v2PreferenceSettingsBean.updateSelectedServer('ark')}" update="containerIndex menuBar" />
                                                 </p:toggleSwitch>  
                                             </div>
                                         </div>
@@ -156,7 +156,7 @@
                                                 <div class="row" style="padding: 3px;">
                                                     <div class="col-11" style="text-align: right; margin-top: 2px;">
                                                         <p:commandButton value="#{v2LocaleBean.getMsg('btnValidate')}" styleClass="ui-button-success" icon="pi pi-check" 
-                                                                         update="containerIndex messageIndex"
+                                                                         update="containerIndex messageIndex menuBar"
                                                                          action="#{v2PreferenceSettingsBean.save()}" >
                                                             <p:tooltip value="#{v2LocaleBean.getMsg('candidat.save')}" showDelay="500" />
                                                         </p:commandButton>
@@ -179,7 +179,7 @@
                                                 <p:toggleSwitch  value="#{v2PreferenceSettingsBean.editor.useArkLocal}" 
                                                                  onIcon="pi pi-times" offIcon="pi pi-check"
                                                                  style="height: 25px; width: 50px;">
-                                                    <p:ajax event="change" listener="#{v2PreferenceSettingsBean.updateSelectedServer('arklocal')}" update="containerIndex" />
+                                                    <p:ajax event="change" listener="#{v2PreferenceSettingsBean.updateSelectedServer('arklocal')}" update="containerIndex menuBar" />
                                                 </p:toggleSwitch>  
                                             </div>
                                         </div>
@@ -253,7 +253,7 @@
                                                     <div class="col-11" style="text-align: right; margin-top: 2px;">
                                                         <p:commandButton value="#{v2LocaleBean.getMsg('btnValidate')}" styleClass="ui-button-success" icon="pi pi-check"
                                                                          action="#{v2PreferenceSettingsBean.save()}"
-                                                                         update="containerIndex messageIndex"/>
+                                                                         update="containerIndex messageIndex menuBar"/>
                                                     </div>
                                                 </div>
                                             </div>
@@ -272,7 +272,7 @@
                                                 <p:toggleSwitch  value="#{v2PreferenceSettingsBean.editor.useHandle}" 
                                                                  onIcon="pi pi-times" offIcon="pi pi-check"
                                                                  style="height: 25px; width: 50px;">
-                                                    <p:ajax event="change" listener="#{v2PreferenceSettingsBean.updateSelectedServer('handle')}" update="containerIndex" />
+                                                    <p:ajax event="change" listener="#{v2PreferenceSettingsBean.updateSelectedServer('handle')}" update="containerIndex menuBar" />
                                                 </p:toggleSwitch>                                                    
                                             </div>
                                         </div>
@@ -289,7 +289,7 @@
                                                         </div>
                                                         <div class="col-8">
                                                             <p:inputSwitch value="#{v2PreferenceSettingsBean.editor.useHandleWithCertificat}" style="color: #f47b2a" onLabel="OUI" offLabel="NON" >
-                                                                <p:ajax event="change" update="containerIndex" />
+                                                                <p:ajax event="change" update="containerIndex menuBar" />
                                                             </p:inputSwitch>
                                                         </div>
                                                     </div>
@@ -431,7 +431,7 @@
                                                     <div class="col-11" style="text-align: right; margin-top: 2px;">
                                                         <p:commandButton value="#{v2LocaleBean.getMsg('btnValidate')}" styleClass="ui-button-success" icon="pi pi-check"
                                                                          action="#{v2PreferenceSettingsBean.save()}"
-                                                                         update="containerIndex messageIndex"/>
+                                                                         update="containerIndex messageIndex menuBar"/>
                                                     </div>
                                                 </div>
 
@@ -451,7 +451,7 @@
                                                 <p:toggleSwitch  value="#{v2PreferenceSettingsBean.editor.useOpenArk}"
                                                                  onIcon="pi pi-times" offIcon="pi pi-check"
                                                                  style="height: 25px; width: 50px;">
-                                                    <p:ajax event="change" listener="#{v2PreferenceSettingsBean.updateSelectedServer('openark')}" update="containerIndex" />
+                                                    <p:ajax event="change" listener="#{v2PreferenceSettingsBean.updateSelectedServer('openark')}" update="containerIndex menuBar" />
                                                 </p:toggleSwitch>
                                             </div>
                                         </div>
@@ -512,7 +512,7 @@
                                                 <div class="row" style="padding: 3px;">
                                                     <div class="col-11" style="text-align: right; margin-top: 2px;">
                                                         <p:commandButton value="#{v2LocaleBean.getMsg('btnValidate')}" styleClass="ui-button-success" icon="pi pi-check"
-                                                                         update="containerIndex messageIndex"
+                                                                         update="containerIndex messageIndex menuBar"
                                                                          action="#{v2PreferenceSettingsBean.save()}" >
                                                             <p:tooltip value="#{v2LocaleBean.getMsg('candidat.save')}" showDelay="500" />
                                                         </p:commandButton>

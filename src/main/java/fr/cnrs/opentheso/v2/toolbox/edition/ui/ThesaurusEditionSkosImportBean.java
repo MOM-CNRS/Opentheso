@@ -37,6 +37,7 @@ public class ThesaurusEditionSkosImportBean implements Serializable {
     private final ThesaurusEditionSkosImportService thesaurusEditionSkosImportService;
     private final NewThesaurusService newThesaurusService;
     private final UserSession userSession;
+    private final ToolboxAccessPolicy toolboxAccessPolicy;
 
     private int typeImport;
     private int total;
@@ -56,7 +57,7 @@ public class ThesaurusEditionSkosImportBean implements Serializable {
     private SKOSXmlDocument skosXmlDocument;
 
     public void init() {
-        if (!ToolboxAccessPolicy.canCreateOrImportThesaurus(userSession)) {
+        if (!toolboxAccessPolicy.canCreateOrImportThesaurus(userSession)) {
             return;
         }
         typeImport = 0;

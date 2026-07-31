@@ -1,10 +1,10 @@
 package fr.cnrs.opentheso.v2.shared.auth;
 
-import fr.cnrs.opentheso.v2.project.policy.ProjectAccessPolicy;
+import fr.cnrs.opentheso.v2.rights.AuthTarget;
+import fr.cnrs.opentheso.v2.rights.Permission;
+import fr.cnrs.opentheso.v2.rights.RightsService;
 import fr.cnrs.opentheso.v2.setting.exception.SettingAccessDeniedException;
-import fr.cnrs.opentheso.v2.setting.service.ThesaurusAccessService;
 import fr.cnrs.opentheso.v2.shared.exception.ModuleAccessDeniedException;
-import fr.cnrs.opentheso.v2.shared.repository.ThesaurusSettingsQueryRepository;
 import fr.cnrs.opentheso.v2.user.service.UserProfileService;
 import lombok.RequiredArgsConstructor;
 import org.apache.commons.lang3.StringUtils;
@@ -16,9 +16,7 @@ public class ThesaurusScopedAuthSupport {
 
     private final ApiKeyAuthenticationService apiKeyAuthenticationService;
     private final UserProfileService userProfileService;
-    private final ThesaurusAccessService thesaurusAccessService;
-    private final UserCapabilityService userCapabilityService;
-    private final ThesaurusSettingsQueryRepository thesaurusSettingsQueryRepository;
+    private final RightsService rightsService;
 
     public int resolveUserId(String xApiKey, String legacyApiKey) {
         return apiKeyAuthenticationService.resolveUserId(xApiKey, legacyApiKey);
@@ -26,30 +24,26 @@ public class ThesaurusScopedAuthSupport {
 
     public void requireThesaurusManager(int userId, String thesaurusId) {
         requireThesaurusSelected(thesaurusId);
-        var profile = userProfileService.getProfile(userId);
-        if (!thesaurusAccessService.canManageThesaurus(userId, profile.superAdmin(), thesaurusId)) {
+        if (!rightsService.can(userId, Permission.MANAGE_THESAURUS, AuthTarget.thesaurus(thesaurusId))) {
             throw new SettingAccessDeniedException();
         }
     }
 
     public void requireThesaurusContributor(int userId, String thesaurusId) {
         requireThesaurusSelected(thesaurusId);
-        var capabilities = userCapabilityService.loadSessionUser(userId);
-        if (!hasRoleOnThesaurus(userId, capabilities.superAdmin(), thesaurusId, ProjectAccessPolicy.ROLE_CONTRIBUTOR)) {
+        if (!rightsService.can(userId, Permission.CONTRIBUTE_ON_THESAURUS, AuthTarget.thesaurus(thesaurusId))) {
             throw new ModuleAccessDeniedException("candidat");
         }
     }
 
     public void requireToolboxEditionAccess(int userId) {
-        var capabilities = userCapabilityService.loadSessionUser(userId);
-        if (!capabilities.projectAdmin() && !capabilities.superAdmin()) {
+        if (!rightsService.can(userId, Permission.TOOLBOX_EDITION)) {
             throw new ModuleAccessDeniedException("toolbox");
         }
     }
 
     public void requireToolboxStatisticsAccess(int userId) {
-        var capabilities = userCapabilityService.loadSessionUser(userId);
-        if (!capabilities.manager() && !capabilities.superAdmin()) {
+        if (!rightsService.can(userId, Permission.TOOLBOX_STATISTICS)) {
             throw new ModuleAccessDeniedException("toolbox");
         }
     }
@@ -62,14 +56,5 @@ public class ThesaurusScopedAuthSupport {
         if (StringUtils.isBlank(thesaurusId)) {
             throw new ModuleAccessDeniedException("thesaurus");
         }
-    }
-
-    private boolean hasRoleOnThesaurus(int userId, boolean superAdmin, String thesaurusId, int maxRoleId) {
-        if (superAdmin) {
-            return true;
-        }
-        return thesaurusSettingsQueryRepository.findEffectiveRoleOnThesaurus(userId, thesaurusId)
-                .map(roleId -> roleId <= maxRoleId)
-                .orElse(false);
     }
 }

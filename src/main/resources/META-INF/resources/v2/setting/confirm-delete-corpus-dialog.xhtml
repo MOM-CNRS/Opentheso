@@ -28,7 +28,7 @@
                                  oncomplete="PF('v2ConfirmDeleteCorpus').hide();" update="idV2ConfirmDeleteCorpus"/>
 
                 <p:commandButton value="Supprimer" styleClass="ui-button-success" icon="pi pi-check"
-                                 update="containerIndex messageIndex" process="@this"
+                                 update="containerIndex messageIndex menuBar" process="@this"
                                  action="#{v2CorpusSettingsBean.delete()}"/>
             </div>
         </h:form>

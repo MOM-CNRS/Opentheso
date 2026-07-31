@@ -12,6 +12,7 @@ import fr.cnrs.opentheso.v2.concept.write.service.ConceptNoteMutationService;
 import fr.cnrs.opentheso.v2.concept.write.service.ConceptWriteMetadataService;
 import fr.cnrs.opentheso.v2.facet.read.FacetReadService;
 import fr.cnrs.opentheso.v2.setting.ui.ThesaurusContext;
+import fr.cnrs.opentheso.v2.concept.write.policy.ConceptWritePolicy;
 import fr.cnrs.opentheso.v2.shared.ui.UserSession;
 import org.junit.jupiter.api.BeforeEach;
 import org.junit.jupiter.api.Test;
@@ -41,6 +42,7 @@ class FacetNoteEditorBeanTest {
     @Mock private FacetReadService facetReadService;
     @Mock private ThesaurusContext thesaurusContext;
     @Mock private UserSession userSession;
+    @Mock private ConceptWritePolicy conceptWritePolicy;
     @Mock private ThesaurusBrowseBean thesaurusBrowseBean;
 
     private FacetNoteEditorBean bean;
@@ -53,16 +55,17 @@ class FacetNoteEditorBeanTest {
     void setUp() {
         bean = new FacetNoteEditorBean(
                 conceptNoteMutationService, conceptWriteMetadataService, facetReadService,
-                thesaurusContext, userSession, thesaurusBrowseBean);
+                thesaurusContext, userSession,
+                conceptWritePolicy, thesaurusBrowseBean);
         lenient().when(thesaurusContext.resolveThesaurusId()).thenReturn("TH1");
         lenient().when(thesaurusContext.resolveWorkLanguage()).thenReturn("fr");
         lenient().when(thesaurusBrowseBean.getSelectedFacet()).thenReturn(FACET);
+        lenient().when(conceptWritePolicy.canMutateLexicalContent(userSession, false)).thenReturn(true);
     }
 
     @Test
     void isNoteActionsAvailable_trueForManager() {
-        when(userSession.isLoggedIn()).thenReturn(true);
-        when(userSession.isManager()).thenReturn(true);
+        when(conceptWritePolicy.canMutateLexicalContent(userSession, false)).thenReturn(true);
 
         assertTrue(bean.isNoteActionsAvailable());
     }
@@ -77,8 +80,6 @@ class FacetNoteEditorBeanTest {
 
     @Test
     void submitSaveNote_usesFacetIdAsIdentifier() {
-        when(userSession.isLoggedIn()).thenReturn(true);
-        when(userSession.isManager()).thenReturn(true);
         when(userSession.getCurrentUserId()).thenReturn(7);
         when(userSession.getCurrentUsername()).thenReturn("admin");
         when(conceptNoteMutationService.listNoteTypes()).thenReturn(List.of(new ConceptWriteNoteType("note")));

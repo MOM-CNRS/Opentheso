@@ -1,6 +1,9 @@
 package fr.cnrs.opentheso.v2.graph.policy;
 
+import fr.cnrs.opentheso.v2.rights.Permission;
+import fr.cnrs.opentheso.v2.rights.RightsService;
 import fr.cnrs.opentheso.v2.shared.ui.UserSession;
+import org.junit.jupiter.api.BeforeEach;
 import org.junit.jupiter.api.Test;
 import org.junit.jupiter.api.extension.ExtendWith;
 import org.mockito.Mock;
@@ -14,17 +17,23 @@ import static org.mockito.Mockito.when;
 class GraphAccessPolicyTest {
 
     @Mock
+    private RightsService rightsService;
+    @Mock
     private UserSession userSession;
 
-    @Test
-    void canAccessModule_returnsFalseWhenNotLoggedIn() {
-        when(userSession.isLoggedIn()).thenReturn(false);
-        assertFalse(GraphAccessPolicy.canAccessModule(userSession));
+    private GraphAccessPolicy policy;
+
+    @BeforeEach
+    void setUp() {
+        policy = new GraphAccessPolicy(rightsService);
     }
 
     @Test
-    void canAccessModule_returnsTrueWhenLoggedIn() {
-        when(userSession.isLoggedIn()).thenReturn(true);
-        assertTrue(GraphAccessPolicy.canAccessModule(userSession));
+    void canAccessModule_delegatesToRightsService() {
+        when(rightsService.can(userSession, Permission.ACCESS_GRAPH)).thenReturn(false);
+        assertFalse(policy.canAccessModule(userSession));
+
+        when(rightsService.can(userSession, Permission.ACCESS_GRAPH)).thenReturn(true);
+        assertTrue(policy.canAccessModule(userSession));
     }
 }

@@ -48,24 +48,24 @@
                     <div id="collapseTwo" class="collapse" aria-labelledby="headingTwo" data-parent="#accordionSidebar">
                         <div class="bg-white py-2 collapse-inner rounded">
                             <p:commandLink class="collapse-item" actionListener="#{v2NavigationBean.redirectToMyProfile()}"
-                                           process="@this" style="font-size: 12px;">#{v2LocaleBean.getMsg('profile.my_account')}
+                                           process="@this" ajax="false" style="font-size: 12px;">#{v2LocaleBean.getMsg('profile.my_account')}
                             </p:commandLink>
                             <p:commandLink rendered="#{v2UserSession.canAccessProjectAdminScreen()}"
                                            class="collapse-item" actionListener="#{v2NavigationBean.redirectToMyProjects()}"
-                                           style="font-size: 12px;" process="@this">#{v2LocaleBean.getMsg('profile.my_projects_users')}
+                                           process="@this" ajax="false" style="font-size: 12px;">#{v2LocaleBean.getMsg('profile.my_projects_users')}
                             </p:commandLink>
                             <hr class="sidebar-divider"/>
                             <p:commandLink rendered="#{v2UserSession.superAdmin}"
                                            class="collapse-item" actionListener="#{v2NavigationBean.redirectToAllUsers()}"
-                                           style="font-size: 12px;" process="@this">#{v2LocaleBean.getMsg('profile.tooltip_all_users')}
+                                           process="@this" ajax="false" style="font-size: 12px;">#{v2LocaleBean.getMsg('profile.tooltip_all_users')}
                             </p:commandLink>
                             <p:commandLink rendered="#{v2UserSession.superAdmin}"
                                            class="collapse-item" actionListener="#{v2NavigationBean.redirectToAllProjects()}"
-                                           style="font-size: 12px;" process="@this">#{v2LocaleBean.getMsg('profile.all_projects')}
+                                           process="@this" ajax="false" style="font-size: 12px;">#{v2LocaleBean.getMsg('profile.all_projects')}
                             </p:commandLink>
                             <p:commandLink rendered="#{v2UserSession.superAdmin}"
                                            class="collapse-item" actionListener="#{v2NavigationBean.redirectToAllThesauri()}"
-                                           style="font-size: 12px;" process="@this">#{v2LocaleBean.getMsg('profile.all_thesauri')}
+                                           process="@this" ajax="false" style="font-size: 12px;">#{v2LocaleBean.getMsg('profile.all_thesauri')}
                             </p:commandLink>
                         </div>
                     </div>
@@ -82,23 +82,23 @@
                          data-parent="#accordionSidebar">
                         <div class="bg-white py-2 collapse-inner rounded">
                             <p:commandLink class="collapse-item" actionListener="#{v2NavigationBean.redirectToEdition()}"
-                                           style="font-size: 12px;" process="@this">#{v2LocaleBean.getMsg('menu.edition')}
+                                           process="@this" ajax="false" style="font-size: 12px;">#{v2LocaleBean.getMsg('menu.edition')}
                             </p:commandLink>
                             <p:commandLink rendered="#{v2UserSession.superAdmin}"
                                            class="collapse-item" actionListener="#{v2NavigationBean.redirectToFlag()}"
-                                           style="font-size: 12px;" process="@this">#{v2LocaleBean.getMsg('toolbox.manageFlags')}
+                                           process="@this" ajax="false" style="font-size: 12px;">#{v2LocaleBean.getMsg('toolbox.manageFlags')}
                             </p:commandLink>
                             <p:commandLink rendered="#{v2ConsultationShellBean.hasSelectedThesaurus()}"
                                            class="collapse-item" actionListener="#{v2NavigationBean.redirectToWorkshop()}"
-                                           style="font-size: 12px;" process="@this">#{v2LocaleBean.getMsg('menu.thesaurusWorkshop')}
+                                           process="@this" ajax="false" style="font-size: 12px;">#{v2LocaleBean.getMsg('menu.thesaurusWorkshop')}
                             </p:commandLink>
                             <p:commandLink rendered="#{v2ConsultationShellBean.hasSelectedThesaurus()}"
                                            class="collapse-item" actionListener="#{v2NavigationBean.redirectToMaintenance()}"
-                                           style="font-size: 12px;" process="@this">#{v2LocaleBean.getMsg('menu.service')}
+                                           process="@this" ajax="false" style="font-size: 12px;">#{v2LocaleBean.getMsg('menu.service')}
                             </p:commandLink>
                             <p:commandLink rendered="#{v2ConsultationShellBean.hasSelectedThesaurus()}"
                                            class="collapse-item" actionListener="#{v2NavigationBean.redirectToStatistics()}"
-                                           style="font-size: 12px;" process="@this">#{v2LocaleBean.getMsg('statistique.statistic')}
+                                           process="@this" ajax="false" style="font-size: 12px;">#{v2LocaleBean.getMsg('statistique.statistic')}
                             </p:commandLink>
                         </div>
                     </div>
@@ -115,13 +115,13 @@
                          data-parent="#accordionSidebar">
                         <div class="bg-white py-2 collapse-inner rounded">
                             <p:commandLink class="collapse-item" actionListener="#{v2NavigationBean.redirectToPreference()}"
-                                           style="font-size: 12px;" process="@this">#{v2LocaleBean.getMsg('menu.preference')}
+                                           process="@this" ajax="false" style="font-size: 12px;">#{v2LocaleBean.getMsg('menu.preference')}
                             </p:commandLink>
                             <p:commandLink class="collapse-item" actionListener="#{v2NavigationBean.redirectToIdentifier()}"
-                                           style="font-size: 12px;" process="@this">#{v2LocaleBean.getMsg('menu.identifier')}
+                                           process="@this" ajax="false" style="font-size: 12px;">#{v2LocaleBean.getMsg('menu.identifier')}
                             </p:commandLink>
                             <p:commandLink class="collapse-item" actionListener="#{v2NavigationBean.redirectToCorpus()}"
-                                           style="font-size: 12px;" process="@this">#{v2LocaleBean.getMsg('menu.corpus')}
+                                           process="@this" ajax="false" style="font-size: 12px;">#{v2LocaleBean.getMsg('menu.corpus')}
                             </p:commandLink>
                         </div>
                     </div>

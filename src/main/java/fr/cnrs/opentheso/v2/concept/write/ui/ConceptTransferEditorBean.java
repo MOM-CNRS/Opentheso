@@ -39,6 +39,7 @@ public class ConceptTransferEditorBean implements Serializable {
     private final ConceptNavigationSupport conceptNavigationSupport;
     private final ThesaurusContext thesaurusContext;
     private final UserSession userSession;
+    private final ConceptWritePolicy conceptWritePolicy;
     private final ThesaurusAccessService thesaurusAccessService;
     private final BranchConceptSupport branchConceptSupport;
 
@@ -48,7 +49,7 @@ public class ConceptTransferEditorBean implements Serializable {
     private List<ConceptWriteThesaurusOption> availableThesauri = Collections.emptyList();
 
     public boolean isTransferActionsAvailable() {
-        return ConceptWritePolicy.canTransferConcept(userSession, canManageCurrentThesaurus());
+        return conceptWritePolicy.canTransferConcept(userSession);
     }
 
     public void prepareMoveToAnotherThesaurus() {

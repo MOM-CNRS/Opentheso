@@ -40,6 +40,7 @@ public class ConceptNoteEditorBean implements Serializable {
     private final ConceptNavigationSupport conceptNavigationSupport;
     private final ThesaurusContext thesaurusContext;
     private final UserSession userSession;
+    private final ConceptWritePolicy conceptWritePolicy;
     private final ThesaurusBrowseBean thesaurusBrowseBean;
 
     private String currentConceptLabel;
@@ -53,7 +54,7 @@ public class ConceptNoteEditorBean implements Serializable {
     private List<ConceptNote> notesToDelete = Collections.emptyList();
 
     public boolean isNoteActionsAvailable() {
-        return ConceptWritePolicy.canMutateLexicalContent(userSession, isSelectedDeprecated());
+        return conceptWritePolicy.canMutateLexicalContent(userSession, isSelectedDeprecated());
     }
 
     public void prepareManageNote() {

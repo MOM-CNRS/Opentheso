@@ -4,6 +4,7 @@ import fr.cnrs.opentheso.utils.MessageUtils;
 import fr.cnrs.opentheso.v2.setting.service.ThesaurusAccessService;
 import fr.cnrs.opentheso.v2.setting.ui.ThesaurusContext;
 import fr.cnrs.opentheso.v2.shared.ui.UserSession;
+import fr.cnrs.opentheso.v2.toolbox.policy.ToolboxAccessPolicy;
 import org.junit.jupiter.api.BeforeEach;
 import org.junit.jupiter.api.Test;
 import org.junit.jupiter.api.extension.ExtendWith;
@@ -25,6 +26,8 @@ class WorkshopBeanTest {
     @Mock
     private UserSession userSession;
     @Mock
+    private ToolboxAccessPolicy toolboxAccessPolicy;
+    @Mock
     private ThesaurusContext thesaurusContext;
     @Mock
     private WorkshopImportBean workshopImportBean;
@@ -35,20 +38,20 @@ class WorkshopBeanTest {
 
     @BeforeEach
     void setUp() {
-        bean = new WorkshopBean(userSession, thesaurusContext, workshopImportBean, thesaurusAccessService);
+        bean = new WorkshopBean(userSession, toolboxAccessPolicy, thesaurusContext, workshopImportBean, thesaurusAccessService);
     }
 
     @Test
     void screenAvailable_requiresLoginAndThesaurusFromContext() {
-        when(userSession.isLoggedIn()).thenReturn(true);
-        when(thesaurusContext.resolveThesaurusId()).thenReturn("TH1");
+        stubScreenAccess();
 
         assertTrue(bean.isScreenAvailable());
     }
 
     @Test
     void screenUnavailableWithoutThesaurus() {
-        when(userSession.isLoggedIn()).thenReturn(true);
+        when(toolboxAccessPolicy.canAccessWorkshop(userSession)).thenReturn(true);
+        when(toolboxAccessPolicy.hasSelectedThesaurus("")).thenReturn(false);
         when(thesaurusContext.resolveThesaurusId()).thenReturn("");
 
         assertFalse(bean.isScreenAvailable());
@@ -56,17 +59,16 @@ class WorkshopBeanTest {
 
     @Test
     void screenUnavailableForGuest() {
-        when(userSession.isLoggedIn()).thenReturn(false);
+        when(toolboxAccessPolicy.canAccessWorkshop(userSession)).thenReturn(false);
 
         assertFalse(bean.isScreenAvailable());
     }
 
     @Test
     void actionsAvailable_requiresAdminOnCurrentThesaurus() {
-        when(userSession.isLoggedIn()).thenReturn(true);
+        stubScreenAccess();
         when(userSession.getCurrentUserId()).thenReturn(7);
         when(userSession.isSuperAdmin()).thenReturn(false);
-        when(thesaurusContext.resolveThesaurusId()).thenReturn("TH1");
         when(thesaurusAccessService.canManageThesaurus(7, false, "TH1")).thenReturn(true);
 
         assertTrue(bean.isActionsAvailable());
@@ -74,10 +76,9 @@ class WorkshopBeanTest {
 
     @Test
     void actionsUnavailableWithoutThesaurusAdmin() {
-        when(userSession.isLoggedIn()).thenReturn(true);
+        stubScreenAccess();
         when(userSession.getCurrentUserId()).thenReturn(7);
         when(userSession.isSuperAdmin()).thenReturn(false);
-        when(thesaurusContext.resolveThesaurusId()).thenReturn("TH1");
         when(thesaurusAccessService.canManageThesaurus(7, false, "TH1")).thenReturn(false);
 
         assertFalse(bean.isActionsAvailable());
@@ -100,11 +101,7 @@ class WorkshopBeanTest {
 
     @Test
     void load_preparesBulkImportWhenAccessGranted() {
-        when(userSession.isLoggedIn()).thenReturn(true);
-        when(userSession.getCurrentUserId()).thenReturn(7);
-        when(userSession.isSuperAdmin()).thenReturn(false);
-        when(thesaurusContext.resolveThesaurusId()).thenReturn("TH1");
-        when(thesaurusAccessService.canManageThesaurus(7, false, "TH1")).thenReturn(true);
+        stubAdminAccess();
 
         bean.load();
 
@@ -114,10 +111,9 @@ class WorkshopBeanTest {
 
     @Test
     void load_skipsBulkImportForNonAdmin() {
-        when(userSession.isLoggedIn()).thenReturn(true);
+        stubScreenAccess();
         when(userSession.getCurrentUserId()).thenReturn(7);
         when(userSession.isSuperAdmin()).thenReturn(false);
-        when(thesaurusContext.resolveThesaurusId()).thenReturn("TH1");
         when(thesaurusAccessService.canManageThesaurus(7, false, "TH1")).thenReturn(false);
 
         bean.load();
@@ -127,7 +123,8 @@ class WorkshopBeanTest {
 
     @Test
     void load_showsErrorWhenThesaurusMissing() {
-        when(userSession.isLoggedIn()).thenReturn(true);
+        when(toolboxAccessPolicy.canAccessWorkshop(userSession)).thenReturn(true);
+        when(toolboxAccessPolicy.hasSelectedThesaurus("")).thenReturn(false);
         when(thesaurusContext.resolveThesaurusId()).thenReturn("");
 
         try (MockedStatic<MessageUtils> messages = mockStatic(MessageUtils.class)) {
@@ -139,11 +136,7 @@ class WorkshopBeanTest {
 
     @Test
     void prepareBulkActions_initializesImportForAdmin() {
-        when(userSession.isLoggedIn()).thenReturn(true);
-        when(userSession.getCurrentUserId()).thenReturn(7);
-        when(userSession.isSuperAdmin()).thenReturn(false);
-        when(thesaurusContext.resolveThesaurusId()).thenReturn("TH1");
-        when(thesaurusAccessService.canManageThesaurus(7, false, "TH1")).thenReturn(true);
+        stubAdminAccess();
 
         bean.prepareBulkActions();
 
@@ -152,14 +145,26 @@ class WorkshopBeanTest {
 
     @Test
     void prepareBulkActions_skipsImportForNonAdmin() {
-        when(userSession.isLoggedIn()).thenReturn(true);
+        stubScreenAccess();
         when(userSession.getCurrentUserId()).thenReturn(7);
         when(userSession.isSuperAdmin()).thenReturn(false);
-        when(thesaurusContext.resolveThesaurusId()).thenReturn("TH1");
         when(thesaurusAccessService.canManageThesaurus(7, false, "TH1")).thenReturn(false);
 
         bean.prepareBulkActions();
 
         verify(workshopImportBean, never()).prepare();
+    }
+
+    private void stubScreenAccess() {
+        when(toolboxAccessPolicy.canAccessWorkshop(userSession)).thenReturn(true);
+        when(toolboxAccessPolicy.hasSelectedThesaurus("TH1")).thenReturn(true);
+        when(thesaurusContext.resolveThesaurusId()).thenReturn("TH1");
+    }
+
+    private void stubAdminAccess() {
+        stubScreenAccess();
+        when(userSession.getCurrentUserId()).thenReturn(7);
+        when(userSession.isSuperAdmin()).thenReturn(false);
+        when(thesaurusAccessService.canManageThesaurus(7, false, "TH1")).thenReturn(true);
     }
 }

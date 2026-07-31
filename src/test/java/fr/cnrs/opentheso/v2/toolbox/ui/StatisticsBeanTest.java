@@ -10,6 +10,7 @@ import fr.cnrs.opentheso.v2.setting.ui.ThesaurusContext;
 import fr.cnrs.opentheso.v2.shared.ui.UserSession;
 import fr.cnrs.opentheso.v2.toolbox.fixtures.ToolboxTestFixtures;
 import fr.cnrs.opentheso.v2.toolbox.model.StatisticsSummary;
+import fr.cnrs.opentheso.v2.toolbox.policy.ToolboxAccessPolicy;
 import fr.cnrs.opentheso.v2.toolbox.service.ThesaurusStatisticsService;
 import fr.cnrs.opentheso.v2.test.support.PrimeFacesTestSupport;
 import org.junit.jupiter.api.BeforeEach;
@@ -37,6 +38,8 @@ class StatisticsBeanTest {
     @Mock
     private UserSession userSession;
     @Mock
+    private ToolboxAccessPolicy toolboxAccessPolicy;
+    @Mock
     private ThesaurusContext thesaurusContext;
     @Mock
     private ThesaurusStatisticsService thesaurusStatisticsService;
@@ -47,6 +50,7 @@ class StatisticsBeanTest {
     void setUp() {
         bean = new StatisticsBean(
                 userSession,
+                toolboxAccessPolicy,
                 thesaurusContext,
                 thesaurusStatisticsService
         );
@@ -144,8 +148,8 @@ class StatisticsBeanTest {
 
     @Test
     void load_showsErrorWhenThesaurusMissing() {
-        when(userSession.isLoggedIn()).thenReturn(true);
-        when(userSession.isManager()).thenReturn(true);
+        when(toolboxAccessPolicy.canViewStatistics(userSession)).thenReturn(true);
+        when(toolboxAccessPolicy.hasSelectedThesaurus("")).thenReturn(false);
         when(thesaurusContext.resolveThesaurusId()).thenReturn("");
 
         try (MockedStatic<MessageUtils> messages = mockStatic(MessageUtils.class)) {
@@ -156,8 +160,8 @@ class StatisticsBeanTest {
     }
 
     private void stubAccess() {
-        when(userSession.isLoggedIn()).thenReturn(true);
-        when(userSession.isManager()).thenReturn(true);
+        when(toolboxAccessPolicy.canViewStatistics(userSession)).thenReturn(true);
+        when(toolboxAccessPolicy.hasSelectedThesaurus("TH1")).thenReturn(true);
         when(thesaurusContext.resolveThesaurusId()).thenReturn("TH1");
     }
 }

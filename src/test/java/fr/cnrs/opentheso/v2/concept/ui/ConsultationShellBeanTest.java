@@ -4,10 +4,10 @@ import fr.cnrs.opentheso.utils.MessageUtils;
 import fr.cnrs.opentheso.v2.concept.model.ConsultationThesaurusOption;
 import fr.cnrs.opentheso.v2.concept.service.ConsultationCatalogService;
 import fr.cnrs.opentheso.v2.setting.ui.ThesaurusContext;
-import fr.cnrs.opentheso.v2.shared.repository.ThesaurusSettingsQueryRepository;
 import fr.cnrs.opentheso.v2.shared.service.PlatformHomeReadService;
 import fr.cnrs.opentheso.v2.shared.session.SessionLifecycleService;
 import fr.cnrs.opentheso.v2.shared.session.SsoSessionBridge;
+import fr.cnrs.opentheso.v2.rights.RightsService;
 import fr.cnrs.opentheso.v2.shared.ui.UserSession;
 import fr.cnrs.opentheso.v2.shared.ui.V2LocaleBean;
 import jakarta.faces.context.ExternalContext;
@@ -42,13 +42,13 @@ class ConsultationShellBeanTest {
     @Mock
     private V2LocaleBean v2LocaleBean;
     @Mock
-    private ThesaurusSettingsQueryRepository thesaurusSettingsQueryRepository;
-    @Mock
     private PlatformHomeReadService platformHomeReadService;
     @Mock
     private SsoSessionBridge ssoSessionBridge;
     @Mock
     private SessionLifecycleService sessionLifecycleService;
+    @Mock
+    private RightsService rightsService;
     @Mock
     private FacesContext facesContext;
     @Mock
@@ -63,10 +63,10 @@ class ConsultationShellBeanTest {
                 thesaurusContext,
                 userSession,
                 v2LocaleBean,
-                thesaurusSettingsQueryRepository,
                 platformHomeReadService,
                 ssoSessionBridge,
-                sessionLifecycleService
+                sessionLifecycleService,
+                rightsService
         );
     }
 
@@ -99,10 +99,10 @@ class ConsultationShellBeanTest {
     @Test
     void isAdminOnCurrentThesaurus_checksRole() {
         when(userSession.isLoggedIn()).thenReturn(true);
-        when(userSession.isSuperAdmin()).thenReturn(false);
         when(userSession.getCurrentUserId()).thenReturn(5);
         when(thesaurusContext.resolveThesaurusId()).thenReturn("TH1");
-        when(thesaurusSettingsQueryRepository.findEffectiveRoleOnThesaurus(5, "TH1")).thenReturn(Optional.of(2));
+        when(rightsService.canOnThesaurus(5, fr.cnrs.opentheso.v2.rights.Permission.MANAGE_THESAURUS, "TH1"))
+                .thenReturn(true);
 
         assertTrue(consultationShellBean.isAdminOnCurrentThesaurus());
     }

@@ -39,6 +39,7 @@ public class ConceptAttributeEditorBean implements Serializable {
     private final ConceptNavigationSupport conceptNavigationSupport;
     private final ThesaurusContext thesaurusContext;
     private final UserSession userSession;
+    private final ConceptWritePolicy conceptWritePolicy;
     private final ThesaurusBrowseBean thesaurusBrowseBean;
 
     private String currentConceptLabel;
@@ -48,7 +49,7 @@ public class ConceptAttributeEditorBean implements Serializable {
     private List<ConceptWriteConceptType> availableConceptTypes = Collections.emptyList();
 
     public boolean isAttributeActionsAvailable() {
-        return ConceptWritePolicy.canMutateConceptAttributes(userSession, isSelectedDeprecated());
+        return conceptWritePolicy.canMutateConceptAttributes(userSession, isSelectedDeprecated());
     }
 
     public boolean isNotationEditAvailable() {

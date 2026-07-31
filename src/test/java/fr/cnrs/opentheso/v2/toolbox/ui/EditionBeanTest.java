@@ -12,6 +12,7 @@ import fr.cnrs.opentheso.v2.toolbox.edition.ui.ThesaurusEditionCsvStructuredImpo
 import fr.cnrs.opentheso.v2.toolbox.edition.ui.ThesaurusEditionSkosImportBean;
 import fr.cnrs.opentheso.v2.toolbox.export.ui.ThesaurusExportBean;
 import fr.cnrs.opentheso.v2.toolbox.model.EditionView;
+import fr.cnrs.opentheso.v2.toolbox.policy.ToolboxAccessPolicy;
 import fr.cnrs.opentheso.v2.toolbox.service.EditionThesaurusService;
 import fr.cnrs.opentheso.v2.test.support.PrimeFacesTestSupport;
 import jakarta.faces.application.FacesMessage;
@@ -49,6 +50,8 @@ class EditionBeanTest {
     @Mock
     private UserSession userSession;
     @Mock
+    private ToolboxAccessPolicy toolboxAccessPolicy;
+    @Mock
     private ThesaurusContext thesaurusContext;
     @Mock
     private V2LocaleBean localeBean;
@@ -77,6 +80,7 @@ class EditionBeanTest {
     void setUp() {
         bean = new EditionBean(
                 userSession,
+                toolboxAccessPolicy,
                 thesaurusContext,
                 localeBean,
                 editionThesaurusService,
@@ -107,9 +111,7 @@ class EditionBeanTest {
 
     @Test
     void load_clearsListWhenAccessDenied() {
-        when(userSession.isLoggedIn()).thenReturn(true);
-        when(userSession.isSuperAdmin()).thenReturn(false);
-        when(userSession.hasRoleAsAdmin()).thenReturn(false);
+        when(toolboxAccessPolicy.canAccessEditionScreen(userSession)).thenReturn(false);
 
         bean.load();
 
@@ -154,9 +156,7 @@ class EditionBeanTest {
 
     @Test
     void showNewThesaurus_deniedWhenUserCannotCreate() {
-        when(userSession.isLoggedIn()).thenReturn(true);
-        when(userSession.isSuperAdmin()).thenReturn(false);
-        when(userSession.hasRoleAsAdmin()).thenReturn(false);
+        when(toolboxAccessPolicy.canCreateOrImportThesaurus(userSession)).thenReturn(false);
 
         bean.showNewThesaurus();
 
@@ -307,8 +307,7 @@ class EditionBeanTest {
     }
 
     private void stubScreenAccess() {
-        when(userSession.isLoggedIn()).thenReturn(true);
-        when(userSession.hasRoleAsAdmin()).thenReturn(true);
+        when(toolboxAccessPolicy.canAccessEditionScreen(userSession)).thenReturn(true);
     }
 
     private void stubListAccess() {
@@ -318,8 +317,6 @@ class EditionBeanTest {
     }
 
     private void stubCreateAccess() {
-        when(userSession.isLoggedIn()).thenReturn(true);
-        when(userSession.isSuperAdmin()).thenReturn(false);
-        when(userSession.hasRoleAsAdmin()).thenReturn(true);
+        when(toolboxAccessPolicy.canCreateOrImportThesaurus(userSession)).thenReturn(true);
     }
 }

@@ -39,6 +39,7 @@ public class ConceptCollectionEditorBean implements Serializable {
     private final ConceptNavigationSupport conceptNavigationSupport;
     private final ThesaurusContext thesaurusContext;
     private final UserSession userSession;
+    private final ConceptWritePolicy conceptWritePolicy;
     private final ThesaurusBrowseBean thesaurusBrowseBean;
 
     private String currentConceptLabel;
@@ -47,7 +48,7 @@ public class ConceptCollectionEditorBean implements Serializable {
     private List<ConceptRelation> collectionsToRemove = Collections.emptyList();
 
     public boolean isCollectionActionsAvailable() {
-        return ConceptWritePolicy.canMutateConceptAttributes(userSession, isSelectedDeprecated());
+        return conceptWritePolicy.canMutateConceptAttributes(userSession, isSelectedDeprecated());
     }
 
     public void prepareAddToCollection() {

@@ -14,6 +14,7 @@ import fr.cnrs.opentheso.v2.concept.write.model.command.UpsertNoteCommand;
 import fr.cnrs.opentheso.v2.concept.write.service.ConceptNoteMutationService;
 import fr.cnrs.opentheso.v2.concept.write.service.ConceptWriteMetadataService;
 import fr.cnrs.opentheso.v2.setting.ui.ThesaurusContext;
+import fr.cnrs.opentheso.v2.concept.write.policy.ConceptWritePolicy;
 import fr.cnrs.opentheso.v2.shared.ui.UserSession;
 import org.junit.jupiter.api.BeforeEach;
 import org.junit.jupiter.api.Test;
@@ -45,6 +46,7 @@ class CollectionNoteEditorBeanTest {
     @Mock private CollectionReadService collectionReadService;
     @Mock private ThesaurusContext thesaurusContext;
     @Mock private UserSession userSession;
+    @Mock private ConceptWritePolicy conceptWritePolicy;
     @Mock private ThesaurusBrowseBean thesaurusBrowseBean;
 
     private CollectionNoteEditorBean bean;
@@ -57,23 +59,24 @@ class CollectionNoteEditorBeanTest {
     void setUp() {
         bean = new CollectionNoteEditorBean(
                 conceptNoteMutationService, conceptWriteMetadataService, collectionReadService,
-                thesaurusContext, userSession, thesaurusBrowseBean);
+                thesaurusContext, userSession,
+                conceptWritePolicy, thesaurusBrowseBean);
         lenient().when(thesaurusContext.resolveThesaurusId()).thenReturn("TH1");
         lenient().when(thesaurusContext.resolveWorkLanguage()).thenReturn("fr");
         lenient().when(thesaurusBrowseBean.getSelectedGroup()).thenReturn(GROUP);
+        lenient().when(conceptWritePolicy.canMutateLexicalContent(userSession, false)).thenReturn(true);
     }
 
     @Test
     void isNoteActionsAvailable_trueForManager() {
-        when(userSession.isLoggedIn()).thenReturn(true);
-        when(userSession.isManager()).thenReturn(true);
+        when(conceptWritePolicy.canMutateLexicalContent(userSession, false)).thenReturn(true);
 
         assertTrue(bean.isNoteActionsAvailable());
     }
 
     @Test
     void isNoteActionsAvailable_falseForGuest() {
-        when(userSession.isLoggedIn()).thenReturn(false);
+        when(conceptWritePolicy.canMutateLexicalContent(userSession, false)).thenReturn(false);
 
         assertFalse(bean.isNoteActionsAvailable());
     }
@@ -95,8 +98,6 @@ class CollectionNoteEditorBeanTest {
 
     @Test
     void submitSaveNote_delegatesToMutationService() {
-        when(userSession.isLoggedIn()).thenReturn(true);
-        when(userSession.isManager()).thenReturn(true);
         when(userSession.getCurrentUserId()).thenReturn(7);
         when(userSession.getCurrentUsername()).thenReturn("admin");
         bean.setSelectedLang("fr");
@@ -124,8 +125,6 @@ class CollectionNoteEditorBeanTest {
 
     @Test
     void submitDeleteNote_rejectsInvalidNoteId() {
-        when(userSession.isLoggedIn()).thenReturn(true);
-        when(userSession.isManager()).thenReturn(true);
         when(userSession.getCurrentUserId()).thenReturn(7);
 
         try (MockedStatic<MessageUtils> messageUtils = mockStatic(MessageUtils.class)) {
@@ -137,8 +136,6 @@ class CollectionNoteEditorBeanTest {
 
     @Test
     void submitDeleteNote_deletesNote() {
-        when(userSession.isLoggedIn()).thenReturn(true);
-        when(userSession.isManager()).thenReturn(true);
         when(userSession.getCurrentUserId()).thenReturn(7);
         when(userSession.getCurrentUsername()).thenReturn("admin");
         when(conceptNoteMutationService.deleteNote(new DeleteNoteCommand(

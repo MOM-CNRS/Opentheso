@@ -20,13 +20,14 @@ import java.io.Serializable;
 public class WorkshopBean implements Serializable {
 
     private final UserSession userSession;
+    private final ToolboxAccessPolicy toolboxAccessPolicy;
     private final ThesaurusContext thesaurusContext;
     private final WorkshopImportBean workshopImportBean;
     private final ThesaurusAccessService thesaurusAccessService;
 
     public boolean isScreenAvailable() {
-        return ToolboxAccessPolicy.canAccessWorkshop(userSession)
-                && ToolboxAccessPolicy.hasSelectedThesaurus(getThesaurusId());
+        return toolboxAccessPolicy.canAccessWorkshop(userSession)
+                && toolboxAccessPolicy.hasSelectedThesaurus(getThesaurusId());
     }
 
     public boolean isActionsAvailable() {
