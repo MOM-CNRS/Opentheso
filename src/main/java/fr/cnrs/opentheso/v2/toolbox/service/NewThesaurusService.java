@@ -75,6 +75,7 @@ public class NewThesaurusService {
         }
 
         toolboxPreferencePersistence.initPreferences(thesaurusId, request.language());
+        toolboxPreferencePersistence.updatePreferredName(thesaurusId, request.persistentNameThesaurus());
         createAndSaveDcTerm(thesaurusId, DCMIResource.CREATOR, creatorName, "", "string");
         createAndSaveDcTerm(thesaurusId, DCMIResource.TITLE, request.title(), request.language(), "string");
         createAndSaveDcTerm(thesaurusId, DCMIResource.LANGUAGE, request.language(), "", "string");

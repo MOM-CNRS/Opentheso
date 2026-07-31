@@ -13,6 +13,7 @@ import java.io.Serializable;
 public class NewThesaurusEditor implements Serializable {
 
     private String title = "";
+    private String persistentNameThesaurus = "";
     private String selectedLanguage;
     private String selectedProjectId = "";
 
@@ -31,6 +32,7 @@ public class NewThesaurusEditor implements Serializable {
         }
         return new NewThesaurusRequest(
                 StringUtils.trimToEmpty(title),
+                StringUtils.trimToEmpty(persistentNameThesaurus),
                 selectedLanguage,
                 projectId
         );

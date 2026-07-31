@@ -99,7 +99,7 @@ public class EditionQueryRepository {
         String sql = """
                 SELECT iso639_1, COALESCE(code_pays, ''), french_name, english_name
                 FROM languages_iso639
-                ORDER BY code_pays
+                ORDER BY iso639_1
                 """;
         List<Object[]> rows = entityManager.createNativeQuery(sql).getResultList();
         return rows.stream()

@@ -33,6 +33,17 @@
                     </div>
                 </div>
 
+                <!-- Nom pérenne ou Acronyme du thésaurus -->
+                <div class="row" style="margin-top: 10px">
+                    <div class="col-3" style="text-align: right; padding-top: 4px">
+                        <h:outputText value="Acronyme" />
+                    </div>
+                    <div class="col-5">
+                        <p:inputText placeholder="#{langueBean.getMsg('preferences.persistentNameTheso')}"
+                                     value="#{v2NewThesaurusBean.editor.persistentNameThesaurus}" style="width: 100%"/>
+                    </div>
+                </div>
+
                 <div class="row" style="margin-top: 10px">
                     <div class="col-3" style="text-align: right; padding-top: 4px">
                         <h:outputText value="#{v2LocaleBean.getMsg('rightbody.conceptdialog.language')}" style="margin-right: -6px"/>

@@ -72,7 +72,7 @@ class NewThesaurusServiceTest {
     void create_validatesTitle() {
         assertThrows(
                 InvalidToolboxDataException.class,
-                () -> service.create(new NewThesaurusRequest(" ", "fr", null), "admin")
+                () -> service.create(new NewThesaurusRequest(" ", "", "fr", null), "admin")
         );
     }
 
@@ -80,7 +80,7 @@ class NewThesaurusServiceTest {
     void create_validatesLanguage() {
         assertThrows(
                 InvalidToolboxDataException.class,
-                () -> service.create(new NewThesaurusRequest("Titre", " ", null), "admin")
+                () -> service.create(new NewThesaurusRequest("Titre", ""," ", null), "admin")
         );
     }
 
@@ -90,7 +90,7 @@ class NewThesaurusServiceTest {
 
         assertThrows(
                 InvalidToolboxDataException.class,
-                () -> service.create(new NewThesaurusRequest("Test", "fr", null), "admin")
+                () -> service.create(new NewThesaurusRequest("Test", "","fr", null), "admin")
         );
     }
 
@@ -98,7 +98,7 @@ class NewThesaurusServiceTest {
     void create_linksProjectWhenProvided() {
         when(toolboxThesaurusPersistence.createThesaurusId()).thenReturn("th99");
 
-        String createdId = service.create(new NewThesaurusRequest("Test", "fr", 5), "admin");
+        String createdId = service.create(new NewThesaurusRequest("Test", "","fr", 5), "admin");
 
         assertEquals("th99", createdId);
         ArgumentCaptor<fr.cnrs.opentheso.entites.UserGroupThesaurus> captor =
@@ -113,7 +113,7 @@ class NewThesaurusServiceTest {
     void create_skipsProjectLinkWhenProjectIsNull() {
         when(toolboxThesaurusPersistence.createThesaurusId()).thenReturn("th100");
 
-        service.create(new NewThesaurusRequest("Test", "en", null), "creator");
+        service.create(new NewThesaurusRequest("Test", "","en", null), "creator");
 
         verify(toolboxThesaurusPersistence, never()).linkToProject(any());
         verify(toolboxPreferencePersistence).initPreferences("th100", "en");
