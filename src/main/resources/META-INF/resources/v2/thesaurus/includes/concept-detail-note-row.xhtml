@@ -14,7 +14,15 @@
         <div class="col-xl-9 col-lg-8 col-md-7 col-sm-7" style="margin-left:-10px;">
           <ui:repeat value="#{v2ThesaurusBrowseBean.notesOfType(noteType)}" var="note">
             <div class="row" style="margin-left:0; margin-bottom:2px;">
-              <div class="col-auto" style="padding-right:0; padding-left:0; min-width:28px;">
+              <div class="col-auto" style="padding-right:0; padding-left:0; min-width:56px;">
+                <p:commandLink title="#{v2LocaleBean.getMsg('deepl.translate')}"
+                               rendered="#{v2ThesaurusBrowseBean.deeplTranslationEnabled and v2ConceptNoteEditorBean.noteActionsAvailable}"
+                               process="@this"
+                               actionListener="#{v2ConceptDeeplTranslateBean.prepareFromNote(note)}"
+                               update="@([id$=v2DeeplTranslateForm])"
+                               oncomplete="PF('v2DeeplTranslateDlg').show();">
+                  <img src="#{request.contextPath}/resources/img/deepl.png" height="25" style="margin-right:7px;" alt="DeepL"/>
+                </p:commandLink>
                 <img src="#{v2ThesaurusBrowseBean.getFlagImageUrl(note.lang)}"
                      width="20" height="15" style="margin-right:7px;" alt=""/>
               </div>

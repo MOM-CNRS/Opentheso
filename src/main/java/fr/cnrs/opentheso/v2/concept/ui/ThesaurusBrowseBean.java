@@ -127,6 +127,7 @@ public class ThesaurusBrowseBean implements Serializable, ConceptNavigationSuppo
     private boolean useCustomRelation;
     private boolean autoExpandTree = true;
     private boolean treeCacheEnabled;
+    private boolean useDeeplTranslation;
     private boolean suggestionEnabled;
     /** Onglet Suggestion activé après clic sur « Proposer une amélioration » (comme legacy isRubriqueVisible). */
     private boolean propositionRubriqueVisible;
@@ -786,6 +787,11 @@ public class ThesaurusBrowseBean implements Serializable, ConceptNavigationSuppo
         return useCustomRelation;
     }
 
+    /** DeepL activé dans les préférences du thésaurus (icônes notes). */
+    public boolean isDeeplTranslationEnabled() {
+        return useDeeplTranslation;
+    }
+
     public boolean isStandardConceptType() {
         if (selectedConcept == null || selectedConcept.summary() == null) {
             return true;
@@ -1149,6 +1155,7 @@ public class ThesaurusBrowseBean implements Serializable, ConceptNavigationSuppo
             autoExpandTree = preferences.autoExpandTree();
             treeCacheEnabled = preferences.treeCache();
             suggestionEnabled = preferences.suggestion();
+            useDeeplTranslation = preferences.useDeeplTranslation();
         } else {
             breadcrumbEnabled = true;
             useConceptTree = true;
@@ -1160,6 +1167,7 @@ public class ThesaurusBrowseBean implements Serializable, ConceptNavigationSuppo
             autoExpandTree = true;
             treeCacheEnabled = false;
             suggestionEnabled = false;
+            useDeeplTranslation = false;
         }
     }
 
