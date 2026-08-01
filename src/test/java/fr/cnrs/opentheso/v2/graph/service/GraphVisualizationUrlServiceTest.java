@@ -98,16 +98,21 @@ class GraphVisualizationUrlServiceTest {
 
     @Test
     void buildThesaurusTreeDataUrl_usesResolvedLanguage() {
-        String url = service.buildThesaurusTreeDataUrl("http://localhost:8080/opentheso", "TH1", null);
+        String url = service.buildThesaurusTreeDataUrl("http://localhost:8080/opentheso/", "TH1", null);
 
         assertEquals("http://localhost:8080/opentheso/openapi/v1/concept/TH1/thesoGraph?lang=fr", url);
     }
 
     @Test
     void buildBranchTreeDataUrl_includesConceptAndLanguage() {
-        String url = service.buildBranchTreeDataUrl("http://localhost:8080/opentheso", "TH1", "C1", "en");
+        String url = service.buildBranchTreeDataUrl("http://localhost:8080/opentheso/", "TH1", "C1", "en");
 
         assertEquals("http://localhost:8080/opentheso/openapi/v1/concept/TH1/C1/graph/?lang=en", url);
+    }
+
+    @Test
+    void buildBranchTreeDataUrl_returnsNullWhenConceptMissing() {
+        assertNull(service.buildBranchTreeDataUrl("http://localhost:8080/opentheso", "TH1", " ", "fr"));
     }
 
     @Test

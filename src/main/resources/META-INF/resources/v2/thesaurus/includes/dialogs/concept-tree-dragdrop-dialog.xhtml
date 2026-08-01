@@ -1,0 +1,122 @@
+<ui:fragment xmlns="http://www.w3.org/1999/xhtml"
+             xmlns:ui="http://xmlns.jcp.org/jsf/facelets"
+             xmlns:h="http://xmlns.jcp.org/jsf/html"
+             xmlns:p="http://primefaces.org/ui">
+
+    <p:dialog id="v2DragAndDropDlg" header="Drag and Drop"
+              widgetVar="v2DragAndDropDlg" modal="true" resizable="true" closable="false"
+              position="top" width="600" style="margin-top:50px;" appendTo="@(body)">
+        <h:form id="v2DragAndDropForm">
+            <div class="row" style="font-size:14px; color:black;">
+                <div class="col-12" style="margin-left:10px;">
+                    <h:outputText value="Déplacer le concept/branche: "/>
+                </div>
+            </div>
+            <div class="row" style="font-size:14px; color:black;">
+                <div class="col-5">
+                    <i class="pi pi-cut" style="color:red; margin-right:20px;"/>
+                    <h:outputText value=" #{v2ConceptTreeDragDropBean.dragLabel} (#{v2ConceptTreeDragDropBean.dragConceptId}) "
+                                  style="background-color:#C63632; color:#ffffff;"/>
+                </div>
+                <div class="col-1">
+                    <i class="pi pi-arrow-right" style="color:green; margin-right:20px;"/>
+                </div>
+                <div class="col-5">
+                    <h:outputText value=" #{v2ConceptTreeDragDropBean.dropLabel}"
+                                  style="background-color:#54a90a; color:#ffffff;"/>
+                    <h:outputText rendered="#{not v2ConceptTreeDragDropBean.dropToRoot}"
+                                  value=" (#{v2ConceptTreeDragDropBean.dropConceptId})"
+                                  style="background-color:#54a90a; color:#ffffff;"/>
+                </div>
+            </div>
+
+            <p:spacer height="15"/>
+
+            <h:panelGroup rendered="#{v2ConceptTreeDragDropBean.broadersToCut.size() > 1}">
+                <div class="row" style="background-color:#C63632; color:white; font-size:14px;">
+                    <div class="col-11" style="margin-left:10px;">
+                        <h:outputText value="Poly-hiérarchie à supprimer / garder pour : (#{v2ConceptTreeDragDropBean.dragLabel})"/>
+                    </div>
+                </div>
+                <div class="row">
+                    <div class="col-11" style="margin-left:5px; font-size:12px;">
+                        <p:dataTable value="#{v2ConceptTreeDragDropBean.broadersToCut}" var="broader" lazy="false">
+                            <p:column headerText="id" width="100">
+                                <h:outputText value="#{broader.conceptId}"/>
+                            </p:column>
+                            <p:column headerText="Terme générique">
+                                <h:outputText value="#{broader.title}"/>
+                            </p:column>
+                            <p:column headerText="à couper" width="80">
+                                <p:selectBooleanCheckbox value="#{broader.selected}"/>
+                            </p:column>
+                        </p:dataTable>
+                    </div>
+                </div>
+                <p:spacer height="15"/>
+            </h:panelGroup>
+
+            <div class="row" style="background-color:#C63632; color:white; font-size:14px;">
+                <div class="col-11" style="margin-left:10px;">
+                    <h:outputText value="Collections à supprimer pour (#{v2ConceptTreeDragDropBean.dragLabel})"/>
+                </div>
+            </div>
+            <h:panelGroup rendered="#{not empty v2ConceptTreeDragDropBean.groupsToCut}">
+                <div class="row">
+                    <div class="col-11" style="margin-left:5px; font-size:12px;">
+                        <p:dataTable value="#{v2ConceptTreeDragDropBean.groupsToCut}" var="group" lazy="false">
+                            <p:column headerText="id" width="100">
+                                <h:outputText value="#{group.groupId}"/>
+                            </p:column>
+                            <p:column headerText="Collection/groupe">
+                                <h:outputText value="#{group.title}"/>
+                            </p:column>
+                            <p:column headerText="à supprimer" width="80">
+                                <p:selectBooleanCheckbox value="#{group.selected}"/>
+                            </p:column>
+                        </p:dataTable>
+                    </div>
+                </div>
+            </h:panelGroup>
+
+            <p:spacer height="20"/>
+
+            <div class="row" style="background-color:#54a90a; color:white; font-size:14px;">
+                <div class="col-11" style="margin-left:10px;">
+                    <h:outputText value="Collections à ajouter pour (#{v2ConceptTreeDragDropBean.dragLabel})"/>
+                </div>
+            </div>
+            <h:panelGroup rendered="#{not empty v2ConceptTreeDragDropBean.groupsToAdd}">
+                <div class="row">
+                    <div class="col-11" style="margin-left:5px; font-size:12px;">
+                        <p:dataTable value="#{v2ConceptTreeDragDropBean.groupsToAdd}" var="group" lazy="false">
+                            <p:column headerText="id" width="100">
+                                <h:outputText value="#{group.groupId}"/>
+                            </p:column>
+                            <p:column headerText="Collection/groupe">
+                                <h:outputText value="#{group.title}"/>
+                            </p:column>
+                            <p:column headerText="à ajouter" width="80">
+                                <p:selectBooleanCheckbox value="#{group.selected}"/>
+                            </p:column>
+                        </p:dataTable>
+                    </div>
+                </div>
+            </h:panelGroup>
+
+            <div style="width:100%; text-align:right; margin-top:20px; margin-bottom:5px;">
+                <p:commandButton value="#{v2LocaleBean.getMsg('candidat.close')}"
+                                 icon="fas fa-undo-alt" styleClass="ui-button-secondary"
+                                 style="margin-right:10px;"
+                                 actionListener="#{v2ConceptTreeDragDropBean.cancelDrop()}"
+                                 process="@this"
+                                 update=":containerIndex:formLeftTab :messageIndex"/>
+                <p:commandButton value="#{v2LocaleBean.getMsg('btnValidate')}"
+                                 icon="pi pi-check" styleClass="ui-button-success"
+                                 actionListener="#{v2ConceptTreeDragDropBean.submitDrop()}"
+                                 process="@form"
+                                 update=":containerIndex:formLeftTab :containerIndex:formRightTab :messageIndex"/>
+            </div>
+        </h:form>
+    </p:dialog>
+</ui:fragment>

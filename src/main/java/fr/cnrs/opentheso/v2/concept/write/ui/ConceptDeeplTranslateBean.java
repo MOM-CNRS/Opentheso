@@ -5,6 +5,7 @@ import fr.cnrs.opentheso.utils.MessageUtils;
 import fr.cnrs.opentheso.v2.concept.model.ConceptNote;
 import fr.cnrs.opentheso.v2.concept.session.ConceptNavigationSupport;
 import fr.cnrs.opentheso.v2.concept.session.ConceptSelectionContext;
+import fr.cnrs.opentheso.v2.concept.ui.ThesaurusBrowseBean;
 import fr.cnrs.opentheso.v2.concept.write.model.MutationOutcome;
 import fr.cnrs.opentheso.v2.concept.write.model.command.UpsertNoteCommand;
 import fr.cnrs.opentheso.v2.concept.write.policy.ConceptWritePolicy;
@@ -21,6 +22,7 @@ import lombok.RequiredArgsConstructor;
 import lombok.Setter;
 import org.apache.commons.lang3.StringUtils;
 import org.primefaces.PrimeFaces;
+import org.springframework.beans.factory.ObjectProvider;
 
 import java.io.Serializable;
 import java.time.LocalDate;
@@ -28,7 +30,7 @@ import java.util.Collections;
 import java.util.List;
 
 /**
- * Traduction DeepL des notes concept — équivalent V2 de {@code deeplTranslate}.
+ * Traduction DeepL des notes concept / facette — équivalent V2 de {@code deeplTranslate}.
  */
 @Getter
 @Setter
@@ -46,6 +48,7 @@ public class ConceptDeeplTranslateBean implements Serializable {
     private final ThesaurusContext thesaurusContext;
     private final UserSession userSession;
     private final ConceptWritePolicy conceptWritePolicy;
+    private final ObjectProvider<ThesaurusBrowseBean> thesaurusBrowseBean;
 
     private String fromLang;
     private String fromLangLabel;
@@ -57,6 +60,7 @@ public class ConceptDeeplTranslateBean implements Serializable {
     private String noteTypeCode;
     private String conceptId;
     private String conceptLabel;
+    private boolean facetNoteMode;
 
     private List<Language> sourceLangs = Collections.emptyList();
     private List<Language> targetLangs = Collections.emptyList();
@@ -86,17 +90,46 @@ public class ConceptDeeplTranslateBean implements Serializable {
             return;
         }
 
-        String apiKey = resolveApiKey();
-        if (StringUtils.isBlank(apiKey)) {
-            MessageUtils.showErrorMessage("Clé API DeepL manquante");
+        if (!initLanguages()) {
             return;
         }
 
-        sourceLangs = deeplClient.listSourceLanguages(apiKey);
-        targetLangs = deeplClient.listTargetLanguages(apiKey);
-
+        facetNoteMode = false;
         conceptId = conceptSelectionContext.getSummary().conceptId();
         conceptLabel = conceptSelectionContext.getSummary().preferredLabel();
+        noteTypeCode = note.typeCode();
+        textToTranslate = note.value();
+        fromLang = note.lang();
+        fromLangLabel = resolveLanguageLabel(fromLang);
+
+        if (StringUtils.equalsIgnoreCase(fromLang, normalizeIdLang(toLang))) {
+            toLang = "fr";
+        }
+        retrieveExistingTranslatedText();
+    }
+
+    /**
+     * Même flux que {@link #prepareFromNote} pour une note de facette (id facette = identifiant note).
+     */
+    public void prepareFromFacetNote(ConceptNote note) {
+        clearTranslationFields();
+        if (note == null || StringUtils.isAnyBlank(note.value(), note.lang(), note.typeCode())) {
+            MessageUtils.showErrorMessage("Aucune note sélectionnée !");
+            return;
+        }
+        ThesaurusBrowseBean browse = thesaurusBrowseBean.getIfAvailable();
+        if (browse == null || browse.getSelectedFacet() == null) {
+            MessageUtils.showErrorMessage("Action non autorisée");
+            return;
+        }
+
+        if (!initLanguages()) {
+            return;
+        }
+
+        facetNoteMode = true;
+        conceptId = browse.getSelectedFacet().facetId();
+        conceptLabel = browse.getSelectedFacet().label();
         noteTypeCode = note.typeCode();
         textToTranslate = note.value();
         fromLang = note.lang();
@@ -137,7 +170,6 @@ public class ConceptDeeplTranslateBean implements Serializable {
                 noteTypeCode
         );
         if (draft.isEmpty()) {
-            // DeepL peut renvoyer en-GB ; tenter aussi le code brut
             if (!normalizeIdLang(toLang).equalsIgnoreCase(toLang)) {
                 draft = conceptWriteMetadataService.loadNoteDraft(
                         thesaurusContext.resolveThesaurusId(),
@@ -174,7 +206,7 @@ public class ConceptDeeplTranslateBean implements Serializable {
                 StringUtils.defaultString(userSession.getCurrentUsername())
         ));
         if (result != null && result.outcome() == MutationOutcome.OK) {
-            conceptNavigationSupport.openConcept(conceptId);
+            refreshAfterNoteSave();
             translatingText = "";
             retrieveExistingTranslatedText();
             PrimeFaces.current().ajax().update(":containerIndex:formRightTab", ":messageIndex");
@@ -204,12 +236,34 @@ public class ConceptDeeplTranslateBean implements Serializable {
                 StringUtils.defaultString(userSession.getCurrentUsername())
         ));
         if (result != null && result.outcome() == MutationOutcome.OK) {
-            conceptNavigationSupport.openConcept(conceptId);
+            refreshAfterNoteSave();
             PrimeFaces.current().ajax().update(":containerIndex:formRightTab", ":messageIndex");
             MessageUtils.showInformationMessage("Note mis à jour avec succès");
         } else if (result != null) {
             MessageUtils.showErrorMessage(result.message());
         }
+    }
+
+    private void refreshAfterNoteSave() {
+        if (facetNoteMode) {
+            ThesaurusBrowseBean browse = thesaurusBrowseBean.getIfAvailable();
+            if (browse != null) {
+                browse.openFacet(conceptId);
+            }
+        } else {
+            conceptNavigationSupport.openConcept(conceptId);
+        }
+    }
+
+    private boolean initLanguages() {
+        String apiKey = resolveApiKey();
+        if (StringUtils.isBlank(apiKey)) {
+            MessageUtils.showErrorMessage("Clé API DeepL manquante");
+            return false;
+        }
+        sourceLangs = deeplClient.listSourceLanguages(apiKey);
+        targetLangs = deeplClient.listTargetLanguages(apiKey);
+        return true;
     }
 
     private void clearTranslationFields() {
@@ -222,6 +276,7 @@ public class ConceptDeeplTranslateBean implements Serializable {
         noteTypeCode = null;
         conceptId = null;
         conceptLabel = null;
+        facetNoteMode = false;
     }
 
     private String resolveApiKey() {
@@ -267,6 +322,9 @@ public class ConceptDeeplTranslateBean implements Serializable {
     }
 
     private boolean isSelectedDeprecated() {
+        if (facetNoteMode) {
+            return false;
+        }
         if (!conceptSelectionContext.hasSelection()) {
             return false;
         }

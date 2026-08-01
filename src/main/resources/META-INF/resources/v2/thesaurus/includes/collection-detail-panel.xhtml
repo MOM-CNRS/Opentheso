@@ -175,7 +175,7 @@
                   <p:commandLink value="#{empty member.label ? '('.concat(member.conceptId).concat(')') : member.label}"
                                  action="#{v2ThesaurusBrowseBean.openConcept(member.conceptId)}"
                                  process="@this"
-                                 update=":containerIndex:rightTab :containerIndex:formLeftTab"
+                                 update=":containerIndex:formRightTab :containerIndex:formLeftTab"
                                  style="color:#601e18; font-size:14px;"/>
                   <p:commandLink rendered="#{v2CollectionDetailEditorBean.managerActionsAvailable}"
                                  actionListener="#{v2CollectionDetailEditorBean.submitRemoveMember(member.conceptId)}"

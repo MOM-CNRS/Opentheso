@@ -11,6 +11,7 @@ import fr.cnrs.opentheso.v2.concept.write.model.command.DeleteBroaderRelationCom
 import fr.cnrs.opentheso.v2.concept.write.model.command.DeleteCustomRelationCommand;
 import fr.cnrs.opentheso.v2.concept.write.model.command.DeleteNarrowerRelationCommand;
 import fr.cnrs.opentheso.v2.concept.write.model.command.DeleteRelatedRelationCommand;
+import fr.cnrs.opentheso.v2.concept.write.model.command.ReparentConceptCommand;
 import fr.cnrs.opentheso.v2.concept.write.model.command.UpdateNarrowerRelationTypeCommand;
 import fr.cnrs.opentheso.v2.concept.write.persistence.ConceptRelationNativeWriteService;
 import lombok.RequiredArgsConstructor;
@@ -25,6 +26,11 @@ public class ConceptRelationMutationService {
 
     private final ConceptRelationNativeWriteService conceptRelationNativeWriteService;
     private final ConceptWriteMetadataService conceptWriteMetadataService;
+
+    @Transactional
+    public MutationResult reparentConcept(ReparentConceptCommand command) {
+        return conceptRelationNativeWriteService.reparentConcept(command);
+    }
 
     @Transactional
     public MutationResult addBroaderRelation(AddBroaderRelationCommand command) {

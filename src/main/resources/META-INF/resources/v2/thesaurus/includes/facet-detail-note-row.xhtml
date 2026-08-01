@@ -28,9 +28,22 @@
             </p:menuButton>
           </h:panelGroup>
           <ui:repeat value="#{v2ThesaurusBrowseBean.facetNotesOfType(noteType)}" var="note">
-            <h:outputText value="#{note.value}#{note.sourceDisplay}" escape="false" style="font-size:14px;"/>
-            <h:outputText value=" (#{note.lang})" style="font-size:14px; font-weight:300;"/>
-            <br/>
+            <div class="row" style="margin-left:0; margin-bottom:2px;">
+              <div class="col-auto" style="padding-right:0; padding-left:0; min-width:56px;">
+                <p:commandLink title="#{v2LocaleBean.getMsg('deepl.translate')}"
+                               rendered="#{v2ThesaurusBrowseBean.deeplTranslationEnabled and v2FacetNoteEditorBean.noteActionsAvailable}"
+                               process="@this"
+                               actionListener="#{v2ConceptDeeplTranslateBean.prepareFromFacetNote(note)}"
+                               update="@([id$=v2DeeplTranslateForm])"
+                               oncomplete="PF('v2DeeplTranslateDlg').show();">
+                  <img src="#{request.contextPath}/resources/img/deepl.png" height="25" style="margin-right:7px;" alt="DeepL"/>
+                </p:commandLink>
+              </div>
+              <div class="col" style="padding-left:0;">
+                <h:outputText value="#{note.value}#{note.sourceDisplay}" escape="false" style="font-size:14px;"/>
+                <h:outputText value=" (#{note.lang})" style="font-size:14px; font-weight:300;"/>
+              </div>
+            </div>
           </ui:repeat>
         </div>
       </div>

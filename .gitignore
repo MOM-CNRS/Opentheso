@@ -13,3 +13,4 @@
 /logs/opentheso.log
 /src/main/resources/application-local.yaml
 /opentheso.iml
+/.vscode/

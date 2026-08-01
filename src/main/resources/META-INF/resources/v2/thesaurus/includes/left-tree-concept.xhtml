@@ -11,52 +11,58 @@
             cache="#{v2ThesaurusBrowseBean.treeCacheEnabled}"
             selectionMode="single"
             selection="#{v2ThesaurusBrowseBean.selectedNode}"
+            widgetVar="treeWidget"
+            draggable="#{v2ConceptTreeDragDropBean.dragDropEnabled}"
+            droppable="#{v2ConceptTreeDragDropBean.dragDropEnabled}"
             style="width:auto; border:none; min-height:925px; max-height:925px; overflow:auto; font-size:12px;">
         <f:attribute name="treeMode" value="#{treeMode}"/>
         <p:ajax event="expand" listener="#{v2ThesaurusBrowseBean.onNodeExpand}"/>
         <p:ajax event="select"
                 listener="#{v2ThesaurusBrowseBean.onNodeSelect}"
                 update="indexTitle containerIndex:formRightTab containerIndex:tabTree messageIndex"/>
+        <p:ajax event="dragdrop"
+                listener="#{v2ConceptTreeDragDropBean.onDragDrop}"
+                update=":containerIndex:formLeftTab :messageIndex"/>
 
         <p:treeNode expandedIcon="pi pi-folder-open"
                     collapsedIcon="pi pi-folder">
-            <h:outputText value="#{nodetree.notation} "
+            <h:outputText title="#{nodetree.nodeId}" value="#{nodetree.notation} "
                           style="color:blue; font-size:12px;"
                           rendered="#{not empty nodetree.notation}"/>
-            <h:outputText value="#{nodetree.label}" style="font-size:12px;"/>
+            <h:outputText title="#{nodetree.nodeId}" value="#{nodetree.label}" style="font-size:12px;"/>
         </p:treeNode>
 
         <p:treeNode type="concept"
                     expandedIcon="pi pi-folder-open pi_custom_open"
                     collapsedIcon="pi pi-folder pi_custom_collapse">
-            <h:outputText value="#{nodetree.notation} "
+            <h:outputText title="#{nodetree.nodeId}" value="#{nodetree.notation} "
                           style="color:blue; font-size:12px;"
                           rendered="#{not empty nodetree.notation}"/>
-            <h:outputText value="#{nodetree.label}" style="font-size:12px;"/>
+            <h:outputText title="#{nodetree.nodeId}" value="#{nodetree.label}" style="font-size:12px;"/>
         </p:treeNode>
 
         <p:treeNode type="file"
                     icon="pi pi-file pi_custom_file">
-            <h:outputText value="#{nodetree.notation} "
+            <h:outputText title="#{nodetree.nodeId}" value="#{nodetree.notation} "
                           style="color:blue; font-size:12px;"
                           rendered="#{not empty nodetree.notation}"/>
-            <h:outputText value="#{nodetree.label}" style="font-size:12px;"/>
+            <h:outputText title="#{nodetree.nodeId}" value="#{nodetree.label}" style="font-size:12px;"/>
         </p:treeNode>
 
         <p:treeNode type="facet"
                     icon="fa fa-magnet fa_custom_magnet">
-            <h:outputText value="#{nodetree.notation} "
+            <h:outputText title="#{nodetree.nodeId}" value="#{nodetree.notation} "
                           style="color:blue; font-size:12px;"
                           rendered="#{not empty nodetree.notation}"/>
-            <h:outputText value="#{nodetree.label}" style="font-size:12px;"/>
+            <h:outputText title="#{nodetree.nodeId}" value="#{nodetree.label}" style="font-size:12px;"/>
         </p:treeNode>
 
         <p:treeNode type="deprecated"
                     icon="fa fa-solid fa-ban fa_custom_ban">
-            <h:outputText value="#{nodetree.notation} "
+            <h:outputText title="#{nodetree.nodeId}" value="#{nodetree.notation} "
                           style="color:blue; font-size:12px;"
                           rendered="#{not empty nodetree.notation}"/>
-            <h:outputText value="#{nodetree.label}"
+            <h:outputText title="#{nodetree.nodeId}" value="#{nodetree.label}"
                           style="font-size:12px; color:#C63632; font-weight:bold; font-style:italic;"/>
         </p:treeNode>
     </p:tree>

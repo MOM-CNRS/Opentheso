@@ -30,7 +30,7 @@
                                  styleClass="rounded-button ui-button-warning ui-button-flat"
                                  process="@this"
                                  actionListener="#{v2ConceptLifecycleEditorBean.prepareRename()}"
-                                 update="v2RenameConceptForm"
+                                 update="@([id$=v2RenameConceptForm])"
                                  oncomplete="PF('v2RenameConceptDlg').show();"/>
               </h:panelGroup>
               <h:outputText id="v2TextPrefLabel" rendered="#{not v2ThesaurusBrowseBean.selectedConcept.deprecated}"
@@ -518,11 +518,9 @@
       </div>
     </h:panelGroup>
 
-    <ui:include src="dialogs/concept-lifecycle-dialogs.xhtml"/>
     <ui:include src="dialogs/concept-relation-dialogs.xhtml"/>
     <ui:include src="dialogs/concept-lexical-dialogs.xhtml"/>
     <ui:include src="dialogs/concept-note-dialogs.xhtml"/>
-    <ui:include src="dialogs/concept-deepl-translate-dialog.xhtml"/>
     <ui:include src="dialogs/concept-custom-relation-dialogs.xhtml"/>
     <ui:include src="dialogs/concept-identifier-dialogs.xhtml"/>
     <ui:include src="dialogs/concept-transfer-dialogs.xhtml"/>

@@ -10,11 +10,14 @@ import fr.cnrs.opentheso.v2.concept.write.model.command.DeleteBroaderRelationCom
 import fr.cnrs.opentheso.v2.concept.write.model.command.DeleteCustomRelationCommand;
 import fr.cnrs.opentheso.v2.concept.write.model.command.DeleteNarrowerRelationCommand;
 import fr.cnrs.opentheso.v2.concept.write.model.command.DeleteRelatedRelationCommand;
+import fr.cnrs.opentheso.v2.concept.write.model.command.ReparentConceptCommand;
 import fr.cnrs.opentheso.v2.concept.write.model.command.UpdateNarrowerRelationTypeCommand;
 import lombok.RequiredArgsConstructor;
 import org.apache.commons.lang3.StringUtils;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
+
+import java.util.List;
 
 @Service
 @RequiredArgsConstructor
@@ -27,6 +30,68 @@ public class ConceptRelationNativeWriteService {
     private final ConceptRenameWriteRepository conceptRenameWriteRepository;
     private final ConceptTranslationWriteRepository conceptTranslationWriteRepository;
     private final ConceptWritePostMutationRepository conceptWritePostMutationRepository;
+    private final BranchConceptSupport branchConceptSupport;
+
+    @Transactional
+    public MutationResult reparentConcept(ReparentConceptCommand command) {
+        if (StringUtils.isBlank(command.conceptId())) {
+            return MutationResult.validationError("Aucune sélection !");
+        }
+        List<String> toDetach = command.broaderIdsToDetach() == null
+                ? List.of()
+                : command.broaderIdsToDetach().stream().filter(StringUtils::isNotBlank).distinct().toList();
+        String newBroaderId = StringUtils.trimToNull(command.newBroaderId());
+
+        if (newBroaderId != null) {
+            if (command.conceptId().equalsIgnoreCase(newBroaderId)) {
+                return MutationResult.validationError("Relation non permise !");
+            }
+            List<String> branchIds = branchConceptSupport.collectBranchConceptIds(
+                    command.thesaurusId(), command.conceptId());
+            if (branchIds.contains(newBroaderId)) {
+                return MutationResult.validationError("Relation non permise !");
+            }
+            if (conceptRelationWriteRepository.hasRelatedRelation(
+                    command.conceptId(), newBroaderId, command.thesaurusId())) {
+                return MutationResult.validationError("Relation non permise !");
+            }
+            boolean willDetachTarget = toDetach.stream().anyMatch(id -> id.equalsIgnoreCase(newBroaderId));
+            if (!willDetachTarget
+                    && conceptRelationWriteRepository.hasHierarchicalRelation(
+                            command.conceptId(), newBroaderId, command.thesaurusId())) {
+                return MutationResult.validationError("Relation non permise !");
+            }
+        }
+
+        for (String oldBroaderId : toDetach) {
+            conceptRelationWriteRepository.deleteBroaderRelation(
+                    command.conceptId(), oldBroaderId, command.thesaurusId(), command.userId());
+        }
+
+        if (newBroaderId != null) {
+            conceptRelationWriteRepository.addBroaderRelation(
+                    command.conceptId(), newBroaderId, command.thesaurusId(), command.userId());
+            if (conceptLifecycleWriteRepository.isTopConcept(command.thesaurusId(), command.conceptId())
+                    && !conceptLifecycleWriteRepository.setTopConcept(
+                            command.thesaurusId(), command.conceptId(), false)) {
+                return MutationResult.failure(
+                        "Erreur en enlevant le concept du TopConcept, veuillez utiliser les outils de correction de cohérence !");
+            }
+        } else if (!conceptRelationWriteRepository.hasBroaderRelation(command.conceptId(), command.thesaurusId())
+                && !conceptLifecycleWriteRepository.setTopConcept(
+                        command.thesaurusId(), command.conceptId(), true)) {
+            return MutationResult.failure(
+                    "Erreur en passant le concept en TopConcept, veuillez utiliser les outils de correction de cohérence !");
+        }
+
+        return finalizeMutation(
+                command.thesaurusId(),
+                command.conceptId(),
+                command.userId(),
+                command.contributorName(),
+                "Concept déplacé avec succès"
+        );
+    }
 
     @Transactional
     public MutationResult addBroaderRelation(AddBroaderRelationCommand command) {

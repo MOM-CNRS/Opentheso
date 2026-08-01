@@ -178,4 +178,17 @@ public class ConceptLifecycleWriteRepository {
                 .setParameter("conceptId", conceptId)
                 .executeUpdate() > 0;
     }
+
+    @Transactional
+    public boolean clearArkId(String thesaurusId, String conceptId) {
+        return entityManager.createNativeQuery("""
+                        UPDATE concept
+                        SET id_ark = ''
+                        WHERE id_thesaurus = :thesaurusId
+                          AND id_concept = :conceptId
+                        """)
+                .setParameter("thesaurusId", thesaurusId)
+                .setParameter("conceptId", conceptId)
+                .executeUpdate() > 0;
+    }
 }

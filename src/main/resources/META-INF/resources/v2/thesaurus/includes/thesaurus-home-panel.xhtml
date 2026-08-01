@@ -72,7 +72,7 @@
                                                style="font-size: 13px; color: #601e18;"
                                                title="#{recentConcept.conceptId}"
                                                actionListener="#{v2ThesaurusBrowseBean.openConcept(recentConcept.conceptId)}"
-                                               update=":containerIndex:formRightTab :containerIndex:tabTree"
+                                               update=":containerIndex:formRightTab :containerIndex:formLeftTab"
                                                process="@this"/>
                                 <h:outputText rendered="#{not recentStatus.last and not empty recentConcept.label}"
                                               value=", "

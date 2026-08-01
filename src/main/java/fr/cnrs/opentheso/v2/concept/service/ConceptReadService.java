@@ -51,11 +51,21 @@ public class ConceptReadService {
 
     @Transactional(readOnly = true)
     public List<ConceptTreeNodeData> loadRootNodes(String thesaurusId, String lang, LeftTreeMode mode) {
+        return loadRootNodes(thesaurusId, lang, mode, isSortByNotation(thesaurusId, lang));
+    }
+
+    @Transactional(readOnly = true)
+    public List<ConceptTreeNodeData> loadRootNodes(
+            String thesaurusId,
+            String lang,
+            LeftTreeMode mode,
+            boolean sortByNotation
+    ) {
         if (StringUtils.isBlank(thesaurusId)) {
             return Collections.emptyList();
         }
         return switch (mode) {
-            case CONCEPT -> loadRootConceptNodes(thesaurusId, lang);
+            case CONCEPT -> loadRootConceptNodes(thesaurusId, lang, sortByNotation);
             case COLLECTION, ARBRE -> conceptQueryRepository.findConceptGroups(thesaurusId, lang).stream()
                     .map(row -> ConceptMapper.toGroupNode(row, "group"))
                     .toList();
@@ -63,12 +73,12 @@ public class ConceptReadService {
         };
     }
 
-    private List<ConceptTreeNodeData> loadRootConceptNodes(String thesaurusId, String lang) {
+    private List<ConceptTreeNodeData> loadRootConceptNodes(String thesaurusId, String lang, boolean sortByNotation) {
         boolean authenticated = authenticatedUserSource.isLoggedIn();
         return conceptTreeConsultationService.loadTopConcepts(
                 thesaurusId,
                 lang,
-                isSortByNotation(thesaurusId, lang),
+                sortByNotation,
                 authenticated
         );
     }
@@ -80,6 +90,18 @@ public class ConceptReadService {
             String thesaurusId,
             String lang,
             LeftTreeMode mode
+    ) {
+        return loadChildNodes(parentId, parentType, thesaurusId, lang, mode, isSortByNotation(thesaurusId, lang));
+    }
+
+    @Transactional(readOnly = true)
+    public List<ConceptTreeNodeData> loadChildNodes(
+            String parentId,
+            String parentType,
+            String thesaurusId,
+            String lang,
+            LeftTreeMode mode,
+            boolean sortByNotation
     ) {
         if (StringUtils.isAnyBlank(parentId, thesaurusId)) {
             return Collections.emptyList();
@@ -94,7 +116,7 @@ public class ConceptReadService {
                         parentId,
                         parentType,
                         lang,
-                        isSortByNotation(thesaurusId, lang),
+                        sortByNotation,
                         authenticatedUserSource.isLoggedIn()
                 );
             }
@@ -125,9 +147,15 @@ public class ConceptReadService {
                 .map(row -> ConceptMapper.toGroupNode(row, "subGroup"))
                 .forEach(children::add);
         if (mode == LeftTreeMode.COLLECTION) {
-            conceptQueryRepository.findConceptsOfGroup(parentId, thesaurusId, lang).stream()
-                    .map(ConceptMapper::toCollectionConceptNode)
-                    .forEach(children::add);
+            var groupConcepts = conceptQueryRepository.findConceptsOfGroup(parentId, thesaurusId, lang);
+            int limit = Math.min(groupConcepts.size(), 4000);
+            for (int i = 0; i < limit; i++) {
+                children.add(ConceptMapper.toCollectionConceptNode(groupConcepts.get(i)));
+            }
+            // Legacy TreeGroups : au-delà de 4000, un nœud "...." coupe l'affichage
+            if (groupConcepts.size() > 4000) {
+                children.add(new ConceptTreeNodeData("....", "....", "", "file", false));
+            }
         } else {
             conceptQueryRepository.findTopConceptsOfGroup(parentId, thesaurusId, lang).stream()
                     .map(ConceptMapper::toConceptNode)

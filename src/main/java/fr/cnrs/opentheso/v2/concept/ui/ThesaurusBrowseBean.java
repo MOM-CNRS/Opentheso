@@ -127,6 +127,8 @@ public class ThesaurusBrowseBean implements Serializable, ConceptNavigationSuppo
     private boolean useCustomRelation;
     private boolean autoExpandTree = true;
     private boolean treeCacheEnabled;
+    private boolean sortByNotation;
+    private boolean manySiblings;
     private boolean useDeeplTranslation;
     private boolean suggestionEnabled;
     /** Onglet Suggestion activé après clic sur « Proposer une amélioration » (comme legacy isRubriqueVisible). */
@@ -286,9 +288,8 @@ public class ThesaurusBrowseBean implements Serializable, ConceptNavigationSuppo
             case "viewTabConceptTree" -> 3;
             default -> 0;
         };
-        selectedNode = null;
+        // Comme legacy : changer d'onglet gauche ne réinitialise pas le panneau droit
         ensureTreeBuilt(activeLeftTreeMode);
-        openThesaurusHome();
     }
 
     public void onRightTabChange(TabChangeEvent<?> event) {
@@ -322,7 +323,7 @@ public class ThesaurusBrowseBean implements Serializable, ConceptNavigationSuppo
         LeftTreeMode mode = resolveTreeModeFromComponent(event);
         selectedNode = event.getTreeNode();
         ConceptTreeNodeData data = (ConceptTreeNodeData) event.getTreeNode().getData();
-        if (data == null || data.isDummy() || "root".equals(data.nodeType())) {
+        if (data == null || data.isDummy() || "root".equals(data.nodeType()) || "....".equals(data.nodeId())) {
             openThesaurusHome();
             refreshAfterTreeSelection();
             return;
@@ -661,7 +662,68 @@ public class ThesaurusBrowseBean implements Serializable, ConceptNavigationSuppo
         refreshConceptDisplayData();
         conceptSelectionContext.update(thesaurusContext.resolveThesaurusId(), selectedConcept);
         if (syncTree && autoExpandTree) {
+            // Comme legacy ConceptView#getConcept → tree.expandTreeToPath
+            ensureTreeBuilt(LeftTreeMode.CONCEPT);
             syncConceptTreeSelection(conceptId);
+            scrollToSelectedNode();
+        }
+    }
+
+    /**
+     * Recharge l'arbre concept (comme legacy {@code tree.reloadSelectedConcept}).
+     */
+    public void reloadConceptTree() {
+        manySiblings = false;
+        invalidateConceptTree();
+        ensureTreeBuilt(LeftTreeMode.CONCEPT);
+        if (selectedConcept != null && selectedConcept.summary() != null && autoExpandTree) {
+            syncConceptTreeSelection(selectedConcept.summary().conceptId());
+            scrollToSelectedNode();
+        }
+    }
+
+    public void setAlphabeticSort() {
+        persistTreeSort(false);
+    }
+
+    public void setNotationSort() {
+        persistTreeSort(true);
+    }
+
+    private void persistTreeSort(boolean byNotation) {
+        sortByNotation = byNotation;
+        String thesaurusId = thesaurusContext.resolveThesaurusId();
+        if (StringUtils.isNotBlank(thesaurusId)) {
+            try {
+                thesaurusPreferenceService.updateSortByNotation(
+                        thesaurusId,
+                        byNotation,
+                        thesaurusContext.resolveWorkLanguage()
+                );
+            } catch (RuntimeException ex) {
+                MessageUtils.showWarnMessage("Tri appliqué pour la session, mais non enregistré en préférences");
+            }
+        }
+        reloadAllLeftTrees();
+    }
+
+    private void reloadAllLeftTrees() {
+        manySiblings = false;
+        invalidateConceptTree();
+        invalidateCollectionTree();
+        ensureTreeBuilt(activeLeftTreeMode);
+        if (activeLeftTreeMode == LeftTreeMode.CONCEPT
+                && selectedConcept != null
+                && selectedConcept.summary() != null
+                && autoExpandTree) {
+            syncConceptTreeSelection(selectedConcept.summary().conceptId());
+            scrollToSelectedNode();
+        }
+    }
+
+    private void scrollToSelectedNode() {
+        if (PrimeFaces.current().isAjaxRequest()) {
+            PrimeFaces.current().executeScript("typeof srollToSelected === 'function' && srollToSelected();");
         }
     }
 
@@ -956,7 +1018,15 @@ public class ThesaurusBrowseBean implements Serializable, ConceptNavigationSuppo
     }
 
     public boolean isBranchGraphEnabled() {
-        return StringUtils.isNotBlank(getBranchGraphConceptId());
+        // Comme legacy Tree#isGraphNotVisible : besoin d'un concept sélectionné non-feuille
+        if (selectedNode != null && selectedNode.getData() instanceof ConceptTreeNodeData data
+                && StringUtils.isNotBlank(data.nodeId())
+                && !data.isGroup()
+                && !"facet".equals(data.nodeType())
+                && !"root".equals(data.nodeType())) {
+            return !selectedNode.isLeaf();
+        }
+        return conceptSelectionContext.isHasNarrowers();
     }
 
     public String getBranchGraphConceptId() {
@@ -974,25 +1044,55 @@ public class ThesaurusBrowseBean implements Serializable, ConceptNavigationSuppo
     }
 
     private void syncConceptTreeSelection(String conceptId) {
-        if (conceptRoot == null || selectedConcept == null) {
+        if (StringUtils.isBlank(conceptId) || selectedConcept == null) {
             return;
         }
-        List<String> pathIds = resolveConceptPathIds(conceptId);
-        if (pathIds.isEmpty()) {
+        ensureTreeBuilt(LeftTreeMode.CONCEPT);
+        if (conceptRoot == null) {
             return;
         }
-        TreeNode found = expandPath(conceptRoot, pathIds, 0, LeftTreeMode.CONCEPT);
+
+        if (selectedNode != null) {
+            selectedNode.setSelected(false);
+        }
+
+        TreeNode found = null;
+        for (List<String> pathIds : resolveAllConceptPathIds(conceptId)) {
+            if (pathIds.isEmpty()) {
+                continue;
+            }
+            found = expandPath(conceptRoot, pathIds, 0, LeftTreeMode.CONCEPT);
+            if (found != null) {
+                break;
+            }
+        }
+        if (found == null) {
+            found = expandPath(conceptRoot, List.of(conceptId), 0, LeftTreeMode.CONCEPT);
+        }
         if (found != null) {
+            found.setSelected(true);
             selectedNode = found;
+        } else {
+            selectedNode = null;
         }
     }
 
-    private List<String> resolveConceptPathIds(String conceptId) {
+    private List<List<String>> resolveAllConceptPathIds(String conceptId) {
         List<List<BreadcrumbStep>> paths = selectedConcept.breadcrumbPaths();
-        if (paths != null && !paths.isEmpty() && !paths.get(0).isEmpty()) {
-            return paths.get(0).stream().map(BreadcrumbStep::conceptId).toList();
+        if (paths == null || paths.isEmpty()) {
+            return List.of(List.of(conceptId));
         }
-        return List.of(conceptId);
+        List<List<String>> result = new ArrayList<>();
+        for (List<BreadcrumbStep> path : paths) {
+            if (path == null || path.isEmpty()) {
+                continue;
+            }
+            result.add(path.stream().map(BreadcrumbStep::conceptId).toList());
+        }
+        if (result.isEmpty()) {
+            result.add(List.of(conceptId));
+        }
+        return result;
     }
 
     private TreeNode expandPath(TreeNode parent, List<String> pathIds, int depth, LeftTreeMode mode) {
@@ -1002,6 +1102,7 @@ public class ThesaurusBrowseBean implements Serializable, ConceptNavigationSuppo
         String targetId = pathIds.get(depth);
         if (parent instanceof DefaultTreeNode defaultParent && !isRootNode(defaultParent)) {
             ensureChildrenLoaded(defaultParent, mode);
+            defaultParent.setExpanded(true);
         } else if (parent instanceof DefaultTreeNode rootNode && isRootNode(rootNode)) {
             rootNode.setExpanded(true);
         }
@@ -1012,11 +1113,12 @@ public class ThesaurusBrowseBean implements Serializable, ConceptNavigationSuppo
             if (!(child.getData() instanceof ConceptTreeNodeData data) || data.isDummy()) {
                 continue;
             }
-            if (!targetId.equals(data.nodeId())) {
+            if (!targetId.equalsIgnoreCase(data.nodeId())) {
                 continue;
             }
-            child.setExpanded(depth < pathIds.size() - 1);
-            if (depth == pathIds.size() - 1) {
+            boolean last = depth == pathIds.size() - 1;
+            child.setExpanded(!last);
+            if (last) {
                 return child;
             }
             return expandPath(child, pathIds, depth + 1, mode);
@@ -1061,11 +1163,16 @@ public class ThesaurusBrowseBean implements Serializable, ConceptNavigationSuppo
                 new ConceptTreeNodeData("root", getThesaurusTitle(), "", "root", true),
                 null
         );
-        for (ConceptTreeNodeData nodeData : conceptReadService.loadRootNodes(
+        List<ConceptTreeNodeData> roots = conceptReadService.loadRootNodes(
                 thesaurusContext.resolveThesaurusId(),
                 thesaurusContext.resolveWorkLanguage(),
-                mode
-        )) {
+                mode,
+                sortByNotation
+        );
+        if (mode == LeftTreeMode.CONCEPT && roots.size() >= 2000) {
+            manySiblings = true;
+        }
+        for (ConceptTreeNodeData nodeData : roots) {
             DefaultTreeNode node = createTreeNode(nodeData, treeRoot);
             addLazyPlaceholderIfNeeded(node, nodeData);
         }
@@ -1079,8 +1186,12 @@ public class ThesaurusBrowseBean implements Serializable, ConceptNavigationSuppo
                 parentData.nodeType(),
                 thesaurusContext.resolveThesaurusId(),
                 thesaurusContext.resolveWorkLanguage(),
-                mode
+                mode,
+                sortByNotation
         );
+        if (mode == LeftTreeMode.CONCEPT && children.size() >= 2000) {
+            manySiblings = true;
+        }
         for (ConceptTreeNodeData childData : children) {
             DefaultTreeNode childNode = createTreeNode(childData, parentNode);
             addLazyPlaceholderIfNeeded(childNode, childData);
@@ -1171,6 +1282,7 @@ public class ThesaurusBrowseBean implements Serializable, ConceptNavigationSuppo
             useCustomRelation = preferences.useCustomRelation();
             autoExpandTree = preferences.autoExpandTree();
             treeCacheEnabled = preferences.treeCache();
+            sortByNotation = preferences.sortByNotation();
             suggestionEnabled = preferences.suggestion();
             useDeeplTranslation = preferences.useDeeplTranslation();
         } else {
@@ -1183,9 +1295,11 @@ public class ThesaurusBrowseBean implements Serializable, ConceptNavigationSuppo
             useCustomRelation = false;
             autoExpandTree = true;
             treeCacheEnabled = false;
+            sortByNotation = false;
             suggestionEnabled = false;
             useDeeplTranslation = false;
         }
+        manySiblings = false;
     }
 
     private void resetState() {

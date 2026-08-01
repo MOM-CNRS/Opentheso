@@ -3,11 +3,62 @@
              xmlns:ui="http://xmlns.jcp.org/jsf/facelets"
              xmlns:p="http://primefaces.org/ui">
 
-    <div class="row" style="height:28px; margin-top:-10px; margin-bottom:5px;">
-        <div class="col-12" style="text-align:right;">
+    <div class="row" style="height:28px; margin-top:-15px; margin-bottom:-20px;">
+        <div class="col-xl-8 col-lg-7 col-md-6 col-sm-6">
+            <h:outputText rendered="#{v2ThesaurusBrowseBean.manySiblings}"
+                          value="#{v2LocaleBean.getMsg('tree.manySiblings')}"
+                          title="#{v2LocaleBean.getMsg('tree.tooltip_manySiblings')}"
+                          style="color:red; font-style:italic; background-color:yellow; font-size:12px;"/>
+        </div>
+        <div class="col-xl-1 col-lg-1 col-md-1 col-sm-1">
+            <p:commandLink id="v2ReloadConceptTree"
+                           process="@this" ajax="true"
+                           actionListener="#{v2ThesaurusBrowseBean.reloadConceptTree()}"
+                           update=":containerIndex:formLeftTab :messageIndex"
+                           style="color:#F47B2A; float:right;"
+                           title="#{v2LocaleBean.getMsg('menu.reload_concept')}">
+                <i class="fas fa-refresh" style="color:#F47B2A; font-size:0.8rem;"/>
+            </p:commandLink>
+        </div>
+        <div class="col-xl-1 col-lg-1 col-md-2 col-sm-3">
             <p:commandButton id="v2ConceptTreeMenuButton" type="button" icon="pi pi-align-justify"
-                             style="width:1.5rem; height:1.5rem; margin-right:5px; background:white; color:#f47b2a; border:1px solid #ffffff;"/>
-            <p:menu overlay="true" trigger="v2ConceptTreeMenuButton" my="left top" at="left bottom">
+                             style="width:1.5rem; height:1.5rem; margin-left:5px; margin-right:5px; background:white; color:#f47b2a; border:1px solid #ffffff;"/>
+            <p:menu id="v2ConceptTreeMenu" overlay="true" trigger="v2ConceptTreeMenuButton" my="left top" at="left bottom">
+                <p:menuitem value="#{v2LocaleBean.getMsg('rightbody.concept.addTopTerm')}"
+                            icon="fas fa-folder-plus"
+                            actionListener="#{v2ConceptLifecycleEditorBean.prepareAddTopConcept()}"
+                            oncomplete="PF('v2AddTopConceptDlg').show();"
+                            update="@([id$=v2AddTopConceptForm])"
+                            process="@this"
+                            rendered="#{v2ConceptLifecycleEditorBean.writeActionsAvailable}"/>
+                <p:separator rendered="#{v2ConceptLifecycleEditorBean.writeActionsAvailable}"
+                             style="border-bottom:2px solid #d8d8dc; margin-bottom:5px;"/>
+                <p:menuitem rendered="#{v2ConceptTreeDragDropBean.pasteAtRootAvailable}"
+                            value="#{v2LocaleBean.getMsg('rightbody.concept.paste')} #{v2ConceptTreeDragDropBean.cutLabel} #{v2LocaleBean.getMsg('rightbody.concept.at_the_root')}"
+                            icon="fas fa-paste"
+                            actionListener="#{v2ConceptTreeDragDropBean.pasteAtRoot()}"
+                            process="@this"
+                            update=":containerIndex:formLeftTab :containerIndex:formRightTab :messageIndex"/>
+                <p:menuitem rendered="#{v2ConceptTreeDragDropBean.cutOn}"
+                            value="#{v2LocaleBean.getMsg('rightbody.concept.cancel_copy')}"
+                            icon="fas fa-undo"
+                            actionListener="#{v2ConceptTreeDragDropBean.cancelCut()}"
+                            process="@this"
+                            update=":containerIndex:formLeftTab :containerIndex:formRightTab :messageIndex"/>
+                <p:menuitem rendered="#{v2ConceptCopyBetweenThesaurusBean.pasteAvailable}"
+                            value="#{v2LocaleBean.getMsg('rightbody.concept.paste')} (#{v2ConceptCopyBetweenThesaurusBean.sourceLabel}) #{v2LocaleBean.getMsg('rightbody.concept.at_the_root')} !!"
+                            icon="fas fa-paste"
+                            actionListener="#{v2ConceptCopyBetweenThesaurusBean.preparePasteAtRoot()}"
+                            process="@this"
+                            update=":containerIndex:v2CopyBetweenThesoToRootForm :messageIndex"/>
+                <p:menuitem rendered="#{v2ConceptCopyBetweenThesaurusBean.copyOn}"
+                            value="#{v2LocaleBean.getMsg('rightbody.concept.cancel_copy')}"
+                            icon="fas fa-undo"
+                            actionListener="#{v2ConceptCopyBetweenThesaurusBean.cancelCopy()}"
+                            process="@this"
+                            update=":containerIndex:formLeftTab :containerIndex:formRightTab :messageIndex"/>
+                <p:separator rendered="#{v2ConceptTreeDragDropBean.cutOn or v2ConceptTreeDragDropBean.pasteAtRootAvailable or v2ConceptCopyBetweenThesaurusBean.copyOn}"
+                             style="border-bottom:2px solid #d8d8dc; margin-bottom:5px;"/>
                 <p:menuitem value="#{v2LocaleBean.getMsg('conceptsview.view_theso_as_graph')}"
                             icon="fa-solid fa-diagram-project"
                             url="#{request.contextPath}/v2/graph/visualize/thesaurus?idtheso=#{v2ThesaurusBrowseBean.thesaurusId}"
@@ -19,7 +70,21 @@
                             target="_blank"
                             disabled="#{not v2ThesaurusBrowseBean.branchGraphEnabled}"
                             title="#{v2LocaleBean.getMsg('conceptsview.view_branch_as_graph_tooltip')}"/>
+                <p:separator style="border-bottom:2px solid #d8d8dc; margin-bottom:5px;"/>
+                <p:menuitem value="#{v2LocaleBean.getMsg('leftbody.alphabetic_sort')}"
+                            actionListener="#{v2ThesaurusBrowseBean.setAlphabeticSort()}"
+                            ajax="true" process="@this"
+                            disabled="#{not v2ThesaurusBrowseBean.sortByNotation}"
+                            update=":containerIndex:formLeftTab"
+                            icon="fas fa-sort-alpha-down"/>
+                <p:menuitem value="#{v2LocaleBean.getMsg('leftbody.notation_sort')}"
+                            actionListener="#{v2ThesaurusBrowseBean.setNotationSort()}"
+                            ajax="true" process="@this"
+                            disabled="#{v2ThesaurusBrowseBean.sortByNotation}"
+                            update=":containerIndex:formLeftTab"
+                            icon="fas fa-sort-numeric-down"/>
             </p:menu>
         </div>
     </div>
+    <p:separator style="color:#F47B2A"/>
 </ui:fragment>

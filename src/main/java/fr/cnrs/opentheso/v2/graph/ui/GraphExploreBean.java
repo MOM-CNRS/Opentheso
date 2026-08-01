@@ -41,10 +41,15 @@ public class GraphExploreBean implements Serializable {
     public void loadBranchGraph() {
         thesaurusContext.syncFromViewParams();
         String conceptId = resolveConceptId();
+        String thesaurusId = thesaurusContext.resolveThesaurusId();
         String baseUrl = applicationUriService.resolveApplicationRootUrl();
+        if (StringUtils.isAnyBlank(thesaurusId, conceptId)) {
+            treeDataUrl = "";
+            return;
+        }
         treeDataUrl = graphVisualizationUrlService.buildBranchTreeDataUrl(
                 baseUrl,
-                thesaurusContext.resolveThesaurusId(),
+                thesaurusId,
                 conceptId,
                 thesaurusContext.resolveWorkLanguage()
         );

@@ -33,6 +33,7 @@
         <link rel="stylesheet" href="https://use.fontawesome.com/releases/v6.1.0/css/v4-shims.css"/>
         <link rel="stylesheet" href="#{resource['webjars:leaflet/1.8.0/leaflet.css']}"/>
         <script src="#{resource['webjars:leaflet/1.8.0/leaflet.js']}"></script>
+        <script type="text/javascript" src="#{request.contextPath}/resources/js/scrollToSelectedScript.js"></script>
         <style>
             .search-form {
                 width: 80%;
@@ -123,18 +124,17 @@
                             <div class="col-xl-3 col-lg-3 col-md-3 hidden-sm card shadow mb-1"
                                  style="overflow:hidden; padding-right:0; padding-left:0; height:100%;">
                                 <h:panelGroup id="formLeftTab">
-                                    <ui:include src="includes/left-tree-menu.xhtml"/>
-
                                     <p:tabView id="tabTree" activeIndex="#{v2ThesaurusBrowseBean.leftTabIndex}">
                                         <p:ajax event="tabChange"
                                                 listener="#{v2ThesaurusBrowseBean.onLeftTabChange}"
-                                                update=":containerIndex:formLeftTab :containerIndex:formRightTab"/>
+                                                update=":containerIndex:formLeftTab"/>
 
                                         <p:tab id="viewTabTree">
                                             <f:facet name="title">
                                                 <i class="pi pi-sitemap"/>
                                                 <h:outputText value=" #{v2LocaleBean.getMsg('leftbody.concept')}"/>
                                             </f:facet>
+                                            <ui:include src="includes/left-tree-menu.xhtml"/>
                                             <ui:include src="includes/left-tree-concept.xhtml">
                                                 <ui:param name="treeId" value="conceptTree"/>
                                                 <ui:param name="treeRoot" value="#{v2ThesaurusBrowseBean.conceptRoot}"/>
@@ -178,6 +178,23 @@
                                                                     actionListener="#{v2CollectionDetailEditorBean.prepareCreateSubgroup()}"
                                                                     oncomplete="PF('v2CreateSubgroupDlg').show();"
                                                                     update=":containerIndex:v2CreateSubgroupDlg" process="@this"/>
+                                                        <p:menuitem value="#{v2LocaleBean.getMsg('leftbody.group.deleteGroup')}" icon="fas fa-minus"
+                                                                    disabled="#{v2ThesaurusBrowseBean.selectedGroup == null}"
+                                                                    oncomplete="PF('v2DeleteCollectionDlg').show();"
+                                                                    update=":containerIndex:v2DeleteCollectionDlg" process="@this"/>
+                                                        <p:separator style="border-bottom:2px solid #d8d8dc; margin-bottom:5px;"/>
+                                                        <p:menuitem value="#{v2LocaleBean.getMsg('leftbody.alphabetic_sort')}"
+                                                                    actionListener="#{v2ThesaurusBrowseBean.setAlphabeticSort()}"
+                                                                    ajax="true" process="@this"
+                                                                    disabled="#{not v2ThesaurusBrowseBean.sortByNotation}"
+                                                                    update=":containerIndex:formLeftTab"
+                                                                    icon="fas fa-sort-alpha-down"/>
+                                                        <p:menuitem value="#{v2LocaleBean.getMsg('leftbody.notation_sort')}"
+                                                                    actionListener="#{v2ThesaurusBrowseBean.setNotationSort()}"
+                                                                    ajax="true" process="@this"
+                                                                    disabled="#{v2ThesaurusBrowseBean.sortByNotation}"
+                                                                    update=":containerIndex:formLeftTab"
+                                                                    icon="fas fa-sort-numeric-down"/>
                                                     </p:menu>
                                                 </div>
                                             </div>
@@ -284,6 +301,10 @@
                 </h:panelGroup>
 
 
+                <ui:include src="includes/dialogs/concept-lifecycle-dialogs.xhtml"/>
+                <ui:include src="includes/dialogs/concept-tree-dragdrop-dialog.xhtml"/>
+                <ui:include src="includes/dialogs/concept-copy-between-theso-dialogs.xhtml"/>
+                <ui:include src="includes/dialogs/concept-deepl-translate-dialog.xhtml"/>
                 <ui:include src="includes/dialogs/concept-alignment-dialogs.xhtml"/>
                 <ui:include src="includes/dialogs/concept-alignment-search-dialog.xhtml"/>
                 <ui:include src="includes/dialogs/alignment-admin-dialogs.xhtml"/>

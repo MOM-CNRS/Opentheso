@@ -7,6 +7,7 @@ import fr.cnrs.opentheso.v2.concept.write.model.command.AddRelatedRelationComman
 import fr.cnrs.opentheso.v2.concept.write.model.command.ApplyNarrowerRelationToBranchCommand;
 import fr.cnrs.opentheso.v2.concept.write.model.command.DeleteBroaderRelationCommand;
 import fr.cnrs.opentheso.v2.concept.write.model.command.DeleteCustomRelationCommand;
+import fr.cnrs.opentheso.v2.concept.write.model.command.ReparentConceptCommand;
 import fr.cnrs.opentheso.v2.concept.write.model.command.UpdateNarrowerRelationTypeCommand;
 import org.junit.jupiter.api.Test;
 import org.junit.jupiter.api.extension.ExtendWith;
@@ -43,6 +44,8 @@ class ConceptRelationNativeWriteServiceTest {
     private ConceptTranslationWriteRepository conceptTranslationWriteRepository;
     @Mock
     private ConceptWritePostMutationRepository conceptWritePostMutationRepository;
+    @Mock
+    private BranchConceptSupport branchConceptSupport;
 
     @InjectMocks
     private ConceptRelationNativeWriteService service;
@@ -182,5 +185,48 @@ class ConceptRelationNativeWriteServiceTest {
         assertEquals(MutationOutcome.OK, result.outcome());
         verify(conceptRelationWriteRepository).deleteCustomRelation(
                 "C1", "C2", "TH1", "place", false, 7);
+    }
+
+    @Test
+    void reparentConcept_movesUnderNewBroader() {
+        var command = new ReparentConceptCommand("TH1", "C1", List.of("OLD"), "NEW", 7, "admin");
+        when(branchConceptSupport.collectBranchConceptIds("TH1", "C1")).thenReturn(List.of("C1", "C1a"));
+        when(conceptRelationWriteRepository.hasRelatedRelation("C1", "NEW", "TH1")).thenReturn(false);
+        when(conceptRelationWriteRepository.hasHierarchicalRelation("C1", "NEW", "TH1")).thenReturn(false);
+        when(conceptLifecycleWriteRepository.isTopConcept("TH1", "C1")).thenReturn(false);
+
+        var result = service.reparentConcept(command);
+
+        assertEquals(MutationOutcome.OK, result.outcome());
+        verify(conceptRelationWriteRepository).deleteBroaderRelation("C1", "OLD", "TH1", 7);
+        verify(conceptRelationWriteRepository).addBroaderRelation("C1", "NEW", "TH1", 7);
+        verify(conceptWritePostMutationRepository).touchConcept("TH1", "C1", 7);
+    }
+
+    @Test
+    void reparentConcept_toRoot_setsTopConcept() {
+        var command = new ReparentConceptCommand("TH1", "C1", List.of("OLD"), null, 7, "admin");
+        when(conceptRelationWriteRepository.hasBroaderRelation("C1", "TH1")).thenReturn(false);
+        when(conceptLifecycleWriteRepository.setTopConcept("TH1", "C1", true)).thenReturn(true);
+
+        var result = service.reparentConcept(command);
+
+        assertEquals(MutationOutcome.OK, result.outcome());
+        verify(conceptRelationWriteRepository).deleteBroaderRelation("C1", "OLD", "TH1", 7);
+        verify(conceptRelationWriteRepository, never()).addBroaderRelation(
+                anyString(), anyString(), anyString(), anyInt());
+        verify(conceptLifecycleWriteRepository).setTopConcept("TH1", "C1", true);
+    }
+
+    @Test
+    void reparentConcept_rejectsCycle() {
+        var command = new ReparentConceptCommand("TH1", "C1", List.of("OLD"), "CHILD", 7, "admin");
+        when(branchConceptSupport.collectBranchConceptIds("TH1", "C1")).thenReturn(List.of("C1", "CHILD"));
+
+        var result = service.reparentConcept(command);
+
+        assertEquals(MutationOutcome.VALIDATION_ERROR, result.outcome());
+        verify(conceptRelationWriteRepository, never()).deleteBroaderRelation(
+                anyString(), anyString(), anyString(), anyInt());
     }
 }

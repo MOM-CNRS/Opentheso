@@ -279,7 +279,7 @@ public class ConceptQueryRepository {
               AND c.id_thesaurus = :thesaurusId
               AND c.status != 'CA'
             ORDER BY label
-            LIMIT 2001
+            LIMIT 4001
             """)
                 .setParameter("groupId", groupId)
                 .setParameter("thesaurusId", thesaurusId)

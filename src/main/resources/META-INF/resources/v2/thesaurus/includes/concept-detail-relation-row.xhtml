@@ -23,12 +23,12 @@
             <p:menuitem value="#{v2LocaleBean.getMsg('rightbody.concept.replace_with2')}"
                         process="@this"
                         actionListener="#{v2ConceptLifecycleEditorBean.prepareAddReplacedBy()}"
-                        update="v2AddReplacedByForm"
+                        update="@([id$=v2AddReplacedByForm])"
                         oncomplete="PF('v2AddReplacedByDlg').show();"/>
             <p:menuitem value="#{v2LocaleBean.getMsg('rightbody.concept.delere_replace_with')}"
                         process="@this"
                         actionListener="#{v2ConceptLifecycleEditorBean.prepareDeleteReplacedBy()}"
-                        update="v2DeleteReplacedByForm"
+                        update="@([id$=v2DeleteReplacedByForm])"
                         oncomplete="PF('v2DeleteReplacedByDlg').show();"
                         disabled="#{empty relations}"/>
           </p:menuButton>

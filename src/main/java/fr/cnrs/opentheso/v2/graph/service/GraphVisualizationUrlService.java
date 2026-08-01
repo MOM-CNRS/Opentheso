@@ -62,11 +62,31 @@ public class GraphVisualizationUrlService {
     }
 
     public String buildThesaurusTreeDataUrl(String baseUrl, String thesaurusId, String lang) {
-        return baseUrl + "/openapi/v1/concept/" + thesaurusId + "/thesoGraph?lang=" + resolveLanguage(lang);
+        String root = normalizeBaseUrl(baseUrl);
+        return root + "/openapi/v1/concept/" + encodePath(thesaurusId)
+                + "/thesoGraph?lang=" + resolveLanguage(lang);
     }
 
     public String buildBranchTreeDataUrl(String baseUrl, String thesaurusId, String conceptId, String lang) {
-        return baseUrl + "/openapi/v1/concept/" + thesaurusId + "/" + conceptId + "/graph/?lang=" + resolveLanguage(lang);
+        if (StringUtils.isAnyBlank(thesaurusId, conceptId)) {
+            return null;
+        }
+        String root = normalizeBaseUrl(baseUrl);
+        return root + "/openapi/v1/concept/" + encodePath(thesaurusId)
+                + "/" + encodePath(conceptId)
+                + "/graph/?lang=" + resolveLanguage(lang);
+    }
+
+    private static String normalizeBaseUrl(String baseUrl) {
+        if (StringUtils.isBlank(baseUrl)) {
+            return "";
+        }
+        return baseUrl.endsWith("/") ? baseUrl.substring(0, baseUrl.length() - 1) : baseUrl;
+    }
+
+    private static String encodePath(String value) {
+        return java.net.URLEncoder.encode(StringUtils.defaultString(value), StandardCharsets.UTF_8)
+                .replace("+", "%20");
     }
 
     private void appendExportParameters(URIBuilder dataUrlBuilder, List<GraphExportEntry> exports) {

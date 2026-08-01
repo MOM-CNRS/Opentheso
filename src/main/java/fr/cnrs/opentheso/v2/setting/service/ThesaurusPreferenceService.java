@@ -77,6 +77,19 @@ public class ThesaurusPreferenceService {
         return savePreferences(thesaurusId, preferences, null, null, null, null, workLang);
     }
 
+    /**
+     * Persiste uniquement le tri de l'arbre (α / notation), sans toucher aux autres préférences.
+     */
+    @Transactional
+    @CacheEvict(cacheNames = CacheConfig.THESAURUS_PREFERENCES_CACHE, allEntries = true)
+    public ThesaurusPreferences updateSortByNotation(String thesaurusId, boolean sortByNotation, String workLang) {
+        PreferencesEntity entity = requirePreferences(thesaurusId);
+        entity.setSortByNotation(sortByNotation);
+        preferencesJpaRepository.save(entity);
+        log.info("Tri par notation={} enregistré pour le thésaurus {}", sortByNotation, thesaurusId);
+        return loadPreferences(thesaurusId, workLang);
+    }
+
     @Transactional
     @CacheEvict(cacheNames = CacheConfig.THESAURUS_PREFERENCES_CACHE, allEntries = true)
     public ThesaurusPreferences savePreferences(

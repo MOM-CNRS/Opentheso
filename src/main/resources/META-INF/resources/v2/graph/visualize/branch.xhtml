@@ -12,8 +12,9 @@
     </f:view>
 
     <h:head>
-        <title>Opentheso Graphe (v2)</title>
-        <link rel="stylesheet" type="text/css" href="../../../graph2/resources/css/diagram.css" />
+        <title>Opentheso Graphe branche (v2)</title>
+        <link rel="icon" type="image/png" href="../../../graph2/resources/img/icon_opentheso.png"/>
+        <link rel="stylesheet" type="text/css" href="../../../graph2/resources/css/diagram.css"/>
         <script src="https://code.jquery.com/jquery-3.5.1.min.js"></script>
         <script src="https://d3js.org/d3.v3.min.js"></script>
         <script type="text/javascript" src="../../../graph2/resources/js/diagram-lib.js"></script>
@@ -28,9 +29,37 @@
         </div>
 
         <div style="display:none; margin-top: 10px;" id="myDiv" class="animate-bottom">
+            <table style="align-items: center; justify-content: center; width: 100%; height: 20px; padding-top: 10px; margin-bottom: -15px;">
+                <tr>
+                    <td style="padding-left: 20px;">
+                        <div class="form-group">
+                            <span>URL : </span>
+                            <input id="url" class="form-field" type="text" placeholder="domain.tld" title="Le graphe est limité à 3000 concepts"/>
+                        </div>
+                    </td>
+                    <td style="text-align: right; padding-right: 20px; vertical-align:central">
+                        <label class="select">
+                            <select id="taille">
+                                <option value="#" selected="selected">Taille normale</option>
+                                <option value="#">Taille moyenne</option>
+                                <option value="#">Taille grande</option>
+                                <option value="#">Taille très grande</option>
+                                <option value="#">Taille Maxi</option>
+                            </select>
+                        </label>
+                        <button class="btn" onclick="expandAll()" title="Ouvrir tous les éléments" type="button">
+                            <img src="../../../resources/img/expand.png" width="17" alt=""/>
+                        </button>
+                        <button class="btn" onclick="collapseAll()" title="Fermer tous les éléments" type="button">
+                            <img src="../../../resources/img/collapsing.png" width="17" alt=""/>
+                        </button>
+                    </td>
+                </tr>
+            </table>
+
             <h:form id="formId">
-                <h:inputHidden id="tree_data_url" value="#{v2GraphExploreBean.treeDataUrl}" />
-                <input type="hidden" name="csrfToken" value="${sessionScope.CSRF_TOKEN}" />
+                <h:inputHidden id="tree_data_url" value="#{v2GraphExploreBean.treeDataUrl}"/>
+                <input type="hidden" name="csrfToken" value="${sessionScope.CSRF_TOKEN}"/>
             </h:form>
 
             <script type="text/javascript">

@@ -124,7 +124,7 @@ class ThesaurusBrowseBeanTest {
         when(thesaurusContext.resolveThesaurusId()).thenReturn("TH1");
         when(thesaurusContext.getCurrentThesaurusTitle()).thenReturn("Test");
         when(thesaurusContext.resolveWorkLanguage()).thenReturn("fr");
-        when(conceptReadService.loadRootNodes("TH1", "fr", LeftTreeMode.CONCEPT)).thenReturn(List.of(
+        when(conceptReadService.loadRootNodes("TH1", "fr", LeftTreeMode.CONCEPT, false)).thenReturn(List.of(
                 new ConceptTreeNodeData("C1", "Concept 1", "C1", "concept", false)
         ));
         when(thesaurusHomeReadService.loadOverview("TH1", "fr", "Test"))
@@ -147,7 +147,7 @@ class ThesaurusBrowseBeanTest {
         when(thesaurusContext.resolveThesaurusId()).thenReturn("TH1");
         when(thesaurusContext.getCurrentThesaurusTitle()).thenReturn("Test");
         when(thesaurusContext.resolveWorkLanguage()).thenReturn("fr");
-        when(conceptReadService.loadRootNodes("TH1", "fr", LeftTreeMode.CONCEPT)).thenReturn(List.of());
+        when(conceptReadService.loadRootNodes("TH1", "fr", LeftTreeMode.CONCEPT, false)).thenReturn(List.of());
         when(thesaurusHomeReadService.loadOverview("TH1", "fr", "Test"))
                 .thenReturn(new ThesaurusHomeOverview("Test", 0, "", "", "", "", List.of(), List.of(), ""));
         when(thesaurusPreferenceService.loadPreferencesOrNull("TH1", "fr"))
@@ -156,7 +156,7 @@ class ThesaurusBrowseBeanTest {
         bean.load();
 
         assertNull(bean.getArbreRoot());
-        verify(conceptReadService, never()).loadRootNodes("TH1", "fr", LeftTreeMode.ARBRE);
+        verify(conceptReadService, never()).loadRootNodes("TH1", "fr", LeftTreeMode.ARBRE, false);
     }
 
     @Test
@@ -243,7 +243,7 @@ class ThesaurusBrowseBeanTest {
         var parentNode = new org.primefaces.model.DefaultTreeNode<>("concept", parentData, null);
         new org.primefaces.model.DefaultTreeNode<>("default", ConceptTreeNodeData.dummy(), parentNode);
         var childData = new ConceptTreeNodeData("C2", "Child", "C2", "file", false);
-        when(conceptReadService.loadChildNodes("C1", "concept", "TH1", "fr", LeftTreeMode.CONCEPT))
+        when(conceptReadService.loadChildNodes("C1", "concept", "TH1", "fr", LeftTreeMode.CONCEPT, false))
                 .thenReturn(List.of(childData));
 
         var event = org.mockito.Mockito.mock(NodeExpandEvent.class);
@@ -396,7 +396,7 @@ class ThesaurusBrowseBeanTest {
         when(thesaurusContext.resolveThesaurusId()).thenReturn("TH1");
         when(thesaurusContext.getCurrentThesaurusTitle()).thenReturn("Test");
         when(thesaurusContext.resolveWorkLanguage()).thenReturn("fr");
-        when(conceptReadService.loadRootNodes("TH1", "fr", LeftTreeMode.CONCEPT)).thenReturn(List.of());
+        when(conceptReadService.loadRootNodes("TH1", "fr", LeftTreeMode.CONCEPT, false)).thenReturn(List.of());
         when(thesaurusHomeReadService.loadOverview("TH1", "fr", "Test"))
                 .thenReturn(new ThesaurusHomeOverview("Test", 0, "", "", "", "", List.of(), List.of(), ""));
         when(thesaurusPreferenceService.loadPreferencesOrNull("TH1", "fr"))
@@ -438,7 +438,7 @@ class ThesaurusBrowseBeanTest {
         when(thesaurusContext.resolveThesaurusId()).thenReturn("TH1");
         when(thesaurusContext.getCurrentThesaurusTitle()).thenReturn("Test");
         when(thesaurusContext.resolveWorkLanguage()).thenReturn("fr");
-        when(conceptReadService.loadRootNodes("TH1", "fr", LeftTreeMode.CONCEPT)).thenReturn(List.of());
+        when(conceptReadService.loadRootNodes("TH1", "fr", LeftTreeMode.CONCEPT, false)).thenReturn(List.of());
         when(thesaurusHomeReadService.loadOverview("TH1", "fr", "Test"))
                 .thenReturn(new ThesaurusHomeOverview("Test", 0, "", "", "", "", List.of(), List.of(), ""));
         when(thesaurusPreferenceService.loadPreferencesOrNull("TH1", "fr"))
@@ -459,7 +459,7 @@ class ThesaurusBrowseBeanTest {
         when(thesaurusContext.resolveThesaurusId()).thenReturn("TH1");
         when(thesaurusContext.getCurrentThesaurusTitle()).thenReturn("Test");
         when(thesaurusContext.resolveWorkLanguage()).thenReturn("fr");
-        when(conceptReadService.loadRootNodes("TH1", "fr", LeftTreeMode.CONCEPT)).thenReturn(List.of());
+        when(conceptReadService.loadRootNodes("TH1", "fr", LeftTreeMode.CONCEPT, false)).thenReturn(List.of());
         when(thesaurusHomeReadService.loadOverview("TH1", "fr", "Test"))
                 .thenReturn(new ThesaurusHomeOverview("Test", 0, "", "", "", "", List.of(), List.of(), ""));
         when(thesaurusPreferenceService.loadPreferencesOrNull("TH1", "fr"))
@@ -495,7 +495,7 @@ class ThesaurusBrowseBeanTest {
         when(thesaurusContext.resolveThesaurusId()).thenReturn("TH1");
         when(thesaurusContext.getCurrentThesaurusTitle()).thenReturn("Test");
         when(thesaurusContext.resolveWorkLanguage()).thenReturn("fr");
-        when(conceptReadService.loadRootNodes("TH1", "fr", LeftTreeMode.CONCEPT)).thenReturn(List.of());
+        when(conceptReadService.loadRootNodes("TH1", "fr", LeftTreeMode.CONCEPT, false)).thenReturn(List.of());
         when(thesaurusHomeReadService.loadOverview("TH1", "fr", "Test"))
                 .thenReturn(new ThesaurusHomeOverview("Test", 0, "", "", "", "", List.of(), List.of(), ""));
         when(thesaurusPreferenceService.loadPreferencesOrNull("TH1", "fr"))
@@ -551,7 +551,7 @@ class ThesaurusBrowseBeanTest {
         when(thesaurusContext.resolveThesaurusId()).thenReturn("TH1");
         when(thesaurusContext.getCurrentThesaurusTitle()).thenReturn("Test");
         when(thesaurusContext.resolveWorkLanguage()).thenReturn("fr");
-        when(conceptReadService.loadRootNodes("TH1", "fr", LeftTreeMode.CONCEPT)).thenReturn(List.of());
+        when(conceptReadService.loadRootNodes("TH1", "fr", LeftTreeMode.CONCEPT, false)).thenReturn(List.of());
         when(thesaurusHomeReadService.loadOverview("TH1", "fr", "Test"))
                 .thenReturn(new ThesaurusHomeOverview("Test", 0, "", "", "", "", List.of(), List.of(), ""));
         when(thesaurusPreferenceService.loadPreferencesOrNull("TH1", "fr"))
@@ -586,7 +586,7 @@ class ThesaurusBrowseBeanTest {
         when(thesaurusContext.resolveThesaurusId()).thenReturn("TH1");
         when(thesaurusContext.getCurrentThesaurusTitle()).thenReturn("Test");
         when(thesaurusContext.resolveWorkLanguage()).thenReturn("fr");
-        when(conceptReadService.loadRootNodes("TH1", "fr", LeftTreeMode.CONCEPT)).thenReturn(List.of());
+        when(conceptReadService.loadRootNodes("TH1", "fr", LeftTreeMode.CONCEPT, false)).thenReturn(List.of());
         when(thesaurusHomeReadService.loadOverview("TH1", "fr", "Test"))
                 .thenReturn(new ThesaurusHomeOverview("Test", 0, "", "", "", "", List.of(), List.of(), ""));
         when(thesaurusPreferenceService.loadPreferencesOrNull("TH1", "fr"))
@@ -644,7 +644,6 @@ class ThesaurusBrowseBeanTest {
 
         assertEquals(LeftTreeMode.INDEX, bean.getActiveLeftTreeMode());
         assertEquals(1, bean.getLeftTabIndex());
-        assertTrue(bean.isHomePanel());
     }
 
     @Test
@@ -698,7 +697,7 @@ class ThesaurusBrowseBeanTest {
         when(thesaurusContext.resolveThesaurusId()).thenReturn("TH1");
         when(thesaurusContext.getCurrentThesaurusTitle()).thenReturn("Test");
         when(thesaurusContext.resolveWorkLanguage()).thenReturn("fr");
-        when(conceptReadService.loadRootNodes("TH1", "fr", LeftTreeMode.CONCEPT)).thenReturn(List.of());
+        when(conceptReadService.loadRootNodes("TH1", "fr", LeftTreeMode.CONCEPT, false)).thenReturn(List.of());
         when(thesaurusHomeReadService.loadOverview("TH1", "fr", "Test"))
                 .thenReturn(new ThesaurusHomeOverview("Test", 0, "", "", "", "", List.of(), List.of(), ""));
         when(thesaurusPreferenceService.loadPreferencesOrNull("TH1", "fr"))
@@ -771,13 +770,13 @@ class ThesaurusBrowseBeanTest {
         when(thesaurusContext.resolveThesaurusId()).thenReturn("TH1");
         when(thesaurusContext.getCurrentThesaurusTitle()).thenReturn("Test");
         when(thesaurusContext.resolveWorkLanguage()).thenReturn("fr");
-        when(conceptReadService.loadRootNodes("TH1", "fr", LeftTreeMode.CONCEPT)).thenReturn(List.of(
+        when(conceptReadService.loadRootNodes("TH1", "fr", LeftTreeMode.CONCEPT, false)).thenReturn(List.of(
                 new ConceptTreeNodeData("C1", "Parent", "C1", "concept", true)
         ));
         when(thesaurusHomeReadService.loadOverview("TH1", "fr", "Test"))
                 .thenReturn(new ThesaurusHomeOverview("Test", 0, "", "", "", "", List.of(), List.of(), ""));
         when(thesaurusPreferenceService.loadPreferencesOrNull("TH1", "fr")).thenReturn(consultationPreferences(true));
-        when(conceptReadService.loadChildNodes("C1", "concept", "TH1", "fr", LeftTreeMode.CONCEPT))
+        when(conceptReadService.loadChildNodes("C1", "concept", "TH1", "fr", LeftTreeMode.CONCEPT, false))
                 .thenReturn(List.of(new ConceptTreeNodeData("C2", "Child", "C2", "file", false)));
 
         bean.load();
@@ -949,7 +948,7 @@ class ThesaurusBrowseBeanTest {
         when(thesaurusHomeReadService.loadOverview("TH1", "fr", "Test")).thenReturn(
                 new ThesaurusHomeOverview("Test", 0, "", "", "", "", List.of(), List.of(), "")
         );
-        when(conceptReadService.loadRootNodes("TH1", "fr", LeftTreeMode.CONCEPT)).thenReturn(List.of());
+        when(conceptReadService.loadRootNodes("TH1", "fr", LeftTreeMode.CONCEPT, false)).thenReturn(List.of());
 
         bean.load();
 
