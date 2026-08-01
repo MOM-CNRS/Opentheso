@@ -147,6 +147,31 @@ class ProjectMemberServiceTest {
     }
 
     @Test
+    void addExistingMember_throwsWhenAlreadyMember() {
+        stubProjectAdmin(5, 3, 2);
+        when(userLookupService.requireEntity(16)).thenReturn(new UserEntity());
+        when(projectAdminQueryRepository.isProjectAccessible(16, 3)).thenReturn(true);
+
+        InvalidProjectDataException ex = assertThrows(InvalidProjectDataException.class,
+                () -> projectMemberService.addExistingMember(5, false, 3, 16, 4));
+
+        assertEquals("Cet utilisateur est déjà membre de ce projet.", ex.getMessage());
+        verify(projectMembershipRepository, never()).assignProjectRole(anyInt(), anyInt(), anyInt());
+    }
+
+    @Test
+    void addExistingMember_assignsRoleWhenUserIsNotYetMember() {
+        stubProjectAdmin(5, 3, 2);
+        when(userLookupService.requireEntity(16)).thenReturn(new UserEntity());
+        when(projectAdminQueryRepository.isProjectAccessible(16, 3)).thenReturn(false);
+
+        projectMemberService.addExistingMember(5, false, 3, 16, 4);
+
+        verify(projectMembershipRepository).assignProjectRole(16, 4, 3);
+        verify(rightsService).invalidate(16);
+    }
+
+    @Test
     void removeMember_throwsWhenRemovingSelf() {
         stubProjectAdmin(5, 3, 2);
         when(userLookupService.requireEntity(5)).thenReturn(new UserEntity());

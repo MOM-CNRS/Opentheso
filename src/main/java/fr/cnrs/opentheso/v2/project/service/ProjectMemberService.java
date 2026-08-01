@@ -104,6 +104,9 @@ public class ProjectMemberService {
         if (callerId == userId) {
             throw new InvalidProjectDataException("Vous ne pouvez pas vous ajouter vous-même au projet.");
         }
+        if (projectAdminQueryRepository.isProjectAccessible(userId, projectId)) {
+            throw new InvalidProjectDataException("Cet utilisateur est déjà membre de ce projet.");
+        }
         projectMembershipRepository.assignProjectRole(userId, roleId, projectId);
         rightsService.invalidate(userId);
         log.info("Utilisateur id={} ajouté au projet id={} par l'utilisateur id={}", userId, projectId, callerId);

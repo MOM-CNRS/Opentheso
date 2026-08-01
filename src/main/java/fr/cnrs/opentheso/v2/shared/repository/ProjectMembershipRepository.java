@@ -18,6 +18,8 @@ public class ProjectMembershipRepository {
         entityManager.createNativeQuery("""
                         INSERT INTO user_role_group (id_user, id_role, id_group)
                         VALUES (:userId, :roleId, :projectId)
+                        ON CONFLICT (id_user, id_group)
+                        DO UPDATE SET id_role = EXCLUDED.id_role
                         """)
                 .setParameter("userId", userId)
                 .setParameter("roleId", roleId)
