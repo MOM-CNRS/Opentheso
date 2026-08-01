@@ -120,4 +120,8 @@ public class Preferences {
 
     @Column(name = "api_key_openark")
     private String apiKeyOpenArk;
+
+    /** true = thésaurus maître, false = esclave (défaut). */
+    @Column(name = "is_master")
+    private boolean master;
 }

@@ -202,6 +202,12 @@ public class ThesaurusSkosSerializer {
         writeDocumentation(conceptScheme);
         writeGPS(conceptScheme);
         writeDcTerms(conceptScheme);
+        // À l'export, le thésaurus est toujours marqué esclave (copie).
+        builder.add(
+                vf.createIRI(fr.cnrs.opentheso.v2.toolbox.model.ThesaurusRole.SKOS_NAMESPACE,
+                        fr.cnrs.opentheso.v2.toolbox.model.ThesaurusRole.SKOS_PROPERTY_LOCAL_NAME),
+                vf.createLiteral(fr.cnrs.opentheso.v2.toolbox.model.ThesaurusRole.SLAVE.skosValue())
+        );
     }
 
     private void writeGPS(SKOSResource resource) {

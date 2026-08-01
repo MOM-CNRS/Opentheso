@@ -40,7 +40,25 @@ public class ToolboxPreferencePersistence {
                 .autoExpandTree(true)
                 .webservices(true)
                 .breadcrumb(true)
+                .master(false)
                 .build());
+    }
+
+    public void updateMasterRole(String thesaurusId, boolean master) {
+        if (StringUtils.isBlank(thesaurusId)) {
+            return;
+        }
+        var preference = preferencesRepository.findByIdThesaurus(thesaurusId);
+        if (preference.isEmpty()) {
+            return;
+        }
+        preference.get().setMaster(master);
+        preferencesRepository.save(preference.get());
+    }
+
+    public boolean isMaster(String thesaurusId) {
+        var preference = preferencesRepository.findByIdThesaurus(thesaurusId);
+        return preference.map(Preferences::isMaster).orElse(false);
     }
 
     public String getWorkLanguage(String thesaurusId) {

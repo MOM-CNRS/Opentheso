@@ -104,6 +104,8 @@ public class ThesaurusEditionSkosImportEngine {
     private SKOSXmlDocument skosXmlDocument;
     private SimpleDateFormat dateFormat;
     boolean isFirst = true;
+    /** Rôle à appliquer à l'import (false = esclave par défaut). */
+    private boolean importAsMaster;
 
 
     public void setInfos(String formatDate, int idUser, int idGroupUser, String langueSource) {
@@ -120,6 +122,7 @@ public class ThesaurusEditionSkosImportEngine {
         this.pendingGroupConcepts.clear();
         this.message = new StringBuilder();
         this.dateFormat = new SimpleDateFormat(StringUtils.defaultIfBlank(formatDate, "yyyy-MM-dd"));
+        this.importAsMaster = false;
     }
 
     public String addThesaurus() throws SQLException {
@@ -304,6 +307,7 @@ public class ThesaurusEditionSkosImportEngine {
         if (selectedIdentifier.equalsIgnoreCase("doi")) {
             nodePreference.setOriginalUriIsDoi(true);
         }
+        nodePreference.setMaster(importAsMaster);
         preferencesRepository.save(nodePreference);
     }
 

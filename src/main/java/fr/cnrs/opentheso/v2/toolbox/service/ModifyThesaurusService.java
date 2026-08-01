@@ -121,6 +121,19 @@ public class ModifyThesaurusService {
         toolboxThesaurusPersistence.setVisibility(thesaurusId, privateThesaurus);
     }
 
+    @Transactional(readOnly = true)
+    public boolean isMasterThesaurus(String thesaurusId) {
+        return toolboxPreferencePersistence.isMaster(thesaurusId);
+    }
+
+    @Transactional
+    public void updateMasterRole(String thesaurusId, boolean master) {
+        if (StringUtils.isBlank(thesaurusId)) {
+            throw new InvalidToolboxDataException("Thésaurus introuvable");
+        }
+        toolboxPreferencePersistence.updateMasterRole(thesaurusId, master);
+    }
+
     @Transactional
     public String generateArkId(String thesaurusId) {
         return toolboxThesaurusArkPersistence.generateArkIdForThesaurus(thesaurusId);

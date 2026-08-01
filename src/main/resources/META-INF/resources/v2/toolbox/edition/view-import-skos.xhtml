@@ -84,12 +84,16 @@
                         <f:selectItem itemLabel="..." itemValue=""/>
                         <f:selectItems value="#{v2ThesaurusEditionSkosImportBean.projects}" var="project"
                                        itemLabel="#{project.name}" itemValue="#{project.id}"/>
+                        <p:ajax event="change" listener="#{v2ThesaurusEditionSkosImportBean.onProjectChanged}"
+                                update="importResume"/>
                     </p:selectOneMenu>
                     <p:selectOneMenu value="#{v2ThesaurusEditionSkosImportBean.selectedProjectId}"
                                      rendered="#{not v2ThesaurusEditionSkosImportBean.superAdmin}"
                                      style="width: 100%;">
                         <f:selectItems value="#{v2ThesaurusEditionSkosImportBean.projects}" var="project"
                                        itemLabel="#{project.name}" itemValue="#{project.id}"/>
+                        <p:ajax event="change" listener="#{v2ThesaurusEditionSkosImportBean.onProjectChanged}"
+                                update="importResume"/>
                     </p:selectOneMenu>
                 </div>
             </div>
@@ -128,6 +132,31 @@
                             <h:outputText value="#{v2ThesaurusEditionSkosImportBean.total}" style="color: #C63632;"/>
                         </div>
                     </div>
+                    <h:panelGroup rendered="#{v2ThesaurusEditionSkosImportBean.existingThesaurusDetected}" layout="block">
+                        <div class="row mb-2 align-items-center">
+                            <div class="col-3 text-right"/>
+                            <div class="col-8">
+                                <h:outputText value="#{v2LocaleBean.getMsg('toolbox.thesaurusRoleExistingHint')}"
+                                              style="color: #856404;"/>
+                                <h:outputText value=" (#{v2ThesaurusEditionSkosImportBean.existingThesaurusId})"
+                                              style="color: #856404;"/>
+                            </div>
+                        </div>
+                        <div class="row mb-3 align-items-center">
+                            <div class="col-3 text-right">
+                                <h:outputText value="#{v2LocaleBean.getMsg('toolbox.thesaurusRole')}"/>
+                            </div>
+                            <div class="col-8">
+                                <p:selectOneRadio value="#{v2ThesaurusEditionSkosImportBean.importAsMaster}"
+                                                  layout="lineDirection">
+                                    <f:selectItem itemLabel="#{v2LocaleBean.getMsg('toolbox.thesaurusRoleSlave')}"
+                                                  itemValue="false"/>
+                                    <f:selectItem itemLabel="#{v2LocaleBean.getMsg('toolbox.thesaurusRoleMaster')}"
+                                                  itemValue="true"/>
+                                </p:selectOneRadio>
+                            </div>
+                        </div>
+                    </h:panelGroup>
                     <h:panelGroup rendered="#{v2ThesaurusEditionSkosImportBean.total gt 0}" layout="block">
                         <div class="row mb-3">
                             <div class="col-12 text-center">

@@ -111,4 +111,7 @@ public class PreferencesEntity {
 
     @Column(name = "api_key_openark")
     private String apiKeyOpenArk;
+
+    @Column(name = "is_master")
+    private boolean master;
 }

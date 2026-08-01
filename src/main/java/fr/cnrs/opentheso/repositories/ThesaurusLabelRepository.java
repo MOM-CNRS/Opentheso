@@ -28,6 +28,25 @@ public interface ThesaurusLabelRepository extends JpaRepository<ThesaurusLabel, 
     @Query("SELECT DISTINCT tl.lang FROM ThesaurusLabel tl WHERE tl.idThesaurus = :idThesaurus")
     List<String> findDistinctLangByIdThesaurus(@Param("idThesaurus") String idThesaurus);
 
+    @Query("""
+            SELECT DISTINCT tl.idThesaurus
+            FROM ThesaurusLabel tl
+            JOIN UserGroupThesaurus ugt ON ugt.idThesaurus = tl.idThesaurus
+            WHERE ugt.idGroup = :groupId
+              AND LOWER(TRIM(tl.title)) = LOWER(TRIM(:title))
+            """)
+    List<String> findThesaurusIdsByProjectAndTitle(
+            @Param("groupId") Integer groupId,
+            @Param("title") String title
+    );
+
+    @Query("""
+            SELECT DISTINCT tl.idThesaurus
+            FROM ThesaurusLabel tl
+            WHERE LOWER(TRIM(tl.title)) = LOWER(TRIM(:title))
+            """)
+    List<String> findThesaurusIdsByTitle(@Param("title") String title);
+
     @Modifying
     @Transactional
     @Query("UPDATE ThesaurusLabel t SET t.idThesaurus = :newIdThesaurus WHERE t.idThesaurus = :oldIdThesaurus")

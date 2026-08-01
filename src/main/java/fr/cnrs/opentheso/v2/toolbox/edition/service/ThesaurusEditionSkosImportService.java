@@ -1,8 +1,11 @@
 package fr.cnrs.opentheso.v2.toolbox.edition.service;
 
 import fr.cnrs.opentheso.entites.Preferences;
+import fr.cnrs.opentheso.models.nodes.DcElement;
+import fr.cnrs.opentheso.models.skosapi.SKOSLabel;
 import fr.cnrs.opentheso.models.skosapi.SKOSResource;
 import fr.cnrs.opentheso.models.skosapi.SKOSXmlDocument;
+import fr.cnrs.opentheso.repositories.ThesaurusLabelRepository;
 import fr.cnrs.opentheso.v2.concept.io.rdf.parser.ReadRdf4jDocument;
 import fr.cnrs.opentheso.v2.shared.io.SkosRdfFormatSupport;
 import fr.cnrs.opentheso.v2.toolbox.edition.io.skos.ThesaurusEditionSkosImportEngine;
@@ -18,6 +21,7 @@ import java.io.InputStream;
 import java.sql.SQLException;
 import java.util.ArrayList;
 import java.util.List;
+import java.util.Optional;
 
 @Service
 @RequiredArgsConstructor
@@ -26,6 +30,7 @@ public class ThesaurusEditionSkosImportService {
     private final ThesaurusEditionSkosImportEngine thesaurusEditionSkosImportEngine;
     private final NewThesaurusService newThesaurusService;
     private final ThesaurusImportBatchSupport importBatchSupport;
+    private final ThesaurusLabelRepository thesaurusLabelRepository;
 
     public SkosLoadResult loadSkosFile(
             InputStream inputStream,
@@ -47,6 +52,64 @@ public class ThesaurusEditionSkosImportService {
         );
     }
 
+    /**
+     * Détecte si un thésaurus portant le même titre existe déjà (dans le projet, ou globalement).
+     */
+    public Optional<String> findExistingThesaurusId(
+            SKOSXmlDocument document,
+            Integer projectGroupId,
+            String sourceLang
+    ) {
+        String title = resolveConceptSchemeTitle(document, sourceLang);
+        if (StringUtils.isBlank(title)) {
+            return Optional.empty();
+        }
+        List<String> matches;
+        if (projectGroupId != null && projectGroupId > 0) {
+            matches = thesaurusLabelRepository.findThesaurusIdsByProjectAndTitle(projectGroupId, title);
+        } else {
+            matches = thesaurusLabelRepository.findThesaurusIdsByTitle(title);
+        }
+        if (matches == null || matches.isEmpty()) {
+            return Optional.empty();
+        }
+        return Optional.of(matches.get(0));
+    }
+
+    public String resolveConceptSchemeTitle(SKOSXmlDocument document, String sourceLang) {
+        if (document == null || document.getConceptScheme() == null) {
+            return null;
+        }
+        SKOSResource conceptScheme = document.getConceptScheme();
+        String lang = StringUtils.defaultIfBlank(sourceLang, "fr");
+        if (conceptScheme.getLabelsList() != null) {
+            for (SKOSLabel label : conceptScheme.getLabelsList()) {
+                if (StringUtils.isNotBlank(label.getLabel())
+                        && lang.equalsIgnoreCase(StringUtils.defaultString(label.getLanguage()))) {
+                    return label.getLabel().trim();
+                }
+            }
+            for (SKOSLabel label : conceptScheme.getLabelsList()) {
+                if (StringUtils.isNotBlank(label.getLabel())) {
+                    return label.getLabel().trim();
+                }
+            }
+        }
+        if (conceptScheme.getThesaurus() != null) {
+            if (StringUtils.isNotBlank(conceptScheme.getThesaurus().getTitle())) {
+                return conceptScheme.getThesaurus().getTitle().trim();
+            }
+            if (conceptScheme.getThesaurus().getDcElement() != null) {
+                for (DcElement dcElement : conceptScheme.getThesaurus().getDcElement()) {
+                    if ("title".equalsIgnoreCase(dcElement.getName()) && StringUtils.isNotBlank(dcElement.getValue())) {
+                        return dcElement.getValue().trim();
+                    }
+                }
+            }
+        }
+        return null;
+    }
+
     public String importNewThesaurus(
             SKOSXmlDocument document,
             String formatDate,
@@ -56,7 +119,8 @@ public class ThesaurusEditionSkosImportService {
             String sourceLang,
             String selectedIdentifier,
             String prefixHandle,
-            String prefixDoi
+            String prefixDoi,
+            boolean importAsMaster
     ) throws SQLException {
         var preferences = new Preferences();
         preferences.setSourceLang(StringUtils.defaultIfBlank(sourceLang, "fr"));
@@ -69,6 +133,13 @@ public class ThesaurusEditionSkosImportService {
             }
         }
 
+        // Nouveau thésaurus → toujours esclave ; existant → choix utilisateur
+        boolean asMaster = false;
+        if (importAsMaster) {
+            Optional<String> existing = findExistingThesaurusId(document, groupId, sourceLang);
+            asMaster = existing.isPresent();
+        }
+
         String thesaurusId = importSkosDocument(
                 document,
                 StringUtils.defaultIfBlank(formatDate, "yyyy-MM-dd"),
@@ -78,7 +149,8 @@ public class ThesaurusEditionSkosImportService {
                 StringUtils.defaultIfBlank(selectedIdentifier, "sans"),
                 StringUtils.defaultIfBlank(prefixHandle, ""),
                 StringUtils.defaultIfBlank(prefixDoi, ""),
-                preferences
+                preferences,
+                asMaster
         );
 
         if (thesaurusId == null) {
@@ -96,7 +168,8 @@ public class ThesaurusEditionSkosImportService {
             String selectedIdentifier,
             String prefixHandle,
             String prefixDoi,
-            Preferences preferences
+            Preferences preferences,
+            boolean importAsMaster
     ) throws SQLException {
         int groupId = projectGroupId == null ? -1 : projectGroupId;
         thesaurusEditionSkosImportEngine.setInfos(formatDate, userId, groupId, sourceLang);
@@ -104,6 +177,7 @@ public class ThesaurusEditionSkosImportService {
         thesaurusEditionSkosImportEngine.setPrefixHandle(prefixHandle);
         thesaurusEditionSkosImportEngine.setPrefixDoi(prefixDoi);
         thesaurusEditionSkosImportEngine.setNodePreference(preferences);
+        thesaurusEditionSkosImportEngine.setImportAsMaster(importAsMaster);
         thesaurusEditionSkosImportEngine.setRdf4jThesaurus(document);
 
         String thesaurusId;

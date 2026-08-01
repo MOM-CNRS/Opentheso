@@ -275,4 +275,9 @@
         <sqlFile path="v26/26-08_01.sql" relativeToChangelogFile="true" splitStatements="false"/>
     </changeSet>
 
+    <changeSet id="26.08.02" author="Firas">
+        <comment>Thesaurus master/slave role on preferences (is_master, default false = slave)</comment>
+        <sqlFile path="v26/26-08_02.sql" relativeToChangelogFile="true" splitStatements="false"/>
+    </changeSet>
+
 </databaseChangeLog>

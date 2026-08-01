@@ -33,6 +33,8 @@ public class Thesaurus {
     private String title = "";
     private String type = "";
     private boolean privateTheso;
+    /** master | slave — rôle du thésaurus (opentheso:thesaurusRole). */
+    private String thesaurusRole;
     private List <DcElement> dcElement = new ArrayList<>();
 
 

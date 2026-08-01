@@ -89,6 +89,25 @@
                                              oncomplete="PF('v2ChangeThesaurusId').show();" process="@this"/>
                         </div>
                     </div>
+
+                    <h:panelGroup id="v2ThesaurusRolePanel" layout="block">
+                        <div class="row" style="margin-top: 10px">
+                            <div class="col-3" style="text-align: right">
+                                <h:outputText value="#{v2LocaleBean.getMsg('toolbox.thesaurusRole')}"/>
+                            </div>
+                            <div class="col-5">
+                                <p:selectOneRadio value="#{v2ModifyThesaurusBean.masterThesaurus}"
+                                                  layout="lineDirection">
+                                    <f:selectItem itemLabel="#{v2LocaleBean.getMsg('toolbox.thesaurusRoleSlave')}"
+                                                  itemValue="false"/>
+                                    <f:selectItem itemLabel="#{v2LocaleBean.getMsg('toolbox.thesaurusRoleMaster')}"
+                                                  itemValue="true"/>
+                                    <p:ajax event="change" listener="#{v2ModifyThesaurusBean.saveThesaurusRole()}"
+                                            process="@this" update="messageIndex"/>
+                                </p:selectOneRadio>
+                            </div>
+                        </div>
+                    </h:panelGroup>
                 </div>
 
                 <div class="card mb-4 py-3 border-left-success" style="margin-left: 30px; margin-right: 30px; margin-top: 10px; margin-bottom: 30px;">
