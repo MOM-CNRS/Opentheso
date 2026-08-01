@@ -60,7 +60,7 @@
                 </div>
             </div>
             <p:dataTable var="broader" value="#{v2ThesaurusBrowseBean.selectedConcept.broaderTerms}"
-                         size="small" styleClass="products-table">
+                         size="small" styleClass="products-table" lazy="false">
                 <f:facet name="header">
                     <h:outputText value="#{v2LocaleBean.getMsg('rightbody.concept.broaderLists')}" style="font-weight:bold;"/>
                 </f:facet>
@@ -134,7 +134,7 @@
                 </div>
             </div>
             <p:dataTable var="narrower" value="#{v2ThesaurusBrowseBean.selectedConcept.narrowerTerms}"
-                         size="small" styleClass="products-table">
+                         size="small" styleClass="products-table" lazy="false">
                 <f:facet name="header">
                     <h:outputText value="#{v2LocaleBean.getMsg('rightbody.concept.NarrowerLists')}" style="font-weight:bold;"/>
                 </f:facet>
@@ -181,7 +181,7 @@
             </h:panelGroup>
             <h:panelGroup rendered="#{not v2ConceptRelationEditorBean.applyToBranch}">
                 <p:dataTable var="narrowerEdit" value="#{v2ConceptRelationEditorBean.narrowerEdits}"
-                             size="small" scrollable="true" scrollHeight="250">
+                             size="small" scrollable="true" scrollHeight="250" lazy="false">
                     <p:column headerText="#{v2LocaleBean.getMsg('rightbody.conceptdialog.has_relationship')}">
                         <p:selectOneMenu value="#{narrowerEdit.role}" style="width:100%;">
                             <f:selectItems value="#{v2ConceptRelationEditorBean.ntRelationTypes}" var="typesNT"
@@ -277,7 +277,7 @@
                 </div>
             </div>
             <p:dataTable var="related" value="#{v2ThesaurusBrowseBean.selectedConcept.relatedTerms}"
-                         size="small" styleClass="products-table">
+                         size="small" styleClass="products-table" lazy="false">
                 <p:column headerText="#{v2LocaleBean.getMsg('statistique.label')}">
                     <h:outputText value="#{related.displayLabel} (#{related.conceptId})"/>
                 </p:column>

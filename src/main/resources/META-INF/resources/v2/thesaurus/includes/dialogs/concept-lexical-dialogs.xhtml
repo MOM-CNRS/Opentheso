@@ -71,7 +71,7 @@
                     <h:outputText value="#{v2ConceptLexicalEditorBean.currentConceptLabel}" style="color:#C63632;"/>
                 </div>
             </div>
-            <p:dataTable var="row" value="#{v2ConceptLexicalEditorBean.synonymEdits}" size="small" styleClass="products-table">
+            <p:dataTable var="row" value="#{v2ConceptLexicalEditorBean.synonymEdits}" size="small" styleClass="products-table" lazy="false">
                 <p:column headerText="#{v2LocaleBean.getMsg('indexview.synonym')}">
                     <p:inputText value="#{row.value}" style="width:100%;"/>
                 </p:column>
@@ -117,7 +117,7 @@
                     <h:outputText value="#{v2ConceptLexicalEditorBean.currentConceptLabel}" style="color:#C63632;"/>
                 </div>
             </div>
-            <p:dataTable var="row" value="#{v2ConceptLexicalEditorBean.synonymEdits}" size="small" styleClass="products-table">
+            <p:dataTable var="row" value="#{v2ConceptLexicalEditorBean.synonymEdits}" size="small" styleClass="products-table" lazy="false">
                 <f:facet name="header">
                     <h:outputText value="#{v2LocaleBean.getMsg('rightbody.conceptdialog.listOfSynonyms')}" style="font-weight:bold;"/>
                 </f:facet>
@@ -188,7 +188,7 @@
                     <h:outputText value="#{v2ConceptLexicalEditorBean.currentConceptLabel}" style="color:#C63632;"/>
                 </div>
             </div>
-            <p:dataTable var="row" value="#{v2ConceptLexicalEditorBean.translationEdits}" size="small" styleClass="products-table">
+            <p:dataTable var="row" value="#{v2ConceptLexicalEditorBean.translationEdits}" size="small" styleClass="products-table" lazy="false">
                 <p:column headerText="#{v2LocaleBean.getMsg('candidat.traduction')}">
                     <p:inputText value="#{row.value}" style="width:100%;"/>
                 </p:column>
@@ -219,7 +219,7 @@
                     <h:outputText value="#{v2ConceptLexicalEditorBean.currentConceptLabel}" style="color:#C63632;"/>
                 </div>
             </div>
-            <p:dataTable var="row" value="#{v2ConceptLexicalEditorBean.translationEdits}" size="small" styleClass="products-table">
+            <p:dataTable var="row" value="#{v2ConceptLexicalEditorBean.translationEdits}" size="small" styleClass="products-table" lazy="false">
                 <p:column headerText="Label">
                     <h:outputText value="#{row.value} (#{row.lang})"/>
                 </p:column>

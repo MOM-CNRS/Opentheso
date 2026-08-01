@@ -62,8 +62,9 @@ class ThesaurusContextTest {
         assertEquals("Mon thésaurus", thesaurusContext.getCurrentThesaurusTitle());
         assertEquals("fr", thesaurusContext.resolveWorkLanguage());
         assertNull(thesaurusContext.getIdThesoFromUri());
-        assertNull(thesaurusContext.getIdConceptFromUri());
-        assertNull(thesaurusContext.getIdGroupFromUri());
+        // Conservés pour que l'écran de consultation puisse les consommer
+        assertEquals("C1", thesaurusContext.getIdConceptFromUri());
+        assertEquals("G1", thesaurusContext.getIdGroupFromUri());
     }
 
     @Test

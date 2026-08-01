@@ -36,7 +36,6 @@ import fr.cnrs.opentheso.v2.setting.model.ThesaurusPreferences;
 import fr.cnrs.opentheso.v2.setting.service.ThesaurusPreferenceService;
 import fr.cnrs.opentheso.v2.setting.ui.ThesaurusContext;
 import fr.cnrs.opentheso.v2.shared.ui.UserSession;
-import jakarta.faces.context.FacesContext;
 import jakarta.faces.event.FacesEvent;
 import jakarta.faces.view.ViewScoped;
 import jakarta.inject.Named;
@@ -55,8 +54,6 @@ import org.primefaces.model.TreeNode;
 import org.springframework.beans.factory.ObjectProvider;
 
 import java.io.Serializable;
-import java.net.URLEncoder;
-import java.nio.charset.StandardCharsets;
 import java.util.ArrayList;
 import java.util.Collections;
 import java.util.List;
@@ -147,18 +144,13 @@ public class ThesaurusBrowseBean implements Serializable, ConceptNavigationSuppo
 
     public void load() {
         thesaurusContext.syncFromViewParams();
-        if (StringUtils.isBlank(conceptIdFromUri) && StringUtils.isNotBlank(thesaurusContext.getIdConceptFromUri())) {
-            conceptIdFromUri = thesaurusContext.getIdConceptFromUri();
-            thesaurusContext.setIdConceptFromUri(null);
-        }
-        if (StringUtils.isBlank(groupIdFromUri) && StringUtils.isNotBlank(thesaurusContext.getIdGroupFromUri())) {
-            groupIdFromUri = thesaurusContext.getIdGroupFromUri();
-            thesaurusContext.setIdGroupFromUri(null);
-        }
 
-        String restoreConceptId = StringUtils.trimToNull(conceptIdFromUri);
-        String restoreGroupId = StringUtils.trimToNull(groupIdFromUri);
-        String restoreFacetId = StringUtils.trimToNull(facetIdFromUri);
+        String restoreConceptId = StringUtils.trimToNull(thesaurusContext.getIdConceptFromUri());
+        String restoreGroupId = StringUtils.trimToNull(thesaurusContext.getIdGroupFromUri());
+        String restoreFacetId = StringUtils.trimToNull(thesaurusContext.getIdFacetFromUri());
+        thesaurusContext.setIdConceptFromUri(null);
+        thesaurusContext.setIdGroupFromUri(null);
+        thesaurusContext.setIdFacetFromUri(null);
         conceptIdFromUri = null;
         groupIdFromUri = null;
         facetIdFromUri = null;
@@ -408,7 +400,6 @@ public class ThesaurusBrowseBean implements Serializable, ConceptNavigationSuppo
         displayedSynonymLabels = Collections.emptyList();
         displayedCorpusLinks = Collections.emptyList();
         corpusSearched = false;
-        syncBrowserUrl(null, null, null);
     }
 
     public void refreshSelectedConcept() {
@@ -685,7 +676,6 @@ public class ThesaurusBrowseBean implements Serializable, ConceptNavigationSuppo
             syncConceptTreeSelection(conceptId);
             scrollToSelectedNode();
         }
-        syncBrowserUrl(conceptId, null, null);
     }
 
     /**
@@ -744,43 +734,6 @@ public class ThesaurusBrowseBean implements Serializable, ConceptNavigationSuppo
         if (PrimeFaces.current().isAjaxRequest()) {
             PrimeFaces.current().executeScript("typeof srollToSelected === 'function' && srollToSelected();");
         }
-    }
-
-    /**
-     * Met à jour l'URL du navigateur (idt/idc/idg/idf) pour conserver la sélection au refresh,
-     * comme les liens legacy {@code ?idc=…&idt=…}.
-     */
-    private void syncBrowserUrl(String conceptId, String groupId, String facetId) {
-        if (FacesContext.getCurrentInstance() == null) {
-            return;
-        }
-        try {
-            if (!PrimeFaces.current().isAjaxRequest()) {
-                return;
-            }
-            String thesaurusId = thesaurusContext.resolveThesaurusId();
-            if (StringUtils.isBlank(thesaurusId)) {
-                return;
-            }
-            StringBuilder query = new StringBuilder("idt=").append(urlEncode(thesaurusId));
-            if (StringUtils.isNotBlank(conceptId)) {
-                query.append("&idc=").append(urlEncode(conceptId.trim()));
-            } else if (StringUtils.isNotBlank(groupId)) {
-                query.append("&idg=").append(urlEncode(groupId.trim()));
-            } else if (StringUtils.isNotBlank(facetId)) {
-                query.append("&idf=").append(urlEncode(facetId.trim()));
-            }
-            PrimeFaces.current().executeScript(
-                    "if(window.history&&history.replaceState){"
-                            + "history.replaceState(null,'',window.location.pathname+'?" + query + "');}"
-            );
-        } catch (RuntimeException ex) {
-            log.debug("Impossible de synchroniser l'URL de consultation", ex);
-        }
-    }
-
-    private static String urlEncode(String value) {
-        return URLEncoder.encode(value, StandardCharsets.UTF_8).replace("+", "%20");
     }
 
     public void loadMoreNarrowers() {
@@ -851,7 +804,6 @@ public class ThesaurusBrowseBean implements Serializable, ConceptNavigationSuppo
         if (!isSelectedNodeId(groupId)) {
             clearAllLeftTreeSelections();
         }
-        syncBrowserUrl(null, groupId, null);
     }
 
     public void openFacet(String facetId) {
@@ -869,7 +821,6 @@ public class ThesaurusBrowseBean implements Serializable, ConceptNavigationSuppo
         if (!isSelectedNodeId(facetId)) {
             clearAllLeftTreeSelections();
         }
-        syncBrowserUrl(null, null, facetId);
     }
 
     public void focusGroup(String groupId) {

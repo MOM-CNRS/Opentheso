@@ -122,7 +122,7 @@
                                             <p:dataTable value="#{v2MyProjectsBean.dashboard.thesauri()}" var="theso"
                                                          size="small" paginator="true" rows="10"
                                                          emptyMessage="#{v2LocaleBean.getMsg('toolbox.noThesaurus')}"
-                                                         stripedRows="true">
+                                                         stripedRows="true" lazy="false">
                                                 <p:column headerText="Id" width="10%">
                                                     <h:outputText value="#{theso.id()}"/>
                                                 </p:column>
@@ -152,7 +152,7 @@
                                             <p:dataTable value="#{v2MyProjectsBean.dashboard.members()}" var="member"
                                                          size="small" paginator="true" rows="10"
                                                          emptyMessage="#{v2LocaleBean.getMsg('rightbody.concept.no_value')}..."
-                                                         stripedRows="true">
+                                                         stripedRows="true" lazy="false">
                                                 <p:column headerText="#{v2LocaleBean.getMsg('profile.pseudo')}">
                                                     <h:outputText rendered="#{!member.active()}"
                                                                   value="#{member.username()}"
@@ -202,7 +202,7 @@
                                             <p:dataTable value="#{v2MyProjectsBean.dashboard.limitedMembers()}"
                                                          var="limited" size="small" paginator="true" rows="10"
                                                          emptyMessage="#{v2LocaleBean.getMsg('rightbody.concept.no_value')}..."
-                                                         stripedRows="true">
+                                                         stripedRows="true" lazy="false">
                                                 <p:column headerText="#{v2LocaleBean.getMsg('profile.pseudo')}">
                                                     <h:outputText rendered="#{!limited.active()}"
                                                                   value="#{limited.username()}"

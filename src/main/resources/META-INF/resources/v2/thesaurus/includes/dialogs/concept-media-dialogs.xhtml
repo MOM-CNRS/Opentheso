@@ -71,7 +71,7 @@
     <p:dialog id="v2EditImageDlg" appendTo="@(body)" header="#{v2LocaleBean.getMsg('rightbody.concept.edit_image')}"
               widgetVar="v2EditImageDlg" width="700" modal="true" resizable="false">
         <h:form id="v2EditImageForm">
-            <p:dataTable var="imageEdit" value="#{v2ConceptMediaEditorBean.imageEdits}" size="small">
+            <p:dataTable var="imageEdit" value="#{v2ConceptMediaEditorBean.imageEdits}" size="small" lazy="false">
                 <p:column headerText="#{v2LocaleBean.getMsg('rightbody.conceptdialog.uri_image')}">
                     <p:inputText value="#{imageEdit.uri}" style="width:100%;"/>
                 </p:column>
@@ -101,7 +101,7 @@
     <p:dialog id="v2DeleteImageDlg" appendTo="@(body)" header="#{v2LocaleBean.getMsg('rightbody.concept.delete_image')}"
               widgetVar="v2DeleteImageDlg" width="600" modal="true" resizable="false">
         <h:form id="v2DeleteImageForm">
-            <p:dataTable var="imageDelete" value="#{v2ConceptMediaEditorBean.imagesToDelete}" size="small">
+            <p:dataTable var="imageDelete" value="#{v2ConceptMediaEditorBean.imagesToDelete}" size="small" lazy="false">
                 <p:column headerText="#{v2LocaleBean.getMsg('rightbody.conceptdialog.uri_image')}">
                     <h:outputText value="#{imageDelete.uri}"/>
                 </p:column>
@@ -145,7 +145,7 @@
     <p:dialog id="v2EditExternalResourceDlg" appendTo="@(body)" header="#{v2LocaleBean.getMsg('rightbody.concept.modifyExternalResource')}"
               widgetVar="v2EditExternalResourceDlg" width="700" modal="true" resizable="false">
         <h:form id="v2EditExternalResourceForm">
-            <p:dataTable var="resourceEdit" value="#{v2ConceptMediaEditorBean.resourceEdits}" size="small">
+            <p:dataTable var="resourceEdit" value="#{v2ConceptMediaEditorBean.resourceEdits}" size="small" lazy="false">
                 <p:column headerText="#{v2LocaleBean.getMsg('rightbody.conceptdialog.uri')}">
                     <p:inputText value="#{resourceEdit.uri}" style="width:100%;"/>
                 </p:column>
@@ -169,7 +169,7 @@
     <p:dialog id="v2DeleteExternalResourceDlg" appendTo="@(body)" header="#{v2LocaleBean.getMsg('rightbody.concept.deleteExternalResource')}"
               widgetVar="v2DeleteExternalResourceDlg" width="600" modal="true" resizable="false">
         <h:form id="v2DeleteExternalResourceForm">
-            <p:dataTable var="resourceDelete" value="#{v2ConceptMediaEditorBean.resourcesToDelete}" size="small">
+            <p:dataTable var="resourceDelete" value="#{v2ConceptMediaEditorBean.resourcesToDelete}" size="small" lazy="false">
                 <p:column headerText="#{v2LocaleBean.getMsg('rightbody.conceptdialog.uri')}">
                     <h:outputText value="#{resourceDelete.uri}"/>
                 </p:column>

@@ -270,7 +270,7 @@
                     </div>
                 </div>
                 <p:dataTable value="#{v2ThesaurusBrowseBean.selectedConcept.replacedBy}" var="replacedBy"
-                             size="small" scrollable="true" scrollHeight="200">
+                             size="small" scrollable="true" scrollHeight="200" lazy="false">
                     <p:column headerText="idConcept" width="30%">
                         <h:outputText value="#{replacedBy.conceptId}"/>
                     </p:column>

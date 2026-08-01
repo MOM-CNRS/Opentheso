@@ -7,15 +7,15 @@
 
     <f:view>
         <f:metadata>
-            <f:viewParam name="idc" value="#{v2ThesaurusBrowseBean.conceptIdFromUri}"/>
-            <f:viewParam name="idg" value="#{v2ThesaurusBrowseBean.groupIdFromUri}"/>
-            <f:viewParam name="idf" value="#{v2ThesaurusBrowseBean.facetIdFromUri}"/>
-            <f:viewParam name="idt" value="#{v2ThesaurusContext.idThesoFromUri}"/>
             <f:viewAction action="#{v2ThesaurusBrowseBean.load()}"/>
             <f:viewAction action="#{v2ConsultationShellBean.load()}"/>
             <f:viewAction action="#{v2GlobalConceptSearchBean.init()}"/>
             <f:viewAction action="#{v2ConceptSearchBean.syncFromContext()}"/>
             <f:viewAction action="#{v2PropositionBean.refresh()}"/>
+            <f:viewParam name="idc" value="#{v2ThesaurusContext.idConceptFromUri}"/>
+            <f:viewParam name="idg" value="#{v2ThesaurusContext.idGroupFromUri}"/>
+            <f:viewParam name="idf" value="#{v2ThesaurusContext.idFacetFromUri}"/>
+            <f:viewParam name="idt" value="#{v2ThesaurusContext.idThesoFromUri}"/>
         </f:metadata>
     </f:view>
 

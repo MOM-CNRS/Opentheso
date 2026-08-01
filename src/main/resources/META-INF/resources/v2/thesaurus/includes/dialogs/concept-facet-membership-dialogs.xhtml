@@ -64,7 +64,7 @@
             </div>
             <div class="card mb-3 py-2 border-left-success" style="border-color:#43B572;">
                 <p:dataTable size="small" var="facet" value="#{v2ConceptFacetMembershipBean.facetsToRemove}"
-                             style="margin-bottom:0;">
+                             style="margin-bottom:0;" lazy="false">
                     <p:column headerText="#{v2LocaleBean.getMsg('leftbody.isPartOfFacets')}">
                         <h:outputText value="#{facet.displayLabel}" title="#{facet.conceptId}"/>
                     </p:column>

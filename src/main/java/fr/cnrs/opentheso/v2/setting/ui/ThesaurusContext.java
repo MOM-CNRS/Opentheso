@@ -29,6 +29,7 @@ public class ThesaurusContext implements Serializable {
 
     private String idConceptFromUri;
     private String idGroupFromUri;
+    private String idFacetFromUri;
     private String idThesoFromUri;
 
     private String currentThesaurusId;
@@ -45,13 +46,15 @@ public class ThesaurusContext implements Serializable {
         this.thesaurusWorkLanguageService = thesaurusWorkLanguageService;
     }
 
+    /**
+     * Applique {@code idt} depuis l'URL. Les ids concept/collection/facette restent disponibles
+     * pour l'écran appelant (à consommer puis effacer).
+     */
     public void syncFromViewParams() {
         if (StringUtils.isNotBlank(idThesoFromUri)) {
             fromUrl = true;
             applyThesaurus(idThesoFromUri.trim());
             idThesoFromUri = null;
-            idConceptFromUri = null;
-            idGroupFromUri = null;
             return;
         }
         fromUrl = false;

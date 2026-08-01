@@ -37,7 +37,7 @@
                      selection="#{v2ThesaurusBrowseBean.indexSelected}"
                      rowKey="#{entry.nodeId}"
                      styleClass="borderless"
-                     style="width:auto; border:none; font-size:12px; min-height:400px; max-height:800px; overflow-y:auto;">
+                     style="width:auto; border:none; font-size:12px; min-height:400px; max-height:800px; overflow-y:auto;" lazy="false">
             <p:ajax event="rowSelect"
                     listener="#{v2ThesaurusBrowseBean.onIndexSelect}"
                     update="indexTitle containerIndex:formRightTab containerIndex:tabTree messageIndex"/>

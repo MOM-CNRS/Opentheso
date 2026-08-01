@@ -12,7 +12,7 @@
       <div class="row">
         <div class="col-12">
           <p:dataTable value="#{v2ConceptHistoryBean.overview != null ? v2ConceptHistoryBean.overview.labels : null}" var="label"
-                       scrollable="true" scrollHeight="250" style="font-size:12px;">
+                       scrollable="true" scrollHeight="250" style="font-size:12px;" lazy="false">
             <f:facet name="header" xmlns:f="http://xmlns.jcp.org/jsf/core">
               <h:outputText value="#{v2LocaleBean.getMsg('rightbody.conceptdialog.labelHistory')}"/>
             </f:facet>
@@ -28,7 +28,7 @@
       <div class="row" style="margin-top:10px;">
         <div class="col-12">
           <p:dataTable value="#{v2ConceptHistoryBean.overview != null ? v2ConceptHistoryBean.overview.synonyms : null}" var="synonym"
-                       scrollable="true" scrollHeight="250" style="font-size:12px;">
+                       scrollable="true" scrollHeight="250" style="font-size:12px;" lazy="false">
             <f:facet name="header" xmlns:f="http://xmlns.jcp.org/jsf/core">
               <h:outputText value="#{v2LocaleBean.getMsg('rightbody.conceptdialog.synonymHistory')}"/>
             </f:facet>
@@ -44,7 +44,7 @@
       <div class="row" style="margin-top:10px;">
         <div class="col-12">
           <p:dataTable value="#{v2ConceptHistoryBean.overview != null ? v2ConceptHistoryBean.overview.notes : null}" var="note"
-                       scrollable="true" scrollHeight="250" style="font-size:12px;">
+                       scrollable="true" scrollHeight="250" style="font-size:12px;" lazy="false">
             <f:facet name="header" xmlns:f="http://xmlns.jcp.org/jsf/core">
               <h:outputText value="#{v2LocaleBean.getMsg('rightbody.conceptdialog.noteHistory')}"/>
             </f:facet>
@@ -60,7 +60,7 @@
       <div class="row" style="margin-top:10px;">
         <div class="col-12">
           <p:dataTable value="#{v2ConceptHistoryBean.overview != null ? v2ConceptHistoryBean.overview.relations : null}" var="relation"
-                       scrollable="true" scrollHeight="250" style="font-size:12px;">
+                       scrollable="true" scrollHeight="250" style="font-size:12px;" lazy="false">
             <f:facet name="header" xmlns:f="http://xmlns.jcp.org/jsf/core">
               <h:outputText value="#{v2LocaleBean.getMsg('rightbody.conceptdialog.relationshipHistory')}"/>
             </f:facet>
