@@ -36,6 +36,7 @@ import fr.cnrs.opentheso.v2.setting.model.ThesaurusPreferences;
 import fr.cnrs.opentheso.v2.setting.service.ThesaurusPreferenceService;
 import fr.cnrs.opentheso.v2.setting.ui.ThesaurusContext;
 import fr.cnrs.opentheso.v2.shared.ui.UserSession;
+import jakarta.faces.context.FacesContext;
 import jakarta.faces.event.FacesEvent;
 import jakarta.faces.view.ViewScoped;
 import jakarta.inject.Named;
@@ -54,6 +55,8 @@ import org.primefaces.model.TreeNode;
 import org.springframework.beans.factory.ObjectProvider;
 
 import java.io.Serializable;
+import java.net.URLEncoder;
+import java.nio.charset.StandardCharsets;
 import java.util.ArrayList;
 import java.util.Collections;
 import java.util.List;
@@ -152,6 +155,21 @@ public class ThesaurusBrowseBean implements Serializable, ConceptNavigationSuppo
             groupIdFromUri = thesaurusContext.getIdGroupFromUri();
             thesaurusContext.setIdGroupFromUri(null);
         }
+
+        String restoreConceptId = StringUtils.trimToNull(conceptIdFromUri);
+        String restoreGroupId = StringUtils.trimToNull(groupIdFromUri);
+        String restoreFacetId = StringUtils.trimToNull(facetIdFromUri);
+        conceptIdFromUri = null;
+        groupIdFromUri = null;
+        facetIdFromUri = null;
+
+        // Comme legacy (ConceptView en session) : conserver la sélection au refresh de page.
+        if (restoreConceptId == null && restoreGroupId == null && restoreFacetId == null
+                && conceptSelectionContext.hasSelection()
+                && thesaurusContext.matchesCurrentThesaurus(conceptSelectionContext.getThesaurusId())) {
+            restoreConceptId = conceptSelectionContext.getConceptId();
+        }
+
         resetState();
         if (conceptTreeRefreshState.consumeRefresh()) {
             invalidateConceptTree();
@@ -163,15 +181,12 @@ public class ThesaurusBrowseBean implements Serializable, ConceptNavigationSuppo
         refreshActiveCorpusState();
         ensureTreeBuilt(activeLeftTreeMode);
         loadThesaurusHome();
-        if (StringUtils.isNotBlank(conceptIdFromUri)) {
-            openConcept(conceptIdFromUri.trim());
-            conceptIdFromUri = null;
-        } else if (StringUtils.isNotBlank(groupIdFromUri)) {
-            focusGroup(groupIdFromUri.trim());
-            groupIdFromUri = null;
-        } else if (StringUtils.isNotBlank(facetIdFromUri)) {
-            focusFacet(facetIdFromUri.trim());
-            facetIdFromUri = null;
+        if (restoreConceptId != null) {
+            openConcept(restoreConceptId);
+        } else if (restoreGroupId != null) {
+            focusGroup(restoreGroupId);
+        } else if (restoreFacetId != null) {
+            focusFacet(restoreFacetId);
         }
     }
 
@@ -321,8 +336,10 @@ public class ThesaurusBrowseBean implements Serializable, ConceptNavigationSuppo
 
     public void onNodeSelect(NodeSelectEvent event) {
         LeftTreeMode mode = resolveTreeModeFromComponent(event);
-        selectedNode = event.getTreeNode();
-        ConceptTreeNodeData data = (ConceptTreeNodeData) event.getTreeNode().getData();
+        TreeNode newlySelected = event.getTreeNode();
+        // Un seul nœud sélectionné dans les arbres gauches (comme legacy).
+        selectSingleTreeNode(newlySelected);
+        ConceptTreeNodeData data = newlySelected == null ? null : (ConceptTreeNodeData) newlySelected.getData();
         if (data == null || data.isDummy() || "root".equals(data.nodeType()) || "....".equals(data.nodeId())) {
             openThesaurusHome();
             refreshAfterTreeSelection();
@@ -385,12 +402,13 @@ public class ThesaurusBrowseBean implements Serializable, ConceptNavigationSuppo
         selectedFullConcept = null;
         selectedGroup = null;
         selectedFacet = null;
-        selectedNode = null;
+        clearAllLeftTreeSelections();
         branchConceptCount = 0;
         displayedNotes = Collections.emptyList();
         displayedSynonymLabels = Collections.emptyList();
         displayedCorpusLinks = Collections.emptyList();
         corpusSearched = false;
+        syncBrowserUrl(null, null, null);
     }
 
     public void refreshSelectedConcept() {
@@ -493,7 +511,7 @@ public class ThesaurusBrowseBean implements Serializable, ConceptNavigationSuppo
     @Override
     public void afterConceptDeleted(String fallbackConceptId) {
         invalidateConceptTree();
-        selectedNode = null;
+        clearAllLeftTreeSelections();
         if (org.apache.commons.lang3.StringUtils.isNotBlank(fallbackConceptId)) {
             openConcept(fallbackConceptId);
         } else {
@@ -667,6 +685,7 @@ public class ThesaurusBrowseBean implements Serializable, ConceptNavigationSuppo
             syncConceptTreeSelection(conceptId);
             scrollToSelectedNode();
         }
+        syncBrowserUrl(conceptId, null, null);
     }
 
     /**
@@ -725,6 +744,43 @@ public class ThesaurusBrowseBean implements Serializable, ConceptNavigationSuppo
         if (PrimeFaces.current().isAjaxRequest()) {
             PrimeFaces.current().executeScript("typeof srollToSelected === 'function' && srollToSelected();");
         }
+    }
+
+    /**
+     * Met à jour l'URL du navigateur (idt/idc/idg/idf) pour conserver la sélection au refresh,
+     * comme les liens legacy {@code ?idc=…&idt=…}.
+     */
+    private void syncBrowserUrl(String conceptId, String groupId, String facetId) {
+        if (FacesContext.getCurrentInstance() == null) {
+            return;
+        }
+        try {
+            if (!PrimeFaces.current().isAjaxRequest()) {
+                return;
+            }
+            String thesaurusId = thesaurusContext.resolveThesaurusId();
+            if (StringUtils.isBlank(thesaurusId)) {
+                return;
+            }
+            StringBuilder query = new StringBuilder("idt=").append(urlEncode(thesaurusId));
+            if (StringUtils.isNotBlank(conceptId)) {
+                query.append("&idc=").append(urlEncode(conceptId.trim()));
+            } else if (StringUtils.isNotBlank(groupId)) {
+                query.append("&idg=").append(urlEncode(groupId.trim()));
+            } else if (StringUtils.isNotBlank(facetId)) {
+                query.append("&idf=").append(urlEncode(facetId.trim()));
+            }
+            PrimeFaces.current().executeScript(
+                    "if(window.history&&history.replaceState){"
+                            + "history.replaceState(null,'',window.location.pathname+'?" + query + "');}"
+            );
+        } catch (RuntimeException ex) {
+            log.debug("Impossible de synchroniser l'URL de consultation", ex);
+        }
+    }
+
+    private static String urlEncode(String value) {
+        return URLEncoder.encode(value, StandardCharsets.UTF_8).replace("+", "%20");
     }
 
     public void loadMoreNarrowers() {
@@ -792,7 +848,10 @@ public class ThesaurusBrowseBean implements Serializable, ConceptNavigationSuppo
                 groupId,
                 thesaurusContext.resolveWorkLanguage()
         ).orElse(null);
-        selectedNode = null;
+        if (!isSelectedNodeId(groupId)) {
+            clearAllLeftTreeSelections();
+        }
+        syncBrowserUrl(null, groupId, null);
     }
 
     public void openFacet(String facetId) {
@@ -807,7 +866,10 @@ public class ThesaurusBrowseBean implements Serializable, ConceptNavigationSuppo
                 facetId,
                 thesaurusContext.resolveWorkLanguage()
         ).orElse(null);
-        selectedNode = null;
+        if (!isSelectedNodeId(facetId)) {
+            clearAllLeftTreeSelections();
+        }
+        syncBrowserUrl(null, null, facetId);
     }
 
     public void focusGroup(String groupId) {
@@ -1052,9 +1114,7 @@ public class ThesaurusBrowseBean implements Serializable, ConceptNavigationSuppo
             return;
         }
 
-        if (selectedNode != null) {
-            selectedNode.setSelected(false);
-        }
+        clearAllLeftTreeSelections();
 
         TreeNode found = null;
         for (List<String> pathIds : resolveAllConceptPathIds(conceptId)) {
@@ -1069,11 +1129,51 @@ public class ThesaurusBrowseBean implements Serializable, ConceptNavigationSuppo
         if (found == null) {
             found = expandPath(conceptRoot, List.of(conceptId), 0, LeftTreeMode.CONCEPT);
         }
-        if (found != null) {
-            found.setSelected(true);
-            selectedNode = found;
-        } else {
+        selectSingleTreeNode(found);
+    }
+
+    /**
+     * Garantit qu'un seul nœud est sélectionné dans les arbres du panneau gauche.
+     */
+    private void selectSingleTreeNode(TreeNode node) {
+        clearAllLeftTreeSelections();
+        selectedNode = node;
+        if (selectedNode != null) {
+            selectedNode.setSelected(true);
+        }
+    }
+
+    private boolean isSelectedNodeId(String nodeId) {
+        if (StringUtils.isBlank(nodeId) || selectedNode == null) {
+            return false;
+        }
+        if (!(selectedNode.getData() instanceof ConceptTreeNodeData data)) {
+            return false;
+        }
+        return nodeId.equalsIgnoreCase(data.nodeId());
+    }
+
+    private void clearAllLeftTreeSelections() {
+        if (selectedNode != null) {
+            selectedNode.setSelected(false);
             selectedNode = null;
+        }
+        clearTreeSelectionFlags(conceptRoot);
+        clearTreeSelectionFlags(arbreRoot);
+        clearTreeSelectionFlags(collectionRoot);
+    }
+
+    private void clearTreeSelectionFlags(TreeNode node) {
+        if (node == null) {
+            return;
+        }
+        if (node.isSelected()) {
+            node.setSelected(false);
+        }
+        for (Object childObject : node.getChildren()) {
+            if (childObject instanceof TreeNode child) {
+                clearTreeSelectionFlags(child);
+            }
         }
     }
 

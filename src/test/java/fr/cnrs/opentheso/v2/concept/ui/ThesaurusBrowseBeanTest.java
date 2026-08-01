@@ -166,7 +166,32 @@ class ThesaurusBrowseBeanTest {
         bean.load();
 
         assertFalse(bean.isScreenAvailable());
-        assertNull(bean.getConceptRoot());
+        verify(conceptReadService, never()).loadRootNodes(org.mockito.ArgumentMatchers.any(), org.mockito.ArgumentMatchers.any(),
+                org.mockito.ArgumentMatchers.any(), org.mockito.ArgumentMatchers.anyBoolean());
+    }
+
+    @Test
+    void load_restoresConceptFromSessionSelectionOnRefresh() {
+        when(thesaurusContext.resolveThesaurusId()).thenReturn("TH1");
+        when(thesaurusContext.getCurrentThesaurusTitle()).thenReturn("Test");
+        when(thesaurusContext.resolveWorkLanguage()).thenReturn("fr");
+        when(thesaurusContext.matchesCurrentThesaurus("TH1")).thenReturn(true);
+        when(conceptSelectionContext.hasSelection()).thenReturn(true);
+        when(conceptSelectionContext.getThesaurusId()).thenReturn("TH1");
+        when(conceptSelectionContext.getConceptId()).thenReturn("C9");
+        when(conceptReadService.loadRootNodes("TH1", "fr", LeftTreeMode.CONCEPT, false)).thenReturn(List.of());
+        when(thesaurusHomeReadService.loadOverview("TH1", "fr", "Test"))
+                .thenReturn(new ThesaurusHomeOverview("Test", 0, "", "", "", "", List.of(), List.of(), ""));
+        when(thesaurusPreferenceService.loadPreferencesOrNull("TH1", "fr"))
+                .thenReturn(consultationPreferences(false));
+        var summary = new ConceptSummary("C9", "TH1", "Restored", "fr", "C", "", "concept", "", "", "", "");
+        stubLoadDetailWithSource("TH1", "C9", "fr", minimalConceptDetail(summary));
+
+        bean.load();
+
+        assertTrue(bean.isConceptPanel());
+        assertEquals("C9", bean.getSelectedConcept().summary().conceptId());
+        verify(conceptReadService).loadDetailWithSource("TH1", "C9", "fr");
     }
 
     @Test
@@ -781,6 +806,10 @@ class ThesaurusBrowseBeanTest {
 
         bean.load();
 
+        // Simule une ancienne sélection encore marquée dans l'arbre
+        var stale = (org.primefaces.model.TreeNode) bean.getConceptRoot().getChildren().get(0);
+        stale.setSelected(true);
+
         var summary = new ConceptSummary("C2", "TH1", "Child", "fr", "C", "", "concept", "", "", "", "");
         var detail = new ConceptDetail(
                 summary,
@@ -816,6 +845,8 @@ class ThesaurusBrowseBeanTest {
 
         assertNotNull(bean.getSelectedNode());
         assertEquals("C2", ((ConceptTreeNodeData) bean.getSelectedNode().getData()).nodeId());
+        assertTrue(bean.getSelectedNode().isSelected());
+        assertFalse(stale.isSelected());
     }
 
     @Test
@@ -1033,6 +1064,7 @@ class ThesaurusBrowseBeanTest {
                 Collections.emptyList(),
                 Collections.emptyList()
         ));
+        when(conceptSelectionContext.isHasNarrowers()).thenReturn(true);
 
         assertEquals("C1", bean.getBranchGraphConceptId());
         assertTrue(bean.isBranchGraphEnabled());
