@@ -20,7 +20,8 @@
             </div>
             <div class="text-right mt-3">
                 <p:commandButton value="#{v2LocaleBean.getMsg('apply')}" icon="pi pi-check"
-                                 action="#{v2AllUsersBean.updateUser()}" update=":containerIndex :messageIndex"/>
+                                 actionListener="#{v2AllUsersBean.updateUser()}"
+                                 process="@form" update=":containerIndex :messageIndex"/>
             </div>
 
             <p:separator/>
@@ -30,7 +31,8 @@
                     <div class="col-4 text-right"><h:outputText value="#{v2LocaleBean.getMsg('profile.apiKeyAuthorize')}"/></div>
                     <div class="col-8">
                         <p:toggleSwitch value="#{v2AllUsersBean.editHasApiKey}">
-                            <p:ajax update="v2EditUserApiKey"/>
+                            <p:ajax listener="#{v2AllUsersBean.onEditHasApiKeyChange()}"
+                                    update="v2EditUserApiKey"/>
                         </p:toggleSwitch>
                     </div>
                 </div>
@@ -53,7 +55,8 @@
                 </h:panelGroup>
                 <div class="text-right mt-3">
                     <p:commandButton value="#{v2LocaleBean.getMsg('apply')}" icon="pi pi-check"
-                                     action="#{v2AllUsersBean.updateApiKey()}" update=":containerIndex :messageIndex"/>
+                                     actionListener="#{v2AllUsersBean.updateApiKey()}"
+                                     process="@form" update=":containerIndex :messageIndex"/>
                 </div>
             </h:panelGroup>
         </h:form>

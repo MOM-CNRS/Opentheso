@@ -12,6 +12,7 @@ import fr.cnrs.opentheso.v2.shared.ui.UserSession;
 import fr.cnrs.opentheso.v2.project.exception.InvalidProjectDataException;
 import fr.cnrs.opentheso.v2.user.exception.InvalidPasswordException;
 import fr.cnrs.opentheso.v2.user.exception.InvalidProfileDataException;
+import fr.cnrs.opentheso.v2.user.policy.ApiKeyPolicy;
 import fr.cnrs.opentheso.v2.user.service.UserProfileService;
 import jakarta.faces.view.ViewScoped;
 import jakarta.inject.Named;
@@ -22,6 +23,7 @@ import org.primefaces.PrimeFaces;
 
 import java.io.Serializable;
 import java.time.LocalDate;
+import java.util.ArrayList;
 import java.util.Collections;
 import java.util.List;
 
@@ -82,8 +84,8 @@ public class AllUsersBean implements Serializable {
             clearState();
             return;
         }
-        users = adminCatalogService.listAllUsers(true);
-        projects = adminCatalogService.listAllProjects(true);
+        users = new ArrayList<>(adminCatalogService.listAllUsers(true));
+        projects = new ArrayList<>(adminCatalogService.listAllProjects(true));
         roles = adminCatalogService.listAssignableRoles(true);
     }
 
@@ -116,9 +118,20 @@ public class AllUsersBean implements Serializable {
         editUsername = profile.username();
         editEmail = profile.email();
         editAlertMail = profile.alertMail();
-        editHasApiKey = profile.hasApiKey();
+        // Autorisation ≠ présence d'une clé générée (hasApiKey).
+        editHasApiKey = ApiKeyPolicy.isSectionVisible(profile);
         editKeyNeverExpire = profile.keyNeverExpire();
         editApiKeyExpiresAt = profile.keyExpiresAt();
+    }
+
+    public void onEditHasApiKeyChange() {
+        if (editHasApiKey && !editKeyNeverExpire && editApiKeyExpiresAt == null) {
+            editKeyNeverExpire = true;
+        }
+        if (!editHasApiKey) {
+            editKeyNeverExpire = false;
+            editApiKeyExpiresAt = null;
+        }
     }
 
     public void preparePasswordDialog(int userId) {

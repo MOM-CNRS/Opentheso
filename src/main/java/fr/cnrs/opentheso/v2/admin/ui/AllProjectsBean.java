@@ -8,6 +8,7 @@ import jakarta.inject.Named;
 import lombok.Getter;
 
 import java.io.Serializable;
+import java.util.ArrayList;
 import java.util.Collections;
 import java.util.List;
 
@@ -31,7 +32,7 @@ public class AllProjectsBean implements Serializable {
             projects = Collections.emptyList();
             return;
         }
-        projects = adminCatalogService.listAllProjects(true);
+        projects = new ArrayList<>(adminCatalogService.listAllProjects(true));
     }
 
     public boolean isSuperAdminScreen() {

@@ -13,6 +13,7 @@ import lombok.Setter;
 import org.primefaces.PrimeFaces;
 
 import java.io.Serializable;
+import java.util.ArrayList;
 import java.util.Collections;
 import java.util.List;
 
@@ -46,7 +47,7 @@ public class AllThesauriBean implements Serializable {
             clearState();
             return;
         }
-        thesauri = adminCatalogService.listAllThesauri(true, localeBean.getIdLangue());
+        thesauri = new ArrayList<>(adminCatalogService.listAllThesauri(true, localeBean.getIdLangue()));
     }
 
     public void prepareMoveDialog(String thesaurusId, String thesaurusTitle) {

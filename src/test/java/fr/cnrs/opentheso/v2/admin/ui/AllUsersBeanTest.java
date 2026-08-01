@@ -103,6 +103,29 @@ class AllUsersBeanTest {
     }
 
     @Test
+    void prepareEditDialog_marksAuthorizedEvenWithoutGeneratedKey() {
+        when(userProfileService.getProfile(5)).thenReturn(
+                new UserProfile(5, "alice", "alice@test.fr", false, false, true, null, false)
+        );
+
+        allUsersBean.prepareEditDialog(5);
+
+        assertTrue(allUsersBean.isEditHasApiKey());
+        assertTrue(allUsersBean.isEditKeyNeverExpire());
+    }
+
+    @Test
+    void onEditHasApiKeyChange_defaultsToPermanentWhenEnabling() {
+        allUsersBean.setEditHasApiKey(true);
+        allUsersBean.setEditKeyNeverExpire(false);
+        allUsersBean.setEditApiKeyExpiresAt(null);
+
+        allUsersBean.onEditHasApiKeyChange();
+
+        assertTrue(allUsersBean.isEditKeyNeverExpire());
+    }
+
+    @Test
     void onNewProjectChange_loadsThesauriForSelectedProject() {
         when(userSession.canAccessSuperAdminScreen()).thenReturn(true);
         allUsersBean.setNewProjectId(2);

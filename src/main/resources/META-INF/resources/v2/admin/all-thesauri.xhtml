@@ -48,26 +48,28 @@
                                          resizableColumns="true" scrollHeight="450" reflow="true"
                                          paginator="true" rows="10" paginatorPosition="bottom"
                                          emptyMessage="#{v2LocaleBean.getMsg('toolbox.noThesaurus')}"
-                                         stripedRows="true"
+                                         stripedRows="true" lazy="false"
                                          style="margin-bottom: -17px; margin-top: -16px;">
                                 <f:facet name="header">
                                     <div class="products-table-header">
                                         <span style="font-weight: bold">#{v2LocaleBean.getMsg('profile.list_of_thesauri')}</span>
                                     </div>
                                 </f:facet>
-                                <p:column width="10" headerText="Id" sortBy="#{theso.id()}">
-                                    <h:outputText value="#{theso.id()}" style="font-weight: bold"/>
+                                <p:column width="10" headerText="Id" field="id" sortBy="#{theso.id}">
+                                    <h:outputText value="#{theso.id}" style="font-weight: bold"/>
                                 </p:column>
-                                <p:column width="40" headerText="#{v2LocaleBean.getMsg('menu.thesaurus')}" sortBy="#{theso.title()}">
-                                    <h:outputText rendered="#{!theso.privateThesaurus()}" value="#{theso.title()}"/>
-                                    <h:outputText rendered="#{theso.privateThesaurus()}" value="#{theso.title()}"
+                                <p:column width="40" headerText="#{v2LocaleBean.getMsg('menu.thesaurus')}"
+                                          field="title" sortBy="#{theso.title}">
+                                    <h:outputText rendered="#{!theso.privateThesaurus}" value="#{theso.title}"/>
+                                    <h:outputText rendered="#{theso.privateThesaurus}" value="#{theso.title}"
                                                   style="color: red; font-style: italic"/>
                                 </p:column>
-                                <p:column width="50" headerText="#{v2LocaleBean.getMsg('profile.project')}" sortBy="#{theso.projectName()}">
-                                    <h:outputText value="#{theso.projectName()}"/>
+                                <p:column width="50" headerText="#{v2LocaleBean.getMsg('profile.project')}"
+                                          field="projectName" sortBy="#{theso.projectName}">
+                                    <h:outputText value="#{theso.projectName}"/>
                                 </p:column>
                                 <p:column width="10" headerText="#{v2LocaleBean.getMsg('toolbox.publicPrivate')}">
-                                    <p:toggleSwitch disabled="true" value="#{theso.privateThesaurus()}"/>
+                                    <p:toggleSwitch disabled="true" value="#{theso.privateThesaurus}"/>
                                 </p:column>
                                 <p:column width="1" headerText="#{v2LocaleBean.getMsg('profile.action')}" style="text-align: center">
                                     <p:commandButton icon="fas fa-people-carry" styleClass="edit-button rounded-button"
@@ -75,7 +77,7 @@
                                                      title="#{v2LocaleBean.getMsg('profile.move_thesaurus_to_another_project')}"
                                                      update=":containerIndex:idV2MoveThesaurus :containerIndex:v2MoveThesaurusForm"
                                                      oncomplete="PF('v2MoveThesaurus').show();"
-                                                     actionListener="#{v2AllThesauriBean.prepareMoveDialog(theso.id(), theso.title())}"/>
+                                                     actionListener="#{v2AllThesauriBean.prepareMoveDialog(theso.id, theso.title)}"/>
                                 </p:column>
                                 <f:facet name="footer">
                                     <span class="p-text-bold">

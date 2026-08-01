@@ -138,17 +138,21 @@ public class UserCommandRepository {
                 .executeUpdate();
     }
 
+    /**
+     * Persiste l'autorisation API ({@code key_never_expire} / {@code key_expires_at}).
+     * Si {@code authorized} est faux, la clé stockée est effacée.
+     */
     @Transactional
-    public void updateApiKeySettings(int userId, boolean hasApiKey, boolean keyNeverExpire, java.time.LocalDate keyExpiresAt) {
+    public void updateApiKeySettings(int userId, boolean authorized, boolean keyNeverExpire, java.time.LocalDate keyExpiresAt) {
         entityManager.createNativeQuery("""
                         UPDATE users
                         SET key_never_expire = :keyNeverExpire,
                             key_expires_at = :keyExpiresAt,
-                            apikey = CASE WHEN :hasApiKey THEN apikey ELSE NULL END
+                            apikey = CASE WHEN :authorized THEN apikey ELSE NULL END
                         WHERE id_user = :userId
                         """)
                 .setParameter("userId", userId)
-                .setParameter("hasApiKey", hasApiKey)
+                .setParameter("authorized", authorized)
                 .setParameter("keyNeverExpire", keyNeverExpire)
                 .setParameter("keyExpiresAt", keyExpiresAt)
                 .executeUpdate();

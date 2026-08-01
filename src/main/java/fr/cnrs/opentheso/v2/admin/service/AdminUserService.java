@@ -105,13 +105,28 @@ public class AdminUserService {
     public void updateApiKeySettings(
             boolean superAdmin,
             int userId,
-            boolean hasApiKey,
+            boolean authorized,
             boolean keyNeverExpire,
             LocalDate keyExpiresAt
     ) {
         SuperAdminAccessPolicy.requireSuperAdmin(superAdmin);
         userLookupService.requireEntity(userId);
-        userCommandRepository.updateApiKeySettings(userId, hasApiKey, keyNeverExpire, keyExpiresAt);
+
+        // L'autorisation repose sur key_never_expire OU key_expires_at (ApiKeyPolicy).
+        boolean neverExpire;
+        LocalDate expiresAt;
+        if (!authorized) {
+            neverExpire = false;
+            expiresAt = null;
+        } else if (keyNeverExpire || keyExpiresAt == null) {
+            neverExpire = true;
+            expiresAt = null;
+        } else {
+            neverExpire = false;
+            expiresAt = keyExpiresAt;
+        }
+
+        userCommandRepository.updateApiKeySettings(userId, authorized, neverExpire, expiresAt);
     }
 
     @Transactional

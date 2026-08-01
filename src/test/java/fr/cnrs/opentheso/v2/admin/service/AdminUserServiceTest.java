@@ -203,6 +203,34 @@ class AdminUserServiceTest {
         verify(userCommandRepository).deleteUserCascade(8);
     }
 
+    @Test
+    void updateApiKeySettings_authorizesWithPermanentKeyByDefault() {
+        when(userLookupService.requireEntity(5)).thenReturn(new UserEntity());
+
+        adminUserService.updateApiKeySettings(true, 5, true, false, null);
+
+        verify(userCommandRepository).updateApiKeySettings(5, true, true, null);
+    }
+
+    @Test
+    void updateApiKeySettings_authorizesWithExpirationDate() {
+        when(userLookupService.requireEntity(5)).thenReturn(new UserEntity());
+        LocalDate expiresAt = LocalDate.of(2027, 6, 1);
+
+        adminUserService.updateApiKeySettings(true, 5, true, false, expiresAt);
+
+        verify(userCommandRepository).updateApiKeySettings(5, true, false, expiresAt);
+    }
+
+    @Test
+    void updateApiKeySettings_clearsAuthorizationWhenDisabled() {
+        when(userLookupService.requireEntity(5)).thenReturn(new UserEntity());
+
+        adminUserService.updateApiKeySettings(true, 5, false, true, LocalDate.of(2027, 1, 1));
+
+        verify(userCommandRepository).updateApiKeySettings(5, false, false, null);
+    }
+
     private static UserProfile profile(int id, String username, String email) {
         return new UserProfile(id, username, email, false, false, true, LocalDate.now(), true);
     }

@@ -42,15 +42,16 @@
 
                     <div class="card shadow mb-4" style="margin: 20px;">
                         <p:dataTable value="#{v2AllProjectsBean.projects}" var="project" size="small"
-                                     paginator="true" rows="20" stripedRows="true">
+                                     paginator="true" rows="20" stripedRows="true" lazy="false">
                             <f:facet name="header">
                                 <span class="font-weight-bold">#{v2LocaleBean.getMsg('profile.listOfProjects')}</span>
                             </f:facet>
-                            <p:column headerText="Id" width="15%">
-                                <h:outputText value="#{project.id()}"/>
+                            <p:column headerText="Id" width="15%" field="id" sortBy="#{project.id}">
+                                <h:outputText value="#{project.id}"/>
                             </p:column>
-                            <p:column headerText="#{v2LocaleBean.getMsg('profile.project')}" sortBy="#{project.name()}">
-                                <h:outputText value="#{project.name()}"/>
+                            <p:column headerText="#{v2LocaleBean.getMsg('profile.project')}"
+                                      field="name" sortBy="#{project.name}">
+                                <h:outputText value="#{project.name}"/>
                             </p:column>
                             <f:facet name="footer">
                                 <span class="p-text-bold">#{v2LocaleBean.getMsg('profile.totalOfProjects')}: #{v2AllProjectsBean.projects.size()}</span>

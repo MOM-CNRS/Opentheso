@@ -41,7 +41,7 @@
 
                     <div class="card shadow mb-4" style="margin: 20px;">
                         <p:dataTable value="#{v2AllUsersBean.users}" var="user" size="small"
-                                     paginator="true" rows="20" stripedRows="true"
+                                     paginator="true" rows="20" stripedRows="true" lazy="false"
                                      emptyMessage="#{v2LocaleBean.getMsg('rightbody.concept.no_value')}...">
                             <f:facet name="header">
                                 <div class="d-flex justify-content-between align-items-center">
@@ -53,27 +53,30 @@
                                                      title="#{v2LocaleBean.getMsg('profile.new_user')}"/>
                                 </div>
                             </f:facet>
-                            <p:column headerText="Id" width="8%">
-                                <h:outputText value="#{user.userId()}"/>
+                            <p:column headerText="Id" width="8%" field="userId" sortBy="#{user.userId}">
+                                <h:outputText value="#{user.userId}"/>
                             </p:column>
-                            <p:column headerText="#{v2LocaleBean.getMsg('profile.pseudo')}" sortBy="#{user.username()}">
-                                <h:outputText value="#{user.username()}"/>
+                            <p:column headerText="#{v2LocaleBean.getMsg('profile.pseudo')}"
+                                      field="username" sortBy="#{user.username}">
+                                <h:outputText value="#{user.username}"/>
                             </p:column>
-                            <p:column headerText="#{v2LocaleBean.getMsg('profile.role')}" sortBy="#{user.roleName()}">
-                                <h:outputText value="#{user.roleName()}"/>
+                            <p:column headerText="#{v2LocaleBean.getMsg('profile.role')}"
+                                      field="roleName" sortBy="#{user.roleName}">
+                                <h:outputText value="#{user.roleName}"/>
                             </p:column>
-                            <p:column headerText="#{v2LocaleBean.getMsg('profile.project')}" sortBy="#{user.projectName()}">
-                                <h:outputText value="#{user.projectName()}"/>
+                            <p:column headerText="#{v2LocaleBean.getMsg('profile.project')}"
+                                      field="projectName" sortBy="#{user.projectName}">
+                                <h:outputText value="#{user.projectName}"/>
                             </p:column>
                             <p:column headerText="#{v2LocaleBean.getMsg('profile.action')}" width="18%">
                                 <p:commandButton icon="pi pi-user-edit" styleClass="rounded-button ui-button-outlined"
-                                                 actionListener="#{v2AllUsersBean.prepareEditDialog(user.userId())}"
+                                                 actionListener="#{v2AllUsersBean.prepareEditDialog(user.userId)}"
                                                  oncomplete="PF('v2EditUser').show();" update="idV2EditUser" process="@this"/>
                                 <p:commandButton icon="pi pi-key" styleClass="rounded-button ui-button-outlined"
-                                                 actionListener="#{v2AllUsersBean.preparePasswordDialog(user.userId())}"
+                                                 actionListener="#{v2AllUsersBean.preparePasswordDialog(user.userId)}"
                                                  oncomplete="PF('v2ResetPassword').show();" update="idV2ResetPassword" process="@this"/>
                                 <p:commandButton icon="pi pi-trash" styleClass="rounded-button ui-button-danger"
-                                                 actionListener="#{v2AllUsersBean.prepareDeleteDialog(user.userId(), user.username())}"
+                                                 actionListener="#{v2AllUsersBean.prepareDeleteDialog(user.userId, user.username)}"
                                                  oncomplete="PF('v2DeleteUser').show();" update="idV2DeleteUser" process="@this"/>
                             </p:column>
                             <f:facet name="footer">
