@@ -12,5 +12,6 @@ public enum EditionView {
     EXPORT_CSV,
     EXPORT_CSV_ID,
     EXPORT_CSV_STRUCTURE,
-    EXPORT_DEPRECATED
+    EXPORT_DEPRECATED,
+    SYNC
 }

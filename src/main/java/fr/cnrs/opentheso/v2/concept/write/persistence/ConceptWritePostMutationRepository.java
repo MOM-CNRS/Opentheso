@@ -18,7 +18,7 @@ public class ConceptWritePostMutationRepository {
     public void touchConcept(String thesaurusId, String conceptId, int contributorUserId) {
         entityManager.createNativeQuery("""
                         UPDATE concept
-                        SET modified = CURRENT_DATE,
+                        SET modified = CURRENT_TIMESTAMP,
                             contributor = :contributor
                         WHERE id_thesaurus = :thesaurusId
                           AND id_concept = :conceptId

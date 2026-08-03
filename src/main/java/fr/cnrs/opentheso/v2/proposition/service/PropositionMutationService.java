@@ -54,15 +54,18 @@ public class PropositionMutationService {
             return Optional.empty();
         }
 
-        var existing = propositionModificationRepository.findPendingByConcept(
-                submission.conceptId(),
-                submission.thesaurusId(),
-                submission.lang()
-        );
-        if (existing != null && StringUtils.isNotBlank(submission.authorEmail())
-                && submission.authorEmail().equalsIgnoreCase(existing.getEmail())) {
-            log.debug("Proposition déjà en cours pour le concept {} ({})", submission.conceptId(), submission.lang());
-            return Optional.empty();
+        if (!submission.allowMultiplePending()) {
+            var existing = propositionModificationRepository.findPendingByConcept(
+                    submission.conceptId(),
+                    submission.thesaurusId(),
+                    submission.lang()
+            );
+            if (existing != null && StringUtils.isNotBlank(submission.authorEmail())
+                    && submission.authorEmail().equalsIgnoreCase(existing.getEmail())) {
+                log.debug("Proposition déjà en cours pour le concept {} ({})",
+                        submission.conceptId(), submission.lang());
+                return Optional.empty();
+            }
         }
 
         var proposition = PropositionModification.builder()

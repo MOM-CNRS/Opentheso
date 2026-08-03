@@ -51,6 +51,8 @@ public class ModifyThesaurusBean implements Serializable {
     private List<String> dcmiResources = Collections.emptyList();
     private List<String> dcmiTypes = Collections.emptyList();
     private TreeNode<EditionCollectionNode> collectionRoot = new DefaultTreeNode<>(null, null);
+    /** true = maître, false = esclave */
+    private boolean masterThesaurus;
 
     private AddLanguageEditor addLanguageEditor = AddLanguageEditor.empty();
     private EditLanguageEditor editLanguageEditor = EditLanguageEditor.empty();
@@ -121,6 +123,18 @@ public class ModifyThesaurusBean implements Serializable {
             MessageUtils.showInformationMessage(privateThesaurus
                     ? "Le thésaurus est maintenant privé"
                     : "Le thésaurus est maintenant public");
+        } catch (InvalidToolboxDataException e) {
+            MessageUtils.showErrorMessage(e.getMessage());
+        }
+    }
+
+    public void saveThesaurusRole() {
+        if (!canManage()) {
+            return;
+        }
+        try {
+            modifyThesaurusService.updateMasterRole(thesaurusId, masterThesaurus);
+            MessageUtils.showInformationMessage("Rôle du thésaurus enregistré");
         } catch (InvalidToolboxDataException e) {
             MessageUtils.showErrorMessage(e.getMessage());
         }
@@ -292,6 +306,7 @@ public class ModifyThesaurusBean implements Serializable {
         sourceLang = details.sourceLang();
         privateThesaurus = details.privateThesaurus();
         arkId = details.arkId();
+        masterThesaurus = modifyThesaurusService.isMasterThesaurus(thesaurusId);
     }
 
     private void refreshLanguages() {
@@ -307,6 +322,7 @@ public class ModifyThesaurusBean implements Serializable {
         details = null;
         sourceLang = null;
         arkId = null;
+        masterThesaurus = false;
         languages = Collections.emptyList();
         allLanguages = Collections.emptyList();
         metadata = Collections.emptyList();

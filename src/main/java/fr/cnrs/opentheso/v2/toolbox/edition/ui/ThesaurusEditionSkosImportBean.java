@@ -41,7 +41,6 @@ public class ThesaurusEditionSkosImportBean implements Serializable {
     private final UserSession userSession;
     private final ToolboxAccessPolicy toolboxAccessPolicy;
     private final V2ThesaurusPreferencesProvider v2ThesaurusPreferencesProvider;
-    private final PreferenceService preferenceService;
 
     private int typeImport;
     private int total;
@@ -55,6 +54,11 @@ public class ThesaurusEditionSkosImportBean implements Serializable {
     private String selectedProjectId;
     private boolean loadDone;
     private int progressValue;
+    /** true si un thésaurus du même titre existe déjà → l'utilisateur peut choisir maître/esclave. */
+    private boolean existingThesaurusDetected;
+    private String existingThesaurusId;
+    /** true = maître ; false = esclave (défaut). */
+    private boolean importAsMaster;
 
     private List<LanguageOption> allLangs = Collections.emptyList();
     private List<ProjectOption> projects = Collections.emptyList();
@@ -76,6 +80,9 @@ public class ThesaurusEditionSkosImportBean implements Serializable {
         prefixHandle = "";
         prefixDoi = "";
         selectedProjectId = null;
+        existingThesaurusDetected = false;
+        existingThesaurusId = null;
+        importAsMaster = false;
 
         var options = newThesaurusService.loadFormOptions(
                 userSession.getCurrentUserId(),
@@ -114,6 +121,9 @@ public class ThesaurusEditionSkosImportBean implements Serializable {
         }
 
         var error = new StringBuffer();
+        existingThesaurusDetected = false;
+        existingThesaurusId = null;
+        importAsMaster = false;
         try (InputStream inputStream = event.getFile().getInputStream()) {
             if (StringUtils.isBlank(selectedLang)) {
                 selectedLang = resolveDefaultSourceLang();
@@ -123,6 +133,7 @@ public class ThesaurusEditionSkosImportBean implements Serializable {
             total = result.totalConcepts();
             uri = result.uri();
             loadDone = true;
+            detectExistingThesaurus();
         } catch (Exception ex) {
             loadDone = true;
             error.append(ex.getMessage());
@@ -132,6 +143,35 @@ public class ThesaurusEditionSkosImportBean implements Serializable {
             MessageUtils.showErrorMessage(error.toString());
         }
         PrimeFaces.current().executeScript("PF('waitDialog').hide();");
+    }
+
+    private void detectExistingThesaurus() {
+        existingThesaurusDetected = false;
+        existingThesaurusId = null;
+        importAsMaster = false;
+        if (skosXmlDocument == null) {
+            return;
+        }
+        Integer projectId = null;
+        if (StringUtils.isNotBlank(selectedProjectId)) {
+            try {
+                projectId = Integer.parseInt(selectedProjectId);
+            } catch (NumberFormatException ignored) {
+                projectId = null;
+            }
+        }
+        var existing = thesaurusEditionSkosImportService.findExistingThesaurusId(
+                skosXmlDocument, projectId, selectedLang);
+        if (existing.isPresent()) {
+            existingThesaurusDetected = true;
+            existingThesaurusId = existing.get();
+        }
+    }
+
+    public void onProjectChanged() {
+        if (loadDone && skosXmlDocument != null) {
+            detectExistingThesaurus();
+        }
     }
 
     public void importThesaurus() {
@@ -150,6 +190,7 @@ public class ThesaurusEditionSkosImportBean implements Serializable {
                 selectedLang = resolveDefaultSourceLang();
             }
             Integer projectId = StringUtils.isBlank(selectedProjectId) ? null : Integer.parseInt(selectedProjectId);
+            boolean asMaster = existingThesaurusDetected && importAsMaster;
             String thesaurusId = thesaurusEditionSkosImportService.importNewThesaurus(
                     skosXmlDocument,
                     formatDate,
@@ -161,6 +202,8 @@ public class ThesaurusEditionSkosImportBean implements Serializable {
                     prefixHandle,
                     prefixDoi,
                     persistentNameThesaurus
+                    prefixDoi,
+                    asMaster
             );
             progressValue = 100;
             FacesContext.getCurrentInstance().addMessage(null, new FacesMessage(

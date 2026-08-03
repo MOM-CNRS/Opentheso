@@ -74,6 +74,7 @@ class ModifyThesaurusBeanTest {
         when(modifyThesaurusService.loadDcmiResources()).thenReturn(List.of("title"));
         when(modifyThesaurusService.loadDcmiTypes()).thenReturn(List.of("string"));
         when(modifyThesaurusService.loadCollectionTree("TH1")).thenReturn(new DefaultTreeNode<>(null, null));
+        when(modifyThesaurusService.isMasterThesaurus("TH1")).thenReturn(false);
 
         bean.load("TH1");
 
@@ -110,6 +111,7 @@ class ModifyThesaurusBeanTest {
         when(modifyThesaurusService.loadDcmiResources()).thenReturn(List.of());
         when(modifyThesaurusService.loadDcmiTypes()).thenReturn(List.of());
         when(modifyThesaurusService.loadCollectionTree("TH1")).thenReturn(new DefaultTreeNode<>(null, null));
+        when(modifyThesaurusService.isMasterThesaurus("TH1")).thenReturn(false);
 
         try (MockedStatic<MessageUtils> messages = mockStatic(MessageUtils.class)) {
             bean.changeSourceLanguage();

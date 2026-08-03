@@ -1,0 +1,4 @@
+ALTER TABLE preferences ADD COLUMN IF NOT EXISTS master_server_url TEXT;
+ALTER TABLE preferences ADD COLUMN IF NOT EXISTS master_thesaurus_id TEXT;
+ALTER TABLE preferences ADD COLUMN IF NOT EXISTS master_api_key TEXT;
+ALTER TABLE preferences ADD COLUMN IF NOT EXISTS last_sync_at TIMESTAMP WITHOUT TIME ZONE;

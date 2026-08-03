@@ -7,6 +7,7 @@ import fr.cnrs.opentheso.v2.shared.ui.UserSession;
 import fr.cnrs.opentheso.v2.shared.ui.V2LocaleBean;
 import fr.cnrs.opentheso.v2.toolbox.exception.InvalidToolboxDataException;
 import fr.cnrs.opentheso.v2.toolbox.model.EditionThesaurusSummary;
+import fr.cnrs.opentheso.v2.sync.ui.ThesaurusSyncBean;
 import fr.cnrs.opentheso.v2.toolbox.edition.ui.ThesaurusEditionCsvImportBean;
 import fr.cnrs.opentheso.v2.toolbox.edition.ui.ThesaurusEditionCsvStructuredImportBean;
 import fr.cnrs.opentheso.v2.toolbox.edition.ui.ThesaurusEditionSkosImportBean;
@@ -56,6 +57,7 @@ public class EditionBean implements Serializable {
     private final ThesaurusEditionSkosImportBean skosImportBean;
     private final ThesaurusEditionCsvImportBean csvImportBean;
     private final ThesaurusEditionCsvStructuredImportBean csvStructuredImportBean;
+    private final ThesaurusSyncBean thesaurusSyncBean;
 
     private EditionThesaurusSummary selectedThesaurusForAction;
 
@@ -71,7 +73,8 @@ public class EditionBean implements Serializable {
             ThesaurusExportBean thesaurusExportBean,
             ThesaurusEditionSkosImportBean skosImportBean,
             ThesaurusEditionCsvImportBean csvImportBean,
-            ThesaurusEditionCsvStructuredImportBean csvStructuredImportBean
+            ThesaurusEditionCsvStructuredImportBean csvStructuredImportBean,
+            ThesaurusSyncBean thesaurusSyncBean
     ) {
         this.userSession = userSession;
         this.toolboxAccessPolicy = toolboxAccessPolicy;
@@ -85,6 +88,7 @@ public class EditionBean implements Serializable {
         this.skosImportBean = skosImportBean;
         this.csvImportBean = csvImportBean;
         this.csvStructuredImportBean = csvStructuredImportBean;
+        this.thesaurusSyncBean = thesaurusSyncBean;
     }
 
     public void load() {
@@ -163,6 +167,10 @@ public class EditionBean implements Serializable {
         return currentView == EditionView.EXPORT_DEPRECATED;
     }
 
+    public boolean isSyncView() {
+        return currentView == EditionView.SYNC;
+    }
+
     public void showList() {
         resetToListView();
         if (canAccessScreen()) {
@@ -209,6 +217,22 @@ public class EditionBean implements Serializable {
         selectedThesaurusForAction = thesaurus;
         modifyThesaurusBean.load(thesaurus.id());
         currentView = EditionView.MODIFY;
+    }
+
+    public void showModifyThesaurusById(String thesaurusId) {
+        if (!canAccessScreen() || StringUtils.isBlank(thesaurusId)) {
+            return;
+        }
+        modifyThesaurusBean.load(thesaurusId);
+        currentView = EditionView.MODIFY;
+    }
+
+    public void showSyncThesaurus(String thesaurusId) {
+        if (!canAccessScreen() || StringUtils.isBlank(thesaurusId)) {
+            return;
+        }
+        thesaurusSyncBean.init(thesaurusId);
+        currentView = EditionView.SYNC;
     }
 
     public void showExport(EditionThesaurusSummary thesaurus, EditionView exportView) {

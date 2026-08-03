@@ -7,6 +7,7 @@ import fr.cnrs.opentheso.v2.setting.ui.ThesaurusContext;
 import fr.cnrs.opentheso.v2.shared.ui.UserSession;
 import fr.cnrs.opentheso.v2.toolbox.exception.InvalidToolboxDataException;
 import fr.cnrs.opentheso.v2.toolbox.fixtures.ToolboxTestFixtures;
+import fr.cnrs.opentheso.v2.sync.ui.ThesaurusSyncBean;
 import fr.cnrs.opentheso.v2.toolbox.edition.ui.ThesaurusEditionCsvImportBean;
 import fr.cnrs.opentheso.v2.toolbox.edition.ui.ThesaurusEditionCsvStructuredImportBean;
 import fr.cnrs.opentheso.v2.toolbox.edition.ui.ThesaurusEditionSkosImportBean;
@@ -72,6 +73,8 @@ class EditionBeanTest {
     @Mock
     private ThesaurusEditionCsvStructuredImportBean csvStructuredImportBean;
     @Mock
+    private ThesaurusSyncBean thesaurusSyncBean;
+    @Mock
     private FacesContext facesContext;
 
     private EditionBean bean;
@@ -90,7 +93,8 @@ class EditionBeanTest {
                 thesaurusExportBean,
                 skosImportBean,
                 csvImportBean,
-                csvStructuredImportBean
+                csvStructuredImportBean,
+                thesaurusSyncBean
         );
     }
 

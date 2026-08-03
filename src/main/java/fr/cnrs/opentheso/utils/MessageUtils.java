@@ -10,8 +10,15 @@ public class MessageUtils {
     public static void showMessage(FacesMessage.Severity messageType, String titre, String message) {
 
         FacesMessage msg = new FacesMessage(messageType, titre, message);
-        FacesContext.getCurrentInstance().addMessage(null, msg);
-        PrimeFaces.current().ajax().update("messageIndex");
+        FacesContext facesContext = FacesContext.getCurrentInstance();
+        if (facesContext != null) {
+            facesContext.addMessage(null, msg);
+        }
+        try {
+            PrimeFaces.current().ajax().update("messageIndex");
+        } catch (Exception ignored) {
+            // Hors contexte JSF/PrimeFaces (ex. appel API).
+        }
     }
 
     public static void showWarnMessage(String message) {

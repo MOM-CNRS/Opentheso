@@ -11,9 +11,12 @@ import java.sql.Timestamp;
 import java.time.Instant;
 import java.time.LocalDateTime;
 import java.time.ZoneId;
+import java.util.ArrayList;
 import java.util.Collections;
 import java.util.Date;
+import java.util.LinkedHashMap;
 import java.util.List;
+import java.util.Map;
 import java.util.Optional;
 
 @Repository
@@ -123,7 +126,7 @@ public class ThesaurusHomeQueryRepository {
         if (rows.isEmpty()) {
             return Collections.emptyList();
         }
-        return rows.stream()
+        List<ThesaurusMetadataItem> items = rows.stream()
                 .map(row -> new ThesaurusMetadataItem(
                         ((Number) row[0]).intValue(),
                         row[1] != null ? (String) row[1] : "",
@@ -132,6 +135,59 @@ public class ThesaurusHomeQueryRepository {
                         row[4] != null ? (String) row[4] : ""
                 ))
                 .toList();
+        return dedupeSingularDcMetadata(items);
+    }
+
+    /**
+     * Affiche une seule valeur pour {@code created}/{@code modified} (la plus récente).
+     */
+    static List<ThesaurusMetadataItem> dedupeSingularDcMetadata(List<ThesaurusMetadataItem> items) {
+        if (items == null || items.isEmpty()) {
+            return List.of();
+        }
+        Map<String, ThesaurusMetadataItem> singularBest = new LinkedHashMap<>();
+        List<ThesaurusMetadataItem> others = new ArrayList<>();
+        for (ThesaurusMetadataItem item : items) {
+            String name = item.name() == null ? "" : item.name().trim().toLowerCase();
+            if ("created".equals(name) || "modified".equals(name)) {
+                ThesaurusMetadataItem previous = singularBest.get(name);
+                if (previous == null || isNewerDcDate(item.value(), previous.value())) {
+                    singularBest.put(name, item);
+                }
+            } else {
+                others.add(item);
+            }
+        }
+        List<ThesaurusMetadataItem> result = new ArrayList<>(others.size() + singularBest.size());
+        result.addAll(others);
+        result.addAll(singularBest.values());
+        return result;
+    }
+
+    private static boolean isNewerDcDate(String candidate, String current) {
+        if (StringUtils.isBlank(candidate)) {
+            return false;
+        }
+        if (StringUtils.isBlank(current)) {
+            return true;
+        }
+        try {
+            return Instant.parse(normalizeDcDate(candidate))
+                    .isAfter(Instant.parse(normalizeDcDate(current)));
+        } catch (Exception ignored) {
+            return candidate.compareTo(current) > 0;
+        }
+    }
+
+    private static String normalizeDcDate(String value) {
+        String trimmed = value.trim();
+        if (trimmed.length() == 10) {
+            return trimmed + "T00:00:00Z";
+        }
+        if (trimmed.endsWith("Z") || trimmed.contains("+") || trimmed.matches(".*[+-]\\d{2}:\\d{2}$")) {
+            return trimmed;
+        }
+        return trimmed + "Z";
     }
 
     @SuppressWarnings("unchecked")

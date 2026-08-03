@@ -4,10 +4,12 @@ import fr.cnrs.opentheso.models.skosapi.SKOSLabel;
 import fr.cnrs.opentheso.models.skosapi.SKOSProperty;
 import fr.cnrs.opentheso.models.skosapi.SKOSResource;
 import fr.cnrs.opentheso.models.skosapi.SKOSXmlDocument;
+import fr.cnrs.opentheso.repositories.ThesaurusLabelRepository;
 import fr.cnrs.opentheso.v2.toolbox.edition.io.skos.ThesaurusEditionSkosImportEngine;
 import fr.cnrs.opentheso.v2.toolbox.edition.support.ThesaurusImportBatchSupport;
 import fr.cnrs.opentheso.v2.toolbox.model.NewThesaurusFormOptions;
 import fr.cnrs.opentheso.v2.toolbox.model.ProjectOption;
+import fr.cnrs.opentheso.v2.toolbox.persistence.ToolboxPreferencePersistence;
 import fr.cnrs.opentheso.v2.toolbox.service.NewThesaurusService;
 import org.junit.jupiter.api.BeforeEach;
 import org.junit.jupiter.api.Test;
@@ -17,6 +19,7 @@ import org.mockito.junit.jupiter.MockitoExtension;
 
 import java.util.ArrayList;
 import java.util.List;
+import java.util.Optional;
 import java.util.function.BiConsumer;
 import java.util.function.Supplier;
 
@@ -34,6 +37,10 @@ class ThesaurusEditionSkosImportServiceTest {
     private ThesaurusEditionSkosImportEngine thesaurusEditionSkosImportEngine;
     @Mock
     private NewThesaurusService newThesaurusService;
+    @Mock
+    private ThesaurusLabelRepository thesaurusLabelRepository;
+    @Mock
+    private ToolboxPreferencePersistence toolboxPreferencePersistence;
 
     private ThesaurusEditionSkosImportService service;
 
@@ -42,7 +49,9 @@ class ThesaurusEditionSkosImportServiceTest {
         service = new ThesaurusEditionSkosImportService(
                 thesaurusEditionSkosImportEngine,
                 newThesaurusService,
-                new SyncImportBatchSupport()
+                new SyncImportBatchSupport(),
+                thesaurusLabelRepository,
+                toolboxPreferencePersistence
         );
     }
 
@@ -61,11 +70,13 @@ class ThesaurusEditionSkosImportServiceTest {
                 "ark",
                 "",
                 "",
-                ""
+                "",
+                false
         );
 
         assertEquals("TH99", thesaurusId);
         verify(thesaurusEditionSkosImportEngine).setInfos("yyyy-MM-dd", 7, 12, "fr");
+        verify(thesaurusEditionSkosImportEngine).setImportAsMaster(false);
         verify(thesaurusEditionSkosImportEngine).addConceptV2(any(SKOSResource.class), eq("TH99"));
     }
 
@@ -86,11 +97,59 @@ class ThesaurusEditionSkosImportServiceTest {
                 "sans",
                 "",
                 "",
-                ""
+                "",
+                false
         );
 
         assertEquals("TH5", thesaurusId);
         verify(thesaurusEditionSkosImportEngine).setInfos("yyyy-MM-dd", 7, 5, "fr");
+    }
+
+    @Test
+    void importNewThesaurus_appliesMasterOnlyWhenExistingDetected() throws Exception {
+        var document = sampleDocument();
+        when(thesaurusLabelRepository.findThesaurusIdsByProjectAndTitle(12, "Mon theso"))
+                .thenReturn(List.of("TH_OLD"));
+        when(thesaurusEditionSkosImportEngine.addThesaurus()).thenReturn("TH100");
+
+        String thesaurusId = service.importNewThesaurus(
+                document,
+                "yyyy-MM-dd",
+                7,
+                true,
+                12,
+                "fr",
+                "sans",
+                "",
+                "",
+                true
+        );
+
+        assertEquals("TH100", thesaurusId);
+        verify(thesaurusEditionSkosImportEngine).setImportAsMaster(true);
+    }
+
+    @Test
+    void importNewThesaurus_forcesSlaveWhenNewEvenIfMasterRequested() throws Exception {
+        var document = sampleDocument();
+        when(thesaurusLabelRepository.findThesaurusIdsByProjectAndTitle(12, "Mon theso"))
+                .thenReturn(List.of());
+        when(thesaurusEditionSkosImportEngine.addThesaurus()).thenReturn("TH101");
+
+        service.importNewThesaurus(
+                document,
+                "yyyy-MM-dd",
+                7,
+                true,
+                12,
+                "fr",
+                "sans",
+                "",
+                "",
+                true
+        );
+
+        verify(thesaurusEditionSkosImportEngine).setImportAsMaster(false);
     }
 
     @Test
@@ -101,12 +160,26 @@ class ThesaurusEditionSkosImportServiceTest {
 
         assertThrows(IllegalStateException.class, () -> service.importNewThesaurus(
                 document, "yyyy-MM-dd", 7, true, null, "fr", "sans", "", "", ""
+                document, "yyyy-MM-dd", 7, true, null, "fr", "sans", "", "", false
         ));
+    }
+
+    @Test
+    void findExistingThesaurusId_matchesByTitle() throws Exception {
+        var document = sampleDocument();
+        when(thesaurusLabelRepository.findThesaurusIdsByProjectAndTitle(3, "Mon theso"))
+                .thenReturn(List.of("TH1"));
+
+        Optional<String> found = service.findExistingThesaurusId(document, 3, "fr");
+        assertEquals(Optional.of("TH1"), found);
     }
 
     private SKOSXmlDocument sampleDocument() throws Exception {
         var document = new SKOSXmlDocument();
         document.setTitle("https://example.com/theso");
+        var conceptScheme = new SKOSResource();
+        conceptScheme.getLabelsList().add(new SKOSLabel("Mon theso", "fr", SKOSProperty.PREF_LABEL));
+        document.setConceptScheme(conceptScheme);
         var concept = new SKOSResource();
         concept.getLabelsList().add(new SKOSLabel("Chat", "fr", SKOSProperty.PREF_LABEL));
         document.setConceptList(new ArrayList<>(List.of(concept)));

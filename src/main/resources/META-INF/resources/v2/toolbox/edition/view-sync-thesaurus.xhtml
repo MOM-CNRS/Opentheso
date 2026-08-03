@@ -1,0 +1,210 @@
+<ui:fragment xmlns="http://www.w3.org/1999/xhtml"
+             xmlns:h="http://java.sun.com/jsf/html"
+             xmlns:ui="http://java.sun.com/jsf/facelets"
+             xmlns:p="http://primefaces.org/ui">
+
+    <h:panelGroup rendered="#{v2ThesaurusSyncBean.formAvailable}">
+        <div class="card shadow mb-4" style="height: 100%;">
+            <div class="card mb-4 py-3 border-left-success" style="margin: 30px; border-color: #43B572;">
+
+                <div class="row mb-4">
+                    <div class="col-12" style="padding-left: 30px;">
+                        <h:outputText value="#{v2LocaleBean.getMsg('toolbox.syncWithMaster')}"
+                                      styleClass="h5 mb-0 text-gray-800"/>
+                    </div>
+                </div>
+
+                <h:panelGroup id="v2SyncMasterLinkPanel" layout="block">
+                    <div class="row mb-3 align-items-center">
+                        <div class="col-3 text-right">
+                            <h:outputText value="#{v2LocaleBean.getMsg('toolbox.masterServerUrl')}"/>
+                        </div>
+                        <div class="col-6">
+                            <p:inputText value="#{v2ThesaurusSyncBean.masterServerUrl}"
+                                         placeholder="https://opentheso.example.fr"
+                                         style="width: 100%;"
+                                         disabled="#{v2ThesaurusSyncBean.running}"/>
+                        </div>
+                    </div>
+
+                    <div class="row mb-3 align-items-center">
+                        <div class="col-3 text-right">
+                            <h:outputText value="#{v2LocaleBean.getMsg('toolbox.masterThesaurusId')}"/>
+                        </div>
+                        <div class="col-6">
+                            <p:inputText value="#{v2ThesaurusSyncBean.masterThesaurusId}"
+                                         placeholder="th12"
+                                         style="width: 100%;"
+                                         disabled="#{v2ThesaurusSyncBean.running}"/>
+                        </div>
+                    </div>
+
+                    <div class="row mb-3 align-items-center">
+                        <div class="col-3 text-right">
+                            <h:outputText value="#{v2LocaleBean.getMsg('toolbox.masterApiKey')}"/>
+                        </div>
+                        <div class="col-6">
+                            <p:inputText value="#{v2ThesaurusSyncBean.masterApiKey}"
+                                         style="width: 100%;"
+                                         disabled="#{v2ThesaurusSyncBean.running}"/>
+                        </div>
+                        <div class="col-2">
+                            <p:commandButton value="#{v2LocaleBean.getMsg('btnValidate')}"
+                                             styleClass="ui-button-success"
+                                             icon="fas fa-save"
+                                             disabled="#{v2ThesaurusSyncBean.running}"
+                                             process="v2SyncMasterLinkPanel"
+                                             update="messageIndex containerIndex"
+                                             action="#{v2ThesaurusSyncBean.saveMasterLink()}"/>
+                        </div>
+                    </div>
+                </h:panelGroup>
+
+                <div class="row mb-3 align-items-center">
+                    <div class="col-3 text-right">
+                        <h:outputText value="#{v2LocaleBean.getMsg('toolbox.lastSyncAt')}"/>
+                    </div>
+                    <div class="col-6">
+                        <h:outputText value="#{v2ThesaurusSyncBean.formattedLastSyncAt}"
+                                      rendered="#{v2ThesaurusSyncBean.lastSyncAt != null}"/>
+                        <h:outputText value="—" rendered="#{v2ThesaurusSyncBean.lastSyncAt == null}"/>
+                    </div>
+                </div>
+
+                <div class="row mb-3 align-items-center">
+                    <div class="col-3 text-right">
+                        <h:outputText value="#{v2LocaleBean.getMsg('toolbox.conceptsToSync')}"/>
+                    </div>
+                    <div class="col-6">
+                        <h:outputText value="#{v2ThesaurusSyncBean.conceptCount}" style="color: #C63632; font-weight: bold;"/>
+                        <p:commandButton icon="fas fa-redo"
+                                         styleClass="ui-button-outlined ui-button-secondary"
+                                         style="margin-left: 10px;"
+                                         disabled="#{v2ThesaurusSyncBean.running}"
+                                         action="#{v2ThesaurusSyncBean.refreshPreparation()}"
+                                         update="containerIndex messageIndex"
+                                         process="@this v2SyncMasterLinkPanel"/>
+                    </div>
+                </div>
+
+                <div class="row mb-3 align-items-center">
+                    <div class="col-3 text-right">
+                        <h:outputText value="#{v2LocaleBean.getMsg('toolbox.syncMode')}"/>
+                    </div>
+                    <div class="col-6">
+                        <p:selectBooleanCheckbox value="#{v2ThesaurusSyncBean.syncAll}"
+                                                 itemLabel="#{v2LocaleBean.getMsg('toolbox.syncAllConcepts')}"
+                                                 disabled="#{v2ThesaurusSyncBean.running}">
+                            <p:ajax event="change" listener="#{v2ThesaurusSyncBean.refreshPreparation()}"
+                                    update="containerIndex messageIndex"/>
+                        </p:selectBooleanCheckbox>
+                    </div>
+                </div>
+
+                <div class="row mb-3 align-items-center">
+                    <div class="col-3 text-right">
+                        <h:outputText value="#{v2LocaleBean.getMsg('toolbox.syncComment')}"/>
+                    </div>
+                    <div class="col-6">
+                        <p:inputTextarea value="#{v2ThesaurusSyncBean.comment}" rows="3" style="width: 100%;"
+                                         disabled="#{v2ThesaurusSyncBean.running}"/>
+                    </div>
+                </div>
+
+                <div class="row mb-4">
+                    <div class="col-12 text-center">
+                        <p:commandButton id="v2StartSyncButton"
+                                         value="#{v2LocaleBean.getMsg('toolbox.startSync')}"
+                                         icon="fas fa-cloud-upload-alt"
+                                         styleClass="ui-button-success"
+                                         disabled="#{v2ThesaurusSyncBean.running or v2ThesaurusSyncBean.conceptCount eq 0}"
+                                         action="#{v2ThesaurusSyncBean.startSync()}"
+                                         update="v2SyncProgressContent v2StartSyncButton messageIndex"
+                                         process="@form"
+                                         oncomplete="setTimeout(function(){ var p = PF('v2SyncProgressPoll'); if (p) { p.start(); } }, 50);"/>
+                    </div>
+                </div>
+
+                <!-- Contenu de progression (sans le poll, pour éviter de le détruire à chaque update) -->
+                <h:panelGroup id="v2SyncProgressContent" layout="block">
+                    <h:panelGroup rendered="#{v2ThesaurusSyncBean.progressVisible}" layout="block">
+                        <div class="row mb-2">
+                            <div class="col-12" style="padding-left: 30px; padding-right: 30px;">
+                                <div style="display: flex; justify-content: space-between; margin-bottom: 6px; font-size: 13px; color: #5a5c69;">
+                                    <h:outputText value="#{v2ThesaurusSyncBean.statusMessage}"/>
+                                    <h:outputText value="#{v2ThesaurusSyncBean.progressDetail}"
+                                                  rendered="#{not empty v2ThesaurusSyncBean.progressDetail}"/>
+                                </div>
+                                <p:progressBar id="v2SyncProgressBar"
+                                               value="#{v2ThesaurusSyncBean.progressValue}"
+                                               labelTemplate="{value}%"
+                                               displayOnly="true"
+                                               style="height: 1.6rem;"/>
+                                <h:panelGroup rendered="#{v2ThesaurusSyncBean.running}" layout="block">
+                                    <div style="margin-top: 6px; font-size: 12px; color: #858796; text-align: center;">
+                                        <i class="fas fa-spinner fa-spin" style="margin-right: 6px;"/>
+                                        <h:outputText value="#{v2LocaleBean.getMsg('toolbox.syncInProgress')}"/>
+                                    </div>
+                                </h:panelGroup>
+                            </div>
+                        </div>
+
+                        <div class="row mb-3 text-center" style="margin-top: 12px;">
+                            <div class="col-3">
+                                <div style="font-size: 11px; color: #858796; text-transform: uppercase;">
+                                    <h:outputText value="#{v2LocaleBean.getMsg('toolbox.syncSkipped')}"/>
+                                </div>
+                                <div style="font-size: 1.25rem; font-weight: 600; color: #5a5c69;">
+                                    <h:outputText value="#{v2ThesaurusSyncBean.skipped}"/>
+                                </div>
+                            </div>
+                            <div class="col-3">
+                                <div style="font-size: 11px; color: #858796; text-transform: uppercase;">
+                                    <h:outputText value="#{v2LocaleBean.getMsg('toolbox.syncPropositions')}"/>
+                                </div>
+                                <div style="font-size: 1.25rem; font-weight: 600; color: #1cc88a;">
+                                    <h:outputText value="#{v2ThesaurusSyncBean.propositions}"/>
+                                </div>
+                            </div>
+                            <div class="col-3">
+                                <div style="font-size: 11px; color: #858796; text-transform: uppercase;">
+                                    <h:outputText value="#{v2LocaleBean.getMsg('toolbox.syncCandidates')}"/>
+                                </div>
+                                <div style="font-size: 1.25rem; font-weight: 600; color: #36b9cc;">
+                                    <h:outputText value="#{v2ThesaurusSyncBean.candidates}"/>
+                                </div>
+                            </div>
+                            <div class="col-3">
+                                <div style="font-size: 11px; color: #858796; text-transform: uppercase;">
+                                    <h:outputText value="#{v2LocaleBean.getMsg('toolbox.syncErrors')}"/>
+                                </div>
+                                <div style="font-size: 1.25rem; font-weight: 600; color: #e74a3b;">
+                                    <h:outputText value="#{v2ThesaurusSyncBean.errors}"/>
+                                </div>
+                            </div>
+                        </div>
+                    </h:panelGroup>
+                </h:panelGroup>
+
+                <!-- Poll toujours présent dans le DOM (ne pas l'inclure dans son propre update) -->
+                <p:poll widgetVar="v2SyncProgressPoll"
+                        interval="1"
+                        autoStart="false"
+                        listener="#{v2ThesaurusSyncBean.onProgressPoll()}"
+                        update="v2SyncProgressContent v2StartSyncButton"
+                        stop="#{not v2ThesaurusSyncBean.running}"/>
+
+                <div class="row" style="margin-top: 30px;">
+                    <div class="col-12 text-center">
+                        <p:commandButton value="#{v2LocaleBean.getMsg('btnBack')}"
+                                         styleClass="ui-button-secondary button"
+                                         icon="fas fa-undo-alt"
+                                         disabled="#{v2ThesaurusSyncBean.running}"
+                                         update="containerIndex"
+                                         action="#{v2ThesaurusSyncBean.back()}"/>
+                    </div>
+                </div>
+            </div>
+        </div>
+    </h:panelGroup>
+</ui:fragment>

@@ -40,7 +40,60 @@ public class ToolboxPreferencePersistence {
                 .autoExpandTree(true)
                 .webservices(true)
                 .breadcrumb(true)
+                .master(false)
                 .build());
+    }
+
+    public void updateMasterRole(String thesaurusId, boolean master) {
+        if (StringUtils.isBlank(thesaurusId)) {
+            return;
+        }
+        var preference = preferencesRepository.findByIdThesaurus(thesaurusId);
+        if (preference.isEmpty()) {
+            return;
+        }
+        preference.get().setMaster(master);
+        preferencesRepository.save(preference.get());
+    }
+
+    public boolean isMaster(String thesaurusId) {
+        var preference = preferencesRepository.findByIdThesaurus(thesaurusId);
+        return preference.map(Preferences::isMaster).orElse(false);
+    }
+
+    public void updateMasterLink(
+            String thesaurusId,
+            String masterServerUrl,
+            String masterThesaurusId,
+            String masterApiKey
+    ) {
+        if (StringUtils.isBlank(thesaurusId)) {
+            return;
+        }
+        var preference = preferencesRepository.findByIdThesaurus(thesaurusId);
+        if (preference.isEmpty()) {
+            return;
+        }
+        Preferences prefs = preference.get();
+        prefs.setMasterServerUrl(StringUtils.trimToNull(masterServerUrl));
+        prefs.setMasterThesaurusId(StringUtils.trimToNull(masterThesaurusId));
+        if (masterApiKey != null) {
+            // Chaîne vide = effacer la clé ; null = ne pas toucher (non utilisé ici).
+            prefs.setMasterApiKey(StringUtils.trimToNull(masterApiKey));
+        }
+        preferencesRepository.save(prefs);
+    }
+
+    public void updateLastSyncAt(String thesaurusId, java.time.LocalDateTime lastSyncAt) {
+        if (StringUtils.isBlank(thesaurusId)) {
+            return;
+        }
+        var preference = preferencesRepository.findByIdThesaurus(thesaurusId);
+        if (preference.isEmpty()) {
+            return;
+        }
+        preference.get().setLastSyncAt(lastSyncAt);
+        preferencesRepository.save(preference.get());
     }
 
     public String getWorkLanguage(String thesaurusId) {

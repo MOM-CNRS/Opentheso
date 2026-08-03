@@ -62,6 +62,9 @@ public class GenericReader {
             case "modified":
                 skosConcept.getThesaurus().setModified(new DateUtils().getDateFromString(literal.getLabel()));
                 break;
+            case "thesaurusRole":
+                skosConcept.getThesaurus().setThesaurusRole(literal.getLabel());
+                break;
                 
             /// ajout des créativecommons
             /// ajout des dcterms

@@ -275,4 +275,14 @@
         <sqlFile path="v26/26-08_01.sql" relativeToChangelogFile="true" splitStatements="false"/>
     </changeSet>
 
+    <changeSet id="26.08.02" author="Firas">
+        <comment>Thesaurus master/slave role on preferences (is_master, default false = slave)</comment>
+        <sqlFile path="v26/26-08_02.sql" relativeToChangelogFile="true" splitStatements="false"/>
+    </changeSet>
+
+    <changeSet id="26.08.03" author="Firas">
+        <comment>Master link for slave thesaurus sync (server URL, thesaurus id, API key, last sync)</comment>
+        <sqlFile path="v26/26-08_03.sql" relativeToChangelogFile="true" splitStatements="false"/>
+    </changeSet>
+
 </databaseChangeLog>

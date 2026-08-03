@@ -141,6 +141,8 @@ public class ThesaurusEditionCsvStructuredImportPersistence {
             }
         });
 
+        toolboxPreferencePersistence.updateLastSyncAt(thesaurusId, java.time.LocalDateTime.now());
+
         return new ThesaurusEditionStructuredImportResult(thesaurusId, importedConcepts.get(), null);
     }
 

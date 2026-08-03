@@ -104,6 +104,8 @@ public class ThesaurusEditionSkosImportEngine {
     private SKOSXmlDocument skosXmlDocument;
     private SimpleDateFormat dateFormat;
     boolean isFirst = true;
+    /** Rôle à appliquer à l'import (false = esclave par défaut). */
+    private boolean importAsMaster;
 
 
     public void setInfos(String formatDate, int idUser, int idGroupUser, String langueSource) {
@@ -120,6 +122,7 @@ public class ThesaurusEditionSkosImportEngine {
         this.pendingGroupConcepts.clear();
         this.message = new StringBuilder();
         this.dateFormat = new SimpleDateFormat(StringUtils.defaultIfBlank(formatDate, "yyyy-MM-dd"));
+        this.importAsMaster = false;
     }
 
     public String addThesaurus() throws SQLException {
@@ -166,8 +169,9 @@ public class ThesaurusEditionSkosImportEngine {
         thesaurus.setId_thesaurus(idTheso1);
         thesaurus.setTitle(displayTitle);
 
-        // intégration des métadonnées DC
-        for (DcElement dcElement : skosXmlDocument.getConceptScheme().getThesaurus().getDcElement()) {
+        // intégration des métadonnées DC (created/modified : une seule valeur, la plus récente)
+        for (DcElement dcElement : dedupeSingularThesaurusDcTerms(
+                skosXmlDocument.getConceptScheme().getThesaurus().getDcElement())) {
             try {
                 thesaurusDcTermRepository.save(ThesaurusDcTerm.builder()
                         .idThesaurus(idTheso1)
@@ -239,7 +243,64 @@ public class ThesaurusEditionSkosImportEngine {
                 idTheso1,
                 nodePreference.getPreferredName() == null ? displayTitle : nodePreference.getPreferredName()
         );
+        initPreferencesThesaurus(idTheso1, displayTitle);
+        captureMasterLinkFromConceptScheme(conceptScheme, idTheso1);
         return idTheso1;
+    }
+
+    private void captureMasterLinkFromConceptScheme(SKOSResource conceptScheme, String localThesaurusId) {
+        if (conceptScheme == null || StringUtils.isBlank(conceptScheme.getUri())) {
+            return;
+        }
+        String uri = conceptScheme.getUri().trim();
+        String masterThesaurusId = extractQueryParam(uri, "idt");
+        String masterServerUrl = extractServerBaseUrl(uri);
+        if (StringUtils.isAnyBlank(masterServerUrl, masterThesaurusId)) {
+            return;
+        }
+        toolboxPreferencePersistence.updateMasterLink(localThesaurusId, masterServerUrl, masterThesaurusId, null);
+    }
+
+    private String extractQueryParam(String uri, String paramName) {
+        int queryIndex = uri.indexOf('?');
+        if (queryIndex < 0 || queryIndex >= uri.length() - 1) {
+            return null;
+        }
+        String query = uri.substring(queryIndex + 1);
+        for (String part : query.split("&")) {
+            String[] pair = part.split("=", 2);
+            if (pair.length == 2 && paramName.equalsIgnoreCase(pair[0].trim())) {
+                return pair[1].trim();
+            }
+        }
+        return null;
+    }
+
+    private String extractServerBaseUrl(String uri) {
+        try {
+            java.net.URI parsed = java.net.URI.create(uri);
+            if (StringUtils.isBlank(parsed.getScheme()) || StringUtils.isBlank(parsed.getHost())) {
+                return null;
+            }
+            StringBuilder base = new StringBuilder();
+            base.append(parsed.getScheme()).append("://").append(parsed.getHost());
+            if (parsed.getPort() > 0) {
+                base.append(':').append(parsed.getPort());
+            }
+            // Garder le contexte applicatif s'il existe (ex. /opentheso)
+            String path = parsed.getPath();
+            if (StringUtils.isNotBlank(path) && path.contains("/")) {
+                // Retirer le dernier segment ressource éventuel, garder le préfixe applicatif.
+                String normalized = path.endsWith("/") ? path.substring(0, path.length() - 1) : path;
+                int lastSlash = normalized.lastIndexOf('/');
+                if (lastSlash > 0) {
+                    base.append(normalized.substring(0, lastSlash));
+                }
+            }
+            return base.toString();
+        } catch (Exception ex) {
+            return null;
+        }
     }
 
     private String resolveImportDisplayTitle(SKOSResource conceptScheme, String dctermsTitle, String idTheso) {
@@ -293,6 +354,63 @@ public class ThesaurusEditionSkosImportEngine {
         return trimmed.startsWith("http://") || trimmed.startsWith("https://") || trimmed.startsWith("urn:");
     }
 
+    /**
+     * Pour {@code created}/{@code modified}, ne conserve qu'une seule valeur (la plus récente).
+     * Les autres propriétés DC peuvent rester multi-valuées.
+     */
+    static java.util.List<DcElement> dedupeSingularThesaurusDcTerms(java.util.List<DcElement> source) {
+        if (source == null || source.isEmpty()) {
+            return java.util.List.of();
+        }
+        java.util.Map<String, DcElement> singularBest = new java.util.LinkedHashMap<>();
+        java.util.List<DcElement> others = new java.util.ArrayList<>();
+        for (DcElement element : source) {
+            if (element == null || StringUtils.isBlank(element.getName())) {
+                continue;
+            }
+            String name = element.getName().trim().toLowerCase();
+            if ("created".equals(name) || "modified".equals(name)) {
+                DcElement previous = singularBest.get(name);
+                if (previous == null || isNewerDcDate(element.getValue(), previous.getValue())) {
+                    singularBest.put(name, element);
+                }
+            } else {
+                others.add(element);
+            }
+        }
+        java.util.List<DcElement> result = new java.util.ArrayList<>(others.size() + singularBest.size());
+        result.addAll(others);
+        result.addAll(singularBest.values());
+        return result;
+    }
+
+    private static boolean isNewerDcDate(String candidate, String current) {
+        if (StringUtils.isBlank(candidate)) {
+            return false;
+        }
+        if (StringUtils.isBlank(current)) {
+            return true;
+        }
+        try {
+            return java.time.Instant.parse(normalizeDcDate(candidate))
+                    .isAfter(java.time.Instant.parse(normalizeDcDate(current)));
+        } catch (Exception ignored) {
+            // Comparaison textuelle en dernier recours (ISO-like).
+            return candidate.compareTo(current) > 0;
+        }
+    }
+
+    private static String normalizeDcDate(String value) {
+        String trimmed = value.trim();
+        if (trimmed.length() == 10) {
+            return trimmed + "T00:00:00Z";
+        }
+        if (trimmed.endsWith("Z") || trimmed.contains("+") || trimmed.matches(".*[+-]\\d{2}:\\d{2}$")) {
+            return trimmed;
+        }
+        return trimmed + "Z";
+    }
+
     private void initPreferencesThesaurus(String idThesaurus, String preferredTitle) {
         langueSource = StringUtils.isEmpty(langueSource) ? "fr" : langueSource;
         toolboxPreferencePersistence.initPreferences(idThesaurus, langueSource);
@@ -307,6 +425,7 @@ public class ThesaurusEditionSkosImportEngine {
         if (selectedIdentifier.equalsIgnoreCase("doi")) {
             nodePreference.setOriginalUriIsDoi(true);
         }
+        nodePreference.setMaster(importAsMaster);
         preferencesRepository.save(nodePreference);
     }
 
