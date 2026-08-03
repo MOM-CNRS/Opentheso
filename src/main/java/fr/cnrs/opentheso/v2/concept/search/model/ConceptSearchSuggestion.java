@@ -20,6 +20,11 @@ public record ConceptSearchSuggestion(
         return altLabel;
     }
 
+    /** Alias legacy ({@code NodeSearchMini#getAltLabelValue}) pour l’affichage Facelets. */
+    public String getAltLabelValue() {
+        return altLabel;
+    }
+
     public ConceptSearchKind getKind() {
         return kind;
     }
@@ -32,8 +37,16 @@ public record ConceptSearchSuggestion(
         return kind == ConceptSearchKind.CONCEPT;
     }
 
-    public boolean isAltLabel() {
+    /**
+     * Flag booléen « est un synonyme ». Ne pas exposer comme propriété {@code altLabel}
+     * (conflit EL avec {@link #getAltLabel()} → affichage {@code true->}).
+     */
+    public boolean isAltLabelMatch() {
         return kind == ConceptSearchKind.ALT_LABEL;
+    }
+
+    public boolean isAltLabel() {
+        return isAltLabelMatch();
     }
 
     public boolean isGroup() {
@@ -42,6 +55,10 @@ public record ConceptSearchSuggestion(
 
     public boolean isFacet() {
         return kind == ConceptSearchKind.FACET;
+    }
+
+    public String getConceptId() {
+        return conceptId();
     }
 
     public String conceptId() {

@@ -30,7 +30,7 @@
                                     minQueryLength="1" itemLabel="#{values.prefLabel}" itemValue="#{values}" converter="searchConverter"
                                     scrollHeight="600" inputStyle="font-size: 12px; width: 100%; height: 34px;box-shadow: none;">
                         <p:column rendered="#{values.isAltLabel()}" style="font-size: 12px;">
-                            <h:outputText title="#{values.idConcept}" value="#{values.altLabel}"
+                            <h:outputText title="#{values.idConcept}" value="#{values.altLabelValue}"
                                           style="font-style: italic;" />
                             <h:outputText title="#{values.idConcept}" value=" -> #{values.prefLabel}" style="color: blue" />                                        
                         </p:column>

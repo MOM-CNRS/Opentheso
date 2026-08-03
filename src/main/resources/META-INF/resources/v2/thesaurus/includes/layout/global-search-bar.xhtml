@@ -46,8 +46,8 @@
                                             <p:column rendered="#{suggestion.concept}">
                                                 <h:outputText value="#{suggestion.preferredLabel}" style="font-size:12px;"/>
                                             </p:column>
-                                            <p:column rendered="#{suggestion.altLabel}">
-                                                <h:outputText value="#{suggestion.altLabel} -&gt; #{suggestion.preferredLabel}"
+                                            <p:column rendered="#{suggestion.altLabelMatch}">
+                                                <h:outputText value="#{suggestion.altLabelValue} -&gt; #{suggestion.preferredLabel}"
                                                               style="font-style:italic; font-size:12px; color:blue;"/>
                                             </p:column>
                                             <p:ajax event="itemSelect"

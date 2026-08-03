@@ -61,9 +61,9 @@
                                                               style="font-size:12px;"/>
                                             </p:column>
 
-                                            <p:column rendered="#{suggestion.altLabel}">
+                                            <p:column rendered="#{suggestion.altLabelMatch}">
                                                 <h:outputText title="#{suggestion.refId}"
-                                                              value="#{suggestion.altLabel} -&gt; "
+                                                              value="#{suggestion.altLabelValue} -&gt; "
                                                               style="font-style:italic; font-size:12px; color:blue;"/>
                                                 <h:panelGroup rendered="#{suggestion.deprecated}">
                                                     <i class="fa fa-solid fa-ban fa_custom_ban"/>

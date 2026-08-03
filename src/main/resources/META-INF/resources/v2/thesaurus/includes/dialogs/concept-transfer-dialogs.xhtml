@@ -54,7 +54,7 @@
                                     converter="v2ConceptSearchConverter" forceSelection="true"
                                     minQueryLength="1" scrollHeight="400" style="width:100%;">
                         <p:column rendered="#{suggestion.altLabelMatch}" style="font-size:12px;">
-                            <h:outputText value="#{suggestion.altLabel}" style="font-style:italic;"/>
+                            <h:outputText value="#{suggestion.altLabelValue}" style="font-style:italic;"/>
                             <h:outputText value=" -&gt; #{suggestion.preferredLabel}" style="color:blue;"/>
                         </p:column>
                         <p:column rendered="#{not suggestion.altLabelMatch}" style="font-size:12px;">

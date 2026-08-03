@@ -320,7 +320,7 @@
                                     converter="v2ConceptSearchConverter" scrollHeight="400"
                                     inputStyle="width:100%;">
                         <p:column rendered="#{values.isAltLabel()}">
-                            <h:outputText title="#{values.idConcept}" value="#{values.altLabel}" style="font-style:italic;"/>
+                            <h:outputText title="#{values.idConcept}" value="#{values.altLabelValue}" style="font-style:italic;"/>
                             <h:outputText title="#{values.idConcept}" value=" -&gt; #{values.prefLabel}" style="color:blue;"/>
                         </p:column>
                         <p:column rendered="#{not values.isAltLabel()}">

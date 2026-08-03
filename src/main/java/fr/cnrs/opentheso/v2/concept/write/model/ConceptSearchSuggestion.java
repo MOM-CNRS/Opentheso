@@ -26,6 +26,10 @@ public record ConceptSearchSuggestion(
         return altLabel;
     }
 
+    public String getAltLabelValue() {
+        return altLabel;
+    }
+
     public boolean isAltLabelMatch() {
         return altLabelMatch;
     }

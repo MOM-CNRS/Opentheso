@@ -73,13 +73,13 @@
                                             completeMethod="#{v2GraphViewBean.getAutoComplete}"
                                             minQueryLength="1" itemLabel="#{values.preferredLabel}" itemValue="#{values}" converter="v2ConceptSearchSuggestionConverter"
                                             scrollHeight="600" inputStyle="font-size: 12px; width: 100%; height: 34px;box-shadow: none;">
-                                <p:column rendered="#{values.altLabel}" style="font-size: 12px;">
-                                    <h:outputText title="#{values.conceptId}" value="#{values.altLabel}"
+                                <p:column rendered="#{values.isAltLabelMatch()}" style="font-size: 12px;">
+                                    <h:outputText title="#{values.conceptId}" value="#{values.altLabelValue}"
                                                   style="font-style: italic;" />
                                     <h:outputText title="#{values.conceptId}" value=" -> #{values.preferredLabel} (#{values.conceptId})" style="color: blue" />
                                 </p:column>
 
-                                <p:column rendered="#{!values.altLabel}" style="font-size: 12px;">
+                                <p:column rendered="#{!values.isAltLabelMatch()}" style="font-size: 12px;">
                                     <h:outputText title="#{values.conceptId}" value="#{values.preferredLabel} (#{values.conceptId})" />
                                 </p:column>
                             </p:autoComplete>
