@@ -2,6 +2,7 @@ package fr.cnrs.opentheso.v2.setting.ui;
 
 import fr.cnrs.opentheso.v2.shared.ui.V2LocaleBean;
 import fr.cnrs.opentheso.utils.MessageUtils;
+import fr.cnrs.opentheso.v2.concept.ui.ConsultationShellBean;
 import fr.cnrs.opentheso.v2.setting.fixtures.SettingTestFixtures;
 import fr.cnrs.opentheso.v2.setting.exception.InvalidSettingDataException;
 import fr.cnrs.opentheso.v2.setting.model.IdentifierServerType;
@@ -48,6 +49,8 @@ class PreferenceSettingsBeanTest {
     private V2LocaleBean localeBean;
     @Mock
     private ThesaurusPreferenceService thesaurusPreferenceService;
+    @Mock
+    private ConsultationShellBean consultationShellBean;
 
     private PreferenceSettingsBean bean;
 
@@ -58,7 +61,8 @@ class PreferenceSettingsBeanTest {
                 rightsService,
                 thesaurusContext,
                 localeBean,
-                thesaurusPreferenceService
+                thesaurusPreferenceService,
+                consultationShellBean
         );
         lenient().when(localeBean.getIdLangue()).thenReturn("fr");
     }
@@ -117,6 +121,8 @@ class PreferenceSettingsBeanTest {
                     nullable(String.class), nullable(String.class),
                     nullable(String.class), nullable(String.class), eq("fr")
             );
+            verify(thesaurusContext).changeWorkLanguage("fr");
+            verify(consultationShellBean).refreshHeaderCatalog();
             messageUtils.verify(() -> MessageUtils.showInformationMessage("Préférences enregistrées avec succès"));
         }
     }

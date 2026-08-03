@@ -2,6 +2,7 @@ package fr.cnrs.opentheso.v2.setting.ui;
 
 import fr.cnrs.opentheso.v2.shared.ui.V2LocaleBean;
 import fr.cnrs.opentheso.utils.MessageUtils;
+import fr.cnrs.opentheso.v2.concept.ui.ConsultationShellBean;
 import fr.cnrs.opentheso.v2.rights.AuthTarget;
 import fr.cnrs.opentheso.v2.rights.Permission;
 import fr.cnrs.opentheso.v2.rights.RightsService;
@@ -15,6 +16,7 @@ import jakarta.faces.view.ViewScoped;
 import jakarta.inject.Named;
 import lombok.Getter;
 import lombok.extern.slf4j.Slf4j;
+import org.apache.commons.lang3.StringUtils;
 import org.primefaces.PrimeFaces;
 
 import java.io.Serializable;
@@ -30,6 +32,7 @@ public class PreferenceSettingsBean implements Serializable {
     private final ThesaurusContext thesaurusContext;
     private final V2LocaleBean localeBean;
     private final ThesaurusPreferenceService thesaurusPreferenceService;
+    private final ConsultationShellBean consultationShellBean;
 
     private PreferenceEditor editor;
 
@@ -38,13 +41,15 @@ public class PreferenceSettingsBean implements Serializable {
             RightsService rightsService,
             ThesaurusContext thesaurusContext,
             V2LocaleBean localeBean,
-            ThesaurusPreferenceService thesaurusPreferenceService
+            ThesaurusPreferenceService thesaurusPreferenceService,
+            ConsultationShellBean consultationShellBean
     ) {
         this.userSession = userSession;
         this.rightsService = rightsService;
         this.thesaurusContext = thesaurusContext;
         this.localeBean = localeBean;
         this.thesaurusPreferenceService = thesaurusPreferenceService;
+        this.consultationShellBean = consultationShellBean;
     }
 
     public void load() {
@@ -145,6 +150,11 @@ public class PreferenceSettingsBean implements Serializable {
             editor.setNewPassHandle(null);
             editor.setNewDeeplApiKey(null);
             editor.setNewApiKeyOpenArk(null);
+            // Applique la langue par défaut à la consultation (liste des langues / arbres).
+            if (StringUtils.isNotBlank(saved.sourceLang())) {
+                thesaurusContext.changeWorkLanguage(saved.sourceLang());
+            }
+            consultationShellBean.refreshHeaderCatalog();
             MessageUtils.showInformationMessage("Préférences enregistrées avec succès");
             PrimeFaces.current().ajax().update("containerIndex", "messageIndex", "menuBar");
         } catch (SettingAccessDeniedException | InvalidSettingDataException e) {
