@@ -59,6 +59,17 @@
                 </div>
             </div>
 
+            <!-- Nom pérenne ou Acronyme du thésaurus -->
+            <div class="row mb-3 align-items-center">
+                <div class="col-3 text-right">
+                    <h:outputText value="Acronyme" />
+                </div>
+                <div class="col-5">
+                    <p:inputText placeholder="#{langueBean.getMsg('preferences.persistentNameTheso')}"
+                                 value="#{v2ThesaurusEditionSkosImportBean.persistentNameThesaurus}" style="width: 100%"/>
+                </div>
+            </div>
+
             <div class="row mb-3 align-items-center">
                 <div class="col-3 text-right">
                     <h:outputText value="#{v2LocaleBean.getMsg('candidat.output_format')}"/>

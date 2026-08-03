@@ -75,7 +75,8 @@ public class ThesaurusEditionCsvImportPersistence {
             int userId,
             String userName,
             List<ThesaurusCsvConceptObject> conceptObjects,
-            List<String> languages
+            List<String> languages,
+            String persistentNameThesaurus
     ) {
         if (CollectionUtils.isEmpty(conceptObjects)) {
             return ThesaurusEditionCsvImportResult.error("Aucun concept à importer");
@@ -95,7 +96,12 @@ public class ThesaurusEditionCsvImportPersistence {
             if (StringUtils.isBlank(id)) {
                 return null;
             }
-            String resolvedName = StringUtils.defaultIfBlank(thesaurusName, "theso_" + id);
+            String resolvedName;
+            if(StringUtils.isBlank(persistentNameThesaurus)) {
+                resolvedName = StringUtils.defaultIfBlank(thesaurusName, "theso_" + id);
+            } else {
+                resolvedName = persistentNameThesaurus;
+            }
             if (CollectionUtils.isNotEmpty(languages)) {
                 thesaurusCsvImportEngine.addLangsToThesaurus(languages, id);
             }

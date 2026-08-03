@@ -65,22 +65,22 @@ class ThesaurusEditionCsvImportServiceTest {
     @Test
     void importNewThesaurus_surfacesPersistenceFailure() {
         when(thesaurusEditionCsvImportPersistence.importNewThesaurus(
-                any(), any(), any(), any(), anyInt(), any(), any(), any()
+                any(), any(), any(), any(), anyInt(), any(), any(), any(), any()
         )).thenReturn(ThesaurusEditionCsvImportResult.error("failed"));
 
         assertThrows(IllegalStateException.class, () -> service.importNewThesaurus(
-                "Animaux", "fr", "yyyy-MM-dd", 7, "user", true, null, List.of(), List.of()
+                "Animaux", "fr", "yyyy-MM-dd", 7, "user", true, null, List.of(), List.of(), ""
         ));
     }
 
     @Test
     void importNewThesaurus_returnsCreatedThesaurusId() {
         when(thesaurusEditionCsvImportPersistence.importNewThesaurus(
-                any(), any(), any(), any(), anyInt(), any(), any(), any()
+                any(), any(), any(), any(), anyInt(), any(), any(), any(), any()
         )).thenReturn(new ThesaurusEditionCsvImportResult("TH42", 3, ""));
 
         var outcome = service.importNewThesaurus(
-                "Animaux", "fr", "yyyy-MM-dd", 7, "user", true, 7, List.of(), List.of("fr")
+                "Animaux", "fr", "yyyy-MM-dd", 7, "user", true, 7, List.of(), List.of("fr"), ""
         );
 
         assertEquals("TH42", outcome.thesaurusId());

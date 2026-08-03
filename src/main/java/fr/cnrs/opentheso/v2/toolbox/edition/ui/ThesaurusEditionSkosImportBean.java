@@ -1,7 +1,9 @@
 package fr.cnrs.opentheso.v2.toolbox.edition.ui;
 
 import fr.cnrs.opentheso.models.skosapi.SKOSXmlDocument;
+import fr.cnrs.opentheso.services.PreferenceService;
 import fr.cnrs.opentheso.utils.MessageUtils;
+import fr.cnrs.opentheso.v2.shared.persistence.V2ThesaurusPreferencesProvider;
 import fr.cnrs.opentheso.v2.shared.ui.UserSession;
 import fr.cnrs.opentheso.v2.toolbox.model.LanguageOption;
 import fr.cnrs.opentheso.v2.toolbox.model.ProjectOption;
@@ -38,11 +40,14 @@ public class ThesaurusEditionSkosImportBean implements Serializable {
     private final NewThesaurusService newThesaurusService;
     private final UserSession userSession;
     private final ToolboxAccessPolicy toolboxAccessPolicy;
+    private final V2ThesaurusPreferencesProvider v2ThesaurusPreferencesProvider;
+    private final PreferenceService preferenceService;
 
     private int typeImport;
     private int total;
     private String uri;
     private String selectedLang;
+    private String persistentNameThesaurus;
     private String formatDate = "yyyy-MM-dd";
     private String selectedIdentifier = "sans";
     private String prefixHandle = "";
@@ -154,7 +159,8 @@ public class ThesaurusEditionSkosImportBean implements Serializable {
                     selectedLang,
                     selectedIdentifier,
                     prefixHandle,
-                    prefixDoi
+                    prefixDoi,
+                    persistentNameThesaurus
             );
             progressValue = 100;
             FacesContext.getCurrentInstance().addMessage(null, new FacesMessage(

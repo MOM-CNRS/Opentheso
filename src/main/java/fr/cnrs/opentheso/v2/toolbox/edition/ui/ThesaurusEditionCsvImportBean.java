@@ -41,6 +41,7 @@ public class ThesaurusEditionCsvImportBean implements Serializable {
 
     private String thesaurusName;
     private String selectedLang;
+    private String persistentNameThesaurus;
     private String formatDate = "yyyy-MM-dd";
     private int choiceDelimiter;
     private String selectedProjectId;
@@ -140,7 +141,8 @@ public class ThesaurusEditionCsvImportBean implements Serializable {
                     superAdmin,
                     projectId,
                     conceptObjects,
-                    detectedLangs
+                    detectedLangs,
+                    persistentNameThesaurus
             );
 
             String detail = "Total importé : " + outcome.importedConcepts();

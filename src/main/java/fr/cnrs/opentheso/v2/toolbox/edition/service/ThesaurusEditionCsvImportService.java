@@ -38,7 +38,8 @@ public class ThesaurusEditionCsvImportService {
             boolean superAdmin,
             Integer projectGroupId,
             List<ThesaurusCsvConceptObject> conceptObjects,
-            List<String> languages
+            List<String> languages,
+            String persistentNameThesaurus
     ) {
         Integer groupId = projectGroupId;
         if (!superAdmin && groupId == null) {
@@ -56,7 +57,8 @@ public class ThesaurusEditionCsvImportService {
                 userId,
                 userName,
                 conceptObjects,
-                languages
+                languages,
+                persistentNameThesaurus
         );
 
         if (!result.isSuccess()) {

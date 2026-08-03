@@ -235,7 +235,10 @@ public class ThesaurusEditionSkosImportEngine {
         for (SKOSRelation relation : skosXmlDocument.getConceptScheme().getRelationsList()) {
             hasTopConcceptList.add(relation.getTargetUri());
         }
-        initPreferencesThesaurus(idTheso1, displayTitle);
+        initPreferencesThesaurus(
+                idTheso1,
+                nodePreference.getPreferredName() == null ? displayTitle : nodePreference.getPreferredName()
+        );
         return idTheso1;
     }
 

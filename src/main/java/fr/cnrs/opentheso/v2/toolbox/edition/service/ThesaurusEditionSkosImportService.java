@@ -56,10 +56,12 @@ public class ThesaurusEditionSkosImportService {
             String sourceLang,
             String selectedIdentifier,
             String prefixHandle,
-            String prefixDoi
+            String prefixDoi,
+            String persistentNameThesaurus
     ) throws SQLException {
         var preferences = new Preferences();
         preferences.setSourceLang(StringUtils.defaultIfBlank(sourceLang, "fr"));
+        preferences.setPreferredName(persistentNameThesaurus);
 
         Integer groupId = projectGroupId;
         if (!superAdmin && groupId == null) {
