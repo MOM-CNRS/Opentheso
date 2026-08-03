@@ -46,6 +46,7 @@ public class SecurityConfigKeycloak {
                 .authorizeHttpRequests(authz -> authz
                         .requestMatchers("/login", "/logout", "/oauth2/**",
                                 "/javax.faces.resource/**",
+                                "/jakarta.faces.resource/**",
                                 "/openapi/v1/**")
                         .permitAll()
                         .anyRequest().permitAll())

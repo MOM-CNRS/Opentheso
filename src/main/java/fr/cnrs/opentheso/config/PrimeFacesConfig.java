@@ -1,13 +1,8 @@
 package fr.cnrs.opentheso.config;
 
-import com.sun.faces.config.ConfigureListener;
-import jakarta.faces.lifecycle.Lifecycle;
-import jakarta.faces.lifecycle.LifecycleFactory;
-import jakarta.servlet.ServletContext;
 import jakarta.faces.webapp.FacesServlet;
-import org.springframework.beans.factory.annotation.Autowired;
+import jakarta.servlet.ServletContext;
 import org.springframework.boot.web.servlet.ServletContextInitializer;
-import org.springframework.boot.web.servlet.ServletListenerRegistrationBean;
 import org.springframework.boot.web.servlet.ServletRegistrationBean;
 import org.springframework.context.MessageSource;
 import org.springframework.context.annotation.Bean;
@@ -22,13 +17,13 @@ public class PrimeFacesConfig implements ServletContextAware {
     @Override
     public void setServletContext(ServletContext servletContext) {
         servletContext.setInitParameter("com.sun.faces.forceLoadConfiguration", Boolean.TRUE.toString());
-        servletContext.setInitParameter("javax.faces.FACELETS_SKIP_COMMENTS", Boolean.TRUE.toString());
+        servletContext.setInitParameter("jakarta.faces.FACELETS_SKIP_COMMENTS", Boolean.TRUE.toString());
 
         servletContext.setInitParameter("facelets.DEVELOPMENT", Boolean.TRUE.toString());
 
-        servletContext.setInitParameter("javax.faces.DEFAULT_SUFFIX", ".xhtml");
-        servletContext.setInitParameter("javax.faces.PROJECT_STAGE", "Development");
-        servletContext.setInitParameter("javax.faces.FACELETS_REFRESH_PERIOD", "1");
+        servletContext.setInitParameter("jakarta.faces.DEFAULT_SUFFIX", ".xhtml");
+        servletContext.setInitParameter("jakarta.faces.PROJECT_STAGE", "Development");
+        servletContext.setInitParameter("jakarta.faces.FACELETS_REFRESH_PERIOD", "1");
         servletContext.setInitParameter("jakarta.faces.STATE_SAVING_METHOD", "server");
         servletContext.setInitParameter("jakarta.faces.PARTIAL_STATE_SAVING", Boolean.TRUE.toString());
 
@@ -41,11 +36,6 @@ public class PrimeFacesConfig implements ServletContextAware {
         ServletRegistrationBean<FacesServlet> registrationBean = new ServletRegistrationBean<>(new FacesServlet(), "*.xhtml");
         registrationBean.setLoadOnStartup(1);
         return registrationBean;
-    }
-
-    @Bean
-    public ServletListenerRegistrationBean<ConfigureListener> jsfConfigureListener() {
-        return new ServletListenerRegistrationBean<>(new ConfigureListener());
     }
 
     // permet de gérer le multilingue
