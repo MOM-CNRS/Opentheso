@@ -122,6 +122,7 @@ class ThesaurusEditionSkosImportServiceTest {
                 "sans",
                 "",
                 "",
+                "",
                 true
         );
 
@@ -146,6 +147,7 @@ class ThesaurusEditionSkosImportServiceTest {
                 "sans",
                 "",
                 "",
+                "",
                 true
         );
 
@@ -159,8 +161,8 @@ class ThesaurusEditionSkosImportServiceTest {
         when(thesaurusEditionSkosImportEngine.getMessage()).thenReturn(new StringBuilder("Erreur SKOS"));
 
         assertThrows(IllegalStateException.class, () -> service.importNewThesaurus(
-                document, "yyyy-MM-dd", 7, true, null, "fr", "sans", "", "", ""
-                document, "yyyy-MM-dd", 7, true, null, "fr", "sans", "", "", false
+                document, "yyyy-MM-dd", 7, true, null, "fr",
+                "sans", "", "", "", false
         ));
     }
 

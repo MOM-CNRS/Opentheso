@@ -201,8 +201,7 @@ public class ThesaurusEditionSkosImportBean implements Serializable {
                     selectedIdentifier,
                     prefixHandle,
                     prefixDoi,
-                    persistentNameThesaurus
-                    prefixDoi,
+                    persistentNameThesaurus,
                     asMaster
             );
             progressValue = 100;

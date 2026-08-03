@@ -123,8 +123,7 @@ public class ThesaurusEditionSkosImportService {
             String selectedIdentifier,
             String prefixHandle,
             String prefixDoi,
-            String persistentNameThesaurus
-            String prefixDoi,
+            String persistentNameThesaurus,
             boolean importAsMaster
     ) throws SQLException {
         var preferences = new Preferences();
