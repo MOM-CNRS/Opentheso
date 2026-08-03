@@ -98,6 +98,24 @@ class PropositionMutationServiceTest {
     }
 
     @Test
+    void submitDraft_allowsMultiplePendingWhenFlagEnabled() {
+        when(repository.save(any())).thenAnswer(invocation -> {
+            PropositionModification entity = invocation.getArgument(0);
+            entity.setId(77);
+            return entity;
+        });
+
+        var createdId = service.submitDraft(new PropositionSubmission(
+                "TH1", "Test", "C1", "Concept 1", "fr", "Author", "a@b.fr",
+                "Second sync change", true));
+
+        assertTrue(createdId.isPresent());
+        assertEquals(77, createdId.get());
+        verify(repository, never()).findPendingByConcept(any(), any(), any());
+        verify(repository).save(any());
+    }
+
+    @Test
     void markRead_updatesEnvoyerToLu() {
         PropositionModification proposition = new PropositionModification();
         proposition.setStatus("ENVOYER");

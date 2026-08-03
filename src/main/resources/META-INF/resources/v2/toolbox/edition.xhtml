@@ -63,6 +63,10 @@
                             <ui:include src="edition/view-modify-theso.xhtml" />
                         </p:panel>
 
+                        <p:panel rendered="#{v2EditionBean.syncView}">
+                            <ui:include src="edition/view-sync-thesaurus.xhtml" />
+                        </p:panel>
+
                         <p:panel rendered="#{v2EditionBean.importSkosView}">
                             <ui:include src="edition/view-import-skos.xhtml" />
                         </p:panel>

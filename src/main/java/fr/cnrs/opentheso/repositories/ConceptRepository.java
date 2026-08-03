@@ -176,7 +176,7 @@ public interface ConceptRepository extends JpaRepository<Concept, Integer> {
     @Transactional
     @Query(value = """
                 UPDATE concept 
-                SET modified = CURRENT_DATE,
+                SET modified = CURRENT_TIMESTAMP,
                     contributor = :contributor
                 WHERE id_thesaurus = :thesaurus
                   AND id_concept = :idConcept
@@ -375,6 +375,57 @@ public interface ConceptRepository extends JpaRepository<Concept, Integer> {
       AND c.modified >= :startDate
 """)
     List<String> findConceptsModifiedSince(
+            @Param("idThesaurus") String idThesaurus,
+            @Param("startDate") Date startDate
+    );
+
+    /**
+     * Concepts modifiés depuis {@code startDate} (date+heure).
+     * Inclut les mises à jour lexicales/notes même si {@code concept.modified}
+     * n'a été touché qu'à la granularité jour ({@code CURRENT_DATE}).
+     */
+    @Query(value = """
+            SELECT DISTINCT c.id_concept
+            FROM concept c
+            WHERE c.id_thesaurus = :idThesaurus
+              AND c.status <> 'CA'
+              AND (
+                    c.modified > :startDate
+                    OR EXISTS (
+                        SELECT 1
+                        FROM preferred_term pt
+                        JOIN term t ON t.id_term = pt.id_term AND t.id_thesaurus = pt.id_thesaurus
+                        WHERE pt.id_concept = c.id_concept
+                          AND pt.id_thesaurus = c.id_thesaurus
+                          AND t.modified > :startDate
+                    )
+                    OR EXISTS (
+                        SELECT 1
+                        FROM preferred_term pt
+                        JOIN non_preferred_term npt
+                          ON npt.id_term = pt.id_term AND npt.id_thesaurus = pt.id_thesaurus
+                        WHERE pt.id_concept = c.id_concept
+                          AND pt.id_thesaurus = c.id_thesaurus
+                          AND npt.modified > :startDate
+                    )
+                    OR EXISTS (
+                        SELECT 1
+                        FROM note n
+                        WHERE n.id_thesaurus = c.id_thesaurus
+                          AND n.modified > :startDate
+                          AND (
+                                n.id_concept = c.id_concept
+                                OR n.id_term IN (
+                                    SELECT pt.id_term
+                                    FROM preferred_term pt
+                                    WHERE pt.id_concept = c.id_concept
+                                      AND pt.id_thesaurus = c.id_thesaurus
+                                )
+                          )
+                    )
+              )
+            """, nativeQuery = true)
+    List<String> findConceptIdsChangedSince(
             @Param("idThesaurus") String idThesaurus,
             @Param("startDate") Date startDate
     );

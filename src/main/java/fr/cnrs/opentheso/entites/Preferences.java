@@ -124,4 +124,20 @@ public class Preferences {
     /** true = thésaurus maître, false = esclave (défaut). */
     @Column(name = "is_master")
     private boolean master;
+
+    /** URL de base du serveur maître (ex. https://opentheso.example.fr). */
+    @Column(name = "master_server_url")
+    private String masterServerUrl;
+
+    /** Identifiant du thésaurus maître distant. */
+    @Column(name = "master_thesaurus_id")
+    private String masterThesaurusId;
+
+    /** Clé API pour authentifier les appels vers le serveur maître. */
+    @Column(name = "master_api_key")
+    private String masterApiKey;
+
+    /** Date/heure de la dernière synchronisation réussie vers le maître. */
+    @Column(name = "last_sync_at")
+    private java.time.LocalDateTime lastSyncAt;
 }

@@ -9,6 +9,7 @@ import fr.cnrs.opentheso.v2.toolbox.edition.io.skos.ThesaurusEditionSkosImportEn
 import fr.cnrs.opentheso.v2.toolbox.edition.support.ThesaurusImportBatchSupport;
 import fr.cnrs.opentheso.v2.toolbox.model.NewThesaurusFormOptions;
 import fr.cnrs.opentheso.v2.toolbox.model.ProjectOption;
+import fr.cnrs.opentheso.v2.toolbox.persistence.ToolboxPreferencePersistence;
 import fr.cnrs.opentheso.v2.toolbox.service.NewThesaurusService;
 import org.junit.jupiter.api.BeforeEach;
 import org.junit.jupiter.api.Test;
@@ -38,6 +39,8 @@ class ThesaurusEditionSkosImportServiceTest {
     private NewThesaurusService newThesaurusService;
     @Mock
     private ThesaurusLabelRepository thesaurusLabelRepository;
+    @Mock
+    private ToolboxPreferencePersistence toolboxPreferencePersistence;
 
     private ThesaurusEditionSkosImportService service;
 
@@ -47,7 +50,8 @@ class ThesaurusEditionSkosImportServiceTest {
                 thesaurusEditionSkosImportEngine,
                 newThesaurusService,
                 new SyncImportBatchSupport(),
-                thesaurusLabelRepository
+                thesaurusLabelRepository,
+                toolboxPreferencePersistence
         );
     }
 

@@ -421,6 +421,7 @@ class ThesaurusBrowseBeanTest {
         when(thesaurusContext.resolveThesaurusId()).thenReturn("TH1");
         when(thesaurusContext.getCurrentThesaurusTitle()).thenReturn("Test");
         when(thesaurusContext.resolveWorkLanguage()).thenReturn("fr");
+        when(thesaurusContext.getIdFacetFromUri()).thenReturn("F1");
         when(conceptReadService.loadRootNodes("TH1", "fr", LeftTreeMode.CONCEPT, false)).thenReturn(List.of());
         when(thesaurusHomeReadService.loadOverview("TH1", "fr", "Test"))
                 .thenReturn(new ThesaurusHomeOverview("Test", 0, "", "", "", "", List.of(), List.of(), ""));
@@ -428,7 +429,6 @@ class ThesaurusBrowseBeanTest {
                 .thenReturn(consultationPreferences(true));
         var facet = new FacetDetailOverview("F1", "Facette", "fr", "C1", "Parent", List.of(), List.of(), List.of());
         when(facetReadService.loadDetail("TH1", "F1", "fr")).thenReturn(Optional.of(facet));
-        bean.setFacetIdFromUri("F1");
 
         bean.load();
 
@@ -463,6 +463,7 @@ class ThesaurusBrowseBeanTest {
         when(thesaurusContext.resolveThesaurusId()).thenReturn("TH1");
         when(thesaurusContext.getCurrentThesaurusTitle()).thenReturn("Test");
         when(thesaurusContext.resolveWorkLanguage()).thenReturn("fr");
+        when(thesaurusContext.getIdGroupFromUri()).thenReturn("G1");
         when(conceptReadService.loadRootNodes("TH1", "fr", LeftTreeMode.CONCEPT, false)).thenReturn(List.of());
         when(thesaurusHomeReadService.loadOverview("TH1", "fr", "Test"))
                 .thenReturn(new ThesaurusHomeOverview("Test", 0, "", "", "", "", List.of(), List.of(), ""));
@@ -470,7 +471,6 @@ class ThesaurusBrowseBeanTest {
                 .thenReturn(consultationPreferences(true));
         var group = new GroupDetailOverview("G1", "Collection", "fr", "", "", "", 0, "", "", "", List.of(), List.of(), List.of());
         when(collectionReadService.loadDetail("TH1", "G1", "fr")).thenReturn(Optional.of(group));
-        bean.setGroupIdFromUri("G1");
 
         bean.load();
 
@@ -506,8 +506,8 @@ class ThesaurusBrowseBeanTest {
                         Collections.emptyList(),
                         Collections.emptyList()
                 ));
-        bean.setConceptIdFromUri("C1");
-        bean.setGroupIdFromUri("G1");
+        when(thesaurusContext.getIdConceptFromUri()).thenReturn("C1");
+        when(thesaurusContext.getIdGroupFromUri()).thenReturn("G1");
 
         bean.load();
 
@@ -598,7 +598,7 @@ class ThesaurusBrowseBeanTest {
                         Collections.emptyList(),
                         Collections.emptyList()
                 ));
-        bean.setConceptIdFromUri("C1");
+        when(thesaurusContext.getIdConceptFromUri()).thenReturn("C1");
 
         bean.load();
 

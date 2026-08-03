@@ -1,5 +1,6 @@
 package fr.cnrs.opentheso.v2.toolbox.service;
 
+import fr.cnrs.opentheso.entites.Preferences;
 import fr.cnrs.opentheso.entites.ThesaurusDcTerm;
 import fr.cnrs.opentheso.models.concept.DCMIResource;
 import fr.cnrs.opentheso.models.thesaurus.Thesaurus;
@@ -77,7 +78,7 @@ public class ModifyThesaurusService {
 
     @Transactional(readOnly = true)
     public List<EditionMetadata> loadMetadata(String thesaurusId) {
-        return thesaurusDcTermRepository.findAllByIdThesaurus(thesaurusId).stream()
+        List<EditionMetadata> loaded = thesaurusDcTermRepository.findAllByIdThesaurus(thesaurusId).stream()
                 .map(term -> {
                     EditionMetadata metadata = new EditionMetadata();
                     metadata.setId(term.getId().intValue());
@@ -88,6 +89,59 @@ public class ModifyThesaurusService {
                     return metadata;
                 })
                 .toList();
+        return dedupeSingularEditionMetadata(loaded);
+    }
+
+    /**
+     * Une seule ligne pour created/modified (valeur la plus récente), pour éviter les doublons DC.
+     */
+    static List<EditionMetadata> dedupeSingularEditionMetadata(List<EditionMetadata> items) {
+        if (items == null || items.isEmpty()) {
+            return List.of();
+        }
+        Map<String, EditionMetadata> singularBest = new LinkedHashMap<>();
+        List<EditionMetadata> others = new ArrayList<>();
+        for (EditionMetadata item : items) {
+            String name = item.getName() == null ? "" : item.getName().trim().toLowerCase();
+            if ("created".equals(name) || "modified".equals(name)) {
+                EditionMetadata previous = singularBest.get(name);
+                if (previous == null || isNewerDcDate(item.getValue(), previous.getValue())) {
+                    singularBest.put(name, item);
+                }
+            } else {
+                others.add(item);
+            }
+        }
+        List<EditionMetadata> result = new ArrayList<>(others.size() + singularBest.size());
+        result.addAll(others);
+        result.addAll(singularBest.values());
+        return result;
+    }
+
+    private static boolean isNewerDcDate(String candidate, String current) {
+        if (StringUtils.isBlank(candidate)) {
+            return false;
+        }
+        if (StringUtils.isBlank(current)) {
+            return true;
+        }
+        try {
+            return java.time.Instant.parse(normalizeDcDate(candidate))
+                    .isAfter(java.time.Instant.parse(normalizeDcDate(current)));
+        } catch (Exception ignored) {
+            return candidate.compareTo(current) > 0;
+        }
+    }
+
+    private static String normalizeDcDate(String value) {
+        String trimmed = value.trim();
+        if (trimmed.length() == 10) {
+            return trimmed + "T00:00:00Z";
+        }
+        if (trimmed.endsWith("Z") || trimmed.contains("+") || trimmed.matches(".*[+-]\\d{2}:\\d{2}$")) {
+            return trimmed;
+        }
+        return trimmed + "Z";
     }
 
     public List<String> loadDcmiResources() {
@@ -132,6 +186,25 @@ public class ModifyThesaurusService {
             throw new InvalidToolboxDataException("Thésaurus introuvable");
         }
         toolboxPreferencePersistence.updateMasterRole(thesaurusId, master);
+    }
+
+    @Transactional(readOnly = true)
+    public Preferences loadPreferences(String thesaurusId) {
+        return toolboxPreferencePersistence.findPreferences(thesaurusId);
+    }
+
+    @Transactional
+    public void updateMasterLink(
+            String thesaurusId,
+            String masterServerUrl,
+            String masterThesaurusId,
+            String masterApiKey
+    ) {
+        if (StringUtils.isBlank(thesaurusId)) {
+            throw new InvalidToolboxDataException("Thésaurus introuvable");
+        }
+        toolboxPreferencePersistence.updateMasterLink(
+                thesaurusId, masterServerUrl, masterThesaurusId, masterApiKey);
     }
 
     @Transactional

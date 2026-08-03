@@ -114,4 +114,16 @@ public class PreferencesEntity {
 
     @Column(name = "is_master")
     private boolean master;
+
+    @Column(name = "master_server_url")
+    private String masterServerUrl;
+
+    @Column(name = "master_thesaurus_id")
+    private String masterThesaurusId;
+
+    @Column(name = "master_api_key")
+    private String masterApiKey;
+
+    @Column(name = "last_sync_at")
+    private java.time.LocalDateTime lastSyncAt;
 }

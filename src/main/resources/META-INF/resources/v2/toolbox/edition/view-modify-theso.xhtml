@@ -103,8 +103,26 @@
                                     <f:selectItem itemLabel="#{v2LocaleBean.getMsg('toolbox.thesaurusRoleMaster')}"
                                                   itemValue="true"/>
                                     <p:ajax event="change" listener="#{v2ModifyThesaurusBean.saveThesaurusRole()}"
-                                            process="@this" update="messageIndex"/>
+                                            process="@this" update="messageIndex v2SyncButtonPanel"/>
                                 </p:selectOneRadio>
+                            </div>
+                        </div>
+                    </h:panelGroup>
+
+                    <h:panelGroup id="v2SyncButtonPanel" layout="block">
+                        <div class="row" style="margin-top: 10px">
+                            <div class="col-3" style="text-align: right">
+                                <h:outputText value="#{v2LocaleBean.getMsg('toolbox.syncWithMaster')}"/>
+                            </div>
+                            <div class="col-5">
+                                <p:commandButton value="#{v2LocaleBean.getMsg('toolbox.openSync')}"
+                                                 icon="fas fa-sync-alt"
+                                                 styleClass="ui-button-success"
+                                                 disabled="#{v2ModifyThesaurusBean.masterThesaurus}"
+                                                 title="#{v2ModifyThesaurusBean.masterThesaurus ? v2LocaleBean.getMsg('toolbox.syncOnlySlave') : ''}"
+                                                 action="#{v2EditionBean.showSyncThesaurus(v2ModifyThesaurusBean.thesaurusId)}"
+                                                 update="containerIndex"
+                                                 process="@this"/>
                             </div>
                         </div>
                     </h:panelGroup>

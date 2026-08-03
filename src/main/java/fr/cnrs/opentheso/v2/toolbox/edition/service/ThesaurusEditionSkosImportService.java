@@ -11,6 +11,7 @@ import fr.cnrs.opentheso.v2.shared.io.SkosRdfFormatSupport;
 import fr.cnrs.opentheso.v2.toolbox.edition.io.skos.ThesaurusEditionSkosImportEngine;
 import fr.cnrs.opentheso.v2.toolbox.edition.support.ThesaurusImportBatchSupport;
 import fr.cnrs.opentheso.v2.toolbox.model.NewThesaurusFormOptions;
+import fr.cnrs.opentheso.v2.toolbox.persistence.ToolboxPreferencePersistence;
 import fr.cnrs.opentheso.v2.toolbox.service.NewThesaurusService;
 import lombok.RequiredArgsConstructor;
 import org.apache.commons.lang3.StringUtils;
@@ -19,6 +20,7 @@ import org.springframework.stereotype.Service;
 import java.io.IOException;
 import java.io.InputStream;
 import java.sql.SQLException;
+import java.time.LocalDateTime;
 import java.util.ArrayList;
 import java.util.List;
 import java.util.Optional;
@@ -31,6 +33,7 @@ public class ThesaurusEditionSkosImportService {
     private final NewThesaurusService newThesaurusService;
     private final ThesaurusImportBatchSupport importBatchSupport;
     private final ThesaurusLabelRepository thesaurusLabelRepository;
+    private final ToolboxPreferencePersistence toolboxPreferencePersistence;
 
     public SkosLoadResult loadSkosFile(
             InputStream inputStream,
@@ -234,6 +237,8 @@ public class ThesaurusEditionSkosImportService {
                 thesaurusEditionSkosImportEngine.addFoafImages(new ArrayList<>(foafImages), finalThesaurusId);
             }
             importBatchSupport.flushAndClear();
+            // Baseline sync : l'import n'est pas une modification locale à pousser vers le maître.
+            toolboxPreferencePersistence.updateLastSyncAt(finalThesaurusId, LocalDateTime.now());
         });
 
         return thesaurusId;

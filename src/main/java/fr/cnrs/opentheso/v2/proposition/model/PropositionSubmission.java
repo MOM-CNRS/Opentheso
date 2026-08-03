@@ -8,6 +8,23 @@ public record PropositionSubmission(
         String lang,
         String authorName,
         String authorEmail,
-        String comment
+        String comment,
+        boolean allowMultiplePending
 ) {
+    /**
+     * Soumission UI classique : une seule proposition pending par auteur/concept/langue.
+     */
+    public PropositionSubmission(
+            String thesaurusId,
+            String thesaurusTitle,
+            String conceptId,
+            String conceptLabel,
+            String lang,
+            String authorName,
+            String authorEmail,
+            String comment
+    ) {
+        this(thesaurusId, thesaurusTitle, conceptId, conceptLabel, lang,
+                authorName, authorEmail, comment, false);
+    }
 }

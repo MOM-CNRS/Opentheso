@@ -95,16 +95,16 @@ class GraphExploreBeanTest {
     }
 
     @Test
-    void loadBranchGraph_usesNullConceptWhenNothingResolved() {
+    void loadBranchGraph_setsEmptyUrlWhenNothingResolved() {
         bean.setConceptIdFromUri(null);
         when(thesaurusContext.getIdConceptFromUri()).thenReturn(null);
         when(conceptSelectionSource.getSelectedConceptId()).thenReturn(Optional.empty());
         when(thesaurusContext.resolveThesaurusId()).thenReturn("TH1");
-        when(thesaurusContext.resolveWorkLanguage()).thenReturn("fr");
         when(applicationUriService.resolveApplicationRootUrl()).thenReturn("http://localhost:8080/opentheso/");
 
         bean.loadBranchGraph();
 
-        verify(graphVisualizationUrlService).buildBranchTreeDataUrl("http://localhost:8080/opentheso/", "TH1", null, "fr");
+        assertEquals("", bean.getTreeDataUrl());
+        verify(graphVisualizationUrlService, never()).buildBranchTreeDataUrl(any(), any(), any(), any());
     }
 }
