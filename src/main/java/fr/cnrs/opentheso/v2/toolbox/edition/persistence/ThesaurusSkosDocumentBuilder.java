@@ -448,18 +448,22 @@ public class ThesaurusSkosDocumentBuilder {
             try {
                 ArrayList<NodeImage> nodeImages = new ArrayList<>();
                 for (String image : images) {
-                    String[] imageDetail = image.split(SUB_SEPARATOR);
-                    // if(imageDetail.length != 4) return;
-
+                    String[] imageDetail = image.split(SUB_SEPARATOR, -1);
+                    if (imageDetail.length < 3 || StringUtils.isBlank(imageDetail[2])) {
+                        continue;
+                    }
                     NodeImage nodeImage = new NodeImage();
                     nodeImage.setImageName(imageDetail[0]);
                     nodeImage.setCopyRight(imageDetail[1]);
-                    nodeImage.setUri(imageDetail[2]);
-                    if (imageDetail.length >= 4)
+                    nodeImage.setUri(imageDetail[2].trim());
+                    if (imageDetail.length >= 4) {
                         nodeImage.setCreator(imageDetail[3]);
+                    }
                     nodeImages.add(nodeImage);
                 }
-                resource.setNodeImages(nodeImages);
+                if (!nodeImages.isEmpty()) {
+                    resource.setNodeImages(nodeImages);
+                }
             } catch (Exception e) {
                 log.error("Erreur export Concept _ images = " + resource.getIdentifier() + "  " + textBrut );
             }

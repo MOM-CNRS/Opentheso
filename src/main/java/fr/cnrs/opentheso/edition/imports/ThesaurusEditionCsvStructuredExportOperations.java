@@ -2,7 +2,6 @@ package fr.cnrs.opentheso.edition.imports;
 
 import fr.cnrs.opentheso.models.nodes.NodeTree;
 import fr.cnrs.opentheso.services.ConceptService;
-import fr.cnrs.opentheso.services.FacetService;
 import lombok.RequiredArgsConstructor;
 import org.apache.commons.collections4.CollectionUtils;
 import org.apache.commons.lang3.StringUtils;
@@ -11,12 +10,15 @@ import org.springframework.stereotype.Component;
 import java.util.ArrayList;
 import java.util.List;
 
+/**
+ * Legacy helper (non branché sur l'UI V2). Les facettes sont ignorées
+ * pour ne pas fausser la structure CSV.
+ */
 @Component
 @RequiredArgsConstructor
 public class ThesaurusEditionCsvStructuredExportOperations {
 
     private final ConceptService conceptService;
-    private final FacetService facetService;
 
     private int treeSize;
     private int matrixRow;
@@ -42,35 +44,17 @@ public class ThesaurusEditionCsvStructuredExportOperations {
     }
 
     private List<NodeTree> traverseTree(String thesaurusId, String languageCode, String parentId) {
-        List<NodeTree> concepts = conceptService.getListChildrenOfConceptWithTerm(parentId, languageCode, thesaurusId);
+        List<NodeTree> concepts = new ArrayList<>(
+                conceptService.getListChildrenOfConceptWithTerm(parentId, languageCode, thesaurusId)
+        );
         for (NodeTree concept : concepts) {
             treeSize++;
             concept.setIdParent(parentId);
             concept.setPreferredTerm(StringUtils.isEmpty(concept.getPreferredTerm())
                     ? "(" + concept.getIdConcept() + ")" : concept.getPreferredTerm());
             concept.setChildrens(traverseTree(thesaurusId, languageCode, concept.getIdConcept()));
-
-            var facets = searchFacetsForTree(parentId, thesaurusId, languageCode);
-            if (CollectionUtils.isNotEmpty(facets)) {
-                treeSize += facets.size();
-                concept.getChildrens().addAll(facets);
-            }
         }
         return concepts;
-    }
-
-    private List<NodeTree> searchFacetsForTree(String conceptParentId, String thesaurusId, String languageCode) {
-        var facets = new ArrayList<NodeTree>();
-        var facetValues = facetService.getAllIdValueFacetsOfConcept(conceptParentId, thesaurusId, languageCode);
-        for (var facet : facetValues) {
-            var nodeTree = new NodeTree();
-            nodeTree.setIdConcept(facet.getId());
-            nodeTree.setIdParent(conceptParentId);
-            nodeTree.setPreferredTerm(StringUtils.isEmpty(facet.getValue())
-                    ? "(" + facet.getId() + ")" : facet.getValue());
-            facets.add(nodeTree);
-        }
-        return facets;
     }
 
     private void fillMatrix(String[][] matrix, NodeTree concept) {
@@ -87,9 +71,6 @@ public class ThesaurusEditionCsvStructuredExportOperations {
                     matrix[matrixRow][matrixColumn] = child.getPreferredTerm();
                     if (matrixRow < matrix.length - 1) {
                         matrixRow++;
-                    }
-                    if (matrixColumn > matrix.length - 1) {
-                        matrixColumn--;
                     }
                 }
             }

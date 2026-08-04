@@ -113,6 +113,30 @@ class ThesaurusExportBeanTest {
     }
 
     @Test
+    void downloadPdf_delegatesWithImagesAndExportOptions() throws Exception {
+        StreamedContent content = org.mockito.Mockito.mock(StreamedContent.class);
+        bean.prepare("TH1", "Thésaurus test");
+        bean.setPdfLanguage1("fr");
+        bean.setPdfLanguage2("en");
+        bean.setPdfHierarchical(true);
+        bean.setIncludeImages(true);
+        bean.setClearHtml(true);
+        bean.setFilterByGroup(true);
+        bean.setSelectedGroupIds(new java.util.ArrayList<>(List.of("G1")));
+        when(thesaurusEditionPdfExportService.exportThesaurus(
+                eq("TH1"),
+                eq("Thésaurus test"),
+                eq("fr"),
+                eq("en"),
+                eq(true),
+                eq(true),
+                any(ThesaurusEditionExportOptions.class)
+        )).thenReturn(content);
+
+        assertEquals(content, bean.downloadPdf());
+    }
+
+    @Test
     void downloadCsvDeprecated_delegatesToDeprecatedExportService() {
         StreamedContent content = org.mockito.Mockito.mock(StreamedContent.class);
         bean.prepare("TH1", "Thésaurus test");

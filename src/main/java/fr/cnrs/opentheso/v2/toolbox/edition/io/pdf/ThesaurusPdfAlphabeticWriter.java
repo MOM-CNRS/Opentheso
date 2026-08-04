@@ -1,12 +1,9 @@
 package fr.cnrs.opentheso.v2.toolbox.edition.io.pdf;
 
 import com.itextpdf.text.Anchor;
-import com.itextpdf.text.BadElementException;
 import com.itextpdf.text.Chunk;
-import com.itextpdf.text.Image;
 import com.itextpdf.text.Paragraph;
 import fr.cnrs.opentheso.entites.Preferences;
-import fr.cnrs.opentheso.models.nodes.NodeImage;
 import fr.cnrs.opentheso.models.skosapi.SKOSXmlDocument;
 import fr.cnrs.opentheso.models.skosapi.SKOSResource;
 import fr.cnrs.opentheso.models.skosapi.SKOSLabel;
@@ -22,9 +19,6 @@ import org.apache.commons.collections4.CollectionUtils;
 import org.apache.commons.lang3.StringUtils;
 import lombok.RequiredArgsConstructor;
 import org.springframework.stereotype.Component;
-
-import java.io.IOException;
-import java.net.URL;
 
 import java.util.ArrayList;
 import java.util.Collections;
@@ -91,8 +85,9 @@ public class ThesaurusPdfAlphabeticWriter {
             addDocuments(paragraphs, concept.getDocumentationsList(), traductions.get(idFromUri), codeLanguage1, codeLanguage2, writePdfSettings);
             addMatchs(paragraphs, concept.getMatchList(), writePdfSettings);
             addGpsCoordiantes(paragraphs, concept.getGpsCoordinates(), writePdfSettings);
-            if(isToogleExportImage)
-                addImages(paragraphs, concept.getNodeImages(), writePdfSettings);
+            if (isToogleExportImage) {
+                ThesaurusPdfImageEmbedder.addImages(paragraphs, concept.getNodeImages(), 11f, writePdfSettings);
+            }
         }
     }
 
@@ -244,49 +239,4 @@ public class ThesaurusPdfAlphabeticWriter {
             return "(" + resultat.substring(0, resultat.length() - 2) + ")";
         }
     }
-
-    private void addImages(List<Paragraph> paragraphs, List<NodeImage> images, ThesaurusPdfSettings writePdfSettings) {
-        if (CollectionUtils.isNotEmpty(images)) {
-            paragraphs.add(new Paragraph(Chunk.NEWLINE));
-            for (NodeImage imageElement : images) {
-                if (imageElement.getUri() != null && !imageElement.getUri().isEmpty()) {
-                    try {
-                        // Téléchargement de l'image
-                        URL imageUrl = new URL(imageElement.getUri());
-                        Image image = Image.getInstance(imageUrl);
-
-                        // Redimensionnement
-                        float scaleFactor = writePdfSettings.resiseImage(image);
-                        if (scaleFactor > 0) {
-                            image.scaleAbsolute(image.getWidth() / scaleFactor, image.getHeight() / scaleFactor);
-                            // Ajout de l'image au paragraphe avec indentation
-                            paragraphs.add(new Paragraph(new Chunk(image, 11, 0, true)));
-                        } else {
-                            paragraphs.add(new Paragraph("Erreur de redimensionnement de l'image : " + imageElement.getUri()));
-                        }
-                    } catch (BadElementException | IOException ex) {
-                        paragraphs.add(new Paragraph("Erreur de téléchargement de l'image (image vide) : " + imageElement.getUri()));
-                    }
-                } else {
-                    paragraphs.add(new Paragraph("Image invalide : " + imageElement.getUri()));
-                }
-            }
-        }
-    }
-
-    /*
-    private void addImages(List<Paragraph> paragraphs, List<NodeImage> images, ThesaurusPdfSettings writePdfSettings) {
-
-        if (CollectionUtils.isNotEmpty(images)) {
-            paragraphs.add(new Paragraph(Chunk.NEWLINE));
-            images.stream().forEach(element -> {
-                try {
-                    Image image = Image.getInstance(new URL(element.getUri()));
-                    image.scaleAbsolute(writePdfSettings.resiseImage(image));
-                    paragraphs.add(new Paragraph(new Chunk(image, 11, 0, true)));
-                } catch (Exception ex) {
-                }
-            });
-        }
-    }*/
 }

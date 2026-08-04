@@ -1,11 +1,8 @@
 package fr.cnrs.opentheso.v2.toolbox.edition.persistence;
 
-import fr.cnrs.opentheso.entites.NodeLabel;
 import fr.cnrs.opentheso.models.nodes.NodeTree;
 import fr.cnrs.opentheso.repositories.ConceptRepository;
 import fr.cnrs.opentheso.repositories.HierarchicalRelationshipRepository;
-import fr.cnrs.opentheso.repositories.NodeLabelRepository;
-import fr.cnrs.opentheso.repositories.ThesaurusArrayRepository;
 import lombok.RequiredArgsConstructor;
 import org.apache.commons.collections4.CollectionUtils;
 import org.apache.commons.lang3.StringUtils;
@@ -14,105 +11,115 @@ import org.springframework.stereotype.Component;
 import java.util.ArrayList;
 import java.util.List;
 
+/**
+ * Construit la matrice CSV structurée (hiérarchie de concepts uniquement).
+ * Les facettes sont volontairement ignorées pour ne pas fausser la structure
+ * (réimport = concepts uniquement).
+ */
 @Component
 @RequiredArgsConstructor
 public class ThesaurusEditionCsvStructuredExportPersistence {
 
+    private static final int MIN_COLUMNS = 1;
+
     private final ConceptRepository conceptRepository;
     private final HierarchicalRelationshipRepository hierarchicalRelationshipRepository;
-    private final ThesaurusArrayRepository thesaurusArrayRepository;
-    private final NodeLabelRepository nodeLabelRepository;
-
-    private int treeSize;
-    private int matrixRow;
-    private int matrixColumn;
 
     public String[][] buildStructuredMatrix(String thesaurusId, String languageCode) {
-        treeSize = 0;
-        var topConcepts = conceptRepository.findTopConceptsWithTermByThesaurusAndLang(thesaurusId, languageCode);
-        for (NodeTree topConcept : topConcepts) {
-            treeSize++;
-            topConcept.setPreferredTerm(StringUtils.isEmpty(topConcept.getPreferredTerm())
-                    ? "(" + topConcept.getIdConcept() + ")" : topConcept.getPreferredTerm());
-            topConcept.setChildrens(traverseTree(thesaurusId, languageCode, topConcept.getIdConcept()));
+        List<NodeTree> topConcepts = loadTopConcepts(thesaurusId, languageCode);
+        int treeSize = countNodes(topConcepts);
+        if (treeSize == 0) {
+            return new String[0][0];
         }
 
-        String[][] matrix = new String[treeSize][20];
-        matrixRow = 0;
+        int columnCount = Math.max(MIN_COLUMNS, maxDepth(topConcepts));
+        String[][] matrix = new String[treeSize][columnCount];
+        MatrixCursor cursor = new MatrixCursor();
         for (NodeTree topConcept : topConcepts) {
-            matrixColumn = 0;
-            fillMatrix(matrix, topConcept);
+            cursor.column = 0;
+            fillMatrix(matrix, topConcept, cursor);
         }
         return matrix;
     }
 
+    private List<NodeTree> loadTopConcepts(String thesaurusId, String languageCode) {
+        List<NodeTree> topConcepts = new ArrayList<>(
+                conceptRepository.findTopConceptsWithTermByThesaurusAndLang(thesaurusId, languageCode)
+        );
+        for (NodeTree topConcept : topConcepts) {
+            topConcept.setPreferredTerm(resolveLabel(topConcept.getPreferredTerm(), topConcept.getIdConcept()));
+            topConcept.setChildrens(traverseTree(thesaurusId, languageCode, topConcept.getIdConcept()));
+        }
+        return topConcepts;
+    }
+
     private List<NodeTree> traverseTree(String thesaurusId, String languageCode, String parentId) {
-        List<NodeTree> concepts = hierarchicalRelationshipRepository
-                .findChildrenWithPreferredTerm(parentId, languageCode, thesaurusId).stream()
-                .map(view -> {
+        List<NodeTree> concepts = new ArrayList<>();
+        hierarchicalRelationshipRepository
+                .findChildrenWithPreferredTerm(parentId, languageCode, thesaurusId)
+                .forEach(view -> {
                     NodeTree node = new NodeTree();
                     node.setIdConcept(view.getIdConcept());
-                    node.setPreferredTerm(view.getPreferredTerm());
-                    return node;
-                })
-                .toList();
-
-        for (NodeTree concept : concepts) {
-            treeSize++;
-            concept.setIdParent(parentId);
-            concept.setPreferredTerm(StringUtils.isEmpty(concept.getPreferredTerm())
-                    ? "(" + concept.getIdConcept() + ")" : concept.getPreferredTerm());
-            concept.setChildrens(traverseTree(thesaurusId, languageCode, concept.getIdConcept()));
-
-            var facets = searchFacetsForTree(parentId, thesaurusId, languageCode);
-            if (CollectionUtils.isNotEmpty(facets)) {
-                treeSize += facets.size();
-                concept.getChildrens().addAll(facets);
-            }
-        }
+                    node.setIdParent(parentId);
+                    node.setPreferredTerm(resolveLabel(view.getPreferredTerm(), view.getIdConcept()));
+                    // Facettes exclues : seuls les concepts NT alimentent la structure.
+                    node.setChildrens(traverseTree(thesaurusId, languageCode, view.getIdConcept()));
+                    concepts.add(node);
+                });
         return concepts;
     }
 
-    private List<NodeTree> searchFacetsForTree(String conceptParentId, String thesaurusId, String languageCode) {
-        var facets = new ArrayList<NodeTree>();
-        var thesaurusArrays = thesaurusArrayRepository.findAllByIdThesaurusAndIdConceptParent(thesaurusId, conceptParentId);
-        for (var facet : thesaurusArrays) {
-            var lexicalValue = nodeLabelRepository.findByIdFacetAndIdThesaurusAndLang(
-                            facet.getIdFacet(), thesaurusId, languageCode)
-                    .map(NodeLabel::getLexicalValue)
-                    .orElse("");
-
-            var nodeTree = new NodeTree();
-            nodeTree.setIdConcept(facet.getIdFacet());
-            nodeTree.setIdParent(conceptParentId);
-            nodeTree.setPreferredTerm(StringUtils.isEmpty(lexicalValue)
-                    ? "(" + facet.getIdFacet() + ")" : lexicalValue);
-            facets.add(nodeTree);
+    private void fillMatrix(String[][] matrix, NodeTree concept, MatrixCursor cursor) {
+        matrix[cursor.row][cursor.column] = concept.getPreferredTerm();
+        if (CollectionUtils.isEmpty(concept.getChildrens())) {
+            return;
         }
-        return facets;
-    }
-
-    private void fillMatrix(String[][] matrix, NodeTree concept) {
-        matrix[matrixRow][matrixColumn] = concept.getPreferredTerm();
-        if (CollectionUtils.isNotEmpty(concept.getChildrens())) {
-            matrixColumn++;
-            if (matrixRow < matrix.length - 1) {
-                matrixRow++;
-            }
-            for (NodeTree child : concept.getChildrens()) {
-                if (CollectionUtils.isNotEmpty(child.getChildrens())) {
-                    fillMatrix(matrix, child);
-                } else {
-                    matrix[matrixRow][matrixColumn] = child.getPreferredTerm();
-                    if (matrixRow < matrix.length - 1) {
-                        matrixRow++;
-                    }
-                    if (matrixColumn > matrix.length - 1) {
-                        matrixColumn--;
-                    }
+        cursor.column++;
+        if (cursor.row < matrix.length - 1) {
+            cursor.row++;
+        }
+        for (NodeTree child : concept.getChildrens()) {
+            if (CollectionUtils.isNotEmpty(child.getChildrens())) {
+                fillMatrix(matrix, child, cursor);
+            } else {
+                matrix[cursor.row][cursor.column] = child.getPreferredTerm();
+                if (cursor.row < matrix.length - 1) {
+                    cursor.row++;
                 }
             }
-            matrixColumn--;
         }
+        cursor.column--;
+    }
+
+    private static String resolveLabel(String preferredTerm, String conceptId) {
+        return StringUtils.isEmpty(preferredTerm) ? "(" + conceptId + ")" : preferredTerm;
+    }
+
+    private static int countNodes(List<NodeTree> nodes) {
+        int count = 0;
+        for (NodeTree node : nodes) {
+            count++;
+            if (CollectionUtils.isNotEmpty(node.getChildrens())) {
+                count += countNodes(node.getChildrens());
+            }
+        }
+        return count;
+    }
+
+    private static int maxDepth(List<NodeTree> nodes) {
+        int max = 0;
+        for (NodeTree node : nodes) {
+            int depth = 1;
+            if (CollectionUtils.isNotEmpty(node.getChildrens())) {
+                depth += maxDepth(node.getChildrens());
+            }
+            max = Math.max(max, depth);
+        }
+        return max;
+    }
+
+    private static final class MatrixCursor {
+        private int row;
+        private int column;
     }
 }

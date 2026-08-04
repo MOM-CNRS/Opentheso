@@ -51,19 +51,6 @@
                         </p:selectOneMenu>
                     </div>
                 </div>
-                <div class="row mb-3 align-items-center">
-                    <div class="col-3 text-right">
-                        <h:outputText value="#{v2LocaleBean.getMsg('candidat.language')}"/>
-                    </div>
-                    <div class="col-5">
-                        <p:selectCheckboxMenu value="#{v2ThesaurusExportBean.selectedLanguageCodes}"
-                                              label="#{v2LocaleBean.getMsg('select')}"
-                                              style="width: 100%;" multiple="true" filter="true">
-                            <f:selectItems value="#{v2ThesaurusExportBean.exportLanguages}" var="lang"
-                                           itemLabel="#{lang.value}" itemValue="#{lang.code}"/>
-                        </p:selectCheckboxMenu>
-                    </div>
-                </div>
                 <ui:include src="includes/export-download-button.xhtml">
                     <ui:param name="downloadMode" value="csv"/>
                 </ui:include>
@@ -116,13 +103,15 @@
             </h:panelGroup>
 
             <h:panelGroup rendered="#{v2EditionBean.exportPdfView}" layout="block">
-                <div class="row mb-3 align-items-center">
+                <div class="row mb-3">
                     <div class="col-3 text-right">
                         <h:outputText value="#{v2LocaleBean.getMsg('statistique.type')}"/>
                     </div>
                     <div class="col-5">
-                        <p:selectBooleanCheckbox value="#{v2ThesaurusExportBean.pdfHierarchical}"
-                                                 itemLabel="#{v2LocaleBean.getMsg('export.hierarchical')}"/>
+                        <p:selectOneRadio value="#{v2ThesaurusExportBean.pdfHierarchical}" layout="pageDirection">
+                            <f:selectItem itemLabel="#{v2LocaleBean.getMsg('export.hierarchical')}" itemValue="#{true}"/>
+                            <f:selectItem itemLabel="#{v2LocaleBean.getMsg('export.alphabetical')}" itemValue="#{false}"/>
+                        </p:selectOneRadio>
                     </div>
                 </div>
                 <div class="row mb-3 align-items-center">
@@ -148,9 +137,51 @@
                         </p:selectOneMenu>
                     </div>
                 </div>
+
+                <h:panelGroup id="exportPdfFilterByGroupPanel" layout="block">
+                    <div class="row mb-3 align-items-center">
+                        <div class="col-3 text-right">
+                            <h:outputText value="#{v2LocaleBean.getMsg('statistique.filtre_collection')}"
+                                          title="#{v2LocaleBean.getMsg('eport.allSelectedByDefault')}"/>
+                        </div>
+                        <div class="col-5">
+                            <p:toggleSwitch value="#{v2ThesaurusExportBean.filterByGroup}">
+                                <p:ajax update="exportPdfFilterByGroupPanel"/>
+                            </p:toggleSwitch>
+                        </div>
+                    </div>
+                    <h:panelGroup rendered="#{v2ThesaurusExportBean.filterByGroup}" layout="block">
+                        <div class="row mb-3">
+                            <div class="col-3"/>
+                            <div class="col-5">
+                                <p:selectCheckboxMenu value="#{v2ThesaurusExportBean.selectedGroupIds}"
+                                                      label="#{v2LocaleBean.getMsg('select')}"
+                                                      style="width: 100%;" multiple="true" filter="true"
+                                                      filterMatchMode="startsWith"
+                                                      panelStyle="width: 21rem;" scrollHeight="250">
+                                    <f:selectItems value="#{v2ThesaurusExportBean.groupList}" var="group"
+                                                   itemLabel="#{group.lexicalValue}"
+                                                   itemValue="#{group.conceptGroup.idGroup}"/>
+                                </p:selectCheckboxMenu>
+                            </div>
+                        </div>
+                    </h:panelGroup>
+                </h:panelGroup>
+
                 <div class="row mb-3 align-items-center">
                     <div class="col-3 text-right">
-                        <h:outputText value="#{v2LocaleBean.getMsg('export.filterAddImage')}"/>
+                        <h:outputText value="#{v2LocaleBean.getMsg('export.filterHtmlCharacter')}"
+                                      title="#{v2LocaleBean.getMsg('export.filterHtmlCharacterTooltip')}"/>
+                    </div>
+                    <div class="col-5">
+                        <p:toggleSwitch value="#{v2ThesaurusExportBean.clearHtml}"/>
+                    </div>
+                </div>
+
+                <div class="row mb-3 align-items-center">
+                    <div class="col-3 text-right">
+                        <h:outputText value="#{v2LocaleBean.getMsg('export.filterAddImage')}"
+                                      title="#{v2LocaleBean.getMsg('export.filterAddImageTooltip')}"/>
                     </div>
                     <div class="col-5">
                         <p:toggleSwitch value="#{v2ThesaurusExportBean.includeImages}"/>

@@ -681,12 +681,7 @@ public class ExportService {
             concept.setIdParent(parentId);
             concept.setPreferredTerm(StringUtils.isEmpty(concept.getPreferredTerm()) ? "(" + concept.getIdConcept() + ")" : concept.getPreferredTerm());
             concept.setChildrens(parcourirArbre(thesoId, langId, concept.getIdConcept()));
-
-            List<NodeTree> facettes = tree.searchFacettesForTree(parentId, thesoId, langId);
-            if (CollectionUtils.isNotEmpty(facettes)) {
-                sizeOfTheso += facettes.size();
-                concept.getChildrens().addAll(facettes);
-            }
+            // Les facettes sont ignorées : l'export CSV structuré ne contient que la hiérarchie de concepts.
         }
 
         return concepts;

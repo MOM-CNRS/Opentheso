@@ -1,8 +1,5 @@
 package fr.cnrs.opentheso.v2.toolbox.edition.io.pdf;
 
-import com.itextpdf.text.BadElementException;
-import com.itextpdf.text.Chunk;
-import com.itextpdf.text.Image;
 import com.itextpdf.text.Anchor;
 import com.itextpdf.text.Paragraph;
 
@@ -19,8 +16,6 @@ import org.apache.commons.lang3.StringUtils;
 import lombok.RequiredArgsConstructor;
 import org.springframework.stereotype.Component;
 
-import java.io.IOException;
-import java.net.URL;
 import java.util.ArrayList;
 import java.util.HashMap;
 import java.util.Collections;
@@ -156,8 +151,13 @@ public class ThesaurusPdfHierarchicalWriter {
         addNotes(paragraphs, space, idToDoc.get(key), notesDiff.get(key), writePdfSettings);
         addMatchs(paragraphs, matchs.get(key), space, writePdfSettings);
         addGpsCoordiantes(paragraphs, gps.get(key), space, writePdfSettings);
-        if(isToogleExportImage) {
-            addImages(paragraphs, images.get(key), indentation, writePdfSettings);
+        if (isToogleExportImage) {
+            ThesaurusPdfImageEmbedder.addImages(
+                    paragraphs,
+                    images.get(key),
+                    indentation.length() * 2.9f,
+                    writePdfSettings
+            );
         }
     }
 
@@ -203,50 +203,4 @@ public class ThesaurusPdfHierarchicalWriter {
             paragraphs.add(new Paragraph(space + "GPS : (" + gps.stream().collect(Collectors.joining(", ")) + ")", writePdfSettings.hieraInfoFont));
         }
     }
-
-    private void addImages(List<Paragraph> paragraphs, List<NodeImage> images, String indentation, ThesaurusPdfSettings writePdfSettings) {
-        if (CollectionUtils.isNotEmpty(images)) {
-            paragraphs.add(new Paragraph(Chunk.NEWLINE));
-            for (NodeImage imageElement : images) {
-                if (imageElement.getUri() != null && !imageElement.getUri().isEmpty()) {
-                    try {
-                        // Téléchargement de l'image
-                        URL imageUrl = new URL(imageElement.getUri());
-                        Image image = Image.getInstance(imageUrl);
-
-                        // Redimensionnement
-                        float scaleFactor = writePdfSettings.resiseImage(image);
-                        if (scaleFactor > 0) {
-                            image.scaleAbsolute(image.getWidth() / scaleFactor, image.getHeight() / scaleFactor);
-                            // Ajout de l'image au paragraphe avec indentation
-                            paragraphs.add(new Paragraph(new Chunk(image, indentation.length() * (2.9f), 0, true)));
-                        } else {
-                            paragraphs.add(new Paragraph("Erreur de redimensionnement de l'image : " + imageElement.getUri()));
-                        }
-                    } catch (BadElementException | IOException ex) {
-                        paragraphs.add(new Paragraph("Erreur de téléchargement de l'image (image vide) : " + imageElement.getUri()));
-                    }
-                } else {
-                    paragraphs.add(new Paragraph("Image invalide : " + imageElement.getUri()));
-                }
-            }
-        }
-    }
-
-    /*
-    private void addImages(List<Paragraph> paragraphs, ArrayList<NodeImage> images, String indentation, ThesaurusPdfSettings writePdfSettings) {
-
-        if (CollectionUtils.isNotEmpty(images)) {
-            paragraphs.add(new Paragraph(Chunk.NEWLINE));
-            images.stream()
-                    .forEach(imageElement -> {
-                        try {
-                            Image image = Image.getInstance(new URL(imageElement.getUri()));
-                            image.scaleAbsolute(writePdfSettings.resiseImage(image));
-                            paragraphs.add(new Paragraph(new Chunk(image, indentation.length() * (2.9f), 0, true)));
-                        } catch (BadElementException | IOException ex) {}
-                    });
-        }
-    }*/
-   
 }

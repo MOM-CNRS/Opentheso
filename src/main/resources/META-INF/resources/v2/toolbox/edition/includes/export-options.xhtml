@@ -4,11 +4,12 @@
              xmlns:p="http://primefaces.org/ui"
              xmlns:f="http://xmlns.jcp.org/jsf/core">
 
-    <h:panelGroup rendered="#{v2EditionBean.exportSkosView or v2EditionBean.exportCsvView or v2EditionBean.exportPdfView}">
+    <h:panelGroup rendered="#{v2EditionBean.exportSkosView or v2EditionBean.exportCsvView}">
         <h:panelGroup id="exportFilterByGroupPanel" layout="block">
             <div class="row mb-3 align-items-center">
                 <div class="col-3 text-right">
-                    <h:outputText value="#{v2LocaleBean.getMsg('statistique.filtre_collection')}"/>
+                    <h:outputText value="#{v2LocaleBean.getMsg('statistique.filtre_collection')}"
+                                  title="#{v2LocaleBean.getMsg('eport.allSelectedByDefault')}"/>
                 </div>
                 <div class="col-5">
                     <p:toggleSwitch value="#{v2ThesaurusExportBean.filterByGroup}">
@@ -35,30 +36,19 @@
         </h:panelGroup>
 
         <h:panelGroup id="exportByGroupPanel" layout="block">
-            <h:panelGroup rendered="#{v2EditionBean.exportSkosView or v2EditionBean.exportCsvView}" layout="block">
-                <div class="row mb-3 align-items-center">
-                    <div class="col-3 text-right">
-                        <h:outputText value="#{v2LocaleBean.getMsg('export.exportThesaurusByCollection')}"
-                                      title="#{v2LocaleBean.getMsg('export.exportThesaurusByCollectionTooltip')}"/>
-                    </div>
-                    <div class="col-5">
-                        <p:toggleSwitch value="#{v2ThesaurusExportBean.exportByGroup}">
-                            <p:ajax listener="#{v2ThesaurusExportBean.onExportByGroupToggle()}"
-                                    update="exportFilterByGroupPanel exportByGroupPanel"/>
-                        </p:toggleSwitch>
-                    </div>
+            <div class="row mb-3 align-items-center">
+                <div class="col-3 text-right">
+                    <h:outputText value="#{v2LocaleBean.getMsg('export.exportThesaurusByCollection')}"
+                                  title="#{v2LocaleBean.getMsg('export.exportThesaurusByCollectionTooltip')}"/>
                 </div>
-            </h:panelGroup>
+                <div class="col-5">
+                    <p:toggleSwitch value="#{v2ThesaurusExportBean.exportByGroup}">
+                        <p:ajax listener="#{v2ThesaurusExportBean.onExportByGroupToggle()}"
+                                update="exportFilterByGroupPanel exportByGroupPanel"/>
+                    </p:toggleSwitch>
+                </div>
+            </div>
         </h:panelGroup>
-
-        <div class="row mb-3 align-items-center">
-            <div class="col-3 text-right">
-                <h:outputText value="#{v2LocaleBean.getMsg('export.filterHtmlCharacter')}"/>
-            </div>
-            <div class="col-5">
-                <p:toggleSwitch value="#{v2ThesaurusExportBean.clearHtml}"/>
-            </div>
-        </div>
     </h:panelGroup>
 
     <h:panelGroup rendered="#{v2EditionBean.exportCsvIdView}">

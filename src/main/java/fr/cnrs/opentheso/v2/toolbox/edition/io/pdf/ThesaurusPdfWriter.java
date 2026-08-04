@@ -19,9 +19,11 @@ import java.util.List;
 import org.apache.commons.lang3.ObjectUtils;
 import org.apache.commons.lang3.StringUtils;
 import lombok.RequiredArgsConstructor;
+import lombok.extern.slf4j.Slf4j;
 import org.springframework.stereotype.Component;
 
 
+@Slf4j
 @Component
 @RequiredArgsConstructor
 public class ThesaurusPdfWriter {
@@ -61,6 +63,7 @@ public class ThesaurusPdfWriter {
             document.close();
             return output.toByteArray();
         } catch (Exception ex) {
+            log.error("Échec de la génération PDF", ex);
             if (ObjectUtils.isNotEmpty(document)) {
                 document.close();
             }

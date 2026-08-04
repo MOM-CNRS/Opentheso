@@ -271,7 +271,7 @@ public class ThesaurusExportBean implements Serializable {
                     buildExportOptions()
             );
         } catch (Exception ex) {
-            MessageUtils.showErrorMessage("Export PDF impossible");
+            MessageUtils.showErrorMessage("Export PDF impossible : " + StringUtils.defaultIfBlank(ex.getMessage(), ex.getClass().getSimpleName()));
             return null;
         }
     }
@@ -309,11 +309,11 @@ public class ThesaurusExportBean implements Serializable {
 
     private void loadLanguagesAndGroups() {
         exportLanguages = thesaurusEditionCsvExportService.listExportLanguages(thesaurusId);
-        selectedLanguageCodes = exportLanguages.stream().map(NodeLangTheso::getCode).toList();
+        selectedLanguageCodes = new ArrayList<>(exportLanguages.stream().map(NodeLangTheso::getCode).toList());
         groupList = toolboxExportPersistence.loadConceptGroups(thesaurusId);
-        selectedGroupIds = groupList.stream()
+        selectedGroupIds = new ArrayList<>(groupList.stream()
                 .map(group -> group.getConceptGroup().getIdGroup())
-                .toList();
+                .toList());
     }
 
     private String resolveDefaultLanguage() {
@@ -326,7 +326,7 @@ public class ThesaurusExportBean implements Serializable {
 
     private ThesaurusEditionExportOptions buildExportOptions() {
         List<String> groups = filterByGroup && CollectionUtils.isNotEmpty(selectedGroupIds)
-                ? selectedGroupIds
+                ? new ArrayList<>(selectedGroupIds)
                 : List.of();
         return new ThesaurusEditionExportOptions(filterByGroup, groups, clearHtml);
     }
