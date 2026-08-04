@@ -50,7 +50,8 @@
     </p:dialog>
 
     <p:dialog id="v2AddChildConceptDlg" header="#{v2LocaleBean.getMsg('rightbody.conceptdialog.add_specific_concept')}"
-              widgetVar="v2AddChildConceptDlg" width="450" modal="true" resizable="false" position="top" style="margin-top:30px;">
+              widgetVar="v2AddChildConceptDlg" width="450" modal="true" resizable="false" position="top"
+              appendTo="@(body)" style="margin-top:30px;">
         <h:form id="v2AddChildConceptForm">
             <p:defaultCommand target="v2AddChildConceptSubmit"/>
             <div class="row">
@@ -86,7 +87,9 @@
                     <h:outputText value="#{v2LocaleBean.getMsg('rightbody.conceptdialog.collection')}"/>
                 </div>
                 <div class="col-7">
-                    <p:selectOneMenu value="#{v2ConceptLifecycleEditorBean.selectedGroupId}" style="width:100%;">
+                    <p:selectOneMenu id="v2AddChildCollectionMenu"
+                                     value="#{v2ConceptLifecycleEditorBean.selectedGroupId}"
+                                     style="width:100%;">
                         <f:selectItem itemLabel="..." itemValue=""/>
                         <f:selectItems value="#{v2ConceptLifecycleEditorBean.availableCollections}" var="collection"
                                        itemLabel="#{collection.label}" itemValue="#{collection.id}"/>
@@ -127,26 +130,27 @@
                                  id="v2AddChildConceptSubmit" icon="pi pi-check" styleClass="ui-button-success"
                                  value="#{v2LocaleBean.getMsg('btnAdd')}"
                                  actionListener="#{v2ConceptLifecycleEditorBean.submitAddChild()}"
-                                 update="v2AddChildConceptForm :containerIndex:formRightTab :containerIndex:formLeftTab :messageIndex"
+                                 update=":v2AddChildConceptForm :containerIndex:formRightTab :containerIndex:formLeftTab :messageIndex"
                                  process="@form"/>
                 <p:commandButton rendered="#{v2ConceptLifecycleEditorBean.duplicateLabelWarning}"
                                  value="#{v2LocaleBean.getMsg('btnCancel')}" icon="fas fa-undo-alt"
                                  styleClass="ui-button-secondary button" style="margin-right:10px"
                                  actionListener="#{v2ConceptLifecycleEditorBean.cancelDuplicate()}"
-                                 update="v2AddChildConceptForm" oncomplete="PF('v2AddChildConceptDlg').show();"
+                                 update=":v2AddChildConceptForm" oncomplete="PF('v2AddChildConceptDlg').show();"
                                  process="@form"/>
                 <p:commandButton rendered="#{v2ConceptLifecycleEditorBean.duplicateLabelWarning}"
                                  value="#{v2LocaleBean.getMsg('rightbody.conceptdialog.force')}"
                                  icon="pi pi-check" styleClass="ui-button-success"
                                  actionListener="#{v2ConceptLifecycleEditorBean.submitAddChildForced()}"
-                                 update="v2AddChildConceptForm :containerIndex:formRightTab :containerIndex:formLeftTab :messageIndex"
+                                 update=":v2AddChildConceptForm :containerIndex:formRightTab :containerIndex:formLeftTab :messageIndex"
                                  process="@form"/>
             </div>
         </h:form>
     </p:dialog>
 
     <p:dialog id="v2AddTopConceptDlg" header="#{v2LocaleBean.getMsg('rightbody.concept.addTopConcept')}"
-              widgetVar="v2AddTopConceptDlg" width="450" modal="true" resizable="false" position="top" style="margin-top:30px;">
+              widgetVar="v2AddTopConceptDlg" width="450" modal="true" resizable="false" position="top"
+              appendTo="@(body)" style="margin-top:30px;">
         <h:form id="v2AddTopConceptForm">
             <p:defaultCommand target="v2AddTopConceptSubmit"/>
             <div class="row">
@@ -163,7 +167,9 @@
                     <h:outputText value="#{v2LocaleBean.getMsg('rightbody.conceptdialog.collection')}:"/>
                 </div>
                 <div class="col-7">
-                    <p:selectOneMenu value="#{v2ConceptLifecycleEditorBean.selectedGroupId}" style="width:100%;">
+                    <p:selectOneMenu id="v2AddTopCollectionMenu"
+                                     value="#{v2ConceptLifecycleEditorBean.selectedGroupId}"
+                                     style="width:100%;">
                         <f:selectItem itemLabel="..." itemValue=""/>
                         <f:selectItems value="#{v2ConceptLifecycleEditorBean.availableCollections}" var="collection"
                                        itemLabel="#{collection.label}" itemValue="#{collection.id}"/>
@@ -197,19 +203,19 @@
                                  id="v2AddTopConceptSubmit" value="#{v2LocaleBean.getMsg('btnAdd')}"
                                  icon="pi pi-check" styleClass="ui-button-success"
                                  actionListener="#{v2ConceptLifecycleEditorBean.submitAddTopConcept()}"
-                                 update="v2AddTopConceptForm :containerIndex:formRightTab :containerIndex:formLeftTab :messageIndex"
+                                 update=":v2AddTopConceptForm :containerIndex:formRightTab :containerIndex:formLeftTab :messageIndex"
                                  process="@form"/>
                 <p:commandButton rendered="#{v2ConceptLifecycleEditorBean.duplicateLabelWarning}"
                                  value="#{v2LocaleBean.getMsg('btnCancel')}" icon="fas fa-undo-alt"
                                  styleClass="ui-button-secondary button" style="margin-right:10px"
                                  actionListener="#{v2ConceptLifecycleEditorBean.cancelDuplicate()}"
-                                 update="v2AddTopConceptForm" oncomplete="PF('v2AddTopConceptDlg').show();"
+                                 update=":v2AddTopConceptForm" oncomplete="PF('v2AddTopConceptDlg').show();"
                                  process="@form"/>
                 <p:commandButton rendered="#{v2ConceptLifecycleEditorBean.duplicateLabelWarning}"
                                  value="#{v2LocaleBean.getMsg('rightbody.conceptdialog.force')}"
                                  icon="pi pi-check" styleClass="ui-button-success"
                                  actionListener="#{v2ConceptLifecycleEditorBean.submitAddTopConceptForced()}"
-                                 update="v2AddTopConceptForm :containerIndex:formRightTab :containerIndex:formLeftTab :messageIndex"
+                                 update=":v2AddTopConceptForm :containerIndex:formRightTab :containerIndex:formLeftTab :messageIndex"
                                  process="@form"/>
             </div>
         </h:form>

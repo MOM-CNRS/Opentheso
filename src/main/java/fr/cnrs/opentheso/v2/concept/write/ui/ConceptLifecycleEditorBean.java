@@ -235,6 +235,7 @@ public class ConceptLifecycleEditorBean implements Serializable {
     private void loadCreationFormMetadata() {
         String thesaurusId = thesaurusContext.resolveThesaurusId();
         String lang = thesaurusContext.resolveWorkLanguage();
+        availableCollections = Collections.emptyList();
         availableCollections = conceptWriteMetadataService.listCollections(thesaurusId, lang);
         ntRelationTypes = conceptWriteMetadataService.listNtRelationTypes();
         if (StringUtils.isBlank(selectedGroupId)) {
