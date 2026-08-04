@@ -131,7 +131,7 @@
                 <div class="card mb-4 py-3 border-left-success" style="margin-left: 30px; margin-right: 30px; margin-top: 10px; margin-bottom: 30px;">
                     <div class="row" style="margin-left: 20px; margin-right: 20px;">
                         <div class="col-12">
-                            <p:tabView id="v2ModifySettingsPanels" dynamic="true" cache="true"
+                            <p:tabView id="v2ModifySettingsPanels" dynamic="false" cache="false"
                                        activeIndex="#{v2ModifyThesaurusBean.activeTabIndex}">
                                 <p:tab title="Langues">
                                     <div class="row" style="margin-bottom: 10px; text-align: right;">
@@ -169,19 +169,21 @@
                                 </p:tab>
 
                                 <p:tab title="Métadonnées">
+                                    <h:panelGroup id="v2MetadataPanel" layout="block">
                                     <div class="row" style="margin-bottom: 10px; text-align: right;">
                                         <div class="col-12">
                                             <p:commandButton value="#{v2LocaleBean.getMsg('toolbox.addMetadata')}"
                                                              styleClass="ui-button-success" icon="fas fa-plus-circle"
-                                                             process="@this" ajax="true" update="containerIndex messageIndex"
-                                                             action="#{v2ModifyThesaurusBean.addMetadataRow()}"/>
+                                                             process="@this" ajax="true"
+                                                             update="@([id$=v2MetadataPanel]) messageIndex"
+                                                             actionListener="#{v2ModifyThesaurusBean.addMetadataRow()}"/>
                                         </div>
                                     </div>
                                     <p:dataTable id="v2MetadataTheso" widgetVar="v2MetadataTheso" var="dcElement"
                                                  value="#{v2ModifyThesaurusBean.metadata}"
                                                  editable="true" scrollHeight="250" scrollable="true" lazy="false">
                                         <p:ajax event="rowEdit" listener="#{v2ModifyThesaurusBean.onMetadataRowEdit}"
-                                                process="@this" update=":containerIndex:v2MetadataTheso messageIndex"/>
+                                                process="@this" update="@([id$=v2MetadataPanel]) messageIndex"/>
 
                                         <p:column width="10%" headerText="#{v2LocaleBean.getMsg('toolbox.metadata_property')}">
                                             <p:cellEditor>
@@ -254,19 +256,12 @@
                                         </p:column>
 
                                         <p:column width="5%" style="text-align: right">
-                                            <p:cellEditor>
-                                                <f:facet name="output">
-                                                    <p:commandButton styleClass="ui-button-danger rounded-button" icon="pi pi-trash"
-                                                                     actionListener="#{v2ModifyThesaurusBean.deleteMetadata(dcElement)}"
-                                                                     update=":containerIndex:v2MetadataTheso messageIndex" process="@this"/>
-                                                </f:facet>
-                                                <f:facet name="input">
-                                                    <p:commandButton disabled="true" styleClass="ui-button-danger rounded-button"
-                                                                     icon="pi pi-trash" process="@this"/>
-                                                </f:facet>
-                                            </p:cellEditor>
+                                            <p:commandButton styleClass="ui-button-danger rounded-button" icon="pi pi-trash"
+                                                             actionListener="#{v2ModifyThesaurusBean.deleteMetadata(dcElement)}"
+                                                             update="@([id$=v2MetadataPanel]) messageIndex" process="@this"/>
                                         </p:column>
                                     </p:dataTable>
+                                    </h:panelGroup>
                                 </p:tab>
 
                                 <p:tab title="Collections">

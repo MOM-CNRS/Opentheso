@@ -47,7 +47,7 @@ public class ModifyThesaurusBean implements Serializable {
 
     private List<EditionThesaurusLanguage> languages = Collections.emptyList();
     private List<LanguageOption> allLanguages = Collections.emptyList();
-    private List<EditionMetadata> metadata = Collections.emptyList();
+    private List<EditionMetadata> metadata = new ArrayList<>();
     private List<String> dcmiResources = Collections.emptyList();
     private List<String> dcmiTypes = Collections.emptyList();
     private TreeNode<EditionCollectionNode> collectionRoot = new DefaultTreeNode<>(null, null);
@@ -220,6 +220,11 @@ public class ModifyThesaurusBean implements Serializable {
     }
 
     public void addMetadataRow() {
+        if (!canManage()) {
+            return;
+        }
+        ensureMutableMetadataList();
+        activeTabIndex = 1;
         metadata.add(EditionMetadata.emptyRow());
     }
 
@@ -228,7 +233,9 @@ public class ModifyThesaurusBean implements Serializable {
             return;
         }
         try {
+            activeTabIndex = 1;
             modifyThesaurusService.saveMetadata(thesaurusId, event.getObject());
+            refreshMetadata();
             MessageUtils.showInformationMessage("Métadonnée mise à jour");
         } catch (InvalidToolboxDataException e) {
             MessageUtils.showErrorMessage(e.getMessage());
@@ -239,7 +246,9 @@ public class ModifyThesaurusBean implements Serializable {
         if (!canManage() || metadataRow == null) {
             return;
         }
+        activeTabIndex = 1;
         if (metadataRow.getId() == -1) {
+            ensureMutableMetadataList();
             metadata.remove(metadataRow);
             return;
         }
@@ -249,6 +258,12 @@ public class ModifyThesaurusBean implements Serializable {
             MessageUtils.showInformationMessage("Métadonnée supprimée");
         } catch (RuntimeException e) {
             MessageUtils.showErrorMessage("Erreur lors de la suppression de la métadonnée");
+        }
+    }
+
+    private void ensureMutableMetadataList() {
+        if (!(metadata instanceof ArrayList)) {
+            metadata = metadata == null ? new ArrayList<>() : new ArrayList<>(metadata);
         }
     }
 
@@ -325,7 +340,7 @@ public class ModifyThesaurusBean implements Serializable {
         masterThesaurus = false;
         languages = Collections.emptyList();
         allLanguages = Collections.emptyList();
-        metadata = Collections.emptyList();
+        metadata = new ArrayList<>();
         dcmiResources = Collections.emptyList();
         dcmiTypes = Collections.emptyList();
         collectionRoot = new DefaultTreeNode<>(null, null);
