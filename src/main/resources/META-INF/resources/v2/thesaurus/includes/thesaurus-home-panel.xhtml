@@ -12,7 +12,22 @@
             }
         </style>
 
-        <h:panelGroup id="thesoHomeData" style="border: none; margin-top: 20px">
+        <h:panelGroup rendered="#{v2ThesaurusHomeEditorBean.canEdit and not v2ThesaurusHomeEditorBean.editing}">
+            <div class="row">
+                <div class="col-xl-2 col-lg-2 col-md-2 col-sm-2 offset-xl-10 offset-lg-9 offset-md-9 offset-sm-8" style="text-align: right">
+                    <p:commandButton value="#{v2LocaleBean.getMsg('candidat.edit')}"
+                                     update=":containerIndex:formRightTab"
+                                     icon="pi pi-pencil"
+                                     styleClass="ui-button-success"
+                                     ajax="true"
+                                     process="@this"
+                                     actionListener="#{v2ThesaurusHomeEditorBean.startEditing()}"/>
+                </div>
+            </div>
+            <p:separator/>
+        </h:panelGroup>
+
+        <h:panelGroup id="thesoHomeData" rendered="#{not v2ThesaurusHomeEditorBean.editing}" style="border: none; margin-top: 20px">
             <div class="row" style="background-color: #F5F2F2">
                 <div class="col-1" style="margin-top: 3px">
                     <i class="fas fa-info-circle fa-2x" style="color: #43B572"/>
@@ -119,33 +134,71 @@
 
             <p:separator style="color: #F47B2A"/>
 
-            <div class="row" style="margin-bottom: 10px;">
-                <div class="col-xl-6 col-lg-6 col-md-6 col-sm-6">
-                    <p:commandButton value="#{v2LocaleBean.getMsg('thesohome.interpretedHTMLView')}"
-                                     styleClass="ui-button-success"
-                                     action="#{v2ThesaurusBrowseBean.setHomePagePlainTextView(false)}"
-                                     update=":containerIndex:formRightTab"/>
+            <div class="row">
+                <div class="col-12">
+                    <h:outputText escape="false"
+                                  style="font-size: 14px;"
+                                  value="#{v2ThesaurusBrowseBean.thesaurusHome.homePageHtml}"/>
                 </div>
-                <div class="col-xl-6 col-lg-6 col-md-6 col-sm-6" style="text-align: right;">
+            </div>
+        </h:panelGroup>
+
+        <h:panelGroup id="thesoHomePageEdition" rendered="#{v2ThesaurusHomeEditorBean.editing}">
+            <div class="row">
+                <div class="col-xl-4 col-lg-4 col-md-6 col-sm-6">
+                    <p:commandButton value="#{v2LocaleBean.getMsg('thesohome.interpretedHTMLView')}"
+                                     update=":containerIndex:formRightTab"
+                                     styleClass="ui-button-success"
+                                     process="@this"
+                                     action="#{v2ThesaurusHomeEditorBean.setViewPlainTextTo(false)}"/>
+                </div>
+                <div class="col-xl-4 col-lg-4 col-md-6 col-sm-6 offset-xl-4 offset-lg-4 offset-md-0 offset-sm-0"
+                     style="font-size: 12px; text-align: right">
                     <p:commandButton value="#{v2LocaleBean.getMsg('thesohome.rawHTMLView')}"
                                      styleClass="ui-button-success"
-                                     action="#{v2ThesaurusBrowseBean.setHomePagePlainTextView(true)}"
-                                     update=":containerIndex:formRightTab"/>
+                                     update=":containerIndex:formRightTab"
+                                     process="@this"
+                                     action="#{v2ThesaurusHomeEditorBean.setViewPlainTextTo(true)}"
+                                     style="font-size: 12px;"/>
                 </div>
             </div>
 
+            <h:panelGroup rendered="#{not v2ThesaurusHomeEditorBean.plainTextView}">
+                <div class="row" style="margin-top: 10px">
+                    <div class="col-12">
+                        <p:textEditor widgetVar="v2ThesoHomeEditor"
+                                      value="#{v2ThesaurusHomeEditorBean.text}"
+                                      secure="false"
+                                      height="300"
+                                      style="margin-bottom:5px; margin-right: 5px"/>
+                    </div>
+                </div>
+            </h:panelGroup>
+            <h:panelGroup rendered="#{v2ThesaurusHomeEditorBean.plainTextView}">
+                <div class="row">
+                    <div class="col-12">
+                        <p:inputTextarea value="#{v2ThesaurusHomeEditorBean.text}"
+                                         style="width: 100%; margin-bottom:5px; margin-right: 5px; min-height: 300px;"/>
+                    </div>
+                </div>
+            </h:panelGroup>
+
             <div class="row">
-                <div class="col-12">
-                    <h:panelGroup rendered="#{not v2ThesaurusBrowseBean.homePagePlainTextView}">
-                        <h:outputText escape="false"
-                                      style="font-size: 14px;"
-                                      value="#{v2ThesaurusBrowseBean.thesaurusHome.homePageHtml}"/>
-                    </h:panelGroup>
-                    <h:panelGroup rendered="#{v2ThesaurusBrowseBean.homePagePlainTextView}">
-                        <h:outputText escape="true"
-                                      style="font-size: 14px; white-space: pre-wrap;"
-                                      value="#{v2ThesaurusBrowseBean.thesaurusHome.homePageHtml}"/>
-                    </h:panelGroup>
+                <div class="col-12" style="text-align: right">
+                    <p:commandButton value="#{v2LocaleBean.getMsg('btnCancel')}"
+                                     style="margin-right: 20px"
+                                     update=":containerIndex:formRightTab"
+                                     styleClass="ui-button-secondary button"
+                                     icon="fas fa-undo-alt"
+                                     process="@this"
+                                     actionListener="#{v2ThesaurusHomeEditorBean.cancel()}"/>
+
+                    <p:commandButton value="#{v2LocaleBean.getMsg('candidat.save')}"
+                                     update=":containerIndex:formRightTab :messageIndex"
+                                     styleClass="ui-button-success"
+                                     icon="pi pi-check"
+                                     process="@form"
+                                     action="#{v2ThesaurusHomeEditorBean.save()}"/>
                 </div>
             </div>
         </h:panelGroup>

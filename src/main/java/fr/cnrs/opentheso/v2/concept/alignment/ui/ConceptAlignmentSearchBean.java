@@ -13,6 +13,7 @@ import jakarta.inject.Named;
 import lombok.RequiredArgsConstructor;
 import org.apache.commons.lang3.StringUtils;
 import org.primefaces.PrimeFaces;
+import org.springframework.beans.factory.ObjectProvider;
 
 import java.io.IOException;
 import java.io.Serializable;
@@ -32,6 +33,7 @@ public class ConceptAlignmentSearchBean implements Serializable {
     private final ThesaurusContext thesaurusContext;
     private final UserSession userSession;
     private final ConceptNavigationSupport conceptNavigationSupport;
+    private final ObjectProvider<ConceptAlignmentAdminBean> conceptAlignmentAdminBean;
 
     public void prepare(String conceptId, String conceptLabel) {
         engine.prepare(
@@ -57,9 +59,19 @@ public class ConceptAlignmentSearchBean implements Serializable {
             MessageUtils.showErrorMessage("Action non autorisée");
             return;
         }
+        ConceptAlignmentAdminBean adminBean = conceptAlignmentAdminBean.getIfAvailable();
+        String previousBranchRoot = adminBean != null ? adminBean.getRootConceptId() : null;
+
         engine.addAlignment(thesaurusContext.resolveThesaurusId(), conceptId, userId);
         MessageUtils.showInformationMessage("Alignement ajouté avec succès");
         conceptNavigationSupport.openConcept(conceptId);
+        if (adminBean != null) {
+            if (StringUtils.isNotBlank(previousBranchRoot)) {
+                adminBean.reloadBranchSummary(previousBranchRoot);
+            } else {
+                adminBean.reloadCurrentBranchSummary();
+            }
+        }
         PrimeFaces.current().ajax().update(":containerIndex:formRightTab :messageIndex");
         PrimeFaces.current().executeScript("PF('v2ConceptSearchAlignement').hide();");
     }

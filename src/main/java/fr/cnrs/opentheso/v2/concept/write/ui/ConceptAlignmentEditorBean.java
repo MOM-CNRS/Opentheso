@@ -1,6 +1,7 @@
 package fr.cnrs.opentheso.v2.concept.write.ui;
 
 import fr.cnrs.opentheso.utils.MessageUtils;
+import fr.cnrs.opentheso.v2.concept.alignment.ui.ConceptAlignmentAdminBean;
 import fr.cnrs.opentheso.v2.concept.model.ConceptAlignment;
 import fr.cnrs.opentheso.v2.concept.session.ConceptNavigationSupport;
 import fr.cnrs.opentheso.v2.concept.session.ConceptSelectionContext;
@@ -20,6 +21,7 @@ import lombok.RequiredArgsConstructor;
 import lombok.Setter;
 import org.apache.commons.lang3.StringUtils;
 import org.primefaces.PrimeFaces;
+import org.springframework.beans.factory.ObjectProvider;
 
 import java.io.Serializable;
 import java.util.Collections;
@@ -43,6 +45,7 @@ public class ConceptAlignmentEditorBean implements Serializable {
     private final ThesaurusContext thesaurusContext;
     private final UserSession userSession;
     private final ConceptWritePolicy conceptWritePolicy;
+    private final ObjectProvider<ConceptAlignmentAdminBean> conceptAlignmentAdminBean;
 
     private List<ConceptWriteAlignmentType> alignmentTypes = Collections.emptyList();
 
@@ -170,7 +173,16 @@ public class ConceptAlignmentEditorBean implements Serializable {
         }
         switch (result.outcome()) {
             case OK -> {
+                ConceptAlignmentAdminBean adminBean = conceptAlignmentAdminBean.getIfAvailable();
+                String previousBranchRoot = adminBean != null ? adminBean.getRootConceptId() : null;
                 conceptNavigationSupport.openConcept(conceptId);
+                if (adminBean != null) {
+                    if (StringUtils.isNotBlank(previousBranchRoot)) {
+                        adminBean.reloadBranchSummary(previousBranchRoot);
+                    } else {
+                        adminBean.reloadCurrentBranchSummary();
+                    }
+                }
                 PrimeFaces.current().ajax().update(":containerIndex:formRightTab :messageIndex");
                 MessageUtils.showInformationMessage(result.message());
                 if (StringUtils.isNotBlank(hideDialogScript)) {

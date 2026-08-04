@@ -83,6 +83,7 @@ public class ThesaurusBrowseBean implements Serializable, ConceptNavigationSuppo
     private final ObjectProvider<ConceptAlignmentAdminBean> conceptAlignmentAdminBean;
     private final ObjectProvider<PropositionSubmitBean> propositionSubmitBean;
     private final ObjectProvider<PropositionBean> propositionBean;
+    private final ObjectProvider<ThesaurusHomeEditorBean> thesaurusHomeEditorBean;
 
     private String conceptIdFromUri;
     private String groupIdFromUri;
@@ -135,7 +136,6 @@ public class ThesaurusBrowseBean implements Serializable, ConceptNavigationSuppo
     private boolean propositionRubriqueVisible;
     private boolean showAllNoteLanguages = true;
     private boolean showAllSynonymLanguages = true;
-    private boolean homePagePlainTextView;
     private int branchConceptCount;
     private List<ConceptNote> displayedNotes = Collections.emptyList();
     private List<ConceptLabel> displayedSynonymLabels = Collections.emptyList();
@@ -400,6 +400,11 @@ public class ThesaurusBrowseBean implements Serializable, ConceptNavigationSuppo
         displayedSynonymLabels = Collections.emptyList();
         displayedCorpusLinks = Collections.emptyList();
         corpusSearched = false;
+        ThesaurusHomeEditorBean homeEditor = thesaurusHomeEditorBean.getIfAvailable();
+        if (homeEditor != null) {
+            homeEditor.reset();
+        }
+        loadThesaurusHome();
     }
 
     public void refreshSelectedConcept() {
@@ -647,10 +652,9 @@ public class ThesaurusBrowseBean implements Serializable, ConceptNavigationSuppo
             leftTabIndex = 0;
         }
         // Comme legacy : rester sur Alignement si déjà ouvert, sinon onglet Concept
-        if (rightTabKey != RightTabKey.ALIGNMENT) {
+        boolean stayOnAlignmentTab = rightTabKey == RightTabKey.ALIGNMENT;
+        if (!stayOnAlignmentTab) {
             activateRightTab(RightTabKey.CONCEPT);
-        } else {
-            conceptAlignmentAdminBean.getObject().openForCurrentConcept();
         }
         propositionBean.getObject().clearConsultation();
         propositionRubriqueVisible = false;
@@ -670,6 +674,10 @@ public class ThesaurusBrowseBean implements Serializable, ConceptNavigationSuppo
         }
         refreshConceptDisplayData();
         conceptSelectionContext.update(thesaurusContext.resolveThesaurusId(), selectedConcept);
+        // Recharger l'atelier d'alignement APRÈS la mise à jour du contexte (sinon résumé obsolète).
+        if (stayOnAlignmentTab) {
+            conceptAlignmentAdminBean.getObject().openForCurrentConcept();
+        }
         if (syncTree && autoExpandTree) {
             // Comme legacy ConceptView#getConcept → tree.expandTreeToPath
             ensureTreeBuilt(LeftTreeMode.CONCEPT);
@@ -1293,7 +1301,11 @@ public class ThesaurusBrowseBean implements Serializable, ConceptNavigationSuppo
                 thesaurusContext.resolveWorkLanguage(),
                 getThesaurusTitle()
         );
-        homePagePlainTextView = false;
+    }
+
+    /** Recharge la page d'accueil après édition HTML. */
+    public void reloadThesaurusHomeAfterEdit() {
+        loadThesaurusHome();
     }
 
     private void refreshConceptDisplayData() {
@@ -1379,7 +1391,6 @@ public class ThesaurusBrowseBean implements Serializable, ConceptNavigationSuppo
         displayedCorpusLinks = Collections.emptyList();
         corpusSearched = false;
         haveActiveCorpus = false;
-        homePagePlainTextView = false;
         activateRightTab(RightTabKey.CONCEPT);
     }
 }
