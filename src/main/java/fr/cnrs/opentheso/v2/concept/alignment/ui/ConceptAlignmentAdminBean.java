@@ -77,6 +77,30 @@ public class ConceptAlignmentAdminBean implements Serializable {
         resetPropositionsState();
     }
 
+    /**
+     * Recharge le résumé en conservant la racine de branche courante
+     * (ex. après ajout d'alignement depuis l'atelier).
+     */
+    public void reloadCurrentBranchSummary() {
+        if (StringUtils.isBlank(rootConceptId)) {
+            openForCurrentConcept();
+            return;
+        }
+        reloadSummary();
+        if (mode != AlignmentWorkbenchMode.PROPOSITIONS && mode != AlignmentWorkbenchMode.COMPARISON) {
+            mode = AlignmentWorkbenchMode.SUMMARY;
+        }
+    }
+
+    public void reloadBranchSummary(String branchRootConceptId) {
+        if (StringUtils.isBlank(branchRootConceptId)) {
+            reloadCurrentBranchSummary();
+            return;
+        }
+        rootConceptId = branchRootConceptId;
+        reloadCurrentBranchSummary();
+    }
+
     public void clear() {
         rootConceptId = null;
         summaryRows = Collections.emptyList();

@@ -57,6 +57,36 @@ public class ConceptQueryRepository {
                 .getResultList();
     }
 
+    /**
+     * Toutes les collections du thésaurus (pour listes de sélection), un libellé par id —
+     * équivalent legacy {@code GroupService#getListConceptGroup}.
+     * Évite les doublons dus à des labels multiples sur le même groupe/langue.
+     */
+    @SuppressWarnings("unchecked")
+    public List<Object[]> findAllConceptGroupsForSelection(String thesaurusId, String lang) {
+        return em.createNativeQuery("""
+            SELECT cg.idgroup,
+                   COALESCE(
+                       (
+                           SELECT cgl.lexicalvalue
+                           FROM concept_group_label cgl
+                           WHERE cgl.idgroup = cg.idgroup
+                             AND cgl.idthesaurus = cg.idthesaurus
+                             AND cgl.lang = :lang
+                           ORDER BY cgl.id
+                           LIMIT 1
+                       ),
+                       cg.idgroup
+                   ) AS label
+            FROM concept_group cg
+            WHERE cg.idthesaurus = :thesaurusId
+            ORDER BY label
+            """)
+                .setParameter("thesaurusId", thesaurusId)
+                .setParameter("lang", lang)
+                .getResultList();
+    }
+
     public List<Object[]> findChildConceptGroups(String parentGroupId, String thesaurusId, String lang) {
         return em.createNativeQuery("""
             SELECT cg.idgroup, cg.idthesaurus,

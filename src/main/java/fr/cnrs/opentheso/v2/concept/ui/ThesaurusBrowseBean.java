@@ -83,6 +83,7 @@ public class ThesaurusBrowseBean implements Serializable, ConceptNavigationSuppo
     private final ObjectProvider<ConceptAlignmentAdminBean> conceptAlignmentAdminBean;
     private final ObjectProvider<PropositionSubmitBean> propositionSubmitBean;
     private final ObjectProvider<PropositionBean> propositionBean;
+    private final ObjectProvider<ThesaurusHomeEditorBean> thesaurusHomeEditorBean;
 
     private String conceptIdFromUri;
     private String groupIdFromUri;
@@ -135,7 +136,6 @@ public class ThesaurusBrowseBean implements Serializable, ConceptNavigationSuppo
     private boolean propositionRubriqueVisible;
     private boolean showAllNoteLanguages = true;
     private boolean showAllSynonymLanguages = true;
-    private boolean homePagePlainTextView;
     private int branchConceptCount;
     private List<ConceptNote> displayedNotes = Collections.emptyList();
     private List<ConceptLabel> displayedSynonymLabels = Collections.emptyList();
@@ -400,6 +400,11 @@ public class ThesaurusBrowseBean implements Serializable, ConceptNavigationSuppo
         displayedSynonymLabels = Collections.emptyList();
         displayedCorpusLinks = Collections.emptyList();
         corpusSearched = false;
+        ThesaurusHomeEditorBean homeEditor = thesaurusHomeEditorBean.getIfAvailable();
+        if (homeEditor != null) {
+            homeEditor.reset();
+        }
+        loadThesaurusHome();
     }
 
     public void refreshSelectedConcept() {
@@ -411,32 +416,102 @@ public class ThesaurusBrowseBean implements Serializable, ConceptNavigationSuppo
     @Override
     public void refreshAfterRename(String conceptId, String newLabel) {
         openConcept(conceptId, false);
-        updateSelectedTreeNodeLabel(conceptId, newLabel);
+        // Comme legacy EditConcept#updateLabel : positionner le nœud puis mettre à jour le libellé dans l'arbre.
+        ensureTreeBuilt(LeftTreeMode.CONCEPT);
+        if (!isSelectedNodeId(conceptId)) {
+            syncConceptTreeSelection(conceptId);
+        }
+        updateTreeNodeLabels(conceptId, StringUtils.defaultString(newLabel));
+        updateIndexLabel(conceptId, StringUtils.defaultString(newLabel));
     }
 
     @Override
     public void refreshAfterNotationUpdate(String conceptId, String notation) {
         openConcept(conceptId, false);
+        ensureTreeBuilt(LeftTreeMode.CONCEPT);
+        if (!isSelectedNodeId(conceptId)) {
+            syncConceptTreeSelection(conceptId);
+        }
         updateSelectedTreeNodeNotation(conceptId, notation);
     }
 
-    private void updateSelectedTreeNodeLabel(String conceptId, String newLabel) {
-        if (!(selectedNode instanceof DefaultTreeNode defaultNode)) {
+    /** Met à jour le libellé partout où le concept apparaît dans les arbres déjà chargés. */
+    private void updateTreeNodeLabels(String conceptId, String newLabel) {
+        if (StringUtils.isBlank(conceptId)) {
             return;
         }
-        if (!(defaultNode.getData() instanceof ConceptTreeNodeData data)) {
+        updateTreeNodeLabelRecursive(conceptRoot, conceptId, newLabel);
+        updateTreeNodeLabelRecursive(arbreRoot, conceptId, newLabel);
+        updateTreeNodeLabelRecursive(collectionRoot, conceptId, newLabel);
+        if (selectedNode instanceof DefaultTreeNode defaultNode
+                && defaultNode.getData() instanceof ConceptTreeNodeData data
+                && conceptId.equalsIgnoreCase(data.nodeId())) {
+            defaultNode.setData(new ConceptTreeNodeData(
+                    data.nodeId(),
+                    newLabel,
+                    data.notation(),
+                    data.nodeType(),
+                    data.hasChildren()
+            ));
+        }
+    }
+
+    private void updateTreeNodeLabelRecursive(TreeNode node, String conceptId, String newLabel) {
+        if (node == null) {
             return;
         }
-        if (!conceptId.equalsIgnoreCase(data.nodeId())) {
+        if (node instanceof DefaultTreeNode defaultNode
+                && defaultNode.getData() instanceof ConceptTreeNodeData data
+                && conceptId.equalsIgnoreCase(data.nodeId())) {
+            defaultNode.setData(new ConceptTreeNodeData(
+                    data.nodeId(),
+                    newLabel,
+                    data.notation(),
+                    data.nodeType(),
+                    data.hasChildren()
+            ));
+        }
+        if (node.getChildren() != null) {
+            for (Object childObj : node.getChildren()) {
+                if (childObj instanceof TreeNode child) {
+                    updateTreeNodeLabelRecursive(child, conceptId, newLabel);
+                }
+            }
+        }
+    }
+
+    private void updateIndexLabel(String conceptId, String newLabel) {
+        if (StringUtils.isBlank(conceptId) || indexResults == null || indexResults.isEmpty()) {
             return;
         }
-        defaultNode.setData(new ConceptTreeNodeData(
-                data.nodeId(),
-                newLabel,
-                data.notation(),
-                data.nodeType(),
-                data.hasChildren()
-        ));
+        List<ConceptTreeNodeData> updated = new ArrayList<>();
+        boolean changed = false;
+        for (ConceptTreeNodeData item : indexResults) {
+            if (item != null && conceptId.equalsIgnoreCase(item.nodeId())) {
+                updated.add(new ConceptTreeNodeData(
+                        item.nodeId(),
+                        newLabel,
+                        item.notation(),
+                        item.nodeType(),
+                        item.hasChildren()
+                ));
+                changed = true;
+            } else {
+                updated.add(item);
+            }
+        }
+        if (changed) {
+            indexResults = updated;
+            if (indexSelected != null && conceptId.equalsIgnoreCase(indexSelected.nodeId())) {
+                indexSelected = new ConceptTreeNodeData(
+                        indexSelected.nodeId(),
+                        newLabel,
+                        indexSelected.notation(),
+                        indexSelected.nodeType(),
+                        indexSelected.hasChildren()
+                );
+            }
+        }
     }
 
     private void updateSelectedTreeNodeNotation(String conceptId, String notation) {
@@ -647,10 +722,9 @@ public class ThesaurusBrowseBean implements Serializable, ConceptNavigationSuppo
             leftTabIndex = 0;
         }
         // Comme legacy : rester sur Alignement si déjà ouvert, sinon onglet Concept
-        if (rightTabKey != RightTabKey.ALIGNMENT) {
+        boolean stayOnAlignmentTab = rightTabKey == RightTabKey.ALIGNMENT;
+        if (!stayOnAlignmentTab) {
             activateRightTab(RightTabKey.CONCEPT);
-        } else {
-            conceptAlignmentAdminBean.getObject().openForCurrentConcept();
         }
         propositionBean.getObject().clearConsultation();
         propositionRubriqueVisible = false;
@@ -670,6 +744,10 @@ public class ThesaurusBrowseBean implements Serializable, ConceptNavigationSuppo
         }
         refreshConceptDisplayData();
         conceptSelectionContext.update(thesaurusContext.resolveThesaurusId(), selectedConcept);
+        // Recharger l'atelier d'alignement APRÈS la mise à jour du contexte (sinon résumé obsolète).
+        if (stayOnAlignmentTab) {
+            conceptAlignmentAdminBean.getObject().openForCurrentConcept();
+        }
         if (syncTree && autoExpandTree) {
             // Comme legacy ConceptView#getConcept → tree.expandTreeToPath
             ensureTreeBuilt(LeftTreeMode.CONCEPT);
@@ -1293,7 +1371,11 @@ public class ThesaurusBrowseBean implements Serializable, ConceptNavigationSuppo
                 thesaurusContext.resolveWorkLanguage(),
                 getThesaurusTitle()
         );
-        homePagePlainTextView = false;
+    }
+
+    /** Recharge la page d'accueil après édition HTML. */
+    public void reloadThesaurusHomeAfterEdit() {
+        loadThesaurusHome();
     }
 
     private void refreshConceptDisplayData() {
@@ -1379,7 +1461,6 @@ public class ThesaurusBrowseBean implements Serializable, ConceptNavigationSuppo
         displayedCorpusLinks = Collections.emptyList();
         corpusSearched = false;
         haveActiveCorpus = false;
-        homePagePlainTextView = false;
         activateRightTab(RightTabKey.CONCEPT);
     }
 }

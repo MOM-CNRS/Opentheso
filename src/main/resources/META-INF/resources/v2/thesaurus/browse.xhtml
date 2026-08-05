@@ -301,7 +301,6 @@
                 </h:panelGroup>
 
 
-                <ui:include src="includes/dialogs/concept-lifecycle-dialogs.xhtml"/>
                 <ui:include src="includes/dialogs/concept-tree-dragdrop-dialog.xhtml"/>
                 <ui:include src="includes/dialogs/concept-copy-between-theso-dialogs.xhtml"/>
                 <ui:include src="includes/dialogs/concept-deepl-translate-dialog.xhtml"/>
@@ -316,6 +315,9 @@
                 <ui:include src="includes/dialogs/proposition-submit-dialogs.xhtml"/>
                 <input type="hidden" name="csrfToken" value="${sessionScope.CSRF_TOKEN}"/>
                 </h:form>
+
+                <!-- Hors du form principal (comme legacy) pour éviter les options en double dans les selectOneMenu -->
+                <ui:include src="includes/dialogs/concept-lifecycle-dialogs.xhtml"/>
 
             </div>
         </h:panelGroup>

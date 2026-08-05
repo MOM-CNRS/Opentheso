@@ -145,18 +145,20 @@
 
             <div class="topbar-divider d-none d-sm-block"/>
 
-            <p:panel rendered="#{not v2UserSession.loggedIn}" style="padding: 0; border: none; background: none;">
-                <li class="nav-item dropdown no-arrow">
-                    <p:commandLink class="nav-link dropdown-toggle" update="idLogin" oncomplete="PF('login').show();">
+            <ui:fragment rendered="#{not v2UserSession.loggedIn}">
+                <li class="nav-item">
+                    <!-- Ouverture client-side : évite le 1er clic AJAX inopérant (dialog hors form containerIndex). -->
+                    <a href="#" class="nav-link"
+                       onclick="var dlg = PF('login'); if (dlg) { dlg.show(); } return false;">
                         <span class="mr-2 d-none d-lg-inline text-gray-600 small"
                               style="font-size: 12px; margin-top: 7px">#{v2LocaleBean.getMsg('menu.login')}</span>
                         <img class="img-profile rounded-circle" src="#{request.contextPath}/resources/img/logout.png"
                              style="margin-top: 7px; font-size: 12px;" alt=""/>
-                    </p:commandLink>
+                    </a>
                 </li>
-            </p:panel>
+            </ui:fragment>
 
-            <p:panel rendered="#{v2UserSession.loggedIn}" style="padding: 0; border: none; background: none; font-size: 12px;">
+            <ui:fragment rendered="#{v2UserSession.loggedIn}">
                 <li class="nav-item dropdown no-arrow">
                     <a class="nav-link dropdown-toggle" href="#" role="button"
                        data-toggle="dropdown" aria-haspopup="true" aria-expanded="false">
@@ -173,14 +175,15 @@
                             #{v2LocaleBean.getMsg('menu.profile')}
                         </p:commandLink>
                         <div class="dropdown-divider"/>
-                        <p:commandLink class="dropdown-item" update="idLogout" oncomplete="PF('logout').show();"
+                        <p:commandLink class="dropdown-item" process="@this" update=":idLogout"
+                                       oncomplete="PF('logout').show();"
                                        style="font-size: 12px; color: #818183">
                             <i class="fas fa-sign-out-alt fa-sm fa-fw mr-2 text-gray-400"/>
                             #{v2LocaleBean.getMsg('menu.logout')}
                         </p:commandLink>
                     </div>
                 </li>
-            </p:panel>
+            </ui:fragment>
         </ul>
     </nav>
 

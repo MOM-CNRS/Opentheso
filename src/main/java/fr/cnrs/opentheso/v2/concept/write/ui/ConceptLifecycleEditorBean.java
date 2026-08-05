@@ -235,6 +235,7 @@ public class ConceptLifecycleEditorBean implements Serializable {
     private void loadCreationFormMetadata() {
         String thesaurusId = thesaurusContext.resolveThesaurusId();
         String lang = thesaurusContext.resolveWorkLanguage();
+        availableCollections = Collections.emptyList();
         availableCollections = conceptWriteMetadataService.listCollections(thesaurusId, lang);
         ntRelationTypes = conceptWriteMetadataService.listNtRelationTypes();
         if (StringUtils.isBlank(selectedGroupId)) {
@@ -305,11 +306,12 @@ public class ConceptLifecycleEditorBean implements Serializable {
         if (result.outcome() == MutationOutcome.DUPLICATE_LABEL) {
             duplicateLabelWarning = true;
             MessageUtils.showWarnMessage(result.message());
-            PrimeFaces.current().ajax().update("v2RenameConceptForm :messageIndex");
+            PrimeFaces.current().ajax().update(":v2RenameConceptForm", ":messageIndex");
             return;
         }
         duplicateLabelWarning = false;
-        if (handleMutationResult(result, summary.conceptId(), MutationRefreshMode.RENAME, command.label().trim())) {
+        String renamed = StringUtils.trimToEmpty(command.label());
+        if (handleMutationResult(result, summary.conceptId(), MutationRefreshMode.RENAME, renamed)) {
             PrimeFaces.current().executeScript("PF('v2RenameConceptDlg').hide();");
         }
     }
@@ -424,7 +426,11 @@ public class ConceptLifecycleEditorBean implements Serializable {
                     }
                     case PANEL_ONLY -> conceptNavigationSupport.openConcept(conceptIdToOpen);
                 }
-                PrimeFaces.current().ajax().update(":containerIndex:formRightTab :containerIndex:tabTree :messageIndex");
+                // formLeftTab pour rafraîchir le libellé dans l'arbre (comme legacy EditConcept#updateLabel)
+                PrimeFaces.current().ajax().update(
+                        ":containerIndex:formRightTab",
+                        ":containerIndex:formLeftTab",
+                        ":messageIndex");
                 MessageUtils.showInformationMessage(result.message());
                 return true;
             }

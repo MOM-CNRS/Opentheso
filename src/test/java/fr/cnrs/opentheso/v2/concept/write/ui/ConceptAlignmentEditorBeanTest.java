@@ -1,6 +1,7 @@
 package fr.cnrs.opentheso.v2.concept.write.ui;
 
 import fr.cnrs.opentheso.utils.MessageUtils;
+import fr.cnrs.opentheso.v2.concept.alignment.ui.ConceptAlignmentAdminBean;
 import fr.cnrs.opentheso.v2.concept.model.ConceptAlignment;
 import fr.cnrs.opentheso.v2.concept.model.ConceptSummary;
 import fr.cnrs.opentheso.v2.concept.session.ConceptNavigationSupport;
@@ -21,6 +22,7 @@ import org.mockito.Mock;
 import org.mockito.MockedStatic;
 import org.mockito.junit.jupiter.MockitoExtension;
 import org.primefaces.PrimeFaces;
+import org.springframework.beans.factory.ObjectProvider;
 
 import java.util.List;
 
@@ -50,6 +52,8 @@ class ConceptAlignmentEditorBeanTest {
     private UserSession userSession;
     @Mock
     private ConceptWritePolicy conceptWritePolicy;
+    @Mock
+    private ObjectProvider<ConceptAlignmentAdminBean> conceptAlignmentAdminBean;
 
     private ConceptAlignmentEditorBean bean;
 
@@ -60,10 +64,11 @@ class ConceptAlignmentEditorBeanTest {
     void setUp() {
         bean = new ConceptAlignmentEditorBean(
                 conceptAlignmentMutationService, conceptSelectionContext, conceptNavigationSupport,
-                thesaurusContext, userSession, conceptWritePolicy);
+                thesaurusContext, userSession, conceptWritePolicy, conceptAlignmentAdminBean);
         lenient().when(conceptWritePolicy.canMutateAlignments(eq(userSession), anyBoolean())).thenReturn(true);
         lenient().when(conceptSelectionContext.hasSelection()).thenReturn(true);
         lenient().when(conceptSelectionContext.getSummary()).thenReturn(ACTIVE_CONCEPT);
+        lenient().when(conceptAlignmentAdminBean.getIfAvailable()).thenReturn(null);
     }
 
     @Test
