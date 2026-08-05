@@ -5,7 +5,7 @@
              xmlns:f="http://xmlns.jcp.org/jsf/core">
 
     <p:dialog id="v2RenameConceptDlg" header="#{v2LocaleBean.getMsg('rightbody.conceptdialog.rename_concept')}"
-              widgetVar="v2RenameConceptDlg" width="520" modal="true" resizable="false">
+              widgetVar="v2RenameConceptDlg" width="520" modal="true" resizable="false" appendTo="@(body)">
         <h:form id="v2RenameConceptForm">
             <p:defaultCommand target="v2RenameConceptSubmit"/>
             <div class="row mb-2">
@@ -26,7 +26,7 @@
                 <p:commandButton rendered="#{v2ConceptLifecycleEditorBean.duplicateLabelWarning}"
                                  value="#{v2LocaleBean.getMsg('btnCancel')}" styleClass="ui-button-secondary"
                                  actionListener="#{v2ConceptLifecycleEditorBean.cancelDuplicate()}"
-                                 update="v2RenameConceptForm"
+                                 update=":v2RenameConceptForm"
                                  oncomplete="PF('v2RenameConceptDlg').show();"
                                  process="@form" style="margin-right:8px;"/>
                 <p:commandButton rendered="#{not v2ConceptLifecycleEditorBean.duplicateLabelWarning}"
@@ -36,13 +36,13 @@
                                  rendered="#{not v2ConceptLifecycleEditorBean.duplicateLabelWarning}"
                                  value="#{v2LocaleBean.getMsg('btnValidate')}" styleClass="ui-button-success"
                                  actionListener="#{v2ConceptLifecycleEditorBean.submitRename()}"
-                                 update="v2RenameConceptForm :containerIndex:formRightTab :containerIndex:formLeftTab :messageIndex"
+                                 update=":v2RenameConceptForm :containerIndex:formRightTab :containerIndex:formLeftTab :messageIndex"
                                  process="@form"/>
                 <p:commandButton rendered="#{v2ConceptLifecycleEditorBean.duplicateLabelWarning}"
                                  value="#{v2LocaleBean.getMsg('rightbody.conceptdialog.force')}"
                                  styleClass="ui-button-warning"
                                  actionListener="#{v2ConceptLifecycleEditorBean.submitRenameForced()}"
-                                 update="v2RenameConceptForm :containerIndex:formRightTab :containerIndex:formLeftTab :messageIndex"
+                                 update=":v2RenameConceptForm :containerIndex:formRightTab :containerIndex:formLeftTab :messageIndex"
                                  process="@form"
                                  oncomplete="PF('v2RenameConceptDlg').hide();"/>
             </div>
