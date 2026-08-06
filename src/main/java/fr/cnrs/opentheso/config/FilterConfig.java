@@ -6,6 +6,7 @@ import lombok.RequiredArgsConstructor;
 import org.springframework.boot.web.servlet.FilterRegistrationBean;
 import org.springframework.context.annotation.Bean;
 import org.springframework.context.annotation.Configuration;
+import org.springframework.core.Ordered;
 
 @Configuration
 @RequiredArgsConstructor
@@ -18,7 +19,7 @@ public class FilterConfig {
         FilterRegistrationBean<SsoTokenFilter> bean = new FilterRegistrationBean<>();
         bean.setFilter(new SsoTokenFilter(ssoTokenService));
         bean.addUrlPatterns("/*");
-        bean.setOrder(1);
+        bean.setOrder(Ordered.HIGHEST_PRECEDENCE);
         return bean;
     }
 }

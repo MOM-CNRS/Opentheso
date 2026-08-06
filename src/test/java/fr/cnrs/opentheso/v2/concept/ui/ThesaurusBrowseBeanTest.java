@@ -93,6 +93,8 @@ class ThesaurusBrowseBeanTest {
     private ObjectProvider<PropositionBean> propositionBean;
     @Mock
     private PropositionBean propositionBeanInstance;
+    @Mock
+    private ObjectProvider<ThesaurusHomeEditorBean> thesaurusHomeEditorBean;
 
     private ThesaurusBrowseBean bean;
 
@@ -115,7 +117,8 @@ class ThesaurusBrowseBeanTest {
                 rightsService,
                 conceptAlignmentAdminBean,
                 propositionSubmitBean,
-                propositionBean
+                propositionBean,
+                thesaurusHomeEditorBean
         );
     }
 

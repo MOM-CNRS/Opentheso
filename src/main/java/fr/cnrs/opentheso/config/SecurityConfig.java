@@ -6,7 +6,7 @@ import jakarta.servlet.http.HttpSession;
 import lombok.RequiredArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
 import org.apache.commons.lang3.StringUtils;
-import org.springframework.boot.autoconfigure.condition.ConditionalOnProperty;
+import org.springframework.beans.factory.annotation.Value;
 import org.springframework.context.annotation.Bean;
 import org.springframework.context.annotation.Configuration;
 import org.springframework.security.config.annotation.web.builders.HttpSecurity;
@@ -19,7 +19,6 @@ import org.springframework.security.oauth2.core.user.OAuth2User;
 import org.springframework.security.web.SecurityFilterChain;
 import org.springframework.security.web.authentication.AuthenticationFailureHandler;
 import org.springframework.security.web.authentication.AuthenticationSuccessHandler;
-import org.springframework.security.web.util.matcher.AntPathRequestMatcher;
 import org.springframework.web.context.request.RequestContextHolder;
 import org.springframework.web.context.request.ServletRequestAttributes;
 
@@ -32,64 +31,80 @@ import java.util.Set;
 @Configuration
 @EnableWebSecurity
 @RequiredArgsConstructor
-@ConditionalOnProperty(prefix = "app.security", name = "keycloak-enabled", havingValue = "true")
-public class SecurityConfigKeycloak {
+public class SecurityConfig {
+
+    @Value("${app.security.keycloak-enabled}")
+    private boolean keycloakEnabled;
 
     private final CurrentUser currentUser;
     private final UserRepository userRepository;
 
-
     @Bean
     public SecurityFilterChain filterChain(HttpSecurity http) throws Exception {
-        return http
+
+        // Configuration commune aux deux modes
+        http
                 .sessionManagement(session -> session.sessionFixation().none())
                 .authorizeHttpRequests(authz -> authz
-                        .requestMatchers("/login", "/logout", "/oauth2/**",
+                        .requestMatchers(
+                                "/login", "/logout", "/oauth2/**",
                                 "/javax.faces.resource/**",
                                 "/jakarta.faces.resource/**",
-                                "/openapi/v1/**")
-                        .permitAll()
+                                "/openapi/v1/**",
+                                "/api/v2/auth/token"
+                        ).permitAll()
                         .anyRequest().permitAll())
                 .csrf(csrf -> csrf
                         .ignoringRequestMatchers(
-                                new AntPathRequestMatcher("/openapi/v1/**"),
+                                "/openapi/v1/**",
+                                "/api/v2/**",
+                                "/api/v2/auth/token"
+                        )
+                        .ignoringRequestMatchers(
                                 request -> request.getServletPath().endsWith(".xhtml")
                         )
                 )
-                .oauth2Login(oauth2 -> oauth2.loginPage("/login")
-                        .successHandler(authenticationSuccessHandler())
-                        .failureHandler(authenticationFailureHandler())
-                        .userInfoEndpoint(userInfo -> userInfo.userAuthoritiesMapper(this.userAuthoritiesMapper())))
-                .build();
+                .headers(headers -> headers
+                        .frameOptions(frame -> frame.disable())
+                );
+
+        // Configuration spécifique Keycloak
+        if (keycloakEnabled) {
+            log.info("✅ Keycloak activé - Application en mode authentification SSO");
+            http.oauth2Login(oauth2 -> oauth2
+                    .loginPage("/login")
+                    .successHandler(authenticationSuccessHandler())
+                    .failureHandler(authenticationFailureHandler())
+                    .userInfoEndpoint(userInfo -> userInfo
+                            .userAuthoritiesMapper(this.userAuthoritiesMapper())));
+        } else {
+            log.warn("⚠️ Keycloak désactivé - Application en mode authentification locale");
+        }
+
+        return http.build();
     }
 
     @Bean
     public AuthenticationSuccessHandler authenticationSuccessHandler() {
         return (request, response, authentication) -> {
-
             ServletRequestAttributes attr = (ServletRequestAttributes) RequestContextHolder.getRequestAttributes();
 
             if (attr != null) {
                 var session = attr.getRequest().getSession(false);
                 var oauthUser = (OAuth2User) authentication.getPrincipal();
-
                 String email = oauthUser.getAttribute("email");
                 log.debug("Authentification réussie. Email : {}", email);
 
-                if (session != null) {
-                    if (StringUtils.isNotEmpty(email)) {
-                        // pour Stocker le message dans la session suivant la connexion via SSO
-                        HttpSession session2 = request.getSession(true); // IMPORTANT
-
-                        var user = userRepository.findByMail(email);
-                        if (user.isPresent()) {
-                            log.debug("Utilisateur trouvé dans la base Opentheso, chargement de la session ...");
-                            session2.setAttribute("LOGIN_INFO_MESSAGE", "Connexion réussie via KeyCloak");
-                            currentUser.setUser(user.get());
-                        } else {
-                            session2.setAttribute("LOGIN_ERROR_MESSAGE", "Connexion réussie, mais vous n'avez pas de compte dans Opentheso ! demandez à un Admin de vous donner des droits");
-                            log.error("Utilisateur avec email : {} non trouvé", email);
-                        }
+                if (session != null && StringUtils.isNotEmpty(email)) {
+                    HttpSession session2 = request.getSession(true);
+                    var user = userRepository.findByMail(email);
+                    if (user.isPresent()) {
+                        log.debug("Utilisateur trouvé dans la base Opentheso, chargement de la session ...");
+                        session2.setAttribute("LOGIN_INFO_MESSAGE", "Connexion réussie via KeyCloak");
+                        currentUser.setUser(user.get());
+                    } else {
+                        session2.setAttribute("LOGIN_ERROR_MESSAGE", "Connexion réussie, mais vous n'avez pas de compte dans Opentheso ! demandez à un Admin de vous donner des droits");
+                        log.error("Utilisateur avec email : {} non trouvé", email);
                     }
                 }
             }
@@ -100,7 +115,6 @@ public class SecurityConfigKeycloak {
     @Bean
     public AuthenticationFailureHandler authenticationFailureHandler() {
         return (request, response, exception) -> {
-            // Rediriger vers une page d'erreur JSF
             response.sendRedirect("/authFailure");
         };
     }
@@ -108,7 +122,6 @@ public class SecurityConfigKeycloak {
     private GrantedAuthoritiesMapper userAuthoritiesMapper() {
         return authorities -> {
             Set<GrantedAuthority> mappedAuthorities = new HashSet<>();
-
             for (GrantedAuthority authority : authorities) {
                 if (authority instanceof OidcUserAuthority oidcUserAuthority) {
                     Map<String, Object> attributes = oidcUserAuthority.getAttributes();
@@ -125,5 +138,3 @@ public class SecurityConfigKeycloak {
         };
     }
 }
-
-
