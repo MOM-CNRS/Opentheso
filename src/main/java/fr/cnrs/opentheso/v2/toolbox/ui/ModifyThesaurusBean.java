@@ -3,6 +3,7 @@ package fr.cnrs.opentheso.v2.toolbox.ui;
 import fr.cnrs.opentheso.utils.MessageUtils;
 import fr.cnrs.opentheso.v2.concept.ui.ConsultationShellBean;
 import fr.cnrs.opentheso.v2.setting.service.ThesaurusAccessService;
+import fr.cnrs.opentheso.v2.setting.service.ThesaurusSearchLanguageSync;
 import fr.cnrs.opentheso.v2.shared.ui.UserSession;
 import fr.cnrs.opentheso.v2.toolbox.exception.InvalidToolboxDataException;
 import fr.cnrs.opentheso.v2.toolbox.model.EditionCollectionNode;
@@ -37,6 +38,7 @@ public class ModifyThesaurusBean implements Serializable {
     private final UserSession userSession;
     private final ThesaurusAccessService thesaurusAccessService;
     private final ModifyThesaurusService modifyThesaurusService;
+    private final ThesaurusSearchLanguageSync thesaurusSearchLanguageSync;
 
     private String thesaurusId;
     private EditionThesaurusDetails details;
@@ -61,11 +63,13 @@ public class ModifyThesaurusBean implements Serializable {
     public ModifyThesaurusBean(
             UserSession userSession,
             ThesaurusAccessService thesaurusAccessService,
-            ModifyThesaurusService modifyThesaurusService
+            ModifyThesaurusService modifyThesaurusService,
+            ThesaurusSearchLanguageSync thesaurusSearchLanguageSync
     ) {
         this.userSession = userSession;
         this.thesaurusAccessService = thesaurusAccessService;
         this.modifyThesaurusService = modifyThesaurusService;
+        this.thesaurusSearchLanguageSync = thesaurusSearchLanguageSync;
     }
 
     public boolean isFormAvailable() {
@@ -105,6 +109,7 @@ public class ModifyThesaurusBean implements Serializable {
         }
         try {
             modifyThesaurusService.changeSourceLanguage(thesaurusId, sourceLang);
+            thesaurusSearchLanguageSync.applyAfterSourceLanguageChange(thesaurusId, sourceLang);
             refreshAll();
             MessageUtils.showInformationMessage("Langue source modifiée avec succès");
         } catch (InvalidToolboxDataException e) {

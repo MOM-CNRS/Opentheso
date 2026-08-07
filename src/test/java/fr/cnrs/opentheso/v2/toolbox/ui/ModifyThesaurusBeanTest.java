@@ -3,6 +3,7 @@ package fr.cnrs.opentheso.v2.toolbox.ui;
 import fr.cnrs.opentheso.utils.MessageUtils;
 import fr.cnrs.opentheso.v2.concept.ui.ConsultationShellBean;
 import fr.cnrs.opentheso.v2.setting.service.ThesaurusAccessService;
+import fr.cnrs.opentheso.v2.setting.service.ThesaurusSearchLanguageSync;
 import fr.cnrs.opentheso.v2.shared.ui.UserSession;
 import fr.cnrs.opentheso.v2.toolbox.model.EditionCollectionNode;
 import fr.cnrs.opentheso.v2.toolbox.model.EditionMetadata;
@@ -46,6 +47,8 @@ class ModifyThesaurusBeanTest {
     @Mock
     private ModifyThesaurusService modifyThesaurusService;
     @Mock
+    private ThesaurusSearchLanguageSync thesaurusSearchLanguageSync;
+    @Mock
     private EditionBean editionBean;
     @Mock
     private ConsultationShellBean consultationShellBean;
@@ -58,7 +61,8 @@ class ModifyThesaurusBeanTest {
 
     @BeforeEach
     void setUp() {
-        bean = new ModifyThesaurusBean(userSession, thesaurusAccessService, modifyThesaurusService);
+        bean = new ModifyThesaurusBean(
+                userSession, thesaurusAccessService, modifyThesaurusService, thesaurusSearchLanguageSync);
     }
 
     @Test
@@ -118,6 +122,7 @@ class ModifyThesaurusBeanTest {
         }
 
         verify(modifyThesaurusService).changeSourceLanguage("TH1", "en");
+        verify(thesaurusSearchLanguageSync).applyAfterSourceLanguageChange("TH1", "en");
         assertEquals("en", bean.getSourceLang());
     }
 

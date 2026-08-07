@@ -11,6 +11,7 @@ import fr.cnrs.opentheso.v2.setting.exception.SettingAccessDeniedException;
 import fr.cnrs.opentheso.v2.setting.model.IdentifierServerType;
 import fr.cnrs.opentheso.v2.setting.model.ThesaurusPreferences;
 import fr.cnrs.opentheso.v2.setting.service.ThesaurusPreferenceService;
+import fr.cnrs.opentheso.v2.setting.service.ThesaurusSearchLanguageSync;
 import fr.cnrs.opentheso.v2.shared.ui.UserSession;
 import jakarta.faces.view.ViewScoped;
 import jakarta.inject.Named;
@@ -33,6 +34,7 @@ public class PreferenceSettingsBean implements Serializable {
     private final V2LocaleBean localeBean;
     private final ThesaurusPreferenceService thesaurusPreferenceService;
     private final ConsultationShellBean consultationShellBean;
+    private final ThesaurusSearchLanguageSync thesaurusSearchLanguageSync;
 
     private PreferenceEditor editor;
 
@@ -42,7 +44,8 @@ public class PreferenceSettingsBean implements Serializable {
             ThesaurusContext thesaurusContext,
             V2LocaleBean localeBean,
             ThesaurusPreferenceService thesaurusPreferenceService,
-            ConsultationShellBean consultationShellBean
+            ConsultationShellBean consultationShellBean,
+            ThesaurusSearchLanguageSync thesaurusSearchLanguageSync
     ) {
         this.userSession = userSession;
         this.rightsService = rightsService;
@@ -50,6 +53,7 @@ public class PreferenceSettingsBean implements Serializable {
         this.localeBean = localeBean;
         this.thesaurusPreferenceService = thesaurusPreferenceService;
         this.consultationShellBean = consultationShellBean;
+        this.thesaurusSearchLanguageSync = thesaurusSearchLanguageSync;
     }
 
     public void load() {
@@ -150,9 +154,12 @@ public class PreferenceSettingsBean implements Serializable {
             editor.setNewPassHandle(null);
             editor.setNewDeeplApiKey(null);
             editor.setNewApiKeyOpenArk(null);
-            // Applique la langue par défaut à la consultation (liste des langues / arbres).
+            // Applique la langue par défaut à la consultation (V2 + sélecteur legacy search.xhtml).
             if (StringUtils.isNotBlank(saved.sourceLang())) {
-                thesaurusContext.changeWorkLanguage(saved.sourceLang());
+                thesaurusSearchLanguageSync.applyAfterSourceLanguageChange(
+                        thesaurusContext.getCurrentThesaurusId(),
+                        saved.sourceLang()
+                );
             }
             consultationShellBean.refreshHeaderCatalog();
             MessageUtils.showInformationMessage("Préférences enregistrées avec succès");

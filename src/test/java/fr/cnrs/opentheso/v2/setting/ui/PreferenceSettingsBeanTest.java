@@ -8,6 +8,7 @@ import fr.cnrs.opentheso.v2.setting.exception.InvalidSettingDataException;
 import fr.cnrs.opentheso.v2.setting.model.IdentifierServerType;
 import fr.cnrs.opentheso.v2.setting.model.ThesaurusPreferences;
 import fr.cnrs.opentheso.v2.setting.service.ThesaurusPreferenceService;
+import fr.cnrs.opentheso.v2.setting.service.ThesaurusSearchLanguageSync;
 import fr.cnrs.opentheso.v2.rights.AuthTarget;
 import fr.cnrs.opentheso.v2.rights.Permission;
 import fr.cnrs.opentheso.v2.rights.RightsService;
@@ -51,6 +52,8 @@ class PreferenceSettingsBeanTest {
     private ThesaurusPreferenceService thesaurusPreferenceService;
     @Mock
     private ConsultationShellBean consultationShellBean;
+    @Mock
+    private ThesaurusSearchLanguageSync thesaurusSearchLanguageSync;
 
     private PreferenceSettingsBean bean;
 
@@ -62,7 +65,8 @@ class PreferenceSettingsBeanTest {
                 thesaurusContext,
                 localeBean,
                 thesaurusPreferenceService,
-                consultationShellBean
+                consultationShellBean,
+                thesaurusSearchLanguageSync
         );
         lenient().when(localeBean.getIdLangue()).thenReturn("fr");
     }
@@ -121,7 +125,7 @@ class PreferenceSettingsBeanTest {
                     nullable(String.class), nullable(String.class),
                     nullable(String.class), nullable(String.class), eq("fr")
             );
-            verify(thesaurusContext).changeWorkLanguage("fr");
+            verify(thesaurusSearchLanguageSync).applyAfterSourceLanguageChange("TH1", "fr");
             verify(consultationShellBean).refreshHeaderCatalog();
             messageUtils.verify(() -> MessageUtils.showInformationMessage("Préférences enregistrées avec succès"));
         }

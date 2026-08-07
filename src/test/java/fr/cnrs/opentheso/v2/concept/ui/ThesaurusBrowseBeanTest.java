@@ -95,8 +95,6 @@ class ThesaurusBrowseBeanTest {
     private ObjectProvider<ThesaurusHomeEditorBean> thesaurusHomeEditorBean;
     @Mock
     private PropositionBean propositionBeanInstance;
-    @Mock
-    private ObjectProvider<ThesaurusHomeEditorBean> thesaurusHomeEditorBean;
 
     private ThesaurusBrowseBean bean;
 
