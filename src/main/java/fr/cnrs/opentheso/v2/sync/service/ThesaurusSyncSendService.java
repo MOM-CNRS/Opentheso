@@ -89,7 +89,22 @@ public class ThesaurusSyncSendService {
             String authorName,
             String authorEmail,
             String comment,
+            boolean createCandidates,
+            Consumer<SyncProgress> progressConsumer
+    ) {
+        return runSync(slaveThesaurusId, authorName, authorEmail, comment, false, createCandidates, progressConsumer);
+    }
+
+    /**
+     * @param syncAll si {@code true}, envoie tous les concepts (réservé aux tests / usage interne)
+     */
+    public SyncBatchResponse runSync(
+            String slaveThesaurusId,
+            String authorName,
+            String authorEmail,
+            String comment,
             boolean syncAll,
+            boolean createCandidates,
             Consumer<SyncProgress> progressConsumer
     ) {
         Preferences prefs = requireSlavePreferences(slaveThesaurusId);
@@ -154,6 +169,7 @@ public class ThesaurusSyncSendService {
                     authorName,
                     authorEmail,
                     comment,
+                    createCandidates,
                     payloads
             );
 
@@ -188,8 +204,7 @@ public class ThesaurusSyncSendService {
 
     private List<String> listConceptsToSync(String thesaurusId, LocalDateTime lastSyncAt) {
         if (lastSyncAt == null) {
-            // Pas encore de baseline (ni import récent, ni sync) → mode dirty = 0.
-            // Utiliser « Envoyer tous les concepts » pour une première sync complète.
+            // Pas encore de baseline (ni import récent, ni sync) → rien à synchroniser.
             return List.of();
         }
         Date since = Date.from(lastSyncAt.atZone(ZoneId.systemDefault()).toInstant());

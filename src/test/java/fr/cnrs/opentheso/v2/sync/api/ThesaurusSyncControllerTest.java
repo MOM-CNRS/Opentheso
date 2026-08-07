@@ -91,6 +91,6 @@ class ThesaurusSyncControllerTest {
     }
 
     private static SyncBatchRequest emptyBody() {
-        return new SyncBatchRequest("TH_SLAVE", null, null, null, null, List.of());
+        return new SyncBatchRequest("TH_SLAVE", null, null, null, null, true, List.of());
     }
 }

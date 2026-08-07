@@ -427,8 +427,28 @@ public class HandleClient {
 
         } catch (Exception ex) {
             log.error("Erreur Handle : ", ex);
+            message = describeHandleException(ex);
         }
         return null;
+    }
+
+    private String describeHandleException(Exception ex) {
+        Throwable root = ex;
+        while (root.getCause() != null && root.getCause() != root) {
+            root = root.getCause();
+        }
+        String detail = root.getMessage() != null && !root.getMessage().isBlank()
+                ? root.getMessage()
+                : root.getClass().getSimpleName();
+        if (ex instanceof java.io.FileNotFoundException
+                || root instanceof java.io.FileNotFoundException) {
+            return "fichier clé/certificat Handle introuvable ou chemin vide (" + detail + ")";
+        }
+        if (detail.contains("PKIX") || detail.contains("SSLHandshake")
+                || root instanceof javax.net.ssl.SSLHandshakeException) {
+            return "certificat SSL du serveur Handle non reconnu (PKIX) : " + detail;
+        }
+        return detail;
     }
 
     public String makeHttpsRequest(String method, String urlHandle, String idHandle,

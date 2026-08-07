@@ -41,7 +41,7 @@ class ThesaurusSyncHttpRemoteClientTest {
                 null,
                 "a",
                 "a@b.fr",
-                "c",
+                "c", true,
                 List.of(SyncConceptPayload.builder().identifier("C1").prefLabel("fr", "Chat").build())
         );
 
@@ -81,7 +81,7 @@ class ThesaurusSyncHttpRemoteClientTest {
         SyncBatchResponse response = client.postBatch(
                 "http://localhost/api/v2/thesaurus/TH/sync/concepts",
                 "secret",
-                new SyncBatchRequest("TH1", null, "a", "a@b.fr", "c", List.of(
+                new SyncBatchRequest("TH1", null, "a", "a@b.fr", "c", true, List.of(
                         SyncConceptPayload.builder().identifier("C1").prefLabel("fr", "Chat").build()))
         );
 
@@ -102,7 +102,7 @@ class ThesaurusSyncHttpRemoteClientTest {
                 client.postBatch(
                         "http://localhost/api/v2/thesaurus/TH/sync/concepts",
                         "secret",
-                        new SyncBatchRequest("TH1", null, "a", "a@b.fr", "c", List.of())));
+                        new SyncBatchRequest("TH1", null, "a", "a@b.fr", "c", true, List.of())));
 
         assertTrue(ex.getMessage().contains("400"));
         assertTrue(ex.getMessage().contains("not master"));
@@ -119,7 +119,7 @@ class ThesaurusSyncHttpRemoteClientTest {
                 .thenReturn(httpResponse);
 
         SyncBatchRequest request = new SyncBatchRequest(
-                "TH1", null, "a", "a@b.fr", "c",
+                "TH1", null, "a", "a@b.fr", "c", true,
                 List.of(SyncConceptPayload.builder().identifier("C1").prefLabel("fr", "Chat").build()));
         client.postBatch("http://localhost/api/v2/thesaurus/TH/sync/concepts", "my-key", request);
 

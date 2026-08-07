@@ -118,7 +118,7 @@ class ThesaurusSyncReceiveServiceTest {
 
         SyncBatchResponse response = service.receiveBatch(
                 "TH_MASTER",
-                new SyncBatchRequest("TH_SLAVE", null, "bob", "bob@ex.com", "sync", List.of(incoming)),
+                new SyncBatchRequest("TH_SLAVE", null, "bob", "bob@ex.com", "sync", true, List.of(incoming)),
                 user
         );
 
@@ -147,7 +147,7 @@ class ThesaurusSyncReceiveServiceTest {
 
         SyncBatchResponse response = service.receiveBatch(
                 "TH_MASTER",
-                new SyncBatchRequest("TH_SLAVE", null, null, null, null, List.of(incoming)),
+                new SyncBatchRequest("TH_SLAVE", null, null, null, null, true, List.of(incoming)),
                 user
         );
 
@@ -177,7 +177,7 @@ class ThesaurusSyncReceiveServiceTest {
 
         SyncBatchResponse response = service.receiveBatch(
                 "TH_MASTER",
-                new SyncBatchRequest("TH_SLAVE", null, null, null, null, List.of(incoming)),
+                new SyncBatchRequest("TH_SLAVE", null, null, null, null, true, List.of(incoming)),
                 user
         );
 
@@ -205,13 +205,36 @@ class ThesaurusSyncReceiveServiceTest {
 
         SyncBatchResponse response = service.receiveBatch(
                 "TH_MASTER",
-                new SyncBatchRequest("TH_SLAVE", null, null, null, null, List.of(incoming)),
+                new SyncBatchRequest("TH_SLAVE", null, null, null, null, true, List.of(incoming)),
                 user
         );
 
         assertEquals(1, response.candidatesCreated());
         assertEquals(SyncConceptOutcome.CANDIDATE_CREATED, response.results().get(0).outcome());
         assertEquals("CA99", response.results().get(0).matchedConceptId());
+    }
+
+    @Test
+    void receiveBatch_skipsUnknownConceptWhenCreateCandidatesDisabled() throws Exception {
+        when(toolboxPreferencePersistence.isMaster("TH_MASTER")).thenReturn(true);
+        when(toolboxPreferencePersistence.getWorkLanguage("TH_MASTER")).thenReturn("fr");
+        when(conceptRepository.existsByIdConceptAndIdThesaurus("C99", "TH_MASTER")).thenReturn(false);
+
+        SyncConceptPayload incoming = SyncConceptPayload.builder()
+                .identifier("C99")
+                .prefLabel("fr", "Nouveau")
+                .build();
+
+        SyncBatchResponse response = service.receiveBatch(
+                "TH_MASTER",
+                new SyncBatchRequest("TH_SLAVE", null, null, null, null, false, List.of(incoming)),
+                user
+        );
+
+        assertEquals(1, response.skipped());
+        assertEquals(SyncConceptOutcome.SKIPPED, response.results().get(0).outcome());
+        verify(candidatMutationService, never()).saveNewCandidat(
+                any(), anyString(), anyString(), anyInt(), anyString(), anyString(), any());
     }
 
     @Test
@@ -226,7 +249,7 @@ class ThesaurusSyncReceiveServiceTest {
 
         SyncBatchResponse response = service.receiveBatch(
                 "TH_MASTER",
-                new SyncBatchRequest("TH_SLAVE", null, null, null, null, List.of(incoming)),
+                new SyncBatchRequest("TH_SLAVE", null, null, null, null, true, List.of(incoming)),
                 user
         );
 
@@ -258,7 +281,7 @@ class ThesaurusSyncReceiveServiceTest {
 
         service.receiveBatch(
                 "TH_MASTER",
-                new SyncBatchRequest("TH_SLAVE", null, "bob", "bob@ex.com", "sync", List.of(incoming)),
+                new SyncBatchRequest("TH_SLAVE", null, "bob", "bob@ex.com", "sync", true, List.of(incoming)),
                 user
         );
 
@@ -286,7 +309,7 @@ class ThesaurusSyncReceiveServiceTest {
 
         SyncBatchResponse response = service.receiveBatch(
                 "TH_MASTER",
-                new SyncBatchRequest("TH_SLAVE", null, "bob", "bob@ex.com", "sync", List.of(
+                new SyncBatchRequest("TH_SLAVE", null, "bob", "bob@ex.com", "sync", true, List.of(
                         SyncConceptPayload.builder().identifier("C1").prefLabel("fr", "New").build())),
                 user
         );
@@ -305,7 +328,7 @@ class ThesaurusSyncReceiveServiceTest {
 
         SyncBatchResponse response = service.receiveBatch(
                 "TH_MASTER",
-                new SyncBatchRequest("TH_SLAVE", null, null, null, null, List.of(
+                new SyncBatchRequest("TH_SLAVE", null, null, null, null, true, List.of(
                         SyncConceptPayload.builder().identifier("C1").prefLabel("fr", "X").build())),
                 user
         );
@@ -321,7 +344,7 @@ class ThesaurusSyncReceiveServiceTest {
 
         SyncBatchResponse response = service.receiveBatch(
                 "TH_MASTER",
-                new SyncBatchRequest("TH_SLAVE", null, null, null, null, List.of(
+                new SyncBatchRequest("TH_SLAVE", null, null, null, null, true, List.of(
                         SyncConceptPayload.builder().identifier("  ").build())),
                 user
         );
@@ -341,7 +364,7 @@ class ThesaurusSyncReceiveServiceTest {
 
         SyncBatchResponse response = service.receiveBatch(
                 "TH_MASTER",
-                new SyncBatchRequest("TH_SLAVE", null, null, null, null, List.of(
+                new SyncBatchRequest("TH_SLAVE", null, null, null, null, true, List.of(
                         SyncConceptPayload.builder().identifier("C99").prefLabel("fr", "Nouveau").build())),
                 user
         );
@@ -358,7 +381,7 @@ class ThesaurusSyncReceiveServiceTest {
 
         SyncBatchResponse response = service.receiveBatch(
                 "TH_MASTER",
-                new SyncBatchRequest("TH_SLAVE", null, null, null, null, List.of(
+                new SyncBatchRequest("TH_SLAVE", null, null, null, null, true, List.of(
                         SyncConceptPayload.builder().identifier("C1").prefLabel("fr", "X").build())),
                 user
         );
@@ -374,7 +397,7 @@ class ThesaurusSyncReceiveServiceTest {
         assertEquals(0, service.receiveBatch("TH_MASTER", null, user).total());
         assertEquals(0, service.receiveBatch(
                 "TH_MASTER",
-                new SyncBatchRequest("TH_SLAVE", null, null, null, null, null),
+                new SyncBatchRequest("TH_SLAVE", null, null, null, null, true, null),
                 user).total());
     }
 
@@ -389,7 +412,7 @@ class ThesaurusSyncReceiveServiceTest {
 
         SyncBatchResponse response = service.receiveBatch(
                 "TH_MASTER",
-                new SyncBatchRequest("TH_SLAVE", null, null, null, null, List.of(
+                new SyncBatchRequest("TH_SLAVE", null, null, null, null, true, List.of(
                         SyncConceptPayload.builder().identifier("C99").prefLabel("en", "Cat").build())),
                 null
         );
@@ -398,6 +421,6 @@ class ThesaurusSyncReceiveServiceTest {
     }
 
     private static SyncBatchRequest emptyRequest() {
-        return new SyncBatchRequest("TH_SLAVE", null, null, null, null, List.of());
+        return new SyncBatchRequest("TH_SLAVE", null, null, null, null, true, List.of());
     }
 }

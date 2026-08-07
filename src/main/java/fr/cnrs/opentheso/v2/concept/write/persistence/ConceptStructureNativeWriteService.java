@@ -145,9 +145,12 @@ public class ConceptStructureNativeWriteService {
         try {
             conceptIdentifierAssignmentService.assignIdentifiers(thesaurusId, conceptId, lang);
         } catch (RuntimeException exception) {
-            return MutationResult.failure(topConcept
-                    ? "Erreur pendant la création du concept"
-                    : "Erreur pendant l'enregistrement du nouveau concept !");
+            String detail = StringUtils.defaultIfBlank(
+                    exception.getMessage(),
+                    topConcept
+                            ? "Erreur pendant la création du concept"
+                            : "Erreur pendant l'enregistrement du nouveau concept !");
+            return MutationResult.failure(detail);
         }
 
         conceptWritePostMutationRepository.saveCreatorDcTerm(

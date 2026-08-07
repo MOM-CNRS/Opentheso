@@ -62,6 +62,7 @@ public class ThesaurusSyncReceiveService {
                         ? " " + request.sourceThesaurusId()
                         : ""));
 
+        boolean createCandidates = request.shouldCreateCandidates();
         List<SyncConceptResult> results = new ArrayList<>();
         for (SyncConceptPayload concept : request.concepts()) {
             results.add(processOne(
@@ -71,6 +72,7 @@ public class ThesaurusSyncReceiveService {
                     authorName,
                     authorEmail,
                     comment,
+                    createCandidates,
                     user
             ));
         }
@@ -84,6 +86,7 @@ public class ThesaurusSyncReceiveService {
             String authorName,
             String authorEmail,
             String comment,
+            boolean createCandidates,
             User user
     ) {
         if (incoming == null || StringUtils.isBlank(incoming.identifier())) {
@@ -92,6 +95,12 @@ public class ThesaurusSyncReceiveService {
         try {
             Optional<String> matchedId = resolveMasterConceptId(masterThesaurusId, incoming);
             if (matchedId.isEmpty()) {
+                if (!createCandidates) {
+                    return SyncConceptResult.skipped(
+                            incoming.identifier(),
+                            null,
+                            "Création de candidat désactivée");
+                }
                 return createCandidate(masterThesaurusId, workLang, incoming, user);
             }
             return createPropositionIfNeeded(

@@ -44,8 +44,10 @@
                             <h:outputText value="#{v2LocaleBean.getMsg('toolbox.masterApiKey')}"/>
                         </div>
                         <div class="col-6">
-                            <p:inputText value="#{v2ThesaurusSyncBean.masterApiKey}"
+                            <p:inputText id="v2SyncMasterApiKey"
+                                         value="#{v2ThesaurusSyncBean.masterApiKey}"
                                          style="width: 100%;"
+                                         autocomplete="off"
                                          disabled="#{v2ThesaurusSyncBean.running}"/>
                         </div>
                         <div class="col-2">
@@ -89,15 +91,12 @@
 
                 <div class="row mb-3 align-items-center">
                     <div class="col-3 text-right">
-                        <h:outputText value="#{v2LocaleBean.getMsg('toolbox.syncMode')}"/>
+                        <h:outputText value="#{v2LocaleBean.getMsg('toolbox.syncCreateCandidatesLabel')}"/>
                     </div>
                     <div class="col-6">
-                        <p:selectBooleanCheckbox value="#{v2ThesaurusSyncBean.syncAll}"
-                                                 itemLabel="#{v2LocaleBean.getMsg('toolbox.syncAllConcepts')}"
-                                                 disabled="#{v2ThesaurusSyncBean.running}">
-                            <p:ajax event="change" listener="#{v2ThesaurusSyncBean.refreshPreparation()}"
-                                    update="containerIndex messageIndex"/>
-                        </p:selectBooleanCheckbox>
+                        <p:selectBooleanCheckbox value="#{v2ThesaurusSyncBean.createCandidates}"
+                                                 itemLabel="#{v2LocaleBean.getMsg('toolbox.syncCreateCandidates')}"
+                                                 disabled="#{v2ThesaurusSyncBean.running}"/>
                     </div>
                 </div>
 

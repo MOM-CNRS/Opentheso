@@ -33,9 +33,9 @@
                              style="height: 28px; max-width: 400px; border-radius: 50px 0px 0px 50px;
                                     background-color: #ECF8F1; color: #FFF !important; margin-top: 0px;">
                 <p:ajax event="valueChange" listener="#{v2ConsultationShellBean.onProjectChange()}" process="@this"
-                        update="menuBar containerIndex indexTitle resultSearchBar"
+                        update="thesoSelect containerIndex indexTitle resultSearchBar menuBar"
                         oncomplete="changeUrl();"/>
-                <f:selectItem itemLabel="#{v2LocaleBean.getMsg('menu.all_project')}" itemValue="-1"/>
+                <f:selectItem itemLabel="#{v2LocaleBean.getMsg('menu.all_project')}" itemValue="#{-1}"/>
                 <f:selectItems value="#{v2ConsultationShellBean.projects}" var="project"
                                itemLabel="#{project.label}" itemValue="#{project.id}"/>
             </p:selectOneMenu>

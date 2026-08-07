@@ -72,10 +72,20 @@ public class ConceptHandleWriteService {
         }
 
         if (preferences.isUseHandleWithCertificat()) {
+            String validationError = validateCertificateHandleConfig(preferences);
+            if (validationError != null) {
+                conceptHandleConnectionService.setMessage(validationError);
+                log.error("Configuration Handle invalide : {}", validationError);
+                return false;
+            }
             String privateUri = "?idc=" + conceptId + "&idt=" + thesaurusId;
             String handleId = conceptHandleConnectionService.addIdHandle(privateUri, preferences);
             if (handleId == null) {
-                log.error("Erreur pendant l'ajout d'un id handle : {}", conceptHandleConnectionService.getMessage());
+                String detail = StringUtils.defaultIfBlank(
+                        conceptHandleConnectionService.getMessage(),
+                        "vérifiez l'URL API Handle, les certificats et la confiance SSL (PKIX)");
+                conceptHandleConnectionService.setMessage(detail);
+                log.error("Erreur pendant l'ajout d'un id handle : {}", detail);
                 return false;
             }
             return updateHandleIdOfConcept(conceptId, thesaurusId, handleId);
@@ -83,10 +93,35 @@ public class ConceptHandleWriteService {
 
         conceptHandleConnectionService.applyNodePreference(preferences);
         if (!conceptHandleConnectionService.connectHandle()) {
-            log.error("Erreur pendant la connexion avec le serveur Handle");
+            String detail = StringUtils.defaultIfBlank(
+                    conceptHandleConnectionService.getMessage(),
+                    "impossible de se connecter au serveur Handle");
+            conceptHandleConnectionService.setMessage(detail);
+            log.error("Erreur pendant la connexion avec le serveur Handle : {}", detail);
             return false;
         }
         return createStandardHandle(conceptId, thesaurusId, preferences);
+    }
+
+    private String validateCertificateHandleConfig(Preferences preferences) {
+        if (StringUtils.isBlank(preferences.getUrlApiHandle())) {
+            return "URL API Handle non renseignée (Préférences → Identifiants)";
+        }
+        if (StringUtils.isBlank(preferences.getPathKeyHandle())) {
+            return "chemin de la clé Handle (PKCS12) non renseigné (Préférences → Identifiants)";
+        }
+        if (StringUtils.isBlank(preferences.getPathCertHandle())) {
+            return "chemin du certificat Handle (JKS) non renseigné (Préférences → Identifiants)";
+        }
+        java.io.File keyFile = new java.io.File(preferences.getPathKeyHandle());
+        if (!keyFile.isFile()) {
+            return "fichier clé Handle introuvable : " + preferences.getPathKeyHandle();
+        }
+        java.io.File certFile = new java.io.File(preferences.getPathCertHandle());
+        if (!certFile.isFile()) {
+            return "fichier certificat Handle introuvable : " + preferences.getPathCertHandle();
+        }
+        return null;
     }
 
     public boolean deleteHandle(String conceptId, String thesaurusId, String handleId) {

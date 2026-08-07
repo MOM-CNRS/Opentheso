@@ -64,7 +64,7 @@ class ThesaurusSyncBeanTest {
                 "api-key",
                 LocalDateTime.of(2026, 7, 1, 8, 0)
         ));
-        when(thesaurusSyncSendService.prepare("TH1", false)).thenReturn(new ThesaurusSyncSendService.SyncPreparation(
+        when(thesaurusSyncSendService.prepare("TH1")).thenReturn(new ThesaurusSyncSendService.SyncPreparation(
                 "TH1",
                 "https://master.example",
                 "TH_MASTER",
@@ -81,8 +81,9 @@ class ThesaurusSyncBeanTest {
         assertTrue(bean.isFormAvailable());
         assertEquals("https://master.example", bean.getMasterServerUrl());
         assertEquals("TH_MASTER", bean.getMasterThesaurusId());
-        assertEquals("api-key", bean.getMasterApiKey());
+        assertEquals("*******", bean.getMasterApiKey());
         assertEquals(12, bean.getConceptCount());
+        assertTrue(bean.isCreateCandidates());
     }
 
     @Test
@@ -90,7 +91,7 @@ class ThesaurusSyncBeanTest {
         stubAccess(true);
         when(thesaurusSyncSendService.loadConfig("TH1")).thenReturn(new ThesaurusSyncSendService.SyncConfig(
                 null, null, null, null));
-        when(thesaurusSyncSendService.prepare("TH1", false))
+        when(thesaurusSyncSendService.prepare("TH1"))
                 .thenThrow(new InvalidToolboxDataException("Lien maître incomplet"));
 
         try (MockedStatic<MessageUtils> ignored = mockStatic(MessageUtils.class)) {
@@ -120,7 +121,7 @@ class ThesaurusSyncBeanTest {
         bean.setMasterServerUrl("https://master.example");
         bean.setMasterThesaurusId("TH_MASTER");
         bean.setMasterApiKey("api-key");
-        when(thesaurusSyncSendService.prepare("TH1", false)).thenReturn(new ThesaurusSyncSendService.SyncPreparation(
+        when(thesaurusSyncSendService.prepare("TH1")).thenReturn(new ThesaurusSyncSendService.SyncPreparation(
                 "TH1", "https://master.example", "TH_MASTER", "api-key", 3, "fr", null));
 
         try (MockedStatic<MessageUtils> messages = mockStatic(MessageUtils.class)) {
@@ -153,7 +154,7 @@ class ThesaurusSyncBeanTest {
         }).when(thesaurusSyncSendService).runSync(
                 eq("TH1"), eq("alice"), eq("a@b.fr"), eq("sync"), eq(false), any());
 
-        when(thesaurusSyncSendService.prepare("TH1", false)).thenReturn(
+        when(thesaurusSyncSendService.prepare("TH1")).thenReturn(
                 new ThesaurusSyncSendService.SyncPreparation(
                         "TH1", "https://master.example", "TH_MASTER", "api-key", 0, "fr", LocalDateTime.now()));
 
@@ -219,7 +220,7 @@ class ThesaurusSyncBeanTest {
                     // with sync executor Runnable::run it finishes immediately, so start twice before second can run.
                     return SyncBatchResponse.from(List.of());
                 });
-        when(thesaurusSyncSendService.prepare("TH1", false)).thenReturn(
+        when(thesaurusSyncSendService.prepare("TH1")).thenReturn(
                 new ThesaurusSyncSendService.SyncPreparation(
                         "TH1", "https://m", "THM", "k", 0, "fr", null));
 
@@ -256,7 +257,7 @@ class ThesaurusSyncBeanTest {
         when(userSession.getCurrentUserEmail()).thenReturn("a@b.fr");
         when(thesaurusSyncSendService.runSync(anyString(), anyString(), anyString(), any(), anyBoolean(), any()))
                 .thenReturn(SyncBatchResponse.from(List.of()));
-        when(thesaurusSyncSendService.prepare("TH1", false)).thenReturn(
+        when(thesaurusSyncSendService.prepare("TH1")).thenReturn(
                 new ThesaurusSyncSendService.SyncPreparation(
                         "TH1", "https://m", "THM", "k", 0, "fr", null));
 
@@ -272,39 +273,38 @@ class ThesaurusSyncBeanTest {
     }
 
     @Test
-    void refreshPreparation_updatesCountForSyncAllMode() {
+    void refreshPreparation_updatesConceptCount() {
         stubAccess(true);
         bean.setThesaurusId("TH1");
-        bean.setSyncAll(true);
-        when(thesaurusSyncSendService.prepare("TH1", true)).thenReturn(
+        when(thesaurusSyncSendService.prepare("TH1")).thenReturn(
                 new ThesaurusSyncSendService.SyncPreparation(
                         "TH1", "https://m", "THM", "k", 8, "fr", null));
 
         try (MockedStatic<MessageUtils> messages = mockStatic(MessageUtils.class)) {
             bean.refreshPreparation();
-            messages.verify(() -> MessageUtils.showInformationMessage(org.mockito.ArgumentMatchers.contains("mode complet")));
+            messages.verify(() -> MessageUtils.showInformationMessage(org.mockito.ArgumentMatchers.contains("8 concept")));
         }
         assertEquals(8, bean.getConceptCount());
     }
 
     @Test
-    void startSync_passesSyncAllFlagToService() {
+    void startSync_passesCreateCandidatesFlagToService() {
         stubAccess(true);
         bean.setThesaurusId("TH1");
-        bean.setSyncAll(true);
+        bean.setCreateCandidates(false);
         bean.setComment("c");
         when(userSession.getCurrentUserId()).thenReturn(2);
         when(userSession.getCurrentUsername()).thenReturn("alice");
         when(userSession.getCurrentUserEmail()).thenReturn("a@b.fr");
-        when(thesaurusSyncSendService.runSync(eq("TH1"), eq("alice"), eq("a@b.fr"), eq("c"), eq(true), any()))
+        when(thesaurusSyncSendService.runSync(eq("TH1"), eq("alice"), eq("a@b.fr"), eq("c"), eq(false), any()))
                 .thenReturn(SyncBatchResponse.from(List.of()));
-        when(thesaurusSyncSendService.prepare("TH1", true)).thenReturn(
+        when(thesaurusSyncSendService.prepare("TH1")).thenReturn(
                 new ThesaurusSyncSendService.SyncPreparation(
                         "TH1", "https://m", "THM", "k", 0, "fr", null));
 
         bean.startSync();
 
-        verify(thesaurusSyncSendService).runSync(eq("TH1"), eq("alice"), eq("a@b.fr"), eq("c"), eq(true), any());
+        verify(thesaurusSyncSendService).runSync(eq("TH1"), eq("alice"), eq("a@b.fr"), eq("c"), eq(false), any());
     }
 
     @Test

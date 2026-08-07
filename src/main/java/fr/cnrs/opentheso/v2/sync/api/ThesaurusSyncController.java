@@ -37,7 +37,8 @@ public class ThesaurusSyncController {
     @Operation(
             summary = "Synchronise un lot de concepts depuis un thésaurus esclave",
             description = "Compare chaque concept reçu au thésaurus maître : crée une proposition "
-                    + "s'il existe, un candidat sinon. Aucun changement n'est appliqué directement.",
+                    + "s'il existe ; crée un candidat s'il est inconnu et si createCandidates "
+                    + "n'est pas false. Aucun changement n'est appliqué directement.",
             security = @SecurityRequirement(name = "ApiKeyAuth")
     )
     public ResponseEntity<?> syncConcepts(

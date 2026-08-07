@@ -7,6 +7,7 @@ import fr.cnrs.opentheso.v2.sync.model.SyncBatchResponse;
 import fr.cnrs.opentheso.v2.sync.service.ThesaurusSyncProgressTracker;
 import fr.cnrs.opentheso.v2.sync.service.ThesaurusSyncProgressTracker.ProgressState;
 import fr.cnrs.opentheso.v2.sync.service.ThesaurusSyncSendService;
+import fr.cnrs.opentheso.v2.sync.support.ApiKeyDisplayMask;
 import fr.cnrs.opentheso.v2.toolbox.exception.InvalidToolboxDataException;
 import fr.cnrs.opentheso.v2.toolbox.ui.EditionBean;
 import jakarta.faces.context.FacesContext;
@@ -48,10 +49,13 @@ public class ThesaurusSyncBean implements Serializable {
     private String thesaurusId;
     private String masterServerUrl;
     private String masterThesaurusId;
+    /** Valeur affichée dans le formulaire (masquée si chargée depuis le stockage). */
     private String masterApiKey;
+    /** Valeur réelle persistée, jamais exposée telle quelle après chargement. */
+    private String storedMasterApiKey;
     private LocalDateTime lastSyncAt;
     private int conceptCount;
-    private boolean syncAll;
+    private boolean createCandidates;
     private String comment;
     private String progressKey;
 
@@ -61,7 +65,7 @@ public class ThesaurusSyncBean implements Serializable {
         this.thesaurusId = thesaurusId;
         clearProgress();
         lastResponse = null;
-        syncAll = false;
+        createCandidates = true;
         comment = "Synchronisation depuis le thésaurus esclave";
         if (!canManage()) {
             clear();
@@ -71,14 +75,14 @@ public class ThesaurusSyncBean implements Serializable {
             var config = thesaurusSyncSendService.loadConfig(thesaurusId);
             masterServerUrl = config.masterServerUrl();
             masterThesaurusId = config.masterThesaurusId();
-            masterApiKey = config.masterApiKey();
+            applyStoredApiKey(config.masterApiKey());
             lastSyncAt = config.lastSyncAt();
             refreshConceptCountQuietly();
         } catch (InvalidToolboxDataException ex) {
             MessageUtils.showErrorMessage(ex.getMessage());
             masterServerUrl = null;
             masterThesaurusId = null;
-            masterApiKey = null;
+            applyStoredApiKey(null);
             lastSyncAt = null;
             conceptCount = 0;
         }
@@ -89,8 +93,10 @@ public class ThesaurusSyncBean implements Serializable {
             return;
         }
         try {
+            String apiKeyToSave = ApiKeyDisplayMask.resolveForPersist(masterApiKey, storedMasterApiKey);
             thesaurusSyncSendService.saveMasterLink(
-                    thesaurusId, masterServerUrl, masterThesaurusId, masterApiKey);
+                    thesaurusId, masterServerUrl, masterThesaurusId, apiKeyToSave);
+            applyStoredApiKey(apiKeyToSave);
             MessageUtils.showInformationMessage("Lien vers le thésaurus maître enregistré");
             refreshConceptCountQuietly();
         } catch (InvalidToolboxDataException e) {
@@ -103,11 +109,10 @@ public class ThesaurusSyncBean implements Serializable {
             return;
         }
         try {
-            var preparation = thesaurusSyncSendService.prepare(thesaurusId, syncAll);
+            var preparation = thesaurusSyncSendService.prepare(thesaurusId);
             applyPreparation(preparation);
             MessageUtils.showInformationMessage(
-                    conceptCount + " concept(s) à synchroniser"
-                            + (syncAll ? " (mode complet)" : " (modifiés depuis la dernière sync)"));
+                    conceptCount + " concept(s) à synchroniser (modifiés depuis la dernière sync)");
         } catch (InvalidToolboxDataException ex) {
             conceptCount = 0;
             MessageUtils.showErrorMessage(ex.getMessage());
@@ -125,11 +130,11 @@ public class ThesaurusSyncBean implements Serializable {
         final String authorName = userSession.getCurrentUsername();
         final String authorEmail = userSession.getCurrentUserEmail();
         final String syncComment = comment;
-        final boolean syncAllConcepts = syncAll;
+        final boolean createCandidatesFlag = createCandidates;
         final String key = progressKey;
 
         resolveSyncExecutor().execute(() -> runSyncInBackground(
-                key, state, syncThesaurusId, authorName, authorEmail, syncComment, syncAllConcepts));
+                key, state, syncThesaurusId, authorName, authorEmail, syncComment, createCandidatesFlag));
     }
 
     /**
@@ -237,7 +242,7 @@ public class ThesaurusSyncBean implements Serializable {
             String authorName,
             String authorEmail,
             String syncComment,
-            boolean syncAllConcepts
+            boolean createCandidatesFlag
     ) {
         try {
             lastResponse = thesaurusSyncSendService.runSync(
@@ -245,7 +250,7 @@ public class ThesaurusSyncBean implements Serializable {
                     authorName,
                     authorEmail,
                     syncComment,
-                    syncAllConcepts,
+                    createCandidatesFlag,
                     progress -> {
                         state.total = progress.total();
                         state.processed = progress.processed();
@@ -292,7 +297,7 @@ public class ThesaurusSyncBean implements Serializable {
 
     private void refreshConceptCountQuietly() {
         try {
-            var preparation = thesaurusSyncSendService.prepare(thesaurusId, syncAll);
+            var preparation = thesaurusSyncSendService.prepare(thesaurusId);
             applyPreparation(preparation);
         } catch (InvalidToolboxDataException ignored) {
             conceptCount = 0;
@@ -302,9 +307,15 @@ public class ThesaurusSyncBean implements Serializable {
     private void applyPreparation(ThesaurusSyncSendService.SyncPreparation preparation) {
         masterServerUrl = preparation.masterServerUrl();
         masterThesaurusId = preparation.masterThesaurusId();
-        masterApiKey = preparation.masterApiKey();
+        applyStoredApiKey(preparation.masterApiKey());
         lastSyncAt = preparation.lastSyncAt();
         conceptCount = preparation.conceptCount();
+    }
+
+    private void applyStoredApiKey(String apiKey) {
+        storedMasterApiKey = StringUtils.trimToNull(apiKey);
+        // Clé déjà en base → masquée ; première saisie (vide) → champ libre en clair.
+        masterApiKey = ApiKeyDisplayMask.mask(storedMasterApiKey);
     }
 
     private void clearProgress() {
@@ -319,7 +330,7 @@ public class ThesaurusSyncBean implements Serializable {
         thesaurusId = null;
         masterServerUrl = null;
         masterThesaurusId = null;
-        masterApiKey = null;
+        applyStoredApiKey(null);
         lastSyncAt = null;
         conceptCount = 0;
     }

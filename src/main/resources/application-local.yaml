@@ -27,7 +27,7 @@ primefaces:
 
 app:
   security:
-    keycloak-enabled: false  # ou false pour désactiver
+    keycloak-enabled: true  # ou false pour désactiver
   neo4j:
     enabled: false
 
@@ -79,20 +79,20 @@ spring:
     default-encoding: UTF-8
 
   # Connexion de KeyCloak
-#  security:
-#    oauth2:
-#      client:
-#        registration:
-#          keycloak:
-#            client-id: opentheso
-#            client-secret:
-#            provider: keycloak
-#            authorization-grant-type: authorization_code
-#            redirect-uri: "{baseUrl}/login/oauth2/code/keycloak"
-#            scope: openid, profile, email
-#        provider:
-#          keycloak:
-#            issuer-uri: https://login.server.net/realms/server
+  security:
+    oauth2:
+      client:
+        registration:
+          keycloak:
+            client-id: opentheso
+            client-secret: kUNAPoxYcnpj7XAYIHcjLYN5kWJ0KJr5
+            provider: keycloak
+            authorization-grant-type: authorization_code
+            redirect-uri: "{baseUrl}/login/oauth2/code/keycloak"
+            scope: openid, profile, email
+        provider:
+          keycloak:
+            issuer-uri: https://login.espadon.net/realms/espadon
 
 settings:
   workLanguage: fr

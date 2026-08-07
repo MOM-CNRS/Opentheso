@@ -5,6 +5,7 @@ import fr.cnrs.opentheso.v2.concept.model.ConsultationThesaurusOption;
 import fr.cnrs.opentheso.v2.project.service.ProjectAdminService;
 import fr.cnrs.opentheso.v2.shared.repository.AdminQueryRepository;
 import fr.cnrs.opentheso.v2.shared.repository.ConsultationCatalogQueryRepository;
+import fr.cnrs.opentheso.v2.shared.repository.ProjectAdminQueryRepository;
 import lombok.RequiredArgsConstructor;
 import org.springframework.beans.factory.annotation.Value;
 import org.springframework.stereotype.Service;
@@ -18,6 +19,7 @@ public class ConsultationCatalogService {
 
     private final ConsultationCatalogQueryRepository consultationCatalogQueryRepository;
     private final ProjectAdminService projectAdminService;
+    private final ProjectAdminQueryRepository projectAdminQueryRepository;
     private final AdminQueryRepository adminQueryRepository;
 
     @Value("${settings.workLanguage:fr}")
@@ -39,7 +41,14 @@ public class ConsultationCatalogService {
         if (userId == null) {
             return consultationCatalogQueryRepository.findPublicThesauri(projectId, resolvedLang);
         }
-        if (superAdmin && projectId < 0) {
+        // Aligné legacy SelectedTheso.setSelectedProject / getThesaurusOfProject :
+        // un projet précis → tous les thésaurus du projet (y compris privés).
+        if (projectId >= 0) {
+            return projectAdminQueryRepository.findThesauriOfProject(projectId, resolvedLang).stream()
+                    .map(row -> new ConsultationThesaurusOption(row.id(), row.title(), resolvedLang))
+                    .toList();
+        }
+        if (superAdmin) {
             return adminQueryRepository.findAllThesauri(resolvedLang).stream()
                     .map(row -> new ConsultationThesaurusOption(
                             row.thesaurusId(),

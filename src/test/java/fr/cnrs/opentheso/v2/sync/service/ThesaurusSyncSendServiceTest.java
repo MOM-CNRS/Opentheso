@@ -127,7 +127,7 @@ class ThesaurusSyncSendServiceTest {
                         .build());
 
         assertThrows(InvalidToolboxDataException.class, () ->
-                service.runSync("TH1", "a", "a@b.fr", "c", false, null));
+                service.runSync("TH1", "a", "a@b.fr", "c", true, null));
     }
 
     @Test
@@ -135,7 +135,7 @@ class ThesaurusSyncSendServiceTest {
         when(toolboxPreferencePersistence.findPreferences("TH1")).thenReturn(slavePrefs(LocalDateTime.now()));
         when(conceptRepository.findConceptIdsChangedSince(eq("TH1"), any(Date.class))).thenReturn(List.of());
 
-        SyncBatchResponse response = service.runSync("TH1", "a", "a@b.fr", "c", false, null);
+        SyncBatchResponse response = service.runSync("TH1", "a", "a@b.fr", "c", true, null);
 
         assertEquals(0, response.total());
         verify(remoteClient, never()).postBatch(anyString(), anyString(), any());
@@ -162,7 +162,7 @@ class ThesaurusSyncSendServiceTest {
         AtomicReference<ThesaurusSyncSendService.SyncProgress> lastProgress = new AtomicReference<>();
         // Première sync complète : le mode dirty avec last_sync_at null n'envoie rien.
         SyncBatchResponse response = service.runSync(
-                "TH1", "alice", "a@b.fr", "comment", true, lastProgress::set);
+                "TH1", "alice", "a@b.fr", "comment", true, true, lastProgress::set);
 
         assertEquals(1, response.propositionsCreated());
         assertEquals(100, lastProgress.get().percent());
@@ -175,6 +175,7 @@ class ThesaurusSyncSendServiceTest {
         );
         assertEquals("TH1", requestCaptor.getValue().sourceThesaurusId());
         assertEquals(1, requestCaptor.getValue().concepts().size());
+        assertTrue(requestCaptor.getValue().shouldCreateCandidates());
         verify(toolboxPreferencePersistence).updateLastSyncAt(eq("TH1"), any(LocalDateTime.class));
     }
 
@@ -264,7 +265,7 @@ class ThesaurusSyncSendServiceTest {
         when(remoteClient.postBatch(anyString(), eq("api-key"), any()))
                 .thenReturn(SyncBatchResponse.from(List.of(SyncConceptResult.skipped("C9", "C9", "ok"))));
 
-        SyncBatchResponse response = service.runSync("TH1", "a", "a@b.fr", "c", false, null);
+        SyncBatchResponse response = service.runSync("TH1", "a", "a@b.fr", "c", true, null);
 
         assertEquals(1, response.skipped());
         verify(conceptRepository, never()).findAllByIdThesaurusAndStatusNot(anyString(), anyString());
@@ -275,7 +276,7 @@ class ThesaurusSyncSendServiceTest {
     void runSync_nullLastSyncDirty_returnsEmptyWithoutRemoteCall() {
         when(toolboxPreferencePersistence.findPreferences("TH1")).thenReturn(slavePrefs(null));
 
-        SyncBatchResponse response = service.runSync("TH1", "a", "a@b.fr", "c", false, null);
+        SyncBatchResponse response = service.runSync("TH1", "a", "a@b.fr", "c", true, null);
 
         assertEquals(0, response.total());
         verify(remoteClient, never()).postBatch(anyString(), anyString(), any());
@@ -297,7 +298,7 @@ class ThesaurusSyncSendServiceTest {
         when(remoteClient.postBatch(anyString(), eq("api-key"), any()))
                 .thenReturn(SyncBatchResponse.from(List.of(SyncConceptResult.skipped("Cx", "Cx", "ok"))));
 
-        service.runSync("TH1", "a", "a@b.fr", "c", true, null);
+        service.runSync("TH1", "a", "a@b.fr", "c", true, true, null);
 
         verify(remoteClient, times(2)).postBatch(anyString(), eq("api-key"), any());
     }
@@ -309,7 +310,7 @@ class ThesaurusSyncSendServiceTest {
                 .thenReturn(List.of(Concept.builder().idConcept("C1").build()));
         when(payloadBuilder.build("TH1", "C1", "fr")).thenReturn(Optional.empty());
 
-        SyncBatchResponse response = service.runSync("TH1", "a", "a@b.fr", "c", true, null);
+        SyncBatchResponse response = service.runSync("TH1", "a", "a@b.fr", "c", true, true, null);
 
         assertEquals(0, response.total());
         verify(remoteClient, never()).postBatch(anyString(), anyString(), any());
@@ -327,7 +328,7 @@ class ThesaurusSyncSendServiceTest {
                 .when(remoteClient).postBatch(anyString(), anyString(), any());
 
         assertThrows(InvalidToolboxDataException.class, () ->
-                service.runSync("TH1", "a", "a@b.fr", "c", true, null));
+                service.runSync("TH1", "a", "a@b.fr", "c", true, true, null));
         verify(toolboxPreferencePersistence, never()).updateLastSyncAt(anyString(), any());
     }
 
