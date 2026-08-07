@@ -21,6 +21,7 @@ import org.primefaces.model.charts.ChartData;
 import org.primefaces.model.charts.donut.DonutChartDataSet;
 import org.primefaces.model.charts.donut.DonutChartModel;
 
+import java.io.ByteArrayInputStream;
 import java.io.Serializable;
 import java.util.ArrayList;
 import java.util.Collections;
@@ -144,6 +145,7 @@ public class StatisticsBean implements Serializable {
         startDate = null;
         endDate = null;
         selectedCollection = "";
+        resultLimit = "100";
         conceptStatistics = new ArrayList<>();
         collectionStatistics = new ArrayList<>();
         clearCharts();
@@ -215,10 +217,11 @@ public class StatisticsBean implements Serializable {
         byte[] content = genericTypeVisible
                 ? thesaurusStatisticsService.exportGenericReport(collectionStatistics)
                 : thesaurusStatisticsService.exportConceptReport(conceptStatistics);
+        String fileName = StringUtils.defaultIfBlank(getThesaurusTitle(), "statistics") + ".csv";
         return DefaultStreamedContent.builder()
                 .contentType("text/csv")
-                .name(getThesaurusTitle() + ".csv")
-                .stream(() -> thesaurusStatisticsService.toStream(content))
+                .name(fileName)
+                .stream(() -> new ByteArrayInputStream(content))
                 .build();
     }
 

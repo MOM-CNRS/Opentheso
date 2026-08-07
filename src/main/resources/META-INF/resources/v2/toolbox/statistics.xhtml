@@ -195,7 +195,8 @@
                                             <p:commandButton rendered="#{v2StatisticsBean.collectionStatistics.size() != 0}"
                                                 icon="pi pi-download" value="#{v2LocaleBean.getMsg('download')}" styleClass="ui-button-success"
                                                              title="#{v2LocaleBean.getMsg('statistique.exporter_csv')}"
-                                                             update=":containerIndex:bloc1 :containerIndex:bloc2" style=" height: 33px;" >
+                                                             ajax="false"
+                                                             style=" height: 33px;" >
                                                 <p:fileDownload value="#{v2StatisticsBean.exportStatistics()}" />
                                             </p:commandButton>                                            
                                         </div>
@@ -257,7 +258,8 @@
                                     <div class="row" style="margin-top: 10px">
                                         <div class="col-12" style="text-align: right">
                                             <p:commandButton value="#{v2LocaleBean.getMsg('init')}" styleClass="ui-button-secondary button" icon="fas fa-arrows-rotate"
-                                                             update=":containerIndex:filterParams"
+                                                             process="@this"
+                                                             update=":containerIndex:bloc1"
                                                              actionListener="#{v2StatisticsBean.clearFilter()}" style="margin-right: 5px" />
 
                                             <p:commandButton 
@@ -311,7 +313,8 @@
                                             <p:commandButton id="commandExport" rendered="#{v2StatisticsBean.conceptStatistics.size() != 0}"
                                                             icon="pi pi-download" value="#{v2LocaleBean.getMsg('download')}" styleClass="ui-button-success"
                                                              title="#{v2LocaleBean.getMsg('statistique.exporter_csv')}"
-                                                             update=":containerIndex:bloc1 :containerIndex:bloc2" style=" height: 33px;" >
+                                                             ajax="false"
+                                                             style=" height: 33px;" >
                                                 <p:fileDownload value="#{v2StatisticsBean.exportStatistics()}" />
                                             </p:commandButton>                                               
                                             
