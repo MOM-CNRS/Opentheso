@@ -164,8 +164,12 @@ public class CurrentUser implements Serializable {
 
     // pour capter les connexions qui arrivent du SSO via un Bouton et clé d'API
     private void checkAndLoginFromSso() {
-        HttpSession session = (HttpSession) FacesContext.getCurrentInstance()
-                .getExternalContext().getSession(false);
+        FacesContext facesContext = FacesContext.getCurrentInstance();
+        if (facesContext == null) {
+            // Appelé hors requête JSF (ex. callback OAuth2 Spring Security) → ignorer.
+            return;
+        }
+        HttpSession session = (HttpSession) facesContext.getExternalContext().getSession(false);
 
         if (session != null) {
             Integer ssoUserId = (Integer) session.getAttribute("ssoUserId");
