@@ -41,20 +41,23 @@
                         <p:dataTable id="v2FlagTable" var="lang" value="#{v2FlagManagementBean.languages}"
                                      widgetVar="v2FlagTable" scrollable="true" scrollHeight="450"
                                      editMode="cell" editable="true" lazy="false">
-                            <p:ajax event="cellEdit" listener="#{v2FlagManagementBean.onCellEdit(lang)}" update="containerIndex messageIndex"/>
+                            <p:ajax event="cellEdit" listener="#{v2FlagManagementBean.onCellEdit}"/>
                             <p:column width="50" headerText="iso1" filterBy="#{lang.iso6391}">
                                 <h:outputText value="#{lang.iso6391}"/>
                             </p:column>
                             <p:column width="40" headerText="drapeau">
                                 <p:cellEditor>
-                                    <f:facet name="output"><h:outputText value="#{lang.countryCode}"/></f:facet>
+                                    <f:facet name="output">
+                                        <h:outputText value="#{lang.countryCode}"/>
+                                    </f:facet>
                                     <f:facet name="input">
                                         <p:inputText value="#{lang.countryCode}" style="width:100%"/>
                                     </f:facet>
                                 </p:cellEditor>
                             </p:column>
                             <p:column width="10" headerText="image">
-                                <img src="#{request.contextPath}/resources/img/flag/#{lang.countryCode}.png" width="27" height="22"/>
+                                <img src="#{request.contextPath}/resources/img/flag/#{lang.countryCode}.png"
+                                     width="27" height="22" alt=""/>
                             </p:column>
                         </p:dataTable>
                     </div>
