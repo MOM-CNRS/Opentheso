@@ -13,13 +13,16 @@ import static org.junit.jupiter.api.Assertions.assertTrue;
 class PreferenceEditorTest {
 
     @Test
-    void from_mapsPreferencesAndClearsPassHandle() {
+    void from_mapsPreferencesAndClearsSecrets() {
         var preferences = SettingTestFixtures.samplePreferences();
 
         PreferenceEditor editor = PreferenceEditor.from(preferences);
 
         assertEquals("https://site/", editor.getCheminSite());
         assertEquals("", editor.getPassHandle());
+        assertEquals("", editor.getPassArk());
+        assertEquals("", editor.getDeeplApiKey());
+        assertEquals("", editor.getApiKeyOpenArk());
         assertEquals(1, editor.getLanguages().size());
     }
 

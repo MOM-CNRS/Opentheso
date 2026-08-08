@@ -15,7 +15,7 @@ public interface PreferencesJpaRepository extends JpaRepository<PreferencesEntit
 
     @Query("""
             SELECT COUNT(p) > 0
-            FROM Preferences p
+            FROM V2Preferences p
             WHERE p.preferredName = :preferredName
               AND p.idThesaurus <> :idThesaurus
             """)

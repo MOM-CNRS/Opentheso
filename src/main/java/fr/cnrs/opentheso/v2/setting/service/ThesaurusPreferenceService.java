@@ -116,18 +116,21 @@ public class ThesaurusPreferenceService {
             String workLang
     ) {
         PreferencesEntity entity = requirePreferences(thesaurusId);
+        String existingPassArk = entity.getPassArk();
+        String existingPassHandle = entity.getPassHandle();
+        String existingDeeplApiKey = entity.getDeeplApiKey();
+        String existingApiKeyOpenArk = entity.getApiKeyOpenArk();
+
         SettingMapper.applyPreferences(entity, preferences);
-        if (StringUtils.isNotBlank(newPassArk)) {
-            entity.setPassArk(newPassArk);
-        }
-        if (StringUtils.isNotBlank(newPassHandle)) {
-            entity.setPassHandle(newPassHandle);
-        }
-        if (StringUtils.isNotBlank(newDeeplApiKey)) {
-            entity.setDeeplApiKey(newDeeplApiKey);
-        }
+
+        // Comme le legacy : ne pas écraser les secrets si aucun nouveau n'est saisi.
+        entity.setPassArk(StringUtils.isNotBlank(newPassArk) ? newPassArk : existingPassArk);
+        entity.setPassHandle(StringUtils.isNotBlank(newPassHandle) ? newPassHandle : existingPassHandle);
+        entity.setDeeplApiKey(StringUtils.isNotBlank(newDeeplApiKey) ? newDeeplApiKey : existingDeeplApiKey);
         if (StringUtils.isNotBlank(newApiKeyOpenArk)) {
             entity.setApiKeyOpenArk(crypto.encrypt(newApiKeyOpenArk));
+        } else {
+            entity.setApiKeyOpenArk(existingApiKeyOpenArk);
         }
         normalizePaths(entity);
         preferencesJpaRepository.save(entity);

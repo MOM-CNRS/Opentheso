@@ -13,7 +13,6 @@ import fr.cnrs.opentheso.v2.rights.AuthTarget;
 import fr.cnrs.opentheso.v2.rights.Permission;
 import fr.cnrs.opentheso.v2.rights.RightsService;
 import fr.cnrs.opentheso.v2.shared.ui.UserSession;
-import fr.cnrs.opentheso.v2.test.support.PrimeFacesTestSupport;
 import org.junit.jupiter.api.BeforeEach;
 import org.junit.jupiter.api.Test;
 import org.junit.jupiter.api.extension.ExtendWith;
@@ -117,8 +116,7 @@ class PreferenceSettingsBeanTest {
                 nullable(String.class), nullable(String.class), eq("fr")
         )).thenReturn(samplePreferences());
 
-        try (var primeFaces = PrimeFacesTestSupport.open();
-             MockedStatic<MessageUtils> messageUtils = mockStatic(MessageUtils.class)) {
+        try (MockedStatic<MessageUtils> messageUtils = mockStatic(MessageUtils.class)) {
             bean.save();
             verify(thesaurusPreferenceService).savePreferences(
                     eq("TH1"), any(ThesaurusPreferences.class),

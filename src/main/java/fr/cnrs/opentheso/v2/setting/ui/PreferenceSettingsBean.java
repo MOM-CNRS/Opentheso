@@ -18,7 +18,6 @@ import jakarta.inject.Named;
 import lombok.Getter;
 import lombok.extern.slf4j.Slf4j;
 import org.apache.commons.lang3.StringUtils;
-import org.primefaces.PrimeFaces;
 
 import java.io.Serializable;
 
@@ -163,7 +162,6 @@ public class PreferenceSettingsBean implements Serializable {
             }
             consultationShellBean.refreshHeaderCatalog();
             MessageUtils.showInformationMessage("Préférences enregistrées avec succès");
-            PrimeFaces.current().ajax().update("containerIndex", "messageIndex", "menuBar");
         } catch (SettingAccessDeniedException | InvalidSettingDataException e) {
             MessageUtils.showErrorMessage(e.getMessage());
         }

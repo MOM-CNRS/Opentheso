@@ -103,7 +103,7 @@ public class PreferenceEditor implements Serializable {
         editor.setServerArk(preferences.serverArk());
         editor.setPrefixArk(preferences.prefixArk());
         editor.setUserArk(preferences.userArk());
-        editor.setPassArk(preferences.passArk());
+        editor.setPassArk("");
         editor.setGenerateHandle(preferences.generateHandle());
         editor.setUseArkLocal(preferences.useArkLocal());
         editor.setNaanArkLocal(preferences.naanArkLocal());
@@ -114,7 +114,7 @@ public class PreferenceEditor implements Serializable {
         editor.setServerOpenArk(preferences.serverOpenArk());
         editor.setNaanOpenArk(preferences.naanOpenArk());
         editor.setPrefixOpenArk(preferences.prefixOpenArk());
-        editor.setApiKeyOpenArk(preferences.apiKeyOpenArk());
+        editor.setApiKeyOpenArk("");
         editor.setAutoExpandTree(preferences.autoExpandTree());
         editor.setSortByNotation(preferences.sortByNotation());
         editor.setTreeCache(preferences.treeCache());
@@ -129,7 +129,7 @@ public class PreferenceEditor implements Serializable {
         editor.setAdminHandle(preferences.adminHandle());
         editor.setIndexHandle(preferences.indexHandle());
         editor.setUseDeeplTranslation(preferences.useDeeplTranslation());
-        editor.setDeeplApiKey(preferences.deeplApiKey());
+        editor.setDeeplApiKey("");
         editor.setWebservices(preferences.webservices());
         editor.setKohaLink(preferences.kohaLink());
         editor.setLanguages(new ArrayList<>(preferences.languages()));

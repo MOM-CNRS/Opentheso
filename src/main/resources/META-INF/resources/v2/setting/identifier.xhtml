@@ -156,7 +156,8 @@
                                                 <div class="row" style="padding: 3px;">
                                                     <div class="col-11" style="text-align: right; margin-top: 2px;">
                                                         <p:commandButton value="#{v2LocaleBean.getMsg('btnValidate')}" styleClass="ui-button-success" icon="pi pi-check" 
-                                                                         update="containerIndex messageIndex menuBar"
+                                                                         process="@form"
+                                                                         update=":messageIndex"
                                                                          action="#{v2PreferenceSettingsBean.save()}" >
                                                             <p:tooltip value="#{v2LocaleBean.getMsg('candidat.save')}" showDelay="500" />
                                                         </p:commandButton>
@@ -253,7 +254,8 @@
                                                     <div class="col-11" style="text-align: right; margin-top: 2px;">
                                                         <p:commandButton value="#{v2LocaleBean.getMsg('btnValidate')}" styleClass="ui-button-success" icon="pi pi-check"
                                                                          action="#{v2PreferenceSettingsBean.save()}"
-                                                                         update="containerIndex messageIndex menuBar"/>
+                                                                         process="@form"
+                                                                         update=":messageIndex"/>
                                                     </div>
                                                 </div>
                                             </div>
@@ -431,7 +433,8 @@
                                                     <div class="col-11" style="text-align: right; margin-top: 2px;">
                                                         <p:commandButton value="#{v2LocaleBean.getMsg('btnValidate')}" styleClass="ui-button-success" icon="pi pi-check"
                                                                          action="#{v2PreferenceSettingsBean.save()}"
-                                                                         update="containerIndex messageIndex menuBar"/>
+                                                                         process="@form"
+                                                                         update=":messageIndex"/>
                                                     </div>
                                                 </div>
 
@@ -512,7 +515,8 @@
                                                 <div class="row" style="padding: 3px;">
                                                     <div class="col-11" style="text-align: right; margin-top: 2px;">
                                                         <p:commandButton value="#{v2LocaleBean.getMsg('btnValidate')}" styleClass="ui-button-success" icon="pi pi-check"
-                                                                         update="containerIndex messageIndex menuBar"
+                                                                         process="@form"
+                                                                         update=":messageIndex"
                                                                          action="#{v2PreferenceSettingsBean.save()}" >
                                                             <p:tooltip value="#{v2LocaleBean.getMsg('candidat.save')}" showDelay="500" />
                                                         </p:commandButton>
