@@ -5,6 +5,7 @@ import fr.cnrs.opentheso.utils.SimpleCrypto;
 import fr.cnrs.opentheso.v2.setting.exception.InvalidSettingDataException;
 import fr.cnrs.opentheso.v2.setting.mapper.SettingMapper;
 import fr.cnrs.opentheso.v2.setting.model.IdentifierServerType;
+import fr.cnrs.opentheso.v2.setting.model.ThesaurusLanguage;
 import fr.cnrs.opentheso.v2.setting.model.ThesaurusPreferences;
 import fr.cnrs.opentheso.v2.shared.persistence.PreferencesEntity;
 import fr.cnrs.opentheso.v2.shared.repository.PreferencesJpaRepository;
@@ -16,6 +17,8 @@ import org.springframework.cache.annotation.CacheEvict;
 import org.springframework.cache.annotation.Cacheable;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
+
+import java.util.List;
 
 @Slf4j
 @Service
@@ -45,30 +48,41 @@ public class ThesaurusPreferenceService {
     @Transactional(readOnly = true)
     public ThesaurusPreferences loadPreferences(String thesaurusId, String workLang) {
         PreferencesEntity entity = requirePreferences(thesaurusId);
-        var languages = thesaurusSettingsQueryRepository.findUsedLanguages(thesaurusId, workLang).stream()
-                .map(SettingMapper::toLanguage)
-                .toList();
-        return SettingMapper.toPreferences(entity, languages);
+        return SettingMapper.toPreferences(entity, loadUsedLanguages(thesaurusId, workLang));
     }
 
     /**
      * Same as {@link #loadPreferences(String, String)} but returns null instead of throwing
      * when the thesaurus has no preferences row configured yet (consultation read paths).
      * Cached because consultation pages (concept detail, thesaurus home, tree loading) call
-     * this on every request while preferences change rarely; evicted by the save* methods.
+     * this on every request while preferences change rarely; evicted by the save* methods
+     * and after thesaurus language list changes.
      */
     @Transactional(readOnly = true)
     @Cacheable(cacheNames = CacheConfig.THESAURUS_PREFERENCES_CACHE, key = "#thesaurusId + '|' + #workLang")
     public ThesaurusPreferences loadPreferencesOrNull(String thesaurusId, String workLang) {
         try {
             PreferencesEntity entity = requirePreferences(thesaurusId);
-            var languages = thesaurusSettingsQueryRepository.findUsedLanguages(thesaurusId, workLang).stream()
-                    .map(SettingMapper::toLanguage)
-                    .toList();
-            return SettingMapper.toPreferences(entity, languages);
+            return SettingMapper.toPreferences(entity, loadUsedLanguages(thesaurusId, workLang));
         } catch (InvalidSettingDataException noPreferencesConfigured) {
             return null;
         }
+    }
+
+    /**
+     * Langues du thésaurus ({@code thesaurus_label}) — non mis en cache, pour le sélecteur
+     * de recherche qui doit refléter immédiatement un ajout / une suppression.
+     */
+    @Transactional(readOnly = true)
+    public List<ThesaurusLanguage> loadUsedLanguages(String thesaurusId, String workLang) {
+        return thesaurusSettingsQueryRepository.findUsedLanguages(thesaurusId, workLang).stream()
+                .map(SettingMapper::toLanguage)
+                .toList();
+    }
+
+    @CacheEvict(cacheNames = CacheConfig.THESAURUS_PREFERENCES_CACHE, allEntries = true)
+    public void evictPreferencesCache() {
+        // Intentional no-op: annotation drives cache eviction after language list changes.
     }
 
     @Transactional

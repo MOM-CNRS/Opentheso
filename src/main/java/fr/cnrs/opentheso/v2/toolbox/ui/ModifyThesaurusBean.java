@@ -183,6 +183,7 @@ public class ModifyThesaurusBean implements Serializable {
                     addLanguageEditor.getSelectedLanguage(),
                     userSession.getCurrentUsername()
             );
+            thesaurusSearchLanguageSync.applyAfterLanguageListChange(thesaurusId, null);
             addLanguageEditor = AddLanguageEditor.empty();
             refreshLanguages();
             refreshMenuThesaurusList();
@@ -217,6 +218,7 @@ public class ModifyThesaurusBean implements Serializable {
         }
         try {
             modifyThesaurusService.deleteLanguage(thesaurusId, languageCode);
+            thesaurusSearchLanguageSync.applyAfterLanguageListChange(thesaurusId, languageCode);
             refreshAll();
             MessageUtils.showInformationMessage("Langue supprimée avec succès");
         } catch (InvalidToolboxDataException e) {

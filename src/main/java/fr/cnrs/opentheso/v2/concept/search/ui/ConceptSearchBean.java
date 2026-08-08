@@ -272,13 +272,22 @@ public class ConceptSearchBean implements Serializable {
             return;
         }
         try {
-            var preferences = thesaurusPreferenceService
-                    .loadPreferencesOrNull(thesaurusId, thesaurusContext.resolveWorkLanguage());
-            availableLanguages = preferences != null && preferences.languages() != null
-                    ? preferences.languages()
-                    : Collections.emptyList();
+            availableLanguages = thesaurusPreferenceService.loadUsedLanguages(
+                    thesaurusId, thesaurusContext.resolveWorkLanguage());
+            if (StringUtils.isNotBlank(searchLang)
+                    && !"all".equalsIgnoreCase(searchLang)
+                    && availableLanguages.stream().noneMatch(lang -> searchLang.equalsIgnoreCase(lang.code()))) {
+                searchLang = thesaurusContext.resolveWorkLanguage();
+            }
         } catch (RuntimeException ex) {
             availableLanguages = Collections.emptyList();
         }
+    }
+
+    /**
+     * Recharge la liste des langues du sélecteur de recherche (après édition thésaurus).
+     */
+    public void reloadAvailableLanguages() {
+        loadLanguages();
     }
 }

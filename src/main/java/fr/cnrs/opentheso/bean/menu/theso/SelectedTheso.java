@@ -488,6 +488,28 @@ public class SelectedTheso implements Serializable {
     }
 
     /**
+     * Recharge la liste des langues utilisées (sélecteur {@code search.xhtml#languageSelect}).
+     * Si la langue sélectionnée a disparu, bascule sur la langue source du thésaurus.
+     */
+    public void refreshUsedLanguages() {
+        String thesoId = StringUtils.firstNonBlank(currentIdTheso, selectedIdTheso);
+        if (StringUtils.isBlank(thesoId)) {
+            return;
+        }
+        nodeLangs = thesaurusService.getAllUsedLanguagesOfThesaurusNode(thesoId, languageBean.getIdLangue());
+        if (StringUtils.isBlank(selectedLang) || "all".equalsIgnoreCase(selectedLang)) {
+            return;
+        }
+        boolean stillPresent = CollectionUtils.isNotEmpty(nodeLangs)
+                && nodeLangs.stream().anyMatch(lang -> selectedLang.equalsIgnoreCase(lang.getCode()));
+        if (!stillPresent) {
+            String fallback = getIdLang();
+            selectedLang = fallback;
+            currentLang = fallback;
+        }
+    }
+
+    /**
      * Pour sélectionner un thésaurus ou un concept en passant par l'URL
      */
     public void preRenderView() {
