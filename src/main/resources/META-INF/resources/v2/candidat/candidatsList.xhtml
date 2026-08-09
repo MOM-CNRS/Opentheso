@@ -82,9 +82,9 @@
                              emptyMessage="#{v2LocaleBean.getMsg('candidat.save.msg10')}"
                              style="margin-bottom: -17px; margin-top: -16px;" lazy="false">
 
-                    <p:ajax event="rowSelectCheckbox" listener="#{v2CandidatBean.setStateForSelectedCandidate()}" update="tabViewCandidat:panelCandidateList"  />
-                    <p:ajax event="rowUnselectCheckbox" listener="#{v2CandidatBean.setStateForSelectedCandidate()}" update="tabViewCandidat:panelCandidateList"  />
-                    <p:ajax event="toggleSelect" listener="#{v2CandidatBean.setStateForSelectedCandidate()}" update="tabViewCandidat:panelCandidateList" />
+                    <p:ajax event="rowSelectCheckbox" listener="#{v2CandidatBean.setStateForSelectedCandidate()}" update="@form" />
+                    <p:ajax event="rowUnselectCheckbox" listener="#{v2CandidatBean.setStateForSelectedCandidate()}" update="@form" />
+                    <p:ajax event="toggleSelect" listener="#{v2CandidatBean.setStateForSelectedCandidate()}" update="@form" />
 
                     <p:column selectionBox="true" style="width:16px;text-align:center"/>
 
@@ -94,8 +94,7 @@
                         </div>
                     </f:facet>
 
-                    <p:column rendered="#{(currentUser.nodeUser != null) and 
-                                          (roleOnThesaurus.isAdminOnThisThesaurus() or roleOnThesaurus.isSuperAdmin())}"
+                    <p:column rendered="#{v2UserSession.loggedIn and v2Rights.can('MANAGE_THESAURUS')}"
                               selectionMode="multiple" style="width:16px;text-align:center;"/>
 
                     <p:column width="20" headerText="id" sortBy="#{candidat.idConcepte}">
@@ -143,34 +142,36 @@
                 </p:dataTable>  
             </div> 
 
-            <h:panelGroup rendered="#{(currentUser.nodeUser != null) and (roleOnThesaurus.isAdminOnThisThesaurus() or roleOnThesaurus.isSuperAdmin())
-                                      and (v2CandidatBean.isListSelected())}">
-                <div class="row" style="margin-top: 10px; margin-bottom: 30px">
-                    <div class="col-sm-3 col-xl-2  " style="text-align: left;">
-                        <p:commandButton ajax="true" process="@this"
-                                         value="#{v2LocaleBean.getMsg('candidat.remove')}" styleClass="ui-button-danger-private" icon="fas fa-trash" 
-                                         update="idDeleteCandidate"
-                                         oncomplete="PF('deleteCandidate').show();" style="width: 100%"/> 
-                    </div>
+            <h:panelGroup id="candidateBulkActions">
+                <h:panelGroup rendered="#{v2UserSession.loggedIn and v2Rights.can('MANAGE_THESAURUS')
+                                          and v2CandidatBean.listSelected}">
+                    <div class="row" style="margin-top: 10px; margin-bottom: 30px">
+                        <div class="col-sm-3 col-xl-2  " style="text-align: left;">
+                            <p:commandButton ajax="true" process="@this"
+                                             value="#{v2LocaleBean.getMsg('candidat.remove')}" styleClass="ui-button-danger-private" icon="fas fa-trash"
+                                             update=":idDeleteCandidate"
+                                             oncomplete="PF('deleteCandidate').show();" style="width: 100%"/>
+                        </div>
 
-                    <div class="col-sm-6 offset-sm-0 col-xl-4 offset-xl-2 " style="text-align: right;">
-                        <p:commandButton ajax="true" process="@this"
-                                         value="#{v2LocaleBean.getMsg('candidat.submitList')}" styleClass="ui-button-success" icon="pi pi-check"
-                                         update="idProcessCandidateList processCandidateListForm"
-                                         oncomplete="PF('processCandidateList').show();" style="width: 100%"/> 
+                        <div class="col-sm-6 offset-sm-0 col-xl-4 offset-xl-2 " style="text-align: right;">
+                            <p:commandButton ajax="true" process="@this"
+                                             value="#{v2LocaleBean.getMsg('candidat.submitList')}" styleClass="ui-button-success" icon="pi pi-check"
+                                             update=":idProcessCandidateList :processCandidateListForm"
+                                             oncomplete="PF('processCandidateList').show();" style="width: 100%"/>
+                        </div>
+
+                        <div class="col-sm-3 offset-sm-0 col-xl-2 offset-xl-2 " style="text-align: right;">
+                            <p:commandButton ajax="true" process="@this"
+                                             value="#{v2LocaleBean.getMsg('concept.moveToAnotherTheso')}"
+                                             styleClass="ui-button-secondary button" icon="fa-solid fa-paper-plane"
+                                             update=":idMoveToAnotherThesoCA :moveToAnotherThesoCAForm"
+                                             title="#{v2LocaleBean.getMsg('concept.moveToAnotherThesoTooltip')}"
+                                             action="#{v2CandidatTransferBean.initForCandidates(v2CandidatBean.selectedCandidatesAsId, v2ThesaurusContext.resolveThesaurusId())}"
+                                             oncomplete="PF('moveToAnotherThesoCA').show();" style="width: 100%"/>
+                        </div>
                     </div>
-                    
-                    <div class="col-sm-3 offset-sm-0 col-xl-2 offset-xl-2 " style="text-align: right;">
-                        <p:commandButton ajax="true" process="@this"
-                                         value="#{v2LocaleBean.getMsg('concept.moveToAnotherTheso')}" 
-                                         styleClass="ui-button-secondary button" icon="fa-solid fa-paper-plane"
-                                         update="idMoveToAnotherThesoCA moveToAnotherThesoCAForm"
-                                         title="#{v2LocaleBean.getMsg('concept.moveToAnotherThesoTooltip')}"
-                                         action="#{v2CandidatTransferBean.initForCandidates(v2CandidatBean.selectedCandidatesAsId, v2ThesaurusContext.resolveThesaurusId())}"
-                                         oncomplete="PF('moveToAnotherThesoCA').show();" style="width: 100%"/> 
-                    </div>
-                </div>
-            </h:panelGroup>  
+                </h:panelGroup>
+            </h:panelGroup>
             <input type="hidden" name="csrfToken" value="${sessionScope.CSRF_TOKEN}" />
         </h:form>
     </p:panel>
@@ -221,7 +222,8 @@
                     <p:commandButton value="#{v2LocaleBean.getMsg('candidat.export')}"
                                      styleClass="ui-button-success" icon="fa fa-upload"
                                      style="margin-left: 20px"
-                                     update="tabViewCandidat messageIndex">
+                                     ajax="false"
+                                     process="@this">
                         <p:fileDownload value="#{v2CandidatExportBean.exportPendingCandidates()}" />
                     </p:commandButton>
                 </div>
@@ -251,7 +253,7 @@
                         <f:selectItem itemLabel="Json-ld" itemValue="1" />
                         <f:selectItem itemLabel="Turtle" itemValue="2" />
                         <f:selectItem itemLabel="Json" itemValue="3" />
-                        <p:ajax event="change" listener="#{v2CandidatImportBean.stateChangeListener}" />
+                        <p:ajax event="change" />
                     </p:selectOneMenu> 
                 </div>
             </div>  
@@ -277,7 +279,8 @@
                 <div class="col-12"> 
                     <p:fileUpload listener="#{v2CandidatImportBean.loadFileSkos}" label="#{v2LocaleBean.getMsg('candidat.parcourir')}" 
                                   mode="advanced" auto="true" process="@this"
-                                  allowTypes="/(\.|\/)(skos|rdf|xml|json|ttl)$/" update="tabViewCandidat" >
+                                  allowTypes="/(\.|\/)(skos|rdf|xml|json|ttl)$/"
+                                  update=":tabViewCandidat :messageIndex" >
                     </p:fileUpload>
                 </div>
             </div> 
@@ -307,7 +310,7 @@
                 <div class="col-6" >
                     <p:commandButton ajax="true"
                                      value="#{v2LocaleBean.getMsg('candidat.import')}" styleClass="ui-button-success" icon="pi pi-download"
-                                     update="tabViewCandidat messageIndex" process="@this"
+                                     update=":tabViewCandidat :messageIndex" process="@this"
                                      actionListener="#{v2CandidatImportBean.addSkosCandidatToBDD()}"/>
                 </div> 
             </div>

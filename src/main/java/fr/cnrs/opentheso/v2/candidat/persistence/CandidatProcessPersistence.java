@@ -44,26 +44,45 @@ public class CandidatProcessPersistence {
     }
 
     public void generatePersistentIds(Preferences preferences, CandidatDto candidate) {
-        if (preferences == null) {
+        if (candidate == null) {
             return;
         }
+        generatePersistentIds(preferences, List.of(candidate));
+    }
+
+    /**
+     * Génère ARK/Handle pour un lot de candidats (un seul appel ARK pour tout le lot).
+     */
+    public void generatePersistentIds(Preferences preferences, List<CandidatDto> candidates) {
+        if (preferences == null || CollectionUtils.isEmpty(candidates)) {
+            return;
+        }
+        String thesaurusId = candidates.get(0).getIdThesaurus();
+        String lang = candidates.get(0).getLang();
+        List<String> conceptIds = candidates.stream()
+                .map(CandidatDto::getIdConcepte)
+                .filter(id -> id != null && !id.isBlank())
+                .distinct()
+                .toList();
+        if (conceptIds.isEmpty()) {
+            return;
+        }
+
         if (preferences.isUseHandle()) {
-            if (!conceptHandleWriteService.assignHandleOnCreation(candidate.getIdConcepte(), candidate.getIdThesaurus())) {
-                log.error("La création Handle a échoué");
+            for (String conceptId : conceptIds) {
+                if (!conceptHandleWriteService.assignHandleOnCreation(conceptId, thesaurusId)) {
+                    log.error("La création Handle a échoué pour {}", conceptId);
+                }
             }
         }
         if (preferences.isUseArk()) {
-            var result = conceptArkWriteService.generateArkIds(
-                    candidate.getIdThesaurus(),
-                    List.of(candidate.getIdConcepte()),
-                    candidate.getLang());
+            var result = conceptArkWriteService.generateArkIds(thesaurusId, conceptIds, lang);
             if (CollectionUtils.isEmpty(result)) {
-                log.error("La création Ark a échoué");
+                log.error("La création Ark a échoué pour le lot ({} concepts)", conceptIds.size());
             }
         }
         if (preferences.isUseArkLocal()) {
-            candidatMutationPersistence.generateLocalArkForConcepts(
-                    candidate.getIdThesaurus(), List.of(candidate.getIdConcepte()), preferences);
+            candidatMutationPersistence.generateLocalArkForConcepts(thesaurusId, conceptIds, preferences);
         }
     }
 

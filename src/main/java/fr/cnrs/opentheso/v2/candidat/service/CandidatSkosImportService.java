@@ -65,9 +65,7 @@ public class CandidatSkosImportService {
             if (progressCallback != null) {
                 progressCallback.onProgress(index, concepts.size());
             }
-            if (!resource.getLabelsList().isEmpty()) {
-                conceptSkosRdfImportEngine.importConcept(resource, thesaurusId, true);
-            }
+            conceptSkosRdfImportEngine.importConcept(resource, thesaurusId, true);
         }
     }
 

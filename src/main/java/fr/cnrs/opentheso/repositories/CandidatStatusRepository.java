@@ -26,6 +26,11 @@ public interface CandidatStatusRepository extends JpaRepository<CandidatStatus, 
 
     @Modifying
     @Transactional
+    @Query(value = "DELETE FROM candidat_status WHERE id_concept = :conceptId AND id_thesaurus = :thesaurusId", nativeQuery = true)
+    int deleteByIdConceptAndIdThesaurus(@Param("conceptId") String conceptId, @Param("thesaurusId") String thesaurusId);
+
+    @Modifying
+    @Transactional
     @Query(
             value = "DELETE FROM candidat_status WHERE id_thesaurus = :idTheso",
             nativeQuery = true

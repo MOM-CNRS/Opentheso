@@ -905,8 +905,8 @@ public class ThesaurusEditionSkosImportEngine {
                 isReplacedBy,
                 gps != null,
                 gps,
-                created,
-                modified,
+                toSqlDate(created),
+                toSqlDate(modified),
                 dcterms);
 
         addExternalResources(idTheso, idConcept, conceptResource.getDcRelations());
@@ -1260,5 +1260,10 @@ public class ThesaurusEditionSkosImportEngine {
                 .created(new Date())
                 .modified(new Date())
                 .build());
+    }
+
+    /** PostgreSQL attend des {@code date} ; {@link java.util.Date} est envoyé en type unknown. */
+    private static java.sql.Date toSqlDate(Date date) {
+        return date == null ? null : new java.sql.Date(date.getTime());
     }
 }

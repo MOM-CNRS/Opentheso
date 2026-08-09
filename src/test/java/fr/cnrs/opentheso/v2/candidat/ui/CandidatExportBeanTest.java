@@ -13,8 +13,8 @@ import org.mockito.junit.jupiter.MockitoExtension;
 
 import java.util.List;
 
+import static org.junit.jupiter.api.Assertions.assertEquals;
 import static org.junit.jupiter.api.Assertions.assertNotNull;
-import static org.junit.jupiter.api.Assertions.assertNull;
 import static org.mockito.ArgumentMatchers.any;
 import static org.mockito.Mockito.mockStatic;
 import static org.mockito.Mockito.verify;
@@ -46,16 +46,18 @@ class CandidatExportBeanTest {
         when(candidatBean.getCandidatList()).thenReturn(List.of(new CandidatDto()));
         when(candidatBean.getSelectedExportFormat()).thenReturn("skos");
         when(candidatExportService.exportPendingCandidates(any(), any(), any(), any()))
-                .thenReturn(new CandidatExportService.ExportResult("data".getBytes(), "candidats.xml", "application/xml"));
+                .thenReturn(new CandidatExportService.ExportResult("data".getBytes(), "candidats.rdf", "application/rdf+xml"));
 
         var result = bean.exportPendingCandidates();
 
         assertNotNull(result);
+        assertEquals("candidats.rdf", result.getName());
         verify(candidatBean).resetExportProgress();
+        verify(candidatBean).setListCandidatsActivate(true);
     }
 
     @Test
-    void exportPendingCandidates_returnsNullAndShowsErrorOnFailure() throws Exception {
+    void exportPendingCandidates_returnsEmptyFileAndShowsErrorOnFailure() throws Exception {
         when(candidatBean.getActiveThesaurusId()).thenReturn("TH1");
         when(candidatBean.getCandidatList()).thenReturn(List.of());
         when(candidatBean.getSelectedExportFormat()).thenReturn("skos");
@@ -64,7 +66,8 @@ class CandidatExportBeanTest {
 
         var result = bean.exportPendingCandidates();
 
-        assertNull(result);
-        messageUtilsStatic.verify(() -> MessageUtils.showErrorMessage("Erreur pendant l'export des candidats"));
+        assertNotNull(result);
+        assertEquals("export-error.txt", result.getName());
+        messageUtilsStatic.verify(() -> MessageUtils.showErrorMessage("Aucun candidat à exporter"));
     }
 }

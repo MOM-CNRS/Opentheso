@@ -7,23 +7,21 @@ import fr.cnrs.opentheso.v2.candidat.service.CandidatLanguageService;
 import fr.cnrs.opentheso.v2.candidat.service.CandidatSkosImportService;
 import fr.cnrs.opentheso.v2.setting.ui.ThesaurusContext;
 import fr.cnrs.opentheso.v2.shared.ui.UserSession;
-import jakarta.faces.application.FacesMessage;
-import jakarta.faces.context.FacesContext;
-import jakarta.faces.event.AjaxBehaviorEvent;
 import jakarta.faces.event.PhaseId;
 import jakarta.faces.view.ViewScoped;
 import jakarta.inject.Named;
 import lombok.Getter;
 import lombok.RequiredArgsConstructor;
 import lombok.Setter;
+import lombok.extern.slf4j.Slf4j;
 import org.primefaces.PrimeFaces;
 import org.primefaces.event.FileUploadEvent;
 
-import java.io.IOException;
 import java.io.InputStream;
 import java.io.Serializable;
 import java.util.List;
 
+@Slf4j
 @Getter
 @Setter
 @ViewScoped
@@ -57,10 +55,6 @@ public class CandidatImportBean implements Serializable {
         selectedLang = thesaurusContext.resolveWorkLanguage();
     }
 
-    public void stateChangeListener(AjaxBehaviorEvent event) {
-        // Conservé pour compatibilité avec le composant JSF legacy.
-    }
-
     public void loadFileSkos(FileUploadEvent event) {
         if (!PhaseId.INVOKE_APPLICATION.equals(event.getPhaseId())) {
             event.setPhaseId(PhaseId.INVOKE_APPLICATION);
@@ -77,17 +71,22 @@ public class CandidatImportBean implements Serializable {
             loadDone = true;
         } catch (Exception ex) {
             loadDone = true;
-            error.append(ex.getMessage());
+            skosXmlDocument = null;
+            total = 0;
+            uri = "";
+            error.append(ex.getMessage() != null ? ex.getMessage() : "Fichier invalide");
+            log.error("Lecture du fichier SKOS candidat impossible", ex);
         }
 
         if (!error.isEmpty()) {
             MessageUtils.showErrorMessage(error.toString());
         }
-        PrimeFaces.current().executeScript("PF('waitDialog').hide();");
+        hideWaitDialog();
     }
 
     public void addSkosCandidatToBDD() {
-        if (skosXmlDocument == null || skosXmlDocument.getConceptList() == null) {
+        if (skosXmlDocument == null || skosXmlDocument.getConceptList() == null
+                || skosXmlDocument.getConceptList().isEmpty()) {
             MessageUtils.showErrorMessage("Aucun fichier candidat chargé");
             return;
         }
@@ -109,20 +108,25 @@ public class CandidatImportBean implements Serializable {
                     candidatBean::updateImportProgress
             );
             candidatBean.setListCandidatsActivate(true);
-            onComplete();
-        } catch (IOException ex) {
-            MessageUtils.showErrorMessage("Erreur pendant l'import des candidats");
+            candidatBean.refreshPendingList();
+            MessageUtils.showInformationMessage("Import des candidats réussi");
+            loadDone = false;
+            skosXmlDocument = null;
+        } catch (Exception ex) {
+            log.error("Import SKOS des candidats impossible", ex);
+            MessageUtils.showErrorMessage(
+                    ex.getMessage() != null ? ex.getMessage() : "Erreur pendant l'import des candidats"
+            );
         }
     }
 
-    private void onComplete() {
-        candidatBean.setProgressBarValue(100);
-        showSuccess("import réussi");
-        PrimeFaces.current().executeScript("PF('pbAjax').cancel();");
-    }
-
-    private void showSuccess(String message) {
-        FacesContext.getCurrentInstance().addMessage(null, new FacesMessage(FacesMessage.SEVERITY_INFO, "Info :", message));
-        PrimeFaces.current().ajax().update("messageIndex");
+    private void hideWaitDialog() {
+        try {
+            PrimeFaces.current().executeScript(
+                    "if (typeof PF !== 'undefined' && PF('waitDialog')) { PF('waitDialog').hide(); }"
+            );
+        } catch (Exception ignored) {
+            // widget optionnel
+        }
     }
 }

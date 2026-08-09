@@ -8,7 +8,6 @@ import fr.cnrs.opentheso.v2.candidat.service.CandidatSkosImportService;
 import fr.cnrs.opentheso.v2.setting.ui.ThesaurusContext;
 import fr.cnrs.opentheso.v2.shared.ui.UserSession;
 import fr.cnrs.opentheso.v2.test.support.PrimeFacesTestSupport;
-import jakarta.faces.context.FacesContext;
 import jakarta.faces.event.PhaseId;
 import org.junit.jupiter.api.AfterEach;
 import org.junit.jupiter.api.BeforeEach;
@@ -45,7 +44,6 @@ class CandidatImportBeanTest {
     @Mock private CandidatBean candidatBean;
     @Mock private FileUploadEvent event;
     @Mock private UploadedFile uploadedFile;
-    @Mock private FacesContext facesContext;
 
     private CandidatImportBean bean;
     private MockedStatic<MessageUtils> messageUtilsStatic;
@@ -80,7 +78,7 @@ class CandidatImportBeanTest {
     }
 
     @Test
-    void loadFileSkos_requeuesEventWhenNotInInvokeApplicationPhase() throws Exception {
+    void loadFileSkos_requeuesEventWhenNotInInvokeApplicationPhase() {
         when(event.getPhaseId()).thenReturn(PhaseId.APPLY_REQUEST_VALUES);
 
         bean.loadFileSkos(event);
@@ -146,15 +144,13 @@ class CandidatImportBeanTest {
         when(userSession.getCurrentUserId()).thenReturn(7);
         when(thesaurusContext.resolveWorkLanguage()).thenReturn("fr");
 
-        try (MockedStatic<FacesContext> faces = mockStatic(FacesContext.class)) {
-            faces.when(FacesContext::getCurrentInstance).thenReturn(facesContext);
-            bean.addSkosCandidatToBDD();
-        }
+        bean.addSkosCandidatToBDD();
 
         verify(candidatBean).prepareImportProgress(1);
         verify(candidatSkosImportService).importCandidatesForThesaurus(eq(document), eq("TH1"), eq(7), eq("fr"), any());
         verify(candidatBean).setListCandidatsActivate(true);
-        verify(candidatBean).setProgressBarValue(100);
+        verify(candidatBean).refreshPendingList();
+        messageUtilsStatic.verify(() -> MessageUtils.showInformationMessage("Import des candidats réussi"));
     }
 
     @Test
@@ -170,6 +166,6 @@ class CandidatImportBeanTest {
 
         bean.addSkosCandidatToBDD();
 
-        messageUtilsStatic.verify(() -> MessageUtils.showErrorMessage("Erreur pendant l'import des candidats"));
+        messageUtilsStatic.verify(() -> MessageUtils.showErrorMessage("boom"));
     }
 }

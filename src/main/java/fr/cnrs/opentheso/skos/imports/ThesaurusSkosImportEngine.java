@@ -773,8 +773,8 @@ public class ThesaurusSkosImportEngine {
                 isReplacedBy,
                 gps != null,
                 gps,
-                created,
-                modified,
+                created == null ? null : new java.sql.Date(created.getTime()),
+                modified == null ? null : new java.sql.Date(modified.getTime()),
                 dcterms);
 
         addExternalResources(idTheso, idConcept, conceptResource.getDcRelations());
@@ -1433,6 +1433,10 @@ public class ThesaurusSkosImportEngine {
                 } else if ((date.getProperty() == SKOSProperty.MODIFIED)) {
                     acs.concept.setModified(simpleDateFormat.parse(date.getDate()));
                 }
+            }
+            // SKOS n'a souvent que dcterms:created ; term.modified est NOT NULL.
+            if (acs.concept.getModified() == null && acs.concept.getCreated() != null) {
+                acs.concept.setModified(acs.concept.getCreated());
             }
         } catch (ParseException ex) {
             Logger.getLogger(ThesaurusSkosImportEngine.class.getName()).log(Level.SEVERE, null, ex);

@@ -17,8 +17,11 @@ import org.mockito.MockedStatic;
 import org.mockito.junit.jupiter.MockitoExtension;
 
 import java.util.List;
+import java.util.Map;
 import java.util.Optional;
 
+import static org.junit.jupiter.api.Assertions.assertEquals;
+import static org.junit.jupiter.api.Assertions.assertNotNull;
 import static org.junit.jupiter.api.Assertions.assertNull;
 import static org.mockito.ArgumentMatchers.any;
 import static org.mockito.ArgumentMatchers.eq;
@@ -182,13 +185,14 @@ class ProcessCandidateBeanTest {
         when(candidatBean.getPreferredLang()).thenReturn("fr");
         var preferences = new Preferences();
         when(thesaurusPreferencesProvider.findPreferences("TH1")).thenReturn(Optional.of(preferences));
-        when(candidatProcessService.insertCandidate(any(), any(), eq(7))).thenReturn(false);
-        when(candidatProcessService.isAlertMailEnabled(3)).thenReturn(false);
+        when(candidatProcessService.acceptCandidatesBatch(any(), any(), eq(7), eq("admin"), eq(preferences)))
+                .thenReturn(null);
+        when(candidatProcessService.resolveAlertMails(any())).thenReturn(Map.of(3, null));
 
         bean.insertListCandidat();
 
         verify(candidatProcessService).prepareCandidatesForAccept(any(), eq("TH1"), eq("fr"));
-        verify(candidatProcessService).afterCandidateAccepted(candidate1, 7, "admin", preferences);
+        verify(candidatProcessService).acceptCandidatesBatch(any(), any(), eq(7), eq("admin"), eq(preferences));
         messageUtilsStatic.verify(() -> MessageUtils.showInformationMessage("Candidats insérés avec succès"));
     }
 
@@ -197,14 +201,18 @@ class ProcessCandidateBeanTest {
         var candidate1 = candidat();
         when(candidatBean.getSelectedCandidates()).thenReturn(List.of(candidate1));
         when(userSession.getCurrentUserId()).thenReturn(7);
+        when(userSession.getCurrentUsername()).thenReturn("admin");
         when(thesaurusContext.resolveThesaurusId()).thenReturn("TH1");
         when(candidatBean.getPreferredLang()).thenReturn("fr");
         when(thesaurusPreferencesProvider.findPreferences("TH1")).thenReturn(Optional.empty());
-        when(candidatProcessService.insertCandidate(any(), any(), eq(7))).thenReturn(true);
+        when(candidatProcessService.acceptCandidatesBatch(any(), any(), eq(7), eq("admin"), any()))
+                .thenReturn(candidate1);
 
         bean.insertListCandidat();
 
-        verify(candidatProcessService, never()).afterCandidateAccepted(any(), org.mockito.ArgumentMatchers.anyInt(), any(), any());
+        verify(candidatProcessService, never()).resolveAlertMails(any());
+        messageUtilsStatic.verify(() -> MessageUtils.showErrorMessage(
+                "Erreur d'insertion pour le candidat : Concept 1(C1)"));
     }
 
     @Test
@@ -222,19 +230,35 @@ class ProcessCandidateBeanTest {
         when(candidatBean.getSelectedCandidates()).thenReturn(List.of(candidate1));
         when(userSession.getCurrentUserId()).thenReturn(7);
         when(userSession.getCurrentUsername()).thenReturn("admin");
-        when(candidatProcessService.rejectCandidate(any(), any(), eq(7))).thenReturn(false);
-        when(candidatProcessService.isAlertMailEnabled(3)).thenReturn(false);
+        when(candidatProcessService.rejectCandidatesBatch(any(), any(), eq(7), eq("admin"))).thenReturn(null);
+        when(candidatProcessService.resolveAlertMails(any())).thenReturn(Map.of(3, null));
 
         bean.rejectCandidatList();
 
-        verify(candidatProcessService).afterCandidateRejected(candidate1, 7, "admin");
+        verify(candidatProcessService).rejectCandidatesBatch(any(), any(), eq(7), eq("admin"));
         messageUtilsStatic.verify(() -> MessageUtils.showInformationMessage("Candidats insérés avec succès"));
     }
 
     @Test
-    void exportProcessedCandidates_returnsNullWhenNoData() {
+    void exportProcessedCandidates_returnsErrorFileWhenNoData() {
         when(candidatProcessService.exportProcessedCandidatesCsv(any())).thenReturn(null);
 
-        assertNull(bean.exportProcessedCandidates(List.of()));
+        var result = bean.exportProcessedCandidates(List.of());
+
+        assertNotNull(result);
+        assertEquals("export-error.txt", result.getName());
+        messageUtilsStatic.verify(() -> MessageUtils.showErrorMessage("Aucun candidat à exporter"));
+    }
+
+    @Test
+    void exportProcessedCandidates_returnsCsvStream() {
+        when(candidatProcessService.exportProcessedCandidatesCsv(any())).thenReturn("id;name".getBytes());
+        when(thesaurusContext.getCurrentThesaurusTitle()).thenReturn("MyTheso");
+
+        var result = bean.exportProcessedCandidates(List.of(candidat()));
+
+        assertNotNull(result);
+        assertEquals("MyTheso_candidats.csv", result.getName());
+        assertEquals("text/csv", result.getContentType());
     }
 }

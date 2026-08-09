@@ -17,6 +17,7 @@ import org.mockito.junit.jupiter.MockitoExtension;
 import java.util.List;
 
 import static org.junit.jupiter.api.Assertions.assertEquals;
+import static org.junit.jupiter.api.Assertions.assertNull;
 import static org.junit.jupiter.api.Assertions.assertTrue;
 import static org.mockito.Mockito.verify;
 import static org.mockito.Mockito.when;
@@ -69,6 +70,25 @@ class CandidatProcessServiceTest {
         verify(conceptDcTermRepository).save(captor.capture());
         assertEquals(DCMIResource.CONTRIBUTOR, captor.getValue().getName());
         assertEquals("admin", captor.getValue().getValue());
+    }
+
+    @Test
+    void acceptCandidatesBatch_refreshesTreeAndGeneratesIdsOnce() {
+        var c1 = new CandidatDto();
+        c1.setIdThesaurus("TH1");
+        c1.setIdConcepte("C1");
+        var c2 = new CandidatDto();
+        c2.setIdThesaurus("TH1");
+        c2.setIdConcepte("C2");
+        var preferences = Preferences.builder().build();
+        when(candidatProcessPersistence.insertCandidate(c1, "ok", 7)).thenReturn(false);
+        when(candidatProcessPersistence.insertCandidate(c2, "ok", 7)).thenReturn(false);
+
+        assertNull(service.acceptCandidatesBatch(List.of(c1, c2), "ok", 7, "admin", preferences));
+
+        verify(candidatProcessPersistence).generatePersistentIds(preferences, List.of(c1, c2));
+        verify(conceptTreeRefreshSupport).refreshConceptTree();
+        verify(conceptDcTermRepository, org.mockito.Mockito.times(2)).save(org.mockito.ArgumentMatchers.any(ConceptDcTerm.class));
     }
 
     @Test

@@ -197,6 +197,9 @@ public class TermService {
             addInPermutedTable(nodeTerm, termTraduction);
 
             var lexicalValue = fr.cnrs.opentheso.utils.StringUtils.convertString(termTraduction.getLexicalValue());
+            // SKOS peut n'avoir que dcterms:created : modified est NOT NULL en base.
+            Date created = nodeTerm.getCreated() != null ? nodeTerm.getCreated() : new Date();
+            Date modified = nodeTerm.getModified() != null ? nodeTerm.getModified() : created;
 
             termRepository.save(fr.cnrs.opentheso.entites.Term.builder()
                     .idTerm(nodeTerm.getIdTerm())
@@ -206,8 +209,8 @@ public class TermService {
                     .source(nodeTerm.getSource())
                     .status(nodeTerm.getStatus())
                     .contributor(idUser)
-                    .created(nodeTerm.getCreated())
-                    .modified(nodeTerm.getModified())
+                    .created(created)
+                    .modified(modified)
                     .build());
         }
 

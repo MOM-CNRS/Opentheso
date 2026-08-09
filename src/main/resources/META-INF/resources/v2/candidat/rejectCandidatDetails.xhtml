@@ -118,7 +118,7 @@
             <!-- pour réactiver le candidat -->
             <div class="row" style="margin-top: 20px; text-align: right">
                 <div class="col-12">
-                    <p:commandButton rendered="#{(currentUser.nodeUser != null) and (roleOnThesaurus.isAdminOnThisThesaurus() or roleOnThesaurus.isSuperAdmin())}"
+                    <p:commandButton rendered="#{v2UserSession.loggedIn and v2Rights.can('MANAGE_THESAURUS')}"
                         value="réactiver le candidat" action="#{v2CandidatBean.reactivateRejectedCandidat()}" update="messageIndex tabViewCandidat"/>
                 </div>            
             </div>            

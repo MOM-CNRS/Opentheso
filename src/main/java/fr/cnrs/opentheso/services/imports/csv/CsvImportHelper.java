@@ -589,8 +589,8 @@ public class CsvImportHelper {
                     replacedBy,
                     gps != null,
                     gps,
-                    (conceptObject.getCreated()== null ? null : new SimpleDateFormat(formatDate).parse(conceptObject.getCreated())),
-                    (conceptObject.getModified()== null ? null : new SimpleDateFormat(formatDate).parse(conceptObject.getModified())),
+                    toSqlDate(conceptObject.getCreated() == null ? null : new SimpleDateFormat(formatDate).parse(conceptObject.getCreated())),
+                    toSqlDate(conceptObject.getModified() == null ? null : new SimpleDateFormat(formatDate).parse(conceptObject.getModified())),
                     null);
 
         } catch (Exception e) {
@@ -1522,5 +1522,9 @@ public class CsvImportHelper {
                     nodeImage.getCopyRight(), nodeImage.getUri(), "", idUser1);
         }
         return true;
+    }
+
+    private static java.sql.Date toSqlDate(Date date) {
+        return date == null ? null : new java.sql.Date(date.getTime());
     }
 }

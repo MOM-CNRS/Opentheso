@@ -28,6 +28,11 @@ public interface CandidatMessageRepository extends JpaRepository<CandidatMessage
 
     @Modifying
     @Transactional
+    @Query(value = "DELETE FROM candidat_messages WHERE id_concept = :conceptId AND id_thesaurus = :thesaurusId", nativeQuery = true)
+    int deleteAllByIdThesaurusAndIdConcept(@Param("thesaurusId") String thesaurusId, @Param("conceptId") String conceptId);
+
+    @Modifying
+    @Transactional
     @Query("UPDATE CandidatMessages t SET t.idThesaurus = :newIdThesaurus WHERE t.idThesaurus = :oldIdThesaurus")
     void updateThesaurusId(@Param("newIdThesaurus") String newIdThesaurus, @Param("oldIdThesaurus") String oldIdThesaurus);
 

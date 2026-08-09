@@ -65,6 +65,7 @@ import org.apache.commons.collections4.CollectionUtils;
 import org.apache.commons.lang3.StringUtils;
 import org.apache.commons.text.StringEscapeUtils;
 import org.springframework.stereotype.Component;
+import org.springframework.transaction.annotation.Transactional;
 import java.io.IOException;
 import java.sql.SQLException;
 import java.text.SimpleDateFormat;
@@ -109,14 +110,23 @@ public class CandidatMutationPersistence {
     private final ImagesRepository imagesRepository;
     private final SystemMailSender systemMailSender;
 
+    @Transactional
     public boolean deleteConcept(String conceptId, String thesaurusId) {
         try {
+            // Nettoyage des tables candidat avant le concept (comme le legacy via ConceptService + données CA).
+            deleteCandidateMetadata(conceptId, thesaurusId);
             conceptDeletionWriteRepository.deleteConcept(thesaurusId, conceptId);
             return true;
         } catch (Exception ex) {
             log.error("Erreur pendant la suppression du candidat {}", conceptId, ex);
             return false;
         }
+    }
+
+    private void deleteCandidateMetadata(String conceptId, String thesaurusId) {
+        candidatVoteRepository.deleteAllByIdThesaurusAndIdConcept(thesaurusId, conceptId);
+        candidatMessageRepository.deleteAllByIdThesaurusAndIdConcept(thesaurusId, conceptId);
+        candidatStatusRepository.deleteByIdConceptAndIdThesaurus(conceptId, thesaurusId);
     }
 
     public List<NodeLangTheso> loadUsedLanguages(String thesaurusId, String lang) {
@@ -485,6 +495,7 @@ public class CandidatMutationPersistence {
     public boolean insertCandidate(CandidatDto candidatDto, String adminMessage, int userId) {
         var candidatStatus = candidatStatusRepository.findByIdConcept(candidatDto.getIdConcepte());
         if (candidatStatus.isPresent()) {
+            // Statut "accepté" (id=2) : cache JPA de 1er niveau dans un lot transactionnel.
             candidatStatus.get().setStatus(statusRepository.findById(2).orElse(null));
             candidatStatus.get().setMessage(adminMessage);
             candidatStatus.get().setIdUserAdmin(userId);
@@ -500,6 +511,7 @@ public class CandidatMutationPersistence {
     public boolean rejectCandidate(CandidatDto candidatDto, String adminMessage, int userId) {
         var candidatStatus = candidatStatusRepository.findByIdConcept(candidatDto.getIdConcepte());
         if (candidatStatus.isPresent()) {
+            // Statut "rejeté" (id=3) : cache JPA de 1er niveau dans un lot transactionnel.
             candidatStatus.get().setStatus(statusRepository.findById(3).orElse(null));
             candidatStatus.get().setMessage(adminMessage);
             candidatStatus.get().setIdUserAdmin(userId);

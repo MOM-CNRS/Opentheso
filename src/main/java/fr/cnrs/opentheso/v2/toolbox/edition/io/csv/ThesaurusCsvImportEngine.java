@@ -628,8 +628,8 @@ public class ThesaurusCsvImportEngine {
                     replacedBy,
                     gps != null,
                     gps,
-                    (conceptObject.getCreated()== null ? null : dateFormat.parse(conceptObject.getCreated())),
-                    (conceptObject.getModified()== null ? null : dateFormat.parse(conceptObject.getModified())),
+                    toSqlDate(conceptObject.getCreated() == null ? null : dateFormat.parse(conceptObject.getCreated())),
+                    toSqlDate(conceptObject.getModified() == null ? null : dateFormat.parse(conceptObject.getModified())),
                     null);
 
         } catch (Exception e) {
@@ -718,5 +718,9 @@ public class ThesaurusCsvImportEngine {
                 .idUser(userId)
                 .modified(new Date())
                 .build());
+    }
+
+    private static java.sql.Date toSqlDate(Date date) {
+        return date == null ? null : new java.sql.Date(date.getTime());
     }
 }

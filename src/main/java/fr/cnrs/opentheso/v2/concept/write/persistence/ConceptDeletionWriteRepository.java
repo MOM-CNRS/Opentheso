@@ -34,7 +34,6 @@ public class ConceptDeletionWriteRepository {
         deleteAllRelations(thesaurusId, conceptId);
         deleteNotes(thesaurusId, conceptId);
         deleteAlignments(thesaurusId, conceptId);
-        deleteConceptRow(thesaurusId, conceptId);
         deleteFacets(thesaurusId, conceptId);
         deleteGroupLinks(thesaurusId, conceptId);
         deleteGps(thesaurusId, conceptId);
@@ -44,9 +43,18 @@ public class ConceptDeletionWriteRepository {
         deletePropositionModifications(thesaurusId, conceptId);
         deletePropositions(thesaurusId, conceptId);
         deleteReplacedByLinks(thesaurusId, conceptId);
+        deleteConceptDcTerms(thesaurusId, conceptId);
+        deleteConceptRow(thesaurusId, conceptId);
     }
 
     private void deleteTerm(String thesaurusId, String idTerm) {
+        entityManager.createNativeQuery("""
+                        DELETE FROM note
+                        WHERE id_thesaurus = :thesaurusId AND id_term = :idTerm
+                        """)
+                .setParameter("thesaurusId", thesaurusId)
+                .setParameter("idTerm", idTerm)
+                .executeUpdate();
         entityManager.createNativeQuery("""
                         DELETE FROM non_preferred_term
                         WHERE id_thesaurus = :thesaurusId AND id_term = :idTerm
@@ -84,7 +92,8 @@ public class ConceptDeletionWriteRepository {
     private void deleteNotes(String thesaurusId, String conceptId) {
         entityManager.createNativeQuery("""
                         DELETE FROM note
-                        WHERE id_thesaurus = :thesaurusId AND identifier = :conceptId
+                        WHERE id_thesaurus = :thesaurusId
+                          AND (identifier = :conceptId OR id_concept = :conceptId)
                         """)
                 .setParameter("thesaurusId", thesaurusId)
                 .setParameter("conceptId", conceptId)
@@ -202,6 +211,16 @@ public class ConceptDeletionWriteRepository {
                         DELETE FROM concept_replacedby
                         WHERE id_thesaurus = :thesaurusId
                           AND (id_concept1 = :conceptId OR id_concept2 = :conceptId)
+                        """)
+                .setParameter("thesaurusId", thesaurusId)
+                .setParameter("conceptId", conceptId)
+                .executeUpdate();
+    }
+
+    private void deleteConceptDcTerms(String thesaurusId, String conceptId) {
+        entityManager.createNativeQuery("""
+                        DELETE FROM concept_dcterms
+                        WHERE id_thesaurus = :thesaurusId AND id_concept = :conceptId
                         """)
                 .setParameter("thesaurusId", thesaurusId)
                 .setParameter("conceptId", conceptId)

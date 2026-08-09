@@ -10,7 +10,6 @@ import fr.cnrs.opentheso.v2.shared.ui.UserSession;
 import jakarta.faces.context.FacesContext;
 import jakarta.faces.view.ViewScoped;
 import jakarta.inject.Named;
-import jakarta.servlet.http.HttpServletRequest;
 import lombok.Getter;
 import lombok.RequiredArgsConstructor;
 import lombok.Setter;
@@ -49,21 +48,20 @@ public class ProcessCandidateBean implements Serializable {
 
     public StreamedContent exportProcessedCandidates(List<CandidatDto> candidatDtos) {
         var datas = candidatProcessService.exportProcessedCandidatesCsv(candidatDtos);
-        if (datas == null) {
-            return null;
-        }
-
-        PrimeFaces.current().executeScript("PF('waitDialog').hide();");
-
-        try (ByteArrayInputStream input = new ByteArrayInputStream(datas)) {
+        if (datas == null || datas.length == 0) {
+            MessageUtils.showErrorMessage("Aucun candidat à exporter");
             return DefaultStreamedContent.builder()
-                    .contentType("text/csv")
-                    .name(resolveThesaurusTitle() + "_candidats.csv")
-                    .stream(() -> input)
+                    .contentType("text/plain")
+                    .name("export-error.txt")
+                    .stream(() -> new ByteArrayInputStream(new byte[0]))
                     .build();
-        } catch (IOException ignored) {
-            return new DefaultStreamedContent();
         }
+
+        return DefaultStreamedContent.builder()
+                .contentType("text/csv")
+                .name(resolveThesaurusTitle() + "_candidats.csv")
+                .stream(() -> new ByteArrayInputStream(datas))
+                .build();
     }
 
     public void insertCandidat() throws IOException {
@@ -152,25 +150,25 @@ public class ProcessCandidateBean implements Serializable {
                 candidatBean.getPreferredLang()
         );
 
+        CandidatDto failed = candidatProcessService.acceptCandidatesBatch(
+                candidates,
+                adminMessage,
+                idUser,
+                userSession.getCurrentUsername(),
+                nodePreference
+        );
+        if (failed != null) {
+            MessageUtils.showErrorMessage("Erreur d'insertion pour le candidat : "
+                    + failed.getNomPref() + "(" + failed.getIdConcepte() + ")");
+            return;
+        }
+
+        // Mails après le lot DB (et une seule résolution user par créateur distinct).
+        var alertMails = candidatProcessService.resolveAlertMails(candidates);
         for (CandidatDto candidate : candidates) {
-            if (candidatProcessService.insertCandidate(candidate, adminMessage, idUser)) {
-                MessageUtils.showErrorMessage("Erreur d'insertion pour le candidat : "
-                        + candidate.getNomPref() + "(" + candidate.getIdConcepte() + ")");
-                return;
-            }
-
-            candidatProcessService.afterCandidateAccepted(
-                    candidate,
-                    idUser,
-                    userSession.getCurrentUsername(),
-                    nodePreference
-            );
-
-            if (candidatProcessService.isAlertMailEnabled(candidate.getCreatedById())) {
-                String mail = candidatProcessService.resolveUserMail(candidate.getCreatedById());
-                if (mail != null) {
-                    sendMailCandidateAccepted(mail, candidate);
-                }
+            String mail = alertMails.get(candidate.getCreatedById());
+            if (mail != null) {
+                sendMailCandidateAccepted(mail, candidate);
             }
         }
 
@@ -188,19 +186,25 @@ public class ProcessCandidateBean implements Serializable {
         }
 
         int userId = requireUserId();
-        for (CandidatDto candidate : candidatBean.getSelectedCandidates()) {
-            if (candidatProcessService.rejectCandidate(candidate, adminMessage, userId)) {
-                MessageUtils.showErrorMessage("Erreur pour le candidat : "
-                        + candidate.getNomPref() + "(" + candidate.getIdConcepte() + ")");
-                return;
+        var candidates = new ArrayList<>(candidatBean.getSelectedCandidates());
+        CandidatDto failed = candidatProcessService.rejectCandidatesBatch(
+                candidates,
+                adminMessage,
+                userId,
+                userSession.getCurrentUsername()
+        );
+        if (failed != null) {
+            MessageUtils.showErrorMessage("Erreur pour le candidat : "
+                    + failed.getNomPref() + "(" + failed.getIdConcepte() + ")");
+            return;
+        }
+
+        var alertMails = candidatProcessService.resolveAlertMails(candidates);
+        for (CandidatDto candidate : candidates) {
+            String mail = alertMails.get(candidate.getCreatedById());
+            if (mail != null) {
+                sendMailCandidateRejected(mail, candidate);
             }
-            if (candidatProcessService.isAlertMailEnabled(candidate.getCreatedById())) {
-                String mail = candidatProcessService.resolveUserMail(candidate.getCreatedById());
-                if (mail != null) {
-                    sendMailCandidateRejected(mail, candidate);
-                }
-            }
-            candidatProcessService.afterCandidateRejected(candidate, userId, userSession.getCurrentUsername());
         }
 
         MessageUtils.showInformationMessage("Candidats insérés avec succès");

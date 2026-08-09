@@ -34,7 +34,8 @@ public class V2NavigationBean implements Serializable {
     public void redirectToCandidat() throws IOException {
         requireThesaurus();
         activePageName = "candidatV2";
-        redirect(buildSettingUrl("/v2/candidat"));
+        // Le thésaurus est porté par la session (ThesaurusContext), pas par l'URL.
+        redirect("/v2/candidat");
     }
 
     public void redirectToGraph() throws IOException {

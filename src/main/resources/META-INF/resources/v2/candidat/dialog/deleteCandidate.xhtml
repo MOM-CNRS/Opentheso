@@ -27,8 +27,8 @@
 
                 <p:commandButton styleClass="ui-button-danger"
                                  value="#{v2LocaleBean.getMsg('candidat.remove')}" oncomplete="PF('deleteCandidate').hide();"
-                                 update="tabViewCandidat tabViewCandidat:panelCandidateList messageIndex" process="@this"
-                                 actionListener="#{v2CandidatBean.deleteSelectedCandidate(currentUser.nodeUser.idUser)}"/>
+                                 update=":tabViewCandidat :messageIndex" process="@this"
+                                 actionListener="#{v2CandidatBean.deleteSelectedCandidate(v2UserSession.currentUserId)}"/>
             </div>    
             <input type="hidden" name="csrfToken" value="${sessionScope.CSRF_TOKEN}" />
         </h:form>

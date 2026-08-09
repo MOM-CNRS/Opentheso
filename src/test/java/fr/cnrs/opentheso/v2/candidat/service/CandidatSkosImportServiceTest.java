@@ -36,7 +36,7 @@ class CandidatSkosImportServiceTest {
     }
 
     @Test
-    void importCandidates_addsOnlyConceptsWithLabels() throws Exception {
+    void importCandidates_importsAllConceptsLikeLegacy() throws Exception {
         var document = new SKOSXmlDocument();
         var withLabel = new SKOSResource();
         withLabel.getLabelsList().add(new SKOSLabel("chat", "fr", SKOSProperty.PREF_LABEL));
@@ -63,6 +63,7 @@ class CandidatSkosImportServiceTest {
         verify(conceptSkosRdfImportEngine).configureImport(eq("yyyy-MM-dd"), eq(7), eq(-1), eq("fr"), eq(preferences));
         verify(conceptSkosRdfImportEngine).setImportDocument(document);
         verify(conceptSkosRdfImportEngine).importConcept(withLabel, "TH1", true);
+        verify(conceptSkosRdfImportEngine).importConcept(withoutLabel, "TH1", true);
         assertEquals(100, progress.get());
     }
 }

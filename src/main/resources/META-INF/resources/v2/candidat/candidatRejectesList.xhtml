@@ -18,10 +18,12 @@
                 <p:commandButton icon="fas fa-search" update="tabViewCandidat" style="height: 31px; margin-left: 5px"
                                  actionListener="#{v2CandidatBean.searchRejectCandByTermeAndAuteur()}"/>
                 
-                <p:commandButton id="commandExport" rendered="#{v2CandidatBean.rejetCadidat.size() != 0}" 
+                <p:commandButton id="commandExport" rendered="#{v2CandidatBean.rejetCadidat.size() != 0}"
                                 icon="pi pi-download" value="#{v2LocaleBean.getMsg('download')}" styleClass="ui-button-success"
                                  title="#{v2LocaleBean.getMsg('statistique.exporter_csv')}"
-                                 update="tabViewCandidat" style=" height: 31px; margin-left: 10px" >
+                                 ajax="false"
+                                 process="@this"
+                                 style="height: 31px; margin-left: 10px">
                     <p:fileDownload value="#{v2ProcessCandidateBean.exportProcessedCandidates(v2CandidatBean.rejetCadidat)}" />
                 </p:commandButton>                    
             </p:toolbarGroup>

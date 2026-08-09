@@ -75,9 +75,8 @@
                                      value="#{v2LocaleBean.getMsg('btnValidate')}" styleClass="ui-button-success" icon="fa-solid fa-save"
                                      ajax="true" process="@this" style="margin-left: 20px"/>
                     <p:commandButton id="deleteBtn" rendered="#{v2CandidatBean.isMyCandidate() and !v2CandidatBean.isNewCandidatActivate()}"
-                                     update="tabViewCandidat"
-                                     actionListener="#{v2CandidatBean.deleteCandidate(currentUser.nodeUser.idUser)}"
-                                     action="#{v2CandidatBean.setIsListCandidatsActivate(true)}"
+                                     update="tabViewCandidat :messageIndex"
+                                     actionListener="#{v2CandidatBean.deleteCandidate(v2UserSession.currentUserId)}"
                                      value="#{v2LocaleBean.getMsg('candidat.remove')}" styleClass="ui-button-danger-private" icon="fa-solid fa-remove"
                                      ajax="true" process="@this" style="margin-left: 20px">
                         <p:confirm header="#{v2LocaleBean.getMsg('profile.confirmation')}"

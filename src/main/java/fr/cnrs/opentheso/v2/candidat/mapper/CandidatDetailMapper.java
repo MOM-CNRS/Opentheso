@@ -28,7 +28,7 @@ public final class CandidatDetailMapper {
     public static List<NodeIdValue> toNodeIdValues(List<CandidatIdValueRow> rows) {
         return rows.stream()
                 .map(row -> NodeIdValue.builder().id(row.id()).value(row.value()).build())
-                .toList();
+                .collect(Collectors.toCollection(ArrayList::new));
     }
 
     public static Map<String, List<NodeIdValue>> groupBroaderRelationsByConcept(List<CandidatConceptRelationRow> rows) {
@@ -51,7 +51,7 @@ public final class CandidatDetailMapper {
                         .idUser(row.idUser())
                         .voted(votedNoteIds.contains(String.valueOf(row.id())))
                         .build())
-                .toList();
+                .collect(Collectors.toCollection(ArrayList::new));
     }
 
     public static List<TraductionDto> toTraductions(List<CandidatTranslationRow> rows) {
@@ -61,7 +61,7 @@ public final class CandidatDetailMapper {
                         .traduction(row.lexicalValue())
                         .codePays(row.countryCode())
                         .build())
-                .toList();
+                .collect(Collectors.toCollection(ArrayList::new));
     }
 
     public static List<MessageDto> toMessages(List<CandidatDiscussionRow> rows, int currentUserId) {
@@ -73,11 +73,12 @@ public final class CandidatDetailMapper {
                         .mine(currentUserId == row.idUser())
                         .date(row.date())
                         .build())
-                .toList();
+                .collect(Collectors.toCollection(ArrayList::new));
     }
 
     public static void applyBroaderTerms(CandidatDto candidat, Map<String, List<NodeIdValue>> broaderByConcept) {
-        candidat.setTermesGenerique(broaderByConcept.getOrDefault(candidat.getIdConcepte(), List.of()));
+        candidat.setTermesGenerique(new ArrayList<>(
+                broaderByConcept.getOrDefault(candidat.getIdConcepte(), List.of())));
     }
 
     public static void applyDetails(

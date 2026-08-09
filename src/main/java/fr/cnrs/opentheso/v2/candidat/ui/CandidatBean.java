@@ -30,6 +30,7 @@ import java.util.List;
 import java.util.Arrays;
 import java.util.logging.Level;
 import java.util.logging.Logger;
+import java.util.stream.Collectors;
 
 import jakarta.inject.Named;
 import jakarta.faces.view.ViewScoped;
@@ -176,6 +177,8 @@ public class CandidatBean implements Serializable {
                 return;
             }
         }
+        selectedCandidates = new ArrayList<>();
+        listSelected = false;
         initCandidatModule();
         loadCandidatsList();
         MessageUtils.showInformationMessage("Candidats supprimés");
@@ -193,8 +196,10 @@ public class CandidatBean implements Serializable {
             return;
         }
 
+        candidatSelected = null;
         initCandidatModule();
         loadCandidatsList();
+        setIsListCandidatsActivate(true);
         MessageUtils.showInformationMessage("Candidat supprimé");
     }
 
@@ -683,12 +688,21 @@ public class CandidatBean implements Serializable {
     }
 
     public void addCollection() {
+        if (collectionSelected == null || collectionSelected.getId() == null || candidatSelected == null) {
+            return;
+        }
         var elementAdded = allCollections.stream()
                 .filter(element -> collectionSelected.getId().equalsIgnoreCase(element.getId()))
                 .findFirst();
         if (elementAdded.isPresent()) {
             candidatMutationService.addCollection(elementAdded.get().getId(), candidatSelected.getIdThesaurus(), candidatSelected.getIdConcepte());
+            if (candidatSelected.getCollections() == null) {
+                candidatSelected.setCollections(new ArrayList<>());
+            } else if (!(candidatSelected.getCollections() instanceof ArrayList<?>)) {
+                candidatSelected.setCollections(new ArrayList<>(candidatSelected.getCollections()));
+            }
             candidatSelected.getCollections().add(elementAdded.get());
+            collectionSelected = null;
             PrimeFaces.current().ajax().update("tabViewCandidat:containerIndexCandidat:candidatCollection");
             MessageUtils.showInformationMessage("Collection ajoutée avec succès !");
         }
@@ -698,6 +712,9 @@ public class CandidatBean implements Serializable {
 
         if (CollectionUtils.isNotEmpty(candidatSelected.getCollections())) {
             candidatMutationService.removeCollection(collection.getId(), candidatSelected.getIdConcepte(), candidatSelected.getIdThesaurus());
+            if (!(candidatSelected.getCollections() instanceof ArrayList<?>)) {
+                candidatSelected.setCollections(new ArrayList<>(candidatSelected.getCollections()));
+            }
             candidatSelected.getCollections().remove(collection);
             PrimeFaces.current().ajax().update("tabViewCandidat:containerIndexCandidat:candidatCollection");
             MessageUtils.showInformationMessage("Collection supprimée avec succès !");
@@ -734,7 +751,7 @@ public class CandidatBean implements Serializable {
                         candidatSelected.getIdThesaurus(), candidatSelected.getLang(), synonyme);
                 candidatSelected.setEmployePourList(candidatSelected.getEmployePourList().stream()
                         .filter(element -> !element.equals(synonyme))
-                        .toList());
+                        .collect(Collectors.toCollection(ArrayList::new)));
                 PrimeFaces.current().ajax().update("tabViewCandidat:containerIndexCandidat:candidatSynonym");
                 MessageUtils.showInformationMessage("Synonyme supprimé avec succès !");
             } catch (Exception ex) {

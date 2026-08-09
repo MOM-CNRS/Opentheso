@@ -68,7 +68,7 @@
 
                                             <ui:include src="candidatDetails.xhtml" />
 
-                                            <h:panelGroup rendered="#{(currentUser.hasRoleAsAdmin and v2CandidatBean.isShowCandidatActivate())}">
+                                            <h:panelGroup rendered="#{v2UserSession.hasRoleAsAdmin() and v2CandidatBean.isShowCandidatActivate()}">
                                                 <div class="row" style="margin-bottom: 20px">
                                                     <div class="col-12" style="align-content: center; margin-top: 10px;">
                                                         <p:commandButton value="#{v2LocaleBean.getMsg('candidat.submit')}"
@@ -131,6 +131,13 @@
 
                 <ui:include src="../thesaurus/includes/layout/logout-dialog.xhtml" />
             </div>
-        </h:panelGroup> 
+        </h:panelGroup>
+
+        <p:ajaxStatus onstart="PF('waitDialog').show()" onsuccess="PF('waitDialog').hide()"/>
+        <p:dialog widgetVar="waitDialog" modal="false" draggable="false" width="80"
+                  closable="false" resizable="false" showHeader="false" position="top"
+                  style="margin-top:250px; border:none;">
+            <p:graphicImage value="#{request.contextPath}/resources/img/wait.gif" width="100%" style="margin-top:15px;"/>
+        </p:dialog>
     </h:body>
 </html>

@@ -202,7 +202,8 @@ public class MenuBean implements Serializable {
         }
         propositionBean.searchNewPropositions();
         propositionBean.setRubriqueVisible(false);
-        redirectToV2SettingPage("/v2/candidat");
+        ExternalContext context = FacesContext.getCurrentInstance().getExternalContext();
+        context.redirect(context.getRequestContextPath() + "/v2/candidat");
     }
     
     // LOGIN Page
