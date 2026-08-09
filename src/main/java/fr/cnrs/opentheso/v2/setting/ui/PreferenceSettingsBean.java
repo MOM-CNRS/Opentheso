@@ -138,6 +138,14 @@ public class PreferenceSettingsBean implements Serializable {
             return;
         }
 
+        if (editor.isUseOpenArk()) {
+            String openArkError = validateOpenArkEditor();
+            if (openArkError != null) {
+                MessageUtils.showErrorMessage(openArkError);
+                return;
+            }
+        }
+
         try {
             ThesaurusPreferences saved = thesaurusPreferenceService.savePreferences(
                     thesaurusContext.getCurrentThesaurusId(),
@@ -165,6 +173,38 @@ public class PreferenceSettingsBean implements Serializable {
         } catch (SettingAccessDeniedException | InvalidSettingDataException e) {
             MessageUtils.showErrorMessage(e.getMessage());
         }
+    }
+
+    private String validateOpenArkEditor() {
+        String server = StringUtils.trimToEmpty(editor.getServerOpenArk());
+        if (StringUtils.isBlank(server)) {
+            return "OpenArk : URL du serveur obligatoire (ex. http://localhost:8080/api)";
+        }
+        String serverLower = server.toLowerCase();
+        if (!serverLower.startsWith("http://") && !serverLower.startsWith("https://")) {
+            return "OpenArk : l'URL du serveur doit commencer par http:// ou https://";
+        }
+        String naan = StringUtils.trimToEmpty(editor.getNaanOpenArk());
+        if (StringUtils.isBlank(naan)) {
+            return "OpenArk : NAAN obligatoire";
+        }
+        try {
+            Integer.parseInt(naan);
+        } catch (NumberFormatException ex) {
+            return "OpenArk : NAAN invalide (nombre attendu, ex. 66666)";
+        }
+        if (StringUtils.isBlank(editor.getPrefixOpenArk())) {
+            return "OpenArk : préfixe Ark obligatoire";
+        }
+        ThesaurusPreferences current = thesaurusPreferenceService.loadPreferencesOrNull(
+                thesaurusContext.getCurrentThesaurusId(),
+                localeBean.getIdLangue()
+        );
+        boolean hasExistingKey = current != null && StringUtils.isNotBlank(current.apiKeyOpenArk());
+        if (!hasExistingKey && StringUtils.isBlank(editor.getNewApiKeyOpenArk())) {
+            return "OpenArk : clé API obligatoire";
+        }
+        return null;
     }
 
     public void clearNewPasswords() {

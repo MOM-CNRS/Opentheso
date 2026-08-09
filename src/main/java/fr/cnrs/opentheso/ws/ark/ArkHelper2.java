@@ -24,18 +24,41 @@ public class ArkHelper2 {
     public boolean login() {
         arkClientRest = new ArkClientRest();
 
-        Properties propertiesArk = new Properties();
-        propertiesArk.setProperty("serverHost", nodePreference.getServerArk());//"http://localhost:8082/Arkeo");//"https://ark.mom.fr/Arkeo");
-        propertiesArk.setProperty("idNaan", nodePreference.getIdNaan());
-        propertiesArk.setProperty("user", nodePreference.getUserArk());
-        propertiesArk.setProperty("password", nodePreference.getPassArk());
-        arkClientRest.setPropertiesArk(propertiesArk);    
-        try {
-            return arkClientRest.login();
-        } catch (Exception e) {
+        if (nodePreference == null) {
+            message = "Pas de préférences pour le thésaurus";
             return false;
         }
 
+        String serverHost = nodePreference.getServerArk();
+        String idNaan = nodePreference.getIdNaan();
+        String user = nodePreference.getUserArk();
+        String password = nodePreference.getPassArk();
+
+        if (isBlank(serverHost) || isBlank(idNaan) || isBlank(user) || isBlank(password)) {
+            message = "Paramètres Ark incomplets (URL serveur, NAAN, utilisateur et mot de passe sont obligatoires)";
+            return false;
+        }
+
+        Properties propertiesArk = new Properties();
+        propertiesArk.setProperty("serverHost", serverHost);
+        propertiesArk.setProperty("idNaan", idNaan);
+        propertiesArk.setProperty("user", user);
+        propertiesArk.setProperty("password", password);
+        arkClientRest.setPropertiesArk(propertiesArk);
+        try {
+            boolean ok = arkClientRest.login();
+            if (!ok) {
+                message = "Échec de la connexion au serveur Ark";
+            }
+            return ok;
+        } catch (Exception e) {
+            message = "Erreur de connexion au serveur Ark: " + e.getMessage();
+            return false;
+        }
+    }
+
+    private static boolean isBlank(String value) {
+        return value == null || value.trim().isEmpty();
     }
     
     public boolean isArkExistOnServer(String idArk) {

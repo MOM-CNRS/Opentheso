@@ -134,4 +134,25 @@
             </div>
         </h:form>
     </p:dialog>
+
+    <p:dialog id="v2GenerateAllArkDlg" header="#{v2LocaleBean.getMsg('rightbody.concept.generate_all_ark')}"
+              widgetVar="v2GenerateAllArkDlg" width="650" modal="true" resizable="false" position="top">
+        <h:form id="v2GenerateAllArkForm">
+            <p:panel style="border: 1px solid #43B572; border-radius: 10px; padding: 10px; margin-top: 10px; margin-bottom: 20px; font-size: 12px;">
+                <p style="color: #000;">
+                    Permet de générer tous identifiants Ark du thésaurus en actuel<br/>
+                    Si l'IdArk existe, il sera seulement mise à jour
+                </p>
+            </p:panel>
+            <div class="text-right mt-3">
+                <p:commandButton value="#{v2LocaleBean.getMsg('candidat.close')}" styleClass="ui-button-secondary"
+                                 type="button" onclick="PF('v2GenerateAllArkDlg').hide();" style="margin-right:8px;"/>
+                <p:commandButton value="#{v2LocaleBean.getMsg('service.generate')}" styleClass="ui-button-success"
+                                 icon="fa fa-upload"
+                                 actionListener="#{v2ConceptIdentifierEditorBean.submitGenerateAllArk()}"
+                                 update="v2GenerateAllArkForm :containerIndex:formRightTab :messageIndex"
+                                 process="@form"/>
+            </div>
+        </h:form>
+    </p:dialog>
 </ui:fragment>

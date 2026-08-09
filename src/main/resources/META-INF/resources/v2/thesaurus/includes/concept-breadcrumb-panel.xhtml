@@ -1,9 +1,9 @@
 <ui:fragment xmlns="http://www.w3.org/1999/xhtml"
              xmlns:h="http://xmlns.jcp.org/jsf/html"
-             xmlns:ui="http://xmlns.jcp.org/jsf/facelets"
+             xmlns:ui="http://java.sun.com/jsf/facelets"
              xmlns:p="http://primefaces.org/ui">
 
-  <!-- Barre d'actions + fil d'Ariane (structure legacy) -->
+  <!-- Barre d'actions + fil d'Ariane (structure legacy filAariane.xhtml) -->
   <h:panelGroup rendered="#{v2ConceptLifecycleEditorBean.writeActionsAvailable
                               or (v2ThesaurusBrowseBean.breadcrumbEnabled
                                   and not empty v2ThesaurusBrowseBean.selectedConcept.breadcrumbPaths)}">
@@ -14,6 +14,8 @@
                        style="width: 1.5rem; height: 1.5rem; margin-left: 5px; margin-right: 5px;
                               background: #ecf8f1; color: #f47b2a; border: 1px solid #ecf8f1;"/>
       <p:menu overlay="true" trigger="v2ConceptActionsButton" my="left top" at="left bottom">
+
+        <!-- Nouveau concept / type / facette -->
         <p:menuitem value="#{v2LocaleBean.getMsg('rightbody.concept.new_concept')}"
                     id="v2MenuNewConcept"
                     rendered="#{v2ConceptLifecycleEditorBean.activeConceptWriteAvailable}"
@@ -21,12 +23,6 @@
                     actionListener="#{v2ConceptLifecycleEditorBean.prepareAddChild()}"
                     update="@([id$=v2AddChildConceptForm])"
                     oncomplete="PF('v2AddChildConceptDlg').show();"
-                    icon="fas fa-plus"/>
-        <p:menuitem value="#{v2LocaleBean.getMsg('rightbody.concept.addTopConcept')}"
-                    process="@this"
-                    actionListener="#{v2ConceptLifecycleEditorBean.prepareAddTopConcept()}"
-                    update="@([id$=v2AddTopConceptForm])"
-                    oncomplete="PF('v2AddTopConceptDlg').show();"
                     icon="fas fa-plus"/>
 
         <p:menuitem rendered="#{v2ConceptAttributeEditorBean.conceptTypeEditAvailable}"
@@ -37,6 +33,14 @@
                     oncomplete="PF('v2EditConceptTypeDlg').show();"
                     icon="fas fa-edit"/>
 
+        <p:menuitem rendered="#{v2ConceptTypeManagerBean.manageAvailable}"
+                    value="#{v2LocaleBean.getMsg('concept.manageConceptType')}"
+                    process="@this"
+                    actionListener="#{v2ConceptTypeManagerBean.prepareManage()}"
+                    update=":v2ManageConceptTypeForm"
+                    oncomplete="PF('v2ManageConceptTypeDlg').show();"
+                    icon="fas fa-cog"/>
+
         <p:menuitem id="v2MenuNewFacet"
                     rendered="#{v2FacetDetailEditorBean.managerActionsAvailable}"
                     value="#{v2LocaleBean.getMsg('rightbody.concept.new_facet')}"
@@ -46,8 +50,9 @@
                     oncomplete="PF('v2CreateFacetUnderConceptDlg').show();"
                     icon="fas fa-magnet"/>
 
-        <p:separator rendered="#{v2ConceptTreeDragDropBean.cutActionsAvailable}"
-                     style="border-bottom: 2px solid #d8d8dc; margin-bottom: 5px;"/>
+        <p:separator style="border-bottom: 2px solid #d8d8dc; margin-bottom: 5px;"/>
+
+        <!-- Couper / coller -->
         <p:menuitem rendered="#{v2ConceptTreeDragDropBean.cutActionsAvailable}"
                     value="#{v2LocaleBean.getMsg('rightbody.concept.cut_move')}"
                     process="@this"
@@ -67,30 +72,7 @@
                     update=":containerIndex:formLeftTab :containerIndex:formRightTab :messageIndex"
                     icon="fas fa-paste"/>
 
-        <p:separator rendered="#{v2ConceptCopyBetweenThesaurusBean.copyActionsAvailable}"
-                     style="border-bottom: 2px solid #d8d8dc; margin-bottom: 5px;"/>
-        <p:menuitem rendered="#{v2ConceptCopyBetweenThesaurusBean.copyActionsAvailable and not v2ConceptCopyBetweenThesaurusBean.copyOn}"
-                    value="#{v2LocaleBean.getMsg('rightbody.concept.copy_to_another_thesaurus')}"
-                    title="#{v2LocaleBean.getMsg('rightbody.concept.tooltip_copy_to_another_thesaurus')}"
-                    process="@this"
-                    actionListener="#{v2ConceptCopyBetweenThesaurusBean.onStartCopy()}"
-                    update=":containerIndex:formRightTab :containerIndex:formLeftTab :messageIndex"
-                    icon="fas fa-copy"/>
-        <p:menuitem rendered="#{v2ConceptCopyBetweenThesaurusBean.pasteUnderConceptAvailable}"
-                    value="#{v2LocaleBean.getMsg('rightbody.concept.paste')} (#{v2ConceptCopyBetweenThesaurusBean.sourceLabel}) #{v2LocaleBean.getMsg('rightbody.concept.here')} !!"
-                    process="@this"
-                    actionListener="#{v2ConceptCopyBetweenThesaurusBean.preparePasteUnderCurrentConcept()}"
-                    update=":containerIndex:v2CopyBetweenThesoForm :messageIndex"
-                    icon="fas fa-paste"/>
-        <p:menuitem rendered="#{v2ConceptCopyBetweenThesaurusBean.copyOn}"
-                    value="#{v2LocaleBean.getMsg('rightbody.concept.cancel_copy')}"
-                    title="#{v2LocaleBean.getMsg('rightbody.concept.tooltip_cancel_copy_other_thesaurus')}"
-                    process="@this"
-                    actionListener="#{v2ConceptCopyBetweenThesaurusBean.cancelCopy()}"
-                    update=":containerIndex:formRightTab :containerIndex:formLeftTab :messageIndex"
-                    icon="fas fa-undo"/>
-
-        <p:separator style="border-bottom: 2px solid #d8d8dc; margin-bottom: 5px;"/>
+        <!-- Suppression / statut -->
         <p:menuitem value="#{v2LocaleBean.getMsg('rightbody.concept.delete_concept')}"
                     process="@this"
                     actionListener="#{v2ConceptLifecycleEditorBean.prepareDelete()}"
@@ -112,8 +94,30 @@
                     oncomplete="PF('v2ApproveConceptDlg').show();"
                     icon="fa fa-check-circle"/>
 
+        <!-- Copie entre thésaurus -->
+        <p:menuitem rendered="#{v2ConceptCopyBetweenThesaurusBean.copyActionsAvailable and not v2ConceptCopyBetweenThesaurusBean.copyOn}"
+                    value="#{v2LocaleBean.getMsg('rightbody.concept.copy_to_another_thesaurus')}"
+                    title="#{v2LocaleBean.getMsg('rightbody.concept.tooltip_copy_to_another_thesaurus')}"
+                    process="@this"
+                    actionListener="#{v2ConceptCopyBetweenThesaurusBean.onStartCopy()}"
+                    update=":containerIndex:formRightTab :containerIndex:formLeftTab :messageIndex"
+                    icon="fas fa-copy"/>
+        <p:menuitem rendered="#{v2ConceptCopyBetweenThesaurusBean.pasteUnderConceptAvailable}"
+                    value="#{v2LocaleBean.getMsg('rightbody.concept.paste')} (#{v2ConceptCopyBetweenThesaurusBean.sourceLabel}) #{v2LocaleBean.getMsg('rightbody.concept.here')} !!"
+                    process="@this"
+                    actionListener="#{v2ConceptCopyBetweenThesaurusBean.preparePasteUnderCurrentConcept()}"
+                    update=":containerIndex:v2CopyBetweenThesoForm :messageIndex"
+                    icon="fas fa-paste"/>
+        <p:menuitem rendered="#{v2ConceptCopyBetweenThesaurusBean.copyOn}"
+                    value="#{v2LocaleBean.getMsg('rightbody.concept.cancel_copy')}"
+                    title="#{v2LocaleBean.getMsg('rightbody.concept.tooltip_cancel_copy_other_thesaurus')}"
+                    process="@this"
+                    actionListener="#{v2ConceptCopyBetweenThesaurusBean.cancelCopy()}"
+                    update=":containerIndex:formRightTab :containerIndex:formLeftTab :messageIndex"
+                    icon="fas fa-ban"/>
+
         <p:separator rendered="#{v2ConceptTransferEditorBean.transferActionsAvailable}"
-                    style="border-bottom: 2px solid #d8d8dc; margin-bottom: 5px;"/>
+                     style="border-bottom: 2px solid #d8d8dc; margin-bottom: 5px;"/>
         <p:menuitem rendered="#{v2ConceptTransferEditorBean.transferActionsAvailable}"
                     value="#{v2LocaleBean.getMsg('concept.moveToAnotherThesoTooltip')}"
                     process="@this"
@@ -122,50 +126,92 @@
                     oncomplete="PF('v2MoveToAnotherThesoDlg').show();"
                     icon="fas fa-truck-moving"/>
 
-        <p:separator rendered="#{v2ConceptIdentifierEditorBean.identifierActionsAvailable}"
-                    style="border-bottom: 2px solid #d8d8dc; margin-bottom: 5px;"/>
+        <p:separator style="border-bottom: 2px solid #d8d8dc; margin-bottom: 5px;"/>
+
+        <!-- ARK -->
         <p:menuitem rendered="#{v2ConceptIdentifierEditorBean.arkGenerationAvailable}"
                     value="#{v2LocaleBean.getMsg('rightbody.concept.generate_ark')}"
                     process="@this"
                     actionListener="#{v2ConceptIdentifierEditorBean.prepareGenerateArk()}"
-                    update="v2GenerateArkForm"
+                    update=":v2GenerateArkForm"
                     oncomplete="PF('v2GenerateArkDlg').show();"
-                    icon="fas fa-fingerprint"/>
+                    style="font-size: 12px;"/>
         <p:menuitem rendered="#{v2ConceptIdentifierEditorBean.arkDeletionAvailable}"
                     value="#{v2LocaleBean.getMsg('rightbody.concept.delete_ark')}"
                     process="@this"
                     actionListener="#{v2ConceptIdentifierEditorBean.prepareDeleteArk()}"
-                    update="v2DeleteArkForm"
+                    update=":v2DeleteArkForm"
                     oncomplete="PF('v2DeleteArkDlg').show();"
-                    icon="fas fa-eraser"/>
-        <p:menuitem rendered="#{v2ConceptIdentifierEditorBean.arkGenerationAvailable}"
+                    style="font-size: 12px;"/>
+        <p:menuitem rendered="#{v2ConceptIdentifierEditorBean.arkBatchGenerationAvailable}"
+                    value="#{v2LocaleBean.getMsg('rightbody.concept.generate_missing_ark')}"
+                    process="@this"
+                    actionListener="#{v2ConceptIdentifierEditorBean.submitGenerateArkForConceptsWithoutArk()}"
+                    update=":messageIndex :containerIndex:formRightTab"
+                    style="font-size: 12px;"/>
+        <p:menuitem rendered="#{v2ConceptIdentifierEditorBean.arkBatchGenerationAvailable}"
                     value="#{v2LocaleBean.getMsg('rightbody.concept.generate_ark_for_branch')}"
                     process="@this"
                     actionListener="#{v2ConceptIdentifierEditorBean.prepareGenerateArkForBranch()}"
-                    update="v2GenerateArkBranchForm"
-                    oncomplete="PF('v2GenerateArkBranchDlg').show();"
-                    icon="fas fa-code-branch"/>
+                    update=":v2GenerateArkBranchForm"
+                    oncomplete="PF('v2GenerateArkBranchDlg').show();"/>
+        <p:menuitem rendered="#{v2ConceptIdentifierEditorBean.arkBatchGenerationAvailable}"
+                    value="#{v2LocaleBean.getMsg('rightbody.concept.generate_all_ark')}"
+                    process="@this"
+                    actionListener="#{v2ConceptIdentifierEditorBean.prepareGenerateAllArk()}"
+                    update=":v2GenerateAllArkForm"
+                    oncomplete="PF('v2GenerateAllArkDlg').show();"/>
+
+        <!-- Handle -->
         <p:menuitem rendered="#{v2ConceptIdentifierEditorBean.handleGenerationAvailable}"
                     value="#{v2LocaleBean.getMsg('rightbody.concept.generate_handle')}"
                     process="@this"
                     actionListener="#{v2ConceptIdentifierEditorBean.prepareGenerateHandle()}"
-                    update="v2GenerateHandleForm"
+                    update=":v2GenerateHandleForm"
                     oncomplete="PF('v2GenerateHandleDlg').show();"
-                    icon="fas fa-link"/>
+                    style="font-size: 12px;"/>
         <p:menuitem rendered="#{v2ConceptIdentifierEditorBean.handleDeletionAvailable}"
                     value="#{v2LocaleBean.getMsg('rightbody.concept.delete_handle')}"
                     process="@this"
                     actionListener="#{v2ConceptIdentifierEditorBean.prepareDeleteHandle()}"
-                    update="v2DeleteHandleForm"
+                    update=":v2DeleteHandleForm"
                     oncomplete="PF('v2DeleteHandleDlg').show();"
-                    icon="fas fa-unlink"/>
+                    style="font-size: 12px;"/>
+        <p:menuitem rendered="#{v2ConceptIdentifierEditorBean.handleGenerationAvailable}"
+                    value="#{v2LocaleBean.getMsg('rightbody.concept.generate_missing_handle')}"
+                    process="@this"
+                    actionListener="#{v2ConceptIdentifierEditorBean.submitGenerateHandleForConceptsWithoutHandle()}"
+                    update=":messageIndex :containerIndex:formRightTab"/>
         <p:menuitem rendered="#{v2ConceptIdentifierEditorBean.handleGenerationAvailable}"
                     value="#{v2LocaleBean.getMsg('rightbody.concept.generate_handle_for_branch')}"
                     process="@this"
                     actionListener="#{v2ConceptIdentifierEditorBean.prepareGenerateHandleForBranch()}"
-                    update="v2GenerateHandleBranchForm"
-                    oncomplete="PF('v2GenerateHandleBranchDlg').show();"
-                    icon="fas fa-sitemap"/>
+                    update=":v2GenerateHandleBranchForm"
+                    oncomplete="PF('v2GenerateHandleBranchDlg').show();"/>
+        <p:menuitem rendered="#{v2ConceptIdentifierEditorBean.handleGenerationAvailable}"
+                    value="#{v2LocaleBean.getMsg('rightbody.concept.generate_all_handle')}"
+                    process="@this"
+                    actionListener="#{v2ConceptIdentifierEditorBean.submitGenerateAllHandle()}"
+                    update=":messageIndex :containerIndex:formRightTab"/>
+
+        <!-- Import liste tabulée -->
+        <p:menuitem rendered="#{v2ConceptListCsvImportBean.importAvailable}"
+                    value="#{v2LocaleBean.getMsg('rightbody.concept.import_tabulated_list')}"
+                    process="@this"
+                    actionListener="#{v2ConceptListCsvImportBean.prepareImport()}"
+                    update=":v2ListImportCsvForm"
+                    oncomplete="PF('v2ListImportCsvDlg').show();"
+                    icon="fas fa-file-download"/>
+
+        <p:separator style="border-bottom: 2px solid #d8d8dc; margin-bottom: 5px;"/>
+
+        <p:menuitem rendered="#{v2ConceptMaintenanceEditorBean.maintenanceActionsAvailable}"
+                    value="#{v2LocaleBean.getMsg('actions.repairLoopedRelationships')}"
+                    title="#{v2LocaleBean.getMsg('actions.repairLoopedRelationshipsToolTip')}"
+                    process="@this"
+                    actionListener="#{v2ConceptMaintenanceEditorBean.repairLoopedRelationships()}"
+                    update=":messageIndex :containerIndex:formRightTab :containerIndex:formLeftTab"
+                    icon="fas fa-toolbox"/>
       </p:menu>
       <p:tooltip for="v2MenuNewConcept"
                  value="#{v2LocaleBean.getMsg('rightbody.concept.tooltip_new_concept')} #{v2ThesaurusBrowseBean.selectedConcept.summary.preferredLabel}"

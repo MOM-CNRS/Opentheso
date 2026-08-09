@@ -407,16 +407,18 @@ public class ConceptFullQueryRepository {
     }
 
     public List<Object[]> findFacets(String conceptId, String thesaurusId, String lang) {
+        // Aligné legacy ConceptView.setFacetsOfConcept : facettes dont le concept est membre
+        // (table concept_facet), pas les facettes dont il est parent (thesaurus_array).
         return em.createNativeQuery("""
-            SELECT ta.id_facet, COALESCE(nl.lexical_value, ta.id_facet)
-            FROM thesaurus_array ta
+            SELECT cf.id_facet, COALESCE(nl.lexical_value, '')
+            FROM concept_facet cf
             LEFT JOIN node_label nl
-                ON nl.id_facet = ta.id_facet
-                AND nl.id_thesaurus = ta.id_thesaurus
+                ON nl.id_facet = cf.id_facet
+                AND nl.id_thesaurus = cf.id_thesaurus
                 AND nl.lang = :lang
-            WHERE ta.id_thesaurus = :thesaurusId
-              AND ta.id_concept_parent = :conceptId
-            ORDER BY COALESCE(nl.lexical_value, ta.id_facet)
+            WHERE cf.id_thesaurus = :thesaurusId
+              AND cf.id_concept = :conceptId
+            ORDER BY COALESCE(NULLIF(nl.lexical_value, ''), cf.id_facet)
             """)
                 .setParameter("conceptId", conceptId)
                 .setParameter("thesaurusId", thesaurusId)

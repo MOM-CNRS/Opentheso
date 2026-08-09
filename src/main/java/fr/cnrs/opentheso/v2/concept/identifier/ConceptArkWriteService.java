@@ -63,6 +63,11 @@ public class ConceptArkWriteService {
             return;
         }
         if (preferences.isUseOpenArk()) {
+            String configError = validateOpenArkPreferences(preferences);
+            if (configError != null) {
+                log.warn("Création concept : OpenArk ignoré ({})", configError);
+                return;
+            }
             generateOpenArkIds(thesaurusId, List.of(conceptId), lang, preferences);
         }
         if (preferences.isUseArk()) {
@@ -82,8 +87,11 @@ public class ConceptArkWriteService {
             return List.of(errorValue("", "Pas de préférences pour le thésaurus !!"));
         }
         if (preferences.isUseOpenArk()) {
-            generateOpenArkIds(thesaurusId, conceptIds, lang, preferences);
-            return null;
+            String configError = validateOpenArkPreferences(preferences);
+            if (configError != null) {
+                return List.of(errorValue("", configError));
+            }
+            return generateOpenArkIds(thesaurusId, conceptIds, lang, preferences);
         }
         return generateRemoteArkIds(thesaurusId, conceptIds, lang, preferences);
     }
@@ -93,7 +101,14 @@ public class ConceptArkWriteService {
         if (preferences == null || !preferences.isUseOpenArk()) {
             return false;
         }
-        String apiKey = crypto.decrypt(preferences.getApiKeyOpenArk());
+        if (validateOpenArkPreferences(preferences) != null) {
+            return false;
+        }
+        String apiKey = decryptApiKey(preferences.getApiKeyOpenArk());
+        if (StringUtils.isBlank(apiKey)) {
+            return false;
+        }
+        String serverUrl = normalizeOpenArkServerUrl(preferences.getServerOpenArk());
         for (String conceptId : conceptIds) {
             Concept concept = conceptRepository.findByIdConceptAndIdThesaurus(conceptId, thesaurusId).orElse(null);
             if (concept == null || StringUtils.isBlank(concept.getIdArk())) {
@@ -102,9 +117,8 @@ public class ConceptArkWriteService {
             try {
                 DeleteArkRequest deleteRequest = new DeleteArkRequest();
                 deleteRequest.setArk(concept.getIdArk());
-                deleteRequest.setNaan(preferences.getNaanOpenArk());
-                DeleteArkResponse response = arkApiClient.deleteArk(
-                        deleteRequest, preferences.getServerOpenArk(), apiKey);
+                deleteRequest.setNaan(preferences.getNaanOpenArk().trim());
+                DeleteArkResponse response = arkApiClient.deleteArk(deleteRequest, serverUrl, apiKey);
                 if (response == null) {
                     return false;
                 }
@@ -119,19 +133,65 @@ public class ConceptArkWriteService {
         return true;
     }
 
-    private void generateOpenArkIds(String thesaurusId, List<String> conceptIds, String lang, Preferences preferences) {
-        String apiKey = crypto.decrypt(preferences.getApiKeyOpenArk());
+    /**
+     * @return message d'erreur, ou {@code null} si la config OpenArk est utilisable
+     */
+    public String validateOpenArkPreferences(Preferences preferences) {
+        if (preferences == null || !preferences.isUseOpenArk()) {
+            return "OpenArk n'est pas activé pour ce thésaurus";
+        }
+        String server = StringUtils.trimToEmpty(preferences.getServerOpenArk());
+        if (StringUtils.isBlank(server)) {
+            return "Paramètres OpenArk incomplets : URL du serveur obligatoire (ex. http://localhost:8080/api)";
+        }
+        if (!hasHttpScheme(server)) {
+            return "Paramètres OpenArk incomplets : l'URL du serveur doit commencer par http:// ou https://";
+        }
+        String naan = StringUtils.trimToEmpty(preferences.getNaanOpenArk());
+        if (StringUtils.isBlank(naan)) {
+            return "Paramètres OpenArk incomplets : NAAN obligatoire";
+        }
+        try {
+            Integer.parseInt(naan);
+        } catch (NumberFormatException ex) {
+            return "Paramètres OpenArk incomplets : NAAN invalide (nombre attendu, ex. 66666)";
+        }
+        if (StringUtils.isBlank(preferences.getPrefixOpenArk())) {
+            return "Paramètres OpenArk incomplets : préfixe Ark obligatoire";
+        }
+        if (StringUtils.isBlank(decryptApiKey(preferences.getApiKeyOpenArk()))) {
+            return "Paramètres OpenArk incomplets : clé API obligatoire (enregistrez-la via Valider dans les préférences)";
+        }
+        return null;
+    }
+
+    private List<NodeIdValue> generateOpenArkIds(
+            String thesaurusId,
+            List<String> conceptIds,
+            String lang,
+            Preferences preferences
+    ) {
+        String apiKey = decryptApiKey(preferences.getApiKeyOpenArk());
+        String serverUrl = normalizeOpenArkServerUrl(preferences.getServerOpenArk());
+        int naan = Integer.parseInt(preferences.getNaanOpenArk().trim());
+        List<NodeIdValue> errors = new ArrayList<>();
+
         for (String conceptId : conceptIds) {
-            Concept concept = requireConcept(conceptId, thesaurusId);
-            String url = preferences.getCheminSite() + "?idc=" + conceptId + "&idt=" + thesaurusId;
-            int naan = Integer.parseInt(preferences.getNaanOpenArk());
-            String idArk = concept.getIdArk();
-            if (StringUtils.isBlank(idArk)) {
-                if (arkApiClient.arkExistsByUrl(naan, url, preferences.getServerOpenArk())) {
+            try {
+                Concept concept = requireConcept(conceptId, thesaurusId);
+                String cheminSite = StringUtils.defaultString(preferences.getCheminSite());
+                String url = cheminSite + "?idc=" + conceptId + "&idt=" + thesaurusId;
+                String idArk = concept.getIdArk();
+                if (StringUtils.isNotBlank(idArk)) {
+                    continue;
+                }
+                if (arkApiClient.arkExistsByUrl(naan, url, serverUrl)) {
                     ArkResponse arkResponse = arkApiClient.getArkByNaanAndUrlWithApiKey(
-                            naan, url, preferences.getServerOpenArk(), apiKey);
-                    if (arkResponse != null) {
+                            naan, url, serverUrl, apiKey);
+                    if (arkResponse != null && arkResponse.getArk() != null) {
                         updateArkId(conceptId, thesaurusId, arkResponse.getArk().getArkId());
+                    } else {
+                        errors.add(errorValue(conceptId, "Impossible de récupérer l'ARK existant sur OpenArk"));
                     }
                 } else {
                     ArkRequest request = new ArkRequest();
@@ -141,11 +201,40 @@ public class ConceptArkWriteService {
                     request.setUrlTarget(url);
                     request.setTitle(resolvePreferredLabel(conceptId, thesaurusId, lang));
                     request.setCreator(resolveCreatorName(concept));
-                    ArkResponse response = arkApiClient.createArk(request, preferences.getServerOpenArk(), apiKey);
+                    ArkResponse response = arkApiClient.createArk(request, serverUrl, apiKey);
+                    if (response == null || response.getArk() == null) {
+                        errors.add(errorValue(conceptId, "La création OpenArk n'a renvoyé aucun identifiant"));
+                        continue;
+                    }
                     updateArkId(conceptId, thesaurusId, response.getArk().getArkId());
                 }
+            } catch (ArkApiException | IllegalStateException | IllegalArgumentException ex) {
+                log.warn("Échec génération OpenArk pour {} : {}", conceptId, ex.getMessage());
+                errors.add(errorValue(conceptId, StringUtils.defaultIfBlank(ex.getMessage(), "Échec OpenArk")));
             }
         }
+        return errors.isEmpty() ? null : errors;
+    }
+
+    private String decryptApiKey(String encryptedApiKey) {
+        if (StringUtils.isBlank(encryptedApiKey)) {
+            return "";
+        }
+        try {
+            return StringUtils.defaultString(crypto.decrypt(encryptedApiKey));
+        } catch (Exception ex) {
+            log.warn("Impossible de déchiffrer la clé API OpenArk : {}", ex.getMessage());
+            return "";
+        }
+    }
+
+    private static String normalizeOpenArkServerUrl(String serverUrl) {
+        return StringUtils.removeEnd(StringUtils.trimToEmpty(serverUrl), "/");
+    }
+
+    private static boolean hasHttpScheme(String serverUrl) {
+        String value = StringUtils.lowerCase(StringUtils.trimToEmpty(serverUrl));
+        return value.startsWith("http://") || value.startsWith("https://");
     }
 
     private List<NodeIdValue> generateRemoteArkIds(
@@ -165,6 +254,11 @@ public class ConceptArkWriteService {
 
         ArkHelper2 arkHelper2 = new ArkHelper2(preferences);
         if (!arkHelper2.login()) {
+            String loginMessage = StringUtils.defaultIfBlank(
+                    arkHelper2.getMessage(),
+                    "Erreur pendant la connexion avec le serveur Ark");
+            log.error(loginMessage);
+            nodeIdValues.add(errorValue("", loginMessage));
             return nodeIdValues;
         }
 

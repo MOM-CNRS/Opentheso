@@ -1,0 +1,138 @@
+<ui:fragment xmlns="http://www.w3.org/1999/xhtml"
+             xmlns:ui="http://java.sun.com/jsf/facelets"
+             xmlns:p="http://primefaces.org/ui"
+             xmlns:h="http://xmlns.jcp.org/jsf/html">
+
+    <p:dialog id="v2ManageConceptTypeDlg" header="#{v2LocaleBean.getMsg('concept.manageConceptType')}"
+              widgetVar="v2ManageConceptTypeDlg" width="750" modal="true" resizable="false" position="top">
+        <h:form id="v2ManageConceptTypeForm">
+            <div class="row">
+                <div class="col-1 offset-11">
+                    <p:commandButton styleClass="ui-button-success rounded-button" icon="pi pi-plus"
+                                     style="padding: 0.5rem; margin-top: 10px;"
+                                     title="#{v2LocaleBean.getMsg('rightbody.concept.addNewConceptType')}"
+                                     actionListener="#{v2ConceptTypeManagerBean.prepareAdd()}"
+                                     update=":v2AddNewConceptTypeForm"
+                                     oncomplete="PF('v2AddNewConceptTypeDlg').show();"
+                                     process="@this"/>
+                </div>
+            </div>
+            <div class="card mb-4 py-3 border-left-success" style="border-color: #43B572; margin-top: -10px;">
+                <p:dataTable id="v2ConceptTypeData" var="nodeConceptType" value="#{v2ConceptTypeManagerBean.conceptTypes}"
+                             size="small"
+                             style="margin-bottom: -17px; margin-top: -16px; overflow: auto; max-height: 400px"
+                             lazy="false">
+                    <p:column headerText="#{v2LocaleBean.getMsg('concept.code')}" width="15%">
+                        <h:outputText value="#{nodeConceptType.code}" style="font-size: 14px;"/>
+                    </p:column>
+                    <p:column headerText="labelFr" width="20%">
+                        <p:inputText value="#{nodeConceptType.labelFr}" style="font-size: 14px;"
+                                     disabled="#{nodeConceptType.permanent}"/>
+                    </p:column>
+                    <p:column headerText="labelEn" width="20%">
+                        <p:inputText value="#{nodeConceptType.labelEn}" style="font-size: 14px;"
+                                     disabled="#{nodeConceptType.permanent}"/>
+                    </p:column>
+                    <p:column headerText="#{v2LocaleBean.getMsg('rightbody.conceptdialog.relationship')}" width="30%">
+                        <p:selectBooleanCheckbox value="#{nodeConceptType.reciprocal}"
+                                                 itemLabel="#{v2LocaleBean.getMsg('concept.isReciprocalRelationship')}"
+                                                 style="font-size: 14px;" disabled="#{nodeConceptType.permanent}"/>
+                    </p:column>
+                    <p:column width="7%" headerText="#{v2LocaleBean.getMsg('profile.action')}">
+                        <p:commandLink style="color: #FF7979; text-align: center"
+                                       disabled="#{nodeConceptType.permanent}"
+                                       action="#{v2ConceptTypeManagerBean.applyChange(nodeConceptType)}"
+                                       update=":messageIndex v2ConceptTypeData"
+                                       process="@form">
+                            <i class="pi pi-save"
+                               style="font-size: 1rem; padding-top: 5px; color: #{nodeConceptType.permanent ? '#8C8C8C':'#F47B2A'};"/>
+                        </p:commandLink>
+                    </p:column>
+                    <p:column width="7%">
+                        <p:commandLink style="color: #FF7979; text-align: right"
+                                       disabled="#{nodeConceptType.permanent}"
+                                       actionListener="#{v2ConceptTypeManagerBean.prepareDelete(nodeConceptType)}"
+                                       oncomplete="PF('v2ConfirmDeleteConceptType').show();"
+                                       process="@this">
+                            <i class="pi pi-trash"
+                               style="font-size: 1rem; padding-top: 5px; color: #{nodeConceptType.permanent ? '#8C8C8C':'#C02929'};"/>
+                        </p:commandLink>
+                    </p:column>
+                </p:dataTable>
+            </div>
+
+            <p:confirmDialog widgetVar="v2ConfirmDeleteConceptType"
+                             header="#{v2LocaleBean.getMsg('rightbody.conceptdialog.confirmDelete')} ?"
+                             showEffect="fade" hideEffect="explode">
+                <div class="row">
+                    <div class="col-5 offset-1">
+                        <p:commandButton value="#{v2LocaleBean.getMsg('no')}" styleClass="ui-button-secondary"
+                                         icon="fas fa-undo-alt" style="width: 100%"
+                                         type="button"
+                                         onclick="PF('v2ConfirmDeleteConceptType').hide();"/>
+                    </div>
+                    <div class="col-5 offset-1">
+                        <p:commandButton value="#{v2LocaleBean.getMsg('yes')}" styleClass="ui-button-success"
+                                         icon="pi pi-check" style="width: 100%"
+                                         actionListener="#{v2ConceptTypeManagerBean.deleteCustomRelationship()}"
+                                         update=":messageIndex v2ConceptTypeData"
+                                         process="@this"/>
+                    </div>
+                </div>
+            </p:confirmDialog>
+        </h:form>
+    </p:dialog>
+
+    <p:dialog id="v2AddNewConceptTypeDlg" header="#{v2LocaleBean.getMsg('rightbody.concept.addNewConceptType')}"
+              widgetVar="v2AddNewConceptTypeDlg" width="550" modal="true" resizable="false" position="top">
+        <h:form id="v2AddNewConceptTypeForm">
+            <p:defaultCommand target="v2AddNewConceptTypeBtn"/>
+            <div class="row">
+                <div class="col-2" style="text-align: right;">
+                    <h:outputText value="#{v2LocaleBean.getMsg('concept.code')} ?" style="font-weight: bold"
+                                  title="#{v2LocaleBean.getMsg('concept.typeCodeDescription')}"/>
+                </div>
+                <div class="col-9">
+                    <p:inputText value="#{v2ConceptTypeManagerBean.conceptTypeToAdd.code}" style="width: 100%"
+                                 title="#{v2LocaleBean.getMsg('concept.typeCodeDescription')}"/>
+                </div>
+            </div>
+            <div class="row" style="margin-top: 10px;">
+                <div class="col-2" style="text-align: right;">
+                    <h:outputText value="labelFr"/>
+                </div>
+                <div class="col-9">
+                    <p:inputText value="#{v2ConceptTypeManagerBean.conceptTypeToAdd.labelFr}" style="width: 100%"/>
+                </div>
+            </div>
+            <div class="row" style="margin-top: 10px;">
+                <div class="col-2" style="text-align: right;">
+                    <h:outputText value="labelEn"/>
+                </div>
+                <div class="col-9">
+                    <p:inputText value="#{v2ConceptTypeManagerBean.conceptTypeToAdd.labelEn}" style="width: 100%"/>
+                </div>
+            </div>
+            <div class="row" style="margin-top: 10px;">
+                <div class="col-2" style="text-align: right;">
+                    <h:outputText value="#{v2LocaleBean.getMsg('rightbody.conceptdialog.relationship')}"/>
+                </div>
+                <div class="col-9">
+                    <p:selectBooleanCheckbox value="#{v2ConceptTypeManagerBean.conceptTypeToAdd.reciprocal}"
+                                             itemLabel="#{v2LocaleBean.getMsg('concept.isReciprocalRelationship')}"/>
+                </div>
+            </div>
+            <div style="width: 100%; text-align: right; margin-top: 15px;">
+                <p:commandButton value="#{v2LocaleBean.getMsg('candidat.close')}"
+                                 icon="fas fa-undo-alt" styleClass="ui-button-secondary" style="margin-right: 10px"
+                                 type="button" onclick="PF('v2AddNewConceptTypeDlg').hide();"/>
+                <p:commandButton id="v2AddNewConceptTypeBtn"
+                                 value="#{v2LocaleBean.getMsg('btnAdd')}"
+                                 icon="pi pi-check" styleClass="ui-button-success"
+                                 action="#{v2ConceptTypeManagerBean.addNewConceptType()}"
+                                 update=":messageIndex :v2ManageConceptTypeForm:v2ConceptTypeData v2AddNewConceptTypeForm"
+                                 process="@form"/>
+            </div>
+        </h:form>
+    </p:dialog>
+</ui:fragment>

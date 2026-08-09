@@ -33,6 +33,15 @@ public class ConceptIdentifierWritePersistence {
         if (result == null) {
             return MutationResult.ok("L'opération est terminée avec succès !!");
         }
+        if (result.isEmpty()) {
+            return MutationResult.failure("La génération Ark a échoué !!");
+        }
+        // Erreur globale (ex. connexion serveur) : un seul message sans id concept
+        if (result.size() == 1 && StringUtils.isBlank(result.get(0).getId())) {
+            return MutationResult.failure(StringUtils.defaultIfBlank(
+                    result.get(0).getValue(),
+                    "La génération Ark a échoué !!"));
+        }
         return MutationResult.ok("L'opération est terminée, vérifier le fichier de résultat téléchargé !!");
     }
 
@@ -46,6 +55,10 @@ public class ConceptIdentifierWritePersistence {
         }
         if (!preferences.isUseOpenArk()) {
             return MutationResult.forbidden("La suppression Ark n'est disponible que pour OpenArk");
+        }
+        String configError = conceptArkWriteService.validateOpenArkPreferences(preferences);
+        if (configError != null) {
+            return MutationResult.failure(configError);
         }
         if (!conceptArkWriteService.deleteOpenArkIds(command.thesaurusId(), command.conceptIds())) {
             return MutationResult.failure("La suppression Ark a échoué !!");

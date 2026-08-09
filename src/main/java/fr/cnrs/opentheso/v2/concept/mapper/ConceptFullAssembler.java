@@ -432,7 +432,10 @@ public class ConceptFullAssembler {
         List<ConceptUriLabel> facets = new ArrayList<>();
         for (Object[] row : conceptFullQueryRepository.findFacets(conceptId, thesaurusId, lang)) {
             String facetId = stringAt(row, 0);
-            facets.add(new ConceptUriLabel(facetId, facetId, stringAt(row, 1)));
+            if (StringUtils.isBlank(facetId)) {
+                continue;
+            }
+            facets.add(new ConceptUriLabel("", facetId, stringAt(row, 1)));
         }
         if (facets.isEmpty()) {
             return null;
