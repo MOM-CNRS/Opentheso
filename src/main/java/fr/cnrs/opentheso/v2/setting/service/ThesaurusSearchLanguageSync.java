@@ -14,7 +14,7 @@ import org.springframework.stereotype.Component;
  * Aligne la langue / la liste des langues de consultation après une modification
  * en édition V2 (langue source, ajout/suppression de traduction).
  * <ul>
- *   <li>V2 : {@link ThesaurusContext} + {@code v2ConceptSearchBean.availableLanguages}</li>
+ *   <li>V2 : {@link ThesaurusContext} + {@code v2ConceptSearchBean.searchLang}</li>
  *   <li>Legacy : {@code selectedThesaurus} → sélecteur {@code search.xhtml#languageSelect}</li>
  * </ul>
  */
@@ -39,6 +39,7 @@ public class ThesaurusSearchLanguageSync {
 
         if (isCurrentV2Thesaurus(thesoId)) {
             thesaurusContext.changeWorkLanguage(lang);
+            syncV2SearchLanguageSelector(lang);
         }
 
         if (!isCurrentLegacyThesaurus(thesoId)) {
@@ -53,6 +54,29 @@ public class ThesaurusSearchLanguageSync {
         selectedTheso.setCurrentLang(lang);
         roleOnThesaurusBean.initNodePref(thesoId);
         log.debug("Sélecteur de langue (search) aligné sur {} pour le thésaurus {}", lang, thesoId);
+    }
+
+    /**
+     * Comme le legacy au clic sur une traduction de concept :
+     * change la langue de consultation et aligne le sélecteur de recherche V2
+     * ({@code v2SearchLanguage}) + legacy ({@code languageSelect}).
+     */
+    public void applyConsultationLanguageFromConceptTranslation(String language) {
+        if (StringUtils.isBlank(language) || "all".equalsIgnoreCase(language)) {
+            return;
+        }
+        String lang = language.trim();
+        thesaurusContext.changeWorkLanguage(lang);
+        syncV2SearchLanguageSelector(lang);
+
+        String thesaurusId = thesaurusContext.resolveThesaurusId();
+        if (StringUtils.isBlank(thesaurusId)) {
+            return;
+        }
+        selectedTheso.setSelectedIdTheso(thesaurusId);
+        selectedTheso.setCurrentIdTheso(thesaurusId);
+        selectedTheso.setSelectedLang(lang);
+        selectedTheso.setCurrentLang(lang);
     }
 
     /**
@@ -74,6 +98,7 @@ public class ThesaurusSearchLanguageSync {
                 && removed.equalsIgnoreCase(thesaurusContext.resolveWorkLanguage())) {
             String fallback = thesaurusWorkLanguageService.resolveForThesaurus(thesoId);
             thesaurusContext.changeWorkLanguage(fallback);
+            syncV2SearchLanguageSelector(fallback);
         }
 
         // Toujours aligner SelectedTheso quand le thésaurus édité est celui de la session V2
@@ -90,6 +115,13 @@ public class ThesaurusSearchLanguageSync {
         if (conceptSearchBean != null && isCurrentV2Thesaurus(thesoId)) {
             conceptSearchBean.reloadAvailableLanguages();
             log.debug("Liste des langues (search-bar V2) rafraîchie pour le thésaurus {}", thesoId);
+        }
+    }
+
+    private void syncV2SearchLanguageSelector(String lang) {
+        ConceptSearchBean conceptSearchBean = conceptSearchBeanProvider.getIfAvailable();
+        if (conceptSearchBean != null) {
+            conceptSearchBean.setSearchLang(lang);
         }
     }
 

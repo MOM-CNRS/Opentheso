@@ -34,6 +34,7 @@ import fr.cnrs.opentheso.v2.rights.Permission;
 import fr.cnrs.opentheso.v2.rights.RightsService;
 import fr.cnrs.opentheso.v2.setting.model.ThesaurusPreferences;
 import fr.cnrs.opentheso.v2.setting.service.ThesaurusPreferenceService;
+import fr.cnrs.opentheso.v2.setting.service.ThesaurusSearchLanguageSync;
 import fr.cnrs.opentheso.v2.setting.ui.ThesaurusContext;
 import fr.cnrs.opentheso.v2.shared.ui.UserSession;
 import jakarta.faces.event.FacesEvent;
@@ -76,6 +77,7 @@ public class ThesaurusBrowseBean implements Serializable, ConceptNavigationSuppo
     private final ThesaurusHomeReadService thesaurusHomeReadService;
     private final ConceptHistoryBean conceptHistoryBean;
     private final ThesaurusPreferenceService thesaurusPreferenceService;
+    private final ThesaurusSearchLanguageSync thesaurusSearchLanguageSync;
     private final UserSession userSession;
     private final ConceptTypeReadService conceptTypeReadService;
     private final ConceptTreeRefreshState conceptTreeRefreshState;
@@ -992,8 +994,9 @@ public class ThesaurusBrowseBean implements Serializable, ConceptNavigationSuppo
         if (selectedConcept == null || selectedConcept.summary() == null || StringUtils.isBlank(lang)) {
             return;
         }
-        thesaurusContext.changeWorkLanguage(lang);
-        openConcept(selectedConcept.summary().conceptId(), true);
+        // Comme legacy (clic traduction → search.xhtml#languageSelect) + V2 search-bar.
+        thesaurusSearchLanguageSync.applyConsultationLanguageFromConceptTranslation(lang);
+        reloadAfterLanguageChange();
     }
 
     public boolean isAlignmentPanelVisible() {
