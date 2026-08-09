@@ -4,6 +4,7 @@ import fr.cnrs.opentheso.utils.MessageUtils;
 import fr.cnrs.opentheso.v2.concept.model.ConsultationProjectOption;
 import fr.cnrs.opentheso.v2.concept.model.ConsultationThesaurusOption;
 import fr.cnrs.opentheso.v2.concept.service.ConsultationCatalogService;
+import fr.cnrs.opentheso.v2.concept.session.ConceptSelectionContext;
 import fr.cnrs.opentheso.v2.shared.session.SessionLifecycleService;
 import fr.cnrs.opentheso.v2.shared.session.SsoSessionBridge;
 import fr.cnrs.opentheso.v2.rights.Permission;
@@ -40,6 +41,7 @@ public class ConsultationShellBean implements Serializable {
 
     private final ConsultationCatalogService consultationCatalogService;
     private final ThesaurusContext thesaurusContext;
+    private final ConceptSelectionContext conceptSelectionContext;
     private final UserSession userSession;
     private final V2LocaleBean v2LocaleBean;
     private final PlatformHomeReadService platformHomeReadService;
@@ -91,9 +93,42 @@ public class ConsultationShellBean implements Serializable {
         applyBrowseRefresh();
     }
 
+    /**
+     * Recharge le thésaurus courant (équivalent legacy {@code SelectedTheso#reloadSelectedTheso}).
+     * <p>
+     * Rafraîchit le catalogue header, revient à l'accueil thésaurus (sans concept sélectionné)
+     * puis force un rechargement complet de la page.
+     */
     public void reloadThesaurus() throws IOException {
         thesaurusContext.setFromUrl(false);
-        applyBrowseRefresh();
+        thesaurusContext.setIdConceptFromUri(null);
+        thesaurusContext.setIdGroupFromUri(null);
+        thesaurusContext.setIdFacetFromUri(null);
+
+        refreshCatalog();
+        syncSelectionFromContext();
+
+        if (StringUtils.isBlank(selectedThesaurusId)) {
+            applyBrowseRefresh();
+            return;
+        }
+
+        applyThesaurusSelection(selectedThesaurusId);
+        conceptSelectionContext.clear();
+
+        FacesContext facesContext = FacesContext.getCurrentInstance();
+        if (facesContext != null && isBrowseView(facesContext)) {
+            invokeViewAction("#{v2ConceptSearchBean.clear()}");
+            PrimeFaces.current().executeScript(
+                    "if (typeof hideResultSearchBar === 'function') { hideResultSearchBar(); }"
+                            + "window.location.reload();");
+            return;
+        }
+
+        ExternalContext context = facesContext != null ? facesContext.getExternalContext() : null;
+        if (context != null) {
+            context.redirect(context.getRequestContextPath() + "/v2/thesaurus");
+        }
     }
 
     public void clearFromUrl() throws IOException {

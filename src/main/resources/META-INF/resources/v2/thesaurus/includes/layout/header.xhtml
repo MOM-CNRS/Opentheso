@@ -52,9 +52,9 @@
                                itemLabel="#{theso.displayLabel}" itemValue="#{theso.id}"/>
             </p:selectOneMenu>
 
-            <p:commandLink actionListener="#{v2ConsultationShellBean.reloadThesaurus()}" style="margin-left: 15px;"
-                             update="menuBar containerIndex indexTitle resultSearchBar"
-                             oncomplete="changeUrl();">
+            <p:commandLink action="#{v2ConsultationShellBean.reloadThesaurus()}"
+                           process="@this"
+                           style="margin-left: 15px;">
                 <i class="fas fa-refresh" style="color: #d1d3e2; font-size: 1.1rem"
                    title="#{v2LocaleBean.getMsg('menu.reload_thesaurus')}"/>
             </p:commandLink>

@@ -304,7 +304,6 @@
                 <ui:include src="includes/dialogs/concept-tree-dragdrop-dialog.xhtml"/>
                 <ui:include src="includes/dialogs/concept-copy-between-theso-dialogs.xhtml"/>
                 <ui:include src="includes/dialogs/concept-deepl-translate-dialog.xhtml"/>
-                <ui:include src="includes/dialogs/concept-alignment-dialogs.xhtml"/>
                 <ui:include src="includes/dialogs/concept-alignment-search-dialog.xhtml"/>
                 <ui:include src="includes/dialogs/alignment-admin-dialogs.xhtml"/>
                 <ui:include src="includes/dialogs/concept-collection-dialogs.xhtml"/>
@@ -316,11 +315,13 @@
                 <input type="hidden" name="csrfToken" value="${sessionScope.CSRF_TOKEN}"/>
                 </h:form>
 
-                <!-- Hors du form principal (comme legacy) pour éviter les options en double dans les selectOneMenu -->
+                <!-- Hors du form principal (comme legacy) pour éviter forms imbriqués / options en double -->
+                <ui:include src="includes/dialogs/concept-alignment-dialogs.xhtml"/>
                 <ui:include src="includes/dialogs/concept-lifecycle-dialogs.xhtml"/>
                 <ui:include src="includes/dialogs/concept-identifier-dialogs.xhtml"/>
                 <ui:include src="includes/dialogs/concept-type-manage-dialogs.xhtml"/>
                 <ui:include src="includes/dialogs/concept-list-import-csv-dialog.xhtml"/>
+                <ui:include src="includes/dialogs/concept-lexical-dialogs.xhtml"/>
 
             </div>
         </h:panelGroup>

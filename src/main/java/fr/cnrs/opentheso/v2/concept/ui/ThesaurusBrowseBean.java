@@ -833,6 +833,7 @@ public class ThesaurusBrowseBean implements Serializable, ConceptNavigationSuppo
             haveMoreNarrowers = false;
             return;
         }
+        boolean moreRemain = conceptFullReadService.hasMoreFromBatch(additional);
         conceptFullReadService.appendNarrowers(selectedFullConcept, additional);
         narrowerOffset = conceptFullReadService.nextNarrowerOffset(narrowerOffset);
         selectedConcept = conceptReadService.buildDetailFromFullConcept(
@@ -841,7 +842,7 @@ public class ThesaurusBrowseBean implements Serializable, ConceptNavigationSuppo
                 selectedFullConcept.getIdentifier(),
                 lang
         );
-        haveMoreNarrowers = conceptFullReadService.hasMoreNarrowers(selectedFullConcept);
+        haveMoreNarrowers = moreRemain;
     }
 
     public void searchCorpusLinks() {

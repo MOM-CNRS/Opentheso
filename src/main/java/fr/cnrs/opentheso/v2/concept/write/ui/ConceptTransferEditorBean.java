@@ -101,16 +101,20 @@ public class ConceptTransferEditorBean implements Serializable {
                 StringUtils.defaultString(userSession.getCurrentUsername()),
                 parentConceptId
         );
-        MutationResult result = conceptTransferMutationService.moveConceptToThesaurus(command);
-        if (result == null || !result.success()) {
-            MessageUtils.showErrorMessage(result != null ? result.message() : "Erreur");
-            return;
+        try {
+            MutationResult result = conceptTransferMutationService.moveConceptToThesaurus(command);
+            if (result == null || !result.success()) {
+                MessageUtils.showErrorMessage(result != null ? result.message() : "Erreur");
+                return;
+            }
+            conceptNavigationSupport.invalidateConceptTree();
+            conceptNavigationSupport.openThesaurusHome();
+            PrimeFaces.current().ajax().update(":containerIndex:formRightTab :containerIndex:tabTree :messageIndex");
+            MessageUtils.showInformationMessage(result.message());
+            PrimeFaces.current().executeScript("PF('v2MoveToAnotherThesoDlg').hide();");
+        } catch (RuntimeException exception) {
+            MessageUtils.showErrorMessage("Le déplacement a échoué !");
         }
-        conceptNavigationSupport.invalidateConceptTree();
-        conceptNavigationSupport.openThesaurusHome();
-        PrimeFaces.current().ajax().update(":containerIndex:formRightTab :containerIndex:tabTree :messageIndex");
-        MessageUtils.showInformationMessage(result.message());
-        PrimeFaces.current().executeScript("PF('v2MoveToAnotherThesoDlg').hide();");
     }
 
     private void loadAvailableThesauri() {

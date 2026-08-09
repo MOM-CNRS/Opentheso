@@ -127,14 +127,17 @@ public class ConceptLexicalEditorBean implements Serializable {
         if (summary == null) {
             return;
         }
-        submitMutation(conceptLexicalMutationService.deleteSynonym(new DeleteSynonymCommand(
+        if (submitMutation(conceptLexicalMutationService.deleteSynonym(new DeleteSynonymCommand(
                 thesaurusContext.resolveThesaurusId(),
                 summary.conceptId(),
                 row.getLang(),
                 row.getOldValue(),
                 userId,
                 contributorName()
-        )), "PF('v2DeleteSynonymDlg').hide();");
+        )), null)) {
+            synonymEdits = loadSynonymEdits();
+            PrimeFaces.current().executeScript("PF('v2DeleteSynonymDlg').show();");
+        }
     }
 
     public void submitAddTranslation() {
@@ -226,7 +229,11 @@ public class ConceptLexicalEditorBean implements Serializable {
             return;
         }
         duplicateLabelWarning = false;
-        submitMutation(result, "PF('v2AddSynonymDlg').hide();");
+        // Comme legacy : garder le dialogue ouvert et réinitialiser le formulaire
+        if (submitMutation(result, null)) {
+            resetSynonymForm();
+            PrimeFaces.current().executeScript("PF('v2AddSynonymDlg').show();");
+        }
     }
 
     private void submitUpdateSynonymInternal(SynonymEditRow row, boolean forced) {
@@ -254,13 +261,15 @@ public class ConceptLexicalEditorBean implements Serializable {
             duplicateLabelWarning = true;
             pendingSynonymEditRow = row;
             MessageUtils.showWarnMessage(result.message());
-            PrimeFaces.current().ajax().update("v2EditSynonymForm");
+            PrimeFaces.current().ajax().update(":v2EditSynonymForm");
             return;
         }
         duplicateLabelWarning = false;
         pendingSynonymEditRow = null;
-        submitMutation(result, null);
-        synonymEdits = loadSynonymEdits();
+        if (submitMutation(result, null)) {
+            synonymEdits = loadSynonymEdits();
+            PrimeFaces.current().executeScript("PF('v2EditSynonymDlg').show();");
+        }
     }
 
     public void submitUpdateSynonymForcedFromEdit() {
@@ -269,9 +278,9 @@ public class ConceptLexicalEditorBean implements Serializable {
         }
     }
 
-    private void submitMutation(MutationResult result, String hideDialogScript) {
+    private boolean submitMutation(MutationResult result, String hideDialogScript) {
         if (result == null) {
-            return;
+            return false;
         }
         switch (result.outcome()) {
             case OK -> {
@@ -281,10 +290,14 @@ public class ConceptLexicalEditorBean implements Serializable {
                 if (StringUtils.isNotBlank(hideDialogScript)) {
                     PrimeFaces.current().executeScript(hideDialogScript);
                 }
+                return true;
             }
-            case VALIDATION_ERROR, FAILURE, FORBIDDEN, DUPLICATE_LABEL ->
-                    MessageUtils.showErrorMessage(result.message());
+            case VALIDATION_ERROR, FAILURE, FORBIDDEN, DUPLICATE_LABEL -> {
+                MessageUtils.showErrorMessage(result.message());
+                return false;
+            }
             default -> {
+                return false;
             }
         }
     }

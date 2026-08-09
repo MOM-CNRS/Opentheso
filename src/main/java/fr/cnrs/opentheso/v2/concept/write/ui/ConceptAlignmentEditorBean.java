@@ -184,7 +184,11 @@ public class ConceptAlignmentEditorBean implements Serializable {
                     }
                 }
                 PrimeFaces.current().ajax().update(":containerIndex:formRightTab :messageIndex");
-                MessageUtils.showInformationMessage(result.message());
+                if (result.warning()) {
+                    MessageUtils.showWarnMessage(result.message());
+                } else {
+                    MessageUtils.showInformationMessage(result.message());
+                }
                 if (StringUtils.isNotBlank(hideDialogScript)) {
                     PrimeFaces.current().executeScript(hideDialogScript);
                 }

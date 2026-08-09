@@ -3,75 +3,129 @@
              xmlns:ui="http://xmlns.jcp.org/jsf/facelets"
              xmlns:p="http://primefaces.org/ui">
 
-  <h:panelGroup rendered="#{v2ThesaurusBrowseBean.customRelationVisible and v2ThesaurusBrowseBean.standardConceptType and (v2ThesaurusBrowseBean.loggedIn or v2ThesaurusBrowseBean.selectedConcept.hasOutgoingCustomRelations())}">
-    <div class="list-group-item list-group-item-action">
-      <div class="row" style="margin-left:0;">
-        <div class="col-xl-3 col-lg-4 col-md-5 col-sm-5">
-          <h:outputText value="#{v2LocaleBean.getMsg('rightbody.concept.customRelation')}"
-                        style="font-size:14px; font-weight:bold; color:#8f8f8f;"/>
-        </div>
-        <div class="col-xl-9 col-lg-8 col-md-7 col-sm-7" style="margin-left:-10px;">
-          <h:panelGroup rendered="#{v2ConceptRelationEditorBean.customRelationActionsAvailable}"
-                        style="display:inline-block; margin-right:6px;">
-            <p:menuButton icon="fas fa-cog"
-                          style="color:#F7A269; background:none; border:none; box-shadow:none; font-size:12px;">
-              <p:menuitem value="#{v2LocaleBean.getMsg('rightbody.concept.addCustomRelation')}"
-                          process="@this"
-                          actionListener="#{v2ConceptRelationEditorBean.prepareAddCustomRelation()}"
-                          update="v2AddCustomRelationForm"
-                          oncomplete="PF('v2AddCustomRelationDlg').show();"
-                          icon="fas fa-plus"/>
-              <p:menuitem value="#{v2LocaleBean.getMsg('rightbody.concept.deleteCustomRelation')}"
-                          process="@this"
-                          actionListener="#{v2ConceptRelationEditorBean.prepareDeleteCustomRelation()}"
-                          update="v2DeleteCustomRelationForm"
-                          oncomplete="PF('v2DeleteCustomRelationDlg').show();"
-                          icon="fas fa-minus"
-                          disabled="#{not v2ThesaurusBrowseBean.selectedConcept.hasOutgoingCustomRelations()}"/>
-            </p:menuButton>
-          </h:panelGroup>
-          <h:panelGroup rendered="#{not v2ThesaurusBrowseBean.selectedConcept.hasOutgoingCustomRelations()}">
-            <h:outputText value="....." style="font-size:14px; color:grey; font-style:italic;"/>
-          </h:panelGroup>
-          <ui:repeat value="#{v2ThesaurusBrowseBean.selectedConcept.outgoingCustomRelations}" var="custom" varStatus="status">
-            <h:outputText value="#{custom.relationLabel}: " style="font-size:14px; color:#8f8f8f;"/>
-            <p:commandLink value="#{empty custom.targetLabel ? '('.concat(custom.targetConceptId).concat(')') : custom.targetLabel}"
-                           action="#{v2ThesaurusBrowseBean.openConcept(custom.targetConceptId)}"
-                           process="@this"
-                           update=":containerIndex:formRightTab :containerIndex:formLeftTab"
-                           style="color:#601e18; font-size:14px;"/>
-            <h:outputText value=", " rendered="#{not status.last}" style="color:#FF7979;"/>
-          </ui:repeat>
-        </div>
-      </div>
-    </div>
-  </h:panelGroup>
+    <!-- Bloc de gestion des relations personnalisées (clone structurel du legacy conceptDetailBloc2) -->
+    <h:panelGroup layout="block"
+                  rendered="#{v2ThesaurusBrowseBean.customRelationVisible and v2ThesaurusBrowseBean.standardConceptType}">
 
-  <h:panelGroup rendered="#{v2ThesaurusBrowseBean.customRelationVisible and v2ThesaurusBrowseBean.specificConceptType and (v2ThesaurusBrowseBean.loggedIn or v2ThesaurusBrowseBean.selectedConcept.hasReciprocalCustomRelations())}">
-    <div class="list-group-item list-group-item-action">
-      <div class="row" style="margin-left:0;">
-        <div class="col-xl-3 col-lg-4 col-md-5 col-sm-5">
-          <h:outputText value="#{v2LocaleBean.getMsg('rightbody.concept.customRelation')}"
-                        style="font-size:14px; font-weight:bold; color:#8f8f8f;"/>
-        </div>
-        <div class="col-xl-9 col-lg-8 col-md-7 col-sm-7" style="margin-left:-10px;">
-          <ui:repeat value="#{v2ThesaurusBrowseBean.selectedConcept.reciprocalCustomRelations}" var="custom" varStatus="status">
-            <h:outputText value="#{v2ThesaurusBrowseBean.selectedConcept.summary.preferredLabel}"
-                          style="color:#78261f; font-size:14px;"/>
-            <i class="fas fa-arrows-alt-h" style="color:#78261f; margin-right:10px; margin-left:10px;"/>
-            <p:commandLink value="#{empty custom.targetLabel ? '('.concat(custom.targetConceptId).concat(')') : custom.targetLabel}"
-                           action="#{v2ThesaurusBrowseBean.openConcept(custom.targetConceptId)}"
-                           process="@this"
-                           update=":containerIndex:formRightTab :containerIndex:formLeftTab"
-                           style="color:#601e18; font-size:14px;"/>
-            <p:tag styleClass="mr-2"
-                   severity="warning"
-                   style="font-style:italic; margin-left:5px; font-weight:300; height:20px;"
-                   value=" #{custom.relationLabel}"/>
-            <br/>
-          </ui:repeat>
-        </div>
-      </div>
-    </div>
-  </h:panelGroup>
+        <h:panelGroup layout="block"
+                      rendered="#{v2ThesaurusBrowseBean.loggedIn or not empty v2ThesaurusBrowseBean.selectedConcept.customRelations}">
+            <div class="card mb-4 py-3 border-left-success" style="margin-top: 15px; margin: 20px;">
+                <div class="list-group" style="margin-top: -10px; margin-bottom: -10px">
+                    <div class="list-group-item list-group-item-action">
+                        <div class="row" style="margin-left: 0px;">
+                            <div class="col-xl-3 col-lg-4 col-md-5 col-sm-5 offset-xl-0 offset-lg-0 offset-md-0 offset-sm-0">
+                                <h:outputText value="#{v2LocaleBean.getMsg('rightbody.concept.customRelation')}"
+                                              title="#{v2LocaleBean.getMsg('rightbody.concept.customRelation')}"
+                                              style="font-size: 14px; font-weight: bold; color: #8f8f8f; margin-right: 7px"/>
+                            </div>
+
+                            <div class="col-xl-9 col-lg-8 col-md-7 col-sm-7" style="margin-left: -10px">
+                                <p:menuButton rendered="#{v2ConceptRelationEditorBean.customRelationActionsAvailable}"
+                                              icon="fas fa-cog"
+                                              style="color: #F7A269; background: none; border: none; box-shadow: none; font-size: 12px;">
+                                    <p:menuitem value="#{v2LocaleBean.getMsg('rightbody.concept.addCustomRelation')}"
+                                                title="#{v2LocaleBean.getMsg('rightbody.concept.addCustomRelation')}"
+                                                process="@this"
+                                                actionListener="#{v2ConceptRelationEditorBean.prepareAddCustomRelation()}"
+                                                update="v2AddCustomRelationForm"
+                                                oncomplete="PF('v2AddCustomRelationDlg').show();"
+                                                icon="fas fa-plus"/>
+
+                                    <p:menuitem value="#{v2LocaleBean.getMsg('rightbody.concept.deleteCustomRelation')}"
+                                                title="#{v2LocaleBean.getMsg('rightbody.concept.deleteCustomRelation')}"
+                                                process="@this"
+                                                actionListener="#{v2ConceptRelationEditorBean.prepareDeleteCustomRelation()}"
+                                                update="v2DeleteCustomRelationForm"
+                                                oncomplete="PF('v2DeleteCustomRelationDlg').show();"
+                                                icon="fas fa-minus"
+                                                disabled="#{empty v2ThesaurusBrowseBean.selectedConcept.customRelations}"/>
+                                </p:menuButton>
+
+                                <h:panelGroup rendered="#{empty v2ThesaurusBrowseBean.selectedConcept.customRelations}">
+                                    <h:outputText value="....."
+                                                  title="#{v2LocaleBean.getMsg('rightbody.concept.no_value')}"/>
+                                </h:panelGroup>
+
+                                <h:panelGroup rendered="#{not empty v2ThesaurusBrowseBean.selectedConcept.customRelations}">
+                                    <ui:repeat var="customRelation"
+                                               value="#{v2ThesaurusBrowseBean.selectedConcept.customRelations}"
+                                               varStatus="status2">
+                                        <h:panelGroup rendered="#{v2ConceptRelationEditorBean.customRelationActionsAvailable}">
+                                            <p:spacer width="1" rendered="#{status2.first}"/>
+                                            <p:spacer width="39" rendered="#{not status2.first}"/>
+                                        </h:panelGroup>
+
+                                        <p:commandLink value="#{empty customRelation.targetLabel ? '('.concat(customRelation.targetConceptId).concat(')') : customRelation.targetLabel} "
+                                                       title="#{customRelation.targetConceptId}"
+                                                       action="#{v2ThesaurusBrowseBean.openConcept(customRelation.targetConceptId)}"
+                                                       process="@this"
+                                                       update=":containerIndex:formRightTab :containerIndex:formLeftTab"/>
+
+                                        <p:tag styleClass="mr-2"
+                                               severity="warning"
+                                               style="font-style: italic;margin-left: 5px;font-weight: 300; height: 20px;"
+                                               value=" #{customRelation.relationLabel}">
+                                        </p:tag>
+                                        <br/>
+                                    </ui:repeat>
+                                </h:panelGroup>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+            </div>
+        </h:panelGroup>
+
+    </h:panelGroup>
+
+    <!-- Relations réciproques pour les types spécifiques (clone legacy) -->
+    <h:panelGroup layout="block"
+                  rendered="#{v2ThesaurusBrowseBean.customRelationVisible and v2ThesaurusBrowseBean.specificConceptType and v2ThesaurusBrowseBean.selectedConcept.hasReciprocalCustomRelations()}">
+
+        <h:panelGroup layout="block"
+                      rendered="#{v2ThesaurusBrowseBean.loggedIn or v2ThesaurusBrowseBean.selectedConcept.hasReciprocalCustomRelations()}">
+            <div class="card mb-4 py-3 border-left-success" style="margin-top: 15px; margin: 20px;">
+                <div class="list-group" style="margin-top: -10px; margin-bottom: -10px">
+                    <div class="list-group-item list-group-item-action">
+                        <div class="row" style="margin-left: 0px;">
+                            <div class="col-xl-3 col-lg-4 col-md-5 col-sm-5 offset-xl-0 offset-lg-0 offset-md-0 offset-sm-0">
+                                <h:outputText value="#{v2LocaleBean.getMsg('rightbody.concept.customRelation')}"
+                                              title="#{v2LocaleBean.getMsg('rightbody.concept.customRelation')}"
+                                              style="font-size: 14px; font-weight: bold; color: #8f8f8f; margin-right: 7px"/>
+                            </div>
+                            <div class="col-xl-9 col-lg-8 col-md-7 col-sm-7" style="margin-left: -10px">
+                                <h:panelGroup rendered="#{v2ThesaurusBrowseBean.selectedConcept.hasReciprocalCustomRelations()}">
+                                    <ui:repeat var="customRelation"
+                                               value="#{v2ThesaurusBrowseBean.selectedConcept.reciprocalCustomRelations}"
+                                               varStatus="status2">
+                                        <h:panelGroup rendered="#{v2ConceptRelationEditorBean.customRelationActionsAvailable}">
+                                            <p:spacer width="1" rendered="#{status2.first}"/>
+                                            <p:spacer width="39" rendered="#{not status2.first}"/>
+                                        </h:panelGroup>
+
+                                        <h:outputText value="#{v2ThesaurusBrowseBean.selectedConcept.summary.preferredLabel}"
+                                                      style="color: #78261f; font-size: 14px;"/>
+                                        <i class="fas fa-arrows-alt-h" style="color: #78261f; margin-right: 10px; margin-left: 10px"/>
+                                        <p:commandLink value="#{empty customRelation.targetLabel ? '('.concat(customRelation.targetConceptId).concat(')') : customRelation.targetLabel} "
+                                                       title="#{customRelation.targetConceptId}"
+                                                       action="#{v2ThesaurusBrowseBean.openConcept(customRelation.targetConceptId)}"
+                                                       process="@this"
+                                                       update=":containerIndex:formRightTab :containerIndex:formLeftTab"/>
+
+                                        <p:tag styleClass="mr-2"
+                                               severity="warning"
+                                               style="font-style: italic;margin-left: 5px;font-weight: 300; height: 20px;"
+                                               value=" #{customRelation.relationLabel}">
+                                        </p:tag>
+                                        <br/>
+                                    </ui:repeat>
+                                </h:panelGroup>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+            </div>
+        </h:panelGroup>
+
+    </h:panelGroup>
 </ui:fragment>

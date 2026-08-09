@@ -101,15 +101,16 @@
     <p:dialog id="v2DeleteImageDlg" appendTo="@(body)" header="#{v2LocaleBean.getMsg('rightbody.concept.delete_image')}"
               widgetVar="v2DeleteImageDlg" width="600" modal="true" resizable="false">
         <h:form id="v2DeleteImageForm">
-            <p:dataTable var="imageDelete" value="#{v2ConceptMediaEditorBean.imagesToDelete}" size="small" lazy="false">
+            <p:dataTable id="v2DeleteImageTable" var="imageDelete" value="#{v2ConceptMediaEditorBean.imagesToDelete}"
+                         size="small" lazy="false">
                 <p:column headerText="#{v2LocaleBean.getMsg('rightbody.conceptdialog.uri_image')}">
                     <h:outputText value="#{imageDelete.uri}"/>
                 </p:column>
                 <p:column width="90">
                     <p:commandButton icon="pi pi-trash" styleClass="ui-button-danger"
                                      actionListener="#{v2ConceptMediaEditorBean.submitDeleteImage(imageDelete)}"
-                                     update="v2DeleteImageForm :containerIndex:formRightTab :messageIndex"
-                                     process="@form"/>
+                                     update=":containerIndex:v2DeleteImageDlg :containerIndex:formRightTab :messageIndex"
+                                     process="@this v2DeleteImageTable"/>
                 </p:column>
             </p:dataTable>
             <div class="text-right mt-3">
@@ -169,15 +170,16 @@
     <p:dialog id="v2DeleteExternalResourceDlg" appendTo="@(body)" header="#{v2LocaleBean.getMsg('rightbody.concept.deleteExternalResource')}"
               widgetVar="v2DeleteExternalResourceDlg" width="600" modal="true" resizable="false">
         <h:form id="v2DeleteExternalResourceForm">
-            <p:dataTable var="resourceDelete" value="#{v2ConceptMediaEditorBean.resourcesToDelete}" size="small" lazy="false">
+            <p:dataTable id="v2DeleteExternalResourceTable" var="resourceDelete"
+                         value="#{v2ConceptMediaEditorBean.resourcesToDelete}" size="small" lazy="false">
                 <p:column headerText="#{v2LocaleBean.getMsg('rightbody.conceptdialog.uri')}">
                     <h:outputText value="#{resourceDelete.uri}"/>
                 </p:column>
                 <p:column width="90">
                     <p:commandButton icon="pi pi-trash" styleClass="ui-button-danger"
                                      actionListener="#{v2ConceptMediaEditorBean.submitDeleteExternalResource(resourceDelete)}"
-                                     update="v2DeleteExternalResourceForm :containerIndex:formRightTab :messageIndex"
-                                     process="@form"/>
+                                     update=":containerIndex:v2DeleteExternalResourceDlg :containerIndex:formRightTab :messageIndex"
+                                     process="@this v2DeleteExternalResourceTable"/>
                 </p:column>
             </p:dataTable>
             <div class="text-right mt-3">

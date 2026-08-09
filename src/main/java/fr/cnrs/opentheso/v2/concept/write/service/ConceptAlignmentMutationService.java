@@ -3,6 +3,7 @@ package fr.cnrs.opentheso.v2.concept.write.service;
 import fr.cnrs.opentheso.entites.Alignement;
 import fr.cnrs.opentheso.repositories.AlignementRepository;
 import fr.cnrs.opentheso.repositories.AlignementTypeRepository;
+import fr.cnrs.opentheso.v2.concept.alignment.support.AlignmentUrlProbe;
 import fr.cnrs.opentheso.v2.concept.write.model.ConceptWriteAlignmentType;
 import fr.cnrs.opentheso.v2.concept.write.model.MutationResult;
 import fr.cnrs.opentheso.v2.concept.write.model.command.AddManualAlignmentCommand;
@@ -43,12 +44,22 @@ public class ConceptAlignmentMutationService {
     public MutationResult addManualAlignment(AddManualAlignmentCommand command) {
         String uri = StringUtils.trimToEmpty(command.uri());
         if (StringUtils.isBlank(uri)) {
-            return MutationResult.validationError("L'URI cible est obligatoire !");
+            return MutationResult.validationError("Veuillez saisir une valeur  !");
+        }
+        if (!AlignmentUrlProbe.isValidFormat(uri)) {
+            return MutationResult.validationError("L'URL n'est pas valide !");
+        }
+        if (command.typeId() <= 0) {
+            return MutationResult.validationError("Le type d'alignement est obligatoire !");
         }
         var alignementType = alignementTypeRepository.findById(command.typeId());
         if (alignementType.isEmpty()) {
             return MutationResult.validationError("Le type d'alignement est introuvable !");
         }
+        uri = fr.cnrs.opentheso.utils.StringUtils.convertString(uri);
+        String source = fr.cnrs.opentheso.utils.StringUtils.convertString(
+                StringUtils.trimToEmpty(command.source()));
+
         if (alignementRepository.existsByConceptThesaurusTypeAndUri(
                 command.thesaurusId(), command.conceptId(), command.typeId(), uri)) {
             return MutationResult.duplicate("Cet alignement existe déjà pour ce concept !");
@@ -58,12 +69,16 @@ public class ConceptAlignmentMutationService {
             return MutationResult.duplicate("Cette URI est déjà alignée avec un autre type d'équivalence !");
         }
 
+        if (!AlignmentUrlProbe.isReachable(uri)) {
+            return MutationResult.validationError("L'URL n'est pas joignable !");
+        }
+
         var now = new Date();
         try {
             alignementRepository.save(Alignement.builder()
                     .author(command.userId())
                     .conceptTarget("")
-                    .thesaurusTarget(StringUtils.trimToEmpty(command.source()))
+                    .thesaurusTarget(source)
                     .uriTarget(uri)
                     .urlAvailable(true)
                     .alignementType(alignementType.get())
@@ -76,15 +91,26 @@ public class ConceptAlignmentMutationService {
             return MutationResult.duplicate("Cette URI est déjà alignée sur ce concept !");
         }
 
-        return finalizeMutation(command.thesaurusId(), command.conceptId(), command.userId(), command.contributorName(),
-                "Alignement ajouté avec succès");
+        return finalizeMutation(
+                command.thesaurusId(),
+                command.conceptId(),
+                command.userId(),
+                command.contributorName(),
+                "Alignement ajouté avec succès"
+        );
     }
 
     @Transactional
     public MutationResult updateAlignment(UpdateAlignmentCommand command) {
         String uri = StringUtils.trimToEmpty(command.uri());
         if (StringUtils.isBlank(uri)) {
-            return MutationResult.validationError("L'URI cible est obligatoire !");
+            return MutationResult.validationError("Veuillez saisir une valeur  !");
+        }
+        if (!AlignmentUrlProbe.isValidFormat(uri)) {
+            return MutationResult.validationError("L'URL n'est pas valide !");
+        }
+        if (command.typeId() <= 0) {
+            return MutationResult.validationError("Le type d'alignement est obligatoire !");
         }
         var alignement = alignementRepository.findByInternalIdThesaurusAndInternalIdConceptAndId(
                 command.thesaurusId(), command.conceptId(), command.alignmentId());
@@ -96,10 +122,26 @@ public class ConceptAlignmentMutationService {
             return MutationResult.validationError("Le type d'alignement est introuvable !");
         }
 
+        uri = fr.cnrs.opentheso.utils.StringUtils.convertString(uri);
+        String source = fr.cnrs.opentheso.utils.StringUtils.convertString(
+                StringUtils.trimToEmpty(command.source()));
+
         var entity = alignement.get();
+        String previousUri = StringUtils.defaultString(entity.getUriTarget());
+        if (!uri.equals(previousUri)
+                && alignementRepository.existsByInternalIdThesaurusAndInternalIdConceptAndUriTarget(
+                command.thesaurusId(), command.conceptId(), uri)) {
+            return MutationResult.duplicate("Cette URI est déjà alignée sur ce concept !");
+        }
+
+        if (!AlignmentUrlProbe.isReachable(uri)) {
+            return MutationResult.validationError("L'URL n'est pas joignable !");
+        }
+
         entity.setUriTarget(uri);
-        entity.setThesaurusTarget(StringUtils.trimToEmpty(command.source()));
+        entity.setThesaurusTarget(source);
         entity.setAlignementType(alignementType.get());
+        entity.setUrlAvailable(true);
         entity.setModified(new Date());
         try {
             alignementRepository.save(entity);
@@ -107,8 +149,13 @@ public class ConceptAlignmentMutationService {
             return MutationResult.duplicate("Cette URI est déjà alignée sur ce concept !");
         }
 
-        return finalizeMutation(command.thesaurusId(), command.conceptId(), command.userId(), command.contributorName(),
-                "Alignement modifié avec succès");
+        return finalizeMutation(
+                command.thesaurusId(),
+                command.conceptId(),
+                command.userId(),
+                command.contributorName(),
+                "Alignement modifié avec succès"
+        );
     }
 
     @Transactional
@@ -120,8 +167,13 @@ public class ConceptAlignmentMutationService {
         }
         alignementRepository.delete(alignement.get());
 
-        return finalizeMutation(command.thesaurusId(), command.conceptId(), command.userId(), command.contributorName(),
-                "Alignement supprimé avec succès");
+        return finalizeMutation(
+                command.thesaurusId(),
+                command.conceptId(),
+                command.userId(),
+                command.contributorName(),
+                "Alignement supprimé avec succès"
+        );
     }
 
     private MutationResult finalizeMutation(

@@ -35,13 +35,21 @@ public class ConceptTransferWritePersistence {
                 || CollectionUtils.isEmpty(command.branchConceptIds())) {
             return MutationResult.validationError("Aucune sélection !");
         }
+        if (StringUtils.equalsIgnoreCase(command.sourceThesaurusId(), command.targetThesaurusId())) {
+            return MutationResult.validationError("Le thésaurus cible doit être différent du thésaurus source.");
+        }
+
+        for (String conceptId : command.branchConceptIds()) {
+            if (conceptRepository.existsByIdConceptAndIdThesaurus(conceptId, command.targetThesaurusId())) {
+                return MutationResult.duplicate(
+                        "Le concept " + conceptId + " existe déjà dans le thésaurus cible.");
+            }
+        }
 
         var targetPreferences = preferencesRepository.findByIdThesaurus(command.targetThesaurusId()).orElse(null);
         for (String conceptId : command.branchConceptIds()) {
-            if (!conceptTransferWriteRepository.moveConceptToAnotherThesaurus(
-                    conceptId, command.sourceThesaurusId(), command.targetThesaurusId())) {
-                return MutationResult.failure("Le déplacement a échoué !");
-            }
+            conceptTransferWriteRepository.moveConceptToAnotherThesaurus(
+                    conceptId, command.sourceThesaurusId(), command.targetThesaurusId());
             conceptWritePostMutationRepository.touchConcept(
                     command.targetThesaurusId(), conceptId, command.userId());
             if (StringUtils.isNotBlank(command.contributorName())) {

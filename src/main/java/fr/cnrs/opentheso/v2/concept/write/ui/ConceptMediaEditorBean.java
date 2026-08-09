@@ -170,8 +170,18 @@ public class ConceptMediaEditorBean implements Serializable {
                 contributorName(),
                 row.getUri()
         );
-        handleMutationResult(conceptMediaMutationService.deleteImage(command), null);
-        imagesToDelete = loadImageEdits();
+        if (!handleMutationResult(conceptMediaMutationService.deleteImage(command), null)) {
+            return;
+        }
+        // Retirer la ligne du dialogue immédiatement (comme legacy reset() après delete)
+        int deletedId = row.getId();
+        String deletedUri = row.getUri();
+        imagesToDelete = imagesToDelete.stream()
+                .filter(image -> deletedId > 0
+                        ? image.getId() != deletedId
+                        : !StringUtils.equals(image.getUri(), deletedUri))
+                .collect(Collectors.toList());
+        PrimeFaces.current().ajax().update(":containerIndex:v2DeleteImageDlg");
     }
 
     public void submitAddExternalResource() {
@@ -225,8 +235,15 @@ public class ConceptMediaEditorBean implements Serializable {
                 contributorName(),
                 row.getUri()
         );
-        handleMutationResult(conceptMediaMutationService.deleteExternalResource(command), null);
-        resourcesToDelete = loadResourceEdits();
+        if (!handleMutationResult(conceptMediaMutationService.deleteExternalResource(command), null)) {
+            return;
+        }
+        String deletedUri = row.getUri();
+        resourcesToDelete = resourcesToDelete.stream()
+                .filter(resource -> !StringUtils.equals(resource.getUri(), deletedUri)
+                        && !StringUtils.equals(resource.getOldUri(), deletedUri))
+                .collect(Collectors.toList());
+        PrimeFaces.current().ajax().update(":containerIndex:v2DeleteExternalResourceDlg");
     }
 
     private boolean handleMutationResult(MutationResult result, String dialogWidget) {

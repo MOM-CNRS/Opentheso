@@ -54,7 +54,7 @@ class ConceptFullReadServiceTest {
                 eq("C1"),
                 eq("fr"),
                 eq(0),
-                eq(ConceptFullReadService.FULL_CONCEPT_STEP + 1),
+                eq(ConceptFullReadService.NARROWER_PAGE_SIZE + 1),
                 eq(true),
                 eq(null),
                 eq("http://localhost")
@@ -75,7 +75,7 @@ class ConceptFullReadServiceTest {
                 eq("C1"),
                 eq("fr"),
                 eq(41),
-                eq(ConceptFullReadService.FULL_CONCEPT_STEP + 1),
+                eq(ConceptFullReadService.NARROWER_PAGE_SIZE + 1),
                 eq(false),
                 eq(null),
                 eq("http://localhost")
@@ -90,11 +90,20 @@ class ConceptFullReadServiceTest {
     void hasMoreNarrowers_detectsProbeElement() {
         ConceptFullSnapshot fullConcept = new ConceptFullSnapshot();
         fullConcept.setNarrowers(new java.util.ArrayList<>());
-        for (int i = 0; i <= ConceptFullReadService.FULL_CONCEPT_STEP; i++) {
+        for (int i = 0; i <= ConceptFullReadService.NARROWER_PAGE_SIZE; i++) {
             fullConcept.getNarrowers().add(new ConceptHierarchicalRelation("", "C" + i, "Label", "NT"));
         }
 
         assertTrue(service.hasMoreNarrowers(fullConcept));
+    }
+
+    @Test
+    void hasMoreFromBatch_falseWhenLastPage() {
+        List<ConceptHierarchicalRelation> lastPage = List.of(
+                new ConceptHierarchicalRelation("", "C2", "Child", "NT")
+        );
+
+        assertFalse(service.hasMoreFromBatch(lastPage));
     }
 
     @Test

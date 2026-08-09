@@ -505,7 +505,7 @@ public class ConceptRelationEditorBean implements Serializable {
             customRelationsToDelete = Collections.emptyList();
             return;
         }
-        List<ConceptCustomRelationItem> relations = thesaurusBrowseBean.getSelectedConcept().getOutgoingCustomRelations();
+        List<ConceptCustomRelationItem> relations = thesaurusBrowseBean.getSelectedConcept().getCustomRelations();
         customRelationsToDelete = relations != null ? List.copyOf(relations) : Collections.emptyList();
     }
 

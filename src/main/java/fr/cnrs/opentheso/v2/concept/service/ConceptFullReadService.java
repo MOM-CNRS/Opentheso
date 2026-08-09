@@ -16,11 +16,20 @@ import java.util.Collections;
 import java.util.List;
 import java.util.Optional;
 
+/**
+ * Lecture du concept complet avec pagination des termes spécifiques (NT),
+ * alignée sur le legacy ({@code step = 40}, probe {@code step + 1}).
+ */
 @Service
 @RequiredArgsConstructor
 public class ConceptFullReadService {
 
-    public static final int FULL_CONCEPT_STEP = 40;
+    /** Taille de page des NT (legacy {@code ConceptView#step}). */
+    public static final int NARROWER_PAGE_SIZE = 40;
+
+    /** @deprecated préférer {@link #NARROWER_PAGE_SIZE} */
+    @Deprecated
+    public static final int FULL_CONCEPT_STEP = NARROWER_PAGE_SIZE;
 
     private final ConceptFullAssembler conceptFullAssembler;
     private final ThesaurusPreferenceService thesaurusPreferenceService;
@@ -44,21 +53,33 @@ public class ConceptFullReadService {
                 conceptId,
                 lang,
                 offset,
-                FULL_CONCEPT_STEP + 1,
+                pageFetchSize(),
                 authenticated,
                 preferences,
                 applicationBaseUrl
         );
     }
 
+    /**
+     * Après un chargement initial (offset 0), indique s'il reste des NT à charger.
+     * Le fetch demande {@code pageSize + 1} éléments : s'il y en a plus que {@code pageSize},
+     * une page suivante existe.
+     */
     public boolean hasMoreNarrowers(ConceptFullSnapshot fullConcept) {
-        return fullConcept != null
-                && CollectionUtils.isNotEmpty(fullConcept.getNarrowers())
-                && fullConcept.getNarrowers().size() > FULL_CONCEPT_STEP;
+        return hasMoreFromBatch(fullConcept == null ? null : fullConcept.getNarrowers());
+    }
+
+    /** Même règle sur le dernier lot ramené par {@link #loadMoreNarrowers}. */
+    public boolean hasMoreFromBatch(List<?> batch) {
+        return CollectionUtils.isNotEmpty(batch) && batch.size() > NARROWER_PAGE_SIZE;
     }
 
     public int nextNarrowerOffset(int currentOffset) {
-        return currentOffset + FULL_CONCEPT_STEP + 1;
+        return currentOffset + pageFetchSize();
+    }
+
+    public int pageFetchSize() {
+        return NARROWER_PAGE_SIZE + 1;
     }
 
     @Transactional(readOnly = true)
@@ -79,7 +100,7 @@ public class ConceptFullReadService {
                 conceptId,
                 lang,
                 offset,
-                FULL_CONCEPT_STEP + 1,
+                pageFetchSize(),
                 authenticated,
                 preferences,
                 applicationBaseUrl
@@ -95,7 +116,9 @@ public class ConceptFullReadService {
             return;
         }
         for (ConceptHierarchicalRelation relation : additional) {
-            if (!fullConcept.getNarrowers().contains(relation)) {
+            boolean alreadyPresent = fullConcept.getNarrowers().stream()
+                    .anyMatch(existing -> StringUtils.equals(existing.conceptId(), relation.conceptId()));
+            if (!alreadyPresent) {
                 fullConcept.getNarrowers().add(relation);
             }
         }

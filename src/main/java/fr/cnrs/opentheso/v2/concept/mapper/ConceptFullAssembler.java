@@ -416,13 +416,13 @@ public class ConceptFullAssembler {
     private List<ConceptImageItem> mapImages(String conceptId, String thesaurusId) {
         List<ConceptImageItem> images = new ArrayList<>();
         for (Object[] row : conceptFullQueryRepository.findImages(conceptId, thesaurusId)) {
-            String imageName = stringAt(row, 0);
+            String imageName = stringAt(row, 1);
             images.add(new ConceptImageItem(
-                    0,
+                    parseInt(stringAt(row, 0)),
                     "null".equalsIgnoreCase(imageName) ? "" : imageName,
-                    stringAt(row, 1),
-                    stringAt(row, 3),
-                    stringAt(row, 2)
+                    stringAt(row, 2),
+                    stringAt(row, 4),
+                    stringAt(row, 3)
             ));
         }
         return images.isEmpty() ? null : images;

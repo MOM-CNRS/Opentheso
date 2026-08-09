@@ -25,11 +25,9 @@ import fr.cnrs.opentheso.repositories.PropositionRepository;
 import fr.cnrs.opentheso.repositories.TermRepository;
 import fr.cnrs.opentheso.repositories.ThesaurusArrayRepository;
 import lombok.RequiredArgsConstructor;
-import lombok.extern.slf4j.Slf4j;
 import org.springframework.stereotype.Repository;
 import org.springframework.transaction.annotation.Transactional;
 
-@Slf4j
 @Repository
 @RequiredArgsConstructor
 public class ConceptTransferWriteRepository {
@@ -60,40 +58,34 @@ public class ConceptTransferWriteRepository {
     private final ConceptDcTermRepository conceptDcTermRepository;
 
     @Transactional
-    public boolean moveConceptToAnotherThesaurus(String conceptId, String sourceThesaurusId, String targetThesaurusId) {
-        try {
-            conceptRepository.updateThesaurus(conceptId, sourceThesaurusId, targetThesaurusId);
-            thesaurusArrayRepository.updateThesaurusByParent(conceptId, sourceThesaurusId, targetThesaurusId);
-            conceptHistoriqueRepository.updateThesaurus(conceptId, sourceThesaurusId, targetThesaurusId);
-            termRepository.updateThesaurus(conceptId, sourceThesaurusId, targetThesaurusId);
-            nonPreferredTermRepository.updateThesaurus(conceptId, sourceThesaurusId, targetThesaurusId);
-            noteRepository.updateThesaurusByConcept(conceptId, sourceThesaurusId, targetThesaurusId);
-            noteRepository.updateThesaurusByTerm(conceptId, sourceThesaurusId, targetThesaurusId);
-            noteHistoriqueRepository.updateThesaurus(conceptId, sourceThesaurusId, targetThesaurusId);
-            preferredTermRepository.updateThesaurus(conceptId, sourceThesaurusId, targetThesaurusId);
-            conceptCandidatRepository.updateThesaurus(conceptId, sourceThesaurusId, targetThesaurusId);
-            candidatStatusRepository.updateThesaurus(conceptId, sourceThesaurusId, targetThesaurusId);
-            candidatMessageRepository.updateThesaurus(conceptId, sourceThesaurusId, targetThesaurusId);
-            candidatVoteRepository.updateThesaurus(conceptId, sourceThesaurusId, targetThesaurusId);
-            conceptGroupConceptRepository.updateThesaurus(conceptId, sourceThesaurusId, targetThesaurusId);
-            hierarchicalRelationshipRepository.updateThesaurusByConcept1(conceptId, sourceThesaurusId, targetThesaurusId);
-            hierarchicalRelationshipRepository.updateThesaurusByConcept2(conceptId, sourceThesaurusId, targetThesaurusId);
-            hierarchicalRelationshipHistoriqueRepository.updateThesaurusByConcept1(conceptId, sourceThesaurusId, targetThesaurusId);
-            hierarchicalRelationshipHistoriqueRepository.updateThesaurusByConcept2(conceptId, sourceThesaurusId, targetThesaurusId);
-            conceptTermCandidatRepository.updateThesaurus(conceptId, sourceThesaurusId, targetThesaurusId);
-            alignementRepository.updateInternalThesaurus(conceptId, sourceThesaurusId, targetThesaurusId);
-            propositionRepository.updateThesaurus(conceptId, sourceThesaurusId, targetThesaurusId);
-            conceptReplacedByRepository.updateThesaurusByConcept1(conceptId, sourceThesaurusId, targetThesaurusId);
-            conceptReplacedByRepository.updateThesaurusByConcept2(conceptId, sourceThesaurusId, targetThesaurusId);
-            gpsRepository.updateThesaurus(conceptId, sourceThesaurusId, targetThesaurusId);
-            conceptFacetRepository.updateThesaurus(conceptId, sourceThesaurusId, targetThesaurusId);
-            externalResourceRepository.updateThesaurus(conceptId, sourceThesaurusId, targetThesaurusId);
-            externalImageRepository.updateThesaurus(conceptId, sourceThesaurusId, targetThesaurusId);
-            conceptDcTermRepository.updateThesaurus(conceptId, sourceThesaurusId, targetThesaurusId);
-            return true;
-        } catch (Exception exception) {
-            log.error("Error while moving concept {}", conceptId, exception);
-            return false;
-        }
+    public void moveConceptToAnotherThesaurus(String conceptId, String sourceThesaurusId, String targetThesaurusId) {
+        conceptRepository.updateThesaurus(conceptId, sourceThesaurusId, targetThesaurusId);
+        thesaurusArrayRepository.updateThesaurusByParent(conceptId, sourceThesaurusId, targetThesaurusId);
+        conceptHistoriqueRepository.updateThesaurus(conceptId, sourceThesaurusId, targetThesaurusId);
+        termRepository.updateThesaurus(conceptId, sourceThesaurusId, targetThesaurusId);
+        nonPreferredTermRepository.updateThesaurus(conceptId, sourceThesaurusId, targetThesaurusId);
+        noteRepository.updateThesaurusByConcept(conceptId, sourceThesaurusId, targetThesaurusId);
+        noteRepository.updateThesaurusByTerm(conceptId, sourceThesaurusId, targetThesaurusId);
+        noteHistoriqueRepository.updateThesaurus(conceptId, sourceThesaurusId, targetThesaurusId);
+        preferredTermRepository.updateThesaurus(conceptId, sourceThesaurusId, targetThesaurusId);
+        conceptCandidatRepository.updateThesaurus(conceptId, sourceThesaurusId, targetThesaurusId);
+        candidatStatusRepository.updateThesaurus(conceptId, sourceThesaurusId, targetThesaurusId);
+        candidatMessageRepository.updateThesaurus(conceptId, sourceThesaurusId, targetThesaurusId);
+        candidatVoteRepository.updateThesaurus(conceptId, sourceThesaurusId, targetThesaurusId);
+        conceptGroupConceptRepository.updateThesaurus(conceptId, sourceThesaurusId, targetThesaurusId);
+        hierarchicalRelationshipRepository.updateThesaurusByConcept1(conceptId, sourceThesaurusId, targetThesaurusId);
+        hierarchicalRelationshipRepository.updateThesaurusByConcept2(conceptId, sourceThesaurusId, targetThesaurusId);
+        hierarchicalRelationshipHistoriqueRepository.updateThesaurusByConcept1(conceptId, sourceThesaurusId, targetThesaurusId);
+        hierarchicalRelationshipHistoriqueRepository.updateThesaurusByConcept2(conceptId, sourceThesaurusId, targetThesaurusId);
+        conceptTermCandidatRepository.updateThesaurus(conceptId, sourceThesaurusId, targetThesaurusId);
+        alignementRepository.updateInternalThesaurus(conceptId, sourceThesaurusId, targetThesaurusId);
+        propositionRepository.updateThesaurus(conceptId, sourceThesaurusId, targetThesaurusId);
+        conceptReplacedByRepository.updateThesaurusByConcept1(conceptId, sourceThesaurusId, targetThesaurusId);
+        conceptReplacedByRepository.updateThesaurusByConcept2(conceptId, sourceThesaurusId, targetThesaurusId);
+        gpsRepository.updateThesaurus(conceptId, sourceThesaurusId, targetThesaurusId);
+        conceptFacetRepository.updateThesaurus(conceptId, sourceThesaurusId, targetThesaurusId);
+        externalResourceRepository.updateThesaurus(conceptId, sourceThesaurusId, targetThesaurusId);
+        externalImageRepository.updateThesaurus(conceptId, sourceThesaurusId, targetThesaurusId);
+        conceptDcTermRepository.updateThesaurus(conceptId, sourceThesaurusId, targetThesaurusId);
     }
 }

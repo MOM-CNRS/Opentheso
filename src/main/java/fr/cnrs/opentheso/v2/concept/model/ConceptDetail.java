@@ -147,7 +147,7 @@ public record ConceptDetail(
     }
 
     public List<ConceptCustomRelationItem> getCustomRelations() {
-        return customRelations;
+        return customRelations == null ? Collections.emptyList() : customRelations;
     }
 
     public List<ConceptCorpusLinkItem> getCorpusLinks() {

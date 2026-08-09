@@ -318,7 +318,7 @@ public class ConceptFullQueryRepository {
 
     public List<Object[]> findImages(String conceptId, String thesaurusId) {
         return em.createNativeQuery("""
-            SELECT ei.image_name, ei.image_copyright, ei.external_uri, COALESCE(ei.image_creator, '')
+            SELECT ei.id, ei.image_name, ei.image_copyright, ei.external_uri, COALESCE(ei.image_creator, '')
             FROM external_images ei
             WHERE ei.id_thesaurus = :thesaurusId
               AND ei.id_concept = :conceptId

@@ -197,7 +197,7 @@ class PropositionDraftServiceTest {
                 PropositionFieldCategory.NOM, PropositionFieldAction.UPDATE, "fr", "New label", "Old label", false));
 
         when(conceptLifecycleMutationService.renamePreferredLabel(any(RenamePreferredLabelCommand.class)))
-                .thenReturn(new MutationResult(false, MutationOutcome.DUPLICATE_LABEL, "Le libellé existe déjà", null));
+                .thenReturn(new MutationResult(false, MutationOutcome.DUPLICATE_LABEL, "Le libellé existe déjà", null, false));
 
         var acceptance = new PropositionAcceptance(
                 true, false, false, false, false, false, false, false, false, false);

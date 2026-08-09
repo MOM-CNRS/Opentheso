@@ -154,8 +154,19 @@
                              update=":containerIndex:formRightTab :containerIndex:formLeftTab"
                              style="font-size:14px; color:#601e18;"/>
             </h:panelGroup>
-            <h:outputText value=", " rendered="#{not status.last}" style="color:#FF7979;"/>
+            <h:outputText value=", " rendered="#{not status.last or (not empty narrowerPagination and narrowerPagination and v2ThesaurusBrowseBean.haveMoreNarrowers)}"
+                          style="color:#FF7979;"/>
           </ui:repeat>
+          <!-- Pagination NT (comme legacy ConceptView#getNextNT) -->
+          <p:commandLink rendered="#{not empty narrowerPagination and narrowerPagination and v2ThesaurusBrowseBean.haveMoreNarrowers}"
+                         value="..."
+                         action="#{v2ThesaurusBrowseBean.loadMoreNarrowers()}"
+                         process="@this"
+                         update=":containerIndex:formRightTab"
+                         style="color:#FF7979;"
+                         styleClass="textOpentheso">
+            <i class="fa-solid fa-forward" style="color:#f47b2a; font-size:14px;"/>
+          </p:commandLink>
         </h:panelGroup>
       </div>
     </div>

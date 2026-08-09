@@ -28,6 +28,7 @@ import fr.cnrs.opentheso.v2.rights.RightsService;
 import fr.cnrs.opentheso.v2.setting.fixtures.SettingTestFixtures;
 import fr.cnrs.opentheso.v2.setting.model.ThesaurusPreferences;
 import fr.cnrs.opentheso.v2.setting.service.ThesaurusPreferenceService;
+import fr.cnrs.opentheso.v2.setting.service.ThesaurusSearchLanguageSync;
 import fr.cnrs.opentheso.v2.setting.ui.ThesaurusContext;
 import fr.cnrs.opentheso.v2.shared.ui.UserSession;
 import jakarta.faces.component.UIComponent;
@@ -76,6 +77,8 @@ class ThesaurusBrowseBeanTest {
     @Mock
     private ThesaurusPreferenceService thesaurusPreferenceService;
     @Mock
+    private ThesaurusSearchLanguageSync thesaurusSearchLanguageSync;
+    @Mock
     private UserSession userSession;
     @Mock
     private ConceptTypeReadService conceptTypeReadService;
@@ -111,6 +114,7 @@ class ThesaurusBrowseBeanTest {
                 thesaurusHomeReadService,
                 conceptHistoryBean,
                 thesaurusPreferenceService,
+                thesaurusSearchLanguageSync,
                 userSession,
                 conceptTypeReadService,
                 conceptTreeRefreshState,

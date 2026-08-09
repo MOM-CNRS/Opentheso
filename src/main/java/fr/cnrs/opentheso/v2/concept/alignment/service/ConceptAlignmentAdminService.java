@@ -11,6 +11,7 @@ import fr.cnrs.opentheso.v2.candidat.alignment.persistence.CandidatAutoAlignment
 import fr.cnrs.opentheso.v2.concept.alignment.model.AlignmentAdminRow;
 import fr.cnrs.opentheso.v2.concept.alignment.model.AlignmentProposition;
 import fr.cnrs.opentheso.v2.concept.alignment.model.AlignmentSourceItem;
+import fr.cnrs.opentheso.v2.concept.alignment.support.AlignmentUrlProbe;
 import fr.cnrs.opentheso.v2.concept.search.repository.ConceptSearchQueryRepository;
 import fr.cnrs.opentheso.v2.concept.write.model.MutationResult;
 import fr.cnrs.opentheso.v2.concept.write.model.command.AddManualAlignmentCommand;
@@ -105,7 +106,7 @@ public class ConceptAlignmentAdminService {
             if (row.isPlaceholder() || !conceptId.equals(row.conceptId()) || row.alignmentId() == null) {
                 continue;
             }
-            boolean reachable = isReachable(row.targetUri());
+            boolean reachable = AlignmentUrlProbe.isReachable(row.targetUri());
             if (!reachable) {
                 invalid++;
             }
@@ -570,25 +571,6 @@ public class ConceptAlignmentAdminService {
             return connection.getResponseCode() == HttpURLConnection.HTTP_OK;
         } catch (Exception ex) {
             log.debug("Ping source échoué: {}", baseUri, ex);
-            return false;
-        }
-    }
-
-    private boolean isReachable(String urlString) {
-        if (StringUtils.isBlank(urlString)) {
-            return false;
-        }
-        try {
-            URL url = URI.create(urlString.trim().replaceFirst("^http://", "https://")).toURL();
-            HttpURLConnection connection = (HttpURLConnection) url.openConnection();
-            connection.setRequestMethod("HEAD");
-            connection.setConnectTimeout(5000);
-            connection.setReadTimeout(5000);
-            connection.setInstanceFollowRedirects(true);
-            int code = connection.getResponseCode();
-            return code >= 200 && code < 400;
-        } catch (Exception ex) {
-            log.debug("URL non joignable: {}", urlString, ex);
             return false;
         }
     }

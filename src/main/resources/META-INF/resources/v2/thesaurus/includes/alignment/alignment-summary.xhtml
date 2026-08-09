@@ -74,14 +74,14 @@
                     <p:commandButton icon="pi pi-pencil"
                                      process="@this"
                                      actionListener="#{v2ConceptAlignmentAdminBean.prepareEdit(alignement)}"
-                                     update=":containerIndex:v2EditAlignmentDlg"
+                                     update=":v2EditAlignmentDlg"
                                      oncomplete="PF('v2EditAlignment').show();"
                                      styleClass="rounded-button ui-button-outlined"
                                      style="height:30px; width:30px; color:#43B572;"/>
                     <p:commandButton icon="pi pi-trash"
                                      process="@this"
                                      actionListener="#{v2ConceptAlignmentAdminBean.prepareDelete(alignement)}"
-                                     update=":containerIndex:v2DeleteAlignmentDlg"
+                                     update=":v2DeleteAlignmentDlg"
                                      oncomplete="PF('v2DeleteAlignment').show();"
                                      styleClass="rounded-button ui-button-danger ui-button-outlined"
                                      style="height:30px; width:30px; margin-left:10px;"/>

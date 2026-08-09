@@ -74,18 +74,23 @@ public class ConceptMediaWritePersistence {
     }
 
     public MutationResult updateImage(UpdateConceptImageCommand command) {
+        if (command.imageId() <= 0) {
+            return MutationResult.validationError("Aucune image sélectionnée !");
+        }
         if (org.apache.commons.lang3.StringUtils.isBlank(command.uri())) {
             return MutationResult.validationError("Aucune image sélectionnée !");
         }
-        imagesRepository.save(ImageExterne.builder()
-                .id(command.imageId())
-                .imageCreator(command.creator())
-                .externalUri(command.uri())
-                .imageName(command.name())
-                .imageCopyright(command.copyright())
-                .idThesaurus(command.thesaurusId())
-                .idConcept(command.conceptId())
-                .build());
+        var existing = imagesRepository.findById(command.imageId()).orElse(null);
+        if (existing == null
+                || !org.apache.commons.lang3.StringUtils.equals(existing.getIdConcept(), command.conceptId())
+                || !org.apache.commons.lang3.StringUtils.equals(existing.getIdThesaurus(), command.thesaurusId())) {
+            return MutationResult.validationError("Aucune image sélectionnée !");
+        }
+        existing.setImageCreator(command.creator());
+        existing.setExternalUri(command.uri());
+        existing.setImageName(command.name());
+        existing.setImageCopyright(command.copyright());
+        imagesRepository.save(existing);
         touchConcept(command.thesaurusId(), command.conceptId(), command.userId(), command.contributorName());
         return MutationResult.ok("L'URI du l'image est modifiée avec succès");
     }

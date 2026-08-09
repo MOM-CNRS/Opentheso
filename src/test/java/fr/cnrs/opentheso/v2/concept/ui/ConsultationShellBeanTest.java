@@ -3,6 +3,7 @@ package fr.cnrs.opentheso.v2.concept.ui;
 import fr.cnrs.opentheso.utils.MessageUtils;
 import fr.cnrs.opentheso.v2.concept.model.ConsultationThesaurusOption;
 import fr.cnrs.opentheso.v2.concept.service.ConsultationCatalogService;
+import fr.cnrs.opentheso.v2.concept.session.ConceptSelectionContext;
 import fr.cnrs.opentheso.v2.setting.ui.ThesaurusContext;
 import fr.cnrs.opentheso.v2.shared.service.PlatformHomeReadService;
 import fr.cnrs.opentheso.v2.shared.session.SessionLifecycleService;
@@ -26,9 +27,12 @@ import java.util.Optional;
 import static org.junit.jupiter.api.Assertions.assertEquals;
 import static org.junit.jupiter.api.Assertions.assertFalse;
 import static org.junit.jupiter.api.Assertions.assertTrue;
+import static org.mockito.Mockito.mock;
 import static org.mockito.Mockito.mockStatic;
 import static org.mockito.Mockito.verify;
 import static org.mockito.Mockito.when;
+
+import org.primefaces.PrimeFaces;
 
 @ExtendWith(MockitoExtension.class)
 class ConsultationShellBeanTest {
@@ -37,6 +41,8 @@ class ConsultationShellBeanTest {
     private ConsultationCatalogService consultationCatalogService;
     @Mock
     private ThesaurusContext thesaurusContext;
+    @Mock
+    private ConceptSelectionContext conceptSelectionContext;
     @Mock
     private UserSession userSession;
     @Mock
@@ -61,6 +67,7 @@ class ConsultationShellBeanTest {
         consultationShellBean = new ConsultationShellBean(
                 consultationCatalogService,
                 thesaurusContext,
+                conceptSelectionContext,
                 userSession,
                 v2LocaleBean,
                 platformHomeReadService,
@@ -202,6 +209,41 @@ class ConsultationShellBeanTest {
             consultationShellBean.load();
 
             messages.verify(() -> MessageUtils.showInformationMessage("Au revoir"));
+        }
+    }
+
+    @Test
+    void reloadThesaurus_clearsConceptAndReloadsWhenBrowseView() throws Exception {
+        consultationShellBean.setSelectedThesaurusId("TH1");
+        consultationShellBean.setThesaurusOptions(List.of(new ConsultationThesaurusOption("TH1", "Title", "fr")));
+        when(thesaurusContext.resolveThesaurusId()).thenReturn("TH1");
+        when(userSession.isLoggedIn()).thenReturn(false);
+        when(userSession.isSuperAdmin()).thenReturn(false);
+        when(v2LocaleBean.getIdLangue()).thenReturn("fr");
+        when(consultationCatalogService.listProjects(null, false)).thenReturn(List.of());
+        when(consultationCatalogService.listThesauri(null, false, -1, "fr"))
+                .thenReturn(List.of(new ConsultationThesaurusOption("TH1", "Title", "fr")));
+
+        jakarta.faces.component.UIViewRoot viewRoot = mock(jakarta.faces.component.UIViewRoot.class);
+        when(facesContext.getViewRoot()).thenReturn(viewRoot);
+        when(viewRoot.getViewId()).thenReturn("/v2/thesaurus/browse.xhtml");
+        when(facesContext.getApplication()).thenReturn(mock(jakarta.faces.application.Application.class));
+
+        try (MockedStatic<FacesContext> faces = mockStatic(FacesContext.class);
+             MockedStatic<PrimeFaces> primeFaces = mockStatic(PrimeFaces.class)) {
+            faces.when(FacesContext::getCurrentInstance).thenReturn(facesContext);
+            PrimeFaces primeFacesInstance = mock(PrimeFaces.class);
+            primeFaces.when(PrimeFaces::current).thenReturn(primeFacesInstance);
+
+            consultationShellBean.reloadThesaurus();
+
+            verify(thesaurusContext).setFromUrl(false);
+            verify(thesaurusContext).setIdConceptFromUri(null);
+            verify(thesaurusContext).setIdGroupFromUri(null);
+            verify(thesaurusContext).setIdFacetFromUri(null);
+            verify(thesaurusContext).selectThesaurus("TH1", "Title", "fr");
+            verify(conceptSelectionContext).clear();
+            verify(primeFacesInstance).executeScript(org.mockito.ArgumentMatchers.contains("window.location.reload()"));
         }
     }
 }
