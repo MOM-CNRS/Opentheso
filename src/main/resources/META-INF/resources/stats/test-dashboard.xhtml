@@ -5,83 +5,373 @@
       xmlns:p="primefaces">
 
 <h:head>
+
     <title>Test - Dashboard statistique Opentheso</title>
+
+    <style>
+        body {
+            margin: 0;
+            padding: 0;
+            background-color: #f5f6f8;
+            font-family: Arial, sans-serif;
+        }
+
+        .dashboard-container {
+            width: 95%;
+            max-width: 1400px;
+            margin: 30px auto;
+        }
+
+        .dashboard-header {
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+            margin-bottom: 20px;
+        }
+
+        .dashboard-title {
+            margin: 0;
+            font-size: 26px;
+            font-weight: 500;
+        }
+
+        .dashboard-filters {
+            display: flex;
+            align-items: center;
+            gap: 10px;
+        }
+
+        /* Grille */
+        .dashboard-grid {
+            display: grid;
+            grid-template-columns: 1fr;
+            gap: 20px;
+        }
+
+        /*
+         * Très important :
+         * empêche le contenu d'un bloc de déborder
+         * dans la cellule suivante.
+         */
+        .dashboard-card {
+            min-width: 0;
+            min-height: 0;
+            overflow: hidden;
+        }
+
+        .dashboard-card-full {
+            width: 100%;
+        }
+
+        /*
+         * Conteneurs des graphiques
+         */
+        .chart-container {
+            position: relative;
+            width: 100%;
+            height: 350px;
+        }
+
+        .chart-container-small {
+            position: relative;
+            width: 100%;
+            height: 350px;
+        }
+
+        /*
+         * Le canvas Chart.js doit rester
+         * dans les limites du conteneur.
+         */
+        .chart-container canvas,
+        .chart-container-small canvas {
+            max-width: 100% !important;
+            max-height: 100% !important;
+        }
+
+        /*
+         * Table
+         */
+        .concepts-container {
+            width: 100%;
+        }
+
+        /*
+         * Debug
+         */
+        .debug-container {
+            background-color: #fafafa;
+            padding: 15px;
+            border-radius: 4px;
+            overflow: auto;
+        }
+
+        .json-debug {
+            font-family: monospace;
+            font-size: 11px;
+            line-height: 1.4;
+            word-break: break-all;
+            white-space: pre-wrap;
+        }
+
+        @media (max-width: 900px) {
+
+            .dashboard-grid {
+                grid-template-columns: 1fr;
+            }
+
+            .dashboard-card-full {
+                grid-column: auto;
+            }
+
+            .dashboard-header {
+                flex-direction: column;
+                align-items: flex-start;
+                gap: 15px;
+            }
+
+            .dashboard-filters {
+                flex-wrap: wrap;
+            }
+        }
+        .chart-container-pie {
+            position: relative;
+            width: 80%;
+            padding: 20px;
+            box-sizing: border-box;
+        }
+    </style>
+
 </h:head>
+
 
 <h:body>
 
     <h:form id="testForm">
 
-        <h1>Test du tableau de bord statistique</h1>
+        <div class="dashboard-container">
 
-        <!-- Sélecteur de période -->
-        <p:outputLabel value="Période : " for="periodMenu"/>
-        <p:selectOneMenu id="periodMenu" value="#{dashboardBean.selectedPeriod}">
-            <f:selectItems value="#{dashboardBean.availablePeriods}"
-                           var="p" itemLabel="#{p.label}" itemValue="#{p}"/>
-            <p:ajax listener="#{dashboardBean.onPeriodChange}"
-                    update="trafficChart pieChart apiChart wordCloudZone rawDebug"/>
-        </p:selectOneMenu>
 
-        <p:separator/>
+            <!-- ===================================================== -->
+            <!-- EN-TÊTE -->
+            <!-- ===================================================== -->
 
-        <!-- Graphique de tendance -->
-        <h3>Évolution des consultations</h3>
-        <h:panelGroup id="trafficChart" layout="block">
-            <p:chart value="#{dashboardBean.dailyTrafficChartJson}" style="height:300px; width:600px;"/>
-        </h:panelGroup>
+            <div class="dashboard-header">
 
-        <p:separator/>
+                <h1 class="dashboard-title">
+                    Tableau de bord statistique
+                </h1>
 
-        <!-- Répartition par thésaurus -->
-        <h3>Répartition par thésaurus</h3>
-        <h:panelGroup id="pieChart" layout="block">
-            <p:chart value="#{dashboardBean.thesaurusPieChartJson}" style="height:300px; width:400px;"/>
-        </h:panelGroup>
+                <div class="dashboard-filters">
 
-        <p:separator/>
+                    <p:outputLabel
+                            value="Période :"
+                            for="periodMenu"/>
 
-        <!-- Usage API -->
-        <h3>Endpoints API les plus appelés</h3>
-        <h:panelGroup id="apiChart" layout="block">
-            <p:chart value="#{dashboardBean.apiUsageChartJson}" style="height:300px; width:600px;"/>
-        </h:panelGroup>
+                    <p:selectOneMenu
+                            id="periodMenu"
+                            value="#{dashboardBean.selectedPeriod}">
 
-        <p:separator/>
+                        <f:selectItems
+                                value="#{dashboardBean.availablePeriods}"
+                                var="p"
+                                itemLabel="#{p.label}"
+                                itemValue="#{p}"/>
 
-        <!-- Nuage de mots (test minimal, sans wordcloud2.js pour l'instant) -->
-        <h3>Concepts les plus consultés (données brutes)</h3>
-        <h:panelGroup id="wordCloudZone" layout="block">
-            <p:dataTable value="#{dashboardBean.topConcepts}" var="c" rows="10" paginator="true">
-                <p:column headerText="Concept">
-                    <h:outputText value="#{c.label}"/>
-                </p:column>
-                <p:column headerText="Thésaurus">
-                    <h:outputText value="#{c.thesaurusLabel}"/>
-                </p:column>
-                <p:column headerText="Nb vues">
-                    <h:outputText value="#{c.totalVues}"/>
-                </p:column>
-            </p:dataTable>
-        </h:panelGroup>
+                        <p:ajax
+                                listener="#{dashboardBean.onPeriodChange}"
+                                update="dashboardContent"/>
 
-        <p:separator/>
+                    </p:selectOneMenu>
 
-        <!-- Zone de debug : vérifie que le JSON est bien généré -->
-        <h3>Debug : JSON brut des graphiques</h3>
-        <h:panelGroup id="rawDebug" layout="block">
-            <p><b>Trafic quotidien :</b></p>
-            <p:outputPanel style="font-family:monospace; font-size:11px; word-break:break-all;">
-                <h:outputText value="#{dashboardBean.dailyTrafficChartJson}"/>
-            </p:outputPanel>
 
-            <p><b>Répartition thésaurus :</b></p>
-            <p:outputPanel style="font-family:monospace; font-size:11px; word-break:break-all;">
-                <h:outputText value="#{dashboardBean.thesaurusPieChartJson}"/>
-            </p:outputPanel>
-        </h:panelGroup>
+                    <p:commandButton
+                            value="Rafraîchir"
+                            icon="pi pi-refresh"
+                            actionListener="#{dashboardBean.refreshNow}"
+                            update="dashboardContent"/>
+
+                </div>
+
+            </div>
+
+
+            <!-- ===================================================== -->
+            <!-- CONTENU DU DASHBOARD -->
+            <!-- ===================================================== -->
+
+            <h:panelGroup
+                    id="dashboardContent"
+                    layout="block">
+
+                <div class="dashboard-grid">
+
+
+                    <!-- ================================================= -->
+                    <!-- TRAFIC -->
+                    <!-- ================================================= -->
+
+                    <div class="dashboard-card">
+
+                        <p:panel
+                                header="Évolution des consultations"
+                                toggleable="true"
+                                collapsed="false">
+
+                            <div class="chart-container">
+
+                                <p:chart
+                                        type="line"
+                                        value="#{dashboardBean.dailyTrafficChartJson}"
+                                        style="width:100%; height:100%;"/>
+
+                            </div>
+
+                        </p:panel>
+
+                    </div>
+
+
+                    <!-- ================================================= -->
+                    <!-- THESAURUS -->
+                    <!-- ================================================= -->
+
+                    <div class="dashboard-card">
+
+                        <p:panel
+                                header="Répartition par thésaurus"
+                                toggleable="true"
+                                collapsed="false"
+                                style="width:100%;">
+
+                            <div class="chart-container-pie">
+
+                                <p:chart
+                                        type="pie"
+                                        value="#{dashboardBean.thesaurusPieChartJson}"
+                                        style="width:100%; height:100%;"/>
+
+                            </div>
+
+                        </p:panel>
+
+                    </div>
+
+
+                    <!-- ================================================= -->
+                    <!-- API -->
+                    <!-- ================================================= -->
+
+                    <div class="dashboard-card">
+                        <p:panel
+                                header="Endpoints API les plus appelés"
+                                toggleable="true"
+                                collapsed="false">
+
+                            <div class="chart-container-small">
+
+                                <p:chart
+                                        type="bar"
+                                        value="#{dashboardBean.apiUsageChartJson}"
+                                        style="width:100%; height:100%;"/>
+
+                            </div>
+
+                        </p:panel>
+
+                    </div>
+
+
+                    <!-- ================================================= -->
+                    <!-- CONCEPTS -->
+                    <!-- ================================================= -->
+
+                    <div class="dashboard-card">
+
+                        <p:panel
+                                header="Concepts les plus consultés"
+                                toggleable="true"
+                                collapsed="false">
+
+                            <p:dataTable
+                                    value="#{dashboardBean.topConcepts}"
+                                    var="c"
+                                    rows="10"
+                                    paginator="true"
+                                    responsiveLayout="scroll">
+
+                                <p:column headerText="Concept">
+                                    <h:outputText value="#{c.label}"/>
+                                </p:column>
+
+                                <p:column headerText="Thésaurus">
+                                    <h:outputText value="#{c.thesaurusLabel}"/>
+                                </p:column>
+
+                                <p:column headerText="Nb vues">
+                                    <h:outputText value="#{c.totalVues}"/>
+                                </p:column>
+
+                            </p:dataTable>
+
+                        </p:panel>
+
+                    </div>
+
+
+                    <!-- ================================================= -->
+                    <!-- DEBUG -->
+                    <!-- ================================================= -->
+
+                    <div class="dashboard-card">
+
+                        <p:panel
+                                header="Debug : JSON des graphiques"
+                                toggleable="true"
+                                collapsed="true">
+
+                            <div class="debug-container">
+
+                                <p>
+                                    <b>Trafic quotidien :</b>
+                                </p>
+
+                                <div class="json-debug">
+                                    <h:outputText
+                                            value="#{dashboardBean.dailyTrafficChartJson}"/>
+                                </div>
+
+                                <p>
+                                    <b>Répartition thésaurus :</b>
+                                </p>
+
+                                <div class="json-debug">
+                                    <h:outputText
+                                            value="#{dashboardBean.thesaurusPieChartJson}"/>
+                                </div>
+
+                                <p>
+                                    <b>API :</b>
+                                </p>
+
+                                <div class="json-debug">
+                                    <h:outputText
+                                            value="#{dashboardBean.apiUsageChartJson}"/>
+                                </div>
+
+                            </div>
+
+                        </p:panel>
+
+                    </div>
+
+                </div>
+
+            </h:panelGroup>
+
+        </div>
 
     </h:form>
 
 </h:body>
+
 </html>

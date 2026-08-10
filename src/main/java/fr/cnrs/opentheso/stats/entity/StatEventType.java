@@ -7,6 +7,7 @@ package fr.cnrs.opentheso.stats.entity;
 public enum StatEventType {
     CONCEPT_VIEW,
     COLLECTION_VIEW,
+    GROUP_VIEW,
     API_CALL
 }
 

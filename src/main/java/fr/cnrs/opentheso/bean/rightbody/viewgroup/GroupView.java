@@ -120,8 +120,9 @@ public class GroupView implements Serializable {
                 nodeGroup.getConceptGroup().getIdGroup(),
                 label,
                 lang,
-                selectedTheso.getThesoName(),
-                selectedTheso.getCurrentIdTheso());
+                selectedTheso.getCurrentIdTheso(),
+                selectedTheso.getThesoName()
+                );
     }
 
     public void setNotes(String idThesaurus, String idGroup, String idLang) {

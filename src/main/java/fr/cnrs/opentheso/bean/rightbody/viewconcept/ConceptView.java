@@ -457,8 +457,9 @@ public class ConceptView implements Serializable {
                 nodeFullConcept.getIdentifier(),
                 label,
                 lang,
-                selectedTheso.getThesoName(),
-                selectedTheso.getCurrentIdTheso());
+                selectedTheso.getCurrentIdTheso(),
+                selectedTheso.getThesoName()
+                );
     }
 
     /**

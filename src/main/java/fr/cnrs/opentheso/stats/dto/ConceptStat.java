@@ -13,12 +13,14 @@ import lombok.Data;
 public class ConceptStat {
 
     private final String conceptId;
+    private final String thesaurusId;
     private final String thesaurusLabel;
     private final long totalVues;
-    private String label; // à renseigner après coup via votre service de concepts
+    private String label; // à renseigner via votre service de concepts (libellé ACTUEL)
 
-    public ConceptStat(String conceptId, String thesaurusLabel, long totalVues) {
+    public ConceptStat(String conceptId, String thesaurusId, String thesaurusLabel, long totalVues) {
         this.conceptId = conceptId;
+        this.thesaurusId = thesaurusId;
         this.thesaurusLabel = thesaurusLabel;
         this.totalVues = totalVues;
     }
