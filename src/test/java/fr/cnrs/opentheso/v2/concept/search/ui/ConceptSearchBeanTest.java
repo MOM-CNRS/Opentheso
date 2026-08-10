@@ -216,8 +216,8 @@ class ConceptSearchBeanTest {
     void syncFromContext_loadsLanguages() {
         when(thesaurusContext.resolveThesaurusId()).thenReturn("TH1");
         when(thesaurusContext.resolveWorkLanguage()).thenReturn("fr");
-        when(thesaurusPreferenceService.loadPreferencesOrNull("TH1", "fr"))
-                .thenReturn(SettingTestFixtures.samplePreferences());
+        when(thesaurusPreferenceService.loadUsedLanguages("TH1", "fr"))
+                .thenReturn(SettingTestFixtures.samplePreferences().languages());
 
         bean.syncFromContext();
 
@@ -416,7 +416,7 @@ class ConceptSearchBeanTest {
     void syncFromContext_handlesPreferenceFailure() {
         when(thesaurusContext.resolveThesaurusId()).thenReturn("TH1");
         when(thesaurusContext.resolveWorkLanguage()).thenReturn("fr");
-        when(thesaurusPreferenceService.loadPreferencesOrNull("TH1", "fr")).thenThrow(new RuntimeException("db"));
+        when(thesaurusPreferenceService.loadUsedLanguages("TH1", "fr")).thenThrow(new RuntimeException("db"));
 
         bean.syncFromContext();
 

@@ -16,6 +16,7 @@ import org.mockito.Mock;
 import org.mockito.MockedStatic;
 import org.mockito.junit.jupiter.MockitoExtension;
 
+import java.util.HashMap;
 import java.util.List;
 import java.util.Map;
 import java.util.Optional;
@@ -25,7 +26,6 @@ import static org.junit.jupiter.api.Assertions.assertNotNull;
 import static org.junit.jupiter.api.Assertions.assertNull;
 import static org.mockito.ArgumentMatchers.any;
 import static org.mockito.ArgumentMatchers.eq;
-import static org.mockito.Mockito.lenient;
 import static org.mockito.Mockito.mockStatic;
 import static org.mockito.Mockito.never;
 import static org.mockito.Mockito.verify;
@@ -64,6 +64,13 @@ class ProcessCandidateBeanTest {
         candidat.setNomPref("Concept 1");
         candidat.setCreatedById(3);
         return candidat;
+    }
+
+    /** Map.of n'accepte pas les valeurs null — nécessaire pour simuler « pas d'email ». */
+    private static Map<Integer, String> alertMailsWithoutAddress() {
+        Map<Integer, String> mails = new HashMap<>();
+        mails.put(3, null);
+        return mails;
     }
 
     @Test
@@ -187,7 +194,7 @@ class ProcessCandidateBeanTest {
         when(thesaurusPreferencesProvider.findPreferences("TH1")).thenReturn(Optional.of(preferences));
         when(candidatProcessService.acceptCandidatesBatch(any(), any(), eq(7), eq("admin"), eq(preferences)))
                 .thenReturn(null);
-        when(candidatProcessService.resolveAlertMails(any())).thenReturn(Map.of(3, null));
+        when(candidatProcessService.resolveAlertMails(any())).thenReturn(alertMailsWithoutAddress());
 
         bean.insertListCandidat();
 
@@ -231,7 +238,7 @@ class ProcessCandidateBeanTest {
         when(userSession.getCurrentUserId()).thenReturn(7);
         when(userSession.getCurrentUsername()).thenReturn("admin");
         when(candidatProcessService.rejectCandidatesBatch(any(), any(), eq(7), eq("admin"))).thenReturn(null);
-        when(candidatProcessService.resolveAlertMails(any())).thenReturn(Map.of(3, null));
+        when(candidatProcessService.resolveAlertMails(any())).thenReturn(alertMailsWithoutAddress());
 
         bean.rejectCandidatList();
 
