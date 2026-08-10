@@ -20,7 +20,7 @@
                 <div class="col-8">
                     <p:selectOneMenu value="#{v2ConceptNoteEditorBean.selectedLang}" style="width:100%;">
                         <p:ajax event="change" listener="#{v2ConceptNoteEditorBean.onNoteTypeOrLangChange()}"
-                                update="v2ManageNoteEditorPanel"/>
+                                update="v2ManageNoteEditorPanel v2ManageNoteDeleteBtn"/>
                         <f:selectItems value="#{v2ConceptNoteEditorBean.availableLanguages}" var="lang"
                                        itemLabel="#{lang.value}" itemValue="#{lang.code}"/>
                     </p:selectOneMenu>
@@ -31,7 +31,7 @@
                 <div class="col-8">
                     <p:selectOneMenu value="#{v2ConceptNoteEditorBean.selectedTypeCode}" style="width:100%;">
                         <p:ajax event="change" listener="#{v2ConceptNoteEditorBean.onNoteTypeOrLangChange()}"
-                                update="v2ManageNoteEditorPanel"/>
+                                update="v2ManageNoteEditorPanel v2ManageNoteDeleteBtn"/>
                         <f:selectItems value="#{v2ConceptNoteEditorBean.noteTypes}" var="type"
                                        itemLabel="#{type.code}" itemValue="#{type.code}"/>
                     </p:selectOneMenu>
@@ -56,14 +56,17 @@
 
             <div class="row" style="margin-top:20px;">
                 <div class="col-2">
-                    <p:commandButton value="#{v2LocaleBean.getMsg('candidat.remove')}"
-                                     icon="fas fa-trash"
-                                     styleClass="ui-button-danger"
-                                     title="#{v2LocaleBean.getMsg('rightbody.concept.delete_thisnote')}"
-                                     disabled="#{v2ConceptNoteEditorBean.currentNoteId le 0}"
-                                     process="@form"
-                                     actionListener="#{v2ConceptNoteEditorBean.submitDeleteCurrentNote()}"
-                                     update="v2ManageNoteForm :containerIndex:formRightTab :messageIndex"/>
+                    <h:panelGroup id="v2ManageNoteDeleteBtn">
+                        <p:commandButton value="#{v2LocaleBean.getMsg('candidat.remove')}"
+                                         icon="fas fa-trash"
+                                         styleClass="ui-button-danger"
+                                         title="#{v2LocaleBean.getMsg('rightbody.concept.delete_thisnote')}"
+                                         disabled="#{v2ConceptNoteEditorBean.currentNoteId le 0}"
+                                         process="@this"
+                                         ajax="true"
+                                         actionListener="#{v2ConceptNoteEditorBean.submitDeleteCurrentNote()}"
+                                         update=":v2ManageNoteForm :containerIndex:formRightTab :messageIndex"/>
+                    </h:panelGroup>
                 </div>
                 <div class="col-10" style="text-align:right;">
                     <p:commandButton value="#{v2LocaleBean.getMsg('candidat.close')}"
@@ -77,8 +80,9 @@
                                      icon="pi pi-save"
                                      styleClass="ui-button-success"
                                      process="@form"
+                                     ajax="true"
                                      actionListener="#{v2ConceptNoteEditorBean.submitSaveNote()}"
-                                     update="v2ManageNoteForm :containerIndex:formRightTab :messageIndex"/>
+                                     update=":v2ManageNoteForm :containerIndex:formRightTab :messageIndex"/>
                 </div>
             </div>
         </h:form>
@@ -109,7 +113,7 @@
                         <p:commandButton icon="pi pi-trash" styleClass="rounded-button ui-button-danger"
                                          process="@this" ajax="true"
                                          actionListener="#{v2ConceptNoteEditorBean.submitDeleteNote(noteToDelete)}"
-                                         update="v2DeleteNoteForm :containerIndex:formRightTab :messageIndex"/>
+                                         update=":v2DeleteNoteForm :containerIndex:formRightTab :messageIndex"/>
                     </p:column>
                 </p:dataTable>
             </div>

@@ -364,7 +364,7 @@
                                    icon="fas fa-cog" style="color:#f47b2a"
                                    process="@this"
                                    actionListener="#{v2ConceptNoteEditorBean.prepareManageNote()}"
-                                   update="v2ManageNoteForm"
+                                   update=":v2ManageNoteForm"
                                    oncomplete="PF('v2ManageNoteDlg').show();"/>
                 </h:panelGroup>
               </div>
@@ -506,7 +506,6 @@
     </h:panelGroup>
 
     <ui:include src="dialogs/concept-relation-dialogs.xhtml"/>
-    <ui:include src="dialogs/concept-note-dialogs.xhtml"/>
     <ui:include src="dialogs/concept-custom-relation-dialogs.xhtml"/>
     <ui:include src="dialogs/concept-transfer-dialogs.xhtml"/>
     <ui:include src="dialogs/concept-attribute-dialogs.xhtml"/>

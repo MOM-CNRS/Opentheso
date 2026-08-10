@@ -121,9 +121,11 @@ public class ConceptNoteEditorBean implements Serializable {
                 userId,
                 contributorName()
         )), null)) {
+            // Comme legacy resetNotes : vider l'éditeur après suppression
             noteValue = "";
             noteSource = "";
             currentNoteId = 0;
+            PrimeFaces.current().ajax().update(":v2ManageNoteForm");
         }
     }
 
@@ -147,7 +149,7 @@ public class ConceptNoteEditorBean implements Serializable {
             MessageUtils.showErrorMessage("Aucune note sélectionnée !");
             return;
         }
-        submitMutation(conceptNoteMutationService.deleteNote(new DeleteNoteCommand(
+        if (submitMutation(conceptNoteMutationService.deleteNote(new DeleteNoteCommand(
                 thesaurusContext.resolveThesaurusId(),
                 summary.conceptId(),
                 noteId,
@@ -155,8 +157,15 @@ public class ConceptNoteEditorBean implements Serializable {
                 note.typeCode(),
                 userId,
                 contributorName()
-        )), null);
-        notesToDelete = thesaurusBrowseBean.getDisplayedNotes();
+        )), null)) {
+            notesToDelete = thesaurusBrowseBean.getDisplayedNotes();
+            if (currentNoteId == noteId) {
+                noteValue = "";
+                noteSource = "";
+                currentNoteId = 0;
+            }
+            PrimeFaces.current().ajax().update(":v2DeleteNoteForm");
+        }
     }
 
     private void loadNoteFormMetadata() {
@@ -166,8 +175,17 @@ public class ConceptNoteEditorBean implements Serializable {
         selectedLang = thesaurusContext.resolveWorkLanguage();
         if (noteTypes.isEmpty()) {
             selectedTypeCode = "note";
-        } else {
-            selectedTypeCode = noteTypes.get(0).code();
+            return;
+        }
+        selectedTypeCode = noteTypes.get(0).code();
+        // Ouvrir sur un type qui a déjà une note (active le bouton supprimer)
+        for (ConceptNote note : thesaurusBrowseBean.getDisplayedNotes()) {
+            if (note != null
+                    && StringUtils.equalsIgnoreCase(selectedLang, note.lang())
+                    && StringUtils.isNotBlank(note.typeCode())) {
+                selectedTypeCode = note.typeCode();
+                return;
+            }
         }
     }
 

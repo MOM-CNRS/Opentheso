@@ -78,7 +78,7 @@ public class ConceptWriteMetadataPersistence {
             return Optional.empty();
         }
         return Optional.of(new ConceptWriteNoteDraft(
-                noteId.orElse(null),
+                noteId.orElse(0),
                 lexicalValue.orElse(""),
                 conceptNoteWriteRepository.findNoteSource(conceptId, thesaurusId, lang, typeCode).orElse("")
         ));
