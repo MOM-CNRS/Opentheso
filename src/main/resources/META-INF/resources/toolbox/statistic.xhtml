@@ -325,7 +325,7 @@
                     <p:dialog id="noteChartID" widgetVar="noteChart" modal="true" resizable="false" 
                               position="top" width="600" style="margin-top: 50px" header="Diagramme des notes" >
                         <div class="card">
-                            <p:donutChart widgetVar="chart" model="#{statistiqueBean.createChartModel(4)}" style="width: 100%; height: 500px;"/>
+                            $1value="#{statistiqueBean.createChartModel(4)}" style="width: 100%; height: 500px;"/>
                         </div>
                         <div style="text-align: right" >
                             <p:commandLink update="containerIndex" onclick="PF('noteChart').hide();" value="Fermer" />
@@ -335,7 +335,7 @@
                     <p:dialog id="termChartID" widgetVar="termChart" modal="true" resizable="false" 
                               position="top" width="600" style="margin-top: 50px" header="Diagramme des termes non traduits" >
                         <div class="card">
-                            <p:donutChart model="#{statistiqueBean.createChartModel(3)}" style="width: 100%; height: 500px;"/>
+                            $1value="#{statistiqueBean.createChartModel(3)}" style="width: 100%; height: 500px;"/>
                         </div>
                         <div style="text-align: right" >
                             <p:commandLink update="containerIndex" onclick="PF('termChart').hide();" value="Fermer" />
@@ -345,7 +345,7 @@
                     <p:dialog id="synonymChartID" widgetVar="synonymChart" modal="true" resizable="false" 
                               position="top" width="600" style="margin-top: 50px" header="Diagramme des synonymes" >
                         <div class="card">
-                            <p:donutChart model="#{statistiqueBean.createChartModel(2)}" style="width: 100%; height: 500px;"/>
+                            $1value="#{statistiqueBean.createChartModel(2)}" style="width: 100%; height: 500px;"/>
                         </div>
                         <div style="text-align: right" >
                             <p:commandLink update="containerIndex" onclick="PF('synonymChart').hide();" value="Fermer" />
@@ -355,7 +355,7 @@
                     <p:dialog id="conceptChartID" widgetVar="conceptChart" resizable="false" 
                               position="top" width="600" style="margin-top: 50px" header="Diagramme des concepts"  >
                         <div class="card">
-                            <p:donutChart model="#{statistiqueBean.createChartModel(1)}" style="width: 100%; height: 500px;"/>
+                            $1value="#{statistiqueBean.createChartModel(1)}" style="width: 100%; height: 500px;"/>
                         </div>
                         <div style="text-align: right" >
                             <p:commandLink update="containerIndex" onclick="PF('conceptChart').hide();" value="Fermer" />

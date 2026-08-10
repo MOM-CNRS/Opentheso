@@ -2,7 +2,7 @@ package fr.cnrs.opentheso.client;
 
 import fr.cnrs.opentheso.ws.dto.*;
 import lombok.extern.slf4j.Slf4j;
-import org.springframework.boot.web.client.RestTemplateBuilder;
+import org.springframework.boot.restclient.RestTemplateBuilder;
 import org.springframework.http.*;
 import org.springframework.stereotype.Service;
 import org.springframework.web.client.HttpClientErrorException;
@@ -26,7 +26,7 @@ public class ArkApiClient {
     public boolean arkExistsById(String arkId, Integer naan, String urlServerOpenArk) {
         try {
             URI uri = UriComponentsBuilder
-                    .fromHttpUrl(urlServerOpenArk)
+                    .fromUriString(urlServerOpenArk)
                     .path("/arks/exists-by-id")
                     .queryParam("naan", naan)
                     .queryParam("arkId", arkId)
@@ -50,7 +50,7 @@ public class ArkApiClient {
     public boolean arkExistsByUrl(Integer naan, String urlArk, String urlServerOpenArk) {
         try {
             URI uri = UriComponentsBuilder
-                    .fromHttpUrl(urlServerOpenArk)
+                    .fromUriString(urlServerOpenArk)
                     .path("/arks/exists-by-url")
                     .queryParam("naan", naan)
                     .queryParam("url", urlArk)
@@ -76,7 +76,7 @@ public class ArkApiClient {
 
         try {
             URI uri = UriComponentsBuilder
-                    .fromHttpUrl(urlServerOpenArk)
+                    .fromUriString(urlServerOpenArk)
                     .path("/getArkByNaanUrl")
                     .queryParam("naan", naan)
                     .queryParam("url", urlArk)

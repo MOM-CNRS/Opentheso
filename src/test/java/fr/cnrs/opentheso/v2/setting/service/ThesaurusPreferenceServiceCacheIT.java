@@ -9,7 +9,7 @@ import org.junit.jupiter.api.Test;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.boot.test.context.SpringBootTest;
 import org.springframework.cache.CacheManager;
-import org.springframework.boot.test.mock.mockito.MockBean;
+import org.springframework.test.context.bean.override.mockito.MockitoBean;
 import org.springframework.test.context.TestPropertySource;
 
 import java.util.List;
@@ -36,10 +36,10 @@ import static org.mockito.Mockito.when;
 })
 class ThesaurusPreferenceServiceCacheIT {
 
-    @MockBean
+    @MockitoBean
     private PreferencesJpaRepository preferencesJpaRepository;
 
-    @MockBean
+    @MockitoBean
     private ThesaurusSettingsQueryRepository thesaurusSettingsQueryRepository;
 
     @Autowired

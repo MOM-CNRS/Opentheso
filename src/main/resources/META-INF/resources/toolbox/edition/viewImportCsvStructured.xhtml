@@ -73,8 +73,9 @@
                                               label="#{langueBean.getMsg('candidat.parcourir')}"
                                               styleClass="browserbutton"
                                               mode="advanced" auto="true"
-                                              allowTypes="/(\.|\/)(csv|txt)$/"
-                                              update="panelFormCSVStructure" />  
+                                              update="panelFormCSVStructure">
+                                      <p:validateFile allowTypes="/(\.|\/)(csv|txt)$/"/>
+                        </p:fileUpload>  
                             </div>
                         </div> 
 

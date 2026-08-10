@@ -40,6 +40,11 @@ spring:
   application:
     name: opentheso
 
+  # Boot 4 : Jackson 3 par défaut ; préférer Jackson 2 tant que le code utilise com.fasterxml.jackson
+  http:
+    converters:
+      preferred-json-mapper: jackson2
+
   thymeleaf:
     check-template-location: false
   servlet:

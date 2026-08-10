@@ -11,6 +11,7 @@ import fr.cnrs.opentheso.services.UserService;
 import fr.cnrs.opentheso.services.statistiques.StatistiqueService;
 import fr.cnrs.opentheso.utils.MessageUtils;
 import fr.cnrs.opentheso.services.statistiques.StatistiquesRapportCSV;
+import fr.cnrs.opentheso.v2.shared.chart.ChartJsonSupport;
 
 import java.io.ByteArrayInputStream;
 import java.io.Serializable;
@@ -30,9 +31,6 @@ import org.apache.commons.lang3.StringUtils;
 import org.primefaces.PrimeFaces;
 import org.primefaces.model.DefaultStreamedContent;
 import org.primefaces.model.StreamedContent;
-import org.primefaces.model.charts.ChartData;
-import org.primefaces.model.charts.donut.DonutChartDataSet;
-import org.primefaces.model.charts.donut.DonutChartModel;
 
 
 
@@ -95,7 +93,7 @@ public class StatistiqueBean implements Serializable {
         genericStatistiques = new ArrayList<>();
     }
 
-    public DonutChartModel createChartModel(int model) {
+    public String createChartModel(int model) {
 
         List<Number> values = new ArrayList<>();
         List<String> labels = new ArrayList<>();
@@ -123,17 +121,7 @@ public class StatistiqueBean implements Serializable {
             if (pos == colors.size()) pos = 0;
         }
 
-        var dataSet = new DonutChartDataSet();
-        dataSet.setData(values);
-        dataSet.setBackgroundColor(bgColors);
-
-        var data = new ChartData();
-        data.addChartDataSet(dataSet);
-        data.setLabels(labels);
-
-        var donutModel = new DonutChartModel();
-        donutModel.setData(data);
-        return donutModel;
+        return ChartJsonSupport.doughnut(values, labels, bgColors);
     }
 
     public void onSelectStatType() {

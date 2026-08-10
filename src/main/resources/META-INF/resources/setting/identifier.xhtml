@@ -286,9 +286,9 @@
                                                             <h:outputText value="#{langueBean.getMsg('identifier.useHandleWithCertificate')}" style="font-weight: bold;" />
                                                         </div>
                                                         <div class="col-8">
-                                                            <p:inputSwitch value="#{preferenceBean.preferences.useHandleWithCertificat}" style="color: #f47b2a" onLabel="OUI" offLabel="NON" >
+                                                            <p:toggleSwitch value="#{preferenceBean.preferences.useHandleWithCertificat}" style="color: #f47b2a" >
                                                                 <p:ajax event="change" update="containerIndex" />
-                                                            </p:inputSwitch>
+                                                            </p:toggleSwitch>
                                                         </div>
                                                     </div>
                                                 </div>                                                       

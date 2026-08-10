@@ -118,8 +118,9 @@
                                       label="#{v2LocaleBean.getMsg('candidat.parcourir')}"  style="padding-left: 10px; padding-right: 10px; font-size: 12px;"
                                       mode="advanced" auto="true"
                                       styleClass="browserbutton"
-                                      allowTypes="/(\.|\/)(csv|txt)$/"
-                                      update="panelListForMergeCsv_result" disabled="#{v2WorkshopImportBean.loadDone}"/>  
+                                      update="panelListForMergeCsv_result" disabled="#{v2WorkshopImportBean.loadDone}">
+                                      <p:validateFile allowTypes="/(\.|\/)(csv|txt)$/"/>
+                        </p:fileUpload>  
                     </div>
                 </div> 
             </h:panelGroup>                

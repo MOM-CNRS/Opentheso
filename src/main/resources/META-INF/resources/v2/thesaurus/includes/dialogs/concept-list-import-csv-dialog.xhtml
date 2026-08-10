@@ -40,9 +40,10 @@
                                       label="#{v2LocaleBean.getMsg('candidat.parcourir')}"
                                       mode="advanced" auto="true"
                                       styleClass="browserbutton"
-                                      allowTypes="/(\.|\/)(csv|txt)$/"
                                       update="v2PanelListCsv"
-                                      disabled="#{v2ConceptListCsvImportBean.loadDone}"/>
+                                      disabled="#{v2ConceptListCsvImportBean.loadDone}">
+                                      <p:validateFile allowTypes="/(\.|\/)(csv|txt)$/"/>
+                        </p:fileUpload>
                     </div>
                 </div>
 

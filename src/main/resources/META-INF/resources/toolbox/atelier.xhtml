@@ -81,7 +81,9 @@
                                                 <h5 style="color: #43B572; font-weight: bold; margin-top: 10px">Importation du thésaurus source</h5>
 
                                                 <p:fileUpload listener="#{fusionService.importTheso}" update="fussion" label="parcourir" 
-                                                              mode="advanced" auto="true" allowTypes="/(\.|\/)(skos|rdf|xml|json|ttl)$/" />
+                                                              mode="advanced" auto="true">
+                                      <p:validateFile allowTypes="/(\.|\/)(skos|rdf|xml|json|ttl)$/"/>
+                        </p:fileUpload>
 
                                                 <h:panelGroup rendered="#{fusionService.loadDone}">
                                                     <div class="row" style="margin-left: 30px; margin-right: 30px; font-size: 12px;">
@@ -114,7 +116,9 @@
                                                 <div class="row">
                                                     <div class="col-12" >
                                                         <p:fileUpload listener="#{atelierThesBean.loadFileCsv}" label="parcourir" mode="advanced" auto="true"
-                                                                      update="containerIndex" allowTypes="/(\.|\/)(csv|txt)$/" />
+                                                                      update="containerIndex">
+                                      <p:validateFile allowTypes="/(\.|\/)(csv|txt)$/"/>
+                        </p:fileUpload>
                                                     </div>
                                                 </div>
 

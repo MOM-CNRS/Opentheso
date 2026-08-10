@@ -86,9 +86,10 @@
                         <p:fileUpload listener="#{importFileBean.loadFileAltlabelCsv}" 
                                       label="#{langueBean.getMsg('candidat.parcourir')}" 
                                       mode="advanced" auto="true"
-                                      allowTypes="/(\.|\/)(csv|txt)$/"
                                       update="panelDeleteListAltlabelCsv_result" disabled="#{importFileBean.loadDone}"
-                                      style="font-size: 12px;" />  
+                                      style="font-size: 12px;">
+                                      <p:validateFile allowTypes="/(\.|\/)(csv|txt)$/"/>
+                        </p:fileUpload>  
                     </div>
                 </div> 
             </h:panelGroup>    

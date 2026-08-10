@@ -279,8 +279,8 @@
                 <div class="col-12"> 
                     <p:fileUpload listener="#{v2CandidatImportBean.loadFileSkos}" label="#{v2LocaleBean.getMsg('candidat.parcourir')}" 
                                   mode="advanced" auto="true" process="@this"
-                                  allowTypes="/(\.|\/)(skos|rdf|xml|json|ttl)$/"
                                   update=":tabViewCandidat :messageIndex" >
+                        <p:validateFile allowTypes="/(\.|\/)(skos|rdf|xml|json|ttl)$/"/>
                     </p:fileUpload>
                 </div>
             </div> 

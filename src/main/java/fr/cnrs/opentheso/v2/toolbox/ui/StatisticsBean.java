@@ -8,6 +8,7 @@ import fr.cnrs.opentheso.v2.setting.ui.ThesaurusContext;
 import fr.cnrs.opentheso.v2.shared.ui.UserSession;
 import fr.cnrs.opentheso.v2.toolbox.policy.ToolboxAccessPolicy;
 import fr.cnrs.opentheso.v2.toolbox.service.ThesaurusStatisticsService;
+import fr.cnrs.opentheso.v2.shared.chart.ChartJsonSupport;
 import jakarta.faces.view.ViewScoped;
 import jakarta.inject.Named;
 import lombok.Getter;
@@ -17,9 +18,6 @@ import org.apache.commons.lang3.StringUtils;
 import org.primefaces.PrimeFaces;
 import org.primefaces.model.DefaultStreamedContent;
 import org.primefaces.model.StreamedContent;
-import org.primefaces.model.charts.ChartData;
-import org.primefaces.model.charts.donut.DonutChartDataSet;
-import org.primefaces.model.charts.donut.DonutChartModel;
 
 import java.io.ByteArrayInputStream;
 import java.io.Serializable;
@@ -60,10 +58,10 @@ public class StatisticsBean implements Serializable {
     private List<fr.cnrs.opentheso.models.thesaurus.NodeLangTheso> languages = Collections.emptyList();
     private List<DomaineDto> collections = Collections.emptyList();
 
-    private DonutChartModel conceptsChartModel = emptyChartModel();
-    private DonutChartModel synonymsChartModel = emptyChartModel();
-    private DonutChartModel untranslatedChartModel = emptyChartModel();
-    private DonutChartModel notesChartModel = emptyChartModel();
+    private String conceptsChartModel = emptyChartModel();
+    private String synonymsChartModel = emptyChartModel();
+    private String untranslatedChartModel = emptyChartModel();
+    private String notesChartModel = emptyChartModel();
 
     private final List<String> chartColors = new ArrayList<>(List.of(
             "rgb(255, 99, 132)", "rgb(54, 162, 235)", "rgb(75, 192, 192)", "rgb(158, 14, 64)",
@@ -312,7 +310,7 @@ public class StatisticsBean implements Serializable {
         notesChartModel = buildChartModel(4);
     }
 
-    private DonutChartModel buildChartModel(int model) {
+    private String buildChartModel(int model) {
         List<Number> values = new ArrayList<>();
         List<String> labels = new ArrayList<>();
         List<String> bgColors = new ArrayList<>();
@@ -333,19 +331,11 @@ public class StatisticsBean implements Serializable {
         return toDonutModel(values, labels, bgColors);
     }
 
-    private static DonutChartModel emptyChartModel() {
+    private static String emptyChartModel() {
         return toDonutModel(List.of(), List.of(), List.of());
     }
 
-    private static DonutChartModel toDonutModel(List<Number> values, List<String> labels, List<String> bgColors) {
-        var dataSet = new DonutChartDataSet();
-        dataSet.setData(values);
-        dataSet.setBackgroundColor(bgColors);
-        var data = new ChartData();
-        data.addChartDataSet(dataSet);
-        data.setLabels(labels);
-        var donutModel = new DonutChartModel();
-        donutModel.setData(data);
-        return donutModel;
+    private static String toDonutModel(List<Number> values, List<String> labels, List<String> bgColors) {
+        return ChartJsonSupport.doughnut(values, labels, bgColors);
     }
 }

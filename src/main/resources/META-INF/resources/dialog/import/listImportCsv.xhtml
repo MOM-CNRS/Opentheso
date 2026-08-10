@@ -103,8 +103,9 @@
                                       mode="advanced" auto="true"
                                       style="padding-left: 10px; padding-right: 10px; font-size: 12px;"
                                       styleClass="browserbutton"
-                                      allowTypes="/(\.|\/)(csv|txt)$/"
-                                      update="panelListCsv" disabled="#{importFileBean.loadDone}"/>
+                                      update="panelListCsv" disabled="#{importFileBean.loadDone}">
+                                      <p:validateFile allowTypes="/(\.|\/)(csv|txt)$/"/>
+                        </p:fileUpload>
                     </div>
                 </div>
 

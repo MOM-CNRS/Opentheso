@@ -163,8 +163,9 @@
                                               label="#{langueBean.getMsg('candidat.parcourir')}" style="padding-left: 10px; padding-right: 10px"
                                               mode="advanced" auto="true"
                                               styleClass="browserbutton"
-                                              allowTypes="/(\.|\/)(skos|rdf|xml|json|ttl)$/"
-                                              update="panelFormImportSkos" disabled="#{importFileBean.loadDone}" />
+                                              update="panelFormImportSkos" disabled="#{importFileBean.loadDone}">
+                                      <p:validateFile allowTypes="/(\.|\/)(skos|rdf|xml|json|ttl)$/"/>
+                        </p:fileUpload>
                             </div>
                         </div>
 

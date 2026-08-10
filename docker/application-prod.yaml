@@ -33,6 +33,10 @@ spring:
   application:
     name: opentheso
 
+  http:
+    converters:
+      preferred-json-mapper: jackson2
+
   servlet:
     multipart:
       enabled: true

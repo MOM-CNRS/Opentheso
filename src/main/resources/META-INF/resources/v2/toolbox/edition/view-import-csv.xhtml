@@ -104,8 +104,9 @@
                                   update="importCsvResume messageIndex"
                                   onstart="PF('waitDialog').show();"
                                   oncomplete="PF('waitDialog').hide();"
-                                  allowTypes="/(\.|\/)(csv|txt)$/"
-                                  styleClass="browserbutton"/>
+                                  styleClass="browserbutton">
+                                      <p:validateFile allowTypes="/(\.|\/)(csv|txt)$/"/>
+                        </p:fileUpload>
                 </div>
             </div>
 

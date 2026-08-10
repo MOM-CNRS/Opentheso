@@ -26,11 +26,11 @@
                     </div>
                     <div class="col-xl-1 col-lg-1 col-md-1 col-sm-1"
                          style="text-align: right; margin-top: 7px">
-                        <p:inputSwitch id="commandOtherLang" value="#{conceptView.toggleSwitchNotesLang}"
+                        <p:toggleSwitch id="commandOtherLang" value="#{conceptView.toggleSwitchNotesLang}"
                                        style="color: #f47b2a; margin-right: 10px">
                             <p:ajax listener="#{conceptView.setNotes()}"
                                     update="containerIndex:formRightTab messageIndex"/>
-                        </p:inputSwitch>
+                        </p:toggleSwitch>
                         <p:tooltip for="commandOtherLang" value="#{langueBean.getMsg('concept.showNotesOtherLang')}"
                                    showDelay="1000"/>
                     </div>

@@ -110,8 +110,9 @@
                                       label="#{langueBean.getMsg('candidat.parcourir')}"  style="padding-left: 10px; padding-right: 10px; font-size: 12px;"
                                       mode="advanced" auto="true"
                                       styleClass="browserbutton"
-                                      allowTypes="/(\.|\/)(csv|txt)$/"
-                                      update="panelListReplaceValueByNewValueCsv_result" disabled="#{importFileBean.loadDone}"/>  
+                                      update="panelListReplaceValueByNewValueCsv_result" disabled="#{importFileBean.loadDone}">
+                                      <p:validateFile allowTypes="/(\.|\/)(csv|txt)$/"/>
+                        </p:fileUpload>  
                     </div>
                 </div> 
             </h:panelGroup>                

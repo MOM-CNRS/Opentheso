@@ -260,7 +260,7 @@
                     <h:outputText value="#{langueBean.getMsg('rightbody.conceptdialog.hidden')}: " />
                 </div>
                 <div class="col-7">
-                    <p:inputSwitch value="#{synonymBean.hidden}" style="margin-top: 10px"/>
+                    <p:toggleSwitch value="#{synonymBean.hidden}" style="margin-top: 10px"/>
                 </div>
             </div>
 
@@ -358,7 +358,7 @@
                         <h:outputText value="#{synonymes.lang.toUpperCase()}" style="color: #43B572; text-align: center; font-size: 14px;"/>
                     </p:column>  
                     <p:column width="20" headerText="#{langueBean.getMsg('rightbody.conceptdialog.hidden')} ?">
-                        <p:inputSwitch value="#{synonymes.hiden}" style="margin-top: 3px"/>
+                        <p:toggleSwitch value="#{synonymes.hiden}" style="margin-top: 3px"/>
                     </p:column> 
                     <p:column width="5">
                         <p:commandLink style="color: #FF7979;" ajax="true" process="@form"

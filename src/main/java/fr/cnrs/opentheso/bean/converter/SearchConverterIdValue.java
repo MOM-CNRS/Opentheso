@@ -1,17 +1,13 @@
 package fr.cnrs.opentheso.bean.converter;
 
 import fr.cnrs.opentheso.models.nodes.NodeIdValue;
-import jakarta.enterprise.context.ApplicationScoped;
 import jakarta.faces.component.UIComponent;
 import jakarta.faces.context.FacesContext;
 import jakarta.faces.convert.Converter;
 import jakarta.faces.convert.FacesConverter;
-import jakarta.inject.Named;
 
 
-@Named
-@ApplicationScoped
-@FacesConverter(value = "searchConverterIdValue", managed = true)
+@FacesConverter("searchConverterIdValue")
 public class SearchConverterIdValue implements Converter<NodeIdValue> {
 
     @Override

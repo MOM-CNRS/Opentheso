@@ -42,9 +42,10 @@
                         <p:fileUpload listener="#{importFileBean.loadFileIdentifierCsv}"
                                       label="parcourir" 
                                       mode="advanced" auto="true"
-                                      allowTypes="/(\.|\/)(csv|txt)$/"
                                       update="panelGetIdConceptFromArkId_result" disabled="#{importFileBean.loadDone}"
-                                      style="font-size: 12px;" />  
+                                      style="font-size: 12px;">
+                                      <p:validateFile allowTypes="/(\.|\/)(csv|txt)$/"/>
+                        </p:fileUpload>  
                     </div>
                 </div> 
             </h:panelGroup>                

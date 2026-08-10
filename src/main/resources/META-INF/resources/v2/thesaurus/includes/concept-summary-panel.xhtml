@@ -166,10 +166,10 @@
               </h:panelGroup>
             </div>
             <div class="col-xl-1 col-lg-1 col-md-1 col-sm-1" style="text-align: right;">
-              <p:inputSwitch id="v2SynonymLangSwitch" value="#{v2ThesaurusBrowseBean.showAllSynonymLanguages}" style="margin-top: 7px;">
+              <p:toggleSwitch id="v2SynonymLangSwitch" value="#{v2ThesaurusBrowseBean.showAllSynonymLanguages}" style="margin-top: 7px;">
                 <p:ajax listener="#{v2ThesaurusBrowseBean.onSynonymLanguageToggle()}"
                         update=":containerIndex:formRightTab"/>
-              </p:inputSwitch>
+              </p:toggleSwitch>
               <p:tooltip for="v2SynonymLangSwitch" value="#{v2LocaleBean.getMsg('concept.showEMOtherLang')}" showDelay="1000"/>
             </div>
           </div>
@@ -369,10 +369,10 @@
                 </h:panelGroup>
               </div>
               <div class="col-xl-2 col-lg-2 col-md-2 col-sm-2" style="text-align: right;">
-                <p:inputSwitch id="v2NoteLangSwitch" value="#{v2ThesaurusBrowseBean.showAllNoteLanguages}">
+                <p:toggleSwitch id="v2NoteLangSwitch" value="#{v2ThesaurusBrowseBean.showAllNoteLanguages}">
                   <p:ajax listener="#{v2ThesaurusBrowseBean.onNoteLanguageToggle()}"
                           update=":containerIndex:formRightTab"/>
-                </p:inputSwitch>
+                </p:toggleSwitch>
                 <p:tooltip for="v2NoteLangSwitch" value="#{v2LocaleBean.getMsg('concept.showNotesOtherLang')}" showDelay="1000"/>
               </div>
             </div>

@@ -226,9 +226,9 @@
                     </div>
 
                     <div class="col-xl-1 col-lg-1 col-md-1 col-sm-1" style="text-align: right ">
-                        <p:inputSwitch id="commandOtherLangAltLabel" value="#{conceptView.toggleSwitchAltLabelLang}" style="margin-top: 7px">
+                        <p:toggleSwitch id="commandOtherLangAltLabel" value="#{conceptView.toggleSwitchAltLabelLang}" style="margin-top: 7px">
                             <p:ajax  update="containerIndex:formRightTab messageIndex"/>
-                        </p:inputSwitch>
+                        </p:toggleSwitch>
                         <p:tooltip for="commandOtherLangAltLabel" value="#{langueBean.getMsg('concept.showEMOtherLang')}" showDelay="1000" />
                     </div>                    
                 </div>     
