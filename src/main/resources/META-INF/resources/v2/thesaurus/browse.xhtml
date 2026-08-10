@@ -111,13 +111,17 @@
                         </div>
                     </p:panel>
 
-                    <h:panelGroup id="contentConcept" rendered="#{not v2ThesaurusBrowseBean.screenAvailable}">
-                        <ui:include src="includes/layout/platform-landing.xhtml"/>
-                    </h:panelGroup>
+                    <!-- id toujours présent (comme legacy) : rendered sur les enfants pour l'AJAX -->
+                    <h:panelGroup id="contentConcept">
+                        <h:panelGroup rendered="#{v2ConsultationShellBean.platformHome}">
+                            <ui:include src="includes/layout/platform-landing.xhtml"/>
+                        </h:panelGroup>
 
-                    <ui:include src="includes/layout/footer.xhtml"/>
+                        <h:panelGroup rendered="#{v2ConsultationShellBean.projectHome}">
+                            <ui:include src="includes/layout/project-home-panel.xhtml"/>
+                        </h:panelGroup>
 
-                <h:panelGroup rendered="#{v2ThesaurusBrowseBean.screenAvailable}">
+                        <h:panelGroup rendered="#{v2ThesaurusBrowseBean.screenAvailable}">
                     <div style="margin-top:-8px; margin-left:10px; margin-right:10px;">
                         <div class="row" style="margin-left:15px; margin-right:15px; margin-top:5px;">
 
@@ -298,8 +302,10 @@
 
                         </div>
                     </div>
-                </h:panelGroup>
+                        </h:panelGroup>
+                    </h:panelGroup>
 
+                    <ui:include src="includes/layout/footer.xhtml"/>
 
                 <ui:include src="includes/dialogs/concept-tree-dragdrop-dialog.xhtml"/>
                 <ui:include src="includes/dialogs/concept-copy-between-theso-dialogs.xhtml"/>

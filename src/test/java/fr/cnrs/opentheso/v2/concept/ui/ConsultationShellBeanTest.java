@@ -56,6 +56,8 @@ class ConsultationShellBeanTest {
     @Mock
     private RightsService rightsService;
     @Mock
+    private ConsultationProjectHomeBean consultationProjectHomeBean;
+    @Mock
     private FacesContext facesContext;
     @Mock
     private ExternalContext externalContext;
@@ -73,7 +75,8 @@ class ConsultationShellBeanTest {
                 platformHomeReadService,
                 ssoSessionBridge,
                 sessionLifecycleService,
-                rightsService
+                rightsService,
+                consultationProjectHomeBean
         );
     }
 
@@ -210,6 +213,117 @@ class ConsultationShellBeanTest {
 
             messages.verify(() -> MessageUtils.showInformationMessage("Au revoir"));
         }
+    }
+
+    @Test
+    void onThesaurusChange_clearsSelectionAndLoadsPlatformHome() throws Exception {
+        consultationShellBean.setSelectedThesaurusId("");
+        consultationShellBean.setSelectedProjectId(-1);
+        when(thesaurusContext.resolveThesaurusId()).thenReturn(null);
+        when(v2LocaleBean.getIdLangue()).thenReturn("fr");
+        when(platformHomeReadService.loadHomePageHtml("fr")).thenReturn("<p>accueil</p>");
+
+        jakarta.faces.component.UIViewRoot viewRoot = mock(jakarta.faces.component.UIViewRoot.class);
+        when(facesContext.getViewRoot()).thenReturn(viewRoot);
+        when(viewRoot.getViewId()).thenReturn("/v2/thesaurus/browse.xhtml");
+        when(facesContext.getApplication()).thenReturn(mock(jakarta.faces.application.Application.class));
+
+        try (MockedStatic<FacesContext> faces = mockStatic(FacesContext.class);
+             MockedStatic<PrimeFaces> primeFaces = mockStatic(PrimeFaces.class)) {
+            faces.when(FacesContext::getCurrentInstance).thenReturn(facesContext);
+            PrimeFaces primeFacesInstance = mock(PrimeFaces.class);
+            PrimeFaces.Ajax ajax = mock(PrimeFaces.Ajax.class);
+            when(primeFacesInstance.isAjaxRequest()).thenReturn(true);
+            when(primeFacesInstance.ajax()).thenReturn(ajax);
+            primeFaces.when(PrimeFaces::current).thenReturn(primeFacesInstance);
+
+            consultationShellBean.onThesaurusChange();
+
+            verify(thesaurusContext).setFromUrl(false);
+            verify(thesaurusContext).clearSelection();
+            verify(conceptSelectionContext).clear();
+            verify(consultationProjectHomeBean).clear();
+            assertEquals("<p>accueil</p>", consultationShellBean.getPlatformHomeHtml());
+            assertTrue(consultationShellBean.isPlatformHome());
+            assertFalse(consultationShellBean.isProjectHome());
+            assertEquals(null, consultationShellBean.getSelectedThesaurusId());
+            verify(ajax).update(
+                    "indexTitle",
+                    "menuBar",
+                    "resultSearchBar",
+                    "containerIndex:header",
+                    "containerIndex:searchBar",
+                    "containerIndex:contentConcept"
+            );
+        }
+    }
+
+    @Test
+    void onThesaurusChange_withProjectSelected_loadsProjectHome() throws Exception {
+        consultationShellBean.setSelectedThesaurusId("");
+        consultationShellBean.setSelectedProjectId(7);
+        when(thesaurusContext.resolveThesaurusId()).thenReturn(null);
+
+        jakarta.faces.component.UIViewRoot viewRoot = mock(jakarta.faces.component.UIViewRoot.class);
+        when(facesContext.getViewRoot()).thenReturn(viewRoot);
+        when(viewRoot.getViewId()).thenReturn("/v2/thesaurus/browse.xhtml");
+        when(facesContext.getApplication()).thenReturn(mock(jakarta.faces.application.Application.class));
+
+        try (MockedStatic<FacesContext> faces = mockStatic(FacesContext.class);
+             MockedStatic<PrimeFaces> primeFaces = mockStatic(PrimeFaces.class)) {
+            faces.when(FacesContext::getCurrentInstance).thenReturn(facesContext);
+            PrimeFaces primeFacesInstance = mock(PrimeFaces.class);
+            when(primeFacesInstance.isAjaxRequest()).thenReturn(false);
+            primeFaces.when(PrimeFaces::current).thenReturn(primeFacesInstance);
+
+            consultationShellBean.onThesaurusChange();
+
+            verify(consultationProjectHomeBean).load(7);
+            assertTrue(consultationShellBean.isProjectHome());
+            assertFalse(consultationShellBean.isPlatformHome());
+        }
+    }
+
+    @Test
+    void onProjectChange_clearsInvalidThesaurusAndLoadsProjectHome() throws Exception {
+        consultationShellBean.setSelectedThesaurusId("TH1");
+        consultationShellBean.setSelectedProjectId(42);
+        when(userSession.isLoggedIn()).thenReturn(false);
+        when(userSession.isSuperAdmin()).thenReturn(false);
+        when(v2LocaleBean.getIdLangue()).thenReturn("fr");
+        when(consultationCatalogService.listThesauri(null, false, 42, "fr")).thenReturn(List.of());
+        when(thesaurusContext.resolveThesaurusId()).thenReturn(null);
+
+        jakarta.faces.component.UIViewRoot viewRoot = mock(jakarta.faces.component.UIViewRoot.class);
+        when(facesContext.getViewRoot()).thenReturn(viewRoot);
+        when(viewRoot.getViewId()).thenReturn("/v2/thesaurus/browse.xhtml");
+        when(facesContext.getApplication()).thenReturn(mock(jakarta.faces.application.Application.class));
+
+        try (MockedStatic<FacesContext> faces = mockStatic(FacesContext.class);
+             MockedStatic<PrimeFaces> primeFaces = mockStatic(PrimeFaces.class)) {
+            faces.when(FacesContext::getCurrentInstance).thenReturn(facesContext);
+            PrimeFaces primeFacesInstance = mock(PrimeFaces.class);
+            when(primeFacesInstance.isAjaxRequest()).thenReturn(false);
+            primeFaces.when(PrimeFaces::current).thenReturn(primeFacesInstance);
+
+            consultationShellBean.onProjectChange();
+
+            verify(thesaurusContext).clearSelection();
+            verify(conceptSelectionContext).clear();
+            verify(consultationProjectHomeBean).load(42);
+            assertEquals(null, consultationShellBean.getSelectedThesaurusId());
+            assertTrue(consultationShellBean.isProjectHome());
+        }
+    }
+
+    @Test
+    void screenModes_whenThesaurusSelected_areNeitherPlatformNorProjectHome() {
+        consultationShellBean.setSelectedProjectId(3);
+        when(thesaurusContext.resolveThesaurusId()).thenReturn("TH1");
+
+        assertTrue(consultationShellBean.hasSelectedThesaurus());
+        assertFalse(consultationShellBean.isPlatformHome());
+        assertFalse(consultationShellBean.isProjectHome());
     }
 
     @Test

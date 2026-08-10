@@ -48,6 +48,7 @@ public class ConsultationShellBean implements Serializable {
     private final SsoSessionBridge ssoSessionBridge;
     private final SessionLifecycleService sessionLifecycleService;
     private final RightsService rightsService;
+    private final ConsultationProjectHomeBean consultationProjectHomeBean;
 
     private int selectedProjectId = ALL_PROJECTS_ID;
     private String selectedThesaurusId;
@@ -69,28 +70,45 @@ public class ConsultationShellBean implements Serializable {
         }
         refreshCatalog();
         syncSelectionFromContext();
-        platformHomeHtml = platformHomeReadService.loadHomePageHtml(v2LocaleBean.getIdLangue());
+        syncHomePanels();
     }
 
     public void onProjectChange() throws IOException {
         refreshThesaurusOptions();
         if (StringUtils.isNotBlank(selectedThesaurusId)
                 && thesaurusOptions.stream().noneMatch(option -> option.id().equals(selectedThesaurusId))) {
-            selectedThesaurusId = null;
-            thesaurusContext.clearSelection();
+            clearThesaurusSelection();
         }
+        syncHomePanels();
         applyBrowseRefresh();
     }
 
     public void onThesaurusChange() throws IOException {
         thesaurusContext.setFromUrl(false);
         if (StringUtils.isBlank(selectedThesaurusId)) {
-            thesaurusContext.clearSelection();
+            clearThesaurusSelection();
+            syncHomePanels();
             applyBrowseRefresh();
             return;
         }
+        consultationProjectHomeBean.clear();
         applyThesaurusSelection(selectedThesaurusId);
         applyBrowseRefresh();
+    }
+
+    /** Projet précis sélectionné (pas « Tous les projets »). */
+    public boolean isProjectSelected() {
+        return selectedProjectId != ALL_PROJECTS_ID;
+    }
+
+    /** Accueil plateforme : aucun projet précis + aucun thésaurus. */
+    public boolean isPlatformHome() {
+        return !hasSelectedThesaurus() && !isProjectSelected();
+    }
+
+    /** Présentation projet : projet précis + aucun thésaurus. */
+    public boolean isProjectHome() {
+        return !hasSelectedThesaurus() && isProjectSelected();
     }
 
     /**
@@ -251,6 +269,28 @@ public class ConsultationShellBean implements Serializable {
         selectedThesaurusId = null;
     }
 
+    /**
+     * Aucun thésaurus sélectionné → clear contexte + sélection concept.
+     */
+    private void clearThesaurusSelection() {
+        selectedThesaurusId = null;
+        thesaurusContext.clearSelection();
+        conceptSelectionContext.clear();
+    }
+
+    private void syncHomePanels() {
+        if (hasSelectedThesaurus()) {
+            consultationProjectHomeBean.clear();
+            return;
+        }
+        if (isProjectSelected()) {
+            consultationProjectHomeBean.load(selectedProjectId);
+            return;
+        }
+        consultationProjectHomeBean.clear();
+        platformHomeHtml = platformHomeReadService.loadHomePageHtml(v2LocaleBean.getIdLangue());
+    }
+
     private void applyThesaurusSelection(String thesaurusId) {
         ConsultationThesaurusOption option = thesaurusOptions.stream()
                 .filter(item -> item.id().equals(thesaurusId))
@@ -285,7 +325,15 @@ public class ConsultationShellBean implements Serializable {
         invokeViewAction("#{v2ConceptSearchBean.syncFromContext()}");
         invokeViewAction("#{v2PropositionBean.refreshPendingCount()}");
         if (PrimeFaces.current().isAjaxRequest()) {
-            PrimeFaces.current().ajax().update("indexTitle", "menuBar", "containerIndex", "resultSearchBar");
+            // Évite d'updater tout le form (contient la source AJAX) : cibles stables comme legacy.
+            PrimeFaces.current().ajax().update(
+                    "indexTitle",
+                    "menuBar",
+                    "resultSearchBar",
+                    "containerIndex:header",
+                    "containerIndex:searchBar",
+                    "containerIndex:contentConcept"
+            );
         }
     }
 

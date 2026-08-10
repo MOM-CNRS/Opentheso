@@ -33,9 +33,10 @@
                              style="height: 28px; max-width: 400px; border-radius: 50px 0px 0px 50px;
                                     background-color: #ECF8F1; color: #FFF !important; margin-top: 0px;">
                 <p:ajax event="valueChange" listener="#{v2ConsultationShellBean.onProjectChange()}" process="@this"
-                        update="thesoSelect containerIndex indexTitle resultSearchBar menuBar"
+                        update="thesoSelect :indexTitle :resultSearchBar :menuBar
+                                :containerIndex:searchBar :containerIndex:contentConcept"
                         oncomplete="changeUrl();"/>
-                <f:selectItem itemLabel="#{v2LocaleBean.getMsg('menu.all_project')}" itemValue="#{-1}"/>
+                <f:selectItem itemLabel="#{v2LocaleBean.getMsg('menu.all_project')}" itemValue="-1"/>
                 <f:selectItems value="#{v2ConsultationShellBean.projects}" var="project"
                                itemLabel="#{project.label}" itemValue="#{project.id}"/>
             </p:selectOneMenu>
@@ -45,9 +46,11 @@
                                     color: #FFF !important;"
                              filter="true" filterMatchMode="contains">
                 <p:ajax event="valueChange" listener="#{v2ConsultationShellBean.onThesaurusChange()}" process="@this"
-                        update="menuBar containerIndex indexTitle resultSearchBar"
+                        update=":indexTitle :resultSearchBar :menuBar
+                                :containerIndex:header :containerIndex:searchBar :containerIndex:contentConcept"
                         oncomplete="changeUrl();"/>
-                <f:selectItem itemLabel="(#{v2LocaleBean.getMsg('menu.select_thesaurus')})" itemValue=""/>
+                <f:selectItem itemLabel="(#{v2LocaleBean.getMsg('menu.select_thesaurus')})" itemValue=""
+                              noSelectionOption="true"/>
                 <f:selectItems value="#{v2ConsultationShellBean.thesaurusOptions}" var="theso"
                                itemLabel="#{theso.displayLabel}" itemValue="#{theso.id}"/>
             </p:selectOneMenu>
