@@ -2,6 +2,7 @@ package fr.cnrs.opentheso.v2.shared.repository;
 
 import jakarta.persistence.EntityManager;
 import jakarta.persistence.PersistenceContext;
+import org.apache.commons.lang3.StringUtils;
 import org.springframework.stereotype.Repository;
 import org.springframework.transaction.annotation.Transactional;
 
@@ -329,19 +330,37 @@ public class ConceptFullQueryRepository {
                 .getResultList();
     }
 
+    /**
+     * Créateur affiché : d'abord {@code concept_dcterms} (name=creator), sinon
+     * le username lié à {@code concept.creator} (cas des concepts sans ligne DC).
+     */
     public Optional<String> findCreator(String conceptId, String thesaurusId) {
         List<?> rows = em.createNativeQuery("""
-            SELECT cd.value
-            FROM concept_dcterms cd
-            WHERE cd.id_concept = :conceptId
-              AND cd.id_thesaurus = :thesaurusId
-              AND cd.name = 'creator'
-            LIMIT 1
+            SELECT COALESCE(
+                (
+                    SELECT cd.value
+                    FROM concept_dcterms cd
+                    WHERE cd.id_concept = :conceptId
+                      AND cd.id_thesaurus = :thesaurusId
+                      AND cd.name = 'creator'
+                    LIMIT 1
+                ),
+                (
+                    SELECT u.username
+                    FROM concept c
+                    JOIN users u ON u.id_user = c.creator
+                    WHERE c.id_concept = :conceptId
+                      AND c.id_thesaurus = :thesaurusId
+                      AND c.creator > 0
+                    LIMIT 1
+                ),
+                ''
+            )
             """)
                 .setParameter("conceptId", conceptId)
                 .setParameter("thesaurusId", thesaurusId)
                 .getResultList();
-        return firstScalarAsString(rows);
+        return firstScalarAsString(rows).filter(StringUtils::isNotBlank);
     }
 
     public List<String> findContributors(String conceptId, String thesaurusId) {

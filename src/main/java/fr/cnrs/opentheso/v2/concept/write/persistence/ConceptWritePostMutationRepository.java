@@ -1,15 +1,28 @@
 package fr.cnrs.opentheso.v2.concept.write.persistence;
 
+import fr.cnrs.opentheso.entites.ConceptDcTerm;
+import fr.cnrs.opentheso.models.concept.DCMIResource;
+import fr.cnrs.opentheso.repositories.ConceptDcTermRepository;
 import jakarta.persistence.EntityManager;
 import jakarta.persistence.PersistenceContext;
+import lombok.RequiredArgsConstructor;
+import lombok.extern.slf4j.Slf4j;
+import org.apache.commons.lang3.StringUtils;
+import org.springframework.dao.DataIntegrityViolationException;
 import org.springframework.stereotype.Repository;
 import org.springframework.transaction.annotation.Transactional;
 
+/**
+ * Post-traitement commun après mutation d'un concept :
+ * date de modification, contributeur technique ({@code concept.contributor}),
+ * et métadonnées Dublin Core ({@code concept_dcterms}) comme en legacy.
+ */
+@Slf4j
 @Repository
+@RequiredArgsConstructor
 public class ConceptWritePostMutationRepository {
 
-    private static final String CONTRIBUTOR_DC_TERM = "contributor";
-    private static final String CREATOR_DC_TERM = "creator";
+    private final ConceptDcTermRepository conceptDcTermRepository;
 
     @PersistenceContext
     private EntityManager entityManager;
@@ -29,30 +42,37 @@ public class ConceptWritePostMutationRepository {
                 .executeUpdate();
     }
 
+    /**
+     * Enregistre le contributeur Dublin Core (comme {@code DcTermsService} / beans legacy).
+     * La PK de {@code concept_dcterms} est (id_concept, id_thesaurus, name, value) :
+     * un même contributeur déjà présent est ignoré.
+     */
     @Transactional
     public void saveContributorDcTerm(String thesaurusId, String conceptId, String contributorName) {
-        insertDcTermIfAbsent(thesaurusId, conceptId, CONTRIBUTOR_DC_TERM, contributorName);
+        saveDcTermIfAbsent(thesaurusId, conceptId, DCMIResource.CONTRIBUTOR, contributorName);
     }
 
     @Transactional
     public void saveCreatorDcTerm(String thesaurusId, String conceptId, String creatorName) {
-        insertDcTermIfAbsent(thesaurusId, conceptId, CREATOR_DC_TERM, creatorName);
+        saveDcTermIfAbsent(thesaurusId, conceptId, DCMIResource.CREATOR, creatorName);
     }
 
-    /**
-     * La PK de {@code concept_dcterms} est (id_concept, id_thesaurus, name, value).
-     * Un même contributeur peut déjà être enregistré : on ignore alors le doublon.
-     */
-    private void insertDcTermIfAbsent(String thesaurusId, String conceptId, String name, String value) {
-        entityManager.createNativeQuery("""
-                        INSERT INTO concept_dcterms (id_concept, id_thesaurus, name, value)
-                        VALUES (:conceptId, :thesaurusId, :name, :value)
-                        ON CONFLICT (id_concept, id_thesaurus, name, value) DO NOTHING
-                        """)
-                .setParameter("conceptId", conceptId)
-                .setParameter("thesaurusId", thesaurusId)
-                .setParameter("name", name)
-                .setParameter("value", value)
-                .executeUpdate();
+    private void saveDcTermIfAbsent(String thesaurusId, String conceptId, String name, String value) {
+        String trimmed = StringUtils.trimToNull(value);
+        if (StringUtils.isAnyBlank(thesaurusId, conceptId, name, trimmed)) {
+            return;
+        }
+        try {
+            // Même approche que le legacy : ConceptDcTermRepository.save(...)
+            conceptDcTermRepository.save(ConceptDcTerm.builder()
+                    .idConcept(conceptId)
+                    .idThesaurus(thesaurusId)
+                    .name(name)
+                    .value(trimmed)
+                    .build());
+        } catch (DataIntegrityViolationException ex) {
+            // Contributeur / créateur déjà enregistré pour ce concept (PK composite).
+            log.debug("DC term déjà présent: {} / {} / {} / {}", thesaurusId, conceptId, name, trimmed);
+        }
     }
 }

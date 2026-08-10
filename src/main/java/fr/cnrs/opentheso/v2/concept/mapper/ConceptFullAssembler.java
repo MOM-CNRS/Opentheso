@@ -119,12 +119,10 @@ public class ConceptFullAssembler {
         concept.setNotation(stringAt(core, 5));
         concept.setCreated(formatDate(core[6]));
         concept.setModified(formatDate(core[7]));
-        concept.setCreatorName(preferences != null && preferences.displayUserName()
-                ? conceptFullQueryRepository.findCreator(conceptId, thesaurusId).orElse(null)
-                : null);
-        concept.setContributorName(preferences != null && preferences.displayUserName()
-                ? nullIfEmpty(conceptFullQueryRepository.findContributors(conceptId, thesaurusId))
-                : null);
+        // Comme legacy (ResourceService / SQL opentheso_get_concept) : toujours charger
+        // creator/contributors depuis concept_dcterms ; l'affichage est filtré côté UI.
+        concept.setCreatorName(conceptFullQueryRepository.findCreator(conceptId, thesaurusId).orElse(null));
+        concept.setContributorName(nullIfEmpty(conceptFullQueryRepository.findContributors(conceptId, thesaurusId)));
 
         concept.setPrefLabel(mapPreferredLabel(conceptId, thesaurusId, lang));
         concept.setAltLabels(mapAltLabels(conceptId, thesaurusId, lang, false));

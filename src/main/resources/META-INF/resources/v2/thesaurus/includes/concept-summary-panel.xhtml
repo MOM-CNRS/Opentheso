@@ -465,7 +465,7 @@
               <h:outputText value="#{v2ThesaurusBrowseBean.selectedConcept.summary.created}" style="font-size: 12px; color: #43B572;"/>
               <h:outputText value="  #{v2LocaleBean.getMsg('rightbody.concept.last_modification')}: " style="font-size: 12px; color: grey; font-style: italic; margin-left: 10px;"/>
               <h:outputText value="#{v2ThesaurusBrowseBean.selectedConcept.summary.modified}" style="font-size: 12px; color: #43B572;"/>
-              <h:panelGroup rendered="#{v2ThesaurusBrowseBean.displayUserName and (not empty v2ThesaurusBrowseBean.selectedConcept.summary.creatorName or not empty v2ThesaurusBrowseBean.selectedConcept.contributors)}">
+              <h:panelGroup rendered="#{(v2UserSession.loggedIn or v2ThesaurusBrowseBean.displayUserName) and (not empty v2ThesaurusBrowseBean.selectedConcept.summary.creatorName or not empty v2ThesaurusBrowseBean.selectedConcept.contributors)}">
                 <br/>
                 <h:outputText rendered="#{not empty v2ThesaurusBrowseBean.selectedConcept.summary.creatorName}"
                               value="#{v2LocaleBean.getMsg('rightbody.concept.createdBy')}: " style="font-size: 12px; color: grey; font-style: italic;"/>
