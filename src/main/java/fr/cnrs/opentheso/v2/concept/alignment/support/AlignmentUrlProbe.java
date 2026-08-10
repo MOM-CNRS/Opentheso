@@ -8,10 +8,10 @@ import java.net.URI;
 import java.net.URL;
 
 /**
- * Contrôles d'URL pour les alignements manuels :
+ * Contrôles d'URL pour les alignements :
  * <ul>
- *   <li>format ({@code http}/{@code https})</li>
- *   <li>joignabilité (HEAD, timeout court)</li>
+ *   <li>format ({@code http}/{@code https}) — utilisé pour l'ajout / modification manuels</li>
+ *   <li>joignabilité (HEAD) — réservé au contrôle batch admin ({@code checkUrls})</li>
  * </ul>
  */
 @Slf4j
@@ -28,8 +28,8 @@ public final class AlignmentUrlProbe {
     }
 
     /**
-     * Indique si l'URL répond (codes 2xx/3xx).
-     * En création / modification manuelle, un échec bloque l'enregistrement.
+     * Indique si l'URL répond (codes 2xx/3xx). Utilisé uniquement pour le contrôle
+     * batch des URLs d'alignement en admin, pas à l'enregistrement manuel.
      */
     public static boolean isReachable(String urlString) {
         if (StringUtils.isBlank(urlString)) {

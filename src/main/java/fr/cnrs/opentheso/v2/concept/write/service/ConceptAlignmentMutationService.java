@@ -69,10 +69,6 @@ public class ConceptAlignmentMutationService {
             return MutationResult.duplicate("Cette URI est déjà alignée avec un autre type d'équivalence !");
         }
 
-        if (!AlignmentUrlProbe.isReachable(uri)) {
-            return MutationResult.validationError("L'URL n'est pas joignable !");
-        }
-
         var now = new Date();
         try {
             alignementRepository.save(Alignement.builder()
@@ -132,10 +128,6 @@ public class ConceptAlignmentMutationService {
                 && alignementRepository.existsByInternalIdThesaurusAndInternalIdConceptAndUriTarget(
                 command.thesaurusId(), command.conceptId(), uri)) {
             return MutationResult.duplicate("Cette URI est déjà alignée sur ce concept !");
-        }
-
-        if (!AlignmentUrlProbe.isReachable(uri)) {
-            return MutationResult.validationError("L'URL n'est pas joignable !");
         }
 
         entity.setUriTarget(uri);

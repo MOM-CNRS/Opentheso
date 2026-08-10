@@ -4,7 +4,6 @@ import fr.cnrs.opentheso.entites.Alignement;
 import fr.cnrs.opentheso.entites.AlignementType;
 import fr.cnrs.opentheso.repositories.AlignementRepository;
 import fr.cnrs.opentheso.repositories.AlignementTypeRepository;
-import fr.cnrs.opentheso.v2.concept.alignment.support.AlignmentUrlProbe;
 import fr.cnrs.opentheso.v2.concept.write.model.MutationOutcome;
 import fr.cnrs.opentheso.v2.concept.write.model.command.AddManualAlignmentCommand;
 import fr.cnrs.opentheso.v2.concept.write.model.command.DeleteAlignmentCommand;
@@ -15,7 +14,6 @@ import org.junit.jupiter.api.extension.ExtendWith;
 import org.mockito.ArgumentCaptor;
 import org.mockito.InjectMocks;
 import org.mockito.Mock;
-import org.mockito.MockedStatic;
 import org.mockito.junit.jupiter.MockitoExtension;
 
 import java.util.List;
@@ -25,8 +23,6 @@ import static org.junit.jupiter.api.Assertions.assertEquals;
 import static org.junit.jupiter.api.Assertions.assertFalse;
 import static org.junit.jupiter.api.Assertions.assertTrue;
 import static org.mockito.ArgumentMatchers.any;
-import static org.mockito.ArgumentMatchers.anyString;
-import static org.mockito.Mockito.mockStatic;
 import static org.mockito.Mockito.never;
 import static org.mockito.Mockito.verify;
 import static org.mockito.Mockito.when;
@@ -127,77 +123,22 @@ class ConceptAlignmentMutationServiceTest {
         when(alignementRepository.existsByInternalIdThesaurusAndInternalIdConceptAndUriTarget(
                 "TH1", "C1", "http://example.org/x")).thenReturn(false);
 
-        try (MockedStatic<AlignmentUrlProbe> probe = mockStatic(AlignmentUrlProbe.class)) {
-            probe.when(() -> AlignmentUrlProbe.isValidFormat(anyString())).thenCallRealMethod();
-            probe.when(() -> AlignmentUrlProbe.isReachable("http://example.org/x")).thenReturn(true);
+        var result = service.addManualAlignment(command);
 
-            var result = service.addManualAlignment(command);
-
-            assertEquals(MutationOutcome.OK, result.outcome());
-            assertFalse(result.warning());
-            ArgumentCaptor<Alignement> captor = ArgumentCaptor.forClass(Alignement.class);
-            verify(alignementRepository).save(captor.capture());
-            Alignement saved = captor.getValue();
-            assertEquals("http://example.org/x", saved.getUriTarget());
-            assertEquals("Wikidata", saved.getThesaurusTarget());
-            assertEquals("C1", saved.getInternalIdConcept());
-            assertEquals("TH1", saved.getInternalIdThesaurus());
-            assertTrue(saved.getUrlAvailable());
-            assertEquals(exactMatchType, saved.getAlignementType());
-            assertEquals(42, saved.getAuthor());
-            verify(conceptWritePostMutationRepository).touchConcept("TH1", "C1", 42);
-            verify(conceptWritePostMutationRepository).saveContributorDcTerm("TH1", "C1", "admin");
-        }
-    }
-
-    @Test
-    void addManualAlignment_unreachableUrl_blocksSave() {
-        var command = new AddManualAlignmentCommand("TH1", "C1", 1, "http://example.org/down", "Wikidata", 42, "admin");
-        when(alignementTypeRepository.findById(1)).thenReturn(Optional.of(exactMatchType));
-        when(alignementRepository.existsByConceptThesaurusTypeAndUri("TH1", "C1", 1, "http://example.org/down"))
-                .thenReturn(false);
-        when(alignementRepository.existsByInternalIdThesaurusAndInternalIdConceptAndUriTarget(
-                "TH1", "C1", "http://example.org/down")).thenReturn(false);
-
-        try (MockedStatic<AlignmentUrlProbe> probe = mockStatic(AlignmentUrlProbe.class)) {
-            probe.when(() -> AlignmentUrlProbe.isValidFormat(anyString())).thenCallRealMethod();
-            probe.when(() -> AlignmentUrlProbe.isReachable("http://example.org/down")).thenReturn(false);
-
-            var result = service.addManualAlignment(command);
-
-            assertEquals(MutationOutcome.VALIDATION_ERROR, result.outcome());
-            assertEquals("L'URL n'est pas joignable !", result.message());
-            verify(alignementRepository, never()).save(any());
-        }
-    }
-
-    @Test
-    void updateAlignment_unreachableUrl_blocksSave() {
-        var command = new UpdateAlignmentCommand("TH1", "C1", 7, 1, "http://example.org/down", "Getty", 42, "admin");
-        var existing = Alignement.builder()
-                .id(7)
-                .internalIdThesaurus("TH1")
-                .internalIdConcept("C1")
-                .uriTarget("http://example.org/old")
-                .thesaurusTarget("Old source")
-                .urlAvailable(true)
-                .build();
-        when(alignementRepository.findByInternalIdThesaurusAndInternalIdConceptAndId("TH1", "C1", 7))
-                .thenReturn(Optional.of(existing));
-        when(alignementTypeRepository.findById(1)).thenReturn(Optional.of(exactMatchType));
-        when(alignementRepository.existsByInternalIdThesaurusAndInternalIdConceptAndUriTarget(
-                "TH1", "C1", "http://example.org/down")).thenReturn(false);
-
-        try (MockedStatic<AlignmentUrlProbe> probe = mockStatic(AlignmentUrlProbe.class)) {
-            probe.when(() -> AlignmentUrlProbe.isValidFormat(anyString())).thenCallRealMethod();
-            probe.when(() -> AlignmentUrlProbe.isReachable("http://example.org/down")).thenReturn(false);
-
-            var result = service.updateAlignment(command);
-
-            assertEquals(MutationOutcome.VALIDATION_ERROR, result.outcome());
-            assertEquals("L'URL n'est pas joignable !", result.message());
-            verify(alignementRepository, never()).save(any());
-        }
+        assertEquals(MutationOutcome.OK, result.outcome());
+        assertFalse(result.warning());
+        ArgumentCaptor<Alignement> captor = ArgumentCaptor.forClass(Alignement.class);
+        verify(alignementRepository).save(captor.capture());
+        Alignement saved = captor.getValue();
+        assertEquals("http://example.org/x", saved.getUriTarget());
+        assertEquals("Wikidata", saved.getThesaurusTarget());
+        assertEquals("C1", saved.getInternalIdConcept());
+        assertEquals("TH1", saved.getInternalIdThesaurus());
+        assertTrue(saved.getUrlAvailable());
+        assertEquals(exactMatchType, saved.getAlignementType());
+        assertEquals(42, saved.getAuthor());
+        verify(conceptWritePostMutationRepository).touchConcept("TH1", "C1", 42);
+        verify(conceptWritePostMutationRepository).saveContributorDcTerm("TH1", "C1", "admin");
     }
 
     @Test
@@ -228,21 +169,16 @@ class ConceptAlignmentMutationServiceTest {
                 .thenReturn(Optional.of(existing));
         when(alignementTypeRepository.findById(2)).thenReturn(Optional.of(closeType));
 
-        try (MockedStatic<AlignmentUrlProbe> probe = mockStatic(AlignmentUrlProbe.class)) {
-            probe.when(() -> AlignmentUrlProbe.isValidFormat(anyString())).thenCallRealMethod();
-            probe.when(() -> AlignmentUrlProbe.isReachable("http://example.org/old")).thenReturn(true);
+        var result = service.updateAlignment(command);
 
-            var result = service.updateAlignment(command);
-
-            assertEquals(MutationOutcome.OK, result.outcome());
-            assertEquals("http://example.org/old", existing.getUriTarget());
-            assertEquals("Getty", existing.getThesaurusTarget());
-            assertEquals(closeType, existing.getAlignementType());
-            assertTrue(existing.getUrlAvailable());
-            verify(alignementRepository, never()).existsByInternalIdThesaurusAndInternalIdConceptAndUriTarget(
-                    any(), any(), any());
-            verify(alignementRepository).save(existing);
-        }
+        assertEquals(MutationOutcome.OK, result.outcome());
+        assertEquals("http://example.org/old", existing.getUriTarget());
+        assertEquals("Getty", existing.getThesaurusTarget());
+        assertEquals(closeType, existing.getAlignementType());
+        assertTrue(existing.getUrlAvailable());
+        verify(alignementRepository, never()).existsByInternalIdThesaurusAndInternalIdConceptAndUriTarget(
+                any(), any(), any());
+        verify(alignementRepository).save(existing);
     }
 
     @Test
@@ -285,20 +221,15 @@ class ConceptAlignmentMutationServiceTest {
         when(alignementRepository.existsByInternalIdThesaurusAndInternalIdConceptAndUriTarget(
                 "TH1", "C1", "http://example.org/y")).thenReturn(false);
 
-        try (MockedStatic<AlignmentUrlProbe> probe = mockStatic(AlignmentUrlProbe.class)) {
-            probe.when(() -> AlignmentUrlProbe.isValidFormat(anyString())).thenCallRealMethod();
-            probe.when(() -> AlignmentUrlProbe.isReachable("http://example.org/y")).thenReturn(true);
+        var result = service.updateAlignment(command);
 
-            var result = service.updateAlignment(command);
-
-            assertEquals(MutationOutcome.OK, result.outcome());
-            assertEquals("http://example.org/y", existing.getUriTarget());
-            assertEquals("Getty", existing.getThesaurusTarget());
-            assertEquals(exactMatchType, existing.getAlignementType());
-            assertTrue(existing.getUrlAvailable());
-            verify(alignementRepository).save(existing);
-            verify(conceptWritePostMutationRepository).touchConcept("TH1", "C1", 42);
-        }
+        assertEquals(MutationOutcome.OK, result.outcome());
+        assertEquals("http://example.org/y", existing.getUriTarget());
+        assertEquals("Getty", existing.getThesaurusTarget());
+        assertEquals(exactMatchType, existing.getAlignementType());
+        assertTrue(existing.getUrlAvailable());
+        verify(alignementRepository).save(existing);
+        verify(conceptWritePostMutationRepository).touchConcept("TH1", "C1", 42);
     }
 
     @Test
