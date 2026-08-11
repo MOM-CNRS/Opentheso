@@ -22,17 +22,17 @@
         <h:panelGroup rendered="#{v2ThesaurusContext.fromUrl}">
             <p:commandButton icon="pi pi-arrow-circle-left" style="margin-right: 15px"
                              actionListener="#{v2ConsultationShellBean.clearFromUrl()}" process="@this"
-                             update="menuBar containerIndex indexTitle resultSearchBar"
                              oncomplete="changeUrl();"/>
             <h:outputLabel value="#{v2ConsultationShellBean.currentThesaurusTitle}"
                            style="margin-bottom: 0rem; color: #226b40; font-weight: bold;"/>
         </h:panelGroup>
 
         <h:panelGroup rendered="#{not v2ThesaurusContext.fromUrl}">
+            <!-- Liste projets — comme legacy : AJAX update thesoSelect + contenu (pas de redirect) -->
             <p:selectOneMenu value="#{v2ConsultationShellBean.selectedProjectId}" filter="true" filterMatchMode="contains"
                              style="height: 28px; max-width: 400px; border-radius: 50px 0px 0px 50px;
                                     background-color: #ECF8F1; color: #FFF !important; margin-top: 0px;">
-                <p:ajax event="valueChange" listener="#{v2ConsultationShellBean.onProjectChange()}" process="@this"
+                <p:ajax event="valueChange" listener="#{v2ConsultationShellBean.onProjectChange()}"
                         update="thesoSelect :indexTitle :resultSearchBar :menuBar
                                 :containerIndex:searchBar :containerIndex:contentConcept"
                         oncomplete="changeUrl();"/>
@@ -41,16 +41,13 @@
                                itemLabel="#{project.label}" itemValue="#{project.id}"/>
             </p:selectOneMenu>
 
+            <!-- Liste thésaurus — comme legacy setSelectedTheso() : pas d'update, redirect dans le bean -->
             <p:selectOneMenu id="thesoSelect" value="#{v2ConsultationShellBean.selectedThesaurusId}"
                              style="height: 28px; max-width: 400px; border-radius: 0px 50px 50px 0px; background-color: #ECF8F1;
                                     color: #FFF !important;"
                              filter="true" filterMatchMode="contains">
-                <p:ajax event="valueChange" listener="#{v2ConsultationShellBean.onThesaurusChange()}" process="@this"
-                        update=":indexTitle :resultSearchBar :menuBar
-                                :containerIndex:header :containerIndex:searchBar :containerIndex:contentConcept"
-                        oncomplete="changeUrl();"/>
-                <f:selectItem itemLabel="(#{v2LocaleBean.getMsg('menu.select_thesaurus')})" itemValue=""
-                              noSelectionOption="true"/>
+                <p:ajax event="valueChange" listener="#{v2ConsultationShellBean.onThesaurusChange()}"/>
+                <f:selectItem itemLabel="(#{v2LocaleBean.getMsg('menu.select_thesaurus')})" itemValue=""/>
                 <f:selectItems value="#{v2ConsultationShellBean.thesaurusOptions}" var="theso"
                                itemLabel="#{theso.displayLabel}" itemValue="#{theso.id}"/>
             </p:selectOneMenu>

@@ -26,7 +26,7 @@
                                                     update=":containerIndex :indexTitle :resultSearchBar :messageIndex :menuBar"/>
                                             <f:selectItems value="#{v2ConceptSearchBean.availableLanguages}"
                                                            var="lang"
-                                                           itemLabel="#{lang.value}"
+                                                           itemLabel="#{lang.displayLabel}"
                                                            itemValue="#{lang.code}"/>
                                             <f:selectItem itemLabel="#{v2LocaleBean.getMsg('search.any_language')}" itemValue="all"/>
                                         </p:selectOneMenu>

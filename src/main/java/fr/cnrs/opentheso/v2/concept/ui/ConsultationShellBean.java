@@ -17,12 +17,10 @@ import jakarta.enterprise.context.SessionScoped;
 import jakarta.faces.context.ExternalContext;
 import jakarta.faces.context.FacesContext;
 import jakarta.inject.Named;
-import jakarta.servlet.http.HttpServletRequest;
 import lombok.Getter;
 import lombok.RequiredArgsConstructor;
 import lombok.Setter;
 import org.apache.commons.lang3.StringUtils;
-import org.primefaces.PrimeFaces;
 
 import java.io.IOException;
 import java.io.Serializable;
@@ -30,6 +28,15 @@ import java.util.Collections;
 import java.util.List;
 import java.util.Map;
 
+/**
+ * Shell consultation V2 (sélection projet / thésaurus du header).
+ * <p>
+ * Comportement aligné sur le legacy {@code SelectedTheso} :
+ * <ul>
+ *   <li>changement de projet → AJAX (rafraîchit la liste des thésaurus + contenu)</li>
+ *   <li>changement de thésaurus → redirect HTTP vers {@code /v2/thesaurus}</li>
+ * </ul>
+ */
 @Getter
 @Setter
 @SessionScoped
@@ -38,6 +45,7 @@ import java.util.Map;
 public class ConsultationShellBean implements Serializable {
 
     private static final int ALL_PROJECTS_ID = -1;
+    private static final String BROWSE_PATH = "/v2/thesaurus";
 
     private final ConsultationCatalogService consultationCatalogService;
     private final ThesaurusContext thesaurusContext;
@@ -73,85 +81,72 @@ public class ConsultationShellBean implements Serializable {
         syncHomePanels();
     }
 
-    public void onProjectChange() throws IOException {
+    /**
+     * Équivalent legacy {@code SelectedTheso#setSelectedProject} : met à jour la liste
+     * des thésaurus et le panneau d'accueil (AJAX, pas de redirect).
+     */
+    public void onProjectChange() {
         refreshThesaurusOptions();
         if (StringUtils.isNotBlank(selectedThesaurusId)
                 && thesaurusOptions.stream().noneMatch(option -> option.id().equals(selectedThesaurusId))) {
             clearThesaurusSelection();
         }
         syncHomePanels();
-        applyBrowseRefresh();
+        refreshBrowseState();
     }
 
+    /**
+     * Équivalent legacy {@code SelectedTheso#setSelectedTheso} : applique la sélection
+     * puis redirect HTTP (comme {@code menuBean.redirectToThesaurus}).
+     */
     public void onThesaurusChange() throws IOException {
         thesaurusContext.setFromUrl(false);
+        conceptSelectionContext.clear();
         if (StringUtils.isBlank(selectedThesaurusId)) {
             clearThesaurusSelection();
-            syncHomePanels();
-            applyBrowseRefresh();
-            return;
+        } else {
+            consultationProjectHomeBean.clear();
+            applyThesaurusSelection(selectedThesaurusId);
         }
-        consultationProjectHomeBean.clear();
-        applyThesaurusSelection(selectedThesaurusId);
-        applyBrowseRefresh();
+        syncHomePanels();
+        redirectToBrowse();
     }
 
-    /** Projet précis sélectionné (pas « Tous les projets »). */
     public boolean isProjectSelected() {
         return selectedProjectId != ALL_PROJECTS_ID;
     }
 
-    /** Accueil plateforme : aucun projet précis + aucun thésaurus. */
     public boolean isPlatformHome() {
         return !hasSelectedThesaurus() && !isProjectSelected();
     }
 
-    /** Présentation projet : projet précis + aucun thésaurus. */
     public boolean isProjectHome() {
         return !hasSelectedThesaurus() && isProjectSelected();
     }
 
     /**
      * Recharge le thésaurus courant (équivalent legacy {@code SelectedTheso#reloadSelectedTheso}).
-     * <p>
-     * Rafraîchit le catalogue header, revient à l'accueil thésaurus (sans concept sélectionné)
-     * puis force un rechargement complet de la page.
      */
     public void reloadThesaurus() throws IOException {
         thesaurusContext.setFromUrl(false);
         thesaurusContext.setIdConceptFromUri(null);
         thesaurusContext.setIdGroupFromUri(null);
         thesaurusContext.setIdFacetFromUri(null);
+        conceptSelectionContext.clear();
 
         refreshCatalog();
         syncSelectionFromContext();
 
-        if (StringUtils.isBlank(selectedThesaurusId)) {
-            applyBrowseRefresh();
-            return;
+        if (StringUtils.isNotBlank(selectedThesaurusId)) {
+            applyThesaurusSelection(selectedThesaurusId);
         }
-
-        applyThesaurusSelection(selectedThesaurusId);
-        conceptSelectionContext.clear();
-
-        FacesContext facesContext = FacesContext.getCurrentInstance();
-        if (facesContext != null && isBrowseView(facesContext)) {
-            invokeViewAction("#{v2ConceptSearchBean.clear()}");
-            PrimeFaces.current().executeScript(
-                    "if (typeof hideResultSearchBar === 'function') { hideResultSearchBar(); }"
-                            + "window.location.reload();");
-            return;
-        }
-
-        ExternalContext context = facesContext != null ? facesContext.getExternalContext() : null;
-        if (context != null) {
-            context.redirect(context.getRequestContextPath() + "/v2/thesaurus");
-        }
+        syncHomePanels();
+        redirectToBrowse();
     }
 
     public void clearFromUrl() throws IOException {
         thesaurusContext.setFromUrl(false);
-        applyBrowseRefresh();
+        redirectToBrowse();
     }
 
     public void clearSession() throws IOException {
@@ -171,22 +166,6 @@ public class ConsultationShellBean implements Serializable {
         }
     }
 
-    private void notifySessionLifecycleMessages() {
-        FacesContext facesContext = FacesContext.getCurrentInstance();
-        if (facesContext == null) {
-            return;
-        }
-        Map<String, String> params = facesContext.getExternalContext().getRequestParameterMap();
-        if ("1".equals(params.get(SessionLifecycleService.PARAM_SESSION_EXPIRED))) {
-            MessageUtils.showWarnMessage(v2LocaleBean.getMsg("session.expired"));
-        } else if ("1".equals(params.get(SessionLifecycleService.PARAM_LOGOUT))) {
-            MessageUtils.showInformationMessage(v2LocaleBean.getMsg("connect.goodbye"));
-        }
-    }
-
-    /**
-     * Recharge projets + thésaurus du sélecteur header (après create/import/delete).
-     */
     public void refreshHeaderCatalog() {
         refreshCatalog();
         syncSelectionFromContext();
@@ -243,6 +222,19 @@ public class ConsultationShellBean implements Serializable {
         return platformHomeReadService.getApplicationVersion();
     }
 
+    private void notifySessionLifecycleMessages() {
+        FacesContext facesContext = FacesContext.getCurrentInstance();
+        if (facesContext == null) {
+            return;
+        }
+        Map<String, String> params = facesContext.getExternalContext().getRequestParameterMap();
+        if ("1".equals(params.get(SessionLifecycleService.PARAM_SESSION_EXPIRED))) {
+            MessageUtils.showWarnMessage(v2LocaleBean.getMsg("session.expired"));
+        } else if ("1".equals(params.get(SessionLifecycleService.PARAM_LOGOUT))) {
+            MessageUtils.showInformationMessage(v2LocaleBean.getMsg("connect.goodbye"));
+        }
+    }
+
     private void refreshCatalog() {
         projects = consultationCatalogService.listProjects(
                 userSession.isLoggedIn() ? userSession.getCurrentUserId() : null,
@@ -262,16 +254,9 @@ public class ConsultationShellBean implements Serializable {
 
     private void syncSelectionFromContext() {
         String currentThesaurusId = thesaurusContext.resolveThesaurusId();
-        if (StringUtils.isNotBlank(currentThesaurusId)) {
-            selectedThesaurusId = currentThesaurusId;
-            return;
-        }
-        selectedThesaurusId = null;
+        selectedThesaurusId = StringUtils.isNotBlank(currentThesaurusId) ? currentThesaurusId : null;
     }
 
-    /**
-     * Aucun thésaurus sélectionné → clear contexte + sélection concept.
-     */
     private void clearThesaurusSelection() {
         selectedThesaurusId = null;
         thesaurusContext.clearSelection();
@@ -303,38 +288,24 @@ public class ConsultationShellBean implements Serializable {
         }
     }
 
-    private void applyBrowseRefresh() throws IOException {
-        FacesContext facesContext = FacesContext.getCurrentInstance();
-        if (facesContext == null) {
-            return;
-        }
-        if (isBrowseView(facesContext)) {
-            refreshBrowseView();
-            return;
-        }
-        redirectWithoutQueryParams();
-    }
-
-    private boolean isBrowseView(FacesContext facesContext) {
-        String viewId = facesContext.getViewRoot().getViewId();
-        return viewId != null && viewId.contains("thesaurus/browse");
-    }
-
-    private void refreshBrowseView() {
+    /** Recharge l'état ViewScoped après changement de projet (réponse AJAX). */
+    private void refreshBrowseState() {
         invokeViewAction("#{v2ThesaurusBrowseBean.load()}");
         invokeViewAction("#{v2ConceptSearchBean.syncFromContext()}");
         invokeViewAction("#{v2PropositionBean.refreshPendingCount()}");
-        if (PrimeFaces.current().isAjaxRequest()) {
-            // Évite d'updater tout le form (contient la source AJAX) : cibles stables comme legacy.
-            PrimeFaces.current().ajax().update(
-                    "indexTitle",
-                    "menuBar",
-                    "resultSearchBar",
-                    "containerIndex:header",
-                    "containerIndex:searchBar",
-                    "containerIndex:contentConcept"
-            );
+    }
+
+    /**
+     * Redirect HTTP comme legacy {@code menuBean.redirectToThesaurus()}.
+     * Sans attribut {@code update} sur le {@code p:ajax} source.
+     */
+    private void redirectToBrowse() throws IOException {
+        FacesContext facesContext = FacesContext.getCurrentInstance();
+        if (facesContext == null || facesContext.getResponseComplete()) {
+            return;
         }
+        ExternalContext context = facesContext.getExternalContext();
+        context.redirect(context.getRequestContextPath() + BROWSE_PATH);
     }
 
     private void invokeViewAction(String expression) {
@@ -343,12 +314,5 @@ public class ConsultationShellBean implements Serializable {
             return;
         }
         context.getApplication().evaluateExpressionGet(context, expression, Object.class);
-    }
-
-    private void redirectWithoutQueryParams() throws IOException {
-        ExternalContext context = FacesContext.getCurrentInstance().getExternalContext();
-        HttpServletRequest request = (HttpServletRequest) context.getRequest();
-        String path = request.getRequestURI().substring(request.getContextPath().length());
-        context.redirect(request.getContextPath() + path);
     }
 }

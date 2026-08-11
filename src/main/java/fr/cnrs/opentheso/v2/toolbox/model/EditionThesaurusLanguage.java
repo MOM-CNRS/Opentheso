@@ -23,7 +23,11 @@ public record EditionThesaurusLanguage(
         return displayLabel;
     }
 
-    public String getValue() {
+    public String value() {
         return displayLabel;
+    }
+
+    public String getValue() {
+        return value();
     }
 }
