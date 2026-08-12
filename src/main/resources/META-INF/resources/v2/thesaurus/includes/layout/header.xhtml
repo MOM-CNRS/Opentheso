@@ -28,7 +28,6 @@
         </h:panelGroup>
 
         <h:panelGroup rendered="#{not v2ThesaurusContext.fromUrl}">
-            <!-- Liste projets — comme legacy : AJAX update thesoSelect + contenu (pas de redirect) -->
             <p:selectOneMenu value="#{v2ConsultationShellBean.selectedProjectId}" filter="true" filterMatchMode="contains"
                              style="height: 28px; max-width: 400px; border-radius: 50px 0px 0px 50px;
                                     background-color: #ECF8F1; color: #FFF !important; margin-top: 0px;">
@@ -41,7 +40,8 @@
                                itemLabel="#{project.label}" itemValue="#{project.id}"/>
             </p:selectOneMenu>
 
-            <!-- Liste thésaurus — comme legacy setSelectedTheso() : pas d'update, redirect dans le bean -->
+            <!-- Liste thésaurus — miroir exact du legacy commun/header.xhtml :
+                 p:ajax valueChange SANS update ; le bean redirige vers /v2/thesaurus. -->
             <p:selectOneMenu id="thesoSelect" value="#{v2ConsultationShellBean.selectedThesaurusId}"
                              style="height: 28px; max-width: 400px; border-radius: 0px 50px 50px 0px; background-color: #ECF8F1;
                                     color: #FFF !important;"

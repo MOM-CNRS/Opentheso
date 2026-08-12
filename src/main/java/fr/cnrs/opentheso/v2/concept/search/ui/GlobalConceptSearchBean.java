@@ -57,6 +57,14 @@ public class GlobalConceptSearchBean implements Serializable {
         }
     }
 
+    /** Réinitialise les résultats (changement de thésaurus, comme legacy). */
+    public void clearResults() {
+        searchValue = null;
+        selectedSuggestion = null;
+        results = Collections.emptyList();
+        singleResultSelected = false;
+    }
+
     public List<ConceptSearchSuggestion> complete(String query) {
         if (StringUtils.isBlank(query)) {
             return Collections.emptyList();

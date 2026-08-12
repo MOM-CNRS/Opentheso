@@ -5,6 +5,7 @@ import fr.cnrs.opentheso.v2.concept.model.ConsultationProjectOption;
 import fr.cnrs.opentheso.v2.concept.model.ConsultationThesaurusOption;
 import fr.cnrs.opentheso.v2.concept.service.ConsultationCatalogService;
 import fr.cnrs.opentheso.v2.concept.session.ConceptSelectionContext;
+import fr.cnrs.opentheso.v2.shared.session.ConceptTreeRefreshState;
 import fr.cnrs.opentheso.v2.shared.session.SessionLifecycleService;
 import fr.cnrs.opentheso.v2.shared.session.SsoSessionBridge;
 import fr.cnrs.opentheso.v2.rights.Permission;
@@ -21,6 +22,7 @@ import lombok.Getter;
 import lombok.RequiredArgsConstructor;
 import lombok.Setter;
 import org.apache.commons.lang3.StringUtils;
+import org.primefaces.PrimeFaces;
 
 import java.io.IOException;
 import java.io.Serializable;
@@ -45,7 +47,8 @@ import java.util.Map;
 public class ConsultationShellBean implements Serializable {
 
     private static final int ALL_PROJECTS_ID = -1;
-    private static final String BROWSE_PATH = "/v2/thesaurus";
+    /** Vue JSF concrète (comme legacy {@code /index.xhtml}), pas la pretty URL. */
+    private static final String BROWSE_VIEW = "/v2/thesaurus/browse.xhtml";
 
     private final ConsultationCatalogService consultationCatalogService;
     private final ThesaurusContext thesaurusContext;
@@ -57,6 +60,7 @@ public class ConsultationShellBean implements Serializable {
     private final SessionLifecycleService sessionLifecycleService;
     private final RightsService rightsService;
     private final ConsultationProjectHomeBean consultationProjectHomeBean;
+    private final ConceptTreeRefreshState conceptTreeRefreshState;
 
     private int selectedProjectId = ALL_PROJECTS_ID;
     private String selectedThesaurusId;
@@ -96,20 +100,38 @@ public class ConsultationShellBean implements Serializable {
     }
 
     /**
-     * Équivalent legacy {@code SelectedTheso#setSelectedTheso} : applique la sélection
-     * puis redirect HTTP (comme {@code menuBean.redirectToThesaurus}).
+     * Équivalent legacy {@code SelectedTheso#setSelectedTheso}.
+     * <p>
+     * Applique la sélection puis force une navigation vers la vue browse
+     * (chemin {@code .xhtml}, comme legacy → {@code /index.xhtml}).
      */
     public void onThesaurusChange() throws IOException {
         thesaurusContext.setFromUrl(false);
-        conceptSelectionContext.clear();
+
         if (StringUtils.isBlank(selectedThesaurusId)) {
             clearThesaurusSelection();
-        } else {
+            syncHomePanels();
+            safeClearSearchResults();
+            navigateToBrowse();
+            return;
+        }
+
+        String previousId = thesaurusContext.resolveThesaurusId();
+        boolean sameThesaurus = selectedThesaurusId.equalsIgnoreCase(StringUtils.defaultString(previousId));
+
+        if (!sameThesaurus) {
+            conceptSelectionContext.clear();
             consultationProjectHomeBean.clear();
             applyThesaurusSelection(selectedThesaurusId);
+            conceptTreeRefreshState.requestRefresh();
         }
+
         syncHomePanels();
-        redirectToBrowse();
+        safeClearSearchResults();
+        if (!sameThesaurus) {
+            safeRefreshPropositions();
+        }
+        navigateToBrowse();
     }
 
     public boolean isProjectSelected() {
@@ -141,12 +163,12 @@ public class ConsultationShellBean implements Serializable {
             applyThesaurusSelection(selectedThesaurusId);
         }
         syncHomePanels();
-        redirectToBrowse();
+        navigateToBrowse();
     }
 
     public void clearFromUrl() throws IOException {
         thesaurusContext.setFromUrl(false);
-        redirectToBrowse();
+        navigateToBrowse();
     }
 
     public void clearSession() throws IOException {
@@ -222,6 +244,10 @@ public class ConsultationShellBean implements Serializable {
         return platformHomeReadService.getApplicationVersion();
     }
 
+    public String getGoogleAnalyticsCode() {
+        return platformHomeReadService.getGoogleAnalyticsCode();
+    }
+
     private void notifySessionLifecycleMessages() {
         FacesContext facesContext = FacesContext.getCurrentInstance();
         if (facesContext == null) {
@@ -273,6 +299,11 @@ public class ConsultationShellBean implements Serializable {
             return;
         }
         consultationProjectHomeBean.clear();
+        refreshPlatformHomeHtml();
+    }
+
+    /** Recharge le HTML d'accueil plateforme (après édition super-admin). */
+    public void refreshPlatformHomeHtml() {
         platformHomeHtml = platformHomeReadService.loadHomePageHtml(v2LocaleBean.getIdLangue());
     }
 
@@ -296,16 +327,42 @@ public class ConsultationShellBean implements Serializable {
     }
 
     /**
-     * Redirect HTTP comme legacy {@code menuBean.redirectToThesaurus()}.
-     * Sans attribut {@code update} sur le {@code p:ajax} source.
+     * Navigation forcée vers la consultation, comme legacy {@code menuBean.redirectToThesaurus()}.
+     * <p>
+     * Cible {@code browse.xhtml} (équivalent legacy {@code /index.xhtml}) avec un paramètre
+     * anti-cache : un redirect/assign vers la même URL ne recharge la page qu'une fois sur deux.
      */
-    private void redirectToBrowse() throws IOException {
+    private void navigateToBrowse() throws IOException {
         FacesContext facesContext = FacesContext.getCurrentInstance();
         if (facesContext == null || facesContext.getResponseComplete()) {
             return;
         }
         ExternalContext context = facesContext.getExternalContext();
-        context.redirect(context.getRequestContextPath() + BROWSE_PATH);
+        String url = context.getRequestContextPath() + BROWSE_VIEW + "?_=" + System.currentTimeMillis();
+        if (PrimeFaces.current().isAjaxRequest()) {
+            PrimeFaces.current().executeScript("window.location.assign('" + url + "');");
+            return;
+        }
+        context.redirect(url);
+    }
+
+    /** Comme legacy {@code searchBean.setNodeConceptSearchs(empty)} — best effort. */
+    private void safeClearSearchResults() {
+        try {
+            invokeViewAction("#{v2ConceptSearchBean.clear()}");
+            invokeViewAction("#{v2GlobalConceptSearchBean.clearResults()}");
+        } catch (RuntimeException ignored) {
+            // ne pas bloquer la navigation
+        }
+    }
+
+    /** Comme legacy {@code propositionBean.searchNewPropositions()} — best effort. */
+    private void safeRefreshPropositions() {
+        try {
+            invokeViewAction("#{v2PropositionBean.refreshPendingCount()}");
+        } catch (RuntimeException ignored) {
+            // ne pas bloquer la navigation
+        }
     }
 
     private void invokeViewAction(String expression) {
