@@ -170,7 +170,8 @@
                             update="resultSearchBar :containerIndex:rightTab messageIndex"/>
                 <p:menuitem value="#{v2LocaleBean.getMsg('search.duplicates')}"
                             actionListener="#{v2ConceptSearchBean.runDuplicatesSearch()}"
-                            update="resultSearchBar :containerIndex:rightTab messageIndex"/>
+                            update=":resultSearchBar :messageIndex :containerIndex:contentConcept :containerIndex:formLeftTab"
+                            title="#{v2LocaleBean.getMsg('search.tooltip_duplicates')}"/>
                 <p:menuitem value="#{v2LocaleBean.getMsg('search.forbiddenRelationships')}"
                             actionListener="#{v2ConceptSearchBean.runForbiddenRelationshipsSearch()}"
                             update="resultSearchBar :containerIndex:rightTab messageIndex"/>

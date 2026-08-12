@@ -72,10 +72,13 @@ public class ConceptSearchService {
 
     @Transactional(readOnly = true)
     public List<ConceptSearchResult> searchDuplicates(String thesaurusId, String lang) {
-        String resolvedLang = resolveLang(lang);
+        // Pas de resolveLang("all") → null : les doublons exigent une langue concrète (legacy currentLang).
+        if (StringUtils.isAnyBlank(thesaurusId, lang) || "all".equalsIgnoreCase(lang)) {
+            return Collections.emptyList();
+        }
         List<ConceptSearchResult> results = new ArrayList<>();
-        for (String label : conceptSearchReadService.findDuplicateLabels(thesaurusId, resolvedLang)) {
-            var mapped = conceptSearchReadService.hydrateResultFromLabel(label, thesaurusId, resolvedLang);
+        for (String label : conceptSearchReadService.findDuplicateLabels(thesaurusId, lang)) {
+            var mapped = conceptSearchReadService.hydrateResultFromLabel(label, thesaurusId, lang);
             if (mapped != null) {
                 results.add(mapped);
             }

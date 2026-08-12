@@ -33,11 +33,22 @@ public class ConceptSearchHydrationService {
         if (StringUtils.isAnyBlank(label, thesaurusId, lang)) {
             return null;
         }
+        // Miroir legacy ConceptService#getConceptForSearchFromLabel :
+        // 1) prefLabel (convertString), 2) altLabel (convertString).
         String normalizedLabel = fr.cnrs.opentheso.utils.StringUtils.convertString(label);
         String conceptId = conceptSearchQueryRepository.findConceptIdFromLabel(thesaurusId, normalizedLabel, lang)
                 .orElse(null);
         if (StringUtils.isBlank(conceptId)) {
             conceptId = conceptSearchQueryRepository.findConceptIdFromAltLabel(thesaurusId, normalizedLabel, lang)
+                    .orElse(null);
+        }
+        if (StringUtils.isBlank(conceptId)) {
+            // Repli : label brut (déjà lower() côté SQL des doublons)
+            conceptId = conceptSearchQueryRepository.findConceptIdFromLabel(thesaurusId, label, lang)
+                    .orElse(null);
+        }
+        if (StringUtils.isBlank(conceptId)) {
+            conceptId = conceptSearchQueryRepository.findConceptIdFromAltLabel(thesaurusId, label, lang)
                     .orElse(null);
         }
         if (StringUtils.isBlank(conceptId)) {

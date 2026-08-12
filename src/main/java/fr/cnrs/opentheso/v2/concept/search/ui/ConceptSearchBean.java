@@ -181,32 +181,56 @@ public class ConceptSearchBean implements Serializable {
 
     public void runDeprecatedSearch() {
         runPreprogrammed(conceptSearchService.searchDeprecated(
-                thesaurusContext.resolveThesaurusId(), searchLang));
+                thesaurusContext.resolveThesaurusId(), preprogrammedLang()));
     }
 
     public void runPolyhierarchySearch() {
         runPreprogrammed(conceptSearchService.searchPolyhierarchy(
-                thesaurusContext.resolveThesaurusId(), searchLang));
+                thesaurusContext.resolveThesaurusId(), preprogrammedLang()));
     }
 
     public void runMultiGroupsSearch() {
         runPreprogrammed(conceptSearchService.searchMultiGroups(
-                thesaurusContext.resolveThesaurusId(), searchLang));
+                thesaurusContext.resolveThesaurusId(), preprogrammedLang()));
     }
 
     public void runWithoutGroupsSearch() {
         runPreprogrammed(conceptSearchService.searchWithoutGroups(
-                thesaurusContext.resolveThesaurusId(), searchLang));
+                thesaurusContext.resolveThesaurusId(), preprogrammedLang()));
     }
 
+    /**
+     * Aligné sur legacy {@code SearchBean#searchConceptDuplicated} :
+     * langue de travail du thésaurus, tri, ouverture du 1er résultat,
+     * barre de résultats si plusieurs.
+     */
     public void runDuplicatesSearch() {
-        runPreprogrammed(conceptSearchService.searchDuplicates(
-                thesaurusContext.resolveThesaurusId(), searchLang));
+        if (!isPreprogrammedSearchAvailable()) {
+            return;
+        }
+        String thesaurusId = thesaurusContext.resolveThesaurusId();
+        String lang = preprogrammedLang();
+        results = conceptSearchService.searchDuplicates(thesaurusId, lang);
+        if (results.isEmpty()) {
+            resultsVisible = false;
+            singleResultSelected = false;
+            MessageUtils.showWarnMessage("Recherche doublons : Aucun résultat trouvée !");
+            return;
+        }
+        openConcept(results.get(0).getConceptId());
+        if (results.size() == 1) {
+            singleResultSelected = true;
+            resultsVisible = false;
+        } else {
+            singleResultSelected = false;
+            resultsVisible = true;
+            PrimeFaces.current().executeScript("showResultSearchBar();");
+        }
     }
 
     public void runForbiddenRelationshipsSearch() {
         runPreprogrammed(conceptSearchService.searchForbiddenRelationships(
-                thesaurusContext.resolveThesaurusId(), searchLang));
+                thesaurusContext.resolveThesaurusId(), preprogrammedLang()));
     }
 
     public boolean isSearchAvailable() {
@@ -223,6 +247,13 @@ public class ConceptSearchBean implements Serializable {
         results = Collections.emptyList();
         resultsVisible = false;
         singleResultSelected = false;
+    }
+
+    /**
+     * Comme legacy {@code selectedTheso.currentLang}.
+     */
+    private String preprogrammedLang() {
+        return thesaurusContext.resolveWorkLanguage();
     }
 
     private void runPreprogrammed(List<ConceptSearchResult> preprogrammedResults) {
