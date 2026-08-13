@@ -1,0 +1,199 @@
+/* Affichage / masquage de la structure déjà présente dans target.html.
+   Le JavaScript ne fait que poser des classes ; il ne construit pas le DOM. */
+
+.menu-pop{display:none}
+.rail-btn.is-on + .menu-pop{display:block}
+
+.view-pick-menu{display:none}
+.view-pick:hover .view-pick-menu,
+.view-pick-btn.is-open + .view-pick-menu{display:block}
+
+.view-pick-cur .vpc{display:none}
+.view-pick[data-view="arbo"] .vpc[data-view="arbo"],
+.view-pick[data-view="tableau"] .vpc[data-view="tableau"],
+.view-pick[data-view="hyper"] .vpc[data-view="hyper"],
+.view-pick[data-view="collection"] .vpc[data-view="collection"],
+.view-pick[data-view="recherche"] .vpc[data-view="recherche"]{display:inline}
+
+.view-pick-item:not(.is-on) .view-pick-check{display:none}
+
+.vo-pop{display:none}
+.vo-gear.is-on + .vo-pop{display:block}
+
+.view-panel{display:none;height:100%;overflow:auto}
+.view-panel.is-on{display:block}
+.view-panel.is-on.hyper,
+#viewHyper.is-on{display:flex;flex-direction:column}
+
+.sidebar-panel{display:none}
+.sidebar-panel.is-on{display:block}
+.sidebar-body.sb-tree.sidebar-panel.is-on{padding:10px 8px}
+
+.tn:not(.is-open) > .tn-kids{display:none}
+.tn.is-open > .tn-row .caret-shut{display:none}
+.tn:not(.is-open) > .tn-row .caret-open{display:none}
+.tn-caret.is-empty .caret-open,
+.tn-caret.is-empty .caret-shut{display:none}
+
+.tn-check.on::after{content:"✓";color:#fff;font-size:10px;font-weight:700;line-height:1}
+
+.bulksel{display:none}
+.bulksel.is-on{display:flex}
+
+.app-toast[hidden]{display:none}
+
+/* Autocomplete : listes déjà dans le HTML */
+.searchbox:not(.is-open) .ac{display:none}
+.searchbox.is-open .ac{display:flex;flex-direction:column}
+.ac-row{display:none !important}
+.ac.has-hits .ac-row.is-shown{display:flex !important}
+.ac-via{display:none}
+.ac-row.match-syn .ac-via-syn.is-on{display:block}
+.ac-row.match-note .ac-via-note{display:block}
+.ac:not(.is-empty) .ac-empty{display:none}
+.ac.is-empty .ac-empty{display:block}
+.ac:not(.has-hits) .ac-footer{display:none}
+.ac-footer{order:1000}
+
+.search-clear[hidden]{display:none}
+
+/* Résultats : listes déjà dans le HTML */
+.rl-item{display:none !important}
+.rl-item.is-shown{display:flex !important}
+.rl.is-idle .rl-idle{display:block}
+.rl.is-idle .rl-none,
+.rl.is-idle .rl-head,
+.rl.is-idle .rl-list{display:none}
+.rl.is-empty .rl-none{display:block}
+.rl.is-empty .rl-idle,
+.rl.is-empty .rl-head,
+.rl.is-empty .rl-list{display:none}
+.rl.is-filled .rl-head{display:flex}
+.rl.is-filled .rl-list{display:flex;flex-direction:column}
+.rl.is-filled .rl-empty{display:none}
+
+/* Fiches concept : une par concept, déjà dans le HTML */
+#viewConcept .cv{display:none}
+#viewConcept .cv.is-on{display:block}
+.stk-group[data-group="candidat"]:not(.on) .cf{display:none}
+.cf-combo:not(.open) .cf-menu{display:none}
+button.stk-item,button.stk-ghead{border:none;background:transparent;width:100%;text-align:left;font:inherit;color:inherit}
+button.tbl-colrow{border:none;background:transparent;width:100%;text-align:left;font:inherit;color:inherit}
+button.cf-in{text-align:left;cursor:pointer;width:100%}
+
+/* À propos : deux libellés, pas de réécriture */
+.abt-toggle .abt-less{display:none}
+.abt-toggle.open .abt-more{display:none}
+.abt-toggle.open .abt-less{display:inline}
+.tn-kids,.tree-body{display:flex;flex-direction:column}
+.tn.is-status-off{display:none !important}
+#panelTable tr.is-status-off{display:none}
+
+.api-copy .api-copied{display:none}
+.api-copy.is-copied > svg:first-child{display:none}
+.api-copy.is-copied .api-copied{display:grid}
+.api-copied svg{stroke:var(--accent)}
+
+.bulksel-menu{display:none}
+.bulksel-menu.is-on{display:block}
+.bulksel-form[hidden]{display:none}
+.vo-pop-row[hidden]{display:none}
+.vo-pop-stk[hidden]{display:none}
+.vo-pop-wrap[hidden]{display:none}
+
+.stk-box.mixed{background:var(--accent);border-color:var(--accent);opacity:.7}
+
+body.hide-path .ac-row .path,
+body.hide-path .rl-item .path{display:none}
+
+.rl-via{display:none}
+.rl-item.match-syn .rl-via-syn.is-on,
+.rl-item.match-note .rl-via-note.is-on{display:block}
+
+.rl-list{display:flex;flex-direction:column}
+.rl-more[hidden]{display:none}
+
+.vswitch-badge[hidden]{display:none}
+
+#panelTable .is-col-off{display:none}
+
+.bulksel-po{display:none}
+.bulksel-po.is-shown{display:flex}
+.bulksel-pick[hidden],
+.bulksel-target[hidden]{display:none}
+.bulksel-btn.is-off{opacity:.45;pointer-events:none}
+
+.hyper-dot.is-active{stroke:var(--accent);stroke-width:3}
+
+/* Actions par lot — états (DOM déjà dans target.html) */
+.bo-head{display:none}
+.bo-head.is-on{display:flex}
+.bo-opsel{display:none}
+.bo-opsel.is-on{display:block}
+.bo-panel{display:none}
+.bo-panel.is-on{display:block}
+.bo-acc-step:not(.open) .bo-acc-body{display:none}
+
+.bo-panel .bo-drop.has-file{display:none}
+.bo-panel.has-file .bo-drop-empty{display:none}
+.bo-panel.has-file .bo-drop.has-file{display:flex}
+
+.bo-panel:not(.has-file) [data-act="bo-check"],
+.bo-panel.is-checked [data-act="bo-check"]{opacity:.45;pointer-events:none}
+.bo-panel.has-file .bo-need-file{display:none}
+.bo-panel:not(.has-file) .bo-hint-file{display:none}
+.bo-panel.has-file .bo-hint-idle{display:none}
+
+.bo-valid{display:none}
+.bo-panel.is-checked:not(.is-done) .bo-valid{display:block}
+.bo-valid-ok{display:none}
+.bo-stat-zero{display:none}
+.bo-panel.is-corrected.is-checked .bo-valid-errors{display:none}
+.bo-panel.is-corrected.is-checked .bo-valid-ok{display:block}
+.bo-panel.is-corrected.is-checked .bo-stat-err{display:none}
+.bo-panel.is-corrected.is-checked .bo-stat-zero{display:flex}
+
+.bo-file-corr{display:none}
+.bo-panel.is-corrected .bo-file-n:not(.bo-file-corr){display:none}
+.bo-panel.is-corrected .bo-file-corr{display:block}
+
+.bo-result{display:none}
+.bo-panel.is-done .bo-result{display:block}
+.bo-n-ok{display:none}
+.bo-panel.is-corrected .bo-n-err{display:none}
+.bo-panel.is-corrected .bo-n-ok{display:inline}
+.bo-panel.is-corrected.is-done .bo-rej{color:inherit}
+
+.st-integ:not(.on) .st-deepl-field{display:none}
+#viewSettings.is-on{padding-bottom:88px}
+.bo-toast[hidden]{display:none}
+button.st-hint{background:none;border:none;padding:0;cursor:pointer;font:inherit}
+
+a.th-id,a.rail-logo,a.rail-btn,a.boc-item,a.boc,a.bo-back,a.empty-link,a.menu-row,a.menu-foot,a.admin-tile,a.proj-row,a.view-pick-item,a.view-add,a.cand-row,a.bo-btn{color:inherit;text-decoration:none}
+a.th-id{flex:1}
+a.boc-item,a.boc.boc-clickable{cursor:pointer}
+a.empty-link{color:var(--accent);font-weight:600}
+
+.page-side-hint{padding:28px 18px;color:var(--ink-3);font-size:13.5px;line-height:1.5}
+.page-side-hint a{display:inline-block;font-weight:600;color:var(--accent);text-decoration:none;margin-bottom:8px}
+.page-side-hint a:hover{text-decoration:underline}
+.page-side-hint p{margin:0}
+.sidebar-lite .sidebar-body{display:block}
+
+.cand-board{margin-top:8px}
+.cand-tabs{display:flex;gap:6px;margin-bottom:14px;flex-wrap:wrap}
+.cand-tab{padding:8px 14px;border-radius:9px;font-weight:600;font-size:13.5px;color:var(--ink-2);background:var(--surface-2);border:1px solid var(--line)}
+.cand-tab-n{font-family:var(--mono);font-size:11px;margin-left:6px;color:var(--ink-4)}
+.cand-board[data-tab="attente"] .cand-tab[data-tab="attente"],
+.cand-board[data-tab="insere"] .cand-tab[data-tab="insere"],
+.cand-board[data-tab="rejete"] .cand-tab[data-tab="rejete"]{background:var(--accent-soft);color:var(--accent);border-color:var(--accent-line)}
+.cand-pane{display:none;flex-direction:column;gap:6px}
+.cand-board[data-tab="attente"] .cand-pane[data-tab="attente"],
+.cand-board[data-tab="insere"] .cand-pane[data-tab="insere"],
+.cand-board[data-tab="rejete"] .cand-pane[data-tab="rejete"],
+.cand-pane.is-on{display:flex}
+.cand-row{display:flex;align-items:baseline;gap:12px;padding:11px 13px;border:1px solid var(--line);border-radius:9px;background:var(--surface)}
+.cand-row:hover{border-color:var(--accent-line);background:var(--accent-soft)}
+.cand-row-t{font-weight:600;flex:1;min-width:0}
+.cand-row-m{font-size:12.5px;color:var(--ink-3)}
+.cand-row-v{font-family:var(--mono);font-size:12px;color:var(--ink-4);white-space:nowrap}
