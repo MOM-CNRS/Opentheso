@@ -1,6 +1,6 @@
 /**
  * Effets uniquement — le DOM est dans les pages HTML.
- * Comportement calqué sur le prototype React (target.html / app.jsx).
+ * Comportement calqué sur le prototype React (target.xhtml / app.jsx).
  */
 (function () {
   "use strict";
@@ -32,7 +32,7 @@
 
   const state = {
     view: "arbo",
-    home: false,
+    home: true,
     conceptId: null,
     draft: false,
     committed: "",
@@ -66,19 +66,34 @@
     $$(sel).forEach(el => el.classList.toggle("is-on", el.id === id));
   }
 
+  function closeSearchUi() {
+    const box = $("#searchBox");
+    if (box) box.classList.remove("is-open");
+    const fld = $("#searchField");
+    if (fld) fld.classList.remove("is-focused");
+    state.acIdx = -1;
+    paintQueryHighlight();
+  }
+
   function paintMain() {
-    if (!IS_CONSULT) return;
     const v = state.view;
     let id;
-    if (v === "hyper") id = "viewHyper";
-    else if (v === "collection") id = "viewCollection";
-    else if (state.draft && (v === "arbo" || v === "tableau" || v === "recherche")) {
+    if (v === "hyper" && $("#viewHyper")) {
+      id = "viewHyper";
+    } else if (!IS_CONSULT) {
+      if (v === "arbo" && $("#viewHome")) id = "viewHome";
+      else return;
+    } else if (v === "collection") {
+      id = "viewCollection";
+    } else if (state.draft && (v === "arbo" || v === "tableau" || v === "recherche")) {
       id = "viewDraft";
     } else if (v === "recherche") {
       if (!rankHits(state.committed).length) id = "viewNoResults";
       else id = state.conceptId ? "viewConcept" : "viewEmpty";
     } else if (v === "tableau") {
       id = state.conceptId ? "viewConcept" : "viewEmpty";
+    } else if (state.home && !state.conceptId && $("#viewHome")) {
+      id = "viewHome";
     } else {
       id = state.conceptId ? "viewConcept" : "viewEmpty";
     }
@@ -140,12 +155,16 @@
 
   function setView(view) {
     if (!view) return;
-    if (view === "hyper") {
-      go("graphe.html");
+    if (view === "hyper" && !$("#viewHyper")) {
+      go("graphe.xhtml");
       return;
     }
-    if (!IS_CONSULT) {
-      go("consultation.html?view=" + encodeURIComponent(view));
+    if (!IS_CONSULT && view !== "arbo" && view !== "hyper") {
+      go("consultation.xhtml?view=" + encodeURIComponent(view));
+      return;
+    }
+    if (!IS_CONSULT && view === "arbo" && !$("#viewHome")) {
+      go("index.xhtml");
       return;
     }
     state.view = view;
@@ -197,7 +216,7 @@
   function openConcept(id, mode) {
     if (!id) return;
     if (!IS_CONSULT) {
-      go("consultation.html?id=" + encodeURIComponent(id));
+      go("consultation.xhtml?id=" + encodeURIComponent(id));
       return;
     }
     state.home = false;
@@ -205,12 +224,21 @@
     state.conceptId = id;
     if (mode !== "stay") state.view = "arbo";
     highlightConcept(id);
-    $("#searchBox") && $("#searchBox").classList.remove("is-open");
+    closeSearchUi();
     paint();
   }
 
   function openHome() {
-    if (SCREEN !== "accueil") go("index.html");
+    if (IS_CONSULT) {
+      state.home = true;
+      state.conceptId = null;
+      state.draft = false;
+      state.view = "arbo";
+      highlightConcept(null);
+      paint();
+      return;
+    }
+    if (SCREEN !== "accueil") go("index.xhtml");
   }
 
   function createCandidate(btn) {
@@ -220,7 +248,7 @@
       const q = new URLSearchParams({ new: "1" });
       if (parentName) q.set("pref", parentName);
       if (pathKey) q.set("path", pathKey);
-      go("candidats.html?" + q.toString());
+      go("candidats.xhtml?" + q.toString());
       return;
     }
     state.home = false;
@@ -263,11 +291,11 @@
   }
 
   function showHomePanel(panel) {
-    if (panel === "viewStats") go("statistiques.html");
-    else if (panel === "viewSettings") go("parametres.html");
-    else if (panel === "viewBatch") go("atelier.html");
-    else if (panel === "viewMaintenance") go("maintenance.html");
-    else go("index.html");
+    if (panel === "viewStats") go("statistiques.xhtml");
+    else if (panel === "viewSettings") go("parametres.xhtml");
+    else if (panel === "viewBatch") go("atelier.xhtml");
+    else if (panel === "viewMaintenance") go("maintenance.xhtml");
+    else go("index.xhtml");
   }
 
   function setBatch(obj, op) {
@@ -324,6 +352,66 @@
     return $$("#ac .ac-row.is-shown");
   }
 
+  function rangeForQuery(textNode, rawQuery) {
+    const text = textNode && textNode.nodeValue;
+    const nq = norm((rawQuery || "").trim());
+    if (!text || !nq) return null;
+    let folded = "";
+    const origAt = [];
+    for (let i = 0; i < text.length; i++) {
+      const piece = norm(text[i]);
+      for (let k = 0; k < piece.length; k++) origAt.push(i);
+      folded += piece;
+    }
+    const at = folded.indexOf(nq);
+    if (at < 0 || origAt[at] == null || origAt[at + nq.length - 1] == null) return null;
+    const range = document.createRange();
+    range.setStart(textNode, origAt[at]);
+    range.setEnd(textNode, origAt[at + nq.length - 1] + 1);
+    return range;
+  }
+
+  function unwrapQueryMarks() {
+    $$("#ac mark.hl, #resultsList mark.hl").forEach(m => {
+      const p = m.parentNode;
+      if (!p) return;
+      while (m.firstChild) p.insertBefore(m.firstChild, m);
+      p.removeChild(m);
+      p.normalize();
+    });
+  }
+
+  function wrapQueryIn(el, rawQuery) {
+    const nodes = [];
+    const walk = document.createTreeWalker(el, NodeFilter.SHOW_TEXT, null);
+    let node;
+    while ((node = walk.nextNode())) nodes.push(node);
+    nodes.forEach(n => {
+      const range = rangeForQuery(n, rawQuery);
+      if (!range || range.collapsed) return;
+      const mark = document.createElement("mark");
+      mark.className = "hl";
+      try { range.surroundContents(mark); } catch (_) {}
+    });
+  }
+
+  function paintQueryHighlight() {
+    unwrapQueryMarks();
+    if (!state.highlight) return;
+    const live = (($("#searchInput") && $("#searchInput").value) || "").trim();
+    if (live && $("#searchBox") && $("#searchBox").classList.contains("is-open")) {
+      $$("#ac .ac-row.is-shown .ac-pref, #ac .ac-row.is-shown .ac-via-syn.is-on em").forEach(el => {
+        wrapQueryIn(el, live);
+      });
+    }
+    const committed = (state.committed || "").trim();
+    if (committed) {
+      $$("#resultsList .rl-item.is-shown .rl-pref, #resultsList .rl-item.is-shown .rl-via-syn.is-on em").forEach(el => {
+        wrapQueryIn(el, committed);
+      });
+    }
+  }
+
   function setAcIdx(i) {
     const rows = shownAcRows();
     state.acIdx = i;
@@ -358,10 +446,11 @@
       ac.classList.toggle("is-empty", !!q && rows.length === 0);
       ac.classList.toggle("has-hits", rows.length > 0);
     }
-    if (box) box.classList.toggle("is-open", IS_CONSULT && !!q);
+    if (box) box.classList.toggle("is-open", !!q);
     const acQ = $("#acQuery"); if (acQ) acQ.textContent = (query || "").trim();
     const acN = $("#acCount"); if (acN) acN.textContent = String(rows.length);
     state.acIdx = -1;
+    paintQueryHighlight();
     return rows.length;
   }
 
@@ -404,6 +493,7 @@
       if (mn) mn.textContent = "+" + Math.min(rest, PAGE);
     }
     paintBadges();
+    paintQueryHighlight();
   }
 
   function syncRechercheConcept() {
@@ -419,7 +509,7 @@
   function runSearch() {
     const q = ($("#searchInput") && $("#searchInput").value) || "";
     if (!IS_CONSULT) {
-      go("consultation.html?q=" + encodeURIComponent(q.trim()));
+      go("consultation.xhtml?q=" + encodeURIComponent(q.trim()));
       return;
     }
     state.committed = q.trim();
@@ -430,7 +520,7 @@
     filterAc(q);
     paintCommittedResults();
     syncRechercheConcept();
-    $("#searchBox") && $("#searchBox").classList.remove("is-open");
+    closeSearchUi();
     paint();
   }
 
@@ -712,12 +802,12 @@
     else if (act === "set-view") setView(t.getAttribute("data-view"));
     else if (act === "show") showHomePanel(t.getAttribute("data-panel"));
     else if (act === "settings-open") {
-      const pages = { prefs: "preference.html", servers: "identifiants.html", corpus: "corpus.html" };
-      go(pages[t.getAttribute("data-section")] || "parametres.html");
+      const pages = { prefs: "preference.xhtml", servers: "identifiants.xhtml", corpus: "corpus.xhtml" };
+      go(pages[t.getAttribute("data-section")] || "parametres.xhtml");
     }
     else if (act === "bo-open") {
       const obj = t.getAttribute("data-obj");
-      go("atelier.html" + (obj ? "?obj=" + encodeURIComponent(obj) : ""));
+      go("atelier.xhtml" + (obj ? "?obj=" + encodeURIComponent(obj) : ""));
     } else if (act === "cand-tab") {
       const board = t.closest(".cand-board") || $("#candBoard");
       if (board) board.setAttribute("data-tab", t.getAttribute("data-tab") || "attente");
@@ -796,6 +886,7 @@
       t.classList.toggle("on", state.highlight);
       t.setAttribute("aria-checked", String(state.highlight));
       document.body.classList.toggle("hl-off", !state.highlight);
+      paintQueryHighlight();
     } else if (act === "density") {
       state.density = t.getAttribute("data-density");
       $$("[data-act='density']").forEach(b => b.classList.toggle("is-on", b === t));
@@ -937,19 +1028,21 @@
       if (input.value) filterAc(input.value);
     });
     input.addEventListener("keydown", (e) => {
-      const rows = shownAcRows();
       if (e.key === "ArrowDown") {
         e.preventDefault();
-        setAcIdx(Math.min(state.acIdx + 1, rows.length - 1));
+        if (input.value.trim()) filterAc(input.value);
+        const downRows = shownAcRows();
+        setAcIdx(Math.min(state.acIdx + 1, Math.max(downRows.length - 1, -1)));
       } else if (e.key === "ArrowUp") {
         e.preventDefault();
         setAcIdx(Math.max(state.acIdx - 1, -1));
       } else if (e.key === "Enter") {
+        const rows = shownAcRows();
         if (state.acIdx >= 0 && rows[state.acIdx]) {
           openConcept(rows[state.acIdx].getAttribute("data-id"), "jump");
         } else runSearch();
       } else if (e.key === "Escape") {
-        $("#searchBox") && $("#searchBox").classList.remove("is-open");
+        closeSearchUi();
         input.blur();
       }
     });
@@ -1004,10 +1097,8 @@
   }
 
   document.addEventListener("mousedown", (e) => {
-    if ($("#searchBox") && !$("#searchBox").contains(e.target)) {
-      $("#searchBox").classList.remove("is-open");
-      field && field.classList.remove("is-focused");
-    }
+    if (e.target.closest(".ac-row, .ac-footer")) e.preventDefault();
+    if ($("#searchBox") && !$("#searchBox").contains(e.target)) closeSearchUi();
   });
 
   const resizer = $("#resizer");
@@ -1046,6 +1137,8 @@
   applyTableSort();
   applyTableCols();
   bulkMode("acts");
+
+  if (SCREEN === "graphe") state.view = "hyper";
 
   const params = new URLSearchParams(location.search);
   if (SCREEN === "parametres" && location.hash) {

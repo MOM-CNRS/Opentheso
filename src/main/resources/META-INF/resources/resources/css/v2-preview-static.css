@@ -23,7 +23,8 @@
 .view-panel{display:none;height:100%;overflow:auto}
 .view-panel.is-on{display:block}
 .view-panel.is-on.hyper,
-#viewHyper.is-on{display:flex;flex-direction:column}
+#viewHyper.is-on,
+body[data-page="graphe"] #viewHyper{display:flex;flex-direction:column}
 
 .sidebar-panel{display:none}
 .sidebar-panel.is-on{display:block}
@@ -103,8 +104,7 @@ button.cf-in{text-align:left;cursor:pointer;width:100%}
 
 .stk-box.mixed{background:var(--accent);border-color:var(--accent);opacity:.7}
 
-body.hide-path .ac-row .path,
-body.hide-path .rl-item .path{display:none}
+body.hl-off mark.hl{background:transparent;color:inherit;font-weight:inherit;padding:0}
 
 .rl-via{display:none}
 .rl-item.match-syn .rl-via-syn.is-on,

@@ -44,7 +44,8 @@ public class JsfPrettyUrlFilter extends OncePerRequestFilter {
             Map.entry("/v2/graph/visualize/branch", "/v2/graph/visualize/branch.xhtml"),
             Map.entry("/v2/graph/visualize/force", "/v2/graph/visualize/force.xhtml"),
             Map.entry("/v2/thesaurus", "/v2/thesaurus/browse.xhtml"),
-            Map.entry("/toolbox/edition", "/toolbox/edition.xhtml")
+            Map.entry("/toolbox/edition", "/toolbox/edition.xhtml"),
+            Map.entry("/v2-preview", "/v2-preview/index.xhtml")
     );
 
     @Override

@@ -1,0 +1,112 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<ui:composition xmlns="http://www.w3.org/1999/xhtml"
+                xmlns:ui="http://xmlns.jcp.org/jsf/facelets"
+                template="includes/layout.xhtml">
+  <ui:param name="previewPage" value="corpus"/>
+  <ui:define name="title">OpenTheso — Corpus</ui:define>
+  <ui:define name="main">
+
+          <div class="view-panel is-on">
+            <div class="bo">
+              <a class="bo-back" href="index.xhtml" title="Retour à l'accueil thésaurus"><svg viewBox="0 0 24 24" aria-hidden="true"><path d="M19 12H5"/><path d="m12 19-7-7 7-7"/></svg></a>
+              <div class="bo-head"><div><h1 class="bo-title">Paramètres / Corpus</h1><p class="bo-sub">Corpus liés et sources d'alignement.</p></div></div>
+              <div class="bo-full st-scope"><div class="bo-card">
+                  <div class="bo-card-h">
+                    <span class="bo-card-t">Corpus liés</span>
+                    
+                    <span class="right"><button type="button" class="bo-btn ghost sm"><svg viewBox="0 0 24 24" aria-hidden="true"><path d="M5 12h14"/><path d="m12 5 7 7-7 7"/></svg> Nouveau corpus</button></span>
+                  </div>
+                  <div class="bo-card-b st-form"><table class="st-table">
+                      <thead><tr><th>Libellé</th><th>URI pour le total</th><th>URI pour le lien</th><th>État</th><th></th></tr></thead>
+                      <tbody>
+                        <tr>
+                          <td class="st-td-name">Epichercheil</td>
+                          <td class="st-td-uri">http://ccj-epichercheil.huma-num.fr</td>
+                          <td class="st-td-uri">http://ccj-epichercheil.huma-num.fr/s</td>
+                          <td><button type="button" class="st-sw on" data-act="toggle-sw" aria-pressed="true"></button></td>
+                          <td class="st-td-act"><button type="button" class="st-icon" title="Éditer">✎</button><button type="button" class="st-icon del" title="Supprimer"><svg viewBox="0 0 24 24" aria-hidden="true"><path d="M18 6 6 18M6 6l12 12"/></svg></button></td>
+                        </tr>
+                        <tr>
+                          <td class="st-td-name">Sculptura</td>
+                          <td class="st-td-uri">https://sculpturo.huma-num.fr/api/items</td>
+                          <td class="st-td-uri">https://sculpturo.huma-num.fr/s/base</td>
+                          <td><button type="button" class="st-sw on" data-act="toggle-sw" aria-pressed="true"></button></td>
+                          <td class="st-td-act"><button type="button" class="st-icon" title="Éditer">✎</button><button type="button" class="st-icon del" title="Supprimer"><svg viewBox="0 0 24 24" aria-hidden="true"><path d="M18 6 6 18M6 6l12 12"/></svg></button></td>
+                        </tr>
+                        <tr>
+                          <td class="st-td-name">Catalogue Frantiq</td>
+                          <td class="st-td-uri">https://pro.frantiq.fr/es/koha_from</td>
+                          <td class="st-td-uri">https://catalogue.frantiq.fr/cgi-bin</td>
+                          <td><button type="button" class="st-sw on" data-act="toggle-sw" aria-pressed="true"></button></td>
+                          <td class="st-td-act"><button type="button" class="st-icon" title="Éditer">✎</button><button type="button" class="st-icon del" title="Supprimer"><svg viewBox="0 0 24 24" aria-hidden="true"><path d="M18 6 6 18M6 6l12 12"/></svg></button></td>
+                        </tr>
+                        <tr>
+                          <td class="st-td-name">CoReA</td>
+                          <td class="st-td-uri">https://ccj-corea.cnrs.fr/api/items</td>
+                          <td class="st-td-uri">https://ccj-corea.cnrs.fr/s/corea</td>
+                          <td><button type="button" class="st-sw on" data-act="toggle-sw" aria-pressed="true"></button></td>
+                          <td class="st-td-act"><button type="button" class="st-icon" title="Éditer">✎</button><button type="button" class="st-icon del" title="Supprimer"><svg viewBox="0 0 24 24" aria-hidden="true"><path d="M18 6 6 18M6 6l12 12"/></svg></button></td>
+                        </tr>
+                        <tr>
+                          <td class="st-td-name">DoRAA</td>
+                          <td class="st-td-uri">https://dorra-iraa.inist.fr/api/items</td>
+                          <td class="st-td-uri">https://dorra-iraa.inist.fr/s/doraa</td>
+                          <td><button type="button" class="st-sw" data-act="toggle-sw" aria-pressed="false"></button></td>
+                          <td class="st-td-act"><button type="button" class="st-icon" title="Éditer">✎</button><button type="button" class="st-icon del" title="Supprimer"><svg viewBox="0 0 24 24" aria-hidden="true"><path d="M18 6 6 18M6 6l12 12"/></svg></button></td>
+                        </tr></tbody>
+                    </table>
+                    <div class="st-count">Nombre total de corpus : 5</div></div>
+                </div><div class="bo-card">
+                  <div class="bo-card-h">
+                    <span class="bo-card-t">Sources d'alignement</span>
+                    
+                    <span class="right"><button type="button" class="bo-btn ghost sm"><svg viewBox="0 0 24 24" aria-hidden="true"><path d="M5 12h14"/><path d="m12 5 7 7-7 7"/></svg> Nouvelle source</button></span>
+                  </div>
+                  <div class="bo-card-b st-form"><div class="st-card-intro">Référentiels externes interrogés par l'alignement automatique.</div>
+                    <table class="st-table">
+                      <thead><tr><th>Source</th><th>Type</th><th>URL de base</th><th>État</th><th></th></tr></thead>
+                      <tbody>
+                        <tr>
+                          <td class="st-td-name">Wikidata</td>
+                          <td>Encyclopédique</td>
+                          <td class="st-td-uri">https://www.wikidata.org/wiki/</td>
+                          <td><button type="button" class="st-sw on" data-act="toggle-sw" aria-pressed="true"></button></td>
+                          <td class="st-td-act"><button type="button" class="st-icon" title="Éditer">✎</button><button type="button" class="st-icon del" title="Supprimer"><svg viewBox="0 0 24 24" aria-hidden="true"><path d="M18 6 6 18M6 6l12 12"/></svg></button></td>
+                        </tr>
+                        <tr>
+                          <td class="st-td-name">GeoNames</td>
+                          <td>Géographique</td>
+                          <td class="st-td-uri">https://www.geonames.org/</td>
+                          <td><button type="button" class="st-sw on" data-act="toggle-sw" aria-pressed="true"></button></td>
+                          <td class="st-td-act"><button type="button" class="st-icon" title="Éditer">✎</button><button type="button" class="st-icon del" title="Supprimer"><svg viewBox="0 0 24 24" aria-hidden="true"><path d="M18 6 6 18M6 6l12 12"/></svg></button></td>
+                        </tr>
+                        <tr>
+                          <td class="st-td-name">Getty AAT</td>
+                          <td>Art &amp; architecture</td>
+                          <td class="st-td-uri">http://vocab.getty.edu/aat/</td>
+                          <td><button type="button" class="st-sw on" data-act="toggle-sw" aria-pressed="true"></button></td>
+                          <td class="st-td-act"><button type="button" class="st-icon" title="Éditer">✎</button><button type="button" class="st-icon del" title="Supprimer"><svg viewBox="0 0 24 24" aria-hidden="true"><path d="M18 6 6 18M6 6l12 12"/></svg></button></td>
+                        </tr>
+                        <tr>
+                          <td class="st-td-name">IdRef</td>
+                          <td>Autorités (ABES)</td>
+                          <td class="st-td-uri">https://www.idref.fr/</td>
+                          <td><button type="button" class="st-sw on" data-act="toggle-sw" aria-pressed="true"></button></td>
+                          <td class="st-td-act"><button type="button" class="st-icon" title="Éditer">✎</button><button type="button" class="st-icon del" title="Supprimer"><svg viewBox="0 0 24 24" aria-hidden="true"><path d="M18 6 6 18M6 6l12 12"/></svg></button></td>
+                        </tr>
+                        <tr>
+                          <td class="st-td-name">data.BnF</td>
+                          <td>Bibliographique</td>
+                          <td class="st-td-uri">https://data.bnf.fr/</td>
+                          <td><button type="button" class="st-sw" data-act="toggle-sw" aria-pressed="false"></button></td>
+                          <td class="st-td-act"><button type="button" class="st-icon" title="Éditer">✎</button><button type="button" class="st-icon del" title="Supprimer"><svg viewBox="0 0 24 24" aria-hidden="true"><path d="M18 6 6 18M6 6l12 12"/></svg></button></td>
+                        </tr></tbody>
+                    </table>
+                    <div class="st-count">Nombre total de sources : 5</div></div>
+                </div></div>
+              <div class="fsave"><button type="button" class="fsave-btn" data-act="st-save"><svg viewBox="0 0 24 24" aria-hidden="true"><path d="M20 6 9 17l-5-5"/></svg> Enregistrer</button></div>
+              <div class="bo-toast above" id="stSaveToast" hidden="hidden"><svg viewBox="0 0 24 24" aria-hidden="true"><path d="M20 6 9 17l-5-5"/></svg> Enregistré avec succès</div>
+            </div>
+          </div>
+  </ui:define>
+</ui:composition>

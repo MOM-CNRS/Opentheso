@@ -1,0 +1,156 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<ui:composition xmlns="http://www.w3.org/1999/xhtml"
+                xmlns:ui="http://xmlns.jcp.org/jsf/facelets"
+                template="includes/layout.xhtml">
+  <ui:param name="previewPage" value="preference"/>
+  <ui:define name="title">OpenTheso — Préférences</ui:define>
+  <ui:define name="main">
+
+          <div class="view-panel is-on">
+            <div class="bo">
+              <a class="bo-back" href="index.xhtml" title="Retour à l'accueil thésaurus"><svg viewBox="0 0 24 24" aria-hidden="true"><path d="M19 12H5"/><path d="m12 19-7-7 7-7"/></svg></a>
+              <div class="bo-head"><div><h1 class="bo-title">Paramètres / Préférences</h1><p class="bo-sub">URL, langue, affichage et intégrations de PACTOLS_Lieux.</p></div></div>
+              <div class="bo-full st-scope"><div class="bo-card">
+                  <div class="bo-card-h">
+                    <span class="bo-card-t">Général</span>
+                    
+                    
+                  </div>
+                  <div class="bo-card-b st-form">
+                    <div class="st-row">
+                    <div class="st-row-l">URL du site local</div>
+                    <div class="st-row-c"><input class="st-input" value="https://pactols.frantiq.fr/opentheso" type="text"/></div>
+                  </div>
+                    <div class="st-row">
+                      <div class="st-row-l">URI d'exportation</div>
+                      <div class="st-row-c">
+                        <div class="st-radios">
+                          <label class="st-radio"><input type="radio" name="uriexp"/> URI classique</label>
+                          <label class="st-radio"><input type="radio" name="uriexp" checked="checked"/> Ark</label>
+                          <label class="st-radio"><input type="radio" name="uriexp"/> Handle</label>
+                        </div>
+                        <input class="st-input" value="https://ark.frantiq.fr/ark:"/>
+                      </div>
+                    </div>
+                    <div class="st-row"><div class="st-row-l">Langue par défaut</div>
+                      <div class="st-row-c"><select class="st-input"><option>Français (fr)</option><option>English (en)</option></select></div></div>
+                    <div class="st-row"><div class="st-row-l">Type d'identifiant</div>
+                      <div class="st-row-c"><select class="st-input"><option>Numérique</option><option>Alphanumérique</option></select></div></div>
+                    <div class="st-row"><div class="st-row-l">Nom pérenne du thésaurus</div>
+                      <div class="st-row-c st-inline"><input class="st-input" value="th17"/><button type="button" class="st-hint">Testez le lien</button></div></div></div>
+                </div><div class="bo-card">
+                  <div class="bo-card-h">
+                    <span class="bo-card-t">Affichage &amp; navigation</span>
+                    
+                    
+                  </div>
+                  <div class="bo-card-b st-form"><div class="st-toggle-row">
+                      <div class="st-toggle-main">
+                        <div class="st-toggle-l">Déploiement automatique de l'arbre</div>
+                        <div class="st-toggle-d">L'arborescence s'ouvre entièrement au chargement.</div>
+                      </div>
+                      <button type="button" class="st-sw on" data-act="toggle-sw" aria-pressed="true"></button>
+                    </div><div class="st-toggle-row">
+                      <div class="st-toggle-main">
+                        <div class="st-toggle-l">Cache de l'arbre</div>
+                        <div class="st-toggle-d">Accélère l'affichage des grandes arborescences.</div>
+                      </div>
+                      <button type="button" class="st-sw" data-act="toggle-sw" aria-pressed="false"></button>
+                    </div><div class="st-toggle-row">
+                      <div class="st-toggle-main">
+                        <div class="st-toggle-l">Tri par défaut sur la notation</div>
+                        <div class="st-toggle-d">Ordonne les concepts par code de classification.</div>
+                      </div>
+                      <button type="button" class="st-sw" data-act="toggle-sw" aria-pressed="false"></button>
+                    </div><div class="st-toggle-row">
+                      <div class="st-toggle-main">
+                        <div class="st-toggle-l">Fil d'Ariane</div>
+                        <div class="st-toggle-d">Affiche le chemin complet au-dessus de chaque concept.</div>
+                      </div>
+                      <button type="button" class="st-sw on" data-act="toggle-sw" aria-pressed="true"></button>
+                    </div><div class="st-toggle-row">
+                      <div class="st-toggle-main">
+                        <div class="st-toggle-l">Arbre de collections / concepts</div>
+                        <div class="st-toggle-d">Ajoute la vue par collections dans l'arborescence.</div>
+                      </div>
+                      <button type="button" class="st-sw" data-act="toggle-sw" aria-pressed="false"></button>
+                    </div></div>
+                </div><div class="bo-card">
+                  <div class="bo-card-h">
+                    <span class="bo-card-t">Collaboration &amp; suivi</span>
+                    
+                    
+                  </div>
+                  <div class="bo-card-b st-form"><div class="st-toggle-row">
+                      <div class="st-toggle-main">
+                        <div class="st-toggle-l">Afficher le nom des contributeurs</div>
+                        <div class="st-toggle-d">Montre qui a modifié chaque concept.</div>
+                      </div>
+                      <button type="button" class="st-sw on" data-act="toggle-sw" aria-pressed="true"></button>
+                    </div><div class="st-toggle-row">
+                      <div class="st-toggle-main">
+                        <div class="st-toggle-l">Propositions de modification</div>
+                        <div class="st-toggle-d">Autorise les suggestions sur les concepts publiés.</div>
+                      </div>
+                      <button type="button" class="st-sw on" data-act="toggle-sw" aria-pressed="true"></button>
+                    </div><div class="st-toggle-row">
+                      <div class="st-toggle-main">
+                        <div class="st-toggle-l">Relations personnalisées</div>
+                        <div class="st-toggle-d">Active les types de relations propres au thésaurus.</div>
+                      </div>
+                      <button type="button" class="st-sw on" data-act="toggle-sw" aria-pressed="true"></button>
+                    </div></div>
+                </div><div class="bo-card">
+                  <div class="bo-card-h">
+                    <span class="bo-card-t">Publication au public</span>
+                    
+                    
+                  </div>
+                  <div class="bo-card-b st-form"><div class="st-toggle-row">
+                      <div class="st-toggle-main">
+                        <div class="st-toggle-l">Afficher la note historique</div>
+                        <div class="st-toggle-d">Rend la note historique visible côté consultation.</div>
+                      </div>
+                      <button type="button" class="st-sw" data-act="toggle-sw" aria-pressed="false"></button>
+                    </div><div class="st-toggle-row">
+                      <div class="st-toggle-main">
+                        <div class="st-toggle-l">Afficher la note éditoriale</div>
+                        <div class="st-toggle-d">Rend la note éditoriale visible côté consultation.</div>
+                      </div>
+                      <button type="button" class="st-sw" data-act="toggle-sw" aria-pressed="false"></button>
+                    </div></div>
+                </div><div class="bo-card">
+                  <div class="bo-card-h">
+                    <span class="bo-card-t">Intégrations</span>
+                    
+                    
+                  </div>
+                  <div class="bo-card-b st-form"><div class="st-integ on" data-key="ws"><div class="st-toggle-row">
+                      <div class="st-toggle-main">
+                        <div class="st-toggle-l">Service Web (API REST)</div>
+                        <div class="st-toggle-d">Expose le thésaurus via l'API REST d'OpenTheso.</div>
+                      </div>
+                      <button type="button" class="st-sw on" data-act="toggle-sw" aria-pressed="true"></button>
+                    </div></div><div class="st-integ" data-key="koha"><div class="st-toggle-row">
+                      <div class="st-toggle-main">
+                        <div class="st-toggle-l">Lien vers Koha Pro</div>
+                        <div class="st-toggle-d">Ajoute un lien vers le catalogue Koha des bibliothèques.</div>
+                      </div>
+                      <button type="button" class="st-sw" data-act="toggle-sw" aria-pressed="false"></button>
+                    </div></div><div class="st-integ on" data-key="deepl"><div class="st-toggle-row">
+                      <div class="st-toggle-main">
+                        <div class="st-toggle-l">Module de traduction DeepL</div>
+                        <div class="st-toggle-d">Traduction assistée des libellés multilingues.</div>
+                      </div>
+                      <button type="button" class="st-sw on" data-act="toggle-sw" aria-pressed="true"></button>
+                    </div><div class="st-deepl-field"><div class="st-row">
+                    <div class="st-row-l">Clé d'API DeepL</div>
+                    <div class="st-row-c"><input class="st-input" value="••••••••••" type="password"/></div>
+                  </div></div></div></div>
+                </div></div>
+              <div class="fsave"><button type="button" class="fsave-btn" data-act="st-save"><svg viewBox="0 0 24 24" aria-hidden="true"><path d="M20 6 9 17l-5-5"/></svg> Enregistrer</button></div>
+              <div class="bo-toast above" id="stSaveToast" hidden="hidden"><svg viewBox="0 0 24 24" aria-hidden="true"><path d="M20 6 9 17l-5-5"/></svg> Enregistré avec succès</div>
+            </div>
+          </div>
+  </ui:define>
+</ui:composition>

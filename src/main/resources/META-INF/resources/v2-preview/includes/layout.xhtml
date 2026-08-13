@@ -1,0 +1,38 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<!DOCTYPE html>
+<html xmlns="http://www.w3.org/1999/xhtml"
+      xmlns:ui="http://xmlns.jcp.org/jsf/facelets"
+      lang="fr">
+<head>
+  <meta charset="UTF-8"/>
+  <meta name="viewport" content="width=device-width, initial-scale=1.0"/>
+  <title><ui:insert name="title">OpenTheso</ui:insert></title>
+  <link rel="icon" href="#{request.contextPath}/resources/img/icon_opentheso2.png"/>
+  <link rel="preconnect" href="https://fonts.googleapis.com"/>
+  <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin=""/>
+  <link href="https://fonts.googleapis.com/css2?family=IBM+Plex+Mono:wght@400;500;600&amp;family=IBM+Plex+Sans:wght@400;500;600;700&amp;display=swap" rel="stylesheet"/>
+  <link rel="stylesheet" href="#{request.contextPath}/resources/css/v2-prototype-recherche.css"/>
+  <link rel="stylesheet" href="#{request.contextPath}/resources/css/v2-preview-static.css"/>
+</head>
+<body data-page="#{previewPage}">
+<div class="app" id="app">
+  <ui:include src="rail.xhtml"/>
+  <div class="main">
+    <div class="panes">
+      <ui:insert name="sidebar">
+        <ui:include src="sidebar.xhtml"/>
+      </ui:insert>
+      <div class="resizer" id="resizer" role="separator" aria-orientation="vertical"
+           title="Glisser pour redimensionner · double-clic pour réinitialiser">
+        <span class="resizer-grip"></span>
+      </div>
+      <main class="content">
+        <div class="view"><ui:insert name="main"/></div>
+      </main>
+    </div>
+  </div>
+</div>
+<div class="app-toast" id="appToast" hidden="hidden"></div>
+<script src="#{request.contextPath}/resources/js/v2-preview/app.js"></script>
+</body>
+</html>

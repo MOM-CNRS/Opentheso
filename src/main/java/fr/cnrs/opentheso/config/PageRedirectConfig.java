@@ -34,6 +34,7 @@ public class PageRedirectConfig implements WebMvcConfigurer {
         registry.addViewController("/v2/graph/visualize/force").setViewName("forward:/v2/graph/visualize/force.xhtml");
         registry.addViewController("/v2/thesaurus").setViewName("forward:/v2/thesaurus/browse.xhtml");
         registry.addViewController("/toolbox/edition").setViewName("forward:/toolbox/edition.xhtml");
+        registry.addViewController("/v2-preview").setViewName("forward:/v2-preview/index.xhtml");
         registry.setOrder(Ordered.HIGHEST_PRECEDENCE);
     }
 }

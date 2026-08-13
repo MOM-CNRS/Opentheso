@@ -1,0 +1,139 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<ui:composition xmlns="http://www.w3.org/1999/xhtml"
+                xmlns:ui="http://xmlns.jcp.org/jsf/facelets">
+          <div class="view-panel is-on" id="viewHome">
+            <div class="cv th-home">
+              <div class="cv-head">
+                <h1 class="cv-pref">PACTOLS<span class="cv-lang">th17</span></h1>
+                <p class="th-sub">Archéologie &amp; sciences de l'Antiquité</p>
+              </div>
+              <div class="boc th-about">
+                <div class="boc-h">
+                  <div class="boc-ico"><svg viewBox="0 0 24 24" aria-hidden="true"><path d="M4 19.5A2.5 2.5 0 0 1 6.5 17H20"/><path d="M6.5 2H20v20H6.5A2.5 2.5 0 0 1 4 19.5v-15A2.5 2.5 0 0 1 6.5 2z"/></svg></div>
+                  <div class="boc-ht">
+                    <div class="boc-t">À propos de PACTOLS</div>
+                    <div class="boc-d">Vocabulaire contrôlé pour l'archéologie et les sciences de l'Antiquité.</div>
+                  </div>
+                </div>
+                <p class="abt-lead">Le thésaurus PACTOLS, créé par Frantiq (Fédération et ressources sur l'Antiquité) en 1985, sert à l'indexation de ressources en archéologie — de la Préhistoire à l'époque contemporaine — et en sciences de l'Antiquité sous tous ses aspects.</p>
+                <div class="abt-detail" id="aboutDetail" hidden="hidden">
+                  <div class="abt-sec"><h4>Origine &amp; structure</h4><p>PACTOLS tient son nom des six micro-thésaurus d'origine : Peuples et cultures, Anthroponymes, Chronologie, Toponymes, Œuvres, Lieux et Sujets. Son contenu est lié au Catalogue collectif indexé des bibliothèques du réseau Frantiq, pour lequel il a d'abord été organisé avant de s'ouvrir à d'autres ressources. Entre 2017 et 2022, une réorganisation complète en a fait un outil de référence inscrit dans le web des données ; un effort continu porte sur la définition des concepts (bibliographie partagée sur Zotero). Il se compose aujourd'hui de deux ensembles : PACTOLS-Lieux et PACTOLS-Sujets.</p></div>
+<div class="abt-sec"><h4>Multilinguisme</h4><p>Sept langues : français, anglais, allemand, arabe, espagnol, italien et néerlandais. Les traductions des libellés (en, it, es, de) ont été révisées et complétées dans le cadre du projet MetaPhoRA (MESRI 2019-2022), avec l'aide du consortium MASA+. La traduction des définitions, du français vers l'anglais, s'appuie sur l'API DeepL intégrée à OpenTheso depuis mars 2024.</p></div>
+<div class="abt-sec"><h4>Alignements</h4><p>PACTOLS est principalement aligné avec Wikidata et, selon les branches, avec l'Art &amp; Architecture Thesaurus du Getty, IdRef, les vocabulaires du ministère de la Culture (Joconde, Inventaire), PeriodO, GeoNames, Pleiades et l'Insee.</p></div>
+<div class="abt-sec"><h4>Standards, formats &amp; API</h4><p>Conforme aux principes FAIR, normalisé ISO 25964 et diffusé sous licence ouverte ODbL. Exportable en CSV, JSON, XML-RDF et PDF, il bénéficie de l'API d'OpenTheso, qui exploite les « Collections » comme filtres de requêtage. Des versions semestrielles sont téléchargeables sur GitHub.</p></div>
+<div class="abt-sec"><h4>Maintenance &amp; versions</h4><p>Le Groupe de travail PACTOLS assure la maintenance et le suivi des versions ; le thésaurus est mis à jour presque quotidiennement. Certaines branches sont en cours de réorganisation. La version 2.0 est dédiée à Évelyne Sinigaglia.</p></div>
+<div class="abt-sec"><h4>Financement</h4><p>Développement financé par le CNRS-Frantiq, avec le soutien de CollEx-Persée, du ministère de la Culture et du consortium MASA+, dont PACTOLS constitue une brique de l'écosystème numérique.</p></div>
+<div class="abt-sec"><h4>Usages &amp; interopérabilité</h4><p>Utilisé par des catalogues documentaires et archivistiques, des publications, des bases de données, des corpus et des entrepôts d'archives ouvertes. Plusieurs alimentent leurs métadonnées dynamiquement via l'API ; les « Corpus liés » rendent visibles les occurrences d'un concept dans ces réservoirs et favorisent l'interopérabilité.</p></div>
+                  <div class="abt-contact">Contact : inscription à la liste de diffusion <a href="mailto:utilisateurs-pactols@services.cnrs.fr">utilisateurs-pactols@services.cnrs.fr</a>. Une aide et une documentation complètes sont disponibles en ligne.</div>
+                </div>
+                <button type="button" class="abt-toggle" id="aboutToggle" data-act="about">
+                  <span class="abt-more">Voir la description complète</span>
+                  <span class="abt-less">Réduire la description</span>
+                  <svg viewBox="0 0 24 24" aria-hidden="true"><path d="m6 9 6 6 6-6"/></svg>
+                </button>
+              </div>
+              <div class="boc">
+                <div class="boc-h">
+                  <div class="boc-ico"><svg viewBox="0 0 24 24" aria-hidden="true"><path d="M3 3h7v7H3zM14 3h7v7h-7zM14 14h7v7h-7zM3 14h7v7H3z"/></svg></div>
+                  <div class="boc-ht">
+                    <div class="boc-t">Actions par lot</div>
+                    <div class="boc-d">Choisissez une donnée — imports, exports et suppressions en masse, par fichier CSV.</div>
+                  </div>
+                </div>
+                <div class="boc-grid">
+                  <a class="boc-item" href="atelier.xhtml?obj=alignements"><span class="boc-v">▦</span><span class="boc-l">Alignements</span><span class="boc-go"><svg viewBox="0 0 24 24" aria-hidden="true"><path d="M5 12h14"/><path d="m12 5 7 7-7 7"/></svg></span></a>
+                  <a class="boc-item" href="atelier.xhtml?obj=relations"><span class="boc-v">▦</span><span class="boc-l">Associations</span><span class="boc-go"><svg viewBox="0 0 24 24" aria-hidden="true"><path d="M5 12h14"/><path d="m12 5 7 7-7 7"/></svg></span></a>
+                  <a class="boc-item" href="atelier.xhtml?obj=synonymes"><span class="boc-v">▦</span><span class="boc-l">Formes alternatives</span><span class="boc-go"><svg viewBox="0 0 24 24" aria-hidden="true"><path d="M5 12h14"/><path d="m12 5 7 7-7 7"/></svg></span></a>
+                  <a class="boc-item" href="atelier.xhtml?obj=notes"><span class="boc-v">▦</span><span class="boc-l">Notes</span><span class="boc-go"><svg viewBox="0 0 24 24" aria-hidden="true"><path d="M5 12h14"/><path d="m12 5 7 7-7 7"/></svg></span></a>
+                  <a class="boc-item" href="atelier.xhtml?obj=identifiants"><span class="boc-v">▦</span><span class="boc-l">Identifiants ARK</span><span class="boc-go"><svg viewBox="0 0 24 24" aria-hidden="true"><path d="M5 12h14"/><path d="m12 5 7 7-7 7"/></svg></span></a>
+                  <a class="boc-item" href="atelier.xhtml?obj=images"><span class="boc-v">▦</span><span class="boc-l">Images</span><span class="boc-go"><svg viewBox="0 0 24 24" aria-hidden="true"><path d="M5 12h14"/><path d="m12 5 7 7-7 7"/></svg></span></a>
+                  <a class="boc-item" href="atelier.xhtml?obj=notations"><span class="boc-v">▦</span><span class="boc-l">Notations</span><span class="boc-go"><svg viewBox="0 0 24 24" aria-hidden="true"><path d="M5 12h14"/><path d="m12 5 7 7-7 7"/></svg></span></a>
+                  <a class="boc-item" href="atelier.xhtml?obj=collections"><span class="boc-v">▦</span><span class="boc-l">Collections</span><span class="boc-go"><svg viewBox="0 0 24 24" aria-hidden="true"><path d="M5 12h14"/><path d="m12 5 7 7-7 7"/></svg></span></a>
+                  <a class="boc-item" href="atelier.xhtml?obj=concepts"><span class="boc-v">▦</span><span class="boc-l">Concepts &amp; listes</span><span class="boc-go"><svg viewBox="0 0 24 24" aria-hidden="true"><path d="M5 12h14"/><path d="m12 5 7 7-7 7"/></svg></span></a>
+                </div>
+              </div>
+              <a class="boc boc-clickable" href="statistiques.xhtml">
+                <div class="boc-h">
+                  <div class="boc-ico"><svg viewBox="0 0 24 24" aria-hidden="true"><path d="M3 3v18h18"/><rect x="7" y="11" width="3" height="6"/><rect x="12" y="7" width="3" height="10"/><rect x="17" y="13" width="3" height="4"/></svg></div>
+                  <div class="boc-ht">
+                    <div class="boc-t">Statistiques</div>
+                    <div class="boc-d">Volumétrie, complétude, répartition. Cliquez pour le détail.</div>
+                  </div>
+                  <span class="boc-go static"><svg viewBox="0 0 24 24" aria-hidden="true"><path d="M5 12h14"/><path d="m12 5 7 7-7 7"/></svg></span>
+                </div>
+                <div class="mg-kpis card">
+                  <div class="mg-kpi"><div class="mg-kpi-n">438</div><div class="mg-kpi-l">Concepts</div></div>
+                  <div class="mg-kpi"><div class="mg-kpi-n">29</div><div class="mg-kpi-l">Candidats</div></div>
+                  <div class="mg-kpi"><div class="mg-kpi-n">7</div><div class="mg-kpi-l">Micro-thésaurus</div></div>
+                  <div class="mg-kpi"><div class="mg-kpi-n">6</div><div class="mg-kpi-l">Langues</div></div>
+                </div>
+              </a>
+              <div class="boc">
+                <div class="boc-h">
+                  <div class="boc-ico"><svg viewBox="0 0 24 24" aria-hidden="true"><circle cx="12" cy="12" r="3"/><path d="M19.4 15a1.65 1.65 0 0 0 .33 1.82l.06.06a2 2 0 1 1-2.83 2.83l-.06-.06a1.65 1.65 0 0 0-1.82-.33 1.65 1.65 0 0 0-1 1.51V21a2 2 0 0 1-4 0v-.09A1.65 1.65 0 0 0 9 19.4a1.65 1.65 0 0 0-1.82.33l-.06.06a2 2 0 1 1-2.83-2.83l-.06-.06a1.65 1.65 0 0 0 .33-1.82 1.65 1.65 0 0 0-1.51-1H3a2 2 0 0 1 0-4h.09A1.65 1.65 0 0 0 4.6 9a1.65 1.65 0 0 0-.33-1.82l-.06-.06a2 2 0 1 1 2.83-2.83l.06.06a1.65 1.65 0 0 0 1.82.33H9a1.65 1.65 0 0 0 1-1.51V3a2 2 0 0 1 4 0v.09a1.65 1.65 0 0 0 1 1.51 1.65 1.65 0 0 0 1.82-.33l.06-.06a2 2 0 1 1 2.83 2.83l-.06.06a1.65 1.65 0 0 0-.33 1.82V9a1.65 1.65 0 0 0 1.51 1H21a2 2 0 0 1 0 4h-.09a1.65 1.65 0 0 0-1.51 1z"/></svg></div>
+                  <div class="boc-ht">
+                    <div class="boc-t">Paramètres du thésaurus</div>
+                    <div class="boc-d">Métadonnées, langues, collections, statut… (rubriques en cours de cadrage).</div>
+                  </div>
+                </div>
+                <div class="boc-grid boc-grid-1">
+                  
+                  <a class="boc-item" href="preference.xhtml">
+                    <span class="boc-v">›</span><span class="boc-l">Préférences du thésaurus</span>
+                    <span class="boc-go"><svg viewBox="0 0 24 24" aria-hidden="true"><path d="M5 12h14"/><path d="m12 5 7 7-7 7"/></svg></span>
+                  </a>
+                  <a class="boc-item" href="identifiants.xhtml">
+                    <span class="boc-v">›</span><span class="boc-l">Identifiants des serveurs</span>
+                    <span class="boc-go"><svg viewBox="0 0 24 24" aria-hidden="true"><path d="M5 12h14"/><path d="m12 5 7 7-7 7"/></svg></span>
+                  </a>
+                  <a class="boc-item" href="corpus.xhtml">
+                    <span class="boc-v">›</span><span class="boc-l">Gestion des corpus liés</span>
+                    <span class="boc-go"><svg viewBox="0 0 24 24" aria-hidden="true"><path d="M5 12h14"/><path d="m12 5 7 7-7 7"/></svg></span>
+                  </a>
+                </div>
+              </div>
+              <div class="boc">
+                <div class="boc-h">
+                  <div class="boc-ico"><svg viewBox="0 0 24 24" aria-hidden="true"><path d="M14.7 6.3a4 4 0 0 0-5.4 5.4L3 18v3h3l6.3-6.3a4 4 0 0 0 5.4-5.4l-2.7 2.7-2-2 2.7-2.7z"/></svg></div>
+                  <div class="boc-ht">
+                    <div class="boc-t">Maintenance</div>
+                    <div class="boc-d">Vérifications de conformité et corrections de données. Le clic lance directement l'outil.</div>
+                  </div>
+                </div>
+                <div class="mc-note"><svg viewBox="0 0 24 24" aria-hidden="true"><path d="M10.3 3.9 1.8 18a2 2 0 0 0 1.7 3h17a2 2 0 0 0 1.7-3L13.7 3.9a2 2 0 0 0-3.4 0z"/><path d="M12 9v4"/><path d="M12 17h.01"/></svg><span>Ces opérations modifient le thésaurus en masse. <b>Rechargez-le</b> après le traitement.</span></div>
+                <div class="mc-list">
+                  <div class="mc-tool">
+                    <div class="mc-tool-main"><div class="mc-tool-t">Corriger les faux top termes</div><div class="mc-tool-d">Corrige les incohérences du thésaurus en cours : si des « top termes » s'affichent alors qu'ils n'en sont pas, cette action les rétablit.</div></div>
+                    <span class="mc-tool-last"><svg viewBox="0 0 24 24" aria-hidden="true"><circle cx="12" cy="12" r="9"/><path d="M12 7v5l3 2"/></svg> jamais</span>
+                    <button type="button" class="bo-btn ghost" data-act="toast" data-msg="« Corriger les faux top termes » lancé — traitement en cours…"><svg viewBox="0 0 24 24" aria-hidden="true"><path d="M20 6 9 17l-5-5"/></svg> Lancer</button>
+                  </div>
+                  <div class="mc-tool">
+                    <div class="mc-tool-main"><div class="mc-tool-t">Restructuration</div><div class="mc-tool-d">Recalcule les liens hiérarchiques (TG/TS) et répare les chaînes incohérentes.</div></div>
+                    <span class="mc-tool-last"><svg viewBox="0 0 24 24" aria-hidden="true"><circle cx="12" cy="12" r="9"/><path d="M12 7v5l3 2"/></svg> il y a 3 mois</span>
+                    <button type="button" class="bo-btn ghost" data-act="toast" data-msg="« Restructuration » lancé — traitement en cours…"><svg viewBox="0 0 24 24" aria-hidden="true"><path d="M20 6 9 17l-5-5"/></svg> Lancer</button>
+                  </div>
+                  <div class="mc-tool">
+                    <div class="mc-tool-main"><div class="mc-tool-t">Collections</div><div class="mc-tool-d">Vérifie l'appartenance des concepts aux collections et nettoie les rattachements orphelins.</div></div>
+                    <span class="mc-tool-last"><svg viewBox="0 0 24 24" aria-hidden="true"><circle cx="12" cy="12" r="9"/><path d="M12 7v5l3 2"/></svg> jamais</span>
+                    <button type="button" class="bo-btn ghost" data-act="toast" data-msg="« Collections » lancé — traitement en cours…"><svg viewBox="0 0 24 24" aria-hidden="true"><path d="M20 6 9 17l-5-5"/></svg> Lancer</button>
+                  </div>
+                  <div class="mc-tool">
+                    <div class="mc-tool-main"><div class="mc-tool-t">Créateur / contributeur</div><div class="mc-tool-d">Harmonise les métadonnées d'auteur sur l'ensemble des concepts.</div></div>
+                    <span class="mc-tool-last"><svg viewBox="0 0 24 24" aria-hidden="true"><circle cx="12" cy="12" r="9"/><path d="M12 7v5l3 2"/></svg> il y a 1 an</span>
+                    <button type="button" class="bo-btn ghost" data-act="toast" data-msg="« Créateur / contributeur » lancé — traitement en cours…"><svg viewBox="0 0 24 24" aria-hidden="true"><path d="M20 6 9 17l-5-5"/></svg> Lancer</button>
+                  </div>
+                  <div class="mc-tool">
+                    <div class="mc-tool-main"><div class="mc-tool-t">Identifiants ARK</div><div class="mc-tool-d">Contrôle l'intégrité des ARK et régénère les identifiants manquants.</div></div>
+                    <span class="mc-tool-last"><svg viewBox="0 0 24 24" aria-hidden="true"><circle cx="12" cy="12" r="9"/><path d="M12 7v5l3 2"/></svg> il y a 6 mois</span>
+                    <button type="button" class="bo-btn ghost" data-act="toast" data-msg="« Identifiants ARK » lancé — traitement en cours…"><svg viewBox="0 0 24 24" aria-hidden="true"><path d="M20 6 9 17l-5-5"/></svg> Lancer</button>
+                  </div>
+                  <div class="mc-tool">
+                    <div class="mc-tool-main"><div class="mc-tool-t">Générer le sitemap.xml</div><div class="mc-tool-d">Produit le sitemap du thésaurus en cours pour le référencement.</div></div>
+                    <span class="mc-tool-last"><svg viewBox="0 0 24 24" aria-hidden="true"><circle cx="12" cy="12" r="9"/><path d="M12 7v5l3 2"/></svg> il y a 2 semaines</span>
+                    <button type="button" class="bo-btn ghost" data-act="toast" data-msg="« Générer le sitemap.xml » lancé — traitement en cours…"><svg viewBox="0 0 24 24" aria-hidden="true"><path d="M20 6 9 17l-5-5"/></svg> Lancer</button>
+                  </div>
+                </div>
+              </div>
+            </div>
+          </div>
+</ui:composition>

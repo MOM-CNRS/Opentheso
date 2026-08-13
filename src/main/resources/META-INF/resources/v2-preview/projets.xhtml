@@ -1,0 +1,42 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<ui:composition xmlns="http://www.w3.org/1999/xhtml"
+                xmlns:ui="http://xmlns.jcp.org/jsf/facelets"
+                template="includes/layout.xhtml">
+  <ui:param name="previewPage" value="projets"/>
+  <ui:define name="title">OpenTheso — Mes projets</ui:define>
+  <ui:define name="main">
+
+          <div class="view-panel is-on">
+            <div class="bo">
+              <a class="bo-back" href="index.xhtml" title="Retour à l'accueil thésaurus"><svg viewBox="0 0 24 24" aria-hidden="true"><path d="M19 12H5"/><path d="m12 19-7-7 7-7"/></svg></a>
+              <div class="bo-head"><div><h1 class="bo-title">Profil / Mes projets</h1><p class="bo-sub">Projets auxquels vous avez accès.</p></div></div>
+              <div class="bo-full st-scope"><div class="boc-grid boc-grid-1">
+                  <a class="boc-item" href="index.xhtml">
+                    <span class="proj-dot" style="background:#1f7a5c"></span>
+                    <span class="boc-l">PACTOLS<small style="display:block;font-weight:400;color:var(--ink-3)">Gestionnaire · 438 concepts</small></span>
+                    <span class="st-card-tag">actif</span>
+                    <span class="boc-go"><svg viewBox="0 0 24 24" aria-hidden="true"><path d="M5 12h14"/><path d="m12 5 7 7-7 7"/></svg></span>
+                  </a>
+                  <a class="boc-item" href="projets.xhtml">
+                    <span class="proj-dot" style="background:#2f5fd0"></span>
+                    <span class="boc-l">GeoEthno<small style="display:block;font-weight:400;color:var(--ink-3)">Contributeur · 4120 concepts</small></span>
+                    
+                    <span class="boc-go"><svg viewBox="0 0 24 24" aria-hidden="true"><path d="M5 12h14"/><path d="m12 5 7 7-7 7"/></svg></span>
+                  </a>
+                  <a class="boc-item" href="projets.xhtml">
+                    <span class="proj-dot" style="background:#9a3b2e"></span>
+                    <span class="boc-l">Thésaurus-W<small style="display:block;font-weight:400;color:var(--ink-3)">Lecteur · 1860 concepts</small></span>
+                    
+                    <span class="boc-go"><svg viewBox="0 0 24 24" aria-hidden="true"><path d="M5 12h14"/><path d="m12 5 7 7-7 7"/></svg></span>
+                  </a>
+                  <a class="boc-item" href="projets.xhtml">
+                    <span class="proj-dot" style="background:#5b4bb8"></span>
+                    <span class="boc-l">Garnier — Matériaux<small style="display:block;font-weight:400;color:var(--ink-3)">Contributeur · 980 concepts</small></span>
+                    
+                    <span class="boc-go"><svg viewBox="0 0 24 24" aria-hidden="true"><path d="M5 12h14"/><path d="m12 5 7 7-7 7"/></svg></span>
+                  </a></div></div>
+              
+            </div>
+          </div>
+  </ui:define>
+</ui:composition>
