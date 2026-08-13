@@ -739,8 +739,8 @@
     if (empty) empty.hidden = n > 0;
   }
 
-  function closeRail() {
-    $$(".rail-btn.is-on").forEach(b => {
+  function closeThesaurus() {
+    $$(".thesaurus-btn.is-on").forEach(b => {
       b.classList.remove("is-on");
       b.setAttribute("aria-expanded", "false");
     });
@@ -780,10 +780,39 @@
     if (center) center.addEventListener("click", () => { tx = 0; ty = 0; apply(); });
   })();
 
+  document.addEventListener("pointerdown", (e) => {
+    const go = e.target.closest(".login-go");
+    if (!go) return;
+    go.classList.remove("is-click");
+    void go.offsetWidth;
+    go.classList.add("is-click");
+  });
+  document.addEventListener("click", (e) => {
+    const go = e.target.closest(".login-go");
+    if (go) go.classList.add("is-busy");
+  }, true);
+
+  window.onPreviewLoginAjax = function (data) {
+    if (data.status !== "success") return;
+    const form = document.getElementById("previewLoginForm");
+    const btn = document.querySelector('[data-thesaurus="account"]');
+    if (!form || !btn) return;
+    btn.classList.add("is-on");
+    btn.setAttribute("aria-expanded", "true");
+  };
+
+  document.addEventListener("keydown", (e) => {
+    if (e.key !== "Escape") return;
+    const dlg = $("#logoutConfirm");
+    if (!dlg || dlg.hidden) return;
+    dlg.hidden = true;
+    e.preventDefault();
+  });
+
   document.addEventListener("click", (e) => {
     const t = e.target.closest("[data-act]");
     if (!t) {
-      if ($("#navRail") && !$("#navRail").contains(e.target)) closeRail();
+      if ($("#navThesaurus") && !$("#navThesaurus").contains(e.target)) closeThesaurus();
       if ($("#voWrap") && !$("#voWrap").contains(e.target)) $("#voGear") && $("#voGear").classList.remove("is-on");
       if ($("#viewPick") && !$("#viewPick").contains(e.target)) $("#viewPickBtn") && $("#viewPickBtn").classList.remove("is-open");
       if ($("#cfCombo") && !$("#cfCombo").contains(e.target)) $("#cfCombo").classList.remove("open");
@@ -791,9 +820,21 @@
     }
     if ($("#cfCombo") && !$("#cfCombo").contains(e.target)) $("#cfCombo").classList.remove("open");
     const act = t.getAttribute("data-act");
-    if (act === "rail") {
+    if (act === "logout-ask") {
+      closeThesaurus();
+      const dlg = $("#logoutConfirm");
+      if (!dlg) return;
+      dlg.hidden = false;
+      const cancel = dlg.querySelector(".confirm-cancel");
+      if (cancel) cancel.focus();
+    } else if (act === "logout-dismiss") {
+      const dlg = $("#logoutConfirm");
+      if (dlg) dlg.hidden = true;
+    } else if (act === "logout-modal") {
+      return;
+    } else if (act === "thesaurus") {
       const on = t.classList.contains("is-on");
-      closeRail();
+      closeThesaurus();
       if (!on) {
         t.classList.add("is-on");
         t.setAttribute("aria-expanded", "true");
@@ -971,9 +1012,9 @@
     } else if (act === "ui-lang") {
       $$(".lang-opt").forEach(o => o.classList.toggle("is-on", o === t));
       const flag = t.querySelector(".lang-opt-flag");
-      const btn = $('[data-rail="lang"] .rail-flag');
+      const btn = $('[data-thesaurus="lang"] .thesaurus-flag');
       if (flag && btn) btn.textContent = flag.textContent;
-      closeRail();
+      closeThesaurus();
     } else if (act === "bulk-coll") bulkMode("coll");
     else if (act === "bulk-move") bulkMode("move");
     else if (act === "bulk-back") bulkMode("acts");

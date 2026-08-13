@@ -7,7 +7,8 @@ import org.springframework.stereotype.Component;
 @ConfigurationProperties(prefix = "app.security")
 public class AppConfig {
 
-    private boolean keycloakEnabled;
+    /** Lié à {@code app.security.keycloak-enabled}. Désactivé par défaut. */
+    private boolean keycloakEnabled = false;
 
     public boolean isKeycloakEnabled() {
         return keycloakEnabled;

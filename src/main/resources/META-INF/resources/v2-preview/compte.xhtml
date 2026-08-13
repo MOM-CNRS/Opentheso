@@ -9,7 +9,7 @@
           <div class="view-panel is-on">
             <div class="bo">
               <a class="bo-back" href="index.xhtml" title="Retour à l'accueil thésaurus"><svg viewBox="0 0 24 24" aria-hidden="true"><path d="M19 12H5"/><path d="m12 19-7-7 7-7"/></svg></a>
-              <div class="bo-head"><div><h1 class="bo-title">Profil / Mon compte</h1><p class="bo-sub">Gestionnaire · c.roussel@mom.fr</p></div></div>
+              <div class="bo-head"><div><h1 class="bo-title">Profil / Mon compte</h1><p class="bo-sub">#{v2UserSession.currentRoleLabel} · #{v2UserSession.currentUserEmail}</p></div></div>
               <div class="bo-full st-scope"><div class="bo-card">
                   <div class="bo-card-h">
                     <span class="bo-card-t">Identité</span>
@@ -18,13 +18,13 @@
                   </div>
                   <div class="bo-card-b st-form"><div class="st-row">
                     <div class="st-row-l">Nom</div>
-                    <div class="st-row-c"><input class="st-input" value="Camille Roussel" type="text"/></div>
+                    <div class="st-row-c"><input class="st-input" value="#{v2UserSession.currentUsername}" type="text" readonly="readonly"/></div>
                   </div><div class="st-row">
                     <div class="st-row-l">E-mail</div>
-                    <div class="st-row-c"><input class="st-input" value="c.roussel@mom.fr" type="text"/></div>
+                    <div class="st-row-c"><input class="st-input" value="#{v2UserSession.currentUserEmail}" type="text" readonly="readonly"/></div>
                   </div><div class="st-row">
                     <div class="st-row-l">Rôle</div>
-                    <div class="st-row-c"><input class="st-input" value="Gestionnaire" type="text"/></div>
+                    <div class="st-row-c"><input class="st-input" value="#{v2UserSession.currentRoleLabel}" type="text" readonly="readonly"/></div>
                   </div></div>
                 </div><div class="bo-card">
                   <div class="bo-card-h">
@@ -32,7 +32,7 @@
                     
                     
                   </div>
-                  <div class="bo-card-b st-form"><p class="st-toggle-d">Connecté en tant que Camille Roussel (CR). Super-admin : oui.</p></div>
+                  <div class="bo-card-b st-form"><p class="st-toggle-d">Connecté en tant que #{v2UserSession.currentUsername} (#{v2UserSession.currentUserInitials}). Super-admin : #{v2UserSession.superAdmin ? 'oui' : 'non'}.</p></div>
                 </div></div>
               <div class="fsave"><button type="button" class="fsave-btn" data-act="st-save"><svg viewBox="0 0 24 24" aria-hidden="true"><path d="M20 6 9 17l-5-5"/></svg> Enregistrer</button></div>
               <div class="bo-toast above" id="stSaveToast" hidden="hidden"><svg viewBox="0 0 24 24" aria-hidden="true"><path d="M20 6 9 17l-5-5"/></svg> Enregistré avec succès</div>

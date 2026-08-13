@@ -2,7 +2,7 @@
    Le JavaScript ne fait que poser des classes ; il ne construit pas le DOM. */
 
 .menu-pop{display:none}
-.rail-btn.is-on + .menu-pop{display:block}
+.thesaurus-btn.is-on + .menu-pop{display:block}
 
 .view-pick-menu{display:none}
 .view-pick:hover .view-pick-menu,
@@ -169,8 +169,123 @@ body.hl-off mark.hl{background:transparent;color:inherit;font-weight:inherit;pad
 .bo-toast[hidden]{display:none}
 button.st-hint{background:none;border:none;padding:0;cursor:pointer;font:inherit}
 
-a.th-id,a.rail-logo,a.rail-btn,a.boc-item,a.boc,a.bo-back,a.empty-link,a.menu-row,a.menu-foot,a.admin-tile,a.proj-row,a.view-pick-item,a.view-add,a.cand-row,a.bo-btn{color:inherit;text-decoration:none}
+a.th-id,a.thesaurus-logo,a.thesaurus-btn,a.boc-item,a.boc,a.bo-back,a.empty-link,a.menu-row,a.menu-foot,a.admin-tile,a.proj-row,a.view-pick-item,a.view-add,a.cand-row,a.bo-btn{color:inherit;text-decoration:none}
 a.th-id{flex:1}
+.login-form .st-input{max-width:none;margin:0}
+.login-form .st-input.is-invalid{border-color:#9a3b2e;box-shadow:0 0 0 3px rgba(154,59,46,.12)}
+.login-l{display:block;font-size:11px;font-weight:600;color:var(--ink-3);margin:8px 0 4px}
+.login-alert{display:flex;align-items:flex-start;gap:8px;margin:0 0 10px;padding:8px 10px;
+  border-radius:8px;border:1px solid rgba(154,59,46,.22);background:#f8ecea;color:#8a3429;
+  font-size:12.5px;line-height:1.4}
+.login-alert svg{width:16px;height:16px;flex:0 0 auto;margin-top:1px;stroke:currentColor;fill:none;
+  stroke-width:1.85;stroke-linecap:round;stroke-linejoin:round}
+.login-form.is-error{animation:login-shake .42s ease}
+.login-form.is-error .menu-h,
+.login-form.is-error .login-l,
+.login-form.is-error .st-input,
+.login-form.is-error .login-go,
+.login-form.is-error .login-msg,
+.login-form.is-error .login-msg-err,
+.login-form.is-error .login-alert,
+.login-form.is-error .menu-foot{animation:none}
+@keyframes login-shake{
+  0%,100%{transform:none}
+  20%{transform:translateX(-4px)}
+  40%{transform:translateX(4px)}
+  60%{transform:translateX(-3px)}
+  80%{transform:translateX(2px)}
+}
+.login-msg,.login-msg-err{font-size:12px;color:#9a3b2e;line-height:1.35;margin:0 0 8px}
+.login-msg-ok{font-size:12px;color:var(--accent);line-height:1.35;margin:0 0 8px}
+
+.login-go,a.login-go{
+  position:relative;overflow:hidden;
+  display:flex;align-items:center;justify-content:center;gap:8px;width:100%;
+  margin-top:14px;padding:10px 14px;border:0;border-radius:9px;
+  background:var(--accent);color:#fff;font:inherit;font-size:13.5px;font-weight:650;
+  letter-spacing:.01em;text-decoration:none;cursor:pointer;
+  box-shadow:0 1px 0 rgba(255,255,255,.16) inset, 0 1px 2px rgba(16,24,20,.12);
+  transition:filter .12s ease, transform .12s ease, box-shadow .12s ease;
+}
+.login-go::after{
+  content:"";position:absolute;inset:0;border-radius:inherit;pointer-events:none;
+  background:radial-gradient(circle at center, rgba(255,255,255,.5) 0%, transparent 62%);
+  opacity:0;transform:scale(.35);
+}
+.login-go:hover,a.login-go:hover{
+  color:#fff;filter:brightness(1.07);
+  box-shadow:0 1px 0 rgba(255,255,255,.2) inset, 0 4px 14px rgba(31,122,92,.28);
+}
+.login-go:active,a.login-go:active,
+.login-go.is-click{
+  transform:scale(.97) translateY(1px);filter:brightness(.96);
+  box-shadow:0 1px 3px rgba(16,24,20,.18) inset;
+}
+.login-go.is-click::after{animation:login-ripple .45s ease-out}
+.login-go.is-busy{pointer-events:none;animation:login-busy .8s ease-in-out infinite}
+.login-go svg{width:16px;height:16px;stroke:currentColor;fill:none;stroke-width:1.9;
+  stroke-linecap:round;stroke-linejoin:round;flex:0 0 auto;position:relative;z-index:1}
+.login-go span{position:relative;z-index:1}
+@keyframes login-ripple{
+  0%{opacity:.75;transform:scale(.3)}
+  100%{opacity:0;transform:scale(1.85)}
+}
+@keyframes login-busy{
+  0%,100%{filter:brightness(1)}
+  50%{filter:brightness(1.14)}
+}
+
+.menu-pop--login{
+  animation:login-pop .34s cubic-bezier(.22,.8,.28,1);
+  box-shadow:var(--shadow-lg), 0 0 0 1px var(--accent-soft);
+}
+.login-form .menu-h,
+.login-form .login-l,
+.login-form .st-input,
+.login-form .login-go,
+.login-form .login-msg,
+.login-form .login-msg-err,
+.login-form .menu-foot{
+  animation:login-rise .38s cubic-bezier(.22,.8,.28,1) both;
+}
+.login-form .menu-h{animation-delay:.04s}
+.login-form .login-l{animation-delay:.08s}
+.login-form .st-input{animation-delay:.12s}
+.login-form .login-go,
+.login-form .menu-foot{animation-delay:.18s}
+@keyframes login-pop{
+  from{opacity:0;transform:translate3d(-10px,4px,0) scale(.98)}
+  to{opacity:1;transform:none}
+}
+@keyframes login-rise{
+  from{opacity:0;transform:translateY(5px)}
+  to{opacity:1;transform:none}
+}
+@media (prefers-reduced-motion:reduce){
+  .menu-pop--login,
+  .login-form .menu-h,
+  .login-form .login-l,
+  .login-form .st-input,
+  .login-form .login-go,
+  .login-form .login-msg,
+  .login-form .login-msg-err,
+  .login-form .menu-foot,
+  .login-form.is-error,
+  .login-go.is-click::after,
+  .login-go.is-busy{animation:none}
+}
+.confirm-overlay[hidden]{display:none!important}
+.confirm-modal{
+  background:var(--surface);border-radius:14px;box-shadow:var(--shadow-lg);
+  width:min(400px,92vw);padding:22px 22px 18px;
+  display:flex;flex-direction:column;gap:12px;
+  animation:login-pop .28s cubic-bezier(.22,.8,.28,1);
+}
+.confirm-h{font-size:15px;font-weight:700;color:var(--ink)}
+.confirm-p{margin:0;font-size:13.5px;line-height:1.45;color:var(--ink-2)}
+.confirm-actions{display:flex;justify-content:flex-end;align-items:center;gap:10px;margin-top:6px}
+.confirm-ok-form{display:contents}
+.confirm-modal a.bo-btn{color:#fff;text-decoration:none}
 a.boc-item,a.boc.boc-clickable{cursor:pointer}
 a.empty-link{color:var(--accent);font-weight:600}
 

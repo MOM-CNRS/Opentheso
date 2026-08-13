@@ -93,14 +93,50 @@ class LoginBeanTest {
     void login_showsErrorWhenCredentialsBlank() {
         loginBean.setUsername(" ");
         loginBean.setPassword(null);
-        when(v2LocaleBean.getMsg("candidat.save.msg9")).thenReturn("required");
+        when(v2LocaleBean.getMsg("connect.error.required")).thenReturn("required");
 
         try (MockedStatic<MessageUtils> messages = mockStatic(MessageUtils.class)) {
             loginBean.login();
             messages.verify(() -> MessageUtils.showErrorMessage("required"));
         }
 
+        org.junit.jupiter.api.Assertions.assertTrue(loginBean.hasLoginError());
+        org.junit.jupiter.api.Assertions.assertTrue(loginBean.isUsernameInvalid());
+        org.junit.jupiter.api.Assertions.assertTrue(loginBean.isPasswordInvalid());
         verify(authenticationService, never()).authenticate(org.mockito.ArgumentMatchers.any(), org.mockito.ArgumentMatchers.any());
+    }
+
+    @Test
+    void login_showsErrorWhenPasswordMissing() {
+        loginBean.setUsername("alice");
+        loginBean.setPassword("  ");
+        when(v2LocaleBean.getMsg("connect.error.password")).thenReturn("password");
+
+        try (MockedStatic<MessageUtils> messages = mockStatic(MessageUtils.class)) {
+            loginBean.login();
+            messages.verify(() -> MessageUtils.showErrorMessage("password"));
+        }
+
+        org.junit.jupiter.api.Assertions.assertTrue(loginBean.isPasswordInvalid());
+        org.junit.jupiter.api.Assertions.assertFalse(loginBean.isUsernameInvalid());
+        verify(authenticationService, never()).authenticate(org.mockito.ArgumentMatchers.any(), org.mockito.ArgumentMatchers.any());
+    }
+
+    @Test
+    void login_showsErrorWhenCredentialsAreWrong() {
+        loginBean.setUsername("alice");
+        loginBean.setPassword("bad");
+        when(authenticationService.authenticate("alice", "bad")).thenReturn(Optional.empty());
+        when(v2LocaleBean.getMsg("connect.error.credentials")).thenReturn("wrong");
+
+        try (MockedStatic<MessageUtils> messages = mockStatic(MessageUtils.class)) {
+            loginBean.login();
+            messages.verify(() -> MessageUtils.showErrorMessage("wrong"));
+        }
+
+        org.junit.jupiter.api.Assertions.assertEquals("wrong", loginBean.getLoginError());
+        org.junit.jupiter.api.Assertions.assertNull(loginBean.getPassword());
+        verify(sessionAuthenticatedUserSource, never()).setUserId(org.mockito.ArgumentMatchers.any());
     }
 
     @Test

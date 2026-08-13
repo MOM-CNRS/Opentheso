@@ -2,6 +2,7 @@
 <!DOCTYPE html>
 <html xmlns="http://www.w3.org/1999/xhtml"
       xmlns:ui="http://xmlns.jcp.org/jsf/facelets"
+      xmlns:h="http://xmlns.jcp.org/jsf/html"
       lang="fr">
 <head>
   <meta charset="UTF-8"/>
@@ -16,7 +17,7 @@
 </head>
 <body data-page="#{previewPage}">
 <div class="app" id="app">
-  <ui:include src="rail.xhtml"/>
+  <ui:include src="thesaurus.xhtml"/>
   <div class="main">
     <div class="panes">
       <ui:insert name="sidebar">
@@ -33,6 +34,7 @@
   </div>
 </div>
 <div class="app-toast" id="appToast" hidden="hidden"></div>
+<h:outputScript library="jakarta.faces" name="faces.js"/>
 <script src="#{request.contextPath}/resources/js/v2-preview/app.js"></script>
 </body>
 </html>

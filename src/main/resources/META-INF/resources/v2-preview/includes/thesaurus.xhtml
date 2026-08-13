@@ -1,36 +1,75 @@
 <?xml version="1.0" encoding="UTF-8"?>
 <ui:composition xmlns="http://www.w3.org/1999/xhtml"
-                xmlns:ui="http://xmlns.jcp.org/jsf/facelets">
+                xmlns:ui="http://xmlns.jcp.org/jsf/facelets"
+                xmlns:h="http://xmlns.jcp.org/jsf/html"
+                xmlns:f="http://xmlns.jcp.org/jsf/core">
 
-  <nav class="rail" id="navRail" aria-label="Navigation OpenTheso">
-    <a class="rail-logo" href="index.xhtml" title="OpenTheso" aria-label="OpenTheso">
+  <nav class="thesaurus" id="navThesaurus" aria-label="Navigation OpenTheso">
+    <a class="thesaurus-logo" href="index.xhtml" title="OpenTheso" aria-label="OpenTheso">
       <svg viewBox="0 0 24 24" aria-hidden="true" class="logo-mark">
         <circle cx="12" cy="12" r="8.2" class="logo-disc"/>
         <path class="logo-seg" d="M12 3.8c-2.5 1.9-4 4.8-4 8.2s1.5 6.3 4 8.2c2.5-1.9 4-4.8 4-8.2s-1.5-6.3-4-8.2Z"/>
       </svg>
     </a>
-    <div class="rail-group">
-      <div class="rail-item">
-        <button type="button" class="rail-btn" data-act="rail" data-rail="account" title="Compte" aria-label="Compte" aria-expanded="false">
+    <div class="thesaurus-group">
+      <div class="thesaurus-item">
+        <button type="button" class="thesaurus-btn#{not v2UserSession.loggedIn and not empty v2LoginBean.loginError ? ' is-on' : ''}"
+                data-act="thesaurus" data-thesaurus="account"
+                title="#{v2UserSession.loggedIn ? 'Compte' : 'Connexion'}"
+                aria-label="#{v2UserSession.loggedIn ? 'Compte' : 'Connexion'}"
+                aria-expanded="#{not v2UserSession.loggedIn and not empty v2LoginBean.loginError}">
           <svg viewBox="0 0 24 24" aria-hidden="true"><path d="M19 21v-1.5a4 4 0 0 0-4-4H9a4 4 0 0 0-4 4V21"/><circle cx="12" cy="7" r="4"/></svg>
         </button>
-        <div class="menu-pop menu-pop--top" id="menu-account">
-        <div class="menu-h">Compte</div>
-        <div class="acct-head">
-          <span class="avatar">CR</span>
-          <div class="acct-id">
-            <div class="acct-name">Camille Roussel</div>
-            <div class="acct-mail">c.roussel@mom.fr</div>
+        <div class="menu-pop menu-pop--top#{not v2UserSession.loggedIn ? ' menu-pop--login' : ''}" id="menu-account">
+        <ui:fragment rendered="#{not v2UserSession.loggedIn}">
+          <h:form id="previewLoginForm" styleClass="login-form#{not empty v2LoginBean.loginError ? ' is-error' : ''}">
+            <div class="menu-h">Connexion</div>
+            <h:panelGroup layout="block" styleClass="login-alert" rendered="#{not empty v2LoginBean.loginError}">
+              <svg viewBox="0 0 24 24" aria-hidden="true"><path d="M10.3 3.9 1.8 18a2 2 0 0 0 1.7 3h17a2 2 0 0 0 1.7-3L13.7 3.9a2 2 0 0 0-3.4 0z"/><path d="M12 9v4"/><path d="M12 17h.01"/></svg>
+              <span>#{v2LoginBean.loginError}</span>
+            </h:panelGroup>
+            <h:outputLabel for="previewLoginUser" styleClass="login-l" value="Identifiant"/>
+            <h:inputText id="previewLoginUser" value="#{v2LoginBean.username}"
+                         styleClass="st-input#{v2LoginBean.usernameInvalid ? ' is-invalid' : ''}"
+                         autocomplete="username"/>
+            <h:outputLabel for="previewLoginPass" styleClass="login-l" value="Mot de passe"/>
+            <h:inputSecret id="previewLoginPass" value="#{v2LoginBean.password}"
+                           styleClass="st-input#{v2LoginBean.passwordInvalid ? ' is-invalid' : ''}"
+                           autocomplete="current-password"
+                           redisplay="false"/>
+            <h:commandLink actionListener="#{v2LoginBean.login}" styleClass="login-go">
+              <f:ajax execute="@form" render="@form" onevent="onPreviewLoginAjax"/>
+              <svg viewBox="0 0 24 24" aria-hidden="true"><path d="M15 3h4a2 2 0 0 1 2 2v14a2 2 0 0 1-2 2h-4"/><path d="m10 17 5-5-5-5"/><path d="M15 12H3"/></svg>
+              <span>Connexion</span>
+            </h:commandLink>
+            <input type="hidden" name="csrfToken" value="#{sessionScope.CSRF_TOKEN}"/>
+          </h:form>
+          <h:outputLink value="#{request.contextPath}/oauth2/authorization/keycloak"
+                        styleClass="menu-foot"
+                        rendered="#{appConfigBean.keycloakEnabled}">
+            Connexion SSO
+          </h:outputLink>
+        </ui:fragment>
+        <ui:fragment rendered="#{v2UserSession.loggedIn}">
+          <div class="menu-h">Compte</div>
+          <div class="acct-head">
+            <span class="avatar">#{v2UserSession.currentUserInitials}</span>
+            <div class="acct-id">
+              <div class="acct-name">#{v2UserSession.currentUsername}</div>
+              <div class="acct-mail">#{v2UserSession.currentUserEmail}</div>
+            </div>
           </div>
+          <div class="role-badge">#{v2UserSession.currentRoleLabel}</div>
+          <div class="menu-list">
+            <a class="menu-row" href="compte.xhtml"><svg viewBox="0 0 24 24" aria-hidden="true"><path d="M19 21v-1.5a4 4 0 0 0-4-4H9a4 4 0 0 0-4 4V21"/><circle cx="12" cy="7" r="4"/></svg><span>Mon profil</span></a>
+            <a class="menu-row" href="preference.xhtml"><svg viewBox="0 0 24 24" aria-hidden="true"><path d="M4 21v-7M4 10V3M12 21v-9M12 8V3M20 21v-5M20 12V3M1 14h6M9 8h6M17 16h6"/></svg><span>Préférences</span></a>
+          </div>
+        </ui:fragment>
         </div>
-        <div class="role-badge">Gestionnaire</div>
-        <div class="menu-list">
-          <a class="menu-row" href="compte.xhtml"><svg viewBox="0 0 24 24" aria-hidden="true"><path d="M19 21v-1.5a4 4 0 0 0-4-4H9a4 4 0 0 0-4 4V21"/><circle cx="12" cy="7" r="4"/></svg><span>Mon profil</span></a>
-          <a class="menu-row" href="preference.xhtml"><svg viewBox="0 0 24 24" aria-hidden="true"><path d="M4 21v-7M4 10V3M12 21v-9M12 8V3M20 21v-5M20 12V3M1 14h6M9 8h6M17 16h6"/></svg><span>Préférences</span></a>
-        </div></div>
       </div>
-      <div class="rail-item">
-        <button type="button" class="rail-btn" data-act="rail" data-rail="projects" title="Mes projets" aria-label="Mes projets" aria-expanded="false">
+      <ui:fragment rendered="#{v2UserSession.loggedIn}">
+      <div class="thesaurus-item">
+        <button type="button" class="thesaurus-btn" data-act="thesaurus" data-thesaurus="projects" title="Mes projets" aria-label="Mes projets" aria-expanded="false">
           <svg viewBox="0 0 24 24" aria-hidden="true"><path d="M16 21v-1.5a4 4 0 0 0-4-4H6a4 4 0 0 0-4 4V21"/><circle cx="9" cy="7" r="3.5"/><path d="M22 21v-1.5a4 4 0 0 0-3-3.85"/><path d="M16 3.3a4 4 0 0 1 0 7.4"/></svg>
         </button>
         <div class="menu-pop menu-pop--top" id="menu-projects">
@@ -68,8 +107,10 @@
         </div>
         <a class="menu-foot" href="projets.xhtml"><svg viewBox="0 0 24 24" aria-hidden="true"><path d="M15 3h6v6"/><path d="M10 14 21 3"/><path d="M18 13v6a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2V8a2 2 0 0 1 2-2h6"/></svg>Gérer mes accès</a></div>
       </div>
-      <div class="rail-item">
-        <button type="button" class="rail-btn" data-act="rail" data-rail="admin" title="Administration" aria-label="Administration" aria-expanded="false">
+      </ui:fragment>
+      <ui:fragment rendered="#{v2UserSession.superAdmin}">
+      <div class="thesaurus-item">
+        <button type="button" class="thesaurus-btn" data-act="thesaurus" data-thesaurus="admin" title="Administration" aria-label="Administration" aria-expanded="false">
           <svg viewBox="0 0 24 24" aria-hidden="true"><path d="M12 22c4.5-1.6 8-4.4 8-9V5.5l-8-3-8 3V13c0 4.6 3.5 7.4 8 9Z"/></svg>
         </button>
         <div class="menu-pop menu-pop--top" id="menu-admin">
@@ -81,12 +122,13 @@
           <a class="admin-tile" href="statistiques.xhtml"><svg viewBox="0 0 24 24" aria-hidden="true"><path d="M22 12h-4l-3 8L9 4l-3 8H2"/></svg><span>Statistiques</span></a>
         </div></div>
       </div>
+      </ui:fragment>
     </div>
-    <div class="rail-spacer"></div>
-    <div class="rail-group">
-      <div class="rail-item">
-        <button type="button" class="rail-btn" data-act="rail" data-rail="lang" title="Langue de l'interface" aria-label="Langue de l'interface" aria-expanded="false">
-          <span class="rail-flag">🇫🇷</span>
+    <div class="thesaurus-spacer"></div>
+    <div class="thesaurus-group">
+      <div class="thesaurus-item">
+        <button type="button" class="thesaurus-btn" data-act="thesaurus" data-thesaurus="lang" title="Langue de l'interface" aria-label="Langue de l'interface" aria-expanded="false">
+          <span class="thesaurus-flag">🇫🇷</span>
         </button>
         <div class="menu-pop menu-pop--bottom" id="menu-lang">
         <div class="menu-h">Langue de l'interface</div>
@@ -109,8 +151,8 @@
           </button>
         </div></div>
       </div>
-      <div class="rail-item">
-        <button type="button" class="rail-btn" data-act="rail" data-rail="api" title="API REST" aria-label="API REST" aria-expanded="false">
+      <div class="thesaurus-item">
+        <button type="button" class="thesaurus-btn" data-act="thesaurus" data-thesaurus="api" title="API REST" aria-label="API REST" aria-expanded="false">
           <svg viewBox="0 0 24 24" aria-hidden="true"><path d="M8 3H7a2 2 0 0 0-2 2v4a2 2 0 0 1-2 2 2 2 0 0 1 2 2v4a2 2 0 0 0 2 2h1"/><path d="M16 3h1a2 2 0 0 1 2 2v4a2 2 0 0 0 2 2 2 2 0 0 0-2 2v4a2 2 0 0 1-2 2h-1"/></svg>
         </button>
         <div class="menu-pop menu-pop--bottom" id="menu-api">
@@ -122,8 +164,8 @@
         </div>
         <button type="button" class="menu-foot"><svg viewBox="0 0 24 24" aria-hidden="true"><path d="M15 3h6v6"/><path d="M10 14 21 3"/><path d="M18 13v6a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2V8a2 2 0 0 1 2-2h6"/></svg>Voir la documentation</button></div>
       </div>
-      <div class="rail-item">
-        <button type="button" class="rail-btn" data-act="rail" data-rail="graph" title="API graphe" aria-label="API graphe" aria-expanded="false">
+      <div class="thesaurus-item">
+        <button type="button" class="thesaurus-btn" data-act="thesaurus" data-thesaurus="graph" title="API graphe" aria-label="API graphe" aria-expanded="false">
           <svg viewBox="0 0 24 24" aria-hidden="true"><circle cx="12" cy="12" r="2.4"/><circle cx="12" cy="4" r="2"/><circle cx="4.6" cy="17.5" r="2"/><circle cx="19.4" cy="17.5" r="2"/><path d="M12 6.3v3.3M10.3 13.4 6.3 16M13.7 13.4l4 2.6"/></svg>
         </button>
         <div class="menu-pop menu-pop--bottom" id="menu-graph">
@@ -136,7 +178,29 @@
         <button type="button" class="menu-foot"><svg viewBox="0 0 24 24" aria-hidden="true"><path d="M15 3h6v6"/><path d="M10 14 21 3"/><path d="M18 13v6a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2V8a2 2 0 0 1 2-2h6"/></svg>Ouvrir l'explorateur</button></div>
       </div>
     </div>
-    <button type="button" class="rail-btn" title="Déconnexion" aria-label="Déconnexion"><svg viewBox="0 0 24 24" aria-hidden="true"><path d="M9 21H5a2 2 0 0 1-2-2V5a2 2 0 0 1 2-2h4"/><path d="m16 17 5-5-5-5"/><path d="M21 12H9"/></svg></button>
-    <div class="rail-ver" title="OpenTheso X.Y.Z">X.Y.Z</div>
+    <ui:fragment rendered="#{v2UserSession.loggedIn}">
+      <button type="button" class="thesaurus-btn" data-act="logout-ask"
+              title="Déconnexion" aria-label="Déconnexion">
+        <svg viewBox="0 0 24 24" aria-hidden="true"><path d="M9 21H5a2 2 0 0 1-2-2V5a2 2 0 0 1 2-2h4"/><path d="m16 17 5-5-5-5"/><path d="M21 12H9"/></svg>
+      </button>
+      <div class="block-overlay confirm-overlay" id="logoutConfirm" hidden="hidden"
+           data-act="logout-dismiss" role="presentation">
+        <div class="confirm-modal" role="dialog" aria-modal="true"
+             aria-labelledby="logoutConfirmTitle" data-act="logout-modal">
+          <div class="confirm-h" id="logoutConfirmTitle">Déconnexion</div>
+          <p class="confirm-p">Voulez-vous vraiment vous déconnecter ?</p>
+          <div class="confirm-actions">
+            <button type="button" class="bo-btn ghost confirm-cancel" data-act="logout-dismiss">Annuler</button>
+            <h:form id="previewLogoutForm" styleClass="confirm-ok-form">
+              <input type="hidden" name="csrfToken" value="#{sessionScope.CSRF_TOKEN}"/>
+              <h:commandLink styleClass="bo-btn danger" actionListener="#{v2LoginBean.logoutToPreview}">
+                Se déconnecter
+              </h:commandLink>
+            </h:form>
+          </div>
+        </div>
+      </div>
+    </ui:fragment>
+    <div class="thesaurus-ver" title="OpenTheso X.Y.Z">X.Y.Z</div>
   </nav>
 </ui:composition>

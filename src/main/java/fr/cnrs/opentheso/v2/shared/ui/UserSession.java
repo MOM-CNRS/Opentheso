@@ -79,6 +79,32 @@ public class UserSession implements Serializable {
         return resolveSessionUser().map(SessionUser::manager).orElse(false);
     }
 
+    public String getCurrentUserInitials() {
+        String name = getCurrentUsername();
+        if (name == null || name.isBlank()) {
+            return "?";
+        }
+        String[] parts = name.trim().split("\\s+");
+        if (parts.length >= 2 && !parts[0].isEmpty() && !parts[1].isEmpty()) {
+            return (parts[0].substring(0, 1) + parts[1].substring(0, 1)).toUpperCase();
+        }
+        String token = parts[0];
+        return token.length() >= 2 ? token.substring(0, 2).toUpperCase() : token.toUpperCase();
+    }
+
+    public String getCurrentRoleLabel() {
+        if (isSuperAdmin()) {
+            return "Super-admin";
+        }
+        if (isManager()) {
+            return "Gestionnaire";
+        }
+        if (isContributor()) {
+            return "Contributeur";
+        }
+        return "Lecteur";
+    }
+
     /**
      * Force le rechargement des droits (profil / rôles) au prochain accès.
      */

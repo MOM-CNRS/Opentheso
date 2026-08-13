@@ -27,26 +27,26 @@ mark.hl{background:var(--accent-soft);color:var(--accent);border-radius:3px;padd
 #root,.app{height:100%}
 .app{display:flex}
 
-/* ───────── Rail vertical : Nav opentheso ───────── */
-.rail{flex:0 0 60px;background:var(--surface);border-right:1px solid var(--line);
+/* ───────── Thesaurus : Nav opentheso ───────── */
+.thesaurus{flex:0 0 60px;background:var(--surface);border-right:1px solid var(--line);
   display:flex;flex-direction:column;align-items:center;gap:9px;padding:14px 0 16px;z-index:35}
-.rail-logo{width:40px;height:40px;border-radius:11px;background:var(--accent);color:var(--accent);
+.thesaurus-logo{width:40px;height:40px;border-radius:11px;background:var(--accent);color:var(--accent);
   display:grid;place-items:center;margin-bottom:5px;box-shadow:var(--shadow-sm)}
-.rail-logo .logo-mark{width:24px;height:24px}
-.rail-logo .logo-disc{fill:#fff}
-.rail-logo .logo-seg{fill:currentColor}
-.rail-group{display:flex;flex-direction:column;align-items:center;gap:7px}
-.rail-spacer{flex:1}
-.rail-item{position:relative;display:grid;place-items:center}
-.rail-btn{width:40px;height:40px;border-radius:10px;color:var(--ink-3);display:grid;place-items:center}
-.rail-btn:hover{background:var(--surface-2);color:var(--ink)}
-.rail-btn svg{width:21px;height:21px;stroke:currentColor;fill:none;
+.thesaurus-logo .logo-mark{width:24px;height:24px}
+.thesaurus-logo .logo-disc{fill:#fff}
+.thesaurus-logo .logo-seg{fill:currentColor}
+.thesaurus-group{display:flex;flex-direction:column;align-items:center;gap:7px}
+.thesaurus-spacer{flex:1}
+.thesaurus-item{position:relative;display:grid;place-items:center}
+.thesaurus-btn{width:40px;height:40px;border-radius:10px;color:var(--ink-3);display:grid;place-items:center}
+.thesaurus-btn:hover{background:var(--surface-2);color:var(--ink)}
+.thesaurus-btn svg{width:21px;height:21px;stroke:currentColor;fill:none;
   stroke-width:1.85;stroke-linecap:round;stroke-linejoin:round}
-.rail-flag{font-size:19px;line-height:1}
-.rail-ver{font-family:var(--mono);font-size:9px;color:var(--ink-4);margin-top:3px;letter-spacing:.02em}
-.rail-btn.is-on{background:var(--accent-soft);color:var(--accent)}
+.thesaurus-flag{font-size:19px;line-height:1}
+.thesaurus-ver{font-family:var(--mono);font-size:9px;color:var(--ink-4);margin-top:3px;letter-spacing:.02em}
+.thesaurus-btn.is-on{background:var(--accent-soft);color:var(--accent)}
 
-/* ── Popovers du rail ── */
+/* ── Popovers du thesaurus ── */
 .menu-pop{position:absolute;left:calc(100% + 12px);width:264px;z-index:60;opacity:1;
   background:var(--surface);border:1px solid var(--line);border-radius:13px;box-shadow:var(--shadow-lg);
   padding:13px;animation:popin .13s ease}
@@ -1280,7 +1280,7 @@ tr.flat-filters th{position:sticky;top:33px;z-index:2;background:var(--surface);
 
 /* ═══ Pattern réutilisable : bouton Enregistrer flottant (voir CLAUDE.md §3) ═══ */
 /* Simple action principale (verte), toujours visible, ancrée en bas et centrée */
-/* dans la colonne de contenu (décalée du rail + arbo à gauche). */
+/* dans la colonne de contenu (décalée du thesaurus + arbo à gauche). */
 .fsave{position:fixed;left:calc(60px + var(--tree-w));right:0;bottom:22px;z-index:40;
   display:flex;justify-content:center;pointer-events:none}
 .fsave-btn{pointer-events:auto;display:inline-flex;align-items:center;gap:8px;background:var(--accent);color:#fff;
