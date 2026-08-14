@@ -1,11 +1,15 @@
 package fr.cnrs.opentheso.v2.preview.ui;
 
+import fr.cnrs.opentheso.v2.concept.service.ThesaurusHomeWriteService;
+import fr.cnrs.opentheso.v2.rights.Permission;
+import fr.cnrs.opentheso.v2.rights.RightsService;
 import fr.cnrs.opentheso.v2.setting.model.ThesaurusLanguage;
 import fr.cnrs.opentheso.v2.setting.service.ThesaurusPreferenceService;
 import fr.cnrs.opentheso.v2.setting.service.ThesaurusWorkLanguageService;
 import fr.cnrs.opentheso.v2.setting.ui.ThesaurusContext;
 import fr.cnrs.opentheso.v2.shared.repository.ThesaurusHomeQueryRepository;
 import fr.cnrs.opentheso.v2.shared.session.ThesaurusSelectionService;
+import fr.cnrs.opentheso.v2.shared.ui.UserSession;
 import fr.cnrs.opentheso.v2.shared.ui.V2LocaleBean;
 import org.junit.jupiter.api.BeforeEach;
 import org.junit.jupiter.api.Test;
@@ -17,6 +21,7 @@ import org.springframework.test.util.ReflectionTestUtils;
 import java.util.List;
 
 import static org.junit.jupiter.api.Assertions.assertEquals;
+import static org.junit.jupiter.api.Assertions.assertFalse;
 import static org.junit.jupiter.api.Assertions.assertTrue;
 import static org.mockito.Mockito.never;
 import static org.mockito.Mockito.verify;
@@ -31,6 +36,12 @@ class PreviewThesaurusBeanTest {
     private ThesaurusPreferenceService thesaurusPreferenceService;
     @Mock
     private ThesaurusWorkLanguageService thesaurusWorkLanguageService;
+    @Mock
+    private ThesaurusHomeWriteService thesaurusHomeWriteService;
+    @Mock
+    private UserSession userSession;
+    @Mock
+    private RightsService rightsService;
     @Mock
     private ThesaurusSelectionService thesaurusSelectionService;
     @Mock
@@ -48,6 +59,9 @@ class PreviewThesaurusBeanTest {
                 thesaurusHomeQueryRepository,
                 thesaurusPreferenceService,
                 thesaurusWorkLanguageService,
+                thesaurusHomeWriteService,
+                userSession,
+                rightsService,
                 v2LocaleBean
         );
     }
@@ -93,6 +107,7 @@ class PreviewThesaurusBeanTest {
         assertEquals("fr", bean.getSelectedLang());
         assertEquals("Français", languages.get(2).getValue());
         verify(thesaurusPreferenceService).loadUsedLanguages("th17", "fr");
+        assertEquals("Français", bean.getSelectedLangLabel());
     }
 
     @Test
@@ -116,6 +131,73 @@ class PreviewThesaurusBeanTest {
         bean.onLanguageChange();
 
         assertEquals("en", thesaurusContext.resolveWorkLanguage());
+    }
+
+    @Test
+    void loadsHomePageHtmlFromDatabase() {
+        thesaurusContext.selectThesaurus("th17", "Pactols_Lieux", "fr");
+        when(thesaurusHomeWriteService.loadHtml("th17", "fr")).thenReturn("<p>Description Pactols</p>");
+
+        assertTrue(bean.isHomePageHtmlPresent());
+        assertEquals("<p>Description Pactols</p>", bean.getHomePageHtml());
+    }
+
+    @Test
+    void canEdit_requiresAdminOnThesaurus() {
+        thesaurusContext.selectThesaurus("th17", "Pactols_Lieux", "fr");
+        when(userSession.getCurrentUserId()).thenReturn(9);
+        when(rightsService.canOnThesaurus(9, Permission.MANAGE_THESAURUS, "th17")).thenReturn(true);
+
+        assertTrue(bean.isCanEdit());
+    }
+
+    @Test
+    void canEdit_deniesAnonymous() {
+        thesaurusContext.selectThesaurus("th17", "Pactols_Lieux", "fr");
+        when(userSession.getCurrentUserId()).thenReturn(null);
+
+        assertFalse(bean.isCanEdit());
+    }
+
+    @Test
+    void startEditing_loadsHtmlWhenAllowed() {
+        thesaurusContext.selectThesaurus("th17", "Pactols_Lieux", "fr");
+        when(userSession.getCurrentUserId()).thenReturn(9);
+        when(rightsService.canOnThesaurus(9, Permission.MANAGE_THESAURUS, "th17")).thenReturn(true);
+        when(thesaurusHomeWriteService.loadHtml("th17", "fr")).thenReturn("<p>actuel</p>");
+
+        bean.startEditing();
+
+        assertTrue(bean.isEditing());
+        assertEquals("<p>actuel</p>", bean.getHomeHtml());
+    }
+
+    @Test
+    void saveHomeHtml_persistsWhenAllowed() {
+        thesaurusContext.selectThesaurus("th17", "Pactols_Lieux", "fr");
+        when(userSession.getCurrentUserId()).thenReturn(9);
+        when(rightsService.canOnThesaurus(9, Permission.MANAGE_THESAURUS, "th17")).thenReturn(true);
+        when(thesaurusHomeWriteService.saveHtml("th17", "fr", "<p>nouveau</p>")).thenReturn(true);
+
+        bean.setHomeHtml("<p>nouveau</p>");
+        bean.saveHomeHtml();
+
+        assertFalse(bean.isEditing());
+        assertEquals("Description enregistrée.", bean.getSaveMessage());
+        verify(thesaurusHomeWriteService).saveHtml("th17", "fr", "<p>nouveau</p>");
+    }
+
+    @Test
+    void saveHomeHtml_rejectsWhenNotAllowed() {
+        thesaurusContext.selectThesaurus("th17", "Pactols_Lieux", "fr");
+        when(userSession.getCurrentUserId()).thenReturn(9);
+        when(rightsService.canOnThesaurus(9, Permission.MANAGE_THESAURUS, "th17")).thenReturn(false);
+
+        bean.setHomeHtml("<p>hack</p>");
+        bean.saveHomeHtml();
+
+        assertTrue(bean.isSaveError());
+        verify(thesaurusHomeWriteService, never()).saveHtml("th17", "fr", "<p>hack</p>");
     }
 
     private static ThesaurusLanguage language(String code, String label) {

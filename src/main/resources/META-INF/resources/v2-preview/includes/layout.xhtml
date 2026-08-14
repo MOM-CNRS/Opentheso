@@ -17,7 +17,7 @@
   <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin=""/>
   <link href="https://fonts.googleapis.com/css2?family=IBM+Plex+Mono:wght@400;500;600&amp;family=IBM+Plex+Sans:wght@400;500;600;700&amp;display=swap" rel="stylesheet"/>
   <link rel="stylesheet" href="#{request.contextPath}/resources/css/v2-prototype-recherche.css"/>
-  <link rel="stylesheet" href="#{request.contextPath}/resources/css/v2-preview-static.css"/>
+  <link rel="stylesheet" href="#{request.contextPath}/resources/css/v2-preview-static.css?v=abtanim"/>
 </head>
 <body data-page="#{previewPage}">
 <div class="app" id="app">
@@ -32,13 +32,24 @@
         <span class="resizer-grip"></span>
       </div>
       <main class="content">
-        <div class="view"><ui:insert name="main"/></div>
+        <div class="view" id="previewView"><ui:insert name="main"/></div>
+        <div class="view-rail" id="previewRail" aria-hidden="true">
+          <span class="view-rail-thumb" id="previewRailThumb"></span>
+        </div>
+        <button type="button" class="go-top is-off" id="previewGoTop" data-act="go-top"
+                title="Haut de page" aria-label="Haut de page" aria-hidden="true" tabindex="-1">
+          <svg viewBox="0 0 24 24" aria-hidden="true"><path d="m6 15 6-6 6 6"/></svg>
+          <span>Haut</span>
+        </button>
       </main>
     </div>
   </div>
 </div>
-<div class="app-toast" id="appToast" hidden="hidden"></div>
+<div class="app-toast" id="appToast" hidden="hidden" role="status" aria-live="polite">
+  <svg class="app-toast-ico" viewBox="0 0 24 24" aria-hidden="true"><path d="M20 6 9 17l-5-5"/></svg>
+  <span class="app-toast-txt"></span>
+</div>
 <h:outputScript library="jakarta.faces" name="faces.js"/>
-<script src="#{request.contextPath}/resources/js/v2-preview/app.js"></script>
+<script src="#{request.contextPath}/resources/js/v2-preview/app.js?v=abtanim"></script>
 </body>
 </html>

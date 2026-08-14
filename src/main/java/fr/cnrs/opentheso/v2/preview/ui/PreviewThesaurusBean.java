@@ -1,14 +1,20 @@
 package fr.cnrs.opentheso.v2.preview.ui;
 
+import fr.cnrs.opentheso.v2.concept.service.ThesaurusHomeWriteService;
+import fr.cnrs.opentheso.v2.rights.Permission;
+import fr.cnrs.opentheso.v2.rights.RightsService;
 import fr.cnrs.opentheso.v2.setting.model.ThesaurusLanguage;
 import fr.cnrs.opentheso.v2.setting.service.ThesaurusPreferenceService;
 import fr.cnrs.opentheso.v2.setting.service.ThesaurusWorkLanguageService;
 import fr.cnrs.opentheso.v2.setting.ui.ThesaurusContext;
 import fr.cnrs.opentheso.v2.shared.repository.ThesaurusHomeQueryRepository;
+import fr.cnrs.opentheso.v2.shared.ui.UserSession;
 import fr.cnrs.opentheso.v2.shared.ui.V2LocaleBean;
-import jakarta.enterprise.context.RequestScoped;
+import jakarta.faces.view.ViewScoped;
 import jakarta.inject.Named;
+import lombok.Getter;
 import lombok.RequiredArgsConstructor;
+import lombok.Setter;
 import org.apache.commons.lang3.StringUtils;
 
 import java.io.Serializable;
@@ -22,7 +28,7 @@ import java.util.Locale;
  * Tant qu'aucun thésaurus n'est en session, sélectionne temporairement {@code th17}.
  */
 @Named("v2PreviewThesaurusBean")
-@RequestScoped
+@ViewScoped
 @RequiredArgsConstructor
 public class PreviewThesaurusBean implements Serializable {
 
@@ -33,12 +39,27 @@ public class PreviewThesaurusBean implements Serializable {
     private final ThesaurusHomeQueryRepository thesaurusHomeQueryRepository;
     private final ThesaurusPreferenceService thesaurusPreferenceService;
     private final ThesaurusWorkLanguageService thesaurusWorkLanguageService;
+    private final ThesaurusHomeWriteService thesaurusHomeWriteService;
+    private final UserSession userSession;
+    private final RightsService rightsService;
     private final V2LocaleBean v2LocaleBean;
 
     private Integer conceptCount;
     private List<ThesaurusLanguage> languages;
     private String selectedLang;
     private boolean sessionReady;
+    private String homePageHtml;
+    private boolean homePageHtmlLoaded;
+
+    @Getter
+    @Setter
+    private String homeHtml;
+    @Getter
+    private boolean editing;
+    @Getter
+    private String saveMessage;
+    @Getter
+    private boolean saveError;
 
     public void ensureSessionThesaurus() {
         if (sessionReady) {
@@ -101,10 +122,96 @@ public class PreviewThesaurusBean implements Serializable {
         this.selectedLang = selectedLang;
     }
 
+    public String getSelectedLangLabel() {
+        String code = getSelectedLang();
+        if (languages == null || StringUtils.isBlank(code)) {
+            return code;
+        }
+        return languages.stream()
+                .filter(lang -> code.equalsIgnoreCase(lang.code()))
+                .map(ThesaurusLanguage::getValue)
+                .filter(StringUtils::isNotBlank)
+                .findFirst()
+                .orElse(code);
+    }
+
     public void onLanguageChange() {
         if (StringUtils.isNotBlank(selectedLang)) {
             thesaurusContext.changeWorkLanguage(selectedLang);
         }
+        invalidateHomePageHtml();
+        if (editing) {
+            homeHtml = thesaurusHomeWriteService.loadHtml(getId(), thesaurusContext.resolveWorkLanguage());
+        }
+    }
+
+    public String getHomePageHtml() {
+        if (!homePageHtmlLoaded) {
+            homePageHtml = StringUtils.defaultString(
+                    thesaurusHomeWriteService.loadHtml(getId(), thesaurusContext.resolveWorkLanguage())
+            );
+            homePageHtmlLoaded = true;
+        }
+        return homePageHtml;
+    }
+
+    public boolean isHomePageHtmlPresent() {
+        return StringUtils.isNotBlank(getHomePageHtml());
+    }
+
+    public boolean isCanEdit() {
+        Integer userId = userSession.getCurrentUserId();
+        String thesaurusId = getId();
+        if (userId == null || StringUtils.isBlank(thesaurusId)) {
+            return false;
+        }
+        return rightsService.canOnThesaurus(userId, Permission.MANAGE_THESAURUS, thesaurusId);
+    }
+
+    public void startEditing() {
+        saveMessage = null;
+        saveError = false;
+        if (!isCanEdit()) {
+            return;
+        }
+        homeHtml = thesaurusHomeWriteService.loadHtml(getId(), thesaurusContext.resolveWorkLanguage());
+        editing = true;
+    }
+
+    public void cancelEditing() {
+        editing = false;
+        homeHtml = null;
+        saveMessage = null;
+        saveError = false;
+    }
+
+    public void saveHomeHtml() {
+        saveMessage = null;
+        saveError = false;
+        if (!isCanEdit()) {
+            saveError = true;
+            saveMessage = "Action non autorisée";
+            return;
+        }
+        boolean ok = thesaurusHomeWriteService.saveHtml(
+                getId(),
+                thesaurusContext.resolveWorkLanguage(),
+                homeHtml
+        );
+        if (!ok) {
+            saveError = true;
+            saveMessage = "L'enregistrement a échoué.";
+            return;
+        }
+        editing = false;
+        homeHtml = null;
+        invalidateHomePageHtml();
+        saveMessage = "Description enregistrée.";
+    }
+
+    private void invalidateHomePageHtml() {
+        homePageHtml = null;
+        homePageHtmlLoaded = false;
     }
 
     private void ensureLanguagesLoaded() {

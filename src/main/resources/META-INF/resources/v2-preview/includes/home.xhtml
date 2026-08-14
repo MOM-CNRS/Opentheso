@@ -1,37 +1,168 @@
 <?xml version="1.0" encoding="UTF-8"?>
 <ui:composition xmlns="http://www.w3.org/1999/xhtml"
-                xmlns:ui="http://xmlns.jcp.org/jsf/facelets">
+                xmlns:ui="http://xmlns.jcp.org/jsf/facelets"
+                xmlns:h="http://xmlns.jcp.org/jsf/html"
+                xmlns:f="http://xmlns.jcp.org/jsf/core">
           <div class="view-panel is-on" id="viewHome">
             <div class="cv th-home">
               <div class="cv-head">
                 <h1 class="cv-pref">#{v2PreviewThesaurusBean.title}<span class="cv-lang">#{v2PreviewThesaurusBean.id}</span><span class="cv-count">#{v2PreviewThesaurusBean.conceptCountLabel}</span></h1>
                 <p class="th-sub">Archéologie &amp; sciences de l'Antiquité</p>
               </div>
-              <div class="boc th-about">
+              <h:form id="previewAboutForm">
+              <div class="boc th-about#{v2PreviewThesaurusBean.editing ? ' is-editing' : ''}">
                 <div class="boc-h">
                   <div class="boc-ico"><svg viewBox="0 0 24 24" aria-hidden="true"><path d="M4 19.5A2.5 2.5 0 0 1 6.5 17H20"/><path d="M6.5 2H20v20H6.5A2.5 2.5 0 0 1 4 19.5v-15A2.5 2.5 0 0 1 6.5 2z"/></svg></div>
                   <div class="boc-ht">
-                    <div class="boc-t">À propos de PACTOLS</div>
-                    <div class="boc-d">Vocabulaire contrôlé pour l'archéologie et les sciences de l'Antiquité.</div>
+                    <div class="boc-t">
+                      <h:panelGroup rendered="#{not v2PreviewThesaurusBean.editing}">À propos de #{v2PreviewThesaurusBean.title}</h:panelGroup>
+                      <h:panelGroup rendered="#{v2PreviewThesaurusBean.editing}">Modifier la description</h:panelGroup>
+                    </div>
+                    <div class="boc-d">
+                      <h:panelGroup rendered="#{not v2PreviewThesaurusBean.editing}">
+                        Description du thésaurus, dans la langue d'affichage des libellés.
+                      </h:panelGroup>
+                      <h:panelGroup rendered="#{v2PreviewThesaurusBean.editing}">
+                        Langue éditée : <span class="cv-lang">#{v2PreviewThesaurusBean.selectedLangLabel}</span>
+                      </h:panelGroup>
+                    </div>
                   </div>
+                  <h:commandButton value="Modifier" styleClass="bo-btn ghost sm abt-edit-btn"
+                                   rendered="#{v2PreviewThesaurusBean.canEdit and not v2PreviewThesaurusBean.editing}"
+                                   action="#{v2PreviewThesaurusBean.startEditing}">
+                    <f:ajax execute="@this" render="@form"/>
+                  </h:commandButton>
                 </div>
-                <p class="abt-lead">Le thésaurus PACTOLS, créé par Frantiq (Fédération et ressources sur l'Antiquité) en 1985, sert à l'indexation de ressources en archéologie — de la Préhistoire à l'époque contemporaine — et en sciences de l'Antiquité sous tous ses aspects.</p>
-                <div class="abt-detail" id="aboutDetail" hidden="hidden">
-                  <div class="abt-sec"><h4>Origine &amp; structure</h4><p>PACTOLS tient son nom des six micro-thésaurus d'origine : Peuples et cultures, Anthroponymes, Chronologie, Toponymes, Œuvres, Lieux et Sujets. Son contenu est lié au Catalogue collectif indexé des bibliothèques du réseau Frantiq, pour lequel il a d'abord été organisé avant de s'ouvrir à d'autres ressources. Entre 2017 et 2022, une réorganisation complète en a fait un outil de référence inscrit dans le web des données ; un effort continu porte sur la définition des concepts (bibliographie partagée sur Zotero). Il se compose aujourd'hui de deux ensembles : PACTOLS-Lieux et PACTOLS-Sujets.</p></div>
-<div class="abt-sec"><h4>Multilinguisme</h4><p>Sept langues : français, anglais, allemand, arabe, espagnol, italien et néerlandais. Les traductions des libellés (en, it, es, de) ont été révisées et complétées dans le cadre du projet MetaPhoRA (MESRI 2019-2022), avec l'aide du consortium MASA+. La traduction des définitions, du français vers l'anglais, s'appuie sur l'API DeepL intégrée à OpenTheso depuis mars 2024.</p></div>
-<div class="abt-sec"><h4>Alignements</h4><p>PACTOLS est principalement aligné avec Wikidata et, selon les branches, avec l'Art &amp; Architecture Thesaurus du Getty, IdRef, les vocabulaires du ministère de la Culture (Joconde, Inventaire), PeriodO, GeoNames, Pleiades et l'Insee.</p></div>
-<div class="abt-sec"><h4>Standards, formats &amp; API</h4><p>Conforme aux principes FAIR, normalisé ISO 25964 et diffusé sous licence ouverte ODbL. Exportable en CSV, JSON, XML-RDF et PDF, il bénéficie de l'API d'OpenTheso, qui exploite les « Collections » comme filtres de requêtage. Des versions semestrielles sont téléchargeables sur GitHub.</p></div>
-<div class="abt-sec"><h4>Maintenance &amp; versions</h4><p>Le Groupe de travail PACTOLS assure la maintenance et le suivi des versions ; le thésaurus est mis à jour presque quotidiennement. Certaines branches sont en cours de réorganisation. La version 2.0 est dédiée à Évelyne Sinigaglia.</p></div>
-<div class="abt-sec"><h4>Financement</h4><p>Développement financé par le CNRS-Frantiq, avec le soutien de CollEx-Persée, du ministère de la Culture et du consortium MASA+, dont PACTOLS constitue une brique de l'écosystème numérique.</p></div>
-<div class="abt-sec"><h4>Usages &amp; interopérabilité</h4><p>Utilisé par des catalogues documentaires et archivistiques, des publications, des bases de données, des corpus et des entrepôts d'archives ouvertes. Plusieurs alimentent leurs métadonnées dynamiquement via l'API ; les « Corpus liés » rendent visibles les occurrences d'un concept dans ces réservoirs et favorisent l'interopérabilité.</p></div>
-                  <div class="abt-contact">Contact : inscription à la liste de diffusion <a href="mailto:utilisateurs-pactols@services.cnrs.fr">utilisateurs-pactols@services.cnrs.fr</a>. Une aide et une documentation complètes sont disponibles en ligne.</div>
-                </div>
-                <button type="button" class="abt-toggle" id="aboutToggle" data-act="about">
-                  <span class="abt-more">Voir la description complète</span>
-                  <span class="abt-less">Réduire la description</span>
-                  <svg viewBox="0 0 24 24" aria-hidden="true"><path d="m6 9 6 6 6-6"/></svg>
-                </button>
+                <h:panelGroup layout="block" rendered="#{not v2PreviewThesaurusBean.editing}">
+                  <h:panelGroup rendered="#{v2PreviewThesaurusBean.homePageHtmlPresent}">
+                    <div class="abt-fold" id="aboutFold">
+                      <div class="abt-html" id="aboutDetail">
+                        <h:outputText value="#{v2PreviewThesaurusBean.homePageHtml}" escape="false"/>
+                      </div>
+                      <button type="button" class="abt-toggle" id="aboutToggle" data-act="about"
+                              aria-expanded="false" aria-controls="aboutDetail">
+                        <span class="abt-more">Voir la description complète</span>
+                        <span class="abt-less">Réduire la description</span>
+                        <svg viewBox="0 0 24 24" aria-hidden="true"><path d="m6 9 6 6 6-6"/></svg>
+                      </button>
+                    </div>
+                  </h:panelGroup>
+                  <h:panelGroup rendered="#{not v2PreviewThesaurusBean.homePageHtmlPresent}">
+                    <p class="abt-empty">Aucune description pour ce thésaurus.</p>
+                  </h:panelGroup>
+                </h:panelGroup>
+                <h:panelGroup layout="block" styleClass="abt-composer" rendered="#{v2PreviewThesaurusBean.editing}">
+                  <div class="abt-composer-bar">
+                    <div class="abt-fmt" role="toolbar" aria-label="Mise en forme">
+                      <button type="button" class="abt-fmt-btn" data-act="about-fmt" data-cmd="undo" title="Annuler la saisie" aria-label="Annuler la saisie">
+                        <svg viewBox="0 0 24 24" aria-hidden="true"><path d="M3 7v6h6"/><path d="M3 13a9 9 0 1 0 2.2-7.4L3 7"/></svg>
+                      </button>
+                      <button type="button" class="abt-fmt-btn" data-act="about-fmt" data-cmd="redo" title="Rétablir" aria-label="Rétablir">
+                        <svg viewBox="0 0 24 24" aria-hidden="true"><path d="M21 7v6h-6"/><path d="M21 13a9 9 0 1 1-2.2-7.4L21 7"/></svg>
+                      </button>
+                      <span class="abt-fmt-sep" aria-hidden="true"></span>
+                      <button type="button" class="abt-fmt-btn" data-act="about-fmt" data-cmd="bold" title="Gras" aria-label="Gras">
+                        <svg viewBox="0 0 24 24" aria-hidden="true"><path d="M7 5h7a3.5 3.5 0 0 1 0 7H7z"/><path d="M7 12h8a3.5 3.5 0 0 1 0 7H7z"/></svg>
+                      </button>
+                      <button type="button" class="abt-fmt-btn" data-act="about-fmt" data-cmd="italic" title="Italique" aria-label="Italique">
+                        <svg viewBox="0 0 24 24" aria-hidden="true"><path d="M11 5h6"/><path d="M7 19h6"/><path d="M14 5 10 19"/></svg>
+                      </button>
+                      <button type="button" class="abt-fmt-btn" data-act="about-fmt" data-cmd="underline" title="Souligné" aria-label="Souligné">
+                        <svg viewBox="0 0 24 24" aria-hidden="true"><path d="M6 4v6a6 6 0 0 0 12 0V4"/><path d="M4 20h16"/></svg>
+                      </button>
+                      <button type="button" class="abt-fmt-btn" data-act="about-fmt" data-cmd="strikeThrough" title="Barré" aria-label="Barré">
+                        <svg viewBox="0 0 24 24" aria-hidden="true"><path d="M16 7a4 4 0 0 0-8 1c0 2 2 3 8 4s8 2 8 4a4 4 0 0 1-8 1"/><path d="M4 12h16"/></svg>
+                      </button>
+                      <span class="abt-fmt-sep" aria-hidden="true"></span>
+                      <button type="button" class="abt-fmt-btn abt-fmt-txt" data-act="about-fmt" data-cmd="formatBlock" data-val="h2" title="Titre" aria-label="Titre">H2</button>
+                      <button type="button" class="abt-fmt-btn abt-fmt-txt" data-act="about-fmt" data-cmd="formatBlock" data-val="h3" title="Sous-titre" aria-label="Sous-titre">H3</button>
+                      <button type="button" class="abt-fmt-btn abt-fmt-txt" data-act="about-fmt" data-cmd="formatBlock" data-val="p" title="Paragraphe" aria-label="Paragraphe">P</button>
+                      <button type="button" class="abt-fmt-btn" data-act="about-fmt" data-cmd="formatBlock" data-val="blockquote" title="Citation" aria-label="Citation">
+                        <svg viewBox="0 0 24 24" aria-hidden="true"><path d="M6 8h5v5H8a3 3 0 0 0 3 3"/><path d="M15 8h5v5h-3a3 3 0 0 0 3 3"/></svg>
+                      </button>
+                      <span class="abt-fmt-sep" aria-hidden="true"></span>
+                      <button type="button" class="abt-fmt-btn" data-act="about-fmt" data-cmd="insertUnorderedList" title="Liste à puces" aria-label="Liste à puces">
+                        <svg viewBox="0 0 24 24" aria-hidden="true"><path d="M9 6h11"/><path d="M9 12h11"/><path d="M9 18h11"/><path d="M5 6h.01"/><path d="M5 12h.01"/><path d="M5 18h.01"/></svg>
+                      </button>
+                      <button type="button" class="abt-fmt-btn" data-act="about-fmt" data-cmd="insertOrderedList" title="Liste numérotée" aria-label="Liste numérotée">
+                        <svg viewBox="0 0 24 24" aria-hidden="true"><path d="M10 6h11"/><path d="M10 12h11"/><path d="M10 18h11"/><path d="M4 6h1v4"/><path d="M4 16h2"/><path d="M5 16v4"/></svg>
+                      </button>
+                      <button type="button" class="abt-fmt-btn" data-act="about-fmt" data-cmd="indent" title="Augmenter le retrait" aria-label="Augmenter le retrait">
+                        <svg viewBox="0 0 24 24" aria-hidden="true"><path d="M3 6h18"/><path d="M11 12h10"/><path d="M3 18h18"/><path d="m3 9 3 3-3 3"/></svg>
+                      </button>
+                      <button type="button" class="abt-fmt-btn" data-act="about-fmt" data-cmd="outdent" title="Diminuer le retrait" aria-label="Diminuer le retrait">
+                        <svg viewBox="0 0 24 24" aria-hidden="true"><path d="M21 6H9"/><path d="M21 12H9"/><path d="M21 18H9"/><path d="m6 9-3 3 3 3"/></svg>
+                      </button>
+                      <span class="abt-fmt-sep" aria-hidden="true"></span>
+                      <button type="button" class="abt-fmt-btn" data-act="about-fmt" data-cmd="createLink" title="Lien" aria-label="Lien">
+                        <svg viewBox="0 0 24 24" aria-hidden="true"><path d="M10 13a5 5 0 0 0 7.54.54l1.91-1.91a5 5 0 0 0-7.07-7.07L10.7 6.23"/><path d="M14 11a5 5 0 0 0-7.54-.54L4.55 12.4a5 5 0 0 0 7.07 7.07l1.67-1.67"/></svg>
+                      </button>
+                      <button type="button" class="abt-fmt-btn" data-act="about-fmt" data-cmd="unlink" title="Supprimer le lien" aria-label="Supprimer le lien">
+                        <svg viewBox="0 0 24 24" aria-hidden="true"><path d="M18 8h1a5 5 0 0 1 0 10h-1"/><path d="M6 16H5a5 5 0 0 1 0-10h1"/><path d="M8 12h8"/><path d="m4 4 16 16"/></svg>
+                      </button>
+                      <button type="button" class="abt-fmt-btn" data-act="about-fmt" data-cmd="insertHorizontalRule" title="Ligne horizontale" aria-label="Ligne horizontale">
+                        <svg viewBox="0 0 24 24" aria-hidden="true"><path d="M4 12h16"/><path d="M4 6h16"/><path d="M4 18h16"/></svg>
+                      </button>
+                      <button type="button" class="abt-fmt-btn" data-act="about-fmt" data-cmd="removeFormat" title="Effacer la mise en forme" aria-label="Effacer la mise en forme">
+                        <svg viewBox="0 0 24 24" aria-hidden="true"><path d="M4 7h10"/><path d="M9 7v10"/><path d="m15 11 5 8"/><path d="m20 11-5 8"/></svg>
+                      </button>
+                    </div>
+                    <button type="button" class="abt-src-btn" data-act="about-src" aria-pressed="false" title="Code HTML">HTML</button>
+                  </div>
+                  <div class="abt-visual abt-html" id="aboutVisual" contenteditable="true" spellcheck="true"
+                       data-placeholder="Saisissez la description du thésaurus…">
+                    <h:outputText value="#{v2PreviewThesaurusBean.homeHtml}" escape="false"/>
+                  </div>
+                  <h:inputTextarea id="previewAboutEditor" styleClass="abt-editor"
+                                   value="#{v2PreviewThesaurusBean.homeHtml}"
+                                   title="Code HTML de la description"/>
+                  <div class="abt-composer-foot">
+                    <p class="abt-hint">Enregistrée pour la langue <span class="cv-lang">#{v2PreviewThesaurusBean.selectedLangLabel}</span>. HTML autorisé.</p>
+                    <div class="abt-actions">
+                      <h:commandLink styleClass="abt-cancel" action="#{v2PreviewThesaurusBean.cancelEditing}">
+                        <f:ajax execute="@this" render="@form"/>
+                        <svg viewBox="0 0 24 24" aria-hidden="true"><path d="M18 6 6 18"/><path d="m6 6 12 12"/></svg>
+                        <span>Annuler</span>
+                      </h:commandLink>
+                      <button type="button" class="abt-save is-off" id="aboutSaveBtn"
+                              data-act="about-save-ask" aria-disabled="true">
+                        <svg viewBox="0 0 24 24" aria-hidden="true"><path d="M20 6 9 17l-5-5"/></svg>
+                        <span class="abt-save-label">Enregistrer</span>
+                        <span class="abt-save-wait">Enregistrement…</span>
+                      </button>
+                    </div>
+                  </div>
+                </h:panelGroup>
+                <h:panelGroup rendered="#{v2PreviewThesaurusBean.editing}">
+                  <div class="block-overlay confirm-overlay" id="aboutSaveConfirm" hidden="hidden"
+                       data-act="about-save-dismiss" role="presentation">
+                    <div class="confirm-modal" role="dialog" aria-modal="true"
+                         aria-labelledby="aboutSaveConfirmTitle" data-act="about-save-modal">
+                      <div class="confirm-h" id="aboutSaveConfirmTitle">Enregistrer la description</div>
+                      <p class="confirm-p">Enregistrer les modifications pour
+                        <span class="cv-lang">#{v2PreviewThesaurusBean.selectedLangLabel}</span> ?
+                        La description actuelle sera remplacée.</p>
+                      <div class="confirm-actions">
+                        <button type="button" class="abt-cancel confirm-cancel"
+                                data-act="about-save-dismiss">Annuler</button>
+                        <h:commandLink styleClass="abt-save abt-save-ok"
+                                       action="#{v2PreviewThesaurusBean.saveHomeHtml}">
+                          <f:ajax execute="@form" render="@form" onevent="onPreviewAboutSave"/>
+                          <svg viewBox="0 0 24 24" aria-hidden="true"><path d="M20 6 9 17l-5-5"/></svg>
+                          <span class="abt-save-label">Enregistrer</span>
+                          <span class="abt-save-wait">Enregistrement…</span>
+                        </h:commandLink>
+                      </div>
+                    </div>
+                  </div>
+                </h:panelGroup>
+                <h:panelGroup rendered="#{not empty v2PreviewThesaurusBean.saveMessage and v2PreviewThesaurusBean.saveError}">
+                  <p class="abt-msg is-error">#{v2PreviewThesaurusBean.saveMessage}</p>
+                </h:panelGroup>
+                <span id="previewAboutSaveMsg" hidden="hidden"
+                      data-ok="#{not v2PreviewThesaurusBean.saveError}">#{v2PreviewThesaurusBean.saveMessage}</span>
               </div>
+              </h:form>
               <div class="boc">
                 <div class="boc-h">
                   <div class="boc-ico"><svg viewBox="0 0 24 24" aria-hidden="true"><path d="M3 3h7v7H3zM14 3h7v7h-7zM14 14h7v7h-7zM3 14h7v7H3z"/></svg></div>

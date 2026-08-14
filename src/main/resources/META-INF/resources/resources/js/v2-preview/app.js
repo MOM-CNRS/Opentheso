@@ -53,13 +53,19 @@
     moveTarget: null
   };
 
-  function toast(msg) {
+  function toast(msg, opts) {
     const el = $("#appToast");
     if (!el) return;
-    el.textContent = msg;
+    const text = el.querySelector(".app-toast-txt") || el;
+    const soft = !!(opts && opts.soft);
+    el.classList.toggle("is-soft", soft);
+    text.textContent = msg;
     el.hidden = false;
     clearTimeout(toast._t);
-    toast._t = setTimeout(() => { el.hidden = true; }, 2600);
+    toast._t = setTimeout(() => {
+      el.hidden = true;
+      el.classList.remove("is-soft");
+    }, soft ? 2200 : 2600);
   }
 
   function showPanel(sel, id) {
@@ -801,13 +807,50 @@
     btn.setAttribute("aria-expanded", "true");
   };
 
+  function hideConfirm(id) {
+    const dlg = $(id);
+    if (!dlg || dlg.hidden) return false;
+    dlg.hidden = true;
+    return true;
+  }
+  function showConfirm(id) {
+    const dlg = $(id);
+    if (!dlg) return;
+    dlg.hidden = false;
+    const cancel = dlg.querySelector(".confirm-cancel");
+    if (cancel) cancel.focus();
+  }
   document.addEventListener("keydown", (e) => {
     if (e.key !== "Escape") return;
-    const dlg = $("#logoutConfirm");
-    if (!dlg || dlg.hidden) return;
-    dlg.hidden = true;
-    e.preventDefault();
+    if (hideConfirm("#aboutSaveConfirm") || hideConfirm("#logoutConfirm")) e.preventDefault();
   });
+
+  document.addEventListener("mousedown", (e) => {
+    if (e.target.closest(".abt-fmt-btn, [data-act='about-src']")) e.preventDefault();
+    const save = e.target.closest(".abt-save:not(.is-off):not(.is-busy)");
+    if (save) {
+      save.classList.remove("is-click");
+      void save.offsetWidth;
+      save.classList.add("is-click");
+    }
+  });
+  document.addEventListener("click", (e) => {
+    const save = e.target.closest(".abt-save");
+    if (save && (save.classList.contains("is-off") || save.classList.contains("is-busy"))) {
+      e.preventDefault();
+      e.stopPropagation();
+    }
+    interceptAboutSwap(e);
+  }, true);
+
+  document.addEventListener("input", (e) => {
+    if (e.target && (e.target.id === "aboutVisual" || e.target.classList.contains("abt-editor"))) {
+      syncAboutEditor();
+      markAboutVisualEmpty();
+      refreshAboutSaveState();
+    }
+  });
+  document.addEventListener("selectionchange", refreshAboutFmtState);
 
   document.addEventListener("click", (e) => {
     const t = e.target.closest("[data-act]");
@@ -822,16 +865,27 @@
     const act = t.getAttribute("data-act");
     if (act === "logout-ask") {
       closeThesaurus();
-      const dlg = $("#logoutConfirm");
-      if (!dlg) return;
-      dlg.hidden = false;
-      const cancel = dlg.querySelector(".confirm-cancel");
-      if (cancel) cancel.focus();
+      showConfirm("#logoutConfirm");
     } else if (act === "logout-dismiss") {
-      const dlg = $("#logoutConfirm");
-      if (dlg) dlg.hidden = true;
+      hideConfirm("#logoutConfirm");
     } else if (act === "logout-modal") {
       return;
+    } else if (act === "about-save-ask") {
+      const btn = $("#aboutSaveBtn");
+      if (!btn || btn.classList.contains("is-off") || btn.classList.contains("is-busy")) return;
+      syncAboutEditor();
+      showConfirm("#aboutSaveConfirm");
+    } else if (act === "about-save-dismiss") {
+      hideConfirm("#aboutSaveConfirm");
+    } else if (act === "about-save-modal") {
+      return;
+    } else if (act === "go-top") {
+      const reduce = window.matchMedia("(prefers-reduced-motion: reduce)").matches;
+      const behavior = reduce ? "auto" : "smooth";
+      ["#previewView", "#viewHome", "main.content .view"].forEach((sel) => {
+        const el = $(sel);
+        if (el) el.scrollTo({ top: 0, behavior });
+      });
     } else if (act === "thesaurus") {
       const on = t.classList.contains("is-on");
       closeThesaurus();
@@ -891,10 +945,30 @@
       highlightConcept(id);
       paint();
     } else if (act === "about") {
-      const d = $("#aboutDetail");
-      if (!d) return;
-      d.hidden = !d.hidden;
-      t.classList.toggle("open", !d.hidden);
+      const fold = t.closest(".abt-fold") || $("#aboutFold");
+      if (!fold) return;
+      const open = fold.classList.toggle("is-open");
+      t.classList.toggle("open", open);
+      t.setAttribute("aria-expanded", String(open));
+      if (!open) {
+        const title = document.querySelector("#viewHome .cv-head") || document.querySelector("#viewHome .cv-pref");
+        const scroller = $("#previewView") || document.querySelector("main.content .view") || document.querySelector(".view");
+        const reduce = window.matchMedia("(prefers-reduced-motion: reduce)").matches;
+        const behavior = reduce ? "auto" : "smooth";
+        if (title) title.scrollIntoView({ block: "start", behavior });
+        else if (scroller) scroller.scrollTo({ top: 0, behavior });
+      }
+      if (window.syncViewRail) {
+        window.syncViewRail();
+        const html = fold.querySelector(".abt-html");
+        if (html) html.addEventListener("transitionend", () => window.syncViewRail(), { once: true });
+      }
+    } else if (act === "about-fmt") {
+      e.preventDefault();
+      applyAboutFormat(t.getAttribute("data-cmd"), t.getAttribute("data-val"));
+    } else if (act === "about-src") {
+      e.preventDefault();
+      toggleAboutSource();
     } else if (act === "toast") {
       toast(t.getAttribute("data-msg"));
       $("#bulkStatusMenu") && $("#bulkStatusMenu").classList.remove("is-on");
@@ -1182,6 +1256,239 @@
   if (SCREEN === "graphe") state.view = "hyper";
 
   const params = new URLSearchParams(location.search);
+  function aboutComposer() {
+    return $(".abt-composer");
+  }
+  function aboutVisual() {
+    return $("#aboutVisual");
+  }
+  function aboutTextarea() {
+    const composer = aboutComposer();
+    return composer ? composer.querySelector("textarea.abt-editor") : null;
+  }
+  function syncAboutEditor() {
+    const composer = aboutComposer();
+    const visual = aboutVisual();
+    const ta = aboutTextarea();
+    if (!composer || !ta || composer.classList.contains("is-source")) return;
+    if (visual) ta.value = visual.innerHTML;
+  }
+  function markAboutVisualEmpty() {
+    const visual = aboutVisual();
+    if (!visual) return;
+    visual.classList.toggle("is-empty", visual.textContent.trim() === "");
+  }
+  function applyAboutFormat(cmd, val) {
+    const visual = aboutVisual();
+    if (!visual || !cmd) return;
+    const composer = aboutComposer();
+    if (composer && composer.classList.contains("is-source")) return;
+    visual.focus();
+    if (cmd === "createLink") {
+      const url = window.prompt("Adresse du lien :", "https://");
+      if (!url) return;
+      document.execCommand("createLink", false, url);
+    } else if (cmd === "formatBlock") {
+      const tag = val || "p";
+      if (!document.execCommand("formatBlock", false, tag)) {
+        document.execCommand("formatBlock", false, "<" + tag + ">");
+      }
+    } else {
+      document.execCommand(cmd, false, val || null);
+    }
+    syncAboutEditor();
+    markAboutVisualEmpty();
+    refreshAboutSaveState();
+    refreshAboutFmtState();
+  }
+  function refreshAboutFmtState() {
+    const composer = aboutComposer();
+    if (!composer || composer.classList.contains("is-source")) return;
+    composer.querySelectorAll(".abt-fmt-btn[data-cmd]").forEach((btn) => {
+      const cmd = btn.getAttribute("data-cmd");
+      let on = false;
+      try {
+        if (cmd === "formatBlock") {
+          const want = (btn.getAttribute("data-val") || "").replace(/[<>]/g, "").toUpperCase();
+          const cur = (document.queryCommandValue("formatBlock") || "").replace(/[<>]/g, "").toUpperCase();
+          on = !!want && cur === want;
+        } else if (cmd === "createLink" || cmd === "unlink" || cmd === "undo" || cmd === "redo"
+            || cmd === "indent" || cmd === "outdent" || cmd === "removeFormat" || cmd === "insertHorizontalRule") {
+          on = false;
+        } else {
+          on = document.queryCommandState(cmd);
+        }
+      } catch (err) {
+        on = false;
+      }
+      btn.classList.toggle("is-on", on);
+    });
+  }
+  function toggleAboutSource() {
+    const composer = aboutComposer();
+    const visual = aboutVisual();
+    const ta = aboutTextarea();
+    if (!composer || !ta) return;
+    const on = !composer.classList.contains("is-source");
+    if (on) {
+      if (visual) ta.value = visual.innerHTML;
+      composer.classList.add("is-source");
+      ta.focus();
+    } else {
+      if (visual) visual.innerHTML = ta.value;
+      composer.classList.remove("is-source");
+      markAboutVisualEmpty();
+      if (visual) visual.focus();
+    }
+    const btn = composer.querySelector("[data-act='about-src']");
+    if (btn) btn.setAttribute("aria-pressed", String(on));
+    refreshAboutSaveState();
+  }
+  function currentAboutHtml() {
+    const composer = aboutComposer();
+    const ta = aboutTextarea();
+    const visual = aboutVisual();
+    if (!composer) return "";
+    if (composer.classList.contains("is-source") && ta) return ta.value;
+    if (visual) return visual.innerHTML;
+    return ta ? ta.value : "";
+  }
+  let aboutBaseline = null;
+  let aboutHadComposer = false;
+  function rememberAboutBaseline() {
+    aboutBaseline = currentAboutHtml();
+    refreshAboutSaveState();
+  }
+  function maybeRememberAboutBaseline() {
+    const has = !!aboutComposer();
+    const swapped = has !== aboutHadComposer;
+    if (has && !aboutHadComposer) rememberAboutBaseline();
+    if (!has) aboutBaseline = null;
+    aboutHadComposer = has;
+    refreshAboutSaveState();
+    if (swapped) playAboutEnter();
+  }
+  function playAboutEnter() {
+    const about = document.querySelector(".th-about");
+    if (!about) return;
+    const panel = about.querySelector(".abt-composer")
+      || about.querySelector(".abt-fold")
+      || about.querySelector(".abt-empty");
+    if (panel) panel.classList.add("is-enter");
+  }
+  function interceptAboutSwap(e) {
+    const edit = e.target.closest(".abt-edit-btn");
+    const cancel = e.target.closest(".abt-actions .abt-cancel");
+    const trigger = edit || cancel;
+    if (!trigger) return;
+    const about = trigger.closest(".th-about") || document.querySelector(".th-about");
+    if (!about) return;
+    if (about.classList.contains("is-swap")) return;
+    e.preventDefault();
+    e.stopImmediatePropagation();
+    if (about.classList.contains("is-leaving")) return;
+    const leaving = cancel
+      ? about.querySelector(".abt-composer")
+      : (about.querySelector(".abt-fold") || about.querySelector(".abt-empty"));
+    about.classList.add("is-leaving");
+    if (leaving) leaving.classList.add("is-leave");
+    const reduce = window.matchMedia("(prefers-reduced-motion: reduce)").matches;
+    let done = false;
+    const go = () => {
+      if (done) return;
+      done = true;
+      about.classList.remove("is-leaving");
+      about.classList.add("is-swap");
+      trigger.click();
+    };
+    if (reduce || !leaving) {
+      go();
+      return;
+    }
+    leaving.addEventListener("animationend", go, { once: true });
+    setTimeout(go, 280);
+  }
+  function refreshAboutSaveState() {
+    const btn = $("#aboutSaveBtn");
+    if (!btn) return;
+    const dirty = currentAboutHtml() !== aboutBaseline;
+    btn.classList.toggle("is-off", !dirty);
+    btn.setAttribute("aria-disabled", String(!dirty));
+    if (!dirty) btn.setAttribute("tabindex", "-1");
+    else btn.removeAttribute("tabindex");
+  }
+  window.onPreviewAboutSave = function (data) {
+    const btns = document.querySelectorAll(".abt-save");
+    if (data.status === "begin") {
+      syncAboutEditor();
+      hideConfirm("#aboutSaveConfirm");
+      btns.forEach((btn) => btn.classList.add("is-busy"));
+    }
+    if (data.status === "success" || data.status === "complete") {
+      btns.forEach((btn) => btn.classList.remove("is-busy", "is-click"));
+    }
+    if (data.status === "success") {
+      requestAnimationFrame(showAboutSaveToast);
+    }
+  };
+  function showAboutSaveToast() {
+    const msg = $("#previewAboutSaveMsg");
+    if (!msg) return;
+    const text = (msg.textContent || "").trim();
+    if (!text || msg.getAttribute("data-ok") !== "true") return;
+    toast(text, { soft: true });
+  }
+  function syncAboutFold() {
+    const fold = $("#aboutFold");
+    if (!fold) return;
+    const html = fold.querySelector(".abt-html");
+    const btn = fold.querySelector(".abt-toggle");
+    if (!html) return;
+    const wasOpen = fold.classList.contains("is-open");
+    fold.classList.remove("is-open", "is-expandable", "is-short");
+    if (btn) {
+      btn.classList.remove("open");
+      btn.setAttribute("aria-expanded", "false");
+    }
+    fold.classList.add("is-measuring");
+    void html.offsetHeight;
+    const overflowing = html.scrollHeight > html.clientHeight + 4;
+    fold.classList.remove("is-measuring");
+    fold.classList.toggle("is-expandable", overflowing);
+    fold.classList.toggle("is-short", !overflowing);
+    if (wasOpen && overflowing) {
+      fold.classList.add("is-open");
+      if (btn) {
+        btn.classList.add("open");
+        btn.setAttribute("aria-expanded", "true");
+      }
+    }
+  }
+
+  if (window.faces && faces.ajax) {
+    faces.ajax.addOnEvent((data) => {
+      if (data.status === "begin") syncAboutEditor();
+      if (data.status === "success") requestAnimationFrame(() => {
+        syncAboutFold();
+        markAboutVisualEmpty();
+        maybeRememberAboutBaseline();
+        refreshAboutFmtState();
+        if (window.syncViewRail) window.syncViewRail();
+      });
+    });
+  } else if (window.jsf && jsf.ajax) {
+    jsf.ajax.addOnEvent((data) => {
+      if (data.status === "begin") syncAboutEditor();
+      if (data.status === "success") requestAnimationFrame(() => {
+        syncAboutFold();
+        markAboutVisualEmpty();
+        maybeRememberAboutBaseline();
+        refreshAboutFmtState();
+        if (window.syncViewRail) window.syncViewRail();
+      });
+    });
+  }
+
   if (SCREEN === "parametres" && location.hash) {
     const el = document.querySelector(location.hash);
     if (el) requestAnimationFrame(() => el.scrollIntoView({ block: "start" }));
@@ -1216,4 +1523,82 @@
   } else {
     paint();
   }
+  function bindViewRail() {
+    const view = $("#previewView") || document.querySelector("main.content .view");
+    const home = $("#viewHome");
+    const rail = $("#previewRail");
+    const thumb = $("#previewRailThumb");
+    const goTop = $("#previewGoTop");
+    const shell = view && view.closest(".content");
+    if (!view) return;
+    const scrollers = [view, home].filter((el, i, arr) => el && arr.indexOf(el) === i);
+    let idle;
+    const mark = () => {
+      if (shell) shell.classList.add("is-scrolling");
+      clearTimeout(idle);
+      idle = setTimeout(() => { if (shell) shell.classList.remove("is-scrolling"); }, 900);
+    };
+    const currentScroll = () => scrollers.reduce((max, el) => Math.max(max, el.scrollTop || 0), 0);
+    const sync = () => {
+      const st = currentScroll();
+      if (goTop) {
+        const off = st < 72;
+        goTop.classList.toggle("is-off", off);
+        goTop.setAttribute("aria-hidden", String(off));
+        if (off) goTop.setAttribute("tabindex", "-1");
+        else goTop.removeAttribute("tabindex");
+      }
+      if (!rail || !thumb) return;
+      const ch = view.clientHeight;
+      const sh = view.scrollHeight;
+      if (sh <= ch + 4) {
+        rail.classList.add("is-off");
+        return;
+      }
+      rail.classList.remove("is-off");
+      const track = rail.clientHeight;
+      const h = Math.max(40, Math.round((ch / sh) * track));
+      const max = Math.max(0, track - h);
+      const y = max === 0 || sh === ch ? 0 : (st / (sh - ch)) * max;
+      thumb.style.height = h + "px";
+      thumb.style.transform = "translate3d(0," + y + "px,0)";
+    };
+    const scrollFromY = (clientY) => {
+      if (!rail || !thumb) return;
+      const rect = rail.getBoundingClientRect();
+      const track = rail.clientHeight;
+      const h = thumb.offsetHeight;
+      const y = Math.min(Math.max(0, clientY - rect.top - h / 2), Math.max(0, track - h));
+      const max = track - h;
+      const span = view.scrollHeight - view.clientHeight;
+      view.scrollTop = max <= 0 ? 0 : (y / max) * span;
+    };
+    scrollers.forEach((el) => el.addEventListener("scroll", () => { mark(); sync(); }, { passive: true }));
+    window.addEventListener("resize", sync);
+    if (rail && thumb) {
+      rail.addEventListener("pointerdown", (e) => {
+        e.preventDefault();
+        rail.classList.add("is-drag");
+        if (shell) shell.classList.add("is-scrolling");
+        scrollFromY(e.clientY);
+        rail.setPointerCapture(e.pointerId);
+      });
+      rail.addEventListener("pointermove", (e) => {
+        if (!rail.classList.contains("is-drag")) return;
+        scrollFromY(e.clientY);
+      });
+      rail.addEventListener("pointerup", () => rail.classList.remove("is-drag"));
+      rail.addEventListener("pointercancel", () => rail.classList.remove("is-drag"));
+    }
+    window.syncViewRail = sync;
+    requestAnimationFrame(sync);
+  }
+  bindViewRail();
+  requestAnimationFrame(() => {
+    syncAboutFold();
+    markAboutVisualEmpty();
+    maybeRememberAboutBaseline();
+    refreshAboutFmtState();
+    if (window.syncViewRail) window.syncViewRail();
+  });
 })();
