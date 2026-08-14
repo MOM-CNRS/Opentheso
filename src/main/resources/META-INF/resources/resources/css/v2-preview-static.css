@@ -147,12 +147,12 @@ body.hl-off mark.hl{background:transparent;color:inherit;font-weight:inherit;pad
 .hyper-dot.is-active{stroke:var(--accent);stroke-width:3}
 
 /* Actions par lot — états (DOM déjà dans target.html) */
-.bo-head{display:none}
-.bo-head.is-on{display:flex}
-.bo-opsel{display:none}
-.bo-opsel.is-on{display:block}
-.bo-panel{display:none}
-.bo-panel.is-on{display:block}
+.bo-head[data-obj]{display:none}
+.bo-head[data-obj].is-on{display:flex}
+.bo-opsel[data-obj]{display:none}
+.bo-opsel[data-obj].is-on{display:block}
+.bo-panel[data-obj]{display:none}
+.bo-panel[data-obj].is-on{display:block}
 .bo-acc-step:not(.open) .bo-acc-body{display:none}
 
 .bo-panel .bo-drop.has-file{display:none}
@@ -186,7 +186,14 @@ body.hl-off mark.hl{background:transparent;color:inherit;font-weight:inherit;pad
 .bo-panel.is-corrected.is-done .bo-rej{color:inherit}
 
 .st-integ:not(.on) .st-deepl-field{display:none}
-#viewSettings.is-on{padding-bottom:88px}
+.view-panel:has(.fsave){padding-bottom:88px}
+.st-group-head{scroll-margin-top:16px}
+form.bo-card-b{margin:0}
+table.st-radios{display:flex;flex-wrap:wrap;gap:18px;margin-bottom:9px;border:0;width:auto;background:none}
+table.st-radios tbody,table.st-radios tr{display:contents}
+table.st-radios td{display:flex;align-items:center;gap:6px;padding:0;border:0;font:inherit;font-size:13px;color:var(--ink-2)}
+a.st-hint{color:var(--accent);text-decoration:none}
+a.st-hint:hover{text-decoration:underline}
 .bo-toast[hidden]{display:none}
 button.st-hint{background:none;border:none;padding:0;cursor:pointer;font:inherit}
 

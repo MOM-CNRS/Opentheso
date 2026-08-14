@@ -3,8 +3,10 @@ package fr.cnrs.opentheso.v2.preview.ui;
 import fr.cnrs.opentheso.v2.concept.service.ThesaurusHomeWriteService;
 import fr.cnrs.opentheso.v2.rights.Permission;
 import fr.cnrs.opentheso.v2.rights.RightsService;
+import fr.cnrs.opentheso.v2.setting.fixtures.SettingTestFixtures;
 import fr.cnrs.opentheso.v2.setting.model.ThesaurusLanguage;
 import fr.cnrs.opentheso.v2.setting.service.ThesaurusPreferenceService;
+import fr.cnrs.opentheso.v2.setting.ui.PreferenceEditor;
 import fr.cnrs.opentheso.v2.setting.service.ThesaurusWorkLanguageService;
 import fr.cnrs.opentheso.v2.setting.ui.ThesaurusContext;
 import fr.cnrs.opentheso.v2.shared.repository.ThesaurusHomeQueryRepository;
@@ -131,6 +133,26 @@ class PreviewThesaurusBeanTest {
         bean.onLanguageChange();
 
         assertEquals("en", thesaurusContext.resolveWorkLanguage());
+    }
+
+    @Test
+    void loadsGeneralPreferenceFieldsFromService() {
+        thesaurusContext.selectThesaurus("th17", "Pactols_Lieux", "fr");
+        when(v2LocaleBean.getIdLangue()).thenReturn("fr");
+        when(thesaurusPreferenceService.loadPreferencesOrNull("th17", "fr"))
+                .thenReturn(SettingTestFixtures.samplePreferences());
+
+        PreferenceEditor preference = bean.getPreference();
+
+        assertEquals("https://site/", preference.getCheminSite());
+        assertEquals("uri", preference.getUriType());
+        assertEquals("https://site/", preference.getOriginalUri());
+        assertEquals("fr", preference.getSourceLang());
+        assertEquals(2, preference.getIdentifierType());
+        assertEquals("TH1", preference.getPreferredName());
+        assertEquals("/api/theso/TH1", bean.getPreferencePermalink());
+        assertEquals(1, preference.getLanguages().size());
+        verify(thesaurusPreferenceService).loadPreferencesOrNull("th17", "fr");
     }
 
     @Test

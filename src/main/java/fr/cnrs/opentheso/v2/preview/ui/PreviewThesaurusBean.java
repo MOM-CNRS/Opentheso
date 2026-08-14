@@ -4,8 +4,10 @@ import fr.cnrs.opentheso.v2.concept.service.ThesaurusHomeWriteService;
 import fr.cnrs.opentheso.v2.rights.Permission;
 import fr.cnrs.opentheso.v2.rights.RightsService;
 import fr.cnrs.opentheso.v2.setting.model.ThesaurusLanguage;
+import fr.cnrs.opentheso.v2.setting.model.ThesaurusPreferences;
 import fr.cnrs.opentheso.v2.setting.service.ThesaurusPreferenceService;
 import fr.cnrs.opentheso.v2.setting.service.ThesaurusWorkLanguageService;
+import fr.cnrs.opentheso.v2.setting.ui.PreferenceEditor;
 import fr.cnrs.opentheso.v2.setting.ui.ThesaurusContext;
 import fr.cnrs.opentheso.v2.shared.repository.ThesaurusHomeQueryRepository;
 import fr.cnrs.opentheso.v2.shared.ui.UserSession;
@@ -50,6 +52,8 @@ public class PreviewThesaurusBean implements Serializable {
     private boolean sessionReady;
     private String homePageHtml;
     private boolean homePageHtmlLoaded;
+    private PreferenceEditor preference;
+    private boolean preferenceLoaded;
 
     @Getter
     @Setter
@@ -145,6 +149,19 @@ public class PreviewThesaurusBean implements Serializable {
         }
     }
 
+    public PreferenceEditor getPreference() {
+        ensurePreferencesLoaded();
+        return preference;
+    }
+
+    public String getPreferencePermalink() {
+        PreferenceEditor editor = getPreference();
+        if (editor == null || StringUtils.isBlank(editor.getPreferredName())) {
+            return "";
+        }
+        return "/api/theso/" + editor.getPreferredName();
+    }
+
     public String getHomePageHtml() {
         if (!homePageHtmlLoaded) {
             homePageHtml = StringUtils.defaultString(
@@ -212,6 +229,22 @@ public class PreviewThesaurusBean implements Serializable {
     private void invalidateHomePageHtml() {
         homePageHtml = null;
         homePageHtmlLoaded = false;
+    }
+
+    private void ensurePreferencesLoaded() {
+        if (preferenceLoaded) {
+            return;
+        }
+        preferenceLoaded = true;
+        String thesaurusId = getId();
+        String workLang = StringUtils.defaultIfBlank(v2LocaleBean.getIdLangue(), "fr");
+        ThesaurusPreferences prefs = thesaurusPreferenceService.loadPreferencesOrNull(thesaurusId, workLang);
+        if (prefs == null) {
+            preference = new PreferenceEditor();
+            preference.setLanguages(getLanguages());
+            return;
+        }
+        preference = PreferenceEditor.from(prefs);
     }
 
     private void ensureLanguagesLoaded() {

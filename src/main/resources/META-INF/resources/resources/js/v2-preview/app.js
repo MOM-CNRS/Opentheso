@@ -897,8 +897,12 @@
     else if (act === "set-view") setView(t.getAttribute("data-view"));
     else if (act === "show") showHomePanel(t.getAttribute("data-panel"));
     else if (act === "settings-open") {
-      const pages = { prefs: "preference.xhtml", servers: "identifiants.xhtml", corpus: "corpus.xhtml" };
-      go(pages[t.getAttribute("data-section")] || "parametres.xhtml");
+      const pages = {
+        prefs: "preference.xhtml#stPrefs",
+        servers: "preference.xhtml#stServers",
+        corpus: "preference.xhtml#stCorpus"
+      };
+      go(pages[t.getAttribute("data-section")] || "preference.xhtml");
     }
     else if (act === "bo-open") {
       const obj = t.getAttribute("data-obj");
@@ -1489,9 +1493,17 @@
     });
   }
 
-  if (SCREEN === "parametres" && location.hash) {
+  if ((SCREEN === "parametres" || SCREEN === "preference") && location.hash) {
     const el = document.querySelector(location.hash);
-    if (el) requestAnimationFrame(() => el.scrollIntoView({ block: "start" }));
+    const view = $("#previewView");
+    if (el && view) {
+      requestAnimationFrame(() => {
+        const top = el.getBoundingClientRect().top - view.getBoundingClientRect().top + view.scrollTop - 8;
+        view.scrollTo({ top: Math.max(0, top) });
+      });
+    } else if (el) {
+      requestAnimationFrame(() => el.scrollIntoView({ block: "start" }));
+    }
   }
   if (SCREEN === "atelier") {
     setBatch(params.get("obj") || "alignements");
