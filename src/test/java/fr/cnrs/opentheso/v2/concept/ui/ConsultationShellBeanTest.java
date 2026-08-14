@@ -6,6 +6,7 @@ import fr.cnrs.opentheso.v2.concept.service.ConsultationCatalogService;
 import fr.cnrs.opentheso.v2.concept.session.ConceptSelectionContext;
 import fr.cnrs.opentheso.v2.setting.ui.ThesaurusContext;
 import fr.cnrs.opentheso.v2.shared.service.PlatformHomeReadService;
+import fr.cnrs.opentheso.v2.shared.session.ConceptTreeRefreshState;
 import fr.cnrs.opentheso.v2.shared.session.SessionLifecycleService;
 import fr.cnrs.opentheso.v2.shared.session.SsoSessionBridge;
 import fr.cnrs.opentheso.v2.rights.RightsService;
@@ -22,7 +23,6 @@ import org.mockito.junit.jupiter.MockitoExtension;
 
 import java.util.List;
 import java.util.Map;
-import java.util.Optional;
 
 import static org.junit.jupiter.api.Assertions.assertEquals;
 import static org.junit.jupiter.api.Assertions.assertFalse;
@@ -58,6 +58,8 @@ class ConsultationShellBeanTest {
     @Mock
     private ConsultationProjectHomeBean consultationProjectHomeBean;
     @Mock
+    private ConceptTreeRefreshState conceptTreeRefreshState;
+    @Mock
     private FacesContext facesContext;
     @Mock
     private ExternalContext externalContext;
@@ -76,7 +78,8 @@ class ConsultationShellBeanTest {
                 ssoSessionBridge,
                 sessionLifecycleService,
                 rightsService,
-                consultationProjectHomeBean
+                consultationProjectHomeBean,
+                conceptTreeRefreshState
         );
     }
 
@@ -223,18 +226,15 @@ class ConsultationShellBeanTest {
         when(v2LocaleBean.getIdLangue()).thenReturn("fr");
         when(platformHomeReadService.loadHomePageHtml("fr")).thenReturn("<p>accueil</p>");
 
-        jakarta.faces.component.UIViewRoot viewRoot = mock(jakarta.faces.component.UIViewRoot.class);
-        when(facesContext.getViewRoot()).thenReturn(viewRoot);
-        when(viewRoot.getViewId()).thenReturn("/v2/thesaurus/browse.xhtml");
+        when(facesContext.getExternalContext()).thenReturn(externalContext);
+        when(externalContext.getRequestContextPath()).thenReturn("");
         when(facesContext.getApplication()).thenReturn(mock(jakarta.faces.application.Application.class));
 
         try (MockedStatic<FacesContext> faces = mockStatic(FacesContext.class);
              MockedStatic<PrimeFaces> primeFaces = mockStatic(PrimeFaces.class)) {
             faces.when(FacesContext::getCurrentInstance).thenReturn(facesContext);
             PrimeFaces primeFacesInstance = mock(PrimeFaces.class);
-            PrimeFaces.Ajax ajax = mock(PrimeFaces.Ajax.class);
             when(primeFacesInstance.isAjaxRequest()).thenReturn(true);
-            when(primeFacesInstance.ajax()).thenReturn(ajax);
             primeFaces.when(PrimeFaces::current).thenReturn(primeFacesInstance);
 
             consultationShellBean.onThesaurusChange();
@@ -247,14 +247,8 @@ class ConsultationShellBeanTest {
             assertTrue(consultationShellBean.isPlatformHome());
             assertFalse(consultationShellBean.isProjectHome());
             assertEquals(null, consultationShellBean.getSelectedThesaurusId());
-            verify(ajax).update(
-                    "indexTitle",
-                    "menuBar",
-                    "resultSearchBar",
-                    "containerIndex:header",
-                    "containerIndex:searchBar",
-                    "containerIndex:contentConcept"
-            );
+            verify(primeFacesInstance).executeScript(
+                    org.mockito.ArgumentMatchers.contains("window.location.assign"));
         }
     }
 
@@ -264,9 +258,8 @@ class ConsultationShellBeanTest {
         consultationShellBean.setSelectedProjectId(7);
         when(thesaurusContext.resolveThesaurusId()).thenReturn(null);
 
-        jakarta.faces.component.UIViewRoot viewRoot = mock(jakarta.faces.component.UIViewRoot.class);
-        when(facesContext.getViewRoot()).thenReturn(viewRoot);
-        when(viewRoot.getViewId()).thenReturn("/v2/thesaurus/browse.xhtml");
+        when(facesContext.getExternalContext()).thenReturn(externalContext);
+        when(externalContext.getRequestContextPath()).thenReturn("");
         when(facesContext.getApplication()).thenReturn(mock(jakarta.faces.application.Application.class));
 
         try (MockedStatic<FacesContext> faces = mockStatic(FacesContext.class);
@@ -281,6 +274,7 @@ class ConsultationShellBeanTest {
             verify(consultationProjectHomeBean).load(7);
             assertTrue(consultationShellBean.isProjectHome());
             assertFalse(consultationShellBean.isPlatformHome());
+            verify(externalContext).redirect(org.mockito.ArgumentMatchers.contains("/v2/thesaurus/browse.xhtml"));
         }
     }
 
@@ -294,17 +288,10 @@ class ConsultationShellBeanTest {
         when(consultationCatalogService.listThesauri(null, false, 42, "fr")).thenReturn(List.of());
         when(thesaurusContext.resolveThesaurusId()).thenReturn(null);
 
-        jakarta.faces.component.UIViewRoot viewRoot = mock(jakarta.faces.component.UIViewRoot.class);
-        when(facesContext.getViewRoot()).thenReturn(viewRoot);
-        when(viewRoot.getViewId()).thenReturn("/v2/thesaurus/browse.xhtml");
         when(facesContext.getApplication()).thenReturn(mock(jakarta.faces.application.Application.class));
 
-        try (MockedStatic<FacesContext> faces = mockStatic(FacesContext.class);
-             MockedStatic<PrimeFaces> primeFaces = mockStatic(PrimeFaces.class)) {
+        try (MockedStatic<FacesContext> faces = mockStatic(FacesContext.class)) {
             faces.when(FacesContext::getCurrentInstance).thenReturn(facesContext);
-            PrimeFaces primeFacesInstance = mock(PrimeFaces.class);
-            when(primeFacesInstance.isAjaxRequest()).thenReturn(false);
-            primeFaces.when(PrimeFaces::current).thenReturn(primeFacesInstance);
 
             consultationShellBean.onProjectChange();
 
@@ -338,15 +325,14 @@ class ConsultationShellBeanTest {
         when(consultationCatalogService.listThesauri(null, false, -1, "fr"))
                 .thenReturn(List.of(new ConsultationThesaurusOption("TH1", "Title", "fr")));
 
-        jakarta.faces.component.UIViewRoot viewRoot = mock(jakarta.faces.component.UIViewRoot.class);
-        when(facesContext.getViewRoot()).thenReturn(viewRoot);
-        when(viewRoot.getViewId()).thenReturn("/v2/thesaurus/browse.xhtml");
-        when(facesContext.getApplication()).thenReturn(mock(jakarta.faces.application.Application.class));
+        when(facesContext.getExternalContext()).thenReturn(externalContext);
+        when(externalContext.getRequestContextPath()).thenReturn("");
 
         try (MockedStatic<FacesContext> faces = mockStatic(FacesContext.class);
              MockedStatic<PrimeFaces> primeFaces = mockStatic(PrimeFaces.class)) {
             faces.when(FacesContext::getCurrentInstance).thenReturn(facesContext);
             PrimeFaces primeFacesInstance = mock(PrimeFaces.class);
+            when(primeFacesInstance.isAjaxRequest()).thenReturn(true);
             primeFaces.when(PrimeFaces::current).thenReturn(primeFacesInstance);
 
             consultationShellBean.reloadThesaurus();
@@ -357,7 +343,8 @@ class ConsultationShellBeanTest {
             verify(thesaurusContext).setIdFacetFromUri(null);
             verify(thesaurusContext).selectThesaurus("TH1", "Title", "fr");
             verify(conceptSelectionContext).clear();
-            verify(primeFacesInstance).executeScript(org.mockito.ArgumentMatchers.contains("window.location.reload()"));
+            verify(primeFacesInstance).executeScript(
+                    org.mockito.ArgumentMatchers.contains("window.location.assign"));
         }
     }
 }

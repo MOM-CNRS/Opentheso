@@ -44,10 +44,17 @@ public class ConsultationCatalogQueryRepository {
                  FROM thesaurus t
                  JOIN preferences p ON p.id_thesaurus = t.id_thesaurus
                  JOIN thesaurus_label tl ON tl.id_thesaurus = t.id_thesaurus AND tl.lang = p.source_lang
-                 LEFT JOIN user_group_thesaurus gt ON gt.id_thesaurus = t.id_thesaurus
-                     WHERE t.private = false
-                     AND (:projectId = -1 OR gt.id_group = :projectId)
-                ORDER BY CAST(regexp_replace(t.id_thesaurus, '\\D', '', 'g') AS INTEGER) DESC;           
+                 WHERE COALESCE(t."private", false) = false
+                   AND (
+                        :projectId = -1
+                        OR EXISTS (
+                            SELECT 1
+                            FROM user_group_thesaurus gt
+                            WHERE gt.id_thesaurus = t.id_thesaurus
+                              AND gt.id_group = :projectId
+                        )
+                   )
+                ORDER BY CAST(regexp_replace(t.id_thesaurus, '\\D', '', 'g') AS INTEGER) DESC
                 """;
         List<Object[]> rows = entityManager.createNativeQuery(sql)
                 .setParameter("projectId", projectId)

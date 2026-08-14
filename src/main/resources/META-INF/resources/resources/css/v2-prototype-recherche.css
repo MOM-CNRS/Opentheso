@@ -564,7 +564,7 @@ tr.flat-filters th{position:sticky;top:33px;z-index:2;background:var(--surface);
   border:1px solid var(--line);border-radius:7px;white-space:nowrap;flex:0 0 auto}
 .fp-toggle:hover{border-color:var(--accent-line);color:var(--accent)}
 
-.view{flex:1;overflow-y:auto;padding:30px 36px 80px}
+.view{flex:1;overflow-y:auto;padding:30px 36px 0px}
 .content.is-full .view{padding:30px 13% 80px}
 
 /* ───────── États vides ───────── */
