@@ -1,0 +1,97 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<ui:composition xmlns="http://www.w3.org/1999/xhtml"
+                xmlns:ui="http://xmlns.jcp.org/jsf/facelets">
+  <div class="cv is-on is-candidate#{v2PreviewThesaurusBean.candidateUnderParent ? ' is-under' : ''}"
+       data-id="#{v2PreviewThesaurusBean.selectedId}"
+       data-pref="#{v2PreviewThesaurusBean.candidateTitle}"
+       data-status="candidat">
+    <div class="cv-path"><span class="path">#{v2PreviewThesaurusBean.candidatePath}</span></div>
+    <div class="cv-head">
+      <h1 class="cv-pref">
+        <span class="cv-dot" title="Concept candidat"></span>
+        <input class="cv-draft-input" value="#{v2PreviewThesaurusBean.candidateTitle}" placeholder="Intitulé du candidat…"/>
+        <span class="cv-lang">#{v2PreviewThesaurusBean.dash(v2PreviewThesaurusBean.selectedConcept.summary.lang)}</span>
+        <span class="cv-status">candidat</span>
+      </h1>
+    </div>
+    <div class="cand-banner">
+      <div class="cand-banner-row">
+        <span class="cand-banner-dot"></span>
+        <div class="cand-banner-main">
+          <div class="cand-banner-t">Nouveau candidat — à renseigner</div>
+          <div class="cand-banner-s">
+            <span class="draft-root">Sans emplacement · 1er niveau</span>
+            <span class="draft-under">Sous «&#160;<b>#{v2PreviewThesaurusBean.candidateParentName}</b>&#160;»</span>
+            <ui:fragment rendered="#{not empty v2PreviewThesaurusBean.candidateBy}">
+              <span class="cand-banner-sep">·</span> proposé par <b>#{v2PreviewThesaurusBean.candidateBy}</b>
+            </ui:fragment>
+            <ui:fragment rendered="#{not empty v2PreviewThesaurusBean.candidateOn}">
+              <span class="cand-banner-sep">·</span> #{v2PreviewThesaurusBean.candidateOn}
+            </ui:fragment>
+          </div>
+        </div>
+        <div class="cand-banner-actions">
+          <button type="button" class="bo-btn primary sm">✓ Créer le candidat</button>
+          <button type="button" class="bo-btn ghost sm">Annuler</button>
+        </div>
+      </div>
+    </div>
+    <section class="cblock">
+      <div class="cblock-head">Contexte</div>
+      <div class="cblock-body">
+        <div class="crow">
+          <div class="crow-lbl">Formes alternatives</div>
+          <div class="crow-val"><input class="st-input" value="#{v2PreviewThesaurusBean.candidateAlts}" placeholder="synonymes, séparés par des virgules"/></div>
+        </div>
+        <div class="crow">
+          <div class="crow-lbl">Collection</div>
+          <div class="crow-val"><input class="st-input" value="#{v2PreviewThesaurusBean.candidateCollections}" placeholder="Collection…"/></div>
+        </div>
+      </div>
+    </section>
+    <section class="cblock">
+      <div class="cblock-head">Relations sémantiques</div>
+      <div class="cblock-body">
+        <div class="crow">
+          <div class="crow-lbl"><span class="rel-code rel-bt">TG</span> Concept générique</div>
+          <div class="crow-val"><input class="st-input" value="#{v2PreviewThesaurusBean.candidateBroader}" placeholder="Terme générique…"/></div>
+        </div>
+        <div class="crow">
+          <div class="crow-lbl"><span class="rel-code rel-nt">TS</span> Concept spécifique</div>
+          <div class="crow-val"><input class="st-input" value="#{v2PreviewThesaurusBean.candidateNarrower}" placeholder="Terme(s) spécifique(s)…"/></div>
+        </div>
+        <div class="crow">
+          <div class="crow-lbl"><span class="rel-code rel-rt">TA</span> Concept associé</div>
+          <div class="crow-val"><input class="st-input" value="#{v2PreviewThesaurusBean.candidateRelated}" placeholder="Terme(s) associé(s)…"/></div>
+        </div>
+      </div>
+    </section>
+    <section class="cblock">
+      <div class="cblock-head">Traductions</div>
+      <div class="cblock-body">
+        <div class="crow"><div class="crow-lbl"><span class="tr-flag">🇫🇷</span> Français</div><div class="crow-val"><input class="st-input" value="#{v2PreviewThesaurusBean.getCandidateTranslation('fr')}" placeholder="(intitulé saisi ci-dessus)"/></div></div>
+        <div class="crow"><div class="crow-lbl"><span class="tr-flag">🇬🇧</span> Anglais</div><div class="crow-val"><input class="st-input" value="#{v2PreviewThesaurusBean.getCandidateTranslation('en')}" placeholder="Traduction…"/></div></div>
+        <div class="crow"><div class="crow-lbl"><span class="tr-flag">🇩🇪</span> Allemand</div><div class="crow-val"><input class="st-input" value="#{v2PreviewThesaurusBean.getCandidateTranslation('de')}" placeholder="Traduction…"/></div></div>
+        <div class="crow"><div class="crow-lbl"><span class="tr-flag">🇪🇸</span> Espagnol</div><div class="crow-val"><input class="st-input" value="#{v2PreviewThesaurusBean.getCandidateTranslation('es')}" placeholder="Traduction…"/></div></div>
+        <div class="crow"><div class="crow-lbl"><span class="tr-flag">🇮🇹</span> Italien</div><div class="crow-val"><input class="st-input" value="#{v2PreviewThesaurusBean.getCandidateTranslation('it')}" placeholder="Traduction…"/></div></div>
+      </div>
+    </section>
+    <section class="cblock">
+      <div class="cblock-head">Notes</div>
+      <div class="cblock-body">
+        <div class="crow">
+          <div class="crow-lbl">Définition</div>
+          <div class="crow-val"><textarea class="disc-input" placeholder="Définition du concept…">#{v2PreviewThesaurusBean.candidateDefinition}</textarea></div>
+        </div>
+        <div class="crow">
+          <div class="crow-lbl">Note d'application</div>
+          <div class="crow-val"><textarea class="disc-input" placeholder="Note d'application…">#{v2PreviewThesaurusBean.candidateScopeNote}</textarea></div>
+        </div>
+      </div>
+    </section>
+    <div class="bo-todo-box">
+      <div class="bo-todo-t">Identifiants &amp; dates</div>
+      <div class="bo-todo-d">L'ARK, l'URI, la notation et les dates sont générés automatiquement à la création du candidat.</div>
+    </div>
+  </div>
+</ui:composition>

@@ -38,8 +38,37 @@ body[data-page="graphe"] #viewHyper{display:flex;flex-direction:column}
 
 .tn-check.on::after{content:"✓";color:#fff;font-size:10px;font-weight:700;line-height:1}
 
-.bulksel{display:none}
-.bulksel.is-on{display:flex}
+.bulksel{
+  display:flex;
+  overflow:hidden;
+  max-height:0;
+  opacity:0;
+  transform:translateY(12px);
+  padding-top:0;
+  padding-bottom:0;
+  border-top-color:transparent;
+  pointer-events:none;
+  visibility:hidden;
+  animation:none;
+  transition:
+    max-height .36s cubic-bezier(.22,1,.36,1),
+    opacity .28s ease,
+    transform .36s cubic-bezier(.22,1,.36,1),
+    padding .36s cubic-bezier(.22,1,.36,1),
+    border-color .28s ease,
+    visibility 0s linear .36s;
+}
+.bulksel.is-on{
+  max-height:360px;
+  opacity:1;
+  transform:translateY(0);
+  padding-top:10px;
+  padding-bottom:11px;
+  border-top-color:var(--line);
+  pointer-events:auto;
+  visibility:visible;
+  transition-delay:0s;
+}
 
 .app-toast[hidden]{display:none}
 .app-toast:not(.is-soft) .app-toast-ico{display:none}
@@ -97,6 +126,13 @@ body[data-page="graphe"] #viewHyper{display:flex;flex-direction:column}
 /* Fiches concept : une par concept, déjà dans le HTML */
 #viewConcept .cv{display:none}
 #viewConcept .cv.is-on{display:block}
+#viewLive .cv{display:block}
+.preview-open-form{position:absolute;width:1px;height:1px;overflow:hidden;clip:rect(0,0,0,0)}
+.cv-status.is-facet{color:#3d5a80;background:rgba(61,90,128,.12)}
+.cv-status.is-dep{color:#9a3412;background:rgba(194,84,58,.12)}
+#viewLive .draft-under{display:none}
+#viewLive .is-under .draft-root{display:none}
+#viewLive .is-under .draft-under{display:inline}
 .stk-group[data-group="candidat"]:not(.on) .cf{display:none}
 .cf-combo:not(.open) .cf-menu{display:none}
 button.stk-item,button.stk-ghead{border:none;background:transparent;width:100%;text-align:left;font:inherit;color:inherit}
@@ -109,6 +145,8 @@ button.cf-in{text-align:left;cursor:pointer;width:100%}
 .abt-toggle.open .abt-less{display:inline}
 .tn-kids,.tree-body{display:flex;flex-direction:column}
 .tn.is-status-off{display:none !important}
+a.tn-caret{color:inherit;text-decoration:none;display:grid;place-items:center}
+.tree-empty{padding:22px 16px;color:var(--ink-3);font-size:13.5px}
 #panelTable tr.is-status-off{display:none}
 
 .api-copy .api-copied{display:none}
@@ -197,7 +235,7 @@ a.st-hint:hover{text-decoration:underline}
 .bo-toast[hidden]{display:none}
 button.st-hint{background:none;border:none;padding:0;cursor:pointer;font:inherit}
 
-a.th-id,a.thesaurus-logo,a.thesaurus-btn,a.boc-item,a.boc,a.bo-back,a.empty-link,a.menu-row,a.menu-foot,a.admin-tile,a.proj-row,a.view-pick-item,a.view-add,a.cand-row,a.bo-btn,a.abt-save,a.abt-cancel{color:inherit;text-decoration:none}
+a.th-id,a.thesaurus-logo,a.thesaurus-btn,a.boc-item,a.boc,a.bo-back,a.empty-link,a.menu-row,a.menu-foot,a.admin-tile,a.proj-row,a.view-pick-item,a.view-add,a.cand-row,a.bo-btn,a.abt-save,a.abt-cancel,a.tn-caret{color:inherit;text-decoration:none}
 a.th-id{flex:1}
 .login-form .st-input{max-width:none;margin:0}
 .login-form .st-input.is-invalid{border-color:#9a3b2e;box-shadow:0 0 0 3px rgba(154,59,46,.12)}

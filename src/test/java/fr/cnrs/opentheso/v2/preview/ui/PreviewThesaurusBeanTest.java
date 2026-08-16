@@ -1,5 +1,10 @@
 package fr.cnrs.opentheso.v2.preview.ui;
 
+import fr.cnrs.opentheso.v2.concept.model.ConceptDetail;
+import fr.cnrs.opentheso.v2.concept.model.ConceptSummary;
+import fr.cnrs.opentheso.v2.concept.model.ConceptTreeNodeData;
+import fr.cnrs.opentheso.v2.concept.model.FacetDetailOverview;
+import fr.cnrs.opentheso.v2.concept.service.ConceptReadService;
 import fr.cnrs.opentheso.v2.concept.service.ThesaurusHomeWriteService;
 import fr.cnrs.opentheso.v2.rights.Permission;
 import fr.cnrs.opentheso.v2.rights.RightsService;
@@ -20,10 +25,13 @@ import org.mockito.Mock;
 import org.mockito.junit.jupiter.MockitoExtension;
 import org.springframework.test.util.ReflectionTestUtils;
 
+import java.util.Collections;
 import java.util.List;
+import java.util.Optional;
 
 import static org.junit.jupiter.api.Assertions.assertEquals;
 import static org.junit.jupiter.api.Assertions.assertFalse;
+import static org.junit.jupiter.api.Assertions.assertNull;
 import static org.junit.jupiter.api.Assertions.assertTrue;
 import static org.mockito.Mockito.never;
 import static org.mockito.Mockito.verify;
@@ -40,6 +48,8 @@ class PreviewThesaurusBeanTest {
     private ThesaurusWorkLanguageService thesaurusWorkLanguageService;
     @Mock
     private ThesaurusHomeWriteService thesaurusHomeWriteService;
+    @Mock
+    private ConceptReadService conceptReadService;
     @Mock
     private UserSession userSession;
     @Mock
@@ -62,6 +72,7 @@ class PreviewThesaurusBeanTest {
                 thesaurusPreferenceService,
                 thesaurusWorkLanguageService,
                 thesaurusHomeWriteService,
+                conceptReadService,
                 userSession,
                 rightsService,
                 v2LocaleBean
@@ -156,6 +167,70 @@ class PreviewThesaurusBeanTest {
     }
 
     @Test
+    void loadsTreeRootsFromDatabase() {
+        thesaurusContext.selectThesaurus("th17", "Pactols_Lieux", "fr");
+        when(v2LocaleBean.getIdLangue()).thenReturn("fr");
+        when(thesaurusPreferenceService.loadUsedLanguages("th17", "fr")).thenReturn(List.of(language("fr", "Français")));
+        when(conceptReadService.loadPreviewRootNodes("th17", "fr")).thenReturn(List.of(
+                new ConceptTreeNodeData("c1", "Lieux", "", "concept", true),
+                new ConceptTreeNodeData("c2", "Feuille", "N1", "file", false)
+        ));
+
+        List<PreviewTreeNode> roots = bean.getTreeRoots();
+
+        assertEquals(2, roots.size());
+        assertEquals("c1", roots.get(0).getId());
+        assertEquals("Lieux", roots.get(0).getLabel());
+        assertTrue(roots.get(0).isHasChildren());
+        assertFalse(roots.get(0).isExpanded());
+        assertEquals("valide", roots.get(0).getStatus());
+        assertEquals("file", roots.get(1).getNodeType());
+        verify(conceptReadService).loadPreviewRootNodes("th17", "fr");
+    }
+
+    @Test
+    void mapsCandidateNodesLikeTjarou() {
+        thesaurusContext.selectThesaurus("th17", "Pactols_Lieux", "fr");
+        when(v2LocaleBean.getIdLangue()).thenReturn("fr");
+        when(thesaurusPreferenceService.loadUsedLanguages("th17", "fr")).thenReturn(List.of(language("fr", "Français")));
+        when(conceptReadService.loadPreviewRootNodes("th17", "fr")).thenReturn(List.of(
+                new ConceptTreeNodeData("ark:/12148/ctj0u1", "Tjarou", "", "candidat", false)
+        ));
+        when(conceptReadService.loadCandidateMeta("th17", List.of("ark:/12148/ctj0u1")))
+                .thenReturn(Collections.singletonList(new Object[]{"ark:/12148/ctj0u1", "anais.mauriceau", "2026-09-29"}));
+
+        PreviewTreeNode node = bean.getTreeRoots().get(0);
+
+        assertEquals("Tjarou", node.getLabel());
+        assertEquals("candidat", node.getStatus());
+        assertTrue(node.isCandidate());
+        assertEquals("anais.mauriceau", node.getCandidateBy());
+        assertEquals("2026-09-29", node.getCandidateOn());
+    }
+
+    @Test
+    void toggleTreeNode_loadsChildrenOnExpand() {
+        thesaurusContext.selectThesaurus("th17", "Pactols_Lieux", "fr");
+        when(v2LocaleBean.getIdLangue()).thenReturn("fr");
+        when(thesaurusPreferenceService.loadUsedLanguages("th17", "fr")).thenReturn(List.of(language("fr", "Français")));
+        when(conceptReadService.loadPreviewRootNodes("th17", "fr")).thenReturn(List.of(
+                new ConceptTreeNodeData("c1", "Lieux", "", "concept", true)
+        ));
+        when(conceptReadService.loadPreviewChildNodes("c1", "concept", "th17", "fr")).thenReturn(List.of(
+                new ConceptTreeNodeData("c1a", "Enfant", "", "file", false)
+        ));
+
+        bean.toggleTreeNode("Lieux");
+
+        PreviewTreeNode root = bean.getTreeRoots().get(0);
+        assertTrue(root.isExpanded());
+        assertEquals(1, root.getChildren().size());
+        assertEquals("c1a", root.getChildren().get(0).getId());
+        assertEquals(1, root.getChildren().get(0).getDepth());
+        verify(conceptReadService).loadPreviewChildNodes("c1", "concept", "th17", "fr");
+    }
+
+    @Test
     void loadsHomePageHtmlFromDatabase() {
         thesaurusContext.selectThesaurus("th17", "Pactols_Lieux", "fr");
         when(thesaurusHomeWriteService.loadHtml("th17", "fr")).thenReturn("<p>Description Pactols</p>");
@@ -222,7 +297,80 @@ class PreviewThesaurusBeanTest {
         verify(thesaurusHomeWriteService, never()).saveHtml("th17", "fr", "<p>hack</p>");
     }
 
+    @Test
+    void openTreeNode_loadsConceptForm() {
+        thesaurusContext.selectThesaurus("th17", "Pactols_Lieux", "fr");
+        when(v2LocaleBean.getIdLangue()).thenReturn("fr");
+        when(thesaurusPreferenceService.loadUsedLanguages("th17", "fr")).thenReturn(List.of(language("fr", "Français")));
+        when(conceptReadService.loadDetail("th17", "c1", "fr", true)).thenReturn(Optional.of(conceptDetail("c1", "Lieux", "C")));
+
+        bean.openTreeNode("c1", "concept");
+
+        assertTrue(bean.isConceptSelected());
+        assertFalse(bean.isCandidateSelected());
+        assertFalse(bean.isFacetSelected());
+        assertEquals("concept", bean.getSelectedKind());
+        assertEquals("Lieux", bean.getSelectedConcept().getSummary().getPreferredLabel());
+        verify(conceptReadService).loadDetail("th17", "c1", "fr", true);
+    }
+
+    @Test
+    void openTreeNode_loadsCandidateFormFromStatus() {
+        thesaurusContext.selectThesaurus("th17", "Pactols_Lieux", "fr");
+        when(v2LocaleBean.getIdLangue()).thenReturn("fr");
+        when(thesaurusPreferenceService.loadUsedLanguages("th17", "fr")).thenReturn(List.of(language("fr", "Français")));
+        when(conceptReadService.loadDetail("th17", "ctj0u1", "fr", true))
+                .thenReturn(Optional.of(conceptDetail("ctj0u1", "Tjarou", "CA")));
+        when(conceptReadService.loadCandidateMeta("th17", List.of("ctj0u1")))
+                .thenReturn(Collections.singletonList(new Object[]{"ctj0u1", "anais.mauriceau", "2026-09-29"}));
+
+        bean.openTreeNode("ctj0u1", "file");
+
+        assertTrue(bean.isCandidateSelected());
+        assertEquals("candidat", bean.getSelectedKind());
+        assertEquals("Tjarou", bean.getCandidateTitle());
+        assertEquals("anais.mauriceau", bean.getCandidateBy());
+        assertEquals("2026-09-29", bean.getCandidateOn());
+    }
+
+    @Test
+    void openTreeNode_loadsFacetForm() {
+        thesaurusContext.selectThesaurus("th17", "Pactols_Lieux", "fr");
+        when(v2LocaleBean.getIdLangue()).thenReturn("fr");
+        when(thesaurusPreferenceService.loadUsedLanguages("th17", "fr")).thenReturn(List.of(language("fr", "Français")));
+        when(conceptReadService.loadFacetDetail("th17", "f1", "fr")).thenReturn(Optional.of(
+                new FacetDetailOverview("f1", "Techniques", "fr", "c1", "Adobe", List.of(), List.of(), List.of())
+        ));
+
+        bean.openTreeNode("f1", "facet");
+
+        assertTrue(bean.isFacetSelected());
+        assertEquals("facet", bean.getSelectedKind());
+        assertEquals("Techniques", bean.getSelectedFacet().getLabel());
+        assertNull(bean.getSelectedConcept());
+        verify(conceptReadService).loadFacetDetail("th17", "f1", "fr");
+    }
+
     private static ThesaurusLanguage language(String code, String label) {
         return new ThesaurusLanguage(1L, code, "", "", label);
+    }
+
+    private static ConceptDetail conceptDetail(String id, String label, String status) {
+        return new ConceptDetail(
+                new ConceptSummary(id, "th17", label, "fr", status, "", "concept", "", "", "", ""),
+                Collections.emptyList(),
+                Collections.emptyList(),
+                Collections.emptyList(),
+                Collections.emptyList(),
+                Collections.emptyList(),
+                Collections.emptyList(),
+                Collections.emptyList(),
+                Collections.emptyList(),
+                Collections.emptyList(),
+                Collections.emptyList(),
+                Collections.emptyList(),
+                Collections.emptyList(),
+                Collections.emptyList()
+        );
     }
 }

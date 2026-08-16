@@ -17,9 +17,9 @@
   <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin=""/>
   <link href="https://fonts.googleapis.com/css2?family=IBM+Plex+Mono:wght@400;500;600&amp;family=IBM+Plex+Sans:wght@400;500;600;700&amp;display=swap" rel="stylesheet"/>
   <link rel="stylesheet" href="#{request.contextPath}/resources/css/v2-prototype-recherche.css"/>
-  <link rel="stylesheet" href="#{request.contextPath}/resources/css/v2-preview-static.css?v=prefs2"/>
+  <link rel="stylesheet" href="#{request.contextPath}/resources/css/v2-preview-static.css?v=detail2"/>
 </head>
-<body data-page="#{previewPage}">
+<body data-page="#{previewPage}" data-ctx="#{request.contextPath}">
 <div class="app" id="app">
   <ui:include src="thesaurus.xhtml"/>
   <div class="main">
@@ -32,7 +32,10 @@
         <span class="resizer-grip"></span>
       </div>
       <main class="content">
-        <div class="view" id="previewView"><ui:insert name="main"/></div>
+        <div class="view" id="previewView">
+          <ui:insert name="main"/>
+          <ui:include src="detail.xhtml"/>
+        </div>
         <div class="view-rail" id="previewRail" aria-hidden="true">
           <span class="view-rail-thumb" id="previewRailThumb"></span>
         </div>
@@ -50,6 +53,6 @@
   <span class="app-toast-txt"></span>
 </div>
 <h:outputScript library="jakarta.faces" name="faces.js"/>
-<script src="#{request.contextPath}/resources/js/v2-preview/app.js?v=prefs2"></script>
+<script src="#{request.contextPath}/resources/js/v2-preview/app.js?v=detail1"></script>
 </body>
 </html>

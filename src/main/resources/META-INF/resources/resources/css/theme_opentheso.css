@@ -10351,6 +10351,8 @@ a:focus {
 .sidebar {
     width: 6.5rem;
     min-height: 100vh;
+    position: relative;
+    z-index: 30;
 }
 
 .sidebar .nav-item {
@@ -10379,7 +10381,7 @@ a:focus {
 .sidebar .nav-item .collapse {
     position: absolute;
     left: calc(6.5rem + 1.5rem / 2);
-    z-index: 1;
+    z-index: 40;
     top: 2px;
 }
 
@@ -10604,7 +10606,7 @@ a:focus {
     .sidebar.toggled .nav-item .collapse {
         position: absolute;
         left: calc(6.5rem + 1.5rem / 2);
-        z-index: 1;
+        z-index: 40;
         top: 2px;
         -webkit-animation-name: growIn;
         animation-name: growIn;

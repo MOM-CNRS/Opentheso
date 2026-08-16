@@ -5,15 +5,13 @@ import jakarta.persistence.PersistenceContext;
 import org.springframework.stereotype.Repository;
 import org.springframework.transaction.annotation.Transactional;
 
+import fr.cnrs.opentheso.v2.candidat.model.CandidatStatusCode;
 import fr.cnrs.opentheso.v2.concept.model.ConceptFacetNodeRow;
 import fr.cnrs.opentheso.v2.concept.model.ConceptHeaderRow;
 import fr.cnrs.opentheso.v2.concept.model.ConceptTreeRow;
 
-import java.util.ArrayList;
 import java.util.HashSet;
-import java.util.LinkedHashMap;
 import java.util.List;
-import java.util.Map;
 import java.util.Optional;
 import java.util.Set;
 
@@ -476,6 +474,37 @@ public class ConceptQueryRepository {
                 .toList();
     }
 
+    public int countDescendantConcepts(String thesaurusId, String conceptId) {
+        Number count = (Number) em.createNativeQuery("""
+            WITH RECURSIVE descendants AS (
+                SELECT hr.id_concept2 AS concept_id
+                FROM hierarchical_relationship hr
+                JOIN concept c
+                    ON c.id_concept = hr.id_concept2
+                    AND c.id_thesaurus = hr.id_thesaurus
+                WHERE hr.id_concept1 = :conceptId
+                  AND hr.id_thesaurus = :thesaurusId
+                  AND hr.role LIKE 'NT%'
+                  """ + excludeRejectedCandidates("c") + """
+                UNION
+                SELECT hr2.id_concept2
+                FROM hierarchical_relationship hr2
+                JOIN descendants d ON d.concept_id = hr2.id_concept1
+                JOIN concept c2
+                    ON c2.id_concept = hr2.id_concept2
+                    AND c2.id_thesaurus = hr2.id_thesaurus
+                WHERE hr2.id_thesaurus = :thesaurusId
+                  AND hr2.role LIKE 'NT%'
+                  """ + excludeRejectedCandidates("c2") + """
+            )
+            SELECT COUNT(*) FROM descendants
+            """)
+                .setParameter("thesaurusId", thesaurusId)
+                .setParameter("conceptId", conceptId)
+                .getSingleResult();
+        return count == null ? 0 : count.intValue();
+    }
+
     public int countConceptsInGroup(String thesaurusId, String groupId) {
         Number count = (Number) em.createNativeQuery("""
             SELECT COUNT(c.id_concept)
@@ -725,7 +754,7 @@ public class ConceptQueryRepository {
                     .setParameter("lang", lang)
                     .getResultList();
         }
-        return withBulkHasChildren(thesaurusId, toConceptTreeRows(rows));
+        return withBulkHasChildren(thesaurusId, toConceptTreeRows(rows), false);
     }
 
     public List<ConceptTreeRow> findFacetMembersForTree(String thesaurusId, String facetId, String lang) {
@@ -822,6 +851,105 @@ public class ConceptQueryRepository {
                     .getResultList();
         }
         return toConceptTreeRows(rows);
+    }
+
+    public List<ConceptTreeRow> findPreviewRootConcepts(String thesaurusId, String lang) {
+        List<Object[]> rows = em.createNativeQuery("""
+            SELECT c.id_concept,
+                   COALESCE(c.notation, '') AS notation,
+                   COALESCE(t.lexical_value, c.id_concept) AS label,
+                   c.status,
+                   false AS has_children
+            FROM concept c
+            LEFT JOIN preferred_term pt
+                ON pt.id_concept = c.id_concept
+                AND pt.id_thesaurus = c.id_thesaurus
+            LEFT JOIN term t
+                ON t.id_term = pt.id_term
+                AND t.id_thesaurus = c.id_thesaurus
+                AND t.lang = :lang
+            WHERE c.id_thesaurus = :thesaurusId
+              AND (
+                  c.top_concept = true
+                  OR NOT EXISTS (
+                      SELECT 1
+                      FROM hierarchical_relationship hr
+                      WHERE hr.id_concept1 = c.id_concept
+                        AND hr.id_thesaurus = c.id_thesaurus
+                        AND hr.role LIKE 'BT%'
+                  )
+              )
+            """ + excludeRejectedCandidates("c") + """
+            ORDER BY c.notation, label
+            LIMIT 4000
+            """)
+                .setParameter("thesaurusId", thesaurusId)
+                .setParameter("lang", lang)
+                .getResultList();
+        return withBulkHasChildren(thesaurusId, toConceptTreeRows(rows), true);
+    }
+
+    public List<ConceptTreeRow> findPreviewChildConcepts(String thesaurusId, String parentId, String lang) {
+        String facetExclusion = """
+            AND NOT EXISTS (
+                SELECT 1
+                FROM concept_facet cf
+                JOIN thesaurus_array ta
+                    ON cf.id_facet = ta.id_facet
+                    AND cf.id_thesaurus = ta.id_thesaurus
+                WHERE cf.id_concept = c.id_concept
+                  AND cf.id_thesaurus = c.id_thesaurus
+                  AND ta.id_concept_parent = :parentId
+                  AND ta.id_thesaurus = :thesaurusId
+            )
+            """;
+        List<Object[]> rows = em.createNativeQuery("""
+            SELECT c.id_concept,
+                   COALESCE(c.notation, '') AS notation,
+                   COALESCE(t.lexical_value, c.id_concept) AS label,
+                   c.status,
+                   """ + hasChildrenExpression(true) + """
+            FROM hierarchical_relationship hr
+            JOIN concept c
+                ON c.id_concept = hr.id_concept2
+                AND c.id_thesaurus = hr.id_thesaurus
+            LEFT JOIN preferred_term pt
+                ON pt.id_concept = c.id_concept
+                AND pt.id_thesaurus = c.id_thesaurus
+            LEFT JOIN term t
+                ON t.id_term = pt.id_term
+                AND t.id_thesaurus = c.id_thesaurus
+                AND t.lang = :lang
+            WHERE hr.id_thesaurus = :thesaurusId
+              AND hr.id_concept1 = :parentId
+              AND hr.role LIKE 'NT%'
+            """ + facetExclusion + excludeRejectedCandidates("c") + """
+            ORDER BY c.notation, label
+            LIMIT 4000
+            """)
+                .setParameter("thesaurusId", thesaurusId)
+                .setParameter("parentId", parentId)
+                .setParameter("lang", lang)
+                .getResultList();
+        return toConceptTreeRows(rows);
+    }
+
+    public List<Object[]> findCandidateMeta(String thesaurusId, List<String> conceptIds) {
+        if (conceptIds == null || conceptIds.isEmpty()) {
+            return List.of();
+        }
+        return em.createNativeQuery("""
+            SELECT cs.id_concept,
+                   COALESCE(u.username, '') AS created_by,
+                   TO_CHAR(cs.date, 'YYYY-MM-DD') AS created_on
+            FROM candidat_status cs
+            LEFT JOIN users u ON u.id_user = cs.id_user
+            WHERE cs.id_thesaurus = :thesaurusId
+              AND cs.id_concept IN (:conceptIds)
+            """)
+                .setParameter("thesaurusId", thesaurusId)
+                .setParameter("conceptIds", conceptIds)
+                .getResultList();
     }
 
     public List<ConceptFacetNodeRow> findFacetsOfConceptForTree(String thesaurusId, String conceptId, String lang) {
@@ -951,6 +1079,14 @@ public class ConceptQueryRepository {
     }
 
     private List<ConceptTreeRow> withBulkHasChildren(String thesaurusId, List<ConceptTreeRow> rows) {
+        return withBulkHasChildren(thesaurusId, rows, false);
+    }
+
+    private List<ConceptTreeRow> withBulkHasChildren(
+            String thesaurusId,
+            List<ConceptTreeRow> rows,
+            boolean includeAllStatuses
+    ) {
         if (rows.isEmpty()) {
             return rows;
         }
@@ -961,7 +1097,7 @@ public class ConceptQueryRepository {
         if (parentIds.isEmpty()) {
             return rows;
         }
-        Set<String> withChildren = findParentIdsHavingChildren(thesaurusId, parentIds);
+        Set<String> withChildren = findParentIdsHavingChildren(thesaurusId, parentIds, includeAllStatuses);
         if (withChildren.isEmpty()) {
             return rows;
         }
@@ -973,7 +1109,14 @@ public class ConceptQueryRepository {
     }
 
     @SuppressWarnings("unchecked")
-    private Set<String> findParentIdsHavingChildren(String thesaurusId, List<String> parentIds) {
+    private Set<String> findParentIdsHavingChildren(
+            String thesaurusId,
+            List<String> parentIds,
+            boolean includeAllStatuses
+    ) {
+        String statusFilter = includeAllStatuses
+                ? excludeRejectedCandidates("child")
+                : "AND child.status != 'CA'";
         List<String> found = em.createNativeQuery("""
                 SELECT DISTINCT parent_id
                 FROM (
@@ -985,7 +1128,7 @@ public class ConceptQueryRepository {
                     WHERE hr.id_thesaurus = :thesaurusId
                       AND hr.role LIKE 'NT%'
                       AND hr.id_concept1 IN (:parentIds)
-                      AND child.status != 'CA'
+                      """ + statusFilter + """
                     UNION
                     SELECT ta.id_concept_parent AS parent_id
                     FROM thesaurus_array ta
@@ -1010,6 +1153,25 @@ public class ConceptQueryRepository {
     }
 
     private static String hasChildrenExpression() {
+        return hasChildrenExpression(false);
+    }
+
+    private static String excludeRejectedCandidates(String conceptAlias) {
+        return """
+            AND NOT EXISTS (
+                SELECT 1
+                FROM candidat_status cs
+                WHERE cs.id_concept = %1$s.id_concept
+                  AND cs.id_thesaurus = %1$s.id_thesaurus
+                  AND cs.id_status = %2$d
+            )
+            """.formatted(conceptAlias, CandidatStatusCode.REJECTED);
+    }
+
+    private static String hasChildrenExpression(boolean includeAllStatuses) {
+        String statusFilter = includeAllStatuses
+                ? excludeRejectedCandidates("child")
+                : "AND child.status != 'CA'";
         return """
             (
                 EXISTS(
@@ -1021,7 +1183,7 @@ public class ConceptQueryRepository {
                     WHERE hr.id_concept1 = c.id_concept
                       AND hr.id_thesaurus = :thesaurusId
                       AND hr.role LIKE 'NT%'
-                      AND child.status != 'CA'
+                      """ + statusFilter + """
                 )
                 OR EXISTS(
                     SELECT 1

@@ -57,7 +57,8 @@ class ConceptFullReadServiceTest {
                 eq(ConceptFullReadService.NARROWER_PAGE_SIZE + 1),
                 eq(true),
                 eq(null),
-                eq("http://localhost")
+                eq("http://localhost"),
+                eq(false)
         )).thenReturn(Optional.of(fullConcept));
 
         Optional<ConceptFullSnapshot> loaded = service.loadFullConcept("TH1", "C1", "fr", 0, true);

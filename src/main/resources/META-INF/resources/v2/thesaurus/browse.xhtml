@@ -86,7 +86,7 @@
             </h:panelGroup>
         </h:panelGroup>
 
-        <h:panelGroup id="wrapper" style="height:100%">
+        <h:panelGroup id="wrapper" layout="block" style="height:100%">
             <ui:include src="includes/layout/menu.xhtml"/>
 
             <div id="content-wrapper" style="width:100%">
@@ -127,7 +127,7 @@
                         <div class="row" style="margin-left:15px; margin-right:15px; margin-top:5px;">
 
                             <div class="col-xl-3 col-lg-3 col-md-3 hidden-sm card shadow mb-1"
-                                 style="overflow:hidden; padding-right:0; padding-left:0; height:100%;">
+                                 style="overflow:visible; padding-right:0; padding-left:0; height:100%;">
                                 <h:panelGroup id="formLeftTab">
                                     <p:tabView id="tabTree" activeIndex="#{v2ThesaurusBrowseBean.leftTabIndex}">
                                         <p:ajax event="tabChange"
@@ -169,11 +169,10 @@
                                                                      actionListener="#{v2ThesaurusBrowseBean.invalidateCollectionTree()}"
                                                                      update=":containerIndex:formLeftTab :containerIndex:formRightTab :messageIndex"
                                                                      style="color:#f47b2a;"/>
-                                                    <p:commandButton id="v2CollectionMenuButton" type="button" icon="pi pi-align-justify"
-                                                                     rendered="#{v2CollectionDetailEditorBean.managerActionsAvailable}"
-                                                                     style="width:1.5rem; height:1.5rem; margin-left:5px; background:white; color:#f47b2a; border:1px solid #ffffff;"/>
-                                                    <p:menu overlay="true" trigger="v2CollectionMenuButton" my="left top" at="left bottom"
-                                                            rendered="#{v2CollectionDetailEditorBean.managerActionsAvailable}">
+                                                    <p:menuButton id="v2CollectionMenuButton" icon="pi pi-align-justify"
+                                                                  rendered="#{v2CollectionDetailEditorBean.managerActionsAvailable}"
+                                                                  styleClass="left-tree-menu-btn"
+                                                                  appendTo="@(body)">
                                                         <p:menuitem value="#{v2LocaleBean.getMsg('leftbody.group.addGroup')}" icon="fas fa-layer-group"
                                                                     actionListener="#{v2CollectionDetailEditorBean.prepareCreateRoot()}"
                                                                     oncomplete="PF('v2CreateCollectionDlg').show();"
@@ -200,7 +199,7 @@
                                                                     disabled="#{v2ThesaurusBrowseBean.sortByNotation}"
                                                                     update=":containerIndex:formLeftTab"
                                                                     icon="fas fa-sort-numeric-down"/>
-                                                    </p:menu>
+                                                    </p:menuButton>
                                                 </div>
                                             </div>
                                             <p:separator style="color:#F47B2A"/>

@@ -1,13 +1,41 @@
 <ui:composition 
     xmlns="http://www.w3.org/1999/xhtml"
-    xmlns:f="http://xmlns.jcp.org/jsf/core"
     xmlns:h="http://xmlns.jcp.org/jsf/html"
     xmlns:ui="http://xmlns.jcp.org/jsf/facelets"
     xmlns:p="http://primefaces.org/ui">
 
-    <ul class="navbar-nav bg-gradient-primary sidebar sidebar-dark accordion toggled" id="accordionSidebar" >
-
-        <h:panelGroup id="menuBar">
+    <h:outputScript>
+        if (typeof window.toggleSidebarFlyout !== 'function') {
+            window.closeSidebarFlyouts = function (except) {
+                var sidebar = document.getElementById('accordionSidebar');
+                if (!sidebar) { return; }
+                sidebar.querySelectorAll('.collapse.show').forEach(function (el) {
+                    if (el === except) { return; }
+                    el.classList.remove('show');
+                    var trigger = sidebar.querySelector('[data-sidebar-collapse="#' + el.id + '"]');
+                    if (trigger) {
+                        trigger.classList.add('collapsed');
+                        trigger.setAttribute('aria-expanded', 'false');
+                    }
+                });
+            };
+            window.toggleSidebarFlyout = function (btn) {
+                if (!btn) { return false; }
+                var target = document.querySelector(btn.getAttribute('data-sidebar-collapse'));
+                if (!target) { return false; }
+                var willOpen = !target.classList.contains('show');
+                window.closeSidebarFlyouts(willOpen ? target : null);
+                if (willOpen) {
+                    target.classList.add('show');
+                    btn.classList.remove('collapsed');
+                    btn.setAttribute('aria-expanded', 'true');
+                }
+                return false;
+            };
+        }
+    </h:outputScript>
+    <h:panelGroup id="menuBar" layout="block" styleClass="sidebar-host">
+    <ul class="navbar-nav bg-gradient-primary sidebar sidebar-dark accordion toggled" id="accordionSidebar">
 
                 <a class="sidebar-brand d-flex align-items-center justify-content-center" style="height: 60px" href="#{request.contextPath}/index.xhtml">
                     <div id="logoOpenTheso">
@@ -27,7 +55,7 @@
                 </p:commandLink>
             </li>
 
-            <h:panelGroup rendered="#{(currentUser.nodeUser != null and selectedThesaurus.currentIdTheso != null) and
+            <ui:fragment rendered="#{(currentUser.nodeUser != null and selectedThesaurus.currentIdTheso != null) and
                                       (currentUser.hasRoleAsContributor)}" >
                 <li class="nav-item">
                     <p:commandLink class="nav-link collapsed" actionListener="#{menuBean.redirectToCandidatPage()}"
@@ -35,15 +63,18 @@
                         <i class="fa-solid fa-plus" style="font-size: 1.2rem" />
                     </p:commandLink>
                 </li>
-            </h:panelGroup>
+            </ui:fragment>
 
-            <h:panelGroup rendered="#{currentUser.nodeUser != null}" > 
+            <ui:fragment rendered="#{currentUser.nodeUser != null}" > 
                 <li class="nav-item">
-                    <a id="profileButton2" class="nav-link collapsed" href="#" data-toggle="collapse" data-target="#collapseTwo"
-                       aria-expanded="true" aria-controls="collapseTwo" title="#{langueBean.getMsg('menu.profile')}">
+                    <button type="button" id="profileButton2" class="nav-link collapsed"
+                            data-sidebar-collapse="#collapseTwo"
+                            onclick="return toggleSidebarFlyout(this);"
+                            aria-expanded="false" aria-controls="collapseTwo"
+                            title="#{langueBean.getMsg('menu.profile')}">
                         <i class="fas fa-fw fa-user" style="font-size: 1.2rem" />
-                    </a>
-                    <div id="collapseTwo" class="collapse" aria-labelledby="headingTwo" data-parent="#accordionSidebar">
+                    </button>
+                    <div id="collapseTwo" class="collapse" aria-labelledby="headingTwo">
                         <div class="bg-white py-2 collapse-inner rounded">
                             <p:commandLink class="collapse-item" actionListener="#{menuBean.redirectToMyProfilePage()}" 
                                            process="@this" style="font-size: 12px;">#{langueBean.getMsg('profile.my_account')}
@@ -68,17 +99,19 @@
                         </div>
                     </div>
                 </li>
-            </h:panelGroup>
+            </ui:fragment>
 
-            <h:panelGroup rendered="#{(currentUser.nodeUser != null) and 
+            <ui:fragment rendered="#{(currentUser.nodeUser != null) and 
                                       (currentUser.allAuthorizedProjectAsAdmin.size() > 0 or currentUser.hasRoleAsAdmin)}" >
                 <li class="nav-item">
-                    <a id="toolboxButton2" class="nav-link collapsed" href="#" data-toggle="collapse" data-target="#collapseUtilities"
-                       aria-expanded="true" aria-controls="collapseUtilities" title="#{langueBean.getMsg('menu.toolbox')}">
+                    <button type="button" id="toolboxButton2" class="nav-link collapsed"
+                            data-sidebar-collapse="#collapseUtilities"
+                            onclick="return toggleSidebarFlyout(this);"
+                            aria-expanded="false" aria-controls="collapseUtilities"
+                            title="#{langueBean.getMsg('menu.toolbox')}">
                         <i class="fas fa-fw fa-briefcase" style="font-size: 1.2rem" />
-                    </a>
-                    <div id="collapseUtilities" class="collapse" aria-labelledby="headingUtilities"
-                         data-parent="#accordionSidebar">
+                    </button>
+                    <div id="collapseUtilities" class="collapse" aria-labelledby="headingUtilities">
                         <div class="bg-white py-2 collapse-inner rounded">
                             <p:commandLink class="collapse-item" actionListener="#{menuBean.redirectToEditionPage()}" 
                                            style="font-size: 12px;" process="@this">#{langueBean.getMsg('menu.edition')}
@@ -102,17 +135,19 @@
                         </div>
                     </div>
                 </li>
-            </h:panelGroup>
+            </ui:fragment>
 
-            <h:panelGroup rendered="#{(currentUser.nodeUser != null) and (selectedThesaurus.currentIdTheso != null)
+            <ui:fragment rendered="#{(currentUser.nodeUser != null) and (selectedThesaurus.currentIdTheso != null)
                                       and (currentUser.hasRoleAsAdmin)}" >
                 <li class="nav-item">
-                    <a id="settingButton2" class="nav-link collapsed" href="#" data-toggle="collapse" data-target="#collapseParams"
-                       aria-expanded="true" aria-controls="collapseParams" title="#{langueBean.getMsg('menu.setting')}">
+                    <button type="button" id="settingButton2" class="nav-link collapsed"
+                            data-sidebar-collapse="#collapseParams"
+                            onclick="return toggleSidebarFlyout(this);"
+                            aria-expanded="false" aria-controls="collapseParams"
+                            title="#{langueBean.getMsg('menu.setting')}">
                         <i class="fas fa-fw fa-wrench" style="font-size: 1.2rem" />
-                    </a>
-                    <div id="collapseParams" class="collapse" aria-labelledby="headingUtilities"
-                         data-parent="#accordionSidebar">
+                    </button>
+                    <div id="collapseParams" class="collapse" aria-labelledby="headingUtilities">
                         <div class="bg-white py-2 collapse-inner rounded">
                             <p:commandLink class="collapse-item" actionListener="#{menuBean.redirectToPreferencePage()}" 
                                            style="font-size: 12px;" process="@this">#{langueBean.getMsg('menu.preference')}
@@ -127,9 +162,9 @@
                     </div>
                 </li>
                 <hr class="sidebar-divider"/>
-            </h:panelGroup>
+            </ui:fragment>
             
-            <h:panelGroup rendered="#{(currentUser.nodeUser != null)}">
+            <ui:fragment rendered="#{(currentUser.nodeUser != null)}">
                 <li class="nav-item">
                     <p:commandLink class="nav-link collapsed" actionListener="#{menuBean.redirectToGraphPage()}"
                                    process="@this" title="#{langueBean.getMsg('graph')}">
@@ -137,7 +172,7 @@
                     </p:commandLink>
                 </li>
                 <hr class="sidebar-divider"/>
-            </h:panelGroup>
-        </h:panelGroup>
+            </ui:fragment>
     </ul>
+    </h:panelGroup>
 </ui:composition>

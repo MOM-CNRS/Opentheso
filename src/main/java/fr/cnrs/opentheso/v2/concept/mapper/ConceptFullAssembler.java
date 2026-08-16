@@ -48,7 +48,34 @@ public class ConceptFullAssembler {
         if (StringUtils.isAnyBlank(thesaurusId, conceptId, lang)) {
             return Optional.empty();
         }
-        return conceptFullQueryRepository.findConceptCore(conceptId, thesaurusId)
+        return assemble(
+                thesaurusId,
+                conceptId,
+                lang,
+                narrowerOffset,
+                narrowerLimit,
+                includePrivateGroups,
+                preferences,
+                applicationBaseUrl,
+                false
+        );
+    }
+
+    public Optional<ConceptFullSnapshot> assemble(
+            String thesaurusId,
+            String conceptId,
+            String lang,
+            int narrowerOffset,
+            int narrowerLimit,
+            boolean includePrivateGroups,
+            ThesaurusPreferences preferences,
+            String applicationBaseUrl,
+            boolean includeCandidates
+    ) {
+        if (StringUtils.isAnyBlank(thesaurusId, conceptId, lang)) {
+            return Optional.empty();
+        }
+        return conceptFullQueryRepository.findConceptCore(conceptId, thesaurusId, includeCandidates)
                 .map(core -> buildNode(
                         core,
                         thesaurusId,

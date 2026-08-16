@@ -66,6 +66,49 @@ class ConceptReadServiceTest {
     }
 
     @Test
+    void loadPreviewRootNodes_keepsCandidates() {
+        when(thesaurusPreferenceService.loadPreferencesOrNull("TH1", "fr")).thenReturn(null);
+        when(conceptQueryRepository.findPreviewRootConcepts("TH1", "fr")).thenReturn(List.of(
+                new ConceptTreeRow("C1", "", "Lieux", "C", true),
+                new ConceptTreeRow("CA1", "", "Tjarou", "CA", false)
+        ));
+
+        var nodes = service.loadPreviewRootNodes("TH1", "fr");
+
+        assertEquals(2, nodes.size());
+        assertEquals("concept", nodes.get(0).nodeType());
+        assertEquals("candidat", nodes.get(1).nodeType());
+        assertEquals("Tjarou", nodes.get(1).label());
+    }
+
+    @Test
+    void loadDetail_canIncludeCandidates() {
+        when(authenticatedUserSource.isLoggedIn()).thenReturn(false);
+        when(conceptDetailEnrichmentService.loadFullConcept("TH1", "CA1", "fr", false, true))
+                .thenReturn(Optional.empty());
+
+        service.loadDetail("TH1", "CA1", "fr", true);
+
+        verify(conceptDetailEnrichmentService).loadFullConcept("TH1", "CA1", "fr", false, true);
+    }
+
+    @Test
+    void countSubtreeConcepts_addsTheNodeToItsDescendants() {
+        when(conceptQueryRepository.countDescendantConcepts("TH1", "C1")).thenReturn(4);
+
+        assertEquals(5, service.countSubtreeConcepts("TH1", "C1", "concept"));
+        verify(conceptQueryRepository).countDescendantConcepts("TH1", "C1");
+    }
+
+    @Test
+    void countSubtreeConcepts_usesGroupMembershipForCollections() {
+        when(conceptQueryRepository.countConceptsInGroup("TH1", "G1")).thenReturn(12);
+
+        assertEquals(12, service.countSubtreeConcepts("TH1", "G1", "group"));
+        verify(conceptQueryRepository, never()).countDescendantConcepts("TH1", "G1");
+    }
+
+    @Test
     void loadRootNodes_conceptTab_returnsTopConcepts() {
         when(authenticatedUserSource.isLoggedIn()).thenReturn(false);
         when(thesaurusPreferenceService.loadPreferencesOrNull("TH1", "fr")).thenReturn(null);
@@ -166,7 +209,7 @@ class ConceptReadServiceTest {
     void loadDetail_aggregatesStoredProcedureData() {
         ConceptFullSnapshot fullConcept = buildFullConcept();
         when(authenticatedUserSource.isLoggedIn()).thenReturn(false);
-        when(conceptDetailEnrichmentService.loadFullConcept("TH1", "C1", "fr", false))
+        when(conceptDetailEnrichmentService.loadFullConcept("TH1", "C1", "fr", false, false))
                 .thenReturn(Optional.of(fullConcept));
         when(thesaurusPreferenceService.loadPreferencesOrNull("TH1", "fr")).thenReturn(null);
         when(conceptDetailEnrichmentService.mapExportIds(fullConcept, null))
@@ -182,7 +225,7 @@ class ConceptReadServiceTest {
         assertTrue(detail.isPresent());
         assertEquals(1, detail.get().broaderTerms().size());
         assertEquals("Parent", detail.get().broaderTerms().get(0).label());
-        verify(conceptDetailEnrichmentService).loadFullConcept("TH1", "C1", "fr", false);
+        verify(conceptDetailEnrichmentService).loadFullConcept("TH1", "C1", "fr", false, false);
     }
 
     @Test
@@ -275,7 +318,7 @@ class ConceptReadServiceTest {
         fullConcept.setPermanentId("ark:/66666/crt/123");
         fullConcept.setUri("https://ark.example.com/ark:/66666/crt/123");
         when(authenticatedUserSource.isLoggedIn()).thenReturn(true);
-        when(conceptDetailEnrichmentService.loadFullConcept("TH1", "C1", "fr", true))
+        when(conceptDetailEnrichmentService.loadFullConcept("TH1", "C1", "fr", true, false))
                 .thenReturn(java.util.Optional.of(fullConcept));
         when(conceptDetailEnrichmentService.mapImages(fullConcept)).thenReturn(List.of());
         when(conceptDetailEnrichmentService.mapGpsPoints(fullConcept)).thenReturn(List.of());
@@ -387,7 +430,7 @@ class ConceptReadServiceTest {
         ConceptFullSnapshot fullConcept = buildFullConcept();
         fullConcept.setPermanentId("12345/abc");
         when(authenticatedUserSource.isLoggedIn()).thenReturn(false);
-        when(conceptDetailEnrichmentService.loadFullConcept("TH1", "C1", "fr", false))
+        when(conceptDetailEnrichmentService.loadFullConcept("TH1", "C1", "fr", false, false))
                 .thenReturn(java.util.Optional.of(fullConcept));
         when(conceptDetailEnrichmentService.mapImages(fullConcept)).thenReturn(List.of());
         when(conceptDetailEnrichmentService.mapGpsPoints(fullConcept)).thenReturn(List.of());
@@ -437,7 +480,7 @@ class ConceptReadServiceTest {
     void loadDetailWithSource_returnsDetailAndFullConcept() {
         ConceptFullSnapshot fullConcept = buildFullConcept();
         when(authenticatedUserSource.isLoggedIn()).thenReturn(false);
-        when(conceptDetailEnrichmentService.loadFullConcept("TH1", "C1", "fr", false))
+        when(conceptDetailEnrichmentService.loadFullConcept("TH1", "C1", "fr", false, false))
                 .thenReturn(Optional.of(fullConcept));
         when(thesaurusPreferenceService.loadPreferencesOrNull("TH1", "fr")).thenReturn(null);
         when(conceptDetailEnrichmentService.mapExportIds(fullConcept, null))

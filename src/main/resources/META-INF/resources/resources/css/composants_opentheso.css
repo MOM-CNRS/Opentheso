@@ -46,6 +46,29 @@ body .ui-selectonemenu .ui-selectonemenu-trigger .ui-icon {
     height: 500px;
 }
 
+.sidebar-host {
+    flex: 0 0 6.5rem;
+    width: 6.5rem;
+    min-height: 100vh;
+    position: relative;
+    z-index: 40;
+}
+
+.sidebar-host .sidebar {
+    width: 6.5rem !important;
+}
+
+.sidebar .nav-item > button.nav-link {
+    background: transparent;
+    border: 0;
+    cursor: pointer;
+}
+
+.sidebar .nav-item .collapse.show {
+    display: block !important;
+    z-index: 50;
+}
+
 /*** MenuButton ***/
 body .ui-menubutton .ui-widget {
     background: transparent !important;
@@ -53,6 +76,20 @@ body .ui-menubutton .ui-widget {
     color: #f47b2a !important;
     box-shadow: none !important;
     padding-left: 35px;
+}
+
+body .ui-menubutton.left-tree-menu-btn .ui-button,
+body .ui-menubutton.left-tree-menu-btn button {
+    width: 1.5rem;
+    height: 1.5rem;
+    min-width: 1.5rem;
+    padding: 0;
+    margin-left: 5px;
+    margin-right: 5px;
+    background: white !important;
+    color: #f47b2a !important;
+    border: 1px solid #ffffff !important;
+    box-shadow: none !important;
 }
 
 body .ui-widget {
@@ -277,6 +314,12 @@ body .ui-panel .ui-panel-content {
 body .ui-menu {
     padding: 0.25rem;
     width: auto;
+}
+
+body .ui-menu.ui-shadow,
+body .ui-menu-overlay,
+body .ui-menu.ui-menu-overlay {
+    z-index: 1100 !important;
 }
 
 /**********************************************************************/

@@ -37,6 +37,8 @@
     draft: false,
     committed: "",
     selected: new Set(),
+    subtreeSize: new Map(),
+    subtreeSizePending: new Map(),
     statusSet: new Set(["valide", "insere", "candidat"]),
     candBy: "",
     candFrom: "",
@@ -81,10 +83,55 @@
     paintQueryHighlight();
   }
 
+  function liveDetailState() {
+    return $("#previewDetailState");
+  }
+
+  function liveDetailRequested() {
+    const el = liveDetailState();
+    return !!(el && el.getAttribute("data-requested") === "1");
+  }
+
+  function resolveNodeType(el) {
+    if (!el) return "concept";
+    const host = el.closest("[data-type],[data-status]") || el;
+    const type = (el.getAttribute("data-type") || host.getAttribute("data-type") || "").toLowerCase();
+    const status = (el.getAttribute("data-status") || host.getAttribute("data-status") || "").toLowerCase();
+    if (type === "facet") return "facet";
+    if (type === "candidat" || status === "candidat") return "candidat";
+    return type || "concept";
+  }
+
+  function openLiveDetail(id, nodeType) {
+    const idEl = document.getElementById("previewOpenForm:openId");
+    const typeEl = document.getElementById("previewOpenForm:openType");
+    const btn = document.getElementById("previewOpenForm:openBtn");
+    if (!id || !idEl || !btn) return false;
+    idEl.value = id;
+    if (typeEl) typeEl.value = nodeType || "";
+    btn.click();
+    return true;
+  }
+
+  function showLiveDetail() {
+    const el = liveDetailState();
+    if (!el || el.getAttribute("data-requested") !== "1") return false;
+    state.home = false;
+    state.draft = false;
+    state.conceptId = el.getAttribute("data-id") || state.conceptId;
+    highlightConcept(state.conceptId);
+    showPanel(".view-panel", "viewLive");
+    const view = $("#previewView");
+    if (view) view.scrollTop = 0;
+    return true;
+  }
+
   function paintMain() {
     const v = state.view;
     let id;
-    if (v === "hyper" && $("#viewHyper")) {
+    if (liveDetailRequested() && !state.home && !state.draft) {
+      id = "viewLive";
+    } else if (v === "hyper" && $("#viewHyper")) {
       id = "viewHyper";
     } else if (!IS_CONSULT) {
       if (v === "arbo" && $("#viewHome")) id = "viewHome";
@@ -201,10 +248,9 @@
         row.scrollIntoView({ block: "nearest" });
       }
       let tn = btn.closest(".tn");
-      while (tn && tn.parentElement) {
-        const parent = tn.parentElement.closest(".tn");
-        if (parent) parent.classList.add("is-open");
-        tn = parent;
+      while (tn) {
+        tn.classList.add("is-open");
+        tn = previousTreeParent(tn);
       }
     }
     const tr = $(`#panelTable tr[data-id="${CSS.escape(id)}"]`);
@@ -541,16 +587,24 @@
       if (state.candTo && (!/^\d{4}-\d{2}-\d{2}$/.test(on) || on > state.candTo)) return false;
       return true;
     }
-    function visible(tn) {
+    const nodes = treeNodes();
+    const ownOk = nodes.map(tn => {
       const st = tn.getAttribute("data-status") || "valide";
-      if (set.has(st) && candOk(tn)) return true;
-      return $$(":scope > .tn-kids > .tn", tn).some(visible);
-    }
-    $$("#panelTree .tree-body > .tn").forEach(function walk(tn) {
-      const on = visible(tn);
-      tn.classList.toggle("is-status-off", !on);
-      $$(":scope > .tn-kids > .tn", tn).forEach(walk);
+      return set.has(st) && candOk(tn);
     });
+    const vis = ownOk.slice();
+    for (let i = 0; i < nodes.length; i++) {
+      if (!ownOk[i]) continue;
+      let depth = treeDepth(nodes[i]);
+      for (let j = i - 1; j >= 0 && depth > 0; j--) {
+        const parentDepth = treeDepth(nodes[j]);
+        if (parentDepth < depth) {
+          vis[j] = true;
+          depth = parentDepth;
+        }
+      }
+    }
+    nodes.forEach((tn, i) => tn.classList.toggle("is-status-off", !vis[i]));
     $$("#panelTable tr[data-status]").forEach(tr => {
       const st = tr.getAttribute("data-status") || "valide";
       let on = set.has(st);
@@ -565,18 +619,51 @@
     });
   }
 
+  function treeNodes() {
+    return $$("#panelTree .tree-body > .tn");
+  }
+
+  function treeDepth(tn) {
+    return Number(tn && tn.getAttribute("data-depth") || 0);
+  }
+
+  function previousTreeParent(tn) {
+    const depth = treeDepth(tn);
+    let prev = tn && tn.previousElementSibling;
+    while (prev) {
+      if (prev.classList.contains("tn") && treeDepth(prev) < depth) return prev;
+      prev = prev.previousElementSibling;
+    }
+    return null;
+  }
+
+  function sortTreeRange(list) {
+    if (!list.length) return [];
+    const depth = treeDepth(list[0]);
+    const groups = [];
+    for (let i = 0; i < list.length; ) {
+      const head = list[i];
+      let j = i + 1;
+      while (j < list.length && treeDepth(list[j]) > depth) j++;
+      groups.push([head, ...sortTreeRange(list.slice(i + 1, j))]);
+      i = j;
+    }
+    groups.sort((a, b) => (a[0].dataset.sortkey || "").localeCompare(b[0].dataset.sortkey || "", "fr"));
+    return groups.flat();
+  }
+
   function applySort() {
     const nota = state.sort === "nota";
-    $$(".tn-kids, #panelTree .tree-body").forEach(box => {
-      $$(":scope > .tn", box).forEach(tn => {
-        tn.dataset.sortkey = nota
-          ? (tn.getAttribute("data-nota") || "~")
-          : (tn.getAttribute("data-key") || "").split("/").pop() || "";
-      });
-      $$(":scope > .tn", box)
-        .sort((a, b) => (a.dataset.sortkey || "").localeCompare(b.dataset.sortkey || "", "fr"))
-        .forEach((el, i) => { el.style.order = String(i); });
+    const box = $("#panelTree .tree-body");
+    const nodes = treeNodes();
+    nodes.forEach(tn => {
+      tn.dataset.sortkey = nota
+        ? (tn.getAttribute("data-nota") || "~")
+        : (tn.getAttribute("data-key") || "").split("/").pop() || "";
     });
+    if (box && nodes.length) {
+      sortTreeRange(nodes).forEach(el => box.appendChild(el));
+    }
     $$(".vo-seg-b[data-sort]").forEach(b => b.classList.toggle("is-on", b.getAttribute("data-sort") === state.sort));
   }
 
@@ -655,22 +742,54 @@
   }
 
   function collectIds(tn) {
-    return [...new Set(
-      [tn.getAttribute("data-id"), ...$$("[data-id]", tn).map(el => el.getAttribute("data-id"))]
-        .filter(Boolean)
-    )];
+    const ids = [];
+    const push = id => { if (id && !ids.includes(id)) ids.push(id); };
+    push(tn.getAttribute("data-id"));
+    const depth = treeDepth(tn);
+    let next = tn.nextElementSibling;
+    while (next && next.classList.contains("tn")) {
+      if (treeDepth(next) <= depth) break;
+      push(next.getAttribute("data-id"));
+      next = next.nextElementSibling;
+    }
+    return ids;
+  }
+
+  function paintSelectedId(id, on) {
+    $$(`[data-id="${CSS.escape(id)}"]`).forEach(el => {
+      const check = el.matches(".tn-check") ? el : (el.querySelector && el.querySelector(".tn-check"));
+      const row = el.closest && (el.closest(".tn-row") || el.closest("tr"));
+      if (check) check.classList.toggle("on", on);
+      if (row) row.classList.toggle("is-sel", on);
+    });
   }
 
   function setSelectedIds(ids, on) {
     ids.forEach(id => {
       if (on) state.selected.add(id);
       else state.selected.delete(id);
-      $$(`[data-id="${CSS.escape(id)}"]`).forEach(el => {
-        const check = el.matches(".tn-check") ? el : (el.querySelector && el.querySelector(".tn-check"));
-        const row = el.closest && (el.closest(".tn-row") || el.closest("tr"));
-        if (check) check.classList.toggle("on", on);
-        if (row) row.classList.toggle("is-sel", on);
-      });
+      paintSelectedId(id, on);
+    });
+    updateBulk();
+  }
+
+  function restoreSelection() {
+    treeNodes().forEach(tn => {
+      const id = tn.getAttribute("data-id");
+      if (!id) return;
+      let selected = state.selected.has(id);
+      if (!selected) {
+        let parent = previousTreeParent(tn);
+        while (parent && !selected) {
+          const parentId = parent.getAttribute("data-id");
+          if (parentId && state.selected.has(parentId)) selected = true;
+          parent = previousTreeParent(parent);
+        }
+      }
+      if (selected) {
+        state.selected.add(id);
+        paintSelectedId(id, true);
+      }
     });
     updateBulk();
   }
@@ -686,9 +805,89 @@
     updateBulk();
   }
 
+  function selectionRootIds() {
+    const roots = [];
+    const seen = new Set();
+    treeNodes().forEach(tn => {
+      const id = tn.getAttribute("data-id");
+      if (!id || !state.selected.has(id) || seen.has(id)) return;
+      let parent = previousTreeParent(tn);
+      while (parent) {
+        const parentId = parent.getAttribute("data-id");
+        if (parentId && state.selected.has(parentId)) return;
+        parent = previousTreeParent(parent);
+      }
+      seen.add(id);
+      roots.push(id);
+    });
+    state.selected.forEach(id => {
+      if (!seen.has(id) && !$$(`.tn[data-id="${CSS.escape(id)}"]`).length) {
+        seen.add(id);
+        roots.push(id);
+      }
+    });
+    return roots;
+  }
+
+  function selectedCount() {
+    const roots = selectionRootIds();
+    if (!roots.length) return state.selected.size;
+    let n = 0;
+    let complete = true;
+    roots.forEach(id => {
+      if (state.subtreeSize.has(id)) n += state.subtreeSize.get(id);
+      else complete = false;
+    });
+    return complete ? n : Math.max(n, state.selected.size);
+  }
+
+  function fetchSubtreeSize(id, nodeType) {
+    const ctx = document.body.getAttribute("data-ctx") || "";
+    const params = new URLSearchParams({ id });
+    if (nodeType) params.set("nodeType", nodeType);
+    return fetch(ctx + "/v2-preview/api/subtree-size?" + params.toString(), {
+      headers: { Accept: "application/json" }
+    }).then(res => res.ok ? res.json() : { size: 1 })
+      .then(data => {
+        const size = Number(data && data.size);
+        return Number.isFinite(size) && size > 0 ? size : 1;
+      })
+      .catch(() => 1);
+  }
+
+  function ensureSubtreeSize(id, nodeType, hasChildren) {
+    if (!id) return Promise.resolve(1);
+    if (state.subtreeSize.has(id)) return Promise.resolve(state.subtreeSize.get(id));
+    if (hasChildren === false) {
+      state.subtreeSize.set(id, 1);
+      return Promise.resolve(1);
+    }
+    if (state.subtreeSizePending.has(id)) return state.subtreeSizePending.get(id);
+    const pending = fetchSubtreeSize(id, nodeType).then(size => {
+      state.subtreeSize.set(id, size);
+      state.subtreeSizePending.delete(id);
+      updateBulk();
+      return size;
+    });
+    state.subtreeSizePending.set(id, pending);
+    return pending;
+  }
+
+  function refreshSubtreeCounts() {
+    selectionRootIds().forEach(id => {
+      const tn = $(`.tn[data-id="${CSS.escape(id)}"]`);
+      ensureSubtreeSize(
+        id,
+        tn && tn.getAttribute("data-type"),
+        tn && tn.getAttribute("data-has-children") === "true"
+      );
+    });
+    updateBulk();
+  }
+
   function updateBulk() {
     const bar = $("#bulkSel");
-    const n = state.selected.size;
+    const n = selectedCount();
     const ok = n > 0 && (state.view === "arbo" || state.view === "tableau" || state.view === "hyper");
     if (bar) bar.classList.toggle("is-on", ok);
     const b = $("#bulkN");
@@ -939,10 +1138,28 @@
     } else if (act === "open") {
       const id = t.getAttribute("data-id");
       const stay = !!(t.closest("#panelTable") || t.closest("#panelResults") || t.closest("#resultsList"));
+      const nodeType = resolveNodeType(t);
+      if (openLiveDetail(id, nodeType)) {
+        state.home = false;
+        state.draft = false;
+        state.conceptId = id;
+        if (!stay) state.view = "arbo";
+        highlightConcept(id);
+        closeSearchUi();
+        return;
+      }
       openConcept(id, stay ? "stay" : "jump");
     } else if (act === "hyper-pick") {
       const id = t.getAttribute("data-id");
       if (!id) return;
+      const nodeType = resolveNodeType(t);
+      if (openLiveDetail(id, nodeType)) {
+        state.home = false;
+        state.draft = false;
+        state.conceptId = id;
+        highlightConcept(id);
+        return;
+      }
       state.home = false;
       state.draft = false;
       state.conceptId = id;
@@ -1023,7 +1240,16 @@
       if (!tn) return;
       const ids = collectIds(tn);
       const on = !t.classList.contains("on");
+      if (!on) {
+        let parent = previousTreeParent(tn);
+        while (parent) {
+          const parentId = parent.getAttribute("data-id");
+          if (parentId) ids.push(parentId);
+          parent = previousTreeParent(parent);
+        }
+      }
       setSelectedIds(ids, on);
+      refreshSubtreeCounts();
     } else if (act === "sel-id") {
       e.stopPropagation();
       const id = t.getAttribute("data-id");
@@ -1477,6 +1703,10 @@
         markAboutVisualEmpty();
         maybeRememberAboutBaseline();
         refreshAboutFmtState();
+        applyStatusFilter();
+        applySort();
+        restoreSelection();
+        showLiveDetail();
         if (window.syncViewRail) window.syncViewRail();
       });
     });
@@ -1488,6 +1718,10 @@
         markAboutVisualEmpty();
         maybeRememberAboutBaseline();
         refreshAboutFmtState();
+        applyStatusFilter();
+        applySort();
+        restoreSelection();
+        showLiveDetail();
         if (window.syncViewRail) window.syncViewRail();
       });
     });
@@ -1526,7 +1760,9 @@
       if (clear) clear.hidden = !q;
       runSearch();
     } else if (id) {
-      openConcept(id);
+      if (!openLiveDetail(id, params.get("type") || "")) {
+        openConcept(id);
+      }
     } else if (view) {
       setView(view);
     } else {

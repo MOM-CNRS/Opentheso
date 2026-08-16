@@ -22,10 +22,9 @@
             </div>
 
             <div class="col-xl-1 col-lg-1 col-md-2 col-sm-3" >
-                <p:commandButton id="conceptMenuButton" type="button" icon="pi pi-align-justify"
-                                 style="width: 1.5rem; height: 1.5rem; margin-left: 5px; margin-right: 5px; background: white; color: #f47b2a; border: 1px solid #ffffff;"/>
-
-                <p:menu id="conceptMenuButtonId" overlay="true" trigger="conceptMenuButton" my="left top" at="left bottom">
+                <p:menuButton id="conceptMenuButton" icon="pi pi-align-justify"
+                              styleClass="left-tree-menu-btn"
+                              appendTo="@(body)">
 
                     <p:menuitem value="#{langueBean.getMsg('rightbody.concept.addTopTerm')}" actionListener="#{newConcept.reset()}" icon="fas fa-folder-plus"
                                 oncomplete="PF('addTopConcept').show();" update="containerIndex:idAddTopConcept"
@@ -71,7 +70,7 @@
                                 disabled="#{selectedThesaurus.sortByNotation}" icon="fas fa-sort-numeric-down"
                                 process="@this" update="containerIndex:formLeftTab" />
 
-                </p:menu>
+                </p:menuButton>
             </div>
         </div>
     </h:panelGroup>
@@ -88,7 +87,7 @@
 
                     <p:ajax event="expand" listener="#{tree.onNodeExpand}"/>
                     <p:ajax event="collapse" listener="#{tree.onNodeCollapse}" />
-                    <p:ajax event="select" listener="#{tree.onNodeSelect}" update="containerIndex:formRightTab containerIndex:formLeftTab:tabTree:conceptMenuButtonId"/>
+                    <p:ajax event="select" listener="#{tree.onNodeSelect}" update="containerIndex:formRightTab containerIndex:formLeftTab:tabTree:conceptMenuButton"/>
                     <p:ajax event="dragdrop" listener="#{dragAndDrop.onDragDrop}" update="tree messageIndex" />
 
                     <p:treeNode expandedIcon="pi pi-folder-open" collapsedIcon="pi pi-folder">

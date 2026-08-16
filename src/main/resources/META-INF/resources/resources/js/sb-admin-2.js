@@ -231,3 +231,49 @@ function initMenu() {
         graph1.style.display = "none";
     }    
 }
+
+function closeSidebarFlyouts(except) {
+    var sidebar = document.getElementById("accordionSidebar");
+    if (!sidebar) {
+        return;
+    }
+    sidebar.querySelectorAll(".collapse.show").forEach(function (el) {
+        if (el === except) {
+            return;
+        }
+        el.classList.remove("show");
+        var trigger = sidebar.querySelector('[data-sidebar-collapse="#' + el.id + '"]');
+        if (trigger) {
+            trigger.classList.add("collapsed");
+            trigger.setAttribute("aria-expanded", "false");
+        }
+    });
+}
+
+function toggleSidebarFlyout(btn) {
+    if (!btn) {
+        return false;
+    }
+    var target = document.querySelector(btn.getAttribute("data-sidebar-collapse"));
+    if (!target) {
+        return false;
+    }
+    var willOpen = !target.classList.contains("show");
+    closeSidebarFlyouts(willOpen ? target : null);
+    if (willOpen) {
+        target.classList.add("show");
+        btn.classList.remove("collapsed");
+        btn.setAttribute("aria-expanded", "true");
+    }
+    return false;
+}
+
+if (!window.__sidebarFlyoutBound) {
+    window.__sidebarFlyoutBound = true;
+    document.addEventListener("click", function (e) {
+        if (e.target.closest("[data-sidebar-collapse]") || e.target.closest("#accordionSidebar .collapse.show")) {
+            return;
+        }
+        closeSidebarFlyouts();
+    });
+}

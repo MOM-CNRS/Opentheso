@@ -75,7 +75,7 @@
 
         <p:growl id="messageIndex" globalOnly="true" showDetail="true" />
 
-        <h:panelGroup id="wrapper" style="height: 100%">
+        <h:panelGroup id="wrapper" layout="block" style="height: 100%">
             <ui:include src="commun/menu.xhtml" />
 
             <div id="content-wrapper" style="width: 100%">
@@ -139,10 +139,6 @@
         <a class="scroll-to-top rounded" href="#page-top">
             <i class="pi pi-angle-up" />
         </a>
-
-        <script src="resources/js/bootstrap.bundle.min.js"></script>
-        <script src="resources/js/jquery.easing.min.js"></script>
-        <script src="resources/js/sb-admin-2.js"></script>
 
         <p:ajaxStatus onstart="PF('waitDialog').show()" onsuccess="PF('waitDialog').hide()"/>
         <p:dialog widgetVar="waitDialog" modal="false" draggable="false" width="80"  closable="false" resizable="false" showHeader="false" position="top" 

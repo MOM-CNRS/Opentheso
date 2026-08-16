@@ -21,9 +21,9 @@
             </p:commandLink>
         </div>
         <div class="col-xl-1 col-lg-1 col-md-2 col-sm-3">
-            <p:commandButton id="v2ConceptTreeMenuButton" type="button" icon="pi pi-align-justify"
-                             style="width:1.5rem; height:1.5rem; margin-left:5px; margin-right:5px; background:white; color:#f47b2a; border:1px solid #ffffff;"/>
-            <p:menu id="v2ConceptTreeMenu" overlay="true" trigger="v2ConceptTreeMenuButton" my="left top" at="left bottom">
+            <p:menuButton id="v2ConceptTreeMenuButton" icon="pi pi-align-justify"
+                          styleClass="left-tree-menu-btn"
+                          appendTo="@(body)">
                 <p:menuitem value="#{v2LocaleBean.getMsg('rightbody.concept.addTopTerm')}"
                             icon="fas fa-folder-plus"
                             actionListener="#{v2ConceptLifecycleEditorBean.prepareAddTopConcept()}"
@@ -83,7 +83,7 @@
                             disabled="#{v2ThesaurusBrowseBean.sortByNotation}"
                             update=":containerIndex:formLeftTab"
                             icon="fas fa-sort-numeric-down"/>
-            </p:menu>
+            </p:menuButton>
         </div>
     </div>
     <p:separator style="color:#F47B2A"/>

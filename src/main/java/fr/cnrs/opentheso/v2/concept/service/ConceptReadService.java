@@ -11,6 +11,8 @@ import fr.cnrs.opentheso.v2.concept.model.ConceptDetail;
 import fr.cnrs.opentheso.v2.concept.model.ConceptIdentifiers;
 import fr.cnrs.opentheso.v2.concept.model.ConceptSummary;
 import fr.cnrs.opentheso.v2.concept.model.ConceptTreeNodeData;
+import fr.cnrs.opentheso.v2.concept.model.ConceptTreeRow;
+import fr.cnrs.opentheso.v2.concept.policy.ConceptStatusPolicy;
 import fr.cnrs.opentheso.v2.concept.model.FacetDetailOverview;
 import fr.cnrs.opentheso.v2.concept.model.FacetMemberItem;
 import fr.cnrs.opentheso.v2.concept.model.GroupDetailOverview;
@@ -136,6 +138,86 @@ public class ConceptReadService {
         return loadChildNodes(parentId, parentType, thesaurusId, lang, LeftTreeMode.CONCEPT);
     }
 
+    @Transactional(readOnly = true)
+    public List<ConceptTreeNodeData> loadPreviewRootNodes(String thesaurusId, String lang) {
+        if (StringUtils.isBlank(thesaurusId)) {
+            return Collections.emptyList();
+        }
+        boolean sortByNotation = isSortByNotation(thesaurusId, lang);
+        var nodes = new ArrayList<ConceptTreeNodeData>();
+        for (var row : conceptQueryRepository.findPreviewRootConcepts(thesaurusId, lang)) {
+            nodes.add(toPreviewTreeNode(row, sortByNotation));
+        }
+        return nodes;
+    }
+
+    @Transactional(readOnly = true)
+    public List<ConceptTreeNodeData> loadPreviewChildNodes(
+            String parentId,
+            String parentType,
+            String thesaurusId,
+            String lang
+    ) {
+        if (StringUtils.isAnyBlank(parentId, thesaurusId)) {
+            return Collections.emptyList();
+        }
+        if ("facet".equals(parentType)) {
+            return conceptQueryRepository.findFacetMembersForTree(thesaurusId, parentId, lang).stream()
+                    .map(row -> toPreviewTreeNode(row, false))
+                    .toList();
+        }
+        boolean sortByNotation = isSortByNotation(thesaurusId, lang);
+        var nodes = new ArrayList<ConceptTreeNodeData>();
+        for (var row : conceptQueryRepository.findPreviewChildConcepts(thesaurusId, parentId, lang)) {
+            nodes.add(toPreviewTreeNode(row, sortByNotation));
+        }
+        for (var facet : conceptQueryRepository.findFacetsOfConceptForTree(thesaurusId, parentId, lang)) {
+            nodes.add(new ConceptTreeNodeData(
+                    facet.facetId(),
+                    StringUtils.isBlank(facet.label()) ? "(" + facet.facetId() + ")" : facet.label(),
+                    "",
+                    "facet",
+                    facet.hasMembers()
+            ));
+        }
+        return nodes;
+    }
+
+    @Transactional(readOnly = true)
+    public List<Object[]> loadCandidateMeta(String thesaurusId, List<String> conceptIds) {
+        return conceptQueryRepository.findCandidateMeta(thesaurusId, conceptIds);
+    }
+
+    private ConceptTreeNodeData toPreviewTreeNode(ConceptTreeRow row, boolean sortByNotation) {
+        String status = StringUtils.trimToEmpty(row.status());
+        String nodeType;
+        if ("CA".equalsIgnoreCase(status)) {
+            nodeType = "candidat";
+        } else if (ConceptStatusPolicy.isDeprecated(status)) {
+            nodeType = "deprecated";
+        } else {
+            nodeType = row.hasChildren() ? "concept" : "file";
+        }
+        return new ConceptTreeNodeData(
+                row.conceptId(),
+                StringUtils.isBlank(row.label()) ? "(" + row.conceptId() + ")" : row.label(),
+                sortByNotation ? row.notation() : row.notation(),
+                nodeType,
+                row.hasChildren()
+        );
+    }
+
+    @Transactional(readOnly = true)
+    public int countSubtreeConcepts(String thesaurusId, String conceptId, String nodeType) {
+        if (StringUtils.isAnyBlank(thesaurusId, conceptId)) {
+            return 0;
+        }
+        if ("group".equals(nodeType) || "subGroup".equals(nodeType)) {
+            return conceptQueryRepository.countConceptsInGroup(thesaurusId, conceptId);
+        }
+        return 1 + conceptQueryRepository.countDescendantConcepts(thesaurusId, conceptId);
+    }
+
     private List<ConceptTreeNodeData> loadGroupChildren(
             String parentId,
             String thesaurusId,
@@ -175,16 +257,38 @@ public class ConceptReadService {
 
     @Transactional(readOnly = true)
     public Optional<ConceptDetail> loadDetail(String thesaurusId, String conceptId, String lang) {
-        return loadDetailWithSource(thesaurusId, conceptId, lang).map(ConceptDetailLoadResult::detail);
+        return loadDetail(thesaurusId, conceptId, lang, false);
+    }
+
+    @Transactional(readOnly = true)
+    public Optional<ConceptDetail> loadDetail(
+            String thesaurusId,
+            String conceptId,
+            String lang,
+            boolean includeCandidates
+    ) {
+        return loadDetailWithSource(thesaurusId, conceptId, lang, includeCandidates)
+                .map(ConceptDetailLoadResult::detail);
     }
 
     @Transactional(readOnly = true)
     public Optional<ConceptDetailLoadResult> loadDetailWithSource(String thesaurusId, String conceptId, String lang) {
+        return loadDetailWithSource(thesaurusId, conceptId, lang, false);
+    }
+
+    @Transactional(readOnly = true)
+    public Optional<ConceptDetailLoadResult> loadDetailWithSource(
+            String thesaurusId,
+            String conceptId,
+            String lang,
+            boolean includeCandidates
+    ) {
         if (StringUtils.isAnyBlank(thesaurusId, conceptId, lang)) {
             return Optional.empty();
         }
         boolean authenticated = authenticatedUserSource.isLoggedIn();
-        return conceptDetailEnrichmentService.loadFullConcept(thesaurusId, conceptId, lang, authenticated)
+        return conceptDetailEnrichmentService.loadFullConcept(
+                        thesaurusId, conceptId, lang, authenticated, includeCandidates)
                 .map(fullConcept -> new ConceptDetailLoadResult(
                         buildDetailFromFullConcept(fullConcept, thesaurusId, conceptId, lang),
                         fullConcept

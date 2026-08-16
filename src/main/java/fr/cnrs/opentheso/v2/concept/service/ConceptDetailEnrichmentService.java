@@ -29,6 +29,17 @@ public class ConceptDetailEnrichmentService {
 
     @Transactional(readOnly = true)
     public Optional<ConceptFullSnapshot> loadFullConcept(String thesaurusId, String conceptId, String lang, boolean authenticated) {
+        return loadFullConcept(thesaurusId, conceptId, lang, authenticated, false);
+    }
+
+    @Transactional(readOnly = true)
+    public Optional<ConceptFullSnapshot> loadFullConcept(
+            String thesaurusId,
+            String conceptId,
+            String lang,
+            boolean authenticated,
+            boolean includeCandidates
+    ) {
         if (StringUtils.isAnyBlank(thesaurusId, conceptId, lang)) {
             return Optional.empty();
         }
@@ -37,7 +48,8 @@ public class ConceptDetailEnrichmentService {
                 conceptId,
                 lang,
                 FULL_CONCEPT_OFFSET,
-                authenticated
+                authenticated,
+                includeCandidates
         );
     }
 

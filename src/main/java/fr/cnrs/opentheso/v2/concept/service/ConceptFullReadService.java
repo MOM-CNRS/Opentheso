@@ -46,6 +46,21 @@ public class ConceptFullReadService {
         if (StringUtils.isAnyBlank(thesaurusId, conceptId, lang)) {
             return Optional.empty();
         }
+        return loadFullConcept(thesaurusId, conceptId, lang, offset, authenticated, false);
+    }
+
+    @Transactional(readOnly = true)
+    public Optional<ConceptFullSnapshot> loadFullConcept(
+            String thesaurusId,
+            String conceptId,
+            String lang,
+            int offset,
+            boolean authenticated,
+            boolean includeCandidates
+    ) {
+        if (StringUtils.isAnyBlank(thesaurusId, conceptId, lang)) {
+            return Optional.empty();
+        }
         var preferences = thesaurusPreferenceService.loadPreferencesOrNull(thesaurusId, lang);
         String applicationBaseUrl = applicationUriService.resolveApplicationBaseUrl();
         return conceptFullAssembler.assemble(
@@ -56,7 +71,8 @@ public class ConceptFullReadService {
                 pageFetchSize(),
                 authenticated,
                 preferences,
-                applicationBaseUrl
+                applicationBaseUrl,
+                includeCandidates
         );
     }
 

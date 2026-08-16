@@ -174,6 +174,11 @@ public record ConceptDetail(
         return isDeprecated();
     }
 
+    /** Accesseur record EL : {@code selectedConcept.deprecated}. */
+    public boolean deprecated() {
+        return isDeprecated();
+    }
+
     public boolean hasNotesOfType(String typeCode) {
         return notes.stream().anyMatch(note -> org.apache.commons.lang3.StringUtils.equals(note.typeCode(), typeCode));
     }

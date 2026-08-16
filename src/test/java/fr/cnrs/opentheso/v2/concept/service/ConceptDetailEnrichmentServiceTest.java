@@ -49,14 +49,14 @@ class ConceptDetailEnrichmentServiceTest {
     @Test
     void loadFullConcept_delegatesToConceptFullReadService() {
         ConceptFullSnapshot fullConcept = sampleFullConcept();
-        when(conceptFullReadService.loadFullConcept("TH1", "C1", "fr", 0, true))
+        when(conceptFullReadService.loadFullConcept("TH1", "C1", "fr", 0, true, false))
                 .thenReturn(Optional.of(fullConcept));
 
         Optional<ConceptFullSnapshot> loaded = service.loadFullConcept("TH1", "C1", "fr", true);
 
         assertTrue(loaded.isPresent());
         assertEquals("C1", loaded.get().getIdentifier());
-        verify(conceptFullReadService).loadFullConcept("TH1", "C1", "fr", 0, true);
+        verify(conceptFullReadService).loadFullConcept("TH1", "C1", "fr", 0, true, false);
     }
 
     @Test

@@ -20,6 +20,11 @@ public class ConceptFullQueryRepository {
     private EntityManager em;
 
     public Optional<Object[]> findConceptCore(String conceptId, String thesaurusId) {
+        return findConceptCore(conceptId, thesaurusId, false);
+    }
+
+    public Optional<Object[]> findConceptCore(String conceptId, String thesaurusId, boolean includeCandidates) {
+        String statusFilter = includeCandidates ? "" : "AND c.status != 'CA'";
         List<Object[]> rows = em.createNativeQuery("""
             SELECT c.id_concept, c.status, c.id_ark, c.id_handle, c.id_doi,
                    COALESCE(c.notation, '') AS notation,
@@ -28,7 +33,7 @@ public class ConceptFullQueryRepository {
             FROM concept c
             WHERE c.id_concept = :conceptId
               AND c.id_thesaurus = :thesaurusId
-              AND c.status != 'CA'
+            """ + statusFilter + """
             LIMIT 1
             """)
                 .setParameter("conceptId", conceptId)

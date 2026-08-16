@@ -12,10 +12,10 @@
                              style="color: #f47b2a;"
             />
             <!-- ajout des collections et sous collections -->
-            <p:commandButton id="groupMenuButton" type="button" icon="pi pi-align-justify"
-                             style="width: 1.5rem; height: 1.5rem; margin-left: 5px; margin-right: 5px; background: white; color: #f47b2a; border: 1px solid #ffffff;"/>
-
-            <p:menu id="groupMenuButtonCollection" rendered="#{treeGroups.menuDisable()}" overlay="true" trigger="groupMenuButton" my="left top" at="left bottom">
+            <p:menuButton id="groupMenuButtonCollection" icon="pi pi-align-justify"
+                          rendered="#{treeGroups.menuDisable()}"
+                          styleClass="left-tree-menu-btn"
+                          appendTo="@(body)">
 
                 <p:menuitem value="#{langueBean.getMsg('leftbody.group.addGroup')}" ajax="true"
                             actionListener="#{addGroupBean.init()}" icon="fas fa-layer-group" process="@this"
@@ -47,7 +47,7 @@
                             disabled="#{treeGroups.sortByNotation}" icon="fas fa-sort-numeric-down"
                             update="containerIndex menuBar" />
 
-            </p:menu>
+            </p:menuButton>
         </div>
     </div>
 
