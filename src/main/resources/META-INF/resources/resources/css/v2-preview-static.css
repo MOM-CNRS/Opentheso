@@ -223,9 +223,10 @@ body.hl-off mark.hl{background:transparent;color:inherit;font-weight:inherit;pad
 .bo-panel.is-corrected .bo-n-ok{display:inline}
 .bo-panel.is-corrected.is-done .bo-rej{color:inherit}
 
-.st-integ:not(.on) .st-deepl-field{display:none}
+.st-integ .st-deepl-field{display:none}
+.st-integ:has(.st-sw-input:checked) .st-deepl-field{display:block}
 .view-panel:has(.fsave){padding-bottom:88px}
-.st-group-head{scroll-margin-top:16px}
+.st-group-head{scroll-margin-top:24px}
 form.bo-card-b{margin:0}
 table.st-radios{display:flex;flex-wrap:wrap;gap:18px;margin-bottom:9px;border:0;width:auto;background:none}
 table.st-radios tbody,table.st-radios tr{display:contents}
@@ -340,7 +341,9 @@ a.th-id{flex:1}
   .login-go.is-click::after,
   .login-go.is-busy{animation:none}
 }
-.confirm-overlay[hidden]{display:none!important}
+.confirm-overlay[hidden],
+.block-overlay.is-off,
+.confirm-overlay.is-off{display:none!important}
 .confirm-modal{
   background:var(--surface);border-radius:14px;box-shadow:var(--shadow-lg);
   width:min(400px,92vw);padding:22px 22px 18px;
@@ -351,7 +354,7 @@ a.th-id{flex:1}
 .confirm-p{margin:0;font-size:13.5px;line-height:1.45;color:var(--ink-2)}
 .confirm-actions{display:flex;justify-content:flex-end;align-items:center;gap:10px;margin-top:6px}
 .confirm-ok-form{display:contents}
-.confirm-modal a.bo-btn,.confirm-modal a.abt-save{color:#fff;text-decoration:none}
+.confirm-modal a.bo-btn,.confirm-modal a.abt-save,.confirm-modal button.bo-btn.primary{color:#fff;text-decoration:none}
 .confirm-modal .abt-cancel{color:var(--ink-2)}
 .confirm-modal .abt-save{box-shadow:0 1px 0 rgba(255,255,255,.16) inset, 0 4px 12px rgba(31,122,92,.24)}
 a.boc-item,a.boc.boc-clickable{cursor:pointer}
@@ -514,13 +517,15 @@ a.empty-link{color:var(--accent);font-weight:600}
 .abt-msg{margin-top:10px;font-size:13px;color:var(--danger)}
 
 .content{position:relative}
-#viewHome.view-panel{
+#viewHome.view-panel,
+#viewSettings.view-panel{
   height:auto;min-height:100%;overflow:visible
 }
 #previewView{
   scrollbar-width:none;
   overscroll-behavior:contain;
-  -webkit-overflow-scrolling:touch
+  -webkit-overflow-scrolling:touch;
+  scroll-padding-top:24px
 }
 #previewView::-webkit-scrollbar{width:0;height:0}
 .view-rail{
@@ -564,3 +569,62 @@ a.empty-link{color:var(--accent);font-weight:600}
 .go-top:active{filter:brightness(.96)}
 .go-top svg{width:18px;height:18px;stroke:currentColor;fill:none;stroke-width:2.2;
   stroke-linecap:round;stroke-linejoin:round;flex:0 0 auto}
+body[data-page="preference"] .go-top{bottom:86px}
+#previewCorpusCreateConfirm{z-index:410}
+.st-corpus-overlay{position:fixed;inset:0;z-index:400;align-items:start;padding-top:48px}
+.st-corpus-modal .is-off{display:none!important}
+.st-corpus-modal{width:min(560px,92vw);max-height:calc(100vh - 80px);overflow:auto}
+.st-corpus-modal .st-row-l{flex-basis:150px;text-align:left}
+.st-corpus-modal .st-input{max-width:none}
+.st-corpus-modal .confirm-actions{gap:12px;margin-top:14px}
+.st-corpus-btn,
+input.st-corpus-btn{
+  position:relative;overflow:hidden;
+  display:inline-flex;align-items:center;justify-content:center;gap:8px;
+  appearance:none;-webkit-appearance:none;
+  min-width:132px;width:132px;height:40px;padding:0 16px;margin:0;border-radius:9px;
+  box-sizing:border-box;line-height:1;text-align:center;
+  font:inherit;font-size:13.5px;font-weight:650;letter-spacing:.01em;
+  cursor:pointer;border:1px solid transparent;
+  transition:filter .12s ease, transform .12s ease, box-shadow .12s ease, background .12s ease, border-color .12s ease, color .12s ease
+}
+.st-corpus-cancel{
+  background:var(--surface);color:var(--ink-2);border-color:var(--line);box-shadow:none
+}
+.st-corpus-cancel:hover{color:var(--accent);border-color:var(--accent-line);background:var(--accent-soft)}
+.st-corpus-add{
+  background:var(--accent);color:#fff;
+  box-shadow:0 1px 0 rgba(255,255,255,.16) inset, 0 8px 20px rgba(31,122,92,.28)
+}
+.st-corpus-add:hover{color:#fff;filter:brightness(1.06);
+  box-shadow:0 1px 0 rgba(255,255,255,.2) inset, 0 10px 24px rgba(31,122,92,.34)}
+.st-corpus-del{background:var(--danger);color:#fff}
+.st-corpus-del:hover{color:#fff;filter:brightness(1.06)}
+.st-corpus-btn:focus-visible{outline:2px solid var(--accent);outline-offset:2px}
+.st-corpus-btn:active,.st-corpus-btn.is-click{
+  transform:translateY(1px) scale(.98);filter:brightness(.96)
+}
+.st-corpus-add:active,.st-corpus-add.is-click{
+  box-shadow:0 1px 3px rgba(16,24,20,.18) inset
+}
+.st-corpus-btn::after{
+  content:"";position:absolute;inset:0;border-radius:inherit;pointer-events:none;
+  background:radial-gradient(circle at center, rgba(255,255,255,.5) 0%, transparent 62%);
+  opacity:0;transform:scale(.35)
+}
+.st-corpus-btn.is-click::after{animation:login-ripple .45s ease-out}
+@media (prefers-reduced-motion:reduce){
+  .st-corpus-btn,.st-corpus-btn.is-click::after{animation:none;transition:none}
+}
+.st-corpus-hint{margin:0;font-size:12px;color:var(--danger);line-height:1.4}
+.st-corpus-ex{margin:0 0 8px;font-size:12px;color:var(--ink-3);font-style:italic;line-height:1.4}
+.st-corpus-msg{margin-top:10px;font-size:13px;font-weight:600;color:var(--accent)}
+.st-corpus-msg.is-error{color:var(--danger)}
+.st-corpus-del-name{color:var(--danger);font-weight:700}
+.st-td-empty{color:var(--ink-3);font-style:italic;white-space:normal}
+.st-table .st-sw{cursor:default;pointer-events:none;margin-top:0}
+a.st-icon,button.st-icon,input.st-icon{
+  display:inline-flex;align-items:center;justify-content:center;text-decoration:none;
+  border:0;background:none;cursor:pointer;color:inherit;font:inherit;
+  -webkit-appearance:none;appearance:none
+}

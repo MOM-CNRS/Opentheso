@@ -1021,7 +1021,8 @@
   }
   document.addEventListener("keydown", (e) => {
     if (e.key !== "Escape") return;
-    if (hideConfirm("#aboutSaveConfirm") || hideConfirm("#logoutConfirm")) e.preventDefault();
+    if (hideConfirm("#aboutSaveConfirm") || hideConfirm("#logoutConfirm") || hideConfirm("#stSaveConfirm")
+        || hideConfirm("#previewCorpusCreateConfirm")) e.preventDefault();
   });
 
   document.addEventListener("mousedown", (e) => {
@@ -1031,6 +1032,12 @@
       save.classList.remove("is-click");
       void save.offsetWidth;
       save.classList.add("is-click");
+    }
+    const corpusBtn = e.target.closest(".st-corpus-btn");
+    if (corpusBtn) {
+      corpusBtn.classList.remove("is-click");
+      void corpusBtn.offsetWidth;
+      corpusBtn.classList.add("is-click");
     }
   });
   document.addEventListener("click", (e) => {
@@ -1078,10 +1085,25 @@
       hideConfirm("#aboutSaveConfirm");
     } else if (act === "about-save-modal") {
       return;
+    } else if (act === "st-save-ask") {
+      showConfirm("#stSaveConfirm");
+    } else if (act === "st-save-dismiss") {
+      hideConfirm("#stSaveConfirm");
+    } else if (act === "st-save-modal") {
+      return;
+    } else if (act === "corpus-create-ask") {
+      const name = ($("#previewCorpusName") && $("#previewCorpusName").value || "").trim();
+      const label = $("#previewCorpusCreateName");
+      if (label) label.textContent = name ? "« " + name + " »" : "ce corpus";
+      showConfirm("#previewCorpusCreateConfirm");
+    } else if (act === "corpus-create-dismiss") {
+      hideConfirm("#previewCorpusCreateConfirm");
+    } else if (act === "corpus-create-modal") {
+      return;
     } else if (act === "go-top") {
       const reduce = window.matchMedia("(prefers-reduced-motion: reduce)").matches;
       const behavior = reduce ? "auto" : "smooth";
-      ["#previewView", "#viewHome", "main.content .view"].forEach((sel) => {
+      ["#previewView", "#viewHome", "#viewSettings", "main.content .view"].forEach((sel) => {
         const el = $(sel);
         if (el) el.scrollTo({ top: 0, behavior });
       });
@@ -1201,6 +1223,7 @@
       t.title = "Copié";
       setTimeout(() => { t.classList.remove("is-copied"); t.title = "Copier"; }, 1400);
     } else if (act === "st-save") {
+      hideConfirm("#stSaveConfirm");
       const el = $("#stSaveToast");
       if (!el) return;
       el.hidden = false;
@@ -1661,6 +1684,62 @@
       requestAnimationFrame(showAboutSaveToast);
     }
   };
+  window.onPreviewCorpusDialog = function (data) {
+    const src = data.source;
+    const cancel = src && /previewCorpusCancel/.test(src.id || "");
+    const creating = src && src.id === "previewCorpusCreateOk";
+    if (data.status === "begin") {
+      if (src) src.classList.add("is-click");
+      if (creating) hideConfirm("#previewCorpusCreateConfirm");
+      if (cancel) {
+        hideConfirm("#previewCorpusCreateConfirm");
+        const overlay = document.getElementById("previewCorpusOverlay");
+        if (overlay) overlay.classList.add("is-off");
+        const del = document.getElementById("previewCorpusDeleteConfirm");
+        if (del) del.classList.add("is-off");
+      }
+      return;
+    }
+    if (src) src.classList.remove("is-click");
+    if (data.status !== "success") return;
+    hideConfirm("#previewCorpusCreateConfirm");
+    const overlay = document.getElementById("previewCorpusOverlay");
+    if (overlay) {
+      const formPane = overlay.querySelector("#previewCorpusFields");
+      const formOpen = formPane && !formPane.classList.contains("is-off");
+      overlay.classList.toggle("is-off", !formOpen);
+      const first = overlay.querySelector("#previewCorpusFields:not(.is-off) .st-input");
+      if (first && formOpen) requestAnimationFrame(() => first.focus());
+    }
+    const saved = src && /previewCorpus(CreateOk|Apply|Delete)$/.test(src.id || "");
+    if (!saved) return;
+    const msg = $("#previewCorpusSaveMsg");
+    if (!msg) return;
+    const text = (msg.textContent || "").trim();
+    if (!text || msg.getAttribute("data-ok") !== "true") return;
+    const el = $("#previewCorpusToast");
+    const txt = $("#previewCorpusToastTxt");
+    if (!el) return;
+    if (txt) txt.textContent = text;
+    el.hidden = false;
+    clearTimeout(el._t);
+    el._t = setTimeout(() => { el.hidden = true; }, 2200);
+  };
+  window.onPreviewPrefSave = function (data) {
+    if (data.status === "begin") {
+      hideConfirm("#stSaveConfirm");
+    }
+    if (data.status !== "success") return;
+    const msg = $("#previewPrefSaveMsg");
+    if (!msg) return;
+    const text = (msg.textContent || "").trim();
+    if (!text || msg.getAttribute("data-ok") !== "true") return;
+    const el = $("#stSaveToast");
+    if (!el) return;
+    el.hidden = false;
+    clearTimeout(el._t);
+    el._t = setTimeout(() => { el.hidden = true; }, 2200);
+  };
   function showAboutSaveToast() {
     const msg = $("#previewAboutSaveMsg");
     if (!msg) return;
@@ -1727,18 +1806,18 @@
     });
   }
 
-  if ((SCREEN === "parametres" || SCREEN === "preference") && location.hash) {
-    const el = document.querySelector(location.hash);
-    const view = $("#previewView");
-    if (el && view) {
-      requestAnimationFrame(() => {
-        const top = el.getBoundingClientRect().top - view.getBoundingClientRect().top + view.scrollTop - 8;
-        view.scrollTo({ top: Math.max(0, top) });
-      });
-    } else if (el) {
-      requestAnimationFrame(() => el.scrollIntoView({ block: "start" }));
-    }
+  function scrollToPrefHash() {
+    const id = (location.hash || "").replace(/^#/, "");
+    if (!id || SCREEN !== "preference") return false;
+    const el = document.getElementById(id);
+    const view = $("#previewView") || document.querySelector("main.content .view");
+    if (!el || !view) return false;
+    const top = el.getBoundingClientRect().top - view.getBoundingClientRect().top + view.scrollTop - 12;
+    view.scrollTo({ top: Math.max(0, top) });
+    if (window.syncViewRail) window.syncViewRail();
+    return true;
   }
+
   if (SCREEN === "atelier") {
     setBatch(params.get("obj") || "alignements");
   }
@@ -1771,15 +1850,32 @@
   } else {
     paint();
   }
+  function bindPrefSwitches() {
+    const sync = (input) => {
+      if (!input || input.type !== "checkbox") return;
+      const sw = input.closest(".st-sw");
+      if (!sw || sw.closest(".st-table")) return;
+      sw.classList.toggle("on", input.checked);
+      const integ = input.closest(".st-integ");
+      if (integ) integ.classList.toggle("on", input.checked);
+    };
+    document.addEventListener("change", (e) => {
+      const input = e.target;
+      if (!input || !input.closest || !input.closest(".st-sw")) return;
+      sync(input);
+    });
+    $$(".st-sw input[type='checkbox']").forEach(sync);
+  }
   function bindViewRail() {
     const view = $("#previewView") || document.querySelector("main.content .view");
     const home = $("#viewHome");
+    const settings = $("#viewSettings");
     const rail = $("#previewRail");
     const thumb = $("#previewRailThumb");
     const goTop = $("#previewGoTop");
     const shell = view && view.closest(".content");
     if (!view) return;
-    const scrollers = [view, home].filter((el, i, arr) => el && arr.indexOf(el) === i);
+    const scrollers = [view, home, settings].filter((el, i, arr) => el && arr.indexOf(el) === i);
     let idle;
     const mark = () => {
       if (shell) shell.classList.add("is-scrolling");
@@ -2159,6 +2255,7 @@
     }
   }
 
+  bindPrefSwitches();
   bindViewRail();
   loadStatKpis();
   requestAnimationFrame(() => {
@@ -2167,5 +2264,11 @@
     maybeRememberAboutBaseline();
     refreshAboutFmtState();
     if (window.syncViewRail) window.syncViewRail();
+    scrollToPrefHash();
   });
+  if (SCREEN === "preference" && location.hash) {
+    window.addEventListener("load", scrollToPrefHash);
+    setTimeout(scrollToPrefHash, 80);
+    setTimeout(scrollToPrefHash, 250);
+  }
 })();

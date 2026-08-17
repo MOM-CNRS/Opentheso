@@ -1,5 +1,7 @@
 package fr.cnrs.opentheso.v2.setting.model;
 
+import java.io.Serializable;
+
 public record ThesaurusCorpus(
         String corpusName,
         String uriLink,
@@ -8,7 +10,7 @@ public record ThesaurusCorpus(
         boolean onlyUriLink,
         boolean omekaS,
         Integer sort
-) {
+) implements Serializable {
 
     public String getCorpusName() {
         return corpusName;
