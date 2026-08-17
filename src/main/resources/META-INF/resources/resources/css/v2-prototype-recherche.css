@@ -1106,12 +1106,26 @@ tr.flat-filters th{position:sticky;top:33px;z-index:2;background:var(--surface);
 .mg-kpis{display:grid;grid-template-columns:repeat(3,1fr);gap:12px;margin-bottom:18px}
 .mg-kpi{background:var(--surface);border:1px solid var(--line);border-radius:var(--r);padding:14px 16px}
 .mg-kpi-n{font-family:var(--mono);font-size:26px;font-weight:600;color:var(--ink);letter-spacing:-.02em}
+.mg-kpi-n[aria-busy="true"]{display:flex;align-items:center;justify-content:center;min-height:1.15em}
+.mg-kpi-spin{width:16px;height:16px;border:2px solid var(--line);border-top-color:var(--accent);border-radius:50%;animation:mg-kpi-spin .65s linear infinite;flex:0 0 auto}
+.mg-kpi-n.is-ready{animation:mg-kpi-in .18s ease}
+@keyframes mg-kpi-spin{to{transform:rotate(360deg)}}
+@keyframes mg-kpi-in{from{opacity:0}to{opacity:1}}
+@media (prefers-reduced-motion:reduce){
+  .mg-kpi-spin{animation:none;border-top-color:var(--accent)}
+  .mg-kpi-n.is-ready{animation:none}
+  .mg-bar-fill{transition:none}
+  .cs-seg{transition:none}
+  .cs-col-stack{transition:none}
+}
 .mg-kpi-l{font-size:12px;color:var(--ink-3);margin-top:2px}
 .mg-bars{display:flex;flex-direction:column;gap:11px}
+.mg-bars[aria-busy="true"]{min-height:168px;align-items:center;justify-content:center}
+.mg-bars-loading{display:flex;align-items:center;justify-content:center;width:100%;height:100%}
 .mg-bar-row{display:flex;align-items:center;gap:12px;font-size:13px}
 .mg-bar-l{flex:0 0 175px;color:var(--ink-2);overflow:hidden;text-overflow:ellipsis;white-space:nowrap}
 .mg-bar-track{flex:1;height:8px;background:var(--surface-2);border-radius:5px;overflow:hidden}
-.mg-bar-fill{display:block;height:100%;background:var(--accent);border-radius:5px}
+.mg-bar-fill{display:block;height:100%;width:0;background:var(--accent);border-radius:5px;transition:width .75s cubic-bezier(.22,.8,.28,1)}
 .mg-bar-n{flex:0 0 44px;text-align:right;font-family:var(--mono);font-size:12px;color:var(--ink-3)}
 
 /* ── Statistiques candidats (module « vie des candidats ») ── */
@@ -1122,7 +1136,7 @@ tr.flat-filters th{position:sticky;top:33px;z-index:2;background:var(--surface);
 .t-rej{background:#c2453a}
 /* devenir des propositions */
 .cs-pipe{display:flex;height:30px;border-radius:8px;overflow:hidden;gap:2px}
-.cs-seg{display:flex;align-items:center;justify-content:center;min-width:26px}
+.cs-seg{display:flex;align-items:center;justify-content:center;min-width:0;width:0;overflow:hidden;transition:width .75s cubic-bezier(.22,.8,.28,1)}
 .cs-seg b{font-family:var(--mono);font-size:13px;font-weight:600;color:#fff}
 .cs-seg.t-cand b{color:#7a3d12}
 .cs-legend{display:flex;gap:20px;margin-top:12px;flex-wrap:wrap}
@@ -1130,12 +1144,15 @@ tr.flat-filters th{position:sticky;top:33px;z-index:2;background:var(--surface);
 .cs-dot{width:10px;height:10px;border-radius:3px;flex:0 0 auto}
 .cs-foot{font-size:12.5px;color:var(--ink-3);margin-top:13px;padding-top:12px;border-top:1px solid var(--line-2);text-wrap:pretty}
 .cs-foot b{color:var(--ink);font-weight:700}
+.bo-card-b[aria-busy="true"]{min-height:148px;display:flex;align-items:center;justify-content:center}
 /* activité mensuelle (colonnes) */
-.cs-months{display:flex;align-items:flex-end;gap:8px;height:170px;padding-top:6px}
-.cs-col{flex:1;display:flex;flex-direction:column;align-items:center;justify-content:flex-end;height:100%;min-width:0}
-.cs-col-stack{width:60%;max-width:34px;min-height:3px;border-radius:5px 5px 0 0;overflow:hidden;display:flex;flex-direction:column-reverse;
-  box-shadow:inset 0 0 0 1px rgba(0,0,0,.03)}
-.cs-col-seg{display:block;width:100%}
+.cs-months{display:flex;align-items:stretch;gap:8px;height:170px;padding-top:6px}
+.cs-col{flex:1;display:flex;flex-direction:column;align-items:center;height:100%;min-width:0}
+.cs-col-plot{flex:1;width:100%;display:flex;align-items:flex-end;justify-content:center;min-height:0}
+.cs-col-stack{width:60%;max-width:34px;height:0;min-height:0;border-radius:5px 5px 0 0;overflow:hidden;display:flex;flex-direction:column-reverse;
+  box-shadow:inset 0 0 0 1px rgba(0,0,0,.03);transition:height .75s cubic-bezier(.22,.8,.28,1)}
+.cs-col-stack.is-empty{height:3px;min-height:3px;background:var(--surface-2)}
+.cs-col-seg{display:block;width:100%;min-height:0}
 .cs-col-n{font-family:var(--mono);font-size:11px;color:var(--ink-3);margin-top:5px}
 .cs-col-lbl{font-size:10px;color:var(--ink-4);margin-top:3px;white-space:nowrap}
 /* 2 colonnes */

@@ -1,5 +1,6 @@
 package fr.cnrs.opentheso.v2.preview.ui;
 
+import fr.cnrs.opentheso.v2.candidat.model.CandidatStatusCode;
 import fr.cnrs.opentheso.v2.concept.model.ConceptDetail;
 import fr.cnrs.opentheso.v2.concept.model.ConceptSummary;
 import fr.cnrs.opentheso.v2.concept.model.ConceptTreeNodeData;
@@ -91,6 +92,38 @@ class PreviewThesaurusBeanTest {
         assertEquals("th17", thesaurusContext.resolveThesaurusId());
         assertEquals("fr", thesaurusContext.resolveWorkLanguage());
         verify(thesaurusHomeQueryRepository).countValidConcepts("th17");
+    }
+
+    @Test
+    void loadsHomeStatisticsForConceptsCandidatesCollectionsAndLanguages() {
+        thesaurusContext.selectThesaurus("th17", "Pactols_Lieux", "fr");
+        when(thesaurusHomeQueryRepository.countValidConcepts("th17")).thenReturn(4382);
+        when(thesaurusHomeQueryRepository.countCandidatesByStatus("th17", CandidatStatusCode.PENDING)).thenReturn(21);
+        when(thesaurusHomeQueryRepository.countCandidatesByStatus("th17", CandidatStatusCode.REJECTED)).thenReturn(8);
+        when(thesaurusHomeQueryRepository.countDefinedLanguages("th17")).thenReturn(6);
+        when(thesaurusHomeQueryRepository.countCollections("th17")).thenReturn(7);
+        when(thesaurusHomeQueryRepository.countConceptsWithoutDefinition("th17")).thenReturn(14);
+        when(thesaurusHomeQueryRepository.findMaxTreeDepth("th17")).thenReturn(5);
+
+        assertEquals("4\u00a0382", bean.getConceptCountFormatted());
+        assertEquals(21, bean.getCandidatePendingCount());
+        assertEquals(8, bean.getCandidateRejectedCount());
+        assertEquals(29, bean.getCandidateCount());
+        assertEquals("29", bean.getCandidateCountFormatted());
+        assertEquals(7, bean.getCollectionCount());
+        assertEquals("7", bean.getCollectionCountFormatted());
+        assertEquals(6, bean.getLanguageCount());
+        assertEquals("6", bean.getLanguageCountFormatted());
+        assertEquals(14, bean.getConceptsWithoutDefinitionCount());
+        assertEquals("14", bean.getConceptsWithoutDefinitionCountFormatted());
+        assertEquals(5, bean.getMaxTreeDepth());
+        assertEquals("5", bean.getMaxTreeDepthFormatted());
+        verify(thesaurusHomeQueryRepository).countCandidatesByStatus("th17", CandidatStatusCode.PENDING);
+        verify(thesaurusHomeQueryRepository).countCandidatesByStatus("th17", CandidatStatusCode.REJECTED);
+        verify(thesaurusHomeQueryRepository).countCollections("th17");
+        verify(thesaurusHomeQueryRepository).countDefinedLanguages("th17");
+        verify(thesaurusHomeQueryRepository).countConceptsWithoutDefinition("th17");
+        verify(thesaurusHomeQueryRepository).findMaxTreeDepth("th17");
     }
 
     @Test

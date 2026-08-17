@@ -1,5 +1,6 @@
 package fr.cnrs.opentheso.v2.preview.ui;
 
+import fr.cnrs.opentheso.v2.candidat.model.CandidatStatusCode;
 import fr.cnrs.opentheso.v2.concept.model.BreadcrumbStep;
 import fr.cnrs.opentheso.v2.concept.model.ConceptDetail;
 import fr.cnrs.opentheso.v2.concept.model.ConceptLabel;
@@ -58,6 +59,12 @@ public class PreviewThesaurusBean implements Serializable {
     private final V2LocaleBean v2LocaleBean;
 
     private Integer conceptCount;
+    private Integer candidatePendingCount;
+    private Integer candidateRejectedCount;
+    private Integer languageCount;
+    private Integer collectionCount;
+    private Integer conceptsWithoutDefinitionCount;
+    private Integer maxTreeDepth;
     private List<ThesaurusLanguage> languages;
     private String selectedLang;
     private boolean sessionReady;
@@ -131,8 +138,79 @@ public class PreviewThesaurusBean implements Serializable {
 
     public String getConceptCountLabel() {
         int count = getConceptCount();
-        String formatted = NumberFormat.getIntegerInstance(Locale.FRANCE).format(count);
-        return formatted + (count > 1 ? " concepts" : " concept");
+        return formatCount(count) + (count > 1 ? " concepts" : " concept");
+    }
+
+    public String getConceptCountFormatted() {
+        return formatCount(getConceptCount());
+    }
+
+    public int getCandidatePendingCount() {
+        if (candidatePendingCount == null) {
+            candidatePendingCount = thesaurusHomeQueryRepository.countCandidatesByStatus(
+                    getId(), CandidatStatusCode.PENDING);
+        }
+        return candidatePendingCount;
+    }
+
+    public int getCandidateRejectedCount() {
+        if (candidateRejectedCount == null) {
+            candidateRejectedCount = thesaurusHomeQueryRepository.countCandidatesByStatus(
+                    getId(), CandidatStatusCode.REJECTED);
+        }
+        return candidateRejectedCount;
+    }
+
+    public int getCandidateCount() {
+        return getCandidatePendingCount() + getCandidateRejectedCount();
+    }
+
+    public String getCandidateCountFormatted() {
+        return formatCount(getCandidateCount());
+    }
+
+    public int getLanguageCount() {
+        if (languageCount == null) {
+            languageCount = thesaurusHomeQueryRepository.countDefinedLanguages(getId());
+        }
+        return languageCount;
+    }
+
+    public String getLanguageCountFormatted() {
+        return formatCount(getLanguageCount());
+    }
+
+    public int getCollectionCount() {
+        if (collectionCount == null) {
+            collectionCount = thesaurusHomeQueryRepository.countCollections(getId());
+        }
+        return collectionCount;
+    }
+
+    public String getCollectionCountFormatted() {
+        return formatCount(getCollectionCount());
+    }
+
+    public int getConceptsWithoutDefinitionCount() {
+        if (conceptsWithoutDefinitionCount == null) {
+            conceptsWithoutDefinitionCount = thesaurusHomeQueryRepository.countConceptsWithoutDefinition(getId());
+        }
+        return conceptsWithoutDefinitionCount;
+    }
+
+    public String getConceptsWithoutDefinitionCountFormatted() {
+        return formatCount(getConceptsWithoutDefinitionCount());
+    }
+
+    public int getMaxTreeDepth() {
+        if (maxTreeDepth == null) {
+            maxTreeDepth = thesaurusHomeQueryRepository.findMaxTreeDepth(getId());
+        }
+        return maxTreeDepth;
+    }
+
+    public String getMaxTreeDepthFormatted() {
+        return formatCount(getMaxTreeDepth());
     }
 
     public List<ThesaurusLanguage> getLanguages() {
@@ -606,5 +684,9 @@ public class PreviewThesaurusBean implements Serializable {
     private boolean languageExists(String lang) {
         return StringUtils.isNotBlank(lang)
                 && languages.stream().anyMatch(item -> item.code().equalsIgnoreCase(lang));
+    }
+
+    private static String formatCount(int count) {
+        return NumberFormat.getIntegerInstance(Locale.FRANCE).format(count);
     }
 }

@@ -9,244 +9,122 @@
           <div class="view-panel is-on" id="viewStats">
             <div class="bo">
               <a class="bo-back" href="index.xhtml" title="Retour à l'accueil thésaurus"><svg viewBox="0 0 24 24" aria-hidden="true"><path d="M19 12H5"/><path d="m12 19-7-7 7-7"/></svg></a>
-              <div class="bo-head"><div><h1 class="bo-title">Statistiques du thésaurus</h1><p class="bo-sub">Volumétrie, complétude et répartition de PACTOLS_Lieux.</p></div></div>
+              <div class="bo-head"><div><h1 class="bo-title">Statistiques du thésaurus</h1><p class="bo-sub">Volumétrie, complétude et répartition de #{v2PreviewThesaurusBean.title}.</p></div></div>
               <div class="bo-full">
                 <div class="st-group-head">Vue d'ensemble</div>
                 <div class="mg-kpis">
-                  <div class="mg-kpi"><div class="mg-kpi-n">438</div><div class="mg-kpi-l">Concepts</div></div>
-                  <div class="mg-kpi"><div class="mg-kpi-n">29</div><div class="mg-kpi-l">Candidats</div></div>
-                  <div class="mg-kpi"><div class="mg-kpi-n">7</div><div class="mg-kpi-l">Micro-thésaurus</div></div>
-                  <div class="mg-kpi"><div class="mg-kpi-n">5</div><div class="mg-kpi-l">Langues</div></div>
-                  <div class="mg-kpi"><div class="mg-kpi-n">5</div><div class="mg-kpi-l">Profondeur max</div></div>
-                  <div class="mg-kpi"><div class="mg-kpi-n">0</div><div class="mg-kpi-l">Sans définition</div></div>
+                  <div class="mg-kpi">
+                    <div class="mg-kpi-n" data-stat="concepts" aria-busy="true" aria-live="polite">
+                      <span class="mg-kpi-spin" aria-hidden="true"></span>
+                    </div>
+                    <div class="mg-kpi-l">Concepts</div>
+                  </div>
+                  <div class="mg-kpi">
+                    <div class="mg-kpi-n" data-stat="candidates" aria-busy="true" aria-live="polite">
+                      <span class="mg-kpi-spin" aria-hidden="true"></span>
+                    </div>
+                    <div class="mg-kpi-l">Candidats</div>
+                  </div>
+                  <div class="mg-kpi">
+                    <div class="mg-kpi-n" data-stat="collections" aria-busy="true" aria-live="polite">
+                      <span class="mg-kpi-spin" aria-hidden="true"></span>
+                    </div>
+                    <div class="mg-kpi-l">Micro-thésaurus</div>
+                  </div>
+                  <div class="mg-kpi">
+                    <div class="mg-kpi-n" data-stat="languages" aria-busy="true" aria-live="polite">
+                      <span class="mg-kpi-spin" aria-hidden="true"></span>
+                    </div>
+                    <div class="mg-kpi-l">Langues</div>
+                  </div>
+                  <div class="mg-kpi">
+                    <div class="mg-kpi-n" data-stat="max-depth" aria-busy="true" aria-live="polite">
+                      <span class="mg-kpi-spin" aria-hidden="true"></span>
+                    </div>
+                    <div class="mg-kpi-l">Profondeur max</div>
+                  </div>
+                  <div class="mg-kpi">
+                    <div class="mg-kpi-n" data-stat="without-definition" aria-busy="true" aria-live="polite">
+                      <span class="mg-kpi-spin" aria-hidden="true"></span>
+                    </div>
+                    <div class="mg-kpi-l">Sans définition</div>
+                  </div>
                 </div>
                 <div class="bo-card">
                   <div class="bo-card-h"><span class="bo-card-t">Répartition par micro-thésaurus</span></div>
-                  <div class="bo-card-b"><div class="mg-bars">
-                    
-                    <div class="mg-bar-row">
-                      <span class="mg-bar-l">Objet</span>
-                      <span class="mg-bar-track"><span class="mg-bar-fill" style="width:100%"></span></span>
-                      <span class="mg-bar-n">137</span>
+                  <div class="bo-card-b">
+                    <div class="mg-bars" data-stat-coverage="collections" aria-busy="true">
+                      <div class="mg-bars-loading">
+                        <span class="mg-kpi-spin" aria-hidden="true"></span>
+                      </div>
                     </div>
-                    <div class="mg-bar-row">
-                      <span class="mg-bar-l">Matière</span>
-                      <span class="mg-bar-track"><span class="mg-bar-fill" style="width:83.21167883211679%"></span></span>
-                      <span class="mg-bar-n">114</span>
-                    </div>
-                    <div class="mg-bar-row">
-                      <span class="mg-bar-l">Structure</span>
-                      <span class="mg-bar-track"><span class="mg-bar-fill" style="width:44.52554744525548%"></span></span>
-                      <span class="mg-bar-n">61</span>
-                    </div>
-                    <div class="mg-bar-row">
-                      <span class="mg-bar-l">Période</span>
-                      <span class="mg-bar-track"><span class="mg-bar-fill" style="width:40.87591240875913%"></span></span>
-                      <span class="mg-bar-n">56</span>
-                    </div>
-                    <div class="mg-bar-row">
-                      <span class="mg-bar-l">Technique</span>
-                      <span class="mg-bar-track"><span class="mg-bar-fill" style="width:35.03649635036496%"></span></span>
-                      <span class="mg-bar-n">48</span>
-                    </div>
-                    <div class="mg-bar-row">
-                      <span class="mg-bar-l">État de conservation</span>
-                      <span class="mg-bar-track"><span class="mg-bar-fill" style="width:14.5985401459854%"></span></span>
-                      <span class="mg-bar-n">20</span>
-                    </div>
-                    <div class="mg-bar-row">
-                      <span class="mg-bar-l">—</span>
-                      <span class="mg-bar-track"><span class="mg-bar-fill" style="width:1.4598540145985401%"></span></span>
-                      <span class="mg-bar-n">2</span>
-                    </div>
-                  </div></div>
+                  </div>
                 </div>
                 <div class="bo-card">
                   <div class="bo-card-h"><span class="bo-card-t">Couverture linguistique</span></div>
-                  <div class="bo-card-b"><div class="mg-bars">
-                    
-                    <div class="mg-bar-row">
-                      <span class="mg-bar-l">Français</span>
-                      <span class="mg-bar-track"><span class="mg-bar-fill" style="width:100%"></span></span>
-                      <span class="mg-bar-n">100%</span>
+                  <div class="bo-card-b">
+                    <div class="mg-bars" data-stat-coverage="language" aria-busy="true">
+                      <div class="mg-bars-loading">
+                        <span class="mg-kpi-spin" aria-hidden="true"></span>
+                      </div>
                     </div>
-                    <div class="mg-bar-row">
-                      <span class="mg-bar-l">English</span>
-                      <span class="mg-bar-track"><span class="mg-bar-fill" style="width:3%"></span></span>
-                      <span class="mg-bar-n">3%</span>
-                    </div>
-                    <div class="mg-bar-row">
-                      <span class="mg-bar-l">Deutsch</span>
-                      <span class="mg-bar-track"><span class="mg-bar-fill" style="width:3%"></span></span>
-                      <span class="mg-bar-n">3%</span>
-                    </div>
-                    <div class="mg-bar-row">
-                      <span class="mg-bar-l">Español</span>
-                      <span class="mg-bar-track"><span class="mg-bar-fill" style="width:3%"></span></span>
-                      <span class="mg-bar-n">3%</span>
-                    </div>
-                    <div class="mg-bar-row">
-                      <span class="mg-bar-l">Italiano</span>
-                      <span class="mg-bar-track"><span class="mg-bar-fill" style="width:3%"></span></span>
-                      <span class="mg-bar-n">3%</span>
-                    </div>
-                  </div></div>
+                  </div>
                 </div>
                 
                 <div class="st-group-head">Vie des candidats</div>
                 <div class="mg-kpis">
-                  <div class="mg-kpi"><div class="mg-kpi-n">8</div><div class="mg-kpi-l">Candidats en attente</div></div><div class="mg-kpi"><div class="mg-kpi-n">12</div><div class="mg-kpi-l">Insérés · 12 mois</div></div><div class="mg-kpi"><div class="mg-kpi-n">5</div><div class="mg-kpi-l">Rejetés · 12 mois</div></div><div class="mg-kpi"><div class="mg-kpi-n">71 %</div><div class="mg-kpi-l">Taux d'acceptation</div></div><div class="mg-kpi"><div class="mg-kpi-n">8 j</div><div class="mg-kpi-l">Délai médian de décision</div></div><div class="mg-kpi"><div class="mg-kpi-n">7</div><div class="mg-kpi-l">Contributeurs actifs</div></div>
+                  <div class="mg-kpi">
+                    <div class="mg-kpi-n" data-stat-life="pending" aria-busy="true" aria-live="polite">
+                      <span class="mg-kpi-spin" aria-hidden="true"></span>
+                    </div>
+                    <div class="mg-kpi-l">Candidats en attente</div>
+                  </div>
+                  <div class="mg-kpi">
+                    <div class="mg-kpi-n" data-stat-life="accepted12m" aria-busy="true" aria-live="polite">
+                      <span class="mg-kpi-spin" aria-hidden="true"></span>
+                    </div>
+                    <div class="mg-kpi-l">Insérés · 12 mois</div>
+                  </div>
+                  <div class="mg-kpi">
+                    <div class="mg-kpi-n" data-stat-life="rejected12m" aria-busy="true" aria-live="polite">
+                      <span class="mg-kpi-spin" aria-hidden="true"></span>
+                    </div>
+                    <div class="mg-kpi-l">Rejetés · 12 mois</div>
+                  </div>
+                  <div class="mg-kpi">
+                    <div class="mg-kpi-n" data-stat-life="acceptanceRate" aria-busy="true" aria-live="polite">
+                      <span class="mg-kpi-spin" aria-hidden="true"></span>
+                    </div>
+                    <div class="mg-kpi-l">Taux d'acceptation</div>
+                  </div>
+                  <div class="mg-kpi">
+                    <div class="mg-kpi-n" data-stat-life="medianDecisionDays" aria-busy="true" aria-live="polite">
+                      <span class="mg-kpi-spin" aria-hidden="true"></span>
+                    </div>
+                    <div class="mg-kpi-l">Délai médian de décision</div>
+                  </div>
+                  <div class="mg-kpi">
+                    <div class="mg-kpi-n" data-stat-life="activeContributors" aria-busy="true" aria-live="polite">
+                      <span class="mg-kpi-spin" aria-hidden="true"></span>
+                    </div>
+                    <div class="mg-kpi-l">Contributeurs actifs</div>
+                  </div>
                 </div>
                 <div class="bo-card">
                   <div class="bo-card-h"><span class="bo-card-t">Devenir des propositions</span>
-                    <span class="cs-cap right">26 termes proposés sur la période</span></div>
-                  <div class="bo-card-b">
-                    <div class="cs-pipe">
-                      <span class="cs-seg t-ins" style="width:50%"><b>13</b></span>
-                      <span class="cs-seg t-cand" style="width:30.76923076923077%"><b>8</b></span>
-                      <span class="cs-seg t-rej" style="width:19.230769230769234%"><b>5</b></span>
+                    <span class="cs-cap right" data-stat-outcome-cap=""></span></div>
+                  <div class="bo-card-b" data-stat-outcome="" aria-busy="true">
+                    <div class="mg-bars-loading">
+                      <span class="mg-kpi-spin" aria-hidden="true"></span>
                     </div>
-                    <div class="cs-legend">
-                      <span class="cs-lg"><i class="cs-dot t-ins"></i>Insérés — 13</span>
-                      <span class="cs-lg"><i class="cs-dot t-cand"></i>En attente — 8</span>
-                      <span class="cs-lg"><i class="cs-dot t-rej"></i>Rejetés — 5</span>
-                    </div>
-                    <p class="cs-foot">Sur 18 propositions déjà tranchées, <b>72 %</b> ont
-                      été acceptées. Délai médian entre proposition et décision : <b>8 jours</b>.</p>
                   </div>
                 </div>
                 <div class="bo-card">
                   <div class="bo-card-h"><span class="bo-card-t">Propositions par mois</span>
-                    <span class="cs-cap right">empilées par issue actuelle</span></div>
-                  <div class="bo-card-b">
-                    <div class="cs-months">
-                      
-                      <div class="cs-col">
-                        <div class="cs-col-stack" style="height:20%" title="1 proposé(s)">
-                          <span class="cs-col-seg t-ins" style="flex:1"></span>
-                          
-                          
-                        </div>
-                        <span class="cs-col-n">1</span>
-                        <span class="cs-col-lbl">juin 25</span>
-                      </div>
-                      <div class="cs-col">
-                        <div class="cs-col-stack" style="height:20%" title="1 proposé(s)">
-                          <span class="cs-col-seg t-ins" style="flex:1"></span>
-                          
-                          
-                        </div>
-                        <span class="cs-col-n">1</span>
-                        <span class="cs-col-lbl">juil. 25</span>
-                      </div>
-                      <div class="cs-col">
-                        <div class="cs-col-stack" style="height:20%" title="1 proposé(s)">
-                          
-                          
-                          <span class="cs-col-seg t-rej" style="flex:1"></span>
-                        </div>
-                        <span class="cs-col-n">1</span>
-                        <span class="cs-col-lbl">août 25</span>
-                      </div>
-                      <div class="cs-col">
-                        <div class="cs-col-stack" style="height:20%" title="1 proposé(s)">
-                          <span class="cs-col-seg t-ins" style="flex:1"></span>
-                          
-                          
-                        </div>
-                        <span class="cs-col-n">1</span>
-                        <span class="cs-col-lbl">sept. 25</span>
-                      </div>
-                      <div class="cs-col">
-                        <div class="cs-col-stack" style="height:20%" title="1 proposé(s)">
-                          <span class="cs-col-seg t-ins" style="flex:1"></span>
-                          
-                          
-                        </div>
-                        <span class="cs-col-n">1</span>
-                        <span class="cs-col-lbl">oct. 25</span>
-                      </div>
-                      <div class="cs-col">
-                        <div class="cs-col-stack" style="height:20%" title="1 proposé(s)">
-                          <span class="cs-col-seg t-ins" style="flex:1"></span>
-                          
-                          
-                        </div>
-                        <span class="cs-col-n">1</span>
-                        <span class="cs-col-lbl">nov. 25</span>
-                      </div>
-                      <div class="cs-col">
-                        <div class="cs-col-stack" style="height:20%" title="1 proposé(s)">
-                          
-                          
-                          <span class="cs-col-seg t-rej" style="flex:1"></span>
-                        </div>
-                        <span class="cs-col-n">1</span>
-                        <span class="cs-col-lbl">déc. 25</span>
-                      </div>
-                      <div class="cs-col">
-                        <div class="cs-col-stack" style="height:40%" title="2 proposé(s)">
-                          <span class="cs-col-seg t-ins" style="flex:2"></span>
-                          
-                          
-                        </div>
-                        <span class="cs-col-n">2</span>
-                        <span class="cs-col-lbl">janv. 26</span>
-                      </div>
-                      <div class="cs-col">
-                        <div class="cs-col-stack" style="height:40%" title="2 proposé(s)">
-                          <span class="cs-col-seg t-ins" style="flex:1"></span>
-                          
-                          <span class="cs-col-seg t-rej" style="flex:1"></span>
-                        </div>
-                        <span class="cs-col-n">2</span>
-                        <span class="cs-col-lbl">févr. 26</span>
-                      </div>
-                      <div class="cs-col">
-                        <div class="cs-col-stack" style="height:60%" title="3 proposé(s)">
-                          <span class="cs-col-seg t-ins" style="flex:1"></span>
-                          <span class="cs-col-seg t-cand" style="flex:1"></span>
-                          <span class="cs-col-seg t-rej" style="flex:1"></span>
-                        </div>
-                        <span class="cs-col-n">3</span>
-                        <span class="cs-col-lbl">mars 26</span>
-                      </div>
-                      <div class="cs-col">
-                        <div class="cs-col-stack" style="height:60%" title="3 proposé(s)">
-                          <span class="cs-col-seg t-ins" style="flex:2"></span>
-                          
-                          <span class="cs-col-seg t-rej" style="flex:1"></span>
-                        </div>
-                        <span class="cs-col-n">3</span>
-                        <span class="cs-col-lbl">avr. 26</span>
-                      </div>
-                      <div class="cs-col">
-                        <div class="cs-col-stack" style="height:100%" title="5 proposé(s)">
-                          <span class="cs-col-seg t-ins" style="flex:2"></span>
-                          <span class="cs-col-seg t-cand" style="flex:3"></span>
-                          
-                        </div>
-                        <span class="cs-col-n">5</span>
-                        <span class="cs-col-lbl">mai 26</span>
-                      </div>
-                      <div class="cs-col">
-                        <div class="cs-col-stack" style="height:60%" title="3 proposé(s)">
-                          
-                          <span class="cs-col-seg t-cand" style="flex:3"></span>
-                          
-                        </div>
-                        <span class="cs-col-n">3</span>
-                        <span class="cs-col-lbl">juin 26</span>
-                      </div>
-                      <div class="cs-col">
-                        <div class="cs-col-stack" style="height:20%" title="1 proposé(s)">
-                          
-                          <span class="cs-col-seg t-cand" style="flex:1"></span>
-                          
-                        </div>
-                        <span class="cs-col-n">1</span>
-                        <span class="cs-col-lbl">juil. 26</span>
-                      </div>
+                    <span class="cs-cap right">12 derniers mois · empilées par issue actuelle</span></div>
+                  <div class="bo-card-b" data-stat-months="" aria-busy="true">
+                    <div class="mg-bars-loading">
+                      <span class="mg-kpi-spin" aria-hidden="true"></span>
                     </div>
                   </div>
                 </div>
