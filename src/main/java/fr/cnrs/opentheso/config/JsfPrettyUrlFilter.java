@@ -20,32 +20,38 @@ import java.util.Map;
 @Order(Ordered.HIGHEST_PRECEDENCE)
 public class JsfPrettyUrlFilter extends OncePerRequestFilter {
 
+    private static final String V2_PREVIEW_PREFIX = "/v2-preview";
+
     private static final Map<String, String> FORWARD_TARGETS = Map.ofEntries(
-            Map.entry("/", "/v2/thesaurus/browse.xhtml"),
+            Map.entry("/", "/index.xhtml"),
             Map.entry("/reset-password", "/reset-password.xhtml"),
             Map.entry("/profile", "/profile/myAccount.xhtml"),
-            Map.entry("/v2/profile", "/v2/user/my-account.xhtml"),
-            Map.entry("/v2/projects-users", "/v2/project/my-projects.xhtml"),
-            Map.entry("/v2/admin/users", "/v2/admin/all-users.xhtml"),
-            Map.entry("/v2/admin/projects", "/v2/admin/all-projects.xhtml"),
-            Map.entry("/v2/admin/thesauri", "/v2/admin/all-thesauri.xhtml"),
-            Map.entry("/v2/settings/preference", "/v2/setting/preference.xhtml"),
-            Map.entry("/v2/settings/identifier", "/v2/setting/identifier.xhtml"),
-            Map.entry("/v2/settings/corpus", "/v2/setting/corpus.xhtml"),
-            Map.entry("/v2/toolbox/edition", "/v2/toolbox/edition.xhtml"),
-            Map.entry("/v2/toolbox/flags", "/v2/toolbox/flag.xhtml"),
-            Map.entry("/v2/toolbox/workshop", "/v2/toolbox/workshop.xhtml"),
-            Map.entry("/v2/toolbox/maintenance", "/v2/toolbox/maintenance.xhtml"),
-            Map.entry("/v2/toolbox/statistics", "/v2/toolbox/statistics.xhtml"),
             Map.entry("/candidat", "/candidat/candidat.xhtml"),
-            Map.entry("/v2/candidat", "/v2/candidat/candidat.xhtml"),
-            Map.entry("/v2/graph", "/v2/graph/graph.xhtml"),
-            Map.entry("/v2/graph/visualize/thesaurus", "/v2/graph/visualize/thesaurus.xhtml"),
-            Map.entry("/v2/graph/visualize/branch", "/v2/graph/visualize/branch.xhtml"),
-            Map.entry("/v2/graph/visualize/force", "/v2/graph/visualize/force.xhtml"),
-            Map.entry("/v2/thesaurus", "/v2/thesaurus/browse.xhtml"),
             Map.entry("/toolbox/edition", "/toolbox/edition.xhtml"),
-            Map.entry("/v2-preview", "/v2-preview/index.xhtml")
+            Map.entry("/v2", "/v2/index.xhtml"),
+            Map.entry(V2_PREVIEW_PREFIX, "/v2/index.xhtml")
+    );
+
+    /** Anciennes pages plates `/v2-preview/*.xhtml` → arborescence `/v2/`. */
+    private static final Map<String, String> V2_PREVIEW_PAGES = Map.ofEntries(
+            Map.entry("/index.xhtml", "/v2/index.xhtml"),
+            Map.entry("/preference.xhtml", "/v2/setting/preference.xhtml"),
+            Map.entry("/identifiants.xhtml", "/v2/setting/identifiants.xhtml"),
+            Map.entry("/corpus.xhtml", "/v2/setting/corpus.xhtml"),
+            Map.entry("/parametres.xhtml", "/v2/setting/parametres.xhtml"),
+            Map.entry("/statistiques.xhtml", "/v2/toolbox/statistiques.xhtml"),
+            Map.entry("/atelier.xhtml", "/v2/toolbox/atelier.xhtml"),
+            Map.entry("/maintenance.xhtml", "/v2/toolbox/maintenance.xhtml"),
+            Map.entry("/actions-lot.xhtml", "/v2/toolbox/actions-lot.xhtml"),
+            Map.entry("/candidats.xhtml", "/v2/candidat/candidats.xhtml"),
+            Map.entry("/graphe.xhtml", "/v2/graph/graphe.xhtml"),
+            Map.entry("/compte.xhtml", "/v2/user/compte.xhtml"),
+            Map.entry("/projets.xhtml", "/v2/project/projets.xhtml"),
+            Map.entry("/admin-utilisateurs.xhtml", "/v2/admin/utilisateurs.xhtml"),
+            Map.entry("/admin-projets.xhtml", "/v2/admin/projets.xhtml"),
+            Map.entry("/admin-thesauri.xhtml", "/v2/admin/thesauri.xhtml"),
+            Map.entry("/consultation.xhtml", "/v2/thesaurus/consultation.xhtml"),
+            Map.entry("/target.xhtml", "/v2/prototype/target.xhtml")
     );
 
     @Override
@@ -54,11 +60,25 @@ public class JsfPrettyUrlFilter extends OncePerRequestFilter {
             HttpServletResponse response,
             FilterChain filterChain
     ) throws ServletException, IOException {
-        String target = FORWARD_TARGETS.get(request.getServletPath());
+        String target = resolveForwardTarget(request.getServletPath());
         if (target != null) {
             request.getRequestDispatcher(target).forward(request, response);
             return;
         }
         filterChain.doFilter(request, response);
+    }
+
+    static String resolveForwardTarget(String servletPath) {
+        if (servletPath == null) {
+            return null;
+        }
+        String target = FORWARD_TARGETS.get(servletPath);
+        if (target != null) {
+            return target;
+        }
+        if (servletPath.startsWith(V2_PREVIEW_PREFIX + "/")) {
+            return V2_PREVIEW_PAGES.get(servletPath.substring(V2_PREVIEW_PREFIX.length()));
+        }
+        return null;
     }
 }

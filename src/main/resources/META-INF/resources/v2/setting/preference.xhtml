@@ -1,363 +1,1055 @@
-<!DOCTYPE HTML>
-<HTML xmlns="http://www.w3.org/1999/xhtml"
-      xmlns:h="http://xmlns.jcp.org/jsf/html"
-      xmlns:ui="http://xmlns.jcp.org/jsf/facelets"
-      xmlns:f="http://xmlns.jcp.org/jsf/core"
-      xmlns:p="http://primefaces.org/ui">
+<?xml version="1.0" encoding="UTF-8"?>
+<ui:composition xmlns="http://www.w3.org/1999/xhtml"
+                xmlns:ui="http://xmlns.jcp.org/jsf/facelets"
+                xmlns:h="http://xmlns.jcp.org/jsf/html"
+                xmlns:f="http://xmlns.jcp.org/jsf/core"
+                xmlns:preview="http://xmlns.jcp.org/jsf/composite/preview"
+                template="/v2/includes/layout.xhtml">
+  <ui:param name="previewPage" value="preference"/>
+  <ui:define name="title">OpenTheso — Préférences</ui:define>
+  <ui:define name="viewActions">
+    <f:viewAction action="#{v2PreviewPreferenceBean.loadPage}" onPostback="false"/>
+  </ui:define>
+  <ui:define name="detail"/>
+  <ui:define name="main">
 
-    <f:view>
-        <f:metadata>
-    <f:viewAction action="#{v2ConsultationShellBean.load()}"/>
-            <f:viewAction action="#{v2PreferenceSettingsBean.load()}"/>
-            <f:viewParam name="idc" value="#{v2ThesaurusContext.idConceptFromUri}"/>
-            <f:viewParam name="idg" value="#{v2ThesaurusContext.idGroupFromUri}"/>
-            <f:viewParam name="idt" value="#{v2ThesaurusContext.idThesoFromUri}"/>
-        </f:metadata>
-    </f:view>
-    <h:head>
-        <title>Opentheso</title>
-
-        <link href="../../resources/img/icon_opentheso2.png" rel="icon" />
-
-        <link rel="stylesheet" type="text/css" href="../../resources/css/all.css" />
-        <link rel="stylesheet" type="text/css" href="../../resources/css/theme_general.css" />
-        <link rel="stylesheet" type="text/css" href="../../resources/css/theme_opentheso.css" />
-        <link rel="stylesheet" type="text/css" href="../../resources/css/composants_opentheso.css" />
-
-        <link rel="stylesheet" href="https://use.fontawesome.com/releases/v6.1.0/css/all.css"/> 
-        <link rel="stylesheet" href="https://use.fontawesome.com/releases/v6.1.0/css/v4-shims.css"/>
-    </h:head>
-
-    <h:body id="page-top" onload="initMenu()">
-
-        <p:growl id="messageIndex" globalOnly="true" showDetail="true"/>
-
-        <h:panelGroup rendered="#{v2UserSession.isLoggedIn() and v2PreferenceSettingsBean.screenAvailable}" id="wrapper" style="height: 100%" >
-
-            <ui:include src="../thesaurus/includes/layout/menu.xhtml" />
-
-            <div id="content-wrapper" style="width: 100%">
-
-                <h:form id="containerIndex" style="min-height:100%; position:relative;">
-
-                    <h:panelGroup id="header">
-                        <ui:include src="../thesaurus/includes/layout/header.xhtml" />
-                    </h:panelGroup>
-
-                    <div class="container-fluid">
-                        <div class="d-sm-flex align-items-center justify-content-between mb-4" style="margin: 20px">
-                            <h1 class="h3 mb-0 text-gray-800">#{v2LocaleBean.getMsg('menu.setting')} / <span style="color: #f47b2a">#{v2LocaleBean.getMsg('menu.preference')}</span></h1>
-                        </div>
-                        <p:scrollPanel mode="native" style="width:100%; max-height: 600px" rendered="#{v2PreferenceSettingsBean.editor != null}">
-                            <div class="col-12" style="height: 100%">
-                                <div class="card shadow mb-4" style="height: 100%;"> 
-                                    <div class="card mb-4 py-3 border-left-success" style="margin-top: 5px; vertical-align: central; margin: 30px">
-                                        <div class="list-group" style="margin-top: -10px; margin-bottom: -10px">
-
-                                            <!-- Url du site local -->
-                                            <div class="list-group-item list-group-item-action" style=" margin-top: 5px">
-                                                <div class="row" style="padding-top: 3px;">
-                                                    <div class="col-3" style="text-align: right; margin-top: 6px">
-                                                        <h:outputText value="#{v2LocaleBean.getMsg('preferences.localUrl')}" style="font-size: 14px; font-weight: bold;"
-                                                                      title="#{v2LocaleBean.getMsg('preferences.localUrlTooltip')} (exp: https://monsite.fr/opentheso/)"/>
-                                                    </div>
-                                                    <div class="col-6">
-                                                        <p:inputText id="inputTextCheminSite" value="#{v2PreferenceSettingsBean.editor.cheminSite}" style="width: 100%;"/>
-                                                    </div>
-                                                </div>
-                                            </div>
-                                            <p:tooltip for="inputTextCheminSite" value="#{v2LocaleBean.getMsg('preferences.serverAdress')} (exp: https://monsite.fr/opentheso/)" 
-                                                       position="top" showDelay="500"/>
-
-                                            <!-- Uri d'export -->
-                                            <div class="list-group-item list-group-item-action" style="margin-top: 20px; margin-bottom: 20px; background-color: #ecf8f1">
-                                                <div class="row" >
-                                                    <div class="col-3"  style="text-align: right;  ">
-                                                        <h:outputText value="#{v2LocaleBean.getMsg('preferences.exportUri')} "
-                                                                      title="#{v2LocaleBean.getMsg('preferences.exportUriInfo')}"
-                                                                      style="font-size: 14px; font-weight: bold;"/>
-                                                        <p:commandButton id="infoUri" type="button" icon="fas fa-info-circle"  styleClass="rounded-button ui-button-flat"/>
-                                                        <p:tooltip for="infoUri" 
-                                                                   value="#{v2LocaleBean.getMsg('preferences.uriInfo')} 
-                                                                   https://ark.mondomaine.fr/ark:  #{v2LocaleBean.getMsg('preferences.uriInfo2')} https://mondomaine.fr/opentheso2"
-                                                                   showDelay="1000" style="max-width: 300px;"/>
-                                                    </div>
-                                                    <div class="col-6">
-                                                        <p:selectOneRadio id="customRadioUri" value="#{v2PreferenceSettingsBean.editor.uriType}"  >
-                                                            <f:selectItem itemLabel="#{v2LocaleBean.getMsg('preferences.uri')}" itemValue="uri" />
-                                                            <f:selectItem itemLabel="Ark" itemValue="ark" />
-                                                            <f:selectItem itemLabel="Handle" itemValue="handle"/>
-                                                            <!-- <f:selectItem itemLabel="Doi" itemValue="doi" itemDisabled="true"/> -->   
-                                                        </p:selectOneRadio>
-                                                        <p:inputText value="#{v2PreferenceSettingsBean.editor.originalUri}" 
-                                                                     style="width: 100%;"/> 
-                                                    </div> 
-                                                    <div class="col-1" style="margin-top: 22px; margin-left: -10px;">
-                                                        <p:commandButton id="infoUri2"  value="Ark"  styleClass="rounded-button ui-button-info"/>
-                                                        <p:tooltip for="infoUri2" 
-                                                                   value="Pour utiliser Opentheso comme serveur Ark, cochez Ark, puis ajouter (/api/) à l'URL, exemple: https://ark.mondomaine.fr/api/ark:"
-                                                                   showDelay="500" style="max-width: 300px;"/>                                                    
-                                                    </div>
-                                                </div>
-
-                                            </div>
-
-                                            <!-- Langue Source -->
-                                            <div class="list-group-item list-group-item-action" style=" margin-top: 5px">
-                                                <div class="row" style="padding-top: 3px;">
-                                                    <div class="col-3" style="text-align: right; margin-top: 6px">
-                                                        <h:outputText value="#{v2LocaleBean.getMsg('toolbox.defaultLanguage')}" style="font-size: 14px; font-weight: bold;"/>
-                                                    </div>
-                                                    <div class="col-6">
-                                                        <p:selectOneMenu id="langOfTheso" value="#{v2PreferenceSettingsBean.editor.sourceLang}" styleClass="selectOneMenu_custom" panelStyleClass="selectOneMenu_panelStyle_custom"
-                                                                         style="width: 100%; background: none;  box-shadow: none; "
-                                                                         panelStyle="border: none; box-shadow: none; max-width: 300px" >
-                                                            <f:selectItems  value="#{v2PreferenceSettingsBean.editor.languages}" var="lang" itemLabel="#{lang.value} (#{lang.code})" itemValue="#{lang.code}"/>
-                                                        </p:selectOneMenu>
-                                                    </div>
-                                                </div>
-                                            </div>
-
-                                            <!-- Type d'identification -->
-                                            <div class="list-group-item list-group-item-action" style=" margin-top: 5px">
-                                                <div class="row" style="padding-top: 3px;">
-                                                    <div class="col-3" style="text-align: right; margin-top: 6px">
-                                                        <h:outputText value="#{v2LocaleBean.getMsg('preferences.identifierType')}" style="font-size: 14px; font-weight: bold;"/>
-                                                    </div>
-                                                    <div class="col-6">
-                                                        <p:selectOneMenu value="#{v2PreferenceSettingsBean.editor.identifierType}" 
-                                                                         styleClass="selectOneMenu_custom" panelStyleClass="selectOneMenu_panelStyle_custom"
-                                                                         style="width: 100%; background: none;  box-shadow: none; ">
-                                                            <f:selectItem itemLabel="#{v2LocaleBean.getMsg('preferences.alphanumeric')}" itemValue="1" />
-                                                            <f:selectItem itemLabel="#{v2LocaleBean.getMsg('preferences.numeric')}" itemValue="2" />                        
-                                                        </p:selectOneMenu>
-                                                    </div>
-                                                </div>
-                                            </div>
-
-                                            <!-- Nom d'identifiant du thésaurus -->
-                                            <div class="list-group-item list-group-item-action" style=" margin-top: 5px">
-                                                <div class="row" style="padding-top: 3px;">
-                                                    <div class="col-3" style="text-align: right; margin-top: 6px">
-                                                        <h:outputText value="#{v2LocaleBean.getMsg('preferences.persistentNameTheso')}" style="font-size: 14px; font-weight: bold;"/>
-                                                    </div>
-                                                    <div class="col-6">
-                                                        <p:inputText value="#{v2PreferenceSettingsBean.editor.preferredName}" style="width: 100%;"/>
-                                                    </div>
-                                                    <div class="col-3" style="text-align: left; margin-top: 6px;">
-                                                        <a class="fas fa-link" style="font-size: 12px; color: #43B572;" />
-                                                        <p:link href="#{request.contextPath}/api/theso/#{v2PreferenceSettingsBean.editor.preferredName}" value="#{v2LocaleBean.getMsg('preferences.testLink')}" style="font-size: 12px; margin-left: 5px; color: #601e18"/>
-                                                    </div>                                                
-                                                </div>
-
-                                            </div>
-
-                                            <!-- Activer/ désactiver le déployement auto de l'arbre  -->
-                                            <div class="list-group-item list-group-item-action" style=" margin-top: 5px">
-                                                <div class="row" style="padding-top: 3px;">
-                                                    <div class="col-xl-3 col-lg-4 col-md-6 col-sm-6" style="text-align: right; margin-top: 6px">
-                                                        <h:outputText value="#{v2LocaleBean.getMsg('preferences.activateAutoTreeDeployment')}" style="font-size: 14px; font-weight: bold;"/>
-                                                    </div>
-                                                    <div class="col-xl-6 col-lg-6 col-md-5 col-sm-5">
-                                                        <p:toggleSwitch value="#{v2PreferenceSettingsBean.editor.autoExpandTree}" style="font-size: 12px;" />
-                                                    </div>
-                                                </div>
-                                            </div>
-
-                                            <!-- Activer/ désactiver le cache de l'arbre  -->
-                                            <div class="list-group-item list-group-item-action" style=" margin-top: 5px">
-                                                <div class="row" style="padding-top: 3px;">
-                                                    <div class="col-xl-3 col-lg-4 col-md-6 col-sm-6" style="text-align: right; margin-top: 6px">
-                                                        <h:outputText value="#{v2LocaleBean.getMsg('preferences.activateTreeCache')}" 
-                                                                      title="#{v2LocaleBean.getMsg('preferences.activateTreeCacheTooltip')}" 
-                                                                      style="font-size: 14px; font-weight: bold;"/>
-                                                    </div>
-                                                    <div class="col-xl-6 col-lg-6 col-md-5 col-sm-5">
-                                                        <p:toggleSwitch value="#{v2PreferenceSettingsBean.editor.treeCache}" style="font-size: 12px;"  />
-                                                    </div>
-                                                </div>
-                                            </div>
-
-                                            <!-- Activer/ désactiver le tri par notation par défaut -->
-                                            <div class="list-group-item list-group-item-action" style=" margin-top: 5px">
-                                                <div class="row" style="padding-top: 3px;">
-                                                    <div class="col-xl-3 col-lg-4 col-md-6 col-sm-6" style="text-align: right; margin-top: 6px">
-                                                        <h:outputText value="#{v2LocaleBean.getMsg('preferences.activateNotationSort')}"
-                                                                      style="font-size: 14px; font-weight: bold;"/>
-                                                    </div>
-                                                    <div class="col-xl-6 col-lg-6 col-md-5 col-sm-5">
-                                                        <p:toggleSwitch value="#{v2PreferenceSettingsBean.editor.sortByNotation}" style="font-size: 12px;"  />
-                                                    </div>
-                                                </div>
-                                            </div>
-
-                                            <!-- Activer/ désactiver le tri par notation par défaut -->
-                                            <div class="list-group-item list-group-item-action" style=" margin-top: 5px">
-                                                <div class="row" style="padding-top: 3px;">
-                                                    <div class="col-xl-3 col-lg-4 col-md-6 col-sm-6" style="text-align: right; margin-top: 6px">
-                                                        <h:outputText value="#{v2LocaleBean.getMsg('preferences.activateWebservices')}"
-                                                                      style="font-size: 14px; font-weight: bold;"/>
-                                                    </div>
-                                                    <div class="col-xl-6 col-lg-6 col-md-5 col-sm-5">
-                                                        <p:toggleSwitch value="#{v2PreferenceSettingsBean.editor.webservices}" style="font-size: 12px;" />
-                                                    </div>
-                                                </div>
-                                            </div>
-
-                                            <!-- Activer/ désactiver le fil d'ariane Breadcrumb -->
-                                            <div class="list-group-item list-group-item-action" style=" margin-top: 5px">
-                                                <div class="row" style="padding-top: 3px;">
-                                                    <div class="col-xl-3 col-lg-4 col-md-6 col-sm-6" style="text-align: right; margin-top: 6px">
-                                                        <h:outputText value="#{v2LocaleBean.getMsg('preferences.activateBreadCrumb')}"
-                                                                      style="font-size: 14px; font-weight: bold;"/>
-                                                    </div>
-                                                    <div class="col-xl-6 col-lg-6 col-md-5 col-sm-5">
-                                                        <p:toggleSwitch value="#{v2PreferenceSettingsBean.editor.breadcrumb}" style="font-size: 12px;" />
-                                                    </div>
-                                                </div>
-                                            </div>                                        
-                                            <!-- Activer/ désactiver l'arbre de Collections-concept -->
-                                            <div class="list-group-item list-group-item-action" style=" margin-top: 5px">
-                                                <div class="row" style="padding-top: 3px;">
-                                                    <div class="col-xl-3 col-lg-4 col-md-6 col-sm-6" style="text-align: right; margin-top: 6px">
-                                                        <h:outputText value="#{v2LocaleBean.getMsg('preferences.activateTreeCollection')}"
-                                                                      style="font-size: 14px; font-weight: bold;"/>
-                                                    </div>
-                                                    <div class="col-xl-6 col-lg-6 col-md-5 col-sm-5">
-                                                        <p:toggleSwitch value="#{v2PreferenceSettingsBean.editor.useConceptTree}" style="font-size: 12px;" />
-                                                    </div>
-                                                </div>
-                                            </div>  
-
-                                            <!-- Activer/ désactiver l'affichage des noms des personnes qui ont créé ou modifié les concepts en pulic -->
-                                            <div class="list-group-item list-group-item-action" style=" margin-top: 5px">
-                                                <div class="row" style="padding-top: 3px;">
-                                                    <div class="col-xl-3 col-lg-4 col-md-6 col-sm-6" style="text-align: right; margin-top: 6px">
-                                                        <h:outputText value="#{v2LocaleBean.getMsg('preferences.nameOfContributor')}"
-                                                                      style="font-size: 14px; font-weight: bold;"/>
-                                                    </div>
-                                                    <div class="col-xl-6 col-lg-6 col-md-5 col-sm-5">
-                                                        <p:toggleSwitch value="#{v2PreferenceSettingsBean.editor.displayUserName}" style="font-size: 12px;" />
-                                                    </div>
-                                                </div>
-                                            </div>    
-
-                                            <!-- Activer/ désactiver les suggestions / propositions de modification d'un concept -->
-                                            <div class="list-group-item list-group-item-action" style=" margin-top: 5px">
-                                                <div class="row" style="padding-top: 3px;">
-                                                    <div class="col-xl-3 col-lg-4 col-md-6 col-sm-6" style="text-align: right; margin-top: 6px">
-                                                        <h:outputText value="#{v2LocaleBean.getMsg('preferences.propositions')}"
-                                                                      style="font-size: 14px; font-weight: bold;"/>
-                                                    </div>
-                                                    <div class="col-xl-6 col-lg-6 col-md-5 col-sm-5">
-                                                        <p:toggleSwitch value="#{v2PreferenceSettingsBean.editor.suggestion}" style="font-size: 12px;" />
-                                                    </div>
-                                                </div>
-                                            </div>   
-
-                                            <!-- Activer/ désactiver les relations personnalisées -->
-                                            <div class="list-group-item list-group-item-action" style=" margin-top: 5px">
-                                                <div class="row" style="padding-top: 3px;">
-                                                    <div class="col-xl-3 col-lg-4 col-md-6 col-sm-6" style="text-align: right; margin-top: 6px">
-                                                        <h:outputText value="#{v2LocaleBean.getMsg('preferences.activateCustomRelation')}"
-                                                                      style="font-size: 14px; font-weight: bold;"/>
-                                                    </div>
-                                                    <div class="col-xl-6 col-lg-6 col-md-5 col-sm-5">
-                                                        <p:toggleSwitch value="#{v2PreferenceSettingsBean.editor.useCustomRelation}" style="font-size: 12px;" />
-                                                    </div>
-                                                </div>
-                                            </div> 
-                                            
-                                            <!-- Activer/ désactiver l'affichage des notes au publique -->
-                                            <div class="list-group-item list-group-item-action" style=" margin-top: 5px">
-                                                <div class="row" style="padding-top: 3px;">
-                                                    <div class="col-xl-3 col-lg-4 col-md-6 col-sm-6" style="text-align: right; margin-top: 6px">
-                                                        <h:outputText value="#{v2LocaleBean.getMsg('preferences.activateShowHhistoryNote')}"
-                                                                      style="font-size: 14px; font-weight: bold;"/>
-                                                    </div>
-                                                    <div class="col-xl-6 col-lg-6 col-md-5 col-sm-5">
-                                                        <p:toggleSwitch value="#{v2PreferenceSettingsBean.editor.showHistoryNote}" style="font-size: 12px;" />
-                                                    </div>
-                                                </div>
-                                            </div>     
-                                            <div class="list-group-item list-group-item-action" style=" margin-top: 5px">
-                                                <div class="row" style="padding-top: 3px;">
-                                                    <div class="col-xl-3 col-lg-4 col-md-6 col-sm-6" style="text-align: right; margin-top: 6px">
-                                                        <h:outputText value="#{v2LocaleBean.getMsg('preferences.activateShowEditorialNote')}"
-                                                                      style="font-size: 14px; font-weight: bold;"/>
-                                                    </div>
-                                                    <div class="col-xl-6 col-lg-6 col-md-5 col-sm-5">
-                                                        <p:toggleSwitch value="#{v2PreferenceSettingsBean.editor.showEditorialNote}" style="font-size: 12px;" />
-                                                    </div>
-                                                </div>
-                                            </div>
-                                            <!-- Activer le lien vers KohaPro -->
-                                            <div class="list-group-item list-group-item-action" style=" margin-top: 5px">
-                                                <div class="row" style="padding-top: 3px;">
-                                                    <div class="col-xl-3 col-lg-4 col-md-6 col-sm-6" style="text-align: right; margin-top: 6px">
-                                                        <h:outputText value="#{v2LocaleBean.getMsg('preferences.activateLinkToKohaPro')}"
-                                                                      style="font-size: 14px; font-weight: bold;"/>
-                                                    </div>
-                                                    <div class="col-xl-6 col-lg-6 col-md-5 col-sm-5">
-                                                        <p:toggleSwitch value="#{v2PreferenceSettingsBean.editor.kohaLink}" style="font-size: 12px;" />
-                                                    </div>
-                                                </div>
-                                            </div>
-
-
-                                            <!-- Activer/ désactiver le module Deepl -->
-
-                                            <h:panelGroup id="deepl">
-                                                <div class="list-group-item list-group-item-action" style=" margin-top: 5px">
-                                                    <div class="row" style="padding-top: 3px;">
-                                                        <div class="col-xl-3 col-lg-4 col-md-6 col-sm-6" style="text-align: right; margin-top: 6px">
-                                                            <h:outputText value="#{v2LocaleBean.getMsg('preferences.activateDeeplTranlation')}"
-                                                                          style="font-size: 14px; font-weight: bold;"/>
-                                                        </div>
-                                                        <div class="col-xl-6 col-lg-6 col-md-5 col-sm-5">
-                                                            <p:toggleSwitch value="#{v2PreferenceSettingsBean.editor.useDeeplTranslation}" style="font-size: 12px;" >
-                                                                <p:ajax event="change" update="deepl" />
-                                                            </p:toggleSwitch>
-                                                                
-                                                        </div>
-                                                    </div>
-                                                </div>
-
-                                                <h:panelGroup id="deeplApiKey" rendered="#{v2PreferenceSettingsBean.editor.useDeeplTranslation}">
-                                                    <div class="list-group-item list-group-item-action" style=" margin-top: 5px">
-                                                        <div class="row" style="padding-top: 3px;">
-                                                            <div class="col-xl-3 col-lg-4 col-md-6 col-sm-6" style="text-align: right; margin-top: 6px">
-                                                                <h:outputText value="#{v2LocaleBean.getMsg('preferences.deeplApiKey')}" style="font-size: 14px; font-weight: bold;"/>
-                                                            </div>
-                                                            <div class="col-xl-6 col-lg-6 col-md-5 col-sm-5">
-                                                                <p:password value="#{v2PreferenceSettingsBean.editor.newDeeplApiKey}" placeholder="••••••••••" feedback="false"  style="width: 100%"/>
-                                                            </div>
-                                                        </div>
-                                                    </div>  
-                                                </h:panelGroup>
-                                            </h:panelGroup>
-                                        </div>        
-                                    </div>
-                                </div>
-                            </div>
-                        </p:scrollPanel>
-                        <div class="row" style="padding-top: 5px; " >
-                            <div class="col-12" style="text-align: center;width: 100%">
-                                <p:commandButton value="#{v2LocaleBean.getMsg('candidat.save')}" styleClass="ui-button-success"
-                                                 actionListener="#{v2PreferenceSettingsBean.save()}"
-                                                 process="@form"
-                                                 update=":messageIndex"
-                                                 icon="fas fa-save"/>
-                            </div>
-                        </div>
-                        <p:spacer height="10px;" />
+          <div class="view-panel is-on" id="viewSettings">
+            <div class="bo">
+              <a class="bo-back" href="index.xhtml" title="Retour à l'accueil thésaurus"><svg viewBox="0 0 24 24" aria-hidden="true"><path d="M19 12H5"/><path d="m12 19-7-7 7-7"/></svg></a>
+              <div class="bo-head"><div><h1 class="bo-title">Paramètres du thésaurus</h1><p class="bo-sub">Configuration globale de #{v2PreviewThesaurusBean.title}. Les modifications restent en brouillon tant que vous n'enregistrez pas.</p></div></div>
+              <div class="bo-full st-scope">
+                <h:form id="previewPrefForm" prependId="false">
+                <h:inputHidden id="previewCorpusTarget" value="#{v2PreviewCorpusBean.corpusActionTarget}"/>
+                <h:inputHidden id="previewCorpusPage" value="#{v2PreviewCorpusBean.corpusPageTarget}"/>
+                <h:commandButton id="previewCorpusNewGo" value="new" styleClass="st-jsf-go"
+                                 action="#{v2PreviewCorpusBean.prepareCreateCorpus}">
+                  <f:ajax execute="@this" render="previewCorpusBox" onevent="onPreviewCorpusDialog"/>
+                </h:commandButton>
+                <h:commandButton id="previewCorpusToggleGo" value="toggle" styleClass="st-jsf-go"
+                                 action="#{v2PreviewCorpusBean.toggleCorpusActive}">
+                  <f:ajax execute="@this previewCorpusTarget" render="previewCorpusBox"/>
+                </h:commandButton>
+                <h:commandButton id="previewCorpusEditGo" value="edit" styleClass="st-jsf-go"
+                                 action="#{v2PreviewCorpusBean.prepareEditCorpus}">
+                  <f:ajax execute="@this previewCorpusTarget" render="previewCorpusBox"
+                          onevent="onPreviewCorpusDialog"/>
+                </h:commandButton>
+                <h:commandButton id="previewCorpusDelGo" value="delete" styleClass="st-jsf-go"
+                                 action="#{v2PreviewCorpusBean.prepareDeleteCorpus}">
+                  <f:ajax execute="@this previewCorpusTarget" render="previewCorpusBox"
+                          onevent="onPreviewCorpusDialog"/>
+                </h:commandButton>
+                <h:commandButton id="previewCorpusPrevGo" value="prev" styleClass="st-jsf-go"
+                                 action="#{v2PreviewCorpusBean.prevCorpusPage}">
+                  <f:ajax execute="@this" render="previewCorpusBox"/>
+                </h:commandButton>
+                <h:commandButton id="previewCorpusNextGo" value="next" styleClass="st-jsf-go"
+                                 action="#{v2PreviewCorpusBean.nextCorpusPage}">
+                  <f:ajax execute="@this" render="previewCorpusBox"/>
+                </h:commandButton>
+                <h:commandButton id="previewCorpusPageGo" value="page" styleClass="st-jsf-go"
+                                 action="#{v2PreviewCorpusBean.goCorpusPage}">
+                  <f:ajax execute="@this previewCorpusPage" render="previewCorpusBox"/>
+                </h:commandButton>
+                <h:inputHidden id="previewAlignSourceId" value="#{v2PreviewAlignmentBean.alignmentActionTarget}"/>
+                <h:inputHidden id="previewAlignPage" value="#{v2PreviewAlignmentBean.alignmentPageTarget}"/>
+                <h:commandButton id="previewAlignToggleGo" value="toggle" styleClass="st-jsf-go"
+                                 action="#{v2PreviewAlignmentBean.toggleAlignmentSource}">
+                  <f:ajax execute="@this previewAlignSourceId" render="previewAlignBox"/>
+                </h:commandButton>
+                <h:commandButton id="previewAlignPrevGo" value="prev" styleClass="st-jsf-go"
+                                 action="#{v2PreviewAlignmentBean.prevAlignmentPage}">
+                  <f:ajax execute="@this" render="previewAlignBox"/>
+                </h:commandButton>
+                <h:commandButton id="previewAlignNextGo" value="next" styleClass="st-jsf-go"
+                                 action="#{v2PreviewAlignmentBean.nextAlignmentPage}">
+                  <f:ajax execute="@this" render="previewAlignBox"/>
+                </h:commandButton>
+                <h:commandButton id="previewAlignPageGo" value="page" styleClass="st-jsf-go"
+                                 action="#{v2PreviewAlignmentBean.goAlignmentPage}">
+                  <f:ajax execute="@this previewAlignPage" render="previewAlignBox"/>
+                </h:commandButton>
+                <h:commandButton id="previewAlignNewGo" value="new" styleClass="st-jsf-go"
+                                 action="#{v2PreviewAlignmentBean.prepareCreateAlignmentSource}">
+                  <f:ajax execute="@this" render="previewAlignBox" onevent="onPreviewAlignDialog"/>
+                </h:commandButton>
+                <h:commandButton id="previewAlignEditGo" value="edit" styleClass="st-jsf-go"
+                                 action="#{v2PreviewAlignmentBean.prepareEditAlignmentSource}">
+                  <f:ajax execute="@this previewAlignSourceId" render="previewAlignBox"
+                          onevent="onPreviewAlignDialog"/>
+                </h:commandButton>
+                <h:commandButton id="previewAlignDelGo" value="delete" styleClass="st-jsf-go"
+                                 action="#{v2PreviewAlignmentBean.prepareDeleteAlignmentSource}">
+                  <f:ajax execute="@this previewAlignSourceId" render="previewAlignBox"
+                          onevent="onPreviewAlignDialog"/>
+                </h:commandButton>
+                <h:panelGroup id="previewSettingsBody" layout="block">
+                <div class="st-group-head" id="stPrefs">Préférences du thésaurus</div>
+                <div class="bo-card">
+                  <div class="bo-card-h">
+                    <span class="bo-card-t">Général</span>
+                  </div>
+                  <div class="bo-card-b st-form">
+                    <div class="st-row">
+                      <div class="st-row-l">URL du site local</div>
+                      <div class="st-row-c">
+                        <h:inputText id="previewPrefCheminSite" styleClass="st-input"
+                                     value="#{v2PreviewPreferenceBean.preference.cheminSite}"/>
+                      </div>
                     </div>
-                    <ui:include src="../thesaurus/includes/layout/footer.xhtml" />
-                    <input type="hidden" name="csrfToken" value="${sessionScope.CSRF_TOKEN}" />
+                    <div class="st-row">
+                      <div class="st-row-l">URI d'exportation</div>
+                      <div class="st-row-c">
+                        <h:selectOneRadio id="previewPrefUriType" styleClass="st-radios" layout="lineDirection"
+                                          value="#{v2PreviewPreferenceBean.preference.uriType}">
+                          <f:selectItem itemLabel="URI classique" itemValue="uri"/>
+                          <f:selectItem itemLabel="Ark" itemValue="ark"/>
+                          <f:selectItem itemLabel="Handle" itemValue="handle"/>
+                        </h:selectOneRadio>
+                        <h:inputText id="previewPrefOriginalUri" styleClass="st-input"
+                                     value="#{v2PreviewPreferenceBean.preference.originalUri}"/>
+                      </div>
+                    </div>
+                    <div class="st-row">
+                      <div class="st-row-l">Langue par défaut</div>
+                      <div class="st-row-c">
+                        <h:selectOneMenu id="previewPrefSourceLang" styleClass="st-input"
+                                         value="#{v2PreviewPreferenceBean.preference.sourceLang}">
+                          <f:selectItems value="#{v2PreviewPreferenceBean.preference.languages}" var="lang"
+                                         itemValue="#{lang.code}" itemLabel="#{lang.value} (#{lang.code})"/>
+                        </h:selectOneMenu>
+                      </div>
+                    </div>
+                    <div class="st-row">
+                      <div class="st-row-l">Type d'identifiant</div>
+                      <div class="st-row-c">
+                        <h:selectOneMenu id="previewPrefIdentifierType" styleClass="st-input"
+                                         value="#{v2PreviewPreferenceBean.preference.identifierType}">
+                          <f:selectItem itemLabel="Alphanumérique" itemValue="#{v2PreviewPreferenceBean.identifierAlphanumeric}"/>
+                          <f:selectItem itemLabel="Numérique" itemValue="#{v2PreviewPreferenceBean.identifierNumeric}"/>
+                        </h:selectOneMenu>
+                      </div>
+                    </div>
+                    <div class="st-row">
+                      <div class="st-row-l">Nom pérenne du thésaurus</div>
+                      <div class="st-row-c st-inline">
+                        <h:inputText id="previewPrefPreferredName" styleClass="st-input"
+                                     value="#{v2PreviewPreferenceBean.preference.preferredName}"/>
+                        <h:outputLink styleClass="st-hint" value="#{request.contextPath}#{v2PreviewPreferenceBean.preferencePermalink}"
+                                      rendered="#{not empty v2PreviewPreferenceBean.preferencePermalink}"
+                                      target="_blank">Testez le lien</h:outputLink>
+                      </div>
+                    </div>
+                  </div>
+                </div>
+                <div class="bo-card">
+                  <div class="bo-card-h">
+                    <span class="bo-card-t">Affichage &amp; navigation</span>
+                  </div>
+                  <div class="bo-card-b st-form">
+                    <div class="st-toggle-row">
+                      <div class="st-toggle-main">
+                        <div class="st-toggle-l">Déploiement automatique de l'arbre</div>
+                        <div class="st-toggle-d">L'arborescence s'ouvre entièrement au chargement.</div>
+                      </div>
+                      <label class="st-sw">
+                        <h:selectBooleanCheckbox styleClass="st-sw-input"
+                                                 value="#{v2PreviewPreferenceBean.preference.autoExpandTree}"
+                                                 title="Déploiement automatique de l'arbre"/>
+                      </label>
+                    </div>
+                    <div class="st-toggle-row">
+                      <div class="st-toggle-main">
+                        <div class="st-toggle-l">Cache de l'arbre</div>
+                        <div class="st-toggle-d">Accélère l'affichage des grandes arborescences.</div>
+                      </div>
+                      <label class="st-sw">
+                        <h:selectBooleanCheckbox styleClass="st-sw-input"
+                                                 value="#{v2PreviewPreferenceBean.preference.treeCache}"
+                                                 title="Cache de l'arbre"/>
+                      </label>
+                    </div>
+                    <div class="st-toggle-row">
+                      <div class="st-toggle-main">
+                        <div class="st-toggle-l">Tri par défaut sur la notation</div>
+                        <div class="st-toggle-d">Ordonne les concepts par code de classification.</div>
+                      </div>
+                      <label class="st-sw">
+                        <h:selectBooleanCheckbox styleClass="st-sw-input"
+                                                 value="#{v2PreviewPreferenceBean.preference.sortByNotation}"
+                                                 title="Tri par défaut sur la notation"/>
+                      </label>
+                    </div>
+                    <div class="st-toggle-row">
+                      <div class="st-toggle-main">
+                        <div class="st-toggle-l">Fil d'Ariane</div>
+                        <div class="st-toggle-d">Affiche le chemin complet au-dessus de chaque concept.</div>
+                      </div>
+                      <label class="st-sw">
+                        <h:selectBooleanCheckbox styleClass="st-sw-input"
+                                                 value="#{v2PreviewPreferenceBean.preference.breadcrumb}"
+                                                 title="Fil d'Ariane"/>
+                      </label>
+                    </div>
+                    <div class="st-toggle-row">
+                      <div class="st-toggle-main">
+                        <div class="st-toggle-l">Arbre de collections / concepts</div>
+                        <div class="st-toggle-d">Ajoute la vue par collections dans l'arborescence.</div>
+                      </div>
+                      <label class="st-sw">
+                        <h:selectBooleanCheckbox styleClass="st-sw-input"
+                                                 value="#{v2PreviewPreferenceBean.preference.useConceptTree}"
+                                                 title="Arbre de collections / concepts"/>
+                      </label>
+                    </div>
+                  </div>
+                </div>
+                <div class="bo-card">
+                  <div class="bo-card-h">
+                    <span class="bo-card-t">Collaboration &amp; suivi</span>
+                  </div>
+                  <div class="bo-card-b st-form">
+                    <div class="st-toggle-row">
+                      <div class="st-toggle-main">
+                        <div class="st-toggle-l">Afficher le nom des contributeurs</div>
+                        <div class="st-toggle-d">Montre qui a modifié chaque concept.</div>
+                      </div>
+                      <label class="st-sw">
+                        <h:selectBooleanCheckbox styleClass="st-sw-input"
+                                                 value="#{v2PreviewPreferenceBean.preference.displayUserName}"
+                                                 title="Afficher le nom des contributeurs"/>
+                      </label>
+                    </div>
+                    <div class="st-toggle-row">
+                      <div class="st-toggle-main">
+                        <div class="st-toggle-l">Propositions de modification</div>
+                        <div class="st-toggle-d">Autorise les suggestions sur les concepts publiés.</div>
+                      </div>
+                      <label class="st-sw">
+                        <h:selectBooleanCheckbox styleClass="st-sw-input"
+                                                 value="#{v2PreviewPreferenceBean.preference.suggestion}"
+                                                 title="Propositions de modification"/>
+                      </label>
+                    </div>
+                    <div class="st-toggle-row">
+                      <div class="st-toggle-main">
+                        <div class="st-toggle-l">Relations personnalisées</div>
+                        <div class="st-toggle-d">Active les types de relations propres au thésaurus.</div>
+                      </div>
+                      <label class="st-sw">
+                        <h:selectBooleanCheckbox styleClass="st-sw-input"
+                                                 value="#{v2PreviewPreferenceBean.preference.useCustomRelation}"
+                                                 title="Relations personnalisées"/>
+                      </label>
+                    </div>
+                  </div>
+                </div>
+                <div class="bo-card">
+                  <div class="bo-card-h">
+                    <span class="bo-card-t">Publication au public</span>
+                  </div>
+                  <div class="bo-card-b st-form">
+                    <div class="st-toggle-row">
+                      <div class="st-toggle-main">
+                        <div class="st-toggle-l">Afficher la note historique</div>
+                        <div class="st-toggle-d">Rend la note historique visible côté consultation.</div>
+                      </div>
+                      <label class="st-sw">
+                        <h:selectBooleanCheckbox styleClass="st-sw-input"
+                                                 value="#{v2PreviewPreferenceBean.preference.showHistoryNote}"
+                                                 title="Afficher la note historique"/>
+                      </label>
+                    </div>
+                    <div class="st-toggle-row">
+                      <div class="st-toggle-main">
+                        <div class="st-toggle-l">Afficher la note éditoriale</div>
+                        <div class="st-toggle-d">Rend la note éditoriale visible côté consultation.</div>
+                      </div>
+                      <label class="st-sw">
+                        <h:selectBooleanCheckbox styleClass="st-sw-input"
+                                                 value="#{v2PreviewPreferenceBean.preference.showEditorialNote}"
+                                                 title="Afficher la note éditoriale"/>
+                      </label>
+                    </div>
+                  </div>
+                </div>
+                <div class="bo-card">
+                  <div class="bo-card-h">
+                    <span class="bo-card-t">Intégrations</span>
+                  </div>
+                  <div class="bo-card-b st-form">
+                    <div class="st-integ#{v2PreviewPreferenceBean.preference.webservices ? ' on' : ''}">
+                      <div class="st-toggle-row">
+                        <div class="st-toggle-main">
+                          <div class="st-toggle-l">Service Web (API REST)</div>
+                          <div class="st-toggle-d">Expose le thésaurus via l'API REST d'OpenTheso.</div>
+                        </div>
+                        <label class="st-sw">
+                          <h:selectBooleanCheckbox styleClass="st-sw-input"
+                                                   value="#{v2PreviewPreferenceBean.preference.webservices}"
+                                                   title="Service Web (API REST)"/>
+                      </label>
+                      </div>
+                    </div>
+                    <div class="st-integ#{v2PreviewPreferenceBean.preference.kohaLink ? ' on' : ''}">
+                      <div class="st-toggle-row">
+                        <div class="st-toggle-main">
+                          <div class="st-toggle-l">Lien vers Koha Pro</div>
+                          <div class="st-toggle-d">Ajoute un lien vers le catalogue Koha des bibliothèques.</div>
+                        </div>
+                        <label class="st-sw">
+                          <h:selectBooleanCheckbox styleClass="st-sw-input"
+                                                   value="#{v2PreviewPreferenceBean.preference.kohaLink}"
+                                                   title="Lien vers Koha Pro"/>
+                      </label>
+                      </div>
+                    </div>
+                    <div class="st-integ#{v2PreviewPreferenceBean.preference.useDeeplTranslation ? ' on' : ''}">
+                      <div class="st-toggle-row">
+                        <div class="st-toggle-main">
+                          <div class="st-toggle-l">Module de traduction DeepL</div>
+                          <div class="st-toggle-d">Traduction assistée des libellés multilingues.</div>
+                        </div>
+                        <label class="st-sw">
+                          <h:selectBooleanCheckbox styleClass="st-sw-input"
+                                                   value="#{v2PreviewPreferenceBean.preference.useDeeplTranslation}"
+                                                   title="Module de traduction DeepL"/>
+                      </label>
+                      </div>
+                      <div class="st-deepl-field">
+                        <div class="st-row">
+                          <div class="st-row-l">Clé d'API DeepL</div>
+                          <div class="st-row-c">
+                            <h:inputSecret styleClass="st-input"
+                                           value="#{v2PreviewPreferenceBean.preference.newDeeplApiKey}"
+                                           redisplay="false"/>
+                          </div>
+                        </div>
+                      </div>
+                    </div>
+                  </div>
+                </div>
+                <div class="st-group-head" id="stServers">Identifiants des serveurs</div>
+                <h:panelGroup id="previewPrefServers" layout="block">
+                <div class="bo-card st-server#{v2PreviewIdentifierBean.preference.useArk ? ' st-server-h' : ''}">
+                  <div class="bo-card-h">
+                    <span class="bo-card-t">Serveur Ark</span>
+                    <label class="st-sw">
+                      <h:selectBooleanCheckbox id="previewUseArk" styleClass="st-sw-input"
+                                               value="#{v2PreviewIdentifierBean.preference.useArk}"
+                                               title="Activer le serveur Ark">
+                        <f:ajax execute="previewPrefServers" listener="#{v2PreviewIdentifierBean.selectIdentifierServer}"
+                                render="previewPrefServers"/>
+                      </h:selectBooleanCheckbox>
+                      </label>
+                  </div>
+                  <div class="bo-card-b st-form st-server-body">
+                    <div class="st-row">
+                      <div class="st-row-l">Serveur Ark</div>
+                      <div class="st-row-c">
+                        <h:inputText styleClass="st-input" value="#{v2PreviewIdentifierBean.preference.serverArk}"
+                                     disabled="#{not v2PreviewIdentifierBean.preference.useArk}"/>
+                      </div>
+                    </div>
+                    <div class="st-row">
+                      <div class="st-row-l">URI Ark</div>
+                      <div class="st-row-c">
+                        <h:inputText styleClass="st-input" value="#{v2PreviewIdentifierBean.preference.uriArk}"
+                                     disabled="#{not v2PreviewIdentifierBean.preference.useArk}"/>
+                      </div>
+                    </div>
+                    <div class="st-row">
+                      <div class="st-row-l">Votre Naan</div>
+                      <div class="st-row-c">
+                        <h:inputText styleClass="st-input" value="#{v2PreviewIdentifierBean.preference.idNaan}"
+                                     disabled="#{not v2PreviewIdentifierBean.preference.useArk}"/>
+                      </div>
+                    </div>
+                    <div class="st-row">
+                      <div class="st-row-l">Préfixe Ark</div>
+                      <div class="st-row-c">
+                        <h:inputText styleClass="st-input" value="#{v2PreviewIdentifierBean.preference.prefixArk}"
+                                     disabled="#{not v2PreviewIdentifierBean.preference.useArk}"/>
+                      </div>
+                    </div>
+                    <div class="st-row">
+                      <div class="st-row-l">Utilisateur Ark</div>
+                      <div class="st-row-c">
+                        <h:inputText styleClass="st-input" value="#{v2PreviewIdentifierBean.preference.userArk}"
+                                     disabled="#{not v2PreviewIdentifierBean.preference.useArk}"/>
+                      </div>
+                    </div>
+                    <div class="st-row">
+                      <div class="st-row-l">Mot de passe Ark</div>
+                      <div class="st-row-c">
+                        <h:inputSecret styleClass="st-input"
+                                       value="#{v2PreviewIdentifierBean.preference.newPassArk}"
+                                       redisplay="false"
+                                       disabled="#{not v2PreviewIdentifierBean.preference.useArk}"/>
+                      </div>
+                    </div>
+                  </div>
+                </div>
+                <div class="bo-card st-server#{v2PreviewIdentifierBean.preference.useArkLocal ? ' st-server-h' : ''}">
+                  <div class="bo-card-h">
+                    <span class="bo-card-t">Serveur Ark local</span>
+                    <span class="st-card-tag">Requis</span>
+                    <label class="st-sw">
+                      <h:selectBooleanCheckbox id="previewUseArkLocal" styleClass="st-sw-input"
+                                               value="#{v2PreviewIdentifierBean.preference.useArkLocal}"
+                                               title="Activer le serveur Ark local">
+                        <f:ajax execute="previewPrefServers" listener="#{v2PreviewIdentifierBean.selectIdentifierServer}"
+                                render="previewPrefServers"/>
+                      </h:selectBooleanCheckbox>
+                      </label>
+                  </div>
+                  <div class="bo-card-b st-form st-server-body">
+                    <div class="st-toggle-row">
+                      <div class="st-toggle-main">
+                        <div class="st-toggle-l">Générer l'identifiant Ark en majuscules</div>
+                      </div>
+                      <label class="st-sw">
+                        <h:selectBooleanCheckbox styleClass="st-sw-input"
+                                                 value="#{v2PreviewIdentifierBean.preference.uppercaseForArk}"
+                                                 title="Générer l'identifiant Ark en majuscules"
+                                                 disabled="#{not v2PreviewIdentifierBean.preference.useArkLocal}"/>
+                      </label>
+                    </div>
+                    <div class="st-row">
+                      <div class="st-row-l">Votre Naan</div>
+                      <div class="st-row-c">
+                        <h:inputText styleClass="st-input" value="#{v2PreviewIdentifierBean.preference.naanArkLocal}"
+                                     disabled="#{not v2PreviewIdentifierBean.preference.useArkLocal}"/>
+                      </div>
+                    </div>
+                    <div class="st-row">
+                      <div class="st-row-l">Préfixe Ark</div>
+                      <div class="st-row-c">
+                        <h:inputText styleClass="st-input" value="#{v2PreviewIdentifierBean.preference.prefixArkLocal}"
+                                     disabled="#{not v2PreviewIdentifierBean.preference.useArkLocal}"/>
+                      </div>
+                    </div>
+                    <div class="st-row">
+                      <div class="st-row-l">Taille de l'identifiant Ark</div>
+                      <div class="st-row-c">
+                        <h:inputText styleClass="st-input" value="#{v2PreviewIdentifierBean.preference.sizeIdArkLocal}"
+                                     disabled="#{not v2PreviewIdentifierBean.preference.useArkLocal}"/>
+                      </div>
+                    </div>
+                    <div class="st-note">(*) La génération des identifiants ARK respecte l'algorithme de vérification NOID (NOID CHECK DIGIT ALGORITHM). Exemple : bLH-ZKKF563R-D</div>
+                  </div>
+                </div>
+                <div class="bo-card st-server#{v2PreviewIdentifierBean.preference.useHandle ? ' st-server-h' : ''}">
+                  <div class="bo-card-h">
+                    <span class="bo-card-t">Serveur Handle</span>
+                    <label class="st-sw">
+                      <h:selectBooleanCheckbox id="previewUseHandle" styleClass="st-sw-input"
+                                               value="#{v2PreviewIdentifierBean.preference.useHandle}"
+                                               title="Activer le serveur Handle">
+                        <f:ajax execute="previewPrefServers" listener="#{v2PreviewIdentifierBean.selectIdentifierServer}"
+                                render="previewPrefServers"/>
+                      </h:selectBooleanCheckbox>
+                      </label>
+                  </div>
+                  <div class="bo-card-b st-form st-server-body">
+                    <div class="st-toggle-row" data-handle-cert="">
+                      <div class="st-toggle-main">
+                        <div class="st-toggle-l">Utiliser le serveur Handle avec certificat</div>
+                      </div>
+                      <label class="st-sw">
+                        <h:selectBooleanCheckbox styleClass="st-sw-input"
+                                                 value="#{v2PreviewIdentifierBean.preference.useHandleWithCertificat}"
+                                                 title="Utiliser le serveur Handle avec certificat"
+                                                 disabled="#{not v2PreviewIdentifierBean.preference.useHandle}"/>
+                      </label>
+                    </div>
+                    <div class="st-row">
+                      <div class="st-row-l">Serveur Handle</div>
+                      <div class="st-row-c">
+                        <h:inputText styleClass="st-input" value="#{v2PreviewIdentifierBean.preference.urlApiHandle}"
+                                     disabled="#{not v2PreviewIdentifierBean.preference.useHandle}"/>
+                      </div>
+                    </div>
+                    <div class="st-row">
+                      <div class="st-row-l">Préfixe Handle</div>
+                      <div class="st-row-c">
+                        <h:inputText styleClass="st-input" value="#{v2PreviewIdentifierBean.preference.prefixIdHandle}"
+                                     disabled="#{not v2PreviewIdentifierBean.preference.useHandle}"/>
+                      </div>
+                    </div>
+                    <div class="st-handle-plain">
+                      <div class="st-row">
+                        <div class="st-row-l">Index Handle</div>
+                        <div class="st-row-c">
+                          <h:inputText styleClass="st-input" value="#{v2PreviewIdentifierBean.preference.indexHandle}"
+                                       disabled="#{not v2PreviewIdentifierBean.preference.useHandle}"/>
+                        </div>
+                      </div>
+                      <div class="st-row">
+                        <div class="st-row-l">Admin Handle</div>
+                        <div class="st-row-c">
+                          <h:inputText styleClass="st-input" value="#{v2PreviewIdentifierBean.preference.adminHandle}"
+                                       disabled="#{not v2PreviewIdentifierBean.preference.useHandle}"/>
+                        </div>
+                      </div>
+                    </div>
+                    <div class="st-row">
+                      <div class="st-row-l">Préfixe privé</div>
+                      <div class="st-row-c">
+                        <h:inputText styleClass="st-input" value="#{v2PreviewIdentifierBean.preference.privatePrefixHandle}"
+                                     disabled="#{not v2PreviewIdentifierBean.preference.useHandle}"/>
+                      </div>
+                    </div>
+                    <div class="st-row">
+                      <div class="st-row-l">Mot de passe Handle</div>
+                      <div class="st-row-c">
+                        <h:inputSecret styleClass="st-input"
+                                       value="#{v2PreviewIdentifierBean.preference.newPassHandle}"
+                                       redisplay="false"
+                                       disabled="#{not v2PreviewIdentifierBean.preference.useHandle}"/>
+                      </div>
+                    </div>
+                    <div class="st-handle-cert">
+                      <div class="st-row">
+                        <div class="st-row-l">Chemin clé Handle</div>
+                        <div class="st-row-c">
+                          <h:inputText styleClass="st-input" value="#{v2PreviewIdentifierBean.preference.pathKeyHandle}"
+                                       disabled="#{not v2PreviewIdentifierBean.preference.useHandle}"/>
+                        </div>
+                      </div>
+                      <div class="st-row">
+                        <div class="st-row-l">Chemin certificat Handle</div>
+                        <div class="st-row-c">
+                          <h:inputText styleClass="st-input" value="#{v2PreviewIdentifierBean.preference.pathCertHandle}"
+                                       disabled="#{not v2PreviewIdentifierBean.preference.useHandle}"/>
+                        </div>
+                      </div>
+                    </div>
+                  </div>
+                </div>
+                <div class="bo-card st-server#{v2PreviewIdentifierBean.preference.useOpenArk ? ' st-server-h' : ''}">
+                  <div class="bo-card-h">
+                    <span class="bo-card-t">Serveur OpenArk</span>
+                    <label class="st-sw">
+                      <h:selectBooleanCheckbox id="previewUseOpenArk" styleClass="st-sw-input"
+                                               value="#{v2PreviewIdentifierBean.preference.useOpenArk}"
+                                               title="Activer le serveur OpenArk">
+                        <f:ajax execute="previewPrefServers" listener="#{v2PreviewIdentifierBean.selectIdentifierServer}"
+                                render="previewPrefServers"/>
+                      </h:selectBooleanCheckbox>
+                      </label>
+                  </div>
+                  <div class="bo-card-b st-form st-server-body">
+                    <div class="st-row">
+                      <div class="st-row-l">Serveur Ark</div>
+                      <div class="st-row-c">
+                        <h:inputText styleClass="st-input" value="#{v2PreviewIdentifierBean.preference.serverOpenArk}"
+                                     disabled="#{not v2PreviewIdentifierBean.preference.useOpenArk}"/>
+                      </div>
+                    </div>
+                    <div class="st-row">
+                      <div class="st-row-l">Votre Naan</div>
+                      <div class="st-row-c">
+                        <h:inputText styleClass="st-input" value="#{v2PreviewIdentifierBean.preference.naanOpenArk}"
+                                     disabled="#{not v2PreviewIdentifierBean.preference.useOpenArk}"/>
+                      </div>
+                    </div>
+                    <div class="st-row">
+                      <div class="st-row-l">Préfixe Ark</div>
+                      <div class="st-row-c">
+                        <h:inputText styleClass="st-input" value="#{v2PreviewIdentifierBean.preference.prefixOpenArk}"
+                                     disabled="#{not v2PreviewIdentifierBean.preference.useOpenArk}"/>
+                      </div>
+                    </div>
+                    <div class="st-row">
+                      <div class="st-row-l">Clé d'API</div>
+                      <div class="st-row-c">
+                        <h:inputSecret styleClass="st-input"
+                                       value="#{v2PreviewIdentifierBean.preference.newApiKeyOpenArk}"
+                                       redisplay="false"
+                                       disabled="#{not v2PreviewIdentifierBean.preference.useOpenArk}"/>
+                      </div>
+                    </div>
+                  </div>
+                </div>
+                </h:panelGroup>
+                <input type="hidden" name="csrfToken" value="#{sessionScope.CSRF_TOKEN}"/>
+                <span id="previewPrefSaveMsg" hidden="hidden"
+                      data-ok="#{not v2PreviewPreferenceBean.preferenceSaveError}">#{v2PreviewPreferenceBean.preferenceSaveMessage}</span>
+                <h:panelGroup layout="block" styleClass="st-corpus-msg is-error"
+                              rendered="#{v2PreviewPreferenceBean.preferenceSaveError and not empty v2PreviewPreferenceBean.preferenceSaveMessage}">
+                  #{v2PreviewPreferenceBean.preferenceSaveMessage}
+                </h:panelGroup>
+                <div class="st-group-head" id="stCorpus">Corpus liés</div>
+                <h:panelGroup id="previewCorpusBox" layout="block">
+                <h:panelGroup id="previewCorpusCard" layout="block">
+                <div class="bo-card">
+                  <div class="bo-card-h">
+                    <span class="bo-card-t">Corpus liés</span>
+                    <span class="right">
+                      <button type="button" class="bo-btn ghost sm" data-act="preview-corpus-new"
+                              title="Ajouter un nouveau corpus, lien vers les données">
+                        <svg viewBox="0 0 24 24" aria-hidden="true"><path d="M5 12h14"/><path d="m12 5 7 7-7 7"/></svg>
+                        Nouveau corpus
+                      </button>
+                    </span>
+                  </div>
+                  <div class="bo-card-b st-form">
+                    <table class="st-table">
+                      <thead><tr><th>Libellé</th><th>URI pour le total</th><th>URI pour le lien</th><th>État</th><th></th></tr></thead>
+                      <tbody>
+                        <ui:repeat id="previewCorpusRows" value="#{v2PreviewCorpusBean.pagedCorpusList}" var="corpus">
+                          <tr>
+                            <td class="st-td-name" title="#{corpus.corpusName}">#{corpus.corpusName}</td>
+                            <td class="st-td-uri" title="#{corpus.uriCount}">
+                              <h:outputText value="#{corpus.uriCount}" rendered="#{not empty corpus.uriCount}"/>
+                              <h:outputText value="—" rendered="#{empty corpus.uriCount}"/>
+                            </td>
+                            <td class="st-td-uri" title="#{corpus.uriLink}">#{corpus.uriLink}</td>
+                            <td class="st-td-state">
+                              <ui:fragment rendered="#{v2PreviewSettingsAccess.canEdit}">
+                                <button type="button" class="st-sw#{corpus.active ? ' on' : ''}"
+                                        data-act="preview-corpus-toggle" data-name="#{corpus.corpusName}"
+                                        title="#{corpus.active ? 'Désactiver ce corpus' : 'Activer ce corpus'}"></button>
+                              </ui:fragment>
+                              <h:panelGroup rendered="#{not v2PreviewSettingsAccess.canEdit}"
+                                            styleClass="st-sw#{corpus.active ? ' on' : ''} is-static"
+                                            title="#{corpus.active ? 'Actif' : 'Inactif'}"/>
+                            </td>
+                            <td class="st-td-act">
+                              <ui:fragment rendered="#{v2PreviewSettingsAccess.canEdit}">
+                                <button type="button" class="st-icon" data-act="preview-corpus-edit"
+                                        data-name="#{corpus.corpusName}" title="Éditer">✎</button>
+                                <button type="button" class="st-icon del" data-act="preview-corpus-del"
+                                        data-name="#{corpus.corpusName}" title="Supprimer">
+                                  <svg viewBox="0 0 24 24" aria-hidden="true"><path d="M18 6 6 18M6 6l12 12"/></svg>
+                                </button>
+                              </ui:fragment>
+                            </td>
+                          </tr>
+                        </ui:repeat>
+                        <ui:fragment rendered="#{empty v2PreviewCorpusBean.corpusList}">
+                          <tr>
+                            <td colspan="5" class="st-td-empty">Aucun corpus lié à ce thésaurus.</td>
+                          </tr>
+                        </ui:fragment>
+                      </tbody>
+                    </table>
+                    <div class="st-table-foot">
+                      <div class="st-count">Nombre total des corpus : #{v2PreviewCorpusBean.corpusList.size()}
+                        <h:outputText value=" · #{v2PreviewCorpusBean.corpusPageFrom}–#{v2PreviewCorpusBean.corpusPageTo}"
+                                      rendered="#{v2PreviewCorpusBean.corpusPagerNeeded}"/>
+                      </div>
+                      <preview:settingsPager needed="#{v2PreviewCorpusBean.corpusPagerNeeded}"
+                                             page="#{v2PreviewCorpusBean.corpusPage}"
+                                             pages="#{v2PreviewCorpusBean.corpusPages}"
+                                             prevAct="preview-corpus-prev"
+                                             nextAct="preview-corpus-next"
+                                             pageAct="preview-corpus-page"/>
+                    </div>
+                    <span id="previewCorpusSaveMsg" hidden="hidden"
+                          data-ok="#{not v2PreviewCorpusBean.corpusError}">#{v2PreviewCorpusBean.corpusMessage}</span>
+                    <h:panelGroup layout="block" styleClass="st-corpus-msg is-error"
+                                  rendered="#{v2PreviewCorpusBean.corpusError and not empty v2PreviewCorpusBean.corpusMessage and not v2PreviewCorpusBean.corpusDialogOpen}">
+                      #{v2PreviewCorpusBean.corpusMessage}
+                    </h:panelGroup>
+                  </div>
+                </div>
+                </h:panelGroup>
+                <h:panelGroup id="previewCorpusOverlay" layout="block"
+                              styleClass="block-overlay confirm-overlay st-corpus-overlay#{v2PreviewCorpusBean.corpusFormDialog ? '' : ' is-off'}">
+                  <div class="confirm-modal st-corpus-modal" role="dialog" aria-modal="true"
+                       aria-labelledby="previewCorpusDlgTitle">
+                    <h:panelGroup id="previewCorpusFields" layout="block"
+                                  styleClass="#{v2PreviewCorpusBean.corpusFormDialog ? '' : 'is-off'}">
+                      <div class="confirm-h" id="previewCorpusDlgTitle">
+                        <h:outputText value="Nouveau corpus" rendered="#{v2PreviewCorpusBean.corpusCreateDialog}"/>
+                        <h:outputText value="Modifier le corpus" rendered="#{not v2PreviewCorpusBean.corpusCreateDialog}"/>
+                      </div>
+                      <h:panelGroup layout="block" styleClass="st-corpus-msg is-error"
+                                    rendered="#{v2PreviewCorpusBean.corpusError and not empty v2PreviewCorpusBean.corpusMessage}">
+                        #{v2PreviewCorpusBean.corpusMessage}
+                      </h:panelGroup>
+                      <div class="st-row">
+                        <div class="st-row-l">Libellé <span class="st-req">*</span></div>
+                        <div class="st-row-c">
+                          <h:inputText id="previewCorpusName" styleClass="st-input"
+                                       value="#{v2PreviewCorpusBean.corpusEditor.corpusName}"/>
+                        </div>
+                      </div>
+                      <div class="st-toggle-row">
+                        <div class="st-toggle-main">
+                          <div class="st-toggle-l">Activer uniquement un lien vers le corpus sans compteur</div>
+                        </div>
+                        <label class="st-sw">
+                          <h:selectBooleanCheckbox id="previewCorpusOnlyUri"
+                                                   styleClass="st-sw-input"
+                                                   value="#{v2PreviewCorpusBean.corpusEditor.onlyUriLink}"
+                                                   title="Activer uniquement un lien vers le corpus sans compteur">
+                            <f:ajax execute="@this" render="previewCorpusUriCount"/>
+                          </h:selectBooleanCheckbox>
+                        </label>
+                      </div>
+                      <h:panelGroup id="previewCorpusUriCount" layout="block"
+                                    styleClass="#{v2PreviewCorpusBean.corpusEditor.onlyUriLink ? 'is-off' : ''}">
+                        <div class="st-row">
+                          <div class="st-row-l">URI pour le total <span class="st-req">*</span></div>
+                          <div class="st-row-c">
+                            <h:inputText id="previewCorpusUriCountInput" styleClass="st-input"
+                                         value="#{v2PreviewCorpusBean.corpusEditor.uriCount}"
+                                         title="Mettez (##id##) pour l'ID du concept ou (##value##) pour le label"/>
+                          </div>
+                        </div>
+                        <p class="st-corpus-hint">Variables disponibles : (##id##, ##value##, ##arkid##)</p>
+                        <p class="st-corpus-ex">exemple : https://monserveur/_count?q=concept-number:##id##</p>
+                      </h:panelGroup>
+                      <div class="st-row">
+                        <div class="st-row-l">URI pour le lien <span class="st-req">*</span></div>
+                        <div class="st-row-c">
+                          <h:inputText id="previewCorpusUriLink" styleClass="st-input"
+                                       value="#{v2PreviewCorpusBean.corpusEditor.uriLink}"
+                                       title="Mettez (##id##) pour l'ID du concept ou (##value##) pour le label"/>
+                        </div>
+                      </div>
+                      <p class="st-corpus-ex">exemple : https://monserveur/_search?q=concept-number:##id##</p>
+                      <div class="st-toggle-row">
+                        <div class="st-toggle-main">
+                          <div class="st-toggle-l">Activer/désactiver ce corpus</div>
+                        </div>
+                        <label class="st-sw">
+                          <h:selectBooleanCheckbox id="previewCorpusActive" styleClass="st-sw-input"
+                                                   value="#{v2PreviewCorpusBean.corpusEditor.active}"
+                                                   title="Activer/désactiver ce corpus"/>
+                        </label>
+                      </div>
+                      <div class="st-toggle-row">
+                        <div class="st-toggle-main">
+                          <div class="st-toggle-l">Est-ce que le corpus est un OmekaS ?</div>
+                        </div>
+                        <label class="st-sw">
+                          <h:selectBooleanCheckbox id="previewCorpusOmeka" styleClass="st-sw-input"
+                                                   value="#{v2PreviewCorpusBean.corpusEditor.omekaS}"
+                                                   title="Est-ce que le corpus est un OmekaS ?"/>
+                        </label>
+                      </div>
+                      <div class="confirm-actions">
+                        <h:commandButton id="previewCorpusCancel" value="Annuler" immediate="true"
+                                         styleClass="st-corpus-btn st-corpus-cancel"
+                                         action="#{v2PreviewCorpusBean.cancelCorpusDialog}">
+                          <f:ajax execute="@this" render="previewCorpusBox"
+                                  onevent="onPreviewCorpusDialog"/>
+                        </h:commandButton>
+                        <h:panelGroup rendered="#{v2PreviewCorpusBean.corpusCreateDialog}">
+                          <button type="button" class="st-corpus-btn st-corpus-add" data-act="corpus-create-ask">Ajouter</button>
+                        </h:panelGroup>
+                        <h:commandButton id="previewCorpusApply" value="Appliquer"
+                                         styleClass="st-corpus-btn st-corpus-add"
+                                         rendered="#{v2PreviewCorpusBean.corpusFormDialog and not v2PreviewCorpusBean.corpusCreateDialog}"
+                                         action="#{v2PreviewCorpusBean.updateCorpus}">
+                          <f:ajax execute="previewCorpusFields" render="previewCorpusBox"
+                                  onevent="onPreviewCorpusDialog"/>
+                        </h:commandButton>
+                      </div>
+                    </h:panelGroup>
+                  </div>
+                </h:panelGroup>
+                <div class="block-overlay confirm-overlay" id="previewCorpusCreateConfirm" hidden="hidden"
+                     data-act="corpus-create-dismiss" role="presentation">
+                  <div class="confirm-modal" role="dialog" aria-modal="true"
+                       aria-labelledby="previewCorpusCreateTitle" data-act="corpus-create-modal">
+                    <div class="confirm-h" id="previewCorpusCreateTitle">Créer le corpus</div>
+                    <p class="confirm-p">Créer le corpus
+                      <span class="cv-lang" id="previewCorpusCreateName"></span>
+                      et l'ajouter aux corpus liés de
+                      <span class="cv-lang">#{v2PreviewThesaurusBean.title}</span> ?
+                      L'ajout ne sera définitif qu'après Enregistrer.</p>
+                    <div class="confirm-actions">
+                      <button type="button" class="st-corpus-btn st-corpus-cancel confirm-cancel"
+                              data-act="corpus-create-dismiss">Annuler</button>
+                      <h:commandButton id="previewCorpusCreateOk" value="Créer"
+                                       styleClass="st-corpus-btn st-corpus-add"
+                                       action="#{v2PreviewCorpusBean.createCorpus}">
+                        <f:ajax execute="previewCorpusFields" render="previewCorpusBox"
+                                onevent="onPreviewCorpusDialog"/>
+                      </h:commandButton>
+                    </div>
+                  </div>
+                </div>
+                <h:panelGroup id="previewCorpusDeleteConfirm" layout="block"
+                              styleClass="block-overlay confirm-overlay st-corpus-overlay#{v2PreviewCorpusBean.corpusDeleteDialog ? '' : ' is-off'}">
+                  <div class="confirm-modal" role="dialog" aria-modal="true" aria-labelledby="previewCorpusDeleteTitle">
+                    <div class="confirm-h" id="previewCorpusDeleteTitle">Confirmer la suppression</div>
+                    <p class="confirm-p">Voulez-vous supprimer le lien vers ce corpus
+                      <span class="st-corpus-del-name">#{v2PreviewCorpusBean.corpusEditor.corpusName}</span> ?
+                      La suppression ne sera définitive qu'après Enregistrer.</p>
+                    <h:panelGroup layout="block" styleClass="st-corpus-msg is-error"
+                                  rendered="#{v2PreviewCorpusBean.corpusError and not empty v2PreviewCorpusBean.corpusMessage}">
+                      #{v2PreviewCorpusBean.corpusMessage}
+                    </h:panelGroup>
+                    <div class="confirm-actions">
+                      <h:commandButton id="previewCorpusCancelDel" value="Annuler" immediate="true"
+                                       styleClass="st-corpus-btn st-corpus-cancel"
+                                       action="#{v2PreviewCorpusBean.cancelCorpusDialog}">
+                        <f:ajax execute="@this" render="previewCorpusBox"
+                                onevent="onPreviewCorpusDialog"/>
+                      </h:commandButton>
+                      <h:commandButton id="previewCorpusDelete" value="Supprimer"
+                                       styleClass="st-corpus-btn st-corpus-del"
+                                       action="#{v2PreviewCorpusBean.deleteCorpus}">
+                        <f:ajax execute="@this" render="previewCorpusBox"
+                                onevent="onPreviewCorpusDialog"/>
+                      </h:commandButton>
+                    </div>
+                  </div>
+                </h:panelGroup>
+                <div class="bo-toast above" id="previewCorpusToast" hidden="hidden">
+                  <svg viewBox="0 0 24 24" aria-hidden="true"><path d="M20 6 9 17l-5-5"/></svg>
+                  <span id="previewCorpusToastTxt">Corpus créé avec succès</span>
+                </div>
+                </h:panelGroup>
+                <div class="st-group-head" id="stAlign">Sources d'alignement</div>
+                <h:panelGroup id="previewAlignBox" layout="block">
+                <h:panelGroup id="previewAlignCard" layout="block">
+                <div class="bo-card">
+                  <div class="bo-card-h">
+                    <span class="bo-card-t">Sources d'alignement</span>
+                    <span class="right">
+                      <ui:fragment rendered="#{v2PreviewSettingsAccess.canEdit}">
+                        <button type="button" class="bo-btn ghost sm" data-act="preview-align-new"
+                                title="Ajouter une source Opentheso">
+                          <svg viewBox="0 0 24 24" aria-hidden="true"><path d="M5 12h14"/><path d="m12 5 7 7-7 7"/></svg>
+                          Nouvelle source
+                        </button>
+                      </ui:fragment>
+                    </span>
+                  </div>
+                  <div class="bo-card-b st-form">
+                    <div class="st-card-intro">Référentiels externes interrogés par l'alignement automatique (recherche &amp; comparaison) depuis la fiche d'un concept.</div>
+                    <table class="st-table">
+                      <thead><tr><th>Source</th><th>Type</th><th>URL de base</th><th>État</th><th></th></tr></thead>
+                      <tbody>
+                        <ui:repeat id="previewAlignRows" value="#{v2PreviewAlignmentBean.pagedAlignmentSources}" var="alignSource">
+                          <tr>
+                            <td class="st-td-name" title="#{alignSource.description}">#{alignSource.label}</td>
+                            <td title="#{alignSource.sourceType}">
+                              <h:outputText value="#{alignSource.sourceType}" rendered="#{not empty alignSource.sourceType}"/>
+                              <h:outputText value="—" rendered="#{empty alignSource.sourceType}"/>
+                            </td>
+                            <td class="st-td-uri" title="#{alignSource.url}">
+                              <h:outputText value="#{alignSource.url}" rendered="#{not empty alignSource.url}"/>
+                              <h:outputText value="—" rendered="#{empty alignSource.url}"/>
+                            </td>
+                            <td class="st-td-state">
+                              <ui:fragment rendered="#{v2PreviewSettingsAccess.canEdit}">
+                                <button type="button" class="st-sw#{alignSource.selected ? ' on' : ''}"
+                                        data-act="preview-align-toggle" data-id="#{alignSource.sourceId}"
+                                        title="#{alignSource.selected ? 'Désactiver pour ce thésaurus' : 'Activer pour ce thésaurus'}"></button>
+                              </ui:fragment>
+                              <h:panelGroup rendered="#{not v2PreviewSettingsAccess.canEdit}"
+                                            styleClass="st-sw#{alignSource.selected ? ' on' : ''} is-static"
+                                            title="#{alignSource.selected ? 'Activée pour ce thésaurus' : 'Non activée'}"/>
+                            </td>
+                            <td class="st-td-act">
+                              <ui:fragment rendered="#{v2PreviewAlignmentBean.canManageAlignmentSource(alignSource)}">
+                                <button type="button" class="st-icon" data-act="preview-align-edit"
+                                        data-id="#{alignSource.sourceId}" title="Modifier la source">✎</button>
+                                <button type="button" class="st-icon del" data-act="preview-align-del"
+                                        data-id="#{alignSource.sourceId}" title="Supprimer la source">
+                                  <svg viewBox="0 0 24 24" aria-hidden="true"><path d="M18 6 6 18M6 6l12 12"/></svg>
+                                </button>
+                              </ui:fragment>
+                            </td>
+                          </tr>
+                        </ui:repeat>
+                        <ui:fragment rendered="#{empty v2PreviewAlignmentBean.alignmentSources}">
+                          <tr>
+                            <td colspan="5" class="st-td-empty">Aucune source d'alignement disponible pour ce thésaurus.</td>
+                          </tr>
+                        </ui:fragment>
+                      </tbody>
+                    </table>
+                    <div class="st-table-foot">
+                      <div class="st-count">Nombre total de sources : #{v2PreviewAlignmentBean.alignmentSources.size()}
+                        <h:outputText value=" · #{v2PreviewAlignmentBean.alignmentPageFrom}–#{v2PreviewAlignmentBean.alignmentPageTo}"
+                                      rendered="#{v2PreviewAlignmentBean.alignmentPagerNeeded}"/>
+                      </div>
+                      <preview:settingsPager needed="#{v2PreviewAlignmentBean.alignmentPagerNeeded}"
+                                             page="#{v2PreviewAlignmentBean.alignmentPage}"
+                                             pages="#{v2PreviewAlignmentBean.alignmentPages}"
+                                             prevAct="preview-align-prev"
+                                             nextAct="preview-align-next"
+                                             pageAct="preview-align-page"/>
+                    </div>
+                  </div>
+                </div>
+                </h:panelGroup>
+                <span id="previewAlignSaveMsg" hidden="hidden"
+                      data-ok="#{not v2PreviewAlignmentBean.alignmentError}">#{v2PreviewAlignmentBean.alignmentMessage}</span>
+                <h:panelGroup id="previewAlignOverlay" layout="block"
+                              styleClass="block-overlay confirm-overlay st-corpus-overlay#{v2PreviewAlignmentBean.alignmentFormDialog ? '' : ' is-off'}">
+                  <div class="confirm-modal st-corpus-modal" role="dialog" aria-modal="true"
+                       aria-labelledby="previewAlignDlgTitle">
+                    <h:panelGroup id="previewAlignFields" layout="block"
+                                  styleClass="#{v2PreviewAlignmentBean.alignmentFormDialog ? '' : 'is-off'}">
+                      <div class="confirm-h" id="previewAlignDlgTitle">
+                        <h:outputText value="Nouvelle source"
+                                      rendered="#{v2PreviewAlignmentBean.alignmentCreateDialog}"/>
+                        <h:outputText value="Modifier la source"
+                                      rendered="#{v2PreviewAlignmentBean.alignmentEditDialog}"/>
+                      </div>
+                      <h:panelGroup layout="block" styleClass="st-corpus-msg is-error"
+                                    rendered="#{v2PreviewAlignmentBean.alignmentError and not empty v2PreviewAlignmentBean.alignmentMessage}">
+                        #{v2PreviewAlignmentBean.alignmentMessage}
+                      </h:panelGroup>
+                      <div class="st-row">
+                        <div class="st-row-l">Source <span class="st-req">*</span></div>
+                        <div class="st-row-c">
+                          <h:inputText id="previewAlignSourceName" styleClass="st-input"
+                                       value="#{v2PreviewAlignmentBean.newAlignmentSourceName}"/>
+                        </div>
+                      </div>
+                      <div class="st-row">
+                        <div class="st-row-l">Type</div>
+                        <div class="st-row-c">
+                          <h:inputText id="previewAlignSourceType" styleClass="st-input"
+                                       value="#{v2PreviewAlignmentBean.newAlignmentSourceType}">
+                            <f:ajax event="blur" execute="@this" render="previewAlignFields"/>
+                          </h:inputText>
+                        </div>
+                      </div>
+                      <div class="st-row">
+                        <div class="st-row-l">URL de base <span class="st-req">*</span></div>
+                        <div class="st-row-c">
+                          <h:inputText id="previewAlignSourceUri" styleClass="st-input"
+                                       value="#{v2PreviewAlignmentBean.newAlignmentSourceUri}"/>
+                        </div>
+                      </div>
+                      <h:panelGroup layout="block"
+                                    styleClass="#{v2PreviewAlignmentBean.alignmentRemoteThesaurusVisible ? '' : 'is-off'}">
+                        <p class="st-corpus-ex">exemple : https://opentheso2.mom.fr/opentheso2</p>
+                        <p class="st-corpus-hint">Le serveur distant est vérifié via /api/ping. L'URL de recherche sera affichée dans le tableau.</p>
+                        <div class="st-row">
+                          <div class="st-row-l">Id. du thésaurus <span class="st-req">*</span></div>
+                          <div class="st-row-c">
+                            <h:inputText id="previewAlignSourceThesoId" styleClass="st-input"
+                                         value="#{v2PreviewAlignmentBean.newAlignmentSourceThesaurusId}"/>
+                          </div>
+                        </div>
+                      </h:panelGroup>
+                      <div class="st-toggle-row">
+                        <div class="st-toggle-main">
+                          <div class="st-toggle-l">État</div>
+                        </div>
+                        <label class="st-sw">
+                          <h:selectBooleanCheckbox id="previewAlignSourceSelected" styleClass="st-sw-input"
+                                                   value="#{v2PreviewAlignmentBean.newAlignmentSourceSelected}"
+                                                   title="Activer pour ce thésaurus"/>
+                        </label>
+                      </div>
+                      <div class="st-row">
+                        <div class="st-row-l">Description</div>
+                        <div class="st-row-c">
+                          <h:inputText id="previewAlignSourceDescription" styleClass="st-input"
+                                       value="#{v2PreviewAlignmentBean.newAlignmentSourceDescription}"/>
+                        </div>
+                      </div>
+                      <div class="confirm-actions">
+                        <h:commandButton id="previewAlignCancel" value="Annuler" immediate="true"
+                                         styleClass="st-corpus-btn st-corpus-cancel"
+                                         action="#{v2PreviewAlignmentBean.cancelAlignmentSourceDialog}">
+                          <f:ajax execute="@this" render="previewAlignBox"
+                                  onevent="onPreviewAlignDialog"/>
+                        </h:commandButton>
+                        <h:commandButton id="previewAlignCreate" value="Ajouter"
+                                         styleClass="st-corpus-btn st-corpus-add#{v2PreviewAlignmentBean.alignmentCreateDialog ? '' : ' is-off'}"
+                                         action="#{v2PreviewAlignmentBean.createAlignmentSource}">
+                          <f:ajax execute="previewAlignFields" render="previewAlignBox"
+                                  onevent="onPreviewAlignDialog"/>
+                        </h:commandButton>
+                        <h:commandButton id="previewAlignApply" value="Appliquer"
+                                         styleClass="st-corpus-btn st-corpus-add#{v2PreviewAlignmentBean.alignmentEditDialog ? '' : ' is-off'}"
+                                         action="#{v2PreviewAlignmentBean.updateAlignmentSource}">
+                          <f:ajax execute="previewAlignFields" render="previewAlignBox"
+                                  onevent="onPreviewAlignDialog"/>
+                        </h:commandButton>
+                      </div>
+                    </h:panelGroup>
+                  </div>
+                </h:panelGroup>
+                <h:panelGroup id="previewAlignDeleteConfirm" layout="block"
+                              styleClass="block-overlay confirm-overlay st-corpus-overlay#{v2PreviewAlignmentBean.alignmentDeleteDialog ? '' : ' is-off'}">
+                  <div class="confirm-modal" role="dialog" aria-modal="true" aria-labelledby="previewAlignDeleteTitle">
+                    <div class="confirm-h" id="previewAlignDeleteTitle">Confirmer la suppression</div>
+                    <p class="confirm-p">Voulez-vous supprimer la source
+                      <span class="st-corpus-del-name">#{v2PreviewAlignmentBean.newAlignmentSourceName}</span> ?
+                      La suppression ne sera définitive qu'après Enregistrer.</p>
+                    <div class="confirm-actions">
+                      <h:commandButton id="previewAlignCancelDel" value="Annuler" immediate="true"
+                                       styleClass="st-corpus-btn st-corpus-cancel"
+                                       action="#{v2PreviewAlignmentBean.cancelAlignmentSourceDialog}">
+                        <f:ajax execute="@this" render="previewAlignBox"
+                                onevent="onPreviewAlignDialog"/>
+                      </h:commandButton>
+                      <h:commandButton id="previewAlignDelete" value="Supprimer"
+                                       styleClass="st-corpus-btn st-corpus-del"
+                                       action="#{v2PreviewAlignmentBean.deleteAlignmentSource}">
+                        <f:ajax execute="@this" render="previewAlignBox"
+                                onevent="onPreviewAlignDialog"/>
+                      </h:commandButton>
+                    </div>
+                  </div>
+                </h:panelGroup>
+                <div class="bo-toast above" id="previewAlignToast" hidden="hidden">
+                  <svg viewBox="0 0 24 24" aria-hidden="true"><path d="M20 6 9 17l-5-5"/></svg>
+                  <span id="previewAlignToastTxt">Source ajoutée avec succès</span>
+                </div>
+                </h:panelGroup>
+                <div class="fsave">
+                  <button type="button" class="fsave-btn" data-act="st-save-ask">
+                    <svg viewBox="0 0 24 24" aria-hidden="true"><path d="M20 6 9 17l-5-5"/></svg>
+                    Enregistrer
+                  </button>
+                </div>
+                <div class="block-overlay confirm-overlay" id="stSaveConfirm" hidden="hidden"
+                     data-act="st-save-dismiss" role="presentation">
+                  <div class="confirm-modal" role="dialog" aria-modal="true"
+                       aria-labelledby="stSaveConfirmTitle" data-act="st-save-modal">
+                    <div class="confirm-h" id="stSaveConfirmTitle">Enregistrer les paramètres</div>
+                    <p class="confirm-p">Enregistrer les modifications des paramètres de
+                      <span class="cv-lang">#{v2PreviewThesaurusBean.title}</span> ?
+                      Préférences, corpus et sources d'alignement seront enregistrés. Sans Enregistrer, tout est perdu en quittant la page.</p>
+                    <div class="confirm-actions">
+                      <button type="button" class="bo-btn ghost confirm-cancel" data-act="st-save-dismiss">Annuler</button>
+                      <h:commandLink styleClass="bo-btn primary" action="#{v2PreviewPreferenceBean.savePreferences}">
+                        <f:ajax execute="@form" render="previewSettingsBody" onevent="onPreviewPrefSave"/>
+                        <svg viewBox="0 0 24 24" aria-hidden="true"><path d="M20 6 9 17l-5-5"/></svg>
+                        Enregistrer
+                      </h:commandLink>
+                    </div>
+                  </div>
+                </div>
+                <div class="bo-toast above" id="stSaveToast" hidden="hidden">
+                  <svg viewBox="0 0 24 24" aria-hidden="true"><path d="M20 6 9 17l-5-5"/></svg>
+                  Enregistré avec succès
+                </div>
+                </h:panelGroup>
+                <input type="hidden" name="csrfToken" value="#{sessionScope.CSRF_TOKEN}"/>
                 </h:form>
+                <div class="block-overlay confirm-overlay" id="stLeaveConfirm" hidden="hidden"
+                     data-act="st-leave-dismiss" role="presentation">
+                  <div class="confirm-modal" role="dialog" aria-modal="true"
+                       aria-labelledby="stLeaveConfirmTitle" data-act="st-leave-modal">
+                    <div class="confirm-h" id="stLeaveConfirmTitle">Quitter sans enregistrer</div>
+                    <p class="confirm-p">Les modifications des paramètres, corpus et sources d'alignement seront perdues.
+                      Voulez-vous quitter la page sans enregistrer ?</p>
+                    <div class="confirm-actions">
+                      <button type="button" class="bo-btn ghost confirm-cancel" data-act="st-leave-dismiss">Rester sur la page</button>
+                      <button type="button" class="bo-btn danger" data-act="st-leave-confirm">Quitter sans enregistrer</button>
+                    </div>
+                  </div>
+                </div>
+              </div>
             </div>
-            <ui:include src="../thesaurus/includes/layout/logout-dialog.xhtml" />
-        </h:panelGroup>
-    </h:body>
-</HTML>
-
+          </div>
+  </ui:define>
+</ui:composition>

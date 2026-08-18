@@ -24,7 +24,7 @@ public class GraphVisualizationUrlService {
     private final ThesaurusWorkLanguageService thesaurusWorkLanguageService;
 
     public String buildForceGraphViewerPath() {
-        return "/v2/graph/visualize/force.xhtml";
+        return "/d3js/index.xhtml";
     }
 
     public String buildVisualizationUrl(String viewId, String baseUrl, String lang) throws URISyntaxException {

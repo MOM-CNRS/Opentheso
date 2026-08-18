@@ -28,75 +28,74 @@ public class V2NavigationBean implements Serializable {
 
     public void redirectToThesaurus() throws IOException {
         activePageName = "thesaurusV2";
-        redirect("/v2/thesaurus");
+        redirect("/v2");
     }
 
     public void redirectToCandidat() throws IOException {
         requireThesaurus();
         activePageName = "candidatV2";
-        // Le thésaurus est porté par la session (ThesaurusContext), pas par l'URL.
-        redirect("/v2/candidat");
+        redirect("/v2/candidat/candidats.xhtml");
     }
 
     public void redirectToGraph() throws IOException {
         activePageName = "graphV2";
-        redirect(buildSettingUrl("/v2/graph"));
+        redirect(buildSettingUrl("/v2/graph/graphe.xhtml"));
     }
 
     public void redirectToMyProfile() throws IOException {
         activePageName = "myAccountV2";
-        redirect("/v2/user/my-account.xhtml");
+        redirect("/v2/user/compte.xhtml");
     }
 
     public void redirectToMyProjects() throws IOException {
         activePageName = "myProjectV2";
-        redirect("/v2/project/my-projects.xhtml");
+        redirect("/v2/project/projets.xhtml");
     }
 
     public void redirectToAllUsers() throws IOException {
         activePageName = "usersV2";
-        redirect("/v2/admin/all-users.xhtml");
+        redirect("/v2/admin/utilisateurs.xhtml");
     }
 
     public void redirectToAllProjects() throws IOException {
         activePageName = "projectsV2";
-        redirect("/v2/admin/all-projects.xhtml");
+        redirect("/v2/admin/projets.xhtml");
     }
 
     public void redirectToAllThesauri() throws IOException {
         activePageName = "thesauriV2";
-        redirect("/v2/admin/all-thesauri.xhtml");
+        redirect("/v2/admin/thesauri.xhtml");
     }
 
     public void redirectToPreference() throws IOException {
         activePageName = "preferenceV2";
-        redirect("/v2/setting/preference.xhtml");
+        redirect(buildSettingUrl("/v2/setting/preference.xhtml"));
     }
 
     public void redirectToIdentifier() throws IOException {
         activePageName = "identifierV2";
-        redirect("/v2/setting/identifier.xhtml");
+        redirect(buildSettingUrl("/v2/setting/preference.xhtml"));
     }
 
     public void redirectToCorpus() throws IOException {
         activePageName = "corpusV2";
-        redirect("/v2/setting/corpus.xhtml");
+        redirect(buildSettingUrl("/v2/setting/preference.xhtml"));
     }
 
     public void redirectToEdition() throws IOException {
         activePageName = "editionV2";
-        redirect("/v2/toolbox/edition.xhtml");
+        redirect("/v2/setting/parametres.xhtml");
     }
 
     public void redirectToFlag() throws IOException {
         activePageName = "flagV2";
-        redirect("/v2/toolbox/flag.xhtml");
+        redirect("/v2/toolbox/actions-lot.xhtml");
     }
 
     public void redirectToWorkshop() throws IOException {
         requireThesaurus();
         activePageName = "atelierV2";
-        redirect("/v2/toolbox/workshop.xhtml");
+        redirect("/v2/toolbox/atelier.xhtml");
     }
 
     public void redirectToMaintenance() throws IOException {
@@ -108,7 +107,7 @@ public class V2NavigationBean implements Serializable {
     public void redirectToStatistics() throws IOException {
         requireThesaurus();
         activePageName = "statisticV2";
-        redirect("/v2/toolbox/statistics.xhtml");
+        redirect("/v2/toolbox/statistiques.xhtml");
     }
 
     public int getSessionTimeoutInMilliseconds() {
@@ -122,7 +121,7 @@ public class V2NavigationBean implements Serializable {
 
     private void requireThesaurus() throws IOException {
         if (StringUtils.isBlank(thesaurusContext.resolveThesaurusId())) {
-            redirect("/v2/thesaurus");
+            redirect("/v2");
         }
     }
 

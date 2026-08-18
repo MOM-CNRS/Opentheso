@@ -16,7 +16,7 @@ import java.io.IOException;
 @Service
 public class SessionLifecycleService {
 
-    public static final String HOME_PATH = "/v2/thesaurus";
+    public static final String HOME_PATH = "/v2";
     public static final String EXPIRE_PATH = "/v2/session/expire";
     public static final String PARAM_SESSION_EXPIRED = "sessionExpired";
     public static final String PARAM_LOGOUT = "logout";

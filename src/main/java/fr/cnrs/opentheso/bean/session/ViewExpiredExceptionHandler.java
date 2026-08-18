@@ -19,7 +19,7 @@ import jakarta.servlet.http.HttpSession;
  */
 public class ViewExpiredExceptionHandler extends ExceptionHandlerWrapper {
 
-    private static final String HOME_PATH = "/v2/thesaurus";
+    private static final String HOME_PATH = "/index.xhtml";
 
     private final ExceptionHandler handler;
 

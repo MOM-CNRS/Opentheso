@@ -1,0 +1,29 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<html xmlns="http://www.w3.org/1999/xhtml"
+      xmlns:cc="http://xmlns.jcp.org/jsf/composite"
+      xmlns:h="http://xmlns.jcp.org/jsf/html"
+      xmlns:ui="http://xmlns.jcp.org/jsf/facelets">
+  <cc:interface>
+    <cc:attribute name="needed" required="true"/>
+    <cc:attribute name="page" required="true"/>
+    <cc:attribute name="pages" required="true"/>
+    <cc:attribute name="prevAct" required="true"/>
+    <cc:attribute name="nextAct" required="true"/>
+    <cc:attribute name="pageAct" required="true"/>
+  </cc:interface>
+  <cc:implementation>
+    <h:panelGroup layout="block" styleClass="st-pager" rendered="#{cc.attrs.needed}">
+      <button type="button"
+              class="st-pager-btn#{cc.attrs.page le 1 ? ' is-off' : ''}"
+              data-act="#{cc.attrs.prevAct}" title="Page précédente">‹</button>
+      <ui:repeat id="pagerPages" value="#{cc.attrs.pages}" var="pageNum">
+        <button type="button"
+                class="st-pager-n#{pageNum eq cc.attrs.page ? ' is-on' : ''}"
+                data-act="#{cc.attrs.pageAct}" data-page="#{pageNum}">#{pageNum}</button>
+      </ui:repeat>
+      <button type="button"
+              class="st-pager-btn#{cc.attrs.page ge cc.attrs.pages.size() ? ' is-off' : ''}"
+              data-act="#{cc.attrs.nextAct}" title="Page suivante">›</button>
+    </h:panelGroup>
+  </cc:implementation>
+</html>

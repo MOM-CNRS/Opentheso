@@ -100,7 +100,7 @@ public class LoginBean implements Serializable {
         sessionLifecycleService.logoutAndRedirectFromFaces();
     }
 
-    /** Déconnexion depuis le clone v2-preview : reste sur /v2-preview. */
+    /** Déconnexion depuis le front v2 : reste sur /v2. */
     public void logoutToPreview() throws IOException {
         username = null;
         password = null;
@@ -116,7 +116,7 @@ public class LoginBean implements Serializable {
             ctx = "";
         }
         sessionLifecycleService.invalidateCurrentFacesSessionQuietly();
-        externalContext.redirect(ctx + "/v2-preview");
+        externalContext.redirect(ctx + "/v2");
         facesContext.responseComplete();
     }
 
@@ -135,7 +135,7 @@ public class LoginBean implements Serializable {
         }
         String path = externalContext.getRequestServletPath();
         if (path == null || path.isBlank()) {
-            path = "/v2-preview";
+            path = "/v2";
         }
         String query = null;
         if (externalContext.getRequest() instanceof HttpServletRequest httpRequest) {

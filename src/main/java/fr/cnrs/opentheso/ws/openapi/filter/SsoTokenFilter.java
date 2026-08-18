@@ -59,7 +59,7 @@ public class SsoTokenFilter implements Filter {
             }
 
             log.warn("SSO token invalide ou expiré : {}", ssoToken);
-            response.sendRedirect(request.getContextPath() + "/v2/thesaurus?ssoError=true");
+            response.sendRedirect(request.getContextPath() + "/index.xhtml?ssoError=true");
             return;
         }
 

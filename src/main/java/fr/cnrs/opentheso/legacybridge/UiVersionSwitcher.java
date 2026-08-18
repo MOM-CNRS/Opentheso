@@ -38,7 +38,9 @@ public class UiVersionSwitcher implements Serializable {
             return true;
         }
         String path = context.getExternalContext().getRequestServletPath();
-        return path != null && path.contains("/v2/");
+        return path != null && (path.equals("/v2")
+                || path.startsWith("/v2/")
+                || path.contains("/v2-preview"));
     }
 
     public String getSelectedVersion() {
@@ -128,43 +130,43 @@ public class UiVersionSwitcher implements Serializable {
         if (path.contains("/graph")) {
             return "graphV2";
         }
-        if (path.contains("/my-account")) {
-            return "myAccountV2";
-        }
-        if (path.contains("/my-projects")) {
-            return "myProjectV2";
-        }
-        if (path.contains("/all-users")) {
+        if (path.contains("/admin/utilisateurs") || path.contains("/all-users")) {
             return "usersV2";
         }
-        if (path.contains("/all-projects")) {
+        if (path.contains("/admin/projets") || path.contains("/all-projects")) {
             return "projectsV2";
         }
-        if (path.contains("/all-thesauri")) {
+        if (path.contains("/admin/thesauri") || path.contains("/all-thesauri")) {
             return "thesauriV2";
+        }
+        if (path.contains("/user/") || path.contains("/compte") || path.contains("/my-account")) {
+            return "myAccountV2";
+        }
+        if (path.contains("/project/") || path.contains("/my-projects")) {
+            return "myProjectV2";
         }
         if (path.contains("/preference")) {
             return "preferenceV2";
         }
-        if (path.contains("/identifier")) {
+        if (path.contains("/identifiant") || path.contains("/identifier")) {
             return "identifierV2";
         }
         if (path.contains("/corpus")) {
             return "corpusV2";
         }
-        if (path.contains("/edition")) {
+        if (path.contains("/parametre") || path.contains("/edition")) {
             return "editionV2";
         }
-        if (path.contains("/flag")) {
+        if (path.contains("/actions-lot") || path.contains("/flag")) {
             return "flagV2";
         }
-        if (path.contains("/workshop")) {
+        if (path.contains("/atelier") || path.contains("/workshop")) {
             return "atelierV2";
         }
         if (path.contains("/maintenance")) {
             return "serviceV2";
         }
-        if (path.contains("/statistics")) {
+        if (path.contains("/statistique") || path.contains("/statistics")) {
             return "statisticV2";
         }
         return "thesaurusV2";

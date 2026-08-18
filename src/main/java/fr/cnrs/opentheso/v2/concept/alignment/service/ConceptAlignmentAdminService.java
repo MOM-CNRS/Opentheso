@@ -137,7 +137,10 @@ public class ConceptAlignmentAdminService {
                         source.getSource(),
                         StringUtils.defaultString(source.getDescription()),
                         selectedIds.contains(source.getId()),
-                        Boolean.TRUE.equals(source.getIsGlobal())
+                        Boolean.TRUE.equals(source.getIsGlobal()),
+                        StringUtils.defaultString(source.getSourceFilter()),
+                        StringUtils.defaultString(source.getRequete()),
+                        source.getIdThesaurusOwner()
                 ))
                 .toList();
     }
@@ -499,42 +502,21 @@ public class ConceptAlignmentAdminService {
             String sourceThesaurusId,
             String description
     ) {
-        if (StringUtils.isBlank(sourceName)) {
-            return "Le nom de la source est obligatoire !";
+        String error = validateOpenthesoSource(sourceName, sourceUri, sourceThesaurusId);
+        if (error != null) {
+            return error;
         }
-        if (StringUtils.isBlank(sourceUri)) {
-            return "L'URL est obligatoire !";
-        }
-        if (StringUtils.isBlank(sourceThesaurusId)) {
-            return "L'Id. du thésaurus est obligatoire !";
-        }
-        String uri = sourceUri.trim();
-        if (uri.endsWith("/")) {
-            uri = uri.substring(0, uri.length() - 1);
-        }
-        if (!isPingOk(uri)) {
-            return "Uri du serveur non valide !";
-        }
-        var alignementSource = AlignementSource.builder()
-                .source(sourceName.trim())
-                .description(StringUtils.defaultString(description))
-                .requete(uri + "/api/search?q=##value##&lang=##lang##&theso=" + sourceThesaurusId.trim())
-                .typeRequete("REST")
-                .alignement_format("skos")
-                .source_filter("Opentheso")
-                .build();
+        String uri = normalizeOpenthesoUri(sourceUri);
         try {
             var saved = alignementSourceRepository.save(fr.cnrs.opentheso.entites.AlignementSource.builder()
-                    .source(alignementSource.getSource())
-                    .requete(alignementSource.getRequete())
-                    .typeRqt(alignementSource.getTypeRequete())
-                    .alignementFormat(alignementSource.getAlignement_format())
-                    .description(alignementSource.getDescription())
+                    .source(sourceName.trim())
+                    .requete(uri + "/api/search?q=##value##&lang=##lang##&theso=" + sourceThesaurusId.trim())
+                    .typeRqt("REST")
+                    .alignementFormat("skos")
+                    .description(StringUtils.defaultString(description))
                     .idUser(userId)
                     .gps(false)
-                    .sourceFilter(StringUtils.isEmpty(alignementSource.getSource_filter())
-                            ? "Opentheso"
-                            : alignementSource.getSource_filter())
+                    .sourceFilter("Opentheso")
                     .isGlobal(false)
                     .idThesaurusOwner(thesaurusId)
                     .build());
@@ -549,6 +531,109 @@ public class ConceptAlignmentAdminService {
             return "Erreur côté base de données !";
         }
         return null;
+    }
+
+    @Transactional(readOnly = true)
+    public String validateOpenthesoSource(String sourceName, String sourceUri, String sourceThesaurusId) {
+        if (StringUtils.isBlank(sourceName)) {
+            return "Le nom de la source est obligatoire !";
+        }
+        if (StringUtils.isBlank(sourceUri)) {
+            return "L'URL est obligatoire !";
+        }
+        if (StringUtils.isBlank(sourceThesaurusId)) {
+            return "L'Id. du thésaurus est obligatoire !";
+        }
+        if (!isPingOk(normalizeOpenthesoUri(sourceUri))) {
+            return "Uri du serveur non valide !";
+        }
+        return null;
+    }
+
+    @Transactional
+    public String updateLocalSource(int sourceId, String sourceName, String requete, String description) {
+        return updateLocalSource(sourceId, sourceName, requete, description, null);
+    }
+
+    @Transactional
+    public String updateLocalSource(
+            int sourceId,
+            String sourceName,
+            String requete,
+            String description,
+            String sourceFilter
+    ) {
+        if (sourceId <= 0) {
+            return "Source introuvable";
+        }
+        if (StringUtils.isBlank(sourceName)) {
+            return "Le nom de la source est obligatoire !";
+        }
+        if (StringUtils.isBlank(requete)) {
+            return "L'URL est obligatoire !";
+        }
+        var found = alignementSourceRepository.findById(sourceId);
+        if (found.isEmpty()) {
+            return "Source introuvable";
+        }
+        found.get().setSource(sourceName.trim());
+        found.get().setRequete(requete.trim());
+        found.get().setDescription(StringUtils.defaultString(description));
+        if (sourceFilter != null) {
+            found.get().setSourceFilter(StringUtils.defaultString(sourceFilter).trim());
+        }
+        alignementSourceRepository.save(found.get());
+        return null;
+    }
+
+    @Transactional
+    public String addLocalSource(
+            String thesaurusId,
+            int userId,
+            String sourceName,
+            String requete,
+            String description,
+            String sourceFilter,
+            boolean selected
+    ) {
+        if (StringUtils.isBlank(sourceName)) {
+            return "Le nom de la source est obligatoire !";
+        }
+        if (StringUtils.isBlank(requete)) {
+            return "L'URL est obligatoire !";
+        }
+        try {
+            var saved = alignementSourceRepository.save(fr.cnrs.opentheso.entites.AlignementSource.builder()
+                    .source(sourceName.trim())
+                    .requete(requete.trim())
+                    .typeRqt("REST")
+                    .alignementFormat("skos")
+                    .description(StringUtils.defaultString(description))
+                    .idUser(userId)
+                    .gps(false)
+                    .sourceFilter(StringUtils.defaultIfBlank(sourceFilter, "Opentheso").trim())
+                    .isGlobal(false)
+                    .idThesaurusOwner(thesaurusId)
+                    .build());
+            if (selected && StringUtils.isNotBlank(thesaurusId) && saved.getId() != null) {
+                thesaurusAlignementSourceRepository.save(ThesaurusAlignementSource.builder()
+                        .idAlignementSource(saved.getId())
+                        .idThesaurus(thesaurusId)
+                        .build());
+            }
+        } catch (Exception ex) {
+            log.error("Erreur lors de l'ajout de la source d'alignement", ex);
+            return "Erreur côté base de données !";
+        }
+        return null;
+    }
+
+    private String normalizeOpenthesoUri(String sourceUri) {
+        String uri = sourceUri.trim();
+        if (uri.endsWith("/")) {
+            return uri.substring(0, uri.length() - 1);
+        }
+        return uri;
     }
 
     private List<String> limitBranch(List<String> branchIds) {

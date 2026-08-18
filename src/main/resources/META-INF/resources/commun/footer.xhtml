@@ -6,7 +6,7 @@
     <p:idleMonitor timeout="#{sessionConfig.getSessionTimeoutInMilliseconds()}" onidle="handleSessionTimeout()" />
     <h:outputScript>
         function handleSessionTimeout() {
-            window.location.href = '#{request.contextPath}/v2/session/expire';
+            window.location.href = '#{request.contextPath}/index.xhtml';
         }
     </h:outputScript>
 

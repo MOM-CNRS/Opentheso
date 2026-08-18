@@ -74,6 +74,16 @@ public class ThesaurusCorpusService {
     }
 
     @Transactional
+    public ThesaurusCorpus setCorpusActive(String thesaurusId, String corpusName, boolean active) {
+        CorpusLinkEntity existing = corpusLinkJpaRepository.findByIdThesaurusAndCorpusName(thesaurusId, corpusName)
+                .orElseThrow(() -> new InvalidSettingDataException("Corpus introuvable : " + corpusName));
+        existing.setActive(active);
+        CorpusLinkEntity saved = corpusLinkJpaRepository.save(existing);
+        log.info("Corpus {} {} pour le thésaurus {}", corpusName, active ? "activé" : "désactivé", thesaurusId);
+        return SettingMapper.toCorpus(saved);
+    }
+
+    @Transactional
     public void deleteCorpus(String thesaurusId, String corpusName) {
         if (corpusLinkJpaRepository.findByIdThesaurusAndCorpusName(thesaurusId, corpusName).isEmpty()) {
             throw new InvalidSettingDataException("Corpus introuvable : " + corpusName);
@@ -82,7 +92,7 @@ public class ThesaurusCorpusService {
         log.info("Corpus {} supprimé pour le thésaurus {}", corpusName, thesaurusId);
     }
 
-    private void validateCorpus(ThesaurusCorpus corpus) {
+    public void validateCorpus(ThesaurusCorpus corpus) {
         if (corpus == null || StringUtils.isBlank(corpus.corpusName())) {
             throw new InvalidSettingDataException("Le nom du corpus est obligatoire.");
         }

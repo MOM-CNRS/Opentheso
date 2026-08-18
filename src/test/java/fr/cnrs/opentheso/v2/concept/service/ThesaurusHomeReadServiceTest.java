@@ -65,7 +65,7 @@ class ThesaurusHomeReadServiceTest {
         assertEquals("Mon thésaurus", overview.thesaurusTitle());
         assertEquals(42, overview.conceptCount());
         assertEquals("Projet A", overview.projectName());
-        assertEquals("http://localhost/opentheso/v2/thesaurus?idt=TH1", overview.permalinkUrl());
+        assertEquals("http://localhost/opentheso/?idt=TH1", overview.permalinkUrl());
         assertEquals(1, overview.lastModifiedConcepts().size());
         assertEquals("<p>Bienvenue</p>", overview.homePageHtml());
     }

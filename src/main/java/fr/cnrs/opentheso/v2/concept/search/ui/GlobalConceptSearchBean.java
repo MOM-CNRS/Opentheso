@@ -179,7 +179,7 @@ public class GlobalConceptSearchBean implements Serializable {
         }
         ExternalContext context = FacesContext.getCurrentInstance().getExternalContext();
         context.redirect(context.getRequestContextPath()
-                + "/v2/thesaurus?idt=" + thesaurusId.trim()
+                + "/?idt=" + thesaurusId.trim()
                 + "&idc=" + conceptId.trim());
     }
 

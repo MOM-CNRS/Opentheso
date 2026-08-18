@@ -61,7 +61,7 @@ public class ThesaurusHomeReadService {
             return preferences.originalUri().replaceAll("/$", "") + "/" + arkId.replaceAll("^/", "");
         }
         if (StringUtils.isBlank(arkId)) {
-            return baseUrl + "/v2/thesaurus?idt=" + thesaurusId;
+            return baseUrl + "/?idt=" + thesaurusId;
         }
         return baseUrl + "/api/ark:/" + arkId.replaceAll("^/", "");
     }

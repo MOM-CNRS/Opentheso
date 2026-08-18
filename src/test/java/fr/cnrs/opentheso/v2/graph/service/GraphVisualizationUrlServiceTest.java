@@ -39,7 +39,7 @@ class GraphVisualizationUrlServiceTest {
     }
 
     @Test
-    void buildVisualizationUrl_targetsV2ForceViewer() throws Exception {
+    void buildVisualizationUrl_targetsLegacyForceViewer() throws Exception {
         var view = new GraphViewSummary(1, "Vue test", "desc");
         view.setExports(List.of(
                 new GraphExportEntry("TH1", null),
@@ -49,7 +49,7 @@ class GraphVisualizationUrlServiceTest {
         String url = service.buildVisualizationUrl(view, "http://localhost:8080/opentheso", "fr");
 
         assertNotNull(url);
-        assertTrue(url.contains("/v2/graph/visualize/force.xhtml"));
+        assertTrue(url.contains("/d3js/index.xhtml"));
         assertTrue(url.contains("format=opentheso"));
     }
 
@@ -142,7 +142,7 @@ class GraphVisualizationUrlServiceTest {
     }
 
     @Test
-    void buildForceGraphViewerPath_pointsToV2Viewer() {
-        assertEquals("/v2/graph/visualize/force.xhtml", service.buildForceGraphViewerPath());
+    void buildForceGraphViewerPath_pointsToD3jsViewer() {
+        assertEquals("/d3js/index.xhtml", service.buildForceGraphViewerPath());
     }
 }

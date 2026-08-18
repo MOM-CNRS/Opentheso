@@ -36,12 +36,12 @@ class SessionLifecycleServiceTest {
 
     @Test
     void homeUrl_handlesRootAndNonRootContext() {
-        assertEquals("/v2/thesaurus", service.homeUrl(null));
-        assertEquals("/v2/thesaurus", service.homeUrl("/"));
-        assertEquals("/opentheso/v2/thesaurus", service.homeUrl("/opentheso"));
-        assertEquals("/opentheso/v2/thesaurus", service.homeUrl("/opentheso/"));
-        assertEquals("/opentheso/v2/thesaurus?sessionExpired=1", service.homeUrlWithSessionExpired("/opentheso"));
-        assertEquals("/opentheso/v2/thesaurus?logout=1", service.homeUrlWithLogout("/opentheso"));
+        assertEquals("/v2", service.homeUrl(null));
+        assertEquals("/v2", service.homeUrl("/"));
+        assertEquals("/opentheso/v2", service.homeUrl("/opentheso"));
+        assertEquals("/opentheso/v2", service.homeUrl("/opentheso/"));
+        assertEquals("/opentheso/v2?sessionExpired=1", service.homeUrlWithSessionExpired("/opentheso"));
+        assertEquals("/opentheso/v2?logout=1", service.homeUrlWithLogout("/opentheso"));
         assertEquals("/opentheso/v2/session/expire", service.expireUrl("/opentheso"));
         assertEquals("/v2/session/expire", service.expireUrl(null));
     }
@@ -54,7 +54,7 @@ class SessionLifecycleServiceTest {
         service.expireAndRedirect(request, response);
 
         verify(session).invalidate();
-        verify(response).sendRedirect("/opentheso/v2/thesaurus?sessionExpired=1");
+        verify(response).sendRedirect("/opentheso/v2?sessionExpired=1");
     }
 
     @Test
@@ -64,7 +64,7 @@ class SessionLifecycleServiceTest {
 
         service.expireAndRedirect(request, response);
 
-        verify(response).sendRedirect("/v2/thesaurus?sessionExpired=1");
+        verify(response).sendRedirect("/v2?sessionExpired=1");
     }
 
     @Test
@@ -88,7 +88,7 @@ class SessionLifecycleServiceTest {
         }
 
         verify(session).invalidate();
-        verify(externalContext).redirect("/opentheso/v2/thesaurus?logout=1");
+        verify(externalContext).redirect("/opentheso/v2?logout=1");
         verify(facesContext).responseComplete();
     }
 
@@ -105,7 +105,7 @@ class SessionLifecycleServiceTest {
         }
 
         verify(session).invalidate();
-        verify(externalContext).redirect("/v2/thesaurus?sessionExpired=1");
+        verify(externalContext).redirect("/v2?sessionExpired=1");
         verify(facesContext).responseComplete();
     }
 
@@ -122,7 +122,7 @@ class SessionLifecycleServiceTest {
         }
 
         verify(session).invalidate();
-        verify(externalContext).redirect("/opentheso/v2/thesaurus");
+        verify(externalContext).redirect("/opentheso/v2");
         verify(facesContext).responseComplete();
     }
 

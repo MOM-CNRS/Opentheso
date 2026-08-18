@@ -568,7 +568,7 @@ public class ConceptReadService {
             String conceptUri
     ) {
         String baseUrl = applicationUriService.resolveApplicationBaseUrl();
-        String internalPermalink = baseUrl + "/v2/thesaurus?idc=" + conceptId + "&idt=" + thesaurusId;
+        String internalPermalink = baseUrl + "/?idc=" + conceptId + "&idt=" + thesaurusId;
         String originalUri = StringUtils.isNotBlank(conceptUri)
                 ? conceptUri
                 : ConceptUriBuilder.buildConceptUri(

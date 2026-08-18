@@ -146,6 +146,20 @@ class ThesaurusCorpusServiceTest {
     }
 
     @Test
+    void setCorpusActive_updatesFlag() {
+        CorpusLinkEntity existing = SettingTestFixtures.sampleCorpusEntity();
+        existing.setActive(true);
+        when(corpusLinkJpaRepository.findByIdThesaurusAndCorpusName("TH1", "Corpus A"))
+                .thenReturn(Optional.of(existing));
+        when(corpusLinkJpaRepository.save(existing)).thenReturn(existing);
+
+        ThesaurusCorpus updated = thesaurusCorpusService.setCorpusActive("TH1", "Corpus A", false);
+
+        assertEquals(false, updated.active());
+        verify(corpusLinkJpaRepository).save(existing);
+    }
+
+    @Test
     void deleteCorpus_removesEntity() {
         when(corpusLinkJpaRepository.findByIdThesaurusAndCorpusName("TH1", "Corpus A"))
                 .thenReturn(Optional.of(new CorpusLinkEntity()));

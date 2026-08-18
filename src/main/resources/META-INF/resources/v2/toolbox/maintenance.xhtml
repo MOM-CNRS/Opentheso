@@ -1,143 +1,67 @@
-<!DOCTYPE HTML>
-<html xmlns="http://www.w3.org/1999/xhtml"
-      xmlns:h="http://xmlns.jcp.org/jsf/html"
-      xmlns:ui="http://xmlns.jcp.org/jsf/facelets"
-      xmlns:f="http://xmlns.jcp.org/jsf/core"
-      xmlns:p="http://primefaces.org/ui">
+<?xml version="1.0" encoding="UTF-8"?>
+<ui:composition xmlns="http://www.w3.org/1999/xhtml"
+                xmlns:ui="http://xmlns.jcp.org/jsf/facelets"
+                template="/v2/includes/layout.xhtml">
+  <ui:param name="previewPage" value="maintenance"/>
+  <ui:define name="title">OpenTheso — Maintenance</ui:define>
+  <ui:define name="main">
 
-    <f:view>
-        <f:metadata>
-    <f:viewAction action="#{v2ConsultationShellBean.load()}"/>
-            <f:viewAction action="#{v2MaintenanceBean.load()}"/>
-            <f:viewParam name="idc" value="#{v2ThesaurusContext.idConceptFromUri}"/>
-            <f:viewParam name="idg" value="#{v2ThesaurusContext.idGroupFromUri}"/>
-            <f:viewParam name="idt" value="#{v2ThesaurusContext.idThesoFromUri}"/>
-        </f:metadata>
-    </f:view>
-    <h:head>
-        <title>Opentheso</title>
-        <link href="../../resources/img/icon_opentheso2.png" rel="icon"/>
-        <link rel="stylesheet" type="text/css" href="../../resources/css/all.css"/>
-        <link rel="stylesheet" type="text/css" href="../../resources/css/theme_general.css"/>
-        <link rel="stylesheet" type="text/css" href="../../resources/css/theme_opentheso.css"/>
-        <link rel="stylesheet" type="text/css" href="../../resources/css/composants_opentheso.css"/>
-        <link rel="stylesheet" href="https://use.fontawesome.com/releases/v6.1.0/css/all.css"/>
-        <link rel="stylesheet" href="https://use.fontawesome.com/releases/v6.1.0/css/v4-shims.css"/>
-    </h:head>
-
-    <h:body id="page-top" onload="initMenu()">
-        <p:growl id="messageIndex" globalOnly="true" showDetail="true"/>
-        <h:panelGroup rendered="#{v2UserSession.isLoggedIn() and v2MaintenanceBean.screenAvailable}" id="wrapper" style="height: 100%">
-            <ui:include src="../thesaurus/includes/layout/menu.xhtml"/>
-            <div id="content-wrapper" style="width: 100%; min-height:100%; position:relative;">
-                <h:form id="containerIndex">
-                    <h:panelGroup id="header">
-                        <ui:include src="../thesaurus/includes/layout/header.xhtml"/>
-                    </h:panelGroup>
-                    <div class="container-fluid">
-                        <div class="d-sm-flex align-items-center justify-content-between mb-4" style="margin: 20px">
-                            <h1 class="h3 mb-0 text-gray-800">#{v2LocaleBean.getMsg('menu.toolbox')} / <span style="color: #f47b2a">#{v2LocaleBean.getMsg('menu.service')}</span></h1>
-                        </div>
-                        <div class="card shadow mb-4">
-                            <div class="card mb-4 py-3 border-left-success" style="margin: 30px">
-                                <div class="row" style="margin-left: 30px; margin-right: 30px;">
-                                    <div class="col-12">
-                                        <h:outputText style="font-size: 16px;" value="#{v2LocaleBean.getMsg('service.selectedThesaurus')}: #{v2MaintenanceBean.thesaurusTitle} (#{v2MaintenanceBean.thesaurusId})"/>
-                                    </div>
-                                    <p:accordionPanel widgetVar="v2MaintenancePanel" style="width: 100%; margin-top: 10px">
-                                        <p:tab title="Corriger l'affichage des faux top termes">
-                                            <p:outputPanel style="color: black; margin-bottom: 10px">
-                                                <h:outputText value="Corrige les concepts marqués top terme alors qu'ils ont déjà une relation BT."/>
-                                            </p:outputPanel>
-                                            <p:commandButton value="#{v2LocaleBean.getMsg('service.launchCorrection')}" icon="pi pi-check"
-                                                             action="#{v2MaintenanceBean.correctDisplayTopTerm()}" update="containerIndex messageIndex"/>
-                                        </p:tab>
-                                        <p:tab title="Correction 1 - Restructuration">
-                                            <p:outputPanel style="color: black; margin-bottom: 10px">
-                                                <h:outputText value="Nettoie et réorganise la hiérarchie (TT / BT / NT) et les relations en boucle."/>
-                                                <br/>
-                                                <h:outputText value="!!! Recharger le thésaurus à la fin du traitement !!!" style="color: red"/>
-                                            </p:outputPanel>
-                                            <p:commandButton value="#{v2LocaleBean.getMsg('service.launchCorrection')}" icon="pi pi-check"
-                                                             action="#{v2MaintenanceBean.reorganizeHierarchy()}" update="containerIndex messageIndex"/>
-                                        </p:tab>
-                                        <p:tab title="Correction 2 - Collections">
-                                            <p:outputPanel style="color: black; margin-bottom: 10px">
-                                                <h:outputText value="Supprime les liens concept/collection incohérents (collection ou concept absent)."/>
-                                                <br/>
-                                                <h:outputText value="Réservé aux super-administrateurs. Recharger le thésaurus après traitement." style="color: red"/>
-                                            </p:outputPanel>
-                                            <p:commandButton rendered="#{v2MaintenanceBean.superAdmin}" value="#{v2LocaleBean.getMsg('service.launchCorrection')}"
-                                                             icon="pi pi-check" action="#{v2MaintenanceBean.reorganizeConceptsAndCollections()}"
-                                                             update="containerIndex messageIndex"/>
-                                            <h:outputText rendered="#{not v2MaintenanceBean.superAdmin}"
-                                                          value="Action réservée aux super-administrateurs."
-                                                          style="color: #666; font-style: italic"/>
-                                        </p:tab>
-                                        <p:tab title="Correction 3 - Créateur/contributeur">
-                                            <p:outputPanel style="color: black; margin-bottom: 10px">
-                                                <h:outputText value="Transfère créateur et contributeur du terme préféré vers le concept."/>
-                                            </p:outputPanel>
-                                            <p:commandButton value="#{v2LocaleBean.getMsg('service.launchCorrection')}" icon="pi pi-check"
-                                                             action="#{v2MaintenanceBean.switchRolesFromTermToConcept()}" update="containerIndex messageIndex"/>
-                                        </p:tab>
-                                        <p:tab title="Correction 4 - Les identifiants Ark">
-                                            <p:outputPanel style="color: black; margin-bottom: 10px">
-                                                <h:outputText value="Génération ARK à partir de l'id concept (NAAN + préfixe + id), ou ARK local selon les préférences."/>
-                                            </p:outputPanel>
-                                            <div class="row" style="color: black; margin-top: 10px">
-                                                <div class="col-3">
-                                                    <h:outputText value="*Naan: "/>
-                                                    <p:inputText value="#{v2MaintenanceBean.arkEditor.naan}" style="height: 22px;"/>
-                                                </div>
-                                                <div class="col-3">
-                                                    <h:outputText value="Prefixe: "/>
-                                                    <p:inputText value="#{v2MaintenanceBean.arkEditor.prefix}" style="height: 22px;"/>
-                                                </div>
-                                                <div class="col-5">
-                                                    <h:outputText value="!!!! Ecraser les Ark Existants? " style="color: red; font-weight: bold"/>
-                                                    <p:toggleSwitch value="#{v2MaintenanceBean.arkEditor.overwrite}" style="height: 22px;"/>
-                                                </div>
-                                            </div>
-                                            <p:commandButton value="#{v2LocaleBean.getMsg('service.generate')}" icon="pi pi-check"
-                                                             action="#{v2MaintenanceBean.generateArkFromConceptId()}" update="containerIndex messageIndex"
-                                                             style="margin-top: 10px"/>
-                                            <div class="row" style="margin-top: 20px; color: black">
-                                                <div class="col-6">
-                                                    <h:outputText value="Naan: "/>
-                                                    <h:outputText value="#{v2MaintenanceBean.localArkSettings.naan}" style="font-weight: bold; color: #f47b2a"/>
-                                                    <h:outputText value=" / Prefixe: "/>
-                                                    <h:outputText value="#{v2MaintenanceBean.localArkSettings.prefix}" style="font-weight: bold; color: #f47b2a"/>
-                                                    <h:outputText value=" / taille Id: "/>
-                                                    <h:outputText value="#{v2MaintenanceBean.localArkSettings.size}" style="font-weight: bold; color: #f47b2a"/>
-                                                </div>
-                                                <div class="col-6">
-                                                    <h:outputText value="!!!! Ecraser les Ark Existants? " style="color: red; font-weight: bold"/>
-                                                    <p:toggleSwitch value="#{v2MaintenanceBean.arkEditor.overwriteLocalArk}" style="height: 22px;"/>
-                                                </div>
-                                            </div>
-                                            <p:commandButton value="Générer" icon="pi pi-check" action="#{v2MaintenanceBean.generateLocalArk()}"
-                                                             update="containerIndex messageIndex" style="margin-top: 10px"/>
-                                        </p:tab>
-                                        <p:tab title="Générer le sitemap.xml pour le thésaurus en cours">
-                                            <p:outputPanel style="color: black; margin-bottom: 10px">
-                                                <h:outputText value="Fonctionnalité temporairement désactivée (comme en V1)."/>
-                                            </p:outputPanel>
-                                            <p:commandButton disabled="true" value="#{v2LocaleBean.getMsg('service.generate')}" icon="pi pi-check"
-                                                             action="#{v2MaintenanceBean.generateSitemap()}" update="containerIndex messageIndex"/>
-                                        </p:tab>
-                                    </p:accordionPanel>
-                                </div>
-                            </div>
-                        </div>
+          <div class="view-panel is-on">
+            <div class="bo">
+              <a class="bo-back" href="index.xhtml" title="Retour à l'accueil thésaurus"><svg viewBox="0 0 24 24" aria-hidden="true"><path d="M19 12H5"/><path d="m12 19-7-7 7-7"/></svg></a>
+              <div class="bo-head"><div><h1 class="bo-title">Boîte à outils / Service</h1><p class="bo-sub">Vérifications de conformité et corrections de données.</p></div></div>
+              <div class="bo-full st-scope"><div class="mc-note"><svg viewBox="0 0 24 24" aria-hidden="true"><path d="M10.3 3.9 1.8 18a2 2 0 0 0 1.7 3h17a2 2 0 0 0 1.7-3L13.7 3.9a2 2 0 0 0-3.4 0z"/><path d="M12 9v4"/><path d="M12 17h.01"/></svg><span>Ces opérations modifient le thésaurus en masse. <b>Rechargez-le</b> après le traitement.</span></div>
+                <div class="mc-list">
+                  <div class="mc-tool">
+                    <div class="mc-tool-main">
+                      <div class="mc-tool-t">Corriger les faux top termes</div>
+                      <div class="mc-tool-d">Corrige les incohérences du thésaurus en cours : si des « top termes » s'affichent alors qu'ils n'en sont pas, cette action les rétablit.</div>
                     </div>
-                    <input type="hidden" name="csrfToken" value="${sessionScope.CSRF_TOKEN}"/>
-                </h:form>
-                <ui:include src="../thesaurus/includes/layout/footer.xhtml"/>
-                <ui:include src="../thesaurus/includes/layout/logout-dialog.xhtml"/>
-            <ui:include src="../thesaurus/includes/layout/login-dialog.xhtml"/>
-            <ui:include src="../thesaurus/includes/layout/forget-password-dialog.xhtml"/>
+                    <span class="mc-tool-last"><svg viewBox="0 0 24 24" aria-hidden="true"><circle cx="12" cy="12" r="9"/><path d="M12 7v5l3 2"/></svg> jamais</span>
+                    <button type="button" class="bo-btn ghost" data-act="toast" data-msg="« Corriger les faux top termes » lancé — traitement en cours…"><svg viewBox="0 0 24 24" aria-hidden="true"><path d="M20 6 9 17l-5-5"/></svg> Lancer</button>
+                  </div>
+                  <div class="mc-tool">
+                    <div class="mc-tool-main">
+                      <div class="mc-tool-t">Restructuration</div>
+                      <div class="mc-tool-d">Recalcule les liens hiérarchiques (TG/TS) et répare les chaînes incohérentes.</div>
+                    </div>
+                    <span class="mc-tool-last"><svg viewBox="0 0 24 24" aria-hidden="true"><circle cx="12" cy="12" r="9"/><path d="M12 7v5l3 2"/></svg> il y a 3 mois</span>
+                    <button type="button" class="bo-btn ghost" data-act="toast" data-msg="« Restructuration » lancé — traitement en cours…"><svg viewBox="0 0 24 24" aria-hidden="true"><path d="M20 6 9 17l-5-5"/></svg> Lancer</button>
+                  </div>
+                  <div class="mc-tool">
+                    <div class="mc-tool-main">
+                      <div class="mc-tool-t">Collections</div>
+                      <div class="mc-tool-d">Vérifie l'appartenance des concepts aux collections et nettoie les rattachements orphelins.</div>
+                    </div>
+                    <span class="mc-tool-last"><svg viewBox="0 0 24 24" aria-hidden="true"><circle cx="12" cy="12" r="9"/><path d="M12 7v5l3 2"/></svg> jamais</span>
+                    <button type="button" class="bo-btn ghost" data-act="toast" data-msg="« Collections » lancé — traitement en cours…"><svg viewBox="0 0 24 24" aria-hidden="true"><path d="M20 6 9 17l-5-5"/></svg> Lancer</button>
+                  </div>
+                  <div class="mc-tool">
+                    <div class="mc-tool-main">
+                      <div class="mc-tool-t">Créateur / contributeur</div>
+                      <div class="mc-tool-d">Harmonise les métadonnées d'auteur sur l'ensemble des concepts.</div>
+                    </div>
+                    <span class="mc-tool-last"><svg viewBox="0 0 24 24" aria-hidden="true"><circle cx="12" cy="12" r="9"/><path d="M12 7v5l3 2"/></svg> il y a 1 an</span>
+                    <button type="button" class="bo-btn ghost" data-act="toast" data-msg="« Créateur / contributeur » lancé — traitement en cours…"><svg viewBox="0 0 24 24" aria-hidden="true"><path d="M20 6 9 17l-5-5"/></svg> Lancer</button>
+                  </div>
+                  <div class="mc-tool">
+                    <div class="mc-tool-main">
+                      <div class="mc-tool-t">Identifiants ARK</div>
+                      <div class="mc-tool-d">Contrôle l'intégrité des ARK et régénère les identifiants manquants.</div>
+                    </div>
+                    <span class="mc-tool-last"><svg viewBox="0 0 24 24" aria-hidden="true"><circle cx="12" cy="12" r="9"/><path d="M12 7v5l3 2"/></svg> il y a 6 mois</span>
+                    <button type="button" class="bo-btn ghost" data-act="toast" data-msg="« Identifiants ARK » lancé — traitement en cours…"><svg viewBox="0 0 24 24" aria-hidden="true"><path d="M20 6 9 17l-5-5"/></svg> Lancer</button>
+                  </div>
+                  <div class="mc-tool">
+                    <div class="mc-tool-main">
+                      <div class="mc-tool-t">Générer le sitemap.xml</div>
+                      <div class="mc-tool-d">Produit le sitemap du thésaurus en cours pour le référencement.</div>
+                    </div>
+                    <span class="mc-tool-last"><svg viewBox="0 0 24 24" aria-hidden="true"><circle cx="12" cy="12" r="9"/><path d="M12 7v5l3 2"/></svg> il y a 2 semaines</span>
+                    <button type="button" class="bo-btn ghost" data-act="toast" data-msg="« Générer le sitemap.xml » lancé — traitement en cours…"><svg viewBox="0 0 24 24" aria-hidden="true"><path d="M20 6 9 17l-5-5"/></svg> Lancer</button>
+                  </div></div></div>
+              
             </div>
-        </h:panelGroup>
-    </h:body>
-</html>
+          </div>
+  </ui:define>
+</ui:composition>

@@ -36,7 +36,7 @@ import java.util.Map;
  * Comportement aligné sur le legacy {@code SelectedTheso} :
  * <ul>
  *   <li>changement de projet → AJAX (rafraîchit la liste des thésaurus + contenu)</li>
- *   <li>changement de thésaurus → redirect HTTP vers {@code /v2/thesaurus}</li>
+ *   <li>changement de thésaurus → redirect HTTP vers {@code /v2}</li>
  * </ul>
  */
 @Getter
@@ -47,8 +47,8 @@ import java.util.Map;
 public class ConsultationShellBean implements Serializable {
 
     private static final int ALL_PROJECTS_ID = -1;
-    /** Vue JSF concrète (comme legacy {@code /index.xhtml}), pas la pretty URL. */
-    private static final String BROWSE_VIEW = "/v2/thesaurus/browse.xhtml";
+    /** Vue JSF concrète du front cible (preview), pas la pretty URL. */
+    private static final String BROWSE_VIEW = "/v2/index.xhtml";
 
     private final ConsultationCatalogService consultationCatalogService;
     private final ThesaurusContext thesaurusContext;
@@ -329,7 +329,7 @@ public class ConsultationShellBean implements Serializable {
     /**
      * Navigation forcée vers la consultation, comme legacy {@code menuBean.redirectToThesaurus()}.
      * <p>
-     * Cible {@code browse.xhtml} (équivalent legacy {@code /index.xhtml}) avec un paramètre
+     * Cible {@code /v2/index.xhtml} (accueil preview) avec un paramètre
      * anti-cache : un redirect/assign vers la même URL ne recharge la page qu'une fois sur deux.
      */
     private void navigateToBrowse() throws IOException {

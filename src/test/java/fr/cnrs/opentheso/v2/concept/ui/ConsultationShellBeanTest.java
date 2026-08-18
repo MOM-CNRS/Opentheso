@@ -274,7 +274,7 @@ class ConsultationShellBeanTest {
             verify(consultationProjectHomeBean).load(7);
             assertTrue(consultationShellBean.isProjectHome());
             assertFalse(consultationShellBean.isPlatformHome());
-            verify(externalContext).redirect(org.mockito.ArgumentMatchers.contains("/v2/thesaurus/browse.xhtml"));
+            verify(externalContext).redirect(org.mockito.ArgumentMatchers.contains("/v2/index.xhtml"));
         }
     }
 

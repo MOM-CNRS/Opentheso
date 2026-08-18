@@ -418,7 +418,9 @@ public class ConceptAlignmentAdminBean implements Serializable {
                         source.getSource(),
                         StringUtils.defaultString(source.getDescription()),
                         true,
-                        false
+                        false,
+                        StringUtils.defaultString(source.getSource_filter()),
+                        StringUtils.defaultString(source.getRequete())
                 ))
                 .toList();
         pendingSearchMode = searchMode;

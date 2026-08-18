@@ -13,7 +13,7 @@ import org.springframework.web.bind.annotation.RestController;
 import java.util.Map;
 
 @RestController
-@RequestMapping("/v2-preview/api")
+@RequestMapping({"/v2/api", "/v2-preview/api"})
 @RequiredArgsConstructor
 public class PreviewTreeApiController {
 

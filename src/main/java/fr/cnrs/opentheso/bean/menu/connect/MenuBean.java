@@ -91,7 +91,7 @@ public class MenuBean implements Serializable {
         propositionBean.setRubriqueVisible(false);
         consultationVersionSwitchSupport.syncV2FromLegacy();
         ExternalContext context = FacesContext.getCurrentInstance().getExternalContext();
-        context.redirect(context.getRequestContextPath() + "/v2/thesaurus");
+        context.redirect(context.getRequestContextPath() + "/v2");
     }
 
     public void redirectToThesaurusLegacyFromV2() throws IOException {
@@ -203,7 +203,7 @@ public class MenuBean implements Serializable {
         propositionBean.searchNewPropositions();
         propositionBean.setRubriqueVisible(false);
         ExternalContext context = FacesContext.getCurrentInstance().getExternalContext();
-        context.redirect(context.getRequestContextPath() + "/v2/candidat");
+        context.redirect(context.getRequestContextPath() + "/v2/candidat/candidats.xhtml");
     }
     
     // LOGIN Page
@@ -220,7 +220,7 @@ public class MenuBean implements Serializable {
         notificationPanelVisible = false;
         propositionBean.searchNewPropositions();
         propositionBean.setRubriqueVisible(false);
-        redirectToV2SettingPage("/v2/graph");
+        redirectToPreviewPage("/v2/graph/graphe.xhtml");
     }
     
     // MENU Profile
@@ -260,7 +260,7 @@ public class MenuBean implements Serializable {
         propositionBean.searchNewPropositions();
         propositionBean.setRubriqueVisible(false);
         ExternalContext context = FacesContext.getCurrentInstance().getExternalContext();
-        context.redirect(context.getRequestContextPath() + "/v2/admin/all-users.xhtml");
+        context.redirect(context.getRequestContextPath() + "/v2/admin/utilisateurs.xhtml");
     }
 
     public void redirectToProjectsV2Page() throws IOException {
@@ -269,7 +269,7 @@ public class MenuBean implements Serializable {
         propositionBean.searchNewPropositions();
         propositionBean.setRubriqueVisible(false);
         ExternalContext context = FacesContext.getCurrentInstance().getExternalContext();
-        context.redirect(context.getRequestContextPath() + "/v2/admin/all-projects.xhtml");
+        context.redirect(context.getRequestContextPath() + "/v2/admin/projets.xhtml");
     }
 
     public void redirectToThesauriV2Page() throws IOException {
@@ -278,7 +278,7 @@ public class MenuBean implements Serializable {
         propositionBean.searchNewPropositions();
         propositionBean.setRubriqueVisible(false);
         ExternalContext context = FacesContext.getCurrentInstance().getExternalContext();
-        context.redirect(context.getRequestContextPath() + "/v2/admin/all-thesauri.xhtml");
+        context.redirect(context.getRequestContextPath() + "/v2/admin/thesauri.xhtml");
     }
     
     public void redirectToMyProfilePage() throws IOException {
@@ -297,7 +297,7 @@ public class MenuBean implements Serializable {
         propositionBean.searchNewPropositions();
         propositionBean.setRubriqueVisible(false);
         ExternalContext context = FacesContext.getCurrentInstance().getExternalContext();
-        context.redirect(context.getRequestContextPath() + "/v2/user/my-account.xhtml");
+        context.redirect(context.getRequestContextPath() + "/v2/user/compte.xhtml");
     }
 
     public void redirectToMesProjectsV2Page() throws IOException {
@@ -306,7 +306,7 @@ public class MenuBean implements Serializable {
         propositionBean.searchNewPropositions();
         propositionBean.setRubriqueVisible(false);
         ExternalContext context = FacesContext.getCurrentInstance().getExternalContext();
-        context.redirect(context.getRequestContextPath() + "/v2/project/my-projects.xhtml");
+        context.redirect(context.getRequestContextPath() + "/v2/project/projets.xhtml");
     }
     
     public void redirectToMesProjectsPage() throws IOException {
@@ -355,7 +355,7 @@ public class MenuBean implements Serializable {
         notificationPanelVisible = false;
         propositionBean.searchNewPropositions();
         propositionBean.setRubriqueVisible(false);
-        redirectToV2SettingPage("/v2/setting/preference.xhtml");
+        redirectToPreviewPage("/v2/setting/preference.xhtml");
     }
 
     public void redirectToIdentifierV2Page() throws IOException {
@@ -363,7 +363,7 @@ public class MenuBean implements Serializable {
         notificationPanelVisible = false;
         propositionBean.searchNewPropositions();
         propositionBean.setRubriqueVisible(false);
-        redirectToV2SettingPage("/v2/setting/identifier.xhtml");
+        redirectToPreviewPage("/v2/setting/preference.xhtml");
     }
 
     public void redirectToCorpusV2Page() throws IOException {
@@ -371,10 +371,10 @@ public class MenuBean implements Serializable {
         notificationPanelVisible = false;
         propositionBean.searchNewPropositions();
         propositionBean.setRubriqueVisible(false);
-        redirectToV2SettingPage("/v2/setting/corpus.xhtml");
+        redirectToPreviewPage("/v2/setting/preference.xhtml");
     }
 
-    private void redirectToV2SettingPage(String path) throws IOException {
+    private void redirectToPreviewPage(String path) throws IOException {
         ExternalContext context = FacesContext.getCurrentInstance().getExternalContext();
         StringBuilder url = new StringBuilder(context.getRequestContextPath()).append(path);
         if (StringUtils.isNotBlank(selectedTheso.getCurrentIdTheso())) {
@@ -399,7 +399,7 @@ public class MenuBean implements Serializable {
         notificationPanelVisible = false;
         propositionBean.searchNewPropositions();
         propositionBean.setRubriqueVisible(false);
-        redirectToV2SettingPage("/v2/toolbox/edition.xhtml");
+        redirectToPreviewPage("/v2/setting/parametres.xhtml");
     }
 
     public void redirectToFlagV2Page() throws IOException {
@@ -407,7 +407,7 @@ public class MenuBean implements Serializable {
         notificationPanelVisible = false;
         propositionBean.searchNewPropositions();
         propositionBean.setRubriqueVisible(false);
-        redirectToV2SettingPage("/v2/toolbox/flag.xhtml");
+        redirectToPreviewPage("/v2/toolbox/actions-lot.xhtml");
     }
 
     public void redirectToWorkshopV2Page() throws IOException {
@@ -419,7 +419,7 @@ public class MenuBean implements Serializable {
         }
         propositionBean.searchNewPropositions();
         propositionBean.setRubriqueVisible(false);
-        redirectToV2SettingPage("/v2/toolbox/workshop.xhtml");
+        redirectToPreviewPage("/v2/toolbox/atelier.xhtml");
     }
 
     public void redirectToMaintenanceV2Page() throws IOException {
@@ -432,7 +432,7 @@ public class MenuBean implements Serializable {
         atelierThesBean.init();
         propositionBean.searchNewPropositions();
         propositionBean.setRubriqueVisible(false);
-        redirectToV2SettingPage("/v2/toolbox/maintenance.xhtml");
+        redirectToPreviewPage("/v2/toolbox/maintenance.xhtml");
     }
 
     public void redirectToStatisticsV2Page() throws IOException {
@@ -445,7 +445,7 @@ public class MenuBean implements Serializable {
         propositionBean.searchNewPropositions();
         propositionBean.setRubriqueVisible(false);
         ExternalContext context = FacesContext.getCurrentInstance().getExternalContext();
-        context.redirect(context.getRequestContextPath() + "/v2/toolbox/statistics.xhtml");
+        context.redirect(context.getRequestContextPath() + "/v2/toolbox/statistiques.xhtml");
     }
 
     private void warnThesaurusRequired() {

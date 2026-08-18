@@ -22,7 +22,7 @@ import java.util.Locale;
 import java.util.Map;
 
 @RestController
-@RequestMapping("/v2-preview/api")
+@RequestMapping({"/v2/api", "/v2-preview/api"})
 @RequiredArgsConstructor
 public class PreviewStatsApiController {
 

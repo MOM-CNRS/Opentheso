@@ -9,16 +9,8 @@ import fr.cnrs.opentheso.v2.concept.service.ConceptReadService;
 import fr.cnrs.opentheso.v2.concept.service.ThesaurusHomeWriteService;
 import fr.cnrs.opentheso.v2.rights.Permission;
 import fr.cnrs.opentheso.v2.rights.RightsService;
-import fr.cnrs.opentheso.v2.setting.fixtures.SettingTestFixtures;
-import fr.cnrs.opentheso.v2.setting.model.ThesaurusCorpus;
 import fr.cnrs.opentheso.v2.setting.model.ThesaurusLanguage;
-import fr.cnrs.opentheso.v2.setting.model.ThesaurusPreferences;
-import fr.cnrs.opentheso.v2.setting.exception.InvalidSettingDataException;
-import fr.cnrs.opentheso.v2.setting.service.ThesaurusCorpusService;
 import fr.cnrs.opentheso.v2.setting.service.ThesaurusPreferenceService;
-import fr.cnrs.opentheso.v2.setting.service.ThesaurusSearchLanguageSync;
-import fr.cnrs.opentheso.v2.setting.ui.CorpusEditor;
-import fr.cnrs.opentheso.v2.setting.ui.PreferenceEditor;
 import fr.cnrs.opentheso.v2.setting.service.ThesaurusWorkLanguageService;
 import fr.cnrs.opentheso.v2.setting.ui.ThesaurusContext;
 import fr.cnrs.opentheso.v2.shared.repository.ThesaurusHomeQueryRepository;
@@ -26,8 +18,6 @@ import fr.cnrs.opentheso.v2.shared.session.ThesaurusSelection;
 import fr.cnrs.opentheso.v2.shared.session.ThesaurusSelectionService;
 import fr.cnrs.opentheso.v2.shared.ui.UserSession;
 import fr.cnrs.opentheso.v2.shared.ui.V2LocaleBean;
-import jakarta.faces.component.UIComponent;
-import jakarta.faces.event.AjaxBehaviorEvent;
 import org.junit.jupiter.api.BeforeEach;
 import org.junit.jupiter.api.Test;
 import org.junit.jupiter.api.extension.ExtendWith;
@@ -35,8 +25,11 @@ import org.mockito.Mock;
 import org.mockito.junit.jupiter.MockitoExtension;
 import org.springframework.test.util.ReflectionTestUtils;
 
+import java.text.NumberFormat;
+import java.util.ArrayList;
 import java.util.Collections;
 import java.util.List;
+import java.util.Locale;
 import java.util.Optional;
 
 import static org.junit.jupiter.api.Assertions.assertEquals;
@@ -44,9 +37,11 @@ import static org.junit.jupiter.api.Assertions.assertFalse;
 import static org.junit.jupiter.api.Assertions.assertNull;
 import static org.junit.jupiter.api.Assertions.assertTrue;
 import static org.mockito.ArgumentMatchers.any;
+import static org.mockito.ArgumentMatchers.anyBoolean;
+import static org.mockito.ArgumentMatchers.anyInt;
 import static org.mockito.ArgumentMatchers.eq;
 import static org.mockito.ArgumentMatchers.nullable;
-import static org.mockito.Mockito.doThrow;
+import static org.mockito.Mockito.lenient;
 import static org.mockito.Mockito.never;
 import static org.mockito.Mockito.times;
 import static org.mockito.Mockito.verify;
@@ -73,10 +68,6 @@ class PreviewThesaurusBeanTest {
     private ThesaurusSelectionService thesaurusSelectionService;
     @Mock
     private V2LocaleBean v2LocaleBean;
-    @Mock
-    private ThesaurusCorpusService thesaurusCorpusService;
-    @Mock
-    private ThesaurusSearchLanguageSync thesaurusSearchLanguageSync;
 
     private ThesaurusContext thesaurusContext;
     private PreviewThesaurusBean bean;
@@ -93,9 +84,7 @@ class PreviewThesaurusBeanTest {
                 conceptReadService,
                 userSession,
                 rightsService,
-                v2LocaleBean,
-                thesaurusCorpusService,
-                thesaurusSearchLanguageSync
+                v2LocaleBean
         );
     }
 
@@ -126,7 +115,7 @@ class PreviewThesaurusBeanTest {
         when(thesaurusHomeQueryRepository.countConceptsWithoutDefinition("th17")).thenReturn(14);
         when(thesaurusHomeQueryRepository.findMaxTreeDepth("th17")).thenReturn(5);
 
-        assertEquals("4\u00a0382", bean.getConceptCountFormatted());
+        assertEquals(NumberFormat.getIntegerInstance(Locale.FRANCE).format(4382), bean.getConceptCountFormatted());
         assertEquals(21, bean.getCandidatePendingCount());
         assertEquals(8, bean.getCandidateRejectedCount());
         assertEquals(29, bean.getCandidateCount());
@@ -198,70 +187,6 @@ class PreviewThesaurusBeanTest {
         bean.onLanguageChange();
 
         assertEquals("en", thesaurusContext.resolveWorkLanguage());
-    }
-
-    @Test
-    void loadsGeneralPreferenceFieldsFromService() {
-        thesaurusContext.selectThesaurus("th17", "Pactols_Lieux", "fr");
-        when(thesaurusPreferenceService.loadPreferencesOrNull("th17", "fr"))
-                .thenReturn(SettingTestFixtures.samplePreferences());
-        when(thesaurusCorpusService.listCorpus("th17"))
-                .thenReturn(List.of(SettingTestFixtures.sampleCorpus()));
-
-        bean.loadGeneralPreferences();
-        PreferenceEditor preference = bean.getPreference();
-
-        assertEquals("https://site/", preference.getCheminSite());
-        assertEquals("uri", preference.getUriType());
-        assertEquals("https://site/", preference.getOriginalUri());
-        assertEquals("fr", preference.getSourceLang());
-        assertEquals(2, preference.getIdentifierType());
-        assertEquals("TH1", preference.getPreferredName());
-        assertTrue(preference.isAutoExpandTree());
-        assertFalse(preference.isTreeCache());
-        assertFalse(preference.isSortByNotation());
-        assertTrue(preference.isBreadcrumb());
-        assertFalse(preference.isUseConceptTree());
-        assertFalse(preference.isDisplayUserName());
-        assertFalse(preference.isSuggestion());
-        assertFalse(preference.isUseCustomRelation());
-        assertFalse(preference.isShowHistoryNote());
-        assertFalse(preference.isShowEditorialNote());
-        assertTrue(preference.isWebservices());
-        assertFalse(preference.isKohaLink());
-        assertFalse(preference.isUseDeeplTranslation());
-        assertFalse(preference.isUseArk());
-        assertEquals("https://ark.example.com/", preference.getServerArk());
-        assertEquals("https://ark.example.com/", preference.getUriArk());
-        assertEquals("66666", preference.getIdNaan());
-        assertEquals("crt", preference.getPrefixArk());
-        assertEquals("user", preference.getUserArk());
-        assertFalse(preference.isUseArkLocal());
-        assertFalse(preference.isUseHandle());
-        assertFalse(preference.isUseOpenArk());
-        assertEquals("/api/theso/TH1", bean.getPreferencePermalink());
-        assertEquals(1, preference.getLanguages().size());
-        verify(thesaurusPreferenceService).loadPreferencesOrNull("th17", "fr");
-        assertEquals(1, bean.getCorpusList().size());
-        assertEquals("Corpus A", bean.getCorpusList().get(0).getCorpusName());
-        verify(thesaurusCorpusService).listCorpus("th17");
-    }
-
-    @Test
-    void getCorpusList_loadsAllCorpusForCurrentThesaurus() {
-        thesaurusContext.selectThesaurus("th17", "Pactols_Lieux", "fr");
-        when(thesaurusCorpusService.listCorpus("th17")).thenReturn(List.of(
-                SettingTestFixtures.sampleCorpus(),
-                new ThesaurusCorpus("Corpus B", "http://b", "http://b-count", false, true, false, 2)
-        ));
-
-        List<ThesaurusCorpus> corpus = bean.getCorpusList();
-
-        assertEquals(2, corpus.size());
-        assertEquals("Corpus A", corpus.get(0).getCorpusName());
-        assertEquals("Corpus B", corpus.get(1).getCorpusName());
-        bean.getCorpusList();
-        verify(thesaurusCorpusService, times(1)).listCorpus("th17");
     }
 
     @Test
@@ -352,6 +277,18 @@ class PreviewThesaurusBeanTest {
         when(userSession.getCurrentUserId()).thenReturn(null);
 
         assertFalse(bean.isCanEdit());
+    }
+
+    @Test
+    void canEdit_isCachedForTheView() {
+        thesaurusContext.selectThesaurus("th17", "Pactols_Lieux", "fr");
+        when(userSession.getCurrentUserId()).thenReturn(9);
+        when(rightsService.canOnThesaurus(9, Permission.MANAGE_THESAURUS, "th17")).thenReturn(true);
+
+        assertTrue(bean.isCanEdit());
+        assertTrue(bean.isCanEdit());
+
+        verify(rightsService, times(1)).canOnThesaurus(9, Permission.MANAGE_THESAURUS, "th17");
     }
 
     @Test
@@ -449,288 +386,6 @@ class PreviewThesaurusBeanTest {
         verify(conceptReadService).loadFacetDetail("th17", "f1", "fr");
     }
 
-    @Test
-    void prepareCreateCorpus_opensEmptyEditorWhenAllowed() {
-        grantThesaurusEdit();
-
-        bean.prepareCreateCorpus();
-
-        assertTrue(bean.isCorpusCreateDialog());
-        assertTrue(bean.isCorpusFormDialog());
-        assertNull(bean.getCorpusEditor().getCorpusName());
-        assertNull(bean.getEditingCorpusName());
-    }
-
-    @Test
-    void prepareCreateCorpus_setsErrorWhenNotAllowed() {
-        thesaurusContext.selectThesaurus("th17", "Pactols_Lieux", "fr");
-        when(userSession.getCurrentUserId()).thenReturn(2);
-        when(rightsService.canOnThesaurus(2, Permission.MANAGE_THESAURUS, "th17")).thenReturn(false);
-
-        bean.prepareCreateCorpus();
-
-        assertFalse(bean.isCorpusDialogOpen());
-        assertTrue(bean.isCorpusError());
-        assertEquals("Action non autorisée", bean.getCorpusMessage());
-    }
-
-    @Test
-    void prepareEditCorpus_setsEditorFromModel() {
-        grantThesaurusEdit();
-
-        bean.prepareEditCorpus(SettingTestFixtures.sampleCorpus());
-
-        assertTrue(bean.isCorpusFormDialog());
-        assertFalse(bean.isCorpusCreateDialog());
-        assertEquals("Corpus A", bean.getCorpusEditor().getCorpusName());
-        assertEquals("Corpus A", bean.getEditingCorpusName());
-    }
-
-    @Test
-    void prepareEditCorpus_ignoresMissingRow() {
-        grantThesaurusEdit();
-
-        bean.prepareEditCorpus(null);
-
-        assertFalse(bean.isCorpusDialogOpen());
-        assertNull(bean.getEditingCorpusName());
-    }
-
-    @Test
-    void prepareDeleteCorpus_opensConfirmDialog() {
-        grantThesaurusEdit();
-
-        bean.prepareDeleteCorpus(SettingTestFixtures.sampleCorpus());
-
-        assertTrue(bean.isCorpusDeleteDialog());
-        assertEquals("Corpus A", bean.getEditingCorpusName());
-        assertEquals("Corpus A", bean.getCorpusEditor().getCorpusName());
-    }
-
-    @Test
-    void createCorpus_persistsWhenAllowed() {
-        grantThesaurusEdit();
-        bean.setCorpusEditor(CorpusEditor.from(
-                new ThesaurusCorpus("New", "http://link", null, true, true, false, null)
-        ));
-        when(thesaurusCorpusService.listCorpus("th17")).thenReturn(List.of());
-
-        bean.createCorpus();
-
-        verify(thesaurusCorpusService).createCorpus(eq("th17"), any(ThesaurusCorpus.class));
-        assertFalse(bean.isCorpusDialogOpen());
-        assertEquals("Corpus créé avec succès", bean.getCorpusMessage());
-        assertFalse(bean.isCorpusError());
-    }
-
-    @Test
-    void createCorpus_keepsDialogOpenWhenValidationFails() {
-        grantThesaurusEdit();
-        bean.prepareCreateCorpus();
-        bean.setCorpusEditor(CorpusEditor.from(
-                new ThesaurusCorpus("New", "http://link", null, true, true, false, null)
-        ));
-        when(thesaurusCorpusService.createCorpus(eq("th17"), any(ThesaurusCorpus.class)))
-                .thenThrow(new InvalidSettingDataException("Le nom du corpus est obligatoire."));
-
-        bean.createCorpus();
-
-        assertTrue(bean.isCorpusCreateDialog());
-        assertTrue(bean.isCorpusError());
-        assertEquals("Le nom du corpus est obligatoire.", bean.getCorpusMessage());
-    }
-
-    @Test
-    void updateCorpus_persistsWhenAllowed() {
-        grantThesaurusEdit();
-        bean.prepareEditCorpus(SettingTestFixtures.sampleCorpus());
-        bean.getCorpusEditor().setUriLink("http://updated");
-        when(thesaurusCorpusService.listCorpus("th17")).thenReturn(List.of());
-
-        bean.updateCorpus();
-
-        verify(thesaurusCorpusService).updateCorpus(eq("th17"), eq("Corpus A"), any(ThesaurusCorpus.class));
-        assertEquals("Corpus modifié avec succès", bean.getCorpusMessage());
-        assertFalse(bean.isCorpusDialogOpen());
-    }
-
-    @Test
-    void updateCorpus_skipsWhenEditingNameMissing() {
-        grantThesaurusEdit();
-
-        bean.updateCorpus();
-
-        verify(thesaurusCorpusService, never()).updateCorpus(any(), any(), any());
-    }
-
-    @Test
-    void deleteCorpus_removesWhenAllowed() {
-        grantThesaurusEdit();
-        bean.prepareDeleteCorpus(SettingTestFixtures.sampleCorpus());
-        when(thesaurusCorpusService.listCorpus("th17")).thenReturn(List.of());
-
-        bean.deleteCorpus();
-
-        verify(thesaurusCorpusService).deleteCorpus("th17", "Corpus A");
-        assertEquals("Corpus supprimé avec succès", bean.getCorpusMessage());
-        assertFalse(bean.isCorpusDialogOpen());
-    }
-
-    @Test
-    void deleteCorpus_showsErrorWhenServiceFails() {
-        grantThesaurusEdit();
-        bean.prepareDeleteCorpus(SettingTestFixtures.sampleCorpus());
-        doThrow(new InvalidSettingDataException("introuvable"))
-                .when(thesaurusCorpusService).deleteCorpus("th17", "Corpus A");
-
-        bean.deleteCorpus();
-
-        assertTrue(bean.isCorpusDeleteDialog());
-        assertTrue(bean.isCorpusError());
-        assertEquals("introuvable", bean.getCorpusMessage());
-    }
-
-    @Test
-    void createCorpus_isDeniedWhenUserCannotEdit() {
-        thesaurusContext.selectThesaurus("th17", "Pactols_Lieux", "fr");
-        when(userSession.getCurrentUserId()).thenReturn(2);
-        when(rightsService.canOnThesaurus(2, Permission.MANAGE_THESAURUS, "th17")).thenReturn(false);
-
-        bean.createCorpus();
-
-        verify(thesaurusCorpusService, never()).createCorpus(any(), any());
-        assertEquals("Action non autorisée", bean.getCorpusMessage());
-        assertTrue(bean.isCorpusError());
-    }
-
-    @Test
-    void savePreferences_persistsWhenAllowed() {
-        grantThesaurusEdit();
-        when(thesaurusPreferenceService.loadPreferencesOrNull("th17", "fr"))
-                .thenReturn(SettingTestFixtures.samplePreferences());
-        when(thesaurusCorpusService.listCorpus("th17")).thenReturn(List.of());
-        when(thesaurusPreferenceService.savePreferences(
-                eq("th17"), any(ThesaurusPreferences.class),
-                nullable(String.class), nullable(String.class),
-                nullable(String.class), nullable(String.class), eq("fr")
-        )).thenReturn(SettingTestFixtures.samplePreferences());
-
-        bean.loadGeneralPreferences();
-        bean.savePreferences();
-
-        verify(thesaurusPreferenceService).savePreferences(
-                eq("th17"), any(ThesaurusPreferences.class),
-                nullable(String.class), nullable(String.class),
-                nullable(String.class), nullable(String.class), eq("fr")
-        );
-        verify(thesaurusSearchLanguageSync).applyAfterSourceLanguageChange("th17", "fr");
-        assertFalse(bean.isPreferenceSaveError());
-        assertEquals("Préférences enregistrées avec succès", bean.getPreferenceSaveMessage());
-    }
-
-    @Test
-    void savePreferences_showsErrorWhenPreferredNameExists() {
-        grantThesaurusEdit();
-        when(thesaurusPreferenceService.loadPreferencesOrNull("th17", "fr"))
-                .thenReturn(SettingTestFixtures.samplePreferences());
-        when(thesaurusCorpusService.listCorpus("th17")).thenReturn(List.of());
-        when(thesaurusPreferenceService.isPreferredNameExist("th17", "TH1")).thenReturn(true);
-
-        bean.loadGeneralPreferences();
-        bean.savePreferences();
-
-        verify(thesaurusPreferenceService, never()).savePreferences(
-                any(), any(), any(), any(), any(), any(), any()
-        );
-        assertTrue(bean.isPreferenceSaveError());
-        assertTrue(bean.getPreferenceSaveMessage().contains("PreferredName"));
-    }
-
-    @Test
-    void savePreferences_isDeniedWhenUserCannotEdit() {
-        thesaurusContext.selectThesaurus("th17", "Pactols_Lieux", "fr");
-        when(userSession.getCurrentUserId()).thenReturn(2);
-        when(rightsService.canOnThesaurus(2, Permission.MANAGE_THESAURUS, "th17")).thenReturn(false);
-
-        bean.savePreferences();
-
-        verify(thesaurusPreferenceService, never()).savePreferences(
-                any(), any(), any(), any(), any(), any(), any()
-        );
-        assertTrue(bean.isPreferenceSaveError());
-        assertEquals("Action non autorisée", bean.getPreferenceSaveMessage());
-    }
-
-    @Test
-    void selectIdentifierServer_turnsOffOtherServersWhenOneIsEnabled() {
-        grantThesaurusEdit();
-        when(thesaurusPreferenceService.loadPreferencesOrNull("th17", "fr"))
-                .thenReturn(SettingTestFixtures.samplePreferences());
-        when(thesaurusCorpusService.listCorpus("th17")).thenReturn(List.of());
-        bean.loadGeneralPreferences();
-        PreferenceEditor preference = bean.getPreference();
-        preference.setUseHandle(true);
-        preference.setUseOpenArk(true);
-        preference.setUseArkLocal(true);
-
-        bean.selectIdentifierServer(ajaxEvent("previewUseArkLocal"));
-
-        assertTrue(preference.isUseArkLocal());
-        assertFalse(preference.isUseArk());
-        assertFalse(preference.isUseHandle());
-        assertFalse(preference.isUseOpenArk());
-    }
-
-    @Test
-    void selectIdentifierServer_activatingHandleTurnsOffArkLocalAndOpenArk() {
-        grantThesaurusEdit();
-        when(thesaurusPreferenceService.loadPreferencesOrNull("th17", "fr"))
-                .thenReturn(SettingTestFixtures.samplePreferences());
-        when(thesaurusCorpusService.listCorpus("th17")).thenReturn(List.of());
-        bean.loadGeneralPreferences();
-        PreferenceEditor preference = bean.getPreference();
-        preference.setUseArkLocal(true);
-        preference.setUseHandle(true);
-        preference.setUseOpenArk(true);
-
-        bean.selectIdentifierServer(ajaxEvent("previewUseHandle"));
-
-        assertTrue(preference.isUseHandle());
-        assertFalse(preference.isUseArk());
-        assertFalse(preference.isUseArkLocal());
-        assertFalse(preference.isUseOpenArk());
-    }
-
-    @Test
-    void selectIdentifierServer_keepsOthersUnchangedWhenTurningOff() {
-        grantThesaurusEdit();
-        when(thesaurusPreferenceService.loadPreferencesOrNull("th17", "fr"))
-                .thenReturn(SettingTestFixtures.samplePreferences());
-        when(thesaurusCorpusService.listCorpus("th17")).thenReturn(List.of());
-        bean.loadGeneralPreferences();
-        PreferenceEditor preference = bean.getPreference();
-        preference.setUseHandle(false);
-        preference.setUseArkLocal(false);
-
-        bean.selectIdentifierServer(ajaxEvent("previewUseHandle"));
-
-        assertFalse(preference.isUseHandle());
-        assertFalse(preference.isUseArkLocal());
-    }
-
-    private static AjaxBehaviorEvent ajaxEvent(String componentId) {
-        UIComponent component = org.mockito.Mockito.mock(UIComponent.class);
-        when(component.getId()).thenReturn(componentId);
-        AjaxBehaviorEvent event = org.mockito.Mockito.mock(AjaxBehaviorEvent.class);
-        when(event.getComponent()).thenReturn(component);
-        return event;
-    }
-
-    private void grantThesaurusEdit() {
-        thesaurusContext.selectThesaurus("th17", "Pactols_Lieux", "fr");
-        when(userSession.getCurrentUserId()).thenReturn(2);
-        when(rightsService.canOnThesaurus(2, Permission.MANAGE_THESAURUS, "th17")).thenReturn(true);
-    }
 
     private static ThesaurusLanguage language(String code, String label) {
         return new ThesaurusLanguage(1L, code, "", "", label);

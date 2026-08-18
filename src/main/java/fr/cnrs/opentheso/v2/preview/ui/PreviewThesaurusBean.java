@@ -12,23 +12,12 @@ import fr.cnrs.opentheso.v2.concept.service.ConceptReadService;
 import fr.cnrs.opentheso.v2.concept.service.ThesaurusHomeWriteService;
 import fr.cnrs.opentheso.v2.rights.Permission;
 import fr.cnrs.opentheso.v2.rights.RightsService;
-import fr.cnrs.opentheso.v2.setting.exception.InvalidSettingDataException;
-import fr.cnrs.opentheso.v2.setting.exception.SettingAccessDeniedException;
-import fr.cnrs.opentheso.v2.setting.model.IdentifierServerType;
-import fr.cnrs.opentheso.v2.setting.model.ThesaurusCorpus;
 import fr.cnrs.opentheso.v2.setting.model.ThesaurusLanguage;
-import fr.cnrs.opentheso.v2.setting.model.ThesaurusPreferences;
-import fr.cnrs.opentheso.v2.setting.service.ThesaurusCorpusService;
 import fr.cnrs.opentheso.v2.setting.service.ThesaurusPreferenceService;
-import fr.cnrs.opentheso.v2.setting.service.ThesaurusSearchLanguageSync;
-import fr.cnrs.opentheso.v2.setting.ui.CorpusEditor;
-import fr.cnrs.opentheso.v2.setting.ui.PreferenceEditor;
 import fr.cnrs.opentheso.v2.setting.ui.ThesaurusContext;
 import fr.cnrs.opentheso.v2.shared.repository.ThesaurusHomeQueryRepository;
 import fr.cnrs.opentheso.v2.shared.ui.UserSession;
 import fr.cnrs.opentheso.v2.shared.ui.V2LocaleBean;
-import jakarta.faces.context.FacesContext;
-import jakarta.faces.event.AjaxBehaviorEvent;
 import jakarta.faces.view.ViewScoped;
 import jakarta.inject.Named;
 import lombok.Getter;
@@ -63,9 +52,6 @@ public class PreviewThesaurusBean implements Serializable {
     private final UserSession userSession;
     private final RightsService rightsService;
     private final V2LocaleBean v2LocaleBean;
-    private final ThesaurusCorpusService thesaurusCorpusService;
-    private final ThesaurusSearchLanguageSync thesaurusSearchLanguageSync;
-
     private Integer conceptCount;
     private Integer candidatePendingCount;
     private Integer candidateRejectedCount;
@@ -78,9 +64,8 @@ public class PreviewThesaurusBean implements Serializable {
     private boolean sessionReady;
     private String homePageHtml;
     private boolean homePageHtmlLoaded;
-    private PreferenceEditor preference;
-    private boolean preferenceLoaded;
     private List<PreviewTreeNode> treeRoots;
+    private Boolean canEdit;
 
     @Getter
     @Setter
@@ -111,26 +96,6 @@ public class PreviewThesaurusBean implements Serializable {
     private String candidateOn = "";
     @Getter
     private boolean detailRequested;
-    private List<ThesaurusCorpus> corpusList = Collections.emptyList();
-    private boolean corpusLoaded;
-    private String corpusLoadedForThesaurus;
-    @Getter
-    @Setter
-    private CorpusEditor corpusEditor = CorpusEditor.empty();
-    @Getter
-    private String editingCorpusName;
-    @Getter
-    private boolean corpusDialogOpen;
-    @Getter
-    private String corpusDialogMode;
-    @Getter
-    private String corpusMessage;
-    @Getter
-    private boolean corpusError;
-    @Getter
-    private String preferenceSaveMessage;
-    @Getter
-    private boolean preferenceSaveError;
 
     public void ensureSessionThesaurus() {
         if (sessionReady) {
@@ -478,253 +443,6 @@ public class PreviewThesaurusBean implements Serializable {
                 .collect(Collectors.joining(", "));
     }
 
-    public PreferenceEditor getPreference() {
-        ensurePreferencesLoaded();
-        return preference;
-    }
-
-    /**
-     * Charge les préférences générales depuis la base, comme l'écran V2
-     * {@code v2PreferenceSettingsBean.load()}.
-     */
-    public void loadGeneralPreferences() {
-        ensureSessionThesaurus();
-        preferenceLoaded = false;
-        ensurePreferencesLoaded();
-        corpusLoaded = false;
-        refreshCorpusList();
-    }
-
-    public List<ThesaurusCorpus> getCorpusList() {
-        ensureCorpusListLoaded();
-        return corpusList != null ? corpusList : Collections.emptyList();
-    }
-
-    /**
-     * Enregistre les préférences preview, comme {@code v2PreferenceSettingsBean.save()}.
-     */
-    public void savePreferences() {
-        preferenceSaveMessage = null;
-        preferenceSaveError = false;
-        if (!isCanEdit()) {
-            preferenceSaveError = true;
-            preferenceSaveMessage = "Action non autorisée";
-            return;
-        }
-        PreferenceEditor editor = getPreference();
-        if (editor == null) {
-            preferenceSaveError = true;
-            preferenceSaveMessage = "Aucune préférence à enregistrer.";
-            return;
-        }
-        String thesaurusId = getId();
-        if (thesaurusPreferenceService.isPreferredNameExist(thesaurusId, editor.getPreferredName())) {
-            preferenceSaveError = true;
-            preferenceSaveMessage = "PreferredName existe déjà, veuillez en choisir un autre ! ";
-            return;
-        }
-        if (editor.isUseOpenArk()) {
-            String openArkError = validateOpenArkEditor(editor);
-            if (openArkError != null) {
-                preferenceSaveError = true;
-                preferenceSaveMessage = openArkError;
-                return;
-            }
-        }
-        syncIdentifierServerType(editor);
-        try {
-            ThesaurusPreferences saved = thesaurusPreferenceService.savePreferences(
-                    thesaurusId,
-                    editor.toModel(thesaurusId),
-                    editor.getNewPassArk(),
-                    editor.getNewPassHandle(),
-                    editor.getNewDeeplApiKey(),
-                    editor.getNewApiKeyOpenArk(),
-                    preferenceWorkLanguage()
-            );
-            preference = PreferenceEditor.from(saved);
-            preference.setNewPassArk(null);
-            preference.setNewPassHandle(null);
-            preference.setNewDeeplApiKey(null);
-            preference.setNewApiKeyOpenArk(null);
-            preferenceLoaded = true;
-            if (StringUtils.isNotBlank(saved.sourceLang())) {
-                thesaurusSearchLanguageSync.applyAfterSourceLanguageChange(thesaurusId, saved.sourceLang());
-            }
-            preferenceSaveMessage = "Préférences enregistrées avec succès";
-        } catch (SettingAccessDeniedException | InvalidSettingDataException e) {
-            preferenceSaveError = true;
-            preferenceSaveMessage = e.getMessage();
-        }
-    }
-
-    /**
-     * Un seul serveur d'identifiants à la fois (Ark, Ark local, Handle, OpenArk).
-     * Ne persiste pas : l'enregistrement se fait via {@link #savePreferences()}.
-     */
-    public void selectIdentifierServer(AjaxBehaviorEvent event) {
-        PreferenceEditor editor = getPreference();
-        if (editor == null || event == null || event.getComponent() == null) {
-            return;
-        }
-        String id = event.getComponent().getId();
-        boolean enabled = switch (id) {
-            case "previewUseArk" -> editor.isUseArk();
-            case "previewUseArkLocal" -> editor.isUseArkLocal();
-            case "previewUseHandle" -> editor.isUseHandle();
-            case "previewUseOpenArk" -> editor.isUseOpenArk();
-            default -> false;
-        };
-        if (!enabled) {
-            syncIdentifierServerType(editor);
-            return;
-        }
-        editor.setUseArk("previewUseArk".equals(id));
-        editor.setUseArkLocal("previewUseArkLocal".equals(id));
-        editor.setUseHandle("previewUseHandle".equals(id));
-        editor.setUseOpenArk("previewUseOpenArk".equals(id));
-        syncIdentifierServerType(editor);
-    }
-
-    public void prepareCreateCorpus() {
-        if (!isCanEdit()) {
-            corpusError = true;
-            corpusMessage = "Action non autorisée";
-            return;
-        }
-        corpusEditor = CorpusEditor.empty();
-        editingCorpusName = null;
-        corpusDialogMode = "create";
-        corpusDialogOpen = true;
-        corpusMessage = null;
-        corpusError = false;
-    }
-
-    public void prepareEditCorpus() {
-        prepareEditCorpus(findCorpus(requestCorpusTarget()));
-    }
-
-    public void prepareEditCorpus(ThesaurusCorpus corpus) {
-        if (!isCanEdit() || corpus == null) {
-            return;
-        }
-        corpusEditor = CorpusEditor.from(corpus);
-        editingCorpusName = corpus.corpusName();
-        corpusDialogMode = "edit";
-        corpusDialogOpen = true;
-        corpusMessage = null;
-        corpusError = false;
-    }
-
-    public void prepareDeleteCorpus() {
-        prepareDeleteCorpus(findCorpus(requestCorpusTarget()));
-    }
-
-    public void prepareDeleteCorpus(ThesaurusCorpus corpus) {
-        if (!isCanEdit() || corpus == null) {
-            return;
-        }
-        corpusEditor = CorpusEditor.from(corpus);
-        editingCorpusName = corpus.corpusName();
-        corpusDialogMode = "delete";
-        corpusDialogOpen = true;
-        corpusMessage = null;
-        corpusError = false;
-    }
-
-    public void cancelCorpusDialog() {
-        closeCorpusDialog();
-        if (corpusError) {
-            corpusMessage = null;
-            corpusError = false;
-        }
-    }
-
-    public void createCorpus() {
-        if (!isCanEdit()) {
-            denyCorpusAction();
-            return;
-        }
-        try {
-            thesaurusCorpusService.createCorpus(getId(), corpusEditor.toModel());
-            closeCorpusDialog();
-            refreshCorpusList();
-            corpusError = false;
-            corpusMessage = "Corpus créé avec succès";
-        } catch (InvalidSettingDataException e) {
-            corpusError = true;
-            corpusMessage = e.getMessage();
-        }
-    }
-
-    public void updateCorpus() {
-        if (!isCanEdit()) {
-            denyCorpusAction();
-            return;
-        }
-        if (editingCorpusName == null) {
-            return;
-        }
-        try {
-            thesaurusCorpusService.updateCorpus(getId(), editingCorpusName, corpusEditor.toModel());
-            closeCorpusDialog();
-            refreshCorpusList();
-            corpusError = false;
-            corpusMessage = "Corpus modifié avec succès";
-        } catch (InvalidSettingDataException e) {
-            corpusError = true;
-            corpusMessage = e.getMessage();
-        }
-    }
-
-    public void deleteCorpus() {
-        if (!isCanEdit()) {
-            denyCorpusAction();
-            return;
-        }
-        if (editingCorpusName == null) {
-            return;
-        }
-        try {
-            thesaurusCorpusService.deleteCorpus(getId(), editingCorpusName);
-            closeCorpusDialog();
-            refreshCorpusList();
-            corpusError = false;
-            corpusMessage = "Corpus supprimé avec succès";
-        } catch (InvalidSettingDataException e) {
-            corpusError = true;
-            corpusMessage = e.getMessage();
-        }
-    }
-
-    public boolean isCorpusFormDialog() {
-        return corpusDialogOpen && ("create".equals(corpusDialogMode) || "edit".equals(corpusDialogMode));
-    }
-
-    public boolean isCorpusCreateDialog() {
-        return corpusDialogOpen && "create".equals(corpusDialogMode);
-    }
-
-    public boolean isCorpusDeleteDialog() {
-        return corpusDialogOpen && "delete".equals(corpusDialogMode);
-    }
-
-    public Integer getIdentifierAlphanumeric() {
-        return 1;
-    }
-
-    public Integer getIdentifierNumeric() {
-        return 2;
-    }
-
-    public String getPreferencePermalink() {
-        PreferenceEditor editor = getPreference();
-        if (editor == null || StringUtils.isBlank(editor.getPreferredName())) {
-            return "";
-        }
-        return "/api/theso/" + editor.getPreferredName();
-    }
-
     public String getHomePageHtml() {
         if (!homePageHtmlLoaded) {
             homePageHtml = StringUtils.defaultString(
@@ -740,12 +458,21 @@ public class PreviewThesaurusBean implements Serializable {
     }
 
     public boolean isCanEdit() {
+        if (canEdit != null) {
+            return canEdit;
+        }
         Integer userId = userSession.getCurrentUserId();
         String thesaurusId = getId();
         if (userId == null || StringUtils.isBlank(thesaurusId)) {
+            canEdit = false;
             return false;
         }
-        return rightsService.canOnThesaurus(userId, Permission.MANAGE_THESAURUS, thesaurusId);
+        canEdit = rightsService.canOnThesaurus(userId, Permission.MANAGE_THESAURUS, thesaurusId);
+        return canEdit;
+    }
+
+    public boolean isSuperAdmin() {
+        return userSession.isSuperAdmin();
     }
 
     public void startEditing() {
@@ -911,147 +638,6 @@ public class PreviewThesaurusBean implements Serializable {
             }
         }
         return null;
-    }
-
-    private void ensureCorpusListLoaded() {
-        String thesaurusId = getId();
-        if (corpusLoaded && StringUtils.equals(corpusLoadedForThesaurus, thesaurusId) && corpusList != null) {
-            return;
-        }
-        refreshCorpusList();
-    }
-
-    private void refreshCorpusList() {
-        String thesaurusId = getId();
-        corpusLoaded = true;
-        corpusLoadedForThesaurus = thesaurusId;
-        if (StringUtils.isBlank(thesaurusId)) {
-            corpusList = Collections.emptyList();
-            return;
-        }
-        List<ThesaurusCorpus> loaded = thesaurusCorpusService.listCorpus(thesaurusId);
-        corpusList = loaded != null ? loaded : Collections.emptyList();
-    }
-
-    private String requestCorpusTarget() {
-        FacesContext context = FacesContext.getCurrentInstance();
-        if (context == null) {
-            return null;
-        }
-        return context.getExternalContext().getRequestParameterMap().get("previewCorpusTarget");
-    }
-
-    private ThesaurusCorpus findCorpus(String corpusName) {
-        if (StringUtils.isBlank(corpusName)) {
-            return null;
-        }
-        ThesaurusCorpus found = matchCorpus(corpusName);
-        if (found != null) {
-            return found;
-        }
-        refreshCorpusList();
-        return matchCorpus(corpusName);
-    }
-
-    private ThesaurusCorpus matchCorpus(String corpusName) {
-        if (corpusList == null) {
-            return null;
-        }
-        return corpusList.stream()
-                .filter(item -> corpusName.equals(item.corpusName()))
-                .findFirst()
-                .orElse(null);
-    }
-
-    private void closeCorpusDialog() {
-        corpusDialogOpen = false;
-        corpusDialogMode = null;
-        corpusEditor = CorpusEditor.empty();
-        editingCorpusName = null;
-    }
-
-    private void denyCorpusAction() {
-        corpusError = true;
-        corpusMessage = "Action non autorisée";
-    }
-
-    private void syncIdentifierServerType(PreferenceEditor editor) {
-        if (editor.isUseOpenArk()) {
-            editor.setIdentifierServerType(IdentifierServerType.OPENARK);
-        } else if (editor.isUseHandle()) {
-            editor.setIdentifierServerType(IdentifierServerType.HANDLE);
-        } else if (editor.isUseArkLocal()) {
-            editor.setIdentifierServerType(IdentifierServerType.ARK_LOCAL);
-        } else if (editor.isUseArk()) {
-            editor.setIdentifierServerType(IdentifierServerType.ARK);
-        } else {
-            editor.setIdentifierServerType(IdentifierServerType.NONE);
-        }
-    }
-
-    private String validateOpenArkEditor(PreferenceEditor editor) {
-        String server = StringUtils.trimToEmpty(editor.getServerOpenArk());
-        if (StringUtils.isBlank(server)) {
-            return "OpenArk : URL du serveur obligatoire (ex. http://localhost:8080/api)";
-        }
-        String serverLower = server.toLowerCase();
-        if (!serverLower.startsWith("http://") && !serverLower.startsWith("https://")) {
-            return "OpenArk : l'URL du serveur doit commencer par http:// ou https://";
-        }
-        String naan = StringUtils.trimToEmpty(editor.getNaanOpenArk());
-        if (StringUtils.isBlank(naan)) {
-            return "OpenArk : NAAN obligatoire";
-        }
-        try {
-            Integer.parseInt(naan);
-        } catch (NumberFormatException ex) {
-            return "OpenArk : NAAN invalide (nombre attendu, ex. 66666)";
-        }
-        if (StringUtils.isBlank(editor.getPrefixOpenArk())) {
-            return "OpenArk : préfixe Ark obligatoire";
-        }
-        ThesaurusPreferences current = thesaurusPreferenceService.loadPreferencesOrNull(
-                getId(),
-                preferenceWorkLanguage()
-        );
-        boolean hasExistingKey = current != null && StringUtils.isNotBlank(current.apiKeyOpenArk());
-        if (!hasExistingKey && StringUtils.isBlank(editor.getNewApiKeyOpenArk())) {
-            return "OpenArk : clé API obligatoire";
-        }
-        return null;
-    }
-
-    private void ensurePreferencesLoaded() {
-        if (preferenceLoaded && preference != null) {
-            return;
-        }
-        String thesaurusId = getId();
-        if (StringUtils.isBlank(thesaurusId)) {
-            preference = new PreferenceEditor();
-            return;
-        }
-        String workLang = preferenceWorkLanguage();
-        ThesaurusPreferences prefs = thesaurusPreferenceService.loadPreferencesOrNull(thesaurusId, workLang);
-        if (prefs == null) {
-            preference = new PreferenceEditor();
-            preference.setLanguages(new ArrayList<>(loadPreferenceLanguages(thesaurusId, workLang)));
-            preferenceLoaded = true;
-            return;
-        }
-        preference = PreferenceEditor.from(prefs);
-        if (preference.getLanguages() == null || preference.getLanguages().isEmpty()) {
-            preference.setLanguages(new ArrayList<>(loadPreferenceLanguages(thesaurusId, workLang)));
-        }
-        preferenceLoaded = true;
-    }
-
-    private String preferenceWorkLanguage() {
-        return StringUtils.defaultIfBlank(thesaurusContext.resolveWorkLanguage(), "fr");
-    }
-
-    private List<ThesaurusLanguage> loadPreferenceLanguages(String thesaurusId, String workLang) {
-        List<ThesaurusLanguage> loaded = thesaurusPreferenceService.loadUsedLanguages(thesaurusId, workLang);
-        return loaded != null ? loaded : Collections.emptyList();
     }
 
     private void ensureLanguagesLoaded() {
