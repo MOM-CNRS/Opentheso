@@ -357,7 +357,8 @@ a.th-id{flex:1}
 .confirm-modal a.bo-btn,.confirm-modal a.abt-save,.confirm-modal button.bo-btn.primary{color:#fff;text-decoration:none}
 .confirm-modal .abt-cancel{color:var(--ink-2)}
 .confirm-modal .abt-save{box-shadow:0 1px 0 rgba(255,255,255,.16) inset, 0 4px 12px rgba(31,122,92,.24)}
-a.boc-item,a.boc.boc-clickable{cursor:pointer}
+a.boc-item,a.boc.boc-clickable,a.boc-h{cursor:pointer}
+a.boc{display:block;width:100%;text-align:left}
 a.empty-link{color:var(--accent);font-weight:600}
 
 .page-side-hint{padding:28px 18px;color:var(--ink-3);font-size:13.5px;line-height:1.5}

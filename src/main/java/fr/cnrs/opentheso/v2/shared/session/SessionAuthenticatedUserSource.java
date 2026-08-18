@@ -1,8 +1,11 @@
 package fr.cnrs.opentheso.v2.shared.session;
 
 import jakarta.faces.context.FacesContext;
+import jakarta.servlet.http.HttpSession;
 import org.springframework.context.annotation.Primary;
 import org.springframework.stereotype.Component;
+import org.springframework.web.context.request.RequestContextHolder;
+import org.springframework.web.context.request.ServletRequestAttributes;
 
 import java.util.Optional;
 
@@ -19,11 +22,7 @@ public class SessionAuthenticatedUserSource implements AuthenticatedUserSource {
 
     @Override
     public Optional<Integer> getUserId() {
-        FacesContext context = FacesContext.getCurrentInstance();
-        if (context == null) {
-            return Optional.empty();
-        }
-        Object value = context.getExternalContext().getSessionMap().get(SESSION_USER_ID_KEY);
+        Object value = sessionAttribute(SESSION_USER_ID_KEY);
         if (value instanceof Integer userId) {
             return Optional.of(userId);
         }
@@ -35,14 +34,41 @@ public class SessionAuthenticatedUserSource implements AuthenticatedUserSource {
 
     public void setUserId(Integer userId) {
         FacesContext context = FacesContext.getCurrentInstance();
-        if (context == null) {
+        if (context != null) {
+            if (userId == null) {
+                context.getExternalContext().getSessionMap().remove(SESSION_USER_ID_KEY);
+            } else {
+                context.getExternalContext().getSessionMap().put(SESSION_USER_ID_KEY, userId);
+            }
+            return;
+        }
+        HttpSession session = currentHttpSession(true);
+        if (session == null) {
             return;
         }
         if (userId == null) {
-            context.getExternalContext().getSessionMap().remove(SESSION_USER_ID_KEY);
+            session.removeAttribute(SESSION_USER_ID_KEY);
         } else {
-            context.getExternalContext().getSessionMap().put(SESSION_USER_ID_KEY, userId);
+            session.setAttribute(SESSION_USER_ID_KEY, userId);
         }
+    }
+
+    private static Object sessionAttribute(String key) {
+        FacesContext context = FacesContext.getCurrentInstance();
+        if (context != null) {
+            return context.getExternalContext().getSessionMap().get(key);
+        }
+        HttpSession session = currentHttpSession(false);
+        return session == null ? null : session.getAttribute(key);
+    }
+
+    private static HttpSession currentHttpSession(boolean create) {
+        ServletRequestAttributes attributes =
+                (ServletRequestAttributes) RequestContextHolder.getRequestAttributes();
+        if (attributes == null) {
+            return null;
+        }
+        return attributes.getRequest().getSession(create);
     }
 
     @Override

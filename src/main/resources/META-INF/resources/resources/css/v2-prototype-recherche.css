@@ -1236,10 +1236,13 @@ tr.flat-filters th{position:sticky;top:33px;z-index:2;background:var(--surface);
 /* Cartes pleine largeur portant leur 1er niveau (réutilise .boc) */
 .boc-clickable{display:block;width:100%;text-align:left;cursor:pointer;transition:all .12s}
 .boc-clickable:hover{border-color:var(--accent-line);box-shadow:var(--shadow-md)}
+.boc-clickable:focus-visible{outline:2px solid var(--accent);outline-offset:2px}
+a.boc-h{color:inherit;text-decoration:none}
 .boc-sub{display:block;font-size:11px;color:var(--ink-4);font-weight:400;margin-top:1px}
 .boc-item .boc-l{display:flex;flex-direction:column}
 .boc-go.static{position:static;opacity:.55;margin-left:auto}
-.boc-clickable:hover .boc-go.static{opacity:1;color:var(--accent)}
+.boc-clickable:hover .boc-go.static,
+a.boc-h:hover .boc-go.static{opacity:1;color:var(--accent)}
 .mg-kpis.card{grid-template-columns:repeat(4,1fr);gap:10px;margin:14px 0 0}
 .mg-kpis.card .mg-kpi{background:var(--surface-2)}
 .mg-kpis.card .mg-kpi-n{font-size:21px}

@@ -1,9 +1,11 @@
 package fr.cnrs.opentheso.v2.shared.repository;
 
+import fr.cnrs.opentheso.v2.candidat.model.CandidatStatusCode;
 import fr.cnrs.opentheso.v2.concept.model.ConceptLinkItem;
 import fr.cnrs.opentheso.v2.concept.model.ThesaurusMetadataItem;
 import jakarta.persistence.EntityManager;
 import jakarta.persistence.PersistenceContext;
+import jakarta.persistence.Query;
 import org.apache.commons.lang3.StringUtils;
 import org.springframework.stereotype.Repository;
 
@@ -34,6 +36,41 @@ public class ThesaurusHomeQueryRepository {
                   AND status NOT IN ('CA', 'DEP', 'dep')
                 """;
         return countByThesaurus(sql, thesaurusId);
+    }
+
+    /**
+     * Quatre compteurs d'accueil en un aller-retour JDBC.
+     * {@code pendingCandidates} = statut en attente uniquement.
+     */
+    public DashboardKpiRow countDashboardKpis(String thesaurusId) {
+        if (StringUtils.isBlank(thesaurusId)) {
+            return DashboardKpiRow.empty();
+        }
+        String sql = """
+                SELECT
+                    (SELECT COUNT(id_concept)
+                     FROM concept
+                     WHERE id_thesaurus = :thesaurusId
+                       AND status NOT IN ('CA', 'DEP', 'dep'))::int,
+                    (SELECT COUNT(*)
+                     FROM candidat_status cs
+                     JOIN concept c
+                         ON cs.id_concept = c.id_concept
+                        AND cs.id_thesaurus = c.id_thesaurus
+                     WHERE cs.id_thesaurus = :thesaurusId
+                       AND cs.id_status = :pendingStatus)::int,
+                    (SELECT COUNT(*)
+                     FROM concept_group
+                     WHERE idthesaurus = :thesaurusId)::int,
+                    (SELECT COUNT(*)
+                     FROM thesaurus_label
+                     WHERE id_thesaurus = :thesaurusId)::int
+                """;
+        Object[] row = (Object[]) entityManager.createNativeQuery(sql)
+                .setParameter("thesaurusId", thesaurusId)
+                .setParameter("pendingStatus", CandidatStatusCode.PENDING)
+                .getSingleResult();
+        return new DashboardKpiRow(number(row, 0), number(row, 1), number(row, 2), number(row, 3));
     }
 
     public int countCandidatesByStatus(String thesaurusId, int statusId) {
@@ -153,6 +190,18 @@ public class ThesaurusHomeQueryRepository {
      */
     @SuppressWarnings("unchecked")
     public List<CollectionCoverageRow> findCollectionMemberCoverage(String thesaurusId, String workLang) {
+        return findCollectionMemberCoverage(thesaurusId, workLang, 0);
+    }
+
+    /**
+     * @param limit si &gt; 0, coupe après {@code limit} collections (les plus peuplées)
+     */
+    @SuppressWarnings("unchecked")
+    public List<CollectionCoverageRow> findCollectionMemberCoverage(
+            String thesaurusId,
+            String workLang,
+            int limit
+    ) {
         if (StringUtils.isBlank(thesaurusId)) {
             return List.of();
         }
@@ -177,10 +226,13 @@ public class ThesaurusHomeQueryRepository {
                 GROUP BY cg.idgroup
                 ORDER BY COUNT(c.id_concept) DESC, COALESCE(MAX(cgl.lexicalvalue), cg.idgroup)
                 """;
-        List<Object[]> rows = entityManager.createNativeQuery(sql)
+        Query query = entityManager.createNativeQuery(sql)
                 .setParameter("thesaurusId", thesaurusId)
-                .setParameter("lang", lang)
-                .getResultList();
+                .setParameter("lang", lang);
+        if (limit > 0) {
+            query.setMaxResults(limit);
+        }
+        List<Object[]> rows = query.getResultList();
         return rows.stream()
                 .map(row -> new CollectionCoverageRow(
                         row[0] != null ? (String) row[0] : "",
@@ -603,6 +655,12 @@ public class ThesaurusHomeQueryRepository {
     public record LastModifiedConceptsBundle(Date lastModified, List<ConceptLinkItem> concepts) {
         public static LastModifiedConceptsBundle empty() {
             return new LastModifiedConceptsBundle(null, Collections.emptyList());
+        }
+    }
+
+    public record DashboardKpiRow(int concepts, int pendingCandidates, int collections, int languages) {
+        public static DashboardKpiRow empty() {
+            return new DashboardKpiRow(0, 0, 0, 0);
         }
     }
 

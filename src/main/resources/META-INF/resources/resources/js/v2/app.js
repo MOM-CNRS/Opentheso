@@ -1088,6 +1088,14 @@
     e.preventDefault();
     go.click();
   });
+  document.addEventListener("keydown", (e) => {
+    if (e.repeat || e.isComposing) return;
+    if (e.key !== "Enter" && e.key !== " ") return;
+    const card = e.target.closest(".boc-clickable[data-act='show']");
+    if (!card || e.target !== card) return;
+    e.preventDefault();
+    card.click();
+  });
 
   window.onPreviewLoginAjax = function (data) {
     if (data.status !== "success") return;
@@ -1273,7 +1281,10 @@
       }
     } else if (act === "home") openHome();
     else if (act === "set-view") setView(t.getAttribute("data-view"));
-    else if (act === "show") showHomePanel(t.getAttribute("data-panel"));
+    else if (act === "show") {
+      e.preventDefault();
+      showHomePanel(t.getAttribute("data-panel"));
+    }
     else if (act === "settings-open") {
       const pages = {
         prefs: "setting/preference.xhtml#stPrefs",
@@ -2154,6 +2165,53 @@
     }).then((res) => (res.ok ? res.json() : Promise.reject()));
   }
 
+  function formatInt(value) {
+    const n = Number(value);
+    return Number.isFinite(n) ? n.toLocaleString("fr-FR") : "—";
+  }
+
+  function capitalizeLabel(value) {
+    const text = String(value == null ? "" : value);
+    if (!text) return text;
+    return text.charAt(0).toUpperCase() + text.slice(1);
+  }
+
+  function monthLabel(key) {
+    const parts = String(key || "").split("-");
+    if (parts.length < 2) return "—";
+    const date = new Date(Number(parts[0]), Number(parts[1]) - 1, 1);
+    if (Number.isNaN(date.getTime())) return "—";
+    return new Intl.DateTimeFormat("fr-FR", { month: "short", year: "2-digit" }).format(date)
+      .replace(/\./g, "")
+      .replace(/\u00a0/g, " ")
+      .replace(/\u202f/g, " ")
+      .trim();
+  }
+
+  function fillKpi(el, value, formatted) {
+    if (!el) return 0;
+    return fillStatNode(el, {
+      value: value,
+      formatted: formatted != null ? formatted : formatInt(value)
+    });
+  }
+
+  function fillOverviewKpis(kpis) {
+    const map = kpis || {};
+    $$("[data-stat]").forEach((el) => {
+      const key = el.getAttribute("data-stat");
+      if (!key || key === "max-depth" || key === "without-definition") return;
+      if (Object.prototype.hasOwnProperty.call(map, key)) fillKpi(el, map[key]);
+    });
+  }
+
+  function dashStatNodes(nodes) {
+    nodes.forEach((el) => {
+      el.textContent = "—";
+      el.removeAttribute("aria-busy");
+    });
+  }
+
   function fillStatNode(el, data) {
     const formatted = data && data.formatted;
     const value = Number(data && data.value);
@@ -2227,7 +2285,7 @@
     renderStatBars(container, (languages || []).map((item) => {
       const pct = coveragePercent(item.translatedCount, total);
       return {
-        label: item.label || item.code || "—",
+        label: capitalizeLabel(item.label || item.code || "—"),
         widthPct: pct,
         display: pct + "%",
         startDisplay: "0%"
@@ -2250,7 +2308,10 @@
   }
 
   function metricValue(body, key) {
-    return Number(body && body[key] && body[key].value) || 0;
+    if (body && body[key] && typeof body[key] === "object" && body[key].value != null) {
+      return Number(body[key].value) || 0;
+    }
+    return Number(body && body[key]) || 0;
   }
 
   function renderCandidateOutcome(container, body) {
@@ -2286,9 +2347,10 @@
     )).join("");
     const decided = accepted + rejected;
     const decidedRate = decided ? Math.round(accepted * 100 / decided) : 0;
-    const median = body.medianDecisionDays && body.medianDecisionDays.formatted !== "—"
-      ? Number(body.medianDecisionDays.value)
-      : null;
+    const medianRaw = body && body.medianDecisionDays;
+    const median = medianRaw && typeof medianRaw === "object"
+      ? (medianRaw.formatted !== "—" ? Number(medianRaw.value) : null)
+      : (medianRaw == null ? null : Number(medianRaw));
     let foot;
     if (!decided) {
       foot = "Aucune proposition n'a encore été tranchée.";
@@ -2353,7 +2415,7 @@
         + '" data-height="' + (total ? height : 0) + '" title="' + escapeHtml(monthTooltip(row)) + '">'
         + segs + "</div></div>"
         + '<span class="cs-col-n" data-count="' + total + '">0</span>'
-        + '<span class="cs-col-lbl">' + escapeHtml(row.label || "—") + "</span>"
+        + '<span class="cs-col-lbl">' + escapeHtml(row.label || monthLabel(row.key) || "—") + "</span>"
         + "</div>";
     }).join("");
     const legend = '<div class="cs-legend">'
@@ -2385,84 +2447,107 @@
     if (window.syncViewRail) window.syncViewRail();
   }
 
-  function loadStatKpis() {
-    const nodes = $$("[data-stat]");
-    const lifeNodes = $$("[data-stat-life]");
-    const languageCoverage = $("[data-stat-coverage='language']");
-    const collectionCoverage = $("[data-stat-coverage='collections']");
-    const outcome = $("[data-stat-outcome]");
-    const months = $("[data-stat-months]");
-    if (!nodes.length && !lifeNodes.length && !languageCoverage && !collectionCoverage && !outcome && !months) return;
-
-    const pending = new Map();
-    const getStat = (metric) => {
-      if (!pending.has(metric)) {
-        pending.set(metric, fetchStat(encodeURIComponent(metric)));
-      }
-      return pending.get(metric);
-    };
-
-    nodes.forEach((el) => {
-      const metric = el.getAttribute("data-stat");
-      if (!metric) return;
-      getStat(metric)
-        .then((data) => fillStatNode(el, data))
-        .catch(() => {
-          el.textContent = "—";
-          el.removeAttribute("aria-busy");
-        });
+  function fillCandidateLife(body) {
+    const life = body || {};
+    const rate = Number(life.acceptanceRatePercent);
+    const median = life.medianDecisionDays;
+    $$("[data-stat-life]").forEach((el) => {
+      const key = el.getAttribute("data-stat-life");
+      if (key === "pending") fillKpi(el, life.pending);
+      else if (key === "accepted12m") fillKpi(el, life.acceptedLast12Months);
+      else if (key === "rejected12m") fillKpi(el, life.rejectedLast12Months);
+      else if (key === "acceptanceRate") {
+        fillKpi(el, rate, Number.isFinite(rate) ? formatInt(rate) + "\u202f%" : "—");
+      } else if (key === "medianDecisionDays") {
+        fillKpi(
+          el,
+          median,
+          median == null ? "—" : formatInt(median) + "\u202fj"
+        );
+      } else if (key === "activeContributors") fillKpi(el, life.activeContributors);
     });
+  }
 
+  function applyOverview(body) {
+    const overview = body || {};
+    fillOverviewKpis(overview.kpis);
+    const languageCoverage = $("[data-stat-coverage='language']");
     if (languageCoverage) {
-      Promise.all([
-        getStat("concepts").then((data) => Number(data && data.value) || 0).catch(() => 0),
-        fetchStat("language-coverage")
-      ])
-        .then(([total, body]) => renderLanguageCoverage(languageCoverage, total, body && body.languages))
-        .catch(() => {
-          languageCoverage.innerHTML = '<div class="mg-bar-row"><span class="mg-bar-l">—</span></div>';
-          languageCoverage.removeAttribute("aria-busy");
-        });
+      renderLanguageCoverage(
+        languageCoverage,
+        Number(overview.kpis && overview.kpis.concepts) || 0,
+        overview.languages
+      );
     }
-
+    const collectionCoverage = $("[data-stat-coverage='collections']");
     if (collectionCoverage) {
-      fetchStat("collection-coverage")
-        .then((body) => renderCollectionCoverage(collectionCoverage, body && body.collections))
-        .catch(() => {
-          collectionCoverage.innerHTML = '<div class="mg-bar-row"><span class="mg-bar-l">—</span></div>';
-          collectionCoverage.removeAttribute("aria-busy");
-        });
+      renderCollectionCoverage(collectionCoverage, overview.collections);
     }
+    const cap = $("[data-stat-collections-cap]");
+    if (cap) {
+      cap.textContent = overview.collectionsTruncated
+        ? "12 micro-thésaurus les plus peuplés"
+        : "";
+    }
+    fillCandidateLife(overview.candidates);
+    const outcome = $("[data-stat-outcome]");
+    if (outcome) renderCandidateOutcome(outcome, overview.candidates || {});
+    const months = $("[data-stat-months]");
+    if (months) renderCandidateMonths(months, overview.months);
+  }
 
-    if (lifeNodes.length || outcome) {
-      fetchStat("candidate-life")
-        .then((body) => {
-          lifeNodes.forEach((el) => {
-            const key = el.getAttribute("data-stat-life");
-            fillStatNode(el, (body && body[key]) || { formatted: "—" });
-          });
-          if (outcome) renderCandidateOutcome(outcome, body || {});
-        })
+  function applyCompleteness(body) {
+    fillKpi($("[data-stat='max-depth']"), body && body.maxDepth);
+    fillKpi($("[data-stat='without-definition']"), body && body.withoutDefinition);
+  }
+
+  function loadStatKpis() {
+    const kpiNodes = $$("[data-stat]");
+    const dashboard = $("[data-stat-life]")
+      || $("[data-stat-coverage='language']")
+      || $("[data-stat-coverage='collections']")
+      || $("[data-stat-outcome]")
+      || $("[data-stat-months]");
+    if (!kpiNodes.length && !dashboard) return;
+
+    if (dashboard) {
+      fetchStat("overview")
+        .then(applyOverview)
         .catch(() => {
-          lifeNodes.forEach((el) => {
-            el.textContent = "—";
-            el.removeAttribute("aria-busy");
+          dashStatNodes(kpiNodes.filter((el) => {
+            const key = el.getAttribute("data-stat");
+            return key !== "max-depth" && key !== "without-definition";
+          }));
+          dashStatNodes($$("[data-stat-life]"));
+          ["language", "collections"].forEach((kind) => {
+            const el = $("[data-stat-coverage='" + kind + "']");
+            if (el) {
+              el.innerHTML = '<div class="mg-bar-row"><span class="mg-bar-l">—</span></div>';
+              el.removeAttribute("aria-busy");
+            }
           });
+          const outcome = $("[data-stat-outcome]");
           if (outcome) {
             outcome.innerHTML = '<p class="cs-foot">—</p>';
             outcome.removeAttribute("aria-busy");
           }
+          const months = $("[data-stat-months]");
+          if (months) {
+            months.innerHTML = '<p class="cs-foot">—</p>';
+            months.removeAttribute("aria-busy");
+          }
         });
+      fetchStat("completeness")
+        .then(applyCompleteness)
+        .catch(() => {
+          dashStatNodes($$("[data-stat='max-depth'], [data-stat='without-definition']"));
+        });
+      return;
     }
 
-    if (months) {
-      fetchStat("candidate-months")
-        .then((body) => renderCandidateMonths(months, body && body.months))
-        .catch(() => {
-          months.innerHTML = '<p class="cs-foot">—</p>';
-          months.removeAttribute("aria-busy");
-        });
-    }
+    fetchStat("kpis")
+      .then(fillOverviewKpis)
+      .catch(() => dashStatNodes(kpiNodes));
   }
 
   bindPrefSwitches();

@@ -4,6 +4,7 @@
                 template="/v2/includes/layout.xhtml">
   <ui:param name="previewPage" value="statistiques"/>
   <ui:define name="title">OpenTheso — Statistiques</ui:define>
+  <ui:define name="detail"/>
   <ui:define name="main">
 
           <div class="view-panel is-on" id="viewStats">
@@ -51,7 +52,8 @@
                   </div>
                 </div>
                 <div class="bo-card">
-                  <div class="bo-card-h"><span class="bo-card-t">Répartition par micro-thésaurus</span></div>
+                  <div class="bo-card-h"><span class="bo-card-t">Répartition par micro-thésaurus</span>
+                    <span class="cs-cap right" data-stat-collections-cap=""></span></div>
                   <div class="bo-card-b">
                     <div class="mg-bars" data-stat-coverage="collections" aria-busy="true">
                       <div class="mg-bars-loading">
@@ -125,166 +127,6 @@
                   <div class="bo-card-b" data-stat-months="" aria-busy="true">
                     <div class="mg-bars-loading">
                       <span class="mg-kpi-spin" aria-hidden="true"></span>
-                    </div>
-                  </div>
-                </div>
-                <div class="cs-2col">
-                  <div class="bo-card">
-                    <div class="bo-card-h"><span class="bo-card-t">Consensus &amp; participation</span></div>
-                    <div class="bo-card-b">
-                      <div class="cs-metrics">
-                        <div class="cs-metric"><b>3.4</b><span>participants / candidat</span></div>
-                        <div class="cs-metric"><b>3.3</b><span>votes / candidat</span></div>
-                        <div class="cs-metric"><b>155</b><span>messages échangés</span></div>
-                      </div>
-                      <div class="cs-dist-lead">Comment se tranchent les décisions</div>
-                      <div class="cs-dist">
-                        
-                        <div class="cs-dist-row">
-                          <span class="cs-dist-l">Accord unanime<em>aucun vote contre</em></span>
-                          <span class="cs-dist-track"><i class="t-ins" style="width:100%"></i></span>
-                          <span class="cs-dist-n">10</span>
-                        </div>
-                        <div class="cs-dist-row">
-                          <span class="cs-dist-l">Consensus large<em>majorité nette</em></span>
-                          <span class="cs-dist-track"><i class="t-cand" style="width:30%"></i></span>
-                          <span class="cs-dist-n">3</span>
-                        </div>
-                        <div class="cs-dist-row">
-                          <span class="cs-dist-l">Débat partagé<em>avis serrés ou contre</em></span>
-                          <span class="cs-dist-track"><i class="t-rej" style="width:50%"></i></span>
-                          <span class="cs-dist-n">5</span>
-                        </div>
-                      </div>
-                    </div>
-                  </div>
-                  <div class="bo-card">
-                    <div class="bo-card-h"><span class="bo-card-t">En discussion</span>
-                      <span class="cs-flag right">4 en attente &gt; 45 j</span></div>
-                    <div class="bo-card-b">
-                      <div class="cs-queue">
-                        <div class="cs-q">
-                          <div class="cs-q-top">
-                            <span class="cs-q-name">Umbo de bouclier</span>
-                            <span class="cs-q-age old">104 j</span>
-                          </div>
-                          <div class="cs-q-by">Proposé par Samuel Garnier · 3 participant(s) · 5 message(s)</div>
-                          <div class="cs-q-votes">
-                            <span class="cs-v up">1 pour</span>
-                            <span class="cs-vbar">
-                              <i class="t-ins" style="flex:1"></i>
-                              <i class="t-rej" style="flex:2"></i>
-                            </span>
-                            <span class="cs-v down">2 contre</span>
-                            <span class="cs-v tot">contesté</span>
-                          </div>
-                        </div><div class="cs-q">
-                          <div class="cs-q-top">
-                            <span class="cs-q-name">Sigillée claire B</span>
-                            <span class="cs-q-age old">59 j</span>
-                          </div>
-                          <div class="cs-q-by">Proposé par Julie Bonnet · 1 participant(s) · 1 message(s)</div>
-                          <div class="cs-q-votes">
-                            <span class="cs-v up">0 pour</span>
-                            <span class="cs-vbar">
-                              <i class="t-ins" style="flex:0.001"></i>
-                              <i class="t-rej" style="flex:0.001"></i>
-                            </span>
-                            <span class="cs-v down">0 contre</span>
-                            <span class="cs-v tot">aucun vote</span>
-                          </div>
-                        </div><div class="cs-q">
-                          <div class="cs-q-top">
-                            <span class="cs-q-name">Orichalque</span>
-                            <span class="cs-q-age old">53 j</span>
-                          </div>
-                          <div class="cs-q-by">Proposé par Marc Lefèvre · 2 participant(s) · 3 message(s)</div>
-                          <div class="cs-q-votes">
-                            <span class="cs-v up">2 pour</span>
-                            <span class="cs-vbar">
-                              <i class="t-ins" style="flex:2"></i>
-                              <i class="t-rej" style="flex:0.001"></i>
-                            </span>
-                            <span class="cs-v down">0 contre</span>
-                            <span class="cs-v tot">consensus +</span>
-                          </div>
-                        </div><div class="cs-q">
-                          <div class="cs-q-top">
-                            <span class="cs-q-name">Bronze doré</span>
-                            <span class="cs-q-age old">50 j</span>
-                          </div>
-                          <div class="cs-q-by">Proposé par Antonio Costa · 3 participant(s) · 5 message(s)</div>
-                          <div class="cs-q-votes">
-                            <span class="cs-v up">3 pour</span>
-                            <span class="cs-vbar">
-                              <i class="t-ins" style="flex:3"></i>
-                              <i class="t-rej" style="flex:1"></i>
-                            </span>
-                            <span class="cs-v down">1 contre</span>
-                            <span class="cs-v tot">consensus +</span>
-                          </div>
-                        </div><div class="cs-q">
-                          <div class="cs-q-top">
-                            <span class="cs-q-name">Céramique à vernis noir</span>
-                            <span class="cs-q-age">25 j</span>
-                          </div>
-                          <div class="cs-q-by">Proposé par Antonio Costa · 4 participant(s) · 6 message(s)</div>
-                          <div class="cs-q-votes">
-                            <span class="cs-v up">4 pour</span>
-                            <span class="cs-vbar">
-                              <i class="t-ins" style="flex:4"></i>
-                              <i class="t-rej" style="flex:0.001"></i>
-                            </span>
-                            <span class="cs-v down">0 contre</span>
-                            <span class="cs-v tot">consensus +</span>
-                          </div>
-                        </div><div class="cs-q">
-                          <div class="cs-q-top">
-                            <span class="cs-q-name">Tjarou</span>
-                            <span class="cs-q-age">11 j</span>
-                          </div>
-                          <div class="cs-q-by">Proposé par Anaïs Mauriceau · 2 participant(s) · 3 message(s)</div>
-                          <div class="cs-q-votes">
-                            <span class="cs-v up">1 pour</span>
-                            <span class="cs-vbar">
-                              <i class="t-ins" style="flex:1"></i>
-                              <i class="t-rej" style="flex:0.001"></i>
-                            </span>
-                            <span class="cs-v down">0 contre</span>
-                            <span class="cs-v tot">consensus +</span>
-                          </div>
-                        </div><div class="cs-q">
-                          <div class="cs-q-top">
-                            <span class="cs-q-name">Alliage argent-cuivre</span>
-                            <span class="cs-q-age">10 j</span>
-                          </div>
-                          <div class="cs-q-by">Proposé par Camille Roussel · 1 participant(s) · 2 message(s)</div>
-                          <div class="cs-q-votes">
-                            <span class="cs-v up">1 pour</span>
-                            <span class="cs-vbar">
-                              <i class="t-ins" style="flex:1"></i>
-                              <i class="t-rej" style="flex:0.001"></i>
-                            </span>
-                            <span class="cs-v down">0 contre</span>
-                            <span class="cs-v tot">consensus +</span>
-                          </div>
-                        </div><div class="cs-q">
-                          <div class="cs-q-top">
-                            <span class="cs-q-name">Fibule à charnière</span>
-                            <span class="cs-q-age">8 j</span>
-                          </div>
-                          <div class="cs-q-by">Proposé par Lucie Petit · 3 participant(s) · 5 message(s)</div>
-                          <div class="cs-q-votes">
-                            <span class="cs-v up">2 pour</span>
-                            <span class="cs-vbar">
-                              <i class="t-ins" style="flex:2"></i>
-                              <i class="t-rej" style="flex:1"></i>
-                            </span>
-                            <span class="cs-v down">1 contre</span>
-                            <span class="cs-v tot">consensus +</span>
-                          </div>
-                        </div>
-                      </div>
                     </div>
                   </div>
                 </div>
