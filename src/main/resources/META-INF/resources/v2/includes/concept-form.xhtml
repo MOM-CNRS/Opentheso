@@ -6,13 +6,15 @@
        data-id="#{v2ThesaurusViewBean.selectedConcept.summary.conceptId}"
        data-pref="#{v2ThesaurusViewBean.selectedConcept.summary.preferredLabel}"
        data-status="#{v2ThesaurusViewBean.candidateSelected ? 'candidat' : 'valide'}">
-    <div class="cv-path">
-      <span class="path">
-        <ui:repeat value="#{v2ThesaurusViewBean.selectedConcept.breadcrumb}" var="step" varStatus="st">
-          <span class="path-seg">#{step.label}<ui:fragment rendered="#{not st.last}"><span class="path-sep">›</span></ui:fragment></span>
-        </ui:repeat>
-      </span>
-    </div>
+    <ui:fragment rendered="#{v2ThesaurusViewBean.breadcrumbEnabled and not empty v2ThesaurusViewBean.selectedConcept.breadcrumb}">
+      <div class="cv-path">
+        <span class="path">
+          <ui:repeat value="#{v2ThesaurusViewBean.selectedConcept.breadcrumb}" var="step" varStatus="st">
+            <span class="path-seg">#{step.label}<ui:fragment rendered="#{not st.last}"><span class="path-sep">›</span></ui:fragment></span>
+          </ui:repeat>
+        </span>
+      </div>
+    </ui:fragment>
     <div class="cv-head">
       <h1 class="cv-pref">
         <ui:fragment rendered="#{v2ThesaurusViewBean.candidateSelected}"><span class="cv-dot" title="Concept candidat"></span></ui:fragment>

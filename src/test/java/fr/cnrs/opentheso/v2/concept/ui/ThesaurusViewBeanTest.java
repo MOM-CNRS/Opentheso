@@ -9,6 +9,7 @@ import fr.cnrs.opentheso.v2.concept.service.ThesaurusHomeWriteService;
 import fr.cnrs.opentheso.v2.rights.Permission;
 import fr.cnrs.opentheso.v2.rights.RightsService;
 import fr.cnrs.opentheso.v2.setting.model.ThesaurusLanguage;
+import fr.cnrs.opentheso.v2.setting.model.ThesaurusPreferences;
 import fr.cnrs.opentheso.v2.setting.service.ThesaurusPreferenceService;
 import fr.cnrs.opentheso.v2.setting.service.ThesaurusWorkLanguageService;
 import fr.cnrs.opentheso.v2.setting.ui.ThesaurusContext;
@@ -39,6 +40,7 @@ import static org.mockito.ArgumentMatchers.anyInt;
 import static org.mockito.ArgumentMatchers.eq;
 import static org.mockito.ArgumentMatchers.nullable;
 import static org.mockito.Mockito.lenient;
+import static org.mockito.Mockito.mock;
 import static org.mockito.Mockito.never;
 import static org.mockito.Mockito.times;
 import static org.mockito.Mockito.verify;
@@ -349,6 +351,26 @@ class ThesaurusViewBeanTest {
         assertEquals("Techniques", bean.getSelectedFacet().getLabel());
         assertNull(bean.getSelectedConcept());
         verify(conceptReadService).loadFacetDetail("th17", "f1", "fr");
+    }
+
+    @Test
+    void breadcrumbEnabled_followsThesaurusPreference() {
+        thesaurusContext.selectThesaurus("th17", "Pactols_Lieux", "fr");
+        ThesaurusPreferences preferences = mock(ThesaurusPreferences.class);
+        when(preferences.breadcrumb()).thenReturn(true);
+        when(thesaurusPreferenceService.loadPreferencesOrNull("th17", "fr")).thenReturn(preferences);
+
+        assertTrue(bean.isBreadcrumbEnabled());
+    }
+
+    @Test
+    void breadcrumbEnabled_isHiddenWhenPreferenceIsOff() {
+        thesaurusContext.selectThesaurus("th17", "Pactols_Lieux", "fr");
+        ThesaurusPreferences preferences = mock(ThesaurusPreferences.class);
+        when(preferences.breadcrumb()).thenReturn(false);
+        when(thesaurusPreferenceService.loadPreferencesOrNull("th17", "fr")).thenReturn(preferences);
+
+        assertFalse(bean.isBreadcrumbEnabled());
     }
 
 

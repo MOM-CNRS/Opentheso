@@ -7,17 +7,17 @@
        data-pref="#{v2ThesaurusViewBean.selectedFacet.label}"
        data-status="facet"
        data-type="facet">
-    <div class="cv-path">
-      <span class="path">
-        <ui:fragment rendered="#{not empty v2ThesaurusViewBean.selectedFacet.parentConceptLabel}">
+    <ui:fragment rendered="#{v2ThesaurusViewBean.breadcrumbEnabled and not empty v2ThesaurusViewBean.selectedFacet.parentConceptLabel}">
+      <div class="cv-path">
+        <span class="path">
           <span class="path-seg">
             <button type="button" class="rel-term" data-act="open"
                     data-id="#{v2ThesaurusViewBean.selectedFacet.parentConceptId}"
                     data-type="concept">#{v2ThesaurusViewBean.selectedFacet.parentConceptLabel}</button>
           </span>
-        </ui:fragment>
-      </span>
-    </div>
+        </span>
+      </div>
+    </ui:fragment>
     <div class="cv-head">
       <h1 class="cv-pref">
         <span>#{v2ThesaurusViewBean.dash(v2ThesaurusViewBean.selectedFacet.label)}</span>

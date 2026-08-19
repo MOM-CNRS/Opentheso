@@ -12,6 +12,7 @@ import fr.cnrs.opentheso.v2.concept.service.ThesaurusHomeWriteService;
 import fr.cnrs.opentheso.v2.rights.Permission;
 import fr.cnrs.opentheso.v2.rights.RightsService;
 import fr.cnrs.opentheso.v2.setting.model.ThesaurusLanguage;
+import fr.cnrs.opentheso.v2.setting.model.ThesaurusPreferences;
 import fr.cnrs.opentheso.v2.setting.service.ThesaurusPreferenceService;
 import fr.cnrs.opentheso.v2.setting.ui.ThesaurusContext;
 import fr.cnrs.opentheso.v2.shared.repository.ThesaurusHomeQueryRepository;
@@ -59,6 +60,7 @@ public class ThesaurusViewBean implements Serializable {
     private boolean homePageHtmlLoaded;
     private List<ThesaurusTreeNode> treeRoots;
     private Boolean canEdit;
+    private Boolean breadcrumbEnabled;
 
     @Getter
     @Setter
@@ -165,6 +167,7 @@ public class ThesaurusViewBean implements Serializable {
         }
         invalidateHomePageHtml();
         invalidateTree();
+        breadcrumbEnabled = null;
         if (editing) {
             homeHtml = thesaurusHomeWriteService.loadHtml(getId(), thesaurusContext.resolveWorkLanguage());
         }
@@ -251,6 +254,17 @@ public class ThesaurusViewBean implements Serializable {
 
     public boolean isSelectedConceptDeprecated() {
         return selectedConcept != null && selectedConcept.isDeprecated();
+    }
+
+    public boolean isBreadcrumbEnabled() {
+        if (breadcrumbEnabled == null) {
+            ThesaurusPreferences preferences = thesaurusPreferenceService.loadPreferencesOrNull(
+                    getId(),
+                    thesaurusContext.resolveWorkLanguage()
+            );
+            breadcrumbEnabled = preferences != null && preferences.breadcrumb();
+        }
+        return breadcrumbEnabled;
     }
 
     public String noteTypeLabel(String typeCode) {

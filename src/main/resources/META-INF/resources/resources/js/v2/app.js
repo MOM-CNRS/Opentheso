@@ -1202,6 +1202,9 @@
       return;
     } else if (act === "st-save-ask") {
       showConfirm("#stSaveConfirm");
+    } else if (act === "st-save-go") {
+      e.preventDefault();
+      clickPreviewJsf("previewPrefSaveGo");
     } else if (act === "st-save-dismiss") {
       hideConfirm("#stSaveConfirm");
     } else if (act === "st-save-modal") {
@@ -1937,17 +1940,28 @@
     if (data.status === "begin") {
       hideConfirm("#stSaveConfirm");
     }
+    if (data.status === "error") {
+      toast("L'enregistrement a échoué. Réessayez.");
+      return;
+    }
     if (data.status !== "success") return;
     const msg = $("#previewPrefSaveMsg");
     if (!msg) return;
     const text = (msg.textContent || "").trim();
-    if (!text || msg.getAttribute("data-ok") !== "true") return;
-    requestAnimationFrame(rememberSettingsBaseline);
-    const el = $("#stSaveToast");
-    if (!el) return;
-    el.hidden = false;
-    clearTimeout(el._t);
-    el._t = setTimeout(() => { el.hidden = true; }, 2200);
+    if (!text) {
+      toast("L'enregistrement n'a pas pu être effectué.");
+      return;
+    }
+    if (msg.getAttribute("data-ok") === "true") {
+      requestAnimationFrame(rememberSettingsBaseline);
+      const el = $("#stSaveToast");
+      if (!el) return;
+      el.hidden = false;
+      clearTimeout(el._t);
+      el._t = setTimeout(() => { el.hidden = true; }, 2200);
+      return;
+    }
+    toast(text);
   };
   function showAboutSaveToast() {
     const msg = $("#previewAboutSaveMsg");

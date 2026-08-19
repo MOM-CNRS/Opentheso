@@ -83,6 +83,11 @@
                   <f:ajax execute="@this previewAlignSourceId" render="previewAlignBox"
                           onevent="onPreviewAlignDialog"/>
                 </h:commandButton>
+                <h:commandButton id="previewPrefSaveGo" value="save" styleClass="st-jsf-go"
+                                 action="#{v2ThesaurusPreferenceBean.savePreferences}">
+                  <f:ajax execute="@this previewSettingsBody" render="previewSettingsBody previewPrefSaveFeedback"
+                          onevent="onPreviewPrefSave"/>
+                </h:commandButton>
                 <h:panelGroup id="previewSettingsBody" layout="block">
                 <div class="st-group-head" id="stPrefs">Préférences du thésaurus</div>
                 <div class="bo-card">
@@ -573,12 +578,15 @@
                   </div>
                 </div>
                 </h:panelGroup>
+                </h:panelGroup>
                 <input type="hidden" name="csrfToken" value="#{sessionScope.CSRF_TOKEN}"/>
+                <h:panelGroup id="previewPrefSaveFeedback" layout="block">
                 <span id="previewPrefSaveMsg" hidden="hidden"
                       data-ok="#{not v2ThesaurusPreferenceBean.preferenceSaveError}">#{v2ThesaurusPreferenceBean.preferenceSaveMessage}</span>
                 <h:panelGroup layout="block" styleClass="st-corpus-msg is-error"
                               rendered="#{v2ThesaurusPreferenceBean.preferenceSaveError and not empty v2ThesaurusPreferenceBean.preferenceSaveMessage}">
                   #{v2ThesaurusPreferenceBean.preferenceSaveMessage}
+                </h:panelGroup>
                 </h:panelGroup>
                 <div class="st-group-head" id="stCorpus">Corpus liés</div>
                 <h:panelGroup id="previewCorpusBox" layout="block">
@@ -1020,11 +1028,10 @@
                       Préférences, corpus et sources d'alignement seront enregistrés. Sans Enregistrer, tout est perdu en quittant la page.</p>
                     <div class="confirm-actions">
                       <button type="button" class="bo-btn ghost confirm-cancel" data-act="st-save-dismiss">Annuler</button>
-                      <h:commandLink styleClass="bo-btn primary" action="#{v2ThesaurusPreferenceBean.savePreferences}">
-                        <f:ajax execute="@form" render="previewSettingsBody" onevent="onPreviewPrefSave"/>
+                      <button type="button" class="bo-btn primary" data-act="st-save-go">
                         <svg viewBox="0 0 24 24" aria-hidden="true"><path d="M20 6 9 17l-5-5"/></svg>
                         Enregistrer
-                      </h:commandLink>
+                      </button>
                     </div>
                   </div>
                 </div>
@@ -1032,7 +1039,6 @@
                   <svg viewBox="0 0 24 24" aria-hidden="true"><path d="M20 6 9 17l-5-5"/></svg>
                   Enregistré avec succès
                 </div>
-                </h:panelGroup>
                 <input type="hidden" name="csrfToken" value="#{sessionScope.CSRF_TOKEN}"/>
                 </h:form>
                 <div class="block-overlay confirm-overlay" id="stLeaveConfirm" hidden="hidden"
