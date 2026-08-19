@@ -1,4 +1,4 @@
-package fr.cnrs.opentheso.v2.preview.service;
+package fr.cnrs.opentheso.v2.setting.service;
 
 import fr.cnrs.opentheso.v2.concept.alignment.model.AlignmentSourceItem;
 import fr.cnrs.opentheso.v2.concept.alignment.service.ConceptAlignmentAdminService;
@@ -33,7 +33,7 @@ import static org.mockito.Mockito.verify;
 import static org.mockito.Mockito.when;
 
 @ExtendWith(MockitoExtension.class)
-class PreviewThesaurusSettingsPersistServiceTest {
+class ThesaurusSettingsPersistServiceTest {
 
     @Mock
     private ThesaurusPreferenceService thesaurusPreferenceService;
@@ -44,11 +44,11 @@ class PreviewThesaurusSettingsPersistServiceTest {
     @Mock
     private ThesaurusSearchLanguageSync thesaurusSearchLanguageSync;
 
-    private PreviewThesaurusSettingsPersistService service;
+    private ThesaurusSettingsPersistService service;
 
     @BeforeEach
     void setUp() {
-        service = new PreviewThesaurusSettingsPersistService(
+        service = new ThesaurusSettingsPersistService(
                 thesaurusPreferenceService,
                 thesaurusCorpusService,
                 conceptAlignmentAdminService,

@@ -1,4 +1,4 @@
-package fr.cnrs.opentheso.v2.preview.ui;
+package fr.cnrs.opentheso.v2.setting.ui;
 
 import fr.cnrs.opentheso.v2.rights.Permission;
 import fr.cnrs.opentheso.v2.rights.RightsService;
@@ -32,7 +32,7 @@ import static org.mockito.Mockito.verify;
 import static org.mockito.Mockito.when;
 
 @ExtendWith(MockitoExtension.class)
-class PreviewThesaurusCorpusBeanTest {
+class ThesaurusCorpusBeanTest {
 
     @Mock
     private ThesaurusSelectionService thesaurusSelectionService;
@@ -45,7 +45,7 @@ class PreviewThesaurusCorpusBeanTest {
     @Mock
     private ThesaurusCorpusService thesaurusCorpusService;
 
-    private PreviewThesaurusCorpusBean bean;
+    private ThesaurusCorpusBean bean;
 
     @BeforeEach
     void setUp() {
@@ -53,8 +53,8 @@ class PreviewThesaurusCorpusBeanTest {
                 thesaurusSelectionService, thesaurusWorkLanguageService);
         ReflectionTestUtils.setField(thesaurusContext, "defaultWorkLanguage", "fr");
         thesaurusContext.selectThesaurus("th17", "Pactols_Lieux", "fr");
-        PreviewSettingsAccess access = new PreviewSettingsAccess(thesaurusContext, userSession, rightsService);
-        bean = new PreviewThesaurusCorpusBean(access, thesaurusCorpusService);
+        SettingsAccess access = new SettingsAccess(thesaurusContext, userSession, rightsService);
+        bean = new ThesaurusCorpusBean(access, thesaurusCorpusService);
     }
 
     @Test

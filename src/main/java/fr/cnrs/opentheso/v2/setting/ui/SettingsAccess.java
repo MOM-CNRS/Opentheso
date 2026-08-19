@@ -1,8 +1,7 @@
-package fr.cnrs.opentheso.v2.preview.ui;
+package fr.cnrs.opentheso.v2.setting.ui;
 
 import fr.cnrs.opentheso.v2.rights.Permission;
 import fr.cnrs.opentheso.v2.rights.RightsService;
-import fr.cnrs.opentheso.v2.setting.ui.ThesaurusContext;
 import fr.cnrs.opentheso.v2.shared.ui.UserSession;
 import jakarta.faces.view.ViewScoped;
 import jakarta.inject.Named;
@@ -14,10 +13,10 @@ import java.io.Serializable;
 /**
  * Droits et identifiant du thésaurus pour la page Paramètres, mémorisés une fois par vue.
  */
-@Named("v2PreviewSettingsAccess")
+@Named("v2SettingsAccess")
 @ViewScoped
 @RequiredArgsConstructor
-public class PreviewSettingsAccess implements Serializable {
+public class SettingsAccess implements Serializable {
 
     private final ThesaurusContext thesaurusContext;
     private final UserSession userSession;

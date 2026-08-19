@@ -101,7 +101,7 @@ public class LoginBean implements Serializable {
     }
 
     /** Déconnexion depuis le front v2 : reste sur /v2. */
-    public void logoutToPreview() throws IOException {
+    public void logoutToV2() throws IOException {
         username = null;
         password = null;
         clearLoginError();

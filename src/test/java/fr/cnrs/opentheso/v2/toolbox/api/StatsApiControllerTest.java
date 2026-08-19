@@ -1,4 +1,4 @@
-package fr.cnrs.opentheso.v2.preview.api;
+package fr.cnrs.opentheso.v2.toolbox.api;
 
 import fr.cnrs.opentheso.v2.setting.ui.ThesaurusContext;
 import fr.cnrs.opentheso.v2.toolbox.model.StatisticsCandidateLife;
@@ -19,18 +19,18 @@ import static org.mockito.Mockito.lenient;
 import static org.mockito.Mockito.when;
 
 @ExtendWith(MockitoExtension.class)
-class PreviewStatsApiControllerTest {
+class StatsApiControllerTest {
 
     @Mock
     private ThesaurusStatisticsService thesaurusStatisticsService;
     @Mock
     private ThesaurusContext thesaurusContext;
 
-    private PreviewStatsApiController controller;
+    private StatsApiController controller;
 
     @BeforeEach
     void setUp() {
-        controller = new PreviewStatsApiController(thesaurusStatisticsService, thesaurusContext);
+        controller = new StatsApiController(thesaurusStatisticsService, thesaurusContext);
         lenient().when(thesaurusContext.resolveThesaurusId()).thenReturn("th17");
     }
 

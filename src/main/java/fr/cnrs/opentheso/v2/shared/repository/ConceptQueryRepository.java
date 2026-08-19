@@ -853,7 +853,7 @@ public class ConceptQueryRepository {
         return toConceptTreeRows(rows);
     }
 
-    public List<ConceptTreeRow> findPreviewRootConcepts(String thesaurusId, String lang) {
+    public List<ConceptTreeRow> findTreeRootConcepts(String thesaurusId, String lang) {
         List<Object[]> rows = em.createNativeQuery("""
             SELECT c.id_concept,
                    COALESCE(c.notation, '') AS notation,
@@ -889,7 +889,7 @@ public class ConceptQueryRepository {
         return withBulkHasChildren(thesaurusId, toConceptTreeRows(rows), true);
     }
 
-    public List<ConceptTreeRow> findPreviewChildConcepts(String thesaurusId, String parentId, String lang) {
+    public List<ConceptTreeRow> findTreeChildConcepts(String thesaurusId, String parentId, String lang) {
         String facetExclusion = """
             AND NOT EXISTS (
                 SELECT 1

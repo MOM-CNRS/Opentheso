@@ -3,7 +3,7 @@
                 xmlns:ui="http://xmlns.jcp.org/jsf/facelets"
                 xmlns:h="http://xmlns.jcp.org/jsf/html"
                 xmlns:f="http://xmlns.jcp.org/jsf/core">
-  <ui:repeat value="#{v2PreviewThesaurusBean.visibleTreeNodes}" var="node">
+  <ui:repeat value="#{v2ThesaurusViewBean.visibleTreeNodes}" var="node">
     <div class="tn#{node.expanded ? ' is-open' : ''}"
          data-key="#{node.path}"
          data-id="#{node.id}"
@@ -14,12 +14,12 @@
          data-nota="#{node.notationOrDash}"
          data-cand-by="#{node.candidateBy}"
          data-cand-on="#{node.candidateOn}">
-      <div class="tn-row#{node.candidate ? ' is-candidate' : ''}">
+      <div class="tn-row#{node.candidate ? ' is-candidate' : ''}#{node.facet ? ' is-facet' : ''}">
         <span class="tn-check" data-act="sel-node" data-id="#{node.id}" data-key="#{node.path}"
               title="Sélectionner (avec ses enfants)"></span>
         <div class="tn-rowmain" style="padding-left:#{node.pad}">
           <h:commandLink styleClass="tn-caret#{node.hasChildren ? '' : ' is-empty'}"
-                         action="#{v2PreviewThesaurusBean.toggleTreeNode(node.path)}"
+                         action="#{v2ThesaurusViewBean.toggleTreeNode(node.path)}"
                          title="#{node.expanded ? 'Replier' : 'Déplier'}"
                          aria-label="#{node.expanded ? 'Replier' : 'Déplier'}">
             <f:ajax execute="@this" render=":previewTreeForm:previewTree"/>
@@ -28,11 +28,14 @@
           <button type="button" class="tn-label" data-act="open" data-id="#{node.id}" data-type="#{node.nodeType}">
             <span class="tn-textwrap"><span class="tn-text">#{node.label}</span></span>
             <ui:fragment rendered="#{node.candidate}"><span class="tn-dot" title="Candidat"></span></ui:fragment>
+            <ui:fragment rendered="#{node.facet}"><span class="tn-facet" title="Facette">◇</span></ui:fragment>
           </button>
         </div>
-        <button type="button" class="tn-add" data-act="create" data-id="#{node.id}"
-                data-pref="#{node.label}" data-path="#{node.path}"
-                title="Proposer un candidat sous « #{node.label} »">+</button>
+        <ui:fragment rendered="#{not node.facet}">
+          <button type="button" class="tn-add" data-act="create" data-id="#{node.id}"
+                  data-pref="#{node.label}" data-path="#{node.path}"
+                  title="Proposer un candidat sous « #{node.label} »">+</button>
+        </ui:fragment>
       </div>
     </div>
   </ui:repeat>

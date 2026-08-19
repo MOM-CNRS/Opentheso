@@ -1,11 +1,11 @@
-package fr.cnrs.opentheso.v2.preview.ui;
+package fr.cnrs.opentheso.v2.setting.ui;
 
 import jakarta.faces.context.FacesContext;
 import org.apache.commons.lang3.StringUtils;
 
-final class PreviewRequestParams {
+final class RequestParams {
 
-    private PreviewRequestParams() {
+    private RequestParams() {
     }
 
     static String param(String name) {

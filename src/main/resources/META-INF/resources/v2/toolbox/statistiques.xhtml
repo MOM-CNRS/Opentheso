@@ -2,7 +2,7 @@
 <ui:composition xmlns="http://www.w3.org/1999/xhtml"
                 xmlns:ui="http://xmlns.jcp.org/jsf/facelets"
                 template="/v2/includes/layout.xhtml">
-  <ui:param name="previewPage" value="statistiques"/>
+  <ui:param name="v2Page" value="statistiques"/>
   <ui:define name="title">OpenTheso — Statistiques</ui:define>
   <ui:define name="detail"/>
   <ui:define name="main">
@@ -10,7 +10,7 @@
           <div class="view-panel is-on" id="viewStats">
             <div class="bo">
               <a class="bo-back" href="index.xhtml" title="Retour à l'accueil thésaurus"><svg viewBox="0 0 24 24" aria-hidden="true"><path d="M19 12H5"/><path d="m12 19-7-7 7-7"/></svg></a>
-              <div class="bo-head"><div><h1 class="bo-title">Statistiques du thésaurus</h1><p class="bo-sub">Volumétrie, complétude et répartition de #{v2PreviewThesaurusBean.title}.</p></div></div>
+              <div class="bo-head"><div><h1 class="bo-title">Statistiques du thésaurus</h1><p class="bo-sub">Volumétrie, complétude et répartition de #{v2ThesaurusViewBean.title}.</p></div></div>
               <div class="bo-full">
                 <div class="st-group-head">Vue d'ensemble</div>
                 <div class="mg-kpis">

@@ -1,6 +1,5 @@
-package fr.cnrs.opentheso.v2.preview.ui;
+package fr.cnrs.opentheso.v2.concept.ui;
 
-import fr.cnrs.opentheso.v2.candidat.model.CandidatStatusCode;
 import fr.cnrs.opentheso.v2.concept.model.BreadcrumbStep;
 import fr.cnrs.opentheso.v2.concept.model.ConceptDetail;
 import fr.cnrs.opentheso.v2.concept.model.ConceptLabel;
@@ -34,13 +33,13 @@ import java.util.Locale;
 import java.util.stream.Collectors;
 
 /**
- * Façade preview : lit / écrit {@link ThesaurusContext}.
+ * Façade de l'accueil thésaurus : lit / écrit {@link ThesaurusContext}.
  * Tant qu'aucun thésaurus n'est en session, sélectionne temporairement {@code th17}.
  */
-@Named("v2PreviewThesaurusBean")
+@Named("v2ThesaurusViewBean")
 @ViewScoped
 @RequiredArgsConstructor
-public class PreviewThesaurusBean implements Serializable {
+public class ThesaurusViewBean implements Serializable {
 
     public static final String THESAURUS_ID = "th17";
 
@@ -53,18 +52,12 @@ public class PreviewThesaurusBean implements Serializable {
     private final RightsService rightsService;
     private final V2LocaleBean v2LocaleBean;
     private Integer conceptCount;
-    private Integer candidatePendingCount;
-    private Integer candidateRejectedCount;
-    private Integer languageCount;
-    private Integer collectionCount;
-    private Integer conceptsWithoutDefinitionCount;
-    private Integer maxTreeDepth;
     private List<ThesaurusLanguage> languages;
     private String selectedLang;
     private boolean sessionReady;
     private String homePageHtml;
     private boolean homePageHtmlLoaded;
-    private List<PreviewTreeNode> treeRoots;
+    private List<ThesaurusTreeNode> treeRoots;
     private Boolean canEdit;
 
     @Getter
@@ -130,78 +123,6 @@ public class PreviewThesaurusBean implements Serializable {
         return formatCount(count) + (count > 1 ? " concepts" : " concept");
     }
 
-    public String getConceptCountFormatted() {
-        return formatCount(getConceptCount());
-    }
-
-    public int getCandidatePendingCount() {
-        if (candidatePendingCount == null) {
-            candidatePendingCount = thesaurusHomeQueryRepository.countCandidatesByStatus(
-                    getId(), CandidatStatusCode.PENDING);
-        }
-        return candidatePendingCount;
-    }
-
-    public int getCandidateRejectedCount() {
-        if (candidateRejectedCount == null) {
-            candidateRejectedCount = thesaurusHomeQueryRepository.countCandidatesByStatus(
-                    getId(), CandidatStatusCode.REJECTED);
-        }
-        return candidateRejectedCount;
-    }
-
-    public int getCandidateCount() {
-        return getCandidatePendingCount() + getCandidateRejectedCount();
-    }
-
-    public String getCandidateCountFormatted() {
-        return formatCount(getCandidateCount());
-    }
-
-    public int getLanguageCount() {
-        if (languageCount == null) {
-            languageCount = thesaurusHomeQueryRepository.countDefinedLanguages(getId());
-        }
-        return languageCount;
-    }
-
-    public String getLanguageCountFormatted() {
-        return formatCount(getLanguageCount());
-    }
-
-    public int getCollectionCount() {
-        if (collectionCount == null) {
-            collectionCount = thesaurusHomeQueryRepository.countCollections(getId());
-        }
-        return collectionCount;
-    }
-
-    public String getCollectionCountFormatted() {
-        return formatCount(getCollectionCount());
-    }
-
-    public int getConceptsWithoutDefinitionCount() {
-        if (conceptsWithoutDefinitionCount == null) {
-            conceptsWithoutDefinitionCount = thesaurusHomeQueryRepository.countConceptsWithoutDefinition(getId());
-        }
-        return conceptsWithoutDefinitionCount;
-    }
-
-    public String getConceptsWithoutDefinitionCountFormatted() {
-        return formatCount(getConceptsWithoutDefinitionCount());
-    }
-
-    public int getMaxTreeDepth() {
-        if (maxTreeDepth == null) {
-            maxTreeDepth = thesaurusHomeQueryRepository.findMaxTreeDepth(getId());
-        }
-        return maxTreeDepth;
-    }
-
-    public String getMaxTreeDepthFormatted() {
-        return formatCount(getMaxTreeDepth());
-    }
-
     public List<ThesaurusLanguage> getLanguages() {
         ensureLanguagesLoaded();
         return languages;
@@ -252,13 +173,13 @@ public class PreviewThesaurusBean implements Serializable {
         }
     }
 
-    public List<PreviewTreeNode> getTreeRoots() {
+    public List<ThesaurusTreeNode> getTreeRoots() {
         ensureTreeLoaded();
         return treeRoots;
     }
 
-    public List<PreviewTreeNode> getVisibleTreeNodes() {
-        List<PreviewTreeNode> visible = new ArrayList<>();
+    public List<ThesaurusTreeNode> getVisibleTreeNodes() {
+        List<ThesaurusTreeNode> visible = new ArrayList<>();
         appendVisibleNodes(getTreeRoots(), visible);
         return visible;
     }
@@ -268,7 +189,7 @@ public class PreviewThesaurusBean implements Serializable {
     }
 
     public void toggleTreeNode(String path) {
-        PreviewTreeNode node = findTreeNodeByPath(getTreeRoots(), path);
+        ThesaurusTreeNode node = findTreeNodeByPath(getTreeRoots(), path);
         if (node == null || !node.isHasChildren()) {
             return;
         }
@@ -529,7 +450,7 @@ public class PreviewThesaurusBean implements Serializable {
         if (treeRoots != null) {
             return;
         }
-        List<ConceptTreeNodeData> roots = conceptReadService.loadPreviewRootNodes(getId(), getSelectedLang());
+        List<ConceptTreeNodeData> roots = conceptReadService.loadTreeRootNodes(getId(), getSelectedLang());
         treeRoots = new ArrayList<>();
         if (roots == null) {
             return;
@@ -540,8 +461,8 @@ public class PreviewThesaurusBean implements Serializable {
         applyCandidateMeta(treeRoots);
     }
 
-    private void loadTreeChildren(PreviewTreeNode parent) {
-        List<ConceptTreeNodeData> children = conceptReadService.loadPreviewChildNodes(
+    private void loadTreeChildren(ThesaurusTreeNode parent) {
+        List<ConceptTreeNodeData> children = conceptReadService.loadTreeChildNodes(
                 parent.getId(),
                 parent.getNodeType(),
                 getId(),
@@ -557,8 +478,8 @@ public class PreviewThesaurusBean implements Serializable {
         parent.setChildrenLoaded(true);
     }
 
-    private PreviewTreeNode toTreeNode(ConceptTreeNodeData data, int depth, String parentPath) {
-        PreviewTreeNode node = new PreviewTreeNode();
+    private ThesaurusTreeNode toTreeNode(ConceptTreeNodeData data, int depth, String parentPath) {
+        ThesaurusTreeNode node = new ThesaurusTreeNode();
         node.setId(data.getNodeId());
         node.setLabel(data.getLabel());
         node.setNotation(data.getNotation());
@@ -587,13 +508,13 @@ public class PreviewThesaurusBean implements Serializable {
         }
     }
 
-    private void applyCandidateMeta(List<PreviewTreeNode> nodes) {
+    private void applyCandidateMeta(List<ThesaurusTreeNode> nodes) {
         if (nodes == null || nodes.isEmpty()) {
             return;
         }
         List<String> ids = nodes.stream()
-                .filter(PreviewTreeNode::isCandidate)
-                .map(PreviewTreeNode::getId)
+                .filter(ThesaurusTreeNode::isCandidate)
+                .map(ThesaurusTreeNode::getId)
                 .filter(StringUtils::isNotBlank)
                 .toList();
         if (ids.isEmpty()) {
@@ -603,7 +524,7 @@ public class PreviewThesaurusBean implements Serializable {
             String id = row[0] == null ? "" : row[0].toString();
             String by = row[1] == null ? "" : row[1].toString();
             String on = row[2] == null ? "" : row[2].toString();
-            for (PreviewTreeNode node : nodes) {
+            for (ThesaurusTreeNode node : nodes) {
                 if (id.equals(node.getId())) {
                     node.setCandidateBy(by);
                     node.setCandidateOn(on);
@@ -612,11 +533,11 @@ public class PreviewThesaurusBean implements Serializable {
         }
     }
 
-    private void appendVisibleNodes(List<PreviewTreeNode> nodes, List<PreviewTreeNode> out) {
+    private void appendVisibleNodes(List<ThesaurusTreeNode> nodes, List<ThesaurusTreeNode> out) {
         if (nodes == null) {
             return;
         }
-        for (PreviewTreeNode node : nodes) {
+        for (ThesaurusTreeNode node : nodes) {
             out.add(node);
             if (node.isExpanded() && !node.getChildren().isEmpty()) {
                 appendVisibleNodes(node.getChildren(), out);
@@ -624,15 +545,15 @@ public class PreviewThesaurusBean implements Serializable {
         }
     }
 
-    private PreviewTreeNode findTreeNodeByPath(List<PreviewTreeNode> nodes, String path) {
+    private ThesaurusTreeNode findTreeNodeByPath(List<ThesaurusTreeNode> nodes, String path) {
         if (nodes == null || StringUtils.isBlank(path)) {
             return null;
         }
-        for (PreviewTreeNode node : nodes) {
+        for (ThesaurusTreeNode node : nodes) {
             if (path.equals(node.getPath())) {
                 return node;
             }
-            PreviewTreeNode found = findTreeNodeByPath(node.getChildren(), path);
+            ThesaurusTreeNode found = findTreeNodeByPath(node.getChildren(), path);
             if (found != null) {
                 return found;
             }

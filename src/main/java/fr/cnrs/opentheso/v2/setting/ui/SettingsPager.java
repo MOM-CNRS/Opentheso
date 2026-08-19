@@ -1,11 +1,11 @@
-package fr.cnrs.opentheso.v2.preview.ui;
+package fr.cnrs.opentheso.v2.setting.ui;
 
 import java.io.Serializable;
 import java.util.ArrayList;
 import java.util.Collections;
 import java.util.List;
 
-public class PreviewTablePager implements Serializable {
+public class SettingsPager implements Serializable {
 
     public static final int PAGE_SIZE = 10;
 

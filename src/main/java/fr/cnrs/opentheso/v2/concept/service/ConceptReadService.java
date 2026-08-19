@@ -139,20 +139,20 @@ public class ConceptReadService {
     }
 
     @Transactional(readOnly = true)
-    public List<ConceptTreeNodeData> loadPreviewRootNodes(String thesaurusId, String lang) {
+    public List<ConceptTreeNodeData> loadTreeRootNodes(String thesaurusId, String lang) {
         if (StringUtils.isBlank(thesaurusId)) {
             return Collections.emptyList();
         }
         boolean sortByNotation = isSortByNotation(thesaurusId, lang);
         var nodes = new ArrayList<ConceptTreeNodeData>();
-        for (var row : conceptQueryRepository.findPreviewRootConcepts(thesaurusId, lang)) {
-            nodes.add(toPreviewTreeNode(row, sortByNotation));
+        for (var row : conceptQueryRepository.findTreeRootConcepts(thesaurusId, lang)) {
+            nodes.add(toThesaurusTreeNode(row, sortByNotation));
         }
         return nodes;
     }
 
     @Transactional(readOnly = true)
-    public List<ConceptTreeNodeData> loadPreviewChildNodes(
+    public List<ConceptTreeNodeData> loadTreeChildNodes(
             String parentId,
             String parentType,
             String thesaurusId,
@@ -163,13 +163,13 @@ public class ConceptReadService {
         }
         if ("facet".equals(parentType)) {
             return conceptQueryRepository.findFacetMembersForTree(thesaurusId, parentId, lang).stream()
-                    .map(row -> toPreviewTreeNode(row, false))
+                    .map(row -> toThesaurusTreeNode(row, false))
                     .toList();
         }
         boolean sortByNotation = isSortByNotation(thesaurusId, lang);
         var nodes = new ArrayList<ConceptTreeNodeData>();
-        for (var row : conceptQueryRepository.findPreviewChildConcepts(thesaurusId, parentId, lang)) {
-            nodes.add(toPreviewTreeNode(row, sortByNotation));
+        for (var row : conceptQueryRepository.findTreeChildConcepts(thesaurusId, parentId, lang)) {
+            nodes.add(toThesaurusTreeNode(row, sortByNotation));
         }
         for (var facet : conceptQueryRepository.findFacetsOfConceptForTree(thesaurusId, parentId, lang)) {
             nodes.add(new ConceptTreeNodeData(
@@ -188,7 +188,7 @@ public class ConceptReadService {
         return conceptQueryRepository.findCandidateMeta(thesaurusId, conceptIds);
     }
 
-    private ConceptTreeNodeData toPreviewTreeNode(ConceptTreeRow row, boolean sortByNotation) {
+    private ConceptTreeNodeData toThesaurusTreeNode(ConceptTreeRow row, boolean sortByNotation) {
         String status = StringUtils.trimToEmpty(row.status());
         String nodeType;
         if ("CA".equalsIgnoreCase(status)) {

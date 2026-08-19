@@ -1,13 +1,11 @@
-package fr.cnrs.opentheso.v2.preview.ui;
+package fr.cnrs.opentheso.v2.setting.ui;
 
-import fr.cnrs.opentheso.v2.preview.service.PreviewThesaurusSettingsPersistService;
 import fr.cnrs.opentheso.v2.setting.exception.InvalidSettingDataException;
 import fr.cnrs.opentheso.v2.setting.exception.SettingAccessDeniedException;
 import fr.cnrs.opentheso.v2.setting.model.ThesaurusLanguage;
 import fr.cnrs.opentheso.v2.setting.model.ThesaurusPreferences;
 import fr.cnrs.opentheso.v2.setting.service.ThesaurusPreferenceService;
-import fr.cnrs.opentheso.v2.setting.ui.PreferenceEditor;
-import fr.cnrs.opentheso.v2.setting.ui.ThesaurusContext;
+import fr.cnrs.opentheso.v2.setting.service.ThesaurusSettingsPersistService;
 import jakarta.faces.view.ViewScoped;
 import jakarta.inject.Named;
 import lombok.Getter;
@@ -19,17 +17,17 @@ import java.util.ArrayList;
 import java.util.Collections;
 import java.util.List;
 
-@Named("v2PreviewPreferenceBean")
+@Named("v2ThesaurusPreferenceBean")
 @ViewScoped
 @RequiredArgsConstructor
-public class PreviewThesaurusPreferenceBean implements Serializable {
+public class ThesaurusPreferenceBean implements Serializable {
 
-    private final PreviewSettingsAccess settingsAccess;
+    private final SettingsAccess settingsAccess;
     private final ThesaurusContext thesaurusContext;
     private final ThesaurusPreferenceService thesaurusPreferenceService;
-    private final PreviewThesaurusSettingsPersistService persistService;
-    private final PreviewThesaurusCorpusBean corpusBean;
-    private final PreviewThesaurusAlignmentBean alignmentBean;
+    private final ThesaurusSettingsPersistService persistService;
+    private final ThesaurusCorpusBean corpusBean;
+    private final ThesaurusAlignmentBean alignmentBean;
 
     private PreferenceEditor preference;
     private boolean preferenceLoaded;

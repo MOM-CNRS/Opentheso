@@ -522,6 +522,13 @@ a.empty-link{color:var(--accent);font-weight:600}
 #viewSettings.view-panel{
   height:auto;min-height:100%;overflow:visible
 }
+.th-home.cv{
+  max-width:none;
+  width:100%;
+  margin:-4px 0 0
+}
+.th-home .cv-head{margin-bottom:22px}
+.th-home .th-sub{margin-top:2px}
 #previewView{
   scrollbar-width:none;
   overscroll-behavior:contain;

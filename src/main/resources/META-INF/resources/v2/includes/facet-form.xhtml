@@ -3,25 +3,25 @@
                 xmlns:ui="http://xmlns.jcp.org/jsf/facelets"
                 xmlns:h="http://xmlns.jcp.org/jsf/html">
   <div class="cv is-on is-facet"
-       data-id="#{v2PreviewThesaurusBean.selectedFacet.facetId}"
-       data-pref="#{v2PreviewThesaurusBean.selectedFacet.label}"
+       data-id="#{v2ThesaurusViewBean.selectedFacet.facetId}"
+       data-pref="#{v2ThesaurusViewBean.selectedFacet.label}"
        data-status="facet"
        data-type="facet">
     <div class="cv-path">
       <span class="path">
-        <ui:fragment rendered="#{not empty v2PreviewThesaurusBean.selectedFacet.parentConceptLabel}">
+        <ui:fragment rendered="#{not empty v2ThesaurusViewBean.selectedFacet.parentConceptLabel}">
           <span class="path-seg">
             <button type="button" class="rel-term" data-act="open"
-                    data-id="#{v2PreviewThesaurusBean.selectedFacet.parentConceptId}"
-                    data-type="concept">#{v2PreviewThesaurusBean.selectedFacet.parentConceptLabel}</button>
+                    data-id="#{v2ThesaurusViewBean.selectedFacet.parentConceptId}"
+                    data-type="concept">#{v2ThesaurusViewBean.selectedFacet.parentConceptLabel}</button>
           </span>
         </ui:fragment>
       </span>
     </div>
     <div class="cv-head">
       <h1 class="cv-pref">
-        <span>#{v2PreviewThesaurusBean.dash(v2PreviewThesaurusBean.selectedFacet.label)}</span>
-        <span class="cv-lang">#{v2PreviewThesaurusBean.dash(v2PreviewThesaurusBean.selectedFacet.lang)}</span>
+        <span>#{v2ThesaurusViewBean.dash(v2ThesaurusViewBean.selectedFacet.label)}</span>
+        <span class="cv-lang">#{v2ThesaurusViewBean.dash(v2ThesaurusViewBean.selectedFacet.lang)}</span>
         <span class="cv-status is-facet">facette</span>
       </h1>
     </div>
@@ -32,26 +32,26 @@
           <div class="crow">
             <div class="crow-lbl">Libellé</div>
             <div class="crow-val">
-              <span class="val-strong">#{v2PreviewThesaurusBean.dash(v2PreviewThesaurusBean.selectedFacet.label)}</span>
-              <span class="val-lang">(#{v2PreviewThesaurusBean.selectedFacet.lang})</span>
+              <span class="val-strong">#{v2ThesaurusViewBean.dash(v2ThesaurusViewBean.selectedFacet.label)}</span>
+              <span class="val-lang">(#{v2ThesaurusViewBean.selectedFacet.lang})</span>
             </div>
           </div>
           <div class="crow">
             <div class="crow-lbl">Concept parent</div>
             <div class="crow-val">
-              <ui:fragment rendered="#{empty v2PreviewThesaurusBean.selectedFacet.parentConceptId}">
+              <ui:fragment rendered="#{empty v2ThesaurusViewBean.selectedFacet.parentConceptId}">
                 <span class="muted">—</span>
               </ui:fragment>
-              <ui:fragment rendered="#{not empty v2PreviewThesaurusBean.selectedFacet.parentConceptId}">
+              <ui:fragment rendered="#{not empty v2ThesaurusViewBean.selectedFacet.parentConceptId}">
                 <button type="button" class="rel-term" data-act="open"
-                        data-id="#{v2PreviewThesaurusBean.selectedFacet.parentConceptId}"
-                        data-type="concept">#{v2PreviewThesaurusBean.dash(v2PreviewThesaurusBean.selectedFacet.parentConceptLabel)}</button>
+                        data-id="#{v2ThesaurusViewBean.selectedFacet.parentConceptId}"
+                        data-type="concept">#{v2ThesaurusViewBean.dash(v2ThesaurusViewBean.selectedFacet.parentConceptLabel)}</button>
               </ui:fragment>
             </div>
           </div>
           <div class="crow">
             <div class="crow-lbl">Identifiant</div>
-            <div class="crow-val is-mono"><span>#{v2PreviewThesaurusBean.selectedFacet.facetId}</span></div>
+            <div class="crow-val is-mono"><span>#{v2ThesaurusViewBean.selectedFacet.facetId}</span></div>
           </div>
         </div>
       </section>
@@ -59,11 +59,11 @@
       <section class="cblock">
         <div class="cblock-head">Membres</div>
         <div class="cblock-body">
-          <ui:fragment rendered="#{empty v2PreviewThesaurusBean.selectedFacet.members}">
+          <ui:fragment rendered="#{empty v2ThesaurusViewBean.selectedFacet.members}">
             <div class="muted">Aucun concept rattaché à cette facette.</div>
           </ui:fragment>
           <div class="rel-items">
-            <ui:repeat value="#{v2PreviewThesaurusBean.selectedFacet.members}" var="member">
+            <ui:repeat value="#{v2ThesaurusViewBean.selectedFacet.members}" var="member">
               <button type="button" class="rel-term" data-act="open" data-id="#{member.conceptId}" data-type="concept">
                 #{empty member.label ? member.conceptId : member.label}
               </button>
@@ -75,10 +75,10 @@
       <section class="cblock">
         <div class="cblock-head">Traductions</div>
         <div class="cblock-body">
-          <ui:fragment rendered="#{empty v2PreviewThesaurusBean.selectedFacet.translations}">
+          <ui:fragment rendered="#{empty v2ThesaurusViewBean.selectedFacet.translations}">
             <div class="muted">Aucune traduction renseignée.</div>
           </ui:fragment>
-          <ui:repeat value="#{v2PreviewThesaurusBean.selectedFacet.translations}" var="tr">
+          <ui:repeat value="#{v2ThesaurusViewBean.selectedFacet.translations}" var="tr">
             <div class="crow">
               <div class="crow-lbl"><span class="val-lang">#{tr.lang}</span></div>
               <div class="crow-val">#{tr.value}</div>
@@ -90,12 +90,12 @@
       <section class="cblock">
         <div class="cblock-head">Notes</div>
         <div class="cblock-body">
-          <ui:fragment rendered="#{empty v2PreviewThesaurusBean.selectedFacet.notes}">
+          <ui:fragment rendered="#{empty v2ThesaurusViewBean.selectedFacet.notes}">
             <div class="muted">Aucune note renseignée.</div>
           </ui:fragment>
-          <ui:repeat value="#{v2PreviewThesaurusBean.selectedFacet.notes}" var="note">
+          <ui:repeat value="#{v2ThesaurusViewBean.selectedFacet.notes}" var="note">
             <div class="note-grp">
-              <div class="note-grp-t">#{v2PreviewThesaurusBean.noteTypeLabel(note.typeCode)}</div>
+              <div class="note-grp-t">#{v2ThesaurusViewBean.noteTypeLabel(note.typeCode)}</div>
               <div class="note-line">
                 <p class="cv-def">#{note.value} <span class="note-lang">(#{note.lang})</span></p>
               </div>

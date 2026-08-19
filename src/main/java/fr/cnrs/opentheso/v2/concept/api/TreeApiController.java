@@ -1,4 +1,4 @@
-package fr.cnrs.opentheso.v2.preview.api;
+package fr.cnrs.opentheso.v2.concept.api;
 
 import fr.cnrs.opentheso.v2.concept.service.ConceptReadService;
 import fr.cnrs.opentheso.v2.setting.ui.ThesaurusContext;
@@ -15,7 +15,7 @@ import java.util.Map;
 @RestController
 @RequestMapping({"/v2/api", "/v2-preview/api"})
 @RequiredArgsConstructor
-public class PreviewTreeApiController {
+public class TreeApiController {
 
     private final ConceptReadService conceptReadService;
     private final ThesaurusContext thesaurusContext;

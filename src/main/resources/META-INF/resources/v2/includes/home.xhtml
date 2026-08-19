@@ -6,38 +6,38 @@
           <div class="view-panel is-on" id="viewHome">
             <div class="cv th-home">
               <div class="cv-head">
-                <h1 class="cv-pref">#{v2PreviewThesaurusBean.title}<span class="cv-lang">#{v2PreviewThesaurusBean.id}</span><span class="cv-count">#{v2PreviewThesaurusBean.conceptCountLabel}</span></h1>
+                <h1 class="cv-pref">#{v2ThesaurusViewBean.title}<span class="cv-lang">#{v2ThesaurusViewBean.id}</span><span class="cv-count">#{v2ThesaurusViewBean.conceptCountLabel}</span></h1>
                 <p class="th-sub">Archéologie &amp; sciences de l'Antiquité</p>
               </div>
               <h:form id="previewAboutForm">
-              <div class="boc th-about#{v2PreviewThesaurusBean.editing ? ' is-editing' : ''}">
+              <div class="boc th-about#{v2ThesaurusViewBean.editing ? ' is-editing' : ''}">
                 <div class="boc-h">
                   <div class="boc-ico"><svg viewBox="0 0 24 24" aria-hidden="true"><path d="M4 19.5A2.5 2.5 0 0 1 6.5 17H20"/><path d="M6.5 2H20v20H6.5A2.5 2.5 0 0 1 4 19.5v-15A2.5 2.5 0 0 1 6.5 2z"/></svg></div>
                   <div class="boc-ht">
                     <div class="boc-t">
-                      <h:panelGroup rendered="#{not v2PreviewThesaurusBean.editing}">À propos de #{v2PreviewThesaurusBean.title}</h:panelGroup>
-                      <h:panelGroup rendered="#{v2PreviewThesaurusBean.editing}">Modifier la description</h:panelGroup>
+                      <h:panelGroup rendered="#{not v2ThesaurusViewBean.editing}">À propos de #{v2ThesaurusViewBean.title}</h:panelGroup>
+                      <h:panelGroup rendered="#{v2ThesaurusViewBean.editing}">Modifier la description</h:panelGroup>
                     </div>
                     <div class="boc-d">
-                      <h:panelGroup rendered="#{not v2PreviewThesaurusBean.editing}">
+                      <h:panelGroup rendered="#{not v2ThesaurusViewBean.editing}">
                         Description du thésaurus, dans la langue d'affichage des libellés.
                       </h:panelGroup>
-                      <h:panelGroup rendered="#{v2PreviewThesaurusBean.editing}">
-                        Langue éditée : <span class="cv-lang">#{v2PreviewThesaurusBean.selectedLangLabel}</span>
+                      <h:panelGroup rendered="#{v2ThesaurusViewBean.editing}">
+                        Langue éditée : <span class="cv-lang">#{v2ThesaurusViewBean.selectedLangLabel}</span>
                       </h:panelGroup>
                     </div>
                   </div>
                   <h:commandButton value="Modifier" styleClass="bo-btn ghost sm abt-edit-btn"
-                                   rendered="#{v2PreviewThesaurusBean.canEdit and not v2PreviewThesaurusBean.editing}"
-                                   action="#{v2PreviewThesaurusBean.startEditing}">
+                                   rendered="#{v2ThesaurusViewBean.canEdit and not v2ThesaurusViewBean.editing}"
+                                   action="#{v2ThesaurusViewBean.startEditing}">
                     <f:ajax execute="@this" render="@form"/>
                   </h:commandButton>
                 </div>
-                <h:panelGroup layout="block" rendered="#{not v2PreviewThesaurusBean.editing}">
-                  <h:panelGroup rendered="#{v2PreviewThesaurusBean.homePageHtmlPresent}">
+                <h:panelGroup layout="block" rendered="#{not v2ThesaurusViewBean.editing}">
+                  <h:panelGroup rendered="#{v2ThesaurusViewBean.homePageHtmlPresent}">
                     <div class="abt-fold" id="aboutFold">
                       <div class="abt-html" id="aboutDetail">
-                        <h:outputText value="#{v2PreviewThesaurusBean.homePageHtml}" escape="false"/>
+                        <h:outputText value="#{v2ThesaurusViewBean.homePageHtml}" escape="false"/>
                       </div>
                       <button type="button" class="abt-toggle" id="aboutToggle" data-act="about"
                               aria-expanded="false" aria-controls="aboutDetail">
@@ -47,11 +47,11 @@
                       </button>
                     </div>
                   </h:panelGroup>
-                  <h:panelGroup rendered="#{not v2PreviewThesaurusBean.homePageHtmlPresent}">
+                  <h:panelGroup rendered="#{not v2ThesaurusViewBean.homePageHtmlPresent}">
                     <p class="abt-empty">Aucune description pour ce thésaurus.</p>
                   </h:panelGroup>
                 </h:panelGroup>
-                <h:panelGroup layout="block" styleClass="abt-composer" rendered="#{v2PreviewThesaurusBean.editing}">
+                <h:panelGroup layout="block" styleClass="abt-composer" rendered="#{v2ThesaurusViewBean.editing}">
                   <div class="abt-composer-bar">
                     <div class="abt-fmt" role="toolbar" aria-label="Mise en forme">
                       <button type="button" class="abt-fmt-btn" data-act="about-fmt" data-cmd="undo" title="Annuler la saisie" aria-label="Annuler la saisie">
@@ -111,15 +111,15 @@
                   </div>
                   <div class="abt-visual abt-html" id="aboutVisual" contenteditable="true" spellcheck="true"
                        data-placeholder="Saisissez la description du thésaurus…">
-                    <h:outputText value="#{v2PreviewThesaurusBean.homeHtml}" escape="false"/>
+                    <h:outputText value="#{v2ThesaurusViewBean.homeHtml}" escape="false"/>
                   </div>
                   <h:inputTextarea id="previewAboutEditor" styleClass="abt-editor"
-                                   value="#{v2PreviewThesaurusBean.homeHtml}"
+                                   value="#{v2ThesaurusViewBean.homeHtml}"
                                    title="Code HTML de la description"/>
                   <div class="abt-composer-foot">
-                    <p class="abt-hint">Enregistrée pour la langue <span class="cv-lang">#{v2PreviewThesaurusBean.selectedLangLabel}</span>. HTML autorisé.</p>
+                    <p class="abt-hint">Enregistrée pour la langue <span class="cv-lang">#{v2ThesaurusViewBean.selectedLangLabel}</span>. HTML autorisé.</p>
                     <div class="abt-actions">
-                      <h:commandLink styleClass="abt-cancel" action="#{v2PreviewThesaurusBean.cancelEditing}">
+                      <h:commandLink styleClass="abt-cancel" action="#{v2ThesaurusViewBean.cancelEditing}">
                         <f:ajax execute="@this" render="@form"/>
                         <svg viewBox="0 0 24 24" aria-hidden="true"><path d="M18 6 6 18"/><path d="m6 6 12 12"/></svg>
                         <span>Annuler</span>
@@ -133,20 +133,20 @@
                     </div>
                   </div>
                 </h:panelGroup>
-                <h:panelGroup rendered="#{v2PreviewThesaurusBean.editing}">
+                <h:panelGroup rendered="#{v2ThesaurusViewBean.editing}">
                   <div class="block-overlay confirm-overlay" id="aboutSaveConfirm" hidden="hidden"
                        data-act="about-save-dismiss" role="presentation">
                     <div class="confirm-modal" role="dialog" aria-modal="true"
                          aria-labelledby="aboutSaveConfirmTitle" data-act="about-save-modal">
                       <div class="confirm-h" id="aboutSaveConfirmTitle">Enregistrer la description</div>
                       <p class="confirm-p">Enregistrer les modifications pour
-                        <span class="cv-lang">#{v2PreviewThesaurusBean.selectedLangLabel}</span> ?
+                        <span class="cv-lang">#{v2ThesaurusViewBean.selectedLangLabel}</span> ?
                         La description actuelle sera remplacée.</p>
                       <div class="confirm-actions">
                         <button type="button" class="abt-cancel confirm-cancel"
                                 data-act="about-save-dismiss">Annuler</button>
                         <h:commandLink styleClass="abt-save abt-save-ok"
-                                       action="#{v2PreviewThesaurusBean.saveHomeHtml}">
+                                       action="#{v2ThesaurusViewBean.saveHomeHtml}">
                           <f:ajax execute="@form" render="@form" onevent="onPreviewAboutSave"/>
                           <svg viewBox="0 0 24 24" aria-hidden="true"><path d="M20 6 9 17l-5-5"/></svg>
                           <span class="abt-save-label">Enregistrer</span>
@@ -156,11 +156,11 @@
                     </div>
                   </div>
                 </h:panelGroup>
-                <h:panelGroup rendered="#{not empty v2PreviewThesaurusBean.saveMessage and v2PreviewThesaurusBean.saveError}">
-                  <p class="abt-msg is-error">#{v2PreviewThesaurusBean.saveMessage}</p>
+                <h:panelGroup rendered="#{not empty v2ThesaurusViewBean.saveMessage and v2ThesaurusViewBean.saveError}">
+                  <p class="abt-msg is-error">#{v2ThesaurusViewBean.saveMessage}</p>
                 </h:panelGroup>
                 <span id="previewAboutSaveMsg" hidden="hidden"
-                      data-ok="#{not v2PreviewThesaurusBean.saveError}">#{v2PreviewThesaurusBean.saveMessage}</span>
+                      data-ok="#{not v2ThesaurusViewBean.saveError}">#{v2ThesaurusViewBean.saveMessage}</span>
               </div>
               </h:form>
               <div class="boc">
@@ -229,15 +229,15 @@
                 </div>
                 <div class="boc-grid boc-grid-1">
                   
-                  <a class="boc-item" href="setting/preference.xhtml#stPrefs">
+                  <a class="boc-item boc-nav" href="setting/preference.xhtml#stPrefs">
                     <span class="boc-v">›</span><span class="boc-l">Préférences du thésaurus</span>
                     <span class="boc-go"><svg viewBox="0 0 24 24" aria-hidden="true"><path d="M5 12h14"/><path d="m12 5 7 7-7 7"/></svg></span>
                   </a>
-                  <a class="boc-item" href="setting/preference.xhtml#stServers">
+                  <a class="boc-item boc-nav" href="setting/preference.xhtml#stServers">
                     <span class="boc-v">›</span><span class="boc-l">Identifiants des serveurs</span>
                     <span class="boc-go"><svg viewBox="0 0 24 24" aria-hidden="true"><path d="M5 12h14"/><path d="m12 5 7 7-7 7"/></svg></span>
                   </a>
-                  <a class="boc-item" href="setting/preference.xhtml#stCorpus">
+                  <a class="boc-item boc-nav" href="setting/preference.xhtml#stCorpus">
                     <span class="boc-v">›</span><span class="boc-l">Gestion des corpus liés</span>
                     <span class="boc-go"><svg viewBox="0 0 24 24" aria-hidden="true"><path d="M5 12h14"/><path d="m12 5 7 7-7 7"/></svg></span>
                   </a>

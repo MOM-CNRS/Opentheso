@@ -4,10 +4,10 @@
                 xmlns:h="http://xmlns.jcp.org/jsf/html"
                 xmlns:f="http://xmlns.jcp.org/jsf/core">
   <h:form id="previewOpenForm" styleClass="preview-open-form">
-    <h:inputHidden id="openId" value="#{v2PreviewThesaurusBean.openId}"/>
-    <h:inputHidden id="openType" value="#{v2PreviewThesaurusBean.openType}"/>
+    <h:inputHidden id="openId" value="#{v2ThesaurusViewBean.openId}"/>
+    <h:inputHidden id="openType" value="#{v2ThesaurusViewBean.openType}"/>
     <h:commandButton id="openBtn" value="Ouvrir" styleClass="preview-open-btn"
-                     action="#{v2PreviewThesaurusBean.openSelectedNode}">
+                     action="#{v2ThesaurusViewBean.openSelectedNode}">
       <f:ajax execute="@form" render=":previewDetailForm:previewDetail"/>
     </h:commandButton>
   </h:form>
@@ -16,20 +16,20 @@
     <h:form id="previewDetailForm">
       <h:panelGroup id="previewDetail" layout="block">
         <div id="previewDetailState"
-             data-open="#{v2PreviewThesaurusBean.detailVisible ? '1' : '0'}"
-             data-requested="#{v2PreviewThesaurusBean.detailRequested ? '1' : '0'}"
-             data-id="#{v2PreviewThesaurusBean.selectedId}"
-             data-kind="#{v2PreviewThesaurusBean.selectedKind}">
-          <ui:fragment rendered="#{v2PreviewThesaurusBean.conceptSelected}">
+             data-open="#{v2ThesaurusViewBean.detailVisible ? '1' : '0'}"
+             data-requested="#{v2ThesaurusViewBean.detailRequested ? '1' : '0'}"
+             data-id="#{v2ThesaurusViewBean.selectedId}"
+             data-kind="#{v2ThesaurusViewBean.selectedKind}">
+          <ui:fragment rendered="#{v2ThesaurusViewBean.conceptSelected}">
             <ui:include src="concept-form.xhtml"/>
           </ui:fragment>
-          <ui:fragment rendered="#{v2PreviewThesaurusBean.candidateSelected}">
+          <ui:fragment rendered="#{v2ThesaurusViewBean.candidateSelected}">
             <ui:include src="candidate-form.xhtml"/>
           </ui:fragment>
-          <ui:fragment rendered="#{v2PreviewThesaurusBean.facetSelected}">
+          <ui:fragment rendered="#{v2ThesaurusViewBean.facetSelected}">
             <ui:include src="facet-form.xhtml"/>
           </ui:fragment>
-          <ui:fragment rendered="#{v2PreviewThesaurusBean.detailRequested and not v2PreviewThesaurusBean.detailVisible}">
+          <ui:fragment rendered="#{v2ThesaurusViewBean.detailRequested and not v2ThesaurusViewBean.detailVisible}">
             <div class="empty">
               <div class="empty-ico">◆</div>
               <p class="empty-t">Élément introuvable</p>

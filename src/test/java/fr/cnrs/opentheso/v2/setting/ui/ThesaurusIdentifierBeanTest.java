@@ -1,4 +1,4 @@
-package fr.cnrs.opentheso.v2.preview.ui;
+package fr.cnrs.opentheso.v2.setting.ui;
 
 import fr.cnrs.opentheso.v2.rights.Permission;
 import fr.cnrs.opentheso.v2.rights.RightsService;
@@ -24,7 +24,7 @@ import static org.mockito.Mockito.lenient;
 import static org.mockito.Mockito.when;
 
 @ExtendWith(MockitoExtension.class)
-class PreviewThesaurusIdentifierBeanTest {
+class ThesaurusIdentifierBeanTest {
 
     @Mock
     private ThesaurusSelectionService thesaurusSelectionService;
@@ -37,14 +37,14 @@ class PreviewThesaurusIdentifierBeanTest {
     @Mock
     private ThesaurusPreferenceService thesaurusPreferenceService;
     @Mock
-    private fr.cnrs.opentheso.v2.preview.service.PreviewThesaurusSettingsPersistService persistService;
+    private fr.cnrs.opentheso.v2.setting.service.ThesaurusSettingsPersistService persistService;
     @Mock
-    private PreviewThesaurusCorpusBean corpusBean;
+    private ThesaurusCorpusBean corpusBean;
     @Mock
-    private PreviewThesaurusAlignmentBean alignmentBean;
+    private ThesaurusAlignmentBean alignmentBean;
 
-    private PreviewThesaurusIdentifierBean bean;
-    private PreviewThesaurusPreferenceBean preferenceBean;
+    private ThesaurusIdentifierBean bean;
+    private ThesaurusPreferenceBean preferenceBean;
 
     @BeforeEach
     void setUp() {
@@ -52,10 +52,10 @@ class PreviewThesaurusIdentifierBeanTest {
                 thesaurusSelectionService, thesaurusWorkLanguageService);
         ReflectionTestUtils.setField(thesaurusContext, "defaultWorkLanguage", "fr");
         thesaurusContext.selectThesaurus("th17", "Pactols_Lieux", "fr");
-        PreviewSettingsAccess access = new PreviewSettingsAccess(thesaurusContext, userSession, rightsService);
-        preferenceBean = new PreviewThesaurusPreferenceBean(
+        SettingsAccess access = new SettingsAccess(thesaurusContext, userSession, rightsService);
+        preferenceBean = new ThesaurusPreferenceBean(
                 access, thesaurusContext, thesaurusPreferenceService, persistService, corpusBean, alignmentBean);
-        bean = new PreviewThesaurusIdentifierBean(preferenceBean);
+        bean = new ThesaurusIdentifierBean(preferenceBean);
         when(thesaurusPreferenceService.loadPreferencesOrNull("th17", "fr"))
                 .thenReturn(SettingTestFixtures.samplePreferences());
         lenient().when(userSession.getCurrentUserId()).thenReturn(2);

@@ -73,44 +73,6 @@ public class ThesaurusHomeQueryRepository {
         return new DashboardKpiRow(number(row, 0), number(row, 1), number(row, 2), number(row, 3));
     }
 
-    public int countCandidatesByStatus(String thesaurusId, int statusId) {
-        String sql = """
-                SELECT COUNT(*)
-                FROM candidat_status cs
-                JOIN concept c
-                    ON cs.id_concept = c.id_concept
-                    AND cs.id_thesaurus = c.id_thesaurus
-                WHERE cs.id_thesaurus = :thesaurusId
-                  AND cs.id_status = :statusId
-                """;
-        if (StringUtils.isBlank(thesaurusId)) {
-            return 0;
-        }
-        Number count = (Number) entityManager.createNativeQuery(sql)
-                .setParameter("thesaurusId", thesaurusId)
-                .setParameter("statusId", statusId)
-                .getSingleResult();
-        return count != null ? count.intValue() : 0;
-    }
-
-    public int countDefinedLanguages(String thesaurusId) {
-        String sql = """
-                SELECT COUNT(*)
-                FROM thesaurus_label
-                WHERE id_thesaurus = :thesaurusId
-                """;
-        return countByThesaurus(sql, thesaurusId);
-    }
-
-    public int countCollections(String thesaurusId) {
-        String sql = """
-                SELECT COUNT(*)
-                FROM concept_group
-                WHERE idthesaurus = :thesaurusId
-                """;
-        return countByThesaurus(sql, thesaurusId);
-    }
-
     public int countConceptsWithoutDefinition(String thesaurusId) {
         String sql = """
                 SELECT COUNT(*)

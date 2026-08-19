@@ -1,4 +1,4 @@
-package fr.cnrs.opentheso.v2.preview.ui;
+package fr.cnrs.opentheso.v2.setting.ui;
 
 import fr.cnrs.opentheso.v2.rights.Permission;
 import fr.cnrs.opentheso.v2.rights.RightsService;
@@ -20,7 +20,7 @@ import static org.mockito.Mockito.verify;
 import static org.mockito.Mockito.when;
 
 @ExtendWith(MockitoExtension.class)
-class PreviewSettingsAccessTest {
+class SettingsAccessTest {
 
     @Mock
     private ThesaurusSelectionService thesaurusSelectionService;
@@ -31,7 +31,7 @@ class PreviewSettingsAccessTest {
     @Mock
     private RightsService rightsService;
 
-    private PreviewSettingsAccess access;
+    private SettingsAccess access;
 
     @BeforeEach
     void setUp() {
@@ -39,7 +39,7 @@ class PreviewSettingsAccessTest {
                 thesaurusSelectionService, thesaurusWorkLanguageService);
         ReflectionTestUtils.setField(thesaurusContext, "defaultWorkLanguage", "fr");
         thesaurusContext.selectThesaurus("th17", "Pactols_Lieux", "fr");
-        access = new PreviewSettingsAccess(thesaurusContext, userSession, rightsService);
+        access = new SettingsAccess(thesaurusContext, userSession, rightsService);
     }
 
     @Test

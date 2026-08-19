@@ -47,7 +47,7 @@ import java.util.Map;
 public class ConsultationShellBean implements Serializable {
 
     private static final int ALL_PROJECTS_ID = -1;
-    /** Vue JSF concrète du front cible (preview), pas la pretty URL. */
+    /** Vue JSF concrète du front v2, pas la pretty URL. */
     private static final String BROWSE_VIEW = "/v2/index.xhtml";
 
     private final ConsultationCatalogService consultationCatalogService;
@@ -329,7 +329,7 @@ public class ConsultationShellBean implements Serializable {
     /**
      * Navigation forcée vers la consultation, comme legacy {@code menuBean.redirectToThesaurus()}.
      * <p>
-     * Cible {@code /v2/index.xhtml} (accueil preview) avec un paramètre
+     * Cible {@code /v2/index.xhtml} (accueil thésaurus) avec un paramètre
      * anti-cache : un redirect/assign vers la même URL ne recharge la page qu'une fois sur deux.
      */
     private void navigateToBrowse() throws IOException {

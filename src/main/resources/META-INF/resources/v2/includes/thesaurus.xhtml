@@ -195,7 +195,7 @@
             <button type="button" class="bo-btn ghost confirm-cancel" data-act="logout-dismiss">Annuler</button>
             <h:form id="previewLogoutForm" styleClass="confirm-ok-form">
               <input type="hidden" name="csrfToken" value="#{sessionScope.CSRF_TOKEN}"/>
-              <h:commandLink styleClass="bo-btn danger" actionListener="#{v2LoginBean.logoutToPreview}">
+              <h:commandLink styleClass="bo-btn danger" actionListener="#{v2LoginBean.logoutToV2}">
                 Se déconnecter
               </h:commandLink>
             </h:form>

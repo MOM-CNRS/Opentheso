@@ -1,6 +1,5 @@
-package fr.cnrs.opentheso.v2.preview.ui;
+package fr.cnrs.opentheso.v2.concept.ui;
 
-import fr.cnrs.opentheso.v2.candidat.model.CandidatStatusCode;
 import fr.cnrs.opentheso.v2.concept.model.ConceptDetail;
 import fr.cnrs.opentheso.v2.concept.model.ConceptSummary;
 import fr.cnrs.opentheso.v2.concept.model.ConceptTreeNodeData;
@@ -25,11 +24,9 @@ import org.mockito.Mock;
 import org.mockito.junit.jupiter.MockitoExtension;
 import org.springframework.test.util.ReflectionTestUtils;
 
-import java.text.NumberFormat;
 import java.util.ArrayList;
 import java.util.Collections;
 import java.util.List;
-import java.util.Locale;
 import java.util.Optional;
 
 import static org.junit.jupiter.api.Assertions.assertEquals;
@@ -48,7 +45,7 @@ import static org.mockito.Mockito.verify;
 import static org.mockito.Mockito.when;
 
 @ExtendWith(MockitoExtension.class)
-class PreviewThesaurusBeanTest {
+class ThesaurusViewBeanTest {
 
     @Mock
     private ThesaurusHomeQueryRepository thesaurusHomeQueryRepository;
@@ -70,13 +67,13 @@ class PreviewThesaurusBeanTest {
     private V2LocaleBean v2LocaleBean;
 
     private ThesaurusContext thesaurusContext;
-    private PreviewThesaurusBean bean;
+    private ThesaurusViewBean bean;
 
     @BeforeEach
     void setUp() {
         thesaurusContext = new ThesaurusContext(thesaurusSelectionService, thesaurusWorkLanguageService);
         ReflectionTestUtils.setField(thesaurusContext, "defaultWorkLanguage", "fr");
-        bean = new PreviewThesaurusBean(
+        bean = new ThesaurusViewBean(
                 thesaurusContext,
                 thesaurusHomeQueryRepository,
                 thesaurusPreferenceService,
@@ -102,38 +99,6 @@ class PreviewThesaurusBeanTest {
         assertEquals("th17", thesaurusContext.resolveThesaurusId());
         assertEquals("fr", thesaurusContext.resolveWorkLanguage());
         verify(thesaurusHomeQueryRepository).countValidConcepts("th17");
-    }
-
-    @Test
-    void loadsHomeStatisticsForConceptsCandidatesCollectionsAndLanguages() {
-        thesaurusContext.selectThesaurus("th17", "Pactols_Lieux", "fr");
-        when(thesaurusHomeQueryRepository.countValidConcepts("th17")).thenReturn(4382);
-        when(thesaurusHomeQueryRepository.countCandidatesByStatus("th17", CandidatStatusCode.PENDING)).thenReturn(21);
-        when(thesaurusHomeQueryRepository.countCandidatesByStatus("th17", CandidatStatusCode.REJECTED)).thenReturn(8);
-        when(thesaurusHomeQueryRepository.countDefinedLanguages("th17")).thenReturn(6);
-        when(thesaurusHomeQueryRepository.countCollections("th17")).thenReturn(7);
-        when(thesaurusHomeQueryRepository.countConceptsWithoutDefinition("th17")).thenReturn(14);
-        when(thesaurusHomeQueryRepository.findMaxTreeDepth("th17")).thenReturn(5);
-
-        assertEquals(NumberFormat.getIntegerInstance(Locale.FRANCE).format(4382), bean.getConceptCountFormatted());
-        assertEquals(21, bean.getCandidatePendingCount());
-        assertEquals(8, bean.getCandidateRejectedCount());
-        assertEquals(29, bean.getCandidateCount());
-        assertEquals("29", bean.getCandidateCountFormatted());
-        assertEquals(7, bean.getCollectionCount());
-        assertEquals("7", bean.getCollectionCountFormatted());
-        assertEquals(6, bean.getLanguageCount());
-        assertEquals("6", bean.getLanguageCountFormatted());
-        assertEquals(14, bean.getConceptsWithoutDefinitionCount());
-        assertEquals("14", bean.getConceptsWithoutDefinitionCountFormatted());
-        assertEquals(5, bean.getMaxTreeDepth());
-        assertEquals("5", bean.getMaxTreeDepthFormatted());
-        verify(thesaurusHomeQueryRepository).countCandidatesByStatus("th17", CandidatStatusCode.PENDING);
-        verify(thesaurusHomeQueryRepository).countCandidatesByStatus("th17", CandidatStatusCode.REJECTED);
-        verify(thesaurusHomeQueryRepository).countCollections("th17");
-        verify(thesaurusHomeQueryRepository).countDefinedLanguages("th17");
-        verify(thesaurusHomeQueryRepository).countConceptsWithoutDefinition("th17");
-        verify(thesaurusHomeQueryRepository).findMaxTreeDepth("th17");
     }
 
     @Test
@@ -194,12 +159,12 @@ class PreviewThesaurusBeanTest {
         thesaurusContext.selectThesaurus("th17", "Pactols_Lieux", "fr");
         when(v2LocaleBean.getIdLangue()).thenReturn("fr");
         when(thesaurusPreferenceService.loadUsedLanguages("th17", "fr")).thenReturn(List.of(language("fr", "Français")));
-        when(conceptReadService.loadPreviewRootNodes("th17", "fr")).thenReturn(List.of(
+        when(conceptReadService.loadTreeRootNodes("th17", "fr")).thenReturn(List.of(
                 new ConceptTreeNodeData("c1", "Lieux", "", "concept", true),
                 new ConceptTreeNodeData("c2", "Feuille", "N1", "file", false)
         ));
 
-        List<PreviewTreeNode> roots = bean.getTreeRoots();
+        List<ThesaurusTreeNode> roots = bean.getTreeRoots();
 
         assertEquals(2, roots.size());
         assertEquals("c1", roots.get(0).getId());
@@ -208,7 +173,7 @@ class PreviewThesaurusBeanTest {
         assertFalse(roots.get(0).isExpanded());
         assertEquals("valide", roots.get(0).getStatus());
         assertEquals("file", roots.get(1).getNodeType());
-        verify(conceptReadService).loadPreviewRootNodes("th17", "fr");
+        verify(conceptReadService).loadTreeRootNodes("th17", "fr");
     }
 
     @Test
@@ -216,13 +181,13 @@ class PreviewThesaurusBeanTest {
         thesaurusContext.selectThesaurus("th17", "Pactols_Lieux", "fr");
         when(v2LocaleBean.getIdLangue()).thenReturn("fr");
         when(thesaurusPreferenceService.loadUsedLanguages("th17", "fr")).thenReturn(List.of(language("fr", "Français")));
-        when(conceptReadService.loadPreviewRootNodes("th17", "fr")).thenReturn(List.of(
+        when(conceptReadService.loadTreeRootNodes("th17", "fr")).thenReturn(List.of(
                 new ConceptTreeNodeData("ark:/12148/ctj0u1", "Tjarou", "", "candidat", false)
         ));
         when(conceptReadService.loadCandidateMeta("th17", List.of("ark:/12148/ctj0u1")))
                 .thenReturn(Collections.singletonList(new Object[]{"ark:/12148/ctj0u1", "anais.mauriceau", "2026-09-29"}));
 
-        PreviewTreeNode node = bean.getTreeRoots().get(0);
+        ThesaurusTreeNode node = bean.getTreeRoots().get(0);
 
         assertEquals("Tjarou", node.getLabel());
         assertEquals("candidat", node.getStatus());
@@ -236,21 +201,21 @@ class PreviewThesaurusBeanTest {
         thesaurusContext.selectThesaurus("th17", "Pactols_Lieux", "fr");
         when(v2LocaleBean.getIdLangue()).thenReturn("fr");
         when(thesaurusPreferenceService.loadUsedLanguages("th17", "fr")).thenReturn(List.of(language("fr", "Français")));
-        when(conceptReadService.loadPreviewRootNodes("th17", "fr")).thenReturn(List.of(
+        when(conceptReadService.loadTreeRootNodes("th17", "fr")).thenReturn(List.of(
                 new ConceptTreeNodeData("c1", "Lieux", "", "concept", true)
         ));
-        when(conceptReadService.loadPreviewChildNodes("c1", "concept", "th17", "fr")).thenReturn(List.of(
+        when(conceptReadService.loadTreeChildNodes("c1", "concept", "th17", "fr")).thenReturn(List.of(
                 new ConceptTreeNodeData("c1a", "Enfant", "", "file", false)
         ));
 
         bean.toggleTreeNode("Lieux");
 
-        PreviewTreeNode root = bean.getTreeRoots().get(0);
+        ThesaurusTreeNode root = bean.getTreeRoots().get(0);
         assertTrue(root.isExpanded());
         assertEquals(1, root.getChildren().size());
         assertEquals("c1a", root.getChildren().get(0).getId());
         assertEquals(1, root.getChildren().get(0).getDepth());
-        verify(conceptReadService).loadPreviewChildNodes("c1", "concept", "th17", "fr");
+        verify(conceptReadService).loadTreeChildNodes("c1", "concept", "th17", "fr");
     }
 
     @Test

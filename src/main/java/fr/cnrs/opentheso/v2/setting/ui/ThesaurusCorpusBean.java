@@ -1,10 +1,9 @@
-package fr.cnrs.opentheso.v2.preview.ui;
+package fr.cnrs.opentheso.v2.setting.ui;
 
-import fr.cnrs.opentheso.v2.preview.service.CorpusPersistDraft;
+import fr.cnrs.opentheso.v2.setting.service.CorpusPersistDraft;
 import fr.cnrs.opentheso.v2.setting.exception.InvalidSettingDataException;
 import fr.cnrs.opentheso.v2.setting.model.ThesaurusCorpus;
 import fr.cnrs.opentheso.v2.setting.service.ThesaurusCorpusService;
-import fr.cnrs.opentheso.v2.setting.ui.CorpusEditor;
 import jakarta.faces.view.ViewScoped;
 import jakarta.inject.Named;
 import lombok.Getter;
@@ -19,12 +18,12 @@ import java.util.LinkedHashMap;
 import java.util.List;
 import java.util.Map;
 
-@Named("v2PreviewCorpusBean")
+@Named("v2ThesaurusCorpusBean")
 @ViewScoped
 @RequiredArgsConstructor
-public class PreviewThesaurusCorpusBean implements Serializable {
+public class ThesaurusCorpusBean implements Serializable {
 
-    private final PreviewSettingsAccess settingsAccess;
+    private final SettingsAccess settingsAccess;
     private final ThesaurusCorpusService thesaurusCorpusService;
 
     private List<ThesaurusCorpus> corpusList = new ArrayList<>();
@@ -32,7 +31,7 @@ public class PreviewThesaurusCorpusBean implements Serializable {
     private final Map<String, String> corpusOriginalNameByCurrent = new LinkedHashMap<>();
     private boolean corpusLoaded;
     private String corpusLoadedForThesaurus;
-    private final PreviewTablePager corpusPager = new PreviewTablePager();
+    private final SettingsPager corpusPager = new SettingsPager();
     private final List<ThesaurusCorpus> pagedCorpusList = new ArrayList<>();
     private final List<Integer> corpusPages = new ArrayList<>();
 
@@ -112,9 +111,9 @@ public class PreviewThesaurusCorpusBean implements Serializable {
     }
 
     public void goCorpusPage() {
-        int page = PreviewRequestParams.parsePositiveInt(PreviewRequestParams.param("previewCorpusPage"));
+        int page = RequestParams.parsePositiveInt(RequestParams.param("previewCorpusPage"));
         if (page <= 0) {
-            page = PreviewRequestParams.parsePositiveInt(corpusPageTarget);
+            page = RequestParams.parsePositiveInt(corpusPageTarget);
         }
         goCorpusPage(page);
     }
@@ -313,7 +312,7 @@ public class PreviewThesaurusCorpusBean implements Serializable {
     }
 
     private String requestCorpusTarget() {
-        String raw = PreviewRequestParams.param("previewCorpusTarget");
+        String raw = RequestParams.param("previewCorpusTarget");
         if (StringUtils.isNotBlank(raw)) {
             return raw;
         }

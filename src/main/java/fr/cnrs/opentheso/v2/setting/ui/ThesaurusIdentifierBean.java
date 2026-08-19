@@ -1,6 +1,5 @@
-package fr.cnrs.opentheso.v2.preview.ui;
+package fr.cnrs.opentheso.v2.setting.ui;
 
-import fr.cnrs.opentheso.v2.setting.ui.PreferenceEditor;
 import jakarta.faces.event.AjaxBehaviorEvent;
 import jakarta.faces.view.ViewScoped;
 import jakarta.inject.Named;
@@ -8,12 +7,12 @@ import lombok.RequiredArgsConstructor;
 
 import java.io.Serializable;
 
-@Named("v2PreviewIdentifierBean")
+@Named("v2ThesaurusIdentifierBean")
 @ViewScoped
 @RequiredArgsConstructor
-public class PreviewThesaurusIdentifierBean implements Serializable {
+public class ThesaurusIdentifierBean implements Serializable {
 
-    private final PreviewThesaurusPreferenceBean preferenceBean;
+    private final ThesaurusPreferenceBean preferenceBean;
 
     public PreferenceEditor getPreference() {
         return preferenceBean.getPreference();
@@ -21,7 +20,7 @@ public class PreviewThesaurusIdentifierBean implements Serializable {
 
     /**
      * Un seul serveur d'identifiants à la fois (Ark, Ark local, Handle, OpenArk).
-     * Ne persiste pas : l'enregistrement se fait via {@link PreviewThesaurusPreferenceBean#savePreferences()}.
+     * Ne persiste pas : l'enregistrement se fait via {@link ThesaurusPreferenceBean#savePreferences()}.
      */
     public void selectIdentifierServer(AjaxBehaviorEvent event) {
         PreferenceEditor editor = getPreference();

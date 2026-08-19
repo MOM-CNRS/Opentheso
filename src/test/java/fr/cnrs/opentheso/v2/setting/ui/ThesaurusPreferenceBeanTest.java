@@ -1,8 +1,8 @@
-package fr.cnrs.opentheso.v2.preview.ui;
+package fr.cnrs.opentheso.v2.setting.ui;
 
-import fr.cnrs.opentheso.v2.preview.service.AlignmentPersistDraft;
-import fr.cnrs.opentheso.v2.preview.service.CorpusPersistDraft;
-import fr.cnrs.opentheso.v2.preview.service.PreviewThesaurusSettingsPersistService;
+import fr.cnrs.opentheso.v2.setting.service.AlignmentPersistDraft;
+import fr.cnrs.opentheso.v2.setting.service.CorpusPersistDraft;
+import fr.cnrs.opentheso.v2.setting.service.ThesaurusSettingsPersistService;
 import fr.cnrs.opentheso.v2.rights.Permission;
 import fr.cnrs.opentheso.v2.rights.RightsService;
 import fr.cnrs.opentheso.v2.setting.fixtures.SettingTestFixtures;
@@ -30,7 +30,7 @@ import static org.mockito.Mockito.verify;
 import static org.mockito.Mockito.when;
 
 @ExtendWith(MockitoExtension.class)
-class PreviewThesaurusPreferenceBeanTest {
+class ThesaurusPreferenceBeanTest {
 
     @Mock
     private ThesaurusSelectionService thesaurusSelectionService;
@@ -43,14 +43,14 @@ class PreviewThesaurusPreferenceBeanTest {
     @Mock
     private ThesaurusPreferenceService thesaurusPreferenceService;
     @Mock
-    private PreviewThesaurusSettingsPersistService persistService;
+    private ThesaurusSettingsPersistService persistService;
     @Mock
-    private PreviewThesaurusCorpusBean corpusBean;
+    private ThesaurusCorpusBean corpusBean;
     @Mock
-    private PreviewThesaurusAlignmentBean alignmentBean;
+    private ThesaurusAlignmentBean alignmentBean;
 
-    private PreviewThesaurusPreferenceBean bean;
-    private PreviewSettingsAccess access;
+    private ThesaurusPreferenceBean bean;
+    private SettingsAccess access;
 
     @BeforeEach
     void setUp() {
@@ -58,8 +58,8 @@ class PreviewThesaurusPreferenceBeanTest {
                 thesaurusSelectionService, thesaurusWorkLanguageService);
         ReflectionTestUtils.setField(thesaurusContext, "defaultWorkLanguage", "fr");
         thesaurusContext.selectThesaurus("th17", "Pactols_Lieux", "fr");
-        access = new PreviewSettingsAccess(thesaurusContext, userSession, rightsService);
-        bean = new PreviewThesaurusPreferenceBean(
+        access = new SettingsAccess(thesaurusContext, userSession, rightsService);
+        bean = new ThesaurusPreferenceBean(
                 access,
                 thesaurusContext,
                 thesaurusPreferenceService,

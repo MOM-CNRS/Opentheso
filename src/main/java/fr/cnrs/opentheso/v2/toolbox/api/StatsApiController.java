@@ -1,4 +1,4 @@
-package fr.cnrs.opentheso.v2.preview.api;
+package fr.cnrs.opentheso.v2.toolbox.api;
 
 import fr.cnrs.opentheso.v2.setting.ui.ThesaurusContext;
 import fr.cnrs.opentheso.v2.toolbox.model.StatisticsCompleteness;
@@ -15,7 +15,7 @@ import org.springframework.web.bind.annotation.RestController;
 @RestController
 @RequestMapping({"/v2/api", "/v2-preview/api"})
 @RequiredArgsConstructor
-public class PreviewStatsApiController {
+public class StatsApiController {
 
     private final ThesaurusStatisticsService thesaurusStatisticsService;
     private final ThesaurusContext thesaurusContext;

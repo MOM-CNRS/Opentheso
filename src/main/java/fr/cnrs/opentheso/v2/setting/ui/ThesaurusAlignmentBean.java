@@ -1,8 +1,8 @@
-package fr.cnrs.opentheso.v2.preview.ui;
+package fr.cnrs.opentheso.v2.setting.ui;
 
 import fr.cnrs.opentheso.v2.concept.alignment.model.AlignmentSourceItem;
 import fr.cnrs.opentheso.v2.concept.alignment.service.ConceptAlignmentAdminService;
-import fr.cnrs.opentheso.v2.preview.service.AlignmentPersistDraft;
+import fr.cnrs.opentheso.v2.setting.service.AlignmentPersistDraft;
 import jakarta.faces.view.ViewScoped;
 import jakarta.inject.Named;
 import lombok.Getter;
@@ -19,12 +19,12 @@ import java.util.List;
 import java.util.Map;
 import java.util.Set;
 
-@Named("v2PreviewAlignmentBean")
+@Named("v2ThesaurusAlignmentBean")
 @ViewScoped
 @RequiredArgsConstructor
-public class PreviewThesaurusAlignmentBean implements Serializable {
+public class ThesaurusAlignmentBean implements Serializable {
 
-    private final PreviewSettingsAccess settingsAccess;
+    private final SettingsAccess settingsAccess;
     private final ConceptAlignmentAdminService conceptAlignmentAdminService;
 
     private List<AlignmentSourceItem> alignmentSources = new ArrayList<>();
@@ -34,7 +34,7 @@ public class PreviewThesaurusAlignmentBean implements Serializable {
     private int nextDraftAlignmentId = -1;
     private boolean alignmentSourcesLoaded;
     private String alignmentSourcesLoadedForThesaurus;
-    private final PreviewTablePager alignmentPager = new PreviewTablePager();
+    private final SettingsPager alignmentPager = new SettingsPager();
     private final List<AlignmentSourceItem> pagedAlignmentSources = new ArrayList<>();
     private final List<Integer> alignmentPages = new ArrayList<>();
 
@@ -129,9 +129,9 @@ public class PreviewThesaurusAlignmentBean implements Serializable {
     }
 
     public void goAlignmentPage() {
-        int page = PreviewRequestParams.parsePositiveInt(PreviewRequestParams.param("previewAlignPage"));
+        int page = RequestParams.parsePositiveInt(RequestParams.param("previewAlignPage"));
         if (page <= 0) {
-            page = PreviewRequestParams.parsePositiveInt(alignmentPageTarget);
+            page = RequestParams.parsePositiveInt(alignmentPageTarget);
         }
         goAlignmentPage(page);
     }
@@ -385,8 +385,8 @@ public class PreviewThesaurusAlignmentBean implements Serializable {
     }
 
     private int requestAlignmentSourceId() {
-        int sourceId = PreviewRequestParams.intParam("previewAlignSourceId");
-        return sourceId != 0 ? sourceId : PreviewRequestParams.parseInt(alignmentActionTarget);
+        int sourceId = RequestParams.intParam("previewAlignSourceId");
+        return sourceId != 0 ? sourceId : RequestParams.parseInt(alignmentActionTarget);
     }
 
     private AlignmentSourceItem findAlignmentSource(int sourceId) {

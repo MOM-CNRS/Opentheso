@@ -1,4 +1,4 @@
-package fr.cnrs.opentheso.v2.preview.service;
+package fr.cnrs.opentheso.v2.setting.service;
 
 import fr.cnrs.opentheso.v2.concept.alignment.model.AlignmentSourceItem;
 

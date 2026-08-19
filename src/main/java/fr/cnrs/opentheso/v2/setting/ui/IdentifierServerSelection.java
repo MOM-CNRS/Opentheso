@@ -1,7 +1,6 @@
-package fr.cnrs.opentheso.v2.preview.ui;
+package fr.cnrs.opentheso.v2.setting.ui;
 
 import fr.cnrs.opentheso.v2.setting.model.IdentifierServerType;
-import fr.cnrs.opentheso.v2.setting.ui.PreferenceEditor;
 import org.apache.commons.lang3.StringUtils;
 
 public final class IdentifierServerSelection {

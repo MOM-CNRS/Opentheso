@@ -2,27 +2,27 @@
 <ui:composition xmlns="http://www.w3.org/1999/xhtml"
                 xmlns:ui="http://xmlns.jcp.org/jsf/facelets"
                 xmlns:h="http://xmlns.jcp.org/jsf/html">
-  <div class="cv is-on#{v2PreviewThesaurusBean.candidateSelected ? ' is-candidate' : ''}"
-       data-id="#{v2PreviewThesaurusBean.selectedConcept.summary.conceptId}"
-       data-pref="#{v2PreviewThesaurusBean.selectedConcept.summary.preferredLabel}"
-       data-status="#{v2PreviewThesaurusBean.candidateSelected ? 'candidat' : 'valide'}">
+  <div class="cv is-on#{v2ThesaurusViewBean.candidateSelected ? ' is-candidate' : ''}"
+       data-id="#{v2ThesaurusViewBean.selectedConcept.summary.conceptId}"
+       data-pref="#{v2ThesaurusViewBean.selectedConcept.summary.preferredLabel}"
+       data-status="#{v2ThesaurusViewBean.candidateSelected ? 'candidat' : 'valide'}">
     <div class="cv-path">
       <span class="path">
-        <ui:repeat value="#{v2PreviewThesaurusBean.selectedConcept.breadcrumb}" var="step" varStatus="st">
+        <ui:repeat value="#{v2ThesaurusViewBean.selectedConcept.breadcrumb}" var="step" varStatus="st">
           <span class="path-seg">#{step.label}<ui:fragment rendered="#{not st.last}"><span class="path-sep">›</span></ui:fragment></span>
         </ui:repeat>
       </span>
     </div>
     <div class="cv-head">
       <h1 class="cv-pref">
-        <ui:fragment rendered="#{v2PreviewThesaurusBean.candidateSelected}"><span class="cv-dot" title="Concept candidat"></span></ui:fragment>
-        <span>#{v2PreviewThesaurusBean.dash(v2PreviewThesaurusBean.selectedConcept.summary.preferredLabel)}</span>
-        <span class="cv-lang">#{v2PreviewThesaurusBean.dash(v2PreviewThesaurusBean.selectedConcept.summary.lang)}</span>
-        <ui:fragment rendered="#{v2PreviewThesaurusBean.candidateSelected}"><span class="cv-status">candidat</span></ui:fragment>
-        <ui:fragment rendered="#{v2PreviewThesaurusBean.selectedConceptDeprecated}"><span class="cv-status is-dep">obsolète</span></ui:fragment>
+        <ui:fragment rendered="#{v2ThesaurusViewBean.candidateSelected}"><span class="cv-dot" title="Concept candidat"></span></ui:fragment>
+        <span>#{v2ThesaurusViewBean.dash(v2ThesaurusViewBean.selectedConcept.summary.preferredLabel)}</span>
+        <span class="cv-lang">#{v2ThesaurusViewBean.dash(v2ThesaurusViewBean.selectedConcept.summary.lang)}</span>
+        <ui:fragment rendered="#{v2ThesaurusViewBean.candidateSelected}"><span class="cv-status">candidat</span></ui:fragment>
+        <ui:fragment rendered="#{v2ThesaurusViewBean.selectedConceptDeprecated}"><span class="cv-status is-dep">obsolète</span></ui:fragment>
       </h1>
     </div>
-    <ui:fragment rendered="#{v2PreviewThesaurusBean.candidateSelected}">
+    <ui:fragment rendered="#{v2ThesaurusViewBean.candidateSelected}">
       <div class="cand-banner">
         <div class="cand-banner-row">
           <span class="cand-banner-dot"></span>
@@ -30,9 +30,9 @@
             <div class="cand-banner-t">Candidat en attente de validation</div>
             <div class="cand-banner-s">
               Proposé
-              <ui:fragment rendered="#{not empty v2PreviewThesaurusBean.candidateBy}"> par <b>#{v2PreviewThesaurusBean.candidateBy}</b></ui:fragment>
-              <ui:fragment rendered="#{not empty v2PreviewThesaurusBean.candidateOn}"> le #{v2PreviewThesaurusBean.candidateOn}</ui:fragment>
-              <ui:fragment rendered="#{empty v2PreviewThesaurusBean.candidateBy and empty v2PreviewThesaurusBean.candidateOn}"> — métadonnées non renseignées</ui:fragment>
+              <ui:fragment rendered="#{not empty v2ThesaurusViewBean.candidateBy}"> par <b>#{v2ThesaurusViewBean.candidateBy}</b></ui:fragment>
+              <ui:fragment rendered="#{not empty v2ThesaurusViewBean.candidateOn}"> le #{v2ThesaurusViewBean.candidateOn}</ui:fragment>
+              <ui:fragment rendered="#{empty v2ThesaurusViewBean.candidateBy and empty v2ThesaurusViewBean.candidateOn}"> — métadonnées non renseignées</ui:fragment>
             </div>
           </div>
         </div>
@@ -45,15 +45,15 @@
           <div class="crow">
             <div class="crow-lbl">Libellé</div>
             <div class="crow-val">
-              <span class="val-strong">#{v2PreviewThesaurusBean.dash(v2PreviewThesaurusBean.selectedConcept.summary.preferredLabel)}</span>
-              <span class="val-lang">(#{v2PreviewThesaurusBean.selectedConcept.summary.lang})</span>
+              <span class="val-strong">#{v2ThesaurusViewBean.dash(v2ThesaurusViewBean.selectedConcept.summary.preferredLabel)}</span>
+              <span class="val-lang">(#{v2ThesaurusViewBean.selectedConcept.summary.lang})</span>
             </div>
           </div>
           <div class="crow">
             <div class="crow-lbl">Formes alternatives</div>
             <div class="crow-val">
-              <ui:fragment rendered="#{empty v2PreviewThesaurusBean.selectedConcept.synonyms}"><span>—</span></ui:fragment>
-              <ui:repeat value="#{v2PreviewThesaurusBean.selectedConcept.synonyms}" var="syn" varStatus="st">
+              <ui:fragment rendered="#{empty v2ThesaurusViewBean.selectedConcept.synonyms}"><span>—</span></ui:fragment>
+              <ui:repeat value="#{v2ThesaurusViewBean.selectedConcept.synonyms}" var="syn" varStatus="st">
                 <h:outputText value="#{syn}"/><h:outputText value=", " rendered="#{not st.last}"/>
               </ui:repeat>
             </div>
@@ -61,8 +61,8 @@
           <div class="crow">
             <div class="crow-lbl">Formes cachées</div>
             <div class="crow-val">
-              <ui:fragment rendered="#{empty v2PreviewThesaurusBean.selectedConcept.hiddenSynonyms}"><span class="muted">—</span></ui:fragment>
-              <ui:repeat value="#{v2PreviewThesaurusBean.selectedConcept.hiddenSynonyms}" var="hid" varStatus="st">
+              <ui:fragment rendered="#{empty v2ThesaurusViewBean.selectedConcept.hiddenSynonyms}"><span class="muted">—</span></ui:fragment>
+              <ui:repeat value="#{v2ThesaurusViewBean.selectedConcept.hiddenSynonyms}" var="hid" varStatus="st">
                 <h:outputText value="#{hid}"/><h:outputText value=", " rendered="#{not st.last}"/>
               </ui:repeat>
             </div>
@@ -70,8 +70,8 @@
           <div class="crow">
             <div class="crow-lbl">Facettes</div>
             <div class="crow-val">
-              <ui:fragment rendered="#{empty v2PreviewThesaurusBean.selectedConcept.facets}"><span class="link">—</span></ui:fragment>
-              <ui:repeat value="#{v2PreviewThesaurusBean.selectedConcept.facets}" var="facet" varStatus="st">
+              <ui:fragment rendered="#{empty v2ThesaurusViewBean.selectedConcept.facets}"><span class="link">—</span></ui:fragment>
+              <ui:repeat value="#{v2ThesaurusViewBean.selectedConcept.facets}" var="facet" varStatus="st">
                 <button type="button" class="link rel-term" data-act="open" data-id="#{facet.conceptId}" data-type="facet">#{facet.displayLabel}</button>
                 <h:outputText value=", " rendered="#{not st.last}"/>
               </ui:repeat>
@@ -83,10 +83,10 @@
       <section class="cblock">
         <div class="cblock-head">Collections</div>
         <div class="cblock-body">
-          <ui:fragment rendered="#{empty v2PreviewThesaurusBean.selectedConcept.collections}">
+          <ui:fragment rendered="#{empty v2ThesaurusViewBean.selectedConcept.collections}">
             <div class="muted">Ce concept n'appartient à aucune collection.</div>
           </ui:fragment>
-          <ui:repeat value="#{v2PreviewThesaurusBean.selectedConcept.collections}" var="coll" varStatus="st">
+          <ui:repeat value="#{v2ThesaurusViewBean.selectedConcept.collections}" var="coll" varStatus="st">
             <span>#{coll.displayLabel}</span><h:outputText value=", " rendered="#{not st.last}"/>
           </ui:repeat>
         </div>
@@ -98,9 +98,9 @@
           <div class="crow crow-rel">
             <div class="crow-lbl"><span class="rel-code rel-bt">TG</span>Concept générique</div>
             <div class="crow-val">
-              <ui:fragment rendered="#{empty v2PreviewThesaurusBean.selectedConcept.broaderTerms}"><span class="muted">—</span></ui:fragment>
+              <ui:fragment rendered="#{empty v2ThesaurusViewBean.selectedConcept.broaderTerms}"><span class="muted">—</span></ui:fragment>
               <div class="rel-items">
-                <ui:repeat value="#{v2PreviewThesaurusBean.selectedConcept.broaderTerms}" var="rel">
+                <ui:repeat value="#{v2ThesaurusViewBean.selectedConcept.broaderTerms}" var="rel">
                   <button type="button" class="rel-term" data-act="open" data-id="#{rel.conceptId}" data-type="concept">#{rel.displayLabel}</button>
                 </ui:repeat>
               </div>
@@ -109,9 +109,9 @@
           <div class="crow crow-rel">
             <div class="crow-lbl"><span class="rel-code rel-nt">TS</span>Concept spécifique</div>
             <div class="crow-val">
-              <ui:fragment rendered="#{empty v2PreviewThesaurusBean.selectedConcept.narrowerTerms}"><span class="muted">—</span></ui:fragment>
+              <ui:fragment rendered="#{empty v2ThesaurusViewBean.selectedConcept.narrowerTerms}"><span class="muted">—</span></ui:fragment>
               <div class="rel-items">
-                <ui:repeat value="#{v2PreviewThesaurusBean.selectedConcept.narrowerTerms}" var="rel">
+                <ui:repeat value="#{v2ThesaurusViewBean.selectedConcept.narrowerTerms}" var="rel">
                   <button type="button" class="rel-term" data-act="open" data-id="#{rel.conceptId}" data-type="concept">#{rel.displayLabel}</button>
                 </ui:repeat>
               </div>
@@ -120,9 +120,9 @@
           <div class="crow crow-rel">
             <div class="crow-lbl"><span class="rel-code rel-rt">TA</span>Concept associé</div>
             <div class="crow-val">
-              <ui:fragment rendered="#{empty v2PreviewThesaurusBean.selectedConcept.relatedTerms}"><span class="muted">—</span></ui:fragment>
+              <ui:fragment rendered="#{empty v2ThesaurusViewBean.selectedConcept.relatedTerms}"><span class="muted">—</span></ui:fragment>
               <div class="rel-items">
-                <ui:repeat value="#{v2PreviewThesaurusBean.selectedConcept.relatedTerms}" var="rel">
+                <ui:repeat value="#{v2ThesaurusViewBean.selectedConcept.relatedTerms}" var="rel">
                   <button type="button" class="rel-term" data-act="open" data-id="#{rel.conceptId}" data-type="concept">#{rel.displayLabel}</button>
                 </ui:repeat>
               </div>
@@ -134,14 +134,14 @@
       <section class="cblock">
         <div class="cblock-head">Relation personnalisée</div>
         <div class="cblock-body">
-          <ui:fragment rendered="#{empty v2PreviewThesaurusBean.selectedConcept.customRelations}">
+          <ui:fragment rendered="#{empty v2ThesaurusViewBean.selectedConcept.customRelations}">
             <div class="muted">Aucune relation personnalisée.</div>
           </ui:fragment>
-          <ui:repeat value="#{v2PreviewThesaurusBean.selectedConcept.customRelations}" var="crel">
+          <ui:repeat value="#{v2ThesaurusViewBean.selectedConcept.customRelations}" var="crel">
             <div class="crow">
-              <div class="crow-lbl">#{v2PreviewThesaurusBean.dash(crel.relationLabel)}</div>
+              <div class="crow-lbl">#{v2ThesaurusViewBean.dash(crel.relationLabel)}</div>
               <div class="crow-val">
-                <button type="button" class="rel-term" data-act="open" data-id="#{crel.targetConceptId}" data-type="concept">#{v2PreviewThesaurusBean.dash(crel.targetLabel)}</button>
+                <button type="button" class="rel-term" data-act="open" data-id="#{crel.targetConceptId}" data-type="concept">#{v2ThesaurusViewBean.dash(crel.targetLabel)}</button>
               </div>
             </div>
           </ui:repeat>
@@ -151,10 +151,10 @@
       <section class="cblock">
         <div class="cblock-head">Traductions</div>
         <div class="cblock-body">
-          <ui:fragment rendered="#{empty v2PreviewThesaurusBean.selectedConcept.translations}">
+          <ui:fragment rendered="#{empty v2ThesaurusViewBean.selectedConcept.translations}">
             <div class="muted">Aucune traduction renseignée.</div>
           </ui:fragment>
-          <ui:repeat value="#{v2PreviewThesaurusBean.selectedConcept.translations}" var="tr">
+          <ui:repeat value="#{v2ThesaurusViewBean.selectedConcept.translations}" var="tr">
             <div class="crow">
               <div class="crow-lbl"><span class="val-lang">#{tr.lang}</span></div>
               <div class="crow-val">#{tr.value}</div>
@@ -166,12 +166,12 @@
       <section class="cblock">
         <div class="cblock-head">Notes</div>
         <div class="cblock-body">
-          <ui:fragment rendered="#{empty v2PreviewThesaurusBean.selectedConcept.notes}">
+          <ui:fragment rendered="#{empty v2ThesaurusViewBean.selectedConcept.notes}">
             <div class="muted">Aucune note renseignée.</div>
           </ui:fragment>
-          <ui:repeat value="#{v2PreviewThesaurusBean.selectedConcept.notes}" var="note">
+          <ui:repeat value="#{v2ThesaurusViewBean.selectedConcept.notes}" var="note">
             <div class="note-grp">
-              <div class="note-grp-t">#{v2PreviewThesaurusBean.noteTypeLabel(note.typeCode)}</div>
+              <div class="note-grp-t">#{v2ThesaurusViewBean.noteTypeLabel(note.typeCode)}</div>
               <div class="note-line">
                 <p class="cv-def">#{note.value} <span class="note-lang">(#{note.lang})</span></p>
               </div>
@@ -183,10 +183,10 @@
       <section class="cblock">
         <div class="cblock-head">Alignement</div>
         <div class="cblock-body">
-          <ui:fragment rendered="#{empty v2PreviewThesaurusBean.selectedConcept.alignmentGroups}">
+          <ui:fragment rendered="#{empty v2ThesaurusViewBean.selectedConcept.alignmentGroups}">
             <div class="muted">Aucun alignement vers un référentiel externe.</div>
           </ui:fragment>
-          <ui:repeat value="#{v2PreviewThesaurusBean.selectedConcept.alignmentGroups}" var="group">
+          <ui:repeat value="#{v2ThesaurusViewBean.selectedConcept.alignmentGroups}" var="group">
             <ui:repeat value="#{group.items}" var="align">
               <div class="align-item">
                 <span class="align-type">#{group.typeLabel}</span>
@@ -203,27 +203,27 @@
         <div class="cblock-body">
           <div class="crow">
             <div class="crow-lbl">Notation</div>
-            <div class="crow-val is-mono"><span>#{v2PreviewThesaurusBean.dash(v2PreviewThesaurusBean.selectedConcept.summary.notation)}</span></div>
+            <div class="crow-val is-mono"><span>#{v2ThesaurusViewBean.dash(v2ThesaurusViewBean.selectedConcept.summary.notation)}</span></div>
           </div>
           <div class="crow">
             <div class="crow-lbl">ID interne</div>
-            <div class="crow-val is-mono"><span class="link">#{v2PreviewThesaurusBean.selectedConcept.summary.conceptId}</span></div>
+            <div class="crow-val is-mono"><span class="link">#{v2ThesaurusViewBean.selectedConcept.summary.conceptId}</span></div>
           </div>
           <div class="crow">
             <div class="crow-lbl">URI</div>
             <div class="crow-val">
-              <ui:fragment rendered="#{v2PreviewThesaurusBean.selectedConcept.identifiers == null}">
+              <ui:fragment rendered="#{v2ThesaurusViewBean.selectedConcept.identifiers == null}">
                 <span class="muted">—</span>
               </ui:fragment>
-              <ui:fragment rendered="#{v2PreviewThesaurusBean.selectedConcept.identifiers != null}">
-                <a class="link" href="#{v2PreviewThesaurusBean.selectedConcept.identifiers.internalPermalinkUrl}">#{v2PreviewThesaurusBean.dash(v2PreviewThesaurusBean.selectedConcept.identifiers.internalPermalinkUrl)}</a>
+              <ui:fragment rendered="#{v2ThesaurusViewBean.selectedConcept.identifiers != null}">
+                <a class="link" href="#{v2ThesaurusViewBean.selectedConcept.identifiers.internalPermalinkUrl}">#{v2ThesaurusViewBean.dash(v2ThesaurusViewBean.selectedConcept.identifiers.internalPermalinkUrl)}</a>
               </ui:fragment>
             </div>
           </div>
           <div class="crow">
             <div class="crow-lbl">Identifiant permanent</div>
             <div class="crow-val is-mono">
-              <span>#{v2PreviewThesaurusBean.selectedConcept.identifiers == null ? '—' : v2PreviewThesaurusBean.dash(v2PreviewThesaurusBean.selectedConcept.identifiers.permanentId)}</span>
+              <span>#{v2ThesaurusViewBean.selectedConcept.identifiers == null ? '—' : v2ThesaurusViewBean.dash(v2ThesaurusViewBean.selectedConcept.identifiers.permanentId)}</span>
             </div>
           </div>
         </div>
@@ -234,11 +234,11 @@
         <div class="cblock-body">
           <div class="crow">
             <div class="crow-lbl">Créé le</div>
-            <div class="crow-val is-mono"><span>#{v2PreviewThesaurusBean.dash(v2PreviewThesaurusBean.selectedConcept.summary.created)}</span></div>
+            <div class="crow-val is-mono"><span>#{v2ThesaurusViewBean.dash(v2ThesaurusViewBean.selectedConcept.summary.created)}</span></div>
           </div>
           <div class="crow">
             <div class="crow-lbl">Dernière modification</div>
-            <div class="crow-val is-mono"><span>#{v2PreviewThesaurusBean.dash(v2PreviewThesaurusBean.selectedConcept.summary.modified)}</span></div>
+            <div class="crow-val is-mono"><span>#{v2ThesaurusViewBean.dash(v2ThesaurusViewBean.selectedConcept.summary.modified)}</span></div>
           </div>
         </div>
       </section>

@@ -1,4 +1,4 @@
-package fr.cnrs.opentheso.v2.preview.ui;
+package fr.cnrs.opentheso.v2.setting.ui;
 
 import fr.cnrs.opentheso.v2.concept.alignment.model.AlignmentSourceItem;
 import fr.cnrs.opentheso.v2.concept.alignment.service.ConceptAlignmentAdminService;
@@ -27,7 +27,7 @@ import static org.mockito.Mockito.verify;
 import static org.mockito.Mockito.when;
 
 @ExtendWith(MockitoExtension.class)
-class PreviewThesaurusAlignmentBeanTest {
+class ThesaurusAlignmentBeanTest {
 
     @Mock
     private ThesaurusSelectionService thesaurusSelectionService;
@@ -40,7 +40,7 @@ class PreviewThesaurusAlignmentBeanTest {
     @Mock
     private ConceptAlignmentAdminService conceptAlignmentAdminService;
 
-    private PreviewThesaurusAlignmentBean bean;
+    private ThesaurusAlignmentBean bean;
 
     @BeforeEach
     void setUp() {
@@ -48,8 +48,8 @@ class PreviewThesaurusAlignmentBeanTest {
                 thesaurusSelectionService, thesaurusWorkLanguageService);
         ReflectionTestUtils.setField(thesaurusContext, "defaultWorkLanguage", "fr");
         thesaurusContext.selectThesaurus("th17", "Pactols_Lieux", "fr");
-        PreviewSettingsAccess access = new PreviewSettingsAccess(thesaurusContext, userSession, rightsService);
-        bean = new PreviewThesaurusAlignmentBean(access, conceptAlignmentAdminService);
+        SettingsAccess access = new SettingsAccess(thesaurusContext, userSession, rightsService);
+        bean = new ThesaurusAlignmentBean(access, conceptAlignmentAdminService);
     }
 
     @Test

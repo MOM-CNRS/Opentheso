@@ -1,4 +1,4 @@
-package fr.cnrs.opentheso.v2.preview.ui;
+package fr.cnrs.opentheso.v2.concept.ui;
 
 import lombok.Getter;
 import lombok.Setter;
@@ -10,7 +10,7 @@ import java.util.List;
 
 @Getter
 @Setter
-public class PreviewTreeNode implements Serializable {
+public class ThesaurusTreeNode implements Serializable {
 
     private String id;
     private String label;
@@ -24,7 +24,7 @@ public class PreviewTreeNode implements Serializable {
     private boolean hasChildren;
     private boolean expanded;
     private boolean childrenLoaded;
-    private List<PreviewTreeNode> children = new ArrayList<>();
+    private List<ThesaurusTreeNode> children = new ArrayList<>();
 
     public String getPad() {
         return (6 + depth * 18) + "px";
@@ -36,5 +36,9 @@ public class PreviewTreeNode implements Serializable {
 
     public boolean isCandidate() {
         return "candidat".equals(status);
+    }
+
+    public boolean isFacet() {
+        return "facet".equals(nodeType);
     }
 }

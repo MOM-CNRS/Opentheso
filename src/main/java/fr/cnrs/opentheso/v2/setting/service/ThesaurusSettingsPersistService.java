@@ -1,14 +1,11 @@
-package fr.cnrs.opentheso.v2.preview.service;
+package fr.cnrs.opentheso.v2.setting.service;
 
 import fr.cnrs.opentheso.v2.concept.alignment.model.AlignmentSourceItem;
 import fr.cnrs.opentheso.v2.concept.alignment.service.ConceptAlignmentAdminService;
 import fr.cnrs.opentheso.v2.setting.exception.InvalidSettingDataException;
 import fr.cnrs.opentheso.v2.setting.model.ThesaurusCorpus;
 import fr.cnrs.opentheso.v2.setting.model.ThesaurusPreferences;
-import fr.cnrs.opentheso.v2.setting.service.ThesaurusCorpusService;
-import fr.cnrs.opentheso.v2.setting.service.ThesaurusPreferenceService;
-import fr.cnrs.opentheso.v2.setting.service.ThesaurusSearchLanguageSync;
-import fr.cnrs.opentheso.v2.preview.ui.IdentifierServerSelection;
+import fr.cnrs.opentheso.v2.setting.ui.IdentifierServerSelection;
 import fr.cnrs.opentheso.v2.setting.ui.PreferenceEditor;
 import lombok.RequiredArgsConstructor;
 import org.apache.commons.lang3.StringUtils;
@@ -26,7 +23,7 @@ import java.util.Set;
  */
 @Service
 @RequiredArgsConstructor
-public class PreviewThesaurusSettingsPersistService {
+public class ThesaurusSettingsPersistService {
 
     private final ThesaurusPreferenceService thesaurusPreferenceService;
     private final ThesaurusCorpusService thesaurusCorpusService;

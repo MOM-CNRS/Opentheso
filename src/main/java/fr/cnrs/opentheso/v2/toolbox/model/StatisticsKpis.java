@@ -9,7 +9,4 @@ public record StatisticsKpis(
         int collections,
         int languages
 ) {
-    public static StatisticsKpis empty() {
-        return new StatisticsKpis(0, 0, 0, 0);
-    }
 }
