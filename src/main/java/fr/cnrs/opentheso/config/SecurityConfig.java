@@ -59,7 +59,9 @@ public class SecurityConfig {
                         .ignoringRequestMatchers(
                                 "/openapi/v1/**",
                                 "/api/v2/**",
-                                "/api/v2/auth/token"
+                                "/api/v2/auth/token",
+                                "/v2/api/**",
+                                "/v2-preview/api/**"
                         )
                         .ignoringRequestMatchers(
                                 request -> request.getServletPath().endsWith(".xhtml")

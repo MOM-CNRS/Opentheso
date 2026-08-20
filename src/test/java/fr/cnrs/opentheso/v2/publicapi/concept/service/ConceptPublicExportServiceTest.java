@@ -29,6 +29,7 @@ import java.util.Optional;
 import static org.junit.jupiter.api.Assertions.assertEquals;
 import static org.junit.jupiter.api.Assertions.assertThrows;
 import static org.mockito.ArgumentMatchers.any;
+import static org.mockito.ArgumentMatchers.eq;
 import static org.mockito.Mockito.lenient;
 import static org.mockito.Mockito.verify;
 import static org.mockito.Mockito.when;
@@ -124,16 +125,15 @@ class ConceptPublicExportServiceTest {
     @Test
     void exportModifiedSince_exportsFoundConcepts() throws Exception {
         when(conceptRepository.findConceptsModifiedSince(any(), any())).thenReturn(List.of("C1", "C2"));
-        when(conceptSkosRdfExportEngine.exportConcept("TH1", "C1")).thenReturn(new SKOSResource());
-        when(conceptSkosRdfExportEngine.exportConcept("TH1", "C2")).thenReturn(new SKOSResource());
+        when(conceptSkosRdfExportEngine.exportConcepts(eq("TH1"), any(), any()))
+                .thenReturn(List.of(new SKOSResource(), new SKOSResource()));
         when(conceptSkosRdfExportEngine.serializeSkos(any(SKOSXmlDocument.class), any(RDFFormat.class)))
                 .thenReturn(new byte[]{9});
 
         var result = service.exportModifiedSince("TH1", "2024-01-01", "skos");
 
         assertEquals("TH1_branch.rdf", result.filename());
-        verify(conceptSkosRdfExportEngine).exportConcept("TH1", "C1");
-        verify(conceptSkosRdfExportEngine).exportConcept("TH1", "C2");
+        verify(conceptSkosRdfExportEngine).exportConcepts(eq("TH1"), any(), any());
     }
 
     @Test
@@ -177,16 +177,15 @@ class ConceptPublicExportServiceTest {
         var leafDetail = detailWith(List.of(), List.of(), List.of());
         when(conceptReadService.loadDetail("TH1", "C1", "fr")).thenReturn(Optional.of(rootDetail));
         when(conceptReadService.loadDetail("TH1", "C2", "fr")).thenReturn(Optional.of(leafDetail));
-        when(conceptSkosRdfExportEngine.exportConcept("TH1", "C1")).thenReturn(new SKOSResource());
-        when(conceptSkosRdfExportEngine.exportConcept("TH1", "C2")).thenReturn(new SKOSResource());
+        when(conceptSkosRdfExportEngine.exportConcepts(eq("TH1"), any(), any()))
+                .thenReturn(List.of(new SKOSResource(), new SKOSResource()));
         when(conceptSkosRdfExportEngine.serializeSkos(any(SKOSXmlDocument.class), any(RDFFormat.class)))
                 .thenReturn(new byte[]{7});
 
         var result = service.exportExpansion("TH1", "C1", "down", "skos");
 
         assertEquals("TH1_branch.rdf", result.filename());
-        verify(conceptSkosRdfExportEngine).exportConcept("TH1", "C1");
-        verify(conceptSkosRdfExportEngine).exportConcept("TH1", "C2");
+        verify(conceptSkosRdfExportEngine).exportConcepts(eq("TH1"), any(), any());
     }
 
     private NodeIdValueProjection mockProjection(String conceptId, String targetUri) {

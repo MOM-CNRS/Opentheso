@@ -27,7 +27,7 @@ primefaces:
 
 app:
   security:
-    keycloak-enabled: false  # ou false pour désactiver
+    keycloak-enabled: true  # ou false pour désactiver
   neo4j:
     enabled: false
 

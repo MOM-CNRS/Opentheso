@@ -23,12 +23,13 @@ public class TreeApiController {
     @GetMapping(value = "/subtree-size", produces = MediaType.APPLICATION_JSON_VALUE)
     public Map<String, Object> subtreeSize(
             @RequestParam String id,
-            @RequestParam(required = false) String nodeType
+            @RequestParam(required = false) String nodeType,
+            @RequestParam(required = false) String thesaurusId
     ) {
-        String thesaurusId = thesaurusContext.resolveThesaurusId();
-        int size = StringUtils.isAnyBlank(thesaurusId, id)
+        String resolvedThesaurusId = StringUtils.firstNonBlank(thesaurusId, thesaurusContext.resolveThesaurusId());
+        int size = StringUtils.isAnyBlank(resolvedThesaurusId, id)
                 ? 0
-                : conceptReadService.countSubtreeConcepts(thesaurusId, id, nodeType);
+                : conceptReadService.countSubtreeConcepts(resolvedThesaurusId, id, nodeType);
         return Map.of("id", id, "size", size);
     }
 }

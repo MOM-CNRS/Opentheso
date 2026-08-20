@@ -47,7 +47,10 @@ public class ThesaurusPdfAlphabeticWriter {
     public void writeAlphabetiquePDF(SKOSXmlDocument xmlDocument, List<Paragraph> paragraphs, List<Paragraph> paragraphTradList,
                                      String codeLanguage1, String codeLanguage2, ThesaurusPdfSettings writePdfSettings, boolean isToogleExportImage) {
         this.isToogleExportImage = isToogleExportImage;
-        this.exportThesaurusId = xmlDocument.getConceptScheme().getThesaurus().getId_thesaurus();
+        this.exportThesaurusId = xmlDocument.getConceptScheme() != null
+                && xmlDocument.getConceptScheme().getThesaurus() != null
+                ? xmlDocument.getConceptScheme().getThesaurus().getId_thesaurus()
+                : null;
         this.exportPreferences = toolboxPreferencePersistence.findPreferences(exportThesaurusId);
         var concepts = xmlDocument.getConceptList();
         List<String> resourceChecked = new ArrayList<>();

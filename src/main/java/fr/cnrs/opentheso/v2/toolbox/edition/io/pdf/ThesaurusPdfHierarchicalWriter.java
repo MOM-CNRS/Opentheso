@@ -42,7 +42,10 @@ public class ThesaurusPdfHierarchicalWriter {
     public void writeHierachiquePDF(List<Paragraph> paragraphs, List<Paragraph> paragraphTradList, String codeLanguage1,
                                     String codeLanguage2, ThesaurusPdfSettings writePdfSettings, SKOSXmlDocument xmlDocument, boolean isToogleExportImage) {
         this.isToogleExportImage = isToogleExportImage;
-        this.exportThesaurusId = xmlDocument.getConceptScheme().getThesaurus().getId_thesaurus();
+        this.exportThesaurusId = xmlDocument.getConceptScheme() != null
+                && xmlDocument.getConceptScheme().getThesaurus() != null
+                ? xmlDocument.getConceptScheme().getThesaurus().getId_thesaurus()
+                : null;
         this.exportPreferences = toolboxPreferencePersistence.findPreferences(exportThesaurusId);
         HashMap<String, String> labels = new HashMap<>();
         HashMap<String, List<String>> idToChildId = new HashMap<>();

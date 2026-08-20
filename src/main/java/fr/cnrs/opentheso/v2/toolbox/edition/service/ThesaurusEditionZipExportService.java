@@ -6,7 +6,6 @@ import fr.cnrs.opentheso.models.thesaurus.NodeLangTheso;
 import fr.cnrs.opentheso.v2.shared.io.SkosRdfFormatSupport;
 import fr.cnrs.opentheso.v2.toolbox.edition.io.csv.ThesaurusCsvWriter;
 import fr.cnrs.opentheso.v2.toolbox.edition.io.rdf.ThesaurusSkosSerializer;
-import fr.cnrs.opentheso.v2.toolbox.edition.model.ThesaurusEditionExportOptions;
 import fr.cnrs.opentheso.v2.toolbox.edition.persistence.ThesaurusSkosDocumentBuilder;
 import fr.cnrs.opentheso.v2.toolbox.persistence.ToolboxExportPersistence;
 import fr.cnrs.opentheso.v2.toolbox.persistence.ToolboxPreferencePersistence;
@@ -24,6 +23,8 @@ import java.io.ByteArrayOutputStream;
 import java.io.IOException;
 import java.util.ArrayList;
 import java.util.List;
+import java.util.Locale;
+import java.util.stream.Collectors;
 import java.util.zip.ZipEntry;
 import java.util.zip.ZipOutputStream;
 
@@ -44,11 +45,24 @@ public class ThesaurusEditionZipExportService {
             List<String> selectedLanguageCodes,
             boolean clearHtml
     ) throws Exception {
+        return exportEachGroupAsCsvZip(
+                thesaurusId, thesaurusTitle, delimiter, selectedLanguageCodes, clearHtml, List.of()
+        );
+    }
+
+    public StreamedContent exportEachGroupAsCsvZip(
+            String thesaurusId,
+            String thesaurusTitle,
+            char delimiter,
+            List<String> selectedLanguageCodes,
+            boolean clearHtml,
+            List<String> restrictGroupIds
+    ) throws Exception {
         return exportZip(
                 thesaurusId,
                 thesaurusTitle,
                 ".csv",
-                "text/csv",
+                restrictGroupIds,
                 (groupId, groupLabel) -> {
                     var document = thesaurusSkosDocumentBuilder.buildDocumentByGroup(thesaurusId, groupId, clearHtml);
                     var languages = resolveLanguages(thesaurusId, selectedLanguageCodes);
@@ -63,12 +77,22 @@ public class ThesaurusEditionZipExportService {
             String formatCode,
             boolean clearHtml
     ) throws Exception {
+        return exportEachGroupAsSkosZip(thesaurusId, thesaurusTitle, formatCode, clearHtml, List.of());
+    }
+
+    public StreamedContent exportEachGroupAsSkosZip(
+            String thesaurusId,
+            String thesaurusTitle,
+            String formatCode,
+            boolean clearHtml,
+            List<String> restrictGroupIds
+    ) throws Exception {
         var resolved = SkosRdfFormatSupport.resolveExportFormat(formatCode);
         return exportZip(
                 thesaurusId,
                 thesaurusTitle,
                 resolved.extension(),
-                "application/xml",
+                restrictGroupIds,
                 (groupId, groupLabel) -> {
                     var document = thesaurusSkosDocumentBuilder.buildDocumentByGroup(thesaurusId, groupId, clearHtml);
                     try (var output = new ByteArrayOutputStream()) {
@@ -85,10 +109,21 @@ public class ThesaurusEditionZipExportService {
             String thesaurusId,
             String thesaurusTitle,
             String extension,
-            String contentType,
+            List<String> restrictGroupIds,
             GroupExporter exporter
     ) throws Exception {
         List<NodeGroup> groups = toolboxExportPersistence.loadConceptGroups(thesaurusId);
+        if (CollectionUtils.isNotEmpty(restrictGroupIds)) {
+            var wanted = restrictGroupIds.stream()
+                    .filter(StringUtils::isNotBlank)
+                    .map(id -> id.toLowerCase(Locale.ROOT))
+                    .collect(Collectors.toSet());
+            groups = groups.stream()
+                    .filter(group -> group.getConceptGroup() != null
+                            && wanted.contains(StringUtils.defaultString(group.getConceptGroup().getIdGroup())
+                            .toLowerCase(Locale.ROOT)))
+                    .toList();
+        }
         if (CollectionUtils.isEmpty(groups)) {
             throw new IllegalStateException("Aucune collection disponible");
         }

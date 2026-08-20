@@ -1,6 +1,5 @@
 package fr.cnrs.opentheso.v2.shared.ui;
 
-import fr.cnrs.opentheso.utils.MessageUtils;
 import fr.cnrs.opentheso.v2.user.service.AccountPasswordResetService;
 import jakarta.enterprise.context.RequestScoped;
 import jakarta.inject.Named;
@@ -22,14 +21,16 @@ public class ForgotPasswordBean implements Serializable {
 
     private String sendTo;
     private String message;
+    private String error;
 
     public void sendMail() {
+        error = null;
+        message = null;
         if (StringUtils.isBlank(sendTo)) {
-            MessageUtils.showErrorMessage("Veuillez saisir une adresse mail");
+            error = "Veuillez saisir une adresse mail";
             return;
         }
         accountPasswordResetService.requestPasswordReset(sendTo.trim(), false);
         message = "Si un compte existe pour cette adresse, un email de réinitialisation a été envoyé.";
-        MessageUtils.showWarnMessage(message);
     }
 }

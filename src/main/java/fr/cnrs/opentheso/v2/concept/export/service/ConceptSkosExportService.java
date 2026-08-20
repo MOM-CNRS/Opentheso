@@ -1,6 +1,7 @@
 package fr.cnrs.opentheso.v2.concept.export.service;
 
 import fr.cnrs.opentheso.entites.Preferences;
+import fr.cnrs.opentheso.models.skosapi.SKOSResource;
 import fr.cnrs.opentheso.models.skosapi.SKOSXmlDocument;
 import fr.cnrs.opentheso.v2.concept.io.rdf.ConceptSkosRdfExportEngine;
 import fr.cnrs.opentheso.v2.shared.io.SkosRdfFormatSupport;
@@ -8,8 +9,12 @@ import fr.cnrs.opentheso.v2.shared.io.SkosRdfFormatSupport.ExportResult;
 import lombok.RequiredArgsConstructor;
 import org.apache.commons.lang3.StringUtils;
 import org.springframework.stereotype.Service;
+import org.springframework.transaction.annotation.Transactional;
 
 import java.io.IOException;
+import java.util.Collection;
+import java.util.List;
+import java.util.function.BiConsumer;
 
 @Service
 @RequiredArgsConstructor
@@ -18,7 +23,61 @@ public class ConceptSkosExportService {
     private final ConceptSkosRdfExportEngine conceptSkosRdfExportEngine;
 
     public ExportResult exportConcept(String thesaurusId, String conceptId, String formatCode) throws IOException {
-        if (StringUtils.isBlank(thesaurusId) || StringUtils.isBlank(conceptId)) {
+        return exportConcepts(
+                thesaurusId,
+                StringUtils.isBlank(conceptId) ? List.of() : List.of(conceptId),
+                formatCode,
+                null
+        );
+    }
+
+    public ExportResult exportConcepts(
+            String thesaurusId,
+            Collection<String> conceptIds,
+            String formatCode,
+            BiConsumer<Integer, Integer> progress
+    ) throws IOException {
+        SKOSXmlDocument document = buildDocument(thesaurusId, conceptIds, progress, false);
+        return serialize(document, thesaurusId, conceptIds, formatCode);
+    }
+
+    public ExportResult serialize(
+            SKOSXmlDocument document,
+            String thesaurusId,
+            Collection<String> conceptIds,
+            String formatCode
+    ) throws IOException {
+        var format = SkosRdfFormatSupport.resolveExportFormat(formatCode);
+        byte[] content = conceptSkosRdfExportEngine.serializeSkos(document, format.rdfFormat());
+        List<String> ids = normalizedIds(conceptIds);
+        String suffix = ids.size() == 1 ? ids.get(0) : "selection";
+        return new ExportResult(
+                content,
+                thesaurusId + "_" + suffix + format.extension(),
+                contentType(formatCode)
+        );
+    }
+
+    public SKOSXmlDocument buildDocument(
+            String thesaurusId,
+            Collection<String> conceptIds,
+            BiConsumer<Integer, Integer> progress
+    ) {
+        return buildDocument(thesaurusId, conceptIds, progress, false);
+    }
+
+    @Transactional(readOnly = true)
+    public SKOSXmlDocument buildDocument(
+            String thesaurusId,
+            Collection<String> conceptIds,
+            BiConsumer<Integer, Integer> progress,
+            boolean clearHtml
+    ) {
+        if (StringUtils.isBlank(thesaurusId)) {
+            throw new IllegalStateException("Concept ou thésaurus manquant");
+        }
+        List<String> ids = normalizedIds(conceptIds);
+        if (ids.isEmpty()) {
             throw new IllegalStateException("Concept ou thésaurus manquant");
         }
 
@@ -28,16 +87,31 @@ public class ConceptSkosExportService {
 
         conceptSkosRdfExportEngine.prepareExport(preferences);
         SKOSXmlDocument document = new SKOSXmlDocument();
-        document.addconcept(conceptSkosRdfExportEngine.exportConcept(thesaurusId, conceptId));
+        document.setConceptScheme(conceptSkosRdfExportEngine.exportConceptScheme(thesaurusId, preferences));
+        List<SKOSResource> resources = conceptSkosRdfExportEngine.exportConcepts(thesaurusId, ids, progress, clearHtml);
+        for (SKOSResource resource : resources) {
+            if (resource != null) {
+                document.addconcept(resource);
+            }
+        }
+        return document;
+    }
 
-        var format = SkosRdfFormatSupport.resolveExportFormat(formatCode);
-        byte[] content = conceptSkosRdfExportEngine.serializeSkos(document, format.rdfFormat());
+    public static String contentType(String formatCode) {
+        return switch (formatCode == null ? "" : formatCode.toLowerCase()) {
+            case "jsonld" -> "application/ld+json";
+            case "json" -> "application/json";
+            case "turtle" -> "text/turtle";
+            case "csv" -> "text/csv";
+            default -> "application/rdf+xml";
+        };
+    }
 
-        return new ExportResult(
-                content,
-                thesaurusId + "_" + conceptId + format.extension(),
-                "application/xml"
-        );
+    private static List<String> normalizedIds(Collection<String> conceptIds) {
+        if (conceptIds == null) {
+            return List.of();
+        }
+        return conceptIds.stream().filter(StringUtils::isNotBlank).distinct().toList();
     }
 
     private void validatePreferences(Preferences preferences) {

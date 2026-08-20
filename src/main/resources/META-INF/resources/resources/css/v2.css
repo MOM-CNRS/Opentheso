@@ -69,6 +69,39 @@ body[data-page="graphe"] #viewHyper{display:flex;flex-direction:column}
   visibility:visible;
   transition-delay:0s;
 }
+.bulksel.is-on.is-export{
+  max-height:min(74vh, 680px);
+  overflow-y:auto;
+}
+.bulksel.is-on.is-export .bulksel-run{
+  position:sticky;bottom:0;z-index:6;
+  padding-top:8px;margin-top:2px;
+  background:linear-gradient(180deg, transparent, var(--surface) 28%);
+  pointer-events:auto;
+}
+body.is-export-lock .thesaurus,
+body.is-export-lock .content,
+body.is-export-lock .resizer,
+body.is-export-lock .sidebar-head,
+body.is-export-lock .sidebar-body,
+body.is-export-lock .bulksel-top{
+  pointer-events:none;
+  user-select:none;
+}
+.thesaurus,.content,.resizer,.sidebar-head,.sidebar-body{
+  transition:opacity .32s ease;
+}
+body.is-export-lock .thesaurus,
+body.is-export-lock .content,
+body.is-export-lock .resizer,
+body.is-export-lock .sidebar-head,
+body.is-export-lock .sidebar-body{
+  opacity:.42;
+}
+body.is-export-lock #bulkSel{
+  pointer-events:auto;
+  opacity:1;
+}
 
 .app-toast[hidden]{display:none}
 .app-toast:not(.is-soft) .app-toast-ico{display:none}
@@ -156,7 +189,12 @@ a.tn-caret{color:inherit;text-decoration:none;display:grid;place-items:center}
 
 .bulksel-menu{display:none}
 .bulksel-menu.is-on{display:block}
-.bulksel-form[hidden]{display:none}
+.bulksel-form[hidden],
+.bulksel-acts[hidden]{display:none}
+.xprog[hidden],.xerr[hidden],.xopt[hidden],.bulksel-help[hidden],.xfmt[hidden],
+.xfmt-row[hidden],.xrow[hidden],.xpick[hidden],.bulksel-btn[hidden]{display:none}
+#bulkExportProg.is-on,
+#bulkExport.is-busy #bulkExportProg{display:flex !important}
 .vo-pop-row[hidden]{display:none}
 .vo-pop-stk[hidden]{display:none}
 .vo-pop-wrap[hidden]{display:none}
@@ -271,7 +309,16 @@ a.th-id{flex:1}
   80%{transform:translateX(2px)}
 }
 .login-msg,.login-msg-err{font-size:12px;color:#9a3b2e;line-height:1.35;margin:0 0 8px}
-.login-msg-ok{font-size:12px;color:var(--accent);line-height:1.35;margin:0 0 8px}
+.login-msg-ok{font-size:12px;color:var(--accent);line-height:1.35;margin:8px 0}
+.login-forgot{
+  display:block;width:100%;margin-top:10px;padding:0;border:0;background:none;
+  text-align:center;font:inherit;font-size:12px;font-weight:500;color:var(--accent);cursor:pointer
+}
+.login-forgot:hover{text-decoration:underline}
+.login-forgot-back{margin-top:10px}
+#menu-account.is-forgot #previewLoginForm,
+#menu-account.is-forgot .login-sso{display:none}
+#menu-account:not(.is-forgot) #previewForgotForm{display:none}
 
 .login-go,a.login-go{
   position:relative;overflow:hidden;
@@ -320,6 +367,7 @@ a.th-id{flex:1}
 .login-form .login-go,
 .login-form .login-msg,
 .login-form .login-msg-err,
+.login-form .login-forgot,
 .login-form .menu-foot{
   animation:login-rise .38s cubic-bezier(.22,.8,.28,1) both;
 }
@@ -327,6 +375,7 @@ a.th-id{flex:1}
 .login-form .login-l{animation-delay:.08s}
 .login-form .st-input{animation-delay:.12s}
 .login-form .login-go,
+.login-form .login-forgot,
 .login-form .menu-foot{animation-delay:.18s}
 @keyframes login-pop{
   from{opacity:0;transform:translate3d(-10px,4px,0) scale(.98)}
@@ -342,6 +391,7 @@ a.th-id{flex:1}
   .login-form .login-l,
   .login-form .st-input,
   .login-form .login-go,
+  .login-form .login-forgot,
   .login-form .login-msg,
   .login-form .login-msg-err,
   .login-form .menu-foot,

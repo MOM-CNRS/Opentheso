@@ -19,7 +19,7 @@ public final class CsvDelimiterSupport {
         }
         return switch (value) {
             case ";" -> ';';
-            case "\\t", "\t" -> '\t';
+            case "\\t", "\t", "tab", "TAB" -> '\t';
             default -> ',';
         };
     }

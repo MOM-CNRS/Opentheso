@@ -187,6 +187,10 @@
 
         <div class="sidebar-body sb-tree sidebar-panel is-on" id="panelTree">
           <div class="tree-body">
+            <div id="previewTreeMeta"
+                 data-concept-count="#{v2ThesaurusViewBean.conceptCount}"
+                 data-thesaurus-id="#{v2ThesaurusViewBean.id}"
+                 data-thesaurus-title="#{v2ThesaurusViewBean.title}">
             <h:form id="previewTreeForm" prependId="false">
               <h:panelGroup id="previewTree" layout="block">
                 <ui:fragment rendered="#{v2ThesaurusViewBean.treeEmpty}">
@@ -195,6 +199,7 @@
                 <ui:include src="tree-nodes.xhtml"/>
               </h:panelGroup>
             </h:form>
+            </div>
           </div>
         </div>
 
@@ -6374,6 +6379,7 @@
         <div class="bulksel" id="bulkSel">
           <div class="bulksel-top">
             <span class="bulksel-n"><b id="bulkN">0</b> concept<span id="bulkPlural">s</span> sélectionné<span id="bulkPlural2">s</span></span>
+            <button type="button" class="bulksel-all" data-act="sel-all-visible" title="Sélectionner tous les concepts du thésaurus">Tout sélectionner</button>
             <button type="button" class="bulksel-x" data-act="clear-sel" title="Tout désélectionner">×</button>
           </div>
           <div class="bulksel-acts" id="bulkActs">
@@ -6388,7 +6394,7 @@
             <button type="button" class="bulksel-mi" data-act="bulk-act" data-msg="Rendus obsolètes"><span class="bulksel-ico">⊘</span><span>Rendre obsolète<small>déprécie sans supprimer</small></span></button>
               </div>
             </div>
-            <button type="button" class="bulksel-act" data-act="bulk-act" data-msg="Sélection exportée"><span class="bulksel-ico">↓</span>Exporter la sélection</button>
+            <button type="button" class="bulksel-act" data-act="bulk-export"><span class="bulksel-ico">↓</span>Exporter la sélection</button>
           </div>
           <div class="bulksel-form" id="bulkColl" hidden="hidden">
             <div class="bulksel-fh">
@@ -7735,6 +7741,172 @@
             <div class="bulksel-run">
               <button type="button" class="bulksel-btn ghost" data-act="bulk-back">Annuler</button>
               <button type="button" class="bulksel-btn primary is-off" id="bulkMoveRun" data-act="bulk-move-run">Déplacer ici</button>
+            </div>
+          </div>
+          <div class="bulksel-form" id="bulkExport" hidden="hidden">
+            <input type="hidden" id="previewExportCsrf" name="csrfToken" value="#{sessionScope.CSRF_TOKEN}"/>
+            <div class="bulksel-fh">
+              <button type="button" class="bulksel-back" data-act="bulk-export-back" title="Retour">←</button>
+              <span class="bulksel-ft">Exporter la sélection</span>
+            </div>
+            <p class="xexp-sum" id="bulkExportSum">Aucun concept.</p>
+            <div class="xexp-pane is-on" id="bulkExportOpts">
+              <div class="xexp-pane-in">
+            <p class="xexp-est" id="bulkExportEst"></p>
+            <div class="xkind" id="bulkExportKinds" role="tablist" aria-label="Famille de format">
+              <button type="button" class="xkind-b is-on" data-act="export-kind" data-kind="skos">SKOS</button>
+              <button type="button" class="xkind-b" data-act="export-kind" data-kind="csv">CSV</button>
+              <button type="button" class="xkind-b" data-act="export-kind" data-kind="pdf">PDF</button>
+            </div>
+            <div class="xexp-fold" id="bulkExportSkosFmts">
+              <div class="xexp-fold-in">
+                <div class="xfmt-row" role="radiogroup" aria-label="Format SKOS">
+                  <button type="button" class="xchip is-on" data-act="export-fmt" data-fmt="rdf">RDF/XML</button>
+                  <button type="button" class="xchip" data-act="export-fmt" data-fmt="jsonld">JSON-LD</button>
+                  <button type="button" class="xchip" data-act="export-fmt" data-fmt="turtle">Turtle</button>
+                  <button type="button" class="xchip" data-act="export-fmt" data-fmt="json">JSON</button>
+                </div>
+              </div>
+            </div>
+            <div class="xexp-fold is-off" id="bulkExportCsvFmts" aria-hidden="true">
+              <div class="xexp-fold-in">
+                <div class="xfmt-row" role="radiogroup" aria-label="Format CSV">
+                  <button type="button" class="xchip" data-act="export-fmt" data-fmt="csv">Complet</button>
+                  <button type="button" class="xchip" data-act="export-fmt" data-fmt="csv-id">Réduit</button>
+                  <button type="button" class="xchip" data-act="export-fmt" data-fmt="csv-structured">Structuré</button>
+                  <button type="button" class="xchip" data-act="export-fmt" data-fmt="csv-deprecated">Dépréciés</button>
+                </div>
+              </div>
+            </div>
+            <p class="bulksel-help" id="bulkExportHelp">Choisissez un format, les options, puis générez le fichier.</p>
+            <div class="xexp-fold" id="bulkExportDescRow">
+              <div class="xexp-fold-in">
+                <div class="xopt" data-act="export-desc">
+                  <span class="xopt-txt">
+                    <span class="xopt-t">Inclure les termes spécifiques</span>
+                    <span class="xopt-d">Descendants des concepts cochés</span>
+                  </span>
+                  <button type="button" class="vo-sw on" id="bulkExportDesc" role="switch" aria-checked="true"></button>
+                </div>
+              </div>
+            </div>
+            <div class="xexp-fold" id="bulkExportHtmlRow">
+              <div class="xexp-fold-in">
+                <div class="xopt" data-act="export-html">
+                  <span class="xopt-txt">
+                    <span class="xopt-t">Enlever les balises HTML</span>
+                    <span class="xopt-d">Nettoie les notes</span>
+                  </span>
+                  <button type="button" class="vo-sw" id="bulkExportHtml" role="switch" aria-checked="false"></button>
+                </div>
+              </div>
+            </div>
+            <div class="xexp-fold" id="bulkExportGroupRow">
+              <div class="xexp-fold-in">
+                <div class="xopt" data-act="export-group">
+                  <span class="xopt-txt">
+                    <span class="xopt-t">Filtrer par collection</span>
+                    <span class="xopt-d">Limiter aux collections choisies</span>
+                  </span>
+                  <button type="button" class="vo-sw" id="bulkExportGroup" role="switch" aria-checked="false"></button>
+                </div>
+              </div>
+            </div>
+            <div class="xexp-fold is-off" id="bulkExportGroupsWrap" aria-hidden="true">
+              <div class="xexp-fold-in">
+                <div class="xpick" id="bulkExportGroups"></div>
+              </div>
+            </div>
+            <div class="xexp-fold is-off" id="bulkExportZipRow" aria-hidden="true">
+              <div class="xexp-fold-in">
+                <div class="xopt" data-act="export-zip">
+                  <span class="xopt-txt">
+                    <span class="xopt-t">Un fichier par collection</span>
+                    <span class="xopt-d">Archive ZIP, thésaurus entier</span>
+                  </span>
+                  <button type="button" class="vo-sw" id="bulkExportZip" role="switch" aria-checked="false"></button>
+                </div>
+              </div>
+            </div>
+            <div class="xexp-fold is-off" id="bulkExportDelimRow" aria-hidden="true">
+              <div class="xexp-fold-in">
+                <div class="xrow">
+                  <span class="xrow-l">Séparateur CSV</span>
+                  <div class="xfmt-row">
+                    <button type="button" class="xchip is-on" data-act="export-delim" data-delim=",">,</button>
+                    <button type="button" class="xchip" data-act="export-delim" data-delim=";">;</button>
+                    <button type="button" class="xchip" data-act="export-delim" data-delim="tab">tab</button>
+                  </div>
+                </div>
+              </div>
+            </div>
+            <div class="xexp-fold is-off" id="bulkExportLangRow" aria-hidden="true">
+              <div class="xexp-fold-in">
+                <div class="xrow">
+                  <span class="xrow-l">Langues</span>
+                  <div class="xpick" id="bulkExportLangs"></div>
+                </div>
+              </div>
+            </div>
+            <div class="xexp-fold is-off" id="bulkExportPdfRow" aria-hidden="true">
+              <div class="xexp-fold-in">
+                <div class="xrow">
+                  <span class="xrow-l">Type PDF</span>
+                  <div class="xfmt-row">
+                    <button type="button" class="xchip is-on" data-act="export-pdf-type" data-pdf="hierarchical">Hiérarchique</button>
+                    <button type="button" class="xchip" data-act="export-pdf-type" data-pdf="alphabetical">Alphabétique</button>
+                  </div>
+                </div>
+              </div>
+            </div>
+            <div class="xexp-fold is-off" id="bulkExportPdfLangRow" aria-hidden="true">
+              <div class="xexp-fold-in">
+                <div class="xrow">
+                  <label class="xrow-l" for="bulkExportLang1">Langue 1</label>
+                  <select class="xsel" id="bulkExportLang1"></select>
+                  <label class="xrow-l" for="bulkExportLang2">Langue 2</label>
+                  <select class="xsel" id="bulkExportLang2"></select>
+                </div>
+              </div>
+            </div>
+            <div class="xexp-fold is-off" id="bulkExportImgRow" aria-hidden="true">
+              <div class="xexp-fold-in">
+                <div class="xopt" data-act="export-img">
+                  <span class="xopt-txt">
+                    <span class="xopt-t">Inclure les images</span>
+                    <span class="xopt-d">Peut allonger l’export PDF</span>
+                  </span>
+                  <button type="button" class="vo-sw" id="bulkExportImg" role="switch" aria-checked="false"></button>
+                </div>
+              </div>
+            </div>
+              </div>
+            </div>
+            <div class="xprog" id="bulkExportProg" aria-hidden="true">
+              <div class="xprog-steps-wrap">
+                <span class="xprog-rail" aria-hidden="true"><span class="xprog-rail-fill" id="bulkExportRail"></span></span>
+                <ol class="xprog-steps" id="bulkExportSteps" aria-label="Étapes de l'export">
+                  <li data-step="0"><span class="xprog-dot"></span><span>Préparer</span></li>
+                  <li data-step="1"><span class="xprog-dot"></span><span>Lire</span></li>
+                  <li data-step="2"><span class="xprog-dot"></span><span>Construire</span></li>
+                  <li data-step="3"><span class="xprog-dot"></span><span>Fichier</span></li>
+                </ol>
+              </div>
+              <div class="xprog-head">
+                <div class="xprog-t" id="bulkExportProgT">Étape 1 / 4 — Préparer</div>
+                <div class="xprog-count" id="bulkExportCount" hidden="hidden"></div>
+              </div>
+              <div class="mg-bar-row">
+                <span class="mg-bar-track"><span class="mg-bar-fill" id="bulkExportFill" style="width:0%"></span></span>
+                <span class="mg-bar-n" id="bulkExportPct">0%</span>
+              </div>
+              <div class="xprog-d" id="bulkExportProgD"></div>
+            </div>
+            <p class="xerr" id="bulkExportErr" hidden="hidden"></p>
+            <div class="bulksel-run">
+              <button type="button" class="bulksel-btn ghost" id="bulkExportCancel" data-act="export-cancel">Annuler</button>
+              <button type="button" class="bulksel-btn primary" id="bulkExportRun" data-act="export-run">Générer</button>
+              <button type="button" class="bulksel-btn primary" id="bulkExportDl" data-act="export-dl" hidden="hidden">Télécharger</button>
             </div>
           </div>
         </div>

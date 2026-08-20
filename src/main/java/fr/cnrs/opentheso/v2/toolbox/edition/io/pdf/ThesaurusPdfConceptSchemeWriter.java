@@ -30,6 +30,11 @@ public class ThesaurusPdfConceptSchemeWriter {
         cell2.setHorizontalAlignment(PdfPCell.ALIGN_CENTER);
         cell2.setBorder(Rectangle.NO_BORDER);
 
+        if (xmlDocument == null || xmlDocument.getConceptScheme() == null
+                || xmlDocument.getConceptScheme().getLabelsList() == null) {
+            return;
+        }
+
         xmlDocument.getConceptScheme().getLabelsList()
                 .stream()
                 .filter(label -> label.getProperty() == SKOSProperty.PREF_LABEL)

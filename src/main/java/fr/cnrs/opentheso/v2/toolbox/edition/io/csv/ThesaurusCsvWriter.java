@@ -26,7 +26,10 @@ import java.io.IOException;
 import java.io.OutputStreamWriter;
 import java.nio.charset.Charset;
 import java.util.ArrayList;
+import java.util.Collection;
+import java.util.HashSet;
 import java.util.List;
+import java.util.Set;
 import java.util.stream.Collectors;
 
 import org.apache.commons.collections4.CollectionUtils;
@@ -550,6 +553,16 @@ public class ThesaurusCsvWriter {
      * @return
      */
     public byte[] writeCsvById(String idTheso, String idLang, List<String> idGroups, char delimiter) {
+        return writeCsvById(idTheso, idLang, idGroups, delimiter, null);
+    }
+
+    public byte[] writeCsvById(
+            String idTheso,
+            String idLang,
+            List<String> idGroups,
+            char delimiter,
+            Collection<String> restrictConceptIds
+    ) {
         try {
             ByteArrayOutputStream os = new ByteArrayOutputStream();
             try (OutputStreamWriter out = new OutputStreamWriter(os, Charset.forName("UTF-8"));
@@ -566,6 +579,10 @@ public class ThesaurusCsvWriter {
                 csvFilePrinter.printRecord(header);
 
                 List<String> idConcepts = csvExportQuerySupport.listConceptIds(idTheso, idGroups);
+                if (restrictConceptIds != null && !restrictConceptIds.isEmpty()) {
+                    Set<String> keep = new HashSet<>(restrictConceptIds);
+                    idConcepts = idConcepts.stream().filter(keep::contains).toList();
+                }
                 List<ThesaurusCsvByIdRow> conceptRows = csvExportQuerySupport.loadConceptsForCsvById(idTheso, idLang, idConcepts);
 
                 ArrayList<Object> record = new ArrayList<>();
@@ -769,6 +786,15 @@ public class ThesaurusCsvWriter {
      * @return
      */
     public byte[] writeCsvByDeprecated(String idTheso, String idLang, char delimiter) {
+        return writeCsvByDeprecated(idTheso, idLang, delimiter, null);
+    }
+
+    public byte[] writeCsvByDeprecated(
+            String idTheso,
+            String idLang,
+            char delimiter,
+            Collection<String> restrictConceptIds
+    ) {
         try {
             ByteArrayOutputStream os = new ByteArrayOutputStream();
             try (OutputStreamWriter out = new OutputStreamWriter(os, Charset.forName("UTF-8"));
@@ -784,8 +810,14 @@ public class ThesaurusCsvWriter {
                 csvFilePrinter.printRecord(header);
 
                 var nodeDeprecateds = csvExportQuerySupport.listDeprecatedConcepts(idTheso, idLang);
+                Set<String> keep = restrictConceptIds == null || restrictConceptIds.isEmpty()
+                        ? null
+                        : new HashSet<>(restrictConceptIds);
                 ArrayList<Object> record = new ArrayList<>();
                 for (NodeDeprecated nodeDeprecated : nodeDeprecateds) {
+                    if (keep != null && !keep.contains(nodeDeprecated.getDeprecatedId())) {
+                        continue;
+                    }
                     record.add(nodeDeprecated.getDeprecatedId());
                     record.add(nodeDeprecated.getDeprecatedLabel());
                     record.add(nodeDeprecated.getReplacedById());

@@ -12,6 +12,7 @@ import org.mockito.ArgumentCaptor;
 import org.mockito.Mock;
 import org.mockito.junit.jupiter.MockitoExtension;
 
+import java.util.List;
 import java.util.Optional;
 
 import static org.junit.jupiter.api.Assertions.assertArrayEquals;
@@ -42,7 +43,8 @@ class ConceptSkosExportServiceTest {
                 .originalUri("https://example.com/theso/")
                 .build();
         when(conceptSkosRdfExportEngine.findThesaurusPreferences("TH1")).thenReturn(Optional.of(preferences));
-        when(conceptSkosRdfExportEngine.exportConcept("TH1", "C1")).thenReturn(new SKOSResource());
+        when(conceptSkosRdfExportEngine.exportConcepts(eq("TH1"), eq(List.of("C1")), any(), eq(false)))
+                .thenReturn(List.of(new SKOSResource()));
         when(conceptSkosRdfExportEngine.serializeSkos(any(SKOSXmlDocument.class), any(RDFFormat.class)))
                 .thenReturn(new byte[]{1, 2, 3});
 
@@ -75,7 +77,8 @@ class ConceptSkosExportServiceTest {
                 .originalUri("https://example.com/theso/")
                 .build();
         when(conceptSkosRdfExportEngine.findThesaurusPreferences("TH1")).thenReturn(Optional.of(preferences));
-        when(conceptSkosRdfExportEngine.exportConcept("TH1", "C1")).thenReturn(new SKOSResource());
+        when(conceptSkosRdfExportEngine.exportConcepts(eq("TH1"), eq(List.of("C1")), any(), eq(false)))
+                .thenReturn(List.of(new SKOSResource()));
         when(conceptSkosRdfExportEngine.serializeSkos(any(SKOSXmlDocument.class), any(RDFFormat.class)))
                 .thenReturn(new byte[]{9});
 
@@ -100,12 +103,70 @@ class ConceptSkosExportServiceTest {
                 .originalUri("https://example.com/theso/")
                 .build();
         when(conceptSkosRdfExportEngine.findThesaurusPreferences("TH1")).thenReturn(Optional.of(preferences));
-        when(conceptSkosRdfExportEngine.exportConcept("TH1", "C1")).thenReturn(new SKOSResource());
+        when(conceptSkosRdfExportEngine.exportConcepts(eq("TH1"), eq(List.of("C1")), any(), eq(false)))
+                .thenReturn(List.of(new SKOSResource()));
         when(conceptSkosRdfExportEngine.serializeSkos(any(SKOSXmlDocument.class), any(RDFFormat.class)))
                 .thenReturn(new byte[]{4});
 
         var result = service.exportConcept("TH1", "C1", "jsonld");
 
         assertEquals("TH1_C1.json", result.filename());
+        assertEquals("application/ld+json", result.contentType());
+    }
+
+    @Test
+    void exportConcepts_exportsEachIdAndReportsProgress() throws Exception {
+        var preferences = Preferences.builder()
+                .cheminSite("https://example.com/")
+                .originalUri("https://example.com/theso/")
+                .build();
+        when(conceptSkosRdfExportEngine.findThesaurusPreferences("TH1")).thenReturn(Optional.of(preferences));
+        when(conceptSkosRdfExportEngine.exportConcepts(eq("TH1"), eq(List.of("C1", "C2")), any(), eq(false)))
+                .thenAnswer(invocation -> {
+                    java.util.function.BiConsumer<Integer, Integer> progress = invocation.getArgument(2);
+                    progress.accept(1, 2);
+                    progress.accept(2, 2);
+                    return List.of(new SKOSResource(), new SKOSResource());
+                });
+        when(conceptSkosRdfExportEngine.serializeSkos(any(SKOSXmlDocument.class), any(RDFFormat.class)))
+                .thenReturn(new byte[]{7, 8});
+
+        var progress = new java.util.ArrayList<String>();
+        var result = service.exportConcepts("TH1", List.of("C1", "C2"), "rdf", (done, total) -> progress.add(done + "/" + total));
+
+        assertEquals("TH1_selection.rdf", result.filename());
+        assertEquals("application/rdf+xml", result.contentType());
+        assertEquals(List.of("1/2", "2/2"), progress);
+        ArgumentCaptor<SKOSXmlDocument> documentCaptor = ArgumentCaptor.forClass(SKOSXmlDocument.class);
+        verify(conceptSkosRdfExportEngine).serializeSkos(documentCaptor.capture(), eq(RDFFormat.RDFXML));
+        assertEquals(2, documentCaptor.getValue().getConceptList().size());
+        verify(conceptSkosRdfExportEngine).exportConcepts(eq("TH1"), eq(List.of("C1", "C2")), any(), eq(false));
+    }
+
+    @Test
+    void contentType_matchesSkosAndCsvFormats() {
+        assertEquals("application/rdf+xml", ConceptSkosExportService.contentType("rdf"));
+        assertEquals("application/ld+json", ConceptSkosExportService.contentType("jsonld"));
+        assertEquals("application/json", ConceptSkosExportService.contentType("json"));
+        assertEquals("text/turtle", ConceptSkosExportService.contentType("turtle"));
+        assertEquals("text/csv", ConceptSkosExportService.contentType("csv"));
+    }
+
+    @Test
+    void buildDocument_attachesThesaurusConceptScheme() {
+        var preferences = Preferences.builder()
+                .cheminSite("https://example.com/")
+                .originalUri("https://example.com/theso/")
+                .build();
+        var scheme = new SKOSResource();
+        when(conceptSkosRdfExportEngine.findThesaurusPreferences("TH1")).thenReturn(Optional.of(preferences));
+        when(conceptSkosRdfExportEngine.exportConceptScheme("TH1", preferences)).thenReturn(scheme);
+        when(conceptSkosRdfExportEngine.exportConcepts(eq("TH1"), eq(List.of("C1")), any(), eq(false)))
+                .thenReturn(List.of(new SKOSResource()));
+
+        var document = service.buildDocument("TH1", List.of("C1"), null, false);
+
+        assertEquals(scheme, document.getConceptScheme());
+        verify(conceptSkosRdfExportEngine).exportConceptScheme("TH1", preferences);
     }
 }

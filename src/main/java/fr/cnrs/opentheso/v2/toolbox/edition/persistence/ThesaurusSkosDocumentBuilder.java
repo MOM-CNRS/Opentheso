@@ -35,13 +35,18 @@ import org.apache.commons.lang3.ObjectUtils;
 import org.apache.commons.lang3.StringUtils;
 import org.jsoup.Jsoup;
 import org.springframework.stereotype.Component;
+import org.springframework.transaction.annotation.Transactional;
 
 import java.sql.SQLException;
 import java.text.SimpleDateFormat;
 import java.util.ArrayList;
+import java.util.Collection;
 import java.util.HashMap;
+import java.util.LinkedHashSet;
 import java.util.List;
 import java.util.Map;
+import java.util.Set;
+import java.util.function.BiConsumer;
 
 @Slf4j
 @Component
@@ -67,6 +72,7 @@ public class ThesaurusSkosDocumentBuilder {
         return buildDocument(thesaurusId, ThesaurusEditionExportOptions.full());
     }
 
+    @Transactional(readOnly = true)
     public SKOSXmlDocument buildDocument(String thesaurusId, ThesaurusEditionExportOptions options) throws Exception {
         var preferences = toolboxPreferencePersistence.findPreferences(thesaurusId);
         if (preferences == null) {
@@ -257,20 +263,72 @@ public class ThesaurusSkosDocumentBuilder {
             Preferences preferences,
             boolean filterHtmlCharacter
     ) throws Exception {
+        List<SKOSResource> resources = exportConcepts(
+                thesaurusId,
+                StringUtils.isBlank(conceptId) ? List.of() : List.of(conceptId),
+                preferences,
+                filterHtmlCharacter,
+                null
+        );
+        return resources.isEmpty() ? null : resources.get(0);
+    }
+
+    /**
+     * Charge les projections SKOS une seule fois, puis construit les ressources demandées.
+     * Évite d'appeler {@code opentheso_get_concepts} une fois par identifiant.
+     */
+    public List<SKOSResource> exportConcepts(
+            String thesaurusId,
+            Collection<String> conceptIds,
+            Preferences preferences,
+            boolean filterHtmlCharacter,
+            BiConsumer<Integer, Integer> progress
+    ) throws Exception {
+        if (preferences == null || StringUtils.isBlank(thesaurusId)) {
+            return List.of();
+        }
+        Set<String> wanted = new LinkedHashSet<>();
+        if (conceptIds != null) {
+            conceptIds.stream().filter(StringUtils::isNotBlank).forEach(wanted::add);
+        }
+        if (wanted.isEmpty()) {
+            return List.of();
+        }
         var baseUrl = ThesaurusSkosUriSupport.resolveBaseUrl(preferences);
-        for (SkosConceptProjection projection : exportRepository.getAllConcepts(thesaurusId, baseUrl)) {
-            if (conceptId.equals(projection.getIdentifier())) {
-                return buildConceptFromProjection(
+        if (progress != null) {
+            progress.accept(0, wanted.size());
+        }
+        List<SkosConceptProjection> projections = wanted.size() >= 1000
+                ? exportRepository.getAllConcepts(thesaurusId, baseUrl)
+                : exportRepository.getConceptsByIds(thesaurusId, baseUrl, wanted);
+        Map<String, SkosConceptProjection> byId = new HashMap<>();
+        for (SkosConceptProjection projection : projections) {
+            String identifier = projection.getIdentifier();
+            if (identifier != null && wanted.contains(identifier)) {
+                byId.putIfAbsent(identifier, projection);
+            }
+        }
+        List<SKOSResource> result = new ArrayList<>(wanted.size());
+        int done = 0;
+        int total = wanted.size();
+        for (String id : wanted) {
+            SkosConceptProjection projection = byId.get(id);
+            if (projection != null) {
+                result.add(buildConceptFromProjection(
                         projection,
                         thesaurusId,
                         baseUrl,
                         preferences.getOriginalUri(),
                         preferences,
                         filterHtmlCharacter
-                );
+                ));
+            }
+            done++;
+            if (progress != null) {
+                progress.accept(done, total);
             }
         }
-        return null;
+        return result;
     }
 
     private SKOSResource buildConceptFromProjection(
@@ -704,6 +762,12 @@ public class ThesaurusSkosDocumentBuilder {
                 }
                 conceptScheme.setThesaurus(toThesaurusModel(label));
             });
+        }
+
+        if (conceptScheme.getThesaurus() == null) {
+            var thesaurus = new Thesaurus();
+            thesaurus.setId_thesaurus(thesaurusId);
+            conceptScheme.setThesaurus(thesaurus);
         }
 
         var dcTerms = thesaurusDcTermRepository.findAllByIdThesaurus(thesaurusId);

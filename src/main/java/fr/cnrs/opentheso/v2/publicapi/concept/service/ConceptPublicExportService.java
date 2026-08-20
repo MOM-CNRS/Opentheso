@@ -91,8 +91,8 @@ public class ConceptPublicExportService {
             throw new PublicResourceNotFoundException("Aucun concept trouvé pour l'export");
         }
         SKOSXmlDocument document = new SKOSXmlDocument();
-        for (String id : conceptIds) {
-            var resource = conceptSkosRdfExportEngine.exportConcept(thesaurusId, id);
+        var resources = conceptSkosRdfExportEngine.exportConcepts(thesaurusId, conceptIds, null);
+        for (var resource : resources) {
             if (resource != null) {
                 document.addconcept(resource);
             }

@@ -16,7 +16,6 @@ import java.io.IOException;
 import java.util.ArrayList;
 import java.util.List;
 
-import org.apache.commons.lang3.ObjectUtils;
 import org.apache.commons.lang3.StringUtils;
 import lombok.RequiredArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
@@ -64,10 +63,17 @@ public class ThesaurusPdfWriter {
             return output.toByteArray();
         } catch (Exception ex) {
             log.error("Échec de la génération PDF", ex);
-            if (ObjectUtils.isNotEmpty(document)) {
-                document.close();
+            try {
+                if (document.isOpen()) {
+                    document.close();
+                }
+            } catch (Exception ignored) {
+                // already logged above
             }
-            return new byte[0];
+            if (ex instanceof RuntimeException runtime) {
+                throw runtime;
+            }
+            throw new IllegalStateException("Échec de la génération PDF", ex);
         }
     }
 
@@ -81,9 +87,26 @@ public class ThesaurusPdfWriter {
         }
 
         // Ajout de l'entête et pied de page
-        writer.setPageEvent(new ThesaurusPdfHeaderFooterEvent(
-                xmlDocument.getConceptScheme().getThesaurus().getId_thesaurus()
-                        + " - " + xmlDocument.getConceptScheme().getThesaurus().getTitle()));
+        writer.setPageEvent(new ThesaurusPdfHeaderFooterEvent(headerOf(xmlDocument)));
+    }
+
+    static String headerOf(SKOSXmlDocument xmlDocument) {
+        if (xmlDocument == null || xmlDocument.getConceptScheme() == null) {
+            return "";
+        }
+        var thesaurus = xmlDocument.getConceptScheme().getThesaurus();
+        if (thesaurus == null) {
+            return StringUtils.defaultString(xmlDocument.getConceptScheme().getUri());
+        }
+        String id = StringUtils.defaultString(thesaurus.getId_thesaurus());
+        String title = StringUtils.defaultString(thesaurus.getTitle());
+        if (StringUtils.isBlank(title)) {
+            return id;
+        }
+        if (StringUtils.isBlank(id)) {
+            return title;
+        }
+        return id + " - " + title;
     }
 
     private void createPdfFile(Document document, String language2, List<Paragraph> paragraphList, List<Paragraph> paragraphTradList)

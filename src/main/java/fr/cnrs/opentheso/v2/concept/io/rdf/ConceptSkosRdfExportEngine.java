@@ -9,7 +9,10 @@ import org.eclipse.rdf4j.rio.RDFFormat;
 import org.springframework.stereotype.Service;
 
 import java.io.IOException;
+import java.util.Collection;
+import java.util.List;
 import java.util.Optional;
+import java.util.function.BiConsumer;
 
 @Service
 @RequiredArgsConstructor
@@ -26,11 +29,37 @@ public class ConceptSkosRdfExportEngine {
     }
 
     public SKOSResource exportConcept(String thesaurusId, String conceptId) {
+        List<SKOSResource> resources = exportConcepts(
+                thesaurusId,
+                conceptId == null ? List.of() : List.of(conceptId),
+                null
+        );
+        return resources.isEmpty() ? null : resources.get(0);
+    }
+
+    public List<SKOSResource> exportConcepts(
+            String thesaurusId,
+            Collection<String> conceptIds,
+            BiConsumer<Integer, Integer> progress
+    ) {
+        return exportConcepts(thesaurusId, conceptIds, progress, false);
+    }
+
+    public List<SKOSResource> exportConcepts(
+            String thesaurusId,
+            Collection<String> conceptIds,
+            BiConsumer<Integer, Integer> progress,
+            boolean clearHtml
+    ) {
         try {
-            return conceptSkosExportPersistence.exportConcept(thesaurusId, conceptId);
+            return conceptSkosExportPersistence.exportConcepts(thesaurusId, conceptIds, progress, clearHtml);
         } catch (Exception ex) {
             throw new IllegalStateException("Export SKOS concept impossible", ex);
         }
+    }
+
+    public SKOSResource exportConceptScheme(String thesaurusId, Preferences preferences) {
+        return conceptSkosExportPersistence.exportConceptScheme(thesaurusId, preferences);
     }
 
     public byte[] serializeSkos(SKOSXmlDocument document, RDFFormat format) throws IOException {

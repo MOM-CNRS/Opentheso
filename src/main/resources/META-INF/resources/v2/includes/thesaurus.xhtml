@@ -22,7 +22,7 @@
         </button>
         <div class="menu-pop menu-pop--top#{not v2UserSession.loggedIn ? ' menu-pop--login' : ''}" id="menu-account">
         <ui:fragment rendered="#{not v2UserSession.loggedIn}">
-          <h:form id="previewLoginForm" styleClass="login-form#{not empty v2LoginBean.loginError ? ' is-error' : ''}">
+          <h:form id="previewLoginForm" prependId="false" styleClass="login-form#{not empty v2LoginBean.loginError ? ' is-error' : ''}">
             <div class="menu-h">Connexion</div>
             <h:panelGroup layout="block" styleClass="login-alert" rendered="#{not empty v2LoginBean.loginError}">
               <svg viewBox="0 0 24 24" aria-hidden="true"><path d="M10.3 3.9 1.8 18a2 2 0 0 0 1.7 3h17a2 2 0 0 0 1.7-3L13.7 3.9a2 2 0 0 0-3.4 0z"/><path d="M12 9v4"/><path d="M12 17h.01"/></svg>
@@ -42,10 +42,35 @@
               <svg viewBox="0 0 24 24" aria-hidden="true"><path d="M15 3h4a2 2 0 0 1 2 2v14a2 2 0 0 1-2 2h-4"/><path d="m10 17 5-5-5-5"/><path d="M15 12H3"/></svg>
               <span>Connexion</span>
             </h:commandLink>
+            <button type="button" class="login-forgot" data-act="login-forgot">Mot de passe oublié</button>
+            <input type="hidden" name="csrfToken" value="#{sessionScope.CSRF_TOKEN}"/>
+          </h:form>
+          <h:form id="previewForgotForm" prependId="false" styleClass="login-form login-forgot-form">
+            <div class="menu-h">Mot de passe oublié</div>
+            <h:panelGroup layout="block" styleClass="login-alert" rendered="#{not empty v2ForgotPasswordBean.error}">
+              <svg viewBox="0 0 24 24" aria-hidden="true"><path d="M10.3 3.9 1.8 18a2 2 0 0 0 1.7 3h17a2 2 0 0 0 1.7-3L13.7 3.9a2 2 0 0 0-3.4 0z"/><path d="M12 9v4"/><path d="M12 17h.01"/></svg>
+              <span>#{v2ForgotPasswordBean.error}</span>
+            </h:panelGroup>
+            <h:panelGroup layout="block" styleClass="login-msg-ok" rendered="#{not empty v2ForgotPasswordBean.message}">
+              #{v2ForgotPasswordBean.message}
+            </h:panelGroup>
+            <h:outputLabel for="previewForgotMail" styleClass="login-l" value="Adresse email"/>
+            <h:inputText id="previewForgotMail" value="#{v2ForgotPasswordBean.sendTo}"
+                         styleClass="st-input#{not empty v2ForgotPasswordBean.error ? ' is-invalid' : ''}"
+                         autocomplete="email"/>
+            <h:commandLink actionListener="#{v2ForgotPasswordBean.sendMail}" styleClass="login-go">
+              <f:ajax execute="@form" render="@form" onevent="onPreviewForgotAjax"/>
+              <svg viewBox="0 0 24 24" aria-hidden="true"><path d="M22 2 11 13"/><path d="M22 2 15 22 11 13 2 9Z"/></svg>
+              <span>Envoyer</span>
+            </h:commandLink>
+            <button type="button" class="menu-foot login-forgot-back" data-act="login-forgot-back">
+              <svg viewBox="0 0 24 24" aria-hidden="true"><path d="M19 12H5"/><path d="m12 19-7-7 7-7"/></svg>
+              Retour à la connexion
+            </button>
             <input type="hidden" name="csrfToken" value="#{sessionScope.CSRF_TOKEN}"/>
           </h:form>
           <h:outputLink value="#{request.contextPath}/oauth2/authorization/keycloak"
-                        styleClass="menu-foot"
+                        styleClass="menu-foot login-sso"
                         rendered="#{appConfigBean.keycloakEnabled}">
             Connexion SSO
           </h:outputLink>
@@ -110,13 +135,12 @@
         </h:outputLink>
         </div>
       </div>
-      <ui:fragment rendered="#{v2UserSession.superAdmin}">
       <div class="thesaurus-item">
         <button type="button" class="thesaurus-btn" data-act="thesaurus" data-thesaurus="admin" title="Administration" aria-label="Administration" aria-expanded="false">
           <svg viewBox="0 0 24 24" aria-hidden="true"><path d="M12 22c4.5-1.6 8-4.4 8-9V5.5l-8-3-8 3V13c0 4.6 3.5 7.4 8 9Z"/></svg>
         </button>
         <div class="menu-pop menu-pop--top" id="menu-admin">
-        <div class="menu-h">Administration<span class="sa-badge">Super-admin</span></div>
+        <div class="menu-h">Administration<ui:fragment rendered="#{v2UserSession.superAdmin}"><span class="sa-badge">Super-admin</span></ui:fragment></div>
         <div class="admin-grid">
           <a class="admin-tile" href="admin/utilisateurs.xhtml"><svg viewBox="0 0 24 24" aria-hidden="true"><path d="M16 21v-1.5a4 4 0 0 0-4-4H6a4 4 0 0 0-4 4V21"/><circle cx="9" cy="7" r="3.5"/><path d="M22 21v-1.5a4 4 0 0 0-3-3.85"/><path d="M16 3.3a4 4 0 0 1 0 7.4"/></svg><span>Utilisateurs</span></a>
           <a class="admin-tile" href="admin/projets.xhtml"><svg viewBox="0 0 24 24" aria-hidden="true"><path d="M20 17a2 2 0 0 0 2-2V9a2 2 0 0 0-2-2h-3.9a2 2 0 0 1-1.69-.9l-.81-1.2A2 2 0 0 0 11.93 4H8a2 2 0 0 0-2 2v9a2 2 0 0 0 2 2Z"/><path d="M2 8v11a2 2 0 0 0 2 2h14"/></svg><span>Projets</span></a>
@@ -124,7 +148,6 @@
           <a class="admin-tile" href="toolbox/statistiques.xhtml"><svg viewBox="0 0 24 24" aria-hidden="true"><path d="M22 12h-4l-3 8L9 4l-3 8H2"/></svg><span>Statistiques</span></a>
         </div></div>
       </div>
-      </ui:fragment>
     </div>
     <div class="thesaurus-spacer"></div>
     <div class="thesaurus-group">

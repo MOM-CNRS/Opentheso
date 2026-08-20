@@ -9,7 +9,9 @@ import fr.cnrs.opentheso.v2.candidat.model.CandidatStatusCode;
 import fr.cnrs.opentheso.v2.concept.model.ConceptFacetNodeRow;
 import fr.cnrs.opentheso.v2.concept.model.ConceptHeaderRow;
 import fr.cnrs.opentheso.v2.concept.model.ConceptTreeRow;
+import org.apache.commons.lang3.StringUtils;
 
+import java.util.Collection;
 import java.util.HashSet;
 import java.util.List;
 import java.util.Optional;
@@ -82,6 +84,30 @@ public class ConceptQueryRepository {
             """)
                 .setParameter("thesaurusId", thesaurusId)
                 .setParameter("lang", lang)
+                .getResultList();
+    }
+
+    @SuppressWarnings("unchecked")
+    public List<String> findConceptIdsInGroups(String thesaurusId, Collection<String> groupIds) {
+        if (StringUtils.isBlank(thesaurusId) || groupIds == null || groupIds.isEmpty()) {
+            return List.of();
+        }
+        List<String> groups = groupIds.stream()
+                .filter(StringUtils::isNotBlank)
+                .map(String::toLowerCase)
+                .distinct()
+                .toList();
+        if (groups.isEmpty()) {
+            return List.of();
+        }
+        return em.createNativeQuery("""
+            SELECT DISTINCT cgc.idconcept
+            FROM concept_group_concept cgc
+            WHERE cgc.idthesaurus = :thesaurusId
+              AND LOWER(cgc.idgroup) IN (:groupIds)
+            """)
+                .setParameter("thesaurusId", thesaurusId)
+                .setParameter("groupIds", groups)
                 .getResultList();
     }
 
@@ -503,6 +529,48 @@ public class ConceptQueryRepository {
                 .setParameter("conceptId", conceptId)
                 .getSingleResult();
         return count == null ? 0 : count.intValue();
+    }
+
+    @SuppressWarnings("unchecked")
+    public List<String> findDescendantConceptIds(String thesaurusId, Collection<String> rootIds) {
+        if (StringUtils.isBlank(thesaurusId) || rootIds == null || rootIds.isEmpty()) {
+            return List.of();
+        }
+        List<String> roots = rootIds.stream()
+                .filter(StringUtils::isNotBlank)
+                .distinct()
+                .toList();
+        if (roots.isEmpty()) {
+            return List.of();
+        }
+        List<String> rows = em.createNativeQuery("""
+            WITH RECURSIVE descendants AS (
+                SELECT hr.id_concept2 AS concept_id
+                FROM hierarchical_relationship hr
+                JOIN concept c
+                    ON c.id_concept = hr.id_concept2
+                    AND c.id_thesaurus = hr.id_thesaurus
+                WHERE hr.id_concept1 IN (:rootIds)
+                  AND hr.id_thesaurus = :thesaurusId
+                  AND hr.role LIKE 'NT%'
+                  """ + excludeRejectedCandidates("c") + """
+                UNION
+                SELECT hr2.id_concept2
+                FROM hierarchical_relationship hr2
+                JOIN descendants d ON d.concept_id = hr2.id_concept1
+                JOIN concept c2
+                    ON c2.id_concept = hr2.id_concept2
+                    AND c2.id_thesaurus = hr2.id_thesaurus
+                WHERE hr2.id_thesaurus = :thesaurusId
+                  AND hr2.role LIKE 'NT%'
+                  """ + excludeRejectedCandidates("c2") + """
+            )
+            SELECT concept_id FROM descendants
+            """)
+                .setParameter("thesaurusId", thesaurusId)
+                .setParameter("rootIds", roots)
+                .getResultList();
+        return rows.stream().map(String::valueOf).toList();
     }
 
     public int countConceptsInGroup(String thesaurusId, String groupId) {
