@@ -290,7 +290,7 @@ mark.hl{background:var(--accent-soft);color:var(--accent);border-radius:3px;padd
   font-size:16px;line-height:1;display:grid;place-items:center;opacity:0;transition:opacity .1s}
 .tn-row:hover .tn-add{opacity:.7}
 .tn-add:hover{opacity:1;background:var(--accent-soft);color:var(--accent)}
-.tn-nota{font-family:var(--mono);font-size:10.5px;color:var(--ink-4);margin-left:6px;flex:0 0 auto}
+.tn-nota{font-family:var(--mono);font-size:12px;color:#2563eb;margin-right:6px;margin-left:0;flex:0 0 auto}
 .tn-row.is-active .tn-nota{color:var(--accent)}
 
 /* ── Paramètres de vue : pattern A (popover) & B (barre) ── */

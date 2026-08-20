@@ -140,15 +140,19 @@ public class ConceptReadService {
 
     @Transactional(readOnly = true)
     public List<ConceptTreeNodeData> loadTreeRootNodes(String thesaurusId, String lang) {
+        return loadTreeRootNodes(thesaurusId, lang, isSortByNotation(thesaurusId, lang));
+    }
+
+    @Transactional(readOnly = true)
+    public List<ConceptTreeNodeData> loadTreeRootNodes(String thesaurusId, String lang, boolean sortByNotation) {
         if (StringUtils.isBlank(thesaurusId)) {
             return Collections.emptyList();
         }
-        boolean sortByNotation = isSortByNotation(thesaurusId, lang);
         var nodes = new ArrayList<ConceptTreeNodeData>();
         for (var row : conceptQueryRepository.findTreeRootConcepts(thesaurusId, lang)) {
-            nodes.add(toThesaurusTreeNode(row, sortByNotation));
+            nodes.add(toThesaurusTreeNode(row));
         }
-        return nodes;
+        return conceptTreeConsultationService.sortNodes(nodes, sortByNotation);
     }
 
     @Transactional(readOnly = true)
@@ -158,18 +162,30 @@ public class ConceptReadService {
             String thesaurusId,
             String lang
     ) {
+        return loadTreeChildNodes(parentId, parentType, thesaurusId, lang, isSortByNotation(thesaurusId, lang));
+    }
+
+    @Transactional(readOnly = true)
+    public List<ConceptTreeNodeData> loadTreeChildNodes(
+            String parentId,
+            String parentType,
+            String thesaurusId,
+            String lang,
+            boolean sortByNotation
+    ) {
         if (StringUtils.isAnyBlank(parentId, thesaurusId)) {
             return Collections.emptyList();
         }
         if ("facet".equals(parentType)) {
-            return conceptQueryRepository.findFacetMembersForTree(thesaurusId, parentId, lang).stream()
-                    .map(row -> toThesaurusTreeNode(row, false))
-                    .toList();
+            var members = new ArrayList<ConceptTreeNodeData>();
+            for (var row : conceptQueryRepository.findFacetMembersForTree(thesaurusId, parentId, lang)) {
+                members.add(toThesaurusTreeNode(row));
+            }
+            return conceptTreeConsultationService.sortNodes(members, sortByNotation);
         }
-        boolean sortByNotation = isSortByNotation(thesaurusId, lang);
         var nodes = new ArrayList<ConceptTreeNodeData>();
         for (var row : conceptQueryRepository.findTreeChildConcepts(thesaurusId, parentId, lang)) {
-            nodes.add(toThesaurusTreeNode(row, sortByNotation));
+            nodes.add(toThesaurusTreeNode(row));
         }
         for (var facet : conceptQueryRepository.findFacetsOfConceptForTree(thesaurusId, parentId, lang)) {
             nodes.add(new ConceptTreeNodeData(
@@ -180,7 +196,7 @@ public class ConceptReadService {
                     facet.hasMembers()
             ));
         }
-        return nodes;
+        return conceptTreeConsultationService.sortNodes(nodes, sortByNotation);
     }
 
     @Transactional(readOnly = true)
@@ -188,7 +204,7 @@ public class ConceptReadService {
         return conceptQueryRepository.findCandidateMeta(thesaurusId, conceptIds);
     }
 
-    private ConceptTreeNodeData toThesaurusTreeNode(ConceptTreeRow row, boolean sortByNotation) {
+    private ConceptTreeNodeData toThesaurusTreeNode(ConceptTreeRow row) {
         String status = StringUtils.trimToEmpty(row.status());
         String nodeType;
         if ("CA".equalsIgnoreCase(status)) {
@@ -201,7 +217,7 @@ public class ConceptReadService {
         return new ConceptTreeNodeData(
                 row.conceptId(),
                 StringUtils.isBlank(row.label()) ? "(" + row.conceptId() + ")" : row.label(),
-                sortByNotation ? row.notation() : row.notation(),
+                StringUtils.defaultString(row.notation()),
                 nodeType,
                 row.hasChildren()
         );

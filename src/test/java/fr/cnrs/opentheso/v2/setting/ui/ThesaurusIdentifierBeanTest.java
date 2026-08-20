@@ -42,6 +42,8 @@ class ThesaurusIdentifierBeanTest {
     private ThesaurusCorpusBean corpusBean;
     @Mock
     private ThesaurusAlignmentBean alignmentBean;
+    @Mock
+    private fr.cnrs.opentheso.v2.concept.ui.ThesaurusViewBean thesaurusViewBean;
 
     private ThesaurusIdentifierBean bean;
     private ThesaurusPreferenceBean preferenceBean;
@@ -54,7 +56,8 @@ class ThesaurusIdentifierBeanTest {
         thesaurusContext.selectThesaurus("th17", "Pactols_Lieux", "fr");
         SettingsAccess access = new SettingsAccess(thesaurusContext, userSession, rightsService);
         preferenceBean = new ThesaurusPreferenceBean(
-                access, thesaurusContext, thesaurusPreferenceService, persistService, corpusBean, alignmentBean);
+                access, thesaurusContext, thesaurusPreferenceService, persistService, corpusBean, alignmentBean,
+                thesaurusViewBean);
         bean = new ThesaurusIdentifierBean(preferenceBean);
         when(thesaurusPreferenceService.loadPreferencesOrNull("th17", "fr"))
                 .thenReturn(SettingTestFixtures.samplePreferences());

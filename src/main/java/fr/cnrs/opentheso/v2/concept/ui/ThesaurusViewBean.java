@@ -61,6 +61,7 @@ public class ThesaurusViewBean implements Serializable {
     private List<ThesaurusTreeNode> treeRoots;
     private Boolean canEdit;
     private Boolean breadcrumbEnabled;
+    private Boolean sortByNotation;
 
     @Getter
     @Setter
@@ -258,13 +259,49 @@ public class ThesaurusViewBean implements Serializable {
 
     public boolean isBreadcrumbEnabled() {
         if (breadcrumbEnabled == null) {
-            ThesaurusPreferences preferences = thesaurusPreferenceService.loadPreferencesOrNull(
-                    getId(),
-                    thesaurusContext.resolveWorkLanguage()
-            );
+            ThesaurusPreferences preferences = loadThesaurusPreferences();
             breadcrumbEnabled = preferences != null && preferences.breadcrumb();
         }
         return breadcrumbEnabled;
+    }
+
+    /**
+     * Tri par défaut de l'arbre, d'après la préférence « Tri par défaut sur la notation ».
+     * Le switch du menu contextuel peut le surcharger pour la vue courante (comme le legacy).
+     */
+    public boolean isSortByNotation() {
+        if (sortByNotation == null) {
+            ThesaurusPreferences preferences = loadThesaurusPreferences();
+            sortByNotation = preferences != null && preferences.sortByNotation();
+        }
+        return sortByNotation;
+    }
+
+    public void setAlphabeticSort() {
+        applyTreeSort(false);
+    }
+
+    public void setNotationSort() {
+        applyTreeSort(true);
+    }
+
+    /**
+     * Recharge le tri de l'arbre après enregistrement des préférences (même vue, sidebar visible).
+     */
+    public void applyPreferenceTreeSort(boolean byNotation) {
+        applyTreeSort(byNotation);
+    }
+
+    private void applyTreeSort(boolean byNotation) {
+        sortByNotation = byNotation;
+        invalidateTree();
+    }
+
+    private ThesaurusPreferences loadThesaurusPreferences() {
+        return thesaurusPreferenceService.loadPreferencesOrNull(
+                getId(),
+                thesaurusContext.resolveWorkLanguage()
+        );
     }
 
     public String noteTypeLabel(String typeCode) {
@@ -464,7 +501,11 @@ public class ThesaurusViewBean implements Serializable {
         if (treeRoots != null) {
             return;
         }
-        List<ConceptTreeNodeData> roots = conceptReadService.loadTreeRootNodes(getId(), getSelectedLang());
+        List<ConceptTreeNodeData> roots = conceptReadService.loadTreeRootNodes(
+                getId(),
+                getSelectedLang(),
+                isSortByNotation()
+        );
         treeRoots = new ArrayList<>();
         if (roots == null) {
             return;
@@ -480,7 +521,8 @@ public class ThesaurusViewBean implements Serializable {
                 parent.getId(),
                 parent.getNodeType(),
                 getId(),
-                getSelectedLang()
+                getSelectedLang(),
+                isSortByNotation()
         );
         parent.getChildren().clear();
         if (children != null) {

@@ -113,6 +113,11 @@
     inactif: ["rejete", "deprecie"]
   };
 
+  function treeSortMode() {
+    const el = $("#previewTreeSortState") || $("#voSortRow");
+    return (el && el.getAttribute("data-tree-sort") === "nota") ? "nota" : "alpha";
+  }
+
   const state = {
     view: "arbo",
     home: true,
@@ -126,7 +131,7 @@
     candBy: "",
     candFrom: "",
     candTo: "",
-    sort: "alpha",
+    sort: treeSortMode(),
     acIdx: -1,
     resultLimit: PAGE,
     tblSort: "concept",
@@ -702,7 +707,14 @@
     });
   }
 
+  function treePanel() {
+    return document.getElementById("previewTree")
+        || document.getElementById("previewTreeForm:previewTree");
+  }
+
   function treeNodes() {
+    const box = treePanel();
+    if (box) return Array.from(box.querySelectorAll(":scope > .tn, .tn"));
     return $$("#panelTree .tree-body > .tn");
   }
 
@@ -731,21 +743,42 @@
       groups.push([head, ...sortTreeRange(list.slice(i + 1, j))]);
       i = j;
     }
-    groups.sort((a, b) => (a[0].dataset.sortkey || "").localeCompare(b[0].dataset.sortkey || "", "fr"));
+    const numeric = state.sort !== "nota";
+    groups.sort((a, b) => (a[0].dataset.sortkey || "").localeCompare(
+        b[0].dataset.sortkey || "",
+        "fr",
+        numeric ? { numeric: true } : { numeric: false, sensitivity: "accent" }
+    ));
     return groups.flat();
   }
 
-  function applySort() {
+  function applySort(mode) {
+    if (mode === "nota" || mode === "alpha") {
+      state.sort = mode;
+    } else if ($("#previewTreeSortState")) {
+      state.sort = treeSortMode();
+    }
+    const box = treePanel();
+    // Arbre JSF : l'ordre est celui du serveur, comme le PrimeFaces legacy.
+    if (box && (box.id === "previewTree" || box.id === "previewTreeForm:previewTree")) {
+      $$(".vo-seg-b[data-sort]").forEach(b => b.classList.toggle("is-on", b.getAttribute("data-sort") === state.sort));
+      return;
+    }
     const nota = state.sort === "nota";
-    const box = $("#panelTree .tree-body");
     const nodes = treeNodes();
     nodes.forEach(tn => {
-      tn.dataset.sortkey = nota
-        ? (tn.getAttribute("data-nota") || "~")
-        : (tn.getAttribute("data-key") || "").split("/").pop() || "";
+      const label = (tn.getAttribute("data-key") || "").split("/").pop() || "";
+      if (nota) {
+        const type = tn.getAttribute("data-type") || "";
+        const notation = tn.getAttribute("data-nota") || "";
+        tn.dataset.sortkey = type === "facet" ? "\uFFFF\t" + label : notation + "\t" + label;
+      } else {
+        tn.dataset.sortkey = label;
+      }
     });
-    if (box && nodes.length) {
-      sortTreeRange(nodes).forEach(el => box.appendChild(el));
+    const protoBox = box || $("#panelTree .tree-body");
+    if (protoBox && nodes.length) {
+      sortTreeRange(nodes).forEach(el => protoBox.appendChild(el));
     }
     $$(".vo-seg-b[data-sort]").forEach(b => b.classList.toggle("is-on", b.getAttribute("data-sort") === state.sort));
   }
@@ -1117,6 +1150,23 @@
     if (!btn) return;
     window.setTimeout(() => btn.click(), 0);
   }
+  let syncPollTimer = null;
+  function syncThesaurusPollTick() {
+    const state = document.getElementById("previewSyncState");
+    const running = !!(state && state.getAttribute("data-running") === "true");
+    if (!running) {
+      if (syncPollTimer) {
+        window.clearInterval(syncPollTimer);
+        syncPollTimer = null;
+      }
+      return;
+    }
+    if (syncPollTimer) return;
+    syncPollTimer = window.setInterval(() => clickPreviewJsf("previewSyncPollGo"), 1000);
+  }
+  window.onPreviewSyncPoll = function (data) {
+    if (data.status === "success") syncThesaurusPollTick();
+  };
   function hideConfirm(id) {
     const dlg = $(id);
     if (!dlg || dlg.hidden) return false;
@@ -1493,9 +1543,6 @@
       if (lab) lab.textContent = "Tout le monde";
       syncCandFilterUi();
       applyStatusFilter();
-    } else if (act === "sort") {
-      state.sort = t.getAttribute("data-sort");
-      applySort();
     } else if (act === "tbl-sort") {
       const col = t.getAttribute("data-col");
       if (state.tblSort === col) state.tblDir *= -1;
@@ -2055,6 +2102,9 @@
 
   if (SCREEN === "atelier") {
     setBatch(params.get("obj") || "alignements");
+  }
+  if (SCREEN === "synchronisation") {
+    syncThesaurusPollTick();
   }
   if (SCREEN === "candidats" && (params.get("new") === "1" || params.get("pref") || params.get("path"))) {
     createCandidate({

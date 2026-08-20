@@ -161,7 +161,7 @@ class ThesaurusViewBeanTest {
         thesaurusContext.selectThesaurus("th17", "Pactols_Lieux", "fr");
         when(v2LocaleBean.getIdLangue()).thenReturn("fr");
         when(thesaurusPreferenceService.loadUsedLanguages("th17", "fr")).thenReturn(List.of(language("fr", "Français")));
-        when(conceptReadService.loadTreeRootNodes("th17", "fr")).thenReturn(List.of(
+        when(conceptReadService.loadTreeRootNodes("th17", "fr", false)).thenReturn(List.of(
                 new ConceptTreeNodeData("c1", "Lieux", "", "concept", true),
                 new ConceptTreeNodeData("c2", "Feuille", "N1", "file", false)
         ));
@@ -175,7 +175,7 @@ class ThesaurusViewBeanTest {
         assertFalse(roots.get(0).isExpanded());
         assertEquals("valide", roots.get(0).getStatus());
         assertEquals("file", roots.get(1).getNodeType());
-        verify(conceptReadService).loadTreeRootNodes("th17", "fr");
+        verify(conceptReadService).loadTreeRootNodes("th17", "fr", false);
     }
 
     @Test
@@ -183,7 +183,7 @@ class ThesaurusViewBeanTest {
         thesaurusContext.selectThesaurus("th17", "Pactols_Lieux", "fr");
         when(v2LocaleBean.getIdLangue()).thenReturn("fr");
         when(thesaurusPreferenceService.loadUsedLanguages("th17", "fr")).thenReturn(List.of(language("fr", "Français")));
-        when(conceptReadService.loadTreeRootNodes("th17", "fr")).thenReturn(List.of(
+        when(conceptReadService.loadTreeRootNodes("th17", "fr", false)).thenReturn(List.of(
                 new ConceptTreeNodeData("ark:/12148/ctj0u1", "Tjarou", "", "candidat", false)
         ));
         when(conceptReadService.loadCandidateMeta("th17", List.of("ark:/12148/ctj0u1")))
@@ -203,10 +203,10 @@ class ThesaurusViewBeanTest {
         thesaurusContext.selectThesaurus("th17", "Pactols_Lieux", "fr");
         when(v2LocaleBean.getIdLangue()).thenReturn("fr");
         when(thesaurusPreferenceService.loadUsedLanguages("th17", "fr")).thenReturn(List.of(language("fr", "Français")));
-        when(conceptReadService.loadTreeRootNodes("th17", "fr")).thenReturn(List.of(
+        when(conceptReadService.loadTreeRootNodes("th17", "fr", false)).thenReturn(List.of(
                 new ConceptTreeNodeData("c1", "Lieux", "", "concept", true)
         ));
-        when(conceptReadService.loadTreeChildNodes("c1", "concept", "th17", "fr")).thenReturn(List.of(
+        when(conceptReadService.loadTreeChildNodes("c1", "concept", "th17", "fr", false)).thenReturn(List.of(
                 new ConceptTreeNodeData("c1a", "Enfant", "", "file", false)
         ));
 
@@ -217,7 +217,7 @@ class ThesaurusViewBeanTest {
         assertEquals(1, root.getChildren().size());
         assertEquals("c1a", root.getChildren().get(0).getId());
         assertEquals(1, root.getChildren().get(0).getDepth());
-        verify(conceptReadService).loadTreeChildNodes("c1", "concept", "th17", "fr");
+        verify(conceptReadService).loadTreeChildNodes("c1", "concept", "th17", "fr", false);
     }
 
     @Test
@@ -371,6 +371,60 @@ class ThesaurusViewBeanTest {
         when(thesaurusPreferenceService.loadPreferencesOrNull("th17", "fr")).thenReturn(preferences);
 
         assertFalse(bean.isBreadcrumbEnabled());
+    }
+
+    @Test
+    void sortByNotation_followsThesaurusPreference() {
+        thesaurusContext.selectThesaurus("th17", "Pactols_Lieux", "fr");
+        ThesaurusPreferences preferences = mock(ThesaurusPreferences.class);
+        when(preferences.sortByNotation()).thenReturn(true);
+        when(thesaurusPreferenceService.loadPreferencesOrNull("th17", "fr")).thenReturn(preferences);
+
+        assertTrue(bean.isSortByNotation());
+    }
+
+    @Test
+    void sortByNotation_defaultsToAlphabeticWhenPreferenceIsOff() {
+        thesaurusContext.selectThesaurus("th17", "Pactols_Lieux", "fr");
+        ThesaurusPreferences preferences = mock(ThesaurusPreferences.class);
+        when(preferences.sortByNotation()).thenReturn(false);
+        when(thesaurusPreferenceService.loadPreferencesOrNull("th17", "fr")).thenReturn(preferences);
+
+        assertFalse(bean.isSortByNotation());
+    }
+
+    @Test
+    void setNotationSort_reloadsTreeWithNotationOrder() {
+        thesaurusContext.selectThesaurus("th17", "Pactols_Lieux", "fr");
+        when(v2LocaleBean.getIdLangue()).thenReturn("fr");
+        when(thesaurusPreferenceService.loadUsedLanguages("th17", "fr")).thenReturn(List.of(language("fr", "Français")));
+        when(conceptReadService.loadTreeRootNodes("th17", "fr", true)).thenReturn(List.of(
+                new ConceptTreeNodeData("c1", "Zèbre", "02", "concept", false),
+                new ConceptTreeNodeData("c2", "Abeille", "01", "file", false)
+        ));
+
+        bean.setNotationSort();
+        List<ThesaurusTreeNode> roots = bean.getTreeRoots();
+
+        assertTrue(bean.isSortByNotation());
+        assertEquals("c1", roots.get(0).getId());
+        verify(conceptReadService).loadTreeRootNodes("th17", "fr", true);
+    }
+
+    @Test
+    void applyPreferenceTreeSort_reloadsFromSavedPreference() {
+        thesaurusContext.selectThesaurus("th17", "Pactols_Lieux", "fr");
+        when(v2LocaleBean.getIdLangue()).thenReturn("fr");
+        when(thesaurusPreferenceService.loadUsedLanguages("th17", "fr")).thenReturn(List.of(language("fr", "Français")));
+        when(conceptReadService.loadTreeRootNodes("th17", "fr", true)).thenReturn(List.of(
+                new ConceptTreeNodeData("c2", "Abeille", "01", "file", false)
+        ));
+
+        bean.applyPreferenceTreeSort(true);
+
+        assertTrue(bean.isSortByNotation());
+        assertEquals("c2", bean.getTreeRoots().get(0).getId());
+        verify(conceptReadService).loadTreeRootNodes("th17", "fr", true);
     }
 
 

@@ -20,6 +20,8 @@ class JsfPrettyUrlFilterTest {
                 JsfPrettyUrlFilter.resolveForwardTarget("/v2-preview/preference.xhtml"));
         assertEquals("/v2/toolbox/statistiques.xhtml",
                 JsfPrettyUrlFilter.resolveForwardTarget("/v2-preview/statistiques.xhtml"));
+        assertEquals("/v2/toolbox/synchronisation.xhtml",
+                JsfPrettyUrlFilter.resolveForwardTarget("/v2-preview/synchronisation.xhtml"));
         assertEquals("/v2/candidat/candidats.xhtml",
                 JsfPrettyUrlFilter.resolveForwardTarget("/v2-preview/candidats.xhtml"));
         assertEquals("/v2/admin/projets.xhtml",

@@ -27,6 +27,10 @@ import java.util.Optional;
 
 import static org.junit.jupiter.api.Assertions.assertEquals;
 import static org.junit.jupiter.api.Assertions.assertTrue;
+import static org.mockito.ArgumentMatchers.any;
+import static org.mockito.ArgumentMatchers.anyBoolean;
+import static org.mockito.ArgumentMatchers.eq;
+import static org.mockito.Mockito.lenient;
 import static org.mockito.Mockito.mock;
 import static org.mockito.Mockito.never;
 import static org.mockito.Mockito.verify;
@@ -63,6 +67,8 @@ class ConceptReadServiceTest {
                 applicationUriService,
                 authenticatedUserSource
         );
+        lenient().when(conceptTreeConsultationService.sortNodes(any(), anyBoolean()))
+                .thenAnswer(invocation -> invocation.getArgument(0));
     }
 
     @Test
@@ -79,6 +85,22 @@ class ConceptReadServiceTest {
         assertEquals("concept", nodes.get(0).nodeType());
         assertEquals("candidat", nodes.get(1).nodeType());
         assertEquals("Tjarou", nodes.get(1).label());
+        verify(conceptTreeConsultationService).sortNodes(any(), eq(false));
+    }
+
+    @Test
+    void loadTreeRootNodes_usesNotationSortWhenPreferenceIsOn() {
+        var preferences = mock(fr.cnrs.opentheso.v2.setting.model.ThesaurusPreferences.class);
+        when(preferences.sortByNotation()).thenReturn(true);
+        when(thesaurusPreferenceService.loadPreferencesOrNull("TH1", "fr")).thenReturn(preferences);
+        when(conceptQueryRepository.findTreeRootConcepts("TH1", "fr")).thenReturn(List.of(
+                new ConceptTreeRow("C1", "02", "Zèbre", "C", false),
+                new ConceptTreeRow("C2", "01", "Abeille", "C", false)
+        ));
+
+        service.loadTreeRootNodes("TH1", "fr");
+
+        verify(conceptTreeConsultationService).sortNodes(any(), eq(true));
     }
 
     @Test

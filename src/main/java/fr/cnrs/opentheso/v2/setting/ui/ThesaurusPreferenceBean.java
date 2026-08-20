@@ -1,5 +1,6 @@
 package fr.cnrs.opentheso.v2.setting.ui;
 
+import fr.cnrs.opentheso.v2.concept.ui.ThesaurusViewBean;
 import fr.cnrs.opentheso.v2.setting.exception.InvalidSettingDataException;
 import fr.cnrs.opentheso.v2.setting.exception.SettingAccessDeniedException;
 import fr.cnrs.opentheso.v2.setting.model.ThesaurusLanguage;
@@ -28,6 +29,7 @@ public class ThesaurusPreferenceBean implements Serializable {
     private final ThesaurusSettingsPersistService persistService;
     private final ThesaurusCorpusBean corpusBean;
     private final ThesaurusAlignmentBean alignmentBean;
+    private final ThesaurusViewBean thesaurusViewBean;
 
     private PreferenceEditor preference;
     private boolean preferenceLoaded;
@@ -109,6 +111,7 @@ public class ThesaurusPreferenceBean implements Serializable {
             preferenceLoaded = true;
             corpusBean.load();
             alignmentBean.load();
+            thesaurusViewBean.applyPreferenceTreeSort(preference.isSortByNotation());
             preferenceSaveMessage = "Paramètres enregistrés avec succès";
         } catch (SettingAccessDeniedException | InvalidSettingDataException e) {
             preferenceSaveError = true;

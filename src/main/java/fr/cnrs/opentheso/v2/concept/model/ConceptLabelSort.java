@@ -2,12 +2,12 @@ package fr.cnrs.opentheso.v2.concept.model;
 
 import java.text.Normalizer;
 
-final class ConceptLabelSort {
+public final class ConceptLabelSort {
 
     private ConceptLabelSort() {
     }
 
-    static int compareLabels(String left, String right) {
+    public static int compareLabels(String left, String right) {
         String normalizedLeft = normalize(left);
         String normalizedRight = normalize(right);
         return naturalCompare(normalizedLeft, normalizedRight, true);

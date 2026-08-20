@@ -85,7 +85,7 @@
                 </h:commandButton>
                 <h:commandButton id="previewPrefSaveGo" value="save" styleClass="st-jsf-go"
                                  action="#{v2ThesaurusPreferenceBean.savePreferences}">
-                  <f:ajax execute="@this previewSettingsBody" render="previewSettingsBody previewPrefSaveFeedback"
+                  <f:ajax execute="@this previewSettingsBody previewPrefSortByNotation" render="previewSettingsBody previewPrefSaveFeedback :previewTree :previewTreeSortForm"
                           onevent="onPreviewPrefSave"/>
                 </h:commandButton>
                 <h:panelGroup id="previewSettingsBody" layout="block">
@@ -180,7 +180,7 @@
                         <div class="st-toggle-d">Ordonne les concepts par code de classification.</div>
                       </div>
                       <label class="st-sw">
-                        <h:selectBooleanCheckbox styleClass="st-sw-input"
+                        <h:selectBooleanCheckbox id="previewPrefSortByNotation" styleClass="st-sw-input"
                                                  value="#{v2ThesaurusPreferenceBean.preference.sortByNotation}"
                                                  title="Tri par défaut sur la notation"/>
                       </label>

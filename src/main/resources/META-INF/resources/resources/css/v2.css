@@ -160,6 +160,14 @@ a.tn-caret{color:inherit;text-decoration:none;display:grid;place-items:center}
 .vo-pop-row[hidden]{display:none}
 .vo-pop-stk[hidden]{display:none}
 .vo-pop-wrap[hidden]{display:none}
+form.vo-seg{margin:0}
+form.vo-seg .vo-seg-b,form.vo-seg input.vo-seg-b{
+  font-family:inherit;cursor:pointer;border:none;background:transparent;color:inherit;
+  appearance:none;-webkit-appearance:none
+}
+form.vo-seg .vo-seg-b.is-on,form.vo-seg input.vo-seg-b.is-on{
+  background:var(--accent);color:#fff
+}
 
 .stk-box.mixed{background:var(--accent);border-color:var(--accent);opacity:.7}
 
@@ -654,3 +662,14 @@ a.st-icon,button.st-icon,input.st-icon{
   border:0;background:none;cursor:pointer;color:inherit;font:inherit;
   -webkit-appearance:none;appearance:none
 }
+input.bo-btn{
+  font:inherit;cursor:pointer;-webkit-appearance:none;appearance:none
+}
+.st-static{padding-top:8px;font-size:13.5px;color:var(--ink-2)}
+textarea.sync-comment{min-height:88px;max-width:440px;resize:vertical}
+.sync-actions{display:flex;flex-wrap:wrap;gap:8px;margin-top:14px}
+.sync-progress{margin:14px 0;padding:12px;border:1px solid var(--line);border-radius:8px;background:var(--surface-2)}
+.sync-progress-t{font-size:13px;font-weight:600;margin-bottom:8px}
+.sync-progress-d{font-size:12px;color:var(--ink-3);font-family:var(--mono);margin-top:6px}
+.sync-kpis{display:flex;flex-wrap:wrap;gap:12px;margin-top:8px;font-size:12px;color:var(--ink-3)}
+#messageIndex{margin:0 0 12px}

@@ -76,4 +76,60 @@ class ConceptTreeConsultationServiceTest {
     void loadConceptTreeChildren_returnsEmptyWhenParentMissing() {
         assertTrue(service.loadConceptTreeChildren("TH1", "", "concept", "fr", false, false).isEmpty());
     }
+
+    @Test
+    void loadTopConcepts_sortsAlphabeticallyWhenPreferenceIsOff() {
+        when(conceptQueryRepository.findTopConceptsForTree("TH1", "fr", false)).thenReturn(List.of(
+                new ConceptTreeRow("C1", "02", "Zèbre", "C", false),
+                new ConceptTreeRow("C2", "01", "Abeille", "C", false)
+        ));
+
+        var nodes = service.loadTopConcepts("TH1", "fr", false, false);
+
+        assertEquals("Abeille", nodes.get(0).label());
+        assertEquals("Zèbre", nodes.get(1).label());
+    }
+
+    @Test
+    void loadTopConcepts_sortsByNotationWhenPreferenceIsOn() {
+        when(conceptQueryRepository.findTopConceptsForTree("TH1", "fr", false)).thenReturn(List.of(
+                new ConceptTreeRow("C1", "02", "Abeille", "C", false),
+                new ConceptTreeRow("C2", "01", "Zèbre", "C", false)
+        ));
+
+        var nodes = service.loadTopConcepts("TH1", "fr", true, false);
+
+        assertEquals("Zèbre", nodes.get(0).label());
+        assertEquals("01", nodes.get(0).notation());
+        assertEquals("Abeille", nodes.get(1).label());
+    }
+
+    @Test
+    void loadTopConcepts_sortsNotationsLexicographicallyLikeLegacySql() {
+        when(conceptQueryRepository.findTopConceptsForTree("TH1", "fr", false)).thenReturn(List.of(
+                new ConceptTreeRow("C1", "2", "Deux", "C", false),
+                new ConceptTreeRow("C2", "10", "Dix", "C", false)
+        ));
+
+        var nodes = service.loadTopConcepts("TH1", "fr", true, false);
+
+        assertEquals("Dix", nodes.get(0).label());
+        assertEquals("Deux", nodes.get(1).label());
+    }
+
+    @Test
+    void loadConceptTreeChildren_keepsFacetsLastWhenSortingByNotation() {
+        when(conceptQueryRepository.findNarrowersForTree("TH1", "C1", "fr", false)).thenReturn(
+                List.of(new ConceptTreeRow("C2", "02", "Child", "C", false))
+        );
+        when(conceptQueryRepository.findFacetsOfConceptForTree("TH1", "C1", "fr")).thenReturn(
+                List.of(new ConceptFacetNodeRow("F1", "Facette", true))
+        );
+
+        var nodes = service.loadConceptTreeChildren("TH1", "C1", "concept", "fr", true, false);
+
+        assertEquals(2, nodes.size());
+        assertEquals("C2", nodes.get(0).nodeId());
+        assertEquals("F1", nodes.get(1).nodeId());
+    }
 }

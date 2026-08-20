@@ -48,6 +48,8 @@ class ThesaurusPreferenceBeanTest {
     private ThesaurusCorpusBean corpusBean;
     @Mock
     private ThesaurusAlignmentBean alignmentBean;
+    @Mock
+    private fr.cnrs.opentheso.v2.concept.ui.ThesaurusViewBean thesaurusViewBean;
 
     private ThesaurusPreferenceBean bean;
     private SettingsAccess access;
@@ -65,7 +67,8 @@ class ThesaurusPreferenceBeanTest {
                 thesaurusPreferenceService,
                 persistService,
                 corpusBean,
-                alignmentBean
+                alignmentBean,
+                thesaurusViewBean
         );
     }
 
@@ -92,6 +95,7 @@ class ThesaurusPreferenceBeanTest {
         verify(persistService).saveAll(eq("th17"), eq(2), any(), eq("fr"), any(), any());
         verify(corpusBean).load();
         verify(alignmentBean).load();
+        verify(thesaurusViewBean).applyPreferenceTreeSort(saved.sortByNotation());
         assertEquals("Paramètres enregistrés avec succès", bean.getPreferenceSaveMessage());
         assertFalse(bean.isPreferenceSaveError());
     }

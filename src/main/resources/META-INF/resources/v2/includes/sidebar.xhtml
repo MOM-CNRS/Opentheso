@@ -137,10 +137,20 @@
                 </div>
                 <div class="vo-pop-row" id="voSortRow">
                   <span class="vo-pop-l">Tri</span>
-                  <div class="vo-seg">
-                    <button type="button" class="vo-seg-b is-on" data-act="sort" data-sort="alpha">A→Z</button>
-                    <button type="button" class="vo-seg-b" data-act="sort" data-sort="nota">Notation</button>
-                  </div>
+                  <h:form id="previewTreeSortForm" prependId="false" styleClass="vo-seg">
+                    <span id="previewTreeSortState" hidden="hidden"
+                          data-tree-sort="#{v2ThesaurusViewBean.sortByNotation ? 'nota' : 'alpha'}"></span>
+                    <h:commandButton id="previewTreeSortAlphaGo" value="A→Z"
+                                     styleClass="vo-seg-b#{v2ThesaurusViewBean.sortByNotation ? '' : ' is-on'}"
+                                     action="#{v2ThesaurusViewBean.setAlphabeticSort}">
+                      <f:ajax execute="@this" render="previewTreeSortForm :previewTree"/>
+                    </h:commandButton>
+                    <h:commandButton id="previewTreeSortNotaGo" value="Notation"
+                                     styleClass="vo-seg-b#{v2ThesaurusViewBean.sortByNotation ? ' is-on' : ''}"
+                                     action="#{v2ThesaurusViewBean.setNotationSort}">
+                      <f:ajax execute="@this" render="previewTreeSortForm :previewTree"/>
+                    </h:commandButton>
+                  </h:form>
                 </div>
                 <div class="vo-pop-row" id="voSearchOpts" hidden="hidden">
                   <span class="vo-pop-l">Densité</span>
@@ -177,7 +187,7 @@
 
         <div class="sidebar-body sb-tree sidebar-panel is-on" id="panelTree">
           <div class="tree-body">
-            <h:form id="previewTreeForm">
+            <h:form id="previewTreeForm" prependId="false">
               <h:panelGroup id="previewTree" layout="block">
                 <ui:fragment rendered="#{v2ThesaurusViewBean.treeEmpty}">
                   <div class="tree-empty">Aucun concept à afficher dans cette langue.</div>

@@ -1,6 +1,7 @@
 package fr.cnrs.opentheso.v2.concept.service;
 
 import fr.cnrs.opentheso.v2.concept.model.ConceptFacetNodeRow;
+import fr.cnrs.opentheso.v2.concept.model.ConceptLabelSort;
 import fr.cnrs.opentheso.v2.concept.model.ConceptTreeNodeData;
 import fr.cnrs.opentheso.v2.concept.model.ConceptTreeRow;
 import fr.cnrs.opentheso.v2.concept.policy.ConceptStatusPolicy;
@@ -47,7 +48,7 @@ public class ConceptTreeConsultationService {
             return Collections.emptyList();
         }
         if ("facet".equals(parentType)) {
-            return loadFacetMembers(thesaurusId, parentId, lang);
+            return loadFacetMembers(thesaurusId, parentId, lang, sortByNotation);
         }
         if ("group".equals(parentType) || "subGroup".equals(parentType)) {
             return Collections.emptyList();
@@ -82,19 +83,35 @@ public class ConceptTreeConsultationService {
         );
     }
 
-    private List<ConceptTreeNodeData> sortNodes(List<ConceptTreeNodeData> nodes, boolean sortByNotation) {
-        if (sortByNotation || nodes.size() <= 1) {
-            return List.copyOf(nodes);
+    public List<ConceptTreeNodeData> sortNodes(List<ConceptTreeNodeData> nodes, boolean sortByNotation) {
+        if (nodes == null || nodes.size() <= 1) {
+            return nodes == null ? List.of() : List.copyOf(nodes);
         }
         var sorted = new ArrayList<>(nodes);
-        sorted.sort(Comparator.comparing(ConceptTreeNodeData::label, String.CASE_INSENSITIVE_ORDER));
+        if (sortByNotation) {
+            // Comme le legacy : ORDER BY notation ASC (lexicographique), facettes à la fin.
+            sorted.sort(Comparator
+                    .comparing((ConceptTreeNodeData node) -> "facet".equals(node.nodeType()))
+                    .thenComparing(node -> StringUtils.defaultString(node.notation()), String.CASE_INSENSITIVE_ORDER)
+                    .thenComparing(node -> StringUtils.defaultString(node.label()), ConceptLabelSort::compareLabels));
+        } else {
+            sorted.sort(Comparator.comparing(
+                    (ConceptTreeNodeData node) -> StringUtils.defaultString(node.label()),
+                    ConceptLabelSort::compareLabels));
+        }
         return List.copyOf(sorted);
     }
 
-    private List<ConceptTreeNodeData> loadFacetMembers(String thesaurusId, String facetId, String lang) {
-        return conceptQueryRepository.findFacetMembersForTree(thesaurusId, facetId, lang).stream()
-                .map(row -> toConceptTreeNodeFromRow(row, false))
+    private List<ConceptTreeNodeData> loadFacetMembers(
+            String thesaurusId,
+            String facetId,
+            String lang,
+            boolean sortByNotation
+    ) {
+        var nodes = conceptQueryRepository.findFacetMembersForTree(thesaurusId, facetId, lang).stream()
+                .map(row -> toConceptTreeNodeFromRow(row, sortByNotation))
                 .toList();
+        return sortNodes(nodes, sortByNotation);
     }
 
     private static String defaultLabel(String id, String label) {

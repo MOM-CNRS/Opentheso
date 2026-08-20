@@ -11,7 +11,7 @@
          data-has-children="#{node.hasChildren}"
          data-depth="#{node.depth}"
          data-status="#{node.status}"
-         data-nota="#{node.notationOrDash}"
+         data-nota="#{node.notation}"
          data-cand-by="#{node.candidateBy}"
          data-cand-on="#{node.candidateOn}">
       <div class="tn-row#{node.candidate ? ' is-candidate' : ''}#{node.facet ? ' is-facet' : ''}">
@@ -22,10 +22,13 @@
                          action="#{v2ThesaurusViewBean.toggleTreeNode(node.path)}"
                          title="#{node.expanded ? 'Replier' : 'Déplier'}"
                          aria-label="#{node.expanded ? 'Replier' : 'Déplier'}">
-            <f:ajax execute="@this" render=":previewTreeForm:previewTree"/>
+            <f:ajax execute="@this" render=":previewTree"/>
             <span class="caret-open">▾</span><span class="caret-shut">▸</span>
           </h:commandLink>
           <button type="button" class="tn-label" data-act="open" data-id="#{node.id}" data-type="#{node.nodeType}">
+            <ui:fragment rendered="#{v2ThesaurusViewBean.sortByNotation and not empty node.notation}">
+              <span class="tn-nota">#{node.notation}</span>
+            </ui:fragment>
             <span class="tn-textwrap"><span class="tn-text">#{node.label}</span></span>
             <ui:fragment rendered="#{node.candidate}"><span class="tn-dot" title="Candidat"></span></ui:fragment>
             <ui:fragment rendered="#{node.facet}"><span class="tn-facet" title="Facette">◇</span></ui:fragment>
