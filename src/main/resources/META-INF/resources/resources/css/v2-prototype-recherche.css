@@ -399,7 +399,7 @@ mark.hl{background:var(--accent-soft);color:var(--accent);border-radius:3px;padd
 .flat-check-h{vertical-align:middle}
 .flat tbody tr.is-sel{background:var(--accent-soft)}
 .flat tbody tr.is-sel .flat-sticky,.flat tbody tr.is-sel .flat-sticky-l{background:var(--accent-soft)}
-.flat-count{position:sticky;left:0;font-size:11.5px;color:var(--ink-3);padding:10px 12px;font-weight:600}
+.flat-count{font-size:11.5px;color:var(--ink-3);padding:10px 12px;font-weight:600}
 
 /* ───────── Statuts : pastilles, pilules, liste cochable (pattern partagé) ───────── */
 .st-dot{width:8px;height:8px;border-radius:50%;flex:0 0 auto;display:inline-block}
@@ -541,6 +541,35 @@ tr.flat-filters th{position:sticky;top:33px;z-index:2;background:var(--surface);
 .flat-ico.st-rejete{color:#c2453a;opacity:1}
 .flat-ico.st-deprecie{color:#9aa0a6;opacity:1}
 .flat-empty-row td{padding:30px 16px;text-align:center;color:var(--ink-3);font-size:13px;white-space:normal}
+.flat tbody tr.flat-empty-row{cursor:default}
+.flat tbody tr.flat-empty-row:hover{background:transparent}
+#panelTable.sidebar-panel.is-on{position:relative;display:flex;flex-direction:column;min-height:0}
+#panelTable .flat-wrap{flex:1;min-height:0}
+#panelTable .flat-loading{
+  position:absolute;inset:0;z-index:3;
+  display:flex;align-items:center;justify-content:center;
+  background:var(--surface)
+}
+#panelTable .flat-loading[hidden]{display:none!important}
+#panelTable.is-loading .flat-wrap,#panelTable.is-loading .flat-foot{visibility:hidden}
+#panelTable .flat-loading .mg-bars-loading{flex-direction:column;gap:12px}
+#panelTable .flat-loading .mg-kpi-spin{width:22px;height:22px;border-width:2.5px}
+.flat-loading-lbl{font-size:13px;color:var(--ink-3);font-weight:500}
+.flat-foot{
+  flex:0 0 auto;display:flex;align-items:center;justify-content:space-between;gap:8px;
+  padding:8px 10px;border-top:1px solid var(--line);background:var(--surface);min-height:44px
+}
+#panelTable .flat-foot .flat-count{padding:0;flex:1;min-width:0;white-space:nowrap;overflow:hidden;text-overflow:ellipsis}
+#panelTable .flat-foot .st-pager{flex:0 0 auto;gap:3px}
+#panelTable .st-pager-btn,#panelTable .st-pager-n{min-width:28px;height:28px;font-size:12px}
+#panelTable .st-pager-gap{min-width:16px;text-align:center;color:var(--ink-4);font-size:12px;font-weight:600}
+.flat-pagesz{display:inline-flex;align-items:center;gap:6px;flex:0 0 auto;font-size:11.5px;color:var(--ink-3);font-weight:600;white-space:nowrap}
+.flat-pagesz select{
+  height:28px;padding:0 8px;border:1px solid var(--line);border-radius:8px;
+  background:var(--surface-2);color:var(--ink);font:inherit;font-size:12px;cursor:pointer
+}
+.flat-pagesz select:hover{border-color:var(--accent-line)}
+.flat-pagesz select:focus{outline:none;border-color:var(--accent)}
 .tbl-aside{padding:16px 14px;display:flex;flex-direction:column;gap:9px}
 .tbl-aside-t{font-size:12px;font-weight:700;text-transform:uppercase;letter-spacing:.05em;color:var(--ink-3)}
 .tbl-aside-p{font-size:12.5px;line-height:1.5;color:var(--ink-3)}
