@@ -5,7 +5,6 @@
 .thesaurus-btn.is-on + .menu-pop{display:block}
 
 .view-pick-menu{display:none}
-.view-pick:hover .view-pick-menu,
 .view-pick-btn.is-open + .view-pick-menu{display:block}
 
 .view-pick-cur .vpc{display:none}

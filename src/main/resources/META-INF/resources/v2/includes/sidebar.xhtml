@@ -152,6 +152,13 @@
                     </h:commandButton>
                   </h:form>
                 </div>
+                <div class="vo-pop-row" id="voColSortRow" hidden="hidden">
+                  <span class="vo-pop-l">Tri</span>
+                  <div class="vo-seg">
+                    <button type="button" class="vo-seg-b is-on" data-act="col-sort" data-sort="alpha">A→Z</button>
+                    <button type="button" class="vo-seg-b" data-act="col-sort" data-sort="nota">Notation</button>
+                  </div>
+                </div>
                 <div class="vo-pop-row" id="voSearchOpts" hidden="hidden">
                   <span class="vo-pop-l">Densité</span>
                   <div class="vo-seg">
@@ -202,6 +209,16 @@
             </h:form>
             </div>
           </div>
+        </div>
+
+        <div class="sidebar-body sb-tree sidebar-panel" id="panelCollection">
+          <div class="flat-loading" id="panelCollectionLoading" hidden="hidden" aria-live="polite">
+            <div class="mg-bars-loading">
+              <span class="mg-kpi-spin" aria-hidden="true"></span>
+              <span class="flat-loading-lbl">Chargement des collections…</span>
+            </div>
+          </div>
+          <div class="tree-body" id="panelCollectionTree"></div>
         </div>
 
         <div class="sidebar-body sidebar-panel" id="panelResults">

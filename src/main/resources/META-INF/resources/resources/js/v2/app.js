@@ -101,7 +101,7 @@
   const PAGE = 12;
   const SIDE = {
     arbo: "panelTree", tableau: "panelTable", hyper: "panelTree",
-    collection: "panelTree", recherche: "panelResults"
+    collection: "panelCollection", recherche: "panelResults"
   };
   const VIEW_LABEL = {
     arbo: "Arborescence", tableau: "Tableau", hyper: "Graphe",
@@ -140,6 +140,8 @@
     tblPage: 1,
     tblPageSize: 50,
     tblCols: new Set(["status", "type", "notation", "path"]),
+    colId: null,
+    colSort: treeSortMode(),
     showPath: true,
     highlight: true,
     density: "regular",
@@ -189,6 +191,8 @@
     const type = (el.getAttribute("data-type") || host.getAttribute("data-type") || "").toLowerCase();
     const status = (el.getAttribute("data-status") || host.getAttribute("data-status") || "").toLowerCase();
     if (type === "facet") return "facet";
+    if (type === "group" || type === "subgroup") return type;
+    if (type === "more") return "more";
     if (type === "candidat" || status === "candidat") return "candidat";
     return type || "concept";
   }
@@ -220,15 +224,17 @@
   function paintMain() {
     const v = state.view;
     let id;
-    if (liveDetailRequested() && !state.home && !state.draft) {
+    if (v === "collection") {
+      if (state.colId) id = "viewCollection";
+      else if (liveDetailRequested() && !state.home && !state.draft && state.conceptId) id = "viewLive";
+      else id = "viewCollection";
+    } else if (liveDetailRequested() && !state.home && !state.draft) {
       id = "viewLive";
     } else if (v === "hyper" && $("#viewHyper")) {
       id = "viewHyper";
     } else if (!IS_CONSULT) {
       if (v === "arbo" && $("#viewHome")) id = "viewHome";
       else return;
-    } else if (v === "collection") {
-      id = "viewCollection";
     } else if (state.draft && (v === "arbo" || v === "tableau" || v === "recherche")) {
       id = "viewDraft";
     } else if (v === "recherche") {
@@ -247,16 +253,19 @@
   }
 
   function paintSidebar() {
-    if (state.view === "collection") {
-      $$(".sidebar-panel").forEach(el => el.classList.remove("is-on"));
-    } else {
-      showPanel(".sidebar-panel", SIDE[state.view] || "panelTree");
-    }
+    showPanel(".sidebar-panel", SIDE[state.view] || "panelTree");
     const sb = $("#panelTree");
     if (sb) sb.classList.toggle("sb-tree", state.view === "arbo" || state.view === "hyper");
     document.body.classList.toggle("hide-path", !state.showPath);
     document.body.classList.toggle("density-compact", state.density === "compact");
     if (state.view === "tableau") ensureTableRows();
+    if (state.view === "collection") {
+      const key = collectionCacheKey();
+      if (collectionTreeState.key !== key && !collectionTreeState.loading) {
+        setCollectionLoading(true);
+      }
+      ensureCollectionTree();
+    }
   }
 
   function paintViewPick() {
@@ -267,6 +276,13 @@
     if (vo) vo.textContent = VIEW_LABEL[state.view] || state.view;
     const sortRow = $("#voSortRow");
     if (sortRow) sortRow.hidden = state.view !== "arbo" && state.view !== "hyper";
+    const colSortRow = $("#voColSortRow");
+    if (colSortRow) {
+      colSortRow.hidden = state.view !== "collection";
+      $$("#voColSortRow .vo-seg-b").forEach(b => {
+        b.classList.toggle("is-on", b.getAttribute("data-sort") === state.colSort);
+      });
+    }
     const searchOn = state.view === "recherche";
     ["voSearchOpts", "voPathRow", "voHlRow"].forEach(id => {
       const el = $("#" + id); if (el) el.hidden = !searchOn;
@@ -276,8 +292,6 @@
     const stk = $(".vo-pop-stk");
     if (stk) stk.hidden = !(state.view === "arbo" || state.view === "tableau" || state.view === "hyper");
     $("#thIdBtn") && $("#thIdBtn").classList.toggle("is-active", SCREEN === "accueil");
-    const gear = $("#voWrap");
-    if (gear) gear.hidden = state.view === "collection";
     paintBadges();
   }
 
@@ -332,7 +346,11 @@
     $$(".hyper-dot.is-active").forEach(d => d.classList.remove("is-active"));
     $$("#viewConcept .cv").forEach(el => el.classList.toggle("is-on", el.getAttribute("data-id") === id));
     if (!id) return;
-    const btn = $(`.tn-label[data-id="${CSS.escape(id)}"]`);
+    const treeScope = state.view === "collection"
+      ? "#panelCollectionTree"
+      : "#previewTree, #previewTreeForm\\:previewTree, #panelTree";
+    const btn = $(`${treeScope} .tn-label[data-id="${CSS.escape(id)}"]`)
+      || $(`.tn-label[data-id="${CSS.escape(id)}"]`);
     if (btn) {
       const row = btn.closest(".tn-row");
       if (row) {
@@ -344,6 +362,7 @@
         tn.classList.add("is-open");
         tn = previousTreeParent(tn);
       }
+      if (state.view === "collection") paintCollectionVisibility();
     }
     if (state.view === "tableau") revealTableConcept(id);
     const tr = $(`#panelTable tr[data-id="${CSS.escape(id)}"]`);
@@ -723,6 +742,49 @@
         || document.getElementById("previewTreeForm:previewTree");
   }
 
+  let treeToggleScroll = null;
+
+  function isTreeCaretSource(src) {
+    if (!src || !src.closest) return false;
+    return !!src.closest(".tn-caret");
+  }
+
+  function lockTreeToggleScroll(src) {
+    const root = document.getElementById("panelTree");
+    const box = treePanel();
+    const tn = src && src.closest ? src.closest(".tn") : null;
+    treeToggleScroll = {
+      top: root ? root.scrollTop : 0,
+      minH: box ? box.offsetHeight : 0
+    };
+    if (box && treeToggleScroll.minH) {
+      box.style.minHeight = treeToggleScroll.minH + "px";
+    }
+    if (tn) {
+      tn.classList.toggle("is-open");
+      tn.classList.add("is-fetching");
+    }
+  }
+
+  function restoreTreeToggleScroll() {
+    const lock = treeToggleScroll;
+    if (!lock) return;
+    const root = document.getElementById("panelTree");
+    const box = treePanel();
+    if (box) box.style.minHeight = "";
+    const apply = () => {
+      if (root) root.scrollTop = lock.top;
+    };
+    apply();
+    requestAnimationFrame(() => {
+      apply();
+      requestAnimationFrame(() => {
+        apply();
+        treeToggleScroll = null;
+      });
+    });
+  }
+
   function treeNodes() {
     const box = treePanel();
     if (box) return Array.from(box.querySelectorAll(":scope > .tn, .tn"));
@@ -1090,12 +1152,346 @@
   }
 
   function onThesaurusLangChanged() {
+    invalidateCollectionTree();
+    if (state.view === "collection") {
+      loadCollectionRoots();
+      if (state.colId) loadCollectionDetail(state.colId);
+    }
     if (state.view !== "tableau") {
       invalidateTableRows();
       return;
     }
     if (tableRowsState.key === tableCacheKey()) return;
     loadTableRows();
+  }
+
+  let collectionTreeState = { key: "", loading: false };
+
+  function collectionSortByNotation() {
+    return state.colSort === "nota";
+  }
+
+  function collectionCacheKey() {
+    return thesaurusId() + "|" + thesaurusLang() + "|" + (collectionSortByNotation() ? "nota" : "alpha");
+  }
+
+  function collectionApi(path, extra) {
+    const ctx = document.body.getAttribute("data-ctx") || "";
+    const params = new URLSearchParams({
+      thesaurusId: thesaurusId() || "",
+      lang: thesaurusLang(),
+      sortByNotation: collectionSortByNotation() ? "true" : "false"
+    });
+    if (extra) {
+      Object.keys(extra).forEach(key => {
+        if (extra[key] != null && extra[key] !== "") params.set(key, extra[key]);
+      });
+    }
+    return fetch(ctx + "/v2/api/collection-tree/" + path + "?" + params.toString(), {
+      headers: { Accept: "application/json" }
+    }).then(res => {
+      if (!res.ok) throw new Error("http");
+      return res.json();
+    });
+  }
+
+  function setCollectionLoading(on) {
+    const panel = $("#panelCollection");
+    const spin = $("#panelCollectionLoading");
+    if (panel) {
+      panel.classList.toggle("is-loading", !!on);
+      if (on) panel.setAttribute("aria-busy", "true");
+      else panel.removeAttribute("aria-busy");
+    }
+    if (spin) {
+      if (on) spin.removeAttribute("hidden");
+      else spin.setAttribute("hidden", "hidden");
+      spin.hidden = !on;
+    }
+  }
+
+  function setCollectionTreeMessage(text) {
+    const box = $("#panelCollectionTree");
+    if (!box) return;
+    box.innerHTML = '<div class="tree-empty">' + escapeHtml(text) + "</div>";
+    setCollectionLoading(false);
+  }
+
+  function invalidateCollectionTree() {
+    collectionTreeState = { key: "", loading: false };
+    const box = $("#panelCollectionTree");
+    if (box) box.innerHTML = "";
+  }
+
+  function ensureCollectionTree() {
+    if (!$("#panelCollectionTree")) return;
+    const key = collectionCacheKey();
+    if (collectionTreeState.key === key || collectionTreeState.loading) return;
+    setCollectionLoading(true);
+    loadCollectionRoots();
+  }
+
+  function loadCollectionRoots() {
+    const box = $("#panelCollectionTree");
+    if (!box) return;
+    const theso = thesaurusId();
+    const key = collectionCacheKey();
+    if (!theso) {
+      collectionTreeState = { key: key, loading: false };
+      setCollectionTreeMessage("Aucun thésaurus sélectionné.");
+      return;
+    }
+    collectionTreeState = { key: key, loading: true };
+    setCollectionLoading(true);
+    collectionApi("roots").then(nodes => {
+      if (collectionCacheKey() !== key) return;
+      collectionTreeState.loading = false;
+      collectionTreeState.key = key;
+      renderCollectionRoots(Array.isArray(nodes) ? nodes : []);
+    }).catch(() => {
+      if (collectionCacheKey() !== key) return;
+      collectionTreeState = { key: "", loading: false };
+      setCollectionTreeMessage("Impossible de charger les collections.");
+    });
+  }
+
+  function renderCollectionRoots(nodes) {
+    const box = $("#panelCollectionTree");
+    if (!box) return;
+    setCollectionLoading(false);
+    if (!nodes.length) {
+      box.innerHTML = '<div class="tree-empty">Aucune collection dans ce thésaurus.</div>';
+      return;
+    }
+    box.innerHTML = nodes.map(node => collectionNodeHtml(node, 0)).join("");
+    paintCollectionVisibility();
+    if (state.colId) highlightConcept(state.colId);
+    else if (state.conceptId) highlightConcept(state.conceptId);
+  }
+
+  function collectionNodeHtml(node, depth) {
+    const id = node && node.id != null ? String(node.id) : "";
+    const type = (node && node.nodeType) || "file";
+    const isGroup = type === "group" || type === "subGroup";
+    const isMore = type === "more";
+    const hasChildren = !!(node && node.hasChildren);
+    const label = (node && node.label) || id;
+    const notation = (node && node.notation) || "";
+    const status = (node && node.status) || (isGroup ? "" : "valide");
+    const pad = 6 + depth * 18;
+    const caretClass = "tn-caret" + (hasChildren ? "" : " is-empty");
+    const caretAct = hasChildren ? ' data-act="col-toggle"' : "";
+    const rowClass = "tn-row"
+      + (isGroup ? " is-group" : "")
+      + (isMore ? " is-more" : "")
+      + (status === "deprecie" ? " is-deprecated" : "");
+    const nota = collectionSortByNotation() && notation
+      ? '<span class="tn-nota">' + escapeHtml(notation) + "</span>"
+      : "";
+    const icon = isGroup ? '<span class="tn-coll" title="Collection">⧉</span>' : "";
+    const openAct = isMore ? "" : ' data-act="open"';
+    return '<div class="tn"'
+      + ' data-id="' + escapeHtml(id) + '"'
+      + ' data-type="' + escapeHtml(type) + '"'
+      + ' data-has-children="' + (hasChildren ? "true" : "false") + '"'
+      + ' data-loaded="0"'
+      + ' data-depth="' + depth + '"'
+      + ' data-status="' + escapeHtml(status) + '"'
+      + ' data-nota="' + escapeHtml(notation) + '">'
+      + '<div class="' + rowClass + '">'
+      + '<div class="tn-rowmain" style="padding-left:' + pad + 'px">'
+      + '<button type="button" class="' + caretClass + '"' + caretAct
+      + ' title="' + (hasChildren ? "Déplier" : "") + '">'
+      + '<span class="caret-open">▾</span><span class="caret-shut">▸</span>'
+      + "</button>"
+      + '<button type="button" class="tn-label"' + openAct
+      + ' data-id="' + escapeHtml(id) + '" data-type="' + escapeHtml(type) + '">'
+      + icon + nota
+      + '<span class="tn-textwrap"><span class="tn-text">' + escapeHtml(label) + "</span></span>"
+      + "</button></div></div></div>";
+  }
+
+  function paintCollectionVisibility() {
+    const nodes = $$("#panelCollectionTree > .tn");
+    const showAt = [true];
+    nodes.forEach(tn => {
+      const depth = Number(tn.getAttribute("data-depth") || 0);
+      const visible = !!showAt[depth];
+      tn.hidden = !visible;
+      showAt[depth + 1] = visible && tn.classList.contains("is-open");
+    });
+  }
+
+  function collectionDescendants(parent) {
+    const depth = Number(parent.getAttribute("data-depth") || 0);
+    const out = [];
+    let el = parent.nextElementSibling;
+    while (el && el.classList.contains("tn")) {
+      const d = Number(el.getAttribute("data-depth") || 0);
+      if (d <= depth) break;
+      out.push(el);
+      el = el.nextElementSibling;
+    }
+    return out;
+  }
+
+  function toggleCollectionNode(tn) {
+    if (!tn || tn.getAttribute("data-has-children") !== "true") return;
+    if (tn.classList.contains("is-fetching")) return;
+    if (tn.classList.contains("is-open")) {
+      tn.classList.remove("is-open");
+      paintCollectionVisibility();
+      return;
+    }
+    if (tn.getAttribute("data-loaded") === "1") {
+      tn.classList.add("is-open");
+      paintCollectionVisibility();
+      return;
+    }
+    tn.classList.add("is-open", "is-fetching");
+    const parentId = tn.getAttribute("data-id");
+    collectionApi("children", { parentId: parentId }).then(nodes => {
+      tn.classList.remove("is-fetching");
+      collectionDescendants(tn).forEach(el => el.remove());
+      const depth = Number(tn.getAttribute("data-depth") || 0) + 1;
+      const html = (Array.isArray(nodes) ? nodes : []).map(node => collectionNodeHtml(node, depth)).join("");
+      if (html) tn.insertAdjacentHTML("afterend", html);
+      tn.setAttribute("data-loaded", "1");
+      if (!html) {
+        tn.classList.remove("is-open");
+        tn.setAttribute("data-has-children", "false");
+        const caret = tn.querySelector(".tn-caret");
+        if (caret) caret.classList.add("is-empty");
+        return;
+      }
+      paintCollectionVisibility();
+    }).catch(() => {
+      tn.classList.remove("is-fetching", "is-open");
+      toast("Impossible de charger les éléments de la collection.");
+    });
+  }
+
+  function setCollectionSort(sort) {
+    const next = sort === "nota" ? "nota" : "alpha";
+    if (state.colSort === next) return;
+    state.colSort = next;
+    $$("#voColSortRow .vo-seg-b").forEach(b => {
+      b.classList.toggle("is-on", b.getAttribute("data-sort") === next);
+    });
+    invalidateCollectionTree();
+    if (state.view === "collection") loadCollectionRoots();
+  }
+
+  function openCollectionFromTree(id) {
+    if (!id) return;
+    state.view = "collection";
+    state.home = false;
+    state.draft = false;
+    state.colId = id;
+    state.conceptId = null;
+    highlightConcept(id);
+    loadCollectionDetail(id);
+    paint();
+  }
+
+  function dashText(value) {
+    return value == null || String(value).trim() === "" ? "—" : String(value);
+  }
+
+  function collectionCrow(label, valueHtml) {
+    return '<div class="crow"><div class="crow-lbl">' + label + '</div><div class="crow-val">'
+      + valueHtml + "</div></div>";
+  }
+
+  function renderCollectionDetail(data) {
+    const empty = $("#collectionEmpty");
+    const loading = $("#collectionLoading");
+    const box = $("#collectionDetail");
+    if (loading) loading.hidden = true;
+    if (!data || !data.groupId) {
+      if (empty) empty.hidden = false;
+      if (box) {
+        box.hidden = true;
+        box.innerHTML = "";
+      }
+      return;
+    }
+    if (empty) empty.hidden = true;
+    if (!box) return;
+    const translations = Array.isArray(data.translations) ? data.translations : [];
+    const notes = Array.isArray(data.notes) ? data.notes : [];
+    const type = data.typeSkosLabel || data.typeLabel || data.typeCode || "";
+    let html = '<div class="cv is-on is-collection" data-id="' + escapeHtml(data.groupId) + '">';
+    html += '<div class="cv-head"><h1 class="cv-pref"><span>'
+      + escapeHtml(dashText(data.label)) + '</span>'
+      + '<span class="cv-lang">' + escapeHtml(dashText(data.lang)) + "</span>"
+      + '<span class="cv-status is-collection">collection</span></h1></div>';
+    html += '<div class="cv-blocks">';
+    html += '<section class="cblock"><div class="cblock-head">Libellé</div><div class="cblock-body">';
+    html += collectionCrow("Libellé",
+      '<span class="val-strong">' + escapeHtml(dashText(data.label)) + "</span>"
+      + ' <span class="val-lang">(' + escapeHtml(dashText(data.lang)) + ")</span>");
+    html += collectionCrow("Type", escapeHtml(dashText(type)));
+    html += collectionCrow("Membres", escapeHtml(String(data.memberCount != null ? data.memberCount : 0)));
+    html += "</div></section>";
+    html += '<section class="cblock"><div class="cblock-head">Traductions</div><div class="cblock-body">';
+    if (!translations.length) {
+      html += '<div class="muted">Aucune traduction renseignée.</div>';
+    } else {
+      translations.forEach(tr => {
+        html += collectionCrow(
+          '<span class="val-lang">' + escapeHtml(tr.lang || "") + "</span>",
+          escapeHtml(tr.value || "")
+        );
+      });
+    }
+    html += "</div></section>";
+    html += '<section class="cblock"><div class="cblock-head">Notes</div><div class="cblock-body">';
+    if (!notes.length) {
+      html += '<div class="muted">Aucune note renseignée.</div>';
+    } else {
+      notes.forEach(note => {
+        html += '<div class="note-grp"><div class="note-grp-t">'
+          + escapeHtml(note.typeLabel || "Note") + '</div><div class="note-line"><p class="cv-def">'
+          + escapeHtml(note.value || "")
+          + ' <span class="note-lang">(' + escapeHtml(note.lang || "") + ")</span></p></div></div>";
+      });
+    }
+    html += "</div></section>";
+    html += '<section class="cblock"><div class="cblock-head">Identifiants</div><div class="cblock-body">';
+    html += collectionCrow("Identifiant", '<span class="is-mono">' + escapeHtml(dashText(data.groupId)) + "</span>");
+    html += collectionCrow("Notation", escapeHtml(dashText(data.notation)));
+    html += collectionCrow("ARK", '<span class="is-mono">' + escapeHtml(dashText(data.arkId)) + "</span>");
+    html += collectionCrow("Handle", '<span class="is-mono">' + escapeHtml(dashText(data.handleId)) + "</span>");
+    html += "</div></section>";
+    html += '<section class="cblock"><div class="cblock-head">Information temporelle</div><div class="cblock-body">';
+    html += collectionCrow("Créé le", '<span class="is-mono">' + escapeHtml(dashText(data.created)) + "</span>");
+    html += collectionCrow("Dernière modification", '<span class="is-mono">' + escapeHtml(dashText(data.modified)) + "</span>");
+    html += "</div></section></div></div>";
+    box.innerHTML = html;
+    box.hidden = false;
+  }
+
+  function loadCollectionDetail(groupId) {
+    const empty = $("#collectionEmpty");
+    const loading = $("#collectionLoading");
+    const box = $("#collectionDetail");
+    if (!groupId) {
+      renderCollectionDetail(null);
+      return;
+    }
+    if (empty) empty.hidden = true;
+    if (box) box.hidden = true;
+    if (loading) loading.hidden = false;
+    collectionApi("detail", { groupId: groupId }).then(data => {
+      if (state.colId !== groupId) return;
+      renderCollectionDetail(data);
+    }).catch(() => {
+      if (state.colId !== groupId) return;
+      if (loading) loading.hidden = true;
+      if (empty) empty.hidden = false;
+      toast("Impossible de charger la collection.");
+    });
   }
 
   function ensureTableRows() {
@@ -2448,15 +2844,31 @@
     else if (act === "toggle") {
       const tn = t.closest(".tn");
       if (tn && !t.classList.contains("is-empty")) tn.classList.toggle("is-open");
+    } else if (act === "col-toggle") {
+      toggleCollectionNode(t.closest(".tn"));
+    } else if (act === "col-sort") {
+      setCollectionSort(t.getAttribute("data-sort"));
     } else if (act === "open") {
       const id = t.getAttribute("data-id");
-      const stay = !!(t.closest("#panelTable") || t.closest("#panelResults") || t.closest("#resultsList"));
       const nodeType = resolveNodeType(t);
+      if (nodeType === "group" || nodeType === "subgroup") {
+        openCollectionFromTree(id);
+        closeSearchUi();
+        return;
+      }
+      if (nodeType === "more") return;
+      const stay = !!(t.closest("#panelTable") || t.closest("#panelResults") || t.closest("#resultsList")
+        || t.closest("#panelCollection") || t.closest("#collectionDetail") || state.view === "collection");
       if (openLiveDetail(id, nodeType)) {
         state.home = false;
         state.draft = false;
         state.conceptId = id;
-        if (!stay) state.view = "arbo";
+        if (stay && (state.view === "collection" || t.closest("#panelCollection") || t.closest("#collectionDetail"))) {
+          state.colId = null;
+          state.view = "collection";
+        } else if (!stay) {
+          state.view = "arbo";
+        }
         highlightConcept(id);
         closeSearchUi();
         return;
@@ -3207,48 +3619,46 @@
     }
   }
 
+  function onV2Ajax(data) {
+    const treeToggle = isTreeCaretSource(data.source);
+    if (data.status === "begin") {
+      if (!treeToggle) syncAboutEditor();
+      if (treeToggle) lockTreeToggleScroll(data.source);
+      return;
+    }
+    if (data.status === "complete" && treeToggle) {
+      restoreTreeToggleScroll();
+      return;
+    }
+    if (data.status === "success") {
+      const srcId = (data.source && data.source.id) || "";
+      if (srcId === "previewCorpusToggleGo" || srcId === "previewAlignToggleGo") {
+        markSettingsDraft();
+      }
+      requestAnimationFrame(() => {
+        if (treeToggle) {
+          applyStatusFilter();
+          restoreSelection();
+          restoreTreeToggleScroll();
+          return;
+        }
+        syncAboutFold();
+        markAboutVisualEmpty();
+        maybeRememberAboutBaseline();
+        refreshAboutFmtState();
+        applyStatusFilter();
+        applySort();
+        restoreSelection();
+        showLiveDetail();
+        if (window.syncViewRail) window.syncViewRail();
+      });
+    }
+  }
+
   if (window.faces && faces.ajax) {
-    faces.ajax.addOnEvent((data) => {
-      if (data.status === "begin") syncAboutEditor();
-      if (data.status === "success") {
-        const srcId = (data.source && data.source.id) || "";
-        if (srcId === "previewCorpusToggleGo" || srcId === "previewAlignToggleGo") {
-          markSettingsDraft();
-        }
-        requestAnimationFrame(() => {
-        syncAboutFold();
-        markAboutVisualEmpty();
-        maybeRememberAboutBaseline();
-        refreshAboutFmtState();
-        applyStatusFilter();
-        applySort();
-        restoreSelection();
-        showLiveDetail();
-        if (window.syncViewRail) window.syncViewRail();
-      });
-      }
-    });
+    faces.ajax.addOnEvent(onV2Ajax);
   } else if (window.jsf && jsf.ajax) {
-    jsf.ajax.addOnEvent((data) => {
-      if (data.status === "begin") syncAboutEditor();
-      if (data.status === "success") {
-        const srcId = (data.source && data.source.id) || "";
-        if (srcId === "previewCorpusToggleGo" || srcId === "previewAlignToggleGo") {
-          markSettingsDraft();
-        }
-        requestAnimationFrame(() => {
-        syncAboutFold();
-        markAboutVisualEmpty();
-        maybeRememberAboutBaseline();
-        refreshAboutFmtState();
-        applyStatusFilter();
-        applySort();
-        restoreSelection();
-        showLiveDetail();
-        if (window.syncViewRail) window.syncViewRail();
-      });
-      }
-    });
+    jsf.ajax.addOnEvent(onV2Ajax);
   }
 
   function scrollToPrefHash() {
