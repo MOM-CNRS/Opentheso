@@ -1,6 +1,5 @@
 package fr.cnrs.opentheso.v2.shared.service;
 
-import fr.cnrs.opentheso.services.HomePageService;
 import fr.cnrs.opentheso.v2.shared.repository.PlatformHomeQueryRepository;
 import lombok.RequiredArgsConstructor;
 import org.apache.commons.lang3.StringUtils;
@@ -13,7 +12,6 @@ import org.springframework.transaction.annotation.Transactional;
 public class PlatformHomeReadService {
 
     private final PlatformHomeQueryRepository platformHomeQueryRepository;
-    private final HomePageService homePageService;
 
     @Value("${settings.workLanguage:fr}")
     private String defaultWorkLanguage;
@@ -30,7 +28,7 @@ public class PlatformHomeReadService {
 
     @Transactional(readOnly = true)
     public String getGoogleAnalyticsCode() {
-        return StringUtils.defaultString(homePageService.getCodeGoogleAnalytics());
+        return platformHomeQueryRepository.findGoogleAnalyticsCode().orElse("");
     }
 
     public String getApplicationVersion() {

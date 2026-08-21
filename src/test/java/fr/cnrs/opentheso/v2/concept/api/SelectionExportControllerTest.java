@@ -27,6 +27,7 @@ import static org.junit.jupiter.api.Assertions.assertNotNull;
 import static org.junit.jupiter.api.Assertions.assertTrue;
 import static org.mockito.ArgumentMatchers.any;
 import static org.mockito.Mockito.doAnswer;
+import static org.mockito.Mockito.lenient;
 import static org.mockito.Mockito.never;
 import static org.mockito.Mockito.verify;
 import static org.mockito.Mockito.when;
@@ -66,7 +67,7 @@ class SelectionExportControllerTest {
                 executor
         );
         job = new SelectionExportJob();
-        when(selectionExportJobStore.current()).thenReturn(job);
+        lenient().when(selectionExportJobStore.current()).thenReturn(job);
     }
 
     @AfterEach
@@ -140,6 +141,7 @@ class SelectionExportControllerTest {
 
     @Test
     void file_returnsAttachmentWhenDone() throws Exception {
+        job.start(1, "Export en cours");
         job.complete(new byte[]{9, 8}, "TH1_selection.rdf", "application/rdf+xml", "Fichier prêt");
 
         var response = controller.file();

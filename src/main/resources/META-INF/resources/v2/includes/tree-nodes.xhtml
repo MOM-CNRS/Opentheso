@@ -14,7 +14,7 @@
          data-nota="#{node.notation}"
          data-cand-by="#{node.candidateBy}"
          data-cand-on="#{node.candidateOn}">
-      <div class="tn-row#{node.candidate ? ' is-candidate' : ''}#{node.facet ? ' is-facet' : ''}">
+      <div class="tn-row#{node.candidate ? ' is-candidate' : ''}#{node.facet ? ' is-facet' : ''}#{v2ThesaurusViewBean.revealedConceptId eq node.id ? ' is-active' : ''}">
         <span class="tn-check" data-act="sel-node" data-id="#{node.id}" data-key="#{node.path}"
               title="Sélectionner (avec ses enfants)"></span>
         <div class="tn-rowmain" style="padding-left:#{node.pad}">

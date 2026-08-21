@@ -285,4 +285,9 @@
         <sqlFile path="v26/26-08_03.sql" relativeToChangelogFile="true" splitStatements="false"/>
     </changeSet>
 
+    <changeSet id="26.08.04" author="Firas">
+        <comment>Indexes for globe load (thesaurus+status) and neighborhood (thesaurus+concept1+role)</comment>
+        <sqlFile path="v26/26-08_04.sql" relativeToChangelogFile="true" splitStatements="false"/>
+    </changeSet>
+
 </databaseChangeLog>

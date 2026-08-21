@@ -257,7 +257,7 @@ class SelectionExportServiceTest {
         when(conceptSkosExportService.serialize(any(), eq("TH1"), any(), eq("rdf")))
                 .thenReturn(new ExportResult(new byte[]{1}, "ignored.rdf", "application/rdf+xml"));
 
-        service.export(requestWithGroups("TH1", List.of("C1", "C2"), "rdf", List.of("G1"), false), job);
+        service.export(requestWithGroups("TH1", List.of("C1", "C2"), "rdf", List.of("G1"), true), job);
 
         assertEquals("done", job.getStatus());
         verify(conceptSkosExportService).buildDocument(eq("TH1"), eq(List.of("C1")), any(), eq(false));

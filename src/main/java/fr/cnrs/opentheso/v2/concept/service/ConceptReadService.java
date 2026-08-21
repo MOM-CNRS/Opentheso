@@ -395,16 +395,21 @@ public class ConceptReadService {
 
     @Transactional(readOnly = true)
     public List<BreadcrumbStep> loadBreadcrumb(String thesaurusId, String conceptId, String lang) {
-        if (StringUtils.isAnyBlank(thesaurusId, conceptId)) {
-            return Collections.emptyList();
-        }
-        var paths = conceptBreadcrumbReadService.loadBreadcrumbPaths(thesaurusId, conceptId, lang);
+        List<List<BreadcrumbStep>> paths = loadBreadcrumbPaths(thesaurusId, conceptId, lang);
         if (!paths.isEmpty()) {
             return paths.get(0);
         }
         return ConceptMapper.toBreadcrumb(
                 conceptQueryRepository.findBreadcrumb(conceptId, thesaurusId, lang)
         );
+    }
+
+    @Transactional(readOnly = true)
+    public List<List<BreadcrumbStep>> loadBreadcrumbPaths(String thesaurusId, String conceptId, String lang) {
+        if (StringUtils.isAnyBlank(thesaurusId, conceptId, lang)) {
+            return Collections.emptyList();
+        }
+        return conceptBreadcrumbReadService.loadBreadcrumbPaths(thesaurusId, conceptId, lang);
     }
 
     @Transactional(readOnly = true)

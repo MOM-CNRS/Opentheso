@@ -199,6 +199,13 @@
                  data-thesaurus-id="#{v2ThesaurusViewBean.id}"
                  data-thesaurus-title="#{v2ThesaurusViewBean.title}"
                  data-lang="#{v2ThesaurusViewBean.selectedLang}">
+            <h:form id="previewTreeRevealForm" styleClass="preview-open-form">
+              <h:inputHidden id="revealId" value="#{v2ThesaurusViewBean.revealId}"/>
+              <h:commandButton id="revealBtn" value="Révéler" styleClass="preview-open-btn"
+                               action="#{v2ThesaurusViewBean.revealInTree}">
+                <f:ajax execute="@form" render=":previewTree"/>
+              </h:commandButton>
+            </h:form>
             <h:form id="previewTreeForm" prependId="false">
               <h:panelGroup id="previewTree" layout="block">
                 <ui:fragment rendered="#{v2ThesaurusViewBean.treeEmpty}">

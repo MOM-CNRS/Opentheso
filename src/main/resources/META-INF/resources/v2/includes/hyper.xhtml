@@ -5,55 +5,27 @@
             <div class="hyper">
               <div class="hyper-bar">
                 <button type="button" class="hyper-up" id="hyperCenter">⊙ Recentrer</button>
-                <span class="hyper-focus">Arbre hyperbolique</span>
-                <span class="hyper-hint">Glissez le disque pour explorer · cliquez un nœud pour ouvrir la fiche</span>
+                <button type="button" class="hyper-up" id="hyperOpen" disabled="disabled">Ouvrir la fiche</button>
+                <label class="hyper-search-wrap">
+                  <input type="search" class="hyper-search" id="hyperSearch" placeholder="Rechercher…"
+                         autocomplete="off" spellcheck="false" aria-label="Rechercher un concept sur le globe"/>
+                </label>
+                <span class="hyper-picked" id="hyperPicked"></span>
+                <span class="hyper-count" id="hyperCount"></span>
               </div>
+              <div class="hyper-neighbors" id="hyperNeighbors" hidden="hidden" aria-live="polite"></div>
               <div class="hyper-stage" id="hyperStage">
-                <svg viewBox="0 0 1000 1000" class="hyper-svg" id="hyperSvg" preserveAspectRatio="xMidYMid meet"><circle cx="500" cy="500" r="470" class="hyper-disk"/>
-                <g id="hyperScene">
-                <circle cx="500" cy="500" r="13" class="hyper-dot is-center"/>
-                <text x="500" y="478" text-anchor="middle" class="hyper-label is-center">PACTOLS</text>
-                <line x1="500" y1="500" x2="500.0" y2="280.0" class="hyper-edge"/>
-                <g class="hyper-node" data-act="hyper-pick" data-id="ark:/syn/17">
-                  <circle cx="500.0" cy="280.0" r="8" class="hyper-dot"/>
-                  <text x="500.0" y="266.0" text-anchor="middle" class="hyper-label">État de conservation</text>
-                </g>
-                <line x1="500" y1="500" x2="655.6" y2="344.4" class="hyper-edge"/>
-                <g class="hyper-node" data-act="hyper-pick" data-id="ark:/syn/1">
-                  <circle cx="655.6" cy="344.4" r="8" class="hyper-dot"/>
-                  <text x="655.6" y="330.4" text-anchor="middle" class="hyper-label">Matière</text>
-                </g>
-                <line x1="500" y1="500" x2="720.0" y2="500.0" class="hyper-edge"/>
-                <g class="hyper-node" data-act="hyper-pick" data-id="ark:/syn/4">
-                  <circle cx="720.0" cy="500.0" r="8" class="hyper-dot"/>
-                  <text x="720.0" y="486.0" text-anchor="middle" class="hyper-label">Objet</text>
-                </g>
-                <line x1="500" y1="500" x2="655.6" y2="655.6" class="hyper-edge"/>
-                <g class="hyper-node" data-act="hyper-pick" data-id="ark:/syn/2">
-                  <circle cx="655.6" cy="655.6" r="8" class="hyper-dot"/>
-                  <text x="655.6" y="641.6" text-anchor="middle" class="hyper-label">Période</text>
-                </g>
-                <line x1="500" y1="500" x2="500.0" y2="720.0" class="hyper-edge"/>
-                <g class="hyper-node" data-act="hyper-pick" data-id="ark:/12148/csb0b2">
-                  <circle cx="500.0" cy="720.0" r="8" class="hyper-dot"/>
-                  <text x="500.0" y="706.0" text-anchor="middle" class="hyper-label">Sigillée claire B</text>
-                </g>
-                <line x1="500" y1="500" x2="344.4" y2="655.6" class="hyper-edge"/>
-                <g class="hyper-node" data-act="hyper-pick" data-id="ark:/syn/13">
-                  <circle cx="344.4" cy="655.6" r="8" class="hyper-dot"/>
-                  <text x="344.4" y="641.6" text-anchor="middle" class="hyper-label">Structure</text>
-                </g>
-                <line x1="500" y1="500" x2="280.0" y2="500.0" class="hyper-edge"/>
-                <g class="hyper-node" data-act="hyper-pick" data-id="ark:/syn/15">
-                  <circle cx="280.0" cy="500.0" r="8" class="hyper-dot"/>
-                  <text x="280.0" y="486.0" text-anchor="middle" class="hyper-label">Technique</text>
-                </g>
-                <line x1="500" y1="500" x2="344.4" y2="344.4" class="hyper-edge"/>
-                <g class="hyper-node" data-act="hyper-pick" data-id="ark:/12148/ctj0u1">
-                  <circle cx="344.4" cy="344.4" r="8" class="hyper-dot"/>
-                  <text x="344.4" y="330.4" text-anchor="middle" class="hyper-label">Tjarou</text>
-                </g>
-                </g></svg>
+                <div class="flat-loading" id="hyperLoading" hidden="hidden" aria-live="polite">
+                  <div class="mg-bars-loading">
+                    <span class="mg-kpi-spin" aria-hidden="true"></span>
+                    <span class="flat-loading-lbl">Chargement du globe…</span>
+                  </div>
+                </div>
+                <canvas class="hyper-globe" id="hyperGlobe" tabindex="0"
+                        aria-label="Globe des concepts du thésaurus. Flèches pour tourner, Entrée pour ouvrir, recherche ci-dessus."></canvas>
+                <canvas class="hyper-globe-fx" id="hyperGlobeFx" aria-hidden="true"></canvas>
+                <div class="hyper-tip" id="hyperTip" hidden="hidden"></div>
+                <div class="hyper-empty" id="hyperEmpty" hidden="hidden">Aucun concept à afficher dans cette langue.</div>
               </div>
             </div>
           </div>

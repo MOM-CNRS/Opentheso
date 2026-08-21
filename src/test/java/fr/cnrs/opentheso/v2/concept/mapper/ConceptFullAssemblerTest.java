@@ -80,7 +80,8 @@ class ConceptFullAssemblerTest {
                 "C1", "C", "ark1", "", "", "N1",
                 Date.valueOf("2024-01-01"), Date.valueOf("2024-02-01"), "subject"
         };
-        when(conceptFullQueryRepository.findConceptCore("C1", "TH1")).thenReturn(Optional.of(core));
+        when(conceptFullQueryRepository.findConceptCore(eq("C1"), eq("TH1"), anyBoolean()))
+                .thenReturn(Optional.of(core));
         when(conceptFullQueryRepository.findPreferredLabel("C1", "TH1", "fr"))
                 .thenReturn(Optional.of(new Object[]{"Libellé", "T1", 12}));
         when(conceptFullQueryRepository.findAltLabels(anyString(), anyString(), anyString(), anyBoolean()))

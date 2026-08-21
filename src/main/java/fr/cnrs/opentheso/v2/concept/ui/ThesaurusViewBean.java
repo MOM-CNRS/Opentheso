@@ -79,6 +79,11 @@ public class ThesaurusViewBean implements Serializable {
     @Setter
     private String openType;
     @Getter
+    @Setter
+    private String revealId;
+    @Getter
+    private String revealedConceptId;
+    @Getter
     private String selectedId;
     @Getter
     private String selectedKind;
@@ -200,6 +205,42 @@ public class ThesaurusViewBean implements Serializable {
         node.setExpanded(!node.isExpanded());
         if (node.isExpanded() && !node.isChildrenLoaded()) {
             loadTreeChildren(node);
+        }
+    }
+
+    public void revealInTree() {
+        String id = StringUtils.trimToEmpty(revealId);
+        revealedConceptId = id;
+        if (StringUtils.isBlank(id)) {
+            return;
+        }
+        ensureTreeLoaded();
+        List<List<BreadcrumbStep>> paths = conceptReadService.loadBreadcrumbPaths(
+                getId(),
+                id,
+                getSelectedLang()
+        );
+        if (paths == null || paths.isEmpty()) {
+            List<BreadcrumbStep> fallback = conceptReadService.loadBreadcrumb(getId(), id, getSelectedLang());
+            paths = fallback == null || fallback.isEmpty()
+                    ? List.of(List.of(new BreadcrumbStep(id, id, 0, true)))
+                    : List.of(fallback);
+        }
+        for (List<BreadcrumbStep> path : paths) {
+            List<String> ids = new ArrayList<>();
+            if (path != null) {
+                for (BreadcrumbStep step : path) {
+                    if (step != null && StringUtils.isNotBlank(step.getConceptId())) {
+                        ids.add(step.getConceptId());
+                    }
+                }
+            }
+            if (ids.isEmpty() || !ids.get(ids.size() - 1).equalsIgnoreCase(id)) {
+                ids.add(id);
+            }
+            if (expandTreePath(ids)) {
+                return;
+            }
         }
     }
 
@@ -599,6 +640,40 @@ public class ThesaurusViewBean implements Serializable {
                 appendVisibleNodes(node.getChildren(), out);
             }
         }
+    }
+
+    private boolean expandTreePath(List<String> ids) {
+        if (ids == null || ids.isEmpty()) {
+            return false;
+        }
+        for (int start = 0; start < ids.size(); start++) {
+            if (expandTreePathFrom(getTreeRoots(), ids, start)) {
+                return true;
+            }
+        }
+        return false;
+    }
+
+    private boolean expandTreePathFrom(List<ThesaurusTreeNode> siblings, List<String> ids, int index) {
+        if (siblings == null || index >= ids.size()) {
+            return index >= ids.size();
+        }
+        String targetId = ids.get(index);
+        for (ThesaurusTreeNode node : siblings) {
+            if (!targetId.equalsIgnoreCase(node.getId())) {
+                continue;
+            }
+            boolean last = index == ids.size() - 1;
+            if (!last && node.isHasChildren()) {
+                node.setExpanded(true);
+                if (!node.isChildrenLoaded()) {
+                    loadTreeChildren(node);
+                }
+                return expandTreePathFrom(node.getChildren(), ids, index + 1);
+            }
+            return last;
+        }
+        return false;
     }
 
     private ThesaurusTreeNode findTreeNodeByPath(List<ThesaurusTreeNode> nodes, String path) {
