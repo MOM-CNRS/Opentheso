@@ -21,6 +21,7 @@ import static org.mockito.ArgumentMatchers.anyBoolean;
 import static org.mockito.ArgumentMatchers.anyInt;
 import static org.mockito.ArgumentMatchers.eq;
 import static org.mockito.Mockito.verify;
+import static org.mockito.Mockito.verifyNoInteractions;
 import static org.mockito.Mockito.when;
 
 @ExtendWith(MockitoExtension.class)
@@ -66,6 +67,28 @@ class CollectionTreeConsultationServiceTest {
         service.loadRoots("TH1", "fr", true);
 
         verify(collectionTreeQueryRepository).findRootGroups("TH1", "fr", true);
+    }
+
+    @Test
+    void loadAll_listsEveryCollectionAlphabetically() {
+        when(authenticatedUserSource.isLoggedIn()).thenReturn(false);
+        when(collectionTreeQueryRepository.findAllGroups("TH1", "fr", false)).thenReturn(List.<Object[]>of(
+                new Object[]{"G2", "Verre", "02"},
+                new Object[]{"G1", "Matière", "01"},
+                new Object[]{"G3", "Objet", "03"}
+        ));
+
+        List<CollectionTreeNode> all = service.loadAll("TH1", "fr", false);
+
+        assertEquals(List.of("G1", "G3", "G2"), all.stream().map(CollectionTreeNode::id).toList());
+        assertEquals("group", all.get(0).nodeType());
+        verify(collectionTreeQueryRepository).findAllGroups("TH1", "fr", false);
+    }
+
+    @Test
+    void loadAll_returnsEmptyWhenThesaurusMissing() {
+        assertTrue(service.loadAll(" ", "fr", false).isEmpty());
+        verifyNoInteractions(collectionTreeQueryRepository);
     }
 
     @Test
@@ -119,6 +142,11 @@ class CollectionTreeConsultationServiceTest {
         when(collectionTreeQueryRepository.findGroupType("MT"))
                 .thenReturn(Optional.of(new Object[]{"Microthesaurus", "skos:Collection"}));
         when(collectionTreeQueryRepository.countMemberConcepts("TH1", "G1")).thenReturn(12);
+        when(collectionTreeQueryRepository.findMemberConcepts(eq("G1"), eq("TH1"), eq("fr"), anyInt()))
+                .thenReturn(List.<Object[]>of(
+                        new Object[]{"C1", "Argile", "N1", "C"},
+                        new Object[]{"C2", "Adobe", "N2", "C"}
+                ));
         when(collectionTreeQueryRepository.findGroupTranslations("G1", "TH1", "fr"))
                 .thenReturn(List.<Object[]>of(new Object[]{"en", "Material"}));
         when(collectionTreeQueryRepository.findGroupNotes("G1", "TH1", "fr"))
@@ -130,6 +158,9 @@ class CollectionTreeConsultationServiceTest {
         assertEquals("Matière", detail.label());
         assertEquals("skos:Collection", detail.typeSkosLabel());
         assertEquals(12, detail.memberCount());
+        assertEquals(2, detail.members().size());
+        assertEquals("C1", detail.members().get(0).conceptId());
+        assertEquals("Argile", detail.members().get(0).label());
         assertEquals("2020-01-02", detail.created());
         assertEquals(1, detail.translations().size());
         assertEquals("Définition", detail.notes().get(0).typeLabel());

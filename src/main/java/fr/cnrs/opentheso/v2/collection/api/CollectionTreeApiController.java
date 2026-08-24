@@ -38,6 +38,22 @@ public class CollectionTreeApiController {
         );
     }
 
+    @GetMapping(value = "/collection-tree/list", produces = MediaType.APPLICATION_JSON_VALUE)
+    public List<CollectionTreeNode> list(
+            @RequestParam(required = false) String thesaurusId,
+            @RequestParam(required = false) String lang,
+            @RequestParam(required = false, defaultValue = "false") boolean sortByNotation
+    ) {
+        if (StringUtils.isBlank(thesaurusId)) {
+            return List.of();
+        }
+        return collectionTreeConsultationService.loadAll(
+                thesaurusId,
+                StringUtils.firstNonBlank(lang, "fr"),
+                sortByNotation
+        );
+    }
+
     @GetMapping(value = "/collection-tree/children", produces = MediaType.APPLICATION_JSON_VALUE)
     public List<CollectionTreeNode> children(
             @RequestParam(required = false) String parentId,

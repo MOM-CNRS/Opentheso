@@ -19,14 +19,15 @@ public record CollectionDetail(
         String created,
         String modified,
         List<CollectionTranslationItem> translations,
-        List<CollectionNoteItem> notes
+        List<CollectionNoteItem> notes,
+        List<CollectionMemberItem> members
 ) {
 
     public static CollectionDetail empty() {
         return new CollectionDetail(
                 "", "", "", "", "", "", 0,
                 "", "", "", "", "",
-                List.of(), List.of()
+                List.of(), List.of(), List.of()
         );
     }
 }

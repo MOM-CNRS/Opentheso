@@ -32,6 +32,54 @@ document.addEventListener("keydown", (e) => {
   e.preventDefault();
   go.click();
 });
+function triggerCandSearch() {
+  const go = document.getElementById("candBoardForm:candSearchGo");
+  if (go) go.click();
+}
+
+function syncCandSearchClear() {
+  const input = document.querySelector(".cand-search");
+  const clear = $("#candSearchClear");
+  if (clear) clear.hidden = !(input && input.value);
+}
+
+document.addEventListener("keydown", (e) => {
+  if (e.key !== "Enter" || e.repeat || e.isComposing) return;
+  if (!e.target.classList || !e.target.classList.contains("cand-search")) return;
+  e.preventDefault();
+  clearTimeout(triggerCandSearch._t);
+  triggerCandSearch();
+});
+document.addEventListener("keydown", (e) => {
+  if (e.repeat || e.isComposing) return;
+  if ((e.metaKey || e.ctrlKey) && e.key === "Enter") {
+    const draft = $("#viewDraft");
+    if (draft && draft.classList.contains("is-on")) {
+      const create = $("#draftCreate");
+      if (create && !create.disabled) create.click();
+    }
+  }
+  if (e.key !== "Escape") return;
+  if (typeof closeCollectionPicker === "function" && closeCollectionPicker()) return;
+  if (e.target && e.target.classList && e.target.classList.contains("cand-search")) {
+    if (e.target.value) {
+      e.target.value = "";
+      syncCandSearchClear();
+      triggerCandSearch();
+      return;
+    }
+  }
+  if (SCREEN !== "candidats") return;
+  const draft = $("#viewDraft");
+  if (draft && draft.classList.contains("is-on")) {
+    resolveDraft("annulé");
+    return;
+  }
+  const live = $("#viewLive");
+  if (live && live.classList.contains("is-on") && fromCandList()) {
+    backToCandList();
+  }
+});
 document.addEventListener("keydown", (e) => {
   if (e.repeat || e.isComposing) return;
   if (e.key !== "Enter" && e.key !== " ") return;
@@ -79,6 +127,12 @@ window.onPreviewSyncPoll = function (data) {
 };
 document.addEventListener("keydown", (e) => {
   if (e.key !== "Escape") return;
+  const overlay = $("#cblockOverlay");
+  if (overlay && !overlay.hidden) {
+    closeConceptBlockOverlay();
+    e.preventDefault();
+    return;
+  }
   if (hideConfirm("#aboutSaveConfirm") || hideConfirm("#logoutConfirm") || hideConfirm("#stSaveConfirm")
       || hideConfirm("#previewCorpusCreateConfirm") || hideConfirm("#stLeaveConfirm")) {
     settingsLeaveAction = null;
@@ -115,6 +169,12 @@ document.addEventListener("input", (e) => {
     syncAboutEditor();
     markAboutVisualEmpty();
     refreshAboutSaveState();
+  }
+  if (e.target && e.target.id === "draftTitle") syncDraftPrefMirror();
+  if (e.target && e.target.classList && e.target.classList.contains("cand-search")) {
+    syncCandSearchClear();
+    clearTimeout(triggerCandSearch._t);
+    triggerCandSearch._t = setTimeout(triggerCandSearch, 280);
   }
 });
 document.addEventListener("selectionchange", refreshAboutFmtState);
@@ -248,6 +308,10 @@ document.addEventListener("click", (e) => {
     if (user) window.setTimeout(() => user.focus(), 0);
   } else if (act === "home") openHome();
   else if (act === "back-graph") backToGraph();
+  else if (act === "back-cand-list") {
+    e.preventDefault();
+    backToCandList();
+  }
   else if (act === "set-view") setView(t.getAttribute("data-view"));
   else if (act === "show") {
     e.preventDefault();
@@ -264,9 +328,27 @@ document.addEventListener("click", (e) => {
   else if (act === "bo-open") {
     const obj = t.getAttribute("data-obj");
     go("toolbox/atelier.xhtml" + (obj ? "?obj=" + encodeURIComponent(obj) : ""));
+  } else if (act === "cand-search-clear") {
+    const input = document.querySelector(".cand-search");
+    if (input) {
+      input.value = "";
+      input.focus();
+    }
+    syncCandSearchClear();
+    triggerCandSearch();
   } else if (act === "cand-tab") {
     const board = t.closest(".cand-board") || $("#candBoard");
-    if (board) board.setAttribute("data-tab", t.getAttribute("data-tab") || "attente");
+    const tab = t.getAttribute("data-tab") || "attente";
+    if (board) {
+      board.setAttribute("data-tab", tab);
+      board.querySelectorAll(".cand-tab").forEach((btn) => {
+        const on = btn.getAttribute("data-tab") === tab;
+        btn.classList.toggle("is-on", on);
+        btn.setAttribute("aria-selected", on ? "true" : "false");
+      });
+    }
+    const hidden = document.getElementById("candBoardForm:activeTab");
+    if (hidden) hidden.value = tab;
   } else if (act === "bo-op") {
     setBatch(t.getAttribute("data-obj"), t.getAttribute("data-op"));
   } else if (act === "bo-acc") {
@@ -298,6 +380,9 @@ document.addEventListener("click", (e) => {
   } else if (act === "col-sort") {
     setCollectionSort(t.getAttribute("data-sort"));
   } else if (act === "open") {
+    const candRow = t.closest("a.cand-row");
+    if (candRow && (e.metaKey || e.ctrlKey || e.shiftKey)) return;
+    if (candRow) e.preventDefault();
     const id = t.getAttribute("data-id");
     const nodeType = resolveNodeType(t);
     if (nodeType === "group" || nodeType === "subgroup") {
@@ -497,6 +582,12 @@ document.addEventListener("click", (e) => {
     if (state.tblCols.has(col)) state.tblCols.delete(col);
     else state.tblCols.add(col);
     applyTableCols();
+  } else if (act === "cblock-expand") {
+    expandConceptBlock(t);
+  } else if (act === "cblock-collapse") {
+    closeConceptBlockOverlay();
+  } else if (act === "align-auto-search" || act === "align-auto-compare") {
+    toast("La recherche et la comparaison automatiques seront disponibles en édition.");
   } else if (act === "ui-lang") {
     $$(".lang-opt").forEach(o => o.classList.toggle("is-on", o === t));
     const flag = t.querySelector(".lang-opt-flag");
@@ -751,14 +842,35 @@ if (pageSizeSel) {
 if (SCREEN === "graphe") state.view = "hyper";
 function onV2Ajax(data) {
   const treeToggle = isTreeCaretSource(data.source);
+  const srcIdBegin = (data.source && data.source.id) || "";
   if (data.status === "begin") {
     if (!treeToggle) syncAboutEditor();
     if (treeToggle) lockTreeToggleScroll(data.source);
+    if (srcIdBegin.indexOf("candSearchGo") >= 0 || srcIdBegin.indexOf("candMine") >= 0) {
+      const panes = $("#candPanes");
+      if (panes) {
+        panes.classList.add("is-busy");
+        panes.setAttribute("aria-busy", "true");
+      }
+    }
     return;
   }
-  if (data.status === "complete" && treeToggle) {
-    restoreTreeToggleScroll();
-    return;
+  if (data.status === "complete") {
+    if (srcIdBegin.indexOf("candSearchGo") >= 0 || srcIdBegin.indexOf("candMine") >= 0) {
+      const panes = $("#candPanes");
+      if (panes) {
+        panes.classList.remove("is-busy");
+        panes.removeAttribute("aria-busy");
+      }
+    }
+    if (treeToggle) {
+      restoreTreeToggleScroll();
+      return;
+    }
+  }
+  if (data.status === "error" && srcIdBegin.indexOf("openBtn") >= 0) {
+    const live = $("#viewLive");
+    if (live) live.classList.remove("is-loading");
   }
   if (data.status === "success") {
     const srcId = (data.source && data.source.id) || "";
@@ -767,7 +879,20 @@ function onV2Ajax(data) {
     }
     requestAnimationFrame(() => {
       const srcId = (data.source && data.source.id) || "";
+      if (srcId.indexOf("clearRevealBtn") >= 0
+          || srcId.indexOf("candSearchGo") >= 0
+          || srcId.indexOf("candMine") >= 0) {
+        return;
+      }
       if (srcId.indexOf("revealBtn") >= 0) {
+        const tn = findTreeNodeById(state.conceptId);
+        if (tn) {
+          const st = tn.getAttribute("data-status");
+          if (st && !state.statusSet.has(st)) {
+            state.statusSet.add(st);
+            syncStatusUi();
+          }
+        }
         applyStatusFilter();
         restoreSelection();
         highlightConcept(state.conceptId);
@@ -857,6 +982,7 @@ requestAnimationFrame(() => {
   markAboutVisualEmpty();
   maybeRememberAboutBaseline();
   refreshAboutFmtState();
+  syncCandSearchClear();
   if (window.syncViewRail) window.syncViewRail();
   scrollToPrefHash();
   if (SCREEN === "preference") rememberSettingsBaseline();

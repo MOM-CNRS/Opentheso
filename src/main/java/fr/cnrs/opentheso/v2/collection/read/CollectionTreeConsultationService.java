@@ -1,6 +1,7 @@
 package fr.cnrs.opentheso.v2.collection.read;
 
 import fr.cnrs.opentheso.v2.collection.model.CollectionDetail;
+import fr.cnrs.opentheso.v2.collection.model.CollectionMemberItem;
 import fr.cnrs.opentheso.v2.collection.model.CollectionNoteItem;
 import fr.cnrs.opentheso.v2.collection.model.CollectionTranslationItem;
 import fr.cnrs.opentheso.v2.collection.model.CollectionTreeNode;
@@ -40,6 +41,19 @@ public class CollectionTreeConsultationService {
         boolean includePrivate = authenticatedUserSource.isLoggedIn();
         List<CollectionTreeNode> nodes = new ArrayList<>();
         for (Object[] row : collectionTreeQueryRepository.findRootGroups(thesaurusId, lang, includePrivate)) {
+            nodes.add(toGroupNode(row, "group"));
+        }
+        return sortNodes(nodes, sortByNotation);
+    }
+
+    @Transactional(readOnly = true)
+    public List<CollectionTreeNode> loadAll(String thesaurusId, String lang, boolean sortByNotation) {
+        if (StringUtils.isAnyBlank(thesaurusId, lang)) {
+            return List.of();
+        }
+        boolean includePrivate = authenticatedUserSource.isLoggedIn();
+        List<CollectionTreeNode> nodes = new ArrayList<>();
+        for (Object[] row : collectionTreeQueryRepository.findAllGroups(thesaurusId, lang, includePrivate)) {
             nodes.add(toGroupNode(row, "group"));
         }
         return sortNodes(nodes, sortByNotation);
@@ -110,10 +124,25 @@ public class CollectionTreeConsultationService {
                                             str(row, 1),
                                             str(row, 2)
                                     ))
-                                    .toList()
+                                    .toList(),
+                            loadDetailMembers(groupId, thesaurusId, lang)
                     );
                 })
                 .orElse(CollectionDetail.empty());
+    }
+
+    private List<CollectionMemberItem> loadDetailMembers(String groupId, String thesaurusId, String lang) {
+        List<Object[]> members = collectionTreeQueryRepository.findMemberConcepts(
+                groupId, thesaurusId, lang, MAX_MEMBER_CONCEPTS + 1);
+        int limit = Math.min(members.size(), MAX_MEMBER_CONCEPTS);
+        List<CollectionMemberItem> items = new ArrayList<>(limit);
+        for (int i = 0; i < limit; i++) {
+            Object[] row = members.get(i);
+            String id = str(row, 0);
+            String label = str(row, 1);
+            items.add(new CollectionMemberItem(id, label.isEmpty() ? id : label));
+        }
+        return List.copyOf(items);
     }
 
     private static CollectionTreeNode toGroupNode(Object[] row, String nodeType) {

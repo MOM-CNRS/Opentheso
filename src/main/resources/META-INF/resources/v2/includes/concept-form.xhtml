@@ -1,8 +1,9 @@
 <?xml version="1.0" encoding="UTF-8"?>
 <ui:composition xmlns="http://www.w3.org/1999/xhtml"
                 xmlns:ui="http://xmlns.jcp.org/jsf/facelets"
-                xmlns:h="http://xmlns.jcp.org/jsf/html">
-  <div class="cv is-on#{v2ThesaurusViewBean.candidateSelected ? ' is-candidate' : ''}"
+                xmlns:h="http://xmlns.jcp.org/jsf/html"
+                xmlns:f="http://xmlns.jcp.org/jsf/core">
+  <div class="cv is-on"
        data-id="#{v2ThesaurusViewBean.selectedConcept.summary.conceptId}"
        data-pref="#{v2ThesaurusViewBean.selectedConcept.summary.preferredLabel}"
        data-status="#{v2ThesaurusViewBean.candidateSelected ? 'candidat' : 'valide'}">
@@ -17,32 +18,14 @@
     </ui:fragment>
     <div class="cv-head">
       <h1 class="cv-pref">
-        <ui:fragment rendered="#{v2ThesaurusViewBean.candidateSelected}"><span class="cv-dot" title="Concept candidat"></span></ui:fragment>
         <span>#{v2ThesaurusViewBean.dash(v2ThesaurusViewBean.selectedConcept.summary.preferredLabel)}</span>
         <span class="cv-lang">#{v2ThesaurusViewBean.dash(v2ThesaurusViewBean.selectedConcept.summary.lang)}</span>
-        <ui:fragment rendered="#{v2ThesaurusViewBean.candidateSelected}"><span class="cv-status">candidat</span></ui:fragment>
         <ui:fragment rendered="#{v2ThesaurusViewBean.selectedConceptDeprecated}"><span class="cv-status is-dep">obsolète</span></ui:fragment>
       </h1>
     </div>
-    <ui:fragment rendered="#{v2ThesaurusViewBean.candidateSelected}">
-      <div class="cand-banner">
-        <div class="cand-banner-row">
-          <span class="cand-banner-dot"></span>
-          <div class="cand-banner-main">
-            <div class="cand-banner-t">Candidat en attente de validation</div>
-            <div class="cand-banner-s">
-              Proposé
-              <ui:fragment rendered="#{not empty v2ThesaurusViewBean.candidateBy}"> par <b>#{v2ThesaurusViewBean.candidateBy}</b></ui:fragment>
-              <ui:fragment rendered="#{not empty v2ThesaurusViewBean.candidateOn}"> le #{v2ThesaurusViewBean.candidateOn}</ui:fragment>
-              <ui:fragment rendered="#{empty v2ThesaurusViewBean.candidateBy and empty v2ThesaurusViewBean.candidateOn}"> — métadonnées non renseignées</ui:fragment>
-            </div>
-          </div>
-        </div>
-      </div>
-    </ui:fragment>
     <div class="cv-blocks">
       <section class="cblock">
-        <div class="cblock-head">Libellé</div>
+        <div class="cblock-head">Libellé<div class="cblock-tools"><button type="button" class="cblock-gear" title="Agrandir" data-act="cblock-expand">⤢</button></div></div>
         <div class="cblock-body">
           <div class="crow">
             <div class="crow-lbl">Libellé</div>
@@ -79,62 +62,98 @@
               </ui:repeat>
             </div>
           </div>
+          <div class="crow">
+            <div class="crow-lbl">Total de la branche</div>
+            <div class="crow-val"><span>#{v2ThesaurusViewBean.branchConceptCount}</span></div>
+          </div>
+          <div class="cv-corpus">
+            <ui:fragment rendered="#{not v2ThesaurusViewBean.corpusSearched}">
+              <h:commandButton value="Afficher les corpus liés" styleClass="bo-btn primary sm"
+                               action="#{v2ThesaurusViewBean.searchCorpusLinks}">
+                <f:ajax execute="@this" render=":previewDetailForm:previewDetail"/>
+              </h:commandButton>
+            </ui:fragment>
+            <ui:fragment rendered="#{v2ThesaurusViewBean.corpusNoResult}">
+              <div class="muted">Aucun corpus lié.</div>
+            </ui:fragment>
+            <ui:repeat value="#{v2ThesaurusViewBean.displayedCorpusLinks}" var="corpus">
+              <div class="crow">
+                <div class="crow-lbl">#{corpus.corpusName}</div>
+                <div class="crow-val">
+                  <ui:fragment rendered="#{corpus.hasLink()}">
+                    <a class="link" href="#{corpus.uriLink}" target="_blank" rel="noopener">
+                      #{corpus.onlyUriLink ? corpus.uriLink : (corpus.noticeCount gt 0 ? corpus.noticeCount : corpus.uriLink)}
+                    </a>
+                  </ui:fragment>
+                  <ui:fragment rendered="#{not corpus.hasLink()}"><span class="muted">—</span></ui:fragment>
+                </div>
+              </div>
+            </ui:repeat>
+          </div>
         </div>
       </section>
 
       <section class="cblock">
-        <div class="cblock-head">Collections</div>
+        <div class="cblock-head">Collections<div class="cblock-tools"><button type="button" class="cblock-gear" title="Agrandir" data-act="cblock-expand">⤢</button></div></div>
         <div class="cblock-body">
           <ui:fragment rendered="#{empty v2ThesaurusViewBean.selectedConcept.collections}">
             <div class="muted">Ce concept n'appartient à aucune collection.</div>
           </ui:fragment>
-          <ui:repeat value="#{v2ThesaurusViewBean.selectedConcept.collections}" var="coll" varStatus="st">
-            <span>#{coll.displayLabel}</span><h:outputText value=", " rendered="#{not st.last}"/>
-          </ui:repeat>
+          <div class="rel-items">
+            <ui:repeat value="#{v2ThesaurusViewBean.selectedConcept.collections}" var="coll">
+              <button type="button" class="rel-term" data-act="open" data-id="#{coll.conceptId}" data-type="group">#{coll.displayLabel}</button>
+            </ui:repeat>
+          </div>
         </div>
       </section>
 
       <section class="cblock">
-        <div class="cblock-head">Relations sémantiques</div>
+        <div class="cblock-head">Relations sémantiques<div class="cblock-tools"><button type="button" class="cblock-gear" title="Agrandir" data-act="cblock-expand">⤢</button></div></div>
         <div class="cblock-body">
           <div class="crow crow-rel">
             <div class="crow-lbl"><span class="rel-code rel-bt">TG</span>Concept générique</div>
             <div class="crow-val">
               <ui:fragment rendered="#{empty v2ThesaurusViewBean.selectedConcept.broaderTerms}"><span class="muted">—</span></ui:fragment>
+              <ui:fragment rendered="#{not empty v2ThesaurusViewBean.selectedConcept.broaderTerms}">
               <div class="rel-items">
                 <ui:repeat value="#{v2ThesaurusViewBean.selectedConcept.broaderTerms}" var="rel">
                   <button type="button" class="rel-term" data-act="open" data-id="#{rel.conceptId}" data-type="concept">#{rel.displayLabel}</button>
                 </ui:repeat>
               </div>
+              </ui:fragment>
             </div>
           </div>
           <div class="crow crow-rel">
             <div class="crow-lbl"><span class="rel-code rel-nt">TS</span>Concept spécifique</div>
             <div class="crow-val">
               <ui:fragment rendered="#{empty v2ThesaurusViewBean.selectedConcept.narrowerTerms}"><span class="muted">—</span></ui:fragment>
+              <ui:fragment rendered="#{not empty v2ThesaurusViewBean.selectedConcept.narrowerTerms}">
               <div class="rel-items">
                 <ui:repeat value="#{v2ThesaurusViewBean.selectedConcept.narrowerTerms}" var="rel">
                   <button type="button" class="rel-term" data-act="open" data-id="#{rel.conceptId}" data-type="concept">#{rel.displayLabel}</button>
                 </ui:repeat>
               </div>
+              </ui:fragment>
             </div>
           </div>
           <div class="crow crow-rel">
             <div class="crow-lbl"><span class="rel-code rel-rt">TA</span>Concept associé</div>
             <div class="crow-val">
               <ui:fragment rendered="#{empty v2ThesaurusViewBean.selectedConcept.relatedTerms}"><span class="muted">—</span></ui:fragment>
+              <ui:fragment rendered="#{not empty v2ThesaurusViewBean.selectedConcept.relatedTerms}">
               <div class="rel-items">
                 <ui:repeat value="#{v2ThesaurusViewBean.selectedConcept.relatedTerms}" var="rel">
                   <button type="button" class="rel-term" data-act="open" data-id="#{rel.conceptId}" data-type="concept">#{rel.displayLabel}</button>
                 </ui:repeat>
               </div>
+              </ui:fragment>
             </div>
           </div>
         </div>
       </section>
 
       <section class="cblock">
-        <div class="cblock-head">Relation personnalisée</div>
+        <div class="cblock-head">Relation personnalisée<div class="cblock-tools"><button type="button" class="cblock-gear" title="Agrandir" data-act="cblock-expand">⤢</button></div></div>
         <div class="cblock-body">
           <ui:fragment rendered="#{empty v2ThesaurusViewBean.selectedConcept.customRelations}">
             <div class="muted">Aucune relation personnalisée.</div>
@@ -151,14 +170,14 @@
       </section>
 
       <section class="cblock">
-        <div class="cblock-head">Traductions</div>
+        <div class="cblock-head">Traductions<div class="cblock-tools"><button type="button" class="cblock-gear" title="Agrandir" data-act="cblock-expand">⤢</button></div></div>
         <div class="cblock-body">
           <ui:fragment rendered="#{empty v2ThesaurusViewBean.selectedConcept.translations}">
             <div class="muted">Aucune traduction renseignée.</div>
           </ui:fragment>
           <ui:repeat value="#{v2ThesaurusViewBean.selectedConcept.translations}" var="tr">
             <div class="crow">
-              <div class="crow-lbl"><span class="val-lang">#{tr.lang}</span></div>
+              <div class="crow-lbl"><span class="tr-flag">#{v2ThesaurusViewBean.flagEmoji(tr.lang)}</span> #{v2ThesaurusViewBean.languageLabel(tr.lang)}</div>
               <div class="crow-val">#{tr.value}</div>
             </div>
           </ui:repeat>
@@ -166,24 +185,72 @@
       </section>
 
       <section class="cblock">
-        <div class="cblock-head">Notes</div>
+        <div class="cblock-head">Notes<div class="cblock-tools"><button type="button" class="cblock-gear" title="Agrandir" data-act="cblock-expand">⤢</button></div></div>
         <div class="cblock-body">
           <ui:fragment rendered="#{empty v2ThesaurusViewBean.selectedConcept.notes}">
             <div class="muted">Aucune note renseignée.</div>
           </ui:fragment>
-          <ui:repeat value="#{v2ThesaurusViewBean.selectedConcept.notes}" var="note">
+          <ui:repeat value="#{v2ThesaurusViewBean.selectedNoteTypeCodes}" var="typeCode">
             <div class="note-grp">
-              <div class="note-grp-t">#{v2ThesaurusViewBean.noteTypeLabel(note.typeCode)}</div>
-              <div class="note-line">
-                <p class="cv-def">#{note.value} <span class="note-lang">(#{note.lang})</span></p>
-              </div>
+              <div class="note-grp-t">#{v2ThesaurusViewBean.noteTypeLabel(typeCode)}</div>
+              <ui:repeat value="#{v2ThesaurusViewBean.notesOfType(typeCode)}" var="note">
+                <div class="note-line">
+                  <span class="tr-flag">#{v2ThesaurusViewBean.flagEmoji(note.lang)}</span>
+                  <p class="cv-def">#{note.value} <span class="note-lang">(#{note.lang})</span></p>
+                </div>
+              </ui:repeat>
             </div>
           </ui:repeat>
         </div>
       </section>
 
       <section class="cblock">
-        <div class="cblock-head">Alignement</div>
+        <div class="cblock-head">Ressources externes<div class="cblock-tools"><button type="button" class="cblock-gear" title="Agrandir" data-act="cblock-expand">⤢</button></div></div>
+        <div class="cblock-body">
+          <div class="crow">
+            <div class="crow-lbl">Ressources externes</div>
+            <div class="crow-val">
+              <ui:fragment rendered="#{empty v2ThesaurusViewBean.selectedConcept.externalResources}"><span class="muted">—</span></ui:fragment>
+              <ui:repeat value="#{v2ThesaurusViewBean.selectedConcept.externalResources}" var="res" varStatus="st">
+                <a class="link" href="#{res.uri}" target="_blank" rel="noopener">#{empty res.description ? res.uri : res.description}</a>
+                <h:outputText value=", " rendered="#{not st.last}"/>
+              </ui:repeat>
+            </div>
+          </div>
+          <div class="crow">
+            <div class="crow-lbl">Image</div>
+            <div class="crow-val">
+              <ui:fragment rendered="#{empty v2ThesaurusViewBean.selectedConcept.images}"><span class="muted">—</span></ui:fragment>
+              <ui:fragment rendered="#{not empty v2ThesaurusViewBean.selectedConcept.images}">
+              <div class="cv-media">
+                <ui:repeat value="#{v2ThesaurusViewBean.selectedConcept.images}" var="img">
+                  <a class="cv-media-item" href="#{img.uri}" target="_blank" rel="noopener">
+                    <img src="#{img.uri}" alt="#{empty img.imageName ? 'Image du concept' : img.imageName}"/>
+                    <ui:fragment rendered="#{not empty img.imageName or not empty img.copyright}">
+                      <span class="cv-media-cap">#{img.imageName}<ui:fragment rendered="#{not empty img.copyright}"> · #{img.copyright}</ui:fragment></span>
+                    </ui:fragment>
+                  </a>
+                </ui:repeat>
+              </div>
+              </ui:fragment>
+            </div>
+          </div>
+          <div class="crow">
+            <div class="crow-lbl">Coordonnées GPS</div>
+            <div class="crow-val">
+              <ui:fragment rendered="#{empty v2ThesaurusViewBean.gpsDisplay}">
+                <span class="muted">Ex. : 48.922548 2.145240</span>
+              </ui:fragment>
+              <ui:fragment rendered="#{not empty v2ThesaurusViewBean.gpsDisplay}">
+                <span>#{v2ThesaurusViewBean.gpsDisplay}</span>
+              </ui:fragment>
+            </div>
+          </div>
+        </div>
+      </section>
+
+      <section class="cblock">
+        <div class="cblock-head">Alignement<div class="cblock-tools"><button type="button" class="cblock-gear" title="Agrandir" data-act="cblock-expand">⤢</button></div></div>
         <div class="cblock-body">
           <ui:fragment rendered="#{empty v2ThesaurusViewBean.selectedConcept.alignmentGroups}">
             <div class="muted">Aucun alignement vers un référentiel externe.</div>
@@ -191,48 +258,72 @@
           <ui:repeat value="#{v2ThesaurusViewBean.selectedConcept.alignmentGroups}" var="group">
             <ui:repeat value="#{group.items}" var="align">
               <div class="align-item">
-                <span class="align-type">#{group.typeLabel}</span>
+                <span class="align-type align-#{group.typeKey}">#{group.typeLabel}</span>
                 <span class="align-src">#{align.sourceName}</span>
                 <a class="align-uri" href="#{align.uri}" target="_blank" rel="noopener">#{align.uri}</a>
               </div>
             </ui:repeat>
           </ui:repeat>
+          <div class="align-auto-actions">
+            <button type="button" class="bo-btn sm" data-act="align-auto-search"><span class="aa-ic">⌕</span> Recherche automatique</button>
+            <button type="button" class="bo-btn sm" data-act="align-auto-compare"><span class="aa-ic">⇄</span> Comparaison automatique</button>
+          </div>
         </div>
       </section>
 
       <section class="cblock">
-        <div class="cblock-head">Identifiants &amp; notation</div>
+        <div class="cblock-head">Identifiants &amp; notation<div class="cblock-tools"><button type="button" class="cblock-gear" title="Agrandir" data-act="cblock-expand">⤢</button></div></div>
         <div class="cblock-body">
-          <div class="crow">
-            <div class="crow-lbl">Notation</div>
-            <div class="crow-val is-mono"><span>#{v2ThesaurusViewBean.dash(v2ThesaurusViewBean.selectedConcept.summary.notation)}</span></div>
-          </div>
-          <div class="crow">
-            <div class="crow-lbl">ID interne</div>
-            <div class="crow-val is-mono"><span class="link">#{v2ThesaurusViewBean.selectedConcept.summary.conceptId}</span></div>
-          </div>
-          <div class="crow">
-            <div class="crow-lbl">URI</div>
-            <div class="crow-val">
-              <ui:fragment rendered="#{v2ThesaurusViewBean.selectedConcept.identifiers == null}">
-                <span class="muted">—</span>
-              </ui:fragment>
-              <ui:fragment rendered="#{v2ThesaurusViewBean.selectedConcept.identifiers != null}">
-                <a class="link" href="#{v2ThesaurusViewBean.selectedConcept.identifiers.internalPermalinkUrl}">#{v2ThesaurusViewBean.dash(v2ThesaurusViewBean.selectedConcept.identifiers.internalPermalinkUrl)}</a>
-              </ui:fragment>
+          <div class="cv-ids">
+            <div class="cv-ids-main">
+              <div class="crow">
+                <div class="crow-lbl">Notation</div>
+                <div class="crow-val is-mono"><span>#{v2ThesaurusViewBean.dash(v2ThesaurusViewBean.selectedConcept.summary.notation)}</span></div>
+              </div>
+              <div class="crow">
+                <div class="crow-lbl">ID interne</div>
+                <div class="crow-val is-mono"><span class="link">#{v2ThesaurusViewBean.selectedConcept.summary.conceptId}</span></div>
+              </div>
+              <div class="crow">
+                <div class="crow-lbl">URI</div>
+                <div class="crow-val">
+                  <ui:fragment rendered="#{v2ThesaurusViewBean.selectedConcept.identifiers == null}">
+                    <span class="muted">—</span>
+                  </ui:fragment>
+                  <ui:fragment rendered="#{v2ThesaurusViewBean.selectedConcept.identifiers != null}">
+                    <a class="link" href="#{v2ThesaurusViewBean.selectedConcept.identifiers.internalPermalinkUrl}">#{v2ThesaurusViewBean.dash(v2ThesaurusViewBean.selectedConcept.identifiers.internalPermalinkUrl)}</a>
+                  </ui:fragment>
+                </div>
+              </div>
+              <div class="crow">
+                <div class="crow-lbl">Identifiant permanent</div>
+                <div class="crow-val is-mono">
+                  <span>#{v2ThesaurusViewBean.selectedConcept.identifiers == null ? '—' : v2ThesaurusViewBean.dash(v2ThesaurusViewBean.selectedConcept.identifiers.permanentId)}</span>
+                </div>
+              </div>
             </div>
+            <ui:fragment rendered="#{v2ThesaurusViewBean.showQrCode}">
+              <div class="cv-qr">
+                <h:outputText value="#{v2ThesaurusViewBean.qrSvg}" escape="false"/>
+              </div>
+            </ui:fragment>
           </div>
           <div class="crow">
-            <div class="crow-lbl">Identifiant permanent</div>
-            <div class="crow-val is-mono">
-              <span>#{v2ThesaurusViewBean.selectedConcept.identifiers == null ? '—' : v2ThesaurusViewBean.dash(v2ThesaurusViewBean.selectedConcept.identifiers.permanentId)}</span>
+            <div class="crow-lbl">Exporter en SKOS</div>
+            <div class="crow-val">
+              <div class="skos-links">
+                <a class="skos-link" href="#{v2ThesaurusViewBean.skosExportUrl('rdf')}" target="_blank" rel="noopener">RDF/XML</a>
+                <a class="skos-link" href="#{v2ThesaurusViewBean.skosExportUrl('json')}" target="_blank" rel="noopener">JSON</a>
+                <a class="skos-link" href="#{v2ThesaurusViewBean.skosExportUrl('jsonld')}" target="_blank" rel="noopener">JSON-LD</a>
+                <a class="skos-link" href="#{v2ThesaurusViewBean.skosExportUrl('turtle')}" target="_blank" rel="noopener">Turtle</a>
+              </div>
             </div>
           </div>
         </div>
       </section>
 
       <section class="cblock">
-        <div class="cblock-head">Information temporelle</div>
+        <div class="cblock-head">Information temporelle<div class="cblock-tools"><button type="button" class="cblock-gear" title="Agrandir" data-act="cblock-expand">⤢</button></div></div>
         <div class="cblock-body">
           <div class="crow">
             <div class="crow-lbl">Créé le</div>

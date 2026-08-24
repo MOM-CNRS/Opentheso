@@ -27,6 +27,7 @@ import java.util.Set;
 public class CandidatQueryRepository {
 
     private static final String UNKNOWN_USER = "Utilisateur inconnu";
+    public static final int BOARD_LIST_CAP = 400;
 
     @PersistenceContext
     private EntityManager entityManager;
@@ -39,7 +40,7 @@ public class CandidatQueryRepository {
     @SuppressWarnings("unchecked")
     public List<CandidatListRow> findCandidatesByStatus(String thesaurusId, String lang, int statusId, String searchTerm) {
         String language = StringUtils.isBlank(lang) ? "fr" : lang;
-        boolean searchEnabled = StringUtils.isNotBlank(searchTerm);
+        int searchFlag = StringUtils.isNotBlank(searchTerm) ? 1 : 0;
         String sql = """
                 SELECT
                     cs.id_concept,
@@ -97,7 +98,7 @@ public class CandidatQueryRepository {
                 WHERE cs.id_thesaurus = :thesaurusId
                   AND cs.id_status = :statusId
                   AND (
-                      :searchEnabled = false
+                      :searchFlag = 0
                       OR f_unaccent(lower(COALESCE(pref.lexical_value, '')))
                           LIKE CONCAT('%', f_unaccent(lower(:searchTerm)), '%')
                       OR f_unaccent(lower(COALESCE(u_creator.username, '')))
@@ -110,10 +111,27 @@ public class CandidatQueryRepository {
                 .setParameter("statusId", statusId)
                 .setParameter("lang", language)
                 .setParameter("unknownUser", UNKNOWN_USER)
-                .setParameter("searchEnabled", searchEnabled)
-                .setParameter("searchTerm", searchEnabled ? searchTerm.trim() : "")
+                .setParameter("searchFlag", searchFlag)
+                .setParameter("searchTerm", searchFlag == 1 ? searchTerm.trim() : "")
+                .setMaxResults(BOARD_LIST_CAP)
                 .getResultList();
         return rows.stream().map(this::toCandidatListRow).toList();
+    }
+
+    public int countCandidatesByStatus(String thesaurusId, int statusId) {
+        if (StringUtils.isBlank(thesaurusId)) {
+            return 0;
+        }
+        Number result = (Number) entityManager.createNativeQuery("""
+                SELECT COUNT(*)
+                FROM candidat_status cs
+                WHERE cs.id_thesaurus = :thesaurusId
+                  AND cs.id_status = :statusId
+                """)
+                .setParameter("thesaurusId", thesaurusId)
+                .setParameter("statusId", statusId)
+                .getSingleResult();
+        return result != null ? result.intValue() : 0;
     }
 
     public Optional<CandidatDetailBundle> findCandidateDetailBundle(

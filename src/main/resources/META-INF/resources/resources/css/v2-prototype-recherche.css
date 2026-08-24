@@ -1041,8 +1041,12 @@ tr.flat-filters th{position:sticky;top:33px;z-index:2;background:var(--surface);
   padding:14px 0 12px;border-bottom:1px solid var(--line-2);margin-bottom:4px}
 .cblock-tools{margin-left:auto;display:flex;gap:3px}
 .cblock-gear{color:var(--ink-4);font-size:13px;width:28px;height:26px;
-  border-radius:6px;display:grid;place-items:center}
+  border-radius:6px;display:grid;place-items:center;background:none;border:none;cursor:pointer}
 .cblock-gear:hover{background:var(--surface-2);color:var(--accent)}
+.cv-media{display:flex;flex-wrap:wrap;gap:10px}
+.cv-media-item{display:flex;flex-direction:column;gap:4px;max-width:168px;color:inherit;text-decoration:none}
+.cv-media-item img{width:160px;height:110px;object-fit:cover;border-radius:8px;border:1px solid var(--line);background:var(--surface-2)}
+.cv-media-cap{font-size:12px;color:var(--ink-3);line-height:1.35}
 .cv-blocks{display:flex;flex-direction:column}
 .cblock-drag{color:var(--ink-4);width:22px;height:26px;border-radius:6px;display:grid;place-items:center;
   cursor:grab;margin-left:-4px;flex:0 0 auto;background:none;border:none;padding:0}
@@ -1116,7 +1120,7 @@ tr.flat-filters th{position:sticky;top:33px;z-index:2;background:var(--surface);
 
 .skos-links{display:flex;flex-wrap:wrap;gap:8px}
 .skos-link{font-size:12.5px;font-weight:600;color:var(--accent);background:var(--accent-soft);
-  border-radius:7px;padding:5px 12px}
+  border-radius:7px;padding:5px 12px;text-decoration:none}
 .skos-link:hover{filter:brightness(.97);text-decoration:underline}
 
 /* ───────── Card plein écran ───────── */

@@ -205,6 +205,10 @@
                                action="#{v2ThesaurusViewBean.revealInTree}">
                 <f:ajax execute="@form" render=":previewTree"/>
               </h:commandButton>
+              <h:commandButton id="clearRevealBtn" value="Effacer" styleClass="preview-open-btn"
+                               action="#{v2ThesaurusViewBean.clearTreeReveal}">
+                <f:ajax execute="@this"/>
+              </h:commandButton>
             </h:form>
             <h:form id="previewTreeForm" prependId="false">
               <h:panelGroup id="previewTree" layout="block">

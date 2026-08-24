@@ -305,6 +305,7 @@ class ThesaurusViewBeanTest {
         when(v2LocaleBean.getIdLangue()).thenReturn("fr");
         when(thesaurusPreferenceService.loadUsedLanguages("th17", "fr")).thenReturn(List.of(language("fr", "Français")));
         when(conceptReadService.loadDetail("th17", "c1", "fr", true)).thenReturn(Optional.of(conceptDetail("c1", "Lieux", "C")));
+        when(conceptReadService.countBranchConcepts("th17", "c1")).thenReturn(2);
 
         bean.openTreeNode("c1", "concept");
 
@@ -313,7 +314,16 @@ class ThesaurusViewBeanTest {
         assertFalse(bean.isFacetSelected());
         assertEquals("concept", bean.getSelectedKind());
         assertEquals("Lieux", bean.getSelectedConcept().getSummary().getPreferredLabel());
+        assertEquals(2, bean.getBranchConceptCount());
         verify(conceptReadService).loadDetail("th17", "c1", "fr", true);
+        verify(conceptReadService).countBranchConcepts("th17", "c1");
+    }
+
+    @Test
+    void flagEmoji_mapsLanguageToRegionalIndicator() {
+        assertEquals("🇫🇷", bean.flagEmoji("fr"));
+        assertEquals("🇬🇧", bean.flagEmoji("en"));
+        assertEquals("🏳️", bean.flagEmoji(""));
     }
 
     @Test

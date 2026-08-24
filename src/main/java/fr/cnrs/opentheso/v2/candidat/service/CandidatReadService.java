@@ -39,6 +39,14 @@ public class CandidatReadService {
     }
 
     @Transactional(readOnly = true)
+    public int countByStatus(String thesaurusId, int statusId) {
+        if (StringUtils.isBlank(thesaurusId)) {
+            return 0;
+        }
+        return candidatQueryRepository.countCandidatesByStatus(thesaurusId, statusId);
+    }
+
+    @Transactional(readOnly = true)
     public void loadDetails(CandidatDto candidat, String thesaurusId) {
         if (candidat == null || StringUtils.isBlank(candidat.getIdConcepte()) || StringUtils.isBlank(thesaurusId)) {
             return;

@@ -33,6 +33,35 @@ function resolveNodeType(el) {
   return type || "concept";
 }
 
+function beginLiveOpen() {
+  const live = $("#viewLive");
+  if (!live) return;
+  live.classList.add("is-loading");
+  live.classList.remove("is-ready");
+  showPanel(".view-panel", "viewLive");
+  const back = $("#liveBackList");
+  if (back && fromCandList()) back.hidden = false;
+  paintListBack();
+  const view = $("#previewView");
+  if (view) view.scrollTop = 0;
+}
+
+function finishLiveOpen() {
+  const live = $("#viewLive");
+  if (!live) return;
+  live.classList.remove("is-loading");
+  live.classList.add("is-ready");
+}
+
+function markCandRowOpen(id) {
+  $$(".cand-row").forEach((row) => {
+    const on = !!(id && row.getAttribute("data-id") === id);
+    row.classList.toggle("is-open", on);
+    if (on) row.setAttribute("aria-current", "page");
+    else row.removeAttribute("aria-current");
+  });
+}
+
 function openLiveDetail(id, nodeType) {
   const idEl = document.getElementById("previewOpenForm:openId");
   const typeEl = document.getElementById("previewOpenForm:openType");
@@ -40,8 +69,59 @@ function openLiveDetail(id, nodeType) {
   if (!id || !idEl || !btn) return false;
   idEl.value = id;
   if (typeEl) typeEl.value = nodeType || "";
+  if (!(state.view === "hyper" && state.graphFront)) beginLiveOpen();
+  markCandRowOpen(id);
   btn.click();
   return true;
+}
+
+function fromCandList() {
+  return SCREEN === "candidats"
+      || new URLSearchParams(location.search).get("from") === "candidats";
+}
+
+function paintListBack() {
+  const btn = $("#liveBackList");
+  if (!btn) return;
+  const show = fromCandList() && liveDetailRequested() && !state.home && !state.draft;
+  btn.hidden = !show;
+}
+
+function backToCandList() {
+  if (SCREEN === "candidats") {
+    const keepId = state.conceptId;
+    state.home = false;
+    state.draft = false;
+    state.conceptId = null;
+    highlightConcept(null);
+    const live = $("#viewLive");
+    if (live) live.classList.remove("is-loading", "is-ready");
+    const clearBtn = document.getElementById("previewTreeRevealForm:clearRevealBtn");
+    if (clearBtn) clearBtn.click();
+    showPanel(".view-panel", "viewCandList");
+    paintListBack();
+    markCandRowOpen(keepId);
+    const row = keepId && document.querySelector('.cand-row[data-id="' + CSS.escape(keepId) + '"]');
+    if (row) requestAnimationFrame(() => row.focus());
+    return;
+  }
+  go("candidat/candidats.xhtml");
+}
+
+function selectOpenedInTree(id) {
+  if (!id) return;
+  const tn = findTreeNodeById(id);
+  if (tn) {
+    const st = tn.getAttribute("data-status");
+    if (st && !state.statusSet.has(st)) {
+      state.statusSet.add(st);
+      if (typeof syncStatusUi === "function") syncStatusUi();
+    }
+    if (typeof applyStatusFilter === "function") applyStatusFilter();
+    highlightConcept(id);
+    return;
+  }
+  revealTreeConcept(id);
 }
 
 function showLiveDetail() {
@@ -51,11 +131,14 @@ function showLiveDetail() {
   state.draft = false;
   state.conceptId = el.getAttribute("data-id") || state.conceptId;
   highlightConcept(state.conceptId);
+  selectOpenedInTree(state.conceptId);
   paintGraphBack();
+  paintListBack();
   if (state.view === "hyper" && state.graphFront) {
     return false;
   }
   showPanel(".view-panel", "viewLive");
+  finishLiveOpen();
   const view = $("#previewView");
   if (view) view.scrollTop = 0;
   return true;
@@ -105,6 +188,7 @@ function paintMain() {
   }
   showPanel(".view-panel", id);
   paintGraphBack();
+  paintListBack();
   const nq = $("#nrQuery");
   if (nq) nq.textContent = state.committed;
 }
@@ -298,18 +382,22 @@ function createCandidate(btn) {
   if (root) {
     root.classList.toggle("is-under", !!parentName);
     root.classList.toggle("has-path", !!pathKey);
-    const nameEl = $("#draftParentName");
-    if (nameEl) nameEl.textContent = parentName;
     const pathEl = $("#draftPathLabel");
     if (pathEl) pathEl.textContent = pathKey.replace(/\//g, " › ");
+    const pathBox = $("#draftPathBox");
+    if (pathBox) pathBox.hidden = !pathKey;
     const bt = $("#draftBt");
     if (bt) bt.value = parentName;
-    const coll = $("#draftColl");
-    if (coll) coll.value = pathKey ? pathKey.split("/")[0] : "";
-    ["draftTitle", "draftAlts", "draftNt", "draftRt", "draftTrFr", "draftTrEn", "draftTrDe", "draftTrEs", "draftTrIt", "draftDef", "draftScope"].forEach(id => {
+    if (typeof resetCollectionPicker === "function") {
+      resetCollectionPicker(pathKey ? pathKey.split("/")[0] : "");
+    }
+    ["draftTitle", "draftAlts", "draftHidden", "draftNt", "draftRt", "draftCustomRel",
+     "draftTrFr", "draftTrEn", "draftTrDe", "draftTrEs", "draftTrIt",
+     "draftDef", "draftScope", "draftExt", "draftImg", "draftGps"].forEach(id => {
       const el = $("#" + id);
       if (el) el.value = "";
     });
+    syncDraftPrefMirror();
   }
   highlightConcept(null);
   $("#searchBox") && $("#searchBox").classList.remove("is-open");
@@ -317,7 +405,24 @@ function createCandidate(btn) {
   requestAnimationFrame(() => { const t = $("#draftTitle"); if (t) t.focus(); });
 }
 
+function syncDraftPrefMirror() {
+  const title = $("#draftTitle");
+  const mirror = $("#draftPrefMirror");
+  const value = title && title.value.trim();
+  if (mirror) mirror.textContent = value || "—";
+  const create = $("#draftCreate");
+  if (create) create.disabled = !value;
+}
+
 function resolveDraft(kind) {
+  if (kind === "créé") {
+    const title = $("#draftTitle");
+    if (!title || !title.value.trim()) {
+      if (title) title.focus();
+      toast("Indiquez un intitulé pour créer le candidat", { soft: true });
+      return;
+    }
+  }
   state.draft = false;
   toast(kind === "créé" ? "Candidat créé · en attente de validation" : "Création annulée");
   if (SCREEN === "candidats") {
@@ -356,4 +461,43 @@ function setBatch(obj, op) {
 
 function boReset(p) {
   if (p) p.classList.remove("has-file", "is-checked", "is-corrected", "is-done");
+}
+
+function closeConceptBlockOverlay() {
+  const ov = $("#cblockOverlay");
+  if (!ov) return;
+  ov.hidden = true;
+  ov.setAttribute("aria-hidden", "true");
+  const body = ov.querySelector(".block-modal-body");
+  if (body) body.innerHTML = "";
+}
+
+function expandConceptBlock(gear) {
+  const block = gear && gear.closest(".cblock");
+  if (!block) return;
+  const titleNode = block.querySelector(".cblock-head");
+  const body = block.querySelector(".cblock-body");
+  if (!body) return;
+  let ov = $("#cblockOverlay");
+  if (!ov) {
+    ov = document.createElement("div");
+    ov.id = "cblockOverlay";
+    ov.className = "block-overlay";
+    ov.innerHTML = '<div class="block-modal" role="dialog" aria-modal="true">'
+      + '<div class="block-modal-head"><span class="cblock-overlay-title"></span>'
+      + '<button type="button" data-act="cblock-collapse" title="Fermer" aria-label="Fermer">×</button></div>'
+      + '<div class="block-modal-body"></div></div>';
+    ov.addEventListener("click", function (e) {
+      if (e.target === ov) closeConceptBlockOverlay();
+    });
+    document.body.appendChild(ov);
+  }
+  const title = ov.querySelector(".cblock-overlay-title");
+  const dest = ov.querySelector(".block-modal-body");
+  if (title) {
+    title.textContent = (titleNode && titleNode.childNodes[0] && titleNode.childNodes[0].textContent || "").trim();
+  }
+  if (dest) dest.replaceChildren(body.cloneNode(true));
+  ov.hidden = false;
+  ov.setAttribute("aria-hidden", "false");
 }

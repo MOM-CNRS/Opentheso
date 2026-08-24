@@ -59,6 +59,23 @@ class CollectionTreeApiControllerTest {
     }
 
     @Test
+    void list_usesQueryParams() {
+        var expected = List.of(new CollectionTreeNode("G1", "Matière", "01", "group", false, ""));
+        when(collectionTreeConsultationService.loadAll("TH1", "en", true)).thenReturn(expected);
+
+        var response = controller.list("TH1", "en", true);
+
+        assertEquals(expected, response);
+        verify(collectionTreeConsultationService).loadAll("TH1", "en", true);
+    }
+
+    @Test
+    void list_returnsEmptyWhenNoThesaurus() {
+        assertTrue(controller.list(" ", "fr", false).isEmpty());
+        verifyNoInteractions(collectionTreeConsultationService);
+    }
+
+    @Test
     void children_requiresParentAndThesaurus() {
         assertTrue(controller.children(" ", "TH1", "fr", false).isEmpty());
         assertTrue(controller.children("G1", " ", "fr", false).isEmpty());

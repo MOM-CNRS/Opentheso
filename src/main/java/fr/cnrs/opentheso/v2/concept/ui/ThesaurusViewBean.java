@@ -1,13 +1,17 @@
 package fr.cnrs.opentheso.v2.concept.ui;
 
 import fr.cnrs.opentheso.v2.concept.model.BreadcrumbStep;
+import fr.cnrs.opentheso.v2.concept.model.ConceptCorpusLinkItem;
 import fr.cnrs.opentheso.v2.concept.model.ConceptDetail;
+import fr.cnrs.opentheso.v2.concept.model.ConceptGpsPoint;
+import fr.cnrs.opentheso.v2.concept.model.ConceptIdentifiers;
 import fr.cnrs.opentheso.v2.concept.model.ConceptLabel;
 import fr.cnrs.opentheso.v2.concept.model.ConceptNote;
 import fr.cnrs.opentheso.v2.concept.model.ConceptRelation;
 import fr.cnrs.opentheso.v2.concept.model.ConceptTreeNodeData;
 import fr.cnrs.opentheso.v2.concept.model.FacetDetailOverview;
 import fr.cnrs.opentheso.v2.concept.service.ConceptReadService;
+import fr.cnrs.opentheso.v2.concept.support.ConceptQrSvgSupport;
 import fr.cnrs.opentheso.v2.concept.service.ThesaurusHomeWriteService;
 import fr.cnrs.opentheso.v2.rights.Permission;
 import fr.cnrs.opentheso.v2.rights.RightsService;
@@ -18,6 +22,7 @@ import fr.cnrs.opentheso.v2.setting.ui.ThesaurusContext;
 import fr.cnrs.opentheso.v2.shared.repository.ThesaurusHomeQueryRepository;
 import fr.cnrs.opentheso.v2.shared.ui.UserSession;
 import fr.cnrs.opentheso.v2.shared.ui.V2LocaleBean;
+import jakarta.faces.context.FacesContext;
 import jakarta.faces.view.ViewScoped;
 import jakarta.inject.Named;
 import lombok.Getter;
@@ -29,6 +34,7 @@ import java.io.Serializable;
 import java.text.NumberFormat;
 import java.util.ArrayList;
 import java.util.Collections;
+import java.util.LinkedHashSet;
 import java.util.List;
 import java.util.Locale;
 import java.util.stream.Collectors;
@@ -97,6 +103,12 @@ public class ThesaurusViewBean implements Serializable {
     private String candidateOn = "";
     @Getter
     private boolean detailRequested;
+    @Getter
+    private int branchConceptCount;
+    @Getter
+    private boolean corpusSearched;
+    @Getter
+    private List<ConceptCorpusLinkItem> displayedCorpusLinks = Collections.emptyList();
 
     public void ensureSessionThesaurus() {
         if (sessionReady) {
@@ -208,6 +220,11 @@ public class ThesaurusViewBean implements Serializable {
         }
     }
 
+    public void clearTreeReveal() {
+        revealId = "";
+        revealedConceptId = "";
+    }
+
     public void revealInTree() {
         String id = StringUtils.trimToEmpty(revealId);
         revealedConceptId = id;
@@ -256,6 +273,7 @@ public class ThesaurusViewBean implements Serializable {
         selectedFacet = null;
         candidateBy = "";
         candidateOn = "";
+        resetConceptExtras();
         if (StringUtils.isBlank(id)) {
             return;
         }
@@ -276,6 +294,127 @@ public class ThesaurusViewBean implements Serializable {
         if (candidate) {
             applySelectedCandidateMeta(id);
         }
+        branchConceptCount = conceptReadService.countBranchConcepts(getId(), id);
+    }
+
+    public void searchCorpusLinks() {
+        corpusSearched = true;
+        if (selectedConcept == null || selectedConcept.getSummary() == null) {
+            displayedCorpusLinks = Collections.emptyList();
+            return;
+        }
+        displayedCorpusLinks = conceptReadService.loadCorpusLinks(
+                getId(),
+                conceptReadService.toCorpusSearchContext(selectedConcept.getSummary())
+        );
+    }
+
+    public boolean isCorpusNoResult() {
+        return corpusSearched && displayedCorpusLinks.isEmpty();
+    }
+
+    public boolean isShowQrCode() {
+        ConceptIdentifiers identifiers = selectedConcept == null ? null : selectedConcept.getIdentifiers();
+        return identifiers != null && identifiers.isShowQrCode();
+    }
+
+    public String getQrSvg() {
+        if (!isShowQrCode()) {
+            return "";
+        }
+        return ConceptQrSvgSupport.toSvg(selectedConcept.getIdentifiers().getQrCodeValue());
+    }
+
+    public String getGpsDisplay() {
+        if (selectedConcept == null || selectedConcept.getGpsPoints() == null
+                || selectedConcept.getGpsPoints().isEmpty()) {
+            return "";
+        }
+        return selectedConcept.getGpsPoints().stream()
+                .map(ThesaurusViewBean::formatGpsPoint)
+                .collect(Collectors.joining(", "));
+    }
+
+    public List<String> getSelectedNoteTypeCodes() {
+        if (selectedConcept == null || selectedConcept.getNotes() == null) {
+            return Collections.emptyList();
+        }
+        return selectedConcept.getNotes().stream()
+                .map(ConceptNote::typeCode)
+                .filter(StringUtils::isNotBlank)
+                .collect(Collectors.collectingAndThen(
+                        Collectors.toCollection(LinkedHashSet::new),
+                        ArrayList::new
+                ));
+    }
+
+    public List<ConceptNote> notesOfType(String typeCode) {
+        if (selectedConcept == null) {
+            return Collections.emptyList();
+        }
+        return selectedConcept.notesOfType(typeCode);
+    }
+
+    public String flagEmoji(String lang) {
+        String code = StringUtils.defaultString(lang).trim().toLowerCase(Locale.ROOT);
+        if (code.contains("-")) {
+            code = code.substring(0, code.indexOf('-'));
+        }
+        String region = switch (code) {
+            case "en" -> "gb";
+            case "ar" -> "sa";
+            case "zh" -> "cn";
+            case "ja" -> "jp";
+            case "ko" -> "kr";
+            case "el" -> "gr";
+            case "uk" -> "ua";
+            case "cs" -> "cz";
+            case "da" -> "dk";
+            case "sv" -> "se";
+            case "nb", "nn", "no" -> "no";
+            case "he" -> "il";
+            case "fa" -> "ir";
+            case "hi" -> "in";
+            case "eu" -> "es";
+            case "ca" -> "es";
+            case "cy" -> "gb";
+            default -> code.length() == 2 ? code : "";
+        };
+        if (region.length() != 2 || !region.chars().allMatch(ch -> ch >= 'a' && ch <= 'z')) {
+            return "🏳️";
+        }
+        return new String(Character.toChars(0x1F1E6 + (region.charAt(0) - 'a')))
+                + new String(Character.toChars(0x1F1E6 + (region.charAt(1) - 'a')));
+    }
+
+    public String languageLabel(String lang) {
+        if (StringUtils.isBlank(lang)) {
+            return "";
+        }
+        return getLanguages().stream()
+                .filter(item -> lang.equalsIgnoreCase(item.code()))
+                .map(ThesaurusLanguage::getValue)
+                .filter(StringUtils::isNotBlank)
+                .findFirst()
+                .orElse(lang);
+    }
+
+    public String skosExportUrl(String format) {
+        if (selectedConcept == null || selectedConcept.getSummary() == null) {
+            return "#";
+        }
+        String extension = switch (StringUtils.defaultString(format).toLowerCase(Locale.ROOT)) {
+            case "json" -> "json";
+            case "jsonld" -> "jsonld";
+            case "turtle", "ttl" -> "ttl";
+            default -> "rdf";
+        };
+        String contextPath = "";
+        FacesContext facesContext = FacesContext.getCurrentInstance();
+        if (facesContext != null) {
+            contextPath = StringUtils.defaultString(facesContext.getExternalContext().getRequestContextPath());
+        }
+        return contextPath + "/api/" + getId() + "." + selectedConcept.getSummary().getConceptId() + "." + extension;
     }
 
     public boolean isDetailVisible() {
@@ -586,6 +725,8 @@ public class ThesaurusViewBean implements Serializable {
         node.setPath(StringUtils.isBlank(parentPath) ? data.getLabel() : parentPath + "/" + data.getLabel());
         if ("candidat".equals(data.getNodeType())) {
             node.setStatus("candidat");
+        } else if ("rejete".equals(data.getNodeType())) {
+            node.setStatus("rejete");
         } else if ("deprecated".equals(data.getNodeType())) {
             node.setStatus("deprecie");
         } else {
@@ -709,5 +850,23 @@ public class ThesaurusViewBean implements Serializable {
 
     private static String formatCount(int count) {
         return NumberFormat.getIntegerInstance(Locale.FRANCE).format(count);
+    }
+
+    private void resetConceptExtras() {
+        branchConceptCount = 0;
+        corpusSearched = false;
+        displayedCorpusLinks = Collections.emptyList();
+    }
+
+    private static String formatGpsPoint(ConceptGpsPoint point) {
+        return formatGpsCoordinate(point.latitude()) + " " + formatGpsCoordinate(point.longitude());
+    }
+
+    private static String formatGpsCoordinate(double value) {
+        String text = Double.toString(value);
+        if (text.contains("E") || text.contains("e")) {
+            return String.format(Locale.US, "%f", value).replaceAll("0+$", "").replaceAll("\\.$", "");
+        }
+        return text;
     }
 }

@@ -13,6 +13,13 @@
   </h:form>
 
   <div class="view-panel" id="viewLive">
+    <div class="cv-progress" id="liveProgress" aria-hidden="true"></div>
+    <a class="cv-back-graph" id="liveBackList" hidden="hidden"
+       href="candidat/candidats.xhtml" data-act="back-cand-list"
+       title="Retour à la liste des candidats">
+      <svg viewBox="0 0 24 24" aria-hidden="true"><path d="M19 12H5"/><path d="m12 19-7-7 7-7"/></svg>
+      Retour à la liste
+    </a>
     <button type="button" class="cv-back-graph" id="liveBackGraph" hidden="hidden"
             data-act="back-graph" title="Retour au graphe">
       <svg viewBox="0 0 24 24" aria-hidden="true"><path d="M19 12H5"/><path d="m12 19-7-7 7-7"/></svg>
@@ -25,11 +32,8 @@
              data-requested="#{v2ThesaurusViewBean.detailRequested ? '1' : '0'}"
              data-id="#{v2ThesaurusViewBean.selectedId}"
              data-kind="#{v2ThesaurusViewBean.selectedKind}">
-          <ui:fragment rendered="#{v2ThesaurusViewBean.conceptSelected}">
+          <ui:fragment rendered="#{v2ThesaurusViewBean.conceptSelected or v2ThesaurusViewBean.candidateSelected}">
             <ui:include src="concept-form.xhtml"/>
-          </ui:fragment>
-          <ui:fragment rendered="#{v2ThesaurusViewBean.candidateSelected}">
-            <ui:include src="candidate-form.xhtml"/>
           </ui:fragment>
           <ui:fragment rendered="#{v2ThesaurusViewBean.facetSelected}">
             <ui:include src="facet-form.xhtml"/>

@@ -207,7 +207,9 @@ public class ConceptReadService {
     private ConceptTreeNodeData toThesaurusTreeNode(ConceptTreeRow row) {
         String status = StringUtils.trimToEmpty(row.status());
         String nodeType;
-        if ("CA".equalsIgnoreCase(status)) {
+        if ("REJ".equalsIgnoreCase(status)) {
+            nodeType = "rejete";
+        } else if ("CA".equalsIgnoreCase(status)) {
             nodeType = "candidat";
         } else if (ConceptStatusPolicy.isDeprecated(status)) {
             nodeType = "deprecated";

@@ -64,6 +64,33 @@ public class CollectionTreeQueryRepository {
     }
 
     /**
+     * Toutes les collections du thésaurus, à plat. Colonnes : id, label, notation.
+     */
+    @SuppressWarnings("unchecked")
+    public List<Object[]> findAllGroups(String thesaurusId, String lang, boolean includePrivate) {
+        StringBuilder sql = new StringBuilder("""
+            SELECT cg.idgroup,
+                   COALESCE((
+                       SELECT cgl.lexicalvalue
+                       FROM concept_group_label cgl
+                       WHERE cgl.idgroup = cg.idgroup
+                         AND cgl.idthesaurus = cg.idthesaurus
+                         AND cgl.lang = :lang
+                       ORDER BY cgl.id
+                       LIMIT 1
+                   ), cg.idgroup) AS label,
+                   COALESCE(cg.notation, '') AS notation
+            FROM concept_group cg
+            WHERE cg.idthesaurus = :thesaurusId
+            """);
+        appendPublicOnly(sql, includePrivate);
+        return em.createNativeQuery(sql.toString())
+                .setParameter("thesaurusId", thesaurusId)
+                .setParameter("lang", lang)
+                .getResultList();
+    }
+
+    /**
      * Sous-collections directes. Colonnes : id, label, notation, has_children.
      */
     @SuppressWarnings("unchecked")

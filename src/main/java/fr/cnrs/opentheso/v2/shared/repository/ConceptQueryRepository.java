@@ -926,7 +926,7 @@ public class ConceptQueryRepository {
             SELECT c.id_concept,
                    COALESCE(c.notation, '') AS notation,
                    COALESCE(t.lexical_value, c.id_concept) AS label,
-                   c.status,
+                   """ + treeUiStatusExpression("c") + """
                    false AS has_children
             FROM concept c
             LEFT JOIN preferred_term pt
@@ -936,6 +936,9 @@ public class ConceptQueryRepository {
                 ON t.id_term = pt.id_term
                 AND t.id_thesaurus = c.id_thesaurus
                 AND t.lang = :lang
+            LEFT JOIN candidat_status cs
+                ON cs.id_concept = c.id_concept
+                AND cs.id_thesaurus = c.id_thesaurus
             WHERE c.id_thesaurus = :thesaurusId
               AND (
                   c.top_concept = true
@@ -947,7 +950,6 @@ public class ConceptQueryRepository {
                         AND hr.role LIKE 'BT%'
                   )
               )
-            """ + excludeRejectedCandidates("c") + """
             ORDER BY c.notation, label
             LIMIT 4000
             """)
@@ -975,7 +977,7 @@ public class ConceptQueryRepository {
             SELECT c.id_concept,
                    COALESCE(c.notation, '') AS notation,
                    COALESCE(t.lexical_value, c.id_concept) AS label,
-                   c.status,
+                   """ + treeUiStatusExpression("c") + """
                    """ + hasChildrenExpression(true) + """
             FROM hierarchical_relationship hr
             JOIN concept c
@@ -988,10 +990,13 @@ public class ConceptQueryRepository {
                 ON t.id_term = pt.id_term
                 AND t.id_thesaurus = c.id_thesaurus
                 AND t.lang = :lang
+            LEFT JOIN candidat_status cs
+                ON cs.id_concept = c.id_concept
+                AND cs.id_thesaurus = c.id_thesaurus
             WHERE hr.id_thesaurus = :thesaurusId
               AND hr.id_concept1 = :parentId
               AND hr.role LIKE 'NT%'
-            """ + facetExclusion + excludeRejectedCandidates("c") + """
+            """ + facetExclusion + """
             ORDER BY c.notation, label
             LIMIT 4000
             """)
@@ -1183,7 +1188,7 @@ public class ConceptQueryRepository {
             boolean includeAllStatuses
     ) {
         String statusFilter = includeAllStatuses
-                ? excludeRejectedCandidates("child")
+                ? ""
                 : "AND child.status != 'CA'";
         List<String> found = em.createNativeQuery("""
                 SELECT DISTINCT parent_id
@@ -1224,6 +1229,15 @@ public class ConceptQueryRepository {
         return hasChildrenExpression(false);
     }
 
+    private static String treeUiStatusExpression(String conceptAlias) {
+        return """
+            CASE
+                WHEN cs.id_status = %d THEN 'REJ'
+                ELSE %s.status
+            END AS status,
+            """.formatted(CandidatStatusCode.REJECTED, conceptAlias);
+    }
+
     private static String excludeRejectedCandidates(String conceptAlias) {
         return """
             AND NOT EXISTS (
@@ -1238,7 +1252,7 @@ public class ConceptQueryRepository {
 
     private static String hasChildrenExpression(boolean includeAllStatuses) {
         String statusFilter = includeAllStatuses
-                ? excludeRejectedCandidates("child")
+                ? ""
                 : "AND child.status != 'CA'";
         return """
             (

@@ -31,4 +31,8 @@ public record ConceptCorpusLinkItem(
     public boolean hasLink() {
         return onlyUriLink || noticeCount > 0;
     }
+
+    public boolean getHasLink() {
+        return hasLink();
+    }
 }

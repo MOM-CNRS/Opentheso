@@ -64,6 +64,14 @@ class CandidatReadServiceTest {
     }
 
     @Test
+    void countByStatus_delegatesToRepository() {
+        when(candidatQueryRepository.countCandidatesByStatus("TH1", 1)).thenReturn(8);
+
+        assertEquals(8, service.countByStatus("TH1", 1));
+        assertEquals(0, service.countByStatus("", 1));
+    }
+
+    @Test
     void loadDetails_usesSingleDetailBundleQuery() {
         var candidat = new CandidatDto();
         candidat.setIdConcepte("C1");

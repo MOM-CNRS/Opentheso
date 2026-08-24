@@ -76,14 +76,16 @@ class ConceptReadServiceTest {
         when(thesaurusPreferenceService.loadPreferencesOrNull("TH1", "fr")).thenReturn(null);
         when(conceptQueryRepository.findTreeRootConcepts("TH1", "fr")).thenReturn(List.of(
                 new ConceptTreeRow("C1", "", "Lieux", "C", true),
-                new ConceptTreeRow("CA1", "", "Tjarou", "CA", false)
+                new ConceptTreeRow("CA1", "", "Tjarou", "CA", false),
+                new ConceptTreeRow("R1", "", "Rejeté", "REJ", false)
         ));
 
         var nodes = service.loadTreeRootNodes("TH1", "fr");
 
-        assertEquals(2, nodes.size());
+        assertEquals(3, nodes.size());
         assertEquals("concept", nodes.get(0).nodeType());
         assertEquals("candidat", nodes.get(1).nodeType());
+        assertEquals("rejete", nodes.get(2).nodeType());
         assertEquals("Tjarou", nodes.get(1).label());
         verify(conceptTreeConsultationService).sortNodes(any(), eq(false));
     }
