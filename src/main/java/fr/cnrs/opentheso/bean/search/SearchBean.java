@@ -15,10 +15,12 @@ import fr.cnrs.opentheso.bean.rightbody.RightBodySetting;
 import fr.cnrs.opentheso.bean.rightbody.viewconcept.ConceptView;
 import fr.cnrs.opentheso.services.ConceptService;
 import fr.cnrs.opentheso.services.SearchService;
+import fr.cnrs.opentheso.services.TermService;
 import fr.cnrs.opentheso.services.ThesaurusService;
 
 import java.io.IOException;
 
+import fr.cnrs.opentheso.stats.services.StatEventService;
 import fr.cnrs.opentheso.utils.MessageUtils;
 import jakarta.annotation.PostConstruct;
 import jakarta.inject.Named;
@@ -57,6 +59,8 @@ public class SearchBean implements Serializable {
     private final ThesaurusService thesaurusService;
     private final ConceptService conceptService;
     private final SearchService searchService;
+    private final StatEventService statEventService;
+    private final TermService termService;
 
 
     private NodeSearchMini searchSelected;
@@ -127,31 +131,35 @@ public class SearchBean implements Serializable {
         listResultAutoComplete = new ArrayList<>();
         if(StringUtils.isEmpty(value)) return List.of();
         value = value.trim();
-
+        var idLang = "all".equalsIgnoreCase(selectedTheso.getSelectedLang()) ? null : selectedTheso.getSelectedLang();
         if (selectedTheso.getCurrentIdTheso() != null && selectedTheso.getSelectedLang() != null) {
-
-            var idLang = "all".equalsIgnoreCase(selectedTheso.getSelectedLang()) ? null : selectedTheso.getSelectedLang();
             var isCollectionPrivate = ObjectUtils.isEmpty(currentUser.getNodeUser());
-
             if (exactMatch) {
                 listResultAutoComplete = searchService.searchExactMatch(value, idLang, selectedTheso.getCurrentIdTheso(), isCollectionPrivate);
             }
-
             if (indexMatch) {
                 listResultAutoComplete = searchService.searchStartWith(value, idLang, selectedTheso.getCurrentIdTheso(), isCollectionPrivate);
             }
-
             if (withId) {
                 listResultAutoComplete = searchService.searchByAllId(value, idLang, selectedTheso.getCurrentIdTheso(), isCollectionPrivate);
             }
-
             if (withNote) {
                 listResultAutoComplete = searchService.searchNotes(value, idLang, selectedTheso.getCurrentIdTheso());
             }
-
             if (!withId && !withNote && !indexMatch && !exactMatch) {
                 listResultAutoComplete = searchService.searchFullTextElastic(value, idLang, selectedTheso.getCurrentIdTheso(), isCollectionPrivate);
             }
+        }
+        // Ne logguer que les recherches infructueuses (≥ 3 caractères, pour
+        // éviter le bruit des débuts de frappe qui n'ont structurellement
+        // aucune chance d'aboutir).
+        if (listResultAutoComplete.isEmpty() && value.length() >= 3) {
+            statEventService.logSearchNoResult(
+                    value,
+                    0,
+                    selectedTheso.getCurrentIdTheso(),
+                    selectedTheso.getThesoName(),
+                    idLang);
         }
 
         searchValue = value;
@@ -162,6 +170,16 @@ public class SearchBean implements Serializable {
         if (searchSelected == null) {
             return;
         }
+
+        // logguer les recherches pour le terme sélectionné
+        statEventService.logSearchResultSelected(
+                searchValue,
+                termService.getLexicalValueOfConcept(searchSelected.getIdConcept(), selectedTheso.getCurrentIdTheso(), selectedTheso.getCurrentLang()),
+                selectedTheso.getCurrentIdTheso(),
+                selectedTheso.getThesoName(),
+                selectedTheso.getCurrentLang());
+
+
         String[] values = searchSelected.getIdConcept().split("####");
         String idConcept;
         if (values.length > 1) {
@@ -230,8 +248,22 @@ public class SearchBean implements Serializable {
                 selectedItem = false;
             }
 
+            // logguer la recherche
+            statEventService.logSearchApplied(
+                    searchValue,
+                    nodeConceptSearchs.size(),
+                    selectedTheso.getCurrentIdTheso(),
+                    selectedTheso.getThesoName(),
+                    selectedTheso.getCurrentLang());
+
             PrimeFaces.current().executeScript("showResultSearchBar();");
         } else {
+            statEventService.logSearchNoResult(
+                    searchValue,
+                    nodeConceptSearchs.size(),
+                    selectedTheso.getCurrentIdTheso(),
+                    selectedTheso.getThesoName(),
+                    selectedTheso.getCurrentLang());
             MessageUtils.showWarnMessage("Recherche de '" + searchValue + "' : Aucun resultat trouvée !");
         }
 

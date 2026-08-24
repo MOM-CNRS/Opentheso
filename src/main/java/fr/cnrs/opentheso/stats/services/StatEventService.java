@@ -28,6 +28,47 @@ public class StatEventService {
     }
 
     @Async(StatAsyncConfig.EXECUTOR_NAME)
+    public void logSearchNoResult(String searchedTerm, int nbResults,
+                               String thesaurusId, String thesaurusLabel, String lang) {
+        LogEvent event = new LogEvent();
+        event.setEventType(StatEventType.SEARCH_NO_RESULT);
+        event.setEventTime(LocalDateTime.now());
+        event.setSearchedTerm(searchedTerm);
+        event.setNbResults(nbResults);
+        event.setThesaurusId(thesaurusId);
+        event.setThesaurusLabel(thesaurusLabel);
+        event.setLang(lang);
+        save(event);
+    }
+    @Async(StatAsyncConfig.EXECUTOR_NAME)
+    public void logSearchResultSelected(String searchedTerm, String selectedTerm,
+                                  String thesaurusId, String thesaurusLabel, String lang) {
+        LogEvent event = new LogEvent();
+        event.setEventType(StatEventType.SEARCH_RESULT_SELECTED);
+        event.setEventTime(LocalDateTime.now());
+        event.setSearchedTerm(searchedTerm);
+        event.setSelectedTerm(selectedTerm);
+        event.setThesaurusId(thesaurusId);
+        event.setThesaurusLabel(thesaurusLabel);
+        event.setLang(lang);
+        save(event);
+    }
+
+    @Async(StatAsyncConfig.EXECUTOR_NAME)
+    public void logSearchApplied(String searchedTerm, int nbResults,
+                                        String thesaurusId, String thesaurusLabel, String lang) {
+        LogEvent event = new LogEvent();
+        event.setEventType(StatEventType.SEARCH_APPLIED);
+        event.setEventTime(LocalDateTime.now());
+        event.setSearchedTerm(searchedTerm);
+        event.setNbResults(nbResults);
+        event.setThesaurusId(thesaurusId);
+        event.setThesaurusLabel(thesaurusLabel);
+        event.setLang(lang);
+        save(event);
+    }
+
+    @Async(StatAsyncConfig.EXECUTOR_NAME)
     public void logConceptView(String conceptId, String conceptLabel, String lang,
                                String thesaurusId, String thesaurusLabel) {
         LogEvent event = new LogEvent();

@@ -237,8 +237,8 @@
     </changeSet>
 
     <!-- Pour les stats -->
-    <changeSet id="stat_26.07.02" author="Miled">
-        <sqlFile path="v26/stat_26-07_02.sql" relativeToChangelogFile="true" splitStatements="false"/>
+    <changeSet id="stat_26.07.05" author="Miled">
+        <sqlFile path="v26/stat_26-07_05.sql" relativeToChangelogFile="true" splitStatements="false"/>
     </changeSet>
 
 

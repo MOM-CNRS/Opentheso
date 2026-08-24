@@ -1,28 +1,31 @@
 package fr.cnrs.opentheso.stats.dto;
 
+import lombok.AllArgsConstructor;
 import lombok.Data;
 
+import java.util.ArrayList;
+import java.util.List;
+
 @Data
-/**
- * Résultat agrégé : nombre de vues d'un concept sur une période donnée.
- * Le libellé (label) n'est volontairement pas rempli ici : il doit être
- * récupéré via votre service de concepts existant, à partir de conceptId,
- * pour toujours afficher le libellé ACTUEL (et non celui, potentiellement
- * périmé, stocké au moment du log).
- */
+@AllArgsConstructor
 public class ConceptStat {
 
-    private final String conceptId;
-    private final String thesaurusId;
-    private final String thesaurusLabel;
-    private final long totalVues;
-    private String label; // à renseigner via votre service de concepts (libellé ACTUEL)
-
-    public ConceptStat(String conceptId, String thesaurusId, String thesaurusLabel, long totalVues) {
-        this.conceptId = conceptId;
-        this.thesaurusId = thesaurusId;
-        this.thesaurusLabel = thesaurusLabel;
-        this.totalVues = totalVues;
-    }
-
+    private String conceptId;
+    private String thesaurusId;
+    private String conceptLabel;
+    private String thesaurusLabel;
+    private long totalVues;
+    private long languageTotal;
+    /**
+     * Nombre de consultations par langue.
+     *
+     * Exemple :
+     *
+     * fr -> 145
+     * en -> 82
+     * de -> 18
+     * es -> 5
+     */
+    private List<ConceptLanguageStat> languageStats;
+    private List<LanguageDistributionStat> languageDistribution;
 }

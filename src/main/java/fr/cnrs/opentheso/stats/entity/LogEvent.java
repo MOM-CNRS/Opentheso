@@ -1,11 +1,18 @@
 package fr.cnrs.opentheso.stats.entity;
 
 import jakarta.persistence.*;
+import lombok.Getter;
+import lombok.NoArgsConstructor;
+import lombok.Setter;
+
 import java.time.LocalDateTime;
 
 /**
  * Entité JPA mappée sur la table stat_log_event.
  */
+@Getter
+@Setter
+@NoArgsConstructor
 @Entity
 @Table(name = "stat_log_event")
 public class LogEvent {
@@ -48,102 +55,12 @@ public class LogEvent {
     @Column(name = "http_method", length = 10)
     private String httpMethod;
 
-    public LogEvent() {
-    }
+    @Column(name = "searched_term", length = 500)
+    private String searchedTerm;
 
-    public Long getId() {
-        return id;
-    }
+    @Column(name = "selected_term", length = 500)
+    private String selectedTerm;
 
-    public void setId(Long id) {
-        this.id = id;
-    }
-
-    public StatEventType getEventType() {
-        return eventType;
-    }
-
-    public void setEventType(StatEventType eventType) {
-        this.eventType = eventType;
-    }
-
-    public LocalDateTime getEventTime() {
-        return eventTime;
-    }
-
-    public void setEventTime(LocalDateTime eventTime) {
-        this.eventTime = eventTime;
-    }
-
-    public String getThesaurusLabel() {
-        return thesaurusLabel;
-    }
-
-    public void setThesaurusLabel(String thesaurusLabel) {
-        this.thesaurusLabel = thesaurusLabel;
-    }
-
-    public String getThesaurusId() {
-        return thesaurusId;
-    }
-
-    public void setThesaurusId(String thesaurusId) {
-        this.thesaurusId = thesaurusId;
-    }
-
-    public String getConceptId() {
-        return conceptId;
-    }
-
-    public void setConceptId(String conceptId) {
-        this.conceptId = conceptId;
-    }
-
-    public String getConceptLabel() {
-        return conceptLabel;
-    }
-
-    public void setConceptLabel(String conceptLabel) {
-        this.conceptLabel = conceptLabel;
-    }
-
-    public String getLang() {
-        return lang;
-    }
-
-    public void setLang(String lang) {
-        this.lang = lang;
-    }
-
-    public String getCollectionId() {
-        return collectionId;
-    }
-
-    public void setCollectionId(String collectionId) {
-        this.collectionId = collectionId;
-    }
-
-    public String getCollectionLabel() {
-        return collectionLabel;
-    }
-
-    public void setCollectionLabel(String collectionLabel) {
-        this.collectionLabel = collectionLabel;
-    }
-
-    public String getUrl() {
-        return url;
-    }
-
-    public void setUrl(String url) {
-        this.url = url;
-    }
-
-    public String getHttpMethod() {
-        return httpMethod;
-    }
-
-    public void setHttpMethod(String httpMethod) {
-        this.httpMethod = httpMethod;
-    }
+    @Column(name = "nb_results")
+    private Integer nbResults;
 }
