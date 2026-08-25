@@ -455,12 +455,91 @@ function setBatch(obj, op) {
   $$(".bo-panel[data-obj]").forEach(el => {
     const on = el.getAttribute("data-obj") === obj && el.getAttribute("data-op") === op;
     el.classList.toggle("is-on", on);
-    if (!on) el.classList.remove("has-file", "is-checked", "is-corrected", "is-done");
+    // Ne pas effacer l'état serveur des panneaux JSF live
+    if (!on && el.getAttribute("data-live") !== "1") {
+      el.classList.remove("has-file", "is-checked", "is-corrected", "is-done", "is-busy", "has-errors");
+    }
   });
 }
 
 function boReset(p) {
-  if (p) p.classList.remove("has-file", "is-checked", "is-corrected", "is-done");
+  if (p) p.classList.remove("has-file", "is-checked", "is-corrected", "is-done", "is-busy", "has-errors");
+}
+
+/** Applique les classes d'état renvoyées par le bean après une action AJAX. */
+function boSyncPanel(obj, op, cssClasses) {
+  const panel = document.querySelector(`.bo-panel[data-obj="${CSS.escape(obj)}"][data-op="${CSS.escape(op)}"]`);
+  if (!panel) return;
+  const keepOn = panel.classList.contains("is-on");
+  panel.className = ("bo-panel " + (cssClasses || "")).trim();
+  if (keepOn) panel.classList.add("is-on");
+  panel.setAttribute("data-live", "1");
+  panel.setAttribute("data-obj", obj);
+  panel.setAttribute("data-op", op);
+  if (panel.classList.contains("has-errors")) {
+    panel.classList.add("bo-shake");
+    setTimeout(() => panel.classList.remove("bo-shake"), 420);
+  }
+}
+window.boSyncPanel = boSyncPanel;
+
+function boAjaxBusy(data) {
+  if (!data) return;
+  const src = data.source;
+  const panel = src && src.closest ? src.closest(".bo-panel") : null;
+  if (data.status === "begin" && panel) panel.classList.add("is-busy");
+  if (data.status === "success" || data.status === "complete") {
+    if (panel) panel.classList.remove("is-busy");
+    // Relire un éventuel marqueur d'état dans le fragment mis à jour
+    document.querySelectorAll(".bo-state[data-cls]").forEach((el) => {
+      const o = el.getAttribute("data-obj");
+      const p = el.getAttribute("data-op");
+      const cls = el.getAttribute("data-cls") || "";
+      if (o && p) boSyncPanel(o, p, cls);
+    });
+  }
+}
+window.boAjaxBusy = boAjaxBusy;
+
+function bindBoDropZones() {
+  document.querySelectorAll(".bo-panel[data-live='1'] .bo-drop-empty").forEach((zone) => {
+    if (zone.dataset.dropBound === "1") return;
+    zone.dataset.dropBound = "1";
+    const inputId = zone.getAttribute("for");
+    const input = inputId ? document.getElementById(inputId) : null;
+    if (!input) return;
+    ["dragenter", "dragover"].forEach((ev) => {
+      zone.addEventListener(ev, (e) => {
+        e.preventDefault();
+        zone.classList.add("is-drag");
+      });
+    });
+    ["dragleave", "drop"].forEach((ev) => {
+      zone.addEventListener(ev, (e) => {
+        e.preventDefault();
+        zone.classList.remove("is-drag");
+      });
+    });
+    zone.addEventListener("drop", (e) => {
+      const file = e.dataTransfer && e.dataTransfer.files && e.dataTransfer.files[0];
+      if (!file) return;
+      const dt = new DataTransfer();
+      dt.items.add(file);
+      input.files = dt.files;
+      input.dispatchEvent(new Event("change", { bubbles: true }));
+    });
+  });
+}
+window.bindBoDropZones = bindBoDropZones;
+document.addEventListener("DOMContentLoaded", bindBoDropZones);
+if (window.faces && faces.ajax) {
+  faces.ajax.addOnEvent(function (data) {
+    if (data.status === "success") bindBoDropZones();
+  });
+} else if (window.jsf && jsf.ajax) {
+  jsf.ajax.addOnEvent(function (data) {
+    if (data.status === "success") bindBoDropZones();
+  });
 }
 
 function closeConceptBlockOverlay() {

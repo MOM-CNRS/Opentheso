@@ -36,6 +36,11 @@ public interface ConceptGroupRepository extends JpaRepository<ConceptGroup, Inte
 
     Optional<ConceptGroup> findByIdGroupAndIdThesaurus(String idGroup, String idThesaurus);
 
+    boolean existsByIdGroupAndIdThesaurus(String idGroup, String idThesaurus);
+
+    @Query("SELECT g.idGroup FROM ConceptGroup g WHERE g.idThesaurus = :idThesaurus AND g.idGroup IN :ids")
+    List<String> findExistingGroupIds(@Param("idThesaurus") String idThesaurus, @Param("ids") java.util.Set<String> ids);
+
     Optional<ConceptGroup> findAllByIdThesaurusAndIdArk(String idThesaurus, String idArk);
 
     Optional<ConceptGroup> findByIdHandle(String idHandle);

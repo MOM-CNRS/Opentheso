@@ -73,15 +73,22 @@ function toast(msg, opts) {
   if (!el) return;
   const text = el.querySelector(".app-toast-txt") || el;
   const soft = !!(opts && opts.soft);
+  const error = !!(opts && opts.error);
   el.classList.toggle("is-soft", soft);
+  el.classList.toggle("is-error", error);
+  const ico = el.querySelector(".app-toast-ico path");
+  if (ico) {
+    ico.setAttribute("d", error ? "M18 6 6 18M6 6l12 12" : "M20 6 9 17l-5-5");
+  }
   text.textContent = msg;
   el.hidden = false;
   clearTimeout(toast._t);
   toast._t = setTimeout(() => {
     el.hidden = true;
-    el.classList.remove("is-soft");
-  }, soft ? 2200 : 2600);
+    el.classList.remove("is-soft", "is-error");
+  }, soft ? 2200 : error ? 3600 : 2600);
 }
+window.toast = toast;
 
 function showPanel(sel, id) {
   $$(sel).forEach(el => el.classList.toggle("is-on", el.id === id));

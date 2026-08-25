@@ -1,0 +1,310 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<ui:composition xmlns="http://www.w3.org/1999/xhtml"
+                xmlns:ui="http://xmlns.jcp.org/jsf/facelets"
+                xmlns:h="http://xmlns.jcp.org/jsf/html"
+                xmlns:f="http://xmlns.jcp.org/jsf/core">
+
+                  <h:form id="previewMaintTopTermForm" prependId="false" styleClass="mc-tool-form">
+                    <div class="mc-tool">
+                      <div class="mc-tool-row">
+                        <div class="mc-tool-main">
+                          <div class="mc-tool-t">Corriger les faux top termes</div>
+                          <div class="mc-tool-d">Corrige les incohérences du thésaurus en cours : si des « top termes » s'affichent alors qu'ils n'en sont pas, cette action les rétablit.</div>
+                        </div>
+                        <h:panelGroup id="previewMaintTopTermLast" styleClass="mc-tool-last">
+                          <span hidden="hidden" data-maint-ok="#{v2MaintenanceBean.lastOk}">ok</span>
+                          <svg viewBox="0 0 24 24" aria-hidden="true"><circle cx="12" cy="12" r="9"/><path d="M12 7v5l3 2"/></svg> #{v2MaintenanceBean.topTermLastRunLabel}
+                        </h:panelGroup>
+                        <span class="bo-btn ghost bo-btn-hit">
+                          <h:commandButton id="maintCorrectTopTerm" styleClass="bo-btn-hit-in" value="Lancer"
+                                           action="#{v2MaintenanceBean.correctDisplayTopTerm}"
+                                           disabled="#{not v2MaintenanceBean.screenAvailable}">
+                            <f:ajax execute="@form" render="previewMaintTopTermLast :previewTreeForm" onevent="onMaintAjax"/>
+                          </h:commandButton>
+                          <span class="bo-btn-hit-ui" aria-hidden="true">
+                            <span class="mc-tool-run"><svg viewBox="0 0 24 24" aria-hidden="true"><path d="M20 6 9 17l-5-5"/></svg> Lancer</span>
+                            <span class="mc-tool-wait"><span class="mg-kpi-spin" aria-hidden="true"></span> Traitement…</span>
+                          </span>
+                        </span>
+                      </div>
+                      <div class="mc-prog" hidden="hidden" aria-live="polite"
+                           data-fail-msg="La correction des faux top termes a échoué."
+                           data-done-title="Correction terminée"
+                           data-done-detail="Arborescence actualisée.">
+                        <div class="xprog-steps-wrap">
+                          <span class="xprog-rail" aria-hidden="true"><span class="xprog-rail-fill"></span></span>
+                          <ol class="xprog-steps" aria-label="Étapes de la correction">
+                            <li data-detail="Parcours des concepts marqués top terme…"><span class="xprog-dot"></span><span>Analyser</span></li>
+                            <li data-detail="Retrait du statut pour les concepts qui ont un terme générique…"><span class="xprog-dot"></span><span>Corriger</span></li>
+                            <li data-detail="Mise à jour de l'arborescence…"><span class="xprog-dot"></span><span>Recharger</span></li>
+                          </ol>
+                        </div>
+                        <div class="xprog-head">
+                          <div class="xprog-t">Étape 1 / 3 — Analyser</div>
+                          <div class="xprog-count">0%</div>
+                        </div>
+                        <div class="mg-bar-row">
+                          <span class="mg-bar-track"><span class="mg-bar-fill" style="width:0%"></span></span>
+                        </div>
+                        <div class="xprog-d">Recherche des faux top termes…</div>
+                      </div>
+                    </div>
+                  </h:form>
+
+                  <h:form id="previewMaintRestructureForm" prependId="false" styleClass="mc-tool-form">
+                    <div class="mc-tool">
+                      <div class="mc-tool-row">
+                        <div class="mc-tool-main">
+                          <div class="mc-tool-t">Restructuration</div>
+                          <div class="mc-tool-d">Détecte les top termes erronés, complète les relations TG/TS manquantes et supprime les relations en boucle.</div>
+                        </div>
+                        <h:panelGroup id="previewMaintRestructureLast" styleClass="mc-tool-last">
+                          <span hidden="hidden" data-maint-ok="#{v2MaintenanceBean.lastOk}">ok</span>
+                          <svg viewBox="0 0 24 24" aria-hidden="true"><circle cx="12" cy="12" r="9"/><path d="M12 7v5l3 2"/></svg> #{v2MaintenanceBean.restructureLastRunLabel}
+                        </h:panelGroup>
+                        <span class="bo-btn ghost bo-btn-hit">
+                          <h:commandButton id="maintRestructure" styleClass="bo-btn-hit-in" value="Lancer"
+                                           action="#{v2MaintenanceBean.reorganizeHierarchy}"
+                                           disabled="#{not v2MaintenanceBean.screenAvailable}">
+                            <f:ajax execute="@form" render="previewMaintRestructureLast :previewTreeForm" onevent="onMaintAjax"/>
+                          </h:commandButton>
+                          <span class="bo-btn-hit-ui" aria-hidden="true">
+                            <span class="mc-tool-run"><svg viewBox="0 0 24 24" aria-hidden="true"><path d="M20 6 9 17l-5-5"/></svg> Lancer</span>
+                            <span class="mc-tool-wait"><span class="mg-kpi-spin" aria-hidden="true"></span> Traitement…</span>
+                          </span>
+                        </span>
+                      </div>
+                      <div class="mc-prog" hidden="hidden" aria-live="polite" style="--mc-n:4"
+                           data-fail-msg="La restructuration a échoué."
+                           data-done-title="Correction terminée"
+                           data-done-detail="Arborescence actualisée.">
+                        <div class="xprog-steps-wrap">
+                          <span class="xprog-rail" aria-hidden="true"><span class="xprog-rail-fill"></span></span>
+                          <ol class="xprog-steps" aria-label="Étapes de la restructuration">
+                            <li data-detail="Suppression des espaces et des valeurs nulles…"><span class="xprog-dot"></span><span>Nettoyer</span></li>
+                            <li data-detail="Correction des top termes sans terme générique…"><span class="xprog-dot"></span><span>Top termes</span></li>
+                            <li data-detail="Complétion des TG/TS et suppression des boucles…"><span class="xprog-dot"></span><span>Relations</span></li>
+                            <li data-detail="Mise à jour de l'arborescence…"><span class="xprog-dot"></span><span>Recharger</span></li>
+                          </ol>
+                        </div>
+                        <div class="xprog-head">
+                          <div class="xprog-t">Étape 1 / 4 — Nettoyer</div>
+                          <div class="xprog-count">0%</div>
+                        </div>
+                        <div class="mg-bar-row">
+                          <span class="mg-bar-track"><span class="mg-bar-fill" style="width:0%"></span></span>
+                        </div>
+                        <div class="xprog-d">Nettoyage du thésaurus…</div>
+                      </div>
+                    </div>
+                  </h:form>
+
+                  <h:form id="previewMaintCollectionsForm" prependId="false" styleClass="mc-tool-form">
+                    <div class="mc-tool">
+                      <div class="mc-tool-row">
+                        <div class="mc-tool-main">
+                          <div class="mc-tool-t">Collections</div>
+                          <div class="mc-tool-d">Détecte et corrige les concepts rattachés à une collection qui n'existe plus.</div>
+                          <h:panelGroup rendered="#{not v2MaintenanceBean.superAdmin}" styleClass="mc-tool-lock">Réservé aux super-administrateurs</h:panelGroup>
+                        </div>
+                        <h:panelGroup id="previewMaintCollectionsLast" styleClass="mc-tool-last">
+                          <span hidden="hidden" data-maint-ok="#{v2MaintenanceBean.lastOk}">ok</span>
+                          <svg viewBox="0 0 24 24" aria-hidden="true"><circle cx="12" cy="12" r="9"/><path d="M12 7v5l3 2"/></svg> #{v2MaintenanceBean.collectionsLastRunLabel}
+                        </h:panelGroup>
+                        <span class="bo-btn ghost bo-btn-hit">
+                          <h:commandButton id="maintCollections" styleClass="bo-btn-hit-in" value="Lancer"
+                                           action="#{v2MaintenanceBean.reorganizeConceptsAndCollections}"
+                                           disabled="#{not v2MaintenanceBean.screenAvailable or not v2MaintenanceBean.superAdmin}">
+                            <f:ajax execute="@form" render="previewMaintCollectionsLast :previewTreeForm" onevent="onMaintAjax"/>
+                          </h:commandButton>
+                          <span class="bo-btn-hit-ui" aria-hidden="true">
+                            <span class="mc-tool-run"><svg viewBox="0 0 24 24" aria-hidden="true"><path d="M20 6 9 17l-5-5"/></svg> Lancer</span>
+                            <span class="mc-tool-wait"><span class="mg-kpi-spin" aria-hidden="true"></span> Traitement…</span>
+                          </span>
+                        </span>
+                      </div>
+                      <div class="mc-prog" hidden="hidden" aria-live="polite"
+                           data-fail-msg="La correction des collections a échoué."
+                           data-done-title="Correction terminée"
+                           data-done-detail="Arborescence actualisée.">
+                        <div class="xprog-steps-wrap">
+                          <span class="xprog-rail" aria-hidden="true"><span class="xprog-rail-fill"></span></span>
+                          <ol class="xprog-steps" aria-label="Étapes de la correction">
+                            <li data-detail="Recherche des rattachements orphelins…"><span class="xprog-dot"></span><span>Analyser</span></li>
+                            <li data-detail="Suppression des liens collection/concept invalides…"><span class="xprog-dot"></span><span>Nettoyer</span></li>
+                            <li data-detail="Mise à jour de l'arborescence…"><span class="xprog-dot"></span><span>Recharger</span></li>
+                          </ol>
+                        </div>
+                        <div class="xprog-head">
+                          <div class="xprog-t">Étape 1 / 3 — Analyser</div>
+                          <div class="xprog-count">0%</div>
+                        </div>
+                        <div class="mg-bar-row">
+                          <span class="mg-bar-track"><span class="mg-bar-fill" style="width:0%"></span></span>
+                        </div>
+                        <div class="xprog-d">Analyse des collections…</div>
+                      </div>
+                    </div>
+                  </h:form>
+
+                  <h:form id="previewMaintRolesForm" prependId="false" styleClass="mc-tool-form">
+                    <div class="mc-tool">
+                      <div class="mc-tool-row">
+                        <div class="mc-tool-main">
+                          <div class="mc-tool-t">Créateur / contributeur</div>
+                          <div class="mc-tool-d">Transfère les informations de créateur et de contributeur du terme vers le concept.</div>
+                        </div>
+                        <h:panelGroup id="previewMaintRolesLast" styleClass="mc-tool-last">
+                          <span hidden="hidden" data-maint-ok="#{v2MaintenanceBean.lastOk}">ok</span>
+                          <svg viewBox="0 0 24 24" aria-hidden="true"><circle cx="12" cy="12" r="9"/><path d="M12 7v5l3 2"/></svg> #{v2MaintenanceBean.rolesLastRunLabel}
+                        </h:panelGroup>
+                        <span class="bo-btn ghost bo-btn-hit">
+                          <h:commandButton id="maintRoles" styleClass="bo-btn-hit-in" value="Lancer"
+                                           action="#{v2MaintenanceBean.switchRolesFromTermToConcept}"
+                                           disabled="#{not v2MaintenanceBean.screenAvailable}">
+                            <f:ajax execute="@form" render="previewMaintRolesLast" onevent="onMaintAjax"/>
+                          </h:commandButton>
+                          <span class="bo-btn-hit-ui" aria-hidden="true">
+                            <span class="mc-tool-run"><svg viewBox="0 0 24 24" aria-hidden="true"><path d="M20 6 9 17l-5-5"/></svg> Lancer</span>
+                            <span class="mc-tool-wait"><span class="mg-kpi-spin" aria-hidden="true"></span> Traitement…</span>
+                          </span>
+                        </span>
+                      </div>
+                      <div class="mc-prog" hidden="hidden" aria-live="polite"
+                           data-fail-msg="Le transfert créateur / contributeur a échoué."
+                           data-done-title="Correction terminée"
+                           data-done-detail="Métadonnées d'auteur mises à jour.">
+                        <div class="xprog-steps-wrap">
+                          <span class="xprog-rail" aria-hidden="true"><span class="xprog-rail-fill"></span></span>
+                          <ol class="xprog-steps" aria-label="Étapes de la correction">
+                            <li data-detail="Lecture des créateurs et contributeurs au niveau du terme…"><span class="xprog-dot"></span><span>Lire</span></li>
+                            <li data-detail="Transfert des informations vers le concept…"><span class="xprog-dot"></span><span>Transférer</span></li>
+                            <li data-detail="Enregistrement des métadonnées…"><span class="xprog-dot"></span><span>Enregistrer</span></li>
+                          </ol>
+                        </div>
+                        <div class="xprog-head">
+                          <div class="xprog-t">Étape 1 / 3 — Lire</div>
+                          <div class="xprog-count">0%</div>
+                        </div>
+                        <div class="mg-bar-row">
+                          <span class="mg-bar-track"><span class="mg-bar-fill" style="width:0%"></span></span>
+                        </div>
+                        <div class="xprog-d">Lecture des rôles…</div>
+                      </div>
+                    </div>
+                  </h:form>
+
+                  <h:form id="previewMaintArkForm" prependId="false" styleClass="mc-tool-form">
+                    <div class="mc-tool">
+                      <div class="mc-tool-row">
+                        <div class="mc-tool-main">
+                          <div class="mc-tool-t">Identifiants ARK</div>
+                          <div class="mc-tool-d">Génère les identifiants ARK en local, à partir de l'id concept ou des paramètres du thésaurus.</div>
+                        </div>
+                        <h:panelGroup id="previewMaintArkLast" styleClass="mc-tool-last">
+                          <span hidden="hidden" data-maint-ok="#{v2MaintenanceBean.lastOk}">ok</span>
+                          <svg viewBox="0 0 24 24" aria-hidden="true"><circle cx="12" cy="12" r="9"/><path d="M12 7v5l3 2"/></svg> #{v2MaintenanceBean.arkLastRunLabel}
+                        </h:panelGroup>
+                      </div>
+                      <div class="mc-tool-opts">
+                        <div class="mc-tool-opt">
+                          <div class="mc-tool-opt-h">Depuis l'identifiant du concept</div>
+                          <div class="mc-tool-opt-d">Pas de connexion à un serveur. Le préfixe est facultatif. Exemple : id = <code>300</code>, préfixe = <code>ndp</code>, NAAN = <code>66666</code> → <code>66666/ndp300</code>.</div>
+                          <div class="mc-tool-fields">
+                            <label class="mc-tool-field">
+                              <span class="mc-tool-field-l">NAAN *</span>
+                              <h:inputText id="maintArkNaan" styleClass="st-input"
+                                           value="#{v2MaintenanceBean.arkEditor.naan}"
+                                           disabled="#{not v2MaintenanceBean.screenAvailable}"/>
+                            </label>
+                            <label class="mc-tool-field">
+                              <span class="mc-tool-field-l">Préfixe</span>
+                              <h:inputText id="maintArkPrefix" styleClass="st-input"
+                                           value="#{v2MaintenanceBean.arkEditor.prefix}"
+                                           disabled="#{not v2MaintenanceBean.screenAvailable}"/>
+                            </label>
+                            <div class="mc-tool-sw">
+                              <span class="mc-tool-field-l mc-tool-warn">Écraser les ARK existants</span>
+                              <label class="st-sw">
+                                <h:selectBooleanCheckbox id="maintArkOverwrite" styleClass="st-sw-input"
+                                                         value="#{v2MaintenanceBean.arkEditor.overwrite}"
+                                                         disabled="#{not v2MaintenanceBean.screenAvailable}"/>
+                              </label>
+                            </div>
+                            <span class="bo-btn ghost bo-btn-hit">
+                              <h:commandButton id="maintArkFromConcept" styleClass="bo-btn-hit-in" value="Générer"
+                                               action="#{v2MaintenanceBean.generateArkFromConceptId}"
+                                               disabled="#{not v2MaintenanceBean.screenAvailable}">
+                                <f:ajax execute="@form" render="previewMaintArkLast" onevent="onMaintAjax"/>
+                              </h:commandButton>
+                              <span class="bo-btn-hit-ui" aria-hidden="true">
+                                <span class="mc-tool-run"><svg viewBox="0 0 24 24" aria-hidden="true"><path d="M20 6 9 17l-5-5"/></svg> Générer</span>
+                                <span class="mc-tool-wait"><span class="mg-kpi-spin" aria-hidden="true"></span> Traitement…</span>
+                              </span>
+                            </span>
+                          </div>
+                        </div>
+                        <div class="mc-tool-opt">
+                          <div class="mc-tool-opt-h">ARK locaux (identifiants opaques)</div>
+                          <div class="mc-tool-opt-d">Utilise NAAN, préfixe et taille définis dans <a href="setting/preference.xhtml#stServers">Paramètres / identifiants</a>.</div>
+                          <div class="mc-tool-pref">
+                            <span>NAAN <b>#{empty v2MaintenanceBean.localArkSettings.naan ? '—' : v2MaintenanceBean.localArkSettings.naan}</b></span>
+                            <span>Préfixe <b>#{empty v2MaintenanceBean.localArkSettings.prefix ? '—' : v2MaintenanceBean.localArkSettings.prefix}</b></span>
+                            <span>Taille <b>#{v2MaintenanceBean.localArkSettings.size}</b></span>
+                          </div>
+                          <div class="mc-tool-fields">
+                            <div class="mc-tool-sw">
+                              <span class="mc-tool-field-l mc-tool-warn">Écraser les ARK existants</span>
+                              <label class="st-sw">
+                                <h:selectBooleanCheckbox id="maintArkOverwriteLocal" styleClass="st-sw-input"
+                                                         value="#{v2MaintenanceBean.arkEditor.overwriteLocalArk}"
+                                                         disabled="#{not v2MaintenanceBean.screenAvailable}"/>
+                              </label>
+                            </div>
+                            <span class="bo-btn ghost bo-btn-hit">
+                              <h:commandButton id="maintArkLocal" styleClass="bo-btn-hit-in" value="Générer"
+                                               action="#{v2MaintenanceBean.generateLocalArk}"
+                                               disabled="#{not v2MaintenanceBean.screenAvailable}">
+                                <f:ajax execute="@form" render="previewMaintArkLast" onevent="onMaintAjax"/>
+                              </h:commandButton>
+                              <span class="bo-btn-hit-ui" aria-hidden="true">
+                                <span class="mc-tool-run"><svg viewBox="0 0 24 24" aria-hidden="true"><path d="M20 6 9 17l-5-5"/></svg> Générer</span>
+                                <span class="mc-tool-wait"><span class="mg-kpi-spin" aria-hidden="true"></span> Traitement…</span>
+                              </span>
+                            </span>
+                          </div>
+                        </div>
+                      </div>
+                      <div class="mc-prog" hidden="hidden" aria-live="polite"
+                           data-fail-msg="La génération des identifiants ARK a échoué."
+                           data-done-title="Génération terminée"
+                           data-done-detail="Identifiants mis à jour.">
+                        <div class="xprog-steps-wrap">
+                          <span class="xprog-rail" aria-hidden="true"><span class="xprog-rail-fill"></span></span>
+                          <ol class="xprog-steps" aria-label="Étapes de la génération">
+                            <li data-detail="Préparation des identifiants…"><span class="xprog-dot"></span><span>Préparer</span></li>
+                            <li data-detail="Génération des ARK en local…"><span class="xprog-dot"></span><span>Générer</span></li>
+                            <li data-detail="Enregistrement des identifiants…"><span class="xprog-dot"></span><span>Enregistrer</span></li>
+                          </ol>
+                        </div>
+                        <div class="xprog-head">
+                          <div class="xprog-t">Étape 1 / 3 — Préparer</div>
+                          <div class="xprog-count">0%</div>
+                        </div>
+                        <div class="mg-bar-row">
+                          <span class="mg-bar-track"><span class="mg-bar-fill" style="width:0%"></span></span>
+                        </div>
+                        <div class="xprog-d">Préparation des identifiants ARK…</div>
+                      </div>
+                    </div>
+                  </h:form>
+
+                  <div class="mc-tool">
+                    <div class="mc-tool-main">
+                      <div class="mc-tool-t">Générer le sitemap.xml</div>
+                      <div class="mc-tool-d">Produit le sitemap du thésaurus en cours pour le référencement.</div>
+                    </div>
+                    <span class="mc-tool-last"><svg viewBox="0 0 24 24" aria-hidden="true"><circle cx="12" cy="12" r="9"/><path d="M12 7v5l3 2"/></svg> jamais</span>
+                    <button type="button" class="bo-btn ghost" data-act="toast" data-msg="« Générer le sitemap.xml » n'est pas encore disponible."><svg viewBox="0 0 24 24" aria-hidden="true"><path d="M20 6 9 17l-5-5"/></svg> Lancer</button>
+                  </div>
+</ui:composition>

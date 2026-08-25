@@ -1,0 +1,400 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<ui:composition xmlns="http://www.w3.org/1999/xhtml"
+                xmlns:ui="http://xmlns.jcp.org/jsf/facelets"
+                xmlns:h="http://xmlns.jcp.org/jsf/html"
+                xmlns:f="http://xmlns.jcp.org/jsf/core">
+
+  <!-- ── Identifiants ARK · Importer ── -->
+  <div class="bo-panel #{v2ActionsLotArkBean.importPanel.cssClasses}"
+       data-obj="identifiants" data-op="import" data-live="1">
+    <div class="bo-p">
+      <div class="bo-acc">
+        <div class="bo-acc-step open">
+          <div class="bo-acc-h">
+            <button type="button" class="bo-acc-h-btn" data-act="bo-acc">
+              <span class="bo-step-n">1</span>
+              <span class="bo-acc-t">Télécharger le modèle<small>colonnes attendues &amp; exemple</small></span>
+            </button>
+            <span class="bo-acc-sp"></span>
+            <h:form prependId="false" styleClass="bo-inline-form">
+              <span class="bo-btn ghost sm bo-btn-hit">
+                <h:commandButton id="arkImportTpl" styleClass="bo-btn-hit-in" value="Modèle"
+                                 action="#{v2ActionsLotArkBean.downloadImportTemplate}"/>
+                <span class="bo-btn-hit-ui" aria-hidden="true">
+                  <svg viewBox="0 0 24 24" aria-hidden="true"><path d="M21 15v4a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2v-4"/><path d="M7 10l5 5 5-5"/><path d="M12 15V3"/></svg>
+                  Modèle
+                </span>
+              </span>
+            </h:form>
+            <button type="button" class="bo-acc-chev" data-act="bo-acc" aria-label="Déplier">
+              <svg viewBox="0 0 24 24" aria-hidden="true"><path d="m9 18 6-6-6-6"/></svg>
+            </button>
+          </div>
+          <div class="bo-acc-body">
+            <table class="bo-fmt">
+              <thead>
+                <tr>
+                  <th>localId</th>
+                  <th>arkId</th>
+                </tr>
+              </thead>
+              <tbody>
+                <tr>
+                  <td>152645</td>
+                  <td>26678/crtcg26jeN4R9</td>
+                </tr>
+              </tbody>
+            </table>
+            <div class="bo-fmt-note">Une ligne par concept. <code>localId</code> est l'<b>identifiant interne</b> du concept (pas un ARK ni un handle).</div>
+          </div>
+        </div>
+        <div class="bo-acc-step">
+          <button type="button" class="bo-acc-h" data-act="bo-acc">
+            <span class="bo-step-n">2</span>
+            <span class="bo-acc-t">Remplir le fichier<small>une ligne = un concept · règles d'application</small></span>
+            <span class="bo-acc-sp"></span>
+            <span class="bo-acc-chev"><svg viewBox="0 0 24 24" aria-hidden="true"><path d="m9 18 6-6-6-6"/></svg></span>
+          </button>
+          <div class="bo-acc-body">
+            <ul class="bo-rules">
+              <li>Séparateur accepté : <code>,</code> <code>;</code> ou tabulation.</li>
+              <li class="warn">Si l'identifiant interne n'existe pas dans le thésaurus, la ligne est <b>rejetée</b>.</li>
+              <li>Sans « remplacer l'existant », l'ARK n'est écrit que si le concept n'en a pas encore.</li>
+              <li>Avec « remplacer l'existant », l'ARK est toujours écrasé.</li>
+            </ul>
+          </div>
+        </div>
+      </div>
+
+      <div class="bo-import">
+        <div class="bo-import-h">
+          <span class="bo-step-n acc">3</span>
+          <div>
+            <div class="bo-import-t">Importer le fichier</div>
+            <div class="bo-import-s">déposez votre CSV rempli et lancez · #{v2ActionsLotArkBean.thesaurusTitle}</div>
+          </div>
+        </div>
+
+        <h:form id="arkImportForm" prependId="false" enctype="multipart/form-data" styleClass="bo-card-b">
+          <span class="bo-state" hidden="hidden"
+                data-obj="identifiants" data-op="import"
+                data-cls="#{v2ActionsLotArkBean.importPanel.cssClasses}"></span>
+          <h:panelGroup layout="block" styleClass="bo-flash" rendered="#{not empty v2ActionsLotArkBean.importPanel.globalError}">
+            <div class="bo-valid-msg err" role="alert">
+              <svg viewBox="0 0 24 24" aria-hidden="true"><path d="M18 6 6 18M6 6l12 12"/></svg>
+              <span>#{v2ActionsLotArkBean.importPanel.globalError}</span>
+            </div>
+          </h:panelGroup>
+
+          <div class="bo-cfg">
+            <div class="bo-field">
+              <div class="bo-field-l">Délimiteur CSV</div>
+              <h:selectOneMenu styleClass="bo-input" value="#{v2ActionsLotArkBean.importPanel.choiceDelimiter}">
+                <f:selectItem itemLabel=", (virgule)" itemValue="0"/>
+                <f:selectItem itemLabel="; (point-virgule)" itemValue="1"/>
+                <f:selectItem itemLabel="tabulation" itemValue="2"/>
+              </h:selectOneMenu>
+            </div>
+            <div class="bo-field">
+              <div class="bo-field-l">Remplacer les ARK existants ?</div>
+              <h:selectBooleanCheckbox styleClass="bo-check" value="#{v2ActionsLotArkBean.importPanel.clearBefore}"/>
+              <div class="bo-field-hint">Si décoché, seuls les concepts sans ARK sont mis à jour.</div>
+            </div>
+          </div>
+
+          <label class="bo-drop bo-drop-empty" for="arkImportFile">
+            <span class="bo-drop-ico"><svg viewBox="0 0 24 24" aria-hidden="true"><path d="M21 15v4a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2v-4"/><path d="M17 8l-5-5-5 5"/><path d="M12 3v12"/></svg></span>
+            <span class="bo-drop-t">Glissez le fichier rempli ou <span class="lk">parcourir</span></span>
+            <span class="bo-drop-s">.csv, .tsv ou .txt</span>
+          </label>
+          <h:inputFile id="arkImportFile" styleClass="bo-file-input" value="#{v2ActionsLotArkBean.importUpload}">
+            <f:ajax event="valueChange" listener="#{v2ActionsLotArkBean.onImportFileSelected}"
+                    execute="@form" render="@form" onevent="boAjaxBusy"/>
+          </h:inputFile>
+
+          <div class="bo-drop has-file">
+            <div class="bo-p-ico sm"><svg viewBox="0 0 24 24" aria-hidden="true"><path d="M14 3v5h5"/><path d="M14 3H6a2 2 0 0 0-2 2v14a2 2 0 0 0 2 2h12a2 2 0 0 0 2-2V8z"/></svg></div>
+            <div class="bo-file">
+              <div class="bo-file-n">#{v2ActionsLotArkBean.importPanel.fileName}</div>
+              <div class="bo-file-m">#{v2ActionsLotArkBean.importPanel.fileMeta}</div>
+            </div>
+            <span class="bo-file-x bo-btn-hit" title="Retirer le fichier">
+              <h:commandButton id="arkImportClearFile" styleClass="bo-btn-hit-in"
+                               action="#{v2ActionsLotArkBean.clearImport}" value="Retirer le fichier"
+                               title="Retirer le fichier" aria-label="Retirer le fichier">
+                <f:ajax execute="@this" render="@form" onevent="boAjaxBusy"/>
+              </h:commandButton>
+              <span class="bo-btn-hit-ui" aria-hidden="true">
+                <svg viewBox="0 0 24 24" aria-hidden="true"><path d="M18 6 6 18M6 6l12 12"/></svg>
+              </span>
+            </span>
+          </div>
+
+          <div class="bo-run">
+            <span class="bo-btn primary bo-btn-hit" data-act="bo-check">
+              <h:commandButton id="arkImportValidate" styleClass="bo-btn-hit-in"
+                               action="#{v2ActionsLotArkBean.validateImport}"
+                               value="Valider le fichier"
+                               disabled="#{!v2ActionsLotArkBean.importPanel.hasFile or v2ActionsLotArkBean.importPanel.checked}">
+                <f:ajax execute="@form" render="@form" onevent="boAjaxBusy"/>
+              </h:commandButton>
+              <span class="bo-btn-hit-ui" aria-hidden="true">
+                <svg viewBox="0 0 24 24" aria-hidden="true"><path d="M20 6 9 17l-5-5"/></svg>
+                Valider le fichier<span class="bo-need-file"> — déposez un fichier</span>
+              </span>
+            </span>
+            <span class="bo-hint bo-hint-idle">Aperçu et validation avant exécution.</span>
+            <span class="bo-hint bo-hint-file">Le fichier est analysé et prévisualisé avant d'être appliqué.</span>
+          </div>
+
+          <div class="bo-valid">
+            <div class="bo-valid-h">
+              <span class="bo-step-n acc sm">✓</span>
+              <div>
+                <div class="bo-import-t">Validation du fichier</div>
+                <div class="bo-import-s"><span class="bo-file-live">#{v2ActionsLotArkBean.importPanel.fileName}</span> · aperçu avant application</div>
+              </div>
+            </div>
+            <div class="bo-valid-sum">
+              <div class="bo-stat ok"><b>#{v2ActionsLotArkBean.importPanel.linesRead}</b><span>lignes lues</span></div>
+              <div class="bo-stat ok"><b class="bo-valid-n">#{v2ActionsLotArkBean.importPanel.validCount}</b><span>valides</span></div>
+              <div class="bo-stat rej bo-stat-err"><b>#{v2ActionsLotArkBean.importPanel.errorCount}</b><span>en erreur</span></div>
+              <div class="bo-stat ok bo-stat-zero"><b>0</b><span>en erreur</span></div>
+            </div>
+
+            <div class="bo-valid-errors">
+              <div class="bo-valid-msg err">
+                <svg viewBox="0 0 24 24" aria-hidden="true"><path d="M18 6 6 18M6 6l12 12"/></svg>
+                <span>#{v2ActionsLotArkBean.importPanel.errorCount} ligne(s) en erreur.
+                  Vous pouvez n'appliquer que les #{v2ActionsLotArkBean.importPanel.validCount} identifiants valides.</span>
+              </div>
+              <table class="bo-errtbl">
+                <thead><tr><th>Ligne</th><th>Identifiant</th><th>Colonne</th><th>Problème</th></tr></thead>
+                <tbody>
+                  <ui:repeat value="#{v2ActionsLotArkBean.importPanel.errors}" var="err">
+                    <tr>
+                      <td class="bo-err-ln">#{err.line}</td>
+                      <td class="bo-err-id">#{err.identifier}</td>
+                      <td><span class="bo-err-col">#{err.column}</span></td>
+                      <td class="bo-err-msg">#{err.message}</td>
+                    </tr>
+                  </ui:repeat>
+                </tbody>
+              </table>
+              <div class="bo-run">
+                <label class="bo-btn primary" for="arkImportFile">
+                  <svg viewBox="0 0 24 24" aria-hidden="true"><path d="M21 15v4a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2v-4"/><path d="M17 8l-5-5-5 5"/><path d="M12 3v12"/></svg>
+                  Réimporter le fichier corrigé
+                </label>
+                <span class="bo-btn ghost bo-btn-hit">
+                  <h:commandButton id="arkImportPartial" styleClass="bo-btn-hit-in"
+                                   action="#{v2ActionsLotArkBean.applyImport}"
+                                   value="Importer les #{v2ActionsLotArkBean.importPanel.validCount} identifiants valides"
+                                   disabled="#{v2ActionsLotArkBean.importPanel.validCount eq 0}">
+                    <f:ajax execute="@form" render="@form" onevent="boAjaxBusy"/>
+                  </h:commandButton>
+                  <span class="bo-btn-hit-ui" aria-hidden="true">
+                    <svg viewBox="0 0 24 24" aria-hidden="true"><path d="M21 15v4a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2v-4"/><path d="M17 8l-5-5-5 5"/><path d="M12 3v12"/></svg>
+                    Importer les #{v2ActionsLotArkBean.importPanel.validCount} identifiants valides
+                  </span>
+                </span>
+                <span class="bo-btn ghost bo-btn-hit">
+                  <h:commandButton id="arkImportCancelErr" styleClass="bo-btn-hit-in"
+                                   action="#{v2ActionsLotArkBean.clearImport}" value="Annuler">
+                    <f:ajax execute="@this" render="@form" onevent="boAjaxBusy"/>
+                  </h:commandButton>
+                  <span class="bo-btn-hit-ui" aria-hidden="true">Annuler</span>
+                </span>
+              </div>
+            </div>
+
+            <div class="bo-valid-ok">
+              <div class="bo-valid-msg ok">
+                <svg viewBox="0 0 24 24" aria-hidden="true"><path d="M20 6 9 17l-5-5"/></svg>
+                <span>Aucune erreur détectée — #{v2ActionsLotArkBean.importPanel.validCount} identifiant(s) prêt(s).</span>
+              </div>
+              <div class="bo-run">
+                <span class="bo-btn primary bo-btn-hit">
+                  <h:commandButton id="arkImportApply" styleClass="bo-btn-hit-in"
+                                   action="#{v2ActionsLotArkBean.applyImport}"
+                                   value="Confirmer — Importer les #{v2ActionsLotArkBean.importPanel.validCount} identifiants">
+                    <f:ajax execute="@form" render="@form" onevent="boAjaxBusy"/>
+                  </h:commandButton>
+                  <span class="bo-btn-hit-ui" aria-hidden="true">
+                    <svg viewBox="0 0 24 24" aria-hidden="true"><path d="M21 15v4a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2v-4"/><path d="M17 8l-5-5-5 5"/><path d="M12 3v12"/></svg>
+                    Confirmer — Importer les #{v2ActionsLotArkBean.importPanel.validCount} identifiants
+                  </span>
+                </span>
+                <span class="bo-btn ghost bo-btn-hit">
+                  <h:commandButton id="arkImportCancelOk" styleClass="bo-btn-hit-in"
+                                   action="#{v2ActionsLotArkBean.clearImport}" value="Annuler">
+                    <f:ajax execute="@this" render="@form" onevent="boAjaxBusy"/>
+                  </h:commandButton>
+                  <span class="bo-btn-hit-ui" aria-hidden="true">Annuler</span>
+                </span>
+              </div>
+            </div>
+          </div>
+
+          <div class="bo-result">
+            <div class="bo-result-t"><svg viewBox="0 0 24 24" aria-hidden="true"><path d="M20 6 9 17l-5-5"/></svg> Importer terminé</div>
+            <div class="bo-result-stats">
+              <div class="bo-stat ok"><b>#{v2ActionsLotArkBean.importPanel.linesRead}</b><span>lignes lues</span></div>
+              <div class="bo-stat ok"><b>#{v2ActionsLotArkBean.importPanel.appliedCount}</b><span>appliqués</span></div>
+              <div class="bo-stat rej"><b>#{v2ActionsLotArkBean.importPanel.rejectedCount}</b><span>déjà présents / rejetés</span></div>
+            </div>
+          </div>
+        </h:form>
+      </div>
+    </div>
+  </div>
+
+  <!-- ── Identifiants ARK · Générer ── -->
+  <div class="bo-panel #{v2ActionsLotArkBean.generateState.cssClasses}"
+       data-obj="identifiants" data-op="generate" data-live="1">
+    <div class="bo-p">
+      <div class="bo-acc">
+        <div class="bo-acc-step open">
+          <button type="button" class="bo-acc-h" data-act="bo-acc">
+            <span class="bo-step-n">1</span>
+            <span class="bo-acc-t">À partir de l'identifiant interne<small>NAAN / préfixe + id concept</small></span>
+            <span class="bo-acc-sp"></span>
+            <span class="bo-acc-chev"><svg viewBox="0 0 24 24" aria-hidden="true"><path d="m9 18 6-6-6-6"/></svg></span>
+          </button>
+          <div class="bo-acc-body">
+            <ul class="bo-rules">
+              <li>Pas de connexion à un serveur : les ARK sont générés en local.</li>
+              <li>Formule : <code>NAAN/préfixe + idConcept</code> — le préfixe est facultatif.</li>
+              <li>Exemple : id = <code>300</code>, préfixe = <code>ndp</code>, NAAN = <code>66666</code> → <code>66666/ndp300</code>.</li>
+              <li class="warn">Les ARK existants ne sont pas écrasés sauf si vous le forcez.</li>
+            </ul>
+          </div>
+        </div>
+        <div class="bo-acc-step">
+          <button type="button" class="bo-acc-h" data-act="bo-acc">
+            <span class="bo-step-n">2</span>
+            <span class="bo-acc-t">ARK opaque (paramètres du thésaurus)<small>identifiants aléatoires</small></span>
+            <span class="bo-acc-sp"></span>
+            <span class="bo-acc-chev"><svg viewBox="0 0 24 24" aria-hidden="true"><path d="m9 18 6-6-6-6"/></svg></span>
+          </button>
+          <div class="bo-acc-body">
+            <ul class="bo-rules">
+              <li>Utilise NAAN, préfixe et taille définis dans <b>Paramètres / identifiants</b>.</li>
+              <li>Exemple : NAAN = <code>66666</code>, préfixe = <code>ndp</code> → <code>66666/ndp…id opaque…</code>.</li>
+              <li class="warn">Les ARK existants ne sont pas écrasés sauf si vous le forcez.</li>
+            </ul>
+          </div>
+        </div>
+      </div>
+
+      <h:form id="arkGenForm" prependId="false">
+        <span class="bo-state" hidden="hidden"
+              data-obj="identifiants" data-op="generate"
+              data-cls="#{v2ActionsLotArkBean.generateState.cssClasses}"></span>
+        <h:panelGroup layout="block" styleClass="bo-flash" rendered="#{not empty v2ActionsLotArkBean.generateState.globalError}">
+          <div class="bo-valid-msg err" role="alert">
+            <svg viewBox="0 0 24 24" aria-hidden="true"><path d="M18 6 6 18M6 6l12 12"/></svg>
+            <span>#{v2ActionsLotArkBean.generateState.globalError}</span>
+          </div>
+        </h:panelGroup>
+
+        <div class="bo-import">
+          <div class="bo-import-h">
+            <span class="bo-step-n acc">A</span>
+            <div>
+              <div class="bo-import-t">Générer depuis l'identifiant interne</div>
+              <div class="bo-import-s">#{v2ActionsLotArkBean.thesaurusTitle}</div>
+            </div>
+          </div>
+          <div class="bo-card-b">
+          <div class="bo-cfg">
+            <div class="bo-field">
+              <div class="bo-field-l">NAAN *</div>
+              <h:inputText styleClass="bo-input" value="#{v2ActionsLotArkBean.generateState.naan}"/>
+            </div>
+            <div class="bo-field">
+              <div class="bo-field-l">Préfixe</div>
+              <h:inputText styleClass="bo-input" value="#{v2ActionsLotArkBean.generateState.prefix}"/>
+            </div>
+            <div class="bo-field">
+              <div class="bo-field-l">Écraser les ARK existants ?</div>
+              <h:selectBooleanCheckbox styleClass="bo-check" value="#{v2ActionsLotArkBean.generateState.overwrite}"/>
+              <div class="bo-field-hint">Si décoché, seuls les concepts sans ARK sont mis à jour.</div>
+            </div>
+          </div>
+          <div class="bo-run">
+            <span class="bo-btn primary bo-btn-hit">
+              <h:commandButton id="arkGenFromId" styleClass="bo-btn-hit-in"
+                               action="#{v2ActionsLotArkBean.generateFromConceptId}"
+                               value="Générer les identifiants ARK">
+                <f:ajax execute="@form" render="@form" onevent="boAjaxBusy"/>
+              </h:commandButton>
+              <span class="bo-btn-hit-ui" aria-hidden="true">
+                <svg viewBox="0 0 24 24" aria-hidden="true"><path d="M20 6 9 17l-5-5"/></svg>
+                Générer les identifiants ARK
+              </span>
+            </span>
+          </div>
+          </div>
+        </div>
+
+        <div class="bo-import">
+          <div class="bo-import-h">
+            <span class="bo-step-n acc">B</span>
+            <div>
+              <div class="bo-import-t">Générer des ARK opaques</div>
+              <div class="bo-import-s">paramètres du thésaurus</div>
+            </div>
+          </div>
+          <div class="bo-card-b">
+          <div class="bo-cfg">
+            <div class="bo-field">
+              <div class="bo-field-l">NAAN</div>
+              <div class="bo-field-hint"><b>#{v2ActionsLotArkBean.generateState.localSettings.naan}</b></div>
+            </div>
+            <div class="bo-field">
+              <div class="bo-field-l">Préfixe</div>
+              <div class="bo-field-hint"><b>#{v2ActionsLotArkBean.generateState.localSettings.prefix}</b></div>
+            </div>
+            <div class="bo-field">
+              <div class="bo-field-l">Taille de l'id</div>
+              <div class="bo-field-hint"><b>#{v2ActionsLotArkBean.generateState.localSettings.size}</b></div>
+            </div>
+            <div class="bo-field">
+              <div class="bo-field-l">Écraser les ARK existants ?</div>
+              <h:selectBooleanCheckbox styleClass="bo-check" value="#{v2ActionsLotArkBean.generateState.overwriteLocal}"/>
+              <div class="bo-field-hint">Ajustez NAAN / préfixe / taille dans Paramètres → identifiants.</div>
+            </div>
+          </div>
+          <h:panelGroup layout="block" styleClass="bo-valid-msg err" rendered="#{!v2ActionsLotArkBean.localGenerateReady}">
+            <svg viewBox="0 0 24 24" aria-hidden="true"><path d="M18 6 6 18M6 6l12 12"/></svg>
+            <span>Paramètres ARK locaux incomplets — renseignez le NAAN dans Paramètres / identifiants.</span>
+          </h:panelGroup>
+          <div class="bo-run">
+            <span class="bo-btn primary bo-btn-hit">
+              <h:commandButton id="arkGenLocal" styleClass="bo-btn-hit-in"
+                               action="#{v2ActionsLotArkBean.generateLocal}"
+                               value="Générer les identifiants ARK opaques"
+                               disabled="#{!v2ActionsLotArkBean.localGenerateReady}">
+                <f:ajax execute="@form" render="@form" onevent="boAjaxBusy"/>
+              </h:commandButton>
+              <span class="bo-btn-hit-ui" aria-hidden="true">
+                <svg viewBox="0 0 24 24" aria-hidden="true"><path d="M20 6 9 17l-5-5"/></svg>
+                Générer les identifiants ARK opaques
+              </span>
+            </span>
+          </div>
+          </div>
+        </div>
+
+        <div class="bo-result">
+          <div class="bo-result-t"><svg viewBox="0 0 24 24" aria-hidden="true"><path d="M20 6 9 17l-5-5"/></svg> Génération terminée</div>
+          <div class="bo-result-stats">
+            <div class="bo-stat ok"><b>#{v2ActionsLotArkBean.generateState.appliedCount}</b><span>identifiants appliqués</span></div>
+          </div>
+        </div>
+      </h:form>
+    </div>
+  </div>
+
+</ui:composition>

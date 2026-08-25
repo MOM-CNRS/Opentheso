@@ -1,0 +1,955 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<ui:composition xmlns="http://www.w3.org/1999/xhtml"
+                xmlns:ui="http://xmlns.jcp.org/jsf/facelets"
+                xmlns:h="http://xmlns.jcp.org/jsf/html"
+                xmlns:f="http://xmlns.jcp.org/jsf/core">
+
+  <!-- ── Concepts · Importer ── -->
+  <div class="bo-panel #{v2ActionsLotConceptBean.addPanel.cssClasses}"
+       data-obj="concepts" data-op="import" data-live="1">
+    <div class="bo-p">
+      <div class="bo-acc">
+        <div class="bo-acc-step open">
+          <div class="bo-acc-h">
+            <button type="button" class="bo-acc-h-btn" data-act="bo-acc">
+              <span class="bo-step-n">1</span>
+              <span class="bo-acc-t">Télécharger le modèle<small>colonnes attendues &amp; exemple</small></span>
+            </button>
+            <span class="bo-acc-sp"></span>
+            <h:form prependId="false" styleClass="bo-inline-form">
+              <span class="bo-btn ghost sm bo-btn-hit">
+                <h:commandButton id="cptAddTpl" styleClass="bo-btn-hit-in" value="Modèle"
+                                 action="#{v2ActionsLotConceptBean.downloadAddTemplate}"/>
+                <span class="bo-btn-hit-ui" aria-hidden="true">
+                  <svg viewBox="0 0 24 24" aria-hidden="true"><path d="M21 15v4a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2v-4"/><path d="M7 10l5 5 5-5"/><path d="M12 15V3"/></svg>
+                  Modèle
+                </span>
+              </span>
+            </h:form>
+            <button type="button" class="bo-acc-chev" data-act="bo-acc" aria-label="Déplier">
+              <svg viewBox="0 0 24 24" aria-hidden="true"><path d="m9 18 6-6-6-6"/></svg>
+            </button>
+          </div>
+          <div class="bo-acc-body">
+            <table class="bo-fmt">
+              <thead><tr><th>URI</th><th>skos:prefLabel@fr</th><th>skos:prefLabel@en</th><th>skos:definition@fr</th><th>skos:broader</th></tr></thead>
+              <tbody><tr><td>20</td><td>France</td><td>France_en</td><td>Pays de la liberté##fait partie de l'Europe</td><td>19</td></tr></tbody>
+            </table>
+            <div class="bo-fmt-note">Une ligne par concept. URI (ou identifier) obligatoire. Champs pris en compte : labels, notes, notation, relations, alignements, GPS, collections, images.</div>
+          </div>
+        </div>
+        <div class="bo-acc-step">
+          <button type="button" class="bo-acc-h" data-act="bo-acc">
+            <span class="bo-step-n">2</span>
+            <span class="bo-acc-t">Remplir le fichier<small>une ligne = un concept · règles d'application</small></span>
+            <span class="bo-acc-sp"></span>
+            <span class="bo-acc-chev"><svg viewBox="0 0 24 24" aria-hidden="true"><path d="m9 18 6-6-6-6"/></svg></span>
+          </button>
+          <div class="bo-acc-body">
+            <ul class="bo-rules">
+              <li>Séparateur accepté : <code>,</code> <code>;</code> ou tabulation.</li>
+              <li>L'identifiant (URI ou identifier) est obligatoire ; une ligne sans identifiant est ignorée.</li>
+              <li class="warn">Si l'identifiant existe déjà, la ligne est <b>rejetée</b>.</li>
+              <li>Les concepts sont liés via <code>skos:broader</code> aux concepts existants.</li>
+              <li><code>rdf:type=skos:Collection</code> crée une collection plutôt qu'un concept.</li>
+            </ul>
+          </div>
+        </div>
+      </div>
+
+      <div class="bo-import">
+        <div class="bo-import-h">
+          <span class="bo-step-n acc">3</span>
+          <div>
+            <div class="bo-import-t">Ajouter les concepts</div>
+            <div class="bo-import-s">déposez votre CSV rempli et lancez · #{v2ActionsLotConceptBean.thesaurusTitle}</div>
+          </div>
+        </div>
+
+        <h:form id="cptAddForm" prependId="false" enctype="multipart/form-data" styleClass="bo-card-b">
+          <span class="bo-state" hidden="hidden"
+                data-obj="concepts" data-op="import"
+                data-cls="#{v2ActionsLotConceptBean.addPanel.cssClasses}"></span>
+          <h:panelGroup layout="block" styleClass="bo-flash" rendered="#{not empty v2ActionsLotConceptBean.addPanel.globalError}">
+            <div class="bo-valid-msg err" role="alert">
+              <svg viewBox="0 0 24 24" aria-hidden="true"><path d="M18 6 6 18M6 6l12 12"/></svg>
+              <span>#{v2ActionsLotConceptBean.addPanel.globalError}</span>
+            </div>
+          </h:panelGroup>
+
+          <div class="bo-cfg">
+            <div class="bo-field">
+              <div class="bo-field-l">L'identifiant est de type</div>
+              <h:selectOneMenu styleClass="bo-input" value="#{v2ActionsLotConceptBean.addPanel.identifierType}">
+                <f:selectItem itemLabel="identifier (id interne)" itemValue="identifier"/>
+                <f:selectItem itemLabel="ark" itemValue="ark"/>
+                <f:selectItem itemLabel="handle" itemValue="handle"/>
+              </h:selectOneMenu>
+            </div>
+            <div class="bo-field">
+              <div class="bo-field-l">Délimiteur CSV</div>
+              <h:selectOneMenu styleClass="bo-input" value="#{v2ActionsLotConceptBean.addPanel.choiceDelimiter}">
+                <f:selectItem itemLabel=", (virgule)" itemValue="0"/>
+                <f:selectItem itemLabel="; (point-virgule)" itemValue="1"/>
+                <f:selectItem itemLabel="tabulation" itemValue="2"/>
+              </h:selectOneMenu>
+            </div>
+          </div>
+
+          <label class="bo-drop bo-drop-empty" for="cptAddFile">
+            <span class="bo-drop-ico"><svg viewBox="0 0 24 24" aria-hidden="true"><path d="M21 15v4a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2v-4"/><path d="M17 8l-5-5-5 5"/><path d="M12 3v12"/></svg></span>
+            <span class="bo-drop-t">Glissez le fichier rempli ou <span class="lk">parcourir</span></span>
+            <span class="bo-drop-s">.csv, .tsv ou .txt</span>
+          </label>
+          <h:inputFile id="cptAddFile" styleClass="bo-file-input" value="#{v2ActionsLotConceptBean.addUpload}">
+            <f:ajax event="valueChange" listener="#{v2ActionsLotConceptBean.onAddFileSelected}"
+                    execute="@form" render="@form" onevent="boAjaxBusy"/>
+          </h:inputFile>
+
+          <div class="bo-drop has-file">
+            <div class="bo-p-ico sm"><svg viewBox="0 0 24 24" aria-hidden="true"><path d="M14 3v5h5"/><path d="M14 3H6a2 2 0 0 0-2 2v14a2 2 0 0 0 2 2h12a2 2 0 0 0 2-2V8z"/></svg></div>
+            <div class="bo-file">
+              <div class="bo-file-n">#{v2ActionsLotConceptBean.addPanel.fileName}</div>
+              <div class="bo-file-m">#{v2ActionsLotConceptBean.addPanel.fileMeta}</div>
+            </div>
+            <span class="bo-file-x bo-btn-hit" title="Retirer le fichier">
+              <h:commandButton id="cptAddClearFile" styleClass="bo-btn-hit-in"
+                               action="#{v2ActionsLotConceptBean.clearAdd}" value="Retirer le fichier"
+                               title="Retirer le fichier" aria-label="Retirer le fichier">
+                <f:ajax execute="@this" render="@form" onevent="boAjaxBusy"/>
+              </h:commandButton>
+              <span class="bo-btn-hit-ui" aria-hidden="true">
+                <svg viewBox="0 0 24 24" aria-hidden="true"><path d="M18 6 6 18M6 6l12 12"/></svg>
+              </span>
+            </span>
+          </div>
+
+          <div class="bo-run">
+            <span class="bo-btn primary bo-btn-hit" data-act="bo-check">
+              <h:commandButton id="cptAddValidate" styleClass="bo-btn-hit-in"
+                               action="#{v2ActionsLotConceptBean.validateAdd}"
+                               value="Valider le fichier"
+                               disabled="#{!v2ActionsLotConceptBean.addPanel.hasFile or v2ActionsLotConceptBean.addPanel.checked}">
+                <f:ajax execute="@form" render="@form" onevent="boAjaxBusy"/>
+              </h:commandButton>
+              <span class="bo-btn-hit-ui" aria-hidden="true">
+                <svg viewBox="0 0 24 24" aria-hidden="true"><path d="M20 6 9 17l-5-5"/></svg>
+                Valider le fichier<span class="bo-need-file"> — déposez un fichier</span>
+              </span>
+            </span>
+            <span class="bo-hint bo-hint-idle">Aperçu et validation avant exécution.</span>
+            <span class="bo-hint bo-hint-file">Le fichier est analysé et prévisualisé avant d'être appliqué.</span>
+          </div>
+
+          <div class="bo-valid">
+            <div class="bo-valid-h">
+              <span class="bo-step-n acc sm">✓</span>
+              <div>
+                <div class="bo-import-t">Validation du fichier</div>
+                <div class="bo-import-s"><span class="bo-file-live">#{v2ActionsLotConceptBean.addPanel.fileName}</span> · aperçu avant application</div>
+              </div>
+            </div>
+            <div class="bo-valid-sum">
+              <div class="bo-stat ok"><b>#{v2ActionsLotConceptBean.addPanel.linesRead}</b><span>lignes lues</span></div>
+              <div class="bo-stat ok"><b class="bo-valid-n">#{v2ActionsLotConceptBean.addPanel.validCount}</b><span>valides</span></div>
+              <div class="bo-stat rej bo-stat-err"><b>#{v2ActionsLotConceptBean.addPanel.errorCount}</b><span>en erreur</span></div>
+              <div class="bo-stat ok bo-stat-zero"><b>0</b><span>en erreur</span></div>
+            </div>
+
+            <div class="bo-valid-errors">
+              <div class="bo-valid-msg err">
+                <svg viewBox="0 0 24 24" aria-hidden="true"><path d="M18 6 6 18M6 6l12 12"/></svg>
+                <span>#{v2ActionsLotConceptBean.addPanel.errorCount} ligne(s) en erreur.
+                  Vous pouvez n'appliquer que les #{v2ActionsLotConceptBean.addPanel.validCount} concepts valides.</span>
+              </div>
+              <table class="bo-errtbl">
+                <thead><tr><th>Ligne</th><th>Identifiant</th><th>Colonne</th><th>Problème</th></tr></thead>
+                <tbody>
+                  <ui:repeat value="#{v2ActionsLotConceptBean.addPanel.errors}" var="err">
+                    <tr>
+                      <td class="bo-err-ln">#{err.line}</td>
+                      <td class="bo-err-id">#{err.identifier}</td>
+                      <td><span class="bo-err-col">#{err.column}</span></td>
+                      <td class="bo-err-msg">#{err.message}</td>
+                    </tr>
+                  </ui:repeat>
+                </tbody>
+              </table>
+              <div class="bo-run">
+                <label class="bo-btn primary" for="cptAddFile">
+                  <svg viewBox="0 0 24 24" aria-hidden="true"><path d="M21 15v4a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2v-4"/><path d="M17 8l-5-5-5 5"/><path d="M12 3v12"/></svg>
+                  Réimporter le fichier corrigé
+                </label>
+                <span class="bo-btn ghost bo-btn-hit">
+                  <h:commandButton id="cptAddPartial" styleClass="bo-btn-hit-in"
+                                   action="#{v2ActionsLotConceptBean.applyAdd}"
+                                   value="Importer les #{v2ActionsLotConceptBean.addPanel.validCount} concepts valides"
+                                   disabled="#{v2ActionsLotConceptBean.addPanel.validCount eq 0}">
+                <f:ajax execute="@form" render="@form" onevent="boAjaxBusy"/>
+                  </h:commandButton>
+                  <span class="bo-btn-hit-ui" aria-hidden="true">
+                    <svg viewBox="0 0 24 24" aria-hidden="true"><path d="M21 15v4a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2v-4"/><path d="M17 8l-5-5-5 5"/><path d="M12 3v12"/></svg>
+                    Importer les #{v2ActionsLotConceptBean.addPanel.validCount} concepts valides
+                  </span>
+                </span>
+                <span class="bo-btn ghost bo-btn-hit">
+                  <h:commandButton id="cptAddCancelErr" styleClass="bo-btn-hit-in"
+                                   action="#{v2ActionsLotConceptBean.clearAdd}" value="Annuler">
+                    <f:ajax execute="@this" render="@form" onevent="boAjaxBusy"/>
+                  </h:commandButton>
+                  <span class="bo-btn-hit-ui" aria-hidden="true">Annuler</span>
+                </span>
+              </div>
+            </div>
+
+            <div class="bo-valid-ok">
+              <div class="bo-valid-msg ok">
+                <svg viewBox="0 0 24 24" aria-hidden="true"><path d="M20 6 9 17l-5-5"/></svg>
+                <span>Aucune erreur détectée — #{v2ActionsLotConceptBean.addPanel.validCount} concepts prêt(s).</span>
+              </div>
+              <div class="bo-run">
+                <span class="bo-btn primary bo-btn-hit">
+                  <h:commandButton id="cptAddApply" styleClass="bo-btn-hit-in"
+                                   action="#{v2ActionsLotConceptBean.applyAdd}"
+                                   value="Confirmer — Importer les #{v2ActionsLotConceptBean.addPanel.validCount} concepts">
+                <f:ajax execute="@form" render="@form" onevent="boAjaxBusy"/>
+                  </h:commandButton>
+                  <span class="bo-btn-hit-ui" aria-hidden="true">
+                    <svg viewBox="0 0 24 24" aria-hidden="true"><path d="M21 15v4a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2v-4"/><path d="M17 8l-5-5-5 5"/><path d="M12 3v12"/></svg>
+                    Confirmer — Importer les #{v2ActionsLotConceptBean.addPanel.validCount} concepts
+                  </span>
+                </span>
+                <span class="bo-btn ghost bo-btn-hit">
+                  <h:commandButton id="cptAddCancelOk" styleClass="bo-btn-hit-in"
+                                   action="#{v2ActionsLotConceptBean.clearAdd}" value="Annuler">
+                    <f:ajax execute="@this" render="@form" onevent="boAjaxBusy"/>
+                  </h:commandButton>
+                  <span class="bo-btn-hit-ui" aria-hidden="true">Annuler</span>
+                </span>
+              </div>
+            </div>
+          </div>
+
+          <div class="bo-result">
+            <div class="bo-result-t"><svg viewBox="0 0 24 24" aria-hidden="true"><path d="M20 6 9 17l-5-5"/></svg> Import terminé</div>
+            <div class="bo-result-stats">
+              <div class="bo-stat ok"><b>#{v2ActionsLotConceptBean.addPanel.linesRead}</b><span>lignes lues</span></div>
+              <div class="bo-stat ok"><b>#{v2ActionsLotConceptBean.addPanel.appliedCount}</b><span>appliquées</span></div>
+              <div class="bo-stat rej"><b>#{v2ActionsLotConceptBean.addPanel.rejectedCount}</b><span>rejetées</span></div>
+            </div>
+          </div>
+        </h:form>
+      </div>
+    </div>
+  </div>
+
+  <!-- ── Concepts · Remplacer ── -->
+  <div class="bo-panel #{v2ActionsLotConceptBean.mergePanel.cssClasses}"
+       data-obj="concepts" data-op="replace" data-live="1">
+    <div class="bo-p">
+      <div class="bo-acc">
+        <div class="bo-acc-step open">
+          <div class="bo-acc-h">
+            <button type="button" class="bo-acc-h-btn" data-act="bo-acc">
+              <span class="bo-step-n">1</span>
+              <span class="bo-acc-t">Télécharger le modèle<small>colonnes attendues &amp; exemple</small></span>
+            </button>
+            <span class="bo-acc-sp"></span>
+            <h:form prependId="false" styleClass="bo-inline-form">
+              <span class="bo-btn ghost sm bo-btn-hit">
+                <h:commandButton id="cptMergeTpl" styleClass="bo-btn-hit-in" value="Modèle"
+                                 action="#{v2ActionsLotConceptBean.downloadMergeTemplate}"/>
+                <span class="bo-btn-hit-ui" aria-hidden="true">
+                  <svg viewBox="0 0 24 24" aria-hidden="true"><path d="M21 15v4a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2v-4"/><path d="M7 10l5 5 5-5"/><path d="M12 15V3"/></svg>
+                  Modèle
+                </span>
+              </span>
+            </h:form>
+            <button type="button" class="bo-acc-chev" data-act="bo-acc" aria-label="Déplier">
+              <svg viewBox="0 0 24 24" aria-hidden="true"><path d="m9 18 6-6-6-6"/></svg>
+            </button>
+          </div>
+          <div class="bo-acc-body">
+            <table class="bo-fmt">
+              <thead><tr><th>identifier</th><th>skos:prefLabel@fr</th><th>skos:prefLabel@it</th><th>skos:altLabel@en</th><th>skos:altLabel@fr</th></tr></thead>
+              <tbody><tr><td>4587</td><td>astre</td><td>astro</td><td>heavenly body##astronomical body</td><td>(vide = supprimer)</td></tr></tbody>
+            </table>
+            <div class="bo-fmt-note">Même format qu'un export CSV. Seuls les concepts listés sont mis à jour. Une cellule vide supprime la valeur existante pour ce champ.</div>
+          </div>
+        </div>
+        <div class="bo-acc-step">
+          <button type="button" class="bo-acc-h" data-act="bo-acc">
+            <span class="bo-step-n">2</span>
+            <span class="bo-acc-t">Remplir le fichier<small>une ligne = un concept · règles d'application</small></span>
+            <span class="bo-acc-sp"></span>
+            <span class="bo-acc-chev"><svg viewBox="0 0 24 24" aria-hidden="true"><path d="m9 18 6-6-6-6"/></svg></span>
+          </button>
+          <div class="bo-acc-body">
+            <ul class="bo-rules">
+              <li>Séparateur accepté : <code>,</code> <code>;</code> ou tabulation.</li>
+              <li class="warn">Si l'identifiant n'existe pas, la ligne est <b>rejetée</b>.</li>
+              <li>Les champs fournis remplacent l'existant (prefLabel, altLabel, notes, alignements, GPS, images, ressources).</li>
+              <li>Une colonne vide (ex. <code>altLabel@en</code>) supprime les valeurs de cette langue.</li>
+              <li>Les champs absents du fichier ne sont pas modifiés. Les concepts hors fichier non plus.</li>
+            </ul>
+          </div>
+        </div>
+      </div>
+
+      <div class="bo-import">
+        <div class="bo-import-h">
+          <span class="bo-step-n acc">3</span>
+          <div>
+            <div class="bo-import-t">Remplacer l'existant</div>
+            <div class="bo-import-s">déposez votre CSV rempli et lancez · #{v2ActionsLotConceptBean.thesaurusTitle}</div>
+          </div>
+        </div>
+
+        <h:form id="cptMergeForm" prependId="false" enctype="multipart/form-data" styleClass="bo-card-b">
+          <span class="bo-state" hidden="hidden"
+                data-obj="concepts" data-op="replace"
+                data-cls="#{v2ActionsLotConceptBean.mergePanel.cssClasses}"></span>
+          <h:panelGroup layout="block" styleClass="bo-flash" rendered="#{not empty v2ActionsLotConceptBean.mergePanel.globalError}">
+            <div class="bo-valid-msg err" role="alert">
+              <svg viewBox="0 0 24 24" aria-hidden="true"><path d="M18 6 6 18M6 6l12 12"/></svg>
+              <span>#{v2ActionsLotConceptBean.mergePanel.globalError}</span>
+            </div>
+          </h:panelGroup>
+
+          <div class="bo-cfg">
+
+            <div class="bo-field">
+              <div class="bo-field-l">Délimiteur CSV</div>
+              <h:selectOneMenu styleClass="bo-input" value="#{v2ActionsLotConceptBean.mergePanel.choiceDelimiter}">
+                <f:selectItem itemLabel=", (virgule)" itemValue="0"/>
+                <f:selectItem itemLabel="; (point-virgule)" itemValue="1"/>
+                <f:selectItem itemLabel="tabulation" itemValue="2"/>
+              </h:selectOneMenu>
+            </div>
+          </div>
+
+          <label class="bo-drop bo-drop-empty" for="cptMergeFile">
+            <span class="bo-drop-ico"><svg viewBox="0 0 24 24" aria-hidden="true"><path d="M21 15v4a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2v-4"/><path d="M17 8l-5-5-5 5"/><path d="M12 3v12"/></svg></span>
+            <span class="bo-drop-t">Glissez le fichier rempli ou <span class="lk">parcourir</span></span>
+            <span class="bo-drop-s">.csv, .tsv ou .txt</span>
+          </label>
+          <h:inputFile id="cptMergeFile" styleClass="bo-file-input" value="#{v2ActionsLotConceptBean.mergeUpload}">
+            <f:ajax event="valueChange" listener="#{v2ActionsLotConceptBean.onMergeFileSelected}"
+                    execute="@form" render="@form" onevent="boAjaxBusy"/>
+          </h:inputFile>
+
+          <div class="bo-drop has-file">
+            <div class="bo-p-ico sm"><svg viewBox="0 0 24 24" aria-hidden="true"><path d="M14 3v5h5"/><path d="M14 3H6a2 2 0 0 0-2 2v14a2 2 0 0 0 2 2h12a2 2 0 0 0 2-2V8z"/></svg></div>
+            <div class="bo-file">
+              <div class="bo-file-n">#{v2ActionsLotConceptBean.mergePanel.fileName}</div>
+              <div class="bo-file-m">#{v2ActionsLotConceptBean.mergePanel.fileMeta}</div>
+            </div>
+            <span class="bo-file-x bo-btn-hit" title="Retirer le fichier">
+              <h:commandButton id="cptMergeClearFile" styleClass="bo-btn-hit-in"
+                               action="#{v2ActionsLotConceptBean.clearMerge}" value="Retirer le fichier"
+                               title="Retirer le fichier" aria-label="Retirer le fichier">
+                <f:ajax execute="@this" render="@form" onevent="boAjaxBusy"/>
+              </h:commandButton>
+              <span class="bo-btn-hit-ui" aria-hidden="true">
+                <svg viewBox="0 0 24 24" aria-hidden="true"><path d="M18 6 6 18M6 6l12 12"/></svg>
+              </span>
+            </span>
+          </div>
+
+          <div class="bo-run">
+            <span class="bo-btn primary bo-btn-hit" data-act="bo-check">
+              <h:commandButton id="cptMergeValidate" styleClass="bo-btn-hit-in"
+                               action="#{v2ActionsLotConceptBean.validateMerge}"
+                               value="Valider le fichier"
+                               disabled="#{!v2ActionsLotConceptBean.mergePanel.hasFile or v2ActionsLotConceptBean.mergePanel.checked}">
+                <f:ajax execute="@form" render="@form" onevent="boAjaxBusy"/>
+              </h:commandButton>
+              <span class="bo-btn-hit-ui" aria-hidden="true">
+                <svg viewBox="0 0 24 24" aria-hidden="true"><path d="M20 6 9 17l-5-5"/></svg>
+                Valider le fichier<span class="bo-need-file"> — déposez un fichier</span>
+              </span>
+            </span>
+            <span class="bo-hint bo-hint-idle">Aperçu et validation avant exécution.</span>
+            <span class="bo-hint bo-hint-file">Le fichier est analysé et prévisualisé avant d'être appliqué.</span>
+          </div>
+
+          <div class="bo-valid">
+            <div class="bo-valid-h">
+              <span class="bo-step-n acc sm">✓</span>
+              <div>
+                <div class="bo-import-t">Validation du fichier</div>
+                <div class="bo-import-s"><span class="bo-file-live">#{v2ActionsLotConceptBean.mergePanel.fileName}</span> · aperçu avant application</div>
+              </div>
+            </div>
+            <div class="bo-valid-sum">
+              <div class="bo-stat ok"><b>#{v2ActionsLotConceptBean.mergePanel.linesRead}</b><span>lignes lues</span></div>
+              <div class="bo-stat ok"><b class="bo-valid-n">#{v2ActionsLotConceptBean.mergePanel.validCount}</b><span>valides</span></div>
+              <div class="bo-stat rej bo-stat-err"><b>#{v2ActionsLotConceptBean.mergePanel.errorCount}</b><span>en erreur</span></div>
+              <div class="bo-stat ok bo-stat-zero"><b>0</b><span>en erreur</span></div>
+            </div>
+
+            <div class="bo-valid-errors">
+              <div class="bo-valid-msg err">
+                <svg viewBox="0 0 24 24" aria-hidden="true"><path d="M18 6 6 18M6 6l12 12"/></svg>
+                <span>#{v2ActionsLotConceptBean.mergePanel.errorCount} ligne(s) en erreur.
+                  Vous pouvez n'appliquer que les #{v2ActionsLotConceptBean.mergePanel.validCount} concepts valides.</span>
+              </div>
+              <table class="bo-errtbl">
+                <thead><tr><th>Ligne</th><th>Identifiant</th><th>Colonne</th><th>Problème</th></tr></thead>
+                <tbody>
+                  <ui:repeat value="#{v2ActionsLotConceptBean.mergePanel.errors}" var="err">
+                    <tr>
+                      <td class="bo-err-ln">#{err.line}</td>
+                      <td class="bo-err-id">#{err.identifier}</td>
+                      <td><span class="bo-err-col">#{err.column}</span></td>
+                      <td class="bo-err-msg">#{err.message}</td>
+                    </tr>
+                  </ui:repeat>
+                </tbody>
+              </table>
+              <div class="bo-run">
+                <label class="bo-btn primary" for="cptMergeFile">
+                  <svg viewBox="0 0 24 24" aria-hidden="true"><path d="M21 15v4a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2v-4"/><path d="M17 8l-5-5-5 5"/><path d="M12 3v12"/></svg>
+                  Réimporter le fichier corrigé
+                </label>
+                <span class="bo-btn ghost bo-btn-hit">
+                  <h:commandButton id="cptMergePartial" styleClass="bo-btn-hit-in"
+                                   action="#{v2ActionsLotConceptBean.applyMerge}"
+                                   value="Remplacer les #{v2ActionsLotConceptBean.mergePanel.validCount} concepts valides"
+                                   disabled="#{v2ActionsLotConceptBean.mergePanel.validCount eq 0}">
+                <f:ajax execute="@form" render="@form" onevent="boAjaxBusy"/>
+                  </h:commandButton>
+                  <span class="bo-btn-hit-ui" aria-hidden="true">
+                    <svg viewBox="0 0 24 24" aria-hidden="true"><path d="M21 15v4a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2v-4"/><path d="M17 8l-5-5-5 5"/><path d="M12 3v12"/></svg>
+                    Remplacer les #{v2ActionsLotConceptBean.mergePanel.validCount} concepts valides
+                  </span>
+                </span>
+                <span class="bo-btn ghost bo-btn-hit">
+                  <h:commandButton id="cptMergeCancelErr" styleClass="bo-btn-hit-in"
+                                   action="#{v2ActionsLotConceptBean.clearMerge}" value="Annuler">
+                    <f:ajax execute="@this" render="@form" onevent="boAjaxBusy"/>
+                  </h:commandButton>
+                  <span class="bo-btn-hit-ui" aria-hidden="true">Annuler</span>
+                </span>
+              </div>
+            </div>
+
+            <div class="bo-valid-ok">
+              <div class="bo-valid-msg ok">
+                <svg viewBox="0 0 24 24" aria-hidden="true"><path d="M20 6 9 17l-5-5"/></svg>
+                <span>Aucune erreur détectée — #{v2ActionsLotConceptBean.mergePanel.validCount} concepts prêt(s).</span>
+              </div>
+              <div class="bo-run">
+                <span class="bo-btn primary bo-btn-hit">
+                  <h:commandButton id="cptMergeApply" styleClass="bo-btn-hit-in"
+                                   action="#{v2ActionsLotConceptBean.applyMerge}"
+                                   value="Confirmer — Remplacer les #{v2ActionsLotConceptBean.mergePanel.validCount} concepts">
+                <f:ajax execute="@form" render="@form" onevent="boAjaxBusy"/>
+                  </h:commandButton>
+                  <span class="bo-btn-hit-ui" aria-hidden="true">
+                    <svg viewBox="0 0 24 24" aria-hidden="true"><path d="M21 15v4a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2v-4"/><path d="M17 8l-5-5-5 5"/><path d="M12 3v12"/></svg>
+                    Confirmer — Remplacer les #{v2ActionsLotConceptBean.mergePanel.validCount} concepts
+                  </span>
+                </span>
+                <span class="bo-btn ghost bo-btn-hit">
+                  <h:commandButton id="cptMergeCancelOk" styleClass="bo-btn-hit-in"
+                                   action="#{v2ActionsLotConceptBean.clearMerge}" value="Annuler">
+                    <f:ajax execute="@this" render="@form" onevent="boAjaxBusy"/>
+                  </h:commandButton>
+                  <span class="bo-btn-hit-ui" aria-hidden="true">Annuler</span>
+                </span>
+              </div>
+            </div>
+          </div>
+
+          <div class="bo-result">
+            <div class="bo-result-t"><svg viewBox="0 0 24 24" aria-hidden="true"><path d="M20 6 9 17l-5-5"/></svg> Remplacement terminé</div>
+            <div class="bo-result-stats">
+              <div class="bo-stat ok"><b>#{v2ActionsLotConceptBean.mergePanel.linesRead}</b><span>lignes lues</span></div>
+              <div class="bo-stat ok"><b>#{v2ActionsLotConceptBean.mergePanel.appliedCount}</b><span>appliquées</span></div>
+              <div class="bo-stat rej"><b>#{v2ActionsLotConceptBean.mergePanel.rejectedCount}</b><span>rejetées</span></div>
+            </div>
+          </div>
+        </h:form>
+      </div>
+    </div>
+  </div>
+
+  <!-- ── Concepts · Rendre obsolète ── -->
+  <div class="bo-panel #{v2ActionsLotConceptBean.deprecatePanel.cssClasses}"
+       data-obj="concepts" data-op="deprecate" data-live="1">
+    <div class="bo-p">
+      <div class="bo-acc">
+        <div class="bo-acc-step open">
+          <div class="bo-acc-h">
+            <button type="button" class="bo-acc-h-btn" data-act="bo-acc">
+              <span class="bo-step-n">1</span>
+              <span class="bo-acc-t">Télécharger le modèle<small>colonnes attendues &amp; exemple</small></span>
+            </button>
+            <span class="bo-acc-sp"></span>
+            <h:form prependId="false" styleClass="bo-inline-form">
+              <span class="bo-btn ghost sm bo-btn-hit">
+                <h:commandButton id="cptDepTpl" styleClass="bo-btn-hit-in" value="Modèle"
+                                 action="#{v2ActionsLotConceptBean.downloadDeprecateTemplate}"/>
+                <span class="bo-btn-hit-ui" aria-hidden="true">
+                  <svg viewBox="0 0 24 24" aria-hidden="true"><path d="M21 15v4a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2v-4"/><path d="M7 10l5 5 5-5"/><path d="M12 15V3"/></svg>
+                  Modèle
+                </span>
+              </span>
+            </h:form>
+            <button type="button" class="bo-acc-chev" data-act="bo-acc" aria-label="Déplier">
+              <svg viewBox="0 0 24 24" aria-hidden="true"><path d="m9 18 6-6-6-6"/></svg>
+            </button>
+          </div>
+          <div class="bo-acc-body">
+            <table class="bo-fmt">
+              <thead><tr><th>deprecated</th><th>isReplacedBy</th><th>skos:note@fr</th></tr></thead>
+              <tbody><tr><td>https://ark.frantiq.fr/ark:/26678/crtcg26jeN4R9</td><td>https://ark.frantiq.fr/ark:/26678/pcrtbpkL4pLqjd</td><td>La bonne localité est « Las Médulas » (31076)</td></tr></tbody>
+            </table>
+            <div class="bo-fmt-note">Une ligne par concept à rendre obsolète. <code>isReplacedBy</code> et la note sont facultatifs.</div>
+          </div>
+        </div>
+        <div class="bo-acc-step">
+          <button type="button" class="bo-acc-h" data-act="bo-acc">
+            <span class="bo-step-n">2</span>
+            <span class="bo-acc-t">Remplir le fichier<small>une ligne = un concept · règles d'application</small></span>
+            <span class="bo-acc-sp"></span>
+            <span class="bo-acc-chev"><svg viewBox="0 0 24 24" aria-hidden="true"><path d="m9 18 6-6-6-6"/></svg></span>
+          </button>
+          <div class="bo-acc-body">
+            <ul class="bo-rules">
+              <li>Séparateur accepté : <code>,</code> <code>;</code> ou tabulation.</li>
+              <li class="warn">Si l'identifiant n'existe pas, la ligne est <b>rejetée</b>.</li>
+              <li>Si <code>isReplacedBy</code> est renseigné mais introuvable, la ligne est <b>rejetée</b>.</li>
+              <li>Le concept est déprécié ; le lien de remplacement et la note sont ajoutés s'ils sont fournis.</li>
+            </ul>
+          </div>
+        </div>
+      </div>
+
+      <div class="bo-import">
+        <div class="bo-import-h">
+          <span class="bo-step-n acc">3</span>
+          <div>
+            <div class="bo-import-t">Rendre obsolète</div>
+            <div class="bo-import-s">déposez votre CSV rempli et lancez · #{v2ActionsLotConceptBean.thesaurusTitle}</div>
+          </div>
+        </div>
+
+        <h:form id="cptDepForm" prependId="false" enctype="multipart/form-data" styleClass="bo-card-b">
+          <span class="bo-state" hidden="hidden"
+                data-obj="concepts" data-op="deprecate"
+                data-cls="#{v2ActionsLotConceptBean.deprecatePanel.cssClasses}"></span>
+          <h:panelGroup layout="block" styleClass="bo-flash" rendered="#{not empty v2ActionsLotConceptBean.deprecatePanel.globalError}">
+            <div class="bo-valid-msg err" role="alert">
+              <svg viewBox="0 0 24 24" aria-hidden="true"><path d="M18 6 6 18M6 6l12 12"/></svg>
+              <span>#{v2ActionsLotConceptBean.deprecatePanel.globalError}</span>
+            </div>
+          </h:panelGroup>
+
+          <div class="bo-cfg">
+            <div class="bo-field">
+              <div class="bo-field-l">L'identifiant est de type</div>
+              <h:selectOneMenu styleClass="bo-input" value="#{v2ActionsLotConceptBean.deprecatePanel.identifierType}">
+                <f:selectItem itemLabel="identifier (id interne)" itemValue="identifier"/>
+                <f:selectItem itemLabel="ark" itemValue="ark"/>
+                <f:selectItem itemLabel="handle" itemValue="handle"/>
+              </h:selectOneMenu>
+            </div>
+            <div class="bo-field">
+              <div class="bo-field-l">Délimiteur CSV</div>
+              <h:selectOneMenu styleClass="bo-input" value="#{v2ActionsLotConceptBean.deprecatePanel.choiceDelimiter}">
+                <f:selectItem itemLabel=", (virgule)" itemValue="0"/>
+                <f:selectItem itemLabel="; (point-virgule)" itemValue="1"/>
+                <f:selectItem itemLabel="tabulation" itemValue="2"/>
+              </h:selectOneMenu>
+            </div>
+          </div>
+
+          <label class="bo-drop bo-drop-empty" for="cptDepFile">
+            <span class="bo-drop-ico"><svg viewBox="0 0 24 24" aria-hidden="true"><path d="M21 15v4a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2v-4"/><path d="M17 8l-5-5-5 5"/><path d="M12 3v12"/></svg></span>
+            <span class="bo-drop-t">Glissez le fichier rempli ou <span class="lk">parcourir</span></span>
+            <span class="bo-drop-s">.csv, .tsv ou .txt</span>
+          </label>
+          <h:inputFile id="cptDepFile" styleClass="bo-file-input" value="#{v2ActionsLotConceptBean.deprecateUpload}">
+            <f:ajax event="valueChange" listener="#{v2ActionsLotConceptBean.onDeprecateFileSelected}"
+                    execute="@form" render="@form" onevent="boAjaxBusy"/>
+          </h:inputFile>
+
+          <div class="bo-drop has-file">
+            <div class="bo-p-ico sm"><svg viewBox="0 0 24 24" aria-hidden="true"><path d="M14 3v5h5"/><path d="M14 3H6a2 2 0 0 0-2 2v14a2 2 0 0 0 2 2h12a2 2 0 0 0 2-2V8z"/></svg></div>
+            <div class="bo-file">
+              <div class="bo-file-n">#{v2ActionsLotConceptBean.deprecatePanel.fileName}</div>
+              <div class="bo-file-m">#{v2ActionsLotConceptBean.deprecatePanel.fileMeta}</div>
+            </div>
+            <span class="bo-file-x bo-btn-hit" title="Retirer le fichier">
+              <h:commandButton id="cptDepClearFile" styleClass="bo-btn-hit-in"
+                               action="#{v2ActionsLotConceptBean.clearDeprecate}" value="Retirer le fichier"
+                               title="Retirer le fichier" aria-label="Retirer le fichier">
+                <f:ajax execute="@this" render="@form" onevent="boAjaxBusy"/>
+              </h:commandButton>
+              <span class="bo-btn-hit-ui" aria-hidden="true">
+                <svg viewBox="0 0 24 24" aria-hidden="true"><path d="M18 6 6 18M6 6l12 12"/></svg>
+              </span>
+            </span>
+          </div>
+
+          <div class="bo-run">
+            <span class="bo-btn primary bo-btn-hit" data-act="bo-check">
+              <h:commandButton id="cptDepValidate" styleClass="bo-btn-hit-in"
+                               action="#{v2ActionsLotConceptBean.validateDeprecate}"
+                               value="Valider le fichier"
+                               disabled="#{!v2ActionsLotConceptBean.deprecatePanel.hasFile or v2ActionsLotConceptBean.deprecatePanel.checked}">
+                <f:ajax execute="@form" render="@form" onevent="boAjaxBusy"/>
+              </h:commandButton>
+              <span class="bo-btn-hit-ui" aria-hidden="true">
+                <svg viewBox="0 0 24 24" aria-hidden="true"><path d="M20 6 9 17l-5-5"/></svg>
+                Valider le fichier<span class="bo-need-file"> — déposez un fichier</span>
+              </span>
+            </span>
+            <span class="bo-hint bo-hint-idle">Aperçu et validation avant exécution.</span>
+            <span class="bo-hint bo-hint-file">Le fichier est analysé et prévisualisé avant d'être appliqué.</span>
+          </div>
+
+          <div class="bo-valid">
+            <div class="bo-valid-h">
+              <span class="bo-step-n acc sm">✓</span>
+              <div>
+                <div class="bo-import-t">Validation du fichier</div>
+                <div class="bo-import-s"><span class="bo-file-live">#{v2ActionsLotConceptBean.deprecatePanel.fileName}</span> · aperçu avant application</div>
+              </div>
+            </div>
+            <div class="bo-valid-sum">
+              <div class="bo-stat ok"><b>#{v2ActionsLotConceptBean.deprecatePanel.linesRead}</b><span>lignes lues</span></div>
+              <div class="bo-stat ok"><b class="bo-valid-n">#{v2ActionsLotConceptBean.deprecatePanel.validCount}</b><span>valides</span></div>
+              <div class="bo-stat rej bo-stat-err"><b>#{v2ActionsLotConceptBean.deprecatePanel.errorCount}</b><span>en erreur</span></div>
+              <div class="bo-stat ok bo-stat-zero"><b>0</b><span>en erreur</span></div>
+            </div>
+
+            <div class="bo-valid-errors">
+              <div class="bo-valid-msg err">
+                <svg viewBox="0 0 24 24" aria-hidden="true"><path d="M18 6 6 18M6 6l12 12"/></svg>
+                <span>#{v2ActionsLotConceptBean.deprecatePanel.errorCount} ligne(s) en erreur.
+                  Vous pouvez n'appliquer que les #{v2ActionsLotConceptBean.deprecatePanel.validCount} concepts valides.</span>
+              </div>
+              <table class="bo-errtbl">
+                <thead><tr><th>Ligne</th><th>Identifiant</th><th>Colonne</th><th>Problème</th></tr></thead>
+                <tbody>
+                  <ui:repeat value="#{v2ActionsLotConceptBean.deprecatePanel.errors}" var="err">
+                    <tr>
+                      <td class="bo-err-ln">#{err.line}</td>
+                      <td class="bo-err-id">#{err.identifier}</td>
+                      <td><span class="bo-err-col">#{err.column}</span></td>
+                      <td class="bo-err-msg">#{err.message}</td>
+                    </tr>
+                  </ui:repeat>
+                </tbody>
+              </table>
+              <div class="bo-run">
+                <label class="bo-btn primary" for="cptDepFile">
+                  <svg viewBox="0 0 24 24" aria-hidden="true"><path d="M21 15v4a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2v-4"/><path d="M17 8l-5-5-5 5"/><path d="M12 3v12"/></svg>
+                  Réimporter le fichier corrigé
+                </label>
+                <span class="bo-btn ghost bo-btn-hit">
+                  <h:commandButton id="cptDepPartial" styleClass="bo-btn-hit-in"
+                                   action="#{v2ActionsLotConceptBean.applyDeprecate}"
+                                   value="Rendre obsolète les #{v2ActionsLotConceptBean.deprecatePanel.validCount} concepts valides"
+                                   disabled="#{v2ActionsLotConceptBean.deprecatePanel.validCount eq 0}">
+                <f:ajax execute="@form" render="@form" onevent="boAjaxBusy"/>
+                  </h:commandButton>
+                  <span class="bo-btn-hit-ui" aria-hidden="true">
+                    <svg viewBox="0 0 24 24" aria-hidden="true"><path d="M21 15v4a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2v-4"/><path d="M17 8l-5-5-5 5"/><path d="M12 3v12"/></svg>
+                    Rendre obsolète les #{v2ActionsLotConceptBean.deprecatePanel.validCount} concepts valides
+                  </span>
+                </span>
+                <span class="bo-btn ghost bo-btn-hit">
+                  <h:commandButton id="cptDepCancelErr" styleClass="bo-btn-hit-in"
+                                   action="#{v2ActionsLotConceptBean.clearDeprecate}" value="Annuler">
+                    <f:ajax execute="@this" render="@form" onevent="boAjaxBusy"/>
+                  </h:commandButton>
+                  <span class="bo-btn-hit-ui" aria-hidden="true">Annuler</span>
+                </span>
+              </div>
+            </div>
+
+            <div class="bo-valid-ok">
+              <div class="bo-valid-msg ok">
+                <svg viewBox="0 0 24 24" aria-hidden="true"><path d="M20 6 9 17l-5-5"/></svg>
+                <span>Aucune erreur détectée — #{v2ActionsLotConceptBean.deprecatePanel.validCount} concepts prêt(s).</span>
+              </div>
+              <div class="bo-run">
+                <span class="bo-btn primary bo-btn-hit">
+                  <h:commandButton id="cptDepApply" styleClass="bo-btn-hit-in"
+                                   action="#{v2ActionsLotConceptBean.applyDeprecate}"
+                                   value="Confirmer — Rendre obsolète les #{v2ActionsLotConceptBean.deprecatePanel.validCount} concepts">
+                <f:ajax execute="@form" render="@form" onevent="boAjaxBusy"/>
+                  </h:commandButton>
+                  <span class="bo-btn-hit-ui" aria-hidden="true">
+                    <svg viewBox="0 0 24 24" aria-hidden="true"><path d="M21 15v4a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2v-4"/><path d="M17 8l-5-5-5 5"/><path d="M12 3v12"/></svg>
+                    Confirmer — Rendre obsolète les #{v2ActionsLotConceptBean.deprecatePanel.validCount} concepts
+                  </span>
+                </span>
+                <span class="bo-btn ghost bo-btn-hit">
+                  <h:commandButton id="cptDepCancelOk" styleClass="bo-btn-hit-in"
+                                   action="#{v2ActionsLotConceptBean.clearDeprecate}" value="Annuler">
+                    <f:ajax execute="@this" render="@form" onevent="boAjaxBusy"/>
+                  </h:commandButton>
+                  <span class="bo-btn-hit-ui" aria-hidden="true">Annuler</span>
+                </span>
+              </div>
+            </div>
+          </div>
+
+          <div class="bo-result">
+            <div class="bo-result-t"><svg viewBox="0 0 24 24" aria-hidden="true"><path d="M20 6 9 17l-5-5"/></svg> Obsolescence terminée</div>
+            <div class="bo-result-stats">
+              <div class="bo-stat ok"><b>#{v2ActionsLotConceptBean.deprecatePanel.linesRead}</b><span>lignes lues</span></div>
+              <div class="bo-stat ok"><b>#{v2ActionsLotConceptBean.deprecatePanel.appliedCount}</b><span>appliquées</span></div>
+              <div class="bo-stat rej"><b>#{v2ActionsLotConceptBean.deprecatePanel.rejectedCount}</b><span>rejetées</span></div>
+            </div>
+          </div>
+        </h:form>
+      </div>
+    </div>
+  </div>
+
+  <!-- ── Concepts · Comparer ── -->
+  <div class="bo-panel #{v2ActionsLotConceptBean.comparePanel.cssClasses}"
+       data-obj="concepts" data-op="compare" data-live="1">
+    <div class="bo-p">
+      <div class="bo-acc">
+        <div class="bo-acc-step open">
+          <div class="bo-acc-h">
+            <button type="button" class="bo-acc-h-btn" data-act="bo-acc">
+              <span class="bo-step-n">1</span>
+              <span class="bo-acc-t">Télécharger le modèle<small>colonnes attendues &amp; exemple</small></span>
+            </button>
+            <span class="bo-acc-sp"></span>
+            <h:form prependId="false" styleClass="bo-inline-form">
+              <span class="bo-btn ghost sm bo-btn-hit">
+                <h:commandButton id="cptCmpTpl" styleClass="bo-btn-hit-in" value="Modèle"
+                                 action="#{v2ActionsLotConceptBean.downloadCompareTemplate}"/>
+                <span class="bo-btn-hit-ui" aria-hidden="true">
+                  <svg viewBox="0 0 24 24" aria-hidden="true"><path d="M21 15v4a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2v-4"/><path d="M7 10l5 5 5-5"/><path d="M12 15V3"/></svg>
+                  Modèle
+                </span>
+              </span>
+            </h:form>
+            <button type="button" class="bo-acc-chev" data-act="bo-acc" aria-label="Déplier">
+              <svg viewBox="0 0 24 24" aria-hidden="true"><path d="m9 18 6-6-6-6"/></svg>
+            </button>
+          </div>
+          <div class="bo-acc-body">
+            <table class="bo-fmt">
+              <thead><tr><th>skos:prefLabel@fr</th><th>conceptId (+)</th><th>prefLabel (+)</th><th>variantes (+)</th></tr></thead>
+              <tbody><tr><td>Espagne</td><td></td><td></td><td></td></tr></tbody>
+            </table>
+            <div class="bo-fmt-note">Une seule colonne en entrée : <code>skos:prefLabel@langue</code>. La comparaison ajoute conceptId, arkId, prefLabel et variantes.</div>
+          </div>
+        </div>
+        <div class="bo-acc-step">
+          <button type="button" class="bo-acc-h" data-act="bo-acc">
+            <span class="bo-step-n">2</span>
+            <span class="bo-acc-t">Remplir le fichier<small>une ligne = un concept · règles d'application</small></span>
+            <span class="bo-acc-sp"></span>
+            <span class="bo-acc-chev"><svg viewBox="0 0 24 24" aria-hidden="true"><path d="m9 18 6-6-6-6"/></svg></span>
+          </button>
+          <div class="bo-acc-body">
+            <ul class="bo-rules">
+              <li>Une seule colonne est autorisée, avec la langue (ex. <code>skos:prefLabel@fr</code>).</li>
+              <li>Recherche sur le label préféré et les variantes.</li>
+              <li>Si plusieurs correspondances, elles sont ajoutées en lignes supplémentaires.</li>
+              <li>L'identifiant est vide s'il n'y a aucun résultat.</li>
+              <li>Le résultat se télécharge en CSV — le thésaurus n'est pas modifié.</li>
+            </ul>
+          </div>
+        </div>
+      </div>
+
+      <div class="bo-import">
+        <div class="bo-import-h">
+          <span class="bo-step-n acc">3</span>
+          <div>
+            <div class="bo-import-t">Comparer au thésaurus</div>
+            <div class="bo-import-s">déposez votre CSV rempli et lancez · #{v2ActionsLotConceptBean.thesaurusTitle}</div>
+          </div>
+        </div>
+
+        <h:form id="cptCmpForm" prependId="false" enctype="multipart/form-data" styleClass="bo-card-b">
+          <span class="bo-state" hidden="hidden"
+                data-obj="concepts" data-op="compare"
+                data-cls="#{v2ActionsLotConceptBean.comparePanel.cssClasses}"></span>
+          <h:panelGroup layout="block" styleClass="bo-flash" rendered="#{not empty v2ActionsLotConceptBean.comparePanel.globalError}">
+            <div class="bo-valid-msg err" role="alert">
+              <svg viewBox="0 0 24 24" aria-hidden="true"><path d="M18 6 6 18M6 6l12 12"/></svg>
+              <span>#{v2ActionsLotConceptBean.comparePanel.globalError}</span>
+            </div>
+          </h:panelGroup>
+
+          <div class="bo-cfg">
+            <div class="bo-field">
+              <div class="bo-field-l">Type de comparaison</div>
+              <h:selectOneMenu styleClass="bo-input" value="#{v2ActionsLotConceptBean.comparePanel.searchType}">
+                <f:selectItem itemLabel="Phrase exacte" itemValue="exactWord"/>
+                <f:selectItem itemLabel="Mot exact" itemValue="containsExactWord"/>
+                <f:selectItem itemLabel="Commence par" itemValue="startWith"/>
+                <f:selectItem itemLabel="Flexible" itemValue="elastic"/>
+              </h:selectOneMenu>
+              <div class="bo-field-hint">Les accents et la casse sont ignorés.</div>
+            </div>
+            <div class="bo-field">
+              <div class="bo-field-l">Délimiteur CSV</div>
+              <h:selectOneMenu styleClass="bo-input" value="#{v2ActionsLotConceptBean.comparePanel.choiceDelimiter}">
+                <f:selectItem itemLabel=", (virgule)" itemValue="0"/>
+                <f:selectItem itemLabel="; (point-virgule)" itemValue="1"/>
+                <f:selectItem itemLabel="tabulation" itemValue="2"/>
+              </h:selectOneMenu>
+            </div>
+          </div>
+
+          <label class="bo-drop bo-drop-empty" for="cptCmpFile">
+            <span class="bo-drop-ico"><svg viewBox="0 0 24 24" aria-hidden="true"><path d="M21 15v4a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2v-4"/><path d="M17 8l-5-5-5 5"/><path d="M12 3v12"/></svg></span>
+            <span class="bo-drop-t">Glissez le fichier rempli ou <span class="lk">parcourir</span></span>
+            <span class="bo-drop-s">.csv, .tsv ou .txt</span>
+          </label>
+          <h:inputFile id="cptCmpFile" styleClass="bo-file-input" value="#{v2ActionsLotConceptBean.compareUpload}">
+            <f:ajax event="valueChange" listener="#{v2ActionsLotConceptBean.onCompareFileSelected}"
+                    execute="@form" render="@form" onevent="boAjaxBusy"/>
+          </h:inputFile>
+
+          <div class="bo-drop has-file">
+            <div class="bo-p-ico sm"><svg viewBox="0 0 24 24" aria-hidden="true"><path d="M14 3v5h5"/><path d="M14 3H6a2 2 0 0 0-2 2v14a2 2 0 0 0 2 2h12a2 2 0 0 0 2-2V8z"/></svg></div>
+            <div class="bo-file">
+              <div class="bo-file-n">#{v2ActionsLotConceptBean.comparePanel.fileName}</div>
+              <div class="bo-file-m">#{v2ActionsLotConceptBean.comparePanel.fileMeta}</div>
+            </div>
+            <span class="bo-file-x bo-btn-hit" title="Retirer le fichier">
+              <h:commandButton id="cptCmpClearFile" styleClass="bo-btn-hit-in"
+                               action="#{v2ActionsLotConceptBean.clearCompare}" value="Retirer le fichier"
+                               title="Retirer le fichier" aria-label="Retirer le fichier">
+                <f:ajax execute="@this" render="@form" onevent="boAjaxBusy"/>
+              </h:commandButton>
+              <span class="bo-btn-hit-ui" aria-hidden="true">
+                <svg viewBox="0 0 24 24" aria-hidden="true"><path d="M18 6 6 18M6 6l12 12"/></svg>
+              </span>
+            </span>
+          </div>
+
+          <div class="bo-run">
+            <span class="bo-btn primary bo-btn-hit" data-act="bo-check">
+              <h:commandButton id="cptCmpValidate" styleClass="bo-btn-hit-in"
+                               action="#{v2ActionsLotConceptBean.validateCompare}"
+                               value="Valider le fichier"
+                               disabled="#{!v2ActionsLotConceptBean.comparePanel.hasFile or v2ActionsLotConceptBean.comparePanel.checked}">
+                <f:ajax execute="@form" render="@form" onevent="boAjaxBusy"/>
+              </h:commandButton>
+              <span class="bo-btn-hit-ui" aria-hidden="true">
+                <svg viewBox="0 0 24 24" aria-hidden="true"><path d="M20 6 9 17l-5-5"/></svg>
+                Valider le fichier<span class="bo-need-file"> — déposez un fichier</span>
+              </span>
+            </span>
+            <span class="bo-hint bo-hint-idle">Aperçu et validation avant exécution.</span>
+            <span class="bo-hint bo-hint-file">Le fichier est analysé et prévisualisé avant d'être appliqué.</span>
+          </div>
+
+          <div class="bo-valid">
+            <div class="bo-valid-h">
+              <span class="bo-step-n acc sm">✓</span>
+              <div>
+                <div class="bo-import-t">Validation du fichier</div>
+                <div class="bo-import-s"><span class="bo-file-live">#{v2ActionsLotConceptBean.comparePanel.fileName}</span> · aperçu avant application</div>
+              </div>
+            </div>
+            <div class="bo-valid-sum">
+              <div class="bo-stat ok"><b>#{v2ActionsLotConceptBean.comparePanel.linesRead}</b><span>lignes lues</span></div>
+              <div class="bo-stat ok"><b class="bo-valid-n">#{v2ActionsLotConceptBean.comparePanel.validCount}</b><span>valides</span></div>
+              <div class="bo-stat rej bo-stat-err"><b>#{v2ActionsLotConceptBean.comparePanel.errorCount}</b><span>en erreur</span></div>
+              <div class="bo-stat ok bo-stat-zero"><b>0</b><span>en erreur</span></div>
+            </div>
+
+            <div class="bo-valid-errors">
+              <div class="bo-valid-msg err">
+                <svg viewBox="0 0 24 24" aria-hidden="true"><path d="M18 6 6 18M6 6l12 12"/></svg>
+                <span>#{v2ActionsLotConceptBean.comparePanel.errorCount} ligne(s) en erreur.
+                  Vous pouvez n'exporter que les #{v2ActionsLotConceptBean.comparePanel.validCount} libellés valides.</span>
+              </div>
+              <table class="bo-errtbl">
+                <thead><tr><th>Ligne</th><th>Identifiant</th><th>Colonne</th><th>Problème</th></tr></thead>
+                <tbody>
+                  <ui:repeat value="#{v2ActionsLotConceptBean.comparePanel.errors}" var="err">
+                    <tr>
+                      <td class="bo-err-ln">#{err.line}</td>
+                      <td class="bo-err-id">#{err.identifier}</td>
+                      <td><span class="bo-err-col">#{err.column}</span></td>
+                      <td class="bo-err-msg">#{err.message}</td>
+                    </tr>
+                  </ui:repeat>
+                </tbody>
+              </table>
+              <div class="bo-run">
+                <label class="bo-btn primary" for="cptCmpFile">
+                  <svg viewBox="0 0 24 24" aria-hidden="true"><path d="M21 15v4a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2v-4"/><path d="M17 8l-5-5-5 5"/><path d="M12 3v12"/></svg>
+                  Réimporter le fichier corrigé
+                </label>
+                <span class="bo-btn ghost bo-btn-hit">
+                  <h:commandButton id="cptCmpPartial" styleClass="bo-btn-hit-in"
+                                   action="#{v2ActionsLotConceptBean.downloadCompareResult}"
+                                   value="Télécharger les #{v2ActionsLotConceptBean.comparePanel.validCount} libellés valides"
+                                   disabled="#{v2ActionsLotConceptBean.comparePanel.validCount eq 0}">
+                  </h:commandButton>
+                  <span class="bo-btn-hit-ui" aria-hidden="true">
+                    <svg viewBox="0 0 24 24" aria-hidden="true"><path d="M21 15v4a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2v-4"/><path d="M17 8l-5-5-5 5"/><path d="M12 3v12"/></svg>
+                    Télécharger les #{v2ActionsLotConceptBean.comparePanel.validCount} libellés valides
+                  </span>
+                </span>
+                <span class="bo-btn ghost bo-btn-hit">
+                  <h:commandButton id="cptCmpCancelErr" styleClass="bo-btn-hit-in"
+                                   action="#{v2ActionsLotConceptBean.clearCompare}" value="Annuler">
+                    <f:ajax execute="@this" render="@form" onevent="boAjaxBusy"/>
+                  </h:commandButton>
+                  <span class="bo-btn-hit-ui" aria-hidden="true">Annuler</span>
+                </span>
+              </div>
+            </div>
+
+            <div class="bo-valid-ok">
+              <div class="bo-valid-msg ok">
+                <svg viewBox="0 0 24 24" aria-hidden="true"><path d="M20 6 9 17l-5-5"/></svg>
+                <span>Aucune erreur détectée — #{v2ActionsLotConceptBean.comparePanel.validCount} libellés prêt(s).</span>
+              </div>
+              <div class="bo-run">
+                <span class="bo-btn primary bo-btn-hit">
+                  <h:commandButton id="cptCmpApply" styleClass="bo-btn-hit-in"
+                                   action="#{v2ActionsLotConceptBean.downloadCompareResult}"
+                                   value="Confirmer — Télécharger les #{v2ActionsLotConceptBean.comparePanel.validCount} libellés">
+                  </h:commandButton>
+                  <span class="bo-btn-hit-ui" aria-hidden="true">
+                    <svg viewBox="0 0 24 24" aria-hidden="true"><path d="M21 15v4a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2v-4"/><path d="M17 8l-5-5-5 5"/><path d="M12 3v12"/></svg>
+                    Confirmer — Télécharger les #{v2ActionsLotConceptBean.comparePanel.validCount} libellés
+                  </span>
+                </span>
+                <span class="bo-btn ghost bo-btn-hit">
+                  <h:commandButton id="cptCmpCancelOk" styleClass="bo-btn-hit-in"
+                                   action="#{v2ActionsLotConceptBean.clearCompare}" value="Annuler">
+                    <f:ajax execute="@this" render="@form" onevent="boAjaxBusy"/>
+                  </h:commandButton>
+                  <span class="bo-btn-hit-ui" aria-hidden="true">Annuler</span>
+                </span>
+              </div>
+            </div>
+          </div>
+
+          <div class="bo-result">
+            <div class="bo-result-t"><svg viewBox="0 0 24 24" aria-hidden="true"><path d="M20 6 9 17l-5-5"/></svg> Comparaison prête</div>
+            <div class="bo-result-stats">
+              <div class="bo-stat ok"><b>#{v2ActionsLotConceptBean.comparePanel.linesRead}</b><span>lignes lues</span></div>
+              <div class="bo-stat ok"><b>#{v2ActionsLotConceptBean.comparePanel.appliedCount}</b><span>appliquées</span></div>
+              <div class="bo-stat rej"><b>#{v2ActionsLotConceptBean.comparePanel.rejectedCount}</b><span>rejetées</span></div>
+            </div>
+          </div>
+        </h:form>
+      </div>
+    </div>
+  </div>
+
+</ui:composition>

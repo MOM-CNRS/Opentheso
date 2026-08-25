@@ -7,6 +7,7 @@ import org.springframework.data.jpa.repository.Query;
 import org.springframework.data.repository.query.Param;
 import org.springframework.transaction.annotation.Transactional;
 
+import java.util.List;
 import java.util.Optional;
 
 
@@ -22,6 +23,8 @@ public interface PreferredTermRepository extends JpaRepository<PreferredTerm, In
     void deleteByIdThesaurus(@Param("idThesaurus") String idThesaurus);
 
     Optional<PreferredTerm> findByIdThesaurusAndIdConcept(String idThesaurus, String idConcept);
+
+    List<PreferredTerm> findByIdThesaurusAndIdConceptIn(String idThesaurus, java.util.Set<String> idConcepts);
 
     @Modifying
     @Transactional

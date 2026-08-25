@@ -56,9 +56,11 @@ import org.springframework.stereotype.Component;
 import java.time.Instant;
 import java.time.LocalDateTime;
 import java.util.ArrayList;
+import java.util.Collection;
 import java.util.Collections;
 import java.util.Date;
 import java.util.HashMap;
+import java.util.HashSet;
 import java.util.List;
 import java.util.Map;
 import java.util.Optional;
@@ -92,6 +94,8 @@ public class WorkshopBulkImportPersistence {
     private final ConceptSearchEngine conceptSearchEngine;
     private final ThesaurusCsvImportEngine thesaurusCsvImportEngine;
     private final WorkshopCsvConceptUpdater workshopCsvConceptUpdater;
+
+    private static final int IN_CHUNK = 500;
 
     private String message = "";
     private String formatDate = "yyyy-MM-dd";
@@ -129,7 +133,10 @@ public class WorkshopBulkImportPersistence {
     }
 
     public boolean isIdExiste(String idConcept, String idThesaurus) {
-        return conceptRepository.findByIdConceptAndIdThesaurus(idConcept, idThesaurus).isPresent();
+        if (StringUtils.isBlank(idConcept) || StringUtils.isBlank(idThesaurus)) {
+            return false;
+        }
+        return conceptRepository.existsByIdConceptAndIdThesaurus(idConcept, idThesaurus);
     }
 
     public void deleteNotes(String identifier, String idThesaurus) {
@@ -270,12 +277,15 @@ public class WorkshopBulkImportPersistence {
     }
 
     public Map<String, String> getIdConceptsFromArkIds(Set<String> arkIds, String idThesaurus) {
-        if (CollectionUtils.isEmpty(arkIds)) {
+        Set<String> unique = uniqueNonBlank(arkIds);
+        if (unique.isEmpty() || StringUtils.isBlank(idThesaurus)) {
             return Collections.emptyMap();
         }
         Map<String, String> result = new HashMap<>();
-        for (Object[] row : conceptRepository.findArkIds(arkIds, idThesaurus)) {
-            result.put((String) row[0], (String) row[1]);
+        for (Set<String> chunk : chunks(unique)) {
+            for (Object[] row : conceptRepository.findArkIds(chunk, idThesaurus)) {
+                result.put((String) row[0], (String) row[1]);
+            }
         }
         return result;
     }
@@ -285,22 +295,7 @@ public class WorkshopBulkImportPersistence {
         if (concept.isEmpty()) {
             return null;
         }
-        var entity = concept.get();
-        return Concept.builder()
-                .idConcept(idConcept)
-                .idThesaurus(idThesaurus)
-                .idArk(entity.getIdArk())
-                .idHandle(entity.getIdHandle())
-                .idDoi(entity.getIdDoi())
-                .created(entity.getCreated())
-                .modified(entity.getModified())
-                .status(entity.getStatus())
-                .notation(entity.getNotation())
-                .topConcept(entity.getTopConcept())
-                .creator(entity.getCreator())
-                .contributor(entity.getContributor())
-                .conceptType(entity.getConceptType() == null ? null : entity.getConceptType().toLowerCase())
-                .build();
+        return toConceptModel(idConcept, idThesaurus, concept.get());
     }
 
     public boolean updateArkIdOfConcept(String idConcept, String idThesaurus, String idArk) {
@@ -473,6 +468,19 @@ public class WorkshopBulkImportPersistence {
                 .build());
     }
 
+    public boolean hasExternalImage(String idConcept, String idThesaurus, String uri) {
+        if (StringUtils.isBlank(uri)) {
+            return false;
+        }
+        String expected = uri.trim();
+        return imagesRepository.findAllByIdConceptAndIdThesaurus(idConcept, idThesaurus).stream()
+                .anyMatch(image -> expected.equals(image.getExternalUri()));
+    }
+
+    public void deleteImages(String idThesaurus, String idConcept) {
+        imagesRepository.deleteAllByIdThesaurusAndIdConcept(idThesaurus, idConcept);
+    }
+
     public String addConcept(String idParent, String relationType, Concept concept, Term term, int idUser) {
         if (idParent == null) {
             concept.setTopConcept(true);
@@ -550,7 +558,10 @@ public class WorkshopBulkImportPersistence {
     }
 
     public boolean isIdGroupExiste(String idGroup, String idThesaurus) {
-        return conceptGroupRepository.findByIdGroupAndIdThesaurus(idGroup, idThesaurus).isPresent();
+        if (StringUtils.isBlank(idGroup) || StringUtils.isBlank(idThesaurus)) {
+            return false;
+        }
+        return conceptGroupRepository.existsByIdGroupAndIdThesaurus(idGroup, idThesaurus);
     }
 
     public List<NodeSearchMini> searchExactTermForAutocompletion(String value, String lang, String thesaurusId) {
@@ -599,10 +610,219 @@ public class WorkshopBulkImportPersistence {
     }
 
     public List<String> findExistingIds(Set<String> ids, String idThesaurus) {
-        if (CollectionUtils.isEmpty(ids)) {
-            return List.of();
+        return new ArrayList<>(findExistingIdSet(ids, idThesaurus));
+    }
+
+    /**
+     * Existence des concepts en une (ou quelques) requêtes IN, par paquets.
+     */
+    public Set<String> findExistingIdSet(Collection<String> ids, String idThesaurus) {
+        Set<String> unique = uniqueNonBlank(ids);
+        if (unique.isEmpty() || StringUtils.isBlank(idThesaurus)) {
+            return Set.of();
         }
-        return conceptRepository.findExistingIds(ids, idThesaurus);
+        Set<String> existing = new HashSet<>();
+        for (Set<String> chunk : chunks(unique)) {
+            List<String> found = conceptRepository.findExistingIds(chunk, idThesaurus);
+            if (found != null) {
+                existing.addAll(found);
+            }
+        }
+        return existing;
+    }
+
+    /**
+     * localId CSV → id concept s'il existe (identifier / ark / handle).
+     */
+    public Map<String, String> resolveConceptIds(
+            Collection<String> localIds,
+            String identifierType,
+            String thesaurusId
+    ) {
+        Set<String> unique = uniqueNonBlank(localIds);
+        if (unique.isEmpty() || StringUtils.isBlank(thesaurusId)) {
+            return Map.of();
+        }
+        Map<String, String> resolved = new HashMap<>();
+        if ("ark".equalsIgnoreCase(identifierType)) {
+            for (Set<String> chunk : chunks(unique)) {
+                resolved.putAll(getIdConceptsFromArkIds(chunk, thesaurusId));
+            }
+            for (String localId : unique) {
+                if (!resolved.containsKey(localId)) {
+                    String conceptId = getIdConceptFromArkId(localId, thesaurusId);
+                    if (StringUtils.isNotBlank(conceptId)) {
+                        resolved.put(localId, conceptId);
+                    }
+                }
+            }
+            return resolved;
+        }
+        if ("handle".equalsIgnoreCase(identifierType)) {
+            Set<String> lowers = new HashSet<>();
+            for (String localId : unique) {
+                lowers.add(localId.toLowerCase());
+            }
+            Map<String, String> byLower = new HashMap<>();
+            for (Set<String> chunk : chunks(lowers)) {
+                List<Object[]> rows = conceptRepository.findConceptIdsByHandles(chunk);
+                if (rows == null) {
+                    continue;
+                }
+                for (Object[] row : rows) {
+                    if (row != null && row.length >= 2 && row[0] != null && row[1] != null) {
+                        byLower.put(String.valueOf(row[0]), String.valueOf(row[1]));
+                    }
+                }
+            }
+            for (String localId : unique) {
+                String conceptId = byLower.get(localId.toLowerCase());
+                if (StringUtils.isBlank(conceptId)) {
+                    conceptId = getIdConceptFromHandleId(localId);
+                }
+                if (StringUtils.isNotBlank(conceptId)) {
+                    resolved.put(localId, conceptId);
+                }
+            }
+            return resolved;
+        }
+        Set<String> existing = findExistingIdSet(unique, thesaurusId);
+        for (String localId : unique) {
+            if (existing.contains(localId)) {
+                resolved.put(localId, localId);
+            }
+        }
+        return resolved;
+    }
+
+    public Set<String> findExistingGroupIdSet(Collection<String> groupIds, String idThesaurus) {
+        Set<String> unique = uniqueNonBlank(groupIds);
+        if (unique.isEmpty() || StringUtils.isBlank(idThesaurus)) {
+            return Set.of();
+        }
+        Set<String> existing = new HashSet<>();
+        for (Set<String> chunk : chunks(unique)) {
+            List<String> found = conceptGroupRepository.findExistingGroupIds(idThesaurus, chunk);
+            if (found != null) {
+                existing.addAll(found);
+            }
+        }
+        return existing;
+    }
+
+    public Map<String, Concept> findConceptsByIds(Collection<String> ids, String idThesaurus) {
+        Set<String> unique = uniqueNonBlank(ids);
+        if (unique.isEmpty() || StringUtils.isBlank(idThesaurus)) {
+            return Map.of();
+        }
+        Map<String, Concept> result = new HashMap<>();
+        for (Set<String> chunk : chunks(unique)) {
+            List<fr.cnrs.opentheso.entites.Concept> entities =
+                    conceptRepository.findByIdThesaurusAndIdConceptIn(idThesaurus, chunk);
+            if (entities == null) {
+                continue;
+            }
+            for (fr.cnrs.opentheso.entites.Concept entity : entities) {
+                if (entity != null && StringUtils.isNotBlank(entity.getIdConcept())) {
+                    result.put(entity.getIdConcept(), toConceptModel(entity.getIdConcept(), idThesaurus, entity));
+                }
+            }
+        }
+        return result;
+    }
+
+    public Map<String, PreferredTerm> findPreferredTermsByConceptIds(Collection<String> conceptIds, String idThesaurus) {
+        Set<String> unique = uniqueNonBlank(conceptIds);
+        if (unique.isEmpty() || StringUtils.isBlank(idThesaurus)) {
+            return Map.of();
+        }
+        Map<String, PreferredTerm> result = new HashMap<>();
+        for (Set<String> chunk : chunks(unique)) {
+            List<PreferredTerm> terms = preferredTermRepository.findByIdThesaurusAndIdConceptIn(idThesaurus, chunk);
+            if (terms == null) {
+                continue;
+            }
+            for (PreferredTerm term : terms) {
+                if (term != null && StringUtils.isNotBlank(term.getIdConcept())) {
+                    result.put(term.getIdConcept(), term);
+                }
+            }
+        }
+        return result;
+    }
+
+    public Set<String> findExistingImageKeys(Collection<String> conceptIds, String idThesaurus) {
+        Set<String> unique = uniqueNonBlank(conceptIds);
+        if (unique.isEmpty() || StringUtils.isBlank(idThesaurus)) {
+            return Set.of();
+        }
+        Set<String> keys = new HashSet<>();
+        for (Set<String> chunk : chunks(unique)) {
+            List<Object[]> rows = imagesRepository.findConceptUriPairs(idThesaurus, chunk);
+            if (rows == null) {
+                continue;
+            }
+            for (Object[] row : rows) {
+                if (row != null && row.length >= 2 && row[0] != null && row[1] != null) {
+                    keys.add(imageKey(String.valueOf(row[0]), String.valueOf(row[1])));
+                }
+            }
+        }
+        return keys;
+    }
+
+    public static String imageKey(String conceptId, String uri) {
+        return conceptId + '\t' + StringUtils.trimToEmpty(uri);
+    }
+
+    private Concept toConceptModel(String idConcept, String idThesaurus, fr.cnrs.opentheso.entites.Concept entity) {
+        return Concept.builder()
+                .idConcept(idConcept)
+                .idThesaurus(idThesaurus)
+                .idArk(entity.getIdArk())
+                .idHandle(entity.getIdHandle())
+                .idDoi(entity.getIdDoi())
+                .created(entity.getCreated())
+                .modified(entity.getModified())
+                .status(entity.getStatus())
+                .notation(entity.getNotation())
+                .topConcept(entity.getTopConcept())
+                .creator(entity.getCreator())
+                .contributor(entity.getContributor())
+                .conceptType(entity.getConceptType() == null ? null : entity.getConceptType().toLowerCase())
+                .build();
+    }
+
+    private static Set<String> uniqueNonBlank(Collection<String> values) {
+        if (values == null || values.isEmpty()) {
+            return Set.of();
+        }
+        Set<String> unique = new HashSet<>();
+        for (String value : values) {
+            if (StringUtils.isNotBlank(value)) {
+                unique.add(value.trim());
+            }
+        }
+        return unique;
+    }
+
+    private static List<Set<String>> chunks(Set<String> values) {
+        if (values.size() <= IN_CHUNK) {
+            return List.of(values);
+        }
+        List<Set<String>> parts = new ArrayList<>();
+        Set<String> current = new HashSet<>(IN_CHUNK);
+        for (String value : values) {
+            current.add(value);
+            if (current.size() >= IN_CHUNK) {
+                parts.add(current);
+                current = new HashSet<>(IN_CHUNK);
+            }
+        }
+        if (!current.isEmpty()) {
+            parts.add(current);
+        }
+        return parts;
     }
 
     public List<String> getAllUsedLanguagesOfThesaurus(String idThesaurus) {

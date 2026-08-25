@@ -354,23 +354,27 @@ document.addEventListener("click", (e) => {
   } else if (act === "bo-acc") {
     const step = t.closest(".bo-acc-step");
     if (step) step.classList.toggle("open");
-  } else if (act === "bo-pick") {
-    const p = t.closest(".bo-panel");
-    if (p) { p.classList.add("has-file"); p.classList.remove("is-checked", "is-done"); }
-  } else if (act === "bo-clear") {
-    boReset(t.closest(".bo-panel"));
-  } else if (act === "bo-check") {
-    const p = t.closest(".bo-panel");
-    if (p && p.classList.contains("has-file") && !p.classList.contains("is-checked")) p.classList.add("is-checked");
-  } else if (act === "bo-reimport") {
-    const p = t.closest(".bo-panel");
-    if (!p) return;
-    p.classList.add("has-file", "is-corrected");
-    p.classList.remove("is-checked", "is-done");
-    toast("Fichier corrigé réimporté");
-  } else if (act === "bo-run") {
-    const p = t.closest(".bo-panel");
-    if (p) p.classList.add("is-done");
+  } else if (act === "bo-pick" || act === "bo-clear" || act === "bo-check" || act === "bo-reimport" || act === "bo-run") {
+    const live = t.closest(".bo-panel[data-live='1']");
+    if (live) return; // panneau branché JSF — ne pas simuler
+    if (act === "bo-pick") {
+      const p = t.closest(".bo-panel");
+      if (p) { p.classList.add("has-file"); p.classList.remove("is-checked", "is-done"); }
+    } else if (act === "bo-clear") {
+      boReset(t.closest(".bo-panel"));
+    } else if (act === "bo-check") {
+      const p = t.closest(".bo-panel");
+      if (p && p.classList.contains("has-file") && !p.classList.contains("is-checked")) p.classList.add("is-checked");
+    } else if (act === "bo-reimport") {
+      const p = t.closest(".bo-panel");
+      if (!p) return;
+      p.classList.add("has-file", "is-corrected");
+      p.classList.remove("is-checked", "is-done");
+      toast("Fichier corrigé réimporté");
+    } else if (act === "bo-run") {
+      const p = t.closest(".bo-panel");
+      if (p) p.classList.add("is-done");
+    }
   }
   else if (act === "toggle") {
     const tn = t.closest(".tn");
@@ -935,6 +939,172 @@ function scrollToPrefHash() {
   if (window.syncViewRail) window.syncViewRail();
   return true;
 }
+
+const maintProgress = new WeakMap();
+
+function maintEls(tool) {
+  if (!tool) return {};
+  const prog = tool.querySelector(".mc-prog");
+  return {
+    tool,
+    prog,
+    fill: tool.querySelector(".mg-bar-fill"),
+    rail: tool.querySelector(".xprog-rail-fill"),
+    pct: tool.querySelector(".xprog-count"),
+    title: tool.querySelector(".xprog-t"),
+    detail: tool.querySelector(".xprog-d"),
+    steps: tool.querySelectorAll(".xprog-steps li")
+  };
+}
+
+function maintState(tool) {
+  let state = maintProgress.get(tool);
+  if (!state) {
+    state = { timer: 0, started: 0, phase: -1 };
+    maintProgress.set(tool, state);
+  }
+  return state;
+}
+
+function maintStepLabel(li) {
+  if (!li) return "";
+  const label = li.querySelector("span:not(.xprog-dot)");
+  return ((label && label.textContent) || li.textContent || "").trim();
+}
+
+function paintMaintProgress(tool, phase, pct, { done = false, detail } = {}) {
+  const els = maintEls(tool);
+  const state = maintState(tool);
+  const n = Math.max(1, els.steps.length);
+  const idx = Math.max(0, Math.min(n - 1, phase));
+  const step = els.steps[idx];
+  const value = Math.max(0, Math.min(100, Math.round(pct)));
+  if (els.prog) els.prog.style.setProperty("--mc-n", String(n));
+  if (els.fill) els.fill.style.width = value + "%";
+  if (els.pct) els.pct.textContent = value + "%";
+  if (els.rail) {
+    const ratio = done ? 1 : (n <= 1 ? 0 : idx / (n - 1));
+    els.rail.style.width = Math.round(ratio * 100) + "%";
+  }
+  if (els.title) {
+    els.title.textContent = done
+      ? ((els.prog && els.prog.getAttribute("data-done-title")) || "Correction terminée")
+      : ("Étape " + (idx + 1) + " / " + n + " — " + maintStepLabel(step));
+  }
+  if (els.detail) {
+    const doneDetail = (els.prog && els.prog.getAttribute("data-done-detail")) || "Traitement terminé.";
+    els.detail.textContent = detail
+      || (done ? doneDetail : ((step && step.getAttribute("data-detail")) || ""));
+  }
+  els.steps.forEach((li, i) => {
+    li.classList.toggle("is-done", done || i < idx);
+    li.classList.toggle("is-on", !done && i === idx);
+    li.classList.toggle("is-enter", !done && i === idx && i !== state.phase);
+  });
+  state.phase = idx;
+}
+
+function stopMaintProgress(tool) {
+  const state = maintState(tool);
+  if (state.timer) {
+    clearInterval(state.timer);
+    state.timer = 0;
+  }
+}
+
+function startMaintProgress(tool) {
+  const els = maintEls(tool);
+  const state = maintState(tool);
+  const n = Math.max(1, els.steps.length);
+  const holdPhase = Math.max(0, n - 2);
+  stopMaintProgress(tool);
+  state.started = Date.now();
+  state.phase = -1;
+  if (els.tool) {
+    els.tool.classList.add("is-busy");
+    els.tool.setAttribute("aria-busy", "true");
+  }
+  if (els.prog) {
+    els.prog.hidden = false;
+    els.prog.classList.add("is-on");
+    els.prog.setAttribute("aria-hidden", "false");
+  }
+  paintMaintProgress(tool, 0, 8);
+  if (window.matchMedia("(prefers-reduced-motion: reduce)").matches) {
+    paintMaintProgress(tool, holdPhase, 55);
+    return;
+  }
+  state.timer = setInterval(() => {
+    const elapsed = Date.now() - state.started;
+    if (n <= 2) {
+      paintMaintProgress(tool, 0, Math.min(86, 8 + elapsed / 30));
+      return;
+    }
+    if (elapsed < 450) {
+      paintMaintProgress(tool, 0, 8 + (elapsed / 450) * 22);
+    } else if (elapsed < 1600) {
+      const mid = Math.min(holdPhase, 1);
+      paintMaintProgress(tool, mid, 32 + ((elapsed - 450) / 1150) * 40);
+    } else {
+      const rest = Math.min(14, (elapsed - 1600) / 400);
+      paintMaintProgress(tool, holdPhase, 72 + rest);
+    }
+  }, 70);
+}
+
+function finishMaintProgress(tool, ok) {
+  const els = maintEls(tool);
+  const state = maintState(tool);
+  const n = Math.max(1, els.steps.length);
+  stopMaintProgress(tool);
+  if (ok) {
+    paintMaintProgress(tool, n - 1, 100, { done: true });
+  } else {
+    paintMaintProgress(tool, state.phase < 0 ? 0 : state.phase, parseInt(els.pct && els.pct.textContent, 10) || 0, {
+      detail: "Le traitement a été interrompu."
+    });
+  }
+  window.setTimeout(() => {
+    if (els.prog) {
+      els.prog.hidden = true;
+      els.prog.classList.remove("is-on");
+      els.prog.setAttribute("aria-hidden", "true");
+    }
+    if (els.tool) {
+      els.tool.classList.remove("is-busy");
+      els.tool.removeAttribute("aria-busy");
+    }
+    if (els.fill) els.fill.style.width = "0%";
+    if (els.rail) els.rail.style.width = "0%";
+  }, ok ? 720 : 900);
+}
+
+function maintToolFromAjax(data) {
+  const src = data && data.source;
+  if (src && src.closest) {
+    return src.closest(".mc-tool");
+  }
+  return document.querySelector(".mc-tool.is-busy");
+}
+
+window.onMaintAjax = function (data) {
+  const tool = maintToolFromAjax(data);
+  if (!tool) return;
+  if (data.status === "begin") {
+    startMaintProgress(tool);
+  }
+  if (data.status === "success") {
+    const flash = tool.querySelector("[data-maint-ok]");
+    const ok = !flash || flash.getAttribute("data-maint-ok") !== "false";
+    finishMaintProgress(tool, ok);
+  }
+  if (data.status === "error") {
+    const prog = tool.querySelector(".mc-prog");
+    finishMaintProgress(tool, false);
+    toast((prog && prog.getAttribute("data-fail-msg")) || "Le traitement a échoué.", { error: true });
+  }
+};
+window.onMaintTopTermAjax = window.onMaintAjax;
 
 var params = new URLSearchParams(location.search);
 

@@ -67,18 +67,7 @@ class WorkshopCsvReaderTest {
     }
 
     @Test
-    void readFileAlignment_explicitAlignmentTypeSuffix_isRejectedAsInvalidUri() {
-        // NOTE: getAlignmentSource() supports a "<uri>##<type>" suffix to carry an explicit
-        // alignment type (e.g. 2 = closeMatch), and would split on "##" to separate them.
-        // However getNewAlignment() validates the *raw* column value (including the "##<type>"
-        // suffix) with ToolsHelper#isValidURI() BEFORE that split happens, and a string
-        // containing a second, un-encoded "#" is not a syntactically valid URI (RFC 3986
-        // forbids a literal "#" inside the fragment component). So in practice this whole
-        // record gets rejected instead of the type suffix being honored. This is not a
-        // regression introduced by the v2 port: the exact same ordering (validate-then-split)
-        // exists verbatim in the legacy fr.cnrs.opentheso.services.imports.csv.CsvReadHelper
-        // (see getNewAlignment/getAlignmentSource there), so this test documents pre-existing,
-        // faithfully-ported behavior rather than a new bug.
+    void readFileAlignment_explicitAlignmentTypeSuffix_isHonored() {
         WorkshopCsvReader reader = new WorkshopCsvReader(',');
         String csv = "localId,skos:closeMatch\n"
                 + "C1,http://example.com/c1##2\n";
@@ -87,9 +76,11 @@ class WorkshopCsvReaderTest {
         boolean ok = reader.readFileAlignment(new StringReader(csv), headers);
 
         assertTrue(ok);
-        assertTrue(reader.getNodeAlignmentImports().isEmpty());
-        assertNotNull(reader.getMessage());
-        assertTrue(reader.getMessage().contains("URI"));
+        List<NodeAlignmentImport> imports = reader.getNodeAlignmentImports();
+        assertEquals(1, imports.size());
+        NodeAlignmentSmall small = imports.get(0).getNodeAlignmentSmalls().get(0);
+        assertEquals("http://example.com/c1", small.getUri_target());
+        assertEquals(2, small.getAlignement_id_type());
     }
 
     @Test

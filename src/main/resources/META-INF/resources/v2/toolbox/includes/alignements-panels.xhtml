@@ -1,0 +1,582 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<ui:composition xmlns="http://www.w3.org/1999/xhtml"
+                xmlns:ui="http://xmlns.jcp.org/jsf/facelets"
+                xmlns:h="http://xmlns.jcp.org/jsf/html"
+                xmlns:f="http://xmlns.jcp.org/jsf/core">
+
+  <h:panelGroup layout="block" styleClass="bo-access-note" rendered="#{not v2ActionsLotAlignmentBean.available}">
+    <div class="bo-valid-msg err" role="status">
+      <svg viewBox="0 0 24 24" aria-hidden="true"><path d="M10.3 3.9 1.8 18a2 2 0 0 0 1.7 3h17a2 2 0 0 0 1.7-3L13.7 3.9a2 2 0 0 0-3.4 0z"/><path d="M12 9v4"/><path d="M12 17h.01"/></svg>
+      <span>Sélectionnez un thésaurus et connectez-vous avec un rôle atelier pour utiliser les actions par lot.</span>
+    </div>
+  </h:panelGroup>
+
+  <!-- ── Alignements · Importer ── -->
+  <div class="bo-panel #{v2ActionsLotAlignmentBean.importPanel.cssClasses}"
+       data-obj="alignements" data-op="import" data-live="1">
+    <div class="bo-p">
+      <div class="bo-acc">
+        <div class="bo-acc-step open">
+          <div class="bo-acc-h">
+            <button type="button" class="bo-acc-h-btn" data-act="bo-acc">
+              <span class="bo-step-n">1</span>
+              <span class="bo-acc-t">Télécharger le modèle<small>colonnes attendues &amp; exemple</small></span>
+            </button>
+            <span class="bo-acc-sp"></span>
+            <h:form prependId="false" styleClass="bo-inline-form">
+              <span class="bo-btn ghost sm bo-btn-hit">
+                <h:commandButton id="alignImportTpl" styleClass="bo-btn-hit-in" value="Modèle"
+                                 action="#{v2ActionsLotAlignmentBean.downloadImportTemplate}"/>
+                <span class="bo-btn-hit-ui" aria-hidden="true">
+                  <svg viewBox="0 0 24 24" aria-hidden="true"><path d="M21 15v4a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2v-4"/><path d="M7 10l5 5 5-5"/><path d="M12 15V3"/></svg>
+                  Modèle
+                </span>
+              </span>
+            </h:form>
+            <button type="button" class="bo-acc-chev" data-act="bo-acc" aria-label="Déplier">
+              <svg viewBox="0 0 24 24" aria-hidden="true"><path d="m9 18 6-6-6-6"/></svg>
+            </button>
+          </div>
+          <div class="bo-acc-body">
+            <table class="bo-fmt">
+              <thead><tr><th>localId</th><th>URI cible (colonne source)</th><th>##type<span class="opt"> (opt.)</span></th></tr></thead>
+              <tbody><tr><td>26678/crtcg26jeN4R9</td><td>https://www.wikidata.org/wiki/Q65955</td><td>##1</td></tr></tbody>
+            </table>
+            <div class="bo-fmt-note">Une ligne par entrée. La 1ʳᵉ ligne (en-têtes) est obligatoire : <code>localId</code> puis le nom de chaque source.</div>
+          </div>
+        </div>
+        <div class="bo-acc-step">
+          <button type="button" class="bo-acc-h" data-act="bo-acc">
+            <span class="bo-step-n">2</span>
+            <span class="bo-acc-t">Remplir le fichier<small>une ligne = une entrée · règles d'application</small></span>
+            <span class="bo-acc-sp"></span>
+            <span class="bo-acc-chev"><svg viewBox="0 0 24 24" aria-hidden="true"><path d="m9 18 6-6-6-6"/></svg></span>
+          </button>
+          <div class="bo-acc-body">
+            <ul class="bo-rules">
+              <li>Séparateur accepté : <code>,</code> <code>;</code> ou tabulation.</li>
+              <li class="warn">Si l'identifiant n'existe pas dans le thésaurus, la ligne est <b>rejetée</b>.</li>
+              <li>Si le concept a déjà cet alignement, le lien n'est pas modifié.</li>
+              <li>Type d'alignement : ajouter <code>##</code> + le code en fin d'URI. Sans code, <code>exactMatch</code> par défaut.</li>
+            </ul>
+            <div class="bo-match">
+              <span class="m"><b>1</b> = exactMatch</span>
+              <span class="m"><b>2</b> = closeMatch</span>
+              <span class="m"><b>3</b> = broadMatch</span>
+              <span class="m"><b>4</b> = relatedMatch</span>
+              <span class="m"><b>5</b> = narrowMatch</span>
+            </div>
+          </div>
+        </div>
+      </div>
+
+      <div class="bo-import">
+        <div class="bo-import-h">
+          <span class="bo-step-n acc">3</span>
+          <div>
+            <div class="bo-import-t">Importer le fichier</div>
+            <div class="bo-import-s">déposez votre CSV rempli et lancez · #{v2ActionsLotAlignmentBean.thesaurusTitle}</div>
+          </div>
+        </div>
+
+        <h:form id="alignImportForm" prependId="false" enctype="multipart/form-data" styleClass="bo-card-b">
+          <span class="bo-state" hidden="hidden"
+                data-obj="alignements" data-op="import"
+                data-cls="#{v2ActionsLotAlignmentBean.importPanel.cssClasses}"></span>
+          <h:panelGroup layout="block" styleClass="bo-flash" rendered="#{not empty v2ActionsLotAlignmentBean.importPanel.globalError}">
+            <div class="bo-valid-msg err" role="alert">
+              <svg viewBox="0 0 24 24" aria-hidden="true"><path d="M18 6 6 18M6 6l12 12"/></svg>
+              <span>#{v2ActionsLotAlignmentBean.importPanel.globalError}</span>
+            </div>
+          </h:panelGroup>
+
+          <div class="bo-cfg">
+            <div class="bo-field">
+              <div class="bo-field-l">L'identifiant est de type</div>
+              <h:selectOneMenu styleClass="bo-input" value="#{v2ActionsLotAlignmentBean.importPanel.identifierType}">
+                <f:selectItem itemLabel="identifier (id interne)" itemValue="identifier"/>
+                <f:selectItem itemLabel="ark" itemValue="ark"/>
+                <f:selectItem itemLabel="handle" itemValue="handle"/>
+              </h:selectOneMenu>
+            </div>
+            <div class="bo-field">
+              <div class="bo-field-l">Délimiteur CSV</div>
+              <h:selectOneMenu styleClass="bo-input" value="#{v2ActionsLotAlignmentBean.importPanel.choiceDelimiter}">
+                <f:selectItem itemLabel=", (virgule)" itemValue="0"/>
+                <f:selectItem itemLabel="; (point-virgule)" itemValue="1"/>
+                <f:selectItem itemLabel="tabulation" itemValue="2"/>
+              </h:selectOneMenu>
+            </div>
+          </div>
+
+          <label class="bo-drop bo-drop-empty" for="alignImportFile">
+            <span class="bo-drop-ico"><svg viewBox="0 0 24 24" aria-hidden="true"><path d="M21 15v4a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2v-4"/><path d="M17 8l-5-5-5 5"/><path d="M12 3v12"/></svg></span>
+            <span class="bo-drop-t">Glissez le fichier rempli ou <span class="lk">parcourir</span></span>
+            <span class="bo-drop-s">.csv, .tsv ou .txt</span>
+          </label>
+          <h:inputFile id="alignImportFile" styleClass="bo-file-input" value="#{v2ActionsLotAlignmentBean.importUpload}">
+            <f:ajax event="valueChange" listener="#{v2ActionsLotAlignmentBean.onImportFileSelected}"
+                    execute="@form" render="@form"
+                    onevent="boAjaxBusy"/>
+          </h:inputFile>
+
+          <div class="bo-drop has-file">
+            <div class="bo-p-ico sm"><svg viewBox="0 0 24 24" aria-hidden="true"><path d="M14 3v5h5"/><path d="M14 3H6a2 2 0 0 0-2 2v14a2 2 0 0 0 2 2h12a2 2 0 0 0 2-2V8z"/></svg></div>
+            <div class="bo-file">
+              <div class="bo-file-n">#{v2ActionsLotAlignmentBean.importPanel.fileName}</div>
+              <div class="bo-file-m">#{v2ActionsLotAlignmentBean.importPanel.fileMeta}</div>
+            </div>
+            <span class="bo-file-x bo-btn-hit" title="Retirer le fichier">
+              <h:commandButton id="alignImportClearFile" styleClass="bo-btn-hit-in"
+                               action="#{v2ActionsLotAlignmentBean.clearImport}" value="Retirer le fichier"
+                               title="Retirer le fichier" aria-label="Retirer le fichier">
+                <f:ajax execute="@this" render="@form" onevent="boAjaxBusy"/>
+              </h:commandButton>
+              <span class="bo-btn-hit-ui" aria-hidden="true">
+                <svg viewBox="0 0 24 24" aria-hidden="true"><path d="M18 6 6 18M6 6l12 12"/></svg>
+              </span>
+            </span>
+          </div>
+
+          <div class="bo-run">
+            <span class="bo-btn primary bo-btn-hit" data-act="bo-check">
+              <h:commandButton id="alignImportValidate" styleClass="bo-btn-hit-in"
+                               action="#{v2ActionsLotAlignmentBean.validateImport}"
+                               value="Valider le fichier"
+                               disabled="#{!v2ActionsLotAlignmentBean.importPanel.hasFile or v2ActionsLotAlignmentBean.importPanel.checked}">
+                <f:ajax execute="@form" render="@form" onevent="boAjaxBusy"/>
+              </h:commandButton>
+              <span class="bo-btn-hit-ui" aria-hidden="true">
+                <svg viewBox="0 0 24 24" aria-hidden="true"><path d="M20 6 9 17l-5-5"/></svg>
+                Valider le fichier<span class="bo-need-file"> — déposez un fichier</span>
+              </span>
+            </span>
+            <span class="bo-hint bo-hint-idle">Aperçu et validation avant exécution.</span>
+            <span class="bo-hint bo-hint-file">Le fichier est analysé et prévisualisé avant d'être appliqué.</span>
+          </div>
+
+          <div class="bo-valid">
+            <div class="bo-valid-h">
+              <span class="bo-step-n acc sm">✓</span>
+              <div>
+                <div class="bo-import-t">Validation du fichier</div>
+                <div class="bo-import-s"><span class="bo-file-live">#{v2ActionsLotAlignmentBean.importPanel.fileName}</span> · aperçu avant application</div>
+              </div>
+            </div>
+            <div class="bo-valid-sum">
+              <div class="bo-stat ok"><b>#{v2ActionsLotAlignmentBean.importPanel.linesRead}</b><span>lignes lues</span></div>
+              <div class="bo-stat ok"><b class="bo-valid-n">#{v2ActionsLotAlignmentBean.importPanel.validCount}</b><span>valides</span></div>
+              <div class="bo-stat rej bo-stat-err"><b>#{v2ActionsLotAlignmentBean.importPanel.errorCount}</b><span>en erreur</span></div>
+              <div class="bo-stat ok bo-stat-zero"><b>0</b><span>en erreur</span></div>
+            </div>
+
+            <div class="bo-valid-errors">
+              <div class="bo-valid-msg err">
+                <svg viewBox="0 0 24 24" aria-hidden="true"><path d="M18 6 6 18M6 6l12 12"/></svg>
+                <span>#{v2ActionsLotAlignmentBean.importPanel.errorCount} ligne(s) en erreur.
+                  Corrigez-les dans votre fichier, puis réimportez-le.
+                  Vous pouvez aussi n'appliquer que les #{v2ActionsLotAlignmentBean.importPanel.validCount} lignes valides.</span>
+              </div>
+              <table class="bo-errtbl">
+                <thead><tr><th>Ligne</th><th>Identifiant</th><th>Colonne</th><th>Problème</th></tr></thead>
+                <tbody>
+                  <ui:repeat value="#{v2ActionsLotAlignmentBean.importPanel.errors}" var="err">
+                    <tr>
+                      <td class="bo-err-ln">#{err.line}</td>
+                      <td class="bo-err-id">#{err.identifier}</td>
+                      <td><span class="bo-err-col">#{err.column}</span></td>
+                      <td class="bo-err-msg">#{err.message}</td>
+                    </tr>
+                  </ui:repeat>
+                </tbody>
+              </table>
+              <div class="bo-run">
+                <label class="bo-btn primary" for="alignImportFile">
+                  <svg viewBox="0 0 24 24" aria-hidden="true"><path d="M21 15v4a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2v-4"/><path d="M17 8l-5-5-5 5"/><path d="M12 3v12"/></svg>
+                  Réimporter le fichier corrigé
+                </label>
+                <span class="bo-btn ghost bo-btn-hit">
+                  <h:commandButton id="alignImportPartial" styleClass="bo-btn-hit-in"
+                                   action="#{v2ActionsLotAlignmentBean.applyImport}"
+                                   value="Importer les #{v2ActionsLotAlignmentBean.importPanel.validCount} lignes valides"
+                                   disabled="#{v2ActionsLotAlignmentBean.importPanel.validCount eq 0}">
+                    <f:ajax execute="@form" render="@form" onevent="boAjaxBusy"/>
+                  </h:commandButton>
+                  <span class="bo-btn-hit-ui" aria-hidden="true">
+                    <svg viewBox="0 0 24 24" aria-hidden="true"><path d="M21 15v4a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2v-4"/><path d="M17 8l-5-5-5 5"/><path d="M12 3v12"/></svg>
+                    Importer les #{v2ActionsLotAlignmentBean.importPanel.validCount} lignes valides
+                  </span>
+                </span>
+                <span class="bo-btn ghost bo-btn-hit">
+                  <h:commandButton id="alignImportCancelErr" styleClass="bo-btn-hit-in"
+                                   action="#{v2ActionsLotAlignmentBean.clearImport}" value="Annuler">
+                    <f:ajax execute="@this" render="@form" onevent="boAjaxBusy"/>
+                  </h:commandButton>
+                  <span class="bo-btn-hit-ui" aria-hidden="true">Annuler</span>
+                </span>
+              </div>
+            </div>
+
+            <div class="bo-valid-ok">
+              <div class="bo-valid-msg ok">
+                <svg viewBox="0 0 24 24" aria-hidden="true"><path d="M20 6 9 17l-5-5"/></svg>
+                <span>Aucune erreur détectée — les #{v2ActionsLotAlignmentBean.importPanel.validCount} lignes sont prêtes à être appliquées.</span>
+              </div>
+              <div class="bo-run">
+                <span class="bo-btn primary bo-btn-hit">
+                  <h:commandButton id="alignImportApply" styleClass="bo-btn-hit-in"
+                                   action="#{v2ActionsLotAlignmentBean.applyImport}"
+                                   value="Confirmer — Importer les #{v2ActionsLotAlignmentBean.importPanel.validCount} lignes">
+                    <f:ajax execute="@form" render="@form" onevent="boAjaxBusy"/>
+                  </h:commandButton>
+                  <span class="bo-btn-hit-ui" aria-hidden="true">
+                    <svg viewBox="0 0 24 24" aria-hidden="true"><path d="M21 15v4a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2v-4"/><path d="M17 8l-5-5-5 5"/><path d="M12 3v12"/></svg>
+                    Confirmer — Importer les #{v2ActionsLotAlignmentBean.importPanel.validCount} lignes
+                  </span>
+                </span>
+                <span class="bo-btn ghost bo-btn-hit">
+                  <h:commandButton id="alignImportCancelOk" styleClass="bo-btn-hit-in"
+                                   action="#{v2ActionsLotAlignmentBean.clearImport}" value="Annuler">
+                    <f:ajax execute="@this" render="@form" onevent="boAjaxBusy"/>
+                  </h:commandButton>
+                  <span class="bo-btn-hit-ui" aria-hidden="true">Annuler</span>
+                </span>
+              </div>
+            </div>
+          </div>
+
+          <div class="bo-result">
+            <div class="bo-result-t"><svg viewBox="0 0 24 24" aria-hidden="true"><path d="M20 6 9 17l-5-5"/></svg> Importer terminé</div>
+            <div class="bo-result-stats">
+              <div class="bo-stat ok"><b>#{v2ActionsLotAlignmentBean.importPanel.linesRead}</b><span>lignes lues</span></div>
+              <div class="bo-stat ok"><b>#{v2ActionsLotAlignmentBean.importPanel.appliedCount}</b><span>appliquées</span></div>
+              <div class="bo-stat rej"><b>#{v2ActionsLotAlignmentBean.importPanel.rejectedCount}</b><span>non modifiées / rejetées</span></div>
+            </div>
+          </div>
+        </h:form>
+      </div>
+    </div>
+  </div>
+
+  <!-- ── Alignements · Supprimer ── -->
+  <div class="bo-panel #{v2ActionsLotAlignmentBean.deletePanel.cssClasses}"
+       data-obj="alignements" data-op="delete" data-live="1">
+    <div class="bo-p">
+      <div class="bo-acc">
+        <div class="bo-acc-step open">
+          <div class="bo-acc-h">
+            <button type="button" class="bo-acc-h-btn" data-act="bo-acc">
+              <span class="bo-step-n">1</span>
+              <span class="bo-acc-t">Télécharger le modèle<small>colonnes attendues &amp; exemple</small></span>
+            </button>
+            <span class="bo-acc-sp"></span>
+            <h:form prependId="false" styleClass="bo-inline-form">
+              <span class="bo-btn ghost sm bo-btn-hit">
+                <h:commandButton id="alignDeleteTpl" styleClass="bo-btn-hit-in" value="Modèle"
+                                 action="#{v2ActionsLotAlignmentBean.downloadDeleteTemplate}"/>
+                <span class="bo-btn-hit-ui" aria-hidden="true">
+                  <svg viewBox="0 0 24 24" aria-hidden="true"><path d="M21 15v4a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2v-4"/><path d="M7 10l5 5 5-5"/><path d="M12 15V3"/></svg>
+                  Modèle
+                </span>
+              </span>
+            </h:form>
+            <button type="button" class="bo-acc-chev" data-act="bo-acc" aria-label="Déplier">
+              <svg viewBox="0 0 24 24" aria-hidden="true"><path d="m9 18 6-6-6-6"/></svg>
+            </button>
+          </div>
+          <div class="bo-acc-body">
+            <table class="bo-fmt">
+              <thead><tr><th>localId</th><th>URI</th></tr></thead>
+              <tbody><tr><td>26678/crtcg26jeN4R9</td><td>https://www.wikidata.org/wiki/Q65955</td></tr></tbody>
+            </table>
+            <div class="bo-fmt-note">Une ligne par entrée. La 1ʳᵉ ligne (en-têtes) est obligatoire.</div>
+          </div>
+        </div>
+        <div class="bo-acc-step">
+          <button type="button" class="bo-acc-h" data-act="bo-acc">
+            <span class="bo-step-n">2</span>
+            <span class="bo-acc-t">Remplir le fichier<small>une ligne = une entrée · règles d'application</small></span>
+            <span class="bo-acc-sp"></span>
+            <span class="bo-acc-chev"><svg viewBox="0 0 24 24" aria-hidden="true"><path d="m9 18 6-6-6-6"/></svg></span>
+          </button>
+          <div class="bo-acc-body">
+            <ul class="bo-rules">
+              <li>Séparateur accepté : <code>,</code> <code>;</code> ou tabulation.</li>
+              <li>Si l'identifiant n'existe pas, la ligne est ignorée.</li>
+              <li class="warn">Si le concept a cet alignement, il est <b>supprimé</b>.</li>
+            </ul>
+          </div>
+        </div>
+      </div>
+
+      <div class="bo-import">
+        <div class="bo-import-h">
+          <span class="bo-step-n acc">3</span>
+          <div>
+            <div class="bo-import-t">Supprimer via fichier</div>
+            <div class="bo-import-s">déposez votre CSV rempli et lancez · #{v2ActionsLotAlignmentBean.thesaurusTitle}</div>
+          </div>
+        </div>
+
+        <h:form id="alignDeleteForm" prependId="false" enctype="multipart/form-data" styleClass="bo-card-b">
+          <span class="bo-state" hidden="hidden"
+                data-obj="alignements" data-op="delete"
+                data-cls="#{v2ActionsLotAlignmentBean.deletePanel.cssClasses}"></span>
+          <h:panelGroup layout="block" styleClass="bo-flash" rendered="#{not empty v2ActionsLotAlignmentBean.deletePanel.globalError}">
+            <div class="bo-valid-msg err" role="alert">
+              <svg viewBox="0 0 24 24" aria-hidden="true"><path d="M18 6 6 18M6 6l12 12"/></svg>
+              <span>#{v2ActionsLotAlignmentBean.deletePanel.globalError}</span>
+            </div>
+          </h:panelGroup>
+
+          <div class="bo-cfg">
+            <div class="bo-field">
+              <div class="bo-field-l">L'identifiant est de type</div>
+              <h:selectOneMenu styleClass="bo-input" value="#{v2ActionsLotAlignmentBean.deletePanel.identifierType}">
+                <f:selectItem itemLabel="identifier (id interne)" itemValue="identifier"/>
+                <f:selectItem itemLabel="ark" itemValue="ark"/>
+                <f:selectItem itemLabel="handle" itemValue="handle"/>
+              </h:selectOneMenu>
+            </div>
+            <div class="bo-field">
+              <div class="bo-field-l">Délimiteur CSV</div>
+              <h:selectOneMenu styleClass="bo-input" value="#{v2ActionsLotAlignmentBean.deletePanel.choiceDelimiter}">
+                <f:selectItem itemLabel=", (virgule)" itemValue="0"/>
+                <f:selectItem itemLabel="; (point-virgule)" itemValue="1"/>
+                <f:selectItem itemLabel="tabulation" itemValue="2"/>
+              </h:selectOneMenu>
+            </div>
+          </div>
+
+          <label class="bo-drop bo-drop-empty" for="alignDeleteFile">
+            <span class="bo-drop-ico"><svg viewBox="0 0 24 24" aria-hidden="true"><path d="M21 15v4a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2v-4"/><path d="M17 8l-5-5-5 5"/><path d="M12 3v12"/></svg></span>
+            <span class="bo-drop-t">Glissez le fichier rempli ou <span class="lk">parcourir</span></span>
+            <span class="bo-drop-s">.csv, .tsv ou .txt</span>
+          </label>
+          <h:inputFile id="alignDeleteFile" styleClass="bo-file-input" value="#{v2ActionsLotAlignmentBean.deleteUpload}">
+            <f:ajax event="valueChange" listener="#{v2ActionsLotAlignmentBean.onDeleteFileSelected}"
+                    execute="@form" render="@form"
+                    onevent="boAjaxBusy"/>
+          </h:inputFile>
+
+          <div class="bo-drop has-file">
+            <div class="bo-p-ico sm"><svg viewBox="0 0 24 24" aria-hidden="true"><path d="M14 3v5h5"/><path d="M14 3H6a2 2 0 0 0-2 2v14a2 2 0 0 0 2 2h12a2 2 0 0 0 2-2V8z"/></svg></div>
+            <div class="bo-file">
+              <div class="bo-file-n">#{v2ActionsLotAlignmentBean.deletePanel.fileName}</div>
+              <div class="bo-file-m">#{v2ActionsLotAlignmentBean.deletePanel.fileMeta}</div>
+            </div>
+            <span class="bo-file-x bo-btn-hit" title="Retirer le fichier">
+              <h:commandButton id="alignDeleteClearFile" styleClass="bo-btn-hit-in"
+                               action="#{v2ActionsLotAlignmentBean.clearDelete}" value="Retirer le fichier"
+                               title="Retirer le fichier" aria-label="Retirer le fichier">
+                <f:ajax execute="@this" render="@form" onevent="boAjaxBusy"/>
+              </h:commandButton>
+              <span class="bo-btn-hit-ui" aria-hidden="true">
+                <svg viewBox="0 0 24 24" aria-hidden="true"><path d="M18 6 6 18M6 6l12 12"/></svg>
+              </span>
+            </span>
+          </div>
+
+          <div class="bo-run">
+            <span class="bo-btn primary bo-btn-hit" data-act="bo-check">
+              <h:commandButton id="alignDeleteValidate" styleClass="bo-btn-hit-in"
+                               action="#{v2ActionsLotAlignmentBean.validateDelete}"
+                               value="Valider le fichier"
+                               disabled="#{!v2ActionsLotAlignmentBean.deletePanel.hasFile or v2ActionsLotAlignmentBean.deletePanel.checked}">
+                <f:ajax execute="@form" render="@form" onevent="boAjaxBusy"/>
+              </h:commandButton>
+              <span class="bo-btn-hit-ui" aria-hidden="true">
+                <svg viewBox="0 0 24 24" aria-hidden="true"><path d="M20 6 9 17l-5-5"/></svg>
+                Valider le fichier<span class="bo-need-file"> — déposez un fichier</span>
+              </span>
+            </span>
+            <span class="bo-hint bo-hint-idle">Aperçu et validation avant exécution.</span>
+            <span class="bo-hint bo-hint-file">Le fichier est analysé et prévisualisé avant d'être appliqué.</span>
+          </div>
+
+          <div class="bo-valid">
+            <div class="bo-valid-h">
+              <span class="bo-step-n acc sm">✓</span>
+              <div>
+                <div class="bo-import-t">Validation du fichier</div>
+                <div class="bo-import-s"><span class="bo-file-live">#{v2ActionsLotAlignmentBean.deletePanel.fileName}</span> · aperçu avant application</div>
+              </div>
+            </div>
+            <div class="bo-valid-sum">
+              <div class="bo-stat ok"><b>#{v2ActionsLotAlignmentBean.deletePanel.linesRead}</b><span>lignes lues</span></div>
+              <div class="bo-stat ok"><b class="bo-valid-n">#{v2ActionsLotAlignmentBean.deletePanel.validCount}</b><span>valides</span></div>
+              <div class="bo-stat rej bo-stat-err"><b>#{v2ActionsLotAlignmentBean.deletePanel.errorCount}</b><span>en erreur</span></div>
+              <div class="bo-stat ok bo-stat-zero"><b>0</b><span>en erreur</span></div>
+            </div>
+
+            <div class="bo-valid-errors">
+              <div class="bo-valid-msg err">
+                <svg viewBox="0 0 24 24" aria-hidden="true"><path d="M18 6 6 18M6 6l12 12"/></svg>
+                <span>#{v2ActionsLotAlignmentBean.deletePanel.errorCount} ligne(s) en erreur.
+                  Vous pouvez supprimer les #{v2ActionsLotAlignmentBean.deletePanel.validCount} lignes valides
+                  <h:panelGroup rendered="#{v2ActionsLotAlignmentBean.deletePanel.ignoredCount gt 0}">
+                    (#{v2ActionsLotAlignmentBean.deletePanel.ignoredCount} ignorée(s))
+                  </h:panelGroup>.</span>
+              </div>
+              <table class="bo-errtbl">
+                <thead><tr><th>Ligne</th><th>Identifiant</th><th>Colonne</th><th>Problème</th></tr></thead>
+                <tbody>
+                  <ui:repeat value="#{v2ActionsLotAlignmentBean.deletePanel.errors}" var="err">
+                    <tr>
+                      <td class="bo-err-ln">#{err.line}</td>
+                      <td class="bo-err-id">#{err.identifier}</td>
+                      <td><span class="bo-err-col">#{err.column}</span></td>
+                      <td class="bo-err-msg">#{err.message}</td>
+                    </tr>
+                  </ui:repeat>
+                </tbody>
+              </table>
+              <div class="bo-run">
+                <label class="bo-btn primary" for="alignDeleteFile">
+                  <svg viewBox="0 0 24 24" aria-hidden="true"><path d="M21 15v4a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2v-4"/><path d="M17 8l-5-5-5 5"/><path d="M12 3v12"/></svg>
+                  Réimporter le fichier corrigé
+                </label>
+                <span class="bo-btn danger bo-btn-hit">
+                  <h:commandButton id="alignDeletePartial" styleClass="bo-btn-hit-in"
+                                   action="#{v2ActionsLotAlignmentBean.applyDelete}"
+                                   value="Supprimer les #{v2ActionsLotAlignmentBean.deletePanel.validCount} lignes valides"
+                                   disabled="#{v2ActionsLotAlignmentBean.deletePanel.validCount eq 0}">
+                    <f:ajax execute="@form" render="@form" onevent="boAjaxBusy"/>
+                  </h:commandButton>
+                  <span class="bo-btn-hit-ui" aria-hidden="true">
+                    <svg viewBox="0 0 24 24" aria-hidden="true"><path d="M3 6h18"/><path d="M8 6V4a2 2 0 0 1 2-2h4a2 2 0 0 1 2 2v2"/><path d="M19 6l-1 14a2 2 0 0 1-2 2H8a2 2 0 0 1-2-2L5 6"/></svg>
+                    Supprimer les #{v2ActionsLotAlignmentBean.deletePanel.validCount} lignes valides
+                  </span>
+                </span>
+                <span class="bo-btn ghost bo-btn-hit">
+                  <h:commandButton id="alignDeleteCancelErr" styleClass="bo-btn-hit-in"
+                                   action="#{v2ActionsLotAlignmentBean.clearDelete}" value="Annuler">
+                    <f:ajax execute="@this" render="@form" onevent="boAjaxBusy"/>
+                  </h:commandButton>
+                  <span class="bo-btn-hit-ui" aria-hidden="true">Annuler</span>
+                </span>
+              </div>
+            </div>
+
+            <div class="bo-valid-ok">
+              <div class="bo-valid-msg ok">
+                <svg viewBox="0 0 24 24" aria-hidden="true"><path d="M20 6 9 17l-5-5"/></svg>
+                <span>Aucune erreur détectée — les #{v2ActionsLotAlignmentBean.deletePanel.validCount} lignes sont prêtes à être appliquées.</span>
+              </div>
+              <div class="bo-run">
+                <span class="bo-btn danger bo-btn-hit">
+                  <h:commandButton id="alignDeleteApply" styleClass="bo-btn-hit-in"
+                                   action="#{v2ActionsLotAlignmentBean.applyDelete}"
+                                   value="Confirmer — Supprimer les #{v2ActionsLotAlignmentBean.deletePanel.validCount} lignes">
+                    <f:ajax execute="@form" render="@form" onevent="boAjaxBusy"/>
+                  </h:commandButton>
+                  <span class="bo-btn-hit-ui" aria-hidden="true">
+                    <svg viewBox="0 0 24 24" aria-hidden="true"><path d="M3 6h18"/><path d="M8 6V4a2 2 0 0 1 2-2h4a2 2 0 0 1 2 2v2"/><path d="M19 6l-1 14a2 2 0 0 1-2 2H8a2 2 0 0 1-2-2L5 6"/></svg>
+                    Confirmer — Supprimer les #{v2ActionsLotAlignmentBean.deletePanel.validCount} lignes
+                  </span>
+                </span>
+                <span class="bo-btn ghost bo-btn-hit">
+                  <h:commandButton id="alignDeleteCancelOk" styleClass="bo-btn-hit-in"
+                                   action="#{v2ActionsLotAlignmentBean.clearDelete}" value="Annuler">
+                    <f:ajax execute="@this" render="@form" onevent="boAjaxBusy"/>
+                  </h:commandButton>
+                  <span class="bo-btn-hit-ui" aria-hidden="true">Annuler</span>
+                </span>
+              </div>
+            </div>
+          </div>
+
+          <div class="bo-result">
+            <div class="bo-result-t"><svg viewBox="0 0 24 24" aria-hidden="true"><path d="M20 6 9 17l-5-5"/></svg> Supprimer terminé</div>
+            <div class="bo-result-stats">
+              <div class="bo-stat ok"><b>#{v2ActionsLotAlignmentBean.deletePanel.linesRead}</b><span>lignes lues</span></div>
+              <div class="bo-stat ok"><b>#{v2ActionsLotAlignmentBean.deletePanel.appliedCount}</b><span>supprimées</span></div>
+              <div class="bo-stat rej"><b>#{v2ActionsLotAlignmentBean.deletePanel.rejectedCount}</b><span>non trouvées</span></div>
+            </div>
+          </div>
+        </h:form>
+      </div>
+    </div>
+  </div>
+
+  <!-- ── Alignements · Exporter ── -->
+  <div class="bo-panel" data-obj="alignements" data-op="export" data-live="1">
+    <div class="bo-p">
+      <div class="bo-acc">
+        <div class="bo-acc-step open">
+          <button type="button" class="bo-acc-h" data-act="bo-acc">
+            <span class="bo-step-n">1</span>
+            <span class="bo-acc-t">Format du fichier généré<small>colonnes exportées &amp; exemple</small></span>
+            <span class="bo-acc-sp"></span>
+            <span class="bo-acc-chev"><svg viewBox="0 0 24 24" aria-hidden="true"><path d="m9 18 6-6-6-6"/></svg></span>
+          </button>
+          <div class="bo-acc-body">
+            <table class="bo-fmt">
+              <thead><tr><th>localId</th><th>URI</th></tr></thead>
+              <tbody><tr><td>230</td><td>https://www.wikidata.org/wiki/Q65955</td></tr></tbody>
+            </table>
+            <div class="bo-fmt-note">Une ligne par entrée. La 1ʳᵉ ligne (en-têtes) est incluse à l'export.</div>
+          </div>
+        </div>
+        <div class="bo-acc-step">
+          <button type="button" class="bo-acc-h" data-act="bo-acc">
+            <span class="bo-step-n">2</span>
+            <span class="bo-acc-t">Règles d'export<small>ce qui est inclus ou exclu</small></span>
+            <span class="bo-acc-sp"></span>
+            <span class="bo-acc-chev"><svg viewBox="0 0 24 24" aria-hidden="true"><path d="m9 18 6-6-6-6"/></svg></span>
+          </button>
+          <div class="bo-acc-body">
+            <ul class="bo-rules">
+              <li>Laisser le périmètre vide exporte <b>tout</b> le thésaurus.</li>
+              <li>Renseigner un identifiant de concept exporte seulement sa branche.</li>
+              <li>Le nom de source filtre les URI qui contiennent <code>.nom.</code> (ex. <code>wikidata</code>).</li>
+            </ul>
+          </div>
+        </div>
+      </div>
+
+      <div class="bo-import">
+        <div class="bo-import-h">
+          <span class="bo-step-n acc">3</span>
+          <div>
+            <div class="bo-import-t">Exporter le fichier</div>
+            <div class="bo-import-s">choisissez le périmètre puis générez le CSV · #{v2ActionsLotAlignmentBean.thesaurusTitle}</div>
+          </div>
+        </div>
+        <h:form id="alignExportForm" prependId="false" styleClass="bo-card-b#{v2ActionsLotAlignmentBean.exportBusy ? ' is-busy' : ''}">
+          <h:panelGroup layout="block" styleClass="bo-flash" rendered="#{not empty v2ActionsLotAlignmentBean.exportError}">
+            <div class="bo-valid-msg err" role="alert">
+              <svg viewBox="0 0 24 24" aria-hidden="true"><path d="M18 6 6 18M6 6l12 12"/></svg>
+              <span>#{v2ActionsLotAlignmentBean.exportError}</span>
+            </div>
+          </h:panelGroup>
+          <div class="bo-cfg">
+            <div class="bo-field">
+              <div class="bo-field-l">Périmètre</div>
+              <h:inputText styleClass="bo-input" value="#{v2ActionsLotAlignmentBean.exportScopeConceptId}"
+                           placeholder="Tout le thésaurus, ou l'identifiant du 1ᵉʳ concept d'une branche"/>
+            </div>
+            <div class="bo-field">
+              <div class="bo-field-l">Nom de la source (*)</div>
+              <h:inputText styleClass="bo-input" value="#{v2ActionsLotAlignmentBean.exportSource}"
+                           placeholder="ex. wikidata"/>
+            </div>
+          </div>
+          <div class="bo-run">
+            <span class="bo-btn primary bo-btn-hit">
+              <h:commandButton id="alignExportRun" styleClass="bo-btn-hit-in" value="Exporter"
+                               action="#{v2ActionsLotAlignmentBean.exportAlignments}"
+                               disabled="#{v2ActionsLotAlignmentBean.exportBusy}"/>
+              <span class="bo-btn-hit-ui" aria-hidden="true">
+                <svg viewBox="0 0 24 24" aria-hidden="true"><path d="M21 15v4a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2v-4"/><path d="M7 10l5 5 5-5"/><path d="M12 15V3"/></svg>
+                Exporter
+              </span>
+            </span>
+            <span class="bo-hint">Le fichier est généré et téléchargé immédiatement.</span>
+          </div>
+        </h:form>
+      </div>
+    </div>
+  </div>
+
+</ui:composition>

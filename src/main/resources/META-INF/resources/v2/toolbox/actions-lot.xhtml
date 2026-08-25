@@ -1,8 +1,12 @@
 <?xml version="1.0" encoding="UTF-8"?>
 <ui:composition xmlns="http://www.w3.org/1999/xhtml"
                 xmlns:ui="http://xmlns.jcp.org/jsf/facelets"
+                xmlns:f="http://xmlns.jcp.org/jsf/core"
+                xmlns:c="jakarta.tags.core"
                 template="/v2/includes/layout.xhtml">
   <ui:param name="v2Page" value="atelier"/>
+  <ui:define name="viewActions">
+  </ui:define>
   <ui:define name="title">OpenTheso — Atelier</ui:define>
   <ui:define name="main">
 
@@ -43,7 +47,7 @@
               <div class="bo-head" data-obj="images">
                 <div>
                   <h1 class="bo-title">Images</h1>
-                  <div class="bo-head-sub">Illustrations associées aux concepts</div>
+                  <div class="bo-head-sub">Importer des images</div>
                 </div>
               </div>
               <div class="bo-head" data-obj="notations">
@@ -55,13 +59,13 @@
               <div class="bo-head" data-obj="collections">
                 <div>
                   <h1 class="bo-title">Collections</h1>
-                  <div class="bo-head-sub">Rattachement des concepts aux collections</div>
+                  <div class="bo-head-sub">Associer les concepts aux collections</div>
                 </div>
               </div>
               <div class="bo-head" data-obj="concepts">
                 <div>
                   <h1 class="bo-title">Concepts &amp; listes</h1>
-                  <div class="bo-head-sub">Ajout / remplacement / obsolescence de concepts</div>
+                  <div class="bo-head-sub">Ajout, remplacement, obsolescence et comparaison</div>
                 </div>
               </div>
               <div class="bo-opsel" data-obj="alignements">
@@ -83,311 +87,62 @@
               </div><div class="bo-opsel" data-obj="synonymes">
                 <div class="bo-ops" role="tablist">
                   <button type="button" role="tab" class="bo-op-seg" data-act="bo-op" data-obj="synonymes" data-op="import">
-                    <svg viewBox="0 0 24 24" aria-hidden="true"><path d="M21 15v4a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2v-4"/><path d="M17 8l-5-5-5 5"/><path d="M12 3v12"/></svg><span>Importer</span><span class="bo-todo sm">à cadrer</span>
+                    <svg viewBox="0 0 24 24" aria-hidden="true"><path d="M21 15v4a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2v-4"/><path d="M17 8l-5-5-5 5"/><path d="M12 3v12"/></svg><span>Importer</span>
                   </button><button type="button" role="tab" class="bo-op-seg danger" data-act="bo-op" data-obj="synonymes" data-op="delete">
-                    <svg viewBox="0 0 24 24" aria-hidden="true"><path d="M3 6h18"/><path d="M8 6V4a2 2 0 0 1 2-2h4a2 2 0 0 1 2 2v2"/><path d="M19 6l-1 14a2 2 0 0 1-2 2H8a2 2 0 0 1-2-2L5 6"/></svg><span>Supprimer</span><span class="bo-todo sm">à cadrer</span>
+                    <svg viewBox="0 0 24 24" aria-hidden="true"><path d="M3 6h18"/><path d="M8 6V4a2 2 0 0 1 2-2h4a2 2 0 0 1 2 2v2"/><path d="M19 6l-1 14a2 2 0 0 1-2 2H8a2 2 0 0 1-2-2L5 6"/></svg><span>Supprimer</span>
                   </button>
                 </div>
               </div><div class="bo-opsel" data-obj="notes">
                 <div class="bo-ops" role="tablist">
                   <button type="button" role="tab" class="bo-op-seg" data-act="bo-op" data-obj="notes" data-op="import">
-                    <svg viewBox="0 0 24 24" aria-hidden="true"><path d="M21 15v4a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2v-4"/><path d="M17 8l-5-5-5 5"/><path d="M12 3v12"/></svg><span>Importer</span><span class="bo-todo sm">à cadrer</span>
+                    <svg viewBox="0 0 24 24" aria-hidden="true"><path d="M21 15v4a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2v-4"/><path d="M17 8l-5-5-5 5"/><path d="M12 3v12"/></svg><span>Importer</span>
                   </button>
                 </div>
               </div><div class="bo-opsel" data-obj="identifiants">
                 <div class="bo-ops" role="tablist">
                   <button type="button" role="tab" class="bo-op-seg" data-act="bo-op" data-obj="identifiants" data-op="import">
-                    <svg viewBox="0 0 24 24" aria-hidden="true"><path d="M21 15v4a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2v-4"/><path d="M17 8l-5-5-5 5"/><path d="M12 3v12"/></svg><span>Importer</span><span class="bo-todo sm">à cadrer</span>
+                    <svg viewBox="0 0 24 24" aria-hidden="true"><path d="M21 15v4a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2v-4"/><path d="M17 8l-5-5-5 5"/><path d="M12 3v12"/></svg><span>Importer</span>
                   </button><button type="button" role="tab" class="bo-op-seg" data-act="bo-op" data-obj="identifiants" data-op="generate">
-                    <svg viewBox="0 0 24 24" aria-hidden="true"><path d="M21 15v4a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2v-4"/><path d="M17 8l-5-5-5 5"/><path d="M12 3v12"/></svg><span>Générer</span><span class="bo-todo sm">à cadrer</span>
+                    <svg viewBox="0 0 24 24" aria-hidden="true"><path d="M21 15v4a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2v-4"/><path d="M17 8l-5-5-5 5"/><path d="M12 3v12"/></svg><span>Générer</span>
                   </button>
                 </div>
               </div><div class="bo-opsel" data-obj="images">
                 <div class="bo-ops" role="tablist">
                   <button type="button" role="tab" class="bo-op-seg" data-act="bo-op" data-obj="images" data-op="import">
-                    <svg viewBox="0 0 24 24" aria-hidden="true"><path d="M21 15v4a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2v-4"/><path d="M17 8l-5-5-5 5"/><path d="M12 3v12"/></svg><span>Importer</span><span class="bo-todo sm">à cadrer</span>
+                    <svg viewBox="0 0 24 24" aria-hidden="true"><path d="M21 15v4a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2v-4"/><path d="M17 8l-5-5-5 5"/><path d="M12 3v12"/></svg><span>Importer</span>
                   </button>
                 </div>
               </div><div class="bo-opsel" data-obj="notations">
                 <div class="bo-ops" role="tablist">
                   <button type="button" role="tab" class="bo-op-seg" data-act="bo-op" data-obj="notations" data-op="import">
-                    <svg viewBox="0 0 24 24" aria-hidden="true"><path d="M21 15v4a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2v-4"/><path d="M17 8l-5-5-5 5"/><path d="M12 3v12"/></svg><span>Importer</span><span class="bo-todo sm">à cadrer</span>
+                    <svg viewBox="0 0 24 24" aria-hidden="true"><path d="M21 15v4a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2v-4"/><path d="M17 8l-5-5-5 5"/><path d="M12 3v12"/></svg><span>Importer</span>
                   </button>
                 </div>
               </div><div class="bo-opsel" data-obj="collections">
                 <div class="bo-ops" role="tablist">
                   <button type="button" role="tab" class="bo-op-seg" data-act="bo-op" data-obj="collections" data-op="import">
-                    <svg viewBox="0 0 24 24" aria-hidden="true"><path d="M21 15v4a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2v-4"/><path d="M17 8l-5-5-5 5"/><path d="M12 3v12"/></svg><span>Importer</span><span class="bo-todo sm">à cadrer</span>
+                    <svg viewBox="0 0 24 24" aria-hidden="true"><path d="M21 15v4a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2v-4"/><path d="M17 8l-5-5-5 5"/><path d="M12 3v12"/></svg><span>Importer</span>
                   </button>
                 </div>
               </div><div class="bo-opsel" data-obj="concepts">
                 <div class="bo-ops" role="tablist">
                   <button type="button" role="tab" class="bo-op-seg" data-act="bo-op" data-obj="concepts" data-op="import">
-                    <svg viewBox="0 0 24 24" aria-hidden="true"><path d="M21 15v4a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2v-4"/><path d="M17 8l-5-5-5 5"/><path d="M12 3v12"/></svg><span>Importer</span><span class="bo-todo sm">à cadrer</span>
+                    <svg viewBox="0 0 24 24" aria-hidden="true"><path d="M21 15v4a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2v-4"/><path d="M17 8l-5-5-5 5"/><path d="M12 3v12"/></svg><span>Importer</span>
                   </button><button type="button" role="tab" class="bo-op-seg danger" data-act="bo-op" data-obj="concepts" data-op="replace">
-                    <svg viewBox="0 0 24 24" aria-hidden="true"><path d="M21 15v4a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2v-4"/><path d="M17 8l-5-5-5 5"/><path d="M12 3v12"/></svg><span>Remplacer l'existant</span><span class="bo-todo sm">à cadrer</span>
+                    <svg viewBox="0 0 24 24" aria-hidden="true"><path d="M21 15v4a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2v-4"/><path d="M17 8l-5-5-5 5"/><path d="M12 3v12"/></svg><span>Remplacer l'existant</span>
                   </button><button type="button" role="tab" class="bo-op-seg danger" data-act="bo-op" data-obj="concepts" data-op="deprecate">
-                    <svg viewBox="0 0 24 24" aria-hidden="true"><path d="M3 6h18"/><path d="M8 6V4a2 2 0 0 1 2-2h4a2 2 0 0 1 2 2v2"/><path d="M19 6l-1 14a2 2 0 0 1-2 2H8a2 2 0 0 1-2-2L5 6"/></svg><span>Rendre obsolète</span><span class="bo-todo sm">à cadrer</span>
+                    <svg viewBox="0 0 24 24" aria-hidden="true"><path d="M3 6h18"/><path d="M8 6V4a2 2 0 0 1 2-2h4a2 2 0 0 1 2 2v2"/><path d="M19 6l-1 14a2 2 0 0 1-2 2H8a2 2 0 0 1-2-2L5 6"/></svg><span>Rendre obsolète</span>
                   </button><button type="button" role="tab" class="bo-op-seg" data-act="bo-op" data-obj="concepts" data-op="compare">
-                    <svg viewBox="0 0 24 24" aria-hidden="true"><path d="M21 15v4a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2v-4"/><path d="M17 8l-5-5-5 5"/><path d="M12 3v12"/></svg><span>Comparer</span><span class="bo-todo sm">à cadrer</span>
+                    <svg viewBox="0 0 24 24" aria-hidden="true"><path d="M21 15v4a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2v-4"/><path d="M17 8l-5-5-5 5"/><path d="M12 3v12"/></svg><span>Comparer</span>
                   </button>
                 </div>
               </div>
               <div class="bo-full">
-                <div class="bo-panel" data-obj="alignements" data-op="import"><div class="bo-p">
-            <div class="bo-acc">
-              <div class="bo-acc-step">
-            <button type="button" class="bo-acc-h" data-act="bo-acc">
-              <span class="bo-step-n">1</span>
-              <span class="bo-acc-t">Télécharger le modèle<small>colonnes attendues &amp; exemple</small></span>
-              <span class="bo-acc-sp"></span>
-              <button type="button" class="bo-btn ghost sm" data-act="toast" data-msg="modèle-alignements.csv téléchargé"><svg viewBox="0 0 24 24" aria-hidden="true"><path d="M21 15v4a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2v-4"/><path d="M7 10l5 5 5-5"/><path d="M12 15V3"/></svg> Modèle</button>
-              <span class="bo-acc-chev"><svg viewBox="0 0 24 24" aria-hidden="true"><path d="m9 18 6-6-6-6"/></svg></span>
-            </button>
-            <div class="bo-acc-body"><table class="bo-fmt">
-              <thead><tr><th>localId</th><th>URI cible</th><th>##type<span class="opt"> (opt.)</span></th></tr></thead>
-              <tbody><tr><td>26678/crtcg26jeN4R9</td><td>https://www.wikidata.org/wiki/Q65955</td><td>##1</td></tr></tbody>
-            </table><div class="bo-fmt-note">Une ligne par entrée. La 1ʳᵉ ligne (en-têtes) est facultative.</div></div>
-          </div>
-              <div class="bo-acc-step">
-            <button type="button" class="bo-acc-h" data-act="bo-acc">
-              <span class="bo-step-n">2</span>
-              <span class="bo-acc-t">Remplir le fichier<small>une ligne = une entrée · règles d'application</small></span>
-              <span class="bo-acc-sp"></span>
-              
-              <span class="bo-acc-chev"><svg viewBox="0 0 24 24" aria-hidden="true"><path d="m9 18 6-6-6-6"/></svg></span>
-            </button>
-            <div class="bo-acc-body"><ul class="bo-rules"><li>Séparateur accepté : <code>,</code> <code>;</code> ou tabulation.</li><li class="warn">Si l'identifiant n'existe pas dans le thésaurus, la ligne est <b>rejetée</b>.</li><li>Si le concept a déjà cet alignement, le lien n'est pas modifié.</li><li>Type d'alignement : ajouter <code>##</code> + le code en fin d'URI. Sans code, <code>exactMatch</code> par défaut.</li></ul><div class="bo-match"><span class="m"><b>1</b> = exactMatch</span><span class="m"><b>2</b> = closeMatch</span><span class="m"><b>3</b> = broadMatch</span><span class="m"><b>4</b> = relatedMatch</span><span class="m"><b>5</b> = narrowMatch</span></div></div>
-          </div>
-            </div>
-            <div class="bo-import">
-              <div class="bo-import-h">
-                <span class="bo-step-n acc">3</span>
-                <div><div class="bo-import-t">Importer le fichier</div>
-                  <div class="bo-import-s">déposez votre CSV rempli et lancez</div></div>
-              </div>
-              <div class="bo-card-b">
-                <div class="bo-cfg">
-                  <div class="bo-field"><div class="bo-field-l">L'identifiant est de type</div>
-                    <select class="bo-input"><option>identifier (id interne)</option><option>ark</option><option>handle</option></select></div>
-                  <div class="bo-field"><div class="bo-field-l">Délimiteur CSV</div>
-                    <select class="bo-input"><option>, (virgule)</option><option>; (point-virgule)</option><option>tabulation</option></select></div>
-                </div>
-                <button type="button" class="bo-drop bo-drop-empty" data-act="bo-pick">
-                  <span class="bo-drop-ico"><svg viewBox="0 0 24 24" aria-hidden="true"><path d="M21 15v4a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2v-4"/><path d="M17 8l-5-5-5 5"/><path d="M12 3v12"/></svg></span>
-                  <span class="bo-drop-t">Glissez le fichier rempli ou <span class="lk">parcourir</span></span>
-                  <span class="bo-drop-s">.csv, .tsv ou .txt</span>
-                </button>
-                <div class="bo-drop has-file">
-                  <div class="bo-p-ico sm"><svg viewBox="0 0 24 24" aria-hidden="true"><path d="M14 3v5h5"/><path d="M14 3H6a2 2 0 0 0-2 2v14a2 2 0 0 0 2 2h12a2 2 0 0 0 2-2V8z"/></svg></div>
-                  <div class="bo-file"><div class="bo-file-n">alignements-pactols.csv</div>
-                    <div class="bo-file-n bo-file-corr">alignements-pactols-corrige.csv</div>
-                    <div class="bo-file-m">142 lignes · 18 Ko</div></div>
-                  <button type="button" class="bo-file-x" data-act="bo-clear"><svg viewBox="0 0 24 24" aria-hidden="true"><path d="M18 6 6 18M6 6l12 12"/></svg></button>
-                </div>
-                <div class="bo-run">
-                  <button type="button" class="bo-btn primary" data-act="bo-check"><svg viewBox="0 0 24 24" aria-hidden="true"><path d="M20 6 9 17l-5-5"/></svg> Valider le fichier<span class="bo-need-file"> — déposez un fichier</span></button>
-                  <span class="bo-hint bo-hint-idle">Aperçu et validation avant exécution.</span>
-                  <span class="bo-hint bo-hint-file">Le fichier est analysé et prévisualisé avant d'être appliqué.</span>
-                </div>
-                <div class="bo-valid">
-                  <div class="bo-valid-h">
-                    <span class="bo-step-n acc sm">✓</span>
-                    <div><div class="bo-import-t">Validation du fichier</div>
-                      <div class="bo-import-s"><span class="bo-file-live">alignements-pactols.csv</span> · aperçu avant application</div></div>
-                  </div>
-                  <div class="bo-valid-sum">
-                    <div class="bo-stat ok"><b>142</b><span>lignes lues</span></div>
-                    <div class="bo-stat ok"><b class="bo-valid-n">138</b><span>valides</span></div>
-                    <div class="bo-stat rej bo-stat-err"><b>4</b><span>en erreur</span></div>
-                    <div class="bo-stat ok bo-stat-zero"><b>0</b><span>en erreur</span></div>
-                  </div>
-                  <div class="bo-valid-errors">
-                    <div class="bo-valid-msg err"><svg viewBox="0 0 24 24" aria-hidden="true"><path d="M18 6 6 18M6 6l12 12"/></svg><span>4 lignes en erreur. Corrigez-les dans votre fichier d'origine, puis réimportez-le. Vous pouvez aussi n'appliquer que les 138 lignes valides.</span></div>
-                    <table class="bo-errtbl">
-                      <thead><tr><th>Ligne</th><th>Identifiant</th><th>Colonne</th><th>Problème</th></tr></thead>
-                      <tbody>
-                        <tr><td class="bo-err-ln">12</td><td class="bo-err-id">ark:/12148/c1a0c1</td><td><span class="bo-err-col">broader</span></td><td class="bo-err-msg">Terme générique introuvable (« Alliage cuivreu »)</td></tr>
-                        <tr><td class="bo-err-ln">47</td><td class="bo-err-id">— (vide)</td><td><span class="bo-err-col">identifier</span></td><td class="bo-err-msg">Identifiant obligatoire manquant</td></tr>
-                        <tr><td class="bo-err-ln">88</td><td class="bo-err-id">ark:/12148/c3d8n1</td><td><span class="bo-err-col">lang</span></td><td class="bo-err-msg">Code langue inconnu « fra » — attendu fr, en, de…</td></tr>
-                        <tr><td class="bo-err-ln">119</td><td class="bo-err-id">ark:/12148/c8h4n2</td><td><span class="bo-err-col">prefLabel</span></td><td class="bo-err-msg">Libellé en doublon avec un concept existant</td></tr>
-                      </tbody>
-                    </table>
-                    <div class="bo-run">
-                      <button type="button" class="bo-btn primary" data-act="bo-reimport"><svg viewBox="0 0 24 24" aria-hidden="true"><path d="M21 15v4a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2v-4"/><path d="M17 8l-5-5-5 5"/><path d="M12 3v12"/></svg> Réimporter le fichier corrigé</button>
-                      <button type="button" class="bo-btn ghost" data-act="bo-run"><svg viewBox="0 0 24 24" aria-hidden="true"><path d="M21 15v4a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2v-4"/><path d="M17 8l-5-5-5 5"/><path d="M12 3v12"/></svg> Importer les 138 lignes valides</button>
-                      <button type="button" class="bo-btn ghost" data-act="bo-clear">Annuler</button>
-                    </div>
-                  </div>
-                  <div class="bo-valid-ok">
-                    <div class="bo-valid-msg ok"><svg viewBox="0 0 24 24" aria-hidden="true"><path d="M20 6 9 17l-5-5"/></svg><span>Aucune erreur détectée — les 142 lignes sont prêtes à être appliquées.</span></div>
-                    <div class="bo-run">
-                      <button type="button" class="bo-btn primary" data-act="bo-run"><svg viewBox="0 0 24 24" aria-hidden="true"><path d="M21 15v4a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2v-4"/><path d="M17 8l-5-5-5 5"/><path d="M12 3v12"/></svg> Confirmer — Importer les 142 lignes</button>
-                      <button type="button" class="bo-btn ghost" data-act="bo-clear">Annuler</button>
-                    </div>
-                  </div>
-                </div>
-                <div class="bo-result">
-                  <div class="bo-result-t"><svg viewBox="0 0 24 24" aria-hidden="true"><path d="M20 6 9 17l-5-5"/></svg> Importer terminé</div>
-                  <div class="bo-result-stats">
-                    <div class="bo-stat ok"><b>142</b><span>lignes lues</span></div>
-                    <div class="bo-stat ok"><b class="bo-n-err">138</b><b class="bo-n-ok">142</b><span>appliquées</span></div>
-                    <div class="bo-stat rej bo-rej"><b class="bo-n-err">4</b><b class="bo-n-ok">0</b><span>rejetées</span></div>
-                  </div>
-                </div>
-              </div>
-            </div>
-          </div></div>
-<div class="bo-panel" data-obj="alignements" data-op="delete"><div class="bo-p">
-            <div class="bo-acc">
-              <div class="bo-acc-step">
-            <button type="button" class="bo-acc-h" data-act="bo-acc">
-              <span class="bo-step-n">1</span>
-              <span class="bo-acc-t">Télécharger le modèle<small>colonnes attendues &amp; exemple</small></span>
-              <span class="bo-acc-sp"></span>
-              <button type="button" class="bo-btn ghost sm" data-act="toast" data-msg="modèle-alignements.csv téléchargé"><svg viewBox="0 0 24 24" aria-hidden="true"><path d="M21 15v4a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2v-4"/><path d="M7 10l5 5 5-5"/><path d="M12 15V3"/></svg> Modèle</button>
-              <span class="bo-acc-chev"><svg viewBox="0 0 24 24" aria-hidden="true"><path d="m9 18 6-6-6-6"/></svg></span>
-            </button>
-            <div class="bo-acc-body"><table class="bo-fmt">
-              <thead><tr><th>localId</th><th>URI</th></tr></thead>
-              <tbody><tr><td>26678/crtcg26jeN4R9</td><td>https://www.wikidata.org/wiki/Q65955</td></tr></tbody>
-            </table><div class="bo-fmt-note">Une ligne par entrée. La 1ʳᵉ ligne (en-têtes) est facultative.</div></div>
-          </div>
-              <div class="bo-acc-step">
-            <button type="button" class="bo-acc-h" data-act="bo-acc">
-              <span class="bo-step-n">2</span>
-              <span class="bo-acc-t">Remplir le fichier<small>une ligne = une entrée · règles d'application</small></span>
-              <span class="bo-acc-sp"></span>
-              
-              <span class="bo-acc-chev"><svg viewBox="0 0 24 24" aria-hidden="true"><path d="m9 18 6-6-6-6"/></svg></span>
-            </button>
-            <div class="bo-acc-body"><ul class="bo-rules"><li>Séparateur accepté : <code>,</code> <code>;</code> ou tabulation.</li><li>Si l'identifiant n'existe pas, la ligne est ignorée.</li><li class="warn">Si le concept a cet alignement, il est <b>supprimé</b>.</li></ul></div>
-          </div>
-            </div>
-            <div class="bo-import">
-              <div class="bo-import-h">
-                <span class="bo-step-n acc">3</span>
-                <div><div class="bo-import-t">Supprimer le fichier</div>
-                  <div class="bo-import-s">déposez votre CSV rempli et lancez</div></div>
-              </div>
-              <div class="bo-card-b">
-                <div class="bo-cfg">
-                  <div class="bo-field"><div class="bo-field-l">L'identifiant est de type</div>
-                    <select class="bo-input"><option>identifier (id interne)</option><option>ark</option><option>handle</option></select></div>
-                  <div class="bo-field"><div class="bo-field-l">Délimiteur CSV</div>
-                    <select class="bo-input"><option>, (virgule)</option><option>; (point-virgule)</option><option>tabulation</option></select></div>
-                </div>
-                <button type="button" class="bo-drop bo-drop-empty" data-act="bo-pick">
-                  <span class="bo-drop-ico"><svg viewBox="0 0 24 24" aria-hidden="true"><path d="M21 15v4a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2v-4"/><path d="M17 8l-5-5-5 5"/><path d="M12 3v12"/></svg></span>
-                  <span class="bo-drop-t">Glissez le fichier rempli ou <span class="lk">parcourir</span></span>
-                  <span class="bo-drop-s">.csv, .tsv ou .txt</span>
-                </button>
-                <div class="bo-drop has-file">
-                  <div class="bo-p-ico sm"><svg viewBox="0 0 24 24" aria-hidden="true"><path d="M14 3v5h5"/><path d="M14 3H6a2 2 0 0 0-2 2v14a2 2 0 0 0 2 2h12a2 2 0 0 0 2-2V8z"/></svg></div>
-                  <div class="bo-file"><div class="bo-file-n">alignements-pactols.csv</div>
-                    <div class="bo-file-n bo-file-corr">alignements-pactols-corrige.csv</div>
-                    <div class="bo-file-m">142 lignes · 18 Ko</div></div>
-                  <button type="button" class="bo-file-x" data-act="bo-clear"><svg viewBox="0 0 24 24" aria-hidden="true"><path d="M18 6 6 18M6 6l12 12"/></svg></button>
-                </div>
-                <div class="bo-run">
-                  <button type="button" class="bo-btn primary" data-act="bo-check"><svg viewBox="0 0 24 24" aria-hidden="true"><path d="M20 6 9 17l-5-5"/></svg> Valider le fichier<span class="bo-need-file"> — déposez un fichier</span></button>
-                  <span class="bo-hint bo-hint-idle">Aperçu et validation avant exécution.</span>
-                  <span class="bo-hint bo-hint-file">Le fichier est analysé et prévisualisé avant d'être appliqué.</span>
-                </div>
-                <div class="bo-valid">
-                  <div class="bo-valid-h">
-                    <span class="bo-step-n acc sm">✓</span>
-                    <div><div class="bo-import-t">Validation du fichier</div>
-                      <div class="bo-import-s"><span class="bo-file-live">alignements-pactols.csv</span> · aperçu avant application</div></div>
-                  </div>
-                  <div class="bo-valid-sum">
-                    <div class="bo-stat ok"><b>142</b><span>lignes lues</span></div>
-                    <div class="bo-stat ok"><b class="bo-valid-n">138</b><span>valides</span></div>
-                    <div class="bo-stat rej bo-stat-err"><b>4</b><span>en erreur</span></div>
-                    <div class="bo-stat ok bo-stat-zero"><b>0</b><span>en erreur</span></div>
-                  </div>
-                  <div class="bo-valid-errors">
-                    <div class="bo-valid-msg err"><svg viewBox="0 0 24 24" aria-hidden="true"><path d="M18 6 6 18M6 6l12 12"/></svg><span>4 lignes en erreur. Corrigez-les dans votre fichier d'origine, puis réimportez-le. Vous pouvez aussi n'appliquer que les 138 lignes valides.</span></div>
-                    <table class="bo-errtbl">
-                      <thead><tr><th>Ligne</th><th>Identifiant</th><th>Colonne</th><th>Problème</th></tr></thead>
-                      <tbody>
-                        <tr><td class="bo-err-ln">12</td><td class="bo-err-id">ark:/12148/c1a0c1</td><td><span class="bo-err-col">broader</span></td><td class="bo-err-msg">Terme générique introuvable (« Alliage cuivreu »)</td></tr>
-                        <tr><td class="bo-err-ln">47</td><td class="bo-err-id">— (vide)</td><td><span class="bo-err-col">identifier</span></td><td class="bo-err-msg">Identifiant obligatoire manquant</td></tr>
-                        <tr><td class="bo-err-ln">88</td><td class="bo-err-id">ark:/12148/c3d8n1</td><td><span class="bo-err-col">lang</span></td><td class="bo-err-msg">Code langue inconnu « fra » — attendu fr, en, de…</td></tr>
-                        <tr><td class="bo-err-ln">119</td><td class="bo-err-id">ark:/12148/c8h4n2</td><td><span class="bo-err-col">prefLabel</span></td><td class="bo-err-msg">Libellé en doublon avec un concept existant</td></tr>
-                      </tbody>
-                    </table>
-                    <div class="bo-run">
-                      <button type="button" class="bo-btn primary" data-act="bo-reimport"><svg viewBox="0 0 24 24" aria-hidden="true"><path d="M21 15v4a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2v-4"/><path d="M17 8l-5-5-5 5"/><path d="M12 3v12"/></svg> Réimporter le fichier corrigé</button>
-                      <button type="button" class="bo-btn danger" data-act="bo-run"><svg viewBox="0 0 24 24" aria-hidden="true"><path d="M3 6h18"/><path d="M8 6V4a2 2 0 0 1 2-2h4a2 2 0 0 1 2 2v2"/><path d="M19 6l-1 14a2 2 0 0 1-2 2H8a2 2 0 0 1-2-2L5 6"/></svg> Supprimer les 138 lignes valides</button>
-                      <button type="button" class="bo-btn ghost" data-act="bo-clear">Annuler</button>
-                    </div>
-                  </div>
-                  <div class="bo-valid-ok">
-                    <div class="bo-valid-msg ok"><svg viewBox="0 0 24 24" aria-hidden="true"><path d="M20 6 9 17l-5-5"/></svg><span>Aucune erreur détectée — les 142 lignes sont prêtes à être appliquées.</span></div>
-                    <div class="bo-run">
-                      <button type="button" class="bo-btn danger" data-act="bo-run"><svg viewBox="0 0 24 24" aria-hidden="true"><path d="M3 6h18"/><path d="M8 6V4a2 2 0 0 1 2-2h4a2 2 0 0 1 2 2v2"/><path d="M19 6l-1 14a2 2 0 0 1-2 2H8a2 2 0 0 1-2-2L5 6"/></svg> Confirmer — Supprimer les 142 lignes</button>
-                      <button type="button" class="bo-btn ghost" data-act="bo-clear">Annuler</button>
-                    </div>
-                  </div>
-                </div>
-                <div class="bo-result">
-                  <div class="bo-result-t"><svg viewBox="0 0 24 24" aria-hidden="true"><path d="M20 6 9 17l-5-5"/></svg> Supprimer terminé</div>
-                  <div class="bo-result-stats">
-                    <div class="bo-stat ok"><b>142</b><span>lignes lues</span></div>
-                    <div class="bo-stat ok"><b class="bo-n-err">138</b><b class="bo-n-ok">142</b><span>appliquées</span></div>
-                    <div class="bo-stat rej bo-rej"><b class="bo-n-err">4</b><b class="bo-n-ok">0</b><span>rejetées</span></div>
-                  </div>
-                </div>
-              </div>
-            </div>
-          </div></div>
-<div class="bo-panel" data-obj="alignements" data-op="export"><div class="bo-p">
-            <div class="bo-acc">
-              <div class="bo-acc-step">
-            <button type="button" class="bo-acc-h" data-act="bo-acc">
-              <span class="bo-step-n">1</span>
-              <span class="bo-acc-t">Format du fichier généré<small>colonnes exportées &amp; exemple</small></span>
-              <span class="bo-acc-sp"></span>
-              
-              <span class="bo-acc-chev"><svg viewBox="0 0 24 24" aria-hidden="true"><path d="m9 18 6-6-6-6"/></svg></span>
-            </button>
-            <div class="bo-acc-body"><table class="bo-fmt">
-              <thead><tr><th>localId</th><th>URI</th></tr></thead>
-              <tbody><tr><td>230</td><td>https://www.wikidata.org/wiki/Q65955</td></tr></tbody>
-            </table><div class="bo-fmt-note">Une ligne par entrée. La 1ʳᵉ ligne (en-têtes) est incluse à l'export.</div></div>
-          </div>
-              <div class="bo-acc-step">
-            <button type="button" class="bo-acc-h" data-act="bo-acc">
-              <span class="bo-step-n">2</span>
-              <span class="bo-acc-t">Règles d'export<small>ce qui est inclus ou exclu</small></span>
-              <span class="bo-acc-sp"></span>
-              
-              <span class="bo-acc-chev"><svg viewBox="0 0 24 24" aria-hidden="true"><path d="m9 18 6-6-6-6"/></svg></span>
-            </button>
-            <div class="bo-acc-body"><ul class="bo-rules"><li>Laisser le périmètre vide exporte <b>tout</b> le thésaurus.</li><li>Renseigner un identifiant de concept exporte seulement sa branche.</li></ul></div>
-          </div>
-            </div>
-            <div class="bo-import">
-              <div class="bo-import-h">
-                <span class="bo-step-n acc">3</span>
-                <div><div class="bo-import-t">Exporter le fichier</div>
-                  <div class="bo-import-s">choisissez le périmètre puis générez le CSV</div></div>
-              </div>
-              <div class="bo-card-b">
-                <div class="bo-cfg">
-                  <div class="bo-field"><div class="bo-field-l">Périmètre</div>
-                    <input class="bo-input" placeholder="Tout le thésaurus, ou l'identifiant du 1ᵉʳ concept d'une branche"/></div><div class="bo-field"><div class="bo-field-l">Nom de la source (*)</div>
-                    <input class="bo-input" placeholder="ex. Wikidata"/></div>
-                </div>
-                <div class="bo-run">
-                  <button type="button" class="bo-btn primary" data-act="toast" data-msg="alignements-pactols.csv généré"><svg viewBox="0 0 24 24" aria-hidden="true"><path d="M21 15v4a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2v-4"/><path d="M7 10l5 5 5-5"/><path d="M12 15V3"/></svg> Exporter</button>
-                  <span class="bo-hint">Le fichier est généré et téléchargé immédiatement.</span>
-                </div>
-              </div>
-            </div>
-          </div></div>
-<div class="bo-panel" data-obj="relations" data-op="import"><div class="bo-p">
+              <c:if test="#{empty param.obj or param.obj eq 'alignements'}">
+              <ui:include src="/v2/toolbox/includes/alignements-panels.xhtml"/>
+              </c:if>
+              <c:if test="#{param.obj eq 'relations'}">
+              <div class="bo-panel" data-obj="relations" data-op="import"><div class="bo-p">
             <div class="bo-acc">
               <div class="bo-acc-step">
             <button type="button" class="bo-acc-h" data-act="bo-acc">
@@ -491,162 +246,28 @@
               </div>
             </div>
           </div></div>
-<div class="bo-panel" data-obj="synonymes" data-op="import"><div class="bo-todo-panel">
-              <div class="bo-p-head">
-                <div class="bo-p-ico"><svg viewBox="0 0 24 24" aria-hidden="true"><path d="M21 15v4a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2v-4"/><path d="M17 8l-5-5-5 5"/><path d="M12 3v12"/></svg></div>
-                <div>
-                  <div class="bo-p-t">Importer — formes alternatives</div>
-                  <div class="bo-p-s">Même primitif que les alignements : un modèle CSV, des règles claires, un import.</div>
-                </div>
-              </div>
-              <div class="bo-todo-box">
-                <div class="bo-todo-t">Format à cadrer ensemble</div>
-                <div class="bo-todo-d">On traite cet objet quand tu veux. Dis-moi les <b>colonnes</b> attendues et les <b>règles</b> (identifiant absent ? valeur déjà présente ? codes / options ?) — je le branche ici à l'identique.</div>
-              </div>
-            </div></div>
-<div class="bo-panel" data-obj="synonymes" data-op="delete"><div class="bo-todo-panel">
-              <div class="bo-p-head">
-                <div class="bo-p-ico del"><svg viewBox="0 0 24 24" aria-hidden="true"><path d="M3 6h18"/><path d="M8 6V4a2 2 0 0 1 2-2h4a2 2 0 0 1 2 2v2"/><path d="M19 6l-1 14a2 2 0 0 1-2 2H8a2 2 0 0 1-2-2L5 6"/></svg></div>
-                <div>
-                  <div class="bo-p-t">Supprimer — formes alternatives</div>
-                  <div class="bo-p-s">Même primitif que les alignements : un modèle CSV, des règles claires, un import.</div>
-                </div>
-              </div>
-              <div class="bo-todo-box">
-                <div class="bo-todo-t">Format à cadrer ensemble</div>
-                <div class="bo-todo-d">On traite cet objet quand tu veux. Dis-moi les <b>colonnes</b> attendues et les <b>règles</b> (identifiant absent ? valeur déjà présente ? codes / options ?) — je le branche ici à l'identique.</div>
-              </div>
-            </div></div>
-<div class="bo-panel" data-obj="notes" data-op="import"><div class="bo-todo-panel">
-              <div class="bo-p-head">
-                <div class="bo-p-ico"><svg viewBox="0 0 24 24" aria-hidden="true"><path d="M21 15v4a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2v-4"/><path d="M17 8l-5-5-5 5"/><path d="M12 3v12"/></svg></div>
-                <div>
-                  <div class="bo-p-t">Importer — notes</div>
-                  <div class="bo-p-s">Même primitif que les alignements : un modèle CSV, des règles claires, un import.</div>
-                </div>
-              </div>
-              <div class="bo-todo-box">
-                <div class="bo-todo-t">Format à cadrer ensemble</div>
-                <div class="bo-todo-d">On traite cet objet quand tu veux. Dis-moi les <b>colonnes</b> attendues et les <b>règles</b> (identifiant absent ? valeur déjà présente ? codes / options ?) — je le branche ici à l'identique.</div>
-              </div>
-            </div></div>
-<div class="bo-panel" data-obj="identifiants" data-op="import"><div class="bo-todo-panel">
-              <div class="bo-p-head">
-                <div class="bo-p-ico"><svg viewBox="0 0 24 24" aria-hidden="true"><path d="M21 15v4a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2v-4"/><path d="M17 8l-5-5-5 5"/><path d="M12 3v12"/></svg></div>
-                <div>
-                  <div class="bo-p-t">Importer — identifiants ark</div>
-                  <div class="bo-p-s">Même primitif que les alignements : un modèle CSV, des règles claires, un import.</div>
-                </div>
-              </div>
-              <div class="bo-todo-box">
-                <div class="bo-todo-t">Format à cadrer ensemble</div>
-                <div class="bo-todo-d">On traite cet objet quand tu veux. Dis-moi les <b>colonnes</b> attendues et les <b>règles</b> (identifiant absent ? valeur déjà présente ? codes / options ?) — je le branche ici à l'identique.</div>
-              </div>
-            </div></div>
-<div class="bo-panel" data-obj="identifiants" data-op="generate"><div class="bo-todo-panel">
-              <div class="bo-p-head">
-                <div class="bo-p-ico"><svg viewBox="0 0 24 24" aria-hidden="true"><path d="M21 15v4a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2v-4"/><path d="M17 8l-5-5-5 5"/><path d="M12 3v12"/></svg></div>
-                <div>
-                  <div class="bo-p-t">Générer — identifiants ark</div>
-                  <div class="bo-p-s">Même primitif que les alignements : un modèle CSV, des règles claires, un import.</div>
-                </div>
-              </div>
-              <div class="bo-todo-box">
-                <div class="bo-todo-t">Format à cadrer ensemble</div>
-                <div class="bo-todo-d">On traite cet objet quand tu veux. Dis-moi les <b>colonnes</b> attendues et les <b>règles</b> (identifiant absent ? valeur déjà présente ? codes / options ?) — je le branche ici à l'identique.</div>
-              </div>
-            </div></div>
-<div class="bo-panel" data-obj="images" data-op="import"><div class="bo-todo-panel">
-              <div class="bo-p-head">
-                <div class="bo-p-ico"><svg viewBox="0 0 24 24" aria-hidden="true"><path d="M21 15v4a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2v-4"/><path d="M17 8l-5-5-5 5"/><path d="M12 3v12"/></svg></div>
-                <div>
-                  <div class="bo-p-t">Importer — images</div>
-                  <div class="bo-p-s">Même primitif que les alignements : un modèle CSV, des règles claires, un import.</div>
-                </div>
-              </div>
-              <div class="bo-todo-box">
-                <div class="bo-todo-t">Format à cadrer ensemble</div>
-                <div class="bo-todo-d">On traite cet objet quand tu veux. Dis-moi les <b>colonnes</b> attendues et les <b>règles</b> (identifiant absent ? valeur déjà présente ? codes / options ?) — je le branche ici à l'identique.</div>
-              </div>
-            </div></div>
-<div class="bo-panel" data-obj="notations" data-op="import"><div class="bo-todo-panel">
-              <div class="bo-p-head">
-                <div class="bo-p-ico"><svg viewBox="0 0 24 24" aria-hidden="true"><path d="M21 15v4a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2v-4"/><path d="M17 8l-5-5-5 5"/><path d="M12 3v12"/></svg></div>
-                <div>
-                  <div class="bo-p-t">Importer — notations</div>
-                  <div class="bo-p-s">Même primitif que les alignements : un modèle CSV, des règles claires, un import.</div>
-                </div>
-              </div>
-              <div class="bo-todo-box">
-                <div class="bo-todo-t">Format à cadrer ensemble</div>
-                <div class="bo-todo-d">On traite cet objet quand tu veux. Dis-moi les <b>colonnes</b> attendues et les <b>règles</b> (identifiant absent ? valeur déjà présente ? codes / options ?) — je le branche ici à l'identique.</div>
-              </div>
-            </div></div>
-<div class="bo-panel" data-obj="collections" data-op="import"><div class="bo-todo-panel">
-              <div class="bo-p-head">
-                <div class="bo-p-ico"><svg viewBox="0 0 24 24" aria-hidden="true"><path d="M21 15v4a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2v-4"/><path d="M17 8l-5-5-5 5"/><path d="M12 3v12"/></svg></div>
-                <div>
-                  <div class="bo-p-t">Importer — collections</div>
-                  <div class="bo-p-s">Même primitif que les alignements : un modèle CSV, des règles claires, un import.</div>
-                </div>
-              </div>
-              <div class="bo-todo-box">
-                <div class="bo-todo-t">Format à cadrer ensemble</div>
-                <div class="bo-todo-d">On traite cet objet quand tu veux. Dis-moi les <b>colonnes</b> attendues et les <b>règles</b> (identifiant absent ? valeur déjà présente ? codes / options ?) — je le branche ici à l'identique.</div>
-              </div>
-            </div></div>
-<div class="bo-panel" data-obj="concepts" data-op="import"><div class="bo-todo-panel">
-              <div class="bo-p-head">
-                <div class="bo-p-ico"><svg viewBox="0 0 24 24" aria-hidden="true"><path d="M21 15v4a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2v-4"/><path d="M17 8l-5-5-5 5"/><path d="M12 3v12"/></svg></div>
-                <div>
-                  <div class="bo-p-t">Importer — concepts &amp; listes</div>
-                  <div class="bo-p-s">Même primitif que les alignements : un modèle CSV, des règles claires, un import.</div>
-                </div>
-              </div>
-              <div class="bo-todo-box">
-                <div class="bo-todo-t">Format à cadrer ensemble</div>
-                <div class="bo-todo-d">On traite cet objet quand tu veux. Dis-moi les <b>colonnes</b> attendues et les <b>règles</b> (identifiant absent ? valeur déjà présente ? codes / options ?) — je le branche ici à l'identique.</div>
-              </div>
-            </div></div>
-<div class="bo-panel" data-obj="concepts" data-op="replace"><div class="bo-todo-panel">
-              <div class="bo-p-head">
-                <div class="bo-p-ico del"><svg viewBox="0 0 24 24" aria-hidden="true"><path d="M21 15v4a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2v-4"/><path d="M17 8l-5-5-5 5"/><path d="M12 3v12"/></svg></div>
-                <div>
-                  <div class="bo-p-t">Remplacer l'existant — concepts &amp; listes</div>
-                  <div class="bo-p-s">Même primitif que les alignements : un modèle CSV, des règles claires, un import.</div>
-                </div>
-              </div>
-              <div class="bo-todo-box">
-                <div class="bo-todo-t">Format à cadrer ensemble</div>
-                <div class="bo-todo-d">On traite cet objet quand tu veux. Dis-moi les <b>colonnes</b> attendues et les <b>règles</b> (identifiant absent ? valeur déjà présente ? codes / options ?) — je le branche ici à l'identique.</div>
-              </div>
-            </div></div>
-<div class="bo-panel" data-obj="concepts" data-op="deprecate"><div class="bo-todo-panel">
-              <div class="bo-p-head">
-                <div class="bo-p-ico del"><svg viewBox="0 0 24 24" aria-hidden="true"><path d="M3 6h18"/><path d="M8 6V4a2 2 0 0 1 2-2h4a2 2 0 0 1 2 2v2"/><path d="M19 6l-1 14a2 2 0 0 1-2 2H8a2 2 0 0 1-2-2L5 6"/></svg></div>
-                <div>
-                  <div class="bo-p-t">Rendre obsolète — concepts &amp; listes</div>
-                  <div class="bo-p-s">Même primitif que les alignements : un modèle CSV, des règles claires, un import.</div>
-                </div>
-              </div>
-              <div class="bo-todo-box">
-                <div class="bo-todo-t">Format à cadrer ensemble</div>
-                <div class="bo-todo-d">On traite cet objet quand tu veux. Dis-moi les <b>colonnes</b> attendues et les <b>règles</b> (identifiant absent ? valeur déjà présente ? codes / options ?) — je le branche ici à l'identique.</div>
-              </div>
-            </div></div>
-<div class="bo-panel" data-obj="concepts" data-op="compare"><div class="bo-todo-panel">
-              <div class="bo-p-head">
-                <div class="bo-p-ico"><svg viewBox="0 0 24 24" aria-hidden="true"><path d="M21 15v4a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2v-4"/><path d="M17 8l-5-5-5 5"/><path d="M12 3v12"/></svg></div>
-                <div>
-                  <div class="bo-p-t">Comparer — concepts &amp; listes</div>
-                  <div class="bo-p-s">Même primitif que les alignements : un modèle CSV, des règles claires, un import.</div>
-                </div>
-              </div>
-              <div class="bo-todo-box">
-                <div class="bo-todo-t">Format à cadrer ensemble</div>
-                <div class="bo-todo-d">On traite cet objet quand tu veux. Dis-moi les <b>colonnes</b> attendues et les <b>règles</b> (identifiant absent ? valeur déjà présente ? codes / options ?) — je le branche ici à l'identique.</div>
-              </div>
-            </div></div>
+              </c:if>
+              <c:if test="#{param.obj eq 'synonymes'}">
+              <ui:include src="/v2/toolbox/includes/synonymes-panels.xhtml"/>
+              </c:if>
+              <c:if test="#{param.obj eq 'notes'}">
+              <ui:include src="/v2/toolbox/includes/notes-panels.xhtml"/>
+              </c:if>
+              <c:if test="#{param.obj eq 'identifiants'}">
+              <ui:include src="/v2/toolbox/includes/identifiants-panels.xhtml"/>
+              </c:if>
+              <c:if test="#{param.obj eq 'images'}">
+              <ui:include src="/v2/toolbox/includes/images-panels.xhtml"/>
+              </c:if>
+              <c:if test="#{param.obj eq 'notations'}">
+              <ui:include src="/v2/toolbox/includes/notations-panels.xhtml"/>
+              </c:if>
+              <c:if test="#{param.obj eq 'collections'}">
+              <ui:include src="/v2/toolbox/includes/collections-panels.xhtml"/>
+              </c:if>
+              <c:if test="#{param.obj eq 'concepts'}">
+              <ui:include src="/v2/toolbox/includes/concepts-panels.xhtml"/>
+              </c:if>
               </div>
             </div>
           </div>

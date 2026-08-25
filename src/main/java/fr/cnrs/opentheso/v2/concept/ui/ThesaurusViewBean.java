@@ -677,6 +677,10 @@ public class ThesaurusViewBean implements Serializable {
         treeRoots = null;
     }
 
+    public void reloadTree() {
+        invalidateTree();
+    }
+
     private void ensureTreeLoaded() {
         if (treeRoots != null) {
             return;

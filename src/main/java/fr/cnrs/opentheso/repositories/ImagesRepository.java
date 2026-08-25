@@ -15,6 +15,9 @@ public interface ImagesRepository extends JpaRepository<ImageExterne, Integer> {
 
     List<ImageExterne> findAllByIdConceptAndIdThesaurus(String idConcept, String idThesaurus);
 
+    @Query("SELECT i.idConcept, i.externalUri FROM ImageExterne i WHERE i.idThesaurus = :idThesaurus AND i.idConcept IN :ids")
+    List<Object[]> findConceptUriPairs(@Param("idThesaurus") String idThesaurus, @Param("ids") java.util.Set<String> ids);
+
     @Modifying
     @Transactional
     void deleteAllByIdThesaurusAndIdConcept(String idThesaurus, String idConcept);

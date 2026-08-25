@@ -735,7 +735,11 @@ public class WorkshopCsvReader {
         for (String alignSource : headerSourceAlign) {
             try {
                 uri1 = record.get(alignSource);
-                if(toolsHelper.isValidURI(uri1) == false) {
+                if (StringUtils.isBlank(uri1)) {
+                    continue;
+                }
+                String uriForValidation = uri1.contains("##") ? uri1.split("##", 2)[0] : uri1;
+                if (!toolsHelper.isValidURI(uriForValidation)) {
                     log.error("Erreur lors de la lecture du fichier CSV : l'URI " + uri1 + " n'est pas valide.");
                     message = "Erreur lors de la lecture du fichier CSV : l'URI " + uri1 + " n'est pas valide.";
                     return null;

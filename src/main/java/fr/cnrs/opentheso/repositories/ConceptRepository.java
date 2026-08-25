@@ -82,6 +82,11 @@ public interface ConceptRepository extends JpaRepository<Concept, Integer> {
     @Query("SELECT c.idConcept FROM Concept c WHERE c.idThesaurus = :idThesaurus AND c.idConcept IN :ids")
     List<String> findExistingIds(@Param("ids") Set<String> ids, @Param("idThesaurus") String idThesaurus);
 
+    List<Concept> findByIdThesaurusAndIdConceptIn(String idThesaurus, Set<String> idConcepts);
+
+    @Query("SELECT LOWER(c.idHandle), c.idConcept FROM Concept c WHERE c.idHandle IS NOT NULL AND c.idHandle <> '' AND LOWER(c.idHandle) IN :handles")
+    List<Object[]> findConceptIdsByHandles(@Param("handles") Set<String> handles);
+
 
 
     List<Concept> findByIdConcept(String idConcept);
