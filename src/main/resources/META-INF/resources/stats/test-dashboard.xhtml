@@ -11,6 +11,64 @@
 
     <style>
 
+        /* gauge quality */
+        .quality-gauge-wrapper {
+            display: flex;
+            flex-direction: column;
+            align-items: center;
+
+            padding: 10px 20px 20px;
+        }
+
+        .quality-gauge-svg {
+            width: 100%;
+            max-width: 360px;
+            height: auto;
+
+            overflow: visible;
+        }
+
+        .quality-gauge-needle {
+            transform-origin: 110px 110px;
+
+            transition:
+                    transform 0.8s cubic-bezier(0.25, 0.8, 0.25, 1);
+        }
+
+        .quality-gauge-score {
+            font-size: 28px;
+            font-weight: 700;
+            margin-top: -10px;
+            color: #33404d;
+        }
+
+        .quality-gauge-bounds {
+            display: flex;
+            justify-content: space-between;
+            width: 100%;
+            max-width: 240px;
+            font-size: 13px;
+            color: #888;
+            margin-top: 4px;
+        }
+
+        .quality-gauge-zone-label {
+            margin-top: 8px;
+            font-size: 14px;
+            font-weight: 600;
+            color: #555;
+        }
+
+        /* fin gauge quality */
+
+
+
+
+
+
+
+
+
         .word-cloud-container {
             display: flex;
             flex-wrap: wrap;
@@ -225,6 +283,12 @@
             </div>
 
 
+
+
+
+
+
+
             <!-- ===================================================== -->
             <!-- CONTENU DU DASHBOARD -->
             <!-- ===================================================== -->
@@ -232,6 +296,96 @@
             <h:panelGroup
                     id="dashboardContent"
                     layout="block">
+
+
+                <!-- ================================================= -->
+                <!-- SCORE DE QUALITÉ DU THÉSAURUS (jauge) -->
+                <!-- Uniquement pertinent pour UN thésaurus précis -->
+                <!-- ================================================= -->
+                <div class="dashboard-card" style="#{dashboardBean.thesaurusFilterActive ? '' : 'display:none;'}">
+
+                    <p:panel
+                            header="Score de qualité du thésaurus"
+                            toggleable="true"
+                            collapsed="false">
+
+                        <div class="quality-gauge-wrapper">
+
+                            <svg viewBox="0 0 220 130" class="quality-gauge-svg">
+
+                                <!-- Bande rouge : 0 à 33% -->
+                                <path d="M 20,110 A 90,90 0 0 1 65,32.06"
+                                      fill="none" stroke="#c0574f" stroke-width="24" stroke-linecap="butt"/>
+
+                                <!-- Bande jaune : 33 à 66% -->
+                                <path d="M 65,32.06 A 90,90 0 0 1 155,32.06"
+                                      fill="none" stroke="#e0b04e" stroke-width="24" stroke-linecap="butt"/>
+
+                                <!-- Bande verte : 66 à 100% -->
+                                <path d="M 155,32.06 A 90,90 0 0 1 200,110"
+                                      fill="none" stroke="#8fae4e" stroke-width="24" stroke-linecap="butt"/>
+
+                                <!-- Aiguille pointue, pivote autour de (110,110) -->
+                                <polygon points="110,20 113,110 110,115 107,110"
+                                         fill="#33404d"
+                                         transform="rotate(#{dashboardBean.gaugeNeedleRotation} 110 110)"/>
+
+                                <!-- Moyeu central -->
+                                <circle cx="110" cy="110" r="11" fill="#33404d"/>
+                                <circle cx="110" cy="110" r="5" fill="#ffffff"/>
+
+                            </svg>
+
+                            <div class="quality-gauge-score">
+                                <h:outputText value="#{dashboardBean.qualityScore.overallScore}">
+                                    <f:convertNumber pattern="0.00'%'"/>
+                                </h:outputText>
+                            </div>
+
+                            <div class="quality-gauge-bounds">
+                                <span>0.00%</span>
+                                <span>100.00%</span>
+                            </div>
+
+                            <div class="quality-gauge-zone-label">
+                                <h:outputText value="#{dashboardBean.qualityScore.scoreZoneLabel}"/>
+                            </div>
+
+                        </div>
+
+                        <p:separator/>
+
+                        <div class="concepts-container">
+
+                            <p:dataTable
+                                    value="#{dashboardBean.qualityScore.criteria}"
+                                    var="crit"
+                                    responsiveLayout="scroll"
+                                    emptyMessage="Aucune donnée de qualité disponible.">
+
+                                <p:column headerText="Critère">
+                                    <h:outputText value="#{crit.label}"/>
+                                </p:column>
+                                <p:column headerText="Score" style="width:150px;">
+                                    <p:progressBar value="#{crit.scorePercent}" labelTemplate="{value}%"
+                                                   style="height:18px;"/>
+                                </p:column>
+                                <p:column headerText="Poids" style="width:100px; text-align:right;">
+                                    <h:outputText value="#{crit.weight}">
+                                        <f:convertNumber type="percent"/>
+                                    </h:outputText>
+                                </p:column>
+
+                            </p:dataTable>
+
+                        </div>
+
+                    </p:panel>
+
+                </div>
+
+
+
                 <div class="dashboard-grid">
 
                     <!-- ================================================= -->

@@ -234,6 +234,186 @@ public class DashboardBean implements Serializable {
     }
 
 
+    private ThesaurusQualityScore qualityScore;
+    private void loadQualityScore() {
+
+        if (!isThesaurusFilterActive()) {
+            qualityScore = null;
+            return;
+        }
+
+     /* ==========================================================
+     *
+     * Ces valeurs seront remplacées ensuite par les résultats
+     * des requêtes PostgreSQL.
+                */
+
+        double definitionsScore = 74.0;
+
+        double translatedTermsScore = 48.0;
+
+        double translatedDefinitionsScore = 31.0;
+
+        double alignmentsScore = 22.0;
+
+        double arkScore = 90.0;
+
+        /*
+         * % de concepts possédant au moins une relation RT.
+         */
+        double rtScore = 65.0;
+
+        /*
+         * % de concepts n'ayant AUCUNE relation BT ou NT.
+         *
+         * Exemple :
+         *
+         * 18 % des concepts sans BT/NT
+         *
+         * => score qualité = 82 %
+         */
+        double conceptsWithoutBtNtRate = 18.0;
+
+        double hierarchyScore = 100.0 - conceptsWithoutBtNtRate;
+
+        /*
+         * Ancienneté de la dernière modification.
+         *
+         * Exemple : dernière modification il y a 8 mois.
+         */
+        double lastModificationScore = 85.0;
+     /*   double lastModificationScore =
+                calculateModificationScore(lastModificationScore2);
+*/
+
+        // TODO : remplacer ces valeurs figées par de vraies requêtes, par ex. :
+        //   - COUNT(concepts avec au moins une définition) / COUNT(total concepts)
+        //   - COUNT(concepts avec un terme traduit dans une langue secondaire) / COUNT(total concepts)
+        //   - COUNT(concepts avec une définition traduite) / COUNT(total concepts)
+        //   - COUNT(concepts avec au moins un alignement) / COUNT(total concepts)
+        //   - COUNT(concepts avec un identifiant ARK) / COUNT(total concepts)
+    /*    List<QualityCriterion> criteria = List.of(
+                new QualityCriterion("Concepts avec une définition", 74.0, 0.25),
+                new QualityCriterion("Termes traduits (langues secondaires)", 48.0, 0.20),
+                new QualityCriterion("Définitions traduites", 31.0, 0.15),
+                new QualityCriterion("Concepts alignés (autres thésaurus)", 22.0, 0.20),
+                new QualityCriterion("Identifiants pérennes (ARK)", 90.0, 0.20)
+        );*/
+
+        List<QualityCriterion> criteria = List.of(
+
+                new QualityCriterion(
+                        "Concepts avec une définition",
+                        definitionsScore,
+                        0.15
+                ),
+
+                new QualityCriterion(
+                        "Termes traduits (langues secondaires)",
+                        translatedTermsScore,
+                        0.10
+                ),
+
+                new QualityCriterion(
+                        "Définitions traduites",
+                        translatedDefinitionsScore,
+                        0.10
+                ),
+
+                new QualityCriterion(
+                        "Concepts alignés (autres thésaurus)",
+                        alignmentsScore,
+                        0.10
+                ),
+
+                new QualityCriterion(
+                        "Identifiants pérennes (ARK)",
+                        arkScore,
+                        0.10
+                ),
+
+                new QualityCriterion(
+                        "Concepts avec relation associative (RT)",
+                        rtScore,
+                        0.10
+                ),
+
+                new QualityCriterion(
+                        "Concepts avec relation hiérarchique (BT/NT)",
+                        hierarchyScore,
+                        0.20
+                ),
+
+                new QualityCriterion(
+                        "Fraîcheur du thésaurus",
+                        lastModificationScore,
+                        0.15
+                )
+        );
+
+
+
+        double overall = criteria.stream()
+                .mapToDouble(QualityCriterion::getContribution)
+                .sum();
+
+        qualityScore = new ThesaurusQualityScore(overall, criteria);
+    }
+
+    private double calculateModificationScore(LocalDate lastModification) {
+
+        if (lastModification == null) {
+            return 0;
+        }
+
+        long months = java.time.temporal.ChronoUnit.MONTHS.between(
+                lastModification,
+                LocalDate.now()
+        );
+
+        if (months < 3) {
+            return 100;
+        }
+
+        if (months < 6) {
+            return 95;
+        }
+
+        if (months < 12) {
+            return 85;
+        }
+
+        if (months < 24) {
+            return 70;
+        }
+
+        if (months < 36) {
+            return 50;
+        }
+
+        if (months < 60) {
+            return 30;
+        }
+
+        return 0;
+    }
+
+
+
+    /**
+     * Angle de rotation (en degrés) de l'aiguille de la jauge SVG.
+     * -90° = tout à gauche (score 0), 0° = vertical (score 50), +90° =
+     * tout à droite (score 100).
+     */
+    public double getGaugeNeedleRotation() {
+
+        double score = (qualityScore != null) ? qualityScore.getOverallScore() : 0.0;
+
+        return (score / 100.0) * 180.0 - 90.0;
+    }
+
+
+
     // ============================================================
     // Listes de filtres
     // ============================================================
@@ -415,6 +595,14 @@ public class DashboardBean implements Serializable {
                 fromDateTime,
                 toDateTime
         );
+
+
+        // --------------------------------------------------------
+        // Score de qualité (jauge)
+        // --------------------------------------------------------
+
+        loadQualityScore();
+
     }
 
 
