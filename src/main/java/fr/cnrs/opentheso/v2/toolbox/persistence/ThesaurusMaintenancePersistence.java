@@ -174,7 +174,6 @@ public class ThesaurusMaintenancePersistence {
             return;
         }
         var fileName = thesaurusId + ".xml";
-        var conceptIds = loadAllConceptIds(thesaurusId);
         try {
             File file = new File(new URI(Objects.requireNonNull(this.getClass().getResource("/")).toString()) + fileName);
             if (file.exists()) {
@@ -182,14 +181,20 @@ public class ThesaurusMaintenancePersistence {
             }
             file.createNewFile();
             var writeFile = new BufferedWriter(new OutputStreamWriter(new FileOutputStream(file), StandardCharsets.UTF_8));
-            writeFile.write(getHeader());
-            writeFile.write(getDatas(conceptIds, thesaurusId));
-            writeFile.write("</urlset>");
+            writeFile.write(buildSitemapXml(thesaurusId, originBaseUrl()));
             writeFile.close();
             MessageUtils.showInformationMessage("L'export du siteMap a réussi, nom du fichier " + fileName);
         } catch (Exception e) {
             MessageUtils.showErrorMessage("L'export du siteMap a échoué");
         }
+    }
+
+    public String buildSitemapXml(String thesaurusId, String baseUrl) {
+        if (StringUtils.isEmpty(thesaurusId)) {
+            return "";
+        }
+        var conceptIds = loadAllConceptIds(thesaurusId);
+        return getHeader() + getDatas(conceptIds, thesaurusId, baseUrl) + "</urlset>";
     }
 
     private boolean cleanThesaurus(String thesaurusId) {
@@ -439,17 +444,18 @@ public class ThesaurusMaintenancePersistence {
         return otherConceptId + "|" + role;
     }
 
-    private String getDatas(List<String> conceptIds, String thesaurusId) {
+    private String getDatas(List<String> conceptIds, String thesaurusId, String baseUrl) {
         var date = new DateUtils().getDate();
         var stringBuilder = new StringBuilder();
         for (String conceptId : conceptIds) {
-            stringBuilder.append(getLine(getUri(conceptId, thesaurusId), date));
+            stringBuilder.append(getLine(getUri(conceptId, thesaurusId, baseUrl), date));
         }
         return stringBuilder.toString();
     }
 
-    private String getUri(String idConcept, String idTheso) {
-        return getPath() + "/?idc=" + idConcept + "&amp;idt=" + idTheso;
+    private String getUri(String idConcept, String idTheso, String baseUrl) {
+        String path = StringUtils.defaultIfBlank(baseUrl, originBaseUrl()).replaceAll("/$", "");
+        return path + "/?idc=" + idConcept + "&amp;idt=" + idTheso;
     }
 
     private String getHeader() {
@@ -466,11 +472,12 @@ public class ThesaurusMaintenancePersistence {
                 + "  </url>\n";
     }
 
-    private String getPath() {
+    private String originBaseUrl() {
         if (FacesContext.getCurrentInstance() == null) {
-            return null;
+            return "";
         }
         String path = FacesContext.getCurrentInstance().getExternalContext().getRequestHeaderMap().get("origin");
-        return path + FacesContext.getCurrentInstance().getExternalContext().getRequestContextPath();
+        return StringUtils.defaultString(path)
+                + FacesContext.getCurrentInstance().getExternalContext().getRequestContextPath();
     }
 }

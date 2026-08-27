@@ -59,8 +59,21 @@ public class V2LocaleBean implements Serializable {
     }
 
     public String getMsg(String key) {
-        FacesContext context = FacesContext.getCurrentInstance();
-        ResourceBundle bundle = context.getApplication().getResourceBundle(context, currentBundle);
-        return bundle.getString(key);
+        if (key == null || key.isBlank()) {
+            return "";
+        }
+        try {
+            FacesContext context = FacesContext.getCurrentInstance();
+            if (context == null) {
+                return key;
+            }
+            ResourceBundle bundle = context.getApplication().getResourceBundle(context, currentBundle);
+            if (bundle == null || !bundle.containsKey(key)) {
+                return key;
+            }
+            return bundle.getString(key);
+        } catch (RuntimeException e) {
+            return key;
+        }
     }
 }

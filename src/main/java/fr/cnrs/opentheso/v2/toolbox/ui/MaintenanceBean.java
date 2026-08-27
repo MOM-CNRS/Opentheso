@@ -3,12 +3,12 @@ package fr.cnrs.opentheso.v2.toolbox.ui;
 import fr.cnrs.opentheso.utils.MessageUtils;
 import fr.cnrs.opentheso.v2.concept.ui.ThesaurusViewBean;
 import fr.cnrs.opentheso.v2.setting.ui.ThesaurusContext;
+import fr.cnrs.opentheso.v2.shared.time.RelativeTimeFormat;
 import fr.cnrs.opentheso.v2.shared.ui.UserSession;
 import fr.cnrs.opentheso.v2.toolbox.model.LocalArkSettings;
 import fr.cnrs.opentheso.v2.toolbox.model.MaintenanceArkEditor;
 import fr.cnrs.opentheso.v2.toolbox.policy.ToolboxAccessPolicy;
 import fr.cnrs.opentheso.v2.toolbox.service.ThesaurusMaintenanceService;
-import jakarta.annotation.PostConstruct;
 import jakarta.faces.view.ViewScoped;
 import jakarta.inject.Named;
 import lombok.Getter;
@@ -17,6 +17,7 @@ import org.apache.commons.lang3.StringUtils;
 import org.primefaces.PrimeFaces;
 
 import java.io.Serializable;
+import java.nio.charset.StandardCharsets;
 import java.time.Instant;
 
 @Getter
@@ -30,33 +31,27 @@ public class MaintenanceBean implements Serializable {
     private final ThesaurusContext thesaurusContext;
     private final ThesaurusMaintenanceService thesaurusMaintenanceService;
     private final ThesaurusViewBean thesaurusViewBean;
+    private final MaintenanceLastRunStore lastRunStore;
 
     private MaintenanceArkEditor arkEditor = new MaintenanceArkEditor();
     private LocalArkSettings localArkSettings = new LocalArkSettings("", "", 0);
+    private boolean localArkSettingsLoaded;
     private boolean lastOk = true;
-    private Instant topTermLastRun;
-    private Instant restructureLastRun;
-    private Instant collectionsLastRun;
-    private Instant rolesLastRun;
-    private Instant arkLastRun;
 
     public MaintenanceBean(
             UserSession userSession,
             ToolboxAccessPolicy toolboxAccessPolicy,
             ThesaurusContext thesaurusContext,
             ThesaurusMaintenanceService thesaurusMaintenanceService,
-            ThesaurusViewBean thesaurusViewBean
+            ThesaurusViewBean thesaurusViewBean,
+            MaintenanceLastRunStore lastRunStore
     ) {
         this.userSession = userSession;
         this.toolboxAccessPolicy = toolboxAccessPolicy;
         this.thesaurusContext = thesaurusContext;
         this.thesaurusMaintenanceService = thesaurusMaintenanceService;
         this.thesaurusViewBean = thesaurusViewBean;
-    }
-
-    @PostConstruct
-    public void init() {
-        load();
+        this.lastRunStore = lastRunStore;
     }
 
     public boolean isScreenAvailable() {
@@ -79,6 +74,20 @@ public class MaintenanceBean implements Serializable {
     public void load() {
         thesaurusContext.syncFromViewParams();
         arkEditor = new MaintenanceArkEditor();
+        localArkSettingsLoaded = false;
+        ensureLocalArkSettings();
+    }
+
+    public LocalArkSettings getLocalArkSettings() {
+        ensureLocalArkSettings();
+        return localArkSettings;
+    }
+
+    private void ensureLocalArkSettings() {
+        if (localArkSettingsLoaded) {
+            return;
+        }
+        localArkSettingsLoaded = true;
         if (!isScreenAvailable()) {
             localArkSettings = new LocalArkSettings("", "", 0);
             return;
@@ -87,23 +96,27 @@ public class MaintenanceBean implements Serializable {
     }
 
     public String getTopTermLastRunLabel() {
-        return formatLastRun(topTermLastRun);
+        return formatLastRun(MaintenanceLastRunStore.TOP_TERM);
     }
 
     public String getRestructureLastRunLabel() {
-        return formatLastRun(restructureLastRun);
+        return formatLastRun(MaintenanceLastRunStore.RESTRUCTURE);
     }
 
     public String getCollectionsLastRunLabel() {
-        return formatLastRun(collectionsLastRun);
+        return formatLastRun(MaintenanceLastRunStore.COLLECTIONS);
     }
 
     public String getRolesLastRunLabel() {
-        return formatLastRun(rolesLastRun);
+        return formatLastRun(MaintenanceLastRunStore.ROLES);
     }
 
     public String getArkLastRunLabel() {
-        return formatLastRun(arkLastRun);
+        return formatLastRun(MaintenanceLastRunStore.ARK);
+    }
+
+    public String getSitemapLastRunLabel() {
+        return formatLastRun(MaintenanceLastRunStore.SITEMAP);
     }
 
     public void correctDisplayTopTerm() {
@@ -112,7 +125,7 @@ public class MaintenanceBean implements Serializable {
         }
         try {
             int count = thesaurusMaintenanceService.correctDisplayTopTerm(thesaurusContext.getCurrentThesaurusId());
-            topTermLastRun = Instant.now();
+            markRun(MaintenanceLastRunStore.TOP_TERM);
             succeed("Correction réussie, concepts affectés : " + count, true);
         } catch (RuntimeException e) {
             fail(StringUtils.defaultIfBlank(e.getMessage(),
@@ -126,7 +139,7 @@ public class MaintenanceBean implements Serializable {
         }
         try {
             thesaurusMaintenanceService.reorganizeHierarchy(thesaurusContext.getCurrentThesaurusId());
-            restructureLastRun = Instant.now();
+            markRun(MaintenanceLastRunStore.RESTRUCTURE);
             succeed("Correction réussie !!!", true);
         } catch (RuntimeException e) {
             fail(StringUtils.defaultIfBlank(e.getMessage(),
@@ -148,7 +161,7 @@ public class MaintenanceBean implements Serializable {
         try {
             int cleaned = thesaurusMaintenanceService.reorganizeConceptsAndCollections(
                     thesaurusContext.getCurrentThesaurusId());
-            collectionsLastRun = Instant.now();
+            markRun(MaintenanceLastRunStore.COLLECTIONS);
             succeed("Correction réussie !!! Liens collection/concept nettoyés : " + cleaned, true);
         } catch (RuntimeException e) {
             fail(StringUtils.defaultIfBlank(e.getMessage(),
@@ -162,7 +175,7 @@ public class MaintenanceBean implements Serializable {
         }
         try {
             thesaurusMaintenanceService.switchRolesFromTermToConcept(thesaurusContext.getCurrentThesaurusId());
-            rolesLastRun = Instant.now();
+            markRun(MaintenanceLastRunStore.ROLES);
             succeed("Correction réussie !!!", false);
         } catch (RuntimeException e) {
             fail(StringUtils.defaultIfBlank(e.getMessage(), "Erreur lors du changement de rôles"));
@@ -184,7 +197,7 @@ public class MaintenanceBean implements Serializable {
                     arkEditor.getNaan(),
                     arkEditor.isOverwrite()
             );
-            arkLastRun = Instant.now();
+            markRun(MaintenanceLastRunStore.ARK);
             succeed("Concepts changés: " + count, false);
         } catch (RuntimeException e) {
             fail(StringUtils.defaultIfBlank(e.getMessage(),
@@ -201,7 +214,7 @@ public class MaintenanceBean implements Serializable {
                     thesaurusContext.getCurrentThesaurusId(),
                     arkEditor.isOverwriteLocalArk()
             );
-            arkLastRun = Instant.now();
+            markRun(MaintenanceLastRunStore.ARK);
             succeed("Concepts changés: " + count, false);
         } catch (RuntimeException e) {
             fail(StringUtils.defaultIfBlank(e.getMessage(),
@@ -214,10 +227,19 @@ public class MaintenanceBean implements Serializable {
             return;
         }
         try {
-            thesaurusMaintenanceService.generateSitemap(thesaurusContext.getCurrentThesaurusId());
-            MessageUtils.showInformationMessage("Sitemap généré avec succès");
+            String thesaurusId = thesaurusContext.getCurrentThesaurusId();
+            String xml = thesaurusMaintenanceService.buildSitemapXml(thesaurusId);
+            if (StringUtils.isBlank(xml)) {
+                fail("Le sitemap n'a pas pu être généré.");
+                return;
+            }
+            lastRunStore.putPendingSitemap(thesaurusId + ".xml", xml.getBytes(StandardCharsets.UTF_8));
+            markRun(MaintenanceLastRunStore.SITEMAP);
+            succeed("Sitemap généré. Téléchargement…", false);
+            executeScript("window.downloadMaintSitemap && window.downloadMaintSitemap()");
         } catch (RuntimeException e) {
-            MessageUtils.showErrorMessage("Erreur lors de la génération du sitemap");
+            fail(StringUtils.defaultIfBlank(e.getMessage(),
+                    "Erreur lors de la génération du sitemap"));
         }
     }
 
@@ -245,8 +267,13 @@ public class MaintenanceBean implements Serializable {
         toast(message, true);
     }
 
-    private String formatLastRun(Instant instant) {
-        return instant == null ? "jamais" : "à l'instant";
+    private void markRun(String action) {
+        lastRunStore.mark(thesaurusContext.getCurrentThesaurusId(), action);
+    }
+
+    private String formatLastRun(String action) {
+        Instant instant = lastRunStore.get(thesaurusContext.getCurrentThesaurusId(), action);
+        return RelativeTimeFormat.lastRun(instant);
     }
 
     private void toast(String message) {
@@ -257,10 +284,14 @@ public class MaintenanceBean implements Serializable {
         if (StringUtils.isBlank(message)) {
             return;
         }
+        String safe = message.replace("\\", "\\\\").replace("'", "\\'").replace("\n", " ");
+        String opts = error ? "{error:true}" : "{}";
+        executeScript("window.toast && window.toast('" + safe + "', " + opts + ")");
+    }
+
+    private void executeScript(String script) {
         try {
-            String safe = message.replace("\\", "\\\\").replace("'", "\\'").replace("\n", " ");
-            String opts = error ? "{error:true}" : "{}";
-            PrimeFaces.current().executeScript("window.toast && window.toast('" + safe + "', " + opts + ")");
+            PrimeFaces.current().executeScript(script);
         } catch (Exception ignored) {
             // Hors contexte JSF (tests unitaires).
         }

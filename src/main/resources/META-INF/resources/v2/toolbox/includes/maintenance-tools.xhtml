@@ -52,7 +52,7 @@
                   </h:form>
 
                   <h:form id="previewMaintRestructureForm" prependId="false" styleClass="mc-tool-form">
-                    <div class="mc-tool">
+                    <div class="mc-tool" data-confirm="#{v2LocaleBean.getMsg('v2.maint.restructure.confirm')}">
                       <div class="mc-tool-row">
                         <div class="mc-tool-main">
                           <div class="mc-tool-t">Restructuration</div>
@@ -100,7 +100,7 @@
                   </h:form>
 
                   <h:form id="previewMaintCollectionsForm" prependId="false" styleClass="mc-tool-form">
-                    <div class="mc-tool">
+                    <div class="mc-tool" data-confirm="#{v2LocaleBean.getMsg('v2.maint.collections.confirm')}">
                       <div class="mc-tool-row">
                         <div class="mc-tool-main">
                           <div class="mc-tool-t">Collections</div>
@@ -207,7 +207,7 @@
                         </h:panelGroup>
                       </div>
                       <div class="mc-tool-opts">
-                        <div class="mc-tool-opt">
+                        <div class="mc-tool-opt" data-confirm-overwrite="#{v2LocaleBean.getMsg('v2.maint.ark.confirm')}">
                           <div class="mc-tool-opt-h">Depuis l'identifiant du concept</div>
                           <div class="mc-tool-opt-d">Pas de connexion à un serveur. Le préfixe est facultatif. Exemple : id = <code>300</code>, préfixe = <code>ndp</code>, NAAN = <code>66666</code> → <code>66666/ndp300</code>.</div>
                           <div class="mc-tool-fields">
@@ -244,7 +244,7 @@
                             </span>
                           </div>
                         </div>
-                        <div class="mc-tool-opt">
+                        <div class="mc-tool-opt" data-confirm-overwrite="#{v2LocaleBean.getMsg('v2.maint.ark.confirm')}">
                           <div class="mc-tool-opt-h">ARK locaux (identifiants opaques)</div>
                           <div class="mc-tool-opt-d">Utilise NAAN, préfixe et taille définis dans <a href="setting/preference.xhtml#stServers">Paramètres / identifiants</a>.</div>
                           <div class="mc-tool-pref">
@@ -299,12 +299,65 @@
                     </div>
                   </h:form>
 
-                  <div class="mc-tool">
-                    <div class="mc-tool-main">
-                      <div class="mc-tool-t">Générer le sitemap.xml</div>
-                      <div class="mc-tool-d">Produit le sitemap du thésaurus en cours pour le référencement.</div>
+                  <h:form id="previewMaintSitemapForm" prependId="false" styleClass="mc-tool-form">
+                    <div class="mc-tool">
+                      <div class="mc-tool-row">
+                        <div class="mc-tool-main">
+                          <div class="mc-tool-t">#{v2LocaleBean.getMsg('v2.maint.sitemap.title')}</div>
+                          <div class="mc-tool-d">#{v2LocaleBean.getMsg('v2.maint.sitemap.desc')}</div>
+                        </div>
+                        <h:panelGroup id="previewMaintSitemapLast" styleClass="mc-tool-last">
+                          <span hidden="hidden" data-maint-ok="#{v2MaintenanceBean.lastOk}">ok</span>
+                          <svg viewBox="0 0 24 24" aria-hidden="true"><circle cx="12" cy="12" r="9"/><path d="M12 7v5l3 2"/></svg> #{v2MaintenanceBean.sitemapLastRunLabel}
+                        </h:panelGroup>
+                        <span class="bo-btn ghost bo-btn-hit">
+                          <h:commandButton id="maintSitemap" styleClass="bo-btn-hit-in" value="#{v2LocaleBean.getMsg('v2.launch')}"
+                                           action="#{v2MaintenanceBean.generateSitemap}"
+                                           disabled="#{not v2MaintenanceBean.screenAvailable}">
+                            <f:ajax execute="@form" render="previewMaintSitemapLast" onevent="onMaintAjax"/>
+                          </h:commandButton>
+                          <span class="bo-btn-hit-ui" aria-hidden="true">
+                            <span class="mc-tool-run"><svg viewBox="0 0 24 24" aria-hidden="true"><path d="M20 6 9 17l-5-5"/></svg> #{v2LocaleBean.getMsg('v2.launch')}</span>
+                            <span class="mc-tool-wait"><span class="mg-kpi-spin" aria-hidden="true"></span> #{v2LocaleBean.getMsg('v2.processing')}</span>
+                          </span>
+                        </span>
+                      </div>
+                      <div class="mc-prog" hidden="hidden" aria-live="polite"
+                           data-fail-msg="#{v2LocaleBean.getMsg('v2.maint.sitemap.fail')}"
+                           data-done-title="#{v2LocaleBean.getMsg('v2.maint.sitemap.done')}"
+                           data-done-detail="#{v2LocaleBean.getMsg('v2.maint.sitemap.doneDetail')}">
+                        <div class="xprog-steps-wrap">
+                          <span class="xprog-rail" aria-hidden="true"><span class="xprog-rail-fill"></span></span>
+                          <ol class="xprog-steps" aria-label="#{v2LocaleBean.getMsg('v2.maint.sitemap.steps')}">
+                            <li data-detail="#{v2LocaleBean.getMsg('v2.maint.sitemap.step1')}"><span class="xprog-dot"></span><span>#{v2LocaleBean.getMsg('v2.maint.sitemap.s1')}</span></li>
+                            <li data-detail="#{v2LocaleBean.getMsg('v2.maint.sitemap.step2')}"><span class="xprog-dot"></span><span>#{v2LocaleBean.getMsg('v2.maint.sitemap.s2')}</span></li>
+                            <li data-detail="#{v2LocaleBean.getMsg('v2.maint.sitemap.step3')}"><span class="xprog-dot"></span><span>#{v2LocaleBean.getMsg('v2.maint.sitemap.s3')}</span></li>
+                          </ol>
+                        </div>
+                        <div class="xprog-head">
+                          <div class="xprog-t">#{v2LocaleBean.getMsg('v2.maint.sitemap.head')}</div>
+                          <div class="xprog-count">0%</div>
+                        </div>
+                        <div class="mg-bar-row">
+                          <span class="mg-bar-track"><span class="mg-bar-fill" style="width:0%"></span></span>
+                        </div>
+                        <div class="xprog-d">#{v2LocaleBean.getMsg('v2.maint.sitemap.step1')}</div>
+                      </div>
                     </div>
-                    <span class="mc-tool-last"><svg viewBox="0 0 24 24" aria-hidden="true"><circle cx="12" cy="12" r="9"/><path d="M12 7v5l3 2"/></svg> jamais</span>
-                    <button type="button" class="bo-btn ghost" data-act="toast" data-msg="« Générer le sitemap.xml » n'est pas encore disponible."><svg viewBox="0 0 24 24" aria-hidden="true"><path d="M20 6 9 17l-5-5"/></svg> Lancer</button>
+                  </h:form>
+
+                  <div class="block-overlay confirm-overlay" id="maintConfirm" hidden="hidden"
+                       data-act="maint-confirm-dismiss" role="presentation">
+                    <div class="confirm-modal" role="dialog" aria-modal="true"
+                         aria-labelledby="maintConfirmTitle" data-act="maint-confirm-modal">
+                      <div class="confirm-h" id="maintConfirmTitle">#{v2LocaleBean.getMsg('v2.maint.confirmTitle')}</div>
+                      <p class="confirm-p" id="maintConfirmText"></p>
+                      <div class="confirm-actions">
+                        <button type="button" class="abt-cancel confirm-cancel"
+                                data-act="maint-confirm-dismiss">#{v2LocaleBean.getMsg('v2.cancel')}</button>
+                        <button type="button" class="abt-save" id="maintConfirmOk"
+                                data-act="maint-confirm-ok">#{v2LocaleBean.getMsg('v2.launch')}</button>
+                      </div>
+                    </div>
                   </div>
 </ui:composition>

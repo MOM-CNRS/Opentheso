@@ -428,6 +428,25 @@ document.addEventListener("click", (e) => {
     state.conceptId = id;
     highlightConcept(id);
     paint();
+  } else if (act === "open-recent") {
+    const id = t.getAttribute("data-id");
+    if (!id) return;
+    state.home = false;
+    if (!openLiveDetail(id, "concept")) {
+      go("index.xhtml?id=" + encodeURIComponent(id));
+    }
+  } else if (act === "maint-confirm-ok") {
+    hideConfirm("#maintConfirm");
+    if (pendingMaintBtn) {
+      pendingMaintBtn.dataset.maintSkipConfirm = "1";
+      pendingMaintBtn.click();
+      pendingMaintBtn = null;
+    }
+  } else if (act === "maint-confirm-dismiss") {
+    hideConfirm("#maintConfirm");
+    pendingMaintBtn = null;
+  } else if (act === "maint-confirm-modal") {
+    return;
   } else if (act === "about") {
     const fold = t.closest(".abt-fold") || $("#aboutFold");
     if (!fold) return;
@@ -459,10 +478,13 @@ document.addEventListener("click", (e) => {
   } else if (act === "bulk-act") {
     bulkAct(t.getAttribute("data-msg") || "Action");
   } else if (act === "copy") {
-    try { navigator.clipboard.writeText(t.getAttribute("data-copy")); } catch (_) {}
+    const value = t.getAttribute("data-copy") || "";
+    try { navigator.clipboard.writeText(value); } catch (_) {}
     t.classList.add("is-copied");
-    t.title = "Copié";
-    setTimeout(() => { t.classList.remove("is-copied"); t.title = "Copier"; }, 1400);
+    const copied = (document.body && document.body.getAttribute("data-msg-copied")) || "Copié";
+    t.title = copied;
+    toast(copied, { soft: true });
+    setTimeout(() => { t.classList.remove("is-copied"); }, 1400);
   } else if (act === "st-save") {
     hideConfirm("#stSaveConfirm");
     const el = $("#stSaveToast");
@@ -1097,6 +1119,8 @@ window.onMaintAjax = function (data) {
     const flash = tool.querySelector("[data-maint-ok]");
     const ok = !flash || flash.getAttribute("data-maint-ok") !== "false";
     finishMaintProgress(tool, ok);
+    const run = tool.querySelector(".bo-btn-hit") || tool.querySelector(".bo-btn-hit-in");
+    if (run) requestAnimationFrame(() => run.focus());
   }
   if (data.status === "error") {
     const prog = tool.querySelector(".mc-prog");
@@ -1105,6 +1129,39 @@ window.onMaintAjax = function (data) {
   }
 };
 window.onMaintTopTermAjax = window.onMaintAjax;
+
+window.downloadMaintSitemap = function () {
+  const ctx = document.body.getAttribute("data-ctx") || "";
+  window.location.href = ctx + "/v2/api/maintenance/sitemap.xml";
+};
+
+let pendingMaintBtn = null;
+function maintConfirmMessage(btn) {
+  const opt = btn.closest("[data-confirm-overwrite]");
+  if (opt) {
+    const sw = opt.querySelector(".st-sw-input, input[type='checkbox']");
+    if (sw && sw.checked) return opt.getAttribute("data-confirm-overwrite") || "";
+    return "";
+  }
+  const tool = btn.closest(".mc-tool[data-confirm]");
+  return tool ? (tool.getAttribute("data-confirm") || "") : "";
+}
+document.addEventListener("click", function (e) {
+  const btn = e.target.closest && e.target.closest(".bo-btn-hit-in");
+  if (!btn || btn.disabled) return;
+  if (btn.dataset.maintSkipConfirm === "1") {
+    delete btn.dataset.maintSkipConfirm;
+    return;
+  }
+  const msg = maintConfirmMessage(btn);
+  if (!msg) return;
+  e.preventDefault();
+  e.stopImmediatePropagation();
+  pendingMaintBtn = btn;
+  const text = document.getElementById("maintConfirmText");
+  if (text) text.textContent = msg;
+  showConfirm("#maintConfirm");
+}, true);
 
 var params = new URLSearchParams(location.search);
 

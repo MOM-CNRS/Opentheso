@@ -25,23 +25,197 @@ function markAboutVisualEmpty() {
   if (!visual) return;
   visual.classList.toggle("is-empty", visual.textContent.trim() === "");
 }
+let aboutHistory = [];
+let aboutHistoryIdx = -1;
+
+function aboutPushHistory() {
+  const visual = aboutVisual();
+  if (!visual) return;
+  const html = visual.innerHTML;
+  aboutHistory = aboutHistory.slice(0, aboutHistoryIdx + 1);
+  aboutHistory.push(html);
+  aboutHistoryIdx = aboutHistory.length - 1;
+  if (aboutHistory.length > 50) {
+    aboutHistory.shift();
+    aboutHistoryIdx -= 1;
+  }
+}
+function aboutRestoreHistory(nextIdx) {
+  const visual = aboutVisual();
+  if (!visual || nextIdx < 0 || nextIdx >= aboutHistory.length) return;
+  aboutHistoryIdx = nextIdx;
+  visual.innerHTML = aboutHistory[aboutHistoryIdx];
+}
+function aboutSelectionNode() {
+  const visual = aboutVisual();
+  const sel = window.getSelection();
+  if (!visual || !sel || !sel.rangeCount) return null;
+  let node = sel.anchorNode;
+  if (node && node.nodeType === 3) node = node.parentElement;
+  if (!node || !visual.contains(node)) return null;
+  return node;
+}
+function aboutClosest(tagNames) {
+  const node = aboutSelectionNode();
+  const visual = aboutVisual();
+  if (!node || !visual) return null;
+  const found = node.closest(tagNames);
+  return found && visual.contains(found) ? found : null;
+}
+function aboutWrapInline(tag) {
+  const visual = aboutVisual();
+  const sel = window.getSelection();
+  if (!visual || !sel || !sel.rangeCount) return;
+  const existing = aboutClosest(tag + ", " + (tag === "strong" ? "b" : tag === "em" ? "i" : tag));
+  if (existing) {
+    const parent = existing.parentNode;
+    while (existing.firstChild) parent.insertBefore(existing.firstChild, existing);
+    parent.removeChild(existing);
+    parent.normalize();
+    return;
+  }
+  const range = sel.getRangeAt(0);
+  if (range.collapsed) {
+    const el = document.createElement(tag);
+    el.appendChild(document.createTextNode("\u200b"));
+    range.insertNode(el);
+    const r = document.createRange();
+    r.selectNodeContents(el);
+    sel.removeAllRanges();
+    sel.addRange(r);
+    return;
+  }
+  const el = document.createElement(tag);
+  try {
+    range.surroundContents(el);
+  } catch (err) {
+    el.appendChild(range.extractContents());
+    range.insertNode(el);
+  }
+}
+function aboutFormatBlock(tag) {
+  const visual = aboutVisual();
+  const sel = window.getSelection();
+  if (!visual || !sel || !sel.rangeCount) return;
+  const node = aboutSelectionNode();
+  if (!node) return;
+  const block = node.closest("p,h1,h2,h3,h4,blockquote,div,li");
+  const next = document.createElement(tag);
+  if (block && visual.contains(block) && block !== visual) {
+    next.innerHTML = block.innerHTML;
+    block.replaceWith(next);
+  } else {
+    next.innerHTML = visual.innerHTML;
+    visual.innerHTML = "";
+    visual.appendChild(next);
+  }
+}
+function aboutToggleList(ordered) {
+  const visual = aboutVisual();
+  if (!visual) return;
+  const tag = ordered ? "ol" : "ul";
+  const list = aboutClosest("ul,ol");
+  if (list) {
+    const frag = document.createDocumentFragment();
+    Array.from(list.children).forEach((li) => {
+      const p = document.createElement("p");
+      p.innerHTML = li.innerHTML;
+      frag.appendChild(p);
+    });
+    list.replaceWith(frag);
+    return;
+  }
+  const block = aboutClosest("p,h2,h3,blockquote,div");
+  const source = block && block !== visual ? block : visual;
+  const listEl = document.createElement(tag);
+  const li = document.createElement("li");
+  li.innerHTML = source === visual ? visual.innerHTML : source.innerHTML;
+  listEl.appendChild(li);
+  if (source === visual) {
+    visual.innerHTML = "";
+    visual.appendChild(listEl);
+  } else {
+    source.replaceWith(listEl);
+  }
+}
+function aboutIndent(outdent) {
+  const listItem = aboutClosest("li");
+  if (!listItem) return;
+  if (outdent) {
+    const list = listItem.parentElement;
+    if (!list || (list.tagName !== "UL" && list.tagName !== "OL")) return;
+    const parentLi = list.parentElement && list.parentElement.closest("li");
+    if (parentLi && parentLi.parentElement) {
+      parentLi.parentElement.insertBefore(listItem, parentLi.nextSibling);
+      if (!list.children.length) list.remove();
+    }
+    return;
+  }
+  const prev = listItem.previousElementSibling;
+  if (!prev) return;
+  let nested = prev.querySelector(":scope > ul, :scope > ol");
+  if (!nested) {
+    nested = document.createElement(listItem.parentElement.tagName.toLowerCase());
+    prev.appendChild(nested);
+  }
+  nested.appendChild(listItem);
+}
 function applyAboutFormat(cmd, val) {
   const visual = aboutVisual();
   if (!visual || !cmd) return;
   const composer = aboutComposer();
   if (composer && composer.classList.contains("is-source")) return;
   visual.focus();
-  if (cmd === "createLink") {
-    const url = window.prompt("Adresse du lien :", "https://");
-    if (!url) return;
-    document.execCommand("createLink", false, url);
-  } else if (cmd === "formatBlock") {
-    const tag = val || "p";
-    if (!document.execCommand("formatBlock", false, tag)) {
-      document.execCommand("formatBlock", false, "<" + tag + ">");
-    }
+  if (aboutHistoryIdx < 0) aboutPushHistory();
+  if (cmd === "undo") {
+    aboutRestoreHistory(aboutHistoryIdx - 1);
+  } else if (cmd === "redo") {
+    aboutRestoreHistory(aboutHistoryIdx + 1);
   } else {
-    document.execCommand(cmd, false, val || null);
+    if (cmd === "createLink") {
+      const promptMsg = (document.body && document.body.getAttribute("data-msg-link")) || "Adresse du lien :";
+      const url = window.prompt(promptMsg, "https://");
+      if (!url) return;
+      aboutWrapInline("a");
+      const link = aboutClosest("a");
+      if (link) link.setAttribute("href", url);
+    } else if (cmd === "unlink") {
+      const link = aboutClosest("a");
+      if (link) {
+        const parent = link.parentNode;
+        while (link.firstChild) parent.insertBefore(link.firstChild, link);
+        parent.removeChild(link);
+      }
+    } else if (cmd === "formatBlock") {
+      aboutFormatBlock((val || "p").replace(/[<>]/g, ""));
+    } else if (cmd === "insertUnorderedList") {
+      aboutToggleList(false);
+    } else if (cmd === "insertOrderedList") {
+      aboutToggleList(true);
+    } else if (cmd === "indent") {
+      aboutIndent(false);
+    } else if (cmd === "outdent") {
+      aboutIndent(true);
+    } else if (cmd === "insertHorizontalRule") {
+      const sel = window.getSelection();
+      if (sel && sel.rangeCount) sel.getRangeAt(0).insertNode(document.createElement("hr"));
+    } else if (cmd === "removeFormat") {
+      const sel = window.getSelection();
+      if (sel && !sel.isCollapsed && sel.rangeCount) {
+        const text = sel.toString();
+        sel.deleteContents();
+        sel.getRangeAt(0).insertNode(document.createTextNode(text));
+      }
+    } else if (cmd === "bold") {
+      aboutWrapInline("strong");
+    } else if (cmd === "italic") {
+      aboutWrapInline("em");
+    } else if (cmd === "underline") {
+      aboutWrapInline("u");
+    } else if (cmd === "strikeThrough") {
+      aboutWrapInline("s");
+    }
+    aboutPushHistory();
   }
   syncAboutEditor();
   markAboutVisualEmpty();
@@ -54,19 +228,22 @@ function refreshAboutFmtState() {
   composer.querySelectorAll(".abt-fmt-btn[data-cmd]").forEach((btn) => {
     const cmd = btn.getAttribute("data-cmd");
     let on = false;
-    try {
-      if (cmd === "formatBlock") {
-        const want = (btn.getAttribute("data-val") || "").replace(/[<>]/g, "").toUpperCase();
-        const cur = (document.queryCommandValue("formatBlock") || "").replace(/[<>]/g, "").toUpperCase();
-        on = !!want && cur === want;
-      } else if (cmd === "createLink" || cmd === "unlink" || cmd === "undo" || cmd === "redo"
-          || cmd === "indent" || cmd === "outdent" || cmd === "removeFormat" || cmd === "insertHorizontalRule") {
-        on = false;
-      } else {
-        on = document.queryCommandState(cmd);
-      }
-    } catch (err) {
-      on = false;
+    if (cmd === "formatBlock") {
+      const want = (btn.getAttribute("data-val") || "").replace(/[<>]/g, "").toUpperCase();
+      const block = aboutClosest("p,h2,h3,blockquote,div");
+      on = !!want && !!block && block.tagName === want;
+    } else if (cmd === "bold") {
+      on = !!aboutClosest("strong,b");
+    } else if (cmd === "italic") {
+      on = !!aboutClosest("em,i");
+    } else if (cmd === "underline") {
+      on = !!aboutClosest("u");
+    } else if (cmd === "strikeThrough") {
+      on = !!aboutClosest("s,strike");
+    } else if (cmd === "insertUnorderedList") {
+      on = !!aboutClosest("ul");
+    } else if (cmd === "insertOrderedList") {
+      on = !!aboutClosest("ol");
     }
     btn.classList.toggle("is-on", on);
   });
@@ -175,7 +352,11 @@ window.onPreviewAboutSave = function (data) {
     btns.forEach((btn) => btn.classList.remove("is-busy", "is-click"));
   }
   if (data.status === "success") {
-    requestAnimationFrame(showAboutSaveToast);
+    requestAnimationFrame(() => {
+      showAboutSaveToast();
+      const edit = document.querySelector(".abt-edit-btn");
+      if (edit) edit.focus();
+    });
   }
 };
 window.onPreviewCorpusDialog = function (data) {

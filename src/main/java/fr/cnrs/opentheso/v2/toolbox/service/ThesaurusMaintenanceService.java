@@ -2,6 +2,7 @@ package fr.cnrs.opentheso.v2.toolbox.service;
 
 import fr.cnrs.opentheso.v2.setting.model.ThesaurusPreferences;
 import fr.cnrs.opentheso.v2.setting.service.ThesaurusPreferenceService;
+import fr.cnrs.opentheso.v2.shared.web.ApplicationUriService;
 import fr.cnrs.opentheso.v2.toolbox.model.LocalArkSettings;
 import fr.cnrs.opentheso.v2.toolbox.persistence.ThesaurusMaintenancePersistence;
 import lombok.RequiredArgsConstructor;
@@ -16,6 +17,7 @@ public class ThesaurusMaintenanceService {
 
     private final ThesaurusMaintenancePersistence thesaurusMaintenancePersistence;
     private final ThesaurusPreferenceService thesaurusPreferenceService;
+    private final ApplicationUriService applicationUriService;
 
     @Value("${settings.workLanguage:fr}")
     private String workLanguage;
@@ -67,6 +69,14 @@ public class ThesaurusMaintenanceService {
     @Transactional
     public int generateLocalArk(String thesaurusId, boolean overwrite) {
         return thesaurusMaintenancePersistence.generateLocalArk(thesaurusId, overwrite);
+    }
+
+    @Transactional(readOnly = true)
+    public String buildSitemapXml(String thesaurusId) {
+        return thesaurusMaintenancePersistence.buildSitemapXml(
+                thesaurusId,
+                applicationUriService.resolveApplicationBaseUrl()
+        );
     }
 
     @Transactional

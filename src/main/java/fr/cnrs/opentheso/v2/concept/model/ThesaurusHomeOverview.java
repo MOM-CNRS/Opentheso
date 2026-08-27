@@ -7,6 +7,7 @@ public record ThesaurusHomeOverview(
         int conceptCount,
         String projectName,
         String lastModifiedDate,
+        String lastModifiedRelative,
         String permalinkUrl,
         String permalinkLabel,
         List<ConceptLinkItem> lastModifiedConcepts,
@@ -28,6 +29,10 @@ public record ThesaurusHomeOverview(
 
     public String getLastModifiedDate() {
         return lastModifiedDate;
+    }
+
+    public String getLastModifiedRelative() {
+        return lastModifiedRelative;
     }
 
     public String getPermalinkUrl() {

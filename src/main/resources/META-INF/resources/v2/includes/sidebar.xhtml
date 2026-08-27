@@ -18,7 +18,7 @@
                 <f:selectItems value="#{v2ThesaurusViewBean.languages}" var="lang"
                                itemValue="#{lang.code}" itemLabel="#{lang.value}"/>
                 <f:ajax event="valueChange" execute="@this" listener="#{v2ThesaurusViewBean.onLanguageChange}"
-                        render=":previewAboutForm :previewTreeForm"/>
+                        render=":previewHomeHead :previewAboutForm :previewTreeForm"/>
               </h:selectOneMenu>
             </h:form>
           </div>

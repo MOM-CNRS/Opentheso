@@ -5,29 +5,95 @@
                 xmlns:f="http://xmlns.jcp.org/jsf/core">
           <div class="view-panel is-on" id="viewHome">
             <div class="cv th-home">
-              <div class="cv-head">
+              <h:panelGroup id="previewHomeHead" layout="block" styleClass="cv-head">
                 <h1 class="cv-pref">#{v2ThesaurusViewBean.title}<span class="cv-lang">#{v2ThesaurusViewBean.id}</span><span class="cv-count">#{v2ThesaurusViewBean.conceptCountLabel}</span></h1>
-                <p class="th-sub">Archéologie &amp; sciences de l'Antiquité</p>
-              </div>
+                <h:panelGroup rendered="#{v2ThesaurusViewBean.identityCardVisible}" layout="block" styleClass="th-idcard">
+                  <h:panelGroup layout="block" styleClass="th-id-grid"
+                                rendered="#{v2ThesaurusViewBean.projectNamePresent or v2ThesaurusViewBean.lastModifiedPresent or v2ThesaurusViewBean.permalinkPresent}">
+                    <h:panelGroup rendered="#{v2ThesaurusViewBean.projectNamePresent}" layout="block" styleClass="th-id-tile">
+                      <span class="th-id-ico" aria-hidden="true">
+                        <svg viewBox="0 0 24 24"><path d="M3 7h6l2 2h10v10H3z"/><path d="M3 7V5h5l2 2"/></svg>
+                      </span>
+                      <span class="th-id-k">#{v2LocaleBean.getMsg('v2.home.project')}</span>
+                      <span class="th-id-v">#{v2ThesaurusViewBean.projectName}</span>
+                    </h:panelGroup>
+                    <h:panelGroup rendered="#{v2ThesaurusViewBean.lastModifiedPresent}" layout="block" styleClass="th-id-tile">
+                      <span class="th-id-ico" aria-hidden="true">
+                        <svg viewBox="0 0 24 24"><circle cx="12" cy="12" r="9"/><path d="M12 7v5l3 2"/></svg>
+                      </span>
+                      <span class="th-id-k">#{v2LocaleBean.getMsg('v2.home.lastModified')}</span>
+                      <span class="th-id-v" title="#{v2ThesaurusViewBean.lastModifiedExact}">#{v2ThesaurusViewBean.lastModifiedLabel}</span>
+                    </h:panelGroup>
+                    <h:panelGroup rendered="#{v2ThesaurusViewBean.permalinkPresent}" layout="block" styleClass="th-id-tile th-id-tile-link">
+                      <span class="th-id-ico" aria-hidden="true">
+                        <svg viewBox="0 0 24 24"><path d="M10 13a5 5 0 0 0 7.54.54l1.91-1.91a5 5 0 0 0-7.07-7.07L10.7 6.23"/><path d="M14 11a5 5 0 0 0-7.54-.54L4.55 12.4a5 5 0 0 0 7.07 7.07l1.67-1.67"/></svg>
+                      </span>
+                      <span class="th-id-k">#{v2LocaleBean.getMsg('v2.home.permalink')}</span>
+                      <span class="th-id-linkrow">
+                        <a class="th-id-link" href="#{v2ThesaurusViewBean.permalinkUrl}" title="#{v2ThesaurusViewBean.permalinkUrl}">#{v2ThesaurusViewBean.permalinkLabel}</a>
+                        <button type="button" class="th-copy" data-act="copy"
+                                data-copy="#{v2ThesaurusViewBean.permalinkUrl}"
+                                title="#{v2LocaleBean.getMsg('v2.copy')}"
+                                aria-label="#{v2LocaleBean.getMsg('v2.copyPermalink')}">
+                          <svg viewBox="0 0 24 24" aria-hidden="true"><rect x="9" y="9" width="13" height="13" rx="2"/><path d="M5 15H4a2 2 0 0 1-2-2V4a2 2 0 0 1 2-2h9a2 2 0 0 1 2 2v1"/></svg>
+                        </button>
+                      </span>
+                    </h:panelGroup>
+                  </h:panelGroup>
+                  <h:panelGroup rendered="#{v2ThesaurusViewBean.lastModifiedConceptsPresent}" layout="block" styleClass="th-id-recent">
+                    <div class="th-id-k">#{v2LocaleBean.getMsg('v2.home.recent')}</div>
+                    <div class="th-id-chips">
+                      <ui:repeat value="#{v2ThesaurusViewBean.lastModifiedConcepts}" var="item">
+                        <button type="button" class="th-chip" data-act="open-recent"
+                                data-id="#{item.conceptId}" title="#{item.label}">#{item.label}</button>
+                      </ui:repeat>
+                    </div>
+                  </h:panelGroup>
+                  <h:panelGroup rendered="#{v2ThesaurusViewBean.metadataPresent}" layout="block">
+                    <details class="th-dc">
+                      <summary>#{v2LocaleBean.getMsg('v2.home.metadata')}</summary>
+                      <table class="th-dc-table">
+                        <thead>
+                          <tr>
+                            <th>#{v2LocaleBean.getMsg('v2.home.dc.property')}</th>
+                            <th>#{v2LocaleBean.getMsg('v2.home.dc.value')}</th>
+                            <th>#{v2LocaleBean.getMsg('v2.home.dc.lang')}</th>
+                          </tr>
+                        </thead>
+                        <tbody>
+                          <ui:repeat value="#{v2ThesaurusViewBean.metadata}" var="dc">
+                            <tr>
+                              <td>#{dc.name}</td>
+                              <td>#{dc.value}</td>
+                              <td>#{dc.language}</td>
+                            </tr>
+                          </ui:repeat>
+                        </tbody>
+                      </table>
+                    </details>
+                  </h:panelGroup>
+                </h:panelGroup>
+              </h:panelGroup>
               <h:form id="previewAboutForm">
               <div class="boc th-about#{v2ThesaurusViewBean.editing ? ' is-editing' : ''}">
                 <div class="boc-h">
                   <div class="boc-ico"><svg viewBox="0 0 24 24" aria-hidden="true"><path d="M4 19.5A2.5 2.5 0 0 1 6.5 17H20"/><path d="M6.5 2H20v20H6.5A2.5 2.5 0 0 1 4 19.5v-15A2.5 2.5 0 0 1 6.5 2z"/></svg></div>
                   <div class="boc-ht">
                     <div class="boc-t">
-                      <h:panelGroup rendered="#{not v2ThesaurusViewBean.editing}">À propos de #{v2ThesaurusViewBean.title}</h:panelGroup>
-                      <h:panelGroup rendered="#{v2ThesaurusViewBean.editing}">Modifier la description</h:panelGroup>
+                      <h:panelGroup rendered="#{not v2ThesaurusViewBean.editing}">#{v2LocaleBean.getMsg('v2.home.about')} #{v2ThesaurusViewBean.title}</h:panelGroup>
+                      <h:panelGroup rendered="#{v2ThesaurusViewBean.editing}">#{v2LocaleBean.getMsg('v2.home.about.edit')}</h:panelGroup>
                     </div>
                     <div class="boc-d">
                       <h:panelGroup rendered="#{not v2ThesaurusViewBean.editing}">
-                        Description du thésaurus, dans la langue d'affichage des libellés.
+                        #{v2LocaleBean.getMsg('v2.home.about.desc')}
+                        <span class="cv-lang th-about-lang">#{v2ThesaurusViewBean.selectedLangLabel}</span>
                       </h:panelGroup>
                       <h:panelGroup rendered="#{v2ThesaurusViewBean.editing}">
-                        Langue éditée : <span class="cv-lang">#{v2ThesaurusViewBean.selectedLangLabel}</span>
+                        #{v2LocaleBean.getMsg('v2.home.about.editLang')} <span class="cv-lang">#{v2ThesaurusViewBean.selectedLangLabel}</span>
                       </h:panelGroup>
                     </div>
                   </div>
-                  <h:commandButton value="Modifier" styleClass="bo-btn ghost sm abt-edit-btn"
+                  <h:commandButton value="#{v2LocaleBean.getMsg('v2.edit')}" styleClass="bo-btn ghost sm abt-edit-btn"
                                    rendered="#{v2ThesaurusViewBean.canEdit and not v2ThesaurusViewBean.editing}"
                                    action="#{v2ThesaurusViewBean.startEditing}">
                     <f:ajax execute="@this" render="@form"/>
@@ -41,94 +107,94 @@
                       </div>
                       <button type="button" class="abt-toggle" id="aboutToggle" data-act="about"
                               aria-expanded="false" aria-controls="aboutDetail">
-                        <span class="abt-more">Voir la description complète</span>
-                        <span class="abt-less">Réduire la description</span>
+                        <span class="abt-more">#{v2LocaleBean.getMsg('v2.home.about.more')}</span>
+                        <span class="abt-less">#{v2LocaleBean.getMsg('v2.home.about.less')}</span>
                         <svg viewBox="0 0 24 24" aria-hidden="true"><path d="m6 9 6 6 6-6"/></svg>
                       </button>
                     </div>
                   </h:panelGroup>
                   <h:panelGroup rendered="#{not v2ThesaurusViewBean.homePageHtmlPresent}">
-                    <p class="abt-empty">Aucune description pour ce thésaurus.</p>
+                    <p class="abt-empty">#{v2LocaleBean.getMsg('v2.home.about.empty')}</p>
                   </h:panelGroup>
                 </h:panelGroup>
                 <h:panelGroup layout="block" styleClass="abt-composer" rendered="#{v2ThesaurusViewBean.editing}">
                   <div class="abt-composer-bar">
-                    <div class="abt-fmt" role="toolbar" aria-label="Mise en forme">
-                      <button type="button" class="abt-fmt-btn" data-act="about-fmt" data-cmd="undo" title="Annuler la saisie" aria-label="Annuler la saisie">
+                    <div class="abt-fmt" role="toolbar" aria-label="#{v2LocaleBean.getMsg('v2.home.about.format')}">
+                      <button type="button" class="abt-fmt-btn" data-act="about-fmt" data-cmd="undo" title="#{v2LocaleBean.getMsg('v2.undo')}" aria-label="#{v2LocaleBean.getMsg('v2.undo')}">
                         <svg viewBox="0 0 24 24" aria-hidden="true"><path d="M3 7v6h6"/><path d="M3 13a9 9 0 1 0 2.2-7.4L3 7"/></svg>
                       </button>
-                      <button type="button" class="abt-fmt-btn" data-act="about-fmt" data-cmd="redo" title="Rétablir" aria-label="Rétablir">
+                      <button type="button" class="abt-fmt-btn" data-act="about-fmt" data-cmd="redo" title="#{v2LocaleBean.getMsg('v2.redo')}" aria-label="#{v2LocaleBean.getMsg('v2.redo')}">
                         <svg viewBox="0 0 24 24" aria-hidden="true"><path d="M21 7v6h-6"/><path d="M21 13a9 9 0 1 1-2.2-7.4L21 7"/></svg>
                       </button>
                       <span class="abt-fmt-sep" aria-hidden="true"></span>
-                      <button type="button" class="abt-fmt-btn" data-act="about-fmt" data-cmd="bold" title="Gras" aria-label="Gras">
+                      <button type="button" class="abt-fmt-btn" data-act="about-fmt" data-cmd="bold" title="#{v2LocaleBean.getMsg('v2.bold')}" aria-label="#{v2LocaleBean.getMsg('v2.bold')}">
                         <svg viewBox="0 0 24 24" aria-hidden="true"><path d="M7 5h7a3.5 3.5 0 0 1 0 7H7z"/><path d="M7 12h8a3.5 3.5 0 0 1 0 7H7z"/></svg>
                       </button>
-                      <button type="button" class="abt-fmt-btn" data-act="about-fmt" data-cmd="italic" title="Italique" aria-label="Italique">
+                      <button type="button" class="abt-fmt-btn" data-act="about-fmt" data-cmd="italic" title="#{v2LocaleBean.getMsg('v2.italic')}" aria-label="#{v2LocaleBean.getMsg('v2.italic')}">
                         <svg viewBox="0 0 24 24" aria-hidden="true"><path d="M11 5h6"/><path d="M7 19h6"/><path d="M14 5 10 19"/></svg>
                       </button>
-                      <button type="button" class="abt-fmt-btn" data-act="about-fmt" data-cmd="underline" title="Souligné" aria-label="Souligné">
+                      <button type="button" class="abt-fmt-btn" data-act="about-fmt" data-cmd="underline" title="#{v2LocaleBean.getMsg('v2.underline')}" aria-label="#{v2LocaleBean.getMsg('v2.underline')}">
                         <svg viewBox="0 0 24 24" aria-hidden="true"><path d="M6 4v6a6 6 0 0 0 12 0V4"/><path d="M4 20h16"/></svg>
                       </button>
-                      <button type="button" class="abt-fmt-btn" data-act="about-fmt" data-cmd="strikeThrough" title="Barré" aria-label="Barré">
+                      <button type="button" class="abt-fmt-btn" data-act="about-fmt" data-cmd="strikeThrough" title="#{v2LocaleBean.getMsg('v2.strike')}" aria-label="#{v2LocaleBean.getMsg('v2.strike')}">
                         <svg viewBox="0 0 24 24" aria-hidden="true"><path d="M16 7a4 4 0 0 0-8 1c0 2 2 3 8 4s8 2 8 4a4 4 0 0 1-8 1"/><path d="M4 12h16"/></svg>
                       </button>
                       <span class="abt-fmt-sep" aria-hidden="true"></span>
-                      <button type="button" class="abt-fmt-btn abt-fmt-txt" data-act="about-fmt" data-cmd="formatBlock" data-val="h2" title="Titre" aria-label="Titre">H2</button>
-                      <button type="button" class="abt-fmt-btn abt-fmt-txt" data-act="about-fmt" data-cmd="formatBlock" data-val="h3" title="Sous-titre" aria-label="Sous-titre">H3</button>
-                      <button type="button" class="abt-fmt-btn abt-fmt-txt" data-act="about-fmt" data-cmd="formatBlock" data-val="p" title="Paragraphe" aria-label="Paragraphe">P</button>
-                      <button type="button" class="abt-fmt-btn" data-act="about-fmt" data-cmd="formatBlock" data-val="blockquote" title="Citation" aria-label="Citation">
+                      <button type="button" class="abt-fmt-btn abt-fmt-txt" data-act="about-fmt" data-cmd="formatBlock" data-val="h2" title="#{v2LocaleBean.getMsg('v2.heading')}" aria-label="#{v2LocaleBean.getMsg('v2.heading')}">H2</button>
+                      <button type="button" class="abt-fmt-btn abt-fmt-txt" data-act="about-fmt" data-cmd="formatBlock" data-val="h3" title="#{v2LocaleBean.getMsg('v2.subheading')}" aria-label="#{v2LocaleBean.getMsg('v2.subheading')}">H3</button>
+                      <button type="button" class="abt-fmt-btn abt-fmt-txt" data-act="about-fmt" data-cmd="formatBlock" data-val="p" title="#{v2LocaleBean.getMsg('v2.paragraph')}" aria-label="#{v2LocaleBean.getMsg('v2.paragraph')}">P</button>
+                      <button type="button" class="abt-fmt-btn" data-act="about-fmt" data-cmd="formatBlock" data-val="blockquote" title="#{v2LocaleBean.getMsg('v2.quote')}" aria-label="#{v2LocaleBean.getMsg('v2.quote')}">
                         <svg viewBox="0 0 24 24" aria-hidden="true"><path d="M6 8h5v5H8a3 3 0 0 0 3 3"/><path d="M15 8h5v5h-3a3 3 0 0 0 3 3"/></svg>
                       </button>
                       <span class="abt-fmt-sep" aria-hidden="true"></span>
-                      <button type="button" class="abt-fmt-btn" data-act="about-fmt" data-cmd="insertUnorderedList" title="Liste à puces" aria-label="Liste à puces">
+                      <button type="button" class="abt-fmt-btn" data-act="about-fmt" data-cmd="insertUnorderedList" title="#{v2LocaleBean.getMsg('v2.list')}" aria-label="#{v2LocaleBean.getMsg('v2.list')}">
                         <svg viewBox="0 0 24 24" aria-hidden="true"><path d="M9 6h11"/><path d="M9 12h11"/><path d="M9 18h11"/><path d="M5 6h.01"/><path d="M5 12h.01"/><path d="M5 18h.01"/></svg>
                       </button>
-                      <button type="button" class="abt-fmt-btn" data-act="about-fmt" data-cmd="insertOrderedList" title="Liste numérotée" aria-label="Liste numérotée">
+                      <button type="button" class="abt-fmt-btn" data-act="about-fmt" data-cmd="insertOrderedList" title="#{v2LocaleBean.getMsg('v2.olist')}" aria-label="#{v2LocaleBean.getMsg('v2.olist')}">
                         <svg viewBox="0 0 24 24" aria-hidden="true"><path d="M10 6h11"/><path d="M10 12h11"/><path d="M10 18h11"/><path d="M4 6h1v4"/><path d="M4 16h2"/><path d="M5 16v4"/></svg>
                       </button>
-                      <button type="button" class="abt-fmt-btn" data-act="about-fmt" data-cmd="indent" title="Augmenter le retrait" aria-label="Augmenter le retrait">
+                      <button type="button" class="abt-fmt-btn" data-act="about-fmt" data-cmd="indent" title="#{v2LocaleBean.getMsg('v2.indent')}" aria-label="#{v2LocaleBean.getMsg('v2.indent')}">
                         <svg viewBox="0 0 24 24" aria-hidden="true"><path d="M3 6h18"/><path d="M11 12h10"/><path d="M3 18h18"/><path d="m3 9 3 3-3 3"/></svg>
                       </button>
-                      <button type="button" class="abt-fmt-btn" data-act="about-fmt" data-cmd="outdent" title="Diminuer le retrait" aria-label="Diminuer le retrait">
+                      <button type="button" class="abt-fmt-btn" data-act="about-fmt" data-cmd="outdent" title="#{v2LocaleBean.getMsg('v2.outdent')}" aria-label="#{v2LocaleBean.getMsg('v2.outdent')}">
                         <svg viewBox="0 0 24 24" aria-hidden="true"><path d="M21 6H9"/><path d="M21 12H9"/><path d="M21 18H9"/><path d="m6 9-3 3 3 3"/></svg>
                       </button>
                       <span class="abt-fmt-sep" aria-hidden="true"></span>
-                      <button type="button" class="abt-fmt-btn" data-act="about-fmt" data-cmd="createLink" title="Lien" aria-label="Lien">
+                      <button type="button" class="abt-fmt-btn" data-act="about-fmt" data-cmd="createLink" title="#{v2LocaleBean.getMsg('v2.link')}" aria-label="#{v2LocaleBean.getMsg('v2.link')}">
                         <svg viewBox="0 0 24 24" aria-hidden="true"><path d="M10 13a5 5 0 0 0 7.54.54l1.91-1.91a5 5 0 0 0-7.07-7.07L10.7 6.23"/><path d="M14 11a5 5 0 0 0-7.54-.54L4.55 12.4a5 5 0 0 0 7.07 7.07l1.67-1.67"/></svg>
                       </button>
-                      <button type="button" class="abt-fmt-btn" data-act="about-fmt" data-cmd="unlink" title="Supprimer le lien" aria-label="Supprimer le lien">
+                      <button type="button" class="abt-fmt-btn" data-act="about-fmt" data-cmd="unlink" title="#{v2LocaleBean.getMsg('v2.unlink')}" aria-label="#{v2LocaleBean.getMsg('v2.unlink')}">
                         <svg viewBox="0 0 24 24" aria-hidden="true"><path d="M18 8h1a5 5 0 0 1 0 10h-1"/><path d="M6 16H5a5 5 0 0 1 0-10h1"/><path d="M8 12h8"/><path d="m4 4 16 16"/></svg>
                       </button>
-                      <button type="button" class="abt-fmt-btn" data-act="about-fmt" data-cmd="insertHorizontalRule" title="Ligne horizontale" aria-label="Ligne horizontale">
+                      <button type="button" class="abt-fmt-btn" data-act="about-fmt" data-cmd="insertHorizontalRule" title="#{v2LocaleBean.getMsg('v2.hr')}" aria-label="#{v2LocaleBean.getMsg('v2.hr')}">
                         <svg viewBox="0 0 24 24" aria-hidden="true"><path d="M4 12h16"/><path d="M4 6h16"/><path d="M4 18h16"/></svg>
                       </button>
-                      <button type="button" class="abt-fmt-btn" data-act="about-fmt" data-cmd="removeFormat" title="Effacer la mise en forme" aria-label="Effacer la mise en forme">
+                      <button type="button" class="abt-fmt-btn" data-act="about-fmt" data-cmd="removeFormat" title="#{v2LocaleBean.getMsg('v2.clearFormat')}" aria-label="#{v2LocaleBean.getMsg('v2.clearFormat')}">
                         <svg viewBox="0 0 24 24" aria-hidden="true"><path d="M4 7h10"/><path d="M9 7v10"/><path d="m15 11 5 8"/><path d="m20 11-5 8"/></svg>
                       </button>
                     </div>
-                    <button type="button" class="abt-src-btn" data-act="about-src" aria-pressed="false" title="Code HTML">HTML</button>
+                    <button type="button" class="abt-src-btn" data-act="about-src" aria-pressed="false" title="#{v2LocaleBean.getMsg('v2.home.about.html')}">HTML</button>
                   </div>
                   <div class="abt-visual abt-html" id="aboutVisual" contenteditable="true" spellcheck="true"
-                       data-placeholder="Saisissez la description du thésaurus…">
+                       data-placeholder="#{v2LocaleBean.getMsg('v2.home.about.placeholder')}">
                     <h:outputText value="#{v2ThesaurusViewBean.homeHtml}" escape="false"/>
                   </div>
                   <h:inputTextarea id="previewAboutEditor" styleClass="abt-editor"
                                    value="#{v2ThesaurusViewBean.homeHtml}"
-                                   title="Code HTML de la description"/>
+                                   title="#{v2LocaleBean.getMsg('v2.home.about.html')}"/>
                   <div class="abt-composer-foot">
-                    <p class="abt-hint">Enregistrée pour la langue <span class="cv-lang">#{v2ThesaurusViewBean.selectedLangLabel}</span>. HTML autorisé.</p>
+                    <p class="abt-hint">#{v2LocaleBean.getMsg('v2.home.about.hint')} <span class="cv-lang">#{v2ThesaurusViewBean.selectedLangLabel}</span>.</p>
                     <div class="abt-actions">
                       <h:commandLink styleClass="abt-cancel" action="#{v2ThesaurusViewBean.cancelEditing}">
                         <f:ajax execute="@this" render="@form"/>
                         <svg viewBox="0 0 24 24" aria-hidden="true"><path d="M18 6 6 18"/><path d="m6 6 12 12"/></svg>
-                        <span>Annuler</span>
+                        <span>#{v2LocaleBean.getMsg('v2.cancel')}</span>
                       </h:commandLink>
                       <button type="button" class="abt-save is-off" id="aboutSaveBtn"
                               data-act="about-save-ask" aria-disabled="true">
                         <svg viewBox="0 0 24 24" aria-hidden="true"><path d="M20 6 9 17l-5-5"/></svg>
-                        <span class="abt-save-label">Enregistrer</span>
-                        <span class="abt-save-wait">Enregistrement…</span>
+                        <span class="abt-save-label">#{v2LocaleBean.getMsg('v2.save')}</span>
+                        <span class="abt-save-wait">#{v2LocaleBean.getMsg('v2.saving')}</span>
                       </button>
                     </div>
                   </div>
@@ -138,19 +204,18 @@
                        data-act="about-save-dismiss" role="presentation">
                     <div class="confirm-modal" role="dialog" aria-modal="true"
                          aria-labelledby="aboutSaveConfirmTitle" data-act="about-save-modal">
-                      <div class="confirm-h" id="aboutSaveConfirmTitle">Enregistrer la description</div>
-                      <p class="confirm-p">Enregistrer les modifications pour
-                        <span class="cv-lang">#{v2ThesaurusViewBean.selectedLangLabel}</span> ?
-                        La description actuelle sera remplacée.</p>
+                      <div class="confirm-h" id="aboutSaveConfirmTitle">#{v2LocaleBean.getMsg('v2.home.about.confirmTitle')}</div>
+                      <p class="confirm-p">#{v2LocaleBean.getMsg('v2.home.about.confirm')}
+                        <span class="cv-lang">#{v2ThesaurusViewBean.selectedLangLabel}</span></p>
                       <div class="confirm-actions">
                         <button type="button" class="abt-cancel confirm-cancel"
-                                data-act="about-save-dismiss">Annuler</button>
+                                data-act="about-save-dismiss">#{v2LocaleBean.getMsg('v2.cancel')}</button>
                         <h:commandLink styleClass="abt-save abt-save-ok"
                                        action="#{v2ThesaurusViewBean.saveHomeHtml}">
                           <f:ajax execute="@form" render="@form" onevent="onPreviewAboutSave"/>
                           <svg viewBox="0 0 24 24" aria-hidden="true"><path d="M20 6 9 17l-5-5"/></svg>
-                          <span class="abt-save-label">Enregistrer</span>
-                          <span class="abt-save-wait">Enregistrement…</span>
+                          <span class="abt-save-label">#{v2LocaleBean.getMsg('v2.save')}</span>
+                          <span class="abt-save-wait">#{v2LocaleBean.getMsg('v2.saving')}</span>
                         </h:commandLink>
                       </div>
                     </div>
@@ -163,100 +228,107 @@
                       data-ok="#{not v2ThesaurusViewBean.saveError}">#{v2ThesaurusViewBean.saveMessage}</span>
               </div>
               </h:form>
-              <div class="boc">
+              <h:panelGroup rendered="#{v2ThesaurusViewBean.workshopVisible}" layout="block" styleClass="boc">
                 <div class="boc-h">
                   <div class="boc-ico"><svg viewBox="0 0 24 24" aria-hidden="true"><path d="M3 3h7v7H3zM14 3h7v7h-7zM14 14h7v7h-7zM3 14h7v7H3z"/></svg></div>
                   <div class="boc-ht">
-                    <div class="boc-t">Actions par lot</div>
-                    <div class="boc-d">Choisissez une donnée — imports, exports et suppressions en masse, par fichier CSV.</div>
+                    <div class="boc-t">#{v2LocaleBean.getMsg('v2.home.workshop')}</div>
+                    <div class="boc-d">#{v2LocaleBean.getMsg('v2.home.workshop.desc')}</div>
                   </div>
                 </div>
                 <div class="boc-grid">
-                  <a class="boc-item" href="toolbox/atelier.xhtml?obj=alignements"><span class="boc-v">▦</span><span class="boc-l">Alignements</span><span class="boc-go"><svg viewBox="0 0 24 24" aria-hidden="true"><path d="M5 12h14"/><path d="m12 5 7 7-7 7"/></svg></span></a>
-                  <a class="boc-item" href="toolbox/atelier.xhtml?obj=relations"><span class="boc-v">▦</span><span class="boc-l">Associations</span><span class="boc-go"><svg viewBox="0 0 24 24" aria-hidden="true"><path d="M5 12h14"/><path d="m12 5 7 7-7 7"/></svg></span></a>
-                  <a class="boc-item" href="toolbox/atelier.xhtml?obj=synonymes"><span class="boc-v">▦</span><span class="boc-l">Formes alternatives</span><span class="boc-go"><svg viewBox="0 0 24 24" aria-hidden="true"><path d="M5 12h14"/><path d="m12 5 7 7-7 7"/></svg></span></a>
-                  <a class="boc-item" href="toolbox/atelier.xhtml?obj=notes"><span class="boc-v">▦</span><span class="boc-l">Notes</span><span class="boc-go"><svg viewBox="0 0 24 24" aria-hidden="true"><path d="M5 12h14"/><path d="m12 5 7 7-7 7"/></svg></span></a>
-                  <a class="boc-item" href="toolbox/atelier.xhtml?obj=identifiants"><span class="boc-v">▦</span><span class="boc-l">Identifiants ARK</span><span class="boc-go"><svg viewBox="0 0 24 24" aria-hidden="true"><path d="M5 12h14"/><path d="m12 5 7 7-7 7"/></svg></span></a>
-                  <a class="boc-item" href="toolbox/atelier.xhtml?obj=images"><span class="boc-v">▦</span><span class="boc-l">Images</span><span class="boc-go"><svg viewBox="0 0 24 24" aria-hidden="true"><path d="M5 12h14"/><path d="m12 5 7 7-7 7"/></svg></span></a>
-                  <a class="boc-item" href="toolbox/atelier.xhtml?obj=notations"><span class="boc-v">▦</span><span class="boc-l">Notations</span><span class="boc-go"><svg viewBox="0 0 24 24" aria-hidden="true"><path d="M5 12h14"/><path d="m12 5 7 7-7 7"/></svg></span></a>
-                  <a class="boc-item" href="toolbox/atelier.xhtml?obj=collections"><span class="boc-v">▦</span><span class="boc-l">Collections</span><span class="boc-go"><svg viewBox="0 0 24 24" aria-hidden="true"><path d="M5 12h14"/><path d="m12 5 7 7-7 7"/></svg></span></a>
-                  <a class="boc-item" href="toolbox/atelier.xhtml?obj=concepts"><span class="boc-v">▦</span><span class="boc-l">Concepts &amp; listes</span><span class="boc-go"><svg viewBox="0 0 24 24" aria-hidden="true"><path d="M5 12h14"/><path d="m12 5 7 7-7 7"/></svg></span></a>
-                  <a class="boc-item" href="toolbox/synchronisation.xhtml"><span class="boc-v">▦</span><span class="boc-l">Synchronisation du thésaurus</span><span class="boc-go"><svg viewBox="0 0 24 24" aria-hidden="true"><path d="M5 12h14"/><path d="m12 5 7 7-7 7"/></svg></span></a>
+                  <a class="boc-item" href="toolbox/atelier.xhtml?obj=alignements"><span class="boc-v" aria-hidden="true"><svg viewBox="0 0 24 24"><path d="M10 13a5 5 0 0 0 7.54.54l1.91-1.91a5 5 0 0 0-7.07-7.07L10.7 6.23"/><path d="M14 11a5 5 0 0 0-7.54-.54L4.55 12.4a5 5 0 0 0 7.07 7.07l1.67-1.67"/></svg></span><span class="boc-l">#{v2LocaleBean.getMsg('v2.home.workshop.alignments')}</span><span class="boc-go"><svg viewBox="0 0 24 24" aria-hidden="true"><path d="M5 12h14"/><path d="m12 5 7 7-7 7"/></svg></span></a>
+                  <a class="boc-item" href="toolbox/atelier.xhtml?obj=relations"><span class="boc-v" aria-hidden="true"><svg viewBox="0 0 24 24"><circle cx="6" cy="12" r="3"/><circle cx="18" cy="6" r="3"/><circle cx="18" cy="18" r="3"/><path d="M8.7 10.7 15.3 7.3"/><path d="M8.7 13.3 15.3 16.7"/></svg></span><span class="boc-l">#{v2LocaleBean.getMsg('v2.home.workshop.relations')}</span><span class="boc-go"><svg viewBox="0 0 24 24" aria-hidden="true"><path d="M5 12h14"/><path d="m12 5 7 7-7 7"/></svg></span></a>
+                  <a class="boc-item" href="toolbox/atelier.xhtml?obj=synonymes"><span class="boc-v" aria-hidden="true"><svg viewBox="0 0 24 24"><path d="M8 6h8"/><path d="M8 12h8"/><path d="M8 18h5"/><path d="M4 6h.01"/><path d="M4 12h.01"/><path d="M4 18h.01"/></svg></span><span class="boc-l">#{v2LocaleBean.getMsg('v2.home.workshop.synonyms')}</span><span class="boc-go"><svg viewBox="0 0 24 24" aria-hidden="true"><path d="M5 12h14"/><path d="m12 5 7 7-7 7"/></svg></span></a>
+                  <a class="boc-item" href="toolbox/atelier.xhtml?obj=notes"><span class="boc-v" aria-hidden="true"><svg viewBox="0 0 24 24"><path d="M14 2H6a2 2 0 0 0-2 2v16a2 2 0 0 0 2 2h12a2 2 0 0 0 2-2V8z"/><path d="M14 2v6h6"/><path d="M8 13h8"/><path d="M8 17h5"/></svg></span><span class="boc-l">#{v2LocaleBean.getMsg('v2.home.workshop.notes')}</span><span class="boc-go"><svg viewBox="0 0 24 24" aria-hidden="true"><path d="M5 12h14"/><path d="m12 5 7 7-7 7"/></svg></span></a>
+                  <a class="boc-item" href="toolbox/atelier.xhtml?obj=identifiants"><span class="boc-v" aria-hidden="true"><svg viewBox="0 0 24 24"><rect x="3" y="7" width="18" height="12" rx="2"/><path d="M7 7V5a2 2 0 0 1 2-2h6a2 2 0 0 1 2 2v2"/><path d="M8 13h8"/></svg></span><span class="boc-l">#{v2LocaleBean.getMsg('v2.home.workshop.ark')}</span><span class="boc-go"><svg viewBox="0 0 24 24" aria-hidden="true"><path d="M5 12h14"/><path d="m12 5 7 7-7 7"/></svg></span></a>
+                  <a class="boc-item" href="toolbox/atelier.xhtml?obj=images"><span class="boc-v" aria-hidden="true"><svg viewBox="0 0 24 24"><rect x="3" y="5" width="18" height="14" rx="2"/><circle cx="8.5" cy="10" r="1.5"/><path d="m21 15-5-5-9 9"/></svg></span><span class="boc-l">#{v2LocaleBean.getMsg('v2.home.workshop.images')}</span><span class="boc-go"><svg viewBox="0 0 24 24" aria-hidden="true"><path d="M5 12h14"/><path d="m12 5 7 7-7 7"/></svg></span></a>
+                  <a class="boc-item" href="toolbox/atelier.xhtml?obj=notations"><span class="boc-v" aria-hidden="true"><svg viewBox="0 0 24 24"><path d="M4 7h16"/><path d="M4 12h10"/><path d="M4 17h7"/><path d="M16 17h4"/><path d="M18 15v4"/></svg></span><span class="boc-l">#{v2LocaleBean.getMsg('v2.home.workshop.notations')}</span><span class="boc-go"><svg viewBox="0 0 24 24" aria-hidden="true"><path d="M5 12h14"/><path d="m12 5 7 7-7 7"/></svg></span></a>
+                  <a class="boc-item" href="toolbox/atelier.xhtml?obj=collections"><span class="boc-v" aria-hidden="true"><svg viewBox="0 0 24 24"><path d="M4 7h6l2 2h8v10H4z"/></svg></span><span class="boc-l">#{v2LocaleBean.getMsg('v2.home.workshop.collections')}</span><span class="boc-go"><svg viewBox="0 0 24 24" aria-hidden="true"><path d="M5 12h14"/><path d="m12 5 7 7-7 7"/></svg></span></a>
+                  <a class="boc-item" href="toolbox/atelier.xhtml?obj=concepts"><span class="boc-v" aria-hidden="true"><svg viewBox="0 0 24 24"><path d="M12 3v18"/><path d="M5 8h14"/><path d="M8 8v5a4 4 0 0 0 8 0V8"/></svg></span><span class="boc-l">#{v2LocaleBean.getMsg('v2.home.workshop.concepts')}</span><span class="boc-go"><svg viewBox="0 0 24 24" aria-hidden="true"><path d="M5 12h14"/><path d="m12 5 7 7-7 7"/></svg></span></a>
+                  <a class="boc-item" href="toolbox/synchronisation.xhtml"><span class="boc-v" aria-hidden="true"><svg viewBox="0 0 24 24"><path d="M21 12a9 9 0 0 1-15.5 6.4L3 16"/><path d="M3 21v-5h5"/><path d="M3 12a9 9 0 0 1 15.5-6.4L21 8"/><path d="M21 3v5h-5"/></svg></span><span class="boc-l">#{v2LocaleBean.getMsg('v2.home.workshop.sync')}</span><span class="boc-go"><svg viewBox="0 0 24 24" aria-hidden="true"><path d="M5 12h14"/><path d="m12 5 7 7-7 7"/></svg></span></a>
                 </div>
-              </div>
-              <div class="boc boc-clickable" data-act="show" data-panel="viewStats" role="link" tabindex="0">
+              </h:panelGroup>
+              <ui:fragment rendered="#{v2ThesaurusViewBean.statisticsBlockVisible}">
+              <div class="boc#{v2ThesaurusViewBean.statisticsDetailVisible ? ' boc-clickable' : ''}"
+                   data-act="#{v2ThesaurusViewBean.statisticsDetailVisible ? 'show' : ''}"
+                   data-panel="viewStats"
+                   role="#{v2ThesaurusViewBean.statisticsDetailVisible ? 'link' : ''}"
+                   tabindex="#{v2ThesaurusViewBean.statisticsDetailVisible ? '0' : '-1'}">
                 <div class="boc-h">
                   <div class="boc-ico"><svg viewBox="0 0 24 24" aria-hidden="true"><path d="M3 3v18h18"/><rect x="7" y="11" width="3" height="6"/><rect x="12" y="7" width="3" height="10"/><rect x="17" y="13" width="3" height="4"/></svg></div>
                   <div class="boc-ht">
-                    <div class="boc-t">Statistiques</div>
-                    <div class="boc-d">Volumétrie, complétude, répartition. Cliquez pour le détail.</div>
+                    <div class="boc-t">#{v2LocaleBean.getMsg('v2.home.stats')}</div>
+                    <div class="boc-d">#{v2ThesaurusViewBean.statisticsDetailVisible ? v2LocaleBean.getMsg('v2.home.stats.desc.click') : v2LocaleBean.getMsg('v2.home.stats.desc')}</div>
                   </div>
-                  <span class="boc-go static"><svg viewBox="0 0 24 24" aria-hidden="true"><path d="M5 12h14"/><path d="m12 5 7 7-7 7"/></svg></span>
+                  <h:panelGroup rendered="#{v2ThesaurusViewBean.statisticsDetailVisible}" styleClass="boc-go static">
+                    <svg viewBox="0 0 24 24" aria-hidden="true"><path d="M5 12h14"/><path d="m12 5 7 7-7 7"/></svg>
+                  </h:panelGroup>
                 </div>
                 <div class="mg-kpis card">
                   <div class="mg-kpi">
                     <div class="mg-kpi-n" data-stat="concepts" aria-busy="true" aria-live="polite">
                       <span class="mg-kpi-spin" aria-hidden="true"></span>
                     </div>
-                    <div class="mg-kpi-l">Concepts</div>
+                    <div class="mg-kpi-l">#{v2LocaleBean.getMsg('v2.home.stats.concepts')}</div>
                   </div>
                   <div class="mg-kpi">
                     <div class="mg-kpi-n" data-stat="candidates" aria-busy="true" aria-live="polite">
                       <span class="mg-kpi-spin" aria-hidden="true"></span>
                     </div>
-                    <div class="mg-kpi-l">Candidats</div>
+                    <div class="mg-kpi-l">#{v2LocaleBean.getMsg('v2.home.stats.candidates')}</div>
                   </div>
                   <div class="mg-kpi">
                     <div class="mg-kpi-n" data-stat="collections" aria-busy="true" aria-live="polite">
                       <span class="mg-kpi-spin" aria-hidden="true"></span>
                     </div>
-                    <div class="mg-kpi-l">Micro-thésaurus</div>
+                    <div class="mg-kpi-l">#{v2LocaleBean.getMsg('v2.home.stats.collections')}</div>
                   </div>
                   <div class="mg-kpi">
                     <div class="mg-kpi-n" data-stat="languages" aria-busy="true" aria-live="polite">
                       <span class="mg-kpi-spin" aria-hidden="true"></span>
                     </div>
-                    <div class="mg-kpi-l">Langues</div>
+                    <div class="mg-kpi-l">#{v2LocaleBean.getMsg('v2.home.stats.languages')}</div>
                   </div>
                 </div>
               </div>
-              <div class="boc">
+              </ui:fragment>
+              <h:panelGroup rendered="#{v2ThesaurusViewBean.settingsVisible}" layout="block" styleClass="boc">
                 <div class="boc-h">
                   <div class="boc-ico"><svg viewBox="0 0 24 24" aria-hidden="true"><circle cx="12" cy="12" r="3"/><path d="M19.4 15a1.65 1.65 0 0 0 .33 1.82l.06.06a2 2 0 1 1-2.83 2.83l-.06-.06a1.65 1.65 0 0 0-1.82-.33 1.65 1.65 0 0 0-1 1.51V21a2 2 0 0 1-4 0v-.09A1.65 1.65 0 0 0 9 19.4a1.65 1.65 0 0 0-1.82.33l-.06.06a2 2 0 1 1-2.83-2.83l-.06-.06a1.65 1.65 0 0 0 .33-1.82 1.65 1.65 0 0 0-1.51-1H3a2 2 0 0 1 0-4h.09A1.65 1.65 0 0 0 4.6 9a1.65 1.65 0 0 0-.33-1.82l-.06-.06a2 2 0 1 1 2.83-2.83l.06.06a1.65 1.65 0 0 0 1.82.33H9a1.65 1.65 0 0 0 1-1.51V3a2 2 0 0 1 4 0v.09a1.65 1.65 0 0 0 1 1.51 1.65 1.65 0 0 0 1.82-.33l.06-.06a2 2 0 1 1 2.83 2.83l-.06.06a1.65 1.65 0 0 0-.33 1.82V9a1.65 1.65 0 0 0 1.51 1H21a2 2 0 0 1 0 4h-.09a1.65 1.65 0 0 0-1.51 1z"/></svg></div>
                   <div class="boc-ht">
-                    <div class="boc-t">Paramètres du thésaurus</div>
-                    <div class="boc-d">Métadonnées, langues, collections, statut… (rubriques en cours de cadrage).</div>
+                    <div class="boc-t">#{v2LocaleBean.getMsg('v2.home.settings')}</div>
+                    <div class="boc-d">#{v2LocaleBean.getMsg('v2.home.settings.desc')}</div>
                   </div>
                 </div>
                 <div class="boc-grid boc-grid-1">
-                  
                   <a class="boc-item boc-nav" href="setting/preference.xhtml#stPrefs">
-                    <span class="boc-v">›</span><span class="boc-l">Préférences du thésaurus</span>
+                    <span class="boc-v">›</span><span class="boc-l">#{v2LocaleBean.getMsg('v2.home.settings.prefs')}</span>
                     <span class="boc-go"><svg viewBox="0 0 24 24" aria-hidden="true"><path d="M5 12h14"/><path d="m12 5 7 7-7 7"/></svg></span>
                   </a>
                   <a class="boc-item boc-nav" href="setting/preference.xhtml#stServers">
-                    <span class="boc-v">›</span><span class="boc-l">Identifiants des serveurs</span>
+                    <span class="boc-v">›</span><span class="boc-l">#{v2LocaleBean.getMsg('v2.home.settings.servers')}</span>
                     <span class="boc-go"><svg viewBox="0 0 24 24" aria-hidden="true"><path d="M5 12h14"/><path d="m12 5 7 7-7 7"/></svg></span>
                   </a>
                   <a class="boc-item boc-nav" href="setting/preference.xhtml#stCorpus">
-                    <span class="boc-v">›</span><span class="boc-l">Gestion des corpus liés</span>
+                    <span class="boc-v">›</span><span class="boc-l">#{v2LocaleBean.getMsg('v2.home.settings.corpus')}</span>
                     <span class="boc-go"><svg viewBox="0 0 24 24" aria-hidden="true"><path d="M5 12h14"/><path d="m12 5 7 7-7 7"/></svg></span>
                   </a>
                 </div>
-              </div>
-              <div class="boc">
+              </h:panelGroup>
+              <h:panelGroup rendered="#{v2ThesaurusViewBean.maintenanceVisible}" layout="block" styleClass="boc">
                 <div class="boc-h">
                   <div class="boc-ico"><svg viewBox="0 0 24 24" aria-hidden="true"><path d="M14.7 6.3a4 4 0 0 0-5.4 5.4L3 18v3h3l6.3-6.3a4 4 0 0 0 5.4-5.4l-2.7 2.7-2-2 2.7-2.7z"/></svg></div>
                   <div class="boc-ht">
-                    <div class="boc-t">Maintenance</div>
-                    <div class="boc-d">Vérifications de conformité et corrections de données. Le clic lance directement l'outil.</div>
+                    <div class="boc-t">#{v2LocaleBean.getMsg('v2.home.maint')}</div>
+                    <div class="boc-d">#{v2LocaleBean.getMsg('v2.home.maint.desc')}</div>
                   </div>
                 </div>
-                <div class="mc-note"><svg viewBox="0 0 24 24" aria-hidden="true"><path d="M10.3 3.9 1.8 18a2 2 0 0 0 1.7 3h17a2 2 0 0 0 1.7-3L13.7 3.9a2 2 0 0 0-3.4 0z"/><path d="M12 9v4"/><path d="M12 17h.01"/></svg><span>Ces opérations modifient le thésaurus en masse. <b>Rechargez-le</b> après le traitement.</span></div>
+                <div class="mc-note"><svg viewBox="0 0 24 24" aria-hidden="true"><path d="M10.3 3.9 1.8 18a2 2 0 0 0 1.7 3h17a2 2 0 0 0 1.7-3L13.7 3.9a2 2 0 0 0-3.4 0z"/><path d="M12 9v4"/><path d="M12 17h.01"/></svg><span>#{v2LocaleBean.getMsg('v2.home.maint.note')}</span></div>
                 <div class="mc-list">
                   <ui:include src="/v2/toolbox/includes/maintenance-tools.xhtml"/>
                 </div>
-              </div>
+              </h:panelGroup>
             </div>
           </div>
 </ui:composition>

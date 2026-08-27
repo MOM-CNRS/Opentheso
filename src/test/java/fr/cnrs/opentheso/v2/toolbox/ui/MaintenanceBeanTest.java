@@ -16,6 +16,7 @@ import org.mockito.junit.jupiter.MockitoExtension;
 
 import static org.junit.jupiter.api.Assertions.assertEquals;
 import static org.junit.jupiter.api.Assertions.assertFalse;
+import static org.junit.jupiter.api.Assertions.assertNotNull;
 import static org.junit.jupiter.api.Assertions.assertTrue;
 import static org.mockito.ArgumentMatchers.anyBoolean;
 import static org.mockito.ArgumentMatchers.anyString;
@@ -38,16 +39,19 @@ class MaintenanceBeanTest {
     @Mock
     private ThesaurusViewBean thesaurusViewBean;
 
+    private MaintenanceLastRunStore lastRunStore;
     private MaintenanceBean bean;
 
     @BeforeEach
     void setUp() {
+        lastRunStore = new MaintenanceLastRunStore();
         bean = new MaintenanceBean(
                 userSession,
                 toolboxAccessPolicy,
                 thesaurusContext,
                 thesaurusMaintenanceService,
-                thesaurusViewBean
+                thesaurusViewBean,
+                lastRunStore
         );
     }
 
@@ -183,6 +187,34 @@ class MaintenanceBeanTest {
 
         verify(thesaurusViewBean, never()).reloadTree();
         assertEquals("à l'instant", bean.getArkLastRunLabel());
+    }
+
+    @Test
+    void generateSitemap_storesXmlAndMarksLastRun() {
+        stubAccess();
+        when(thesaurusMaintenanceService.buildSitemapXml("TH1")).thenReturn("<urlset/>");
+
+        try (MockedStatic<MessageUtils> messages = mockStatic(MessageUtils.class)) {
+            bean.generateSitemap();
+            messages.verify(() -> MessageUtils.showInformationMessage("Sitemap généré. Téléchargement…"));
+        }
+
+        assertEquals("à l'instant", bean.getSitemapLastRunLabel());
+        assertNotNull(lastRunStore.consumePendingSitemap());
+        assertTrue(bean.isLastOk());
+    }
+
+    @Test
+    void reorganizeHierarchy_toastsWhenAccessDenied() {
+        when(toolboxAccessPolicy.canAccessMaintenance(userSession)).thenReturn(false);
+
+        try (MockedStatic<MessageUtils> messages = mockStatic(MessageUtils.class)) {
+            bean.reorganizeHierarchy();
+            messages.verifyNoInteractions();
+        }
+
+        verify(thesaurusMaintenanceService, never()).reorganizeHierarchy(anyString());
+        assertFalse(bean.isLastOk());
     }
 
     @Test

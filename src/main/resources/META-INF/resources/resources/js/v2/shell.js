@@ -181,7 +181,7 @@ function paintMain() {
     else id = state.conceptId ? "viewConcept" : "viewEmpty";
   } else if (v === "tableau") {
     id = state.conceptId ? "viewConcept" : "viewEmpty";
-  } else if (state.home && !state.conceptId && $("#viewHome")) {
+  } else if (!state.conceptId && $("#viewHome") && (state.home || v === "arbo")) {
     id = "viewHome";
   } else {
     id = state.conceptId ? "viewConcept" : "viewEmpty";
@@ -273,6 +273,9 @@ function setView(view) {
   if (view === "hyper") state.graphFront = true;
   if (view !== "arbo" && view !== "hyper" && view !== "tableau") {
     clearSelection(true);
+  }
+  if (view === "arbo" && !state.conceptId) {
+    state.home = true;
   }
   if (view === "recherche") {
     state.home = false;

@@ -21,12 +21,18 @@ class ThesaurusMaintenanceServiceTest {
     private ThesaurusMaintenancePersistence thesaurusMaintenancePersistence;
     @Mock
     private ThesaurusPreferenceService thesaurusPreferenceService;
+    @Mock
+    private fr.cnrs.opentheso.v2.shared.web.ApplicationUriService applicationUriService;
 
     private ThesaurusMaintenanceService service;
 
     @BeforeEach
     void setUp() {
-        service = new ThesaurusMaintenanceService(thesaurusMaintenancePersistence, thesaurusPreferenceService);
+        service = new ThesaurusMaintenanceService(
+                thesaurusMaintenancePersistence,
+                thesaurusPreferenceService,
+                applicationUriService
+        );
         ReflectionTestUtils.setField(service, "workLanguage", "fr");
     }
 

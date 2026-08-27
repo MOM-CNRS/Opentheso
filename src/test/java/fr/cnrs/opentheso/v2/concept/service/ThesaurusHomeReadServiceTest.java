@@ -68,6 +68,8 @@ class ThesaurusHomeReadServiceTest {
         assertEquals("http://localhost/opentheso/?idt=TH1", overview.permalinkUrl());
         assertEquals(1, overview.lastModifiedConcepts().size());
         assertEquals("<p>Bienvenue</p>", overview.homePageHtml());
+        assertTrue(overview.lastModifiedDate().contains("2023"));
+        assertEquals(overview.lastModifiedDate(), overview.lastModifiedRelative());
     }
 
     @Test

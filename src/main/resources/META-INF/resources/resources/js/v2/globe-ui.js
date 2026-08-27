@@ -38,8 +38,19 @@ function otGlobe() {
 }
 
 function ensureGlobe() {
-  const api = otGlobe();
-  if (api) api.ensure();
+  if (window.OTGlobe) {
+    window.OTGlobe.attach(globeHost()).ensure();
+    return;
+  }
+  if (document.querySelector("script[data-globe]")) return;
+  const ctx = document.body.getAttribute("data-ctx") || "";
+  const script = document.createElement("script");
+  script.src = ctx + "/resources/js/v2/globe.js?v=globe-lazy1";
+  script.dataset.globe = "1";
+  script.onload = () => {
+    if (window.OTGlobe) window.OTGlobe.attach(globeHost()).ensure();
+  };
+  document.head.appendChild(script);
 }
 
 function stopGlobe() {

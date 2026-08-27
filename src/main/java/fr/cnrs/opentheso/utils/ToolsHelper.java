@@ -7,6 +7,7 @@ import java.net.URISyntaxException;
 import org.jsoup.Jsoup;
 import org.jsoup.nodes.Document;
 import org.jsoup.nodes.Entities;
+import org.jsoup.safety.Safelist;
 
 public class ToolsHelper {
 
@@ -48,11 +49,14 @@ public class ToolsHelper {
             return "";
         }
 
-        Document doc = Jsoup.parseBodyFragment(html);
-
-        // paramètres de sortie propres
+        Safelist safelist = Safelist.relaxed()
+                .addTags("h1", "h2", "h3", "hr")
+                .addAttributes("span", "class")
+                .addEnforcedAttribute("a", "rel", "noopener noreferrer");
+        String cleaned = Jsoup.clean(html, safelist);
+        Document doc = Jsoup.parseBodyFragment(cleaned);
         doc.outputSettings()
-                .prettyPrint(true)               // indentation
+                .prettyPrint(true)
                 .indentAmount(2)
                 .syntax(Document.OutputSettings.Syntax.html)
                 .escapeMode(Entities.EscapeMode.base);

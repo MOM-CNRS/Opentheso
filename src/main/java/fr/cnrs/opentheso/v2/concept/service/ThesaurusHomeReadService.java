@@ -5,12 +5,14 @@ import fr.cnrs.opentheso.v2.setting.model.ExportUriType;
 import fr.cnrs.opentheso.v2.setting.model.ThesaurusPreferences;
 import fr.cnrs.opentheso.v2.setting.service.ThesaurusPreferenceService;
 import fr.cnrs.opentheso.v2.shared.repository.ThesaurusHomeQueryRepository;
+import fr.cnrs.opentheso.v2.shared.time.RelativeTimeFormat;
 import fr.cnrs.opentheso.v2.shared.web.ApplicationUriService;
 import lombok.RequiredArgsConstructor;
 import org.apache.commons.lang3.StringUtils;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
 
+import java.time.Instant;
 import java.util.Date;
 import java.util.Objects;
 
@@ -40,11 +42,14 @@ public class ThesaurusHomeReadService {
             lastModified = thesaurusHomeQueryRepository.findLastModificationDate(thesaurusId).orElse(null);
         }
 
+        Instant lastModifiedAt = lastModified == null ? null : lastModified.toInstant();
+        String lastModifiedExact = RelativeTimeFormat.exact(lastModifiedAt);
         return new ThesaurusHomeOverview(
                 title,
                 thesaurusHomeQueryRepository.countValidConcepts(thesaurusId),
                 thesaurusHomeQueryRepository.findProjectName(thesaurusId).orElse(""),
-                lastModified != null ? lastModified.toString() : "",
+                lastModifiedExact,
+                RelativeTimeFormat.relative(lastModifiedAt),
                 permalinkUrl,
                 permalinkLabel,
                 lastModifiedBundle.concepts(),
@@ -85,6 +90,7 @@ public class ThesaurusHomeReadService {
         return new ThesaurusHomeOverview(
                 Objects.toString(thesaurusTitle, ""),
                 0,
+                "",
                 "",
                 "",
                 "",

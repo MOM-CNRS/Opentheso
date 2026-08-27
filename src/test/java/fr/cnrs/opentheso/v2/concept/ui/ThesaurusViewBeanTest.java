@@ -1,10 +1,14 @@
 package fr.cnrs.opentheso.v2.concept.ui;
 
+import fr.cnrs.opentheso.v2.concept.model.ConceptLinkItem;
 import fr.cnrs.opentheso.v2.concept.model.ConceptDetail;
 import fr.cnrs.opentheso.v2.concept.model.ConceptSummary;
 import fr.cnrs.opentheso.v2.concept.model.ConceptTreeNodeData;
 import fr.cnrs.opentheso.v2.concept.model.FacetDetailOverview;
+import fr.cnrs.opentheso.v2.concept.model.ThesaurusHomeOverview;
+import fr.cnrs.opentheso.v2.concept.model.ThesaurusMetadataItem;
 import fr.cnrs.opentheso.v2.concept.service.ConceptReadService;
+import fr.cnrs.opentheso.v2.concept.service.ThesaurusHomeReadService;
 import fr.cnrs.opentheso.v2.concept.service.ThesaurusHomeWriteService;
 import fr.cnrs.opentheso.v2.rights.Permission;
 import fr.cnrs.opentheso.v2.rights.RightsService;
@@ -13,11 +17,10 @@ import fr.cnrs.opentheso.v2.setting.model.ThesaurusPreferences;
 import fr.cnrs.opentheso.v2.setting.service.ThesaurusPreferenceService;
 import fr.cnrs.opentheso.v2.setting.service.ThesaurusWorkLanguageService;
 import fr.cnrs.opentheso.v2.setting.ui.ThesaurusContext;
-import fr.cnrs.opentheso.v2.shared.repository.ThesaurusHomeQueryRepository;
-import fr.cnrs.opentheso.v2.shared.session.ThesaurusSelection;
 import fr.cnrs.opentheso.v2.shared.session.ThesaurusSelectionService;
 import fr.cnrs.opentheso.v2.shared.ui.UserSession;
 import fr.cnrs.opentheso.v2.shared.ui.V2LocaleBean;
+import fr.cnrs.opentheso.v2.toolbox.policy.ToolboxAccessPolicy;
 import org.junit.jupiter.api.BeforeEach;
 import org.junit.jupiter.api.Test;
 import org.junit.jupiter.api.extension.ExtendWith;
@@ -35,6 +38,7 @@ import static org.junit.jupiter.api.Assertions.assertFalse;
 import static org.junit.jupiter.api.Assertions.assertNull;
 import static org.junit.jupiter.api.Assertions.assertTrue;
 import static org.mockito.ArgumentMatchers.any;
+import static org.mockito.ArgumentMatchers.anyString;
 import static org.mockito.ArgumentMatchers.anyBoolean;
 import static org.mockito.ArgumentMatchers.anyInt;
 import static org.mockito.ArgumentMatchers.eq;
@@ -50,7 +54,7 @@ import static org.mockito.Mockito.when;
 class ThesaurusViewBeanTest {
 
     @Mock
-    private ThesaurusHomeQueryRepository thesaurusHomeQueryRepository;
+    private ThesaurusHomeReadService thesaurusHomeReadService;
     @Mock
     private ThesaurusPreferenceService thesaurusPreferenceService;
     @Mock
@@ -67,6 +71,8 @@ class ThesaurusViewBeanTest {
     private ThesaurusSelectionService thesaurusSelectionService;
     @Mock
     private V2LocaleBean v2LocaleBean;
+    @Mock
+    private ToolboxAccessPolicy toolboxAccessPolicy;
 
     private ThesaurusContext thesaurusContext;
     private ThesaurusViewBean bean;
@@ -77,36 +83,32 @@ class ThesaurusViewBeanTest {
         ReflectionTestUtils.setField(thesaurusContext, "defaultWorkLanguage", "fr");
         bean = new ThesaurusViewBean(
                 thesaurusContext,
-                thesaurusHomeQueryRepository,
+                thesaurusHomeReadService,
                 thesaurusPreferenceService,
                 thesaurusHomeWriteService,
                 conceptReadService,
                 userSession,
                 rightsService,
-                v2LocaleBean
+                v2LocaleBean,
+                toolboxAccessPolicy
         );
     }
 
     @Test
-    void seedsContextWithTemporaryThesaurusWhenEmpty() {
-        when(thesaurusSelectionService.resolve("th17"))
-                .thenReturn(new ThesaurusSelection("th17", "Titre en base"));
-        when(thesaurusWorkLanguageService.resolveForThesaurus("th17")).thenReturn("fr");
-        when(thesaurusHomeQueryRepository.countValidConcepts("th17")).thenReturn(4382);
-
-        assertEquals("th17", bean.getId());
-        assertEquals("Titre en base", bean.getTitle());
-        assertEquals(4382, bean.getConceptCount());
-        assertTrue(bean.getConceptCountLabel().endsWith("concepts"));
-        assertEquals("th17", thesaurusContext.resolveThesaurusId());
-        assertEquals("fr", thesaurusContext.resolveWorkLanguage());
-        verify(thesaurusHomeQueryRepository).countValidConcepts("th17");
+    void doesNotSeedContextWhenEmpty() {
+        assertNull(bean.getId());
+        assertEquals("", bean.getTitle());
+        assertFalse(bean.isIdentityCardVisible());
+        assertFalse(bean.isStatisticsBlockVisible());
+        verify(thesaurusSelectionService, never()).resolve(anyString());
+        verify(thesaurusHomeReadService, never()).loadOverview(any(), any(), any());
     }
 
     @Test
     void reusesAlreadySelectedThesaurus() {
         thesaurusContext.selectThesaurus("TH2", "Autre thésaurus", "en");
-        when(thesaurusHomeQueryRepository.countValidConcepts("TH2")).thenReturn(12);
+        when(thesaurusHomeReadService.loadOverview("TH2", "en", "Autre thésaurus"))
+                .thenReturn(overview("Autre thésaurus", 12, "Projet B"));
 
         assertEquals("TH2", bean.getId());
         assertEquals("Autre thésaurus", bean.getTitle());
@@ -223,10 +225,22 @@ class ThesaurusViewBeanTest {
     @Test
     void loadsHomePageHtmlFromDatabase() {
         thesaurusContext.selectThesaurus("th17", "Pactols_Lieux", "fr");
-        when(thesaurusHomeWriteService.loadHtml("th17", "fr")).thenReturn("<p>Description Pactols</p>");
+        when(thesaurusHomeReadService.loadOverview("th17", "fr", "Pactols_Lieux"))
+                .thenReturn(overview("Pactols_Lieux", 10, "FRANTIQ", "<p>Description Pactols</p>"));
 
         assertTrue(bean.isHomePageHtmlPresent());
         assertEquals("<p>Description Pactols</p>", bean.getHomePageHtml());
+        assertEquals("FRANTIQ", bean.getProjectName());
+        assertTrue(bean.isPermalinkPresent());
+        assertTrue(bean.isIdentityPresent());
+        assertTrue(bean.isIdentityCardVisible());
+        assertTrue(bean.isLastModifiedConceptsPresent());
+        assertTrue(bean.isMetadataPresent());
+        assertEquals("13 décembre 2023", bean.getLastModifiedExact());
+        assertEquals("13 décembre 2023", bean.getLastModifiedLabel());
+        bean.getConceptCount();
+        bean.getPermalinkUrl();
+        verify(thesaurusHomeReadService, times(1)).loadOverview("th17", "fr", "Pactols_Lieux");
     }
 
     @Test
@@ -437,9 +451,111 @@ class ThesaurusViewBeanTest {
         verify(conceptReadService).loadTreeRootNodes("th17", "fr", true);
     }
 
+    @Test
+    void cancelEditing_clearsDraft() {
+        thesaurusContext.selectThesaurus("th17", "Pactols_Lieux", "fr");
+        when(userSession.getCurrentUserId()).thenReturn(9);
+        when(rightsService.canOnThesaurus(9, Permission.MANAGE_THESAURUS, "th17")).thenReturn(true);
+        when(thesaurusHomeWriteService.loadHtml("th17", "fr")).thenReturn("<p>actuel</p>");
+
+        bean.startEditing();
+        bean.cancelEditing();
+
+        assertFalse(bean.isEditing());
+        assertNull(bean.getHomeHtml());
+        assertFalse(bean.isSaveError());
+    }
+
+    @Test
+    void saveHomeHtml_reportsFailure() {
+        thesaurusContext.selectThesaurus("th17", "Pactols_Lieux", "fr");
+        when(userSession.getCurrentUserId()).thenReturn(9);
+        when(rightsService.canOnThesaurus(9, Permission.MANAGE_THESAURUS, "th17")).thenReturn(true);
+        when(thesaurusHomeWriteService.saveHtml("th17", "fr", "<p>nouveau</p>")).thenReturn(false);
+
+        bean.setHomeHtml("<p>nouveau</p>");
+        bean.saveHomeHtml();
+
+        assertTrue(bean.isSaveError());
+        assertEquals("L'enregistrement a échoué.", bean.getSaveMessage());
+    }
+
+    @Test
+    void reloadTree_invalidatesCachedRoots() {
+        thesaurusContext.selectThesaurus("th17", "Pactols_Lieux", "fr");
+        when(v2LocaleBean.getIdLangue()).thenReturn("fr");
+        when(thesaurusPreferenceService.loadUsedLanguages("th17", "fr")).thenReturn(List.of(language("fr", "Français")));
+        when(conceptReadService.loadTreeRootNodes("th17", "fr", false)).thenReturn(List.of(
+                new ConceptTreeNodeData("c1", "Lieux", "", "concept", false)
+        ));
+
+        assertEquals(1, bean.getTreeRoots().size());
+        bean.reloadTree();
+        assertEquals(1, bean.getTreeRoots().size());
+        verify(conceptReadService, times(2)).loadTreeRootNodes("th17", "fr", false);
+    }
+
+    @Test
+    void workshopAndMaintenanceAreHiddenWithoutRights() {
+        thesaurusContext.selectThesaurus("th17", "Pactols_Lieux", "fr");
+        when(toolboxAccessPolicy.canAccessWorkshop(userSession)).thenReturn(false);
+        when(toolboxAccessPolicy.canAccessMaintenance(userSession)).thenReturn(false);
+        when(toolboxAccessPolicy.canViewStatistics(userSession)).thenReturn(true);
+        when(userSession.getCurrentUserId()).thenReturn(null);
+        when(userSession.isLoggedIn()).thenReturn(false);
+
+        assertTrue(bean.isIdentityCardVisible());
+        assertFalse(bean.isWorkshopVisible());
+        assertFalse(bean.isMaintenanceVisible());
+        assertFalse(bean.isSettingsVisible());
+        assertTrue(bean.isStatisticsDetailVisible());
+        assertFalse(bean.isStatisticsBlockVisible());
+    }
+
+    @Test
+    void statisticsBlockIsVisibleWhenLoggedIn() {
+        thesaurusContext.selectThesaurus("th17", "Pactols_Lieux", "fr");
+        when(userSession.isLoggedIn()).thenReturn(true);
+
+        assertTrue(bean.isIdentityCardVisible());
+        assertTrue(bean.isStatisticsBlockVisible());
+    }
+
+    @Test
+    void workshopAndMaintenanceAreVisibleWithRights() {
+        thesaurusContext.selectThesaurus("th17", "Pactols_Lieux", "fr");
+        when(toolboxAccessPolicy.canAccessWorkshop(userSession)).thenReturn(true);
+        when(toolboxAccessPolicy.canAccessMaintenance(userSession)).thenReturn(true);
+        when(userSession.getCurrentUserId()).thenReturn(9);
+        when(rightsService.canOnThesaurus(9, Permission.MANAGE_THESAURUS, "th17")).thenReturn(true);
+
+        assertTrue(bean.isWorkshopVisible());
+        assertTrue(bean.isMaintenanceVisible());
+        assertTrue(bean.isSettingsVisible());
+    }
+
 
     private static ThesaurusLanguage language(String code, String label) {
         return new ThesaurusLanguage(1L, code, "", "", label);
+    }
+
+    private static ThesaurusHomeOverview overview(String title, int count, String project) {
+        return overview(title, count, project, "<p>Bienvenue</p>");
+    }
+
+    private static ThesaurusHomeOverview overview(String title, int count, String project, String html) {
+        return new ThesaurusHomeOverview(
+                title,
+                count,
+                project,
+                "13 décembre 2023",
+                "13 décembre 2023",
+                "http://localhost/opentheso/?idt=th17",
+                "localhost/opentheso/?idt=th17",
+                List.of(new ConceptLinkItem("c1", "Lieux")),
+                List.of(new ThesaurusMetadataItem(1, "title", title, "fr", "string")),
+                html
+        );
     }
 
     private static ConceptDetail conceptDetail(String id, String label, String status) {

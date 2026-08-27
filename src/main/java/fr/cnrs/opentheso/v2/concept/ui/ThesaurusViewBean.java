@@ -10,8 +10,12 @@ import fr.cnrs.opentheso.v2.concept.model.ConceptNote;
 import fr.cnrs.opentheso.v2.concept.model.ConceptRelation;
 import fr.cnrs.opentheso.v2.concept.model.ConceptTreeNodeData;
 import fr.cnrs.opentheso.v2.concept.model.FacetDetailOverview;
+import fr.cnrs.opentheso.v2.concept.model.ConceptLinkItem;
+import fr.cnrs.opentheso.v2.concept.model.ThesaurusHomeOverview;
+import fr.cnrs.opentheso.v2.concept.model.ThesaurusMetadataItem;
 import fr.cnrs.opentheso.v2.concept.service.ConceptReadService;
 import fr.cnrs.opentheso.v2.concept.support.ConceptQrSvgSupport;
+import fr.cnrs.opentheso.v2.concept.service.ThesaurusHomeReadService;
 import fr.cnrs.opentheso.v2.concept.service.ThesaurusHomeWriteService;
 import fr.cnrs.opentheso.v2.rights.Permission;
 import fr.cnrs.opentheso.v2.rights.RightsService;
@@ -19,9 +23,9 @@ import fr.cnrs.opentheso.v2.setting.model.ThesaurusLanguage;
 import fr.cnrs.opentheso.v2.setting.model.ThesaurusPreferences;
 import fr.cnrs.opentheso.v2.setting.service.ThesaurusPreferenceService;
 import fr.cnrs.opentheso.v2.setting.ui.ThesaurusContext;
-import fr.cnrs.opentheso.v2.shared.repository.ThesaurusHomeQueryRepository;
 import fr.cnrs.opentheso.v2.shared.ui.UserSession;
 import fr.cnrs.opentheso.v2.shared.ui.V2LocaleBean;
+import fr.cnrs.opentheso.v2.toolbox.policy.ToolboxAccessPolicy;
 import jakarta.faces.context.FacesContext;
 import jakarta.faces.view.ViewScoped;
 import jakarta.inject.Named;
@@ -41,29 +45,25 @@ import java.util.stream.Collectors;
 
 /**
  * Façade de l'accueil thésaurus : lit / écrit {@link ThesaurusContext}.
- * Tant qu'aucun thésaurus n'est en session, sélectionne temporairement {@code th17}.
  */
 @Named("v2ThesaurusViewBean")
 @ViewScoped
 @RequiredArgsConstructor
 public class ThesaurusViewBean implements Serializable {
 
-    public static final String THESAURUS_ID = "th17";
-
     private final ThesaurusContext thesaurusContext;
-    private final ThesaurusHomeQueryRepository thesaurusHomeQueryRepository;
+    private final ThesaurusHomeReadService thesaurusHomeReadService;
     private final ThesaurusPreferenceService thesaurusPreferenceService;
     private final ThesaurusHomeWriteService thesaurusHomeWriteService;
     private final ConceptReadService conceptReadService;
     private final UserSession userSession;
     private final RightsService rightsService;
     private final V2LocaleBean v2LocaleBean;
-    private Integer conceptCount;
+    private final ToolboxAccessPolicy toolboxAccessPolicy;
+    private ThesaurusHomeOverview homeOverview;
     private List<ThesaurusLanguage> languages;
     private String selectedLang;
     private boolean sessionReady;
-    private String homePageHtml;
-    private boolean homePageHtmlLoaded;
     private List<ThesaurusTreeNode> treeRoots;
     private Boolean canEdit;
     private Boolean breadcrumbEnabled;
@@ -111,14 +111,7 @@ public class ThesaurusViewBean implements Serializable {
     private List<ConceptCorpusLinkItem> displayedCorpusLinks = Collections.emptyList();
 
     public void ensureSessionThesaurus() {
-        if (sessionReady) {
-            return;
-        }
         sessionReady = true;
-        if (StringUtils.isNotBlank(thesaurusContext.resolveThesaurusId())) {
-            return;
-        }
-        thesaurusContext.selectThesaurus(THESAURUS_ID);
     }
 
     public String getId() {
@@ -132,15 +125,99 @@ public class ThesaurusViewBean implements Serializable {
     }
 
     public int getConceptCount() {
-        if (conceptCount == null) {
-            conceptCount = thesaurusHomeQueryRepository.countValidConcepts(getId());
-        }
-        return conceptCount;
+        return home().conceptCount();
     }
 
     public String getConceptCountLabel() {
         int count = getConceptCount();
         return formatCount(count) + (count > 1 ? " concepts" : " concept");
+    }
+
+    public String getProjectName() {
+        return StringUtils.defaultString(home().projectName());
+    }
+
+    public boolean isProjectNamePresent() {
+        return StringUtils.isNotBlank(getProjectName());
+    }
+
+    public String getLastModifiedLabel() {
+        return StringUtils.firstNonBlank(home().lastModifiedRelative(), home().lastModifiedDate());
+    }
+
+    public String getLastModifiedExact() {
+        return StringUtils.defaultString(home().lastModifiedDate());
+    }
+
+    public boolean isLastModifiedPresent() {
+        return StringUtils.isNotBlank(getLastModifiedExact()) || StringUtils.isNotBlank(getLastModifiedLabel());
+    }
+
+    public String getPermalinkUrl() {
+        return StringUtils.defaultString(home().permalinkUrl());
+    }
+
+    public String getPermalinkLabel() {
+        return StringUtils.defaultString(home().permalinkLabel());
+    }
+
+    public boolean isPermalinkPresent() {
+        return StringUtils.isNotBlank(getPermalinkUrl());
+    }
+
+    public boolean isIdentityPresent() {
+        return isProjectNamePresent()
+                || isLastModifiedPresent()
+                || isPermalinkPresent()
+                || isLastModifiedConceptsPresent()
+                || isMetadataPresent();
+    }
+
+    /** Carte d'identité : visible dès qu'un thésaurus est sélectionné (visiteur et connecté). */
+    public boolean isIdentityCardVisible() {
+        return StringUtils.isNotBlank(getId());
+    }
+
+    public List<ConceptLinkItem> getLastModifiedConcepts() {
+        List<ConceptLinkItem> concepts = home().lastModifiedConcepts();
+        return concepts == null ? Collections.emptyList() : concepts;
+    }
+
+    public boolean isLastModifiedConceptsPresent() {
+        return !getLastModifiedConcepts().isEmpty();
+    }
+
+    public List<ThesaurusMetadataItem> getMetadata() {
+        List<ThesaurusMetadataItem> metadata = home().metadata();
+        return metadata == null ? Collections.emptyList() : metadata;
+    }
+
+    public boolean isMetadataPresent() {
+        return !getMetadata().isEmpty();
+    }
+
+    public boolean isWorkshopVisible() {
+        return toolboxAccessPolicy.canAccessWorkshop(userSession)
+                && StringUtils.isNotBlank(getId());
+    }
+
+    public boolean isSettingsVisible() {
+        return isCanEdit();
+    }
+
+    public boolean isMaintenanceVisible() {
+        return toolboxAccessPolicy.canAccessMaintenance(userSession)
+                && StringUtils.isNotBlank(getId());
+    }
+
+    public boolean isStatisticsDetailVisible() {
+        return toolboxAccessPolicy.canViewStatistics(userSession)
+                && StringUtils.isNotBlank(getId());
+    }
+
+    /** KPIs accueil : réservés aux utilisateurs connectés. */
+    public boolean isStatisticsBlockVisible() {
+        return userSession.isLoggedIn() && StringUtils.isNotBlank(getId());
     }
 
     public List<ThesaurusLanguage> getLanguages() {
@@ -183,7 +260,7 @@ public class ThesaurusViewBean implements Serializable {
         if (StringUtils.isNotBlank(selectedLang)) {
             thesaurusContext.changeWorkLanguage(selectedLang);
         }
-        invalidateHomePageHtml();
+        invalidateHomeOverview();
         invalidateTree();
         breadcrumbEnabled = null;
         if (editing) {
@@ -409,11 +486,7 @@ public class ThesaurusViewBean implements Serializable {
             case "turtle", "ttl" -> "ttl";
             default -> "rdf";
         };
-        String contextPath = "";
-        FacesContext facesContext = FacesContext.getCurrentInstance();
-        if (facesContext != null) {
-            contextPath = StringUtils.defaultString(facesContext.getExternalContext().getRequestContextPath());
-        }
+        String contextPath = requestContextPath();
         return contextPath + "/api/" + getId() + "." + selectedConcept.getSummary().getConceptId() + "." + extension;
     }
 
@@ -596,13 +669,7 @@ public class ThesaurusViewBean implements Serializable {
     }
 
     public String getHomePageHtml() {
-        if (!homePageHtmlLoaded) {
-            homePageHtml = StringUtils.defaultString(
-                    thesaurusHomeWriteService.loadHtml(getId(), thesaurusContext.resolveWorkLanguage())
-            );
-            homePageHtmlLoaded = true;
-        }
-        return homePageHtml;
+        return StringUtils.defaultString(home().homePageHtml());
     }
 
     public boolean isHomePageHtmlPresent() {
@@ -664,13 +731,23 @@ public class ThesaurusViewBean implements Serializable {
         }
         editing = false;
         homeHtml = null;
-        invalidateHomePageHtml();
+        invalidateHomeOverview();
         saveMessage = "Description enregistrée.";
     }
 
-    private void invalidateHomePageHtml() {
-        homePageHtml = null;
-        homePageHtmlLoaded = false;
+    private ThesaurusHomeOverview home() {
+        if (homeOverview == null) {
+            homeOverview = thesaurusHomeReadService.loadOverview(
+                    getId(),
+                    thesaurusContext.resolveWorkLanguage(),
+                    getTitle()
+            );
+        }
+        return homeOverview;
+    }
+
+    private void invalidateHomeOverview() {
+        homeOverview = null;
     }
 
     private void invalidateTree() {
@@ -685,12 +762,15 @@ public class ThesaurusViewBean implements Serializable {
         if (treeRoots != null) {
             return;
         }
+        treeRoots = new ArrayList<>();
+        if (StringUtils.isBlank(getId())) {
+            return;
+        }
         List<ConceptTreeNodeData> roots = conceptReadService.loadTreeRootNodes(
                 getId(),
                 getSelectedLang(),
                 isSortByNotation()
         );
-        treeRoots = new ArrayList<>();
         if (roots == null) {
             return;
         }
@@ -841,6 +921,10 @@ public class ThesaurusViewBean implements Serializable {
         if (languages != null) {
             return;
         }
+        if (StringUtils.isBlank(getId())) {
+            languages = Collections.emptyList();
+            return;
+        }
         languages = thesaurusPreferenceService.loadUsedLanguages(getId(), v2LocaleBean.getIdLangue());
         if (languages == null) {
             languages = Collections.emptyList();
@@ -854,6 +938,14 @@ public class ThesaurusViewBean implements Serializable {
 
     private static String formatCount(int count) {
         return NumberFormat.getIntegerInstance(Locale.FRANCE).format(count);
+    }
+
+    private String requestContextPath() {
+        FacesContext facesContext = FacesContext.getCurrentInstance();
+        if (facesContext == null) {
+            return "";
+        }
+        return StringUtils.defaultString(facesContext.getExternalContext().getRequestContextPath());
     }
 
     private void resetConceptExtras() {
