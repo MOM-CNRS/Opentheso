@@ -260,9 +260,26 @@ public class ThesaurusViewBean implements Serializable {
                 .orElse(code);
     }
 
+    public String getSelectedLangFlag() {
+        return flagEmoji(getSelectedLang());
+    }
+
+    public String getSelectedLangCode() {
+        return StringUtils.defaultString(getSelectedLang()).toUpperCase(Locale.ROOT);
+    }
+
+    public boolean currentWorkLangIs(String code) {
+        return StringUtils.isNotBlank(code) && code.equalsIgnoreCase(getSelectedLang());
+    }
+
+    public boolean isWorkLanguageSwitchable() {
+        return getLanguages().size() > 1;
+    }
+
     public void onLanguageChange() {
         if (StringUtils.isNotBlank(selectedLang)) {
             thesaurusContext.changeWorkLanguage(selectedLang);
+            applyTitleForWorkLanguage(selectedLang);
         }
         invalidateHomeOverview();
         invalidateTree();
@@ -981,6 +998,19 @@ public class ThesaurusViewBean implements Serializable {
             }
         }
         return null;
+    }
+
+    private void applyTitleForWorkLanguage(String lang) {
+        ensureLanguagesLoaded();
+        if (languages == null || StringUtils.isBlank(lang)) {
+            return;
+        }
+        languages.stream()
+                .filter(item -> lang.equalsIgnoreCase(item.code()))
+                .map(ThesaurusLanguage::labelTheso)
+                .filter(StringUtils::isNotBlank)
+                .findFirst()
+                .ifPresent(thesaurusContext::setCurrentThesaurusTitle);
     }
 
     private void ensureLanguagesLoaded() {

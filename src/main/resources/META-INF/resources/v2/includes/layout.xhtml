@@ -4,8 +4,9 @@
       xmlns:ui="http://xmlns.jcp.org/jsf/facelets"
       xmlns:h="http://xmlns.jcp.org/jsf/html"
       xmlns:f="http://xmlns.jcp.org/jsf/core"
-      lang="fr">
+      lang="#{v2LocaleBean.idLangue}">
 <f:metadata>
+  <f:viewAction action="#{v2LocaleBean.applyToView}"/>
   <f:viewAction action="#{v2ThesaurusViewBean.ensureSessionThesaurus}"/>
   <ui:insert name="viewActions"/>
 </f:metadata>
@@ -18,8 +19,8 @@
   <link rel="preconnect" href="https://fonts.googleapis.com"/>
   <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin=""/>
   <link href="https://fonts.googleapis.com/css2?family=IBM+Plex+Mono:wght@400;500;600&amp;family=IBM+Plex+Sans:wght@400;500;600;700&amp;display=swap" rel="stylesheet"/>
-  <link rel="stylesheet" href="#{request.contextPath}/resources/css/v2-prototype-recherche.css?v=cv-res17"/>
-  <link rel="stylesheet" href="#{request.contextPath}/resources/css/v2.css?v=cv-res17"/>
+  <link rel="stylesheet" href="#{request.contextPath}/resources/css/v2-prototype-recherche.css?v=cv-res20"/>
+  <link rel="stylesheet" href="#{request.contextPath}/resources/css/v2.css?v=cv-res20"/>
 </head>
 <body data-page="#{v2Page}" data-ctx="#{request.contextPath}"
       data-logged-in="#{v2UserSession.loggedIn ? '1' : '0'}"
@@ -41,10 +42,12 @@
       </div>
       <main class="content">
         <div class="view" id="previewView">
-          <ui:insert name="main"/>
-          <ui:insert name="detail">
-            <ui:include src="detail.xhtml"/>
-          </ui:insert>
+          <h:panelGroup id="previewWorkLangRefresh" layout="block" styleClass="view-lang-refresh">
+            <ui:insert name="main"/>
+            <ui:insert name="detail">
+              <ui:include src="detail.xhtml"/>
+            </ui:insert>
+          </h:panelGroup>
         </div>
         <div class="view-rail" id="previewRail" aria-hidden="true">
           <span class="view-rail-thumb" id="previewRailThumb"></span>
@@ -73,8 +76,8 @@
 <script src="#{request.contextPath}/resources/js/v2/collections.js?v=coll-nonota"></script>
 <script src="#{request.contextPath}/resources/js/v2/selection.js?v=split1"></script>
 <script src="#{request.contextPath}/resources/js/v2/export.js?v=split1"></script>
-<script src="#{request.contextPath}/resources/js/v2/about.js?v=cv-res17"></script>
+<script src="#{request.contextPath}/resources/js/v2/about.js?v=cv-res19"></script>
 <script src="#{request.contextPath}/resources/js/v2/stats.js?v=cv-scroll1"></script>
-<script src="#{request.contextPath}/resources/js/v2/app.js?v=cv-res17"></script>
+<script src="#{request.contextPath}/resources/js/v2/app.js?v=cv-res20"></script>
 </body>
 </html>

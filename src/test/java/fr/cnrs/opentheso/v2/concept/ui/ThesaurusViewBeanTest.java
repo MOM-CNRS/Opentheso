@@ -134,6 +134,12 @@ class ThesaurusViewBeanTest {
         assertEquals("Français", languages.get(2).getValue());
         verify(thesaurusPreferenceService).loadUsedLanguages("th17", "fr");
         assertEquals("Français", bean.getSelectedLangLabel());
+        assertEquals("FR", bean.getSelectedLangCode());
+        assertEquals("🇫🇷", bean.getSelectedLangFlag());
+        assertTrue(bean.currentWorkLangIs("fr"));
+        assertTrue(bean.currentWorkLangIs("FR"));
+        assertFalse(bean.currentWorkLangIs("en"));
+        assertTrue(bean.isWorkLanguageSwitchable());
     }
 
     @Test
@@ -152,11 +158,40 @@ class ThesaurusViewBeanTest {
     @Test
     void onLanguageChange_writesWorkLanguageToContext() {
         thesaurusContext.selectThesaurus("th17", "Pactols_Lieux", "fr");
+        when(v2LocaleBean.getIdLangue()).thenReturn("fr");
+        when(thesaurusPreferenceService.loadUsedLanguages("th17", "fr")).thenReturn(List.of(
+                language("fr", "Français", "Pactols_Lieux"),
+                language("en", "Anglais", "Pactols_Places")
+        ));
 
         bean.setSelectedLang("en");
         bean.onLanguageChange();
 
         assertEquals("en", thesaurusContext.resolveWorkLanguage());
+        assertEquals("Pactols_Places", thesaurusContext.getCurrentThesaurusTitle());
+    }
+
+    @Test
+    void onLanguageChange_reloadsOpenConceptInNewLanguage() {
+        thesaurusContext.selectThesaurus("th17", "Pactols_Lieux", "fr");
+        when(v2LocaleBean.getIdLangue()).thenReturn("fr");
+        when(thesaurusPreferenceService.loadUsedLanguages("th17", "fr")).thenReturn(List.of(
+                language("fr", "Français", "Pactols_Lieux"),
+                language("en", "Anglais", "Pactols_Places")
+        ));
+        when(conceptReadService.loadDetail("th17", "c1", "fr", true))
+                .thenReturn(Optional.of(conceptDetail("c1", "Lieux", "C")));
+        when(conceptReadService.loadDetail("th17", "c1", "en", true))
+                .thenReturn(Optional.of(conceptDetail("c1", "Places", "C")));
+        when(conceptReadService.countBranchConcepts("th17", "c1")).thenReturn(3);
+
+        bean.openTreeNode("c1", "concept");
+        bean.setSelectedLang("en");
+        bean.onLanguageChange();
+
+        verify(conceptReadService).loadDetail("th17", "c1", "en", true);
+        assertEquals("Places", bean.getSelectedConcept().getSummary().getPreferredLabel());
+        assertEquals("Pactols_Places", bean.getTitle());
     }
 
     @Test
@@ -610,7 +645,11 @@ class ThesaurusViewBeanTest {
 
 
     private static ThesaurusLanguage language(String code, String label) {
-        return new ThesaurusLanguage(1L, code, "", "", label);
+        return language(code, label, "");
+    }
+
+    private static ThesaurusLanguage language(String code, String label, String title) {
+        return new ThesaurusLanguage(1L, code, "", title, label);
     }
 
     private static ThesaurusHomeOverview overview(String title, int count, String project) {

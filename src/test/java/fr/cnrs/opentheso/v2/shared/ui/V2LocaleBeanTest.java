@@ -5,6 +5,8 @@ import org.junit.jupiter.api.Test;
 import org.springframework.test.util.ReflectionTestUtils;
 
 import static org.junit.jupiter.api.Assertions.assertEquals;
+import static org.junit.jupiter.api.Assertions.assertFalse;
+import static org.junit.jupiter.api.Assertions.assertTrue;
 
 class V2LocaleBeanTest {
 
@@ -21,5 +23,42 @@ class V2LocaleBeanTest {
     void init_setsBundleFromWorkLanguage() {
         assertEquals("langue_fr", ReflectionTestUtils.getField(bean, "currentBundle"));
         assertEquals("fr", bean.getIdLangue());
+        assertTrue(bean.currentLangIs("fr"));
+        assertEquals("🇫🇷", bean.getFlagEmoji());
+    }
+
+    @Test
+    void changeLangue_switchesSupportedLanguage() {
+        bean.changeLangue("en");
+
+        assertEquals("en", bean.getIdLangue());
+        assertEquals("langue_en", ReflectionTestUtils.getField(bean, "currentBundle"));
+        assertTrue(bean.currentLangIs("EN"));
+        assertEquals("🇬🇧", bean.getFlagEmoji());
+    }
+
+    @Test
+    void changeLangue_ignoresUnsupportedCode() {
+        bean.changeLangue("it");
+
+        assertEquals("fr", bean.getIdLangue());
+        assertEquals("langue_fr", ReflectionTestUtils.getField(bean, "currentBundle"));
+    }
+
+    @Test
+    void applyPendingLang_usesHiddenFieldValue() {
+        bean.setPendingLang("de");
+        bean.applyPendingLang();
+
+        assertEquals("de", bean.getIdLangue());
+        assertEquals("🇩🇪", bean.getFlagEmoji());
+        assertTrue(bean.currentLangIs("de"));
+    }
+
+    @Test
+    void flagEmoji_mapsKnownLanguages() {
+        assertEquals("🇪🇸", bean.flagEmoji("es"));
+        assertEquals("🇸🇦", bean.flagEmoji("ar"));
+        assertEquals("🇫🇷", bean.flagEmoji("unknown"));
     }
 }

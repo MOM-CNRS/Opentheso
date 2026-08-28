@@ -618,8 +618,7 @@ button.coll-item{
   .cand-row:active{transform:none}
 }
 .cv-count{font-family:var(--mono);font-size:13px;font-weight:500;color:var(--ink-4);white-space:nowrap}
-.tree-lang-form{margin-left:auto;flex:0 0 auto}
-.tree-lang-form .tree-lang-sel{margin-left:0}
+.tree-lang-form{margin-left:auto;flex:0 0 auto;position:relative;display:flex;align-items:center}
 .abt-edit-btn{margin-left:auto;flex:0 0 auto}
 .th-about .boc-ht{flex:1;min-width:0}
 .abt-html{margin-top:12px;font-size:14px;line-height:1.62;color:var(--ink-2)}
@@ -814,6 +813,7 @@ body[data-page="atelier"] .content::after,
   -webkit-overflow-scrolling:touch;
   scroll-padding-top:24px
 }
+.view-lang-refresh{display:contents}
 #previewView::-webkit-scrollbar{width:0;height:0}
 .view-rail{
   position:absolute;top:14px;right:5px;bottom:14px;

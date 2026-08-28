@@ -495,6 +495,24 @@ window.onPreviewAccountSave = function (data) {
   }
   toast(text);
 };
+window.onPreviewUiLang = function (data) {
+  if (data.status === "error") {
+    toast("Le changement de langue a échoué.");
+    return;
+  }
+  if (data.status === "success") {
+    window.location.reload();
+  }
+};
+window.onPreviewTermLang = function (data) {
+  if (data.status === "error") {
+    toast("Le changement de langue du thésaurus a échoué.");
+    return;
+  }
+  if (data.status === "success") {
+    onThesaurusLangChanged();
+  }
+};
 function showAboutSaveToast() {
   const msg = $("#previewAboutSaveMsg");
   if (!msg) return;

@@ -8,18 +8,51 @@
           <div class="th-id-row">
             <a class="th-id#{v2Page eq 'accueil' ? ' is-active' : ''}" id="thIdBtn" href="index.xhtml" title="#{v2ThesaurusViewBean.title}">
               <span class="th-id-ico" aria-hidden="true">▤</span>
-              <span class="th-id-name">#{v2ThesaurusViewBean.title}</span>
+              <h:panelGroup id="previewThTitle" styleClass="th-id-name">#{v2ThesaurusViewBean.title}</h:panelGroup>
               <span class="th-id-meta">#{v2ThesaurusViewBean.conceptCountLabel}</span>
             </a>
             <h:form id="previewLangForm" prependId="false" styleClass="tree-lang-form">
-              <h:selectOneMenu id="termLang" styleClass="tree-lang-sel"
-                               value="#{v2ThesaurusViewBean.selectedLang}"
-                               title="Affichage des libellés du thésaurus">
-                <f:selectItems value="#{v2ThesaurusViewBean.languages}" var="lang"
-                               itemValue="#{lang.code}" itemLabel="#{lang.value}"/>
-                <f:ajax event="valueChange" execute="@this" listener="#{v2ThesaurusViewBean.onLanguageChange}"
-                        render=":previewHomeHead :previewAboutForm :previewTreeForm"/>
-              </h:selectOneMenu>
+              <h:inputHidden id="termLang" value="#{v2ThesaurusViewBean.selectedLang}"/>
+              <h:commandButton id="previewTermLangGo" value="lang" styleClass="st-jsf-go"
+                               action="#{v2ThesaurusViewBean.onLanguageChange}">
+                <f:ajax execute="@form"
+                        render=":previewThTitle :previewTreeMetaBox :previewWorkLangRefresh :previewTermLangUi"
+                        onevent="onPreviewTermLang"/>
+              </h:commandButton>
+              <h:panelGroup id="previewTermLangUi" layout="block" styleClass="tree-lang">
+                <ui:fragment rendered="#{not empty v2ThesaurusViewBean.languages}">
+                <button type="button"
+                        class="tree-lang-btn#{v2ThesaurusViewBean.workLanguageSwitchable ? '' : ' is-solo'}"
+                        id="treeLangBtn"
+                        data-act="term-lang-toggle"
+                        title="#{v2LocaleBean.getMsg('v2.view.termLang')}"
+                        aria-label="#{v2LocaleBean.getMsg('v2.view.termLang')} · #{v2ThesaurusViewBean.selectedLangLabel}"
+                        aria-haspopup="#{v2ThesaurusViewBean.workLanguageSwitchable ? 'listbox' : 'false'}"
+                        aria-expanded="false">
+                  <span class="tree-lang-flag" aria-hidden="true">#{v2ThesaurusViewBean.selectedLangFlag}</span>
+                  <span class="tree-lang-code">#{v2ThesaurusViewBean.selectedLangCode}</span>
+                  <span class="tree-lang-caret" aria-hidden="true">▾</span>
+                </button>
+                <ui:fragment rendered="#{v2ThesaurusViewBean.workLanguageSwitchable}">
+                <div class="tree-lang-menu" role="listbox" aria-label="#{v2LocaleBean.getMsg('v2.view.termLang')}">
+                  <div class="tree-lang-menu-h">#{v2LocaleBean.getMsg('v2.view.termLang')}</div>
+                  <ui:repeat value="#{v2ThesaurusViewBean.languages}" var="lang">
+                    <button type="button"
+                            class="tree-lang-opt#{v2ThesaurusViewBean.currentWorkLangIs(lang.code) ? ' is-on' : ''}"
+                            data-act="term-lang"
+                            data-lang="#{lang.code}"
+                            role="option"
+                            aria-selected="#{v2ThesaurusViewBean.currentWorkLangIs(lang.code)}">
+                      <span class="tree-lang-opt-flag" aria-hidden="true">#{v2ThesaurusViewBean.flagEmoji(lang.code)}</span>
+                      <span class="tree-lang-opt-name">#{lang.value}</span>
+                      <span class="tree-lang-opt-code">#{lang.code}</span>
+                      <span class="tree-lang-opt-check" aria-hidden="true">✓</span>
+                    </button>
+                  </ui:repeat>
+                </div>
+                </ui:fragment>
+                </ui:fragment>
+              </h:panelGroup>
             </h:form>
           </div>
 
@@ -28,39 +61,39 @@
           <div class="view-pick-row">
             <div class="view-pick" id="viewPick" data-view="arbo">
               <button type="button" class="view-pick-btn" id="viewPickBtn" aria-expanded="false">
-                <span class="view-pick-eyebrow">Vue</span>
+                <span class="view-pick-eyebrow">#{v2LocaleBean.getMsg('v2.view.label')}</span>
                 <span class="view-pick-cur" id="viewPickCur">
-                  <span class="vpc" data-view="arbo">Arborescence</span>
-                  <span class="vpc" data-view="tableau">Tableau</span>
-                  <span class="vpc" data-view="hyper">Graphe</span>
-                  <span class="vpc" data-view="collection">Collection</span>
-                  <span class="vpc" data-view="recherche">Recherche</span>
+                  <span class="vpc" data-view="arbo">#{v2LocaleBean.getMsg('v2.view.tree')}</span>
+                  <span class="vpc" data-view="tableau">#{v2LocaleBean.getMsg('v2.view.table')}</span>
+                  <span class="vpc" data-view="hyper">#{v2LocaleBean.getMsg('v2.view.graph')}</span>
+                  <span class="vpc" data-view="collection">#{v2LocaleBean.getMsg('v2.view.collection')}</span>
+                  <span class="vpc" data-view="recherche">#{v2LocaleBean.getMsg('v2.view.search')}</span>
                 </span>
                 <span class="vswitch-badge" id="viewPickBadge" hidden="hidden">0</span>
                 <span class="view-pick-caret" aria-hidden="true">▾</span>
               </button>
               <div class="view-pick-menu" id="viewPickMenu">
                 <button type="button" class="view-pick-item is-on" data-act="set-view" data-view="arbo">
-                  <span class="view-pick-il">Arborescence</span><span class="view-pick-check">✓</span>
+                  <span class="view-pick-il">#{v2LocaleBean.getMsg('v2.view.tree')}</span><span class="view-pick-check">✓</span>
                 </button>
                 <button type="button" class="view-pick-item" data-act="set-view" data-view="tableau">
-                  <span class="view-pick-il">Tableau</span><span class="view-pick-check">✓</span>
+                  <span class="view-pick-il">#{v2LocaleBean.getMsg('v2.view.table')}</span><span class="view-pick-check">✓</span>
                 </button>
                 <button type="button" class="view-pick-item" data-act="set-view" data-view="hyper">
-                  <span class="view-pick-il">Graphe</span><span class="view-pick-check">✓</span>
+                  <span class="view-pick-il">#{v2LocaleBean.getMsg('v2.view.graph')}</span><span class="view-pick-check">✓</span>
                 </button>
                 <button type="button" class="view-pick-item" data-act="set-view" data-view="collection">
-                  <span class="view-pick-il">Collection</span><span class="view-pick-check">✓</span>
+                  <span class="view-pick-il">#{v2LocaleBean.getMsg('v2.view.collection')}</span><span class="view-pick-check">✓</span>
                 </button>
                 <button type="button" class="view-pick-item" data-act="set-view" data-view="recherche">
-                  <span class="view-pick-il">Recherche</span>
+                  <span class="view-pick-il">#{v2LocaleBean.getMsg('v2.view.search')}</span>
                   <span class="vswitch-badge" id="viewMenuBadge" hidden="hidden">0</span>
                   <span class="view-pick-check">✓</span>
                 </button>
               </div>
             </div>
             <div class="vo-pop-wrap" id="voWrap">
-              <button type="button" class="vo-gear" id="voGear" title="Options de la vue" aria-expanded="false"><svg viewBox="0 0 24 24" aria-hidden="true"><circle cx="12" cy="12" r="3"/><path d="M19.4 15a1.65 1.65 0 0 0 .33 1.82l.06.06a2 2 0 1 1-2.83 2.83l-.06-.06a1.65 1.65 0 0 0-1.82-.33 1.65 1.65 0 0 0-1 1.51V21a2 2 0 0 1-4 0v-.09A1.65 1.65 0 0 0 9 19.4a1.65 1.65 0 0 0-1.82.33l-.06-.06a2 2 0 1 1-2.83-2.83l-.06-.06a1.65 1.65 0 0 0 .33-1.82 1.65 1.65 0 0 0-1.51-1H3a2 2 0 0 1 0-4h.09A1.65 1.65 0 0 0 4.6 9a1.65 1.65 0 0 0-.33-1.82l-.06-.06a2 2 0 1 1 2.83-2.83l.06.06a1.65 1.65 0 0 0 1.82.33H9a1.65 1.65 0 0 0 1-1.51V3a2 2 0 0 1 4 0v.09a1.65 1.65 0 0 0 1 1.51 1.65 1.65 0 0 0 1.82-.33l.06-.06a2 2 0 1 1 2.83 2.83l-.06.06a1.65 1.65 0 0 0-.33 1.82V9a1.65 1.65 0 0 0 1.51 1H21a2 2 0 0 1 0 4h-.09a1.65 1.65 0 0 0-1.51 1z"/></svg></button>
+              <button type="button" class="vo-gear" id="voGear" title="#{v2LocaleBean.getMsg('v2.view.options')}" aria-expanded="false"><svg viewBox="0 0 24 24" aria-hidden="true"><circle cx="12" cy="12" r="3"/><path d="M19.4 15a1.65 1.65 0 0 0 .33 1.82l.06.06a2 2 0 1 1-2.83 2.83l-.06-.06a1.65 1.65 0 0 0-1.82-.33 1.65 1.65 0 0 0-1 1.51V21a2 2 0 0 1-4 0v-.09A1.65 1.65 0 0 0 9 19.4a1.65 1.65 0 0 0-1.82.33l-.06-.06a2 2 0 1 1-2.83-2.83l-.06-.06a1.65 1.65 0 0 0 .33-1.82 1.65 1.65 0 0 0-1.51-1H3a2 2 0 0 1 0-4h.09A1.65 1.65 0 0 0 4.6 9a1.65 1.65 0 0 0-.33-1.82l-.06-.06a2 2 0 1 1 2.83-2.83l.06.06a1.65 1.65 0 0 0 1.82.33H9a1.65 1.65 0 0 0 1-1.51V3a2 2 0 0 1 4 0v.09a1.65 1.65 0 0 0 1 1.51 1.65 1.65 0 0 0 1.82-.33l.06-.06a2 2 0 1 1 2.83 2.83l-.06.06a1.65 1.65 0 0 0-.33 1.82V9a1.65 1.65 0 0 0 1.51 1H21a2 2 0 0 1 0 4h-.09a1.65 1.65 0 0 0-1.51 1z"/></svg></button>
               <div class="vo-pop" id="voPop">
                 <div class="vo-pop-h">Options · <span id="voPopView">Arborescence</span></div>
                 <div class="vo-pop-stk">
@@ -194,6 +227,7 @@
 
         <div class="sidebar-body sb-tree sidebar-panel is-on" id="panelTree">
           <div class="tree-body">
+            <h:panelGroup id="previewTreeMetaBox" layout="block">
             <div id="previewTreeMeta"
                  data-concept-count="#{v2ThesaurusViewBean.conceptCount}"
                  data-thesaurus-id="#{v2ThesaurusViewBean.id}"
@@ -219,6 +253,7 @@
               </h:panelGroup>
             </h:form>
             </div>
+            </h:panelGroup>
           </div>
         </div>
 

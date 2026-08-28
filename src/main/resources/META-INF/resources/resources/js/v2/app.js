@@ -12,6 +12,14 @@ function closeThesaurus() {
   if (account) account.classList.remove("is-forgot");
 }
 
+function closeTreeLang() {
+  const btn = $("#treeLangBtn");
+  if (!btn || !btn.classList.contains("is-open")) return false;
+  btn.classList.remove("is-open");
+  btn.setAttribute("aria-expanded", "false");
+  return true;
+}
+
 document.addEventListener("pointerdown", (e) => {
   const go = e.target.closest(".login-go");
   if (!go) return;
@@ -63,6 +71,7 @@ document.addEventListener("keydown", (e) => {
   if (typeof closeImgLightbox === "function" && closeImgLightbox()) return;
   if (typeof closeGpsLightbox === "function" && closeGpsLightbox()) return;
   if (typeof closeCollectionPicker === "function" && closeCollectionPicker()) return;
+  if (closeTreeLang()) return;
   if (e.target && e.target.classList && e.target.classList.contains("cand-search")) {
     if (e.target.value) {
       e.target.value = "";
@@ -188,11 +197,13 @@ document.addEventListener("click", (e) => {
     if ($("#navThesaurus") && !$("#navThesaurus").contains(e.target)) closeThesaurus();
     if ($("#voWrap") && !$("#voWrap").contains(e.target)) $("#voGear") && $("#voGear").classList.remove("is-on");
     if ($("#viewPick") && !$("#viewPick").contains(e.target)) $("#viewPickBtn") && $("#viewPickBtn").classList.remove("is-open");
+    if ($("#previewTermLangUi") && !$("#previewTermLangUi").contains(e.target)) closeTreeLang();
     if ($("#cfCombo") && !$("#cfCombo").contains(e.target)) $("#cfCombo").classList.remove("open");
     return;
   }
   if ($("#cfCombo") && !$("#cfCombo").contains(e.target)) $("#cfCombo").classList.remove("open");
   const act = t.getAttribute("data-act");
+  if (act !== "term-lang-toggle" && act !== "term-lang") closeTreeLang();
   if (act === "logout-ask") {
     closeThesaurus();
     if (askLeaveThen(() => showConfirm("#logoutConfirm"))) return;
@@ -687,11 +698,28 @@ document.addEventListener("click", (e) => {
   } else if (act === "align-replace-modal") {
     return;
   } else if (act === "ui-lang") {
-    $$(".lang-opt").forEach(o => o.classList.toggle("is-on", o === t));
-    const flag = t.querySelector(".lang-opt-flag");
-    const btn = $('[data-thesaurus="lang"] .thesaurus-flag');
-    if (flag && btn) btn.textContent = flag.textContent;
+    e.preventDefault();
+    const lang = t.getAttribute("data-lang");
+    if (!lang || t.classList.contains("is-on")) {
+      closeThesaurus();
+      return;
+    }
+    clickPreviewJsf("previewUiLangGo", { previewUiLangCode: lang });
     closeThesaurus();
+  } else if (act === "term-lang-toggle") {
+    e.preventDefault();
+    if (t.classList.contains("is-solo")) return;
+    const open = !t.classList.contains("is-open");
+    closeThesaurus();
+    $("#viewPickBtn") && $("#viewPickBtn").classList.remove("is-open");
+    t.classList.toggle("is-open", open);
+    t.setAttribute("aria-expanded", open ? "true" : "false");
+  } else if (act === "term-lang") {
+    e.preventDefault();
+    const lang = t.getAttribute("data-lang");
+    closeTreeLang();
+    if (!lang || t.classList.contains("is-on")) return;
+    clickPreviewJsf("previewTermLangGo", { termLang: lang });
   } else if (act === "bulk-coll") bulkMode("coll");
   else if (act === "bulk-move") bulkMode("move");
   else if (act === "bulk-export") bulkMode("export");
@@ -914,16 +942,12 @@ applyTableSort();
 applyTableCols();
 bulkMode("acts");
 
-const termLangSel = document.getElementById("termLang");
-if (termLangSel) {
-  termLangSel.addEventListener("change", onThesaurusLangChanged);
-}
 if (window.jsf && jsf.ajax && typeof jsf.ajax.addOnEvent === "function") {
   jsf.ajax.addOnEvent(function (data) {
     if (data.status !== "success") return;
     const src = data.source;
     const srcId = src && (src.id || (src.getAttribute && src.getAttribute("id")));
-    if (srcId === "termLang") onThesaurusLangChanged();
+    if (srcId === "termLang" || srcId === "previewTermLangGo") onThesaurusLangChanged();
   });
 }
 
