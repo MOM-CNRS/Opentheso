@@ -87,8 +87,10 @@ public class AlignmentPropositionEnricher {
                 remoteTraductions = nullToEmpty(helper.getResourceTraductions());
                 remoteDefinitions = nullToEmpty(helper.getResourceDefinitions());
                 remoteImages = nullToEmpty(helper.getResourceImages());
-                proposition.setLatitude(node.getLat());
-                proposition.setLongitude(node.getLng());
+                if (node.getLat() != null && node.getLng() != null) {
+                    proposition.setLatitude(node.getLat());
+                    proposition.setLongitude(node.getLng());
+                }
             }
             default -> {
                 // IdRef / Opentheso / Ontome : pas d'enrichissement distant standard

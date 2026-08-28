@@ -6,13 +6,15 @@
 function bindViewRail() {
   const view = $("#previewView") || document.querySelector("main.content .view");
   const home = $("#viewHome");
+  const live = $("#viewLive");
+  const concept = $("#viewConcept");
   const settings = $("#viewSettings");
   const rail = $("#previewRail");
   const thumb = $("#previewRailThumb");
   const goTop = $("#previewGoTop");
   const shell = view && view.closest(".content");
   if (!view) return;
-  const scrollers = [view, home, settings].filter((el, i, arr) => el && arr.indexOf(el) === i);
+  const scrollers = [view, home, live, concept, settings].filter((el, i, arr) => el && arr.indexOf(el) === i);
   let idle;
   const mark = () => {
     if (shell) shell.classList.add("is-scrolling");

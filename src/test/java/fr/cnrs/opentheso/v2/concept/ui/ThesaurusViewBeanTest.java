@@ -1,5 +1,6 @@
 package fr.cnrs.opentheso.v2.concept.ui;
 
+import fr.cnrs.opentheso.v2.concept.model.ConceptLabel;
 import fr.cnrs.opentheso.v2.concept.model.ConceptLinkItem;
 import fr.cnrs.opentheso.v2.concept.model.ConceptDetail;
 import fr.cnrs.opentheso.v2.concept.model.ConceptSummary;
@@ -327,10 +328,57 @@ class ThesaurusViewBeanTest {
         assertFalse(bean.isCandidateSelected());
         assertFalse(bean.isFacetSelected());
         assertEquals("concept", bean.getSelectedKind());
+        assertEquals("valide", bean.getConceptDisplayStatus());
         assertEquals("Lieux", bean.getSelectedConcept().getSummary().getPreferredLabel());
         assertEquals(2, bean.getBranchConceptCount());
         verify(conceptReadService).loadDetail("th17", "c1", "fr", true);
         verify(conceptReadService).countBranchConcepts("th17", "c1");
+    }
+
+    @Test
+    void reloadSelectedConcept_reopensCurrentNode() {
+        thesaurusContext.selectThesaurus("th17", "Pactols_Lieux", "fr");
+        when(v2LocaleBean.getIdLangue()).thenReturn("fr");
+        when(thesaurusPreferenceService.loadUsedLanguages("th17", "fr")).thenReturn(List.of(language("fr", "Français")));
+        when(conceptReadService.loadDetail("th17", "c1", "fr", true)).thenReturn(Optional.of(conceptDetail("c1", "Lieux", "C")));
+        when(conceptReadService.countBranchConcepts("th17", "c1")).thenReturn(2);
+
+        bean.openTreeNode("c1", "concept");
+        bean.reloadSelectedConcept();
+
+        verify(conceptReadService, times(2)).loadDetail("th17", "c1", "fr", true);
+        assertTrue(bean.isConceptSelected());
+        assertEquals("c1", bean.getSelectedId());
+    }
+
+    @Test
+    void preferredTranslations_followMaquetteGrouping() {
+        ConceptDetail detail = new ConceptDetail(
+                new ConceptSummary("c1", "th17", "Bronze", "fr", "C", "", "concept", "", "", "", ""),
+                Collections.emptyList(),
+                Collections.emptyList(),
+                Collections.emptyList(),
+                Collections.emptyList(),
+                Collections.emptyList(),
+                Collections.emptyList(),
+                List.of(
+                        new ConceptLabel("en", "Bronze", true, false),
+                        new ConceptLabel("en", "Bronze metal", false, false),
+                        new ConceptLabel("de", "Bronze", true, false),
+                        new ConceptLabel("en", "bronz", false, true)
+                ),
+                Collections.emptyList(),
+                Collections.emptyList(),
+                Collections.emptyList(),
+                Collections.emptyList(),
+                Collections.emptyList(),
+                Collections.emptyList()
+        );
+        ReflectionTestUtils.setField(bean, "selectedConcept", detail);
+
+        assertEquals(2, bean.getPreferredTranslations().size());
+        assertEquals("Bronze metal", bean.altTranslationsLabel("en"));
+        assertEquals("", bean.altTranslationsLabel("de"));
     }
 
     @Test
@@ -354,9 +402,25 @@ class ThesaurusViewBeanTest {
 
         assertTrue(bean.isCandidateSelected());
         assertEquals("candidat", bean.getSelectedKind());
+        assertEquals("candidat", bean.getConceptDisplayStatus());
         assertEquals("Tjarou", bean.getCandidateTitle());
         assertEquals("anais.mauriceau", bean.getCandidateBy());
         assertEquals("2026-09-29", bean.getCandidateOn());
+    }
+
+    @Test
+    void openTreeNode_marksDeprecatedStatusForMaquette() {
+        thesaurusContext.selectThesaurus("th17", "Pactols_Lieux", "fr");
+        when(v2LocaleBean.getIdLangue()).thenReturn("fr");
+        when(thesaurusPreferenceService.loadUsedLanguages("th17", "fr")).thenReturn(List.of(language("fr", "Français")));
+        when(conceptReadService.loadDetail("th17", "c-dep", "fr", true))
+                .thenReturn(Optional.of(conceptDetail("c-dep", "Ancien terme", "DEP")));
+        when(conceptReadService.countBranchConcepts("th17", "c-dep")).thenReturn(0);
+
+        bean.openTreeNode("c-dep", "concept");
+
+        assertTrue(bean.isSelectedConceptDeprecated());
+        assertEquals("deprecie", bean.getConceptDisplayStatus());
     }
 
     @Test
@@ -395,6 +459,16 @@ class ThesaurusViewBeanTest {
         when(thesaurusPreferenceService.loadPreferencesOrNull("th17", "fr")).thenReturn(preferences);
 
         assertFalse(bean.isBreadcrumbEnabled());
+    }
+
+    @Test
+    void customRelationVisible_followsThesaurusPreference() {
+        thesaurusContext.selectThesaurus("th17", "Pactols_Lieux", "fr");
+        ThesaurusPreferences preferences = mock(ThesaurusPreferences.class);
+        when(preferences.useCustomRelation()).thenReturn(true);
+        when(thesaurusPreferenceService.loadPreferencesOrNull("th17", "fr")).thenReturn(preferences);
+
+        assertTrue(bean.isCustomRelationVisible());
     }
 
     @Test

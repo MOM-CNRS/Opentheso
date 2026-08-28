@@ -127,6 +127,48 @@ class UserProfileServiceTest {
     }
 
     @Test
+    void updateIdentity_persistsUsernameAndEmailInOneSave() {
+        UserEntity entity = buildEntity(42, "alice", "alice@example.com", true, false, true, null, null);
+        when(userProfileRepository.findById(42)).thenReturn(Optional.of(entity));
+        when(userProfileRepository.existsByUsernameIgnoreCaseExcludingId("bob", 42)).thenReturn(false);
+        when(userProfileRepository.existsByMailIgnoreCaseExcludingId("bob@example.com", 42)).thenReturn(false);
+        when(userProfileRepository.save(any(UserEntity.class))).thenAnswer(invocation -> invocation.getArgument(0));
+
+        UserProfile profile = userProfileService.updateIdentity(42, "  bob  ", " bob@example.com ");
+
+        assertEquals("bob", profile.username());
+        assertEquals("bob@example.com", profile.email());
+        assertEquals("bob", entity.getUsername());
+        assertEquals("bob@example.com", entity.getMail());
+        verify(userProfileRepository).save(entity);
+    }
+
+    @Test
+    void updateIdentity_rejectsBlankUsernameWithoutSaving() {
+        assertThrows(InvalidProfileDataException.class,
+                () -> userProfileService.updateIdentity(42, "  ", "alice@example.com"));
+        verify(userProfileRepository, never()).save(any());
+    }
+
+    @Test
+    void updateIdentity_rejectsInvalidEmailWithoutSaving() {
+        assertThrows(InvalidProfileDataException.class,
+                () -> userProfileService.updateIdentity(42, "alice", "invalid"));
+        verify(userProfileRepository, never()).save(any());
+    }
+
+    @Test
+    void updateIdentity_rejectsDuplicateUsername() {
+        UserEntity entity = buildEntity(42, "alice", "alice@example.com", true, false, true, null, null);
+        when(userProfileRepository.findById(42)).thenReturn(Optional.of(entity));
+        when(userProfileRepository.existsByUsernameIgnoreCaseExcludingId("bob", 42)).thenReturn(true);
+
+        assertThrows(InvalidProfileDataException.class,
+                () -> userProfileService.updateIdentity(42, "bob", "alice@example.com"));
+        verify(userProfileRepository, never()).save(any());
+    }
+
+    @Test
     void updateEmail_persistsValidEmail() {
         UserEntity entity = buildEntity(42, "alice", "alice@example.com", true, false, true, null, null);
         when(userProfileRepository.findById(42)).thenReturn(Optional.of(entity));

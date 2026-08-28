@@ -1,41 +1,150 @@
 <?xml version="1.0" encoding="UTF-8"?>
 <ui:composition xmlns="http://www.w3.org/1999/xhtml"
                 xmlns:ui="http://xmlns.jcp.org/jsf/facelets"
+                xmlns:h="http://xmlns.jcp.org/jsf/html"
+                xmlns:f="http://xmlns.jcp.org/jsf/core"
                 template="/v2/includes/layout.xhtml">
   <ui:param name="v2Page" value="compte"/>
   <ui:define name="title">OpenTheso — Mon compte</ui:define>
+  <ui:define name="viewActions">
+    <f:viewAction action="#{v2MyAccountBean.load}" onPostback="false"/>
+  </ui:define>
+  <ui:define name="detail"/>
   <ui:define name="main">
 
-          <div class="view-panel is-on">
+          <div class="view-panel is-on" id="viewSettings">
             <div class="bo">
               <a class="bo-back" href="index.xhtml" title="Retour à l'accueil thésaurus"><svg viewBox="0 0 24 24" aria-hidden="true"><path d="M19 12H5"/><path d="m12 19-7-7 7-7"/></svg></a>
+              <h:form id="previewAccountForm" prependId="false">
+              <h:commandButton id="previewAccountSaveGo" value="save" styleClass="st-jsf-go"
+                               action="#{v2MyAccountBean.saveIdentity}">
+                <f:ajax execute="@form" render="previewAccountHead previewAccountIdentity previewAccountRoles previewAccountSaveFeedback"
+                        onevent="onPreviewAccountSave"/>
+              </h:commandButton>
+              <h:panelGroup id="previewAccountHead" layout="block">
               <div class="bo-head"><div><h1 class="bo-title">Profil / Mon compte</h1><p class="bo-sub">#{v2UserSession.currentRoleLabel} · #{v2UserSession.currentUserEmail}</p></div></div>
-              <div class="bo-full st-scope"><div class="bo-card">
+              </h:panelGroup>
+              <div class="bo-full st-scope">
+                <h:panelGroup id="previewAccountIdentity" layout="block">
+                <div class="bo-card">
                   <div class="bo-card-h">
                     <span class="bo-card-t">Identité</span>
-                    
-                    
                   </div>
                   <div class="bo-card-b st-form"><div class="st-row">
                     <div class="st-row-l">Nom</div>
-                    <div class="st-row-c"><input class="st-input" value="#{v2UserSession.currentUsername}" type="text" readonly="readonly"/></div>
+                    <div class="st-row-c">
+                      <h:inputText id="previewAccountUsername" styleClass="st-input"
+                                   value="#{v2MyAccountBean.editableUsername}"/>
+                    </div>
                   </div><div class="st-row">
                     <div class="st-row-l">E-mail</div>
-                    <div class="st-row-c"><input class="st-input" value="#{v2UserSession.currentUserEmail}" type="text" readonly="readonly"/></div>
+                    <div class="st-row-c">
+                      <h:inputText id="previewAccountEmail" styleClass="st-input"
+                                   value="#{v2MyAccountBean.editableEmail}"/>
+                    </div>
                   </div><div class="st-row">
-                    <div class="st-row-l">Rôle</div>
-                    <div class="st-row-c"><input class="st-input" value="#{v2UserSession.currentRoleLabel}" type="text" readonly="readonly"/></div>
-                  </div></div>
-                </div><div class="bo-card">
-                  <div class="bo-card-h">
-                    <span class="bo-card-t">Session</span>
-                    
-                    
+                    <div class="st-row-l">#{v2LocaleBean.getMsg('v2.profile.password')}</div>
+                    <div class="st-row-c">
+                      <h:inputSecret id="previewAccountPassword" styleClass="st-input"
+                                     value="#{v2MyAccountBean.newPassword}" redisplay="false"/>
+                    </div>
+                  </div><div class="st-row">
+                    <div class="st-row-l">#{v2LocaleBean.getMsg('v2.profile.passwordConfirm')}</div>
+                    <div class="st-row-c">
+                      <h:inputSecret id="previewAccountPasswordConfirm" styleClass="st-input"
+                                     value="#{v2MyAccountBean.passwordConfirmation}" redisplay="false"/>
+                      <p class="st-toggle-d acc-pwd-hint">#{v2LocaleBean.getMsg('v2.profile.passwordHint')}</p>
+                    </div>
                   </div>
-                  <div class="bo-card-b st-form"><p class="st-toggle-d">Connecté en tant que #{v2UserSession.currentUsername} (#{v2UserSession.currentUserInitials}). Super-admin : #{v2UserSession.superAdmin ? 'oui' : 'non'}.</p></div>
-                </div></div>
-              <div class="fsave"><button type="button" class="fsave-btn" data-act="st-save"><svg viewBox="0 0 24 24" aria-hidden="true"><path d="M20 6 9 17l-5-5"/></svg> Enregistrer</button></div>
-              <div class="bo-toast above" id="stSaveToast" hidden="hidden"><svg viewBox="0 0 24 24" aria-hidden="true"><path d="M20 6 9 17l-5-5"/></svg> Enregistré avec succès</div>
+                  <h:panelGroup rendered="#{v2UserSession.superAdmin}" layout="block" styleClass="st-row">
+                    <div class="st-row-l">#{v2LocaleBean.getMsg('profile.role')}</div>
+                    <div class="st-row-c"><input class="st-input" value="#{v2LocaleBean.getMsg('v2.profile.role.superAdmin')}" type="text" readonly="readonly"/></div>
+                  </h:panelGroup></div>
+                </div>
+                </h:panelGroup>
+                <h:panelGroup id="previewAccountRoles" layout="block">
+                <h:panelGroup rendered="#{not v2UserSession.superAdmin}" layout="block">
+                <div class="bo-card acc-roles">
+                  <div class="bo-card-h">
+                    <span class="bo-card-t">#{v2LocaleBean.getMsg('v2.profile.roles.title')}</span>
+                  </div>
+                  <div class="bo-card-b">
+                    <h:panelGroup rendered="#{empty v2MyAccountBean.projectRoles}" layout="block">
+                      <p class="acc-roles-empty">#{v2LocaleBean.getMsg('v2.profile.roles.empty')}</p>
+                    </h:panelGroup>
+                    <ui:repeat value="#{v2MyAccountBean.projectRoles}" var="project">
+                      <div class="acc-roles-proj">#{project.projectName}</div>
+                      <table class="st-table acc-roles-table">
+                        <thead>
+                          <tr>
+                            <th>#{v2LocaleBean.getMsg('v2.profile.roles.thesaurus')}</th>
+                            <th>#{v2LocaleBean.getMsg('profile.role')}</th>
+                          </tr>
+                        </thead>
+                        <tbody>
+                          <ui:repeat value="#{project.thesaurusRoles}" var="role">
+                            <tr>
+                              <td>
+                                <span class="st-td-name">#{role.thesaurusName}</span>
+                                <span class="acc-roles-id"> (#{role.thesaurusId})</span>
+                              </td>
+                              <td>#{v2MyAccountBean.labelForRole(role.roleName)}</td>
+                            </tr>
+                          </ui:repeat>
+                        </tbody>
+                      </table>
+                    </ui:repeat>
+                  </div>
+                </div>
+                </h:panelGroup>
+                </h:panelGroup>
+                <div class="bo-card" id="accBlockLayout"
+                     data-msg-open="#{v2LocaleBean.getMsg('v2.profile.blocks.open')}"
+                     data-msg-closed="#{v2LocaleBean.getMsg('v2.profile.blocks.closed')}"
+                     data-msg-drag="#{v2LocaleBean.getMsg('v2.profile.blocks.drag')}"
+                     data-msg-reset-done="#{v2LocaleBean.getMsg('v2.profile.blocks.resetDone')}">
+                  <div class="bo-card-h">
+                    <span class="bo-card-t">#{v2LocaleBean.getMsg('v2.profile.blocks.title')}</span>
+                    <button type="button" class="bo-btn ghost sm acc-block-reset" data-act="acc-block-reset">#{v2LocaleBean.getMsg('v2.profile.blocks.reset')}</button>
+                  </div>
+                  <div class="bo-card-b">
+                    <p class="st-toggle-d acc-block-hint">#{v2LocaleBean.getMsg('v2.profile.blocks.desc')}</p>
+                    <div id="accBlockRows"></div>
+                    <div id="accBlockLabelSrc" hidden="hidden">
+                      <span data-id="contexte">#{v2LocaleBean.getMsg('v2.block.contexte')}</span>
+                      <span data-id="collections">#{v2LocaleBean.getMsg('v2.block.collections')}</span>
+                      <span data-id="relations">#{v2LocaleBean.getMsg('v2.block.relations')}</span>
+                      <span data-id="relPerso">#{v2LocaleBean.getMsg('v2.block.relPerso')}</span>
+                      <span data-id="traductions">#{v2LocaleBean.getMsg('v2.block.traductions')}</span>
+                      <span data-id="notes">#{v2LocaleBean.getMsg('v2.block.notes')}</span>
+                      <span data-id="ressources">#{v2LocaleBean.getMsg('v2.block.ressources')}</span>
+                      <span data-id="alignement">#{v2LocaleBean.getMsg('v2.block.alignement')}</span>
+                      <span data-id="identifiants">#{v2LocaleBean.getMsg('v2.block.identifiants')}</span>
+                      <span data-id="temporel">#{v2LocaleBean.getMsg('v2.block.temporel')}</span>
+                    </div>
+                  </div>
+                </div>
+                <h:panelGroup id="previewAccountSaveFeedback" layout="block">
+                  <span id="previewAccountSaveMsg" hidden="hidden"
+                        data-ok="#{not v2MyAccountBean.identitySaveError}">#{v2MyAccountBean.identitySaveMessage}</span>
+                  <h:panelGroup layout="block" styleClass="st-corpus-msg is-error"
+                                rendered="#{v2MyAccountBean.identitySaveError and not empty v2MyAccountBean.identitySaveMessage}">
+                    #{v2MyAccountBean.identitySaveMessage}
+                  </h:panelGroup>
+                </h:panelGroup>
+                <div class="fsave">
+                  <button type="button" class="fsave-btn" data-act="account-save">
+                    <svg viewBox="0 0 24 24" aria-hidden="true"><path d="M20 6 9 17l-5-5"/></svg>
+                    #{v2LocaleBean.getMsg('v2.save')}
+                  </button>
+                </div>
+                <div class="bo-toast above" id="accountSaveToast" hidden="hidden">
+                  <svg viewBox="0 0 24 24" aria-hidden="true"><path d="M20 6 9 17l-5-5"/></svg>
+                  <span id="accountSaveToastTxt">#{v2LocaleBean.getMsg('v2.profile.identity.saved')}</span>
+                </div>
+                <input type="hidden" name="csrfToken" value="#{sessionScope.CSRF_TOKEN}"/>
+              </div>
+              </h:form>
             </div>
           </div>
   </ui:define>

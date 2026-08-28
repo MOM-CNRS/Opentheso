@@ -48,6 +48,19 @@ public interface NoteRepository extends JpaRepository<Note, Integer> {
 
     @Modifying
     @Transactional
+    @Query("""
+        DELETE FROM Note n
+        WHERE n.idThesaurus = :idThesaurus
+          AND LOWER(n.noteSource) = LOWER(:noteSource)
+          AND (n.identifier = :conceptId OR n.idConcept = :conceptId)
+        """)
+    void deleteByConceptThesaurusAndNoteSource(
+            @Param("conceptId") String conceptId,
+            @Param("idThesaurus") String idThesaurus,
+            @Param("noteSource") String noteSource);
+
+    @Modifying
+    @Transactional
     @Query("UPDATE Note t SET t.idThesaurus = :newIdThesaurus WHERE t.idThesaurus = :oldIdThesaurus")
     void updateThesaurusId(@Param("newIdThesaurus") String newIdThesaurus, @Param("oldIdThesaurus") String oldIdThesaurus);
 

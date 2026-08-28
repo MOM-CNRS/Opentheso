@@ -4,6 +4,7 @@ import fr.cnrs.opentheso.repositories.ConceptGroupLabelRepository;
 import fr.cnrs.opentheso.v2.concept.mapper.ConceptMapper;
 import fr.cnrs.opentheso.v2.concept.write.model.ConceptSearchSuggestion;
 import fr.cnrs.opentheso.v2.concept.write.model.ConceptWriteCollection;
+import fr.cnrs.opentheso.v2.concept.write.model.ConceptWriteCustomTarget;
 import fr.cnrs.opentheso.v2.concept.write.model.ConceptWriteFacet;
 import fr.cnrs.opentheso.v2.shared.repository.ConceptQueryRepository;
 import jakarta.persistence.EntityManager;
@@ -108,6 +109,71 @@ public class ConceptWriteSearchPersistence {
                 .setParameter("query", cleaned + "%")
                 .setParameter("limit", SEARCH_LIMIT)
                 .getResultList();
+        return mapFacetRows(rows);
+    }
+
+    @SuppressWarnings("unchecked")
+    public List<ConceptWriteFacet> listFacets(String lang, String thesaurusId) {
+        if (StringUtils.isAnyBlank(thesaurusId, lang)) {
+            return Collections.emptyList();
+        }
+        List<Object[]> rows = entityManager.createNativeQuery("""
+                        SELECT DISTINCT nl.id_facet, nl.lexical_value
+                        FROM node_label nl
+                        WHERE nl.id_thesaurus = :thesaurusId
+                          AND nl.lang = :lang
+                        ORDER BY nl.lexical_value
+                        """)
+                .setParameter("thesaurusId", thesaurusId)
+                .setParameter("lang", lang)
+                .getResultList();
+        return mapFacetRows(rows);
+    }
+
+    @SuppressWarnings("unchecked")
+    public List<ConceptWriteCustomTarget> autocompleteCustomRelationTarget(
+            String query,
+            String lang,
+            String thesaurusId
+    ) {
+        if (StringUtils.isAnyBlank(thesaurusId, lang, query)) {
+            return Collections.emptyList();
+        }
+        String cleaned = query.trim();
+        List<Object[]> rows = entityManager.createNativeQuery("""
+                        SELECT DISTINCT c.id_concept, t.lexical_value AS label, c.concept_type
+                        FROM concept c
+                        JOIN preferred_term pt
+                            ON pt.id_concept = c.id_concept
+                           AND pt.id_thesaurus = c.id_thesaurus
+                        JOIN term t
+                            ON t.id_term = pt.id_term
+                           AND t.id_thesaurus = c.id_thesaurus
+                        WHERE c.id_thesaurus = :thesaurusId
+                          AND t.lang = :lang
+                          AND c.status NOT IN ('CA', 'hidden')
+                          AND c.concept_type IS NOT NULL
+                          AND c.concept_type != ''
+                          AND c.concept_type != 'concept'
+                          AND f_unaccent(LOWER(t.lexical_value)) LIKE f_unaccent(LOWER(:query))
+                        ORDER BY label
+                        LIMIT :limit
+                        """)
+                .setParameter("thesaurusId", thesaurusId)
+                .setParameter("lang", lang)
+                .setParameter("query", "%" + cleaned + "%")
+                .setParameter("limit", SEARCH_LIMIT)
+                .getResultList();
+        return rows.stream()
+                .map(row -> new ConceptWriteCustomTarget(
+                        ConceptMapper.stringAt(row, 0),
+                        ConceptMapper.stringAt(row, 1),
+                        ConceptMapper.stringAt(row, 2)
+                ))
+                .toList();
+    }
+
+    private static List<ConceptWriteFacet> mapFacetRows(List<Object[]> rows) {
         return rows.stream()
                 .map(row -> new ConceptWriteFacet(
                         ConceptMapper.stringAt(row, 0),

@@ -65,6 +65,19 @@ public class UserProfileService {
     }
 
     @Transactional
+    public UserProfile updateIdentity(int userId, String username, String email) {
+        String validUsername = ProfileValidator.requireUsername(username);
+        String validEmail = ProfileValidator.requireEmail(email);
+        UserEntity user = userLookupService.requireEntity(userId);
+        ensureUsernameAvailable(validUsername, userId);
+        ensureEmailAvailable(validEmail, userId);
+        user.setUsername(validUsername);
+        user.setMail(validEmail);
+        log.debug("Mise à jour de l'identité v2 pour l'utilisateur id={}", userId);
+        return saveEntity(user);
+    }
+
+    @Transactional
     UserProfile saveEntity(UserEntity user) {
         return UserProfileMapper.toProfile(userProfileRepository.save(user));
     }

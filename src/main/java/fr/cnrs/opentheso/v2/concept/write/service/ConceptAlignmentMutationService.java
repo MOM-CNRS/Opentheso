@@ -1,8 +1,12 @@
 package fr.cnrs.opentheso.v2.concept.write.service;
 
 import fr.cnrs.opentheso.entites.Alignement;
+import fr.cnrs.opentheso.models.NodeAlignmentProjection;
 import fr.cnrs.opentheso.repositories.AlignementRepository;
 import fr.cnrs.opentheso.repositories.AlignementTypeRepository;
+import fr.cnrs.opentheso.repositories.GpsRepository;
+import fr.cnrs.opentheso.repositories.ImagesRepository;
+import fr.cnrs.opentheso.repositories.NoteRepository;
 import fr.cnrs.opentheso.v2.concept.alignment.support.AlignmentUrlProbe;
 import fr.cnrs.opentheso.v2.concept.write.model.ConceptWriteAlignmentType;
 import fr.cnrs.opentheso.v2.concept.write.model.MutationResult;
@@ -31,6 +35,9 @@ public class ConceptAlignmentMutationService {
     private final AlignementRepository alignementRepository;
     private final AlignementTypeRepository alignementTypeRepository;
     private final ConceptWritePostMutationRepository conceptWritePostMutationRepository;
+    private final NoteRepository noteRepository;
+    private final ImagesRepository imagesRepository;
+    private final GpsRepository gpsRepository;
 
     @Transactional(readOnly = true)
     public List<ConceptWriteAlignmentType> listAlignmentTypes() {
@@ -157,7 +164,13 @@ public class ConceptAlignmentMutationService {
         if (alignement.isEmpty()) {
             return MutationResult.validationError("Alignement introuvable !");
         }
-        alignementRepository.delete(alignement.get());
+        Alignement entity = alignement.get();
+        String source = StringUtils.trimToEmpty(entity.getThesaurusTarget());
+        alignementRepository.delete(entity);
+        if (StringUtils.isNotBlank(source)
+                && !hasOtherAlignmentOfSource(command.thesaurusId(), command.conceptId(), source)) {
+            removeRelatedEnrichments(command.thesaurusId(), command.conceptId(), source);
+        }
 
         return finalizeMutation(
                 command.thesaurusId(),
@@ -166,6 +179,26 @@ public class ConceptAlignmentMutationService {
                 command.contributorName(),
                 "Alignement supprimé avec succès"
         );
+    }
+
+    private boolean hasOtherAlignmentOfSource(String thesaurusId, String conceptId, String source) {
+        List<NodeAlignmentProjection> remaining =
+                alignementRepository.findAllAlignmentsByConceptAndThesaurus(conceptId, thesaurusId);
+        for (NodeAlignmentProjection row : remaining) {
+            if (row != null && StringUtils.equalsIgnoreCase(source, row.getThesaurus_target())) {
+                return true;
+            }
+        }
+        return false;
+    }
+
+    private void removeRelatedEnrichments(String thesaurusId, String conceptId, String source) {
+        noteRepository.deleteByConceptThesaurusAndNoteSource(conceptId, thesaurusId, source);
+        imagesRepository.deleteByIdThesaurusAndIdConceptAndImageCopyrightIgnoreCase(
+                thesaurusId, conceptId, source);
+        if ("GeoNames".equalsIgnoreCase(source)) {
+            gpsRepository.deleteByIdConceptAndIdTheso(conceptId, thesaurusId);
+        }
     }
 
     private MutationResult finalizeMutation(

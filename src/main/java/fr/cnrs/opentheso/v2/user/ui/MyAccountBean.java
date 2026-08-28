@@ -4,17 +4,21 @@ import fr.cnrs.opentheso.v2.shared.ui.V2LocaleBean;
 import fr.cnrs.opentheso.utils.MessageUtils;
 import fr.cnrs.opentheso.v2.shared.ui.UserSession;
 import fr.cnrs.opentheso.v2.user.exception.ApiKeyRegenerationException;
+import fr.cnrs.opentheso.v2.user.exception.InvalidPasswordException;
 import fr.cnrs.opentheso.v2.user.exception.InvalidProfileDataException;
 import fr.cnrs.opentheso.v2.user.model.ProjectRoleOverview;
 import fr.cnrs.opentheso.v2.user.model.UserProfile;
 import fr.cnrs.opentheso.v2.user.policy.ApiKeyPolicy;
 import fr.cnrs.opentheso.v2.user.service.UserApiKeyService;
+import fr.cnrs.opentheso.v2.user.service.UserPasswordService;
 import fr.cnrs.opentheso.v2.user.service.UserProfileService;
+import fr.cnrs.opentheso.v2.user.validation.PasswordPolicy;
 import jakarta.faces.view.ViewScoped;
 import jakarta.inject.Named;
 import lombok.Getter;
 import lombok.Setter;
 import lombok.extern.slf4j.Slf4j;
+import org.apache.commons.lang3.StringUtils;
 import org.primefaces.PrimeFaces;
 
 import java.io.Serializable;
@@ -35,37 +39,51 @@ public class MyAccountBean implements Serializable {
     private final V2LocaleBean localeBean;
     private final UserProfileService userProfileService;
     private final UserApiKeyService userApiKeyService;
+    private final UserPasswordService userPasswordService;
 
     private UserProfile profile;
     private List<ProjectRoleOverview> projectRoles = Collections.emptyList();
     private String editableUsername;
     private String editableEmail;
     private boolean editableAlertMail;
+    private String newPassword;
+    private String passwordConfirmation;
     private String apiKeyPlain;
+    private boolean identitySaveError;
+    private String identitySaveMessage;
+    private boolean loaded;
 
     public MyAccountBean(
             UserSession userSession,
             V2LocaleBean localeBean,
             UserProfileService userProfileService,
-            UserApiKeyService userApiKeyService
+            UserApiKeyService userApiKeyService,
+            UserPasswordService userPasswordService
     ) {
         this.userSession = userSession;
         this.localeBean = localeBean;
         this.userProfileService = userProfileService;
         this.userApiKeyService = userApiKeyService;
+        this.userPasswordService = userPasswordService;
     }
 
     public void load() {
-        Integer userId = userSession.getCurrentUserId();
-        if (userId == null) {
-            log.warn("Tentative de chargement Mon compte v2 sans utilisateur connecté");
-            clearState();
-            return;
-        }
-        var profileWithRoles = userProfileService.getProfileWithRoles(userId);
-        profile = profileWithRoles.profile();
-        projectRoles = profileWithRoles.projectRoles();
-        syncFormFromProfile();
+        doLoad();
+    }
+
+    public String getEditableUsername() {
+        doLoad();
+        return editableUsername;
+    }
+
+    public String getEditableEmail() {
+        doLoad();
+        return editableEmail;
+    }
+
+    public List<ProjectRoleOverview> getProjectRoles() {
+        doLoad();
+        return projectRoles;
     }
 
     public void updateUsername() {
@@ -90,6 +108,48 @@ public class MyAccountBean implements Serializable {
                 localeBean.getMsg("profile.alertChangedSuccess"),
                 () -> userSession.refreshAlertMail(profile.alertMail())
         );
+    }
+
+    public void saveIdentity() {
+        identitySaveError = false;
+        identitySaveMessage = "";
+        Integer userId = userSession.getCurrentUserId();
+        if (userId == null) {
+            identitySaveError = true;
+            identitySaveMessage = localeBean.getMsg("profile.userNotConnected");
+            return;
+        }
+        boolean changingPassword = StringUtils.isNotBlank(newPassword)
+                || StringUtils.isNotBlank(passwordConfirmation);
+        try {
+            if (changingPassword) {
+                PasswordPolicy.validate(newPassword, passwordConfirmation);
+            }
+            profile = userProfileService.updateIdentity(userId, editableUsername, editableEmail);
+            userSession.refreshDisplayName(profile.username());
+            userSession.refreshEmail(profile.email());
+            if (changingPassword) {
+                userPasswordService.changePassword(userId, newPassword, passwordConfirmation);
+            }
+            loaded = true;
+            syncFormFromProfile();
+            clearPasswordFields();
+            identitySaveMessage = localeBean.getMsg(
+                    changingPassword
+                            ? "v2.profile.identity.savedWithPassword"
+                            : "v2.profile.identity.saved"
+            );
+        } catch (InvalidProfileDataException | InvalidPasswordException e) {
+            identitySaveError = true;
+            identitySaveMessage = e.getMessage();
+        }
+    }
+
+    public String labelForRole(String roleName) {
+        if (StringUtils.isBlank(roleName)) {
+            return "";
+        }
+        return localeBean.getMsg("v2.profile.role." + roleName);
     }
 
     public void regenerateApiKey() {
@@ -131,6 +191,23 @@ public class MyAccountBean implements Serializable {
         return userApiKeyService.canRegenerateApiKey(profile);
     }
 
+    private void doLoad() {
+        if (loaded) {
+            return;
+        }
+        loaded = true;
+        Integer userId = userSession.getCurrentUserId();
+        if (userId == null) {
+            log.warn("Tentative de chargement Mon compte v2 sans utilisateur connecté");
+            clearState();
+            return;
+        }
+        var profileWithRoles = userProfileService.getProfileWithRoles(userId);
+        profile = profileWithRoles.profile();
+        projectRoles = profileWithRoles.projectRoles();
+        syncFormFromProfile();
+    }
+
     private void applyProfileUpdate(
             IntFunction<UserProfile> updateAction,
             String successMessage,
@@ -143,6 +220,7 @@ public class MyAccountBean implements Serializable {
         try {
             profile = updateAction.apply(userId);
             refreshSessionView.run();
+            loaded = true;
             syncFormFromProfile();
             MessageUtils.showInformationMessage(successMessage);
             refreshHeader();
@@ -165,10 +243,16 @@ public class MyAccountBean implements Serializable {
         apiKeyPlain = null;
     }
 
+    private void clearPasswordFields() {
+        newPassword = null;
+        passwordConfirmation = null;
+    }
+
     private void clearState() {
         profile = null;
         projectRoles = Collections.emptyList();
         syncFormFromProfile();
+        clearPasswordFields();
     }
 
     private Integer requireConnectedUserId() {

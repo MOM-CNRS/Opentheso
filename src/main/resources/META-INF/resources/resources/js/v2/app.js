@@ -60,6 +60,8 @@ document.addEventListener("keydown", (e) => {
     }
   }
   if (e.key !== "Escape") return;
+  if (typeof closeImgLightbox === "function" && closeImgLightbox()) return;
+  if (typeof closeGpsLightbox === "function" && closeGpsLightbox()) return;
   if (typeof closeCollectionPicker === "function" && closeCollectionPicker()) return;
   if (e.target && e.target.classList && e.target.classList.contains("cand-search")) {
     if (e.target.value) {
@@ -134,7 +136,8 @@ document.addEventListener("keydown", (e) => {
     return;
   }
   if (hideConfirm("#aboutSaveConfirm") || hideConfirm("#logoutConfirm") || hideConfirm("#stSaveConfirm")
-      || hideConfirm("#previewCorpusCreateConfirm") || hideConfirm("#stLeaveConfirm")) {
+      || hideConfirm("#previewCorpusCreateConfirm") || hideConfirm("#stLeaveConfirm")
+      || hideConfirm("#alignDeleteConfirm") || hideConfirm("#alignReplaceConfirm")) {
     settingsLeaveAction = null;
     e.preventDefault();
   }
@@ -207,11 +210,58 @@ document.addEventListener("click", (e) => {
     hideConfirm("#aboutSaveConfirm");
   } else if (act === "about-save-modal") {
     return;
+  } else if (act === "label-save-ask") {
+    showConfirm("#labelSaveConfirm");
+  } else if (act === "label-save-dismiss") {
+    hideConfirm("#labelSaveConfirm");
+  } else if (act === "label-save-modal") {
+    return;
+  } else if (act === "coll-save-ask") {
+    showConfirm("#collSaveConfirm");
+  } else if (act === "coll-save-dismiss") {
+    hideConfirm("#collSaveConfirm");
+  } else if (act === "coll-save-modal") {
+    return;
+  } else if (act === "rel-save-ask") {
+    showConfirm("#relSaveConfirm");
+  } else if (act === "rel-save-dismiss") {
+    hideConfirm("#relSaveConfirm");
+  } else if (act === "rel-save-modal") {
+    return;
+  } else if (act === "crel-save-ask") {
+    showConfirm("#crelSaveConfirm");
+  } else if (act === "crel-save-dismiss") {
+    hideConfirm("#crelSaveConfirm");
+  } else if (act === "crel-save-modal") {
+    return;
+  } else if (act === "tr-save-ask") {
+    showConfirm("#trSaveConfirm");
+  } else if (act === "tr-save-dismiss") {
+    hideConfirm("#trSaveConfirm");
+  } else if (act === "tr-save-modal") {
+    return;
+  } else if (act === "note-save-ask") {
+    showConfirm("#noteSaveConfirm");
+  } else if (act === "note-save-dismiss") {
+    hideConfirm("#noteSaveConfirm");
+  } else if (act === "note-save-modal") {
+    return;
+  } else if (act === "res-save-ask") {
+    const overlay = t.closest(".crow") && t.closest(".crow").querySelector(".confirm-overlay");
+    showConfirm(overlay && overlay.id ? "#" + overlay.id : "#resLinkSaveConfirm");
+  } else if (act === "res-save-dismiss") {
+    const overlay = t.closest(".confirm-overlay");
+    hideConfirm(overlay && overlay.id ? "#" + overlay.id : "#resLinkSaveConfirm");
+  } else if (act === "res-save-modal") {
+    return;
   } else if (act === "st-save-ask") {
     showConfirm("#stSaveConfirm");
   } else if (act === "st-save-go") {
     e.preventDefault();
     clickPreviewJsf("previewPrefSaveGo");
+  } else if (act === "account-save") {
+    e.preventDefault();
+    clickPreviewJsf("previewAccountSaveGo");
   } else if (act === "st-save-dismiss") {
     hideConfirm("#stSaveConfirm");
   } else if (act === "st-save-modal") {
@@ -278,7 +328,7 @@ document.addEventListener("click", (e) => {
   } else if (act === "go-top") {
     const reduce = window.matchMedia("(prefers-reduced-motion: reduce)").matches;
     const behavior = reduce ? "auto" : "smooth";
-    ["#previewView", "#viewHome", "#viewSettings", "main.content .view"].forEach((sel) => {
+    ["#previewView", "#viewHome", "#viewLive", "#viewConcept", "#viewSettings", "main.content .view"].forEach((sel) => {
       const el = $(sel);
       if (el) el.scrollTo({ top: 0, behavior });
     });
@@ -610,10 +660,32 @@ document.addEventListener("click", (e) => {
     applyTableCols();
   } else if (act === "cblock-expand") {
     expandConceptBlock(t);
+  } else if (act === "cblock-fold") {
+    if (typeof toggleConceptBlockFold === "function") toggleConceptBlockFold(t);
   } else if (act === "cblock-collapse") {
     closeConceptBlockOverlay();
-  } else if (act === "align-auto-search" || act === "align-auto-compare") {
-    toast("La recherche et la comparaison automatiques seront disponibles en édition.");
+  } else if (act === "align-auto-compare") {
+    return;
+  } else if (act === "align-delete-ask") {
+    const idInput = document.querySelector("[id$='alignDeleteId']");
+    const uriEl = document.getElementById("alignDeleteUri");
+    if (idInput) idInput.value = t.getAttribute("data-id") || "";
+    if (uriEl) uriEl.textContent = t.getAttribute("data-uri") || "";
+    showConfirm("#alignDeleteConfirm");
+  } else if (act === "align-delete-dismiss") {
+    hideConfirm("#alignDeleteConfirm");
+  } else if (act === "align-delete-modal") {
+    return;
+  } else if (act === "align-replace-ask") {
+    const idInput = document.querySelector("[id$='alignReplaceIndex']");
+    const uriEl = document.getElementById("alignReplaceUri");
+    if (idInput) idInput.value = t.getAttribute("data-index") || "";
+    if (uriEl) uriEl.textContent = t.getAttribute("data-uri") || "";
+    showConfirm("#alignReplaceConfirm");
+  } else if (act === "align-replace-dismiss") {
+    hideConfirm("#alignReplaceConfirm");
+  } else if (act === "align-replace-modal") {
+    return;
   } else if (act === "ui-lang") {
     $$(".lang-opt").forEach(o => o.classList.toggle("is-on", o === t));
     const flag = t.querySelector(".lang-opt-flag");
@@ -900,12 +972,12 @@ function onV2Ajax(data) {
   }
   if (data.status === "success") {
     const srcId = (data.source && data.source.id) || "";
-    if (srcId === "previewCorpusToggleGo" || srcId === "previewAlignToggleGo") {
-      markSettingsDraft();
-    }
-    requestAnimationFrame(() => {
-      const srcId = (data.source && data.source.id) || "";
-      if (srcId.indexOf("clearRevealBtn") >= 0
+      if (srcId === "previewCorpusToggleGo" || srcId === "previewAlignToggleGo") {
+        markSettingsDraft();
+      }
+      requestAnimationFrame(() => {
+        const srcId = (data.source && data.source.id) || "";
+        if (srcId.indexOf("clearRevealBtn") >= 0
           || srcId.indexOf("candSearchGo") >= 0
           || srcId.indexOf("candMine") >= 0) {
         return;

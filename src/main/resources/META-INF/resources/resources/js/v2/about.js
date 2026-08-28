@@ -467,6 +467,34 @@ window.onPreviewPrefSave = function (data) {
   }
   toast(text);
 };
+window.onPreviewAccountSave = function (data) {
+  if (data.status === "error") {
+    toast("L'enregistrement a échoué. Réessayez.");
+    return;
+  }
+  if (data.status !== "success") return;
+  const msg = $("#previewAccountSaveMsg");
+  if (!msg) return;
+  const text = (msg.textContent || "").trim();
+  if (!text) {
+    toast("L'enregistrement n'a pas pu être effectué.");
+    return;
+  }
+  if (msg.getAttribute("data-ok") === "true") {
+    const el = $("#accountSaveToast");
+    const txt = $("#accountSaveToastTxt");
+    if (txt) txt.textContent = text;
+    if (!el) {
+      toast(text);
+      return;
+    }
+    el.hidden = false;
+    clearTimeout(el._t);
+    el._t = setTimeout(() => { el.hidden = true; }, 2200);
+    return;
+  }
+  toast(text);
+};
 function showAboutSaveToast() {
   const msg = $("#previewAboutSaveMsg");
   if (!msg) return;

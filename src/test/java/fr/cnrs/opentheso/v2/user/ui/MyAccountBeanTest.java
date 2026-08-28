@@ -10,6 +10,7 @@ import fr.cnrs.opentheso.v2.user.model.ProfileWithRoles;
 import fr.cnrs.opentheso.v2.user.model.ProjectRoleOverview;
 import fr.cnrs.opentheso.v2.user.model.UserProfile;
 import fr.cnrs.opentheso.v2.user.service.UserApiKeyService;
+import fr.cnrs.opentheso.v2.user.service.UserPasswordService;
 import fr.cnrs.opentheso.v2.user.service.UserProfileService;
 import org.junit.jupiter.api.BeforeEach;
 import org.junit.jupiter.api.Test;
@@ -29,6 +30,7 @@ import static org.junit.jupiter.api.Assertions.assertTrue;
 import static org.mockito.Mockito.lenient;
 import static org.mockito.Mockito.mock;
 import static org.mockito.Mockito.mockStatic;
+import static org.mockito.Mockito.never;
 import static org.mockito.Mockito.verify;
 import static org.mockito.Mockito.when;
 
@@ -43,6 +45,8 @@ class MyAccountBeanTest {
     private UserProfileService userProfileService;
     @Mock
     private UserApiKeyService userApiKeyService;
+    @Mock
+    private UserPasswordService userPasswordService;
 
     private MyAccountBean myAccountBean;
 
@@ -58,7 +62,8 @@ class MyAccountBeanTest {
                 userSession,
                 localeBean,
                 userProfileService,
-                userApiKeyService
+                userApiKeyService,
+                userPasswordService
         );
     }
 
@@ -85,6 +90,18 @@ class MyAccountBeanTest {
         assertEquals("alice", myAccountBean.getEditableUsername());
         assertEquals("alice@example.com", myAccountBean.getEditableEmail());
         assertTrue(myAccountBean.isEditableAlertMail());
+    }
+
+    @Test
+    void getEditableUsername_loadsProfileWhenViewActionDidNotRun() {
+        when(userSession.getCurrentUserId()).thenReturn(5);
+        when(userProfileService.getProfileWithRoles(5)).thenReturn(
+                new ProfileWithRoles(PROFILE, List.of())
+        );
+
+        assertEquals("alice", myAccountBean.getEditableUsername());
+        assertEquals("alice@example.com", myAccountBean.getEditableEmail());
+        verify(userProfileService).getProfileWithRoles(5);
     }
 
     @Test
@@ -157,6 +174,106 @@ class MyAccountBeanTest {
 
         assertFalse(myAccountBean.isEditableAlertMail());
         verify(userSession).refreshAlertMail(false);
+    }
+
+    @Test
+    void saveIdentity_updatesProfileAndSession() {
+        when(userSession.getCurrentUserId()).thenReturn(5);
+        myAccountBean.setEditableUsername("bob");
+        myAccountBean.setEditableEmail("bob@example.com");
+        when(userProfileService.updateIdentity(5, "bob", "bob@example.com")).thenReturn(
+                new UserProfile(5, "bob", "bob@example.com", true, false, true, null, true)
+        );
+
+        myAccountBean.saveIdentity();
+
+        assertEquals("bob", myAccountBean.getProfile().username());
+        assertEquals("bob@example.com", myAccountBean.getEditableEmail());
+        assertFalse(myAccountBean.isIdentitySaveError());
+        assertEquals("v2.profile.identity.saved", myAccountBean.getIdentitySaveMessage());
+        verify(userSession).refreshDisplayName("bob");
+        verify(userSession).refreshEmail("bob@example.com");
+    }
+
+    @Test
+    void saveIdentity_changesPasswordWhenBothFieldsAreFilled() {
+        when(userSession.getCurrentUserId()).thenReturn(5);
+        myAccountBean.setEditableUsername("alice");
+        myAccountBean.setEditableEmail("alice@example.com");
+        myAccountBean.setNewPassword("Abcd1234!");
+        myAccountBean.setPasswordConfirmation("Abcd1234!");
+        when(userProfileService.updateIdentity(5, "alice", "alice@example.com")).thenReturn(PROFILE);
+
+        myAccountBean.saveIdentity();
+
+        verify(userPasswordService).changePassword(5, "Abcd1234!", "Abcd1234!");
+        assertNull(myAccountBean.getNewPassword());
+        assertNull(myAccountBean.getPasswordConfirmation());
+        assertFalse(myAccountBean.isIdentitySaveError());
+        assertEquals("v2.profile.identity.savedWithPassword", myAccountBean.getIdentitySaveMessage());
+    }
+
+    @Test
+    void saveIdentity_skipsPasswordWhenFieldsAreBlank() {
+        when(userSession.getCurrentUserId()).thenReturn(5);
+        myAccountBean.setEditableUsername("bob");
+        myAccountBean.setEditableEmail("bob@example.com");
+        when(userProfileService.updateIdentity(5, "bob", "bob@example.com")).thenReturn(
+                new UserProfile(5, "bob", "bob@example.com", true, false, true, null, true)
+        );
+
+        myAccountBean.saveIdentity();
+
+        verify(userPasswordService, never()).changePassword(org.mockito.ArgumentMatchers.anyInt(),
+                org.mockito.ArgumentMatchers.any(), org.mockito.ArgumentMatchers.any());
+        assertEquals("v2.profile.identity.saved", myAccountBean.getIdentitySaveMessage());
+    }
+
+    @Test
+    void saveIdentity_rejectsInvalidPasswordWithoutUpdatingIdentity() {
+        when(userSession.getCurrentUserId()).thenReturn(5);
+        myAccountBean.setEditableUsername("alice");
+        myAccountBean.setEditableEmail("alice@example.com");
+        myAccountBean.setNewPassword("weak");
+        myAccountBean.setPasswordConfirmation("weak");
+
+        myAccountBean.saveIdentity();
+
+        assertTrue(myAccountBean.isIdentitySaveError());
+        verify(userProfileService, never()).updateIdentity(
+                org.mockito.ArgumentMatchers.anyInt(),
+                org.mockito.ArgumentMatchers.any(),
+                org.mockito.ArgumentMatchers.any()
+        );
+        verify(userPasswordService, never()).changePassword(
+                org.mockito.ArgumentMatchers.anyInt(),
+                org.mockito.ArgumentMatchers.any(),
+                org.mockito.ArgumentMatchers.any()
+        );
+    }
+
+    @Test
+    void saveIdentity_setsErrorWhenUserNotConnected() {
+        when(userSession.getCurrentUserId()).thenReturn(null);
+
+        myAccountBean.saveIdentity();
+
+        assertTrue(myAccountBean.isIdentitySaveError());
+        assertEquals("profile.userNotConnected", myAccountBean.getIdentitySaveMessage());
+    }
+
+    @Test
+    void saveIdentity_setsErrorOnInvalidData() {
+        when(userSession.getCurrentUserId()).thenReturn(5);
+        myAccountBean.setEditableUsername("");
+        myAccountBean.setEditableEmail("alice@example.com");
+        when(userProfileService.updateIdentity(5, "", "alice@example.com"))
+                .thenThrow(new InvalidProfileDataException("Le pseudo est obligatoire."));
+
+        myAccountBean.saveIdentity();
+
+        assertTrue(myAccountBean.isIdentitySaveError());
+        assertEquals("Le pseudo est obligatoire.", myAccountBean.getIdentitySaveMessage());
     }
 
     @Test

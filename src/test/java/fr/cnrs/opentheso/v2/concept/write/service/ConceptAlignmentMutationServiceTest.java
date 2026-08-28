@@ -2,8 +2,12 @@ package fr.cnrs.opentheso.v2.concept.write.service;
 
 import fr.cnrs.opentheso.entites.Alignement;
 import fr.cnrs.opentheso.entites.AlignementType;
+import fr.cnrs.opentheso.models.NodeAlignmentProjection;
 import fr.cnrs.opentheso.repositories.AlignementRepository;
 import fr.cnrs.opentheso.repositories.AlignementTypeRepository;
+import fr.cnrs.opentheso.repositories.GpsRepository;
+import fr.cnrs.opentheso.repositories.ImagesRepository;
+import fr.cnrs.opentheso.repositories.NoteRepository;
 import fr.cnrs.opentheso.v2.concept.write.model.MutationOutcome;
 import fr.cnrs.opentheso.v2.concept.write.model.command.AddManualAlignmentCommand;
 import fr.cnrs.opentheso.v2.concept.write.model.command.DeleteAlignmentCommand;
@@ -36,6 +40,12 @@ class ConceptAlignmentMutationServiceTest {
     private AlignementTypeRepository alignementTypeRepository;
     @Mock
     private ConceptWritePostMutationRepository conceptWritePostMutationRepository;
+    @Mock
+    private NoteRepository noteRepository;
+    @Mock
+    private ImagesRepository imagesRepository;
+    @Mock
+    private GpsRepository gpsRepository;
 
     @InjectMocks
     private ConceptAlignmentMutationService service;
@@ -247,14 +257,86 @@ class ConceptAlignmentMutationServiceTest {
     @Test
     void deleteAlignment_success_deletesAndTouchesConcept() {
         var command = new DeleteAlignmentCommand("TH1", "C1", 7, 42, "admin");
-        var existing = Alignement.builder().id(7).internalIdThesaurus("TH1").internalIdConcept("C1").build();
+        var existing = Alignement.builder()
+                .id(7)
+                .internalIdThesaurus("TH1")
+                .internalIdConcept("C1")
+                .thesaurusTarget("Wikidata")
+                .build();
         when(alignementRepository.findByInternalIdThesaurusAndInternalIdConceptAndId("TH1", "C1", 7))
                 .thenReturn(Optional.of(existing));
+        when(alignementRepository.findAllAlignmentsByConceptAndThesaurus("C1", "TH1"))
+                .thenReturn(List.of());
 
         var result = service.deleteAlignment(command);
 
         assertEquals(MutationOutcome.OK, result.outcome());
         verify(alignementRepository).delete(existing);
+        verify(noteRepository).deleteByConceptThesaurusAndNoteSource("C1", "TH1", "Wikidata");
+        verify(imagesRepository).deleteByIdThesaurusAndIdConceptAndImageCopyrightIgnoreCase(
+                "TH1", "C1", "Wikidata");
+        verify(gpsRepository, never()).deleteByIdConceptAndIdTheso(any(), any());
         verify(conceptWritePostMutationRepository).touchConcept("TH1", "C1", 42);
+    }
+
+    @Test
+    void deleteAlignment_keepsRelatedWhenAnotherAlignmentSharesSource() {
+        var command = new DeleteAlignmentCommand("TH1", "C1", 7, 42, "admin");
+        var existing = Alignement.builder()
+                .id(7)
+                .internalIdThesaurus("TH1")
+                .internalIdConcept("C1")
+                .thesaurusTarget("Wikidata")
+                .build();
+        when(alignementRepository.findByInternalIdThesaurusAndInternalIdConceptAndId("TH1", "C1", 7))
+                .thenReturn(Optional.of(existing));
+        when(alignementRepository.findAllAlignmentsByConceptAndThesaurus("C1", "TH1"))
+                .thenReturn(List.of(remaining("Wikidata")));
+
+        var result = service.deleteAlignment(command);
+
+        assertEquals(MutationOutcome.OK, result.outcome());
+        verify(alignementRepository).delete(existing);
+        verify(noteRepository, never()).deleteByConceptThesaurusAndNoteSource(any(), any(), any());
+        verify(imagesRepository, never()).deleteByIdThesaurusAndIdConceptAndImageCopyrightIgnoreCase(
+                any(), any(), any());
+    }
+
+    @Test
+    void deleteAlignment_geoNames_removesGpsWhenLastOfSource() {
+        var command = new DeleteAlignmentCommand("TH1", "C1", 7, 42, "admin");
+        var existing = Alignement.builder()
+                .id(7)
+                .internalIdThesaurus("TH1")
+                .internalIdConcept("C1")
+                .thesaurusTarget("GeoNames")
+                .build();
+        when(alignementRepository.findByInternalIdThesaurusAndInternalIdConceptAndId("TH1", "C1", 7))
+                .thenReturn(Optional.of(existing));
+        when(alignementRepository.findAllAlignmentsByConceptAndThesaurus("C1", "TH1"))
+                .thenReturn(List.of());
+
+        service.deleteAlignment(command);
+
+        verify(gpsRepository).deleteByIdConceptAndIdTheso("C1", "TH1");
+    }
+
+    private static NodeAlignmentProjection remaining(String source) {
+        return new NodeAlignmentProjection() {
+            @Override public int getId() { return 8; }
+            @Override public java.util.Date getCreated() { return null; }
+            @Override public java.util.Date getModified() { return null; }
+            @Override public int getAuthor() { return 1; }
+            @Override public String getThesaurus_target() { return source; }
+            @Override public String getConcept_target() { return ""; }
+            @Override public String getUri_target() { return "http://ex.org/b"; }
+            @Override public int getAlignement_id_type() { return 1; }
+            @Override public String getInternal_id_thesaurus() { return "TH1"; }
+            @Override public String getInternal_id_concept() { return "C1"; }
+            @Override public Integer getId_alignement_source() { return null; }
+            @Override public String getLabel() { return "exactMatch"; }
+            @Override public String getLabel_skos() { return "skos:exactMatch"; }
+            @Override public boolean getUrl_available() { return true; }
+        };
     }
 }

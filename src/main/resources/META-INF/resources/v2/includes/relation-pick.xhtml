@@ -1,0 +1,31 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<ui:composition xmlns="http://www.w3.org/1999/xhtml"
+                xmlns:ui="http://xmlns.jcp.org/jsf/facelets"
+                xmlns:h="http://xmlns.jcp.org/jsf/html">
+  <div class="coll-pick" id="cvRel#{kind}Pick" data-rel-kind="#{kindLower}">
+    <div class="coll-pick-chips" id="cvRel#{kind}Chips" hidden="hidden"></div>
+    <div class="search-field coll-pick-field" id="cvRel#{kind}Combo">
+      <span class="search-ico" aria-hidden="true">⌕</span>
+      <input type="text" class="search-input" id="cvRel#{kind}Query"
+             placeholder="#{placeholder}"
+             autocomplete="off" spellcheck="false"
+             aria-autocomplete="list" aria-expanded="false"
+             aria-controls="cvRel#{kind}Menu" aria-label="#{placeholder}"/>
+      <button type="button" class="search-clear" id="cvRel#{kind}Clear" hidden="hidden"
+              data-act="rel-pick-clear" data-kind="#{kindLower}" title="Effacer">×</button>
+      <button type="button" class="coll-pick-caret" id="cvRel#{kind}Caret"
+              data-act="rel-pick-toggle" data-kind="#{kindLower}" tabindex="-1"
+              title="Rechercher un concept" aria-label="Rechercher un concept">
+        <span aria-hidden="true">▾</span>
+      </button>
+    </div>
+    <div class="ac" id="cvRel#{kind}Menu" hidden="hidden" role="listbox">
+      <div class="ac-empty" id="cvRel#{kind}Empty">Tapez pour rechercher un concept…</div>
+      <div class="coll-ac-list" id="cvRel#{kind}List"></div>
+      <button type="button" class="ac-footer" id="cvRel#{kind}More" data-act="rel-pick-more" data-kind="#{kindLower}">
+        Voir les <strong id="cvRel#{kind}Count">0</strong> concepts<span class="ac-enter">↵</span>
+      </button>
+    </div>
+    <h:inputHidden id="cvRel#{kind}Json" value="#{v2ConceptRelationBlockEditorBean[jsonProperty]}"/>
+  </div>
+</ui:composition>

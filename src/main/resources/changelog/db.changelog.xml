@@ -290,4 +290,9 @@
         <sqlFile path="v26/26-08_04.sql" relativeToChangelogFile="true" splitStatements="false"/>
     </changeSet>
 
+    <changeSet id="26.08.05" author="Firas">
+        <comment>Per-user concept fiche block order and collapsed state</comment>
+        <sqlFile path="v26/26-08_05.sql" relativeToChangelogFile="true" splitStatements="false"/>
+    </changeSet>
+
 </databaseChangeLog>

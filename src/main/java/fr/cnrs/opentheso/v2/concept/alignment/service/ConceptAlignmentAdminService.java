@@ -12,6 +12,7 @@ import fr.cnrs.opentheso.v2.concept.alignment.model.AlignmentAdminRow;
 import fr.cnrs.opentheso.v2.concept.alignment.model.AlignmentProposition;
 import fr.cnrs.opentheso.v2.concept.alignment.model.AlignmentSourceItem;
 import fr.cnrs.opentheso.v2.concept.alignment.support.AlignmentUrlProbe;
+import fr.cnrs.opentheso.v2.concept.model.ConceptAlignment;
 import fr.cnrs.opentheso.v2.concept.search.repository.ConceptSearchQueryRepository;
 import fr.cnrs.opentheso.v2.concept.write.model.MutationResult;
 import fr.cnrs.opentheso.v2.concept.write.model.command.AddManualAlignmentCommand;
@@ -30,6 +31,7 @@ import java.net.URL;
 import java.util.ArrayList;
 import java.util.HashSet;
 import java.util.LinkedHashMap;
+import java.util.LinkedHashSet;
 import java.util.List;
 import java.util.Map;
 import java.util.Set;
@@ -44,6 +46,7 @@ import java.util.concurrent.Future;
 public class ConceptAlignmentAdminService {
 
     public static final int BRANCH_LIMIT = 2000;
+    private static final int COMPARISON_HIT_LIMIT = 3;
 
     private final BranchConceptSupport branchConceptSupport;
     private final ConceptSearchQueryRepository conceptSearchQueryRepository;
@@ -324,7 +327,7 @@ public class ConceptAlignmentAdminService {
             return false;
         }
         if ("GeoNames".equalsIgnoreCase(proposition.getSourceName())
-                && (proposition.getLatitude() != 0 || proposition.getLongitude() != 0)) {
+                && hasGpsCoordinates(proposition)) {
             candidatAutoAlignmentPersistence.insertGpsCoordinates(
                     proposition.getConceptId(),
                     thesaurusId,
@@ -335,7 +338,7 @@ public class ConceptAlignmentAdminService {
         return true;
     }
 
-    private List<AlignmentProposition> searchPropositionsForConcept(
+    public List<AlignmentProposition> searchPropositionsForConcept(
             String thesaurusId,
             String lang,
             String conceptId,
@@ -368,6 +371,95 @@ public class ConceptAlignmentAdminService {
                     .build());
         }
         return hits;
+    }
+
+    /**
+     * Comparaison sur un concept : propositions distantes face aux alignements
+     * déjà enregistrés vers la source (équivalent V1 {@code alignement-comparaison}).
+     */
+    public List<AlignmentProposition> searchComparisonsForConcept(
+            String thesaurusId,
+            String lang,
+            String conceptId,
+            String label,
+            String localDefinition,
+            List<ConceptAlignment> alignments,
+            AlignementSource source
+    ) {
+        if (source == null || StringUtils.isAnyBlank(thesaurusId, lang, conceptId, label)) {
+            return List.of();
+        }
+        List<ConceptAlignment> existing = alignmentsTowardSource(alignments, source);
+        if (existing.isEmpty()) {
+            return List.of();
+        }
+        var outcome = alignmentAutoExternalSearch.search(
+                source,
+                new AlignmentAutoExternalSearch.SearchContext(
+                        thesaurusId, conceptId, label, lang, "", ""
+                )
+        );
+        if (outcome.results() == null || outcome.results().isEmpty()) {
+            return List.of();
+        }
+        Set<String> existingUris = new LinkedHashSet<>();
+        for (ConceptAlignment alignment : existing) {
+            String uri = StringUtils.trimToEmpty(alignment.uri());
+            if (!uri.isEmpty()) {
+                existingUris.add(uri);
+            }
+        }
+        ConceptAlignment primary = existing.get(0);
+        List<AlignmentProposition> hits = new ArrayList<>();
+        int limit = Math.min(COMPARISON_HIT_LIMIT, outcome.results().size());
+        for (int i = 0; i < limit; i++) {
+            NodeAlignment hit = outcome.results().get(i);
+            String targetUri = StringUtils.defaultString(hit.getUri_target());
+            boolean sameUri = existingUris.stream().anyMatch(uri -> StringUtils.equalsIgnoreCase(uri, targetUri));
+            hits.add(AlignmentProposition.builder()
+                    .conceptId(conceptId)
+                    .localLabel(StringUtils.defaultString(label))
+                    .localDefinition(StringUtils.defaultString(localDefinition))
+                    .localUri(StringUtils.defaultString(primary.uri()))
+                    .targetLabel(StringUtils.defaultString(hit.getConcept_target()))
+                    .targetUri(targetUri)
+                    .targetDefinition(StringUtils.defaultString(hit.getDef_target()))
+                    .sourceName(source.getSource())
+                    .sourceId(source.getId())
+                    .alignmentTypeId(primary.typeId() > 0 ? primary.typeId() : 1)
+                    .alreadyAligned(sameUri)
+                    .latitude(hit.getLat())
+                    .longitude(hit.getLng())
+                    .build());
+        }
+        return hits;
+    }
+
+    public List<ConceptAlignment> alignmentsTowardSource(List<ConceptAlignment> alignments, AlignementSource source) {
+        List<ConceptAlignment> matched = new ArrayList<>();
+        if (alignments == null || source == null) {
+            return matched;
+        }
+        String sourceHost = hostOf(source.getRequete());
+        String sourceName = StringUtils.defaultString(source.getSource());
+        for (ConceptAlignment alignment : alignments) {
+            if (alignment == null) {
+                continue;
+            }
+            boolean sameSource = StringUtils.equalsIgnoreCase(sourceName, alignment.sourceName())
+                    || (StringUtils.isNotBlank(sourceHost)
+                    && sourceHost.equalsIgnoreCase(hostOf(alignment.uri())));
+            if (sameSource) {
+                matched.add(alignment);
+            }
+        }
+        return matched;
+    }
+
+    private static boolean hasGpsCoordinates(AlignmentProposition proposition) {
+        Double lat = proposition.getLatitude();
+        Double lng = proposition.getLongitude();
+        return lat != null && lng != null && (lat != 0 || lng != 0);
     }
 
     /**

@@ -14,6 +14,7 @@ public class ImageEditRow implements Serializable {
     private String name;
     private String creator;
     private String copyright;
+    private String oldUri;
 
     public ImageEditRow() {
     }
@@ -24,5 +25,6 @@ public class ImageEditRow implements Serializable {
         this.name = name;
         this.creator = creator;
         this.copyright = copyright;
+        this.oldUri = uri;
     }
 }

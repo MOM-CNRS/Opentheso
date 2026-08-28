@@ -3,13 +3,16 @@ package fr.cnrs.opentheso.v2.concept.alignment.service;
 import fr.cnrs.opentheso.entites.AlignementSource;
 import fr.cnrs.opentheso.models.NodeAlignmentProjection;
 import fr.cnrs.opentheso.models.NodeSelectedAlignmentProjection;
+import fr.cnrs.opentheso.models.alignment.NodeAlignment;
 import fr.cnrs.opentheso.repositories.AlignementRepository;
 import fr.cnrs.opentheso.repositories.AlignementSourceRepository;
 import fr.cnrs.opentheso.repositories.ThesaurusAlignementSourceRepository;
 import fr.cnrs.opentheso.v2.candidat.alignment.AlignmentAutoExternalSearch;
 import fr.cnrs.opentheso.v2.candidat.alignment.persistence.CandidatAutoAlignmentPersistence;
 import fr.cnrs.opentheso.v2.concept.alignment.model.AlignmentAdminRow;
+import fr.cnrs.opentheso.v2.concept.alignment.model.AlignmentProposition;
 import fr.cnrs.opentheso.v2.concept.alignment.model.AlignmentSourceItem;
+import fr.cnrs.opentheso.v2.concept.model.ConceptAlignment;
 import fr.cnrs.opentheso.v2.concept.search.repository.ConceptSearchQueryRepository;
 import fr.cnrs.opentheso.v2.concept.write.persistence.BranchConceptSupport;
 import fr.cnrs.opentheso.v2.concept.write.service.ConceptAlignmentMutationService;
@@ -25,7 +28,12 @@ import java.util.Map;
 
 import static org.junit.jupiter.api.Assertions.assertEquals;
 import static org.junit.jupiter.api.Assertions.assertFalse;
+import static org.junit.jupiter.api.Assertions.assertNull;
 import static org.junit.jupiter.api.Assertions.assertTrue;
+import static org.mockito.ArgumentMatchers.any;
+import static org.mockito.ArgumentMatchers.eq;
+import static org.mockito.Mockito.never;
+import static org.mockito.Mockito.verify;
 import static org.mockito.Mockito.when;
 
 @ExtendWith(MockitoExtension.class)
@@ -121,6 +129,80 @@ class ConceptAlignmentAdminServiceTest {
         assertFalse(sources.get(1).isGlobal());
         assertEquals("TH1", sources.get(1).getThesaurusOwner());
         assertTrue(sources.get(1).isLocalSource());
+    }
+
+    @Test
+    void searchPropositionsForConcept_acceptsHitsWithoutGps() {
+        var source = fr.cnrs.opentheso.models.alignment.AlignementSource.builder()
+                .id(4)
+                .source("Wikidata")
+                .source_filter("WIKIDATA_REST")
+                .build();
+        NodeAlignment hit = new NodeAlignment();
+        hit.setConcept_target("Cat");
+        hit.setUri_target("http://www.wikidata.org/entity/Q1");
+        hit.setDef_target("a feline");
+        hit.setAlignement_id_type(1);
+        when(alignmentAutoExternalSearch.search(eq(source), any()))
+                .thenReturn(new AlignmentAutoExternalSearch.SearchOutcome(List.of(hit), null));
+
+        List<AlignmentProposition> hits = service.searchPropositionsForConcept(
+                "TH1", "fr", "C1", "Chat", source);
+
+        assertEquals(1, hits.size());
+        assertEquals("Cat", hits.get(0).getTargetLabel());
+        assertEquals("http://www.wikidata.org/entity/Q1", hits.get(0).getTargetUri());
+        assertNull(hits.get(0).getLatitude());
+        assertNull(hits.get(0).getLongitude());
+    }
+
+    @Test
+    void searchComparisonsForConcept_marksCurrentUriAndLimitsHits() {
+        var source = fr.cnrs.opentheso.models.alignment.AlignementSource.builder()
+                .id(4)
+                .source("Wikidata")
+                .source_filter("WIKIDATA_REST")
+                .requete("https://www.wikidata.org")
+                .build();
+        NodeAlignment same = hit("Cat", "http://www.wikidata.org/entity/Q1");
+        NodeAlignment other = hit("Felis", "http://www.wikidata.org/entity/Q9");
+        NodeAlignment extra = hit("Extra", "http://www.wikidata.org/entity/Q3");
+        NodeAlignment fourth = hit("Fourth", "http://www.wikidata.org/entity/Q4");
+        when(alignmentAutoExternalSearch.search(eq(source), any()))
+                .thenReturn(new AlignmentAutoExternalSearch.SearchOutcome(
+                        List.of(same, other, extra, fourth), null));
+
+        var local = new ConceptAlignment("1", "http://www.wikidata.org/entity/Q1", "exactMatch", "Wikidata", true, 1);
+        List<AlignmentProposition> hits = service.searchComparisonsForConcept(
+                "TH1", "fr", "C1", "Chat", "un félin", List.of(local), source);
+
+        assertEquals(3, hits.size());
+        assertTrue(hits.get(0).isAlreadyAligned());
+        assertFalse(hits.get(1).isAlreadyAligned());
+        assertEquals("http://www.wikidata.org/entity/Q1", hits.get(0).getLocalUri());
+        assertEquals("un félin", hits.get(0).getLocalDefinition());
+        assertEquals("Felis", hits.get(1).getTargetLabel());
+    }
+
+    @Test
+    void searchComparisonsForConcept_skipsRemoteSearchWithoutLocalAlignment() {
+        var source = fr.cnrs.opentheso.models.alignment.AlignementSource.builder()
+                .id(4)
+                .source("Wikidata")
+                .build();
+
+        List<AlignmentProposition> hits = service.searchComparisonsForConcept(
+                "TH1", "fr", "C1", "Chat", "", List.of(), source);
+
+        assertTrue(hits.isEmpty());
+        verify(alignmentAutoExternalSearch, never()).search(any(), any());
+    }
+
+    private static NodeAlignment hit(String label, String uri) {
+        NodeAlignment node = new NodeAlignment();
+        node.setConcept_target(label);
+        node.setUri_target(uri);
+        return node;
     }
 
     private static NodeSelectedAlignmentProjection selectedSource(int id, String source, String description) {

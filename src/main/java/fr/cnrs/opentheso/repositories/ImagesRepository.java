@@ -28,6 +28,11 @@ public interface ImagesRepository extends JpaRepository<ImageExterne, Integer> {
 
     @Modifying
     @Transactional
+    void deleteByIdThesaurusAndIdConceptAndImageCopyrightIgnoreCase(
+            String idThesaurus, String idConcept, String imageCopyright);
+
+    @Modifying
+    @Transactional
     void deleteByIdThesaurus(String idThesaurus);
 
     @Modifying

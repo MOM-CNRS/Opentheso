@@ -25,6 +25,7 @@ public class AlignmentProposition implements Serializable {
     private String conceptId;
     private String localLabel;
     private String localDefinition;
+    private String localUri;
     private String targetLabel;
     private String targetUri;
     private String targetDefinition;
@@ -33,8 +34,8 @@ public class AlignmentProposition implements Serializable {
     private int alignmentTypeId;
     private boolean alreadyAligned;
     private boolean enriched;
-    private double latitude;
-    private double longitude;
+    private Double latitude;
+    private Double longitude;
 
     @Builder.Default
     private List<SelectedResource> traductions = new ArrayList<>();

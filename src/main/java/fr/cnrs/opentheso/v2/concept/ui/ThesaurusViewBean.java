@@ -68,6 +68,7 @@ public class ThesaurusViewBean implements Serializable {
     private Boolean canEdit;
     private Boolean breadcrumbEnabled;
     private Boolean sortByNotation;
+    private Boolean customRelationVisible;
 
     @Getter
     @Setter
@@ -93,6 +94,9 @@ public class ThesaurusViewBean implements Serializable {
     private String selectedId;
     @Getter
     private String selectedKind;
+    @Getter
+    @Setter
+    private String ficheEditCard;
     @Getter
     private ConceptDetail selectedConcept;
     @Getter
@@ -263,6 +267,7 @@ public class ThesaurusViewBean implements Serializable {
         invalidateHomeOverview();
         invalidateTree();
         breadcrumbEnabled = null;
+        customRelationVisible = null;
         if (editing) {
             homeHtml = thesaurusHomeWriteService.loadHtml(getId(), thesaurusContext.resolveWorkLanguage());
         }
@@ -348,6 +353,7 @@ public class ThesaurusViewBean implements Serializable {
         selectedKind = "";
         selectedConcept = null;
         selectedFacet = null;
+        ficheEditCard = null;
         candidateBy = "";
         candidateOn = "";
         resetConceptExtras();
@@ -372,6 +378,13 @@ public class ThesaurusViewBean implements Serializable {
             applySelectedCandidateMeta(id);
         }
         branchConceptCount = conceptReadService.countBranchConcepts(getId(), id);
+    }
+
+    /** Recharge la fiche ouverte après une mutation (libellé, etc.) sans changer de nœud. */
+    public void reloadSelectedConcept() {
+        if (StringUtils.isNotBlank(selectedId)) {
+            openTreeNode(selectedId, selectedKind);
+        }
     }
 
     public void searchCorpusLinks() {
@@ -423,6 +436,29 @@ public class ThesaurusViewBean implements Serializable {
                         Collectors.toCollection(LinkedHashSet::new),
                         ArrayList::new
                 ));
+    }
+
+    /** Libellés préférentiels des autres langues — structure {@code tr-list} de la maquette. */
+    public List<ConceptLabel> getPreferredTranslations() {
+        if (selectedConcept == null || selectedConcept.getTranslations() == null) {
+            return Collections.emptyList();
+        }
+        return selectedConcept.getTranslations().stream()
+                .filter(ConceptLabel::isPreferred)
+                .toList();
+    }
+
+    public String altTranslationsLabel(String lang) {
+        if (selectedConcept == null || selectedConcept.getTranslations() == null
+                || StringUtils.isBlank(lang)) {
+            return "";
+        }
+        return selectedConcept.getTranslations().stream()
+                .filter(label -> !label.isPreferred() && !label.isHidden()
+                        && lang.equalsIgnoreCase(label.lang()))
+                .map(ConceptLabel::value)
+                .filter(StringUtils::isNotBlank)
+                .collect(Collectors.joining(", "));
     }
 
     public List<ConceptNote> notesOfType(String typeCode) {
@@ -510,12 +546,42 @@ public class ThesaurusViewBean implements Serializable {
         return selectedConcept != null && selectedConcept.isDeprecated();
     }
 
+    /** Statut visuel aligné sur la maquette {@code target.html} : {@code valide} / {@code candidat} / {@code deprecie}. */
+    public String getConceptDisplayStatus() {
+        if (isCandidateSelected()) {
+            return "candidat";
+        }
+        if (isSelectedConceptDeprecated()) {
+            return "deprecie";
+        }
+        return "valide";
+    }
+
+    public String getConceptUri() {
+        if (selectedConcept == null || selectedConcept.getIdentifiers() == null) {
+            return "";
+        }
+        ConceptIdentifiers identifiers = selectedConcept.getIdentifiers();
+        if (identifiers.isShowOriginalUri() && StringUtils.isNotBlank(identifiers.getOriginalUri())) {
+            return identifiers.getOriginalUri();
+        }
+        return StringUtils.defaultString(identifiers.getInternalPermalinkUrl());
+    }
+
     public boolean isBreadcrumbEnabled() {
         if (breadcrumbEnabled == null) {
             ThesaurusPreferences preferences = loadThesaurusPreferences();
             breadcrumbEnabled = preferences != null && preferences.breadcrumb();
         }
         return breadcrumbEnabled;
+    }
+
+    public boolean isCustomRelationVisible() {
+        if (customRelationVisible == null) {
+            ThesaurusPreferences preferences = loadThesaurusPreferences();
+            customRelationVisible = preferences != null && preferences.useCustomRelation();
+        }
+        return customRelationVisible;
     }
 
     /**

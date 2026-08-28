@@ -40,6 +40,11 @@ public record ConceptNote(
 
     /** Suffixe legacy {@code (source)} ; vide si pas de source. */
     public String getSourceDisplay() {
+        return sourceDisplay();
+    }
+
+    /** Accesseur EL 5 ({@code #{note.sourceDisplay}}) : le RecordELResolver cherche {@code sourceDisplay()}, pas {@code getSourceDisplay()}. */
+    public String sourceDisplay() {
         if (StringUtils.isBlank(source)) {
             return "";
         }
