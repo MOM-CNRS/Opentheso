@@ -17,4 +17,13 @@ class ApplicationUriServiceTest {
     void resolveApplicationRootUrl_returnsEmptyWhenBaseUrlEmpty() {
         assertEquals("", service.resolveApplicationRootUrl());
     }
+
+    @Test
+    void resolveUrl_returnsEmptyWhenBaseUrlEmpty() {
+        assertEquals("", service.resolveUrl("/swagger-ui/index.html"));
+        assertEquals("", service.resolveSwaggerUrl());
+        assertEquals("", service.resolveOpenApiUrl());
+        assertEquals("", service.resolveGraphQlUrl());
+        assertEquals("", service.resolveGraphiqlUrl());
+    }
 }

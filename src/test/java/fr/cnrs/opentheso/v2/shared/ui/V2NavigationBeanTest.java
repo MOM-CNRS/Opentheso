@@ -3,6 +3,7 @@ package fr.cnrs.opentheso.v2.shared.ui;
 import fr.cnrs.opentheso.config.SessionConfig;
 import fr.cnrs.opentheso.v2.setting.ui.ThesaurusContext;
 import fr.cnrs.opentheso.v2.shared.session.SessionLifecycleService;
+import fr.cnrs.opentheso.v2.shared.web.ApplicationUriService;
 import jakarta.faces.context.ExternalContext;
 import jakarta.faces.context.FacesContext;
 import org.junit.jupiter.api.BeforeEach;
@@ -26,6 +27,8 @@ class V2NavigationBeanTest {
     @Mock
     private SessionLifecycleService sessionLifecycleService;
     @Mock
+    private ApplicationUriService applicationUriService;
+    @Mock
     private FacesContext facesContext;
     @Mock
     private ExternalContext externalContext;
@@ -34,7 +37,7 @@ class V2NavigationBeanTest {
 
     @BeforeEach
     void setUp() {
-        navigationBean = new V2NavigationBean(thesaurusContext, sessionConfig, sessionLifecycleService);
+        navigationBean = new V2NavigationBean(thesaurusContext, sessionConfig, sessionLifecycleService, applicationUriService);
     }
 
     @Test
@@ -55,5 +58,23 @@ class V2NavigationBeanTest {
 
             assertEquals("/opentheso/v2/session/expire", navigationBean.getSessionExpireUrl());
         }
+    }
+
+    @Test
+    void swaggerAndOpenApiUrls_delegateToApplicationUriService() {
+        when(applicationUriService.resolveSwaggerUrl()).thenReturn("http://localhost/swagger-ui/index.html");
+        when(applicationUriService.resolveOpenApiUrl()).thenReturn("http://localhost/openapi/v1");
+
+        assertEquals("http://localhost/swagger-ui/index.html", navigationBean.getSwaggerUrl());
+        assertEquals("http://localhost/openapi/v1", navigationBean.getOpenApiUrl());
+    }
+
+    @Test
+    void graphQlAndGraphiqlUrls_delegateToApplicationUriService() {
+        when(applicationUriService.resolveGraphQlUrl()).thenReturn("http://localhost/graphql");
+        when(applicationUriService.resolveGraphiqlUrl()).thenReturn("http://localhost/graphiql.html");
+
+        assertEquals("http://localhost/graphql", navigationBean.getGraphQlUrl());
+        assertEquals("http://localhost/graphiql.html", navigationBean.getGraphiqlUrl());
     }
 }

@@ -3,6 +3,7 @@ package fr.cnrs.opentheso.v2.shared.ui;
 import fr.cnrs.opentheso.config.SessionConfig;
 import fr.cnrs.opentheso.v2.setting.ui.ThesaurusContext;
 import fr.cnrs.opentheso.v2.shared.session.SessionLifecycleService;
+import fr.cnrs.opentheso.v2.shared.web.ApplicationUriService;
 import jakarta.enterprise.context.SessionScoped;
 import jakarta.faces.context.ExternalContext;
 import jakarta.faces.context.FacesContext;
@@ -23,6 +24,7 @@ public class V2NavigationBean implements Serializable {
     private final ThesaurusContext thesaurusContext;
     private final SessionConfig sessionConfig;
     private final SessionLifecycleService sessionLifecycleService;
+    private final ApplicationUriService applicationUriService;
 
     private String activePageName = "thesaurusV2";
 
@@ -112,6 +114,22 @@ public class V2NavigationBean implements Serializable {
 
     public int getSessionTimeoutInMilliseconds() {
         return sessionConfig.getSessionTimeoutInMilliseconds();
+    }
+
+    public String getSwaggerUrl() {
+        return applicationUriService.resolveSwaggerUrl();
+    }
+
+    public String getOpenApiUrl() {
+        return applicationUriService.resolveOpenApiUrl();
+    }
+
+    public String getGraphQlUrl() {
+        return applicationUriService.resolveGraphQlUrl();
+    }
+
+    public String getGraphiqlUrl() {
+        return applicationUriService.resolveGraphiqlUrl();
     }
 
     public String getSessionExpireUrl() {

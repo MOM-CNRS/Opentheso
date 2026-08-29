@@ -21,4 +21,31 @@ public class ApplicationUriService {
         String base = resolveApplicationBaseUrl();
         return base.isEmpty() ? base : base + "/";
     }
+
+    public String resolveUrl(String path) {
+        String base = resolveApplicationBaseUrl();
+        if (base.isEmpty()) {
+            return "";
+        }
+        if (path == null || path.isBlank()) {
+            return base;
+        }
+        return path.startsWith("/") ? base + path : base + "/" + path;
+    }
+
+    public String resolveSwaggerUrl() {
+        return resolveUrl("/swagger-ui/index.html");
+    }
+
+    public String resolveOpenApiUrl() {
+        return resolveUrl("/openapi/v1");
+    }
+
+    public String resolveGraphQlUrl() {
+        return resolveUrl("/graphql");
+    }
+
+    public String resolveGraphiqlUrl() {
+        return resolveUrl("/graphiql.html");
+    }
 }

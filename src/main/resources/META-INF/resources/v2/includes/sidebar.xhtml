@@ -20,20 +20,19 @@
                         onevent="onPreviewTermLang"/>
               </h:commandButton>
               <h:panelGroup id="previewTermLangUi" layout="block" styleClass="tree-lang">
-                <ui:fragment rendered="#{not empty v2ThesaurusViewBean.languages}">
+                <ui:fragment rendered="#{v2ThesaurusViewBean.workLanguageSwitchable}">
                 <button type="button"
-                        class="tree-lang-btn#{v2ThesaurusViewBean.workLanguageSwitchable ? '' : ' is-solo'}"
+                        class="tree-lang-btn"
                         id="treeLangBtn"
                         data-act="term-lang-toggle"
                         title="#{v2LocaleBean.getMsg('v2.view.termLang')}"
                         aria-label="#{v2LocaleBean.getMsg('v2.view.termLang')} · #{v2ThesaurusViewBean.selectedLangLabel}"
-                        aria-haspopup="#{v2ThesaurusViewBean.workLanguageSwitchable ? 'listbox' : 'false'}"
+                        aria-haspopup="listbox"
                         aria-expanded="false">
                   <span class="tree-lang-flag" aria-hidden="true">#{v2ThesaurusViewBean.selectedLangFlag}</span>
                   <span class="tree-lang-code">#{v2ThesaurusViewBean.selectedLangCode}</span>
                   <span class="tree-lang-caret" aria-hidden="true">▾</span>
                 </button>
-                <ui:fragment rendered="#{v2ThesaurusViewBean.workLanguageSwitchable}">
                 <div class="tree-lang-menu" role="listbox" aria-label="#{v2LocaleBean.getMsg('v2.view.termLang')}">
                   <div class="tree-lang-menu-h">#{v2LocaleBean.getMsg('v2.view.termLang')}</div>
                   <ui:repeat value="#{v2ThesaurusViewBean.languages}" var="lang">
@@ -51,6 +50,12 @@
                   </ui:repeat>
                 </div>
                 </ui:fragment>
+                <ui:fragment rendered="#{not v2ThesaurusViewBean.workLanguageSwitchable and not empty v2ThesaurusViewBean.languages}">
+                  <span class="tree-lang-chip"
+                        title="#{v2LocaleBean.getMsg('v2.view.termLang')} · #{v2ThesaurusViewBean.selectedLangLabel}">
+                    <span class="tree-lang-flag" aria-hidden="true">#{v2ThesaurusViewBean.selectedLangFlag}</span>
+                    <span class="tree-lang-name">#{v2ThesaurusViewBean.selectedLangLabel}</span>
+                  </span>
                 </ui:fragment>
               </h:panelGroup>
             </h:form>

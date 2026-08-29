@@ -67,6 +67,10 @@ mark.hl{background:var(--accent-soft);color:var(--accent);border-radius:3px;padd
   border-top:1px solid var(--line);font-size:12.5px;font-weight:600;color:var(--accent)}
 .menu-foot svg{width:15px;height:15px;stroke:currentColor}
 .menu-foot:hover{text-decoration:underline}
+a.menu-foot{text-decoration:none;color:var(--accent)}
+.api-endpoint-k{font-size:10px;font-weight:700;text-transform:uppercase;letter-spacing:.04em;
+  color:var(--ink-4);margin:8px 2px 4px}
+.menu-desc + .api-endpoint-k{margin-top:0}
 /* compte */
 .acct-head{display:flex;align-items:center;gap:11px;margin-bottom:9px}
 .avatar{width:40px;height:40px;border-radius:10px;background:var(--accent-soft);color:var(--accent);
@@ -220,13 +224,14 @@ mark.hl{background:var(--accent-soft);color:var(--accent);border-radius:3px;padd
   -webkit-appearance:none;appearance:none}
 .tree-lang-btn:hover{border-color:var(--accent-line);background:var(--surface)}
 .tree-lang-btn.is-open{border-color:var(--accent);box-shadow:0 0 0 3px var(--accent-soft);background:var(--surface)}
-.tree-lang-btn.is-solo{cursor:default}
-.tree-lang-btn.is-solo:hover{border-color:var(--line);background:var(--surface-2)}
 .tree-lang-flag{font-size:14px;line-height:1}
 .tree-lang-code{font-family:var(--mono);font-size:11px;font-weight:700;letter-spacing:.04em;
   text-transform:uppercase;color:var(--ink)}
 .tree-lang-caret{font-size:10px;color:var(--ink-3);transform:translateY(-0.5px)}
-.tree-lang-btn.is-solo .tree-lang-caret{display:none}
+.tree-lang-chip{display:inline-flex;align-items:center;gap:6px;height:28px;padding:0 9px 0 7px;
+  border-radius:8px;background:var(--surface-2);color:var(--ink-2);cursor:default}
+.tree-lang-name{font-size:12.5px;font-weight:600;line-height:1;max-width:11em;
+  overflow:hidden;text-overflow:ellipsis;white-space:nowrap}
 .tree-lang-menu{display:none;position:absolute;top:100%;right:0;z-index:70;margin-top:6px;
   min-width:228px;max-height:min(50vh,360px);overflow-y:auto;
   background:var(--surface);border:1px solid var(--line);border-radius:10px;

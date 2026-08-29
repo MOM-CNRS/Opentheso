@@ -147,6 +147,19 @@ class ThesaurusViewBeanTest {
     }
 
     @Test
+    void singleLanguageIsNotSwitchable() {
+        thesaurusContext.selectThesaurus("th17", "Pactols_Lieux", "fr");
+        when(v2LocaleBean.getIdLangue()).thenReturn("fr");
+        when(thesaurusPreferenceService.loadUsedLanguages("th17", "fr")).thenReturn(List.of(
+                language("fr", "Français")
+        ));
+
+        assertEquals("fr", bean.getSelectedLang());
+        assertEquals("Français", bean.getSelectedLangLabel());
+        assertFalse(bean.isWorkLanguageSwitchable());
+    }
+
+    @Test
     void fallsBackToFirstLanguageWhenWorkLanguageIsMissing() {
         thesaurusContext.selectThesaurus("th17", "Pactols_Lieux", "it");
         when(v2LocaleBean.getIdLangue()).thenReturn("fr");
