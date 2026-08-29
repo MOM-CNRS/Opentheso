@@ -27,16 +27,24 @@
        data-rel-tree="#{v2ConceptRelationBlockEditorBean.treeReload ? '1' : ''}"
        data-msg-fold="#{v2LocaleBean.getMsg('v2.block.collapse')}"
        data-msg-unfold="#{v2LocaleBean.getMsg('v2.block.expand')}">
-    <ui:fragment rendered="#{not empty v2ThesaurusViewBean.selectedConcept.breadcrumb}">
+    <ui:fragment rendered="#{not empty v2ThesaurusViewBean.selectedConcept.breadcrumb and v2ThesaurusViewBean.selectedConcept.breadcrumb.size() gt 1}">
       <div class="cv-path">
         <span class="path">
           <ui:repeat value="#{v2ThesaurusViewBean.selectedConcept.breadcrumb}" var="step" varStatus="st">
-            <span class="path-seg">#{step.label}<ui:fragment rendered="#{not st.last}"><span class="path-sep">›</span></ui:fragment></span>
+            <ui:fragment rendered="#{not st.last}">
+              <span class="path-seg">#{step.label}<ui:fragment rendered="#{st.index + 2 lt v2ThesaurusViewBean.selectedConcept.breadcrumb.size()}"><span class="path-sep">›</span></ui:fragment></span>
+            </ui:fragment>
           </ui:repeat>
         </span>
       </div>
     </ui:fragment>
+    <h:messages id="messageIndex" styleClass="cv-msgs"
+                infoClass="cv-msg is-info" warnClass="cv-msg is-warn" errorClass="cv-msg is-error"/>
+    <ui:fragment rendered="#{not empty v2ConceptFicheMenuBean.dialogToReopen}">
+      <span hidden="hidden" data-cv-dlg="#{v2ConceptFicheMenuBean.dialogToReopen}"></span>
+    </ui:fragment>
     <div class="cv-head">
+      <div class="cv-head-bar">
       <h1 class="cv-pref">
         <ui:fragment rendered="#{v2ThesaurusViewBean.candidateSelected}"><span class="cv-dot" aria-hidden="true"></span></ui:fragment>
         <span>#{v2ThesaurusViewBean.dash(v2ThesaurusViewBean.selectedConcept.summary.preferredLabel)}</span>
@@ -44,6 +52,10 @@
         <ui:fragment rendered="#{v2ThesaurusViewBean.candidateSelected}"><span class="cv-status">candidat</span></ui:fragment>
         <ui:fragment rendered="#{v2ThesaurusViewBean.selectedConceptDeprecated}"><span class="cv-status is-dep">obsolète</span></ui:fragment>
       </h1>
+      <ui:fragment rendered="#{v2ThesaurusViewBean.conceptActionsVisible}">
+        <ui:include src="concept-actions-menu.xhtml"/>
+      </ui:fragment>
+      </div>
     </div>
     <div class="cv-blocks">
       <section class="cblock#{v2ConceptLabelBlockEditorBean.editing ? ' is-editing' : ''}" data-card-id="contexte">
@@ -1397,5 +1409,6 @@
         </div>
       </section>
     </div>
+    <ui:include src="concept-actions-dialogs.xhtml"/>
   </div>
 </ui:composition>

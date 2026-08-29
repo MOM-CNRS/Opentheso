@@ -1,0 +1,400 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<ui:composition xmlns="http://www.w3.org/1999/xhtml"
+                xmlns:ui="http://xmlns.jcp.org/jsf/facelets"
+                xmlns:h="http://xmlns.jcp.org/jsf/html"
+                xmlns:f="http://xmlns.jcp.org/jsf/core">
+
+  <div class="block-overlay confirm-overlay" id="cvDlgAddNt" hidden="hidden"
+       data-act="cv-dlg-dismiss" role="presentation">
+    <div class="confirm-modal is-form" role="dialog" aria-modal="true" data-act="cv-dlg-modal">
+      <div class="confirm-h">#{v2LocaleBean.getMsg('rightbody.concept.new_concept')}</div>
+      <p class="confirm-p">#{v2ConceptLifecycleEditorBean.currentPreferredLabel}</p>
+      <label class="cv-dlg-field">
+        <span>#{v2LocaleBean.getMsg('rightbody.concept.preferred_term')}</span>
+        <h:inputText styleClass="st-input" value="#{v2ConceptLifecycleEditorBean.preferredLabel}"/>
+      </label>
+      <label class="cv-dlg-field">
+        <span>#{v2LocaleBean.getMsg('rightbody.concept.narrower')}</span>
+        <h:selectOneMenu styleClass="st-input" value="#{v2ConceptLifecycleEditorBean.selectedNarrowerRelationType}">
+          <f:selectItems value="#{v2ConceptLifecycleEditorBean.ntRelationTypes}" var="nt"
+                         itemValue="#{nt.relationType}" itemLabel="#{nt.descriptionFr} (#{nt.relationType})"/>
+        </h:selectOneMenu>
+      </label>
+      <label class="cv-dlg-field">
+        <span>#{v2LocaleBean.getMsg('rightbody.concept.add_to_group')}</span>
+        <h:selectOneMenu styleClass="st-input" value="#{v2ConceptLifecycleEditorBean.selectedGroupId}">
+          <f:selectItem itemValue="" itemLabel="…"/>
+          <f:selectItems value="#{v2ConceptLifecycleEditorBean.availableCollections}" var="g"
+                         itemValue="#{g.id}" itemLabel="#{g.label}"/>
+        </h:selectOneMenu>
+      </label>
+      <label class="cv-dlg-field">
+        <span>#{v2LocaleBean.getMsg('rightbody.concept.notation')}</span>
+        <h:inputText styleClass="st-input" value="#{v2ConceptLifecycleEditorBean.notation}"/>
+      </label>
+      <label class="cv-dlg-field">
+        <span>ID</span>
+        <h:inputText styleClass="st-input" value="#{v2ConceptLifecycleEditorBean.customConceptId}"/>
+      </label>
+      <ui:fragment rendered="#{v2ConceptLifecycleEditorBean.duplicateLabelWarning}">
+        <p class="confirm-p is-warn">#{v2LocaleBean.getMsg('search.duplicates')}</p>
+      </ui:fragment>
+      <div class="confirm-actions">
+        <button type="button" class="abt-cancel confirm-cancel" data-act="cv-dlg-dismiss">#{v2LocaleBean.getMsg('v2.cancel')}</button>
+        <h:commandLink styleClass="abt-save" rendered="#{not v2ConceptLifecycleEditorBean.duplicateLabelWarning}"
+                       action="#{v2ConceptFicheMenuBean.submitAddChild}">
+          <f:ajax execute="@form" render=":previewDetailForm:previewDetail :previewTree" onevent="onCvMenuAjax"/>
+          #{v2LocaleBean.getMsg('v2.save')}
+        </h:commandLink>
+        <h:commandLink styleClass="abt-save" rendered="#{v2ConceptLifecycleEditorBean.duplicateLabelWarning}"
+                       action="#{v2ConceptFicheMenuBean.submitAddChildForced}">
+          <f:ajax execute="@form" render=":previewDetailForm:previewDetail :previewTree" onevent="onCvMenuAjax"/>
+          #{v2LocaleBean.getMsg('v2.save')}
+        </h:commandLink>
+      </div>
+    </div>
+  </div>
+
+  <div class="block-overlay confirm-overlay" id="cvDlgAddFacet" hidden="hidden"
+       data-act="cv-dlg-dismiss" role="presentation">
+    <div class="confirm-modal is-form" role="dialog" aria-modal="true" data-act="cv-dlg-modal">
+      <div class="confirm-h">#{v2LocaleBean.getMsg('rightbody.concept.new_facet')}</div>
+      <p class="confirm-p">#{v2FacetDetailEditorBean.parentConceptLabel}</p>
+      <label class="cv-dlg-field">
+        <span>#{v2LocaleBean.getMsg('rightbody.concept.preferred_term')}</span>
+        <h:inputText styleClass="st-input" value="#{v2FacetDetailEditorBean.label}"/>
+      </label>
+      <label class="cv-dlg-field">
+        <span>#{v2LocaleBean.getMsg('rightbody.concept.definition')}</span>
+        <h:inputTextarea styleClass="st-input" value="#{v2FacetDetailEditorBean.definition}" rows="3"/>
+      </label>
+      <div class="confirm-actions">
+        <button type="button" class="abt-cancel confirm-cancel" data-act="cv-dlg-dismiss">#{v2LocaleBean.getMsg('v2.cancel')}</button>
+        <h:commandLink styleClass="abt-save" action="#{v2ConceptFicheMenuBean.submitCreateFacet}">
+          <f:ajax execute="@form" render=":previewDetailForm:previewDetail :previewTree" onevent="onCvMenuAjax"/>
+          #{v2LocaleBean.getMsg('v2.save')}
+        </h:commandLink>
+      </div>
+    </div>
+  </div>
+
+  <div class="block-overlay confirm-overlay" id="cvDlgEditType" hidden="hidden"
+       data-act="cv-dlg-dismiss" role="presentation">
+    <div class="confirm-modal is-form" role="dialog" aria-modal="true" data-act="cv-dlg-modal">
+      <div class="confirm-h">#{v2LocaleBean.getMsg('concept.editConceptType')}</div>
+      <label class="cv-dlg-field">
+        <span>#{v2LocaleBean.getMsg('concept.editConceptType')}</span>
+        <h:selectOneMenu styleClass="st-input" value="#{v2ConceptAttributeEditorBean.selectedConceptType}">
+          <f:selectItems value="#{v2ConceptAttributeEditorBean.availableConceptTypes}" var="tp"
+                         itemValue="#{tp.code}" itemLabel="#{v2ConceptAttributeEditorBean.formatConceptTypeOption(tp)}"/>
+        </h:selectOneMenu>
+      </label>
+      <label class="cv-dlg-check">
+        <h:selectBooleanCheckbox value="#{v2ConceptAttributeEditorBean.applyConceptTypeToBranch}"/>
+        <span>Branche</span>
+      </label>
+      <div class="confirm-actions">
+        <button type="button" class="abt-cancel confirm-cancel" data-act="cv-dlg-dismiss">#{v2LocaleBean.getMsg('v2.cancel')}</button>
+        <h:commandLink styleClass="abt-save" action="#{v2ConceptFicheMenuBean.submitEditConceptType}">
+          <f:ajax execute="@form" render=":previewDetailForm:previewDetail :previewTree" onevent="onCvMenuAjax"/>
+          #{v2LocaleBean.getMsg('v2.save')}
+        </h:commandLink>
+      </div>
+    </div>
+  </div>
+
+  <div class="block-overlay confirm-overlay" id="cvDlgManageTypes" hidden="hidden"
+       data-act="cv-dlg-dismiss" role="presentation">
+    <div class="confirm-modal is-form" role="dialog" aria-modal="true" data-act="cv-dlg-modal">
+      <div class="confirm-h">#{v2LocaleBean.getMsg('concept.manageConceptType')}</div>
+      <div class="cv-dlg-list">
+        <ui:repeat value="#{v2ConceptTypeManagerBean.conceptTypes}" var="ct">
+          <div class="cv-dlg-list-row">
+            <span>#{ct.labelFr} (#{ct.code})</span>
+            <h:commandLink styleClass="cv-dlg-del" rendered="#{not ct.permanent}"
+                           action="#{v2ConceptFicheMenuBean.deleteConceptType(ct)}">
+              <f:ajax execute="@this" render=":previewDetailForm:previewDetail :previewTree" onevent="onCvMenuAjax"/>
+              ×
+            </h:commandLink>
+          </div>
+        </ui:repeat>
+      </div>
+      <label class="cv-dlg-field">
+        <span>Code</span>
+        <h:inputText styleClass="st-input" value="#{v2ConceptTypeManagerBean.conceptTypeToAdd.code}"/>
+      </label>
+      <label class="cv-dlg-field">
+        <span>FR</span>
+        <h:inputText styleClass="st-input" value="#{v2ConceptTypeManagerBean.conceptTypeToAdd.labelFr}"/>
+      </label>
+      <label class="cv-dlg-field">
+        <span>EN</span>
+        <h:inputText styleClass="st-input" value="#{v2ConceptTypeManagerBean.conceptTypeToAdd.labelEn}"/>
+      </label>
+      <label class="cv-dlg-check">
+        <h:selectBooleanCheckbox value="#{v2ConceptTypeManagerBean.conceptTypeToAdd.reciprocal}"/>
+        <span>R</span>
+      </label>
+      <div class="confirm-actions">
+        <button type="button" class="abt-cancel confirm-cancel" data-act="cv-dlg-dismiss">#{v2LocaleBean.getMsg('v2.cancel')}</button>
+        <h:commandLink styleClass="abt-save" action="#{v2ConceptFicheMenuBean.addConceptType}">
+          <f:ajax execute="@form" render=":previewDetailForm:previewDetail :previewTree" onevent="onCvMenuAjax"/>
+          #{v2LocaleBean.getMsg('v2.save')}
+        </h:commandLink>
+      </div>
+    </div>
+  </div>
+
+  <div class="block-overlay confirm-overlay" id="cvDlgPaste" hidden="hidden"
+       data-act="cv-dlg-dismiss" role="presentation">
+    <div class="confirm-modal is-form" role="dialog" aria-modal="true" data-act="cv-dlg-modal">
+      <div class="confirm-h">#{v2LocaleBean.getMsg('rightbody.concept.cut_move')}</div>
+      <p class="confirm-p">#{v2ConceptTreeDragDropBean.dragLabel} → #{v2ConceptTreeDragDropBean.dropLabel}</p>
+      <ui:fragment rendered="#{v2ConceptTreeDragDropBean.broadersToCut.size() gt 1}">
+        <div class="cv-dlg-list">
+          <ui:repeat value="#{v2ConceptTreeDragDropBean.broadersToCut}" var="bt">
+            <label class="cv-dlg-check">
+              <h:selectBooleanCheckbox value="#{bt.selected}"/>
+              <span>#{bt.title}</span>
+            </label>
+          </ui:repeat>
+        </div>
+      </ui:fragment>
+      <div class="confirm-actions">
+        <h:commandLink styleClass="abt-cancel" action="#{v2ConceptFicheMenuBean.cancelPaste}">
+          <f:ajax execute="@this" render=":previewDetailForm:previewDetail :previewTree" onevent="onCvMenuAjax"/>
+          #{v2LocaleBean.getMsg('v2.cancel')}
+        </h:commandLink>
+        <h:commandLink styleClass="abt-save" action="#{v2ConceptFicheMenuBean.submitPaste}">
+          <f:ajax execute="@form" render=":previewDetailForm:previewDetail :previewTree" onevent="onCvMenuAjax"/>
+          #{v2LocaleBean.getMsg('v2.save')}
+        </h:commandLink>
+      </div>
+    </div>
+  </div>
+
+  <div class="block-overlay confirm-overlay" id="cvDlgDelete" hidden="hidden"
+       data-act="cv-dlg-dismiss" role="presentation">
+    <div class="confirm-modal" role="dialog" aria-modal="true" data-act="cv-dlg-modal">
+      <div class="confirm-h">#{v2LocaleBean.getMsg('rightbody.concept.delete_concept')}</div>
+      <p class="confirm-p">#{v2ConceptLifecycleEditorBean.currentPreferredLabel}</p>
+      <ui:fragment rendered="#{v2ConceptSelectionContext.hasNarrowers}">
+        <label class="cv-dlg-check">
+          <h:selectBooleanCheckbox value="#{v2ConceptLifecycleEditorBean.forceDeletePolyhierarchy}"/>
+          <span>#{v2LocaleBean.getMsg('rightbody.concept.toottip_delete_concept')}</span>
+        </label>
+      </ui:fragment>
+      <div class="confirm-actions">
+        <button type="button" class="abt-cancel confirm-cancel" data-act="cv-dlg-dismiss">#{v2LocaleBean.getMsg('v2.cancel')}</button>
+        <h:commandLink styleClass="abt-save is-danger" action="#{v2ConceptFicheMenuBean.submitDelete}">
+          <f:ajax execute="@form" render=":previewDetailForm:previewDetail :previewTree" onevent="onCvMenuAjax"/>
+          #{v2LocaleBean.getMsg('rightbody.concept.delete_concept')}
+        </h:commandLink>
+      </div>
+    </div>
+  </div>
+
+  <div class="block-overlay confirm-overlay" id="cvDlgDeprecate" hidden="hidden"
+       data-act="cv-dlg-dismiss" role="presentation">
+    <div class="confirm-modal" role="dialog" aria-modal="true" data-act="cv-dlg-modal">
+      <div class="confirm-h">#{v2LocaleBean.getMsg('rightbody.concept.deprecate_concept')}</div>
+      <p class="confirm-p">#{v2ConceptLifecycleEditorBean.currentPreferredLabel}</p>
+      <div class="confirm-actions">
+        <button type="button" class="abt-cancel confirm-cancel" data-act="cv-dlg-dismiss">#{v2LocaleBean.getMsg('v2.cancel')}</button>
+        <h:commandLink styleClass="abt-save" action="#{v2ConceptFicheMenuBean.submitDeprecate}">
+          <f:ajax execute="@this" render=":previewDetailForm:previewDetail :previewTree" onevent="onCvMenuAjax"/>
+          #{v2LocaleBean.getMsg('rightbody.concept.deprecate_concept')}
+        </h:commandLink>
+      </div>
+    </div>
+  </div>
+
+  <div class="block-overlay confirm-overlay" id="cvDlgApprove" hidden="hidden"
+       data-act="cv-dlg-dismiss" role="presentation">
+    <div class="confirm-modal" role="dialog" aria-modal="true" data-act="cv-dlg-modal">
+      <div class="confirm-h">#{v2LocaleBean.getMsg('rightbody.concept.approve_concept')}</div>
+      <p class="confirm-p">#{v2ConceptLifecycleEditorBean.currentPreferredLabel}</p>
+      <label class="cv-dlg-check">
+        <h:selectBooleanCheckbox value="#{v2ConceptLifecycleEditorBean.addReplacedByRelations}"/>
+        <span>#{v2LocaleBean.getMsg('rightbody.concept.keepRelatedRelation')}</span>
+      </label>
+      <div class="confirm-actions">
+        <button type="button" class="abt-cancel confirm-cancel" data-act="cv-dlg-dismiss">#{v2LocaleBean.getMsg('v2.cancel')}</button>
+        <h:commandLink styleClass="abt-save" action="#{v2ConceptFicheMenuBean.submitApprove}">
+          <f:ajax execute="@form" render=":previewDetailForm:previewDetail :previewTree" onevent="onCvMenuAjax"/>
+          #{v2LocaleBean.getMsg('rightbody.concept.approve_concept')}
+        </h:commandLink>
+      </div>
+    </div>
+  </div>
+
+  <div class="block-overlay confirm-overlay" id="cvDlgPasteOther" hidden="hidden"
+       data-act="cv-dlg-dismiss" role="presentation">
+    <div class="confirm-modal is-form" role="dialog" aria-modal="true" data-act="cv-dlg-modal">
+      <div class="confirm-h">#{v2LocaleBean.getMsg('rightbody.concept.paste')}</div>
+      <p class="confirm-p">#{v2ConceptCopyBetweenThesaurusBean.sourceLabel}</p>
+      <label class="cv-dlg-field">
+        <span>ID</span>
+        <h:selectOneMenu styleClass="st-input" value="#{v2ConceptCopyBetweenThesaurusBean.identifierType}">
+          <f:selectItem itemValue="sans" itemLabel="sans"/>
+          <f:selectItem itemValue="ark" itemLabel="ARK"/>
+          <f:selectItem itemValue="handle" itemLabel="Handle"/>
+        </h:selectOneMenu>
+      </label>
+      <div class="confirm-actions">
+        <button type="button" class="abt-cancel confirm-cancel" data-act="cv-dlg-dismiss">#{v2LocaleBean.getMsg('v2.cancel')}</button>
+        <h:commandLink styleClass="abt-save" action="#{v2ConceptFicheMenuBean.submitPasteFromAnotherThesaurus}">
+          <f:ajax execute="@form" render=":previewDetailForm:previewDetail :previewTree" onevent="onCvMenuAjax"/>
+          #{v2LocaleBean.getMsg('rightbody.concept.paste')}
+        </h:commandLink>
+      </div>
+    </div>
+  </div>
+
+  <div class="block-overlay confirm-overlay" id="cvDlgMoveTheso" hidden="hidden"
+       data-act="cv-dlg-dismiss" role="presentation">
+    <div class="confirm-modal is-form" role="dialog" aria-modal="true" data-act="cv-dlg-modal">
+      <div class="confirm-h">#{v2LocaleBean.getMsg('concept.moveToAnotherThesoTooltip')}</div>
+      <label class="cv-dlg-field">
+        <span>#{v2LocaleBean.getMsg('concept.moveToAnotherTheso')}</span>
+        <h:selectOneMenu styleClass="st-input" value="#{v2ConceptTransferEditorBean.targetThesaurusId}">
+          <f:selectItem itemValue="" itemLabel="…"/>
+          <f:selectItems value="#{v2ConceptTransferEditorBean.availableThesauri}" var="th"
+                         itemValue="#{th.id}" itemLabel="#{th.title}"/>
+        </h:selectOneMenu>
+      </label>
+      <div class="confirm-actions">
+        <button type="button" class="abt-cancel confirm-cancel" data-act="cv-dlg-dismiss">#{v2LocaleBean.getMsg('v2.cancel')}</button>
+        <h:commandLink styleClass="abt-save" action="#{v2ConceptFicheMenuBean.submitMoveToAnotherThesaurus}">
+          <f:ajax execute="@form" render=":previewDetailForm:previewDetail :previewTree" onevent="onCvMenuAjax"/>
+          #{v2LocaleBean.getMsg('concept.moveToAnotherTheso')}
+        </h:commandLink>
+      </div>
+    </div>
+  </div>
+
+  <div class="block-overlay confirm-overlay" id="cvDlgArkGen" hidden="hidden" data-act="cv-dlg-dismiss" role="presentation">
+    <div class="confirm-modal" role="dialog" aria-modal="true" data-act="cv-dlg-modal">
+      <div class="confirm-h">#{v2LocaleBean.getMsg('rightbody.concept.generate_ark')}</div>
+      <p class="confirm-p">#{v2ConceptIdentifierEditorBean.currentConceptLabel}</p>
+      <div class="confirm-actions">
+        <button type="button" class="abt-cancel confirm-cancel" data-act="cv-dlg-dismiss">#{v2LocaleBean.getMsg('v2.cancel')}</button>
+        <h:commandLink styleClass="abt-save" action="#{v2ConceptFicheMenuBean.submitGenerateArk}">
+          <f:ajax execute="@this" render=":previewDetailForm:previewDetail :previewTree" onevent="onCvMenuAjax"/>
+          #{v2LocaleBean.getMsg('rightbody.concept.generate_ark')}
+        </h:commandLink>
+      </div>
+    </div>
+  </div>
+  <div class="block-overlay confirm-overlay" id="cvDlgArkDel" hidden="hidden" data-act="cv-dlg-dismiss" role="presentation">
+    <div class="confirm-modal" role="dialog" aria-modal="true" data-act="cv-dlg-modal">
+      <div class="confirm-h">#{v2LocaleBean.getMsg('rightbody.concept.delete_ark')}</div>
+      <div class="confirm-actions">
+        <button type="button" class="abt-cancel confirm-cancel" data-act="cv-dlg-dismiss">#{v2LocaleBean.getMsg('v2.cancel')}</button>
+        <h:commandLink styleClass="abt-save is-danger" action="#{v2ConceptFicheMenuBean.submitDeleteArk}">
+          <f:ajax execute="@this" render=":previewDetailForm:previewDetail :previewTree" onevent="onCvMenuAjax"/>
+          #{v2LocaleBean.getMsg('rightbody.concept.delete_ark')}
+        </h:commandLink>
+      </div>
+    </div>
+  </div>
+  <div class="block-overlay confirm-overlay" id="cvDlgArkBranch" hidden="hidden" data-act="cv-dlg-dismiss" role="presentation">
+    <div class="confirm-modal" role="dialog" aria-modal="true" data-act="cv-dlg-modal">
+      <div class="confirm-h">#{v2LocaleBean.getMsg('rightbody.concept.generate_ark_for_branch')}</div>
+      <p class="confirm-p">#{v2ConceptIdentifierEditorBean.branchConceptIds.size()}</p>
+      <div class="confirm-actions">
+        <button type="button" class="abt-cancel confirm-cancel" data-act="cv-dlg-dismiss">#{v2LocaleBean.getMsg('v2.cancel')}</button>
+        <h:commandLink styleClass="abt-save" action="#{v2ConceptFicheMenuBean.submitGenerateArkBranch}">
+          <f:ajax execute="@this" render=":previewDetailForm:previewDetail :previewTree" onevent="onCvMenuAjax"/>
+          #{v2LocaleBean.getMsg('rightbody.concept.generate_ark_for_branch')}
+        </h:commandLink>
+      </div>
+    </div>
+  </div>
+  <div class="block-overlay confirm-overlay" id="cvDlgArkAll" hidden="hidden" data-act="cv-dlg-dismiss" role="presentation">
+    <div class="confirm-modal" role="dialog" aria-modal="true" data-act="cv-dlg-modal">
+      <div class="confirm-h">#{v2LocaleBean.getMsg('rightbody.concept.generate_all_ark')}</div>
+      <div class="confirm-actions">
+        <button type="button" class="abt-cancel confirm-cancel" data-act="cv-dlg-dismiss">#{v2LocaleBean.getMsg('v2.cancel')}</button>
+        <h:commandLink styleClass="abt-save" action="#{v2ConceptFicheMenuBean.submitGenerateAllArk}">
+          <f:ajax execute="@this" render=":previewDetailForm:previewDetail :previewTree" onevent="onCvMenuAjax"/>
+          #{v2LocaleBean.getMsg('rightbody.concept.generate_all_ark')}
+        </h:commandLink>
+      </div>
+    </div>
+  </div>
+
+  <div class="block-overlay confirm-overlay" id="cvDlgHandleGen" hidden="hidden" data-act="cv-dlg-dismiss" role="presentation">
+    <div class="confirm-modal" role="dialog" aria-modal="true" data-act="cv-dlg-modal">
+      <div class="confirm-h">#{v2LocaleBean.getMsg('rightbody.concept.generate_handle')}</div>
+      <p class="confirm-p">#{v2ConceptIdentifierEditorBean.currentConceptLabel}</p>
+      <div class="confirm-actions">
+        <button type="button" class="abt-cancel confirm-cancel" data-act="cv-dlg-dismiss">#{v2LocaleBean.getMsg('v2.cancel')}</button>
+        <h:commandLink styleClass="abt-save" action="#{v2ConceptFicheMenuBean.submitGenerateHandle}">
+          <f:ajax execute="@this" render=":previewDetailForm:previewDetail :previewTree" onevent="onCvMenuAjax"/>
+          #{v2LocaleBean.getMsg('rightbody.concept.generate_handle')}
+        </h:commandLink>
+      </div>
+    </div>
+  </div>
+  <div class="block-overlay confirm-overlay" id="cvDlgHandleDel" hidden="hidden" data-act="cv-dlg-dismiss" role="presentation">
+    <div class="confirm-modal" role="dialog" aria-modal="true" data-act="cv-dlg-modal">
+      <div class="confirm-h">#{v2LocaleBean.getMsg('rightbody.concept.delete_handle')}</div>
+      <p class="confirm-p">#{v2ConceptIdentifierEditorBean.currentHandleId}</p>
+      <div class="confirm-actions">
+        <button type="button" class="abt-cancel confirm-cancel" data-act="cv-dlg-dismiss">#{v2LocaleBean.getMsg('v2.cancel')}</button>
+        <h:commandLink styleClass="abt-save is-danger" action="#{v2ConceptFicheMenuBean.submitDeleteHandle}">
+          <f:ajax execute="@this" render=":previewDetailForm:previewDetail :previewTree" onevent="onCvMenuAjax"/>
+          #{v2LocaleBean.getMsg('rightbody.concept.delete_handle')}
+        </h:commandLink>
+      </div>
+    </div>
+  </div>
+  <div class="block-overlay confirm-overlay" id="cvDlgHandleBranch" hidden="hidden" data-act="cv-dlg-dismiss" role="presentation">
+    <div class="confirm-modal" role="dialog" aria-modal="true" data-act="cv-dlg-modal">
+      <div class="confirm-h">#{v2LocaleBean.getMsg('rightbody.concept.generate_handle_for_branch')}</div>
+      <div class="confirm-actions">
+        <button type="button" class="abt-cancel confirm-cancel" data-act="cv-dlg-dismiss">#{v2LocaleBean.getMsg('v2.cancel')}</button>
+        <h:commandLink styleClass="abt-save" action="#{v2ConceptFicheMenuBean.submitGenerateHandleBranch}">
+          <f:ajax execute="@this" render=":previewDetailForm:previewDetail :previewTree" onevent="onCvMenuAjax"/>
+          #{v2LocaleBean.getMsg('rightbody.concept.generate_handle_for_branch')}
+        </h:commandLink>
+      </div>
+    </div>
+  </div>
+
+  <div class="block-overlay confirm-overlay" id="cvDlgImportCsv" hidden="hidden"
+       data-act="cv-dlg-dismiss" role="presentation">
+    <div class="confirm-modal is-form" role="dialog" aria-modal="true" data-act="cv-dlg-modal">
+      <div class="confirm-h">#{v2LocaleBean.getMsg('rightbody.concept.import_tabulated_list')}</div>
+      <p class="confirm-p">#{v2ConceptListCsvImportBean.parentConceptLabel}</p>
+      <label class="cv-dlg-field">
+        <span>CSV</span>
+        <h:selectOneMenu styleClass="st-input" value="#{v2ConceptListCsvImportBean.choiceDelimiter}">
+          <f:selectItem itemValue="#{0}" itemLabel=","/>
+          <f:selectItem itemValue="#{1}" itemLabel=";"/>
+          <f:selectItem itemValue="#{2}" itemLabel="tab"/>
+        </h:selectOneMenu>
+      </label>
+      <h:inputFile styleClass="st-input" value="#{v2ConceptListCsvImportBean.csvUpload}"/>
+      <ui:fragment rendered="#{not empty v2ConceptListCsvImportBean.error}">
+        <p class="confirm-p is-warn">#{v2ConceptListCsvImportBean.error}</p>
+      </ui:fragment>
+      <ui:fragment rendered="#{v2ConceptListCsvImportBean.loadDone}">
+        <p class="confirm-p">#{v2ConceptListCsvImportBean.total}</p>
+      </ui:fragment>
+      <div class="confirm-actions">
+        <button type="button" class="abt-cancel confirm-cancel" data-act="cv-dlg-dismiss">#{v2LocaleBean.getMsg('v2.cancel')}</button>
+        <h:commandLink styleClass="abt-save" action="#{v2ConceptFicheMenuBean.loadImportCsv}">
+          <f:ajax execute="@form" render=":previewDetailForm:previewDetail :previewTree" onevent="onCvMenuAjax"/>
+          Load
+        </h:commandLink>
+        <h:commandLink styleClass="abt-save" rendered="#{v2ConceptListCsvImportBean.loadDone}"
+                       action="#{v2ConceptFicheMenuBean.submitImportCsv}">
+          <f:ajax execute="@this" render=":previewDetailForm:previewDetail :previewTree" onevent="onCvMenuAjax"/>
+          #{v2LocaleBean.getMsg('rightbody.concept.import_tabulated_list')}
+        </h:commandLink>
+      </div>
+    </div>
+  </div>
+</ui:composition>

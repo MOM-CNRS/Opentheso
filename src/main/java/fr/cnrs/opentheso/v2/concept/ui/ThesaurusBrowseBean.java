@@ -134,6 +134,7 @@ public class ThesaurusBrowseBean implements Serializable, ConceptNavigationSuppo
     private boolean manySiblings;
     private boolean useDeeplTranslation;
     private boolean suggestionEnabled;
+    private boolean consultationPreferencesLoaded;
     /** Onglet Suggestion activé après clic sur « Proposer une amélioration » (comme legacy isRubriqueVisible). */
     private boolean propositionRubriqueVisible;
     private boolean showAllNoteLanguages = true;
@@ -940,6 +941,7 @@ public class ThesaurusBrowseBean implements Serializable, ConceptNavigationSuppo
     }
 
     public boolean isCustomRelationVisible() {
+        ensureConsultationPreferences();
         return useCustomRelation;
     }
 
@@ -1399,7 +1401,15 @@ public class ThesaurusBrowseBean implements Serializable, ConceptNavigationSuppo
         branchConceptCount = 0;
     }
 
+    private void ensureConsultationPreferences() {
+        if (consultationPreferencesLoaded) {
+            return;
+        }
+        loadConsultationPreferences();
+    }
+
     private void loadConsultationPreferences() {
+        consultationPreferencesLoaded = true;
         ThesaurusPreferences preferences = null;
         try {
             preferences = thesaurusPreferenceService.loadPreferencesOrNull(
@@ -1465,6 +1475,7 @@ public class ThesaurusBrowseBean implements Serializable, ConceptNavigationSuppo
         displayedCorpusLinks = Collections.emptyList();
         corpusSearched = false;
         haveActiveCorpus = false;
+        consultationPreferencesLoaded = false;
         activateRightTab(RightTabKey.CONCEPT);
     }
 }

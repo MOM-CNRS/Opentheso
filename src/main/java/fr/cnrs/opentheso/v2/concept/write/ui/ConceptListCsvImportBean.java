@@ -12,6 +12,7 @@ import fr.cnrs.opentheso.v2.shared.ui.UserSession;
 import jakarta.faces.event.PhaseId;
 import jakarta.faces.view.ViewScoped;
 import jakarta.inject.Named;
+import jakarta.servlet.http.Part;
 import lombok.Getter;
 import lombok.RequiredArgsConstructor;
 import lombok.Setter;
@@ -20,6 +21,7 @@ import org.apache.commons.lang3.StringUtils;
 import org.primefaces.PrimeFaces;
 import org.primefaces.event.FileUploadEvent;
 
+import java.io.ByteArrayInputStream;
 import java.io.InputStreamReader;
 import java.io.Reader;
 import java.io.Serializable;
@@ -55,6 +57,7 @@ public class ConceptListCsvImportBean implements Serializable {
     private String error = "";
     private String parentConceptLabel = "";
     private List<CsvReadHelper.ConceptObject> conceptObjects = new ArrayList<>();
+    private Part csvUpload;
 
     public boolean isImportAvailable() {
         return conceptWritePolicy.canMutateConcept(userSession)
@@ -97,9 +100,33 @@ public class ConceptListCsvImportBean implements Serializable {
             return;
         }
         initMessages();
+        try {
+            loadFromBytes(event.getFile().getInputStream().readAllBytes());
+        } catch (Exception e) {
+            error = String.valueOf(e.getMessage());
+            loadDone = false;
+        }
+    }
+
+    public void loadFromUpload() {
+        initMessages();
+        if (csvUpload == null) {
+            error = "Aucun fichier";
+            loadDone = false;
+            return;
+        }
+        try {
+            loadFromBytes(csvUpload.getInputStream().readAllBytes());
+        } catch (Exception e) {
+            error = String.valueOf(e.getMessage());
+            loadDone = false;
+        }
+    }
+
+    private void loadFromBytes(byte[] bytes) throws Exception {
         CsvReadHelper csvReadHelper = new CsvReadHelper(delimiterCsv);
-        try (Reader reader1 = new InputStreamReader(event.getFile().getInputStream());
-             Reader reader2 = new InputStreamReader(event.getFile().getInputStream())) {
+        try (Reader reader1 = new InputStreamReader(new ByteArrayInputStream(bytes));
+             Reader reader2 = new InputStreamReader(new ByteArrayInputStream(bytes))) {
             if (!csvReadHelper.setLangs(reader1)) {
                 error = csvReadHelper.getMessage();
             }
@@ -123,9 +150,6 @@ public class ConceptListCsvImportBean implements Serializable {
                     info = "File correctly loaded";
                 }
             }
-        } catch (Exception e) {
-            error = String.valueOf(e.getMessage());
-            loadDone = false;
         }
     }
 

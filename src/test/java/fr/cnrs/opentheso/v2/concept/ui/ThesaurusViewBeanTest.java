@@ -11,6 +11,7 @@ import fr.cnrs.opentheso.v2.concept.model.ThesaurusMetadataItem;
 import fr.cnrs.opentheso.v2.concept.service.ConceptReadService;
 import fr.cnrs.opentheso.v2.concept.service.ThesaurusHomeReadService;
 import fr.cnrs.opentheso.v2.concept.service.ThesaurusHomeWriteService;
+import fr.cnrs.opentheso.v2.concept.session.ConceptSelectionContext;
 import fr.cnrs.opentheso.v2.rights.Permission;
 import fr.cnrs.opentheso.v2.rights.RightsService;
 import fr.cnrs.opentheso.v2.setting.model.ThesaurusLanguage;
@@ -74,6 +75,8 @@ class ThesaurusViewBeanTest {
     private V2LocaleBean v2LocaleBean;
     @Mock
     private ToolboxAccessPolicy toolboxAccessPolicy;
+    @Mock
+    private ConceptSelectionContext conceptSelectionContext;
 
     private ThesaurusContext thesaurusContext;
     private ThesaurusViewBean bean;
@@ -91,7 +94,8 @@ class ThesaurusViewBeanTest {
                 userSession,
                 rightsService,
                 v2LocaleBean,
-                toolboxAccessPolicy
+                toolboxAccessPolicy,
+                conceptSelectionContext
         );
     }
 
@@ -309,6 +313,23 @@ class ThesaurusViewBeanTest {
     }
 
     @Test
+    void conceptActionsVisible_requiresManagerOnThesaurus() {
+        thesaurusContext.selectThesaurus("th17", "Pactols_Lieux", "fr");
+        when(userSession.getCurrentUserId()).thenReturn(9);
+        when(rightsService.canOnThesaurus(9, Permission.MUTATE_CONCEPT_STRUCTURE, "th17")).thenReturn(true);
+
+        assertTrue(bean.isConceptActionsVisible());
+    }
+
+    @Test
+    void conceptActionsVisible_deniesAnonymous() {
+        thesaurusContext.selectThesaurus("th17", "Pactols_Lieux", "fr");
+        when(userSession.getCurrentUserId()).thenReturn(null);
+
+        assertFalse(bean.isConceptActionsVisible());
+    }
+
+    @Test
     void startEditing_loadsHtmlWhenAllowed() {
         thesaurusContext.selectThesaurus("th17", "Pactols_Lieux", "fr");
         when(userSession.getCurrentUserId()).thenReturn(9);
@@ -368,6 +389,7 @@ class ThesaurusViewBeanTest {
         assertEquals(2, bean.getBranchConceptCount());
         verify(conceptReadService).loadDetail("th17", "c1", "fr", true);
         verify(conceptReadService).countBranchConcepts("th17", "c1");
+        verify(conceptSelectionContext).update(eq("th17"), any(ConceptDetail.class));
     }
 
     @Test
@@ -474,6 +496,7 @@ class ThesaurusViewBeanTest {
         assertEquals("Techniques", bean.getSelectedFacet().getLabel());
         assertNull(bean.getSelectedConcept());
         verify(conceptReadService).loadFacetDetail("th17", "f1", "fr");
+        verify(conceptSelectionContext).clear();
     }
 
     @Test

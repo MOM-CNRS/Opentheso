@@ -274,7 +274,6 @@ public class FacetDetailEditorBean implements Serializable {
         selectedParentConcept = null;
         var concept = thesaurusBrowseBean.getSelectedConcept();
         if (concept == null || concept.summary() == null || StringUtils.isBlank(concept.summary().conceptId())) {
-            MessageUtils.showErrorMessage("Aucun concept sélectionné");
             return;
         }
         String conceptId = concept.summary().conceptId();

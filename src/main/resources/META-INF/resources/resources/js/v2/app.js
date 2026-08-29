@@ -20,6 +20,39 @@ function closeTreeLang() {
   return true;
 }
 
+function closeCvCtx() {
+  const btn = $("#cvCtxBtn");
+  if (!btn || !btn.classList.contains("is-open")) return false;
+  btn.classList.remove("is-open");
+  btn.setAttribute("aria-expanded", "false");
+  return true;
+}
+
+function hideCvDialogs() {
+  let closed = false;
+  $$(".confirm-overlay[id^='cvDlg']").forEach((el) => {
+    if (!el.hidden) {
+      el.hidden = true;
+      closed = true;
+    }
+  });
+  return closed;
+}
+
+function onCvMenuAjax(data) {
+  if (data.status !== "success") return;
+  closeCvCtx();
+  hideCvDialogs();
+  const keep = document.querySelector("[data-cv-dlg]");
+  const id = keep && keep.getAttribute("data-cv-dlg");
+  if (keep) keep.remove();
+  if (id) {
+    const dlg = document.getElementById(id);
+    if (dlg) dlg.hidden = false;
+  }
+}
+window.onCvMenuAjax = onCvMenuAjax;
+
 document.addEventListener("pointerdown", (e) => {
   const go = e.target.closest(".login-go");
   if (!go) return;
@@ -72,6 +105,8 @@ document.addEventListener("keydown", (e) => {
   if (typeof closeGpsLightbox === "function" && closeGpsLightbox()) return;
   if (typeof closeCollectionPicker === "function" && closeCollectionPicker()) return;
   if (closeTreeLang()) return;
+  if (closeCvCtx()) return;
+  if (hideCvDialogs()) return;
   if (e.target && e.target.classList && e.target.classList.contains("cand-search")) {
     if (e.target.value) {
       e.target.value = "";
@@ -198,12 +233,14 @@ document.addEventListener("click", (e) => {
     if ($("#voWrap") && !$("#voWrap").contains(e.target)) $("#voGear") && $("#voGear").classList.remove("is-on");
     if ($("#viewPick") && !$("#viewPick").contains(e.target)) $("#viewPickBtn") && $("#viewPickBtn").classList.remove("is-open");
     if ($("#previewTermLangUi") && !$("#previewTermLangUi").contains(e.target)) closeTreeLang();
+    if ($("#cvCtx") && !$("#cvCtx").contains(e.target)) closeCvCtx();
     if ($("#cfCombo") && !$("#cfCombo").contains(e.target)) $("#cfCombo").classList.remove("open");
     return;
   }
   if ($("#cfCombo") && !$("#cfCombo").contains(e.target)) $("#cfCombo").classList.remove("open");
   const act = t.getAttribute("data-act");
   if (act !== "term-lang-toggle" && act !== "term-lang") closeTreeLang();
+  if (act !== "cv-ctx-toggle") closeCvCtx();
   if (act === "logout-ask") {
     closeThesaurus();
     if (askLeaveThen(() => showConfirm("#logoutConfirm"))) return;
@@ -720,6 +757,19 @@ document.addEventListener("click", (e) => {
     closeTreeLang();
     if (!lang || t.classList.contains("is-on")) return;
     clickPreviewJsf("previewTermLangGo", { termLang: lang });
+  } else if (act === "cv-ctx-toggle") {
+    e.preventDefault();
+    const open = !t.classList.contains("is-open");
+    closeThesaurus();
+    $("#viewPickBtn") && $("#viewPickBtn").classList.remove("is-open");
+    closeTreeLang();
+    t.classList.toggle("is-open", open);
+    t.setAttribute("aria-expanded", open ? "true" : "false");
+  } else if (act === "cv-dlg-dismiss") {
+    e.preventDefault();
+    hideCvDialogs();
+  } else if (act === "cv-dlg-modal") {
+    return;
   } else if (act === "bulk-coll") bulkMode("coll");
   else if (act === "bulk-move") bulkMode("move");
   else if (act === "bulk-export") bulkMode("export");

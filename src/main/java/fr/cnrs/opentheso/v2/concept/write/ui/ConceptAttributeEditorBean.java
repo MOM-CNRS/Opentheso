@@ -168,6 +168,9 @@ public class ConceptAttributeEditorBean implements Serializable {
     }
 
     private String currentConceptType() {
+        if (conceptSelectionContext.hasSelection() && conceptSelectionContext.getSummary() != null) {
+            return StringUtils.defaultString(conceptSelectionContext.getSummary().conceptType());
+        }
         if (thesaurusBrowseBean.getSelectedConcept() == null
                 || thesaurusBrowseBean.getSelectedConcept().summary() == null) {
             return "";

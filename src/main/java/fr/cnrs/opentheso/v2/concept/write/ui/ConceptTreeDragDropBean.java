@@ -131,6 +131,11 @@ public class ConceptTreeDragDropBean implements Serializable {
         return !cutWasTopConcept;
     }
 
+    public boolean isPasteConfirmPending() {
+        return StringUtils.isNotBlank(dragConceptId)
+                && (broadersToCut.size() >= 2 || groupChangePending);
+    }
+
     public void onStartCut() {
         if (!isCutActionsAvailable() || !conceptSelectionContext.hasSelection()) {
             MessageUtils.showErrorMessage("Action non autorisée");

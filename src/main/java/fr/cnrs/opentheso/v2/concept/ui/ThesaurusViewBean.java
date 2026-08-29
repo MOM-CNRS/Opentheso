@@ -14,6 +14,7 @@ import fr.cnrs.opentheso.v2.concept.model.ConceptLinkItem;
 import fr.cnrs.opentheso.v2.concept.model.ThesaurusHomeOverview;
 import fr.cnrs.opentheso.v2.concept.model.ThesaurusMetadataItem;
 import fr.cnrs.opentheso.v2.concept.service.ConceptReadService;
+import fr.cnrs.opentheso.v2.concept.session.ConceptSelectionContext;
 import fr.cnrs.opentheso.v2.concept.support.ConceptQrSvgSupport;
 import fr.cnrs.opentheso.v2.concept.service.ThesaurusHomeReadService;
 import fr.cnrs.opentheso.v2.concept.service.ThesaurusHomeWriteService;
@@ -60,12 +61,14 @@ public class ThesaurusViewBean implements Serializable {
     private final RightsService rightsService;
     private final V2LocaleBean v2LocaleBean;
     private final ToolboxAccessPolicy toolboxAccessPolicy;
+    private final ConceptSelectionContext conceptSelectionContext;
     private ThesaurusHomeOverview homeOverview;
     private List<ThesaurusLanguage> languages;
     private String selectedLang;
     private boolean sessionReady;
     private List<ThesaurusTreeNode> treeRoots;
     private Boolean canEdit;
+    private Boolean conceptActionsVisible;
     private Boolean breadcrumbEnabled;
     private Boolean sortByNotation;
     private Boolean customRelationVisible;
@@ -375,9 +378,11 @@ public class ThesaurusViewBean implements Serializable {
         candidateOn = "";
         resetConceptExtras();
         if (StringUtils.isBlank(id)) {
+            conceptSelectionContext.clear();
             return;
         }
         if ("facet".equalsIgnoreCase(nodeType)) {
+            conceptSelectionContext.clear();
             selectedFacet = conceptReadService.loadFacetDetail(getId(), id, getSelectedLang()).orElse(null);
             if (selectedFacet != null) {
                 selectedKind = "facet";
@@ -386,6 +391,7 @@ public class ThesaurusViewBean implements Serializable {
         }
         selectedConcept = conceptReadService.loadDetail(getId(), id, getSelectedLang(), true).orElse(null);
         if (selectedConcept == null) {
+            conceptSelectionContext.clear();
             return;
         }
         boolean candidate = "candidat".equalsIgnoreCase(nodeType)
@@ -395,6 +401,28 @@ public class ThesaurusViewBean implements Serializable {
             applySelectedCandidateMeta(id);
         }
         branchConceptCount = conceptReadService.countBranchConcepts(getId(), id);
+        conceptSelectionContext.update(getId(), selectedConcept);
+    }
+
+    /**
+     * Reprend la sélection partagée (après mutation menu fil d'Ariane) et recharge arbre + fiche.
+     */
+    public void refreshFromSelectionContext() {
+        reloadTree();
+        if (conceptSelectionContext.hasSelection()) {
+            String status = conceptSelectionContext.getSummary() != null
+                    ? conceptSelectionContext.getSummary().getStatus()
+                    : "";
+            String kind = "CA".equalsIgnoreCase(status) ? "candidat" : "concept";
+            openTreeNode(conceptSelectionContext.getConceptId(), kind);
+            return;
+        }
+        selectedConcept = null;
+        selectedFacet = null;
+        selectedKind = "";
+        selectedId = "";
+        detailRequested = false;
+        resetConceptExtras();
     }
 
     /** Recharge la fiche ouverte après une mutation (libellé, etc.) sans changer de nœud. */
@@ -771,6 +799,27 @@ public class ThesaurusViewBean implements Serializable {
         }
         canEdit = rightsService.canOnThesaurus(userId, Permission.MANAGE_THESAURUS, thesaurusId);
         return canEdit;
+    }
+
+    /**
+     * Menu contextuel à côté du fil d'Ariane : rôle manager (comme {@code hasRoleAsManager} legacy).
+     */
+    public boolean isConceptActionsVisible() {
+        if (isCandidateSelected()) {
+            return false;
+        }
+        if (conceptActionsVisible != null) {
+            return conceptActionsVisible;
+        }
+        Integer userId = userSession.getCurrentUserId();
+        String thesaurusId = getId();
+        if (userId == null || StringUtils.isBlank(thesaurusId)) {
+            conceptActionsVisible = false;
+            return false;
+        }
+        conceptActionsVisible = rightsService.canOnThesaurus(
+                userId, Permission.MUTATE_CONCEPT_STRUCTURE, thesaurusId);
+        return conceptActionsVisible;
     }
 
     public boolean isSuperAdmin() {

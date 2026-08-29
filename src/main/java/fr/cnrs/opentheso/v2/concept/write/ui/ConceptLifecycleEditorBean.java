@@ -256,6 +256,7 @@ public class ConceptLifecycleEditorBean implements Serializable {
 
     public void prepareDelete() {
         forceDeletePolyhierarchy = false;
+        refreshCurrentPreferredLabel();
     }
 
     public void submitDelete() {
