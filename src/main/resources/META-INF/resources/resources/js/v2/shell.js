@@ -555,7 +555,7 @@ function pickActiveCvColl() {
 
 var REL_KINDS = ["bt", "nt", "rt"];
 var REL_CAP = { bt: "Bt", nt: "Nt", rt: "Rt" };
-var REL_AC_PAGE = 7;
+var REL_AC_PAGE = 5;
 var REL_DEBOUNCE = 200;
 var relPickers = {
   bt: emptyRelState(),
@@ -793,11 +793,7 @@ function toggleRelMenu(kind) {
   if (els.query) els.query.focus();
   const q = els.query ? els.query.value.trim() : "";
   if (q) scheduleRelSearch(kind);
-  else {
-    relPickers[kind].hits = [];
-    relPickers[kind].query = "";
-    openRelMenu(kind);
-  }
+  else searchRel(kind, "%");
 }
 
 function toggleRelPick(kind, id, label) {
@@ -844,7 +840,9 @@ function searchRel(kind, q) {
   }).then((items) => {
     if (seq !== st.seq) return;
     const exclude = otherRelSelectedIds(kind);
-    st.query = q;
+    const els = relEls(kind);
+    const typed = els.query ? els.query.value.trim() : "";
+    st.query = typed || (q === "%" ? "" : q);
     st.hits = (Array.isArray(items) ? items : []).filter((item) => {
       const id = item && item.id ? String(item.id).toLowerCase() : "";
       return id && !exclude.has(id);
@@ -852,7 +850,9 @@ function searchRel(kind, q) {
     openRelMenu(kind);
   }).catch(() => {
     if (seq !== st.seq) return;
-    st.query = q;
+    const els = relEls(kind);
+    const typed = els.query ? els.query.value.trim() : "";
+    st.query = typed || (q === "%" ? "" : q);
     st.hits = [];
     openRelMenu(kind);
   });

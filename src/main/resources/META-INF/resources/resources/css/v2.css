@@ -1032,6 +1032,7 @@ textarea.sync-comment{min-height:88px;max-width:440px;resize:vertical}
 .coll-pick.is-open .ac{display:flex;flex-direction:column}
 .coll-pick .ac-row.match-nota .ac-via-nota.is-on{display:block}
 .coll-pick .ac-footer[hidden]{display:none!important}
+.coll-pick[data-rel-kind] .ac{max-height:min(32vh,220px)}
 .coll-pick-caret{width:28px;height:28px;border:0;border-radius:6px;background:transparent;color:var(--ink-3);
   display:grid;place-items:center;cursor:pointer;flex:0 0 auto}
 .coll-pick-caret span{display:block;font-size:13px;line-height:1;transition:transform .12s ease}
