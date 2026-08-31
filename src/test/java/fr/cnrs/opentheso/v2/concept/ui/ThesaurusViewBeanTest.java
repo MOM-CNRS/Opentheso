@@ -476,6 +476,43 @@ class ThesaurusViewBeanTest {
         assertEquals("Tjarou", bean.getCandidateTitle());
         assertEquals("anais.mauriceau", bean.getCandidateBy());
         assertEquals("2026-09-29", bean.getCandidateOn());
+        assertFalse(bean.isRejectedSelected());
+    }
+
+    @Test
+    void openTreeNode_addsRejectedBadgeBesideCandidate() {
+        thesaurusContext.selectThesaurus("th17", "Pactols_Lieux", "fr");
+        when(v2LocaleBean.getIdLangue()).thenReturn("fr");
+        when(thesaurusPreferenceService.loadUsedLanguages("th17", "fr")).thenReturn(List.of(language("fr", "Français")));
+        when(conceptReadService.loadDetail("th17", "crej01", "fr", true))
+                .thenReturn(Optional.of(conceptDetail("crej01", "Bronze blanc", "CA")));
+        when(conceptReadService.loadCandidateMeta("th17", List.of("crej01")))
+                .thenReturn(Collections.singletonList(new Object[]{"crej01", "a.costa", "2026-02-20", 3}));
+        when(conceptReadService.countBranchConcepts("th17", "crej01")).thenReturn(0);
+
+        bean.openTreeNode("crej01", "rejete");
+
+        assertTrue(bean.isCandidateSelected());
+        assertTrue(bean.isRejectedSelected());
+        assertEquals("rejete", bean.getConceptDisplayStatus());
+    }
+
+    @Test
+    void mapsRejectedNodesAsCandidatesWithRejectedFlag() {
+        thesaurusContext.selectThesaurus("th17", "Pactols_Lieux", "fr");
+        when(v2LocaleBean.getIdLangue()).thenReturn("fr");
+        when(thesaurusPreferenceService.loadUsedLanguages("th17", "fr")).thenReturn(List.of(language("fr", "Français")));
+        when(conceptReadService.loadTreeRootNodes("th17", "fr", false)).thenReturn(List.of(
+                new ConceptTreeNodeData("crej01", "Bronze blanc", "", "rejete", false)
+        ));
+        when(conceptReadService.loadCandidateMeta("th17", List.of("crej01")))
+                .thenReturn(Collections.singletonList(new Object[]{"crej01", "a.costa", "2026-02-20", 3}));
+
+        ThesaurusTreeNode node = bean.getTreeRoots().get(0);
+
+        assertTrue(node.isCandidate());
+        assertTrue(node.isRejected());
+        assertEquals("rejete", node.getStatus());
     }
 
     @Test

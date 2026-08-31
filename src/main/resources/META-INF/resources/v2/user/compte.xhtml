@@ -98,6 +98,78 @@
                 </div>
                 </h:panelGroup>
                 </h:panelGroup>
+                <div class="bo-card" id="accTreeStatus"
+                     data-msg-reset-done="#{v2LocaleBean.getMsg('v2.profile.treeStatus.resetDone')}">
+                  <div class="bo-card-h">
+                    <span class="bo-card-t">#{v2LocaleBean.getMsg('v2.profile.treeStatus.title')}</span>
+                    <button type="button" class="bo-btn ghost sm" data-act="acc-tree-reset">#{v2LocaleBean.getMsg('v2.profile.treeStatus.reset')}</button>
+                  </div>
+                  <div class="bo-card-b">
+                    <p class="st-toggle-d acc-block-hint">#{v2LocaleBean.getMsg('v2.profile.treeStatus.desc')}</p>
+                    <div class="stk acc-tree-stk">
+                      <div class="stk-title">#{v2LocaleBean.getMsg('v2.view.options.status')}</div>
+                      <div class="stk-group#{v2TreeStatusBean.groupOn('actif') ? ' on' : ''}" data-group="actif">
+                        <button type="button" class="stk-ghead#{v2TreeStatusBean.groupOn('actif') ? ' on' : ''}" data-act="st-group" data-group="actif">
+                          <span class="stk-box#{v2TreeStatusBean.groupMixed('actif') ? ' mixed' : ''}">#{v2TreeStatusBean.groupMixed('actif') ? '–' : (v2TreeStatusBean.groupOn('actif') ? '✓' : '')}</span>
+                          <span class="stk-glabel">#{v2LocaleBean.getMsg('v2.view.status.actif')}</span>
+                        </button>
+                        <div class="stk-list">
+                          <button type="button" class="stk-item#{v2TreeStatusBean.selected('valide') ? ' on' : ''}" data-act="st-item" data-status="valide">
+                            <span class="stk-box">#{v2TreeStatusBean.selected('valide') ? '✓' : ''}</span>
+                            <span class="st-dot st-valide"></span>
+                            <span class="stk-l">#{v2LocaleBean.getMsg('v2.view.status.valide')}</span>
+                          </button>
+                          <button type="button" class="stk-item#{v2TreeStatusBean.selected('insere') ? ' on' : ''}" data-act="st-item" data-status="insere">
+                            <span class="stk-box">#{v2TreeStatusBean.selected('insere') ? '✓' : ''}</span>
+                            <span class="st-dot st-insere"></span>
+                            <span class="stk-l">#{v2LocaleBean.getMsg('v2.view.status.insere')}</span>
+                          </button>
+                        </div>
+                      </div>
+                      <div class="stk-group#{v2TreeStatusBean.groupOn('candidat') ? ' on' : ''}" data-group="candidat">
+                        <button type="button" class="stk-ghead#{v2TreeStatusBean.groupOn('candidat') ? ' on' : ''}" data-act="st-group" data-group="candidat">
+                          <span class="stk-box">#{v2TreeStatusBean.groupOn('candidat') ? '✓' : ''}</span>
+                          <span class="stk-glabel">#{v2LocaleBean.getMsg('v2.view.status.candidat')}</span>
+                        </button>
+                      </div>
+                      <div class="stk-group#{v2TreeStatusBean.groupOn('inactif') ? ' on' : ''}" data-group="inactif">
+                        <button type="button" class="stk-ghead#{v2TreeStatusBean.groupOn('inactif') ? ' on' : ''}" data-act="st-group" data-group="inactif">
+                          <span class="stk-box#{v2TreeStatusBean.groupMixed('inactif') ? ' mixed' : ''}">#{v2TreeStatusBean.groupMixed('inactif') ? '–' : (v2TreeStatusBean.groupOn('inactif') ? '✓' : '')}</span>
+                          <span class="stk-glabel">#{v2LocaleBean.getMsg('v2.view.status.inactif')}</span>
+                        </button>
+                        <div class="stk-list">
+                          <button type="button" class="stk-item#{v2TreeStatusBean.selected('rejete') ? ' on' : ''}" data-act="st-item" data-status="rejete">
+                            <span class="stk-box">#{v2TreeStatusBean.selected('rejete') ? '✓' : ''}</span>
+                            <span class="st-dot st-rejete"></span>
+                            <span class="stk-l">#{v2LocaleBean.getMsg('v2.view.status.rejete')}</span>
+                          </button>
+                          <button type="button" class="stk-item#{v2TreeStatusBean.selected('deprecie') ? ' on' : ''}" data-act="st-item" data-status="deprecie">
+                            <span class="stk-box">#{v2TreeStatusBean.selected('deprecie') ? '✓' : ''}</span>
+                            <span class="st-dot st-deprecie"></span>
+                            <span class="stk-l">#{v2LocaleBean.getMsg('v2.view.status.deprecie')}</span>
+                          </button>
+                        </div>
+                      </div>
+                    </div>
+                  </div>
+                </div>
+                <div class="bo-card" id="accTableCols"
+                     data-msg-reset-done="#{v2LocaleBean.getMsg('v2.profile.tableCols.resetDone')}">
+                  <div class="bo-card-h">
+                    <span class="bo-card-t">#{v2LocaleBean.getMsg('v2.profile.tableCols.title')}</span>
+                    <button type="button" class="bo-btn ghost sm" data-act="acc-table-reset">#{v2LocaleBean.getMsg('v2.profile.tableCols.reset')}</button>
+                  </div>
+                  <div class="bo-card-b">
+                    <p class="st-toggle-d acc-block-hint">#{v2LocaleBean.getMsg('v2.profile.tableCols.desc')}</p>
+                    <div class="tbl-collist acc-table-cols">
+                      <label class="tbl-colrow is-locked on"><span class="tbl-colbox">✓</span><span>#{v2LocaleBean.getMsg('v2.view.table.col.concept')}</span><span class="tbl-lock">#{v2LocaleBean.getMsg('v2.view.table.col.locked')}</span></label>
+                      <button type="button" class="tbl-colrow#{v2TableColBean.selected('status') ? ' on' : ''}" data-act="tbl-col" data-col="status" aria-pressed="#{v2TableColBean.selected('status') ? 'true' : 'false'}"><span class="tbl-colbox">#{v2TableColBean.selected('status') ? '✓' : ''}</span><span>#{v2LocaleBean.getMsg('v2.view.table.col.status')}</span></button>
+                      <button type="button" class="tbl-colrow#{v2TableColBean.selected('type') ? ' on' : ''}" data-act="tbl-col" data-col="type" aria-pressed="#{v2TableColBean.selected('type') ? 'true' : 'false'}"><span class="tbl-colbox">#{v2TableColBean.selected('type') ? '✓' : ''}</span><span>#{v2LocaleBean.getMsg('v2.view.table.col.type')}</span></button>
+                      <button type="button" class="tbl-colrow#{v2TableColBean.selected('notation') ? ' on' : ''}" data-act="tbl-col" data-col="notation" aria-pressed="#{v2TableColBean.selected('notation') ? 'true' : 'false'}"><span class="tbl-colbox">#{v2TableColBean.selected('notation') ? '✓' : ''}</span><span>#{v2LocaleBean.getMsg('v2.view.table.col.notation')}</span></button>
+                      <button type="button" class="tbl-colrow#{v2TableColBean.selected('path') ? ' on' : ''}" data-act="tbl-col" data-col="path" aria-pressed="#{v2TableColBean.selected('path') ? 'true' : 'false'}"><span class="tbl-colbox">#{v2TableColBean.selected('path') ? '✓' : ''}</span><span>#{v2LocaleBean.getMsg('v2.view.table.col.path')}</span></button>
+                    </div>
+                  </div>
+                </div>
                 <div class="bo-card" id="accBlockLayout"
                      data-msg-open="#{v2LocaleBean.getMsg('v2.profile.blocks.open')}"
                      data-msg-closed="#{v2LocaleBean.getMsg('v2.profile.blocks.closed')}"

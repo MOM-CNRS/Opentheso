@@ -295,4 +295,14 @@
         <sqlFile path="v26/26-08_05.sql" relativeToChangelogFile="true" splitStatements="false"/>
     </changeSet>
 
+    <changeSet id="26.08.06" author="Firas">
+        <comment>Per-user default tree status filters (Options · Arborescence)</comment>
+        <sqlFile path="v26/26-08_06.sql" relativeToChangelogFile="true" splitStatements="false"/>
+    </changeSet>
+
+    <changeSet id="26.08.07" author="Firas">
+        <comment>Per-user default table columns (Options · Tableau)</comment>
+        <sqlFile path="v26/26-08_07.sql" relativeToChangelogFile="true" splitStatements="false"/>
+    </changeSet>
+
 </databaseChangeLog>

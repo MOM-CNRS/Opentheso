@@ -14,7 +14,7 @@
          data-nota="#{node.notation}"
          data-cand-by="#{node.candidateBy}"
          data-cand-on="#{node.candidateOn}">
-      <div class="tn-row#{node.candidate ? ' is-candidate' : ''}#{node.facet ? ' is-facet' : ''}#{v2ThesaurusViewBean.revealedConceptId eq node.id ? ' is-active' : ''}">
+      <div class="tn-row#{node.candidate ? ' is-candidate' : ''}#{node.rejected ? ' is-rejected' : ''}#{node.deprecated ? ' is-deprecated' : ''}#{node.facet ? ' is-facet' : ''}#{v2ThesaurusViewBean.revealedConceptId eq node.id ? ' is-active' : ''}">
         <span class="tn-check" data-act="sel-node" data-id="#{node.id}" data-key="#{node.path}"
               title="Sélectionner (avec ses enfants)"></span>
         <div class="tn-rowmain" style="padding-left:#{node.pad}">
@@ -30,7 +30,8 @@
               <span class="tn-nota">#{node.notation}</span>
             </ui:fragment>
             <span class="tn-textwrap"><span class="tn-text">#{node.label}</span></span>
-            <ui:fragment rendered="#{node.candidate}"><span class="tn-dot" title="Candidat"></span></ui:fragment>
+            <ui:fragment rendered="#{node.candidate}"><span class="tn-dot" title="#{v2LocaleBean.getMsg('v2.concept.badge.candidate')}"></span></ui:fragment>
+            <ui:fragment rendered="#{node.rejected}"><span class="tn-tag">#{v2LocaleBean.getMsg('v2.concept.badge.rejected')}</span></ui:fragment>
             <ui:fragment rendered="#{node.facet}"><span class="tn-facet" title="Facette">◇</span></ui:fragment>
           </button>
         </div>

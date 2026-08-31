@@ -77,15 +77,19 @@ class ConceptReadServiceTest {
         when(conceptQueryRepository.findTreeRootConcepts("TH1", "fr")).thenReturn(List.of(
                 new ConceptTreeRow("C1", "", "Lieux", "C", true),
                 new ConceptTreeRow("CA1", "", "Tjarou", "CA", false),
-                new ConceptTreeRow("R1", "", "Rejeté", "REJ", false)
+                new ConceptTreeRow("R1", "", "Rejeté", "REJ", false),
+                new ConceptTreeRow("D1", "", "Ancien terme", "DEP", false),
+                new ConceptTreeRow("I1", "", "Fibule ansée", "INS", false)
         ));
 
         var nodes = service.loadTreeRootNodes("TH1", "fr");
 
-        assertEquals(3, nodes.size());
+        assertEquals(5, nodes.size());
         assertEquals("concept", nodes.get(0).nodeType());
         assertEquals("candidat", nodes.get(1).nodeType());
         assertEquals("rejete", nodes.get(2).nodeType());
+        assertEquals("deprecated", nodes.get(3).nodeType());
+        assertEquals("insere", nodes.get(4).nodeType());
         assertEquals("Tjarou", nodes.get(1).label());
         verify(conceptTreeConsultationService).sortNodes(any(), eq(false));
     }

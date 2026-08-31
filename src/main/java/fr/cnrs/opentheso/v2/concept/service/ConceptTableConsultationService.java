@@ -89,8 +89,8 @@ public class ConceptTableConsultationService {
         if (candidatStatus == CandidatStatusCode.REJECTED) {
             return "rejete";
         }
-        if (candidatStatus == CandidatStatusCode.ACCEPTED && "CA".equalsIgnoreCase(dbStatus)) {
-            return "insere";
+        if (candidatStatus == CandidatStatusCode.ACCEPTED) {
+            return ConceptStatusPolicy.isDeprecated(dbStatus) ? "deprecie" : "insere";
         }
         if ("CA".equalsIgnoreCase(StringUtils.trimToEmpty(dbStatus))) {
             return "candidat";

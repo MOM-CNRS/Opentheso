@@ -49,8 +49,9 @@
         <ui:fragment rendered="#{v2ThesaurusViewBean.candidateSelected}"><span class="cv-dot" aria-hidden="true"></span></ui:fragment>
         <span>#{v2ThesaurusViewBean.dash(v2ThesaurusViewBean.selectedConcept.summary.preferredLabel)}</span>
         <span class="cv-lang">#{v2ThesaurusViewBean.dash(v2ThesaurusViewBean.selectedConcept.summary.lang)}</span>
-        <ui:fragment rendered="#{v2ThesaurusViewBean.candidateSelected}"><span class="cv-status">candidat</span></ui:fragment>
-        <ui:fragment rendered="#{v2ThesaurusViewBean.selectedConceptDeprecated}"><span class="cv-status is-dep">obsolète</span></ui:fragment>
+        <ui:fragment rendered="#{v2ThesaurusViewBean.candidateSelected}"><span class="cv-status">#{v2LocaleBean.getMsg('v2.concept.badge.candidate')}</span></ui:fragment>
+        <ui:fragment rendered="#{v2ThesaurusViewBean.rejectedSelected}"><span class="cv-status is-rej">#{v2LocaleBean.getMsg('v2.concept.badge.rejected')}</span></ui:fragment>
+        <ui:fragment rendered="#{v2ThesaurusViewBean.selectedConceptDeprecated}"><span class="cv-status is-dep">#{v2LocaleBean.getMsg('v2.concept.badge.deprecated')}</span></ui:fragment>
       </h1>
       <ui:fragment rendered="#{v2ThesaurusViewBean.conceptActionsVisible}">
         <ui:include src="concept-actions-menu.xhtml"/>

@@ -114,6 +114,8 @@ class ConceptTableConsultationServiceTest {
     @Test
     void uiStatus_acceptedCandidateIsInserted() {
         assertEquals("insere", ConceptTableConsultationService.uiStatus("CA", CandidatStatusCode.ACCEPTED));
+        assertEquals("insere", ConceptTableConsultationService.uiStatus("D", CandidatStatusCode.ACCEPTED));
+        assertEquals("deprecie", ConceptTableConsultationService.uiStatus("DEP", CandidatStatusCode.ACCEPTED));
         assertEquals("Inséré", ConceptTableConsultationService.statusLabel("insere"));
     }
 }

@@ -35,7 +35,15 @@ public class ThesaurusTreeNode implements Serializable {
     }
 
     public boolean isCandidate() {
-        return "candidat".equals(status);
+        return "candidat".equals(status) || "rejete".equals(status);
+    }
+
+    public boolean isRejected() {
+        return "rejete".equals(status);
+    }
+
+    public boolean isDeprecated() {
+        return "deprecie".equals(status);
     }
 
     public boolean isFacet() {

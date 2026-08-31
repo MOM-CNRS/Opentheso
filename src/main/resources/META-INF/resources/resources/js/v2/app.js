@@ -656,35 +656,50 @@ document.addEventListener("click", (e) => {
     const allOn = list.every(s => state.statusSet.has(s));
     list.forEach(s => allOn ? state.statusSet.delete(s) : state.statusSet.add(s));
     syncStatusUi();
+    persistTreeStatus();
   } else if (act === "st-item") {
     e.preventDefault();
     const s = t.getAttribute("data-status");
     if (state.statusSet.has(s)) state.statusSet.delete(s);
     else state.statusSet.add(s);
     syncStatusUi();
+    persistTreeStatus();
+  } else if (act === "sf-toggle") {
+    e.preventDefault();
+    const tn = t.closest(".tn");
+    if (!tn || !tn.closest("[data-status-forest]")) return;
+    tn.classList.toggle("is-open");
+    const box = tn.parentElement;
+    const list = box ? Array.from(box.querySelectorAll(":scope > .tn")) : [];
+    const openAt = [];
+    list.forEach((node) => {
+      const depth = treeDepth(node);
+      openAt.length = depth;
+      node.hidden = openAt.some((on) => !on);
+      openAt[depth] = node.classList.contains("is-open");
+    });
   } else if (act === "cf-toggle") {
     const combo = t.closest(".cf-combo") || $("#cfCombo");
-    if (combo) combo.classList.toggle("open");
+    if (!combo) return;
+    combo.classList.toggle("open");
+    if (combo.classList.contains("open")) {
+      loadCandByUsers(($("#cfByQuery") && $("#cfByQuery").value) || "");
+      const q = $("#cfByQuery");
+      if (q) q.focus();
+    }
   } else if (act === "cf-by") {
-    state.candBy = t.getAttribute("data-by") || "";
-    $$(".cf-opt").forEach(o => o.classList.toggle("on", o === t));
-    const lab = $("#cfByLabel");
-    if (lab) lab.textContent = t.getAttribute("data-label") || "Tout le monde";
+    setCandBySelection(t.getAttribute("data-by") || "");
     const combo = t.closest(".cf-combo");
     if (combo) combo.classList.remove("open");
-    syncCandFilterUi();
     applyStatusFilter();
   } else if (act === "cf-clear") {
-    state.candBy = "";
     state.candFrom = "";
     state.candTo = "";
     const from = $("#cfFrom"), to = $("#cfTo");
     if (from) from.value = "";
     if (to) to.value = "";
-    $$(".cf-opt").forEach(o => o.classList.toggle("on", !o.getAttribute("data-by")));
-    const lab = $("#cfByLabel");
-    if (lab) lab.textContent = "Tout le monde";
-    syncCandFilterUi();
+    setCandBySelection("");
+    resetCandBySearch();
     applyStatusFilter();
   } else if (act === "tbl-sort") {
     const col = t.getAttribute("data-col");
@@ -703,9 +718,11 @@ document.addEventListener("click", (e) => {
   } else if (act === "tbl-col") {
     e.preventDefault();
     const col = t.getAttribute("data-col");
+    if (!col || TABLE_COL_ALL.indexOf(col) < 0) return;
     if (state.tblCols.has(col)) state.tblCols.delete(col);
     else state.tblCols.add(col);
     applyTableCols();
+    persistTableCols();
   } else if (act === "cblock-expand") {
     expandConceptBlock(t);
   } else if (act === "cblock-fold") {
@@ -926,6 +943,20 @@ if (searchBox && searchBox.tagName === "FORM") {
     applyStatusFilter();
   });
 });
+const cfByQuery = $("#cfByQuery");
+if (cfByQuery) {
+  cfByQuery.addEventListener("input", () => {
+    clearTimeout(cfByQuery._t);
+    cfByQuery._t = setTimeout(() => loadCandByUsers(cfByQuery.value), 180);
+  });
+  cfByQuery.addEventListener("keydown", (e) => {
+    e.stopPropagation();
+    if (e.key === "Escape") {
+      const combo = $("#cfCombo");
+      if (combo) combo.classList.remove("open");
+    }
+  });
+}
 
 const moveQ = $("#bulkMoveQ");
 if (moveQ) {

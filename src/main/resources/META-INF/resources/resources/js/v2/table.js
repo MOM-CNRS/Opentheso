@@ -35,15 +35,15 @@ function paintTableSortHeaders() {
 }
 
 function applyTableCols() {
-  ["status", "type", "notation", "path"].forEach(col => {
+  TABLE_COL_ALL.forEach(col => {
     const on = state.tblCols.has(col);
     $$(".col-" + col).forEach(el => el.classList.toggle("is-col-off", !on));
-    const lab = $(`.tbl-colrow[data-col="${col}"]`);
-    if (lab) {
+    $$(`.tbl-colrow[data-col="${col}"]`).forEach((lab) => {
       lab.classList.toggle("on", on);
+      lab.setAttribute("aria-pressed", on ? "true" : "false");
       const box = lab.querySelector(".tbl-colbox");
       if (box) box.textContent = on ? "✓" : "";
-    }
+    });
   });
 }
 

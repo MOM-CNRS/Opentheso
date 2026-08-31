@@ -31,6 +31,34 @@ var GROUPS = {
   candidat: ["candidat"],
   inactif: ["rejete", "deprecie"]
 };
+var TREE_STATUS_ALL = ["valide", "insere", "candidat", "rejete", "deprecie"];
+var TREE_STATUS_DEFAULT = ["valide", "insere", "candidat"];
+var TABLE_COL_ALL = ["status", "type", "notation", "path"];
+var TABLE_COL_DEFAULT = TABLE_COL_ALL.slice();
+
+function readTreeStatusPref() {
+  try {
+    const raw = JSON.parse(document.body.getAttribute("data-tree-status") || "");
+    const list = raw && Array.isArray(raw.selected) ? raw.selected
+      : (Array.isArray(raw) ? raw : null);
+    if (!list) return TREE_STATUS_DEFAULT.slice();
+    return list.filter((s) => TREE_STATUS_ALL.indexOf(s) >= 0);
+  } catch (e) {
+    return TREE_STATUS_DEFAULT.slice();
+  }
+}
+
+function readTableColPref() {
+  try {
+    const raw = JSON.parse(document.body.getAttribute("data-table-cols") || "");
+    const list = raw && Array.isArray(raw.selected) ? raw.selected
+      : (Array.isArray(raw) ? raw : null);
+    if (!list) return TABLE_COL_DEFAULT.slice();
+    return list.filter((s) => TABLE_COL_ALL.indexOf(s) >= 0);
+  } catch (e) {
+    return TABLE_COL_DEFAULT.slice();
+  }
+}
 
 function treeSortMode() {
   const el = $("#previewTreeSortState") || $("#voSortRow");
@@ -47,7 +75,7 @@ var state = {
   subtreeSize: new Map(),
   subtreeSizePending: new Map(),
   selectedAllThesaurus: false,
-  statusSet: new Set(["valide", "insere", "candidat"]),
+  statusSet: new Set(readTreeStatusPref()),
   candBy: "",
   candFrom: "",
   candTo: "",
@@ -58,7 +86,7 @@ var state = {
   tblDir: 1,
   tblPage: 1,
   tblPageSize: 50,
-  tblCols: new Set(["status", "type", "notation", "path"]),
+  tblCols: new Set(readTableColPref()),
   colId: null,
   colSort: treeSortMode(),
   showPath: true,
@@ -169,7 +197,7 @@ function escapeHtml(value) {
 }
 
 window.OT = {
-  $, $$, norm, SCREEN, IS_CONSULT, PAGE, SIDE, VIEW_LABEL, GROUPS, state,
+  $, $$, norm, SCREEN, IS_CONSULT, PAGE, SIDE, VIEW_LABEL, GROUPS, TREE_STATUS_DEFAULT, state,
   toast, showPanel, treePanel, treeMeta, thesaurusId, thesaurusLang,
   thesaurusTitle, thesaurusConceptCount, csrfToken, clickPreviewJsf,
   hideConfirm, showConfirm, escapeHtml

@@ -171,6 +171,7 @@ body.is-export-lock #bulkSel{
 .preview-open-form{position:absolute;width:1px;height:1px;overflow:hidden;clip:rect(0,0,0,0)}
 .cv-status.is-facet{color:#3d5a80;background:rgba(61,90,128,.12)}
 .cv-status.is-dep{color:#9a3412;background:rgba(194,84,58,.12)}
+.cv-status.is-rej{color:#c2453a;background:rgba(194,69,58,.10)}
 #viewLive .draft-under{display:none}
 #viewLive .is-under .draft-root{display:none}
 #viewLive .is-under .draft-under{display:inline}
@@ -1049,6 +1050,9 @@ textarea.sync-comment{min-height:88px;max-width:440px;resize:vertical}
 .coll-pick .ac-row.is-picked{background:var(--accent-soft)}
 .coll-pick-check{font-size:12px;font-weight:700;color:var(--accent);margin-top:3px;flex:0 0 auto}
 .ac-type{font-weight:500;color:var(--ink-3);font-size:12px}
+.acc-tree-stk{margin-top:2px;max-width:280px}
+.acc-tree-stk .stk-title{margin-bottom:6px}
+.acc-table-cols{max-width:280px}
 .acc-block-hint{margin:0 0 12px}
 .acc-block-reset{margin-left:auto;cursor:pointer}
 .acc-block-reset:disabled{opacity:.4;pointer-events:none;cursor:default}

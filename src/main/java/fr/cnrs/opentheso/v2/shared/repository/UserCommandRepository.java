@@ -55,6 +55,47 @@ public class UserCommandRepository {
                 .setParameter("pattern", "%" + username + "%")
                 .setParameter("limit", limit)
                 .getResultList();
+        return mapUserSearchRows(rows);
+    }
+
+    /**
+     * Annuaire de tous les comptes (y compris super-admin), filtré par nom ou e-mail.
+     * Une requête vide renvoie les premiers utilisateurs par ordre alphabétique.
+     */
+    @SuppressWarnings("unchecked")
+    public List<UserSearchRow> searchDirectory(String query, int limit) {
+        String q = query == null ? "" : query.trim();
+        int cap = Math.min(Math.max(limit, 1), 200);
+        String sql;
+        if (q.isEmpty()) {
+            sql = """
+                    SELECT id_user, username, mail
+                    FROM users
+                    WHERE username IS NOT NULL AND BTRIM(username) <> ''
+                    ORDER BY LOWER(username)
+                    LIMIT :limit
+                    """;
+        } else {
+            sql = """
+                    SELECT id_user, username, mail
+                    FROM users
+                    WHERE username IS NOT NULL AND BTRIM(username) <> ''
+                      AND (
+                        LOWER(username) LIKE LOWER(:pattern)
+                        OR LOWER(COALESCE(mail, '')) LIKE LOWER(:pattern)
+                      )
+                    ORDER BY LOWER(username)
+                    LIMIT :limit
+                    """;
+        }
+        var nativeQuery = entityManager.createNativeQuery(sql).setParameter("limit", cap);
+        if (!q.isEmpty()) {
+            nativeQuery.setParameter("pattern", "%" + q + "%");
+        }
+        return mapUserSearchRows(nativeQuery.getResultList());
+    }
+
+    private static List<UserSearchRow> mapUserSearchRows(List<Object[]> rows) {
         return rows.stream()
                 .map(row -> new UserSearchRow(
                         ((Number) row[0]).intValue(),

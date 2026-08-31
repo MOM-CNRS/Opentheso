@@ -2102,7 +2102,10 @@ function paintViewPick() {
     const el = $("#" + id); if (el) el.hidden = !searchOn;
   });
   const tbl = $("#voTableOpts");
-  if (tbl) tbl.hidden = state.view !== "tableau";
+  if (tbl) {
+    tbl.hidden = state.view !== "tableau";
+    if (state.view === "tableau") applyTableCols();
+  }
   const stk = $(".vo-pop-stk");
   if (stk) stk.hidden = !(state.view === "arbo" || state.view === "tableau" || state.view === "hyper");
   $("#thIdBtn") && $("#thIdBtn").classList.toggle("is-active", SCREEN === "accueil");

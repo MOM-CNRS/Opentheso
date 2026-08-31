@@ -12,8 +12,10 @@ import fr.cnrs.opentheso.v2.concept.model.ConceptTreeRow;
 import org.apache.commons.lang3.StringUtils;
 
 import java.util.Collection;
+import java.util.HashMap;
 import java.util.HashSet;
 import java.util.List;
+import java.util.Map;
 import java.util.Optional;
 import java.util.Set;
 
@@ -936,7 +938,13 @@ public class ConceptQueryRepository {
                 ON t.id_term = pt.id_term
                 AND t.id_thesaurus = c.id_thesaurus
                 AND t.lang = :lang
-            LEFT JOIN candidat_status cs
+            LEFT JOIN (
+                SELECT DISTINCT ON (id_thesaurus, id_concept)
+                       id_thesaurus, id_concept, id_status
+                FROM candidat_status
+                WHERE id_thesaurus = :thesaurusId
+                ORDER BY id_thesaurus, id_concept, date DESC NULLS LAST
+            ) cs
                 ON cs.id_concept = c.id_concept
                 AND cs.id_thesaurus = c.id_thesaurus
             WHERE c.id_thesaurus = :thesaurusId
@@ -1012,13 +1020,16 @@ public class ConceptQueryRepository {
             return List.of();
         }
         return em.createNativeQuery("""
-            SELECT cs.id_concept,
+            SELECT DISTINCT ON (cs.id_concept)
+                   cs.id_concept,
                    COALESCE(u.username, '') AS created_by,
-                   TO_CHAR(cs.date, 'YYYY-MM-DD') AS created_on
+                   TO_CHAR(cs.date, 'YYYY-MM-DD') AS created_on,
+                   cs.id_status
             FROM candidat_status cs
             LEFT JOIN users u ON u.id_user = cs.id_user
             WHERE cs.id_thesaurus = :thesaurusId
               AND cs.id_concept IN (:conceptIds)
+            ORDER BY cs.id_concept, cs.date DESC NULLS LAST
             """)
                 .setParameter("thesaurusId", thesaurusId)
                 .setParameter("conceptIds", conceptIds)
@@ -1221,6 +1232,177 @@ public class ConceptQueryRepository {
         return result;
     }
 
+    public Map<String, Integer> countConceptsByUiStatus(String thesaurusId) {
+        Map<String, Integer> counts = new HashMap<>();
+        if (StringUtils.isBlank(thesaurusId)) {
+            return counts;
+        }
+        @SuppressWarnings("unchecked")
+        List<Object[]> rows = em.createNativeQuery("""
+            SELECT ui_status, COUNT(*) AS n
+            FROM (
+                SELECT CASE
+                    WHEN cs.id_status = :rejected THEN 'rejete'
+                    WHEN cs.id_status = :accepted AND UPPER(TRIM(c.status)) = 'DEP' THEN 'deprecie'
+                    WHEN cs.id_status = :accepted THEN 'insere'
+                    WHEN UPPER(TRIM(c.status)) = 'CA' THEN 'candidat'
+                    WHEN UPPER(TRIM(c.status)) = 'DEP' THEN 'deprecie'
+                    ELSE 'valide'
+                END AS ui_status
+                FROM concept c
+                LEFT JOIN (
+                    SELECT DISTINCT ON (id_thesaurus, id_concept)
+                           id_thesaurus, id_concept, id_status
+                    FROM candidat_status
+                    WHERE id_thesaurus = :thesaurusId
+                    ORDER BY id_thesaurus, id_concept, date DESC NULLS LAST
+                ) cs
+                    ON cs.id_concept = c.id_concept
+                    AND cs.id_thesaurus = c.id_thesaurus
+                WHERE c.id_thesaurus = :thesaurusId
+            ) counted
+            GROUP BY ui_status
+            """)
+                .setParameter("thesaurusId", thesaurusId)
+                .setParameter("rejected", CandidatStatusCode.REJECTED)
+                .setParameter("accepted", CandidatStatusCode.ACCEPTED)
+                .getResultList();
+        for (Object[] row : rows) {
+            if (row == null || row[0] == null) {
+                continue;
+            }
+            counts.put(row[0].toString(), row[1] == null ? 0 : ((Number) row[1]).intValue());
+        }
+        return counts;
+    }
+
+    /**
+     * Concepts dont le statut UI est dans {@code statuses}.
+     * Colonnes : id, notation, label, ui_status, cand_by, cand_on.
+     */
+    @SuppressWarnings("unchecked")
+    public List<Object[]> findConceptsForUiStatuses(String thesaurusId, String lang, Collection<String> statuses) {
+        if (StringUtils.isBlank(thesaurusId) || statuses == null || statuses.isEmpty()) {
+            return List.of();
+        }
+        String uiStatus = uiStatusCaseSql("c", "cs");
+        return em.createNativeQuery("""
+                SELECT c.id_concept,
+                       COALESCE(c.notation, '') AS notation,
+                       COALESCE(t.lexical_value, c.id_concept) AS label,
+                       """ + uiStatus + """
+                       AS ui_status,
+                       COALESCE(u.username, '') AS cand_by,
+                       COALESCE(TO_CHAR(cs.date, 'YYYY-MM-DD'), '') AS cand_on
+                FROM concept c
+                LEFT JOIN preferred_term pt
+                    ON pt.id_concept = c.id_concept
+                    AND pt.id_thesaurus = c.id_thesaurus
+                LEFT JOIN term t
+                    ON t.id_term = pt.id_term
+                    AND t.id_thesaurus = c.id_thesaurus
+                    AND t.lang = :lang
+                LEFT JOIN (
+                    SELECT DISTINCT ON (id_thesaurus, id_concept)
+                           id_thesaurus, id_concept, id_status, date, id_user
+                    FROM candidat_status
+                    WHERE id_thesaurus = :thesaurusId
+                    ORDER BY id_thesaurus, id_concept, date DESC NULLS LAST
+                ) cs
+                    ON cs.id_concept = c.id_concept
+                    AND cs.id_thesaurus = c.id_thesaurus
+                LEFT JOIN users u ON u.id_user = cs.id_user
+                WHERE c.id_thesaurus = :thesaurusId
+                  AND (""" + uiStatus + """
+                       ) IN (:statuses)
+                ORDER BY label
+                LIMIT 2000
+                """)
+                .setParameter("thesaurusId", thesaurusId)
+                .setParameter("lang", lang)
+                .setParameter("statuses", statuses)
+                .getResultList();
+    }
+
+    /**
+     * Arêtes BT (enfant → parent) pour remonter à la racine depuis {@code conceptIds}.
+     * Colonnes : child_id, parent_id, parent_label, parent_ui_status.
+     */
+    @SuppressWarnings("unchecked")
+    public List<Object[]> findAncestorEdgesForConcepts(String thesaurusId, String lang, Collection<String> conceptIds) {
+        if (StringUtils.isBlank(thesaurusId) || conceptIds == null || conceptIds.isEmpty()) {
+            return List.of();
+        }
+        String parentStatus = uiStatusCaseSql("c", "cs");
+        return em.createNativeQuery("""
+                WITH RECURSIVE walk AS (
+                    SELECT hr.id_concept1 AS child_id,
+                           hr.id_concept2 AS parent_id,
+                           1 AS depth
+                    FROM hierarchical_relationship hr
+                    WHERE hr.id_thesaurus = :thesaurusId
+                      AND hr.role LIKE 'BT%'
+                      AND hr.id_concept1 IN (:conceptIds)
+                    UNION ALL
+                    SELECT hr.id_concept1,
+                           hr.id_concept2,
+                           w.depth + 1
+                    FROM hierarchical_relationship hr
+                    JOIN walk w ON hr.id_concept1 = w.parent_id
+                    WHERE hr.id_thesaurus = :thesaurusId
+                      AND hr.role LIKE 'BT%'
+                      AND w.depth < 30
+                )
+                SELECT DISTINCT w.child_id,
+                       w.parent_id,
+                       COALESCE(t.lexical_value, w.parent_id) AS parent_label,
+                       """ + parentStatus + """
+                       AS parent_ui_status
+                FROM walk w
+                JOIN concept c
+                    ON c.id_concept = w.parent_id
+                    AND c.id_thesaurus = :thesaurusId
+                LEFT JOIN preferred_term pt
+                    ON pt.id_concept = c.id_concept
+                    AND pt.id_thesaurus = c.id_thesaurus
+                LEFT JOIN term t
+                    ON t.id_term = pt.id_term
+                    AND t.id_thesaurus = c.id_thesaurus
+                    AND t.lang = :lang
+                LEFT JOIN (
+                    SELECT DISTINCT ON (id_thesaurus, id_concept)
+                           id_thesaurus, id_concept, id_status
+                    FROM candidat_status
+                    WHERE id_thesaurus = :thesaurusId
+                    ORDER BY id_thesaurus, id_concept, date DESC NULLS LAST
+                ) cs
+                    ON cs.id_concept = c.id_concept
+                    AND cs.id_thesaurus = c.id_thesaurus
+                """)
+                .setParameter("thesaurusId", thesaurusId)
+                .setParameter("lang", lang)
+                .setParameter("conceptIds", conceptIds)
+                .getResultList();
+    }
+
+    private static String uiStatusCaseSql(String conceptAlias, String csAlias) {
+        return """
+                CASE
+                    WHEN %2$s.id_status = %3$d THEN 'rejete'
+                    WHEN %2$s.id_status = %4$d AND UPPER(TRIM(%1$s.status)) = 'DEP' THEN 'deprecie'
+                    WHEN %2$s.id_status = %4$d THEN 'insere'
+                    WHEN UPPER(TRIM(%1$s.status)) = 'CA' THEN 'candidat'
+                    WHEN UPPER(TRIM(%1$s.status)) = 'DEP' THEN 'deprecie'
+                    ELSE 'valide'
+                END
+                """.formatted(
+                conceptAlias,
+                csAlias,
+                CandidatStatusCode.REJECTED,
+                CandidatStatusCode.ACCEPTED
+        );
+    }
+
     private static String str(Object o) {
         return o != null ? o.toString() : "";
     }
@@ -1233,9 +1415,15 @@ public class ConceptQueryRepository {
         return """
             CASE
                 WHEN cs.id_status = %d THEN 'REJ'
+                WHEN cs.id_status = %d AND UPPER(TRIM(%s.status)) <> 'DEP' THEN 'INS'
                 ELSE %s.status
             END AS status,
-            """.formatted(CandidatStatusCode.REJECTED, conceptAlias);
+            """.formatted(
+                CandidatStatusCode.REJECTED,
+                CandidatStatusCode.ACCEPTED,
+                conceptAlias,
+                conceptAlias
+        );
     }
 
     private static String excludeRejectedCandidates(String conceptAlias) {

@@ -103,42 +103,51 @@
                 <div class="vo-pop-h">Options · <span id="voPopView">Arborescence</span></div>
                 <div class="vo-pop-stk">
                   <div class="stk">
-                    <div class="stk-title">Statuts affichés</div>
-                    <div class="stk-group on" data-group="actif">
-                      <button type="button" class="stk-ghead on" data-act="st-group" data-group="actif">
-                        <span class="stk-box">✓</span>
-                        <span class="stk-glabel">Actifs</span>
-                        <span class="stk-n">405</span>
+                    <div class="stk-title">#{v2LocaleBean.getMsg('v2.view.options.status')}</div>
+                    <div class="stk-group#{v2TreeStatusBean.groupOn('actif') ? ' on' : ''}" data-group="actif">
+                      <button type="button" class="stk-ghead#{v2TreeStatusBean.groupOn('actif') ? ' on' : ''}" data-act="st-group" data-group="actif">
+                        <span class="stk-box#{v2TreeStatusBean.groupMixed('actif') ? ' mixed' : ''}">#{v2TreeStatusBean.groupMixed('actif') ? '–' : (v2TreeStatusBean.groupOn('actif') ? '✓' : '')}</span>
+                        <span class="stk-glabel">#{v2LocaleBean.getMsg('v2.view.status.actif')}</span>
+                        <span class="stk-n">#{v2TreeStatusBean.groupCount('actif')}</span>
                       </button>
-                      <div class="stk-list"><button type="button" class="stk-item on" data-act="st-item" data-status="valide">
-                          <span class="stk-box">✓</span>
+                      <div class="stk-list"><button type="button" class="stk-item#{v2TreeStatusBean.selected('valide') ? ' on' : ''}" data-act="st-item" data-status="valide">
+                          <span class="stk-box">#{v2TreeStatusBean.selected('valide') ? '✓' : ''}</span>
                           <span class="st-dot st-valide"></span>
-                          <span class="stk-l">Normaux</span>
-                          <span class="stk-n">403</span>
-                        </button><button type="button" class="stk-item on" data-act="st-item" data-status="insere">
-                          <span class="stk-box">✓</span>
+                          <span class="stk-l">#{v2LocaleBean.getMsg('v2.view.status.valide')}</span>
+                          <span class="stk-n">#{v2TreeStatusBean.count('valide')}</span>
+                        </button><button type="button" class="stk-item#{v2TreeStatusBean.selected('insere') ? ' on' : ''}" data-act="st-item" data-status="insere">
+                          <span class="stk-box">#{v2TreeStatusBean.selected('insere') ? '✓' : ''}</span>
                           <span class="st-dot st-insere"></span>
-                          <span class="stk-l">Insérés</span>
-                          <span class="stk-n">2</span>
+                          <span class="stk-l">#{v2LocaleBean.getMsg('v2.view.status.insere')}</span>
+                          <span class="stk-n">#{v2TreeStatusBean.count('insere')}</span>
                         </button></div>
                       
-                    </div><div class="stk-group on" data-group="candidat">
-                      <button type="button" class="stk-ghead on" data-act="st-group" data-group="candidat">
-                        <span class="stk-box">✓</span>
-                        <span class="stk-glabel">Candidats</span>
-                        <span class="stk-n">29</span>
+                    </div><div class="stk-group#{v2TreeStatusBean.groupOn('candidat') ? ' on' : ''}" data-group="candidat">
+                      <button type="button" class="stk-ghead#{v2TreeStatusBean.groupOn('candidat') ? ' on' : ''}" data-act="st-group" data-group="candidat">
+                        <span class="stk-box">#{v2TreeStatusBean.groupOn('candidat') ? '✓' : ''}</span>
+                        <span class="stk-glabel">#{v2LocaleBean.getMsg('v2.view.status.candidat')}</span>
+                        <span class="stk-n">#{v2TreeStatusBean.groupCount('candidat')}</span>
                       </button>
                       
                       <div class="cf">
                       <div class="cf-fld">
-                        <span class="cf-l">Déposé par</span>
-                        <div class="cf-combo" id="cfCombo" data-act="cf-toggle">
-                          <button type="button" class="cf-in" id="cfByLabel">Tout le monde</button>
+                        <span class="cf-l">#{v2LocaleBean.getMsg('v2.view.cand.by')}</span>
+                        <div class="cf-combo" id="cfCombo"
+                             data-everyone="#{v2LocaleBean.getMsg('v2.view.cand.everyone')}"
+                             data-everyone-hint="#{v2LocaleBean.getMsg('v2.view.cand.everyoneHint')}"
+                             data-me="#{v2LocaleBean.getMsg('v2.view.cand.me')}"
+                             data-me-hint="#{v2LocaleBean.getMsg('v2.view.cand.meHint')}"
+                             data-empty="#{v2LocaleBean.getMsg('v2.view.cand.empty')}">
+                          <button type="button" class="cf-in" id="cfByLabel" data-act="cf-toggle">#{v2LocaleBean.getMsg('v2.view.cand.everyone')}</button>
                           <span class="cf-combo-caret">▾</span>
-                          <div class="cf-menu">
-                            <button type="button" class="cf-opt on" data-act="cf-by" data-by="" data-label="Tout le monde">Tout le monde<small>tous les candidats</small></button>
-                            <button type="button" class="cf-opt" data-act="cf-by" data-by="c.roussel" data-label="Moi (Camille Roussel)">Moi (Camille Roussel)<small>c.roussel · mes candidats</small></button>
-                            <button type="button" class="cf-opt" data-act="cf-by" data-by="a.costa" data-label="a.costa">a.costa</button><button type="button" class="cf-opt" data-act="cf-by" data-by="anais.mauriceau" data-label="anais.mauriceau">anais.mauriceau</button><button type="button" class="cf-opt" data-act="cf-by" data-by="j.bonnet" data-label="j.bonnet">j.bonnet</button><button type="button" class="cf-opt" data-act="cf-by" data-by="m.lefevre" data-label="m.lefevre">m.lefevre</button>
+                          <div class="cf-menu" id="cfMenu">
+                            <input type="search" class="cf-search" id="cfByQuery"
+                                   placeholder="#{v2LocaleBean.getMsg('v2.view.cand.search')}"
+                                   autocomplete="off"/>
+                            <div class="cf-opt-list" id="cfByList">
+                              <button type="button" class="cf-opt on" data-act="cf-by" data-by=""
+                                      data-label="#{v2LocaleBean.getMsg('v2.view.cand.everyone')}">#{v2LocaleBean.getMsg('v2.view.cand.everyone')}<small>#{v2LocaleBean.getMsg('v2.view.cand.everyoneHint')}</small></button>
+                            </div>
                           </div>
                         </div>
                       </div>
@@ -150,24 +159,24 @@
                           <input type="date" class="cf-in" id="cfTo"/>
                         </div>
                       </div>
-                      <button type="button" class="cf-clear" id="cfClear" hidden="hidden" data-act="cf-clear">Réinitialiser les filtres candidats</button>
+                      <button type="button" class="cf-clear" id="cfClear" hidden="hidden" data-act="cf-clear">#{v2LocaleBean.getMsg('v2.view.cand.clear')}</button>
                     </div>
-                    </div><div class="stk-group" data-group="inactif">
-                      <button type="button" class="stk-ghead" data-act="st-group" data-group="inactif">
-                        <span class="stk-box"></span>
-                        <span class="stk-glabel">Inactifs</span>
-                        <span class="stk-n">4</span>
+                    </div><div class="stk-group#{v2TreeStatusBean.groupOn('inactif') ? ' on' : ''}" data-group="inactif">
+                      <button type="button" class="stk-ghead#{v2TreeStatusBean.groupOn('inactif') ? ' on' : ''}" data-act="st-group" data-group="inactif">
+                        <span class="stk-box#{v2TreeStatusBean.groupMixed('inactif') ? ' mixed' : ''}">#{v2TreeStatusBean.groupMixed('inactif') ? '–' : (v2TreeStatusBean.groupOn('inactif') ? '✓' : '')}</span>
+                        <span class="stk-glabel">#{v2LocaleBean.getMsg('v2.view.status.inactif')}</span>
+                        <span class="stk-n">#{v2TreeStatusBean.groupCount('inactif')}</span>
                       </button>
-                      <div class="stk-list"><button type="button" class="stk-item" data-act="st-item" data-status="rejete">
-                          <span class="stk-box"></span>
+                      <div class="stk-list"><button type="button" class="stk-item#{v2TreeStatusBean.selected('rejete') ? ' on' : ''}" data-act="st-item" data-status="rejete">
+                          <span class="stk-box">#{v2TreeStatusBean.selected('rejete') ? '✓' : ''}</span>
                           <span class="st-dot st-rejete"></span>
-                          <span class="stk-l">Rejetés</span>
-                          <span class="stk-n">2</span>
-                        </button><button type="button" class="stk-item" data-act="st-item" data-status="deprecie">
-                          <span class="stk-box"></span>
+                          <span class="stk-l">#{v2LocaleBean.getMsg('v2.view.status.rejete')}</span>
+                          <span class="stk-n">#{v2TreeStatusBean.count('rejete')}</span>
+                        </button><button type="button" class="stk-item#{v2TreeStatusBean.selected('deprecie') ? ' on' : ''}" data-act="st-item" data-status="deprecie">
+                          <span class="stk-box">#{v2TreeStatusBean.selected('deprecie') ? '✓' : ''}</span>
                           <span class="st-dot st-deprecie"></span>
-                          <span class="stk-l">Dépréciés</span>
-                          <span class="stk-n">2</span>
+                          <span class="stk-l">#{v2LocaleBean.getMsg('v2.view.status.deprecie')}</span>
+                          <span class="stk-n">#{v2TreeStatusBean.count('deprecie')}</span>
                         </button></div>
                       
                     </div>
@@ -214,13 +223,13 @@
                 </div>
                 <div class="vo-pop-stk" id="voTableOpts" hidden="hidden">
                   <div class="topt">
-                    <div class="topt-h">Colonnes</div>
+                    <div class="topt-h">#{v2LocaleBean.getMsg('v2.view.table.cols')}</div>
                     <div class="tbl-collist">
-                      <label class="tbl-colrow is-locked"><span class="tbl-colbox">✓</span><span>Concept</span><span class="tbl-lock">figée</span></label>
-                      <button type="button" class="tbl-colrow on" data-act="tbl-col" data-col="status"><span class="tbl-colbox">✓</span><span>Statut</span></button>
-                      <button type="button" class="tbl-colrow on" data-act="tbl-col" data-col="type"><span class="tbl-colbox">✓</span><span>Type</span></button>
-                      <button type="button" class="tbl-colrow on" data-act="tbl-col" data-col="notation"><span class="tbl-colbox">✓</span><span>Notation</span></button>
-                      <button type="button" class="tbl-colrow on" data-act="tbl-col" data-col="path"><span class="tbl-colbox">✓</span><span>Chemin</span></button>
+                      <label class="tbl-colrow is-locked on"><span class="tbl-colbox">✓</span><span>#{v2LocaleBean.getMsg('v2.view.table.col.concept')}</span><span class="tbl-lock">#{v2LocaleBean.getMsg('v2.view.table.col.locked')}</span></label>
+                      <button type="button" class="tbl-colrow#{v2TableColBean.selected('status') ? ' on' : ''}" data-act="tbl-col" data-col="status" aria-pressed="#{v2TableColBean.selected('status') ? 'true' : 'false'}"><span class="tbl-colbox">#{v2TableColBean.selected('status') ? '✓' : ''}</span><span>#{v2LocaleBean.getMsg('v2.view.table.col.status')}</span></button>
+                      <button type="button" class="tbl-colrow#{v2TableColBean.selected('type') ? ' on' : ''}" data-act="tbl-col" data-col="type" aria-pressed="#{v2TableColBean.selected('type') ? 'true' : 'false'}"><span class="tbl-colbox">#{v2TableColBean.selected('type') ? '✓' : ''}</span><span>#{v2LocaleBean.getMsg('v2.view.table.col.type')}</span></button>
+                      <button type="button" class="tbl-colrow#{v2TableColBean.selected('notation') ? ' on' : ''}" data-act="tbl-col" data-col="notation" aria-pressed="#{v2TableColBean.selected('notation') ? 'true' : 'false'}"><span class="tbl-colbox">#{v2TableColBean.selected('notation') ? '✓' : ''}</span><span>#{v2LocaleBean.getMsg('v2.view.table.col.notation')}</span></button>
+                      <button type="button" class="tbl-colrow#{v2TableColBean.selected('path') ? ' on' : ''}" data-act="tbl-col" data-col="path" aria-pressed="#{v2TableColBean.selected('path') ? 'true' : 'false'}"><span class="tbl-colbox">#{v2TableColBean.selected('path') ? '✓' : ''}</span><span>#{v2LocaleBean.getMsg('v2.view.table.col.path')}</span></button>
                     </div>
                   </div>
                 </div>

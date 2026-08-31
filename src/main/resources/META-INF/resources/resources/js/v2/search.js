@@ -206,35 +206,187 @@ function runSearch() {
   paint();
 }
 
-function applyStatusFilter() {
+var STATUS_FOREST = { insere: 1, candidat: 1, rejete: 1, deprecie: 1 };
+
+function candFilterOk(status, by, on) {
+  if (status !== "candidat") return true;
+  if (state.candBy && by !== state.candBy) return false;
+  if (state.candFrom && (!/^\d{4}-\d{2}-\d{2}$/.test(on) || on < state.candFrom)) return false;
+  if (state.candTo && (!/^\d{4}-\d{2}-\d{2}$/.test(on) || on > state.candTo)) return false;
+  return true;
+}
+
+function wantsStatusForest() {
   const set = state.statusSet;
-  function candOk(tn) {
-    if ((tn.getAttribute("data-status") || "") !== "candidat") return true;
-    const by = tn.getAttribute("data-cand-by") || "";
-    const on = tn.getAttribute("data-cand-on") || "";
-    if (state.candBy && by !== state.candBy) return false;
-    if (state.candFrom && (!/^\d{4}-\d{2}-\d{2}$/.test(on) || on < state.candFrom)) return false;
-    if (state.candTo && (!/^\d{4}-\d{2}-\d{2}$/.test(on) || on > state.candTo)) return false;
-    return true;
+  return !set.has("valide") && Object.keys(STATUS_FOREST).some((s) => set.has(s));
+}
+
+function statusForestHost() {
+  const tree = $("#previewTree") || treePanel();
+  if (!tree) return null;
+  let box = $("#statusForest");
+  if (!box) {
+    box = document.createElement("div");
+    box.id = "statusForest";
+    box.setAttribute("data-status-forest", "1");
+    tree.appendChild(box);
   }
-  const nodes = treeNodes();
-  const ownOk = nodes.map(tn => {
-    const st = tn.getAttribute("data-status") || "valide";
-    return set.has(st) && candOk(tn);
-  });
-  const vis = ownOk.slice();
-  for (let i = 0; i < nodes.length; i++) {
-    if (!ownOk[i]) continue;
-    let depth = treeDepth(nodes[i]);
+  return box;
+}
+
+function hideStatusForest() {
+  const box = $("#statusForest");
+  if (box) {
+    box.hidden = true;
+    box.innerHTML = "";
+  }
+}
+
+function statusForestNodeHtml(node) {
+  const status = node.status || "valide";
+  const type = node.nodeType || "concept";
+  const depth = Number(node.depth || 0);
+  const inactive = !!node.inactive;
+  const open = !!node.hasChildren;
+  const pad = 6 + depth * 18;
+  const rowCls = "tn-row"
+    + (status === "candidat" ? " is-candidate" : "")
+    + (status === "rejete" ? " is-rejected" : "")
+    + (status === "deprecie" ? " is-deprecated" : "")
+    + (inactive ? " is-status-inactive" : "");
+  const tags = (status === "candidat" || status === "rejete"
+    ? '<span class="tn-dot" title="candidat"></span>' : "")
+    + (status === "rejete" ? '<span class="tn-tag">rejeté</span>' : "");
+  return '<div class="tn' + (open ? " is-open" : "") + (inactive ? " is-status-inactive" : "") + '"'
+    + ' data-id="' + escapeHtml(node.id) + '"'
+    + ' data-type="' + escapeHtml(type) + '"'
+    + ' data-status="' + escapeHtml(status) + '"'
+    + ' data-depth="' + depth + '"'
+    + ' data-has-children="' + (node.hasChildren ? "true" : "false") + '"'
+    + ' data-nota="' + escapeHtml(node.notation || "") + '"'
+    + ' data-cand-by="' + escapeHtml(node.candidateBy || "") + '"'
+    + ' data-cand-on="' + escapeHtml(node.candidateOn || "") + '"'
+    + ' data-key="' + escapeHtml(node.label || node.id) + '">'
+    + '<div class="' + rowCls + '">'
+    + (inactive ? '<span class="tn-check is-off"></span>'
+      : '<span class="tn-check" data-act="sel-node" data-id="' + escapeHtml(node.id) + '"></span>')
+    + '<div class="tn-rowmain" style="padding-left:' + pad + 'px">'
+    + '<button type="button" class="tn-caret' + (node.hasChildren ? "" : " is-empty") + '"'
+    + ' data-act="sf-toggle" aria-label="Déplier">'
+    + '<span class="caret-open">▾</span><span class="caret-shut">▸</span></button>'
+    + '<button type="button" class="tn-label" data-act="open" data-id="' + escapeHtml(node.id)
+    + '" data-type="' + escapeHtml(type) + '">'
+    + '<span class="tn-textwrap"><span class="tn-text">' + escapeHtml(node.label || node.id) + "</span></span>"
+    + tags
+    + "</button></div></div></div>";
+}
+
+function renderStatusForest(nodes) {
+  const box = statusForestHost();
+  if (!box) return;
+  const set = state.statusSet;
+  const keep = new Set();
+  (nodes || []).forEach((node, i) => {
+    if (node.inactive) return;
+    if (!set.has(node.status || "valide")) return;
+    if (!candFilterOk(node.status, node.candidateBy || "", node.candidateOn || "")) return;
+    keep.add(i);
+    let depth = Number(node.depth || 0);
     for (let j = i - 1; j >= 0 && depth > 0; j--) {
-      const parentDepth = treeDepth(nodes[j]);
+      const parentDepth = Number(nodes[j].depth || 0);
       if (parentDepth < depth) {
-        vis[j] = true;
+        keep.add(j);
         depth = parentDepth;
       }
     }
+  });
+  const filtered = (nodes || []).filter((_, i) => keep.has(i));
+  if (!filtered.length) {
+    box.innerHTML = '<div class="tree-empty">Aucun concept pour les statuts sélectionnés.</div>';
+    box.hidden = false;
+    return;
   }
-  nodes.forEach((tn, i) => tn.classList.toggle("is-status-off", !vis[i]));
+  box.innerHTML = filtered.map(statusForestNodeHtml).join("");
+  box.hidden = false;
+}
+
+function loadStatusForest() {
+  const box = statusForestHost();
+  if (!box) return;
+  const statuses = Object.keys(STATUS_FOREST).filter((s) => state.statusSet.has(s)).join(",");
+  const key = thesaurusId() + "|" + thesaurusLang() + "|" + statuses
+    + "|" + (state.candBy || "") + "|" + (state.candFrom || "") + "|" + (state.candTo || "");
+  if (loadStatusForest._key === key && box.childElementCount && !box.hidden) return;
+  box.hidden = false;
+  box.innerHTML = '<div class="tree-empty">Chargement…</div>';
+  const ctx = document.body.getAttribute("data-ctx") || "";
+  const url = ctx + "/v2/api/tree-status-forest?thesaurusId=" + encodeURIComponent(thesaurusId())
+    + "&lang=" + encodeURIComponent(thesaurusLang() || "fr")
+    + "&statuses=" + encodeURIComponent(statuses);
+  fetch(url, { credentials: "same-origin", headers: { Accept: "application/json" } })
+    .then((r) => (r.ok ? r.json() : []))
+    .then((nodes) => {
+      loadStatusForest._key = key;
+      renderStatusForest(Array.isArray(nodes) ? nodes : []);
+    })
+    .catch(() => {
+      box.innerHTML = '<div class="tree-empty">Impossible de charger l’arbre filtré.</div>';
+    });
+}
+
+function applyStatusFilter() {
+  const set = state.statusSet;
+  function candOk(tn) {
+    return candFilterOk(
+      tn.getAttribute("data-status") || "",
+      tn.getAttribute("data-cand-by") || "",
+      tn.getAttribute("data-cand-on") || ""
+    );
+  }
+  const forestOn = wantsStatusForest();
+  const nodes = treeNodes().filter((tn) => !tn.closest("[data-status-forest]"));
+  if (forestOn) {
+    nodes.forEach((tn) => tn.classList.add("is-status-off"));
+    const empty = ($("#previewTree") || treePanel() || document).querySelector(".tree-status-empty");
+    if (empty) empty.hidden = true;
+    loadStatusForest();
+  } else {
+    hideStatusForest();
+    loadStatusForest._key = "";
+    const ownOk = nodes.map((tn) => {
+      const st = tn.getAttribute("data-status") || "valide";
+      return set.has(st) && candOk(tn);
+    });
+    const vis = ownOk.slice();
+    for (let i = 0; i < nodes.length; i++) {
+      if (!ownOk[i]) continue;
+      let depth = treeDepth(nodes[i]);
+      for (let j = i - 1; j >= 0 && depth > 0; j--) {
+        const parentDepth = treeDepth(nodes[j]);
+        if (parentDepth < depth) {
+          vis[j] = true;
+          depth = parentDepth;
+        }
+      }
+    }
+    nodes.forEach((tn, i) => tn.classList.toggle("is-status-off", !vis[i]));
+    const host = $("#previewTree") || treePanel();
+    if (host) {
+      let empty = host.querySelector(".tree-status-empty");
+      const anyOn = vis.some(Boolean);
+      if (!anyOn && nodes.length) {
+        if (!empty) {
+          empty = document.createElement("div");
+          empty.className = "tree-empty tree-status-empty";
+          empty.textContent = "Aucun concept pour les statuts sélectionnés.";
+          host.appendChild(empty);
+        }
+        empty.hidden = false;
+      } else if (empty) {
+        empty.hidden = true;
+      }
+    }
+  }
   if (tableRowsCache.length) {
     state.tblPage = 1;
     renderTablePage();

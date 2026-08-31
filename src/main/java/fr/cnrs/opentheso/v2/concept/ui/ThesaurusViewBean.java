@@ -13,6 +13,7 @@ import fr.cnrs.opentheso.v2.concept.model.FacetDetailOverview;
 import fr.cnrs.opentheso.v2.concept.model.ConceptLinkItem;
 import fr.cnrs.opentheso.v2.concept.model.ThesaurusHomeOverview;
 import fr.cnrs.opentheso.v2.concept.model.ThesaurusMetadataItem;
+import fr.cnrs.opentheso.v2.candidat.model.CandidatStatusCode;
 import fr.cnrs.opentheso.v2.concept.service.ConceptReadService;
 import fr.cnrs.opentheso.v2.concept.session.ConceptSelectionContext;
 import fr.cnrs.opentheso.v2.concept.support.ConceptQrSvgSupport;
@@ -108,6 +109,8 @@ public class ThesaurusViewBean implements Serializable {
     private String candidateBy = "";
     @Getter
     private String candidateOn = "";
+    @Getter
+    private boolean candidateRejected;
     @Getter
     private boolean detailRequested;
     @Getter
@@ -376,6 +379,7 @@ public class ThesaurusViewBean implements Serializable {
         ficheEditCard = null;
         candidateBy = "";
         candidateOn = "";
+        candidateRejected = "rejete".equalsIgnoreCase(nodeType);
         resetConceptExtras();
         if (StringUtils.isBlank(id)) {
             conceptSelectionContext.clear();
@@ -395,6 +399,7 @@ public class ThesaurusViewBean implements Serializable {
             return;
         }
         boolean candidate = "candidat".equalsIgnoreCase(nodeType)
+                || "rejete".equalsIgnoreCase(nodeType)
                 || "CA".equalsIgnoreCase(selectedConcept.getSummary().getStatus());
         selectedKind = candidate ? "candidat" : "concept";
         if (candidate) {
@@ -583,6 +588,10 @@ public class ThesaurusViewBean implements Serializable {
         return "candidat".equals(selectedKind) && selectedConcept != null;
     }
 
+    public boolean isRejectedSelected() {
+        return isCandidateSelected() && candidateRejected;
+    }
+
     public boolean isFacetSelected() {
         return "facet".equals(selectedKind) && selectedFacet != null;
     }
@@ -593,6 +602,9 @@ public class ThesaurusViewBean implements Serializable {
 
     /** Statut visuel aligné sur la maquette {@code target.html} : {@code valide} / {@code candidat} / {@code deprecie}. */
     public String getConceptDisplayStatus() {
+        if (isRejectedSelected()) {
+            return "rejete";
+        }
         if (isCandidateSelected()) {
             return "candidat";
         }
@@ -941,6 +953,8 @@ public class ThesaurusViewBean implements Serializable {
         node.setPath(StringUtils.isBlank(parentPath) ? data.getLabel() : parentPath + "/" + data.getLabel());
         if ("candidat".equals(data.getNodeType())) {
             node.setStatus("candidat");
+        } else if ("insere".equals(data.getNodeType())) {
+            node.setStatus("insere");
         } else if ("rejete".equals(data.getNodeType())) {
             node.setStatus("rejete");
         } else if ("deprecated".equals(data.getNodeType())) {
@@ -958,6 +972,9 @@ public class ThesaurusViewBean implements Serializable {
             }
             candidateBy = row[1] == null ? "" : row[1].toString();
             candidateOn = row[2] == null ? "" : row[2].toString();
+            if (row.length > 3 && row[3] != null) {
+                candidateRejected = toCandidatStatus(row[3]) == CandidatStatusCode.REJECTED;
+            }
             return;
         }
     }
@@ -1079,6 +1096,17 @@ public class ThesaurusViewBean implements Serializable {
     private boolean languageExists(String lang) {
         return StringUtils.isNotBlank(lang)
                 && languages.stream().anyMatch(item -> item.code().equalsIgnoreCase(lang));
+    }
+
+    private static int toCandidatStatus(Object value) {
+        if (value instanceof Number number) {
+            return number.intValue();
+        }
+        try {
+            return Integer.parseInt(value.toString().trim());
+        } catch (NumberFormatException ex) {
+            return 0;
+        }
     }
 
     private static String formatCount(int count) {

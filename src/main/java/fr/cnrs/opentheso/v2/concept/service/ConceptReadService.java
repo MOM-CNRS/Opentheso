@@ -211,6 +211,8 @@ public class ConceptReadService {
             nodeType = "rejete";
         } else if ("CA".equalsIgnoreCase(status)) {
             nodeType = "candidat";
+        } else if ("INS".equalsIgnoreCase(status)) {
+            nodeType = "insere";
         } else if (ConceptStatusPolicy.isDeprecated(status)) {
             nodeType = "deprecated";
         } else {
