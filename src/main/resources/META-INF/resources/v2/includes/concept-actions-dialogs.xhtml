@@ -147,19 +147,71 @@
 
   <div class="block-overlay confirm-overlay" id="cvDlgPaste" hidden="hidden"
        data-act="cv-dlg-dismiss" role="presentation">
-    <div class="confirm-modal is-form" role="dialog" aria-modal="true" data-act="cv-dlg-modal">
-      <div class="confirm-h">#{v2LocaleBean.getMsg('rightbody.concept.cut_move')}</div>
-      <p class="confirm-p">#{v2ConceptTreeDragDropBean.dragLabel} → #{v2ConceptTreeDragDropBean.dropLabel}</p>
-      <ui:fragment rendered="#{v2ConceptTreeDragDropBean.broadersToCut.size() gt 1}">
-        <div class="cv-dlg-list">
-          <ui:repeat value="#{v2ConceptTreeDragDropBean.broadersToCut}" var="bt">
-            <label class="cv-dlg-check">
-              <h:selectBooleanCheckbox value="#{bt.selected}"/>
-              <span>#{bt.title}</span>
-            </label>
-          </ui:repeat>
+    <div class="confirm-modal is-form is-paste" role="dialog" aria-modal="true"
+         aria-labelledby="cvDlgPasteTitle" data-act="cv-dlg-modal">
+      <div class="cv-dlg-head">
+        <span class="th-create-ico" aria-hidden="true">
+          <svg viewBox="0 0 24 24"><path d="M5 12h14"/><path d="m13 6 6 6-6 6"/></svg>
+        </span>
+        <div class="th-create-txt">
+          <div class="confirm-h" id="cvDlgPasteTitle">#{v2LocaleBean.getMsg('v2.tree.dnd.confirmTitle')}</div>
+          <p class="th-create-hint">#{v2LocaleBean.getMsg('v2.tree.dnd.confirmHint')}</p>
         </div>
-      </ui:fragment>
+      </div>
+      <div class="cv-dlg-body">
+        <div class="cv-dlg-move">
+          <div class="cv-dlg-move-node">
+            <span class="cv-dlg-move-k">#{v2LocaleBean.getMsg('v2.tree.dnd.from')}</span>
+            <span class="cv-dlg-move-v">#{v2ConceptTreeDragDropBean.dragLabel}</span>
+          </div>
+          <span class="cv-dlg-move-arrow" aria-hidden="true">
+            <svg viewBox="0 0 24 24"><path d="M5 12h14"/><path d="m13 6 6 6-6 6"/></svg>
+          </span>
+          <div class="cv-dlg-move-node is-to">
+            <span class="cv-dlg-move-k">#{v2LocaleBean.getMsg('v2.tree.dnd.to')}</span>
+            <span class="cv-dlg-move-v">#{v2ConceptTreeDragDropBean.dropToRoot ? v2LocaleBean.getMsg('v2.tree.dnd.toRoot') : v2ConceptTreeDragDropBean.dropLabel}</span>
+          </div>
+        </div>
+        <ui:fragment rendered="#{v2ConceptTreeDragDropBean.broadersToCut.size() gt 1}">
+          <div class="cv-dlg-card">
+            <div class="cv-dlg-card-h">#{v2LocaleBean.getMsg('v2.tree.dnd.poly')}</div>
+            <div class="cv-dlg-opts">
+              <ui:repeat value="#{v2ConceptTreeDragDropBean.broadersToCut}" var="bt">
+                <label class="cv-dlg-opt">
+                  <h:selectBooleanCheckbox value="#{bt.selected}"/>
+                  <span>#{bt.title}</span>
+                </label>
+              </ui:repeat>
+            </div>
+          </div>
+        </ui:fragment>
+        <ui:fragment rendered="#{v2ConceptTreeDragDropBean.groupChangePending and not empty v2ConceptTreeDragDropBean.groupsToCut}">
+          <div class="cv-dlg-card">
+            <div class="cv-dlg-card-h">#{v2LocaleBean.getMsg('v2.tree.dnd.groupsCut')}</div>
+            <div class="cv-dlg-opts">
+              <ui:repeat value="#{v2ConceptTreeDragDropBean.groupsToCut}" var="g">
+                <label class="cv-dlg-opt">
+                  <h:selectBooleanCheckbox value="#{g.selected}"/>
+                  <span>#{g.title}</span>
+                </label>
+              </ui:repeat>
+            </div>
+          </div>
+        </ui:fragment>
+        <ui:fragment rendered="#{v2ConceptTreeDragDropBean.groupChangePending and not empty v2ConceptTreeDragDropBean.groupsToAdd}">
+          <div class="cv-dlg-card">
+            <div class="cv-dlg-card-h">#{v2LocaleBean.getMsg('v2.tree.dnd.groupsAdd')}</div>
+            <div class="cv-dlg-opts">
+              <ui:repeat value="#{v2ConceptTreeDragDropBean.groupsToAdd}" var="g">
+                <label class="cv-dlg-opt">
+                  <h:selectBooleanCheckbox value="#{g.selected}"/>
+                  <span>#{g.title}</span>
+                </label>
+              </ui:repeat>
+            </div>
+          </div>
+        </ui:fragment>
+      </div>
       <div class="confirm-actions">
         <h:commandLink styleClass="abt-cancel" action="#{v2ConceptFicheMenuBean.cancelPaste}">
           <f:ajax execute="@this" render=":previewDetailForm:previewDetail :previewTree" onevent="onCvMenuAjax"/>
@@ -167,7 +219,7 @@
         </h:commandLink>
         <h:commandLink styleClass="abt-save" action="#{v2ConceptFicheMenuBean.submitPaste}">
           <f:ajax execute="@form" render=":previewDetailForm:previewDetail :previewTree" onevent="onCvMenuAjax"/>
-          #{v2LocaleBean.getMsg('v2.save')}
+          #{v2LocaleBean.getMsg('v2.tree.dnd.confirm')}
         </h:commandLink>
       </div>
     </div>

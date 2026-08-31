@@ -246,7 +246,9 @@
                  data-concept-count="#{v2ThesaurusViewBean.conceptCount}"
                  data-thesaurus-id="#{v2ThesaurusViewBean.id}"
                  data-thesaurus-title="#{v2ThesaurusViewBean.title}"
-                 data-lang="#{v2ThesaurusViewBean.selectedLang}">
+                 data-lang="#{v2ThesaurusViewBean.selectedLang}"
+                 data-dnd="#{v2ConceptTreeDragDropBean.dragDropEnabled ? '1' : ''}"
+                 data-msg-dnd-root="#{v2LocaleBean.getMsg('v2.tree.dnd.root')}">
             <h:form id="previewTreeRevealForm" styleClass="preview-open-form">
               <h:inputHidden id="revealId" value="#{v2ThesaurusViewBean.revealId}"/>
               <h:commandButton id="revealBtn" value="Révéler" styleClass="preview-open-btn"

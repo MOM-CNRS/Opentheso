@@ -25,7 +25,8 @@
             <f:ajax execute="@this" render=":previewTree"/>
             <span class="caret-open">▾</span><span class="caret-shut">▸</span>
           </h:commandLink>
-          <button type="button" class="tn-label" data-act="open" data-id="#{node.id}" data-type="#{node.nodeType}">
+          <span class="tn-label" data-act="open" data-id="#{node.id}" data-type="#{node.nodeType}"
+                role="button" tabindex="0">
             <ui:fragment rendered="#{v2ThesaurusViewBean.sortByNotation and not empty node.notation}">
               <span class="tn-nota">#{node.notation}</span>
             </ui:fragment>
@@ -33,7 +34,7 @@
             <ui:fragment rendered="#{node.candidate}"><span class="tn-dot" title="#{v2LocaleBean.getMsg('v2.concept.badge.candidate')}"></span></ui:fragment>
             <ui:fragment rendered="#{node.rejected}"><span class="tn-tag">#{v2LocaleBean.getMsg('v2.concept.badge.rejected')}</span></ui:fragment>
             <ui:fragment rendered="#{node.facet}"><span class="tn-facet" title="Facette">◇</span></ui:fragment>
-          </button>
+          </span>
         </div>
         <ui:fragment rendered="#{not node.facet}">
           <button type="button" class="tn-add" data-act="create" data-id="#{node.id}"

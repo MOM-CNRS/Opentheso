@@ -11,6 +11,18 @@
       <f:ajax execute="@form" render=":previewDetailForm:previewDetail"/>
     </h:commandButton>
   </h:form>
+  <h:form id="previewTreeDropForm" styleClass="preview-open-form">
+    <h:inputHidden id="htmlDragId" value="#{v2ConceptTreeDragDropBean.htmlDragId}"/>
+    <h:inputHidden id="htmlDropId" value="#{v2ConceptTreeDragDropBean.htmlDropId}"/>
+    <h:inputHidden id="htmlDragType" value="#{v2ConceptTreeDragDropBean.htmlDragType}"/>
+    <h:inputHidden id="htmlDropType" value="#{v2ConceptTreeDragDropBean.htmlDropType}"/>
+    <h:inputHidden id="htmlParentId" value="#{v2ConceptTreeDragDropBean.htmlParentId}"/>
+    <h:inputHidden id="htmlDropRoot" value="#{v2ConceptTreeDragDropBean.htmlDropRoot}"/>
+    <h:commandButton id="dropBtn" value="Déposer" styleClass="preview-open-btn"
+                     action="#{v2ConceptFicheMenuBean.dropFromTree}">
+      <f:ajax execute="@form" render=":previewDetailForm:previewDetail :previewTree" onevent="onCvMenuAjax"/>
+    </h:commandButton>
+  </h:form>
 
   <div class="view-panel" id="viewLive">
     <div class="cv-progress" id="liveProgress" aria-hidden="true"></div>
@@ -31,7 +43,9 @@
              data-open="#{v2ThesaurusViewBean.detailVisible ? '1' : '0'}"
              data-requested="#{v2ThesaurusViewBean.detailRequested ? '1' : '0'}"
              data-id="#{v2ThesaurusViewBean.selectedId}"
-             data-kind="#{v2ThesaurusViewBean.selectedKind}">
+             data-kind="#{v2ThesaurusViewBean.selectedKind}"
+             data-flash-dnd="#{v2ConceptTreeDragDropBean.flashMessage}"
+             data-flash-dnd-token="#{v2ConceptTreeDragDropBean.flashToken}">
           <ui:fragment rendered="#{v2ThesaurusViewBean.conceptSelected or v2ThesaurusViewBean.candidateSelected}">
             <ui:include src="concept-form.xhtml"/>
           </ui:fragment>

@@ -1650,7 +1650,18 @@ function bindGpsMap() {
   });
 }
 
+function applyDndFlash() {
+  const host = document.getElementById("previewDetailState");
+  if (!host) return;
+  const msg = host.getAttribute("data-flash-dnd");
+  const token = host.getAttribute("data-flash-dnd-token");
+  if (!msg || !token || token === applyConceptLabelUi._dndToken) return;
+  applyConceptLabelUi._dndToken = token;
+  if (typeof toast === "function") toast(msg, { soft: true });
+}
+
 function applyConceptLabelUi(source) {
+  applyDndFlash();
   const cv = document.querySelector("#viewLive .cv.is-on");
   if (!cv) {
     closeImgLightbox({ restoreFocus: false });

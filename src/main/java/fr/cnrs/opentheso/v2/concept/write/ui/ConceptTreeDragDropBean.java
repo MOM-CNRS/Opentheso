@@ -2,7 +2,6 @@ package fr.cnrs.opentheso.v2.concept.write.ui;
 
 import fr.cnrs.opentheso.utils.MessageUtils;
 import fr.cnrs.opentheso.v2.concept.model.ConceptRelation;
-import fr.cnrs.opentheso.v2.concept.model.ConceptTreeNodeData;
 import fr.cnrs.opentheso.v2.concept.service.ConceptReadService;
 import fr.cnrs.opentheso.v2.concept.session.ConceptSelectionContext;
 import fr.cnrs.opentheso.v2.concept.ui.ThesaurusBrowseBean;
@@ -22,15 +21,13 @@ import fr.cnrs.opentheso.v2.facet.write.model.command.UpdateFacetParentCommand;
 import fr.cnrs.opentheso.v2.facet.write.service.FacetMutationService;
 import fr.cnrs.opentheso.v2.setting.ui.ThesaurusContext;
 import fr.cnrs.opentheso.v2.shared.ui.UserSession;
+import fr.cnrs.opentheso.v2.shared.ui.V2LocaleBean;
 import jakarta.faces.view.ViewScoped;
 import jakarta.inject.Named;
 import lombok.Getter;
 import lombok.RequiredArgsConstructor;
 import lombok.Setter;
 import org.apache.commons.lang3.StringUtils;
-import org.primefaces.PrimeFaces;
-import org.primefaces.event.TreeDragDropEvent;
-import org.primefaces.model.TreeNode;
 
 import java.io.Serializable;
 import java.util.ArrayList;
@@ -57,6 +54,7 @@ public class ConceptTreeDragDropBean implements Serializable {
     private final ConceptWritePolicy conceptWritePolicy;
     private final ThesaurusContext thesaurusContext;
     private final UserSession userSession;
+    private final V2LocaleBean localeBean;
     private final ThesaurusBrowseBean thesaurusBrowseBean;
     private final ConceptSelectionContext conceptSelectionContext;
 
@@ -76,6 +74,23 @@ public class ConceptTreeDragDropBean implements Serializable {
     private String cutLabel;
     private String cutThesaurusId;
     private boolean cutWasTopConcept;
+
+    /** Champs du formulaire HTML5 DnD (arbre V2). */
+    private String htmlDragId;
+    private String htmlDropId;
+    private String htmlDragType;
+    private String htmlDropType;
+    private String htmlParentId;
+    private String htmlDropRoot;
+
+    /** Dernier nœud déplacé avec succès, pour révéler l'arbre V2. */
+    private String lastMovedId;
+    private String lastMovedType;
+    private String pendingFacetDetachId;
+
+    /** Toast V2 (évite le bandeau Faces « Information »). */
+    private String flashMessage;
+    private String flashToken;
 
     @Getter
     @Setter
@@ -182,6 +197,8 @@ public class ConceptTreeDragDropBean implements Serializable {
             MessageUtils.showErrorMessage("Action non autorisée");
             return;
         }
+        lastMovedId = null;
+        lastMovedType = null;
         resetDialogState();
         String thesaurusId = thesaurusContext.resolveThesaurusId();
         String lang = thesaurusContext.resolveWorkLanguage();
@@ -203,69 +220,85 @@ public class ConceptTreeDragDropBean implements Serializable {
 
         if (broadersToCut.size() < 2 && !groupChangePending) {
             applyReparent(broadersToCut.stream().map(BroaderCutRow::getConceptId).toList(), userId, false);
-        } else {
-            PrimeFaces.current().ajax().update(":containerIndex:v2DragAndDropDlg");
-            PrimeFaces.current().executeScript("PF('v2DragAndDropDlg').show();");
         }
     }
 
-    public void onDragDrop(TreeDragDropEvent event) {
+    public void onHtmlTreeDrop() {
+        lastMovedId = null;
+        lastMovedType = null;
+        handleDrop(
+                htmlDragId,
+                htmlDropId,
+                htmlDragType,
+                htmlDropType,
+                htmlParentId,
+                "1".equals(htmlDropRoot) || "true".equalsIgnoreCase(htmlDropRoot)
+        );
+    }
+
+    public void handleDrop(
+            String dragId,
+            String dropId,
+            String dragType,
+            String dropType,
+            String facetParentId,
+            boolean toRoot
+    ) {
         resetDialogState();
         if (!isDragDropEnabled()) {
             MessageUtils.showErrorMessage("Action non autorisée");
-            rollbackTree();
             return;
         }
-        TreeNode dragNode = event.getDragNode();
-        TreeNode dropNode = event.getDropNode();
-        if (dragNode == null || dropNode == null
-                || !(dragNode.getData() instanceof ConceptTreeNodeData dragData)
-                || dragData.isDummy()
-                || "root".equals(dragData.nodeType())) {
-            rollbackTree();
+        dragId = StringUtils.trimToNull(dragId);
+        dropId = StringUtils.trimToNull(dropId);
+        dragType = StringUtils.defaultString(dragType);
+        dropType = StringUtils.defaultString(dropType);
+        facetParentId = StringUtils.trimToNull(facetParentId);
+        if (dragId == null || "root".equals(dragType) || "dummy".equals(dragType)) {
+            return;
+        }
+        if (!toRoot && (dropId == null || dropId.equalsIgnoreCase(dragId))) {
+            MessageUtils.showErrorMessage("Relation non permise !");
             return;
         }
 
         Integer userId = userSession.getCurrentUserId();
         if (userId == null) {
             MessageUtils.showErrorMessage("Action non autorisée");
-            rollbackTree();
             return;
         }
 
         String thesaurusId = thesaurusContext.resolveThesaurusId();
         String lang = thesaurusContext.resolveWorkLanguage();
 
-        if ("facet".equals(dragData.nodeType())) {
-            handleFacetDrag(dragData, dropNode, thesaurusId);
+        if (isFacetType(dragType)) {
+            handleFacetDrag(dragId, dropId, dropType, thesaurusId);
             return;
         }
 
-        if (dropNode.getData() instanceof ConceptTreeNodeData dropData
-                && "facet".equals(dropData.nodeType())) {
-            handleDropOntoFacet(dragData, dropData, thesaurusId);
+        if (isFacetType(dropType)) {
+            handleDropOntoFacet(dragId, dropId, thesaurusId);
             return;
         }
 
-        detachFromFacetParentIfNeeded(dragNode, thesaurusId);
+        pendingFacetDetachId = facetParentId;
 
-        dragConceptId = dragData.nodeId();
-        dragLabel = resolveLabel(dragConceptId, dragData.label(), lang, thesaurusId);
+        dragConceptId = dragId;
+        dragLabel = resolveLabel(dragConceptId, null, lang, thesaurusId);
         broadersToCut = loadBroaderRows(dragConceptId, thesaurusId, lang);
 
-        ConceptTreeNodeData dropData = dropNode.getData() instanceof ConceptTreeNodeData d ? d : null;
-        dropToRoot = dropData == null || "root".equals(dropData.nodeType()) || dropNode.getParent() == null;
+        dropToRoot = toRoot || isRootType(dropType);
         if (dropToRoot) {
             dropConceptId = null;
             dropLabel = "Root";
         } else {
-            if (dropData.isGroup() || "facet".equals(dropData.nodeType())) {
+            if (isGroupType(dropType) || isFacetType(dropType)) {
                 MessageUtils.showErrorMessage("Relation non permise !");
-                rollbackTree();
+                resetDialogState();
                 return;
             }
-            dropConceptId = dropData.nodeId();
-            dropLabel = resolveLabel(dropConceptId, dropData.label(), lang, thesaurusId);
+            dropConceptId = dropId;
+            dropLabel = resolveLabel(dropConceptId, null, lang, thesaurusId);
         }
 
         loadGroupRows(thesaurusId, lang);
@@ -273,9 +306,6 @@ public class ConceptTreeDragDropBean implements Serializable {
 
         if (broadersToCut.size() < 2 && !groupChangePending) {
             applyReparent(broadersToCut.stream().map(BroaderCutRow::getConceptId).toList(), userId, false);
-        } else {
-            PrimeFaces.current().ajax().update(":containerIndex:v2DragAndDropDlg");
-            PrimeFaces.current().executeScript("PF('v2DragAndDropDlg').show();");
         }
     }
 
@@ -290,13 +320,10 @@ public class ConceptTreeDragDropBean implements Serializable {
                 .map(BroaderCutRow::getConceptId)
                 .toList();
         applyReparent(toDetach, userId, true);
-        PrimeFaces.current().executeScript("PF('v2DragAndDropDlg').hide();");
     }
 
     public void cancelDrop() {
-        rollbackTree();
         resetDialogState();
-        PrimeFaces.current().executeScript("PF('v2DragAndDropDlg').hide();");
         MessageUtils.showInformationMessage("Déplacement annulé ");
     }
 
@@ -311,18 +338,27 @@ public class ConceptTreeDragDropBean implements Serializable {
         ));
         if (result == null || !result.success()) {
             MessageUtils.showErrorMessage(result != null ? result.message() : "Erreur");
-            rollbackTree();
             resetDialogState();
             return;
+        }
+        if (StringUtils.isNotBlank(pendingFacetDetachId) && StringUtils.isNotBlank(dragConceptId)) {
+            detachFromFacetParentIfNeeded(
+                    pendingFacetDetachId,
+                    dragConceptId,
+                    thesaurusContext.resolveThesaurusId());
         }
         if (applyGroupChanges) {
             applyCollectionChanges(userId);
         }
         String movedId = dragConceptId;
         String message = dropToRoot
-                ? dragLabel + " -> Root"
-                : dragLabel + " -> " + dropLabel;
+                ? localeMsg("v2.tree.dnd.movedRoot").replace("{0}", StringUtils.defaultString(dragLabel))
+                : localeMsg("v2.tree.dnd.moved")
+                        .replace("{0}", StringUtils.defaultString(dragLabel))
+                        .replace("{1}", StringUtils.defaultString(dropLabel));
         boolean wasCutPaste = cutOn && StringUtils.equalsIgnoreCase(cutConceptId, movedId);
+        lastMovedId = movedId;
+        lastMovedType = "concept";
         resetDialogState();
         if (wasCutPaste) {
             clearCutClipboard();
@@ -330,12 +366,7 @@ public class ConceptTreeDragDropBean implements Serializable {
         thesaurusBrowseBean.invalidateConceptTree();
         thesaurusBrowseBean.invalidateCollectionTree();
         thesaurusBrowseBean.openConcept(movedId, true);
-        PrimeFaces.current().ajax().update(
-                ":containerIndex:formLeftTab",
-                ":containerIndex:formRightTab",
-                ":messageIndex"
-        );
-        MessageUtils.showInformationMessage(message);
+        flashSuccess(message);
     }
 
     private void clearCutClipboard() {
@@ -406,71 +437,62 @@ public class ConceptTreeDragDropBean implements Serializable {
         return !groupsToCut.get(0).getGroupId().equalsIgnoreCase(groupsToAdd.get(0).getGroupId());
     }
 
-    private void handleFacetDrag(ConceptTreeNodeData dragData, TreeNode dropNode, String thesaurusId) {
-        if (!(dropNode.getData() instanceof ConceptTreeNodeData dropData)
-                || dropData.isDummy()
-                || "root".equals(dropData.nodeType())
-                || "facet".equals(dropData.nodeType())
-                || dropData.isGroup()) {
+    private void handleFacetDrag(String facetId, String dropId, String dropType, String thesaurusId) {
+        if (StringUtils.isBlank(dropId) || isFacetType(dropType) || isRootType(dropType) || isGroupType(dropType)) {
             MessageUtils.showErrorMessage("Déplacement non permis !");
-            rollbackTree();
             return;
         }
         MutationResult result = facetMutationService.updateParent(new UpdateFacetParentCommand(
-                thesaurusId, dragData.nodeId(), dropData.nodeId()));
+                thesaurusId, facetId, dropId));
         if (result == null || !result.success()) {
             MessageUtils.showErrorMessage(result != null ? result.message() : "Erreur");
-            rollbackTree();
             return;
         }
+        lastMovedId = facetId;
+        lastMovedType = "facet";
         thesaurusBrowseBean.invalidateConceptTree();
-        thesaurusBrowseBean.openFacet(dragData.nodeId());
-        PrimeFaces.current().ajax().update(
-                ":containerIndex:formLeftTab",
-                ":containerIndex:formRightTab",
-                ":messageIndex"
-        );
-        MessageUtils.showInformationMessage("Facette déplacée avec succès");
+        thesaurusBrowseBean.openFacet(facetId);
+        flashSuccess(localeMsg("v2.tree.dnd.facetMoved"));
     }
 
-    private void handleDropOntoFacet(ConceptTreeNodeData dragData, ConceptTreeNodeData dropData, String thesaurusId) {
+    private void handleDropOntoFacet(String conceptId, String facetId, String thesaurusId) {
         List<String> children = conceptRelationWriteRepository.listNarrowerChildConceptIds(
-                dragData.nodeId(), thesaurusId);
+                conceptId, thesaurusId);
         if (!children.isEmpty()) {
             MessageUtils.showWarnMessage("Action non permise !!!");
-            rollbackTree();
             return;
         }
         MutationResult result = facetMutationService.addMember(new AddFacetMemberCommand(
-                thesaurusId, dropData.nodeId(), dragData.nodeId(), false));
+                thesaurusId, facetId, conceptId, false));
         if (result == null || !result.success()) {
             MessageUtils.showErrorMessage(result != null ? result.message() : "Erreur");
-            rollbackTree();
             return;
         }
+        lastMovedId = facetId;
+        lastMovedType = "facet";
         thesaurusBrowseBean.invalidateConceptTree();
-        thesaurusBrowseBean.openFacet(dropData.nodeId());
-        PrimeFaces.current().ajax().update(
-                ":containerIndex:formLeftTab",
-                ":containerIndex:formRightTab",
-                ":messageIndex"
-        );
-        MessageUtils.showInformationMessage("Concept ajouté à la facette");
+        thesaurusBrowseBean.openFacet(facetId);
+        flashSuccess(localeMsg("v2.tree.dnd.addedToFacet"));
     }
 
-    private void detachFromFacetParentIfNeeded(TreeNode dragNode, String thesaurusId) {
-        TreeNode parent = dragNode.getParent();
-        if (parent == null || !(parent.getData() instanceof ConceptTreeNodeData parentData)) {
-            return;
-        }
-        if (!"facet".equals(parentData.nodeType())) {
-            return;
-        }
-        if (!(dragNode.getData() instanceof ConceptTreeNodeData dragData)) {
+    private void detachFromFacetParentIfNeeded(String facetParentId, String conceptId, String thesaurusId) {
+        if (StringUtils.isBlank(facetParentId) || StringUtils.isBlank(conceptId)) {
             return;
         }
         facetMutationService.removeMember(new RemoveFacetMemberCommand(
-                thesaurusId, parentData.nodeId(), dragData.nodeId(), false));
+                thesaurusId, facetParentId, conceptId, false));
+    }
+
+    private static boolean isFacetType(String nodeType) {
+        return "facet".equalsIgnoreCase(nodeType);
+    }
+
+    private static boolean isRootType(String nodeType) {
+        return "root".equalsIgnoreCase(nodeType);
+    }
+
+    private static boolean isGroupType(String nodeType) {
+        return "group".equalsIgnoreCase(nodeType) || "subGroup".equalsIgnoreCase(nodeType);
     }
 
     private List<BroaderCutRow> loadBroaderRows(String conceptId, String thesaurusId, String lang) {
@@ -491,11 +513,6 @@ public class ConceptTreeDragDropBean implements Serializable {
                 .orElse(StringUtils.defaultIfBlank(fallback, "(" + conceptId + ")"));
     }
 
-    private void rollbackTree() {
-        thesaurusBrowseBean.invalidateConceptTree();
-        PrimeFaces.current().ajax().update(":containerIndex:formLeftTab", ":messageIndex");
-    }
-
     private void resetDialogState() {
         dragConceptId = null;
         dragLabel = null;
@@ -506,5 +523,15 @@ public class ConceptTreeDragDropBean implements Serializable {
         broadersToCut = Collections.emptyList();
         groupsToCut = Collections.emptyList();
         groupsToAdd = Collections.emptyList();
+        pendingFacetDetachId = null;
+    }
+
+    private void flashSuccess(String message) {
+        flashMessage = message;
+        flashToken = String.valueOf(System.currentTimeMillis());
+    }
+
+    private String localeMsg(String key) {
+        return localeBean.getMsg(key);
     }
 }

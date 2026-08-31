@@ -129,7 +129,7 @@ public class ConceptFicheMenuBean implements Serializable {
             return;
         }
         closeDialogs();
-        refreshConsult();
+        refreshAfterTreeMove();
     }
 
     public void pasteAtRoot() {
@@ -139,13 +139,27 @@ public class ConceptFicheMenuBean implements Serializable {
             return;
         }
         closeDialogs();
-        refreshConsult();
+        refreshAfterTreeMove();
+    }
+
+    public void dropFromTree() {
+        treeDragDropBean.onHtmlTreeDrop();
+        if (treeDragDropBean.isPasteConfirmPending()) {
+            String dragId = treeDragDropBean.getDragConceptId();
+            if (StringUtils.isNotBlank(dragId)) {
+                thesaurusViewBean.openTreeNode(dragId, "concept");
+            }
+            openDialog("cvDlgPaste");
+            return;
+        }
+        closeDialogs();
+        refreshAfterTreeMove();
     }
 
     public void submitPaste() {
         treeDragDropBean.submitDrop();
         closeDialogs();
-        refreshConsult();
+        refreshAfterTreeMove();
     }
 
     public void cancelPaste() {
@@ -344,6 +358,19 @@ public class ConceptFicheMenuBean implements Serializable {
 
     private void refreshConsult() {
         thesaurusViewBean.refreshFromSelectionContext();
+    }
+
+    private void refreshAfterTreeMove() {
+        String movedId = treeDragDropBean.getLastMovedId();
+        String movedType = StringUtils.defaultIfBlank(treeDragDropBean.getLastMovedType(), "concept");
+        if (StringUtils.isBlank(movedId)) {
+            refreshConsult();
+            return;
+        }
+        thesaurusViewBean.reloadTree();
+        thesaurusViewBean.setRevealId(movedId);
+        thesaurusViewBean.revealInTree();
+        thesaurusViewBean.openTreeNode(movedId, movedType);
     }
 
     private void openDialog(String id) {
