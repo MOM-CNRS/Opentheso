@@ -162,8 +162,7 @@ public class ConceptTreeDragDropBean implements Serializable {
         cutThesaurusId = thesaurusId;
         cutWasTopConcept = conceptLifecycleWriteRepository.isTopConcept(thesaurusId, cutConceptId);
         cutOn = true;
-        MessageUtils.showInformationMessage(
-                "Couper " + StringUtils.defaultString(cutLabel) + " (" + cutConceptId + ")");
+        flashSuccess(localeMsg("v2.tree.dnd.cut").replace("{0}", StringUtils.defaultString(cutLabel)));
     }
 
     public void pasteUnderCurrentConcept() {
@@ -187,8 +186,11 @@ public class ConceptTreeDragDropBean implements Serializable {
     }
 
     public void cancelCut() {
+        if (!cutOn) {
+            return;
+        }
         clearCutClipboard();
-        MessageUtils.showInformationMessage("Déplacement annulé ");
+        flashSuccess(localeMsg("v2.tree.dnd.cutCancelled"));
     }
 
     private void preparePasteFromClipboard(String targetConceptId, String targetLabel, boolean toRoot) {
@@ -217,10 +219,6 @@ public class ConceptTreeDragDropBean implements Serializable {
         broadersToCut = loadBroaderRows(dragConceptId, thesaurusId, lang);
         loadGroupRows(thesaurusId, lang);
         groupChangePending = isDroppedToAnotherGroup();
-
-        if (broadersToCut.size() < 2 && !groupChangePending) {
-            applyReparent(broadersToCut.stream().map(BroaderCutRow::getConceptId).toList(), userId, false);
-        }
     }
 
     public void onHtmlTreeDrop() {
@@ -319,12 +317,11 @@ public class ConceptTreeDragDropBean implements Serializable {
                 .filter(BroaderCutRow::isSelected)
                 .map(BroaderCutRow::getConceptId)
                 .toList();
-        applyReparent(toDetach, userId, true);
+        applyReparent(toDetach, userId, groupChangePending);
     }
 
     public void cancelDrop() {
         resetDialogState();
-        MessageUtils.showInformationMessage("Déplacement annulé ");
     }
 
     private void applyReparent(List<String> broaderIdsToDetach, int userId, boolean applyGroupChanges) {

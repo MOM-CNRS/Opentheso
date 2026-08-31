@@ -155,7 +155,7 @@
         </span>
         <div class="th-create-txt">
           <div class="confirm-h" id="cvDlgPasteTitle">#{v2LocaleBean.getMsg('v2.tree.dnd.confirmTitle')}</div>
-          <p class="th-create-hint">#{v2LocaleBean.getMsg('v2.tree.dnd.confirmHint')}</p>
+          <p class="th-create-hint">#{v2ConceptTreeDragDropBean.pasteConfirmPending ? v2LocaleBean.getMsg('v2.tree.dnd.confirmHint') : v2LocaleBean.getMsg('v2.tree.dnd.pasteHint')}</p>
         </div>
       </div>
       <div class="cv-dlg-body">
@@ -220,6 +220,29 @@
         <h:commandLink styleClass="abt-save" action="#{v2ConceptFicheMenuBean.submitPaste}">
           <f:ajax execute="@form" render=":previewDetailForm:previewDetail :previewTree" onevent="onCvMenuAjax"/>
           #{v2LocaleBean.getMsg('v2.tree.dnd.confirm')}
+        </h:commandLink>
+      </div>
+    </div>
+  </div>
+
+  <div class="block-overlay confirm-overlay" id="cvDlgCancelCut" hidden="hidden"
+       data-act="cv-dlg-dismiss" role="presentation">
+    <div class="confirm-modal" role="dialog" aria-modal="true" data-act="cv-dlg-modal">
+      <div class="cv-dlg-head">
+        <span class="th-create-ico" aria-hidden="true">
+          <svg viewBox="0 0 24 24"><path d="M6 6l12 12"/><path d="M18 6 6 18"/></svg>
+        </span>
+        <div class="th-create-txt">
+          <div class="confirm-h">#{v2LocaleBean.getMsg('v2.tree.dnd.cancelCutTitle')}</div>
+          <p class="th-create-hint">#{v2LocaleBean.getMsg('v2.tree.dnd.cancelCutBody')}</p>
+        </div>
+      </div>
+      <p class="confirm-p">#{v2ConceptTreeDragDropBean.cutLabel}</p>
+      <div class="confirm-actions">
+        <button type="button" class="abt-cancel confirm-cancel" data-act="cv-dlg-dismiss">#{v2LocaleBean.getMsg('v2.cancel')}</button>
+        <h:commandLink styleClass="abt-save" action="#{v2ConceptFicheMenuBean.cancelCut}">
+          <f:ajax execute="@this" render=":previewDetailForm:previewDetail :previewTree" onevent="onCvMenuAjax"/>
+          #{v2LocaleBean.getMsg('v2.tree.dnd.cancelCutConfirm')}
         </h:commandLink>
       </div>
     </div>

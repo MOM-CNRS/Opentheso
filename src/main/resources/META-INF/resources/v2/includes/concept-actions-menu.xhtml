@@ -62,6 +62,7 @@
       <ui:fragment rendered="#{v2ConceptTreeDragDropBean.cutActionsAvailable
           or v2ConceptTreeDragDropBean.pasteUnderAvailable
           or v2ConceptTreeDragDropBean.pasteAtRootAvailable
+          or v2ConceptTreeDragDropBean.cutOn
           or v2ConceptLifecycleEditorBean.writeActionsAvailable
           or v2ConceptLifecycleEditorBean.statusActionsAvailable
           or v2ConceptCopyBetweenThesaurusBean.copyActionsAvailable
@@ -76,7 +77,10 @@
           <span class="th-create-ico" aria-hidden="true">
             <svg viewBox="0 0 24 24"><circle cx="6" cy="6" r="3"/><circle cx="6" cy="18" r="3"/><path d="M20 4 8.12 15.88"/><path d="M14.47 14.48 20 20"/></svg>
           </span>
-          <span class="th-create-name">#{v2LocaleBean.getMsg('rightbody.concept.cut_move')}</span>
+          <span class="th-create-txt">
+            <span class="th-create-name">#{v2LocaleBean.getMsg('rightbody.concept.cut_move')}</span>
+            <span class="th-create-hint">#{v2LocaleBean.getMsg('v2.tree.dnd.cutMenuHint')}</span>
+          </span>
         </h:commandLink>
         <h:commandLink styleClass="th-create-item" role="menuitem"
                        rendered="#{v2ConceptTreeDragDropBean.pasteUnderAvailable}"
@@ -85,7 +89,9 @@
           <span class="th-create-ico" aria-hidden="true">
             <svg viewBox="0 0 24 24"><path d="M8 6h8"/><path d="M9 6V4h6v2"/><path d="M7 6h10v14H7z"/></svg>
           </span>
-          <span class="th-create-name">#{v2LocaleBean.getMsg('rightbody.concept.paste')} #{v2ConceptTreeDragDropBean.cutLabel} #{v2LocaleBean.getMsg('rightbody.concept.as_specific')}</span>
+          <span class="th-create-txt">
+            <span class="th-create-name">#{v2LocaleBean.getMsg('rightbody.concept.paste')} #{v2ConceptTreeDragDropBean.cutLabel} #{v2LocaleBean.getMsg('rightbody.concept.as_specific')}</span>
+          </span>
         </h:commandLink>
         <h:commandLink styleClass="th-create-item" role="menuitem"
                        rendered="#{v2ConceptTreeDragDropBean.pasteAtRootAvailable}"
@@ -94,7 +100,18 @@
           <span class="th-create-ico" aria-hidden="true">
             <svg viewBox="0 0 24 24"><path d="M8 6h8"/><path d="M9 6V4h6v2"/><path d="M7 6h10v14H7z"/><path d="M12 11v6"/><path d="M9 14h6"/></svg>
           </span>
-          <span class="th-create-name">#{v2LocaleBean.getMsg('rightbody.concept.paste')} #{v2ConceptTreeDragDropBean.cutLabel} #{v2LocaleBean.getMsg('rightbody.concept.at_the_root')}</span>
+          <span class="th-create-txt">
+            <span class="th-create-name">#{v2LocaleBean.getMsg('rightbody.concept.paste')} #{v2ConceptTreeDragDropBean.cutLabel} #{v2LocaleBean.getMsg('rightbody.concept.at_the_root')}</span>
+          </span>
+        </h:commandLink>
+        <h:commandLink styleClass="th-create-item" role="menuitem"
+                       rendered="#{v2ConceptTreeDragDropBean.cutOn}"
+                       action="#{v2ConceptFicheMenuBean.prepareCancelCut}">
+          <f:ajax execute="@this" render=":previewDetailForm:previewDetail :previewTree" onevent="onCvMenuAjax"/>
+          <span class="th-create-ico" aria-hidden="true">
+            <svg viewBox="0 0 24 24"><path d="M6 6l12 12"/><path d="M18 6 6 18"/></svg>
+          </span>
+          <span class="th-create-name">#{v2LocaleBean.getMsg('v2.tree.dnd.cancelCut')}</span>
         </h:commandLink>
         <h:commandLink styleClass="th-create-item is-danger" role="menuitem"
                        rendered="#{v2ConceptLifecycleEditorBean.writeActionsAvailable}"

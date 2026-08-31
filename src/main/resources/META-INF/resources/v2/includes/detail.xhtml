@@ -45,7 +45,8 @@
              data-id="#{v2ThesaurusViewBean.selectedId}"
              data-kind="#{v2ThesaurusViewBean.selectedKind}"
              data-flash-dnd="#{v2ConceptTreeDragDropBean.flashMessage}"
-             data-flash-dnd-token="#{v2ConceptTreeDragDropBean.flashToken}">
+             data-flash-dnd-token="#{v2ConceptTreeDragDropBean.flashToken}"
+             data-cut-id="#{v2ConceptTreeDragDropBean.cutOn ? v2ConceptTreeDragDropBean.cutConceptId : ''}">
           <ui:fragment rendered="#{v2ThesaurusViewBean.conceptSelected or v2ThesaurusViewBean.candidateSelected}">
             <ui:include src="concept-form.xhtml"/>
           </ui:fragment>

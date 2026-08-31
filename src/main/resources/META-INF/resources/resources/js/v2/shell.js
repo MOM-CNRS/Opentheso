@@ -1660,8 +1660,18 @@ function applyDndFlash() {
   if (typeof toast === "function") toast(msg, { soft: true });
 }
 
+function paintCutNode() {
+  const host = document.getElementById("previewDetailState");
+  const cutId = ((host && host.getAttribute("data-cut-id")) || "").trim();
+  document.querySelectorAll("#panelTree .tn.is-cut").forEach((el) => el.classList.remove("is-cut"));
+  if (!cutId) return;
+  const escaped = window.CSS && CSS.escape ? CSS.escape(cutId) : cutId.replace(/\\/g, "\\\\").replace(/"/g, '\\"');
+  document.querySelectorAll('#panelTree .tn[data-id="' + escaped + '"]').forEach((el) => el.classList.add("is-cut"));
+}
+
 function applyConceptLabelUi(source) {
   applyDndFlash();
+  paintCutNode();
   const cv = document.querySelector("#viewLive .cv.is-on");
   if (!cv) {
     closeImgLightbox({ restoreFocus: false });

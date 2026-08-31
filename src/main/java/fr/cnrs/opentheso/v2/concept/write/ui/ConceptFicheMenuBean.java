@@ -122,24 +122,35 @@ public class ConceptFicheMenuBean implements Serializable {
         closeDialogs();
     }
 
+    public void cancelCut() {
+        treeDragDropBean.cancelCut();
+        closeDialogs();
+    }
+
+    public void prepareCancelCut() {
+        if (!treeDragDropBean.isCutOn()) {
+            closeDialogs();
+            return;
+        }
+        openDialog("cvDlgCancelCut");
+    }
+
     public void pasteUnder() {
         treeDragDropBean.pasteUnderCurrentConcept();
-        if (treeDragDropBean.isPasteConfirmPending()) {
+        if (StringUtils.isNotBlank(treeDragDropBean.getDragConceptId())) {
             openDialog("cvDlgPaste");
             return;
         }
         closeDialogs();
-        refreshAfterTreeMove();
     }
 
     public void pasteAtRoot() {
         treeDragDropBean.pasteAtRoot();
-        if (treeDragDropBean.isPasteConfirmPending()) {
+        if (StringUtils.isNotBlank(treeDragDropBean.getDragConceptId())) {
             openDialog("cvDlgPaste");
             return;
         }
         closeDialogs();
-        refreshAfterTreeMove();
     }
 
     public void dropFromTree() {

@@ -349,6 +349,10 @@ html.is-tree-dnd,#previewTreeMeta[data-dnd="1"] .tn.is-dnd-src .tn-label{cursor:
 html.is-tree-dnd{user-select:none;cursor:grabbing}
 html.is-tree-dnd #panelTree .tn-label{cursor:grabbing}
 .tn.is-dnd-src{opacity:.38;transition:opacity .16s ease}
+.tn.is-cut > .tn-row{
+  background:var(--accent-soft);
+  box-shadow:inset 0 0 0 1.5px dashed var(--accent-line);
+}
 .tn.is-dnd-src > .tn-row{transform:scale(.985);transition:transform .16s ease}
 .tn.is-dnd-over > .tn-row{
   background:var(--accent-soft);
