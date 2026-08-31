@@ -1234,7 +1234,7 @@ public class DashboardBean implements Serializable {
 
         selectedDefinitionLang = lang;
 
-        String sourceLang = selectedThesaurusId; //resolveSourceLanguage(selectedThesaurusId);
+        String sourceLang = selectedLanguage; //resolveSourceLanguage(selectedThesaurusId);
 
         conceptsMissingDefinition = statDashboardService.getConceptsMissingDefinition(
                 selectedThesaurusId,
