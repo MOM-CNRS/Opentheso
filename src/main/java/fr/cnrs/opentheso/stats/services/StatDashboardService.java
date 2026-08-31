@@ -32,10 +32,187 @@ public class StatDashboardService {
 
     private final JdbcTemplate jdbcTemplate;
 
-
     public StatDashboardService(JdbcTemplate jdbcTemplate) {
         this.jdbcTemplate = jdbcTemplate;
     }
+
+
+
+
+
+
+
+    //////// requêtes direct sur Opentheso BDD /////
+
+
+
+    public Double getCoveragePercentageDefinition(String idThesaurus, String sourceLanguage) {
+        String sql = """
+        SELECT ROUND(
+            (SELECT COUNT(identifier) 
+             FROM note 
+             WHERE id_thesaurus = ? 
+               AND lang = ? 
+               AND notetypecode = 'definition') * 100.0 / 
+            NULLIF((SELECT COUNT(DISTINCT id_concept) 
+                    FROM concept 
+                    WHERE id_thesaurus = ?), 0), 
+        2)
+        """;
+
+        return jdbcTemplate.queryForObject(sql, Double.class, idThesaurus, sourceLanguage, idThesaurus);
+    }
+
+    public Double getCoveragePercentageTraduction(String idThesaurus, String sourceLanguage) {
+        String sql = """
+            SELECT
+                ROUND(
+                    100.0 * COUNT(*) FILTER (
+                        WHERE nb_langues_secondaires > 0
+                    ) / NULLIF(COUNT(*), 0),
+                    2
+                ) AS score_percent
+
+            FROM (
+                SELECT
+                    pt.id_concept,
+
+                    COUNT(DISTINCT t.lang) FILTER (
+                        WHERE LOWER(TRIM(t.lang)) <> LOWER(TRIM(?))
+                    ) AS nb_langues_secondaires
+
+                FROM preferred_term pt
+
+                JOIN term t
+                    ON t.id_term = pt.id_term
+                    AND t.id_thesaurus = pt.id_thesaurus
+
+                WHERE pt.id_thesaurus = ?
+
+                GROUP BY pt.id_concept
+
+                HAVING COUNT(*) FILTER (
+                    WHERE LOWER(TRIM(t.lang)) = LOWER(TRIM(?))
+                ) > 0
+
+            ) stats
+            """;
+
+        return jdbcTemplate.queryForObject(sql, Double.class, sourceLanguage, idThesaurus, sourceLanguage);
+    }
+
+    //////// Fin des requêtes direct sur Opentheso BDD /////
+
+
+    // ============================================================
+    // Couverture linguistique
+    // ============================================================
+
+    /**
+     * Distribution du nombre de concepts par nombre de langues dans
+     * lesquelles ils disposent d'un terme préférentiel.
+     *
+     * Exemple de résultat :
+     *   1 langue  -> 430 concepts
+     *   2 langues -> 510 concepts
+     *   3 langues -> 220 concepts
+     *
+     * La moyenne "langues / concept" se calcule à partir de cette
+     * distribution côté appelant (pas besoin d'une deuxième requête) :
+     *   moyenne = SUM(nbLangues * nbConcepts) / SUM(nbConcepts)
+     */
+    public List<LanguageCoverageStat> getLanguageCoverageDistribution(String idThesaurus) {
+
+        String sql = """
+                SELECT
+                    nb_langues,
+                    COUNT(*) AS nb_concepts
+ 
+                FROM (
+ 
+                    SELECT
+                        c.id_concept,
+                        COUNT(DISTINCT t.lang) AS nb_langues
+ 
+                    FROM concept c
+ 
+                    LEFT JOIN preferred_term pt
+                        ON pt.id_concept = c.id_concept
+                       AND pt.id_thesaurus = c.id_thesaurus
+ 
+                    LEFT JOIN term t
+                        ON t.id_term = pt.id_term
+                       AND t.id_thesaurus = pt.id_thesaurus
+ 
+                    WHERE c.id_thesaurus = ?
+                      AND (c.status IS NULL OR c.status NOT IN ('CA', 'DEP'))
+ 
+                    GROUP BY c.id_concept
+ 
+                ) per_concept
+ 
+                GROUP BY nb_langues
+ 
+                ORDER BY nb_langues
+                """;
+
+        return jdbcTemplate.query(sql, (rs, rowNum) -> new LanguageCoverageStat(
+                rs.getInt("nb_langues"),
+                rs.getLong("nb_concepts")
+        ), idThesaurus);
+    }
+
+
+    /**
+     * Liste détaillée des concepts ayant EXACTEMENT nbLangues langues
+     * renseignées, pour un thésaurus donné — utilisée par la popup
+     * "cliquer sur un palier de couverture" et son export CSV.
+     *
+     * ATTENTION : "t.lexical_value" est une supposition sur le nom de la
+     * colonne portant le libellé dans votre table "term" — remplacez-la
+     * par le nom réel de cette colonne dans votre schéma.
+     */
+    public List<ConceptToTranslate> getConceptsByLanguageCoverage(
+            String idThesaurus,
+            int nbLangues,
+            String sourceLang) {
+
+        String sql = """
+                SELECT
+                    c.id_concept,
+ 
+                    MAX(CASE WHEN LOWER(t.lang) = LOWER(?) THEN t.lexical_value END) AS label,
+ 
+                    STRING_AGG(DISTINCT UPPER(t.lang), ', ' ORDER BY UPPER(t.lang)) AS existing_langs
+ 
+                FROM concept c
+ 
+                LEFT JOIN preferred_term pt
+                    ON pt.id_concept = c.id_concept
+                   AND pt.id_thesaurus = c.id_thesaurus
+ 
+                LEFT JOIN term t
+                    ON t.id_term = pt.id_term
+                   AND t.id_thesaurus = pt.id_thesaurus
+ 
+                WHERE c.id_thesaurus = ?
+                  AND (c.status IS NULL OR c.status NOT IN ('CA', 'DEP'))
+ 
+                GROUP BY c.id_concept
+ 
+                HAVING COUNT(DISTINCT t.lang) = ?
+ 
+                ORDER BY label NULLS FIRST
+                """;
+
+        return jdbcTemplate.query(sql, (rs, rowNum) -> new ConceptToTranslate(
+                rs.getString("id_concept"),
+                rs.getString("label"),
+                rs.getString("existing_langs")
+        ), sourceLang, idThesaurus, nbLangues);
+    }
+
+
 
 
     // ============================================================
@@ -864,5 +1041,371 @@ public class StatDashboardService {
                 params.toArray()
         );
     }
+
+
+
+    /**
+     * Calcule le pourcentage de concepts possédant au moins une définition
+     * dans une langue secondaire par rapport à la langue source du thésaurus.
+     *
+     * @param thesaurusId identifiant du thésaurus
+     * @param sourceLang langue principale/source du thésaurus (ex: "fr")
+     * @return pourcentage de concepts ayant une définition traduite, de 0 à 100
+     */
+    public double getTranslatedDefinitionsScore(
+            String thesaurusId,
+            String sourceLang) {
+
+        String sql = """
+            SELECT
+                COUNT(DISTINCT c.id_concept) AS total_concepts,
+
+                COUNT(DISTINCT CASE
+                    WHEN n.identifier IS NOT NULL
+                    THEN c.id_concept
+                END) AS concepts_avec_definition_traduite
+
+            FROM concept c
+
+            LEFT JOIN note n
+                   ON n.identifier = c.id_concept
+                  AND n.id_thesaurus = c.id_thesaurus
+                  AND n.notetypecode = 'definition'
+                  AND NULLIF(TRIM(n.lang), '') IS NOT NULL
+                  AND LOWER(TRIM(n.lang)) <> LOWER(TRIM(?))
+
+            WHERE c.id_thesaurus = ?
+            """;
+
+        return jdbcTemplate.queryForObject(
+                sql,
+                (rs, rowNum) -> {
+                    long totalConcepts = rs.getLong("total_concepts");
+                    long translatedDefinitions =
+                            rs.getLong("concepts_avec_definition_traduite");
+
+                    if (totalConcepts == 0) {
+                        return 0.0;
+                    }
+
+                    return (translatedDefinitions * 100.0) / totalConcepts;
+                },
+                sourceLang,
+                thesaurusId
+        );
+    }
+
+
+    /**
+     * Calcule le pourcentage de concepts possédant au moins un alignement
+     * dans un thésaurus.
+     *
+     * @param thesaurusId identifiant du thésaurus
+     * @return pourcentage de concepts ayant au moins un alignement, de 0 à 100
+     */
+    public double getAlignmentCoverageScore(String thesaurusId) {
+
+        String sql = """
+            SELECT
+                COUNT(DISTINCT c.id_concept) AS total_concepts,
+
+                COUNT(DISTINCT CASE
+                    WHEN a.internal_id_concept IS NOT NULL
+                    THEN c.id_concept
+                END) AS concepts_avec_alignement
+
+            FROM concept c
+
+            LEFT JOIN alignement a
+                   ON a.internal_id_concept = c.id_concept
+                  AND a.internal_id_thesaurus = c.id_thesaurus
+
+            WHERE c.id_thesaurus = ?
+            """;
+
+        return jdbcTemplate.queryForObject(
+                sql,
+                (rs, rowNum) -> {
+
+                    long totalConcepts =
+                            rs.getLong("total_concepts");
+
+                    long conceptsAvecAlignement =
+                            rs.getLong("concepts_avec_alignement");
+
+                    if (totalConcepts == 0) {
+                        return 0.0;
+                    }
+
+                    return conceptsAvecAlignement * 100.0 / totalConcepts;
+                },
+                thesaurusId
+        );
+    }
+
+    /**
+     * Calcule le pourcentage de concepts possédant un identifiant ARK
+     * dans un thésaurus.
+     *
+     * @param thesaurusId identifiant du thésaurus
+     * @return pourcentage de concepts ayant un ARK, de 0 à 100
+     */
+    public double getArkCoverageScore(String thesaurusId) {
+
+        String sql = """
+            SELECT
+                COUNT(*) AS total_concepts,
+
+                COUNT(*) FILTER (
+                    WHERE NULLIF(TRIM(id_ark), '') IS NOT NULL
+                ) AS concepts_avec_ark
+
+            FROM concept
+
+            WHERE id_thesaurus = ?
+            """;
+
+        return jdbcTemplate.queryForObject(
+                sql,
+                (rs, rowNum) -> {
+
+                    long totalConcepts =
+                            rs.getLong("total_concepts");
+
+                    long conceptsAvecArk =
+                            rs.getLong("concepts_avec_ark");
+
+                    if (totalConcepts == 0) {
+                        return 0.0;
+                    }
+
+                    return conceptsAvecArk * 100.0 / totalConcepts;
+                },
+                thesaurusId
+        );
+    }
+
+
+
+    public double getRtCoverageScore(String thesaurusId) {
+
+        String sql = """
+        SELECT
+            COUNT(*) AS total_concepts,
+
+            COUNT(*) FILTER (
+                WHERE EXISTS (
+                    SELECT 1
+                    FROM hierarchical_relationship hr
+                    WHERE hr.id_thesaurus = c.id_thesaurus
+                      AND hr.role = 'RT'
+                      AND (
+                          hr.id_concept1 = c.id_concept
+                          OR hr.id_concept2 = c.id_concept
+                      )
+                )
+            ) AS concepts_avec_rt
+
+        FROM concept c
+
+        WHERE c.id_thesaurus = ?
+        """;
+
+        return jdbcTemplate.queryForObject(
+                sql,
+                (rs, rowNum) -> {
+
+                    long totalConcepts =
+                            rs.getLong("total_concepts");
+
+                    long conceptsAvecRt =
+                            rs.getLong("concepts_avec_rt");
+
+                    if (totalConcepts == 0) {
+                        return 0.0;
+                    }
+
+                    return conceptsAvecRt * 100.0 / totalConcepts;
+                },
+                thesaurusId
+        );
+    }
+
+
+
+    public double getHierarchyScore(String thesaurusId) {
+
+        String sql = """
+        SELECT
+            COUNT(*) AS total_concepts,
+
+            COUNT(*) FILTER (
+                WHERE NOT EXISTS (
+                    SELECT 1
+                    FROM hierarchical_relationship hr
+                    WHERE hr.id_thesaurus = c.id_thesaurus
+                      AND hr.role IN ('BT', 'NT')
+                      AND hr.id_concept1 = c.id_concept
+                )
+            ) AS concepts_sans_bt_nt
+
+        FROM concept c
+
+        WHERE c.id_thesaurus = ?
+          AND (c.status IS NULL OR c.status NOT IN ('CA', 'DEP'))
+        """;
+
+        return jdbcTemplate.queryForObject(
+                sql,
+                (rs, rowNum) -> {
+
+                    long totalConcepts =
+                            rs.getLong("total_concepts");
+
+                    long conceptsSansBtNt =
+                            rs.getLong("concepts_sans_bt_nt");
+
+                    if (totalConcepts == 0) {
+                        return 0.0;
+                    }
+
+                    double conceptsWithoutBtNtRate =
+                            conceptsSansBtNt * 100.0 / totalConcepts;
+
+                    return 100.0 - conceptsWithoutBtNtRate;
+                },
+                thesaurusId
+        );
+    }
+
+
+    // ============================================================
+    // Couverture des définitions par langue
+    // ============================================================
+
+    /**
+     * Pour chaque langue du thésaurus : combien de concepts actifs
+     * disposent d'une définition (note de type definitionTypeCode) dans
+     * cette langue, et le taux de couverture correspondant.
+     *
+     * Les langues proviennent de la table term (toutes les langues
+     * effectivement utilisées dans le thésaurus), pas seulement celles
+     * ayant déjà une définition — une langue à 0% doit apparaître, pas
+     * disparaître.
+     *
+     * ATTENTION : "definitionTypeCode" doit correspondre à la valeur
+     * réelle de note.notetypecode identifiant une définition dans votre
+     * schéma (vérifiable via : SELECT DISTINCT notetypecode FROM note;).
+     */
+    public List<DefinitionCoverageStat> getDefinitionCoverageByLanguage(
+            String idThesaurus,
+            String definitionTypeCode) {
+
+        String sql = """
+                WITH langs AS (
+                    SELECT DISTINCT lang
+                    FROM term
+                    WHERE id_thesaurus = ?
+                ),
+ 
+                active_concepts AS (
+                    SELECT id_concept
+                    FROM concept
+                    WHERE id_thesaurus = ?
+                      AND (status IS NULL OR status NOT IN ('CA', 'DEP'))
+                ),
+ 
+                total AS (
+                    SELECT COUNT(*) AS total_concepts
+                    FROM active_concepts
+                )
+ 
+                SELECT
+                    l.lang,
+                    COUNT(DISTINCT n.identifier) AS nb_concepts_with_definition,
+                    t.total_concepts,
+                    ROUND(
+                        100.0 * COUNT(DISTINCT n.identifier) / NULLIF(t.total_concepts, 0),
+                        2
+                    ) AS coverage_percent
+ 
+                FROM langs l
+ 
+                CROSS JOIN total t
+ 
+                LEFT JOIN note n
+                    ON n.id_thesaurus = ?
+                   AND n.notetypecode = ?
+                   AND LOWER(n.lang) = LOWER(l.lang)
+                   AND n.identifier IN (SELECT id_concept FROM active_concepts)
+ 
+                GROUP BY l.lang, t.total_concepts
+ 
+                ORDER BY coverage_percent DESC NULLS LAST
+                """;
+
+        return jdbcTemplate.query(sql, (rs, rowNum) -> {
+            java.math.BigDecimal coveragePercent = rs.getBigDecimal("coverage_percent");
+            return new DefinitionCoverageStat(
+                    rs.getString("lang"),
+                    rs.getLong("nb_concepts_with_definition"),
+                    rs.getLong("total_concepts"),
+                    (coveragePercent != null) ? coveragePercent.doubleValue() : null
+            );
+        }, idThesaurus, idThesaurus, idThesaurus, definitionTypeCode);
+    }
+
+
+    /**
+     * Concepts actifs n'ayant PAS de définition dans la langue donnée
+     * (popup de détail au clic sur une ligne du tableau ci-dessus).
+     * Le libellé affiché est celui de la langue source, pour identifier
+     * facilement quel concept reste à documenter.
+     */
+    public List<ConceptMissingDefinition> getConceptsMissingDefinition(
+            String idThesaurus,
+            String lang,
+            String definitionTypeCode,
+            String sourceLang) {
+
+        String sql = """
+                SELECT
+                    c.id_concept,
+                    MAX(CASE WHEN LOWER(t.lang) = LOWER(?) THEN t.lexical_value END) AS label
+ 
+                FROM concept c
+ 
+                LEFT JOIN preferred_term pt
+                    ON pt.id_concept = c.id_concept
+                   AND pt.id_thesaurus = c.id_thesaurus
+ 
+                LEFT JOIN term t
+                    ON t.id_term = pt.id_term
+                   AND t.id_thesaurus = pt.id_thesaurus
+ 
+                WHERE c.id_thesaurus = ?
+                  AND (c.status IS NULL OR c.status NOT IN ('CA', 'DEP'))
+ 
+                  AND NOT EXISTS (
+                      SELECT 1
+                      FROM note n
+                      WHERE n.identifier = c.id_concept
+                        AND n.id_thesaurus = c.id_thesaurus
+                        AND n.notetypecode = ?
+                        AND LOWER(n.lang) = LOWER(?)
+                  )
+ 
+                GROUP BY c.id_concept
+ 
+                ORDER BY label NULLS FIRST
+                """;
+
+        return jdbcTemplate.query(sql, (rs, rowNum) -> new ConceptMissingDefinition(
+                rs.getString("id_concept"),
+                rs.getString("label")
+        ), sourceLang, idThesaurus, definitionTypeCode, lang);
+    }
+
+
 
 }

@@ -11,6 +11,103 @@
 
     <style>
 
+        /* Coverage Language */
+        .language-summary {
+            text-align: center;
+            padding: 10px 0 15px;
+        }
+
+        .language-count {
+            display: block;
+            font-size: 16px;
+            font-weight: 600;
+            color: #33404d;
+            margin-bottom: 12px;
+        }
+
+        .language-badges {
+            display: flex;
+            justify-content: center;
+            flex-wrap: wrap;
+            gap: 8px;
+        }
+
+        .language-badge {
+            display: inline-block;
+            padding: 4px 14px;
+            border-radius: 14px;
+            background-color: #4b82b4;
+            color: #ffffff;
+            font-size: 13px;
+            font-weight: 600;
+            letter-spacing: 0.5px;
+        }
+
+        .coverage-title {
+            text-align: center;
+            margin: 10px 0;
+            font-size: 15px;
+            color: #33404d;
+        }
+
+        .coverage-table {
+            width: 100%;
+            border-collapse: collapse;
+            font-size: 14px;
+        }
+
+        .coverage-table tr:nth-child(odd) {
+            background-color: #fafafa;
+        }
+
+        .coverage-table td {
+            padding: 6px 12px;
+        }
+
+        .coverage-label {
+            color: #555;
+        }
+
+        .coverage-value {
+            text-align: right;
+            font-weight: 600;
+            color: #33404d;
+        }
+
+        .coverage-link {
+            color: #4b82b4 !important;
+            text-decoration: none;
+            cursor: pointer;
+        }
+
+        .coverage-link:hover {
+            text-decoration: underline;
+        }
+
+        .row-missing-label {
+            background-color: #fdf1f0 !important;
+        }
+
+        .missing-label-tag {
+            color: #c0574f;
+            font-style: italic;
+            font-size: 13px;
+        }
+
+        .coverage-average {
+            text-align: center;
+            margin-top: 14px;
+            padding-top: 10px;
+            border-top: 1px solid #eee;
+            font-size: 14px;
+            font-weight: 600;
+            color: #4b82b4;
+        }
+        /* fin coverage Language */
+
+
+
+
         /* gauge quality */
         .quality-gauge-wrapper {
             display: flex;
@@ -383,6 +480,246 @@
                     </p:panel>
 
                 </div>
+
+
+
+                <!-- ================================================= -->
+                <!-- LANGUES ET COUVERTURE LINGUISTIQUE -->
+                <!-- Uniquement pertinent pour UN thésaurus précis -->
+                <!-- ================================================= -->
+
+                <h:panelGroup layout="block" styleClass="dashboard-card"
+                              rendered="#{dashboardBean.thesaurusFilterActive}">
+
+                    <p:panel
+                            header="🌍 Langues du thésaurus"
+                            toggleable="true"
+                            collapsed="false">
+
+                        <div class="language-summary">
+
+                                <span class="language-count">
+                                    #{dashboardBean.thesaurusLanguages.size()} langue#{dashboardBean.thesaurusLanguages.size() > 1 ? 's' : ''} utilisée#{dashboardBean.thesaurusLanguages.size() > 1 ? 's' : ''}
+                                </span>
+
+                            <div class="language-badges">
+                                <ui:repeat value="#{dashboardBean.thesaurusLanguages}" var="lg">
+                                    <span class="language-badge">#{lg}</span>
+                                </ui:repeat>
+                            </div>
+
+                        </div>
+
+                        <p:separator/>
+
+                        <h4 class="coverage-title">📊 Couverture linguistique</h4>
+
+                        <table class="coverage-table">
+                            <ui:repeat value="#{dashboardBean.languageCoverageDistribution}" var="cov">
+                                <tr>
+                                    <td class="coverage-label">
+                                        #{cov.nbLangues} langue#{cov.nbLangues > 1 ? 's' : ''}
+                                    </td>
+                                    <td class="coverage-value">
+                                        <p:commandLink
+                                                value="#{cov.nbConcepts} concept#{cov.nbConcepts > 1 ? 's' : ''}"
+                                                actionListener="#{dashboardBean.loadConceptsToTranslate(cov.nbLangues)}"
+                                                update=":testForm:conceptsDialogContent"
+                                                oncomplete="PF('conceptsDialog').show()"
+                                                styleClass="coverage-link"/>
+                                    </td>
+                                </tr>
+                            </ui:repeat>
+                        </table>
+
+                        <div class="coverage-average">
+                            Moyenne :
+                            <h:outputText value="#{dashboardBean.averageLanguagesPerConcept}">
+                                <f:convertNumber pattern="0.00"/>
+                            </h:outputText>
+                            langue(s) / concept
+                        </div>
+
+                    </p:panel>
+
+                </h:panelGroup>
+                <!-- ================================================= -->
+                <!-- POPUP : détail des concepts pour un palier de couverture -->
+                <!-- À placer juste après la fermeture de </h:panelGroup>       -->
+                <!-- (dashboardContent), toujours à l'intérieur de <h:form>.    -->
+                <!-- Reste hors de la zone rafraîchie en Ajax pour ne pas       -->
+                <!-- perdre sa référence JS (widgetVar) à chaque refresh.       -->
+                <!-- ================================================= -->
+
+                <p:dialog header="Concepts à traduire"
+                          widgetVar="conceptsDialog"
+                          modal="true"
+                          width="750"
+                          resizable="false"
+                          closeOnEscape="true">
+
+                    <h:panelGroup id="conceptsDialogContent" layout="block">
+
+                        <p style="margin-top:0;">
+                            <h:outputText value="#{dashboardBean.selectedCoverageNbLangues} langue(s) renseignée(s) — "/>
+                            <h:outputText value="#{dashboardBean.conceptsToTranslate.size()} concept(s)"/>
+                        </p>
+
+                        <p:dataTable id="conceptsToTranslateTable"
+                                     value="#{dashboardBean.conceptsToTranslate}"
+                                     var="c"
+                                     rows="15"
+                                     paginator="true"
+                                     responsiveLayout="scroll"
+                                     rowStyleClass="#{empty c.label ? 'row-missing-label' : null}"
+                                     emptyMessage="Aucun concept trouvé pour ce palier.">
+
+                            <p:column headerText="Concept (langue source)">
+                                <h:outputText value="#{c.label}" rendered="#{not empty c.label}"/>
+                                <h:outputText value="Non traduit dans la langue source"
+                                              styleClass="missing-label-tag"
+                                              rendered="#{empty c.label}"/>
+                            </p:column>
+                            <p:column headerText="ID" style="width:120px;">
+                                <h:outputText value="#{c.conceptId}"/>
+                            </p:column>
+                            <p:column headerText="Langues existantes" style="width:180px;">
+                                <h:outputText value="#{c.existingLangs}"/>
+                            </p:column>
+
+                        </p:dataTable>
+
+                        <p:commandButton value="Télécharger en CSV"
+                                         icon="pi pi-download"
+                                         ajax="false"
+                                         style="margin-top:12px;">
+                            <p:dataExporter type="csv"
+                                            target="conceptsToTranslateTable"
+                                            fileName="concepts_a_traduire"/>
+                        </p:commandButton>
+
+                    </h:panelGroup>
+
+                </p:dialog>
+
+
+
+
+
+                <!-- ================================================= -->
+                <!-- COUVERTURE DES DÉFINITIONS PAR LANGUE -->
+                <!-- Uniquement pertinent pour UN thésaurus précis -->
+                <!-- ================================================= -->
+
+                <h:panelGroup layout="block" styleClass="dashboard-card"
+                              rendered="#{dashboardBean.thesaurusFilterActive}">
+
+                    <p:panel
+                            header="📖 Couverture des définitions par langue"
+                            toggleable="true"
+                            collapsed="false">
+
+                        <div class="concepts-container">
+
+                            <p:dataTable
+                                    value="#{dashboardBean.definitionCoverageByLanguage}"
+                                    var="d"
+                                    responsiveLayout="scroll"
+                                    emptyMessage="Aucune donnée disponible.">
+
+                                <p:column headerText="Langue" style="width:100px;">
+                                    <h:outputText value="#{d.lang}"/>
+                                </p:column>
+
+                                <p:column headerText="Concepts avec définition">
+                                    <p:commandLink
+                                            value="#{d.nbConceptsWithDefinition} / #{d.totalConcepts}"
+                                            actionListener="#{dashboardBean.loadConceptsMissingDefinition(d.lang)}"
+                                            update=":testForm:missingDefinitionDialogContent"
+                                            oncomplete="PF('missingDefinitionDialog').show()"
+                                            styleClass="coverage-link"/>
+                                </p:column>
+
+                                <p:column headerText="Couverture" style="width:160px;">
+                                    <p:progressBar value="#{d.coveragePercent}" labelTemplate="{value}%"
+                                                   style="height:18px;"/>
+                                </p:column>
+
+                            </p:dataTable>
+
+                        </div>
+
+                    </p:panel>
+
+                </h:panelGroup>
+                <!-- ================================================= -->
+                <!-- POPUP : concepts sans définition dans une langue -->
+                <!-- À placer juste après </h:panelGroup> (dashboardContent), -->
+                <!-- toujours à l'intérieur de <h:form>, hors zone Ajax       -->
+                <!-- rafraîchie, comme la popup de traduction.                -->
+                <!-- ================================================= -->
+
+                <p:dialog header="Concepts sans définition"
+                          widgetVar="missingDefinitionDialog"
+                          modal="true"
+                          width="750"
+                          resizable="false"
+                          closeOnEscape="true">
+
+                    <h:panelGroup id="missingDefinitionDialogContent" layout="block">
+
+                        <p style="margin-top:0;">
+                            <h:outputText value="Langue : #{dashboardBean.selectedDefinitionLang} — "/>
+                            <h:outputText value="#{dashboardBean.conceptsMissingDefinition.size()} concept(s) sans définition"/>
+                        </p>
+
+                        <p:dataTable id="missingDefinitionTable"
+                                     value="#{dashboardBean.conceptsMissingDefinition}"
+                                     var="c"
+                                     rows="15"
+                                     paginator="true"
+                                     responsiveLayout="scroll"
+                                     rowStyleClass="#{empty c.label ? 'row-missing-label' : null}"
+                                     emptyMessage="Tous les concepts ont une définition dans cette langue.">
+
+                            <p:column headerText="Concept (langue source)">
+                                <h:outputText value="#{c.label}" rendered="#{not empty c.label}"/>
+                                <h:outputText value="Non traduit dans la langue source"
+                                              styleClass="missing-label-tag"
+                                              rendered="#{empty c.label}"/>
+                            </p:column>
+                            <p:column headerText="ID" style="width:120px;">
+                                <h:outputText value="#{c.conceptId}"/>
+                            </p:column>
+
+                        </p:dataTable>
+
+                        <p:commandButton value="Télécharger en CSV"
+                                         icon="pi pi-download"
+                                         ajax="false"
+                                         style="margin-top:12px;">
+                            <p:dataExporter type="csv"
+                                            target="missingDefinitionTable"
+                                            fileName="concepts_sans_definition_#{dashboardBean.selectedDefinitionLang}"/>
+                        </p:commandButton>
+
+                    </h:panelGroup>
+
+                </p:dialog>
+
+
+
+
+
+
+
+
+
+
+
+
+
+
 
 
 

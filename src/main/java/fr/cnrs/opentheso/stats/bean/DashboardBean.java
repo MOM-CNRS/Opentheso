@@ -1,5 +1,7 @@
 package fr.cnrs.opentheso.stats.bean;
 
+import fr.cnrs.opentheso.services.ConceptService;
+import fr.cnrs.opentheso.services.ThesaurusService;
 import fr.cnrs.opentheso.stats.dto.*;
 import fr.cnrs.opentheso.stats.services.StatDashboardService;
 
@@ -12,6 +14,7 @@ import lombok.Data;
 
 import org.primefaces.event.ToggleEvent;
 import org.primefaces.model.Visibility;
+import org.springframework.beans.factory.annotation.Autowired;
 import software.xdev.chartjs.model.charts.BarChart;
 import software.xdev.chartjs.model.charts.LineChart;
 import software.xdev.chartjs.model.charts.PieChart;
@@ -34,7 +37,9 @@ import java.util.Map;
 import java.util.function.Function;
 import java.util.stream.Collectors;
 
-
+import java.time.LocalDate;
+import java.time.ZoneId;
+import java.util.Date;
 /**
  * Bean JSF du tableau de bord statistique Opentheso.
  *
@@ -79,6 +84,10 @@ public class DashboardBean implements Serializable {
 
     @Inject
     private StatDashboardService statDashboardService;
+    @Autowired
+    private ThesaurusService thesaurusService;
+    @Autowired
+    private ConceptService conceptService;
 
 
     // ============================================================
@@ -242,26 +251,34 @@ public class DashboardBean implements Serializable {
             return;
         }
 
+        // Il faut trouver la langue source du thésaurus sélectionné avant de lancer les requêtes ci-dessous
+        // et remplacer (selectedLanguage par sourceLanguage)
+
      /* ==========================================================
      *
      * Ces valeurs seront remplacées ensuite par les résultats
      * des requêtes PostgreSQL.
                 */
+        double definitionsScore = statDashboardService.getCoveragePercentageDefinition(selectedThesaurusId,selectedLanguage);
+       // double definitionsScore = 74.0;
 
-        double definitionsScore = 74.0;
+        double translatedTermsScore = statDashboardService.getCoveragePercentageTraduction(selectedThesaurusId,selectedLanguage);
+     //   double translatedTermsScore = 48.0;
 
-        double translatedTermsScore = 48.0;
+        double translatedDefinitionsScore = statDashboardService.getTranslatedDefinitionsScore(selectedThesaurusId,selectedLanguage);
+       // double translatedDefinitionsScore = 31.0;
 
-        double translatedDefinitionsScore = 31.0;
+        double alignmentsScore = statDashboardService.getAlignmentCoverageScore(selectedThesaurusId);
+        //double alignmentsScore = 22.0;
 
-        double alignmentsScore = 22.0;
-
-        double arkScore = 90.0;
+        double arkScore = statDashboardService.getArkCoverageScore(selectedThesaurusId);
+        //double arkScore = 90.0;
 
         /*
          * % de concepts possédant au moins une relation RT.
          */
-        double rtScore = 65.0;
+        double relatedScore = statDashboardService.getRtCoverageScore(selectedThesaurusId);
+       // double relatedScore = 65.0;
 
         /*
          * % de concepts n'ayant AUCUNE relation BT ou NT.
@@ -272,7 +289,8 @@ public class DashboardBean implements Serializable {
          *
          * => score qualité = 82 %
          */
-        double conceptsWithoutBtNtRate = 18.0;
+        double conceptsWithoutBtNtRate = statDashboardService.getHierarchyScore(selectedThesaurusId);
+        //double conceptsWithoutBtNtRate = 18.0;
 
         double hierarchyScore = 100.0 - conceptsWithoutBtNtRate;
 
@@ -281,10 +299,9 @@ public class DashboardBean implements Serializable {
          *
          * Exemple : dernière modification il y a 8 mois.
          */
-        double lastModificationScore = 85.0;
-     /*   double lastModificationScore =
-                calculateModificationScore(lastModificationScore2);
-*/
+        Date lastModificationScore2 =conceptService.getLastModification(selectedThesaurusId);
+        double lastModificationScore = calculateModificationScore(lastModificationScore2);
+        //double lastModificationScore = 85.0;
 
         // TODO : remplacer ces valeurs figées par de vraies requêtes, par ex. :
         //   - COUNT(concepts avec au moins une définition) / COUNT(total concepts)
@@ -334,7 +351,7 @@ public class DashboardBean implements Serializable {
 
                 new QualityCriterion(
                         "Concepts avec relation associative (RT)",
-                        rtScore,
+                        relatedScore,
                         0.10
                 ),
 
@@ -360,14 +377,19 @@ public class DashboardBean implements Serializable {
         qualityScore = new ThesaurusQualityScore(overall, criteria);
     }
 
-    private double calculateModificationScore(LocalDate lastModification) {
+    private double calculateModificationScore(Date lastModification) {
 
         if (lastModification == null) {
             return 0;
         }
 
+
+        LocalDate modificationDate = lastModification.toInstant()
+                .atZone(ZoneId.systemDefault())
+                .toLocalDate();
+
         long months = java.time.temporal.ChronoUnit.MONTHS.between(
-                lastModification,
+                modificationDate,
                 LocalDate.now()
         );
 
@@ -602,7 +624,8 @@ public class DashboardBean implements Serializable {
         // --------------------------------------------------------
 
         loadQualityScore();
-
+        loadLanguageCoverage();
+        loadDefinitionCoverage();
     }
 
 
@@ -1090,4 +1113,136 @@ public class DashboardBean implements Serializable {
                         TOP_SEARCHES_LIMIT
                 );
     }
+
+
+    // ============================================================
+    // Langues du thésaurus + couverture linguistique
+    // ============================================================
+
+    /** Codes de langue utilisés dans le thésaurus sélectionné (ex: FR, EN, DE). */
+    private List<String> thesaurusLanguages;
+
+    /** Distribution "nombre de concepts ayant exactement N langues". */
+    private List<LanguageCoverageStat> languageCoverageDistribution;
+
+    /** Moyenne "langues / concept", calculée à partir de la distribution. */
+    private double averageLanguagesPerConcept;
+
+    /**
+     * Charge les langues et la couverture linguistique du thésaurus
+     * sélectionné. Ne s'applique, comme le score de qualité, qu'à UN
+     * thésaurus précis.
+     */
+    private void loadLanguageCoverage() {
+
+        if (!isThesaurusFilterActive()) {
+            thesaurusLanguages = List.of();
+            languageCoverageDistribution = List.of();
+            averageLanguagesPerConcept = 0.0;
+            return;
+        }
+
+        thesaurusLanguages = thesaurusService.getIsoLanguagesOfThesaurus(selectedThesaurusId);
+
+        languageCoverageDistribution =
+                statDashboardService.getLanguageCoverageDistribution(selectedThesaurusId);
+
+        long totalConcepts = languageCoverageDistribution.stream()
+                .mapToLong(LanguageCoverageStat::getNbConcepts)
+                .sum();
+
+        long weightedSum = languageCoverageDistribution.stream()
+                .mapToLong(s -> (long) s.getNbLangues() * s.getNbConcepts())
+                .sum();
+
+        averageLanguagesPerConcept = (totalConcepts > 0)
+                ? Math.round((weightedSum * 100.0) / totalConcepts) / 100.0
+                : 0.0;
+    }
+
+
+    /** Concepts affichés dans la popup, pour le palier de couverture cliqué. */
+    private List<ConceptToTranslate> conceptsToTranslate;
+
+    /** Palier actuellement affiché dans la popup (pour le titre). */
+    private Integer selectedCoverageNbLangues;
+
+    /**
+     * Appelé au clic sur un palier de la distribution ("2 langues -> 510
+     * concepts"), charge la liste détaillée pour la popup + export CSV.
+     */
+    public void loadConceptsToTranslate(int nbLangues) {
+
+        if (!isThesaurusFilterActive()) {
+            conceptsToTranslate = List.of();
+            return;
+        }
+
+        selectedCoverageNbLangues = nbLangues;
+        conceptsToTranslate =
+                statDashboardService.getConceptsByLanguageCoverage(selectedThesaurusId, nbLangues,selectedLanguage);
+    }
+
+
+
+
+
+    // ============================================================
+    // Couverture des définitions par langue
+    // ============================================================
+
+    /**
+     * TODO : ajuster à la valeur réelle de note.notetypecode identifiant
+     * une définition dans votre schéma
+     * (vérifiable via : SELECT DISTINCT notetypecode FROM note;).
+     */
+    private static final String DEFINITION_NOTE_TYPE_CODE = "definition";
+
+    /** Couverture des définitions, une ligne par langue du thésaurus. */
+    private List<DefinitionCoverageStat> definitionCoverageByLanguage;
+
+    /** Concepts affichés dans la popup, pour la langue cliquée. */
+    private List<ConceptMissingDefinition> conceptsMissingDefinition;
+
+    /** Langue actuellement affichée dans la popup (pour le titre). */
+    private String selectedDefinitionLang;
+
+    private void loadDefinitionCoverage() {
+
+        if (!isThesaurusFilterActive()) {
+            definitionCoverageByLanguage = List.of();
+            return;
+        }
+
+        definitionCoverageByLanguage = statDashboardService.getDefinitionCoverageByLanguage(
+                selectedThesaurusId,
+                DEFINITION_NOTE_TYPE_CODE
+        );
+    }
+
+    /**
+     * Appelé au clic sur une ligne du tableau de couverture des
+     * définitions, charge les concepts SANS définition dans cette langue
+     * (la liste à traiter), pour la popup + export CSV.
+     */
+    public void loadConceptsMissingDefinition(String lang) {
+
+        if (!isThesaurusFilterActive()) {
+            conceptsMissingDefinition = List.of();
+            return;
+        }
+
+        selectedDefinitionLang = lang;
+
+        String sourceLang = selectedThesaurusId; //resolveSourceLanguage(selectedThesaurusId);
+
+        conceptsMissingDefinition = statDashboardService.getConceptsMissingDefinition(
+                selectedThesaurusId,
+                lang,
+                DEFINITION_NOTE_TYPE_CODE,
+                sourceLang
+        );
+    }
+
+
 }
