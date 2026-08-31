@@ -5,6 +5,9 @@
                                        http://www.liquibase.org/xml/ns/dbchangelog/dbchangelog-4.0.xsd">
 
     <changeSet id="v23.09.001" author="Miled">
+        <preConditions onFail="MARK_RAN">
+            <tableExists tableName="gps_preferences"/>
+        </preConditions>
         <dropTable tableName="gps_preferences"/>
     </changeSet>
 </databaseChangeLog>

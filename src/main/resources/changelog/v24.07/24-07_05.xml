@@ -6,6 +6,11 @@
 
 
     <changeSet id="v24.07.05" author="Miled">
+        <preConditions onFail="MARK_RAN">
+            <not>
+                <columnExists tableName="graph_view" columnName="id_user"/>
+            </not>
+        </preConditions>
         <sql>
             ALTER TABLE graph_view ADD COLUMN id_user integer DEFAULT 1 NOT NULL;
         </sql>

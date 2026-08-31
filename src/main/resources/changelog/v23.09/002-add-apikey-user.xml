@@ -5,7 +5,11 @@
                                        http://www.liquibase.org/xml/ns/dbchangelog/dbchangelog-4.0.xsd">
 
     <changeSet id="v23.09.002" author="Miled">
-        
+        <preConditions onFail="MARK_RAN">
+            <not>
+                <columnExists tableName="users" columnName="apikey"/>
+            </not>
+        </preConditions>
         <addColumn tableName="users">
             <column name="apikey" type="character varying"/>   
         </addColumn>

@@ -6,6 +6,11 @@
 
 
     <changeSet id="v24.04.02" author="fgabsi">
+        <preConditions onFail="MARK_RAN">
+            <not>
+                <columnExists tableName="alignement" columnName="url_available"/>
+            </not>
+        </preConditions>
         <sql>
             ALTER TABLE alignement ADD COLUMN url_available BOOLEAN DEFAULT TRUE NOT NULL;
         </sql>

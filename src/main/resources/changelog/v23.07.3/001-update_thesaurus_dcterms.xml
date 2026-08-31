@@ -5,6 +5,11 @@
                                        http://www.liquibase.org/xml/ns/dbchangelog/dbchangelog-4.0.xsd">
 
     <changeSet id="dropPrimaryKeyThesaurusDcterms" author="Miled">
+        <preConditions onFail="MARK_RAN">
+            <not>
+                <columnExists tableName="thesaurus_dcterms" columnName="id"/>
+            </not>
+        </preConditions>
         <dropPrimaryKey
                 tableName="thesaurus_dcterms"/>
         

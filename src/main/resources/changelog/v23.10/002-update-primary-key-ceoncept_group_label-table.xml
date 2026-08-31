@@ -5,6 +5,11 @@
                                        http://www.liquibase.org/xml/ns/dbchangelog/dbchangelog-4.0.xsd">
 
     <changeSet id="v23.10.001" author="Firas">
+        <preConditions onFail="MARK_RAN">
+            <not>
+                <primaryKeyExists tableName="concept_group_label" primaryKeyName="concept_group_label_pkey"/>
+            </not>
+        </preConditions>
         <dropPrimaryKey tableName="concept_group_label"/>
         <addPrimaryKey tableName="concept_group_label" columnNames="id"/>
     </changeSet>

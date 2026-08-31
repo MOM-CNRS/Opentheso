@@ -5,6 +5,11 @@
                                        http://www.liquibase.org/xml/ns/dbchangelog/dbchangelog-4.0.xsd">
 
     <changeSet author="Miled" id="v23.10.001">
+        <preConditions onFail="MARK_RAN">
+            <not>
+                <columnExists tableName="user_role_only_on" columnName="id_group"/>
+            </not>
+        </preConditions>
         <dropColumn tableName="user_role_only_on" columnName="id_theso_domain" />
         <addColumn tableName="user_role_only_on">
             <column name="id_group" type="integer"/>   

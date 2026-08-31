@@ -5,6 +5,11 @@
                                        http://www.liquibase.org/xml/ns/dbchangelog/dbchangelog-4.0.xsd">
 
     <changeSet id="addColumnDataTypeDCterms" author="Miled">
+        <preConditions onFail="MARK_RAN">
+            <not>
+                <columnExists tableName="thesaurus_dcterms" columnName="data_type"/>
+            </not>
+        </preConditions>
         <addColumn tableName="concept_dcterms">
           <column name="data_type" type="character varying"/>
         </addColumn> 

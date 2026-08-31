@@ -5,6 +5,11 @@
                                        http://www.liquibase.org/xml/ns/dbchangelog/dbchangelog-4.0.xsd">
 
     <changeSet id="dropPrimaryKey" author="Miled">
+        <preConditions onFail="MARK_RAN">
+            <not>
+                <primaryKeyExists tableName="concept_type" primaryKeyName="concept_type_theso"/>
+            </not>
+        </preConditions>
         <dropPrimaryKey
                 tableName="concept_type"/>
         

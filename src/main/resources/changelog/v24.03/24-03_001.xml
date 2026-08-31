@@ -6,6 +6,11 @@
 
     
     <changeSet author="Miled" id="v24.03.001">
+        <preConditions onFail="MARK_RAN">
+            <not>
+                <columnExists tableName="preferences" columnName="use_handle_with_certificat"/>
+            </not>
+        </preConditions>
         <addColumn tableName="preferences"> 
             <column name="use_handle_with_certificat" type="boolean" defaultValue="true"/>   
         </addColumn>         

@@ -6,6 +6,11 @@
 
     
     <changeSet author="Miled" id="v24.03.002">
+        <preConditions onFail="MARK_RAN">
+            <not>
+                <columnExists tableName="preferences" columnName="use_deepl_translation"/>
+            </not>
+        </preConditions>
         <addColumn tableName="preferences"> 
             <column name="use_deepl_translation" type="boolean" defaultValue="false"/>   
         </addColumn>         

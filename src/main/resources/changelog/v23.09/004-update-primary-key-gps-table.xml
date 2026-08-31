@@ -5,6 +5,11 @@
                                        http://www.liquibase.org/xml/ns/dbchangelog/dbchangelog-4.0.xsd">
 
     <changeSet id="v23.09.004" author="Firas">
+        <preConditions onFail="MARK_RAN">
+            <not>
+                <columnExists tableName="gps" columnName="id"/>
+            </not>
+        </preConditions>
         <dropPrimaryKey tableName="gps"/>
         <addPrimaryKey tableName="gps" columnNames="id"/>
         <modifyDataType tableName="gps" columnName="latitude" newDataType="double precision"/>

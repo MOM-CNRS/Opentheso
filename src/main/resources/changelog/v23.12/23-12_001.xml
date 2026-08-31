@@ -5,6 +5,11 @@
                                        http://www.liquibase.org/xml/ns/dbchangelog/dbchangelog-4.0.xsd">
 
     <changeSet author="Miled" id="v23.12.001">
+        <preConditions onFail="MARK_RAN">
+            <sqlCheck expectedResult="0">
+                SELECT COUNT(*) FROM users WHERE id_user = -1
+            </sqlCheck>
+        </preConditions>
         <insert tableName="users">
             <column name="id_user" value="-1"/>
             <column name="username" value=""/>         

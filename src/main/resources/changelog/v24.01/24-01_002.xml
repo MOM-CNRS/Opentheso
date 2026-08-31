@@ -5,6 +5,11 @@
                                        http://www.liquibase.org/xml/ns/dbchangelog/dbchangelog-4.0.xsd">
 
     <changeSet author="Miled" id="v24.01.002">
+        <preConditions onFail="MARK_RAN">
+            <not>
+                <columnExists tableName="note" columnName="identifier"/>
+            </not>
+        </preConditions>
         <addColumn tableName="note">
             <column name="identifier" type="character varying"/>   
         </addColumn>        

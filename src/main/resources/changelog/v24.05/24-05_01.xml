@@ -6,6 +6,11 @@
 
 
     <changeSet id="v24.05.01" author="Tom">
+        <preConditions onFail="MARK_RAN">
+            <not>
+                <columnExists tableName="users" columnName="key_never_expire"/>
+            </not>
+        </preConditions>
         <sql>
             alter table users add key_never_expire boolean default false not null;
             alter table users add key_expires_at date;

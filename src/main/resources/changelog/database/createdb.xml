@@ -6,11 +6,16 @@
 
 
     <changeSet id="createdb" author="miled">
+        <validCheckSum>ANY</validCheckSum>
         <preConditions onFail="MARK_RAN">
             <not>
                 <tableExists tableName="concept"/>
             </not>
         </preConditions>
+        <comment>
+            Bootstrap dump for empty databases only (skipped when table concept already exists).
+            validCheckSum ANY: database.sql content is not part of migration history on existing DBs.
+        </comment>
         <sqlFile path="./database.sql" relativeToChangelogFile="true" splitStatements="false"/>
     </changeSet>
 </databaseChangeLog>

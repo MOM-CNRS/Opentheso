@@ -5,6 +5,11 @@
                                        http://www.liquibase.org/xml/ns/dbchangelog/dbchangelog-4.0.xsd">
 
     <changeSet author="Miled" id="23.12.004">
+        <preConditions onFail="MARK_RAN">
+            <not>
+                <columnExists tableName="external_images" columnName="id"/>
+            </not>
+        </preConditions>
         <dropPrimaryKey tableName="external_images"/>
         <addColumn tableName="external_images">
             <column name="id" type="int" autoIncrement="true">
@@ -17,6 +22,11 @@
     </changeSet>        
         
     <changeSet author="Miled" id="23.12.005">
+        <preConditions onFail="MARK_RAN">
+            <not>
+                <columnExists tableName="non_preferred_term" columnName="id"/>
+            </not>
+        </preConditions>
         <dropPrimaryKey tableName="non_preferred_term"/>
         <addColumn tableName="non_preferred_term">
             <column name="id" type="int" autoIncrement="true">

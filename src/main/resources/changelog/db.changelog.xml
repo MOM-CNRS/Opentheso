@@ -217,6 +217,13 @@
     <changeSet id="26.03.01" author="Miled">
         <sqlFile path="../changelog/v26/26-03_01.sql" relativeToChangelogFile="true" splitStatements="false"/>
     </changeSet>
+    <changeSet id="26.03.03-seq" author="Firas">
+        <comment>
+            The bootstrap dump inserts languages_iso639.id = 194 but leaves languages_id_seq at 193.
+            26.03.03 would then reuse id 194 (PK conflict). Harmless on databases that already ran 26.03.03.
+        </comment>
+        <sql>SELECT setval('public.languages_id_seq', (SELECT MAX(id) FROM public.languages_iso639));</sql>
+    </changeSet>
     <changeSet id="26.03.03" author="Miled">
         <sqlFile path="v26/26-03_03.sql" relativeToChangelogFile="true" splitStatements="false"/>
     </changeSet>
