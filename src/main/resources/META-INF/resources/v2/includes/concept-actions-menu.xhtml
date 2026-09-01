@@ -178,12 +178,16 @@
         <div class="th-create-menu-h">#{v2LocaleBean.getMsg('v2.concept.menu.ids')}</div>
         <h:commandLink styleClass="th-create-item" role="menuitem"
                        rendered="#{v2ConceptIdentifierEditorBean.arkGenerationAvailable}"
-                       action="#{v2ConceptFicheMenuBean.prepareGenerateArk}">
+                       action="#{v2ConceptFicheMenuBean.prepareGenerateArk}"
+                       title="#{v2LocaleBean.getMsg('rightbody.concept.tooltip_generate_ark')}">
           <f:ajax execute="@this" render=":previewDetailForm:previewDetail :previewTree" onevent="onCvMenuAjax"/>
           <span class="th-create-ico" aria-hidden="true">
             <svg viewBox="0 0 24 24"><path d="M5 9h14"/><path d="M5 15h14"/><path d="M9 5 7 19"/><path d="M17 5l-2 14"/></svg>
           </span>
-          <span class="th-create-name">#{v2LocaleBean.getMsg('rightbody.concept.generate_ark')}</span>
+          <span class="th-create-txt">
+            <span class="th-create-name">#{v2LocaleBean.getMsg('rightbody.concept.generate_ark')}</span>
+            <span class="th-create-hint">#{v2LocaleBean.getMsg('v2.concept.arkMenuHint')}</span>
+          </span>
         </h:commandLink>
         <h:commandLink styleClass="th-create-item" role="menuitem"
                        rendered="#{v2ConceptIdentifierEditorBean.arkDeletionAvailable}"

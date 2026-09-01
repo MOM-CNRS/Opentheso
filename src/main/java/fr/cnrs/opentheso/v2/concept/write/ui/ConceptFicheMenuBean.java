@@ -258,6 +258,12 @@ public class ConceptFicheMenuBean implements Serializable {
 
     public void submitGenerateArk() {
         identifierEditorBean.submitGenerateArk();
+        openDialog("cvDlgArkGen");
+    }
+
+    public void afterGenerateArk() {
+        identifierEditorBean.setFlashMessage(null);
+        identifierEditorBean.setFlashToken(null);
         closeDialogs();
         refreshConsult();
     }

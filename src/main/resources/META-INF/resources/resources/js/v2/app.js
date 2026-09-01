@@ -29,6 +29,9 @@ function closeCvCtx() {
 }
 
 function hideCvDialogs() {
+  const ark = document.getElementById("cvDlgArkGen");
+  if (ark && !ark.hidden && ark.classList.contains("is-busy")) return false;
+  const refreshArk = ark && !ark.hidden && ark.classList.contains("is-done");
   let closed = false;
   $$(".confirm-overlay[id^='cvDlg']").forEach((el) => {
     if (!el.hidden) {
@@ -36,6 +39,10 @@ function hideCvDialogs() {
       closed = true;
     }
   });
+  if (refreshArk) {
+    const go = document.querySelector("[id$='cvArkAfterClose']");
+    if (go) go.click();
+  }
   return closed;
 }
 
@@ -56,6 +63,162 @@ function onCvMenuAjax(data) {
   bindThesoTransferUi();
 }
 window.onCvMenuAjax = onCvMenuAjax;
+
+let arkProgTimer = 0;
+let arkProgStarted = 0;
+let arkFinishTimer = 0;
+const ARK_MIN_MS = 1000;
+
+function arkGenGo() {
+  return document.querySelector("#cvDlgArkGen [id$='cvArkGenGo']");
+}
+
+function arkProgEls(dlg) {
+  if (!dlg) return {};
+  return {
+    box: dlg.querySelector(".cv-ark-prog"),
+    fill: dlg.querySelector(".cv-ark-prog-fill"),
+    track: dlg.querySelector(".cv-ark-prog-track"),
+    pct: dlg.querySelector(".cv-ark-prog-pct"),
+    title: dlg.querySelector(".cv-ark-prog-t"),
+    steps: dlg.querySelectorAll(".cv-ark-prog-steps li"),
+    cancel: dlg.querySelector(".confirm-cancel"),
+    go: arkGenGo()
+  };
+}
+
+function paintArkProgress(dlg, idx, pct, done) {
+  const els = arkProgEls(dlg);
+  const n = els.steps.length || 3;
+  const clamped = Math.max(0, Math.min(100, pct));
+  if (els.fill) els.fill.style.width = clamped + "%";
+  if (els.track) els.track.setAttribute("aria-valuenow", String(Math.round(clamped)));
+  if (els.pct) els.pct.textContent = Math.round(clamped) + "%";
+  const step = els.steps[Math.min(Math.max(idx, 0), n - 1)];
+  if (els.title) {
+    els.title.textContent = done
+      ? ((els.box && els.box.getAttribute("data-done")) || "Terminé")
+      : ((step && (step.getAttribute("data-detail") || step.textContent.trim())) || "");
+  }
+  els.steps.forEach((li, i) => {
+    li.classList.toggle("is-done", !!done || i < idx);
+    li.classList.toggle("is-on", !done && i === idx);
+  });
+}
+
+function stopArkProgress() {
+  if (arkProgTimer) {
+    clearInterval(arkProgTimer);
+    arkProgTimer = 0;
+  }
+}
+
+function startArkProgress(dlg) {
+  if (!dlg) return;
+  stopArkProgress();
+  if (arkFinishTimer) {
+    clearTimeout(arkFinishTimer);
+    arkFinishTimer = 0;
+  }
+  dlg.classList.add("is-busy");
+  dlg.classList.remove("is-done");
+  const els = arkProgEls(dlg);
+  if (els.box) {
+    els.box.hidden = false;
+    els.box.setAttribute("aria-hidden", "false");
+  }
+  if (els.go) {
+    els.go.classList.add("is-busy");
+    els.go.classList.remove("is-off");
+  }
+  arkProgStarted = Date.now();
+  paintArkProgress(dlg, 0, 8);
+  if (window.matchMedia("(prefers-reduced-motion: reduce)").matches) {
+    paintArkProgress(dlg, 0, 22);
+    return;
+  }
+  arkProgTimer = window.setInterval(() => {
+    const t = Date.now() - arkProgStarted;
+    if (t < 400) {
+      paintArkProgress(dlg, 0, 8 + (t / 400) * 16);
+    } else if (t < 1000) {
+      paintArkProgress(dlg, 1, 24 + ((t - 400) / 600) * 28);
+    } else {
+      paintArkProgress(dlg, 2, Math.min(90, 52 + (t - 1000) / 80));
+    }
+  }, 70);
+}
+
+function finishArkProgress(dlg, ok) {
+  stopArkProgress();
+  if (arkFinishTimer) {
+    clearTimeout(arkFinishTimer);
+    arkFinishTimer = 0;
+  }
+  if (!dlg) return;
+  dlg.classList.remove("is-busy");
+  const els = arkProgEls(dlg);
+  if (!ok) {
+    dlg.classList.remove("is-done");
+    if (els.box) els.box.hidden = true;
+    if (els.go) els.go.classList.remove("is-busy", "is-off");
+    if (els.cancel) {
+      const idle = els.cancel.getAttribute("data-idle");
+      if (idle) els.cancel.textContent = idle;
+    }
+    return;
+  }
+  dlg.classList.add("is-done");
+  if (els.box) {
+    els.box.hidden = false;
+    els.box.setAttribute("aria-hidden", "false");
+  }
+  if (els.go) {
+    els.go.classList.remove("is-busy");
+    els.go.classList.add("is-off");
+  }
+  if (els.cancel) {
+    const done = els.cancel.getAttribute("data-done");
+    if (done) els.cancel.textContent = done;
+  }
+  paintArkProgress(dlg, 2, 100, true);
+  const live = dlg.querySelector("[data-flash-ark]");
+  const msg = live && live.getAttribute("data-flash-ark");
+  const token = live && live.getAttribute("data-flash-ark-token");
+  if (msg && typeof toast === "function") {
+    if (typeof applyConceptLabelUi === "function" && token) {
+      applyConceptLabelUi._arkToken = token;
+    }
+    toast(msg, { soft: true });
+  }
+}
+
+function settleArkProgress(dlg, ok) {
+  const elapsed = arkProgStarted ? Date.now() - arkProgStarted : ARK_MIN_MS;
+  const wait = ok ? Math.max(0, ARK_MIN_MS - elapsed) : 0;
+  if (arkFinishTimer) clearTimeout(arkFinishTimer);
+  arkFinishTimer = window.setTimeout(() => {
+    arkFinishTimer = 0;
+    finishArkProgress(dlg, ok);
+  }, wait);
+}
+
+function onCvArkAjax(data) {
+  const dlg = document.getElementById("cvDlgArkGen");
+  if (data.status === "begin") {
+    startArkProgress(dlg);
+    return;
+  }
+  if (data.status === "error") {
+    settleArkProgress(dlg, false);
+    return;
+  }
+  if (data.status !== "success") return;
+  const live = dlg && dlg.querySelector(".cv-ark-live [data-ark-state]");
+  const state = (live && live.getAttribute("data-ark-state")) || "";
+  settleArkProgress(dlg, state === "done");
+}
+window.onCvArkAjax = onCvArkAjax;
 
 function onCvThesoTargetAjax(data) {
   if (data.status !== "success") return;
@@ -1228,6 +1391,8 @@ document.addEventListener("click", (e) => {
     t.setAttribute("aria-expanded", open ? "true" : "false");
   } else if (act === "cv-dlg-dismiss") {
     e.preventDefault();
+    const ark = document.getElementById("cvDlgArkGen");
+    if (ark && !ark.hidden && ark.classList.contains("is-busy")) return;
     hideCvDialogs();
   } else if (act === "cv-dlg-modal") {
     return;
@@ -1560,7 +1725,8 @@ function onV2Ajax(data) {
           || srcId.indexOf("candMine") >= 0) {
         return;
       }
-      if (srcId.indexOf("cvCopyThesoTarget") >= 0 || srcId.indexOf("cvMoveThesoTarget") >= 0) {
+      if (srcId.indexOf("cvCopyThesoTarget") >= 0 || srcId.indexOf("cvMoveThesoTarget") >= 0
+          || srcId.indexOf("cvArkGenGo") >= 0) {
         return;
       }
       if (srcId.indexOf("revealBtn") >= 0) {

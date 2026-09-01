@@ -567,18 +567,119 @@
     </div>
   </div>
 
-  <div class="block-overlay confirm-overlay" id="cvDlgArkGen" hidden="hidden" data-act="cv-dlg-dismiss" role="presentation">
-    <div class="confirm-modal" role="dialog" aria-modal="true" data-act="cv-dlg-modal">
-      <div class="confirm-h">#{v2LocaleBean.getMsg('rightbody.concept.generate_ark')}</div>
-      <p class="confirm-p">#{v2ConceptIdentifierEditorBean.currentConceptLabel}</p>
+  <div class="block-overlay confirm-overlay#{v2ConceptIdentifierEditorBean.arkRunState eq 'done' ? ' is-done' : ''}"
+       id="cvDlgArkGen" hidden="hidden"
+       data-act="cv-dlg-dismiss" role="presentation"
+       data-ark-state="#{v2ConceptIdentifierEditorBean.arkRunState}">
+    <div class="confirm-modal is-form is-theso is-ark" role="dialog" aria-modal="true"
+         aria-labelledby="cvDlgArkGenTitle" data-act="cv-dlg-modal">
+      <div class="cv-dlg-head">
+        <span class="th-create-ico" aria-hidden="true">
+          <svg viewBox="0 0 24 24"><path d="M5 9h14"/><path d="M5 15h14"/><path d="M9 5 7 19"/><path d="M17 5l-2 14"/></svg>
+        </span>
+        <div class="th-create-txt">
+          <div class="confirm-h" id="cvDlgArkGenTitle">#{v2LocaleBean.getMsg('rightbody.concept.generate_ark')}</div>
+          <p class="th-create-hint">#{v2LocaleBean.getMsg('v2.concept.arkHint')}</p>
+        </div>
+      </div>
+      <div class="cv-dlg-body">
+        <div class="cv-dlg-card">
+          <div class="cv-dlg-card-h">#{v2LocaleBean.getMsg('v2.concept.arkConcept')}</div>
+          <div class="cv-dlg-branch">
+            <strong>#{v2ConceptIdentifierEditorBean.currentConceptLabel}</strong>
+            <ui:fragment rendered="#{not empty v2ConceptIdentifierEditorBean.arkProvider}">
+              <span class="cv-ark-provider">
+                <ui:fragment rendered="#{v2ConceptIdentifierEditorBean.arkProvider eq 'openark'}">#{v2LocaleBean.getMsg('v2.concept.arkProviderOpen')}</ui:fragment>
+                <ui:fragment rendered="#{v2ConceptIdentifierEditorBean.arkProvider eq 'ark'}">#{v2LocaleBean.getMsg('v2.concept.arkProviderRemote')}</ui:fragment>
+                <ui:fragment rendered="#{v2ConceptIdentifierEditorBean.arkProvider eq 'local'}">#{v2LocaleBean.getMsg('v2.concept.arkProviderLocal')}</ui:fragment>
+              </span>
+            </ui:fragment>
+          </div>
+          <div class="cv-dlg-meta">
+            <div class="cv-dlg-meta-row">
+              <span class="cv-dlg-meta-k">#{v2LocaleBean.getMsg('v2.concept.arkInternal')}</span>
+              <span class="cv-dlg-meta-v is-mono">#{v2ConceptIdentifierEditorBean.currentConceptId}</span>
+            </div>
+          </div>
+          <h:panelGroup id="cvArkGenLive" layout="block" styleClass="cv-ark-live">
+            <span hidden="hidden"
+                  data-ark-state="#{v2ConceptIdentifierEditorBean.arkRunState}"
+                  data-flash-ark="#{v2ConceptIdentifierEditorBean.flashMessage}"
+                  data-flash-ark-token="#{v2ConceptIdentifierEditorBean.flashToken}"></span>
+            <div class="cv-dlg-meta">
+              <div class="cv-dlg-meta-row">
+                <span class="cv-dlg-meta-k">#{v2LocaleBean.getMsg('v2.concept.arkCurrent')}</span>
+                <ui:fragment rendered="#{v2ConceptIdentifierEditorBean.existingArk}">
+                  <span class="cv-dlg-meta-v is-mono">#{v2ConceptIdentifierEditorBean.currentArkId}</span>
+                </ui:fragment>
+                <ui:fragment rendered="#{not v2ConceptIdentifierEditorBean.existingArk}">
+                  <span class="cv-dlg-meta-v is-empty">#{v2LocaleBean.getMsg('v2.concept.arkNone')}</span>
+                </ui:fragment>
+              </div>
+            </div>
+            <ui:fragment rendered="#{v2ConceptIdentifierEditorBean.arkRunState eq 'done'}">
+              <div class="cv-ark-now is-ok">
+                #{v2LocaleBean.getMsg('v2.concept.arkProgDoneD')}
+                <ui:fragment rendered="#{v2ConceptIdentifierEditorBean.existingArk}">
+                  <strong class="is-mono">#{v2ConceptIdentifierEditorBean.currentArkId}</strong>
+                </ui:fragment>
+              </div>
+            </ui:fragment>
+            <ui:fragment rendered="#{v2ConceptIdentifierEditorBean.arkRunState ne 'done'}">
+              <div class="cv-ark-now">
+                <ui:fragment rendered="#{v2ConceptIdentifierEditorBean.existingArk and v2ConceptIdentifierEditorBean.localArkProvider}">
+                  #{v2LocaleBean.getMsg('v2.concept.arkActionLocalUpdate')}
+                </ui:fragment>
+                <ui:fragment rendered="#{v2ConceptIdentifierEditorBean.existingArk and not v2ConceptIdentifierEditorBean.localArkProvider}">
+                  #{v2LocaleBean.getMsg('v2.concept.arkActionUpdate')}
+                </ui:fragment>
+                <ui:fragment rendered="#{not v2ConceptIdentifierEditorBean.existingArk and v2ConceptIdentifierEditorBean.localArkProvider}">
+                  #{v2LocaleBean.getMsg('v2.concept.arkActionLocalCreate')}
+                </ui:fragment>
+                <ui:fragment rendered="#{not v2ConceptIdentifierEditorBean.existingArk and not v2ConceptIdentifierEditorBean.localArkProvider}">
+                  #{v2LocaleBean.getMsg('v2.concept.arkActionCreate')}
+                </ui:fragment>
+              </div>
+            </ui:fragment>
+            <ui:fragment rendered="#{not empty v2ConceptIdentifierEditorBean.errorMessage}">
+              <p class="confirm-p is-warn">#{v2ConceptIdentifierEditorBean.errorMessage}</p>
+            </ui:fragment>
+          </h:panelGroup>
+        </div>
+        <div class="cv-ark-prog" hidden="hidden" aria-live="polite"
+             data-done="#{v2LocaleBean.getMsg('v2.concept.arkProgDone')}">
+          <div class="cv-ark-prog-h">
+            <span class="cv-ark-prog-t">#{v2LocaleBean.getMsg('v2.concept.arkProgPrepD')}</span>
+            <span class="cv-ark-prog-pct">0%</span>
+          </div>
+          <div class="cv-ark-prog-track" role="progressbar" aria-valuemin="0" aria-valuemax="100" aria-valuenow="0">
+            <span class="cv-ark-prog-fill"></span>
+          </div>
+          <ol class="cv-ark-prog-steps" aria-label="#{v2LocaleBean.getMsg('v2.concept.arkSteps')}">
+            <li data-detail="#{v2LocaleBean.getMsg('v2.concept.arkProgPrepD')}">#{v2LocaleBean.getMsg('v2.concept.arkProgPrep')}</li>
+            <li data-detail="#{v2LocaleBean.getMsg('v2.concept.arkProgServerD')}">#{v2LocaleBean.getMsg('v2.concept.arkProgServer')}</li>
+            <li data-detail="#{v2LocaleBean.getMsg('v2.concept.arkProgSaveD')}">#{v2LocaleBean.getMsg('v2.concept.arkProgSave')}</li>
+          </ol>
+        </div>
+      </div>
       <div class="confirm-actions">
-        <button type="button" class="abt-cancel confirm-cancel" data-act="cv-dlg-dismiss">#{v2LocaleBean.getMsg('v2.cancel')}</button>
-        <h:commandLink styleClass="abt-save" action="#{v2ConceptFicheMenuBean.submitGenerateArk}">
-          <f:ajax execute="@this" render=":previewDetailForm:previewDetail :previewTree" onevent="onCvMenuAjax"/>
-          #{v2LocaleBean.getMsg('rightbody.concept.generate_ark')}
+        <button type="button" class="abt-cancel confirm-cancel" data-act="cv-dlg-dismiss"
+                data-idle="#{v2LocaleBean.getMsg('v2.cancel')}"
+                data-done="#{v2LocaleBean.getMsg('candidat.close')}">#{v2LocaleBean.getMsg('v2.cancel')}</button>
+        <h:commandLink id="cvArkGenGo" styleClass="abt-save" action="#{v2ConceptFicheMenuBean.submitGenerateArk}">
+          <f:ajax execute="@this" render=":previewDetailForm:cvArkGenLive" onevent="onCvArkAjax"/>
+          <span class="abt-save-label">
+            <ui:fragment rendered="#{v2ConceptIdentifierEditorBean.existingArk}">#{v2LocaleBean.getMsg('v2.concept.arkConfirmUpdate')}</ui:fragment>
+            <ui:fragment rendered="#{not v2ConceptIdentifierEditorBean.existingArk}">#{v2LocaleBean.getMsg('v2.concept.arkConfirmCreate')}</ui:fragment>
+          </span>
+          <span class="abt-save-wait">#{v2LocaleBean.getMsg('v2.concept.arkBusy')}</span>
         </h:commandLink>
       </div>
     </div>
+    <h:commandButton id="cvArkAfterClose" styleClass="preview-open-btn" style="display:none"
+                     action="#{v2ConceptFicheMenuBean.afterGenerateArk}">
+      <f:ajax execute="@this" render=":previewDetailForm:previewDetail :previewTree" onevent="onCvMenuAjax"/>
+    </h:commandButton>
   </div>
   <div class="block-overlay confirm-overlay" id="cvDlgArkDel" hidden="hidden" data-act="cv-dlg-dismiss" role="presentation">
     <div class="confirm-modal" role="dialog" aria-modal="true" data-act="cv-dlg-modal">

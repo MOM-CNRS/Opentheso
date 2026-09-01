@@ -26,7 +26,6 @@ import lombok.RequiredArgsConstructor;
 import lombok.Setter;
 import org.apache.commons.collections4.CollectionUtils;
 import org.apache.commons.lang3.StringUtils;
-import org.primefaces.PrimeFaces;
 
 import java.io.Serializable;
 import java.util.Collections;
@@ -50,8 +49,15 @@ public class ConceptIdentifierEditorBean implements Serializable {
     private final ThesaurusBrowseBean thesaurusBrowseBean;
     private final ConceptRepository conceptRepository;
 
+    private String currentConceptId;
     private String currentConceptLabel;
+    private String currentArkId;
+    private String arkProvider = "";
     private String currentHandleId;
+    private String arkRunState = "";
+    private String errorMessage;
+    private String flashMessage;
+    private String flashToken;
     private List<String> branchConceptIds = Collections.emptyList();
 
     public boolean isIdentifierActionsAvailable() {
@@ -96,7 +102,17 @@ public class ConceptIdentifierEditorBean implements Serializable {
         return isHandleGenerationAvailable();
     }
 
+    public boolean isExistingArk() {
+        return StringUtils.isNotBlank(currentArkId);
+    }
+
+    public boolean isLocalArkProvider() {
+        return "local".equals(arkProvider);
+    }
+
     public void prepareGenerateArk() {
+        errorMessage = null;
+        arkRunState = "";
         refreshContext();
     }
 
@@ -127,8 +143,29 @@ public class ConceptIdentifierEditorBean implements Serializable {
         loadBranchConceptIds();
     }
 
-    public void submitGenerateArk() {
-        submitGenerateArkForConcepts(List.of(requireConceptId()), isArkGenerationAvailable(), "v2GenerateArkDlg");
+    public boolean submitGenerateArk() {
+        errorMessage = null;
+        if (!isArkGenerationAvailable() || !conceptSelectionContext.hasSelection()) {
+            errorMessage = "Action non autorisée";
+            return false;
+        }
+        boolean updating = isExistingArk();
+        var command = new GenerateArkCommand(
+                thesaurusContext.resolveThesaurusId(),
+                thesaurusContext.resolveWorkLanguage(),
+                List.of(requireConceptId())
+        );
+        MutationResult result = conceptIdentifierMutationService.generateArk(command);
+        if (result == null || !result.success()) {
+            arkRunState = "error";
+            errorMessage = result != null ? result.message() : "La génération Ark a échoué";
+            return false;
+        }
+        currentArkId = resolveArkIdFromStore();
+        arkRunState = "done";
+        String arkSuffix = StringUtils.isBlank(currentArkId) ? "" : " : " + currentArkId;
+        flashSuccess((updating ? "Identifiant Ark mis à jour" : "Identifiant Ark créé") + arkSuffix);
+        return true;
     }
 
     public void submitDeleteArk() {
@@ -140,14 +177,14 @@ public class ConceptIdentifierEditorBean implements Serializable {
                 thesaurusContext.resolveThesaurusId(),
                 List.of(requireConceptId())
         );
-        handleMutationResult(conceptIdentifierMutationService.deleteArk(command), "v2DeleteArkDlg");
+        handleMutationResult(conceptIdentifierMutationService.deleteArk(command));
     }
 
     public void submitGenerateArkForBranch() {
         if (branchConceptIds.isEmpty()) {
             loadBranchConceptIds();
         }
-        submitGenerateArkForConcepts(branchConceptIds, isArkGenerationAvailable(), "v2GenerateArkBranchDlg");
+        submitGenerateArkForConcepts(branchConceptIds, isArkGenerationAvailable());
     }
 
     public void submitGenerateArkForConceptsWithoutArk() {
@@ -161,7 +198,7 @@ public class ConceptIdentifierEditorBean implements Serializable {
             MessageUtils.showInformationMessage("Aucun concept sans ARK");
             return;
         }
-        submitGenerateArkForConcepts(conceptIds, true, null);
+        submitGenerateArkForConcepts(conceptIds, true);
     }
 
     public void submitGenerateAllArk() {
@@ -171,11 +208,11 @@ public class ConceptIdentifierEditorBean implements Serializable {
             return;
         }
         List<String> conceptIds = loadAllConceptIds(thesaurusId);
-        submitGenerateArkForConcepts(conceptIds, true, "v2GenerateAllArkDlg");
+        submitGenerateArkForConcepts(conceptIds, true);
     }
 
     public void submitGenerateHandle() {
-        submitGenerateHandleForConcepts(List.of(requireConceptId()), "v2GenerateHandleDlg");
+        submitGenerateHandleForConcepts(List.of(requireConceptId()));
     }
 
     public void submitDeleteHandle() {
@@ -189,14 +226,14 @@ public class ConceptIdentifierEditorBean implements Serializable {
                 requireConceptId(),
                 currentHandleId
         );
-        handleMutationResult(conceptIdentifierMutationService.deleteHandle(command), "v2DeleteHandleDlg");
+        handleMutationResult(conceptIdentifierMutationService.deleteHandle(command));
     }
 
     public void submitGenerateHandleForBranch() {
         if (branchConceptIds.isEmpty()) {
             loadBranchConceptIds();
         }
-        submitGenerateHandleForConcepts(branchConceptIds, "v2GenerateHandleBranchDlg");
+        submitGenerateHandleForConcepts(branchConceptIds);
     }
 
     public void submitGenerateHandleForConceptsWithoutHandle() {
@@ -210,7 +247,7 @@ public class ConceptIdentifierEditorBean implements Serializable {
             MessageUtils.showInformationMessage("Aucun concept sans Handle");
             return;
         }
-        submitGenerateHandleForConcepts(conceptIds, null);
+        submitGenerateHandleForConcepts(conceptIds);
     }
 
     public void submitGenerateAllHandle() {
@@ -219,10 +256,10 @@ public class ConceptIdentifierEditorBean implements Serializable {
             MessageUtils.showErrorMessage("Action non autorisée");
             return;
         }
-        submitGenerateHandleForConcepts(loadAllConceptIds(thesaurusId), null);
+        submitGenerateHandleForConcepts(loadAllConceptIds(thesaurusId));
     }
 
-    private void submitGenerateArkForConcepts(List<String> conceptIds, boolean allowed, String dialogWidget) {
+    private void submitGenerateArkForConcepts(List<String> conceptIds, boolean allowed) {
         if (!allowed || conceptIds == null || conceptIds.isEmpty()) {
             MessageUtils.showErrorMessage("Action non autorisée");
             return;
@@ -232,16 +269,16 @@ public class ConceptIdentifierEditorBean implements Serializable {
                 thesaurusContext.resolveWorkLanguage(),
                 conceptIds
         );
-        handleMutationResult(conceptIdentifierMutationService.generateArk(command), dialogWidget);
+        handleMutationResult(conceptIdentifierMutationService.generateArk(command));
     }
 
-    private void submitGenerateHandleForConcepts(List<String> conceptIds, String dialogWidget) {
+    private void submitGenerateHandleForConcepts(List<String> conceptIds) {
         if (!isHandleGenerationAvailable() || conceptIds == null || conceptIds.isEmpty()) {
             MessageUtils.showErrorMessage("Action non autorisée");
             return;
         }
         var command = new GenerateHandleCommand(thesaurusContext.resolveThesaurusId(), conceptIds);
-        handleMutationResult(conceptIdentifierMutationService.generateHandle(command), dialogWidget);
+        handleMutationResult(conceptIdentifierMutationService.generateHandle(command));
     }
 
     private List<String> loadAllConceptIds(String thesaurusId) {
@@ -252,24 +289,66 @@ public class ConceptIdentifierEditorBean implements Serializable {
         return concepts.stream().map(Concept::getIdConcept).toList();
     }
 
-    private void handleMutationResult(MutationResult result, String dialogWidget) {
+    private void handleMutationResult(MutationResult result) {
         if (result == null || !result.success()) {
             MessageUtils.showErrorMessage(result != null ? result.message() : "Erreur");
             return;
         }
         conceptNavigationSupport.refreshSelectedConcept();
-        PrimeFaces.current().ajax().update(":containerIndex:formRightTab :messageIndex");
         MessageUtils.showInformationMessage(result.message());
-        if (StringUtils.isNotBlank(dialogWidget)) {
-            PrimeFaces.current().executeScript("PF('" + dialogWidget + "').hide();");
-        }
     }
 
     private void refreshContext() {
+        currentConceptId = requireConceptId();
         currentConceptLabel = conceptSelectionContext.hasSelection()
                 ? conceptSelectionContext.getSummary().preferredLabel()
                 : "";
+        currentArkId = resolveArkId();
+        arkProvider = resolveArkProvider();
         currentHandleId = resolveHandleId();
+    }
+
+    private String resolveArkId() {
+        if (conceptSelectionContext.hasSelection()) {
+            String fromSummary = conceptSelectionContext.getSummary().arkId();
+            if (StringUtils.isNotBlank(fromSummary)) {
+                return fromSummary;
+            }
+        }
+        return resolveArkIdFromStore();
+    }
+
+    private String resolveArkIdFromStore() {
+        String thesaurusId = thesaurusContext.resolveThesaurusId();
+        String conceptId = requireConceptId();
+        if (StringUtils.isAnyBlank(thesaurusId, conceptId)) {
+            return "";
+        }
+        return conceptRepository.findByIdConceptAndIdThesaurus(conceptId, thesaurusId)
+                .map(concept -> StringUtils.defaultString(concept.getIdArk()))
+                .orElse("");
+    }
+
+    private String resolveArkProvider() {
+        Preferences preferences = loadPreferences();
+        if (preferences == null) {
+            return "";
+        }
+        if (preferences.isUseOpenArk()) {
+            return "openark";
+        }
+        if (preferences.isUseArkLocal()) {
+            return "local";
+        }
+        if (preferences.isUseArk()) {
+            return "ark";
+        }
+        return "";
+    }
+
+    private void flashSuccess(String message) {
+        flashMessage = message;
+        flashToken = String.valueOf(System.currentTimeMillis());
     }
 
     private void loadBranchConceptIds() {

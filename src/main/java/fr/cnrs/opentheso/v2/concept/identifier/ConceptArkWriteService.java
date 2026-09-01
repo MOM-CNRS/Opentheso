@@ -181,32 +181,17 @@ public class ConceptArkWriteService {
                 Concept concept = requireConcept(conceptId, thesaurusId);
                 String cheminSite = StringUtils.defaultString(preferences.getCheminSite());
                 String url = cheminSite + "?idc=" + conceptId + "&idt=" + thesaurusId;
+                String title = resolvePreferredLabel(conceptId, thesaurusId, lang);
+                String creator = resolveCreatorName(concept);
                 String idArk = concept.getIdArk();
-                if (StringUtils.isNotBlank(idArk)) {
-                    continue;
-                }
-                if (arkApiClient.arkExistsByUrl(naan, url, serverUrl)) {
-                    ArkResponse arkResponse = arkApiClient.getArkByNaanAndUrlWithApiKey(
-                            naan, url, serverUrl, apiKey);
-                    if (arkResponse != null && arkResponse.getArk() != null) {
-                        updateArkId(conceptId, thesaurusId, arkResponse.getArk().getArkId());
-                    } else {
-                        errors.add(errorValue(conceptId, "Impossible de récupérer l'ARK existant sur OpenArk"));
-                    }
+                if (StringUtils.isBlank(idArk)) {
+                    createOrRecoverOpenArk(
+                            conceptId, thesaurusId, naan, url, title, creator,
+                            preferences, serverUrl, apiKey, errors);
                 } else {
-                    ArkRequest request = new ArkRequest();
-                    request.setArk("");
-                    request.setNaan(naan);
-                    request.setType(preferences.getPrefixOpenArk());
-                    request.setUrlTarget(url);
-                    request.setTitle(resolvePreferredLabel(conceptId, thesaurusId, lang));
-                    request.setCreator(resolveCreatorName(concept));
-                    ArkResponse response = arkApiClient.createArk(request, serverUrl, apiKey);
-                    if (response == null || response.getArk() == null) {
-                        errors.add(errorValue(conceptId, "La création OpenArk n'a renvoyé aucun identifiant"));
-                        continue;
-                    }
-                    updateArkId(conceptId, thesaurusId, response.getArk().getArkId());
+                    updateOrPushOpenArk(
+                            idArk, naan, url, title, creator,
+                            preferences, serverUrl, apiKey);
                 }
             } catch (ArkApiException | IllegalStateException | IllegalArgumentException ex) {
                 log.warn("Échec génération OpenArk pour {} : {}", conceptId, ex.getMessage());
@@ -214,6 +199,75 @@ public class ConceptArkWriteService {
             }
         }
         return errors.isEmpty() ? null : errors;
+    }
+
+    private void createOrRecoverOpenArk(
+            String conceptId,
+            String thesaurusId,
+            int naan,
+            String url,
+            String title,
+            String creator,
+            Preferences preferences,
+            String serverUrl,
+            String apiKey,
+            List<NodeIdValue> errors
+    ) {
+        if (arkApiClient.arkExistsByUrl(naan, url, serverUrl)) {
+            ArkResponse arkResponse = arkApiClient.getArkByNaanAndUrlWithApiKey(
+                    naan, url, serverUrl, apiKey);
+            if (arkResponse != null && arkResponse.getArk() != null) {
+                updateArkId(conceptId, thesaurusId, arkResponse.getArk().getArkId());
+            } else {
+                errors.add(errorValue(conceptId, "Impossible de récupérer l'ARK existant sur OpenArk"));
+            }
+            return;
+        }
+        ArkResponse response = arkApiClient.createArk(
+                openArkRequest("", naan, preferences, url, title, creator), serverUrl, apiKey);
+        if (response == null || response.getArk() == null) {
+            errors.add(errorValue(conceptId, "La création OpenArk n'a renvoyé aucun identifiant"));
+            return;
+        }
+        updateArkId(conceptId, thesaurusId, response.getArk().getArkId());
+    }
+
+    private void updateOrPushOpenArk(
+            String idArk,
+            int naan,
+            String url,
+            String title,
+            String creator,
+            Preferences preferences,
+            String serverUrl,
+            String apiKey
+    ) {
+        if (arkApiClient.arkExistsById(idArk, naan, serverUrl)) {
+            arkApiClient.updateArk(
+                    openArkRequest(idArk, naan, preferences, url, title, creator), serverUrl, apiKey);
+            return;
+        }
+        String arkIdWithoutNaan = idArk.contains("/") ? idArk.split("/", 2)[1] : idArk;
+        arkApiClient.createArk(
+                openArkRequest(arkIdWithoutNaan, naan, preferences, url, title, creator), serverUrl, apiKey);
+    }
+
+    private static ArkRequest openArkRequest(
+            String ark,
+            int naan,
+            Preferences preferences,
+            String url,
+            String title,
+            String creator
+    ) {
+        ArkRequest request = new ArkRequest();
+        request.setArk(ark);
+        request.setNaan(naan);
+        request.setType(preferences.getPrefixOpenArk());
+        request.setUrlTarget(url);
+        request.setTitle(title);
+        request.setCreator(creator);
+        return request;
     }
 
     private String decryptApiKey(String encryptedApiKey) {
@@ -248,7 +302,10 @@ public class ConceptArkWriteService {
             return nodeIdValues;
         }
         if (preferences.isUseArkLocal()) {
-            generateLocalArkIds(thesaurusId, conceptIds);
+            if (!generateLocalArkIds(thesaurusId, conceptIds)) {
+                nodeIdValues.add(errorValue("", "La création du Ark local a échoué"));
+                return nodeIdValues;
+            }
             return null;
         }
 
@@ -284,6 +341,23 @@ public class ConceptArkWriteService {
                 if (!updateArkId(conceptId, thesaurusId, arkHelper2.getIdArk())) {
                     nodeIdValues.add(errorValue(conceptId, "Erreur: La mise à jour du concept dans Opentheso a échoué"));
                 }
+                continue;
+            }
+            if (arkHelper2.isArkExistOnServer(concept.getIdArk())) {
+                if (!arkHelper2.updateArk(concept.getIdArk(), privateUri, nodeMetaData)) {
+                    nodeIdValues.add(errorValue(conceptId,
+                            "Erreur: Ark existe sur le serveur, mais la mise à jour a échoué : " + arkHelper2.getMessage()));
+                }
+                continue;
+            }
+            if (!arkHelper2.addArkWithProvidedId(concept.getIdArk(), privateUri, nodeMetaData)) {
+                nodeIdValues.add(errorValue(conceptId,
+                        "Erreur: Ark n'existe pas sur le serveur, mais la création a échoué : " + arkHelper2.getMessage()));
+                continue;
+            }
+            if (StringUtils.isNotBlank(arkHelper2.getIdArk())
+                    && !updateArkId(conceptId, thesaurusId, arkHelper2.getIdArk())) {
+                nodeIdValues.add(errorValue(conceptId, "Erreur: La mise à jour du concept dans Opentheso a échoué"));
             }
         }
         return nodeIdValues.isEmpty() ? null : nodeIdValues;

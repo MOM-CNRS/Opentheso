@@ -31,18 +31,21 @@ public class ConceptIdentifierWritePersistence {
         var result = conceptArkWriteService.generateArkIds(
                 command.thesaurusId(), command.conceptIds(), command.lang());
         if (result == null) {
-            return MutationResult.ok("L'opération est terminée avec succès !!");
+            return MutationResult.ok("L'opération est terminée avec succès");
         }
         if (result.isEmpty()) {
-            return MutationResult.failure("La génération Ark a échoué !!");
+            return MutationResult.failure("La génération Ark a échoué");
         }
-        // Erreur globale (ex. connexion serveur) : un seul message sans id concept
+        String firstMessage = StringUtils.defaultIfBlank(
+                result.get(0).getValue(),
+                "La génération Ark a échoué");
         if (result.size() == 1 && StringUtils.isBlank(result.get(0).getId())) {
-            return MutationResult.failure(StringUtils.defaultIfBlank(
-                    result.get(0).getValue(),
-                    "La génération Ark a échoué !!"));
+            return MutationResult.failure(firstMessage);
         }
-        return MutationResult.ok("L'opération est terminée, vérifier le fichier de résultat téléchargé !!");
+        if (command.conceptIds().size() == 1) {
+            return MutationResult.failure(firstMessage);
+        }
+        return MutationResult.okWithWarning(firstMessage);
     }
 
     public MutationResult deleteArk(DeleteArkCommand command) {

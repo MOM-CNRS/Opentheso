@@ -1656,7 +1656,8 @@ function applyDndFlash() {
   [
     ["data-flash-dnd", "data-flash-dnd-token", "_dndToken"],
     ["data-flash-copy", "data-flash-copy-token", "_copyToken"],
-    ["data-flash-move", "data-flash-move-token", "_moveToken"]
+    ["data-flash-move", "data-flash-move-token", "_moveToken"],
+    ["data-flash-ark", "data-flash-ark-token", "_arkToken"]
   ].forEach(([msgAttr, tokenAttr, key]) => {
     const msg = host.getAttribute(msgAttr);
     const token = host.getAttribute(tokenAttr);
