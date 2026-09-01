@@ -211,27 +211,23 @@ public class ConceptFicheMenuBean implements Serializable {
         refreshConsult();
     }
 
-    public void startCopyToAnotherThesaurus() {
-        copyBetweenThesaurusBean.onStartCopy();
-        closeDialogs();
+    public void prepareCopyToAnotherThesaurus() {
+        copyBetweenThesaurusBean.prepareCopyToAnotherThesaurus();
+        openDialog("cvDlgCopyTheso");
     }
 
-    public void cancelCopyToAnotherThesaurus() {
-        copyBetweenThesaurusBean.cancelCopy();
-        closeDialogs();
+    public void onCopyTargetThesaurusChange() {
+        copyBetweenThesaurusBean.onTargetThesaurusChange();
     }
 
-    public void preparePasteFromAnotherThesaurus() {
-        copyBetweenThesaurusBean.preparePasteUnderCurrentConcept();
-        if (copyBetweenThesaurusBean.isPasteUnderConceptAvailable()) {
-            openDialog("cvDlgPasteOther");
+    public void submitCopyToAnotherThesaurus() {
+        boolean ok = copyBetweenThesaurusBean.submitCopyToAnotherThesaurus();
+        if (ok) {
+            closeDialogs();
+            refreshConsult();
+            return;
         }
-    }
-
-    public void submitPasteFromAnotherThesaurus() {
-        copyBetweenThesaurusBean.paste();
-        closeDialogs();
-        refreshConsult();
+        openDialog("cvDlgCopyTheso");
     }
 
     public void prepareMoveToAnotherThesaurus() {
@@ -239,10 +235,20 @@ public class ConceptFicheMenuBean implements Serializable {
         openDialog("cvDlgMoveTheso");
     }
 
+    public void onMoveTargetThesaurusChange() {
+        transferEditorBean.onTargetThesaurusChange();
+    }
+
     public void submitMoveToAnotherThesaurus() {
-        transferEditorBean.submitMoveToAnotherThesaurus();
-        closeDialogs();
-        refreshConsult();
+        boolean ok = transferEditorBean.submitMoveToAnotherThesaurus();
+        if (ok) {
+            closeDialogs();
+            conceptSelectionContext.clear();
+            thesaurusViewBean.refreshFromSelectionContext();
+            thesaurusViewBean.reloadTree();
+            return;
+        }
+        openDialog("cvDlgMoveTheso");
     }
 
     public void prepareGenerateArk() {

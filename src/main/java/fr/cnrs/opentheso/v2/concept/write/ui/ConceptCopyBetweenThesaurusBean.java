@@ -1,186 +1,184 @@
 package fr.cnrs.opentheso.v2.concept.write.ui;
 
-import fr.cnrs.opentheso.utils.MessageUtils;
 import fr.cnrs.opentheso.v2.concept.session.ConceptSelectionContext;
-import fr.cnrs.opentheso.v2.concept.ui.ThesaurusBrowseBean;
+import fr.cnrs.opentheso.v2.concept.write.model.ConceptWriteThesaurusOption;
 import fr.cnrs.opentheso.v2.concept.write.model.MutationResult;
 import fr.cnrs.opentheso.v2.concept.write.model.command.CopyBranchBetweenThesaurusCommand;
 import fr.cnrs.opentheso.v2.concept.write.persistence.BranchConceptSupport;
 import fr.cnrs.opentheso.v2.concept.write.policy.ConceptWritePolicy;
 import fr.cnrs.opentheso.v2.concept.write.service.ConceptCopyBetweenThesaurusMutationService;
+import fr.cnrs.opentheso.v2.concept.write.service.ConceptTransferMutationService;
 import fr.cnrs.opentheso.v2.setting.ui.ThesaurusContext;
 import fr.cnrs.opentheso.v2.shared.ui.UserSession;
-import jakarta.enterprise.context.SessionScoped;
+import jakarta.faces.view.ViewScoped;
 import jakarta.inject.Named;
 import lombok.Getter;
 import lombok.RequiredArgsConstructor;
 import lombok.Setter;
 import org.apache.commons.lang3.StringUtils;
-import org.primefaces.PrimeFaces;
-import org.springframework.beans.factory.ObjectProvider;
-import org.springframework.context.annotation.Scope;
-import org.springframework.context.annotation.ScopedProxyMode;
 
 import java.io.Serializable;
 import java.util.Collections;
 import java.util.List;
 
 /**
- * Copie de branche entre thésaurus — équivalent V2 de {@code copyAndPasteBetweenThesaurus}.
+ * Copie de branche vers un autre thésaurus, en une seule fenêtre.
  */
 @Getter
 @Setter
-@SessionScoped
+@ViewScoped
 @Named("v2ConceptCopyBetweenThesaurusBean")
 @RequiredArgsConstructor
-@Scope(value = "session", proxyMode = ScopedProxyMode.TARGET_CLASS)
 public class ConceptCopyBetweenThesaurusBean implements Serializable {
 
     private final ConceptCopyBetweenThesaurusMutationService conceptCopyBetweenThesaurusMutationService;
+    private final ConceptTransferMutationService conceptTransferMutationService;
     private final BranchConceptSupport branchConceptSupport;
     private final ConceptSelectionContext conceptSelectionContext;
     private final ThesaurusContext thesaurusContext;
     private final UserSession userSession;
     private final ConceptWritePolicy conceptWritePolicy;
-    private final ObjectProvider<ThesaurusBrowseBean> thesaurusBrowseBean;
 
-    private boolean copyOn;
-    private boolean dropToRoot;
     private String sourceThesaurusId;
+    private String sourceThesaurusLabel;
     private String sourceConceptId;
     private String sourceLabel;
-    private List<String> conceptsToCopy = Collections.emptyList();
+    private String targetThesaurusId;
+    private String destMode = "";
+    private String parentConceptId;
+    private String parentLabel;
     private String identifierType = "sans";
+    private String errorMessage;
+    private String flashMessage;
+    private String flashToken;
+    private List<String> conceptsToCopy = Collections.emptyList();
+    private List<ConceptWriteThesaurusOption> availableThesauri = Collections.emptyList();
 
     public boolean isCopyActionsAvailable() {
         return conceptWritePolicy.canMutateHierarchicalRelations(userSession, false);
     }
 
-    public boolean isPasteAvailable() {
-        if (!copyOn || !isCopyActionsAvailable()) {
+    public boolean isTargetThesaurusSelected() {
+        return StringUtils.isNotBlank(targetThesaurusId);
+    }
+
+    public boolean isParentSelected() {
+        return StringUtils.isNotBlank(parentConceptId);
+    }
+
+    public boolean isSubmitReady() {
+        if (!isTargetThesaurusSelected()) {
             return false;
         }
-        String currentTheso = thesaurusContext.resolveThesaurusId();
-        return StringUtils.isNotBlank(currentTheso)
-                && !currentTheso.equalsIgnoreCase(sourceThesaurusId);
+        if ("root".equals(destMode)) {
+            return true;
+        }
+        return "parent".equals(destMode) && isParentSelected();
     }
 
-    public boolean isPasteUnderConceptAvailable() {
-        return isPasteAvailable() && conceptSelectionContext.hasSelection();
+    public String getTargetThesaurusLabel() {
+        if (StringUtils.isBlank(targetThesaurusId)) {
+            return "";
+        }
+        return availableThesauri.stream()
+                .filter(th -> targetThesaurusId.equalsIgnoreCase(th.id()))
+                .map(th -> StringUtils.defaultIfBlank(th.title(), th.id()) + " (" + th.id() + ")")
+                .findFirst()
+                .orElse(targetThesaurusId);
     }
 
-    public void onStartCopy() {
+    public void prepareCopyToAnotherThesaurus() {
+        errorMessage = null;
+        destMode = "";
+        parentConceptId = "";
+        parentLabel = "";
+        identifierType = "sans";
+        targetThesaurusId = null;
         if (!isCopyActionsAvailable() || !conceptSelectionContext.hasSelection()) {
-            MessageUtils.showErrorMessage("Action non autorisée");
+            conceptsToCopy = Collections.emptyList();
+            availableThesauri = Collections.emptyList();
+            sourceLabel = "";
+            sourceThesaurusLabel = "";
             return;
         }
-        reset();
         sourceThesaurusId = thesaurusContext.resolveThesaurusId();
+        sourceThesaurusLabel = StringUtils.defaultIfBlank(
+                thesaurusContext.getCurrentThesaurusTitle(), sourceThesaurusId);
         sourceConceptId = conceptSelectionContext.getConceptId();
         sourceLabel = conceptSelectionContext.getSummary().preferredLabel();
         conceptsToCopy = branchConceptSupport.collectBranchConceptIds(sourceThesaurusId, sourceConceptId);
-        copyOn = true;
-        MessageUtils.showInformationMessage(
-                "Copier " + StringUtils.defaultString(sourceLabel)
-                        + " (" + sourceConceptId + ") Total = " + conceptsToCopy.size());
+        loadAvailableThesauri();
     }
 
-    public void preparePasteUnderCurrentConcept() {
-        dropToRoot = false;
-        if (!validatePaste()) {
-            return;
-        }
-        PrimeFaces.current().ajax().update(":containerIndex:v2CopyBetweenThesoForm");
-        PrimeFaces.current().executeScript("PF('v2CopyBetweenThesoDlg').show();");
+    public void onTargetThesaurusChange() {
+        destMode = "";
+        parentConceptId = "";
+        parentLabel = "";
+        errorMessage = null;
     }
 
-    public void preparePasteAtRoot() {
-        dropToRoot = true;
-        if (!validatePaste()) {
-            return;
-        }
-        PrimeFaces.current().ajax().update(":containerIndex:v2CopyBetweenThesoToRootForm");
-        PrimeFaces.current().executeScript("PF('v2CopyBetweenThesoToRootDlg').show();");
-    }
-
-    public boolean validatePaste() {
-        if (!isPasteAvailable()) {
+    public boolean submitCopyToAnotherThesaurus() {
+        errorMessage = null;
+        if (!isCopyActionsAvailable() || !conceptSelectionContext.hasSelection()) {
+            errorMessage = "Action non autorisée";
             return false;
         }
-        MutationResult result = conceptCopyBetweenThesaurusMutationService.validateIdsAvailable(
-                thesaurusContext.resolveThesaurusId(), conceptsToCopy);
-        if (!result.success()) {
-            MessageUtils.showErrorMessage(result.message());
-            return false;
-        }
-        return true;
-    }
-
-    public void paste() {
         Integer userId = userSession.getCurrentUserId();
-        if (userId == null || !copyOn) {
-            MessageUtils.showErrorMessage("Action non autorisée");
-            return;
+        if (userId == null || StringUtils.isBlank(targetThesaurusId) || conceptsToCopy.isEmpty()) {
+            errorMessage = "Choisissez un thésaurus de destination";
+            return false;
         }
-        String targetTheso = thesaurusContext.resolveThesaurusId();
-        String targetParent = dropToRoot || !conceptSelectionContext.hasSelection()
-                ? null
-                : conceptSelectionContext.getConceptId();
-        if (!dropToRoot && StringUtils.isBlank(targetParent)) {
-            MessageUtils.showErrorMessage("Aucune sélection !");
-            return;
+        if (!"root".equals(destMode) && !"parent".equals(destMode)) {
+            errorMessage = "Choisissez un emplacement";
+            return false;
         }
-
+        boolean toRoot = "root".equals(destMode);
+        String parentId = toRoot ? null : parentConceptId;
+        if (!toRoot && StringUtils.isBlank(parentId)) {
+            errorMessage = "Choisissez un concept parent, ou la racine";
+            return false;
+        }
+        MutationResult valid = conceptCopyBetweenThesaurusMutationService.validateIdsAvailable(
+                targetThesaurusId, conceptsToCopy);
+        if (valid == null || !valid.success()) {
+            errorMessage = valid != null ? valid.message() : "La copie a échoué";
+            return false;
+        }
         MutationResult result = conceptCopyBetweenThesaurusMutationService.copyBranch(
                 new CopyBranchBetweenThesaurusCommand(
                         sourceThesaurusId,
                         sourceConceptId,
-                        targetTheso,
-                        targetParent,
-                        dropToRoot,
-                        identifierType,
+                        targetThesaurusId,
+                        parentId,
+                        toRoot,
+                        StringUtils.defaultIfBlank(identifierType, "sans"),
                         userId
                 ));
-        if (!result.success()) {
-            MessageUtils.showErrorMessage(result.message());
+        if (result == null || !result.success()) {
+            errorMessage = result != null ? result.message() : "La copie a échoué";
+            return false;
+        }
+        flashSuccess(StringUtils.defaultIfBlank(result.message(),
+                sourceLabel + " → " + getTargetThesaurusLabel()));
+        return true;
+    }
+
+    private void loadAvailableThesauri() {
+        Integer userId = userSession.getCurrentUserId();
+        if (userId == null) {
+            availableThesauri = Collections.emptyList();
             return;
         }
-
-        String message = dropToRoot
-                ? sourceLabel + " -> Root"
-                : sourceLabel + " -> " + conceptSelectionContext.getSummary().preferredLabel();
-        String openedId = sourceConceptId;
-        reset();
-
-        ThesaurusBrowseBean browse = thesaurusBrowseBean.getIfAvailable();
-        if (browse != null) {
-            browse.invalidateConceptTree();
-            browse.invalidateCollectionTree();
-            browse.openConcept(openedId, true);
-        }
-        PrimeFaces.current().executeScript(
-                "PF('v2CopyBetweenThesoDlg') && PF('v2CopyBetweenThesoDlg').hide();"
-                        + "PF('v2CopyBetweenThesoToRootDlg') && PF('v2CopyBetweenThesoToRootDlg').hide();");
-        PrimeFaces.current().ajax().update(
-                ":containerIndex:formLeftTab",
-                ":containerIndex:formRightTab",
-                ":messageIndex"
+        availableThesauri = conceptTransferMutationService.listAdminThesauri(
+                userId,
+                userSession.isSuperAdmin(),
+                thesaurusContext.resolveThesaurusId(),
+                thesaurusContext.resolveWorkLanguage()
         );
-        MessageUtils.showInformationMessage(message);
     }
 
-    public void cancelCopy() {
-        reset();
-        MessageUtils.showInformationMessage("Copie annulée");
-    }
-
-    public void reset() {
-        copyOn = false;
-        dropToRoot = false;
-        sourceThesaurusId = null;
-        sourceConceptId = null;
-        sourceLabel = null;
-        conceptsToCopy = Collections.emptyList();
-        identifierType = "sans";
+    private void flashSuccess(String message) {
+        flashMessage = message;
+        flashToken = String.valueOf(System.currentTimeMillis());
     }
 }

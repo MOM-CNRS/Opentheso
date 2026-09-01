@@ -1,17 +1,13 @@
 package fr.cnrs.opentheso.v2.concept.write.ui;
 
-import fr.cnrs.opentheso.v2.concept.write.persistence.BranchConceptSupport;
-import fr.cnrs.opentheso.utils.MessageUtils;
 import fr.cnrs.opentheso.v2.concept.session.ConceptNavigationSupport;
 import fr.cnrs.opentheso.v2.concept.session.ConceptSelectionContext;
-import fr.cnrs.opentheso.v2.concept.write.model.ConceptSearchSuggestion;
 import fr.cnrs.opentheso.v2.concept.write.model.ConceptWriteThesaurusOption;
 import fr.cnrs.opentheso.v2.concept.write.model.MutationResult;
 import fr.cnrs.opentheso.v2.concept.write.model.command.MoveConceptToThesaurusCommand;
+import fr.cnrs.opentheso.v2.concept.write.persistence.BranchConceptSupport;
 import fr.cnrs.opentheso.v2.concept.write.policy.ConceptWritePolicy;
 import fr.cnrs.opentheso.v2.concept.write.service.ConceptTransferMutationService;
-import fr.cnrs.opentheso.v2.concept.write.service.ConceptWriteSearchService;
-import fr.cnrs.opentheso.v2.setting.service.ThesaurusAccessService;
 import fr.cnrs.opentheso.v2.setting.ui.ThesaurusContext;
 import fr.cnrs.opentheso.v2.shared.ui.UserSession;
 import jakarta.faces.view.ViewScoped;
@@ -20,7 +16,6 @@ import lombok.Getter;
 import lombok.RequiredArgsConstructor;
 import lombok.Setter;
 import org.apache.commons.lang3.StringUtils;
-import org.primefaces.PrimeFaces;
 
 import java.io.Serializable;
 import java.util.Collections;
@@ -34,17 +29,22 @@ import java.util.List;
 public class ConceptTransferEditorBean implements Serializable {
 
     private final ConceptTransferMutationService conceptTransferMutationService;
-    private final ConceptWriteSearchService conceptWriteSearchService;
     private final ConceptSelectionContext conceptSelectionContext;
     private final ConceptNavigationSupport conceptNavigationSupport;
     private final ThesaurusContext thesaurusContext;
     private final UserSession userSession;
     private final ConceptWritePolicy conceptWritePolicy;
-    private final ThesaurusAccessService thesaurusAccessService;
     private final BranchConceptSupport branchConceptSupport;
 
+    private String sourceThesaurusLabel;
+    private String sourceLabel;
     private String targetThesaurusId;
-    private ConceptSearchSuggestion parentSearchSelected;
+    private String destMode = "";
+    private String parentConceptId;
+    private String parentLabel;
+    private String errorMessage;
+    private String flashMessage;
+    private String flashToken;
     private List<String> branchConceptIds = Collections.emptyList();
     private List<ConceptWriteThesaurusOption> availableThesauri = Collections.emptyList();
 
@@ -52,45 +52,86 @@ public class ConceptTransferEditorBean implements Serializable {
         return conceptWritePolicy.canTransferConcept(userSession);
     }
 
+    public boolean isTargetThesaurusSelected() {
+        return StringUtils.isNotBlank(targetThesaurusId);
+    }
+
+    public boolean isParentSelected() {
+        return StringUtils.isNotBlank(parentConceptId);
+    }
+
+    public boolean isSubmitReady() {
+        if (!isTargetThesaurusSelected()) {
+            return false;
+        }
+        if ("root".equals(destMode)) {
+            return true;
+        }
+        return "parent".equals(destMode) && isParentSelected();
+    }
+
+    public String getTargetThesaurusLabel() {
+        if (StringUtils.isBlank(targetThesaurusId)) {
+            return "";
+        }
+        return availableThesauri.stream()
+                .filter(th -> targetThesaurusId.equalsIgnoreCase(th.id()))
+                .map(th -> StringUtils.defaultIfBlank(th.title(), th.id()) + " (" + th.id() + ")")
+                .findFirst()
+                .orElse(targetThesaurusId);
+    }
+
     public void prepareMoveToAnotherThesaurus() {
+        errorMessage = null;
+        destMode = "";
+        parentConceptId = "";
+        parentLabel = "";
+        targetThesaurusId = null;
         if (!conceptSelectionContext.hasSelection()) {
+            branchConceptIds = Collections.emptyList();
+            availableThesauri = Collections.emptyList();
+            sourceLabel = "";
+            sourceThesaurusLabel = "";
             return;
         }
-        String thesaurusId = thesaurusContext.resolveThesaurusId();
-        String conceptId = conceptSelectionContext.getConceptId();
-        branchConceptIds = branchConceptSupport.collectBranchConceptIds(thesaurusId, conceptId);
-        targetThesaurusId = null;
-        parentSearchSelected = null;
+        sourceThesaurusLabel = StringUtils.defaultIfBlank(
+                thesaurusContext.getCurrentThesaurusTitle(),
+                thesaurusContext.resolveThesaurusId());
+        sourceLabel = conceptSelectionContext.getSummary().preferredLabel();
+        branchConceptIds = branchConceptSupport.collectBranchConceptIds(
+                thesaurusContext.resolveThesaurusId(),
+                conceptSelectionContext.getConceptId());
         loadAvailableThesauri();
     }
 
     public void onTargetThesaurusChange() {
-        parentSearchSelected = null;
+        destMode = "";
+        parentConceptId = "";
+        parentLabel = "";
+        errorMessage = null;
     }
 
-    public List<ConceptSearchSuggestion> autocompleteParentConcept(String query) {
-        if (StringUtils.isBlank(targetThesaurusId)) {
-            return Collections.emptyList();
-        }
-        return conceptWriteSearchService.autocompleteRelationTarget(
-                query,
-                thesaurusContext.resolveWorkLanguage(),
-                targetThesaurusId,
-                true
-        );
-    }
-
-    public void submitMoveToAnotherThesaurus() {
+    public boolean submitMoveToAnotherThesaurus() {
+        errorMessage = null;
         if (!isTransferActionsAvailable() || !conceptSelectionContext.hasSelection()) {
-            MessageUtils.showErrorMessage("Action non autorisée");
-            return;
+            errorMessage = "Action non autorisée";
+            return false;
         }
         Integer userId = userSession.getCurrentUserId();
         if (userId == null || StringUtils.isBlank(targetThesaurusId) || branchConceptIds.isEmpty()) {
-            MessageUtils.showErrorMessage("Aucune sélection !");
-            return;
+            errorMessage = "Choisissez un thésaurus de destination";
+            return false;
         }
-        String parentConceptId = parentSearchSelected != null ? parentSearchSelected.conceptId() : null;
+        if (!"root".equals(destMode) && !"parent".equals(destMode)) {
+            errorMessage = "Choisissez un emplacement";
+            return false;
+        }
+        boolean toRoot = "root".equals(destMode);
+        String parentId = toRoot ? null : parentConceptId;
+        if (!toRoot && StringUtils.isBlank(parentId)) {
+            errorMessage = "Choisissez un concept parent, ou la racine";
+            return false;
+        }
         var command = new MoveConceptToThesaurusCommand(
                 thesaurusContext.resolveThesaurusId(),
                 targetThesaurusId,
@@ -99,21 +140,22 @@ public class ConceptTransferEditorBean implements Serializable {
                 thesaurusContext.resolveWorkLanguage(),
                 userId,
                 StringUtils.defaultString(userSession.getCurrentUsername()),
-                parentConceptId
+                parentId
         );
         try {
             MutationResult result = conceptTransferMutationService.moveConceptToThesaurus(command);
             if (result == null || !result.success()) {
-                MessageUtils.showErrorMessage(result != null ? result.message() : "Erreur");
-                return;
+                errorMessage = result != null ? result.message() : "Le déplacement a échoué";
+                return false;
             }
             conceptNavigationSupport.invalidateConceptTree();
             conceptNavigationSupport.openThesaurusHome();
-            PrimeFaces.current().ajax().update(":containerIndex:formRightTab :containerIndex:tabTree :messageIndex");
-            MessageUtils.showInformationMessage(result.message());
-            PrimeFaces.current().executeScript("PF('v2MoveToAnotherThesoDlg').hide();");
+            flashSuccess(StringUtils.defaultIfBlank(result.message(),
+                    sourceLabel + " → " + getTargetThesaurusLabel()));
+            return true;
         } catch (RuntimeException exception) {
-            MessageUtils.showErrorMessage("Le déplacement a échoué !");
+            errorMessage = "Le déplacement a échoué";
+            return false;
         }
     }
 
@@ -131,15 +173,8 @@ public class ConceptTransferEditorBean implements Serializable {
         );
     }
 
-    private boolean canManageCurrentThesaurus() {
-        Integer userId = userSession.getCurrentUserId();
-        if (userId == null) {
-            return false;
-        }
-        return thesaurusAccessService.canManageThesaurus(
-                userId,
-                userSession.isSuperAdmin(),
-                thesaurusContext.resolveThesaurusId()
-        );
+    private void flashSuccess(String message) {
+        flashMessage = message;
+        flashToken = String.valueOf(System.currentTimeMillis());
     }
 }

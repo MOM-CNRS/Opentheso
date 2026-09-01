@@ -1653,11 +1653,17 @@ function bindGpsMap() {
 function applyDndFlash() {
   const host = document.getElementById("previewDetailState");
   if (!host) return;
-  const msg = host.getAttribute("data-flash-dnd");
-  const token = host.getAttribute("data-flash-dnd-token");
-  if (!msg || !token || token === applyConceptLabelUi._dndToken) return;
-  applyConceptLabelUi._dndToken = token;
-  if (typeof toast === "function") toast(msg, { soft: true });
+  [
+    ["data-flash-dnd", "data-flash-dnd-token", "_dndToken"],
+    ["data-flash-copy", "data-flash-copy-token", "_copyToken"],
+    ["data-flash-move", "data-flash-move-token", "_moveToken"]
+  ].forEach(([msgAttr, tokenAttr, key]) => {
+    const msg = host.getAttribute(msgAttr);
+    const token = host.getAttribute(tokenAttr);
+    if (!msg || !token || token === applyConceptLabelUi[key]) return;
+    applyConceptLabelUi[key] = token;
+    if (typeof toast === "function") toast(msg, { soft: true });
+  });
 }
 
 function paintCutNode() {

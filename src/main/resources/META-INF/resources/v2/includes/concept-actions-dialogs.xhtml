@@ -303,24 +303,141 @@
     </div>
   </div>
 
-  <div class="block-overlay confirm-overlay" id="cvDlgPasteOther" hidden="hidden"
+  <div class="block-overlay confirm-overlay" id="cvDlgCopyTheso" hidden="hidden"
        data-act="cv-dlg-dismiss" role="presentation">
-    <div class="confirm-modal is-form" role="dialog" aria-modal="true" data-act="cv-dlg-modal">
-      <div class="confirm-h">#{v2LocaleBean.getMsg('rightbody.concept.paste')}</div>
-      <p class="confirm-p">#{v2ConceptCopyBetweenThesaurusBean.sourceLabel}</p>
-      <label class="cv-dlg-field">
-        <span>ID</span>
-        <h:selectOneMenu styleClass="st-input" value="#{v2ConceptCopyBetweenThesaurusBean.identifierType}">
-          <f:selectItem itemValue="sans" itemLabel="sans"/>
-          <f:selectItem itemValue="ark" itemLabel="ARK"/>
-          <f:selectItem itemValue="handle" itemLabel="Handle"/>
-        </h:selectOneMenu>
-      </label>
+    <div class="confirm-modal is-form is-theso" role="dialog" aria-modal="true"
+         aria-labelledby="cvDlgCopyThesoTitle" data-act="cv-dlg-modal">
+      <div class="cv-dlg-head">
+        <span class="th-create-ico" aria-hidden="true">
+          <svg viewBox="0 0 24 24"><path d="M8 8h12v12H8z"/><path d="M4 16V4h12"/></svg>
+        </span>
+        <div class="th-create-txt">
+          <div class="confirm-h" id="cvDlgCopyThesoTitle">#{v2LocaleBean.getMsg('rightbody.concept.copy_to_another_thesaurus')}</div>
+          <p class="th-create-hint">#{v2LocaleBean.getMsg('v2.concept.copyHint')}</p>
+        </div>
+      </div>
+      <div class="cv-dlg-body">
+        <div class="cv-dlg-card">
+          <div class="cv-dlg-card-h">#{v2LocaleBean.getMsg('v2.concept.conceptsToCopy')}</div>
+          <div class="cv-dlg-branch">
+            <strong>#{v2ConceptCopyBetweenThesaurusBean.sourceLabel}</strong>
+            <span>#{v2ConceptCopyBetweenThesaurusBean.conceptsToCopy.size()} #{v2LocaleBean.getMsg('v2.concept.branchUnit')}</span>
+          </div>
+        </div>
+        <ui:fragment rendered="#{empty v2ConceptCopyBetweenThesaurusBean.availableThesauri}">
+          <p class="confirm-p">#{v2LocaleBean.getMsg('v2.concept.copyNoTheso')}</p>
+        </ui:fragment>
+        <ui:fragment rendered="#{not empty v2ConceptCopyBetweenThesaurusBean.availableThesauri}">
+          <label class="cv-dlg-field">
+            <span>#{v2LocaleBean.getMsg('concept.toTheso')}</span>
+            <h:selectOneMenu id="cvCopyThesoTarget" styleClass="st-input"
+                             value="#{v2ConceptCopyBetweenThesaurusBean.targetThesaurusId}">
+              <f:selectItem itemValue="" itemLabel="#{v2LocaleBean.getMsg('menu.select_thesaurus')}"/>
+              <f:selectItems value="#{v2ConceptCopyBetweenThesaurusBean.availableThesauri}" var="th"
+                             itemValue="#{th.id}" itemLabel="#{th.title} (#{th.id})"/>
+              <f:ajax event="valueChange" execute="@this"
+                      listener="#{v2ConceptFicheMenuBean.onCopyTargetThesaurusChange}"
+                      render=":previewDetailForm:cvCopyThesoLive" onevent="onCvThesoTargetAjax"/>
+            </h:selectOneMenu>
+          </label>
+        </ui:fragment>
+        <h:panelGroup id="cvCopyThesoLive" layout="block" styleClass="cv-dlg-theso-live">
+          <div class="cv-dlg-move">
+            <div class="cv-dlg-move-node">
+              <span class="cv-dlg-move-k">#{v2LocaleBean.getMsg('concept.fromTheso')}</span>
+              <span class="cv-dlg-move-v">#{v2ConceptCopyBetweenThesaurusBean.sourceThesaurusLabel}</span>
+            </div>
+            <span class="cv-dlg-move-arrow" aria-hidden="true">
+              <svg viewBox="0 0 24 24"><path d="M5 12h14"/><path d="m13 6 6 6-6 6"/></svg>
+            </span>
+            <div class="cv-dlg-move-node is-to">
+              <span class="cv-dlg-move-k">#{v2LocaleBean.getMsg('concept.toTheso')}</span>
+              <span class="cv-dlg-move-v">#{v2ConceptCopyBetweenThesaurusBean.targetThesaurusSelected ? v2ConceptCopyBetweenThesaurusBean.targetThesaurusLabel : v2LocaleBean.getMsg('menu.select_thesaurus')}</span>
+            </div>
+          </div>
+          <ui:fragment rendered="#{v2ConceptCopyBetweenThesaurusBean.targetThesaurusSelected}">
+            <div class="cv-dlg-field">
+              <span>#{v2LocaleBean.getMsg('v2.concept.dest')}</span>
+              <div class="cv-dlg-dest">
+                <button type="button" class="cv-dlg-dest-btn#{v2ConceptCopyBetweenThesaurusBean.destMode eq 'root' ? ' is-on' : ''}"
+                        data-act="theso-dest" data-mode="root" data-prefix="cvCopy">
+                  #{v2LocaleBean.getMsg('v2.concept.destRoot')}
+                </button>
+                <button type="button" class="cv-dlg-dest-btn#{v2ConceptCopyBetweenThesaurusBean.destMode eq 'parent' ? ' is-on' : ''}"
+                        data-act="theso-dest" data-mode="parent" data-prefix="cvCopy">
+                  #{v2LocaleBean.getMsg('v2.concept.destParent')}
+                </button>
+              </div>
+            </div>
+            <h:inputHidden id="cvCopyDestMode" styleClass="cv-theso-dest-mode"
+                           value="#{v2ConceptCopyBetweenThesaurusBean.destMode}"/>
+            <div class="cv-theso-parent#{v2ConceptCopyBetweenThesaurusBean.destMode eq 'parent' ? '' : ' is-off'}"
+                 id="cvCopyParentBox">
+              <div class="cv-dlg-field">
+                <span>#{v2LocaleBean.getMsg('v2.concept.destParentHint')}</span>
+                <div class="coll-pick cv-theso-ac"
+                     data-theso="#{v2ConceptCopyBetweenThesaurusBean.targetThesaurusId}"
+                     data-lang="#{v2ThesaurusContext.currentLanguage}"
+                     data-empty="#{v2LocaleBean.getMsg('v2.concept.destEmpty')}"
+                     data-hint="#{v2LocaleBean.getMsg('v2.concept.destTypeHint')}">
+                  <h:inputHidden id="cvCopyParentId" styleClass="cv-theso-parent-id"
+                                 value="#{v2ConceptCopyBetweenThesaurusBean.parentConceptId}"/>
+                  <h:inputHidden id="cvCopyParentLabel" styleClass="cv-theso-parent-label"
+                                 value="#{v2ConceptCopyBetweenThesaurusBean.parentLabel}"/>
+                  <div class="coll-pick-chips" hidden="hidden"></div>
+                  <div class="search-field coll-pick-field">
+                    <span class="search-ico" aria-hidden="true">⌕</span>
+                    <input type="text" class="search-input cv-theso-ac-q"
+                           placeholder="#{v2LocaleBean.getMsg('v2.concept.destParentHint')}"
+                           autocomplete="off" spellcheck="false"
+                           aria-autocomplete="list" aria-expanded="false"
+                           aria-label="#{v2LocaleBean.getMsg('v2.concept.destParentHint')}"/>
+                    <button type="button" class="search-clear" hidden="hidden"
+                            data-act="theso-query-clear" title="#{v2LocaleBean.getMsg('v2.cancel')}">×</button>
+                    <button type="button" class="coll-pick-caret" data-act="theso-parent-toggle" tabindex="-1"
+                            title="#{v2LocaleBean.getMsg('v2.concept.destShowAll')}"
+                            aria-label="#{v2LocaleBean.getMsg('v2.concept.destShowAll')}">
+                      <span aria-hidden="true">▾</span>
+                    </button>
+                  </div>
+                  <div class="ac" hidden="hidden" role="listbox">
+                    <div class="ac-empty">#{v2LocaleBean.getMsg('v2.concept.destTypeHint')}</div>
+                    <div class="coll-ac-list"></div>
+                    <button type="button" class="ac-footer" data-act="theso-parent-more" hidden="hidden">
+                      #{v2LocaleBean.getMsg('v2.concept.destMorePrefix')} <strong class="cv-theso-ac-count">0</strong> #{v2LocaleBean.getMsg('v2.concept.branchUnit')}<span class="ac-enter">↵</span>
+                    </button>
+                  </div>
+                </div>
+              </div>
+            </div>
+          </ui:fragment>
+          <ui:fragment rendered="#{not empty v2ConceptCopyBetweenThesaurusBean.errorMessage}">
+            <p class="confirm-p is-warn">#{v2ConceptCopyBetweenThesaurusBean.errorMessage}</p>
+          </ui:fragment>
+        </h:panelGroup>
+        <div class="cv-dlg-field">
+          <span>#{v2LocaleBean.getMsg('v2.concept.idKeep')}</span>
+          <h:inputHidden id="cvCopyIdType" styleClass="cv-theso-id-type"
+                         value="#{v2ConceptCopyBetweenThesaurusBean.identifierType}"/>
+          <div class="cv-dlg-dest">
+            <button type="button" class="cv-dlg-dest-btn#{v2ConceptCopyBetweenThesaurusBean.identifierType eq 'sans' or empty v2ConceptCopyBetweenThesaurusBean.identifierType ? ' is-on' : ''}"
+                    data-act="theso-id" data-type="sans">#{v2LocaleBean.getMsg('v2.concept.idNone')}</button>
+            <button type="button" class="cv-dlg-dest-btn#{v2ConceptCopyBetweenThesaurusBean.identifierType eq 'ark' ? ' is-on' : ''}"
+                    data-act="theso-id" data-type="ark">#{v2LocaleBean.getMsg('v2.concept.idArk')}</button>
+            <button type="button" class="cv-dlg-dest-btn#{v2ConceptCopyBetweenThesaurusBean.identifierType eq 'handle' ? ' is-on' : ''}"
+                    data-act="theso-id" data-type="handle">#{v2LocaleBean.getMsg('v2.concept.idHandle')}</button>
+          </div>
+          <p class="cv-dlg-ark-warn#{v2ConceptCopyBetweenThesaurusBean.identifierType eq 'ark' ? '' : ' is-off'}">
+            #{v2LocaleBean.getMsg('v2.concept.idArkWarn')}
+          </p>
+        </div>
+      </div>
       <div class="confirm-actions">
         <button type="button" class="abt-cancel confirm-cancel" data-act="cv-dlg-dismiss">#{v2LocaleBean.getMsg('v2.cancel')}</button>
-        <h:commandLink styleClass="abt-save" action="#{v2ConceptFicheMenuBean.submitPasteFromAnotherThesaurus}">
+        <h:commandLink styleClass="abt-save cv-theso-submit#{v2ConceptCopyBetweenThesaurusBean.submitReady ? '' : ' is-off'}"
+                       action="#{v2ConceptFicheMenuBean.submitCopyToAnotherThesaurus}">
           <f:ajax execute="@form" render=":previewDetailForm:previewDetail :previewTree" onevent="onCvMenuAjax"/>
-          #{v2LocaleBean.getMsg('rightbody.concept.paste')}
+          #{v2LocaleBean.getMsg('v2.concept.copyConfirm')}
         </h:commandLink>
       </div>
     </div>
@@ -328,21 +445,123 @@
 
   <div class="block-overlay confirm-overlay" id="cvDlgMoveTheso" hidden="hidden"
        data-act="cv-dlg-dismiss" role="presentation">
-    <div class="confirm-modal is-form" role="dialog" aria-modal="true" data-act="cv-dlg-modal">
-      <div class="confirm-h">#{v2LocaleBean.getMsg('concept.moveToAnotherThesoTooltip')}</div>
-      <label class="cv-dlg-field">
-        <span>#{v2LocaleBean.getMsg('concept.moveToAnotherTheso')}</span>
-        <h:selectOneMenu styleClass="st-input" value="#{v2ConceptTransferEditorBean.targetThesaurusId}">
-          <f:selectItem itemValue="" itemLabel="…"/>
-          <f:selectItems value="#{v2ConceptTransferEditorBean.availableThesauri}" var="th"
-                         itemValue="#{th.id}" itemLabel="#{th.title}"/>
-        </h:selectOneMenu>
-      </label>
+    <div class="confirm-modal is-form is-theso" role="dialog" aria-modal="true"
+         aria-labelledby="cvDlgMoveThesoTitle" data-act="cv-dlg-modal">
+      <div class="cv-dlg-head">
+        <span class="th-create-ico" aria-hidden="true">
+          <svg viewBox="0 0 24 24"><path d="M5 12h14"/><path d="m13 6 6 6-6 6"/></svg>
+        </span>
+        <div class="th-create-txt">
+          <div class="confirm-h" id="cvDlgMoveThesoTitle">#{v2LocaleBean.getMsg('concept.moveToAnotherThesoTooltip')}</div>
+          <p class="th-create-hint">#{v2LocaleBean.getMsg('v2.concept.moveHint')}</p>
+        </div>
+      </div>
+      <div class="cv-dlg-body">
+        <div class="cv-dlg-card">
+          <div class="cv-dlg-card-h">#{v2LocaleBean.getMsg('concept.conceptsToMove')}</div>
+          <div class="cv-dlg-branch">
+            <strong>#{v2ConceptTransferEditorBean.sourceLabel}</strong>
+            <span>#{v2ConceptTransferEditorBean.branchConceptIds.size()} #{v2LocaleBean.getMsg('v2.concept.branchUnit')}</span>
+          </div>
+        </div>
+        <ui:fragment rendered="#{empty v2ConceptTransferEditorBean.availableThesauri}">
+          <p class="confirm-p">#{v2LocaleBean.getMsg('v2.concept.moveNoTheso')}</p>
+        </ui:fragment>
+        <ui:fragment rendered="#{not empty v2ConceptTransferEditorBean.availableThesauri}">
+          <label class="cv-dlg-field">
+            <span>#{v2LocaleBean.getMsg('concept.toTheso')}</span>
+            <h:selectOneMenu id="cvMoveThesoTarget" styleClass="st-input"
+                             value="#{v2ConceptTransferEditorBean.targetThesaurusId}">
+              <f:selectItem itemValue="" itemLabel="#{v2LocaleBean.getMsg('menu.select_thesaurus')}"/>
+              <f:selectItems value="#{v2ConceptTransferEditorBean.availableThesauri}" var="th"
+                             itemValue="#{th.id}" itemLabel="#{th.title} (#{th.id})"/>
+              <f:ajax event="valueChange" execute="@this"
+                      listener="#{v2ConceptFicheMenuBean.onMoveTargetThesaurusChange}"
+                      render=":previewDetailForm:cvMoveThesoLive" onevent="onCvThesoTargetAjax"/>
+            </h:selectOneMenu>
+          </label>
+        </ui:fragment>
+        <h:panelGroup id="cvMoveThesoLive" layout="block" styleClass="cv-dlg-theso-live">
+          <div class="cv-dlg-move">
+            <div class="cv-dlg-move-node">
+              <span class="cv-dlg-move-k">#{v2LocaleBean.getMsg('concept.fromTheso')}</span>
+              <span class="cv-dlg-move-v">#{v2ConceptTransferEditorBean.sourceThesaurusLabel}</span>
+            </div>
+            <span class="cv-dlg-move-arrow" aria-hidden="true">
+              <svg viewBox="0 0 24 24"><path d="M5 12h14"/><path d="m13 6 6 6-6 6"/></svg>
+            </span>
+            <div class="cv-dlg-move-node is-to">
+              <span class="cv-dlg-move-k">#{v2LocaleBean.getMsg('concept.toTheso')}</span>
+              <span class="cv-dlg-move-v">#{v2ConceptTransferEditorBean.targetThesaurusSelected ? v2ConceptTransferEditorBean.targetThesaurusLabel : v2LocaleBean.getMsg('menu.select_thesaurus')}</span>
+            </div>
+          </div>
+          <ui:fragment rendered="#{v2ConceptTransferEditorBean.targetThesaurusSelected}">
+            <div class="cv-dlg-field">
+              <span>#{v2LocaleBean.getMsg('v2.concept.dest')}</span>
+              <div class="cv-dlg-dest">
+                <button type="button" class="cv-dlg-dest-btn#{v2ConceptTransferEditorBean.destMode eq 'root' ? ' is-on' : ''}"
+                        data-act="theso-dest" data-mode="root" data-prefix="cvMove">
+                  #{v2LocaleBean.getMsg('v2.concept.destRoot')}
+                </button>
+                <button type="button" class="cv-dlg-dest-btn#{v2ConceptTransferEditorBean.destMode eq 'parent' ? ' is-on' : ''}"
+                        data-act="theso-dest" data-mode="parent" data-prefix="cvMove">
+                  #{v2LocaleBean.getMsg('v2.concept.destParent')}
+                </button>
+              </div>
+            </div>
+            <h:inputHidden id="cvMoveDestMode" styleClass="cv-theso-dest-mode"
+                           value="#{v2ConceptTransferEditorBean.destMode}"/>
+            <div class="cv-theso-parent#{v2ConceptTransferEditorBean.destMode eq 'parent' ? '' : ' is-off'}"
+                 id="cvMoveParentBox">
+              <div class="cv-dlg-field">
+                <span>#{v2LocaleBean.getMsg('v2.concept.destParentHint')}</span>
+                <div class="coll-pick cv-theso-ac"
+                     data-theso="#{v2ConceptTransferEditorBean.targetThesaurusId}"
+                     data-lang="#{v2ThesaurusContext.currentLanguage}"
+                     data-empty="#{v2LocaleBean.getMsg('v2.concept.destEmpty')}"
+                     data-hint="#{v2LocaleBean.getMsg('v2.concept.destTypeHint')}">
+                  <h:inputHidden id="cvMoveParentId" styleClass="cv-theso-parent-id"
+                                 value="#{v2ConceptTransferEditorBean.parentConceptId}"/>
+                  <h:inputHidden id="cvMoveParentLabel" styleClass="cv-theso-parent-label"
+                                 value="#{v2ConceptTransferEditorBean.parentLabel}"/>
+                  <div class="coll-pick-chips" hidden="hidden"></div>
+                  <div class="search-field coll-pick-field">
+                    <span class="search-ico" aria-hidden="true">⌕</span>
+                    <input type="text" class="search-input cv-theso-ac-q"
+                           placeholder="#{v2LocaleBean.getMsg('v2.concept.destParentHint')}"
+                           autocomplete="off" spellcheck="false"
+                           aria-autocomplete="list" aria-expanded="false"
+                           aria-label="#{v2LocaleBean.getMsg('v2.concept.destParentHint')}"/>
+                    <button type="button" class="search-clear" hidden="hidden"
+                            data-act="theso-query-clear" title="#{v2LocaleBean.getMsg('v2.cancel')}">×</button>
+                    <button type="button" class="coll-pick-caret" data-act="theso-parent-toggle" tabindex="-1"
+                            title="#{v2LocaleBean.getMsg('v2.concept.destShowAll')}"
+                            aria-label="#{v2LocaleBean.getMsg('v2.concept.destShowAll')}">
+                      <span aria-hidden="true">▾</span>
+                    </button>
+                  </div>
+                  <div class="ac" hidden="hidden" role="listbox">
+                    <div class="ac-empty">#{v2LocaleBean.getMsg('v2.concept.destTypeHint')}</div>
+                    <div class="coll-ac-list"></div>
+                    <button type="button" class="ac-footer" data-act="theso-parent-more" hidden="hidden">
+                      #{v2LocaleBean.getMsg('v2.concept.destMorePrefix')} <strong class="cv-theso-ac-count">0</strong> #{v2LocaleBean.getMsg('v2.concept.branchUnit')}<span class="ac-enter">↵</span>
+                    </button>
+                  </div>
+                </div>
+              </div>
+            </div>
+          </ui:fragment>
+          <ui:fragment rendered="#{not empty v2ConceptTransferEditorBean.errorMessage}">
+            <p class="confirm-p is-warn">#{v2ConceptTransferEditorBean.errorMessage}</p>
+          </ui:fragment>
+        </h:panelGroup>
+      </div>
       <div class="confirm-actions">
         <button type="button" class="abt-cancel confirm-cancel" data-act="cv-dlg-dismiss">#{v2LocaleBean.getMsg('v2.cancel')}</button>
-        <h:commandLink styleClass="abt-save" action="#{v2ConceptFicheMenuBean.submitMoveToAnotherThesaurus}">
+        <h:commandLink styleClass="abt-save cv-theso-submit#{v2ConceptTransferEditorBean.submitReady ? '' : ' is-off'}"
+                       action="#{v2ConceptFicheMenuBean.submitMoveToAnotherThesaurus}">
           <f:ajax execute="@form" render=":previewDetailForm:previewDetail :previewTree" onevent="onCvMenuAjax"/>
-          #{v2LocaleBean.getMsg('concept.moveToAnotherTheso')}
+          #{v2LocaleBean.getMsg('v2.concept.moveConfirm')}
         </h:commandLink>
       </div>
     </div>

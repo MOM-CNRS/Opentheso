@@ -46,6 +46,10 @@
              data-kind="#{v2ThesaurusViewBean.selectedKind}"
              data-flash-dnd="#{v2ConceptTreeDragDropBean.flashMessage}"
              data-flash-dnd-token="#{v2ConceptTreeDragDropBean.flashToken}"
+             data-flash-copy="#{v2ConceptCopyBetweenThesaurusBean.flashMessage}"
+             data-flash-copy-token="#{v2ConceptCopyBetweenThesaurusBean.flashToken}"
+             data-flash-move="#{v2ConceptTransferEditorBean.flashMessage}"
+             data-flash-move-token="#{v2ConceptTransferEditorBean.flashToken}"
              data-cut-id="#{v2ConceptTreeDragDropBean.cutOn ? v2ConceptTreeDragDropBean.cutConceptId : ''}">
           <ui:fragment rendered="#{v2ThesaurusViewBean.conceptSelected or v2ThesaurusViewBean.candidateSelected}">
             <ui:include src="concept-form.xhtml"/>

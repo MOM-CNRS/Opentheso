@@ -500,6 +500,7 @@ a.th-id{flex:1}
   .login-go.is-busy{animation:none}
 }
 .confirm-overlay[hidden],
+.block-overlay[hidden],
 .block-overlay.is-off,
 .confirm-overlay.is-off{display:none!important}
 .confirm-modal{
@@ -600,7 +601,11 @@ button.copy-btn.is-copied{color:var(--accent)}
 button.coll-item{
   width:100%;border:0;background:none;font:inherit;text-align:left;cursor:pointer
 }
-#viewLive.is-loading #previewDetailForm{opacity:.38;pointer-events:none;transition:opacity .16s ease}
+#viewLive.is-loading #previewDetailState > .cv,
+#viewLive.is-loading #previewDetailState > .empty{
+  opacity:.38;pointer-events:none;transition:opacity .16s ease
+}
+#viewLive.is-loading .confirm-overlay:not([hidden]){pointer-events:auto}
 #viewLive.is-ready.is-opening .cv{animation:cv-in .22s cubic-bezier(.22,.8,.28,1)}
 .cv-progress{display:none;position:sticky;top:0;z-index:8;height:2px;margin:0 0 10px;
   background:var(--line);overflow:hidden;border-radius:2px}
@@ -617,7 +622,8 @@ button.coll-item{
 }
 @media (prefers-reduced-motion:reduce){
   #viewLive.is-ready.is-opening .cv,#candPanes,.cand-row,.cand-tab{animation:none;transition:none}
-  #viewLive.is-loading #previewDetailForm{opacity:1}
+  #viewLive.is-loading #previewDetailState > .cv,
+  #viewLive.is-loading #previewDetailState > .empty{opacity:1}
   .cv-progress::after{animation:none;width:100%}
   .cand-row:active{transform:none}
 }
@@ -851,6 +857,51 @@ a.th-create-item{text-decoration:none;color:inherit}
 .cv-cut-bar-txt strong{font-size:13.5px;font-weight:650;color:var(--ink)}
 .confirm-modal.is-form{width:min(460px,92vw)}
 .confirm-modal.is-paste{width:min(520px,92vw);max-height:min(86vh,720px);overflow:hidden;gap:16px;padding:20px 20px 16px}
+.confirm-modal.is-theso{width:min(560px,94vw);max-height:min(88vh,760px);overflow:hidden;gap:16px;padding:20px 20px 16px}
+.confirm-modal.is-theso .cv-dlg-body{gap:14px}
+.confirm-modal.is-theso .confirm-actions{margin-top:2px;padding-top:14px;border-top:1px solid var(--line)}
+.cv-dlg-branch{display:flex;align-items:baseline;justify-content:space-between;gap:12px;padding:10px 12px}
+.cv-dlg-branch strong{font-size:14px;font-weight:650;color:var(--ink);line-height:1.35;overflow-wrap:anywhere}
+.cv-dlg-branch span{flex:0 0 auto;font-size:12px;font-weight:600;color:var(--ink-3)}
+.cv-dlg-theso-live{display:flex;flex-direction:column;gap:12px}
+.cv-dlg-dest{display:flex;flex-wrap:wrap;gap:8px}
+.cv-dlg-dest-btn{appearance:none;border:1px solid var(--line);border-radius:9px;background:var(--surface-2);
+  padding:8px 12px;font:inherit;font-size:13px;font-weight:600;color:var(--ink);cursor:pointer;
+  transition:border-color .12s ease,background .12s ease,color .12s ease}
+.cv-dlg-dest-btn:hover{border-color:var(--accent-line)}
+.cv-dlg-dest-btn.is-on{border-color:var(--accent-line);background:var(--accent-soft);color:var(--accent)}
+.cv-theso-parent.is-off,.cv-dlg-ark-warn.is-off{display:none!important}
+.cv-dlg-ark-warn{margin:4px 0 0;font-size:12px;font-weight:500;line-height:1.4;color:#b8631f}
+.confirm-modal.is-theso .coll-pick .ac{
+  position:relative;top:auto;left:auto;right:auto;z-index:2;
+  max-height:min(32vh,220px)
+}
+.confirm-modal.is-theso .coll-ac-list{display:flex;flex-direction:column}
+@keyframes cv-theso-in{
+  from{opacity:0;transform:translateY(6px)}
+  to{opacity:1;transform:none}
+}
+.confirm-modal.is-theso .cv-dlg-body.is-enter > *,
+.cv-dlg-theso-live.is-enter > *,
+.cv-theso-parent.is-enter,
+.cv-dlg-ark-warn.is-enter,
+.confirm-modal.is-theso .coll-pick.is-open .ac,
+.confirm-modal.is-theso .coll-chip{
+  animation:cv-theso-in .22s cubic-bezier(.22,.8,.28,1) both
+}
+.confirm-modal.is-theso .cv-dlg-body.is-enter > *:nth-child(2),
+.cv-dlg-theso-live.is-enter > *:nth-child(2){animation-delay:.04s}
+.confirm-modal.is-theso .cv-dlg-body.is-enter > *:nth-child(3),
+.cv-dlg-theso-live.is-enter > *:nth-child(3){animation-delay:.08s}
+.confirm-modal.is-theso .cv-dlg-body.is-enter > *:nth-child(4){animation-delay:.12s}
+@media (prefers-reduced-motion:reduce){
+  .confirm-modal.is-theso .cv-dlg-body.is-enter > *,
+  .cv-dlg-theso-live.is-enter > *,
+  .cv-theso-parent.is-enter,
+  .cv-dlg-ark-warn.is-enter,
+  .confirm-modal.is-theso .coll-pick.is-open .ac,
+  .confirm-modal.is-theso .coll-chip{animation:none}
+}
 .confirm-p.is-warn{color:#b8631f}
 .cv-dlg-head{display:flex;align-items:flex-start;gap:12px}
 .cv-dlg-head .th-create-ico{width:36px;height:36px;border-radius:10px;margin-top:0}
