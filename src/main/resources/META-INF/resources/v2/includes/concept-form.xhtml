@@ -27,16 +27,26 @@
        data-rel-tree="#{v2ConceptRelationBlockEditorBean.treeReload ? '1' : ''}"
        data-msg-fold="#{v2LocaleBean.getMsg('v2.block.collapse')}"
        data-msg-unfold="#{v2LocaleBean.getMsg('v2.block.expand')}">
-    <ui:fragment rendered="#{not empty v2ThesaurusViewBean.selectedConcept.breadcrumb and v2ThesaurusViewBean.selectedConcept.breadcrumb.size() gt 1}">
-      <div class="cv-path">
-        <span class="path">
-          <ui:repeat value="#{v2ThesaurusViewBean.selectedConcept.breadcrumb}" var="step" varStatus="st">
-            <ui:fragment rendered="#{not st.last}">
-              <span class="path-seg">#{step.label}<ui:fragment rendered="#{st.index + 2 lt v2ThesaurusViewBean.selectedConcept.breadcrumb.size()}"><span class="path-sep">›</span></ui:fragment></span>
-            </ui:fragment>
-          </ui:repeat>
-        </span>
-      </div>
+    <ui:fragment rendered="#{v2ThesaurusViewBean.breadcrumbEnabled and not empty v2ThesaurusViewBean.selectedConcept.breadcrumb and v2ThesaurusViewBean.selectedConcept.breadcrumb.size() gt 1}">
+      <nav class="cv-path" aria-label="#{v2LocaleBean.getMsg('v2.concept.breadcrumb')}">
+        <ui:repeat value="#{v2ThesaurusViewBean.selectedConcept.breadcrumbPaths}" var="path" varStatus="pst">
+          <ui:fragment rendered="#{path.size() gt 1}">
+            <span class="path">
+              <ui:repeat value="#{path}" var="step" varStatus="st">
+                <ui:fragment rendered="#{not st.last}">
+                  <a class="path-link" href="thesaurus/consultation.xhtml?id=#{step.conceptId}"
+                     data-act="open" data-id="#{step.conceptId}" data-type="concept"
+                     title="#{step.label}">#{step.label}</a>
+                  <span class="path-sep" aria-hidden="true">›</span>
+                </ui:fragment>
+                <ui:fragment rendered="#{st.last}">
+                  <span class="path-current" aria-current="page">#{step.label}</span>
+                </ui:fragment>
+              </ui:repeat>
+            </span>
+          </ui:fragment>
+        </ui:repeat>
+      </nav>
     </ui:fragment>
     <h:messages id="messageIndex" styleClass="cv-msgs"
                 infoClass="cv-msg is-info" warnClass="cv-msg is-warn" errorClass="cv-msg is-error"/>
@@ -69,6 +79,51 @@
       </ui:fragment>
       </div>
     </div>
+    <ui:fragment rendered="#{v2FacetDetailEditorBean.composing}">
+      <div class="cv-facet-composer" id="cvFacetComposer">
+        <div class="cv-facet-composer-h">
+          <span class="th-create-ico" aria-hidden="true">
+            <svg viewBox="0 0 24 24"><path d="M4 4h7v7H4z"/><path d="M13 4h7v7h-7z"/><path d="M4 13h7v7H4z"/><path d="M16.5 13v7"/><path d="M13 16.5h7"/></svg>
+          </span>
+          <div class="cv-facet-composer-title">
+            <strong>#{v2LocaleBean.getMsg('rightbody.concept.new_facet')}</strong>
+            <span>#{v2LocaleBean.getMsg('v2.concept.facetHint')}</span>
+          </div>
+          <span class="cv-facet-lang">#{v2ThesaurusContext.currentLanguage}</span>
+        </div>
+        <label class="cv-facet-composer-field">
+          <span class="cv-facet-composer-k">#{v2LocaleBean.getMsg('rightbody.facetdialog.facet_name')}</span>
+          <h:inputText id="cvFacetName" styleClass="st-input cv-facet-name-input"
+                       value="#{v2FacetDetailEditorBean.label}"
+                       pt:autocomplete="off"
+                       pt:placeholder="#{v2LocaleBean.getMsg('v2.concept.facetPreviewEmpty')}"/>
+        </label>
+        <details class="cv-facet-composer-more">
+          <summary>#{v2LocaleBean.getMsg('v2.concept.facetDef')}</summary>
+          <h:inputTextarea id="cvFacetDef" styleClass="st-input cv-facet-def-input"
+                           value="#{v2FacetDetailEditorBean.definition}" rows="3"
+                           pt:placeholder="#{v2LocaleBean.getMsg('v2.concept.facetDefHint')}"/>
+        </details>
+        <ui:fragment rendered="#{not empty v2FacetDetailEditorBean.createErrorMessage}">
+          <p class="cv-facet-composer-err">#{v2FacetDetailEditorBean.createErrorMessage}</p>
+        </ui:fragment>
+        <div class="cv-facet-composer-act">
+          <h:commandLink id="cvFacetCancel" styleClass="abt-cancel" immediate="true"
+                         action="#{v2ConceptFicheMenuBean.cancelCreateFacet}">
+            <f:ajax execute="@this" render=":previewDetailForm:previewDetail" onevent="onCvMenuAjax"/>
+            #{v2LocaleBean.getMsg('v2.cancel')}
+          </h:commandLink>
+          <h:commandLink id="cvFacetGo"
+                         styleClass="abt-save cv-facet-go#{v2FacetDetailEditorBean.createReady ? '' : ' is-off'}"
+                         action="#{v2ConceptFicheMenuBean.submitCreateFacet}">
+            <f:ajax execute="cvFacetName cvFacetDef @this"
+                    render=":previewDetailForm:previewDetail :previewTree" onevent="onCvMenuAjax"/>
+            <span class="abt-save-label">#{v2LocaleBean.getMsg('v2.concept.facetConfirm')}</span>
+            <span class="abt-save-wait">#{v2LocaleBean.getMsg('v2.saving')}</span>
+          </h:commandLink>
+        </div>
+      </div>
+    </ui:fragment>
     <div class="cv-blocks">
       <section class="cblock#{v2ConceptLabelBlockEditorBean.editing ? ' is-editing' : ''}" data-card-id="contexte">
         <div class="cblock-head"><span class="cblock-drag" role="button" tabindex="0" title="Glisser pour réordonner" aria-label="Réordonner ce bloc"><svg class="cblock-grip" viewBox="0 0 8 14" aria-hidden="true" focusable="false"><circle cx="2" cy="2" r="1.35"/><circle cx="6" cy="2" r="1.35"/><circle cx="2" cy="7" r="1.35"/><circle cx="6" cy="7" r="1.35"/><circle cx="2" cy="12" r="1.35"/><circle cx="6" cy="12" r="1.35"/></svg></span><span class="cblock-title">Libellé</span><div class="cblock-tools"><h:commandButton id="labelEditStart" value="✎" styleClass="cblock-gear" title="#{v2LocaleBean.getMsg('v2.edit')}" rendered="#{v2ConceptLabelBlockEditorBean.editable and not v2ConceptLabelBlockEditorBean.editing}" action="#{v2ConceptLabelBlockEditorBean.startEditing}"><f:ajax execute="@this" render=":previewDetailForm:previewDetail"/></h:commandButton><button type="button" class="cblock-gear cblock-fold" data-act="cblock-fold" title="#{v2LocaleBean.getMsg('v2.block.collapse')}" aria-expanded="true" aria-label="#{v2LocaleBean.getMsg('v2.block.collapse')}"><svg viewBox="0 0 24 24" aria-hidden="true"><path d="m6 9 6 6 6-6"/></svg></button></div></div>

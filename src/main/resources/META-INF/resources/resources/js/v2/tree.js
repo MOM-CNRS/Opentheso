@@ -22,7 +22,9 @@ function lockTreeToggleScroll(src) {
     box.style.minHeight = treeToggleScroll.minH + "px";
   }
   if (tn) {
-    tn.classList.toggle("is-open");
+    const open = !tn.classList.contains("is-open");
+    tn.classList.toggle("is-open", open);
+    if (open && typeof replayAnim === "function") replayAnim(tn, "is-branch-in");
     tn.classList.add("is-fetching");
   }
 }

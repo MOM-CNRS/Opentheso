@@ -2,147 +2,376 @@
 <ui:composition xmlns="http://www.w3.org/1999/xhtml"
                 xmlns:ui="http://xmlns.jcp.org/jsf/facelets"
                 xmlns:h="http://xmlns.jcp.org/jsf/html"
-                xmlns:f="http://xmlns.jcp.org/jsf/core">
+                xmlns:f="http://xmlns.jcp.org/jsf/core"
+                xmlns:pt="http://xmlns.jcp.org/jsf/passthrough">
 
   <div class="block-overlay confirm-overlay" id="cvDlgAddNt" hidden="hidden"
        data-act="cv-dlg-dismiss" role="presentation">
-    <div class="confirm-modal is-form" role="dialog" aria-modal="true" data-act="cv-dlg-modal">
-      <div class="confirm-h">#{v2LocaleBean.getMsg('rightbody.concept.new_concept')}</div>
-      <p class="confirm-p">#{v2ConceptLifecycleEditorBean.currentPreferredLabel}</p>
-      <label class="cv-dlg-field">
-        <span>#{v2LocaleBean.getMsg('rightbody.concept.preferred_term')}</span>
-        <h:inputText styleClass="st-input" value="#{v2ConceptLifecycleEditorBean.preferredLabel}"/>
-      </label>
-      <label class="cv-dlg-field">
-        <span>#{v2LocaleBean.getMsg('rightbody.concept.narrower')}</span>
-        <h:selectOneMenu styleClass="st-input" value="#{v2ConceptLifecycleEditorBean.selectedNarrowerRelationType}">
-          <f:selectItems value="#{v2ConceptLifecycleEditorBean.ntRelationTypes}" var="nt"
-                         itemValue="#{nt.relationType}" itemLabel="#{nt.descriptionFr} (#{nt.relationType})"/>
-        </h:selectOneMenu>
-      </label>
-      <label class="cv-dlg-field">
-        <span>#{v2LocaleBean.getMsg('rightbody.concept.add_to_group')}</span>
-        <h:selectOneMenu styleClass="st-input" value="#{v2ConceptLifecycleEditorBean.selectedGroupId}">
-          <f:selectItem itemValue="" itemLabel="…"/>
-          <f:selectItems value="#{v2ConceptLifecycleEditorBean.availableCollections}" var="g"
-                         itemValue="#{g.id}" itemLabel="#{g.label}"/>
-        </h:selectOneMenu>
-      </label>
-      <label class="cv-dlg-field">
-        <span>#{v2LocaleBean.getMsg('rightbody.concept.notation')}</span>
-        <h:inputText styleClass="st-input" value="#{v2ConceptLifecycleEditorBean.notation}"/>
-      </label>
-      <label class="cv-dlg-field">
-        <span>ID</span>
-        <h:inputText styleClass="st-input" value="#{v2ConceptLifecycleEditorBean.customConceptId}"/>
-      </label>
-      <ui:fragment rendered="#{v2ConceptLifecycleEditorBean.duplicateLabelWarning}">
-        <p class="confirm-p is-warn">#{v2LocaleBean.getMsg('search.duplicates')}</p>
-      </ui:fragment>
-      <div class="confirm-actions">
-        <button type="button" class="abt-cancel confirm-cancel" data-act="cv-dlg-dismiss">#{v2LocaleBean.getMsg('v2.cancel')}</button>
-        <h:commandLink styleClass="abt-save" rendered="#{not v2ConceptLifecycleEditorBean.duplicateLabelWarning}"
-                       action="#{v2ConceptFicheMenuBean.submitAddChild}">
-          <f:ajax execute="@form" render=":previewDetailForm:previewDetail :previewTree" onevent="onCvMenuAjax"/>
-          #{v2LocaleBean.getMsg('v2.save')}
-        </h:commandLink>
-        <h:commandLink styleClass="abt-save" rendered="#{v2ConceptLifecycleEditorBean.duplicateLabelWarning}"
-                       action="#{v2ConceptFicheMenuBean.submitAddChildForced}">
-          <f:ajax execute="@form" render=":previewDetailForm:previewDetail :previewTree" onevent="onCvMenuAjax"/>
-          #{v2LocaleBean.getMsg('v2.save')}
-        </h:commandLink>
+    <div class="confirm-modal is-form is-theso is-add-nt" role="dialog" aria-modal="true"
+         aria-labelledby="cvDlgAddNtTitle" data-act="cv-dlg-modal">
+      <div class="cv-dlg-head">
+        <span class="th-create-ico" aria-hidden="true">
+          <svg viewBox="0 0 24 24"><path d="M4 20V8l8-4 8 4v12"/><path d="M4 8h16"/><path d="M12 4v16"/><path d="M9 12h6"/></svg>
+        </span>
+        <div class="th-create-txt">
+          <div class="confirm-h" id="cvDlgAddNtTitle">#{v2LocaleBean.getMsg('rightbody.conceptdialog.add_specific_concept')}</div>
+          <p class="th-create-hint">#{v2LocaleBean.getMsg('v2.concept.addHint')}</p>
+        </div>
+      </div>
+      <div class="cv-dlg-body">
+        <h:panelGroup id="cvAddNtLive" layout="block" styleClass="cv-add-nt-live">
+          <span hidden="hidden"
+                data-flash-nt="#{v2ConceptLifecycleEditorBean.createFlashMessage}"
+                data-flash-nt-token="#{v2ConceptLifecycleEditorBean.createFlashToken}"
+                data-add-nt-dirty="#{v2ConceptLifecycleEditorBean.createDirty}"
+                data-add-nt-dup="#{v2ConceptLifecycleEditorBean.duplicateLabelWarning}"></span>
+          <div class="cv-add-composer">
+            <div class="cv-add-composer-parent">
+              <span>#{v2LocaleBean.getMsg('v2.concept.addScope')}</span>
+              <strong>#{v2ConceptLifecycleEditorBean.currentPreferredLabel}</strong>
+            </div>
+            <label class="cv-add-name">
+              <span>#{v2LocaleBean.getMsg('v2.concept.addName')}
+                <em class="cv-facet-lang">#{v2ConceptLifecycleEditorBean.workLanguage}</em>
+              </span>
+              <h:inputText id="cvAddNtName" styleClass="st-input cv-add-nt-name"
+                           value="#{v2ConceptLifecycleEditorBean.preferredLabel}"
+                           pt:autocomplete="off"
+                           pt:placeholder="#{v2LocaleBean.getMsg('v2.concept.addPreviewEmpty')}"/>
+              <span class="cv-add-ready" hidden="hidden">#{v2LocaleBean.getMsg('v2.concept.addReady')}</span>
+            </label>
+            <div class="cv-add-preview" aria-live="polite">
+              <div class="cv-add-preview-tree">
+                <div class="cv-add-preview-parent">#{v2ConceptLifecycleEditorBean.currentPreferredLabel}</div>
+                <div class="cv-add-preview-child is-empty" id="cvAddNtPreview"
+                     data-empty="#{v2LocaleBean.getMsg('v2.concept.addPreviewEmpty')}">#{v2LocaleBean.getMsg('v2.concept.addPreviewEmpty')}</div>
+                <div class="cv-add-preview-meta" id="cvAddNtMeta"></div>
+              </div>
+            </div>
+          </div>
+          <ui:fragment rendered="#{v2ConceptLifecycleEditorBean.createdCount gt 0}">
+            <div class="cv-add-session">
+              <span class="cv-add-session-k">#{v2ConceptLifecycleEditorBean.createdCount}
+                #{v2ConceptLifecycleEditorBean.createdCount eq 1
+                    ? v2LocaleBean.getMsg('v2.concept.addCountOne')
+                    : v2LocaleBean.getMsg('v2.concept.addCountMany')}</span>
+              <div class="cv-add-chips">
+                <ui:repeat value="#{v2ConceptLifecycleEditorBean.createdLabels}" var="lab">
+                  <span class="cv-add-chip">#{lab}</span>
+                </ui:repeat>
+              </div>
+            </div>
+          </ui:fragment>
+          <div class="cv-dlg-field">
+            <span>#{v2LocaleBean.getMsg('v2.concept.addRel')}</span>
+            <h:inputHidden id="cvAddNtRel" value="#{v2ConceptLifecycleEditorBean.selectedNarrowerRelationType}"/>
+            <div class="cv-add-rels" role="listbox" aria-label="#{v2LocaleBean.getMsg('v2.concept.addRel')}">
+              <ui:repeat value="#{v2ConceptLifecycleEditorBean.ntRelationTypes}" var="nt">
+                <button type="button" class="cv-add-rel#{v2ConceptLifecycleEditorBean.isNtPicked(nt) ? ' is-on' : ''}"
+                        data-act="add-nt-rel" data-val="#{nt.relationType}"
+                        role="option"
+                        aria-selected="#{v2ConceptLifecycleEditorBean.isNtPicked(nt)}"
+                        title="#{v2ConceptLifecycleEditorBean.formatNtLabel(nt)}">
+                  <span class="cv-add-rel-k">#{nt.relationType}</span>
+                  <span class="cv-add-rel-v">#{v2ConceptLifecycleEditorBean.formatNtLabel(nt)}</span>
+                </button>
+              </ui:repeat>
+            </div>
+          </div>
+          <label class="cv-dlg-field">
+            <span>#{v2LocaleBean.getMsg('v2.concept.addCollection')}</span>
+            <h:selectOneMenu id="cvAddNtGroup" styleClass="st-input cv-add-nt-group"
+                             value="#{v2ConceptLifecycleEditorBean.selectedGroupId}">
+              <f:selectItem itemValue="" itemLabel="#{v2LocaleBean.getMsg('v2.concept.addCollectionNone')}"/>
+              <f:selectItems value="#{v2ConceptLifecycleEditorBean.availableCollections}" var="g"
+                             itemValue="#{g.id}" itemLabel="#{g.label}"/>
+            </h:selectOneMenu>
+          </label>
+          <details class="cv-add-more">
+            <summary>#{v2LocaleBean.getMsg('v2.concept.addMore')}</summary>
+            <div class="cv-add-more-grid">
+              <label class="cv-dlg-field">
+                <span>#{v2LocaleBean.getMsg('v2.concept.addNotation')}</span>
+                <h:inputText id="cvAddNtNotation" styleClass="st-input"
+                             value="#{v2ConceptLifecycleEditorBean.notation}"
+                             pt:autocomplete="off"
+                             pt:placeholder="#{v2LocaleBean.getMsg('rightbody.concept.notation')}…"/>
+              </label>
+              <label class="cv-dlg-field">
+                <span>#{v2LocaleBean.getMsg('v2.concept.addId')}</span>
+                <h:inputText id="cvAddNtId" styleClass="st-input"
+                             value="#{v2ConceptLifecycleEditorBean.customConceptId}"
+                             pt:autocomplete="off"/>
+              </label>
+            </div>
+            <p class="cv-type-recip-hint cv-add-more-hint">#{v2LocaleBean.getMsg('v2.concept.addIdHint')}</p>
+          </details>
+          <ui:fragment rendered="#{v2ConceptLifecycleEditorBean.duplicateLabelWarning}">
+            <p class="confirm-p is-warn" role="alert">#{v2LocaleBean.getMsg('v2.concept.addDup')}</p>
+          </ui:fragment>
+          <ui:fragment rendered="#{not empty v2ConceptLifecycleEditorBean.createErrorMessage and not v2ConceptLifecycleEditorBean.duplicateLabelWarning}">
+            <p class="confirm-p is-warn">#{v2ConceptLifecycleEditorBean.createErrorMessage}</p>
+          </ui:fragment>
+        </h:panelGroup>
+      </div>
+      <div class="confirm-actions cv-add-foot">
+        <button type="button" class="abt-cancel confirm-cancel" data-act="cv-dlg-dismiss"
+                data-idle="#{v2LocaleBean.getMsg('v2.cancel')}"
+                data-done="#{v2LocaleBean.getMsg('candidat.close')}">#{v2LocaleBean.getMsg('v2.cancel')}</button>
+        <h:panelGroup id="cvAddNtFoot" layout="block" styleClass="cv-add-foot-go">
+          <ui:fragment rendered="#{v2ConceptLifecycleEditorBean.duplicateLabelWarning}">
+            <h:commandLink styleClass="abt-cancel sm" action="#{v2ConceptFicheMenuBean.cancelAddChildDuplicate}">
+              <f:ajax execute="@this" render=":previewDetailForm:cvAddNtLive :previewDetailForm:cvAddNtFoot" onevent="onCvAddNtAjax"/>
+              #{v2LocaleBean.getMsg('v2.concept.addDupEdit')}
+            </h:commandLink>
+            <h:commandLink id="cvAddNtForce" styleClass="abt-save"
+                           action="#{v2ConceptFicheMenuBean.submitAddChildForced}">
+              <f:ajax execute=":previewDetailForm:cvAddNtLive" render=":previewDetailForm:cvAddNtLive :previewDetailForm:cvAddNtFoot" onevent="onCvAddNtAjax"/>
+              <span class="abt-save-label">#{v2LocaleBean.getMsg('v2.concept.addDupForce')}</span>
+              <span class="abt-save-wait">#{v2LocaleBean.getMsg('v2.saving')}</span>
+            </h:commandLink>
+          </ui:fragment>
+          <ui:fragment rendered="#{not v2ConceptLifecycleEditorBean.duplicateLabelWarning}">
+            <h:commandLink id="cvAddNtGo"
+                           styleClass="abt-save cv-add-nt-go#{v2ConceptLifecycleEditorBean.createReady ? '' : ' is-off'}"
+                           action="#{v2ConceptFicheMenuBean.submitAddChild}">
+              <f:ajax execute=":previewDetailForm:cvAddNtLive" render=":previewDetailForm:cvAddNtLive :previewDetailForm:cvAddNtFoot" onevent="onCvAddNtAjax"/>
+              <span class="abt-save-label">#{v2LocaleBean.getMsg('v2.concept.addConfirm')}</span>
+              <span class="abt-save-wait">#{v2LocaleBean.getMsg('v2.saving')}</span>
+            </h:commandLink>
+          </ui:fragment>
+        </h:panelGroup>
       </div>
     </div>
+    <h:commandButton id="cvAddNtAfterClose" styleClass="preview-open-btn cv-after-close" style="display:none"
+                     action="#{v2ConceptFicheMenuBean.afterAddChild}">
+      <f:ajax execute="@this" render=":previewDetailForm:previewDetail :previewTree" onevent="onCvMenuAjax"/>
+    </h:commandButton>
   </div>
 
-  <div class="block-overlay confirm-overlay" id="cvDlgAddFacet" hidden="hidden"
+  <div class="block-overlay confirm-overlay is-run-dlg" id="cvDlgEditType" hidden="hidden"
        data-act="cv-dlg-dismiss" role="presentation">
-    <div class="confirm-modal is-form" role="dialog" aria-modal="true" data-act="cv-dlg-modal">
-      <div class="confirm-h">#{v2LocaleBean.getMsg('rightbody.concept.new_facet')}</div>
-      <p class="confirm-p">#{v2FacetDetailEditorBean.parentConceptLabel}</p>
-      <label class="cv-dlg-field">
-        <span>#{v2LocaleBean.getMsg('rightbody.concept.preferred_term')}</span>
-        <h:inputText styleClass="st-input" value="#{v2FacetDetailEditorBean.label}"/>
-      </label>
-      <label class="cv-dlg-field">
-        <span>#{v2LocaleBean.getMsg('rightbody.concept.definition')}</span>
-        <h:inputTextarea styleClass="st-input" value="#{v2FacetDetailEditorBean.definition}" rows="3"/>
-      </label>
+    <div class="confirm-modal is-form is-theso is-edit-type" role="dialog" aria-modal="true"
+         aria-labelledby="cvDlgEditTypeTitle" data-act="cv-dlg-modal">
+      <div class="cv-dlg-head">
+        <span class="th-create-ico" aria-hidden="true">
+          <svg viewBox="0 0 24 24"><path d="M20.59 13.41 13 21H4v-9l7.59-7.59a2 2 0 0 1 2.82 0l6.18 6.18a2 2 0 0 1 0 2.82z"/><circle cx="8.5" cy="8.5" r="1.2"/></svg>
+        </span>
+        <div class="th-create-txt">
+          <div class="confirm-h" id="cvDlgEditTypeTitle">#{v2LocaleBean.getMsg('concept.editConceptType')}</div>
+          <p class="th-create-hint">#{v2LocaleBean.getMsg('v2.concept.editTypeHint')}</p>
+        </div>
+      </div>
+      <div class="cv-dlg-body">
+        <h:panelGroup id="cvEditTypeLive" layout="block" styleClass="cv-edit-type-live">
+          <span hidden="hidden"
+                data-flash-ctype="#{v2ConceptAttributeEditorBean.typeFlashMessage}"
+                data-flash-ctype-token="#{v2ConceptAttributeEditorBean.typeFlashToken}"
+                data-type-done="#{v2ConceptAttributeEditorBean.typeDone}"></span>
+          <div class="cv-dlg-card">
+            <div class="cv-dlg-card-h">#{v2LocaleBean.getMsg('v2.concept.editTypeScope')}</div>
+            <div class="cv-dlg-branch">
+              <strong>#{v2ConceptAttributeEditorBean.currentConceptLabel}</strong>
+              <span>#{v2ConceptAttributeEditorBean.currentConceptTypeLabel}</span>
+            </div>
+          </div>
+          <ui:fragment rendered="#{v2ConceptAttributeEditorBean.typeDone}">
+            <div class="cv-ark-now is-ok">
+              #{v2ConceptAttributeEditorBean.appliedToBranch
+                  ? v2LocaleBean.getMsg('v2.concept.editTypeDoneBranch')
+                  : v2LocaleBean.getMsg('v2.concept.editTypeDone')}
+              <strong>#{v2ConceptAttributeEditorBean.currentConceptTypeLabel}</strong>
+            </div>
+          </ui:fragment>
+          <ui:fragment rendered="#{not v2ConceptAttributeEditorBean.typeDone}">
+            <div class="cv-dlg-card">
+              <div class="cv-dlg-card-h">#{v2LocaleBean.getMsg('v2.concept.editTypePick')}</div>
+              <ui:fragment rendered="#{empty v2ConceptAttributeEditorBean.availableConceptTypes}">
+                <p class="cv-types-empty">#{v2LocaleBean.getMsg('v2.concept.editTypeEmpty')}</p>
+              </ui:fragment>
+              <div class="cv-type-picks">
+                <ui:repeat value="#{v2ConceptAttributeEditorBean.availableConceptTypes}" var="tp">
+                  <h:commandLink styleClass="cv-type-pick#{v2ConceptAttributeEditorBean.isTypePicked(tp) ? ' is-on' : ''}#{v2ConceptAttributeEditorBean.isTypeCurrent(tp) ? ' is-now' : ''}"
+                                 action="#{v2ConceptFicheMenuBean.selectConceptType(tp.code)}">
+                    <f:ajax execute="@this" render=":previewDetailForm:cvEditTypeLive" onevent="onCvEditTypeAjax"/>
+                    <span class="cv-type-pick-main">
+                      <span class="cv-type-pick-lab">#{v2ConceptAttributeEditorBean.formatConceptTypeLabel(tp)}</span>
+                      <span class="cv-type-pick-code">#{tp.code}</span>
+                    </span>
+                    <span class="cv-type-pick-badges">
+                      <ui:fragment rendered="#{v2ConceptAttributeEditorBean.isTypeCurrent(tp)}">
+                        <span class="cv-type-pick-now">#{v2LocaleBean.getMsg('v2.concept.editTypeNow')}</span>
+                      </ui:fragment>
+                      <ui:fragment rendered="#{tp.reciprocal}">
+                        <span class="cv-type-pick-recip">#{v2LocaleBean.getMsg('v2.concept.typeRecipShort')}</span>
+                      </ui:fragment>
+                    </span>
+                  </h:commandLink>
+                </ui:repeat>
+              </div>
+            </div>
+            <label class="cv-dlg-check">
+              <h:selectBooleanCheckbox id="cvEditTypeBranch"
+                                       value="#{v2ConceptAttributeEditorBean.applyConceptTypeToBranch}"/>
+              <span>#{v2LocaleBean.getMsg('concept.changeTypeBranch')}</span>
+            </label>
+            <p class="cv-type-recip-hint">#{v2LocaleBean.getMsg('v2.concept.editTypeBranchHint')}</p>
+            <p class="cv-type-recip-hint">#{v2LocaleBean.getMsg('v2.concept.editTypeAction')}</p>
+          </ui:fragment>
+          <ui:fragment rendered="#{not empty v2ConceptAttributeEditorBean.typeErrorMessage}">
+            <p class="confirm-p is-warn">#{v2ConceptAttributeEditorBean.typeErrorMessage}</p>
+          </ui:fragment>
+        </h:panelGroup>
+      </div>
       <div class="confirm-actions">
-        <button type="button" class="abt-cancel confirm-cancel" data-act="cv-dlg-dismiss">#{v2LocaleBean.getMsg('v2.cancel')}</button>
-        <h:commandLink styleClass="abt-save" action="#{v2ConceptFicheMenuBean.submitCreateFacet}">
-          <f:ajax execute="@form" render=":previewDetailForm:previewDetail :previewTree" onevent="onCvMenuAjax"/>
-          #{v2LocaleBean.getMsg('v2.save')}
+        <button type="button" class="abt-cancel confirm-cancel" data-act="cv-dlg-dismiss"
+                data-idle="#{v2LocaleBean.getMsg('v2.cancel')}"
+                data-done="#{v2LocaleBean.getMsg('candidat.close')}">#{v2LocaleBean.getMsg('v2.cancel')}</button>
+        <h:commandLink id="cvEditTypeGo"
+                       styleClass="abt-save cv-ark-go#{v2ConceptAttributeEditorBean.typeApplyReady ? '' : ' is-off'}"
+                       action="#{v2ConceptFicheMenuBean.submitEditConceptType}">
+          <f:ajax execute=":previewDetailForm:cvEditTypeLive" render=":previewDetailForm:cvEditTypeLive" onevent="onCvEditTypeAjax"/>
+          <span class="abt-save-label">#{v2LocaleBean.getMsg('v2.concept.editTypeConfirm')}</span>
+          <span class="abt-save-wait">#{v2LocaleBean.getMsg('v2.concept.arkBusy')}</span>
         </h:commandLink>
       </div>
     </div>
-  </div>
-
-  <div class="block-overlay confirm-overlay" id="cvDlgEditType" hidden="hidden"
-       data-act="cv-dlg-dismiss" role="presentation">
-    <div class="confirm-modal is-form" role="dialog" aria-modal="true" data-act="cv-dlg-modal">
-      <div class="confirm-h">#{v2LocaleBean.getMsg('concept.editConceptType')}</div>
-      <label class="cv-dlg-field">
-        <span>#{v2LocaleBean.getMsg('concept.editConceptType')}</span>
-        <h:selectOneMenu styleClass="st-input" value="#{v2ConceptAttributeEditorBean.selectedConceptType}">
-          <f:selectItems value="#{v2ConceptAttributeEditorBean.availableConceptTypes}" var="tp"
-                         itemValue="#{tp.code}" itemLabel="#{v2ConceptAttributeEditorBean.formatConceptTypeOption(tp)}"/>
-        </h:selectOneMenu>
-      </label>
-      <label class="cv-dlg-check">
-        <h:selectBooleanCheckbox value="#{v2ConceptAttributeEditorBean.applyConceptTypeToBranch}"/>
-        <span>Branche</span>
-      </label>
-      <div class="confirm-actions">
-        <button type="button" class="abt-cancel confirm-cancel" data-act="cv-dlg-dismiss">#{v2LocaleBean.getMsg('v2.cancel')}</button>
-        <h:commandLink styleClass="abt-save" action="#{v2ConceptFicheMenuBean.submitEditConceptType}">
-          <f:ajax execute="@form" render=":previewDetailForm:previewDetail :previewTree" onevent="onCvMenuAjax"/>
-          #{v2LocaleBean.getMsg('v2.save')}
-        </h:commandLink>
-      </div>
-    </div>
+    <h:commandButton id="cvEditTypeAfterClose" styleClass="preview-open-btn cv-after-close" style="display:none"
+                     action="#{v2ConceptFicheMenuBean.afterEditConceptType}">
+      <f:ajax execute="@this" render=":previewDetailForm:previewDetail :previewTree" onevent="onCvMenuAjax"/>
+    </h:commandButton>
   </div>
 
   <div class="block-overlay confirm-overlay" id="cvDlgManageTypes" hidden="hidden"
        data-act="cv-dlg-dismiss" role="presentation">
-    <div class="confirm-modal is-form" role="dialog" aria-modal="true" data-act="cv-dlg-modal">
-      <div class="confirm-h">#{v2LocaleBean.getMsg('concept.manageConceptType')}</div>
-      <div class="cv-dlg-list">
-        <ui:repeat value="#{v2ConceptTypeManagerBean.conceptTypes}" var="ct">
-          <div class="cv-dlg-list-row">
-            <span>#{ct.labelFr} (#{ct.code})</span>
-            <h:commandLink styleClass="cv-dlg-del" rendered="#{not ct.permanent}"
-                           action="#{v2ConceptFicheMenuBean.deleteConceptType(ct)}">
-              <f:ajax execute="@this" render=":previewDetailForm:previewDetail :previewTree" onevent="onCvMenuAjax"/>
-              ×
-            </h:commandLink>
-          </div>
-        </ui:repeat>
+    <div class="confirm-modal is-form is-theso is-types" role="dialog" aria-modal="true"
+         aria-labelledby="cvDlgManageTypesTitle" data-act="cv-dlg-modal">
+      <div class="cv-dlg-head">
+        <span class="th-create-ico" aria-hidden="true">
+          <svg viewBox="0 0 24 24"><path d="M4 7h16v10H4z"/><path d="M8 7V5h8v2"/></svg>
+        </span>
+        <div class="th-create-txt">
+          <div class="confirm-h" id="cvDlgManageTypesTitle">#{v2LocaleBean.getMsg('concept.manageConceptType')}</div>
+          <p class="th-create-hint">#{v2LocaleBean.getMsg('v2.concept.typeHint')}</p>
+        </div>
       </div>
-      <label class="cv-dlg-field">
-        <span>Code</span>
-        <h:inputText styleClass="st-input" value="#{v2ConceptTypeManagerBean.conceptTypeToAdd.code}"/>
-      </label>
-      <label class="cv-dlg-field">
-        <span>FR</span>
-        <h:inputText styleClass="st-input" value="#{v2ConceptTypeManagerBean.conceptTypeToAdd.labelFr}"/>
-      </label>
-      <label class="cv-dlg-field">
-        <span>EN</span>
-        <h:inputText styleClass="st-input" value="#{v2ConceptTypeManagerBean.conceptTypeToAdd.labelEn}"/>
-      </label>
-      <label class="cv-dlg-check">
-        <h:selectBooleanCheckbox value="#{v2ConceptTypeManagerBean.conceptTypeToAdd.reciprocal}"/>
-        <span>R</span>
-      </label>
+      <div class="cv-dlg-body">
+        <h:panelGroup id="cvTypesLive" layout="block" styleClass="cv-types-live">
+          <span hidden="hidden"
+                data-flash-type="#{v2ConceptTypeManagerBean.flashMessage}"
+                data-flash-type-token="#{v2ConceptTypeManagerBean.flashToken}"
+                data-types-dirty="#{v2ConceptTypeManagerBean.dirty}"></span>
+          <div class="cv-dlg-card">
+            <div class="cv-dlg-card-h">#{v2LocaleBean.getMsg('v2.concept.typeList')}</div>
+            <ui:fragment rendered="#{empty v2ConceptTypeManagerBean.conceptTypes}">
+              <p class="cv-types-empty">#{v2LocaleBean.getMsg('v2.concept.typeEmpty')}</p>
+            </ui:fragment>
+            <ui:repeat value="#{v2ConceptTypeManagerBean.conceptTypes}" var="ct">
+              <div class="cv-type-row#{ct.permanent ? ' is-sys' : ''}#{v2ConceptTypeManagerBean.isPendingDelete(ct) ? ' is-del' : ''}">
+                <div class="cv-type-row-h">
+                  <span class="cv-type-code">#{ct.code}</span>
+                  <ui:fragment rendered="#{ct.permanent}">
+                    <span class="cv-type-sys">#{v2LocaleBean.getMsg('v2.concept.typeSystem')}</span>
+                  </ui:fragment>
+                </div>
+                <ui:fragment rendered="#{ct.permanent}">
+                  <div class="cv-type-labels">
+                    <span>#{ct.labelFr}</span>
+                    <span>#{ct.labelEn}</span>
+                  </div>
+                </ui:fragment>
+                <ui:fragment rendered="#{not ct.permanent}">
+                  <ui:fragment rendered="#{not v2ConceptTypeManagerBean.isPendingDelete(ct)}">
+                    <div class="cv-type-edit">
+                      <label class="cv-type-field">
+                        <span>FR</span>
+                        <h:inputText styleClass="st-input" value="#{ct.labelFr}"/>
+                      </label>
+                      <label class="cv-type-field">
+                        <span>EN</span>
+                        <h:inputText styleClass="st-input" value="#{ct.labelEn}"/>
+                      </label>
+                    </div>
+                    <label class="cv-dlg-check">
+                      <h:selectBooleanCheckbox value="#{ct.reciprocal}"/>
+                      <span>#{v2LocaleBean.getMsg('concept.isReciprocalRelationship')}</span>
+                    </label>
+                    <div class="cv-type-row-act">
+                      <h:commandLink styleClass="abt-save sm" action="#{v2ConceptFicheMenuBean.applyConceptType(ct)}">
+                        <f:ajax execute=":previewDetailForm:cvTypesLive" render=":previewDetailForm:cvTypesLive" onevent="onCvTypesAjax"/>
+                        #{v2LocaleBean.getMsg('v2.save')}
+                      </h:commandLink>
+                      <h:commandLink styleClass="cv-type-del" action="#{v2ConceptFicheMenuBean.prepareDeleteConceptType(ct)}">
+                        <f:ajax execute="@this" render=":previewDetailForm:cvTypesLive" onevent="onCvTypesAjax"/>
+                        #{v2LocaleBean.getMsg('candidat.remove')}
+                      </h:commandLink>
+                    </div>
+                  </ui:fragment>
+                  <ui:fragment rendered="#{v2ConceptTypeManagerBean.isPendingDelete(ct)}">
+                    <p class="cv-type-warn">#{v2LocaleBean.getMsg('v2.concept.typeDeleteAsk')}
+                      <strong>#{ct.code}</strong>. #{v2LocaleBean.getMsg('v2.concept.typeDeleteHint')}</p>
+                    <div class="cv-type-row-act">
+                      <h:commandLink styleClass="abt-cancel sm" action="#{v2ConceptFicheMenuBean.cancelDeleteConceptType}">
+                        <f:ajax execute="@this" render=":previewDetailForm:cvTypesLive" onevent="onCvTypesAjax"/>
+                        #{v2LocaleBean.getMsg('v2.cancel')}
+                      </h:commandLink>
+                      <h:commandLink styleClass="abt-save is-danger sm" action="#{v2ConceptFicheMenuBean.confirmDeleteConceptType}">
+                        <f:ajax execute="@this" render=":previewDetailForm:cvTypesLive" onevent="onCvTypesAjax"/>
+                        #{v2LocaleBean.getMsg('candidat.remove')}
+                      </h:commandLink>
+                    </div>
+                  </ui:fragment>
+                </ui:fragment>
+              </div>
+            </ui:repeat>
+          </div>
+          <div class="cv-dlg-card cv-type-add">
+            <div class="cv-dlg-card-h">#{v2LocaleBean.getMsg('rightbody.concept.addNewConceptType')}</div>
+            <div class="cv-type-edit">
+              <label class="cv-type-field">
+                <span>#{v2LocaleBean.getMsg('concept.code')}</span>
+                <h:inputText id="cvTypeAddCode" styleClass="st-input"
+                             value="#{v2ConceptTypeManagerBean.conceptTypeToAdd.code}"
+                             title="#{v2LocaleBean.getMsg('concept.typeCodeDescription')}"/>
+              </label>
+              <label class="cv-type-field">
+                <span>FR</span>
+                <h:inputText id="cvTypeAddFr" styleClass="st-input"
+                             value="#{v2ConceptTypeManagerBean.conceptTypeToAdd.labelFr}"/>
+              </label>
+              <label class="cv-type-field">
+                <span>EN</span>
+                <h:inputText id="cvTypeAddEn" styleClass="st-input"
+                             value="#{v2ConceptTypeManagerBean.conceptTypeToAdd.labelEn}"/>
+              </label>
+            </div>
+            <p class="cv-type-code-hint">#{v2LocaleBean.getMsg('concept.typeCodeDescription')}</p>
+            <label class="cv-dlg-check">
+              <h:selectBooleanCheckbox id="cvTypeAddRecip"
+                                       value="#{v2ConceptTypeManagerBean.conceptTypeToAdd.reciprocal}"/>
+              <span>#{v2LocaleBean.getMsg('concept.isReciprocalRelationship')}</span>
+            </label>
+            <p class="cv-type-recip-hint">#{v2LocaleBean.getMsg('v2.concept.typeRecipHint')}</p>
+            <div class="cv-type-row-act">
+              <h:commandLink styleClass="abt-save sm" action="#{v2ConceptFicheMenuBean.addConceptType}">
+                <f:ajax execute=":previewDetailForm:cvTypesLive" render=":previewDetailForm:cvTypesLive" onevent="onCvTypesAjax"/>
+                #{v2LocaleBean.getMsg('v2.concept.typeAdd')}
+              </h:commandLink>
+            </div>
+          </div>
+          <ui:fragment rendered="#{not empty v2ConceptTypeManagerBean.errorMessage}">
+            <p class="confirm-p is-warn">#{v2ConceptTypeManagerBean.errorMessage}</p>
+          </ui:fragment>
+        </h:panelGroup>
+      </div>
       <div class="confirm-actions">
-        <button type="button" class="abt-cancel confirm-cancel" data-act="cv-dlg-dismiss">#{v2LocaleBean.getMsg('v2.cancel')}</button>
-        <h:commandLink styleClass="abt-save" action="#{v2ConceptFicheMenuBean.addConceptType}">
-          <f:ajax execute="@form" render=":previewDetailForm:previewDetail :previewTree" onevent="onCvMenuAjax"/>
-          #{v2LocaleBean.getMsg('v2.save')}
-        </h:commandLink>
+        <button type="button" class="abt-cancel confirm-cancel" data-act="cv-dlg-dismiss">#{v2LocaleBean.getMsg('candidat.close')}</button>
       </div>
     </div>
+    <h:commandButton id="cvTypesAfterClose" styleClass="preview-open-btn cv-after-close" style="display:none"
+                     action="#{v2ConceptFicheMenuBean.afterManageConceptTypes}">
+      <f:ajax execute="@this" render=":previewDetailForm:previewDetail :previewTree" onevent="onCvMenuAjax"/>
+    </h:commandButton>
   </div>
 
   <div class="block-overlay confirm-overlay" id="cvDlgPaste" hidden="hidden"
@@ -248,25 +477,112 @@
     </div>
   </div>
 
-  <div class="block-overlay confirm-overlay" id="cvDlgDelete" hidden="hidden"
-       data-act="cv-dlg-dismiss" role="presentation">
-    <div class="confirm-modal" role="dialog" aria-modal="true" data-act="cv-dlg-modal">
-      <div class="confirm-h">#{v2LocaleBean.getMsg('rightbody.concept.delete_concept')}</div>
-      <p class="confirm-p">#{v2ConceptLifecycleEditorBean.currentPreferredLabel}</p>
-      <ui:fragment rendered="#{v2ConceptSelectionContext.hasNarrowers}">
-        <label class="cv-dlg-check">
-          <h:selectBooleanCheckbox value="#{v2ConceptLifecycleEditorBean.forceDeletePolyhierarchy}"/>
-          <span>#{v2LocaleBean.getMsg('rightbody.concept.toottip_delete_concept')}</span>
-        </label>
-      </ui:fragment>
+  <div class="block-overlay confirm-overlay is-run-dlg#{v2ConceptLifecycleEditorBean.deleteRunState eq 'done' ? ' is-done' : ''}"
+       id="cvDlgDelete" hidden="hidden"
+       data-act="cv-dlg-dismiss" role="presentation"
+       data-run-state="#{v2ConceptLifecycleEditorBean.deleteRunState}">
+    <div class="confirm-modal is-form is-theso is-ark is-del" role="dialog" aria-modal="true"
+         aria-labelledby="cvDlgDeleteTitle" data-act="cv-dlg-modal">
+      <div class="cv-dlg-head">
+        <span class="th-create-ico" aria-hidden="true">
+          <svg viewBox="0 0 24 24"><path d="M4 7h16"/><path d="M9 7V5h6v2"/><path d="M7 7l1 12h8l1-12"/></svg>
+        </span>
+        <div class="th-create-txt">
+          <div class="confirm-h" id="cvDlgDeleteTitle">#{v2LocaleBean.getMsg('rightbody.concept.delete_concept')}</div>
+          <p class="th-create-hint">#{v2LocaleBean.getMsg('v2.concept.delHint')}</p>
+        </div>
+      </div>
+      <div class="cv-dlg-body">
+        <div class="cv-dlg-card">
+          <div class="cv-dlg-card-h">#{v2LocaleBean.getMsg('v2.concept.delScope')}</div>
+          <div class="cv-dlg-branch">
+            <strong>#{v2ConceptLifecycleEditorBean.currentPreferredLabel}</strong>
+            <span class="cv-dlg-meta-v is-mono">#{v2ConceptLifecycleEditorBean.deleteConceptId}</span>
+          </div>
+          <h:panelGroup id="cvDeleteLive" layout="block" styleClass="cv-ark-live">
+            <span hidden="hidden"
+                  data-run-state="#{v2ConceptLifecycleEditorBean.deleteRunState}"
+                  data-flash-del="#{v2ConceptLifecycleEditorBean.deleteFlashMessage}"
+                  data-flash-del-token="#{v2ConceptLifecycleEditorBean.deleteFlashToken}"></span>
+            <div class="cv-dlg-meta">
+              <div class="cv-dlg-meta-row">
+                <span class="cv-dlg-meta-k">#{v2LocaleBean.getMsg('v2.concept.delRoot')}</span>
+                <span class="cv-dlg-meta-v is-mono">#{v2ConceptLifecycleEditorBean.deleteConceptId}</span>
+              </div>
+              <div class="cv-dlg-meta-row">
+                <span class="cv-dlg-meta-k">#{v2ConceptLifecycleEditorBean.branchDelete
+                    ? v2LocaleBean.getMsg('v2.concept.delBranch')
+                    : v2LocaleBean.getMsg('v2.concept.delLeaf')}</span>
+                <span class="cv-dlg-meta-v is-count">#{v2ConceptLifecycleEditorBean.deleteBranchCount}</span>
+              </div>
+            </div>
+            <ui:fragment rendered="#{v2ConceptLifecycleEditorBean.deleteRunState eq 'done'}">
+              <div class="cv-ark-now is-ok">
+                #{v2LocaleBean.getMsg('v2.concept.delDone')}
+                <strong>
+                  #{v2ConceptLifecycleEditorBean.deletedCount}
+                  #{v2ConceptLifecycleEditorBean.deletedCount eq 1
+                      ? v2LocaleBean.getMsg('v2.concept.delDoneOne')
+                      : v2LocaleBean.getMsg('v2.concept.delDoneMany')}
+                </strong>
+              </div>
+            </ui:fragment>
+            <ui:fragment rendered="#{v2ConceptLifecycleEditorBean.deleteRunState ne 'done'}">
+              <div class="cv-ark-now#{v2ConceptLifecycleEditorBean.branchDelete ? ' is-warn' : ''}">
+                <ui:fragment rendered="#{v2ConceptLifecycleEditorBean.branchDelete}">
+                  #{v2LocaleBean.getMsg('v2.concept.delActionBranch')}
+                </ui:fragment>
+                <ui:fragment rendered="#{not v2ConceptLifecycleEditorBean.branchDelete}">
+                  #{v2LocaleBean.getMsg('v2.concept.delAction')}
+                </ui:fragment>
+                <span class="cv-ark-wait">#{v2LocaleBean.getMsg('v2.concept.delForever')}</span>
+              </div>
+            </ui:fragment>
+            <ui:fragment rendered="#{not empty v2ConceptLifecycleEditorBean.deleteErrorMessage}">
+              <p class="confirm-p is-warn">#{v2ConceptLifecycleEditorBean.deleteErrorMessage}</p>
+            </ui:fragment>
+          </h:panelGroup>
+          <div class="cv-del-poly#{v2ConceptLifecycleEditorBean.branchDelete ? '' : ' is-off'}">
+            <label class="cv-dlg-check">
+              <h:selectBooleanCheckbox id="cvDeletePoly"
+                                       value="#{v2ConceptLifecycleEditorBean.forceDeletePolyhierarchy}"/>
+              <span>#{v2LocaleBean.getMsg('concept.deletePolyHierarchy')}</span>
+            </label>
+          </div>
+        </div>
+        <div class="cv-ark-prog" hidden="hidden" aria-live="polite"
+             data-done="#{v2LocaleBean.getMsg('v2.concept.arkProgDone')}">
+          <div class="cv-ark-prog-h">
+            <span class="cv-ark-prog-t">#{v2LocaleBean.getMsg('v2.concept.delProgPrepD')}</span>
+            <span class="cv-ark-prog-pct">0%</span>
+          </div>
+          <div class="cv-ark-prog-track" role="progressbar" aria-valuemin="0" aria-valuemax="100" aria-valuenow="0">
+            <span class="cv-ark-prog-fill"></span>
+          </div>
+          <ol class="cv-ark-prog-steps" aria-label="#{v2LocaleBean.getMsg('v2.concept.arkSteps')}">
+            <li data-detail="#{v2LocaleBean.getMsg('v2.concept.delProgPrepD')}">#{v2LocaleBean.getMsg('v2.concept.delProgPrep')}</li>
+            <li data-detail="#{v2LocaleBean.getMsg('v2.concept.delProgFixD')}">#{v2LocaleBean.getMsg('v2.concept.delProgFix')}</li>
+            <li data-detail="#{v2LocaleBean.getMsg('v2.concept.delProgSaveD')}">#{v2LocaleBean.getMsg('v2.concept.delProgSave')}</li>
+          </ol>
+        </div>
+      </div>
       <div class="confirm-actions">
-        <button type="button" class="abt-cancel confirm-cancel" data-act="cv-dlg-dismiss">#{v2LocaleBean.getMsg('v2.cancel')}</button>
-        <h:commandLink styleClass="abt-save is-danger" action="#{v2ConceptFicheMenuBean.submitDelete}">
-          <f:ajax execute="@form" render=":previewDetailForm:previewDetail :previewTree" onevent="onCvMenuAjax"/>
-          #{v2LocaleBean.getMsg('rightbody.concept.delete_concept')}
+        <button type="button" class="abt-cancel confirm-cancel" data-act="cv-dlg-dismiss"
+                data-idle="#{v2LocaleBean.getMsg('v2.cancel')}"
+                data-done="#{v2LocaleBean.getMsg('candidat.close')}">#{v2LocaleBean.getMsg('v2.cancel')}</button>
+        <h:commandLink id="cvDeleteGo"
+                       styleClass="abt-save is-danger cv-ark-go#{v2ConceptLifecycleEditorBean.deleteReady ? '' : ' is-off'}"
+                       action="#{v2ConceptFicheMenuBean.submitDelete}">
+          <f:ajax execute="cvDeletePoly @this" render=":previewDetailForm:cvDeleteLive" onevent="onCvArkAjax"/>
+          <span class="abt-save-label">#{v2LocaleBean.getMsg('candidat.remove')}</span>
+          <span class="abt-save-wait">#{v2LocaleBean.getMsg('v2.concept.arkBusy')}</span>
         </h:commandLink>
       </div>
     </div>
+    <h:commandButton id="cvDeleteAfterClose" styleClass="preview-open-btn cv-after-close" style="display:none"
+                     action="#{v2ConceptFicheMenuBean.afterDelete}">
+      <f:ajax execute="@this" render=":previewDetailForm:previewDetail :previewTree" onevent="onCvMenuAjax"/>
+    </h:commandButton>
   </div>
 
   <div class="block-overlay confirm-overlay" id="cvDlgDeprecate" hidden="hidden"
@@ -567,7 +883,7 @@
     </div>
   </div>
 
-  <div class="block-overlay confirm-overlay#{v2ConceptIdentifierEditorBean.arkRunState eq 'done' ? ' is-done' : ''}"
+  <div class="block-overlay confirm-overlay is-ark-dlg is-run-dlg#{v2ConceptIdentifierEditorBean.arkRunState eq 'done' ? ' is-done' : ''}"
        id="cvDlgArkGen" hidden="hidden"
        data-act="cv-dlg-dismiss" role="presentation"
        data-ark-state="#{v2ConceptIdentifierEditorBean.arkRunState}">
@@ -666,7 +982,7 @@
         <button type="button" class="abt-cancel confirm-cancel" data-act="cv-dlg-dismiss"
                 data-idle="#{v2LocaleBean.getMsg('v2.cancel')}"
                 data-done="#{v2LocaleBean.getMsg('candidat.close')}">#{v2LocaleBean.getMsg('v2.cancel')}</button>
-        <h:commandLink id="cvArkGenGo" styleClass="abt-save" action="#{v2ConceptFicheMenuBean.submitGenerateArk}">
+        <h:commandLink id="cvArkGenGo" styleClass="abt-save cv-ark-go" action="#{v2ConceptFicheMenuBean.submitGenerateArk}">
           <f:ajax execute="@this" render=":previewDetailForm:cvArkGenLive" onevent="onCvArkAjax"/>
           <span class="abt-save-label">
             <ui:fragment rendered="#{v2ConceptIdentifierEditorBean.existingArk}">#{v2LocaleBean.getMsg('v2.concept.arkConfirmUpdate')}</ui:fragment>
@@ -676,10 +992,114 @@
         </h:commandLink>
       </div>
     </div>
-    <h:commandButton id="cvArkAfterClose" styleClass="preview-open-btn" style="display:none"
+    <h:commandButton id="cvArkAfterClose" styleClass="preview-open-btn cv-after-close" style="display:none"
                      action="#{v2ConceptFicheMenuBean.afterGenerateArk}">
       <f:ajax execute="@this" render=":previewDetailForm:previewDetail :previewTree" onevent="onCvMenuAjax"/>
     </h:commandButton>
+  </div>
+
+  <div class="block-overlay confirm-overlay is-ark-dlg is-run-dlg#{v2ConceptIdentifierEditorBean.arkRunState eq 'done' ? ' is-done' : ''}"
+       id="cvDlgArkMissing" hidden="hidden"
+       data-act="cv-dlg-dismiss" role="presentation"
+       data-ark-state="#{v2ConceptIdentifierEditorBean.arkRunState}">
+    <div class="confirm-modal is-form is-theso is-ark" role="dialog" aria-modal="true"
+         aria-labelledby="cvDlgArkMissingTitle" data-act="cv-dlg-modal">
+      <div class="cv-dlg-head">
+        <span class="th-create-ico" aria-hidden="true">
+          <svg viewBox="0 0 24 24"><path d="M5 9h14"/><path d="M5 15h14"/><path d="M9 5 7 19"/><path d="M17 5l-2 14"/></svg>
+        </span>
+        <div class="th-create-txt">
+          <div class="confirm-h" id="cvDlgArkMissingTitle">#{v2LocaleBean.getMsg('rightbody.concept.generate_missing_ark')}</div>
+          <p class="th-create-hint">#{v2LocaleBean.getMsg('v2.concept.arkMissingHint')}</p>
+        </div>
+      </div>
+      <div class="cv-dlg-body">
+        <div class="cv-dlg-card">
+          <div class="cv-dlg-card-h">#{v2LocaleBean.getMsg('v2.concept.arkMissingScope')}</div>
+          <div class="cv-dlg-branch">
+            <strong>#{v2ConceptIdentifierEditorBean.thesaurusLabel}</strong>
+            <ui:fragment rendered="#{not empty v2ConceptIdentifierEditorBean.arkProvider}">
+              <span class="cv-ark-provider">
+                <ui:fragment rendered="#{v2ConceptIdentifierEditorBean.arkProvider eq 'ark'}">#{v2LocaleBean.getMsg('v2.concept.arkProviderRemote')}</ui:fragment>
+                <ui:fragment rendered="#{v2ConceptIdentifierEditorBean.arkProvider eq 'local'}">#{v2LocaleBean.getMsg('v2.concept.arkProviderLocal')}</ui:fragment>
+                <ui:fragment rendered="#{v2ConceptIdentifierEditorBean.arkProvider eq 'openark'}">#{v2LocaleBean.getMsg('v2.concept.arkProviderOpen')}</ui:fragment>
+              </span>
+            </ui:fragment>
+          </div>
+          <h:panelGroup id="cvArkMissingLive" layout="block" styleClass="cv-ark-live">
+            <span hidden="hidden"
+                  data-ark-state="#{v2ConceptIdentifierEditorBean.arkRunState}"
+                  data-flash-ark="#{v2ConceptIdentifierEditorBean.flashMessage}"
+                  data-flash-ark-token="#{v2ConceptIdentifierEditorBean.flashToken}"></span>
+            <div class="cv-dlg-meta">
+              <div class="cv-dlg-meta-row">
+                <span class="cv-dlg-meta-k">#{v2LocaleBean.getMsg('v2.concept.arkMissingTheso')}</span>
+                <span class="cv-dlg-meta-v is-mono">#{v2ConceptIdentifierEditorBean.thesaurusId}</span>
+              </div>
+              <div class="cv-dlg-meta-row">
+                <span class="cv-dlg-meta-k">#{v2LocaleBean.getMsg('v2.concept.arkMissingCount')}</span>
+                <span class="cv-dlg-meta-v is-count#{v2ConceptIdentifierEditorBean.missingArkEmpty ? ' is-zero' : ''}">#{v2ConceptIdentifierEditorBean.missingArkCount}</span>
+              </div>
+            </div>
+            <ui:fragment rendered="#{v2ConceptIdentifierEditorBean.arkRunState eq 'done'}">
+              <div class="cv-ark-now is-ok">
+                #{v2LocaleBean.getMsg('v2.concept.arkMissingDone')}
+                <strong>
+                  #{v2ConceptIdentifierEditorBean.missingArkCreated}
+                  #{v2ConceptIdentifierEditorBean.missingArkCreated eq 1
+                      ? v2LocaleBean.getMsg('v2.concept.arkMissingDoneOne')
+                      : v2LocaleBean.getMsg('v2.concept.arkMissingDoneMany')}
+                </strong>
+              </div>
+            </ui:fragment>
+            <ui:fragment rendered="#{v2ConceptIdentifierEditorBean.arkRunState ne 'done' and v2ConceptIdentifierEditorBean.missingArkEmpty}">
+              <div class="cv-ark-now is-empty">#{v2LocaleBean.getMsg('v2.concept.arkMissingEmpty')}</div>
+            </ui:fragment>
+            <ui:fragment rendered="#{v2ConceptIdentifierEditorBean.arkRunState ne 'done' and not v2ConceptIdentifierEditorBean.missingArkEmpty}">
+              <div class="cv-ark-now">
+                <ui:fragment rendered="#{v2ConceptIdentifierEditorBean.localArkProvider}">
+                  #{v2LocaleBean.getMsg('v2.concept.arkMissingActionLocal')}
+                </ui:fragment>
+                <ui:fragment rendered="#{not v2ConceptIdentifierEditorBean.localArkProvider}">
+                  #{v2LocaleBean.getMsg('v2.concept.arkMissingAction')}
+                </ui:fragment>
+                <span class="cv-ark-wait">#{v2LocaleBean.getMsg('v2.concept.arkMissingWait')}</span>
+              </div>
+            </ui:fragment>
+            <ui:fragment rendered="#{not empty v2ConceptIdentifierEditorBean.errorMessage}">
+              <p class="confirm-p is-warn">#{v2ConceptIdentifierEditorBean.errorMessage}</p>
+            </ui:fragment>
+          </h:panelGroup>
+        </div>
+        <div class="cv-ark-prog" hidden="hidden" aria-live="polite"
+             data-done="#{v2LocaleBean.getMsg('v2.concept.arkProgDone')}">
+          <div class="cv-ark-prog-h">
+            <span class="cv-ark-prog-t">#{v2LocaleBean.getMsg('v2.concept.arkProgPrepD')}</span>
+            <span class="cv-ark-prog-pct">0%</span>
+          </div>
+          <div class="cv-ark-prog-track" role="progressbar" aria-valuemin="0" aria-valuemax="100" aria-valuenow="0">
+            <span class="cv-ark-prog-fill"></span>
+          </div>
+          <ol class="cv-ark-prog-steps" aria-label="#{v2LocaleBean.getMsg('v2.concept.arkSteps')}">
+            <li data-detail="#{v2LocaleBean.getMsg('v2.concept.arkProgPrepD')}">#{v2LocaleBean.getMsg('v2.concept.arkProgPrep')}</li>
+            <li data-detail="#{v2LocaleBean.getMsg('v2.concept.arkProgServerD')}">#{v2LocaleBean.getMsg('v2.concept.arkProgServer')}</li>
+            <li data-detail="#{v2LocaleBean.getMsg('v2.concept.arkMissingProgSaveD')}">#{v2LocaleBean.getMsg('v2.concept.arkProgSave')}</li>
+          </ol>
+        </div>
+      </div>
+      <div class="confirm-actions">
+        <button type="button" class="abt-cancel confirm-cancel" data-act="cv-dlg-dismiss"
+                data-idle="#{v2ConceptIdentifierEditorBean.missingArkEmpty ? v2LocaleBean.getMsg('candidat.close') : v2LocaleBean.getMsg('v2.cancel')}"
+                data-done="#{v2LocaleBean.getMsg('candidat.close')}">#{v2ConceptIdentifierEditorBean.missingArkEmpty ? v2LocaleBean.getMsg('candidat.close') : v2LocaleBean.getMsg('v2.cancel')}</button>
+        <h:commandLink id="cvArkMissingGo"
+                       styleClass="abt-save cv-ark-go#{v2ConceptIdentifierEditorBean.missingArkSubmitReady ? '' : ' is-off'}"
+                       action="#{v2ConceptFicheMenuBean.submitGenerateMissingArk}">
+          <f:ajax execute="@this" render=":previewDetailForm:cvArkMissingLive" onevent="onCvArkAjax"/>
+          <span class="abt-save-label">#{v2LocaleBean.getMsg('v2.concept.arkConfirmCreate')}</span>
+          <span class="abt-save-wait">#{v2LocaleBean.getMsg('v2.concept.arkBusy')}</span>
+        </h:commandLink>
+      </div>
+    </div>
   </div>
   <div class="block-overlay confirm-overlay" id="cvDlgArkDel" hidden="hidden" data-act="cv-dlg-dismiss" role="presentation">
     <div class="confirm-modal" role="dialog" aria-modal="true" data-act="cv-dlg-modal">
@@ -693,27 +1113,242 @@
       </div>
     </div>
   </div>
-  <div class="block-overlay confirm-overlay" id="cvDlgArkBranch" hidden="hidden" data-act="cv-dlg-dismiss" role="presentation">
-    <div class="confirm-modal" role="dialog" aria-modal="true" data-act="cv-dlg-modal">
-      <div class="confirm-h">#{v2LocaleBean.getMsg('rightbody.concept.generate_ark_for_branch')}</div>
-      <p class="confirm-p">#{v2ConceptIdentifierEditorBean.branchConceptIds.size()}</p>
+  <div class="block-overlay confirm-overlay is-ark-dlg is-run-dlg#{v2ConceptIdentifierEditorBean.arkRunState eq 'done' ? ' is-done' : ''}"
+       id="cvDlgArkBranch" hidden="hidden"
+       data-act="cv-dlg-dismiss" role="presentation"
+       data-ark-state="#{v2ConceptIdentifierEditorBean.arkRunState}">
+    <div class="confirm-modal is-form is-theso is-ark" role="dialog" aria-modal="true"
+         aria-labelledby="cvDlgArkBranchTitle" data-act="cv-dlg-modal">
+      <div class="cv-dlg-head">
+        <span class="th-create-ico" aria-hidden="true">
+          <svg viewBox="0 0 24 24"><path d="M5 9h14"/><path d="M5 15h14"/><path d="M9 5 7 19"/><path d="M17 5l-2 14"/></svg>
+        </span>
+        <div class="th-create-txt">
+          <div class="confirm-h" id="cvDlgArkBranchTitle">#{v2LocaleBean.getMsg('rightbody.concept.generate_ark_for_branch')}</div>
+          <p class="th-create-hint">#{v2LocaleBean.getMsg('v2.concept.arkBranchHint')}</p>
+        </div>
+      </div>
+      <div class="cv-dlg-body">
+        <div class="cv-dlg-card">
+          <div class="cv-dlg-card-h">#{v2LocaleBean.getMsg('v2.concept.arkBranchScope')}</div>
+          <div class="cv-dlg-branch">
+            <strong>#{v2ConceptIdentifierEditorBean.currentConceptLabel}</strong>
+            <ui:fragment rendered="#{not empty v2ConceptIdentifierEditorBean.arkProvider}">
+              <span class="cv-ark-provider">
+                <ui:fragment rendered="#{v2ConceptIdentifierEditorBean.arkProvider eq 'ark'}">#{v2LocaleBean.getMsg('v2.concept.arkProviderRemote')}</ui:fragment>
+                <ui:fragment rendered="#{v2ConceptIdentifierEditorBean.arkProvider eq 'local'}">#{v2LocaleBean.getMsg('v2.concept.arkProviderLocal')}</ui:fragment>
+                <ui:fragment rendered="#{v2ConceptIdentifierEditorBean.arkProvider eq 'openark'}">#{v2LocaleBean.getMsg('v2.concept.arkProviderOpen')}</ui:fragment>
+              </span>
+            </ui:fragment>
+          </div>
+          <h:panelGroup id="cvArkBranchLive" layout="block" styleClass="cv-ark-live">
+            <span hidden="hidden"
+                  data-ark-state="#{v2ConceptIdentifierEditorBean.arkRunState}"
+                  data-flash-ark="#{v2ConceptIdentifierEditorBean.flashMessage}"
+                  data-flash-ark-token="#{v2ConceptIdentifierEditorBean.flashToken}"></span>
+            <div class="cv-dlg-meta">
+              <div class="cv-dlg-meta-row">
+                <span class="cv-dlg-meta-k">#{v2LocaleBean.getMsg('v2.concept.arkBranchRoot')}</span>
+                <span class="cv-dlg-meta-v is-mono">#{v2ConceptIdentifierEditorBean.currentConceptId}</span>
+              </div>
+              <div class="cv-dlg-meta-row">
+                <span class="cv-dlg-meta-k">#{v2LocaleBean.getMsg('v2.concept.arkBranchCount')}</span>
+                <span class="cv-dlg-meta-v is-count#{v2ConceptIdentifierEditorBean.branchArkEmpty ? ' is-zero' : ''}">#{v2ConceptIdentifierEditorBean.branchConceptCount}</span>
+              </div>
+              <ui:fragment rendered="#{not v2ConceptIdentifierEditorBean.branchArkEmpty}">
+                <div class="cv-dlg-meta-row">
+                  <span class="cv-dlg-meta-k">#{v2LocaleBean.getMsg('v2.concept.arkBranchCreate')}</span>
+                  <span class="cv-dlg-meta-v#{v2ConceptIdentifierEditorBean.branchArkMissing eq 0 ? ' is-empty' : ''}">#{v2ConceptIdentifierEditorBean.branchArkMissing}</span>
+                </div>
+                <div class="cv-dlg-meta-row">
+                  <span class="cv-dlg-meta-k">#{v2LocaleBean.getMsg('v2.concept.arkBranchUpdate')}</span>
+                  <span class="cv-dlg-meta-v#{v2ConceptIdentifierEditorBean.branchArkExisting eq 0 ? ' is-empty' : ''}">#{v2ConceptIdentifierEditorBean.branchArkExisting}</span>
+                </div>
+              </ui:fragment>
+            </div>
+            <ui:fragment rendered="#{v2ConceptIdentifierEditorBean.arkRunState eq 'done'}">
+              <div class="cv-ark-now is-ok">
+                #{v2LocaleBean.getMsg('v2.concept.arkBranchDone')}
+                <strong>
+                  #{v2ConceptIdentifierEditorBean.branchProcessed}
+                  #{v2ConceptIdentifierEditorBean.branchProcessed eq 1
+                      ? v2LocaleBean.getMsg('v2.concept.arkBranchDoneOne')
+                      : v2LocaleBean.getMsg('v2.concept.arkBranchDoneMany')}
+                </strong>
+              </div>
+            </ui:fragment>
+            <ui:fragment rendered="#{v2ConceptIdentifierEditorBean.arkRunState ne 'done' and v2ConceptIdentifierEditorBean.branchArkEmpty}">
+              <div class="cv-ark-now is-empty">#{v2LocaleBean.getMsg('v2.concept.arkBranchEmpty')}</div>
+            </ui:fragment>
+            <ui:fragment rendered="#{v2ConceptIdentifierEditorBean.arkRunState ne 'done' and not v2ConceptIdentifierEditorBean.branchArkEmpty}">
+              <div class="cv-ark-now">
+                <ui:fragment rendered="#{v2ConceptIdentifierEditorBean.localArkProvider}">
+                  #{v2LocaleBean.getMsg('v2.concept.arkBranchActionLocal')}
+                </ui:fragment>
+                <ui:fragment rendered="#{not v2ConceptIdentifierEditorBean.localArkProvider}">
+                  #{v2LocaleBean.getMsg('v2.concept.arkBranchAction')}
+                </ui:fragment>
+                <span class="cv-ark-wait">#{v2LocaleBean.getMsg('v2.concept.arkBranchWait')}</span>
+              </div>
+            </ui:fragment>
+            <ui:fragment rendered="#{not empty v2ConceptIdentifierEditorBean.errorMessage}">
+              <p class="confirm-p is-warn">#{v2ConceptIdentifierEditorBean.errorMessage}</p>
+            </ui:fragment>
+          </h:panelGroup>
+        </div>
+        <div class="cv-ark-prog" hidden="hidden" aria-live="polite"
+             data-done="#{v2LocaleBean.getMsg('v2.concept.arkProgDone')}">
+          <div class="cv-ark-prog-h">
+            <span class="cv-ark-prog-t">#{v2LocaleBean.getMsg('v2.concept.arkProgPrepD')}</span>
+            <span class="cv-ark-prog-pct">0%</span>
+          </div>
+          <div class="cv-ark-prog-track" role="progressbar" aria-valuemin="0" aria-valuemax="100" aria-valuenow="0">
+            <span class="cv-ark-prog-fill"></span>
+          </div>
+          <ol class="cv-ark-prog-steps" aria-label="#{v2LocaleBean.getMsg('v2.concept.arkSteps')}">
+            <li data-detail="#{v2LocaleBean.getMsg('v2.concept.arkProgPrepD')}">#{v2LocaleBean.getMsg('v2.concept.arkProgPrep')}</li>
+            <li data-detail="#{v2LocaleBean.getMsg('v2.concept.arkProgServerD')}">#{v2LocaleBean.getMsg('v2.concept.arkProgServer')}</li>
+            <li data-detail="#{v2LocaleBean.getMsg('v2.concept.arkBranchProgSaveD')}">#{v2LocaleBean.getMsg('v2.concept.arkProgSave')}</li>
+          </ol>
+        </div>
+      </div>
       <div class="confirm-actions">
-        <button type="button" class="abt-cancel confirm-cancel" data-act="cv-dlg-dismiss">#{v2LocaleBean.getMsg('v2.cancel')}</button>
-        <h:commandLink styleClass="abt-save" action="#{v2ConceptFicheMenuBean.submitGenerateArkBranch}">
-          <f:ajax execute="@this" render=":previewDetailForm:previewDetail :previewTree" onevent="onCvMenuAjax"/>
-          #{v2LocaleBean.getMsg('rightbody.concept.generate_ark_for_branch')}
+        <button type="button" class="abt-cancel confirm-cancel" data-act="cv-dlg-dismiss"
+                data-idle="#{v2ConceptIdentifierEditorBean.branchArkEmpty ? v2LocaleBean.getMsg('candidat.close') : v2LocaleBean.getMsg('v2.cancel')}"
+                data-done="#{v2LocaleBean.getMsg('candidat.close')}">#{v2ConceptIdentifierEditorBean.branchArkEmpty ? v2LocaleBean.getMsg('candidat.close') : v2LocaleBean.getMsg('v2.cancel')}</button>
+        <h:commandLink id="cvArkBranchGo"
+                       styleClass="abt-save cv-ark-go#{v2ConceptIdentifierEditorBean.branchArkSubmitReady ? '' : ' is-off'}"
+                       action="#{v2ConceptFicheMenuBean.submitGenerateArkBranch}">
+          <f:ajax execute="@this" render=":previewDetailForm:cvArkBranchLive" onevent="onCvArkAjax"/>
+          <span class="abt-save-label">
+            <ui:fragment rendered="#{v2ConceptIdentifierEditorBean.branchArkMissing eq 0 and v2ConceptIdentifierEditorBean.branchArkExisting gt 0}">
+              #{v2LocaleBean.getMsg('v2.concept.arkConfirmUpdate')}
+            </ui:fragment>
+            <ui:fragment rendered="#{v2ConceptIdentifierEditorBean.branchArkMissing gt 0 or v2ConceptIdentifierEditorBean.branchArkExisting eq 0}">
+              #{v2LocaleBean.getMsg('v2.concept.arkConfirmCreate')}
+            </ui:fragment>
+          </span>
+          <span class="abt-save-wait">#{v2LocaleBean.getMsg('v2.concept.arkBusy')}</span>
         </h:commandLink>
       </div>
     </div>
   </div>
-  <div class="block-overlay confirm-overlay" id="cvDlgArkAll" hidden="hidden" data-act="cv-dlg-dismiss" role="presentation">
-    <div class="confirm-modal" role="dialog" aria-modal="true" data-act="cv-dlg-modal">
-      <div class="confirm-h">#{v2LocaleBean.getMsg('rightbody.concept.generate_all_ark')}</div>
+  <div class="block-overlay confirm-overlay is-ark-dlg is-run-dlg#{v2ConceptIdentifierEditorBean.arkRunState eq 'done' ? ' is-done' : ''}"
+       id="cvDlgArkAll" hidden="hidden"
+       data-act="cv-dlg-dismiss" role="presentation"
+       data-ark-state="#{v2ConceptIdentifierEditorBean.arkRunState}">
+    <div class="confirm-modal is-form is-theso is-ark" role="dialog" aria-modal="true"
+         aria-labelledby="cvDlgArkAllTitle" data-act="cv-dlg-modal">
+      <div class="cv-dlg-head">
+        <span class="th-create-ico" aria-hidden="true">
+          <svg viewBox="0 0 24 24"><path d="M5 9h14"/><path d="M5 15h14"/><path d="M9 5 7 19"/><path d="M17 5l-2 14"/></svg>
+        </span>
+        <div class="th-create-txt">
+          <div class="confirm-h" id="cvDlgArkAllTitle">#{v2LocaleBean.getMsg('rightbody.concept.generate_all_ark')}</div>
+          <p class="th-create-hint">#{v2LocaleBean.getMsg('v2.concept.arkAllHint')}</p>
+        </div>
+      </div>
+      <div class="cv-dlg-body">
+        <div class="cv-dlg-card">
+          <div class="cv-dlg-card-h">#{v2LocaleBean.getMsg('v2.concept.arkAllScope')}</div>
+          <div class="cv-dlg-branch">
+            <strong>#{v2ConceptIdentifierEditorBean.thesaurusLabel}</strong>
+            <ui:fragment rendered="#{not empty v2ConceptIdentifierEditorBean.arkProvider}">
+              <span class="cv-ark-provider">
+                <ui:fragment rendered="#{v2ConceptIdentifierEditorBean.arkProvider eq 'ark'}">#{v2LocaleBean.getMsg('v2.concept.arkProviderRemote')}</ui:fragment>
+                <ui:fragment rendered="#{v2ConceptIdentifierEditorBean.arkProvider eq 'local'}">#{v2LocaleBean.getMsg('v2.concept.arkProviderLocal')}</ui:fragment>
+                <ui:fragment rendered="#{v2ConceptIdentifierEditorBean.arkProvider eq 'openark'}">#{v2LocaleBean.getMsg('v2.concept.arkProviderOpen')}</ui:fragment>
+              </span>
+            </ui:fragment>
+          </div>
+          <h:panelGroup id="cvArkAllLive" layout="block" styleClass="cv-ark-live">
+            <span hidden="hidden"
+                  data-ark-state="#{v2ConceptIdentifierEditorBean.arkRunState}"
+                  data-flash-ark="#{v2ConceptIdentifierEditorBean.flashMessage}"
+                  data-flash-ark-token="#{v2ConceptIdentifierEditorBean.flashToken}"></span>
+            <div class="cv-dlg-meta">
+              <div class="cv-dlg-meta-row">
+                <span class="cv-dlg-meta-k">#{v2LocaleBean.getMsg('v2.concept.arkAllTheso')}</span>
+                <span class="cv-dlg-meta-v is-mono">#{v2ConceptIdentifierEditorBean.thesaurusId}</span>
+              </div>
+              <div class="cv-dlg-meta-row">
+                <span class="cv-dlg-meta-k">#{v2LocaleBean.getMsg('v2.concept.arkAllCount')}</span>
+                <span class="cv-dlg-meta-v is-count#{v2ConceptIdentifierEditorBean.allArkEmpty ? ' is-zero' : ''}">#{v2ConceptIdentifierEditorBean.allConceptCount}</span>
+              </div>
+              <ui:fragment rendered="#{not v2ConceptIdentifierEditorBean.allArkEmpty}">
+                <div class="cv-dlg-meta-row">
+                  <span class="cv-dlg-meta-k">#{v2LocaleBean.getMsg('v2.concept.arkBranchCreate')}</span>
+                  <span class="cv-dlg-meta-v#{v2ConceptIdentifierEditorBean.allArkMissing eq 0 ? ' is-empty' : ''}">#{v2ConceptIdentifierEditorBean.allArkMissing}</span>
+                </div>
+                <div class="cv-dlg-meta-row">
+                  <span class="cv-dlg-meta-k">#{v2LocaleBean.getMsg('v2.concept.arkBranchUpdate')}</span>
+                  <span class="cv-dlg-meta-v#{v2ConceptIdentifierEditorBean.allArkExisting eq 0 ? ' is-empty' : ''}">#{v2ConceptIdentifierEditorBean.allArkExisting}</span>
+                </div>
+              </ui:fragment>
+            </div>
+            <ui:fragment rendered="#{v2ConceptIdentifierEditorBean.arkRunState eq 'done'}">
+              <div class="cv-ark-now is-ok">
+                #{v2LocaleBean.getMsg('v2.concept.arkAllDone')}
+                <strong>
+                  #{v2ConceptIdentifierEditorBean.allProcessed}
+                  #{v2ConceptIdentifierEditorBean.allProcessed eq 1
+                      ? v2LocaleBean.getMsg('v2.concept.arkAllDoneOne')
+                      : v2LocaleBean.getMsg('v2.concept.arkAllDoneMany')}
+                </strong>
+              </div>
+            </ui:fragment>
+            <ui:fragment rendered="#{v2ConceptIdentifierEditorBean.arkRunState ne 'done' and v2ConceptIdentifierEditorBean.allArkEmpty}">
+              <div class="cv-ark-now is-empty">#{v2LocaleBean.getMsg('v2.concept.arkAllEmpty')}</div>
+            </ui:fragment>
+            <ui:fragment rendered="#{v2ConceptIdentifierEditorBean.arkRunState ne 'done' and not v2ConceptIdentifierEditorBean.allArkEmpty}">
+              <div class="cv-ark-now">
+                <ui:fragment rendered="#{v2ConceptIdentifierEditorBean.localArkProvider}">
+                  #{v2LocaleBean.getMsg('v2.concept.arkAllActionLocal')}
+                </ui:fragment>
+                <ui:fragment rendered="#{not v2ConceptIdentifierEditorBean.localArkProvider}">
+                  #{v2LocaleBean.getMsg('v2.concept.arkAllAction')}
+                </ui:fragment>
+                <span class="cv-ark-wait">#{v2LocaleBean.getMsg('v2.concept.arkAllWait')}</span>
+              </div>
+            </ui:fragment>
+            <ui:fragment rendered="#{not empty v2ConceptIdentifierEditorBean.errorMessage}">
+              <p class="confirm-p is-warn">#{v2ConceptIdentifierEditorBean.errorMessage}</p>
+            </ui:fragment>
+          </h:panelGroup>
+        </div>
+        <div class="cv-ark-prog" hidden="hidden" aria-live="polite"
+             data-done="#{v2LocaleBean.getMsg('v2.concept.arkProgDone')}">
+          <div class="cv-ark-prog-h">
+            <span class="cv-ark-prog-t">#{v2LocaleBean.getMsg('v2.concept.arkProgPrepD')}</span>
+            <span class="cv-ark-prog-pct">0%</span>
+          </div>
+          <div class="cv-ark-prog-track" role="progressbar" aria-valuemin="0" aria-valuemax="100" aria-valuenow="0">
+            <span class="cv-ark-prog-fill"></span>
+          </div>
+          <ol class="cv-ark-prog-steps" aria-label="#{v2LocaleBean.getMsg('v2.concept.arkSteps')}">
+            <li data-detail="#{v2LocaleBean.getMsg('v2.concept.arkProgPrepD')}">#{v2LocaleBean.getMsg('v2.concept.arkProgPrep')}</li>
+            <li data-detail="#{v2LocaleBean.getMsg('v2.concept.arkProgServerD')}">#{v2LocaleBean.getMsg('v2.concept.arkProgServer')}</li>
+            <li data-detail="#{v2LocaleBean.getMsg('v2.concept.arkAllProgSaveD')}">#{v2LocaleBean.getMsg('v2.concept.arkProgSave')}</li>
+          </ol>
+        </div>
+      </div>
       <div class="confirm-actions">
-        <button type="button" class="abt-cancel confirm-cancel" data-act="cv-dlg-dismiss">#{v2LocaleBean.getMsg('v2.cancel')}</button>
-        <h:commandLink styleClass="abt-save" action="#{v2ConceptFicheMenuBean.submitGenerateAllArk}">
-          <f:ajax execute="@this" render=":previewDetailForm:previewDetail :previewTree" onevent="onCvMenuAjax"/>
-          #{v2LocaleBean.getMsg('rightbody.concept.generate_all_ark')}
+        <button type="button" class="abt-cancel confirm-cancel" data-act="cv-dlg-dismiss"
+                data-idle="#{v2ConceptIdentifierEditorBean.allArkEmpty ? v2LocaleBean.getMsg('candidat.close') : v2LocaleBean.getMsg('v2.cancel')}"
+                data-done="#{v2LocaleBean.getMsg('candidat.close')}">#{v2ConceptIdentifierEditorBean.allArkEmpty ? v2LocaleBean.getMsg('candidat.close') : v2LocaleBean.getMsg('v2.cancel')}</button>
+        <h:commandLink id="cvArkAllGo"
+                       styleClass="abt-save cv-ark-go#{v2ConceptIdentifierEditorBean.allArkSubmitReady ? '' : ' is-off'}"
+                       action="#{v2ConceptFicheMenuBean.submitGenerateAllArk}">
+          <f:ajax execute="@this" render=":previewDetailForm:cvArkAllLive" onevent="onCvArkAjax"/>
+          <span class="abt-save-label">
+            <ui:fragment rendered="#{v2ConceptIdentifierEditorBean.allArkMissing eq 0 and v2ConceptIdentifierEditorBean.allArkExisting gt 0}">
+              #{v2LocaleBean.getMsg('v2.concept.arkConfirmUpdate')}
+            </ui:fragment>
+            <ui:fragment rendered="#{v2ConceptIdentifierEditorBean.allArkMissing gt 0 or v2ConceptIdentifierEditorBean.allArkExisting eq 0}">
+              #{v2LocaleBean.getMsg('v2.concept.arkConfirmCreate')}
+            </ui:fragment>
+          </span>
+          <span class="abt-save-wait">#{v2LocaleBean.getMsg('v2.concept.arkBusy')}</span>
         </h:commandLink>
       </div>
     </div>
@@ -758,38 +1393,310 @@
     </div>
   </div>
 
-  <div class="block-overlay confirm-overlay" id="cvDlgImportCsv" hidden="hidden"
-       data-act="cv-dlg-dismiss" role="presentation">
-    <div class="confirm-modal is-form" role="dialog" aria-modal="true" data-act="cv-dlg-modal">
-      <div class="confirm-h">#{v2LocaleBean.getMsg('rightbody.concept.import_tabulated_list')}</div>
-      <p class="confirm-p">#{v2ConceptListCsvImportBean.parentConceptLabel}</p>
-      <label class="cv-dlg-field">
-        <span>CSV</span>
-        <h:selectOneMenu styleClass="st-input" value="#{v2ConceptListCsvImportBean.choiceDelimiter}">
-          <f:selectItem itemValue="#{0}" itemLabel=","/>
-          <f:selectItem itemValue="#{1}" itemLabel=";"/>
-          <f:selectItem itemValue="#{2}" itemLabel="tab"/>
-        </h:selectOneMenu>
-      </label>
-      <h:inputFile styleClass="st-input" value="#{v2ConceptListCsvImportBean.csvUpload}"/>
-      <ui:fragment rendered="#{not empty v2ConceptListCsvImportBean.error}">
-        <p class="confirm-p is-warn">#{v2ConceptListCsvImportBean.error}</p>
-      </ui:fragment>
-      <ui:fragment rendered="#{v2ConceptListCsvImportBean.loadDone}">
-        <p class="confirm-p">#{v2ConceptListCsvImportBean.total}</p>
-      </ui:fragment>
+  <div class="block-overlay confirm-overlay is-run-dlg#{v2ConceptListCsvImportBean.runState eq 'done' ? ' is-done' : ''}"
+       id="cvDlgImportCsv" hidden="hidden"
+       data-act="cv-dlg-dismiss" role="presentation"
+       data-run-state="#{v2ConceptListCsvImportBean.runState}">
+    <div class="confirm-modal is-form is-theso is-csv" role="dialog" aria-modal="true"
+         aria-labelledby="cvDlgImportCsvTitle" data-act="cv-dlg-modal">
+      <div class="cv-dlg-head">
+        <span class="th-create-ico" aria-hidden="true">
+          <svg viewBox="0 0 24 24"><path d="M4 6h16v12H4z"/><path d="M4 10h16"/><path d="M4 14h16"/><path d="M9 6v12"/></svg>
+        </span>
+        <div class="th-create-txt">
+          <div class="confirm-h" id="cvDlgImportCsvTitle">#{v2LocaleBean.getMsg('rightbody.concept.import_tabulated_list')}</div>
+          <p class="th-create-hint">#{v2LocaleBean.getMsg('v2.concept.csvHint')}</p>
+        </div>
+      </div>
+      <div class="cv-dlg-body">
+        <div class="cv-dlg-card">
+          <div class="cv-dlg-card-h">#{v2LocaleBean.getMsg('v2.concept.csvScope')}</div>
+          <div class="cv-dlg-branch cv-csv-parent">
+            <strong>#{v2ConceptListCsvImportBean.parentConceptLabel}</strong>
+            <span class="cv-dlg-meta-v is-mono">#{v2ConceptListCsvImportBean.parentConceptId}</span>
+          </div>
+        </div>
+        <div class="cv-dlg-card">
+          <div class="cv-dlg-card-h">#{v2LocaleBean.getMsg('v2.concept.csvFile')}</div>
+          <div class="cv-csv-cfg">
+            <span class="cv-csv-cfg-l">#{v2LocaleBean.getMsg('import.separatedValue')}</span>
+            <div class="cv-dlg-dest cv-csv-delim" role="group" aria-label="#{v2LocaleBean.getMsg('import.separatedValue')}">
+              <button type="button" class="cv-dlg-dest-btn" data-act="csv-delim" data-val="0">
+                <span class="cv-csv-delim-g">,</span>
+                <small>#{v2LocaleBean.getMsg('v2.concept.csvComma')}</small>
+              </button>
+              <button type="button" class="cv-dlg-dest-btn" data-act="csv-delim" data-val="1">
+                <span class="cv-csv-delim-g">;</span>
+                <small>#{v2LocaleBean.getMsg('v2.concept.csvSemicolon')}</small>
+              </button>
+              <button type="button" class="cv-dlg-dest-btn" data-act="csv-delim" data-val="2">
+                <span class="cv-csv-delim-g">⇥</span>
+                <small>#{v2LocaleBean.getMsg('v2.concept.csvTab')}</small>
+              </button>
+            </div>
+            <h:inputHidden id="cvCsvDelim" value="#{v2ConceptListCsvImportBean.choiceDelimiter}"/>
+          </div>
+          <div class="cv-csv-drop-wrap">
+            <button type="button" class="cv-csv-drop" data-act="csv-browse">
+              <span class="cv-csv-drop-ico" aria-hidden="true">
+                <svg viewBox="0 0 24 24"><path d="M21 15v4a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2v-4"/><path d="M17 8l-5-5-5 5"/><path d="M12 3v12"/></svg>
+              </span>
+              <span class="cv-csv-drop-copy">
+                <span class="cv-csv-drop-t">#{v2LocaleBean.getMsg('v2.concept.csvDrop')}</span>
+                <span class="cv-csv-drop-t is-alt">#{v2LocaleBean.getMsg('v2.concept.csvDropReplace')}</span>
+                <span class="cv-csv-drop-s">#{v2LocaleBean.getMsg('v2.concept.csvDropTypes')}</span>
+              </span>
+            </button>
+            <h:inputFile id="cvCsvFile" styleClass="cv-file-input" value="#{v2ConceptListCsvImportBean.csvUpload}"
+                         accept=".csv,.tsv,.txt,text/csv,text/tab-separated-values,text/plain">
+              <f:ajax event="valueChange" listener="#{v2ConceptFicheMenuBean.loadImportCsv}"
+                      execute="cvCsvDelim cvCsvFile" render=":previewDetailForm:cvCsvLive" onevent="onCvCsvLoadAjax"/>
+            </h:inputFile>
+            <h:panelGroup id="cvCsvLive" layout="block" styleClass="cv-ark-live cv-csv-live">
+              <span hidden="hidden"
+                    data-run-state="#{v2ConceptListCsvImportBean.runState}"
+                    data-import-ready="#{v2ConceptListCsvImportBean.importReady}"
+                    data-csv-loaded="#{not empty v2ConceptListCsvImportBean.fileName}"
+                    data-flash-csv="#{v2ConceptListCsvImportBean.flashMessage}"
+                    data-flash-csv-token="#{v2ConceptListCsvImportBean.flashToken}"></span>
+              <ui:fragment rendered="#{not empty v2ConceptListCsvImportBean.fileName}">
+                <div class="cv-csv-filechip">
+                  <span class="cv-csv-filechip-ico" aria-hidden="true">
+                    <svg viewBox="0 0 24 24"><path d="M14 2H6a2 2 0 0 0-2 2v16a2 2 0 0 0 2 2h12a2 2 0 0 0 2-2V8z"/><path d="M14 2v6h6"/></svg>
+                  </span>
+                  <span class="cv-csv-filechip-n">#{v2ConceptListCsvImportBean.fileName}</span>
+                </div>
+              </ui:fragment>
+              <ui:fragment rendered="#{v2ConceptListCsvImportBean.loadDone or v2ConceptListCsvImportBean.importDone}">
+                <div class="cv-csv-stats">
+                  <div class="cv-csv-stat#{v2ConceptListCsvImportBean.total eq 0 ? ' is-empty' : ''}">
+                    <span class="cv-csv-stat-n">#{v2ConceptListCsvImportBean.total}</span>
+                    <span class="cv-csv-stat-l">#{v2LocaleBean.getMsg('v2.concept.csvCount')}</span>
+                  </div>
+                  <div class="cv-csv-stat">
+                    <span class="cv-csv-stat-n">#{v2ConceptListCsvImportBean.underParentCount}</span>
+                    <span class="cv-csv-stat-l">#{v2LocaleBean.getMsg('v2.concept.csvUnderParent')}</span>
+                  </div>
+                  <div class="cv-csv-stat#{v2ConceptListCsvImportBean.hierarchyCount eq 0 ? ' is-empty' : ''}">
+                    <span class="cv-csv-stat-n">#{v2ConceptListCsvImportBean.hierarchyCount}</span>
+                    <span class="cv-csv-stat-l">#{v2LocaleBean.getMsg('v2.concept.csvWithBroader')}</span>
+                  </div>
+                </div>
+              </ui:fragment>
+              <ui:fragment rendered="#{v2ConceptListCsvImportBean.runState eq 'done'}">
+                <div class="cv-ark-now is-ok">
+                  #{v2LocaleBean.getMsg('v2.concept.csvDone')}
+                  <strong>
+                    #{v2ConceptListCsvImportBean.importedCount}
+                    #{v2ConceptListCsvImportBean.importedCount eq 1
+                        ? v2LocaleBean.getMsg('v2.concept.csvDoneOne')
+                        : v2LocaleBean.getMsg('v2.concept.csvDoneMany')}
+                  </strong>
+                </div>
+              </ui:fragment>
+              <ui:fragment rendered="#{v2ConceptListCsvImportBean.runState ne 'done' and v2ConceptListCsvImportBean.loadDone}">
+                <div class="cv-ark-now">
+                  #{v2LocaleBean.getMsg('v2.concept.csvAction')}
+                  <ui:fragment rendered="#{not empty v2ConceptListCsvImportBean.sampleLabels}">
+                    <span class="cv-csv-sample">
+                      <ui:repeat value="#{v2ConceptListCsvImportBean.sampleLabels}" var="sample">
+                        <span>#{sample}</span>
+                      </ui:repeat>
+                    </span>
+                  </ui:fragment>
+                  <span class="cv-ark-wait">#{v2LocaleBean.getMsg('v2.concept.csvWait')}</span>
+                </div>
+              </ui:fragment>
+              <ui:fragment rendered="#{not empty v2ConceptListCsvImportBean.warning and not v2ConceptListCsvImportBean.warningEmpty}">
+                <p class="confirm-p is-warn">#{v2ConceptListCsvImportBean.warning}</p>
+              </ui:fragment>
+              <ui:fragment rendered="#{not empty v2ConceptListCsvImportBean.error}">
+                <p class="confirm-p is-warn">#{v2ConceptListCsvImportBean.error}</p>
+              </ui:fragment>
+            </h:panelGroup>
+          </div>
+        </div>
+        <details class="cv-csv-help">
+          <summary>#{v2LocaleBean.getMsg('v2.concept.csvFormat')}</summary>
+          <div class="cv-csv-rules">
+            <span>#{v2LocaleBean.getMsg('v2.concept.csvRuleUri')}</span>
+            <span>#{v2LocaleBean.getMsg('v2.concept.csvRuleId')}</span>
+            <span>#{v2LocaleBean.getMsg('v2.concept.csvRuleMulti')}</span>
+            <span>#{v2LocaleBean.getMsg('v2.concept.csvRuleBroader')}</span>
+          </div>
+          <div class="cv-csv-fmt-wrap">
+            <table class="cv-csv-fmt">
+              <thead>
+                <tr>
+                  <th>URI</th>
+                  <th>skos:prefLabel@fr</th>
+                  <th>skos:prefLabel@en</th>
+                  <th>skos:altLabel@fr</th>
+                  <th>skos:definition@fr</th>
+                  <th>skos:facet</th>
+                  <th>skos:broader</th>
+                </tr>
+              </thead>
+              <tbody>
+                <tr>
+                  <td>100</td>
+                  <td>France</td>
+                  <td>France_en</td>
+                  <td>l'Hexagone</td>
+                  <td>Pays de la liberté##fait partie de l'Europe</td>
+                  <td>F19</td>
+                  <td></td>
+                </tr>
+                <tr>
+                  <td>101</td>
+                  <td>Lyon</td>
+                  <td>Lyon_en</td>
+                  <td>Lugdunum</td>
+                  <td>Ville de la gastronomie</td>
+                  <td>F19##F10</td>
+                  <td>100</td>
+                </tr>
+              </tbody>
+            </table>
+          </div>
+        </details>
+        <div class="cv-ark-prog" hidden="hidden" aria-live="polite"
+             data-done="#{v2LocaleBean.getMsg('v2.concept.arkProgDone')}">
+          <div class="cv-ark-prog-h">
+            <span class="cv-ark-prog-t">#{v2LocaleBean.getMsg('v2.concept.csvProgPrepD')}</span>
+            <span class="cv-ark-prog-pct">0%</span>
+          </div>
+          <div class="cv-ark-prog-track" role="progressbar" aria-valuemin="0" aria-valuemax="100" aria-valuenow="0">
+            <span class="cv-ark-prog-fill"></span>
+          </div>
+          <ol class="cv-ark-prog-steps" aria-label="#{v2LocaleBean.getMsg('v2.concept.arkSteps')}">
+            <li data-detail="#{v2LocaleBean.getMsg('v2.concept.csvProgPrepD')}">#{v2LocaleBean.getMsg('v2.concept.csvProgPrep')}</li>
+            <li data-detail="#{v2LocaleBean.getMsg('v2.concept.csvProgImportD')}">#{v2LocaleBean.getMsg('v2.concept.csvProgImport')}</li>
+            <li data-detail="#{v2LocaleBean.getMsg('v2.concept.csvProgSaveD')}">#{v2LocaleBean.getMsg('v2.concept.csvProgSave')}</li>
+          </ol>
+        </div>
+      </div>
       <div class="confirm-actions">
-        <button type="button" class="abt-cancel confirm-cancel" data-act="cv-dlg-dismiss">#{v2LocaleBean.getMsg('v2.cancel')}</button>
-        <h:commandLink styleClass="abt-save" action="#{v2ConceptFicheMenuBean.loadImportCsv}">
-          <f:ajax execute="@form" render=":previewDetailForm:previewDetail :previewTree" onevent="onCvMenuAjax"/>
-          Load
+        <button type="button" class="abt-cancel confirm-cancel" data-act="cv-dlg-dismiss"
+                data-idle="#{v2LocaleBean.getMsg('v2.cancel')}"
+                data-done="#{v2LocaleBean.getMsg('candidat.close')}">#{v2LocaleBean.getMsg('v2.cancel')}</button>
+        <h:commandLink id="cvCsvAnalyze" styleClass="preview-open-btn" style="display:none"
+                       action="#{v2ConceptFicheMenuBean.loadImportCsv}">
+          <f:ajax execute="cvCsvDelim cvCsvFile" render=":previewDetailForm:cvCsvLive" onevent="onCvCsvLoadAjax"/>
         </h:commandLink>
-        <h:commandLink styleClass="abt-save" rendered="#{v2ConceptListCsvImportBean.loadDone}"
+        <h:commandLink id="cvCsvGo"
+                       styleClass="abt-save cv-ark-go#{v2ConceptListCsvImportBean.importReady ? '' : ' is-off'}"
                        action="#{v2ConceptFicheMenuBean.submitImportCsv}">
-          <f:ajax execute="@this" render=":previewDetailForm:previewDetail :previewTree" onevent="onCvMenuAjax"/>
-          #{v2LocaleBean.getMsg('rightbody.concept.import_tabulated_list')}
+          <f:ajax execute="@this" render=":previewDetailForm:cvCsvLive" onevent="onCvArkAjax"/>
+          <span class="abt-save-label">#{v2LocaleBean.getMsg('candidat.import')}</span>
+          <span class="abt-save-wait">#{v2LocaleBean.getMsg('v2.concept.arkBusy')}</span>
         </h:commandLink>
       </div>
     </div>
+    <h:commandButton id="cvCsvAfterClose" styleClass="preview-open-btn cv-after-close" style="display:none"
+                     action="#{v2ConceptFicheMenuBean.afterImportCsv}">
+      <f:ajax execute="@this" render=":previewDetailForm:previewDetail :previewTree" onevent="onCvMenuAjax"/>
+    </h:commandButton>
+  </div>
+
+  <div class="block-overlay confirm-overlay is-run-dlg#{v2ConceptMaintenanceEditorBean.runState eq 'done' ? ' is-done' : ''}"
+       id="cvDlgRepairLoop" hidden="hidden"
+       data-act="cv-dlg-dismiss" role="presentation"
+       data-run-state="#{v2ConceptMaintenanceEditorBean.runState}">
+    <div class="confirm-modal is-form is-theso is-ark" role="dialog" aria-modal="true"
+         aria-labelledby="cvDlgRepairLoopTitle" data-act="cv-dlg-modal">
+      <div class="cv-dlg-head">
+        <span class="th-create-ico" aria-hidden="true">
+          <svg viewBox="0 0 24 24"><path d="M14.7 6.3a4 4 0 0 0-5.4 5.4L4 17l3 3 5.3-5.3a4 4 0 0 0 5.4-5.4L15 12z"/></svg>
+        </span>
+        <div class="th-create-txt">
+          <div class="confirm-h" id="cvDlgRepairLoopTitle">#{v2LocaleBean.getMsg('actions.repairLoopedRelationships')}</div>
+          <p class="th-create-hint">#{v2LocaleBean.getMsg('v2.concept.loopHint')}</p>
+        </div>
+      </div>
+      <div class="cv-dlg-body">
+        <div class="cv-dlg-card">
+          <div class="cv-dlg-card-h">#{v2LocaleBean.getMsg('v2.concept.loopScope')}</div>
+          <div class="cv-dlg-branch">
+            <strong>#{v2ConceptMaintenanceEditorBean.conceptLabel}</strong>
+            <span class="cv-dlg-meta-v is-mono">#{v2ConceptMaintenanceEditorBean.conceptId}</span>
+          </div>
+          <h:panelGroup id="cvLoopLive" layout="block" styleClass="cv-ark-live">
+            <span hidden="hidden"
+                  data-run-state="#{v2ConceptMaintenanceEditorBean.runState}"
+                  data-flash-loop="#{v2ConceptMaintenanceEditorBean.flashMessage}"
+                  data-flash-loop-token="#{v2ConceptMaintenanceEditorBean.flashToken}"></span>
+            <div class="cv-dlg-meta">
+              <div class="cv-dlg-meta-row">
+                <span class="cv-dlg-meta-k">#{v2LocaleBean.getMsg('v2.concept.loopRoot')}</span>
+                <span class="cv-dlg-meta-v is-mono">#{v2ConceptMaintenanceEditorBean.conceptId}</span>
+              </div>
+              <div class="cv-dlg-meta-row">
+                <span class="cv-dlg-meta-k">#{v2LocaleBean.getMsg('v2.concept.loopBranch')}</span>
+                <span class="cv-dlg-meta-v is-count#{v2ConceptMaintenanceEditorBean.branchCount eq 0 ? ' is-zero' : ''}">#{v2ConceptMaintenanceEditorBean.branchCount}</span>
+              </div>
+              <div class="cv-dlg-meta-row">
+                <span class="cv-dlg-meta-k">#{v2LocaleBean.getMsg('v2.concept.loopFound')}</span>
+                <span class="cv-dlg-meta-v#{v2ConceptMaintenanceEditorBean.loopEmpty ? ' is-empty' : ''}">#{v2ConceptMaintenanceEditorBean.loopCount}</span>
+              </div>
+            </div>
+            <ui:fragment rendered="#{v2ConceptMaintenanceEditorBean.runState eq 'done'}">
+              <div class="cv-ark-now is-ok">
+                #{v2LocaleBean.getMsg('v2.concept.loopDone')}
+                <strong>
+                  #{v2ConceptMaintenanceEditorBean.repairedCount}
+                  #{v2ConceptMaintenanceEditorBean.repairedCount eq 1
+                      ? v2LocaleBean.getMsg('v2.concept.loopDoneOne')
+                      : v2LocaleBean.getMsg('v2.concept.loopDoneMany')}
+                </strong>
+              </div>
+            </ui:fragment>
+            <ui:fragment rendered="#{v2ConceptMaintenanceEditorBean.runState ne 'done' and v2ConceptMaintenanceEditorBean.loopEmpty}">
+              <div class="cv-ark-now is-empty">#{v2LocaleBean.getMsg('v2.concept.loopEmpty')}</div>
+            </ui:fragment>
+            <ui:fragment rendered="#{v2ConceptMaintenanceEditorBean.runState ne 'done' and not v2ConceptMaintenanceEditorBean.loopEmpty}">
+              <div class="cv-ark-now">
+                #{v2LocaleBean.getMsg('v2.concept.loopAction')}
+                <span class="cv-ark-wait">#{v2LocaleBean.getMsg('v2.concept.loopWait')}</span>
+              </div>
+            </ui:fragment>
+            <ui:fragment rendered="#{not empty v2ConceptMaintenanceEditorBean.errorMessage}">
+              <p class="confirm-p is-warn">#{v2ConceptMaintenanceEditorBean.errorMessage}</p>
+            </ui:fragment>
+          </h:panelGroup>
+        </div>
+        <div class="cv-ark-prog" hidden="hidden" aria-live="polite"
+             data-done="#{v2LocaleBean.getMsg('v2.concept.arkProgDone')}">
+          <div class="cv-ark-prog-h">
+            <span class="cv-ark-prog-t">#{v2LocaleBean.getMsg('v2.concept.loopProgPrepD')}</span>
+            <span class="cv-ark-prog-pct">0%</span>
+          </div>
+          <div class="cv-ark-prog-track" role="progressbar" aria-valuemin="0" aria-valuemax="100" aria-valuenow="0">
+            <span class="cv-ark-prog-fill"></span>
+          </div>
+          <ol class="cv-ark-prog-steps" aria-label="#{v2LocaleBean.getMsg('v2.concept.arkSteps')}">
+            <li data-detail="#{v2LocaleBean.getMsg('v2.concept.loopProgPrepD')}">#{v2LocaleBean.getMsg('v2.concept.loopProgPrep')}</li>
+            <li data-detail="#{v2LocaleBean.getMsg('v2.concept.loopProgFixD')}">#{v2LocaleBean.getMsg('v2.concept.loopProgFix')}</li>
+            <li data-detail="#{v2LocaleBean.getMsg('v2.concept.loopProgSaveD')}">#{v2LocaleBean.getMsg('v2.concept.loopProgSave')}</li>
+          </ol>
+        </div>
+      </div>
+      <div class="confirm-actions">
+        <button type="button" class="abt-cancel confirm-cancel" data-act="cv-dlg-dismiss"
+                data-idle="#{v2ConceptMaintenanceEditorBean.loopEmpty ? v2LocaleBean.getMsg('candidat.close') : v2LocaleBean.getMsg('v2.cancel')}"
+                data-done="#{v2LocaleBean.getMsg('candidat.close')}">#{v2ConceptMaintenanceEditorBean.loopEmpty ? v2LocaleBean.getMsg('candidat.close') : v2LocaleBean.getMsg('v2.cancel')}</button>
+        <h:commandLink id="cvLoopGo"
+                       styleClass="abt-save cv-ark-go#{v2ConceptMaintenanceEditorBean.repairReady ? '' : ' is-off'}"
+                       action="#{v2ConceptFicheMenuBean.submitRepairLoopedRelationships}">
+          <f:ajax execute="@this" render=":previewDetailForm:cvLoopLive" onevent="onCvArkAjax"/>
+          <span class="abt-save-label">#{v2LocaleBean.getMsg('v2.concept.loopConfirm')}</span>
+          <span class="abt-save-wait">#{v2LocaleBean.getMsg('v2.concept.arkBusy')}</span>
+        </h:commandLink>
+      </div>
+    </div>
+    <h:commandButton id="cvLoopAfterClose" styleClass="preview-open-btn cv-after-close" style="display:none"
+                     action="#{v2ConceptFicheMenuBean.afterRepairLoopedRelationships}">
+      <f:ajax execute="@this" render=":previewDetailForm:previewDetail :previewTree" onevent="onCvMenuAjax"/>
+    </h:commandButton>
   </div>
 </ui:composition>

@@ -183,10 +183,12 @@ function toggleCollectionNode(tn) {
   }
   if (tn.getAttribute("data-loaded") === "1") {
     tn.classList.add("is-open");
+    if (typeof replayAnim === "function") replayAnim(tn, "is-branch-in");
     paintCollectionVisibility();
     return;
   }
   tn.classList.add("is-open", "is-fetching");
+  if (typeof replayAnim === "function") replayAnim(tn, "is-branch-in");
   const parentId = tn.getAttribute("data-id");
   collectionApi("children", { parentId: parentId }).then(nodes => {
     tn.classList.remove("is-fetching");

@@ -11,6 +11,7 @@ import fr.cnrs.opentheso.v2.concept.write.service.ConceptWriteMetadataService;
 import fr.cnrs.opentheso.v2.concept.write.service.ConceptWriteSearchService;
 import fr.cnrs.opentheso.v2.facet.read.FacetReadService;
 import fr.cnrs.opentheso.v2.facet.write.model.command.AddFacetMemberCommand;
+import fr.cnrs.opentheso.v2.facet.write.model.command.CreateFacetCommand;
 import fr.cnrs.opentheso.v2.facet.write.service.FacetMutationService;
 import fr.cnrs.opentheso.v2.setting.ui.ThesaurusContext;
 import fr.cnrs.opentheso.v2.concept.write.policy.ConceptWritePolicy;
@@ -93,8 +94,67 @@ class FacetDetailEditorBeanTest {
         bean.prepareCreateUnderCurrentConcept();
 
         assertEquals("Concept neuf", bean.getParentConceptLabel());
+        assertEquals("C9", bean.getParentConceptId());
         assertEquals("C9", bean.getSelectedParentConcept().conceptId());
         assertEquals("", bean.getLabel());
+        assertEquals("", bean.getCreateRunState());
+        assertTrue(bean.isComposing());
+    }
+
+    @Test
+    void isCreateReady_falseWhenLabelBlank() {
+        bean.setParentConceptId("C9");
+        bean.setLabel("  ");
+
+        assertFalse(bean.isCreateReady());
+    }
+
+    @Test
+    void submitCreate_closesComposerWithoutNavigating() {
+        bean.setParentConceptId("C9");
+        bean.setComposing(true);
+        bean.setLabel("Par matériau");
+        when(facetMutationService.createFacet(new CreateFacetCommand("TH1", "C9", "fr", "Par matériau")))
+                .thenReturn(MutationResult.ok("La facette a bien été créée", "F12"));
+
+        bean.submitCreate();
+
+        assertEquals("done", bean.getCreateRunState());
+        assertEquals("F12", bean.getCreatedFacetId());
+        assertEquals("Facette « Par matériau » créée", bean.getCreateFlashMessage());
+        assertFalse(bean.isComposing());
+        verify(thesaurusBrowseBean, never()).focusFacet(any());
+        verify(thesaurusBrowseBean, never()).invalidateConceptTree();
+    }
+
+    @Test
+    void submitCreate_duplicateNameStaysInError() {
+        bean.setParentConceptId("C9");
+        bean.setComposing(true);
+        bean.setLabel("Par matériau");
+        when(facetMutationService.createFacet(new CreateFacetCommand("TH1", "C9", "fr", "Par matériau")))
+                .thenReturn(MutationResult.duplicate("Le nom de la facette 'Par matériau' existe déjà !"));
+
+        bean.submitCreate();
+
+        assertEquals("error", bean.getCreateRunState());
+        assertEquals("Le nom de la facette 'Par matériau' existe déjà !", bean.getCreateErrorMessage());
+        assertTrue(bean.isComposing());
+        verify(thesaurusBrowseBean, never()).focusFacet(any());
+    }
+
+    @Test
+    void cancelCreate_closesComposer() {
+        bean.setComposing(true);
+        bean.setLabel("Par matériau");
+        bean.setCreatedFacetId("F12");
+
+        bean.cancelCreate();
+
+        assertFalse(bean.isComposing());
+        assertEquals("", bean.getLabel());
+        assertEquals("", bean.getCreatedFacetId());
+        verify(thesaurusBrowseBean, never()).focusFacet(any());
     }
 
     @Test

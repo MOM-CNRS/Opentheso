@@ -3,13 +3,10 @@ package fr.cnrs.opentheso.v2.concept.write.ui;
 import fr.cnrs.opentheso.repositories.PreferencesRepository;
 import fr.cnrs.opentheso.services.imports.csv.CsvImportHelper;
 import fr.cnrs.opentheso.services.imports.csv.CsvReadHelper;
-import fr.cnrs.opentheso.utils.MessageUtils;
-import fr.cnrs.opentheso.v2.concept.session.ConceptNavigationSupport;
 import fr.cnrs.opentheso.v2.concept.session.ConceptSelectionContext;
 import fr.cnrs.opentheso.v2.concept.write.policy.ConceptWritePolicy;
 import fr.cnrs.opentheso.v2.setting.ui.ThesaurusContext;
 import fr.cnrs.opentheso.v2.shared.ui.UserSession;
-import jakarta.faces.event.PhaseId;
 import jakarta.faces.view.ViewScoped;
 import jakarta.inject.Named;
 import jakarta.servlet.http.Part;
@@ -18,15 +15,16 @@ import lombok.RequiredArgsConstructor;
 import lombok.Setter;
 import org.apache.commons.collections4.CollectionUtils;
 import org.apache.commons.lang3.StringUtils;
-import org.primefaces.PrimeFaces;
-import org.primefaces.event.FileUploadEvent;
 
 import java.io.ByteArrayInputStream;
 import java.io.InputStreamReader;
 import java.io.Reader;
 import java.io.Serializable;
+import java.nio.charset.StandardCharsets;
 import java.util.ArrayList;
+import java.util.Collections;
 import java.util.List;
+import java.util.Locale;
 
 /**
  * Import d'une liste tabulée sous le concept courant (équivalent legacy listImportCsv).
@@ -41,7 +39,6 @@ public class ConceptListCsvImportBean implements Serializable {
     private final CsvImportHelper csvImportHelper;
     private final PreferencesRepository preferencesRepository;
     private final ConceptSelectionContext conceptSelectionContext;
-    private final ConceptNavigationSupport conceptNavigationSupport;
     private final ThesaurusContext thesaurusContext;
     private final UserSession userSession;
     private final ConceptWritePolicy conceptWritePolicy;
@@ -52,20 +49,37 @@ public class ConceptListCsvImportBean implements Serializable {
     private boolean importDone;
     private String uri;
     private int total;
+    private int underParentCount;
+    private int hierarchyCount;
+    private int importedCount;
     private String info = "";
     private String warning = "";
     private String error = "";
     private String parentConceptLabel = "";
+    private String parentConceptId = "";
+    private String fileName = "";
+    private String runState = "";
+    private String flashMessage;
+    private String flashToken;
+    private List<String> sampleLabels = Collections.emptyList();
     private List<CsvReadHelper.ConceptObject> conceptObjects = new ArrayList<>();
     private Part csvUpload;
+    private byte[] csvBytes;
 
     public boolean isImportAvailable() {
         return conceptWritePolicy.canMutateConcept(userSession)
                 && conceptSelectionContext.hasSelection();
     }
 
+    public boolean isImportReady() {
+        return loadDone && !"done".equals(runState);
+    }
+
     public void prepareImport() {
         init();
+        parentConceptId = conceptSelectionContext.hasSelection()
+                ? StringUtils.defaultString(conceptSelectionContext.getConceptId())
+                : "";
         parentConceptLabel = conceptSelectionContext.hasSelection()
                 && conceptSelectionContext.getSummary() != null
                 ? StringUtils.defaultString(conceptSelectionContext.getSummary().preferredLabel())
@@ -79,10 +93,20 @@ public class ConceptListCsvImportBean implements Serializable {
         importDone = false;
         uri = null;
         total = 0;
+        underParentCount = 0;
+        hierarchyCount = 0;
+        importedCount = 0;
         info = "";
         warning = "";
         error = "";
+        fileName = "";
+        runState = "";
+        flashMessage = null;
+        flashToken = null;
+        sampleLabels = Collections.emptyList();
         conceptObjects = new ArrayList<>();
+        csvUpload = null;
+        csvBytes = null;
     }
 
     public void actionChoice() {
@@ -93,40 +117,108 @@ public class ConceptListCsvImportBean implements Serializable {
         };
     }
 
-    public void loadFileCsvList(FileUploadEvent event) {
-        if (!PhaseId.INVOKE_APPLICATION.equals(event.getPhaseId())) {
-            event.setPhaseId(PhaseId.INVOKE_APPLICATION);
-            event.queue();
+    public void loadFromUpload() {
+        actionChoice();
+        initMessages();
+        loadDone = false;
+        importDone = false;
+        runState = "";
+        importedCount = 0;
+        try {
+            if (csvUpload != null && csvUpload.getSize() > 0) {
+                csvBytes = csvUpload.getInputStream().readAllBytes();
+                fileName = submittedName(csvUpload);
+            }
+        } catch (Exception e) {
+            error = StringUtils.defaultIfBlank(e.getMessage(), "La lecture du fichier a échoué");
+            loadDone = false;
             return;
         }
-        initMessages();
+        if (csvBytes == null || csvBytes.length == 0) {
+            error = "Aucun fichier";
+            if (StringUtils.isBlank(fileName)) {
+                fileName = "";
+            }
+            return;
+        }
+        if (!isAllowedFileName(fileName)) {
+            error = "Fichier non pris en charge (csv, tsv ou txt)";
+            return;
+        }
         try {
-            loadFromBytes(event.getFile().getInputStream().readAllBytes());
+            loadFromBytes(csvBytes);
         } catch (Exception e) {
-            error = String.valueOf(e.getMessage());
+            error = StringUtils.defaultIfBlank(e.getMessage(), "La lecture du fichier a échoué");
             loadDone = false;
         }
     }
 
-    public void loadFromUpload() {
+    public boolean importUnderCurrentConcept() {
+        error = "";
+        if (!isImportAvailable()) {
+            runState = "error";
+            error = "Action non autorisée";
+            return false;
+        }
+        if (CollectionUtils.isEmpty(conceptObjects)) {
+            runState = "error";
+            error = "Aucun concept à importer";
+            return false;
+        }
+        String thesaurusId = thesaurusContext.resolveThesaurusId();
+        String parentId = StringUtils.defaultIfBlank(parentConceptId, conceptSelectionContext.getConceptId());
+        Integer userId = userSession.getCurrentUserId();
+        if (StringUtils.isAnyBlank(thesaurusId, parentId) || userId == null) {
+            runState = "error";
+            error = "Erreur manque de paramètres";
+            return false;
+        }
+        var preferences = preferencesRepository.findByIdThesaurus(thesaurusId).orElse(null);
+        if (preferences == null) {
+            runState = "error";
+            error = "Pas de préférences pour le thésaurus";
+            return false;
+        }
         initMessages();
-        if (csvUpload == null) {
-            error = "Aucun fichier";
-            loadDone = false;
-            return;
-        }
         try {
-            loadFromBytes(csvUpload.getInputStream().readAllBytes());
-        } catch (Exception e) {
-            error = String.valueOf(e.getMessage());
+            int count = conceptObjects.size();
+            for (CsvReadHelper.ConceptObject conceptObject : conceptObjects) {
+                if (conceptObject.getBroaders() == null || conceptObject.getBroaders().isEmpty()) {
+                    csvImportHelper.addSingleConcept(
+                            thesaurusId, parentId, null, userId, conceptObject, preferences);
+                } else {
+                    csvImportHelper.addSingleConcept(
+                            thesaurusId, null, null, userId, conceptObject, preferences);
+                }
+            }
+            importedCount = count;
             loadDone = false;
+            importDone = true;
+            runState = "done";
+            info = "import réussi\n" + StringUtils.defaultString(csvImportHelper.getMessage());
+            if (StringUtils.isNotBlank(csvImportHelper.getMessage())) {
+                warning = csvImportHelper.getMessage();
+            }
+            conceptObjects = new ArrayList<>();
+            flashSuccess(importedCount == 1
+                    ? "1 concept importé"
+                    : importedCount + " concepts importés");
+            return true;
+        } catch (Exception e) {
+            runState = "error";
+            error = StringUtils.defaultIfBlank(e.getMessage(), "Import en échec");
+            return false;
         }
+    }
+
+    public boolean isWarningEmpty() {
+        return StringUtils.isBlank(warning);
     }
 
     private void loadFromBytes(byte[] bytes) throws Exception {
         CsvReadHelper csvReadHelper = new CsvReadHelper(delimiterCsv);
-        try (Reader reader1 = new InputStreamReader(new ByteArrayInputStream(bytes));
-             Reader reader2 = new InputStreamReader(new ByteArrayInputStream(bytes))) {
+        try (Reader reader1 = new InputStreamReader(new ByteArrayInputStream(bytes), StandardCharsets.UTF_8);
+             Reader reader2 = new InputStreamReader(new ByteArrayInputStream(bytes), StandardCharsets.UTF_8)) {
             if (!csvReadHelper.setLangs(reader1)) {
                 error = csvReadHelper.getMessage();
             }
@@ -138,70 +230,61 @@ public class ConceptListCsvImportBean implements Serializable {
                     ? new ArrayList<>(csvReadHelper.getConceptObjects())
                     : new ArrayList<>();
             total = conceptObjects.size();
+            underParentCount = 0;
+            hierarchyCount = 0;
+            for (CsvReadHelper.ConceptObject conceptObject : conceptObjects) {
+                if (conceptObject.getBroaders() == null || conceptObject.getBroaders().isEmpty()) {
+                    underParentCount++;
+                } else {
+                    hierarchyCount++;
+                }
+            }
+            sampleLabels = conceptObjects.stream()
+                    .limit(3)
+                    .map(this::firstLabel)
+                    .filter(StringUtils::isNotBlank)
+                    .toList();
             uri = "";
             if (!conceptObjects.isEmpty()
                     && conceptObjects.get(0).getPrefLabels() != null
                     && conceptObjects.get(0).getPrefLabels().isEmpty()) {
-                error = "La lecture a échouée, vérifiez le séparateur des colonnes !!";
+                error = "La lecture a échoué, vérifiez le séparateur des colonnes";
                 loadDone = false;
             } else {
                 loadDone = total > 0 && StringUtils.isBlank(error);
                 if (loadDone) {
                     info = "File correctly loaded";
+                } else if (total == 0 && StringUtils.isBlank(error)) {
+                    error = "Aucun concept lu dans le fichier";
                 }
             }
         }
     }
 
-    public void importUnderCurrentConcept() {
-        if (!isImportAvailable()) {
-            MessageUtils.showErrorMessage("Action non autorisée");
-            return;
+    private String firstLabel(CsvReadHelper.ConceptObject conceptObject) {
+        if (conceptObject == null || CollectionUtils.isEmpty(conceptObject.getPrefLabels())) {
+            return StringUtils.defaultString(conceptObject != null ? conceptObject.getIdConcept() : "");
         }
-        if (CollectionUtils.isEmpty(conceptObjects)) {
-            warning = "pas de valeurs";
-            return;
-        }
-        String thesaurusId = thesaurusContext.resolveThesaurusId();
-        String parentConceptId = conceptSelectionContext.getConceptId();
-        Integer userId = userSession.getCurrentUserId();
-        if (StringUtils.isAnyBlank(thesaurusId, parentConceptId) || userId == null) {
-            MessageUtils.showErrorMessage("Erreur manque de paramètres");
-            return;
-        }
-        var preferences = preferencesRepository.findByIdThesaurus(thesaurusId).orElse(null);
-        if (preferences == null) {
-            warning = "pas de préférences";
-            return;
-        }
-        initMessages();
-        try {
-            for (CsvReadHelper.ConceptObject conceptObject : conceptObjects) {
-                if (conceptObject.getBroaders() == null || conceptObject.getBroaders().isEmpty()) {
-                    csvImportHelper.addSingleConcept(
-                            thesaurusId, parentConceptId, null, userId, conceptObject, preferences);
-                } else {
-                    csvImportHelper.addSingleConcept(
-                            thesaurusId, null, null, userId, conceptObject, preferences);
-                }
-            }
-            loadDone = false;
-            importDone = true;
-            info = "import réussi\n" + StringUtils.defaultString(csvImportHelper.getMessage());
-            conceptObjects = new ArrayList<>();
-            total = 0;
-            conceptNavigationSupport.refreshSelectedConcept();
-            PrimeFaces.current().ajax().update(
-                    ":containerIndex:formRightTab :containerIndex:formLeftTab :messageIndex");
-            MessageUtils.showInformationMessage("Import terminé");
-        } catch (Exception e) {
-            error = String.valueOf(e);
-            MessageUtils.showErrorMessage("Import en échec");
-        }
+        return StringUtils.defaultString(conceptObject.getPrefLabels().get(0).getLabel());
     }
 
-    public boolean isWarningEmpty() {
-        return StringUtils.isBlank(warning);
+    private static String submittedName(Part part) {
+        String name = part.getSubmittedFileName();
+        if (StringUtils.isBlank(name)) {
+            return "";
+        }
+        int slash = Math.max(name.lastIndexOf('/'), name.lastIndexOf('\\'));
+        return slash >= 0 ? name.substring(slash + 1) : name;
+    }
+
+    private static boolean isAllowedFileName(String name) {
+        String lower = StringUtils.defaultString(name).toLowerCase(Locale.ROOT);
+        return lower.endsWith(".csv") || lower.endsWith(".tsv") || lower.endsWith(".txt");
+    }
+
+    private void flashSuccess(String message) {
+        flashMessage = message;
+        flashToken = String.valueOf(System.currentTimeMillis());
     }
 
     private void initMessages() {

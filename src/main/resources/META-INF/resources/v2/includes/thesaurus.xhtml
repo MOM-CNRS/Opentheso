@@ -11,6 +11,14 @@
         <path class="logo-seg" d="M12 3.8c-2.5 1.9-4 4.8-4 8.2s1.5 6.3 4 8.2c2.5-1.9 4-4.8 4-8.2s-1.5-6.3-4-8.2Z"/>
       </svg>
     </a>
+    <button type="button" class="thesaurus-btn sb-rail-btn" id="sbOpenBtn" data-act="sb-toggle"
+            title="#{v2LocaleBean.getMsg('v2.shell.treeOpen')}"
+            aria-label="#{v2LocaleBean.getMsg('v2.shell.treeOpen')}"
+            data-open="#{v2LocaleBean.getMsg('v2.shell.treeOpen')}"
+            data-close="#{v2LocaleBean.getMsg('v2.shell.treeClose')}"
+            aria-controls="sidebar" aria-expanded="false">
+      <svg viewBox="0 0 24 24" aria-hidden="true"><path d="M8 6h13"/><path d="M8 12h13"/><path d="M8 18h13"/><path d="M3 6h.01"/><path d="M3 12h.01"/><path d="M3 18h.01"/></svg>
+    </button>
     <div class="thesaurus-group">
       <div class="thesaurus-item">
         <button type="button" class="thesaurus-btn#{not v2UserSession.loggedIn and not empty v2LoginBean.loginError ? ' is-on' : ''}"

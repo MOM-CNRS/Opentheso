@@ -45,7 +45,14 @@ public class ConceptAttributeEditorBean implements Serializable {
     private String currentConceptLabel;
     private String notation;
     private String selectedConceptType;
+    private String currentConceptTypeCode;
+    private String currentConceptTypeLabel;
     private boolean applyConceptTypeToBranch;
+    private boolean appliedToBranch;
+    private String typeRunState = "";
+    private String typeErrorMessage;
+    private String typeFlashMessage;
+    private String typeFlashToken;
     private List<ConceptWriteConceptType> availableConceptTypes = Collections.emptyList();
 
     public boolean isAttributeActionsAvailable() {
@@ -67,11 +74,45 @@ public class ConceptAttributeEditorBean implements Serializable {
         notation = currentNotation();
     }
 
+    public boolean isTypeDone() {
+        return "done".equals(typeRunState);
+    }
+
+    public boolean isTypeApplyReady() {
+        return !isTypeDone()
+                && isConceptTypeEditAvailable()
+                && conceptSelectionContext.hasSelection()
+                && StringUtils.isNotBlank(selectedConceptType);
+    }
+
+    public boolean isTypePicked(ConceptWriteConceptType type) {
+        return type != null && normalizeTypeCode(type.code()).equalsIgnoreCase(normalizeTypeCode(selectedConceptType));
+    }
+
+    public boolean isTypeCurrent(ConceptWriteConceptType type) {
+        return type != null && normalizeTypeCode(type.code()).equalsIgnoreCase(normalizeTypeCode(currentConceptTypeCode));
+    }
+
     public void prepareEditConceptType() {
         refreshCurrentConceptLabel();
         applyConceptTypeToBranch = false;
+        appliedToBranch = false;
+        typeRunState = "";
+        typeErrorMessage = null;
+        typeFlashMessage = null;
+        typeFlashToken = null;
         availableConceptTypes = conceptWriteMetadataService.listConceptTypes(thesaurusContext.resolveThesaurusId());
-        selectedConceptType = currentConceptType();
+        currentConceptTypeCode = currentConceptType();
+        selectedConceptType = currentConceptTypeCode;
+        currentConceptTypeLabel = labelForCode(currentConceptTypeCode);
+    }
+
+    public void selectConceptType(String code) {
+        if (isTypeDone()) {
+            return;
+        }
+        typeErrorMessage = null;
+        selectedConceptType = StringUtils.trimToEmpty(code);
     }
 
     public void submitUpdateNotation() {
@@ -93,9 +134,24 @@ public class ConceptAttributeEditorBean implements Serializable {
     }
 
     public void submitUpdateConceptType() {
+        typeErrorMessage = null;
+        typeFlashMessage = null;
+        if (isTypeDone()) {
+            return;
+        }
         Integer userId = requireUserId();
         if (userId == null || !isConceptTypeEditAvailable() || !conceptSelectionContext.hasSelection()) {
-            MessageUtils.showErrorMessage("Action non autorisée");
+            typeRunState = "error";
+            typeErrorMessage = "Action non autorisée";
+            return;
+        }
+        if (StringUtils.isBlank(selectedConceptType)) {
+            typeRunState = "error";
+            typeErrorMessage = "Choisissez un type";
+            return;
+        }
+        if (isSameAsCurrent() && !applyConceptTypeToBranch) {
+            typeErrorMessage = "Ce concept a déjà ce type";
             return;
         }
         var command = new UpdateConceptTypeCommand(
@@ -106,10 +162,40 @@ public class ConceptAttributeEditorBean implements Serializable {
                 selectedConceptType,
                 applyConceptTypeToBranch
         );
-        handleMutationResult(conceptAttributeMutationService.updateConceptType(command), "v2EditConceptTypeDlg");
+        MutationResult result = conceptAttributeMutationService.updateConceptType(command);
+        if (result == null || !result.success()) {
+            typeRunState = "error";
+            typeErrorMessage = result != null ? result.message() : "Erreur";
+            return;
+        }
+        typeRunState = "done";
+        appliedToBranch = applyConceptTypeToBranch;
+        currentConceptTypeCode = selectedConceptType;
+        currentConceptTypeLabel = labelForCode(selectedConceptType);
+        typeFlashMessage = appliedToBranch
+                ? "Type « " + currentConceptTypeLabel + " » appliqué à la branche"
+                : "Type « " + currentConceptTypeLabel + " » appliqué";
+        typeFlashToken = String.valueOf(System.currentTimeMillis());
+    }
+
+    public void finishTypeAfterClose() {
+        typeFlashMessage = null;
+        typeFlashToken = null;
+        typeErrorMessage = null;
+        typeRunState = "";
+        applyConceptTypeToBranch = false;
+        appliedToBranch = false;
     }
 
     public String formatConceptTypeOption(ConceptWriteConceptType type) {
+        if (type == null) {
+            return "";
+        }
+        String reciprocal = type.reciprocal() ? " (R)" : "";
+        return formatConceptTypeLabel(type) + " (" + type.code() + reciprocal + ")";
+    }
+
+    public String formatConceptTypeLabel(ConceptWriteConceptType type) {
         if (type == null) {
             return "";
         }
@@ -119,8 +205,7 @@ public class ConceptAttributeEditorBean implements Serializable {
         if (StringUtils.isBlank(label)) {
             label = StringUtils.defaultIfBlank(type.labelEn(), type.labelFr());
         }
-        String reciprocal = type.reciprocal() ? " (R)" : "";
-        return label + " (" + type.code() + reciprocal + ")";
+        return StringUtils.defaultIfBlank(label, type.code());
     }
 
     private boolean handleNotationMutationResult(MutationResult result) {
@@ -134,20 +219,6 @@ public class ConceptAttributeEditorBean implements Serializable {
         PrimeFaces.current().ajax().update(":containerIndex:formRightTab :containerIndex:tabTree :messageIndex");
         MessageUtils.showInformationMessage(result.message());
         PrimeFaces.current().executeScript("PF('v2EditNotationDlg').hide();");
-        return true;
-    }
-
-    private boolean handleMutationResult(MutationResult result, String dialogWidget) {
-        if (result == null || !result.success()) {
-            MessageUtils.showErrorMessage(result != null ? result.message() : "Erreur");
-            return false;
-        }
-        conceptNavigationSupport.refreshSelectedConcept();
-        PrimeFaces.current().ajax().update(":containerIndex:formRightTab :messageIndex");
-        MessageUtils.showInformationMessage(result.message());
-        if (StringUtils.isNotBlank(dialogWidget)) {
-            PrimeFaces.current().executeScript("PF('" + dialogWidget + "').hide();");
-        }
         return true;
     }
 
@@ -169,13 +240,33 @@ public class ConceptAttributeEditorBean implements Serializable {
 
     private String currentConceptType() {
         if (conceptSelectionContext.hasSelection() && conceptSelectionContext.getSummary() != null) {
-            return StringUtils.defaultString(conceptSelectionContext.getSummary().conceptType());
+            return normalizeTypeCode(conceptSelectionContext.getSummary().conceptType());
         }
         if (thesaurusBrowseBean.getSelectedConcept() == null
                 || thesaurusBrowseBean.getSelectedConcept().summary() == null) {
-            return "";
+            return "concept";
         }
-        return StringUtils.defaultString(thesaurusBrowseBean.getSelectedConcept().summary().conceptType());
+        return normalizeTypeCode(thesaurusBrowseBean.getSelectedConcept().summary().conceptType());
+    }
+
+    private boolean isSameAsCurrent() {
+        return normalizeTypeCode(selectedConceptType).equalsIgnoreCase(normalizeTypeCode(currentConceptTypeCode));
+    }
+
+    private String normalizeTypeCode(String code) {
+        return StringUtils.isBlank(code) ? "concept" : code.trim();
+    }
+
+    private String labelForCode(String code) {
+        String normalized = normalizeTypeCode(code);
+        if (availableConceptTypes != null) {
+            for (ConceptWriteConceptType type : availableConceptTypes) {
+                if (type != null && normalized.equalsIgnoreCase(normalizeTypeCode(type.code()))) {
+                    return formatConceptTypeLabel(type);
+                }
+            }
+        }
+        return normalized;
     }
 
     private void refreshCurrentConceptLabel() {

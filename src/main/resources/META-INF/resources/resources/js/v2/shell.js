@@ -1657,7 +1657,14 @@ function applyDndFlash() {
     ["data-flash-dnd", "data-flash-dnd-token", "_dndToken"],
     ["data-flash-copy", "data-flash-copy-token", "_copyToken"],
     ["data-flash-move", "data-flash-move-token", "_moveToken"],
-    ["data-flash-ark", "data-flash-ark-token", "_arkToken"]
+    ["data-flash-ark", "data-flash-ark-token", "_arkToken"],
+    ["data-flash-csv", "data-flash-csv-token", "_csvToken"],
+    ["data-flash-loop", "data-flash-loop-token", "_loopToken"],
+    ["data-flash-del", "data-flash-del-token", "_delToken"],
+    ["data-flash-facet", "data-flash-facet-token", "_facetToken"],
+    ["data-flash-type", "data-flash-type-token", "_typeToken"],
+    ["data-flash-ctype", "data-flash-ctype-token", "_ctypeToken"],
+    ["data-flash-nt", "data-flash-nt-token", "_ntToken"]
   ].forEach(([msgAttr, tokenAttr, key]) => {
     const msg = host.getAttribute(msgAttr);
     const token = host.getAttribute(tokenAttr);
@@ -2032,6 +2039,7 @@ function showLiveDetail() {
   }
   showPanel(".view-panel", "viewLive");
   finishLiveOpen();
+  if (typeof closeSidebarDrawer === "function") closeSidebarDrawer();
   const view = $("#previewView");
   if (view && !ficheScrollLock.held) view.scrollTop = 0;
   else restoreFicheScroll();
@@ -2185,6 +2193,7 @@ function setView(view) {
     paintCommittedResults();
   }
   $("#viewPickBtn") && $("#viewPickBtn").classList.remove("is-open");
+  if (view === "hyper" && typeof closeSidebarDrawer === "function") closeSidebarDrawer();
   paint();
 }
 
@@ -2216,7 +2225,11 @@ function highlightConcept(id) {
     const row = tn.querySelector(".tn-row");
     if (row) {
       row.classList.add("is-active");
-      row.scrollIntoView({ block: state.view === "hyper" ? "center" : "nearest" });
+      const reduce = typeof prefersReducedMotion === "function" && prefersReducedMotion();
+      row.scrollIntoView({
+        block: state.view === "hyper" ? "center" : "nearest",
+        behavior: reduce ? "auto" : "smooth"
+      });
     }
     let walk = tn;
     while (walk) {

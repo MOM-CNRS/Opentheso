@@ -266,16 +266,54 @@ public class RestoreThesaurusService {
         }
     }
 
-    public void deleteLoopRelations(String idThesaurus, String idConcept) {
-
+    /**
+     * Compte les concepts de la branche et les paires (a → BT → b et b → BT → a)
+     * sans modifier les relations.
+     */
+    public LoopRelationPreview previewLoopRelations(String idThesaurus, String idConcept) {
         var listIds = conceptService.getIdsOfBranchWithoutLoop(idConcept, idThesaurus);
+        if (listIds == null) {
+            return new LoopRelationPreview(0, 0);
+        }
+        HashSet<String> seen = new HashSet<>();
         for (String id : listIds) {
             var nodeRelation = relationService.getLoopRelation(idThesaurus, id);
-            if(nodeRelation!= null) {
+            if (nodeRelation == null
+                    || StringUtils.isAnyBlank(nodeRelation.getIdConcept1(), nodeRelation.getIdConcept2())) {
+                continue;
+            }
+            String a = nodeRelation.getIdConcept1();
+            String b = nodeRelation.getIdConcept2();
+            String key = a.compareTo(b) <= 0 ? a + '\t' + b : b + '\t' + a;
+            seen.add(key);
+        }
+        return new LoopRelationPreview(listIds.size(), seen.size());
+    }
+
+    /**
+     * Permet de supprimer les relations de type (a → BT → b et b → BT → a)
+     * en parcourant toute la branche à partir du concept donné.
+     *
+     * @return le nombre de paires corrigées
+     */
+    public int deleteLoopRelations(String idThesaurus, String idConcept) {
+        int deleted = 0;
+        var listIds = conceptService.getIdsOfBranchWithoutLoop(idConcept, idThesaurus);
+        if (listIds == null) {
+            return 0;
+        }
+        for (String id : listIds) {
+            var nodeRelation = relationService.getLoopRelation(idThesaurus, id);
+            if (nodeRelation != null) {
                 relationService.deleteThisRelation(nodeRelation.getIdConcept2(), idThesaurus, "BT", nodeRelation.getIdConcept1());
                 relationService.deleteThisRelation(nodeRelation.getIdConcept1(), idThesaurus, "NT", nodeRelation.getIdConcept2());
+                deleted++;
             }
         }
+        return deleted;
+    }
+
+    public record LoopRelationPreview(int branchSize, int loopCount) {
     }
 
     public void switchRolesFromTermToConcept(String idThesaurus, String workLanguage) {

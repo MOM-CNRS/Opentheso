@@ -29,7 +29,9 @@ import org.apache.commons.lang3.StringUtils;
 
 import java.io.Serializable;
 import java.util.Collections;
+import java.util.HashSet;
 import java.util.List;
+import java.util.Set;
 
 @Getter
 @Setter
@@ -58,7 +60,18 @@ public class ConceptIdentifierEditorBean implements Serializable {
     private String errorMessage;
     private String flashMessage;
     private String flashToken;
+    private String thesaurusLabel;
+    private String thesaurusId;
+    private List<String> missingArkIds = Collections.emptyList();
+    private int missingArkCreated;
     private List<String> branchConceptIds = Collections.emptyList();
+    private int branchArkMissing;
+    private int branchArkExisting;
+    private int branchProcessed;
+    private List<String> allConceptIds = Collections.emptyList();
+    private int allArkMissing;
+    private int allArkExisting;
+    private int allProcessed;
 
     public boolean isIdentifierActionsAvailable() {
         return conceptWritePolicy.canMutateIdentifiers(userSession);
@@ -110,10 +123,54 @@ public class ConceptIdentifierEditorBean implements Serializable {
         return "local".equals(arkProvider);
     }
 
+    public boolean isMissingArkEmpty() {
+        return getMissingArkCount() == 0;
+    }
+
+    public int getMissingArkCount() {
+        return missingArkIds == null ? 0 : missingArkIds.size();
+    }
+
+    public boolean isMissingArkSubmitReady() {
+        return !isMissingArkEmpty() && !"done".equals(arkRunState);
+    }
+
+    public boolean isBranchArkEmpty() {
+        return getBranchConceptCount() == 0;
+    }
+
+    public int getBranchConceptCount() {
+        return branchConceptIds == null ? 0 : branchConceptIds.size();
+    }
+
+    public boolean isBranchArkSubmitReady() {
+        return !isBranchArkEmpty() && !"done".equals(arkRunState);
+    }
+
+    public boolean isAllArkEmpty() {
+        return getAllConceptCount() == 0;
+    }
+
+    public int getAllConceptCount() {
+        return allConceptIds == null ? 0 : allConceptIds.size();
+    }
+
+    public boolean isAllArkSubmitReady() {
+        return !isAllArkEmpty() && !"done".equals(arkRunState);
+    }
+
     public void prepareGenerateArk() {
         errorMessage = null;
         arkRunState = "";
         refreshContext();
+    }
+
+    public void prepareGenerateMissingArk() {
+        errorMessage = null;
+        arkRunState = "";
+        missingArkCreated = 0;
+        refreshContext();
+        loadMissingArkIds();
     }
 
     public void prepareDeleteArk() {
@@ -121,12 +178,20 @@ public class ConceptIdentifierEditorBean implements Serializable {
     }
 
     public void prepareGenerateArkForBranch() {
+        errorMessage = null;
+        arkRunState = "";
+        branchProcessed = 0;
         refreshContext();
         loadBranchConceptIds();
+        countBranchArk();
     }
 
     public void prepareGenerateAllArk() {
+        errorMessage = null;
+        arkRunState = "";
+        allProcessed = 0;
         refreshContext();
+        loadAllConceptsForArk();
     }
 
     public void prepareGenerateHandle() {
@@ -168,6 +233,42 @@ public class ConceptIdentifierEditorBean implements Serializable {
         return true;
     }
 
+    public boolean submitGenerateMissingArk() {
+        errorMessage = null;
+        if (!isArkBatchGenerationAvailable()) {
+            arkRunState = "error";
+            errorMessage = "Action non autorisée";
+            return false;
+        }
+        loadMissingArkIds();
+        if (missingArkIds.isEmpty()) {
+            arkRunState = "error";
+            errorMessage = "Aucun concept sans identifiant Ark";
+            return false;
+        }
+        var command = new GenerateArkCommand(
+                thesaurusContext.resolveThesaurusId(),
+                thesaurusContext.resolveWorkLanguage(),
+                missingArkIds
+        );
+        MutationResult result = conceptIdentifierMutationService.generateArk(command);
+        if (result == null || !result.success()) {
+            arkRunState = "error";
+            errorMessage = result != null ? result.message() : "La génération Ark a échoué";
+            return false;
+        }
+        missingArkCreated = missingArkIds.size();
+        arkRunState = "done";
+        if (result.warning()) {
+            errorMessage = result.message();
+        }
+        loadMissingArkIds();
+        flashSuccess(missingArkCreated == 1
+                ? "1 identifiant Ark créé"
+                : missingArkCreated + " identifiants Ark créés");
+        return true;
+    }
+
     public void submitDeleteArk() {
         if (!isArkDeletionAvailable() || !conceptSelectionContext.hasSelection()) {
             MessageUtils.showErrorMessage("Action non autorisée");
@@ -180,11 +281,41 @@ public class ConceptIdentifierEditorBean implements Serializable {
         handleMutationResult(conceptIdentifierMutationService.deleteArk(command));
     }
 
-    public void submitGenerateArkForBranch() {
-        if (branchConceptIds.isEmpty()) {
-            loadBranchConceptIds();
+    public boolean submitGenerateArkForBranch() {
+        errorMessage = null;
+        if (!isArkBatchGenerationAvailable() || !conceptSelectionContext.hasSelection()) {
+            arkRunState = "error";
+            errorMessage = "Action non autorisée";
+            return false;
         }
-        submitGenerateArkForConcepts(branchConceptIds, isArkGenerationAvailable());
+        loadBranchConceptIds();
+        countBranchArk();
+        if (branchConceptIds.isEmpty()) {
+            arkRunState = "error";
+            errorMessage = "Aucun concept dans cette branche";
+            return false;
+        }
+        var command = new GenerateArkCommand(
+                thesaurusContext.resolveThesaurusId(),
+                thesaurusContext.resolveWorkLanguage(),
+                branchConceptIds
+        );
+        MutationResult result = conceptIdentifierMutationService.generateArk(command);
+        if (result == null || !result.success()) {
+            arkRunState = "error";
+            errorMessage = result != null ? result.message() : "La génération Ark a échoué";
+            return false;
+        }
+        branchProcessed = branchConceptIds.size();
+        arkRunState = "done";
+        if (result.warning()) {
+            errorMessage = result.message();
+        }
+        countBranchArk();
+        flashSuccess(branchProcessed == 1
+                ? "1 concept de la branche traité"
+                : branchProcessed + " concepts de la branche traités");
+        return true;
     }
 
     public void submitGenerateArkForConceptsWithoutArk() {
@@ -201,14 +332,40 @@ public class ConceptIdentifierEditorBean implements Serializable {
         submitGenerateArkForConcepts(conceptIds, true);
     }
 
-    public void submitGenerateAllArk() {
-        String thesaurusId = thesaurusContext.resolveThesaurusId();
-        if (!isArkBatchGenerationAvailable() || StringUtils.isBlank(thesaurusId)) {
-            MessageUtils.showErrorMessage("Action non autorisée");
-            return;
+    public boolean submitGenerateAllArk() {
+        errorMessage = null;
+        if (!isArkBatchGenerationAvailable()) {
+            arkRunState = "error";
+            errorMessage = "Action non autorisée";
+            return false;
         }
-        List<String> conceptIds = loadAllConceptIds(thesaurusId);
-        submitGenerateArkForConcepts(conceptIds, true);
+        loadAllConceptsForArk();
+        if (allConceptIds.isEmpty()) {
+            arkRunState = "error";
+            errorMessage = "Aucun concept dans ce thésaurus";
+            return false;
+        }
+        var command = new GenerateArkCommand(
+                thesaurusContext.resolveThesaurusId(),
+                thesaurusContext.resolveWorkLanguage(),
+                allConceptIds
+        );
+        MutationResult result = conceptIdentifierMutationService.generateArk(command);
+        if (result == null || !result.success()) {
+            arkRunState = "error";
+            errorMessage = result != null ? result.message() : "La génération Ark a échoué";
+            return false;
+        }
+        allProcessed = allConceptIds.size();
+        arkRunState = "done";
+        if (result.warning()) {
+            errorMessage = result.message();
+        }
+        loadAllConceptsForArk();
+        flashSuccess(allProcessed == 1
+                ? "1 concept du thésaurus traité"
+                : allProcessed + " concepts du thésaurus traités");
+        return true;
     }
 
     public void submitGenerateHandle() {
@@ -306,6 +463,20 @@ public class ConceptIdentifierEditorBean implements Serializable {
         currentArkId = resolveArkId();
         arkProvider = resolveArkProvider();
         currentHandleId = resolveHandleId();
+        thesaurusId = StringUtils.defaultString(thesaurusContext.resolveThesaurusId());
+        thesaurusLabel = StringUtils.defaultIfBlank(
+                thesaurusContext.getCurrentThesaurusTitle(),
+                thesaurusId);
+    }
+
+    private void loadMissingArkIds() {
+        String thesaurusId = thesaurusContext.resolveThesaurusId();
+        if (!isArkBatchGenerationAvailable() || StringUtils.isBlank(thesaurusId)) {
+            missingArkIds = Collections.emptyList();
+            return;
+        }
+        List<String> ids = conceptRepository.findAllIdConceptsWithoutArk(thesaurusId);
+        missingArkIds = ids == null ? Collections.emptyList() : List.copyOf(ids);
     }
 
     private String resolveArkId() {
@@ -358,7 +529,58 @@ public class ConceptIdentifierEditorBean implements Serializable {
             branchConceptIds = Collections.emptyList();
             return;
         }
-        branchConceptIds = branchConceptSupport.collectBranchConceptIds(thesaurusId, conceptId);
+        List<String> ids = branchConceptSupport.collectBranchConceptIds(thesaurusId, conceptId);
+        branchConceptIds = ids == null ? Collections.emptyList() : List.copyOf(ids);
+    }
+
+    private void countBranchArk() {
+        branchArkMissing = 0;
+        branchArkExisting = 0;
+        if (branchConceptIds == null || branchConceptIds.isEmpty()) {
+            return;
+        }
+        String thesaurusId = thesaurusContext.resolveThesaurusId();
+        if (StringUtils.isBlank(thesaurusId)) {
+            branchArkMissing = branchConceptIds.size();
+            return;
+        }
+        List<Object[]> rows = conceptRepository.findArkFromIdConcepts(
+                Set.copyOf(branchConceptIds), thesaurusId);
+        Set<String> withArk = new HashSet<>();
+        if (rows != null) {
+            for (Object[] row : rows) {
+                if (row == null || row.length < 2) {
+                    continue;
+                }
+                String id = row[0] != null ? String.valueOf(row[0]) : "";
+                String ark = row[1] != null ? String.valueOf(row[1]) : "";
+                if (StringUtils.isNotBlank(id) && StringUtils.isNotBlank(ark)) {
+                    withArk.add(id);
+                }
+            }
+        }
+        branchArkExisting = withArk.size();
+        branchArkMissing = Math.max(0, branchConceptIds.size() - branchArkExisting);
+    }
+
+    private void loadAllConceptsForArk() {
+        allArkMissing = 0;
+        allArkExisting = 0;
+        String thesaurusId = thesaurusContext.resolveThesaurusId();
+        if (!isArkBatchGenerationAvailable() || StringUtils.isBlank(thesaurusId)) {
+            allConceptIds = Collections.emptyList();
+            return;
+        }
+        List<Concept> concepts = conceptRepository.findAllByIdThesaurusAndStatusNot(thesaurusId, "CA");
+        if (CollectionUtils.isEmpty(concepts)) {
+            allConceptIds = Collections.emptyList();
+            return;
+        }
+        allConceptIds = concepts.stream().map(Concept::getIdConcept).toList();
+        allArkExisting = (int) concepts.stream()
+                .filter(concept -> StringUtils.isNotBlank(concept.getIdArk()))
+                .count();
+        allArkMissing = Math.max(0, allConceptIds.size() - allArkExisting);
     }
 
     private String resolveHandleId() {

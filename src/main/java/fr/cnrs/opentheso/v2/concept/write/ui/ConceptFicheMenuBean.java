@@ -45,21 +45,33 @@ public class ConceptFicheMenuBean implements Serializable {
 
     public void submitAddChild() {
         lifecycleEditorBean.submitAddChild();
-        if (lifecycleEditorBean.isDuplicateLabelWarning()) {
-            openDialog("cvDlgAddNt");
-            return;
-        }
-        closeDialogs();
-        refreshConsult();
+        openDialog("cvDlgAddNt");
     }
 
     public void submitAddChildForced() {
         lifecycleEditorBean.submitAddChildForced();
-        if (lifecycleEditorBean.isDuplicateLabelWarning()) {
-            openDialog("cvDlgAddNt");
+        openDialog("cvDlgAddNt");
+    }
+
+    public void cancelAddChildDuplicate() {
+        lifecycleEditorBean.cancelDuplicate();
+        openDialog("cvDlgAddNt");
+    }
+
+    public void afterAddChild() {
+        boolean created = lifecycleEditorBean.isCreateDirty();
+        String lastId = lifecycleEditorBean.getLastCreatedId();
+        lifecycleEditorBean.finishCreateAfterClose();
+        closeDialogs();
+        if (!created) {
             return;
         }
-        closeDialogs();
+        thesaurusBrowseBean.invalidateConceptTree();
+        thesaurusViewBean.reloadTree();
+        if (StringUtils.isNotBlank(lastId)) {
+            thesaurusViewBean.setRevealId(lastId);
+            thesaurusViewBean.revealInTree();
+        }
         refreshConsult();
     }
 
@@ -72,22 +84,32 @@ public class ConceptFicheMenuBean implements Serializable {
             facetDetailEditorBean.setSelectedParentConcept(
                     new fr.cnrs.opentheso.v2.concept.write.model.ConceptSearchSuggestion(
                             conceptId, preferredLabel, "", false));
+            facetDetailEditorBean.setParentConceptId(conceptId);
             facetDetailEditorBean.setParentConceptLabel(
                     StringUtils.isNotBlank(preferredLabel) ? preferredLabel : "(" + conceptId + ")");
+            facetDetailEditorBean.setComposing(true);
         }
-        openDialog("cvDlgAddFacet");
+        closeDialogs();
     }
 
     public void submitCreateFacet() {
         facetDetailEditorBean.submitCreate();
-        closeDialogs();
-        var facet = thesaurusBrowseBean.getSelectedFacet();
-        thesaurusViewBean.reloadTree();
-        if (facet != null && StringUtils.isNotBlank(facet.facetId())) {
-            thesaurusViewBean.openTreeNode(facet.facetId(), "facet");
-        } else {
-            refreshConsult();
+        if (!"done".equals(facetDetailEditorBean.getCreateRunState())) {
+            return;
         }
+        String facetId = facetDetailEditorBean.getCreatedFacetId();
+        thesaurusBrowseBean.invalidateConceptTree();
+        thesaurusViewBean.reloadTree();
+        if (StringUtils.isNotBlank(facetId)) {
+            thesaurusViewBean.setRevealId(facetId);
+            thesaurusViewBean.revealInTree();
+        }
+        refreshConsult();
+    }
+
+    public void cancelCreateFacet() {
+        facetDetailEditorBean.cancelCreate();
+        closeDialogs();
     }
 
     public void prepareEditConceptType() {
@@ -95,14 +117,32 @@ public class ConceptFicheMenuBean implements Serializable {
         openDialog("cvDlgEditType");
     }
 
+    public void selectConceptType(String code) {
+        attributeEditorBean.selectConceptType(code);
+        openDialog("cvDlgEditType");
+    }
+
     public void submitEditConceptType() {
         attributeEditorBean.submitUpdateConceptType();
+        openDialog("cvDlgEditType");
+    }
+
+    public void afterEditConceptType() {
+        boolean refresh = attributeEditorBean.isTypeDone();
+        attributeEditorBean.finishTypeAfterClose();
         closeDialogs();
-        refreshConsult();
+        if (refresh) {
+            refreshConsult();
+        }
     }
 
     public void prepareManageConceptTypes() {
         typeManagerBean.prepareManage();
+        openDialog("cvDlgManageTypes");
+    }
+
+    public void applyConceptType(fr.cnrs.opentheso.models.concept.NodeConceptType type) {
+        typeManagerBean.applyChange(type);
         openDialog("cvDlgManageTypes");
     }
 
@@ -111,10 +151,28 @@ public class ConceptFicheMenuBean implements Serializable {
         openDialog("cvDlgManageTypes");
     }
 
-    public void deleteConceptType(fr.cnrs.opentheso.models.concept.NodeConceptType type) {
+    public void prepareDeleteConceptType(fr.cnrs.opentheso.models.concept.NodeConceptType type) {
         typeManagerBean.prepareDelete(type);
+        openDialog("cvDlgManageTypes");
+    }
+
+    public void confirmDeleteConceptType() {
         typeManagerBean.deleteCustomRelationship();
         openDialog("cvDlgManageTypes");
+    }
+
+    public void cancelDeleteConceptType() {
+        typeManagerBean.cancelDelete();
+        openDialog("cvDlgManageTypes");
+    }
+
+    public void afterManageConceptTypes() {
+        boolean dirty = typeManagerBean.isDirty();
+        typeManagerBean.finishAfterClose();
+        closeDialogs();
+        if (dirty) {
+            refreshConsult();
+        }
     }
 
     public void cutConcept() {
@@ -185,7 +243,13 @@ public class ConceptFicheMenuBean implements Serializable {
 
     public void submitDelete() {
         lifecycleEditorBean.submitDelete();
+        openDialog("cvDlgDelete");
+    }
+
+    public void afterDelete() {
+        lifecycleEditorBean.finishDeleteAfterClose();
         closeDialogs();
+        thesaurusViewBean.reloadTree();
         refreshConsult();
     }
 
@@ -264,6 +328,7 @@ public class ConceptFicheMenuBean implements Serializable {
     public void afterGenerateArk() {
         identifierEditorBean.setFlashMessage(null);
         identifierEditorBean.setFlashToken(null);
+        identifierEditorBean.setArkRunState("");
         closeDialogs();
         refreshConsult();
     }
@@ -279,10 +344,14 @@ public class ConceptFicheMenuBean implements Serializable {
         refreshConsult();
     }
 
-    public void generateMissingArk() {
-        identifierEditorBean.submitGenerateArkForConceptsWithoutArk();
-        closeDialogs();
-        refreshConsult();
+    public void prepareGenerateMissingArk() {
+        identifierEditorBean.prepareGenerateMissingArk();
+        openDialog("cvDlgArkMissing");
+    }
+
+    public void submitGenerateMissingArk() {
+        identifierEditorBean.submitGenerateMissingArk();
+        openDialog("cvDlgArkMissing");
     }
 
     public void prepareGenerateArkBranch() {
@@ -292,8 +361,7 @@ public class ConceptFicheMenuBean implements Serializable {
 
     public void submitGenerateArkBranch() {
         identifierEditorBean.submitGenerateArkForBranch();
-        closeDialogs();
-        refreshConsult();
+        openDialog("cvDlgArkBranch");
     }
 
     public void prepareGenerateAllArk() {
@@ -303,8 +371,7 @@ public class ConceptFicheMenuBean implements Serializable {
 
     public void submitGenerateAllArk() {
         identifierEditorBean.submitGenerateAllArk();
-        closeDialogs();
-        refreshConsult();
+        openDialog("cvDlgArkAll");
     }
 
     public void prepareGenerateHandle() {
@@ -358,20 +425,40 @@ public class ConceptFicheMenuBean implements Serializable {
     }
 
     public void loadImportCsv() {
-        listCsvImportBean.actionChoice();
         listCsvImportBean.loadFromUpload();
         openDialog("cvDlgImportCsv");
     }
 
     public void submitImportCsv() {
         listCsvImportBean.importUnderCurrentConcept();
+        openDialog("cvDlgImportCsv");
+    }
+
+    public void afterImportCsv() {
+        listCsvImportBean.setFlashMessage(null);
+        listCsvImportBean.setFlashToken(null);
+        listCsvImportBean.setRunState("");
         closeDialogs();
+        thesaurusViewBean.reloadTree();
         refreshConsult();
     }
 
-    public void repairLoopedRelationships() {
-        maintenanceEditorBean.repairLoopedRelationships();
+    public void prepareRepairLoopedRelationships() {
+        maintenanceEditorBean.prepareRepairLoopedRelationships();
+        openDialog("cvDlgRepairLoop");
+    }
+
+    public void submitRepairLoopedRelationships() {
+        maintenanceEditorBean.submitRepairLoopedRelationships();
+        openDialog("cvDlgRepairLoop");
+    }
+
+    public void afterRepairLoopedRelationships() {
+        maintenanceEditorBean.setFlashMessage(null);
+        maintenanceEditorBean.setFlashToken(null);
+        maintenanceEditorBean.setRunState("");
         closeDialogs();
+        thesaurusViewBean.reloadTree();
         refreshConsult();
     }
 

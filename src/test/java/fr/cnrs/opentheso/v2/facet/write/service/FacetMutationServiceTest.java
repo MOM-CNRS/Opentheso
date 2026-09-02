@@ -231,6 +231,8 @@ class FacetMutationServiceTest {
     void createFacet_generatesFacetId() {
         when(thesaurusArrayRepository.getNextFacetSequenceId()).thenReturn(7L);
         when(conceptFacetRepository.findByIdFacet("F7")).thenReturn(Optional.empty());
+        when(nodeLabelRepository.existsByIdThesaurusAndLexicalValueAndLang("TH1", "Facet", "fr"))
+                .thenReturn(false);
 
         var result = service.createFacet(new CreateFacetCommand("TH1", "C1", "fr", "Facet"));
 
@@ -238,5 +240,17 @@ class FacetMutationServiceTest {
         assertEquals("F7", result.createdConceptId());
         verify(nodeLabelRepository).save(any(NodeLabel.class));
         verify(thesaurusArrayRepository).save(any(ThesaurusArray.class));
+    }
+
+    @Test
+    void createFacet_rejectsDuplicateName() {
+        when(nodeLabelRepository.existsByIdThesaurusAndLexicalValueAndLang("TH1", "Facet", "fr"))
+                .thenReturn(true);
+
+        var result = service.createFacet(new CreateFacetCommand("TH1", "C1", "fr", "Facet"));
+
+        assertEquals(MutationOutcome.DUPLICATE_LABEL, result.outcome());
+        verify(nodeLabelRepository, never()).save(any());
+        verify(thesaurusArrayRepository, never()).save(any());
     }
 }

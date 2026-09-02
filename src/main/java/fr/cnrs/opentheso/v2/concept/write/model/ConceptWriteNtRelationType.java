@@ -13,4 +13,8 @@ public record ConceptWriteNtRelationType(
     public String getDescriptionFr() {
         return descriptionFr;
     }
+
+    public String getDescriptionEn() {
+        return descriptionEn;
+    }
 }

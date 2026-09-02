@@ -16,6 +16,7 @@ import fr.cnrs.opentheso.v2.concept.write.model.command.DeleteConceptCommand;
 import fr.cnrs.opentheso.v2.concept.write.model.command.DeleteReplacedByCommand;
 import fr.cnrs.opentheso.v2.concept.write.model.command.DeprecateConceptCommand;
 import fr.cnrs.opentheso.v2.concept.write.model.command.RenamePreferredLabelCommand;
+import fr.cnrs.opentheso.v2.concept.write.persistence.BranchConceptSupport;
 import fr.cnrs.opentheso.v2.concept.write.policy.ConceptWritePolicy;
 import fr.cnrs.opentheso.v2.concept.write.service.ConceptLifecycleMutationService;
 import fr.cnrs.opentheso.v2.concept.write.service.ConceptWriteMetadataService;
@@ -31,6 +32,7 @@ import org.apache.commons.lang3.StringUtils;
 import org.primefaces.PrimeFaces;
 
 import java.io.Serializable;
+import java.util.ArrayList;
 import java.util.Collections;
 import java.util.List;
 
@@ -49,6 +51,7 @@ public class ConceptLifecycleEditorBean implements Serializable {
     private final ConceptWritePolicy conceptWritePolicy;
     private final ConceptWriteSearchService conceptWriteSearchService;
     private final ConceptWriteMetadataService conceptWriteMetadataService;
+    private final BranchConceptSupport branchConceptSupport;
 
     private String preferredLabel;
     private String currentPreferredLabel;
@@ -58,7 +61,23 @@ public class ConceptLifecycleEditorBean implements Serializable {
     private String selectedGroupId;
     private String selectedNarrowerRelationType = "NT";
     private boolean duplicateLabelWarning;
+    private String createErrorMessage;
+    private String createFlashMessage;
+    private String createFlashToken;
+    private int createdCount;
+    private String lastCreatedId = "";
+    private String lastCreatedLabel = "";
+    private List<String> createdLabels = new ArrayList<>();
     private boolean forceDeletePolyhierarchy;
+    private boolean hasNarrowersForDelete;
+    private String deleteConceptId = "";
+    private int deleteBranchCount = 1;
+    private int deletedCount;
+    private String deleteRunState = "";
+    private String deleteErrorMessage;
+    private String deleteFlashMessage;
+    private String deleteFlashToken;
+    private String fallbackConceptId;
     private boolean addReplacedByRelations;
     private ConceptSearchSuggestion replacedBySearchSelected;
     private List<ConceptWriteCollection> availableCollections = Collections.emptyList();
@@ -213,8 +232,48 @@ public class ConceptLifecycleEditorBean implements Serializable {
         submitRenameInternal(true);
     }
 
+    public boolean isCreateReady() {
+        return isActiveConceptWriteAvailable()
+                && conceptSelectionContext.hasSelection()
+                && StringUtils.isNotBlank(preferredLabel);
+    }
+
+    public boolean isCreateDirty() {
+        return createdCount > 0;
+    }
+
+    public String getWorkLanguage() {
+        return StringUtils.defaultIfBlank(thesaurusContext.resolveWorkLanguage(), "fr");
+    }
+
+    public String formatNtLabel(ConceptWriteNtRelationType type) {
+        if (type == null) {
+            return "";
+        }
+        String label = "fr".equalsIgnoreCase(getWorkLanguage())
+                ? type.descriptionFr()
+                : type.descriptionEn();
+        if (StringUtils.isBlank(label)) {
+            label = StringUtils.defaultIfBlank(type.descriptionFr(), type.descriptionEn());
+        }
+        return StringUtils.defaultIfBlank(label, type.relationType());
+    }
+
+    public boolean isNtPicked(ConceptWriteNtRelationType type) {
+        return type != null
+                && StringUtils.defaultIfBlank(selectedNarrowerRelationType, "NT")
+                .equalsIgnoreCase(type.relationType());
+    }
+
     public void prepareAddChild() {
         resetNewConceptForm();
+        createdCount = 0;
+        lastCreatedId = "";
+        lastCreatedLabel = "";
+        createdLabels = new ArrayList<>();
+        createErrorMessage = null;
+        createFlashMessage = null;
+        createFlashToken = null;
         refreshCurrentPreferredLabel();
         loadCreationFormMetadata();
     }
@@ -254,31 +313,107 @@ public class ConceptLifecycleEditorBean implements Serializable {
         submitAddTopConceptInternal(true);
     }
 
-    public void prepareDelete() {
-        forceDeletePolyhierarchy = false;
-        refreshCurrentPreferredLabel();
+    public boolean isDeleteReady() {
+        return isWriteActionsAvailable()
+                && conceptSelectionContext.hasSelection()
+                && !"done".equals(deleteRunState);
     }
 
-    public void submitDelete() {
-        if (!conceptWritePolicy.canMutateConcept(userSession) || !conceptSelectionContext.hasSelection()) {
-            MessageUtils.showErrorMessage("Action non autorisée");
+    public boolean isBranchDelete() {
+        return hasNarrowersForDelete || deleteBranchCount > 1;
+    }
+
+    public void prepareDelete() {
+        forceDeletePolyhierarchy = false;
+        hasNarrowersForDelete = false;
+        deleteConceptId = "";
+        deleteBranchCount = 1;
+        deletedCount = 0;
+        deleteRunState = "";
+        deleteErrorMessage = null;
+        deleteFlashMessage = null;
+        deleteFlashToken = null;
+        fallbackConceptId = resolveFallbackConceptAfterDelete();
+        refreshCurrentPreferredLabel();
+        if (!conceptSelectionContext.hasSelection()) {
             return;
         }
-        var summary = conceptSelectionContext.getSummary();
-        boolean hasNarrowers = conceptSelectionContext.isHasNarrowers();
+        deleteConceptId = StringUtils.defaultString(conceptSelectionContext.getConceptId());
+        hasNarrowersForDelete = conceptSelectionContext.isHasNarrowers();
+        String thesaurusId = thesaurusContext.resolveThesaurusId();
+        if (hasNarrowersForDelete && StringUtils.isNoneBlank(thesaurusId, deleteConceptId)) {
+            var ids = branchConceptSupport.collectBranchConceptIds(thesaurusId, deleteConceptId);
+            deleteBranchCount = Math.max(ids.size(), 1);
+        } else {
+            deleteBranchCount = 1;
+        }
+    }
+
+    public boolean submitDelete() {
+        deleteErrorMessage = null;
+        if (!isWriteActionsAvailable() || !conceptSelectionContext.hasSelection()) {
+            deleteRunState = "error";
+            deleteErrorMessage = "Action non autorisée";
+            return false;
+        }
+        String thesaurusId = thesaurusContext.resolveThesaurusId();
+        String conceptId = StringUtils.defaultIfBlank(deleteConceptId, conceptSelectionContext.getConceptId());
+        if (StringUtils.isAnyBlank(thesaurusId, conceptId)) {
+            deleteRunState = "error";
+            deleteErrorMessage = "Erreur manque de paramètres";
+            return false;
+        }
+        boolean hasNarrowers = hasNarrowersForDelete || deleteBranchCount > 1;
         var command = new DeleteConceptCommand(
-                thesaurusContext.resolveThesaurusId(),
-                summary.conceptId(),
+                thesaurusId,
+                conceptId,
                 hasNarrowers,
                 forceDeletePolyhierarchy
         );
         MutationResult result = conceptLifecycleMutationService.deleteConcept(command);
-        String fallbackConceptId = resolveFallbackConceptAfterDelete();
-        handleMutationResult(result, fallbackConceptId, MutationRefreshMode.DELETE);
+        if (result == null || !result.success()) {
+            deleteRunState = "error";
+            deleteErrorMessage = result != null
+                    ? StringUtils.defaultIfBlank(result.message(), "La suppression a échoué")
+                    : "La suppression a échoué";
+            return false;
+        }
+        deletedCount = Math.max(deleteBranchCount, 1);
+        deleteRunState = "done";
+        flashDeleteSuccess(deletedCount == 1
+                ? "1 concept supprimé"
+                : deletedCount + " concepts supprimés");
+        return true;
+    }
+
+    public void finishDeleteAfterClose() {
+        String fallback = fallbackConceptId;
+        deleteFlashMessage = null;
+        deleteFlashToken = null;
+        deleteRunState = "";
+        conceptNavigationSupport.invalidateConceptTree();
+        conceptNavigationSupport.afterConceptDeleted(fallback);
+    }
+
+    private void flashDeleteSuccess(String message) {
+        deleteFlashMessage = message;
+        deleteFlashToken = String.valueOf(System.currentTimeMillis());
     }
 
     public void cancelDuplicate() {
         duplicateLabelWarning = false;
+        createErrorMessage = null;
+    }
+
+    public void finishCreateAfterClose() {
+        createFlashMessage = null;
+        createFlashToken = null;
+        createErrorMessage = null;
+        duplicateLabelWarning = false;
+        createdCount = 0;
+        lastCreatedId = "";
+        lastCreatedLabel = "";
+        createdLabels = new ArrayList<>();
     }
 
     private void submitRenameInternal(boolean forced) {
@@ -318,13 +453,19 @@ public class ConceptLifecycleEditorBean implements Serializable {
     }
 
     private void submitAddChildInternal(boolean forced) {
+        createErrorMessage = null;
+        createFlashMessage = null;
         if (!isActiveConceptWriteAvailable() || !conceptSelectionContext.hasSelection()) {
-            MessageUtils.showErrorMessage("Action non autorisée");
+            createErrorMessage = "Action non autorisée";
             return;
         }
         Integer userId = userSession.getCurrentUserId();
         if (userId == null) {
-            MessageUtils.showErrorMessage("Action non autorisée");
+            createErrorMessage = "Action non autorisée";
+            return;
+        }
+        if (StringUtils.isBlank(preferredLabel)) {
+            createErrorMessage = "Le libellé est obligatoire";
             return;
         }
         var summary = conceptSelectionContext.getSummary();
@@ -343,16 +484,30 @@ public class ConceptLifecycleEditorBean implements Serializable {
                 forced
         );
         MutationResult result = conceptLifecycleMutationService.addChildConcept(command);
+        if (result == null) {
+            createErrorMessage = "La création a échoué";
+            return;
+        }
         if (result.outcome() == MutationOutcome.DUPLICATE_LABEL) {
             duplicateLabelWarning = true;
-            MessageUtils.showWarnMessage(result.message());
+            createErrorMessage = StringUtils.defaultIfBlank(result.message(), "Un libellé identique existe déjà");
+            return;
+        }
+        if (!result.success()) {
+            duplicateLabelWarning = false;
+            createErrorMessage = StringUtils.defaultIfBlank(result.message(), "La création a échoué");
             return;
         }
         duplicateLabelWarning = false;
-        String targetConceptId = StringUtils.defaultIfBlank(result.createdConceptId(), summary.conceptId());
-        if (handleMutationResult(result, targetConceptId, MutationRefreshMode.STRUCTURAL)) {
-            PrimeFaces.current().executeScript("PF('v2AddChildConceptDlg').hide();");
-        }
+        lastCreatedId = StringUtils.defaultString(result.createdConceptId());
+        lastCreatedLabel = preferredLabel.trim();
+        createdCount++;
+        createdLabels.add(lastCreatedLabel);
+        createFlashMessage = "Concept « " + lastCreatedLabel + " » créé";
+        createFlashToken = String.valueOf(System.currentTimeMillis());
+        preferredLabel = "";
+        notation = "";
+        customConceptId = "";
     }
 
     private void submitAddTopConceptInternal(boolean forced) {

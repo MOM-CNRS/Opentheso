@@ -45,6 +45,26 @@ class ConceptIdentifierWritePersistenceTest {
     }
 
     @Test
+    void generateArk_batchSuccess_returnsOk() {
+        when(preferencesRepository.findByIdThesaurus("TH1"))
+                .thenReturn(Optional.of(Preferences.builder().idThesaurus("TH1").build()));
+        when(conceptArkWriteService.generateArkIds("TH1", List.of("C1", "C2"), "fr")).thenReturn(null);
+
+        var result = persistence.generateArk(new GenerateArkCommand("TH1", "fr", List.of("C1", "C2")));
+
+        assertTrue(result.success());
+        assertFalse(result.warning());
+    }
+
+    @Test
+    void generateArk_emptySelection_returnsValidationError() {
+        var result = persistence.generateArk(new GenerateArkCommand("TH1", "fr", List.of()));
+
+        assertFalse(result.success());
+        assertEquals("Aucune sélection !", result.message());
+    }
+
+    @Test
     void generateArk_singleConceptError_returnsFailureMessage() {
         when(preferencesRepository.findByIdThesaurus("TH1"))
                 .thenReturn(Optional.of(Preferences.builder().idThesaurus("TH1").build()));

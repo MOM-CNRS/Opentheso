@@ -118,8 +118,33 @@ function toast(msg, opts) {
 }
 window.toast = toast;
 
+function prefersReducedMotion() {
+  return !!(window.matchMedia && window.matchMedia("(prefers-reduced-motion: reduce)").matches);
+}
+
+function replayAnim(el, cls) {
+  if (!el || !cls || prefersReducedMotion()) return;
+  el.classList.remove(cls);
+  void el.offsetWidth;
+  el.classList.add(cls);
+}
+
 function showPanel(sel, id) {
-  $$(sel).forEach(el => el.classList.toggle("is-on", el.id === id));
+  $$(sel).forEach((el) => {
+    const on = el.id === id;
+    const was = el.classList.contains("is-on");
+    el.classList.toggle("is-on", on);
+    if (!on || was) return;
+    if (el.id !== "viewHyper" && !el.classList.contains("hyper")) {
+      replayAnim(el, "is-nav-in");
+    }
+    if (sel.indexOf("view-panel") >= 0) {
+      const view = document.getElementById("previewView");
+      if (!view) return;
+      if (prefersReducedMotion() || typeof view.scrollTo !== "function") view.scrollTop = 0;
+      else view.scrollTo({ top: 0, behavior: "smooth" });
+    }
+  });
 }
 
 function treePanel() {

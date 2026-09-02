@@ -172,12 +172,20 @@ public class FacetMutationService {
         if (StringUtils.isAnyBlank(command.label(), command.parentConceptId())) {
             return MutationResult.validationError("Le libellé et le concept parent sont obligatoires !");
         }
+        String lexicalValue = fr.cnrs.opentheso.utils.StringUtils.convertString(command.label());
+        if (StringUtils.isBlank(lexicalValue)) {
+            return MutationResult.validationError("Le libellé et le concept parent sont obligatoires !");
+        }
+        if (nodeLabelRepository.existsByIdThesaurusAndLexicalValueAndLang(
+                command.thesaurusId(), lexicalValue, command.lang())) {
+            return MutationResult.duplicate("Le nom de la facette '" + lexicalValue + "' existe déjà !");
+        }
         String facetId = generateFacetId();
         nodeLabelRepository.save(NodeLabel.builder()
                 .idFacet(facetId)
                 .idThesaurus(command.thesaurusId())
                 .lang(command.lang())
-                .lexicalValue(fr.cnrs.opentheso.utils.StringUtils.convertString(command.label()))
+                .lexicalValue(lexicalValue)
                 .created(new Date())
                 .modified(new Date())
                 .build());

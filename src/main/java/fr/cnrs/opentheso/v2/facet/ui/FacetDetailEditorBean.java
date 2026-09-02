@@ -64,6 +64,13 @@ public class FacetDetailEditorBean implements Serializable {
     private String label;
     private String definition;
     private String parentConceptLabel;
+    private String parentConceptId;
+    private String createRunState = "";
+    private String createErrorMessage;
+    private String createFlashMessage;
+    private String createFlashToken;
+    private String createdFacetId;
+    private boolean composing;
     private String translationLang;
     private String translationValue;
     private String selectedTranslationLang;
@@ -258,9 +265,7 @@ public class FacetDetailEditorBean implements Serializable {
 
     public void prepareCreate() {
         loadLanguages();
-        label = "";
-        definition = "";
-        parentConceptLabel = "";
+        resetCreateForm();
         selectedParentConcept = null;
     }
 
@@ -268,18 +273,24 @@ public class FacetDetailEditorBean implements Serializable {
      * Création d'une facette sous le concept courant (menu contextuel fiche concept, comme legacy).
      */
     public void prepareCreateUnderCurrentConcept() {
-        label = "";
-        definition = "";
-        parentConceptLabel = "";
-        selectedParentConcept = null;
+        resetCreateForm();
         var concept = thesaurusBrowseBean.getSelectedConcept();
         if (concept == null || concept.summary() == null || StringUtils.isBlank(concept.summary().conceptId())) {
             return;
         }
         String conceptId = concept.summary().conceptId();
         String preferredLabel = StringUtils.defaultString(concept.summary().preferredLabel());
+        parentConceptId = conceptId;
         parentConceptLabel = StringUtils.isNotBlank(preferredLabel) ? preferredLabel : "(" + conceptId + ")";
         selectedParentConcept = new ConceptSearchSuggestion(conceptId, preferredLabel, "", false);
+        composing = true;
+    }
+
+    public boolean isCreateReady() {
+        return isManagerActionsAvailable()
+                && StringUtils.isNotBlank(resolveCreateParentId())
+                && StringUtils.isNotBlank(label)
+                && !"done".equals(createRunState);
     }
 
     public List<ConceptSearchSuggestion> autocompleteConcept(String query) {
@@ -423,33 +434,56 @@ public class FacetDetailEditorBean implements Serializable {
     }
 
     public void submitCreate() {
-        if (!isManagerActionsAvailable() || selectedParentConcept == null
-                || StringUtils.isBlank(selectedParentConcept.conceptId())) {
-            MessageUtils.showErrorMessage("Action non autorisée");
+        createErrorMessage = null;
+        createdFacetId = "";
+        String parentId = resolveCreateParentId();
+        if (!isManagerActionsAvailable() || StringUtils.isBlank(parentId)) {
+            createRunState = "error";
+            createErrorMessage = "Action non autorisée";
             return;
         }
         if (StringUtils.isBlank(label)) {
-            MessageUtils.showErrorMessage("Le libellé est obligatoire !");
+            createRunState = "error";
+            createErrorMessage = "Le libellé est obligatoire !";
             return;
         }
-        MutationResult result = facetMutationService.createFacet(new CreateFacetCommand(
-                thesaurusContext.resolveThesaurusId(),
-                selectedParentConcept.conceptId(),
-                thesaurusContext.resolveWorkLanguage(),
-                label
-        ));
-        String dialogWidget = StringUtils.isNotBlank(parentConceptLabel)
-                ? "v2CreateFacetUnderConceptDlg"
-                : "v2CreateFacetDlg";
-        if (handleMutation(result, dialogWidget) && StringUtils.isNotBlank(result.createdConceptId())) {
-            persistOptionalDefinition(result.createdConceptId());
-            thesaurusBrowseBean.invalidateConceptTree();
-            thesaurusBrowseBean.focusFacet(result.createdConceptId());
-            label = "";
-            definition = "";
-            parentConceptLabel = "";
-            selectedParentConcept = null;
+        MutationResult result;
+        try {
+            result = facetMutationService.createFacet(new CreateFacetCommand(
+                    thesaurusContext.resolveThesaurusId(),
+                    parentId,
+                    thesaurusContext.resolveWorkLanguage(),
+                    label
+            ));
+        } catch (org.springframework.dao.IncorrectResultSizeDataAccessException e) {
+            createRunState = "error";
+            createErrorMessage = "Le nom de la facette '" + label.trim() + "' existe déjà !";
+            return;
+        } catch (RuntimeException e) {
+            createRunState = "error";
+            createErrorMessage = StringUtils.defaultIfBlank(
+                    e.getMessage(), "Erreur pendant la création de la Facette !");
+            return;
         }
+        if (result == null || !result.success()) {
+            createRunState = "error";
+            createErrorMessage = result != null
+                    ? result.message()
+                    : "Erreur pendant la création de la Facette !";
+            return;
+        }
+        persistOptionalDefinition(result.createdConceptId());
+        createdFacetId = StringUtils.defaultString(result.createdConceptId());
+        createRunState = "done";
+        composing = false;
+        flashCreateSuccess(StringUtils.isNotBlank(createdFacetId)
+                ? "Facette « " + label.trim() + " » créée"
+                : "La facette a bien été créée");
+    }
+
+    public void cancelCreate() {
+        resetCreateForm();
+        composing = false;
     }
 
     private void persistOptionalDefinition(String facetId) {
@@ -531,5 +565,34 @@ public class FacetDetailEditorBean implements Serializable {
             return thesaurusContext.resolveWorkLanguage();
         }
         return availableTranslationLanguages.get(0).code();
+    }
+
+    private void resetCreateForm() {
+        label = "";
+        definition = "";
+        parentConceptLabel = "";
+        parentConceptId = "";
+        createdFacetId = "";
+        createRunState = "";
+        createErrorMessage = null;
+        createFlashMessage = null;
+        createFlashToken = null;
+        selectedParentConcept = null;
+        composing = false;
+    }
+
+    private String resolveCreateParentId() {
+        if (StringUtils.isNotBlank(parentConceptId)) {
+            return parentConceptId;
+        }
+        if (selectedParentConcept != null && StringUtils.isNotBlank(selectedParentConcept.conceptId())) {
+            return selectedParentConcept.conceptId();
+        }
+        return "";
+    }
+
+    private void flashCreateSuccess(String message) {
+        createFlashMessage = message;
+        createFlashToken = String.valueOf(System.currentTimeMillis());
     }
 }

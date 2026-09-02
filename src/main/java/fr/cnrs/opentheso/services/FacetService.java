@@ -252,8 +252,7 @@ public class FacetService {
     public boolean checkExistenceFacetByNameAndLangAndThesaurus(String name, String lang, String idThesaurus) {
 
         log.debug("Vérifier l'existence d'une facet par sa valeur {} (langue {})", name, lang);
-        var nodeLabel = nodeLabelRepository.findByIdThesaurusAndLexicalValueAndLang(idThesaurus, name, lang);
-        return nodeLabel.isPresent();
+        return nodeLabelRepository.existsByIdThesaurusAndLexicalValueAndLang(idThesaurus, name, lang);
     }
 
 

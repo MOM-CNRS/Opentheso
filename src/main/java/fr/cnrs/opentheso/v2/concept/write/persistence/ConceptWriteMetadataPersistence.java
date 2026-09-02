@@ -16,6 +16,8 @@ import org.apache.commons.lang3.StringUtils;
 import org.springframework.stereotype.Component;
 
 import java.util.Collections;
+import java.util.Comparator;
+import java.util.LinkedHashMap;
 import java.util.List;
 import java.util.Optional;
 
@@ -58,8 +60,28 @@ public class ConceptWriteMetadataPersistence {
         if (StringUtils.isBlank(thesaurusId)) {
             return Collections.emptyList();
         }
-        return conceptTypeRepository.findAllByIdThesaurusIn(List.of(thesaurusId)).stream()
+        List<ConceptType> types = conceptTypeRepository.findAllByIdThesaurusIn(List.of(thesaurusId, "all"));
+        if (types == null || types.isEmpty()) {
+            return Collections.emptyList();
+        }
+        LinkedHashMap<String, ConceptType> unique = new LinkedHashMap<>();
+        for (ConceptType type : types) {
+            if (type == null || StringUtils.isBlank(type.getCode())) {
+                continue;
+            }
+            String key = type.getCode().toLowerCase();
+            ConceptType existing = unique.get(key);
+            if (existing == null || "all".equalsIgnoreCase(existing.getIdThesaurus())) {
+                unique.put(key, type);
+            }
+        }
+        return unique.values().stream()
                 .map(this::toConceptWriteType)
+                .sorted(Comparator
+                        .comparing((ConceptWriteConceptType type) -> !"concept".equalsIgnoreCase(type.code()))
+                        .thenComparing(
+                                type -> StringUtils.defaultString(type.labelFr()),
+                                String.CASE_INSENSITIVE_ORDER))
                 .toList();
     }
 
@@ -90,7 +112,7 @@ public class ConceptWriteMetadataPersistence {
                 type.getLabelFr(),
                 type.getLabelEn(),
                 type.isReciprocal(),
-                false
+                "all".equalsIgnoreCase(type.getIdThesaurus())
         );
     }
 }
