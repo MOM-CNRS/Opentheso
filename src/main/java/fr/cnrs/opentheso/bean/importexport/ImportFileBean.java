@@ -1390,16 +1390,15 @@ public class ImportFileBean implements Serializable {
         if (StringUtils.isEmpty(idNewTheso)) {
             return;
         }
-
-        if(StringUtils.isEmpty(persistentNameTheso)) {
-            preferenceService.initPreferences(idNewTheso, persistentNameTheso);
-        }
-
         csvImportHelper.addLangsToThesaurus(langs, idNewTheso);
 
         // préparer les préférences du thésaurus, on récupérer les préférences du thésaurus en cours, ou on initialise des nouvelles.
         preferenceService.initPreferences(idNewTheso, selectedLang);
-        csvImportHelper.setNodePreference(preferenceService.getThesaurusPreferences(idNewTheso));
+        Preferences p = preferenceService.getThesaurusPreferences(idNewTheso);
+        if(StringUtils.isNotEmpty(persistentNameTheso)) {
+            p.setPreferredName(persistentNameTheso);
+        }
+        csvImportHelper.setNodePreference(p);
         csvImportHelper.setFormatDate(formatDate);
 
         // ajout des concepts et collections
