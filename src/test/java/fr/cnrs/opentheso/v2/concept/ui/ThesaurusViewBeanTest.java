@@ -17,6 +17,7 @@ import fr.cnrs.opentheso.v2.rights.RightsService;
 import fr.cnrs.opentheso.v2.setting.model.ThesaurusLanguage;
 import fr.cnrs.opentheso.v2.setting.model.ThesaurusPreferences;
 import fr.cnrs.opentheso.v2.setting.service.ThesaurusPreferenceService;
+import fr.cnrs.opentheso.v2.setting.service.ThesaurusSearchLanguageSync;
 import fr.cnrs.opentheso.v2.setting.service.ThesaurusWorkLanguageService;
 import fr.cnrs.opentheso.v2.setting.ui.ThesaurusContext;
 import fr.cnrs.opentheso.v2.shared.session.ThesaurusSelectionService;
@@ -72,6 +73,8 @@ class ThesaurusViewBeanTest {
     private ToolboxAccessPolicy toolboxAccessPolicy;
     @Mock
     private ConceptSelectionContext conceptSelectionContext;
+    @Mock
+    private ThesaurusSearchLanguageSync thesaurusSearchLanguageSync;
 
     private ThesaurusContext thesaurusContext;
     private ThesaurusViewBean bean;
@@ -90,7 +93,8 @@ class ThesaurusViewBeanTest {
                 rightsService,
                 v2LocaleBean,
                 toolboxAccessPolicy,
-                conceptSelectionContext
+                conceptSelectionContext,
+                thesaurusSearchLanguageSync
         );
     }
 
@@ -204,6 +208,38 @@ class ThesaurusViewBeanTest {
         verify(conceptReadService).loadDetail("th17", "c1", "en", true);
         assertEquals("Places", bean.getSelectedConcept().getSummary().getPreferredLabel());
         assertEquals("Pactols_Places", bean.getTitle());
+    }
+
+    @Test
+    void openConceptInTranslationLanguage_reloadsSameConceptInSelectedLang() {
+        thesaurusContext.selectThesaurus("th17", "Pactols_Lieux", "fr");
+        when(v2LocaleBean.getIdLangue()).thenReturn("fr");
+        when(thesaurusPreferenceService.loadUsedLanguages("th17", "fr")).thenReturn(List.of(
+                language("fr", "Français", "Pactols_Lieux"),
+                language("en", "Anglais", "Pactols_Places")
+        ));
+        when(conceptReadService.loadDetail("th17", "c1", "fr", true))
+                .thenReturn(Optional.of(conceptDetail("c1", "Lieux", "C")));
+        when(conceptReadService.loadDetail("th17", "c1", "en", true))
+                .thenReturn(Optional.of(conceptDetail("c1", "Places", "C")));
+        when(conceptReadService.countBranchConcepts("th17", "c1")).thenReturn(3);
+
+        bean.openTreeNode("c1", "concept");
+        bean.openConceptInTranslationLanguage("en");
+
+        verify(thesaurusSearchLanguageSync).applyConsultationLanguageFromConceptTranslation("en");
+        verify(conceptReadService).loadDetail("th17", "c1", "en", true);
+        assertEquals("en", bean.getSelectedLang());
+        assertEquals("Places", bean.getSelectedConcept().getSummary().getPreferredLabel());
+        assertEquals("Pactols_Places", bean.getTitle());
+    }
+
+    @Test
+    void openConceptInTranslationLanguage_ignoresBlankOrAll() {
+        bean.openConceptInTranslationLanguage(" ");
+        bean.openConceptInTranslationLanguage("all");
+
+        verify(thesaurusSearchLanguageSync, never()).applyConsultationLanguageFromConceptTranslation(anyString());
     }
 
     @Test

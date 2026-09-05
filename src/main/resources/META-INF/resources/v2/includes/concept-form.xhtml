@@ -704,7 +704,14 @@
                 <div class="tr-item">
                   <span class="tr-dot tr-dot-ok" aria-hidden="true"></span>
                   <span class="tr-flag">#{v2ThesaurusViewBean.flagEmoji(tr.lang)}</span>
-                  <span class="tr-label">#{tr.value}</span>
+                  <h:commandLink styleClass="tr-label"
+                                 action="#{v2ThesaurusViewBean.openConceptInTranslationLanguage(tr.lang)}"
+                                 title="#{v2LocaleBean.getMsg('v2.view.termLang')} · #{v2ThesaurusViewBean.languageLabel(tr.lang)}">
+                    <f:ajax execute="@this"
+                            render=":previewDetailForm:previewDetail :previewThTitle :previewTreeMetaBox :previewTermLangUi :termLang"
+                            onevent="onPreviewTermLang"/>
+                    #{tr.value}
+                  </h:commandLink>
                   <span class="tr-lang">#{v2ThesaurusViewBean.languageLabel(tr.lang)}</span>
                 </div>
                 <ui:fragment rendered="#{not empty v2ThesaurusViewBean.altTranslationsLabel(tr.lang)}">

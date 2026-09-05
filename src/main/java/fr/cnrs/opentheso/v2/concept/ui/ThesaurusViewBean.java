@@ -25,6 +25,7 @@ import fr.cnrs.opentheso.v2.rights.RightsService;
 import fr.cnrs.opentheso.v2.setting.model.ThesaurusLanguage;
 import fr.cnrs.opentheso.v2.setting.model.ThesaurusPreferences;
 import fr.cnrs.opentheso.v2.setting.service.ThesaurusPreferenceService;
+import fr.cnrs.opentheso.v2.setting.service.ThesaurusSearchLanguageSync;
 import fr.cnrs.opentheso.v2.setting.ui.ThesaurusContext;
 import fr.cnrs.opentheso.v2.shared.ui.UserSession;
 import fr.cnrs.opentheso.v2.shared.ui.V2LocaleBean;
@@ -65,6 +66,7 @@ public class ThesaurusViewBean implements Serializable {
     private final transient V2LocaleBean v2LocaleBean;
     private final transient ToolboxAccessPolicy toolboxAccessPolicy;
     private final transient ConceptSelectionContext conceptSelectionContext;
+    private final transient ThesaurusSearchLanguageSync thesaurusSearchLanguageSync;
     private ThesaurusHomeOverview homeOverview;
     private List<ThesaurusLanguage> languages;
     private String selectedLang;
@@ -299,6 +301,19 @@ public class ThesaurusViewBean implements Serializable {
         if (detailRequested && StringUtils.isNotBlank(selectedId)) {
             openTreeNode(selectedId, selectedKind);
         }
+    }
+
+    /**
+     * Comme le legacy : clic sur une traduction de la fiche → même concept
+     * dans la langue choisie (sélecteur d'affichage + arbre + recherche).
+     */
+    public void openConceptInTranslationLanguage(String lang) {
+        if (StringUtils.isBlank(lang) || "all".equalsIgnoreCase(lang)) {
+            return;
+        }
+        selectedLang = lang.trim();
+        thesaurusSearchLanguageSync.applyConsultationLanguageFromConceptTranslation(selectedLang);
+        onLanguageChange();
     }
 
     public List<ThesaurusTreeNode> getTreeRoots() {
