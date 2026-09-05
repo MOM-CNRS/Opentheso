@@ -17,8 +17,8 @@ import java.io.Serializable;
 @RequiredArgsConstructor
 public class ThesaurusHomeStatsBean implements Serializable {
 
-    private final EditionThesaurusService editionThesaurusService;
-    private final V2LocaleBean v2LocaleBean;
+    private final transient EditionThesaurusService editionThesaurusService;
+    private final transient V2LocaleBean v2LocaleBean;
 
     public void showInfos(String thesaurusId) {
         if (StringUtils.isBlank(thesaurusId)) {

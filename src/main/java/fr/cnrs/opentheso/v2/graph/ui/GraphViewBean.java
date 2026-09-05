@@ -36,17 +36,17 @@ import java.util.List;
 @Named("v2GraphViewBean")
 public class GraphViewBean implements Serializable {
 
-    private final UserSession userSession;
-    private final GraphAccessPolicy graphAccessPolicy;
-    private final GraphViewReadService graphViewReadService;
-    private final GraphViewCommandService graphViewCommandService;
-    private final GraphVisualizationUrlService graphVisualizationUrlService;
-    private final GraphNeo4jExportService graphNeo4jExportService;
-    private final GraphConceptSearchService graphConceptSearchService;
-    private final ThesaurusSelectionService thesaurusSelectionService;
-    private final ThesaurusWorkLanguageService thesaurusWorkLanguageService;
-    private final ConceptReadService conceptReadService;
-    private final ApplicationUriService applicationUriService;
+    private final transient UserSession userSession;
+    private final transient GraphAccessPolicy graphAccessPolicy;
+    private final transient GraphViewReadService graphViewReadService;
+    private final transient GraphViewCommandService graphViewCommandService;
+    private final transient GraphVisualizationUrlService graphVisualizationUrlService;
+    private final transient GraphNeo4jExportService graphNeo4jExportService;
+    private final transient GraphConceptSearchService graphConceptSearchService;
+    private final transient ThesaurusSelectionService thesaurusSelectionService;
+    private final transient ThesaurusWorkLanguageService thesaurusWorkLanguageService;
+    private final transient ConceptReadService conceptReadService;
+    private final transient ApplicationUriService applicationUriService;
 
     private int selectedViewId = -1;
     private String newViewName;

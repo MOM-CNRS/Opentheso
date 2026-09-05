@@ -2,10 +2,10 @@ package fr.cnrs.opentheso.v2.shared.auth;
 
 import fr.cnrs.opentheso.entites.SsoToken;
 import fr.cnrs.opentheso.repositories.SsoTokenRepository;
+import fr.cnrs.opentheso.v2.shared.time.V2Dates;
 import lombok.RequiredArgsConstructor;
 import org.springframework.stereotype.Service;
 
-import java.time.LocalDateTime;
 import java.util.UUID;
 
 @Service
@@ -18,7 +18,7 @@ public class SsoTokenService {
         SsoToken ssoToken = new SsoToken();
         ssoToken.setToken(UUID.randomUUID());
         ssoToken.setUserId(userId);
-        ssoToken.setExpiresAt(LocalDateTime.now().plusMinutes(5));
+        ssoToken.setExpiresAt(V2Dates.nowDateTime().plusMinutes(5));
         ssoToken.setUsed(false);
 
         ssoTokenRepository.save(ssoToken);
@@ -28,7 +28,7 @@ public class SsoTokenService {
     public Integer validateAndConsumeToken(String token) {
         return ssoTokenRepository.findById(UUID.fromString(token))
                 .filter(t -> !t.isUsed())
-                .filter(t -> t.getExpiresAt().isAfter(LocalDateTime.now()))
+                .filter(t -> t.getExpiresAt().isAfter(V2Dates.nowDateTime()))
                 .map(t -> {
                     t.setUsed(true);
                     ssoTokenRepository.save(t);

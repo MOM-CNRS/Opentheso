@@ -12,8 +12,6 @@ import fr.cnrs.opentheso.v2.toolbox.actions.model.ActionsLotImportValidationResu
 import fr.cnrs.opentheso.v2.toolbox.actions.service.ActionsLotConceptService;
 import fr.cnrs.opentheso.v2.toolbox.policy.ToolboxAccessPolicy;
 import jakarta.annotation.PostConstruct;
-import jakarta.faces.context.ExternalContext;
-import jakarta.faces.context.FacesContext;
 import jakarta.faces.view.ViewScoped;
 import jakarta.inject.Named;
 import jakarta.servlet.http.Part;
@@ -24,9 +22,8 @@ import org.apache.commons.lang3.StringUtils;
 import org.primefaces.PrimeFaces;
 
 import java.io.IOException;
-import java.io.OutputStream;
 import java.io.Serializable;
-import java.nio.file.Paths;
+import fr.cnrs.opentheso.v2.toolbox.actions.model.ActionsLotMessages;
 
 @Getter
 @Setter
@@ -35,20 +32,20 @@ import java.nio.file.Paths;
 @RequiredArgsConstructor
 public class ActionsLotConceptBean implements Serializable {
 
-    private final ActionsLotConceptService conceptService;
-    private final ThesaurusContext thesaurusContext;
-    private final UserSession userSession;
-    private final ToolboxAccessPolicy toolboxAccessPolicy;
+    private final transient ActionsLotConceptService conceptService;
+    private final transient ThesaurusContext thesaurusContext;
+    private final transient UserSession userSession;
+    private final transient ToolboxAccessPolicy toolboxAccessPolicy;
 
     private ActionsLotImportPanelState<ActionsLotConceptCandidate> addPanel = new ActionsLotImportPanelState<>();
     private ActionsLotImportPanelState<ActionsLotConceptCandidate> mergePanel = new ActionsLotImportPanelState<>();
     private ActionsLotImportPanelState<ActionsLotDeprecateCandidate> deprecatePanel = new ActionsLotImportPanelState<>();
     private ActionsLotImportPanelState<ActionsLotCompareCandidate> comparePanel = new ActionsLotImportPanelState<>();
 
-    private Part addUpload;
-    private Part mergeUpload;
-    private Part deprecateUpload;
-    private Part compareUpload;
+    private transient Part addUpload;
+    private transient Part mergeUpload;
+    private transient Part deprecateUpload;
+    private transient Part compareUpload;
 
     @PostConstruct
     public void init() {
@@ -64,64 +61,63 @@ public class ActionsLotConceptBean implements Serializable {
     }
 
     public boolean isAvailable() {
-        return toolboxAccessPolicy.canAccessWorkshop(userSession)
-                && toolboxAccessPolicy.hasSelectedThesaurus(thesaurusContext.resolveThesaurusId());
+        return ActionsLotUiSupport.isAvailable(toolboxAccessPolicy, userSession, thesaurusContext);
     }
 
     public String getThesaurusTitle() {
-        return StringUtils.defaultIfBlank(thesaurusContext.getCurrentThesaurusTitle(), "thésaurus courant");
+        return ActionsLotUiSupport.thesaurusTitle(thesaurusContext);
     }
 
     public void onAddFileSelected() {
-        acceptFile(addUpload, addPanel, "concepts", "import", "Fichier chargé — validez-le avant d'importer");
+        acceptFile(addUpload, addPanel, ActionsLotMessages.KIND_CONCEPTS, ActionsLotMessages.ACTION_IMPORT, ActionsLotMessages.FILE_LOADED);
         addUpload = null;
     }
 
     public void onMergeFileSelected() {
-        acceptFile(mergeUpload, mergePanel, "concepts", "replace", "Fichier chargé — validez-le avant d'importer");
+        acceptFile(mergeUpload, mergePanel, ActionsLotMessages.KIND_CONCEPTS, ActionsLotMessages.ACTION_REPLACE, ActionsLotMessages.FILE_LOADED);
         mergeUpload = null;
     }
 
     public void onDeprecateFileSelected() {
-        acceptFile(deprecateUpload, deprecatePanel, "concepts", "deprecate", "Fichier chargé — validez-le avant d'importer");
+        acceptFile(deprecateUpload, deprecatePanel, ActionsLotMessages.KIND_CONCEPTS, ActionsLotMessages.ACTION_DEPRECATE, ActionsLotMessages.FILE_LOADED);
         deprecateUpload = null;
     }
 
     public void onCompareFileSelected() {
-        acceptFile(compareUpload, comparePanel, "concepts", "compare", "Fichier chargé — validez-le avant de comparer");
+        acceptFile(compareUpload, comparePanel, ActionsLotMessages.KIND_CONCEPTS, ActionsLotMessages.ACTION_COMPARE, "Fichier chargé — validez-le avant de comparer");
         compareUpload = null;
     }
 
     public void clearAdd() {
         addPanel.resetFile();
         addUpload = null;
-        syncPanel("import", addPanel);
-        toast("Import annulé");
+        syncPanel(ActionsLotMessages.ACTION_IMPORT, addPanel);
+        toast(ActionsLotMessages.IMPORT_CANCELLED);
     }
 
     public void clearMerge() {
         mergePanel.resetFile();
         mergeUpload = null;
-        syncPanel("replace", mergePanel);
-        toast("Import annulé");
+        syncPanel(ActionsLotMessages.ACTION_REPLACE, mergePanel);
+        toast(ActionsLotMessages.IMPORT_CANCELLED);
     }
 
     public void clearDeprecate() {
         deprecatePanel.resetFile();
         deprecateUpload = null;
-        syncPanel("deprecate", deprecatePanel);
-        toast("Import annulé");
+        syncPanel(ActionsLotMessages.ACTION_DEPRECATE, deprecatePanel);
+        toast(ActionsLotMessages.IMPORT_CANCELLED);
     }
 
     public void clearCompare() {
         comparePanel.resetFile();
         compareUpload = null;
-        syncPanel("compare", comparePanel);
+        syncPanel(ActionsLotMessages.ACTION_COMPARE, comparePanel);
         toast("Comparaison annulée");
     }
 
     public void validateAdd() {
-        if (!guardFile(addPanel, "import")) {
+        if (!guardFile(addPanel, ActionsLotMessages.ACTION_IMPORT)) {
             return;
         }
         addPanel.setBusy(true);
@@ -132,10 +128,10 @@ public class ActionsLotConceptBean implements Serializable {
                     addPanel.getIdentifierType(),
                     requireThesaurusId()
             );
-            finishValidation(addPanel, "import", result, "concept(s) prêt(s) à importer");
+            finishValidation(addPanel, ActionsLotMessages.ACTION_IMPORT, result, "concept(s) prêt(s) à importer");
         } finally {
             addPanel.setBusy(false);
-            syncPanel("import", addPanel);
+            syncPanel(ActionsLotMessages.ACTION_IMPORT, addPanel);
         }
     }
 
@@ -143,13 +139,13 @@ public class ActionsLotConceptBean implements Serializable {
         Integer userId = requireUserId();
         if (userId == null || addPanel.getValidCandidates().isEmpty()) {
             if (addPanel.getValidCandidates().isEmpty()) {
-                MessageUtils.showErrorMessage("Aucune ligne valide à importer.");
+                MessageUtils.showErrorMessage(ActionsLotMessages.NO_VALID_LINE);
             }
             return;
         }
         addPanel.setBusy(true);
         try {
-            finishApply(addPanel, "import", conceptService.applyAdd(
+            finishApply(addPanel, ActionsLotMessages.ACTION_IMPORT, conceptService.applyAdd(
                     addPanel.getValidCandidates(),
                     addPanel.getFileBytes(),
                     addPanel.getChoiceDelimiter(),
@@ -159,12 +155,12 @@ public class ActionsLotConceptBean implements Serializable {
             ));
         } finally {
             addPanel.setBusy(false);
-            syncPanel("import", addPanel);
+            syncPanel(ActionsLotMessages.ACTION_IMPORT, addPanel);
         }
     }
 
     public void validateMerge() {
-        if (!guardFile(mergePanel, "replace")) {
+        if (!guardFile(mergePanel, ActionsLotMessages.ACTION_REPLACE)) {
             return;
         }
         mergePanel.setBusy(true);
@@ -174,10 +170,10 @@ public class ActionsLotConceptBean implements Serializable {
                     mergePanel.getChoiceDelimiter(),
                     requireThesaurusId()
             );
-            finishValidation(mergePanel, "replace", result, "concept(s) prêt(s) à remplacer");
+            finishValidation(mergePanel, ActionsLotMessages.ACTION_REPLACE, result, "concept(s) prêt(s) à remplacer");
         } finally {
             mergePanel.setBusy(false);
-            syncPanel("replace", mergePanel);
+            syncPanel(ActionsLotMessages.ACTION_REPLACE, mergePanel);
         }
     }
 
@@ -185,13 +181,13 @@ public class ActionsLotConceptBean implements Serializable {
         Integer userId = requireUserId();
         if (userId == null || mergePanel.getValidCandidates().isEmpty()) {
             if (mergePanel.getValidCandidates().isEmpty()) {
-                MessageUtils.showErrorMessage("Aucune ligne valide à importer.");
+                MessageUtils.showErrorMessage(ActionsLotMessages.NO_VALID_LINE);
             }
             return;
         }
         mergePanel.setBusy(true);
         try {
-            finishApply(mergePanel, "replace", conceptService.applyMerge(
+            finishApply(mergePanel, ActionsLotMessages.ACTION_REPLACE, conceptService.applyMerge(
                     mergePanel.getValidCandidates(),
                     mergePanel.getFileBytes(),
                     mergePanel.getChoiceDelimiter(),
@@ -200,12 +196,12 @@ public class ActionsLotConceptBean implements Serializable {
             ));
         } finally {
             mergePanel.setBusy(false);
-            syncPanel("replace", mergePanel);
+            syncPanel(ActionsLotMessages.ACTION_REPLACE, mergePanel);
         }
     }
 
     public void validateDeprecate() {
-        if (!guardFile(deprecatePanel, "deprecate")) {
+        if (!guardFile(deprecatePanel, ActionsLotMessages.ACTION_DEPRECATE)) {
             return;
         }
         deprecatePanel.setBusy(true);
@@ -216,10 +212,10 @@ public class ActionsLotConceptBean implements Serializable {
                     deprecatePanel.getIdentifierType(),
                     requireThesaurusId()
             );
-            finishValidation(deprecatePanel, "deprecate", result, "concept(s) prêt(s) à rendre obsolète(s)");
+            finishValidation(deprecatePanel, ActionsLotMessages.ACTION_DEPRECATE, result, "concept(s) prêt(s) à rendre obsolète(s)");
         } finally {
             deprecatePanel.setBusy(false);
-            syncPanel("deprecate", deprecatePanel);
+            syncPanel(ActionsLotMessages.ACTION_DEPRECATE, deprecatePanel);
         }
     }
 
@@ -227,25 +223,25 @@ public class ActionsLotConceptBean implements Serializable {
         Integer userId = requireUserId();
         if (userId == null || deprecatePanel.getValidCandidates().isEmpty()) {
             if (deprecatePanel.getValidCandidates().isEmpty()) {
-                MessageUtils.showErrorMessage("Aucune ligne valide à importer.");
+                MessageUtils.showErrorMessage(ActionsLotMessages.NO_VALID_LINE);
             }
             return;
         }
         deprecatePanel.setBusy(true);
         try {
-            finishApply(deprecatePanel, "deprecate", conceptService.applyDeprecate(
+            finishApply(deprecatePanel, ActionsLotMessages.ACTION_DEPRECATE, conceptService.applyDeprecate(
                     deprecatePanel.getValidCandidates(),
                     requireThesaurusId(),
                     userId
             ));
         } finally {
             deprecatePanel.setBusy(false);
-            syncPanel("deprecate", deprecatePanel);
+            syncPanel(ActionsLotMessages.ACTION_DEPRECATE, deprecatePanel);
         }
     }
 
     public void validateCompare() {
-        if (!guardFile(comparePanel, "compare")) {
+        if (!guardFile(comparePanel, ActionsLotMessages.ACTION_COMPARE)) {
             return;
         }
         comparePanel.setBusy(true);
@@ -254,10 +250,10 @@ public class ActionsLotConceptBean implements Serializable {
                     comparePanel.getFileBytes(),
                     comparePanel.getChoiceDelimiter()
             );
-            finishValidation(comparePanel, "compare", result, "libellé(s) prêt(s) à comparer");
+            finishValidation(comparePanel, ActionsLotMessages.ACTION_COMPARE, result, "libellé(s) prêt(s) à comparer");
         } finally {
             comparePanel.setBusy(false);
-            syncPanel("compare", comparePanel);
+            syncPanel(ActionsLotMessages.ACTION_COMPARE, comparePanel);
         }
     }
 
@@ -295,7 +291,7 @@ public class ActionsLotConceptBean implements Serializable {
         writeDownload("modele-concepts-comparer.csv", conceptService.compareTemplateBytes());
     }
 
-    private <C> void acceptFile(
+    private <C extends java.io.Serializable> void acceptFile(
             Part part,
             ActionsLotImportPanelState<C> panel,
             String obj,
@@ -318,7 +314,7 @@ public class ActionsLotConceptBean implements Serializable {
         }
     }
 
-    private <C> boolean guardFile(ActionsLotImportPanelState<C> panel, String op) {
+    private <C extends java.io.Serializable> boolean guardFile(ActionsLotImportPanelState<C> panel, String op) {
         if (!guardAccess()) {
             return false;
         }
@@ -330,7 +326,7 @@ public class ActionsLotConceptBean implements Serializable {
         return true;
     }
 
-    private <C> void finishValidation(
+    private <C extends java.io.Serializable> void finishValidation(
             ActionsLotImportPanelState<C> panel,
             String op,
             ActionsLotImportValidationResult<C> result,
@@ -347,7 +343,7 @@ public class ActionsLotConceptBean implements Serializable {
         }
     }
 
-    private <C> void finishApply(ActionsLotImportPanelState<C> panel, String op, ActionsLotApplyResult result) {
+    private <C extends java.io.Serializable> void finishApply(ActionsLotImportPanelState<C> panel, String op, ActionsLotApplyResult result) {
         panel.applyResult(result);
         if (result.success()) {
             MessageUtils.showInformationMessage(result.message());
@@ -370,15 +366,7 @@ public class ActionsLotConceptBean implements Serializable {
     }
 
     private boolean guardAccess() {
-        if (!toolboxAccessPolicy.canAccessWorkshop(userSession)) {
-            MessageUtils.showErrorMessage("Action non autorisée");
-            return false;
-        }
-        if (StringUtils.isBlank(requireThesaurusId())) {
-            MessageUtils.showErrorMessage("Vous devez choisir un thésaurus avant !");
-            return false;
-        }
-        return true;
+        return ActionsLotUiSupport.guardAccess(toolboxAccessPolicy, userSession, thesaurusContext);
     }
 
     private String requireThesaurusId() {
@@ -386,33 +374,15 @@ public class ActionsLotConceptBean implements Serializable {
     }
 
     private byte[] readPart(Part part) throws IOException {
-        if (part == null || part.getSize() <= 0) {
-            return null;
-        }
-        return part.getInputStream().readAllBytes();
+        return ActionsLotUiSupport.readPart(part);
     }
 
     private String fileNameOf(Part part) {
-        if (part == null || StringUtils.isBlank(part.getSubmittedFileName())) {
-            return "fichier.csv";
-        }
-        return Paths.get(part.getSubmittedFileName()).getFileName().toString();
+        return ActionsLotUiSupport.fileNameOf(part);
     }
 
     private void writeDownload(String filename, byte[] content) {
-        FacesContext faces = FacesContext.getCurrentInstance();
-        ExternalContext ext = faces.getExternalContext();
-        ext.responseReset();
-        ext.setResponseContentType("text/csv; charset=UTF-8");
-        ext.setResponseHeader("Content-Disposition", "attachment; filename=\"" + filename + "\"");
-        ext.setResponseContentLength(content.length);
-        try (OutputStream out = ext.getResponseOutputStream()) {
-            out.write(content);
-            out.flush();
-        } catch (IOException ex) {
-            MessageUtils.showErrorMessage("Téléchargement impossible : " + ex.getMessage());
-        }
-        faces.responseComplete();
+        ActionsLotUiSupport.writeDownload(filename, content);
     }
 
     private void syncPanel(String op, ActionsLotImportPanelState<?> panel) {
@@ -425,15 +395,10 @@ public class ActionsLotConceptBean implements Serializable {
     }
 
     private void toast(String message) {
-        toast(message, false);
+        ActionsLotUiSupport.toast(message);
     }
 
     private void toast(String message, boolean error) {
-        if (StringUtils.isBlank(message)) {
-            return;
-        }
-        String safe = message.replace("\\", "\\\\").replace("'", "\\'").replace("\n", " ");
-        String opts = error ? "{error:true}" : "{}";
-        PrimeFaces.current().executeScript("window.toast && window.toast('" + safe + "', " + opts + ")");
+        ActionsLotUiSupport.toast(message, error);
     }
 }

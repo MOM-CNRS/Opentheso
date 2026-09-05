@@ -34,11 +34,11 @@ import java.util.List;
 @Named("v2AllUsersBean")
 public class AllUsersBean implements Serializable {
 
-    private final UserSession userSession;
-    private final V2LocaleBean localeBean;
-    private final AdminCatalogService adminCatalogService;
-    private final AdminUserService adminUserService;
-    private final UserProfileService userProfileService;
+    private final transient UserSession userSession;
+    private final transient V2LocaleBean localeBean;
+    private final transient AdminCatalogService adminCatalogService;
+    private final transient AdminUserService adminUserService;
+    private final transient UserProfileService userProfileService;
 
     private List<AdminUserMembership> users = Collections.emptyList();
     private List<ProjectSummary> projects = Collections.emptyList();

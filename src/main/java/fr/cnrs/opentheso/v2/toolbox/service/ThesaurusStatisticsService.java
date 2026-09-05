@@ -42,6 +42,10 @@ public class ThesaurusStatisticsService {
 
     @Transactional(readOnly = true)
     public StatisticsKpis loadKpis(String thesaurusId) {
+        return doLoadKpis(thesaurusId);
+    }
+
+    private StatisticsKpis doLoadKpis(String thesaurusId) {
         DashboardKpiRow row = thesaurusHomeQueryRepository.countDashboardKpis(thesaurusId);
         return new StatisticsKpis(row.concepts(), row.pendingCandidates(), row.collections(), row.languages());
     }
@@ -49,7 +53,7 @@ public class ThesaurusStatisticsService {
     @Transactional(readOnly = true)
     public StatisticsOverview loadOverview(String thesaurusId, String workLang) {
         String lang = StringUtils.defaultIfBlank(workLang, "fr");
-        StatisticsKpis kpis = loadKpis(thesaurusId);
+        StatisticsKpis kpis = doLoadKpis(thesaurusId);
         List<CollectionCoverageRow> collectionRows = thesaurusHomeQueryRepository
                 .findCollectionMemberCoverage(thesaurusId, lang, COLLECTION_BAR_LIMIT + 1);
         boolean truncated = collectionRows.size() > COLLECTION_BAR_LIMIT;

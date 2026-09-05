@@ -10,6 +10,7 @@ import org.springframework.web.bind.annotation.GetMapping;
 import org.springframework.web.bind.annotation.RequestHeader;
 import org.springframework.web.bind.annotation.RequestMapping;
 import org.springframework.web.bind.annotation.RestController;
+import fr.cnrs.opentheso.v2.shared.api.ApiHeaders;
 
 @RestController("v2PublicApiKeyValidationController")
 @RequestMapping("/openapi/v2/public/auth")
@@ -22,8 +23,8 @@ public class ApiKeyValidationPublicController {
     @GetMapping(value = "/validate", produces = MediaType.APPLICATION_JSON_VALUE)
     @Operation(summary = "Vérifie la validité d'une clé API et renvoie l'identité de l'utilisateur associé")
     public ApiKeyValidationResponse validate(
-            @RequestHeader(value = "X-API-KEY", required = false) String xApiKey,
-            @RequestHeader(value = "API-KEY", required = false) String legacyApiKey
+            @RequestHeader(value = ApiHeaders.X_API_KEY, required = false) String xApiKey,
+            @RequestHeader(value = ApiHeaders.API_KEY, required = false) String legacyApiKey
     ) {
         return apiKeyValidationPublicService.validate(xApiKey, legacyApiKey);
     }

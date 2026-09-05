@@ -1,5 +1,6 @@
 package fr.cnrs.opentheso.v2.concept.write.persistence;
 
+import fr.cnrs.opentheso.v2.shared.repository.NativeQueryParams;
 import jakarta.persistence.EntityManager;
 import jakarta.persistence.PersistenceContext;
 import org.springframework.stereotype.Repository;
@@ -31,13 +32,13 @@ public class ConceptTranslationWriteRepository {
                             '', '', :userId, :userId, :created, :modified
                         )
                         """)
-                .setParameter("idTerm", idTerm)
-                .setParameter("lexicalValue", lexicalValue)
+                .setParameter(NativeQueryParams.ID_TERM, idTerm)
+                .setParameter(NativeQueryParams.LEXICAL_VALUE, lexicalValue)
                 .setParameter("lang", lang)
-                .setParameter("thesaurusId", thesaurusId)
-                .setParameter("userId", userId)
+                .setParameter(NativeQueryParams.THESAURUS_ID, thesaurusId)
+                .setParameter(NativeQueryParams.USER_ID, userId)
                 .setParameter("created", new Date())
-                .setParameter("modified", new Date())
+                .setParameter(NativeQueryParams.MODIFIED, new Date())
                 .executeUpdate();
         insertHistory(idTerm, lexicalValue, thesaurusId, lang, userId, "New");
     }
@@ -59,11 +60,11 @@ public class ConceptTranslationWriteRepository {
                           AND id_thesaurus = :thesaurusId
                           AND lang = :lang
                         """)
-                .setParameter("lexicalValue", lexicalValue)
-                .setParameter("userId", userId)
-                .setParameter("modified", new Date())
-                .setParameter("idTerm", idTerm)
-                .setParameter("thesaurusId", thesaurusId)
+                .setParameter(NativeQueryParams.LEXICAL_VALUE, lexicalValue)
+                .setParameter(NativeQueryParams.USER_ID, userId)
+                .setParameter(NativeQueryParams.MODIFIED, new Date())
+                .setParameter(NativeQueryParams.ID_TERM, idTerm)
+                .setParameter(NativeQueryParams.THESAURUS_ID, thesaurusId)
                 .setParameter("lang", lang)
                 .executeUpdate();
         if (updated <= 0) {
@@ -81,9 +82,9 @@ public class ConceptTranslationWriteRepository {
                           AND lang = :lang
                           AND id_thesaurus = :thesaurusId
                         """)
-                .setParameter("idTerm", idTerm)
+                .setParameter(NativeQueryParams.ID_TERM, idTerm)
                 .setParameter("lang", lang)
-                .setParameter("thesaurusId", thesaurusId)
+                .setParameter(NativeQueryParams.THESAURUS_ID, thesaurusId)
                 .executeUpdate();
     }
 
@@ -105,13 +106,13 @@ public class ConceptTranslationWriteRepository {
                             :userId, :action, :modified, '', ''
                         )
                         """)
-                .setParameter("idTerm", idTerm)
-                .setParameter("lexicalValue", lexicalValue)
+                .setParameter(NativeQueryParams.ID_TERM, idTerm)
+                .setParameter(NativeQueryParams.LEXICAL_VALUE, lexicalValue)
                 .setParameter("lang", lang)
-                .setParameter("thesaurusId", thesaurusId)
-                .setParameter("userId", userId)
+                .setParameter(NativeQueryParams.THESAURUS_ID, thesaurusId)
+                .setParameter(NativeQueryParams.USER_ID, userId)
                 .setParameter("action", action)
-                .setParameter("modified", new Date())
+                .setParameter(NativeQueryParams.MODIFIED, new Date())
                 .executeUpdate();
     }
 }

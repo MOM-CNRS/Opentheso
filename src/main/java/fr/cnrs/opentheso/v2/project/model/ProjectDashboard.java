@@ -1,6 +1,7 @@
 package fr.cnrs.opentheso.v2.project.model;
 
 import java.util.List;
+import java.io.Serializable;
 
 public record ProjectDashboard(
         int projectId,
@@ -11,5 +12,5 @@ public record ProjectDashboard(
         List<ProjectMember> members,
         List<LimitedProjectMember> limitedMembers,
         List<AssignableRole> assignableRoles
-) {
+) implements Serializable {
 }

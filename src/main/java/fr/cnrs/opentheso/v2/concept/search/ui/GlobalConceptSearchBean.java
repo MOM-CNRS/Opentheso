@@ -33,11 +33,11 @@ import java.util.List;
 @RequiredArgsConstructor
 public class GlobalConceptSearchBean implements Serializable {
 
-    private final ConceptSearchService conceptSearchService;
-    private final ConsultationShellBean consultationShellBean;
-    private final ThesaurusWorkLanguageService thesaurusWorkLanguageService;
-    private final UserSession userSession;
-    private final V2LocaleBean v2LocaleBean;
+    private final transient ConceptSearchService conceptSearchService;
+    private final transient ConsultationShellBean consultationShellBean;
+    private final transient ThesaurusWorkLanguageService thesaurusWorkLanguageService;
+    private final transient UserSession userSession;
+    private final transient V2LocaleBean v2LocaleBean;
 
     private String searchLang;
     private String searchValue;
@@ -174,13 +174,22 @@ public class GlobalConceptSearchBean implements Serializable {
     }
 
     private void selectConcept(String conceptId, String thesaurusId) throws IOException {
-        if (StringUtils.isAnyBlank(conceptId, thesaurusId)) {
+        if (conceptId == null || thesaurusId == null) {
             return;
         }
-        ExternalContext context = FacesContext.getCurrentInstance().getExternalContext();
+        String idc = conceptId.trim();
+        String idt = thesaurusId.trim();
+        if (idc.isEmpty() || idt.isEmpty()) {
+            return;
+        }
+        FacesContext facesContext = FacesContext.getCurrentInstance();
+        if (facesContext == null) {
+            return;
+        }
+        ExternalContext context = facesContext.getExternalContext();
         context.redirect(context.getRequestContextPath()
-                + "/?idt=" + thesaurusId.trim()
-                + "&idc=" + conceptId.trim());
+                + "/?idt=" + idt
+                + "&idc=" + idc);
     }
 
     private ConceptSearchMode activeMode() {

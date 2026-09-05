@@ -6,6 +6,7 @@ import fr.cnrs.opentheso.v2.project.model.ProjectSummary;
 import org.junit.jupiter.api.Test;
 
 import java.time.LocalDateTime;
+import java.time.Month;
 import java.util.List;
 
 import static org.junit.jupiter.api.Assertions.assertEquals;
@@ -62,7 +63,7 @@ class AdminApiMapperTest {
 
     @Test
     void toThesaurusResponse_mapsAllFields() {
-        var created = LocalDateTime.of(2024, 1, 1, 0, 0);
+        var created = LocalDateTime.of(2024, Month.JANUARY, 1, 0, 0);
         var thesaurus = new AdminThesaurus("TH1", "Test", 2, "Projet", true, created);
 
         var response = AdminApiMapper.toThesaurusResponse(thesaurus);
@@ -77,7 +78,7 @@ class AdminApiMapperTest {
 
     @Test
     void toThesaurusResponses_mapsWholeList() {
-        var thesaurus = new AdminThesaurus("TH1", "Test", 2, "Projet", false, LocalDateTime.now());
+        var thesaurus = new AdminThesaurus("TH1", "Test", 2, "Projet", false, LocalDateTime.of(2024, Month.JUNE, 15, 12, 0));
 
         var responses = AdminApiMapper.toThesaurusResponses(List.of(thesaurus));
 

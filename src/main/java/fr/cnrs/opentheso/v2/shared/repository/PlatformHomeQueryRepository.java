@@ -44,14 +44,14 @@ public class PlatformHomeQueryRepository {
         if (updated > 0) {
             return true;
         }
-        entityManager.createNativeQuery("""
+        int inserted = entityManager.createNativeQuery("""
                         INSERT INTO homepage (lang, htmlcode)
                         VALUES (:lang, :html)
                         """)
                 .setParameter("lang", lang)
                 .setParameter("html", html)
                 .executeUpdate();
-        return true;
+        return inserted > 0;
     }
 
     @SuppressWarnings("unchecked")

@@ -1,12 +1,13 @@
 package fr.cnrs.opentheso.v2.concept.model;
 
 import java.util.List;
+import java.io.Serializable;
 
 public record ConceptAlignmentGroup(
         String typeKey,
         String typeLabel,
         List<ConceptAlignment> items
-) {
+) implements Serializable {
 
     public String getTypeKey() {
         return typeKey;

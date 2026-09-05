@@ -1,11 +1,13 @@
 package fr.cnrs.opentheso.v2.concept.model;
 
+import java.io.Serializable;
+
 public record ConceptRelation(
         String conceptId,
         String label,
         String arkId,
         String role
-) {
+) implements Serializable {
 
     public ConceptRelation(String conceptId, String label, String arkId) {
         this(conceptId, label, arkId, null);

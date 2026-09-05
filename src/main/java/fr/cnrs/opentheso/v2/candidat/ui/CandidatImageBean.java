@@ -20,9 +20,9 @@ import java.io.Serializable;
 @Named("v2ImageCandidatBean")
 public class CandidatImageBean implements Serializable {
 
-    private final CandidatBean candidatBean;
-    private final CandidatMutationService candidatMutationService;
-    private final ThesaurusContext thesaurusContext;
+    private final transient CandidatBean candidatBean;
+    private final transient CandidatMutationService candidatMutationService;
+    private final transient ThesaurusContext thesaurusContext;
 
     private String uri, copyright, name, creator;
 

@@ -1,12 +1,14 @@
 package fr.cnrs.opentheso.v2.concept.model;
 
+import java.io.Serializable;
+
 public record ConceptCorpusLinkItem(
         String corpusName,
         String uriLink,
         int noticeCount,
         boolean onlyUriLink,
         boolean active
-) {
+) implements Serializable {
 
     public String getCorpusName() {
         return corpusName;

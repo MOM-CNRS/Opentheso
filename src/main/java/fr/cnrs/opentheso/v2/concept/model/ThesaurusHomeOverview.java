@@ -1,6 +1,7 @@
 package fr.cnrs.opentheso.v2.concept.model;
 
 import java.util.List;
+import java.io.Serializable;
 
 public record ThesaurusHomeOverview(
         String thesaurusTitle,
@@ -13,7 +14,7 @@ public record ThesaurusHomeOverview(
         List<ConceptLinkItem> lastModifiedConcepts,
         List<ThesaurusMetadataItem> metadata,
         String homePageHtml
-) {
+) implements Serializable {
 
     public String getThesaurusTitle() {
         return thesaurusTitle;

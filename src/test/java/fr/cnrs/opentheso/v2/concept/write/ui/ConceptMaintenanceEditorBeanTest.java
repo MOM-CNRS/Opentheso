@@ -42,7 +42,8 @@ class ConceptMaintenanceEditorBeanTest {
                 conceptSelectionContext,
                 thesaurusContext,
                 userSession,
-                conceptWritePolicy
+                conceptWritePolicy,
+                null
         );
         lenient().when(conceptWritePolicy.canMutateConcept(userSession)).thenReturn(true);
         lenient().when(conceptSelectionContext.hasSelection()).thenReturn(true);

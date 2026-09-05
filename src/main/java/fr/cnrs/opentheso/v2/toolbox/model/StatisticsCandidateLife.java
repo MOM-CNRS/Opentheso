@@ -1,5 +1,7 @@
 package fr.cnrs.opentheso.v2.toolbox.model;
 
+import java.io.Serializable;
+
 public record StatisticsCandidateLife(
         int pending,
         int accepted,
@@ -9,7 +11,7 @@ public record StatisticsCandidateLife(
         Integer medianDecisionDays,
         int activeContributors,
         int acceptanceRatePercent
-) {
+) implements Serializable {
     public static StatisticsCandidateLife empty() {
         return new StatisticsCandidateLife(0, 0, 0, 0, 0, null, 0, 0);
     }

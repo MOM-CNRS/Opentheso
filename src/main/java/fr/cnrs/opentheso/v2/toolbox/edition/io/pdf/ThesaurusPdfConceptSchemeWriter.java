@@ -1,6 +1,7 @@
 package fr.cnrs.opentheso.v2.toolbox.edition.io.pdf;
 
 import com.itextpdf.text.Document;
+import com.itextpdf.text.Element;
 import com.itextpdf.text.Rectangle;
 import com.itextpdf.text.DocumentException;
 import com.itextpdf.text.Paragraph;
@@ -24,10 +25,10 @@ public class ThesaurusPdfConceptSchemeWriter {
 
         PdfPTable table = new PdfPTable(StringUtils.isNotEmpty(codeLang2) ? 2 : 1);
         PdfPCell cell1 = new PdfPCell();
-        cell1.setHorizontalAlignment(PdfPCell.ALIGN_CENTER);
+        cell1.setHorizontalAlignment(Element.ALIGN_CENTER);
         cell1.setBorderWidth(Rectangle.NO_BORDER);
         PdfPCell cell2 = new PdfPCell();
-        cell2.setHorizontalAlignment(PdfPCell.ALIGN_CENTER);
+        cell2.setHorizontalAlignment(Element.ALIGN_CENTER);
         cell2.setBorder(Rectangle.NO_BORDER);
 
         if (xmlDocument == null || xmlDocument.getConceptScheme() == null

@@ -21,8 +21,8 @@ import java.io.Serializable;
 @Scope(value = "session", proxyMode = ScopedProxyMode.TARGET_CLASS)
 public class ThesaurusContext implements Serializable {
 
-    private final ThesaurusSelectionService thesaurusSelectionService;
-    private final ThesaurusWorkLanguageService thesaurusWorkLanguageService;
+    private final transient ThesaurusSelectionService thesaurusSelectionService;
+    private final transient ThesaurusWorkLanguageService thesaurusWorkLanguageService;
 
     @Value("${settings.workLanguage:fr}")
     private String defaultWorkLanguage;

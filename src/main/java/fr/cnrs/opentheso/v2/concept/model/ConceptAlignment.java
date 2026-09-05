@@ -1,5 +1,7 @@
 package fr.cnrs.opentheso.v2.concept.model;
 
+import java.io.Serializable;
+
 public record ConceptAlignment(
         String id,
         String uri,
@@ -7,7 +9,7 @@ public record ConceptAlignment(
         String sourceName,
         boolean urlAvailable,
         int typeId
-) {
+) implements Serializable {
 
     public String getId() {
         return id;

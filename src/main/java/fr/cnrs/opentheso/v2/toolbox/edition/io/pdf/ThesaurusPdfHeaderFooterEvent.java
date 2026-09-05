@@ -17,11 +17,13 @@ class ThesaurusPdfHeaderFooterEvent extends PdfPageEventHelper {
         this.thesaurusName = thesaurusName;
     }
 
+    @Override
     public void onStartPage(PdfWriter writer, Document document) {
         Paragraph header = new Paragraph(thesaurusName);
         header.setAlignment(Element.ALIGN_LEFT);
     }
 
+    @Override
     public void onEndPage(PdfWriter writer, Document document) {
         ColumnText.showTextAligned(writer.getDirectContent(), Element.ALIGN_CENTER, new Phrase("Page " + document.getPageNumber()), 550, 30, 0);
     }

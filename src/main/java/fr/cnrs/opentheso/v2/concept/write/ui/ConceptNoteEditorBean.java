@@ -34,14 +34,16 @@ import java.util.List;
 @RequiredArgsConstructor
 public class ConceptNoteEditorBean implements Serializable {
 
-    private final ConceptNoteMutationService conceptNoteMutationService;
-    private final ConceptWriteMetadataService conceptWriteMetadataService;
-    private final ConceptSelectionContext conceptSelectionContext;
-    private final ConceptNavigationSupport conceptNavigationSupport;
-    private final ThesaurusContext thesaurusContext;
-    private final UserSession userSession;
-    private final ConceptWritePolicy conceptWritePolicy;
-    private final ThesaurusBrowseBean thesaurusBrowseBean;
+    private static final String NO_NOTE_SELECTED = "Aucune note sélectionnée !";
+
+    private final transient ConceptNoteMutationService conceptNoteMutationService;
+    private final transient ConceptWriteMetadataService conceptWriteMetadataService;
+    private final transient ConceptSelectionContext conceptSelectionContext;
+    private final transient ConceptNavigationSupport conceptNavigationSupport;
+    private final transient ThesaurusContext thesaurusContext;
+    private final transient UserSession userSession;
+    private final transient ConceptWritePolicy conceptWritePolicy;
+    private final transient ThesaurusBrowseBean thesaurusBrowseBean;
 
     private String currentConceptLabel;
     private String selectedTypeCode = "note";
@@ -101,7 +103,7 @@ public class ConceptNoteEditorBean implements Serializable {
      */
     public void submitDeleteCurrentNote() {
         if (currentNoteId <= 0) {
-            MessageUtils.showErrorMessage("Aucune note sélectionnée !");
+            MessageUtils.showErrorMessage(NO_NOTE_SELECTED);
             return;
         }
         Integer userId = requireUserId();
@@ -131,7 +133,7 @@ public class ConceptNoteEditorBean implements Serializable {
 
     public void submitDeleteNote(ConceptNote note) {
         if (note == null || StringUtils.isBlank(note.id())) {
-            MessageUtils.showErrorMessage("Aucune note sélectionnée !");
+            MessageUtils.showErrorMessage(NO_NOTE_SELECTED);
             return;
         }
         Integer userId = requireUserId();
@@ -146,7 +148,7 @@ public class ConceptNoteEditorBean implements Serializable {
         try {
             noteId = Integer.parseInt(note.id());
         } catch (NumberFormatException ex) {
-            MessageUtils.showErrorMessage("Aucune note sélectionnée !");
+            MessageUtils.showErrorMessage(NO_NOTE_SELECTED);
             return;
         }
         if (submitMutation(conceptNoteMutationService.deleteNote(new DeleteNoteCommand(
@@ -242,19 +244,19 @@ public class ConceptNoteEditorBean implements Serializable {
 
     private Integer requireUserId() {
         if (!isNoteActionsAvailable()) {
-            MessageUtils.showErrorMessage("Action non autorisée");
+            MessageUtils.showErrorMessage(WriteUiMessages.UNAUTHORIZED_FALLBACK);
             return null;
         }
         Integer userId = userSession.getCurrentUserId();
         if (userId == null) {
-            MessageUtils.showErrorMessage("Action non autorisée");
+            MessageUtils.showErrorMessage(WriteUiMessages.UNAUTHORIZED_FALLBACK);
         }
         return userId;
     }
 
     private fr.cnrs.opentheso.v2.concept.model.ConceptSummary requireSummary() {
         if (!conceptSelectionContext.hasSelection()) {
-            MessageUtils.showErrorMessage("Action non autorisée");
+            MessageUtils.showErrorMessage(WriteUiMessages.UNAUTHORIZED_FALLBACK);
             return null;
         }
         return conceptSelectionContext.getSummary();

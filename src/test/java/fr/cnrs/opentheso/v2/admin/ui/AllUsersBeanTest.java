@@ -20,6 +20,7 @@ import org.mockito.junit.jupiter.MockitoExtension;
 import org.primefaces.PrimeFaces;
 
 import java.time.LocalDate;
+import java.time.Month;
 import java.util.List;
 
 import static org.junit.jupiter.api.Assertions.assertEquals;
@@ -89,7 +90,7 @@ class AllUsersBeanTest {
     @Test
     void prepareEditDialog_loadsProfile() {
         when(userProfileService.getProfile(5)).thenReturn(
-                new UserProfile(5, "alice", "alice@test.fr", true, false, true, LocalDate.now(), true)
+                new UserProfile(5, "alice", "alice@test.fr", true, false, true, LocalDate.of(2024, Month.JUNE, 15), true)
         );
 
         allUsersBean.prepareEditDialog(5);
@@ -169,7 +170,7 @@ class AllUsersBeanTest {
         allUsersBean.setSelectedUserId(5);
         allUsersBean.setEditHasApiKey(true);
         allUsersBean.setEditKeyNeverExpire(false);
-        LocalDate expiry = LocalDate.of(2027, 1, 1);
+        LocalDate expiry = LocalDate.of(2027, Month.JANUARY, 1);
         allUsersBean.setEditApiKeyExpiresAt(expiry);
 
         PrimeFaces.Ajax ajax = mock(PrimeFaces.Ajax.class);

@@ -22,6 +22,7 @@ import org.mockito.junit.jupiter.MockitoExtension;
 import org.springframework.security.crypto.password.PasswordEncoder;
 
 import java.time.LocalDate;
+import java.time.Month;
 
 import static org.junit.jupiter.api.Assertions.assertEquals;
 import static org.junit.jupiter.api.Assertions.assertThrows;
@@ -215,7 +216,7 @@ class AdminUserServiceTest {
     @Test
     void updateApiKeySettings_authorizesWithExpirationDate() {
         when(userLookupService.requireEntity(5)).thenReturn(new UserEntity());
-        LocalDate expiresAt = LocalDate.of(2027, 6, 1);
+        LocalDate expiresAt = LocalDate.of(2027, Month.JUNE, 1);
 
         adminUserService.updateApiKeySettings(true, 5, true, false, expiresAt);
 
@@ -226,12 +227,12 @@ class AdminUserServiceTest {
     void updateApiKeySettings_clearsAuthorizationWhenDisabled() {
         when(userLookupService.requireEntity(5)).thenReturn(new UserEntity());
 
-        adminUserService.updateApiKeySettings(true, 5, false, true, LocalDate.of(2027, 1, 1));
+        adminUserService.updateApiKeySettings(true, 5, false, true, LocalDate.of(2027, Month.JANUARY, 1));
 
         verify(userCommandRepository).updateApiKeySettings(5, false, false, null);
     }
 
     private static UserProfile profile(int id, String username, String email) {
-        return new UserProfile(id, username, email, false, false, true, LocalDate.now(), true);
+        return new UserProfile(id, username, email, false, false, true, LocalDate.of(2024, Month.JUNE, 15), true);
     }
 }

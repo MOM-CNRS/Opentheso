@@ -1,5 +1,6 @@
 package fr.cnrs.opentheso.v2.toolbox.ui;
 
+import fr.cnrs.opentheso.v2.concept.write.ui.WriteUiMessages;
 import fr.cnrs.opentheso.v2.toolbox.workshop.WorkshopBulkImportOperations;
 import fr.cnrs.opentheso.utils.MessageUtils;
 import fr.cnrs.opentheso.v2.setting.ui.ThesaurusContext;
@@ -18,9 +19,9 @@ import java.io.Serializable;
 @RequiredArgsConstructor
 public class WorkshopImportBean implements Serializable {
 
-    private final WorkshopBulkImportOperations workshopBulkImportOperations;
-    private final ThesaurusContext thesaurusContext;
-    private final UserSession userSession;
+    private final transient WorkshopBulkImportOperations workshopBulkImportOperations;
+    private final transient ThesaurusContext thesaurusContext;
+    private final transient UserSession userSession;
 
     public void prepare() {
         String thesaurusId = thesaurusContext.resolveThesaurusId();
@@ -283,7 +284,7 @@ public class WorkshopImportBean implements Serializable {
         String thesaurusId = requireThesaurusId();
         Integer userId = userSession.getCurrentUserId();
         if (thesaurusId == null || userId == null) {
-            MessageUtils.showErrorMessage("Action non autorisée");
+            MessageUtils.showErrorMessage(WriteUiMessages.UNAUTHORIZED_FALLBACK);
             return;
         }
         workshopBulkImportOperations.prepare(

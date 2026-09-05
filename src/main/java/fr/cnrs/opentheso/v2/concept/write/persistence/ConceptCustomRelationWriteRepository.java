@@ -1,5 +1,6 @@
 package fr.cnrs.opentheso.v2.concept.write.persistence;
 
+import fr.cnrs.opentheso.v2.shared.repository.NativeQueryParams;
 import jakarta.persistence.EntityManager;
 import jakarta.persistence.PersistenceContext;
 import org.springframework.stereotype.Repository;
@@ -20,8 +21,8 @@ public class ConceptCustomRelationWriteRepository {
                           AND id_thesaurus = :thesaurusId
                         LIMIT 1
                         """)
-                .setParameter("conceptId", conceptId)
-                .setParameter("thesaurusId", thesaurusId)
+                .setParameter(NativeQueryParams.CONCEPT_ID, conceptId)
+                .setParameter(NativeQueryParams.THESAURUS_ID, thesaurusId)
                 .getResultStream()
                 .map(String.class::cast)
                 .findFirst();
@@ -37,7 +38,7 @@ public class ConceptCustomRelationWriteRepository {
                         LIMIT 1
                         """)
                 .setParameter("conceptTypeCode", conceptTypeCode)
-                .setParameter("thesaurusId", thesaurusId)
+                .setParameter(NativeQueryParams.THESAURUS_ID, thesaurusId)
                 .getResultStream()
                 .map(value -> (Boolean) value)
                 .findFirst();

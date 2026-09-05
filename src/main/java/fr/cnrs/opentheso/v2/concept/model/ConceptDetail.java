@@ -1,6 +1,7 @@
 package fr.cnrs.opentheso.v2.concept.model;
 
 import fr.cnrs.opentheso.v2.concept.policy.ConceptStatusPolicy;
+import java.io.Serializable;
 
 import java.util.Collections;
 import java.util.List;
@@ -29,7 +30,7 @@ public record ConceptDetail(
         ConceptIdentifiers identifiers,
         String contributors,
         String preferredTermId
-) {
+) implements Serializable {
 
     public ConceptDetail(
             ConceptSummary summary,

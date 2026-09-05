@@ -3,15 +3,11 @@ package fr.cnrs.opentheso.v2.toolbox.actions.ui;
 import fr.cnrs.opentheso.utils.MessageUtils;
 import fr.cnrs.opentheso.v2.setting.ui.ThesaurusContext;
 import fr.cnrs.opentheso.v2.shared.ui.UserSession;
-import fr.cnrs.opentheso.v2.toolbox.actions.model.ActionsLotApplyResult;
 import fr.cnrs.opentheso.v2.toolbox.actions.model.ActionsLotImageCandidate;
 import fr.cnrs.opentheso.v2.toolbox.actions.model.ActionsLotImportPanelState;
-import fr.cnrs.opentheso.v2.toolbox.actions.model.ActionsLotImportValidationResult;
 import fr.cnrs.opentheso.v2.toolbox.actions.service.ActionsLotImageService;
 import fr.cnrs.opentheso.v2.toolbox.policy.ToolboxAccessPolicy;
 import jakarta.annotation.PostConstruct;
-import jakarta.faces.context.ExternalContext;
-import jakarta.faces.context.FacesContext;
 import jakarta.faces.view.ViewScoped;
 import jakarta.inject.Named;
 import jakarta.servlet.http.Part;
@@ -21,10 +17,8 @@ import lombok.Setter;
 import org.apache.commons.lang3.StringUtils;
 import org.primefaces.PrimeFaces;
 
-import java.io.IOException;
-import java.io.OutputStream;
 import java.io.Serializable;
-import java.nio.file.Paths;
+import fr.cnrs.opentheso.v2.toolbox.actions.model.ActionsLotMessages;
 
 @Getter
 @Setter
@@ -33,13 +27,13 @@ import java.nio.file.Paths;
 @RequiredArgsConstructor
 public class ActionsLotImageBean implements Serializable {
 
-    private final ActionsLotImageService imageService;
-    private final ThesaurusContext thesaurusContext;
-    private final UserSession userSession;
-    private final ToolboxAccessPolicy toolboxAccessPolicy;
+    private final transient ActionsLotImageService imageService;
+    private final transient ThesaurusContext thesaurusContext;
+    private final transient UserSession userSession;
+    private final transient ToolboxAccessPolicy toolboxAccessPolicy;
 
     private ActionsLotImportPanelState<ActionsLotImageCandidate> importPanel = new ActionsLotImportPanelState<>();
-    private Part importUpload;
+    private transient Part importUpload;
 
     @PostConstruct
     public void init() {
@@ -52,77 +46,42 @@ public class ActionsLotImageBean implements Serializable {
     }
 
     public boolean isAvailable() {
-        return toolboxAccessPolicy.canAccessWorkshop(userSession)
-                && toolboxAccessPolicy.hasSelectedThesaurus(thesaurusContext.resolveThesaurusId());
+        return ActionsLotUiSupport.isAvailable(toolboxAccessPolicy, userSession, thesaurusContext);
     }
 
     public String getThesaurusTitle() {
-        return StringUtils.defaultIfBlank(thesaurusContext.getCurrentThesaurusTitle(), "thésaurus courant");
+        return ActionsLotUiSupport.thesaurusTitle(thesaurusContext);
     }
 
     public void onImportFileSelected() {
-        try {
-            byte[] bytes = readPart(importUpload);
-            if (bytes == null) {
-                importPanel.setGlobalError("Impossible de lire le fichier.");
-                return;
-            }
-            importPanel.acceptFile(fileNameOf(importUpload), bytes);
-            toast("Fichier chargé — validez-le avant d'importer");
-        } catch (Exception ex) {
-            importPanel.setGlobalError(ex.getMessage());
-            MessageUtils.showErrorMessage(StringUtils.defaultIfBlank(ex.getMessage(), "Upload impossible"));
-        } finally {
-            importUpload = null;
-            updateImportPanel();
-        }
+        ActionsLotUiSupport.loadFile(importUpload, importPanel, this::updateImportPanel,
+                ActionsLotMessages.FILE_LOADED);
+        importUpload = null;
     }
 
     public void clearImport() {
         importPanel.resetFile();
         importUpload = null;
         updateImportPanel();
-        toast("Import annulé");
+        toast(ActionsLotMessages.IMPORT_CANCELLED);
     }
 
     public void validateImport() {
         if (!guardAccess()) {
             return;
         }
-        if (!importPanel.isHasFile() || importPanel.getFileBytes() == null) {
-            importPanel.setGlobalError("Déposez un fichier CSV avant de valider.");
-            updateImportPanel();
-            return;
-        }
-        importPanel.setBusy(true);
-        try {
-            ActionsLotImportValidationResult<ActionsLotImageCandidate> result = imageService.validate(
-                    importPanel.getFileBytes(),
-                    importPanel.getChoiceDelimiter(),
-                    importPanel.getIdentifierType(),
-                    requireThesaurusId()
-            );
-            importPanel.applyValidation(result);
-            if (!result.success()) {
-                MessageUtils.showErrorMessage(result.errorMessage());
-                toast(result.errorMessage(), true);
-            } else if (result.hasErrors()) {
-                toast(result.errorCount() + " ligne(s) en erreur — " + result.validCount() + " valides", true);
-            } else {
-                toast(result.validCount() + " image(s) prête(s) à importer");
-            }
-        } finally {
-            importPanel.setBusy(false);
-            updateImportPanel();
-        }
+        ActionsLotUiSupport.validateFile(importPanel, this::updateImportPanel,
+                () -> imageService.validate(
+                        importPanel.getFileBytes(),
+                        importPanel.getChoiceDelimiter(),
+                        importPanel.getIdentifierType(),
+                        requireThesaurusId()),
+                importPanel::applyValidation,
+                "image(s) prête(s) à importer");
     }
 
     public void applyImport() {
         if (!guardAccess()) {
-            return;
-        }
-        if (importPanel.getValidCandidates().isEmpty()) {
-            MessageUtils.showErrorMessage("Aucune ligne valide à importer.");
             return;
         }
         Integer userId = userSession.getCurrentUserId();
@@ -130,26 +89,13 @@ public class ActionsLotImageBean implements Serializable {
             MessageUtils.showErrorMessage("Utilisateur invalide");
             return;
         }
-        importPanel.setBusy(true);
-        try {
-            ActionsLotApplyResult result = imageService.applyImport(
-                    importPanel.getValidCandidates(),
-                    requireThesaurusId(),
-                    userId,
-                    importPanel.isClearBefore()
-            );
-            importPanel.applyResult(result);
-            if (result.success()) {
-                MessageUtils.showInformationMessage(result.message());
-                toast(result.message());
-            } else {
-                MessageUtils.showErrorMessage(result.message());
-                toast(result.message(), true);
-            }
-        } finally {
-            importPanel.setBusy(false);
-            updateImportPanel();
-        }
+        ActionsLotUiSupport.applyFile(importPanel, this::updateImportPanel,
+                () -> imageService.applyImport(
+                        importPanel.getValidCandidates(),
+                        requireThesaurusId(),
+                        userId,
+                        importPanel.isClearBefore()),
+                ActionsLotMessages.NO_VALID_LINE);
     }
 
     public void downloadImportTemplate() {
@@ -157,49 +103,16 @@ public class ActionsLotImageBean implements Serializable {
     }
 
     private boolean guardAccess() {
-        if (!toolboxAccessPolicy.canAccessWorkshop(userSession)) {
-            MessageUtils.showErrorMessage("Action non autorisée");
-            return false;
-        }
-        if (StringUtils.isBlank(requireThesaurusId())) {
-            MessageUtils.showErrorMessage("Vous devez choisir un thésaurus avant !");
-            return false;
-        }
-        return true;
+        return ActionsLotUiSupport.guardAccess(toolboxAccessPolicy, userSession, thesaurusContext);
     }
 
     private String requireThesaurusId() {
         return thesaurusContext.resolveThesaurusId();
     }
 
-    private byte[] readPart(Part part) throws IOException {
-        if (part == null || part.getSize() <= 0) {
-            return null;
-        }
-        return part.getInputStream().readAllBytes();
-    }
-
-    private String fileNameOf(Part part) {
-        if (part == null || StringUtils.isBlank(part.getSubmittedFileName())) {
-            return "fichier.csv";
-        }
-        return Paths.get(part.getSubmittedFileName()).getFileName().toString();
-    }
 
     private void writeDownload(String filename, byte[] content) {
-        FacesContext faces = FacesContext.getCurrentInstance();
-        ExternalContext ext = faces.getExternalContext();
-        ext.responseReset();
-        ext.setResponseContentType("text/csv; charset=UTF-8");
-        ext.setResponseHeader("Content-Disposition", "attachment; filename=\"" + filename + "\"");
-        ext.setResponseContentLength(content.length);
-        try (OutputStream out = ext.getResponseOutputStream()) {
-            out.write(content);
-            out.flush();
-        } catch (IOException ex) {
-            MessageUtils.showErrorMessage("Téléchargement impossible : " + ex.getMessage());
-        }
-        faces.responseComplete();
+        ActionsLotUiSupport.writeDownload(filename, content);
     }
 
     private void updateImportPanel() {
@@ -212,15 +125,6 @@ public class ActionsLotImageBean implements Serializable {
     }
 
     private void toast(String message) {
-        toast(message, false);
-    }
-
-    private void toast(String message, boolean error) {
-        if (StringUtils.isBlank(message)) {
-            return;
-        }
-        String safe = message.replace("\\", "\\\\").replace("'", "\\'").replace("\n", " ");
-        String opts = error ? "{error:true}" : "{}";
-        PrimeFaces.current().executeScript("window.toast && window.toast('" + safe + "', " + opts + ")");
+        ActionsLotUiSupport.toast(message);
     }
 }

@@ -1,5 +1,6 @@
 package fr.cnrs.opentheso.v2.toolbox.actions.service;
 
+import fr.cnrs.opentheso.v2.toolbox.actions.model.ActionsLotMessages;
 import fr.cnrs.opentheso.models.nodes.NodeImage;
 import fr.cnrs.opentheso.v2.toolbox.actions.model.ActionsLotApplyResult;
 import fr.cnrs.opentheso.v2.toolbox.actions.model.ActionsLotImageCandidate;
@@ -22,6 +23,7 @@ import java.util.HashSet;
 import java.util.List;
 import java.util.Map;
 import java.util.Set;
+import fr.cnrs.opentheso.v2.toolbox.edition.model.ThesaurusCsvConceptObject;
 
 @Service
 @RequiredArgsConstructor
@@ -41,15 +43,15 @@ public class ActionsLotImageService {
             String thesaurusId
     ) {
         if (content == null || content.length == 0) {
-            return ActionsLotImportValidationResult.failure("Aucun fichier à valider.");
+            return ActionsLotImportValidationResult.failure(ActionsLotMessages.NO_FILE);
         }
         if (StringUtils.isBlank(thesaurusId)) {
-            return ActionsLotImportValidationResult.failure("Aucun thésaurus sélectionné.");
+            return ActionsLotImportValidationResult.failure(ActionsLotMessages.NO_THESAURUS);
         }
 
         char delimiter = CsvDelimiterSupport.resolveDelimiter(choiceDelimiter);
         WorkshopCsvReader reader = new WorkshopCsvReader(delimiter);
-        List<WorkshopCsvReader.ConceptObject> rows;
+        List<ThesaurusCsvConceptObject> rows;
         try {
             try (Reader bodyReader = new InputStreamReader(new ByteArrayInputStream(content), StandardCharsets.UTF_8)) {
                 if (!reader.readFileImage(bodyReader)) {
@@ -74,7 +76,7 @@ public class ActionsLotImageService {
         int line = 1;
 
         Set<String> localIds = new HashSet<>();
-        for (WorkshopCsvReader.ConceptObject row : rows) {
+        for (ThesaurusCsvConceptObject row : rows) {
             if (row == null) {
                 continue;
             }
@@ -85,7 +87,7 @@ public class ActionsLotImageService {
         }
         Map<String, String> resolved = persistence.resolveConceptIds(localIds, identifierType, thesaurusId);
 
-        for (WorkshopCsvReader.ConceptObject row : rows) {
+        for (ThesaurusCsvConceptObject row : rows) {
             line++;
             if (row == null) {
                 continue;
@@ -144,10 +146,10 @@ public class ActionsLotImageService {
             boolean clearBefore
     ) {
         if (StringUtils.isBlank(thesaurusId)) {
-            return ActionsLotApplyResult.failure("Aucun thésaurus sélectionné.");
+            return ActionsLotApplyResult.failure(ActionsLotMessages.NO_THESAURUS);
         }
         if (candidates == null || candidates.isEmpty()) {
-            return ActionsLotApplyResult.failure("Aucune ligne valide à importer.");
+            return ActionsLotApplyResult.failure(ActionsLotMessages.NO_VALID_LINE);
         }
 
         Set<String> clearedConcepts = new HashSet<>();
@@ -161,31 +163,9 @@ public class ActionsLotImageService {
         int rejected = 0;
 
         for (ActionsLotImageCandidate candidate : candidates) {
-            if (candidate == null || StringUtils.isBlank(candidate.uri())) {
-                rejected++;
-                continue;
-            }
-            if (clearBefore && clearedConcepts.add(candidate.conceptId())) {
-                persistence.deleteImages(thesaurusId, candidate.conceptId());
-            }
-            if (!clearBefore && existingImages.contains(
-                    WorkshopBulkImportPersistence.imageKey(candidate.conceptId(), candidate.uri())
-            )) {
-                rejected++;
-                continue;
-            }
-            try {
-                persistence.addExternalImage(
-                        candidate.conceptId(),
-                        thesaurusId,
-                        candidate.title(),
-                        candidate.rights(),
-                        candidate.uri(),
-                        candidate.creator(),
-                        userId
-                );
+            if (applyImageCandidate(candidate, thesaurusId, userId, clearBefore, clearedConcepts, existingImages)) {
                 applied++;
-            } catch (Exception ex) {
+            } else {
                 rejected++;
             }
         }
@@ -197,6 +177,41 @@ public class ActionsLotImageService {
                 applied,
                 rejected
         );
+    }
+
+    private boolean applyImageCandidate(
+            ActionsLotImageCandidate candidate,
+            String thesaurusId,
+            int userId,
+            boolean clearBefore,
+            Set<String> clearedConcepts,
+            Set<String> existingImages
+    ) {
+        if (candidate == null || StringUtils.isBlank(candidate.uri())) {
+            return false;
+        }
+        if (clearBefore && clearedConcepts.add(candidate.conceptId())) {
+            persistence.deleteImages(thesaurusId, candidate.conceptId());
+        }
+        if (!clearBefore && existingImages.contains(
+                WorkshopBulkImportPersistence.imageKey(candidate.conceptId(), candidate.uri())
+        )) {
+            return false;
+        }
+        try {
+            persistence.addExternalImage(
+                    candidate.conceptId(),
+                    thesaurusId,
+                    candidate.title(),
+                    candidate.rights(),
+                    candidate.uri(),
+                    candidate.creator(),
+                    userId
+            );
+            return true;
+        } catch (Exception ex) {
+            return false;
+        }
     }
 
     public byte[] templateBytes() {

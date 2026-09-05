@@ -1,12 +1,14 @@
 package fr.cnrs.opentheso.v2.concept.write.model;
 
+import java.io.Serializable;
+
 public record MutationResult(
         boolean success,
         MutationOutcome outcome,
         String message,
         String createdConceptId,
         boolean warning
-) {
+) implements Serializable {
 
     public static MutationResult ok(String message) {
         return new MutationResult(true, MutationOutcome.OK, message, null, false);

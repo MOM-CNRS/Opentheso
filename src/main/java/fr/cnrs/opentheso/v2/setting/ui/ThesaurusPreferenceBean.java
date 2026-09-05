@@ -1,5 +1,6 @@
 package fr.cnrs.opentheso.v2.setting.ui;
 
+import fr.cnrs.opentheso.v2.concept.write.ui.WriteUiMessages;
 import fr.cnrs.opentheso.v2.concept.ui.ThesaurusViewBean;
 import fr.cnrs.opentheso.v2.setting.exception.InvalidSettingDataException;
 import fr.cnrs.opentheso.v2.setting.exception.SettingAccessDeniedException;
@@ -23,13 +24,13 @@ import java.util.List;
 @RequiredArgsConstructor
 public class ThesaurusPreferenceBean implements Serializable {
 
-    private final SettingsAccess settingsAccess;
-    private final ThesaurusContext thesaurusContext;
-    private final ThesaurusPreferenceService thesaurusPreferenceService;
-    private final ThesaurusSettingsPersistService persistService;
-    private final ThesaurusCorpusBean corpusBean;
-    private final ThesaurusAlignmentBean alignmentBean;
-    private final ThesaurusViewBean thesaurusViewBean;
+    private final transient SettingsAccess settingsAccess;
+    private final transient ThesaurusContext thesaurusContext;
+    private final transient ThesaurusPreferenceService thesaurusPreferenceService;
+    private final transient ThesaurusSettingsPersistService persistService;
+    private final transient ThesaurusCorpusBean corpusBean;
+    private final transient ThesaurusAlignmentBean alignmentBean;
+    private final transient ThesaurusViewBean thesaurusViewBean;
 
     private PreferenceEditor preference;
     private boolean preferenceLoaded;
@@ -71,7 +72,7 @@ public class ThesaurusPreferenceBean implements Serializable {
         preferenceSaveError = false;
         if (!settingsAccess.isCanEdit()) {
             preferenceSaveError = true;
-            preferenceSaveMessage = "Action non autorisée";
+            preferenceSaveMessage = WriteUiMessages.UNAUTHORIZED_FALLBACK;
             return;
         }
         PreferenceEditor editor = getPreference();

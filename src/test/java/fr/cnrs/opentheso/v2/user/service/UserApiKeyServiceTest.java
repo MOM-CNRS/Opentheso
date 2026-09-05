@@ -13,6 +13,7 @@ import org.mockito.Mock;
 import org.mockito.junit.jupiter.MockitoExtension;
 
 import java.time.LocalDate;
+import java.time.Month;
 import java.util.Optional;
 
 import static org.junit.jupiter.api.Assertions.assertEquals;
@@ -68,7 +69,7 @@ class UserApiKeyServiceTest {
 
     @Test
     void regenerateApiKey_preservesExpirationPolicy() {
-        LocalDate expiresAt = LocalDate.now().plusDays(30);
+        LocalDate expiresAt = LocalDate.of(2099, Month.DECEMBER, 31);
         UserEntity user = buildEntity(7, false, expiresAt, "old-encrypted");
         when(userProfileRepository.findById(7)).thenReturn(Optional.of(user));
         when(userProfileRepository.save(any(UserEntity.class))).thenAnswer(invocation -> invocation.getArgument(0));
@@ -83,7 +84,7 @@ class UserApiKeyServiceTest {
 
     @Test
     void regenerateApiKey_rejectsExpiredKey() {
-        UserEntity user = buildEntity(7, false, LocalDate.now().minusDays(1), "old-encrypted");
+        UserEntity user = buildEntity(7, false, LocalDate.of(2000, Month.JANUARY, 1), "old-encrypted");
         when(userProfileRepository.findById(7)).thenReturn(Optional.of(user));
 
         assertThrows(ApiKeyRegenerationException.class, () -> userApiKeyService.regenerateApiKey(7));
@@ -108,7 +109,7 @@ class UserApiKeyServiceTest {
     @Test
     void canRegenerateApiKey_followsLegacyRules() {
         UserProfile activeNeverExpire = profile(true, null, true);
-        UserProfile expired = profile(false, LocalDate.now().minusDays(1), true);
+        UserProfile expired = profile(false, LocalDate.of(2000, Month.JANUARY, 1), true);
         UserProfile noKey = profile(false, null, false);
 
         assertTrue(userApiKeyService.canRegenerateApiKey(activeNeverExpire));

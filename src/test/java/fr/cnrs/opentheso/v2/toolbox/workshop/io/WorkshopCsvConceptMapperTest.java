@@ -9,16 +9,13 @@ import static org.junit.jupiter.api.Assertions.assertEquals;
 import static org.junit.jupiter.api.Assertions.assertNotNull;
 import static org.junit.jupiter.api.Assertions.assertNull;
 import static org.junit.jupiter.api.Assertions.assertTrue;
+import fr.cnrs.opentheso.v2.toolbox.edition.model.ThesaurusCsvConceptLabel;
 
 /**
  * Unit tests for {@link WorkshopCsvConceptMapper}, the small static helper that copies a
- * {@link WorkshopCsvReader.ConceptObject} (produced by {@link WorkshopCsvReader}) into the
- * shared edition model {@link ThesaurusCsvConceptObject}.
+ * {@link ThesaurusCsvConceptObject} into a detached edition model.
  */
 class WorkshopCsvConceptMapperTest {
-
-    // ConceptObject is a non-static inner class of WorkshopCsvReader, so it needs an outer instance.
-    private final WorkshopCsvReader reader = new WorkshopCsvReader(',');
 
     @Test
     void toEditionModel_returnsNull_whenSourceIsNull() {
@@ -27,7 +24,7 @@ class WorkshopCsvConceptMapperTest {
 
     @Test
     void toEditionModel_copiesAllScalarAndListFields() {
-        WorkshopCsvReader.ConceptObject source = reader.new ConceptObject();
+        ThesaurusCsvConceptObject source = new ThesaurusCsvConceptObject();
         source.setIdConcept("C1");
         source.setUri("http://example.com/c1");
         source.setLocalId("local1");
@@ -44,52 +41,52 @@ class WorkshopCsvConceptMapperTest {
         source.setCreated("2024-01-01");
         source.setModified("2024-02-02");
 
-        WorkshopCsvReader.Label prefLabel = reader.new Label();
+        ThesaurusCsvConceptLabel prefLabel = new ThesaurusCsvConceptLabel();
         prefLabel.setLabel("Chat");
         prefLabel.setLang("fr");
         source.getPrefLabels().add(prefLabel);
 
-        WorkshopCsvReader.Label altLabel = reader.new Label();
+        ThesaurusCsvConceptLabel altLabel = new ThesaurusCsvConceptLabel();
         altLabel.setLabel("Minou");
         altLabel.setLang("fr");
         source.getAltLabels().add(altLabel);
 
-        WorkshopCsvReader.Label hiddenLabel = reader.new Label();
+        ThesaurusCsvConceptLabel hiddenLabel = new ThesaurusCsvConceptLabel();
         hiddenLabel.setLabel("Chah");
         hiddenLabel.setLang("fr");
         source.getHiddenLabels().add(hiddenLabel);
 
-        WorkshopCsvReader.Label note = reader.new Label();
+        ThesaurusCsvConceptLabel note = new ThesaurusCsvConceptLabel();
         note.setLabel("une note");
         note.setLang("fr");
         source.getNote().add(note);
 
-        WorkshopCsvReader.Label definition = reader.new Label();
+        ThesaurusCsvConceptLabel definition = new ThesaurusCsvConceptLabel();
         definition.setLabel("une definition");
         definition.setLang("fr");
         source.getDefinitions().add(definition);
 
-        WorkshopCsvReader.Label scopeNote = reader.new Label();
+        ThesaurusCsvConceptLabel scopeNote = new ThesaurusCsvConceptLabel();
         scopeNote.setLabel("scope");
         scopeNote.setLang("fr");
         source.getScopeNotes().add(scopeNote);
 
-        WorkshopCsvReader.Label example = reader.new Label();
+        ThesaurusCsvConceptLabel example = new ThesaurusCsvConceptLabel();
         example.setLabel("exemple");
         example.setLang("fr");
         source.getExamples().add(example);
 
-        WorkshopCsvReader.Label historyNote = reader.new Label();
+        ThesaurusCsvConceptLabel historyNote = new ThesaurusCsvConceptLabel();
         historyNote.setLabel("history");
         historyNote.setLang("fr");
         source.getHistoryNotes().add(historyNote);
 
-        WorkshopCsvReader.Label changeNote = reader.new Label();
+        ThesaurusCsvConceptLabel changeNote = new ThesaurusCsvConceptLabel();
         changeNote.setLabel("change");
         changeNote.setLang("fr");
         source.getChangeNotes().add(changeNote);
 
-        WorkshopCsvReader.Label editorialNote = reader.new Label();
+        ThesaurusCsvConceptLabel editorialNote = new ThesaurusCsvConceptLabel();
         editorialNote.setLabel("editorial");
         editorialNote.setLang("fr");
         source.getEditorialNotes().add(editorialNote);
@@ -185,7 +182,7 @@ class WorkshopCsvConceptMapperTest {
 
     @Test
     void toEditionModel_copiesAreIndependent_fromSourceLists() {
-        WorkshopCsvReader.ConceptObject source = reader.new ConceptObject();
+        ThesaurusCsvConceptObject source = new ThesaurusCsvConceptObject();
         source.setIdConcept("C1");
         source.getBroaders().add("broader1");
 
@@ -200,7 +197,7 @@ class WorkshopCsvConceptMapperTest {
 
     @Test
     void toEditionModel_handlesNullLists_byProducingEmptyLists() {
-        WorkshopCsvReader.ConceptObject source = reader.new ConceptObject();
+        ThesaurusCsvConceptObject source = new ThesaurusCsvConceptObject();
         source.setIdConcept("C1");
 
         // force some list fields to null, as could happen if the reader never populated them

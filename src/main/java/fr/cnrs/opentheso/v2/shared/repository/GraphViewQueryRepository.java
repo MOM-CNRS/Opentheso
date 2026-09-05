@@ -36,7 +36,7 @@ public class GraphViewQueryRepository {
                 ORDER BY lower(gv.name)
                 """;
         List<Object[]> rows = entityManager.createNativeQuery(sql)
-                .setParameter("userId", userId)
+                .setParameter(NativeQueryParams.USER_ID, userId)
                 .getResultList();
         return rows.stream().map(this::mapListRow).toList();
     }
@@ -75,7 +75,7 @@ public class GraphViewQueryRepository {
                 """;
         return Boolean.TRUE.equals(entityManager.createNativeQuery(sql)
                 .setParameter("viewId", viewId)
-                .setParameter("userId", userId)
+                .setParameter(NativeQueryParams.USER_ID, userId)
                 .getSingleResult());
     }
 

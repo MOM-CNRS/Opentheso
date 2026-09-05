@@ -3,7 +3,6 @@ package fr.cnrs.opentheso.v2.setting.ui;
 import fr.cnrs.opentheso.v2.shared.ui.V2LocaleBean;
 import fr.cnrs.opentheso.utils.MessageUtils;
 import fr.cnrs.opentheso.v2.concept.ui.ConsultationShellBean;
-import fr.cnrs.opentheso.v2.setting.fixtures.SettingTestFixtures;
 import fr.cnrs.opentheso.v2.setting.exception.InvalidSettingDataException;
 import fr.cnrs.opentheso.v2.setting.model.IdentifierServerType;
 import fr.cnrs.opentheso.v2.setting.model.ThesaurusPreferences;

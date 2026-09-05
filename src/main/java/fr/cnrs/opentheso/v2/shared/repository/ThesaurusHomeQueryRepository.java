@@ -3,6 +3,7 @@ package fr.cnrs.opentheso.v2.shared.repository;
 import fr.cnrs.opentheso.v2.candidat.model.CandidatStatusCode;
 import fr.cnrs.opentheso.v2.concept.model.ConceptLinkItem;
 import fr.cnrs.opentheso.v2.concept.model.ThesaurusMetadataItem;
+import fr.cnrs.opentheso.v2.shared.time.V2Dates;
 import jakarta.persistence.EntityManager;
 import jakarta.persistence.PersistenceContext;
 import jakarta.persistence.Query;
@@ -67,7 +68,7 @@ public class ThesaurusHomeQueryRepository {
                      WHERE id_thesaurus = :thesaurusId)::int
                 """;
         Object[] row = (Object[]) entityManager.createNativeQuery(sql)
-                .setParameter("thesaurusId", thesaurusId)
+                .setParameter(NativeQueryParams.THESAURUS_ID, thesaurusId)
                 .setParameter("pendingStatus", CandidatStatusCode.PENDING)
                 .getSingleResult();
         return new DashboardKpiRow(number(row, 0), number(row, 1), number(row, 2), number(row, 3));
@@ -134,7 +135,7 @@ public class ThesaurusHomeQueryRepository {
                 ORDER BY l.french_name
                 """;
         List<Object[]> rows = entityManager.createNativeQuery(sql)
-                .setParameter("thesaurusId", thesaurusId)
+                .setParameter(NativeQueryParams.THESAURUS_ID, thesaurusId)
                 .setParameter("lang", lang)
                 .getResultList();
         return rows.stream()
@@ -189,7 +190,7 @@ public class ThesaurusHomeQueryRepository {
                 ORDER BY COUNT(c.id_concept) DESC, COALESCE(MAX(cgl.lexicalvalue), cg.idgroup)
                 """;
         Query query = entityManager.createNativeQuery(sql)
-                .setParameter("thesaurusId", thesaurusId)
+                .setParameter(NativeQueryParams.THESAURUS_ID, thesaurusId)
                 .setParameter("lang", lang);
         if (limit > 0) {
             query.setMaxResults(limit);
@@ -229,7 +230,7 @@ public class ThesaurusHomeQueryRepository {
                 WHERE cs.id_thesaurus = :thesaurusId
                 """;
         Object[] counts = (Object[]) entityManager.createNativeQuery(countsSql)
-                .setParameter("thesaurusId", thesaurusId)
+                .setParameter(NativeQueryParams.THESAURUS_ID, thesaurusId)
                 .getSingleResult();
         int pending = number(counts, 0);
         int accepted = number(counts, 1);
@@ -250,7 +251,7 @@ public class ThesaurusHomeQueryRepository {
                   AND c.created IS NOT NULL
                 """;
         Number median = (Number) entityManager.createNativeQuery(medianSql)
-                .setParameter("thesaurusId", thesaurusId)
+                .setParameter(NativeQueryParams.THESAURUS_ID, thesaurusId)
                 .getSingleResult();
 
         String contributorsSql = """
@@ -291,7 +292,7 @@ public class ThesaurusHomeQueryRepository {
                 ) contributors
                 """;
         Number contributors = (Number) entityManager.createNativeQuery(contributorsSql)
-                .setParameter("thesaurusId", thesaurusId)
+                .setParameter(NativeQueryParams.THESAURUS_ID, thesaurusId)
                 .getSingleResult();
 
         return new CandidateLifeStats(
@@ -327,7 +328,7 @@ public class ThesaurusHomeQueryRepository {
                     GROUP BY 1
                     """;
             List<Object[]> rows = entityManager.createNativeQuery(sql)
-                    .setParameter("thesaurusId", thesaurusId)
+                    .setParameter(NativeQueryParams.THESAURUS_ID, thesaurusId)
                     .getResultList();
             for (Object[] row : rows) {
                 YearMonth month = parseYearMonth(row[0]);
@@ -337,7 +338,7 @@ public class ThesaurusHomeQueryRepository {
                 counts.put(month, new int[]{number(row, 1), number(row, 2), number(row, 3)});
             }
         }
-        YearMonth current = YearMonth.now();
+        YearMonth current = V2Dates.nowYearMonth();
         List<CandidateMonthRow> months = new ArrayList<>(12);
         for (int i = 11; i >= 0; i--) {
             YearMonth month = current.minusMonths(i);
@@ -407,7 +408,7 @@ public class ThesaurusHomeQueryRepository {
                 FROM tree
                 """;
         Number depth = (Number) entityManager.createNativeQuery(sql)
-                .setParameter("thesaurusId", thesaurusId)
+                .setParameter(NativeQueryParams.THESAURUS_ID, thesaurusId)
                 .getSingleResult();
         return depth != null ? depth.intValue() : 0;
     }
@@ -417,7 +418,7 @@ public class ThesaurusHomeQueryRepository {
             return 0;
         }
         Number count = (Number) entityManager.createNativeQuery(sql)
-                .setParameter("thesaurusId", thesaurusId)
+                .setParameter(NativeQueryParams.THESAURUS_ID, thesaurusId)
                 .getSingleResult();
         return count != null ? count.intValue() : 0;
     }
@@ -434,7 +435,7 @@ public class ThesaurusHomeQueryRepository {
                 """;
         @SuppressWarnings("unchecked")
         List<Object> rows = entityManager.createNativeQuery(sql)
-                .setParameter("thesaurusId", thesaurusId)
+                .setParameter(NativeQueryParams.THESAURUS_ID, thesaurusId)
                 .getResultList();
         if (rows.isEmpty() || rows.get(0) == null) {
             return Optional.empty();
@@ -453,7 +454,7 @@ public class ThesaurusHomeQueryRepository {
                 """;
         @SuppressWarnings("unchecked")
         List<String> rows = entityManager.createNativeQuery(sql)
-                .setParameter("thesaurusId", thesaurusId)
+                .setParameter(NativeQueryParams.THESAURUS_ID, thesaurusId)
                 .getResultList();
         if (rows.isEmpty() || StringUtils.isBlank(rows.get(0))) {
             return Optional.empty();
@@ -469,7 +470,7 @@ public class ThesaurusHomeQueryRepository {
                 """;
         @SuppressWarnings("unchecked")
         List<String> rows = entityManager.createNativeQuery(sql)
-                .setParameter("thesaurusId", thesaurusId)
+                .setParameter(NativeQueryParams.THESAURUS_ID, thesaurusId)
                 .getResultList();
         if (rows.isEmpty() || StringUtils.isBlank(rows.get(0))) {
             return Optional.empty();
@@ -487,7 +488,7 @@ public class ThesaurusHomeQueryRepository {
                 """;
         @SuppressWarnings("unchecked")
         List<String> rows = entityManager.createNativeQuery(sql)
-                .setParameter("thesaurusId", thesaurusId)
+                .setParameter(NativeQueryParams.THESAURUS_ID, thesaurusId)
                 .setParameter("lang", lang)
                 .getResultList();
         if (rows.isEmpty() || rows.get(0) == null) {
@@ -505,7 +506,7 @@ public class ThesaurusHomeQueryRepository {
                 ORDER BY name
                 """;
         List<Object[]> rows = entityManager.createNativeQuery(sql)
-                .setParameter("thesaurusId", thesaurusId)
+                .setParameter(NativeQueryParams.THESAURUS_ID, thesaurusId)
                 .getResultList();
         if (rows.isEmpty()) {
             return Collections.emptyList();
@@ -597,7 +598,7 @@ public class ThesaurusHomeQueryRepository {
                 LIMIT 10
                 """;
         List<Object[]> rows = entityManager.createNativeQuery(sql)
-                .setParameter("thesaurusId", thesaurusId)
+                .setParameter(NativeQueryParams.THESAURUS_ID, thesaurusId)
                 .setParameter("lang", lang)
                 .getResultList();
         if (rows.isEmpty()) {

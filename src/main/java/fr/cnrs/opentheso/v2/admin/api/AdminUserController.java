@@ -22,6 +22,7 @@ import org.springframework.web.bind.annotation.RequestBody;
 import org.springframework.web.bind.annotation.RequestHeader;
 import org.springframework.web.bind.annotation.RequestMapping;
 import org.springframework.web.bind.annotation.RestController;
+import fr.cnrs.opentheso.v2.shared.api.ApiHeaders;
 
 @RestController
 @RequestMapping("/openapi/v2/admin/users")
@@ -37,8 +38,8 @@ public class AdminUserController {
     @PostMapping(consumes = MediaType.APPLICATION_JSON_VALUE, produces = MediaType.APPLICATION_JSON_VALUE)
     @Operation(summary = "Créer un utilisateur", description = "Crée un utilisateur et lui attribue éventuellement un rôle.")
     public CreatedAdminUserResponse createUser(
-            @RequestHeader(value = "X-API-KEY", required = false) String xApiKey,
-            @RequestHeader(value = "API-KEY", required = false) String legacyApiKey,
+            @RequestHeader(value = ApiHeaders.X_API_KEY, required = false) String xApiKey,
+            @RequestHeader(value = ApiHeaders.API_KEY, required = false) String legacyApiKey,
             @Valid @RequestBody CreateAdminUserRequest request
     ) {
         int callerId = adminAuthSupport.resolveUserId(xApiKey, legacyApiKey);
@@ -61,8 +62,8 @@ public class AdminUserController {
     @PutMapping(value = "/{userId}", consumes = MediaType.APPLICATION_JSON_VALUE)
     @Operation(summary = "Modifier un utilisateur", description = "Met à jour le pseudo, l'email et les alertes.")
     public ResponseEntity<Void> updateUser(
-            @RequestHeader(value = "X-API-KEY", required = false) String xApiKey,
-            @RequestHeader(value = "API-KEY", required = false) String legacyApiKey,
+            @RequestHeader(value = ApiHeaders.X_API_KEY, required = false) String xApiKey,
+            @RequestHeader(value = ApiHeaders.API_KEY, required = false) String legacyApiKey,
             @PathVariable int userId,
             @Valid @RequestBody UpdateAdminUserRequest request
     ) {
@@ -81,8 +82,8 @@ public class AdminUserController {
     @PutMapping(value = "/{userId}/password", consumes = MediaType.APPLICATION_JSON_VALUE)
     @Operation(summary = "Modifier le mot de passe", description = "Définit un nouveau mot de passe pour un utilisateur.")
     public ResponseEntity<Void> updatePassword(
-            @RequestHeader(value = "X-API-KEY", required = false) String xApiKey,
-            @RequestHeader(value = "API-KEY", required = false) String legacyApiKey,
+            @RequestHeader(value = ApiHeaders.X_API_KEY, required = false) String xApiKey,
+            @RequestHeader(value = ApiHeaders.API_KEY, required = false) String legacyApiKey,
             @PathVariable int userId,
             @Valid @RequestBody ChangePasswordRequest request
     ) {
@@ -95,8 +96,8 @@ public class AdminUserController {
     @PutMapping(value = "/{userId}/api-key", consumes = MediaType.APPLICATION_JSON_VALUE)
     @Operation(summary = "Configurer la clé API", description = "Active ou désactive la clé API et ses paramètres d'expiration.")
     public ResponseEntity<Void> updateApiKeySettings(
-            @RequestHeader(value = "X-API-KEY", required = false) String xApiKey,
-            @RequestHeader(value = "API-KEY", required = false) String legacyApiKey,
+            @RequestHeader(value = ApiHeaders.X_API_KEY, required = false) String xApiKey,
+            @RequestHeader(value = ApiHeaders.API_KEY, required = false) String legacyApiKey,
             @PathVariable int userId,
             @Valid @RequestBody UpdateAdminApiKeyRequest request
     ) {
@@ -115,8 +116,8 @@ public class AdminUserController {
     @DeleteMapping("/{userId}")
     @Operation(summary = "Supprimer un utilisateur", description = "Supprime définitivement un utilisateur.")
     public ResponseEntity<Void> deleteUser(
-            @RequestHeader(value = "X-API-KEY", required = false) String xApiKey,
-            @RequestHeader(value = "API-KEY", required = false) String legacyApiKey,
+            @RequestHeader(value = ApiHeaders.X_API_KEY, required = false) String xApiKey,
+            @RequestHeader(value = ApiHeaders.API_KEY, required = false) String legacyApiKey,
             @PathVariable int userId
     ) {
         int callerId = adminAuthSupport.resolveUserId(xApiKey, legacyApiKey);

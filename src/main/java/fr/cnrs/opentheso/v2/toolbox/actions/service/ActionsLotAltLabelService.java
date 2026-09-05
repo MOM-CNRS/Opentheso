@@ -1,5 +1,6 @@
 package fr.cnrs.opentheso.v2.toolbox.actions.service;
 
+import fr.cnrs.opentheso.v2.toolbox.actions.model.ActionsLotMessages;
 import fr.cnrs.opentheso.models.terms.Term;
 import fr.cnrs.opentheso.v2.toolbox.actions.model.ActionsLotAltLabelCandidate;
 import fr.cnrs.opentheso.v2.toolbox.actions.model.ActionsLotAltLabelValidationResult;
@@ -23,6 +24,8 @@ import java.util.List;
 import java.util.Map;
 import java.util.Optional;
 import java.util.Set;
+import fr.cnrs.opentheso.v2.toolbox.edition.model.ThesaurusCsvConceptObject;
+import fr.cnrs.opentheso.v2.toolbox.edition.model.ThesaurusCsvConceptLabel;
 
 /**
  * Actions par lot — Formes alternatives (altLabels) : import / suppression CSV.
@@ -30,6 +33,8 @@ import java.util.Set;
 @Service
 @RequiredArgsConstructor
 public class ActionsLotAltLabelService {
+
+    private static final String LOCAL_ID = "localId";
 
     public static final String TEMPLATE = """
             localId,skos:altLabel@fr,skos:altLabel@en
@@ -46,15 +51,15 @@ public class ActionsLotAltLabelService {
             boolean rejectMissingConcept
     ) {
         if (content == null || content.length == 0) {
-            return ActionsLotAltLabelValidationResult.failure("Aucun fichier à valider.");
+            return ActionsLotAltLabelValidationResult.failure(ActionsLotMessages.NO_FILE);
         }
         if (StringUtils.isBlank(thesaurusId)) {
-            return ActionsLotAltLabelValidationResult.failure("Aucun thésaurus sélectionné.");
+            return ActionsLotAltLabelValidationResult.failure(ActionsLotMessages.NO_THESAURUS);
         }
 
         char delimiter = CsvDelimiterSupport.resolveDelimiter(choiceDelimiter);
         WorkshopCsvReader reader = new WorkshopCsvReader(delimiter);
-        List<WorkshopCsvReader.ConceptObject> rows;
+        List<ThesaurusCsvConceptObject> rows;
         try {
             try (Reader headerReader = new InputStreamReader(new ByteArrayInputStream(content), StandardCharsets.UTF_8)) {
                 if (!reader.setLangs(headerReader)) {
@@ -90,7 +95,7 @@ public class ActionsLotAltLabelService {
         int line = 1;
 
         Set<String> localIds = new HashSet<>();
-        for (WorkshopCsvReader.ConceptObject row : rows) {
+        for (ThesaurusCsvConceptObject row : rows) {
             if (row != null && StringUtils.isNotBlank(row.getIdConcept())) {
                 localIds.add(row.getIdConcept().trim());
             }
@@ -99,21 +104,21 @@ public class ActionsLotAltLabelService {
         Map<String, fr.cnrs.opentheso.entites.PreferredTerm> preferredTerms =
                 persistence.findPreferredTermsByConceptIds(resolved.values(), thesaurusId);
 
-        for (WorkshopCsvReader.ConceptObject row : rows) {
+        for (ThesaurusCsvConceptObject row : rows) {
             line++;
             if (row == null) {
                 continue;
             }
             String localId = StringUtils.trimToEmpty(row.getIdConcept());
             if (StringUtils.isBlank(localId)) {
-                errors.add(new ActionsLotLineError(line, "— (vide)", "localId", "Identifiant obligatoire manquant"));
+                errors.add(new ActionsLotLineError(line, "— (vide)", LOCAL_ID, "Identifiant obligatoire manquant"));
                 continue;
             }
             String conceptId = resolved.get(localId);
             if (StringUtils.isBlank(conceptId)) {
                 if (rejectMissingConcept) {
                     errors.add(new ActionsLotLineError(
-                            line, localId, "localId", "Identifiant introuvable dans le thésaurus"
+                            line, localId, LOCAL_ID, "Identifiant introuvable dans le thésaurus"
                     ));
                 } else {
                     ignored++;
@@ -122,17 +127,17 @@ public class ActionsLotAltLabelService {
             }
             if (!preferredTerms.containsKey(conceptId)) {
                 errors.add(new ActionsLotLineError(
-                        line, localId, "localId", "Terme préférentiel introuvable pour ce concept"
+                        line, localId, LOCAL_ID, "Terme préférentiel introuvable pour ce concept"
                 ));
                 continue;
             }
-            List<WorkshopCsvReader.Label> altLabels = row.getAltLabels();
+            List<ThesaurusCsvConceptLabel> altLabels = row.getAltLabels();
             if (altLabels == null || altLabels.isEmpty()) {
                 errors.add(new ActionsLotLineError(line, localId, "skos:altLabel", "Aucun synonyme sur cette ligne"));
                 continue;
             }
             boolean any = false;
-            for (WorkshopCsvReader.Label altLabel : altLabels) {
+            for (ThesaurusCsvConceptLabel altLabel : altLabels) {
                 if (altLabel == null || StringUtils.isBlank(altLabel.getLabel())) {
                     continue;
                 }
@@ -163,10 +168,10 @@ public class ActionsLotAltLabelService {
             boolean clearBefore
     ) {
         if (StringUtils.isBlank(thesaurusId)) {
-            return ActionsLotApplyResult.failure("Aucun thésaurus sélectionné.");
+            return ActionsLotApplyResult.failure(ActionsLotMessages.NO_THESAURUS);
         }
         if (candidates == null || candidates.isEmpty()) {
-            return ActionsLotApplyResult.failure("Aucune ligne valide à importer.");
+            return ActionsLotApplyResult.failure(ActionsLotMessages.NO_VALID_LINE);
         }
 
         Set<String> clearedConcepts = new HashSet<>();
@@ -222,7 +227,7 @@ public class ActionsLotAltLabelService {
             int userId
     ) {
         if (StringUtils.isBlank(thesaurusId)) {
-            return ActionsLotApplyResult.failure("Aucun thésaurus sélectionné.");
+            return ActionsLotApplyResult.failure(ActionsLotMessages.NO_THESAURUS);
         }
         if (candidates == null || candidates.isEmpty()) {
             return ActionsLotApplyResult.failure("Aucune ligne valide à supprimer.");

@@ -1,5 +1,6 @@
 package fr.cnrs.opentheso.v2.concept.write.persistence;
 
+import fr.cnrs.opentheso.v2.shared.repository.NativeQueryParams;
 import jakarta.persistence.EntityManager;
 import jakarta.persistence.PersistenceContext;
 import org.springframework.stereotype.Repository;
@@ -21,8 +22,8 @@ public class ConceptDeletionWriteRepository {
                           AND id_concept = :conceptId
                         LIMIT 1
                         """)
-                .setParameter("thesaurusId", thesaurusId)
-                .setParameter("conceptId", conceptId)
+                .setParameter(NativeQueryParams.THESAURUS_ID, thesaurusId)
+                .setParameter(NativeQueryParams.CONCEPT_ID, conceptId)
                 .getResultStream()
                 .map(String.class::cast)
                 .findFirst();
@@ -52,29 +53,29 @@ public class ConceptDeletionWriteRepository {
                         DELETE FROM note
                         WHERE id_thesaurus = :thesaurusId AND id_term = :idTerm
                         """)
-                .setParameter("thesaurusId", thesaurusId)
-                .setParameter("idTerm", idTerm)
+                .setParameter(NativeQueryParams.THESAURUS_ID, thesaurusId)
+                .setParameter(NativeQueryParams.ID_TERM, idTerm)
                 .executeUpdate();
         entityManager.createNativeQuery("""
                         DELETE FROM non_preferred_term
                         WHERE id_thesaurus = :thesaurusId AND id_term = :idTerm
                         """)
-                .setParameter("thesaurusId", thesaurusId)
-                .setParameter("idTerm", idTerm)
+                .setParameter(NativeQueryParams.THESAURUS_ID, thesaurusId)
+                .setParameter(NativeQueryParams.ID_TERM, idTerm)
                 .executeUpdate();
         entityManager.createNativeQuery("""
                         DELETE FROM preferred_term
                         WHERE id_thesaurus = :thesaurusId AND id_term = :idTerm
                         """)
-                .setParameter("thesaurusId", thesaurusId)
-                .setParameter("idTerm", idTerm)
+                .setParameter(NativeQueryParams.THESAURUS_ID, thesaurusId)
+                .setParameter(NativeQueryParams.ID_TERM, idTerm)
                 .executeUpdate();
         entityManager.createNativeQuery("""
                         DELETE FROM term
                         WHERE id_thesaurus = :thesaurusId AND id_term = :idTerm
                         """)
-                .setParameter("thesaurusId", thesaurusId)
-                .setParameter("idTerm", idTerm)
+                .setParameter(NativeQueryParams.THESAURUS_ID, thesaurusId)
+                .setParameter(NativeQueryParams.ID_TERM, idTerm)
                 .executeUpdate();
     }
 
@@ -84,8 +85,8 @@ public class ConceptDeletionWriteRepository {
                         WHERE id_thesaurus = :thesaurusId
                           AND (id_concept1 = :conceptId OR id_concept2 = :conceptId)
                         """)
-                .setParameter("thesaurusId", thesaurusId)
-                .setParameter("conceptId", conceptId)
+                .setParameter(NativeQueryParams.THESAURUS_ID, thesaurusId)
+                .setParameter(NativeQueryParams.CONCEPT_ID, conceptId)
                 .executeUpdate();
     }
 
@@ -95,8 +96,8 @@ public class ConceptDeletionWriteRepository {
                         WHERE id_thesaurus = :thesaurusId
                           AND (identifier = :conceptId OR id_concept = :conceptId)
                         """)
-                .setParameter("thesaurusId", thesaurusId)
-                .setParameter("conceptId", conceptId)
+                .setParameter(NativeQueryParams.THESAURUS_ID, thesaurusId)
+                .setParameter(NativeQueryParams.CONCEPT_ID, conceptId)
                 .executeUpdate();
     }
 
@@ -106,8 +107,8 @@ public class ConceptDeletionWriteRepository {
                         WHERE internal_id_thesaurus = :thesaurusId
                           AND internal_id_concept = :conceptId
                         """)
-                .setParameter("thesaurusId", thesaurusId)
-                .setParameter("conceptId", conceptId)
+                .setParameter(NativeQueryParams.THESAURUS_ID, thesaurusId)
+                .setParameter(NativeQueryParams.CONCEPT_ID, conceptId)
                 .executeUpdate();
     }
 
@@ -116,8 +117,8 @@ public class ConceptDeletionWriteRepository {
                         DELETE FROM concept
                         WHERE id_thesaurus = :thesaurusId AND id_concept = :conceptId
                         """)
-                .setParameter("thesaurusId", thesaurusId)
-                .setParameter("conceptId", conceptId)
+                .setParameter(NativeQueryParams.THESAURUS_ID, thesaurusId)
+                .setParameter(NativeQueryParams.CONCEPT_ID, conceptId)
                 .executeUpdate();
     }
 
@@ -126,8 +127,8 @@ public class ConceptDeletionWriteRepository {
                         DELETE FROM concept_facet
                         WHERE id_thesaurus = :thesaurusId AND id_concept = :conceptId
                         """)
-                .setParameter("thesaurusId", thesaurusId)
-                .setParameter("conceptId", conceptId)
+                .setParameter(NativeQueryParams.THESAURUS_ID, thesaurusId)
+                .setParameter(NativeQueryParams.CONCEPT_ID, conceptId)
                 .executeUpdate();
     }
 
@@ -136,8 +137,8 @@ public class ConceptDeletionWriteRepository {
                         DELETE FROM concept_group_concept
                         WHERE idthesaurus = :thesaurusId AND idconcept = :conceptId
                         """)
-                .setParameter("thesaurusId", thesaurusId)
-                .setParameter("conceptId", conceptId)
+                .setParameter(NativeQueryParams.THESAURUS_ID, thesaurusId)
+                .setParameter(NativeQueryParams.CONCEPT_ID, conceptId)
                 .executeUpdate();
     }
 
@@ -146,8 +147,8 @@ public class ConceptDeletionWriteRepository {
                         DELETE FROM gps
                         WHERE id_theso = :thesaurusId AND id_concept = :conceptId
                         """)
-                .setParameter("thesaurusId", thesaurusId)
-                .setParameter("conceptId", conceptId)
+                .setParameter(NativeQueryParams.THESAURUS_ID, thesaurusId)
+                .setParameter(NativeQueryParams.CONCEPT_ID, conceptId)
                 .executeUpdate();
     }
 
@@ -156,8 +157,8 @@ public class ConceptDeletionWriteRepository {
                         DELETE FROM external_images
                         WHERE id_thesaurus = :thesaurusId AND id_concept = :conceptId
                         """)
-                .setParameter("thesaurusId", thesaurusId)
-                .setParameter("conceptId", conceptId)
+                .setParameter(NativeQueryParams.THESAURUS_ID, thesaurusId)
+                .setParameter(NativeQueryParams.CONCEPT_ID, conceptId)
                 .executeUpdate();
     }
 
@@ -166,8 +167,8 @@ public class ConceptDeletionWriteRepository {
                         DELETE FROM external_resources
                         WHERE id_thesaurus = :thesaurusId AND id_concept = :conceptId
                         """)
-                .setParameter("thesaurusId", thesaurusId)
-                .setParameter("conceptId", conceptId)
+                .setParameter(NativeQueryParams.THESAURUS_ID, thesaurusId)
+                .setParameter(NativeQueryParams.CONCEPT_ID, conceptId)
                 .executeUpdate();
     }
 
@@ -181,8 +182,8 @@ public class ConceptDeletionWriteRepository {
                               AND id_concept = :conceptId
                         )
                         """)
-                .setParameter("thesaurusId", thesaurusId)
-                .setParameter("conceptId", conceptId)
+                .setParameter(NativeQueryParams.THESAURUS_ID, thesaurusId)
+                .setParameter(NativeQueryParams.CONCEPT_ID, conceptId)
                 .executeUpdate();
     }
 
@@ -191,8 +192,8 @@ public class ConceptDeletionWriteRepository {
                         DELETE FROM proposition_modification
                         WHERE id_theso = :thesaurusId AND id_concept = :conceptId
                         """)
-                .setParameter("thesaurusId", thesaurusId)
-                .setParameter("conceptId", conceptId)
+                .setParameter(NativeQueryParams.THESAURUS_ID, thesaurusId)
+                .setParameter(NativeQueryParams.CONCEPT_ID, conceptId)
                 .executeUpdate();
     }
 
@@ -201,8 +202,8 @@ public class ConceptDeletionWriteRepository {
                         DELETE FROM proposition
                         WHERE id_thesaurus = :thesaurusId AND id_concept = :conceptId
                         """)
-                .setParameter("thesaurusId", thesaurusId)
-                .setParameter("conceptId", conceptId)
+                .setParameter(NativeQueryParams.THESAURUS_ID, thesaurusId)
+                .setParameter(NativeQueryParams.CONCEPT_ID, conceptId)
                 .executeUpdate();
     }
 
@@ -212,8 +213,8 @@ public class ConceptDeletionWriteRepository {
                         WHERE id_thesaurus = :thesaurusId
                           AND (id_concept1 = :conceptId OR id_concept2 = :conceptId)
                         """)
-                .setParameter("thesaurusId", thesaurusId)
-                .setParameter("conceptId", conceptId)
+                .setParameter(NativeQueryParams.THESAURUS_ID, thesaurusId)
+                .setParameter(NativeQueryParams.CONCEPT_ID, conceptId)
                 .executeUpdate();
     }
 
@@ -222,8 +223,8 @@ public class ConceptDeletionWriteRepository {
                         DELETE FROM concept_dcterms
                         WHERE id_thesaurus = :thesaurusId AND id_concept = :conceptId
                         """)
-                .setParameter("thesaurusId", thesaurusId)
-                .setParameter("conceptId", conceptId)
+                .setParameter(NativeQueryParams.THESAURUS_ID, thesaurusId)
+                .setParameter(NativeQueryParams.CONCEPT_ID, conceptId)
                 .executeUpdate();
     }
 }

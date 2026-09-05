@@ -1,0 +1,11 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<ui:composition xmlns="http://www.w3.org/1999/xhtml"
+                xmlns:ui="http://xmlns.jcp.org/jsf/facelets">
+  <ui:fragment rendered="#{not empty v2ConceptIdentifierEditorBean.arkProvider}">
+    <span class="cv-ark-provider">
+      <ui:fragment rendered="#{v2ConceptIdentifierEditorBean.arkProvider eq 'openark'}">#{v2LocaleBean.getMsg('v2.concept.arkProviderOpen')}</ui:fragment>
+      <ui:fragment rendered="#{v2ConceptIdentifierEditorBean.arkProvider eq 'ark'}">#{v2LocaleBean.getMsg('v2.concept.arkProviderRemote')}</ui:fragment>
+      <ui:fragment rendered="#{v2ConceptIdentifierEditorBean.arkProvider eq 'local'}">#{v2LocaleBean.getMsg('v2.concept.arkProviderLocal')}</ui:fragment>
+    </span>
+  </ui:fragment>
+</ui:composition>

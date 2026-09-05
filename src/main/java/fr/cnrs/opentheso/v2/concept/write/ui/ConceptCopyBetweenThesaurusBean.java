@@ -31,13 +31,13 @@ import java.util.List;
 @RequiredArgsConstructor
 public class ConceptCopyBetweenThesaurusBean implements Serializable {
 
-    private final ConceptCopyBetweenThesaurusMutationService conceptCopyBetweenThesaurusMutationService;
-    private final ConceptTransferMutationService conceptTransferMutationService;
-    private final BranchConceptSupport branchConceptSupport;
-    private final ConceptSelectionContext conceptSelectionContext;
-    private final ThesaurusContext thesaurusContext;
-    private final UserSession userSession;
-    private final ConceptWritePolicy conceptWritePolicy;
+    private final transient ConceptCopyBetweenThesaurusMutationService conceptCopyBetweenThesaurusMutationService;
+    private final transient ConceptTransferMutationService conceptTransferMutationService;
+    private final transient BranchConceptSupport branchConceptSupport;
+    private final transient ConceptSelectionContext conceptSelectionContext;
+    private final transient ThesaurusContext thesaurusContext;
+    private final transient UserSession userSession;
+    private final transient ConceptWritePolicy conceptWritePolicy;
 
     private String sourceThesaurusId;
     private String sourceThesaurusLabel;
@@ -119,25 +119,13 @@ public class ConceptCopyBetweenThesaurusBean implements Serializable {
 
     public boolean submitCopyToAnotherThesaurus() {
         errorMessage = null;
-        if (!isCopyActionsAvailable() || !conceptSelectionContext.hasSelection()) {
-            errorMessage = "Action non autorisée";
-            return false;
-        }
-        Integer userId = userSession.getCurrentUserId();
-        if (userId == null || StringUtils.isBlank(targetThesaurusId) || conceptsToCopy.isEmpty()) {
-            errorMessage = "Choisissez un thésaurus de destination";
-            return false;
-        }
-        if (!"root".equals(destMode) && !"parent".equals(destMode)) {
-            errorMessage = "Choisissez un emplacement";
+        String validationError = validateCopyRequest();
+        if (validationError != null) {
+            errorMessage = validationError;
             return false;
         }
         boolean toRoot = "root".equals(destMode);
         String parentId = toRoot ? null : parentConceptId;
-        if (!toRoot && StringUtils.isBlank(parentId)) {
-            errorMessage = "Choisissez un concept parent, ou la racine";
-            return false;
-        }
         MutationResult valid = conceptCopyBetweenThesaurusMutationService.validateIdsAvailable(
                 targetThesaurusId, conceptsToCopy);
         if (valid == null || !valid.success()) {
@@ -152,7 +140,7 @@ public class ConceptCopyBetweenThesaurusBean implements Serializable {
                         parentId,
                         toRoot,
                         StringUtils.defaultIfBlank(identifierType, "sans"),
-                        userId
+                        userSession.getCurrentUserId()
                 ));
         if (result == null || !result.success()) {
             errorMessage = result != null ? result.message() : "La copie a échoué";
@@ -161,6 +149,24 @@ public class ConceptCopyBetweenThesaurusBean implements Serializable {
         flashSuccess(StringUtils.defaultIfBlank(result.message(),
                 sourceLabel + " → " + getTargetThesaurusLabel()));
         return true;
+    }
+
+    private String validateCopyRequest() {
+        if (!isCopyActionsAvailable() || !conceptSelectionContext.hasSelection()) {
+            return WriteUiMessages.UNAUTHORIZED_FALLBACK;
+        }
+        if (userSession.getCurrentUserId() == null
+                || StringUtils.isBlank(targetThesaurusId)
+                || conceptsToCopy.isEmpty()) {
+            return "Choisissez un thésaurus de destination";
+        }
+        if (!"root".equals(destMode) && !"parent".equals(destMode)) {
+            return "Choisissez un emplacement";
+        }
+        if (!"root".equals(destMode) && StringUtils.isBlank(parentConceptId)) {
+            return "Choisissez un concept parent, ou la racine";
+        }
+        return null;
     }
 
     private void loadAvailableThesauri() {

@@ -1,5 +1,6 @@
 package fr.cnrs.opentheso.v2.concept.ui;
 
+import fr.cnrs.opentheso.v2.concept.write.ui.WriteUiMessages;
 import fr.cnrs.opentheso.v2.concept.model.BreadcrumbStep;
 import fr.cnrs.opentheso.v2.concept.model.ConceptCorpusLinkItem;
 import fr.cnrs.opentheso.v2.concept.model.ConceptDetail;
@@ -44,6 +45,7 @@ import java.util.LinkedHashSet;
 import java.util.List;
 import java.util.Locale;
 import java.util.stream.Collectors;
+import fr.cnrs.opentheso.v2.concept.model.ConceptTreeNodeKinds;
 
 /**
  * Façade de l'accueil thésaurus : lit / écrit {@link ThesaurusContext}.
@@ -53,16 +55,16 @@ import java.util.stream.Collectors;
 @RequiredArgsConstructor
 public class ThesaurusViewBean implements Serializable {
 
-    private final ThesaurusContext thesaurusContext;
-    private final ThesaurusHomeReadService thesaurusHomeReadService;
-    private final ThesaurusPreferenceService thesaurusPreferenceService;
-    private final ThesaurusHomeWriteService thesaurusHomeWriteService;
-    private final ConceptReadService conceptReadService;
-    private final UserSession userSession;
-    private final RightsService rightsService;
-    private final V2LocaleBean v2LocaleBean;
-    private final ToolboxAccessPolicy toolboxAccessPolicy;
-    private final ConceptSelectionContext conceptSelectionContext;
+    private final transient ThesaurusContext thesaurusContext;
+    private final transient ThesaurusHomeReadService thesaurusHomeReadService;
+    private final transient ThesaurusPreferenceService thesaurusPreferenceService;
+    private final transient ThesaurusHomeWriteService thesaurusHomeWriteService;
+    private final transient ConceptReadService conceptReadService;
+    private final transient UserSession userSession;
+    private final transient RightsService rightsService;
+    private final transient V2LocaleBean v2LocaleBean;
+    private final transient ToolboxAccessPolicy toolboxAccessPolicy;
+    private final transient ConceptSelectionContext conceptSelectionContext;
     private ThesaurusHomeOverview homeOverview;
     private List<ThesaurusLanguage> languages;
     private String selectedLang;
@@ -337,33 +339,41 @@ public class ThesaurusViewBean implements Serializable {
             return;
         }
         ensureTreeLoaded();
+        for (List<BreadcrumbStep> path : breadcrumbPathsForReveal(id)) {
+            if (expandTreePath(idsOfPath(path, id))) {
+                return;
+            }
+        }
+    }
+
+    private List<List<BreadcrumbStep>> breadcrumbPathsForReveal(String id) {
         List<List<BreadcrumbStep>> paths = conceptReadService.loadBreadcrumbPaths(
                 getId(),
                 id,
                 getSelectedLang()
         );
-        if (paths == null || paths.isEmpty()) {
-            List<BreadcrumbStep> fallback = conceptReadService.loadBreadcrumb(getId(), id, getSelectedLang());
-            paths = fallback == null || fallback.isEmpty()
-                    ? List.of(List.of(new BreadcrumbStep(id, id, 0, true)))
-                    : List.of(fallback);
+        if (paths != null && !paths.isEmpty()) {
+            return paths;
         }
-        for (List<BreadcrumbStep> path : paths) {
-            List<String> ids = new ArrayList<>();
-            if (path != null) {
-                for (BreadcrumbStep step : path) {
-                    if (step != null && StringUtils.isNotBlank(step.getConceptId())) {
-                        ids.add(step.getConceptId());
-                    }
+        List<BreadcrumbStep> fallback = conceptReadService.loadBreadcrumb(getId(), id, getSelectedLang());
+        return fallback == null || fallback.isEmpty()
+                ? List.of(List.of(new BreadcrumbStep(id, id, 0, true)))
+                : List.of(fallback);
+    }
+
+    private static List<String> idsOfPath(List<BreadcrumbStep> path, String id) {
+        List<String> ids = new ArrayList<>();
+        if (path != null) {
+            for (BreadcrumbStep step : path) {
+                if (step != null && StringUtils.isNotBlank(step.getConceptId())) {
+                    ids.add(step.getConceptId());
                 }
             }
-            if (ids.isEmpty() || !ids.get(ids.size() - 1).equalsIgnoreCase(id)) {
-                ids.add(id);
-            }
-            if (expandTreePath(ids)) {
-                return;
-            }
         }
+        if (ids.isEmpty() || !ids.get(ids.size() - 1).equalsIgnoreCase(id)) {
+            ids.add(id);
+        }
+        return ids;
     }
 
     public void openSelectedNode() {
@@ -379,17 +389,17 @@ public class ThesaurusViewBean implements Serializable {
         ficheEditCard = null;
         candidateBy = "";
         candidateOn = "";
-        candidateRejected = "rejete".equalsIgnoreCase(nodeType);
+        candidateRejected = ConceptTreeNodeKinds.REJETE.equalsIgnoreCase(nodeType);
         resetConceptExtras();
         if (StringUtils.isBlank(id)) {
             conceptSelectionContext.clear();
             return;
         }
-        if ("facet".equalsIgnoreCase(nodeType)) {
+        if (ConceptTreeNodeKinds.FACET.equalsIgnoreCase(nodeType)) {
             conceptSelectionContext.clear();
             selectedFacet = conceptReadService.loadFacetDetail(getId(), id, getSelectedLang()).orElse(null);
             if (selectedFacet != null) {
-                selectedKind = "facet";
+                selectedKind = ConceptTreeNodeKinds.FACET;
             }
             return;
         }
@@ -398,10 +408,10 @@ public class ThesaurusViewBean implements Serializable {
             conceptSelectionContext.clear();
             return;
         }
-        boolean candidate = "candidat".equalsIgnoreCase(nodeType)
-                || "rejete".equalsIgnoreCase(nodeType)
+        boolean candidate = ConceptTreeNodeKinds.CANDIDAT.equalsIgnoreCase(nodeType)
+                || ConceptTreeNodeKinds.REJETE.equalsIgnoreCase(nodeType)
                 || "CA".equalsIgnoreCase(selectedConcept.getSummary().getStatus());
-        selectedKind = candidate ? "candidat" : "concept";
+        selectedKind = candidate ? ConceptTreeNodeKinds.CANDIDAT : ConceptTreeNodeKinds.CONCEPT;
         if (candidate) {
             applySelectedCandidateMeta(id);
         }
@@ -418,7 +428,7 @@ public class ThesaurusViewBean implements Serializable {
             String status = conceptSelectionContext.getSummary() != null
                     ? conceptSelectionContext.getSummary().getStatus()
                     : "";
-            String kind = "CA".equalsIgnoreCase(status) ? "candidat" : "concept";
+            String kind = "CA".equalsIgnoreCase(status) ? ConceptTreeNodeKinds.CANDIDAT : ConceptTreeNodeKinds.CONCEPT;
             openTreeNode(conceptSelectionContext.getConceptId(), kind);
             return;
         }
@@ -581,11 +591,11 @@ public class ThesaurusViewBean implements Serializable {
     }
 
     public boolean isConceptSelected() {
-        return "concept".equals(selectedKind) && selectedConcept != null;
+        return ConceptTreeNodeKinds.CONCEPT.equals(selectedKind) && selectedConcept != null;
     }
 
     public boolean isCandidateSelected() {
-        return "candidat".equals(selectedKind) && selectedConcept != null;
+        return ConceptTreeNodeKinds.CANDIDAT.equals(selectedKind) && selectedConcept != null;
     }
 
     public boolean isRejectedSelected() {
@@ -593,7 +603,7 @@ public class ThesaurusViewBean implements Serializable {
     }
 
     public boolean isFacetSelected() {
-        return "facet".equals(selectedKind) && selectedFacet != null;
+        return ConceptTreeNodeKinds.FACET.equals(selectedKind) && selectedFacet != null;
     }
 
     public boolean isSelectedConceptDeprecated() {
@@ -603,15 +613,15 @@ public class ThesaurusViewBean implements Serializable {
     /** Statut visuel aligné sur la maquette {@code target.html} : {@code valide} / {@code candidat} / {@code deprecie}. */
     public String getConceptDisplayStatus() {
         if (isRejectedSelected()) {
-            return "rejete";
+            return ConceptTreeNodeKinds.REJETE;
         }
         if (isCandidateSelected()) {
-            return "candidat";
+            return ConceptTreeNodeKinds.CANDIDAT;
         }
         if (isSelectedConceptDeprecated()) {
-            return "deprecie";
+            return ConceptTreeNodeKinds.DEPRECIE;
         }
-        return "valide";
+        return ConceptTreeNodeKinds.VALIDE;
     }
 
     public String getConceptUri() {
@@ -860,7 +870,7 @@ public class ThesaurusViewBean implements Serializable {
         saveError = false;
         if (!isCanEdit()) {
             saveError = true;
-            saveMessage = "Action non autorisée";
+            saveMessage = WriteUiMessages.UNAUTHORIZED_FALLBACK;
             return;
         }
         boolean ok = thesaurusHomeWriteService.saveHtml(
@@ -951,16 +961,16 @@ public class ThesaurusViewBean implements Serializable {
         node.setHasChildren(data.isHasChildren());
         node.setDepth(depth);
         node.setPath(StringUtils.isBlank(parentPath) ? data.getLabel() : parentPath + "/" + data.getLabel());
-        if ("candidat".equals(data.getNodeType())) {
-            node.setStatus("candidat");
+        if (ConceptTreeNodeKinds.CANDIDAT.equals(data.getNodeType())) {
+            node.setStatus(ConceptTreeNodeKinds.CANDIDAT);
         } else if ("insere".equals(data.getNodeType())) {
             node.setStatus("insere");
-        } else if ("rejete".equals(data.getNodeType())) {
-            node.setStatus("rejete");
+        } else if (ConceptTreeNodeKinds.REJETE.equals(data.getNodeType())) {
+            node.setStatus(ConceptTreeNodeKinds.REJETE);
         } else if ("deprecated".equals(data.getNodeType())) {
-            node.setStatus("deprecie");
+            node.setStatus(ConceptTreeNodeKinds.DEPRECIE);
         } else {
-            node.setStatus("valide");
+            node.setStatus(ConceptTreeNodeKinds.VALIDE);
         }
         return node;
     }
@@ -1132,10 +1142,6 @@ public class ThesaurusViewBean implements Serializable {
     }
 
     private static String formatGpsCoordinate(double value) {
-        String text = Double.toString(value);
-        if (text.contains("E") || text.contains("e")) {
-            return String.format(Locale.US, "%f", value).replaceAll("0+$", "").replaceAll("\\.$", "");
-        }
-        return text;
+        return ConceptGpsPoint.formatCoordinate(value);
     }
 }

@@ -21,9 +21,9 @@ import java.io.Serializable;
 @Named("v2ModifyPasswordBean")
 public class ModifyPasswordBean implements Serializable {
 
-    private final UserSession userSession;
-    private final V2LocaleBean localeBean;
-    private final UserPasswordService userPasswordService;
+    private final transient UserSession userSession;
+    private final transient V2LocaleBean localeBean;
+    private final transient UserPasswordService userPasswordService;
 
     private String password;
     private String confirmation;

@@ -6,6 +6,7 @@ import fr.cnrs.opentheso.v2.toolbox.model.StatisticsSummary;
 import org.junit.jupiter.api.Test;
 
 import java.time.LocalDateTime;
+import java.time.Month;
 import java.util.Date;
 import java.util.List;
 
@@ -44,7 +45,7 @@ class ToolboxApiMapperTest {
 
     @Test
     void toThesaurusResponse_mapsFields() {
-        var created = LocalDateTime.of(2024, 1, 1, 0, 0);
+        var created = LocalDateTime.of(2024, Month.JANUARY, 1, 0, 0);
         var summary = new EditionThesaurusSummary("TH1", "Test", true, created);
 
         var response = ToolboxApiMapper.toThesaurusResponse(summary);
@@ -57,7 +58,7 @@ class ToolboxApiMapperTest {
 
     @Test
     void toThesaurusResponses_mapsWholeList() {
-        var summary = new EditionThesaurusSummary("TH1", "Test", false, LocalDateTime.now());
+        var summary = new EditionThesaurusSummary("TH1", "Test", false, LocalDateTime.of(2024, Month.JUNE, 15, 12, 0));
 
         var responses = ToolboxApiMapper.toThesaurusResponses(List.of(summary));
 

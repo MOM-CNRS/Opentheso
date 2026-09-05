@@ -37,6 +37,7 @@ import fr.cnrs.opentheso.entites.HierarchicalRelationshipHistorique;
 import fr.cnrs.opentheso.v2.toolbox.edition.model.ThesaurusCsvConceptLabel;
 import fr.cnrs.opentheso.v2.toolbox.edition.model.ThesaurusCsvConceptObject;
 import fr.cnrs.opentheso.v2.toolbox.edition.support.ThesaurusCsvGpsParser;
+import fr.cnrs.opentheso.v2.shared.time.V2Dates;
 import lombok.Getter;
 import lombok.RequiredArgsConstructor;
 import org.apache.commons.collections4.CollectionUtils;
@@ -44,7 +45,6 @@ import org.apache.commons.lang3.StringUtils;
 import org.apache.commons.text.StringEscapeUtils;
 import org.springframework.stereotype.Component;
 
-import java.time.LocalDateTime;
 import java.util.ArrayList;
 import java.util.Date;
 import java.util.List;
@@ -52,6 +52,10 @@ import java.util.List;
 @Component
 @RequiredArgsConstructor
 public class WorkshopCsvConceptUpdater {
+
+    private static final String NOTE_DEFINITION = "definition";
+    private static final String ERROR_PREFIX = "Erreur : ";
+    private static final String CONCEPT_WITHOUT_ID = "concept sans identifiant :";
 
     private final PreferredTermRepository preferredTermRepository;
     private final TermRepository termRepository;
@@ -81,8 +85,8 @@ public class WorkshopCsvConceptUpdater {
         updateAltLabel(idTheso, conceptObject, idUser);
         updateNotes(idTheso, conceptObject, idUser);
         updateAlignments(idTheso, conceptObject, idUser);
-        updateGeoLocalisation(idTheso, conceptObject);
-        updateImages(idTheso, conceptObject, idUser);
+        applyGeoLocalisation(idTheso, conceptObject);
+        applyImages(idTheso, conceptObject, idUser);
         addExternalResources(idTheso, conceptObject.getIdConcept(), conceptObject.getExternalResources());
         return true;
     }
@@ -93,22 +97,22 @@ public class WorkshopCsvConceptUpdater {
             case SKOSProperty.PREF_LABEL -> {
                 if (!StringUtils.isEmpty(nodeReplaceValueByValue.getNewValue())
                         && !updatePrefLabel(idTheso, nodeReplaceValueByValue, idUser)) {
-                    addMessage("Erreur : ", nodeReplaceValueByValue);
+                    addMessage(ERROR_PREFIX, nodeReplaceValueByValue);
                 }
             }
             case SKOSProperty.ALT_LABEL -> {
                 if (!updateAltLabel(idTheso, nodeReplaceValueByValue, idUser)) {
-                    addMessage("Erreur : ", nodeReplaceValueByValue);
+                    addMessage(ERROR_PREFIX, nodeReplaceValueByValue);
                 }
             }
             case SKOSProperty.DEFINITION -> {
                 if (!updateDefinition(idTheso, nodeReplaceValueByValue, idUser)) {
-                    addMessage("Erreur : ", nodeReplaceValueByValue);
+                    addMessage(ERROR_PREFIX, nodeReplaceValueByValue);
                 }
             }
             case SKOSProperty.BROADER -> {
                 if (!updateBroader(idTheso, nodeReplaceValueByValue, idUser)) {
-                    addMessage("Erreur : ", nodeReplaceValueByValue);
+                    addMessage(ERROR_PREFIX, nodeReplaceValueByValue);
                 }
             }
             default -> {
@@ -119,7 +123,7 @@ public class WorkshopCsvConceptUpdater {
 
     private boolean updatePrefLabel(String idTheso, NodeReplaceValueByValue nodeReplaceValueByValue, int idUser) {
         if (StringUtils.isEmpty(nodeReplaceValueByValue.getIdConcept())) {
-            addMessage("concept sans identifiant :", nodeReplaceValueByValue);
+            addMessage(CONCEPT_WITHOUT_ID, nodeReplaceValueByValue);
             return false;
         }
 
@@ -150,7 +154,7 @@ public class WorkshopCsvConceptUpdater {
 
     private boolean updateAltLabel(String idThesaurus, NodeReplaceValueByValue nodeReplaceValueByValue, int idUser) {
         if (StringUtils.isEmpty(nodeReplaceValueByValue.getIdConcept())) {
-            addMessage("concept sans identifiant :", nodeReplaceValueByValue);
+            addMessage(CONCEPT_WITHOUT_ID, nodeReplaceValueByValue);
             return false;
         }
 
@@ -189,7 +193,7 @@ public class WorkshopCsvConceptUpdater {
 
     private boolean updateDefinition(String idTheso, NodeReplaceValueByValue nodeReplaceValueByValue, int idUser) {
         if (StringUtils.isEmpty(nodeReplaceValueByValue.getIdConcept())) {
-            addMessage("concept sans identifiant :", nodeReplaceValueByValue);
+            addMessage(CONCEPT_WITHOUT_ID, nodeReplaceValueByValue);
             return false;
         }
 
@@ -197,7 +201,7 @@ public class WorkshopCsvConceptUpdater {
             if (!StringUtils.isEmpty(nodeReplaceValueByValue.getNewValue())) {
                 int idNote = getNoteByValueAndThesaurus(
                         nodeReplaceValueByValue.getOldValue(),
-                        "definition",
+                        NOTE_DEFINITION,
                         nodeReplaceValueByValue.getIdLang(),
                         idTheso
                 );
@@ -209,7 +213,7 @@ public class WorkshopCsvConceptUpdater {
                             idTheso,
                             nodeReplaceValueByValue.getNewValue(),
                             "",
-                            "definition",
+                            NOTE_DEFINITION,
                             idUser
                     )) {
                         addMessage("Rename definition error :", nodeReplaceValueByValue);
@@ -219,14 +223,14 @@ public class WorkshopCsvConceptUpdater {
                         idTheso,
                         nodeReplaceValueByValue.getIdLang(),
                         nodeReplaceValueByValue.getNewValue(),
-                        "definition"
+                        NOTE_DEFINITION
                 )) {
                     addNote(
                             nodeReplaceValueByValue.getIdConcept(),
                             nodeReplaceValueByValue.getIdLang(),
                             idTheso,
                             nodeReplaceValueByValue.getNewValue(),
-                            "definition",
+                            NOTE_DEFINITION,
                             "",
                             idUser
                     );
@@ -238,14 +242,14 @@ public class WorkshopCsvConceptUpdater {
                 idTheso,
                 nodeReplaceValueByValue.getIdLang(),
                 nodeReplaceValueByValue.getNewValue(),
-                "definition"
+                NOTE_DEFINITION
         )) {
             addNote(
                     nodeReplaceValueByValue.getIdConcept(),
                     nodeReplaceValueByValue.getIdLang(),
                     idTheso,
                     nodeReplaceValueByValue.getNewValue(),
-                    "definition",
+                    NOTE_DEFINITION,
                     "",
                     idUser
             );
@@ -255,7 +259,7 @@ public class WorkshopCsvConceptUpdater {
 
     private boolean updateBroader(String idTheso, NodeReplaceValueByValue nodeReplaceValueByValue, int idUser) {
         if (StringUtils.isEmpty(nodeReplaceValueByValue.getIdConcept())) {
-            addMessage("concept sans identifiant :", nodeReplaceValueByValue);
+            addMessage(CONCEPT_WITHOUT_ID, nodeReplaceValueByValue);
             return false;
         }
 
@@ -364,7 +368,7 @@ public class WorkshopCsvConceptUpdater {
     private boolean updateNotes(String idTheso, ThesaurusCsvConceptObject conceptObject, int idUser) {
         updateNotesByType(idTheso, conceptObject, conceptObject.getNote(), "note", idUser);
         updateNotesByType(idTheso, conceptObject, conceptObject.getScopeNotes(), "scopeNote", idUser);
-        updateNotesByType(idTheso, conceptObject, conceptObject.getDefinitions(), "definition", idUser);
+        updateNotesByType(idTheso, conceptObject, conceptObject.getDefinitions(), NOTE_DEFINITION, idUser);
         updateNotesByType(idTheso, conceptObject, conceptObject.getChangeNotes(), "changeNote", idUser);
         updateNotesByType(idTheso, conceptObject, conceptObject.getEditorialNotes(), "editorialNote", idUser);
         updateNotesByType(idTheso, conceptObject, conceptObject.getHistoryNotes(), "historyNote", idUser);
@@ -423,10 +427,10 @@ public class WorkshopCsvConceptUpdater {
         }
     }
 
-    private boolean updateGeoLocalisation(String idTheso, ThesaurusCsvConceptObject conceptObject) {
+    private void applyGeoLocalisation(String idTheso, ThesaurusCsvConceptObject conceptObject) {
         if ((conceptObject.getLatitude() == null || conceptObject.getLongitude() == null)
                 && (conceptObject.getGps() == null || conceptObject.getGps().isEmpty())) {
-            return true;
+            return;
         }
 
         gpsRepository.deleteByIdConceptAndIdTheso(conceptObject.getIdConcept(), idTheso);
@@ -441,7 +445,7 @@ public class WorkshopCsvConceptUpdater {
                 nodeGpses.add(nodeGps);
                 saveGps(conceptObject.getIdConcept(), idTheso, nodeGpses);
             } catch (Exception ignored) {
-                return true;
+                return;
             }
         } else if (StringUtils.isNotEmpty(conceptObject.getGps())) {
             var gpsList = ThesaurusCsvGpsParser.readGps(conceptObject.getGps(), idTheso, conceptObject.getIdConcept());
@@ -456,12 +460,11 @@ public class WorkshopCsvConceptUpdater {
                 saveGps(conceptObject.getIdConcept(), idTheso, nodeGpses);
             }
         }
-        return true;
     }
 
-    private boolean updateImages(String idTheso, ThesaurusCsvConceptObject conceptObject, int idUser) {
+    private void applyImages(String idTheso, ThesaurusCsvConceptObject conceptObject, int idUser) {
         if (CollectionUtils.isEmpty(conceptObject.getImages())) {
-            return true;
+            return;
         }
 
         imagesRepository.deleteAllByIdThesaurusAndIdConcept(idTheso, conceptObject.getIdConcept());
@@ -480,7 +483,6 @@ public class WorkshopCsvConceptUpdater {
                     .externalUri(nodeImage.getUri().trim())
                     .build());
         }
-        return true;
     }
 
     private void addExternalResources(String idTheso, String idConcept, List<String> externalResources) {
@@ -544,7 +546,7 @@ public class WorkshopCsvConceptUpdater {
                 .status("")
                 .idUser(idUser)
                 .action("UPDATE")
-                .modified(LocalDateTime.now())
+                .modified(V2Dates.nowDateTime())
                 .build());
     }
 
@@ -570,7 +572,7 @@ public class WorkshopCsvConceptUpdater {
                 .source(termSaved.getSource())
                 .status(termSaved.getStatus())
                 .idUser(idUser)
-                .modified(LocalDateTime.now())
+                .modified(V2Dates.nowDateTime())
                 .action("New")
                 .build());
     }

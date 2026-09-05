@@ -45,14 +45,14 @@ import java.util.stream.Collectors;
 @RequiredArgsConstructor
 public class ConceptLabelBlockEditorBean implements Serializable {
 
-    private final ThesaurusViewBean thesaurusViewBean;
-    private final ConceptLifecycleMutationService conceptLifecycleMutationService;
-    private final ConceptLexicalMutationService conceptLexicalMutationService;
-    private final FacetMutationService facetMutationService;
-    private final ConceptWritePolicy conceptWritePolicy;
-    private final UserSession userSession;
-    private final ThesaurusContext thesaurusContext;
-    private final ConceptSelectionContext conceptSelectionContext;
+    private final transient ThesaurusViewBean thesaurusViewBean;
+    private final transient ConceptLifecycleMutationService conceptLifecycleMutationService;
+    private final transient ConceptLexicalMutationService conceptLexicalMutationService;
+    private final transient FacetMutationService facetMutationService;
+    private final transient ConceptWritePolicy conceptWritePolicy;
+    private final transient UserSession userSession;
+    private final transient ThesaurusContext thesaurusContext;
+    private final transient ConceptSelectionContext conceptSelectionContext;
 
     static final String FICHE_CARD = "contexte";
 
@@ -136,12 +136,12 @@ public class ConceptLabelBlockEditorBean implements Serializable {
         }
         Integer userId = userSession.getCurrentUserId();
         if (userId == null) {
-            errorMessage = "Action non autorisée";
+            errorMessage = WriteUiMessages.UNAUTHORIZED_FALLBACK;
             return;
         }
         ConceptDetail current = thesaurusViewBean.getSelectedConcept();
         if (current == null || current.getSummary() == null) {
-            errorMessage = "Action non autorisée";
+            errorMessage = WriteUiMessages.UNAUTHORIZED_FALLBACK;
             return;
         }
         String pref = StringUtils.trimToEmpty(preferredLabel);

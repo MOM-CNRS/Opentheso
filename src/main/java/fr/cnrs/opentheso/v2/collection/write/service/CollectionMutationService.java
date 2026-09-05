@@ -39,6 +39,11 @@ import java.util.Optional;
 @RequiredArgsConstructor
 public class CollectionMutationService {
 
+    private static final String COLLECTION_NOT_FOUND = "Collection introuvable !";
+    private static final String LABEL_REQUIRED = "Le libellé est obligatoire !";
+    private static final String NOTATION_DUPLICATE = "Cette notation existe déjà dans le thésaurus !";
+
+
     private final ConceptGroupRepository conceptGroupRepository;
     private final ConceptGroupLabelRepository conceptGroupLabelRepository;
     private final ConceptGroupConceptRepository conceptGroupConceptRepository;
@@ -49,12 +54,12 @@ public class CollectionMutationService {
     @Transactional
     public MutationResult renamePreferredLabel(RenameCollectionLabelCommand command) {
         if (StringUtils.isBlank(command.label())) {
-            return MutationResult.validationError("Le libellé est obligatoire !");
+            return MutationResult.validationError(LABEL_REQUIRED);
         }
         var labels = conceptGroupLabelRepository.findAllByIdThesaurusAndIdGroupAndLang(
                 command.thesaurusId(), command.collectionId(), command.lang());
         if (labels.isEmpty()) {
-            return MutationResult.validationError("Collection introuvable !");
+            return MutationResult.validationError(COLLECTION_NOT_FOUND);
         }
         var label = labels.get(0);
         label.setLexicalValue(fr.cnrs.opentheso.utils.StringUtils.convertString(command.label()));
@@ -69,12 +74,12 @@ public class CollectionMutationService {
         Optional<ConceptGroup> group = conceptGroupRepository.findByIdGroupAndIdThesaurus(
                 command.collectionId(), command.thesaurusId());
         if (group.isEmpty()) {
-            return MutationResult.validationError("Collection introuvable !");
+            return MutationResult.validationError(COLLECTION_NOT_FOUND);
         }
         String notation = StringUtils.defaultString(command.notation());
         if (StringUtils.isNotBlank(notation) && isNotationUsedByOtherCollection(
                 command.thesaurusId(), notation, command.collectionId())) {
-            return MutationResult.duplicate("Cette notation existe déjà dans le thésaurus !");
+            return MutationResult.duplicate(NOTATION_DUPLICATE);
         }
         group.get().setNotation(notation);
         group.get().setModified(new Date());
@@ -90,7 +95,7 @@ public class CollectionMutationService {
         Optional<ConceptGroup> group = conceptGroupRepository.findByIdGroupAndIdThesaurus(
                 command.collectionId(), command.thesaurusId());
         if (group.isEmpty()) {
-            return MutationResult.validationError("Collection introuvable !");
+            return MutationResult.validationError(COLLECTION_NOT_FOUND);
         }
         group.get().setIdTypeCode(command.typeCode());
         group.get().setModified(new Date());
@@ -103,7 +108,7 @@ public class CollectionMutationService {
         Optional<ConceptGroup> group = conceptGroupRepository.findByIdGroupAndIdThesaurus(
                 command.collectionId(), command.thesaurusId());
         if (group.isEmpty()) {
-            return MutationResult.validationError("Collection introuvable !");
+            return MutationResult.validationError(COLLECTION_NOT_FOUND);
         }
         conceptGroupConceptRepository.deleteAllByIdGroupAndIdThesaurus(command.collectionId(), command.thesaurusId());
         conceptGroupLabelRepository.deleteByIdThesaurusAndIdGroup(command.thesaurusId(), command.collectionId());
@@ -219,11 +224,11 @@ public class CollectionMutationService {
     @Transactional
     public MutationResult createCollection(CreateCollectionCommand command) {
         if (StringUtils.isBlank(command.label())) {
-            return MutationResult.validationError("Le libellé est obligatoire !");
+            return MutationResult.validationError(LABEL_REQUIRED);
         }
         if (StringUtils.isNotBlank(command.notation())
                 && isNotationUsedByOtherCollection(command.thesaurusId(), command.notation(), null)) {
-            return MutationResult.duplicate("Cette notation existe déjà dans le thésaurus !");
+            return MutationResult.duplicate(NOTATION_DUPLICATE);
         }
         String collectionId = createGroupEntity(
                 command.thesaurusId(),
@@ -240,14 +245,14 @@ public class CollectionMutationService {
     @Transactional
     public MutationResult createSubgroup(CreateSubgroupCommand command) {
         if (StringUtils.isBlank(command.label())) {
-            return MutationResult.validationError("Le libellé est obligatoire !");
+            return MutationResult.validationError(LABEL_REQUIRED);
         }
         if (StringUtils.isBlank(command.parentCollectionId())) {
             return MutationResult.validationError("Collection parente obligatoire !");
         }
         if (StringUtils.isNotBlank(command.notation())
                 && isNotationUsedByOtherCollection(command.thesaurusId(), command.notation(), null)) {
-            return MutationResult.duplicate("Cette notation existe déjà dans le thésaurus !");
+            return MutationResult.duplicate(NOTATION_DUPLICATE);
         }
         String collectionId = createGroupEntity(
                 command.thesaurusId(),

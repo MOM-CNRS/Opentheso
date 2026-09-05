@@ -39,13 +39,13 @@ import java.util.List;
 @RequiredArgsConstructor
 public class ConceptAlignmentEditorBean implements Serializable {
 
-    private final ConceptAlignmentMutationService conceptAlignmentMutationService;
-    private final ConceptSelectionContext conceptSelectionContext;
-    private final ConceptNavigationSupport conceptNavigationSupport;
-    private final ThesaurusContext thesaurusContext;
-    private final UserSession userSession;
-    private final ConceptWritePolicy conceptWritePolicy;
-    private final ObjectProvider<ConceptAlignmentAdminBean> conceptAlignmentAdminBean;
+    private final transient ConceptAlignmentMutationService conceptAlignmentMutationService;
+    private final transient ConceptSelectionContext conceptSelectionContext;
+    private final transient ConceptNavigationSupport conceptNavigationSupport;
+    private final transient ThesaurusContext thesaurusContext;
+    private final transient UserSession userSession;
+    private final transient ConceptWritePolicy conceptWritePolicy;
+    private final transient ObjectProvider<ConceptAlignmentAdminBean> conceptAlignmentAdminBean;
 
     private List<ConceptWriteAlignmentType> alignmentTypes = Collections.emptyList();
 
@@ -89,12 +89,12 @@ public class ConceptAlignmentEditorBean implements Serializable {
 
     public void addManualAlignment() {
         if (!isManagerActionsAvailable() || !conceptSelectionContext.hasSelection()) {
-            MessageUtils.showErrorMessage("Action non autorisée");
+            MessageUtils.showErrorMessage(WriteUiMessages.UNAUTHORIZED_FALLBACK);
             return;
         }
         Integer userId = userSession.getCurrentUserId();
         if (userId == null) {
-            MessageUtils.showErrorMessage("Action non autorisée");
+            MessageUtils.showErrorMessage(WriteUiMessages.UNAUTHORIZED_FALLBACK);
             return;
         }
         var summary = conceptSelectionContext.getSummary();
@@ -116,12 +116,12 @@ public class ConceptAlignmentEditorBean implements Serializable {
 
     public void updateAlignment() {
         if (!isManagerActionsAvailable() || !conceptSelectionContext.hasSelection() || editingAlignmentId <= 0) {
-            MessageUtils.showErrorMessage("Action non autorisée");
+            MessageUtils.showErrorMessage(WriteUiMessages.UNAUTHORIZED_FALLBACK);
             return;
         }
         Integer userId = userSession.getCurrentUserId();
         if (userId == null) {
-            MessageUtils.showErrorMessage("Action non autorisée");
+            MessageUtils.showErrorMessage(WriteUiMessages.UNAUTHORIZED_FALLBACK);
             return;
         }
         var summary = conceptSelectionContext.getSummary();
@@ -144,12 +144,12 @@ public class ConceptAlignmentEditorBean implements Serializable {
 
     public void deleteAlignment() {
         if (!isManagerActionsAvailable() || !conceptSelectionContext.hasSelection() || alignmentToDeleteId <= 0) {
-            MessageUtils.showErrorMessage("Action non autorisée");
+            MessageUtils.showErrorMessage(WriteUiMessages.UNAUTHORIZED_FALLBACK);
             return;
         }
         Integer userId = userSession.getCurrentUserId();
         if (userId == null) {
-            MessageUtils.showErrorMessage("Action non autorisée");
+            MessageUtils.showErrorMessage(WriteUiMessages.UNAUTHORIZED_FALLBACK);
             return;
         }
         var summary = conceptSelectionContext.getSummary();

@@ -29,6 +29,7 @@ import java.util.Optional;
 import static org.junit.jupiter.api.Assertions.assertEquals;
 import static org.junit.jupiter.api.Assertions.assertFalse;
 import static org.junit.jupiter.api.Assertions.assertThrows;
+import static org.junit.jupiter.api.Assertions.assertTrue;
 import static org.mockito.ArgumentMatchers.any;
 import static org.mockito.Mockito.never;
 import static org.mockito.Mockito.verify;
@@ -163,6 +164,102 @@ class ModifyThesaurusServiceTest {
         assertEquals(1, languages.size());
         assertEquals("en", languages.get(0).code());
         verify(thesaurusSettingsQueryRepository).findUsedLanguages("TH1", "en");
+    }
+
+    @Test
+    void loadAllLanguages_mapsRows() {
+        when(editionQueryRepository.findAllLanguages())
+                .thenReturn(List.of(new fr.cnrs.opentheso.v2.shared.repository.projection.LanguageOptionRow(
+                        "fr", "fr", "Français", "French")));
+
+        var options = service.loadAllLanguages();
+
+        assertEquals(1, options.size());
+        assertEquals("fr", options.get(0).code());
+    }
+
+    @Test
+    void loadMetadata_dedupesCreatedModifiedKeepingNewest() {
+        when(thesaurusDcTermRepository.findAllByIdThesaurus("TH1")).thenReturn(List.of(
+                ThesaurusDcTerm.builder().id(1L).name("created").value("2020-01-01").build(),
+                ThesaurusDcTerm.builder().id(2L).name("created").value("2024-01-01").build(),
+                ThesaurusDcTerm.builder().id(3L).name("title").value("Pays").build()
+        ));
+
+        var metadata = service.loadMetadata("TH1");
+
+        assertEquals(2, metadata.size());
+        assertTrue(metadata.stream().anyMatch(item -> "title".equals(item.getName())));
+        assertEquals("2024-01-01", metadata.stream()
+                .filter(item -> "created".equals(item.getName()))
+                .findFirst().orElseThrow().getValue());
+    }
+
+    @Test
+    void loadCollectionTree_usesWorkLanguageFallback() {
+        when(toolboxPreferencePersistence.getWorkLanguage("TH1")).thenReturn(" ");
+        when(editionQueryRepository.findCollections("TH1", "fr")).thenReturn(List.of(
+                new EditionCollectionRow("root", "Racine", false, null)
+        ));
+
+        var tree = service.loadCollectionTree("TH1");
+
+        assertEquals(1, tree.getChildren().size());
+    }
+
+    @Test
+    void changeVisibilityAndMasterRole_delegate() {
+        when(toolboxPreferencePersistence.isMaster("TH1")).thenReturn(true);
+        service.changeVisibility("TH1", true);
+        service.updateMasterRole("TH1", false);
+        service.updateMasterLink("TH1", "http://master", "THX", "key");
+        service.deleteMetadata("TH1", 4);
+
+        verify(toolboxThesaurusPersistence).setVisibility("TH1", true);
+        verify(toolboxPreferencePersistence).updateMasterRole("TH1", false);
+        verify(toolboxPreferencePersistence).updateMasterLink("TH1", "http://master", "THX", "key");
+        verify(thesaurusDcTermRepository).deleteDcElementThesaurus(4, "TH1");
+        assertTrue(service.isMasterThesaurus("TH1"));
+    }
+
+    @Test
+    void generateArkId_delegates() {
+        when(toolboxThesaurusArkPersistence.generateArkIdForThesaurus("TH1")).thenReturn("ark:/1");
+        assertEquals("ark:/1", service.generateArkId("TH1"));
+    }
+
+    @Test
+    void updateLanguage_throwsWhenPersistenceFails() {
+        when(toolboxThesaurusPersistence.updateTranslation(any())).thenReturn(false);
+        assertThrows(InvalidToolboxDataException.class,
+                () -> service.updateLanguage("TH1", "fr", "Titre", "admin"));
+    }
+
+    @Test
+    void changeSourceLanguage_throwsWhenPersistenceFails() {
+        when(toolboxPreferencePersistence.setWorkLanguage("en", "TH1")).thenReturn(false);
+        assertThrows(InvalidToolboxDataException.class, () -> service.changeSourceLanguage("TH1", "en"));
+    }
+
+    @Test
+    void loadDcmiCatalog_isNotEmpty() {
+        assertFalse(service.loadDcmiResources().isEmpty());
+        assertFalse(service.loadDcmiTypes().isEmpty());
+    }
+
+    @Test
+    void saveMetadata_updatesExistingRow() {
+        EditionMetadata metadata = new EditionMetadata();
+        metadata.setId(5);
+        metadata.setName("title");
+        metadata.setValue("Pays");
+        ThesaurusDcTerm existing = ThesaurusDcTerm.builder().id(5L).name("old").value("x").build();
+        when(thesaurusDcTermRepository.findById(5)).thenReturn(Optional.of(existing));
+
+        service.saveMetadata("TH1", metadata);
+
+        verify(thesaurusDcTermRepository).save(existing);
+        assertEquals("Pays", existing.getValue());
     }
 
     @Test

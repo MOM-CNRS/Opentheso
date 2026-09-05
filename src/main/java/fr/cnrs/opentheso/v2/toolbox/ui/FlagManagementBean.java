@@ -20,9 +20,9 @@ import java.util.List;
 @Named("v2FlagManagementBean")
 public class FlagManagementBean implements Serializable {
 
-    private final UserSession userSession;
-    private final ToolboxAccessPolicy toolboxAccessPolicy;
-    private final LanguageFlagService languageFlagService;
+    private final transient UserSession userSession;
+    private final transient ToolboxAccessPolicy toolboxAccessPolicy;
+    private final transient LanguageFlagService languageFlagService;
 
     private List<LanguageFlag> languages = Collections.emptyList();
 

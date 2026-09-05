@@ -5,6 +5,7 @@ import fr.cnrs.opentheso.repositories.ConceptRepository;
 import fr.cnrs.opentheso.repositories.PreferencesRepository;
 import fr.cnrs.opentheso.utils.ToolsHelper;
 import fr.cnrs.opentheso.v2.concept.identifier.handle.ConceptHandleConnectionService;
+import fr.cnrs.opentheso.v2.shared.uri.SkosUriFragments;
 import lombok.RequiredArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
 import org.apache.commons.lang3.StringUtils;
@@ -39,7 +40,7 @@ public class ConceptHandleWriteService {
 
         if (preferences.isUseHandleWithCertificat()) {
             for (String conceptId : conceptIds) {
-                String privateUri = "?idc=" + conceptId + "&idt=" + thesaurusId;
+                String privateUri = SkosUriFragments.IDC_QUERY + conceptId + SkosUriFragments.IDT + thesaurusId;
                 String handleId = conceptHandleConnectionService.addIdHandle(privateUri, preferences);
                 if (handleId == null) {
                     log.error("Erreur pendant l'ajout du Handle : {}", conceptHandleConnectionService.getMessage());
@@ -78,7 +79,7 @@ public class ConceptHandleWriteService {
                 log.error("Configuration Handle invalide : {}", validationError);
                 return false;
             }
-            String privateUri = "?idc=" + conceptId + "&idt=" + thesaurusId;
+            String privateUri = SkosUriFragments.IDC_QUERY + conceptId + SkosUriFragments.IDT + thesaurusId;
             String handleId = conceptHandleConnectionService.addIdHandle(privateUri, preferences);
             if (handleId == null) {
                 String detail = StringUtils.defaultIfBlank(
@@ -157,7 +158,7 @@ public class ConceptHandleWriteService {
     }
 
     private boolean createStandardHandle(String conceptId, String thesaurusId, Preferences preferences) {
-        String privateUri = preferences.getCheminSite() + "?idc=" + conceptId + "&idt=" + thesaurusId;
+        String privateUri = preferences.getCheminSite() + SkosUriFragments.IDC_QUERY + conceptId + SkosUriFragments.IDT + thesaurusId;
         String handleId = ToolsHelper.getNewId(25, false, false);
         handleId = conceptHandleConnectionService.getPrivatePrefix() + handleId;
         try {

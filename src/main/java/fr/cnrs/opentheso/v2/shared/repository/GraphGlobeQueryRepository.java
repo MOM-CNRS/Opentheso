@@ -46,7 +46,7 @@ public class GraphGlobeQueryRepository {
         }
         sql.append(" ORDER BY label ");
         Query query = em.createNativeQuery(sql.toString())
-                .setParameter("thesaurusId", thesaurusId)
+                .setParameter(NativeQueryParams.THESAURUS_ID, thesaurusId)
                 .setParameter("lang", lang);
         query.setMaxResults(Math.max(1, limit));
         return query.getResultList();
@@ -74,8 +74,8 @@ public class GraphGlobeQueryRepository {
               AND (hr.role LIKE 'BT%' OR hr.role LIKE 'NT%' OR hr.role = 'RT')
             ORDER BY hr.role, label
             """)
-                .setParameter("thesaurusId", thesaurusId)
-                .setParameter("conceptId", conceptId)
+                .setParameter(NativeQueryParams.THESAURUS_ID, thesaurusId)
+                .setParameter(NativeQueryParams.CONCEPT_ID, conceptId)
                 .setParameter("lang", lang);
         query.setMaxResults(Math.max(1, limit > 0 ? limit : DEFAULT_NEIGHBOR_CAP));
         return query.getResultList();

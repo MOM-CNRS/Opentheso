@@ -32,10 +32,10 @@ import java.util.List;
 @RequiredArgsConstructor
 public class ConceptSkosImportBean implements Serializable {
 
-    private final ConceptSkosImportService conceptSkosImportService;
-    private final CandidatLanguageService candidatLanguageService;
-    private final ThesaurusContext thesaurusContext;
-    private final UserSession userSession;
+    private final transient ConceptSkosImportService conceptSkosImportService;
+    private final transient CandidatLanguageService candidatLanguageService;
+    private final transient ThesaurusContext thesaurusContext;
+    private final transient UserSession userSession;
 
     private int typeImport;
     private int total;
@@ -70,7 +70,7 @@ public class ConceptSkosImportBean implements Serializable {
             return;
         }
 
-        var error = new StringBuffer();
+        var error = new StringBuilder();
         try (InputStream inputStream = event.getFile().getInputStream()) {
             var result = conceptSkosImportService.loadSkosFile(inputStream, typeImport, selectedLang, error);
             skosXmlDocument = result.document();

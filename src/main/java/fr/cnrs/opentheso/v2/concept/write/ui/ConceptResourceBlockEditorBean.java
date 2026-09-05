@@ -46,11 +46,11 @@ public class ConceptResourceBlockEditorBean implements Serializable {
     static final String CARD_IMAGES = "resImages";
     static final String CARD_GPS = "resGps";
 
-    private final ThesaurusViewBean thesaurusViewBean;
-    private final ConceptMediaMutationService conceptMediaMutationService;
-    private final ConceptWritePolicy conceptWritePolicy;
-    private final UserSession userSession;
-    private final ConceptSelectionContext conceptSelectionContext;
+    private final transient ThesaurusViewBean thesaurusViewBean;
+    private final transient ConceptMediaMutationService conceptMediaMutationService;
+    private final transient ConceptWritePolicy conceptWritePolicy;
+    private final transient UserSession userSession;
+    private final transient ConceptSelectionContext conceptSelectionContext;
 
     @Getter(AccessLevel.NONE)
     private boolean editing;
@@ -208,12 +208,12 @@ public class ConceptResourceBlockEditorBean implements Serializable {
         }
         Integer userId = userSession.getCurrentUserId();
         if (userId == null) {
-            errorMessage = "Action non autorisée";
+            errorMessage = WriteUiMessages.UNAUTHORIZED_FALLBACK;
             return;
         }
         ConceptDetail current = thesaurusViewBean.getSelectedConcept();
         if (current == null || current.getSummary() == null) {
-            errorMessage = "Action non autorisée";
+            errorMessage = WriteUiMessages.UNAUTHORIZED_FALLBACK;
             return;
         }
         String thesaurusId = thesaurusViewBean.getId();
@@ -458,31 +458,41 @@ public class ConceptResourceBlockEditorBean implements Serializable {
             if (row == null) {
                 continue;
             }
-            String lat = normalizeCoord(row.getLatitude());
-            String lng = normalizeCoord(row.getLongitude());
-            if (lat.isEmpty() && lng.isEmpty()) {
-                continue;
-            }
-            if (lat.isEmpty() || lng.isEmpty()) {
-                errorMessage = "Chaque point GPS doit avoir une latitude et une longitude.";
+            String pair = formatGpsPair(row);
+            if (pair == null) {
                 return null;
             }
-            if (!isCoord(lat) || !isCoord(lng)) {
-                errorMessage = "Coordonnées GPS invalides.";
-                return null;
+            if (!pair.isEmpty()) {
+                pairs.add(pair);
             }
-            double latitude = Double.parseDouble(lat);
-            double longitude = Double.parseDouble(lng);
-            if (latitude < -90 || latitude > 90 || longitude < -180 || longitude > 180) {
-                errorMessage = "Coordonnées GPS hors limites.";
-                return null;
-            }
-            pairs.add(lat + " " + lng);
         }
         if (pairs.isEmpty()) {
             return "";
         }
         return "(" + String.join(", ", pairs) + ")";
+    }
+
+    private String formatGpsPair(GpsEditRow row) {
+        String lat = normalizeCoord(row.getLatitude());
+        String lng = normalizeCoord(row.getLongitude());
+        if (lat.isEmpty() && lng.isEmpty()) {
+            return "";
+        }
+        if (lat.isEmpty() || lng.isEmpty()) {
+            errorMessage = "Chaque point GPS doit avoir une latitude et une longitude.";
+            return null;
+        }
+        if (!isCoord(lat) || !isCoord(lng)) {
+            errorMessage = "Coordonnées GPS invalides.";
+            return null;
+        }
+        double latitude = Double.parseDouble(lat);
+        double longitude = Double.parseDouble(lng);
+        if (latitude < -90 || latitude > 90 || longitude < -180 || longitude > 180) {
+            errorMessage = "Coordonnées GPS hors limites.";
+            return null;
+        }
+        return lat + " " + lng;
     }
 
     private boolean applyResult(MutationResult result, boolean dirty) {

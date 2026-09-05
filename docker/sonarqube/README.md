@@ -19,7 +19,7 @@ Identifiants par défaut : `admin` / `admin` (changement de mot de passe demand�
 
 ## Analyser le code (Maven)
 
-Analyse **limitée au package `fr.cnrs.opentheso.v2`** (legacy et `target/` exclus via `sonar-project.properties`).
+Analyse **limitée au package `fr.cnrs.opentheso.v2`** (legacy et `target/` exclus via `pom.xml` et `sonar-project.properties`).
 
 À la racine du projet :
 

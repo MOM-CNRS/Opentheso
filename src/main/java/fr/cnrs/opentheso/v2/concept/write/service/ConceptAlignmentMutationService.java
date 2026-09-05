@@ -32,6 +32,8 @@ import java.util.List;
 @RequiredArgsConstructor
 public class ConceptAlignmentMutationService {
 
+    private static final String URI_ALREADY_ALIGNED = "Cette URI est déjà alignée sur ce concept !";
+
     private final AlignementRepository alignementRepository;
     private final AlignementTypeRepository alignementTypeRepository;
     private final ConceptWritePostMutationRepository conceptWritePostMutationRepository;
@@ -91,7 +93,7 @@ public class ConceptAlignmentMutationService {
                     .modified(now)
                     .build());
         } catch (DataIntegrityViolationException e) {
-            return MutationResult.duplicate("Cette URI est déjà alignée sur ce concept !");
+            return MutationResult.duplicate(URI_ALREADY_ALIGNED);
         }
 
         return finalizeMutation(
@@ -134,7 +136,7 @@ public class ConceptAlignmentMutationService {
         if (!uri.equals(previousUri)
                 && alignementRepository.existsByInternalIdThesaurusAndInternalIdConceptAndUriTarget(
                 command.thesaurusId(), command.conceptId(), uri)) {
-            return MutationResult.duplicate("Cette URI est déjà alignée sur ce concept !");
+            return MutationResult.duplicate(URI_ALREADY_ALIGNED);
         }
 
         entity.setUriTarget(uri);
@@ -145,7 +147,7 @@ public class ConceptAlignmentMutationService {
         try {
             alignementRepository.save(entity);
         } catch (DataIntegrityViolationException e) {
-            return MutationResult.duplicate("Cette URI est déjà alignée sur ce concept !");
+            return MutationResult.duplicate(URI_ALREADY_ALIGNED);
         }
 
         return finalizeMutation(

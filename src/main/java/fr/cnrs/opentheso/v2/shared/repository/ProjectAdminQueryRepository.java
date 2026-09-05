@@ -60,7 +60,7 @@ public class ProjectAdminQueryRepository {
                 ORDER BY LOWER(ugl.label_group)
                 """;
         List<Object[]> rows = entityManager.createNativeQuery(sql)
-                .setParameter("userId", userId)
+                .setParameter(NativeQueryParams.USER_ID, userId)
                 .getResultList();
         return rows.stream()
                 .map(row -> new ProjectSummaryRow(((Number) row[0]).intValue(), (String) row[1]))
@@ -75,8 +75,8 @@ public class ProjectAdminQueryRepository {
                 """;
         @SuppressWarnings("unchecked")
         List<Number> rows = entityManager.createNativeQuery(sql)
-                .setParameter("userId", userId)
-                .setParameter("projectId", projectId)
+                .setParameter(NativeQueryParams.USER_ID, userId)
+                .setParameter(NativeQueryParams.PROJECT_ID, projectId)
                 .getResultList();
         return rows.isEmpty() ? Optional.empty() : Optional.of(rows.get(0).intValue());
     }
@@ -89,7 +89,7 @@ public class ProjectAdminQueryRepository {
                 )
                 """;
         return Boolean.TRUE.equals(entityManager.createNativeQuery(sql)
-                .setParameter("userId", userId)
+                .setParameter(NativeQueryParams.USER_ID, userId)
                 .setParameter("managerRoleId", managerRoleId)
                 .getSingleResult());
     }
@@ -100,8 +100,8 @@ public class ProjectAdminQueryRepository {
                     OR EXISTS(SELECT 1 FROM user_role_only_on WHERE id_user = :userId AND id_group = :projectId)
                 """;
         return Boolean.TRUE.equals(entityManager.createNativeQuery(sql)
-                .setParameter("userId", userId)
-                .setParameter("projectId", projectId)
+                .setParameter(NativeQueryParams.USER_ID, userId)
+                .setParameter(NativeQueryParams.PROJECT_ID, projectId)
                 .getSingleResult());
     }
 
@@ -117,7 +117,7 @@ public class ProjectAdminQueryRepository {
                   AND ugt.id_thesaurus IN (:ids)
                 """;
         List<String> found = entityManager.createNativeQuery(sql)
-                .setParameter("projectId", projectId)
+                .setParameter(NativeQueryParams.PROJECT_ID, projectId)
                 .setParameter("ids", thesaurusIds)
                 .getResultList();
         Set<String> foundSet = new HashSet<>(found);
@@ -147,7 +147,7 @@ public class ProjectAdminQueryRepository {
                 ORDER BY LOWER(ugt.id_thesaurus)
                 """;
         List<Object[]> rows = entityManager.createNativeQuery(sql)
-                .setParameter("projectId", projectId)
+                .setParameter(NativeQueryParams.PROJECT_ID, projectId)
                 .setParameter("lang", lang)
                 .getResultList();
         return rows.stream()
@@ -172,7 +172,7 @@ public class ProjectAdminQueryRepository {
                 ORDER BY LOWER(u.username)
                 """;
         List<Object[]> rows = entityManager.createNativeQuery(sql)
-                .setParameter("projectId", projectId)
+                .setParameter(NativeQueryParams.PROJECT_ID, projectId)
                 .setParameter("minRoleId", minRoleId)
                 .getResultList();
         return rows.stream()
@@ -213,7 +213,7 @@ public class ProjectAdminQueryRepository {
                 ORDER BY LOWER(u.username)
                 """;
         List<Object[]> rows = entityManager.createNativeQuery(sql)
-                .setParameter("projectId", projectId)
+                .setParameter(NativeQueryParams.PROJECT_ID, projectId)
                 .setParameter("lang", lang)
                 .getResultList();
         return rows.stream()

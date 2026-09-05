@@ -1,5 +1,6 @@
 package fr.cnrs.opentheso.v2.concept.write.persistence;
 
+import fr.cnrs.opentheso.v2.shared.repository.NativeQueryParams;
 import jakarta.persistence.EntityManager;
 import jakarta.persistence.PersistenceContext;
 import org.springframework.stereotype.Repository;
@@ -29,9 +30,9 @@ public class ConceptNoteWriteRepository {
                           AND lang = :lang
                         LIMIT 1
                         """)
-                .setParameter("conceptId", conceptId)
-                .setParameter("thesaurusId", thesaurusId)
-                .setParameter("typeCode", typeCode)
+                .setParameter(NativeQueryParams.CONCEPT_ID, conceptId)
+                .setParameter(NativeQueryParams.THESAURUS_ID, thesaurusId)
+                .setParameter(NativeQueryParams.TYPE_CODE, typeCode)
                 .setParameter("lang", lang)
                 .getResultStream()
                 .map(String.class::cast)
@@ -53,9 +54,9 @@ public class ConceptNoteWriteRepository {
                           AND lang = :lang
                         LIMIT 1
                         """)
-                .setParameter("conceptId", conceptId)
-                .setParameter("thesaurusId", thesaurusId)
-                .setParameter("typeCode", typeCode)
+                .setParameter(NativeQueryParams.CONCEPT_ID, conceptId)
+                .setParameter(NativeQueryParams.THESAURUS_ID, thesaurusId)
+                .setParameter(NativeQueryParams.TYPE_CODE, typeCode)
                 .setParameter("lang", lang)
                 .getResultStream()
                 .findFirst()
@@ -78,9 +79,9 @@ public class ConceptNoteWriteRepository {
                           AND lang = :lang
                         LIMIT 1
                         """)
-                .setParameter("conceptId", conceptId)
-                .setParameter("thesaurusId", thesaurusId)
-                .setParameter("typeCode", typeCode)
+                .setParameter(NativeQueryParams.CONCEPT_ID, conceptId)
+                .setParameter(NativeQueryParams.THESAURUS_ID, thesaurusId)
+                .setParameter(NativeQueryParams.TYPE_CODE, typeCode)
                 .setParameter("lang", lang)
                 .getResultStream()
                 .map(value -> value != null ? (String) value : "")
@@ -105,11 +106,11 @@ public class ConceptNoteWriteRepository {
                               AND lexicalvalue = :lexicalValue
                         )
                         """)
-                .setParameter("conceptId", conceptId)
-                .setParameter("thesaurusId", thesaurusId)
-                .setParameter("typeCode", typeCode)
+                .setParameter(NativeQueryParams.CONCEPT_ID, conceptId)
+                .setParameter(NativeQueryParams.THESAURUS_ID, thesaurusId)
+                .setParameter(NativeQueryParams.TYPE_CODE, typeCode)
                 .setParameter("lang", lang)
-                .setParameter("lexicalValue", lexicalValue)
+                .setParameter(NativeQueryParams.LEXICAL_VALUE, lexicalValue)
                 .getSingleResult());
     }
 
@@ -134,15 +135,15 @@ public class ConceptNoteWriteRepository {
                             :conceptId, :noteSource, :userId, :created, :modified
                         )
                         """)
-                .setParameter("typeCode", typeCode)
-                .setParameter("thesaurusId", thesaurusId)
+                .setParameter(NativeQueryParams.TYPE_CODE, typeCode)
+                .setParameter(NativeQueryParams.THESAURUS_ID, thesaurusId)
                 .setParameter("lang", lang)
-                .setParameter("lexicalValue", lexicalValue)
-                .setParameter("conceptId", conceptId)
+                .setParameter(NativeQueryParams.LEXICAL_VALUE, lexicalValue)
+                .setParameter(NativeQueryParams.CONCEPT_ID, conceptId)
                 .setParameter("noteSource", noteSource)
-                .setParameter("userId", userId)
+                .setParameter(NativeQueryParams.USER_ID, userId)
                 .setParameter("created", now)
-                .setParameter("modified", now)
+                .setParameter(NativeQueryParams.MODIFIED, now)
                 .executeUpdate();
     }
 
@@ -161,11 +162,11 @@ public class ConceptNoteWriteRepository {
                         WHERE id = :noteId
                           AND id_thesaurus = :thesaurusId
                         """)
-                .setParameter("lexicalValue", lexicalValue)
+                .setParameter(NativeQueryParams.LEXICAL_VALUE, lexicalValue)
                 .setParameter("noteSource", noteSource)
-                .setParameter("modified", new Date())
+                .setParameter(NativeQueryParams.MODIFIED, new Date())
                 .setParameter("noteId", noteId)
-                .setParameter("thesaurusId", thesaurusId)
+                .setParameter(NativeQueryParams.THESAURUS_ID, thesaurusId)
                 .executeUpdate();
         return updated > 0;
     }
@@ -178,7 +179,7 @@ public class ConceptNoteWriteRepository {
                           AND id_thesaurus = :thesaurusId
                         """)
                 .setParameter("noteId", noteId)
-                .setParameter("thesaurusId", thesaurusId)
+                .setParameter(NativeQueryParams.THESAURUS_ID, thesaurusId)
                 .executeUpdate();
     }
 
@@ -202,14 +203,14 @@ public class ConceptNoteWriteRepository {
                             :lexicalValue, :action, :userId, :modified
                         )
                         """)
-                .setParameter("typeCode", typeCode)
-                .setParameter("thesaurusId", thesaurusId)
-                .setParameter("conceptId", conceptId)
+                .setParameter(NativeQueryParams.TYPE_CODE, typeCode)
+                .setParameter(NativeQueryParams.THESAURUS_ID, thesaurusId)
+                .setParameter(NativeQueryParams.CONCEPT_ID, conceptId)
                 .setParameter("lang", lang)
-                .setParameter("lexicalValue", lexicalValue)
+                .setParameter(NativeQueryParams.LEXICAL_VALUE, lexicalValue)
                 .setParameter("action", action)
-                .setParameter("userId", userId)
-                .setParameter("modified", new Date())
+                .setParameter(NativeQueryParams.USER_ID, userId)
+                .setParameter(NativeQueryParams.MODIFIED, new Date())
                 .executeUpdate();
     }
 }

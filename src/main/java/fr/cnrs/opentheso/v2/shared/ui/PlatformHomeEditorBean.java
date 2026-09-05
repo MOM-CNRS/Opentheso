@@ -1,5 +1,6 @@
 package fr.cnrs.opentheso.v2.shared.ui;
 
+import fr.cnrs.opentheso.v2.concept.write.ui.WriteUiMessages;
 import fr.cnrs.opentheso.utils.MessageUtils;
 import fr.cnrs.opentheso.v2.concept.ui.ConsultationShellBean;
 import fr.cnrs.opentheso.v2.shared.service.PlatformHomeWriteService;
@@ -27,10 +28,10 @@ public class PlatformHomeEditorBean implements Serializable {
     private static final String OPTION_HOME = "Option2";
     private static final String OPTION_ANALYTICS = "Option3";
 
-    private final PlatformHomeWriteService platformHomeWriteService;
-    private final UserSession userSession;
-    private final V2LocaleBean v2LocaleBean;
-    private final ObjectProvider<ConsultationShellBean> consultationShellBean;
+    private final transient PlatformHomeWriteService platformHomeWriteService;
+    private final transient UserSession userSession;
+    private final transient V2LocaleBean v2LocaleBean;
+    private final transient ObjectProvider<ConsultationShellBean> consultationShellBean;
 
     private String selectedOption = OPTION_NONE;
     private boolean editingHomePage;
@@ -91,7 +92,7 @@ public class PlatformHomeEditorBean implements Serializable {
 
     public void saveHomePage() {
         if (!isActionsAvailable()) {
-            MessageUtils.showErrorMessage("Action non autorisée");
+            MessageUtils.showErrorMessage(WriteUiMessages.UNAUTHORIZED_FALLBACK);
             return;
         }
         if (!platformHomeWriteService.saveHomePageHtml(v2LocaleBean.getIdLangue(), text)) {
@@ -105,7 +106,7 @@ public class PlatformHomeEditorBean implements Serializable {
 
     public void saveGoogleAnalytics() {
         if (!isActionsAvailable()) {
-            MessageUtils.showErrorMessage("Action non autorisée");
+            MessageUtils.showErrorMessage(WriteUiMessages.UNAUTHORIZED_FALLBACK);
             return;
         }
         platformHomeWriteService.saveGoogleAnalyticsCode(codeGoogleAnalytics);

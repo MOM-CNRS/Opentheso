@@ -2,13 +2,14 @@ package fr.cnrs.opentheso.v2.concept.model;
 
 import lombok.Data;
 
+import java.io.Serializable;
 import java.util.List;
 
 /**
  * Données brutes assemblées pour la fiche concept v2, avant projection en {@link ConceptDetail}.
  */
 @Data
-public class ConceptFullSnapshot {
+public class ConceptFullSnapshot implements Serializable {
 
     private String uri;
     private int resourceType;

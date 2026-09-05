@@ -39,13 +39,13 @@ import java.util.stream.Collectors;
 @RequiredArgsConstructor
 public class ConceptMediaEditorBean implements Serializable {
 
-    private final ConceptMediaMutationService conceptMediaMutationService;
-    private final ConceptSelectionContext conceptSelectionContext;
-    private final ConceptNavigationSupport conceptNavigationSupport;
-    private final ThesaurusContext thesaurusContext;
-    private final UserSession userSession;
-    private final ConceptWritePolicy conceptWritePolicy;
-    private final ThesaurusBrowseBean thesaurusBrowseBean;
+    private final transient ConceptMediaMutationService conceptMediaMutationService;
+    private final transient ConceptSelectionContext conceptSelectionContext;
+    private final transient ConceptNavigationSupport conceptNavigationSupport;
+    private final transient ThesaurusContext thesaurusContext;
+    private final transient UserSession userSession;
+    private final transient ConceptWritePolicy conceptWritePolicy;
+    private final transient ThesaurusBrowseBean thesaurusBrowseBean;
 
     private String currentConceptLabel;
     private String gpsCoordinatesText;
@@ -102,7 +102,7 @@ public class ConceptMediaEditorBean implements Serializable {
     public void submitSaveGps() {
         Integer userId = requireUserId();
         if (userId == null || !isMediaActionsAvailable() || !conceptSelectionContext.hasSelection()) {
-            MessageUtils.showErrorMessage("Action non autorisée");
+            MessageUtils.showErrorMessage(WriteUiMessages.UNAUTHORIZED_FALLBACK);
             return;
         }
         var command = new ReplaceGpsCoordinatesCommand(
@@ -118,7 +118,7 @@ public class ConceptMediaEditorBean implements Serializable {
     public void submitAddImage() {
         Integer userId = requireUserId();
         if (userId == null || !isMediaActionsAvailable() || !conceptSelectionContext.hasSelection()) {
-            MessageUtils.showErrorMessage("Action non autorisée");
+            MessageUtils.showErrorMessage(WriteUiMessages.UNAUTHORIZED_FALLBACK);
             return;
         }
         var command = new AddConceptImageCommand(
@@ -139,7 +139,7 @@ public class ConceptMediaEditorBean implements Serializable {
     public void submitUpdateImage(ImageEditRow row) {
         Integer userId = requireUserId();
         if (userId == null || row == null || !isMediaActionsAvailable() || !conceptSelectionContext.hasSelection()) {
-            MessageUtils.showErrorMessage("Action non autorisée");
+            MessageUtils.showErrorMessage(WriteUiMessages.UNAUTHORIZED_FALLBACK);
             return;
         }
         var command = new UpdateConceptImageCommand(
@@ -160,7 +160,7 @@ public class ConceptMediaEditorBean implements Serializable {
     public void submitDeleteImage(ImageEditRow row) {
         Integer userId = requireUserId();
         if (userId == null || row == null || !isMediaActionsAvailable() || !conceptSelectionContext.hasSelection()) {
-            MessageUtils.showErrorMessage("Action non autorisée");
+            MessageUtils.showErrorMessage(WriteUiMessages.UNAUTHORIZED_FALLBACK);
             return;
         }
         var command = new DeleteConceptImageCommand(
@@ -187,7 +187,7 @@ public class ConceptMediaEditorBean implements Serializable {
     public void submitAddExternalResource() {
         Integer userId = requireUserId();
         if (userId == null || !isMediaActionsAvailable() || !conceptSelectionContext.hasSelection()) {
-            MessageUtils.showErrorMessage("Action non autorisée");
+            MessageUtils.showErrorMessage(WriteUiMessages.UNAUTHORIZED_FALLBACK);
             return;
         }
         var command = new AddExternalResourceCommand(
@@ -206,7 +206,7 @@ public class ConceptMediaEditorBean implements Serializable {
     public void submitUpdateExternalResource(ExternalResourceEditRow row) {
         Integer userId = requireUserId();
         if (userId == null || row == null || !isMediaActionsAvailable() || !conceptSelectionContext.hasSelection()) {
-            MessageUtils.showErrorMessage("Action non autorisée");
+            MessageUtils.showErrorMessage(WriteUiMessages.UNAUTHORIZED_FALLBACK);
             return;
         }
         var command = new UpdateExternalResourceCommand(
@@ -225,7 +225,7 @@ public class ConceptMediaEditorBean implements Serializable {
     public void submitDeleteExternalResource(ExternalResourceEditRow row) {
         Integer userId = requireUserId();
         if (userId == null || row == null || !isMediaActionsAvailable() || !conceptSelectionContext.hasSelection()) {
-            MessageUtils.showErrorMessage("Action non autorisée");
+            MessageUtils.showErrorMessage(WriteUiMessages.UNAUTHORIZED_FALLBACK);
             return;
         }
         var command = new DeleteExternalResourceCommand(

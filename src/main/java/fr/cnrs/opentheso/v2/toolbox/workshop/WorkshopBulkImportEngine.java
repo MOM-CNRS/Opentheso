@@ -51,6 +51,8 @@ import jakarta.enterprise.context.SessionScoped;
 import jakarta.faces.application.FacesMessage;
 import fr.cnrs.opentheso.utils.MessageUtils;
 import org.springframework.transaction.annotation.Transactional;
+import fr.cnrs.opentheso.v2.toolbox.edition.model.ThesaurusCsvConceptObject;
+import fr.cnrs.opentheso.v2.toolbox.edition.model.ThesaurusCsvConceptLabel;
 
 /**
  *
@@ -62,27 +64,38 @@ import org.springframework.transaction.annotation.Transactional;
 @RequiredArgsConstructor
 public class WorkshopBulkImportEngine implements Serializable {
 
-    private final WorkshopBulkImportPersistence persistence;
-    private final ThesaurusCsvWriter thesaurusCsvWriter;
+    private static final String FILE_LOADED_MSG = "File correctly loaded";
+    private static final String WAIT_DIALOG_HIDE = "PF('waitDialog').hide();";
+    private static final String TOTAL_PREFIX = "total = ";
+    private static final String IDENTIFIER_KEY = "identifier";
+    private static final String CSV_CONTENT_TYPE = "text/csv";
+    private static final String RESULT_CSV_NAME = "resultat.csv";
+    private static final String NO_VALUES_MSG = "pas de valeurs";
+    private static final String NO_THESAURUS_MSG = "pas de thésaurus sélectionné";
+    private static final String DATE_FORMAT = "yyyy-MM-dd";
+
+
+    private final transient WorkshopBulkImportPersistence persistence;
+    private final transient ThesaurusCsvWriter thesaurusCsvWriter;
 
     private String thesaurusId;
     private int userId;
     private String workLanguage;
 
     private double progress = 0;
-    private double progressStep = 0;
+    private int progressStep = 0;
     private int typeImport, total;
 
     private String info = "";
     private String warning = "";
-    private String formatDate = "yyyy-MM-dd";
+    private String formatDate = DATE_FORMAT;
     private String selectedIdentifier = "sans";
     private String prefixHandle, selectedIdentifierImportAlign, prefixDoi, uri, thesaurusName, selectedUserProject,
             selectedConcept, alignmentSource, selectedLang, fileName, selectedSearchType, idLang;
     private boolean loadDone, BDDinsertEnable, importDone, importInProgress, isCandidatImport, haveError, clearBefore;
     private char delimiterCsv = ',';
     private int choiceDelimiter = 0;
-    private List<WorkshopCsvReader.ConceptObject> conceptObjects;
+    private List<ThesaurusCsvConceptObject> conceptObjects;
     private List<String> langs;
     private String lang;
 
@@ -94,7 +107,7 @@ public class WorkshopBulkImportEngine implements Serializable {
     private List<NodeIdValue> nodeIdValues;
     private List<NodeCompareTheso> nodeCompareThesos;
 
-    private StringBuffer error = new StringBuffer();
+    private StringBuilder error = new StringBuilder();
 
 
 
@@ -106,7 +119,7 @@ public class WorkshopBulkImportEngine implements Serializable {
 
     public void init() {
         selectedSearchType = "exactWord"; // containsExactWord, startWith, elastic
-        selectedIdentifierImportAlign = "identifier";
+        selectedIdentifierImportAlign = IDENTIFIER_KEY;
         choiceDelimiter = 0;
         delimiterCsv = ',';
         haveError = false;
@@ -116,10 +129,10 @@ public class WorkshopBulkImportEngine implements Serializable {
         info = "";
         prefixHandle = null;
         prefixDoi = null;
-        error = new StringBuffer();
+        error = new StringBuilder();
         warning = "";
         uri = "";
-        formatDate = "yyyy-MM-dd";
+        formatDate = DATE_FORMAT;
         total = 0;
         loadDone = false;
         importDone = false;
@@ -170,388 +183,53 @@ public class WorkshopBulkImportEngine implements Serializable {
         setSelectedIdentifier(selectedIdentifierImportAlign);
     }
 
-    /**
-     * permet de charger un fichier de notes en Csv
-     *
-     * @param event
-     */
     public void loadFileNoteCsv(FileUploadEvent event) {
-        initError();
-        if (!PhaseId.INVOKE_APPLICATION.equals(event.getPhaseId())) {
-            event.setPhaseId(PhaseId.INVOKE_APPLICATION);
-            event.queue();
-        } else {
-            WorkshopCsvReader csvReadHelper = new WorkshopCsvReader(delimiterCsv);
-            try (Reader reader1 = new InputStreamReader(event.getFile().getInputStream())) {
-
-                if (!csvReadHelper.setLangs(reader1)) {
-                    error.append(csvReadHelper.getMessage());
-                } else {
-                    try (Reader reader2 = new InputStreamReader(event.getFile().getInputStream())) {
-                        if (!csvReadHelper.readFileNote(reader2)) {
-                            error.append(csvReadHelper.getMessage());
-                        }
-
-                        warning = csvReadHelper.getMessage();
-                        conceptObjects = csvReadHelper.getConceptObjects();
-                        if (conceptObjects != null) {
-                            if (conceptObjects.isEmpty()) {
-                                haveError = true;
-                                error.append(System.getProperty("line.separator"));
-                                error.append("La lecture a échouée, vérifiez le séparateur des colonnes !!");
-                                warning = "";
-                            } else {
-                                total = conceptObjects.size();
-                                uri = "";//csvReadHelper.getUri();
-                                loadDone = true;
-                                BDDinsertEnable = true;
-                                info = "File correctly loaded";
-                            }
-                        }
-                    }
-                }
-            } catch (Exception e) {
-                haveError = true;
-                error.append(System.getProperty("line.separator"));
-                error.append(e.toString());
-            } finally {
-                showError();
-            }
-            PrimeFaces.current().executeScript("PF('waitDialog').hide()");
-        }
+        loadCsvAfterLangs(event, WorkshopCsvReader::readFileNote, true);
     }
 
-    /**
-     * permet de charger un fichier de notes en Csv
-     *
-     * @param event
-     */
     public void loadFileTraductionCsv(FileUploadEvent event) {
-        initError();
-        lang = null;
-        if (!PhaseId.INVOKE_APPLICATION.equals(event.getPhaseId())) {
-            event.setPhaseId(PhaseId.INVOKE_APPLICATION);
-            event.queue();
-        } else {
-            WorkshopCsvReader csvReadHelper = new WorkshopCsvReader(delimiterCsv);
+        loadCsvEvent(event, helper -> {
+            lang = null;
             try (Reader reader1 = new InputStreamReader(event.getFile().getInputStream())) {
-                lang = csvReadHelper.getLangOfValue(reader1);
+                lang = helper.getLangOfValue(reader1);
                 if (lang == null) {
-                    error.append(csvReadHelper.getMessage());
-                } else {
-                    try (Reader reader2 = new InputStreamReader(event.getFile().getInputStream())) {
-                        if (!csvReadHelper.readFileTraduction(reader2, lang)) {
-                            error.append(csvReadHelper.getMessage());
-                        }
-
-                        warning = csvReadHelper.getMessage();
-                        nodeIdValues = csvReadHelper.getNodeIdValues();
-                        if (nodeIdValues != null) {
-                            if (nodeIdValues.isEmpty()) {
-                                haveError = true;
-                                error.append(System.getProperty("line.separator"));
-                                error.append("La lecture a échouée, vérifiez le séparateur des colonnes !!");
-                                warning = "";
-                            } else {
-                                total = nodeIdValues.size();
-                                uri = "";//csvReadHelper.getUri();
-                                loadDone = true;
-                                BDDinsertEnable = true;
-                                info = "File correctly loaded";
-                            }
-                        }
-                    }
+                    error.append(helper.getMessage());
+                    return;
                 }
-            } catch (Exception e) {
-                haveError = true;
-                error.append(System.getProperty("line.separator"));
-                error.append(e.toString());
-            } finally {
-                showError();
+                try (Reader reader2 = new InputStreamReader(event.getFile().getInputStream())) {
+                    if (!helper.readFileTraduction(reader2, lang)) {
+                        error.append(helper.getMessage());
+                    }
+                    warning = helper.getMessage();
+                    nodeIdValues = helper.getNodeIdValues();
+                    acceptLoadedList(nodeIdValues);
+                }
             }
-            PrimeFaces.current().executeScript("PF('waitDialog').hide()");
-        }
+        });
     }
 
-
-
-    /**
-     * permet de charger un fichier de notes en Csv
-     *
-     * @param event
-     */
     public void loadFileAltlabelCsv(FileUploadEvent event) {
-        initError();
-        if (!PhaseId.INVOKE_APPLICATION.equals(event.getPhaseId())) {
-            event.setPhaseId(PhaseId.INVOKE_APPLICATION);
-            event.queue();
-        } else {
-            WorkshopCsvReader csvReadHelper = new WorkshopCsvReader(delimiterCsv);
-            try (Reader reader1 = new InputStreamReader(event.getFile().getInputStream())) {
-
-                if (!csvReadHelper.setLangs(reader1)) {
-                    error.append(csvReadHelper.getMessage());
-                } else {
-                    try (Reader reader2 = new InputStreamReader(event.getFile().getInputStream())) {
-                        if (!csvReadHelper.readFileAltlabel(reader2)) {
-                            error.append(csvReadHelper.getMessage());
-                        }
-
-                        warning = csvReadHelper.getMessage();
-                        conceptObjects = csvReadHelper.getConceptObjects();
-                        if (conceptObjects != null) {
-                            if (conceptObjects.isEmpty()) {
-                                haveError = true;
-                                error.append(System.getProperty("line.separator"));
-                                error.append("La lecture a échouée, vérifiez le séparateur des colonnes !!");
-                                warning = "";
-                            } else {
-                                total = conceptObjects.size();
-                                uri = "";//csvReadHelper.getUri();
-                                loadDone = true;
-                                BDDinsertEnable = true;
-                                info = "File correctly loaded";
-                            }
-                        }
-                    }
-                }
-            } catch (Exception e) {
-                haveError = true;
-                error.append(System.getProperty("line.separator"));
-                error.append(e.toString());
-            } finally {
-                showError();
-            }
-            PrimeFaces.current().executeScript("PF('waitDialog').hide()");
-        }
+        loadCsvAfterLangs(event, WorkshopCsvReader::readFileAltlabel, true);
     }
 
-    /**
-     * permet de charger un fichier de notes en Csv
-     *
-     * @param event
-     */
     public void loadFileImageCsv(FileUploadEvent event) {
-        initError();
-        if (!PhaseId.INVOKE_APPLICATION.equals(event.getPhaseId())) {
-            event.setPhaseId(PhaseId.INVOKE_APPLICATION);
-            event.queue();
-        } else {
-            WorkshopCsvReader csvReadHelper = new WorkshopCsvReader(delimiterCsv);
-            try (Reader reader1 = new InputStreamReader(event.getFile().getInputStream())) {
-                if (!csvReadHelper.readFileImage(reader1)) {
-                    error.append(csvReadHelper.getMessage());
-                }
-
-                warning = csvReadHelper.getMessage();
-                conceptObjects = csvReadHelper.getConceptObjects();
-                if (conceptObjects != null) {
-                    if (conceptObjects.isEmpty()) {
-                        haveError = true;
-                        error.append(System.getProperty("line.separator"));
-                        error.append("La lecture a échoué, vérifiez le séparateur des colonnes !!");
-                        warning = "";
-                    } else {
-                        total = conceptObjects.size();
-                        uri = "";//csvReadHelper.getUri();
-                        loadDone = true;
-                        BDDinsertEnable = true;
-                        info = "File correctly loaded";
-                    }
-                }
-            } catch (Exception e) {
-                haveError = true;
-                error.append(System.getProperty("line.separator"));
-                error.append(e.toString());
-            } finally {
-                showError();
-            }
-            PrimeFaces.current().executeScript("PF('waitDialog').hide()");
-        }
+        loadSingleCsv(event, WorkshopCsvReader::readFileImage, true);
     }
 
-    /**
-     * permet de charger un fichier de notes en Csv
-     *
-     * @param event
-     */
     public void loadFileNotationCsv(FileUploadEvent event) {
-        initError();
-        if (!PhaseId.INVOKE_APPLICATION.equals(event.getPhaseId())) {
-            event.setPhaseId(PhaseId.INVOKE_APPLICATION);
-            event.queue();
-        } else {
-            WorkshopCsvReader csvReadHelper = new WorkshopCsvReader(delimiterCsv);
-            try (Reader reader = new InputStreamReader(event.getFile().getInputStream())) {
-
-                if (!csvReadHelper.readFileNotation(reader)) {
-                    error.append(csvReadHelper.getMessage());
-                }
-
-                warning = csvReadHelper.getMessage();
-                nodeIdValues = csvReadHelper.getNodeIdValues();
-                if (nodeIdValues != null) {
-                    if (nodeIdValues.isEmpty()) {
-                        haveError = true;
-                        error.append(System.getProperty("line.separator"));
-                        error.append("La lecture a échouée, vérifiez le séparateur des colonnes !!");
-                        warning = "";
-                    } else {
-                        total = nodeIdValues.size();
-                        uri = "";//csvReadHelper.getUri();
-                        loadDone = true;
-                        BDDinsertEnable = true;
-                        info = "File correctly loaded";
-                    }
-                }
-                PrimeFaces.current().executeScript("PF('waitDialog').hide();");
-            } catch (Exception e) {
-                haveError = true;
-                error.append(System.getProperty("line.separator"));
-                error.append(e.toString());
-            } finally {
-                showError();
-            }
-            PrimeFaces.current().executeScript("PF('waitDialog').hide();");
-        }
+        loadSingleCsv(event, WorkshopCsvReader::readFileNotation, false);
     }
 
-    /**
-     * permet de charger un fichier de notes en Csv
-     *
-     * @param event
-     */
     public void loadFileCollectionCsv(FileUploadEvent event) {
-        initError();
-        if (!PhaseId.INVOKE_APPLICATION.equals(event.getPhaseId())) {
-            event.setPhaseId(PhaseId.INVOKE_APPLICATION);
-            event.queue();
-        } else {
-            WorkshopCsvReader csvReadHelper = new WorkshopCsvReader(delimiterCsv);
-            try (Reader reader = new InputStreamReader(event.getFile().getInputStream())) {
-
-                if (!csvReadHelper.readFileCollection(reader)) {
-                    error.append(csvReadHelper.getMessage());
-                }
-
-                warning = csvReadHelper.getMessage();
-                nodeIdValues = csvReadHelper.getNodeIdValues();
-                if (nodeIdValues != null) {
-                    if (nodeIdValues.isEmpty()) {
-                        haveError = true;
-                        error.append(System.getProperty("line.separator"));
-                        error.append("La lecture a échouée, vérifiez le séparateur des colonnes !!");
-                        warning = "";
-                    } else {
-                        total = nodeIdValues.size();
-                        uri = "";//csvReadHelper.getUri();
-                        loadDone = true;
-                        BDDinsertEnable = true;
-                        info = "File correctly loaded";
-                    }
-                }
-                PrimeFaces.current().executeScript("PF('waitDialog').hide();");
-            } catch (Exception e) {
-                haveError = true;
-                error.append(System.getProperty("line.separator"));
-                error.append(e.toString());
-            } finally {
-                showError();
-            }
-            PrimeFaces.current().executeScript("PF('waitDialog').hide();");
-        }
+        loadSingleCsv(event, WorkshopCsvReader::readFileCollection, false);
     }
 
-    /**
-     * permet de charger un fichier en Csv
-     *
-     * @param event
-     */
     public void loadFileArkCsv(FileUploadEvent event) {
-        initError();
-        if (!PhaseId.INVOKE_APPLICATION.equals(event.getPhaseId())) {
-            event.setPhaseId(PhaseId.INVOKE_APPLICATION);
-            event.queue();
-        } else {
-            WorkshopCsvReader csvReadHelper = new WorkshopCsvReader(delimiterCsv);
-
-            try (Reader reader = new InputStreamReader(event.getFile().getInputStream())) {
-
-                if (!csvReadHelper.readFileArk(reader)) {
-                    error.append(csvReadHelper.getMessage());
-                }
-
-                warning = csvReadHelper.getMessage();
-                nodeIdValues = csvReadHelper.getNodeIdValues();
-                if (nodeIdValues != null) {
-                    if (nodeIdValues.isEmpty()) {
-                        haveError = true;
-                        error.append(System.getProperty("line.separator"));
-                        error.append("La lecture a échouée, vérifiez le séparateur des colonnes !!");
-                        warning = "";
-                    } else {
-                        total = nodeIdValues.size();
-                        uri = "";//csvReadHelper.getUri();
-                        loadDone = true;
-                        BDDinsertEnable = true;
-                        info = "File correctly loaded";
-                    }
-                }
-                PrimeFaces.current().executeScript("PF('waitDialog').hide();");
-            } catch (Exception e) {
-                haveError = true;
-                error.append(System.getProperty("line.separator"));
-                error.append(e.toString());
-            } finally {
-                showError();
-            }
-            PrimeFaces.current().executeScript("PF('waitDialog').hide();");
-        }
+        loadSingleCsv(event, WorkshopCsvReader::readFileArk, false);
     }
 
-    /**
-     * permet de charger un fichier en Csv
-     *
-     * @param event
-     */
     public void loadFileIdentifierCsv(FileUploadEvent event) {
-        initError();
-        if (!PhaseId.INVOKE_APPLICATION.equals(event.getPhaseId())) {
-            event.setPhaseId(PhaseId.INVOKE_APPLICATION);
-            event.queue();
-        } else {
-            WorkshopCsvReader csvReadHelper = new WorkshopCsvReader(delimiterCsv);
-            try (Reader reader = new InputStreamReader(event.getFile().getInputStream())) {
-                if (!csvReadHelper.readFileIdentifier(reader)) {
-                    error.append(csvReadHelper.getMessage());
-                }
-
-                warning = csvReadHelper.getMessage();
-                nodeIdValues = csvReadHelper.getNodeIdValues();
-                if (nodeIdValues != null) {
-                    if (nodeIdValues.isEmpty()) {
-                        haveError = true;
-                        error.append(System.getProperty("line.separator"));
-                        error.append("La lecture a échouée, vérifiez le séparateur des colonnes !!");
-                        warning = "";
-                    } else {
-                        total = nodeIdValues.size();
-                        uri = "";//csvReadHelper.getUri();
-                        loadDone = true;
-                        BDDinsertEnable = true;
-                        info = "File correctly loaded";
-                    }
-                }
-                PrimeFaces.current().executeScript("PF('waitDialog').hide();");
-            } catch (Exception e) {
-                haveError = true;
-                error.append(System.getProperty("line.separator"));
-                error.append(e.toString());
-            } finally {
-                showError();
-            }
-            PrimeFaces.current().executeScript("PF('waitDialog').hide();");
-        }
+        loadSingleCsv(event, WorkshopCsvReader::readFileIdentifier, false);
     }
 
     /**
@@ -597,7 +275,7 @@ public class WorkshopBulkImportEngine implements Serializable {
         } catch (Exception e) {
             haveError = true;
             error.append(System.lineSeparator()).append("Erreur : ").append(e.getMessage());
-            e.printStackTrace();
+            log.warn("Erreur lors du chargement du fichier d'alignements à supprimer", e);
         } finally {
             showError();
         }
@@ -625,7 +303,7 @@ public class WorkshopBulkImportEngine implements Serializable {
                 }
             } catch (Exception e) {
                 haveError = true;
-                error.append(System.getProperty("line.separator"));
+                error.append(System.lineSeparator());
                 error.append(e.toString());
                 return;
             }
@@ -642,7 +320,7 @@ public class WorkshopBulkImportEngine implements Serializable {
                     if (nodeAlignmentImports.isEmpty()) {
                         haveError = true;
                         error.append(csvReadHelper.getMessage());
-                        error.append(System.getProperty("line.separator"));
+                        error.append(System.lineSeparator());
                         error.append("La lecture a échouée, vérifiez peut être le séparateur des colonnes !!");
                         warning = "";
                     } else {
@@ -650,19 +328,19 @@ public class WorkshopBulkImportEngine implements Serializable {
                         uri = "";//csvReadHelper.getUri();
                         loadDone = true;
                         BDDinsertEnable = true;
-                        info = "File correctly loaded";
-                        PrimeFaces.current().executeScript("PF('waitDialog').hide();");
+                        info = FILE_LOADED_MSG;
+                        PrimeFaces.current().executeScript(WAIT_DIALOG_HIDE);
                     }
                 }
             } catch (Exception e) {
                 haveError = true;
-                error.append(System.getProperty("line.separator"));
+                error.append(System.lineSeparator());
                 error.append(e.toString());
             } finally {
                 showError();
             }
         }
-        PrimeFaces.current().executeScript("PF('waitDialog').hide();");
+        PrimeFaces.current().executeScript(WAIT_DIALOG_HIDE);
     }
 
     /**
@@ -687,7 +365,7 @@ public class WorkshopBulkImportEngine implements Serializable {
                 }
             } catch (Exception e) {
                 haveError = true;
-                error.append(System.getProperty("line.separator"));
+                error.append(System.lineSeparator());
                 error.append(e.toString());
                 return;
             }
@@ -704,7 +382,7 @@ public class WorkshopBulkImportEngine implements Serializable {
                     if (nodeIdValues.isEmpty()) {
                         haveError = true;
                         error.append(csvReadHelper.getMessage());
-                        error.append(System.getProperty("line.separator"));
+                        error.append(System.lineSeparator());
                         error.append("La lecture a échouée, vérifiez peut être le séparateur des colonnes !!");
                         warning = "";
                     } else {
@@ -712,19 +390,19 @@ public class WorkshopBulkImportEngine implements Serializable {
                         uri = "";//csvReadHelper.getUri();
                         loadDone = true;
                         BDDinsertEnable = true;
-                        info = "File correctly loaded";
-                        PrimeFaces.current().executeScript("PF('waitDialog').hide();");
+                        info = FILE_LOADED_MSG;
+                        PrimeFaces.current().executeScript(WAIT_DIALOG_HIDE);
                     }
                 }
             } catch (Exception e) {
                 haveError = true;
-                error.append(System.getProperty("line.separator"));
+                error.append(System.lineSeparator());
                 error.append(e.toString());
             } finally {
                 showError();
             }
         }
-        PrimeFaces.current().executeScript("PF('waitDialog').hide();");
+        PrimeFaces.current().executeScript(WAIT_DIALOG_HIDE);
     }
 
     /**
@@ -763,7 +441,7 @@ public class WorkshopBulkImportEngine implements Serializable {
                         if (conceptObjects.get(0).getPrefLabels() != null) {
                             if (conceptObjects.get(0).getPrefLabels().isEmpty()) {
                                 haveError = true;
-                                error.append(System.getProperty("line.separator"));
+                                error.append(System.lineSeparator());
                                 error.append("La lecture a échouée, vérifiez le séparateur des colonnes !!");
                                 warning = "";
                             } else {
@@ -772,21 +450,21 @@ public class WorkshopBulkImportEngine implements Serializable {
                                 uri = "";//csvReadHelper.getUri();
                                 loadDone = true;
                                 BDDinsertEnable = true;
-                                info = "File correctly loaded";
+                                info = FILE_LOADED_MSG;
                             }
                         }
                     }
-                    total = conceptObjects.size();
+                    total = conceptObjects == null ? 0 : conceptObjects.size();
                 }
-                PrimeFaces.current().executeScript("PF('waitDialog').hide()");
+                PrimeFaces.current().executeScript(WAIT_DIALOG_HIDE);
             } catch (Exception e) {
                 haveError = true;
-                error.append(System.getProperty("line.separator"));
+                error.append(System.lineSeparator());
                 error.append(e.toString());
             } finally {
                 showError();
             }
-            PrimeFaces.current().executeScript("PF('waitDialog').hide()");
+            PrimeFaces.current().executeScript(WAIT_DIALOG_HIDE);
         }
     }
 
@@ -824,18 +502,18 @@ public class WorkshopBulkImportEngine implements Serializable {
                         uri = "";//csvReadHelper.getUri();
                         loadDone = true;
                         BDDinsertEnable = true;
-                        info = "File correctly loaded";
+                        info = FILE_LOADED_MSG;
                     }
                 }
-                PrimeFaces.current().executeScript("PF('waitDialog').hide()");
+                PrimeFaces.current().executeScript(WAIT_DIALOG_HIDE);
             } catch (Exception e) {
                 haveError = true;
-                error.append(System.getProperty("line.separator"));
+                error.append(System.lineSeparator());
                 error.append(e.toString());
             } finally {
                 showError();
             }
-            PrimeFaces.current().executeScript("PF('waitDialog').hide()");
+            PrimeFaces.current().executeScript(WAIT_DIALOG_HIDE);
         }
     }
 
@@ -861,7 +539,7 @@ public class WorkshopBulkImportEngine implements Serializable {
                 }
             } catch (Exception e) {
                 haveError = true;
-                error.append(System.getProperty("line.separator"));
+                error.append(System.lineSeparator());
                 error.append(e.toString());
             }
             if (csvReadHelper.getIdLang() == null) {
@@ -883,17 +561,17 @@ public class WorkshopBulkImportEngine implements Serializable {
                     uri = "";//csvReadHelper.getUri();
                     loadDone = true;
                     BDDinsertEnable = true;
-                    info = "File correctly loaded";
+                    info = FILE_LOADED_MSG;
                 }
-                PrimeFaces.current().executeScript("PF('waitDialog').hide()");
+                PrimeFaces.current().executeScript(WAIT_DIALOG_HIDE);
             } catch (Exception e) {
                 haveError = true;
-                error.append(System.getProperty("line.separator"));
+                error.append(System.lineSeparator());
                 error.append(e.toString());
             } finally {
                 showError();
             }
-            PrimeFaces.current().executeScript("PF('waitDialog').hide()");
+            PrimeFaces.current().executeScript(WAIT_DIALOG_HIDE);
         }
     }
 
@@ -924,17 +602,17 @@ public class WorkshopBulkImportEngine implements Serializable {
                     uri = "";//csvReadHelper.getUri();
                     loadDone = true;
                     BDDinsertEnable = true;
-                    info = "File correctly loaded";
+                    info = FILE_LOADED_MSG;
                 }
-                PrimeFaces.current().executeScript("PF('waitDialog').hide()");
+                PrimeFaces.current().executeScript(WAIT_DIALOG_HIDE);
             } catch (Exception e) {
                 haveError = true;
-                error.append(System.getProperty("line.separator"));
+                error.append(System.lineSeparator());
                 error.append(e.toString());
             } finally {
                 showError();
             }
-            PrimeFaces.current().executeScript("PF('waitDialog').hide()");
+            PrimeFaces.current().executeScript(WAIT_DIALOG_HIDE);
         }
     }
 
@@ -966,17 +644,17 @@ public class WorkshopBulkImportEngine implements Serializable {
                     uri = "";//csvReadHelper.getUri();
                     loadDone = true;
                     BDDinsertEnable = true;
-                    info = "File correctly loaded";
+                    info = FILE_LOADED_MSG;
                 }
-                PrimeFaces.current().executeScript("PF('waitDialog').hide()");
+                PrimeFaces.current().executeScript(WAIT_DIALOG_HIDE);
             } catch (Exception e) {
                 haveError = true;
-                error.append(System.getProperty("line.separator"));
+                error.append(System.lineSeparator());
                 error.append(e.toString());
             } finally {
                 showError();
             }
-            PrimeFaces.current().executeScript("PF('waitDialog').hide()");
+            PrimeFaces.current().executeScript(WAIT_DIALOG_HIDE);
         }
     }
 
@@ -1010,17 +688,13 @@ public class WorkshopBulkImportEngine implements Serializable {
 
         ligne++;
 
-        if (ligne < matrix.length && colone < matrix[ligne].length) {
-            if (matrix[ligne][colone] == null) {
-                colone--;
-            } else {
-                if (matrix[ligne][colone].isEmpty()) {
-                    colone++;
-                    element.getChildrens().add(createTreeMR(matrix, ligne, colone));
-                }
-                if (!matrix[ligne][colone].isEmpty()) {
-                    element.getChildrens().add(createTreeMR(matrix, ligne, colone));
-                }
+        if (ligne < matrix.length && colone < matrix[ligne].length && matrix[ligne][colone] != null) {
+            if (matrix[ligne][colone].isEmpty()) {
+                colone++;
+                element.getChildrens().add(createTreeMR(matrix, ligne, colone));
+            }
+            if (!matrix[ligne][colone].isEmpty()) {
+                element.getChildrens().add(createTreeMR(matrix, ligne, colone));
             }
         }
         return element;
@@ -1082,7 +756,7 @@ public class WorkshopBulkImportEngine implements Serializable {
 
         // mise à jouor des concepts
         try {
-            for (WorkshopCsvReader.ConceptObject conceptObject : conceptObjects) {
+            for (ThesaurusCsvConceptObject conceptObject : conceptObjects) {
                 if (persistence.updateConcept(idTheso, WorkshopCsvConceptMapper.toEditionModel(conceptObject), idUser1)) {
                     total++;
                     persistence.updateDateOfConcept(idTheso, conceptObject.getIdConcept(), idUser1);
@@ -1102,11 +776,10 @@ public class WorkshopBulkImportEngine implements Serializable {
             importInProgress = false;
             uri = null;
             //total = 0;
-            info = info + "\n" + "total = " + total + "\n" + persistence.getMessage();
+            info = info + "\n" + TOTAL_PREFIX + total + "\n" + persistence.getMessage();
 
         } catch (Exception e) {
-            error.append(System.getProperty("line.separator"));
-            error.append(e.toString());
+            failListImport(e);
         } finally {
             showError();
         }
@@ -1179,7 +852,7 @@ public class WorkshopBulkImportEngine implements Serializable {
             importInProgress = false;
             uri = null;
             //total = 0;
-            info = info + "\n" + "total = " + total;
+            info = info + "\n" + TOTAL_PREFIX + total;
             error.append(persistence.getMessage());
 
             ThesaurusCsvWriter csvWriter = thesaurusCsvWriter;
@@ -1187,19 +860,18 @@ public class WorkshopBulkImportEngine implements Serializable {
 
             try (ByteArrayInputStream input = new ByteArrayInputStream(datas)) {
                 return DefaultStreamedContent.builder()
-                        .contentType("text/csv")
-                        .name("resultat.csv")
+                        .contentType(CSV_CONTENT_TYPE)
+                        .name(RESULT_CSV_NAME)
                         .stream(() -> input)
                         .build();
             } catch (IOException ex) {
                 error.append(System.getProperty(ex.getMessage()));
             }
-            PrimeFaces.current().executeScript("PF('waitDialog').hide();");
+            PrimeFaces.current().executeScript(WAIT_DIALOG_HIDE);
             return new DefaultStreamedContent();
 
         } catch (Exception e) {
-            error.append(System.getProperty("line.separator"));
-            error.append(e.toString());
+            failListImport(e);
         } finally {
             showError();
         }
@@ -1291,7 +963,7 @@ public class WorkshopBulkImportEngine implements Serializable {
             importInProgress = false;
             uri = null;
             //total = 0;
-            info = info + "\n" + "total = " + total;
+            info = info + "\n" + TOTAL_PREFIX + total;
             error.append(persistence.getMessage());
 
             ThesaurusCsvWriter csvWriter = thesaurusCsvWriter;
@@ -1299,18 +971,17 @@ public class WorkshopBulkImportEngine implements Serializable {
 
             try (ByteArrayInputStream input = new ByteArrayInputStream(datas)) {
                 return DefaultStreamedContent.builder()
-                        .contentType("text/csv")
-                        .name("resultat.csv")
+                        .contentType(CSV_CONTENT_TYPE)
+                        .name(RESULT_CSV_NAME)
                         .stream(() -> input)
                         .build();
             } catch (IOException ex) {
             }
-            PrimeFaces.current().executeScript("PF('waitDialog').hide();");
+            PrimeFaces.current().executeScript(WAIT_DIALOG_HIDE);
             return new DefaultStreamedContent();
 
         } catch (Exception e) {
-            error.append(System.getProperty("line.separator"));
-            error.append(e.toString());
+            failListImport(e);
         } finally {
             showError();
         }
@@ -1393,12 +1064,11 @@ public class WorkshopBulkImportEngine implements Serializable {
             importInProgress = false;
             uri = null;
             //total = 0;
-            info = info + "\n" + "total = " + total;
+            info = info + "\n" + TOTAL_PREFIX + total;
             error.append(persistence.getMessage());
 
         } catch (Exception e) {
-            error.append(System.getProperty("line.separator"));
-            error.append(e.toString());
+            failListImport(e);
         } finally {
             showError();
         }
@@ -1489,12 +1159,11 @@ public class WorkshopBulkImportEngine implements Serializable {
             importInProgress = false;
             uri = null;
             //total = 0;
-            info = info + "\n" + "total = " + total;
+            info = info + "\n" + TOTAL_PREFIX + total;
             error.append(persistence.getMessage());
 
         } catch (Exception e) {
-            error.append(System.getProperty("line.separator"));
-            error.append(e.toString());
+            failListImport(e);
         } finally {
             showError();
         }
@@ -1513,7 +1182,7 @@ public class WorkshopBulkImportEngine implements Serializable {
         if ("handle".equalsIgnoreCase(selectedIdentifierImportAlign)) {
             idConcept = persistence.getIdConceptFromHandleId(idToFind);
         }
-        if ("identifier".equalsIgnoreCase(selectedIdentifierImportAlign)) {
+        if (IDENTIFIER_KEY.equalsIgnoreCase(selectedIdentifierImportAlign)) {
             idConcept = idToFind;
         }
         return idConcept;
@@ -1527,10 +1196,83 @@ public class WorkshopBulkImportEngine implements Serializable {
         if ("handle".equalsIgnoreCase(selectedIdentifierImportAlign)) {
             idGroup = persistence.getIdGroupFromHandleId(idToFind);
         }
-        if ("identifier".equalsIgnoreCase(selectedIdentifierImportAlign)) {
+        if (IDENTIFIER_KEY.equalsIgnoreCase(selectedIdentifierImportAlign)) {
             idGroup = idToFind;
         }
         return idGroup;
+    }
+
+    private String resolveExistingConceptId(String localId) {
+        if (localId == null || localId.isEmpty()) {
+            return null;
+        }
+        String idConcept = getIdConcept(localId, thesaurusId);
+        if (idConcept == null || idConcept.isEmpty()) {
+            return null;
+        }
+        if (!persistence.isIdExiste(idConcept, thesaurusId)) {
+            return null;
+        }
+        return idConcept;
+    }
+
+    private boolean beginListImport(boolean hasValues) {
+        return beginListImport(hasValues, null, false);
+    }
+
+    private boolean beginListImport(boolean hasValues, String emptyWarning) {
+        return beginListImport(hasValues, emptyWarning, false);
+    }
+
+    private boolean beginListImport(boolean hasValues, String emptyWarning, boolean showWaitDialog) {
+        if (thesaurusId == null || thesaurusId.isEmpty()) {
+            warning = NO_THESAURUS_MSG;
+            return false;
+        }
+        if (!hasValues) {
+            if (emptyWarning != null) {
+                warning = emptyWarning;
+            }
+            return false;
+        }
+        if (importInProgress) {
+            return false;
+        }
+        if (showWaitDialog) {
+            PrimeFaces.current().executeScript("PF('waitDialog').show();");
+        }
+        initError();
+        loadDone = false;
+        progressStep = 0;
+        progress = 0;
+        total = 0;
+        return true;
+    }
+
+    private void completeListImport(String infoMessage) {
+        loadDone = false;
+        importDone = true;
+        BDDinsertEnable = false;
+        importInProgress = false;
+        uri = null;
+        info = infoMessage;
+        total = 0;
+    }
+
+    private void failListImport(Exception e) {
+        error.append(System.lineSeparator());
+        error.append(e.toString());
+    }
+
+    private void applyCsvRead(WorkshopCsvReader helper, boolean concepts) {
+        warning = helper.getMessage();
+        if (concepts) {
+            conceptObjects = helper.getConceptObjects();
+            acceptLoadedList(conceptObjects);
+        } else {
+            nodeIdValues = helper.getNodeIdValues();
+            acceptLoadedList(nodeIdValues);
+        }
     }
 
 ///////////////////////////////////////////////////////////////////////////////
@@ -1542,21 +1284,9 @@ public class WorkshopBulkImportEngine implements Serializable {
      *
      */
     public void addArkList() {
-        if (thesaurusId == null || thesaurusId.isEmpty()) {
-            warning = "pas de thésaurus sélectionné";
+        if (!beginListImport(nodeIdValues != null && !nodeIdValues.isEmpty())) {
             return;
         }
-        if (nodeIdValues == null || nodeIdValues.isEmpty()) {
-            return;
-        }
-        if (importInProgress) {
-            return;
-        }
-        initError();
-        loadDone = false;
-        progressStep = 0;
-        progress = 0;
-        total = 0;
         try {
             for (NodeIdValue nodeIdValue : nodeIdValues) {
                 if (nodeIdValue == null) {
@@ -1583,18 +1313,11 @@ public class WorkshopBulkImportEngine implements Serializable {
                     }
                 }
                 progressStep++;
-                progress = progressStep / total * 100;
+                progress = progressPercent(progressStep, total);
             }
-            loadDone = false;
-            importDone = true;
-            BDDinsertEnable = false;
-            importInProgress = false;
-            uri = null;
-            info = "import réussi, Arks importés = " + total;
-            total = 0;
+            completeListImport("import réussi, Arks importés = " + total);
         } catch (Exception e) {
-            error.append(System.getProperty("line.separator"));
-            error.append(e.toString());
+            failListImport(e);
         } finally {
             showError();
         }
@@ -1603,7 +1326,7 @@ public class WorkshopBulkImportEngine implements Serializable {
     // Récupérer les identifiants Ark d'après les identifiants des concepts
     public StreamedContent getArkFromConceptId() {
         if (thesaurusId == null || thesaurusId.isEmpty()) {
-            warning = "pas de thésaurus sélectionné";
+            warning = NO_THESAURUS_MSG;
             return null;
         }
         if (nodeIdValues == null || nodeIdValues.isEmpty()) {
@@ -1637,16 +1360,16 @@ public class WorkshopBulkImportEngine implements Serializable {
         loadDone = false;
 
         ThesaurusCsvWriter csvWriter = thesaurusCsvWriter;
-        byte[] datas = csvWriter.writeCsvResultProcess(nodeIdValues, "identifier", "ArkId");
+        byte[] datas = csvWriter.writeCsvResultProcess(nodeIdValues, IDENTIFIER_KEY, "ArkId");
 
         try (ByteArrayInputStream returnedDatas = new ByteArrayInputStream(datas)) {
             return DefaultStreamedContent.builder()
-                    .contentType("text/csv")
-                    .name("resultat.csv")
+                    .contentType(CSV_CONTENT_TYPE)
+                    .name(RESULT_CSV_NAME)
                     .stream(() -> returnedDatas)
                     .build();
         } catch (IOException ex) {
-            System.err.println(ex.getMessage());
+            log.warn("Erreur lors de la génération du CSV des identifiants Ark", ex);
         }
         return null;
     }
@@ -1654,7 +1377,7 @@ public class WorkshopBulkImportEngine implements Serializable {
     // Récupérer les identifiants des concepts d'après les identifiants Ark
     public StreamedContent getConceptIdFromArk() {
         if (thesaurusId == null || thesaurusId.isEmpty()) {
-            warning = "pas de thésaurus sélectionné";
+            warning = NO_THESAURUS_MSG;
             return null;
         }
         if (nodeIdValues == null || nodeIdValues.isEmpty()) {
@@ -1698,16 +1421,16 @@ public class WorkshopBulkImportEngine implements Serializable {
         }
         loadDone = false;
         ThesaurusCsvWriter csvWriter = thesaurusCsvWriter;
-        byte[] datas = csvWriter.writeCsvResultProcess(nodeIdValues, "identifier", "conceptId");
+        byte[] datas = csvWriter.writeCsvResultProcess(nodeIdValues, IDENTIFIER_KEY, "conceptId");
 
         try (ByteArrayInputStream returnedDatas = new ByteArrayInputStream(datas)) {
             return DefaultStreamedContent.builder()
-                    .contentType("text/csv")
-                    .name("resultat.csv")
+                    .contentType(CSV_CONTENT_TYPE)
+                    .name(RESULT_CSV_NAME)
                     .stream(() -> returnedDatas)
                     .build();
         } catch (IOException ex) {
-            System.err.println(ex.getMessage());
+            log.warn("Erreur lors de la génération du CSV des identifiants de concept", ex);
         }
         return null;
     }
@@ -1717,21 +1440,9 @@ public class WorkshopBulkImportEngine implements Serializable {
      *
      */
     public void addTraductionList() {
-        if (thesaurusId == null || thesaurusId.isEmpty()) {
-            warning = "pas de thésaurus sélectionné";
+        if (!beginListImport(nodeIdValues != null && !nodeIdValues.isEmpty())) {
             return;
         }
-        if (nodeIdValues == null || nodeIdValues.isEmpty()) {
-            return;
-        }
-        if (importInProgress) {
-            return;
-        }
-        initError();
-        loadDone = false;
-        progressStep = 0;
-        progress = 0;
-        total = 0;
         String idConcept = null;
         Term term = null;
         int idUser = userId;
@@ -1743,21 +1454,8 @@ public class WorkshopBulkImportEngine implements Serializable {
                 if (nodeIdValue.getId() == null || nodeIdValue.getId().isEmpty()) {
                     continue;
                 }
-                if ("ark".equalsIgnoreCase(selectedIdentifierImportAlign)) {
-                    idConcept = persistence.getIdConceptFromArkId(nodeIdValue.getId(), thesaurusId);
-                }
-                if ("handle".equalsIgnoreCase(selectedIdentifierImportAlign)) {
-                    idConcept = persistence.getIdConceptFromHandleId(nodeIdValue.getId());
-                }
-                if ("identifier".equalsIgnoreCase(selectedIdentifierImportAlign)) {
-                    idConcept = nodeIdValue.getId();
-                }
-
-                if (idConcept == null || idConcept.isEmpty()) {
-                    continue;
-                }
-                // controle pour vérifier l'existance de l'Id
-                if (!persistence.isIdExiste(idConcept, thesaurusId)) {
+                idConcept = resolveExistingConceptId(nodeIdValue.getId());
+                if (idConcept == null) {
                     continue;
                 }
 
@@ -1776,18 +1474,11 @@ public class WorkshopBulkImportEngine implements Serializable {
                 }
 
                 progressStep++;
-                progress = progressStep / total * 100;
+                progress = progressPercent(progressStep, total);
             }
-            loadDone = false;
-            importDone = true;
-            BDDinsertEnable = false;
-            importInProgress = false;
-            uri = null;
-            info = "import réussi, notes importées = " + (int) total;
-            total = 0;
+            completeListImport("import réussi, notes importées = " + (int) total);
         } catch (Exception e) {
-            error.append(System.getProperty("line.separator"));
-            error.append(e.toString());
+            failListImport(e);
         } finally {
             showError();
         }
@@ -1798,45 +1489,20 @@ public class WorkshopBulkImportEngine implements Serializable {
      *
      */
     public void addNoteList() {
-        if (thesaurusId == null || thesaurusId.isEmpty()) {
-            warning = "pas de thésaurus sélectionné";
+        if (!beginListImport(conceptObjects != null && !conceptObjects.isEmpty())) {
             return;
         }
-        if (conceptObjects == null || conceptObjects.isEmpty()) {
-            return;
-        }
-        if (importInProgress) {
-            return;
-        }
-        initError();
-        loadDone = false;
-        progressStep = 0;
-        progress = 0;
-        total = 0;
         String idConcept = null;
         try {
-            for (WorkshopCsvReader.ConceptObject conceptObject : conceptObjects) {
+            for (ThesaurusCsvConceptObject conceptObject : conceptObjects) {
                 if (conceptObject == null) {
                     continue;
                 }
                 if (conceptObject.getIdConcept() == null || conceptObject.getIdConcept().isEmpty()) {
                     continue;
                 }
-                if ("ark".equalsIgnoreCase(selectedIdentifierImportAlign)) {
-                    idConcept = persistence.getIdConceptFromArkId(conceptObject.getIdConcept(), thesaurusId);
-                }
-                if ("handle".equalsIgnoreCase(selectedIdentifierImportAlign)) {
-                    idConcept = persistence.getIdConceptFromHandleId(conceptObject.getIdConcept());
-                }
-                if ("identifier".equalsIgnoreCase(selectedIdentifierImportAlign)) {
-                    idConcept = conceptObject.getIdConcept();
-                }
-
-                if (idConcept == null || idConcept.isEmpty()) {
-                    continue;
-                }
-                // controle pour vérifier l'existance de l'Id
-                if (!persistence.isIdExiste(idConcept, thesaurusId)) {
+                idConcept = resolveExistingConceptId(conceptObject.getIdConcept());
+                if (idConcept == null) {
                     continue;
                 }
 
@@ -1845,7 +1511,7 @@ public class WorkshopBulkImportEngine implements Serializable {
                 }
 
                 //definition
-                for (WorkshopCsvReader.Label definition : conceptObject.getDefinitions()) {
+                for (ThesaurusCsvConceptLabel definition : conceptObject.getDefinitions()) {
                     if (!persistence.isNoteExist(idConcept, thesaurusId, definition.getLang(),
                             definition.getLabel(), "definition")) {
                         persistence.addNote(idConcept, definition.getLang(),
@@ -1854,7 +1520,7 @@ public class WorkshopBulkImportEngine implements Serializable {
                     }
                 }
                 // historyNote
-                for (WorkshopCsvReader.Label historyNote : conceptObject.getHistoryNotes()) {
+                for (ThesaurusCsvConceptLabel historyNote : conceptObject.getHistoryNotes()) {
                     if (!persistence.isNoteExist(idConcept, thesaurusId, historyNote.getLang(),
                             historyNote.getLabel(), "historyNote")) {
                         persistence.addNote(idConcept, historyNote.getLang(),
@@ -1863,7 +1529,7 @@ public class WorkshopBulkImportEngine implements Serializable {
                     }
                 }
                 // changeNote
-                for (WorkshopCsvReader.Label changeNote : conceptObject.getChangeNotes()) {
+                for (ThesaurusCsvConceptLabel changeNote : conceptObject.getChangeNotes()) {
                     if (!persistence.isNoteExist(idConcept, thesaurusId, changeNote.getLang(),
                             changeNote.getLabel(), "changeNote")) {
                         persistence.addNote(idConcept, changeNote.getLang(),
@@ -1872,7 +1538,7 @@ public class WorkshopBulkImportEngine implements Serializable {
                     }
                 }
                 // editorialNote
-                for (WorkshopCsvReader.Label editorialNote : conceptObject.getEditorialNotes()) {
+                for (ThesaurusCsvConceptLabel editorialNote : conceptObject.getEditorialNotes()) {
                     if (!persistence.isNoteExist(idConcept, thesaurusId, editorialNote.getLang(),
                             editorialNote.getLabel(), "editorialNote")) {
                         persistence.addNote(idConcept, editorialNote.getLang(),
@@ -1881,7 +1547,7 @@ public class WorkshopBulkImportEngine implements Serializable {
                     }
                 }
                 // example
-                for (WorkshopCsvReader.Label example : conceptObject.getExamples()) {
+                for (ThesaurusCsvConceptLabel example : conceptObject.getExamples()) {
                     if (!persistence.isNoteExist(idConcept, thesaurusId, example.getLang(),
                             example.getLabel(), "example")) {
                         persistence.addNote(idConcept, example.getLang(),
@@ -1892,14 +1558,14 @@ public class WorkshopBulkImportEngine implements Serializable {
 
                 //pour Concept
                 // note
-                for (WorkshopCsvReader.Label note : conceptObject.getNote()) {
+                for (ThesaurusCsvConceptLabel note : conceptObject.getNote()) {
                     if (!persistence.isNoteExist(idConcept, thesaurusId, note.getLang(), note.getLabel(), "note")) {
                         persistence.addNote(idConcept, note.getLang(), thesaurusId, note.getLabel(), "note", "", -1);
                         total++;
                     }
                 }
                 // scopeNote
-                for (WorkshopCsvReader.Label scopeNote : conceptObject.getScopeNotes()) {
+                for (ThesaurusCsvConceptLabel scopeNote : conceptObject.getScopeNotes()) {
                     if (!persistence.isNoteExist(idConcept, thesaurusId, scopeNote.getLang(),
                             scopeNote.getLabel(), "scopeNote")) {
                         persistence.addNote(
@@ -1910,18 +1576,11 @@ public class WorkshopBulkImportEngine implements Serializable {
                 }
 
                 progressStep++;
-                progress = progressStep / total * 100;
+                progress = progressPercent(progressStep, total);
             }
-            loadDone = false;
-            importDone = true;
-            BDDinsertEnable = false;
-            importInProgress = false;
-            uri = null;
-            info = "import réussi, notes importées = " + (int) total;
-            total = 0;
+            completeListImport("import réussi, notes importées = " + (int) total);
         } catch (Exception e) {
-            error.append(System.getProperty("line.separator"));
-            error.append(e.toString());
+            failListImport(e);
         } finally {
             showError();
         }
@@ -1932,53 +1591,27 @@ public class WorkshopBulkImportEngine implements Serializable {
      *
      */
     public void deleteAltLabelList() {
-        if (thesaurusId == null || thesaurusId.isEmpty()) {
-            warning = "pas de thésaurus sélectionné";
+        if (!beginListImport(conceptObjects != null && !conceptObjects.isEmpty())) {
             return;
         }
-        if (conceptObjects == null || conceptObjects.isEmpty()) {
-            return;
-        }
-        if (importInProgress) {
-            return;
-        }
-        initError();
-        loadDone = false;
-        progressStep = 0;
-        progress = 0;
-        total = 0;
-        String idTerm;
         String idConcept = null;
         try {
-            for (WorkshopCsvReader.ConceptObject conceptObject : conceptObjects) {
+            for (ThesaurusCsvConceptObject conceptObject : conceptObjects) {
                 if (conceptObject == null) {
                     continue;
                 }
                 if (conceptObject.getIdConcept() == null || conceptObject.getIdConcept().isEmpty()) {
                     continue;
                 }
-                if ("ark".equalsIgnoreCase(selectedIdentifierImportAlign)) {
-                    idConcept = persistence.getIdConceptFromArkId(conceptObject.getIdConcept(), thesaurusId);
-                }
-                if ("handle".equalsIgnoreCase(selectedIdentifierImportAlign)) {
-                    idConcept = persistence.getIdConceptFromHandleId(conceptObject.getIdConcept());
-                }
-                if ("identifier".equalsIgnoreCase(selectedIdentifierImportAlign)) {
-                    idConcept = conceptObject.getIdConcept();
-                }
-
-                if (idConcept == null || idConcept.isEmpty()) {
-                    continue;
-                }
-                // controle pour vérifier l'existance de l'Id
-                if (!persistence.isIdExiste(idConcept, thesaurusId)) {
+                idConcept = resolveExistingConceptId(conceptObject.getIdConcept());
+                if (idConcept == null) {
                     continue;
                 }
 
                 //Suppression des synonymes
                 var preferredTerm = persistence.findByIdThesaurusAndIdConcept(thesaurusId, idConcept);
                 if (preferredTerm.isPresent()) {
-                    for (WorkshopCsvReader.Label altLabel : conceptObject.getAltLabels()) {
+                    for (ThesaurusCsvConceptLabel altLabel : conceptObject.getAltLabels()) {
                         persistence.deleteNonPreferredTerm(preferredTerm.get().getIdTerm(), altLabel.getLang(),
                                 altLabel.getLabel(), thesaurusId, userId);
                         total++;
@@ -1986,18 +1619,11 @@ public class WorkshopBulkImportEngine implements Serializable {
                 }
 
                 progressStep++;
-                progress = progressStep / total * 100;
+                progress = progressPercent(progressStep, total);
             }
-            loadDone = false;
-            importDone = true;
-            BDDinsertEnable = false;
-            importInProgress = false;
-            uri = null;
-            info = "Suppression réussie, synonymes importés = " + (int) total;
-            total = 0;
+            completeListImport("Suppression réussie, synonymes importés = " + (int) total);
         } catch (Exception e) {
-            error.append(System.getProperty("line.separator"));
-            error.append(e.toString());
+            failListImport(e);
         } finally {
             showError();
         }
@@ -2008,46 +1634,20 @@ public class WorkshopBulkImportEngine implements Serializable {
      *
      */
     public void addAltLabelList() {
-        if (thesaurusId == null || thesaurusId.isEmpty()) {
-            warning = "pas de thésaurus sélectionné";
+        if (!beginListImport(conceptObjects != null && !conceptObjects.isEmpty())) {
             return;
         }
-        if (conceptObjects == null || conceptObjects.isEmpty()) {
-            return;
-        }
-        if (importInProgress) {
-            return;
-        }
-        initError();
-        loadDone = false;
-        progressStep = 0;
-        progress = 0;
-        total = 0;
-        String idTerm;
         String idConcept = null;
         try {
-            for (WorkshopCsvReader.ConceptObject conceptObject : conceptObjects) {
+            for (ThesaurusCsvConceptObject conceptObject : conceptObjects) {
                 if (conceptObject == null) {
                     continue;
                 }
                 if (conceptObject.getIdConcept() == null || conceptObject.getIdConcept().isEmpty()) {
                     continue;
                 }
-                if ("ark".equalsIgnoreCase(selectedIdentifierImportAlign)) {
-                    idConcept = persistence.getIdConceptFromArkId(conceptObject.getIdConcept(), thesaurusId);
-                }
-                if ("handle".equalsIgnoreCase(selectedIdentifierImportAlign)) {
-                    idConcept = persistence.getIdConceptFromHandleId(conceptObject.getIdConcept());
-                }
-                if ("identifier".equalsIgnoreCase(selectedIdentifierImportAlign)) {
-                    idConcept = conceptObject.getIdConcept();
-                }
-
-                if (idConcept == null || idConcept.isEmpty()) {
-                    continue;
-                }
-                // controle pour vérifier l'existance de l'Id
-                if (!persistence.isIdExiste(idConcept, thesaurusId)) {
+                idConcept = resolveExistingConceptId(conceptObject.getIdConcept());
+                if (idConcept == null) {
                     continue;
                 }
 
@@ -2058,7 +1658,7 @@ public class WorkshopBulkImportEngine implements Serializable {
                 //ajout des synonymes
                 var preferredTerm = persistence.findByIdThesaurusAndIdConcept(thesaurusId, idConcept);
                 if (preferredTerm.isPresent()) {
-                    for (WorkshopCsvReader.Label altLabel : conceptObject.getAltLabels()) {
+                    for (ThesaurusCsvConceptLabel altLabel : conceptObject.getAltLabels()) {
                         Term term = Term.builder()
                                 .idTerm(preferredTerm.get().getIdTerm())
                                 .lexicalValue(altLabel.getLabel())
@@ -2074,18 +1674,11 @@ public class WorkshopBulkImportEngine implements Serializable {
                 }
 
                 progressStep++;
-                progress = progressStep / total * 100;
+                progress = progressPercent(progressStep, total);
             }
-            loadDone = false;
-            importDone = true;
-            BDDinsertEnable = false;
-            importInProgress = false;
-            uri = null;
-            info = "import réussi, synonymes importés = " + (int) total;
-            total = 0;
+            completeListImport("import réussi, synonymes importés = " + (int) total);
         } catch (Exception e) {
-            error.append(System.getProperty("line.separator"));
-            error.append(e.toString());
+            failListImport(e);
         } finally {
             showError();
         }
@@ -2096,26 +1689,13 @@ public class WorkshopBulkImportEngine implements Serializable {
      *
      */
     public void addImageList() {
-        if (thesaurusId == null || thesaurusId.isEmpty()) {
-            warning = "pas de thésaurus sélectionné";
+        if (!beginListImport(conceptObjects != null && !conceptObjects.isEmpty(), null, true)) {
             return;
         }
-        if (conceptObjects == null || conceptObjects.isEmpty()) {
-            return;
-        }
-        if (importInProgress) {
-            return;
-        }
-        PrimeFaces.current().executeScript("PF('waitDialog').show();");
-        initError();
-        loadDone = false;
-        progressStep = 0;
-        progress = 0;
-        total = 0;
         String idConcept = null;
 
         try {
-            for (WorkshopCsvReader.ConceptObject conceptObject : conceptObjects) {
+            for (ThesaurusCsvConceptObject conceptObject : conceptObjects) {
                 if (conceptObject == null) {
                     continue;
                 }
@@ -2125,21 +1705,8 @@ public class WorkshopBulkImportEngine implements Serializable {
                 if (conceptObject.getImages() == null || conceptObject.getImages().isEmpty()) {
                     continue;
                 }
-                if ("ark".equalsIgnoreCase(selectedIdentifierImportAlign)) {
-                    idConcept = persistence.getIdConceptFromArkId(conceptObject.getLocalId(), thesaurusId);
-                }
-                if ("handle".equalsIgnoreCase(selectedIdentifierImportAlign)) {
-                    idConcept = persistence.getIdConceptFromHandleId(conceptObject.getLocalId());
-                }
-                if ("identifier".equalsIgnoreCase(selectedIdentifierImportAlign)) {
-                    idConcept = conceptObject.getLocalId();
-                }
-
-                if (idConcept == null || idConcept.isEmpty()) {
-                    continue;
-                }
-                // controle pour vérifier l'existance de l'Id
-                if (!persistence.isIdExiste(idConcept, thesaurusId)) {
+                idConcept = resolveExistingConceptId(conceptObject.getLocalId());
+                if (idConcept == null) {
                     continue;
                 }
 
@@ -2159,7 +1726,7 @@ public class WorkshopBulkImportEngine implements Serializable {
                     total++;
                 }
             }
-            PrimeFaces.current().executeScript("PF('waitDialog').hide();");
+            PrimeFaces.current().executeScript(WAIT_DIALOG_HIDE);
             loadDone = false;
             importDone = true;
             BDDinsertEnable = false;
@@ -2168,12 +1735,11 @@ public class WorkshopBulkImportEngine implements Serializable {
             info = "import réussi, images importées = " + (int) total;
             //           total = 0;
         } catch (Exception e) {
-            error.append(System.getProperty("line.separator"));
-            error.append(e.toString());
+            failListImport(e);
         } finally {
             showError();
         }
-        PrimeFaces.current().executeScript("PF('waitDialog').hide();");
+        PrimeFaces.current().executeScript(WAIT_DIALOG_HIDE);
     }
 
     /**
@@ -2181,46 +1747,17 @@ public class WorkshopBulkImportEngine implements Serializable {
      *
      */
     public void addNotationList() {
-        if (thesaurusId == null || thesaurusId.isEmpty()) {
-            warning = "pas de thésaurus sélectionné";
+        if (!beginListImport(nodeIdValues != null && !nodeIdValues.isEmpty())) {
             return;
         }
-        if (nodeIdValues == null || nodeIdValues.isEmpty()) {
-            return;
-        }
-        if (importInProgress) {
-            return;
-        }
-        initError();
-        loadDone = false;
-        progressStep = 0;
-        progress = 0;
-        total = 0;
         String idConcept = null;
         try {
             for (NodeIdValue nodeIdValue : nodeIdValues) {
                 if (nodeIdValue == null) {
                     continue;
                 }
-                if (nodeIdValue.getId() == null || nodeIdValue.getId().isEmpty()) {
-                    continue;
-                }
-                if ("ark".equalsIgnoreCase(selectedIdentifierImportAlign)) {
-                    idConcept = persistence.getIdConceptFromArkId(nodeIdValue.getId(), thesaurusId);
-                }
-                if ("handle".equalsIgnoreCase(selectedIdentifierImportAlign)) {
-                    idConcept = persistence.getIdConceptFromHandleId(nodeIdValue.getId());
-                }
-                if ("identifier".equalsIgnoreCase(selectedIdentifierImportAlign)) {
-                    idConcept = nodeIdValue.getId();
-                }
-
-                if (idConcept == null || idConcept.isEmpty()) {
-                    continue;
-                }
-
-                // controle pour vérifier l'existance de l'Id
-                if (!persistence.isIdExiste(idConcept, thesaurusId)) {
+                idConcept = resolveExistingConceptId(nodeIdValue.getId());
+                if (idConcept == null) {
                     continue;
                 }
 
@@ -2237,18 +1774,11 @@ public class WorkshopBulkImportEngine implements Serializable {
                     }
                 }
                 progressStep++;
-                progress = progressStep / total * 100;
+                progress = progressPercent(progressStep, total);
             }
-            loadDone = false;
-            importDone = true;
-            BDDinsertEnable = false;
-            importInProgress = false;
-            uri = null;
-            info = "import réussi, notations importées = " + (int) total;
-            total = 0;
+            completeListImport("import réussi, notations importées = " + (int) total);
         } catch (Exception e) {
-            error.append(System.getProperty("line.separator"));
-            error.append(e.toString());
+            failListImport(e);
         } finally {
             showError();
         }
@@ -2259,46 +1789,17 @@ public class WorkshopBulkImportEngine implements Serializable {
      *
      */
     public void addCollectionListToConcept() {
-        if (thesaurusId == null || thesaurusId.isEmpty()) {
-            warning = "pas de thésaurus sélectionné";
+        if (!beginListImport(nodeIdValues != null && !nodeIdValues.isEmpty())) {
             return;
         }
-        if (nodeIdValues == null || nodeIdValues.isEmpty()) {
-            return;
-        }
-        if (importInProgress) {
-            return;
-        }
-        initError();
-        loadDone = false;
-        progressStep = 0;
-        progress = 0;
-        total = 0;
         String idConcept = null;
         try {
             for (NodeIdValue nodeIdValue : nodeIdValues) {
                 if (nodeIdValue == null) {
                     continue;
                 }
-                if (nodeIdValue.getId() == null || nodeIdValue.getId().isEmpty()) {
-                    continue;
-                }
-                if ("ark".equalsIgnoreCase(selectedIdentifierImportAlign)) {
-                    idConcept = persistence.getIdConceptFromArkId(nodeIdValue.getId(), thesaurusId);
-                }
-                if ("handle".equalsIgnoreCase(selectedIdentifierImportAlign)) {
-                    idConcept = persistence.getIdConceptFromHandleId(nodeIdValue.getId());
-                }
-                if ("identifier".equalsIgnoreCase(selectedIdentifierImportAlign)) {
-                    idConcept = nodeIdValue.getId();
-                }
-
-                if (idConcept == null || idConcept.isEmpty()) {
-                    continue;
-                }
-
-                // controle pour vérifier l'existance de l'Id
-                if (!persistence.isIdExiste(idConcept, thesaurusId)) {
+                idConcept = resolveExistingConceptId(nodeIdValue.getId());
+                if (idConcept == null) {
                     continue;
                 }
 
@@ -2307,18 +1808,11 @@ public class WorkshopBulkImportEngine implements Serializable {
                     total++;
                 }
                 progressStep++;
-                progress = progressStep / total * 100;
+                progress = progressPercent(progressStep, total);
             }
-            loadDone = false;
-            importDone = true;
-            BDDinsertEnable = false;
-            importInProgress = false;
-            uri = null;
-            info = "import réussi, notations importées = " + (int) total;
-            total = 0;
+            completeListImport("import réussi, notations importées = " + (int) total);
         } catch (Exception e) {
-            error.append(System.getProperty("line.separator"));
-            error.append(e.toString());
+            failListImport(e);
         } finally {
             showError();
         }
@@ -2329,26 +1823,10 @@ public class WorkshopBulkImportEngine implements Serializable {
      *
      */
     public void addRelatedList() {
-        if (thesaurusId == null || thesaurusId.isEmpty()) {
-            warning = "pas de thésaurus sélectionné";
+        if (!beginListImport(nodeIdValues != null && !nodeIdValues.isEmpty(), NO_VALUES_MSG, true)) {
             return;
         }
-        if (nodeIdValues == null || nodeIdValues.isEmpty()) {
-            warning = "pas de valeurs";
-            return;
-        }
-        if (importInProgress) {
-            return;
-        }
-        PrimeFaces.current().executeScript("PF('waitDialog').show();");
-        initError();
-        loadDone = false;
-        progressStep = 0;
-        progress = 0;
-        total = 0;
-        String idConcept = null;
         List<HierarchicalRelationship> relationsToSave = new ArrayList<>();
-        int total = 0;
 
         try {
             // Extraire tous les IDs depuis nodeIdValues
@@ -2380,19 +1858,6 @@ public class WorkshopBulkImportEngine implements Serializable {
                     continue;
                 }
 
-/*                idConcept = null;
-                switch (selectedIdentifierImportAlign.toLowerCase()) {
-                    case "ark":
-                        idConcept = persistence.getIdConceptFromArkId(nodeId, thesaurusId);
-                        break;
-                    case "handle":
-                        idConcept = persistence.getIdConceptFromHandleId(nodeId);
-                        break;
-                    case "identifier":
-                        idConcept = nodeId;
-                        break;
-                }
-*/
                 if (StringUtils.isBlank(nodeId)) {
                     continue;
                 }
@@ -2420,21 +1885,14 @@ public class WorkshopBulkImportEngine implements Serializable {
                 persistence.saveAll(relationsToSave);
             }
 
-            PrimeFaces.current().executeScript("PF('waitDialog').hide();");
-            loadDone = false;
-            importDone = true;
-            BDDinsertEnable = false;
-            importInProgress = false;
-            uri = null;
-            info = "import réussi, alignements importés = " + (int) total;
-            total = 0;
+            PrimeFaces.current().executeScript(WAIT_DIALOG_HIDE);
+            completeListImport("import réussi, alignements importés = " + (int) total);
         } catch (Exception e) {
-            error.append(System.getProperty("line.separator"));
-            error.append(e.toString());
+            failListImport(e);
         } finally {
             showError();
         }
-        PrimeFaces.current().executeScript("PF('waitDialog').hide();");
+        PrimeFaces.current().executeScript(WAIT_DIALOG_HIDE);
     }
 
     /**
@@ -2442,23 +1900,9 @@ public class WorkshopBulkImportEngine implements Serializable {
      *
      */
     public void addAlignmentList() {
-        if (thesaurusId == null || thesaurusId.isEmpty()) {
-            warning = "pas de thésaurus sélectionné";
+        if (!beginListImport(nodeAlignmentImports != null && !nodeAlignmentImports.isEmpty(), NO_VALUES_MSG, true)) {
             return;
         }
-        if (nodeAlignmentImports == null || nodeAlignmentImports.isEmpty()) {
-            warning = "pas de valeurs";
-            return;
-        }
-        if (importInProgress) {
-            return;
-        }
-        PrimeFaces.current().executeScript("PF('waitDialog').show();");
-        initError();
-        loadDone = false;
-        progressStep = 0;
-        progress = 0;
-        total = 0;
         String idConcept = null;
         NodeAlignment nodeAlignment = new NodeAlignment();
 
@@ -2470,21 +1914,8 @@ public class WorkshopBulkImportEngine implements Serializable {
                 if (nodeAlignmentImport.getLocalId() == null || nodeAlignmentImport.getLocalId().isEmpty()) {
                     continue;
                 }
-                if ("ark".equalsIgnoreCase(selectedIdentifierImportAlign)) {
-                    idConcept = persistence.getIdConceptFromArkId(nodeAlignmentImport.getLocalId(), thesaurusId);
-                }
-                if ("handle".equalsIgnoreCase(selectedIdentifierImportAlign)) {
-                    idConcept = persistence.getIdConceptFromHandleId(nodeAlignmentImport.getLocalId());
-                }
-                if ("identifier".equalsIgnoreCase(selectedIdentifierImportAlign)) {
-                    idConcept = nodeAlignmentImport.getLocalId();
-                }
-
-                if (idConcept == null || idConcept.isEmpty()) {
-                    continue;
-                }
-                // controle pour vérifier l'existance de l'Id
-                if (!persistence.isIdExiste(idConcept, thesaurusId)) {
+                idConcept = resolveExistingConceptId(nodeAlignmentImport.getLocalId());
+                if (idConcept == null) {
                     continue;
                 }
 
@@ -2507,21 +1938,14 @@ public class WorkshopBulkImportEngine implements Serializable {
                     }
                 }
             }
-            PrimeFaces.current().executeScript("PF('waitDialog').hide();");
-            loadDone = false;
-            importDone = true;
-            BDDinsertEnable = false;
-            importInProgress = false;
-            uri = null;
-            info = "import réussi, alignements importés = " + (int) total;
-            total = 0;
+            PrimeFaces.current().executeScript(WAIT_DIALOG_HIDE);
+            completeListImport("import réussi, alignements importés = " + (int) total);
         } catch (Exception e) {
-            error.append(System.getProperty("line.separator"));
-            error.append(e.toString());
+            failListImport(e);
         } finally {
             showError();
         }
-        PrimeFaces.current().executeScript("PF('waitDialog').hide();");
+        PrimeFaces.current().executeScript(WAIT_DIALOG_HIDE);
     }
 
     /**
@@ -2529,43 +1953,18 @@ public class WorkshopBulkImportEngine implements Serializable {
      *
      */
     public void deleteAlignmentFromCsv() {
-        if (thesaurusId == null || thesaurusId.isEmpty()) {
-            warning = "pas de thésaurus sélectionné";
+        if (!beginListImport(conceptObjects != null && !conceptObjects.isEmpty(), NO_VALUES_MSG)) {
             return;
         }
-        if (conceptObjects == null || conceptObjects.isEmpty()) {
-            warning = "pas de valeurs";
-            return;
-        }
-        if (importInProgress) {
-            return;
-        }
-        initError();
-        loadDone = false;
-        progressStep = 0;
-        progress = 0;
-        total = 0;
         String idConcept = null;
 
         try {
-            for (WorkshopCsvReader.ConceptObject conceptObject : conceptObjects) {
+            for (ThesaurusCsvConceptObject conceptObject : conceptObjects) {
                 if (conceptObject.getLocalId() == null || conceptObject.getLocalId().isEmpty()) {
                     continue;
                 }
-                if ("ark".equalsIgnoreCase(selectedIdentifierImportAlign)) {
-                    idConcept = persistence.getIdConceptFromArkId(conceptObject.getLocalId(), thesaurusId);
-                }
-                if ("handle".equalsIgnoreCase(selectedIdentifierImportAlign)) {
-                    idConcept = persistence.getIdConceptFromHandleId(conceptObject.getLocalId());
-                }
-                if ("identifier".equalsIgnoreCase(selectedIdentifierImportAlign)) {
-                    idConcept = conceptObject.getLocalId();
-                }
-                if (idConcept == null || idConcept.isEmpty()) {
-                    continue;
-                }
-                // controle pour vérifier l'existance de l'Id
-                if (!persistence.isIdExiste(idConcept, thesaurusId)) {
+                idConcept = resolveExistingConceptId(conceptObject.getLocalId());
+                if (idConcept == null) {
                     continue;
                 }
                 for (NodeIdValue nodeIdValue : conceptObject.getAlignments()) {
@@ -2574,16 +1973,9 @@ public class WorkshopBulkImportEngine implements Serializable {
                     }
                 }
             }
-            loadDone = false;
-            importDone = true;
-            BDDinsertEnable = false;
-            importInProgress = false;
-            uri = null;
-            info = "Suppression réussi, alignements supprimés = " + (int) total;
-            total = 0;
+            completeListImport("Suppression réussi, alignements supprimés = " + (int) total);
         } catch (Exception e) {
-            error.append(System.getProperty("line.separator"));
-            error.append(e.toString());
+            failListImport(e);
         } finally {
             showError();
         }
@@ -2603,7 +1995,7 @@ public class WorkshopBulkImportEngine implements Serializable {
     @Transactional
     public void addListConceptsToTheso(String idTheso) {
         if (conceptObjects == null || conceptObjects.isEmpty()) {
-            warning = "pas de valeurs";
+            warning = NO_VALUES_MSG;
             return;
         }
         if (importInProgress) {
@@ -2617,11 +2009,10 @@ public class WorkshopBulkImportEngine implements Serializable {
         // préparer les préférences du thésaurus, on récupérer les préférences du thésaurus en cours
         persistence.setFormatDate(formatDate);
         String idConcept;
-        String BT_temp;
         String idGroup;
         total = 0;
         try {
-            for (WorkshopCsvReader.ConceptObject conceptObject : conceptObjects) {
+            for (ThesaurusCsvConceptObject conceptObject : conceptObjects) {
                 if (conceptObject == null) {
                     continue;
                 }
@@ -2665,7 +2056,7 @@ public class WorkshopBulkImportEngine implements Serializable {
                                 continue;
                             }
                         }
-                        if (persistence.addConceptV2(idTheso, WorkshopCsvConceptMapper.toEditionModel(conceptObject), userId, "yyyy-MM-dd")) {
+                        if (persistence.addConceptV2(idTheso, WorkshopCsvConceptMapper.toEditionModel(conceptObject), userId, DATE_FORMAT)) {
                             total++;
                         }
                         break;
@@ -2678,16 +2069,100 @@ public class WorkshopBulkImportEngine implements Serializable {
             uri = null;
             info = "import réussi";
 
-            info = info + "\n" + "total = " + total;
+            info = info + "\n" + TOTAL_PREFIX + total;
             error.append(persistence.getMessage());
             
 
         } catch (Exception e) {
-            error.append(System.getProperty("line.separator"));
+            error.append(System.lineSeparator());
             error.append(e);
         } finally {
             showError();
         }
+    }
+
+    private static double progressPercent(int step, int denominator) {
+        if (denominator <= 0) {
+            return 0;
+        }
+        return step * 100.0 / denominator;
+    }
+
+
+    @FunctionalInterface
+    private interface CsvRead {
+        boolean apply(WorkshopCsvReader helper, Reader reader) throws Exception;
+    }
+
+    @FunctionalInterface
+    private interface CsvWork {
+        void run(WorkshopCsvReader helper) throws Exception;
+    }
+
+    private void loadCsvEvent(FileUploadEvent event, CsvWork work) {
+        initError();
+        if (!PhaseId.INVOKE_APPLICATION.equals(event.getPhaseId())) {
+            event.setPhaseId(PhaseId.INVOKE_APPLICATION);
+            event.queue();
+            return;
+        }
+        WorkshopCsvReader helper = new WorkshopCsvReader(delimiterCsv);
+        try {
+            work.run(helper);
+        } catch (Exception e) {
+            haveError = true;
+            error.append(System.lineSeparator());
+            error.append(e.toString());
+        } finally {
+            showError();
+            PrimeFaces.current().executeScript(WAIT_DIALOG_HIDE);
+        }
+    }
+
+    private void loadCsvAfterLangs(FileUploadEvent event, CsvRead secondPass, boolean concepts) {
+        loadCsvEvent(event, helper -> {
+            try (Reader reader1 = new InputStreamReader(event.getFile().getInputStream())) {
+                if (!helper.setLangs(reader1)) {
+                    error.append(helper.getMessage());
+                    return;
+                }
+            }
+            try (Reader reader2 = new InputStreamReader(event.getFile().getInputStream())) {
+                if (!secondPass.apply(helper, reader2)) {
+                    error.append(helper.getMessage());
+                }
+                applyCsvRead(helper, concepts);
+            }
+        });
+    }
+
+    private void loadSingleCsv(FileUploadEvent event, CsvRead read, boolean concepts) {
+        loadCsvEvent(event, helper -> {
+            try (Reader reader = new InputStreamReader(event.getFile().getInputStream())) {
+                if (!read.apply(helper, reader)) {
+                    error.append(helper.getMessage());
+                }
+                applyCsvRead(helper, concepts);
+            }
+        });
+    }
+
+    private void acceptLoadedList(List<?> loaded) {
+        if (loaded == null) {
+            return;
+        }
+        if (loaded.isEmpty()) {
+            haveError = true;
+            error.append(System.lineSeparator());
+            error.append("La lecture a échouée, vérifiez le séparateur des colonnes !!");
+            warning = "";
+            return;
+        }
+        total = loaded.size();
+        uri = "";
+        loadDone = true;
+        BDDinsertEnable = true;
+        info = FILE_LOADED_MSG;
     }
 
     private void showError() {
@@ -2706,7 +2181,7 @@ public class WorkshopBulkImportEngine implements Serializable {
     private void initError() {
         haveError = false;
         info = "";
-        error = new StringBuffer();
+        error = new StringBuilder();
         warning = "";
     }
 

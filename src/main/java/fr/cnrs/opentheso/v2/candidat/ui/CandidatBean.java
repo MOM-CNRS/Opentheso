@@ -54,18 +54,23 @@ import org.apache.commons.lang3.StringUtils;
 @Named(value = "v2CandidatBean")
 public class CandidatBean implements Serializable {
 
+    private static final String TAB_VIEW_CANDIDAT = "tabViewCandidat";
+    private static final String MSG_RESULT_FOUND = "candidat.result_found";
+    private static final String MSG_SAVE_9 = "candidat.save.msg9";
+
+
     @Value("${settings.workLanguage:fr}")
     private String workLanguage;
 
-    private final UserSession userSession;
-    private final CandidatAccessPolicy candidatAccessPolicy;
-    private final ThesaurusContext thesaurusContext;
-    private final CandidatReadService candidatReadService;
-    private final CandidatMutationService candidatMutationService;
-    private final CandidatAutoAlignmentBean candidatAutoAlignmentBean;
-    private final CandidatAlignmentBean candidatAlignmentBean;
-    private final V2LocaleBean localeBean;
-    private final PreferencesJpaRepository preferencesJpaRepository;
+    private final transient UserSession userSession;
+    private final transient CandidatAccessPolicy candidatAccessPolicy;
+    private final transient ThesaurusContext thesaurusContext;
+    private final transient CandidatReadService candidatReadService;
+    private final transient CandidatMutationService candidatMutationService;
+    private final transient CandidatAutoAlignmentBean candidatAutoAlignmentBean;
+    private final transient CandidatAlignmentBean candidatAlignmentBean;
+    private final transient V2LocaleBean localeBean;
+    private final transient PreferencesJpaRepository preferencesJpaRepository;
 
     private boolean isListCandidatsActivate, isNewCandidatActivate, isShowCandidatActivate, isRejectCandidatsActivate,
             isAcceptedCandidatsActivate, isExportViewActivate, isImportViewActivate, myCandidatsSelected1, myCandidatsSelected2,
@@ -229,11 +234,10 @@ public class CandidatBean implements Serializable {
         } else {
             candidatList = candidatReadService.loadByStatus(resolveThesaurusId(), getIdLang(), CandidatStatusCode.PENDING);
         }
-        MessageUtils.showInformationMessage(new StringBuffer().append(candidatList.size()).append(" ")
-                .append(localeBean.getMsg("candidat.result_found")).toString());
+        MessageUtils.showInformationMessage(candidatList.size() + " " + localeBean.getMsg(MSG_RESULT_FOUND));
     }
 
-    public void onTabChange(TabChangeEvent event) {
+    public void onTabChange(TabChangeEvent<?> event) {
         listSelected = false;
         selectedCandidates = List.of();
 
@@ -294,16 +298,14 @@ public class CandidatBean implements Serializable {
         } else {
             rejetCadidat = candidatReadService.loadByStatus(resolveThesaurusId(), getIdLang(), CandidatStatusCode.REJECTED);
         }
-        MessageUtils.showInformationMessage(new StringBuffer().append(rejetCadidat.size()).append(" ")
-                .append(localeBean.getMsg("candidat.result_found")).toString());
+        MessageUtils.showInformationMessage(rejetCadidat.size() + " " + localeBean.getMsg(MSG_RESULT_FOUND));
     }
 
     public void searchRejectCandByTermeAndAuteur() {
         rejetCadidat = candidatReadService.searchByStatus(
                 resolveThesaurusId(), getIdLang(), CandidatStatusCode.REJECTED, searchValue3);
         tabViewIndexSelected = 2;
-        MessageUtils.showInformationMessage(new StringBuffer().append(rejetCadidat.size()).append(" ")
-                .append(localeBean.getMsg("candidat.result_found")).toString());
+        MessageUtils.showInformationMessage(rejetCadidat.size() + " " + localeBean.getMsg(MSG_RESULT_FOUND));
     }
 
     public void selectMyAcceptedCandidats() {
@@ -316,29 +318,21 @@ public class CandidatBean implements Serializable {
             acceptedCadidat = candidatReadService.loadByStatus(resolveThesaurusId(), getIdLang(), CandidatStatusCode.ACCEPTED);
         }
 
-        MessageUtils.showInformationMessage(new StringBuffer().append(acceptedCadidat.size()).append(" ")
-                .append(localeBean.getMsg("candidat.result_found")).toString());
+        MessageUtils.showInformationMessage(acceptedCadidat.size() + " " + localeBean.getMsg(MSG_RESULT_FOUND));
     }
 
     public void searchAcceptedCandByTermeAndAuteur() {
         acceptedCadidat = candidatReadService.searchByStatus(
                 resolveThesaurusId(), getIdLang(), CandidatStatusCode.ACCEPTED, searchValue2);
         tabViewIndexSelected = 1;
-        MessageUtils.showInformationMessage(new StringBuffer().append(acceptedCadidat.size()).append(" ")
-                .append(localeBean.getMsg("candidat.result_found")).toString());
-    }
-
-    private boolean candidatCheck(CandidatDto candidat, String searchValue) {
-        return (StringUtils.isNotEmpty(candidat.getNomPref()) && candidat.getNomPref().contains(searchValue))
-                || (StringUtils.isNotEmpty(candidat.getUser()) && candidat.getUser().contains(searchValue));
+        MessageUtils.showInformationMessage(acceptedCadidat.size() + " " + localeBean.getMsg(MSG_RESULT_FOUND));
     }
 
     public void searchByTermeAndAuteur() {
         candidatList = candidatReadService.searchByStatus(
                 resolveThesaurusId(), getIdLang(), CandidatStatusCode.PENDING, searchValue1);
         tabViewIndexSelected = 0;
-        MessageUtils.showInformationMessage(new StringBuffer().append(candidatList.size()).append(" ")
-                .append(localeBean.getMsg("candidat.result_found")).toString());
+        MessageUtils.showInformationMessage(candidatList.size() + " " + localeBean.getMsg(MSG_RESULT_FOUND));
     }
 
     public void deleteAlignment(NodeAlignment nodeAlignment) {
@@ -351,7 +345,7 @@ public class CandidatBean implements Serializable {
         candidatSelected.setAlignments(candidatMutationService.loadAlignments(candidatSelected.getIdConcepte(), resolveThesaurusId()));
 
         MessageUtils.showInformationMessage("Alignement supprimé avec succès");
-        PrimeFaces.current().ajax().update("tabViewCandidat");
+        PrimeFaces.current().ajax().update(TAB_VIEW_CANDIDAT);
     }
 
     public void showRejectCandidatSelected(CandidatDto candidatDto) {
@@ -359,7 +353,7 @@ public class CandidatBean implements Serializable {
         tabViewIndexSelected = 2;
 
         if (StringUtils.isEmpty(resolveThesaurusId())) {
-            MessageUtils.showWarnMessage(localeBean.getMsg("candidat.save.msg9"));
+            MessageUtils.showWarnMessage(localeBean.getMsg(MSG_SAVE_9));
             return;
         }
 
@@ -372,7 +366,7 @@ public class CandidatBean implements Serializable {
         tabViewIndexSelected = 1;
 
         if (StringUtils.isEmpty(resolveThesaurusId())) {
-            MessageUtils.showWarnMessage(localeBean.getMsg("candidat.save.msg9"));
+            MessageUtils.showWarnMessage(localeBean.getMsg(MSG_SAVE_9));
             return;
         }
 
@@ -393,7 +387,7 @@ public class CandidatBean implements Serializable {
         tabViewIndexSelected = 0;
 
         if (StringUtils.isEmpty(resolveThesaurusId())) {
-            MessageUtils.showWarnMessage(localeBean.getMsg("candidat.save.msg9"));
+            MessageUtils.showWarnMessage(localeBean.getMsg(MSG_SAVE_9));
             return;
         }
 
@@ -577,7 +571,7 @@ public class CandidatBean implements Serializable {
         }
 
         MessageUtils.showInformationMessage("Vote enregistré");
-        PrimeFaces.current().ajax().update("tabViewCandidat");
+        PrimeFaces.current().ajax().update(TAB_VIEW_CANDIDAT);
     }
 
     public void addNoteVote(NodeNote nodeNote) {
@@ -640,7 +634,7 @@ public class CandidatBean implements Serializable {
     public void initialNewCandidat() {
 
         if (StringUtils.isEmpty(resolveThesaurusId())) {
-            MessageUtils.showWarnMessage(localeBean.getMsg("candidat.save.msg9"));
+            MessageUtils.showWarnMessage(localeBean.getMsg(MSG_SAVE_9));
             return;
         }
 
@@ -736,7 +730,7 @@ public class CandidatBean implements Serializable {
                     modifiableList.add(employePour);
                     candidatSelected.setEmployePourList(modifiableList);
                     employePour = "";
-                    PrimeFaces.current().ajax().update("tabViewCandidat");
+                    PrimeFaces.current().ajax().update(TAB_VIEW_CANDIDAT);
                     MessageUtils.showInformationMessage("Synonyme ajouté avec succès !");
                 }
             }
@@ -822,7 +816,7 @@ public class CandidatBean implements Serializable {
         var elementAdded = allCollections.stream().filter(element -> event.getObject().getId().equalsIgnoreCase(element.getId())).findFirst();
         if (elementAdded.isPresent()) {
             candidatSelected.getCollections().add(elementAdded.get());
-            PrimeFaces.current().ajax().update("tabViewCandidat");
+            PrimeFaces.current().ajax().update(TAB_VIEW_CANDIDAT);
         }
     }
 
@@ -910,7 +904,7 @@ public class CandidatBean implements Serializable {
                 resolveThesaurusId()));
 
         MessageUtils.showInformationMessage("Alignement supprimé avec succès !");
-        PrimeFaces.current().ajax().update("tabViewCandidat");
+        PrimeFaces.current().ajax().update(TAB_VIEW_CANDIDAT);
     }
 
     public void updateAlignement() {
@@ -927,7 +921,7 @@ public class CandidatBean implements Serializable {
         candidatSelected.setAlignments(candidatMutationService.loadAlignments(candidatSelected.getIdConcepte(),
                 resolveThesaurusId()));
         MessageUtils.showInformationMessage("Alignement mise à jour avec succès !");
-        PrimeFaces.current().ajax().update("tabViewCandidat");
+        PrimeFaces.current().ajax().update(TAB_VIEW_CANDIDAT);
     }
 
     public String getCreatedByBtnTitle() {
@@ -969,7 +963,7 @@ public class CandidatBean implements Serializable {
         candidatAutoAlignmentBean.addAlignment(candidatSelected.getIdConcepte(), requireUserId());
         MessageUtils.showInformationMessage("Alignement ajouté avec sucée !");
         candidatReadService.loadDetails(candidatSelected, resolveThesaurusId());
-        PrimeFaces.current().ajax().update("tabViewCandidat");
+        PrimeFaces.current().ajax().update(TAB_VIEW_CANDIDAT);
     }
 
     public String getNoteType(String typeCode) {

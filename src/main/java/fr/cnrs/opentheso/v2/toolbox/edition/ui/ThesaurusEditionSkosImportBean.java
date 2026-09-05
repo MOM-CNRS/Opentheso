@@ -1,7 +1,6 @@
 package fr.cnrs.opentheso.v2.toolbox.edition.ui;
 
 import fr.cnrs.opentheso.models.skosapi.SKOSXmlDocument;
-import fr.cnrs.opentheso.services.PreferenceService;
 import fr.cnrs.opentheso.utils.MessageUtils;
 import fr.cnrs.opentheso.v2.shared.persistence.V2ThesaurusPreferencesProvider;
 import fr.cnrs.opentheso.v2.shared.ui.UserSession;
@@ -36,11 +35,11 @@ import java.util.List;
 @RequiredArgsConstructor
 public class ThesaurusEditionSkosImportBean implements Serializable {
 
-    private final ThesaurusEditionSkosImportService thesaurusEditionSkosImportService;
-    private final NewThesaurusService newThesaurusService;
-    private final UserSession userSession;
-    private final ToolboxAccessPolicy toolboxAccessPolicy;
-    private final V2ThesaurusPreferencesProvider v2ThesaurusPreferencesProvider;
+    private final transient ThesaurusEditionSkosImportService thesaurusEditionSkosImportService;
+    private final transient NewThesaurusService newThesaurusService;
+    private final transient UserSession userSession;
+    private final transient ToolboxAccessPolicy toolboxAccessPolicy;
+    private final transient V2ThesaurusPreferencesProvider v2ThesaurusPreferencesProvider;
 
     private int typeImport;
     private int total;
@@ -120,7 +119,7 @@ public class ThesaurusEditionSkosImportBean implements Serializable {
             return;
         }
 
-        var error = new StringBuffer();
+        var error = new StringBuilder();
         existingThesaurusDetected = false;
         existingThesaurusId = null;
         importAsMaster = false;

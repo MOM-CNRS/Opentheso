@@ -18,8 +18,7 @@ public class ProjectLookupService {
 
     @Transactional(readOnly = true)
     public ProjectEntity requireEntity(int projectId) {
-        return projectRepository.findById(projectId)
-                .orElseThrow(() -> new ProjectNotFoundException(projectId));
+        return doRequireEntity(projectId);
     }
 
     /**
@@ -28,10 +27,15 @@ public class ProjectLookupService {
      */
     @Transactional(readOnly = true)
     public ProjectEntity requireAccessibleProject(int userId, boolean superAdmin, int projectId) {
-        ProjectEntity entity = requireEntity(projectId);
+        ProjectEntity entity = doRequireEntity(projectId);
         if (superAdmin || projectAdminQueryRepository.isProjectAccessible(userId, projectId)) {
             return entity;
         }
         throw new ProjectAccessDeniedException();
+    }
+
+    private ProjectEntity doRequireEntity(int projectId) {
+        return projectRepository.findById(projectId)
+                .orElseThrow(() -> new ProjectNotFoundException(projectId));
     }
 }

@@ -5,7 +5,6 @@ import fr.cnrs.opentheso.entites.Preferences;
 import fr.cnrs.opentheso.repositories.ConceptRepository;
 import fr.cnrs.opentheso.v2.sync.model.SyncBatchRequest;
 import fr.cnrs.opentheso.v2.sync.model.SyncBatchResponse;
-import fr.cnrs.opentheso.v2.sync.model.SyncConceptOutcome;
 import fr.cnrs.opentheso.v2.sync.model.SyncConceptPayload;
 import fr.cnrs.opentheso.v2.sync.model.SyncConceptResult;
 import fr.cnrs.opentheso.v2.toolbox.exception.InvalidToolboxDataException;
@@ -18,6 +17,7 @@ import org.mockito.Mock;
 import org.mockito.junit.jupiter.MockitoExtension;
 
 import java.time.LocalDateTime;
+import java.time.Month;
 import java.util.Date;
 import java.util.List;
 import java.util.Optional;
@@ -77,7 +77,7 @@ class ThesaurusSyncSendServiceTest {
 
     @Test
     void prepare_countsDirtyConceptsSinceLastSync() {
-        LocalDateTime lastSync = LocalDateTime.of(2026, 1, 1, 10, 0);
+        LocalDateTime lastSync = LocalDateTime.of(2026, Month.JANUARY, 1, 10, 0);
         when(toolboxPreferencePersistence.findPreferences("TH1")).thenReturn(slavePrefs(lastSync));
         when(conceptRepository.findConceptIdsChangedSince(eq("TH1"), any(Date.class)))
                 .thenReturn(List.of("C1", "C2"));
@@ -132,7 +132,7 @@ class ThesaurusSyncSendServiceTest {
 
     @Test
     void runSync_returnsEmptyWhenNoConcepts() {
-        when(toolboxPreferencePersistence.findPreferences("TH1")).thenReturn(slavePrefs(LocalDateTime.now()));
+        when(toolboxPreferencePersistence.findPreferences("TH1")).thenReturn(slavePrefs(LocalDateTime.of(2024, Month.JUNE, 15, 12, 0)));
         when(conceptRepository.findConceptIdsChangedSince(eq("TH1"), any(Date.class))).thenReturn(List.of());
 
         SyncBatchResponse response = service.runSync("TH1", "a", "a@b.fr", "c", true, null);
@@ -246,7 +246,7 @@ class ThesaurusSyncSendServiceTest {
                         .masterServerUrl("https://master.example")
                         .masterThesaurusId("TH_MASTER")
                         .masterApiKey("api-key")
-                        .lastSyncAt(LocalDateTime.now())
+                        .lastSyncAt(LocalDateTime.of(2024, Month.JUNE, 15, 12, 0))
                         .build());
         when(conceptRepository.findConceptIdsChangedSince(eq("TH1"), any(Date.class)))
                 .thenReturn(List.of());
@@ -257,7 +257,7 @@ class ThesaurusSyncSendServiceTest {
     @Test
     void runSync_dirtyMode_postsOnlyConceptsChangedSinceLastSync() {
         when(toolboxPreferencePersistence.findPreferences("TH1"))
-                .thenReturn(slavePrefs(LocalDateTime.of(2026, 1, 1, 10, 0)));
+                .thenReturn(slavePrefs(LocalDateTime.of(2026, Month.JANUARY, 1, 10, 0)));
         when(conceptRepository.findConceptIdsChangedSince(eq("TH1"), any(Date.class)))
                 .thenReturn(List.of("C9"));
         when(payloadBuilder.build("TH1", "C9", "fr")).thenReturn(Optional.of(

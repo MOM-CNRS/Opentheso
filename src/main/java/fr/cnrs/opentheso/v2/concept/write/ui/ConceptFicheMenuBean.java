@@ -22,19 +22,21 @@ import java.io.Serializable;
 @RequiredArgsConstructor
 public class ConceptFicheMenuBean implements Serializable {
 
-    private final ThesaurusViewBean thesaurusViewBean;
-    private final ThesaurusBrowseBean thesaurusBrowseBean;
-    private final ConceptSelectionContext conceptSelectionContext;
-    private final ConceptLifecycleEditorBean lifecycleEditorBean;
-    private final ConceptTreeDragDropBean treeDragDropBean;
-    private final ConceptMaintenanceEditorBean maintenanceEditorBean;
-    private final ConceptIdentifierEditorBean identifierEditorBean;
-    private final FacetDetailEditorBean facetDetailEditorBean;
-    private final ConceptAttributeEditorBean attributeEditorBean;
-    private final ConceptTypeManagerBean typeManagerBean;
-    private final ConceptTransferEditorBean transferEditorBean;
-    private final ConceptCopyBetweenThesaurusBean copyBetweenThesaurusBean;
-    private final ConceptListCsvImportBean listCsvImportBean;
+    private static final String DIALOG_PASTE = "cvDlgPaste";
+
+    private final transient ThesaurusViewBean thesaurusViewBean;
+    private final transient ThesaurusBrowseBean thesaurusBrowseBean;
+    private final transient ConceptSelectionContext conceptSelectionContext;
+    private final transient ConceptLifecycleEditorBean lifecycleEditorBean;
+    private final transient ConceptTreeDragDropBean treeDragDropBean;
+    private final transient ConceptMaintenanceEditorBean maintenanceEditorBean;
+    private final transient ConceptIdentifierEditorBean identifierEditorBean;
+    private final transient FacetDetailEditorBean facetDetailEditorBean;
+    private final transient ConceptAttributeEditorBean attributeEditorBean;
+    private final transient ConceptTypeManagerBean typeManagerBean;
+    private final transient ConceptTransferEditorBean transferEditorBean;
+    private final transient ConceptCopyBetweenThesaurusBean copyBetweenThesaurusBean;
+    private final transient ConceptListCsvImportBean listCsvImportBean;
 
     private String dialogToReopen;
 
@@ -45,17 +47,14 @@ public class ConceptFicheMenuBean implements Serializable {
 
     public void submitAddChild() {
         lifecycleEditorBean.submitAddChild();
-        openDialog("cvDlgAddNt");
     }
 
     public void submitAddChildForced() {
         lifecycleEditorBean.submitAddChildForced();
-        openDialog("cvDlgAddNt");
     }
 
     public void cancelAddChildDuplicate() {
         lifecycleEditorBean.cancelDuplicate();
-        openDialog("cvDlgAddNt");
     }
 
     public void afterAddChild() {
@@ -119,12 +118,10 @@ public class ConceptFicheMenuBean implements Serializable {
 
     public void selectConceptType(String code) {
         attributeEditorBean.selectConceptType(code);
-        openDialog("cvDlgEditType");
     }
 
     public void submitEditConceptType() {
         attributeEditorBean.submitUpdateConceptType();
-        openDialog("cvDlgEditType");
     }
 
     public void afterEditConceptType() {
@@ -143,27 +140,22 @@ public class ConceptFicheMenuBean implements Serializable {
 
     public void applyConceptType(fr.cnrs.opentheso.models.concept.NodeConceptType type) {
         typeManagerBean.applyChange(type);
-        openDialog("cvDlgManageTypes");
     }
 
     public void addConceptType() {
         typeManagerBean.addNewConceptType();
-        openDialog("cvDlgManageTypes");
     }
 
     public void prepareDeleteConceptType(fr.cnrs.opentheso.models.concept.NodeConceptType type) {
         typeManagerBean.prepareDelete(type);
-        openDialog("cvDlgManageTypes");
     }
 
     public void confirmDeleteConceptType() {
         typeManagerBean.deleteCustomRelationship();
-        openDialog("cvDlgManageTypes");
     }
 
     public void cancelDeleteConceptType() {
         typeManagerBean.cancelDelete();
-        openDialog("cvDlgManageTypes");
     }
 
     public void afterManageConceptTypes() {
@@ -196,7 +188,7 @@ public class ConceptFicheMenuBean implements Serializable {
     public void pasteUnder() {
         treeDragDropBean.pasteUnderCurrentConcept();
         if (StringUtils.isNotBlank(treeDragDropBean.getDragConceptId())) {
-            openDialog("cvDlgPaste");
+            openDialog(DIALOG_PASTE);
             return;
         }
         closeDialogs();
@@ -205,7 +197,7 @@ public class ConceptFicheMenuBean implements Serializable {
     public void pasteAtRoot() {
         treeDragDropBean.pasteAtRoot();
         if (StringUtils.isNotBlank(treeDragDropBean.getDragConceptId())) {
-            openDialog("cvDlgPaste");
+            openDialog(DIALOG_PASTE);
             return;
         }
         closeDialogs();
@@ -218,7 +210,7 @@ public class ConceptFicheMenuBean implements Serializable {
             if (StringUtils.isNotBlank(dragId)) {
                 thesaurusViewBean.openTreeNode(dragId, "concept");
             }
-            openDialog("cvDlgPaste");
+            openDialog(DIALOG_PASTE);
             return;
         }
         closeDialogs();
@@ -243,7 +235,6 @@ public class ConceptFicheMenuBean implements Serializable {
 
     public void submitDelete() {
         lifecycleEditorBean.submitDelete();
-        openDialog("cvDlgDelete");
     }
 
     public void afterDelete() {
@@ -322,13 +313,10 @@ public class ConceptFicheMenuBean implements Serializable {
 
     public void submitGenerateArk() {
         identifierEditorBean.submitGenerateArk();
-        openDialog("cvDlgArkGen");
     }
 
     public void afterGenerateArk() {
-        identifierEditorBean.setFlashMessage(null);
-        identifierEditorBean.setFlashToken(null);
-        identifierEditorBean.setArkRunState("");
+        identifierEditorBean.finishAfterClose();
         closeDialogs();
         refreshConsult();
     }
@@ -351,7 +339,6 @@ public class ConceptFicheMenuBean implements Serializable {
 
     public void submitGenerateMissingArk() {
         identifierEditorBean.submitGenerateMissingArk();
-        openDialog("cvDlgArkMissing");
     }
 
     public void prepareGenerateArkBranch() {
@@ -361,7 +348,6 @@ public class ConceptFicheMenuBean implements Serializable {
 
     public void submitGenerateArkBranch() {
         identifierEditorBean.submitGenerateArkForBranch();
-        openDialog("cvDlgArkBranch");
     }
 
     public void prepareGenerateAllArk() {
@@ -371,7 +357,6 @@ public class ConceptFicheMenuBean implements Serializable {
 
     public void submitGenerateAllArk() {
         identifierEditorBean.submitGenerateAllArk();
-        openDialog("cvDlgArkAll");
     }
 
     public void prepareGenerateHandle() {
@@ -426,18 +411,14 @@ public class ConceptFicheMenuBean implements Serializable {
 
     public void loadImportCsv() {
         listCsvImportBean.loadFromUpload();
-        openDialog("cvDlgImportCsv");
     }
 
     public void submitImportCsv() {
         listCsvImportBean.importUnderCurrentConcept();
-        openDialog("cvDlgImportCsv");
     }
 
     public void afterImportCsv() {
-        listCsvImportBean.setFlashMessage(null);
-        listCsvImportBean.setFlashToken(null);
-        listCsvImportBean.setRunState("");
+        listCsvImportBean.finishAfterClose();
         closeDialogs();
         thesaurusViewBean.reloadTree();
         refreshConsult();
@@ -450,13 +431,10 @@ public class ConceptFicheMenuBean implements Serializable {
 
     public void submitRepairLoopedRelationships() {
         maintenanceEditorBean.submitRepairLoopedRelationships();
-        openDialog("cvDlgRepairLoop");
     }
 
     public void afterRepairLoopedRelationships() {
-        maintenanceEditorBean.setFlashMessage(null);
-        maintenanceEditorBean.setFlashToken(null);
-        maintenanceEditorBean.setRunState("");
+        maintenanceEditorBean.finishAfterClose();
         closeDialogs();
         thesaurusViewBean.reloadTree();
         refreshConsult();

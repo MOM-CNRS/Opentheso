@@ -14,6 +14,7 @@ import org.mockito.Mock;
 import org.mockito.junit.jupiter.MockitoExtension;
 
 import java.time.LocalDateTime;
+import java.time.Month;
 import java.util.Date;
 import java.util.List;
 
@@ -51,7 +52,7 @@ class ToolboxControllerTest {
         when(userProfileService.getProfile(2)).thenReturn(new UserProfile(
                 2, "admin", "a@b.c", false, false, false, null, true));
         when(editionThesaurusService.listAdminThesauri(2, false)).thenReturn(List.of(
-                new EditionThesaurusSummary("TH1", "Test", false, LocalDateTime.now())
+                new EditionThesaurusSummary("TH1", "Test", false, LocalDateTime.of(2024, Month.JUNE, 15, 12, 0))
         ));
 
         var response = controller.listEditionThesauri("api-key", null);
@@ -64,7 +65,7 @@ class ToolboxControllerTest {
     @Test
     void statisticsSummary_returnsCounts() {
         when(thesaurusStatisticsService.loadSummary("TH1")).thenReturn(
-                new StatisticsSummary(new EditionStatistics(10, 2, 1), new Date()));
+                new StatisticsSummary(new EditionStatistics(10, 2, 1), Date.from(java.time.Instant.parse("2024-06-15T12:00:00Z"))));
 
         var response = controller.statisticsSummary("api-key", null, "TH1");
 

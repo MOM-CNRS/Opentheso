@@ -23,9 +23,9 @@ import java.util.List;
 @Named("v2NewThesaurusBean")
 public class NewThesaurusBean implements Serializable {
 
-    private final UserSession userSession;
-    private final ToolboxAccessPolicy toolboxAccessPolicy;
-    private final NewThesaurusService newThesaurusService;
+    private final transient UserSession userSession;
+    private final transient ToolboxAccessPolicy toolboxAccessPolicy;
+    private final transient NewThesaurusService newThesaurusService;
 
     private NewThesaurusEditor editor = NewThesaurusEditor.empty();
     private List<LanguageOption> languages = Collections.emptyList();

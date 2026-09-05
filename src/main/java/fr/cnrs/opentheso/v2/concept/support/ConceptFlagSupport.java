@@ -7,6 +7,8 @@ import java.io.InputStream;
 
 public final class ConceptFlagSupport {
 
+    private static final String NO_FLAG = "/resources/img/flag/noflag.png";
+
     private ConceptFlagSupport() {
     }
 
@@ -18,7 +20,7 @@ public final class ConceptFlagSupport {
         var externalContext = facesContext.getExternalContext();
         var contextPath = externalContext.getRequestContextPath();
         if (StringUtils.isBlank(codeFlag)) {
-            return contextPath + "/resources/img/flag/noflag.png";
+            return contextPath + NO_FLAG;
         }
         String resourcePath = "/resources/img/flag/" + codeFlag.toLowerCase() + ".png";
         try (InputStream inputStream = externalContext.getResourceAsStream(resourcePath)) {
@@ -27,12 +29,12 @@ public final class ConceptFlagSupport {
             }
         } catch (Exception ignored) {
         }
-        return contextPath + "/resources/img/flag/noflag.png";
+        return contextPath + NO_FLAG;
     }
 
     private static String defaultFlagPath(String codeFlag) {
         if (StringUtils.isBlank(codeFlag)) {
-            return "/resources/img/flag/noflag.png";
+            return NO_FLAG;
         }
         return "/resources/img/flag/" + codeFlag.toLowerCase() + ".png";
     }

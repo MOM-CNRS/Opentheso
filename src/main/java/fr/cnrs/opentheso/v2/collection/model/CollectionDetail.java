@@ -1,5 +1,6 @@
 package fr.cnrs.opentheso.v2.collection.model;
 
+import java.io.Serializable;
 import java.util.List;
 
 /**
@@ -21,7 +22,7 @@ public record CollectionDetail(
         List<CollectionTranslationItem> translations,
         List<CollectionNoteItem> notes,
         List<CollectionMemberItem> members
-) {
+) implements Serializable {
 
     public static CollectionDetail empty() {
         return new CollectionDetail(

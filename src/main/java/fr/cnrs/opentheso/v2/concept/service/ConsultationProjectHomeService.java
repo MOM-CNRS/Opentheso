@@ -48,10 +48,13 @@ public class ConsultationProjectHomeService {
     }
 
     @Transactional(readOnly = true)
+    public Optional<ProjectDescription> findDescription(int projectId, String lang) {
+        return doFindDescription(projectId, lang);
+    }
+
+    @Transactional(readOnly = true)
     public List<ConsultationProjectLangOption> listDescriptionLanguages(int projectId) {
-        return languageRepository.findLanguagesByProject(String.valueOf(projectId)).stream()
-                .map(this::toLangOption)
-                .toList();
+        return doListDescriptionLanguages(projectId);
     }
 
     @Transactional(readOnly = true)
@@ -62,25 +65,17 @@ public class ConsultationProjectHomeService {
     }
 
     @Transactional(readOnly = true)
-    public Optional<ProjectDescription> findDescription(int projectId, String lang) {
-        if (StringUtils.isBlank(lang)) {
-            return Optional.empty();
-        }
-        return projectDescriptionRepository.findByIdGroupAndLang(String.valueOf(projectId), lang);
-    }
-
-    @Transactional(readOnly = true)
     public Optional<ProjectDescription> resolveDescription(int projectId, String preferredLang) {
         String lang = StringUtils.isNotBlank(preferredLang) ? preferredLang : defaultWorkLanguage;
-        Optional<ProjectDescription> preferred = findDescription(projectId, lang);
+        Optional<ProjectDescription> preferred = doFindDescription(projectId, lang);
         if (preferred.isPresent()) {
             return preferred;
         }
-        List<ConsultationProjectLangOption> langs = listDescriptionLanguages(projectId);
+        List<ConsultationProjectLangOption> langs = doListDescriptionLanguages(projectId);
         if (langs.isEmpty()) {
             return Optional.empty();
         }
-        return findDescription(projectId, langs.get(0).iso6391());
+        return doFindDescription(projectId, langs.get(0).iso6391());
     }
 
     @Transactional
@@ -125,5 +120,18 @@ public class ConsultationProjectHomeService {
                 language.getEnglishName(),
                 language.getCodePays()
         );
+    }
+
+    private List<ConsultationProjectLangOption> doListDescriptionLanguages(int projectId) {
+        return languageRepository.findLanguagesByProject(String.valueOf(projectId)).stream()
+                .map(this::toLangOption)
+                .toList();
+    }
+
+    private Optional<ProjectDescription> doFindDescription(int projectId, String lang) {
+        if (StringUtils.isBlank(lang)) {
+            return Optional.empty();
+        }
+        return projectDescriptionRepository.findByIdGroupAndLang(String.valueOf(projectId), lang);
     }
 }

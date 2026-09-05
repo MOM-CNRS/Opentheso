@@ -44,11 +44,11 @@ public class ConceptRelationBlockEditorBean implements Serializable {
 
     static final String FICHE_CARD = "relations";
 
-    private final ThesaurusViewBean thesaurusViewBean;
-    private final ConceptRelationMutationService conceptRelationMutationService;
-    private final ConceptWritePolicy conceptWritePolicy;
-    private final UserSession userSession;
-    private final ConceptSelectionContext conceptSelectionContext;
+    private final transient ThesaurusViewBean thesaurusViewBean;
+    private final transient ConceptRelationMutationService conceptRelationMutationService;
+    private final transient ConceptWritePolicy conceptWritePolicy;
+    private final transient UserSession userSession;
+    private final transient ConceptSelectionContext conceptSelectionContext;
 
     @Getter(AccessLevel.NONE)
     private boolean editing;
@@ -142,12 +142,12 @@ public class ConceptRelationBlockEditorBean implements Serializable {
         }
         Integer userId = userSession.getCurrentUserId();
         if (userId == null) {
-            errorMessage = "Action non autorisée";
+            errorMessage = WriteUiMessages.UNAUTHORIZED_FALLBACK;
             return;
         }
         ConceptDetail current = thesaurusViewBean.getSelectedConcept();
         if (current == null || current.getSummary() == null) {
-            errorMessage = "Action non autorisée";
+            errorMessage = WriteUiMessages.UNAUTHORIZED_FALLBACK;
             return;
         }
 
@@ -159,14 +159,7 @@ public class ConceptRelationBlockEditorBean implements Serializable {
         Set<String> broaderIds = selectedIds(selectedBroader);
         Set<String> narrowerIds = selectedIds(selectedNarrower);
         Set<String> relatedIds = selectedIds(selectedRelated);
-        if (hasOverlap(broaderIds, narrowerIds) || hasOverlap(broaderIds, relatedIds)
-                || hasOverlap(narrowerIds, relatedIds)) {
-            errorMessage = "Un concept ne peut pas avoir plusieurs types de relation à la fois.";
-            return;
-        }
-        String selfId = normalizeId(conceptId);
-        if (broaderIds.contains(selfId) || narrowerIds.contains(selfId) || relatedIds.contains(selfId)) {
-            errorMessage = "Relation non permise !";
+        if (!validateRelationSets(conceptId, broaderIds, narrowerIds, relatedIds)) {
             return;
         }
 
@@ -332,6 +325,25 @@ public class ConceptRelationBlockEditorBean implements Serializable {
         flashToken = String.valueOf(System.currentTimeMillis());
         thesaurusViewBean.reloadSelectedConcept();
         conceptSelectionContext.update(thesaurusViewBean.getId(), thesaurusViewBean.getSelectedConcept());
+    }
+
+    private boolean validateRelationSets(
+            String conceptId,
+            Set<String> broaderIds,
+            Set<String> narrowerIds,
+            Set<String> relatedIds
+    ) {
+        if (hasOverlap(broaderIds, narrowerIds) || hasOverlap(broaderIds, relatedIds)
+                || hasOverlap(narrowerIds, relatedIds)) {
+            errorMessage = "Un concept ne peut pas avoir plusieurs types de relation à la fois.";
+            return false;
+        }
+        String selfId = normalizeId(conceptId);
+        if (broaderIds.contains(selfId) || narrowerIds.contains(selfId) || relatedIds.contains(selfId)) {
+            errorMessage = "Relation non permise !";
+            return false;
+        }
+        return true;
     }
 
     private void reloadIfDirty(boolean dirty) {

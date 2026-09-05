@@ -26,6 +26,7 @@ import fr.cnrs.opentheso.repositories.RelationGroupRepository;
 import fr.cnrs.opentheso.repositories.ThesaurusArrayRepository;
 import fr.cnrs.opentheso.repositories.ThesaurusDcTermRepository;
 import fr.cnrs.opentheso.repositories.ThesaurusLabelRepository;
+import fr.cnrs.opentheso.v2.shared.uri.SkosUriFragments;
 import fr.cnrs.opentheso.v2.toolbox.edition.model.ThesaurusEditionExportOptions;
 import fr.cnrs.opentheso.v2.toolbox.persistence.ToolboxPreferencePersistence;
 import lombok.RequiredArgsConstructor;
@@ -68,12 +69,25 @@ public class ThesaurusSkosDocumentBuilder {
     private final ThesaurusArrayRepository thesaurusArrayRepository;
     private final ToolboxPreferencePersistence toolboxPreferencePersistence;
 
+    @Transactional(readOnly = true)
     public SKOSXmlDocument buildFullDocument(String thesaurusId) throws Exception {
-        return buildDocument(thesaurusId, ThesaurusEditionExportOptions.full());
+        return doBuildDocument(thesaurusId, ThesaurusEditionExportOptions.full());
     }
 
     @Transactional(readOnly = true)
     public SKOSXmlDocument buildDocument(String thesaurusId, ThesaurusEditionExportOptions options) throws Exception {
+        return doBuildDocument(thesaurusId, options);
+    }
+
+    @Transactional(readOnly = true)
+    public SKOSXmlDocument buildDocumentByGroup(String thesaurusId, String groupId, boolean clearHtml) throws Exception {
+        return doBuildDocument(
+                thesaurusId,
+                new ThesaurusEditionExportOptions(true, List.of(groupId), clearHtml)
+        );
+    }
+
+    private SKOSXmlDocument doBuildDocument(String thesaurusId, ThesaurusEditionExportOptions options) throws Exception {
         var preferences = toolboxPreferencePersistence.findPreferences(thesaurusId);
         if (preferences == null) {
             throw new IllegalStateException("Préférences du thésaurus introuvables");
@@ -87,30 +101,9 @@ public class ThesaurusSkosDocumentBuilder {
         var baseUrl = ThesaurusSkosUriSupport.resolveBaseUrl(preferences);
         document.setConceptScheme(exportConceptScheme(thesaurusId, preferences, baseUrl));
 
-        List<SKOSResource> concepts = new ArrayList<>();
-        if (!resolvedOptions.filterByGroup()) {
-            for (SKOSResource group : exportCollections(thesaurusId, preferences, baseUrl)) {
-                document.addGroup(group);
-            }
-            concepts = getAllConcepts(
-                    thesaurusId, baseUrl, null, preferences.getOriginalUri(), preferences, resolvedOptions.clearHtml()
-            );
-            for (SKOSResource facet : getAllFacettes(thesaurusId, baseUrl, preferences.getOriginalUri(), preferences)) {
-                document.addFacet(facet);
-            }
-        } else {
-            for (String groupId : resolvedOptions.selectedGroupIds()) {
-                document.addGroup(exportCollectionById(thesaurusId, groupId, preferences, baseUrl));
-                concepts.addAll(getAllConcepts(
-                        thesaurusId, baseUrl, groupId, preferences.getOriginalUri(), preferences, resolvedOptions.clearHtml()
-                ));
-            }
-            for (SKOSResource facet : getAllFacettes(thesaurusId, baseUrl, preferences.getOriginalUri(), preferences)) {
-                if (isFacetInGroups(thesaurusId, facet.getIdentifier(), resolvedOptions.selectedGroupIds())) {
-                    document.addFacet(facet);
-                }
-            }
-        }
+        List<SKOSResource> concepts = resolvedOptions.filterByGroup()
+                ? fillDocumentByGroups(document, thesaurusId, preferences, baseUrl, resolvedOptions)
+                : fillFullDocument(document, thesaurusId, preferences, baseUrl, resolvedOptions);
 
         for (SKOSResource concept : concepts) {
             document.addconcept(concept);
@@ -119,11 +112,45 @@ public class ThesaurusSkosDocumentBuilder {
         return document;
     }
 
-    public SKOSXmlDocument buildDocumentByGroup(String thesaurusId, String groupId, boolean clearHtml) throws Exception {
-        return buildDocument(
-                thesaurusId,
-                new ThesaurusEditionExportOptions(true, List.of(groupId), clearHtml)
+    private List<SKOSResource> fillFullDocument(
+            SKOSXmlDocument document,
+            String thesaurusId,
+            Preferences preferences,
+            String baseUrl,
+            ThesaurusEditionExportOptions options
+    ) throws Exception {
+        for (SKOSResource group : exportCollections(thesaurusId, preferences, baseUrl)) {
+            document.addGroup(group);
+        }
+        List<SKOSResource> concepts = getAllConcepts(
+                thesaurusId, baseUrl, null, preferences.getOriginalUri(), preferences, options.clearHtml()
         );
+        for (SKOSResource facet : getAllFacettes(thesaurusId, baseUrl, preferences.getOriginalUri(), preferences)) {
+            document.addFacet(facet);
+        }
+        return concepts;
+    }
+
+    private List<SKOSResource> fillDocumentByGroups(
+            SKOSXmlDocument document,
+            String thesaurusId,
+            Preferences preferences,
+            String baseUrl,
+            ThesaurusEditionExportOptions options
+    ) throws Exception {
+        List<SKOSResource> concepts = new ArrayList<>();
+        for (String groupId : options.selectedGroupIds()) {
+            document.addGroup(exportCollectionById(thesaurusId, groupId, preferences, baseUrl));
+            concepts.addAll(getAllConcepts(
+                    thesaurusId, baseUrl, groupId, preferences.getOriginalUri(), preferences, options.clearHtml()
+            ));
+        }
+        for (SKOSResource facet : getAllFacettes(thesaurusId, baseUrl, preferences.getOriginalUri(), preferences)) {
+            if (isFacetInGroups(thesaurusId, facet.getIdentifier(), options.selectedGroupIds())) {
+                document.addFacet(facet);
+            }
+        }
+        return concepts;
     }
 
     private boolean isFacetInGroups(String thesaurusId, String facetId, List<String> groupIds) {
@@ -464,7 +491,7 @@ public class ThesaurusSkosDocumentBuilder {
     }
 
     private String getUriForFacette(String idFacet, String idTheso, String originalUri) {
-        return originalUri + "/?idf=" + idFacet + "&idt=" + idTheso;
+        return originalUri + SkosUriFragments.IDF_PATH + idFacet + SkosUriFragments.IDT + idTheso;
     }
 
     private void addDoc(String content, SKOSResource resource, int type) {
@@ -533,7 +560,7 @@ public class ThesaurusSkosDocumentBuilder {
             String[] idFacettes = textBrut.split(SEPARATOR);
             try {
                 for (String idFacette : idFacettes) {
-                    String url = originalUri + "/?idf=" + idFacette + "&idt=" + idTheso;
+                    String url = originalUri + SkosUriFragments.IDF_PATH + idFacette + SkosUriFragments.IDT + idTheso;
                     resource.addRelation(idFacette, url, SKOSProperty.SUB_ORDINATE_ARRAY);
                 }
             } catch (Exception e) {
@@ -650,7 +677,7 @@ public class ThesaurusSkosDocumentBuilder {
                     String str = fr.cnrs.opentheso.utils.StringUtils.normalizeStringForXml(element[0]);
                     sKOSResource.addDocumentation(str, element[1], type);
                 } catch (Exception e) {
-                    System.out.println("Erreur export Concept _ note = " + sKOSResource.getIdentifier() + " _____ " + textBrut );
+                    log.warn("Erreur export note pour le concept {} : {}", sKOSResource.getIdentifier(), textBrut);
                 }
 
             }
@@ -666,7 +693,7 @@ public class ThesaurusSkosDocumentBuilder {
                 try {
                     sKOSResource.addLabel(element[0], element[1], type);
                 } catch (Exception e) {
-                    System.out.println("Erreur export Concept = " + sKOSResource.getIdentifier() + "  " + labelBrut );
+                    log.warn("Erreur export libellé pour le concept {} : {}", sKOSResource.getIdentifier(), labelBrut);
                 }
 
             }
@@ -686,55 +713,23 @@ public class ThesaurusSkosDocumentBuilder {
         }
     }
 
-    private String getUriFromNodeUri(String idTheso, String originalUri, String idConcept, Preferences nodePreference,
-                                     NodeUri nodeUri) {
-
-        if(nodePreference.isOriginalUriIsArk() && nodeUri.getIdArk()!= null && !StringUtils.isEmpty(nodeUri.getIdArk())) {
-            return originalUri + '/' + nodeUri.getIdArk();
-        } else if(nodePreference.isOriginalUriIsArk() && (nodeUri.getIdArk() == null || StringUtils.isEmpty(nodeUri.getIdArk())) ) {
-            return originalUri + "/?idc=" + idConcept + "&idt=" + idTheso;
-        } else if(nodePreference.isOriginalUriIsHandle() && !StringUtils.isEmpty(nodeUri.getIdHandle())) {
-            return "https://hdl.handle.net/" + nodeUri.getIdHandle();
-        } else if (nodePreference.isOriginalUriIsDoi() && !StringUtils.isEmpty(nodeUri.getIdDoi())) {
-            return "https://doi.org/" + nodeUri.getIdDoi();
-        } else if (!StringUtils.isEmpty(originalUri)) {
-            return originalUri + "/?idc=" + idConcept + "&idt=" + idTheso;
-        } else {
-            return originalUri + "/?idc=" + idConcept + "&idt=" + idTheso;
-        }
-    }
-
     private String buildUri(NodeUri nodeUri, String idTheso, String idConcept, String originalUri, Preferences pref) {
         if (pref.isOriginalUriIsArk() && StringUtils.isNotEmpty(nodeUri.getIdArk())) {
             return originalUri + '/' + nodeUri.getIdArk();
         } else if (pref.isOriginalUriIsHandle() && StringUtils.isNotEmpty(nodeUri.getIdHandle())) {
-            return "https://hdl.handle.net/" + nodeUri.getIdHandle();
+            return SkosUriFragments.HANDLE + nodeUri.getIdHandle();
         } else if (pref.isOriginalUriIsDoi() && StringUtils.isNotEmpty(nodeUri.getIdDoi())) {
-            return "https://doi.org/" + nodeUri.getIdDoi();
+            return SkosUriFragments.DOI + nodeUri.getIdDoi();
         } else {
-            return originalUri + "/?idc=" + idConcept + "&idt=" + idTheso;
+            return originalUri + SkosUriFragments.IDC_PATH + idConcept + SkosUriFragments.IDT + idTheso;
         }
     }
 
     private String getUriThesoFromId(String id, String originalUri, Preferences pref) {
         if (pref.isOriginalUriIsArk()) return pref.getOriginalUri() + "/" + pref.getIdNaan() + "/" + id;
-        if (pref.isOriginalUriIsHandle()) return "https://hdl.handle.net/" + id;
-        if (StringUtils.isNotEmpty(originalUri)) return originalUri + "/?idt=" + id;
-        return originalUri + "/?idt=" + id;
-    }
-
-
-
-    private NodeUri resolveConceptUri(String conceptId, String thesaurusId) {
-        var nodeUri = new NodeUri();
-        nodeUri.setIdConcept(conceptId);
-        var concept = conceptRepository.findByIdConceptAndIdThesaurus(conceptId, thesaurusId);
-        if (concept.isPresent()) {
-            nodeUri.setIdArk(concept.get().getIdArk());
-            nodeUri.setIdHandle(concept.get().getIdHandle());
-            nodeUri.setIdDoi(concept.get().getIdDoi());
-        }
-        return nodeUri;
+        if (pref.isOriginalUriIsHandle()) return SkosUriFragments.HANDLE + id;
+        if (StringUtils.isNotEmpty(originalUri)) return originalUri + SkosUriFragments.IDT_PATH + id;
+        return originalUri + SkosUriFragments.IDT_PATH + id;
     }
 
     private SKOSResource exportConceptScheme(String thesaurusId, Preferences preferences, String baseUrl) {

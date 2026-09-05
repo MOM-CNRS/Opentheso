@@ -21,9 +21,9 @@ import java.util.Optional;
 @RequiredArgsConstructor
 public class UserSession implements Serializable {
 
-    private final AuthenticatedUserSource authenticatedUserSource;
-    private final SessionUserService sessionUserService;
-    private final RightsService rightsService;
+    private final transient AuthenticatedUserSource authenticatedUserSource;
+    private final transient SessionUserService sessionUserService;
+    private final transient RightsService rightsService;
 
     public boolean isLoggedIn() {
         return authenticatedUserSource.isLoggedIn();

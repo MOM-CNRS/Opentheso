@@ -29,9 +29,9 @@ import java.util.List;
 @RequiredArgsConstructor
 public class ConsultationProjectHomeBean implements Serializable {
 
-    private final ConsultationProjectHomeService consultationProjectHomeService;
-    private final UserSession userSession;
-    private final V2LocaleBean v2LocaleBean;
+    private final transient ConsultationProjectHomeService consultationProjectHomeService;
+    private final transient UserSession userSession;
+    private final transient V2LocaleBean v2LocaleBean;
 
     private int projectId = -1;
     private List<ConsultationProjectThesaurusItem> thesauri = Collections.emptyList();

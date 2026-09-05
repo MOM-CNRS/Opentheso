@@ -72,6 +72,14 @@ public class ThesaurusEditionSkosImportEngine {
 
     private static final String SEPERATEUR = "##";
     private static final String SOUS_SEPERATEUR = "@@";
+    private static final String IDENTIFIER_HANDLE = "handle";
+    private static final String NOTE_DEFINITION = "definition";
+    private static final String NOTE_SCOPE = "scopeNote";
+    private static final String NOTE_EXAMPLE = "example";
+    private static final String NOTE_HISTORY = "historyNote";
+    private static final String NOTE_EDITORIAL = "editorialNote";
+    private static final String NOTE_CHANGE = "changeNote";
+    private static final String NOTE_GENERIC = "note";
 
     private final ToolboxThesaurusPersistence toolboxThesaurusPersistence;
     private final ToolboxPreferencePersistence toolboxPreferencePersistence;
@@ -419,7 +427,7 @@ public class ThesaurusEditionSkosImportEngine {
         if (selectedIdentifier.equalsIgnoreCase("ark")) {
             nodePreference.setOriginalUriIsArk(true);
         }
-        if (selectedIdentifier.equalsIgnoreCase("handle")) {
+        if (selectedIdentifier.equalsIgnoreCase(IDENTIFIER_HANDLE)) {
             nodePreference.setOriginalUriIsHandle(true);
         }
         if (selectedIdentifier.equalsIgnoreCase("doi")) {
@@ -473,7 +481,7 @@ public class ThesaurusEditionSkosImportEngine {
                 if (selectedIdentifier.equalsIgnoreCase("ark")) {
                     idArkHandle = getIdArkFromUri(group.getUri());
                 }
-                if (selectedIdentifier.equalsIgnoreCase("handle")) {
+                if (selectedIdentifier.equalsIgnoreCase(IDENTIFIER_HANDLE)) {
                     idArkHandle = getIdHandleFromUri(group.getUri());
                 }
                 if (selectedIdentifier.equalsIgnoreCase("doi")) {
@@ -545,9 +553,7 @@ public class ThesaurusEditionSkosImportEngine {
             }
 
             for (SKOSDocumentation documentation : group.getDocumentationsList()) {
-                String noteTypeCode = "";
-                int prop = documentation.getProperty();
-                noteTypeCode = getString(noteTypeCode, prop);
+                String noteTypeCode = toNoteTypeCode(documentation.getProperty());
 
                 addGroupNote(idGroup, documentation.getLanguage(), idTheso, documentation.getText(), noteTypeCode);
             }
@@ -556,42 +562,41 @@ public class ThesaurusEditionSkosImportEngine {
         flushPendingGroupConcepts();
     }
 
+    private String toNoteTypeCode(int prop) {
+        return getString("", prop);
+    }
+
     private String getString(String noteTypeCode, int prop) {
         switch (prop) {
             case SKOSProperty.DEFINITION:
-                noteTypeCode = "definition";
-                break;
+                return NOTE_DEFINITION;
             case SKOSProperty.SCOPE_NOTE:
-                noteTypeCode = "scopeNote";
-                break;
+                return NOTE_SCOPE;
             case SKOSProperty.EXAMPLE:
-                noteTypeCode = "example";
-                break;
+                return NOTE_EXAMPLE;
             case SKOSProperty.HISTORY_NOTE:
-                noteTypeCode = "historyNote";
-                break;
+                return NOTE_HISTORY;
             case SKOSProperty.EDITORIAL_NOTE:
-                noteTypeCode = "editorialNote";
-                break;
+                return NOTE_EDITORIAL;
             case SKOSProperty.CHANGE_NOTE:
-                noteTypeCode = "changeNote";
-                break;
+                return NOTE_CHANGE;
             case SKOSProperty.NOTE:
-                noteTypeCode = "note";
-                break;
+                return NOTE_GENERIC;
+            default:
+                return noteTypeCode;
         }
-        return noteTypeCode;
     }
 
     private void addGroupConceptGroup(String idTheso) {
         // groupSubGroup : compositon du HashMap = idSubGroup(ou idConcept) -> idGroup
         // c'est pour séparer les concepts des groupes
-        for (String idSubGroup : groupSubGroup.keySet()) {
+        for (var entry : groupSubGroup.entrySet()) {
+            String idSubGroup = entry.getKey();
             if (idGroups.contains(idSubGroup)) {
                 // si la relation member est vers un sous groupe, alors on créé une relation groupe/sousGroupe
-                addSubGroup(groupSubGroup.get(idSubGroup), idSubGroup, idTheso);
+                addSubGroup(entry.getValue(), idSubGroup, idTheso);
             } else {
-                queueConceptGroupConcept(groupSubGroup.get(idSubGroup), idSubGroup, idTheso);
+                queueConceptGroupConcept(entry.getValue(), idSubGroup, idTheso);
             }
         }
     }
@@ -632,7 +637,7 @@ public class ThesaurusEditionSkosImportEngine {
         }
 
         String idHandle = "";
-        if ("handle".equalsIgnoreCase(selectedIdentifier)) {
+        if (IDENTIFIER_HANDLE.equalsIgnoreCase(selectedIdentifier)) {
             idHandle = getIdHandleFromUri(conceptResource.getUri());
         }
 
@@ -722,7 +727,6 @@ public class ThesaurusEditionSkosImportEngine {
 
         //Relation
         //-- 'id_concept1@role@id_concept2'
-        String collectionToAdd;
         String relations = null;
         boolean isSchemeTopConcept = hasTopConcceptList.contains(conceptResource.getUri());
         if (CollectionUtils.isNotEmpty(conceptResource.getRelationsList())) {
@@ -757,8 +761,6 @@ public class ThesaurusEditionSkosImportEngine {
 
                 if (!role.isEmpty()) {
                     relations = relations + SEPERATEUR + idConcept + SOUS_SEPERATEUR + role + SOUS_SEPERATEUR + getOriginalId(relation.getTargetUri());
-                } else if (relation.getProperty() == SKOSProperty.MEMBER_OF) {
-                    collectionToAdd = getIdFromUri(relation.getTargetUri());
                 }
             }
             if (!relations.isEmpty()) {
@@ -778,16 +780,7 @@ public class ThesaurusEditionSkosImportEngine {
         if (CollectionUtils.isNotEmpty(conceptResource.getDocumentationsList())) {
             notes = "";
             for (SKOSDocumentation documentation : conceptResource.getDocumentationsList()) {
-                String noteTypeCode = switch (documentation.getProperty()) {
-                    case SKOSProperty.DEFINITION -> "definition";
-                    case SKOSProperty.SCOPE_NOTE -> "scopeNote";
-                    case SKOSProperty.EXAMPLE -> "example";
-                    case SKOSProperty.HISTORY_NOTE -> "historyNote";
-                    case SKOSProperty.EDITORIAL_NOTE -> "editorialNote";
-                    case SKOSProperty.CHANGE_NOTE -> "changeNote";
-                    case SKOSProperty.NOTE -> "note";
-                    default -> "";
-                };
+                String noteTypeCode = toNoteTypeCode(documentation.getProperty());
 
                 notes += SEPERATEUR + documentation.getText()
                         + SOUS_SEPERATEUR + noteTypeCode
@@ -998,16 +991,7 @@ public class ThesaurusEditionSkosImportEngine {
             if (CollectionUtils.isNotEmpty(facetSKOSResource.getDocumentationsList())) {
                 notes = "";
                 for (SKOSDocumentation documentation : facetSKOSResource.getDocumentationsList()) {
-                    String noteTypeCode = switch (documentation.getProperty()) {
-                        case SKOSProperty.DEFINITION -> "definition";
-                        case SKOSProperty.SCOPE_NOTE -> "scopeNote";
-                        case SKOSProperty.EXAMPLE -> "example";
-                        case SKOSProperty.HISTORY_NOTE -> "historyNote";
-                        case SKOSProperty.EDITORIAL_NOTE -> "editorialNote";
-                        case SKOSProperty.CHANGE_NOTE -> "changeNote";
-                        case SKOSProperty.NOTE -> "note";
-                        default -> "";
-                    };
+                    String noteTypeCode = toNoteTypeCode(documentation.getProperty());
 
                     notes += SEPERATEUR + documentation.getText()
                             + SOUS_SEPERATEUR + noteTypeCode
@@ -1209,10 +1193,6 @@ public class ThesaurusEditionSkosImportEngine {
         }
         conceptGroupConceptRepository.saveAll(pendingGroupConcepts);
         pendingGroupConcepts.clear();
-    }
-
-    private void saveConceptGroupConcept(String idGroup, String idConcept, String idThesaurus) {
-        queueConceptGroupConcept(idGroup, idConcept, idThesaurus);
     }
 
     private void addSubGroup(String fatherGroupId, String childGroupId, String thesaurusId) {

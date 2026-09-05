@@ -12,7 +12,6 @@ import org.apache.commons.collections4.CollectionUtils;
 import org.apache.commons.lang3.StringUtils;
 import org.springframework.stereotype.Component;
 
-import java.util.ArrayList;
 import java.util.Collection;
 import java.util.LinkedHashMap;
 import java.util.LinkedHashSet;
@@ -35,7 +34,22 @@ public class ThesaurusSyncConceptDiffService {
         PropositionDraft draft = new PropositionDraft();
         draft.setConceptId(master.getIdentifier());
         draft.setLang(workLang);
+        applyPrefAndTranslations(draft, incoming, master, workLang);
+        applyAltLabels(draft, incoming, master);
 
+        compareNotes(draft, PropositionFieldCategory.NOTE, collectNotes(master.getNotes()), incoming.notes());
+        compareNotes(draft, PropositionFieldCategory.DEFINITION, collectNotes(master.getDefinitions()), incoming.definitions());
+        compareNotes(draft, PropositionFieldCategory.SCOPE, collectNotes(master.getScopeNotes()), incoming.scopeNotes());
+
+        return draft;
+    }
+
+    private void applyPrefAndTranslations(
+            PropositionDraft draft,
+            SyncConceptPayload incoming,
+            ConceptFullSnapshot master,
+            String workLang
+    ) {
         Map<String, String> masterPref = collectPrefLabels(master);
         Map<String, String> incomingPref = incoming.prefLabels() == null ? Map.of() : incoming.prefLabels();
 
@@ -57,35 +71,33 @@ public class ThesaurusSyncConceptDiffService {
 
         for (Map.Entry<String, String> entry : incomingPref.entrySet()) {
             String lang = entry.getKey();
-            if (workLang.equalsIgnoreCase(lang)) {
+            if (workLang.equalsIgnoreCase(lang) || StringUtils.isBlank(entry.getValue())) {
                 continue;
             }
-            String newValue = entry.getValue();
             String oldValue = masterPref.get(lang);
-            if (StringUtils.isBlank(newValue)) {
-                continue;
-            }
             if (StringUtils.isBlank(oldValue)) {
                 draft.getTranslationChanges().add(new PropositionFieldChange(
                         PropositionFieldCategory.TRADUCTION,
                         PropositionFieldAction.ADD,
                         lang,
-                        newValue,
+                        entry.getValue(),
                         null,
                         false
                 ));
-            } else if (!Objects.equals(normalize(oldValue), normalize(newValue))) {
+            } else if (!Objects.equals(normalize(oldValue), normalize(entry.getValue()))) {
                 draft.getTranslationChanges().add(new PropositionFieldChange(
                         PropositionFieldCategory.TRADUCTION,
                         PropositionFieldAction.UPDATE,
                         lang,
-                        newValue,
+                        entry.getValue(),
                         oldValue,
                         false
                 ));
             }
         }
+    }
 
+    private void applyAltLabels(PropositionDraft draft, SyncConceptPayload incoming, ConceptFullSnapshot master) {
         Map<String, Set<String>> masterAlts = collectAltLabels(master);
         Map<String, List<String>> incomingAlts = incoming.altLabels() == null ? Map.of() : incoming.altLabels();
         for (Map.Entry<String, List<String>> entry : incomingAlts.entrySet()) {
@@ -109,12 +121,6 @@ public class ThesaurusSyncConceptDiffService {
                 }
             }
         }
-
-        compareNotes(draft, PropositionFieldCategory.NOTE, collectNotes(master.getNotes()), incoming.notes());
-        compareNotes(draft, PropositionFieldCategory.DEFINITION, collectNotes(master.getDefinitions()), incoming.definitions());
-        compareNotes(draft, PropositionFieldCategory.SCOPE, collectNotes(master.getScopeNotes()), incoming.scopeNotes());
-
-        return draft;
     }
 
     private void compareNotes(

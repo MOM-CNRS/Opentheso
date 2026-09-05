@@ -1,10 +1,12 @@
 package fr.cnrs.opentheso.v2.concept.model;
 
+import java.io.Serializable;
+
 public record ConceptUriLabel(
         String uri,
         String identifier,
         String label
-) implements Comparable<ConceptUriLabel> {
+) implements Comparable<ConceptUriLabel>, Serializable {
 
     public String getUri() {
         return uri;

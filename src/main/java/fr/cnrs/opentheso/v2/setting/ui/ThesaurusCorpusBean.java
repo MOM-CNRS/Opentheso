@@ -1,5 +1,6 @@
 package fr.cnrs.opentheso.v2.setting.ui;
 
+import fr.cnrs.opentheso.v2.concept.write.ui.WriteUiMessages;
 import fr.cnrs.opentheso.v2.setting.service.CorpusPersistDraft;
 import fr.cnrs.opentheso.v2.setting.exception.InvalidSettingDataException;
 import fr.cnrs.opentheso.v2.setting.model.ThesaurusCorpus;
@@ -23,8 +24,10 @@ import java.util.Map;
 @RequiredArgsConstructor
 public class ThesaurusCorpusBean implements Serializable {
 
-    private final SettingsAccess settingsAccess;
-    private final ThesaurusCorpusService thesaurusCorpusService;
+    private static final String MODE_CREATE = "create";
+
+    private final transient SettingsAccess settingsAccess;
+    private final transient ThesaurusCorpusService thesaurusCorpusService;
 
     private List<ThesaurusCorpus> corpusList = new ArrayList<>();
     private List<ThesaurusCorpus> corpusBaseline = new ArrayList<>();
@@ -150,12 +153,12 @@ public class ThesaurusCorpusBean implements Serializable {
     public void prepareCreateCorpus() {
         if (!settingsAccess.isCanEdit()) {
             corpusError = true;
-            corpusMessage = "Action non autorisée";
+            corpusMessage = WriteUiMessages.UNAUTHORIZED_FALLBACK;
             return;
         }
         corpusEditor = CorpusEditor.empty();
         editingCorpusName = null;
-        corpusDialogMode = "create";
+        corpusDialogMode = MODE_CREATE;
         corpusDialogOpen = true;
         corpusMessage = null;
         corpusError = false;
@@ -268,11 +271,11 @@ public class ThesaurusCorpusBean implements Serializable {
     }
 
     public boolean isCorpusFormDialog() {
-        return corpusDialogOpen && ("create".equals(corpusDialogMode) || "edit".equals(corpusDialogMode));
+        return corpusDialogOpen && (MODE_CREATE.equals(corpusDialogMode) || "edit".equals(corpusDialogMode));
     }
 
     public boolean isCorpusCreateDialog() {
-        return corpusDialogOpen && "create".equals(corpusDialogMode);
+        return corpusDialogOpen && MODE_CREATE.equals(corpusDialogMode);
     }
 
     public boolean isCorpusDeleteDialog() {
@@ -342,7 +345,7 @@ public class ThesaurusCorpusBean implements Serializable {
 
     private void denyCorpusAction() {
         corpusError = true;
-        corpusMessage = "Action non autorisée";
+        corpusMessage = WriteUiMessages.UNAUTHORIZED_FALLBACK;
     }
 
     private void snapshotCorpusBaseline() {
@@ -354,9 +357,10 @@ public class ThesaurusCorpusBean implements Serializable {
     }
 
     private void ensureCorpusListMutable() {
-        if (corpusList == null || !(corpusList instanceof ArrayList)) {
-            corpusList = new ArrayList<>(corpusList != null ? corpusList : List.of());
+        if (corpusList instanceof ArrayList) {
+            return;
         }
+        corpusList = new ArrayList<>(corpusList != null ? corpusList : List.of());
     }
 
     private void validateDraftCorpus(ThesaurusCorpus corpus) {

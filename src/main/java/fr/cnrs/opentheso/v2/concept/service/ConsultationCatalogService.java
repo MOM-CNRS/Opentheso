@@ -37,6 +37,10 @@ public class ConsultationCatalogService {
 
     @Transactional(readOnly = true)
     public List<ConsultationThesaurusOption> listThesauri(Integer userId, boolean superAdmin, int projectId, String lang) {
+        return doListThesauri(userId, superAdmin, projectId, lang);
+    }
+
+    private List<ConsultationThesaurusOption> doListThesauri(Integer userId, boolean superAdmin, int projectId, String lang) {
         String resolvedLang = lang != null ? lang : defaultWorkLanguage;
         if (userId == null) {
             return consultationCatalogQueryRepository.findPublicThesauri(projectId, resolvedLang);
@@ -62,7 +66,7 @@ public class ConsultationCatalogService {
 
     @Transactional(readOnly = true)
     public List<String> listSearchableThesaurusIds(Integer userId, boolean superAdmin, int projectId, String lang) {
-        return listThesauri(userId, superAdmin, projectId, lang).stream()
+        return doListThesauri(userId, superAdmin, projectId, lang).stream()
                 .map(ConsultationThesaurusOption::id)
                 .toList();
     }

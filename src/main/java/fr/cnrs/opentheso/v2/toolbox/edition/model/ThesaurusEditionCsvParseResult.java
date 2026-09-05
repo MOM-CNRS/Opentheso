@@ -1,6 +1,7 @@
 package fr.cnrs.opentheso.v2.toolbox.edition.model;
 
 import org.apache.commons.lang3.StringUtils;
+import java.io.Serializable;
 
 import java.util.List;
 
@@ -10,7 +11,7 @@ public record ThesaurusEditionCsvParseResult(
         int totalConcepts,
         String warning,
         String error
-) {
+) implements Serializable {
     public static ThesaurusEditionCsvParseResult error(String message) {
         return new ThesaurusEditionCsvParseResult(List.of(), List.of(), 0, null, message);
     }

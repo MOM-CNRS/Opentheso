@@ -31,9 +31,9 @@ public class CandidatBoardBean implements Serializable {
     private static final String TAB_ACCEPTED = "insere";
     private static final String TAB_REJECTED = "rejete";
 
-    private final ThesaurusViewBean thesaurusViewBean;
-    private final CandidatReadService candidatReadService;
-    private final UserSession userSession;
+    private final transient ThesaurusViewBean thesaurusViewBean;
+    private final transient CandidatReadService candidatReadService;
+    private final transient UserSession userSession;
     private boolean loaded;
 
     @Getter
@@ -64,13 +64,11 @@ public class CandidatBoardBean implements Serializable {
     }
 
     public void search() {
-        loaded = false;
-        ensureLoaded();
+        load();
     }
 
     public void toggleMine() {
-        loaded = false;
-        ensureLoaded();
+        load();
     }
 
     public List<CandidatBoardItem> getPending() {

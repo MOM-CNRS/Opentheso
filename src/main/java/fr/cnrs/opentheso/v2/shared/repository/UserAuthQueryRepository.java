@@ -5,6 +5,7 @@ import jakarta.persistence.EntityManager;
 import jakarta.persistence.PersistenceContext;
 import org.springframework.stereotype.Repository;
 
+import java.util.List;
 import java.util.Optional;
 
 @Repository
@@ -14,24 +15,29 @@ public class UserAuthQueryRepository {
     private EntityManager entityManager;
 
     public Optional<UserCredentialRow> findByUsername(String username) {
-        return findCredential("username", username);
+        return mapCredential(entityManager.createNativeQuery("""
+                SELECT id_user, username, mail, password
+                FROM users
+                WHERE LOWER(username) = LOWER(:value)
+                LIMIT 1
+                """)
+                .setParameter(NativeQueryParams.VALUE, username)
+                .getResultList());
     }
 
     public Optional<UserCredentialRow> findByMail(String mail) {
-        return findCredential("mail", mail);
+        return mapCredential(entityManager.createNativeQuery("""
+                SELECT id_user, username, mail, password
+                FROM users
+                WHERE LOWER(mail) = LOWER(:value)
+                LIMIT 1
+                """)
+                .setParameter(NativeQueryParams.VALUE, mail)
+                .getResultList());
     }
 
     @SuppressWarnings("unchecked")
-    private Optional<UserCredentialRow> findCredential(String column, String value) {
-        String sql = """
-                SELECT id_user, username, mail, password
-                FROM users
-                WHERE LOWER(%s) = LOWER(:value)
-                LIMIT 1
-                """.formatted(column);
-        var rows = entityManager.createNativeQuery(sql)
-                .setParameter("value", value)
-                .getResultList();
+    private Optional<UserCredentialRow> mapCredential(List<?> rows) {
         if (rows.isEmpty()) {
             return Optional.empty();
         }

@@ -66,7 +66,8 @@ class ConceptLifecycleEditorBeanCreateTest {
                 conceptWritePolicy,
                 conceptWriteSearchService,
                 conceptWriteMetadataService,
-                branchConceptSupport
+                branchConceptSupport,
+                null
         );
         lenient().when(conceptWritePolicy.canMutateActiveConcept(any(), anyBoolean())).thenReturn(true);
         lenient().when(conceptWritePolicy.canMutateConcept(userSession)).thenReturn(true);

@@ -1,5 +1,6 @@
 package fr.cnrs.opentheso.v2.setting.service;
 
+import fr.cnrs.opentheso.v2.concept.write.ui.WriteUiMessages;
 import fr.cnrs.opentheso.v2.concept.alignment.model.AlignmentSourceItem;
 import fr.cnrs.opentheso.v2.concept.alignment.service.ConceptAlignmentAdminService;
 import fr.cnrs.opentheso.v2.setting.exception.InvalidSettingDataException;
@@ -91,7 +92,7 @@ public class ThesaurusSettingsPersistService {
             return;
         }
         if (userId == null) {
-            throw new InvalidSettingDataException("Action non autorisée");
+            throw new InvalidSettingDataException(WriteUiMessages.UNAUTHORIZED_FALLBACK);
         }
         Set<Integer> toDelete = draft.idsToDelete() != null ? draft.idsToDelete() : Set.of();
         for (Integer sourceId : new ArrayList<>(toDelete)) {
@@ -100,36 +101,45 @@ public class ThesaurusSettingsPersistService {
         List<AlignmentSourceItem> current = draft.current() != null ? draft.current() : List.of();
         List<AlignmentSourceItem> baseline = draft.baseline() != null ? draft.baseline() : List.of();
         for (AlignmentSourceItem item : current) {
-            if (item.getSourceId() < 0) {
-                String error = conceptAlignmentAdminService.addLocalSource(
-                        thesaurusId,
-                        userId,
-                        item.getLabel(),
-                        item.getUrl(),
-                        item.getDescription(),
-                        item.getSourceType(),
-                        item.isSelected()
-                );
-                if (error != null) {
-                    throw new InvalidSettingDataException(error);
-                }
-                continue;
+            persistAlignmentItem(thesaurusId, userId, item, baseline);
+        }
+    }
+
+    private void persistAlignmentItem(
+            String thesaurusId,
+            Integer userId,
+            AlignmentSourceItem item,
+            List<AlignmentSourceItem> baseline
+    ) {
+        if (item.getSourceId() < 0) {
+            String error = conceptAlignmentAdminService.addLocalSource(
+                    thesaurusId,
+                    userId,
+                    item.getLabel(),
+                    item.getUrl(),
+                    item.getDescription(),
+                    item.getSourceType(),
+                    item.isSelected()
+            );
+            if (error != null) {
+                throw new InvalidSettingDataException(error);
             }
-            AlignmentSourceItem previous = findBaselineAlignment(baseline, item.getSourceId());
-            if (previous != null && alignmentMetadataChanged(previous, item)) {
-                String error = conceptAlignmentAdminService.updateLocalSource(
-                        item.getSourceId(),
-                        item.getLabel(),
-                        item.getUrl(),
-                        item.getDescription(),
-                        item.getSourceType());
-                if (error != null) {
-                    throw new InvalidSettingDataException(error);
-                }
+            return;
+        }
+        AlignmentSourceItem previous = findBaselineAlignment(baseline, item.getSourceId());
+        if (previous != null && alignmentMetadataChanged(previous, item)) {
+            String error = conceptAlignmentAdminService.updateLocalSource(
+                    item.getSourceId(),
+                    item.getLabel(),
+                    item.getUrl(),
+                    item.getDescription(),
+                    item.getSourceType());
+            if (error != null) {
+                throw new InvalidSettingDataException(error);
             }
-            if (previous == null || previous.isSelected() != item.isSelected()) {
-                conceptAlignmentAdminService.setSourceSelected(thesaurusId, item.getSourceId(), item.isSelected());
-            }
+        }
+        if (previous == null || previous.isSelected() != item.isSelected()) {
+            conceptAlignmentAdminService.setSourceSelected(thesaurusId, item.getSourceId(), item.isSelected());
         }
     }
 

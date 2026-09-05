@@ -1,11 +1,13 @@
 package fr.cnrs.opentheso.v2.concept.write.model;
 
+import java.io.Serializable;
+
 public record ConceptSearchSuggestion(
         String conceptId,
         String preferredLabel,
         String altLabel,
         boolean altLabelMatch
-) {
+) implements Serializable {
 
     public String displayLabel() {
         if (altLabelMatch && altLabel != null && !altLabel.isBlank()) {

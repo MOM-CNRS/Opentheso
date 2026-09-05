@@ -1,5 +1,6 @@
 package fr.cnrs.opentheso.v2.toolbox.actions.service;
 
+import fr.cnrs.opentheso.v2.toolbox.actions.model.ActionsLotMessages;
 import fr.cnrs.opentheso.models.nodes.NodeIdValue;
 import fr.cnrs.opentheso.v2.toolbox.actions.model.ActionsLotApplyResult;
 import fr.cnrs.opentheso.v2.toolbox.actions.model.ActionsLotCollectionCandidate;
@@ -41,10 +42,10 @@ public class ActionsLotCollectionService {
             String thesaurusId
     ) {
         if (content == null || content.length == 0) {
-            return ActionsLotImportValidationResult.failure("Aucun fichier à valider.");
+            return ActionsLotImportValidationResult.failure(ActionsLotMessages.NO_FILE);
         }
         if (StringUtils.isBlank(thesaurusId)) {
-            return ActionsLotImportValidationResult.failure("Aucun thésaurus sélectionné.");
+            return ActionsLotImportValidationResult.failure(ActionsLotMessages.NO_THESAURUS);
         }
 
         char delimiter = CsvDelimiterSupport.resolveDelimiter(choiceDelimiter);
@@ -131,10 +132,10 @@ public class ActionsLotCollectionService {
             String thesaurusId
     ) {
         if (StringUtils.isBlank(thesaurusId)) {
-            return ActionsLotApplyResult.failure("Aucun thésaurus sélectionné.");
+            return ActionsLotApplyResult.failure(ActionsLotMessages.NO_THESAURUS);
         }
         if (candidates == null || candidates.isEmpty()) {
-            return ActionsLotApplyResult.failure("Aucune ligne valide à importer.");
+            return ActionsLotApplyResult.failure(ActionsLotMessages.NO_VALID_LINE);
         }
 
         int applied = 0;

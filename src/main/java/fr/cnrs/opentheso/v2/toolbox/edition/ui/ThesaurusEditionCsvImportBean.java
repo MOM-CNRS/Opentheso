@@ -34,10 +34,10 @@ import java.util.List;
 @RequiredArgsConstructor
 public class ThesaurusEditionCsvImportBean implements Serializable {
 
-    private final ThesaurusEditionCsvImportService thesaurusEditionCsvImportService;
-    private final NewThesaurusService newThesaurusService;
-    private final UserSession userSession;
-    private final ToolboxAccessPolicy toolboxAccessPolicy;
+    private final transient ThesaurusEditionCsvImportService thesaurusEditionCsvImportService;
+    private final transient NewThesaurusService newThesaurusService;
+    private final transient UserSession userSession;
+    private final transient ToolboxAccessPolicy toolboxAccessPolicy;
 
     private String thesaurusName;
     private String selectedLang;

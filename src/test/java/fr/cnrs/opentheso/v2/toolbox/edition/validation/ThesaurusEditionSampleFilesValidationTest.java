@@ -66,7 +66,7 @@ class ThesaurusEditionSampleFilesValidationTest {
     @Test
     void sampleSkosRdf_readsSuccessfully() throws IOException {
         byte[] content = readSample("samples/sample_skos.rdf");
-        var errorBuffer = new StringBuffer();
+        var errorBuffer = new StringBuilder();
 
         var document = new ReadRdf4jDocument().readRdfFlux(
                 new ByteArrayInputStream(content),
@@ -83,7 +83,7 @@ class ThesaurusEditionSampleFilesValidationTest {
     @Test
     void sampleSkosTurtle_readsSuccessfully() throws IOException {
         byte[] content = readSample("samples/theso/test_complet_sansArk.rdf");
-        var errorBuffer = new StringBuffer();
+        var errorBuffer = new StringBuilder();
         var format = SkosRdfFormatSupport.resolveImportFormat(0);
 
         var document = new ReadRdf4jDocument().readRdfFlux(

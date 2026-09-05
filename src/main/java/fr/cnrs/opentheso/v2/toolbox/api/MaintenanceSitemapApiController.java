@@ -2,6 +2,7 @@ package fr.cnrs.opentheso.v2.toolbox.api;
 
 import fr.cnrs.opentheso.v2.toolbox.ui.MaintenanceLastRunStore;
 import org.apache.commons.lang3.StringUtils;
+import org.springframework.beans.factory.ObjectProvider;
 import org.springframework.http.HttpHeaders;
 import org.springframework.http.MediaType;
 import org.springframework.http.ResponseEntity;
@@ -13,15 +14,15 @@ import org.springframework.web.bind.annotation.RestController;
 @RequestMapping({"/v2/api", "/v2-preview/api"})
 public class MaintenanceSitemapApiController {
 
-    private final MaintenanceLastRunStore lastRunStore;
+    private final ObjectProvider<MaintenanceLastRunStore> lastRunStore;
 
-    public MaintenanceSitemapApiController(MaintenanceLastRunStore lastRunStore) {
+    public MaintenanceSitemapApiController(ObjectProvider<MaintenanceLastRunStore> lastRunStore) {
         this.lastRunStore = lastRunStore;
     }
 
     @GetMapping("/maintenance/sitemap.xml")
     public ResponseEntity<byte[]> downloadSitemap() {
-        MaintenanceLastRunStore.PendingSitemap pending = lastRunStore.consumePendingSitemap();
+        MaintenanceLastRunStore.PendingSitemap pending = lastRunStore.getObject().consumePendingSitemap();
         if (pending == null || pending.xml() == null || pending.xml().length == 0) {
             return ResponseEntity.notFound().build();
         }

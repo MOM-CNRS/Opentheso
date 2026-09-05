@@ -20,6 +20,7 @@ import org.springframework.web.bind.annotation.RequestMapping;
 import org.springframework.web.bind.annotation.RestController;
 
 import java.util.List;
+import fr.cnrs.opentheso.v2.shared.api.ApiHeaders;
 
 @RestController
 @RequestMapping("/openapi/v2/toolbox")
@@ -36,8 +37,8 @@ public class ToolboxController {
     @GetMapping(value = "/edition/thesauri", produces = MediaType.APPLICATION_JSON_VALUE)
     @Operation(summary = "Lister les thésaurus administrables")
     public List<EditionThesaurusResponse> listEditionThesauri(
-            @RequestHeader(value = "X-API-KEY", required = false) String xApiKey,
-            @RequestHeader(value = "API-KEY", required = false) String legacyApiKey
+            @RequestHeader(value = ApiHeaders.X_API_KEY, required = false) String xApiKey,
+            @RequestHeader(value = ApiHeaders.API_KEY, required = false) String legacyApiKey
     ) {
         int userId = toolboxAuthSupport.resolveUserId(xApiKey, legacyApiKey);
         toolboxAuthSupport.requireEditionAccess(userId);
@@ -50,8 +51,8 @@ public class ToolboxController {
     @GetMapping(value = "/edition/{thesaurusId}/statistics", produces = MediaType.APPLICATION_JSON_VALUE)
     @Operation(summary = "Statistiques d'édition d'un thésaurus")
     public EditionStatisticsResponse editionStatistics(
-            @RequestHeader(value = "X-API-KEY", required = false) String xApiKey,
-            @RequestHeader(value = "API-KEY", required = false) String legacyApiKey,
+            @RequestHeader(value = ApiHeaders.X_API_KEY, required = false) String xApiKey,
+            @RequestHeader(value = ApiHeaders.API_KEY, required = false) String legacyApiKey,
             @PathVariable String thesaurusId
     ) {
         int userId = toolboxAuthSupport.resolveUserId(xApiKey, legacyApiKey);
@@ -62,8 +63,8 @@ public class ToolboxController {
     @GetMapping(value = "/statistics/{thesaurusId}/summary", produces = MediaType.APPLICATION_JSON_VALUE)
     @Operation(summary = "Résumé statistique d'un thésaurus")
     public StatisticsSummaryResponse statisticsSummary(
-            @RequestHeader(value = "X-API-KEY", required = false) String xApiKey,
-            @RequestHeader(value = "API-KEY", required = false) String legacyApiKey,
+            @RequestHeader(value = ApiHeaders.X_API_KEY, required = false) String xApiKey,
+            @RequestHeader(value = ApiHeaders.API_KEY, required = false) String legacyApiKey,
             @PathVariable String thesaurusId
     ) {
         int userId = toolboxAuthSupport.resolveUserId(xApiKey, legacyApiKey);

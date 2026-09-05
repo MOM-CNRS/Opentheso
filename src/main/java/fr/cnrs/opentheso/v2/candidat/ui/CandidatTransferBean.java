@@ -1,5 +1,6 @@
 package fr.cnrs.opentheso.v2.candidat.ui;
 
+import fr.cnrs.opentheso.v2.concept.write.ui.WriteUiMessages;
 import fr.cnrs.opentheso.utils.MessageUtils;
 import fr.cnrs.opentheso.v2.concept.write.model.ConceptWriteThesaurusOption;
 import fr.cnrs.opentheso.v2.concept.write.model.MutationResult;
@@ -28,10 +29,10 @@ import java.util.List;
 @RequiredArgsConstructor
 public class CandidatTransferBean implements Serializable {
 
-    private final ConceptTransferMutationService conceptTransferMutationService;
-    private final ThesaurusContext thesaurusContext;
-    private final UserSession userSession;
-    private final CandidatBean candidatBean;
+    private final transient ConceptTransferMutationService conceptTransferMutationService;
+    private final transient ThesaurusContext thesaurusContext;
+    private final transient UserSession userSession;
+    private final transient CandidatBean candidatBean;
 
     private String sourceThesaurusId;
     private String targetThesaurusId;
@@ -60,7 +61,7 @@ public class CandidatTransferBean implements Serializable {
         }
         Integer userId = userSession.getCurrentUserId();
         if (userId == null) {
-            MessageUtils.showErrorMessage("Action non autorisée");
+            MessageUtils.showErrorMessage(WriteUiMessages.UNAUTHORIZED_FALLBACK);
             return;
         }
 

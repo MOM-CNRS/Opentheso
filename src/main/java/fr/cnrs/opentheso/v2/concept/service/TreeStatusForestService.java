@@ -16,6 +16,7 @@ import java.util.LinkedHashMap;
 import java.util.List;
 import java.util.Map;
 import java.util.Set;
+import fr.cnrs.opentheso.v2.concept.model.ConceptTreeNodeKinds;
 
 @Service
 public class TreeStatusForestService {
@@ -143,14 +144,14 @@ public class TreeStatusForestService {
                 str(row, 0),
                 str(row, 2),
                 str(row, 1),
-                StringUtils.defaultIfBlank(str(row, 3), "valide"),
+                StringUtils.defaultIfBlank(str(row, 3), ConceptTreeNodeKinds.VALIDE),
                 str(row, 4),
                 str(row, 5)
         );
     }
 
     private static Edge edgeFromRow(Object[] row) {
-        return new Edge(str(row, 0), str(row, 1), str(row, 2), StringUtils.defaultIfBlank(str(row, 3), "valide"));
+        return new Edge(str(row, 0), str(row, 1), str(row, 2), StringUtils.defaultIfBlank(str(row, 3), ConceptTreeNodeKinds.VALIDE));
     }
 
     private static Node nodeFromSeed(Seed seed, Set<String> selected) {
@@ -166,7 +167,7 @@ public class TreeStatusForestService {
     }
 
     private static Node nodeFromParent(String id, String label, String status, Set<String> selected) {
-        String ui = StringUtils.defaultIfBlank(status, "valide");
+        String ui = StringUtils.defaultIfBlank(status, ConceptTreeNodeKinds.VALIDE);
         return new Node(id, StringUtils.defaultIfBlank(label, id), "", ui, !selected.contains(ui), "", "");
     }
 

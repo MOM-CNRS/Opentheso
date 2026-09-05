@@ -1,5 +1,6 @@
 package fr.cnrs.opentheso.v2.concept.ui;
 
+import fr.cnrs.opentheso.v2.concept.write.ui.WriteUiMessages;
 import fr.cnrs.opentheso.utils.MessageUtils;
 import fr.cnrs.opentheso.utils.ToolsHelper;
 import fr.cnrs.opentheso.v2.concept.service.ThesaurusHomeWriteService;
@@ -27,11 +28,11 @@ import java.io.Serializable;
 @RequiredArgsConstructor
 public class ThesaurusHomeEditorBean implements Serializable {
 
-    private final ThesaurusHomeWriteService thesaurusHomeWriteService;
-    private final ThesaurusContext thesaurusContext;
-    private final UserSession userSession;
-    private final RightsService rightsService;
-    private final ObjectProvider<ThesaurusBrowseBean> thesaurusBrowseBean;
+    private final transient ThesaurusHomeWriteService thesaurusHomeWriteService;
+    private final transient ThesaurusContext thesaurusContext;
+    private final transient UserSession userSession;
+    private final transient RightsService rightsService;
+    private final transient ObjectProvider<ThesaurusBrowseBean> thesaurusBrowseBean;
 
     private boolean editing;
     private boolean plainTextView;
@@ -74,7 +75,7 @@ public class ThesaurusHomeEditorBean implements Serializable {
 
     public void save() {
         if (!isCanEdit()) {
-            MessageUtils.showErrorMessage("Action non autorisée");
+            MessageUtils.showErrorMessage(WriteUiMessages.UNAUTHORIZED_FALLBACK);
             return;
         }
         boolean ok = thesaurusHomeWriteService.saveHtml(

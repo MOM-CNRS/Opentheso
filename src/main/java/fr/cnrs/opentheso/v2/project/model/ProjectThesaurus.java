@@ -1,4 +1,6 @@
 package fr.cnrs.opentheso.v2.project.model;
 
-public record ProjectThesaurus(String id, String title, boolean privateThesaurus) {
+import java.io.Serializable;
+
+public record ProjectThesaurus(String id, String title, boolean privateThesaurus) implements Serializable {
 }

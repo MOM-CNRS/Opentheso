@@ -47,6 +47,10 @@ public class ConceptAlignmentAdminService {
 
     public static final int BRANCH_LIMIT = 2000;
     private static final int COMPARISON_HIT_LIMIT = 3;
+    private static final String SOURCE_NAME_REQUIRED = "Le nom de la source est obligatoire !";
+    private static final String SOURCE_URL_REQUIRED = "L'URL est obligatoire !";
+    private static final String SOURCE_NOT_FOUND = "Source introuvable";
+    private static final String SOURCE_DB_ERROR = "Erreur côté base de données !";
 
     private final BranchConceptSupport branchConceptSupport;
     private final ConceptSearchQueryRepository conceptSearchQueryRepository;
@@ -175,6 +179,10 @@ public class ConceptAlignmentAdminService {
 
     @Transactional(readOnly = true)
     public List<AlignementSource> listActiveSources(String thesaurusId) {
+        return doListActiveSources(thesaurusId);
+    }
+
+    private List<AlignementSource> doListActiveSources(String thesaurusId) {
         if (StringUtils.isBlank(thesaurusId)) {
             return List.of();
         }
@@ -198,7 +206,7 @@ public class ConceptAlignmentAdminService {
 
     @Transactional(readOnly = true)
     public AlignementSource findActiveSource(String thesaurusId, int sourceId) {
-        return listActiveSources(thesaurusId).stream()
+        return doListActiveSources(thesaurusId).stream()
                 .filter(source -> source.getId() == sourceId)
                 .findFirst()
                 .orElse(null);
@@ -243,6 +251,9 @@ public class ConceptAlignmentAdminService {
             for (Future<List<AlignmentProposition>> future : futures) {
                 propositions.addAll(future.get());
             }
+        } catch (InterruptedException ex) {
+            Thread.currentThread().interrupt();
+            log.error("Recherche automatique d'alignements interrompue", ex);
         } catch (Exception ex) {
             log.error("Recherche automatique d'alignements interrompue", ex);
         } finally {
@@ -594,7 +605,7 @@ public class ConceptAlignmentAdminService {
             String sourceThesaurusId,
             String description
     ) {
-        String error = validateOpenthesoSource(sourceName, sourceUri, sourceThesaurusId);
+        String error = doValidateOpenthesoSource(sourceName, sourceUri, sourceThesaurusId);
         if (error != null) {
             return error;
         }
@@ -620,18 +631,22 @@ public class ConceptAlignmentAdminService {
             }
         } catch (Exception ex) {
             log.error("Erreur lors de l'ajout de la source Opentheso", ex);
-            return "Erreur côté base de données !";
+            return SOURCE_DB_ERROR;
         }
         return null;
     }
 
     @Transactional(readOnly = true)
     public String validateOpenthesoSource(String sourceName, String sourceUri, String sourceThesaurusId) {
+        return doValidateOpenthesoSource(sourceName, sourceUri, sourceThesaurusId);
+    }
+
+    private String doValidateOpenthesoSource(String sourceName, String sourceUri, String sourceThesaurusId) {
         if (StringUtils.isBlank(sourceName)) {
-            return "Le nom de la source est obligatoire !";
+            return SOURCE_NAME_REQUIRED;
         }
         if (StringUtils.isBlank(sourceUri)) {
-            return "L'URL est obligatoire !";
+            return SOURCE_URL_REQUIRED;
         }
         if (StringUtils.isBlank(sourceThesaurusId)) {
             return "L'Id. du thésaurus est obligatoire !";
@@ -644,7 +659,7 @@ public class ConceptAlignmentAdminService {
 
     @Transactional
     public String updateLocalSource(int sourceId, String sourceName, String requete, String description) {
-        return updateLocalSource(sourceId, sourceName, requete, description, null);
+        return doUpdateLocalSource(sourceId, sourceName, requete, description, null);
     }
 
     @Transactional
@@ -655,18 +670,28 @@ public class ConceptAlignmentAdminService {
             String description,
             String sourceFilter
     ) {
+        return doUpdateLocalSource(sourceId, sourceName, requete, description, sourceFilter);
+    }
+
+    private String doUpdateLocalSource(
+            int sourceId,
+            String sourceName,
+            String requete,
+            String description,
+            String sourceFilter
+    ) {
         if (sourceId <= 0) {
-            return "Source introuvable";
+            return SOURCE_NOT_FOUND;
         }
         if (StringUtils.isBlank(sourceName)) {
-            return "Le nom de la source est obligatoire !";
+            return SOURCE_NAME_REQUIRED;
         }
         if (StringUtils.isBlank(requete)) {
-            return "L'URL est obligatoire !";
+            return SOURCE_URL_REQUIRED;
         }
         var found = alignementSourceRepository.findById(sourceId);
         if (found.isEmpty()) {
-            return "Source introuvable";
+            return SOURCE_NOT_FOUND;
         }
         found.get().setSource(sourceName.trim());
         found.get().setRequete(requete.trim());
@@ -689,10 +714,10 @@ public class ConceptAlignmentAdminService {
             boolean selected
     ) {
         if (StringUtils.isBlank(sourceName)) {
-            return "Le nom de la source est obligatoire !";
+            return SOURCE_NAME_REQUIRED;
         }
         if (StringUtils.isBlank(requete)) {
-            return "L'URL est obligatoire !";
+            return SOURCE_URL_REQUIRED;
         }
         try {
             var saved = alignementSourceRepository.save(fr.cnrs.opentheso.entites.AlignementSource.builder()
@@ -715,7 +740,7 @@ public class ConceptAlignmentAdminService {
             }
         } catch (Exception ex) {
             log.error("Erreur lors de l'ajout de la source d'alignement", ex);
-            return "Erreur côté base de données !";
+            return SOURCE_DB_ERROR;
         }
         return null;
     }

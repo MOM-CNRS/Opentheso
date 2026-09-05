@@ -22,9 +22,9 @@ import java.util.List;
 @RequiredArgsConstructor
 public class ConceptBlockLayoutAccountBean implements Serializable {
 
-    private final UserSession userSession;
-    private final V2LocaleBean localeBean;
-    private final ConceptBlockLayoutService conceptBlockLayoutService;
+    private final transient UserSession userSession;
+    private final transient V2LocaleBean localeBean;
+    private final transient ConceptBlockLayoutService conceptBlockLayoutService;
 
     private List<ConceptBlockLayoutRow> rows = List.of();
     private boolean loaded;

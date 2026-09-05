@@ -1,5 +1,6 @@
 package fr.cnrs.opentheso.v2.toolbox.actions.service;
 
+import fr.cnrs.opentheso.v2.toolbox.actions.model.ActionsLotMessages;
 import fr.cnrs.opentheso.models.nodes.NodeIdValue;
 import fr.cnrs.opentheso.v2.toolbox.actions.model.ActionsLotApplyResult;
 import fr.cnrs.opentheso.v2.toolbox.actions.model.ActionsLotArkCandidate;
@@ -42,10 +43,10 @@ public class ActionsLotArkService {
             String thesaurusId
     ) {
         if (content == null || content.length == 0) {
-            return ActionsLotImportValidationResult.failure("Aucun fichier à valider.");
+            return ActionsLotImportValidationResult.failure(ActionsLotMessages.NO_FILE);
         }
         if (StringUtils.isBlank(thesaurusId)) {
-            return ActionsLotImportValidationResult.failure("Aucun thésaurus sélectionné.");
+            return ActionsLotImportValidationResult.failure(ActionsLotMessages.NO_THESAURUS);
         }
 
         char delimiter = CsvDelimiterSupport.resolveDelimiter(choiceDelimiter);
@@ -61,7 +62,7 @@ public class ActionsLotArkService {
             }
             rows = reader.getNodeIdValues();
         } catch (Exception ex) {
-            return ActionsLotImportValidationResult.failure("Erreur de lecture : " + ex.getMessage());
+            return ActionsLotImportValidationResult.failure(ActionsLotMessages.READ_ERROR_PREFIX + ex.getMessage());
         }
 
         if (rows == null || rows.isEmpty()) {
@@ -84,31 +85,41 @@ public class ActionsLotArkService {
 
         for (NodeIdValue row : rows) {
             line++;
-            if (row == null) {
-                continue;
-            }
-            String localId = StringUtils.trimToEmpty(row.getId());
-            if (StringUtils.isBlank(localId)) {
-                errors.add(new ActionsLotLineError(line, "— (vide)", "localId", "Identifiant obligatoire manquant"));
-                continue;
-            }
-            if (!existing.contains(localId)) {
-                errors.add(new ActionsLotLineError(
-                        line, localId, "localId", "Identifiant introuvable dans le thésaurus"
-                ));
-                continue;
-            }
-            String arkId = StringUtils.trimToEmpty(row.getValue());
-            if (StringUtils.isBlank(arkId)) {
-                errors.add(new ActionsLotLineError(line, localId, "arkId", "Identifiant ARK obligatoire manquant"));
-                continue;
-            }
-            valid.add(new ActionsLotArkCandidate(line, localId, localId, arkId));
+            collectArkRow(row, line, existing, errors, valid);
         }
 
         return new ActionsLotImportValidationResult<>(
                 true, null, rows.size(), valid.size(), errors.size(), 0, errors, valid
         );
+    }
+
+    private static void collectArkRow(
+            NodeIdValue row,
+            int line,
+            Set<String> existing,
+            List<ActionsLotLineError> errors,
+            List<ActionsLotArkCandidate> valid
+    ) {
+        if (row == null) {
+            return;
+        }
+        String localId = StringUtils.trimToEmpty(row.getId());
+        if (StringUtils.isBlank(localId)) {
+            errors.add(new ActionsLotLineError(line, "— (vide)", "localId", "Identifiant obligatoire manquant"));
+            return;
+        }
+        if (!existing.contains(localId)) {
+            errors.add(new ActionsLotLineError(
+                    line, localId, "localId", "Identifiant introuvable dans le thésaurus"
+            ));
+            return;
+        }
+        String arkId = StringUtils.trimToEmpty(row.getValue());
+        if (StringUtils.isBlank(arkId)) {
+            errors.add(new ActionsLotLineError(line, localId, "arkId", "Identifiant ARK obligatoire manquant"));
+            return;
+        }
+        valid.add(new ActionsLotArkCandidate(line, localId, localId, arkId));
     }
 
     @Transactional
@@ -118,10 +129,10 @@ public class ActionsLotArkService {
             boolean clearBefore
     ) {
         if (StringUtils.isBlank(thesaurusId)) {
-            return ActionsLotApplyResult.failure("Aucun thésaurus sélectionné.");
+            return ActionsLotApplyResult.failure(ActionsLotMessages.NO_THESAURUS);
         }
         if (candidates == null || candidates.isEmpty()) {
-            return ActionsLotApplyResult.failure("Aucune ligne valide à importer.");
+            return ActionsLotApplyResult.failure(ActionsLotMessages.NO_VALID_LINE);
         }
 
         int applied = 0;
@@ -154,7 +165,7 @@ public class ActionsLotArkService {
 
         return new ActionsLotApplyResult(
                 true,
-                "Import terminé : " + applied + " identifiant(s) ARK appliqué(s).",
+                "Import terminé : " + applied + ActionsLotMessages.ARK_APPLIED_SUFFIX,
                 candidates.size(),
                 applied,
                 rejected
@@ -179,7 +190,7 @@ public class ActionsLotArkService {
             boolean overwrite
     ) {
         if (StringUtils.isBlank(thesaurusId)) {
-            return ActionsLotApplyResult.failure("Aucun thésaurus sélectionné.");
+            return ActionsLotApplyResult.failure(ActionsLotMessages.NO_THESAURUS);
         }
         if (StringUtils.isBlank(naan)) {
             return ActionsLotApplyResult.failure("Le NAAN est obligatoire.");
@@ -187,7 +198,7 @@ public class ActionsLotArkService {
         int count = thesaurusMaintenanceService.generateArkFromConceptId(thesaurusId, prefix, naan, overwrite);
         return new ActionsLotApplyResult(
                 true,
-                "Génération terminée : " + count + " identifiant(s) ARK appliqué(s).",
+                "Génération terminée : " + count + ActionsLotMessages.ARK_APPLIED_SUFFIX,
                 0,
                 count,
                 0
@@ -196,12 +207,12 @@ public class ActionsLotArkService {
 
     public ActionsLotApplyResult generateLocal(String thesaurusId, boolean overwrite) {
         if (StringUtils.isBlank(thesaurusId)) {
-            return ActionsLotApplyResult.failure("Aucun thésaurus sélectionné.");
+            return ActionsLotApplyResult.failure(ActionsLotMessages.NO_THESAURUS);
         }
         int count = thesaurusMaintenanceService.generateLocalArk(thesaurusId, overwrite);
         return new ActionsLotApplyResult(
                 true,
-                "Génération terminée : " + count + " identifiant(s) ARK appliqué(s).",
+                "Génération terminée : " + count + ActionsLotMessages.ARK_APPLIED_SUFFIX,
                 0,
                 count,
                 0

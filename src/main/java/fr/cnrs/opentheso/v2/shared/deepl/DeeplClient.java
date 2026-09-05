@@ -23,6 +23,9 @@ public class DeeplClient {
         try {
             return new Translator(authKey).translateText(value, fromLang, toLang).getText().trim();
         } catch (Exception ex) {
+            if (ex instanceof InterruptedException) {
+                Thread.currentThread().interrupt();
+            }
             log.error("DeepL translate failed", ex);
             return null;
         }
@@ -35,6 +38,9 @@ public class DeeplClient {
         try {
             return new Translator(authKey).getSourceLanguages();
         } catch (Exception ex) {
+            if (ex instanceof InterruptedException) {
+                Thread.currentThread().interrupt();
+            }
             log.error("DeepL getSourceLanguages failed", ex);
             return Collections.emptyList();
         }
@@ -47,6 +53,9 @@ public class DeeplClient {
         try {
             return new Translator(authKey).getTargetLanguages();
         } catch (Exception ex) {
+            if (ex instanceof InterruptedException) {
+                Thread.currentThread().interrupt();
+            }
             log.error("DeepL getTargetLanguages failed", ex);
             return Collections.emptyList();
         }

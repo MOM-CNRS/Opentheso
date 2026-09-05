@@ -19,7 +19,7 @@ public class UserCommandRepository {
                 SELECT EXISTS(SELECT 1 FROM users WHERE LOWER(username) = LOWER(:username))
                 """;
         return Boolean.TRUE.equals(entityManager.createNativeQuery(sql)
-                .setParameter("username", username)
+                .setParameter(NativeQueryParams.USERNAME, username)
                 .getSingleResult());
     }
 
@@ -36,7 +36,7 @@ public class UserCommandRepository {
     public String findInstitution(int userId) {
         String sql = "SELECT institution FROM users WHERE id_user = :userId";
         List<Object> result = entityManager.createNativeQuery(sql)
-                .setParameter("userId", userId)
+                .setParameter(NativeQueryParams.USER_ID, userId)
                 .getResultList();
         return result.isEmpty() ? null : (String) result.get(0);
     }
@@ -52,8 +52,8 @@ public class UserCommandRepository {
                 LIMIT :limit
                 """;
         List<Object[]> rows = entityManager.createNativeQuery(sql)
-                .setParameter("pattern", "%" + username + "%")
-                .setParameter("limit", limit)
+                .setParameter(NativeQueryParams.PATTERN, "%" + username + "%")
+                .setParameter(NativeQueryParams.LIMIT, limit)
                 .getResultList();
         return mapUserSearchRows(rows);
     }
@@ -88,9 +88,9 @@ public class UserCommandRepository {
                     LIMIT :limit
                     """;
         }
-        var nativeQuery = entityManager.createNativeQuery(sql).setParameter("limit", cap);
+        var nativeQuery = entityManager.createNativeQuery(sql).setParameter(NativeQueryParams.LIMIT, cap);
         if (!q.isEmpty()) {
-            nativeQuery.setParameter("pattern", "%" + q + "%");
+            nativeQuery.setParameter(NativeQueryParams.PATTERN, "%" + q + "%");
         }
         return mapUserSearchRows(nativeQuery.getResultList());
     }
@@ -128,7 +128,7 @@ public class UserCommandRepository {
                 RETURNING id_user
                 """;
         Number id = (Number) entityManager.createNativeQuery(sql)
-                .setParameter("username", username)
+                .setParameter(NativeQueryParams.USERNAME, username)
                 .setParameter("password", password != null ? password : "")
                 .setParameter("mail", mail)
                 .setParameter("alertMail", alertMail)
@@ -158,8 +158,8 @@ public class UserCommandRepository {
                             active = :active
                         WHERE id_user = :userId
                         """)
-                .setParameter("userId", userId)
-                .setParameter("username", username)
+                .setParameter(NativeQueryParams.USER_ID, userId)
+                .setParameter(NativeQueryParams.USERNAME, username)
                 .setParameter("mail", mail)
                 .setParameter("alertMail", alertMail)
                 .setParameter("institution", institution)
@@ -174,7 +174,7 @@ public class UserCommandRepository {
                         SET password = :password, passtomodify = false
                         WHERE id_user = :userId
                         """)
-                .setParameter("userId", userId)
+                .setParameter(NativeQueryParams.USER_ID, userId)
                 .setParameter("password", encodedPassword)
                 .executeUpdate();
     }
@@ -192,7 +192,7 @@ public class UserCommandRepository {
                             apikey = CASE WHEN :authorized THEN apikey ELSE NULL END
                         WHERE id_user = :userId
                         """)
-                .setParameter("userId", userId)
+                .setParameter(NativeQueryParams.USER_ID, userId)
                 .setParameter("authorized", authorized)
                 .setParameter("keyNeverExpire", keyNeverExpire)
                 .setParameter("keyExpiresAt", keyExpiresAt)
@@ -202,16 +202,16 @@ public class UserCommandRepository {
     @Transactional
     public void deleteUserCascade(int userId) {
         entityManager.createNativeQuery("DELETE FROM password_reset_token WHERE id_user = :userId")
-                .setParameter("userId", userId)
+                .setParameter(NativeQueryParams.USER_ID, userId)
                 .executeUpdate();
         entityManager.createNativeQuery("DELETE FROM user_role_only_on WHERE id_user = :userId")
-                .setParameter("userId", userId)
+                .setParameter(NativeQueryParams.USER_ID, userId)
                 .executeUpdate();
         entityManager.createNativeQuery("DELETE FROM user_role_group WHERE id_user = :userId")
-                .setParameter("userId", userId)
+                .setParameter(NativeQueryParams.USER_ID, userId)
                 .executeUpdate();
         entityManager.createNativeQuery("DELETE FROM users WHERE id_user = :userId")
-                .setParameter("userId", userId)
+                .setParameter(NativeQueryParams.USER_ID, userId)
                 .executeUpdate();
     }
 
@@ -220,7 +220,7 @@ public class UserCommandRepository {
         entityManager.createNativeQuery("""
                         UPDATE users SET issuperadmin = :superAdmin WHERE id_user = :userId
                         """)
-                .setParameter("userId", userId)
+                .setParameter(NativeQueryParams.USER_ID, userId)
                 .setParameter("superAdmin", superAdmin)
                 .executeUpdate();
     }

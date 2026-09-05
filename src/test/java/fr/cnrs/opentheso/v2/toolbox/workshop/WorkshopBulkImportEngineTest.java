@@ -254,6 +254,50 @@ class WorkshopBulkImportEngineTest {
     @Test
     void replaceValueByNewValue_blankThesaurus_doesNotThrow() {
         engine.replaceValueByNewValue("", 7);
-        // no assertion beyond "does not throw": the guard clause returns before touching persistence
+
+        verify(persistence, never()).isIdExiste(anyString(), anyString());
+    }
+
+    @Test
+    void loadCsvVariants_markLoadDone() throws Exception {
+        stubUploadedContent("localid,skos:notation\nC1,N-001\n");
+        engine.loadFileNotationCsv(event);
+        assertTrue(engine.isLoadDone());
+
+        stubUploadedContent("localid,skos:related\nC1,C2\n");
+        engine.loadFileRelatedCsv(event);
+        assertTrue(engine.isLoadDone());
+
+        stubUploadedContent("localId,Uri\nC1,http://example.com/x\n");
+        engine.loadFileAlignmentCsvToDelete(event);
+        assertTrue(engine.isLoadDone());
+
+        stubUploadedContent("identifier\nC1\n");
+        engine.loadFileIdentifierCsv(event);
+        assertTrue(engine.isLoadDone());
+
+        stubUploadedContent("localid,skos:prefLabel@fr\nC1,Chat\n");
+        engine.loadFileTraductionCsv(event);
+        assertTrue(engine.isLoadDone());
+
+        stubUploadedContent("localid,skos:altLabel@fr\nC1,Minou\n");
+        engine.loadFileAltlabelCsv(event);
+        assertTrue(engine.isLoadDone());
+
+        stubUploadedContent("deprecated,isReplacedBy\nOLD,NEW\n");
+        engine.loadFileCsvDeprecateConcepts(event);
+        assertTrue(engine.isLoadDone());
+    }
+
+    @Test
+    void addLists_afterLoad_callPersistenceWhenConceptExists() throws Exception {
+        when(persistence.isIdExiste(anyString(), anyString())).thenReturn(true);
+        when(persistence.updateNotation(anyString(), anyString(), anyString())).thenReturn(true);
+        engine.setClearBefore(true);
+
+        stubUploadedContent("localid,skos:notation\nC1,N-001\n");
+        engine.loadFileNotationCsv(event);
+        engine.addNotationList();
+        verify(persistence).updateNotation("C1", "TH1", "N-001");
     }
 }

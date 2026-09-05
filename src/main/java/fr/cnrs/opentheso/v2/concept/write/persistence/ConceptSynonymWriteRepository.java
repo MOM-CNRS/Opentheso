@@ -1,5 +1,6 @@
 package fr.cnrs.opentheso.v2.concept.write.persistence;
 
+import fr.cnrs.opentheso.v2.shared.repository.NativeQueryParams;
 import jakarta.persistence.EntityManager;
 import jakarta.persistence.PersistenceContext;
 import org.springframework.stereotype.Repository;
@@ -35,14 +36,14 @@ public class ConceptSynonymWriteRepository {
                             '', :status, :hidden, :created, :modified
                         )
                         """)
-                .setParameter("idTerm", idTerm)
-                .setParameter("lexicalValue", lexicalValue)
+                .setParameter(NativeQueryParams.ID_TERM, idTerm)
+                .setParameter(NativeQueryParams.LEXICAL_VALUE, lexicalValue)
                 .setParameter("lang", lang)
-                .setParameter("thesaurusId", thesaurusId)
+                .setParameter(NativeQueryParams.THESAURUS_ID, thesaurusId)
                 .setParameter("status", hidden ? "Hidden" : "USE")
-                .setParameter("hidden", hidden)
+                .setParameter(NativeQueryParams.HIDDEN, hidden)
                 .setParameter("created", new Date())
-                .setParameter("modified", new Date())
+                .setParameter(NativeQueryParams.MODIFIED, new Date())
                 .executeUpdate();
         insertHistory(idTerm, lexicalValue, thesaurusId, lang, userId, hidden, "ADD");
         return true;
@@ -69,10 +70,10 @@ public class ConceptSynonymWriteRepository {
                           AND lexical_value = :oldValue
                         """)
                 .setParameter("newValue", newValue)
-                .setParameter("hidden", hidden)
-                .setParameter("modified", new Date())
-                .setParameter("idTerm", idTerm)
-                .setParameter("thesaurusId", thesaurusId)
+                .setParameter(NativeQueryParams.HIDDEN, hidden)
+                .setParameter(NativeQueryParams.MODIFIED, new Date())
+                .setParameter(NativeQueryParams.ID_TERM, idTerm)
+                .setParameter(NativeQueryParams.THESAURUS_ID, thesaurusId)
                 .setParameter("lang", lang)
                 .setParameter("oldValue", oldValue)
                 .executeUpdate();
@@ -101,12 +102,12 @@ public class ConceptSynonymWriteRepository {
                           AND lang = :lang
                           AND lexical_value = :value
                         """)
-                .setParameter("hidden", hidden)
-                .setParameter("modified", new Date())
-                .setParameter("idTerm", idTerm)
-                .setParameter("thesaurusId", thesaurusId)
+                .setParameter(NativeQueryParams.HIDDEN, hidden)
+                .setParameter(NativeQueryParams.MODIFIED, new Date())
+                .setParameter(NativeQueryParams.ID_TERM, idTerm)
+                .setParameter(NativeQueryParams.THESAURUS_ID, thesaurusId)
                 .setParameter("lang", lang)
-                .setParameter("value", value)
+                .setParameter(NativeQueryParams.VALUE, value)
                 .executeUpdate();
         if (updated <= 0) {
             return false;
@@ -130,9 +131,9 @@ public class ConceptSynonymWriteRepository {
                           AND lexical_value = :lexicalValue
                           AND lang = :lang
                         """)
-                .setParameter("thesaurusId", thesaurusId)
-                .setParameter("idTerm", idTerm)
-                .setParameter("lexicalValue", lexicalValue)
+                .setParameter(NativeQueryParams.THESAURUS_ID, thesaurusId)
+                .setParameter(NativeQueryParams.ID_TERM, idTerm)
+                .setParameter(NativeQueryParams.LEXICAL_VALUE, lexicalValue)
                 .setParameter("lang", lang)
                 .executeUpdate();
         insertHistory(idTerm, lexicalValue, thesaurusId, lang, userId, false, "delete");
@@ -146,9 +147,9 @@ public class ConceptSynonymWriteRepository {
                           AND id_thesaurus = :thesaurusId
                           AND lang = :lang
                         """)
-                .setParameter("value", value)
+                .setParameter(NativeQueryParams.VALUE, value)
                 .setParameter("lang", lang)
-                .setParameter("thesaurusId", thesaurusId)
+                .setParameter(NativeQueryParams.THESAURUS_ID, thesaurusId)
                 .getSingleResult());
     }
 
@@ -171,14 +172,14 @@ public class ConceptSynonymWriteRepository {
                             :userId, :hidden, :action, :modified, '', ''
                         )
                         """)
-                .setParameter("idTerm", idTerm)
-                .setParameter("lexicalValue", lexicalValue)
+                .setParameter(NativeQueryParams.ID_TERM, idTerm)
+                .setParameter(NativeQueryParams.LEXICAL_VALUE, lexicalValue)
                 .setParameter("lang", lang)
-                .setParameter("thesaurusId", thesaurusId)
-                .setParameter("userId", userId)
-                .setParameter("hidden", hidden)
+                .setParameter(NativeQueryParams.THESAURUS_ID, thesaurusId)
+                .setParameter(NativeQueryParams.USER_ID, userId)
+                .setParameter(NativeQueryParams.HIDDEN, hidden)
                 .setParameter("action", action)
-                .setParameter("modified", new Date())
+                .setParameter(NativeQueryParams.MODIFIED, new Date())
                 .executeUpdate();
     }
 }

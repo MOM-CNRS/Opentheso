@@ -43,11 +43,11 @@ public class ConceptCustomRelationBlockEditorBean implements Serializable {
 
     private static final ObjectMapper JSON = new ObjectMapper();
 
-    private final ThesaurusViewBean thesaurusViewBean;
-    private final ConceptRelationMutationService conceptRelationMutationService;
-    private final ConceptWritePolicy conceptWritePolicy;
-    private final UserSession userSession;
-    private final ConceptSelectionContext conceptSelectionContext;
+    private final transient ThesaurusViewBean thesaurusViewBean;
+    private final transient ConceptRelationMutationService conceptRelationMutationService;
+    private final transient ConceptWritePolicy conceptWritePolicy;
+    private final transient UserSession userSession;
+    private final transient ConceptSelectionContext conceptSelectionContext;
 
     @Getter(AccessLevel.NONE)
     private boolean editing;
@@ -111,12 +111,12 @@ public class ConceptCustomRelationBlockEditorBean implements Serializable {
         }
         Integer userId = userSession.getCurrentUserId();
         if (userId == null) {
-            errorMessage = "Action non autorisée";
+            errorMessage = WriteUiMessages.UNAUTHORIZED_FALLBACK;
             return;
         }
         ConceptDetail current = thesaurusViewBean.getSelectedConcept();
         if (current == null || current.getSummary() == null) {
-            errorMessage = "Action non autorisée";
+            errorMessage = WriteUiMessages.UNAUTHORIZED_FALLBACK;
             return;
         }
 

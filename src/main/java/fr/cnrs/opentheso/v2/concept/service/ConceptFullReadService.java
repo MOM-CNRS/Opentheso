@@ -46,11 +46,22 @@ public class ConceptFullReadService {
         if (StringUtils.isAnyBlank(thesaurusId, conceptId, lang)) {
             return Optional.empty();
         }
-        return loadFullConcept(thesaurusId, conceptId, lang, offset, authenticated, false);
+        return doLoadFullConcept(thesaurusId, conceptId, lang, offset, authenticated, false);
     }
 
     @Transactional(readOnly = true)
     public Optional<ConceptFullSnapshot> loadFullConcept(
+            String thesaurusId,
+            String conceptId,
+            String lang,
+            int offset,
+            boolean authenticated,
+            boolean includeCandidates
+    ) {
+        return doLoadFullConcept(thesaurusId, conceptId, lang, offset, authenticated, includeCandidates);
+    }
+
+    private Optional<ConceptFullSnapshot> doLoadFullConcept(
             String thesaurusId,
             String conceptId,
             String lang,

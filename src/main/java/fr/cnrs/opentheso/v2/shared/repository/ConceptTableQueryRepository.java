@@ -75,7 +75,7 @@ public class ConceptTableQueryRepository {
         }
         sql.append(" ORDER BY label LIMIT ").append(Math.max(1, limit));
         return em.createNativeQuery(sql.toString())
-                .setParameter("thesaurusId", thesaurusId)
+                .setParameter(NativeQueryParams.THESAURUS_ID, thesaurusId)
                 .setParameter("lang", lang)
                 .getResultList();
     }
@@ -101,7 +101,7 @@ public class ConceptTableQueryRepository {
               AND hr.role LIKE 'BT%'
             ORDER BY hr.id_concept1, hr.id_concept2
             """)
-                .setParameter("thesaurusId", thesaurusId)
+                .setParameter(NativeQueryParams.THESAURUS_ID, thesaurusId)
                 .setParameter("lang", lang)
                 .getResultList();
     }

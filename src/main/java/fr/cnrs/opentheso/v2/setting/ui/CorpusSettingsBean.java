@@ -22,10 +22,10 @@ import java.util.List;
 @Named("v2CorpusSettingsBean")
 public class CorpusSettingsBean implements Serializable {
 
-    private final UserSession userSession;
-    private final ThesaurusContext thesaurusContext;
-    private final ThesaurusAccessService thesaurusAccessService;
-    private final ThesaurusCorpusService thesaurusCorpusService;
+    private final transient UserSession userSession;
+    private final transient ThesaurusContext thesaurusContext;
+    private final transient ThesaurusAccessService thesaurusAccessService;
+    private final transient ThesaurusCorpusService thesaurusCorpusService;
 
     private List<ThesaurusCorpus> corpusList = Collections.emptyList();
     private CorpusEditor corpusEditor = CorpusEditor.empty();

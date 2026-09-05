@@ -14,7 +14,7 @@ import java.io.InputStream;
 @Slf4j
 public class ReadRdf4jDocument {
 
-    public SKOSXmlDocument readRdfFlux(InputStream inputStream, RDFFormat rdfFormat, String defaultLang, StringBuffer error) throws IOException {
+    public SKOSXmlDocument readRdfFlux(InputStream inputStream, RDFFormat rdfFormat, String defaultLang, StringBuilder error) throws IOException {
 
         SKOSXmlDocument skosXmlDocument = new SKOSXmlDocument();
         RDFParser parser = Rio.createParser(rdfFormat);

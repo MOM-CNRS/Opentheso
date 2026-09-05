@@ -1,6 +1,7 @@
 package fr.cnrs.opentheso.v2.setting.model;
 
 import java.util.List;
+import java.io.Serializable;
 
 public record ThesaurusPreferences(
         String thesaurusId,
@@ -55,5 +56,5 @@ public record ThesaurusPreferences(
         String prefixOpenArk,
         String apiKeyOpenArk,
         List<ThesaurusLanguage> languages
-) {
+) implements Serializable {
 }

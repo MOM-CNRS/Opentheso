@@ -28,13 +28,13 @@ import java.io.Serializable;
 @RequiredArgsConstructor
 public class LoginBean implements Serializable {
 
-    private final AuthenticationService authenticationService;
-    private final SessionAuthenticatedUserSource sessionAuthenticatedUserSource;
-    private final UserSession userSession;
-    private final V2LocaleBean v2LocaleBean;
-    private final ConsultationShellBean consultationShellBean;
-    private final AppConfig appConfig;
-    private final SessionLifecycleService sessionLifecycleService;
+    private final transient AuthenticationService authenticationService;
+    private final transient SessionAuthenticatedUserSource sessionAuthenticatedUserSource;
+    private final transient UserSession userSession;
+    private final transient V2LocaleBean v2LocaleBean;
+    private final transient ConsultationShellBean consultationShellBean;
+    private final transient AppConfig appConfig;
+    private final transient SessionLifecycleService sessionLifecycleService;
 
     private String username;
     private String password;

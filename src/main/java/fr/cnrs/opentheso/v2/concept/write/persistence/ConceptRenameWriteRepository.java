@@ -1,5 +1,6 @@
 package fr.cnrs.opentheso.v2.concept.write.persistence;
 
+import fr.cnrs.opentheso.v2.shared.repository.NativeQueryParams;
 import jakarta.persistence.EntityManager;
 import jakarta.persistence.PersistenceContext;
 import org.springframework.stereotype.Repository;
@@ -26,9 +27,9 @@ public class ConceptRenameWriteRepository {
                           AND id_thesaurus = :thesaurusId
                         LIMIT 1
                         """)
-                .setParameter("lexicalValue", lexicalValue)
+                .setParameter(NativeQueryParams.LEXICAL_VALUE, lexicalValue)
                 .setParameter("lang", lang)
-                .setParameter("thesaurusId", thesaurusId)
+                .setParameter(NativeQueryParams.THESAURUS_ID, thesaurusId)
                 .getResultStream()
                 .map(row -> {
                     Object[] values = (Object[]) row;
@@ -53,8 +54,8 @@ public class ConceptRenameWriteRepository {
                           AND t.lang = :lang
                         LIMIT 1
                         """)
-                .setParameter("conceptId", conceptId)
-                .setParameter("thesaurusId", thesaurusId)
+                .setParameter(NativeQueryParams.CONCEPT_ID, conceptId)
+                .setParameter(NativeQueryParams.THESAURUS_ID, thesaurusId)
                 .setParameter("lang", lang)
                 .getResultStream()
                 .map(value -> ((Number) value).intValue())
@@ -71,8 +72,8 @@ public class ConceptRenameWriteRepository {
                               AND lang = :lang
                         )
                         """)
-                .setParameter("idTerm", idTerm)
-                .setParameter("thesaurusId", thesaurusId)
+                .setParameter(NativeQueryParams.ID_TERM, idTerm)
+                .setParameter(NativeQueryParams.THESAURUS_ID, thesaurusId)
                 .setParameter("lang", lang)
                 .getSingleResult());
     }
@@ -98,14 +99,14 @@ public class ConceptRenameWriteRepository {
                             :source, '', :userId, :userId, :created, :modified
                         )
                         """)
-                .setParameter("idTerm", idTerm)
-                .setParameter("lexicalValue", lexicalValue)
+                .setParameter(NativeQueryParams.ID_TERM, idTerm)
+                .setParameter(NativeQueryParams.LEXICAL_VALUE, lexicalValue)
                 .setParameter("lang", lang)
-                .setParameter("thesaurusId", thesaurusId)
+                .setParameter(NativeQueryParams.THESAURUS_ID, thesaurusId)
                 .setParameter("source", source)
-                .setParameter("userId", userId)
+                .setParameter(NativeQueryParams.USER_ID, userId)
                 .setParameter("created", now)
-                .setParameter("modified", now)
+                .setParameter(NativeQueryParams.MODIFIED, now)
                 .executeUpdate();
         entityManager.createNativeQuery("""
                         INSERT INTO term_historique (
@@ -117,21 +118,21 @@ public class ConceptRenameWriteRepository {
                             :userId, 'ADD', :modified, :source, ''
                         )
                         """)
-                .setParameter("idTerm", idTerm)
-                .setParameter("lexicalValue", lexicalValue)
+                .setParameter(NativeQueryParams.ID_TERM, idTerm)
+                .setParameter(NativeQueryParams.LEXICAL_VALUE, lexicalValue)
                 .setParameter("lang", lang)
-                .setParameter("thesaurusId", thesaurusId)
-                .setParameter("userId", userId)
-                .setParameter("modified", now)
+                .setParameter(NativeQueryParams.THESAURUS_ID, thesaurusId)
+                .setParameter(NativeQueryParams.USER_ID, userId)
+                .setParameter(NativeQueryParams.MODIFIED, now)
                 .setParameter("source", source)
                 .executeUpdate();
         entityManager.createNativeQuery("""
                         INSERT INTO preferred_term (id_concept, id_term, id_thesaurus)
                         VALUES (:conceptId, :idTerm, :thesaurusId)
                         """)
-                .setParameter("conceptId", conceptId)
-                .setParameter("idTerm", idTerm)
-                .setParameter("thesaurusId", thesaurusId)
+                .setParameter(NativeQueryParams.CONCEPT_ID, conceptId)
+                .setParameter(NativeQueryParams.ID_TERM, idTerm)
+                .setParameter(NativeQueryParams.THESAURUS_ID, thesaurusId)
                 .executeUpdate();
         return idTerm;
     }
@@ -149,8 +150,8 @@ public class ConceptRenameWriteRepository {
                             WHERE id_term = :idTerm AND id_thesaurus = :thesaurusId
                         )
                         """)
-                .setParameter("idTerm", idTerm)
-                .setParameter("thesaurusId", thesaurusId)
+                .setParameter(NativeQueryParams.ID_TERM, idTerm)
+                .setParameter(NativeQueryParams.THESAURUS_ID, thesaurusId)
                 .getSingleResult()));
         return idTerm;
     }

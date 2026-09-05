@@ -16,6 +16,7 @@ import org.mockito.junit.jupiter.MockitoExtension;
 import org.springframework.http.HttpStatus;
 
 import java.time.LocalDate;
+import java.time.Month;
 import java.util.List;
 
 import static org.junit.jupiter.api.Assertions.assertEquals;
@@ -109,7 +110,7 @@ class AdminUserControllerTest {
     void updateApiKeySettings_delegatesToService() {
         when(adminAuthSupport.resolveUserId("key", null)).thenReturn(1);
         when(userProfileService.getProfile(1)).thenReturn(superAdminProfile(1));
-        LocalDate expiresAt = LocalDate.of(2026, 12, 31);
+        LocalDate expiresAt = LocalDate.of(2026, Month.DECEMBER, 31);
 
         var response = adminUserController.updateApiKeySettings(
                 "key",
@@ -134,6 +135,6 @@ class AdminUserControllerTest {
     }
 
     private static UserProfile superAdminProfile(int id) {
-        return new UserProfile(id, "admin", "admin@test.fr", false, true, true, LocalDate.now(), true);
+        return new UserProfile(id, "admin", "admin@test.fr", false, true, true, LocalDate.of(2024, Month.JUNE, 15), true);
     }
 }

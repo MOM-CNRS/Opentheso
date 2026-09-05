@@ -7,6 +7,7 @@ import fr.cnrs.opentheso.v2.concept.session.ConceptSelectionContext;
 import fr.cnrs.opentheso.v2.concept.write.policy.ConceptWritePolicy;
 import fr.cnrs.opentheso.v2.setting.ui.ThesaurusContext;
 import fr.cnrs.opentheso.v2.shared.ui.UserSession;
+import fr.cnrs.opentheso.v2.shared.ui.V2LocaleBean;
 import jakarta.faces.view.ViewScoped;
 import jakarta.inject.Named;
 import jakarta.servlet.http.Part;
@@ -36,12 +37,15 @@ import java.util.Locale;
 @RequiredArgsConstructor
 public class ConceptListCsvImportBean implements Serializable {
 
-    private final CsvImportHelper csvImportHelper;
-    private final PreferencesRepository preferencesRepository;
-    private final ConceptSelectionContext conceptSelectionContext;
-    private final ThesaurusContext thesaurusContext;
-    private final UserSession userSession;
-    private final ConceptWritePolicy conceptWritePolicy;
+    private final transient CsvImportHelper csvImportHelper;
+    private final transient PreferencesRepository preferencesRepository;
+    private final transient ConceptSelectionContext conceptSelectionContext;
+    private final transient ThesaurusContext thesaurusContext;
+    private final transient UserSession userSession;
+    private final transient ConceptWritePolicy conceptWritePolicy;
+    private final transient V2LocaleBean v2LocaleBean;
+
+    private final DialogRunState run = new DialogRunState();
 
     private int choiceDelimiter;
     private char delimiterCsv = ',';
@@ -58,12 +62,33 @@ public class ConceptListCsvImportBean implements Serializable {
     private String parentConceptLabel = "";
     private String parentConceptId = "";
     private String fileName = "";
-    private String runState = "";
-    private String flashMessage;
-    private String flashToken;
     private List<String> sampleLabels = Collections.emptyList();
+
+    public String getRunState() {
+        return run.getState();
+    }
+
+    public void setRunState(String state) {
+        run.setState(state);
+    }
+
+    public String getFlashMessage() {
+        return run.getFlashMessage();
+    }
+
+    public void setFlashMessage(String flashMessage) {
+        run.setFlashMessage(flashMessage);
+    }
+
+    public String getFlashToken() {
+        return run.getFlashToken();
+    }
+
+    public void setFlashToken(String flashToken) {
+        run.setFlashToken(flashToken);
+    }
     private List<CsvReadHelper.ConceptObject> conceptObjects = new ArrayList<>();
-    private Part csvUpload;
+    private transient Part csvUpload;
     private byte[] csvBytes;
 
     public boolean isImportAvailable() {
@@ -72,7 +97,7 @@ public class ConceptListCsvImportBean implements Serializable {
     }
 
     public boolean isImportReady() {
-        return loadDone && !"done".equals(runState);
+        return loadDone && !run.isDone();
     }
 
     public void prepareImport() {
@@ -100,9 +125,7 @@ public class ConceptListCsvImportBean implements Serializable {
         warning = "";
         error = "";
         fileName = "";
-        runState = "";
-        flashMessage = null;
-        flashToken = null;
+        run.reset();
         sampleLabels = Collections.emptyList();
         conceptObjects = new ArrayList<>();
         csvUpload = null;
@@ -122,7 +145,7 @@ public class ConceptListCsvImportBean implements Serializable {
         initMessages();
         loadDone = false;
         importDone = false;
-        runState = "";
+        run.reset();
         importedCount = 0;
         try {
             if (csvUpload != null && csvUpload.getSize() > 0) {
@@ -130,25 +153,25 @@ public class ConceptListCsvImportBean implements Serializable {
                 fileName = submittedName(csvUpload);
             }
         } catch (Exception e) {
-            error = StringUtils.defaultIfBlank(e.getMessage(), "La lecture du fichier a échoué");
+            error = StringUtils.defaultIfBlank(e.getMessage(), msg("v2.concept.csvReadFailed", "La lecture du fichier a échoué"));
             loadDone = false;
             return;
         }
         if (csvBytes == null || csvBytes.length == 0) {
-            error = "Aucun fichier";
+            error = msg("v2.concept.csvNoFile", "Aucun fichier");
             if (StringUtils.isBlank(fileName)) {
                 fileName = "";
             }
             return;
         }
         if (!isAllowedFileName(fileName)) {
-            error = "Fichier non pris en charge (csv, tsv ou txt)";
+            error = msg("v2.concept.csvBadType", "Fichier non pris en charge (csv, tsv ou txt)");
             return;
         }
         try {
             loadFromBytes(csvBytes);
         } catch (Exception e) {
-            error = StringUtils.defaultIfBlank(e.getMessage(), "La lecture du fichier a échoué");
+            error = StringUtils.defaultIfBlank(e.getMessage(), msg("v2.concept.csvReadFailed", "La lecture du fichier a échoué"));
             loadDone = false;
         }
     }
@@ -156,27 +179,27 @@ public class ConceptListCsvImportBean implements Serializable {
     public boolean importUnderCurrentConcept() {
         error = "";
         if (!isImportAvailable()) {
-            runState = "error";
-            error = "Action non autorisée";
+            run.fail(unauthorized());
+            error = run.getErrorMessage();
             return false;
         }
         if (CollectionUtils.isEmpty(conceptObjects)) {
-            runState = "error";
-            error = "Aucun concept à importer";
+            run.fail(msg("v2.concept.csvNone", "Aucun concept à importer"));
+            error = run.getErrorMessage();
             return false;
         }
         String thesaurusId = thesaurusContext.resolveThesaurusId();
         String parentId = StringUtils.defaultIfBlank(parentConceptId, conceptSelectionContext.getConceptId());
         Integer userId = userSession.getCurrentUserId();
         if (StringUtils.isAnyBlank(thesaurusId, parentId) || userId == null) {
-            runState = "error";
-            error = "Erreur manque de paramètres";
+            run.fail(msg("v2.write.missingParams", "Erreur manque de paramètres"));
+            error = run.getErrorMessage();
             return false;
         }
         var preferences = preferencesRepository.findByIdThesaurus(thesaurusId).orElse(null);
         if (preferences == null) {
-            runState = "error";
-            error = "Pas de préférences pour le thésaurus";
+            run.fail(msg("v2.concept.csvNoPrefs", "Pas de préférences pour le thésaurus"));
+            error = run.getErrorMessage();
             return false;
         }
         initMessages();
@@ -194,19 +217,18 @@ public class ConceptListCsvImportBean implements Serializable {
             importedCount = count;
             loadDone = false;
             importDone = true;
-            runState = "done";
             info = "import réussi\n" + StringUtils.defaultString(csvImportHelper.getMessage());
             if (StringUtils.isNotBlank(csvImportHelper.getMessage())) {
                 warning = csvImportHelper.getMessage();
             }
             conceptObjects = new ArrayList<>();
-            flashSuccess(importedCount == 1
-                    ? "1 concept importé"
-                    : importedCount + " concepts importés");
+            run.succeed(importedCount == 1
+                    ? msg("v2.concept.csvImportedOne", "1 concept importé")
+                    : msg("v2.concept.csvImportedMany", "{0} concepts importés", importedCount));
             return true;
         } catch (Exception e) {
-            runState = "error";
-            error = StringUtils.defaultIfBlank(e.getMessage(), "Import en échec");
+            run.fail(StringUtils.defaultIfBlank(e.getMessage(), msg("v2.concept.csvFailed", "Import en échec")));
+            error = run.getErrorMessage();
             return false;
         }
     }
@@ -230,15 +252,7 @@ public class ConceptListCsvImportBean implements Serializable {
                     ? new ArrayList<>(csvReadHelper.getConceptObjects())
                     : new ArrayList<>();
             total = conceptObjects.size();
-            underParentCount = 0;
-            hierarchyCount = 0;
-            for (CsvReadHelper.ConceptObject conceptObject : conceptObjects) {
-                if (conceptObject.getBroaders() == null || conceptObject.getBroaders().isEmpty()) {
-                    underParentCount++;
-                } else {
-                    hierarchyCount++;
-                }
-            }
+            countConceptsByHierarchy();
             sampleLabels = conceptObjects.stream()
                     .limit(3)
                     .map(this::firstLabel)
@@ -248,15 +262,27 @@ public class ConceptListCsvImportBean implements Serializable {
             if (!conceptObjects.isEmpty()
                     && conceptObjects.get(0).getPrefLabels() != null
                     && conceptObjects.get(0).getPrefLabels().isEmpty()) {
-                error = "La lecture a échoué, vérifiez le séparateur des colonnes";
+                error = msg("v2.concept.csvSepFailed", "La lecture a échoué, vérifiez le séparateur des colonnes");
                 loadDone = false;
             } else {
                 loadDone = total > 0 && StringUtils.isBlank(error);
                 if (loadDone) {
                     info = "File correctly loaded";
                 } else if (total == 0 && StringUtils.isBlank(error)) {
-                    error = "Aucun concept lu dans le fichier";
+                    error = msg("v2.concept.csvEmptyFile", "Aucun concept lu dans le fichier");
                 }
+            }
+        }
+    }
+
+    private void countConceptsByHierarchy() {
+        underParentCount = 0;
+        hierarchyCount = 0;
+        for (CsvReadHelper.ConceptObject conceptObject : conceptObjects) {
+            if (conceptObject.getBroaders() == null || conceptObject.getBroaders().isEmpty()) {
+                underParentCount++;
+            } else {
+                hierarchyCount++;
             }
         }
     }
@@ -282,9 +308,21 @@ public class ConceptListCsvImportBean implements Serializable {
         return lower.endsWith(".csv") || lower.endsWith(".tsv") || lower.endsWith(".txt");
     }
 
-    private void flashSuccess(String message) {
-        flashMessage = message;
-        flashToken = String.valueOf(System.currentTimeMillis());
+    public void finishAfterClose() {
+        run.reset();
+    }
+
+
+    private String unauthorized() {
+        return WriteUiMessages.unauthorized(v2LocaleBean);
+    }
+
+    private String msg(String key, String fallback) {
+        return WriteUiMessages.msg(v2LocaleBean, key, fallback);
+    }
+
+    private String msg(String key, String fallback, Object... args) {
+        return WriteUiMessages.msg(v2LocaleBean, key, fallback, args);
     }
 
     private void initMessages() {

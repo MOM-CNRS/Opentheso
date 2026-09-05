@@ -1,5 +1,6 @@
 package fr.cnrs.opentheso.v2.candidat.ui;
 
+import fr.cnrs.opentheso.v2.concept.write.ui.WriteUiMessages;
 import fr.cnrs.opentheso.models.candidats.CandidatDto;
 import fr.cnrs.opentheso.utils.MessageUtils;
 import fr.cnrs.opentheso.v2.candidat.service.CandidatMutationService;
@@ -28,10 +29,10 @@ import java.util.List;
 @RequiredArgsConstructor
 public class CandidatAlignmentBean implements Serializable {
 
-    private final ConceptAlignmentMutationService conceptAlignmentMutationService;
-    private final CandidatMutationService candidatMutationService;
-    private final ThesaurusContext thesaurusContext;
-    private final UserSession userSession;
+    private final transient ConceptAlignmentMutationService conceptAlignmentMutationService;
+    private final transient CandidatMutationService candidatMutationService;
+    private final transient ThesaurusContext thesaurusContext;
+    private final transient UserSession userSession;
 
     private List<ConceptWriteAlignmentType> alignmentTypes = Collections.emptyList();
     private int manualAlignmentType = -1;
@@ -56,7 +57,7 @@ public class CandidatAlignmentBean implements Serializable {
 
     public void addManualAlignment(CandidatDto candidat) {
         if (candidat == null || StringUtils.isBlank(candidat.getIdConcepte())) {
-            MessageUtils.showErrorMessage("Action non autorisée");
+            MessageUtils.showErrorMessage(WriteUiMessages.UNAUTHORIZED_FALLBACK);
             return;
         }
         if (StringUtils.isBlank(manualAlignmentUri)) {
@@ -69,7 +70,7 @@ public class CandidatAlignmentBean implements Serializable {
         }
         Integer userId = userSession.getCurrentUserId();
         if (userId == null) {
-            MessageUtils.showErrorMessage("Action non autorisée");
+            MessageUtils.showErrorMessage(WriteUiMessages.UNAUTHORIZED_FALLBACK);
             return;
         }
 

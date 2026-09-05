@@ -32,6 +32,7 @@ import org.springframework.web.bind.annotation.RestController;
 
 import java.net.URISyntaxException;
 import java.util.List;
+import fr.cnrs.opentheso.v2.shared.api.ApiHeaders;
 
 @RestController
 @RequestMapping("/openapi/v2/graph/views")
@@ -52,8 +53,8 @@ public class GraphViewController {
     @GetMapping(produces = MediaType.APPLICATION_JSON_VALUE)
     @Operation(summary = "Lister les vues graphe de l'utilisateur")
     public List<GraphViewResponse> listViews(
-            @RequestHeader(value = "X-API-KEY", required = false) String xApiKey,
-            @RequestHeader(value = "API-KEY", required = false) String legacyApiKey
+            @RequestHeader(value = ApiHeaders.X_API_KEY, required = false) String xApiKey,
+            @RequestHeader(value = ApiHeaders.API_KEY, required = false) String legacyApiKey
     ) {
         int userId = graphAuthSupport.resolveUserId(xApiKey, legacyApiKey);
         graphAuthSupport.requireAuthenticated(userId);
@@ -63,8 +64,8 @@ public class GraphViewController {
     @GetMapping(value = "/{viewId}", produces = MediaType.APPLICATION_JSON_VALUE)
     @Operation(summary = "Lire une vue graphe")
     public GraphViewResponse getView(
-            @RequestHeader(value = "X-API-KEY", required = false) String xApiKey,
-            @RequestHeader(value = "API-KEY", required = false) String legacyApiKey,
+            @RequestHeader(value = ApiHeaders.X_API_KEY, required = false) String xApiKey,
+            @RequestHeader(value = ApiHeaders.API_KEY, required = false) String legacyApiKey,
             @PathVariable int viewId
     ) {
         int userId = graphAuthSupport.resolveUserId(xApiKey, legacyApiKey);
@@ -75,8 +76,8 @@ public class GraphViewController {
     @PostMapping(consumes = MediaType.APPLICATION_JSON_VALUE, produces = MediaType.APPLICATION_JSON_VALUE)
     @Operation(summary = "Créer une vue graphe")
     public GraphViewResponse createView(
-            @RequestHeader(value = "X-API-KEY", required = false) String xApiKey,
-            @RequestHeader(value = "API-KEY", required = false) String legacyApiKey,
+            @RequestHeader(value = ApiHeaders.X_API_KEY, required = false) String xApiKey,
+            @RequestHeader(value = ApiHeaders.API_KEY, required = false) String legacyApiKey,
             @Valid @RequestBody CreateGraphViewRequest request
     ) {
         int userId = graphAuthSupport.resolveUserId(xApiKey, legacyApiKey);
@@ -88,8 +89,8 @@ public class GraphViewController {
     @PutMapping(value = "/{viewId}", consumes = MediaType.APPLICATION_JSON_VALUE, produces = MediaType.APPLICATION_JSON_VALUE)
     @Operation(summary = "Mettre à jour une vue graphe")
     public GraphViewResponse updateView(
-            @RequestHeader(value = "X-API-KEY", required = false) String xApiKey,
-            @RequestHeader(value = "API-KEY", required = false) String legacyApiKey,
+            @RequestHeader(value = ApiHeaders.X_API_KEY, required = false) String xApiKey,
+            @RequestHeader(value = ApiHeaders.API_KEY, required = false) String legacyApiKey,
             @PathVariable int viewId,
             @Valid @RequestBody UpdateGraphViewRequest request
     ) {
@@ -103,8 +104,8 @@ public class GraphViewController {
     @DeleteMapping("/{viewId}")
     @Operation(summary = "Supprimer une vue graphe")
     public ResponseEntity<Void> deleteView(
-            @RequestHeader(value = "X-API-KEY", required = false) String xApiKey,
-            @RequestHeader(value = "API-KEY", required = false) String legacyApiKey,
+            @RequestHeader(value = ApiHeaders.X_API_KEY, required = false) String xApiKey,
+            @RequestHeader(value = ApiHeaders.API_KEY, required = false) String legacyApiKey,
             @PathVariable int viewId
     ) {
         int userId = graphAuthSupport.resolveUserId(xApiKey, legacyApiKey);
@@ -117,8 +118,8 @@ public class GraphViewController {
     @PostMapping(value = "/{viewId}/exports", consumes = MediaType.APPLICATION_JSON_VALUE, produces = MediaType.APPLICATION_JSON_VALUE)
     @Operation(summary = "Ajouter une entrée d'export à une vue")
     public GraphViewResponse addExport(
-            @RequestHeader(value = "X-API-KEY", required = false) String xApiKey,
-            @RequestHeader(value = "API-KEY", required = false) String legacyApiKey,
+            @RequestHeader(value = ApiHeaders.X_API_KEY, required = false) String xApiKey,
+            @RequestHeader(value = ApiHeaders.API_KEY, required = false) String legacyApiKey,
             @PathVariable int viewId,
             @Valid @RequestBody AddGraphExportRequest request
     ) {
@@ -134,8 +135,8 @@ public class GraphViewController {
     @DeleteMapping("/{viewId}/exports")
     @Operation(summary = "Retirer une entrée d'export d'une vue")
     public GraphViewResponse removeExport(
-            @RequestHeader(value = "X-API-KEY", required = false) String xApiKey,
-            @RequestHeader(value = "API-KEY", required = false) String legacyApiKey,
+            @RequestHeader(value = ApiHeaders.X_API_KEY, required = false) String xApiKey,
+            @RequestHeader(value = ApiHeaders.API_KEY, required = false) String legacyApiKey,
             @PathVariable int viewId,
             @RequestParam String thesaurusId,
             @RequestParam(required = false) String conceptId
@@ -150,8 +151,8 @@ public class GraphViewController {
     @GetMapping(value = "/{viewId}/visualization-url", produces = MediaType.APPLICATION_JSON_VALUE)
     @Operation(summary = "Obtenir l'URL de visualisation force-directed")
     public GraphVisualizationUrlResponse visualizationUrl(
-            @RequestHeader(value = "X-API-KEY", required = false) String xApiKey,
-            @RequestHeader(value = "API-KEY", required = false) String legacyApiKey,
+            @RequestHeader(value = ApiHeaders.X_API_KEY, required = false) String xApiKey,
+            @RequestHeader(value = ApiHeaders.API_KEY, required = false) String legacyApiKey,
             @PathVariable int viewId,
             @RequestParam(required = false) String lang
     ) throws URISyntaxException {
@@ -169,8 +170,8 @@ public class GraphViewController {
     @PostMapping("/{viewId}/neo4j-export")
     @Operation(summary = "Exporter la vue vers Neo4j")
     public ResponseEntity<Void> exportToNeo4j(
-            @RequestHeader(value = "X-API-KEY", required = false) String xApiKey,
-            @RequestHeader(value = "API-KEY", required = false) String legacyApiKey,
+            @RequestHeader(value = ApiHeaders.X_API_KEY, required = false) String xApiKey,
+            @RequestHeader(value = ApiHeaders.API_KEY, required = false) String legacyApiKey,
             @PathVariable int viewId
     ) {
         int userId = graphAuthSupport.resolveUserId(xApiKey, legacyApiKey);

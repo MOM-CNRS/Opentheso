@@ -55,7 +55,7 @@ public class UserRoleQueryRepository {
                 ORDER BY LOWER(ugl.label_group), LOWER(ugt.id_thesaurus)
                 """;
         List<Object[]> rows = entityManager.createNativeQuery(sql)
-                .setParameter("userId", userId)
+                .setParameter(NativeQueryParams.USER_ID, userId)
                 .getResultList();
 
         return rows.stream()
@@ -79,7 +79,7 @@ public class UserRoleQueryRepository {
                 ) roles
                 """;
         Object result = entityManager.createNativeQuery(sql)
-                .setParameter("userId", userId)
+                .setParameter(NativeQueryParams.USER_ID, userId)
                 .getSingleResult();
         if (result == null) {
             return OptionalInt.empty();

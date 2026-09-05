@@ -10,6 +10,7 @@ import fr.cnrs.opentheso.v2.user.model.UserProfile;
 import org.junit.jupiter.api.Test;
 
 import java.time.LocalDate;
+import java.time.Month;
 import java.util.List;
 
 import static org.junit.jupiter.api.Assertions.assertEquals;
@@ -38,7 +39,7 @@ class AccountApiMapperTest {
     void toProfileResponse_marksExpiredKey() {
         UserProfile profile = new UserProfile(
                 1, "alice", "alice@example.com", false, false,
-                false, LocalDate.now().minusDays(1), true
+                false, LocalDate.of(2000, Month.JANUARY, 1), true
         );
 
         AccountProfileResponse response = AccountApiMapper.toProfileResponse(profile);

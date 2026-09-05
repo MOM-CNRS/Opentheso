@@ -1,12 +1,14 @@
 package fr.cnrs.opentheso.v2.concept.model;
 
+import java.io.Serializable;
+
 public record ConceptLabel(
         String lang,
         String value,
         boolean preferred,
         boolean hidden,
         String codeFlag
-) {
+) implements Serializable {
 
     public ConceptLabel(String lang, String value, boolean preferred, boolean hidden) {
         this(lang, value, preferred, hidden, "");

@@ -15,6 +15,10 @@ import java.nio.charset.StandardCharsets;
 import static org.junit.jupiter.api.Assertions.assertEquals;
 import static org.junit.jupiter.api.Assertions.assertFalse;
 import static org.junit.jupiter.api.Assertions.assertTrue;
+import static org.mockito.ArgumentMatchers.any;
+import static org.mockito.ArgumentMatchers.eq;
+import static org.mockito.Mockito.verify;
+import static org.mockito.Mockito.when;
 
 
 
@@ -102,5 +106,53 @@ class ActionsLotAlignmentServiceTest {
     void applyImport_withoutCandidates_fails() {
         ActionsLotApplyResult result = service.applyImport(java.util.List.of(), "TH1", 1);
         assertFalse(result.success());
+    }
+
+    @Test
+    void applyImport_addsAlignment() {
+        var candidate = new fr.cnrs.opentheso.v2.toolbox.actions.model.ActionsLotAlignmentCandidate(
+                2, "c1", "c1", "https://www.wikidata.org/wiki/Q1", "Wikidata", 1);
+        when(persistence.addNewAlignment(any())).thenReturn(true);
+
+        ActionsLotApplyResult result = service.applyImport(java.util.List.of(candidate), "TH1", 7);
+
+        assertTrue(result.success());
+        assertEquals(1, result.applied());
+        verify(persistence).addNewAlignment(any());
+    }
+
+    @Test
+    void applyDelete_removesAlignment() {
+        var candidate = new fr.cnrs.opentheso.v2.toolbox.actions.model.ActionsLotAlignmentCandidate(
+                2, "c1", "c1", "https://www.wikidata.org/wiki/Q1", "Wikidata", 1);
+        when(persistence.deleteAlignmentByUri("https://www.wikidata.org/wiki/Q1", "c1", "TH1")).thenReturn(true);
+
+        ActionsLotApplyResult result = service.applyDelete(java.util.List.of(candidate), "TH1");
+
+        assertTrue(result.success());
+        assertEquals(1, result.applied());
+    }
+
+    @Test
+    void exportAlignments_writesCsvForWholeThesaurus() {
+        when(persistence.getAllIdConceptOfThesaurus("TH1")).thenReturn(java.util.List.of("c1"));
+        when(persistence.getAllAlignmentsOfConcept("c1", "TH1")).thenReturn(java.util.List.of(
+                fr.cnrs.opentheso.models.alignment.NodeAlignmentSmall.builder()
+                        .uri_target("https://www.wikidata.org/wiki/Q1")
+                        .alignement_id_type(1)
+                        .source("Wikidata")
+                        .build()
+        ));
+        when(thesaurusCsvWriter.writeCsvForAlignment(any(), eq("Wikidata"))).thenReturn("csv".getBytes());
+
+        byte[] csv = service.exportAlignments("TH1", "Wikidata", null);
+
+        assertEquals("csv", new String(csv, StandardCharsets.UTF_8));
+    }
+
+    @Test
+    void templates_areNotEmpty() {
+        assertTrue(service.importTemplateBytes().length > 0);
+        assertTrue(service.deleteTemplateBytes().length > 0);
     }
 }

@@ -18,9 +18,9 @@ import java.io.Serializable;
 @RequiredArgsConstructor
 public class RightsBean implements Serializable {
 
-    private final RightsService rightsService;
-    private final UserSession userSession;
-    private final ThesaurusContext thesaurusContext;
+    private final transient RightsService rightsService;
+    private final transient UserSession userSession;
+    private final transient ThesaurusContext thesaurusContext;
 
     public boolean can(String permissionName) {
         Permission permission = parse(permissionName);

@@ -40,13 +40,13 @@ public class PropositionSubmitBean implements Serializable {
     private static final List<String> NOTE_TYPE_CODES = List.of(
             "note", "definition", "scopeNote", "changeNote", "editorialNote", "example", "historyNote");
 
-    private final PropositionMutationService propositionMutationService;
-    private final PropositionDraftService propositionDraftService;
-    private final ConceptSelectionContext conceptSelectionContext;
-    private final ConceptReadService conceptReadService;
-    private final ConceptLexicalMutationService conceptLexicalMutationService;
-    private final ThesaurusContext thesaurusContext;
-    private final UserSession userSession;
+    private final transient PropositionMutationService propositionMutationService;
+    private final transient PropositionDraftService propositionDraftService;
+    private final transient ConceptSelectionContext conceptSelectionContext;
+    private final transient ConceptReadService conceptReadService;
+    private final transient ConceptLexicalMutationService conceptLexicalMutationService;
+    private final transient ThesaurusContext thesaurusContext;
+    private final transient UserSession userSession;
 
     private String authorName;
     private String authorEmail;

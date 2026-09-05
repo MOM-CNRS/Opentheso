@@ -56,10 +56,8 @@ public class ConceptBreadcrumbReadService {
         List<String> roots = new ArrayList<>();
         for (Object[] row : ancestorRows) {
             String parent = str(row[1]);
-            if (!childToParents.containsKey(parent)) {
-                if (!roots.contains(parent)) {
-                    roots.add(parent);
-                }
+            if (!childToParents.containsKey(parent) && !roots.contains(parent)) {
+                roots.add(parent);
             }
         }
 

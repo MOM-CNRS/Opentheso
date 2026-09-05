@@ -29,6 +29,7 @@ import java.io.FileOutputStream;
 import java.io.OutputStreamWriter;
 import java.net.URI;
 import java.nio.charset.StandardCharsets;
+import java.nio.file.Files;
 import java.util.ArrayList;
 import java.util.Date;
 import java.util.LinkedHashSet;
@@ -64,21 +65,11 @@ public class ThesaurusMaintenancePersistence {
         if (StringUtils.isEmpty(thesaurusId)) {
             return false;
         }
-        if (!cleanThesaurus(thesaurusId)) {
-            throw new IllegalStateException("Erreur pendant la suppression des espaces et des null");
-        }
-        if (!reorganizingTopTermInThesaurus(thesaurusId)) {
-            throw new IllegalStateException("Erreur pendant la correction des TT");
-        }
-        if (!reorganizingThesaurus(thesaurusId)) {
-            throw new IllegalStateException("Erreur pendant la correction des NT BT");
-        }
-        if (!removeTopTermForConceptWithBT(thesaurusId)) {
-            throw new IllegalStateException("Erreur pendant la suppression des BT pour les topTermes");
-        }
-        if (!removeSameRelations(thesaurusId)) {
-            throw new IllegalStateException("Erreur pendant la suppression des relations en boucle");
-        }
+        cleanThesaurus(thesaurusId);
+        reorganizingTopTermInThesaurus(thesaurusId);
+        doReorganizingThesaurus(thesaurusId);
+        removeTopTermForConceptWithBT(thesaurusId);
+        removeSameRelations(thesaurusId);
         return true;
     }
 
@@ -176,13 +167,13 @@ public class ThesaurusMaintenancePersistence {
         var fileName = thesaurusId + ".xml";
         try {
             File file = new File(new URI(Objects.requireNonNull(this.getClass().getResource("/")).toString()) + fileName);
-            if (file.exists()) {
-                file.delete();
+            Files.deleteIfExists(file.toPath());
+            if (!file.createNewFile()) {
+                throw new IllegalStateException("Impossible de créer le sitemap " + fileName);
             }
-            file.createNewFile();
-            var writeFile = new BufferedWriter(new OutputStreamWriter(new FileOutputStream(file), StandardCharsets.UTF_8));
-            writeFile.write(buildSitemapXml(thesaurusId, originBaseUrl()));
-            writeFile.close();
+            try (var writeFile = new BufferedWriter(new OutputStreamWriter(new FileOutputStream(file), StandardCharsets.UTF_8))) {
+                writeFile.write(buildSitemapXml(thesaurusId, originBaseUrl()));
+            }
             MessageUtils.showInformationMessage("L'export du siteMap a réussi, nom du fichier " + fileName);
         } catch (Exception e) {
             MessageUtils.showErrorMessage("L'export du siteMap a échoué");
@@ -197,44 +188,41 @@ public class ThesaurusMaintenancePersistence {
         return getHeader() + getDatas(conceptIds, thesaurusId, baseUrl) + "</urlset>";
     }
 
-    private boolean cleanThesaurus(String thesaurusId) {
+    private void cleanThesaurus(String thesaurusId) {
         termRepository.deleteByIdTermAndIdThesaurus("", thesaurusId);
         conceptGroupLabelRepository.deleteByIdThesaurusAndIdGroup(thesaurusId, "");
         conceptGroupRepository.deleteByIdThesaurusAndIdGroup(thesaurusId, "");
         conceptGroupRepository.cleanIdTypeCode();
         conceptRepository.cleanConcept();
-        return true;
     }
 
-    private boolean reorganizingTopTermInThesaurus(String thesaurusId) {
+    private void reorganizingTopTermInThesaurus(String thesaurusId) {
         var listIds = loadTopTermIdsForRepair(thesaurusId);
         for (String idConcept : listIds) {
             conceptRepository.setTopConceptTag(true, idConcept, thesaurusId);
         }
-        return true;
     }
 
-    private boolean removeTopTermForConceptWithBT(String thesaurusId) {
+    private void removeTopTermForConceptWithBT(String thesaurusId) {
         var tabIdTT = conceptRepository.findAllByIdThesaurusAndTopConceptAndStatusNotLike(thesaurusId, true, "CA");
         for (Concept concept : tabIdTT) {
             if (hasRelationBt(concept.getIdConcept(), thesaurusId)) {
                 conceptRepository.setTopConceptTag(false, concept.getIdConcept(), thesaurusId);
             }
         }
-        return true;
     }
 
-    private boolean removeSameRelations(String idTheso) {
-        return removeSameRelations("BT", idTheso)
-                && removeSameRelations("NT", idTheso)
-                && removeSameRelations("RT", idTheso)
-                && removeSameRelations("BTG", idTheso)
-                && removeSameRelations("NTG", idTheso)
-                && removeSameRelations("BTP", idTheso)
-                && removeSameRelations("NTP", idTheso);
+    private void removeSameRelations(String idTheso) {
+        removeSameRelations("BT", idTheso);
+        removeSameRelations("NT", idTheso);
+        removeSameRelations("RT", idTheso);
+        removeSameRelations("BTG", idTheso);
+        removeSameRelations("NTG", idTheso);
+        removeSameRelations("BTP", idTheso);
+        removeSameRelations("NTP", idTheso);
     }
 
-    private boolean removeSameRelations(String role, String thesaurusId) {
+    private void removeSameRelations(String role, String thesaurusId) {
         var tabRelations = hierarchicalRelationshipRepository.getListLoopRelations(thesaurusId, role);
         if (!tabRelations.isEmpty()) {
             for (HierarchicalRelationship relation : tabRelations) {
@@ -242,7 +230,6 @@ public class ThesaurusMaintenancePersistence {
                         thesaurusId, relation.getIdConcept1(), relation.getIdConcept2(), role);
             }
         }
-        return true;
     }
 
     /**
@@ -251,6 +238,10 @@ public class ThesaurusMaintenancePersistence {
      */
     @Transactional
     public boolean reorganizingThesaurus(String thesaurusId) {
+        return doReorganizingThesaurus(thesaurusId);
+    }
+
+    private boolean doReorganizingThesaurus(String thesaurusId) {
         for (String idConcept : loadAllConceptIds(thesaurusId)) {
             List<HierarchicalRelationship> btRelations = loadBtRelations(idConcept, thesaurusId);
             List<HierarchicalRelationship> ntParentRelations = loadNtParentRelations(idConcept, thesaurusId);

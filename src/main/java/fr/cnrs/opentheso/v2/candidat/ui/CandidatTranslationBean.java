@@ -26,10 +26,12 @@ import java.util.List;
 @Named("v2TraductionCandidatBean")
 public class CandidatTranslationBean implements Serializable {
 
-    private final CandidatBean candidatBean;
-    private final CandidatMutationService candidatMutationService;
-    private final UserSession userSession;
-    private final V2LocaleBean localeBean;
+    private static final String CONTAINER_INDEX = "containerIndex";
+
+    private final transient CandidatBean candidatBean;
+    private final transient CandidatMutationService candidatMutationService;
+    private final transient UserSession userSession;
+    private final transient V2LocaleBean localeBean;
 
     private String langage, traduction, langageOld, traductionOld, newLangage, newTraduction;
     private List<NodeLangTheso> nodeLanguesFiltered;
@@ -71,7 +73,7 @@ public class CandidatTranslationBean implements Serializable {
 
         loadTraductionList();
         MessageUtils.showInformationMessage(localeBean.getMsg("candidat.traduction.msg2"));
-        PrimeFaces.current().ajax().update("containerIndex");
+        PrimeFaces.current().ajax().update(CONTAINER_INDEX);
     }
 
     public void updateTraduction() {
@@ -80,7 +82,7 @@ public class CandidatTranslationBean implements Serializable {
 
         loadTraductionList();
         MessageUtils.showInformationMessage(localeBean.getMsg("candidat.traduction.msg3"));
-        PrimeFaces.current().ajax().update("containerIndex");
+        PrimeFaces.current().ajax().update(CONTAINER_INDEX);
     }
 
     public void addTraductionCandidat() {
@@ -112,7 +114,7 @@ public class CandidatTranslationBean implements Serializable {
                 candidatBean.getCandidatSelected().getIdThesaurus(),
                 candidatBean.getCandidatSelected().getLang());
         candidatBean.getCandidatSelected().setTraductions(traductions);
-        PrimeFaces.current().ajax().update("containerIndex");
+        PrimeFaces.current().ajax().update(CONTAINER_INDEX);
     }
 
     private int requireUserId() {

@@ -22,8 +22,9 @@ public class ConceptSkosExportService {
 
     private final ConceptSkosRdfExportEngine conceptSkosRdfExportEngine;
 
+    @Transactional(readOnly = true)
     public ExportResult exportConcept(String thesaurusId, String conceptId, String formatCode) throws IOException {
-        return exportConcepts(
+        return doExportConcepts(
                 thesaurusId,
                 StringUtils.isBlank(conceptId) ? List.of() : List.of(conceptId),
                 formatCode,
@@ -31,13 +32,23 @@ public class ConceptSkosExportService {
         );
     }
 
+    @Transactional(readOnly = true)
     public ExportResult exportConcepts(
             String thesaurusId,
             Collection<String> conceptIds,
             String formatCode,
             BiConsumer<Integer, Integer> progress
     ) throws IOException {
-        SKOSXmlDocument document = buildDocument(thesaurusId, conceptIds, progress, false);
+        return doExportConcepts(thesaurusId, conceptIds, formatCode, progress);
+    }
+
+    private ExportResult doExportConcepts(
+            String thesaurusId,
+            Collection<String> conceptIds,
+            String formatCode,
+            BiConsumer<Integer, Integer> progress
+    ) throws IOException {
+        SKOSXmlDocument document = doBuildDocument(thesaurusId, conceptIds, progress, false);
         return serialize(document, thesaurusId, conceptIds, formatCode);
     }
 
@@ -58,16 +69,26 @@ public class ConceptSkosExportService {
         );
     }
 
+    @Transactional(readOnly = true)
     public SKOSXmlDocument buildDocument(
             String thesaurusId,
             Collection<String> conceptIds,
             BiConsumer<Integer, Integer> progress
     ) {
-        return buildDocument(thesaurusId, conceptIds, progress, false);
+        return doBuildDocument(thesaurusId, conceptIds, progress, false);
     }
 
     @Transactional(readOnly = true)
     public SKOSXmlDocument buildDocument(
+            String thesaurusId,
+            Collection<String> conceptIds,
+            BiConsumer<Integer, Integer> progress,
+            boolean clearHtml
+    ) {
+        return doBuildDocument(thesaurusId, conceptIds, progress, clearHtml);
+    }
+
+    private SKOSXmlDocument doBuildDocument(
             String thesaurusId,
             Collection<String> conceptIds,
             BiConsumer<Integer, Integer> progress,

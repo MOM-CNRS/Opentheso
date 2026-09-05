@@ -1,5 +1,6 @@
 package fr.cnrs.opentheso.v2.concept.alignment.ui;
 
+import fr.cnrs.opentheso.v2.concept.write.ui.WriteUiMessages;
 import fr.cnrs.opentheso.models.alignment.AlignementSource;
 import fr.cnrs.opentheso.models.alignment.NodeAlignment;
 import fr.cnrs.opentheso.models.alignment.SelectedResource;
@@ -29,11 +30,11 @@ import java.util.Map;
 @RequiredArgsConstructor
 public class ConceptAlignmentSearchBean implements Serializable {
 
-    private final CandidatAutoAlignmentEngine engine;
-    private final ThesaurusContext thesaurusContext;
-    private final UserSession userSession;
-    private final ConceptNavigationSupport conceptNavigationSupport;
-    private final ObjectProvider<ConceptAlignmentAdminBean> conceptAlignmentAdminBean;
+    private final transient CandidatAutoAlignmentEngine engine;
+    private final transient ThesaurusContext thesaurusContext;
+    private final transient UserSession userSession;
+    private final transient ConceptNavigationSupport conceptNavigationSupport;
+    private final transient ObjectProvider<ConceptAlignmentAdminBean> conceptAlignmentAdminBean;
 
     public void prepare(String conceptId, String conceptLabel) {
         engine.prepare(
@@ -56,7 +57,7 @@ public class ConceptAlignmentSearchBean implements Serializable {
         Integer userId = userSession.getCurrentUserId();
         String conceptId = engine.getIdConceptSelectedForAlignment();
         if (userId == null || StringUtils.isBlank(conceptId)) {
-            MessageUtils.showErrorMessage("Action non autorisée");
+            MessageUtils.showErrorMessage(WriteUiMessages.UNAUTHORIZED_FALLBACK);
             return;
         }
         ConceptAlignmentAdminBean adminBean = conceptAlignmentAdminBean.getIfAvailable();

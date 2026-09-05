@@ -15,6 +15,7 @@ import java.util.ArrayList;
 import java.util.Collections;
 import java.util.Comparator;
 import java.util.List;
+import fr.cnrs.opentheso.v2.concept.model.ConceptTreeNodeKinds;
 
 @Service
 @RequiredArgsConstructor
@@ -47,7 +48,7 @@ public class ConceptTreeConsultationService {
         if (StringUtils.isAnyBlank(thesaurusId, parentId)) {
             return Collections.emptyList();
         }
-        if ("facet".equals(parentType)) {
+        if (ConceptTreeNodeKinds.FACET.equals(parentType)) {
             return loadFacetMembers(thesaurusId, parentId, lang, sortByNotation);
         }
         if ("group".equals(parentType) || "subGroup".equals(parentType)) {
@@ -63,7 +64,7 @@ public class ConceptTreeConsultationService {
                     facet.facetId(),
                     defaultLabel(facet.facetId(), facet.label()),
                     "",
-                    "facet",
+                    ConceptTreeNodeKinds.FACET,
                     facet.hasMembers()
             ));
         }
@@ -91,7 +92,7 @@ public class ConceptTreeConsultationService {
         if (sortByNotation) {
             // Comme le legacy : ORDER BY notation ASC (lexicographique), facettes à la fin.
             sorted.sort(Comparator
-                    .comparing((ConceptTreeNodeData node) -> "facet".equals(node.nodeType()))
+                    .comparing((ConceptTreeNodeData node) -> ConceptTreeNodeKinds.FACET.equals(node.nodeType()))
                     .thenComparing(node -> StringUtils.defaultString(node.notation()), String.CASE_INSENSITIVE_ORDER)
                     .thenComparing(node -> StringUtils.defaultString(node.label()), ConceptLabelSort::compareLabels));
         } else {

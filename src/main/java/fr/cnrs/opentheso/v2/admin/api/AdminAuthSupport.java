@@ -1,6 +1,5 @@
 package fr.cnrs.opentheso.v2.admin.api;
 
-import fr.cnrs.opentheso.v2.project.api.ProjectAuthSupport;
 import fr.cnrs.opentheso.v2.user.api.AccountAuthSupport;
 import lombok.RequiredArgsConstructor;
 import org.springframework.stereotype.Component;

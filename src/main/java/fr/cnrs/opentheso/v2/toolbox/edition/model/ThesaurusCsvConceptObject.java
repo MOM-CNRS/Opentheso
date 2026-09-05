@@ -4,10 +4,11 @@ import fr.cnrs.opentheso.models.nodes.NodeIdValue;
 import fr.cnrs.opentheso.models.nodes.NodeImage;
 import lombok.Data;
 
+import java.io.Serializable;
 import java.util.ArrayList;
 
 @Data
-public class ThesaurusCsvConceptObject {
+public class ThesaurusCsvConceptObject implements Serializable {
 
     private String idConcept;
     private String uri;
@@ -95,74 +96,35 @@ public class ThesaurusCsvConceptObject {
     }
 
     public void clear() {
-        if (prefLabels != null) {
-            prefLabels.clear();
-        }
-        if (altLabels != null) {
-            altLabels.clear();
-        }
-        if (hiddenLabels != null) {
-            hiddenLabels.clear();
-        }
-        if (note != null) {
-            note.clear();
-        }
-        if (definitions != null) {
-            definitions.clear();
-        }
-        if (scopeNotes != null) {
-            scopeNotes.clear();
-        }
-        if (examples != null) {
-            examples.clear();
-        }
-        if (historyNotes != null) {
-            historyNotes.clear();
-        }
-        if (changeNotes != null) {
-            changeNotes.clear();
-        }
-        if (editorialNotes != null) {
-            editorialNotes.clear();
-        }
-        if (broaders != null) {
-            broaders.clear();
-        }
-        if (narrowers != null) {
-            narrowers.clear();
-        }
-        if (relateds != null) {
-            relateds.clear();
-        }
-        if (customRelations != null) {
-            customRelations.clear();
-        }
-        if (exactMatchs != null) {
-            exactMatchs.clear();
-        }
-        if (closeMatchs != null) {
-            closeMatchs.clear();
-        }
-        if (broadMatchs != null) {
-            broadMatchs.clear();
-        }
-        if (narrowMatchs != null) {
-            narrowMatchs.clear();
-        }
-        if (relatedMatchs != null) {
-            relatedMatchs.clear();
-        }
-        if (members != null) {
-            members.clear();
-        }
-        if (alignments != null) {
-            alignments.clear();
-        }
-        if (memberOfFacets != null) {
-            memberOfFacets.clear();
-        }
-
+        clearIfPresent(prefLabels);
+        clearIfPresent(altLabels);
+        clearIfPresent(hiddenLabels);
+        clearIfPresent(note);
+        clearIfPresent(definitions);
+        clearIfPresent(scopeNotes);
+        clearIfPresent(examples);
+        clearIfPresent(historyNotes);
+        clearIfPresent(changeNotes);
+        clearIfPresent(editorialNotes);
+        clearIfPresent(broaders);
+        clearIfPresent(narrowers);
+        clearIfPresent(relateds);
+        clearIfPresent(customRelations);
+        clearIfPresent(exactMatchs);
+        clearIfPresent(closeMatchs);
+        clearIfPresent(broadMatchs);
+        clearIfPresent(narrowMatchs);
+        clearIfPresent(relatedMatchs);
+        clearIfPresent(members);
+        clearIfPresent(alignments);
+        clearIfPresent(memberOfFacets);
         conceptType = null;
         gps = null;
+    }
+
+    private static void clearIfPresent(java.util.Collection<?> values) {
+        if (values != null) {
+            values.clear();
+        }
     }
 }

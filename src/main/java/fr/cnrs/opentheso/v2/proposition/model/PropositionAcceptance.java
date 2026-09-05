@@ -1,5 +1,7 @@
 package fr.cnrs.opentheso.v2.proposition.model;
 
+import java.io.Serializable;
+
 public record PropositionAcceptance(
         boolean preferredLabel,
         boolean synonyms,
@@ -11,7 +13,7 @@ public record PropositionAcceptance(
         boolean editorialNote,
         boolean example,
         boolean historyNote
-) {
+) implements Serializable {
 
     public static PropositionAcceptance none() {
         return new PropositionAcceptance(false, false, false, false, false, false, false, false, false, false);

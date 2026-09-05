@@ -1,5 +1,6 @@
 package fr.cnrs.opentheso.v2.concept.alignment.ui;
 
+import fr.cnrs.opentheso.v2.concept.write.ui.WriteUiMessages;
 import fr.cnrs.opentheso.models.alignment.AlignementSource;
 import fr.cnrs.opentheso.v2.concept.alignment.model.AlignmentProposition;
 import fr.cnrs.opentheso.v2.concept.alignment.model.AlignmentSourceItem;
@@ -41,12 +42,12 @@ public class ConceptAlignmentAutoSearchBean implements Serializable {
 
     static final String FICHE_CARD = "alignement";
 
-    private final ThesaurusViewBean thesaurusViewBean;
-    private final ConceptAlignmentAdminService conceptAlignmentAdminService;
-    private final ConceptAlignmentMutationService conceptAlignmentMutationService;
-    private final ConceptWritePolicy conceptWritePolicy;
-    private final UserSession userSession;
-    private final ConceptSelectionContext conceptSelectionContext;
+    private final transient ThesaurusViewBean thesaurusViewBean;
+    private final transient ConceptAlignmentAdminService conceptAlignmentAdminService;
+    private final transient ConceptAlignmentMutationService conceptAlignmentMutationService;
+    private final transient ConceptWritePolicy conceptWritePolicy;
+    private final transient UserSession userSession;
+    private final transient ConceptSelectionContext conceptSelectionContext;
 
     @Getter(AccessLevel.NONE)
     private boolean open;
@@ -142,9 +143,12 @@ public class ConceptAlignmentAutoSearchBean implements Serializable {
         selectedSourceName = StringUtils.defaultString(source.getSource());
         errorMessage = "";
         ConceptDetail detail = thesaurusViewBean.getSelectedConcept();
-        String label = detail != null && detail.getSummary() != null
-                ? StringUtils.defaultString(detail.getSummary().getPreferredLabel())
-                : "";
+        if (detail == null || detail.getSummary() == null) {
+            errorMessage = "Le concept n'a pas de libellé à interroger.";
+            propositions = new ArrayList<>();
+            return;
+        }
+        String label = StringUtils.defaultString(detail.getSummary().getPreferredLabel());
         if (StringUtils.isBlank(label)) {
             errorMessage = "Le concept n'a pas de libellé à interroger.";
             propositions = new ArrayList<>();
@@ -188,7 +192,7 @@ public class ConceptAlignmentAutoSearchBean implements Serializable {
         }
         Integer userId = userSession.getCurrentUserId();
         if (userId == null) {
-            errorMessage = "Action non autorisée";
+            errorMessage = WriteUiMessages.UNAUTHORIZED_FALLBACK;
             return;
         }
         AlignmentProposition proposition = propositions.get(index);
@@ -219,7 +223,7 @@ public class ConceptAlignmentAutoSearchBean implements Serializable {
         }
         Integer userId = userSession.getCurrentUserId();
         if (userId == null) {
-            errorMessage = "Action non autorisée";
+            errorMessage = WriteUiMessages.UNAUTHORIZED_FALLBACK;
             return;
         }
         int index = parseAlignmentId(propositionToReplaceIndex);

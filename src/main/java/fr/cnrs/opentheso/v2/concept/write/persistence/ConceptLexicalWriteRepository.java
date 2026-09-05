@@ -1,5 +1,6 @@
 package fr.cnrs.opentheso.v2.concept.write.persistence;
 
+import fr.cnrs.opentheso.v2.shared.repository.NativeQueryParams;
 import jakarta.persistence.EntityManager;
 import jakarta.persistence.PersistenceContext;
 import org.springframework.stereotype.Repository;
@@ -20,8 +21,8 @@ public class ConceptLexicalWriteRepository {
                           AND id_concept = :conceptId
                         LIMIT 1
                         """)
-                .setParameter("thesaurusId", thesaurusId)
-                .setParameter("conceptId", conceptId)
+                .setParameter(NativeQueryParams.THESAURUS_ID, thesaurusId)
+                .setParameter(NativeQueryParams.CONCEPT_ID, conceptId)
                 .getResultStream()
                 .map(String.class::cast)
                 .findFirst();
@@ -35,9 +36,9 @@ public class ConceptLexicalWriteRepository {
                           AND lang = :lang
                           AND id_thesaurus = :thesaurusId
                         """)
-                .setParameter("value", value)
+                .setParameter(NativeQueryParams.VALUE, value)
                 .setParameter("lang", lang)
-                .setParameter("thesaurusId", thesaurusId)
+                .setParameter(NativeQueryParams.THESAURUS_ID, thesaurusId)
                 .getSingleResult());
     }
 
@@ -49,9 +50,9 @@ public class ConceptLexicalWriteRepository {
                           AND id_thesaurus = :thesaurusId
                           AND lang = :lang
                         """)
-                .setParameter("value", value)
+                .setParameter(NativeQueryParams.VALUE, value)
                 .setParameter("lang", lang)
-                .setParameter("thesaurusId", thesaurusId)
+                .setParameter(NativeQueryParams.THESAURUS_ID, thesaurusId)
                 .getSingleResult());
     }
 
@@ -63,9 +64,9 @@ public class ConceptLexicalWriteRepository {
                           AND lang = :lang
                           AND id_thesaurus = :thesaurusId
                         """)
-                .setParameter("value", value)
+                .setParameter(NativeQueryParams.VALUE, value)
                 .setParameter("lang", lang)
-                .setParameter("thesaurusId", thesaurusId)
+                .setParameter(NativeQueryParams.THESAURUS_ID, thesaurusId)
                 .getSingleResult());
     }
 
@@ -81,8 +82,8 @@ public class ConceptLexicalWriteRepository {
                           AND t.lang = :lang
                         LIMIT 1
                         """)
-                .setParameter("conceptId", conceptId)
-                .setParameter("thesaurusId", thesaurusId)
+                .setParameter(NativeQueryParams.CONCEPT_ID, conceptId)
+                .setParameter(NativeQueryParams.THESAURUS_ID, thesaurusId)
                 .setParameter("lang", lang)
                 .getResultStream()
                 .map(String.class::cast)

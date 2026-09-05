@@ -24,6 +24,7 @@ import org.mockito.junit.jupiter.MockitoExtension;
 import org.springframework.test.util.ReflectionTestUtils;
 
 import java.time.LocalDateTime;
+import java.time.Month;
 import java.util.List;
 
 import static org.junit.jupiter.api.Assertions.assertEquals;
@@ -143,8 +144,8 @@ class AdminCatalogServiceTest {
 
     @Test
     void listAllThesauri_sortsByCreatedAtDescending() {
-        LocalDateTime older = LocalDateTime.of(2024, 1, 1, 10, 0);
-        LocalDateTime newer = LocalDateTime.of(2025, 1, 1, 10, 0);
+        LocalDateTime older = LocalDateTime.of(2024, Month.JANUARY, 1, 10, 0);
+        LocalDateTime newer = LocalDateTime.of(2025, Month.JANUARY, 1, 10, 0);
         when(adminQueryRepository.findAllThesauri("fr")).thenReturn(
                 List.of(
                         new AdminThesaurusRow("th1", "Ancien", 1, "P1", false, older),

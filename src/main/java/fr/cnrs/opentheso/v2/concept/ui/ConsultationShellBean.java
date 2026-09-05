@@ -50,16 +50,16 @@ public class ConsultationShellBean implements Serializable {
     /** Vue JSF concrète du front v2, pas la pretty URL. */
     private static final String BROWSE_VIEW = "/v2/index.xhtml";
 
-    private final ConsultationCatalogService consultationCatalogService;
-    private final ThesaurusContext thesaurusContext;
-    private final ConceptSelectionContext conceptSelectionContext;
-    private final UserSession userSession;
-    private final V2LocaleBean v2LocaleBean;
-    private final PlatformHomeReadService platformHomeReadService;
-    private final SsoSessionBridge ssoSessionBridge;
-    private final SessionLifecycleService sessionLifecycleService;
-    private final RightsService rightsService;
-    private final ConsultationProjectHomeBean consultationProjectHomeBean;
+    private final transient ConsultationCatalogService consultationCatalogService;
+    private final transient ThesaurusContext thesaurusContext;
+    private final transient ConceptSelectionContext conceptSelectionContext;
+    private final transient UserSession userSession;
+    private final transient V2LocaleBean v2LocaleBean;
+    private final transient PlatformHomeReadService platformHomeReadService;
+    private final transient SsoSessionBridge ssoSessionBridge;
+    private final transient SessionLifecycleService sessionLifecycleService;
+    private final transient RightsService rightsService;
+    private final transient ConsultationProjectHomeBean consultationProjectHomeBean;
     private final ConceptTreeRefreshState conceptTreeRefreshState;
 
     private int selectedProjectId = ALL_PROJECTS_ID;

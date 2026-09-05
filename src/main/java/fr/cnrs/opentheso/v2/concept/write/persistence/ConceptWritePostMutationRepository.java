@@ -1,5 +1,6 @@
 package fr.cnrs.opentheso.v2.concept.write.persistence;
 
+import fr.cnrs.opentheso.v2.shared.repository.NativeQueryParams;
 import fr.cnrs.opentheso.entites.ConceptDcTerm;
 import fr.cnrs.opentheso.models.concept.DCMIResource;
 import fr.cnrs.opentheso.repositories.ConceptDcTermRepository;
@@ -37,8 +38,8 @@ public class ConceptWritePostMutationRepository {
                           AND id_concept = :conceptId
                         """)
                 .setParameter("contributor", contributorUserId)
-                .setParameter("thesaurusId", thesaurusId)
-                .setParameter("conceptId", conceptId)
+                .setParameter(NativeQueryParams.THESAURUS_ID, thesaurusId)
+                .setParameter(NativeQueryParams.CONCEPT_ID, conceptId)
                 .executeUpdate();
     }
 

@@ -1,6 +1,7 @@
 package fr.cnrs.opentheso.v2.concept.alignment.service;
 
 import fr.cnrs.opentheso.entites.AlignementSource;
+import fr.cnrs.opentheso.models.AlignementSourceProjection;
 import fr.cnrs.opentheso.models.NodeAlignmentProjection;
 import fr.cnrs.opentheso.models.NodeSelectedAlignmentProjection;
 import fr.cnrs.opentheso.models.alignment.NodeAlignment;
@@ -14,6 +15,7 @@ import fr.cnrs.opentheso.v2.concept.alignment.model.AlignmentProposition;
 import fr.cnrs.opentheso.v2.concept.alignment.model.AlignmentSourceItem;
 import fr.cnrs.opentheso.v2.concept.model.ConceptAlignment;
 import fr.cnrs.opentheso.v2.concept.search.repository.ConceptSearchQueryRepository;
+import fr.cnrs.opentheso.v2.concept.write.model.MutationResult;
 import fr.cnrs.opentheso.v2.concept.write.persistence.BranchConceptSupport;
 import fr.cnrs.opentheso.v2.concept.write.service.ConceptAlignmentMutationService;
 import org.junit.jupiter.api.BeforeEach;
@@ -196,6 +198,224 @@ class ConceptAlignmentAdminServiceTest {
 
         assertTrue(hits.isEmpty());
         verify(alignmentAutoExternalSearch, never()).search(any(), any());
+    }
+
+    @Test
+    void loadBranchSummary_blankArgs_returnsEmpty() {
+        assertTrue(service.loadBranchSummary(" ", "C1", "fr").isEmpty());
+        assertEquals(0, service.countAlignments(null));
+        assertEquals(0, service.countAlignmentsForConcept(null, "C1"));
+        assertEquals(0, service.checkUrlsForConcept("TH1", "C1", null));
+        assertTrue(service.listSourcesForManagement(" ").isEmpty());
+        assertTrue(service.listActiveSources(" ").isEmpty());
+    }
+
+    @Test
+    void setSourceSelected_savesOrDeletesLink() {
+        service.setSourceSelected("TH1", 4, true);
+        verify(thesaurusAlignementSourceRepository).save(any());
+
+        service.setSourceSelected("TH1", 4, false);
+        verify(thesaurusAlignementSourceRepository).deleteByIdThesaurusAndIdAlignementSource("TH1", 4);
+
+        service.setSourceSelected(" ", 4, true);
+        verify(thesaurusAlignementSourceRepository, org.mockito.Mockito.times(1)).save(any());
+    }
+
+    @Test
+    void deleteLocalSource_returnsTrueWhenDeleted() {
+        when(alignementSourceRepository.deleteByIdAlignementSource(8)).thenReturn(1);
+        assertTrue(service.deleteLocalSource(8));
+    }
+
+    @Test
+    void deleteLocalSource_returnsFalseOnError() {
+        when(alignementSourceRepository.deleteByIdAlignementSource(8)).thenThrow(new RuntimeException("db"));
+        assertFalse(service.deleteLocalSource(8));
+    }
+
+    @Test
+    void listActiveSources_mapsProjectionAndFindById() {
+        when(alignementSourceRepository.findAllByThesaurus("TH1")).thenReturn(List.of(activeSource(4, "Wikidata")));
+        var sources = service.listActiveSources("TH1");
+        assertEquals(1, sources.size());
+        assertEquals(4, sources.get(0).getId());
+        assertEquals("Wikidata", service.findActiveSource("TH1", 4).getSource());
+        assertNull(service.findActiveSource("TH1", 99));
+    }
+
+    @Test
+    void searchPropositions_runsForEachConceptInSummary() {
+        var source = fr.cnrs.opentheso.models.alignment.AlignementSource.builder()
+                .id(4).source("Wikidata").source_filter("WIKIDATA_REST").build();
+        NodeAlignment hit = new NodeAlignment();
+        hit.setConcept_target("Cat");
+        hit.setUri_target("http://www.wikidata.org/entity/Q1");
+        when(alignmentAutoExternalSearch.search(eq(source), any()))
+                .thenReturn(new AlignmentAutoExternalSearch.SearchOutcome(List.of(hit), null));
+
+        List<AlignmentAdminRow> rows = List.of(
+                new AlignmentAdminRow("C1", "Chat", null, null, null, 0, null, true)
+        );
+        List<AlignmentProposition> hits = service.searchPropositions("TH1", "fr", rows, source);
+        assertEquals(1, hits.size());
+        assertEquals("C1", hits.get(0).getConceptId());
+    }
+
+    @Test
+    void enrichProposition_delegates() {
+        AlignmentProposition proposition = AlignmentProposition.builder().conceptId("C1").build();
+        var source = fr.cnrs.opentheso.models.alignment.AlignementSource.builder().id(1).build();
+        service.enrichProposition(proposition, source, "TH1", "fr");
+        verify(alignmentPropositionEnricher).enrich(proposition, source, "TH1", "fr");
+    }
+
+    @Test
+    void acceptProposition_persistsManualAlignmentAndEnrichments() {
+        AlignmentProposition proposition = AlignmentProposition.builder()
+                .conceptId("C1")
+                .targetUri("http://www.wikidata.org/entity/Q1")
+                .targetLabel("Cat")
+                .sourceName("Wikidata")
+                .sourceId(0)
+                .alignmentTypeId(1)
+                .build();
+        when(conceptAlignmentMutationService.addManualAlignment(any())).thenReturn(MutationResult.ok("ok"));
+        when(candidatAutoAlignmentPersistence.addSelectedTranslations(eq("TH1"), eq("C1"), eq(7), any())).thenReturn(true);
+        when(candidatAutoAlignmentPersistence.addSelectedDefinitions(eq("C1"), eq("TH1"), eq(7), eq("Wikidata"), any())).thenReturn(true);
+        when(candidatAutoAlignmentPersistence.addSelectedImages(eq("C1"), eq("TH1"), eq(7), any(), eq("Wikidata"), any())).thenReturn(true);
+
+        assertTrue(service.acceptProposition("TH1", proposition, 7, "alice"));
+        verify(candidatAutoAlignmentPersistence).touchConcept("TH1", "C1", 7);
+    }
+
+    @Test
+    void acceptProposition_usesSourceAlignmentAndGpsForGeoNames() {
+        AlignmentProposition proposition = AlignmentProposition.builder()
+                .conceptId("C1")
+                .targetUri("http://geonames.org/1")
+                .targetLabel("Paris")
+                .sourceName("GeoNames")
+                .sourceId(9)
+                .latitude(48.8)
+                .longitude(2.3)
+                .build();
+        when(candidatAutoAlignmentPersistence.addAlignment(eq(7), eq("Paris"), eq("GeoNames"),
+                eq("http://geonames.org/1"), eq(1), eq("C1"), eq("TH1"), eq(9))).thenReturn(true);
+        when(candidatAutoAlignmentPersistence.addSelectedTranslations(any(), any(), eq(7), any())).thenReturn(true);
+        when(candidatAutoAlignmentPersistence.addSelectedDefinitions(any(), any(), eq(7), any(), any())).thenReturn(true);
+        when(candidatAutoAlignmentPersistence.addSelectedImages(any(), any(), eq(7), any(), any(), any())).thenReturn(true);
+
+        assertTrue(service.acceptProposition("TH1", proposition, 7, "alice"));
+        verify(candidatAutoAlignmentPersistence).insertGpsCoordinates("C1", "TH1", 48.8, 2.3);
+    }
+
+    @Test
+    void acceptProposition_rejectsIncompletePayload() {
+        assertFalse(service.acceptProposition("TH1", null, 1, "x"));
+        assertFalse(service.acceptProposition("TH1", AlignmentProposition.builder().conceptId("C1").build(), 1, "x"));
+    }
+
+    @Test
+    void searchComparisons_keepsExistingUriWhenRemoteEmpty() {
+        var source = fr.cnrs.opentheso.models.alignment.AlignementSource.builder()
+                .id(4).source("Wikidata").requete("https://www.wikidata.org/wiki").build();
+        when(alignmentAutoExternalSearch.search(eq(source), any()))
+                .thenReturn(new AlignmentAutoExternalSearch.SearchOutcome(List.of(), null));
+        List<AlignmentAdminRow> rows = List.of(
+                new AlignmentAdminRow("C1", "Chat", 10, "http://www.wikidata.org/entity/Q1", "exact", 1, "Wikidata", true),
+                new AlignmentAdminRow("C1", "Chat", null, null, null, 0, null, true)
+        );
+        List<AlignmentProposition> hits = service.searchComparisons("TH1", "fr", rows, source);
+        assertEquals(1, hits.size());
+        assertEquals("http://www.wikidata.org/entity/Q1", hits.get(0).getTargetUri());
+        assertTrue(hits.get(0).isAlreadyAligned());
+    }
+
+    @Test
+    void replaceAlignmentFromProposition_deletesSameSourceThenAdds() {
+        AlignmentProposition proposition = AlignmentProposition.builder()
+                .conceptId("C1")
+                .targetUri("http://www.wikidata.org/entity/Q9")
+                .sourceName("Wikidata")
+                .alignmentTypeId(1)
+                .build();
+        when(alignementRepository.findAllAlignmentsByConceptAndThesaurus("C1", "TH1"))
+                .thenReturn(List.of(projection(10, "C1", "http://www.wikidata.org/entity/Q1", "exactMatch", "Wikidata", true)));
+        when(conceptAlignmentMutationService.addManualAlignment(any())).thenReturn(MutationResult.ok("ok"));
+
+        assertTrue(service.replaceAlignmentFromProposition("TH1", proposition, 7, "alice"));
+        verify(alignementRepository).deleteByIdAndThesaurus(10, "TH1");
+    }
+
+    @Test
+    void updateLocalSource_validatesAndSaves() {
+        var entity = fr.cnrs.opentheso.entites.AlignementSource.builder().id(3).source("Old").build();
+        when(alignementSourceRepository.findById(3)).thenReturn(java.util.Optional.of(entity));
+
+        assertEquals("Le nom de la source est obligatoire !", service.updateLocalSource(3, " ", "http://x", "d"));
+        assertNull(service.updateLocalSource(3, "Local", "http://x", "desc", "Opentheso"));
+        verify(alignementSourceRepository).save(entity);
+        assertEquals("Opentheso", entity.getSourceFilter());
+    }
+
+    @Test
+    void addLocalSource_savesAndOptionallySelects() {
+        var saved = fr.cnrs.opentheso.entites.AlignementSource.builder().id(12).source("Local").build();
+        when(alignementSourceRepository.save(any())).thenReturn(saved);
+
+        assertNull(service.addLocalSource("TH1", 7, "Local", "http://ex.org", "d", "Opentheso", true));
+        verify(thesaurusAlignementSourceRepository).save(any());
+        assertEquals("Le nom de la source est obligatoire !", service.addLocalSource("TH1", 7, " ", "http://x", "", "", false));
+    }
+
+    @Test
+    void validateOpenthesoSource_rejectsBlankFieldsAndUnreachableUri() {
+        assertEquals("Le nom de la source est obligatoire !", service.validateOpenthesoSource(" ", "http://x", "th"));
+        assertEquals("L'URL est obligatoire !", service.validateOpenthesoSource("n", " ", "th"));
+        assertEquals("L'Id. du thésaurus est obligatoire !", service.validateOpenthesoSource("n", "http://x", " "));
+        assertEquals("Uri du serveur non valide !", service.validateOpenthesoSource("n", "not a uri", "th"));
+    }
+
+    @Test
+    void alignmentsTowardSource_matchesByNameOrHost() {
+        var source = fr.cnrs.opentheso.models.alignment.AlignementSource.builder()
+                .source("Wikidata").requete("https://www.wikidata.org/wiki").build();
+        var sameName = new ConceptAlignment("1", "http://other.org/a", "exact", "Wikidata", true, 1);
+        var sameHost = new ConceptAlignment("2", "https://www.wikidata.org/entity/Q1", "exact", "Other", true, 1);
+        var other = new ConceptAlignment("3", "https://example.org/x", "exact", "Gemet", true, 1);
+
+        var matched = service.alignmentsTowardSource(java.util.Arrays.asList(sameName, sameHost, other, null), source);
+        assertEquals(2, matched.size());
+        assertTrue(service.alignmentsTowardSource(null, source).isEmpty());
+    }
+
+    @Test
+    void checkUrlsForConcept_marksUnreachableUrls() {
+        List<AlignmentAdminRow> rows = List.of(
+                new AlignmentAdminRow("C1", "Chat", 10, "not-a-url", "exact", 1, "Wikidata", true),
+                new AlignmentAdminRow("C1", "Chat", null, null, null, 0, null, true)
+        );
+        var entity = fr.cnrs.opentheso.entites.Alignement.builder().id(10).urlAvailable(true).build();
+        when(alignementRepository.findByInternalIdThesaurusAndInternalIdConceptAndId("TH1", "C1", 10))
+                .thenReturn(java.util.Optional.of(entity));
+
+        assertEquals(1, service.checkUrlsForConcept("TH1", "C1", rows));
+        verify(alignementRepository).save(entity);
+        assertFalse(entity.getUrlAvailable());
+    }
+
+    private static AlignementSourceProjection activeSource(int id, String source) {
+        return new AlignementSourceProjection() {
+            @Override public String getSource() { return source; }
+            @Override public String getRequete() { return "https://www.wikidata.org"; }
+            @Override public String getTypeRequete() { return "REST"; }
+            @Override public String getAlignement_format() { return "skos"; }
+            @Override public int getId() { return id; }
+            @Override public String getDescription() { return source; }
+            @Override public String getSource_filter() { return "wikidata"; }
+            @Override public boolean getGps() { return false; }
+        };
     }
 
     private static NodeAlignment hit(String label, String uri) {

@@ -1,6 +1,7 @@
 package fr.cnrs.opentheso.v2.concept.search.model;
 
 import java.text.Normalizer;
+import java.io.Serializable;
 import java.util.List;
 
 public record ConceptSearchResult(
@@ -12,7 +13,7 @@ public record ConceptSearchResult(
         List<String> synonyms,
         List<String> broaderTerms,
         List<String> relatedTerms
-) implements Comparable<ConceptSearchResult> {
+) implements Comparable<ConceptSearchResult>, Serializable {
 
     public String getThesaurusId() {
         return thesaurusId;

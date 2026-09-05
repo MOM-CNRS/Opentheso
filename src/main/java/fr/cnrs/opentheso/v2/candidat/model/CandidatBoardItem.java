@@ -1,5 +1,7 @@
 package fr.cnrs.opentheso.v2.candidat.model;
 
+import java.io.Serializable;
+
 /**
  * Ligne du tableau de bord candidats V2 (EL Facelets).
  */
@@ -9,7 +11,7 @@ public record CandidatBoardItem(
         String meta,
         String votes,
         String openType
-) {
+) implements Serializable {
 
     public String getConceptId() {
         return conceptId;

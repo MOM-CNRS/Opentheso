@@ -1,5 +1,6 @@
 package fr.cnrs.opentheso.v2.toolbox.actions.service;
 
+import fr.cnrs.opentheso.v2.toolbox.actions.model.ActionsLotMessages;
 import fr.cnrs.opentheso.models.nodes.NodeIdValue;
 import fr.cnrs.opentheso.v2.toolbox.actions.model.ActionsLotApplyResult;
 import fr.cnrs.opentheso.v2.toolbox.actions.model.ActionsLotImportValidationResult;
@@ -41,10 +42,10 @@ public class ActionsLotNotationService {
             String thesaurusId
     ) {
         if (content == null || content.length == 0) {
-            return ActionsLotImportValidationResult.failure("Aucun fichier à valider.");
+            return ActionsLotImportValidationResult.failure(ActionsLotMessages.NO_FILE);
         }
         if (StringUtils.isBlank(thesaurusId)) {
-            return ActionsLotImportValidationResult.failure("Aucun thésaurus sélectionné.");
+            return ActionsLotImportValidationResult.failure(ActionsLotMessages.NO_THESAURUS);
         }
 
         char delimiter = CsvDelimiterSupport.resolveDelimiter(choiceDelimiter);
@@ -83,32 +84,42 @@ public class ActionsLotNotationService {
 
         for (NodeIdValue row : rows) {
             line++;
-            if (row == null) {
-                continue;
-            }
-            String localId = StringUtils.trimToEmpty(row.getId());
-            if (StringUtils.isBlank(localId)) {
-                errors.add(new ActionsLotLineError(line, "— (vide)", "localId", "Identifiant obligatoire manquant"));
-                continue;
-            }
-            String conceptId = resolved.get(localId);
-            if (StringUtils.isBlank(conceptId)) {
-                errors.add(new ActionsLotLineError(
-                        line, localId, "localId", "Identifiant introuvable dans le thésaurus"
-                ));
-                continue;
-            }
-            String notation = StringUtils.trimToEmpty(row.getValue());
-            if (StringUtils.isBlank(notation)) {
-                errors.add(new ActionsLotLineError(line, localId, "skos:notation", "Notation obligatoire manquante"));
-                continue;
-            }
-            valid.add(new ActionsLotNotationCandidate(line, localId, conceptId, notation));
+            collectNotationRow(row, line, resolved, errors, valid);
         }
 
         return new ActionsLotImportValidationResult<>(
                 true, null, rows.size(), valid.size(), errors.size(), 0, errors, valid
         );
+    }
+
+    private static void collectNotationRow(
+            NodeIdValue row,
+            int line,
+            Map<String, String> resolved,
+            List<ActionsLotLineError> errors,
+            List<ActionsLotNotationCandidate> valid
+    ) {
+        if (row == null) {
+            return;
+        }
+        String localId = StringUtils.trimToEmpty(row.getId());
+        if (StringUtils.isBlank(localId)) {
+            errors.add(new ActionsLotLineError(line, "— (vide)", "localId", "Identifiant obligatoire manquant"));
+            return;
+        }
+        String conceptId = resolved.get(localId);
+        if (StringUtils.isBlank(conceptId)) {
+            errors.add(new ActionsLotLineError(
+                    line, localId, "localId", "Identifiant introuvable dans le thésaurus"
+            ));
+            return;
+        }
+        String notation = StringUtils.trimToEmpty(row.getValue());
+        if (StringUtils.isBlank(notation)) {
+            errors.add(new ActionsLotLineError(line, localId, "skos:notation", "Notation obligatoire manquante"));
+            return;
+        }
+        valid.add(new ActionsLotNotationCandidate(line, localId, conceptId, notation));
     }
 
     @Transactional
@@ -118,10 +129,10 @@ public class ActionsLotNotationService {
             boolean clearBefore
     ) {
         if (StringUtils.isBlank(thesaurusId)) {
-            return ActionsLotApplyResult.failure("Aucun thésaurus sélectionné.");
+            return ActionsLotApplyResult.failure(ActionsLotMessages.NO_THESAURUS);
         }
         if (candidates == null || candidates.isEmpty()) {
-            return ActionsLotApplyResult.failure("Aucune ligne valide à importer.");
+            return ActionsLotApplyResult.failure(ActionsLotMessages.NO_VALID_LINE);
         }
 
         int applied = 0;

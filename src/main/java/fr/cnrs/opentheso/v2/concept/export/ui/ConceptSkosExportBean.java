@@ -22,7 +22,7 @@ import java.io.Serializable;
 @RequiredArgsConstructor
 public class ConceptSkosExportBean implements Serializable {
 
-    private final ConceptSkosExportService conceptSkosExportService;
+    private final transient ConceptSkosExportService conceptSkosExportService;
 
     private String thesaurusId;
     private String conceptId;

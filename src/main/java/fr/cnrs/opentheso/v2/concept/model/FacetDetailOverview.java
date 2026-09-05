@@ -1,6 +1,7 @@
 package fr.cnrs.opentheso.v2.concept.model;
 
 import java.util.List;
+import java.io.Serializable;
 
 public record FacetDetailOverview(
         String facetId,
@@ -11,7 +12,7 @@ public record FacetDetailOverview(
         List<FacetMemberItem> members,
         List<GroupTranslationItem> translations,
         List<ConceptNote> notes
-) {
+) implements Serializable {
 
     public String getFacetId() {
         return facetId;

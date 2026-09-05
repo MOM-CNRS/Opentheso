@@ -5,6 +5,7 @@ import fr.cnrs.opentheso.v2.shared.persistence.UserEntity;
 import org.junit.jupiter.api.Test;
 
 import java.time.LocalDate;
+import java.time.Month;
 
 import static org.junit.jupiter.api.Assertions.assertEquals;
 import static org.junit.jupiter.api.Assertions.assertFalse;
@@ -22,7 +23,7 @@ class UserProfileMapperTest {
         entity.setAlertMail(true);
         entity.setSuperAdmin(true);
         entity.setKeyNeverExpire(false);
-        entity.setKeyExpiresAt(LocalDate.of(2026, 12, 31));
+        entity.setKeyExpiresAt(LocalDate.of(2026, Month.DECEMBER, 31));
         entity.setApiKey("encrypted");
 
         UserProfile profile = UserProfileMapper.toProfile(entity);
@@ -33,7 +34,7 @@ class UserProfileMapperTest {
         assertTrue(profile.alertMail());
         assertTrue(profile.superAdmin());
         assertFalse(profile.keyNeverExpire());
-        assertEquals(LocalDate.of(2026, 12, 31), profile.keyExpiresAt());
+        assertEquals(LocalDate.of(2026, Month.DECEMBER, 31), profile.keyExpiresAt());
         assertTrue(profile.hasApiKey());
     }
 

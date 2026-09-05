@@ -3,6 +3,7 @@ package fr.cnrs.opentheso.v2.toolbox.edition.persistence;
 import fr.cnrs.opentheso.entites.Preferences;
 import fr.cnrs.opentheso.models.concept.NodeUri;
 import fr.cnrs.opentheso.models.group.NodeGroupLabel;
+import fr.cnrs.opentheso.v2.shared.uri.SkosUriFragments;
 import jakarta.faces.context.FacesContext;
 import jakarta.servlet.http.HttpServletRequest;
 import org.apache.commons.lang3.StringUtils;
@@ -38,12 +39,12 @@ public final class ThesaurusSkosUriSupport {
             return preferences.getOriginalUri() + "/" + preferences.getIdNaan() + "/" + thesaurusId;
         }
         if (preferences.isOriginalUriIsHandle()) {
-            return "https://hdl.handle.net/" + thesaurusId;
+            return SkosUriFragments.HANDLE + thesaurusId;
         }
         if (StringUtils.isNotEmpty(originalUri)) {
-            return originalUri + "/?idt=" + thesaurusId;
+            return originalUri + SkosUriFragments.IDT_PATH + thesaurusId;
         }
-        return originalUri + "/?idt=" + thesaurusId;
+        return originalUri + SkosUriFragments.IDT_PATH + thesaurusId;
     }
 
     public static String uriFromId(String id, Preferences preferences, String baseUrl) {
@@ -52,13 +53,13 @@ public final class ThesaurusSkosUriSupport {
             if (StringUtils.isNotEmpty(preferences.getOriginalUri())) {
                 return preferences.getOriginalUri() + "/" + preferences.getIdNaan() + "/" + id;
             }
-            return uriBase + "/?idt=" + id;
+            return uriBase + SkosUriFragments.IDT_PATH + id;
         }
-        return uriBase + "/?idt=" + id;
+        return uriBase + SkosUriFragments.IDT_PATH + id;
     }
 
     public static String uriForFacet(String facetId, String thesaurusId, String originalUri) {
-        return originalUri + "/?idf=" + facetId + "&idt=" + thesaurusId;
+        return originalUri + SkosUriFragments.IDF_PATH + facetId + SkosUriFragments.IDT + thesaurusId;
     }
 
     public static String buildConceptUri(NodeUri nodeUri, String thesaurusId, String conceptId,
@@ -67,12 +68,12 @@ public final class ThesaurusSkosUriSupport {
             return originalUri + '/' + nodeUri.getIdArk();
         }
         if (preferences.isOriginalUriIsHandle() && StringUtils.isNotEmpty(nodeUri.getIdHandle())) {
-            return "https://hdl.handle.net/" + nodeUri.getIdHandle();
+            return SkosUriFragments.HANDLE + nodeUri.getIdHandle();
         }
         if (preferences.isOriginalUriIsDoi() && StringUtils.isNotEmpty(nodeUri.getIdDoi())) {
-            return "https://doi.org/" + nodeUri.getIdDoi();
+            return SkosUriFragments.DOI + nodeUri.getIdDoi();
         }
-        return originalUri + "/?idc=" + conceptId + "&idt=" + thesaurusId;
+        return originalUri + SkosUriFragments.IDC_PATH + conceptId + SkosUriFragments.IDT + thesaurusId;
     }
 
     public static String uriFromGroup(NodeGroupLabel group, Preferences preferences, String baseUrl) {
@@ -84,18 +85,18 @@ public final class ThesaurusSkosUriSupport {
             if (StringUtils.isNotBlank(group.getIdArk())) {
                 return preferences.getUriArk() + group.getIdArk();
             }
-            return uriBase + "/?idg=" + group.getIdGroup() + "&idt=" + group.getIdThesaurus();
+            return uriBase + SkosUriFragments.IDG_PATH + group.getIdGroup() + SkosUriFragments.IDT + group.getIdThesaurus();
         }
         if (preferences.isOriginalUriIsHandle() && StringUtils.isNotBlank(group.getIdHandle())) {
-            return "https://hdl.handle.net/" + group.getIdHandle();
+            return SkosUriFragments.HANDLE + group.getIdHandle();
         }
         if (preferences.isOriginalUriIsDoi() && StringUtils.isNotBlank(group.getIdDoi())) {
-            return "https://doi.org/" + group.getIdDoi();
+            return SkosUriFragments.DOI + group.getIdDoi();
         }
         if (StringUtils.isNotEmpty(preferences.getOriginalUri())) {
-            return preferences.getOriginalUri() + "/?idg=" + group.getIdGroup() + "&idt=" + group.getIdThesaurus();
+            return preferences.getOriginalUri() + SkosUriFragments.IDG_PATH + group.getIdGroup() + SkosUriFragments.IDT + group.getIdThesaurus();
         }
-        return uriBase + "/?idg=" + group.getIdGroup() + "&idt=" + group.getIdThesaurus();
+        return uriBase + SkosUriFragments.IDG_PATH + group.getIdGroup() + SkosUriFragments.IDT + group.getIdThesaurus();
     }
 
     public static String uriGroupFromNodeUri(NodeUri nodeUri, String thesaurusId, Preferences preferences, String baseUrl) {
@@ -107,15 +108,15 @@ public final class ThesaurusSkosUriSupport {
             if (StringUtils.isNotEmpty(nodeUri.getIdArk())) {
                 return preferences.getOriginalUri() + "/" + nodeUri.getIdArk();
             }
-            return uriBase + "/?idg=" + nodeUri.getIdConcept() + "&idt=" + thesaurusId;
+            return uriBase + SkosUriFragments.IDG_PATH + nodeUri.getIdConcept() + SkosUriFragments.IDT + thesaurusId;
         }
         if (StringUtils.isNotBlank(nodeUri.getIdHandle())) {
-            return "https://hdl.handle.net/" + nodeUri.getIdHandle();
+            return SkosUriFragments.HANDLE + nodeUri.getIdHandle();
         }
         if (StringUtils.isNotEmpty(preferences.getOriginalUri())) {
-            return preferences.getOriginalUri() + "/?idg=" + nodeUri.getIdConcept() + "&idt=" + thesaurusId;
+            return preferences.getOriginalUri() + SkosUriFragments.IDG_PATH + nodeUri.getIdConcept() + SkosUriFragments.IDT + thesaurusId;
         }
-        return uriBase + "/?idg=" + nodeUri.getIdConcept() + "&idt=" + thesaurusId;
+        return uriBase + SkosUriFragments.IDG_PATH + nodeUri.getIdConcept() + SkosUriFragments.IDT + thesaurusId;
     }
 
     public static String uriFromNodeUri(NodeUri nodeUri, String thesaurusId, String conceptId,
@@ -125,18 +126,18 @@ public final class ThesaurusSkosUriSupport {
                 return preferences.getOriginalUri() + "/" + nodeUri.getIdArk();
             }
             var uriBase = StringUtils.removeEnd(baseUrl, "/");
-            return uriBase + "/?idc=" + conceptId + "&idt=" + thesaurusId;
+            return uriBase + SkosUriFragments.IDC_PATH + conceptId + SkosUriFragments.IDT + thesaurusId;
         }
         if (preferences.isOriginalUriIsHandle() && StringUtils.isNotBlank(nodeUri.getIdHandle())) {
-            return "https://hdl.handle.net/" + nodeUri.getIdHandle();
+            return SkosUriFragments.HANDLE + nodeUri.getIdHandle();
         }
         if (preferences.isOriginalUriIsDoi() && StringUtils.isNotBlank(nodeUri.getIdDoi())) {
-            return "https://doi.org/" + nodeUri.getIdDoi();
+            return SkosUriFragments.DOI + nodeUri.getIdDoi();
         }
         if (StringUtils.isNotEmpty(originalUri)) {
-            return originalUri + "/?idc=" + conceptId + "&idt=" + thesaurusId;
+            return originalUri + SkosUriFragments.IDC_PATH + conceptId + SkosUriFragments.IDT + thesaurusId;
         }
         var uriBase = StringUtils.removeEnd(baseUrl, "/");
-        return uriBase + "/?idc=" + conceptId + "&idt=" + thesaurusId;
+        return uriBase + SkosUriFragments.IDC_PATH + conceptId + SkosUriFragments.IDT + thesaurusId;
     }
 }

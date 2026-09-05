@@ -1,12 +1,14 @@
 package fr.cnrs.opentheso.v2.concept.search.model;
 
+import java.io.Serializable;
+
 public record ConceptSearchSuggestion(
         String refId,
         String preferredLabel,
         String altLabel,
         ConceptSearchKind kind,
         boolean deprecated
-) {
+) implements Serializable {
 
     public String getRefId() {
         return refId;

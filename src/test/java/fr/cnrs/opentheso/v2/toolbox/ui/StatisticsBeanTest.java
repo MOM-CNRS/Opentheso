@@ -6,7 +6,6 @@ import fr.cnrs.opentheso.models.statistiques.ConceptStatisticData;
 import fr.cnrs.opentheso.models.statistiques.GenericStatistiqueData;
 import fr.cnrs.opentheso.models.thesaurus.NodeLangTheso;
 import fr.cnrs.opentheso.utils.MessageUtils;
-import fr.cnrs.opentheso.v2.setting.ui.ThesaurusContext;
 import fr.cnrs.opentheso.v2.shared.ui.UserSession;
 import fr.cnrs.opentheso.v2.toolbox.fixtures.ToolboxTestFixtures;
 import fr.cnrs.opentheso.v2.toolbox.model.StatisticsSummary;
@@ -109,7 +108,7 @@ class StatisticsBeanTest {
         var row = GenericStatistiqueData.builder().collection("Collection A").build();
         when(thesaurusStatisticsService.loadCollectionStatistics("TH1", "fr")).thenReturn(List.of(row));
         when(thesaurusStatisticsService.loadSummary("TH1"))
-                .thenReturn(new StatisticsSummary(ToolboxTestFixtures.sampleStatistics(), new Date()));
+                .thenReturn(new StatisticsSummary(ToolboxTestFixtures.sampleStatistics(), Date.from(java.time.Instant.parse("2024-06-15T12:00:00Z"))));
 
         try (var primeFaces = PrimeFacesTestSupport.open()) {
             bean.applyLanguageSelection();

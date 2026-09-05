@@ -1,5 +1,6 @@
 package fr.cnrs.opentheso.v2.concept.alignment.ui;
 
+import fr.cnrs.opentheso.v2.concept.write.ui.WriteUiMessages;
 import fr.cnrs.opentheso.models.alignment.AlignementSource;
 import fr.cnrs.opentheso.utils.MessageUtils;
 import fr.cnrs.opentheso.v2.concept.alignment.model.AlignmentAdminRow;
@@ -37,13 +38,16 @@ import java.util.List;
 @RequiredArgsConstructor
 public class ConceptAlignmentAdminBean implements Serializable {
 
-    private final ConceptAlignmentAdminService conceptAlignmentAdminService;
-    private final ConceptAlignmentEditorBean conceptAlignmentEditorBean;
-    private final ObjectProvider<ConceptAlignmentSearchBean> conceptAlignmentSearchBean;
-    private final ConceptNavigationSupport conceptNavigationSupport;
-    private final ConceptSelectionContext conceptSelectionContext;
-    private final ThesaurusContext thesaurusContext;
-    private final UserSession userSession;
+    private static final String SELECT_SOURCE = "Veuillez sélectionner une source !";
+    private static final String MESSAGE_INDEX = ":containerIndex:formRightTab :messageIndex";
+
+    private final transient ConceptAlignmentAdminService conceptAlignmentAdminService;
+    private final transient ConceptAlignmentEditorBean conceptAlignmentEditorBean;
+    private final transient ObjectProvider<ConceptAlignmentSearchBean> conceptAlignmentSearchBean;
+    private final transient ConceptNavigationSupport conceptNavigationSupport;
+    private final transient ConceptSelectionContext conceptSelectionContext;
+    private final transient ThesaurusContext thesaurusContext;
+    private final transient UserSession userSession;
 
     private AlignmentWorkbenchMode mode = AlignmentWorkbenchMode.SUMMARY;
     private String rootConceptId;
@@ -238,7 +242,7 @@ public class ConceptAlignmentAdminBean implements Serializable {
 
     public void confirmSelectedSourceAndSearch() {
         if (selectedSourceIdForSearch == null || selectedSourceIdForSearch <= 0) {
-            MessageUtils.showWarnMessage("Veuillez sélectionner une source !");
+            MessageUtils.showWarnMessage(SELECT_SOURCE);
             return;
         }
         runSearch(selectedSourceIdForSearch, pendingSearchMode);
@@ -300,7 +304,7 @@ public class ConceptAlignmentAdminBean implements Serializable {
         }
         Integer userId = userSession.getCurrentUserId();
         if (userId == null) {
-            MessageUtils.showErrorMessage("Action non autorisée");
+            MessageUtils.showErrorMessage(WriteUiMessages.UNAUTHORIZED_FALLBACK);
             return;
         }
         boolean ok = conceptAlignmentAdminService.acceptProposition(
@@ -320,7 +324,7 @@ public class ConceptAlignmentAdminBean implements Serializable {
         closePropositionsForConcept(conceptId);
         conceptNavigationSupport.openConcept(conceptId);
         PrimeFaces.current().executeScript("PF('v2ValidateAlignmentProposition').hide();");
-        PrimeFaces.current().ajax().update(":containerIndex:formRightTab :messageIndex");
+        PrimeFaces.current().ajax().update(MESSAGE_INDEX);
     }
 
     public void cancelValidateProposition() {
@@ -349,7 +353,7 @@ public class ConceptAlignmentAdminBean implements Serializable {
         }
         Integer userId = userSession.getCurrentUserId();
         if (userId == null) {
-            MessageUtils.showErrorMessage("Action non autorisée");
+            MessageUtils.showErrorMessage(WriteUiMessages.UNAUTHORIZED_FALLBACK);
             return;
         }
         boolean replaced = conceptAlignmentAdminService.replaceAlignmentFromProposition(
@@ -368,7 +372,7 @@ public class ConceptAlignmentAdminBean implements Serializable {
         } else {
             MessageUtils.showErrorMessage("Le remplacement de l'alignement a échoué");
         }
-        PrimeFaces.current().ajax().update(":containerIndex:formRightTab :messageIndex");
+        PrimeFaces.current().ajax().update(MESSAGE_INDEX);
     }
 
     public void prepareAddSource() {
@@ -381,7 +385,7 @@ public class ConceptAlignmentAdminBean implements Serializable {
     public void addOpenthesoSource() {
         Integer userId = userSession.getCurrentUserId();
         if (userId == null) {
-            MessageUtils.showErrorMessage("Action non autorisée");
+            MessageUtils.showErrorMessage(WriteUiMessages.UNAUTHORIZED_FALLBACK);
             return;
         }
         String error = conceptAlignmentAdminService.addOpenthesoSource(
@@ -409,7 +413,7 @@ public class ConceptAlignmentAdminBean implements Serializable {
         List<AlignementSource> active = conceptAlignmentAdminService.listActiveSources(
                 thesaurusContext.resolveThesaurusId());
         if (active.isEmpty()) {
-            MessageUtils.showWarnMessage("Veuillez sélectionner une source !");
+            MessageUtils.showWarnMessage(SELECT_SOURCE);
             return;
         }
         selectableSources = active.stream()
@@ -436,7 +440,7 @@ public class ConceptAlignmentAdminBean implements Serializable {
         AlignementSource source = conceptAlignmentAdminService.findActiveSource(
                 thesaurusContext.resolveThesaurusId(), sourceId);
         if (source == null) {
-            MessageUtils.showWarnMessage("Veuillez sélectionner une source !");
+            MessageUtils.showWarnMessage(SELECT_SOURCE);
             return;
         }
         if (summaryRows == null || summaryRows.isEmpty()) {
@@ -463,7 +467,7 @@ public class ConceptAlignmentAdminBean implements Serializable {
             MessageUtils.showErrorMessage("Aucun alignement trouvé !");
             mode = AlignmentWorkbenchMode.SUMMARY;
         }
-        PrimeFaces.current().ajax().update(":containerIndex:formRightTab :messageIndex");
+        PrimeFaces.current().ajax().update(MESSAGE_INDEX);
     }
 
     private void resetPropositionsState() {

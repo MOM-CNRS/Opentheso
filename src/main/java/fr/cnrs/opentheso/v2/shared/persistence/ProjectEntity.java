@@ -24,5 +24,6 @@ public class ProjectEntity {
     private String label;
 
     public ProjectEntity() {
+        // Constructeur sans argument requis par JPA.
     }
 }

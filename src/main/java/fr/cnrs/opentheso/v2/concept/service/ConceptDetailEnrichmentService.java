@@ -29,11 +29,21 @@ public class ConceptDetailEnrichmentService {
 
     @Transactional(readOnly = true)
     public Optional<ConceptFullSnapshot> loadFullConcept(String thesaurusId, String conceptId, String lang, boolean authenticated) {
-        return loadFullConcept(thesaurusId, conceptId, lang, authenticated, false);
+        return doLoadFullConcept(thesaurusId, conceptId, lang, authenticated, false);
     }
 
     @Transactional(readOnly = true)
     public Optional<ConceptFullSnapshot> loadFullConcept(
+            String thesaurusId,
+            String conceptId,
+            String lang,
+            boolean authenticated,
+            boolean includeCandidates
+    ) {
+        return doLoadFullConcept(thesaurusId, conceptId, lang, authenticated, includeCandidates);
+    }
+
+    private Optional<ConceptFullSnapshot> doLoadFullConcept(
             String thesaurusId,
             String conceptId,
             String lang,

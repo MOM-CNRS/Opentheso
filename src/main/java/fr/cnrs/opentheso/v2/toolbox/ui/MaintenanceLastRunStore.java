@@ -1,5 +1,6 @@
 package fr.cnrs.opentheso.v2.toolbox.ui;
 
+import fr.cnrs.opentheso.v2.shared.time.V2Dates;
 import org.apache.commons.lang3.StringUtils;
 import org.springframework.context.annotation.Scope;
 import org.springframework.context.annotation.ScopedProxyMode;
@@ -7,6 +8,8 @@ import org.springframework.stereotype.Component;
 
 import java.io.Serializable;
 import java.time.Instant;
+import java.util.Arrays;
+import java.util.Objects;
 import java.util.concurrent.ConcurrentHashMap;
 
 @Component("v2MaintenanceLastRunStore")
@@ -27,7 +30,7 @@ public class MaintenanceLastRunStore implements Serializable {
         if (StringUtils.isBlank(thesaurusId) || StringUtils.isBlank(action)) {
             return;
         }
-        lastRuns.put(key(thesaurusId, action), Instant.now());
+        lastRuns.put(key(thesaurusId, action), V2Dates.nowInstant());
     }
 
     public Instant get(String thesaurusId, String action) {
@@ -51,6 +54,26 @@ public class MaintenanceLastRunStore implements Serializable {
         return thesaurusId + "|" + action;
     }
 
-    public record PendingSitemap(String fileName, byte[] xml) {
+    public record PendingSitemap(String fileName, byte[] xml) implements Serializable {
+        @Override
+        public boolean equals(Object other) {
+            if (this == other) {
+                return true;
+            }
+            if (!(other instanceof PendingSitemap that)) {
+                return false;
+            }
+            return Objects.equals(fileName, that.fileName) && Arrays.equals(xml, that.xml);
+        }
+
+        @Override
+        public int hashCode() {
+            return Objects.hash(fileName, Arrays.hashCode(xml));
+        }
+
+        @Override
+        public String toString() {
+            return "PendingSitemap[fileName=" + fileName + ", bytes=" + (xml == null ? 0 : xml.length) + "]";
+        }
     }
 }

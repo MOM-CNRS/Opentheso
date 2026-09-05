@@ -44,15 +44,15 @@ import java.util.List;
 @RequiredArgsConstructor
 public class ConceptRelationEditorBean implements Serializable {
 
-    private final ConceptRelationMutationService conceptRelationMutationService;
-    private final ConceptSelectionContext conceptSelectionContext;
-    private final ConceptNavigationSupport conceptNavigationSupport;
-    private final ThesaurusContext thesaurusContext;
-    private final UserSession userSession;
-    private final ConceptWritePolicy conceptWritePolicy;
-    private final ConceptWriteSearchService conceptWriteSearchService;
-    private final ConceptReadService conceptReadService;
-    private final ThesaurusBrowseBean thesaurusBrowseBean;
+    private final transient ConceptRelationMutationService conceptRelationMutationService;
+    private final transient ConceptSelectionContext conceptSelectionContext;
+    private final transient ConceptNavigationSupport conceptNavigationSupport;
+    private final transient ThesaurusContext thesaurusContext;
+    private final transient UserSession userSession;
+    private final transient ConceptWritePolicy conceptWritePolicy;
+    private final transient ConceptWriteSearchService conceptWriteSearchService;
+    private final transient ConceptReadService conceptReadService;
+    private final transient ThesaurusBrowseBean thesaurusBrowseBean;
 
     private ConceptSearchSuggestion searchSelected;
     private String currentConceptLabel;
@@ -148,12 +148,12 @@ public class ConceptRelationEditorBean implements Serializable {
 
     public void submitAddCustomRelation() {
         if (!isCustomRelationActionsAvailable() || !conceptSelectionContext.hasSelection()) {
-            MessageUtils.showErrorMessage("Action non autorisée");
+            MessageUtils.showErrorMessage(WriteUiMessages.UNAUTHORIZED_FALLBACK);
             return;
         }
         Integer userId = userSession.getCurrentUserId();
         if (userId == null) {
-            MessageUtils.showErrorMessage("Action non autorisée");
+            MessageUtils.showErrorMessage(WriteUiMessages.UNAUTHORIZED_FALLBACK);
             return;
         }
         if (searchSelected == null || StringUtils.isBlank(searchSelected.conceptId())) {
@@ -179,12 +179,12 @@ public class ConceptRelationEditorBean implements Serializable {
 
     public void submitDeleteCustomRelation(String targetConceptId, String relationCode, boolean reciprocal) {
         if (!isCustomRelationActionsAvailable() || !conceptSelectionContext.hasSelection()) {
-            MessageUtils.showErrorMessage("Action non autorisée");
+            MessageUtils.showErrorMessage(WriteUiMessages.UNAUTHORIZED_FALLBACK);
             return;
         }
         Integer userId = userSession.getCurrentUserId();
         if (userId == null) {
-            MessageUtils.showErrorMessage("Action non autorisée");
+            MessageUtils.showErrorMessage(WriteUiMessages.UNAUTHORIZED_FALLBACK);
             return;
         }
         var summary = conceptSelectionContext.getSummary();
@@ -209,12 +209,12 @@ public class ConceptRelationEditorBean implements Serializable {
 
     public void submitUpdateNarrowerType(NarrowerRelationEditRow row) {
         if (!isRelationActionsAvailable() || !conceptSelectionContext.hasSelection() || row == null) {
-            MessageUtils.showErrorMessage("Action non autorisée");
+            MessageUtils.showErrorMessage(WriteUiMessages.UNAUTHORIZED_FALLBACK);
             return;
         }
         Integer userId = userSession.getCurrentUserId();
         if (userId == null) {
-            MessageUtils.showErrorMessage("Action non autorisée");
+            MessageUtils.showErrorMessage(WriteUiMessages.UNAUTHORIZED_FALLBACK);
             return;
         }
         var summary = conceptSelectionContext.getSummary();
@@ -238,12 +238,12 @@ public class ConceptRelationEditorBean implements Serializable {
 
     public void submitApplyNarrowerTypeToBranch() {
         if (!isRelationActionsAvailable() || !conceptSelectionContext.hasSelection()) {
-            MessageUtils.showErrorMessage("Action non autorisée");
+            MessageUtils.showErrorMessage(WriteUiMessages.UNAUTHORIZED_FALLBACK);
             return;
         }
         Integer userId = userSession.getCurrentUserId();
         if (userId == null) {
-            MessageUtils.showErrorMessage("Action non autorisée");
+            MessageUtils.showErrorMessage(WriteUiMessages.UNAUTHORIZED_FALLBACK);
             return;
         }
         var summary = conceptSelectionContext.getSummary();
@@ -267,12 +267,12 @@ public class ConceptRelationEditorBean implements Serializable {
 
     private void submitAddBroaderInternal() {
         if (!isRelationActionsAvailable() || !conceptSelectionContext.hasSelection()) {
-            MessageUtils.showErrorMessage("Action non autorisée");
+            MessageUtils.showErrorMessage(WriteUiMessages.UNAUTHORIZED_FALLBACK);
             return;
         }
         Integer userId = userSession.getCurrentUserId();
         if (userId == null) {
-            MessageUtils.showErrorMessage("Action non autorisée");
+            MessageUtils.showErrorMessage(WriteUiMessages.UNAUTHORIZED_FALLBACK);
             return;
         }
         if (searchSelected == null || StringUtils.isBlank(searchSelected.conceptId())) {
@@ -298,12 +298,12 @@ public class ConceptRelationEditorBean implements Serializable {
 
     private void submitAddNarrowerInternal() {
         if (!isRelationActionsAvailable() || !conceptSelectionContext.hasSelection()) {
-            MessageUtils.showErrorMessage("Action non autorisée");
+            MessageUtils.showErrorMessage(WriteUiMessages.UNAUTHORIZED_FALLBACK);
             return;
         }
         Integer userId = userSession.getCurrentUserId();
         if (userId == null) {
-            MessageUtils.showErrorMessage("Action non autorisée");
+            MessageUtils.showErrorMessage(WriteUiMessages.UNAUTHORIZED_FALLBACK);
             return;
         }
         if (searchSelected == null || StringUtils.isBlank(searchSelected.conceptId())) {
@@ -329,12 +329,12 @@ public class ConceptRelationEditorBean implements Serializable {
 
     private void submitAddRelatedInternal() {
         if (!isRelationActionsAvailable() || !conceptSelectionContext.hasSelection()) {
-            MessageUtils.showErrorMessage("Action non autorisée");
+            MessageUtils.showErrorMessage(WriteUiMessages.UNAUTHORIZED_FALLBACK);
             return;
         }
         Integer userId = userSession.getCurrentUserId();
         if (userId == null) {
-            MessageUtils.showErrorMessage("Action non autorisée");
+            MessageUtils.showErrorMessage(WriteUiMessages.UNAUTHORIZED_FALLBACK);
             return;
         }
         if (searchSelected == null || StringUtils.isBlank(searchSelected.conceptId())) {
@@ -370,12 +370,12 @@ public class ConceptRelationEditorBean implements Serializable {
 
     private void submitDeleteRelatedInternal(String targetConceptId) {
         if (!isRelationActionsAvailable() || !conceptSelectionContext.hasSelection()) {
-            MessageUtils.showErrorMessage("Action non autorisée");
+            MessageUtils.showErrorMessage(WriteUiMessages.UNAUTHORIZED_FALLBACK);
             return;
         }
         Integer userId = userSession.getCurrentUserId();
         if (userId == null) {
-            MessageUtils.showErrorMessage("Action non autorisée");
+            MessageUtils.showErrorMessage(WriteUiMessages.UNAUTHORIZED_FALLBACK);
             return;
         }
         var summary = conceptSelectionContext.getSummary();
@@ -397,12 +397,12 @@ public class ConceptRelationEditorBean implements Serializable {
 
     private void submitDeleteHierarchicalInternal(String targetConceptId, boolean broader) {
         if (!isRelationActionsAvailable() || !conceptSelectionContext.hasSelection()) {
-            MessageUtils.showErrorMessage("Action non autorisée");
+            MessageUtils.showErrorMessage(WriteUiMessages.UNAUTHORIZED_FALLBACK);
             return;
         }
         Integer userId = userSession.getCurrentUserId();
         if (userId == null) {
-            MessageUtils.showErrorMessage("Action non autorisée");
+            MessageUtils.showErrorMessage(WriteUiMessages.UNAUTHORIZED_FALLBACK);
             return;
         }
         var summary = conceptSelectionContext.getSummary();

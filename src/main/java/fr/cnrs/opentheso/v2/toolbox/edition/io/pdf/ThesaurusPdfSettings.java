@@ -3,7 +3,6 @@ package fr.cnrs.opentheso.v2.toolbox.edition.io.pdf;
 import com.itextpdf.text.DocumentException;
 import com.itextpdf.text.Font;
 import com.itextpdf.text.Image;
-import com.itextpdf.text.Rectangle;
 import com.itextpdf.text.pdf.BaseFont;
 
 import fr.cnrs.opentheso.models.skosapi.SKOSProperty;
@@ -97,32 +96,25 @@ public class ThesaurusPdfSettings {
 
     public String getIdFromUri(String uri) {
         if (uri.contains("idg=")) {
-            if (uri.contains("&")) {
-                uri = uri.substring(uri.indexOf("idg=") + 4, uri.indexOf("&"));
-            } else {
-                uri = uri.substring(uri.indexOf("idg=") + 4, uri.length());
-            }
+            uri = valueAfterMarker(uri, "idg=");
+        } else if (uri.contains("idc=")) {
+            uri = valueAfterMarker(uri, "idc=");
+        } else if (uri.contains("#")) {
+            uri = uri.substring(uri.indexOf("#") + 1);
         } else {
-            if (uri.contains("idc=")) {
-                if (uri.contains("&")) {
-                    uri = uri.substring(uri.indexOf("idc=") + 4, uri.indexOf("&"));
-                } else {
-                    uri = uri.substring(uri.indexOf("idc=") + 4, uri.length());
-                }
-            } else {
-                if (uri.contains("#")) {
-                    uri = uri.substring(uri.indexOf("#") + 1, uri.length());
-                } else {
-                    uri = uri.substring(uri.lastIndexOf("/") + 1, uri.length());
-                }
-            }
+            uri = uri.substring(uri.lastIndexOf("/") + 1);
         }
 
         return fr.cnrs.opentheso.utils.StringUtils.normalizeStringForIdentifier(uri);
     }
 
-
-
+    private static String valueAfterMarker(String uri, String marker) {
+        int start = uri.indexOf(marker) + marker.length();
+        if (uri.contains("&")) {
+            return uri.substring(start, uri.indexOf("&"));
+        }
+        return uri.substring(start);
+    }
 
     public float resiseImage(Image image) {
         float width = image.getWidth();
@@ -144,24 +136,4 @@ public class ThesaurusPdfSettings {
     private float getRate(float size){
         return size/250;
     }
-    
-/*
-    public Rectangle resiseImage(Image image){
-        float width = image.getWidth();
-        float height = image.getHeight();
-        float rate;
-        // Vérification si l'image est horizontale ou verticale
-        if (width > height) {
-            //L'image est horizontale.
-            rate = getRate(width);
-        } else {
-            //L'image est verticale
-            rate = getRate(height);
-        }
-        return new Rectangle(width/rate, height/rate);
-    }
-    */
-    // pour définir la taille souhaitée,
-    // la valeur size/200 est pour obtenir une image de (200x200)
-
 }

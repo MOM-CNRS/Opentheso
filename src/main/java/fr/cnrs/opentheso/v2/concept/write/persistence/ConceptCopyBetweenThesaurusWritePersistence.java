@@ -25,6 +25,8 @@ import java.util.List;
 @RequiredArgsConstructor
 public class ConceptCopyBetweenThesaurusWritePersistence {
 
+    private static final String NO_SELECTION = "Aucune sélection !";
+
     private final ConceptSkosExportPersistence conceptSkosExportPersistence;
     private final ThesaurusEditionSkosImportEngine thesaurusEditionSkosImportEngine;
     private final BranchConceptSupport branchConceptSupport;
@@ -35,8 +37,12 @@ public class ConceptCopyBetweenThesaurusWritePersistence {
 
     @Transactional(readOnly = true)
     public MutationResult validateIdsAvailable(String targetThesaurusId, List<String> conceptIds) {
+        return doValidateIdsAvailable(targetThesaurusId, conceptIds);
+    }
+
+    private MutationResult doValidateIdsAvailable(String targetThesaurusId, List<String> conceptIds) {
         if (StringUtils.isBlank(targetThesaurusId) || conceptIds == null || conceptIds.isEmpty()) {
-            return MutationResult.validationError("Aucune sélection !");
+            return MutationResult.validationError(NO_SELECTION);
         }
         for (String conceptId : conceptIds) {
             if (conceptCreationWriteRepository.existsConcept(targetThesaurusId, conceptId)) {
@@ -47,23 +53,31 @@ public class ConceptCopyBetweenThesaurusWritePersistence {
         return MutationResult.ok("OK");
     }
 
-    @Transactional
-    public MutationResult copyBranch(CopyBranchBetweenThesaurusCommand command) {
+    private static MutationResult validateCopyCommand(CopyBranchBetweenThesaurusCommand command) {
         if (command == null
                 || StringUtils.isAnyBlank(command.sourceThesaurusId(), command.sourceConceptId(),
                 command.targetThesaurusId())) {
-            return MutationResult.validationError("Aucune sélection !");
+            return MutationResult.validationError(NO_SELECTION);
         }
         if (command.sourceThesaurusId().equalsIgnoreCase(command.targetThesaurusId())) {
             return MutationResult.validationError("Action non permise !!!");
         }
         if (!command.dropToRoot() && StringUtils.isBlank(command.targetParentConceptId())) {
-            return MutationResult.validationError("Aucune sélection !");
+            return MutationResult.validationError(NO_SELECTION);
+        }
+        return null;
+    }
+
+    @Transactional
+    public MutationResult copyBranch(CopyBranchBetweenThesaurusCommand command) {
+        MutationResult invalid = validateCopyCommand(command);
+        if (invalid != null) {
+            return invalid;
         }
 
         List<String> branchIds = branchConceptSupport.collectBranchConceptIds(
                 command.sourceThesaurusId(), command.sourceConceptId());
-        MutationResult clash = validateIdsAvailable(command.targetThesaurusId(), branchIds);
+        MutationResult clash = doValidateIdsAvailable(command.targetThesaurusId(), branchIds);
         if (!clash.success()) {
             return clash;
         }

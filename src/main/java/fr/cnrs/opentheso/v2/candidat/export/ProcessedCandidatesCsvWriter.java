@@ -28,18 +28,18 @@ public class ProcessedCandidatesCsvWriter {
                     return null;
                 }
                 for (CandidatDto candidatDto : candidates) {
-                    ArrayList<Object> record = new ArrayList<>();
-                    record.add(candidatDto.getIdConcepte());
-                    record.add(candidatDto.getNomPref());
-                    record.add(candidatDto.getCreatedBy());
-                    record.add(candidatDto.getCreationDate());
-                    record.add(candidatDto.getCreatedByAdmin());
-                    record.add(candidatDto.getInsertionDate());
-                    record.add(candidatDto.getAdminMessage());
-                    record.add(candidatDto.getNbrVote());
-                    record.add(candidatDto.getNbrNoteVote());
-                    record.add(candidatDto.getNbrParticipant());
-                    csvFilePrinter.printRecord(record);
+                    ArrayList<Object> csvRow = new ArrayList<>();
+                    csvRow.add(candidatDto.getIdConcepte());
+                    csvRow.add(candidatDto.getNomPref());
+                    csvRow.add(candidatDto.getCreatedBy());
+                    csvRow.add(candidatDto.getCreationDate());
+                    csvRow.add(candidatDto.getCreatedByAdmin());
+                    csvRow.add(candidatDto.getInsertionDate());
+                    csvRow.add(candidatDto.getAdminMessage());
+                    csvRow.add(candidatDto.getNbrVote());
+                    csvRow.add(candidatDto.getNbrNoteVote());
+                    csvRow.add(candidatDto.getNbrParticipant());
+                    csvFilePrinter.printRecord(csvRow);
                 }
             }
             return os.toByteArray();

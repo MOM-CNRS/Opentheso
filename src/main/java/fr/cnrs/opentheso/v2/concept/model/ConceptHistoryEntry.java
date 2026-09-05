@@ -1,6 +1,7 @@
 package fr.cnrs.opentheso.v2.concept.model;
 
 import java.util.Date;
+import java.io.Serializable;
 
 public record ConceptHistoryEntry(
         String value,
@@ -10,7 +11,7 @@ public record ConceptHistoryEntry(
         String user,
         String noteType,
         String role
-) {
+) implements Serializable {
 
     public String getValue() {
         return value;

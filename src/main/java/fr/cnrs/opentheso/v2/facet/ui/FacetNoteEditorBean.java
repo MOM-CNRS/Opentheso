@@ -1,5 +1,6 @@
 package fr.cnrs.opentheso.v2.facet.ui;
 
+import fr.cnrs.opentheso.v2.concept.write.ui.WriteUiMessages;
 import fr.cnrs.opentheso.utils.MessageUtils;
 import fr.cnrs.opentheso.v2.concept.model.ConceptNote;
 import fr.cnrs.opentheso.v2.concept.ui.ThesaurusBrowseBean;
@@ -33,13 +34,13 @@ import java.util.List;
 @RequiredArgsConstructor
 public class FacetNoteEditorBean implements Serializable {
 
-    private final ConceptNoteMutationService conceptNoteMutationService;
-    private final ConceptWriteMetadataService conceptWriteMetadataService;
-    private final FacetReadService facetReadService;
-    private final ThesaurusContext thesaurusContext;
-    private final UserSession userSession;
-    private final ConceptWritePolicy conceptWritePolicy;
-    private final ThesaurusBrowseBean thesaurusBrowseBean;
+    private final transient ConceptNoteMutationService conceptNoteMutationService;
+    private final transient ConceptWriteMetadataService conceptWriteMetadataService;
+    private final transient FacetReadService facetReadService;
+    private final transient ThesaurusContext thesaurusContext;
+    private final transient UserSession userSession;
+    private final transient ConceptWritePolicy conceptWritePolicy;
+    private final transient ThesaurusBrowseBean thesaurusBrowseBean;
 
     private String currentLabel;
     private String selectedTypeCode = "note";
@@ -194,19 +195,19 @@ public class FacetNoteEditorBean implements Serializable {
 
     private Integer requireUserId() {
         if (!isNoteActionsAvailable()) {
-            MessageUtils.showErrorMessage("Action non autorisée");
+            MessageUtils.showErrorMessage(WriteUiMessages.UNAUTHORIZED_FALLBACK);
             return null;
         }
         Integer userId = userSession.getCurrentUserId();
         if (userId == null) {
-            MessageUtils.showErrorMessage("Action non autorisée");
+            MessageUtils.showErrorMessage(WriteUiMessages.UNAUTHORIZED_FALLBACK);
         }
         return userId;
     }
 
     private String requireFacetId() {
         if (thesaurusBrowseBean.getSelectedFacet() == null) {
-            MessageUtils.showErrorMessage("Action non autorisée");
+            MessageUtils.showErrorMessage(WriteUiMessages.UNAUTHORIZED_FALLBACK);
             return null;
         }
         return thesaurusBrowseBean.getSelectedFacet().facetId();

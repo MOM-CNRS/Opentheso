@@ -31,12 +31,14 @@ import java.util.List;
 @RequiredArgsConstructor
 public class ConceptSearchBean implements Serializable {
 
-    private final ConceptSearchService conceptSearchService;
-    private final ThesaurusContext thesaurusContext;
-    private final ThesaurusPreferenceService thesaurusPreferenceService;
-    private final UserSession userSession;
-    private final V2LocaleBean v2LocaleBean;
-    private final ConceptNavigationSupport conceptNavigationSupport;
+    private static final String SHOW_RESULT_SEARCH_BAR = "showResultSearchBar();";
+
+    private final transient ConceptSearchService conceptSearchService;
+    private final transient ThesaurusContext thesaurusContext;
+    private final transient ThesaurusPreferenceService thesaurusPreferenceService;
+    private final transient UserSession userSession;
+    private final transient V2LocaleBean v2LocaleBean;
+    private final transient ConceptNavigationSupport conceptNavigationSupport;
 
     private String searchLang;
     private String searchValue;
@@ -137,7 +139,7 @@ public class ConceptSearchBean implements Serializable {
             singleResultSelected = true;
         } else {
             singleResultSelected = false;
-            PrimeFaces.current().executeScript("showResultSearchBar();");
+            PrimeFaces.current().executeScript(SHOW_RESULT_SEARCH_BAR);
         }
         resultsVisible = true;
     }
@@ -224,7 +226,7 @@ public class ConceptSearchBean implements Serializable {
         } else {
             singleResultSelected = false;
             resultsVisible = true;
-            PrimeFaces.current().executeScript("showResultSearchBar();");
+            PrimeFaces.current().executeScript(SHOW_RESULT_SEARCH_BAR);
         }
     }
 
@@ -271,7 +273,7 @@ public class ConceptSearchBean implements Serializable {
             singleResultSelected = true;
         } else {
             singleResultSelected = false;
-            PrimeFaces.current().executeScript("showResultSearchBar();");
+            PrimeFaces.current().executeScript(SHOW_RESULT_SEARCH_BAR);
         }
         resultsVisible = true;
     }

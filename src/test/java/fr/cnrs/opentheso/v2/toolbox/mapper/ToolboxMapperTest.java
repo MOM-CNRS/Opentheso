@@ -8,6 +8,7 @@ import fr.cnrs.opentheso.v2.shared.repository.projection.ThesaurusLanguageRow;
 import org.junit.jupiter.api.Test;
 
 import java.time.LocalDateTime;
+import java.time.Month;
 
 import static org.junit.jupiter.api.Assertions.assertEquals;
 import static org.junit.jupiter.api.Assertions.assertTrue;
@@ -16,14 +17,14 @@ class ToolboxMapperTest {
 
     @Test
     void toThesaurusSummary_mapsRow() {
-        var row = new EditionThesaurusRow("TH1", "Titre", true, LocalDateTime.of(2024, 6, 1, 12, 0));
+        var row = new EditionThesaurusRow("TH1", "Titre", true, LocalDateTime.of(2024, Month.JUNE, 1, 12, 0));
 
         var summary = ToolboxMapper.toThesaurusSummary(row);
 
         assertEquals("TH1", summary.id());
         assertEquals("Titre", summary.title());
         assertEquals(true, summary.privateThesaurus());
-        assertEquals(LocalDateTime.of(2024, 6, 1, 12, 0), summary.createdAt());
+        assertEquals(LocalDateTime.of(2024, Month.JUNE, 1, 12, 0), summary.createdAt());
         assertEquals("TH1", summary.getId());
         assertEquals("Titre", summary.getTitle());
         assertEquals(true, summary.isPrivateThesaurus());

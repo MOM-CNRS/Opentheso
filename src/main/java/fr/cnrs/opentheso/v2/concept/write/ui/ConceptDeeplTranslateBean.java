@@ -15,6 +15,7 @@ import fr.cnrs.opentheso.v2.setting.service.ThesaurusPreferenceService;
 import fr.cnrs.opentheso.v2.setting.ui.ThesaurusContext;
 import fr.cnrs.opentheso.v2.shared.deepl.DeeplClient;
 import fr.cnrs.opentheso.v2.shared.ui.UserSession;
+import fr.cnrs.opentheso.v2.shared.time.V2Dates;
 import jakarta.faces.view.ViewScoped;
 import jakarta.inject.Named;
 import lombok.Getter;
@@ -25,7 +26,6 @@ import org.primefaces.PrimeFaces;
 import org.springframework.beans.factory.ObjectProvider;
 
 import java.io.Serializable;
-import java.time.LocalDate;
 import java.util.Collections;
 import java.util.List;
 
@@ -39,16 +39,16 @@ import java.util.List;
 @RequiredArgsConstructor
 public class ConceptDeeplTranslateBean implements Serializable {
 
-    private final DeeplClient deeplClient;
-    private final ThesaurusPreferenceService thesaurusPreferenceService;
-    private final ConceptWriteMetadataService conceptWriteMetadataService;
-    private final ConceptNoteMutationService conceptNoteMutationService;
-    private final ConceptNavigationSupport conceptNavigationSupport;
-    private final ConceptSelectionContext conceptSelectionContext;
-    private final ThesaurusContext thesaurusContext;
-    private final UserSession userSession;
-    private final ConceptWritePolicy conceptWritePolicy;
-    private final ObjectProvider<ThesaurusBrowseBean> thesaurusBrowseBean;
+    private final transient DeeplClient deeplClient;
+    private final transient ThesaurusPreferenceService thesaurusPreferenceService;
+    private final transient ConceptWriteMetadataService conceptWriteMetadataService;
+    private final transient ConceptNoteMutationService conceptNoteMutationService;
+    private final transient ConceptNavigationSupport conceptNavigationSupport;
+    private final transient ConceptSelectionContext conceptSelectionContext;
+    private final transient ThesaurusContext thesaurusContext;
+    private final transient UserSession userSession;
+    private final transient ConceptWritePolicy conceptWritePolicy;
+    private final transient ObjectProvider<ThesaurusBrowseBean> thesaurusBrowseBean;
 
     private String fromLang;
     private String fromLangLabel;
@@ -86,7 +86,7 @@ public class ConceptDeeplTranslateBean implements Serializable {
             return;
         }
         if (!conceptSelectionContext.hasSelection()) {
-            MessageUtils.showErrorMessage("Action non autorisée");
+            MessageUtils.showErrorMessage(WriteUiMessages.UNAUTHORIZED_FALLBACK);
             return;
         }
 
@@ -119,7 +119,7 @@ public class ConceptDeeplTranslateBean implements Serializable {
         }
         ThesaurusBrowseBean browse = thesaurusBrowseBean.getIfAvailable();
         if (browse == null || browse.getSelectedFacet() == null) {
-            MessageUtils.showErrorMessage("Action non autorisée");
+            MessageUtils.showErrorMessage(WriteUiMessages.UNAUTHORIZED_FALLBACK);
             return;
         }
 
@@ -169,15 +169,14 @@ public class ConceptDeeplTranslateBean implements Serializable {
                 normalizeIdLang(toLang),
                 noteTypeCode
         );
-        if (draft.isEmpty()) {
-            if (!normalizeIdLang(toLang).equalsIgnoreCase(toLang)) {
-                draft = conceptWriteMetadataService.loadNoteDraft(
-                        thesaurusContext.resolveThesaurusId(),
-                        conceptId,
-                        toLang,
-                        noteTypeCode
-                );
-            }
+        String normalizedToLang = normalizeIdLang(toLang);
+        if (draft.isEmpty() && normalizedToLang != null && !normalizedToLang.equalsIgnoreCase(toLang)) {
+            draft = conceptWriteMetadataService.loadNoteDraft(
+                    thesaurusContext.resolveThesaurusId(),
+                    conceptId,
+                    toLang,
+                    noteTypeCode
+            );
         }
         draft.ifPresent(existing -> {
             existingTranslatedText = StringUtils.defaultString(existing.value());
@@ -194,7 +193,7 @@ public class ConceptDeeplTranslateBean implements Serializable {
         if (userId == null) {
             return;
         }
-        String source = "traduit par Deepl le " + LocalDate.now();
+        String source = "traduit par Deepl le " + V2Dates.nowDate();
         var result = conceptNoteMutationService.upsertNote(new UpsertNoteCommand(
                 thesaurusContext.resolveThesaurusId(),
                 conceptId,
@@ -311,12 +310,12 @@ public class ConceptDeeplTranslateBean implements Serializable {
 
     private Integer requireUserId() {
         if (!isDeeplAvailable()) {
-            MessageUtils.showErrorMessage("Action non autorisée");
+            MessageUtils.showErrorMessage(WriteUiMessages.UNAUTHORIZED_FALLBACK);
             return null;
         }
         Integer userId = userSession.getCurrentUserId();
         if (userId == null) {
-            MessageUtils.showErrorMessage("Action non autorisée");
+            MessageUtils.showErrorMessage(WriteUiMessages.UNAUTHORIZED_FALLBACK);
         }
         return userId;
     }

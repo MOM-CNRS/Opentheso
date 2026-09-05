@@ -21,6 +21,7 @@ import java.util.List;
 
 import static org.junit.jupiter.api.Assertions.assertEquals;
 import static org.junit.jupiter.api.Assertions.assertTrue;
+import static org.mockito.ArgumentMatchers.any;
 import static org.mockito.Mockito.verify;
 import static org.mockito.Mockito.when;
 
@@ -181,5 +182,53 @@ class CandidatMutationServiceTest {
         service.sendMailInvitation("test@example.com");
 
         verify(candidatMutationPersistence).sendMailInvitation("test@example.com");
+    }
+
+    @Test
+    void remainingDelegates_forwardToPersistence() throws Exception {
+        when(candidatMutationPersistence.deleteAlignment(3, "TH1")).thenReturn(true);
+        when(candidatMutationPersistence.updateCandidateStatus("TH1", "C1", 2)).thenReturn(true);
+        when(candidatMutationPersistence.hasVote("TH1", "C1", 7, "n1", fr.cnrs.opentheso.models.candidats.enumeration.VoteType.CANDIDAT)).thenReturn(true);
+        when(candidatMutationPersistence.termExists("T1", "TH1", "fr")).thenReturn(true);
+        when(candidatMutationPersistence.loadUsedLanguages("TH1", "fr")).thenReturn(List.of());
+        when(candidatMutationPersistence.loadAlignments("C1", "TH1")).thenReturn(List.of());
+        when(candidatMutationPersistence.searchCollections("TH1", "fr", "q")).thenReturn(List.of());
+        when(candidatMutationPersistence.searchRelationTerms("q", "fr", "TH1")).thenReturn(List.of());
+        when(candidatMutationPersistence.loadCandidateNotes("C1", "TH1")).thenReturn(List.of());
+        when(candidatMutationPersistence.loadBroaderRelations("C1", "TH1", "fr")).thenReturn(List.of());
+        when(candidatMutationPersistence.loadRelatedTerms("C1", "TH1", "fr")).thenReturn(List.of());
+        when(candidatMutationPersistence.migrateOldCandidates("TH1", 7)).thenReturn("ok");
+
+        assertTrue(service.deleteAlignment(3, "TH1"));
+        assertTrue(service.updateCandidateStatus("TH1", "C1", 2));
+        assertTrue(service.hasVote("TH1", "C1", 7, "n1", fr.cnrs.opentheso.models.candidats.enumeration.VoteType.CANDIDAT));
+        assertTrue(service.termExists("T1", "TH1", "fr"));
+        assertEquals("ok", service.migrateOldCandidates("TH1", 7));
+        assertTrue(service.loadUsedLanguages("TH1", "fr").isEmpty());
+        assertTrue(service.loadAlignments("C1", "TH1").isEmpty());
+        assertTrue(service.searchCollections("TH1", "fr", "q").isEmpty());
+        assertTrue(service.searchRelationTerms("q", "fr", "TH1").isEmpty());
+        assertTrue(service.loadCandidateNotes("C1", "TH1").isEmpty());
+        assertTrue(service.loadBroaderRelations("C1", "TH1", "fr").isEmpty());
+        assertTrue(service.loadRelatedTerms("C1", "TH1", "fr").isEmpty());
+
+        service.updateCandidateDetails(fr.cnrs.opentheso.models.candidats.CandidatDto.builder().build());
+        service.updateCandidateLabel("L", "TH1", "fr", "T1");
+        service.removeVote("TH1", "C1", 7, "n1", fr.cnrs.opentheso.models.candidats.enumeration.VoteType.CANDIDAT);
+        service.addVote("TH1", "C1", 7, "n1", fr.cnrs.opentheso.models.candidats.enumeration.VoteType.CANDIDAT);
+        service.addCollection("G1", "TH1", "C1");
+        service.removeCollection("G1", "C1", "TH1");
+        service.updateTermLabel("L", "TH1", "fr", "T1");
+        service.addTerm(new Term());
+        service.addSynonym("syn", "TH1", "fr", "T1");
+        service.deleteSynonym("T1", "TH1", "fr", "syn");
+        service.addBroaderRelation("C1", "TH1", "P1");
+        service.deleteBroaderRelation("C1", "TH1", "P1", 7);
+        service.addRelatedTerm("C1", "TH1", "R1");
+        service.deleteRelatedTerm("C1", "TH1", "R1", 7);
+        service.updateAlignment(null, "C1", "TH1");
+
+        verify(candidatMutationPersistence).updateCandidateDetails(any());
+        verify(candidatMutationPersistence).addCollection("G1", "TH1", "C1");
     }
 }

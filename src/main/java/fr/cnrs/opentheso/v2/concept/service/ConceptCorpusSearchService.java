@@ -17,20 +17,16 @@ import org.apache.commons.lang3.StringUtils;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
 
-import javax.net.ssl.HttpsURLConnection;
-import javax.net.ssl.SSLContext;
-import javax.net.ssl.TrustManager;
-import javax.net.ssl.X509TrustManager;
 import java.io.BufferedReader;
 import java.io.InputStreamReader;
 import java.io.StringReader;
-import java.io.UnsupportedEncodingException;
 import java.net.HttpURLConnection;
-import java.net.URL;
+import java.net.URI;
 import java.net.URLEncoder;
 import java.nio.charset.StandardCharsets;
 import java.util.Collections;
 import java.util.List;
+import java.util.Locale;
 import java.util.Map;
 import java.util.stream.Collectors;
 
@@ -38,6 +34,12 @@ import java.util.stream.Collectors;
 @Service
 @RequiredArgsConstructor
 public class ConceptCorpusSearchService {
+
+    private static final String JSON_RESPONSE = "response";
+
+    private static final String TOKEN_ID = "##id##";
+    private static final String TOKEN_VALUE = "##value##";
+    private static final String TOKEN_ARK = "##arkid##";
 
     private final ThesaurusCorpusService thesaurusCorpusService;
 
@@ -93,50 +95,46 @@ public class ConceptCorpusSearchService {
     }
 
     private void applyOnlyUriLinkPlaceholders(ResolvedCorpusLink corpus, CorpusSearchContext context) {
-        if (corpus.getUriLink().contains("##id##")) {
-            corpus.setUriLink(corpus.getUriLink().replace("##id##", context.conceptId()));
+        if (corpus.getUriLink().contains(TOKEN_ID)) {
+            corpus.setUriLink(corpus.getUriLink().replace(TOKEN_ID, context.conceptId()));
         }
-        if (corpus.getUriLink().contains("##value##")
+        if (corpus.getUriLink().contains(TOKEN_VALUE)
                 && StringUtils.isNotBlank(context.preferredLabel())) {
-            corpus.setUriLink(corpus.getUriLink().replace("##value##", context.preferredLabel()));
+            corpus.setUriLink(corpus.getUriLink().replace(TOKEN_VALUE, context.preferredLabel()));
         }
     }
 
     private void applyCountPlaceholders(ResolvedCorpusLink corpus, CorpusSearchContext context) {
-        if (StringUtils.isNotBlank(corpus.getUriCount()) && corpus.getUriCount().contains("##id##")) {
-            corpus.setUriCount(corpus.getUriCount().replace("##id##", context.conceptId()));
+        if (StringUtils.isNotBlank(corpus.getUriCount()) && corpus.getUriCount().contains(TOKEN_ID)) {
+            corpus.setUriCount(corpus.getUriCount().replace(TOKEN_ID, context.conceptId()));
         }
         if (StringUtils.isNotBlank(corpus.getUriCount())
-                && corpus.getUriCount().contains("##arkid##")
+                && corpus.getUriCount().contains(TOKEN_ARK)
                 && StringUtils.isNotBlank(context.arkId())) {
-            corpus.setUriCount(corpus.getUriCount().replace("##arkid##", context.arkId()));
+            corpus.setUriCount(corpus.getUriCount().replace(TOKEN_ARK, context.arkId()));
         }
         if (StringUtils.isNotBlank(corpus.getUriCount())
-                && corpus.getUriCount().contains("##value##")
+                && corpus.getUriCount().contains(TOKEN_VALUE)
                 && StringUtils.isNotBlank(context.preferredLabel())) {
             corpus.setUriCount(replaceEncodedValue(corpus.getUriCount(), context.preferredLabel()));
         }
     }
 
     private void applyLinkPlaceholders(ResolvedCorpusLink corpus, CorpusSearchContext context) {
-        if (corpus.getUriLink().contains("##id##")) {
-            corpus.setUriLink(corpus.getUriLink().replace("##id##", context.conceptId()));
+        if (corpus.getUriLink().contains(TOKEN_ID)) {
+            corpus.setUriLink(corpus.getUriLink().replace(TOKEN_ID, context.conceptId()));
         }
-        if (corpus.getUriLink().contains("##arkid##") && StringUtils.isNotBlank(context.arkId())) {
-            corpus.setUriLink(corpus.getUriLink().replace("##arkid##", context.arkId()));
+        if (corpus.getUriLink().contains(TOKEN_ARK) && StringUtils.isNotBlank(context.arkId())) {
+            corpus.setUriLink(corpus.getUriLink().replace(TOKEN_ARK, context.arkId()));
         }
-        if (corpus.getUriLink().contains("##value##")
+        if (corpus.getUriLink().contains(TOKEN_VALUE)
                 && StringUtils.isNotBlank(context.preferredLabel())) {
             corpus.setUriLink(replaceEncodedValue(corpus.getUriLink(), context.preferredLabel()));
         }
     }
 
     private String replaceEncodedValue(String source, String value) {
-        try {
-            return source.replace("##value##", URLEncoder.encode(value, StandardCharsets.UTF_8.toString()));
-        } catch (UnsupportedEncodingException e) {
-            return source;
-        }
+        return source.replace(TOKEN_VALUE, URLEncoder.encode(value, StandardCharsets.UTF_8));
     }
 
     private void setCorpusCount(ResolvedCorpusLink corpus) {
@@ -152,25 +150,9 @@ public class ConceptCorpusSearchService {
             return -1;
         }
         StringBuilder json = new StringBuilder();
+        HttpURLConnection conn = null;
         try {
-            TrustManager[] trustAllCerts = new TrustManager[]{
-                    new X509TrustManager() {
-                        public java.security.cert.X509Certificate[] getAcceptedIssuers() {
-                            return null;
-                        }
-
-                        public void checkClientTrusted(java.security.cert.X509Certificate[] certs, String authType) {
-                        }
-
-                        public void checkServerTrusted(java.security.cert.X509Certificate[] certs, String authType) {
-                        }
-                    }
-            };
-            SSLContext sc = SSLContext.getInstance("TLS");
-            sc.init(null, trustAllCerts, new java.security.SecureRandom());
-            HttpsURLConnection.setDefaultSSLSocketFactory(sc.getSocketFactory());
-
-            HttpURLConnection conn = (HttpURLConnection) new URL(uri).openConnection();
+            conn = (HttpURLConnection) URI.create(uri).toURL().openConnection();
             conn.setRequestMethod("GET");
             conn.setRequestProperty("Accept", "application/json");
             conn.setRequestProperty("User-Agent", "JavaHttpClient");
@@ -185,7 +167,7 @@ public class ConceptCorpusSearchService {
             }
 
             try (BufferedReader br = new BufferedReader(
-                    new InputStreamReader(status >= 400 ? conn.getErrorStream() : conn.getInputStream()))) {
+                    new InputStreamReader(conn.getInputStream(), StandardCharsets.UTF_8))) {
                 String output;
                 while ((output = br.readLine()) != null) {
                     json.append(output);
@@ -194,6 +176,10 @@ public class ConceptCorpusSearchService {
             return getCountFromJson(json.toString());
         } catch (Exception ex) {
             log.warn("Unable to fetch corpus count from {}", uri, ex);
+        } finally {
+            if (conn != null) {
+                conn.disconnect();
+            }
         }
         return -1;
     }
@@ -204,18 +190,16 @@ public class ConceptCorpusSearchService {
         }
         try (JsonReader reader = Json.createReader(new StringReader(jsonText))) {
             JsonObject jsonObject = reader.readObject();
-            int count = -1;
-            try {
-                count = jsonObject.getInt("count");
-            } catch (Exception ignored) {
+            if (jsonObject.containsKey("count")) {
+                return jsonObject.getInt("count");
             }
-            if (count == -1) {
-                try {
-                    count = jsonObject.getJsonObject("response").getInt("numFound");
-                } catch (Exception ignored) {
+            if (jsonObject.containsKey(JSON_RESPONSE) && !jsonObject.isNull(JSON_RESPONSE)) {
+                JsonObject response = jsonObject.getJsonObject(JSON_RESPONSE);
+                if (response.containsKey("numFound")) {
+                    return response.getInt("numFound");
                 }
             }
-            return count;
+            return -1;
         } catch (Exception e) {
             log.warn("Unable to parse corpus count json", e);
             return -1;
@@ -227,12 +211,12 @@ public class ConceptCorpusSearchService {
             return -1;
         }
         try {
-            HttpURLConnection connection = (HttpURLConnection) new URL(uri).openConnection();
+            HttpURLConnection connection = (HttpURLConnection) URI.create(uri).toURL().openConnection();
             connection.setRequestMethod("GET");
             Map<String, List<String>> headers = connection.getHeaderFields();
             Map<String, List<String>> lowerCaseHeaders = headers.entrySet().stream()
                     .collect(Collectors.toMap(
-                            entry -> entry.getKey() != null ? entry.getKey().toLowerCase() : "",
+                            entry -> entry.getKey() != null ? entry.getKey().toLowerCase(Locale.ROOT) : "",
                             Map.Entry::getValue
                     ));
             List<String> values = lowerCaseHeaders.get("omeka-s-total-results");

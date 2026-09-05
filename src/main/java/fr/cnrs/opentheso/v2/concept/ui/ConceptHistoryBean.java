@@ -16,7 +16,7 @@ import java.io.Serializable;
 @RequiredArgsConstructor
 public class ConceptHistoryBean implements Serializable {
 
-    private final ConceptHistoryReadService conceptHistoryReadService;
+    private final transient ConceptHistoryReadService conceptHistoryReadService;
 
     private ConceptHistoryOverview overview;
 

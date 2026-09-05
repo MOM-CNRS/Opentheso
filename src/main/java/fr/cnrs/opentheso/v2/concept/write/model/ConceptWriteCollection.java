@@ -1,6 +1,8 @@
 package fr.cnrs.opentheso.v2.concept.write.model;
 
-public record ConceptWriteCollection(String id, String label) {
+import java.io.Serializable;
+
+public record ConceptWriteCollection(String id, String label) implements Serializable {
 
     public String getId() {
         return id;

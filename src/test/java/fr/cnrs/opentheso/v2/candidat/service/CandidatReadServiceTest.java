@@ -1,7 +1,6 @@
 package fr.cnrs.opentheso.v2.candidat.service;
 
 import fr.cnrs.opentheso.models.candidats.CandidatDto;
-import fr.cnrs.opentheso.models.nodes.NodeIdValue;
 import fr.cnrs.opentheso.v2.candidat.mapper.CandidatDetailJsonParser;
 import fr.cnrs.opentheso.v2.candidat.persistence.CandidatReadPersistence;
 import fr.cnrs.opentheso.v2.shared.repository.CandidatQueryRepository;

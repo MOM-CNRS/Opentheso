@@ -21,7 +21,7 @@ public class PasswordResetCommandRepository {
                         WHERE id_user = :userId
                           AND used = false
                         """)
-                .setParameter("userId", userId)
+                .setParameter(NativeQueryParams.USER_ID, userId)
                 .executeUpdate();
     }
 
@@ -32,7 +32,7 @@ public class PasswordResetCommandRepository {
                         VALUES (:token, :userId, :expiresAt, false)
                         """)
                 .setParameter("token", token)
-                .setParameter("userId", userId)
+                .setParameter(NativeQueryParams.USER_ID, userId)
                 .setParameter("expiresAt", expiresAt)
                 .executeUpdate();
     }

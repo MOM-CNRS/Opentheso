@@ -52,6 +52,7 @@ public class ThesaurusCsvImportEngine {
 
     private static final String SEPERATEUR = "##";
     private static final String SOUS_SEPERATEUR = "@@";
+    private static final String DEFAULT_DATE_FORMAT = "yyyy-MM-dd";
 
     private final ToolboxThesaurusPersistence toolboxThesaurusPersistence;
     private final ConceptRepository conceptRepository;
@@ -74,7 +75,7 @@ public class ThesaurusCsvImportEngine {
 
     public void setFormatDate(String formatDate) {
         this.formatDate = formatDate;
-        this.dateFormat = new SimpleDateFormat(StringUtils.defaultIfBlank(formatDate, "yyyy-MM-dd"));
+        this.dateFormat = new SimpleDateFormat(StringUtils.defaultIfBlank(formatDate, DEFAULT_DATE_FORMAT));
     }
 
     public String createThesaurus(String thesoName, String idLang, int idProject, String userName) {
@@ -242,7 +243,7 @@ public class ThesaurusCsvImportEngine {
         }
         
         if (StringUtils.isEmpty(formatDate)) {
-            formatDate = "yyyy-MM-dd";
+            formatDate = DEFAULT_DATE_FORMAT;
             dateFormat = new SimpleDateFormat(formatDate);
         }
         Date created = null;
@@ -605,7 +606,7 @@ public class ThesaurusCsvImportEngine {
 
         try {
             if (dateFormat == null) {
-                dateFormat = new SimpleDateFormat(StringUtils.defaultIfBlank(formatDate, "yyyy-MM-dd"));
+                dateFormat = new SimpleDateFormat(StringUtils.defaultIfBlank(formatDate, DEFAULT_DATE_FORMAT));
             }
             conceptRepository.addNewConcept(
                     idTheso,
@@ -674,14 +675,6 @@ public class ThesaurusCsvImportEngine {
                 .filter(org.apache.commons.lang3.StringUtils::isNotBlank)
                 .findFirst()
                 .orElse("theso_" + idTheso);
-    }
-
-    private void saveConceptGroupConcept(String idGroup, String idConcept, String idThesaurus) {
-        conceptGroupConceptRepository.save(ConceptGroupConcept.builder()
-                .idGroup(idGroup)
-                .idThesaurus(idThesaurus)
-                .idConcept(idConcept)
-                .build());
     }
 
     private void insertGroup(String idGroup, String idThesaurus, String idArk, String typeCode, String notation,

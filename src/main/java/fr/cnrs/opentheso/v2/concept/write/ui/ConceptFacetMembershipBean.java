@@ -33,14 +33,14 @@ import java.util.List;
 @RequiredArgsConstructor
 public class ConceptFacetMembershipBean implements Serializable {
 
-    private final FacetMutationService facetMutationService;
-    private final ConceptWriteSearchService conceptWriteSearchService;
-    private final ConceptSelectionContext conceptSelectionContext;
-    private final ConceptNavigationSupport conceptNavigationSupport;
-    private final ThesaurusContext thesaurusContext;
-    private final UserSession userSession;
-    private final ConceptWritePolicy conceptWritePolicy;
-    private final ThesaurusBrowseBean thesaurusBrowseBean;
+    private final transient FacetMutationService facetMutationService;
+    private final transient ConceptWriteSearchService conceptWriteSearchService;
+    private final transient ConceptSelectionContext conceptSelectionContext;
+    private final transient ConceptNavigationSupport conceptNavigationSupport;
+    private final transient ThesaurusContext thesaurusContext;
+    private final transient UserSession userSession;
+    private final transient ConceptWritePolicy conceptWritePolicy;
+    private final transient ThesaurusBrowseBean thesaurusBrowseBean;
 
     private String currentConceptLabel;
     private ConceptWriteFacet selectedFacet;
@@ -70,7 +70,7 @@ public class ConceptFacetMembershipBean implements Serializable {
 
     public void submitAddToFacet() {
         if (!isFacetActionsAvailable() || !conceptSelectionContext.hasSelection()) {
-            MessageUtils.showErrorMessage("Action non autorisée");
+            MessageUtils.showErrorMessage(WriteUiMessages.UNAUTHORIZED_FALLBACK);
             return;
         }
         if (selectedFacet == null || StringUtils.isBlank(selectedFacet.id())) {
@@ -90,7 +90,7 @@ public class ConceptFacetMembershipBean implements Serializable {
 
     public void submitRemoveFromFacet(ConceptRelation facet) {
         if (!isFacetActionsAvailable() || facet == null || !conceptSelectionContext.hasSelection()) {
-            MessageUtils.showErrorMessage("Action non autorisée");
+            MessageUtils.showErrorMessage(WriteUiMessages.UNAUTHORIZED_FALLBACK);
             return;
         }
         MutationResult result = facetMutationService.removeMember(new RemoveFacetMemberCommand(

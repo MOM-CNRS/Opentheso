@@ -54,7 +54,7 @@ public class ConceptQueryRepository {
               )
             ORDER BY cg.numerotation, label
             """)
-                .setParameter("thesaurusId", thesaurusId)
+                .setParameter(NativeQueryParams.THESAURUS_ID, thesaurusId)
                 .setParameter("lang", lang)
                 .getResultList();
     }
@@ -84,7 +84,7 @@ public class ConceptQueryRepository {
             WHERE cg.idthesaurus = :thesaurusId
             ORDER BY label
             """)
-                .setParameter("thesaurusId", thesaurusId)
+                .setParameter(NativeQueryParams.THESAURUS_ID, thesaurusId)
                 .setParameter("lang", lang)
                 .getResultList();
     }
@@ -108,7 +108,7 @@ public class ConceptQueryRepository {
             WHERE cgc.idthesaurus = :thesaurusId
               AND LOWER(cgc.idgroup) IN (:groupIds)
             """)
-                .setParameter("thesaurusId", thesaurusId)
+                .setParameter(NativeQueryParams.THESAURUS_ID, thesaurusId)
                 .setParameter("groupIds", groups)
                 .getResultList();
     }
@@ -141,7 +141,7 @@ public class ConceptQueryRepository {
             ORDER BY cg.numerotation, label
             """)
                 .setParameter("parentGroupId", parentGroupId)
-                .setParameter("thesaurusId", thesaurusId)
+                .setParameter(NativeQueryParams.THESAURUS_ID, thesaurusId)
                 .setParameter("lang", lang)
                 .getResultList();
     }
@@ -176,8 +176,8 @@ public class ConceptQueryRepository {
             ORDER BY label
             LIMIT 2000
             """)
-                .setParameter("groupId", groupId)
-                .setParameter("thesaurusId", thesaurusId)
+                .setParameter(NativeQueryParams.GROUP_ID, groupId)
+                .setParameter(NativeQueryParams.THESAURUS_ID, thesaurusId)
                 .setParameter("lang", lang)
                 .getResultList();
         return toConceptTreeRows6(rows);
@@ -210,8 +210,8 @@ public class ConceptQueryRepository {
             ORDER BY label
             LIMIT 2000
             """)
-                .setParameter("parentId", parentId)
-                .setParameter("thesaurusId", thesaurusId)
+                .setParameter(NativeQueryParams.PARENT_ID, parentId)
+                .setParameter(NativeQueryParams.THESAURUS_ID, thesaurusId)
                 .setParameter("lang", lang)
                 .getResultList();
         return toConceptTreeRows6(rows);
@@ -242,8 +242,8 @@ public class ConceptQueryRepository {
               AND c.status != 'CA'
             LIMIT 1
             """)
-                .setParameter("conceptId", conceptId)
-                .setParameter("thesaurusId", thesaurusId)
+                .setParameter(NativeQueryParams.CONCEPT_ID, conceptId)
+                .setParameter(NativeQueryParams.THESAURUS_ID, thesaurusId)
                 .setParameter("lang", lang)
                 .getResultList();
         if (rows.isEmpty()) {
@@ -293,8 +293,8 @@ public class ConceptQueryRepository {
             FROM breadcrumb
             ORDER BY ancestor_id, depth DESC
             """)
-                .setParameter("conceptId", conceptId)
-                .setParameter("thesaurusId", thesaurusId)
+                .setParameter(NativeQueryParams.CONCEPT_ID, conceptId)
+                .setParameter(NativeQueryParams.THESAURUS_ID, thesaurusId)
                 .setParameter("lang", lang)
                 .getResultList();
     }
@@ -308,8 +308,8 @@ public class ConceptQueryRepository {
               AND n.lang = :lang
             ORDER BY n.notetypecode
             """)
-                .setParameter("conceptId", conceptId)
-                .setParameter("thesaurusId", thesaurusId)
+                .setParameter(NativeQueryParams.CONCEPT_ID, conceptId)
+                .setParameter(NativeQueryParams.THESAURUS_ID, thesaurusId)
                 .setParameter("lang", lang)
                 .getResultList();
     }
@@ -337,8 +337,8 @@ public class ConceptQueryRepository {
             ORDER BY label
             LIMIT 4001
             """)
-                .setParameter("groupId", groupId)
-                .setParameter("thesaurusId", thesaurusId)
+                .setParameter(NativeQueryParams.GROUP_ID, groupId)
+                .setParameter(NativeQueryParams.THESAURUS_ID, thesaurusId)
                 .setParameter("lang", lang)
                 .getResultList();
     }
@@ -362,10 +362,10 @@ public class ConceptQueryRepository {
             ORDER BY label
             LIMIT :limit
             """)
-                .setParameter("thesaurusId", thesaurusId)
+                .setParameter(NativeQueryParams.THESAURUS_ID, thesaurusId)
                 .setParameter("lang", lang)
-                .setParameter("query", "%" + query + "%")
-                .setParameter("limit", limit)
+                .setParameter(NativeQueryParams.QUERY, "%" + query + "%")
+                .setParameter(NativeQueryParams.LIMIT, limit)
                 .getResultList();
         return toConceptTreeRows6(rows);
     }
@@ -373,7 +373,7 @@ public class ConceptQueryRepository {
     public boolean hasGroups(String thesaurusId) {
         Long count = (Long) em.createNativeQuery(
                 "SELECT COUNT(*) FROM concept_group WHERE idthesaurus = :thesaurusId")
-                .setParameter("thesaurusId", thesaurusId)
+                .setParameter(NativeQueryParams.THESAURUS_ID, thesaurusId)
                 .getSingleResult();
         return count != null && count > 0;
     }
@@ -388,8 +388,8 @@ public class ConceptQueryRepository {
               AND t.lang = :lang
             LIMIT 1
             """)
-                .setParameter("conceptId", conceptId)
-                .setParameter("thesaurusId", thesaurusId)
+                .setParameter(NativeQueryParams.CONCEPT_ID, conceptId)
+                .setParameter(NativeQueryParams.THESAURUS_ID, thesaurusId)
                 .setParameter("lang", lang)
                 .getResultList();
         if (rows.isEmpty() || rows.get(0) == null) {
@@ -434,9 +434,9 @@ public class ConceptQueryRepository {
                   AND c.status != 'CA'
                 ORDER BY npt.lexical_value ASC
                 """)
-                    .setParameter("thesaurusId", thesaurusId)
+                    .setParameter(NativeQueryParams.THESAURUS_ID, thesaurusId)
                     .setParameter("lang", lang)
-                    .setParameter("pattern", pattern)
+                    .setParameter(NativeQueryParams.PATTERN, pattern)
                     .getResultList();
         }
         return em.createNativeQuery("""
@@ -450,9 +450,9 @@ public class ConceptQueryRepository {
               AND c.status != 'CA'
             ORDER BY t.lexical_value ASC
             """)
-                .setParameter("thesaurusId", thesaurusId)
+                .setParameter(NativeQueryParams.THESAURUS_ID, thesaurusId)
                 .setParameter("lang", lang)
-                .setParameter("pattern", pattern)
+                .setParameter(NativeQueryParams.PATTERN, pattern)
                 .getResultList();
     }
 
@@ -489,8 +489,8 @@ public class ConceptQueryRepository {
               AND c.status != 'CA'
             ORDER BY label
             """)
-                .setParameter("facetId", facetId)
-                .setParameter("thesaurusId", thesaurusId)
+                .setParameter(NativeQueryParams.FACET_ID, facetId)
+                .setParameter(NativeQueryParams.THESAURUS_ID, thesaurusId)
                 .setParameter("lang", lang)
                 .getResultList();
         // columns: [0]=id_concept, [1]=label, [2]=status, [3]=has_children
@@ -513,7 +513,13 @@ public class ConceptQueryRepository {
                 WHERE hr.id_concept1 = :conceptId
                   AND hr.id_thesaurus = :thesaurusId
                   AND hr.role LIKE 'NT%'
-                  """ + excludeRejectedCandidates("c") + """
+                  AND NOT EXISTS (
+                      SELECT 1
+                      FROM candidat_status cs
+                      WHERE cs.id_concept = c.id_concept
+                        AND cs.id_thesaurus = c.id_thesaurus
+                        AND cs.id_status = :rejected
+                  )
                 UNION
                 SELECT hr2.id_concept2
                 FROM hierarchical_relationship hr2
@@ -523,12 +529,19 @@ public class ConceptQueryRepository {
                     AND c2.id_thesaurus = hr2.id_thesaurus
                 WHERE hr2.id_thesaurus = :thesaurusId
                   AND hr2.role LIKE 'NT%'
-                  """ + excludeRejectedCandidates("c2") + """
+                  AND NOT EXISTS (
+                      SELECT 1
+                      FROM candidat_status cs
+                      WHERE cs.id_concept = c2.id_concept
+                        AND cs.id_thesaurus = c2.id_thesaurus
+                        AND cs.id_status = :rejected
+                  )
             )
             SELECT COUNT(*) FROM descendants
             """)
-                .setParameter("thesaurusId", thesaurusId)
-                .setParameter("conceptId", conceptId)
+                .setParameter(NativeQueryParams.THESAURUS_ID, thesaurusId)
+                .setParameter(NativeQueryParams.CONCEPT_ID, conceptId)
+                .setParameter(NativeQueryParams.REJECTED, CandidatStatusCode.REJECTED)
                 .getSingleResult();
         return count == null ? 0 : count.intValue();
     }
@@ -555,7 +568,13 @@ public class ConceptQueryRepository {
                 WHERE hr.id_concept1 IN (:rootIds)
                   AND hr.id_thesaurus = :thesaurusId
                   AND hr.role LIKE 'NT%'
-                  """ + excludeRejectedCandidates("c") + """
+                  AND NOT EXISTS (
+                      SELECT 1
+                      FROM candidat_status cs
+                      WHERE cs.id_concept = c.id_concept
+                        AND cs.id_thesaurus = c.id_thesaurus
+                        AND cs.id_status = :rejected
+                  )
                 UNION
                 SELECT hr2.id_concept2
                 FROM hierarchical_relationship hr2
@@ -565,12 +584,19 @@ public class ConceptQueryRepository {
                     AND c2.id_thesaurus = hr2.id_thesaurus
                 WHERE hr2.id_thesaurus = :thesaurusId
                   AND hr2.role LIKE 'NT%'
-                  """ + excludeRejectedCandidates("c2") + """
+                  AND NOT EXISTS (
+                      SELECT 1
+                      FROM candidat_status cs
+                      WHERE cs.id_concept = c2.id_concept
+                        AND cs.id_thesaurus = c2.id_thesaurus
+                        AND cs.id_status = :rejected
+                  )
             )
             SELECT concept_id FROM descendants
             """)
-                .setParameter("thesaurusId", thesaurusId)
+                .setParameter(NativeQueryParams.THESAURUS_ID, thesaurusId)
                 .setParameter("rootIds", roots)
+                .setParameter(NativeQueryParams.REJECTED, CandidatStatusCode.REJECTED)
                 .getResultList();
         return rows.stream().map(String::valueOf).toList();
     }
@@ -584,8 +610,8 @@ public class ConceptQueryRepository {
               AND LOWER(cgc.idgroup) = LOWER(:groupId)
               AND c.status != 'CA'
             """)
-                .setParameter("thesaurusId", thesaurusId)
-                .setParameter("groupId", groupId)
+                .setParameter(NativeQueryParams.THESAURUS_ID, thesaurusId)
+                .setParameter(NativeQueryParams.GROUP_ID, groupId)
                 .getSingleResult();
         return count == null ? 0 : count.intValue();
     }
@@ -607,8 +633,8 @@ public class ConceptQueryRepository {
               AND cg.idthesaurus = :thesaurusId
             LIMIT 1
             """)
-                .setParameter("groupId", groupId)
-                .setParameter("thesaurusId", thesaurusId)
+                .setParameter(NativeQueryParams.GROUP_ID, groupId)
+                .setParameter(NativeQueryParams.THESAURUS_ID, thesaurusId)
                 .setParameter("lang", lang)
                 .getResultList();
         return rows.isEmpty() ? Optional.empty() : Optional.of(rows.get(0));
@@ -623,8 +649,8 @@ public class ConceptQueryRepository {
               AND cgl.lang != :lang
             ORDER BY cgl.lang
             """)
-                .setParameter("groupId", groupId)
-                .setParameter("thesaurusId", thesaurusId)
+                .setParameter(NativeQueryParams.GROUP_ID, groupId)
+                .setParameter(NativeQueryParams.THESAURUS_ID, thesaurusId)
                 .setParameter("lang", lang)
                 .getResultList();
     }
@@ -639,7 +665,7 @@ public class ConceptQueryRepository {
             WHERE code = :typeCode
             LIMIT 1
             """)
-                .setParameter("typeCode", typeCode)
+                .setParameter(NativeQueryParams.TYPE_CODE, typeCode)
                 .getResultList();
         return rows.isEmpty() ? Optional.empty() : Optional.of(rows.get(0));
     }
@@ -658,8 +684,8 @@ public class ConceptQueryRepository {
               AND ta.id_thesaurus = :thesaurusId
             LIMIT 1
             """)
-                .setParameter("facetId", facetId)
-                .setParameter("thesaurusId", thesaurusId)
+                .setParameter(NativeQueryParams.FACET_ID, facetId)
+                .setParameter(NativeQueryParams.THESAURUS_ID, thesaurusId)
                 .setParameter("lang", lang)
                 .getResultList();
         return rows.isEmpty() ? Optional.empty() : Optional.of(rows.get(0));
@@ -674,8 +700,8 @@ public class ConceptQueryRepository {
               AND nl.lang != :lang
             ORDER BY nl.lang
             """)
-                .setParameter("facetId", facetId)
-                .setParameter("thesaurusId", thesaurusId)
+                .setParameter(NativeQueryParams.FACET_ID, facetId)
+                .setParameter(NativeQueryParams.THESAURUS_ID, thesaurusId)
                 .setParameter("lang", lang)
                 .getResultList();
     }
@@ -688,8 +714,8 @@ public class ConceptQueryRepository {
         Number result = (Number) em.createNativeQuery("""
             SELECT COUNT(*) FROM opentheso_get_narrowers_ignorefacet(:thesaurusId, :conceptId)
             """)
-                .setParameter("thesaurusId", thesaurusId)
-                .setParameter("conceptId", conceptId)
+                .setParameter(NativeQueryParams.THESAURUS_ID, thesaurusId)
+                .setParameter(NativeQueryParams.CONCEPT_ID, conceptId)
                 .getSingleResult();
         return result != null ? result.intValue() : 0;
     }
@@ -702,8 +728,8 @@ public class ConceptQueryRepository {
               AND id_concept1 = :conceptId
               AND role LIKE 'BT%'
             """)
-                .setParameter("conceptId", conceptId)
-                .setParameter("thesaurusId", thesaurusId)
+                .setParameter(NativeQueryParams.CONCEPT_ID, conceptId)
+                .setParameter(NativeQueryParams.THESAURUS_ID, thesaurusId)
                 .getResultList();
     }
 
@@ -750,8 +776,8 @@ public class ConceptQueryRepository {
                AND t.lang          = :lang
             ORDER BY a.depth DESC
             """)
-                .setParameter("conceptId", conceptId)
-                .setParameter("thesaurusId", thesaurusId)
+                .setParameter(NativeQueryParams.CONCEPT_ID, conceptId)
+                .setParameter(NativeQueryParams.THESAURUS_ID, thesaurusId)
                 .setParameter("lang", lang)
                 .getResultList();
     }
@@ -789,7 +815,7 @@ public class ConceptQueryRepository {
                 ORDER BY c.notation, label
                 LIMIT 2000
                 """)
-                    .setParameter("thesaurusId", thesaurusId)
+                    .setParameter(NativeQueryParams.THESAURUS_ID, thesaurusId)
                     .setParameter("lang", lang)
                     .getResultList();
         } else {
@@ -820,7 +846,7 @@ public class ConceptQueryRepository {
                 ORDER BY c.notation, label
                 LIMIT 2000
                 """)
-                    .setParameter("thesaurusId", thesaurusId)
+                    .setParameter(NativeQueryParams.THESAURUS_ID, thesaurusId)
                     .setParameter("lang", lang)
                     .getResultList();
         }
@@ -837,19 +863,6 @@ public class ConceptQueryRepository {
             String lang,
             boolean includePrivateGroups
     ) {
-        String facetExclusion = """
-            AND NOT EXISTS (
-                SELECT 1
-                FROM concept_facet cf
-                JOIN thesaurus_array ta
-                    ON cf.id_facet = ta.id_facet
-                    AND cf.id_thesaurus = ta.id_thesaurus
-                WHERE cf.id_concept = c.id_concept
-                  AND cf.id_thesaurus = c.id_thesaurus
-                  AND ta.id_concept_parent = :parentId
-                  AND ta.id_thesaurus = :thesaurusId
-            )
-            """;
         List<Object[]> rows;
         if (includePrivateGroups) {
             rows = em.createNativeQuery("""
@@ -857,7 +870,25 @@ public class ConceptQueryRepository {
                        COALESCE(c.notation, '') AS notation,
                        COALESCE(t.lexical_value, c.id_concept) AS label,
                        c.status,
-                       """ + hasChildrenExpression() + """
+                       (
+                           EXISTS(
+                               SELECT 1
+                               FROM hierarchical_relationship child_hr
+                               JOIN concept child
+                                   ON child.id_concept = child_hr.id_concept2
+                                   AND child.id_thesaurus = child_hr.id_thesaurus
+                               WHERE child_hr.id_concept1 = c.id_concept
+                                 AND child_hr.id_thesaurus = :thesaurusId
+                                 AND child_hr.role LIKE 'NT%'
+                                 AND child.status != 'CA'
+                           )
+                           OR EXISTS(
+                               SELECT 1
+                               FROM thesaurus_array ta
+                               WHERE ta.id_concept_parent = c.id_concept
+                                 AND ta.id_thesaurus = :thesaurusId
+                           )
+                       ) AS has_children
                 FROM hierarchical_relationship hr
                 JOIN concept c
                     ON c.id_concept = hr.id_concept2
@@ -873,12 +904,22 @@ public class ConceptQueryRepository {
                   AND hr.id_concept1 = :parentId
                   AND hr.role LIKE 'NT%'
                   AND c.status != 'CA'
-                """ + facetExclusion + """
+                  AND NOT EXISTS (
+                      SELECT 1
+                      FROM concept_facet cf
+                      JOIN thesaurus_array ta
+                          ON cf.id_facet = ta.id_facet
+                          AND cf.id_thesaurus = ta.id_thesaurus
+                      WHERE cf.id_concept = c.id_concept
+                        AND cf.id_thesaurus = c.id_thesaurus
+                        AND ta.id_concept_parent = :parentId
+                        AND ta.id_thesaurus = :thesaurusId
+                  )
                 ORDER BY c.notation, label
                 LIMIT 2000
                 """)
-                    .setParameter("thesaurusId", thesaurusId)
-                    .setParameter("parentId", parentId)
+                    .setParameter(NativeQueryParams.THESAURUS_ID, thesaurusId)
+                    .setParameter(NativeQueryParams.PARENT_ID, parentId)
                     .setParameter("lang", lang)
                     .getResultList();
         } else {
@@ -887,7 +928,25 @@ public class ConceptQueryRepository {
                        COALESCE(c.notation, '') AS notation,
                        COALESCE(t.lexical_value, c.id_concept) AS label,
                        c.status,
-                       """ + hasChildrenExpression() + """
+                       (
+                           EXISTS(
+                               SELECT 1
+                               FROM hierarchical_relationship child_hr
+                               JOIN concept child
+                                   ON child.id_concept = child_hr.id_concept2
+                                   AND child.id_thesaurus = child_hr.id_thesaurus
+                               WHERE child_hr.id_concept1 = c.id_concept
+                                 AND child_hr.id_thesaurus = :thesaurusId
+                                 AND child_hr.role LIKE 'NT%'
+                                 AND child.status != 'CA'
+                           )
+                           OR EXISTS(
+                               SELECT 1
+                               FROM thesaurus_array ta
+                               WHERE ta.id_concept_parent = c.id_concept
+                                 AND ta.id_thesaurus = :thesaurusId
+                           )
+                       ) AS has_children
                 FROM hierarchical_relationship hr
                 JOIN concept c
                     ON c.id_concept = hr.id_concept2
@@ -909,14 +968,24 @@ public class ConceptQueryRepository {
                   AND hr.id_concept1 = :parentId
                   AND hr.role LIKE 'NT%'
                   AND c.status != 'CA'
-                """ + facetExclusion + """
+                  AND NOT EXISTS (
+                      SELECT 1
+                      FROM concept_facet cf
+                      JOIN thesaurus_array ta
+                          ON cf.id_facet = ta.id_facet
+                          AND cf.id_thesaurus = ta.id_thesaurus
+                      WHERE cf.id_concept = c.id_concept
+                        AND cf.id_thesaurus = c.id_thesaurus
+                        AND ta.id_concept_parent = :parentId
+                        AND ta.id_thesaurus = :thesaurusId
+                  )
                 GROUP BY c.id_concept, c.notation, t.lexical_value, c.status
                 HAVING BOOL_OR(cg.private IS NULL OR cg.private = false)
                 ORDER BY c.notation, label
                 LIMIT 2000
                 """)
-                    .setParameter("thesaurusId", thesaurusId)
-                    .setParameter("parentId", parentId)
+                    .setParameter(NativeQueryParams.THESAURUS_ID, thesaurusId)
+                    .setParameter(NativeQueryParams.PARENT_ID, parentId)
                     .setParameter("lang", lang)
                     .getResultList();
         }
@@ -928,7 +997,11 @@ public class ConceptQueryRepository {
             SELECT c.id_concept,
                    COALESCE(c.notation, '') AS notation,
                    COALESCE(t.lexical_value, c.id_concept) AS label,
-                   """ + treeUiStatusExpression("c") + """
+                   CASE
+                       WHEN cs.id_status = :rejected THEN 'REJ'
+                       WHEN cs.id_status = :accepted AND UPPER(TRIM(c.status)) <> 'DEP' THEN 'INS'
+                       ELSE c.status
+                   END AS status,
                    false AS has_children
             FROM concept c
             LEFT JOIN preferred_term pt
@@ -961,32 +1034,42 @@ public class ConceptQueryRepository {
             ORDER BY c.notation, label
             LIMIT 4000
             """)
-                .setParameter("thesaurusId", thesaurusId)
+                .setParameter(NativeQueryParams.THESAURUS_ID, thesaurusId)
                 .setParameter("lang", lang)
+                .setParameter(NativeQueryParams.REJECTED, CandidatStatusCode.REJECTED)
+                .setParameter(NativeQueryParams.ACCEPTED, CandidatStatusCode.ACCEPTED)
                 .getResultList();
         return withBulkHasChildren(thesaurusId, toConceptTreeRows(rows), true);
     }
 
     public List<ConceptTreeRow> findTreeChildConcepts(String thesaurusId, String parentId, String lang) {
-        String facetExclusion = """
-            AND NOT EXISTS (
-                SELECT 1
-                FROM concept_facet cf
-                JOIN thesaurus_array ta
-                    ON cf.id_facet = ta.id_facet
-                    AND cf.id_thesaurus = ta.id_thesaurus
-                WHERE cf.id_concept = c.id_concept
-                  AND cf.id_thesaurus = c.id_thesaurus
-                  AND ta.id_concept_parent = :parentId
-                  AND ta.id_thesaurus = :thesaurusId
-            )
-            """;
         List<Object[]> rows = em.createNativeQuery("""
             SELECT c.id_concept,
                    COALESCE(c.notation, '') AS notation,
                    COALESCE(t.lexical_value, c.id_concept) AS label,
-                   """ + treeUiStatusExpression("c") + """
-                   """ + hasChildrenExpression(true) + """
+                   CASE
+                       WHEN cs.id_status = :rejected THEN 'REJ'
+                       WHEN cs.id_status = :accepted AND UPPER(TRIM(c.status)) <> 'DEP' THEN 'INS'
+                       ELSE c.status
+                   END AS status,
+                   (
+                       EXISTS(
+                           SELECT 1
+                           FROM hierarchical_relationship child_hr
+                           JOIN concept child
+                               ON child.id_concept = child_hr.id_concept2
+                               AND child.id_thesaurus = child_hr.id_thesaurus
+                           WHERE child_hr.id_concept1 = c.id_concept
+                             AND child_hr.id_thesaurus = :thesaurusId
+                             AND child_hr.role LIKE 'NT%'
+                       )
+                       OR EXISTS(
+                           SELECT 1
+                           FROM thesaurus_array ta
+                           WHERE ta.id_concept_parent = c.id_concept
+                             AND ta.id_thesaurus = :thesaurusId
+                       )
+                   ) AS has_children
             FROM hierarchical_relationship hr
             JOIN concept c
                 ON c.id_concept = hr.id_concept2
@@ -1004,13 +1087,25 @@ public class ConceptQueryRepository {
             WHERE hr.id_thesaurus = :thesaurusId
               AND hr.id_concept1 = :parentId
               AND hr.role LIKE 'NT%'
-            """ + facetExclusion + """
+              AND NOT EXISTS (
+                  SELECT 1
+                  FROM concept_facet cf
+                  JOIN thesaurus_array ta
+                      ON cf.id_facet = ta.id_facet
+                      AND cf.id_thesaurus = ta.id_thesaurus
+                  WHERE cf.id_concept = c.id_concept
+                    AND cf.id_thesaurus = c.id_thesaurus
+                    AND ta.id_concept_parent = :parentId
+                    AND ta.id_thesaurus = :thesaurusId
+              )
             ORDER BY c.notation, label
             LIMIT 4000
             """)
-                .setParameter("thesaurusId", thesaurusId)
-                .setParameter("parentId", parentId)
+                .setParameter(NativeQueryParams.THESAURUS_ID, thesaurusId)
+                .setParameter(NativeQueryParams.PARENT_ID, parentId)
                 .setParameter("lang", lang)
+                .setParameter(NativeQueryParams.REJECTED, CandidatStatusCode.REJECTED)
+                .setParameter(NativeQueryParams.ACCEPTED, CandidatStatusCode.ACCEPTED)
                 .getResultList();
         return toConceptTreeRows(rows);
     }
@@ -1031,8 +1126,8 @@ public class ConceptQueryRepository {
               AND cs.id_concept IN (:conceptIds)
             ORDER BY cs.id_concept, cs.date DESC NULLS LAST
             """)
-                .setParameter("thesaurusId", thesaurusId)
-                .setParameter("conceptIds", conceptIds)
+                .setParameter(NativeQueryParams.THESAURUS_ID, thesaurusId)
+                .setParameter(NativeQueryParams.CONCEPT_IDS, conceptIds)
                 .getResultList();
     }
 
@@ -1063,8 +1158,8 @@ public class ConceptQueryRepository {
               )
             ORDER BY label
             """)
-                .setParameter("thesaurusId", thesaurusId)
-                .setParameter("conceptId", conceptId)
+                .setParameter(NativeQueryParams.THESAURUS_ID, thesaurusId)
+                .setParameter(NativeQueryParams.CONCEPT_ID, conceptId)
                 .setParameter("lang", lang)
                 .getResultList();
         // columns: [0]=id_facet, [1]=label, [2]=has_members
@@ -1111,8 +1206,8 @@ public class ConceptQueryRepository {
               AND c.status != 'CA'
             ORDER BY relation_label, target_label
             """)
-                .setParameter("conceptId", conceptId)
-                .setParameter("thesaurusId", thesaurusId)
+                .setParameter(NativeQueryParams.CONCEPT_ID, conceptId)
+                .setParameter(NativeQueryParams.THESAURUS_ID, thesaurusId)
                 .setParameter("lang", lang)
                 .setParameter("interfaceLang", interfaceLang)
                 .getResultList();
@@ -1131,7 +1226,7 @@ public class ConceptQueryRepository {
             LIMIT 1
             """)
                 .setParameter("code", code)
-                .setParameter("thesaurusId", thesaurusId)
+                .setParameter(NativeQueryParams.THESAURUS_ID, thesaurusId)
                 .getResultList();
         return rows.isEmpty() ? Optional.empty() : Optional.of(rows.get(0));
     }
@@ -1160,10 +1255,6 @@ public class ConceptQueryRepository {
                         "true".equalsIgnoreCase(str(r[4])) || "t".equalsIgnoreCase(str(r[4]))
                 ))
                 .toList();
-    }
-
-    private List<ConceptTreeRow> withBulkHasChildren(String thesaurusId, List<ConceptTreeRow> rows) {
-        return withBulkHasChildren(thesaurusId, rows, false);
     }
 
     private List<ConceptTreeRow> withBulkHasChildren(
@@ -1198,9 +1289,6 @@ public class ConceptQueryRepository {
             List<String> parentIds,
             boolean includeAllStatuses
     ) {
-        String statusFilter = includeAllStatuses
-                ? ""
-                : "AND child.status != 'CA'";
         List<String> found = em.createNativeQuery("""
                 SELECT DISTINCT parent_id
                 FROM (
@@ -1212,7 +1300,7 @@ public class ConceptQueryRepository {
                     WHERE hr.id_thesaurus = :thesaurusId
                       AND hr.role LIKE 'NT%'
                       AND hr.id_concept1 IN (:parentIds)
-                      """ + statusFilter + """
+                      AND (:includeAllStatuses = true OR child.status <> 'CA')
                     UNION
                     SELECT ta.id_concept_parent AS parent_id
                     FROM thesaurus_array ta
@@ -1220,8 +1308,9 @@ public class ConceptQueryRepository {
                       AND ta.id_concept_parent IN (:parentIds)
                 ) parents
                 """)
-                .setParameter("thesaurusId", thesaurusId)
+                .setParameter(NativeQueryParams.THESAURUS_ID, thesaurusId)
                 .setParameter("parentIds", parentIds)
+                .setParameter("includeAllStatuses", includeAllStatuses)
                 .getResultList();
         Set<String> result = new HashSet<>(found.size());
         for (Object value : found) {
@@ -1263,9 +1352,9 @@ public class ConceptQueryRepository {
             ) counted
             GROUP BY ui_status
             """)
-                .setParameter("thesaurusId", thesaurusId)
-                .setParameter("rejected", CandidatStatusCode.REJECTED)
-                .setParameter("accepted", CandidatStatusCode.ACCEPTED)
+                .setParameter(NativeQueryParams.THESAURUS_ID, thesaurusId)
+                .setParameter(NativeQueryParams.REJECTED, CandidatStatusCode.REJECTED)
+                .setParameter(NativeQueryParams.ACCEPTED, CandidatStatusCode.ACCEPTED)
                 .getResultList();
         for (Object[] row : rows) {
             if (row == null || row[0] == null) {
@@ -1285,13 +1374,18 @@ public class ConceptQueryRepository {
         if (StringUtils.isBlank(thesaurusId) || statuses == null || statuses.isEmpty()) {
             return List.of();
         }
-        String uiStatus = uiStatusCaseSql("c", "cs");
         return em.createNativeQuery("""
                 SELECT c.id_concept,
                        COALESCE(c.notation, '') AS notation,
                        COALESCE(t.lexical_value, c.id_concept) AS label,
-                       """ + uiStatus + """
-                       AS ui_status,
+                       CASE
+                           WHEN cs.id_status = :rejected THEN 'rejete'
+                           WHEN cs.id_status = :accepted AND UPPER(TRIM(c.status)) = 'DEP' THEN 'deprecie'
+                           WHEN cs.id_status = :accepted THEN 'insere'
+                           WHEN UPPER(TRIM(c.status)) = 'CA' THEN 'candidat'
+                           WHEN UPPER(TRIM(c.status)) = 'DEP' THEN 'deprecie'
+                           ELSE 'valide'
+                       END AS ui_status,
                        COALESCE(u.username, '') AS cand_by,
                        COALESCE(TO_CHAR(cs.date, 'YYYY-MM-DD'), '') AS cand_on
                 FROM concept c
@@ -1313,14 +1407,24 @@ public class ConceptQueryRepository {
                     AND cs.id_thesaurus = c.id_thesaurus
                 LEFT JOIN users u ON u.id_user = cs.id_user
                 WHERE c.id_thesaurus = :thesaurusId
-                  AND (""" + uiStatus + """
-                       ) IN (:statuses)
+                  AND (
+                       CASE
+                           WHEN cs.id_status = :rejected THEN 'rejete'
+                           WHEN cs.id_status = :accepted AND UPPER(TRIM(c.status)) = 'DEP' THEN 'deprecie'
+                           WHEN cs.id_status = :accepted THEN 'insere'
+                           WHEN UPPER(TRIM(c.status)) = 'CA' THEN 'candidat'
+                           WHEN UPPER(TRIM(c.status)) = 'DEP' THEN 'deprecie'
+                           ELSE 'valide'
+                       END
+                  ) IN (:statuses)
                 ORDER BY label
                 LIMIT 2000
                 """)
-                .setParameter("thesaurusId", thesaurusId)
+                .setParameter(NativeQueryParams.THESAURUS_ID, thesaurusId)
                 .setParameter("lang", lang)
                 .setParameter("statuses", statuses)
+                .setParameter(NativeQueryParams.REJECTED, CandidatStatusCode.REJECTED)
+                .setParameter(NativeQueryParams.ACCEPTED, CandidatStatusCode.ACCEPTED)
                 .getResultList();
     }
 
@@ -1333,7 +1437,6 @@ public class ConceptQueryRepository {
         if (StringUtils.isBlank(thesaurusId) || conceptIds == null || conceptIds.isEmpty()) {
             return List.of();
         }
-        String parentStatus = uiStatusCaseSql("c", "cs");
         return em.createNativeQuery("""
                 WITH RECURSIVE walk AS (
                     SELECT hr.id_concept1 AS child_id,
@@ -1356,8 +1459,14 @@ public class ConceptQueryRepository {
                 SELECT DISTINCT w.child_id,
                        w.parent_id,
                        COALESCE(t.lexical_value, w.parent_id) AS parent_label,
-                       """ + parentStatus + """
-                       AS parent_ui_status
+                       CASE
+                           WHEN cs.id_status = :rejected THEN 'rejete'
+                           WHEN cs.id_status = :accepted AND UPPER(TRIM(c.status)) = 'DEP' THEN 'deprecie'
+                           WHEN cs.id_status = :accepted THEN 'insere'
+                           WHEN UPPER(TRIM(c.status)) = 'CA' THEN 'candidat'
+                           WHEN UPPER(TRIM(c.status)) = 'DEP' THEN 'deprecie'
+                           ELSE 'valide'
+                       END AS parent_ui_status
                 FROM walk w
                 JOIN concept c
                     ON c.id_concept = w.parent_id
@@ -1379,90 +1488,16 @@ public class ConceptQueryRepository {
                     ON cs.id_concept = c.id_concept
                     AND cs.id_thesaurus = c.id_thesaurus
                 """)
-                .setParameter("thesaurusId", thesaurusId)
+                .setParameter(NativeQueryParams.THESAURUS_ID, thesaurusId)
                 .setParameter("lang", lang)
-                .setParameter("conceptIds", conceptIds)
+                .setParameter(NativeQueryParams.CONCEPT_IDS, conceptIds)
+                .setParameter(NativeQueryParams.REJECTED, CandidatStatusCode.REJECTED)
+                .setParameter(NativeQueryParams.ACCEPTED, CandidatStatusCode.ACCEPTED)
                 .getResultList();
-    }
-
-    private static String uiStatusCaseSql(String conceptAlias, String csAlias) {
-        return """
-                CASE
-                    WHEN %2$s.id_status = %3$d THEN 'rejete'
-                    WHEN %2$s.id_status = %4$d AND UPPER(TRIM(%1$s.status)) = 'DEP' THEN 'deprecie'
-                    WHEN %2$s.id_status = %4$d THEN 'insere'
-                    WHEN UPPER(TRIM(%1$s.status)) = 'CA' THEN 'candidat'
-                    WHEN UPPER(TRIM(%1$s.status)) = 'DEP' THEN 'deprecie'
-                    ELSE 'valide'
-                END
-                """.formatted(
-                conceptAlias,
-                csAlias,
-                CandidatStatusCode.REJECTED,
-                CandidatStatusCode.ACCEPTED
-        );
     }
 
     private static String str(Object o) {
         return o != null ? o.toString() : "";
-    }
-
-    private static String hasChildrenExpression() {
-        return hasChildrenExpression(false);
-    }
-
-    private static String treeUiStatusExpression(String conceptAlias) {
-        return """
-            CASE
-                WHEN cs.id_status = %d THEN 'REJ'
-                WHEN cs.id_status = %d AND UPPER(TRIM(%s.status)) <> 'DEP' THEN 'INS'
-                ELSE %s.status
-            END AS status,
-            """.formatted(
-                CandidatStatusCode.REJECTED,
-                CandidatStatusCode.ACCEPTED,
-                conceptAlias,
-                conceptAlias
-        );
-    }
-
-    private static String excludeRejectedCandidates(String conceptAlias) {
-        return """
-            AND NOT EXISTS (
-                SELECT 1
-                FROM candidat_status cs
-                WHERE cs.id_concept = %1$s.id_concept
-                  AND cs.id_thesaurus = %1$s.id_thesaurus
-                  AND cs.id_status = %2$d
-            )
-            """.formatted(conceptAlias, CandidatStatusCode.REJECTED);
-    }
-
-    private static String hasChildrenExpression(boolean includeAllStatuses) {
-        String statusFilter = includeAllStatuses
-                ? ""
-                : "AND child.status != 'CA'";
-        return """
-            (
-                EXISTS(
-                    SELECT 1
-                    FROM hierarchical_relationship hr
-                    JOIN concept child
-                        ON child.id_concept = hr.id_concept2
-                        AND child.id_thesaurus = hr.id_thesaurus
-                    WHERE hr.id_concept1 = c.id_concept
-                      AND hr.id_thesaurus = :thesaurusId
-                      AND hr.role LIKE 'NT%'
-                      """ + statusFilter + """
-                )
-                OR EXISTS(
-                    SELECT 1
-                    FROM thesaurus_array ta
-                    WHERE ta.id_concept_parent = c.id_concept
-                      AND ta.id_thesaurus = :thesaurusId
-                )
-            ) AS has_children
-            """;
     }
 }
 

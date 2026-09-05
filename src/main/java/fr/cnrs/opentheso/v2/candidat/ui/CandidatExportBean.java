@@ -18,8 +18,8 @@ import java.io.Serializable;
 @RequiredArgsConstructor
 public class CandidatExportBean implements Serializable {
 
-    private final CandidatExportService candidatExportService;
-    private final CandidatBean candidatBean;
+    private final transient CandidatExportService candidatExportService;
+    private final transient CandidatBean candidatBean;
 
     public StreamedContent exportPendingCandidates() {
         try {

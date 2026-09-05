@@ -16,7 +16,17 @@ import java.util.Map;
 @Service
 public class ReconciliationPublicService {
 
-    private static final List<String> CANONICAL_PROPERTIES = List.of("prefLabel", "description", "aliases", "ark", "uri");
+    private static final String PROP_PREF_LABEL = "prefLabel";
+    private static final String PROP_DESCRIPTION = "description";
+    private static final String PROP_ALIASES = "aliases";
+    private static final String KEY_SERVICE_URL = "service_url";
+    private static final String KEY_SERVICE_PATH = "service_path";
+    private static final String KEY_PROPERTIES = "properties";
+    private static final String KEY_SCORE = "score";
+    private static final String KEY_RESULT = "result";
+    private static final String TYPE_CONCEPT = "concept";
+    private static final String TYPE_CONCEPT_NAME = "Concept";
+    private static final List<String> CANONICAL_PROPERTIES = List.of(PROP_PREF_LABEL, PROP_DESCRIPTION, PROP_ALIASES, "ark", "uri");
     private static final int DEFAULT_LIMIT = 15;
 
     private final ConceptReadService conceptReadService;
@@ -37,18 +47,18 @@ public class ReconciliationPublicService {
                 "view", Map.of("url", baseUrl + "/?idc={{id}}&idt=" + thesaurusId),
                 "suggest", Map.of(
                         "entity", Map.of(
-                                "service_url", servicePrefix + "/" + thesaurusId + "/" + lang,
-                                "service_path", "/suggest/entity"
+                                KEY_SERVICE_URL, servicePrefix + "/" + thesaurusId + "/" + lang,
+                                KEY_SERVICE_PATH, "/suggest/entity"
                         ),
                         "property", Map.of(
-                                "service_url", servicePrefix,
-                                "service_path", "/suggest/properties"
+                                KEY_SERVICE_URL, servicePrefix,
+                                KEY_SERVICE_PATH, "/suggest/properties"
                         )
                 ),
                 "extend", Map.of(
                         "propose_properties", Map.of(
-                                "service_url", servicePrefix,
-                                "service_path", "/propose-properties"
+                                KEY_SERVICE_URL, servicePrefix,
+                                KEY_SERVICE_PATH, "/propose-properties"
                         )
                 ),
                 "preview", Map.of(
@@ -56,8 +66,8 @@ public class ReconciliationPublicService {
                         "height", 120,
                         "width", 400
                 ),
-                "defaultTypes", List.of(Map.of("id", "concept", "name", "Concept")),
-                "properties", List.of(
+                "defaultTypes", List.of(Map.of("id", TYPE_CONCEPT, "name", TYPE_CONCEPT_NAME)),
+                KEY_PROPERTIES, List.of(
                         Map.of("id", "thesaurus", "name", "Thesaurus"),
                         Map.of("id", "lang", "name", "Language")
                 )
@@ -89,7 +99,7 @@ public class ReconciliationPublicService {
         }
 
         List<String> requestedProps = new ArrayList<>();
-        JsonNode propsNode = json.get("properties");
+        JsonNode propsNode = json.get(KEY_PROPERTIES);
         if (propsNode != null && propsNode.isArray()) {
             propsNode.forEach(p -> {
                 JsonNode idNode = p.get("id");
@@ -114,9 +124,9 @@ public class ReconciliationPublicService {
         }
 
         List<Map<String, Object>> meta = List.of(
-                Map.of("id", "prefLabel", "name", "Preferred label"),
-                Map.of("id", "description", "name", "Definition"),
-                Map.of("id", "aliases", "name", "Alternative labels"),
+                Map.of("id", PROP_PREF_LABEL, "name", "Preferred label"),
+                Map.of("id", PROP_DESCRIPTION, "name", "Definition"),
+                Map.of("id", PROP_ALIASES, "name", "Alternative labels"),
                 Map.of("id", "ark", "name", "ARK Identifier"),
                 Map.of("id", "uri", "name", "URI")
         );
@@ -127,19 +137,19 @@ public class ReconciliationPublicService {
         var candidates = search(thesaurusId, lang, prefix, DEFAULT_LIMIT);
         List<Map<String, Object>> result = candidates.stream()
                 .map(candidate -> buildConcept(candidate, prefix, baseUrl, thesaurusId, true))
-                .sorted((a, b) -> Integer.compare((int) b.get("score"), (int) a.get("score")))
+                .sorted((a, b) -> Integer.compare((int) b.get(KEY_SCORE), (int) a.get(KEY_SCORE)))
                 .toList();
-        return Map.of("result", result);
+        return Map.of(KEY_RESULT, result);
     }
 
     public Map<String, Object> suggestProperties() {
-        return Map.of("result", propertyDescriptors());
+        return Map.of(KEY_RESULT, propertyDescriptors());
     }
 
     public Map<String, Object> proposeProperties() {
         return Map.of(
-                "type", Map.of("id", "concept", "name", "Concept"),
-                "properties", propertyDescriptors()
+                "type", Map.of("id", TYPE_CONCEPT, "name", TYPE_CONCEPT_NAME),
+                KEY_PROPERTIES, propertyDescriptors()
         );
     }
 
@@ -190,9 +200,9 @@ public class ReconciliationPublicService {
     private List<Object> buildExtendValues(String prop, String conceptId, String thesaurusId, ConceptDetail detail) {
         List<Object> values = new ArrayList<>();
         switch (prop) {
-            case "prefLabel" -> values.add(Map.of("str", detail != null ? StringUtils.defaultString(detail.summary().preferredLabel()) : ""));
-            case "description" -> values.add(Map.of("str", detail != null ? firstDefinition(detail) : ""));
-            case "aliases" -> {
+            case PROP_PREF_LABEL -> values.add(Map.of("str", detail != null ? StringUtils.defaultString(detail.summary().preferredLabel()) : ""));
+            case PROP_DESCRIPTION -> values.add(Map.of("str", detail != null ? firstDefinition(detail) : ""));
+            case PROP_ALIASES -> {
                 if (detail != null) {
                     detail.synonyms().stream().filter(StringUtils::isNotBlank).forEach(alias -> values.add(Map.of("str", alias)));
                 }
@@ -211,7 +221,7 @@ public class ReconciliationPublicService {
         List<Map<String, Object>> results = candidates.stream()
                 .map(candidate -> buildConcept(candidate, query, baseUrl, thesaurusId, suggestMode))
                 .toList();
-        return Map.of("result", results);
+        return Map.of(KEY_RESULT, results);
     }
 
     private Map<String, Object> buildConcept(Candidate candidate, String query, String baseUrl, String thesaurusId, boolean suggestMode) {
@@ -219,18 +229,18 @@ public class ReconciliationPublicService {
         Map<String, Object> m = new LinkedHashMap<>();
         m.put("id", candidate.conceptId());
         m.put("name", candidate.label());
-        m.put("score", score);
+        m.put(KEY_SCORE, score);
         m.put("match", score >= 95);
-        m.put("type", List.of(Map.of("id", "concept", "name", "Concept")));
+        m.put("type", List.of(Map.of("id", TYPE_CONCEPT, "name", TYPE_CONCEPT_NAME)));
         m.put("uri", baseUrl + "/openapi/v2/public/thesauri/" + thesaurusId + "/concepts/" + candidate.conceptId());
         if (StringUtils.isNotBlank(candidate.arkId())) {
             m.put("persistentIdentifier", candidate.arkId());
         }
         if (StringUtils.isNotBlank(candidate.description())) {
-            m.put("description", candidate.description());
+            m.put(PROP_DESCRIPTION, candidate.description());
         }
         if (!candidate.aliases().isEmpty()) {
-            m.put("aliases", candidate.aliases());
+            m.put(PROP_ALIASES, candidate.aliases());
         }
         m.put("preview", Map.of(
                 "url", baseUrl + "/openapi/v2/public/reconciliation/preview/" + thesaurusId + "/" + candidate.conceptId(),
@@ -242,9 +252,9 @@ public class ReconciliationPublicService {
 
     private List<Map<String, Object>> propertyDescriptors() {
         return List.of(
-                Map.of("id", "prefLabel", "name", "Preferred label"),
-                Map.of("id", "description", "name", "Description"),
-                Map.of("id", "aliases", "name", "Alternative labels"),
+                Map.of("id", PROP_PREF_LABEL, "name", "Preferred label"),
+                Map.of("id", PROP_DESCRIPTION, "name", "Description"),
+                Map.of("id", PROP_ALIASES, "name", "Alternative labels"),
                 Map.of("id", "ark", "name", "ARK Identifier"),
                 Map.of("id", "uri", "name", "URI")
         );

@@ -1,6 +1,7 @@
 package fr.cnrs.opentheso.v2.concept.model;
 
 import java.util.List;
+import java.io.Serializable;
 
 public record GroupDetailOverview(
         String groupId,
@@ -16,7 +17,7 @@ public record GroupDetailOverview(
         List<GroupTranslationItem> translations,
         List<ConceptNote> notes,
         List<FacetMemberItem> members
-) {
+) implements Serializable {
 
     public String getGroupId() {
         return groupId;

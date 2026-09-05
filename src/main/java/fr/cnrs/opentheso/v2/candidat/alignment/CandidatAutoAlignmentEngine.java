@@ -43,11 +43,13 @@ import java.util.Map;
 @RequiredArgsConstructor
 public class CandidatAutoAlignmentEngine implements Serializable {
 
+    private static final String KEY_VALUE = "value";
+
     private static final String WIKIDATA_API = "https://www.wikidata.org/w/api.php";
     private static final String NO_RESULT = "Aucun résultat";
 
-    private final CandidatAutoAlignmentPersistence persistence;
-    private final AlignmentAutoExternalSearch externalSearch;
+    private final transient CandidatAutoAlignmentPersistence persistence;
+    private final transient AlignmentAutoExternalSearch externalSearch;
 
     private boolean isViewResult = true;
     private boolean isSelectedAllLang = true;
@@ -105,12 +107,11 @@ public class CandidatAutoAlignmentEngine implements Serializable {
 
     public void searchAlignments() {
         reset();
-        for (AlignementSource alignementSource : alignementSources) {
-            if (alignementSource.getSource().equalsIgnoreCase(selectedAlignement)) {
-                selectedAlignementSource = new AlignementSource(alignementSource);
-                break;
-            }
-        }
+        selectedAlignementSource = CollectionUtils.emptyIfNull(alignementSources).stream()
+                .filter(source -> StringUtils.equalsIgnoreCase(source.getSource(), selectedAlignement))
+                .findFirst()
+                .map(AlignementSource::new)
+                .orElse(null);
 
         if (ObjectUtils.isEmpty(selectedAlignementSource)) {
             return;
@@ -354,7 +355,7 @@ public class CandidatAutoAlignmentEngine implements Serializable {
 
         entity.path("labels").fieldNames().forEachRemaining(lang -> {
             if (thesaurusUsedLanguage.contains(lang.toLowerCase())) {
-                String val = entity.path("labels").path(lang).path("value").asText(null);
+                String val = entity.path("labels").path(lang).path(KEY_VALUE).asText(null);
                 if (val != null) {
                     SelectedResource selectedResource = new SelectedResource();
                     boolean added = false;
@@ -378,7 +379,7 @@ public class CandidatAutoAlignmentEngine implements Serializable {
 
         entity.path("descriptions").fieldNames().forEachRemaining(lang -> {
             if (thesaurusUsedLanguage.contains(lang.toLowerCase())) {
-                String val = entity.path("descriptions").path(lang).path("value").asText(null);
+                String val = entity.path("descriptions").path(lang).path(KEY_VALUE).asText(null);
                 if (val != null) {
                     SelectedResource selectedResource = new SelectedResource();
                     boolean added = false;
@@ -403,7 +404,7 @@ public class CandidatAutoAlignmentEngine implements Serializable {
 
         JsonNode claims = entity.path("claims");
         for (JsonNode claim : claims.path("P18")) {
-            JsonNode valNode = claim.path("mainsnak").path("datavalue").path("value");
+            JsonNode valNode = claim.path("mainsnak").path("datavalue").path(KEY_VALUE);
             if (valNode.isTextual()) {
                 boolean added = false;
                 String filename = valNode.asText();
@@ -480,16 +481,13 @@ public class CandidatAutoAlignmentEngine implements Serializable {
             return;
         }
         for (SelectedResource selectedResource : imagesTemp) {
-            boolean added = false;
-            for (NodeImage nodeImage : nodeImages) {
-                if (!selectedResource.getGettedValue().trim().equalsIgnoreCase(nodeImage.getUri().trim())) {
-                    selectedResource.setLocalValue(nodeImage.getUri());
-                    imagesOfAlignment.add(selectedResource);
-                }
-                added = true;
-                break;
+            if (nodeImages.isEmpty()) {
+                imagesOfAlignment.add(selectedResource);
+                continue;
             }
-            if (!added) {
+            NodeImage firstImage = nodeImages.get(0);
+            if (!selectedResource.getGettedValue().trim().equalsIgnoreCase(firstImage.getUri().trim())) {
+                selectedResource.setLocalValue(firstImage.getUri());
                 imagesOfAlignment.add(selectedResource);
             }
         }

@@ -1,5 +1,6 @@
 package fr.cnrs.opentheso.v2.setting.ui;
 
+import fr.cnrs.opentheso.v2.concept.write.ui.WriteUiMessages;
 import fr.cnrs.opentheso.v2.concept.alignment.model.AlignmentSourceItem;
 import fr.cnrs.opentheso.v2.concept.alignment.service.ConceptAlignmentAdminService;
 import fr.cnrs.opentheso.v2.setting.service.AlignmentPersistDraft;
@@ -24,8 +25,10 @@ import java.util.Set;
 @RequiredArgsConstructor
 public class ThesaurusAlignmentBean implements Serializable {
 
-    private final SettingsAccess settingsAccess;
-    private final ConceptAlignmentAdminService conceptAlignmentAdminService;
+    private static final String MODE_CREATE = "create";
+
+    private final transient SettingsAccess settingsAccess;
+    private final transient ConceptAlignmentAdminService conceptAlignmentAdminService;
 
     private List<AlignmentSourceItem> alignmentSources = new ArrayList<>();
     private List<AlignmentSourceItem> alignmentBaseline = new ArrayList<>();
@@ -158,11 +161,11 @@ public class ThesaurusAlignmentBean implements Serializable {
     }
 
     public boolean isAlignmentFormDialog() {
-        return alignmentDialogOpen && ("create".equals(alignmentDialogMode) || "edit".equals(alignmentDialogMode));
+        return alignmentDialogOpen && (MODE_CREATE.equals(alignmentDialogMode) || "edit".equals(alignmentDialogMode));
     }
 
     public boolean isAlignmentCreateDialog() {
-        return alignmentDialogOpen && "create".equals(alignmentDialogMode);
+        return alignmentDialogOpen && MODE_CREATE.equals(alignmentDialogMode);
     }
 
     public boolean isAlignmentEditDialog() {
@@ -195,13 +198,13 @@ public class ThesaurusAlignmentBean implements Serializable {
     public void prepareCreateAlignmentSource() {
         if (!settingsAccess.isCanEdit()) {
             alignmentError = true;
-            alignmentMessage = "Action non autorisée";
+            alignmentMessage = WriteUiMessages.UNAUTHORIZED_FALLBACK;
             return;
         }
         resetAlignmentSourceEditor();
         newAlignmentSourceType = "Opentheso";
         newAlignmentSourceSelected = true;
-        alignmentDialogMode = "create";
+        alignmentDialogMode = MODE_CREATE;
         editingAlignmentSourceId = 0;
         alignmentDialogOpen = true;
         alignmentMessage = null;
@@ -310,7 +313,7 @@ public class ThesaurusAlignmentBean implements Serializable {
             return;
         }
         AlignmentSourceItem item = findAlignmentSource(editingAlignmentSourceId);
-        if (!canManageAlignmentSource(item)) {
+        if (item == null || !canManageAlignmentSource(item)) {
             return;
         }
         if (StringUtils.isBlank(newAlignmentSourceName) || StringUtils.isBlank(newAlignmentSourceUri)) {
@@ -336,7 +339,7 @@ public class ThesaurusAlignmentBean implements Serializable {
             return;
         }
         AlignmentSourceItem item = findAlignmentSource(editingAlignmentSourceId);
-        if (!canManageAlignmentSource(item)) {
+        if (item == null || !canManageAlignmentSource(item)) {
             return;
         }
         alignmentSources.remove(item);
@@ -462,6 +465,6 @@ public class ThesaurusAlignmentBean implements Serializable {
 
     private void denyAlignmentSourceAction() {
         alignmentError = true;
-        alignmentMessage = "Action non autorisée";
+        alignmentMessage = WriteUiMessages.UNAUTHORIZED_FALLBACK;
     }
 }

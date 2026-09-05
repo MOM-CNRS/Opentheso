@@ -7,12 +7,12 @@ import fr.cnrs.opentheso.models.thesaurus.NodeLangTheso;
 import fr.cnrs.opentheso.repositories.ThesaurusLabelRepository;
 import fr.cnrs.opentheso.repositories.ThesaurusRepository;
 import fr.cnrs.opentheso.repositories.UserGroupThesaurusRepository;
+import fr.cnrs.opentheso.v2.shared.time.V2Dates;
 import lombok.RequiredArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
 import org.apache.commons.collections4.CollectionUtils;
 import org.springframework.stereotype.Component;
 
-import java.time.LocalDateTime;
 import java.util.Date;
 import java.util.List;
 
@@ -68,8 +68,8 @@ public class ToolboxThesaurusPersistence {
                 .source(normalized.getSource())
                 .subject(normalized.getSubject())
                 .type(normalized.getType())
-                .created(LocalDateTime.now())
-                .modified(LocalDateTime.now())
+                .created(V2Dates.nowDateTime())
+                .modified(V2Dates.nowDateTime())
                 .build());
     }
 
@@ -84,7 +84,7 @@ public class ToolboxThesaurusPersistence {
         entity.setContributor(normalized.getContributor());
         entity.setCoverage(normalized.getCoverage());
         entity.setCreator(normalized.getCreator());
-        entity.setModified(LocalDateTime.now());
+        entity.setModified(V2Dates.nowDateTime());
         entity.setDescription(normalized.getDescription());
         entity.setFormat(normalized.getFormat());
         entity.setPublisher(normalized.getPublisher());

@@ -9,6 +9,7 @@ import fr.cnrs.opentheso.v2.sync.model.SyncConceptPayload;
 import fr.cnrs.opentheso.v2.sync.model.SyncConceptResult;
 import fr.cnrs.opentheso.v2.toolbox.exception.InvalidToolboxDataException;
 import fr.cnrs.opentheso.v2.toolbox.persistence.ToolboxPreferencePersistence;
+import fr.cnrs.opentheso.v2.shared.time.V2Dates;
 import lombok.RequiredArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
 import org.apache.commons.lang3.StringUtils;
@@ -36,6 +37,15 @@ public class ThesaurusSyncSendService {
 
     @Transactional(readOnly = true)
     public SyncPreparation prepare(String slaveThesaurusId, boolean syncAll) {
+        return doPrepare(slaveThesaurusId, syncAll);
+    }
+
+    @Transactional(readOnly = true)
+    public SyncPreparation prepare(String slaveThesaurusId) {
+        return doPrepare(slaveThesaurusId, false);
+    }
+
+    private SyncPreparation doPrepare(String slaveThesaurusId, boolean syncAll) {
         Preferences prefs = requireSlavePreferences(slaveThesaurusId);
         validateMasterLink(prefs);
 
@@ -52,11 +62,6 @@ public class ThesaurusSyncSendService {
                 workLang,
                 prefs.getLastSyncAt()
         );
-    }
-
-    @Transactional(readOnly = true)
-    public SyncPreparation prepare(String slaveThesaurusId) {
-        return prepare(slaveThesaurusId, false);
     }
 
     /**
@@ -188,7 +193,7 @@ public class ThesaurusSyncSendService {
             ));
         }
 
-        toolboxPreferencePersistence.updateLastSyncAt(slaveThesaurusId, LocalDateTime.now());
+        toolboxPreferencePersistence.updateLastSyncAt(slaveThesaurusId, V2Dates.nowDateTime());
         SyncBatchResponse response = SyncBatchResponse.from(allResults);
         report(progressConsumer, new SyncProgress(
                 conceptIds.size(),

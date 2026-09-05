@@ -27,13 +27,13 @@ import java.io.Serializable;
 @Named("v2PreferenceSettingsBean")
 public class PreferenceSettingsBean implements Serializable {
 
-    private final UserSession userSession;
-    private final RightsService rightsService;
-    private final ThesaurusContext thesaurusContext;
-    private final V2LocaleBean localeBean;
-    private final ThesaurusPreferenceService thesaurusPreferenceService;
-    private final ConsultationShellBean consultationShellBean;
-    private final ThesaurusSearchLanguageSync thesaurusSearchLanguageSync;
+    private final transient UserSession userSession;
+    private final transient RightsService rightsService;
+    private final transient ThesaurusContext thesaurusContext;
+    private final transient V2LocaleBean localeBean;
+    private final transient ThesaurusPreferenceService thesaurusPreferenceService;
+    private final transient ConsultationShellBean consultationShellBean;
+    private final transient ThesaurusSearchLanguageSync thesaurusSearchLanguageSync;
 
     private PreferenceEditor editor;
 

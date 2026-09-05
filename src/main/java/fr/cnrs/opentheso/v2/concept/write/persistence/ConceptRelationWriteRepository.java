@@ -1,5 +1,6 @@
 package fr.cnrs.opentheso.v2.concept.write.persistence;
 
+import fr.cnrs.opentheso.v2.shared.repository.NativeQueryParams;
 import jakarta.persistence.EntityManager;
 import jakarta.persistence.PersistenceContext;
 import org.springframework.stereotype.Repository;
@@ -28,8 +29,8 @@ public class ConceptRelationWriteRepository {
                           AND id_concept1 = :conceptId
                           AND role LIKE 'BT%'
                         """)
-                .setParameter("thesaurusId", thesaurusId)
-                .setParameter("conceptId", conceptId)
+                .setParameter(NativeQueryParams.THESAURUS_ID, thesaurusId)
+                .setParameter(NativeQueryParams.CONCEPT_ID, conceptId)
                 .getSingleResult();
         return count.intValue();
     }
@@ -98,9 +99,9 @@ public class ConceptRelationWriteRepository {
                           AND id_thesaurus = :thesaurusId
                         """)
                 .setParameter("role", directRole)
-                .setParameter("conceptId1", conceptId1)
-                .setParameter("conceptId2", conceptId2)
-                .setParameter("thesaurusId", thesaurusId)
+                .setParameter(NativeQueryParams.CONCEPT_ID1, conceptId1)
+                .setParameter(NativeQueryParams.CONCEPT_ID2, conceptId2)
+                .setParameter(NativeQueryParams.THESAURUS_ID, thesaurusId)
                 .executeUpdate();
         entityManager.createNativeQuery("""
                         UPDATE hierarchical_relationship
@@ -110,9 +111,9 @@ public class ConceptRelationWriteRepository {
                           AND id_thesaurus = :thesaurusId
                         """)
                 .setParameter("role", inverseRole)
-                .setParameter("conceptId1", conceptId1)
-                .setParameter("conceptId2", conceptId2)
-                .setParameter("thesaurusId", thesaurusId)
+                .setParameter(NativeQueryParams.CONCEPT_ID1, conceptId1)
+                .setParameter(NativeQueryParams.CONCEPT_ID2, conceptId2)
+                .setParameter(NativeQueryParams.THESAURUS_ID, thesaurusId)
                 .executeUpdate();
         insertRelationHistory(conceptId1, conceptId2, thesaurusId, directRole, userId, "UPDATE");
     }
@@ -127,8 +128,8 @@ public class ConceptRelationWriteRepository {
                               AND role LIKE 'BT%'
                         )
                         """)
-                .setParameter("thesaurusId", thesaurusId)
-                .setParameter("conceptId", conceptId)
+                .setParameter(NativeQueryParams.THESAURUS_ID, thesaurusId)
+                .setParameter(NativeQueryParams.CONCEPT_ID, conceptId)
                 .getSingleResult());
     }
 
@@ -143,9 +144,9 @@ public class ConceptRelationWriteRepository {
                               AND (role LIKE 'NT%' OR role LIKE 'BT%')
                         )
                         """)
-                .setParameter("thesaurusId", thesaurusId)
-                .setParameter("conceptId1", conceptId1)
-                .setParameter("conceptId2", conceptId2)
+                .setParameter(NativeQueryParams.THESAURUS_ID, thesaurusId)
+                .setParameter(NativeQueryParams.CONCEPT_ID1, conceptId1)
+                .setParameter(NativeQueryParams.CONCEPT_ID2, conceptId2)
                 .getSingleResult());
     }
 
@@ -160,9 +161,9 @@ public class ConceptRelationWriteRepository {
                               AND role LIKE 'RT%'
                         )
                         """)
-                .setParameter("thesaurusId", thesaurusId)
-                .setParameter("conceptId1", conceptId1)
-                .setParameter("conceptId2", conceptId2)
+                .setParameter(NativeQueryParams.THESAURUS_ID, thesaurusId)
+                .setParameter(NativeQueryParams.CONCEPT_ID1, conceptId1)
+                .setParameter(NativeQueryParams.CONCEPT_ID2, conceptId2)
                 .getSingleResult());
     }
 
@@ -175,7 +176,7 @@ public class ConceptRelationWriteRepository {
                           AND id_concept1 = :parentConceptId
                           AND role LIKE 'NT%'
                         """)
-                .setParameter("thesaurusId", thesaurusId)
+                .setParameter(NativeQueryParams.THESAURUS_ID, thesaurusId)
                 .setParameter("parentConceptId", parentConceptId)
                 .getResultList();
     }
@@ -189,7 +190,7 @@ public class ConceptRelationWriteRepository {
                           AND id_concept1 = :narrowerConceptId
                           AND role LIKE 'BT%'
                         """)
-                .setParameter("thesaurusId", thesaurusId)
+                .setParameter(NativeQueryParams.THESAURUS_ID, thesaurusId)
                 .setParameter("narrowerConceptId", narrowerConceptId)
                 .getResultList();
     }
@@ -233,9 +234,9 @@ public class ConceptRelationWriteRepository {
                         )
                         VALUES (:conceptId1, :conceptId2, :thesaurusId, :role)
                         """)
-                .setParameter("conceptId1", conceptId1)
-                .setParameter("conceptId2", conceptId2)
-                .setParameter("thesaurusId", thesaurusId)
+                .setParameter(NativeQueryParams.CONCEPT_ID1, conceptId1)
+                .setParameter(NativeQueryParams.CONCEPT_ID2, conceptId2)
+                .setParameter(NativeQueryParams.THESAURUS_ID, thesaurusId)
                 .setParameter("role", role)
                 .executeUpdate();
     }
@@ -248,9 +249,9 @@ public class ConceptRelationWriteRepository {
                           AND id_concept2 = :conceptId2
                           AND role = :role
                         """)
-                .setParameter("thesaurusId", thesaurusId)
-                .setParameter("conceptId1", conceptId1)
-                .setParameter("conceptId2", conceptId2)
+                .setParameter(NativeQueryParams.THESAURUS_ID, thesaurusId)
+                .setParameter(NativeQueryParams.CONCEPT_ID1, conceptId1)
+                .setParameter(NativeQueryParams.CONCEPT_ID2, conceptId2)
                 .setParameter("role", role)
                 .executeUpdate();
     }
@@ -273,12 +274,12 @@ public class ConceptRelationWriteRepository {
                             :modified, :userId, :action
                         )
                         """)
-                .setParameter("conceptId1", conceptId1)
-                .setParameter("conceptId2", conceptId2)
-                .setParameter("thesaurusId", thesaurusId)
+                .setParameter(NativeQueryParams.CONCEPT_ID1, conceptId1)
+                .setParameter(NativeQueryParams.CONCEPT_ID2, conceptId2)
+                .setParameter(NativeQueryParams.THESAURUS_ID, thesaurusId)
                 .setParameter("role", role)
-                .setParameter("modified", new Date())
-                .setParameter("userId", userId)
+                .setParameter(NativeQueryParams.MODIFIED, new Date())
+                .setParameter(NativeQueryParams.USER_ID, userId)
                 .setParameter("action", action)
                 .executeUpdate();
     }

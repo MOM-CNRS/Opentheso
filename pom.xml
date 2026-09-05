@@ -4,11 +4,6 @@
          xsi:schemaLocation="http://maven.apache.org/POM/4.0.0 http://maven.apache.org/xsd/maven-4.0.0.xsd">
 
     <modelVersion>4.0.0</modelVersion>
-    <groupId>cnrs.opentheso</groupId>
-    <artifactId>opentheso</artifactId>
-    <version>26.07.02</version>
-    <packaging>jar</packaging>
-    <name>opentheso</name>
 
     <parent>
         <groupId>org.springframework.boot</groupId>
@@ -16,6 +11,66 @@
         <version>4.1.0</version>
         <relativePath/>
     </parent>
+
+    <groupId>cnrs.opentheso</groupId>
+    <artifactId>opentheso</artifactId>
+    <version>26.07.02</version>
+    <packaging>jar</packaging>
+    <name>opentheso</name>
+
+    <properties>
+        <java.version>17</java.version>
+        <project.build.sourceEncoding>UTF-8</project.build.sourceEncoding>
+        <project.reporting.outputEncoding>UTF-8</project.reporting.outputEncoding>
+
+        <joinfaces.version>6.1.0</joinfaces.version>
+        <primefaces.version>15.0.16</primefaces.version>
+        <primefaces-extensions.version>15.0.16</primefaces-extensions.version>
+        <lombok.version>1.18.36</lombok.version>
+        <postgresql.version>42.7.11</postgresql.version>
+        <liquibase.version>4.29.0</liquibase.version>
+        <springdoc.version>3.1.0</springdoc.version>
+
+        <poi.version>4.1.1</poi.version>
+        <commons-compress.version>1.27.1</commons-compress.version>
+        <commons-csv.version>1.11.0</commons-csv.version>
+        <commons-io.version>2.16.1</commons-io.version>
+        <commons-validator.version>1.9.0</commons-validator.version>
+        <deepl.version>1.5.0</deepl.version>
+        <gson.version>2.11.0</gson.version>
+        <handle-client.version>9.3.1</handle-client.version>
+        <httpclient.version>4.5.14</httpclient.version>
+        <itextpdf.version>5.5.13.4</itextpdf.version>
+        <jakarta.json.version>2.1.3</jakarta.json.version>
+        <jakarta.ws.rs.version>4.0.0</jakarta.ws.rs.version>
+        <jena-arq.version>5.1.0</jena-arq.version>
+        <jsoup.version>1.21.2</jsoup.version>
+        <leaflet.version>1.8.0</leaflet.version>
+        <neo4j.version>5.22.0</neo4j.version>
+        <protobuf.version>4.29.0-RC1</protobuf.version>
+        <qrcodegen.version>1.8.0</qrcodegen.version>
+        <rdf4j.version>5.0.1</rdf4j.version>
+        <treelayout.version>1.0.3</treelayout.version>
+        <xmlunit-core.version>2.10.0</xmlunit-core.version>
+
+        <jacoco.version>0.8.12</jacoco.version>
+        <sonar.maven.plugin.version>4.0.0.4121</sonar.maven.plugin.version>
+
+        <!-- Analyse SonarQube limitée à fr.cnrs.opentheso.v2 (pas le legacy). -->
+        <sonar.projectKey>opentheso</sonar.projectKey>
+        <sonar.projectName>OpenTheso (v2)</sonar.projectName>
+        <sonar.host.url>http://localhost:9000</sonar.host.url>
+        <sonar.java.source>${java.version}</sonar.java.source>
+        <sonar.inclusions>src/main/java/fr/cnrs/opentheso/v2/**</sonar.inclusions>
+        <sonar.test.inclusions>src/test/java/fr/cnrs/opentheso/v2/**</sonar.test.inclusions>
+        <sonar.exclusions>**/target/**,**/*.xhtml,**/*.xml,**/*.sql,**/*.properties,**/*.yaml,**/*.yml</sonar.exclusions>
+        <sonar.coverage.jacoco.xmlReportPaths>target/site/jacoco/jacoco.xml</sonar.coverage.jacoco.xmlReportPaths>
+        <!-- Couverture Sonar : couche métier V2 (service/policy/mapper/repository).
+             sonar.coverage.inclusions n'est pas appliqué par le scanner ; on exclut UI/moteurs/IO. -->
+        <sonar.coverage.exclusions>**/AlignmentPropositionEnricher.java,**/ConceptCorpusSearchService.java,**/ui/**,**/*Bean.java,**/*Engine.java,**/persistence/**,**/model/**,**/workshop/**,**/config/**,**/*Controller.java,**/edition/io/**,**/candidat/alignment/**</sonar.coverage.exclusions>
+        <!-- Évite le hang du scanner Maven sur la détection Git (macOS). -->
+        <sonar.scm.disabled>true</sonar.scm.disabled>
+    </properties>
 
     <dependencyManagement>
         <dependencies>
@@ -30,164 +85,118 @@
     </dependencyManagement>
 
     <dependencies>
-
-        <!-- Ajout de la connexion Keycloak -->
-        <dependency>
-            <groupId>org.springframework.boot</groupId>
-            <artifactId>spring-boot-starter-oauth2-client</artifactId>
-        </dependency>
-
-        <dependency>
-            <groupId>org.springframework.boot</groupId>
-            <artifactId>spring-boot-starter-mail</artifactId>
-        </dependency>
-
-        <dependency>
-            <groupId>org.joinfaces</groupId>
-            <artifactId>primefaces-spring-boot-starter</artifactId>
-        </dependency>
-
-        <dependency>
-            <groupId>org.primefaces</groupId>
-            <artifactId>primefaces</artifactId>
-            <version>${primefaces.version}</version>
-            <classifier>jakarta</classifier>
-        </dependency>
-
-        <dependency>
-            <groupId>org.primefaces</groupId>
-            <artifactId>primefaces-themes</artifactId>
-            <version>${primefaces.version}</version>
-        </dependency>
-
+        <!-- Spring Boot -->
         <dependency>
             <groupId>org.springframework.boot</groupId>
             <artifactId>spring-boot-starter-web</artifactId>
         </dependency>
-
+        <dependency>
+            <groupId>org.springframework.boot</groupId>
+            <artifactId>spring-boot-starter-data-jpa</artifactId>
+        </dependency>
+        <dependency>
+            <groupId>org.springframework.boot</groupId>
+            <artifactId>spring-boot-starter-oauth2-client</artifactId>
+        </dependency>
+        <dependency>
+            <groupId>org.springframework.boot</groupId>
+            <artifactId>spring-boot-starter-mail</artifactId>
+        </dependency>
+        <dependency>
+            <groupId>org.springframework.boot</groupId>
+            <artifactId>spring-boot-starter-graphql</artifactId>
+        </dependency>
+        <dependency>
+            <groupId>org.springframework.boot</groupId>
+            <artifactId>spring-boot-starter-liquibase</artifactId>
+        </dependency>
+        <dependency>
+            <groupId>org.springframework.boot</groupId>
+            <artifactId>spring-boot-starter-actuator</artifactId>
+        </dependency>
+        <dependency>
+            <groupId>org.springframework.boot</groupId>
+            <artifactId>spring-boot-starter-thymeleaf</artifactId>
+        </dependency>
+        <dependency>
+            <groupId>org.springframework.boot</groupId>
+            <artifactId>spring-boot-starter-restclient</artifactId>
+        </dependency>
         <!-- Boot 4 = Jackson 3 par défaut ; conserve ObjectMapper Jackson 2 (code existant). -->
         <dependency>
             <groupId>org.springframework.boot</groupId>
             <artifactId>spring-boot-jackson2</artifactId>
         </dependency>
-
         <dependency>
             <groupId>org.springframework.boot</groupId>
-            <artifactId>spring-boot-starter-restclient</artifactId>
+            <artifactId>spring-boot-devtools</artifactId>
+            <optional>true</optional>
         </dependency>
-
         <dependency>
-            <groupId>org.springframework.boot</groupId>
-            <artifactId>spring-boot-starter-data-jpa</artifactId>
+            <groupId>org.projectlombok</groupId>
+            <artifactId>lombok</artifactId>
+            <optional>true</optional>
         </dependency>
-
         <dependency>
-            <groupId>org.springframework.boot</groupId>
-            <artifactId>spring-boot-starter-test</artifactId>
-            <scope>test</scope>
-            <exclusions>
-                <exclusion>
-                    <groupId>org.xmlunit</groupId>
-                    <artifactId>xmlunit-core</artifactId>
-                </exclusion>
-            </exclusions>
+            <groupId>com.github.ben-manes.caffeine</groupId>
+            <artifactId>caffeine</artifactId>
         </dependency>
-
         <dependency>
-            <groupId>org.springframework.boot</groupId>
-            <artifactId>spring-boot-starter-data-jpa-test</artifactId>
-            <scope>test</scope>
+            <groupId>org.apache.tomcat.embed</groupId>
+            <artifactId>tomcat-embed-jasper</artifactId>
         </dependency>
-
-        <dependency>
-            <groupId>org.springframework.boot</groupId>
-            <artifactId>spring-boot-starter-graphql-test</artifactId>
-            <scope>test</scope>
-        </dependency>
-
-        <dependency>
-            <groupId>com.tngtech.archunit</groupId>
-            <artifactId>archunit-junit5</artifactId>
-            <version>1.3.0</version>
-            <scope>test</scope>
-        </dependency>
-
-        <dependency>
-            <groupId>org.springframework.boot</groupId>
-            <artifactId>spring-boot-testcontainers</artifactId>
-            <scope>test</scope>
-        </dependency>
-
-        <dependency>
-            <groupId>org.testcontainers</groupId>
-            <artifactId>testcontainers-postgresql</artifactId>
-            <scope>test</scope>
-        </dependency>
-
-        <dependency>
-            <groupId>org.testcontainers</groupId>
-            <artifactId>testcontainers-junit-jupiter</artifactId>
-            <scope>test</scope>
-        </dependency>
-
-        <dependency>
-            <groupId>org.xmlunit</groupId>
-            <artifactId>xmlunit-core</artifactId>
-            <version>${xmlunit-core.version}</version>
-            <scope>test</scope>
-        </dependency>
-
         <dependency>
             <groupId>org.postgresql</groupId>
             <artifactId>postgresql</artifactId>
             <version>${postgresql.version}</version>
         </dependency>
 
+        <!-- JSF / PrimeFaces -->
         <dependency>
-            <groupId>org.springframework.boot</groupId>
-            <artifactId>spring-boot-starter-actuator</artifactId>
+            <groupId>org.joinfaces</groupId>
+            <artifactId>primefaces-spring-boot-starter</artifactId>
         </dependency>
-
         <dependency>
-            <groupId>com.github.ben-manes.caffeine</groupId>
-            <artifactId>caffeine</artifactId>
+            <groupId>org.primefaces</groupId>
+            <artifactId>primefaces</artifactId>
+            <version>${primefaces.version}</version>
+            <classifier>jakarta</classifier>
         </dependency>
-
         <dependency>
-            <groupId>org.apache.tomcat.embed</groupId>
-            <artifactId>tomcat-embed-jasper</artifactId>
+            <groupId>org.primefaces</groupId>
+            <artifactId>primefaces-themes</artifactId>
+            <version>${primefaces.version}</version>
         </dependency>
-
         <dependency>
             <groupId>org.primefaces.extensions</groupId>
             <artifactId>primefaces-extensions</artifactId>
-            <version>${primefaces-extensions}</version>
+            <version>${primefaces-extensions.version}</version>
             <classifier>jakarta</classifier>
         </dependency>
 
+        <!-- API / documentation -->
         <dependency>
-            <groupId>org.springframework.boot</groupId>
-            <artifactId>spring-boot-devtools</artifactId>
+            <groupId>org.springdoc</groupId>
+            <artifactId>springdoc-openapi-starter-webmvc-ui</artifactId>
+            <version>${springdoc.version}</version>
+        </dependency>
+        <dependency>
+            <groupId>jakarta.ws.rs</groupId>
+            <artifactId>jakarta.ws.rs-api</artifactId>
+            <version>${jakarta.ws.rs.version}</version>
+        </dependency>
+        <dependency>
+            <groupId>jakarta.json</groupId>
+            <artifactId>jakarta.json-api</artifactId>
+            <version>${jakarta.json.version}</version>
         </dependency>
 
-        <dependency>
-            <groupId>org.projectlombok</groupId>
-            <artifactId>lombok</artifactId>
-            <version>${lombok.version}</version>
-        </dependency>
-
-        <dependency>
-            <groupId>com.deepl.api</groupId>
-            <artifactId>deepl-java</artifactId>
-            <version>${deepl.version}</version>
-        </dependency>
-
+        <!-- Import / export / RDF -->
         <dependency>
             <groupId>org.apache.poi</groupId>
             <artifactId>poi</artifactId>
             <version>${poi.version}</version>
         </dependency>
-
         <dependency>
             <groupId>org.apache.poi</groupId>
             <artifactId>poi-ooxml</artifactId>
@@ -199,195 +208,51 @@
                 </exclusion>
             </exclusions>
         </dependency>
-
         <dependency>
             <groupId>org.apache.commons</groupId>
             <artifactId>commons-compress</artifactId>
             <version>${commons-compress.version}</version>
         </dependency>
-
-
-        <dependency>
-            <groupId>org.springframework.boot</groupId>
-            <artifactId>spring-boot-starter-thymeleaf</artifactId>
-        </dependency>
-
-        <dependency>
-            <groupId>javax.inject</groupId>
-            <artifactId>javax.inject</artifactId>
-            <version>${javax.inject.version}</version>
-        </dependency>
-
-        <dependency>
-            <groupId>org.springframework.boot</groupId>
-            <artifactId>spring-boot-starter-tomcat</artifactId>
-           <!-- <scope>provided</scope> -->
-        </dependency>
-
-        <dependency>
-            <groupId>org.springframework.boot</groupId>
-            <artifactId>spring-boot-starter-liquibase</artifactId>
-        </dependency>
-
-        <dependency>
-            <groupId>com.google.code.gson</groupId>
-            <artifactId>gson</artifactId>
-            <version>${gson.version}</version>
-        </dependency>
-
-        <dependency>
-            <groupId>org.neo4j.driver</groupId>
-            <artifactId>neo4j-java-driver</artifactId>
-            <version>${neo4j.version}</version>
-        </dependency>
-
-        <dependency>
-            <groupId>jakarta.ws.rs</groupId>
-            <artifactId>jakarta.ws.rs-api</artifactId>
-            <version>${jakarta.ws.rs.version}</version>
-        </dependency>
-
-        <dependency>
-            <groupId>org.jdom</groupId>
-            <artifactId>jdom2</artifactId>
-            <version>${jdom2.version}</version>
-        </dependency>
-
-        <dependency>
-            <groupId>jakarta.json</groupId>
-            <artifactId>jakarta.json-api</artifactId>
-            <version>${jakarta.json.version}</version>
-        </dependency>
-
         <dependency>
             <groupId>org.apache.commons</groupId>
             <artifactId>commons-csv</artifactId>
             <version>${commons-csv.version}</version>
         </dependency>
-
-<!--        <dependency>
-            <groupId>javax.mail</groupId>
-            <artifactId>mail</artifactId>
-            <version>${mail.version}</version>
-        </dependency>
--->
-        <dependency>
-            <groupId>jakarta.mail</groupId>
-            <artifactId>jakarta.mail-api</artifactId>
-            <version>2.1.3</version>
-            <scope>compile</scope>
-        </dependency>
-
-        <dependency>
-            <groupId>com.itextpdf</groupId>
-            <artifactId>itextpdf</artifactId>
-            <version>${itextpdf.version}</version>
-        </dependency>
-
-        <dependency>
-            <groupId>org.springdoc</groupId>
-            <artifactId>springdoc-openapi-starter-webmvc-ui</artifactId>
-            <version>${springdoc.version}</version>
-        </dependency>
-
-        <dependency>
-            <groupId>org.apache.httpcomponents</groupId>
-            <artifactId>httpclient</artifactId>
-            <version>${httpclient.version}</version>
-        </dependency>
-
-        <dependency>
-            <groupId>org.abego.treelayout</groupId>
-            <artifactId>org.abego.treelayout.core</artifactId>
-            <version>${treelayout.version}</version>
-        </dependency>
-
-        <dependency>
-            <groupId>net.handle</groupId>
-            <artifactId>handle-client</artifactId>
-            <version>${handle-client.version}</version>
-        </dependency>
-
         <dependency>
             <groupId>org.eclipse.rdf4j</groupId>
             <artifactId>rdf4j-model</artifactId>
             <version>${rdf4j.version}</version>
-            <type>jar</type>
         </dependency>
-
         <dependency>
             <groupId>org.eclipse.rdf4j</groupId>
             <artifactId>rdf4j-rio-rdfxml</artifactId>
             <version>${rdf4j.version}</version>
         </dependency>
-
         <dependency>
             <groupId>org.eclipse.rdf4j</groupId>
             <artifactId>rdf4j-rio-jsonld</artifactId>
             <version>${rdf4j.version}</version>
         </dependency>
-
         <dependency>
             <groupId>org.eclipse.rdf4j</groupId>
             <artifactId>rdf4j-rio-turtle</artifactId>
             <version>${rdf4j.version}</version>
         </dependency>
-
         <dependency>
             <groupId>org.eclipse.rdf4j</groupId>
             <artifactId>rdf4j-rio-rdfjson</artifactId>
             <version>${rdf4j.version}</version>
         </dependency>
-
         <dependency>
             <groupId>org.eclipse.rdf4j</groupId>
             <artifactId>rdf4j-queryresultio-sparqljson</artifactId>
             <version>${rdf4j.version}</version>
         </dependency>
-
         <dependency>
             <groupId>org.eclipse.rdf4j</groupId>
             <artifactId>rdf4j-repository-sparql</artifactId>
             <version>${rdf4j.version}</version>
         </dependency>
-
-
-        <!-- Ajout de GraphQL par Miled -->
-        <dependency>
-            <groupId>org.springframework.boot</groupId>
-            <artifactId>spring-boot-starter-graphql</artifactId>
-        </dependency>
-
-        <dependency>
-            <groupId>org.springframework.graphql</groupId>
-            <artifactId>spring-graphql-test</artifactId>
-            <scope>test</scope>
-        </dependency>
-
-
-
-
-
-
-
-        <dependency>
-            <groupId>org.jsoup</groupId>
-            <artifactId>jsoup</artifactId>
-            <version>${jsoup.version}</version>
-        </dependency>
-
-        <dependency>
-            <groupId>io.springfox</groupId>
-            <artifactId>springfox-boot-starter</artifactId>
-            <version>${springfox.version}</version>
-        </dependency>
-
-        <dependency>
-            <groupId>commons-validator</groupId>
-            <artifactId>commons-validator</artifactId>
-            <version>${commons-validator.version}</version>
-        </dependency>
-
         <dependency>
             <groupId>org.apache.jena</groupId>
             <artifactId>jena-arq</artifactId>
@@ -399,97 +264,131 @@
                 </exclusion>
             </exclusions>
         </dependency>
-
-        <dependency>
-            <groupId>javax.annotation</groupId>
-            <artifactId>javax.annotation-api</artifactId>
-            <version>${javax.annotation-api.version}</version>
-        </dependency>
-
         <dependency>
             <groupId>com.google.protobuf</groupId>
             <artifactId>protobuf-java</artifactId>
             <version>${protobuf.version}</version>
         </dependency>
+        <dependency>
+            <groupId>com.itextpdf</groupId>
+            <artifactId>itextpdf</artifactId>
+            <version>${itextpdf.version}</version>
+        </dependency>
 
+        <!-- Clients / utilitaires métier -->
+        <dependency>
+            <groupId>com.deepl.api</groupId>
+            <artifactId>deepl-java</artifactId>
+            <version>${deepl.version}</version>
+        </dependency>
+        <dependency>
+            <groupId>org.neo4j.driver</groupId>
+            <artifactId>neo4j-java-driver</artifactId>
+            <version>${neo4j.version}</version>
+        </dependency>
+        <dependency>
+            <groupId>net.handle</groupId>
+            <artifactId>handle-client</artifactId>
+            <version>${handle-client.version}</version>
+        </dependency>
+        <dependency>
+            <groupId>org.apache.httpcomponents</groupId>
+            <artifactId>httpclient</artifactId>
+            <version>${httpclient.version}</version>
+        </dependency>
+        <dependency>
+            <groupId>com.google.code.gson</groupId>
+            <artifactId>gson</artifactId>
+            <version>${gson.version}</version>
+        </dependency>
+        <dependency>
+            <groupId>org.jsoup</groupId>
+            <artifactId>jsoup</artifactId>
+            <version>${jsoup.version}</version>
+        </dependency>
+        <dependency>
+            <groupId>commons-validator</groupId>
+            <artifactId>commons-validator</artifactId>
+            <version>${commons-validator.version}</version>
+        </dependency>
+        <dependency>
+            <groupId>commons-io</groupId>
+            <artifactId>commons-io</artifactId>
+            <version>${commons-io.version}</version>
+        </dependency>
+        <dependency>
+            <groupId>org.abego.treelayout</groupId>
+            <artifactId>org.abego.treelayout.core</artifactId>
+            <version>${treelayout.version}</version>
+        </dependency>
+        <dependency>
+            <groupId>io.nayuki</groupId>
+            <artifactId>qrcodegen</artifactId>
+            <version>${qrcodegen.version}</version>
+        </dependency>
         <dependency>
             <groupId>org.webjars</groupId>
             <artifactId>leaflet</artifactId>
             <version>${leaflet.version}</version>
         </dependency>
 
+        <!-- Tests -->
         <dependency>
-            <groupId>jakarta.websocket</groupId>
-            <artifactId>jakarta.websocket-api</artifactId>
-            <version>${websocket.version}</version>
+            <groupId>org.springframework.boot</groupId>
+            <artifactId>spring-boot-starter-test</artifactId>
+            <scope>test</scope>
+            <exclusions>
+                <exclusion>
+                    <groupId>org.xmlunit</groupId>
+                    <artifactId>xmlunit-core</artifactId>
+                </exclusion>
+            </exclusions>
         </dependency>
-
         <dependency>
-            <groupId>commons-io</groupId>
-            <artifactId>commons-io</artifactId>
-            <version>${commons-io.version}</version>
+            <groupId>org.springframework.boot</groupId>
+            <artifactId>spring-boot-starter-data-jpa-test</artifactId>
+            <scope>test</scope>
         </dependency>
-
         <dependency>
-            <groupId>io.nayuki</groupId>
-            <artifactId>qrcodegen</artifactId>
-            <version>${qrcodegen.version}</version>
+            <groupId>org.springframework.boot</groupId>
+            <artifactId>spring-boot-starter-graphql-test</artifactId>
+            <scope>test</scope>
+        </dependency>
+        <dependency>
+            <groupId>org.xmlunit</groupId>
+            <artifactId>xmlunit-core</artifactId>
+            <version>${xmlunit-core.version}</version>
+            <scope>test</scope>
+        </dependency>
+        <dependency>
+            <groupId>com.tngtech.archunit</groupId>
+            <artifactId>archunit-junit5</artifactId>
+            <version>1.3.0</version>
+            <scope>test</scope>
+        </dependency>
+        <dependency>
+            <groupId>org.springframework.boot</groupId>
+            <artifactId>spring-boot-testcontainers</artifactId>
+            <scope>test</scope>
+        </dependency>
+        <dependency>
+            <groupId>org.testcontainers</groupId>
+            <artifactId>testcontainers-postgresql</artifactId>
+            <scope>test</scope>
+        </dependency>
+        <dependency>
+            <groupId>org.testcontainers</groupId>
+            <artifactId>testcontainers-junit-jupiter</artifactId>
+            <scope>test</scope>
         </dependency>
     </dependencies>
 
-    <properties>
-        <java.version>17</java.version>
-        <poi.version>4.1.1</poi.version>
-        <virtjdbc4.version>4.0</virtjdbc4.version>
-        <websocket.version>2.2.0</websocket.version>
-        <openapi.version>1.7.0</openapi.version>
-        <lombok.version>1.18.36</lombok.version>
-        <deepl.version>1.5.0</deepl.version>
-        <commons-io.version>2.16.1</commons-io.version>
-        <qrcodegen.version>1.8.0</qrcodegen.version>
-        <joinfaces.version>6.1.0</joinfaces.version>
-        <xmlunit-core.version>2.10.0</xmlunit-core.version>
-        <postgresql.version>42.7.11</postgresql.version>
-
-        <primefaces.version>15.0.16</primefaces.version>
-        <primefaces-extensions>15.0.16</primefaces-extensions>
-        <liquibase.version>4.29.0</liquibase.version>
-        <gson.version>2.11.0</gson.version>
-        <neo4j.version>5.22.0</neo4j.version>
-        <javax.inject.version>1</javax.inject.version>
-        <jakarta.ws.rs.version>4.0.0</jakarta.ws.rs.version>
-        <jakarta.json.version>2.1.3</jakarta.json.version>
-        <commons-csv.version>1.11.0</commons-csv.version>
-  <!--      <mail.version>1.4.7</mail.version> -->
-        <itextpdf.version>5.5.13.4</itextpdf.version>
-        <springdoc.version>3.1.0</springdoc.version>
-        <httpclient.version>4.5.14</httpclient.version>
-        <treelayout.version>1.0.3</treelayout.version>
-        <handle-client.version>9.3.1</handle-client.version>
-        <rdf4j.version>5.0.1</rdf4j.version>
-        <jsoup.version>1.21.2</jsoup.version>
-        <protobuf.version>4.29.0-RC1</protobuf.version>
-        <leaflet.version>1.8.0</leaflet.version>
-        <virt_jena3.version>3.0</virt_jena3.version>
-        <springfox.version>3.0.0</springfox.version>
-        <commons-validator.version>1.9.0</commons-validator.version>
-        <jena-arq.version>5.1.0</jena-arq.version>
-        <commons-compress.version>1.27.1</commons-compress.version>
-        <javax.annotation-api.version>1.3.2</javax.annotation-api.version>
-        <project.build.sourceEncoding>UTF-8</project.build.sourceEncoding>
-        <project.reporting.outputEncoding>UTF-8</project.reporting.outputEncoding>
-        <jacoco.version>0.8.12</jacoco.version>
-        <sonar.maven.plugin.version>4.0.0.4121</sonar.maven.plugin.version>
-    </properties>
-
     <build>
-       <!-- <finalName>opentheso-latest</finalName> -->
         <plugins>
             <plugin>
                 <groupId>org.springframework.boot</groupId>
                 <artifactId>spring-boot-maven-plugin</artifactId>
             </plugin>
-
             <plugin>
                 <groupId>org.apache.maven.plugins</groupId>
                 <artifactId>maven-surefire-plugin</artifactId>
@@ -498,7 +397,6 @@
                     <argLine>@{argLine} -javaagent:${settings.localRepository}/org/mockito/mockito-core/${mockito.version}/mockito-core-${mockito.version}.jar</argLine>
                 </configuration>
             </plugin>
-
             <plugin>
                 <groupId>org.apache.maven.plugins</groupId>
                 <artifactId>maven-compiler-plugin</artifactId>
@@ -515,7 +413,6 @@
                     </annotationProcessorPaths>
                 </configuration>
             </plugin>
-
             <plugin>
                 <groupId>org.jacoco</groupId>
                 <artifactId>jacoco-maven-plugin</artifactId>
@@ -542,7 +439,6 @@
                     </execution>
                 </executions>
             </plugin>
-
             <plugin>
                 <groupId>org.sonarsource.scanner.maven</groupId>
                 <artifactId>sonar-maven-plugin</artifactId>
@@ -551,6 +447,7 @@
         </plugins>
     </build>
 
+    <!-- Seuils Jacoco par module v2 : mvn verify -Pcoverage-check-v2-<module> -->
     <profiles>
         <profile>
             <id>coverage-check-v2-setting</id>
@@ -941,8 +838,5 @@
             </build>
         </profile>
     </profiles>
-
-    <!-- Propriétés SonarQube v2 (surcharge possibles en ligne de commande) -->
-    <!-- mvn sonar:sonar -Dsonar.token=... lit aussi sonar-project.properties -->
 
 </project>

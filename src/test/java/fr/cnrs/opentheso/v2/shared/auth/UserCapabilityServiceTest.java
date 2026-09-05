@@ -12,6 +12,7 @@ import org.mockito.Mock;
 import org.mockito.junit.jupiter.MockitoExtension;
 
 import java.time.LocalDate;
+import java.time.Month;
 import java.util.OptionalInt;
 
 import static org.junit.jupiter.api.Assertions.assertFalse;
@@ -67,6 +68,6 @@ class UserCapabilityServiceTest {
     }
 
     private static UserProfile sampleProfile(boolean superAdmin) {
-        return new UserProfile(1, "alice", "a@b.c", false, superAdmin, false, LocalDate.now(), true);
+        return new UserProfile(1, "alice", "a@b.c", false, superAdmin, false, LocalDate.of(2024, Month.JUNE, 15), true);
     }
 }

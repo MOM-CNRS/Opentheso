@@ -33,6 +33,19 @@ import java.util.Set;
 @RequiredArgsConstructor
 public class SelectionExportService {
 
+    private static final String FORMAT_CSV_ID = "csv-id";
+    private static final String FORMAT_CSV_DEPRECATED = "csv-deprecated";
+    private static final String FORMAT_CSV_STRUCTURED = "csv-structured";
+    private static final String FORMAT_JSONLD = "jsonld";
+    private static final String FORMAT_TURTLE = "turtle";
+    private static final String PHASE_LOAD_PREFIX = "Chargement de ";
+    private static final String PHASE_LOAD_SUFFIX = " en base…";
+    private static final String PHASE_BUILD = "build";
+    private static final String PHASE_BUILD_LABEL = "Construire";
+    private static final String PHASE_WRITE = "write";
+    private static final String PHASE_FILE = "Fichier";
+
+
     private final ConceptSkosExportService conceptSkosExportService;
     private final ConceptQueryRepository conceptQueryRepository;
     private final ThesaurusSkosDocumentBuilder thesaurusSkosDocumentBuilder;
@@ -101,13 +114,13 @@ public class SelectionExportService {
                 : conceptsLabel(ids.size()) + " à exporter");
         throwIfCancelled(job);
 
-        if ("csv-id".equals(format) || "csv-deprecated".equals(format) || "csv-structured".equals(format)) {
+        if (FORMAT_CSV_ID.equals(format) || FORMAT_CSV_DEPRECATED.equals(format) || FORMAT_CSV_STRUCTURED.equals(format)) {
             exportSpecialCsv(request, thesaurusId, format, ids, job);
             return;
         }
 
-        job.enterPhase(1, "read", "Lire", "Chargement de " + conceptsLabel(ids.size()) + " en base…");
-        job.progress(0, ids.size(), "Chargement de " + conceptsLabel(ids.size()) + " en base…");
+        job.enterPhase(1, "read", "Lire", PHASE_LOAD_PREFIX + conceptsLabel(ids.size()) + PHASE_LOAD_SUFFIX);
+        job.progress(0, ids.size(), PHASE_LOAD_PREFIX + conceptsLabel(ids.size()) + PHASE_LOAD_SUFFIX);
         var document = buildSelectionDocument(thesaurusId, ids, request.clearHtml(), job);
         throwIfCancelled(job);
         writeDocument(request, thesaurusId, format, document, ids.size(), false, job);
@@ -127,7 +140,7 @@ public class SelectionExportService {
         var document = thesaurusSkosDocumentBuilder.buildDocument(thesaurusId, options);
         throwIfCancelled(job);
         int conceptCount = document.getConceptList() == null ? 0 : document.getConceptList().size();
-        job.enterPhase(2, "build", "Construire", "Assemblage SKOS de " + conceptsLabel(conceptCount) + "…");
+        job.enterPhase(2, PHASE_BUILD, PHASE_BUILD_LABEL, "Assemblage SKOS de " + conceptsLabel(conceptCount) + "…");
         job.progress(conceptCount, Math.max(1, conceptCount), "Assemblage SKOS terminé · " + conceptsLabel(conceptCount));
         throwIfCancelled(job);
         writeDocument(request, thesaurusId, format, document, conceptCount, true, job);
@@ -151,13 +164,13 @@ public class SelectionExportService {
         job.enterPhase(1, "read", "Lire", "Lecture des données CSV…");
         job.progress(0, 1, "Lecture des données CSV…");
         throwIfCancelled(job);
-        job.enterPhase(2, "build", "Construire", "Construction du tableau…");
+        job.enterPhase(2, PHASE_BUILD, PHASE_BUILD_LABEL, "Construction du tableau…");
         byte[] csv;
         String ext = ".csv";
-        if ("csv-id".equals(format)) {
+        if (FORMAT_CSV_ID.equals(format)) {
             List<String> groups = request.filterByGroup() ? request.groupIds() : null;
             csv = thesaurusCsvWriter.writeCsvById(thesaurusId, lang, groups, delimiter, whole ? null : selectionIds);
-        } else if ("csv-deprecated".equals(format)) {
+        } else if (FORMAT_CSV_DEPRECATED.equals(format)) {
             csv = thesaurusCsvWriter.writeCsvByDeprecated(thesaurusId, lang, delimiter, whole ? null : selectionIds);
         } else {
             String[][] matrix = csvStructuredPersistence.buildStructuredMatrix(thesaurusId, lang);
@@ -166,7 +179,7 @@ public class SelectionExportService {
         if (csv == null || csv.length == 0) {
             throw new IllegalStateException("Export CSV vide");
         }
-        job.enterPhase(3, "write", "Fichier", "Écriture CSV…");
+        job.enterPhase(3, PHASE_WRITE, PHASE_FILE, "Écriture CSV…");
         job.complete(
                 csv,
                 filename(request, thesaurusId, whole, ext),
@@ -201,7 +214,7 @@ public class SelectionExportService {
             );
         }
         throwIfCancelled(job);
-        job.enterPhase(3, "write", "Fichier", "Écriture de l'archive ZIP…");
+        job.enterPhase(3, PHASE_WRITE, PHASE_FILE, "Écriture de l'archive ZIP…");
         byte[] zip = readStreamed(streamed);
         job.complete(
                 zip,
@@ -220,7 +233,7 @@ public class SelectionExportService {
             boolean whole,
             SelectionExportJob job
     ) throws Exception {
-        job.enterPhase(3, "write", "Fichier", "Écriture " + formatLabel(format) + " · " + conceptsLabel(conceptCount) + "…");
+        job.enterPhase(3, PHASE_WRITE, PHASE_FILE, "Écriture " + formatLabel(format) + " · " + conceptsLabel(conceptCount) + "…");
         throwIfCancelled(job);
         job.progress(0, 1, "Écriture " + formatLabel(format) + "…");
         if ("csv".equals(format)) {
@@ -251,11 +264,11 @@ public class SelectionExportService {
             throwIfCancelled(job);
             int safeTotal = Math.max(1, total);
             if (done <= 0) {
-                job.progress(0, safeTotal, "Chargement de " + conceptsLabel(safeTotal) + " en base…");
+                job.progress(0, safeTotal, PHASE_LOAD_PREFIX + conceptsLabel(safeTotal) + PHASE_LOAD_SUFFIX);
                 return;
             }
             if (job.getPhaseIndex() < 2) {
-                job.enterPhase(2, "build", "Construire", "Construction SKOS de " + conceptsLabel(safeTotal) + "…");
+                job.enterPhase(2, PHASE_BUILD, PHASE_BUILD_LABEL, "Construction SKOS de " + conceptsLabel(safeTotal) + "…");
             }
             String currentId = done <= ids.size() ? ids.get(done - 1) : "";
             job.progress(done, safeTotal, "Concept " + done + " / " + safeTotal
@@ -419,13 +432,13 @@ public class SelectionExportService {
     static String normalizeFormat(String formatCode) {
         String code = formatCode == null ? "" : formatCode.trim().toLowerCase(Locale.ROOT);
         return switch (code) {
-            case "jsonld", "json-ld" -> "jsonld";
+            case FORMAT_JSONLD, "json-ld" -> FORMAT_JSONLD;
             case "json" -> "json";
-            case "turtle", "ttl" -> "turtle";
+            case FORMAT_TURTLE, "ttl" -> FORMAT_TURTLE;
             case "csv", "csv-full" -> "csv";
-            case "csv-id", "csv_id", "csvid" -> "csv-id";
-            case "csv-structured", "csv_struc", "csv-struc" -> "csv-structured";
-            case "csv-deprecated", "deprecated" -> "csv-deprecated";
+            case FORMAT_CSV_ID, "csv_id", "csvid" -> FORMAT_CSV_ID;
+            case FORMAT_CSV_STRUCTURED, "csv_struc", "csv-struc" -> FORMAT_CSV_STRUCTURED;
+            case FORMAT_CSV_DEPRECATED, "deprecated" -> FORMAT_CSV_DEPRECATED;
             case "pdf" -> "pdf";
             default -> "rdf";
         };
@@ -433,13 +446,13 @@ public class SelectionExportService {
 
     static String formatLabel(String format) {
         return switch (format == null ? "" : format) {
-            case "jsonld" -> "JSON-LD";
+            case FORMAT_JSONLD -> "JSON-LD";
             case "json" -> "JSON";
-            case "turtle" -> "Turtle";
+            case FORMAT_TURTLE -> "Turtle";
             case "csv" -> "CSV";
-            case "csv-id" -> "CSV réduit";
-            case "csv-structured" -> "CSV structuré";
-            case "csv-deprecated" -> "CSV dépréciés";
+            case FORMAT_CSV_ID -> "CSV réduit";
+            case FORMAT_CSV_STRUCTURED -> "CSV structuré";
+            case FORMAT_CSV_DEPRECATED -> "CSV dépréciés";
             case "pdf" -> "PDF";
             default -> "RDF/XML";
         };
@@ -467,8 +480,8 @@ public class SelectionExportService {
     }
 
     private static boolean isSkosOrCsvFull(String format) {
-        return "csv".equals(format) || "rdf".equals(format) || "jsonld".equals(format)
-                || "json".equals(format) || "turtle".equals(format);
+        return "csv".equals(format) || "rdf".equals(format) || FORMAT_JSONLD.equals(format)
+                || "json".equals(format) || FORMAT_TURTLE.equals(format);
     }
 
     private static boolean isSelectionDocumentFormat(String format) {

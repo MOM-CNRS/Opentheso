@@ -20,10 +20,10 @@ import java.io.Serializable;
 @RequiredArgsConstructor
 public class GraphExploreBean implements Serializable {
 
-    private final ThesaurusContext thesaurusContext;
-    private final ConceptSelectionSource conceptSelectionSource;
-    private final ApplicationUriService applicationUriService;
-    private final GraphVisualizationUrlService graphVisualizationUrlService;
+    private final transient ThesaurusContext thesaurusContext;
+    private final transient ConceptSelectionSource conceptSelectionSource;
+    private final transient ApplicationUriService applicationUriService;
+    private final transient GraphVisualizationUrlService graphVisualizationUrlService;
 
     private String conceptIdFromUri;
     private String treeDataUrl;

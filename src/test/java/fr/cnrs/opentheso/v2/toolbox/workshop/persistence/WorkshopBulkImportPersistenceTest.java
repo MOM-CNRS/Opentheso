@@ -1,7 +1,6 @@
 package fr.cnrs.opentheso.v2.toolbox.workshop.persistence;
 
 import fr.cnrs.opentheso.entites.Alignement;
-import fr.cnrs.opentheso.entites.AlignementSource;
 import fr.cnrs.opentheso.entites.AlignementType;
 import fr.cnrs.opentheso.entites.Concept;
 import fr.cnrs.opentheso.entites.ConceptGroupConcept;
@@ -52,7 +51,6 @@ import static org.junit.jupiter.api.Assertions.assertTrue;
 import static org.mockito.ArgumentMatchers.any;
 import static org.mockito.ArgumentMatchers.anyInt;
 import static org.mockito.ArgumentMatchers.anyString;
-import static org.mockito.ArgumentMatchers.eq;
 import static org.mockito.Mockito.never;
 import static org.mockito.Mockito.verify;
 import static org.mockito.Mockito.when;
@@ -292,8 +290,8 @@ class WorkshopBulkImportPersistenceTest {
                 .topConcept(false)
                 .creator(7)
                 .contributor(7)
-                .created(new Date())
-                .modified(new Date())
+                .created(Date.from(java.time.Instant.parse("2024-06-15T12:00:00Z")))
+                .modified(Date.from(java.time.Instant.parse("2024-06-15T12:00:00Z")))
                 .build();
         when(conceptRepository.findByIdConceptAndIdThesaurus("C1", "TH1")).thenReturn(Optional.of(existingConcept));
 

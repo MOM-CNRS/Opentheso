@@ -23,6 +23,8 @@ import java.util.Set;
 @RequiredArgsConstructor
 public class ConceptGraphNetworkService {
 
+    private static final String RESOURCE = "Resource";
+
     private static final int MAX_CONCEPTS = 2000;
 
     public record GraphRequestEntry(String thesaurusId, String conceptId) {
@@ -101,7 +103,7 @@ public class ConceptGraphNetworkService {
     private void addThesaurusNode(String thesaurusId, Map<String, D3jsGraphNodeResponse> nodes) {
         String uri = thesaurusUri(thesaurusId);
         nodes.putIfAbsent(uri, new D3jsGraphNodeResponse(
-                uri, List.of("Resource", "skos__ConceptScheme"), uri, List.of()));
+                uri, List.of(RESOURCE, "skos__ConceptScheme"), uri, List.of()));
     }
 
     private void addConceptNodeAndRelations(
@@ -118,7 +120,7 @@ public class ConceptGraphNetworkService {
         String uri = conceptUri(thesaurusId, conceptId);
         String prefLabel = detail.summary().preferredLabel();
         nodes.putIfAbsent(uri, new D3jsGraphNodeResponse(
-                uri, List.of("Resource", "skos__Concept"), uri, prefLabel != null ? List.of(prefLabel) : List.of()));
+                uri, List.of(RESOURCE, "skos__Concept"), uri, prefLabel != null ? List.of(prefLabel) : List.of()));
 
         addRelations(uri, detail.narrowerTerms(), "skos__narrower", thesaurusId, relationships);
         addRelations(uri, detail.broaderTerms(), "skos__broader", thesaurusId, relationships);
@@ -136,7 +138,7 @@ public class ConceptGraphNetworkService {
                     continue;
                 }
                 nodes.putIfAbsent(alignment.uri(), new D3jsGraphNodeResponse(
-                        alignment.uri(), List.of("Resource"), alignment.uri(), List.of()));
+                        alignment.uri(), List.of(RESOURCE), alignment.uri(), List.of()));
                 relationships.add(new D3jsGraphRelationshipResponse(uri, alignment.uri(), "skos__exactMatch"));
             }
         }

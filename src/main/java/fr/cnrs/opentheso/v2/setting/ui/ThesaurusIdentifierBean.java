@@ -12,7 +12,7 @@ import java.io.Serializable;
 @RequiredArgsConstructor
 public class ThesaurusIdentifierBean implements Serializable {
 
-    private final ThesaurusPreferenceBean preferenceBean;
+    private final transient ThesaurusPreferenceBean preferenceBean;
 
     public PreferenceEditor getPreference() {
         return preferenceBean.getPreference();

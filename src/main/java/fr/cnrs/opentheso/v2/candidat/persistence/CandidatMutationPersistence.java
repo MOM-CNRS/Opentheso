@@ -58,6 +58,7 @@ import fr.cnrs.opentheso.utils.MessageUtils;
 import fr.cnrs.opentheso.utils.ToolsHelper;
 import fr.cnrs.opentheso.v2.concept.write.persistence.ConceptDeletionWriteRepository;
 import fr.cnrs.opentheso.v2.shared.mail.SystemMailSender;
+import fr.cnrs.opentheso.v2.shared.time.V2Dates;
 import fr.cnrs.opentheso.v2.toolbox.persistence.ToolboxThesaurusPersistence;
 import lombok.RequiredArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
@@ -69,7 +70,6 @@ import org.springframework.transaction.annotation.Transactional;
 import java.io.IOException;
 import java.sql.SQLException;
 import java.text.SimpleDateFormat;
-import java.time.LocalDateTime;
 import java.util.ArrayList;
 import java.util.Comparator;
 import java.util.Date;
@@ -79,6 +79,9 @@ import java.util.List;
 @Component
 @RequiredArgsConstructor
 public class CandidatMutationPersistence {
+
+    private static final String STATUS_CANDIDAT = "candidat";
+    private static final String ERROR_PREFIX = "Erreur : ";
 
     private final ConceptDeletionWriteRepository conceptDeletionWriteRepository;
     private final ToolboxThesaurusPersistence toolboxThesaurusPersistence;
@@ -203,7 +206,7 @@ public class CandidatMutationPersistence {
                 .idThesaurus(thesaurusId)
                 .contributor(userId)
                 .lexicalValue(candidat.getNomPref().trim())
-                .source("candidat")
+                .source(STATUS_CANDIDAT)
                 .status("D")
                 .created(new Date())
                 .modified(new Date())
@@ -298,10 +301,10 @@ public class CandidatMutationPersistence {
                 try {
                     idNewConcept = createCandidateConcept(concept);
                 } catch (SQLException e) {
-                    messages.append("Erreur : ").append(nodeCandidateOld.getIdCandidate());
+                    messages.append(ERROR_PREFIX).append(nodeCandidateOld.getIdCandidate());
                 }
                 if (idNewConcept == null) {
-                    messages.append("Erreur : ").append(nodeCandidateOld.getIdCandidate());
+                    messages.append(ERROR_PREFIX).append(nodeCandidateOld.getIdCandidate());
                     continue;
                 }
                 for (NodeTraductionCandidat nodeTraduction : nodeCandidateOld.getNodeTraductions()) {
@@ -310,12 +313,12 @@ public class CandidatMutationPersistence {
                         terme.setLang(nodeTraduction.getIdLang());
                         terme.setContributor(userId);
                         terme.setLexicalValue(nodeTraduction.getTitle().trim());
-                        terme.setSource("candidat");
+                        terme.setSource(STATUS_CANDIDAT);
                         terme.setStatus("D");
                         try {
                             idNewTerm = addTerm(terme, idNewConcept, userId);
                         } catch (SQLException e) {
-                            messages.append("Erreur : ").append(nodeCandidateOld.getIdCandidate());
+                            messages.append(ERROR_PREFIX).append(nodeCandidateOld.getIdCandidate());
                             continue;
                         }
                         first = false;
@@ -325,7 +328,7 @@ public class CandidatMutationPersistence {
                                 .idThesaurus(thesaurusId)
                                 .lang(nodeTraduction.getIdLang())
                                 .lexicalValue(nodeTraduction.getTitle())
-                                .source("candidat")
+                                .source(STATUS_CANDIDAT)
                                 .status("D")
                                 .build(), userId);
                     }
@@ -808,7 +811,7 @@ public class CandidatMutationPersistence {
                 .status(termSaved.getStatus())
                 .idUser(userId)
                 .action("ADD")
-                .modified(LocalDateTime.now())
+                .modified(V2Dates.nowDateTime())
                 .build());
         preferredTermRepository.save(PreferredTerm.builder()
                 .idConcept(conceptId)
@@ -839,7 +842,7 @@ public class CandidatMutationPersistence {
                 .source(term.getSource())
                 .status(term.getStatus())
                 .idUser(userId)
-                .modified(LocalDateTime.now())
+                .modified(V2Dates.nowDateTime())
                 .action("New")
                 .build());
     }

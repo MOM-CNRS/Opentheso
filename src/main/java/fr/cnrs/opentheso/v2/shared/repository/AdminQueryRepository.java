@@ -72,7 +72,7 @@ public class AdminQueryRepository {
                 """;
         List<Object[]> rows = entityManager.createNativeQuery(sql)
                 .setParameter("mail", mail)
-                .setParameter("username", username)
+                .setParameter(NativeQueryParams.USERNAME, username)
                 .getResultList();
         return rows.stream().map(this::toAdminUserRow).toList();
     }

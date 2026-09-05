@@ -13,7 +13,7 @@ public final class ActionsLotErrorView {
     private ActionsLotErrorView() {
     }
 
-    public static List<ActionsLotLineError> limit(List<ActionsLotLineError> errors) {
+    public static List<ActionsLotLineError> visibleErrors(List<ActionsLotLineError> errors) {
         if (errors == null || errors.isEmpty()) {
             return Collections.emptyList();
         }

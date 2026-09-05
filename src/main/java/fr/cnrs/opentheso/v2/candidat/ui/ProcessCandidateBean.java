@@ -32,11 +32,13 @@ import java.util.List;
 @Named(value = "v2ProcessCandidateBean")
 public class ProcessCandidateBean implements Serializable {
 
-    private final CandidatBean candidatBean;
-    private final CandidatProcessService candidatProcessService;
-    private final ThesaurusContext thesaurusContext;
-    private final UserSession userSession;
-    private final ThesaurusPreferencesProvider thesaurusPreferencesProvider;
+    private static final String NO_CANDIDATE_SELECTED = "Pas de candidat sélectionné";
+
+    private final transient CandidatBean candidatBean;
+    private final transient CandidatProcessService candidatProcessService;
+    private final transient ThesaurusContext thesaurusContext;
+    private final transient UserSession userSession;
+    private final transient ThesaurusPreferencesProvider thesaurusPreferencesProvider;
 
     private CandidatDto selectedCandidate;
     private String adminMessage;
@@ -66,7 +68,7 @@ public class ProcessCandidateBean implements Serializable {
 
     public void insertCandidat() throws IOException {
         if (selectedCandidate == null) {
-            MessageUtils.showErrorMessage("Pas de candidat sélectionné");
+            MessageUtils.showErrorMessage(NO_CANDIDATE_SELECTED);
             return;
         }
 
@@ -101,7 +103,7 @@ public class ProcessCandidateBean implements Serializable {
 
     public void rejectCandidat() throws IOException {
         if (selectedCandidate == null) {
-            MessageUtils.showErrorMessage("Pas de candidat sélectionné");
+            MessageUtils.showErrorMessage(NO_CANDIDATE_SELECTED);
             return;
         }
 
@@ -134,7 +136,7 @@ public class ProcessCandidateBean implements Serializable {
 
     public void insertListCandidat() throws IOException {
         if (candidatBean.getSelectedCandidates() == null || candidatBean.getSelectedCandidates().isEmpty()) {
-            MessageUtils.showErrorMessage("Pas de candidat sélectionné");
+            MessageUtils.showErrorMessage(NO_CANDIDATE_SELECTED);
             return;
         }
 
@@ -181,7 +183,7 @@ public class ProcessCandidateBean implements Serializable {
 
     public void rejectCandidatList() throws IOException {
         if (candidatBean.getSelectedCandidates() == null || candidatBean.getSelectedCandidates().isEmpty()) {
-            MessageUtils.showErrorMessage("Pas de candidat sélectionné");
+            MessageUtils.showErrorMessage(NO_CANDIDATE_SELECTED);
             return;
         }
 

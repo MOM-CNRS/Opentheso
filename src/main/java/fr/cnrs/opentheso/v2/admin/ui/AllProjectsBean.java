@@ -17,8 +17,8 @@ import java.util.List;
 @Named("v2AllProjectsBean")
 public class AllProjectsBean implements Serializable {
 
-    private final UserSession userSession;
-    private final AdminCatalogService adminCatalogService;
+    private final transient UserSession userSession;
+    private final transient AdminCatalogService adminCatalogService;
 
     public AllProjectsBean(UserSession userSession, AdminCatalogService adminCatalogService) {
         this.userSession = userSession;

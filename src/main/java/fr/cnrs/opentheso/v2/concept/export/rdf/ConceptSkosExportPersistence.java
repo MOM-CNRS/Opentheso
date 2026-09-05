@@ -33,15 +33,22 @@ public class ConceptSkosExportPersistence {
         return preferencesRepository.findByIdThesaurus(thesaurusId);
     }
 
+    @Transactional(readOnly = true)
     public SKOSResource exportConcept(String thesaurusId, String conceptId) throws Exception {
-        return exportConcept(thesaurusId, conceptId, false);
+        return doExportConcept(thesaurusId, conceptId, false);
     }
 
+    @Transactional(readOnly = true)
     public SKOSResource exportConcept(String thesaurusId, String conceptId, boolean candidatExport) throws Exception {
-        List<SKOSResource> resources = exportConcepts(
+        return doExportConcept(thesaurusId, conceptId, candidatExport);
+    }
+
+    private SKOSResource doExportConcept(String thesaurusId, String conceptId, boolean candidatExport) throws Exception {
+        List<SKOSResource> resources = doExportConcepts(
                 thesaurusId,
                 StringUtils.isBlank(conceptId) ? List.of() : List.of(conceptId),
-                null
+                null,
+                false
         );
         SKOSResource resource = resources.isEmpty() ? null : resources.get(0);
         if (resource != null && candidatExport) {
@@ -50,16 +57,26 @@ public class ConceptSkosExportPersistence {
         return resource;
     }
 
+    @Transactional(readOnly = true)
     public List<SKOSResource> exportConcepts(
             String thesaurusId,
             Collection<String> conceptIds,
             BiConsumer<Integer, Integer> progress
     ) throws Exception {
-        return exportConcepts(thesaurusId, conceptIds, progress, false);
+        return doExportConcepts(thesaurusId, conceptIds, progress, false);
     }
 
     @Transactional(readOnly = true)
     public List<SKOSResource> exportConcepts(
+            String thesaurusId,
+            Collection<String> conceptIds,
+            BiConsumer<Integer, Integer> progress,
+            boolean clearHtml
+    ) throws Exception {
+        return doExportConcepts(thesaurusId, conceptIds, progress, clearHtml);
+    }
+
+    private List<SKOSResource> doExportConcepts(
             String thesaurusId,
             Collection<String> conceptIds,
             BiConsumer<Integer, Integer> progress,

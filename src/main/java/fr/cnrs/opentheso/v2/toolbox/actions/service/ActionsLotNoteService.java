@@ -1,5 +1,6 @@
 package fr.cnrs.opentheso.v2.toolbox.actions.service;
 
+import fr.cnrs.opentheso.v2.toolbox.actions.model.ActionsLotMessages;
 import fr.cnrs.opentheso.v2.toolbox.actions.model.ActionsLotApplyResult;
 import fr.cnrs.opentheso.v2.toolbox.actions.model.ActionsLotLineError;
 import fr.cnrs.opentheso.v2.toolbox.actions.model.ActionsLotNoteCandidate;
@@ -21,6 +22,8 @@ import java.util.HashSet;
 import java.util.List;
 import java.util.Map;
 import java.util.Set;
+import fr.cnrs.opentheso.v2.toolbox.edition.model.ThesaurusCsvConceptObject;
+import fr.cnrs.opentheso.v2.toolbox.edition.model.ThesaurusCsvConceptLabel;
 
 /**
  * Actions par lot — Notes : import CSV (même moteur que l'atelier legacy).
@@ -43,15 +46,15 @@ public class ActionsLotNoteService {
             String thesaurusId
     ) {
         if (content == null || content.length == 0) {
-            return ActionsLotNoteValidationResult.failure("Aucun fichier à valider.");
+            return ActionsLotNoteValidationResult.failure(ActionsLotMessages.NO_FILE);
         }
         if (StringUtils.isBlank(thesaurusId)) {
-            return ActionsLotNoteValidationResult.failure("Aucun thésaurus sélectionné.");
+            return ActionsLotNoteValidationResult.failure(ActionsLotMessages.NO_THESAURUS);
         }
 
         char delimiter = CsvDelimiterSupport.resolveDelimiter(choiceDelimiter);
         WorkshopCsvReader reader = new WorkshopCsvReader(delimiter);
-        List<WorkshopCsvReader.ConceptObject> rows;
+        List<ThesaurusCsvConceptObject> rows;
         try {
             try (Reader headerReader = new InputStreamReader(new ByteArrayInputStream(content), StandardCharsets.UTF_8)) {
                 if (!reader.setLangs(headerReader)) {
@@ -86,46 +89,56 @@ public class ActionsLotNoteService {
         int line = 1;
 
         Set<String> localIds = new HashSet<>();
-        for (WorkshopCsvReader.ConceptObject row : rows) {
+        for (ThesaurusCsvConceptObject row : rows) {
             if (row != null && StringUtils.isNotBlank(row.getIdConcept())) {
                 localIds.add(row.getIdConcept().trim());
             }
         }
         Map<String, String> resolved = persistence.resolveConceptIds(localIds, identifierType, thesaurusId);
 
-        for (WorkshopCsvReader.ConceptObject row : rows) {
+        for (ThesaurusCsvConceptObject row : rows) {
             line++;
-            if (row == null) {
-                continue;
-            }
-            String localId = StringUtils.trimToEmpty(row.getIdConcept());
-            if (StringUtils.isBlank(localId)) {
-                errors.add(new ActionsLotLineError(line, "— (vide)", "localId", "Identifiant obligatoire manquant"));
-                continue;
-            }
-            String conceptId = resolved.get(localId);
-            if (StringUtils.isBlank(conceptId)) {
-                errors.add(new ActionsLotLineError(
-                        line, localId, "localId", "Identifiant introuvable dans le thésaurus"
-                ));
-                continue;
-            }
-            int before = valid.size();
-            collect(row.getDefinitions(), "definition", line, localId, conceptId, valid);
-            collect(row.getHistoryNotes(), "historyNote", line, localId, conceptId, valid);
-            collect(row.getChangeNotes(), "changeNote", line, localId, conceptId, valid);
-            collect(row.getEditorialNotes(), "editorialNote", line, localId, conceptId, valid);
-            collect(row.getExamples(), "example", line, localId, conceptId, valid);
-            collect(row.getNote(), "note", line, localId, conceptId, valid);
-            collect(row.getScopeNotes(), "scopeNote", line, localId, conceptId, valid);
-            if (valid.size() == before) {
-                errors.add(new ActionsLotLineError(line, localId, "skos:note", "Aucune note sur cette ligne"));
-            }
+            collectNoteRow(row, line, resolved, errors, valid);
         }
 
         return new ActionsLotNoteValidationResult(
                 true, null, rows.size(), valid.size(), errors.size(), 0, errors, valid
         );
+    }
+
+    private void collectNoteRow(
+            ThesaurusCsvConceptObject row,
+            int line,
+            Map<String, String> resolved,
+            List<ActionsLotLineError> errors,
+            List<ActionsLotNoteCandidate> valid
+    ) {
+        if (row == null) {
+            return;
+        }
+        String localId = StringUtils.trimToEmpty(row.getIdConcept());
+        if (StringUtils.isBlank(localId)) {
+            errors.add(new ActionsLotLineError(line, "— (vide)", "localId", "Identifiant obligatoire manquant"));
+            return;
+        }
+        String conceptId = resolved.get(localId);
+        if (StringUtils.isBlank(conceptId)) {
+            errors.add(new ActionsLotLineError(
+                    line, localId, "localId", "Identifiant introuvable dans le thésaurus"
+            ));
+            return;
+        }
+        int before = valid.size();
+        collect(row.getDefinitions(), "definition", line, localId, conceptId, valid);
+        collect(row.getHistoryNotes(), "historyNote", line, localId, conceptId, valid);
+        collect(row.getChangeNotes(), "changeNote", line, localId, conceptId, valid);
+        collect(row.getEditorialNotes(), "editorialNote", line, localId, conceptId, valid);
+        collect(row.getExamples(), "example", line, localId, conceptId, valid);
+        collect(row.getNote(), "note", line, localId, conceptId, valid);
+        collect(row.getScopeNotes(), "scopeNote", line, localId, conceptId, valid);
+        if (valid.size() == before) {
+            errors.add(new ActionsLotLineError(line, localId, "skos:note", "Aucune note sur cette ligne"));
+        }
     }
 
     @Transactional
@@ -136,10 +149,10 @@ public class ActionsLotNoteService {
             boolean clearBefore
     ) {
         if (StringUtils.isBlank(thesaurusId)) {
-            return ActionsLotApplyResult.failure("Aucun thésaurus sélectionné.");
+            return ActionsLotApplyResult.failure(ActionsLotMessages.NO_THESAURUS);
         }
         if (candidates == null || candidates.isEmpty()) {
-            return ActionsLotApplyResult.failure("Aucune ligne valide à importer.");
+            return ActionsLotApplyResult.failure(ActionsLotMessages.NO_VALID_LINE);
         }
 
         Set<String> clearedConcepts = new HashSet<>();
@@ -194,7 +207,7 @@ public class ActionsLotNoteService {
     }
 
     private void collect(
-            List<WorkshopCsvReader.Label> labels,
+            List<ThesaurusCsvConceptLabel> labels,
             String typeCode,
             int line,
             String localId,
@@ -204,7 +217,7 @@ public class ActionsLotNoteService {
         if (labels == null) {
             return;
         }
-        for (WorkshopCsvReader.Label label : labels) {
+        for (ThesaurusCsvConceptLabel label : labels) {
             if (label == null || StringUtils.isBlank(label.getLabel())) {
                 continue;
             }

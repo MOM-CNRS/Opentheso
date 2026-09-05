@@ -17,6 +17,7 @@ import org.mockito.MockedStatic;
 import org.mockito.junit.jupiter.MockitoExtension;
 
 import java.time.LocalDateTime;
+import java.time.Month;
 import java.util.List;
 import java.util.function.Consumer;
 
@@ -62,7 +63,7 @@ class ThesaurusSyncBeanTest {
                 "https://master.example",
                 "TH_MASTER",
                 "api-key",
-                LocalDateTime.of(2026, 7, 1, 8, 0)
+                LocalDateTime.of(2026, Month.JULY, 1, 8, 0)
         ));
         when(thesaurusSyncSendService.prepare("TH1")).thenReturn(new ThesaurusSyncSendService.SyncPreparation(
                 "TH1",
@@ -71,7 +72,7 @@ class ThesaurusSyncBeanTest {
                 "api-key",
                 12,
                 "fr",
-                LocalDateTime.of(2026, 7, 1, 8, 0)
+                LocalDateTime.of(2026, Month.JULY, 1, 8, 0)
         ));
 
         try (MockedStatic<MessageUtils> ignored = mockStatic(MessageUtils.class)) {
@@ -156,7 +157,7 @@ class ThesaurusSyncBeanTest {
 
         when(thesaurusSyncSendService.prepare("TH1")).thenReturn(
                 new ThesaurusSyncSendService.SyncPreparation(
-                        "TH1", "https://master.example", "TH_MASTER", "api-key", 0, "fr", LocalDateTime.now()));
+                        "TH1", "https://master.example", "TH_MASTER", "api-key", 0, "fr", LocalDateTime.of(2024, Month.JUNE, 15, 12, 0)));
 
         bean.startSync();
 
@@ -338,7 +339,7 @@ class ThesaurusSyncBeanTest {
 
     @Test
     void getFormattedLastSyncAt_formatsLocalDateTime() {
-        bean.setLastSyncAt(LocalDateTime.of(2026, 8, 2, 15, 4));
+        bean.setLastSyncAt(LocalDateTime.of(2026, Month.AUGUST, 2, 15, 4));
         assertEquals("02/08/2026 15:04", bean.getFormattedLastSyncAt());
     }
 

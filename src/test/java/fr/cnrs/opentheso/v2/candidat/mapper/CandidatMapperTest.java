@@ -5,6 +5,7 @@ import fr.cnrs.opentheso.v2.shared.repository.projection.CandidatListRow;
 import org.junit.jupiter.api.Test;
 
 import java.time.LocalDateTime;
+import java.time.Month;
 import java.util.List;
 
 import static org.junit.jupiter.api.Assertions.assertEquals;
@@ -16,8 +17,8 @@ class CandidatMapperTest {
     void toCandidatDto_mapsListRowFields() {
         var row = new CandidatListRow(
                 "C1",
-                LocalDateTime.of(2024, 1, 2, 10, 0),
-                LocalDateTime.of(2024, 1, 3, 11, 0),
+                LocalDateTime.of(2024, Month.JANUARY, 2, 10, 0),
+                LocalDateTime.of(2024, Month.JANUARY, 3, 11, 0),
                 7,
                 9,
                 "admin msg",

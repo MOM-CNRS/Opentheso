@@ -41,7 +41,7 @@ public class ThesaurusSyncController {
                     + "n'est pas false. Aucun changement n'est appliqué directement.",
             security = @SecurityRequirement(name = "ApiKeyAuth")
     )
-    public ResponseEntity<?> syncConcepts(
+    public ResponseEntity<Object> syncConcepts(
             HttpServletRequest request,
             @PathVariable String idThesaurus,
             @RequestBody SyncBatchRequest body

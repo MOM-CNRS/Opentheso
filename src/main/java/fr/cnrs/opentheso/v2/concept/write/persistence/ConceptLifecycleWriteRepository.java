@@ -1,5 +1,6 @@
 package fr.cnrs.opentheso.v2.concept.write.persistence;
 
+import fr.cnrs.opentheso.v2.shared.repository.NativeQueryParams;
 import jakarta.persistence.EntityManager;
 import jakarta.persistence.PersistenceContext;
 import org.springframework.stereotype.Repository;
@@ -23,8 +24,8 @@ public class ConceptLifecycleWriteRepository {
                           AND id_concept = :conceptId
                         LIMIT 1
                         """)
-                .setParameter("thesaurusId", thesaurusId)
-                .setParameter("conceptId", conceptId)
+                .setParameter(NativeQueryParams.THESAURUS_ID, thesaurusId)
+                .setParameter(NativeQueryParams.CONCEPT_ID, conceptId)
                 .getResultStream()
                 .map(row -> {
                     Object[] values = (Object[]) row;
@@ -49,18 +50,22 @@ public class ConceptLifecycleWriteRepository {
                           AND id_concept = :conceptId
                         """)
                 .setParameter("status", status)
-                .setParameter("thesaurusId", thesaurusId)
-                .setParameter("conceptId", conceptId)
+                .setParameter(NativeQueryParams.THESAURUS_ID, thesaurusId)
+                .setParameter(NativeQueryParams.CONCEPT_ID, conceptId)
                 .executeUpdate() > 0;
     }
 
     @Transactional
     public void insertConceptHistory(ConceptSnapshot concept, int userId) {
-        insertConceptHistory(concept, userId, "");
+        doInsertConceptHistory(concept, userId, "");
     }
 
     @Transactional
     public void insertConceptHistory(ConceptSnapshot concept, int userId, String idGroup) {
+        doInsertConceptHistory(concept, userId, idGroup);
+    }
+
+    private void doInsertConceptHistory(ConceptSnapshot concept, int userId, String idGroup) {
         entityManager.createNativeQuery("""
                         INSERT INTO concept_historique (
                             id_concept, id_thesaurus, id_ark, modified, status,
@@ -71,15 +76,15 @@ public class ConceptLifecycleWriteRepository {
                             :notation, :topConcept, :idGroup, :userId
                         )
                         """)
-                .setParameter("conceptId", concept.conceptId())
-                .setParameter("thesaurusId", concept.thesaurusId())
+                .setParameter(NativeQueryParams.CONCEPT_ID, concept.conceptId())
+                .setParameter(NativeQueryParams.THESAURUS_ID, concept.thesaurusId())
                 .setParameter("idArk", concept.idArk())
-                .setParameter("modified", new Date())
+                .setParameter(NativeQueryParams.MODIFIED, new Date())
                 .setParameter("status", concept.status())
                 .setParameter("notation", concept.notation())
                 .setParameter("topConcept", concept.topConcept())
                 .setParameter("idGroup", idGroup == null ? "" : idGroup)
-                .setParameter("userId", userId)
+                .setParameter(NativeQueryParams.USER_ID, userId)
                 .executeUpdate();
     }
 
@@ -98,11 +103,11 @@ public class ConceptLifecycleWriteRepository {
                             :deprecatedConceptId, :replacementConceptId, :thesaurusId, :modified, :userId
                         )
                         """)
-                .setParameter("deprecatedConceptId", deprecatedConceptId)
+                .setParameter(NativeQueryParams.DEPRECATED_CONCEPT_ID, deprecatedConceptId)
                 .setParameter("replacementConceptId", replacementConceptId)
-                .setParameter("thesaurusId", thesaurusId)
-                .setParameter("modified", new Date())
-                .setParameter("userId", userId)
+                .setParameter(NativeQueryParams.THESAURUS_ID, thesaurusId)
+                .setParameter(NativeQueryParams.MODIFIED, new Date())
+                .setParameter(NativeQueryParams.USER_ID, userId)
                 .executeUpdate();
     }
 
@@ -118,9 +123,9 @@ public class ConceptLifecycleWriteRepository {
                           AND id_concept2 = :replacementConceptId
                           AND id_thesaurus = :thesaurusId
                         """)
-                .setParameter("deprecatedConceptId", deprecatedConceptId)
+                .setParameter(NativeQueryParams.DEPRECATED_CONCEPT_ID, deprecatedConceptId)
                 .setParameter("replacementConceptId", replacementConceptId)
-                .setParameter("thesaurusId", thesaurusId)
+                .setParameter(NativeQueryParams.THESAURUS_ID, thesaurusId)
                 .executeUpdate();
     }
 
@@ -131,8 +136,8 @@ public class ConceptLifecycleWriteRepository {
                         WHERE id_concept1 = :deprecatedConceptId
                           AND id_thesaurus = :thesaurusId
                         """)
-                .setParameter("deprecatedConceptId", deprecatedConceptId)
-                .setParameter("thesaurusId", thesaurusId)
+                .setParameter(NativeQueryParams.DEPRECATED_CONCEPT_ID, deprecatedConceptId)
+                .setParameter(NativeQueryParams.THESAURUS_ID, thesaurusId)
                 .executeUpdate();
     }
 
@@ -144,8 +149,8 @@ public class ConceptLifecycleWriteRepository {
                         WHERE id_concept1 = :deprecatedConceptId
                           AND id_thesaurus = :thesaurusId
                         """)
-                .setParameter("deprecatedConceptId", deprecatedConceptId)
-                .setParameter("thesaurusId", thesaurusId)
+                .setParameter(NativeQueryParams.DEPRECATED_CONCEPT_ID, deprecatedConceptId)
+                .setParameter(NativeQueryParams.THESAURUS_ID, thesaurusId)
                 .getResultList();
     }
 
@@ -157,8 +162,8 @@ public class ConceptLifecycleWriteRepository {
                           AND id_concept = :conceptId
                         LIMIT 1
                         """)
-                .setParameter("thesaurusId", thesaurusId)
-                .setParameter("conceptId", conceptId)
+                .setParameter(NativeQueryParams.THESAURUS_ID, thesaurusId)
+                .setParameter(NativeQueryParams.CONCEPT_ID, conceptId)
                 .getResultStream()
                 .findFirst()
                 .map(value -> (Boolean) value)
@@ -174,8 +179,8 @@ public class ConceptLifecycleWriteRepository {
                           AND id_concept = :conceptId
                         """)
                 .setParameter("topConcept", topConcept)
-                .setParameter("thesaurusId", thesaurusId)
-                .setParameter("conceptId", conceptId)
+                .setParameter(NativeQueryParams.THESAURUS_ID, thesaurusId)
+                .setParameter(NativeQueryParams.CONCEPT_ID, conceptId)
                 .executeUpdate() > 0;
     }
 
@@ -187,8 +192,8 @@ public class ConceptLifecycleWriteRepository {
                         WHERE id_thesaurus = :thesaurusId
                           AND id_concept = :conceptId
                         """)
-                .setParameter("thesaurusId", thesaurusId)
-                .setParameter("conceptId", conceptId)
+                .setParameter(NativeQueryParams.THESAURUS_ID, thesaurusId)
+                .setParameter(NativeQueryParams.CONCEPT_ID, conceptId)
                 .executeUpdate() > 0;
     }
 }

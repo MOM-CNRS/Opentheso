@@ -38,13 +38,13 @@ import java.util.List;
 @RequiredArgsConstructor
 public class PropositionBean implements Serializable {
 
-    private final PropositionReadService propositionReadService;
-    private final PropositionMutationService propositionMutationService;
-    private final PropositionDraftService propositionDraftService;
-    private final ThesaurusContext thesaurusContext;
-    private final UserSession userSession;
-    private final RightsService rightsService;
-    private final V2LocaleBean localeBean;
+    private final transient PropositionReadService propositionReadService;
+    private final transient PropositionMutationService propositionMutationService;
+    private final transient PropositionDraftService propositionDraftService;
+    private final transient ThesaurusContext thesaurusContext;
+    private final transient UserSession userSession;
+    private final transient RightsService rightsService;
+    private final transient V2LocaleBean localeBean;
 
     private List<PropositionSummary> propositions = Collections.emptyList();
     private int pendingCount;

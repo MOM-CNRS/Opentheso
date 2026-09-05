@@ -107,7 +107,7 @@ public class CandidatQueryRepository {
                 ORDER BY c.created DESC
                 """;
         List<Object[]> rows = entityManager.createNativeQuery(sql)
-                .setParameter("thesaurusId", thesaurusId)
+                .setParameter(NativeQueryParams.THESAURUS_ID, thesaurusId)
                 .setParameter("statusId", statusId)
                 .setParameter("lang", language)
                 .setParameter("unknownUser", UNKNOWN_USER)
@@ -128,7 +128,7 @@ public class CandidatQueryRepository {
                 WHERE cs.id_thesaurus = :thesaurusId
                   AND cs.id_status = :statusId
                 """)
-                .setParameter("thesaurusId", thesaurusId)
+                .setParameter(NativeQueryParams.THESAURUS_ID, thesaurusId)
                 .setParameter("statusId", statusId)
                 .getSingleResult();
         return result != null ? result.intValue() : 0;
@@ -255,10 +255,10 @@ public class CandidatQueryRepository {
                 """;
         try {
             Object[] row = (Object[]) entityManager.createNativeQuery(sql)
-                    .setParameter("thesaurusId", thesaurusId)
-                    .setParameter("conceptId", conceptId)
+                    .setParameter(NativeQueryParams.THESAURUS_ID, thesaurusId)
+                    .setParameter(NativeQueryParams.CONCEPT_ID, conceptId)
                     .setParameter("lang", language)
-                    .setParameter("userId", userId)
+                    .setParameter(NativeQueryParams.USER_ID, userId)
                     .getSingleResult();
             var parsed = CandidatDetailJsonParser.parse(
                     stringValue(row[2]),
@@ -312,8 +312,8 @@ public class CandidatQueryRepository {
                 ORDER BY label
                 """;
         List<Object[]> rows = entityManager.createNativeQuery(sql)
-                .setParameter("thesaurusId", thesaurusId)
-                .setParameter("conceptId", conceptId)
+                .setParameter(NativeQueryParams.THESAURUS_ID, thesaurusId)
+                .setParameter(NativeQueryParams.CONCEPT_ID, conceptId)
                 .setParameter("lang", language)
                 .getResultList();
         return rows.stream()
@@ -351,8 +351,8 @@ public class CandidatQueryRepository {
                 ORDER BY hr.id_concept1, label
                 """;
         List<Object[]> rows = entityManager.createNativeQuery(sql)
-                .setParameter("thesaurusId", thesaurusId)
-                .setParameter("conceptIds", conceptIds)
+                .setParameter(NativeQueryParams.THESAURUS_ID, thesaurusId)
+                .setParameter(NativeQueryParams.CONCEPT_IDS, conceptIds)
                 .setParameter("lang", language)
                 .getResultList();
         return rows.stream()
@@ -379,8 +379,8 @@ public class CandidatQueryRepository {
                 ORDER BY npt.lexical_value ASC
                 """;
         return entityManager.createNativeQuery(sql)
-                .setParameter("thesaurusId", thesaurusId)
-                .setParameter("conceptId", conceptId)
+                .setParameter(NativeQueryParams.THESAURUS_ID, thesaurusId)
+                .setParameter(NativeQueryParams.CONCEPT_ID, conceptId)
                 .setParameter("lang", language)
                 .getResultList();
     }
@@ -395,8 +395,8 @@ public class CandidatQueryRepository {
                 ORDER BY n.id
                 """;
         List<Object[]> rows = entityManager.createNativeQuery(sql)
-                .setParameter("thesaurusId", thesaurusId)
-                .setParameter("conceptId", conceptId)
+                .setParameter(NativeQueryParams.THESAURUS_ID, thesaurusId)
+                .setParameter(NativeQueryParams.CONCEPT_ID, conceptId)
                 .getResultList();
         return rows.stream()
                 .map(row -> new CandidatNoteDetailRow(
@@ -426,8 +426,8 @@ public class CandidatQueryRepository {
                 ORDER BY t.lexical_value
                 """;
         List<Object[]> rows = entityManager.createNativeQuery(sql)
-                .setParameter("thesaurusId", thesaurusId)
-                .setParameter("conceptId", conceptId)
+                .setParameter(NativeQueryParams.THESAURUS_ID, thesaurusId)
+                .setParameter(NativeQueryParams.CONCEPT_ID, conceptId)
                 .setParameter("lang", language)
                 .getResultList();
         return rows.stream()
@@ -450,8 +450,8 @@ public class CandidatQueryRepository {
                 ORDER BY c.date
                 """;
         List<Object[]> rows = entityManager.createNativeQuery(sql)
-                .setParameter("thesaurusId", thesaurusId)
-                .setParameter("conceptId", conceptId)
+                .setParameter(NativeQueryParams.THESAURUS_ID, thesaurusId)
+                .setParameter(NativeQueryParams.CONCEPT_ID, conceptId)
                 .getResultList();
         return rows.stream()
                 .map(row -> new CandidatDiscussionRow(
@@ -474,9 +474,9 @@ public class CandidatQueryRepository {
                   AND cv.type_vote = 'NT'
                 """;
         List<String> rows = entityManager.createNativeQuery(sql)
-                .setParameter("thesaurusId", thesaurusId)
-                .setParameter("conceptId", conceptId)
-                .setParameter("userId", userId)
+                .setParameter(NativeQueryParams.THESAURUS_ID, thesaurusId)
+                .setParameter(NativeQueryParams.CONCEPT_ID, conceptId)
+                .setParameter(NativeQueryParams.USER_ID, userId)
                 .getResultList();
         return new HashSet<>(rows);
     }
@@ -493,9 +493,9 @@ public class CandidatQueryRepository {
                 )
                 """;
         return Boolean.TRUE.equals(entityManager.createNativeQuery(sql)
-                .setParameter("thesaurusId", thesaurusId)
-                .setParameter("conceptId", conceptId)
-                .setParameter("userId", userId)
+                .setParameter(NativeQueryParams.THESAURUS_ID, thesaurusId)
+                .setParameter(NativeQueryParams.CONCEPT_ID, conceptId)
+                .setParameter(NativeQueryParams.USER_ID, userId)
                 .getSingleResult());
     }
 
@@ -536,8 +536,8 @@ public class CandidatQueryRepository {
                 ORDER BY label
                 """;
         List<Object[]> rows = entityManager.createNativeQuery(sql)
-                .setParameter("thesaurusId", thesaurusId)
-                .setParameter("conceptId", conceptId)
+                .setParameter(NativeQueryParams.THESAURUS_ID, thesaurusId)
+                .setParameter(NativeQueryParams.CONCEPT_ID, conceptId)
                 .setParameter("lang", language)
                 .getResultList();
         return rows.stream()

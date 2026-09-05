@@ -3,11 +3,8 @@ package fr.cnrs.opentheso.v2.toolbox.edition.io.rdf.parser;
 import fr.cnrs.opentheso.models.skosapi.SKOSProperty;
 import fr.cnrs.opentheso.models.skosapi.SKOSResource;
 import fr.cnrs.opentheso.models.skosapi.SKOSXmlDocument;
-import org.eclipse.rdf4j.model.Resource;
-
 
 public class ThesaurusManager {
-
 
     public void addStructData(SKOSResource skosResource, SKOSXmlDocument sKOSXmlDocument, int prop) {
 
@@ -31,6 +28,8 @@ public class ThesaurusManager {
                 break;
             case SKOSProperty.FOAF_IMAGE:
                 sKOSXmlDocument.addFoafImage(skosResource);
+                break;
+            default:
                 break;
         }
     }

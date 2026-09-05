@@ -57,7 +57,7 @@ public class ConsultationCatalogQueryRepository {
                 ORDER BY CAST(regexp_replace(t.id_thesaurus, '\\D', '', 'g') AS INTEGER) DESC
                 """;
         List<Object[]> rows = entityManager.createNativeQuery(sql)
-                .setParameter("projectId", projectId)
+                .setParameter(NativeQueryParams.PROJECT_ID, projectId)
                 .getResultList();
         return rows.stream()
                 .map(row -> new ConsultationThesaurusOption(
@@ -101,8 +101,8 @@ public class ConsultationCatalogQueryRepository {
                 ORDER BY LOWER(ugt.id_thesaurus)
                 """;
         List<Object[]> rows = entityManager.createNativeQuery(sql)
-                .setParameter("userId", userId)
-                .setParameter("projectId", projectId)
+                .setParameter(NativeQueryParams.USER_ID, userId)
+                .setParameter(NativeQueryParams.PROJECT_ID, projectId)
                 .setParameter("lang", lang)
                 .getResultList();
         Map<String, ConsultationThesaurusOption> unique = new LinkedHashMap<>();

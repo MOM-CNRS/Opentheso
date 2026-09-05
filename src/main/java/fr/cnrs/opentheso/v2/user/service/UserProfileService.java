@@ -23,17 +23,21 @@ public class UserProfileService {
 
     @Transactional(readOnly = true)
     public UserProfile getProfile(int userId) {
-        log.debug("Chargement du profil v2 pour l'utilisateur id={}", userId);
-        return UserProfileMapper.toProfile(userLookupService.requireEntity(userId));
+        return doGetProfile(userId);
     }
 
     @Transactional(readOnly = true)
     public ProfileWithRoles getProfileWithRoles(int userId) {
-        UserProfile profile = getProfile(userId);
+        UserProfile profile = doGetProfile(userId);
         return new ProfileWithRoles(
                 profile,
                 userRoleOverviewService.loadProjectRoles(userId, profile.superAdmin())
         );
+    }
+
+    private UserProfile doGetProfile(int userId) {
+        log.debug("Chargement du profil v2 pour l'utilisateur id={}", userId);
+        return UserProfileMapper.toProfile(userLookupService.requireEntity(userId));
     }
 
     @Transactional
@@ -77,7 +81,6 @@ public class UserProfileService {
         return saveEntity(user);
     }
 
-    @Transactional
     UserProfile saveEntity(UserEntity user) {
         return UserProfileMapper.toProfile(userProfileRepository.save(user));
     }

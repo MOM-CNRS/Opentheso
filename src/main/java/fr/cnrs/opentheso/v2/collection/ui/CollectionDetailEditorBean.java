@@ -1,5 +1,6 @@
 package fr.cnrs.opentheso.v2.collection.ui;
 
+import fr.cnrs.opentheso.v2.concept.write.ui.WriteUiMessages;
 import fr.cnrs.opentheso.entites.ConceptGroupType;
 import fr.cnrs.opentheso.repositories.ConceptGroupTypeRepository;
 import fr.cnrs.opentheso.utils.MessageUtils;
@@ -49,15 +50,15 @@ import java.util.Set;
 @RequiredArgsConstructor
 public class CollectionDetailEditorBean implements Serializable {
 
-    private final CollectionMutationService collectionMutationService;
-    private final CollectionReadService collectionReadService;
-    private final ConceptWriteSearchService conceptWriteSearchService;
-    private final ConceptWriteMetadataService conceptWriteMetadataService;
-    private final ConceptGroupTypeRepository conceptGroupTypeRepository;
-    private final ThesaurusContext thesaurusContext;
-    private final UserSession userSession;
-    private final ConceptWritePolicy conceptWritePolicy;
-    private final ThesaurusBrowseBean thesaurusBrowseBean;
+    private final transient CollectionMutationService collectionMutationService;
+    private final transient CollectionReadService collectionReadService;
+    private final transient ConceptWriteSearchService conceptWriteSearchService;
+    private final transient ConceptWriteMetadataService conceptWriteMetadataService;
+    private final transient ConceptGroupTypeRepository conceptGroupTypeRepository;
+    private final transient ThesaurusContext thesaurusContext;
+    private final transient UserSession userSession;
+    private final transient ConceptWritePolicy conceptWritePolicy;
+    private final transient ThesaurusBrowseBean thesaurusBrowseBean;
 
     private String label;
     private String notation;
@@ -142,8 +143,7 @@ public class CollectionDetailEditorBean implements Serializable {
     }
 
     public void prepareRemoveBranchMember() {
-        selectedConcept = null;
-        applyToBranch = true;
+        prepareAddBranchMember();
     }
 
     public void prepareMove() {
@@ -342,12 +342,12 @@ public class CollectionDetailEditorBean implements Serializable {
 
     public void submitCreateRoot() {
         if (!isManagerActionsAvailable()) {
-            MessageUtils.showErrorMessage("Action non autorisée");
+            MessageUtils.showErrorMessage(WriteUiMessages.UNAUTHORIZED_FALLBACK);
             return;
         }
         Integer userId = requireUserId();
         if (userId == null) {
-            MessageUtils.showErrorMessage("Action non autorisée");
+            MessageUtils.showErrorMessage(WriteUiMessages.UNAUTHORIZED_FALLBACK);
             return;
         }
         MutationResult result = collectionMutationService.createCollection(new CreateCollectionCommand(
@@ -369,7 +369,7 @@ public class CollectionDetailEditorBean implements Serializable {
         }
         Integer userId = requireUserId();
         if (userId == null) {
-            MessageUtils.showErrorMessage("Action non autorisée");
+            MessageUtils.showErrorMessage(WriteUiMessages.UNAUTHORIZED_FALLBACK);
             return;
         }
         var group = thesaurusBrowseBean.getSelectedGroup();
@@ -389,11 +389,11 @@ public class CollectionDetailEditorBean implements Serializable {
 
     private boolean canMutateSelectedCollection() {
         if (!isManagerActionsAvailable() || thesaurusBrowseBean.getSelectedGroup() == null) {
-            MessageUtils.showErrorMessage("Action non autorisée");
+            MessageUtils.showErrorMessage(WriteUiMessages.UNAUTHORIZED_FALLBACK);
             return false;
         }
         if (requireUserId() == null) {
-            MessageUtils.showErrorMessage("Action non autorisée");
+            MessageUtils.showErrorMessage(WriteUiMessages.UNAUTHORIZED_FALLBACK);
             return false;
         }
         return true;

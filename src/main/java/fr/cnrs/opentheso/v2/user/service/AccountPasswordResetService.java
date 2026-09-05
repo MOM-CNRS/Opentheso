@@ -3,12 +3,12 @@ package fr.cnrs.opentheso.v2.user.service;
 import fr.cnrs.opentheso.v2.shared.mail.SystemMailSender;
 import fr.cnrs.opentheso.v2.shared.repository.PasswordResetCommandRepository;
 import fr.cnrs.opentheso.v2.shared.repository.UserAuthQueryRepository;
+import fr.cnrs.opentheso.v2.shared.time.V2Dates;
 import fr.cnrs.opentheso.v2.shared.web.ApplicationUriService;
 import lombok.RequiredArgsConstructor;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
 
-import java.time.LocalDateTime;
 import java.util.UUID;
 
 @Service
@@ -31,7 +31,7 @@ public class AccountPasswordResetService {
             passwordResetCommandRepository.insertToken(
                     credential.userId(),
                     token,
-                    LocalDateTime.now().plusMinutes(TOKEN_EXPIRATION_MINUTES)
+                    V2Dates.nowDateTime().plusMinutes(TOKEN_EXPIRATION_MINUTES)
             );
 
             String resetLink = applicationUriService.resolveApplicationBaseUrl()

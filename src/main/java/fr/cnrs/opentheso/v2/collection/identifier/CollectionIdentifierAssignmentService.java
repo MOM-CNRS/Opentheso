@@ -22,12 +22,11 @@ public class CollectionIdentifierAssignmentService {
         if (preferences.isUseArk()) {
             collectionArkWriteService.assignArkOnCreation(thesaurusId, collectionId, label);
         }
-        if (preferences.isUseHandle() && !preferences.isGenerateHandle()) {
+        if (preferences.isUseHandle() && !preferences.isGenerateHandle()
+                && !collectionHandleWriteService.assignHandleOnCreation(collectionId, thesaurusId)) {
             // Aligné sur le legacy : un échec Handle ne doit pas annuler la création de la collection.
-            if (!collectionHandleWriteService.assignHandleOnCreation(collectionId, thesaurusId)) {
-                log.warn("La création du Handle a échoué pour la collection {} (thésaurus {})",
-                        collectionId, thesaurusId);
-            }
+            log.warn("La création du Handle a échoué pour la collection {} (thésaurus {})",
+                    collectionId, thesaurusId);
         }
     }
 }

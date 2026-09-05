@@ -7,7 +7,6 @@ import fr.cnrs.opentheso.v2.concept.model.ConceptAlignmentGroup;
 import fr.cnrs.opentheso.v2.concept.model.ConceptDetail;
 import fr.cnrs.opentheso.v2.concept.model.ConceptImageItem;
 import fr.cnrs.opentheso.v2.concept.model.ConceptNote;
-import fr.cnrs.opentheso.v2.concept.model.ConceptRelation;
 import fr.cnrs.opentheso.v2.concept.model.ConceptSummary;
 import fr.cnrs.opentheso.v2.concept.model.ConceptTreeNodeData;
 import fr.cnrs.opentheso.v2.concept.service.ConceptReadService;

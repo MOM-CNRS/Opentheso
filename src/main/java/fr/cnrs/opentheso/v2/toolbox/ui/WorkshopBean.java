@@ -19,11 +19,11 @@ import java.io.Serializable;
 @RequiredArgsConstructor
 public class WorkshopBean implements Serializable {
 
-    private final UserSession userSession;
-    private final ToolboxAccessPolicy toolboxAccessPolicy;
-    private final ThesaurusContext thesaurusContext;
-    private final WorkshopImportBean workshopImportBean;
-    private final ThesaurusAccessService thesaurusAccessService;
+    private final transient UserSession userSession;
+    private final transient ToolboxAccessPolicy toolboxAccessPolicy;
+    private final transient ThesaurusContext thesaurusContext;
+    private final transient WorkshopImportBean workshopImportBean;
+    private final transient ThesaurusAccessService thesaurusAccessService;
 
     public boolean isScreenAvailable() {
         return toolboxAccessPolicy.canAccessWorkshop(userSession)

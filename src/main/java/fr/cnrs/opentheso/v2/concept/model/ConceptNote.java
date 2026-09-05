@@ -1,6 +1,7 @@
 package fr.cnrs.opentheso.v2.concept.model;
 
 import org.apache.commons.lang3.StringUtils;
+import java.io.Serializable;
 
 /**
  * Note affichée sur le panneau concept.
@@ -12,7 +13,7 @@ public record ConceptNote(
         String lang,
         String value,
         String source
-) {
+) implements Serializable {
 
     public ConceptNote(String id, String typeCode, String lang, String value) {
         this(id, typeCode, lang, value, null);

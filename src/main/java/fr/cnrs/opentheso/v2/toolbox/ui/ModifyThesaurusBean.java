@@ -35,10 +35,10 @@ import java.util.List;
 @Named("v2ModifyThesaurusBean")
 public class ModifyThesaurusBean implements Serializable {
 
-    private final UserSession userSession;
-    private final ThesaurusAccessService thesaurusAccessService;
-    private final ModifyThesaurusService modifyThesaurusService;
-    private final ThesaurusSearchLanguageSync thesaurusSearchLanguageSync;
+    private final transient UserSession userSession;
+    private final transient ThesaurusAccessService thesaurusAccessService;
+    private final transient ModifyThesaurusService modifyThesaurusService;
+    private final transient ThesaurusSearchLanguageSync thesaurusSearchLanguageSync;
 
     private String thesaurusId;
     private EditionThesaurusDetails details;

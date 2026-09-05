@@ -1,5 +1,7 @@
 package fr.cnrs.opentheso.v2.concept.model;
 
+import java.io.Serializable;
+
 public record ConceptIdentifiers(
         String internalPermalinkUrl,
         String originalUri,
@@ -7,7 +9,7 @@ public record ConceptIdentifiers(
         String qrCodeValue,
         boolean showOriginalUri,
         boolean showQrCode
-) {
+) implements Serializable {
 
     public String getInternalPermalinkUrl() {
         return internalPermalinkUrl;

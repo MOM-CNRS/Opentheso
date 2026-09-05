@@ -13,6 +13,7 @@ import org.mockito.junit.jupiter.MockitoExtension;
 
 import java.sql.Date;
 import java.time.LocalDate;
+import java.time.Month;
 import java.util.List;
 
 import static org.junit.jupiter.api.Assertions.assertEquals;
@@ -98,7 +99,7 @@ class CandidatBoardBeanTest {
         dto.setCreatedBy(author);
         dto.setCreatedById(userId);
         dto.setNbrVote(votes);
-        dto.setCreationDate(Date.valueOf(LocalDate.of(2026, 6, 15)));
+        dto.setCreationDate(Date.valueOf(LocalDate.of(2026, Month.JUNE, 15)));
         return dto;
     }
 }

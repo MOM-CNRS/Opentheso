@@ -1,5 +1,6 @@
 package fr.cnrs.opentheso.v2.publicapi.thesaurus.persistence;
 
+import fr.cnrs.opentheso.v2.shared.repository.NativeQueryParams;
 import fr.cnrs.opentheso.v2.concept.model.ConceptLinkItem;
 import jakarta.persistence.EntityManager;
 import jakarta.persistence.PersistenceContext;
@@ -28,7 +29,7 @@ public class ThesaurusPublicQueryRepository {
                 ORDER BY t.lexical_value
                 """;
         List<Object[]> rows = entityManager.createNativeQuery(sql)
-                .setParameter("thesaurusId", thesaurusId)
+                .setParameter(NativeQueryParams.THESAURUS_ID, thesaurusId)
                 .setParameter("lang", lang)
                 .getResultList();
         if (rows.isEmpty()) {

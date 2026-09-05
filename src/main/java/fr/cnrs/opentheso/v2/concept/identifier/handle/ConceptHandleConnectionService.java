@@ -1,8 +1,7 @@
 package fr.cnrs.opentheso.v2.concept.identifier.handle;
 
-import java.io.File;
 import java.io.FileInputStream;
-import java.io.UnsupportedEncodingException;
+import java.nio.charset.StandardCharsets;
 import java.security.PrivateKey;
 import java.util.List;
 
@@ -50,86 +49,62 @@ public class ConceptHandleConnectionService {
     private HandleResolver resolver;
 
 
-    public void applyNodePreference(Preferences nodePreference){
+    public void applyNodePreference(Preferences nodePreference) {
+        if (nodePreference == null) {
+            return;
+        }
         serverHandle = nodePreference.getUrlApiHandle();
         pass = nodePreference.getPassHandle();
-        prefix = nodePreference.getPrefixIdHandle(); // exp : 20.500.11859
+        prefix = nodePreference.getPrefixIdHandle();
         privatePrefix = nodePreference.getPrivatePrefixHandle();
-        
-        pathKey = admprivPath;//("certificats/admpriv.bin");
-        try {
-            index = nodePreference.getIndexHandle(); // exp : 300
-        } catch (Exception e) {
-        }
-        adminHandle = nodePreference.getAdminHandle(); // exp : 0.NA/20.500.11859
-    }    
-    
-    public boolean connectHandle(){
-        byte[] key = null;
-        try {
-            File f= new File(admprivPath);
-            FileInputStream fs = new FileInputStream(f);
+        pathKey = admprivPath;
+        index = nodePreference.getIndexHandle();
+        adminHandle = nodePreference.getAdminHandle();
+    }
+
+    public boolean connectHandle() {
+        byte[] key;
+        try (FileInputStream fs = new FileInputStream(admprivPath)) {
             key = Util.getBytesFromInputStream(fs);
             if (key == null || key.length == 0) {
-                throw new RuntimeException("Failed to load private key. Key is null or empty.");
+                throw new IllegalStateException("Failed to load private key. Key is null or empty.");
             }
-        } catch (Throwable t) {
-            message = "Cannot read private key " + admprivPath + ": " + t;
-            log.debug("Cannot read private key " + admprivPath + ": " + t);
+        } catch (Exception e) {
+            message = "Cannot read private key " + admprivPath + ": " + e;
+            log.debug("Cannot read private key {}: {}", admprivPath, e.toString());
             return false;
         }
 
-        // A HandleResolver object is used not just for resolution, but for
-        // all handle operations(including create)
         resolver = new HandleResolver();
 
-        // Check to see if the private key is encrypted.  If so, read in the
-        // user's passphrase and decrypt.  Finally, convert the byte[] 
-        // representation of the private key into a PrivateKey object.
-        PrivateKey privkey = null;
-        byte secKey[] = null;
+        PrivateKey privkey;
         try {
+            byte[] secKey = null;
             if (Util.requiresSecretKey(key)) {
-                secKey = pass.getBytes();
+                secKey = pass == null ? null : pass.getBytes(StandardCharsets.UTF_8);
             }
             key = Util.decrypt(key, secKey);
             privkey = Util.getPrivateKeyFromBytes(key, 0);
-        } catch (Throwable t) {
-            log.debug("Can't load private key in " + admprivPath + ": " + t);
+        } catch (Exception e) {
+            log.debug("Can't load private key in {}: {}", admprivPath, e.toString());
             return false;
         }
 
         try {
-            // Create a PublicKeyAuthenticationInfo object to pass to HandleResolver.
-            // This is constructed with the admin handle, index, and PrivateKey as
-            // arguments.
-            auth = new PublicKeyAuthenticationInfo(adminHandle.getBytes("UTF8"),
-                            index,
-                            privkey);
-
-            // We don't want to create a handle without an admin value-- otherwise
-            // we would be locked out.  Give ourselves all permissions, even
-            // ones that only apply for NA handles.
-            admin = new AdminRecord(adminHandle.getBytes("UTF8"), index,
+            auth = new PublicKeyAuthenticationInfo(adminHandle.getBytes(StandardCharsets.UTF_8),
+                    index,
+                    privkey);
+            admin = new AdminRecord(adminHandle.getBytes(StandardCharsets.UTF_8), index,
                     true, true, true, true, true, true,
                     true, true, true, true, true, true);
-
-        } catch (Throwable t) {
-            log.debug("\nError: " + t);
+        } catch (Exception e) {
+            log.debug("Error creating handle authentication: {}", e.toString());
         }
         return true;
     }
 
-    /**
-     * peut créer un handle
-     * 
-     * @param handle
-     * @param url
-     * @return
-     * @throws UnsupportedEncodingException
-     * @throws HandleException 
-     */
-    public boolean createHandle(String handle, String url) throws UnsupportedEncodingException, HandleException {
+    /** Crée un handle pour l'URL donnée. */
+    public boolean createHandle(String handle, String url) throws HandleException {
 
         if (!url.startsWith("http://") && !url.startsWith("https://")) {
             //prefix by http by default
@@ -143,7 +118,7 @@ public class ConceptHandleConnectionService {
         // The final argument is the authentication object that should be
         // used to gain permission to perform the creation.
         String handleId = prefix + "/" + handle;
-        CreateHandleRequest req = new CreateHandleRequest(handleId.getBytes("UTF8"), val, auth);
+        CreateHandleRequest req = new CreateHandleRequest(handleId.getBytes(StandardCharsets.UTF_8), val, auth);
 
         AbstractResponse response = resolver.processRequest(req);
 
@@ -153,12 +128,12 @@ public class ConceptHandleConnectionService {
         // response codes, including RC_ERROR, RC_INVALID_ADMIN, and
         // RC_INSUFFICIENT_PERMISSIONS.
         if (response.responseCode == AbstractMessage.RC_SUCCESS) {
-            //System.out.println("\nGot Response: \n" + response);
+            log.debug("Got response: {}", response);
             message = response.toString();
             this.setResponseMsg(response.responseCode);
             return true;
         } else {
-            //System.out.println("\nGot Error: \n" + response);
+            log.debug("Got error: {}", response);
             message = response.toString();
             this.setResponseMsg(response.responseCode);
         }
@@ -204,7 +179,7 @@ public class ConceptHandleConnectionService {
                 duplicateId = false;
             }
             if (!handleClient.isHandleExist(
-                    " https://hdl.handle.net/",
+                    "https://hdl.handle.net/",
                     nodePreference.getPrefixIdHandle() + "/" + idHandle)) {
                 duplicateId = false;
             }
@@ -265,10 +240,12 @@ public class ConceptHandleConnectionService {
         DeleteHandleRequest req = new DeleteHandleRequest(Util.encodeString(handleId), auth);
         AbstractResponse response = resolver.processRequest(req);
         if (response == null || response.responseCode != AbstractMessage.RC_SUCCESS) {
-            System.out.println("error deleting '" + handleId + "': " + response);
-            this.setResponseMsg(response.responseCode);
+            log.warn("Error deleting handle '{}': {}", handleId, response);
+            if (response != null) {
+                this.setResponseMsg(response.responseCode);
+            }
         } else {
-            System.out.println("deleted " + handleId);
+            log.debug("Deleted handle {}", handleId);
             return true;
         }
         return false;

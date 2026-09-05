@@ -47,8 +47,7 @@ public class ThesaurusPreferenceService {
 
     @Transactional(readOnly = true)
     public ThesaurusPreferences loadPreferences(String thesaurusId, String workLang) {
-        PreferencesEntity entity = requirePreferences(thesaurusId);
-        return SettingMapper.toPreferences(entity, loadUsedLanguages(thesaurusId, workLang));
+        return toPreferences(thesaurusId, workLang);
     }
 
     /**
@@ -62,8 +61,7 @@ public class ThesaurusPreferenceService {
     @Cacheable(cacheNames = CacheConfig.THESAURUS_PREFERENCES_CACHE, key = "#thesaurusId + '|' + #workLang")
     public ThesaurusPreferences loadPreferencesOrNull(String thesaurusId, String workLang) {
         try {
-            PreferencesEntity entity = requirePreferences(thesaurusId);
-            return SettingMapper.toPreferences(entity, loadUsedLanguages(thesaurusId, workLang));
+            return toPreferences(thesaurusId, workLang);
         } catch (InvalidSettingDataException noPreferencesConfigured) {
             return null;
         }
@@ -75,9 +73,7 @@ public class ThesaurusPreferenceService {
      */
     @Transactional(readOnly = true)
     public List<ThesaurusLanguage> loadUsedLanguages(String thesaurusId, String workLang) {
-        return thesaurusSettingsQueryRepository.findUsedLanguages(thesaurusId, workLang).stream()
-                .map(SettingMapper::toLanguage)
-                .toList();
+        return usedLanguages(thesaurusId, workLang);
     }
 
     @CacheEvict(cacheNames = CacheConfig.THESAURUS_PREFERENCES_CACHE, allEntries = true)
@@ -88,7 +84,7 @@ public class ThesaurusPreferenceService {
     @Transactional
     @CacheEvict(cacheNames = CacheConfig.THESAURUS_PREFERENCES_CACHE, allEntries = true)
     public ThesaurusPreferences savePreferences(String thesaurusId, ThesaurusPreferences preferences, String workLang) {
-        return savePreferences(thesaurusId, preferences, null, null, null, null, workLang);
+        return persistPreferences(thesaurusId, preferences, null, null, null, null, workLang);
     }
 
     /**
@@ -101,12 +97,25 @@ public class ThesaurusPreferenceService {
         entity.setSortByNotation(sortByNotation);
         preferencesJpaRepository.save(entity);
         log.info("Tri par notation={} enregistré pour le thésaurus {}", sortByNotation, thesaurusId);
-        return loadPreferences(thesaurusId, workLang);
+        return toPreferences(thesaurusId, workLang);
     }
 
     @Transactional
     @CacheEvict(cacheNames = CacheConfig.THESAURUS_PREFERENCES_CACHE, allEntries = true)
     public ThesaurusPreferences savePreferences(
+            String thesaurusId,
+            ThesaurusPreferences preferences,
+            String newPassArk,
+            String newPassHandle,
+            String newDeeplApiKey,
+            String newApiKeyOpenArk,
+            String workLang
+    ) {
+        return persistPreferences(
+                thesaurusId, preferences, newPassArk, newPassHandle, newDeeplApiKey, newApiKeyOpenArk, workLang);
+    }
+
+    private ThesaurusPreferences persistPreferences(
             String thesaurusId,
             ThesaurusPreferences preferences,
             String newPassArk,
@@ -135,7 +144,7 @@ public class ThesaurusPreferenceService {
         normalizePaths(entity);
         preferencesJpaRepository.save(entity);
         log.info("Préférences enregistrées pour le thésaurus {}", thesaurusId);
-        return loadPreferences(thesaurusId, workLang);
+        return toPreferences(thesaurusId, workLang);
     }
 
     @Transactional
@@ -149,7 +158,7 @@ public class ThesaurusPreferenceService {
         SettingMapper.applyIdentifierServerType(entity, serverType);
         preferencesJpaRepository.save(entity);
         log.info("Serveur d'identifiants mis à jour pour le thésaurus {}", thesaurusId);
-        return loadPreferences(thesaurusId, workLang);
+        return toPreferences(thesaurusId, workLang);
     }
 
     @Transactional
@@ -168,7 +177,18 @@ public class ThesaurusPreferenceService {
         }
         preferencesJpaRepository.save(entity);
         log.info("Paramètres d'identifiants enregistrés pour le thésaurus {}", thesaurusId);
-        return loadPreferences(thesaurusId, workLang);
+        return toPreferences(thesaurusId, workLang);
+    }
+
+    private ThesaurusPreferences toPreferences(String thesaurusId, String workLang) {
+        PreferencesEntity entity = requirePreferences(thesaurusId);
+        return SettingMapper.toPreferences(entity, usedLanguages(thesaurusId, workLang));
+    }
+
+    private List<ThesaurusLanguage> usedLanguages(String thesaurusId, String workLang) {
+        return thesaurusSettingsQueryRepository.findUsedLanguages(thesaurusId, workLang).stream()
+                .map(SettingMapper::toLanguage)
+                .toList();
     }
 
     private PreferencesEntity requirePreferences(String thesaurusId) {

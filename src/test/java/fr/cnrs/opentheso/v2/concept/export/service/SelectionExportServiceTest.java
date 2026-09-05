@@ -14,6 +14,7 @@ import fr.cnrs.opentheso.v2.toolbox.edition.persistence.ThesaurusSkosDocumentBui
 import fr.cnrs.opentheso.v2.toolbox.edition.service.ThesaurusEditionZipExportService;
 import fr.cnrs.opentheso.v2.toolbox.persistence.ToolboxPreferencePersistence;
 import fr.cnrs.opentheso.v2.toolbox.persistence.ToolboxThesaurusPersistence;
+import fr.cnrs.opentheso.v2.shared.time.V2Dates;
 import org.junit.jupiter.api.AfterEach;
 import org.junit.jupiter.api.BeforeEach;
 import org.junit.jupiter.api.Test;
@@ -23,7 +24,6 @@ import org.mockito.junit.jupiter.MockitoExtension;
 import org.primefaces.model.StreamedContent;
 
 import java.io.ByteArrayInputStream;
-import java.time.LocalDate;
 import java.util.List;
 import java.util.function.BiConsumer;
 
@@ -339,6 +339,6 @@ class SelectionExportServiceTest {
     }
 
     private static String datedName(String base, String extension) {
-        return base + "_" + LocalDate.now() + extension;
+        return base + "_" + V2Dates.nowDate() + extension;
     }
 }

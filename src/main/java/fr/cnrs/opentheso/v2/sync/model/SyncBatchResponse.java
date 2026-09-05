@@ -1,6 +1,7 @@
 package fr.cnrs.opentheso.v2.sync.model;
 
 import java.util.List;
+import java.io.Serializable;
 
 public record SyncBatchResponse(
         int total,
@@ -9,7 +10,7 @@ public record SyncBatchResponse(
         int candidatesCreated,
         int errors,
         List<SyncConceptResult> results
-) {
+) implements Serializable {
     public static SyncBatchResponse from(List<SyncConceptResult> results) {
         int skipped = 0;
         int propositions = 0;

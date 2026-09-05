@@ -52,7 +52,7 @@ class CandidatControllerV2Test {
         candidat.setLang("fr");
         candidat.setStatut(String.valueOf(CandidatStatusCode.PENDING));
         candidat.setCreatedBy("alice");
-        candidat.setCreationDate(new Date());
+        candidat.setCreationDate(Date.from(java.time.Instant.parse("2024-06-15T12:00:00Z")));
         when(candidatReadService.searchByStatus("TH1", "fr", CandidatStatusCode.PENDING, null))
                 .thenReturn(List.of(candidat));
 

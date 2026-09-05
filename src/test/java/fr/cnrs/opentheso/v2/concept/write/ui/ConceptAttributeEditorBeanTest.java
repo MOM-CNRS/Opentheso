@@ -61,7 +61,8 @@ class ConceptAttributeEditorBeanTest {
                 thesaurusContext,
                 userSession,
                 conceptWritePolicy,
-                thesaurusBrowseBean
+                thesaurusBrowseBean,
+                null
         );
         lenient().when(conceptWritePolicy.canMutateConceptAttributes(userSession, false)).thenReturn(true);
         lenient().when(thesaurusBrowseBean.isCustomRelationVisible()).thenReturn(true);

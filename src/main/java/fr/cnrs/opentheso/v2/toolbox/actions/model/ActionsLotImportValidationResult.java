@@ -14,7 +14,7 @@ public record ActionsLotImportValidationResult<C>(
         List<ActionsLotLineError> errors,
         List<C> validCandidates,
         String context
-) implements Serializable {
+) implements Serializable, ActionsLotCheckOutcome {
 
     public ActionsLotImportValidationResult(
             boolean success,

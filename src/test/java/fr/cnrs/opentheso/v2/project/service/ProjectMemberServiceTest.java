@@ -11,7 +11,6 @@ import fr.cnrs.opentheso.v2.shared.repository.ProjectMembershipRepository;
 import fr.cnrs.opentheso.v2.shared.repository.UserCommandRepository;
 import fr.cnrs.opentheso.v2.rights.RightsService;
 import fr.cnrs.opentheso.v2.shared.repository.projection.UserSearchRow;
-import fr.cnrs.opentheso.v2.user.exception.UserNotFoundException;
 import fr.cnrs.opentheso.v2.user.model.UserProfile;
 import fr.cnrs.opentheso.v2.user.service.UserLookupService;
 import fr.cnrs.opentheso.v2.user.service.UserProfileService;

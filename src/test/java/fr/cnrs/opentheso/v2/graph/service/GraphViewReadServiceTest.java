@@ -1,6 +1,5 @@
 package fr.cnrs.opentheso.v2.graph.service;
 
-import fr.cnrs.opentheso.v2.graph.mapper.GraphViewMapper;
 import fr.cnrs.opentheso.v2.shared.repository.GraphViewQueryRepository;
 import fr.cnrs.opentheso.v2.shared.repository.projection.GraphViewListRow;
 import org.junit.jupiter.api.BeforeEach;

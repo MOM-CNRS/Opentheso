@@ -1,5 +1,6 @@
 package fr.cnrs.opentheso.v2.facet.ui;
 
+import fr.cnrs.opentheso.v2.concept.write.ui.WriteUiMessages;
 import fr.cnrs.opentheso.utils.MessageUtils;
 import fr.cnrs.opentheso.v2.concept.ui.ThesaurusBrowseBean;
 import fr.cnrs.opentheso.v2.concept.write.model.ConceptSearchSuggestion;
@@ -50,16 +51,19 @@ import java.util.Set;
 @RequiredArgsConstructor
 public class FacetDetailEditorBean implements Serializable {
 
-    private final FacetMutationService facetMutationService;
-    private final FacetReadService facetReadService;
-    private final ConceptWriteSearchService conceptWriteSearchService;
-    private final ConceptWriteMetadataService conceptWriteMetadataService;
-    private final ConceptLifecycleMutationService conceptLifecycleMutationService;
-    private final ConceptNoteMutationService conceptNoteMutationService;
-    private final ThesaurusContext thesaurusContext;
-    private final UserSession userSession;
-    private final ConceptWritePolicy conceptWritePolicy;
-    private final ThesaurusBrowseBean thesaurusBrowseBean;
+    private static final String INVALID_SELECTION = "Sélection invalide !";
+    private static final String STATUS_ERROR = "error";
+
+    private final transient FacetMutationService facetMutationService;
+    private final transient FacetReadService facetReadService;
+    private final transient ConceptWriteSearchService conceptWriteSearchService;
+    private final transient ConceptWriteMetadataService conceptWriteMetadataService;
+    private final transient ConceptLifecycleMutationService conceptLifecycleMutationService;
+    private final transient ConceptNoteMutationService conceptNoteMutationService;
+    private final transient ThesaurusContext thesaurusContext;
+    private final transient UserSession userSession;
+    private final transient ConceptWritePolicy conceptWritePolicy;
+    private final transient ThesaurusBrowseBean thesaurusBrowseBean;
 
     private String label;
     private String definition;
@@ -194,7 +198,7 @@ public class FacetDetailEditorBean implements Serializable {
         }
         Integer userId = userSession.getCurrentUserId();
         if (userId == null) {
-            MessageUtils.showErrorMessage("Action non autorisée");
+            MessageUtils.showErrorMessage(WriteUiMessages.UNAUTHORIZED_FALLBACK);
             return;
         }
         if (StringUtils.isBlank(childPreferredLabel)) {
@@ -247,8 +251,7 @@ public class FacetDetailEditorBean implements Serializable {
     }
 
     public void prepareRemoveBranchMember() {
-        selectedConcept = null;
-        applyToBranch = true;
+        prepareAddBranchMember();
     }
 
     public void prepareChangeParent() {
@@ -370,7 +373,7 @@ public class FacetDetailEditorBean implements Serializable {
 
     public void submitAddMember() {
         if (!canMutateSelectedFacet() || selectedConcept == null) {
-            MessageUtils.showErrorMessage("Sélection invalide !");
+            MessageUtils.showErrorMessage(INVALID_SELECTION);
             return;
         }
         var facet = thesaurusBrowseBean.getSelectedFacet();
@@ -384,7 +387,7 @@ public class FacetDetailEditorBean implements Serializable {
 
     public void submitRemoveBranchMember() {
         if (!canMutateSelectedFacet() || selectedConcept == null) {
-            MessageUtils.showErrorMessage("Sélection invalide !");
+            MessageUtils.showErrorMessage(INVALID_SELECTION);
             return;
         }
         var facet = thesaurusBrowseBean.getSelectedFacet();
@@ -422,7 +425,7 @@ public class FacetDetailEditorBean implements Serializable {
 
     public void submitChangeParent() {
         if (!canMutateSelectedFacet() || selectedParentConcept == null) {
-            MessageUtils.showErrorMessage("Sélection invalide !");
+            MessageUtils.showErrorMessage(INVALID_SELECTION);
             return;
         }
         var facet = thesaurusBrowseBean.getSelectedFacet();
@@ -438,12 +441,12 @@ public class FacetDetailEditorBean implements Serializable {
         createdFacetId = "";
         String parentId = resolveCreateParentId();
         if (!isManagerActionsAvailable() || StringUtils.isBlank(parentId)) {
-            createRunState = "error";
-            createErrorMessage = "Action non autorisée";
+            createRunState = STATUS_ERROR;
+            createErrorMessage = WriteUiMessages.UNAUTHORIZED_FALLBACK;
             return;
         }
         if (StringUtils.isBlank(label)) {
-            createRunState = "error";
+            createRunState = STATUS_ERROR;
             createErrorMessage = "Le libellé est obligatoire !";
             return;
         }
@@ -456,17 +459,17 @@ public class FacetDetailEditorBean implements Serializable {
                     label
             ));
         } catch (org.springframework.dao.IncorrectResultSizeDataAccessException e) {
-            createRunState = "error";
+            createRunState = STATUS_ERROR;
             createErrorMessage = "Le nom de la facette '" + label.trim() + "' existe déjà !";
             return;
         } catch (RuntimeException e) {
-            createRunState = "error";
+            createRunState = STATUS_ERROR;
             createErrorMessage = StringUtils.defaultIfBlank(
                     e.getMessage(), "Erreur pendant la création de la Facette !");
             return;
         }
         if (result == null || !result.success()) {
-            createRunState = "error";
+            createRunState = STATUS_ERROR;
             createErrorMessage = result != null
                     ? result.message()
                     : "Erreur pendant la création de la Facette !";
@@ -508,7 +511,7 @@ public class FacetDetailEditorBean implements Serializable {
 
     private boolean canMutateSelectedFacet() {
         if (!isManagerActionsAvailable() || thesaurusBrowseBean.getSelectedFacet() == null) {
-            MessageUtils.showErrorMessage("Action non autorisée");
+            MessageUtils.showErrorMessage(WriteUiMessages.UNAUTHORIZED_FALLBACK);
             return false;
         }
         return true;

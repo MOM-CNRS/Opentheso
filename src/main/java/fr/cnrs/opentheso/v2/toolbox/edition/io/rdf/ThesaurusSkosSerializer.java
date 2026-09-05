@@ -21,13 +21,13 @@ import fr.cnrs.opentheso.models.skosapi.SKOSXmlDocument;
 
 import fr.cnrs.opentheso.utils.ToolsHelper;
 import lombok.Data;
+import lombok.extern.slf4j.Slf4j;
 import org.apache.commons.collections4.CollectionUtils;
 import org.apache.commons.lang3.ObjectUtils;
 import org.apache.commons.lang3.StringUtils;
 import org.eclipse.rdf4j.model.IRI;
 import org.eclipse.rdf4j.model.Model;
 import org.eclipse.rdf4j.model.ValueFactory;
-import org.eclipse.rdf4j.model.base.AbstractNamespace;
 import org.eclipse.rdf4j.model.impl.SimpleValueFactory;
 import org.eclipse.rdf4j.model.util.ModelBuilder;
 import org.eclipse.rdf4j.model.vocabulary.DCTERMS;
@@ -40,6 +40,7 @@ import org.eclipse.rdf4j.model.vocabulary.XSD;
 import java.util.List;
 
 @Data
+@Slf4j
 public class ThesaurusSkosSerializer {
 
     public final static String DELIMINATE = "##";
@@ -118,7 +119,7 @@ public class ThesaurusSkosSerializer {
                 continue;
             }
 
-            builder.subject(vf.createIRI(nodeImage.getUri().replaceAll(" ", "%20")));
+            builder.subject(vf.createIRI(nodeImage.getUri().replace(" ", "%20")));
             builder.add(RDF.TYPE, FOAF.IMAGE);
             builder.add(DCTERMS.IDENTIFIER, resource.getSdc().getIdentifier());
             if (!StringUtils.isEmpty(nodeImage.getImageName())) {
@@ -141,6 +142,8 @@ public class ThesaurusSkosSerializer {
                     break;
                 case SKOSProperty.REPLACES:
                     builder.add(DCTERMS.REPLACES, vf.createIRI(replace.getTargetUri()));
+                    break;
+                default:
                     break;
             }
         }
@@ -240,24 +243,6 @@ public class ThesaurusSkosSerializer {
         }
     }
 
-    private static class VocabularyNamespace extends AbstractNamespace {
-        private final String prefix;
-        private final String namespace;
-
-        public VocabularyNamespace(String prefix, String namespace) {
-            this.prefix = prefix;
-            this.namespace = namespace;
-        }
-
-        public String getPrefix() {
-            return this.prefix;
-        }
-
-        public String getName() {
-            return this.namespace;
-        }
-    }
-
     private String getGpsMode(List<SKOSGPSCoordinates> getGpsCoordinates) {
         if (CollectionUtils.isNotEmpty(getGpsCoordinates)) {
             var lastIndex = getGpsCoordinates.size() - 1;
@@ -303,6 +288,8 @@ public class ThesaurusSkosSerializer {
                 case SKOSProperty.NOTE:
                     builder.add(SKOS.NOTE, vf.createLiteral(doc.getText(), doc.getLanguage()));
                     break;
+                default:
+                    break;
             }
         }
     }
@@ -339,6 +326,8 @@ public class ThesaurusSkosSerializer {
                     break;
                 case SKOSProperty.DATE:
                     builder.add(DCTERMS.DATE, vf.createLiteral(date.getDate(), XSD.DATE));
+                    break;
+                default:
                     break;
             }
         }
@@ -398,6 +387,8 @@ public class ThesaurusSkosSerializer {
                 case SKOSProperty.HIDDEN_LABEL:
                     builder.add(SKOS.HIDDEN_LABEL, vf.createLiteral(label.getLabel(), label.getLanguage()));
                     break;
+                default:
+                    break;
             }
         }
     }
@@ -456,6 +447,7 @@ public class ThesaurusSkosSerializer {
             switch (dcElement.getName()) {
                 case "title":
                     writeDcElement(dcElement, DCTERMS.TITLE);
+                    break;
                 case "creator":
                     writeDcElement(dcElement, DCTERMS.CREATOR);
                     break;
@@ -521,6 +513,7 @@ public class ThesaurusSkosSerializer {
                     break;
                 case "alternative":
                     writeDcElement(dcElement, DCTERMS.ALTERNATIVE);
+                    break;
                 default:
                     break;
             }
@@ -578,9 +571,11 @@ public class ThesaurusSkosSerializer {
                     case SKOSProperty.NARROWER_MATCH:
                         builder.add(SKOS.NARROW_MATCH, vf.createIRI(match.getValue()));
                         break;
+                    default:
+                        break;
                 }
             } catch (Exception e) {
-                System.out.println("Uri non valide = " + resource.getIdentifier() + "  " + match.getValue());
+                log.warn("Uri non valide pour la ressource {} : {}", resource.getIdentifier(), match.getValue());
             }
 
         }
@@ -659,6 +654,9 @@ public class ThesaurusSkosSerializer {
                     break;
                 case SKOSProperty.SUB_ORDINATE_ARRAY:
                     builder.add("iso-thes:subordinateArray", vf.createIRI(relation.getTargetUri()));
+                    break;
+                default:
+                    break;
             }
         }
     }

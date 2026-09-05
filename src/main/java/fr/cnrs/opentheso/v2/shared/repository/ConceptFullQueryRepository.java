@@ -24,7 +24,6 @@ public class ConceptFullQueryRepository {
     }
 
     public Optional<Object[]> findConceptCore(String conceptId, String thesaurusId, boolean includeCandidates) {
-        String statusFilter = includeCandidates ? "" : "AND c.status != 'CA'";
         List<Object[]> rows = em.createNativeQuery("""
             SELECT c.id_concept, c.status, c.id_ark, c.id_handle, c.id_doi,
                    COALESCE(c.notation, '') AS notation,
@@ -33,11 +32,12 @@ public class ConceptFullQueryRepository {
             FROM concept c
             WHERE c.id_concept = :conceptId
               AND c.id_thesaurus = :thesaurusId
-            """ + statusFilter + """
+              AND (:includeCandidates = true OR c.status <> 'CA')
             LIMIT 1
             """)
-                .setParameter("conceptId", conceptId)
-                .setParameter("thesaurusId", thesaurusId)
+                .setParameter(NativeQueryParams.CONCEPT_ID, conceptId)
+                .setParameter(NativeQueryParams.THESAURUS_ID, thesaurusId)
+                .setParameter("includeCandidates", includeCandidates)
                 .getResultList();
         return rows.isEmpty() ? Optional.empty() : Optional.of(rows.get(0));
     }
@@ -54,8 +54,8 @@ public class ConceptFullQueryRepository {
               AND t.lang = :lang
             LIMIT 1
             """)
-                .setParameter("conceptId", conceptId)
-                .setParameter("thesaurusId", thesaurusId)
+                .setParameter(NativeQueryParams.CONCEPT_ID, conceptId)
+                .setParameter(NativeQueryParams.THESAURUS_ID, thesaurusId)
                 .setParameter("lang", lang)
                 .getResultList();
         return rows.isEmpty() ? Optional.empty() : Optional.of(rows.get(0));
@@ -79,10 +79,10 @@ public class ConceptFullQueryRepository {
               AND npt.hiden = :hidden
             ORDER BY npt.lexical_value
             """)
-                .setParameter("conceptId", conceptId)
-                .setParameter("thesaurusId", thesaurusId)
+                .setParameter(NativeQueryParams.CONCEPT_ID, conceptId)
+                .setParameter(NativeQueryParams.THESAURUS_ID, thesaurusId)
                 .setParameter("lang", lang)
-                .setParameter("hidden", hidden)
+                .setParameter(NativeQueryParams.HIDDEN, hidden)
                 .getResultList();
     }
 
@@ -100,8 +100,8 @@ public class ConceptFullQueryRepository {
               AND t.lang != :lang
             ORDER BY t.lang
             """)
-                .setParameter("conceptId", conceptId)
-                .setParameter("thesaurusId", thesaurusId)
+                .setParameter(NativeQueryParams.CONCEPT_ID, conceptId)
+                .setParameter(NativeQueryParams.THESAURUS_ID, thesaurusId)
                 .setParameter("lang", lang)
                 .getResultList();
     }
@@ -119,10 +119,10 @@ public class ConceptFullQueryRepository {
               AND npt.hiden = :hidden
             ORDER BY npt.lang
             """)
-                .setParameter("conceptId", conceptId)
-                .setParameter("thesaurusId", thesaurusId)
+                .setParameter(NativeQueryParams.CONCEPT_ID, conceptId)
+                .setParameter(NativeQueryParams.THESAURUS_ID, thesaurusId)
                 .setParameter("lang", lang)
-                .setParameter("hidden", hidden)
+                .setParameter(NativeQueryParams.HIDDEN, hidden)
                 .getResultList();
     }
 
@@ -134,8 +134,8 @@ public class ConceptFullQueryRepository {
               AND n.identifier = :conceptId
             ORDER BY n.notetypecode, n.lang
             """)
-                .setParameter("conceptId", conceptId)
-                .setParameter("thesaurusId", thesaurusId)
+                .setParameter(NativeQueryParams.CONCEPT_ID, conceptId)
+                .setParameter(NativeQueryParams.THESAURUS_ID, thesaurusId)
                 .getResultList();
     }
 
@@ -177,8 +177,8 @@ public class ConceptFullQueryRepository {
               )
             ORDER BY sort_key, COALESCE(t.lexical_value, hr.id_concept2)
             """)
-                .setParameter("conceptId", conceptId)
-                .setParameter("thesaurusId", thesaurusId)
+                .setParameter(NativeQueryParams.CONCEPT_ID, conceptId)
+                .setParameter(NativeQueryParams.THESAURUS_ID, thesaurusId)
                 .setParameter("lang", lang)
                 .setParameter("includePrivateGroups", includePrivateGroups)
                 .getResultList();
@@ -205,8 +205,8 @@ public class ConceptFullQueryRepository {
               AND hr.role LIKE 'RT%'
             ORDER BY COALESCE(t.lexical_value, hr.id_concept2), hr.role
             """)
-                .setParameter("conceptId", conceptId)
-                .setParameter("thesaurusId", thesaurusId)
+                .setParameter(NativeQueryParams.CONCEPT_ID, conceptId)
+                .setParameter(NativeQueryParams.THESAURUS_ID, thesaurusId)
                 .setParameter("lang", lang)
                 .getResultList();
     }
@@ -250,12 +250,12 @@ public class ConceptFullQueryRepository {
             ORDER BY sort_key, t.lexical_value ASC
             OFFSET :offset ROWS FETCH NEXT :limit ROWS ONLY
             """)
-                .setParameter("conceptId", conceptId)
-                .setParameter("thesaurusId", thesaurusId)
+                .setParameter(NativeQueryParams.CONCEPT_ID, conceptId)
+                .setParameter(NativeQueryParams.THESAURUS_ID, thesaurusId)
                 .setParameter("lang", lang)
                 .setParameter("includePrivateGroups", includePrivateGroups)
                 .setParameter("offset", offset)
-                .setParameter("limit", limit);
+                .setParameter(NativeQueryParams.LIMIT, limit);
         return query.getResultList();
     }
 
@@ -267,8 +267,8 @@ public class ConceptFullQueryRepository {
               AND a.internal_id_thesaurus = :thesaurusId
             ORDER BY a.alignement_id_type, a.uri_target
             """)
-                .setParameter("conceptId", conceptId)
-                .setParameter("thesaurusId", thesaurusId)
+                .setParameter(NativeQueryParams.CONCEPT_ID, conceptId)
+                .setParameter(NativeQueryParams.THESAURUS_ID, thesaurusId)
                 .getResultList();
     }
 
@@ -280,8 +280,8 @@ public class ConceptFullQueryRepository {
               AND g.id_concept = :conceptId
             ORDER BY g.position
             """)
-                .setParameter("conceptId", conceptId)
-                .setParameter("thesaurusId", thesaurusId)
+                .setParameter(NativeQueryParams.CONCEPT_ID, conceptId)
+                .setParameter(NativeQueryParams.THESAURUS_ID, thesaurusId)
                 .getResultList();
     }
 
@@ -300,8 +300,8 @@ public class ConceptFullQueryRepository {
               AND LOWER(cgc.idconcept) = LOWER(:conceptId)
             ORDER BY COALESCE(cgl.lexicalvalue, cg.idgroup)
             """)
-                .setParameter("conceptId", conceptId)
-                .setParameter("thesaurusId", thesaurusId)
+                .setParameter(NativeQueryParams.CONCEPT_ID, conceptId)
+                .setParameter(NativeQueryParams.THESAURUS_ID, thesaurusId)
                 .setParameter("lang", lang)
                 .getResultList();
     }
@@ -315,8 +315,8 @@ public class ConceptFullQueryRepository {
               AND cgl.lang = :lang
             LIMIT 1
             """)
-                .setParameter("groupId", groupId)
-                .setParameter("thesaurusId", thesaurusId)
+                .setParameter(NativeQueryParams.GROUP_ID, groupId)
+                .setParameter(NativeQueryParams.THESAURUS_ID, thesaurusId)
                 .setParameter("lang", lang)
                 .getResultList();
         return firstScalarAsString(rows);
@@ -330,8 +330,8 @@ public class ConceptFullQueryRepository {
               AND ei.id_concept = :conceptId
             ORDER BY ei.id
             """)
-                .setParameter("conceptId", conceptId)
-                .setParameter("thesaurusId", thesaurusId)
+                .setParameter(NativeQueryParams.CONCEPT_ID, conceptId)
+                .setParameter(NativeQueryParams.THESAURUS_ID, thesaurusId)
                 .getResultList();
     }
 
@@ -362,8 +362,8 @@ public class ConceptFullQueryRepository {
                 ''
             )
             """)
-                .setParameter("conceptId", conceptId)
-                .setParameter("thesaurusId", thesaurusId)
+                .setParameter(NativeQueryParams.CONCEPT_ID, conceptId)
+                .setParameter(NativeQueryParams.THESAURUS_ID, thesaurusId)
                 .getResultList();
         return firstScalarAsString(rows).filter(StringUtils::isNotBlank);
     }
@@ -377,8 +377,8 @@ public class ConceptFullQueryRepository {
               AND cd.name = 'contributor'
             ORDER BY cd.value
             """)
-                .setParameter("conceptId", conceptId)
-                .setParameter("thesaurusId", thesaurusId)
+                .setParameter(NativeQueryParams.CONCEPT_ID, conceptId)
+                .setParameter(NativeQueryParams.THESAURUS_ID, thesaurusId)
                 .getResultList();
     }
 
@@ -400,8 +400,8 @@ public class ConceptFullQueryRepository {
               AND cr.id_thesaurus = :thesaurusId
             ORDER BY COALESCE(t.lexical_value, c.id_concept)
             """)
-                .setParameter("conceptId", conceptId)
-                .setParameter("thesaurusId", thesaurusId)
+                .setParameter(NativeQueryParams.CONCEPT_ID, conceptId)
+                .setParameter(NativeQueryParams.THESAURUS_ID, thesaurusId)
                 .setParameter("lang", lang)
                 .getResultList();
     }
@@ -424,8 +424,8 @@ public class ConceptFullQueryRepository {
               AND cr.id_thesaurus = :thesaurusId
             ORDER BY COALESCE(t.lexical_value, c.id_concept)
             """)
-                .setParameter("conceptId", conceptId)
-                .setParameter("thesaurusId", thesaurusId)
+                .setParameter(NativeQueryParams.CONCEPT_ID, conceptId)
+                .setParameter(NativeQueryParams.THESAURUS_ID, thesaurusId)
                 .setParameter("lang", lang)
                 .getResultList();
     }
@@ -444,8 +444,8 @@ public class ConceptFullQueryRepository {
               AND cf.id_concept = :conceptId
             ORDER BY COALESCE(NULLIF(nl.lexical_value, ''), cf.id_facet)
             """)
-                .setParameter("conceptId", conceptId)
-                .setParameter("thesaurusId", thesaurusId)
+                .setParameter(NativeQueryParams.CONCEPT_ID, conceptId)
+                .setParameter(NativeQueryParams.THESAURUS_ID, thesaurusId)
                 .setParameter("lang", lang)
                 .getResultList();
     }
@@ -458,8 +458,8 @@ public class ConceptFullQueryRepository {
               AND er.id_concept = :conceptId
             ORDER BY er.external_uri
             """)
-                .setParameter("conceptId", conceptId)
-                .setParameter("thesaurusId", thesaurusId)
+                .setParameter(NativeQueryParams.CONCEPT_ID, conceptId)
+                .setParameter(NativeQueryParams.THESAURUS_ID, thesaurusId)
                 .getResultList();
     }
 

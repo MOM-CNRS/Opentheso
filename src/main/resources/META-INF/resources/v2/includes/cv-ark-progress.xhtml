@@ -1,0 +1,19 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<ui:composition xmlns="http://www.w3.org/1999/xhtml"
+                xmlns:ui="http://xmlns.jcp.org/jsf/facelets">
+  <div class="cv-ark-prog" hidden="hidden" aria-live="polite"
+       data-done="#{v2LocaleBean.getMsg('v2.concept.arkProgDone')}">
+    <div class="cv-ark-prog-h">
+      <span class="cv-ark-prog-t">#{step1Detail}</span>
+      <span class="cv-ark-prog-pct">0%</span>
+    </div>
+    <div class="cv-ark-prog-track" role="progressbar" aria-valuemin="0" aria-valuemax="100" aria-valuenow="0">
+      <span class="cv-ark-prog-fill"></span>
+    </div>
+    <ol class="cv-ark-prog-steps" aria-label="#{v2LocaleBean.getMsg('v2.concept.arkSteps')}">
+      <li data-detail="#{step1Detail}">#{step1}</li>
+      <li data-detail="#{step2Detail}">#{step2}</li>
+      <li data-detail="#{step3Detail}">#{step3}</li>
+    </ol>
+  </div>
+</ui:composition>

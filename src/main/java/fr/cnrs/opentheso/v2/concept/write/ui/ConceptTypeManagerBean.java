@@ -8,6 +8,7 @@ import fr.cnrs.opentheso.v2.concept.ui.ThesaurusBrowseBean;
 import fr.cnrs.opentheso.v2.concept.write.policy.ConceptWritePolicy;
 import fr.cnrs.opentheso.v2.setting.ui.ThesaurusContext;
 import fr.cnrs.opentheso.v2.shared.ui.UserSession;
+import fr.cnrs.opentheso.v2.shared.ui.V2LocaleBean;
 import jakarta.faces.view.ViewScoped;
 import jakarta.inject.Named;
 import lombok.Getter;
@@ -30,20 +31,32 @@ import java.util.List;
 @RequiredArgsConstructor
 public class ConceptTypeManagerBean implements Serializable {
 
-    private final ConceptTypeService conceptTypeService;
-    private final ConceptTypeRepository conceptTypeRepository;
-    private final ThesaurusContext thesaurusContext;
-    private final UserSession userSession;
-    private final ConceptWritePolicy conceptWritePolicy;
-    private final ThesaurusBrowseBean thesaurusBrowseBean;
+    private final transient ConceptTypeService conceptTypeService;
+    private final transient ConceptTypeRepository conceptTypeRepository;
+    private final transient ThesaurusContext thesaurusContext;
+    private final transient UserSession userSession;
+    private final transient ConceptWritePolicy conceptWritePolicy;
+    private final transient ThesaurusBrowseBean thesaurusBrowseBean;
+    private final transient V2LocaleBean v2LocaleBean;
+
+    private final DialogRunState run = new DialogRunState();
 
     private List<NodeConceptType> conceptTypes = new ArrayList<>();
     private NodeConceptType conceptTypeToAdd = new NodeConceptType();
     private NodeConceptType conceptTypeToDelete;
-    private String errorMessage;
-    private String flashMessage;
-    private String flashToken;
     private boolean dirty;
+
+    public String getErrorMessage() {
+        return run.getErrorMessage();
+    }
+
+    public String getFlashMessage() {
+        return run.getFlashMessage();
+    }
+
+    public String getFlashToken() {
+        return run.getFlashToken();
+    }
 
     public boolean isManageAvailable() {
         return conceptWritePolicy.canMutateConcept(userSession)
@@ -57,14 +70,12 @@ public class ConceptTypeManagerBean implements Serializable {
     }
 
     public void prepareManage() {
-        errorMessage = null;
-        flashMessage = null;
-        flashToken = null;
+        run.reset();
         dirty = false;
         conceptTypeToDelete = null;
         conceptTypeToAdd = new NodeConceptType();
         if (!isManageAvailable()) {
-            errorMessage = "Action non autorisée";
+            run.setErrorMessage(unauthorized());
             conceptTypes = new ArrayList<>();
             return;
         }
@@ -72,33 +83,33 @@ public class ConceptTypeManagerBean implements Serializable {
     }
 
     public void applyChange(NodeConceptType nodeConceptType) {
-        errorMessage = null;
+        run.setErrorMessage(null);
         if (!isManageAvailable() || nodeConceptType == null || StringUtils.isBlank(nodeConceptType.getCode())) {
-            errorMessage = "Action non autorisée";
+            run.setErrorMessage(unauthorized());
             return;
         }
         if (nodeConceptType.isPermanent()) {
-            errorMessage = "Ce type système n'est pas modifiable";
+            run.setErrorMessage(msg("v2.type.systemLocked", "Ce type système n'est pas modifiable"));
             return;
         }
         if (StringUtils.isAllBlank(nodeConceptType.getLabelFr(), nodeConceptType.getLabelEn())) {
-            errorMessage = "Indiquez au moins un libellé";
+            run.setErrorMessage(msg("v2.type.labelRequired", "Indiquez au moins un libellé"));
             return;
         }
         conceptTypeToDelete = null;
         if (!conceptTypeService.updateConceptType(thesaurusContext.resolveThesaurusId(), nodeConceptType)) {
-            errorMessage = "La mise à jour a échoué";
+            run.setErrorMessage(msg("v2.type.updateFailed", "La mise à jour a échoué"));
             return;
         }
         dirty = true;
-        flashSuccess("Type « " + nodeConceptType.getCode() + " » enregistré");
+        run.flash(msg("v2.type.saved", "Type « {0} » enregistré", nodeConceptType.getCode()));
         reloadTypes();
     }
 
     public void prepareDelete(NodeConceptType nodeConceptType) {
-        errorMessage = null;
+        run.setErrorMessage(null);
         if (nodeConceptType == null || nodeConceptType.isPermanent()) {
-            errorMessage = "Ce type ne peut pas être supprimé";
+            run.setErrorMessage(msg("v2.type.notDeletable", "Ce type ne peut pas être supprimé"));
             conceptTypeToDelete = null;
             return;
         }
@@ -107,64 +118,62 @@ public class ConceptTypeManagerBean implements Serializable {
 
     public void cancelDelete() {
         conceptTypeToDelete = null;
-        errorMessage = null;
+        run.setErrorMessage(null);
     }
 
     public void deleteCustomRelationship() {
-        errorMessage = null;
+        run.setErrorMessage(null);
         if (!isManageAvailable() || conceptTypeToDelete == null || StringUtils.isBlank(conceptTypeToDelete.getCode())) {
-            errorMessage = "Action non autorisée";
+            run.setErrorMessage(unauthorized());
             return;
         }
         if (conceptTypeToDelete.isPermanent()) {
-            errorMessage = "Ce type système n'est pas supprimable";
+            run.setErrorMessage(msg("v2.type.systemNotDeletable", "Ce type système n'est pas supprimable"));
             return;
         }
         String code = conceptTypeToDelete.getCode();
         conceptTypeService.deleteConceptType(thesaurusContext.resolveThesaurusId(), conceptTypeToDelete);
         conceptTypeToDelete = null;
         dirty = true;
-        flashSuccess("Type « " + code + " » supprimé");
+        run.flash(msg("v2.type.deleted", "Type « {0} » supprimé", code));
         reloadTypes();
     }
 
     public void addNewConceptType() {
-        errorMessage = null;
+        run.setErrorMessage(null);
         if (!isManageAvailable() || conceptTypeToAdd == null) {
-            errorMessage = "Action non autorisée";
+            run.setErrorMessage(unauthorized());
             return;
         }
         if (StringUtils.isBlank(conceptTypeToAdd.getCode())) {
-            errorMessage = "Le code est obligatoire";
+            run.setErrorMessage(msg("v2.type.codeRequired", "Le code est obligatoire"));
             return;
         }
         String code = fr.cnrs.opentheso.utils.StringUtils.unaccentLowerString(conceptTypeToAdd.getCode())
-                .replaceAll(" ", "");
+                .replace(" ", "");
         conceptTypeToAdd.setCode(code);
         if (StringUtils.isBlank(code)) {
-            errorMessage = "Le code est obligatoire";
+            run.setErrorMessage(msg("v2.type.codeRequired", "Le code est obligatoire"));
             return;
         }
         if (StringUtils.isAllBlank(conceptTypeToAdd.getLabelFr(), conceptTypeToAdd.getLabelEn())) {
-            errorMessage = "Indiquez au moins un libellé";
+            run.setErrorMessage(msg("v2.type.labelRequired", "Indiquez au moins un libellé"));
             return;
         }
         if (codeExists(code)) {
-            errorMessage = "Le type « " + code + " » existe déjà";
+            run.setErrorMessage(msg("v2.type.exists", "Le type « {0} » existe déjà", code));
             return;
         }
         conceptTypeToDelete = null;
         conceptTypeService.addNewConceptType(thesaurusContext.resolveThesaurusId(), conceptTypeToAdd);
         conceptTypeToAdd = new NodeConceptType();
         dirty = true;
-        flashSuccess("Type « " + code + " » ajouté");
+        run.flash(msg("v2.type.added", "Type « {0} » ajouté", code));
         reloadTypes();
     }
 
     public void finishAfterClose() {
-        flashMessage = null;
-        flashToken = null;
-        errorMessage = null;
+        run.reset();
         conceptTypeToDelete = null;
         dirty = false;
     }
@@ -199,8 +208,16 @@ public class ConceptTypeManagerBean implements Serializable {
                 .collect(java.util.stream.Collectors.toCollection(ArrayList::new));
     }
 
-    private void flashSuccess(String message) {
-        flashMessage = message;
-        flashToken = String.valueOf(System.currentTimeMillis());
+
+    private String unauthorized() {
+        return WriteUiMessages.unauthorized(v2LocaleBean);
+    }
+
+    private String msg(String key, String fallback) {
+        return WriteUiMessages.msg(v2LocaleBean, key, fallback);
+    }
+
+    private String msg(String key, String fallback, Object... args) {
+        return WriteUiMessages.msg(v2LocaleBean, key, fallback, args);
     }
 }

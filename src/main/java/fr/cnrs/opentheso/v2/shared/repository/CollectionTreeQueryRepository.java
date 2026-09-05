@@ -21,7 +21,7 @@ public class CollectionTreeQueryRepository {
      */
     @SuppressWarnings("unchecked")
     public List<Object[]> findRootGroups(String thesaurusId, String lang, boolean includePrivate) {
-        StringBuilder sql = new StringBuilder("""
+        return em.createNativeQuery("""
             SELECT cg.idgroup,
                    COALESCE((
                        SELECT cgl.lexicalvalue
@@ -55,11 +55,11 @@ public class CollectionTreeQueryRepository {
                     AND rg.id_thesaurus = :thesaurusId
                     AND rg.id_group2 IS NOT NULL
               )
-            """);
-        appendPublicOnly(sql, includePrivate);
-        return em.createNativeQuery(sql.toString())
-                .setParameter("thesaurusId", thesaurusId)
+              AND (:includePrivate = true OR cg.private = false)
+            """)
+                .setParameter(NativeQueryParams.THESAURUS_ID, thesaurusId)
                 .setParameter("lang", lang)
+                .setParameter(NativeQueryParams.INCLUDE_PRIVATE, includePrivate)
                 .getResultList();
     }
 
@@ -68,7 +68,7 @@ public class CollectionTreeQueryRepository {
      */
     @SuppressWarnings("unchecked")
     public List<Object[]> findAllGroups(String thesaurusId, String lang, boolean includePrivate) {
-        StringBuilder sql = new StringBuilder("""
+        return em.createNativeQuery("""
             SELECT cg.idgroup,
                    COALESCE((
                        SELECT cgl.lexicalvalue
@@ -82,11 +82,11 @@ public class CollectionTreeQueryRepository {
                    COALESCE(cg.notation, '') AS notation
             FROM concept_group cg
             WHERE cg.idthesaurus = :thesaurusId
-            """);
-        appendPublicOnly(sql, includePrivate);
-        return em.createNativeQuery(sql.toString())
-                .setParameter("thesaurusId", thesaurusId)
+              AND (:includePrivate = true OR cg.private = false)
+            """)
+                .setParameter(NativeQueryParams.THESAURUS_ID, thesaurusId)
                 .setParameter("lang", lang)
+                .setParameter(NativeQueryParams.INCLUDE_PRIVATE, includePrivate)
                 .getResultList();
     }
 
@@ -95,7 +95,7 @@ public class CollectionTreeQueryRepository {
      */
     @SuppressWarnings("unchecked")
     public List<Object[]> findChildGroups(String parentGroupId, String thesaurusId, String lang, boolean includePrivate) {
-        StringBuilder sql = new StringBuilder("""
+        return em.createNativeQuery("""
             SELECT cg.idgroup,
                    COALESCE((
                        SELECT cgl.lexicalvalue
@@ -127,12 +127,12 @@ public class CollectionTreeQueryRepository {
             WHERE rg.id_thesaurus = :thesaurusId
               AND LOWER(rg.id_group1) = LOWER(:parentGroupId)
               AND rg.relation = 'sub'
-            """);
-        appendPublicOnly(sql, includePrivate);
-        return em.createNativeQuery(sql.toString())
+              AND (:includePrivate = true OR cg.private = false)
+            """)
                 .setParameter("parentGroupId", parentGroupId)
-                .setParameter("thesaurusId", thesaurusId)
+                .setParameter(NativeQueryParams.THESAURUS_ID, thesaurusId)
                 .setParameter("lang", lang)
+                .setParameter(NativeQueryParams.INCLUDE_PRIVATE, includePrivate)
                 .getResultList();
     }
 
@@ -141,7 +141,7 @@ public class CollectionTreeQueryRepository {
      */
     @SuppressWarnings("unchecked")
     public List<Object[]> findMemberConcepts(String groupId, String thesaurusId, String lang, int limit) {
-        String sql = """
+        return em.createNativeQuery("""
             SELECT c.id_concept,
                    COALESCE(t.lexical_value, c.id_concept) AS label,
                    COALESCE(c.notation, '') AS notation,
@@ -161,12 +161,11 @@ public class CollectionTreeQueryRepository {
               AND c.id_thesaurus = :thesaurusId
               AND c.status != 'CA'
             ORDER BY label
-            LIMIT
-            """ + Math.max(1, limit);
-        return em.createNativeQuery(sql)
-                .setParameter("groupId", groupId)
-                .setParameter("thesaurusId", thesaurusId)
+            """)
+                .setParameter(NativeQueryParams.GROUP_ID, groupId)
+                .setParameter(NativeQueryParams.THESAURUS_ID, thesaurusId)
                 .setParameter("lang", lang)
+                .setMaxResults(Math.max(1, limit))
                 .getResultList();
     }
 
@@ -175,7 +174,7 @@ public class CollectionTreeQueryRepository {
      */
     @SuppressWarnings("unchecked")
     public Optional<Object[]> findGroupHeader(String groupId, String thesaurusId, String lang, boolean includePrivate) {
-        StringBuilder sql = new StringBuilder("""
+        List<Object[]> rows = em.createNativeQuery("""
             SELECT cg.idgroup,
                    COALESCE((
                        SELECT cgl.lexicalvalue
@@ -195,13 +194,13 @@ public class CollectionTreeQueryRepository {
             FROM concept_group cg
             WHERE LOWER(cg.idgroup) = LOWER(:groupId)
               AND cg.idthesaurus = :thesaurusId
-            """);
-        appendPublicOnly(sql, includePrivate);
-        sql.append(" LIMIT 1");
-        List<Object[]> rows = em.createNativeQuery(sql.toString())
-                .setParameter("groupId", groupId)
-                .setParameter("thesaurusId", thesaurusId)
+              AND (:includePrivate = true OR cg.private = false)
+            LIMIT 1
+            """)
+                .setParameter(NativeQueryParams.GROUP_ID, groupId)
+                .setParameter(NativeQueryParams.THESAURUS_ID, thesaurusId)
                 .setParameter("lang", lang)
+                .setParameter(NativeQueryParams.INCLUDE_PRIVATE, includePrivate)
                 .getResultList();
         return rows.isEmpty() ? Optional.empty() : Optional.of(rows.get(0));
     }
@@ -217,7 +216,7 @@ public class CollectionTreeQueryRepository {
             WHERE code = :typeCode
             LIMIT 1
             """)
-                .setParameter("typeCode", typeCode)
+                .setParameter(NativeQueryParams.TYPE_CODE, typeCode)
                 .getResultList();
         return rows.isEmpty() ? Optional.empty() : Optional.of(rows.get(0));
     }
@@ -233,8 +232,8 @@ public class CollectionTreeQueryRepository {
               AND LOWER(cgc.idgroup) = LOWER(:groupId)
               AND c.status != 'CA'
             """)
-                .setParameter("thesaurusId", thesaurusId)
-                .setParameter("groupId", groupId)
+                .setParameter(NativeQueryParams.THESAURUS_ID, thesaurusId)
+                .setParameter(NativeQueryParams.GROUP_ID, groupId)
                 .getSingleResult();
         return count == null ? 0 : count.intValue();
     }
@@ -249,8 +248,8 @@ public class CollectionTreeQueryRepository {
               AND cgl.lang != :lang
             ORDER BY cgl.lang
             """)
-                .setParameter("groupId", groupId)
-                .setParameter("thesaurusId", thesaurusId)
+                .setParameter(NativeQueryParams.GROUP_ID, groupId)
+                .setParameter(NativeQueryParams.THESAURUS_ID, thesaurusId)
                 .setParameter("lang", lang)
                 .getResultList();
     }
@@ -265,15 +264,9 @@ public class CollectionTreeQueryRepository {
               AND n.lang = :lang
             ORDER BY n.notetypecode
             """)
-                .setParameter("groupId", groupId)
-                .setParameter("thesaurusId", thesaurusId)
+                .setParameter(NativeQueryParams.GROUP_ID, groupId)
+                .setParameter(NativeQueryParams.THESAURUS_ID, thesaurusId)
                 .setParameter("lang", lang)
                 .getResultList();
-    }
-
-    private static void appendPublicOnly(StringBuilder sql, boolean includePrivate) {
-        if (!includePrivate) {
-            sql.append(" AND cg.private = false ");
-        }
     }
 }

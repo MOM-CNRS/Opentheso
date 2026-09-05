@@ -1,6 +1,21 @@
 /* Affichage / masquage de la structure déjà présente dans target.html.
    Le JavaScript ne fait que poser des classes ; il ne construit pas le DOM. */
 
+/* Shell breakpoints — garder alignés avec SHELL_NARROW dans shell-narrow.js
+   --v2-bp-phone: 420px
+   --v2-bp-dock: 560px
+   --v2-bp-compact: 760px
+   --v2-bp-drawer: 900px
+   --v2-bp-wide: 1100px
+   (var() n'est pas utilisable dans @media) */
+:root{
+  --v2-bp-phone:420px;
+  --v2-bp-dock:560px;
+  --v2-bp-compact:760px;
+  --v2-bp-drawer:900px;
+  --v2-bp-wide:1100px;
+}
+
 .menu-pop{display:none}
 .thesaurus-btn.is-on + .menu-pop{display:block}
 

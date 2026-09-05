@@ -30,7 +30,7 @@ public class ThesaurusSettingsQueryRepository {
                 """;
         @SuppressWarnings("unchecked")
         List<String> rows = entityManager.createNativeQuery(sql)
-                .setParameter("thesaurusId", thesaurusId)
+                .setParameter(NativeQueryParams.THESAURUS_ID, thesaurusId)
                 .setParameter("lang", lang)
                 .getResultList();
         if (rows.isEmpty() || rows.get(0) == null) {
@@ -57,8 +57,8 @@ public class ThesaurusSettingsQueryRepository {
                 """;
         @SuppressWarnings("unchecked")
         List<Number> rows = entityManager.createNativeQuery(sql)
-                .setParameter("userId", userId)
-                .setParameter("thesaurusId", thesaurusId)
+                .setParameter(NativeQueryParams.USER_ID, userId)
+                .setParameter(NativeQueryParams.THESAURUS_ID, thesaurusId)
                 .getResultList();
         if (rows.isEmpty() || rows.get(0) == null) {
             return Optional.empty();
@@ -81,7 +81,7 @@ public class ThesaurusSettingsQueryRepository {
                 ORDER BY l.french_name
                 """;
         List<Object[]> rows = entityManager.createNativeQuery(sql)
-                .setParameter("thesaurusId", thesaurusId)
+                .setParameter(NativeQueryParams.THESAURUS_ID, thesaurusId)
                 .setParameter("lang", lang)
                 .getResultList();
         return rows.stream()
@@ -107,7 +107,7 @@ public class ThesaurusSettingsQueryRepository {
                 """;
         @SuppressWarnings("unchecked")
         List<String> rows = entityManager.createNativeQuery(sql)
-                .setParameter("thesaurusId", thesaurusId.trim())
+                .setParameter(NativeQueryParams.THESAURUS_ID, thesaurusId.trim())
                 .getResultList();
         if (rows.isEmpty() || rows.get(0) == null) {
             return Optional.empty();

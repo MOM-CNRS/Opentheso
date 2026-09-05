@@ -1,6 +1,8 @@
 package fr.cnrs.opentheso.v2.concept.write.model;
 
-public record ConceptWriteLanguage(String code, String label) {
+import java.io.Serializable;
+
+public record ConceptWriteLanguage(String code, String label) implements Serializable {
 
     public String getCode() {
         return code;

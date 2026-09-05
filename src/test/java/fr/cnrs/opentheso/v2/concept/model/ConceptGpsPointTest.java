@@ -12,4 +12,10 @@ class ConceptGpsPointTest {
         assertEquals("48.922548", point.latText());
         assertEquals("2.14524", point.lngText());
     }
+
+    @Test
+    void formatCoordinateStripsScientificNotationWithoutRegex() {
+        assertEquals("0", ConceptGpsPoint.formatCoordinate(1e-7));
+        assertEquals("48.922548", ConceptGpsPoint.formatCoordinate(48.922548));
+    }
 }

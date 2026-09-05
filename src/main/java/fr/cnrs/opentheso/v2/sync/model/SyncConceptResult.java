@@ -1,12 +1,14 @@
 package fr.cnrs.opentheso.v2.sync.model;
 
+import java.io.Serializable;
+
 public record SyncConceptResult(
         String identifier,
         String matchedConceptId,
         SyncConceptOutcome outcome,
         String message,
         Integer propositionId
-) {
+) implements Serializable {
     public static SyncConceptResult skipped(String identifier, String matchedConceptId, String message) {
         return new SyncConceptResult(identifier, matchedConceptId, SyncConceptOutcome.SKIPPED, message, null);
     }

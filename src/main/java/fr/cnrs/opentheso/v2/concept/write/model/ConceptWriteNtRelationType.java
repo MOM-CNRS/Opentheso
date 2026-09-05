@@ -1,10 +1,12 @@
 package fr.cnrs.opentheso.v2.concept.write.model;
 
+import java.io.Serializable;
+
 public record ConceptWriteNtRelationType(
         String relationType,
         String descriptionFr,
         String descriptionEn
-) {
+) implements Serializable {
 
     public String getRelationType() {
         return relationType;

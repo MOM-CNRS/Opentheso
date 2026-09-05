@@ -83,9 +83,9 @@ public class ThesaurusPdfHierarchicalWriter {
 
             boolean isAtRoot = true;
             String conceptID = concept.getIdentifier();
-            Iterator i = idToChildId.keySet().iterator();
+            Iterator<String> i = idToChildId.keySet().iterator();
             while (i.hasNext()) {
-                ArrayList<String> valeur = (ArrayList<String>) idToChildId.get((String) i.next());
+                List<String> valeur = idToChildId.get(i.next());
                 for (String id : valeur) {
                     if (id.equals(conceptID)) {
                         isAtRoot = false;

@@ -6,7 +6,6 @@ import fr.cnrs.opentheso.models.skosapi.SKOSXmlDocument;
 import fr.cnrs.opentheso.v2.toolbox.edition.io.rdf.parser.ConceptReader;
 import fr.cnrs.opentheso.v2.toolbox.edition.io.rdf.parser.GenericReader;
 import fr.cnrs.opentheso.v2.toolbox.edition.io.rdf.parser.ThesaurusManager;
-import org.apache.commons.lang3.ObjectUtils;
 import org.eclipse.rdf4j.model.IRI;
 import org.eclipse.rdf4j.model.Literal;
 import org.eclipse.rdf4j.model.Resource;
@@ -23,7 +22,6 @@ public class ReadJsonFlux extends AbstractRDFHandler {
     private String CONCEPT_PATTERN = "^https://opentheso2\\.mom\\.fr/ark:/66666/th\\d+/\\?idg=G\\d+&idt=th\\d+/\\?idc=\\d+&idt=th\\d+$";
     private String COLLECTION_PATTERN = "^https://opentheso2\\.mom\\.fr/ark:/66666/th\\d+/\\?idg=G\\d+&idt=th\\d+/\\?idg=G\\d+&idt=th\\d+$";
     private String THESORUS_PATTERN = "^https://opentheso2\\.mom\\.fr/ark:/66666/th\\d+/\\?idg=G\\d+&idt=th\\d+/66666/th\\d+$";
-    private final static String IMAGE_TAG = "http://xmlns.com/foaf/0.1/Image";
 
     private SKOSXmlDocument skosXmlDocument;
     private Resource subject;
@@ -85,9 +83,7 @@ public class ReadJsonFlux extends AbstractRDFHandler {
         if (value instanceof Literal) {
             // Si la ligne en cours contient une langue spécifique, on récupère la langue dans
             literal = (Literal) value;
-            if (ObjectUtils.isNotEmpty(literal) && literal.getLanguage().isPresent()) {
-                lang = literal.getLanguage().get();
-            }
+            lang = literal.getLanguage().orElse(lang);
 
             if (isConceptScheme) {
                 // Dans le cas d'un conceptScheme

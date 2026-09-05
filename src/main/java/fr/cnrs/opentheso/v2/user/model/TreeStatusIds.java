@@ -19,7 +19,7 @@ public final class TreeStatusIds {
 
     public static final Map<String, List<String>> GROUPS = Map.of(
             "actif", List.of(VALIDE, INSERE),
-            "candidat", List.of(CANDIDAT),
+            CANDIDAT, List.of(CANDIDAT),
             "inactif", List.of(REJETE, DEPRECIE)
     );
 

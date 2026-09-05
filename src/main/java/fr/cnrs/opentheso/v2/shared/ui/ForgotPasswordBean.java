@@ -17,7 +17,7 @@ import java.io.Serializable;
 @RequiredArgsConstructor
 public class ForgotPasswordBean implements Serializable {
 
-    private final AccountPasswordResetService accountPasswordResetService;
+    private final transient AccountPasswordResetService accountPasswordResetService;
 
     private String sendTo;
     private String message;

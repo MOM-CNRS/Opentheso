@@ -1,6 +1,7 @@
 package fr.cnrs.opentheso.v2.proposition.model;
 
 import fr.cnrs.opentheso.models.propositions.PropositionStatusEnum;
+import java.io.Serializable;
 
 /**
  * Résumé d'une proposition pour le tiroir latéral.
@@ -17,7 +18,7 @@ public record PropositionSummary(
         String publishedAt,
         String lang,
         String flagCode
-) {
+) implements Serializable {
 
     public int getId() {
         return id;

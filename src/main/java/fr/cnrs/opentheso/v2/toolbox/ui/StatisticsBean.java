@@ -33,10 +33,10 @@ import java.util.stream.Collectors;
 @Named("v2StatisticsBean")
 public class StatisticsBean implements Serializable {
 
-    private final UserSession userSession;
-    private final ToolboxAccessPolicy toolboxAccessPolicy;
-    private final ThesaurusContext thesaurusContext;
-    private final ThesaurusStatisticsService thesaurusStatisticsService;
+    private final transient UserSession userSession;
+    private final transient ToolboxAccessPolicy toolboxAccessPolicy;
+    private final transient ThesaurusContext thesaurusContext;
+    private final transient ThesaurusStatisticsService thesaurusStatisticsService;
 
     private boolean genericTypeVisible;
     private boolean conceptTypeVisible;

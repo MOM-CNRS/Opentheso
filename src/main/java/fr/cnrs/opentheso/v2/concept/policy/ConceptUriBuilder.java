@@ -2,6 +2,7 @@ package fr.cnrs.opentheso.v2.concept.policy;
 
 import fr.cnrs.opentheso.v2.setting.model.ExportUriType;
 import fr.cnrs.opentheso.v2.setting.model.ThesaurusPreferences;
+import fr.cnrs.opentheso.v2.shared.uri.SkosUriFragments;
 import org.apache.commons.lang3.StringUtils;
 
 public final class ConceptUriBuilder {
@@ -59,28 +60,28 @@ public final class ConceptUriBuilder {
         if (StringUtils.isNotBlank(arkId)) {
             return originalUri + "/" + arkId;
         }
-        return sitePath + "?idc=" + conceptId + "&idt=" + thesaurusId;
+        return sitePath + SkosUriFragments.IDC_QUERY + conceptId + SkosUriFragments.IDT + thesaurusId;
     }
 
     private static String buildHandleUri(String sitePath, String conceptId, String thesaurusId, String handleId) {
         if (StringUtils.isNotBlank(handleId)) {
-            return "https://hdl.handle.net/" + handleId;
+            return SkosUriFragments.HANDLE + handleId;
         }
-        return sitePath + "?idc=" + conceptId + "&idt=" + thesaurusId;
+        return sitePath + SkosUriFragments.IDC_QUERY + conceptId + SkosUriFragments.IDT + thesaurusId;
     }
 
     private static String buildDoiUri(String sitePath, String conceptId, String thesaurusId, String doiId) {
         if (StringUtils.isNotBlank(doiId)) {
-            return "https://doi.org/" + doiId;
+            return SkosUriFragments.DOI + doiId;
         }
-        return sitePath + "?idc=" + conceptId + "&idt=" + thesaurusId;
+        return sitePath + SkosUriFragments.IDC_QUERY + conceptId + SkosUriFragments.IDT + thesaurusId;
     }
 
     private static String buildDefaultUri(String originalUri, String sitePath, String conceptId, String thesaurusId) {
         if (StringUtils.isNotBlank(originalUri)) {
-            return originalUri + "/?idc=" + conceptId + "&idt=" + thesaurusId;
+            return originalUri + SkosUriFragments.IDC_PATH + conceptId + SkosUriFragments.IDT + thesaurusId;
         }
-        return sitePath + "?idc=" + conceptId + "&idt=" + thesaurusId;
+        return sitePath + SkosUriFragments.IDC_QUERY + conceptId + SkosUriFragments.IDT + thesaurusId;
     }
 
     public static String buildGroupUri(
@@ -102,15 +103,15 @@ public final class ConceptUriBuilder {
             return originalUri + "/" + groupArkId;
         }
         if (exportType == ExportUriType.ARK) {
-            return sitePath + "?idg=" + groupId + "&idt=" + thesaurusId;
+            return sitePath + SkosUriFragments.IDG_QUERY + groupId + SkosUriFragments.IDT + thesaurusId;
         }
         if (StringUtils.isNotBlank(groupHandleId)) {
-            return "https://hdl.handle.net/" + groupHandleId;
+            return SkosUriFragments.HANDLE + groupHandleId;
         }
         if (StringUtils.isNotBlank(originalUri)) {
-            return originalUri + "/?idg=" + groupId + "&idt=" + thesaurusId;
+            return originalUri + SkosUriFragments.IDG_PATH + groupId + SkosUriFragments.IDT + thesaurusId;
         }
-        return sitePath + "?idc=" + groupId + "&idt=" + thesaurusId;
+        return sitePath + SkosUriFragments.IDC_QUERY + groupId + SkosUriFragments.IDT + thesaurusId;
     }
 
     private static String normalizePath(String path) {

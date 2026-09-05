@@ -11,7 +11,7 @@ public final class WorkshopCsvConceptMapper {
     private WorkshopCsvConceptMapper() {
     }
 
-    public static ThesaurusCsvConceptObject toEditionModel(WorkshopCsvReader.ConceptObject source) {
+    public static ThesaurusCsvConceptObject toEditionModel(ThesaurusCsvConceptObject source) {
         if (source == null) {
             return null;
         }
@@ -60,12 +60,12 @@ public final class WorkshopCsvConceptMapper {
         return target;
     }
 
-    private static ArrayList<ThesaurusCsvConceptLabel> copyLabels(ArrayList<WorkshopCsvReader.Label> labels) {
+    private static ArrayList<ThesaurusCsvConceptLabel> copyLabels(ArrayList<ThesaurusCsvConceptLabel> labels) {
         ArrayList<ThesaurusCsvConceptLabel> copy = new ArrayList<>();
         if (CollectionUtils.isEmpty(labels)) {
             return copy;
         }
-        for (WorkshopCsvReader.Label label : labels) {
+        for (ThesaurusCsvConceptLabel label : labels) {
             ThesaurusCsvConceptLabel target = new ThesaurusCsvConceptLabel();
             target.setLabel(label.getLabel());
             target.setLang(label.getLang());

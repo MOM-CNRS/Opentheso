@@ -14,6 +14,8 @@ import static org.junit.jupiter.api.Assertions.assertEquals;
 import static org.junit.jupiter.api.Assertions.assertFalse;
 import static org.junit.jupiter.api.Assertions.assertNotNull;
 import static org.junit.jupiter.api.Assertions.assertTrue;
+import fr.cnrs.opentheso.v2.toolbox.edition.model.ThesaurusCsvConceptObject;
+import fr.cnrs.opentheso.v2.toolbox.edition.model.ThesaurusCsvConceptLabel;
 
 /**
  * Unit tests for {@link WorkshopCsvReader}, the CSV parser backing the "Atelier" (Workshop)
@@ -112,7 +114,7 @@ class WorkshopCsvReaderTest {
         boolean ok = reader.readFileAlignmentToDelete(new StringReader(csv));
 
         assertTrue(ok);
-        List<WorkshopCsvReader.ConceptObject> concepts = reader.getConceptObjects();
+        List<ThesaurusCsvConceptObject> concepts = reader.getConceptObjects();
         assertEquals(1, concepts.size());
         assertEquals("C1", concepts.get(0).getLocalId());
         assertEquals(1, concepts.get(0).getAlignments().size());
@@ -196,9 +198,9 @@ class WorkshopCsvReaderTest {
         boolean ok = reader.readFileNote(new StringReader(csv));
 
         assertTrue(ok);
-        List<WorkshopCsvReader.ConceptObject> concepts = reader.getConceptObjects();
+        List<ThesaurusCsvConceptObject> concepts = reader.getConceptObjects();
         assertEquals(1, concepts.size());
-        WorkshopCsvReader.ConceptObject concept = concepts.get(0);
+        ThesaurusCsvConceptObject concept = concepts.get(0);
         assertEquals("C1", concept.getIdConcept());
         assertEquals(1, concept.getNote().size());
         assertEquals("Une note", concept.getNote().get(0).getLabel());
@@ -217,7 +219,7 @@ class WorkshopCsvReaderTest {
         boolean ok = reader.readFileNote(new StringReader(csv));
 
         assertTrue(ok);
-        List<WorkshopCsvReader.Label> notes = reader.getConceptObjects().get(0).getNote();
+        List<ThesaurusCsvConceptLabel> notes = reader.getConceptObjects().get(0).getNote();
         assertEquals(2, notes.size());
         assertEquals("premiere note", notes.get(0).getLabel());
         assertEquals("deuxieme note", notes.get(1).getLabel());
@@ -284,9 +286,9 @@ class WorkshopCsvReaderTest {
         boolean ok = reader.readFile(new StringReader(csv), false);
 
         assertTrue(ok);
-        List<WorkshopCsvReader.ConceptObject> concepts = reader.getConceptObjects();
+        List<ThesaurusCsvConceptObject> concepts = reader.getConceptObjects();
         assertEquals(1, concepts.size());
-        WorkshopCsvReader.ConceptObject concept = concepts.get(0);
+        ThesaurusCsvConceptObject concept = concepts.get(0);
         assertEquals("concept1", concept.getIdConcept());
         assertEquals("skos:concept", concept.getType());
 
@@ -311,7 +313,7 @@ class WorkshopCsvReaderTest {
         boolean ok = reader.readFile(new StringReader(csv), false);
 
         assertTrue(ok);
-        List<WorkshopCsvReader.ConceptObject> concepts = reader.getConceptObjects();
+        List<ThesaurusCsvConceptObject> concepts = reader.getConceptObjects();
         assertEquals(1, concepts.size());
         // getId() extracts whatever follows the last "#" fragment of the URI
         assertEquals("concept42", concepts.get(0).getIdConcept());
@@ -411,5 +413,52 @@ class WorkshopCsvReaderTest {
         assertEquals(1, reader.getNodeIdValues().size());
         assertEquals("C1", reader.getNodeIdValues().get(0).getId());
         assertEquals("N-001", reader.getNodeIdValues().get(0).getValue());
+    }
+
+    @Test
+    void readFileIdentifier_andConceptId_andArk_andImage_andRelated_andAltlabel() {
+        WorkshopCsvReader reader = new WorkshopCsvReader(',');
+        assertTrue(reader.readFileIdentifier(new StringReader("identifier\nID1\nID1\n")));
+        assertEquals(1, reader.getNodeIdValues().size());
+
+        assertTrue(reader.readFileConceptId(new StringReader("localid\nC1\n")));
+        assertFalse(reader.getNodeIdValues().isEmpty());
+
+        assertTrue(reader.readFileArk(new StringReader("localid,arkId\nC1,ark:/12148/x\n")));
+        assertFalse(reader.getNodeIdValues().isEmpty());
+
+        assertTrue(reader.readFileImage(new StringReader("localid,foaf:image\nC1,http://example.com/a.png\n")));
+        assertEquals("C1", reader.getConceptObjects().get(reader.getConceptObjects().size() - 1).getLocalId());
+
+        ArrayList<String> relatedHeaders = reader.readHeadersFileRelated(new StringReader("localid,skos:related\nC1,C2\n"));
+        assertTrue(reader.readFileRelated(new StringReader("localid,skos:related\nC1,C2\n"), relatedHeaders));
+
+        assertTrue(reader.setLangs(new StringReader("localid,skos:altLabel@fr\nC1,Minou\n")));
+        assertTrue(reader.readFileAltlabel(new StringReader("localid,skos:altLabel@fr\nC1,Minou\n")));
+        assertEquals("C1", reader.getConceptObjects().get(reader.getConceptObjects().size() - 1).getIdConcept());
+    }
+
+    @Test
+    void readFileCollection_andDeprecate_andReplace_andGenericReadFile() {
+        WorkshopCsvReader reader = new WorkshopCsvReader(',');
+        assertTrue(reader.readFileCollection(new StringReader("localid,skos:member\nC1,G1\n")));
+
+        assertTrue(reader.readFileCsvDeprecateConcepts(new StringReader(
+                "deprecated,isReplacedBy,skos:prefLabel@fr\nOLD,NEW,Ancien\n")));
+        assertEquals(1, reader.getNodeDeprecateds().size());
+
+        assertTrue(reader.setLangs(new StringReader("localid,skos:preflabel@fr,new_skos:preflabel@fr\nC1,Chat,Felis\n")));
+        assertTrue(reader.readFileReplaceValueByNewValue(
+                new StringReader("localid,skos:preflabel@fr,new_skos:preflabel@fr\nC1,Chat,Felis\n"),
+                List.of("fr")));
+        assertFalse(reader.getNodeReplaceValueByValues().isEmpty());
+
+        assertTrue(reader.setLangs(new StringReader(
+                "identifier,rdf:type,skos:prefLabel@fr,skos:definition@fr,skos:narrower,skos:related,skos:exactMatch\n"
+                        + "C1,skos:Concept,Chat,Un felin,N1,R1,http://example.com/c1\n")));
+        assertTrue(reader.readFile(new StringReader(
+                "identifier,rdf:type,skos:prefLabel@fr,skos:definition@fr,skos:narrower,skos:related,skos:exactMatch\n"
+                        + "C1,skos:Concept,Chat,Un felin,N1,R1,http://example.com/c1\n"), false));
+        assertEquals("C1", reader.getConceptObjects().get(0).getIdConcept());
     }
 }

@@ -1,8 +1,8 @@
 package fr.cnrs.opentheso.v2.concept.export.service;
 
+import fr.cnrs.opentheso.v2.shared.time.V2Dates;
 import org.apache.commons.lang3.StringUtils;
 
-import java.time.LocalDate;
 import java.util.Locale;
 
 final class SelectionExportFileNames {
@@ -16,10 +16,15 @@ final class SelectionExportFileNames {
             base = "opentheso";
         }
         String scope = wholeThesaurus ? "thesaurus" : "selection";
-        String ext = extension == null || extension.isBlank()
-                ? ".bin"
-                : (extension.startsWith(".") ? extension : "." + extension);
-        return base + "_" + scope + "_" + LocalDate.now() + ext;
+        String ext;
+        if (extension == null || extension.isBlank()) {
+            ext = ".bin";
+        } else if (extension.startsWith(".")) {
+            ext = extension;
+        } else {
+            ext = "." + extension;
+        }
+        return base + "_" + scope + "_" + V2Dates.nowDate() + ext;
     }
 
     static String sanitize(String raw) {

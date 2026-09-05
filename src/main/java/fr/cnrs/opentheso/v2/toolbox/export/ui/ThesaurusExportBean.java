@@ -33,15 +33,15 @@ import java.util.List;
 @Named("v2ThesaurusExportBean")
 public class ThesaurusExportBean implements Serializable {
 
-    private final ThesaurusEditionSkosExportService thesaurusEditionSkosExportService;
-    private final ThesaurusEditionCsvExportService thesaurusEditionCsvExportService;
-    private final ThesaurusEditionCsvIdExportService thesaurusEditionCsvIdExportService;
-    private final ThesaurusEditionCsvStructuredExportService thesaurusEditionCsvStructuredExportService;
-    private final ThesaurusEditionPdfExportService thesaurusEditionPdfExportService;
-    private final ThesaurusEditionCsvDeprecatedExportService thesaurusEditionCsvDeprecatedExportService;
-    private final ThesaurusEditionZipExportService thesaurusEditionZipExportService;
-    private final ToolboxExportPersistence toolboxExportPersistence;
-    private final ToolboxPreferencePersistence toolboxPreferencePersistence;
+    private final transient ThesaurusEditionSkosExportService thesaurusEditionSkosExportService;
+    private final transient ThesaurusEditionCsvExportService thesaurusEditionCsvExportService;
+    private final transient ThesaurusEditionCsvIdExportService thesaurusEditionCsvIdExportService;
+    private final transient ThesaurusEditionCsvStructuredExportService thesaurusEditionCsvStructuredExportService;
+    private final transient ThesaurusEditionPdfExportService thesaurusEditionPdfExportService;
+    private final transient ThesaurusEditionCsvDeprecatedExportService thesaurusEditionCsvDeprecatedExportService;
+    private final transient ThesaurusEditionZipExportService thesaurusEditionZipExportService;
+    private final transient ToolboxExportPersistence toolboxExportPersistence;
+    private final transient ToolboxPreferencePersistence toolboxPreferencePersistence;
 
     private String thesaurusId;
     private String thesaurusTitle;

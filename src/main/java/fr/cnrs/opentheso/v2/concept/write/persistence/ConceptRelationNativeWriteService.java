@@ -23,6 +23,15 @@ import java.util.List;
 @RequiredArgsConstructor
 public class ConceptRelationNativeWriteService {
 
+    private static final String RELATION_NOT_ALLOWED = "Relation non permise !";
+    private static final String RELATION_ADDED = "Relation ajoutée avec succès";
+    private static final String RELATION_DELETED = "Relation supprimée avec succès";
+    private static final String NO_RELATION_SELECTED = "Aucune relation n'est sélectionnée !";
+    private static final String TOP_CONCEPT_REMOVE_ERROR =
+            "Erreur en enlevant le concept du TopConcept, veuillez utiliser les outils de correction de cohérence !";
+    private static final String TOP_CONCEPT_ADD_ERROR =
+            "Erreur en passant le concept en TopConcept, veuillez utiliser les outils de correction de cohérence !";
+
     private final ConceptRelationWriteRepository conceptRelationWriteRepository;
     private final ConceptCustomRelationWriteRepository conceptCustomRelationWriteRepository;
     private final ConceptLifecycleWriteRepository conceptLifecycleWriteRepository;
@@ -44,22 +53,22 @@ public class ConceptRelationNativeWriteService {
 
         if (newBroaderId != null) {
             if (command.conceptId().equalsIgnoreCase(newBroaderId)) {
-                return MutationResult.validationError("Relation non permise !");
+                return MutationResult.validationError(RELATION_NOT_ALLOWED);
             }
             List<String> branchIds = branchConceptSupport.collectBranchConceptIds(
                     command.thesaurusId(), command.conceptId());
             if (branchIds.contains(newBroaderId)) {
-                return MutationResult.validationError("Relation non permise !");
+                return MutationResult.validationError(RELATION_NOT_ALLOWED);
             }
             if (conceptRelationWriteRepository.hasRelatedRelation(
                     command.conceptId(), newBroaderId, command.thesaurusId())) {
-                return MutationResult.validationError("Relation non permise !");
+                return MutationResult.validationError(RELATION_NOT_ALLOWED);
             }
             boolean willDetachTarget = toDetach.stream().anyMatch(id -> id.equalsIgnoreCase(newBroaderId));
             if (!willDetachTarget
                     && conceptRelationWriteRepository.hasHierarchicalRelation(
                             command.conceptId(), newBroaderId, command.thesaurusId())) {
-                return MutationResult.validationError("Relation non permise !");
+                return MutationResult.validationError(RELATION_NOT_ALLOWED);
             }
         }
 
@@ -75,13 +84,13 @@ public class ConceptRelationNativeWriteService {
                     && !conceptLifecycleWriteRepository.setTopConcept(
                             command.thesaurusId(), command.conceptId(), false)) {
                 return MutationResult.failure(
-                        "Erreur en enlevant le concept du TopConcept, veuillez utiliser les outils de correction de cohérence !");
+                        TOP_CONCEPT_REMOVE_ERROR);
             }
         } else if (!conceptRelationWriteRepository.hasBroaderRelation(command.conceptId(), command.thesaurusId())
                 && !conceptLifecycleWriteRepository.setTopConcept(
                         command.thesaurusId(), command.conceptId(), true)) {
             return MutationResult.failure(
-                    "Erreur en passant le concept en TopConcept, veuillez utiliser les outils de correction de cohérence !");
+                    TOP_CONCEPT_ADD_ERROR);
         }
 
         return finalizeMutation(
@@ -108,11 +117,11 @@ public class ConceptRelationNativeWriteService {
                 && !conceptLifecycleWriteRepository.setTopConcept(
                         command.thesaurusId(), command.conceptId(), false)) {
             return MutationResult.failure(
-                    "Erreur en enlevant le concept du TopConcept, veuillez utiliser les outils de correction de cohérence !");
+                    TOP_CONCEPT_REMOVE_ERROR);
         }
 
         return finalizeMutation(command.thesaurusId(), command.conceptId(), command.userId(), command.contributorName(),
-                "Relation ajoutée avec succès");
+                RELATION_ADDED);
     }
 
     @Transactional
@@ -130,11 +139,11 @@ public class ConceptRelationNativeWriteService {
                 && !conceptLifecycleWriteRepository.setTopConcept(
                         command.thesaurusId(), command.targetConceptId(), false)) {
             return MutationResult.failure(
-                    "Erreur en enlevant le concept du TopConcept, veuillez utiliser les outils de correction de cohérence !");
+                    TOP_CONCEPT_REMOVE_ERROR);
         }
 
         return finalizeMutation(command.thesaurusId(), command.conceptId(), command.userId(), command.contributorName(),
-                "Relation ajoutée avec succès");
+                RELATION_ADDED);
     }
 
     @Transactional
@@ -151,11 +160,11 @@ public class ConceptRelationNativeWriteService {
                 && !conceptLifecycleWriteRepository.setTopConcept(
                         command.thesaurusId(), command.conceptId(), true)) {
             return MutationResult.failure(
-                    "Erreur en passant le concept en TopConcept, veuillez utiliser les outils de correction de cohérence !");
+                    TOP_CONCEPT_ADD_ERROR);
         }
 
         return finalizeMutation(command.thesaurusId(), command.conceptId(), command.userId(), command.contributorName(),
-                "Relation supprimée avec succès");
+                RELATION_DELETED);
     }
 
     @Transactional
@@ -172,17 +181,17 @@ public class ConceptRelationNativeWriteService {
                 && !conceptLifecycleWriteRepository.setTopConcept(
                         command.thesaurusId(), command.targetConceptId(), true)) {
             return MutationResult.failure(
-                    "Erreur en passant le concept en TopConcept, veuillez utiliser les outils de correction de cohérence !");
+                    TOP_CONCEPT_ADD_ERROR);
         }
 
         return finalizeMutation(command.thesaurusId(), command.conceptId(), command.userId(), command.contributorName(),
-                "Relation supprimée avec succès");
+                RELATION_DELETED);
     }
 
     @Transactional
     public MutationResult updateNarrowerRelationType(UpdateNarrowerRelationTypeCommand command) {
         if (StringUtils.isAnyBlank(command.targetConceptId(), command.ntRole())) {
-            return MutationResult.validationError("Aucune relation n'est sélectionnée !");
+            return MutationResult.validationError(NO_RELATION_SELECTED);
         }
         String inverseRelation = inverseNtRole(command.ntRole());
         conceptRelationWriteRepository.updateRelationRoles(
@@ -199,7 +208,7 @@ public class ConceptRelationNativeWriteService {
     @Transactional
     public MutationResult applyNarrowerRelationToBranch(ApplyNarrowerRelationToBranchCommand command) {
         if (StringUtils.isBlank(command.ntRole())) {
-            return MutationResult.validationError("Aucune relation n'est sélectionnée !");
+            return MutationResult.validationError(NO_RELATION_SELECTED);
         }
         String inverseRelation = inverseNtRole(command.ntRole());
         applyRelationToBranchRecursive(
@@ -215,11 +224,11 @@ public class ConceptRelationNativeWriteService {
     @Transactional
     public MutationResult addRelatedRelation(AddRelatedRelationCommand command) {
         if (StringUtils.isBlank(command.targetConceptId())) {
-            return MutationResult.validationError("Aucune relation n'est sélectionnée !");
+            return MutationResult.validationError(NO_RELATION_SELECTED);
         }
         if (conceptRelationWriteRepository.hasHierarchicalRelation(
                 command.conceptId(), command.targetConceptId(), command.thesaurusId())) {
-            return MutationResult.validationError("Relation non permise !");
+            return MutationResult.validationError(RELATION_NOT_ALLOWED);
         }
         if (!conceptRelationWriteRepository.addRelatedRelation(
                 command.conceptId(), command.targetConceptId(), command.thesaurusId(), command.userId())) {
@@ -229,7 +238,7 @@ public class ConceptRelationNativeWriteService {
             applyTagPrefLabel(command);
         }
         return finalizeMutation(command.thesaurusId(), command.conceptId(), command.userId(), command.contributorName(),
-                "Relation ajoutée avec succès");
+                RELATION_ADDED);
     }
 
     @Transactional
@@ -241,13 +250,13 @@ public class ConceptRelationNativeWriteService {
         conceptRelationWriteRepository.deleteRelatedRelation(
                 command.conceptId(), command.targetConceptId(), command.thesaurusId(), command.userId());
         return finalizeMutation(command.thesaurusId(), command.conceptId(), command.userId(), command.contributorName(),
-                "Relation supprimée avec succès");
+                RELATION_DELETED);
     }
 
     @Transactional
     public MutationResult addCustomRelation(AddCustomRelationCommand command) {
         if (StringUtils.isBlank(command.targetConceptId())) {
-            return MutationResult.validationError("Aucune relation n'est sélectionnée !");
+            return MutationResult.validationError(NO_RELATION_SELECTED);
         }
         var conceptTypeCode = conceptCustomRelationWriteRepository.findConceptTypeCode(
                 command.targetConceptId(), command.thesaurusId());
@@ -267,13 +276,13 @@ public class ConceptRelationNativeWriteService {
                 reciprocal.get(),
                 command.userId());
         return finalizeMutation(command.thesaurusId(), command.conceptId(), command.userId(), command.contributorName(),
-                "Relation ajoutée avec succès");
+                RELATION_ADDED);
     }
 
     @Transactional
     public MutationResult deleteCustomRelation(DeleteCustomRelationCommand command) {
         if (StringUtils.isAnyBlank(command.targetConceptId(), command.relationCode())) {
-            return MutationResult.validationError("Aucune relation n'est sélectionnée !");
+            return MutationResult.validationError(NO_RELATION_SELECTED);
         }
         conceptRelationWriteRepository.deleteCustomRelation(
                 command.conceptId(),
@@ -283,7 +292,7 @@ public class ConceptRelationNativeWriteService {
                 command.reciprocal(),
                 command.userId());
         return finalizeMutation(command.thesaurusId(), command.conceptId(), command.userId(), command.contributorName(),
-                "Relation supprimée avec succès");
+                RELATION_DELETED);
     }
 
     private void applyTagPrefLabel(AddRelatedRelationCommand command) {
@@ -340,14 +349,14 @@ public class ConceptRelationNativeWriteService {
             return MutationResult.validationError("Aucune sélection !");
         }
         if (isHierarchicalRelationInvalid(thesaurusId, conceptId, targetConceptId)) {
-            return MutationResult.validationError("Relation non permise !");
+            return MutationResult.validationError(RELATION_NOT_ALLOWED);
         }
         return null;
     }
 
     private MutationResult validateRelationTarget(String targetConceptId) {
         if (StringUtils.isBlank(targetConceptId)) {
-            return MutationResult.validationError("Aucune relation n'est sélectionnée !");
+            return MutationResult.validationError(NO_RELATION_SELECTED);
         }
         return null;
     }

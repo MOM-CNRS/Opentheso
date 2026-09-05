@@ -26,6 +26,7 @@ import org.springframework.web.bind.annotation.RequestBody;
 import org.springframework.web.bind.annotation.RequestHeader;
 import org.springframework.web.bind.annotation.RequestMapping;
 import org.springframework.web.bind.annotation.RestController;
+import fr.cnrs.opentheso.v2.shared.api.ApiHeaders;
 
 @RestController
 @RequestMapping("/openapi/v2/account/me")
@@ -45,8 +46,8 @@ public class AccountController {
             description = "Retourne le profil de l'utilisateur identifié par la clé API (pseudo, email, alertes, statut clé API)."
     )
     public AccountProfileResponse getProfile(
-            @RequestHeader(value = "X-API-KEY", required = false) String xApiKey,
-            @RequestHeader(value = "API-KEY", required = false) String legacyApiKey
+            @RequestHeader(value = ApiHeaders.X_API_KEY, required = false) String xApiKey,
+            @RequestHeader(value = ApiHeaders.API_KEY, required = false) String legacyApiKey
     ) {
         int userId = accountAuthSupport.resolveUserId(xApiKey, legacyApiKey);
         return AccountApiMapper.toProfileResponse(userProfileService.getProfile(userId));
@@ -55,8 +56,8 @@ public class AccountController {
     @PutMapping(value = "/username", consumes = MediaType.APPLICATION_JSON_VALUE, produces = MediaType.APPLICATION_JSON_VALUE)
     @Operation(summary = "Modifier mon pseudo", description = "Met à jour le pseudo de l'utilisateur connecté.")
     public AccountProfileResponse updateUsername(
-            @RequestHeader(value = "X-API-KEY", required = false) String xApiKey,
-            @RequestHeader(value = "API-KEY", required = false) String legacyApiKey,
+            @RequestHeader(value = ApiHeaders.X_API_KEY, required = false) String xApiKey,
+            @RequestHeader(value = ApiHeaders.API_KEY, required = false) String legacyApiKey,
             @Valid @RequestBody UpdateUsernameRequest request
     ) {
         int userId = accountAuthSupport.resolveUserId(xApiKey, legacyApiKey);
@@ -67,8 +68,8 @@ public class AccountController {
     @PutMapping(value = "/email", consumes = MediaType.APPLICATION_JSON_VALUE, produces = MediaType.APPLICATION_JSON_VALUE)
     @Operation(summary = "Modifier mon email", description = "Met à jour l'adresse email de l'utilisateur connecté.")
     public AccountProfileResponse updateEmail(
-            @RequestHeader(value = "X-API-KEY", required = false) String xApiKey,
-            @RequestHeader(value = "API-KEY", required = false) String legacyApiKey,
+            @RequestHeader(value = ApiHeaders.X_API_KEY, required = false) String xApiKey,
+            @RequestHeader(value = ApiHeaders.API_KEY, required = false) String legacyApiKey,
             @Valid @RequestBody UpdateEmailRequest request
     ) {
         int userId = accountAuthSupport.resolveUserId(xApiKey, legacyApiKey);
@@ -79,8 +80,8 @@ public class AccountController {
     @PutMapping(value = "/alert-mail", consumes = MediaType.APPLICATION_JSON_VALUE, produces = MediaType.APPLICATION_JSON_VALUE)
     @Operation(summary = "Modifier mes alertes email", description = "Active ou désactive la réception d'alertes par email.")
     public AccountProfileResponse updateAlertMail(
-            @RequestHeader(value = "X-API-KEY", required = false) String xApiKey,
-            @RequestHeader(value = "API-KEY", required = false) String legacyApiKey,
+            @RequestHeader(value = ApiHeaders.X_API_KEY, required = false) String xApiKey,
+            @RequestHeader(value = ApiHeaders.API_KEY, required = false) String legacyApiKey,
             @Valid @RequestBody UpdateAlertMailRequest request
     ) {
         int userId = accountAuthSupport.resolveUserId(xApiKey, legacyApiKey);
@@ -96,8 +97,8 @@ public class AccountController {
                     + "une minuscule, un chiffre et un caractère spécial."
     )
     public ResponseEntity<Void> changePassword(
-            @RequestHeader(value = "X-API-KEY", required = false) String xApiKey,
-            @RequestHeader(value = "API-KEY", required = false) String legacyApiKey,
+            @RequestHeader(value = ApiHeaders.X_API_KEY, required = false) String xApiKey,
+            @RequestHeader(value = ApiHeaders.API_KEY, required = false) String legacyApiKey,
             @Valid @RequestBody ChangePasswordRequest request
     ) {
         int userId = accountAuthSupport.resolveUserId(xApiKey, legacyApiKey);
@@ -112,8 +113,8 @@ public class AccountController {
                     + "Pour un super-administrateur, la liste est vide et le flag superAdmin vaut true."
     )
     public AccountRolesResponse getRoles(
-            @RequestHeader(value = "X-API-KEY", required = false) String xApiKey,
-            @RequestHeader(value = "API-KEY", required = false) String legacyApiKey
+            @RequestHeader(value = ApiHeaders.X_API_KEY, required = false) String xApiKey,
+            @RequestHeader(value = ApiHeaders.API_KEY, required = false) String legacyApiKey
     ) {
         int userId = accountAuthSupport.resolveUserId(xApiKey, legacyApiKey);
         var profileWithRoles = userProfileService.getProfileWithRoles(userId);
@@ -131,8 +132,8 @@ public class AccountController {
                     + "Impossible si la clé actuelle est expirée ou absente."
     )
     public ApiKeyRegenerateResponse regenerateApiKey(
-            @RequestHeader(value = "X-API-KEY", required = false) String xApiKey,
-            @RequestHeader(value = "API-KEY", required = false) String legacyApiKey
+            @RequestHeader(value = ApiHeaders.X_API_KEY, required = false) String xApiKey,
+            @RequestHeader(value = ApiHeaders.API_KEY, required = false) String legacyApiKey
     ) {
         int userId = accountAuthSupport.resolveUserId(xApiKey, legacyApiKey);
         return AccountApiMapper.toRegenerateResponse(userApiKeyService.regenerateApiKey(userId));

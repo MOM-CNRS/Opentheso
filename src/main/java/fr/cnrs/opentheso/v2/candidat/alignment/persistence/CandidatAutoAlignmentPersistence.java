@@ -42,6 +42,8 @@ import java.util.Optional;
 @RequiredArgsConstructor
 public class CandidatAutoAlignmentPersistence {
 
+    private static final String NOTE_DEFINITION = "definition";
+
     private final AlignementSourceRepository alignementSourceRepository;
     private final AlignementTypeRepository alignementTypeRepository;
     private final ThesaurusLabelRepository thesaurusLabelRepository;
@@ -244,18 +246,18 @@ public class CandidatAutoAlignmentPersistence {
             String lang = normalizeLang(selectedResource.getIdLang());
             String noteValue = StringUtils.clearNoteFromP(
                     StringUtils.clearValue(StringEscapeUtils.unescapeXml(selectedResource.getGettedValue())));
-            if (isNoteDuplicate(conceptId, thesaurusId, lang, noteValue, "definition")) {
+            if (isNoteDuplicate(conceptId, thesaurusId, lang, noteValue, NOTE_DEFINITION)) {
                 continue;
             }
             var existing = noteRepository.findAllByIdentifierAndIdThesaurusAndNoteTypeCodeAndLang(
-                    conceptId, thesaurusId, "definition", lang);
+                    conceptId, thesaurusId, NOTE_DEFINITION, lang);
             if (!existing.isEmpty()) {
                 existing.get(0).setLexicalValue(noteValue);
                 existing.get(0).setNoteSource(noteSource);
                 noteRepository.save(existing.get(0));
             } else {
                 noteRepository.save(Note.builder()
-                        .noteTypeCode("definition")
+                        .noteTypeCode(NOTE_DEFINITION)
                         .idThesaurus(thesaurusId)
                         .lang(lang)
                         .lexicalValue(noteValue)

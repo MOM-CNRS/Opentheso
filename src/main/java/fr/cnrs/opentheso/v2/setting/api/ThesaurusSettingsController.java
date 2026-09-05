@@ -29,6 +29,7 @@ import org.springframework.web.bind.annotation.RequestMapping;
 import org.springframework.web.bind.annotation.RestController;
 
 import java.util.List;
+import fr.cnrs.opentheso.v2.shared.api.ApiHeaders;
 
 @RestController
 @RequestMapping("/openapi/v2/thesauri/{thesaurusId}/settings")
@@ -47,8 +48,8 @@ public class ThesaurusSettingsController {
     @GetMapping(value = "/preferences", produces = MediaType.APPLICATION_JSON_VALUE)
     @Operation(summary = "Lire les préférences", description = "Retourne les préférences générales du thésaurus.")
     public ThesaurusPreferencesResponse getPreferences(
-            @RequestHeader(value = "X-API-KEY", required = false) String xApiKey,
-            @RequestHeader(value = "API-KEY", required = false) String legacyApiKey,
+            @RequestHeader(value = ApiHeaders.X_API_KEY, required = false) String xApiKey,
+            @RequestHeader(value = ApiHeaders.API_KEY, required = false) String legacyApiKey,
             @PathVariable String thesaurusId
     ) {
         int userId = settingAuthSupport.resolveUserId(xApiKey, legacyApiKey);
@@ -61,8 +62,8 @@ public class ThesaurusSettingsController {
     @PutMapping(value = "/preferences", consumes = MediaType.APPLICATION_JSON_VALUE, produces = MediaType.APPLICATION_JSON_VALUE)
     @Operation(summary = "Mettre à jour les préférences", description = "Met à jour les préférences générales du thésaurus.")
     public ThesaurusPreferencesResponse updatePreferences(
-            @RequestHeader(value = "X-API-KEY", required = false) String xApiKey,
-            @RequestHeader(value = "API-KEY", required = false) String legacyApiKey,
+            @RequestHeader(value = ApiHeaders.X_API_KEY, required = false) String xApiKey,
+            @RequestHeader(value = ApiHeaders.API_KEY, required = false) String legacyApiKey,
             @PathVariable String thesaurusId,
             @Valid @RequestBody UpdateThesaurusPreferencesRequest request
     ) {
@@ -78,8 +79,8 @@ public class ThesaurusSettingsController {
     @GetMapping(value = "/identifiers", produces = MediaType.APPLICATION_JSON_VALUE)
     @Operation(summary = "Lire les paramètres d'identifiants", description = "Retourne la configuration des serveurs d'identifiants.")
     public ThesaurusIdentifierSettingsResponse getIdentifiers(
-            @RequestHeader(value = "X-API-KEY", required = false) String xApiKey,
-            @RequestHeader(value = "API-KEY", required = false) String legacyApiKey,
+            @RequestHeader(value = ApiHeaders.X_API_KEY, required = false) String xApiKey,
+            @RequestHeader(value = ApiHeaders.API_KEY, required = false) String legacyApiKey,
             @PathVariable String thesaurusId
     ) {
         int userId = settingAuthSupport.resolveUserId(xApiKey, legacyApiKey);
@@ -92,8 +93,8 @@ public class ThesaurusSettingsController {
     @PutMapping(value = "/identifiers", consumes = MediaType.APPLICATION_JSON_VALUE, produces = MediaType.APPLICATION_JSON_VALUE)
     @Operation(summary = "Mettre à jour les identifiants", description = "Met à jour la configuration des serveurs d'identifiants.")
     public ThesaurusIdentifierSettingsResponse updateIdentifiers(
-            @RequestHeader(value = "X-API-KEY", required = false) String xApiKey,
-            @RequestHeader(value = "API-KEY", required = false) String legacyApiKey,
+            @RequestHeader(value = ApiHeaders.X_API_KEY, required = false) String xApiKey,
+            @RequestHeader(value = ApiHeaders.API_KEY, required = false) String legacyApiKey,
             @PathVariable String thesaurusId,
             @Valid @RequestBody UpdateThesaurusIdentifierSettingsRequest request
     ) {
@@ -114,8 +115,8 @@ public class ThesaurusSettingsController {
     @GetMapping(value = "/corpus", produces = MediaType.APPLICATION_JSON_VALUE)
     @Operation(summary = "Lister les corpus", description = "Retourne les corpus liés au thésaurus.")
     public List<CorpusResponse> listCorpus(
-            @RequestHeader(value = "X-API-KEY", required = false) String xApiKey,
-            @RequestHeader(value = "API-KEY", required = false) String legacyApiKey,
+            @RequestHeader(value = ApiHeaders.X_API_KEY, required = false) String xApiKey,
+            @RequestHeader(value = ApiHeaders.API_KEY, required = false) String legacyApiKey,
             @PathVariable String thesaurusId
     ) {
         int userId = settingAuthSupport.resolveUserId(xApiKey, legacyApiKey);
@@ -128,8 +129,8 @@ public class ThesaurusSettingsController {
     @PostMapping(value = "/corpus", consumes = MediaType.APPLICATION_JSON_VALUE, produces = MediaType.APPLICATION_JSON_VALUE)
     @Operation(summary = "Créer un corpus", description = "Ajoute un corpus au thésaurus.")
     public CorpusResponse createCorpus(
-            @RequestHeader(value = "X-API-KEY", required = false) String xApiKey,
-            @RequestHeader(value = "API-KEY", required = false) String legacyApiKey,
+            @RequestHeader(value = ApiHeaders.X_API_KEY, required = false) String xApiKey,
+            @RequestHeader(value = ApiHeaders.API_KEY, required = false) String legacyApiKey,
             @PathVariable String thesaurusId,
             @Valid @RequestBody CreateCorpusRequest request
     ) {
@@ -143,8 +144,8 @@ public class ThesaurusSettingsController {
     @PutMapping(value = "/corpus/{name}", consumes = MediaType.APPLICATION_JSON_VALUE, produces = MediaType.APPLICATION_JSON_VALUE)
     @Operation(summary = "Modifier un corpus", description = "Met à jour un corpus existant.")
     public CorpusResponse updateCorpus(
-            @RequestHeader(value = "X-API-KEY", required = false) String xApiKey,
-            @RequestHeader(value = "API-KEY", required = false) String legacyApiKey,
+            @RequestHeader(value = ApiHeaders.X_API_KEY, required = false) String xApiKey,
+            @RequestHeader(value = ApiHeaders.API_KEY, required = false) String legacyApiKey,
             @PathVariable String thesaurusId,
             @PathVariable String name,
             @Valid @RequestBody UpdateCorpusRequest request
@@ -159,8 +160,8 @@ public class ThesaurusSettingsController {
     @DeleteMapping("/corpus/{name}")
     @Operation(summary = "Supprimer un corpus", description = "Supprime un corpus du thésaurus.")
     public ResponseEntity<Void> deleteCorpus(
-            @RequestHeader(value = "X-API-KEY", required = false) String xApiKey,
-            @RequestHeader(value = "API-KEY", required = false) String legacyApiKey,
+            @RequestHeader(value = ApiHeaders.X_API_KEY, required = false) String xApiKey,
+            @RequestHeader(value = ApiHeaders.API_KEY, required = false) String legacyApiKey,
             @PathVariable String thesaurusId,
             @PathVariable String name
     ) {

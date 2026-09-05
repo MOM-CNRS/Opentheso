@@ -1,5 +1,6 @@
 package fr.cnrs.opentheso.v2.collection.ui;
 
+import fr.cnrs.opentheso.v2.concept.write.ui.WriteUiMessages;
 import fr.cnrs.opentheso.utils.MessageUtils;
 import fr.cnrs.opentheso.v2.collection.read.CollectionReadService;
 import fr.cnrs.opentheso.v2.concept.model.ConceptNote;
@@ -33,13 +34,13 @@ import java.util.List;
 @RequiredArgsConstructor
 public class CollectionNoteEditorBean implements Serializable {
 
-    private final ConceptNoteMutationService conceptNoteMutationService;
-    private final ConceptWriteMetadataService conceptWriteMetadataService;
-    private final CollectionReadService collectionReadService;
-    private final ThesaurusContext thesaurusContext;
-    private final UserSession userSession;
-    private final ConceptWritePolicy conceptWritePolicy;
-    private final ThesaurusBrowseBean thesaurusBrowseBean;
+    private final transient ConceptNoteMutationService conceptNoteMutationService;
+    private final transient ConceptWriteMetadataService conceptWriteMetadataService;
+    private final transient CollectionReadService collectionReadService;
+    private final transient ThesaurusContext thesaurusContext;
+    private final transient UserSession userSession;
+    private final transient ConceptWritePolicy conceptWritePolicy;
+    private final transient ThesaurusBrowseBean thesaurusBrowseBean;
 
     private String currentLabel;
     private String selectedTypeCode = "note";
@@ -184,19 +185,19 @@ public class CollectionNoteEditorBean implements Serializable {
 
     private Integer requireUserId() {
         if (!isNoteActionsAvailable()) {
-            MessageUtils.showErrorMessage("Action non autorisée");
+            MessageUtils.showErrorMessage(WriteUiMessages.UNAUTHORIZED_FALLBACK);
             return null;
         }
         Integer userId = userSession.getCurrentUserId();
         if (userId == null) {
-            MessageUtils.showErrorMessage("Action non autorisée");
+            MessageUtils.showErrorMessage(WriteUiMessages.UNAUTHORIZED_FALLBACK);
         }
         return userId;
     }
 
     private String requireCollectionId() {
         if (thesaurusBrowseBean.getSelectedGroup() == null) {
-            MessageUtils.showErrorMessage("Action non autorisée");
+            MessageUtils.showErrorMessage(WriteUiMessages.UNAUTHORIZED_FALLBACK);
             return null;
         }
         return thesaurusBrowseBean.getSelectedGroup().groupId();

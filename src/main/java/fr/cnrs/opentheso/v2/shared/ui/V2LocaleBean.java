@@ -10,6 +10,7 @@ import org.springframework.context.annotation.ScopedProxyMode;
 import org.springframework.stereotype.Component;
 
 import java.io.Serializable;
+import java.text.MessageFormat;
 import java.util.Locale;
 import java.util.ResourceBundle;
 import java.util.Set;
@@ -23,6 +24,7 @@ import java.util.Set;
 @Scope(value = "session", proxyMode = ScopedProxyMode.TARGET_CLASS)
 public class V2LocaleBean implements Serializable {
 
+    private static final long serialVersionUID = 1L;
     private static final Set<String> SUPPORTED = Set.of("fr", "en", "de", "es", "ar");
 
     @Value("${settings.workLanguage:fr}")
@@ -101,6 +103,14 @@ public class V2LocaleBean implements Serializable {
         } catch (RuntimeException e) {
             return key;
         }
+    }
+
+    public String getMsg(String key, Object... args) {
+        String pattern = getMsg(key);
+        if (args == null || args.length == 0) {
+            return pattern;
+        }
+        return MessageFormat.format(pattern, args);
     }
 
     private void applyCode(String code) {

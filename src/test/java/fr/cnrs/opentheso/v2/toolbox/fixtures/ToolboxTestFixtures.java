@@ -7,6 +7,7 @@ import fr.cnrs.opentheso.v2.toolbox.model.EditionStatistics;
 import fr.cnrs.opentheso.v2.toolbox.model.EditionThesaurusSummary;
 
 import java.time.LocalDateTime;
+import java.time.Month;
 
 public final class ToolboxTestFixtures {
 
@@ -18,7 +19,7 @@ public final class ToolboxTestFixtures {
                 "TH1",
                 "Thésaurus test",
                 false,
-                LocalDateTime.of(2024, 1, 15, 10, 0)
+                LocalDateTime.of(2024, Month.JANUARY, 15, 10, 0)
         );
     }
 
@@ -27,7 +28,7 @@ public final class ToolboxTestFixtures {
                 "TH2",
                 "Thésaurus privé",
                 true,
-                LocalDateTime.of(2023, 5, 20, 8, 30)
+                LocalDateTime.of(2023, Month.MAY, 20, 8, 30)
         );
     }
 
@@ -36,7 +37,7 @@ public final class ToolboxTestFixtures {
     }
 
     public static EditionThesaurusRow sampleThesaurusRow() {
-        return new EditionThesaurusRow("TH1", "Thésaurus test", false, LocalDateTime.of(2024, 1, 15, 10, 0));
+        return new EditionThesaurusRow("TH1", "Thésaurus test", false, LocalDateTime.of(2024, Month.JANUARY, 15, 10, 0));
     }
 
     public static LanguageOptionRow sampleLanguageRow() {

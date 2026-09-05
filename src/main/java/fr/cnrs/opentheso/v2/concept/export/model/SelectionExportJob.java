@@ -3,9 +3,16 @@ package fr.cnrs.opentheso.v2.concept.export.model;
 import java.io.IOException;
 import java.nio.file.Files;
 import java.nio.file.Path;
+import java.nio.file.attribute.PosixFilePermission;
+import java.nio.file.attribute.PosixFilePermissions;
+import java.util.EnumSet;
 import java.util.concurrent.Future;
 
 public class SelectionExportJob {
+
+    private static final String PHASE_RESOLVE = "resolve";
+    private static final String PHASE_PREPARE = "Préparer";
+    private static final String STATUS_RUNNING = "running";
 
     static final int PHASE_COUNT = 4;
     private static final int[] PHASE_WEIGHTS = {12, 38, 35, 15};
@@ -18,14 +25,14 @@ public class SelectionExportJob {
     private volatile String filename;
     private volatile String contentType;
     private volatile String error;
-    private volatile byte[] content;
-    private volatile Path file;
+    private byte[] content;
+    private Path file;
     private volatile long bytes;
     private volatile long startedAt;
     private volatile boolean cancelRequested;
     private volatile int phaseIndex;
-    private volatile String phase = "resolve";
-    private volatile String phaseLabel = "Préparer";
+    private volatile String phase = PHASE_RESOLVE;
+    private volatile String phaseLabel = PHASE_PREPARE;
     private Future<?> worker;
 
     public synchronized void reset() {
@@ -44,24 +51,24 @@ public class SelectionExportJob {
         startedAt = 0;
         cancelRequested = false;
         phaseIndex = 0;
-        phase = "resolve";
-        phaseLabel = "Préparer";
+        phase = PHASE_RESOLVE;
+        phaseLabel = PHASE_PREPARE;
     }
 
     public synchronized void start(int total, String message) {
         deleteFileQuietly();
-        this.status = "running";
+        this.status = STATUS_RUNNING;
         this.error = null;
         this.content = null;
         this.filename = null;
         this.bytes = 0;
         this.startedAt = System.currentTimeMillis();
-        enterPhase(0, "resolve", "Préparer", message);
+        enterPhase(0, PHASE_RESOLVE, PHASE_PREPARE, message);
         this.total = Math.max(0, total);
     }
 
     public synchronized void enterPhase(int index, String phase, String phaseLabel, String message) {
-        this.status = "running";
+        this.status = STATUS_RUNNING;
         this.phaseIndex = Math.max(0, Math.min(PHASE_COUNT - 1, index));
         this.phase = phase == null ? "" : phase;
         this.phaseLabel = phaseLabel == null ? "" : phaseLabel;
@@ -90,7 +97,7 @@ public class SelectionExportJob {
             cancel();
             return;
         }
-        if (!"running".equals(status)) {
+        if (!STATUS_RUNNING.equals(status)) {
             return;
         }
         deleteFileQuietly();
@@ -108,7 +115,7 @@ public class SelectionExportJob {
         this.bytes = data.length;
         try {
             String suffix = extensionOf(filename);
-            Path path = Files.createTempFile("ot-sel-export-", suffix);
+            Path path = createExportTempFile(suffix);
             Files.write(path, data);
             this.file = path;
             this.content = null;
@@ -249,6 +256,33 @@ public class SelectionExportJob {
         }
         content = null;
         bytes = 0;
+    }
+
+    private static Path createExportTempFile(String suffix) throws IOException {
+        Path dir = exportTempDir();
+        try {
+            return Files.createTempFile(dir, "ot-sel-export-", suffix,
+                    PosixFilePermissions.asFileAttribute(EnumSet.of(
+                            PosixFilePermission.OWNER_READ,
+                            PosixFilePermission.OWNER_WRITE)));
+        } catch (UnsupportedOperationException ignored) {
+            return Files.createTempFile(dir, "ot-sel-export-", suffix);
+        }
+    }
+
+    private static Path exportTempDir() throws IOException {
+        String home = System.getProperty("user.home");
+        Path dir = Path.of(home == null || home.isBlank() ? "." : home, ".opentheso", "export-tmp");
+        Files.createDirectories(dir);
+        try {
+            Files.setPosixFilePermissions(dir, EnumSet.of(
+                    PosixFilePermission.OWNER_READ,
+                    PosixFilePermission.OWNER_WRITE,
+                    PosixFilePermission.OWNER_EXECUTE));
+        } catch (UnsupportedOperationException ignored) {
+            // Windows / non-POSIX FS
+        }
+        return dir;
     }
 
     private static String extensionOf(String name) {

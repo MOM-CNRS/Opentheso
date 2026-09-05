@@ -26,12 +26,12 @@ import java.time.Instant;
 @Named("v2MaintenanceBean")
 public class MaintenanceBean implements Serializable {
 
-    private final UserSession userSession;
-    private final ToolboxAccessPolicy toolboxAccessPolicy;
-    private final ThesaurusContext thesaurusContext;
-    private final ThesaurusMaintenanceService thesaurusMaintenanceService;
-    private final ThesaurusViewBean thesaurusViewBean;
-    private final MaintenanceLastRunStore lastRunStore;
+    private final transient UserSession userSession;
+    private final transient ToolboxAccessPolicy toolboxAccessPolicy;
+    private final transient ThesaurusContext thesaurusContext;
+    private final transient ThesaurusMaintenanceService thesaurusMaintenanceService;
+    private final transient ThesaurusViewBean thesaurusViewBean;
+    private final transient MaintenanceLastRunStore lastRunStore;
 
     private MaintenanceArkEditor arkEditor = new MaintenanceArkEditor();
     private LocalArkSettings localArkSettings = new LocalArkSettings("", "", 0);

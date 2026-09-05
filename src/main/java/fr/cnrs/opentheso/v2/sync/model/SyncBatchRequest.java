@@ -1,6 +1,7 @@
 package fr.cnrs.opentheso.v2.sync.model;
 
 import java.util.List;
+import java.io.Serializable;
 
 public record SyncBatchRequest(
         String sourceThesaurusId,
@@ -14,7 +15,7 @@ public record SyncBatchRequest(
          */
         Boolean createCandidates,
         List<SyncConceptPayload> concepts
-) {
+) implements Serializable {
     public boolean shouldCreateCandidates() {
         return createCandidates == null || createCandidates;
     }

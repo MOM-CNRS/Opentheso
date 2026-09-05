@@ -19,6 +19,7 @@ import fr.cnrs.opentheso.v2.concept.write.policy.ConceptWritePolicy;
 import fr.cnrs.opentheso.v2.concept.write.service.ConceptIdentifierMutationService;
 import fr.cnrs.opentheso.v2.setting.ui.ThesaurusContext;
 import fr.cnrs.opentheso.v2.shared.ui.UserSession;
+import fr.cnrs.opentheso.v2.shared.ui.V2LocaleBean;
 import jakarta.faces.view.ViewScoped;
 import jakarta.inject.Named;
 import lombok.Getter;
@@ -40,26 +41,29 @@ import java.util.Set;
 @RequiredArgsConstructor
 public class ConceptIdentifierEditorBean implements Serializable {
 
-    private final ConceptIdentifierMutationService conceptIdentifierMutationService;
-    private final ConceptSelectionContext conceptSelectionContext;
-    private final ConceptNavigationSupport conceptNavigationSupport;
-    private final ThesaurusContext thesaurusContext;
-    private final UserSession userSession;
-    private final ConceptWritePolicy conceptWritePolicy;
-    private final PreferencesRepository preferencesRepository;
-    private final BranchConceptSupport branchConceptSupport;
-    private final ThesaurusBrowseBean thesaurusBrowseBean;
-    private final ConceptRepository conceptRepository;
+    private static final String ARK_FAILED_KEY = "v2.concept.arkFailed";
+    private static final String ARK_FAILED_FALLBACK = "La génération Ark a échoué";
+
+
+    private final transient ConceptIdentifierMutationService conceptIdentifierMutationService;
+    private final transient ConceptSelectionContext conceptSelectionContext;
+    private final transient ConceptNavigationSupport conceptNavigationSupport;
+    private final transient ThesaurusContext thesaurusContext;
+    private final transient UserSession userSession;
+    private final transient ConceptWritePolicy conceptWritePolicy;
+    private final transient PreferencesRepository preferencesRepository;
+    private final transient BranchConceptSupport branchConceptSupport;
+    private final transient ThesaurusBrowseBean thesaurusBrowseBean;
+    private final transient ConceptRepository conceptRepository;
+    private final transient V2LocaleBean v2LocaleBean;
+
+    private final DialogRunState arkRun = new DialogRunState();
 
     private String currentConceptId;
     private String currentConceptLabel;
     private String currentArkId;
     private String arkProvider = "";
     private String currentHandleId;
-    private String arkRunState = "";
-    private String errorMessage;
-    private String flashMessage;
-    private String flashToken;
     private String thesaurusLabel;
     private String thesaurusId;
     private List<String> missingArkIds = Collections.emptyList();
@@ -131,8 +135,40 @@ public class ConceptIdentifierEditorBean implements Serializable {
         return missingArkIds == null ? 0 : missingArkIds.size();
     }
 
+    public String getArkRunState() {
+        return arkRun.getState();
+    }
+
+    public void setArkRunState(String state) {
+        arkRun.setState(state);
+    }
+
+    public String getErrorMessage() {
+        return arkRun.getErrorMessage();
+    }
+
+    public void setErrorMessage(String errorMessage) {
+        arkRun.setErrorMessage(errorMessage);
+    }
+
+    public String getFlashMessage() {
+        return arkRun.getFlashMessage();
+    }
+
+    public void setFlashMessage(String flashMessage) {
+        arkRun.setFlashMessage(flashMessage);
+    }
+
+    public String getFlashToken() {
+        return arkRun.getFlashToken();
+    }
+
+    public void setFlashToken(String flashToken) {
+        arkRun.setFlashToken(flashToken);
+    }
+
     public boolean isMissingArkSubmitReady() {
-        return !isMissingArkEmpty() && !"done".equals(arkRunState);
+        return !isMissingArkEmpty() && !arkRun.isDone();
     }
 
     public boolean isBranchArkEmpty() {
@@ -144,7 +180,7 @@ public class ConceptIdentifierEditorBean implements Serializable {
     }
 
     public boolean isBranchArkSubmitReady() {
-        return !isBranchArkEmpty() && !"done".equals(arkRunState);
+        return !isBranchArkEmpty() && !arkRun.isDone();
     }
 
     public boolean isAllArkEmpty() {
@@ -156,18 +192,16 @@ public class ConceptIdentifierEditorBean implements Serializable {
     }
 
     public boolean isAllArkSubmitReady() {
-        return !isAllArkEmpty() && !"done".equals(arkRunState);
+        return !isAllArkEmpty() && !arkRun.isDone();
     }
 
     public void prepareGenerateArk() {
-        errorMessage = null;
-        arkRunState = "";
+        arkRun.reset();
         refreshContext();
     }
 
     public void prepareGenerateMissingArk() {
-        errorMessage = null;
-        arkRunState = "";
+        arkRun.reset();
         missingArkCreated = 0;
         refreshContext();
         loadMissingArkIds();
@@ -178,8 +212,7 @@ public class ConceptIdentifierEditorBean implements Serializable {
     }
 
     public void prepareGenerateArkForBranch() {
-        errorMessage = null;
-        arkRunState = "";
+        arkRun.reset();
         branchProcessed = 0;
         refreshContext();
         loadBranchConceptIds();
@@ -187,8 +220,7 @@ public class ConceptIdentifierEditorBean implements Serializable {
     }
 
     public void prepareGenerateAllArk() {
-        errorMessage = null;
-        arkRunState = "";
+        arkRun.reset();
         allProcessed = 0;
         refreshContext();
         loadAllConceptsForArk();
@@ -209,9 +241,9 @@ public class ConceptIdentifierEditorBean implements Serializable {
     }
 
     public boolean submitGenerateArk() {
-        errorMessage = null;
+        arkRun.setErrorMessage(null);
         if (!isArkGenerationAvailable() || !conceptSelectionContext.hasSelection()) {
-            errorMessage = "Action non autorisée";
+            arkRun.fail(unauthorized());
             return false;
         }
         boolean updating = isExistingArk();
@@ -222,28 +254,26 @@ public class ConceptIdentifierEditorBean implements Serializable {
         );
         MutationResult result = conceptIdentifierMutationService.generateArk(command);
         if (result == null || !result.success()) {
-            arkRunState = "error";
-            errorMessage = result != null ? result.message() : "La génération Ark a échoué";
+            arkRun.fail(result != null ? result.message() : msg(ARK_FAILED_KEY, ARK_FAILED_FALLBACK));
             return false;
         }
         currentArkId = resolveArkIdFromStore();
-        arkRunState = "done";
         String arkSuffix = StringUtils.isBlank(currentArkId) ? "" : " : " + currentArkId;
-        flashSuccess((updating ? "Identifiant Ark mis à jour" : "Identifiant Ark créé") + arkSuffix);
+        arkRun.succeed((updating
+                ? msg("v2.concept.arkUpdatedFlash", "Identifiant Ark mis à jour")
+                : msg("v2.concept.arkCreatedFlash", "Identifiant Ark créé")) + arkSuffix);
         return true;
     }
 
     public boolean submitGenerateMissingArk() {
-        errorMessage = null;
+        arkRun.setErrorMessage(null);
         if (!isArkBatchGenerationAvailable()) {
-            arkRunState = "error";
-            errorMessage = "Action non autorisée";
+            arkRun.fail(unauthorized());
             return false;
         }
         loadMissingArkIds();
         if (missingArkIds.isEmpty()) {
-            arkRunState = "error";
-            errorMessage = "Aucun concept sans identifiant Ark";
+            arkRun.fail(msg("v2.concept.arkNoneMissing", "Aucun concept sans identifiant Ark"));
             return false;
         }
         var command = new GenerateArkCommand(
@@ -253,25 +283,23 @@ public class ConceptIdentifierEditorBean implements Serializable {
         );
         MutationResult result = conceptIdentifierMutationService.generateArk(command);
         if (result == null || !result.success()) {
-            arkRunState = "error";
-            errorMessage = result != null ? result.message() : "La génération Ark a échoué";
+            arkRun.fail(result != null ? result.message() : msg(ARK_FAILED_KEY, ARK_FAILED_FALLBACK));
             return false;
         }
         missingArkCreated = missingArkIds.size();
-        arkRunState = "done";
         if (result.warning()) {
-            errorMessage = result.message();
+            arkRun.setErrorMessage(result.message());
         }
         loadMissingArkIds();
-        flashSuccess(missingArkCreated == 1
-                ? "1 identifiant Ark créé"
-                : missingArkCreated + " identifiants Ark créés");
+        arkRun.complete(missingArkCreated == 1
+                ? msg("v2.concept.arkCreatedOne", "1 identifiant Ark créé")
+                : msg("v2.concept.arkCreatedMany", "{0} identifiants Ark créés", missingArkCreated));
         return true;
     }
 
     public void submitDeleteArk() {
         if (!isArkDeletionAvailable() || !conceptSelectionContext.hasSelection()) {
-            MessageUtils.showErrorMessage("Action non autorisée");
+            MessageUtils.showErrorMessage(unauthorized());
             return;
         }
         var command = new DeleteArkCommand(
@@ -282,17 +310,15 @@ public class ConceptIdentifierEditorBean implements Serializable {
     }
 
     public boolean submitGenerateArkForBranch() {
-        errorMessage = null;
+        arkRun.setErrorMessage(null);
         if (!isArkBatchGenerationAvailable() || !conceptSelectionContext.hasSelection()) {
-            arkRunState = "error";
-            errorMessage = "Action non autorisée";
+            arkRun.fail(unauthorized());
             return false;
         }
         loadBranchConceptIds();
         countBranchArk();
         if (branchConceptIds.isEmpty()) {
-            arkRunState = "error";
-            errorMessage = "Aucun concept dans cette branche";
+            arkRun.fail(msg("v2.concept.arkBranchEmptyFlash", "Aucun concept dans cette branche"));
             return false;
         }
         var command = new GenerateArkCommand(
@@ -302,47 +328,43 @@ public class ConceptIdentifierEditorBean implements Serializable {
         );
         MutationResult result = conceptIdentifierMutationService.generateArk(command);
         if (result == null || !result.success()) {
-            arkRunState = "error";
-            errorMessage = result != null ? result.message() : "La génération Ark a échoué";
+            arkRun.fail(result != null ? result.message() : msg(ARK_FAILED_KEY, ARK_FAILED_FALLBACK));
             return false;
         }
         branchProcessed = branchConceptIds.size();
-        arkRunState = "done";
         if (result.warning()) {
-            errorMessage = result.message();
+            arkRun.setErrorMessage(result.message());
         }
         countBranchArk();
-        flashSuccess(branchProcessed == 1
-                ? "1 concept de la branche traité"
-                : branchProcessed + " concepts de la branche traités");
+        arkRun.complete(branchProcessed == 1
+                ? msg("v2.concept.arkBranchFlashOne", "1 concept de la branche traité")
+                : msg("v2.concept.arkBranchFlashMany", "{0} concepts de la branche traités", branchProcessed));
         return true;
     }
 
     public void submitGenerateArkForConceptsWithoutArk() {
         String thesaurusId = thesaurusContext.resolveThesaurusId();
         if (!isArkBatchGenerationAvailable() || StringUtils.isBlank(thesaurusId)) {
-            MessageUtils.showErrorMessage("Action non autorisée");
+            MessageUtils.showErrorMessage(unauthorized());
             return;
         }
         List<String> conceptIds = conceptRepository.findAllIdConceptsWithoutArk(thesaurusId);
         if (CollectionUtils.isEmpty(conceptIds)) {
-            MessageUtils.showInformationMessage("Aucun concept sans ARK");
+            MessageUtils.showInformationMessage(msg("v2.concept.arkNoneFlash", "Aucun concept sans ARK"));
             return;
         }
         submitGenerateArkForConcepts(conceptIds, true);
     }
 
     public boolean submitGenerateAllArk() {
-        errorMessage = null;
+        arkRun.setErrorMessage(null);
         if (!isArkBatchGenerationAvailable()) {
-            arkRunState = "error";
-            errorMessage = "Action non autorisée";
+            arkRun.fail(unauthorized());
             return false;
         }
         loadAllConceptsForArk();
         if (allConceptIds.isEmpty()) {
-            arkRunState = "error";
-            errorMessage = "Aucun concept dans ce thésaurus";
+            arkRun.fail(msg("v2.concept.arkAllEmptyFlash", "Aucun concept dans ce thésaurus"));
             return false;
         }
         var command = new GenerateArkCommand(
@@ -352,19 +374,17 @@ public class ConceptIdentifierEditorBean implements Serializable {
         );
         MutationResult result = conceptIdentifierMutationService.generateArk(command);
         if (result == null || !result.success()) {
-            arkRunState = "error";
-            errorMessage = result != null ? result.message() : "La génération Ark a échoué";
+            arkRun.fail(result != null ? result.message() : msg(ARK_FAILED_KEY, ARK_FAILED_FALLBACK));
             return false;
         }
         allProcessed = allConceptIds.size();
-        arkRunState = "done";
         if (result.warning()) {
-            errorMessage = result.message();
+            arkRun.setErrorMessage(result.message());
         }
         loadAllConceptsForArk();
-        flashSuccess(allProcessed == 1
-                ? "1 concept du thésaurus traité"
-                : allProcessed + " concepts du thésaurus traités");
+        arkRun.complete(allProcessed == 1
+                ? msg("v2.concept.arkAllFlashOne", "1 concept du thésaurus traité")
+                : msg("v2.concept.arkAllFlashMany", "{0} concepts du thésaurus traités", allProcessed));
         return true;
     }
 
@@ -374,7 +394,7 @@ public class ConceptIdentifierEditorBean implements Serializable {
 
     public void submitDeleteHandle() {
         if (!isHandleDeletionAvailable() || !conceptSelectionContext.hasSelection()) {
-            MessageUtils.showErrorMessage("Action non autorisée");
+            MessageUtils.showErrorMessage(unauthorized());
             return;
         }
         currentHandleId = resolveHandleId();
@@ -396,12 +416,12 @@ public class ConceptIdentifierEditorBean implements Serializable {
     public void submitGenerateHandleForConceptsWithoutHandle() {
         String thesaurusId = thesaurusContext.resolveThesaurusId();
         if (!isHandleGenerationAvailable() || StringUtils.isBlank(thesaurusId)) {
-            MessageUtils.showErrorMessage("Action non autorisée");
+            MessageUtils.showErrorMessage(unauthorized());
             return;
         }
         List<String> conceptIds = conceptRepository.findAllIdsWithoutHandle(thesaurusId);
         if (CollectionUtils.isEmpty(conceptIds)) {
-            MessageUtils.showInformationMessage("Aucun concept sans Handle");
+            MessageUtils.showInformationMessage(msg("v2.concept.handleNoneFlash", "Aucun concept sans Handle"));
             return;
         }
         submitGenerateHandleForConcepts(conceptIds);
@@ -410,7 +430,7 @@ public class ConceptIdentifierEditorBean implements Serializable {
     public void submitGenerateAllHandle() {
         String thesaurusId = thesaurusContext.resolveThesaurusId();
         if (!isHandleGenerationAvailable() || StringUtils.isBlank(thesaurusId)) {
-            MessageUtils.showErrorMessage("Action non autorisée");
+            MessageUtils.showErrorMessage(unauthorized());
             return;
         }
         submitGenerateHandleForConcepts(loadAllConceptIds(thesaurusId));
@@ -418,7 +438,7 @@ public class ConceptIdentifierEditorBean implements Serializable {
 
     private void submitGenerateArkForConcepts(List<String> conceptIds, boolean allowed) {
         if (!allowed || conceptIds == null || conceptIds.isEmpty()) {
-            MessageUtils.showErrorMessage("Action non autorisée");
+            MessageUtils.showErrorMessage(unauthorized());
             return;
         }
         var command = new GenerateArkCommand(
@@ -431,7 +451,7 @@ public class ConceptIdentifierEditorBean implements Serializable {
 
     private void submitGenerateHandleForConcepts(List<String> conceptIds) {
         if (!isHandleGenerationAvailable() || conceptIds == null || conceptIds.isEmpty()) {
-            MessageUtils.showErrorMessage("Action non autorisée");
+            MessageUtils.showErrorMessage(unauthorized());
             return;
         }
         var command = new GenerateHandleCommand(thesaurusContext.resolveThesaurusId(), conceptIds);
@@ -448,7 +468,7 @@ public class ConceptIdentifierEditorBean implements Serializable {
 
     private void handleMutationResult(MutationResult result) {
         if (result == null || !result.success()) {
-            MessageUtils.showErrorMessage(result != null ? result.message() : "Erreur");
+            MessageUtils.showErrorMessage(result != null ? result.message() : msg("v2.write.failed", "Erreur"));
             return;
         }
         conceptNavigationSupport.refreshSelectedConcept();
@@ -517,9 +537,21 @@ public class ConceptIdentifierEditorBean implements Serializable {
         return "";
     }
 
-    private void flashSuccess(String message) {
-        flashMessage = message;
-        flashToken = String.valueOf(System.currentTimeMillis());
+    public void finishAfterClose() {
+        arkRun.reset();
+    }
+
+
+    private String unauthorized() {
+        return WriteUiMessages.unauthorized(v2LocaleBean);
+    }
+
+    private String msg(String key, String fallback) {
+        return WriteUiMessages.msg(v2LocaleBean, key, fallback);
+    }
+
+    private String msg(String key, String fallback, Object... args) {
+        return WriteUiMessages.msg(v2LocaleBean, key, fallback, args);
     }
 
     private void loadBranchConceptIds() {

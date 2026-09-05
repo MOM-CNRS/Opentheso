@@ -36,12 +36,12 @@ import java.util.List;
 @Named("v2EditionBean")
 public class EditionBean implements Serializable {
 
-    private final UserSession userSession;
-    private final ToolboxAccessPolicy toolboxAccessPolicy;
-    private final ThesaurusContext thesaurusContext;
-    private final V2LocaleBean localeBean;
-    private final EditionThesaurusService editionThesaurusService;
-    private final ConsultationShellBean consultationShellBean;
+    private final transient UserSession userSession;
+    private final transient ToolboxAccessPolicy toolboxAccessPolicy;
+    private final transient ThesaurusContext thesaurusContext;
+    private final transient V2LocaleBean localeBean;
+    private final transient EditionThesaurusService editionThesaurusService;
+    private final transient ConsultationShellBean consultationShellBean;
 
     private EditionView currentView = EditionView.LIST;
     private List<EditionThesaurusSummary> thesaurusList = Collections.emptyList();
@@ -51,13 +51,13 @@ public class EditionBean implements Serializable {
     private String thesaurusTitleToDelete;
     private boolean deletePerennialIdentifiers;
 
-    private final NewThesaurusBean newThesaurusBean;
-    private final ModifyThesaurusBean modifyThesaurusBean;
-    private final ThesaurusExportBean thesaurusExportBean;
-    private final ThesaurusEditionSkosImportBean skosImportBean;
-    private final ThesaurusEditionCsvImportBean csvImportBean;
-    private final ThesaurusEditionCsvStructuredImportBean csvStructuredImportBean;
-    private final ThesaurusSyncBean thesaurusSyncBean;
+    private final transient NewThesaurusBean newThesaurusBean;
+    private final transient ModifyThesaurusBean modifyThesaurusBean;
+    private final transient ThesaurusExportBean thesaurusExportBean;
+    private final transient ThesaurusEditionSkosImportBean skosImportBean;
+    private final transient ThesaurusEditionCsvImportBean csvImportBean;
+    private final transient ThesaurusEditionCsvStructuredImportBean csvStructuredImportBean;
+    private final transient ThesaurusSyncBean thesaurusSyncBean;
 
     private EditionThesaurusSummary selectedThesaurusForAction;
 

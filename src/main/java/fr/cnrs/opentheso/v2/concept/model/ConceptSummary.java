@@ -1,5 +1,7 @@
 package fr.cnrs.opentheso.v2.concept.model;
 
+import java.io.Serializable;
+
 public record ConceptSummary(
         String conceptId,
         String thesaurusId,
@@ -12,7 +14,7 @@ public record ConceptSummary(
         String created,
         String modified,
         String creatorName
-) {
+) implements Serializable {
 
     public String getConceptId() {
         return conceptId;

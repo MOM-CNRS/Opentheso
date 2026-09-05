@@ -7,7 +7,6 @@ import fr.cnrs.opentheso.v2.user.exception.ApiKeyRegenerationException;
 import fr.cnrs.opentheso.v2.user.exception.InvalidProfileDataException;
 import fr.cnrs.opentheso.v2.user.model.ApiKeyGenerationResult;
 import fr.cnrs.opentheso.v2.user.model.ProfileWithRoles;
-import fr.cnrs.opentheso.v2.user.model.ProjectRoleOverview;
 import fr.cnrs.opentheso.v2.user.model.UserProfile;
 import fr.cnrs.opentheso.v2.user.service.UserApiKeyService;
 import fr.cnrs.opentheso.v2.user.service.UserPasswordService;
@@ -21,6 +20,7 @@ import org.mockito.junit.jupiter.MockitoExtension;
 import org.primefaces.PrimeFaces;
 
 import java.time.LocalDate;
+import java.time.Month;
 import java.util.List;
 
 import static org.junit.jupiter.api.Assertions.assertEquals;
@@ -118,7 +118,7 @@ class MyAccountBeanTest {
     @Test
     void jsfHelpers_detectExpiredKey() {
         myAccountBean.setProfile(new UserProfile(
-                5, "alice", "alice@example.com", true, false, false, LocalDate.now().minusDays(1), true
+                5, "alice", "alice@example.com", true, false, false, LocalDate.of(2000, Month.JANUARY, 1), true
         ));
 
         assertTrue(myAccountBean.isKeyExpired());

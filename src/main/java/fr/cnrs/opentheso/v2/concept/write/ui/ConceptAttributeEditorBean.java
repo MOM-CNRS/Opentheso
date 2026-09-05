@@ -14,6 +14,7 @@ import fr.cnrs.opentheso.v2.concept.write.service.ConceptAttributeMutationServic
 import fr.cnrs.opentheso.v2.concept.write.service.ConceptWriteMetadataService;
 import fr.cnrs.opentheso.v2.setting.ui.ThesaurusContext;
 import fr.cnrs.opentheso.v2.shared.ui.UserSession;
+import fr.cnrs.opentheso.v2.shared.ui.V2LocaleBean;
 import jakarta.faces.view.ViewScoped;
 import jakarta.inject.Named;
 import lombok.Getter;
@@ -33,14 +34,17 @@ import java.util.List;
 @RequiredArgsConstructor
 public class ConceptAttributeEditorBean implements Serializable {
 
-    private final ConceptAttributeMutationService conceptAttributeMutationService;
-    private final ConceptWriteMetadataService conceptWriteMetadataService;
-    private final ConceptSelectionContext conceptSelectionContext;
-    private final ConceptNavigationSupport conceptNavigationSupport;
-    private final ThesaurusContext thesaurusContext;
-    private final UserSession userSession;
-    private final ConceptWritePolicy conceptWritePolicy;
-    private final ThesaurusBrowseBean thesaurusBrowseBean;
+    private final transient ConceptAttributeMutationService conceptAttributeMutationService;
+    private final transient ConceptWriteMetadataService conceptWriteMetadataService;
+    private final transient ConceptSelectionContext conceptSelectionContext;
+    private final transient ConceptNavigationSupport conceptNavigationSupport;
+    private final transient ThesaurusContext thesaurusContext;
+    private final transient UserSession userSession;
+    private final transient ConceptWritePolicy conceptWritePolicy;
+    private final transient ThesaurusBrowseBean thesaurusBrowseBean;
+    private final transient V2LocaleBean v2LocaleBean;
+
+    private final DialogRunState typeRun = new DialogRunState();
 
     private String currentConceptLabel;
     private String notation;
@@ -49,11 +53,23 @@ public class ConceptAttributeEditorBean implements Serializable {
     private String currentConceptTypeLabel;
     private boolean applyConceptTypeToBranch;
     private boolean appliedToBranch;
-    private String typeRunState = "";
-    private String typeErrorMessage;
-    private String typeFlashMessage;
-    private String typeFlashToken;
     private List<ConceptWriteConceptType> availableConceptTypes = Collections.emptyList();
+
+    public String getTypeRunState() {
+        return typeRun.getState();
+    }
+
+    public String getTypeErrorMessage() {
+        return typeRun.getErrorMessage();
+    }
+
+    public String getTypeFlashMessage() {
+        return typeRun.getFlashMessage();
+    }
+
+    public String getTypeFlashToken() {
+        return typeRun.getFlashToken();
+    }
 
     public boolean isAttributeActionsAvailable() {
         return conceptWritePolicy.canMutateConceptAttributes(userSession, isSelectedDeprecated());
@@ -75,7 +91,7 @@ public class ConceptAttributeEditorBean implements Serializable {
     }
 
     public boolean isTypeDone() {
-        return "done".equals(typeRunState);
+        return typeRun.isDone();
     }
 
     public boolean isTypeApplyReady() {
@@ -97,10 +113,7 @@ public class ConceptAttributeEditorBean implements Serializable {
         refreshCurrentConceptLabel();
         applyConceptTypeToBranch = false;
         appliedToBranch = false;
-        typeRunState = "";
-        typeErrorMessage = null;
-        typeFlashMessage = null;
-        typeFlashToken = null;
+        typeRun.reset();
         availableConceptTypes = conceptWriteMetadataService.listConceptTypes(thesaurusContext.resolveThesaurusId());
         currentConceptTypeCode = currentConceptType();
         selectedConceptType = currentConceptTypeCode;
@@ -111,14 +124,14 @@ public class ConceptAttributeEditorBean implements Serializable {
         if (isTypeDone()) {
             return;
         }
-        typeErrorMessage = null;
+        typeRun.setErrorMessage(null);
         selectedConceptType = StringUtils.trimToEmpty(code);
     }
 
     public void submitUpdateNotation() {
         Integer userId = requireUserId();
         if (userId == null || !isNotationEditAvailable() || !conceptSelectionContext.hasSelection()) {
-            MessageUtils.showErrorMessage("Action non autorisée");
+            MessageUtils.showErrorMessage(unauthorized());
             return;
         }
         var command = new UpdateNotationCommand(
@@ -134,24 +147,22 @@ public class ConceptAttributeEditorBean implements Serializable {
     }
 
     public void submitUpdateConceptType() {
-        typeErrorMessage = null;
-        typeFlashMessage = null;
+        typeRun.setErrorMessage(null);
+        typeRun.clearFlash();
         if (isTypeDone()) {
             return;
         }
         Integer userId = requireUserId();
         if (userId == null || !isConceptTypeEditAvailable() || !conceptSelectionContext.hasSelection()) {
-            typeRunState = "error";
-            typeErrorMessage = "Action non autorisée";
+            typeRun.fail(unauthorized());
             return;
         }
         if (StringUtils.isBlank(selectedConceptType)) {
-            typeRunState = "error";
-            typeErrorMessage = "Choisissez un type";
+            typeRun.fail(msg("v2.concept.editTypeChoose", "Choisissez un type"));
             return;
         }
         if (isSameAsCurrent() && !applyConceptTypeToBranch) {
-            typeErrorMessage = "Ce concept a déjà ce type";
+            typeRun.setErrorMessage(msg("v2.concept.editTypeSame", "Ce concept a déjà ce type"));
             return;
         }
         var command = new UpdateConceptTypeCommand(
@@ -164,25 +175,19 @@ public class ConceptAttributeEditorBean implements Serializable {
         );
         MutationResult result = conceptAttributeMutationService.updateConceptType(command);
         if (result == null || !result.success()) {
-            typeRunState = "error";
-            typeErrorMessage = result != null ? result.message() : "Erreur";
+            typeRun.fail(result != null ? result.message() : msg("v2.write.failed", "Erreur"));
             return;
         }
-        typeRunState = "done";
         appliedToBranch = applyConceptTypeToBranch;
         currentConceptTypeCode = selectedConceptType;
         currentConceptTypeLabel = labelForCode(selectedConceptType);
-        typeFlashMessage = appliedToBranch
-                ? "Type « " + currentConceptTypeLabel + " » appliqué à la branche"
-                : "Type « " + currentConceptTypeLabel + " » appliqué";
-        typeFlashToken = String.valueOf(System.currentTimeMillis());
+        typeRun.succeed(appliedToBranch
+                ? msg("v2.concept.editTypeAppliedBranch", "Type « {0} » appliqué à la branche", currentConceptTypeLabel)
+                : msg("v2.concept.editTypeApplied", "Type « {0} » appliqué", currentConceptTypeLabel));
     }
 
     public void finishTypeAfterClose() {
-        typeFlashMessage = null;
-        typeFlashToken = null;
-        typeErrorMessage = null;
-        typeRunState = "";
+        typeRun.reset();
         applyConceptTypeToBranch = false;
         appliedToBranch = false;
     }
@@ -210,7 +215,7 @@ public class ConceptAttributeEditorBean implements Serializable {
 
     private boolean handleNotationMutationResult(MutationResult result) {
         if (result == null || !result.success()) {
-            MessageUtils.showErrorMessage(result != null ? result.message() : "Erreur");
+            MessageUtils.showErrorMessage(result != null ? result.message() : msg("v2.write.failed", "Erreur"));
             return false;
         }
         String conceptId = conceptSelectionContext.getConceptId();
@@ -279,7 +284,7 @@ public class ConceptAttributeEditorBean implements Serializable {
         if (!conceptSelectionContext.hasSelection()) {
             return false;
         }
-        return "dep".equalsIgnoreCase(org.apache.commons.lang3.StringUtils.trimToEmpty(
+        return "dep".equalsIgnoreCase(StringUtils.trimToEmpty(
                 conceptSelectionContext.getSummary().status()));
     }
 
@@ -288,6 +293,19 @@ public class ConceptAttributeEditorBean implements Serializable {
     }
 
     private String contributorName() {
-        return org.apache.commons.lang3.StringUtils.defaultString(userSession.getCurrentUsername());
+        return StringUtils.defaultString(userSession.getCurrentUsername());
+    }
+
+
+    private String unauthorized() {
+        return WriteUiMessages.unauthorized(v2LocaleBean);
+    }
+
+    private String msg(String key, String fallback) {
+        return WriteUiMessages.msg(v2LocaleBean, key, fallback);
+    }
+
+    private String msg(String key, String fallback, Object... args) {
+        return WriteUiMessages.msg(v2LocaleBean, key, fallback, args);
     }
 }

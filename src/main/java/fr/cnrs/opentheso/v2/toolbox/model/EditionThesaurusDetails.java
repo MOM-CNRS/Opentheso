@@ -1,12 +1,14 @@
 package fr.cnrs.opentheso.v2.toolbox.model;
 
+import java.io.Serializable;
+
 public record EditionThesaurusDetails(
         String id,
         String title,
         String arkId,
         boolean privateThesaurus,
         String sourceLang
-) {
+) implements Serializable {
 
     public String getId() {
         return id;

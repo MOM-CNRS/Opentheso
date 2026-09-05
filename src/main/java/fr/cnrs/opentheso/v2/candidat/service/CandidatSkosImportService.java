@@ -20,7 +20,7 @@ public class CandidatSkosImportService {
     private final ConceptSkosRdfImportEngine conceptSkosRdfImportEngine;
     private final ThesaurusPreferencesProvider thesaurusPreferencesProvider;
 
-    public SkosLoadResult loadSkosFile(InputStream inputStream, int typeImport, String selectedLang, StringBuffer errorBuffer) throws IOException {
+    public SkosLoadResult loadSkosFile(InputStream inputStream, int typeImport, String selectedLang, StringBuilder errorBuffer) throws IOException {
         String lang = StringUtils.isBlank(selectedLang) ? "fr" : selectedLang;
         var document = conceptSkosRdfImportEngine.readSkos(inputStream, resolveFormat(typeImport), lang, errorBuffer);
         return new SkosLoadResult(

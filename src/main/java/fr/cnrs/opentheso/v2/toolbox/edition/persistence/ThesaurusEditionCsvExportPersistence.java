@@ -1,5 +1,6 @@
 package fr.cnrs.opentheso.v2.toolbox.edition.persistence;
 
+import fr.cnrs.opentheso.v2.shared.repository.NativeQueryParams;
 import fr.cnrs.opentheso.models.NodeDeprecatedProjection;
 import fr.cnrs.opentheso.models.nodes.NodeIdValue;
 import fr.cnrs.opentheso.models.relations.NodeDeprecated;
@@ -39,7 +40,7 @@ public class ThesaurusEditionCsvExportPersistence {
                               AND status <> 'CA'
                             ORDER BY id_concept
                             """)
-                    .setParameter("thesaurusId", thesaurusId)
+                    .setParameter(NativeQueryParams.THESAURUS_ID, thesaurusId)
                     .getResultList();
             return ids;
         }
@@ -126,8 +127,8 @@ public class ThesaurusEditionCsvExportPersistence {
                         WHERE id_thesaurus = :thesaurusId
                           AND id_concept IN (:conceptIds)
                         """)
-                .setParameter("thesaurusId", thesaurusId)
-                .setParameter("conceptIds", conceptIds)
+                .setParameter(NativeQueryParams.THESAURUS_ID, thesaurusId)
+                .setParameter(NativeQueryParams.CONCEPT_IDS, conceptIds)
                 .getResultList();
         Map<String, ConceptIds> map = new HashMap<>();
         for (Object[] row : rows) {
@@ -146,9 +147,9 @@ public class ThesaurusEditionCsvExportPersistence {
                           AND t.lang = :lang
                           AND pt.id_concept IN (:conceptIds)
                         """)
-                .setParameter("thesaurusId", thesaurusId)
+                .setParameter(NativeQueryParams.THESAURUS_ID, thesaurusId)
                 .setParameter("lang", languageCode)
-                .setParameter("conceptIds", conceptIds)
+                .setParameter(NativeQueryParams.CONCEPT_IDS, conceptIds)
                 .getResultList();
         Map<String, String> map = new HashMap<>();
         for (Object[] row : rows) {
@@ -168,9 +169,9 @@ public class ThesaurusEditionCsvExportPersistence {
                           AND pt.id_concept IN (:conceptIds)
                         ORDER BY npt.lexical_value
                         """)
-                .setParameter("thesaurusId", thesaurusId)
+                .setParameter(NativeQueryParams.THESAURUS_ID, thesaurusId)
                 .setParameter("lang", languageCode)
-                .setParameter("conceptIds", conceptIds)
+                .setParameter(NativeQueryParams.CONCEPT_IDS, conceptIds)
                 .getResultList();
         Map<String, List<String>> map = new HashMap<>();
         for (Object[] row : rows) {
@@ -190,9 +191,9 @@ public class ThesaurusEditionCsvExportPersistence {
                           AND LOWER(notetypecode) = 'definition'
                           AND identifier IN (:conceptIds)
                         """)
-                .setParameter("thesaurusId", thesaurusId)
+                .setParameter(NativeQueryParams.THESAURUS_ID, thesaurusId)
                 .setParameter("lang", languageCode)
-                .setParameter("conceptIds", conceptIds)
+                .setParameter(NativeQueryParams.CONCEPT_IDS, conceptIds)
                 .getResultList();
         Map<String, List<String>> map = new HashMap<>();
         for (Object[] row : rows) {
@@ -212,8 +213,8 @@ public class ThesaurusEditionCsvExportPersistence {
                           AND a.internal_id_concept IN (:conceptIds)
                         ORDER BY a.id
                         """)
-                .setParameter("thesaurusId", thesaurusId)
-                .setParameter("conceptIds", conceptIds)
+                .setParameter(NativeQueryParams.THESAURUS_ID, thesaurusId)
+                .setParameter(NativeQueryParams.CONCEPT_IDS, conceptIds)
                 .getResultList();
         Map<String, List<ThesaurusCsvAlignmentRow>> map = new HashMap<>();
         for (Object[] row : rows) {
@@ -240,7 +241,7 @@ public class ThesaurusEditionCsvExportPersistence {
                             WHERE cr.id_thesaurus = :thesaurusId
                               AND cr.id_concept1 IN (:deprecatedIds)
                             """)
-                    .setParameter("thesaurusId", thesaurusId)
+                    .setParameter(NativeQueryParams.THESAURUS_ID, thesaurusId)
                     .setParameter("lang", languageCode)
                     .setParameter("deprecatedIds", chunk)
                     .getResultList();

@@ -36,12 +36,14 @@ import java.util.List;
 @Named("v2MyProjectsBean")
 public class MyProjectsBean implements Serializable {
 
-    private final UserSession userSession;
-    private final V2LocaleBean localeBean;
-    private final ProjectAdminService projectAdminService;
-    private final ProjectManagementService projectManagementService;
-    private final ProjectMemberService projectMemberService;
-    private final UserProfileService userProfileService;
+    private static final String EMAIL = "EMAIL";
+
+    private final transient UserSession userSession;
+    private final transient V2LocaleBean localeBean;
+    private final transient ProjectAdminService projectAdminService;
+    private final transient ProjectManagementService projectManagementService;
+    private final transient ProjectMemberService projectMemberService;
+    private final transient UserProfileService userProfileService;
 
     private List<ProjectSummary> projects = Collections.emptyList();
     private Integer selectedProjectId;
@@ -54,7 +56,7 @@ public class MyProjectsBean implements Serializable {
     private String memberEmail;
     private String memberInstitution;
     private boolean memberAlertMail;
-    private String memberCreationMode = "EMAIL";
+    private String memberCreationMode = EMAIL;
     private String memberPassword1;
     private String memberPassword2;
     private Integer memberRoleId;
@@ -154,7 +156,7 @@ public class MyProjectsBean implements Serializable {
         memberEmail = null;
         memberInstitution = null;
         memberAlertMail = false;
-        memberCreationMode = "EMAIL";
+        memberCreationMode = EMAIL;
         memberPassword1 = null;
         memberPassword2 = null;
         memberRoleId = defaultAssignableRoleId();
@@ -199,7 +201,7 @@ public class MyProjectsBean implements Serializable {
                     memberPassword2,
                     memberCreationMode
             );
-            if ("EMAIL".equalsIgnoreCase(memberCreationMode)) {
+            if (EMAIL.equalsIgnoreCase(memberCreationMode)) {
                 MessageUtils.showInformationMessage(
                         "Un mail a été envoyé pour définir le mot de passe et activer le compte"
                 );

@@ -23,9 +23,9 @@ import java.util.List;
 @Named("v2AllThesauriBean")
 public class AllThesauriBean implements Serializable {
 
-    private final UserSession userSession;
-    private final V2LocaleBean localeBean;
-    private final AdminCatalogService adminCatalogService;
+    private final transient UserSession userSession;
+    private final transient V2LocaleBean localeBean;
+    private final transient AdminCatalogService adminCatalogService;
 
     public AllThesauriBean(
             UserSession userSession,

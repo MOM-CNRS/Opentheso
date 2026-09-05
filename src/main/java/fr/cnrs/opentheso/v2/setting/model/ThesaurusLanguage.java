@@ -1,5 +1,7 @@
 package fr.cnrs.opentheso.v2.setting.model;
 
+import java.io.Serializable;
+
 /**
  * Langue de thésaurus pour les listes Facelets.
  * <p>
@@ -12,7 +14,7 @@ public record ThesaurusLanguage(
         String codeFlag,
         String labelTheso,
         String displayLabel
-) {
+) implements Serializable {
 
     public String getCode() {
         return code;

@@ -26,10 +26,10 @@ import java.util.List;
 @Named("v2DiscussionCandidatBean")
 public class CandidatDiscussionBean implements Serializable {
 
-    private final CandidatBean candidatBean;
-    private final CandidatMutationService candidatMutationService;
-    private final UserSession userSession;
-    private final V2LocaleBean localeBean;
+    private final transient CandidatBean candidatBean;
+    private final transient CandidatMutationService candidatMutationService;
+    private final transient UserSession userSession;
+    private final transient V2LocaleBean localeBean;
 
     private String email;
     private List<NodeUser> nodeUsers;

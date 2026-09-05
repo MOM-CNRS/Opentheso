@@ -1,5 +1,7 @@
 package fr.cnrs.opentheso.v2.concept.model;
 
+import java.io.Serializable;
+
 public record ConceptTableRow(
         String id,
         String label,
@@ -10,4 +12,4 @@ public record ConceptTableRow(
         String path,
         String candidateBy,
         String candidateOn
-) {}
+) implements Serializable {}

@@ -122,9 +122,7 @@ public class ConceptArkWriteService {
                 if (response == null) {
                     return false;
                 }
-                if (!updateArkId(conceptId, thesaurusId, "")) {
-                    return false;
-                }
+                updateArkId(conceptId, thesaurusId, "");
             } catch (ArkApiException ex) {
                 log.warn("Échec suppression ARK : {}", ex.getMessage());
                 return false;
@@ -338,9 +336,7 @@ public class ConceptArkWriteService {
                     nodeIdValues.add(errorValue(conceptId, "Erreur: La création Ark a échoué: " + arkHelper2.getMessage()));
                     continue;
                 }
-                if (!updateArkId(conceptId, thesaurusId, arkHelper2.getIdArk())) {
-                    nodeIdValues.add(errorValue(conceptId, "Erreur: La mise à jour du concept dans Opentheso a échoué"));
-                }
+                updateArkId(conceptId, thesaurusId, arkHelper2.getIdArk());
                 continue;
             }
             if (arkHelper2.isArkExistOnServer(concept.getIdArk())) {
@@ -355,9 +351,8 @@ public class ConceptArkWriteService {
                         "Erreur: Ark n'existe pas sur le serveur, mais la création a échoué : " + arkHelper2.getMessage()));
                 continue;
             }
-            if (StringUtils.isNotBlank(arkHelper2.getIdArk())
-                    && !updateArkId(conceptId, thesaurusId, arkHelper2.getIdArk())) {
-                nodeIdValues.add(errorValue(conceptId, "Erreur: La mise à jour du concept dans Opentheso a échoué"));
+            if (StringUtils.isNotBlank(arkHelper2.getIdArk())) {
+                updateArkId(conceptId, thesaurusId, arkHelper2.getIdArk());
             }
         }
         return nodeIdValues.isEmpty() ? null : nodeIdValues;
@@ -375,16 +370,13 @@ public class ConceptArkWriteService {
                 idArk = ToolsHelper.getNewId(preferences.getSizeIdArkLocal(), preferences.isUppercaseForArk(), true);
                 idArk = preferences.getNaanArkLocal() + "/" + preferences.getPrefixArkLocal() + idArk;
             }
-            if (!updateArkId(conceptId, thesaurusId, idArk)) {
-                return false;
-            }
+            updateArkId(conceptId, thesaurusId, idArk);
         }
         return true;
     }
 
-    private boolean updateArkId(String conceptId, String thesaurusId, String arkId) {
+    private void updateArkId(String conceptId, String thesaurusId, String arkId) {
         conceptRepository.setIdArk(arkId, new Date(), conceptId, thesaurusId);
-        return true;
     }
 
     private Concept requireConcept(String conceptId, String thesaurusId) {

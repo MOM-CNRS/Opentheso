@@ -1,5 +1,7 @@
 package fr.cnrs.opentheso.v2.proposition.model;
 
+import java.io.Serializable;
+
 public record PropositionSubmission(
         String thesaurusId,
         String thesaurusTitle,
@@ -10,7 +12,7 @@ public record PropositionSubmission(
         String authorEmail,
         String comment,
         boolean allowMultiplePending
-) {
+) implements Serializable {
     /**
      * Soumission UI classique : une seule proposition pending par auteur/concept/langue.
      */

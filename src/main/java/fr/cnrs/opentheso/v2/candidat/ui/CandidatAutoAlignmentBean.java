@@ -19,8 +19,8 @@ import java.util.Map;
 @RequiredArgsConstructor
 public class CandidatAutoAlignmentBean implements Serializable {
 
-    private final CandidatAutoAlignmentEngine candidatAutoAlignmentEngine;
-    private final ThesaurusContext thesaurusContext;
+    private final transient CandidatAutoAlignmentEngine candidatAutoAlignmentEngine;
+    private final transient ThesaurusContext thesaurusContext;
 
     public void prepareForCandidate(String conceptLabel, String conceptId) {
         candidatAutoAlignmentEngine.prepare(

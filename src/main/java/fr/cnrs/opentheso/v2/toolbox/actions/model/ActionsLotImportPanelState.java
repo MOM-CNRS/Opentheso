@@ -8,7 +8,7 @@ import java.util.List;
 /**
  * État UI d'un panneau Importer CSV (images, notations, identifiants…).
  */
-public class ActionsLotImportPanelState<C> implements Serializable {
+public class ActionsLotImportPanelState<C extends Serializable> implements Serializable {
 
     private String identifierType = "identifier";
     private int choiceDelimiter;
@@ -124,7 +124,7 @@ public class ActionsLotImportPanelState<C> implements Serializable {
     }
 
     public List<ActionsLotLineError> getErrors() {
-        return ActionsLotErrorView.limit(errors);
+        return ActionsLotErrorView.visibleErrors(errors);
     }
 
     public List<C> getValidCandidates() {
@@ -233,5 +233,9 @@ public class ActionsLotImportPanelState<C> implements Serializable {
 
     public int getRejectedCount() {
         return rejectedCount;
+    }
+
+    public boolean isCorrected() {
+        return checked && errorCount == 0 && globalError == null;
     }
 }

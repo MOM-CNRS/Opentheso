@@ -50,7 +50,7 @@ class ThesaurusStatisticsServiceTest {
 
     @Test
     void loadSummary_aggregatesCounts() {
-        var lastModification = new Date();
+        var lastModification = Date.from(java.time.Instant.parse("2024-06-15T12:00:00Z"));
         when(editionQueryRepository.countAllConceptStats("TH1")).thenReturn(new int[]{10, 2, 1});
         when(toolboxStatisticsPersistence.loadLastModification("TH1")).thenReturn(lastModification);
 
@@ -148,7 +148,7 @@ class ThesaurusStatisticsServiceTest {
         when(thesaurusHomeQueryRepository.findCandidateLifeStats("TH1"))
                 .thenReturn(new CandidateLifeStats(2, 8, 1, 5, 1, 6, 4));
         when(thesaurusHomeQueryRepository.findCandidateMonthlyProposals("TH1"))
-                .thenReturn(List.of(new CandidateMonthRow(YearMonth.of(2026, 5), 2, 3, 0)));
+                .thenReturn(List.of(new CandidateMonthRow(YearMonth.of(2026, java.time.Month.MAY), 2, 3, 0)));
 
         var overview = service.loadOverview("TH1", "fr");
 

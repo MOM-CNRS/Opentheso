@@ -1,11 +1,13 @@
 package fr.cnrs.opentheso.v2.toolbox.model;
 
+import java.io.Serializable;
+
 public record EditionThesaurusLanguage(
         String code,
         String countryCode,
         String label,
         String displayLabel
-) {
+) implements Serializable {
 
     public String getCode() {
         return code;

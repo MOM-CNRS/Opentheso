@@ -8,14 +8,12 @@ import fr.cnrs.opentheso.v2.shared.persistence.ProjectEntity;
 import fr.cnrs.opentheso.v2.shared.repository.ProjectAdminQueryRepository;
 import fr.cnrs.opentheso.v2.shared.repository.ProjectMembershipRepository;
 import fr.cnrs.opentheso.v2.shared.repository.ProjectRepository;
-import fr.cnrs.opentheso.v2.shared.repository.projection.ProjectSummaryRow;
 import org.junit.jupiter.api.BeforeEach;
 import org.junit.jupiter.api.Test;
 import org.junit.jupiter.api.extension.ExtendWith;
 import org.mockito.Mock;
 import org.mockito.junit.jupiter.MockitoExtension;
 
-import java.util.List;
 import java.util.Optional;
 
 import static org.junit.jupiter.api.Assertions.assertEquals;

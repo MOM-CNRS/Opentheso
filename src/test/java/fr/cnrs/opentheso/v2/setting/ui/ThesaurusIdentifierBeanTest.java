@@ -5,8 +5,6 @@ import fr.cnrs.opentheso.v2.rights.RightsService;
 import fr.cnrs.opentheso.v2.setting.fixtures.SettingTestFixtures;
 import fr.cnrs.opentheso.v2.setting.service.ThesaurusPreferenceService;
 import fr.cnrs.opentheso.v2.setting.service.ThesaurusWorkLanguageService;
-import fr.cnrs.opentheso.v2.setting.ui.PreferenceEditor;
-import fr.cnrs.opentheso.v2.setting.ui.ThesaurusContext;
 import fr.cnrs.opentheso.v2.shared.session.ThesaurusSelectionService;
 import fr.cnrs.opentheso.v2.shared.ui.UserSession;
 import jakarta.faces.component.UIComponent;

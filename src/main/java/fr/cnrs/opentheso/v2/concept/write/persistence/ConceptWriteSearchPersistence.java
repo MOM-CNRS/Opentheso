@@ -1,5 +1,6 @@
 package fr.cnrs.opentheso.v2.concept.write.persistence;
 
+import fr.cnrs.opentheso.v2.shared.repository.NativeQueryParams;
 import fr.cnrs.opentheso.repositories.ConceptGroupLabelRepository;
 import fr.cnrs.opentheso.v2.concept.mapper.ConceptMapper;
 import fr.cnrs.opentheso.v2.concept.write.model.ConceptSearchSuggestion;
@@ -104,10 +105,10 @@ public class ConceptWriteSearchPersistence {
                         ORDER BY nl.lexical_value
                         LIMIT :limit
                         """)
-                .setParameter("thesaurusId", thesaurusId)
+                .setParameter(NativeQueryParams.THESAURUS_ID, thesaurusId)
                 .setParameter("lang", lang)
-                .setParameter("query", cleaned + "%")
-                .setParameter("limit", SEARCH_LIMIT)
+                .setParameter(NativeQueryParams.QUERY, cleaned + "%")
+                .setParameter(NativeQueryParams.LIMIT, SEARCH_LIMIT)
                 .getResultList();
         return mapFacetRows(rows);
     }
@@ -124,7 +125,7 @@ public class ConceptWriteSearchPersistence {
                           AND nl.lang = :lang
                         ORDER BY nl.lexical_value
                         """)
-                .setParameter("thesaurusId", thesaurusId)
+                .setParameter(NativeQueryParams.THESAURUS_ID, thesaurusId)
                 .setParameter("lang", lang)
                 .getResultList();
         return mapFacetRows(rows);
@@ -159,10 +160,10 @@ public class ConceptWriteSearchPersistence {
                         ORDER BY label
                         LIMIT :limit
                         """)
-                .setParameter("thesaurusId", thesaurusId)
+                .setParameter(NativeQueryParams.THESAURUS_ID, thesaurusId)
                 .setParameter("lang", lang)
-                .setParameter("query", "%" + cleaned + "%")
-                .setParameter("limit", SEARCH_LIMIT)
+                .setParameter(NativeQueryParams.QUERY, "%" + cleaned + "%")
+                .setParameter(NativeQueryParams.LIMIT, SEARCH_LIMIT)
                 .getResultList();
         return rows.stream()
                 .map(row -> new ConceptWriteCustomTarget(
@@ -199,10 +200,10 @@ public class ConceptWriteSearchPersistence {
                         ORDER BY label
                         LIMIT :limit
                         """)
-                .setParameter("thesaurusId", thesaurusId)
+                .setParameter(NativeQueryParams.THESAURUS_ID, thesaurusId)
                 .setParameter("lang", lang)
-                .setParameter("query", "%" + query + "%")
-                .setParameter("limit", SEARCH_LIMIT)
+                .setParameter(NativeQueryParams.QUERY, "%" + query + "%")
+                .setParameter(NativeQueryParams.LIMIT, SEARCH_LIMIT)
                 .getResultList();
     }
 }

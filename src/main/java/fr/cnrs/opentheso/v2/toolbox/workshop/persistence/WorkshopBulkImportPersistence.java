@@ -47,6 +47,7 @@ import fr.cnrs.opentheso.v2.concept.search.model.ConceptSearchSuggestion;
 import fr.cnrs.opentheso.v2.concept.search.service.ConceptSearchEngine;
 import fr.cnrs.opentheso.v2.toolbox.edition.io.csv.ThesaurusCsvImportEngine;
 import fr.cnrs.opentheso.v2.toolbox.edition.model.ThesaurusCsvConceptObject;
+import fr.cnrs.opentheso.v2.shared.time.V2Dates;
 import lombok.RequiredArgsConstructor;
 import org.apache.commons.collections4.CollectionUtils;
 import org.apache.commons.lang3.StringUtils;
@@ -54,7 +55,6 @@ import org.apache.commons.text.StringEscapeUtils;
 import org.springframework.stereotype.Component;
 
 import java.time.Instant;
-import java.time.LocalDateTime;
 import java.util.ArrayList;
 import java.util.Collection;
 import java.util.Collections;
@@ -397,7 +397,7 @@ public class WorkshopBulkImportPersistence {
                 .source(termSaved.getSource())
                 .status(termSaved.getStatus())
                 .idUser(idUser)
-                .modified(LocalDateTime.now())
+                .modified(V2Dates.nowDateTime())
                 .action("New")
                 .build());
     }
@@ -420,7 +420,7 @@ public class WorkshopBulkImportPersistence {
                 .status("")
                 .idUser(idUser)
                 .action("UPDATE")
-                .modified(LocalDateTime.now())
+                .modified(V2Dates.nowDateTime())
                 .build());
     }
 
@@ -941,7 +941,7 @@ public class WorkshopBulkImportPersistence {
                 .status(termSaved.getStatus())
                 .idUser(idUser)
                 .action("ADD")
-                .modified(LocalDateTime.now())
+                .modified(V2Dates.nowDateTime())
                 .build());
         preferredTermRepository.save(PreferredTerm.builder()
                 .idTerm(termSaved.getIdTerm())

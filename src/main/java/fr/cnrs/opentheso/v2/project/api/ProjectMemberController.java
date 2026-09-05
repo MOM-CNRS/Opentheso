@@ -32,6 +32,7 @@ import org.springframework.web.bind.annotation.RequestParam;
 import org.springframework.web.bind.annotation.RestController;
 
 import java.util.List;
+import fr.cnrs.opentheso.v2.shared.api.ApiHeaders;
 
 @RestController
 @RequestMapping("/openapi/v2/projects/{projectId}")
@@ -47,8 +48,8 @@ public class ProjectMemberController {
     @GetMapping(value = "/users/search", produces = MediaType.APPLICATION_JSON_VALUE)
     @Operation(summary = "Rechercher des utilisateurs", description = "Autocomplétion pour ajouter un utilisateur existant au projet.")
     public List<UserSearchResponse> searchUsers(
-            @RequestHeader(value = "X-API-KEY", required = false) String xApiKey,
-            @RequestHeader(value = "API-KEY", required = false) String legacyApiKey,
+            @RequestHeader(value = ApiHeaders.X_API_KEY, required = false) String xApiKey,
+            @RequestHeader(value = ApiHeaders.API_KEY, required = false) String legacyApiKey,
             @PathVariable int projectId,
             @RequestParam String username
     ) {
@@ -62,8 +63,8 @@ public class ProjectMemberController {
     @PostMapping(value = "/members", consumes = MediaType.APPLICATION_JSON_VALUE, produces = MediaType.APPLICATION_JSON_VALUE)
     @Operation(summary = "Créer un utilisateur sur le projet", description = "Crée un compte et l'associe au projet avec un rôle.")
     public CreatedProjectMemberResponse createMember(
-            @RequestHeader(value = "X-API-KEY", required = false) String xApiKey,
-            @RequestHeader(value = "API-KEY", required = false) String legacyApiKey,
+            @RequestHeader(value = ApiHeaders.X_API_KEY, required = false) String xApiKey,
+            @RequestHeader(value = ApiHeaders.API_KEY, required = false) String legacyApiKey,
             @PathVariable int projectId,
             @Valid @RequestBody CreateProjectMemberRequest request
     ) {
@@ -90,8 +91,8 @@ public class ProjectMemberController {
     @PostMapping(value = "/members/{userId}", consumes = MediaType.APPLICATION_JSON_VALUE)
     @Operation(summary = "Ajouter un utilisateur existant", description = "Associe un utilisateur existant au projet avec un rôle.")
     public ResponseEntity<Void> addExistingMember(
-            @RequestHeader(value = "X-API-KEY", required = false) String xApiKey,
-            @RequestHeader(value = "API-KEY", required = false) String legacyApiKey,
+            @RequestHeader(value = ApiHeaders.X_API_KEY, required = false) String xApiKey,
+            @RequestHeader(value = ApiHeaders.API_KEY, required = false) String legacyApiKey,
             @PathVariable int projectId,
             @PathVariable int userId,
             @Valid @RequestBody AddProjectMemberRequest request
@@ -107,8 +108,8 @@ public class ProjectMemberController {
     @PutMapping(value = "/members/{userId}/role", consumes = MediaType.APPLICATION_JSON_VALUE)
     @Operation(summary = "Modifier le rôle projet", description = "Met à jour le rôle sur le projet entier ou bascule vers des rôles limités par thésaurus.")
     public ResponseEntity<Void> updateMemberRole(
-            @RequestHeader(value = "X-API-KEY", required = false) String xApiKey,
-            @RequestHeader(value = "API-KEY", required = false) String legacyApiKey,
+            @RequestHeader(value = ApiHeaders.X_API_KEY, required = false) String xApiKey,
+            @RequestHeader(value = ApiHeaders.API_KEY, required = false) String legacyApiKey,
             @PathVariable int projectId,
             @PathVariable int userId,
             @Valid @RequestBody UpdateProjectMemberRoleRequest request
@@ -133,8 +134,8 @@ public class ProjectMemberController {
             description = "Change le rôle sur un thésaurus ou promeut l'utilisateur au rôle projet entier."
     )
     public ResponseEntity<Void> updateLimitedMemberRole(
-            @RequestHeader(value = "X-API-KEY", required = false) String xApiKey,
-            @RequestHeader(value = "API-KEY", required = false) String legacyApiKey,
+            @RequestHeader(value = ApiHeaders.X_API_KEY, required = false) String xApiKey,
+            @RequestHeader(value = ApiHeaders.API_KEY, required = false) String legacyApiKey,
             @PathVariable int projectId,
             @PathVariable int userId,
             @Valid @RequestBody UpdateLimitedMemberRoleRequest request
@@ -157,8 +158,8 @@ public class ProjectMemberController {
     @DeleteMapping("/members/{userId}")
     @Operation(summary = "Retirer un utilisateur du projet", description = "Supprime le rôle projet et les rôles limités de l'utilisateur.")
     public ResponseEntity<Void> removeMember(
-            @RequestHeader(value = "X-API-KEY", required = false) String xApiKey,
-            @RequestHeader(value = "API-KEY", required = false) String legacyApiKey,
+            @RequestHeader(value = ApiHeaders.X_API_KEY, required = false) String xApiKey,
+            @RequestHeader(value = ApiHeaders.API_KEY, required = false) String legacyApiKey,
             @PathVariable int projectId,
             @PathVariable int userId
     ) {
@@ -171,8 +172,8 @@ public class ProjectMemberController {
     @DeleteMapping("/members/{userId}/limited-roles/{thesaurusId}")
     @Operation(summary = "Supprimer un rôle limité", description = "Retire le rôle limité d'un utilisateur sur un thésaurus.")
     public ResponseEntity<Void> removeLimitedRole(
-            @RequestHeader(value = "X-API-KEY", required = false) String xApiKey,
-            @RequestHeader(value = "API-KEY", required = false) String legacyApiKey,
+            @RequestHeader(value = ApiHeaders.X_API_KEY, required = false) String xApiKey,
+            @RequestHeader(value = ApiHeaders.API_KEY, required = false) String legacyApiKey,
             @PathVariable int projectId,
             @PathVariable int userId,
             @PathVariable String thesaurusId,
@@ -189,8 +190,8 @@ public class ProjectMemberController {
     @PutMapping(value = "/members/{userId}/profile", consumes = MediaType.APPLICATION_JSON_VALUE)
     @Operation(summary = "Modifier le profil d'un membre", description = "Met à jour pseudo, email et autres champs d'un utilisateur du projet.")
     public ResponseEntity<Void> updateMemberProfile(
-            @RequestHeader(value = "X-API-KEY", required = false) String xApiKey,
-            @RequestHeader(value = "API-KEY", required = false) String legacyApiKey,
+            @RequestHeader(value = ApiHeaders.X_API_KEY, required = false) String xApiKey,
+            @RequestHeader(value = ApiHeaders.API_KEY, required = false) String legacyApiKey,
             @PathVariable int projectId,
             @PathVariable int userId,
             @Valid @RequestBody UpdateMemberProfileRequest request
@@ -214,8 +215,8 @@ public class ProjectMemberController {
     @PutMapping(value = "/members/{userId}/password", consumes = MediaType.APPLICATION_JSON_VALUE)
     @Operation(summary = "Modifier le mot de passe d'un membre", description = "Définit un nouveau mot de passe pour un utilisateur du projet.")
     public ResponseEntity<Void> setMemberPassword(
-            @RequestHeader(value = "X-API-KEY", required = false) String xApiKey,
-            @RequestHeader(value = "API-KEY", required = false) String legacyApiKey,
+            @RequestHeader(value = ApiHeaders.X_API_KEY, required = false) String xApiKey,
+            @RequestHeader(value = ApiHeaders.API_KEY, required = false) String legacyApiKey,
             @PathVariable int projectId,
             @PathVariable int userId,
             @Valid @RequestBody ChangePasswordRequest request

@@ -24,11 +24,15 @@ public class CandidatReadService {
 
     @Transactional(readOnly = true)
     public List<CandidatDto> loadByStatus(String thesaurusId, String lang, int statusId) {
-        return searchByStatus(thesaurusId, lang, statusId, null);
+        return doSearchByStatus(thesaurusId, lang, statusId, null);
     }
 
     @Transactional(readOnly = true)
     public List<CandidatDto> searchByStatus(String thesaurusId, String lang, int statusId, String searchTerm) {
+        return doSearchByStatus(thesaurusId, lang, statusId, searchTerm);
+    }
+
+    private List<CandidatDto> doSearchByStatus(String thesaurusId, String lang, int statusId, String searchTerm) {
         if (StringUtils.isBlank(thesaurusId)) {
             return Collections.emptyList();
         }
@@ -86,6 +90,10 @@ public class CandidatReadService {
 
     @Transactional(readOnly = true)
     public Map<String, List<NodeIdValue>> loadBroaderTermsForConcepts(String thesaurusId, List<String> conceptIds, String lang) {
+        return doLoadBroaderTermsForConcepts(thesaurusId, conceptIds, lang);
+    }
+
+    private Map<String, List<NodeIdValue>> doLoadBroaderTermsForConcepts(String thesaurusId, List<String> conceptIds, String lang) {
         if (StringUtils.isBlank(thesaurusId) || conceptIds == null || conceptIds.isEmpty()) {
             return Collections.emptyMap();
         }
@@ -98,7 +106,7 @@ public class CandidatReadService {
         if (candidates == null || candidates.isEmpty()) {
             return;
         }
-        var broaderByConcept = loadBroaderTermsForConcepts(
+        var broaderByConcept = doLoadBroaderTermsForConcepts(
                 thesaurusId,
                 CandidatDetailMapper.extractConceptIds(candidates),
                 lang

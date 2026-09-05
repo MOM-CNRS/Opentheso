@@ -33,14 +33,14 @@ import java.util.List;
 @RequiredArgsConstructor
 public class ConceptCollectionEditorBean implements Serializable {
 
-    private final ConceptCollectionMutationService conceptCollectionMutationService;
-    private final ConceptWriteSearchService conceptWriteSearchService;
-    private final ConceptSelectionContext conceptSelectionContext;
-    private final ConceptNavigationSupport conceptNavigationSupport;
-    private final ThesaurusContext thesaurusContext;
-    private final UserSession userSession;
-    private final ConceptWritePolicy conceptWritePolicy;
-    private final ThesaurusBrowseBean thesaurusBrowseBean;
+    private final transient ConceptCollectionMutationService conceptCollectionMutationService;
+    private final transient ConceptWriteSearchService conceptWriteSearchService;
+    private final transient ConceptSelectionContext conceptSelectionContext;
+    private final transient ConceptNavigationSupport conceptNavigationSupport;
+    private final transient ThesaurusContext thesaurusContext;
+    private final transient UserSession userSession;
+    private final transient ConceptWritePolicy conceptWritePolicy;
+    private final transient ThesaurusBrowseBean thesaurusBrowseBean;
 
     private String currentConceptLabel;
     private ConceptWriteCollection selectedCollection;
@@ -93,7 +93,7 @@ public class ConceptCollectionEditorBean implements Serializable {
     public void submitAddToCollection() {
         Integer userId = requireUserId();
         if (userId == null || !isCollectionActionsAvailable() || !conceptSelectionContext.hasSelection()) {
-            MessageUtils.showErrorMessage("Action non autorisée");
+            MessageUtils.showErrorMessage(WriteUiMessages.UNAUTHORIZED_FALLBACK);
             return;
         }
         if (selectedCollection == null || StringUtils.isBlank(selectedCollection.id())) {
@@ -118,7 +118,7 @@ public class ConceptCollectionEditorBean implements Serializable {
         Integer userId = requireUserId();
         if (userId == null || collection == null || !isCollectionActionsAvailable()
                 || !conceptSelectionContext.hasSelection()) {
-            MessageUtils.showErrorMessage("Action non autorisée");
+            MessageUtils.showErrorMessage(WriteUiMessages.UNAUTHORIZED_FALLBACK);
             return;
         }
         var command = new RemoveConceptFromCollectionCommand(

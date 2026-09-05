@@ -13,6 +13,7 @@ import java.net.http.HttpClient;
 import java.net.http.HttpRequest;
 import java.net.http.HttpResponse;
 import java.time.Duration;
+import fr.cnrs.opentheso.v2.shared.api.ApiHeaders;
 
 @Component
 public class ThesaurusSyncHttpRemoteClient implements ThesaurusSyncRemoteClient {
@@ -41,7 +42,7 @@ public class ThesaurusSyncHttpRemoteClient implements ThesaurusSyncRemoteClient 
                     .uri(URI.create(endpoint))
                     .timeout(Duration.ofMinutes(5))
                     .header("Content-Type", "application/json")
-                    .header("X-API-KEY", apiKey)
+                    .header(ApiHeaders.X_API_KEY, apiKey)
                     .POST(HttpRequest.BodyPublishers.ofString(json))
                     .build();
             HttpResponse<String> response = httpClient.send(httpRequest, HttpResponse.BodyHandlers.ofString());
@@ -53,6 +54,10 @@ public class ThesaurusSyncHttpRemoteClient implements ThesaurusSyncRemoteClient 
                             + StringUtils.abbreviate(response.body(), 300));
         } catch (InvalidToolboxDataException ex) {
             throw ex;
+        } catch (InterruptedException ex) {
+            Thread.currentThread().interrupt();
+            throw new InvalidToolboxDataException(
+                    "Impossible de contacter le serveur maître: " + ex.getMessage());
         } catch (Exception ex) {
             throw new InvalidToolboxDataException(
                     "Impossible de contacter le serveur maître: " + ex.getMessage());

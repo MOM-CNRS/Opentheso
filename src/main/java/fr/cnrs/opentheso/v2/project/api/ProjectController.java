@@ -29,6 +29,7 @@ import org.springframework.web.bind.annotation.RequestMapping;
 import org.springframework.web.bind.annotation.RestController;
 
 import java.util.List;
+import fr.cnrs.opentheso.v2.shared.api.ApiHeaders;
 
 @RestController
 @RequestMapping("/openapi/v2/projects")
@@ -49,8 +50,8 @@ public class ProjectController {
     @GetMapping(produces = MediaType.APPLICATION_JSON_VALUE)
     @Operation(summary = "Lister mes projets", description = "Retourne les projets accessibles à l'utilisateur connecté.")
     public List<ProjectSummaryResponse> listProjects(
-            @RequestHeader(value = "X-API-KEY", required = false) String xApiKey,
-            @RequestHeader(value = "API-KEY", required = false) String legacyApiKey
+            @RequestHeader(value = ApiHeaders.X_API_KEY, required = false) String xApiKey,
+            @RequestHeader(value = ApiHeaders.API_KEY, required = false) String legacyApiKey
     ) {
         int userId = projectAuthSupport.resolveUserId(xApiKey, legacyApiKey);
         return ProjectApiMapper.toSummaryResponses(projectAdminService.listAccessibleProjects(userId));
@@ -62,8 +63,8 @@ public class ProjectController {
             description = "Retourne thésaurus, utilisateurs, rôles limités et rôles assignables pour un projet sélectionné."
     )
     public ProjectDashboardResponse getDashboard(
-            @RequestHeader(value = "X-API-KEY", required = false) String xApiKey,
-            @RequestHeader(value = "API-KEY", required = false) String legacyApiKey,
+            @RequestHeader(value = ApiHeaders.X_API_KEY, required = false) String xApiKey,
+            @RequestHeader(value = ApiHeaders.API_KEY, required = false) String legacyApiKey,
             @PathVariable int projectId
     ) {
         int userId = projectAuthSupport.resolveUserId(xApiKey, legacyApiKey);
@@ -75,8 +76,8 @@ public class ProjectController {
     @PostMapping(consumes = MediaType.APPLICATION_JSON_VALUE, produces = MediaType.APPLICATION_JSON_VALUE)
     @Operation(summary = "Créer un projet", description = "Crée un nouveau projet. Réservé aux administrateurs.")
     public ProjectSummaryResponse createProject(
-            @RequestHeader(value = "X-API-KEY", required = false) String xApiKey,
-            @RequestHeader(value = "API-KEY", required = false) String legacyApiKey,
+            @RequestHeader(value = ApiHeaders.X_API_KEY, required = false) String xApiKey,
+            @RequestHeader(value = ApiHeaders.API_KEY, required = false) String legacyApiKey,
             @Valid @RequestBody CreateProjectRequest request
     ) {
         int userId = projectAuthSupport.resolveUserId(xApiKey, legacyApiKey);
@@ -89,8 +90,8 @@ public class ProjectController {
     @PutMapping(value = "/{projectId}", consumes = MediaType.APPLICATION_JSON_VALUE, produces = MediaType.APPLICATION_JSON_VALUE)
     @Operation(summary = "Renommer un projet", description = "Met à jour le libellé d'un projet.")
     public ProjectSummaryResponse renameProject(
-            @RequestHeader(value = "X-API-KEY", required = false) String xApiKey,
-            @RequestHeader(value = "API-KEY", required = false) String legacyApiKey,
+            @RequestHeader(value = ApiHeaders.X_API_KEY, required = false) String xApiKey,
+            @RequestHeader(value = ApiHeaders.API_KEY, required = false) String legacyApiKey,
             @PathVariable int projectId,
             @Valid @RequestBody UpdateProjectLabelRequest request
     ) {
@@ -104,8 +105,8 @@ public class ProjectController {
     @DeleteMapping("/{projectId}")
     @Operation(summary = "Supprimer un projet", description = "Supprime un projet. Réservé aux super-administrateurs.")
     public ResponseEntity<Void> deleteProject(
-            @RequestHeader(value = "X-API-KEY", required = false) String xApiKey,
-            @RequestHeader(value = "API-KEY", required = false) String legacyApiKey,
+            @RequestHeader(value = ApiHeaders.X_API_KEY, required = false) String xApiKey,
+            @RequestHeader(value = ApiHeaders.API_KEY, required = false) String legacyApiKey,
             @PathVariable int projectId
     ) {
         int userId = projectAuthSupport.resolveUserId(xApiKey, legacyApiKey);
@@ -117,8 +118,8 @@ public class ProjectController {
     @PutMapping(value = "/{projectId}/thesauri/{thesaurusId}/move", consumes = MediaType.APPLICATION_JSON_VALUE)
     @Operation(summary = "Déplacer un thésaurus", description = "Déplace un thésaurus vers un autre projet.")
     public ResponseEntity<Void> moveThesaurus(
-            @RequestHeader(value = "X-API-KEY", required = false) String xApiKey,
-            @RequestHeader(value = "API-KEY", required = false) String legacyApiKey,
+            @RequestHeader(value = ApiHeaders.X_API_KEY, required = false) String xApiKey,
+            @RequestHeader(value = ApiHeaders.API_KEY, required = false) String legacyApiKey,
             @PathVariable int projectId,
             @PathVariable String thesaurusId,
             @Valid @RequestBody MoveThesaurusRequest request

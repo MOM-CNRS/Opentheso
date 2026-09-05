@@ -27,6 +27,8 @@ import java.util.List;
 @RequiredArgsConstructor
 public class ConceptMediaWritePersistence {
 
+    private static final String NO_IMAGE_SELECTED = "Aucune image sélectionnée !";
+
     private final GpsRepository gpsRepository;
     private final ImagesRepository imagesRepository;
     private final ExternalResourcesRepository externalResourcesRepository;
@@ -75,16 +77,16 @@ public class ConceptMediaWritePersistence {
 
     public MutationResult updateImage(UpdateConceptImageCommand command) {
         if (command.imageId() <= 0) {
-            return MutationResult.validationError("Aucune image sélectionnée !");
+            return MutationResult.validationError(NO_IMAGE_SELECTED);
         }
         if (org.apache.commons.lang3.StringUtils.isBlank(command.uri())) {
-            return MutationResult.validationError("Aucune image sélectionnée !");
+            return MutationResult.validationError(NO_IMAGE_SELECTED);
         }
         var existing = imagesRepository.findById(command.imageId()).orElse(null);
         if (existing == null
                 || !org.apache.commons.lang3.StringUtils.equals(existing.getIdConcept(), command.conceptId())
                 || !org.apache.commons.lang3.StringUtils.equals(existing.getIdThesaurus(), command.thesaurusId())) {
-            return MutationResult.validationError("Aucune image sélectionnée !");
+            return MutationResult.validationError(NO_IMAGE_SELECTED);
         }
         existing.setImageCreator(command.creator());
         existing.setExternalUri(command.uri());

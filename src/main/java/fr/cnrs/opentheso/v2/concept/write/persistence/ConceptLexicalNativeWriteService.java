@@ -16,6 +16,8 @@ import org.springframework.transaction.annotation.Transactional;
 @RequiredArgsConstructor
 public class ConceptLexicalNativeWriteService {
 
+    private static final String DB_COHERENCE_ERROR = "Erreur de cohérence de BDD !";
+
     private final ConceptLexicalWriteRepository conceptLexicalWriteRepository;
     private final ConceptSynonymWriteRepository conceptSynonymWriteRepository;
     private final ConceptTranslationWriteRepository conceptTranslationWriteRepository;
@@ -38,7 +40,7 @@ public class ConceptLexicalNativeWriteService {
         }
         var idTerm = requirePreferredTermId(command.thesaurusId(), command.conceptId());
         if (idTerm == null) {
-            return MutationResult.failure("Erreur de cohérence de BDD !");
+            return MutationResult.failure(DB_COHERENCE_ERROR);
         }
         conceptSynonymWriteRepository.insertSynonym(
                 idTerm, command.thesaurusId(), command.lang(), command.value(), command.hidden(), command.userId());
@@ -50,7 +52,7 @@ public class ConceptLexicalNativeWriteService {
     public MutationResult updateSynonym(UpdateSynonymCommand command) {
         var idTerm = requirePreferredTermId(command.thesaurusId(), command.conceptId());
         if (idTerm == null) {
-            return MutationResult.failure("Erreur de cohérence de BDD !");
+            return MutationResult.failure(DB_COHERENCE_ERROR);
         }
         if (!StringUtils.equals(command.oldValue(), command.newValue())) {
             if (!command.forced()) {
@@ -81,7 +83,7 @@ public class ConceptLexicalNativeWriteService {
         }
         var idTerm = requirePreferredTermId(command.thesaurusId(), command.conceptId());
         if (idTerm == null) {
-            return MutationResult.failure("Erreur de cohérence de BDD !");
+            return MutationResult.failure(DB_COHERENCE_ERROR);
         }
         conceptSynonymWriteRepository.deleteSynonym(
                 idTerm, command.thesaurusId(), command.lang(), command.value(), command.userId());
@@ -104,7 +106,7 @@ public class ConceptLexicalNativeWriteService {
         }
         var idTerm = requirePreferredTermId(command.thesaurusId(), command.conceptId());
         if (idTerm == null) {
-            return MutationResult.failure("Erreur de cohérence de BDD !");
+            return MutationResult.failure(DB_COHERENCE_ERROR);
         }
         conceptTranslationWriteRepository.insertTranslation(
                 idTerm, command.thesaurusId(), command.lang(), convertedValue, command.userId());
@@ -124,7 +126,7 @@ public class ConceptLexicalNativeWriteService {
         }
         var idTerm = requirePreferredTermId(command.thesaurusId(), command.conceptId());
         if (idTerm == null) {
-            return MutationResult.failure("Erreur de cohérence de BDD !");
+            return MutationResult.failure(DB_COHERENCE_ERROR);
         }
         conceptTranslationWriteRepository.updateTranslation(
                 idTerm, command.thesaurusId(), command.lang(), convertedValue, command.userId());
@@ -139,7 +141,7 @@ public class ConceptLexicalNativeWriteService {
         }
         var idTerm = requirePreferredTermId(command.thesaurusId(), command.conceptId());
         if (idTerm == null) {
-            return MutationResult.failure("Erreur de cohérence de BDD !");
+            return MutationResult.failure(DB_COHERENCE_ERROR);
         }
         conceptTranslationWriteRepository.deleteTranslation(idTerm, command.thesaurusId(), command.lang());
         finalizeMutation(command.thesaurusId(), command.conceptId(), command.userId(), command.contributorName());

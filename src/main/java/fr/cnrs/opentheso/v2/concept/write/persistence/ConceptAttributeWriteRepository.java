@@ -1,5 +1,6 @@
 package fr.cnrs.opentheso.v2.concept.write.persistence;
 
+import fr.cnrs.opentheso.v2.shared.repository.NativeQueryParams;
 import jakarta.persistence.EntityManager;
 import jakarta.persistence.PersistenceContext;
 import org.springframework.stereotype.Repository;
@@ -23,7 +24,7 @@ public class ConceptAttributeWriteRepository {
                               AND id_concept <> :excludeConceptId
                         )
                         """)
-                .setParameter("thesaurusId", thesaurusId)
+                .setParameter(NativeQueryParams.THESAURUS_ID, thesaurusId)
                 .setParameter("notation", notation)
                 .setParameter("excludeConceptId", excludeConceptId)
                 .getSingleResult());
@@ -39,9 +40,9 @@ public class ConceptAttributeWriteRepository {
                           AND id_concept = :conceptId
                         """)
                 .setParameter("notation", notation)
-                .setParameter("modified", new Date())
-                .setParameter("thesaurusId", thesaurusId)
-                .setParameter("conceptId", conceptId)
+                .setParameter(NativeQueryParams.MODIFIED, new Date())
+                .setParameter(NativeQueryParams.THESAURUS_ID, thesaurusId)
+                .setParameter(NativeQueryParams.CONCEPT_ID, conceptId)
                 .executeUpdate() > 0;
     }
 
@@ -55,9 +56,9 @@ public class ConceptAttributeWriteRepository {
                           AND id_concept = :conceptId
                         """)
                 .setParameter("conceptType", conceptTypeCode)
-                .setParameter("modified", new Date())
-                .setParameter("thesaurusId", thesaurusId)
-                .setParameter("conceptId", conceptId)
+                .setParameter(NativeQueryParams.MODIFIED, new Date())
+                .setParameter(NativeQueryParams.THESAURUS_ID, thesaurusId)
+                .setParameter(NativeQueryParams.CONCEPT_ID, conceptId)
                 .executeUpdate();
     }
 }

@@ -27,6 +27,7 @@ import org.springframework.web.bind.annotation.RestController;
 
 import java.io.IOException;
 import java.util.List;
+import fr.cnrs.opentheso.v2.shared.api.ApiHeaders;
 
 @RestController("v2CandidatController")
 @RequestMapping("/openapi/v2/thesauri/{thesaurusId}/candidates")
@@ -45,8 +46,8 @@ public class CandidatControllerV2 {
     @GetMapping(produces = MediaType.APPLICATION_JSON_VALUE)
     @Operation(summary = "Lister les candidats par statut")
     public List<CandidateSummaryResponse> listCandidates(
-            @RequestHeader(value = "X-API-KEY", required = false) String xApiKey,
-            @RequestHeader(value = "API-KEY", required = false) String legacyApiKey,
+            @RequestHeader(value = ApiHeaders.X_API_KEY, required = false) String xApiKey,
+            @RequestHeader(value = ApiHeaders.API_KEY, required = false) String legacyApiKey,
             @PathVariable String thesaurusId,
             @RequestParam(defaultValue = "pending") String status,
             @RequestParam(required = false) String lang,
@@ -64,8 +65,8 @@ public class CandidatControllerV2 {
     @GetMapping(value = "/{conceptId}", produces = MediaType.APPLICATION_JSON_VALUE)
     @Operation(summary = "Lire le détail d'un candidat")
     public CandidateSummaryResponse getCandidate(
-            @RequestHeader(value = "X-API-KEY", required = false) String xApiKey,
-            @RequestHeader(value = "API-KEY", required = false) String legacyApiKey,
+            @RequestHeader(value = ApiHeaders.X_API_KEY, required = false) String xApiKey,
+            @RequestHeader(value = ApiHeaders.API_KEY, required = false) String legacyApiKey,
             @PathVariable String thesaurusId,
             @PathVariable String conceptId,
             @RequestParam(defaultValue = "pending") String status,
@@ -87,8 +88,8 @@ public class CandidatControllerV2 {
     @PostMapping(value = "/export", consumes = MediaType.APPLICATION_JSON_VALUE)
     @Operation(summary = "Exporter les candidats en attente")
     public ResponseEntity<byte[]> exportPendingCandidates(
-            @RequestHeader(value = "X-API-KEY", required = false) String xApiKey,
-            @RequestHeader(value = "API-KEY", required = false) String legacyApiKey,
+            @RequestHeader(value = ApiHeaders.X_API_KEY, required = false) String xApiKey,
+            @RequestHeader(value = ApiHeaders.API_KEY, required = false) String legacyApiKey,
             @PathVariable String thesaurusId,
             @RequestParam(required = false) String lang,
             @Valid @RequestBody ExportCandidatesRequest request

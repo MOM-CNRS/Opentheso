@@ -156,30 +156,33 @@ public class AlignmentPropositionEnricher {
             if (candidate == null || StringUtils.isBlank(candidate.getGettedValue())) {
                 continue;
             }
-            boolean skip = false;
-            for (NodeNote note : localNotes) {
-                if (!"definition".equalsIgnoreCase(note.getNoteTypeCode())) {
-                    continue;
-                }
-                if (StringUtils.isNotBlank(candidate.getIdLang())
-                        && !StringUtils.equalsIgnoreCase(candidate.getIdLang(), note.getLang())) {
-                    continue;
-                }
-                if (StringUtils.equalsIgnoreCase(
-                        candidate.getGettedValue().trim(),
-                        StringUtils.defaultString(note.getLexicalValue()).trim())) {
-                    skip = true;
-                } else {
-                    candidate.setLocalValue(note.getLexicalValue());
-                }
-                break;
+            if (definitionAlreadyPresent(candidate, localNotes)) {
+                continue;
             }
-            if (!skip) {
-                candidate.setSelected(true);
-                result.add(candidate);
-            }
+            candidate.setSelected(true);
+            result.add(candidate);
         }
         return result;
+    }
+
+    private static boolean definitionAlreadyPresent(SelectedResource candidate, List<NodeNote> localNotes) {
+        for (NodeNote note : localNotes) {
+            if (!"definition".equalsIgnoreCase(note.getNoteTypeCode())) {
+                continue;
+            }
+            if (StringUtils.isNotBlank(candidate.getIdLang())
+                    && !StringUtils.equalsIgnoreCase(candidate.getIdLang(), note.getLang())) {
+                continue;
+            }
+            if (StringUtils.equalsIgnoreCase(
+                    candidate.getGettedValue().trim(),
+                    StringUtils.defaultString(note.getLexicalValue()).trim())) {
+                return true;
+            }
+            candidate.setLocalValue(note.getLexicalValue());
+            return false;
+        }
+        return false;
     }
 
     private static List<SelectedResource> reconcileImages(

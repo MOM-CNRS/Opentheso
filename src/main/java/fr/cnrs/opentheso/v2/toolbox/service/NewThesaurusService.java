@@ -29,6 +29,8 @@ import java.util.Date;
 @RequiredArgsConstructor
 public class NewThesaurusService {
 
+    private static final String DCMI_TYPE_STRING = "string";
+
     private final EditionQueryRepository editionQueryRepository;
     private final ProjectAdminQueryRepository projectAdminQueryRepository;
     private final ToolboxThesaurusPersistence toolboxThesaurusPersistence;
@@ -76,9 +78,9 @@ public class NewThesaurusService {
 
         toolboxPreferencePersistence.initPreferences(thesaurusId, request.language());
         toolboxPreferencePersistence.updatePreferredName(thesaurusId, request.persistentNameThesaurus());
-        createAndSaveDcTerm(thesaurusId, DCMIResource.CREATOR, creatorName, "", "string");
-        createAndSaveDcTerm(thesaurusId, DCMIResource.TITLE, request.title(), request.language(), "string");
-        createAndSaveDcTerm(thesaurusId, DCMIResource.LANGUAGE, request.language(), "", "string");
+        createAndSaveDcTerm(thesaurusId, DCMIResource.CREATOR, creatorName, "", DCMI_TYPE_STRING);
+        createAndSaveDcTerm(thesaurusId, DCMIResource.TITLE, request.title(), request.language(), DCMI_TYPE_STRING);
+        createAndSaveDcTerm(thesaurusId, DCMIResource.LANGUAGE, request.language(), "", DCMI_TYPE_STRING);
         createAndSaveDcTerm(
                 thesaurusId,
                 DCMIResource.CREATED,

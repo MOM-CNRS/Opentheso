@@ -9,6 +9,7 @@ import fr.cnrs.opentheso.v2.toolbox.edition.model.ThesaurusEditionStructuredImpo
 import fr.cnrs.opentheso.v2.toolbox.edition.model.ThesaurusEditionStructuredParseResult;
 import fr.cnrs.opentheso.v2.toolbox.edition.support.ThesaurusImportBatchSupport;
 import fr.cnrs.opentheso.v2.toolbox.persistence.ToolboxPreferencePersistence;
+import fr.cnrs.opentheso.v2.shared.time.V2Dates;
 import lombok.RequiredArgsConstructor;
 import org.apache.commons.collections4.CollectionUtils;
 import org.apache.commons.lang3.StringUtils;
@@ -141,7 +142,7 @@ public class ThesaurusEditionCsvStructuredImportPersistence {
             }
         });
 
-        toolboxPreferencePersistence.updateLastSyncAt(thesaurusId, java.time.LocalDateTime.now());
+        toolboxPreferencePersistence.updateLastSyncAt(thesaurusId, V2Dates.nowDateTime());
 
         return new ThesaurusEditionStructuredImportResult(thesaurusId, importedConcepts.get(), null);
     }

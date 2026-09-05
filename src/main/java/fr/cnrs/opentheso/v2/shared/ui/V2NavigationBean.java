@@ -21,10 +21,12 @@ import java.io.Serializable;
 @RequiredArgsConstructor
 public class V2NavigationBean implements Serializable {
 
-    private final ThesaurusContext thesaurusContext;
-    private final SessionConfig sessionConfig;
-    private final SessionLifecycleService sessionLifecycleService;
-    private final ApplicationUriService applicationUriService;
+    private static final String PREFERENCE_XHTML = "/v2/setting/preference.xhtml";
+
+    private final transient ThesaurusContext thesaurusContext;
+    private final transient SessionConfig sessionConfig;
+    private final transient SessionLifecycleService sessionLifecycleService;
+    private final transient ApplicationUriService applicationUriService;
 
     private String activePageName = "thesaurusV2";
 
@@ -71,17 +73,17 @@ public class V2NavigationBean implements Serializable {
 
     public void redirectToPreference() throws IOException {
         activePageName = "preferenceV2";
-        redirect(buildSettingUrl("/v2/setting/preference.xhtml"));
+        redirect(buildSettingUrl(PREFERENCE_XHTML));
     }
 
     public void redirectToIdentifier() throws IOException {
         activePageName = "identifierV2";
-        redirect(buildSettingUrl("/v2/setting/preference.xhtml"));
+        redirect(buildSettingUrl(PREFERENCE_XHTML));
     }
 
     public void redirectToCorpus() throws IOException {
         activePageName = "corpusV2";
-        redirect(buildSettingUrl("/v2/setting/preference.xhtml"));
+        redirect(buildSettingUrl(PREFERENCE_XHTML));
     }
 
     public void redirectToEdition() throws IOException {

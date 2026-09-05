@@ -38,10 +38,10 @@ public class ThesaurusSyncBean implements Serializable {
         thread.start();
     };
 
-    private final ThesaurusSyncSendService thesaurusSyncSendService;
-    private final ThesaurusSyncProgressTracker progressTracker;
-    private final UserSession userSession;
-    private final ThesaurusAccessService thesaurusAccessService;
+    private final transient ThesaurusSyncSendService thesaurusSyncSendService;
+    private final transient ThesaurusSyncProgressTracker progressTracker;
+    private final transient UserSession userSession;
+    private final transient ThesaurusAccessService thesaurusAccessService;
 
     /** Remplaçable en test pour exécuter la sync de façon synchrone. */
     private transient Executor syncExecutor = DEFAULT_SYNC_EXECUTOR;

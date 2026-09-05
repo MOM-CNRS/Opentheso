@@ -36,12 +36,17 @@ public class GraphViewCommandService {
 
     @Transactional
     public void deleteView(int viewId) {
-        graphViewRepository.deleteById(viewId);
-        exportRepository.deleteAllByGraphViewId(viewId);
+        doDeleteView(viewId);
     }
 
+    @Transactional
     public void deleteView(String viewId) {
-        deleteView(Integer.parseInt(viewId));
+        doDeleteView(Integer.parseInt(viewId));
+    }
+
+    private void doDeleteView(int viewId) {
+        graphViewRepository.deleteById(viewId);
+        exportRepository.deleteAllByGraphViewId(viewId);
     }
 
     @Transactional

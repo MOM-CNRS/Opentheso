@@ -43,12 +43,12 @@ public class ConceptNoteBlockEditorBean implements Serializable {
 
     static final String FICHE_CARD = "notes";
 
-    private final ThesaurusViewBean thesaurusViewBean;
-    private final ConceptNoteMutationService conceptNoteMutationService;
-    private final ConceptWriteMetadataService conceptWriteMetadataService;
-    private final ConceptWritePolicy conceptWritePolicy;
-    private final UserSession userSession;
-    private final ConceptSelectionContext conceptSelectionContext;
+    private final transient ThesaurusViewBean thesaurusViewBean;
+    private final transient ConceptNoteMutationService conceptNoteMutationService;
+    private final transient ConceptWriteMetadataService conceptWriteMetadataService;
+    private final transient ConceptWritePolicy conceptWritePolicy;
+    private final transient UserSession userSession;
+    private final transient ConceptSelectionContext conceptSelectionContext;
 
     @Getter(AccessLevel.NONE)
     private boolean editing;
@@ -155,12 +155,12 @@ public class ConceptNoteBlockEditorBean implements Serializable {
         }
         Integer userId = userSession.getCurrentUserId();
         if (userId == null) {
-            errorMessage = "Action non autorisée";
+            errorMessage = WriteUiMessages.UNAUTHORIZED_FALLBACK;
             return;
         }
         ConceptDetail current = thesaurusViewBean.getSelectedConcept();
         if (current == null || current.getSummary() == null) {
-            errorMessage = "Action non autorisée";
+            errorMessage = WriteUiMessages.UNAUTHORIZED_FALLBACK;
             return;
         }
 

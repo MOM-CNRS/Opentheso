@@ -6,8 +6,6 @@ import fr.cnrs.opentheso.v2.setting.fixtures.SettingTestFixtures;
 import fr.cnrs.opentheso.v2.setting.model.ThesaurusCorpus;
 import fr.cnrs.opentheso.v2.setting.service.ThesaurusCorpusService;
 import fr.cnrs.opentheso.v2.setting.service.ThesaurusWorkLanguageService;
-import fr.cnrs.opentheso.v2.setting.ui.CorpusEditor;
-import fr.cnrs.opentheso.v2.setting.ui.ThesaurusContext;
 import fr.cnrs.opentheso.v2.shared.session.ThesaurusSelectionService;
 import fr.cnrs.opentheso.v2.shared.ui.UserSession;
 import org.junit.jupiter.api.BeforeEach;

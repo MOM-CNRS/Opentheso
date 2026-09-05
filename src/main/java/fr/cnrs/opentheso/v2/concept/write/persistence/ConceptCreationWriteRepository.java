@@ -1,5 +1,6 @@
 package fr.cnrs.opentheso.v2.concept.write.persistence;
 
+import fr.cnrs.opentheso.v2.shared.repository.NativeQueryParams;
 import fr.cnrs.opentheso.utils.ToolsHelper;
 import jakarta.persistence.EntityManager;
 import jakarta.persistence.PersistenceContext;
@@ -24,7 +25,7 @@ public class ConceptCreationWriteRepository {
                         WHERE id_thesaurus = :thesaurusId
                         LIMIT 1
                         """)
-                .setParameter("thesaurusId", thesaurusId)
+                .setParameter(NativeQueryParams.THESAURUS_ID, thesaurusId)
                 .getResultStream()
                 .map(value -> ((Number) value).intValue())
                 .findFirst();
@@ -39,8 +40,8 @@ public class ConceptCreationWriteRepository {
                               AND id_concept = :conceptId
                         )
                         """)
-                .setParameter("thesaurusId", thesaurusId)
-                .setParameter("conceptId", conceptId)
+                .setParameter(NativeQueryParams.THESAURUS_ID, thesaurusId)
+                .setParameter(NativeQueryParams.CONCEPT_ID, conceptId)
                 .getSingleResult());
     }
 
@@ -50,7 +51,7 @@ public class ConceptCreationWriteRepository {
                             SELECT 1 FROM concept WHERE id_concept = :conceptId
                         )
                         """)
-                .setParameter("conceptId", conceptId)
+                .setParameter(NativeQueryParams.CONCEPT_ID, conceptId)
                 .getSingleResult());
     }
 
@@ -63,7 +64,7 @@ public class ConceptCreationWriteRepository {
                               AND notation ILIKE :notation
                         )
                         """)
-                .setParameter("thesaurusId", thesaurusId)
+                .setParameter(NativeQueryParams.THESAURUS_ID, thesaurusId)
                 .setParameter("notation", notation)
                 .getSingleResult());
     }
@@ -129,14 +130,14 @@ public class ConceptCreationWriteRepository {
                             '', ''
                         )
                         """)
-                .setParameter("conceptId", conceptId)
-                .setParameter("thesaurusId", thesaurusId)
+                .setParameter(NativeQueryParams.CONCEPT_ID, conceptId)
+                .setParameter(NativeQueryParams.THESAURUS_ID, thesaurusId)
                 .setParameter("created", now)
-                .setParameter("modified", now)
+                .setParameter(NativeQueryParams.MODIFIED, now)
                 .setParameter("status", status)
                 .setParameter("notation", notation == null ? "" : notation)
                 .setParameter("topConcept", topConcept)
-                .setParameter("userId", userId)
+                .setParameter(NativeQueryParams.USER_ID, userId)
                 .executeUpdate();
     }
 
@@ -146,9 +147,9 @@ public class ConceptCreationWriteRepository {
                         INSERT INTO concept_group_concept (idgroup, idthesaurus, idconcept)
                         VALUES (:groupId, :thesaurusId, :conceptId)
                         """)
-                .setParameter("groupId", groupId)
-                .setParameter("thesaurusId", thesaurusId)
-                .setParameter("conceptId", conceptId)
+                .setParameter(NativeQueryParams.GROUP_ID, groupId)
+                .setParameter(NativeQueryParams.THESAURUS_ID, thesaurusId)
+                .setParameter(NativeQueryParams.CONCEPT_ID, conceptId)
                 .executeUpdate();
     }
 

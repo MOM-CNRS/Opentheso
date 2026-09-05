@@ -35,7 +35,7 @@ class ConceptHistoryBeanTest {
     @Test
     void load_withValidIds_delegatesToHistoryReadService() {
         var overview = new ConceptHistoryOverview(
-                List.of(new ConceptHistoryEntry("Label", "fr", "CREATE", new Date(), "admin", null, null)),
+                List.of(new ConceptHistoryEntry("Label", "fr", "CREATE", Date.from(java.time.Instant.parse("2024-06-15T12:00:00Z")), "admin", null, null)),
                 List.of(),
                 List.of(),
                 List.of()

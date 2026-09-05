@@ -40,14 +40,14 @@ import java.util.stream.Collectors;
 @RequiredArgsConstructor
 public class ConceptLexicalEditorBean implements Serializable {
 
-    private final ConceptLexicalMutationService conceptLexicalMutationService;
-    private final ConceptSelectionContext conceptSelectionContext;
-    private final ConceptNavigationSupport conceptNavigationSupport;
-    private final ThesaurusContext thesaurusContext;
-    private final UserSession userSession;
-    private final ConceptWritePolicy conceptWritePolicy;
-    private final ConceptReadService conceptReadService;
-    private final ConceptWriteMetadataService conceptWriteMetadataService;
+    private final transient ConceptLexicalMutationService conceptLexicalMutationService;
+    private final transient ConceptSelectionContext conceptSelectionContext;
+    private final transient ConceptNavigationSupport conceptNavigationSupport;
+    private final transient ThesaurusContext thesaurusContext;
+    private final transient UserSession userSession;
+    private final transient ConceptWritePolicy conceptWritePolicy;
+    private final transient ConceptReadService conceptReadService;
+    private final transient ConceptWriteMetadataService conceptWriteMetadataService;
 
     private String currentConceptLabel;
     private String synonymValue;
@@ -98,8 +98,7 @@ public class ConceptLexicalEditorBean implements Serializable {
     }
 
     public void prepareDeleteTranslations() {
-        refreshCurrentConceptLabel();
-        translationEdits = loadTranslationEdits();
+        prepareEditTranslations();
     }
 
     public void submitAddSynonym() {
@@ -367,19 +366,19 @@ public class ConceptLexicalEditorBean implements Serializable {
 
     private Integer requireUserId() {
         if (!isLexicalActionsAvailable()) {
-            MessageUtils.showErrorMessage("Action non autorisée");
+            MessageUtils.showErrorMessage(WriteUiMessages.UNAUTHORIZED_FALLBACK);
             return null;
         }
         Integer userId = userSession.getCurrentUserId();
         if (userId == null) {
-            MessageUtils.showErrorMessage("Action non autorisée");
+            MessageUtils.showErrorMessage(WriteUiMessages.UNAUTHORIZED_FALLBACK);
         }
         return userId;
     }
 
     private fr.cnrs.opentheso.v2.concept.model.ConceptSummary requireSummary() {
         if (!conceptSelectionContext.hasSelection()) {
-            MessageUtils.showErrorMessage("Action non autorisée");
+            MessageUtils.showErrorMessage(WriteUiMessages.UNAUTHORIZED_FALLBACK);
             return null;
         }
         return conceptSelectionContext.getSummary();

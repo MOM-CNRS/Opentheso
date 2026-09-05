@@ -39,11 +39,11 @@ public class ConceptCollectionBlockEditorBean implements Serializable {
 
     static final String FICHE_CARD = "collections";
 
-    private final ThesaurusViewBean thesaurusViewBean;
-    private final ConceptCollectionMutationService conceptCollectionMutationService;
-    private final ConceptWritePolicy conceptWritePolicy;
-    private final UserSession userSession;
-    private final ConceptSelectionContext conceptSelectionContext;
+    private final transient ThesaurusViewBean thesaurusViewBean;
+    private final transient ConceptCollectionMutationService conceptCollectionMutationService;
+    private final transient ConceptWritePolicy conceptWritePolicy;
+    private final transient UserSession userSession;
+    private final transient ConceptSelectionContext conceptSelectionContext;
 
     @Getter(AccessLevel.NONE)
     private boolean editing;
@@ -106,25 +106,38 @@ public class ConceptCollectionBlockEditorBean implements Serializable {
         }
         Integer userId = userSession.getCurrentUserId();
         if (userId == null) {
-            errorMessage = "Action non autorisée";
+            errorMessage = WriteUiMessages.UNAUTHORIZED_FALLBACK;
             return;
         }
         ConceptDetail current = thesaurusViewBean.getSelectedConcept();
         if (current == null || current.getSummary() == null) {
-            errorMessage = "Action non autorisée";
+            errorMessage = WriteUiMessages.UNAUTHORIZED_FALLBACK;
             return;
         }
 
         String thesaurusId = thesaurusViewBean.getId();
         String conceptId = current.getSummary().getConceptId();
         String contributor = StringUtils.defaultString(userSession.getCurrentUsername());
-        boolean dirty = false;
 
+        if (!syncCollections(current, thesaurusId, conceptId, userId, contributor)) {
+            return;
+        }
+        finishSuccess();
+    }
+
+    private boolean syncCollections(
+            ConceptDetail current,
+            String thesaurusId,
+            String conceptId,
+            int userId,
+            String contributor
+    ) {
         List<ConceptRelation> currentCollections = current.getCollections() == null
                 ? List.of()
                 : current.getCollections();
         Set<String> oldIds = normalizedIds(currentCollections);
         Set<String> newIds = selectedCollectionIds();
+        boolean dirty = false;
 
         for (ConceptRelation collection : currentCollections) {
             if (collection == null || StringUtils.isBlank(collection.getConceptId())) {
@@ -137,7 +150,7 @@ public class ConceptCollectionBlockEditorBean implements Serializable {
                     new RemoveConceptFromCollectionCommand(
                             thesaurusId, conceptId, userId, contributor, collection.getConceptId(), false));
             if (!applyResult(removed, dirty)) {
-                return;
+                return false;
             }
             dirty = true;
         }
@@ -145,20 +158,18 @@ public class ConceptCollectionBlockEditorBean implements Serializable {
             if (row == null || StringUtils.isBlank(row.getId())) {
                 continue;
             }
-            String collectionId = normalizeId(row.getId());
-            if (oldIds.contains(collectionId)) {
+            if (oldIds.contains(normalizeId(row.getId()))) {
                 continue;
             }
             MutationResult added = conceptCollectionMutationService.addToCollection(
                     new AddConceptToCollectionCommand(
                             thesaurusId, conceptId, userId, contributor, row.getId(), false));
             if (!applyResult(added, dirty)) {
-                return;
+                return false;
             }
             dirty = true;
         }
-
-        finishSuccess();
+        return true;
     }
 
     private boolean applyResult(MutationResult result, boolean dirty) {

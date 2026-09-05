@@ -29,11 +29,11 @@ import java.util.List;
 @RequiredArgsConstructor
 public class CandidatImportBean implements Serializable {
 
-    private final CandidatSkosImportService candidatSkosImportService;
-    private final CandidatLanguageService candidatLanguageService;
-    private final ThesaurusContext thesaurusContext;
-    private final UserSession userSession;
-    private final CandidatBean candidatBean;
+    private final transient CandidatSkosImportService candidatSkosImportService;
+    private final transient CandidatLanguageService candidatLanguageService;
+    private final transient ThesaurusContext thesaurusContext;
+    private final transient UserSession userSession;
+    private final transient CandidatBean candidatBean;
 
     private int typeImport;
     private int total;
@@ -62,7 +62,7 @@ public class CandidatImportBean implements Serializable {
             return;
         }
 
-        var error = new StringBuffer();
+        var error = new StringBuilder();
         try (InputStream inputStream = event.getFile().getInputStream()) {
             var result = candidatSkosImportService.loadSkosFile(inputStream, typeImport, selectedLang, error);
             skosXmlDocument = result.document();

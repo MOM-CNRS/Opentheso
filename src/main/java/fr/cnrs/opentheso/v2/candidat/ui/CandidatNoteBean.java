@@ -24,10 +24,10 @@ import java.util.List;
 @Named("v2NoteBeanCandidat")
 public class CandidatNoteBean implements Serializable {
 
-    private final CandidatBean candidatBean;
-    private final CandidatMutationService candidatMutationService;
-    private final UserSession userSession;
-    private final ThesaurusContext thesaurusContext;
+    private final transient CandidatBean candidatBean;
+    private final transient CandidatMutationService candidatMutationService;
+    private final transient UserSession userSession;
+    private final transient ThesaurusContext thesaurusContext;
 
     private List<NoteType> noteTypes;
     private String selectedLang, selectedTypeNote, noteValue;

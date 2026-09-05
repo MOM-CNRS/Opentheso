@@ -24,7 +24,7 @@ import java.io.BufferedWriter;
 import java.io.ByteArrayOutputStream;
 import java.io.IOException;
 import java.io.OutputStreamWriter;
-import java.nio.charset.Charset;
+import java.nio.charset.StandardCharsets;
 import java.util.ArrayList;
 import java.util.Collection;
 import java.util.HashSet;
@@ -39,11 +39,17 @@ import org.apache.commons.lang3.StringUtils;
 import org.springframework.stereotype.Service;
 
 import lombok.RequiredArgsConstructor;
+import lombok.extern.slf4j.Slf4j;
 
 
+@Slf4j
 @Service
 @RequiredArgsConstructor
 public class ThesaurusCsvWriter {
+
+    private static final String CSV_EXPORT_ERROR = "Erreur lors de l'export CSV";
+    private static final String COL_ARK_ID = "arkId";
+
 
     private final ThesaurusEditionCsvExportPersistence csvExportQuerySupport;
     private final String delim_multi_datas = "##";
@@ -57,7 +63,7 @@ public class ThesaurusCsvWriter {
         }
         try {
             ByteArrayOutputStream os = new ByteArrayOutputStream();
-            try (OutputStreamWriter out = new OutputStreamWriter(os, Charset.forName("UTF-8")); CSVPrinter csvFilePrinter = new CSVPrinter(out, CSVFormat.RFC4180.builder().setDelimiter(delimiter).build())) {
+            try (OutputStreamWriter out = new OutputStreamWriter(os, StandardCharsets.UTF_8); CSVPrinter csvFilePrinter = new CSVPrinter(out, CSVFormat.RFC4180.builder().setDelimiter(delimiter).build())) {
 
                 // write Headers
                 ArrayList<String> header = new ArrayList<>();
@@ -65,7 +71,7 @@ public class ThesaurusCsvWriter {
                 header.add("rdf:type");
                 header.add("localURI");
                 header.add("identifier");
-                header.add("arkId");
+                header.add(COL_ARK_ID);
 
                 List<String> langs = selectedLanguages.stream().map(lang -> lang.getCode()).collect(Collectors.toList());
                 //skos:prefLabel
@@ -153,220 +159,175 @@ public class ThesaurusCsvWriter {
                 header.add("dcterms:modified");
                 csvFilePrinter.printRecord(header);
 
-                ArrayList<Object> record = new ArrayList<>();
+                ArrayList<Object> csvRow = new ArrayList<>();
                 // write concepts and collections
                 xmlDocument.getGroupList().forEach(groupe -> {
                     try {
-                        writeResource(record, csvFilePrinter, groupe, "skos:Collection", langs);
+                        writeResource(csvRow, csvFilePrinter, groupe, "skos:Collection", langs);
                     } catch (IOException e) {
-                        System.err.println(e.toString());
+                        log.warn(CSV_EXPORT_ERROR, e);
                     }
                 });
                 // write Facettes
                 xmlDocument.getFacetList().forEach(facet -> {
                     try {
-                        writeResource(record, csvFilePrinter, facet, "skos-thes:ThesaurusArray", langs);
+                        writeResource(csvRow, csvFilePrinter, facet, "skos-thes:ThesaurusArray", langs);
                     } catch (IOException e) {
-                        System.err.println(e.toString());
+                        log.warn(CSV_EXPORT_ERROR, e);
                     }
                 });                
                 // write all concepts
                 xmlDocument.getConceptList().forEach(concept -> {
                     try {
-                        writeResource(record, csvFilePrinter, concept, "skos:Concept", langs);
+                        writeResource(csvRow, csvFilePrinter, concept, "skos:Concept", langs);
                     } catch (IOException e) {
-                        System.err.println(e.toString());
+                        log.warn(CSV_EXPORT_ERROR, e);
                     }
                 });
             }
             return os.toByteArray();
         } catch (IOException e) {
-            System.out.println(e.toString());
+            log.warn(CSV_EXPORT_ERROR, e);
             return null;
         }
     }
 
-    private void writeResource(ArrayList<Object> record, CSVPrinter csvFilePrinter,
+    private void writeResource(ArrayList<Object> csvRow, CSVPrinter csvFilePrinter,
             SKOSResource skosResource, String type, List<String> langs) throws IOException {
 
         //URI + rdf:type
-        record.add(skosResource.getUri());
-        record.add(type);
+        csvRow.add(skosResource.getUri());
+        csvRow.add(type);
 
         //localURI
-        record.add(skosResource.getLocalUri());
+        csvRow.add(skosResource.getLocalUri());
 
         // identifier and arkId
         if (StringUtils.isNoneEmpty(skosResource.getIdentifier())) {
-            record.add(skosResource.getIdentifier());
+            csvRow.add(skosResource.getIdentifier());
         } else {
-            record.add("");
+            csvRow.add("");
         }
 
         if (skosResource.getArkId() != null && !skosResource.getArkId().isEmpty()) {
-            record.add(skosResource.getArkId());
+            csvRow.add(skosResource.getArkId());
         } else {
-            record.add("");
+            csvRow.add("");
         }
 
         //skos:prefLabel
         for (String lang : langs) {
-            record.add(getPrefLabelValue(skosResource.getLabelsList(), lang, SKOSProperty.PREF_LABEL));
+            csvRow.add(getPrefLabelValue(skosResource.getLabelsList(), lang, SKOSProperty.PREF_LABEL));
         }
 
         //skos:altLabel
         for (String lang : langs) {
-            record.add(getAltLabelValue(skosResource.getLabelsList(), lang, SKOSProperty.ALT_LABEL));
+            csvRow.add(getAltLabelValue(skosResource.getLabelsList(), lang, SKOSProperty.ALT_LABEL));
         }
 
         //skos:hiddenLabel
         for (String lang : langs) {
-            record.add(getAltLabelValue(skosResource.getLabelsList(), lang, SKOSProperty.HIDDEN_LABEL));
+            csvRow.add(getAltLabelValue(skosResource.getLabelsList(), lang, SKOSProperty.HIDDEN_LABEL));
         }
 
-        //skos:definition
-        for (String lang : langs) {
-            String def = getDocumentationValue(skosResource.getDocumentationsList(), lang, SKOSProperty.DEFINITION);
-            def = def.replaceAll("amp;", "");
-            def = def.replaceAll(";", ",");
-            record.add(def);
-        }
-
-        //skos:scopeNote
-        for (String lang : langs) {
-            String def = getDocumentationValue(skosResource.getDocumentationsList(), lang, SKOSProperty.SCOPE_NOTE);
-            def = def.replaceAll("amp;", "");
-            def = def.replaceAll(";", ",");
-            record.add(def);
-        }
-
-        //skos:note
-        for (String lang : langs) {
-            String def = getDocumentationValue(skosResource.getDocumentationsList(), lang, SKOSProperty.NOTE);
-            def = def.replaceAll("amp;", "");
-            def = def.replaceAll(";", ",");
-            record.add(def);
-        }
-
-        //skos:historyNote
-        for (String lang : langs) {
-            String def = getDocumentationValue(skosResource.getDocumentationsList(), lang, SKOSProperty.HISTORY_NOTE);
-            def = def.replaceAll("amp;", "");
-            def = def.replaceAll(";", ",");
-            record.add(def);
-        }
-        //skos:editorialNote
-        for (String lang : langs) {
-            String def = getDocumentationValue(skosResource.getDocumentationsList(), lang, SKOSProperty.EDITORIAL_NOTE);
-            def = def.replaceAll("amp;", "");
-            def = def.replaceAll(";", ",");
-            record.add(def);
-        }
-        //skos:changeNote
-        for (String lang : langs) {
-            String def = getDocumentationValue(skosResource.getDocumentationsList(), lang, SKOSProperty.CHANGE_NOTE);
-            def = def.replaceAll("amp;", "");
-            def = def.replaceAll(";", ",");
-            record.add(def);
-        }
-        //skos:example
-        for (String lang : langs) {
-            String def = getDocumentationValue(skosResource.getDocumentationsList(), lang, SKOSProperty.EXAMPLE);
-            def = def.replaceAll("amp;", "");
-            def = def.replaceAll(";", ",");
-            record.add(def);
-        }
+        addDocumentationColumns(csvRow, skosResource, langs, SKOSProperty.DEFINITION);
+        addDocumentationColumns(csvRow, skosResource, langs, SKOSProperty.SCOPE_NOTE);
+        addDocumentationColumns(csvRow, skosResource, langs, SKOSProperty.NOTE);
+        addDocumentationColumns(csvRow, skosResource, langs, SKOSProperty.HISTORY_NOTE);
+        addDocumentationColumns(csvRow, skosResource, langs, SKOSProperty.EDITORIAL_NOTE);
+        addDocumentationColumns(csvRow, skosResource, langs, SKOSProperty.CHANGE_NOTE);
+        addDocumentationColumns(csvRow, skosResource, langs, SKOSProperty.EXAMPLE);
 
         // notation
-        record.add(getNotation(skosResource.getNotationList()));
+        csvRow.add(getNotation(skosResource.getNotationList()));
 
         //narrower 
-        record.add(getRelationGivenValue(skosResource.getRelationsList(), SKOSProperty.NARROWER));
+        csvRow.add(getRelationGivenValue(skosResource.getRelationsList(), SKOSProperty.NARROWER));
         //narrowerId
-        record.add(getRelationGivenValueId(skosResource.getRelationsList(), SKOSProperty.NARROWER));
+        csvRow.add(getRelationGivenValueId(skosResource.getRelationsList(), SKOSProperty.NARROWER));
 
         //broader
         var broader = getRelationGivenValue(skosResource.getRelationsList(), SKOSProperty.BROADER);
         if (StringUtils.isEmpty(broader)) {
             //broader = getRelationGivenValue(skosResource.getRelationsList(), SKOSProperty.TOP_CONCEPT_OF);
-            record.add("");
+            csvRow.add("");
         } else {
-            record.add(broader);
+            csvRow.add(broader);
         }
         //broaderId
         var broaderId = getRelationGivenValueId(skosResource.getRelationsList(), SKOSProperty.BROADER);
         if (StringUtils.isEmpty(broaderId)) {
             broaderId = ""; //getRelationGivenValueId(skosResource.getRelationsList(), SKOSProperty.TOP_CONCEPT_OF);
         }
-        record.add(broaderId);
+        csvRow.add(broaderId);
 
         //related
-        record.add(getRelationGivenValue(skosResource.getRelationsList(), SKOSProperty.RELATED));
+        csvRow.add(getRelationGivenValue(skosResource.getRelationsList(), SKOSProperty.RELATED));
         //relatedId 
-        record.add(getRelationGivenValueId(skosResource.getRelationsList(), SKOSProperty.RELATED));
+        csvRow.add(getRelationGivenValueId(skosResource.getRelationsList(), SKOSProperty.RELATED));
 
         //exactMatch
-        record.add(getAlligementValue(skosResource.getMatchList(), SKOSProperty.EXACT_MATCH));
+        csvRow.add(getAlligementValue(skosResource.getMatchList(), SKOSProperty.EXACT_MATCH));
         //closeMatch
-        record.add(getAlligementValue(skosResource.getMatchList(), SKOSProperty.CLOSE_MATCH));
+        csvRow.add(getAlligementValue(skosResource.getMatchList(), SKOSProperty.CLOSE_MATCH));
 
         if (CollectionUtils.isNotEmpty(skosResource.getGpsCoordinates()) && skosResource.getGpsCoordinates().size() == 1) {
             //geo:lat
-            record.add(getLatValue(skosResource.getGpsCoordinates().get(0)));
+            csvRow.add(getLatValue(skosResource.getGpsCoordinates().get(0)));
             //geo:long
-            record.add(getLongValue(skosResource.getGpsCoordinates().get(0)));
+            csvRow.add(getLongValue(skosResource.getGpsCoordinates().get(0)));
         } else {
             //geo:lat
-            record.add("");
+            csvRow.add("");
             //geo:long
-            record.add("");
+            csvRow.add("");
         }
         //GPS
         if (CollectionUtils.isNotEmpty(skosResource.getGpsCoordinates()) && skosResource.getGpsCoordinates().size() > 1) {
-            record.add(getGpsValue(skosResource.getGpsCoordinates()));
+            csvRow.add(getGpsValue(skosResource.getGpsCoordinates()));
         } else {
-            record.add("");
+            csvRow.add("");
         }
         
         //skos:member (pour les concepts pour ajouter l'info de l'appartenance du concept à une collection)
         //skos:member (pour les Facettes et collections pour ajouter qui sont les membres)        
-        record.add(getMemberValue(skosResource.getRelationsList()));
-        record.add(getMemberId(skosResource.getRelationsList()));        
+        csvRow.add(getMemberValue(skosResource.getRelationsList()));
+        csvRow.add(getMemberId(skosResource.getRelationsList()));        
           
         // iso-thes:subGroup pour référencer l'URI des sous groupes 
-        record.add(getSubGroup(skosResource.getRelationsList()));        
+        csvRow.add(getSubGroup(skosResource.getRelationsList()));        
         
         // iso-thes:superOrdinate pour référencer les Facettes du Concept
-        record.add(getFacettesOfConceptParent(skosResource.getRelationsList()));
+        csvRow.add(getFacettesOfConceptParent(skosResource.getRelationsList()));
 
-        record.add(getFacettesOfConceptParentId(skosResource.getRelationsList()));
+        csvRow.add(getFacettesOfConceptParentId(skosResource.getRelationsList()));
 
         // owl:deprecated pour les concepts dépréciés
         if(skosResource.getStatus() == SKOSProperty.DEPRECATED)
-            record.add("true");
+            csvRow.add("true");
         else
-            record.add("false");
+            csvRow.add("false");
         // dcterms:isReplacedBy pour référencer les concepts qui remplacent celui qui est déprécié 
-        record.add(getReplaceBy(skosResource.getsKOSReplaces()));    
+        csvRow.add(getReplaceBy(skosResource.getsKOSReplaces()));    
         
         // foaf:Image pour les images
-        record.add(getImages(skosResource.getNodeImages()));
+        csvRow.add(getImages(skosResource.getNodeImages()));
         
         //dcterms:source
         if (CollectionUtils.isNotEmpty(skosResource.getExternalResources())) {
-            record.add(getExternalReources(skosResource.getExternalResources()));
+            csvRow.add(getExternalReources(skosResource.getExternalResources()));
         } else {
-            record.add("");
+            csvRow.add("");
         }        
         
         
         //sdct:created
-        record.add(getDateValue(skosResource.getDateList(), SKOSProperty.CREATED));
+        csvRow.add(getDateValue(skosResource.getDateList(), SKOSProperty.CREATED));
         //dct:modified
-        record.add(getDateValue(skosResource.getDateList(), SKOSProperty.MODIFIED));
+        csvRow.add(getDateValue(skosResource.getDateList(), SKOSProperty.MODIFIED));
 
-        csvFilePrinter.printRecord(record);
-        record.clear();
+        csvFilePrinter.printRecord(csvRow);
+        csvRow.clear();
     }
     
     private String getExternalReources(ArrayList<String> externalResources) {
@@ -447,6 +408,21 @@ public class ThesaurusCsvWriter {
                 .filter(label -> label.getProperty() == propertie && label.getLanguage().equals(lang))
                 .map(label -> label.getLabel())
                 .collect(Collectors.joining(delim_multi_datas));
+    }
+
+    private void addDocumentationColumns(
+            ArrayList<Object> csvRow,
+            SKOSResource skosResource,
+            List<String> langs,
+            int property
+    ) {
+        for (String lang : langs) {
+            csvRow.add(sanitizeCsvNote(getDocumentationValue(skosResource.getDocumentationsList(), lang, property)));
+        }
+    }
+
+    private String sanitizeCsvNote(String def) {
+        return def.replace("amp;", "").replace(";", ",");
     }
 
     private String getDocumentationValue(ArrayList<SKOSDocumentation> documentations, String lang, int propertie) {
@@ -565,12 +541,12 @@ public class ThesaurusCsvWriter {
     ) {
         try {
             ByteArrayOutputStream os = new ByteArrayOutputStream();
-            try (OutputStreamWriter out = new OutputStreamWriter(os, Charset.forName("UTF-8"));
+            try (OutputStreamWriter out = new OutputStreamWriter(os, StandardCharsets.UTF_8);
                  CSVPrinter csvFilePrinter = new CSVPrinter(out, CSVFormat.RFC4180.builder().setDelimiter(delimiter).build())) {
 
                 ArrayList<String> header = new ArrayList<>();
                 header.add("conceptId");
-                header.add("arkId");
+                header.add(COL_ARK_ID);
                 header.add("handleId");
                 header.add("prefLabel");
                 header.add("altLabel");
@@ -585,9 +561,9 @@ public class ThesaurusCsvWriter {
                 }
                 List<ThesaurusCsvByIdRow> conceptRows = csvExportQuerySupport.loadConceptsForCsvById(idTheso, idLang, idConcepts);
 
-                ArrayList<Object> record = new ArrayList<>();
+                ArrayList<Object> csvRow = new ArrayList<>();
                 for (ThesaurusCsvByIdRow conceptRow : conceptRows) {
-                    appendCsvByIdRow(record, csvFilePrinter, conceptRow);
+                    appendCsvByIdRow(csvRow, csvFilePrinter, conceptRow);
                 }
             }
             return os.toByteArray();
@@ -606,7 +582,7 @@ public class ThesaurusCsvWriter {
     public byte[] writeProcessedCandidates( List<CandidatDto> candidatDtos, char delimiter) {
         try {
             ByteArrayOutputStream os = new ByteArrayOutputStream();
-            try (OutputStreamWriter out = new OutputStreamWriter(os, Charset.forName("UTF-8")); CSVPrinter csvFilePrinter = new CSVPrinter(out, CSVFormat.RFC4180.builder().setDelimiter(delimiter).build())) {
+            try (OutputStreamWriter out = new OutputStreamWriter(os, StandardCharsets.UTF_8); CSVPrinter csvFilePrinter = new CSVPrinter(out, CSVFormat.RFC4180.builder().setDelimiter(delimiter).build())) {
                 /// écriture des headers
                 ArrayList<String> header = new ArrayList<>();
                 header.add("Id");
@@ -627,30 +603,30 @@ public class ThesaurusCsvWriter {
                 }
 
                 /// écritures des données
-                ArrayList<Object> record = new ArrayList<>();
+                ArrayList<Object> csvRow = new ArrayList<>();
                 for (CandidatDto candidatDto : candidatDtos) {
                     try {
-                        record.add(candidatDto.getIdConcepte());
-                        record.add(candidatDto.getNomPref());
-                        record.add(candidatDto.getCreatedBy());
-                        record.add(candidatDto.getCreationDate());
-                        record.add(candidatDto.getCreatedByAdmin());
-                        record.add(candidatDto.getInsertionDate());
-                        record.add(candidatDto.getAdminMessage());
-                        record.add(candidatDto.getNbrVote());
-                        record.add(candidatDto.getNbrNoteVote());
-                        record.add(candidatDto.getNbrParticipant());
+                        csvRow.add(candidatDto.getIdConcepte());
+                        csvRow.add(candidatDto.getNomPref());
+                        csvRow.add(candidatDto.getCreatedBy());
+                        csvRow.add(candidatDto.getCreationDate());
+                        csvRow.add(candidatDto.getCreatedByAdmin());
+                        csvRow.add(candidatDto.getInsertionDate());
+                        csvRow.add(candidatDto.getAdminMessage());
+                        csvRow.add(candidatDto.getNbrVote());
+                        csvRow.add(candidatDto.getNbrNoteVote());
+                        csvRow.add(candidatDto.getNbrParticipant());
 
-                        csvFilePrinter.printRecord(record);
-                        record.clear();
+                        csvFilePrinter.printRecord(csvRow);
+                        csvRow.clear();
                     } catch (IOException e) {
-                        System.err.println(e.toString());
+                        log.warn(CSV_EXPORT_ERROR, e);
                     }
                 }
             }
             return os.toByteArray();
         } catch (IOException e) {
-            System.out.println(e.toString());
+            log.warn(CSV_EXPORT_ERROR, e);
             return null;
         }
     }
@@ -666,7 +642,7 @@ public class ThesaurusCsvWriter {
     public byte[] writeCsvResultProcess(List<NodeIdValue> nodeIdValues, String header1, String header2) {
         try {
             ByteArrayOutputStream os = new ByteArrayOutputStream();
-            try (OutputStreamWriter out = new OutputStreamWriter(os, Charset.forName("UTF-8")); CSVPrinter csvFilePrinter = new CSVPrinter(out, CSVFormat.RFC4180.builder().build())) {
+            try (OutputStreamWriter out = new OutputStreamWriter(os, StandardCharsets.UTF_8); CSVPrinter csvFilePrinter = new CSVPrinter(out, CSVFormat.RFC4180.builder().build())) {
 
                 /// écriture des headers
                 ArrayList<String> header = new ArrayList<>();
@@ -674,21 +650,21 @@ public class ThesaurusCsvWriter {
                 header.add(header2);
                 csvFilePrinter.printRecord(header);
 
-                ArrayList<Object> record = new ArrayList<>();
+                ArrayList<Object> csvRow = new ArrayList<>();
                 for (NodeIdValue nodeIdValue : nodeIdValues) {
                     try {
-                        record.add(nodeIdValue.getId());
-                        record.add(nodeIdValue.getValue());
-                        csvFilePrinter.printRecord(record);
-                        record.clear();
+                        csvRow.add(nodeIdValue.getId());
+                        csvRow.add(nodeIdValue.getValue());
+                        csvFilePrinter.printRecord(csvRow);
+                        csvRow.clear();
                     } catch (IOException e) {
-                        System.err.println(e.toString());
+                        log.warn(CSV_EXPORT_ERROR, e);
                     }
                 }
             }
             return os.toByteArray();
         } catch (IOException e) {
-            System.out.println(e.toString());
+            log.warn(CSV_EXPORT_ERROR, e);
             return null;
         }
     }
@@ -703,7 +679,7 @@ public class ThesaurusCsvWriter {
     public byte[] writeCsvForAlignment(ArrayList<NodeIdValue> listAlignments, String alignmentSource) {
         try {
             ByteArrayOutputStream os = new ByteArrayOutputStream();
-            try (OutputStreamWriter out = new OutputStreamWriter(os, Charset.forName("UTF-8")); CSVPrinter csvFilePrinter = new CSVPrinter(out, CSVFormat.RFC4180.builder().build())) {
+            try (OutputStreamWriter out = new OutputStreamWriter(os, StandardCharsets.UTF_8); CSVPrinter csvFilePrinter = new CSVPrinter(out, CSVFormat.RFC4180.builder().build())) {
 
                 /// écriture des headers
                 ArrayList<String> header = new ArrayList<>();
@@ -711,24 +687,24 @@ public class ThesaurusCsvWriter {
                 header.add("URI");
 
                 csvFilePrinter.printRecord(header);
-                ArrayList<Object> record = new ArrayList<>();
+                ArrayList<Object> csvRow = new ArrayList<>();
                 try {
                     for (NodeIdValue listAlignment : listAlignments) {
                         if(StringUtils.containsIgnoreCase(listAlignment.getValue(), "." + alignmentSource + ".")) {
-                            record.add(0, listAlignment.getId());
-                            record.add(1, listAlignment.getValue());
-                            csvFilePrinter.printRecord(record);
-                            record.clear();
+                            csvRow.add(0, listAlignment.getId());
+                            csvRow.add(1, listAlignment.getValue());
+                            csvFilePrinter.printRecord(csvRow);
+                            csvRow.clear();
                         }
                     }
                 } catch (IOException e) {
-                    System.err.println(e.toString());
+                    log.warn(CSV_EXPORT_ERROR, e);
                 }
 
             }
             return os.toByteArray();
         } catch (IOException e) {
-            System.out.println(e.toString());
+            log.warn(CSV_EXPORT_ERROR, e);
             return null;
         }
     }
@@ -743,35 +719,35 @@ public class ThesaurusCsvWriter {
     public byte[] writeCsvFromNodeCompareTheso(List<NodeCompareTheso> nodeCompareThesos, String idLang) {
         try {
             ByteArrayOutputStream os = new ByteArrayOutputStream();
-            try (OutputStreamWriter out = new OutputStreamWriter(os, Charset.forName("UTF-8")); CSVPrinter csvFilePrinter = new CSVPrinter(out, CSVFormat.RFC4180.builder().build())) {
+            try (OutputStreamWriter out = new OutputStreamWriter(os, StandardCharsets.UTF_8); CSVPrinter csvFilePrinter = new CSVPrinter(out, CSVFormat.RFC4180.builder().build())) {
 
                 /// écriture des headers
                 ArrayList<String> header = new ArrayList<>();
                 header.add("originalPrefLabel@" + idLang);
                 header.add("conceptId");
-                header.add("arkId");
+                header.add(COL_ARK_ID);
                 header.add("skos:prefLabel@" + idLang);
                 header.add("skos:altLabel@" + idLang);
 
                 csvFilePrinter.printRecord(header);
-                ArrayList<Object> record = new ArrayList<>();
+                ArrayList<Object> csvRow = new ArrayList<>();
                 for (NodeCompareTheso nodeCompareTheso : nodeCompareThesos) {
                     try {
-                        record.add(nodeCompareTheso.getOriginalPrefLabel());
-                        record.add(nodeCompareTheso.getIdConcept());
-                        record.add(nodeCompareTheso.getIdArk());
-                        record.add(nodeCompareTheso.getPrefLabel());
-                        record.add(nodeCompareTheso.getAltLabel());
-                        csvFilePrinter.printRecord(record);
-                        record.clear();
+                        csvRow.add(nodeCompareTheso.getOriginalPrefLabel());
+                        csvRow.add(nodeCompareTheso.getIdConcept());
+                        csvRow.add(nodeCompareTheso.getIdArk());
+                        csvRow.add(nodeCompareTheso.getPrefLabel());
+                        csvRow.add(nodeCompareTheso.getAltLabel());
+                        csvFilePrinter.printRecord(csvRow);
+                        csvRow.clear();
                     } catch (IOException e) {
-                        System.err.println(e.toString());
+                        log.warn(CSV_EXPORT_ERROR, e);
                     }
                 }
             }
             return os.toByteArray();
         } catch (IOException e) {
-            System.out.println(e.toString());
+            log.warn(CSV_EXPORT_ERROR, e);
             return null;
         }
     }
@@ -797,7 +773,7 @@ public class ThesaurusCsvWriter {
     ) {
         try {
             ByteArrayOutputStream os = new ByteArrayOutputStream();
-            try (OutputStreamWriter out = new OutputStreamWriter(os, Charset.forName("UTF-8"));
+            try (OutputStreamWriter out = new OutputStreamWriter(os, StandardCharsets.UTF_8);
                  CSVPrinter csvFilePrinter = new CSVPrinter(out, CSVFormat.RFC4180.builder().setDelimiter(delimiter).build())) {
 
                 ArrayList<String> header = new ArrayList<>();
@@ -813,19 +789,19 @@ public class ThesaurusCsvWriter {
                 Set<String> keep = restrictConceptIds == null || restrictConceptIds.isEmpty()
                         ? null
                         : new HashSet<>(restrictConceptIds);
-                ArrayList<Object> record = new ArrayList<>();
+                ArrayList<Object> csvRow = new ArrayList<>();
                 for (NodeDeprecated nodeDeprecated : nodeDeprecateds) {
                     if (keep != null && !keep.contains(nodeDeprecated.getDeprecatedId())) {
                         continue;
                     }
-                    record.add(nodeDeprecated.getDeprecatedId());
-                    record.add(nodeDeprecated.getDeprecatedLabel());
-                    record.add(nodeDeprecated.getReplacedById());
-                    record.add(nodeDeprecated.getReplacedByLabel());
-                    record.add(nodeDeprecated.getModified());
-                    record.add(nodeDeprecated.getUserName());
-                    csvFilePrinter.printRecord(record);
-                    record.clear();
+                    csvRow.add(nodeDeprecated.getDeprecatedId());
+                    csvRow.add(nodeDeprecated.getDeprecatedLabel());
+                    csvRow.add(nodeDeprecated.getReplacedById());
+                    csvRow.add(nodeDeprecated.getReplacedByLabel());
+                    csvRow.add(nodeDeprecated.getModified());
+                    csvRow.add(nodeDeprecated.getUserName());
+                    csvFilePrinter.printRecord(csvRow);
+                    csvRow.clear();
                 }
             }
             return os.toByteArray();
@@ -834,17 +810,17 @@ public class ThesaurusCsvWriter {
         }
     }
 
-    private void appendCsvByIdRow(ArrayList<Object> record, CSVPrinter csvFilePrinter, ThesaurusCsvByIdRow conceptRow)
+    private void appendCsvByIdRow(ArrayList<Object> csvRow, CSVPrinter csvFilePrinter, ThesaurusCsvByIdRow conceptRow)
             throws IOException {
-        record.add(conceptRow.conceptId());
-        record.add(conceptRow.arkId());
-        record.add(conceptRow.handleId());
-        record.add(conceptRow.prefLabel());
-        record.add(joinValues(conceptRow.altLabels()));
-        record.add(joinValues(conceptRow.definitions()));
-        record.add(joinAlignments(conceptRow.alignments()));
-        csvFilePrinter.printRecord(record);
-        record.clear();
+        csvRow.add(conceptRow.conceptId());
+        csvRow.add(conceptRow.arkId());
+        csvRow.add(conceptRow.handleId());
+        csvRow.add(conceptRow.prefLabel());
+        csvRow.add(joinValues(conceptRow.altLabels()));
+        csvRow.add(joinValues(conceptRow.definitions()));
+        csvRow.add(joinAlignments(conceptRow.alignments()));
+        csvFilePrinter.printRecord(csvRow);
+        csvRow.clear();
     }
 
     private String joinValues(List<String> values) {

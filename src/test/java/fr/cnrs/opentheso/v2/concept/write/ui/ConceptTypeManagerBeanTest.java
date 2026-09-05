@@ -54,7 +54,8 @@ class ConceptTypeManagerBeanTest {
                 thesaurusContext,
                 userSession,
                 conceptWritePolicy,
-                thesaurusBrowseBean
+                thesaurusBrowseBean,
+                null
         );
         lenient().when(conceptWritePolicy.canMutateConcept(userSession)).thenReturn(true);
         lenient().when(thesaurusBrowseBean.isCustomRelationVisible()).thenReturn(true);

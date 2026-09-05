@@ -1,5 +1,7 @@
 package fr.cnrs.opentheso.v2.concept.alignment.model;
 
+import java.io.Serializable;
+
 /**
  * Ligne du tableau résumé (branche) : soit un alignement réel, soit un
  * placeholder sans URI pour garder le groupe concept visible.
@@ -13,7 +15,7 @@ public record AlignmentAdminRow(
         int typeId,
         String sourceName,
         boolean urlAvailable
-) {
+) implements Serializable {
 
     public boolean isPlaceholder() {
         return alignmentId == null || targetUri == null;

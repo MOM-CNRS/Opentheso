@@ -1,8 +1,7 @@
 package fr.cnrs.opentheso.v2.user.policy;
 
+import fr.cnrs.opentheso.v2.shared.time.V2Dates;
 import fr.cnrs.opentheso.v2.user.model.UserProfile;
-
-import java.time.LocalDate;
 
 public final class ApiKeyPolicy {
 
@@ -20,7 +19,7 @@ public final class ApiKeyPolicy {
         if (profile == null || profile.keyNeverExpire() || profile.keyExpiresAt() == null) {
             return false;
         }
-        return LocalDate.now().isAfter(profile.keyExpiresAt());
+        return V2Dates.nowDate().isAfter(profile.keyExpiresAt());
     }
 
     public static boolean canRegenerate(UserProfile profile) {

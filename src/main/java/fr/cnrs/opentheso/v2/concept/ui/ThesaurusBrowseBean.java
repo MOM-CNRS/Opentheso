@@ -59,6 +59,7 @@ import java.util.ArrayList;
 import java.util.Collections;
 import java.util.List;
 import java.util.Optional;
+import fr.cnrs.opentheso.v2.concept.model.ConceptTreeNodeKinds;
 
 @Slf4j
 @Getter
@@ -68,32 +69,32 @@ import java.util.Optional;
 @RequiredArgsConstructor
 public class ThesaurusBrowseBean implements Serializable, ConceptNavigationSupport {
 
-    private final ThesaurusContext thesaurusContext;
-    private final ConceptSelectionContext conceptSelectionContext;
-    private final ConceptReadService conceptReadService;
-    private final CollectionReadService collectionReadService;
-    private final FacetReadService facetReadService;
-    private final ConceptFullReadService conceptFullReadService;
-    private final ThesaurusHomeReadService thesaurusHomeReadService;
-    private final ConceptHistoryBean conceptHistoryBean;
-    private final ThesaurusPreferenceService thesaurusPreferenceService;
-    private final ThesaurusSearchLanguageSync thesaurusSearchLanguageSync;
-    private final UserSession userSession;
-    private final ConceptTypeReadService conceptTypeReadService;
+    private final transient ThesaurusContext thesaurusContext;
+    private final transient ConceptSelectionContext conceptSelectionContext;
+    private final transient ConceptReadService conceptReadService;
+    private final transient CollectionReadService collectionReadService;
+    private final transient FacetReadService facetReadService;
+    private final transient ConceptFullReadService conceptFullReadService;
+    private final transient ThesaurusHomeReadService thesaurusHomeReadService;
+    private final transient ConceptHistoryBean conceptHistoryBean;
+    private final transient ThesaurusPreferenceService thesaurusPreferenceService;
+    private final transient ThesaurusSearchLanguageSync thesaurusSearchLanguageSync;
+    private final transient UserSession userSession;
+    private final transient ConceptTypeReadService conceptTypeReadService;
     private final ConceptTreeRefreshState conceptTreeRefreshState;
-    private final RightsService rightsService;
-    private final ObjectProvider<ConceptAlignmentAdminBean> conceptAlignmentAdminBean;
-    private final ObjectProvider<PropositionSubmitBean> propositionSubmitBean;
-    private final ObjectProvider<PropositionBean> propositionBean;
-    private final ObjectProvider<ThesaurusHomeEditorBean> thesaurusHomeEditorBean;
+    private final transient RightsService rightsService;
+    private final transient ObjectProvider<ConceptAlignmentAdminBean> conceptAlignmentAdminBean;
+    private final transient ObjectProvider<PropositionSubmitBean> propositionSubmitBean;
+    private final transient ObjectProvider<PropositionBean> propositionBean;
+    private final transient ObjectProvider<ThesaurusHomeEditorBean> thesaurusHomeEditorBean;
 
     private String conceptIdFromUri;
     private String groupIdFromUri;
     private String facetIdFromUri;
-    private TreeNode conceptRoot;
-    private TreeNode collectionRoot;
-    private TreeNode arbreRoot;
-    private TreeNode selectedNode;
+    private TreeNode<Object> conceptRoot;
+    private TreeNode<Object> collectionRoot;
+    private TreeNode<Object> arbreRoot;
+    private TreeNode<Object> selectedNode;
     private ConceptDetail selectedConcept;
     private ConceptFullSnapshot selectedFullConcept;
     private List<ConceptCorpusLinkItem> displayedCorpusLinks = Collections.emptyList();
@@ -321,7 +322,7 @@ public class ThesaurusBrowseBean implements Serializable, ConceptNavigationSuppo
 
     public void onNodeExpand(NodeExpandEvent event) {
         LeftTreeMode mode = resolveTreeModeFromComponent(event);
-        DefaultTreeNode node = (DefaultTreeNode) event.getTreeNode();
+        DefaultTreeNode<Object> node = (DefaultTreeNode<Object>) event.getTreeNode();
         if (node.getChildCount() == 1 && isDummyChild(node)) {
             node.getChildren().clear();
             ConceptTreeNodeData data = (ConceptTreeNodeData) node.getData();
@@ -331,7 +332,7 @@ public class ThesaurusBrowseBean implements Serializable, ConceptNavigationSuppo
 
     public void onNodeSelect(NodeSelectEvent event) {
         LeftTreeMode mode = resolveTreeModeFromComponent(event);
-        TreeNode newlySelected = event.getTreeNode();
+        TreeNode<Object> newlySelected = event.getTreeNode();
         // Un seul nœud sélectionné dans les arbres gauches (comme legacy).
         selectSingleTreeNode(newlySelected);
         ConceptTreeNodeData data = newlySelected == null ? null : (ConceptTreeNodeData) newlySelected.getData();
@@ -345,7 +346,7 @@ public class ThesaurusBrowseBean implements Serializable, ConceptNavigationSuppo
             refreshAfterTreeSelection();
             return;
         }
-        if ("facet".equals(data.nodeType())) {
+        if (ConceptTreeNodeKinds.FACET.equals(data.nodeType())) {
             openFacet(data.nodeId());
             refreshAfterTreeSelection();
             return;
@@ -459,7 +460,7 @@ public class ThesaurusBrowseBean implements Serializable, ConceptNavigationSuppo
         }
     }
 
-    private void updateTreeNodeLabelRecursive(TreeNode node, String conceptId, String newLabel) {
+    private void updateTreeNodeLabelRecursive(TreeNode<?> node, String conceptId, String newLabel) {
         if (node == null) {
             return;
         }
@@ -476,7 +477,7 @@ public class ThesaurusBrowseBean implements Serializable, ConceptNavigationSuppo
         }
         if (node.getChildren() != null) {
             for (Object childObj : node.getChildren()) {
-                if (childObj instanceof TreeNode child) {
+                if (childObj instanceof TreeNode<?> child) {
                     updateTreeNodeLabelRecursive(child, conceptId, newLabel);
                 }
             }
@@ -551,7 +552,7 @@ public class ThesaurusBrowseBean implements Serializable, ConceptNavigationSuppo
      * Lazy-builds the concept tree when the model was invalidated (create/delete/refresh)
      * so AJAX updates of {@code formLeftTab} always receive a usable root.
      */
-    public TreeNode getConceptRoot() {
+    public TreeNode<Object> getConceptRoot() {
         if (conceptRoot == null && isScreenAvailable()) {
             ensureTreeBuilt(LeftTreeMode.CONCEPT);
         }
@@ -562,14 +563,14 @@ public class ThesaurusBrowseBean implements Serializable, ConceptNavigationSuppo
      * Lazy-builds the collection tree after invalidation so newly created collections
      * appear without requiring a tab switch.
      */
-    public TreeNode getCollectionRoot() {
+    public TreeNode<Object> getCollectionRoot() {
         if (collectionRoot == null && isScreenAvailable()) {
             ensureTreeBuilt(LeftTreeMode.COLLECTION);
         }
         return collectionRoot;
     }
 
-    public TreeNode getArbreRoot() {
+    public TreeNode<Object> getArbreRoot() {
         if (arbreRoot == null && isScreenAvailable() && useConceptTree
                 && activeLeftTreeMode == LeftTreeMode.ARBRE) {
             ensureTreeBuilt(LeftTreeMode.ARBRE);
@@ -1119,7 +1120,7 @@ public class ThesaurusBrowseBean implements Serializable, ConceptNavigationSuppo
         if (selectedNode != null && selectedNode.getData() instanceof ConceptTreeNodeData data
                 && StringUtils.isNotBlank(data.nodeId())
                 && !data.isGroup()
-                && !"facet".equals(data.nodeType())
+                && !ConceptTreeNodeKinds.FACET.equals(data.nodeType())
                 && !"root".equals(data.nodeType())) {
             return !selectedNode.isLeaf();
         }
@@ -1130,7 +1131,7 @@ public class ThesaurusBrowseBean implements Serializable, ConceptNavigationSuppo
         if (selectedNode != null && selectedNode.getData() instanceof ConceptTreeNodeData data
                 && StringUtils.isNotBlank(data.nodeId())
                 && !data.isGroup()
-                && !"facet".equals(data.nodeType())
+                && !ConceptTreeNodeKinds.FACET.equals(data.nodeType())
                 && !"root".equals(data.nodeType())) {
             return data.nodeId();
         }
@@ -1151,7 +1152,7 @@ public class ThesaurusBrowseBean implements Serializable, ConceptNavigationSuppo
 
         clearAllLeftTreeSelections();
 
-        TreeNode found = null;
+        TreeNode<Object> found = null;
         for (List<String> pathIds : resolveAllConceptPathIds(conceptId)) {
             if (pathIds.isEmpty()) {
                 continue;
@@ -1170,7 +1171,7 @@ public class ThesaurusBrowseBean implements Serializable, ConceptNavigationSuppo
     /**
      * Garantit qu'un seul nœud est sélectionné dans les arbres du panneau gauche.
      */
-    private void selectSingleTreeNode(TreeNode node) {
+    private void selectSingleTreeNode(TreeNode<Object> node) {
         clearAllLeftTreeSelections();
         selectedNode = node;
         if (selectedNode != null) {
@@ -1198,7 +1199,7 @@ public class ThesaurusBrowseBean implements Serializable, ConceptNavigationSuppo
         clearTreeSelectionFlags(collectionRoot);
     }
 
-    private void clearTreeSelectionFlags(TreeNode node) {
+    private void clearTreeSelectionFlags(TreeNode<?> node) {
         if (node == null) {
             return;
         }
@@ -1206,7 +1207,7 @@ public class ThesaurusBrowseBean implements Serializable, ConceptNavigationSuppo
             node.setSelected(false);
         }
         for (Object childObject : node.getChildren()) {
-            if (childObject instanceof TreeNode child) {
+            if (childObject instanceof TreeNode<?> child) {
                 clearTreeSelectionFlags(child);
             }
         }
@@ -1230,9 +1231,9 @@ public class ThesaurusBrowseBean implements Serializable, ConceptNavigationSuppo
         return result;
     }
 
-    private TreeNode expandPath(TreeNode parent, List<String> pathIds, int depth, LeftTreeMode mode) {
+    private TreeNode<Object> expandPath(TreeNode<?> parent, List<String> pathIds, int depth, LeftTreeMode mode) {
         if (depth >= pathIds.size()) {
-            return parent;
+            return (TreeNode<Object>) parent;
         }
         String targetId = pathIds.get(depth);
         if (parent instanceof DefaultTreeNode defaultParent && !isRootNode(defaultParent)) {
@@ -1242,7 +1243,7 @@ public class ThesaurusBrowseBean implements Serializable, ConceptNavigationSuppo
             rootNode.setExpanded(true);
         }
         for (Object childObject : parent.getChildren()) {
-            if (!(childObject instanceof TreeNode child)) {
+            if (!(childObject instanceof TreeNode<?> child)) {
                 continue;
             }
             if (!(child.getData() instanceof ConceptTreeNodeData data) || data.isDummy()) {
@@ -1254,14 +1255,14 @@ public class ThesaurusBrowseBean implements Serializable, ConceptNavigationSuppo
             boolean last = depth == pathIds.size() - 1;
             child.setExpanded(!last);
             if (last) {
-                return child;
+                return (TreeNode<Object>) child;
             }
             return expandPath(child, pathIds, depth + 1, mode);
         }
         return null;
     }
 
-    private void ensureChildrenLoaded(DefaultTreeNode parentNode, LeftTreeMode mode) {
+    private void ensureChildrenLoaded(DefaultTreeNode<Object> parentNode, LeftTreeMode mode) {
         if (parentNode.getChildCount() == 1 && isDummyChild(parentNode)) {
             parentNode.getChildren().clear();
             ConceptTreeNodeData parentData = (ConceptTreeNodeData) parentNode.getData();
@@ -1269,7 +1270,7 @@ public class ThesaurusBrowseBean implements Serializable, ConceptNavigationSuppo
         }
     }
 
-    private boolean isRootNode(DefaultTreeNode node) {
+    private boolean isRootNode(DefaultTreeNode<Object> node) {
         return node.getData() instanceof ConceptTreeNodeData data && "root".equals(data.nodeType());
     }
 
@@ -1290,11 +1291,14 @@ public class ThesaurusBrowseBean implements Serializable, ConceptNavigationSuppo
                     arbreRoot = buildTree(LeftTreeMode.ARBRE);
                 }
             }
+            case INDEX -> {
+                // L'onglet index n'utilise pas l'arbre conceptuel.
+            }
         }
     }
 
-    private TreeNode buildTree(LeftTreeMode mode) {
-        TreeNode treeRoot = new DefaultTreeNode(
+    private TreeNode<Object> buildTree(LeftTreeMode mode) {
+        TreeNode<Object> treeRoot = new DefaultTreeNode<>(
                 new ConceptTreeNodeData("root", getThesaurusTitle(), "", "root", true),
                 null
         );
@@ -1308,14 +1312,14 @@ public class ThesaurusBrowseBean implements Serializable, ConceptNavigationSuppo
             manySiblings = true;
         }
         for (ConceptTreeNodeData nodeData : roots) {
-            DefaultTreeNode node = createTreeNode(nodeData, treeRoot);
+            DefaultTreeNode<Object> node = createTreeNode(nodeData, treeRoot);
             addLazyPlaceholderIfNeeded(node, nodeData);
         }
         treeRoot.setExpanded(true);
         return treeRoot;
     }
 
-    private void loadChildren(DefaultTreeNode parentNode, ConceptTreeNodeData parentData, LeftTreeMode mode) {
+    private void loadChildren(DefaultTreeNode<Object> parentNode, ConceptTreeNodeData parentData, LeftTreeMode mode) {
         List<ConceptTreeNodeData> children = conceptReadService.loadChildNodes(
                 parentData.nodeId(),
                 parentData.nodeType(),
@@ -1328,26 +1332,26 @@ public class ThesaurusBrowseBean implements Serializable, ConceptNavigationSuppo
             manySiblings = true;
         }
         for (ConceptTreeNodeData childData : children) {
-            DefaultTreeNode childNode = createTreeNode(childData, parentNode);
+            DefaultTreeNode<Object> childNode = createTreeNode(childData, parentNode);
             addLazyPlaceholderIfNeeded(childNode, childData);
         }
     }
 
-    private DefaultTreeNode createTreeNode(ConceptTreeNodeData data, TreeNode parent) {
-        return new DefaultTreeNode(data.nodeType(), data, parent);
+    private DefaultTreeNode<Object> createTreeNode(ConceptTreeNodeData data, TreeNode<Object> parent) {
+        return new DefaultTreeNode<>(data.nodeType(), data, parent);
     }
 
-    private void addLazyPlaceholderIfNeeded(DefaultTreeNode node, ConceptTreeNodeData data) {
+    private void addLazyPlaceholderIfNeeded(DefaultTreeNode<Object> node, ConceptTreeNodeData data) {
         if (data.hasChildren()) {
             new DefaultTreeNode("default", ConceptTreeNodeData.dummy(), node);
         }
     }
 
-    private boolean isDummyChild(DefaultTreeNode node) {
+    private boolean isDummyChild(DefaultTreeNode<Object> node) {
         if (node.getChildCount() != 1) {
             return false;
         }
-        Object data = ((TreeNode) node.getChildren().get(0)).getData();
+        Object data = ((TreeNode<?>) node.getChildren().get(0)).getData();
         return data instanceof ConceptTreeNodeData treeData && treeData.isDummy();
     }
 

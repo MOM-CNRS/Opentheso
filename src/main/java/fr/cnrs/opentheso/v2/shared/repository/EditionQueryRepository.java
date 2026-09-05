@@ -68,7 +68,7 @@ public class EditionQueryRepository {
                 ORDER BY t.created DESC NULLS LAST, LOWER(t.id_thesaurus)
                 """;
         List<Object[]> rows = entityManager.createNativeQuery(sql)
-                .setParameter("userId", userId)
+                .setParameter(NativeQueryParams.USER_ID, userId)
                 .setParameter("superAdmin", superAdmin)
                 .setParameter("lang", lang)
                 .getResultList();
@@ -85,7 +85,7 @@ public class EditionQueryRepository {
                 WHERE c.id_thesaurus = :thesaurusId
                 """;
         Object[] row = (Object[]) entityManager.createNativeQuery(sql)
-                .setParameter("thesaurusId", thesaurusId)
+                .setParameter(NativeQueryParams.THESAURUS_ID, thesaurusId)
                 .getSingleResult();
         return new int[]{
                 row[0] != null ? ((Number) row[0]).intValue() : 0,
@@ -123,7 +123,7 @@ public class EditionQueryRepository {
                 ORDER BY LOWER(ugl.label_group)
                 """;
         List<Object[]> rows = entityManager.createNativeQuery(sql)
-                .setParameter("userId", userId)
+                .setParameter(NativeQueryParams.USER_ID, userId)
                 .getResultList();
         return rows.stream()
                 .map(row -> new ProjectSummaryRow(((Number) row[0]).intValue(), (String) row[1]))
@@ -159,7 +159,7 @@ public class EditionQueryRepository {
                 """;
         @SuppressWarnings("unchecked")
         List<Object[]> rows = entityManager.createNativeQuery(sql)
-                .setParameter("thesaurusId", thesaurusId)
+                .setParameter(NativeQueryParams.THESAURUS_ID, thesaurusId)
                 .setParameter("lang", lang)
                 .getResultList();
         if (rows.isEmpty()) {
@@ -197,7 +197,7 @@ public class EditionQueryRepository {
                 ORDER BY LOWER(COALESCE(cgl.lexicalvalue, cg.idgroup))
                 """;
         List<Object[]> rows = entityManager.createNativeQuery(sql)
-                .setParameter("thesaurusId", thesaurusId)
+                .setParameter(NativeQueryParams.THESAURUS_ID, thesaurusId)
                 .setParameter("lang", lang)
                 .getResultList();
         return rows.stream()
@@ -222,7 +222,7 @@ public class EditionQueryRepository {
                   AND idgroup IN (:groupIds)
                 """)
                 .setParameter("isPrivate", isPrivate)
-                .setParameter("thesaurusId", thesaurusId)
+                .setParameter(NativeQueryParams.THESAURUS_ID, thesaurusId)
                 .setParameter("groupIds", groupIds)
                 .executeUpdate();
     }

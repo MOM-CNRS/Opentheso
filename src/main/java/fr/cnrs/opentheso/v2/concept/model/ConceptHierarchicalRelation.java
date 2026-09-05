@@ -1,11 +1,13 @@
 package fr.cnrs.opentheso.v2.concept.model;
 
+import java.io.Serializable;
+
 public record ConceptHierarchicalRelation(
         String uri,
         String conceptId,
         String label,
         String role
-) implements Comparable<ConceptHierarchicalRelation> {
+) implements Comparable<ConceptHierarchicalRelation>, Serializable {
 
     public String getUri() {
         return uri;

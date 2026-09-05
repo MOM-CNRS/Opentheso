@@ -6,7 +6,6 @@ import fr.cnrs.opentheso.models.skosapi.SKOSXmlDocument;
 import fr.cnrs.opentheso.v2.toolbox.edition.io.rdf.parser.ConceptReader;
 import fr.cnrs.opentheso.v2.toolbox.edition.io.rdf.parser.GenericReader;
 import fr.cnrs.opentheso.v2.toolbox.edition.io.rdf.parser.ThesaurusManager;
-import org.apache.commons.lang3.ObjectUtils;
 import org.eclipse.rdf4j.model.IRI;
 import org.eclipse.rdf4j.model.Literal;
 import org.eclipse.rdf4j.model.Resource;
@@ -52,8 +51,7 @@ public class ReadCommunFlux extends AbstractRDFHandler {
         subject = st.getSubject();
 
         // On teste si on est au niveau du début/fin d'une balise de type "rdf:Description"
-        if ((subjectTmp == null || (subjectTmp != null && !subject.stringValue().equals(subjectTmp.stringValue()))) && RESOURCE_TAG.equalsIgnoreCase(predicate.stringValue())) {
-        //if (RESOURCE_TAG.equalsIgnoreCase(predicate.stringValue())) {
+        if ((subjectTmp == null || !subject.stringValue().equals(subjectTmp.stringValue())) && RESOURCE_TAG.equalsIgnoreCase(predicate.stringValue())) {
             // Ajouter l'objet SKOSResource dans SKOSXmlDocument
             // Ce code est executé à la fin de chaque balise "rdf:Description"
             addNewResources();
@@ -78,6 +76,9 @@ public class ReadCommunFlux extends AbstractRDFHandler {
                         break;
                     case IMAGE_TAG:
                         isImage = true;
+                        break;
+                    default:
+                        break;
                 }
             }
         }
@@ -87,9 +88,7 @@ public class ReadCommunFlux extends AbstractRDFHandler {
         if (value instanceof Literal) {
             // Si la ligne en cours contient une langue spécifique, on récupère la langue dans
             literal = (Literal) value;
-            if (ObjectUtils.isNotEmpty(literal) && literal.getLanguage().isPresent()) {
-                lang = literal.getLanguage().get();
-            }
+            lang = literal.getLanguage().orElse(lang);
 
             if (isConceptScheme) {
                 // Dans le cas d'un conceptScheme

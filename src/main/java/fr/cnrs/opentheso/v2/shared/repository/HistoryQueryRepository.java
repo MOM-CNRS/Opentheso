@@ -23,8 +23,8 @@ public class HistoryQueryRepository {
               AND th.id_thesaurus = :thesaurusId
             ORDER BY th.modified DESC
             """)
-                .setParameter("termId", termId)
-                .setParameter("thesaurusId", thesaurusId)
+                .setParameter(NativeQueryParams.TERM_ID, termId)
+                .setParameter(NativeQueryParams.THESAURUS_ID, thesaurusId)
                 .getResultList();
     }
 
@@ -37,8 +37,8 @@ public class HistoryQueryRepository {
               AND npth.id_thesaurus = :thesaurusId
             ORDER BY npth.modified DESC
             """)
-                .setParameter("termId", termId)
-                .setParameter("thesaurusId", thesaurusId)
+                .setParameter(NativeQueryParams.TERM_ID, termId)
+                .setParameter(NativeQueryParams.THESAURUS_ID, thesaurusId)
                 .getResultList();
     }
 
@@ -51,8 +51,8 @@ public class HistoryQueryRepository {
               AND hr.id_thesaurus = :thesaurusId
             ORDER BY hr.modified DESC
             """)
-                .setParameter("conceptId", conceptId)
-                .setParameter("thesaurusId", thesaurusId)
+                .setParameter(NativeQueryParams.CONCEPT_ID, conceptId)
+                .setParameter(NativeQueryParams.THESAURUS_ID, thesaurusId)
                 .getResultList();
     }
 
@@ -65,9 +65,9 @@ public class HistoryQueryRepository {
               AND nh.id_thesaurus = :thesaurusId
             ORDER BY nh.modified DESC
             """)
-                .setParameter("conceptId", conceptId)
-                .setParameter("termId", termId)
-                .setParameter("thesaurusId", thesaurusId)
+                .setParameter(NativeQueryParams.CONCEPT_ID, conceptId)
+                .setParameter(NativeQueryParams.TERM_ID, termId)
+                .setParameter(NativeQueryParams.THESAURUS_ID, thesaurusId)
                 .getResultList();
     }
 }

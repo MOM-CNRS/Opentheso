@@ -26,6 +26,7 @@ import org.springframework.web.bind.annotation.RestController;
 import org.apache.commons.lang3.StringUtils;
 
 import java.util.List;
+import fr.cnrs.opentheso.v2.shared.api.ApiHeaders;
 
 @RestController
 @RequestMapping("/openapi/v2/admin")
@@ -42,8 +43,8 @@ public class AdminCatalogController {
     @Operation(summary = "Lister ou rechercher les utilisateurs",
             description = "Sans paramètre : liste tous les utilisateurs. Avec mail et/ou username : recherche partielle insensible à la casse sur les deux critères.")
     public List<AdminUserMembershipResponse> listUsers(
-            @RequestHeader(value = "X-API-KEY", required = false) String xApiKey,
-            @RequestHeader(value = "API-KEY", required = false) String legacyApiKey,
+            @RequestHeader(value = ApiHeaders.X_API_KEY, required = false) String xApiKey,
+            @RequestHeader(value = ApiHeaders.API_KEY, required = false) String legacyApiKey,
             @RequestParam(required = false) String mail,
             @RequestParam(required = false) String username
     ) {
@@ -58,8 +59,8 @@ public class AdminCatalogController {
     @GetMapping(value = "/projects", produces = MediaType.APPLICATION_JSON_VALUE)
     @Operation(summary = "Lister tous les projets")
     public List<ProjectSummaryResponse> listProjects(
-            @RequestHeader(value = "X-API-KEY", required = false) String xApiKey,
-            @RequestHeader(value = "API-KEY", required = false) String legacyApiKey
+            @RequestHeader(value = ApiHeaders.X_API_KEY, required = false) String xApiKey,
+            @RequestHeader(value = ApiHeaders.API_KEY, required = false) String legacyApiKey
     ) {
         int callerId = adminAuthSupport.resolveUserId(xApiKey, legacyApiKey);
         var profile = userProfileService.getProfile(callerId);
@@ -69,8 +70,8 @@ public class AdminCatalogController {
     @GetMapping(value = "/thesauri", produces = MediaType.APPLICATION_JSON_VALUE)
     @Operation(summary = "Lister tous les thésaurus")
     public List<AdminThesaurusResponse> listThesauri(
-            @RequestHeader(value = "X-API-KEY", required = false) String xApiKey,
-            @RequestHeader(value = "API-KEY", required = false) String legacyApiKey
+            @RequestHeader(value = ApiHeaders.X_API_KEY, required = false) String xApiKey,
+            @RequestHeader(value = ApiHeaders.API_KEY, required = false) String legacyApiKey
     ) {
         int callerId = adminAuthSupport.resolveUserId(xApiKey, legacyApiKey);
         var profile = userProfileService.getProfile(callerId);
@@ -82,8 +83,8 @@ public class AdminCatalogController {
     @PutMapping(value = "/thesauri/{thesaurusId}/move", consumes = MediaType.APPLICATION_JSON_VALUE)
     @Operation(summary = "Déplacer un thésaurus", description = "Déplace un thésaurus vers un autre projet.")
     public ResponseEntity<Void> moveThesaurus(
-            @RequestHeader(value = "X-API-KEY", required = false) String xApiKey,
-            @RequestHeader(value = "API-KEY", required = false) String legacyApiKey,
+            @RequestHeader(value = ApiHeaders.X_API_KEY, required = false) String xApiKey,
+            @RequestHeader(value = ApiHeaders.API_KEY, required = false) String legacyApiKey,
             @PathVariable String thesaurusId,
             @Valid @RequestBody MoveAdminThesaurusRequest request
     ) {

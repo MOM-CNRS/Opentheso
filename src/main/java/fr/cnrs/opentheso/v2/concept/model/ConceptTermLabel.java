@@ -1,6 +1,7 @@
 package fr.cnrs.opentheso.v2.concept.model;
 
 import org.apache.commons.lang3.StringUtils;
+import java.io.Serializable;
 
 public record ConceptTermLabel(
         int id,
@@ -8,7 +9,7 @@ public record ConceptTermLabel(
         String lang,
         String value,
         String codeFlag
-) implements Comparable<ConceptTermLabel> {
+) implements Comparable<ConceptTermLabel>, Serializable {
 
     public ConceptTermLabel(String lang, String value, String termId, int id) {
         this(id, termId, lang, value, "");

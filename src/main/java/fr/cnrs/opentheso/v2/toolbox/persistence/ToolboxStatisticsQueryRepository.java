@@ -1,5 +1,6 @@
 package fr.cnrs.opentheso.v2.toolbox.persistence;
 
+import fr.cnrs.opentheso.v2.shared.repository.NativeQueryParams;
 import jakarta.persistence.EntityManager;
 import jakarta.persistence.PersistenceContext;
 import org.springframework.stereotype.Repository;
@@ -30,7 +31,7 @@ public class ToolboxStatisticsQueryRepository {
                   AND c.status != 'CA'
                 GROUP BY LOWER(cgc.idgroup)
                 """)
-                .setParameter("thesaurusId", thesaurusId)
+                .setParameter(NativeQueryParams.THESAURUS_ID, thesaurusId)
                 .getResultList());
     }
 
@@ -45,7 +46,7 @@ public class ToolboxStatisticsQueryRepository {
                   AND n.lang = :language
                 GROUP BY LOWER(cgc.idgroup)
                 """)
-                .setParameter("thesaurusId", thesaurusId)
+                .setParameter(NativeQueryParams.THESAURUS_ID, thesaurusId)
                 .setParameter("language", language)
                 .getResultList());
     }
@@ -64,7 +65,7 @@ public class ToolboxStatisticsQueryRepository {
                   AND npt.id_thesaurus = :thesaurusId
                 GROUP BY LOWER(cgc.idgroup)
                 """)
-                .setParameter("thesaurusId", thesaurusId)
+                .setParameter(NativeQueryParams.THESAURUS_ID, thesaurusId)
                 .setParameter("language", language)
                 .getResultList());
     }
@@ -82,7 +83,7 @@ public class ToolboxStatisticsQueryRepository {
                 WHERE cgc.idthesaurus = :thesaurusId
                 GROUP BY LOWER(cgc.idgroup)
                 """)
-                .setParameter("thesaurusId", thesaurusId)
+                .setParameter(NativeQueryParams.THESAURUS_ID, thesaurusId)
                 .getResultList();
         Map<String, int[]> result = new HashMap<>();
         for (Object[] row : rows) {
@@ -105,7 +106,7 @@ public class ToolboxStatisticsQueryRepository {
                       SELECT idconcept FROM concept_group_concept WHERE idthesaurus = :thesaurusId
                   )
                 """)
-                .setParameter("thesaurusId", thesaurusId)
+                .setParameter(NativeQueryParams.THESAURUS_ID, thesaurusId)
                 .getResultList();
         if (rows.isEmpty()) {
             return new int[]{0, 0};

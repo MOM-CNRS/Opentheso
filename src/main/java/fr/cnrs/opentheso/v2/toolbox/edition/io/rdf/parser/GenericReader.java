@@ -65,6 +65,8 @@ public class GenericReader {
             case "thesaurusRole":
                 skosConcept.getThesaurus().setThesaurusRole(literal.getLabel());
                 break;
+            default:
+                break;
 
             /// ajout des créativecommons
             /// ajout des dcterms
@@ -77,7 +79,7 @@ public class GenericReader {
                         skosConcept.getThesaurus().addDcElement(new DcElement(predicate.getLocalName(), literal.getLabel(), null, DCMIResource.TYPE_DATE));                        
                         break;
                     case DCMIResource.TYPE_LANGUE:
-                        dcLang = literal.getLanguage().get(); literal.getDatatype().getLocalName();
+                        dcLang = literal.getLanguage().orElse(null);
                         skosConcept.getThesaurus().addDcElement(new DcElement(predicate.getLocalName(), literal.getLabel(), dcLang, null));
                         break;       
                     case DCMIResource.TYPE_STRING:
@@ -106,6 +108,8 @@ public class GenericReader {
                 break;                
             case "rights":
                 skosResource.getFoafImage().setCopyRight(literal.getLabel());
+                break;
+            default:
                 break;
         }
     }

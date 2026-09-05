@@ -26,6 +26,7 @@ import org.springframework.web.bind.annotation.RequestParam;
 import org.springframework.web.bind.annotation.RestController;
 
 import java.util.List;
+import fr.cnrs.opentheso.v2.shared.api.ApiHeaders;
 
 @RestController("v2ConceptController")
 @RequestMapping("/openapi/v2/thesauri/{thesaurusId}/concepts")
@@ -42,8 +43,8 @@ public class ConceptController {
     @GetMapping(value = "/tree/roots", produces = MediaType.APPLICATION_JSON_VALUE)
     @Operation(summary = "Racines de l'arbre", description = "Groupes ou concepts top sans groupe.")
     public List<ConceptTreeNodeResponse> loadRootNodes(
-            @RequestHeader(value = "X-API-KEY", required = false) String xApiKey,
-            @RequestHeader(value = "API-KEY", required = false) String legacyApiKey,
+            @RequestHeader(value = ApiHeaders.X_API_KEY, required = false) String xApiKey,
+            @RequestHeader(value = ApiHeaders.API_KEY, required = false) String legacyApiKey,
             @PathVariable String thesaurusId,
             @RequestParam(required = false) String lang
     ) {
@@ -58,8 +59,8 @@ public class ConceptController {
     @GetMapping(value = "/tree/{parentId}/children", produces = MediaType.APPLICATION_JSON_VALUE)
     @Operation(summary = "Enfants d'un nœud", description = "Concepts enfants ou top d'un groupe.")
     public List<ConceptTreeNodeResponse> loadChildNodes(
-            @RequestHeader(value = "X-API-KEY", required = false) String xApiKey,
-            @RequestHeader(value = "API-KEY", required = false) String legacyApiKey,
+            @RequestHeader(value = ApiHeaders.X_API_KEY, required = false) String xApiKey,
+            @RequestHeader(value = ApiHeaders.API_KEY, required = false) String legacyApiKey,
             @PathVariable String thesaurusId,
             @PathVariable String parentId,
             @RequestParam String parentType,
@@ -76,8 +77,8 @@ public class ConceptController {
     @GetMapping(value = "/{conceptId}", produces = MediaType.APPLICATION_JSON_VALUE)
     @Operation(summary = "Résumé d'un concept")
     public ConceptSummaryResponse loadSummary(
-            @RequestHeader(value = "X-API-KEY", required = false) String xApiKey,
-            @RequestHeader(value = "API-KEY", required = false) String legacyApiKey,
+            @RequestHeader(value = ApiHeaders.X_API_KEY, required = false) String xApiKey,
+            @RequestHeader(value = ApiHeaders.API_KEY, required = false) String legacyApiKey,
             @PathVariable String thesaurusId,
             @PathVariable String conceptId,
             @RequestParam(required = false) String lang
@@ -93,8 +94,8 @@ public class ConceptController {
     @GetMapping(value = "/{conceptId}/detail", produces = MediaType.APPLICATION_JSON_VALUE)
     @Operation(summary = "Fiche complète d'un concept")
     public ConceptDetailResponse loadDetail(
-            @RequestHeader(value = "X-API-KEY", required = false) String xApiKey,
-            @RequestHeader(value = "API-KEY", required = false) String legacyApiKey,
+            @RequestHeader(value = ApiHeaders.X_API_KEY, required = false) String xApiKey,
+            @RequestHeader(value = ApiHeaders.API_KEY, required = false) String legacyApiKey,
             @PathVariable String thesaurusId,
             @PathVariable String conceptId,
             @RequestParam(required = false) String lang
@@ -110,8 +111,8 @@ public class ConceptController {
     @GetMapping(value = "/{conceptId}/breadcrumb", produces = MediaType.APPLICATION_JSON_VALUE)
     @Operation(summary = "Fil d'Ariane d'un concept")
     public List<ConceptBreadcrumbResponse> loadBreadcrumb(
-            @RequestHeader(value = "X-API-KEY", required = false) String xApiKey,
-            @RequestHeader(value = "API-KEY", required = false) String legacyApiKey,
+            @RequestHeader(value = ApiHeaders.X_API_KEY, required = false) String xApiKey,
+            @RequestHeader(value = ApiHeaders.API_KEY, required = false) String legacyApiKey,
             @PathVariable String thesaurusId,
             @PathVariable String conceptId,
             @RequestParam(required = false) String lang
@@ -127,8 +128,8 @@ public class ConceptController {
     @GetMapping(value = "/search", produces = MediaType.APPLICATION_JSON_VALUE)
     @Operation(summary = "Recherche par libellé")
     public ConceptSearchResponse search(
-            @RequestHeader(value = "X-API-KEY", required = false) String xApiKey,
-            @RequestHeader(value = "API-KEY", required = false) String legacyApiKey,
+            @RequestHeader(value = ApiHeaders.X_API_KEY, required = false) String xApiKey,
+            @RequestHeader(value = ApiHeaders.API_KEY, required = false) String legacyApiKey,
             @PathVariable String thesaurusId,
             @RequestParam String q,
             @RequestParam(defaultValue = "25") int limit,
@@ -146,8 +147,8 @@ public class ConceptController {
     @GetMapping(value = "/index-search", produces = MediaType.APPLICATION_JSON_VALUE)
     @Operation(summary = "Recherche index alphabétique")
     public ConceptIndexSearchResponse searchIndex(
-            @RequestHeader(value = "X-API-KEY", required = false) String xApiKey,
-            @RequestHeader(value = "API-KEY", required = false) String legacyApiKey,
+            @RequestHeader(value = ApiHeaders.X_API_KEY, required = false) String xApiKey,
+            @RequestHeader(value = ApiHeaders.API_KEY, required = false) String legacyApiKey,
             @PathVariable String thesaurusId,
             @RequestParam String q,
             @RequestParam(defaultValue = "100") int limit,
@@ -167,8 +168,8 @@ public class ConceptController {
     @GetMapping(value = "/{conceptId}/export")
     @Operation(summary = "Export SKOS d'un concept", description = "Formats : skos (défaut), jsonld, turtle, json")
     public ResponseEntity<byte[]> exportConcept(
-            @RequestHeader(value = "X-API-KEY", required = false) String xApiKey,
-            @RequestHeader(value = "API-KEY", required = false) String legacyApiKey,
+            @RequestHeader(value = ApiHeaders.X_API_KEY, required = false) String xApiKey,
+            @RequestHeader(value = ApiHeaders.API_KEY, required = false) String legacyApiKey,
             @PathVariable String thesaurusId,
             @PathVariable String conceptId,
             @RequestParam(defaultValue = "skos") String format

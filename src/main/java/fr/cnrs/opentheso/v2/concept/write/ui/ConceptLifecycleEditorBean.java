@@ -23,6 +23,7 @@ import fr.cnrs.opentheso.v2.concept.write.service.ConceptWriteMetadataService;
 import fr.cnrs.opentheso.v2.concept.write.service.ConceptWriteSearchService;
 import fr.cnrs.opentheso.v2.setting.ui.ThesaurusContext;
 import fr.cnrs.opentheso.v2.shared.ui.UserSession;
+import fr.cnrs.opentheso.v2.shared.ui.V2LocaleBean;
 import jakarta.faces.view.ViewScoped;
 import jakarta.inject.Named;
 import lombok.Getter;
@@ -43,15 +44,19 @@ import java.util.List;
 @RequiredArgsConstructor
 public class ConceptLifecycleEditorBean implements Serializable {
 
-    private final ConceptLifecycleMutationService conceptLifecycleMutationService;
-    private final ConceptSelectionContext conceptSelectionContext;
-    private final ConceptNavigationSupport conceptNavigationSupport;
-    private final ThesaurusContext thesaurusContext;
-    private final UserSession userSession;
-    private final ConceptWritePolicy conceptWritePolicy;
-    private final ConceptWriteSearchService conceptWriteSearchService;
-    private final ConceptWriteMetadataService conceptWriteMetadataService;
-    private final BranchConceptSupport branchConceptSupport;
+    private final transient ConceptLifecycleMutationService conceptLifecycleMutationService;
+    private final transient ConceptSelectionContext conceptSelectionContext;
+    private final transient ConceptNavigationSupport conceptNavigationSupport;
+    private final transient ThesaurusContext thesaurusContext;
+    private final transient UserSession userSession;
+    private final transient ConceptWritePolicy conceptWritePolicy;
+    private final transient ConceptWriteSearchService conceptWriteSearchService;
+    private final transient ConceptWriteMetadataService conceptWriteMetadataService;
+    private final transient BranchConceptSupport branchConceptSupport;
+    private final transient V2LocaleBean v2LocaleBean;
+
+    private final DialogRunState createRun = new DialogRunState();
+    private final DialogRunState deleteRun = new DialogRunState();
 
     private String preferredLabel;
     private String currentPreferredLabel;
@@ -61,9 +66,6 @@ public class ConceptLifecycleEditorBean implements Serializable {
     private String selectedGroupId;
     private String selectedNarrowerRelationType = "NT";
     private boolean duplicateLabelWarning;
-    private String createErrorMessage;
-    private String createFlashMessage;
-    private String createFlashToken;
     private int createdCount;
     private String lastCreatedId = "";
     private String lastCreatedLabel = "";
@@ -73,10 +75,6 @@ public class ConceptLifecycleEditorBean implements Serializable {
     private String deleteConceptId = "";
     private int deleteBranchCount = 1;
     private int deletedCount;
-    private String deleteRunState = "";
-    private String deleteErrorMessage;
-    private String deleteFlashMessage;
-    private String deleteFlashToken;
     private String fallbackConceptId;
     private boolean addReplacedByRelations;
     private ConceptSearchSuggestion replacedBySearchSelected;
@@ -126,9 +124,37 @@ public class ConceptLifecycleEditorBean implements Serializable {
         refreshCurrentPreferredLabel();
     }
 
+    public String getCreateErrorMessage() {
+        return createRun.getErrorMessage();
+    }
+
+    public String getCreateFlashMessage() {
+        return createRun.getFlashMessage();
+    }
+
+    public String getCreateFlashToken() {
+        return createRun.getFlashToken();
+    }
+
+    public String getDeleteRunState() {
+        return deleteRun.getState();
+    }
+
+    public String getDeleteErrorMessage() {
+        return deleteRun.getErrorMessage();
+    }
+
+    public String getDeleteFlashMessage() {
+        return deleteRun.getFlashMessage();
+    }
+
+    public String getDeleteFlashToken() {
+        return deleteRun.getFlashToken();
+    }
+
     public void submitDeprecate() {
         if (!isStatusActionsAvailable() || !conceptSelectionContext.hasSelection()) {
-            MessageUtils.showErrorMessage("Action non autorisée");
+            legacyError(unauthorized());
             return;
         }
         Integer userId = userSession.getCurrentUserId();
@@ -138,16 +164,16 @@ public class ConceptLifecycleEditorBean implements Serializable {
         var summary = conceptSelectionContext.getSummary();
         var command = new DeprecateConceptCommand(
                 thesaurusContext.resolveThesaurusId(), summary.conceptId(), userId, contributorName());
-        handleMutationResult(
+        handleLegacyMutationResult(
                 conceptLifecycleMutationService.deprecateConcept(command),
                 summary.conceptId(),
                 MutationRefreshMode.STRUCTURAL);
-        PrimeFaces.current().executeScript("PF('v2DeprecateConceptDlg').hide();");
+        legacyHide("v2DeprecateConceptDlg");
     }
 
     public void submitApprove() {
         if (!isStatusActionsAvailable() || !conceptSelectionContext.hasSelection()) {
-            MessageUtils.showErrorMessage("Action non autorisée");
+            legacyError(unauthorized());
             return;
         }
         Integer userId = userSession.getCurrentUserId();
@@ -162,24 +188,24 @@ public class ConceptLifecycleEditorBean implements Serializable {
                 userId,
                 contributorName(),
                 addReplacedByRelations);
-        handleMutationResult(conceptLifecycleMutationService.approveConcept(command), summary.conceptId(),
+        handleLegacyMutationResult(conceptLifecycleMutationService.approveConcept(command), summary.conceptId(),
                 MutationRefreshMode.STRUCTURAL);
-        PrimeFaces.current().executeScript("PF('v2ApproveConceptDlg').hide();");
+        legacyHide("v2ApproveConceptDlg");
     }
 
     public void submitAddReplacedBy() {
         if (!isStatusActionsAvailable() || !conceptSelectionContext.hasSelection()) {
-            MessageUtils.showErrorMessage("Action non autorisée");
+            legacyError(unauthorized());
             return;
         }
         Integer userId = userSession.getCurrentUserId();
         if (userId == null || replacedBySearchSelected == null
                 || StringUtils.isBlank(replacedBySearchSelected.conceptId())) {
-            MessageUtils.showErrorMessage("Pas de concept sélectionné !");
+            legacyError(msg("v2.write.noSelection", "Pas de concept sélectionné !"));
             return;
         }
         var summary = conceptSelectionContext.getSummary();
-        handleMutationResult(
+        handleLegacyMutationResult(
                 conceptLifecycleMutationService.addReplacedBy(new AddReplacedByCommand(
                         thesaurusContext.resolveThesaurusId(),
                         summary.conceptId(),
@@ -188,12 +214,12 @@ public class ConceptLifecycleEditorBean implements Serializable {
                         contributorName())),
                 summary.conceptId(),
                 MutationRefreshMode.PANEL_ONLY);
-        PrimeFaces.current().executeScript("PF('v2AddReplacedByDlg').hide();");
+        legacyHide("v2AddReplacedByDlg");
     }
 
     public void submitDeleteReplacedBy(String targetConceptId) {
         if (!isStatusActionsAvailable() || !conceptSelectionContext.hasSelection()) {
-            MessageUtils.showErrorMessage("Action non autorisée");
+            legacyError(unauthorized());
             return;
         }
         Integer userId = userSession.getCurrentUserId();
@@ -201,7 +227,7 @@ public class ConceptLifecycleEditorBean implements Serializable {
             return;
         }
         var summary = conceptSelectionContext.getSummary();
-        handleMutationResult(
+        handleLegacyMutationResult(
                 conceptLifecycleMutationService.deleteReplacedBy(new DeleteReplacedByCommand(
                         thesaurusContext.resolveThesaurusId(),
                         summary.conceptId(),
@@ -271,9 +297,7 @@ public class ConceptLifecycleEditorBean implements Serializable {
         lastCreatedId = "";
         lastCreatedLabel = "";
         createdLabels = new ArrayList<>();
-        createErrorMessage = null;
-        createFlashMessage = null;
-        createFlashToken = null;
+        createRun.reset();
         refreshCurrentPreferredLabel();
         loadCreationFormMetadata();
     }
@@ -316,7 +340,7 @@ public class ConceptLifecycleEditorBean implements Serializable {
     public boolean isDeleteReady() {
         return isWriteActionsAvailable()
                 && conceptSelectionContext.hasSelection()
-                && !"done".equals(deleteRunState);
+                && !deleteRun.isDone();
     }
 
     public boolean isBranchDelete() {
@@ -329,10 +353,7 @@ public class ConceptLifecycleEditorBean implements Serializable {
         deleteConceptId = "";
         deleteBranchCount = 1;
         deletedCount = 0;
-        deleteRunState = "";
-        deleteErrorMessage = null;
-        deleteFlashMessage = null;
-        deleteFlashToken = null;
+        deleteRun.reset();
         fallbackConceptId = resolveFallbackConceptAfterDelete();
         refreshCurrentPreferredLabel();
         if (!conceptSelectionContext.hasSelection()) {
@@ -350,17 +371,15 @@ public class ConceptLifecycleEditorBean implements Serializable {
     }
 
     public boolean submitDelete() {
-        deleteErrorMessage = null;
+        deleteRun.setErrorMessage(null);
         if (!isWriteActionsAvailable() || !conceptSelectionContext.hasSelection()) {
-            deleteRunState = "error";
-            deleteErrorMessage = "Action non autorisée";
+            deleteRun.fail(unauthorized());
             return false;
         }
         String thesaurusId = thesaurusContext.resolveThesaurusId();
         String conceptId = StringUtils.defaultIfBlank(deleteConceptId, conceptSelectionContext.getConceptId());
         if (StringUtils.isAnyBlank(thesaurusId, conceptId)) {
-            deleteRunState = "error";
-            deleteErrorMessage = "Erreur manque de paramètres";
+            deleteRun.fail(msg("v2.write.missingParams", "Erreur manque de paramètres"));
             return false;
         }
         boolean hasNarrowers = hasNarrowersForDelete || deleteBranchCount > 1;
@@ -372,43 +391,32 @@ public class ConceptLifecycleEditorBean implements Serializable {
         );
         MutationResult result = conceptLifecycleMutationService.deleteConcept(command);
         if (result == null || !result.success()) {
-            deleteRunState = "error";
-            deleteErrorMessage = result != null
-                    ? StringUtils.defaultIfBlank(result.message(), "La suppression a échoué")
-                    : "La suppression a échoué";
+            deleteRun.fail(result != null
+                    ? StringUtils.defaultIfBlank(result.message(), msg("v2.concept.deleteFailed", "La suppression a échoué"))
+                    : msg("v2.concept.deleteFailed", "La suppression a échoué"));
             return false;
         }
         deletedCount = Math.max(deleteBranchCount, 1);
-        deleteRunState = "done";
-        flashDeleteSuccess(deletedCount == 1
-                ? "1 concept supprimé"
-                : deletedCount + " concepts supprimés");
+        deleteRun.succeed(deletedCount == 1
+                ? msg("v2.concept.deleteOne", "1 concept supprimé")
+                : msg("v2.concept.deleteMany", "{0} concepts supprimés", deletedCount));
         return true;
     }
 
     public void finishDeleteAfterClose() {
         String fallback = fallbackConceptId;
-        deleteFlashMessage = null;
-        deleteFlashToken = null;
-        deleteRunState = "";
+        deleteRun.reset();
         conceptNavigationSupport.invalidateConceptTree();
         conceptNavigationSupport.afterConceptDeleted(fallback);
     }
 
-    private void flashDeleteSuccess(String message) {
-        deleteFlashMessage = message;
-        deleteFlashToken = String.valueOf(System.currentTimeMillis());
-    }
-
     public void cancelDuplicate() {
         duplicateLabelWarning = false;
-        createErrorMessage = null;
+        createRun.setErrorMessage(null);
     }
 
     public void finishCreateAfterClose() {
-        createFlashMessage = null;
-        createFlashToken = null;
-        createErrorMessage = null;
+        createRun.reset();
         duplicateLabelWarning = false;
         createdCount = 0;
         lastCreatedId = "";
@@ -418,12 +426,12 @@ public class ConceptLifecycleEditorBean implements Serializable {
 
     private void submitRenameInternal(boolean forced) {
         if (!isRenameAvailable() || !conceptSelectionContext.hasSelection()) {
-            MessageUtils.showErrorMessage("Action non autorisée");
+            legacyError(unauthorized());
             return;
         }
         Integer userId = userSession.getCurrentUserId();
         if (userId == null) {
-            MessageUtils.showErrorMessage("Action non autorisée");
+            legacyError(unauthorized());
             return;
         }
         var summary = conceptSelectionContext.getSummary();
@@ -442,30 +450,30 @@ public class ConceptLifecycleEditorBean implements Serializable {
         if (result.outcome() == MutationOutcome.DUPLICATE_LABEL) {
             duplicateLabelWarning = true;
             MessageUtils.showWarnMessage(result.message());
-            PrimeFaces.current().ajax().update(":v2RenameConceptForm", ":messageIndex");
+            legacyUpdate(":v2RenameConceptForm", ":messageIndex");
             return;
         }
         duplicateLabelWarning = false;
         String renamed = StringUtils.trimToEmpty(command.label());
-        if (handleMutationResult(result, summary.conceptId(), MutationRefreshMode.RENAME, renamed)) {
-            PrimeFaces.current().executeScript("PF('v2RenameConceptDlg').hide();");
+        if (handleLegacyMutationResult(result, summary.conceptId(), MutationRefreshMode.RENAME, renamed)) {
+            legacyHide("v2RenameConceptDlg");
         }
     }
 
     private void submitAddChildInternal(boolean forced) {
-        createErrorMessage = null;
-        createFlashMessage = null;
+        createRun.setErrorMessage(null);
+        createRun.clearFlash();
         if (!isActiveConceptWriteAvailable() || !conceptSelectionContext.hasSelection()) {
-            createErrorMessage = "Action non autorisée";
+            createRun.setErrorMessage(unauthorized());
             return;
         }
         Integer userId = userSession.getCurrentUserId();
         if (userId == null) {
-            createErrorMessage = "Action non autorisée";
+            createRun.setErrorMessage(unauthorized());
             return;
         }
         if (StringUtils.isBlank(preferredLabel)) {
-            createErrorMessage = "Le libellé est obligatoire";
+            createRun.setErrorMessage(msg("v2.concept.addLabelRequired", "Le libellé est obligatoire"));
             return;
         }
         var summary = conceptSelectionContext.getSummary();
@@ -485,17 +493,19 @@ public class ConceptLifecycleEditorBean implements Serializable {
         );
         MutationResult result = conceptLifecycleMutationService.addChildConcept(command);
         if (result == null) {
-            createErrorMessage = "La création a échoué";
+            createRun.setErrorMessage(msg("v2.concept.addFailed", "La création a échoué"));
             return;
         }
         if (result.outcome() == MutationOutcome.DUPLICATE_LABEL) {
             duplicateLabelWarning = true;
-            createErrorMessage = StringUtils.defaultIfBlank(result.message(), "Un libellé identique existe déjà");
+            createRun.setErrorMessage(StringUtils.defaultIfBlank(result.message(),
+                    msg("v2.concept.addDup", "Un libellé identique existe déjà")));
             return;
         }
         if (!result.success()) {
             duplicateLabelWarning = false;
-            createErrorMessage = StringUtils.defaultIfBlank(result.message(), "La création a échoué");
+            createRun.setErrorMessage(StringUtils.defaultIfBlank(result.message(),
+                    msg("v2.concept.addFailed", "La création a échoué")));
             return;
         }
         duplicateLabelWarning = false;
@@ -503,8 +513,7 @@ public class ConceptLifecycleEditorBean implements Serializable {
         lastCreatedLabel = preferredLabel.trim();
         createdCount++;
         createdLabels.add(lastCreatedLabel);
-        createFlashMessage = "Concept « " + lastCreatedLabel + " » créé";
-        createFlashToken = String.valueOf(System.currentTimeMillis());
+        createRun.flash(msg("v2.concept.addCreated", "Concept « {0} » créé", lastCreatedLabel));
         preferredLabel = "";
         notation = "";
         customConceptId = "";
@@ -512,12 +521,12 @@ public class ConceptLifecycleEditorBean implements Serializable {
 
     private void submitAddTopConceptInternal(boolean forced) {
         if (!isWriteActionsAvailable()) {
-            MessageUtils.showErrorMessage("Action non autorisée");
+            legacyError(unauthorized());
             return;
         }
         Integer userId = userSession.getCurrentUserId();
         if (userId == null) {
-            MessageUtils.showErrorMessage("Action non autorisée");
+            legacyError(unauthorized());
             return;
         }
         var command = new AddTopConceptCommand(
@@ -539,8 +548,8 @@ public class ConceptLifecycleEditorBean implements Serializable {
             return;
         }
         duplicateLabelWarning = false;
-        if (handleMutationResult(result, result.createdConceptId(), MutationRefreshMode.STRUCTURAL)) {
-            PrimeFaces.current().executeScript("PF('v2AddTopConceptDlg').hide();");
+        if (handleLegacyMutationResult(result, result.createdConceptId(), MutationRefreshMode.STRUCTURAL)) {
+            legacyHide("v2AddTopConceptDlg");
         }
     }
 
@@ -551,11 +560,11 @@ public class ConceptLifecycleEditorBean implements Serializable {
         PANEL_ONLY
     }
 
-    private boolean handleMutationResult(MutationResult result, String conceptIdToOpen, MutationRefreshMode mode) {
-        return handleMutationResult(result, conceptIdToOpen, mode, null);
+    private boolean handleLegacyMutationResult(MutationResult result, String conceptIdToOpen, MutationRefreshMode mode) {
+        return handleLegacyMutationResult(result, conceptIdToOpen, mode, null);
     }
 
-    private boolean handleMutationResult(
+    private boolean handleLegacyMutationResult(
             MutationResult result,
             String conceptIdToOpen,
             MutationRefreshMode mode,
@@ -582,8 +591,7 @@ public class ConceptLifecycleEditorBean implements Serializable {
                     }
                     case PANEL_ONLY -> conceptNavigationSupport.openConcept(conceptIdToOpen);
                 }
-                // formLeftTab pour rafraîchir le libellé dans l'arbre (comme legacy EditConcept#updateLabel)
-                PrimeFaces.current().ajax().update(
+                legacyUpdate(
                         ":containerIndex:formRightTab",
                         ":containerIndex:formLeftTab",
                         ":messageIndex");
@@ -591,7 +599,7 @@ public class ConceptLifecycleEditorBean implements Serializable {
                 return true;
             }
             case VALIDATION_ERROR, FAILURE, FORBIDDEN -> {
-                MessageUtils.showErrorMessage(result.message());
+                legacyError(result.message());
                 return false;
             }
             default -> {
@@ -629,5 +637,31 @@ public class ConceptLifecycleEditorBean implements Serializable {
 
     private String contributorName() {
         return StringUtils.defaultString(userSession.getCurrentUsername());
+    }
+
+
+    private String unauthorized() {
+        return WriteUiMessages.unauthorized(v2LocaleBean);
+    }
+
+    private String msg(String key, String fallback) {
+        return WriteUiMessages.msg(v2LocaleBean, key, fallback);
+    }
+
+    private String msg(String key, String fallback, Object... args) {
+        return WriteUiMessages.msg(v2LocaleBean, key, fallback, args);
+    }
+
+    /** Dialogues PrimeFaces V1 uniquement — jamais sur le chemin V2 (création / suppression). */
+    private void legacyHide(String widgetVar) {
+        PrimeFaces.current().executeScript("PF('" + widgetVar + "').hide();");
+    }
+
+    private void legacyUpdate(String... clientIds) {
+        PrimeFaces.current().ajax().update(clientIds);
+    }
+
+    private void legacyError(String message) {
+        MessageUtils.showErrorMessage(message);
     }
 }

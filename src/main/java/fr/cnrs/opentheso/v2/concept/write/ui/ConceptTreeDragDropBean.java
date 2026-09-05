@@ -33,6 +33,7 @@ import java.io.Serializable;
 import java.util.ArrayList;
 import java.util.Collections;
 import java.util.List;
+import fr.cnrs.opentheso.v2.concept.model.ConceptTreeNodeKinds;
 
 /**
  * Drag-and-drop + cut/paste de l'arbre concept V2 — équivalent de {@code dragAndDrop} legacy (même thésaurus).
@@ -44,19 +45,22 @@ import java.util.List;
 @RequiredArgsConstructor
 public class ConceptTreeDragDropBean implements Serializable {
 
-    private final ConceptRelationMutationService conceptRelationMutationService;
-    private final ConceptCollectionMutationService conceptCollectionMutationService;
-    private final ConceptRelationWriteRepository conceptRelationWriteRepository;
-    private final ConceptLexicalWriteRepository conceptLexicalWriteRepository;
-    private final ConceptLifecycleWriteRepository conceptLifecycleWriteRepository;
-    private final ConceptReadService conceptReadService;
-    private final FacetMutationService facetMutationService;
-    private final ConceptWritePolicy conceptWritePolicy;
-    private final ThesaurusContext thesaurusContext;
-    private final UserSession userSession;
-    private final V2LocaleBean localeBean;
-    private final ThesaurusBrowseBean thesaurusBrowseBean;
-    private final ConceptSelectionContext conceptSelectionContext;
+    private static final String ACTION_NOT_ALLOWED = "Action non permise !!!";
+    private static final String ERROR_TITLE = "Erreur";
+
+    private final transient ConceptRelationMutationService conceptRelationMutationService;
+    private final transient ConceptCollectionMutationService conceptCollectionMutationService;
+    private final transient ConceptRelationWriteRepository conceptRelationWriteRepository;
+    private final transient ConceptLexicalWriteRepository conceptLexicalWriteRepository;
+    private final transient ConceptLifecycleWriteRepository conceptLifecycleWriteRepository;
+    private final transient ConceptReadService conceptReadService;
+    private final transient FacetMutationService facetMutationService;
+    private final transient ConceptWritePolicy conceptWritePolicy;
+    private final transient ThesaurusContext thesaurusContext;
+    private final transient UserSession userSession;
+    private final transient V2LocaleBean localeBean;
+    private final transient ThesaurusBrowseBean thesaurusBrowseBean;
+    private final transient ConceptSelectionContext conceptSelectionContext;
 
     private String dragConceptId;
     private String dragLabel;
@@ -153,7 +157,7 @@ public class ConceptTreeDragDropBean implements Serializable {
 
     public void onStartCut() {
         if (!isCutActionsAvailable() || !conceptSelectionContext.hasSelection()) {
-            MessageUtils.showErrorMessage("Action non autorisée");
+            MessageUtils.showErrorMessage(WriteUiMessages.UNAUTHORIZED_FALLBACK);
             return;
         }
         String thesaurusId = thesaurusContext.resolveThesaurusId();
@@ -167,7 +171,7 @@ public class ConceptTreeDragDropBean implements Serializable {
 
     public void pasteUnderCurrentConcept() {
         if (!isPasteUnderAvailable()) {
-            MessageUtils.showWarnMessage("Action non permise !!!");
+            MessageUtils.showWarnMessage(ACTION_NOT_ALLOWED);
             return;
         }
         preparePasteFromClipboard(
@@ -179,7 +183,7 @@ public class ConceptTreeDragDropBean implements Serializable {
 
     public void pasteAtRoot() {
         if (!isPasteAtRootAvailable()) {
-            MessageUtils.showWarnMessage("Action non permise !!!");
+            MessageUtils.showWarnMessage(ACTION_NOT_ALLOWED);
             return;
         }
         preparePasteFromClipboard(null, "Root", true);
@@ -196,7 +200,7 @@ public class ConceptTreeDragDropBean implements Serializable {
     private void preparePasteFromClipboard(String targetConceptId, String targetLabel, boolean toRoot) {
         Integer userId = userSession.getCurrentUserId();
         if (userId == null || StringUtils.isBlank(cutConceptId)) {
-            MessageUtils.showErrorMessage("Action non autorisée");
+            MessageUtils.showErrorMessage(WriteUiMessages.UNAUTHORIZED_FALLBACK);
             return;
         }
         lastMovedId = null;
@@ -244,7 +248,7 @@ public class ConceptTreeDragDropBean implements Serializable {
     ) {
         resetDialogState();
         if (!isDragDropEnabled()) {
-            MessageUtils.showErrorMessage("Action non autorisée");
+            MessageUtils.showErrorMessage(WriteUiMessages.UNAUTHORIZED_FALLBACK);
             return;
         }
         dragId = StringUtils.trimToNull(dragId);
@@ -262,7 +266,7 @@ public class ConceptTreeDragDropBean implements Serializable {
 
         Integer userId = userSession.getCurrentUserId();
         if (userId == null) {
-            MessageUtils.showErrorMessage("Action non autorisée");
+            MessageUtils.showErrorMessage(WriteUiMessages.UNAUTHORIZED_FALLBACK);
             return;
         }
 
@@ -280,7 +284,22 @@ public class ConceptTreeDragDropBean implements Serializable {
         }
 
         pendingFacetDetachId = facetParentId;
+        if (!prepareConceptDrop(dragId, dropId, dropType, toRoot, thesaurusId, lang)) {
+            return;
+        }
+        if (broadersToCut.size() < 2 && !groupChangePending) {
+            applyReparent(broadersToCut.stream().map(BroaderCutRow::getConceptId).toList(), userId, false);
+        }
+    }
 
+    private boolean prepareConceptDrop(
+            String dragId,
+            String dropId,
+            String dropType,
+            boolean toRoot,
+            String thesaurusId,
+            String lang
+    ) {
         dragConceptId = dragId;
         dragLabel = resolveLabel(dragConceptId, null, lang, thesaurusId);
         broadersToCut = loadBroaderRows(dragConceptId, thesaurusId, lang);
@@ -289,28 +308,24 @@ public class ConceptTreeDragDropBean implements Serializable {
         if (dropToRoot) {
             dropConceptId = null;
             dropLabel = "Root";
+        } else if (isGroupType(dropType) || isFacetType(dropType)) {
+            MessageUtils.showErrorMessage("Relation non permise !");
+            resetDialogState();
+            return false;
         } else {
-            if (isGroupType(dropType) || isFacetType(dropType)) {
-                MessageUtils.showErrorMessage("Relation non permise !");
-                resetDialogState();
-                return;
-            }
             dropConceptId = dropId;
             dropLabel = resolveLabel(dropConceptId, null, lang, thesaurusId);
         }
 
         loadGroupRows(thesaurusId, lang);
         groupChangePending = isDroppedToAnotherGroup();
-
-        if (broadersToCut.size() < 2 && !groupChangePending) {
-            applyReparent(broadersToCut.stream().map(BroaderCutRow::getConceptId).toList(), userId, false);
-        }
+        return true;
     }
 
     public void submitDrop() {
         Integer userId = userSession.getCurrentUserId();
         if (userId == null || StringUtils.isBlank(dragConceptId)) {
-            MessageUtils.showErrorMessage("Action non autorisée");
+            MessageUtils.showErrorMessage(WriteUiMessages.UNAUTHORIZED_FALLBACK);
             return;
         }
         List<String> toDetach = broadersToCut.stream()
@@ -334,7 +349,7 @@ public class ConceptTreeDragDropBean implements Serializable {
                 StringUtils.defaultString(userSession.getCurrentUsername())
         ));
         if (result == null || !result.success()) {
-            MessageUtils.showErrorMessage(result != null ? result.message() : "Erreur");
+            MessageUtils.showErrorMessage(result != null ? result.message() : ERROR_TITLE);
             resetDialogState();
             return;
         }
@@ -442,11 +457,11 @@ public class ConceptTreeDragDropBean implements Serializable {
         MutationResult result = facetMutationService.updateParent(new UpdateFacetParentCommand(
                 thesaurusId, facetId, dropId));
         if (result == null || !result.success()) {
-            MessageUtils.showErrorMessage(result != null ? result.message() : "Erreur");
+            MessageUtils.showErrorMessage(result != null ? result.message() : ERROR_TITLE);
             return;
         }
         lastMovedId = facetId;
-        lastMovedType = "facet";
+        lastMovedType = ConceptTreeNodeKinds.FACET;
         thesaurusBrowseBean.invalidateConceptTree();
         thesaurusBrowseBean.openFacet(facetId);
         flashSuccess(localeMsg("v2.tree.dnd.facetMoved"));
@@ -456,17 +471,17 @@ public class ConceptTreeDragDropBean implements Serializable {
         List<String> children = conceptRelationWriteRepository.listNarrowerChildConceptIds(
                 conceptId, thesaurusId);
         if (!children.isEmpty()) {
-            MessageUtils.showWarnMessage("Action non permise !!!");
+            MessageUtils.showWarnMessage(ACTION_NOT_ALLOWED);
             return;
         }
         MutationResult result = facetMutationService.addMember(new AddFacetMemberCommand(
                 thesaurusId, facetId, conceptId, false));
         if (result == null || !result.success()) {
-            MessageUtils.showErrorMessage(result != null ? result.message() : "Erreur");
+            MessageUtils.showErrorMessage(result != null ? result.message() : ERROR_TITLE);
             return;
         }
         lastMovedId = facetId;
-        lastMovedType = "facet";
+        lastMovedType = ConceptTreeNodeKinds.FACET;
         thesaurusBrowseBean.invalidateConceptTree();
         thesaurusBrowseBean.openFacet(facetId);
         flashSuccess(localeMsg("v2.tree.dnd.addedToFacet"));
@@ -481,7 +496,7 @@ public class ConceptTreeDragDropBean implements Serializable {
     }
 
     private static boolean isFacetType(String nodeType) {
-        return "facet".equalsIgnoreCase(nodeType);
+        return ConceptTreeNodeKinds.FACET.equalsIgnoreCase(nodeType);
     }
 
     private static boolean isRootType(String nodeType) {

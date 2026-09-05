@@ -48,5 +48,6 @@ public class UserEntity {
     private LocalDate keyExpiresAt;
 
     public UserEntity() {
+        // Constructeur sans argument requis par JPA.
     }
 }

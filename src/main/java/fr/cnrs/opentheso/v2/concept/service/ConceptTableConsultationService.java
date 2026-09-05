@@ -16,6 +16,7 @@ import java.util.HashSet;
 import java.util.List;
 import java.util.Map;
 import java.util.Set;
+import fr.cnrs.opentheso.v2.concept.model.ConceptTreeNodeKinds;
 
 @Service
 public class ConceptTableConsultationService {
@@ -90,13 +91,13 @@ public class ConceptTableConsultationService {
             return "rejete";
         }
         if (candidatStatus == CandidatStatusCode.ACCEPTED) {
-            return ConceptStatusPolicy.isDeprecated(dbStatus) ? "deprecie" : "insere";
+            return ConceptStatusPolicy.isDeprecated(dbStatus) ? ConceptTreeNodeKinds.DEPRECIE : "insere";
         }
         if ("CA".equalsIgnoreCase(StringUtils.trimToEmpty(dbStatus))) {
             return "candidat";
         }
         if (ConceptStatusPolicy.isDeprecated(dbStatus)) {
-            return "deprecie";
+            return ConceptTreeNodeKinds.DEPRECIE;
         }
         return "valide";
     }
@@ -106,7 +107,7 @@ public class ConceptTableConsultationService {
             case "candidat" -> "Candidat";
             case "insere" -> "Inséré";
             case "rejete" -> "Rejeté";
-            case "deprecie" -> "Déprécié";
+            case ConceptTreeNodeKinds.DEPRECIE -> "Déprécié";
             default -> "Normal";
         };
     }

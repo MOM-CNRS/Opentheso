@@ -1,13 +1,14 @@
 package fr.cnrs.opentheso.v2.concept.model;
 
 import java.util.List;
+import java.io.Serializable;
 
 public record ConceptHistoryOverview(
         List<ConceptHistoryEntry> labels,
         List<ConceptHistoryEntry> synonyms,
         List<ConceptHistoryEntry> relations,
         List<ConceptHistoryEntry> notes
-) {
+) implements Serializable {
 
     public List<ConceptHistoryEntry> getLabels() {
         return labels;

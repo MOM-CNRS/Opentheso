@@ -13,7 +13,7 @@ public record ActionsLotNoteValidationResult(
         int ignoredCount,
         List<ActionsLotLineError> errors,
         List<ActionsLotNoteCandidate> validCandidates
-) implements Serializable {
+) implements Serializable, ActionsLotCheckOutcome {
 
     public static ActionsLotNoteValidationResult failure(String message) {
         return new ActionsLotNoteValidationResult(

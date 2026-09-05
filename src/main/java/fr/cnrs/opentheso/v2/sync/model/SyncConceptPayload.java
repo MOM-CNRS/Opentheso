@@ -1,6 +1,7 @@
 package fr.cnrs.opentheso.v2.sync.model;
 
 import java.util.ArrayList;
+import java.io.Serializable;
 import java.util.LinkedHashMap;
 import java.util.List;
 import java.util.Map;
@@ -17,7 +18,7 @@ public record SyncConceptPayload(
         Map<String, List<String>> notes,
         Map<String, List<String>> definitions,
         Map<String, List<String>> scopeNotes
-) {
+) implements Serializable {
     public SyncConceptPayload {
         prefLabels = prefLabels == null ? Map.of() : Map.copyOf(prefLabels);
         altLabels = copyListMap(altLabels);

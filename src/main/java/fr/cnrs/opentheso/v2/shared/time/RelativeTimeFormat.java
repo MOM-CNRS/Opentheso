@@ -8,6 +8,8 @@ import java.util.Locale;
 
 public final class RelativeTimeFormat {
 
+    private static final String AGO_PREFIX = "il y a ";
+
     private static final DateTimeFormatter EXACT = DateTimeFormatter.ofPattern("d MMMM yyyy", Locale.FRANCE);
 
     private RelativeTimeFormat() {
@@ -21,14 +23,14 @@ public final class RelativeTimeFormat {
     }
 
     public static String relative(Instant instant) {
-        return relative(instant, Instant.now());
+        return relative(instant, V2Dates.nowInstant());
     }
 
     public static String relative(Instant instant, Instant now) {
         if (instant == null) {
             return "";
         }
-        Instant reference = now == null ? Instant.now() : now;
+        Instant reference = now == null ? V2Dates.nowInstant() : now;
         Duration duration = Duration.between(instant, reference);
         if (duration.isNegative()) {
             duration = Duration.ZERO;
@@ -38,21 +40,21 @@ public final class RelativeTimeFormat {
             return "à l'instant";
         }
         if (minutes < 60) {
-            return "il y a " + minutes + " min";
+            return AGO_PREFIX + minutes + " min";
         }
         long hours = duration.toHours();
         if (hours < 24) {
-            return "il y a " + hours + " h";
+            return AGO_PREFIX + hours + " h";
         }
         long days = duration.toDays();
         if (days < 7) {
-            return "il y a " + days + " j";
+            return AGO_PREFIX + days + " j";
         }
         return exact(instant);
     }
 
     public static String lastRun(Instant instant) {
-        return lastRun(instant, Instant.now());
+        return lastRun(instant, V2Dates.nowInstant());
     }
 
     public static String lastRun(Instant instant, Instant now) {

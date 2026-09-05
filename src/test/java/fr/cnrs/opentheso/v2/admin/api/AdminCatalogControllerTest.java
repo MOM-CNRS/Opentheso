@@ -16,6 +16,7 @@ import org.springframework.http.HttpStatus;
 
 import java.time.LocalDate;
 import java.time.LocalDateTime;
+import java.time.Month;
 import java.util.List;
 
 import static org.junit.jupiter.api.Assertions.assertEquals;
@@ -104,7 +105,7 @@ class AdminCatalogControllerTest {
         when(adminAuthSupport.resolveUserId("key", null)).thenReturn(1);
         when(userProfileService.getProfile(1)).thenReturn(superAdminProfile(1));
         when(adminCatalogService.listAllThesauri(true, null)).thenReturn(
-                List.of(new AdminThesaurus("th1", "Titre", 2, "Projet", false, LocalDateTime.now()))
+                List.of(new AdminThesaurus("th1", "Titre", 2, "Projet", false, LocalDateTime.of(2024, Month.JUNE, 15, 12, 0)))
         );
 
         var response = adminCatalogController.listThesauri("key", null);
@@ -130,6 +131,6 @@ class AdminCatalogControllerTest {
     }
 
     private static UserProfile superAdminProfile(int id) {
-        return new UserProfile(id, "admin", "admin@test.fr", false, true, true, LocalDate.now(), true);
+        return new UserProfile(id, "admin", "admin@test.fr", false, true, true, LocalDate.of(2024, Month.JUNE, 15), true);
     }
 }

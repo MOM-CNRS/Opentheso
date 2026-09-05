@@ -33,6 +33,7 @@ import java.util.ArrayList;
 import java.util.Collections;
 import java.util.List;
 import java.util.Optional;
+import fr.cnrs.opentheso.v2.concept.model.ConceptTreeNodeKinds;
 
 @Service
 @RequiredArgsConstructor
@@ -48,16 +49,25 @@ public class ConceptReadService {
 
     @Transactional(readOnly = true)
     public List<ConceptTreeNodeData> loadRootNodes(String thesaurusId, String lang) {
-        return loadRootNodes(thesaurusId, lang, LeftTreeMode.CONCEPT);
+        return doLoadRootNodes(thesaurusId, lang, LeftTreeMode.CONCEPT, isSortByNotation(thesaurusId, lang));
     }
 
     @Transactional(readOnly = true)
     public List<ConceptTreeNodeData> loadRootNodes(String thesaurusId, String lang, LeftTreeMode mode) {
-        return loadRootNodes(thesaurusId, lang, mode, isSortByNotation(thesaurusId, lang));
+        return doLoadRootNodes(thesaurusId, lang, mode, isSortByNotation(thesaurusId, lang));
     }
 
     @Transactional(readOnly = true)
     public List<ConceptTreeNodeData> loadRootNodes(
+            String thesaurusId,
+            String lang,
+            LeftTreeMode mode,
+            boolean sortByNotation
+    ) {
+        return doLoadRootNodes(thesaurusId, lang, mode, sortByNotation);
+    }
+
+    private List<ConceptTreeNodeData> doLoadRootNodes(
             String thesaurusId,
             String lang,
             LeftTreeMode mode,
@@ -69,7 +79,7 @@ public class ConceptReadService {
         return switch (mode) {
             case CONCEPT -> loadRootConceptNodes(thesaurusId, lang, sortByNotation);
             case COLLECTION, ARBRE -> conceptQueryRepository.findConceptGroups(thesaurusId, lang).stream()
-                    .map(row -> ConceptMapper.toGroupNode(row, "group"))
+                    .map(row -> ConceptMapper.toGroupNode(row, ConceptTreeNodeKinds.GROUP))
                     .toList();
             case INDEX -> Collections.emptyList();
         };
@@ -93,7 +103,7 @@ public class ConceptReadService {
             String lang,
             LeftTreeMode mode
     ) {
-        return loadChildNodes(parentId, parentType, thesaurusId, lang, mode, isSortByNotation(thesaurusId, lang));
+        return doLoadChildNodes(parentId, parentType, thesaurusId, lang, mode, isSortByNotation(thesaurusId, lang));
     }
 
     @Transactional(readOnly = true)
@@ -105,23 +115,33 @@ public class ConceptReadService {
             LeftTreeMode mode,
             boolean sortByNotation
     ) {
+        return doLoadChildNodes(parentId, parentType, thesaurusId, lang, mode, sortByNotation);
+    }
+
+    private List<ConceptTreeNodeData> doLoadChildNodes(
+            String parentId,
+            String parentType,
+            String thesaurusId,
+            String lang,
+            LeftTreeMode mode,
+            boolean sortByNotation
+    ) {
         if (StringUtils.isAnyBlank(parentId, thesaurusId)) {
             return Collections.emptyList();
         }
-        if ("group".equals(parentType) || "subGroup".equals(parentType)) {
+        if (ConceptTreeNodeKinds.GROUP.equals(parentType) || ConceptTreeNodeKinds.SUB_GROUP.equals(parentType)) {
             return loadGroupChildren(parentId, thesaurusId, lang, mode);
         }
-        if (mode == LeftTreeMode.CONCEPT || mode == LeftTreeMode.ARBRE) {
-            if ("facet".equals(parentType) || isConceptNodeType(parentType)) {
-                return conceptTreeConsultationService.loadConceptTreeChildren(
-                        thesaurusId,
-                        parentId,
-                        parentType,
-                        lang,
-                        sortByNotation,
-                        authenticatedUserSource.isLoggedIn()
-                );
-            }
+        if ((mode == LeftTreeMode.CONCEPT || mode == LeftTreeMode.ARBRE)
+                && (ConceptTreeNodeKinds.FACET.equals(parentType) || isConceptNodeType(parentType))) {
+            return conceptTreeConsultationService.loadConceptTreeChildren(
+                    thesaurusId,
+                    parentId,
+                    parentType,
+                    lang,
+                    sortByNotation,
+                    authenticatedUserSource.isLoggedIn()
+            );
         }
         return conceptQueryRepository.findChildConcepts(parentId, thesaurusId, lang).stream()
                 .map(ConceptMapper::toConceptNode)
@@ -135,16 +155,20 @@ public class ConceptReadService {
             String thesaurusId,
             String lang
     ) {
-        return loadChildNodes(parentId, parentType, thesaurusId, lang, LeftTreeMode.CONCEPT);
+        return doLoadChildNodes(parentId, parentType, thesaurusId, lang, LeftTreeMode.CONCEPT, isSortByNotation(thesaurusId, lang));
     }
 
     @Transactional(readOnly = true)
     public List<ConceptTreeNodeData> loadTreeRootNodes(String thesaurusId, String lang) {
-        return loadTreeRootNodes(thesaurusId, lang, isSortByNotation(thesaurusId, lang));
+        return doLoadTreeRootNodes(thesaurusId, lang, isSortByNotation(thesaurusId, lang));
     }
 
     @Transactional(readOnly = true)
     public List<ConceptTreeNodeData> loadTreeRootNodes(String thesaurusId, String lang, boolean sortByNotation) {
+        return doLoadTreeRootNodes(thesaurusId, lang, sortByNotation);
+    }
+
+    private List<ConceptTreeNodeData> doLoadTreeRootNodes(String thesaurusId, String lang, boolean sortByNotation) {
         if (StringUtils.isBlank(thesaurusId)) {
             return Collections.emptyList();
         }
@@ -162,7 +186,7 @@ public class ConceptReadService {
             String thesaurusId,
             String lang
     ) {
-        return loadTreeChildNodes(parentId, parentType, thesaurusId, lang, isSortByNotation(thesaurusId, lang));
+        return doLoadTreeChildNodes(parentId, parentType, thesaurusId, lang, isSortByNotation(thesaurusId, lang));
     }
 
     @Transactional(readOnly = true)
@@ -173,10 +197,20 @@ public class ConceptReadService {
             String lang,
             boolean sortByNotation
     ) {
+        return doLoadTreeChildNodes(parentId, parentType, thesaurusId, lang, sortByNotation);
+    }
+
+    private List<ConceptTreeNodeData> doLoadTreeChildNodes(
+            String parentId,
+            String parentType,
+            String thesaurusId,
+            String lang,
+            boolean sortByNotation
+    ) {
         if (StringUtils.isAnyBlank(parentId, thesaurusId)) {
             return Collections.emptyList();
         }
-        if ("facet".equals(parentType)) {
+        if (ConceptTreeNodeKinds.FACET.equals(parentType)) {
             var members = new ArrayList<ConceptTreeNodeData>();
             for (var row : conceptQueryRepository.findFacetMembersForTree(thesaurusId, parentId, lang)) {
                 members.add(toThesaurusTreeNode(row));
@@ -192,7 +226,7 @@ public class ConceptReadService {
                     facet.facetId(),
                     StringUtils.isBlank(facet.label()) ? "(" + facet.facetId() + ")" : facet.label(),
                     "",
-                    "facet",
+                    ConceptTreeNodeKinds.FACET,
                     facet.hasMembers()
             ));
         }
@@ -232,7 +266,7 @@ public class ConceptReadService {
         if (StringUtils.isAnyBlank(thesaurusId, conceptId)) {
             return 0;
         }
-        if ("group".equals(nodeType) || "subGroup".equals(nodeType)) {
+        if (ConceptTreeNodeKinds.GROUP.equals(nodeType) || ConceptTreeNodeKinds.SUB_GROUP.equals(nodeType)) {
             return conceptQueryRepository.countConceptsInGroup(thesaurusId, conceptId);
         }
         return 1 + conceptQueryRepository.countDescendantConcepts(thesaurusId, conceptId);
@@ -246,7 +280,7 @@ public class ConceptReadService {
     ) {
         var children = new ArrayList<ConceptTreeNodeData>();
         conceptQueryRepository.findChildConceptGroups(parentId, thesaurusId, lang).stream()
-                .map(row -> ConceptMapper.toGroupNode(row, "subGroup"))
+                .map(row -> ConceptMapper.toGroupNode(row, ConceptTreeNodeKinds.SUB_GROUP))
                 .forEach(children::add);
         if (mode == LeftTreeMode.COLLECTION) {
             var groupConcepts = conceptQueryRepository.findConceptsOfGroup(parentId, thesaurusId, lang);
@@ -277,7 +311,8 @@ public class ConceptReadService {
 
     @Transactional(readOnly = true)
     public Optional<ConceptDetail> loadDetail(String thesaurusId, String conceptId, String lang) {
-        return loadDetail(thesaurusId, conceptId, lang, false);
+        return doLoadDetailWithSource(thesaurusId, conceptId, lang, false)
+                .map(ConceptDetailLoadResult::detail);
     }
 
     @Transactional(readOnly = true)
@@ -287,17 +322,26 @@ public class ConceptReadService {
             String lang,
             boolean includeCandidates
     ) {
-        return loadDetailWithSource(thesaurusId, conceptId, lang, includeCandidates)
+        return doLoadDetailWithSource(thesaurusId, conceptId, lang, includeCandidates)
                 .map(ConceptDetailLoadResult::detail);
     }
 
     @Transactional(readOnly = true)
     public Optional<ConceptDetailLoadResult> loadDetailWithSource(String thesaurusId, String conceptId, String lang) {
-        return loadDetailWithSource(thesaurusId, conceptId, lang, false);
+        return doLoadDetailWithSource(thesaurusId, conceptId, lang, false);
     }
 
     @Transactional(readOnly = true)
     public Optional<ConceptDetailLoadResult> loadDetailWithSource(
+            String thesaurusId,
+            String conceptId,
+            String lang,
+            boolean includeCandidates
+    ) {
+        return doLoadDetailWithSource(thesaurusId, conceptId, lang, includeCandidates);
+    }
+
+    private Optional<ConceptDetailLoadResult> doLoadDetailWithSource(
             String thesaurusId,
             String conceptId,
             String lang,
@@ -399,7 +443,7 @@ public class ConceptReadService {
 
     @Transactional(readOnly = true)
     public List<BreadcrumbStep> loadBreadcrumb(String thesaurusId, String conceptId, String lang) {
-        List<List<BreadcrumbStep>> paths = loadBreadcrumbPaths(thesaurusId, conceptId, lang);
+        List<List<BreadcrumbStep>> paths = doLoadBreadcrumbPaths(thesaurusId, conceptId, lang);
         if (!paths.isEmpty()) {
             return paths.get(0);
         }
@@ -410,6 +454,10 @@ public class ConceptReadService {
 
     @Transactional(readOnly = true)
     public List<List<BreadcrumbStep>> loadBreadcrumbPaths(String thesaurusId, String conceptId, String lang) {
+        return doLoadBreadcrumbPaths(thesaurusId, conceptId, lang);
+    }
+
+    private List<List<BreadcrumbStep>> doLoadBreadcrumbPaths(String thesaurusId, String conceptId, String lang) {
         if (StringUtils.isAnyBlank(thesaurusId, conceptId, lang)) {
             return Collections.emptyList();
         }
@@ -532,6 +580,17 @@ public class ConceptReadService {
             boolean withAltLabel,
             int limit
     ) {
+        return doSearchIndex(thesaurusId, lang, query, permuted, withAltLabel, limit);
+    }
+
+    private List<ConceptTreeNodeData> doSearchIndex(
+            String thesaurusId,
+            String lang,
+            String query,
+            boolean permuted,
+            boolean withAltLabel,
+            int limit
+    ) {
         if (StringUtils.isAnyBlank(thesaurusId, query)) {
             return Collections.emptyList();
         }
@@ -568,7 +627,7 @@ public class ConceptReadService {
 
     @Transactional(readOnly = true)
     public List<ConceptTreeNodeData> searchIndex(String thesaurusId, String lang, String query, int limit) {
-        return searchIndex(thesaurusId, lang, query, false, false, limit);
+        return doSearchIndex(thesaurusId, lang, query, false, false, limit);
     }
 
     private String resolvePreferredTermId(

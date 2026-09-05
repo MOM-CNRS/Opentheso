@@ -35,11 +35,11 @@ public class MyAccountBean implements Serializable {
 
     private static final String HEADER_UPDATE_TARGET = "containerIndex";
 
-    private final UserSession userSession;
-    private final V2LocaleBean localeBean;
-    private final UserProfileService userProfileService;
-    private final UserApiKeyService userApiKeyService;
-    private final UserPasswordService userPasswordService;
+    private final transient UserSession userSession;
+    private final transient V2LocaleBean localeBean;
+    private final transient UserProfileService userProfileService;
+    private final transient UserApiKeyService userApiKeyService;
+    private final transient UserPasswordService userPasswordService;
 
     private UserProfile profile;
     private List<ProjectRoleOverview> projectRoles = Collections.emptyList();

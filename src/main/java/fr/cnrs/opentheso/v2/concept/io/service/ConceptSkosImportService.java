@@ -24,7 +24,7 @@ public class ConceptSkosImportService {
             InputStream inputStream,
             int typeImport,
             String selectedLang,
-            StringBuffer errorBuffer
+            StringBuilder errorBuffer
     ) throws IOException {
         String lang = StringUtils.isBlank(selectedLang) ? "fr" : selectedLang;
         var document = conceptSkosRdfImportEngine.readSkos(

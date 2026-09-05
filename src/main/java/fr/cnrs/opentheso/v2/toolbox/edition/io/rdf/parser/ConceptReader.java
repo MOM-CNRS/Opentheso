@@ -165,6 +165,8 @@ public class ConceptReader {
             case "contributor":
                 skosConcept.addAgent(literal.getLabel(), SKOSProperty.CONTRIBUTOR);
                 break;
+            default:
+                break;
         }
     }
 
@@ -325,6 +327,8 @@ public class ConceptReader {
                 //deprecated
                 case "deprecated":
                     skosConcept.setStatus(SKOSProperty.DEPRECATED);
+                    break;
+                default:
                     break;
             }
 

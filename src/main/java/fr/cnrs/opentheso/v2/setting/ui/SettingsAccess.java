@@ -18,9 +18,9 @@ import java.io.Serializable;
 @RequiredArgsConstructor
 public class SettingsAccess implements Serializable {
 
-    private final ThesaurusContext thesaurusContext;
-    private final UserSession userSession;
-    private final RightsService rightsService;
+    private final transient ThesaurusContext thesaurusContext;
+    private final transient UserSession userSession;
+    private final transient RightsService rightsService;
 
     private Boolean canEdit;
     private Boolean superAdmin;

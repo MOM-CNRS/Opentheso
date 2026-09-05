@@ -17,13 +17,15 @@ import org.springframework.stereotype.Component;
 @RequiredArgsConstructor
 public class ConceptIdentifierWritePersistence {
 
+    private static final String NO_SELECTION = "Aucune sélection !";
+
     private final ConceptArkWriteService conceptArkWriteService;
     private final ConceptHandleWriteService conceptHandleWriteService;
     private final PreferencesRepository preferencesRepository;
 
     public MutationResult generateArk(GenerateArkCommand command) {
         if (CollectionUtils.isEmpty(command.conceptIds())) {
-            return MutationResult.validationError("Aucune sélection !");
+            return MutationResult.validationError(NO_SELECTION);
         }
         if (preferencesRepository.findByIdThesaurus(command.thesaurusId()).isEmpty()) {
             return MutationResult.failure("Pas de préférences pour le thésaurus !!");
@@ -50,7 +52,7 @@ public class ConceptIdentifierWritePersistence {
 
     public MutationResult deleteArk(DeleteArkCommand command) {
         if (CollectionUtils.isEmpty(command.conceptIds())) {
-            return MutationResult.validationError("Aucune sélection !");
+            return MutationResult.validationError(NO_SELECTION);
         }
         var preferences = preferencesRepository.findByIdThesaurus(command.thesaurusId()).orElse(null);
         if (preferences == null) {
@@ -71,7 +73,7 @@ public class ConceptIdentifierWritePersistence {
 
     public MutationResult generateHandle(GenerateHandleCommand command) {
         if (CollectionUtils.isEmpty(command.conceptIds())) {
-            return MutationResult.validationError("Aucune sélection !");
+            return MutationResult.validationError(NO_SELECTION);
         }
         if (!conceptHandleWriteService.generateHandleIds(command.conceptIds(), command.thesaurusId())) {
             return MutationResult.failure("La génération de Handle a échoué !!");

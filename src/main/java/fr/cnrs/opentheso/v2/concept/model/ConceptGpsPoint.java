@@ -1,12 +1,13 @@
 package fr.cnrs.opentheso.v2.concept.model;
 
 import java.util.Locale;
+import java.io.Serializable;
 
 public record ConceptGpsPoint(
         double latitude,
         double longitude,
         int position
-) {
+) implements Serializable {
 
     public double getLatitude() {
         return latitude;
@@ -21,11 +22,11 @@ public record ConceptGpsPoint(
     }
 
     public String latText() {
-        return formatCoord(latitude);
+        return formatCoordinate(latitude);
     }
 
     public String lngText() {
-        return formatCoord(longitude);
+        return formatCoordinate(longitude);
     }
 
     public String getLatText() {
@@ -36,11 +37,26 @@ public record ConceptGpsPoint(
         return lngText();
     }
 
-    private static String formatCoord(double value) {
+    public static String formatCoordinate(double value) {
         String text = Double.toString(value);
         if (text.indexOf('E') >= 0 || text.indexOf('e') >= 0) {
-            return String.format(Locale.US, "%f", value).replaceAll("0+$", "").replaceAll("\\.$", "");
+            return stripTrailingZeros(String.format(Locale.US, "%f", value));
         }
         return text;
+    }
+
+    private static String stripTrailingZeros(String text) {
+        int end = text.length();
+        int dot = text.indexOf('.');
+        if (dot < 0) {
+            return text;
+        }
+        while (end > dot && text.charAt(end - 1) == '0') {
+            end--;
+        }
+        if (end > 0 && text.charAt(end - 1) == '.') {
+            end--;
+        }
+        return text.substring(0, end);
     }
 }

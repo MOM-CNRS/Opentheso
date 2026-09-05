@@ -28,13 +28,13 @@ import java.util.List;
 @RequiredArgsConstructor
 public class ConceptTransferEditorBean implements Serializable {
 
-    private final ConceptTransferMutationService conceptTransferMutationService;
-    private final ConceptSelectionContext conceptSelectionContext;
-    private final ConceptNavigationSupport conceptNavigationSupport;
-    private final ThesaurusContext thesaurusContext;
-    private final UserSession userSession;
-    private final ConceptWritePolicy conceptWritePolicy;
-    private final BranchConceptSupport branchConceptSupport;
+    private final transient ConceptTransferMutationService conceptTransferMutationService;
+    private final transient ConceptSelectionContext conceptSelectionContext;
+    private final transient ConceptNavigationSupport conceptNavigationSupport;
+    private final transient ThesaurusContext thesaurusContext;
+    private final transient UserSession userSession;
+    private final transient ConceptWritePolicy conceptWritePolicy;
+    private final transient BranchConceptSupport branchConceptSupport;
 
     private String sourceThesaurusLabel;
     private String sourceLabel;
@@ -114,7 +114,7 @@ public class ConceptTransferEditorBean implements Serializable {
     public boolean submitMoveToAnotherThesaurus() {
         errorMessage = null;
         if (!isTransferActionsAvailable() || !conceptSelectionContext.hasSelection()) {
-            errorMessage = "Action non autorisée";
+            errorMessage = WriteUiMessages.UNAUTHORIZED_FALLBACK;
             return false;
         }
         Integer userId = userSession.getCurrentUserId();
