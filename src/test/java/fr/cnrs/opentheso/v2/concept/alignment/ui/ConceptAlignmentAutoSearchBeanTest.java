@@ -9,6 +9,7 @@ import fr.cnrs.opentheso.v2.concept.model.ConceptDetail;
 import fr.cnrs.opentheso.v2.concept.model.ConceptSummary;
 import fr.cnrs.opentheso.v2.concept.session.ConceptSelectionContext;
 import fr.cnrs.opentheso.v2.concept.ui.ThesaurusViewBean;
+import fr.cnrs.opentheso.v2.concept.write.model.ConceptWriteAlignmentType;
 import fr.cnrs.opentheso.v2.concept.write.model.MutationResult;
 import fr.cnrs.opentheso.v2.concept.write.model.command.DeleteAlignmentCommand;
 import fr.cnrs.opentheso.v2.concept.write.policy.ConceptWritePolicy;
@@ -68,6 +69,10 @@ class ConceptAlignmentAutoSearchBeanTest {
         lenient().when(thesaurusViewBean.isSelectedConceptDeprecated()).thenReturn(false);
         lenient().when(userSession.getCurrentUserId()).thenReturn(7);
         lenient().when(userSession.getCurrentUsername()).thenReturn("alice");
+        lenient().when(conceptAlignmentMutationService.listAlignmentTypes()).thenReturn(List.of(
+                new ConceptWriteAlignmentType(1, "exacte", "exactMatch"),
+                new ConceptWriteAlignmentType(2, "inexacte", "closeMatch")
+        ));
         lenient().doAnswer(invocation -> {
             ficheEditCard = invocation.getArgument(0);
             return null;
@@ -91,7 +96,57 @@ class ConceptAlignmentAutoSearchBeanTest {
         assertEquals(4, bean.getSelectedSourceId());
         assertEquals(1, bean.getPropositions().size());
         assertEquals("Cat", bean.getPropositions().get(0).getTargetLabel());
+        assertEquals("Recherche terminée · 1 résultat(s) · Wikidata", bean.getStatusMessage());
+        assertEquals("Recherche terminée · 1 résultat(s) · Wikidata", bean.getFlashMessage());
         verify(conceptSelectionContext).update("TH1", thesaurusViewBean.getSelectedConcept());
+    }
+
+    @Test
+    void startSearching_whenNoHit_setsDoneMessage() {
+        when(thesaurusViewBean.getSelectedConcept()).thenReturn(detail(List.of()));
+        when(conceptAlignmentAdminService.listActiveSources("TH1")).thenReturn(List.of(wikidata()));
+        when(conceptAlignmentAdminService.findActiveSource("TH1", 4)).thenReturn(wikidata());
+        when(conceptAlignmentAdminService.searchPropositionsForConcept(
+                eq("TH1"), eq("fr"), eq("C1"), eq("Chat"), eq(wikidata())
+        )).thenReturn(List.of());
+
+        bean.startSearching();
+
+        assertTrue(bean.getPropositions().isEmpty());
+        assertEquals("Recherche terminée · aucun résultat · Wikidata", bean.getStatusMessage());
+        assertEquals("Aucun alignement trouvé !", bean.getErrorMessage());
+    }
+
+    @Test
+    void searchLabel_andPropositionTypeKey_followConceptAndTypeId() {
+        when(thesaurusViewBean.getSelectedConcept()).thenReturn(detail(List.of()));
+
+        assertEquals("Chat", bean.getSearchLabel());
+        assertEquals("exactMatch", bean.propositionTypeKey(hit("http://www.wikidata.org/entity/Q1", "Cat")));
+        AlignmentProposition close = hit("http://www.wikidata.org/entity/Q2", "Feline");
+        close.setAlignmentTypeId(2);
+        assertEquals("closeMatch", bean.propositionTypeKey(close));
+        assertEquals("v2.concept.alignment.type.exact", bean.typeMessageKey("skos:exactMatch"));
+        assertEquals("v2.concept.alignment.type.close", bean.typeMessageKey(2));
+    }
+
+    @Test
+    void selectPropositionType_updatesOnlyTheChosenHit() {
+        when(thesaurusViewBean.getSelectedConcept()).thenReturn(detail(List.of()));
+        when(conceptAlignmentAdminService.listActiveSources("TH1")).thenReturn(List.of(wikidata()));
+        when(conceptAlignmentAdminService.findActiveSource("TH1", 4)).thenReturn(wikidata());
+        when(conceptAlignmentAdminService.searchPropositionsForConcept(
+                eq("TH1"), eq("fr"), eq("C1"), eq("Chat"), eq(wikidata())
+        )).thenReturn(List.of(hit("http://www.wikidata.org/entity/Q1", "Cat")));
+
+        bean.startSearching();
+        bean.selectPropositionType(0, 5);
+        assertEquals(5, bean.getPropositions().get(0).getAlignmentTypeId());
+
+        bean.selectPropositionType(-1, 2);
+        bean.selectPropositionType(0, 0);
+        bean.selectPropositionType(9, 2);
+        assertEquals(5, bean.getPropositions().get(0).getAlignmentTypeId());
     }
 
     @Test
@@ -228,6 +283,7 @@ class ConceptAlignmentAutoSearchBeanTest {
 
         assertTrue(bean.isComparing());
         assertEquals("Aucun alignement existant vers cette source.", bean.getErrorMessage());
+        assertEquals("", bean.getStatusMessage() == null ? "" : bean.getStatusMessage());
         assertTrue(bean.getPropositions().isEmpty());
         verify(conceptAlignmentAdminService, never()).searchComparisonsForConcept(
                 any(), any(), any(), any(), any(), any(), any()
@@ -261,6 +317,7 @@ class ConceptAlignmentAutoSearchBeanTest {
         assertEquals(1, bean.getPropositions().size());
         assertEquals("Felis", bean.getPropositions().get(0).getTargetLabel());
         assertFalse(bean.getPropositions().get(0).isAlreadyAligned());
+        assertEquals("Comparaison terminée · 1 résultat(s) · Wikidata", bean.getStatusMessage());
     }
 
     @Test

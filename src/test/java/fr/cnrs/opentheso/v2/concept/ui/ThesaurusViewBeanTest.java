@@ -243,6 +243,46 @@ class ThesaurusViewBeanTest {
     }
 
     @Test
+    void alignmentSourcesUrl_keepsCurrentConceptForReturn() {
+        thesaurusContext.selectThesaurus("th17", "Pactols_Lieux", "fr");
+        when(v2LocaleBean.getIdLangue()).thenReturn("fr");
+        when(thesaurusPreferenceService.loadUsedLanguages("th17", "fr")).thenReturn(List.of(language("fr", "Français")));
+        when(conceptReadService.loadDetail("th17", "c1", "fr", true))
+                .thenReturn(Optional.of(conceptDetail("c1", "Lieux", "C")));
+        when(conceptReadService.countBranchConcepts("th17", "c1")).thenReturn(1);
+
+        bean.openTreeNode("c1", "concept");
+
+        assertEquals("setting/preference.xhtml?idc=c1#stAlign", bean.getAlignmentSourcesUrl());
+        assertEquals("thesaurus/consultation.xhtml?id=c1", bean.getSettingsReturnUrl());
+        assertEquals("Retour au concept", bean.getSettingsReturnTitle());
+    }
+
+    @Test
+    void settingsReturnUrl_fallsBackToHomeWhenNoConcept() {
+        when(conceptSelectionContext.getConceptId()).thenReturn(null);
+
+        assertEquals("setting/preference.xhtml#stAlign", bean.getAlignmentSourcesUrl());
+        assertEquals("index.xhtml", bean.getSettingsReturnUrl());
+        assertEquals("Retour à l'accueil thésaurus", bean.getSettingsReturnTitle());
+    }
+
+    @Test
+    void revealCurrentConceptInTree_expandsSessionConceptWithoutOpeningIt() {
+        thesaurusContext.selectThesaurus("th17", "Pactols_Lieux", "fr");
+        when(v2LocaleBean.getIdLangue()).thenReturn("fr");
+        when(thesaurusPreferenceService.loadUsedLanguages("th17", "fr")).thenReturn(List.of(language("fr", "Français")));
+        when(conceptSelectionContext.getConceptId()).thenReturn("c1");
+        when(conceptReadService.loadBreadcrumbPaths("th17", "c1", "fr")).thenReturn(List.of());
+        when(conceptReadService.loadBreadcrumb("th17", "c1", "fr")).thenReturn(List.of());
+
+        bean.revealCurrentConceptInTree();
+
+        assertEquals("c1", bean.getRevealedConceptId());
+        verify(conceptReadService, never()).loadDetail(any(), any(), any(), any(Boolean.class));
+    }
+
+    @Test
     void loadsTreeRootsFromDatabase() {
         thesaurusContext.selectThesaurus("th17", "Pactols_Lieux", "fr");
         when(v2LocaleBean.getIdLangue()).thenReturn("fr");

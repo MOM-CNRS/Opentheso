@@ -316,6 +316,60 @@ public class ThesaurusViewBean implements Serializable {
         onLanguageChange();
     }
 
+    public String getAlignmentSourcesUrl() {
+        String conceptId = currentConceptId();
+        if (StringUtils.isBlank(conceptId)) {
+            return "setting/preference.xhtml#stAlign";
+        }
+        return "setting/preference.xhtml?idc=" + conceptId + "#stAlign";
+    }
+
+    public String getSettingsReturnUrl() {
+        String conceptId = settingsConceptId();
+        if (StringUtils.isBlank(conceptId)) {
+            return "index.xhtml";
+        }
+        return "thesaurus/consultation.xhtml?id=" + conceptId;
+    }
+
+    public String getSettingsReturnTitle() {
+        return StringUtils.isBlank(settingsConceptId())
+                ? "Retour à l'accueil thésaurus"
+                : "Retour au concept";
+    }
+
+    public void revealCurrentConceptInTree() {
+        String conceptId = settingsConceptId();
+        if (StringUtils.isBlank(conceptId)) {
+            return;
+        }
+        revealId = conceptId;
+        revealInTree();
+    }
+
+    public String currentConceptId() {
+        if (selectedConcept != null && selectedConcept.getSummary() != null) {
+            return StringUtils.trimToEmpty(selectedConcept.getSummary().getConceptId());
+        }
+        return StringUtils.trimToEmpty(conceptSelectionContext.getConceptId());
+    }
+
+    private String settingsConceptId() {
+        String fromRequest = requestParameter("idc");
+        if (StringUtils.isNotBlank(fromRequest)) {
+            return fromRequest.trim();
+        }
+        return currentConceptId();
+    }
+
+    private String requestParameter(String name) {
+        FacesContext facesContext = FacesContext.getCurrentInstance();
+        if (facesContext == null || StringUtils.isBlank(name)) {
+            return "";
+        }
+        return StringUtils.trimToEmpty(facesContext.getExternalContext().getRequestParameterMap().get(name));
+    }
+
     public List<ThesaurusTreeNode> getTreeRoots() {
         ensureTreeLoaded();
         return treeRoots;

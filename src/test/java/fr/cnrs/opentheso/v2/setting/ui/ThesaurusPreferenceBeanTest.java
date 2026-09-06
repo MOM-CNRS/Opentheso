@@ -72,6 +72,15 @@ class ThesaurusPreferenceBeanTest {
     }
 
     @Test
+    void loadPage_restoresTreeToCurrentConcept() {
+        bean.loadPage();
+
+        verify(corpusBean).load();
+        verify(alignmentBean).load();
+        verify(thesaurusViewBean).revealCurrentConceptInTree();
+    }
+
+    @Test
     void loadsGeneralPreferenceFieldsFromService() {
         when(thesaurusPreferenceService.loadPreferencesOrNull("th17", "fr"))
                 .thenReturn(SettingTestFixtures.samplePreferences());

@@ -304,6 +304,12 @@ document.addEventListener("click", (e) => {
     hideConfirm("#trSaveConfirm");
   } else if (act === "tr-save-modal") {
     return;
+  } else if (act === "align-save-ask") {
+    showConfirm("#alignSaveConfirm");
+  } else if (act === "align-save-dismiss") {
+    hideConfirm("#alignSaveConfirm");
+  } else if (act === "align-save-modal") {
+    return;
   } else if (act === "note-save-ask") {
     showConfirm("#noteSaveConfirm");
   } else if (act === "note-save-dismiss") {

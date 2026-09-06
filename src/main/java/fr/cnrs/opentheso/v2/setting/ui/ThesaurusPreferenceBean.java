@@ -44,6 +44,7 @@ public class ThesaurusPreferenceBean implements Serializable {
         ensurePreferencesLoaded();
         corpusBean.load();
         alignmentBean.load();
+        thesaurusViewBean.revealCurrentConceptInTree();
     }
 
     public PreferenceEditor getPreference() {

@@ -24,6 +24,8 @@
        data-flash-res-token="#{v2ConceptResourceBlockEditorBean.flashToken}"
        data-flash-align="#{v2ConceptAlignmentAutoSearchBean.flashMessage}"
        data-flash-align-token="#{v2ConceptAlignmentAutoSearchBean.flashToken}"
+       data-flash-align-edit="#{v2ConceptAlignmentBlockEditorBean.flashMessage}"
+       data-flash-align-edit-token="#{v2ConceptAlignmentBlockEditorBean.flashToken}"
        data-rel-tree="#{v2ConceptRelationBlockEditorBean.treeReload ? '1' : ''}"
        data-msg-fold="#{v2LocaleBean.getMsg('v2.block.collapse')}"
        data-msg-unfold="#{v2LocaleBean.getMsg('v2.block.expand')}">
@@ -1215,9 +1217,98 @@
       </section>
 
 
-      <section class="cblock#{v2ConceptAlignmentAutoSearchBean.open ? ' is-editing' : ''}" data-card-id="alignement">
-        <div class="cblock-head"><span class="cblock-drag" role="button" tabindex="0" title="Glisser pour réordonner" aria-label="Réordonner ce bloc"><svg class="cblock-grip" viewBox="0 0 8 14" aria-hidden="true" focusable="false"><circle cx="2" cy="2" r="1.35"/><circle cx="6" cy="2" r="1.35"/><circle cx="2" cy="7" r="1.35"/><circle cx="6" cy="7" r="1.35"/><circle cx="2" cy="12" r="1.35"/><circle cx="6" cy="12" r="1.35"/></svg></span><span class="cblock-title">Alignement</span><div class="cblock-tools"><button type="button" class="cblock-gear cblock-fold" data-act="cblock-fold" title="#{v2LocaleBean.getMsg('v2.block.collapse')}" aria-expanded="true" aria-label="#{v2LocaleBean.getMsg('v2.block.collapse')}"><svg viewBox="0 0 24 24" aria-hidden="true"><path d="m6 9 6 6 6-6"/></svg></button></div></div>
+      <section class="cblock#{v2ConceptAlignmentBlockEditorBean.editing or v2ConceptAlignmentAutoSearchBean.open ? ' is-editing' : ''}" data-card-id="alignement">
+        <div class="cblock-head"><span class="cblock-drag" role="button" tabindex="0" title="Glisser pour réordonner" aria-label="Réordonner ce bloc"><svg class="cblock-grip" viewBox="0 0 8 14" aria-hidden="true" focusable="false"><circle cx="2" cy="2" r="1.35"/><circle cx="6" cy="2" r="1.35"/><circle cx="2" cy="7" r="1.35"/><circle cx="6" cy="7" r="1.35"/><circle cx="2" cy="12" r="1.35"/><circle cx="6" cy="12" r="1.35"/></svg></span><span class="cblock-title">Alignement</span><div class="cblock-tools"><h:commandButton id="alignEditStart" value="✎" styleClass="cblock-gear" title="#{v2LocaleBean.getMsg('v2.edit')}" rendered="#{v2ConceptAlignmentBlockEditorBean.editable and not v2ConceptAlignmentBlockEditorBean.editing and not v2ConceptAlignmentAutoSearchBean.open}" action="#{v2ConceptAlignmentBlockEditorBean.startEditing}"><f:ajax execute="@this" render=":previewDetailForm:previewDetail"/></h:commandButton><button type="button" class="cblock-gear cblock-fold" data-act="cblock-fold" title="#{v2LocaleBean.getMsg('v2.block.collapse')}" aria-expanded="true" aria-label="#{v2LocaleBean.getMsg('v2.block.collapse')}"><svg viewBox="0 0 24 24" aria-hidden="true"><path d="m6 9 6 6 6-6"/></svg></button></div></div>
         <div class="cblock-body">
+          <ui:fragment rendered="#{v2ConceptAlignmentBlockEditorBean.editing}">
+          <div class="align-edit">
+            <ui:repeat value="#{v2ConceptAlignmentBlockEditorBean.rows}" var="row" varStatus="st">
+              <div class="align-edit-card">
+                <div class="align-edit-head">
+                  <details class="align-type-menu">
+                    <summary class="align-type-now align-#{v2ConceptAlignmentAutoSearchBean.typeKey(row.typeId)}"
+                             title="#{v2LocaleBean.getMsg('v2.concept.alignment.typePick')}">
+                      #{v2LocaleBean.getMsg(v2ConceptAlignmentAutoSearchBean.typeMessageKey(row.typeId))}
+                    </summary>
+                    <div class="align-type-opts" role="listbox">
+                      <ui:repeat value="#{v2ConceptAlignmentBlockEditorBean.alignmentTypes}" var="type">
+                        <h:commandLink styleClass="align-type-opt align-#{type.labelSkos}#{row.typeId eq type.id ? ' is-on' : ''}"
+                                       action="#{v2ConceptAlignmentBlockEditorBean.setRowType(st.index, type.id)}">
+                          <f:ajax execute="@form" render=":previewDetailForm:previewDetail"/>
+                          <span class="align-type-opt-dot" aria-hidden="true"></span>
+                          #{v2LocaleBean.getMsg(v2ConceptAlignmentAutoSearchBean.typeMessageKey(type.labelSkos))}
+                        </h:commandLink>
+                      </ui:repeat>
+                    </div>
+                  </details>
+                  <h:inputText id="alignSource" styleClass="st-input align-source-input"
+                               value="#{row.source}"
+                               pt:autocomplete="off"
+                               pt:placeholder="#{v2LocaleBean.getMsg('v2.concept.alignment.source')}"/>
+                  <h:commandLink id="alignRemove" styleClass="tr-edit-remove"
+                                 title="#{v2LocaleBean.getMsg('rightbody.concept.delete_alignment')}"
+                                 action="#{v2ConceptAlignmentBlockEditorBean.removeRow(st.index)}">
+                    <f:ajax execute="@form" render=":previewDetailForm:previewDetail"/>
+                    <span aria-hidden="true">×</span>
+                  </h:commandLink>
+                </div>
+                <div class="crow cblock-edit-row">
+                  <div class="crow-lbl">URI</div>
+                  <div class="crow-val">
+                    <h:inputText id="alignUri" styleClass="st-input"
+                                 value="#{row.uri}"
+                                 pt:autocomplete="off"
+                                 pt:placeholder="#{v2LocaleBean.getMsg('v2.concept.alignment.uriPlaceholder')}"/>
+                  </div>
+                </div>
+              </div>
+            </ui:repeat>
+            <h:commandLink id="alignAddRow" styleClass="tr-add-btn"
+                           action="#{v2ConceptAlignmentBlockEditorBean.addRow}">
+              <f:ajax execute="@form" render=":previewDetailForm:previewDetail"/>
+              <span>#{v2LocaleBean.getMsg('v2.concept.alignment.addRow')}</span>
+            </h:commandLink>
+          </div>
+          <ui:fragment rendered="#{not empty v2ConceptAlignmentBlockEditorBean.errorMessage}">
+            <div class="cblock-edit-warn" role="alert">
+              <p>#{v2ConceptAlignmentBlockEditorBean.errorMessage}</p>
+            </div>
+          </ui:fragment>
+          <div class="cblock-edit-foot">
+            <h:commandLink id="alignEditCancel" styleClass="abt-cancel" immediate="true"
+                           action="#{v2ConceptAlignmentBlockEditorBean.cancel}">
+              <f:ajax execute="@this" render=":previewDetailForm:previewDetail"/>
+              <svg viewBox="0 0 24 24" aria-hidden="true"><path d="M18 6 6 18"/><path d="m6 6 12 12"/></svg>
+              <span>#{v2LocaleBean.getMsg('v2.cancel')}</span>
+            </h:commandLink>
+            <button type="button" class="abt-save" id="alignSaveAsk"
+                    data-act="align-save-ask">
+              <svg viewBox="0 0 24 24" aria-hidden="true"><path d="M20 6 9 17l-5-5"/></svg>
+              <span class="abt-save-label">#{v2LocaleBean.getMsg('v2.save')}</span>
+              <span class="abt-save-wait">#{v2LocaleBean.getMsg('v2.saving')}</span>
+            </button>
+          </div>
+          <div class="block-overlay confirm-overlay" id="alignSaveConfirm" hidden="hidden"
+               data-act="align-save-dismiss" role="presentation">
+            <div class="confirm-modal" role="dialog" aria-modal="true"
+                 aria-labelledby="alignSaveConfirmTitle" data-act="align-save-modal">
+              <div class="confirm-h" id="alignSaveConfirmTitle">#{v2LocaleBean.getMsg('v2.concept.alignment.confirmTitle')}</div>
+              <p class="confirm-p">#{v2LocaleBean.getMsg('v2.concept.alignment.confirm')}</p>
+              <div class="confirm-actions">
+                <button type="button" class="abt-cancel confirm-cancel"
+                        data-act="align-save-dismiss">#{v2LocaleBean.getMsg('v2.cancel')}</button>
+                <h:commandLink id="alignEditSave" styleClass="abt-save abt-save-ok"
+                               action="#{v2ConceptAlignmentBlockEditorBean.save}">
+                  <f:ajax execute="@form" render=":previewDetailForm:previewDetail" onevent="onLabelSave"/>
+                  <svg viewBox="0 0 24 24" aria-hidden="true"><path d="M20 6 9 17l-5-5"/></svg>
+                  <span class="abt-save-label">#{v2LocaleBean.getMsg('v2.save')}</span>
+                  <span class="abt-save-wait">#{v2LocaleBean.getMsg('v2.saving')}</span>
+                </h:commandLink>
+              </div>
+            </div>
+          </div>
+          </ui:fragment>
+          <ui:fragment rendered="#{not v2ConceptAlignmentBlockEditorBean.editing}">
           <ui:fragment rendered="#{empty v2ThesaurusViewBean.selectedConcept.alignmentGroups}">
             <div class="muted">Aucun alignement vers un référentiel externe.</div>
           </ui:fragment>
@@ -1226,7 +1317,7 @@
             <ui:repeat value="#{v2ThesaurusViewBean.selectedConcept.alignmentGroups}" var="group">
               <ui:repeat value="#{group.items}" var="align">
                 <div class="align-item">
-                  <span class="align-type align-#{group.typeKey}">#{group.typeLabel}</span>
+                  <span class="align-type align-#{group.typeKey}">#{v2LocaleBean.getMsg(v2ConceptAlignmentAutoSearchBean.typeMessageKey(group.typeKey))}</span>
                   <span class="align-src">#{align.sourceName}</span>
                   <a class="align-uri" href="#{align.uri}" target="_blank" rel="noopener">#{align.uri}</a>
                   <ui:fragment rendered="#{v2ConceptAlignmentAutoSearchBean.available}">
@@ -1242,6 +1333,7 @@
               </ui:repeat>
             </ui:repeat>
           </div>
+          </ui:fragment>
           </ui:fragment>
           <ui:fragment rendered="#{v2ConceptAlignmentAutoSearchBean.available}">
           <h:inputHidden id="alignDeleteId" value="#{v2ConceptAlignmentAutoSearchBean.alignmentToDeleteId}"/>
@@ -1287,7 +1379,7 @@
             </div>
           </div>
           </ui:fragment>
-          <ui:fragment rendered="#{v2ConceptAlignmentAutoSearchBean.available}">
+          <ui:fragment rendered="#{v2ConceptAlignmentAutoSearchBean.available and not v2ConceptAlignmentBlockEditorBean.editing}">
           <div class="align-auto-actions">
             <h:commandLink id="alignAutoStart" styleClass="bo-btn sm#{v2ConceptAlignmentAutoSearchBean.open and not v2ConceptAlignmentAutoSearchBean.comparing ? ' active' : ''}"
                            action="#{v2ConceptAlignmentAutoSearchBean.startSearching}">
@@ -1299,19 +1391,27 @@
                            action="#{v2ConceptAlignmentAutoSearchBean.startComparing}">
               <f:ajax execute="@this" render=":previewDetailForm:previewDetail" onevent="onAlignAutoSearch"/>
               <span class="aa-ic" aria-hidden="true">⇄</span>
-              <h:outputText value="#{v2LocaleBean.getMsg('rightbody.concept.alignement.comparison')}"/>
+              <h:outputText value="#{v2LocaleBean.getMsg('v2.concept.alignment.compareAuto')}"/>
             </h:commandLink>
+            <a class="align-src-settings" href="#{v2ThesaurusViewBean.alignmentSourcesUrl}">#{v2LocaleBean.getMsg('v2.concept.alignment.sourcesSettings')}</a>
           </div>
           </ui:fragment>
           <ui:fragment rendered="#{v2ConceptAlignmentAutoSearchBean.open}">
           <div class="align-auto" id="alignAutoPanel">
             <div class="align-auto-head">
-              <span>#{v2LocaleBean.getMsg('rightbody.alignmentSourceList')}</span>
+              <span>
+                <ui:fragment rendered="#{v2ConceptAlignmentAutoSearchBean.comparing}">
+                  #{v2LocaleBean.getMsg('v2.concept.alignment.compareTitle', v2ConceptAlignmentAutoSearchBean.searchLabel)}
+                </ui:fragment>
+                <ui:fragment rendered="#{not v2ConceptAlignmentAutoSearchBean.comparing}">
+                  #{v2LocaleBean.getMsg('v2.concept.alignment.searchTitle', v2ConceptAlignmentAutoSearchBean.searchLabel)}
+                </ui:fragment>
+              </span>
               <h:commandLink id="alignAutoCancel" styleClass="align-auto-x" immediate="true"
-                             title="#{v2LocaleBean.getMsg('v2.cancel')}"
+                             title="#{v2LocaleBean.getMsg('v2.concept.alignment.close')}"
                              action="#{v2ConceptAlignmentAutoSearchBean.cancel}">
                 <f:ajax execute="@this" render=":previewDetailForm:previewDetail"/>
-                <span aria-hidden="true">×</span>
+                <span>#{v2LocaleBean.getMsg('v2.concept.alignment.close')} ✕</span>
               </h:commandLink>
             </div>
             <ui:fragment rendered="#{not empty v2ConceptAlignmentAutoSearchBean.sources}">
@@ -1325,22 +1425,29 @@
                 </h:commandLink>
               </ui:repeat>
             </div>
+            <div class="align-src-track" aria-hidden="true"><span class="align-src-ind"></span></div>
+            <a class="align-src-settings align-src-settings-panel" href="#{v2ThesaurusViewBean.alignmentSourcesUrl}">#{v2LocaleBean.getMsg('v2.concept.alignment.sourcesSettings')}</a>
             </ui:fragment>
-            <ui:fragment rendered="#{not empty v2ConceptAlignmentAutoSearchBean.errorMessage}">
+            <ui:fragment rendered="#{empty v2ConceptAlignmentAutoSearchBean.sources}">
+              <a class="align-src-settings align-src-settings-panel" href="#{v2ThesaurusViewBean.alignmentSourcesUrl}">#{v2LocaleBean.getMsg('v2.concept.alignment.sourcesSettings')}</a>
+            </ui:fragment>
+            <ui:fragment rendered="#{not empty v2ConceptAlignmentAutoSearchBean.statusMessage}">
+              <p class="align-res-done#{empty v2ConceptAlignmentAutoSearchBean.propositions ? ' is-empty' : ''}" role="status">
+                #{v2ConceptAlignmentAutoSearchBean.statusMessage}
+              </p>
+            </ui:fragment>
+            <ui:fragment rendered="#{not empty v2ConceptAlignmentAutoSearchBean.errorMessage and empty v2ConceptAlignmentAutoSearchBean.statusMessage}">
               <p class="align-res-empty" role="status">#{v2ConceptAlignmentAutoSearchBean.errorMessage}</p>
             </ui:fragment>
-            <div class="align-res-load">#{v2ConceptAlignmentAutoSearchBean.comparing ? 'Comparaison en cours…' : 'Recherche en cours…'}</div>
+            <div class="align-res-load" role="status" aria-live="polite">
+              <span class="align-res-spin" aria-hidden="true"></span>
+              <span>#{v2ConceptAlignmentAutoSearchBean.comparing
+                  ? v2LocaleBean.getMsg('v2.concept.alignment.comparing')
+                  : v2LocaleBean.getMsg('v2.concept.alignment.searching')}</span>
+              <span class="align-res-load-src"></span>
+            </div>
             <ui:fragment rendered="#{v2ConceptAlignmentAutoSearchBean.sourceSelected and not empty v2ConceptAlignmentAutoSearchBean.propositions}">
             <div class="align-res">
-              <div class="align-res-t">
-                #{v2ConceptAlignmentAutoSearchBean.propositions.size()}
-                #{v2ConceptAlignmentAutoSearchBean.comparing
-                    ? (v2ConceptAlignmentAutoSearchBean.propositions.size() gt 1 ? 'comparaisons' : 'comparaison')
-                    : (v2ConceptAlignmentAutoSearchBean.propositions.size() gt 1 ? 'résultats' : 'résultat')}
-                <ui:fragment rendered="#{not empty v2ConceptAlignmentAutoSearchBean.selectedSourceName}">
-                  · #{v2ConceptAlignmentAutoSearchBean.selectedSourceName}
-                </ui:fragment>
-              </div>
               <ui:repeat value="#{v2ConceptAlignmentAutoSearchBean.propositions}" var="prop" varStatus="st">
                 <ui:fragment rendered="#{v2ConceptAlignmentAutoSearchBean.comparing}">
                 <div class="align-cmp">
@@ -1363,6 +1470,22 @@
                     <a class="ari-uri" href="#{prop.targetUri}" target="_blank" rel="noopener">#{prop.targetUri}</a>
                   </div>
                   <div class="align-cmp-act">
+                    <details class="align-type-menu">
+                      <summary class="align-type-now align-#{v2ConceptAlignmentAutoSearchBean.propositionTypeKey(prop)}"
+                               title="#{v2LocaleBean.getMsg('v2.concept.alignment.typePick')}">
+                        #{v2LocaleBean.getMsg(v2ConceptAlignmentAutoSearchBean.typeMessageKey(prop.alignmentTypeId))}
+                      </summary>
+                      <div class="align-type-opts" role="listbox">
+                        <ui:repeat value="#{v2ConceptAlignmentAutoSearchBean.alignmentTypes}" var="type">
+                          <h:commandLink styleClass="align-type-opt align-#{type.labelSkos}#{prop.alignmentTypeId eq type.id ? ' is-on' : ''}"
+                                         action="#{v2ConceptAlignmentAutoSearchBean.selectPropositionType(st.index, type.id)}">
+                            <f:ajax execute="@this" render=":previewDetailForm:previewDetail"/>
+                            <span class="align-type-opt-dot" aria-hidden="true"></span>
+                            #{v2LocaleBean.getMsg(v2ConceptAlignmentAutoSearchBean.typeMessageKey(type.labelSkos))}
+                          </h:commandLink>
+                        </ui:repeat>
+                      </div>
+                    </details>
                     <ui:fragment rendered="#{prop.alreadyAligned}">
                       <span class="ari-done">
                         <svg viewBox="0 0 24 24" aria-hidden="true"><path d="M20 6 9 17l-5-5"/></svg>
@@ -1383,25 +1506,40 @@
                 </ui:fragment>
                 <ui:fragment rendered="#{not v2ConceptAlignmentAutoSearchBean.comparing}">
                 <div class="align-res-item">
+                  <details class="align-type-menu">
+                    <summary class="align-type-now align-#{v2ConceptAlignmentAutoSearchBean.propositionTypeKey(prop)}"
+                             title="#{v2LocaleBean.getMsg('v2.concept.alignment.typePick')}">
+                      #{v2LocaleBean.getMsg(v2ConceptAlignmentAutoSearchBean.typeMessageKey(prop.alignmentTypeId))}
+                    </summary>
+                    <div class="align-type-opts" role="listbox">
+                      <ui:repeat value="#{v2ConceptAlignmentAutoSearchBean.alignmentTypes}" var="type">
+                        <h:commandLink styleClass="align-type-opt align-#{type.labelSkos}#{prop.alignmentTypeId eq type.id ? ' is-on' : ''}"
+                                       action="#{v2ConceptAlignmentAutoSearchBean.selectPropositionType(st.index, type.id)}">
+                          <f:ajax execute="@this" render=":previewDetailForm:previewDetail"/>
+                          <span class="align-type-opt-dot" aria-hidden="true"></span>
+                          #{v2LocaleBean.getMsg(v2ConceptAlignmentAutoSearchBean.typeMessageKey(type.labelSkos))}
+                        </h:commandLink>
+                      </ui:repeat>
+                    </div>
+                  </details>
                   <div class="ari-main">
-                    <div class="ari-label">#{empty prop.targetLabel ? prop.targetUri : prop.targetLabel}</div>
+                    <span class="ari-label">#{empty prop.targetLabel ? prop.targetUri : prop.targetLabel}</span>
                     <ui:fragment rendered="#{not empty prop.targetDefinition}">
                       <div class="ari-def">#{prop.targetDefinition}</div>
                     </ui:fragment>
-                    <a class="ari-uri" href="#{prop.targetUri}" target="_blank" rel="noopener">#{prop.targetUri}</a>
+                    <a class="align-uri" href="#{prop.targetUri}" target="_blank" rel="noopener">#{prop.targetUri}</a>
                   </div>
                   <ui:fragment rendered="#{prop.alreadyAligned}">
                     <span class="ari-done">
                       <svg viewBox="0 0 24 24" aria-hidden="true"><path d="M20 6 9 17l-5-5"/></svg>
-                      Déjà aligné
+                      #{v2LocaleBean.getMsg('v2.concept.alignment.aligned')}
                     </span>
                   </ui:fragment>
-                  <h:commandLink id="alignAutoAdd" styleClass="ari-add"
+                  <h:commandLink id="alignAutoAdd" styleClass="bo-btn primary sm ari-add"
                                  rendered="#{not prop.alreadyAligned}"
                                  action="#{v2ConceptAlignmentAutoSearchBean.addProposition(st.index)}">
                     <f:ajax execute="@this" render=":previewDetailForm:previewDetail"/>
-                    <svg viewBox="0 0 24 24" aria-hidden="true"><path d="M12 5v14"/><path d="M5 12h14"/></svg>
-                    <span>Ajouter</span>
+                    <span>#{v2LocaleBean.getMsg('v2.concept.alignment.add')}</span>
                   </h:commandLink>
                 </div>
                 </ui:fragment>

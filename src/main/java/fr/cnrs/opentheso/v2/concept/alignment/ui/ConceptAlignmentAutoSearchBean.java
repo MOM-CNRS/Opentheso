@@ -10,6 +10,7 @@ import fr.cnrs.opentheso.v2.concept.model.ConceptAlignmentGroup;
 import fr.cnrs.opentheso.v2.concept.model.ConceptDetail;
 import fr.cnrs.opentheso.v2.concept.session.ConceptSelectionContext;
 import fr.cnrs.opentheso.v2.concept.ui.ThesaurusViewBean;
+import fr.cnrs.opentheso.v2.concept.write.model.ConceptWriteAlignmentType;
 import fr.cnrs.opentheso.v2.concept.write.model.MutationResult;
 import fr.cnrs.opentheso.v2.concept.write.model.command.DeleteAlignmentCommand;
 import fr.cnrs.opentheso.v2.concept.write.policy.ConceptWritePolicy;
@@ -56,7 +57,9 @@ public class ConceptAlignmentAutoSearchBean implements Serializable {
     private int selectedSourceId;
     private String selectedSourceName;
     private List<AlignmentProposition> propositions = new ArrayList<>();
+    private List<ConceptWriteAlignmentType> alignmentTypes = new ArrayList<>();
     private String errorMessage;
+    private String statusMessage;
     private String flashMessage;
     private String flashToken;
     private String alignmentToDeleteId;
@@ -104,11 +107,18 @@ public class ConceptAlignmentAutoSearchBean implements Serializable {
             return;
         }
         editingConceptId = detail.getSummary().getConceptId();
+        List<ConceptWriteAlignmentType> types = conceptAlignmentMutationService.listAlignmentTypes();
+        alignmentTypes = types == null
+                ? List.of()
+                : types.stream()
+                        .sorted(java.util.Comparator.comparingInt(ConceptWriteAlignmentType::getId))
+                        .toList();
         sources = toItems(conceptAlignmentAdminService.listActiveSources(thesaurusViewBean.getId()));
         selectedSourceId = 0;
         selectedSourceName = "";
         propositions = new ArrayList<>();
         errorMessage = "";
+        statusMessage = "";
         flashMessage = "";
         flashToken = "";
         propositionToReplaceIndex = "";
@@ -130,6 +140,10 @@ public class ConceptAlignmentAutoSearchBean implements Serializable {
     }
 
     public void selectSource(int sourceId) {
+        selectSource(sourceId, true);
+    }
+
+    private void selectSource(int sourceId, boolean announce) {
         if (!isOpen()) {
             return;
         }
@@ -142,6 +156,7 @@ public class ConceptAlignmentAutoSearchBean implements Serializable {
         selectedSourceId = source.getId();
         selectedSourceName = StringUtils.defaultString(source.getSource());
         errorMessage = "";
+        statusMessage = "";
         ConceptDetail detail = thesaurusViewBean.getSelectedConcept();
         if (detail == null || detail.getSummary() == null) {
             errorMessage = "Le concept n'a pas de libellé à interroger.";
@@ -181,7 +196,28 @@ public class ConceptAlignmentAutoSearchBean implements Serializable {
             ));
             markExisting();
         }
-        if (propositions.isEmpty() && StringUtils.isBlank(errorMessage)) {
+        markSearchDone(announce);
+    }
+
+    private void markSearchDone(boolean announce) {
+        int count = propositions.size();
+        String source = StringUtils.defaultString(selectedSourceName);
+        String head;
+        if (isComparing()) {
+            head = count == 0
+                    ? "Comparaison terminée · aucun résultat"
+                    : "Comparaison terminée · " + count + " résultat(s)";
+        } else {
+            head = count == 0
+                    ? "Recherche terminée · aucun résultat"
+                    : "Recherche terminée · " + count + " résultat(s)";
+        }
+        statusMessage = StringUtils.isBlank(source) ? head : head + " · " + source;
+        if (announce) {
+            flashMessage = statusMessage;
+            flashToken = String.valueOf(System.currentTimeMillis());
+        }
+        if (count == 0 && StringUtils.isBlank(errorMessage)) {
             errorMessage = "Aucun alignement trouvé !";
         }
     }
@@ -250,7 +286,9 @@ public class ConceptAlignmentAutoSearchBean implements Serializable {
         flashToken = String.valueOf(System.currentTimeMillis());
         thesaurusViewBean.reloadSelectedConcept();
         conceptSelectionContext.update(thesaurusViewBean.getId(), thesaurusViewBean.getSelectedConcept());
-        selectSource(selectedSourceId);
+        selectSource(selectedSourceId, false);
+        flashMessage = "Alignement remplacé";
+        flashToken = String.valueOf(System.currentTimeMillis());
     }
 
     public void deleteAlignment() {
@@ -291,6 +329,13 @@ public class ConceptAlignmentAutoSearchBean implements Serializable {
         markExisting();
     }
 
+    public void selectPropositionType(int index, int typeId) {
+        if (!isOpen() || index < 0 || index >= propositions.size() || typeId <= 0) {
+            return;
+        }
+        propositions.get(index).setAlignmentTypeId(typeId);
+    }
+
     public boolean isSelectedSource(int sourceId) {
         return selectedSourceId == sourceId;
     }
@@ -303,6 +348,47 @@ public class ConceptAlignmentAutoSearchBean implements Serializable {
             return item.getDescription();
         }
         return StringUtils.defaultString(item.getSourceType()).replace('_', ' ');
+    }
+
+    public String getSearchLabel() {
+        ConceptDetail detail = thesaurusViewBean.getSelectedConcept();
+        if (detail == null || detail.getSummary() == null) {
+            return "";
+        }
+        return StringUtils.defaultString(detail.getSummary().getPreferredLabel());
+    }
+
+    public String propositionTypeKey(AlignmentProposition proposition) {
+        int typeId = proposition == null ? 1 : proposition.getAlignmentTypeId();
+        return typeKey(typeId);
+    }
+
+    public String typeKey(int typeId) {
+        return switch (typeId) {
+            case 2 -> "closeMatch";
+            case 3 -> "broadMatch";
+            case 4 -> "relatedMatch";
+            case 5 -> "narrowMatch";
+            default -> "exactMatch";
+        };
+    }
+
+    public String typeMessageKey(String typeKey) {
+        String key = StringUtils.defaultString(typeKey).trim();
+        if (key.startsWith("skos:")) {
+            key = key.substring(5);
+        }
+        return switch (key.toLowerCase()) {
+            case "closematch", "close" -> "v2.concept.alignment.type.close";
+            case "broadmatch", "broad" -> "v2.concept.alignment.type.broad";
+            case "relatedmatch", "related" -> "v2.concept.alignment.type.related";
+            case "narrowmatch", "narrow" -> "v2.concept.alignment.type.narrow";
+            default -> "v2.concept.alignment.type.exact";
+        };
+    }
+
+    public String typeMessageKey(int typeId) {
+        return typeMessageKey(typeKey(typeId));
     }
 
     private void markExisting() {
@@ -343,7 +429,9 @@ public class ConceptAlignmentAutoSearchBean implements Serializable {
         selectedSourceId = 0;
         selectedSourceName = "";
         propositions = new ArrayList<>();
+        alignmentTypes = new ArrayList<>();
         errorMessage = "";
+        statusMessage = "";
         mode = MODE_SEARCH;
         propositionToReplaceIndex = "";
         if (!keepFlash) {

@@ -1700,7 +1700,8 @@ function applyConceptLabelUi(source) {
     { msg: cv.getAttribute("data-flash-tr"), token: cv.getAttribute("data-flash-tr-token"), kind: "tr" },
     { msg: cv.getAttribute("data-flash-note"), token: cv.getAttribute("data-flash-note-token"), kind: "note" },
     { msg: cv.getAttribute("data-flash-res"), token: cv.getAttribute("data-flash-res-token"), kind: "res" },
-    { msg: cv.getAttribute("data-flash-align"), token: cv.getAttribute("data-flash-align-token"), kind: "align" }
+    { msg: cv.getAttribute("data-flash-align"), token: cv.getAttribute("data-flash-align-token"), kind: "align" },
+    { msg: cv.getAttribute("data-flash-align-edit"), token: cv.getAttribute("data-flash-align-edit-token"), kind: "alignEdit" }
   ];
   flashes.forEach((item) => {
     if (!item.msg || !item.token) return;
@@ -1922,12 +1923,36 @@ window.onAlignReplace = function (data) {
   }
 }
 
+document.addEventListener("toggle", (event) => {
+  const menu = event.target && event.target.classList && event.target.classList.contains("align-type-menu")
+    ? event.target
+    : null;
+  if (!menu || !menu.open) return;
+  document.querySelectorAll(".align-type-menu[open]").forEach((el) => {
+    if (el !== menu) el.removeAttribute("open");
+  });
+}, true);
+
+document.addEventListener("click", (event) => {
+  if (event.target.closest && event.target.closest(".align-type-menu")) return;
+  document.querySelectorAll(".align-type-menu[open]").forEach((el) => el.removeAttribute("open"));
+});
+
 window.onAlignAutoSearch = function (data) {
   const panel = document.querySelector("#viewLive .align-auto");
   const actions = document.querySelector("#viewLive .align-auto-actions");
   if (data.status === "begin") {
     if (panel) panel.classList.add("is-searching");
     if (actions) actions.classList.add("is-searching");
+    const trigger = data.source;
+    const card = trigger && trigger.closest ? trigger.closest(".align-src-card") : null;
+    if (panel && card) {
+      panel.querySelectorAll(".align-src-card").forEach((el) => el.classList.remove("sel", "is-loading"));
+      card.classList.add("sel", "is-loading");
+      const name = card.querySelector(".asc-name");
+      const dest = panel.querySelector(".align-res-load-src");
+      if (name && dest) dest.textContent = name.textContent.trim();
+    }
   }
   if (data.status === "success" || data.status === "complete") {
     if (panel) panel.classList.remove("is-searching");
