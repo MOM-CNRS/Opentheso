@@ -1987,6 +1987,28 @@ function markCandRowOpen(id) {
   });
 }
 
+function syncConceptUrl(id, nodeType) {
+  if (SCREEN !== "accueil" && SCREEN !== "consultation") return;
+  try {
+    const url = new URL(location.href);
+    if (id) {
+      url.searchParams.set("id", id);
+      if (nodeType && nodeType !== "concept") url.searchParams.set("type", nodeType);
+      else url.searchParams.delete("type");
+    } else {
+      url.searchParams.delete("id");
+      url.searchParams.delete("type");
+    }
+    url.searchParams.delete("idc");
+    const next = url.pathname + url.search + url.hash;
+    if (next !== location.pathname + location.search + location.hash) {
+      history.replaceState({ conceptId: id || "", type: nodeType || "" }, "", next);
+    }
+  } catch (err) {
+    /* ignore */
+  }
+}
+
 function openLiveDetail(id, nodeType) {
   const idEl = document.getElementById("previewOpenForm:openId");
   const typeEl = document.getElementById("previewOpenForm:openType");
@@ -1994,6 +2016,7 @@ function openLiveDetail(id, nodeType) {
   if (!id || !idEl || !btn) return false;
   idEl.value = id;
   if (typeEl) typeEl.value = nodeType || "";
+  syncConceptUrl(id, nodeType);
   if (!(state.view === "hyper" && state.graphFront)) beginLiveOpen();
   markCandRowOpen(id);
   btn.click();
@@ -2055,6 +2078,7 @@ function showLiveDetail() {
   state.home = false;
   state.draft = false;
   state.conceptId = el.getAttribute("data-id") || state.conceptId;
+  syncConceptUrl(state.conceptId, el.getAttribute("data-kind") || "");
   highlightConcept(state.conceptId);
   selectOpenedInTree(state.conceptId);
   paintGraphBack();
@@ -2287,22 +2311,24 @@ function openConcept(id, mode) {
   state.draft = false;
   state.conceptId = id;
   if (mode !== "stay") state.view = "arbo";
+  syncConceptUrl(id, "");
   highlightConcept(id);
   closeSearchUi();
   paint();
 }
 
 function openHome() {
-  if (IS_CONSULT) {
+  if (IS_CONSULT || SCREEN === "accueil") {
     state.home = true;
     state.conceptId = null;
     state.draft = false;
     state.view = "arbo";
     highlightConcept(null);
+    syncConceptUrl("", "");
     paint();
     return;
   }
-  if (SCREEN !== "accueil") go("index.xhtml");
+  go("index.xhtml");
 }
 
 function createCandidate(btn) {

@@ -1,8 +1,12 @@
 <?xml version="1.0" encoding="UTF-8"?>
 <ui:composition xmlns="http://www.w3.org/1999/xhtml"
                 xmlns:ui="http://xmlns.jcp.org/jsf/facelets"
+                xmlns:f="http://xmlns.jcp.org/jsf/core"
                 template="/v2/includes/layout.xhtml">
   <ui:param name="v2Page" value="consultation"/>
+  <ui:define name="viewActions">
+    <f:viewAction action="#{v2ThesaurusViewBean.restoreOpenedConcept}" onPostback="false"/>
+  </ui:define>
   <ui:define name="title">OpenTheso — Consultation</ui:define>
   <ui:define name="main">
 

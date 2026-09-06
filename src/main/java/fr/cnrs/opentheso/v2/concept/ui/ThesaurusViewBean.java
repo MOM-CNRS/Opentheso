@@ -347,6 +347,35 @@ public class ThesaurusViewBean implements Serializable {
         revealInTree();
     }
 
+    public void restoreOpenedConcept() {
+        restoreOpenedConcept(
+                firstNonBlank(requestParameter("id"), requestParameter("idc")),
+                requestParameter("type")
+        );
+    }
+
+    public void restoreOpenedConcept(String conceptId, String nodeType) {
+        if (detailRequested && StringUtils.isNotBlank(selectedId)) {
+            return;
+        }
+        if (StringUtils.isBlank(conceptId)) {
+            return;
+        }
+        openTreeNode(conceptId.trim(), StringUtils.trimToEmpty(nodeType));
+        if (StringUtils.isBlank(selectedId)) {
+            return;
+        }
+        revealId = selectedId;
+        revealInTree();
+    }
+
+    private static String firstNonBlank(String first, String second) {
+        if (StringUtils.isNotBlank(first)) {
+            return first.trim();
+        }
+        return StringUtils.trimToEmpty(second);
+    }
+
     public String currentConceptId() {
         if (selectedConcept != null && selectedConcept.getSummary() != null) {
             return StringUtils.trimToEmpty(selectedConcept.getSummary().getConceptId());

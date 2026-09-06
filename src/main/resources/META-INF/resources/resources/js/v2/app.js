@@ -1460,19 +1460,22 @@ if (SCREEN === "candidats" && (params.get("new") === "1" || params.get("pref") |
     }
   });
 }
-if (IS_CONSULT) {
+if (IS_CONSULT || SCREEN === "accueil") {
   const q = params.get("q");
-  const id = params.get("id");
+  const id = params.get("id") || params.get("idc");
   const view = params.get("view");
   if (q) {
     if (input) input.value = q;
     if (clear) clear.hidden = !q;
     runSearch();
+  } else if (typeof liveDetailRequested === "function" && liveDetailRequested()) {
+    if (typeof showLiveDetail === "function") showLiveDetail();
+    paint();
   } else if (id) {
     if (!openLiveDetail(id, params.get("type") || "")) {
       openConcept(id);
     }
-  } else if (view) {
+  } else if (IS_CONSULT && view) {
     setView(view);
   } else {
     paint();

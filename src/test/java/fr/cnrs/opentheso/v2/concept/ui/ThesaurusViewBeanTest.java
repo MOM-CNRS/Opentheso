@@ -283,6 +283,32 @@ class ThesaurusViewBeanTest {
     }
 
     @Test
+    void restoreOpenedConcept_reopensConceptFromId() {
+        thesaurusContext.selectThesaurus("th17", "Pactols_Lieux", "fr");
+        when(v2LocaleBean.getIdLangue()).thenReturn("fr");
+        when(thesaurusPreferenceService.loadUsedLanguages("th17", "fr")).thenReturn(List.of(language("fr", "Français")));
+        when(conceptReadService.loadDetail("th17", "c1", "fr", true))
+                .thenReturn(Optional.of(conceptDetail("c1", "Lieux", "C")));
+        when(conceptReadService.countBranchConcepts("th17", "c1")).thenReturn(1);
+        when(conceptReadService.loadBreadcrumbPaths("th17", "c1", "fr")).thenReturn(List.of());
+        when(conceptReadService.loadBreadcrumb("th17", "c1", "fr")).thenReturn(List.of());
+
+        bean.restoreOpenedConcept("c1", "concept");
+
+        assertTrue(bean.isConceptSelected());
+        assertEquals("c1", bean.getSelectedId());
+        assertEquals("c1", bean.getRevealedConceptId());
+    }
+
+    @Test
+    void restoreOpenedConcept_skipsWhenNothingRequested() {
+        bean.restoreOpenedConcept("", "");
+
+        verify(conceptReadService, never()).loadDetail(any(), any(), any(), any(Boolean.class));
+        assertFalse(bean.isDetailRequested());
+    }
+
+    @Test
     void loadsTreeRootsFromDatabase() {
         thesaurusContext.selectThesaurus("th17", "Pactols_Lieux", "fr");
         when(v2LocaleBean.getIdLangue()).thenReturn("fr");
