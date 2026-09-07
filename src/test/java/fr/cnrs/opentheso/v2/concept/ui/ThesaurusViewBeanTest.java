@@ -1,6 +1,7 @@
 package fr.cnrs.opentheso.v2.concept.ui;
 
 import fr.cnrs.opentheso.v2.concept.model.ConceptLabel;
+import fr.cnrs.opentheso.v2.concept.model.ConceptNote;
 import fr.cnrs.opentheso.v2.concept.model.ConceptLinkItem;
 import fr.cnrs.opentheso.v2.concept.model.ConceptDetail;
 import fr.cnrs.opentheso.v2.concept.model.ConceptSummary;
@@ -306,6 +307,33 @@ class ThesaurusViewBeanTest {
 
         verify(conceptReadService, never()).loadDetail(any(), any(), any(), any(Boolean.class));
         assertFalse(bean.isDetailRequested());
+    }
+
+    @Test
+    void notesOfType_keepsSelectedLanguageUntilToggle() {
+        thesaurusContext.selectThesaurus("th17", "Pactols_Lieux", "fr");
+        when(v2LocaleBean.getIdLangue()).thenReturn("fr");
+        when(thesaurusPreferenceService.loadUsedLanguages("th17", "fr")).thenReturn(List.of(
+                language("fr", "Français"),
+                language("en", "Anglais")
+        ));
+        ReflectionTestUtils.setField(bean, "selectedConcept", conceptDetailWithNotes(
+                new ConceptNote("1", "definition", "fr", "Chat"),
+                new ConceptNote("2", "definition", "en", "Cat")
+        ));
+        bean.setSelectedLang("fr");
+
+        assertEquals(1, bean.notesOfType("definition").size());
+        assertEquals("Chat", bean.notesOfType("definition").get(0).value());
+        assertTrue(bean.isHasDisplayedNotes());
+        assertTrue(bean.isNoteLanguageToggleVisible());
+        assertFalse(bean.isShowAllNoteLanguages());
+
+        bean.toggleNoteLanguages();
+
+        assertTrue(bean.isShowAllNoteLanguages());
+        assertTrue(bean.isHasDisplayedNotes());
+        assertEquals(2, bean.notesOfType("definition").size());
     }
 
     @Test
@@ -837,6 +865,25 @@ class ThesaurusViewBeanTest {
                 List.of(new ConceptLinkItem("c1", "Lieux")),
                 List.of(new ThesaurusMetadataItem(1, "title", title, "fr", "string")),
                 html
+        );
+    }
+
+    private static ConceptDetail conceptDetailWithNotes(ConceptNote... notes) {
+        return new ConceptDetail(
+                new ConceptSummary("c1", "th17", "Lieux", "fr", "C", "", "concept", "", "", "", ""),
+                Collections.emptyList(),
+                Collections.emptyList(),
+                Collections.emptyList(),
+                Collections.emptyList(),
+                Collections.emptyList(),
+                Collections.emptyList(),
+                Collections.emptyList(),
+                List.of(notes),
+                Collections.emptyList(),
+                Collections.emptyList(),
+                Collections.emptyList(),
+                Collections.emptyList(),
+                Collections.emptyList()
         );
     }
 

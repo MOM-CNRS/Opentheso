@@ -1992,18 +1992,43 @@ function syncConceptUrl(id, nodeType) {
   try {
     const url = new URL(location.href);
     if (id) {
-      url.searchParams.set("id", id);
+      /* Accueil: idc évite le paramètre JSF "id" qui casse l'ajax de sélection. */
+      if (SCREEN === "accueil") {
+        url.searchParams.set("idc", id);
+        url.searchParams.delete("id");
+      } else {
+        url.searchParams.set("id", id);
+        url.searchParams.delete("idc");
+      }
       if (nodeType && nodeType !== "concept") url.searchParams.set("type", nodeType);
       else url.searchParams.delete("type");
     } else {
       url.searchParams.delete("id");
+      url.searchParams.delete("idc");
       url.searchParams.delete("type");
     }
-    url.searchParams.delete("idc");
     const next = url.pathname + url.search + url.hash;
     if (next !== location.pathname + location.search + location.hash) {
       history.replaceState({ conceptId: id || "", type: nodeType || "" }, "", next);
     }
+  } catch (err) {
+    /* ignore */
+  }
+}
+
+function sanitizeFacesFormAction(form) {
+  if (!form) return;
+  const raw = form.getAttribute("action");
+  if (!raw) return;
+  try {
+    const url = new URL(raw, location.href);
+    if (!url.searchParams.has("id") && !url.searchParams.has("idc") && !url.searchParams.has("type")) {
+      return;
+    }
+    url.searchParams.delete("id");
+    url.searchParams.delete("idc");
+    url.searchParams.delete("type");
+    form.setAttribute("action", url.pathname + url.search + url.hash);
   } catch (err) {
     /* ignore */
   }
@@ -2016,7 +2041,7 @@ function openLiveDetail(id, nodeType) {
   if (!id || !idEl || !btn) return false;
   idEl.value = id;
   if (typeEl) typeEl.value = nodeType || "";
-  syncConceptUrl(id, nodeType);
+  sanitizeFacesFormAction(btn.form);
   if (!(state.view === "hyper" && state.graphFront)) beginLiveOpen();
   markCandRowOpen(id);
   btn.click();

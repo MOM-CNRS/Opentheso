@@ -77,6 +77,8 @@ public class ThesaurusViewBean implements Serializable {
     private Boolean breadcrumbEnabled;
     private Boolean sortByNotation;
     private Boolean customRelationVisible;
+    @Getter
+    private boolean showAllNoteLanguages;
 
     @Getter
     @Setter
@@ -349,7 +351,7 @@ public class ThesaurusViewBean implements Serializable {
 
     public void restoreOpenedConcept() {
         restoreOpenedConcept(
-                firstNonBlank(requestParameter("id"), requestParameter("idc")),
+                firstNonBlank(requestParameter("idc"), requestParameter("id")),
                 requestParameter("type")
         );
     }
@@ -584,16 +586,59 @@ public class ThesaurusViewBean implements Serializable {
     }
 
     public List<String> getSelectedNoteTypeCodes() {
-        if (selectedConcept == null || selectedConcept.getNotes() == null) {
-            return Collections.emptyList();
-        }
-        return selectedConcept.getNotes().stream()
+        return getDisplayedNotes().stream()
                 .map(ConceptNote::typeCode)
                 .filter(StringUtils::isNotBlank)
                 .collect(Collectors.collectingAndThen(
                         Collectors.toCollection(LinkedHashSet::new),
                         ArrayList::new
                 ));
+    }
+
+    public void toggleNoteLanguages() {
+        showAllNoteLanguages = !showAllNoteLanguages;
+    }
+
+    public boolean isNoteLanguageToggleVisible() {
+        if (selectedConcept == null || selectedConcept.getNotes() == null) {
+            return false;
+        }
+        String lang = getSelectedLang();
+        return selectedConcept.getNotes().stream()
+                .anyMatch(note -> note != null && !matchesNoteLang(note.lang(), lang));
+    }
+
+    public boolean hasDisplayedNotes() {
+        return !getDisplayedNotes().isEmpty();
+    }
+
+    /** EL JSF : {@code #{bean.hasDisplayedNotes}} résout {@code isHasDisplayedNotes()}, pas {@code hasDisplayedNotes()}. */
+    public boolean isHasDisplayedNotes() {
+        return hasDisplayedNotes();
+    }
+
+    public List<ConceptNote> displayedNotes() {
+        return getDisplayedNotes();
+    }
+
+    public List<ConceptNote> getDisplayedNotes() {
+        if (selectedConcept == null || selectedConcept.getNotes() == null) {
+            return Collections.emptyList();
+        }
+        if (showAllNoteLanguages) {
+            return selectedConcept.getNotes();
+        }
+        String lang = getSelectedLang();
+        return selectedConcept.getNotes().stream()
+                .filter(note -> note != null && matchesNoteLang(note.lang(), lang))
+                .toList();
+    }
+
+    private static boolean matchesNoteLang(String noteLang, String selected) {
+        return StringUtils.equalsIgnoreCase(
+                StringUtils.trimToEmpty(noteLang),
+                StringUtils.trimToEmpty(selected)
+        );
     }
 
     /** Libellés préférentiels des autres langues — structure {@code tr-list} de la maquette. */
@@ -620,10 +665,9 @@ public class ThesaurusViewBean implements Serializable {
     }
 
     public List<ConceptNote> notesOfType(String typeCode) {
-        if (selectedConcept == null) {
-            return Collections.emptyList();
-        }
-        return selectedConcept.notesOfType(typeCode);
+        return getDisplayedNotes().stream()
+                .filter(note -> StringUtils.equals(note.typeCode(), typeCode))
+                .toList();
     }
 
     public String flagEmoji(String lang) {

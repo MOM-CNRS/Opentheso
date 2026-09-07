@@ -728,7 +728,7 @@
       </section>
 
       <section class="cblock#{v2ConceptNoteBlockEditorBean.editing ? ' is-editing' : ''}" data-card-id="notes">
-        <div class="cblock-head"><span class="cblock-drag" role="button" tabindex="0" title="Glisser pour réordonner" aria-label="Réordonner ce bloc"><svg class="cblock-grip" viewBox="0 0 8 14" aria-hidden="true" focusable="false"><circle cx="2" cy="2" r="1.35"/><circle cx="6" cy="2" r="1.35"/><circle cx="2" cy="7" r="1.35"/><circle cx="6" cy="7" r="1.35"/><circle cx="2" cy="12" r="1.35"/><circle cx="6" cy="12" r="1.35"/></svg></span><span class="cblock-title">Notes</span><div class="cblock-tools"><h:commandButton id="noteEditStart" value="✎" styleClass="cblock-gear" title="#{v2LocaleBean.getMsg('v2.edit')}" rendered="#{v2ConceptNoteBlockEditorBean.editable and not v2ConceptNoteBlockEditorBean.editing}" action="#{v2ConceptNoteBlockEditorBean.startEditing}"><f:ajax execute="@this" render=":previewDetailForm:previewDetail"/></h:commandButton><button type="button" class="cblock-gear cblock-fold" data-act="cblock-fold" title="#{v2LocaleBean.getMsg('v2.block.collapse')}" aria-expanded="true" aria-label="#{v2LocaleBean.getMsg('v2.block.collapse')}"><svg viewBox="0 0 24 24" aria-hidden="true"><path d="m6 9 6 6 6-6"/></svg></button></div></div>
+        <div class="cblock-head"><span class="cblock-drag" role="button" tabindex="0" title="Glisser pour réordonner" aria-label="Réordonner ce bloc"><svg class="cblock-grip" viewBox="0 0 8 14" aria-hidden="true" focusable="false"><circle cx="2" cy="2" r="1.35"/><circle cx="6" cy="2" r="1.35"/><circle cx="2" cy="7" r="1.35"/><circle cx="6" cy="7" r="1.35"/><circle cx="2" cy="12" r="1.35"/><circle cx="6" cy="12" r="1.35"/></svg></span><span class="cblock-title">Notes</span><div class="cblock-tools"><h:commandLink id="noteLangToggle" styleClass="vo-sw cblock-note-sw#{v2ThesaurusViewBean.showAllNoteLanguages ? ' on' : ''}" title="#{v2LocaleBean.getMsg('concept.showNotesOtherLang')}" rendered="#{v2ThesaurusViewBean.noteLanguageToggleVisible and not v2ConceptNoteBlockEditorBean.editing}" action="#{v2ThesaurusViewBean.toggleNoteLanguages}" pt:role="switch" pt:aria-checked="#{v2ThesaurusViewBean.showAllNoteLanguages}"><f:ajax execute="@this" render=":previewDetailForm:previewDetail"/></h:commandLink><h:commandButton id="noteEditStart" value="✎" styleClass="cblock-gear" title="#{v2LocaleBean.getMsg('v2.edit')}" rendered="#{v2ConceptNoteBlockEditorBean.editable and not v2ConceptNoteBlockEditorBean.editing}" action="#{v2ConceptNoteBlockEditorBean.startEditing}"><f:ajax execute="@this" render=":previewDetailForm:previewDetail"/></h:commandButton><button type="button" class="cblock-gear cblock-fold" data-act="cblock-fold" title="#{v2LocaleBean.getMsg('v2.block.collapse')}" aria-expanded="true" aria-label="#{v2LocaleBean.getMsg('v2.block.collapse')}"><svg viewBox="0 0 24 24" aria-hidden="true"><path d="m6 9 6 6 6-6"/></svg></button></div></div>
         <div class="cblock-body">
           <ui:fragment rendered="#{v2ConceptNoteBlockEditorBean.editing}">
           <div class="note-edit">
@@ -827,7 +827,7 @@
           </div>
           </ui:fragment>
           <ui:fragment rendered="#{not v2ConceptNoteBlockEditorBean.editing}">
-          <ui:fragment rendered="#{empty v2ThesaurusViewBean.selectedConcept.notes}">
+          <ui:fragment rendered="#{not v2ThesaurusViewBean.hasDisplayedNotes}">
             <div class="muted">Aucune note.</div>
           </ui:fragment>
           <ui:repeat value="#{v2ThesaurusViewBean.selectedNoteTypeCodes}" var="typeCode">

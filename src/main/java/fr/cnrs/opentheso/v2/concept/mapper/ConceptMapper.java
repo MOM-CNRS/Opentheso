@@ -135,7 +135,7 @@ public final class ConceptMapper {
                 mapSynonyms(fullConcept.getAltLabels()),
                 mapSynonyms(fullConcept.getHiddenLabels()),
                 mapTranslations(fullConcept),
-                mapNotes(fullConcept, lang),
+                mapNotes(fullConcept, lang, true),
                 mapAlignmentGroupsFromFullConcept(fullConcept),
                 mapUriLabels(fullConcept.getMembres()),
                 mapUriLabels(fullConcept.getFacets()),
@@ -237,10 +237,6 @@ public final class ConceptMapper {
                         StringUtils.defaultString(label.getCodeFlag())
                 ))
                 .forEach(target::add);
-    }
-
-    private static List<ConceptNote> mapNotes(ConceptFullSnapshot fullConcept, String lang) {
-        return mapNotes(fullConcept, lang, false);
     }
 
     private static void addNotes(

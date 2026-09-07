@@ -115,4 +115,21 @@ class ConceptMapperTest {
         assertEquals(1, detail.facets().size());
         assertTrue(detail.hasNotesOfType("definition"));
     }
+
+    @Test
+    void toDetailFromFullConcept_keepsNotesFromEveryLanguage() {
+        ConceptFullSnapshot fullConcept = new ConceptFullSnapshot();
+        fullConcept.setIdentifier("C1");
+        fullConcept.setResourceStatus(ConceptResourceStatus.CONCEPT);
+        fullConcept.setPrefLabel(new ConceptTermLabel("fr", "Preferred", "T1", 1));
+        fullConcept.setDefinitions(List.of(
+                new ConceptSnapshotNote(1, "fr", "Une définition", ""),
+                new ConceptSnapshotNote(2, "en", "A definition", "")
+        ));
+
+        var detail = ConceptMapper.toDetailFromFullConcept(fullConcept, "TH1", "fr", List.of());
+
+        assertEquals(2, detail.notes().size());
+        assertEquals("en", detail.notes().get(1).lang());
+    }
 }
