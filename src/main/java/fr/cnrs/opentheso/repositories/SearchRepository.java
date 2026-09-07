@@ -272,7 +272,8 @@ public interface SearchRepository extends JpaRepository<Concept, Integer> {
                      WHERE c.status != 'CA'
                        AND pt.id_thesaurus = :idThesaurus
                        AND (:idLang IS NULL OR t.lang = :idLang)
-                       AND (
+                       AND unaccent(lower(t.lexical_value)) ~* ('(^|[^[:alpha:]])' || unaccent(lower(:val)))
+                    /*   AND (
                            unaccent(lower(t.lexical_value)) ILIKE CONCAT(unaccent(lower(:val)), '%')
                            OR unaccent(lower(t.lexical_value)) ILIKE CONCAT('% ', unaccent(lower(:val)), '%')
                            OR unaccent(lower(t.lexical_value)) ILIKE CONCAT('%-', unaccent(lower(:val)), '%')
@@ -282,7 +283,7 @@ public interface SearchRepository extends JpaRepository<Concept, Integer> {
                            OR unaccent(lower(t.lexical_value)) ILIKE CONCAT('%ʿ', unaccent(lower(:val)), '%')
                            OR unaccent(lower(t.lexical_value)) ILIKE CONCAT('%[', unaccent(lower(:val)), '%')
                            OR unaccent(lower(t.lexical_value)) ILIKE CONCAT('%(', unaccent(lower(:val)), '%')
-                       )
+                       )*/
                  ) x
                  ORDER BY x.sort_norm
                  LIMIT 50;
@@ -375,6 +376,9 @@ public interface SearchRepository extends JpaRepository<Concept, Integer> {
                              WHERE c.status != 'CA'
                                AND npt.id_thesaurus = :idThesaurus
                                AND (:idLang IS NULL OR npt.lang = :idLang)
+                               
+                               AND unaccent(lower(npt.lexical_value)) ~* ('(^|[^[:alpha:]])' || unaccent(lower(:val)))
+                               /*            
                                AND (
                                    unaccent(lower(npt.lexical_value)) ILIKE CONCAT(unaccent(lower(:val)), '%')
                                    OR unaccent(lower(npt.lexical_value)) ILIKE CONCAT('% ', unaccent(lower(:val)), '%')
@@ -385,7 +389,7 @@ public interface SearchRepository extends JpaRepository<Concept, Integer> {
                                    OR unaccent(lower(npt.lexical_value)) ILIKE CONCAT('%ʿ', unaccent(lower(:val)), '%')
                                    OR unaccent(lower(npt.lexical_value)) ILIKE CONCAT('%[', unaccent(lower(:val)), '%')
                                    OR unaccent(lower(npt.lexical_value)) ILIKE CONCAT('%(', unaccent(lower(:val)), '%')
-                               )
+                               )*/
                                -- Exclure les concepts privés via NOT EXISTS
                                AND NOT EXISTS (
                                    SELECT 1
