@@ -16,17 +16,15 @@ import org.eclipse.rdf4j.rio.helpers.AbstractRDFHandler;
 
 public class ReadCommunFlux extends AbstractRDFHandler {
 
-    private final static String RESOURCE_TAG = "http://www.w3.org/1999/02/22-rdf-syntax-ns#type";
-    private final static String CONCEPT_SCHEME_TAG = "http://www.w3.org/2004/02/skos/core#ConceptScheme";
-    private final static String COLLECTION_TAG = "http://www.w3.org/2004/02/skos/core#Collection";
-    private final static String FACET_TAG = "http://purl.org/iso25964/skos-thes#ThesaurusArray";
-    private final static String CONCEPT_TAG = "http://www.w3.org/2004/02/skos/core#Concept";
-    private final static String IMAGE_TAG = "http://xmlns.com/foaf/0.1/Image";
+    private static final String RESOURCE_TAG = "http://www.w3.org/1999/02/22-rdf-syntax-ns#type";
+    private static final String CONCEPT_SCHEME_TAG = "http://www.w3.org/2004/02/skos/core#ConceptScheme";
+    private static final String COLLECTION_TAG = "http://www.w3.org/2004/02/skos/core#Collection";
+    private static final String FACET_TAG = "http://purl.org/iso25964/skos-thes#ThesaurusArray";
+    private static final String CONCEPT_TAG = "http://www.w3.org/2004/02/skos/core#Concept";
+    private static final String IMAGE_TAG = "http://xmlns.com/foaf/0.1/Image";
 
     private SKOSXmlDocument skosXmlDocument;
-    private Resource subject, subjectTmp;
-    private IRI predicate;
-    private Value value;
+    private Resource subjectTmp;
     private boolean isConceptScheme;
     private boolean isCollection;
     private boolean isFacet;
@@ -46,9 +44,9 @@ public class ReadCommunFlux extends AbstractRDFHandler {
     @Override
     public void handleStatement(Statement st) throws RDFHandlerException {
         // On commence par lire la première ligne d'un bloc de type "rdf:Description"
-        predicate = st.getPredicate();
-        value = st.getObject();
-        subject = st.getSubject();
+        IRI predicate = st.getPredicate();
+        Value value = st.getObject();
+        Resource subject = st.getSubject();
 
         // On teste si on est au niveau du début/fin d'une balise de type "rdf:Description"
         if ((subjectTmp == null || !subject.stringValue().equals(subjectTmp.stringValue())) && RESOURCE_TAG.equalsIgnoreCase(predicate.stringValue())) {
@@ -84,10 +82,8 @@ public class ReadCommunFlux extends AbstractRDFHandler {
         }
 
         String lang = defaultLang;
-        Literal literal = null;
-        if (value instanceof Literal) {
+        if (value instanceof Literal literal) {
             // Si la ligne en cours contient une langue spécifique, on récupère la langue dans
-            literal = (Literal) value;
             lang = literal.getLanguage().orElse(lang);
 
             if (isConceptScheme) {
@@ -102,7 +98,7 @@ public class ReadCommunFlux extends AbstractRDFHandler {
             }
         } else {
             // Pour traiter les lignes d'un bloc qui ne contiennent pas une langue, le bloc peut être de plusieurs type
-            conceptReader.readConcept(skosXmlDocument, skosResource, predicate, value, literal);
+            conceptReader.readConcept(skosXmlDocument, skosResource, predicate, value, null);
         }
         subjectTmp = subject;
     }

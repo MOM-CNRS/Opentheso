@@ -24,7 +24,10 @@ public class CandidatImageBean implements Serializable {
     private final transient CandidatMutationService candidatMutationService;
     private final transient ThesaurusContext thesaurusContext;
 
-    private String uri, copyright, name, creator;
+    private String uri;
+    private String copyright;
+    private String name;
+    private String creator;
 
     public void addNewImage(int idUser) {
         if (StringUtils.isBlank(uri)) {

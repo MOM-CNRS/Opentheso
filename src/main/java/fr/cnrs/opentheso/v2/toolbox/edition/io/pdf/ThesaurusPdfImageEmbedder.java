@@ -1,5 +1,6 @@
 package fr.cnrs.opentheso.v2.toolbox.edition.io.pdf;
 
+import com.itextpdf.text.BadElementException;
 import com.itextpdf.text.Chunk;
 import com.itextpdf.text.Image;
 import com.itextpdf.text.Paragraph;
@@ -8,6 +9,7 @@ import lombok.extern.slf4j.Slf4j;
 import org.apache.commons.collections4.CollectionUtils;
 import org.apache.commons.lang3.StringUtils;
 
+import java.io.IOException;
 import java.io.InputStream;
 import java.net.HttpURLConnection;
 import java.net.URI;
@@ -56,7 +58,7 @@ final class ThesaurusPdfImageEmbedder {
         }
     }
 
-    private static Image loadImage(String uri) throws Exception {
+    private static Image loadImage(String uri) throws IOException, BadElementException {
         URL imageUrl = URI.create(uri).toURL();
         URLConnection connection = imageUrl.openConnection();
         connection.setConnectTimeout(CONNECT_TIMEOUT_MS);

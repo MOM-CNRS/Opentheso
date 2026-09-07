@@ -20,7 +20,7 @@ import org.mockito.junit.jupiter.MockitoExtension;
 import java.util.ArrayList;
 import java.util.List;
 import java.util.Optional;
-import java.util.function.BiConsumer;
+import java.util.function.ObjIntConsumer;
 import java.util.function.Supplier;
 
 import static org.junit.jupiter.api.Assertions.assertEquals;
@@ -208,7 +208,7 @@ class ThesaurusEditionSkosImportServiceTest {
         }
 
         @Override
-        public <T> int forEachBatched(List<T> items, BiConsumer<List<T>, Integer> batchConsumer) {
+        public <T> int forEachBatched(List<T> items, ObjIntConsumer<List<T>> batchConsumer) {
             if (items == null || items.isEmpty()) {
                 return 0;
             }

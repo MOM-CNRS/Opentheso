@@ -52,10 +52,11 @@ class SelectionExportJobTest {
         var interrupted = new java.util.concurrent.atomic.AtomicBoolean();
         var pool = java.util.concurrent.Executors.newSingleThreadExecutor();
         try {
+            var block = new java.util.concurrent.CountDownLatch(1);
             var future = pool.submit(() -> {
                 started.countDown();
                 try {
-                    Thread.sleep(10_000);
+                    block.await();
                 } catch (InterruptedException ex) {
                     interrupted.set(true);
                 } finally {

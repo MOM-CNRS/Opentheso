@@ -251,7 +251,7 @@ class EditionBeanTest {
     }
 
     @Test
-    void deleteThesaurus_clearsSelectedThesaurusWhenDeleted() throws Exception {
+    void deleteThesaurus_clearsSelectedThesaurusWhenDeleted() {
         stubListAccess();
         bean.setThesaurusIdToDelete("TH1");
         when(thesaurusContext.matchesCurrentThesaurus("TH1")).thenReturn(true);

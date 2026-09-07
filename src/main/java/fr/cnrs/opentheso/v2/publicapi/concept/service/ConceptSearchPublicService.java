@@ -3,6 +3,7 @@ package fr.cnrs.opentheso.v2.publicapi.concept.service;
 import fr.cnrs.opentheso.repositories.ConceptRepository;
 import fr.cnrs.opentheso.v2.concept.api.dto.ConceptTreeNodeResponse;
 import fr.cnrs.opentheso.v2.concept.api.mapper.ConceptApiMapper;
+import fr.cnrs.opentheso.v2.concept.model.ConceptSummary;
 import fr.cnrs.opentheso.v2.concept.service.ConceptBreadcrumbReadService;
 import fr.cnrs.opentheso.v2.concept.service.ConceptReadService;
 import fr.cnrs.opentheso.v2.publicapi.concept.api.dto.ConceptSearchPathResponse;
@@ -35,7 +36,7 @@ public class ConceptSearchPublicService {
                 .limit(limit)
                 .map(concept -> {
                     String label = conceptReadService.loadSummary(thesaurusId, concept.getIdConcept(), workLang)
-                            .map(summary -> summary.preferredLabel())
+                            .map(ConceptSummary::preferredLabel)
                             .orElse("(" + concept.getIdConcept() + ")");
                     return new ConceptTreeNodeResponse(
                             concept.getIdConcept(), label, concept.getNotation(), concept.getConceptType(), false);
@@ -57,7 +58,7 @@ public class ConceptSearchPublicService {
     public ConceptSearchPathResponse fullPathOfConcept(String thesaurusId, String conceptId, String lang) {
         String workLang = resolveLang(thesaurusId, lang);
         String label = conceptReadService.loadSummary(thesaurusId, conceptId, workLang)
-                .map(summary -> summary.preferredLabel())
+                .map(ConceptSummary::preferredLabel)
                 .orElse(conceptId);
         return new ConceptSearchPathResponse(conceptId, label, loadAllPaths(thesaurusId, conceptId, workLang));
     }

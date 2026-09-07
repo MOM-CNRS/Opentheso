@@ -127,7 +127,7 @@ class SelectionExportServiceTest {
     }
 
     @Test
-    void export_cancelsWhenRequestedBeforeWork() throws Exception {
+    void export_cancelsWhenRequestedBeforeWork() {
         job.requestCancel();
 
         service.export(SelectionExportRequest.of("TH1", List.of("C1"), "rdf", false, false), job);

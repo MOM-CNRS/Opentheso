@@ -31,7 +31,6 @@ import static org.mockito.ArgumentMatchers.any;
 import static org.mockito.ArgumentMatchers.anyBoolean;
 import static org.mockito.ArgumentMatchers.anyInt;
 import static org.mockito.ArgumentMatchers.anyString;
-import static org.mockito.ArgumentMatchers.eq;
 import static org.mockito.Mockito.never;
 import static org.mockito.Mockito.verify;
 import static org.mockito.Mockito.when;
@@ -104,8 +103,8 @@ class ProjectMemberServiceTest {
         when(userCommandRepository.existsByMailIgnoreCase("bob@example.com")).thenReturn(false);
         when(passwordEncoder.encode("Abcd1234!")).thenReturn("encoded");
         when(userCommandRepository.createUser(
-                eq("bob"), eq("bob@example.com"), eq("encoded"), eq(true), eq("CNRS"),
-                eq(true), eq(false), eq(true)
+                "bob", "bob@example.com", "encoded", true, "CNRS",
+                true, false, true
         )).thenReturn(12);
 
         CreatedProjectMember created = projectMemberService.createMember(

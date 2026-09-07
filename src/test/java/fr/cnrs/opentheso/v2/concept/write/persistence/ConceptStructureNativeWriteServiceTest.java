@@ -17,7 +17,6 @@ import static org.junit.jupiter.api.Assertions.assertEquals;
 import static org.mockito.ArgumentMatchers.anyBoolean;
 import static org.mockito.ArgumentMatchers.anyInt;
 import static org.mockito.ArgumentMatchers.anyString;
-import static org.mockito.ArgumentMatchers.eq;
 import static org.mockito.Mockito.never;
 import static org.mockito.Mockito.verify;
 import static org.mockito.Mockito.when;
@@ -70,7 +69,7 @@ class ConceptStructureNativeWriteServiceTest {
         assertEquals(MutationOutcome.OK, result.outcome());
         assertEquals("C99", result.createdConceptId());
         verify(conceptCreationWriteRepository).insertConcept(
-                eq("C99"), eq("TH1"), eq("D"), eq(""), eq(true), eq(7));
+                "C99", "TH1", "D", "", true, 7);
         verify(conceptCreationWriteRepository).linkConceptToGroup("GRP1", "C99", "TH1");
         verify(conceptIdentifierAssignmentService).assignIdentifiers("TH1", "C99", "fr");
         verify(conceptWritePostMutationRepository).saveCreatorDcTerm("TH1", "C99", "admin");

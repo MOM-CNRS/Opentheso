@@ -29,10 +29,13 @@ public class CandidatNoteBean implements Serializable {
     private final transient UserSession userSession;
     private final transient ThesaurusContext thesaurusContext;
 
-    private List<NoteType> noteTypes;
-    private String selectedLang, selectedTypeNote, noteValue;
+    private transient List<NoteType> noteTypes;
+    private String selectedLang;
+    private String selectedTypeNote;
+    private String noteValue;
     private NodeNote selectedNodeNote;
-    private boolean isEditMode, visible;
+    private boolean isEditMode;
+    private boolean visible;
 
     public void reset() {
         visible = true;

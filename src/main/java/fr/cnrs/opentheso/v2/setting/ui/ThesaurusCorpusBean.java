@@ -11,6 +11,7 @@ import lombok.Getter;
 import lombok.RequiredArgsConstructor;
 import lombok.Setter;
 import org.apache.commons.lang3.StringUtils;
+import org.apache.commons.lang3.Strings;
 
 import java.io.Serializable;
 import java.util.ArrayList;
@@ -284,7 +285,7 @@ public class ThesaurusCorpusBean implements Serializable {
 
     private void ensureCorpusListLoaded() {
         String thesaurusId = settingsAccess.getThesaurusId();
-        if (corpusLoaded && StringUtils.equals(corpusLoadedForThesaurus, thesaurusId) && corpusList != null) {
+        if (corpusLoaded && Strings.CS.equals(corpusLoadedForThesaurus, thesaurusId) && corpusList != null) {
             return;
         }
         refreshCorpusList();

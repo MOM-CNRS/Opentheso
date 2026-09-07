@@ -27,6 +27,7 @@ import lombok.Getter;
 import lombok.RequiredArgsConstructor;
 import lombok.Setter;
 import org.apache.commons.lang3.StringUtils;
+import org.apache.commons.lang3.Strings;
 
 import java.io.Serializable;
 import java.util.ArrayList;
@@ -163,7 +164,7 @@ public class ConceptLabelBlockEditorBean implements Serializable {
         String currentPref = StringUtils.trimToEmpty(current.getSummary().getPreferredLabel());
         boolean dirty = false;
 
-        if (!StringUtils.equals(pref, currentPref)) {
+        if (!Strings.CS.equals(pref, currentPref)) {
             MutationResult renamed = conceptLifecycleMutationService.renamePreferredLabel(
                     new RenamePreferredLabelCommand(
                             thesaurusId,
@@ -337,8 +338,8 @@ public class ConceptLabelBlockEditorBean implements Serializable {
         if (detail == null || detail.getSummary() == null) {
             return false;
         }
-        return StringUtils.equals(editingConceptId, detail.getSummary().getConceptId())
-                && StringUtils.equals(editingLang, resolveLang(detail));
+        return Strings.CS.equals(editingConceptId, detail.getSummary().getConceptId())
+                && Strings.CS.equals(editingLang, resolveLang(detail));
     }
 
     private String resolveLang(ConceptDetail detail) {

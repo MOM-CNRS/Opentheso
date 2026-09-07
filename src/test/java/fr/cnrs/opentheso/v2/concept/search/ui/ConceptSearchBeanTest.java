@@ -90,7 +90,7 @@ class ConceptSearchBeanTest {
         bean.setSearchLang("fr");
         bean.setSearchValue("a");
         when(conceptSearchService.search(
-                eq("a"), eq(ConceptSearchMode.FULL_TEXT), eq("TH1"), eq("fr"), eq(true)
+                "a", ConceptSearchMode.FULL_TEXT, "TH1", "fr", true
         )).thenReturn(List.of(
                 new ConceptSearchResult("TH1", "C1", "Alpha", "fr", false, List.of(), List.of(), List.of()),
                 new ConceptSearchResult("TH1", "C2", "Beta", "fr", false, List.of(), List.of(), List.of())

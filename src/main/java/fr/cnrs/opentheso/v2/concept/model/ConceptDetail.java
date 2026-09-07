@@ -181,12 +181,12 @@ public record ConceptDetail(
     }
 
     public boolean hasNotesOfType(String typeCode) {
-        return notes.stream().anyMatch(note -> org.apache.commons.lang3.StringUtils.equals(note.typeCode(), typeCode));
+        return notes.stream().anyMatch(note -> org.apache.commons.lang3.Strings.CS.equals(note.typeCode(), typeCode));
     }
 
     public List<ConceptNote> notesOfType(String typeCode) {
         return notes.stream()
-                .filter(note -> org.apache.commons.lang3.StringUtils.equals(note.typeCode(), typeCode))
+                .filter(note -> org.apache.commons.lang3.Strings.CS.equals(note.typeCode(), typeCode))
                 .toList();
     }
 

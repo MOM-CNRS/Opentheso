@@ -179,21 +179,24 @@ public class ToolboxStatisticsPersistence {
     }
 
     private List<ConceptStatisticData> mapConceptStatistics(List<ConceptGroupProjection> rows) {
+        if (CollectionUtils.isEmpty(rows)) {
+            return List.of();
+        }
         var dataFormat = new SimpleDateFormat("yyyy-MM-dd");
-        return CollectionUtils.isEmpty(rows)
-                ? List.of()
-                : rows.stream()
-                        .map(element -> ConceptStatisticData.builder()
-                                .idConcept(element.getIdConcept())
-                                .dateCreation(ObjectUtils.isEmpty(element.getCreated())
-                                        ? null : dataFormat.format(element.getCreated()))
-                                .dateModification(ObjectUtils.isEmpty(element.getModified())
-                                        ? null : dataFormat.format(element.getModified()))
-                                .label(element.getLexicalValue())
-                                .utilisateur(element.getUsername())
-                                .type("skos:prefLabel")
-                                .build())
-                        .toList();
+        return rows.stream()
+                .map(element -> ConceptStatisticData.builder()
+                        .idConcept(element.getIdConcept())
+                        .dateCreation(formatStatisticDate(dataFormat, element.getCreated()))
+                        .dateModification(formatStatisticDate(dataFormat, element.getModified()))
+                        .label(element.getLexicalValue())
+                        .utilisateur(element.getUsername())
+                        .type("skos:prefLabel")
+                        .build())
+                .toList();
+    }
+
+    private static String formatStatisticDate(SimpleDateFormat dataFormat, Date date) {
+        return ObjectUtils.isEmpty(date) ? null : dataFormat.format(date);
     }
 
     private static String normalizeGroupKey(String groupId) {

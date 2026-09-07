@@ -1,5 +1,6 @@
 package fr.cnrs.opentheso.v2.publicapi.graphql.service;
 
+import fr.cnrs.opentheso.models.ConceptIdView;
 import fr.cnrs.opentheso.repositories.ConceptRepository;
 import fr.cnrs.opentheso.v2.concept.model.ConceptDetail;
 import fr.cnrs.opentheso.v2.concept.model.ConceptRelation;
@@ -50,7 +51,7 @@ public class PublicGraphQlConceptService {
         List<String> filteredIds = candidateIds;
         if (!normalizedGroupIds.isEmpty()) {
             Set<String> groupMemberIds = conceptRepository.findAllByThesaurusAndGroups(thesaurusId, normalizedGroupIds).stream()
-                    .map(view -> view.getIdConcept())
+                    .map(ConceptIdView::getIdConcept)
                     .collect(java.util.stream.Collectors.toCollection(LinkedHashSet::new));
             filteredIds = candidateIds.stream().filter(groupMemberIds::contains).toList();
         }

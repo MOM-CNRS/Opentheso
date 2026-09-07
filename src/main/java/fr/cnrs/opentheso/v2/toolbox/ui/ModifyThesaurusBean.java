@@ -52,7 +52,7 @@ public class ModifyThesaurusBean implements Serializable {
     private List<EditionMetadata> metadata = new ArrayList<>();
     private List<String> dcmiResources = Collections.emptyList();
     private List<String> dcmiTypes = Collections.emptyList();
-    private TreeNode<EditionCollectionNode> collectionRoot = new DefaultTreeNode<>(null, null);
+    private transient TreeNode<EditionCollectionNode> collectionRoot = new DefaultTreeNode<>(null, null);
     /** true = maître, false = esclave */
     private boolean masterThesaurus;
 

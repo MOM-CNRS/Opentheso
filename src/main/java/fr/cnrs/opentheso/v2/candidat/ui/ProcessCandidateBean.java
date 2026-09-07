@@ -19,7 +19,6 @@ import org.primefaces.model.DefaultStreamedContent;
 import org.primefaces.model.StreamedContent;
 
 import java.io.ByteArrayInputStream;
-import java.io.IOException;
 import java.io.Serializable;
 import java.util.ArrayList;
 import java.util.List;
@@ -66,7 +65,7 @@ public class ProcessCandidateBean implements Serializable {
                 .build();
     }
 
-    public void insertCandidat() throws IOException {
+    public void insertCandidat() {
         if (selectedCandidate == null) {
             MessageUtils.showErrorMessage(NO_CANDIDATE_SELECTED);
             return;
@@ -95,13 +94,13 @@ public class ProcessCandidateBean implements Serializable {
 
         reset(null);
         candidatBean.getAllCandidatsByThesoAndLangue();
-        candidatBean.setIsListCandidatsActivate(true);
+        candidatBean.setIsListCandidatsActivate();
         candidatBean.initCandidatModule();
         PrimeFaces.current().ajax().update("containerIndex:tabViewCandidat");
         MessageUtils.showInformationMessage("Candidat inséré avec succès");
     }
 
-    public void rejectCandidat() throws IOException {
+    public void rejectCandidat() {
         if (selectedCandidate == null) {
             MessageUtils.showErrorMessage(NO_CANDIDATE_SELECTED);
             return;
@@ -129,12 +128,12 @@ public class ProcessCandidateBean implements Serializable {
         MessageUtils.showInformationMessage("Candidat(s) rejeté(s) avec succès");
         reset(null);
         candidatBean.getAllCandidatsByThesoAndLangue();
-        candidatBean.setIsListCandidatsActivate(true);
+        candidatBean.setIsListCandidatsActivate();
         candidatBean.initCandidatModule();
         PrimeFaces.current().ajax().update("containerIndex:tabViewCandidat");
     }
 
-    public void insertListCandidat() throws IOException {
+    public void insertListCandidat() {
         if (candidatBean.getSelectedCandidates() == null || candidatBean.getSelectedCandidates().isEmpty()) {
             MessageUtils.showErrorMessage(NO_CANDIDATE_SELECTED);
             return;
@@ -178,10 +177,10 @@ public class ProcessCandidateBean implements Serializable {
         reset(null);
         candidatBean.initCandidatModule();
         candidatBean.getAllCandidatsByThesoAndLangue();
-        candidatBean.setIsListCandidatsActivate(true);
+        candidatBean.setIsListCandidatsActivate();
     }
 
-    public void rejectCandidatList() throws IOException {
+    public void rejectCandidatList() {
         if (candidatBean.getSelectedCandidates() == null || candidatBean.getSelectedCandidates().isEmpty()) {
             MessageUtils.showErrorMessage(NO_CANDIDATE_SELECTED);
             return;
@@ -213,7 +212,7 @@ public class ProcessCandidateBean implements Serializable {
         reset(null);
         candidatBean.initCandidatModule();
         candidatBean.getAllCandidatsByThesoAndLangue();
-        candidatBean.setIsListCandidatsActivate(true);
+        candidatBean.setIsListCandidatsActivate();
     }
 
     private void sendMailCandidateAccepted(String mail, CandidatDto candidat) {

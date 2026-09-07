@@ -52,15 +52,15 @@ public class ConceptRelationWriteRepository {
     @Transactional
     public void deleteBroaderRelation(String narrowerConceptId, String broaderConceptId, String thesaurusId, int userId) {
         insertRelationHistory(narrowerConceptId, broaderConceptId, thesaurusId, "BT", userId, "DEL");
-        deleteRelationship(thesaurusId, narrowerConceptId, broaderConceptId, "BT");
-        deleteRelationship(thesaurusId, broaderConceptId, narrowerConceptId, "NT");
+        deleteRelationship(narrowerConceptId, broaderConceptId, thesaurusId, "BT");
+        deleteRelationship(broaderConceptId, narrowerConceptId, thesaurusId, "NT");
     }
 
     @Transactional
     public void deleteNarrowerRelation(String broaderConceptId, String narrowerConceptId, String thesaurusId, int userId) {
         insertRelationHistory(broaderConceptId, narrowerConceptId, thesaurusId, "RT", userId, "DELETE");
-        deleteRelationship(thesaurusId, broaderConceptId, narrowerConceptId, "NT");
-        deleteRelationship(thesaurusId, narrowerConceptId, broaderConceptId, "BT");
+        deleteRelationship(broaderConceptId, narrowerConceptId, thesaurusId, "NT");
+        deleteRelationship(narrowerConceptId, broaderConceptId, thesaurusId, "BT");
     }
 
     @Transactional
@@ -78,8 +78,8 @@ public class ConceptRelationWriteRepository {
     @Transactional
     public void deleteRelatedRelation(String conceptId1, String conceptId2, String thesaurusId, int userId) {
         insertRelationHistory(conceptId1, conceptId2, thesaurusId, "RT", userId, "DEL");
-        deleteRelationship(thesaurusId, conceptId1, conceptId2, "RT");
-        deleteRelationship(thesaurusId, conceptId2, conceptId1, "RT");
+        deleteRelationship(conceptId1, conceptId2, thesaurusId, "RT");
+        deleteRelationship(conceptId2, conceptId1, thesaurusId, "RT");
     }
 
     @Transactional
@@ -220,28 +220,28 @@ public class ConceptRelationWriteRepository {
             boolean reciprocal,
             int userId
     ) {
-        deleteRelationship(thesaurusId, conceptId1, conceptId2, relationCode);
+        deleteRelationship(conceptId1, conceptId2, thesaurusId, relationCode);
         if (reciprocal) {
-            deleteRelationship(thesaurusId, conceptId2, conceptId1, relationCode);
+            deleteRelationship(conceptId2, conceptId1, thesaurusId, relationCode);
         }
         insertRelationHistory(conceptId1, conceptId2, thesaurusId, "QUALIFIER", userId, "DEL");
     }
 
-    private void insertRelationship(String conceptId1, String conceptId2, String thesaurusId, String role) {
+    private void insertRelationship(String fromId, String toId, String thesaurusId, String role) {
         entityManager.createNativeQuery("""
                         INSERT INTO hierarchical_relationship (
                             id_concept1, id_concept2, id_thesaurus, role
                         )
                         VALUES (:conceptId1, :conceptId2, :thesaurusId, :role)
                         """)
-                .setParameter(NativeQueryParams.CONCEPT_ID1, conceptId1)
-                .setParameter(NativeQueryParams.CONCEPT_ID2, conceptId2)
+                .setParameter(NativeQueryParams.CONCEPT_ID1, fromId)
+                .setParameter(NativeQueryParams.CONCEPT_ID2, toId)
                 .setParameter(NativeQueryParams.THESAURUS_ID, thesaurusId)
                 .setParameter("role", role)
                 .executeUpdate();
     }
 
-    private void deleteRelationship(String thesaurusId, String conceptId1, String conceptId2, String role) {
+    private void deleteRelationship(String fromId, String toId, String thesaurusId, String role) {
         entityManager.createNativeQuery("""
                         DELETE FROM hierarchical_relationship
                         WHERE id_thesaurus = :thesaurusId
@@ -250,8 +250,8 @@ public class ConceptRelationWriteRepository {
                           AND role = :role
                         """)
                 .setParameter(NativeQueryParams.THESAURUS_ID, thesaurusId)
-                .setParameter(NativeQueryParams.CONCEPT_ID1, conceptId1)
-                .setParameter(NativeQueryParams.CONCEPT_ID2, conceptId2)
+                .setParameter(NativeQueryParams.CONCEPT_ID1, fromId)
+                .setParameter(NativeQueryParams.CONCEPT_ID2, toId)
                 .setParameter("role", role)
                 .executeUpdate();
     }

@@ -98,11 +98,13 @@ class ThesaurusSyncHttpRemoteClientTest {
         when(httpClient.send(any(HttpRequest.class), any(HttpResponse.BodyHandler.class)))
                 .thenReturn(httpResponse);
 
+        var request = new SyncBatchRequest("TH1", null, "a", "a@b.fr", "c", true, List.of());
+
         InvalidToolboxDataException ex = assertThrows(InvalidToolboxDataException.class, () ->
                 client.postBatch(
                         "http://localhost/api/v2/thesaurus/TH/sync/concepts",
                         "secret",
-                        new SyncBatchRequest("TH1", null, "a", "a@b.fr", "c", true, List.of())));
+                        request));
 
         assertTrue(ex.getMessage().contains("400"));
         assertTrue(ex.getMessage().contains("not master"));

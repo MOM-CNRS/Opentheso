@@ -28,7 +28,8 @@ public class GraphViewCommandService {
 
     @Transactional
     public void updateView(int viewId, String name, String description) {
-        var graphView = graphViewRepository.getById(viewId);
+        var graphView = graphViewRepository.findById(viewId)
+                .orElseThrow(() -> new IllegalArgumentException("Graph view not found: " + viewId));
         graphView.setName(name);
         graphView.setDescription(description);
         graphViewRepository.save(graphView);

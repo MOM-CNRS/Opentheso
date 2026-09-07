@@ -10,6 +10,7 @@ import lombok.Getter;
 import lombok.RequiredArgsConstructor;
 import lombok.Setter;
 import org.apache.commons.lang3.StringUtils;
+import org.apache.commons.lang3.Strings;
 
 import java.io.Serializable;
 import java.util.ArrayList;
@@ -192,7 +193,7 @@ public class ThesaurusAlignmentBean implements Serializable {
         if (settingsAccess.isSuperAdmin() || !item.isGlobal()) {
             return true;
         }
-        return StringUtils.equals(item.getThesaurusOwner(), settingsAccess.getThesaurusId());
+        return Strings.CS.equals(item.getThesaurusOwner(), settingsAccess.getThesaurusId());
     }
 
     public void prepareCreateAlignmentSource() {
@@ -356,7 +357,7 @@ public class ThesaurusAlignmentBean implements Serializable {
     private void ensureAlignmentSourcesLoaded() {
         String thesaurusId = settingsAccess.getThesaurusId();
         if (alignmentSourcesLoaded
-                && StringUtils.equals(alignmentSourcesLoadedForThesaurus, thesaurusId)
+                && Strings.CS.equals(alignmentSourcesLoadedForThesaurus, thesaurusId)
                 && alignmentSources != null) {
             return;
         }

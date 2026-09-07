@@ -1,6 +1,7 @@
 package fr.cnrs.opentheso.v2.candidat.persistence;
 
 import fr.cnrs.opentheso.entites.Preferences;
+import fr.cnrs.opentheso.entites.User;
 import fr.cnrs.opentheso.models.candidats.CandidatDto;
 import fr.cnrs.opentheso.repositories.ConceptRepository;
 import fr.cnrs.opentheso.repositories.UserRepository;
@@ -93,7 +94,7 @@ public class CandidatProcessPersistence {
     }
 
     public String resolveUserMail(int userId) {
-        return userRepository.findById(userId).map(user -> user.getMail()).orElse(null);
+        return userRepository.findById(userId).map(User::getMail).orElse(null);
     }
 
     public boolean sendMail(String mail, String subject, String htmlBody) {

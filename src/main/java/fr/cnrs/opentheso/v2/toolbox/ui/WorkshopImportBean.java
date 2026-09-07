@@ -153,18 +153,15 @@ public class WorkshopImportBean implements Serializable {
     }
 
     public void mergeCsvThesoToBDD() {
-        executeWithUser((thesaurusId, userId) ->
-                workshopBulkImportOperations.mergeCsvThesoToBDD(thesaurusId, userId));
+        executeWithUser(workshopBulkImportOperations::mergeCsvThesoToBDD);
     }
 
     public void replaceValueByNewValue() {
-        executeWithUser((thesaurusId, userId) ->
-                workshopBulkImportOperations.replaceValueByNewValue(thesaurusId, userId));
+        executeWithUser(workshopBulkImportOperations::replaceValueByNewValue);
     }
 
     public void deprecateConcepts() {
-        executeWithUser((thesaurusId, userId) ->
-                workshopBulkImportOperations.deprecateConcepts(thesaurusId, userId));
+        executeWithUser(workshopBulkImportOperations::deprecateConcepts);
     }
 
     public void addListConceptsToTheso() {

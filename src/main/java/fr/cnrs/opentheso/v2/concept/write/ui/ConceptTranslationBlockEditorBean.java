@@ -23,6 +23,7 @@ import lombok.Getter;
 import lombok.RequiredArgsConstructor;
 import lombok.Setter;
 import org.apache.commons.lang3.StringUtils;
+import org.apache.commons.lang3.Strings;
 
 import java.io.Serializable;
 import java.util.ArrayList;
@@ -231,7 +232,7 @@ public class ConceptTranslationBlockEditorBean implements Serializable {
                 }
                 continue;
             }
-            if (!StringUtils.equals(oldPrefs.get(lang), value)) {
+            if (!Strings.CS.equals(oldPrefs.get(lang), value)) {
                 MutationResult updated = conceptLexicalMutationService.updateTranslation(
                         new UpdateTranslationCommand(thesaurusId, conceptId, lang, value, userId, contributor));
                 if (!applyResult(updated, dirty)) {
@@ -338,7 +339,7 @@ public class ConceptTranslationBlockEditorBean implements Serializable {
         if (detail == null || detail.getSummary() == null) {
             return false;
         }
-        return StringUtils.equals(editingConceptId, detail.getSummary().getConceptId());
+        return Strings.CS.equals(editingConceptId, detail.getSummary().getConceptId());
     }
 
     private List<ConceptWriteLanguage> languagesForNewRow() {

@@ -56,6 +56,7 @@ import org.springframework.stereotype.Component;
 
 import java.time.Instant;
 import java.util.ArrayList;
+import java.util.Objects;
 import java.util.Collection;
 import java.util.Collections;
 import java.util.Date;
@@ -502,7 +503,7 @@ public class WorkshopBulkImportPersistence {
         term.setIdTerm(idTerm);
 
         if (!concept.isTopConcept()) {
-            String inverseRelation = switch (StringUtils.defaultString(relationType, "NT")) {
+            String inverseRelation = switch (Objects.toString(relationType, "NT")) {
                 case "NT" -> "BT";
                 case "NTG" -> "BTG";
                 case "NTP" -> "BTP";

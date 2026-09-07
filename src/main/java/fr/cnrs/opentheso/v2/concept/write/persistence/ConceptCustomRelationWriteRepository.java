@@ -40,7 +40,7 @@ public class ConceptCustomRelationWriteRepository {
                 .setParameter("conceptTypeCode", conceptTypeCode)
                 .setParameter(NativeQueryParams.THESAURUS_ID, thesaurusId)
                 .getResultStream()
-                .map(value -> (Boolean) value)
+                .map(Boolean.class::cast)
                 .findFirst();
     }
 }

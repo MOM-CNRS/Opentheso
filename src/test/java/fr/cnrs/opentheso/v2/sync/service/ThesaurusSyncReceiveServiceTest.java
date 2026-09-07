@@ -78,9 +78,10 @@ class ThesaurusSyncReceiveServiceTest {
     @Test
     void receiveBatch_rejectsNonMasterThesaurus() {
         when(toolboxPreferencePersistence.isMaster("TH_MASTER")).thenReturn(false);
+        var request = emptyRequest();
 
         assertThrows(IllegalStateException.class, () ->
-                service.receiveBatch("TH_MASTER", emptyRequest(), user));
+                service.receiveBatch("TH_MASTER", request, user));
     }
 
     @Test
@@ -125,7 +126,7 @@ class ThesaurusSyncReceiveServiceTest {
         assertEquals(1, response.propositionsCreated());
         assertEquals(SyncConceptOutcome.PROPOSITION_CREATED, response.results().get(0).outcome());
         assertEquals(42, response.results().get(0).propositionId());
-        verify(propositionDraftService).saveDraftDetails(eq(42), eq(draft));
+        verify(propositionDraftService).saveDraftDetails(42, draft);
     }
 
     @Test
@@ -186,7 +187,7 @@ class ThesaurusSyncReceiveServiceTest {
     }
 
     @Test
-    void receiveBatch_createsCandidateWhenConceptMissing() throws Exception {
+    void receiveBatch_createsCandidateWhenConceptMissing() {
         when(toolboxPreferencePersistence.isMaster("TH_MASTER")).thenReturn(true);
         when(toolboxPreferencePersistence.getWorkLanguage("TH_MASTER")).thenReturn("fr");
         when(conceptRepository.existsByIdConceptAndIdThesaurus("C99", "TH_MASTER")).thenReturn(false);
@@ -215,7 +216,7 @@ class ThesaurusSyncReceiveServiceTest {
     }
 
     @Test
-    void receiveBatch_skipsUnknownConceptWhenCreateCandidatesDisabled() throws Exception {
+    void receiveBatch_skipsUnknownConceptWhenCreateCandidatesDisabled() {
         when(toolboxPreferencePersistence.isMaster("TH_MASTER")).thenReturn(true);
         when(toolboxPreferencePersistence.getWorkLanguage("TH_MASTER")).thenReturn("fr");
         when(conceptRepository.existsByIdConceptAndIdThesaurus("C99", "TH_MASTER")).thenReturn(false);
@@ -354,7 +355,7 @@ class ThesaurusSyncReceiveServiceTest {
     }
 
     @Test
-    void receiveBatch_errorsWhenCandidateCreationRefused() throws Exception {
+    void receiveBatch_errorsWhenCandidateCreationRefused() {
         when(toolboxPreferencePersistence.isMaster("TH_MASTER")).thenReturn(true);
         when(toolboxPreferencePersistence.getWorkLanguage("TH_MASTER")).thenReturn("fr");
         when(conceptRepository.existsByIdConceptAndIdThesaurus("C99", "TH_MASTER")).thenReturn(false);
@@ -402,7 +403,7 @@ class ThesaurusSyncReceiveServiceTest {
     }
 
     @Test
-    void receiveBatch_nullUser_usesDefaultSyncIdentityForCandidate() throws Exception {
+    void receiveBatch_nullUser_usesDefaultSyncIdentityForCandidate() {
         when(toolboxPreferencePersistence.isMaster("TH_MASTER")).thenReturn(true);
         when(toolboxPreferencePersistence.getWorkLanguage("TH_MASTER")).thenReturn("fr");
         when(conceptRepository.existsByIdConceptAndIdThesaurus("C99", "TH_MASTER")).thenReturn(false);

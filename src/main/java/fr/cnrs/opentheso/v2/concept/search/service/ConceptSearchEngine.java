@@ -35,7 +35,7 @@ public class ConceptSearchEngine {
             case START_WITH -> searchStartWith(normalizedQuery, lang, thesaurusId);
             case NOTE -> searchNotes(normalizedQuery, lang, thesaurusId);
             case IDENTIFIER -> searchByAllId(normalizedQuery, lang, thesaurusId, anonymous);
-            case FULL_TEXT -> searchFullText(normalizedQuery, lang, thesaurusId, anonymous);
+            case FULL_TEXT -> searchFullText(normalizedQuery, lang, thesaurusId);
         };
     }
 
@@ -61,8 +61,6 @@ public class ConceptSearchEngine {
             case START_WITH -> autocomplete(normalizedQuery, ConceptSearchMode.START_WITH, thesaurusId, lang, anonymous)
                     .forEach(item -> ids.add(item.conceptId()));
             case FULL_TEXT -> ids.addAll(searchFullTextIds(normalizedQuery, lang, thesaurusId, anonymous));
-            default -> {
-            }
         }
         return new ArrayList<>(ids);
     }
@@ -107,7 +105,7 @@ public class ConceptSearchEngine {
         return results;
     }
 
-    private List<ConceptSearchSuggestion> searchFullText(String value, String lang, String thesaurusId, boolean anonymous) {
+    private List<ConceptSearchSuggestion> searchFullText(String value, String lang, String thesaurusId) {
         boolean langSensitive = StringUtils.isNotBlank(lang);
         List<ConceptSearchSuggestion> results = new ArrayList<>();
         for (Object[] row : conceptSearchQueryRepository.searchPreferredTermsFullText(value, lang, thesaurusId, langSensitive)) {
@@ -174,12 +172,10 @@ public class ConceptSearchEngine {
                     false
             ));
         }
-        conceptSearchQueryRepository.findCollectionById(identifier, lang, thesaurusId).ifPresent(row -> {
-            results.add(groupSuggestion(stringAt(row, 0), stringAt(row, 1)));
-        });
-        conceptSearchQueryRepository.findFacetById(identifier, lang, thesaurusId).ifPresent(row -> {
-            results.add(facetSuggestion(stringAt(row, 0), stringAt(row, 1)));
-        });
+        conceptSearchQueryRepository.findCollectionById(identifier, lang, thesaurusId)
+                .ifPresent(row -> results.add(groupSuggestion(stringAt(row, 0), stringAt(row, 1))));
+        conceptSearchQueryRepository.findFacetById(identifier, lang, thesaurusId)
+                .ifPresent(row -> results.add(facetSuggestion(stringAt(row, 0), stringAt(row, 1))));
         return results;
     }
 

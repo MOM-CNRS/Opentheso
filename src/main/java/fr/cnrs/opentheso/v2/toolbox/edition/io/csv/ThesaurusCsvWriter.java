@@ -36,6 +36,7 @@ import org.apache.commons.collections4.CollectionUtils;
 import org.apache.commons.csv.CSVFormat;
 import org.apache.commons.csv.CSVPrinter;
 import org.apache.commons.lang3.StringUtils;
+import org.apache.commons.lang3.Strings;
 import org.springframework.stereotype.Service;
 
 import lombok.RequiredArgsConstructor;
@@ -52,14 +53,14 @@ public class ThesaurusCsvWriter {
 
 
     private final ThesaurusEditionCsvExportPersistence csvExportQuerySupport;
-    private final String delim_multi_datas = "##";
+    private static final String DELIM_MULTI_DATAS = "##";
 
     /**
      * Export en CSV avec tous les champs
      */
     public byte[] writeCsv(SKOSXmlDocument xmlDocument, List<NodeLangTheso> selectedLanguages, char delimiter) {
         if (selectedLanguages == null || selectedLanguages.isEmpty()) {
-            return null;
+            return new byte[0];
         }
         try {
             ByteArrayOutputStream os = new ByteArrayOutputStream();
@@ -73,56 +74,36 @@ public class ThesaurusCsvWriter {
                 header.add("identifier");
                 header.add(COL_ARK_ID);
 
-                List<String> langs = selectedLanguages.stream().map(lang -> lang.getCode()).collect(Collectors.toList());
+                List<String> langs = selectedLanguages.stream().map(NodeLangTheso::getCode).toList();
                 //skos:prefLabel
-                langs.forEach((lang) -> {
-                    header.add("skos:prefLabel@" + lang);
-                });
+                langs.forEach(lang -> header.add("skos:prefLabel@" + lang));
 
                 //skos:altLabel
-                langs.forEach((lang) -> {
-                    header.add("skos:altLabel@" + lang);
-                });
+                langs.forEach(lang -> header.add("skos:altLabel@" + lang));
 
                 //skos:hiddenLabel
-                langs.forEach((lang) -> {
-                    header.add("skos:hiddenLabel@" + lang);
-                });
+                langs.forEach(lang -> header.add("skos:hiddenLabel@" + lang));
 
                 //skos:definition
-                langs.forEach((lang) -> {
-                    header.add("skos:definition@" + lang);
-                });
+                langs.forEach(lang -> header.add("skos:definition@" + lang));
 
                 //skos:scopeNote
-                langs.forEach((lang) -> {
-                    header.add("skos:scopeNote@" + lang);
-                });
+                langs.forEach(lang -> header.add("skos:scopeNote@" + lang));
 
                 //skos:note
-                langs.forEach((lang) -> {
-                    header.add("skos:note@" + lang);
-                });
+                langs.forEach(lang -> header.add("skos:note@" + lang));
 
                 //skos:historyNote
-                langs.forEach((lang) -> {
-                    header.add("skos:historyNote@" + lang);
-                });
+                langs.forEach(lang -> header.add("skos:historyNote@" + lang));
 
                 //skos:editorialNote
-                langs.forEach((lang) -> {
-                    header.add("skos:editorialNote@" + lang);
-                });
+                langs.forEach(lang -> header.add("skos:editorialNote@" + lang));
 
                 //skos:changeNote
-                langs.forEach((lang) -> {
-                    header.add("skos:changeNote@" + lang);
-                });
+                langs.forEach(lang -> header.add("skos:changeNote@" + lang));
 
                 //skos:example
-                langs.forEach((lang) -> {
-                    header.add("skos:example@" + lang);
-                });
+                langs.forEach(lang -> header.add("skos:example@" + lang));
 
                 header.add("skos:notation");
                 header.add("skos:narrower");
@@ -188,7 +169,7 @@ public class ThesaurusCsvWriter {
             return os.toByteArray();
         } catch (IOException e) {
             log.warn(CSV_EXPORT_ERROR, e);
-            return null;
+            return new byte[0];
         }
     }
 
@@ -249,7 +230,6 @@ public class ThesaurusCsvWriter {
         //broader
         var broader = getRelationGivenValue(skosResource.getRelationsList(), SKOSProperty.BROADER);
         if (StringUtils.isEmpty(broader)) {
-            //broader = getRelationGivenValue(skosResource.getRelationsList(), SKOSProperty.TOP_CONCEPT_OF);
             csvRow.add("");
         } else {
             csvRow.add(broader);
@@ -257,7 +237,7 @@ public class ThesaurusCsvWriter {
         //broaderId
         var broaderId = getRelationGivenValueId(skosResource.getRelationsList(), SKOSProperty.BROADER);
         if (StringUtils.isEmpty(broaderId)) {
-            broaderId = ""; //getRelationGivenValueId(skosResource.getRelationsList(), SKOSProperty.TOP_CONCEPT_OF);
+            broaderId = "";
         }
         csvRow.add(broaderId);
 
@@ -332,63 +312,63 @@ public class ThesaurusCsvWriter {
     
     private String getExternalReources(ArrayList<String> externalResources) {
         if(externalResources == null) return null;
-        String value = "";
+        StringBuilder value = new StringBuilder();
         for (String externalImage : externalResources) {
-            if(StringUtils.isEmpty(value)){
-                value = externalImage;
+            if(value.isEmpty()){
+                value.append(externalImage);
             } else {
-                value = value + delim_multi_datas +  externalImage;
+                value.append(DELIM_MULTI_DATAS).append(externalImage);
             }
         }
-        return value;
+        return value.toString();
     }       
     
     private String getImages(ArrayList<NodeImage> nodeImages) {
-        String value = "";
+        StringBuilder value = new StringBuilder();
         for (NodeImage nodeImage : nodeImages) {
-            if(StringUtils.isEmpty(value)){
-                value = "rdf:about=" + nodeImage.getUri();
+            if(value.isEmpty()){
+                value.append("rdf:about=").append(nodeImage.getUri());
             } else {
-                value = value + delim_multi_datas +  "rdf:about=" + nodeImage.getUri();
+                value.append(DELIM_MULTI_DATAS).append("rdf:about=").append(nodeImage.getUri());
             }
             if(!StringUtils.isEmpty(nodeImage.getCopyRight())) {
-                value = value + "@@dcterms:rights=" +  nodeImage.getCopyRight();
+                value.append("@@dcterms:rights=").append(nodeImage.getCopyRight());
             }      
             if(!StringUtils.isEmpty(nodeImage.getImageName())) {
-                value = value + "@@dcterms:title=" +  nodeImage.getImageName();
+                value.append("@@dcterms:title=").append(nodeImage.getImageName());
             }
             if(!StringUtils.isEmpty(nodeImage.getCreator())) {
-                value = value + "@@dcterms:creator=" +  nodeImage.getCreator();
+                value.append("@@dcterms:creator=").append(nodeImage.getCreator());
             }              
         }
-        return value;
+        return value.toString();
     }     
 
     private String getReplaceBy(ArrayList<SKOSReplaces> sKOSReplaceses) {
         return sKOSReplaceses.stream()
                 .filter(sKOSReplace -> (sKOSReplace.getProperty() == SKOSProperty.IS_REPLACED_BY))
-                .map(sKOSReplace -> sKOSReplace.getTargetUri())
-                .collect(Collectors.joining(delim_multi_datas));
+                .map(SKOSReplaces::getTargetUri)
+                .collect(Collectors.joining(DELIM_MULTI_DATAS));
     }                
     
     private String getFacettesOfConceptParent(ArrayList<SKOSRelation> sKOSRelations) {
         return sKOSRelations.stream()
                 .filter(sKOSRelation -> (sKOSRelation.getProperty() == SKOSProperty.SUPER_ORDINATE))
-                .map(sKOSRelation -> sKOSRelation.getTargetUri())
-                .collect(Collectors.joining(delim_multi_datas));
+                .map(SKOSRelation::getTargetUri)
+                .collect(Collectors.joining(DELIM_MULTI_DATAS));
     }
     private String getFacettesOfConceptParentId(ArrayList<SKOSRelation> sKOSRelations) {
         return sKOSRelations.stream()
                 .filter(sKOSRelation -> (sKOSRelation.getProperty() == SKOSProperty.SUPER_ORDINATE))
-                .map(sKOSRelation -> sKOSRelation.getLocalIdentifier())
-                .collect(Collectors.joining(delim_multi_datas));
+                .map(SKOSRelation::getLocalIdentifier)
+                .collect(Collectors.joining(DELIM_MULTI_DATAS));
     }
 
     private String getSubGroup(ArrayList<SKOSRelation> sKOSRelations) {
         return sKOSRelations.stream()
                 .filter(sKOSRelation -> (sKOSRelation.getProperty() == SKOSProperty.SUBGROUP))
-                .map(sKOSRelation -> sKOSRelation.getTargetUri())
-                .collect(Collectors.joining(delim_multi_datas));
+                .map(SKOSRelation::getTargetUri)
+                .collect(Collectors.joining(DELIM_MULTI_DATAS));
     }    
 
     private String getPrefLabelValue(List<SKOSLabel> labels, String lang, int propertie) {
@@ -406,8 +386,8 @@ public class ThesaurusCsvWriter {
 
         return labels.stream()
                 .filter(label -> label.getProperty() == propertie && label.getLanguage().equals(lang))
-                .map(label -> label.getLabel())
-                .collect(Collectors.joining(delim_multi_datas));
+                .map(SKOSLabel::getLabel)
+                .collect(Collectors.joining(DELIM_MULTI_DATAS));
     }
 
     private void addDocumentationColumns(
@@ -429,8 +409,8 @@ public class ThesaurusCsvWriter {
 
         return documentations.stream()
                 .filter(document -> document.getProperty() == propertie && document.getLanguage().equals(lang))
-                .map(document -> document.getText())
-                .collect(Collectors.joining(delim_multi_datas));
+                .map(SKOSDocumentation::getText)
+                .collect(Collectors.joining(DELIM_MULTI_DATAS));
     }
 
     private String getLatValue(SKOSGPSCoordinates coordinates) {
@@ -456,37 +436,37 @@ public class ThesaurusCsvWriter {
     private String getMemberValue(ArrayList<SKOSRelation> sKOSRelations) {
         return sKOSRelations.stream()
                 .filter(sKOSRelation -> (sKOSRelation.getProperty() == SKOSProperty.MEMBER_OF) || (sKOSRelation.getProperty() == SKOSProperty.MEMBER))
-                .map(sKOSRelation -> sKOSRelation.getTargetUri())
-                .collect(Collectors.joining(delim_multi_datas));
+                .map(SKOSRelation::getTargetUri)
+                .collect(Collectors.joining(DELIM_MULTI_DATAS));
     }   
     
     private String getMemberId(ArrayList<SKOSRelation> sKOSRelations) {
         return sKOSRelations.stream()
                 .filter(sKOSRelation -> (sKOSRelation.getProperty() == SKOSProperty.MEMBER_OF) || (sKOSRelation.getProperty() == SKOSProperty.MEMBER))
-                .map(sKOSRelation -> sKOSRelation.getLocalIdentifier())
-                .collect(Collectors.joining(delim_multi_datas));
+                .map(SKOSRelation::getLocalIdentifier)
+                .collect(Collectors.joining(DELIM_MULTI_DATAS));
     }      
     
 
     private String getRelationGivenValue(List<SKOSRelation> relations, int propertie) {
         return relations.stream()
                 .filter(relation -> relation.getProperty() == propertie)
-                .map(relation -> relation.getTargetUri())
-                .collect(Collectors.joining(delim_multi_datas));
+                .map(SKOSRelation::getTargetUri)
+                .collect(Collectors.joining(DELIM_MULTI_DATAS));
     }
 
     private String getRelationGivenValueId(List<SKOSRelation> relations, int propertie) {
         return relations.stream()
                 .filter(relation -> relation.getProperty() == propertie)
-                .map(relation -> relation.getLocalIdentifier())
-                .collect(Collectors.joining(delim_multi_datas));
+                .map(SKOSRelation::getLocalIdentifier)
+                .collect(Collectors.joining(DELIM_MULTI_DATAS));
     }
 
     private String getAlligementValue(List<SKOSMatch> matchs, int propertie) {
         return matchs.stream()
                 .filter(alignment -> alignment.getProperty() == propertie)
-                .map(alignment -> alignment.getValue())
-                .collect(Collectors.joining(delim_multi_datas));
+                .map(SKOSMatch::getValue)
+                .collect(Collectors.joining(DELIM_MULTI_DATAS));
     }
 
     private String getGpsValue(List<SKOSGPSCoordinates> gpsList) {
@@ -568,7 +548,7 @@ public class ThesaurusCsvWriter {
             }
             return os.toByteArray();
         } catch (IOException e) {
-            return null;
+            return new byte[0];
         }
     }
 
@@ -583,7 +563,7 @@ public class ThesaurusCsvWriter {
         try {
             ByteArrayOutputStream os = new ByteArrayOutputStream();
             try (OutputStreamWriter out = new OutputStreamWriter(os, StandardCharsets.UTF_8); CSVPrinter csvFilePrinter = new CSVPrinter(out, CSVFormat.RFC4180.builder().setDelimiter(delimiter).build())) {
-                /// écriture des headers
+                // écriture des headers
                 ArrayList<String> header = new ArrayList<>();
                 header.add("Id");
                 header.add("Candidat");
@@ -602,26 +582,10 @@ public class ThesaurusCsvWriter {
                     return null;
                 }
 
-                /// écritures des données
+                // écritures des données
                 ArrayList<Object> csvRow = new ArrayList<>();
                 for (CandidatDto candidatDto : candidatDtos) {
-                    try {
-                        csvRow.add(candidatDto.getIdConcepte());
-                        csvRow.add(candidatDto.getNomPref());
-                        csvRow.add(candidatDto.getCreatedBy());
-                        csvRow.add(candidatDto.getCreationDate());
-                        csvRow.add(candidatDto.getCreatedByAdmin());
-                        csvRow.add(candidatDto.getInsertionDate());
-                        csvRow.add(candidatDto.getAdminMessage());
-                        csvRow.add(candidatDto.getNbrVote());
-                        csvRow.add(candidatDto.getNbrNoteVote());
-                        csvRow.add(candidatDto.getNbrParticipant());
-
-                        csvFilePrinter.printRecord(csvRow);
-                        csvRow.clear();
-                    } catch (IOException e) {
-                        log.warn(CSV_EXPORT_ERROR, e);
-                    }
+                    printProcessedCandidateRow(csvFilePrinter, csvRow, candidatDto);
                 }
             }
             return os.toByteArray();
@@ -644,7 +608,7 @@ public class ThesaurusCsvWriter {
             ByteArrayOutputStream os = new ByteArrayOutputStream();
             try (OutputStreamWriter out = new OutputStreamWriter(os, StandardCharsets.UTF_8); CSVPrinter csvFilePrinter = new CSVPrinter(out, CSVFormat.RFC4180.builder().build())) {
 
-                /// écriture des headers
+                // écriture des headers
                 ArrayList<String> header = new ArrayList<>();
                 header.add(header1);
                 header.add(header2);
@@ -652,14 +616,7 @@ public class ThesaurusCsvWriter {
 
                 ArrayList<Object> csvRow = new ArrayList<>();
                 for (NodeIdValue nodeIdValue : nodeIdValues) {
-                    try {
-                        csvRow.add(nodeIdValue.getId());
-                        csvRow.add(nodeIdValue.getValue());
-                        csvFilePrinter.printRecord(csvRow);
-                        csvRow.clear();
-                    } catch (IOException e) {
-                        log.warn(CSV_EXPORT_ERROR, e);
-                    }
+                    printIdValueRow(csvFilePrinter, csvRow, nodeIdValue);
                 }
             }
             return os.toByteArray();
@@ -676,30 +633,19 @@ public class ThesaurusCsvWriter {
      * @param alignmentSource
      * @return
      */
-    public byte[] writeCsvForAlignment(ArrayList<NodeIdValue> listAlignments, String alignmentSource) {
+    public byte[] writeCsvForAlignment(List<NodeIdValue> listAlignments, String alignmentSource) {
         try {
             ByteArrayOutputStream os = new ByteArrayOutputStream();
             try (OutputStreamWriter out = new OutputStreamWriter(os, StandardCharsets.UTF_8); CSVPrinter csvFilePrinter = new CSVPrinter(out, CSVFormat.RFC4180.builder().build())) {
 
-                /// écriture des headers
+                // écriture des headers
                 ArrayList<String> header = new ArrayList<>();
                 header.add("localId");
                 header.add("URI");
 
                 csvFilePrinter.printRecord(header);
                 ArrayList<Object> csvRow = new ArrayList<>();
-                try {
-                    for (NodeIdValue listAlignment : listAlignments) {
-                        if(StringUtils.containsIgnoreCase(listAlignment.getValue(), "." + alignmentSource + ".")) {
-                            csvRow.add(0, listAlignment.getId());
-                            csvRow.add(1, listAlignment.getValue());
-                            csvFilePrinter.printRecord(csvRow);
-                            csvRow.clear();
-                        }
-                    }
-                } catch (IOException e) {
-                    log.warn(CSV_EXPORT_ERROR, e);
-                }
+                printAlignmentRows(csvFilePrinter, csvRow, listAlignments, alignmentSource);
 
             }
             return os.toByteArray();
@@ -721,7 +667,7 @@ public class ThesaurusCsvWriter {
             ByteArrayOutputStream os = new ByteArrayOutputStream();
             try (OutputStreamWriter out = new OutputStreamWriter(os, StandardCharsets.UTF_8); CSVPrinter csvFilePrinter = new CSVPrinter(out, CSVFormat.RFC4180.builder().build())) {
 
-                /// écriture des headers
+                // écriture des headers
                 ArrayList<String> header = new ArrayList<>();
                 header.add("originalPrefLabel@" + idLang);
                 header.add("conceptId");
@@ -732,17 +678,7 @@ public class ThesaurusCsvWriter {
                 csvFilePrinter.printRecord(header);
                 ArrayList<Object> csvRow = new ArrayList<>();
                 for (NodeCompareTheso nodeCompareTheso : nodeCompareThesos) {
-                    try {
-                        csvRow.add(nodeCompareTheso.getOriginalPrefLabel());
-                        csvRow.add(nodeCompareTheso.getIdConcept());
-                        csvRow.add(nodeCompareTheso.getIdArk());
-                        csvRow.add(nodeCompareTheso.getPrefLabel());
-                        csvRow.add(nodeCompareTheso.getAltLabel());
-                        csvFilePrinter.printRecord(csvRow);
-                        csvRow.clear();
-                    } catch (IOException e) {
-                        log.warn(CSV_EXPORT_ERROR, e);
-                    }
+                    printCompareThesoRow(csvFilePrinter, csvRow, nodeCompareTheso);
                 }
             }
             return os.toByteArray();
@@ -806,7 +742,68 @@ public class ThesaurusCsvWriter {
             }
             return os.toByteArray();
         } catch (IOException e) {
-            return null;
+            return new byte[0];
+        }
+    }
+
+    private void printProcessedCandidateRow(CSVPrinter csvFilePrinter, ArrayList<Object> csvRow, CandidatDto candidatDto) {
+        try {
+            csvRow.add(candidatDto.getIdConcepte());
+            csvRow.add(candidatDto.getNomPref());
+            csvRow.add(candidatDto.getCreatedBy());
+            csvRow.add(candidatDto.getCreationDate());
+            csvRow.add(candidatDto.getCreatedByAdmin());
+            csvRow.add(candidatDto.getInsertionDate());
+            csvRow.add(candidatDto.getAdminMessage());
+            csvRow.add(candidatDto.getNbrVote());
+            csvRow.add(candidatDto.getNbrNoteVote());
+            csvRow.add(candidatDto.getNbrParticipant());
+
+            csvFilePrinter.printRecord(csvRow);
+            csvRow.clear();
+        } catch (IOException e) {
+            log.warn(CSV_EXPORT_ERROR, e);
+        }
+    }
+
+    private void printIdValueRow(CSVPrinter csvFilePrinter, ArrayList<Object> csvRow, NodeIdValue nodeIdValue) {
+        try {
+            csvRow.add(nodeIdValue.getId());
+            csvRow.add(nodeIdValue.getValue());
+            csvFilePrinter.printRecord(csvRow);
+            csvRow.clear();
+        } catch (IOException e) {
+            log.warn(CSV_EXPORT_ERROR, e);
+        }
+    }
+
+    private void printAlignmentRows(CSVPrinter csvFilePrinter, ArrayList<Object> csvRow,
+            List<NodeIdValue> listAlignments, String alignmentSource) {
+        try {
+            for (NodeIdValue listAlignment : listAlignments) {
+                if(Strings.CI.contains(listAlignment.getValue(), "." + alignmentSource + ".")) {
+                    csvRow.add(0, listAlignment.getId());
+                    csvRow.add(1, listAlignment.getValue());
+                    csvFilePrinter.printRecord(csvRow);
+                    csvRow.clear();
+                }
+            }
+        } catch (IOException e) {
+            log.warn(CSV_EXPORT_ERROR, e);
+        }
+    }
+
+    private void printCompareThesoRow(CSVPrinter csvFilePrinter, ArrayList<Object> csvRow, NodeCompareTheso nodeCompareTheso) {
+        try {
+            csvRow.add(nodeCompareTheso.getOriginalPrefLabel());
+            csvRow.add(nodeCompareTheso.getIdConcept());
+            csvRow.add(nodeCompareTheso.getIdArk());
+            csvRow.add(nodeCompareTheso.getPrefLabel());
+            csvRow.add(nodeCompareTheso.getAltLabel());
+            csvFilePrinter.printRecord(csvRow);
+            csvRow.clear();
+        } catch (IOException e) {
+            log.warn(CSV_EXPORT_ERROR, e);
         }
     }
 
@@ -827,7 +824,7 @@ public class ThesaurusCsvWriter {
         if (CollectionUtils.isEmpty(values)) {
             return "";
         }
-        return String.join(delim_multi_datas, values);
+        return String.join(DELIM_MULTI_DATAS, values);
     }
 
     private String joinAlignments(List<ThesaurusCsvAlignmentRow> alignments) {
@@ -836,7 +833,7 @@ public class ThesaurusCsvWriter {
         }
         return alignments.stream()
                 .map(alignment -> alignment.typeLabel() + ":" + alignment.uri())
-                .collect(Collectors.joining(delim_multi_datas));
+                .collect(Collectors.joining(DELIM_MULTI_DATAS));
     }
 
     public byte[] importTreeCsv(String[][] tab, char seperate) {
@@ -858,7 +855,7 @@ public class ThesaurusCsvWriter {
             writer.close();
             return output.toByteArray();
         } catch (IOException ex) {
-            return null;
+            return new byte[0];
         }
     }
 }

@@ -21,7 +21,7 @@ import static org.mockito.Mockito.when;
 @ExtendWith(MockitoExtension.class)
 class SessionLifecycleServiceTest {
 
-    private final SessionLifecycleService service = new SessionLifecycleService();
+    private final SessionLifecycleService service = new SessionLifecycleService("/v2", "/v2/session/expire");
 
     @Mock
     private HttpServletRequest request;

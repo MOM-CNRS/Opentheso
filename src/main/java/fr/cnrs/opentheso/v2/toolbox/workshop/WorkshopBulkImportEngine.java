@@ -84,28 +84,45 @@ public class WorkshopBulkImportEngine implements Serializable {
 
     private double progress = 0;
     private int progressStep = 0;
-    private int typeImport, total;
+    private int typeImport;
+    private int total;
 
     private String info = "";
     private String warning = "";
     private String formatDate = DATE_FORMAT;
     private String selectedIdentifier = "sans";
-    private String prefixHandle, selectedIdentifierImportAlign, prefixDoi, uri, thesaurusName, selectedUserProject,
-            selectedConcept, alignmentSource, selectedLang, fileName, selectedSearchType, idLang;
-    private boolean loadDone, BDDinsertEnable, importDone, importInProgress, isCandidatImport, haveError, clearBefore;
+    private String prefixHandle;
+    private String selectedIdentifierImportAlign;
+    private String prefixDoi;
+    private String uri;
+    private String thesaurusName;
+    private String selectedUserProject;
+    private String selectedConcept;
+    private String alignmentSource;
+    private String selectedLang;
+    private String fileName;
+    private String selectedSearchType;
+    private String idLang;
+    private boolean loadDone;
+    private boolean bddInsertEnable;
+    private boolean importDone;
+    private boolean importInProgress;
+    private boolean isCandidatImport;
+    private boolean haveError;
+    private boolean clearBefore;
     private char delimiterCsv = ',';
     private int choiceDelimiter = 0;
     private List<ThesaurusCsvConceptObject> conceptObjects;
     private List<String> langs;
     private String lang;
 
-    private List<NodeAlignmentImport> nodeAlignmentImports;
-    private List<NodeReplaceValueByValue> nodeReplaceValueByValues;
-    private List<NodeDeprecated> nodeDeprecateds;
+    private transient List<NodeAlignmentImport> nodeAlignmentImports;
+    private transient List<NodeReplaceValueByValue> nodeReplaceValueByValues;
+    private transient List<NodeDeprecated> nodeDeprecateds;
     private List<LanguageIso639> allLangs;
     private List<UserGroupLabel> nodeUserProjects;
     private List<NodeIdValue> nodeIdValues;
-    private List<NodeCompareTheso> nodeCompareThesos;
+    private transient List<NodeCompareTheso> nodeCompareThesos;
 
     private StringBuilder error = new StringBuilder();
 
@@ -136,7 +153,7 @@ public class WorkshopBulkImportEngine implements Serializable {
         total = 0;
         loadDone = false;
         importDone = false;
-        BDDinsertEnable = false;
+        bddInsertEnable = false;
         importInProgress = false;
         selectedIdentifier = "sans";
         fileName = null;
@@ -268,7 +285,7 @@ public class WorkshopBulkImportEngine implements Serializable {
             } else {
                 total = conceptObjects.size();
                 loadDone = true;
-                BDDinsertEnable = true;
+                bddInsertEnable = true;
                 info = "Fichier correctement chargé (" + total + " concepts).";
             }
 
@@ -292,7 +309,7 @@ public class WorkshopBulkImportEngine implements Serializable {
             event.setPhaseId(PhaseId.INVOKE_APPLICATION);
             event.queue();
         } else {
-            ArrayList<String> headerSourceAlignList;
+            List<String> headerSourceAlignList;
 
             WorkshopCsvReader csvReadHelper = new WorkshopCsvReader(delimiterCsv);
             try (Reader reader1 = new InputStreamReader(event.getFile().getInputStream())) {
@@ -325,9 +342,9 @@ public class WorkshopBulkImportEngine implements Serializable {
                         warning = "";
                     } else {
                         total = nodeAlignmentImports.size();
-                        uri = "";//csvReadHelper.getUri();
+                        uri = "";
                         loadDone = true;
-                        BDDinsertEnable = true;
+                        bddInsertEnable = true;
                         info = FILE_LOADED_MSG;
                         PrimeFaces.current().executeScript(WAIT_DIALOG_HIDE);
                     }
@@ -354,7 +371,7 @@ public class WorkshopBulkImportEngine implements Serializable {
             event.setPhaseId(PhaseId.INVOKE_APPLICATION);
             event.queue();
         } else {
-            ArrayList<String> headerRelatedList;
+            List<String> headerRelatedList;
 
             WorkshopCsvReader csvReadHelper = new WorkshopCsvReader(delimiterCsv);
             try (Reader reader1 = new InputStreamReader(event.getFile().getInputStream())) {
@@ -372,7 +389,7 @@ public class WorkshopBulkImportEngine implements Serializable {
 
             try (Reader reader = new InputStreamReader(event.getFile().getInputStream())) {
 
-                if (!csvReadHelper.readFileRelated(reader, headerRelatedList)) {
+                if (!csvReadHelper.readFileRelated(reader)) {
                     error.append(csvReadHelper.getMessage());
                 }
 
@@ -387,9 +404,9 @@ public class WorkshopBulkImportEngine implements Serializable {
                         warning = "";
                     } else {
                         total = nodeIdValues.size();
-                        uri = "";//csvReadHelper.getUri();
+                        uri = "";
                         loadDone = true;
-                        BDDinsertEnable = true;
+                        bddInsertEnable = true;
                         info = FILE_LOADED_MSG;
                         PrimeFaces.current().executeScript(WAIT_DIALOG_HIDE);
                     }
@@ -404,12 +421,6 @@ public class WorkshopBulkImportEngine implements Serializable {
         }
         PrimeFaces.current().executeScript(WAIT_DIALOG_HIDE);
     }
-
-    /**
-     * permet de charger un fichier en Csv
-     *
-     * @param event
-     */
 
     /**
      * permet de charger un fichier en Csv
@@ -437,21 +448,20 @@ public class WorkshopBulkImportEngine implements Serializable {
 
                     warning = csvReadHelper.getMessage();
                     conceptObjects = csvReadHelper.getConceptObjects();
-                    if (conceptObjects != null && !conceptObjects.isEmpty()) {
-                        if (conceptObjects.get(0).getPrefLabels() != null) {
-                            if (conceptObjects.get(0).getPrefLabels().isEmpty()) {
-                                haveError = true;
-                                error.append(System.lineSeparator());
-                                error.append("La lecture a échouée, vérifiez le séparateur des colonnes !!");
-                                warning = "";
-                            } else {
-                                langs = csvReadHelper.getLangs();
-                                total = conceptObjects.size();
-                                uri = "";//csvReadHelper.getUri();
-                                loadDone = true;
-                                BDDinsertEnable = true;
-                                info = FILE_LOADED_MSG;
-                            }
+                    if (conceptObjects != null && !conceptObjects.isEmpty()
+                            && conceptObjects.get(0).getPrefLabels() != null) {
+                        if (conceptObjects.get(0).getPrefLabels().isEmpty()) {
+                            haveError = true;
+                            error.append(System.lineSeparator());
+                            error.append("La lecture a échouée, vérifiez le séparateur des colonnes !!");
+                            warning = "";
+                        } else {
+                            langs = csvReadHelper.getLangs();
+                            total = conceptObjects.size();
+                            uri = "";
+                            loadDone = true;
+                            bddInsertEnable = true;
+                            info = FILE_LOADED_MSG;
                         }
                     }
                     total = conceptObjects == null ? 0 : conceptObjects.size();
@@ -489,7 +499,7 @@ public class WorkshopBulkImportEngine implements Serializable {
                 }
                 //deuxième lecture pour les données
                 try (Reader reader2 = new InputStreamReader(event.getFile().getInputStream())) {
-                    /// option true to read empty data
+                    // option true to read empty data
                     if (!csvReadHelper.readFile(reader2, true)) {
                         error.append(csvReadHelper.getMessage());
                     }
@@ -499,9 +509,9 @@ public class WorkshopBulkImportEngine implements Serializable {
                     if (conceptObjects != null) {
                         langs = csvReadHelper.getLangs();
                         total = conceptObjects.size();
-                        uri = "";//csvReadHelper.getUri();
+                        uri = "";
                         loadDone = true;
-                        BDDinsertEnable = true;
+                        bddInsertEnable = true;
                         info = FILE_LOADED_MSG;
                     }
                 }
@@ -533,7 +543,7 @@ public class WorkshopBulkImportEngine implements Serializable {
             fileName = event.getFile().getFileName();
             // première lecrture pour charger les langues
             try (Reader reader1 = new InputStreamReader(event.getFile().getInputStream())) {
-                /// option true to read empty data
+                // option true to read empty data
                 if (!csvReadHelper.readFileCsvForGetIdFromPrefLabelSetLang(reader1)) {
                     error.append(csvReadHelper.getMessage());
                 }
@@ -548,7 +558,7 @@ public class WorkshopBulkImportEngine implements Serializable {
             }
 
             try (Reader reader = new InputStreamReader(event.getFile().getInputStream())) {
-                /// option true to read empty data
+                // option true to read empty data
                 if (!csvReadHelper.readFileCsvForGetIdFromPrefLabel(reader)) {
                     error.append(csvReadHelper.getMessage());
                 }
@@ -558,9 +568,9 @@ public class WorkshopBulkImportEngine implements Serializable {
                 idLang = csvReadHelper.getIdLang();
                 if (nodeCompareThesos != null) {
                     total = nodeCompareThesos.size();
-                    uri = "";//csvReadHelper.getUri();
+                    uri = "";
                     loadDone = true;
-                    BDDinsertEnable = true;
+                    bddInsertEnable = true;
                     info = FILE_LOADED_MSG;
                 }
                 PrimeFaces.current().executeScript(WAIT_DIALOG_HIDE);
@@ -590,7 +600,7 @@ public class WorkshopBulkImportEngine implements Serializable {
             WorkshopCsvReader csvReadHelper = new WorkshopCsvReader(delimiterCsv);
 
             try (Reader reader = new InputStreamReader(event.getFile().getInputStream())) {
-                /// option true to read empty data
+                // option true to read empty data
                 if (!csvReadHelper.readFileCsvDeprecateConcepts(reader)) {
                     error.append(csvReadHelper.getMessage());
                 }
@@ -599,9 +609,9 @@ public class WorkshopBulkImportEngine implements Serializable {
                 nodeDeprecateds = csvReadHelper.getNodeDeprecateds();
                 if (nodeDeprecateds != null) {
                     total = nodeDeprecateds.size();
-                    uri = "";//csvReadHelper.getUri();
+                    uri = "";
                     loadDone = true;
-                    BDDinsertEnable = true;
+                    bddInsertEnable = true;
                     info = FILE_LOADED_MSG;
                 }
                 PrimeFaces.current().executeScript(WAIT_DIALOG_HIDE);
@@ -632,7 +642,7 @@ public class WorkshopBulkImportEngine implements Serializable {
             // première lecrture pour charger les langues
             var usedLangs = persistence.getAllUsedLanguagesOfThesaurus(thesaurusId);
             try (Reader reader = new InputStreamReader(event.getFile().getInputStream())) {
-                /// option true to read empty data
+                // option true to read empty data
                 if (!csvReadHelper.readFileReplaceValueByNewValue(reader, usedLangs)) {
                     error.append(csvReadHelper.getMessage());
                 }
@@ -641,9 +651,9 @@ public class WorkshopBulkImportEngine implements Serializable {
                 nodeReplaceValueByValues = csvReadHelper.getNodeReplaceValueByValues();
                 if (nodeReplaceValueByValues != null) {
                     total = nodeReplaceValueByValues.size();
-                    uri = "";//csvReadHelper.getUri();
+                    uri = "";
                     loadDone = true;
-                    BDDinsertEnable = true;
+                    bddInsertEnable = true;
                     info = FILE_LOADED_MSG;
                 }
                 PrimeFaces.current().executeScript(WAIT_DIALOG_HIDE);
@@ -668,10 +678,10 @@ public class WorkshopBulkImportEngine implements Serializable {
         ligne++;
         if (ligne < matrix.length && colone < matrix[ligne].length) {
             while (matrix[ligne][colone] != null) {
-                if (matrix[ligne][colone - 1] != null && matrix[ligne][colone - 1].length() > 0 && !matrix[ligne][colone - 1].equals(element.getPreferredTerm())) {
+                if (matrix[ligne][colone - 1] != null && !matrix[ligne][colone - 1].isEmpty() && !matrix[ligne][colone - 1].equals(element.getPreferredTerm())) {
                     break;
                 }
-                if (matrix[ligne][colone].length() > 0) {
+                if (!matrix[ligne][colone].isEmpty()) {
                     element.getChildrens().add(createTree(matrix, ligne, colone));
                 }
                 ligne++;
@@ -707,7 +717,7 @@ public class WorkshopBulkImportEngine implements Serializable {
         concept.setIdThesaurus(idNewTheso);
         concept.setStatus("D");
 
-        concept.setIdConcept(null);//id);
+        concept.setIdConcept(null);
 
         Term terme = new Term();
         terme.setIdThesaurus(idNewTheso);
@@ -772,10 +782,9 @@ public class WorkshopBulkImportEngine implements Serializable {
 
             loadDone = false;
             importDone = true;
-            BDDinsertEnable = false;
+            bddInsertEnable = false;
             importInProgress = false;
             uri = null;
-            //total = 0;
             info = info + "\n" + TOTAL_PREFIX + total + "\n" + persistence.getMessage();
 
         } catch (Exception e) {
@@ -785,8 +794,6 @@ public class WorkshopBulkImportEngine implements Serializable {
         }
 
         conceptObjects = null;
-        //    System.gc();
-        //    System.gc();
     }
 
     /**
@@ -848,27 +855,16 @@ public class WorkshopBulkImportEngine implements Serializable {
 
             loadDone = false;
             importDone = true;
-            BDDinsertEnable = false;
+            bddInsertEnable = false;
             importInProgress = false;
             uri = null;
-            //total = 0;
             info = info + "\n" + TOTAL_PREFIX + total;
             error.append(persistence.getMessage());
 
             ThesaurusCsvWriter csvWriter = thesaurusCsvWriter;
             byte[] datas = csvWriter.writeCsvForAlignment(listAlignments, alignmentSource);
 
-            try (ByteArrayInputStream input = new ByteArrayInputStream(datas)) {
-                return DefaultStreamedContent.builder()
-                        .contentType(CSV_CONTENT_TYPE)
-                        .name(RESULT_CSV_NAME)
-                        .stream(() -> input)
-                        .build();
-            } catch (IOException ex) {
-                error.append(System.getProperty(ex.getMessage()));
-            }
-            PrimeFaces.current().executeScript(WAIT_DIALOG_HIDE);
-            return new DefaultStreamedContent();
+            return streamedCsvOrEmpty(datas);
 
         } catch (Exception e) {
             failListImport(e);
@@ -959,26 +955,16 @@ public class WorkshopBulkImportEngine implements Serializable {
             total = nodeCompareThesos.size();
             loadDone = false;
             importDone = true;
-            BDDinsertEnable = false;
+            bddInsertEnable = false;
             importInProgress = false;
             uri = null;
-            //total = 0;
             info = info + "\n" + TOTAL_PREFIX + total;
             error.append(persistence.getMessage());
 
             ThesaurusCsvWriter csvWriter = thesaurusCsvWriter;
             byte[] datas = csvWriter.writeCsvFromNodeCompareTheso(nodeCompareThesos, idLang);
 
-            try (ByteArrayInputStream input = new ByteArrayInputStream(datas)) {
-                return DefaultStreamedContent.builder()
-                        .contentType(CSV_CONTENT_TYPE)
-                        .name(RESULT_CSV_NAME)
-                        .stream(() -> input)
-                        .build();
-            } catch (IOException ex) {
-            }
-            PrimeFaces.current().executeScript(WAIT_DIALOG_HIDE);
-            return new DefaultStreamedContent();
+            return streamedCsvOrEmptyQuietly(datas);
 
         } catch (Exception e) {
             failListImport(e);
@@ -986,6 +972,34 @@ public class WorkshopBulkImportEngine implements Serializable {
             showError();
         }
         return null;
+    }
+
+    private StreamedContent streamedCsvContent(ByteArrayInputStream input) {
+        return DefaultStreamedContent.builder()
+                .contentType(CSV_CONTENT_TYPE)
+                .name(RESULT_CSV_NAME)
+                .stream(() -> input)
+                .build();
+    }
+
+    private StreamedContent streamedCsvOrEmpty(byte[] datas) {
+        try (ByteArrayInputStream input = new ByteArrayInputStream(datas)) {
+            return streamedCsvContent(input);
+        } catch (IOException ex) {
+            error.append(System.getProperty(ex.getMessage()));
+        }
+        PrimeFaces.current().executeScript(WAIT_DIALOG_HIDE);
+        return new DefaultStreamedContent();
+    }
+
+    private StreamedContent streamedCsvOrEmptyQuietly(byte[] datas) {
+        try (ByteArrayInputStream input = new ByteArrayInputStream(datas)) {
+            return streamedCsvContent(input);
+        } catch (IOException ignored) {
+            // ByteArrayInputStream.close() does not throw; keep the empty-download fallback.
+        }
+        PrimeFaces.current().executeScript(WAIT_DIALOG_HIDE);
+        return new DefaultStreamedContent();
     }
 
     /**
@@ -1060,10 +1074,9 @@ public class WorkshopBulkImportEngine implements Serializable {
 
             loadDone = false;
             importDone = true;
-            BDDinsertEnable = false;
+            bddInsertEnable = false;
             importInProgress = false;
             uri = null;
-            //total = 0;
             info = info + "\n" + TOTAL_PREFIX + total;
             error.append(persistence.getMessage());
 
@@ -1074,8 +1087,6 @@ public class WorkshopBulkImportEngine implements Serializable {
         }
 
         conceptObjects = null;
-        //    System.gc();
-        //    System.gc();
     }
 
     /**
@@ -1155,10 +1166,9 @@ public class WorkshopBulkImportEngine implements Serializable {
 
             loadDone = false;
             importDone = true;
-            BDDinsertEnable = false;
+            bddInsertEnable = false;
             importInProgress = false;
             uri = null;
-            //total = 0;
             info = info + "\n" + TOTAL_PREFIX + total;
             error.append(persistence.getMessage());
 
@@ -1169,8 +1179,6 @@ public class WorkshopBulkImportEngine implements Serializable {
         }
 
         conceptObjects = null;
-        //    System.gc();
-        //    System.gc();
     }
 
     private String getIdConcept(String idToFind, String idTheso) {
@@ -1252,7 +1260,7 @@ public class WorkshopBulkImportEngine implements Serializable {
     private void completeListImport(String infoMessage) {
         loadDone = false;
         importDone = true;
-        BDDinsertEnable = false;
+        bddInsertEnable = false;
         importInProgress = false;
         uri = null;
         info = infoMessage;
@@ -1275,10 +1283,7 @@ public class WorkshopBulkImportEngine implements Serializable {
         }
     }
 
-///////////////////////////////////////////////////////////////////////////////
-///////////////// Fonctions pour importer des données en CSV //////////////////
-///////////////// L'ajout des données se fait en fusion  //////////////////////
-///////////////////////////////////////////////////////////////////////////////
+// Import CSV data (merge / fusion).
     /**
      * permet d'ajouter une liste de notes en CSV au thésaurus
      *
@@ -1306,10 +1311,9 @@ public class WorkshopBulkImportEngine implements Serializable {
                     }
                 } else {
                     var concept = persistence.getConcept(nodeIdValue.getId(), thesaurusId);
-                    if (StringUtils.isEmpty(concept.getIdArk())) {
-                        if (persistence.updateArkIdOfConcept(nodeIdValue.getId(), thesaurusId, nodeIdValue.getValue())) {
-                            total++;
-                        }
+                    if (StringUtils.isEmpty(concept.getIdArk())
+                            && persistence.updateArkIdOfConcept(nodeIdValue.getId(), thesaurusId, nodeIdValue.getValue())) {
+                        total++;
                     }
                 }
                 progressStep++;
@@ -1476,7 +1480,7 @@ public class WorkshopBulkImportEngine implements Serializable {
                 progressStep++;
                 progress = progressPercent(progressStep, total);
             }
-            completeListImport("import réussi, notes importées = " + (int) total);
+            completeListImport("import réussi, notes importées = " + total);
         } catch (Exception e) {
             failListImport(e);
         } finally {
@@ -1578,7 +1582,7 @@ public class WorkshopBulkImportEngine implements Serializable {
                 progressStep++;
                 progress = progressPercent(progressStep, total);
             }
-            completeListImport("import réussi, notes importées = " + (int) total);
+            completeListImport("import réussi, notes importées = " + total);
         } catch (Exception e) {
             failListImport(e);
         } finally {
@@ -1621,7 +1625,7 @@ public class WorkshopBulkImportEngine implements Serializable {
                 progressStep++;
                 progress = progressPercent(progressStep, total);
             }
-            completeListImport("Suppression réussie, synonymes importés = " + (int) total);
+            completeListImport("Suppression réussie, synonymes importés = " + total);
         } catch (Exception e) {
             failListImport(e);
         } finally {
@@ -1676,7 +1680,7 @@ public class WorkshopBulkImportEngine implements Serializable {
                 progressStep++;
                 progress = progressPercent(progressStep, total);
             }
-            completeListImport("import réussi, synonymes importés = " + (int) total);
+            completeListImport("import réussi, synonymes importés = " + total);
         } catch (Exception e) {
             failListImport(e);
         } finally {
@@ -1714,7 +1718,6 @@ public class WorkshopBulkImportEngine implements Serializable {
                     if (nodeImage == null) {
                         continue;
                     }
-                    //   nodeImage.setUri(URLEncoder.encode(nodeImage.getUri(), "UTF-8"));
                     if (!fr.cnrs.opentheso.utils.StringUtils.urlValidator(nodeImage.getUri())) {
                         error.append("URL non valide : ");
                         error.append(uri);
@@ -1729,11 +1732,10 @@ public class WorkshopBulkImportEngine implements Serializable {
             PrimeFaces.current().executeScript(WAIT_DIALOG_HIDE);
             loadDone = false;
             importDone = true;
-            BDDinsertEnable = false;
+            bddInsertEnable = false;
             importInProgress = false;
             uri = null;
-            info = "import réussi, images importées = " + (int) total;
-            //           total = 0;
+            info = "import réussi, images importées = " + total;
         } catch (Exception e) {
             failListImport(e);
         } finally {
@@ -1767,16 +1769,15 @@ public class WorkshopBulkImportEngine implements Serializable {
                     }
                 } else {
                     var concept = persistence.getConcept(idConcept, thesaurusId);
-                    if (StringUtils.isEmpty(concept.getNotation())) {
-                        if (persistence.updateNotation(idConcept, thesaurusId, nodeIdValue.getValue())) {
-                            total++;
-                        }
+                    if (StringUtils.isEmpty(concept.getNotation())
+                            && persistence.updateNotation(idConcept, thesaurusId, nodeIdValue.getValue())) {
+                        total++;
                     }
                 }
                 progressStep++;
                 progress = progressPercent(progressStep, total);
             }
-            completeListImport("import réussi, notations importées = " + (int) total);
+            completeListImport("import réussi, notations importées = " + total);
         } catch (Exception e) {
             failListImport(e);
         } finally {
@@ -1810,7 +1811,7 @@ public class WorkshopBulkImportEngine implements Serializable {
                 progressStep++;
                 progress = progressPercent(progressStep, total);
             }
-            completeListImport("import réussi, notations importées = " + (int) total);
+            completeListImport("import réussi, notations importées = " + total);
         } catch (Exception e) {
             failListImport(e);
         } finally {
@@ -1833,7 +1834,7 @@ public class WorkshopBulkImportEngine implements Serializable {
             List<String> allIds = nodeIdValues.stream()
                     .map(NodeIdValue::getId)
                     .filter(id -> id != null && !id.isBlank())
-                    .collect(Collectors.toList());
+                    .toList();
 
             // Définir la taille du batch pour la requête SQL
             int batchSize = 5000;
@@ -1886,7 +1887,7 @@ public class WorkshopBulkImportEngine implements Serializable {
             }
 
             PrimeFaces.current().executeScript(WAIT_DIALOG_HIDE);
-            completeListImport("import réussi, alignements importés = " + (int) total);
+            completeListImport("import réussi, alignements importés = " + total);
         } catch (Exception e) {
             failListImport(e);
         } finally {
@@ -1939,7 +1940,7 @@ public class WorkshopBulkImportEngine implements Serializable {
                 }
             }
             PrimeFaces.current().executeScript(WAIT_DIALOG_HIDE);
-            completeListImport("import réussi, alignements importés = " + (int) total);
+            completeListImport("import réussi, alignements importés = " + total);
         } catch (Exception e) {
             failListImport(e);
         } finally {
@@ -1973,17 +1974,14 @@ public class WorkshopBulkImportEngine implements Serializable {
                     }
                 }
             }
-            completeListImport("Suppression réussi, alignements supprimés = " + (int) total);
+            completeListImport("Suppression réussi, alignements supprimés = " + total);
         } catch (Exception e) {
             failListImport(e);
         } finally {
             showError();
         }
     }
-///////////////////////////////////////////////////////////////////////////////
-//////////////////Fin Ajout des alignements de Wikidata////////////////////////
-///////////////////////////////////////////////////////////////////////////////
-///////////////////////////////////////////////////////////////////////////////
+// End of Wikidata alignment import.
 
     /**
      * permet d'ajouter une liste de concepts en CSV au thésaurus les concepts
@@ -2016,8 +2014,7 @@ public class WorkshopBulkImportEngine implements Serializable {
                 if (conceptObject == null) {
                     continue;
                 }
-                switch (conceptObject.getType().toLowerCase()) {
-                    case "skos:collection":
+                if ("skos:collection".equalsIgnoreCase(conceptObject.getType())) {
                         if (conceptObject.getIdConcept() == null || conceptObject.getIdConcept().isEmpty()) {
                             conceptObject.setIdConcept(null);
                         } else {
@@ -2040,9 +2037,7 @@ public class WorkshopBulkImportEngine implements Serializable {
                             persistence.addSubGroup(conceptObject.getIdConcept(), subGroup, idTheso);
                             total++;
                         }
-
-                        break;
-                    default:
+                } else {
                         if (conceptObject.getIdConcept() == null || conceptObject.getIdConcept().isEmpty()) {
                             conceptObject.setIdConcept(null);
                         } else {
@@ -2059,12 +2054,11 @@ public class WorkshopBulkImportEngine implements Serializable {
                         if (persistence.addConceptV2(idTheso, WorkshopCsvConceptMapper.toEditionModel(conceptObject), userId, DATE_FORMAT)) {
                             total++;
                         }
-                        break;
                 }
             }
             loadDone = false;
             importDone = true;
-            BDDinsertEnable = false;
+            bddInsertEnable = false;
             importInProgress = false;
             uri = null;
             info = "import réussi";
@@ -2091,12 +2085,12 @@ public class WorkshopBulkImportEngine implements Serializable {
 
     @FunctionalInterface
     private interface CsvRead {
-        boolean apply(WorkshopCsvReader helper, Reader reader) throws Exception;
+        boolean apply(WorkshopCsvReader helper, Reader reader);
     }
 
     @FunctionalInterface
     private interface CsvWork {
-        void run(WorkshopCsvReader helper) throws Exception;
+        void run(WorkshopCsvReader helper) throws IOException;
     }
 
     private void loadCsvEvent(FileUploadEvent event, CsvWork work) {
@@ -2161,7 +2155,7 @@ public class WorkshopBulkImportEngine implements Serializable {
         total = loaded.size();
         uri = "";
         loadDone = true;
-        BDDinsertEnable = true;
+        bddInsertEnable = true;
         info = FILE_LOADED_MSG;
     }
 
@@ -2190,7 +2184,7 @@ public class WorkshopBulkImportEngine implements Serializable {
     }
 
     public double getTotal() {
-        return total;
+        return getTotalInt();
     }
 
     public int getTotalInt() {
@@ -2238,7 +2232,7 @@ public class WorkshopBulkImportEngine implements Serializable {
     }
 
     public void setTotalInt(int total) {
-        this.total = total;
+        setTotal(total);
     }
 
     public void setLoadDone(boolean loadDone) {

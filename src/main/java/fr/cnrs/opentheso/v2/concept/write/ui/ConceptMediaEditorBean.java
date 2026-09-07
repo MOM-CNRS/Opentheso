@@ -25,12 +25,12 @@ import lombok.Getter;
 import lombok.RequiredArgsConstructor;
 import lombok.Setter;
 import org.apache.commons.lang3.StringUtils;
+import org.apache.commons.lang3.Strings;
 import org.primefaces.PrimeFaces;
 
 import java.io.Serializable;
 import java.util.Collections;
 import java.util.List;
-import java.util.stream.Collectors;
 
 @Getter
 @Setter
@@ -179,8 +179,8 @@ public class ConceptMediaEditorBean implements Serializable {
         imagesToDelete = imagesToDelete.stream()
                 .filter(image -> deletedId > 0
                         ? image.getId() != deletedId
-                        : !StringUtils.equals(image.getUri(), deletedUri))
-                .collect(Collectors.toList());
+                        : !Strings.CS.equals(image.getUri(), deletedUri))
+                .toList();
         PrimeFaces.current().ajax().update(":containerIndex:v2DeleteImageDlg");
     }
 
@@ -240,9 +240,9 @@ public class ConceptMediaEditorBean implements Serializable {
         }
         String deletedUri = row.getUri();
         resourcesToDelete = resourcesToDelete.stream()
-                .filter(resource -> !StringUtils.equals(resource.getUri(), deletedUri)
-                        && !StringUtils.equals(resource.getOldUri(), deletedUri))
-                .collect(Collectors.toList());
+                .filter(resource -> !Strings.CS.equals(resource.getUri(), deletedUri)
+                        && !Strings.CS.equals(resource.getOldUri(), deletedUri))
+                .toList();
         PrimeFaces.current().ajax().update(":containerIndex:v2DeleteExternalResourceDlg");
     }
 
@@ -276,7 +276,7 @@ public class ConceptMediaEditorBean implements Serializable {
         }
         return thesaurusBrowseBean.getSelectedConcept().images().stream()
                 .map(this::toImageEditRow)
-                .collect(Collectors.toList());
+                .toList();
     }
 
     private List<ExternalResourceEditRow> loadResourceEdits() {
@@ -286,7 +286,7 @@ public class ConceptMediaEditorBean implements Serializable {
         }
         return thesaurusBrowseBean.getSelectedConcept().externalResources().stream()
                 .map(this::toResourceEditRow)
-                .collect(Collectors.toList());
+                .toList();
     }
 
     private ImageEditRow toImageEditRow(ConceptImageItem image) {

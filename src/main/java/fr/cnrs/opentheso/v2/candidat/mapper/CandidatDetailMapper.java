@@ -115,6 +115,6 @@ public final class CandidatDetailMapper {
                 .map(CandidatDto::getIdConcepte)
                 .filter(id -> id != null && !id.isBlank())
                 .distinct()
-                .collect(Collectors.toList());
+                .toList();
     }
 }

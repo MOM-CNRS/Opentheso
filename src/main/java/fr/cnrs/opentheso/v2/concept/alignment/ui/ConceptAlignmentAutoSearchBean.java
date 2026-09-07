@@ -23,6 +23,7 @@ import lombok.Getter;
 import lombok.RequiredArgsConstructor;
 import lombok.Setter;
 import org.apache.commons.lang3.StringUtils;
+import org.apache.commons.lang3.Strings;
 
 import java.io.Serializable;
 import java.util.ArrayList;
@@ -445,7 +446,7 @@ public class ConceptAlignmentAutoSearchBean implements Serializable {
         if (detail == null || detail.getSummary() == null) {
             return false;
         }
-        return StringUtils.equals(editingConceptId, detail.getSummary().getConceptId());
+        return Strings.CS.equals(editingConceptId, detail.getSummary().getConceptId());
     }
 
     private List<ConceptAlignment> currentAlignments() {
@@ -476,7 +477,7 @@ public class ConceptAlignmentAutoSearchBean implements Serializable {
             if (StringUtils.isBlank(note.value())) {
                 continue;
             }
-            if (StringUtils.equalsIgnoreCase(lang, note.lang())) {
+            if (Strings.CI.equals(lang, note.lang())) {
                 return note.value();
             }
             if (fallback.isEmpty()) {

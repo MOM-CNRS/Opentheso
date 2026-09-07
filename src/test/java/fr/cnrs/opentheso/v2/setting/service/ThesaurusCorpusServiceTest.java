@@ -62,24 +62,26 @@ class ThesaurusCorpusServiceTest {
     void createCorpus_rejectsDuplicate() {
         when(corpusLinkJpaRepository.findByIdThesaurusAndCorpusName("TH1", "Corpus A"))
                 .thenReturn(Optional.of(new CorpusLinkEntity()));
+        var corpus = SettingTestFixtures.sampleCorpus();
 
         assertThrows(InvalidSettingDataException.class,
-                () -> thesaurusCorpusService.createCorpus("TH1", SettingTestFixtures.sampleCorpus()));
+                () -> thesaurusCorpusService.createCorpus("TH1", corpus));
     }
 
     @Test
     void createCorpus_rejectsInvalidData() {
+        var unnamed = new ThesaurusCorpus("", "http://link", "http://count", true, false, false, null);
+        var noLink = new ThesaurusCorpus("Corpus A", "", "http://count", true, false, false, null);
+        var noCount = new ThesaurusCorpus("Corpus A", "http://link", null, true, false, false, null);
+
         assertThrows(InvalidSettingDataException.class,
                 () -> thesaurusCorpusService.createCorpus("TH1", null));
         assertThrows(InvalidSettingDataException.class,
-                () -> thesaurusCorpusService.createCorpus("TH1",
-                        new ThesaurusCorpus("", "http://link", "http://count", true, false, false, null)));
+                () -> thesaurusCorpusService.createCorpus("TH1", unnamed));
         assertThrows(InvalidSettingDataException.class,
-                () -> thesaurusCorpusService.createCorpus("TH1",
-                        new ThesaurusCorpus("Corpus A", "", "http://count", true, false, false, null)));
+                () -> thesaurusCorpusService.createCorpus("TH1", noLink));
         assertThrows(InvalidSettingDataException.class,
-                () -> thesaurusCorpusService.createCorpus("TH1",
-                        new ThesaurusCorpus("Corpus A", "http://link", null, true, false, false, null)));
+                () -> thesaurusCorpusService.createCorpus("TH1", noCount));
     }
 
     @Test
@@ -126,9 +128,10 @@ class ThesaurusCorpusServiceTest {
     void updateCorpus_throwsWhenMissing() {
         when(corpusLinkJpaRepository.findByIdThesaurusAndCorpusName("TH1", "Missing"))
                 .thenReturn(Optional.empty());
+        var corpus = SettingTestFixtures.sampleCorpus();
 
         assertThrows(InvalidSettingDataException.class,
-                () -> thesaurusCorpusService.updateCorpus("TH1", "Missing", SettingTestFixtures.sampleCorpus()));
+                () -> thesaurusCorpusService.updateCorpus("TH1", "Missing", corpus));
     }
 
     @Test
@@ -137,12 +140,10 @@ class ThesaurusCorpusServiceTest {
                 .thenReturn(Optional.of(SettingTestFixtures.sampleCorpusEntity()));
         when(corpusLinkJpaRepository.findByIdThesaurusAndCorpusName("TH1", "Corpus B"))
                 .thenReturn(Optional.of(new CorpusLinkEntity()));
+        var renamed = new ThesaurusCorpus("Corpus B", "http://link", "http://count", true, false, false, null);
 
-        assertThrows(InvalidSettingDataException.class, () -> thesaurusCorpusService.updateCorpus(
-                "TH1",
-                "Corpus A",
-                new ThesaurusCorpus("Corpus B", "http://link", "http://count", true, false, false, null)
-        ));
+        assertThrows(InvalidSettingDataException.class,
+                () -> thesaurusCorpusService.updateCorpus("TH1", "Corpus A", renamed));
     }
 
     @Test

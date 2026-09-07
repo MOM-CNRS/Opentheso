@@ -17,7 +17,6 @@ import java.util.Optional;
 import static org.junit.jupiter.api.Assertions.assertEquals;
 import static org.junit.jupiter.api.Assertions.assertFalse;
 import static org.junit.jupiter.api.Assertions.assertTrue;
-import static org.mockito.ArgumentMatchers.eq;
 import static org.mockito.Mockito.when;
 
 @ExtendWith(MockitoExtension.class)
@@ -50,15 +49,15 @@ class ConceptFullReadServiceTest {
         when(thesaurusPreferenceService.loadPreferencesOrNull("TH1", "fr")).thenReturn(null);
         when(applicationUriService.resolveApplicationBaseUrl()).thenReturn("http://localhost");
         when(conceptFullAssembler.assemble(
-                eq("TH1"),
-                eq("C1"),
-                eq("fr"),
-                eq(0),
-                eq(ConceptFullReadService.NARROWER_PAGE_SIZE + 1),
-                eq(true),
-                eq(null),
-                eq("http://localhost"),
-                eq(false)
+                "TH1",
+                "C1",
+                "fr",
+                0,
+                ConceptFullReadService.NARROWER_PAGE_SIZE + 1,
+                true,
+                null,
+                "http://localhost",
+                false
         )).thenReturn(Optional.of(fullConcept));
 
         Optional<ConceptFullSnapshot> loaded = service.loadFullConcept("TH1", "C1", "fr", 0, true);
@@ -72,14 +71,14 @@ class ConceptFullReadServiceTest {
         when(thesaurusPreferenceService.loadPreferencesOrNull("TH1", "fr")).thenReturn(null);
         when(applicationUriService.resolveApplicationBaseUrl()).thenReturn("http://localhost");
         when(conceptFullAssembler.assembleNarrowerRelations(
-                eq("TH1"),
-                eq("C1"),
-                eq("fr"),
-                eq(41),
-                eq(ConceptFullReadService.NARROWER_PAGE_SIZE + 1),
-                eq(false),
-                eq(null),
-                eq("http://localhost")
+                "TH1",
+                "C1",
+                "fr",
+                41,
+                ConceptFullReadService.NARROWER_PAGE_SIZE + 1,
+                false,
+                null,
+                "http://localhost"
         )).thenReturn(List.of(new ConceptHierarchicalRelation("", "C2", "Child", "NT")));
 
         List<ConceptHierarchicalRelation> loaded = service.loadMoreNarrowers("TH1", "C1", "fr", 41, false);

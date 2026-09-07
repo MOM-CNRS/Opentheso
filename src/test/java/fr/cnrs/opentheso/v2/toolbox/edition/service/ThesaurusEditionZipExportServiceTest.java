@@ -94,8 +94,11 @@ class ThesaurusEditionZipExportServiceTest {
                 group("G2", "Asie")
         ));
 
+        var languages = List.<String>of();
+        var restrictedGroups = List.of("missing");
+
         assertThrows(IllegalStateException.class, () ->
-                service.exportEachGroupAsCsvZip("TH1", "Pays", ',', List.of(), false, List.of("missing")));
+                service.exportEachGroupAsCsvZip("TH1", "Pays", ',', languages, false, restrictedGroups));
     }
 
     private static NodeGroup group(String id, String label) {

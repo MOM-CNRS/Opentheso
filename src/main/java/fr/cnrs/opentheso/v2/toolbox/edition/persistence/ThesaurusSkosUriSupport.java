@@ -7,6 +7,7 @@ import fr.cnrs.opentheso.v2.shared.uri.SkosUriFragments;
 import jakarta.faces.context.FacesContext;
 import jakarta.servlet.http.HttpServletRequest;
 import org.apache.commons.lang3.StringUtils;
+import org.apache.commons.lang3.Strings;
 
 public final class ThesaurusSkosUriSupport {
 
@@ -48,7 +49,7 @@ public final class ThesaurusSkosUriSupport {
     }
 
     public static String uriFromId(String id, Preferences preferences, String baseUrl) {
-        var uriBase = StringUtils.removeEnd(baseUrl, "/");
+        var uriBase = Strings.CS.removeEnd(baseUrl, "/");
         if (preferences.isOriginalUriIsArk()) {
             if (StringUtils.isNotEmpty(preferences.getOriginalUri())) {
                 return preferences.getOriginalUri() + "/" + preferences.getIdNaan() + "/" + id;
@@ -80,7 +81,7 @@ public final class ThesaurusSkosUriSupport {
         if (group == null || group.getIdGroup() == null) {
             return "";
         }
-        var uriBase = StringUtils.removeEnd(baseUrl, "/");
+        var uriBase = Strings.CS.removeEnd(baseUrl, "/");
         if (preferences.isOriginalUriIsArk()) {
             if (StringUtils.isNotBlank(group.getIdArk())) {
                 return preferences.getUriArk() + group.getIdArk();
@@ -103,7 +104,7 @@ public final class ThesaurusSkosUriSupport {
         if (nodeUri == null) {
             return "";
         }
-        var uriBase = StringUtils.removeEnd(baseUrl, "/");
+        var uriBase = Strings.CS.removeEnd(baseUrl, "/");
         if (preferences.isOriginalUriIsArk()) {
             if (StringUtils.isNotEmpty(nodeUri.getIdArk())) {
                 return preferences.getOriginalUri() + "/" + nodeUri.getIdArk();
@@ -125,7 +126,7 @@ public final class ThesaurusSkosUriSupport {
             if (StringUtils.isNotEmpty(nodeUri.getIdArk())) {
                 return preferences.getOriginalUri() + "/" + nodeUri.getIdArk();
             }
-            var uriBase = StringUtils.removeEnd(baseUrl, "/");
+            var uriBase = Strings.CS.removeEnd(baseUrl, "/");
             return uriBase + SkosUriFragments.IDC_PATH + conceptId + SkosUriFragments.IDT + thesaurusId;
         }
         if (preferences.isOriginalUriIsHandle() && StringUtils.isNotBlank(nodeUri.getIdHandle())) {
@@ -137,7 +138,7 @@ public final class ThesaurusSkosUriSupport {
         if (StringUtils.isNotEmpty(originalUri)) {
             return originalUri + SkosUriFragments.IDC_PATH + conceptId + SkosUriFragments.IDT + thesaurusId;
         }
-        var uriBase = StringUtils.removeEnd(baseUrl, "/");
+        var uriBase = Strings.CS.removeEnd(baseUrl, "/");
         return uriBase + SkosUriFragments.IDC_PATH + conceptId + SkosUriFragments.IDT + thesaurusId;
     }
 }

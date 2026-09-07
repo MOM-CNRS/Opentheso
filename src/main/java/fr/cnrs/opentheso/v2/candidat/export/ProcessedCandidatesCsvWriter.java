@@ -8,7 +8,7 @@ import org.apache.commons.csv.CSVPrinter;
 import java.io.ByteArrayOutputStream;
 import java.io.IOException;
 import java.io.OutputStreamWriter;
-import java.nio.charset.Charset;
+import java.nio.charset.StandardCharsets;
 import java.util.ArrayList;
 import java.util.List;
 
@@ -18,14 +18,14 @@ public class ProcessedCandidatesCsvWriter {
     public byte[] write(List<CandidatDto> candidates, char delimiter) {
         try {
             ByteArrayOutputStream os = new ByteArrayOutputStream();
-            try (OutputStreamWriter out = new OutputStreamWriter(os, Charset.forName("UTF-8"));
+            try (OutputStreamWriter out = new OutputStreamWriter(os, StandardCharsets.UTF_8);
                  CSVPrinter csvFilePrinter = new CSVPrinter(out, CSVFormat.RFC4180.builder().setDelimiter(delimiter).build())) {
                 csvFilePrinter.printRecord(List.of(
                         "Id", "Candidat", "Créé par", "Date de création", "Traité par",
                         "Date de traitement", "Message de l'admin", "Votes", "Votes de notes",
                         "Nombre de participants"));
                 if (candidates == null || candidates.isEmpty()) {
-                    return null;
+                    return new byte[0];
                 }
                 for (CandidatDto candidatDto : candidates) {
                     ArrayList<Object> csvRow = new ArrayList<>();
@@ -45,7 +45,7 @@ public class ProcessedCandidatesCsvWriter {
             return os.toByteArray();
         } catch (IOException e) {
             log.error("Erreur pendant l'export CSV des candidats traités", e);
-            return null;
+            return new byte[0];
         }
     }
 }

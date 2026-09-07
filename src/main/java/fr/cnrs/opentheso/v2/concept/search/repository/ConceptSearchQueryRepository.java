@@ -614,13 +614,14 @@ public class ConceptSearchQueryRepository {
         if (conceptIds == null || conceptIds.isEmpty()) {
             return Map.of();
         }
+        String sql = """
+            SELECT c.id_concept, c.status
+            FROM concept c
+            WHERE c.id_thesaurus = :thesaurusId
+              AND c.id_concept IN (:conceptIds)
+            """;
         return chunkedMapQuery(conceptIds, chunk -> {
-            List<Object[]> rows = em.createNativeQuery("""
-                SELECT c.id_concept, c.status
-                FROM concept c
-                WHERE c.id_thesaurus = :thesaurusId
-                  AND c.id_concept IN (:conceptIds)
-                """)
+            List<Object[]> rows = em.createNativeQuery(sql)
                     .setParameter(NativeQueryParams.THESAURUS_ID, thesaurusId)
                     .setParameter(NativeQueryParams.CONCEPT_IDS, chunk)
                     .getResultList();
@@ -636,15 +637,16 @@ public class ConceptSearchQueryRepository {
         if (conceptIds == null || conceptIds.isEmpty()) {
             return Map.of();
         }
+        String sql = """
+            SELECT pt.id_concept, t.lexical_value
+            FROM preferred_term pt
+            JOIN term t ON t.id_term = pt.id_term AND t.id_thesaurus = pt.id_thesaurus
+            WHERE pt.id_thesaurus = :thesaurusId
+              AND pt.id_concept IN (:conceptIds)
+              AND t.lang = :lang
+            """;
         return chunkedMapQuery(conceptIds, chunk -> {
-            List<Object[]> rows = em.createNativeQuery("""
-                SELECT pt.id_concept, t.lexical_value
-                FROM preferred_term pt
-                JOIN term t ON t.id_term = pt.id_term AND t.id_thesaurus = pt.id_thesaurus
-                WHERE pt.id_thesaurus = :thesaurusId
-                  AND pt.id_concept IN (:conceptIds)
-                  AND t.lang = :lang
-                """)
+            List<Object[]> rows = em.createNativeQuery(sql)
                     .setParameter(NativeQueryParams.THESAURUS_ID, thesaurusId)
                     .setParameter(NativeQueryParams.CONCEPT_IDS, chunk)
                     .setParameter("lang", lang)
@@ -661,17 +663,18 @@ public class ConceptSearchQueryRepository {
         if (conceptIds == null || conceptIds.isEmpty()) {
             return Map.of();
         }
+        String sql = """
+            SELECT pt.id_concept, npt.lexical_value
+            FROM non_preferred_term npt
+            JOIN preferred_term pt ON pt.id_term = npt.id_term AND pt.id_thesaurus = npt.id_thesaurus
+            WHERE npt.id_thesaurus = :thesaurusId
+              AND npt.lang = :lang
+              AND npt.hiden = false
+              AND pt.id_concept IN (:conceptIds)
+            ORDER BY npt.lexical_value
+            """;
         return chunkedMapQuery(conceptIds, chunk -> {
-            List<Object[]> rows = em.createNativeQuery("""
-                SELECT pt.id_concept, npt.lexical_value
-                FROM non_preferred_term npt
-                JOIN preferred_term pt ON pt.id_term = npt.id_term AND pt.id_thesaurus = npt.id_thesaurus
-                WHERE npt.id_thesaurus = :thesaurusId
-                  AND npt.lang = :lang
-                  AND npt.hiden = false
-                  AND pt.id_concept IN (:conceptIds)
-                ORDER BY npt.lexical_value
-                """)
+            List<Object[]> rows = em.createNativeQuery(sql)
                     .setParameter(NativeQueryParams.THESAURUS_ID, thesaurusId)
                     .setParameter(NativeQueryParams.CONCEPT_IDS, chunk)
                     .setParameter("lang", lang)
@@ -684,19 +687,20 @@ public class ConceptSearchQueryRepository {
         if (conceptIds == null || conceptIds.isEmpty()) {
             return Map.of();
         }
+        String sql = """
+            SELECT hr.id_concept1, COALESCE(t.lexical_value, hr.id_concept2)
+            FROM hierarchical_relationship hr
+            JOIN concept c ON c.id_concept = hr.id_concept2 AND c.id_thesaurus = hr.id_thesaurus
+            LEFT JOIN preferred_term pt ON pt.id_concept = c.id_concept AND pt.id_thesaurus = c.id_thesaurus
+            LEFT JOIN term t ON t.id_term = pt.id_term AND t.id_thesaurus = c.id_thesaurus AND t.lang = :lang
+            WHERE hr.id_thesaurus = :thesaurusId
+              AND hr.id_concept1 IN (:conceptIds)
+              AND hr.role LIKE 'BT%'
+              AND c.status != 'CA'
+            ORDER BY t.lexical_value
+            """;
         return chunkedMapQuery(conceptIds, chunk -> {
-            List<Object[]> rows = em.createNativeQuery("""
-                SELECT hr.id_concept1, COALESCE(t.lexical_value, hr.id_concept2)
-                FROM hierarchical_relationship hr
-                JOIN concept c ON c.id_concept = hr.id_concept2 AND c.id_thesaurus = hr.id_thesaurus
-                LEFT JOIN preferred_term pt ON pt.id_concept = c.id_concept AND pt.id_thesaurus = c.id_thesaurus
-                LEFT JOIN term t ON t.id_term = pt.id_term AND t.id_thesaurus = c.id_thesaurus AND t.lang = :lang
-                WHERE hr.id_thesaurus = :thesaurusId
-                  AND hr.id_concept1 IN (:conceptIds)
-                  AND hr.role LIKE 'BT%'
-                  AND c.status != 'CA'
-                ORDER BY t.lexical_value
-                """)
+            List<Object[]> rows = em.createNativeQuery(sql)
                     .setParameter(NativeQueryParams.THESAURUS_ID, thesaurusId)
                     .setParameter(NativeQueryParams.CONCEPT_IDS, chunk)
                     .setParameter("lang", lang)
@@ -709,19 +713,20 @@ public class ConceptSearchQueryRepository {
         if (conceptIds == null || conceptIds.isEmpty()) {
             return Map.of();
         }
+        String sql = """
+            SELECT hr.id_concept1, COALESCE(t.lexical_value, hr.id_concept2)
+            FROM hierarchical_relationship hr
+            JOIN concept c ON c.id_concept = hr.id_concept2 AND c.id_thesaurus = hr.id_thesaurus
+            LEFT JOIN preferred_term pt ON pt.id_concept = c.id_concept AND pt.id_thesaurus = c.id_thesaurus
+            LEFT JOIN term t ON t.id_term = pt.id_term AND t.id_thesaurus = c.id_thesaurus AND t.lang = :lang
+            WHERE hr.id_thesaurus = :thesaurusId
+              AND hr.id_concept1 IN (:conceptIds)
+              AND hr.role LIKE 'RT%'
+              AND c.status != 'CA'
+            ORDER BY t.lexical_value
+            """;
         return chunkedMapQuery(conceptIds, chunk -> {
-            List<Object[]> rows = em.createNativeQuery("""
-                SELECT hr.id_concept1, COALESCE(t.lexical_value, hr.id_concept2)
-                FROM hierarchical_relationship hr
-                JOIN concept c ON c.id_concept = hr.id_concept2 AND c.id_thesaurus = hr.id_thesaurus
-                LEFT JOIN preferred_term pt ON pt.id_concept = c.id_concept AND pt.id_thesaurus = c.id_thesaurus
-                LEFT JOIN term t ON t.id_term = pt.id_term AND t.id_thesaurus = c.id_thesaurus AND t.lang = :lang
-                WHERE hr.id_thesaurus = :thesaurusId
-                  AND hr.id_concept1 IN (:conceptIds)
-                  AND hr.role LIKE 'RT%'
-                  AND c.status != 'CA'
-                ORDER BY t.lexical_value
-                """)
+            List<Object[]> rows = em.createNativeQuery(sql)
                     .setParameter(NativeQueryParams.THESAURUS_ID, thesaurusId)
                     .setParameter(NativeQueryParams.CONCEPT_IDS, chunk)
                     .setParameter("lang", lang)

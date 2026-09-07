@@ -18,15 +18,12 @@ import java.util.regex.Pattern;
 
 public class ReadJsonFlux extends AbstractRDFHandler {
 
-    private String FACET_PATTERN = "^http://localhost:8080/opentheso2/\\?idf=F\\d+&idt=th\\d+$";
-    private String CONCEPT_PATTERN = "^https://opentheso2\\.mom\\.fr/ark:/66666/th\\d+/\\?idg=G\\d+&idt=th\\d+/\\?idc=\\d+&idt=th\\d+$";
-    private String COLLECTION_PATTERN = "^https://opentheso2\\.mom\\.fr/ark:/66666/th\\d+/\\?idg=G\\d+&idt=th\\d+/\\?idg=G\\d+&idt=th\\d+$";
-    private String THESORUS_PATTERN = "^https://opentheso2\\.mom\\.fr/ark:/66666/th\\d+/\\?idg=G\\d+&idt=th\\d+/66666/th\\d+$";
+    private static final String FACET_PATTERN = "^http://localhost:8080/opentheso2/\\?idf=F\\d+&idt=th\\d+$";
+    private static final String CONCEPT_PATTERN = "^https://opentheso2\\.mom\\.fr/ark:/66666/th\\d+/\\?idg=G\\d+&idt=th\\d+/\\?idc=\\d+&idt=th\\d+$";
+    private static final String COLLECTION_PATTERN = "^https://opentheso2\\.mom\\.fr/ark:/66666/th\\d+/\\?idg=G\\d+&idt=th\\d+/\\?idg=G\\d+&idt=th\\d+$";
+    private static final String THESORUS_PATTERN = "^https://opentheso2\\.mom\\.fr/ark:/66666/th\\d+/\\?idg=G\\d+&idt=th\\d+/66666/th\\d+$";
 
     private SKOSXmlDocument skosXmlDocument;
-    private Resource subject;
-    private IRI predicate;
-    private Value value;
     private boolean isConceptScheme;
     private boolean isCollection;
     private boolean isFacet;
@@ -38,7 +35,10 @@ public class ReadJsonFlux extends AbstractRDFHandler {
     private ThesaurusManager fileManager = new ThesaurusManager();
     private ConceptReader conceptReader = new ConceptReader();
     private GenericReader genericReader = new GenericReader();
-    private Pattern thesorusRegex, facetRegex, collectionRegex, conceptRegex;
+    private Pattern thesorusRegex;
+    private Pattern facetRegex;
+    private Pattern collectionRegex;
+    private Pattern conceptRegex;
 
     public ReadJsonFlux(SKOSXmlDocument skosXmlDocument, String defaultLang) {
         this.defaultLang = defaultLang;
@@ -53,9 +53,9 @@ public class ReadJsonFlux extends AbstractRDFHandler {
     @Override
     public void handleStatement(Statement st) throws RDFHandlerException {
 
-        predicate = st.getPredicate();
-        value = st.getObject();
-        subject = st.getSubject();
+        IRI predicate = st.getPredicate();
+        Value value = st.getObject();
+        Resource subject = st.getSubject();
 
         if (!subject.stringValue().equals(currentSubject)) {
             addNewResources();
@@ -79,10 +79,8 @@ public class ReadJsonFlux extends AbstractRDFHandler {
         currentSubject = subject.stringValue();
 
         String lang = defaultLang;
-        Literal literal = null;
-        if (value instanceof Literal) {
+        if (value instanceof Literal literal) {
             // Si la ligne en cours contient une langue spécifique, on récupère la langue dans
-            literal = (Literal) value;
             lang = literal.getLanguage().orElse(lang);
 
             if (isConceptScheme) {
@@ -97,7 +95,7 @@ public class ReadJsonFlux extends AbstractRDFHandler {
             }
         } else {
             // Pour traiter les lignes d'un concept qui ne contiennent pas une langue
-            conceptReader.readConcept(skosXmlDocument, skosResource, predicate, value, literal);
+            conceptReader.readConcept(skosXmlDocument, skosResource, predicate, value, null);
         }
     }
 

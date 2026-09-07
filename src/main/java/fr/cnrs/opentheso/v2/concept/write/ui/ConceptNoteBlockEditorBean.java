@@ -21,6 +21,7 @@ import lombok.Getter;
 import lombok.RequiredArgsConstructor;
 import lombok.Setter;
 import org.apache.commons.lang3.StringUtils;
+import org.apache.commons.lang3.Strings;
 
 import java.io.Serializable;
 import java.util.ArrayList;
@@ -220,8 +221,8 @@ public class ConceptNoteBlockEditorBean implements Serializable {
             String source = StringUtils.trimToEmpty(row.getSource());
             ConceptNote previous = row.getNoteId() > 0 ? oldById.get(row.getNoteId()) : null;
             if (previous != null
-                    && StringUtils.equals(StringUtils.trimToEmpty(previous.value()), value)
-                    && StringUtils.equals(StringUtils.trimToEmpty(previous.source()), source)) {
+                    && Strings.CS.equals(StringUtils.trimToEmpty(previous.value()), value)
+                    && Strings.CS.equals(StringUtils.trimToEmpty(previous.source()), source)) {
                 continue;
             }
             MutationResult upserted = conceptNoteMutationService.upsertNote(new UpsertNoteCommand(
@@ -289,7 +290,7 @@ public class ConceptNoteBlockEditorBean implements Serializable {
         if (detail == null || detail.getSummary() == null) {
             return false;
         }
-        return StringUtils.equals(editingConceptId, detail.getSummary().getConceptId());
+        return Strings.CS.equals(editingConceptId, detail.getSummary().getConceptId());
     }
 
     private String[] firstFreeCombo() {

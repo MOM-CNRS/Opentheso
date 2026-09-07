@@ -6,16 +6,18 @@ import com.itextpdf.text.Image;
 import com.itextpdf.text.pdf.BaseFont;
 
 import fr.cnrs.opentheso.models.skosapi.SKOSProperty;
+import lombok.Getter;
 
 import java.io.IOException;
 
+@Getter
 public class ThesaurusPdfSettings {
 
-    public Font titleFont;
-    public Font termFont;
-    public Font textFont;
-    public Font relationFont;
-    public Font hieraInfoFont;
+    private Font titleFont;
+    private Font termFont;
+    private Font textFont;
+    private Font relationFont;
+    private Font hieraInfoFont;
 
     public ThesaurusPdfSettings() throws DocumentException, IOException {
 

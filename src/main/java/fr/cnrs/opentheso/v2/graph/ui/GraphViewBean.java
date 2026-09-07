@@ -2,6 +2,7 @@ package fr.cnrs.opentheso.v2.graph.ui;
 
 import fr.cnrs.opentheso.v2.concept.search.model.ConceptSearchSuggestion;
 import fr.cnrs.opentheso.utils.MessageUtils;
+import fr.cnrs.opentheso.v2.concept.model.ConceptSummary;
 import fr.cnrs.opentheso.v2.concept.service.ConceptReadService;
 import fr.cnrs.opentheso.v2.graph.model.GraphExportEntry;
 import fr.cnrs.opentheso.v2.graph.model.GraphViewSummary;
@@ -117,7 +118,7 @@ public class GraphViewBean implements Serializable {
         String title = thesaurusSelectionService.resolve(idThesaurus).title();
         String lang = thesaurusWorkLanguageService.resolveForThesaurus(idThesaurus);
         String conceptLabel = conceptReadService.loadSummary(idThesaurus, idConcept, lang)
-                .map(summary -> summary.preferredLabel())
+                .map(ConceptSummary::preferredLabel)
                 .orElse(idConcept);
         MessageUtils.showInformationMessage("Thesaurus : " + title);
         MessageUtils.showInformationMessage("Concept : " + conceptLabel);

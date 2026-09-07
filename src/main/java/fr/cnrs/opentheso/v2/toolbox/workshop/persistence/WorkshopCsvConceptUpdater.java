@@ -116,6 +116,7 @@ public class WorkshopCsvConceptUpdater {
                 }
             }
             default -> {
+                // Unknown SKOS property: leave the row unchanged.
             }
         }
         return true;
@@ -163,19 +164,18 @@ public class WorkshopCsvConceptUpdater {
             return false;
         }
 
-        if (!StringUtils.isEmpty(nodeReplaceValueByValue.getOldValue())) {
-            if (!StringUtils.isEmpty(nodeReplaceValueByValue.getNewValue())) {
-                if (!updateNonPreferredTerm(
-                        nodeReplaceValueByValue.getOldValue(),
-                        nodeReplaceValueByValue.getNewValue(),
-                        preferredTerm.get().getIdTerm(),
-                        nodeReplaceValueByValue.getIdLang(),
-                        idThesaurus,
-                        false,
-                        idUser
-                )) {
-                    addMessage("Rename AltLabel error :", nodeReplaceValueByValue);
-                }
+        if (!StringUtils.isEmpty(nodeReplaceValueByValue.getOldValue())
+                && !StringUtils.isEmpty(nodeReplaceValueByValue.getNewValue())) {
+            if (!updateNonPreferredTerm(
+                    nodeReplaceValueByValue.getOldValue(),
+                    nodeReplaceValueByValue.getNewValue(),
+                    preferredTerm.get().getIdTerm(),
+                    nodeReplaceValueByValue.getIdLang(),
+                    idThesaurus,
+                    false,
+                    idUser
+            )) {
+                addMessage("Rename AltLabel error :", nodeReplaceValueByValue);
             }
         } else if (!StringUtils.isEmpty(nodeReplaceValueByValue.getNewValue())) {
             addNonPreferredTerm(Term.builder()
@@ -445,7 +445,7 @@ public class WorkshopCsvConceptUpdater {
                 nodeGpses.add(nodeGps);
                 saveGps(conceptObject.getIdConcept(), idTheso, nodeGpses);
             } catch (Exception ignored) {
-                return;
+                // latitude/longitude invalides : on ignore ce point GPS
             }
         } else if (StringUtils.isNotEmpty(conceptObject.getGps())) {
             var gpsList = ThesaurusCsvGpsParser.readGps(conceptObject.getGps(), idTheso, conceptObject.getIdConcept());

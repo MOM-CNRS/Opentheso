@@ -10,6 +10,7 @@ import fr.cnrs.opentheso.v2.setting.ui.IdentifierServerSelection;
 import fr.cnrs.opentheso.v2.setting.ui.PreferenceEditor;
 import lombok.RequiredArgsConstructor;
 import org.apache.commons.lang3.StringUtils;
+import org.apache.commons.lang3.Strings;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
 
@@ -154,9 +155,9 @@ public class ThesaurusSettingsPersistService {
         if (left == null || right == null) {
             return false;
         }
-        return StringUtils.equals(left.corpusName(), right.corpusName())
-                && StringUtils.equals(left.uriLink(), right.uriLink())
-                && StringUtils.equals(left.uriCount(), right.uriCount())
+        return Strings.CS.equals(left.corpusName(), right.corpusName())
+                && Strings.CS.equals(left.uriLink(), right.uriLink())
+                && Strings.CS.equals(left.uriCount(), right.uriCount())
                 && left.active() == right.active()
                 && left.onlyUriLink() == right.onlyUriLink()
                 && left.omekaS() == right.omekaS();
@@ -170,9 +171,9 @@ public class ThesaurusSettingsPersistService {
     }
 
     private static boolean alignmentMetadataChanged(AlignmentSourceItem baseline, AlignmentSourceItem current) {
-        return !StringUtils.equals(baseline.getLabel(), current.getLabel())
-                || !StringUtils.equals(baseline.getUrl(), current.getUrl())
-                || !StringUtils.equals(baseline.getDescription(), current.getDescription())
-                || !StringUtils.equals(baseline.getSourceType(), current.getSourceType());
+        return !Strings.CS.equals(baseline.getLabel(), current.getLabel())
+                || !Strings.CS.equals(baseline.getUrl(), current.getUrl())
+                || !Strings.CS.equals(baseline.getDescription(), current.getDescription())
+                || !Strings.CS.equals(baseline.getSourceType(), current.getSourceType());
     }
 }

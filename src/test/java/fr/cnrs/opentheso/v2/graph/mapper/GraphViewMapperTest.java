@@ -2,6 +2,9 @@ package fr.cnrs.opentheso.v2.graph.mapper;
 
 import fr.cnrs.opentheso.v2.shared.repository.projection.GraphViewListRow;
 import org.junit.jupiter.api.Test;
+import org.junit.jupiter.params.ParameterizedTest;
+import org.junit.jupiter.params.provider.NullSource;
+import org.junit.jupiter.params.provider.ValueSource;
 
 import static org.junit.jupiter.api.Assertions.assertEquals;
 import static org.junit.jupiter.api.Assertions.assertTrue;
@@ -27,23 +30,11 @@ class GraphViewMapperTest {
         assertEquals("C3", summary.getExports().get(1).conceptId());
     }
 
-    @Test
-    void toSummary_handlesEmptyExports() {
-        var summary = GraphViewMapper.toSummary(new GraphViewListRow(2, "V", "D", "[]"));
-
-        assertTrue(summary.getExports().isEmpty());
-    }
-
-    @Test
-    void toSummary_handlesNullExportsJson() {
-        var summary = GraphViewMapper.toSummary(new GraphViewListRow(2, "V", "D", null));
-
-        assertTrue(summary.getExports().isEmpty());
-    }
-
-    @Test
-    void toSummary_handlesInvalidExportsJson() {
-        var summary = GraphViewMapper.toSummary(new GraphViewListRow(2, "V", "D", "not-json"));
+    @ParameterizedTest
+    @NullSource
+    @ValueSource(strings = { "[]", "not-json" })
+    void toSummary_treatsMissingOrInvalidExportsAsEmpty(String exportsJson) {
+        var summary = GraphViewMapper.toSummary(new GraphViewListRow(2, "V", "D", exportsJson));
 
         assertTrue(summary.getExports().isEmpty());
     }

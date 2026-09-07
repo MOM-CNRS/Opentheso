@@ -4,6 +4,8 @@ import fr.cnrs.opentheso.models.skosapi.SKOSXmlDocument;
 
 import lombok.extern.slf4j.Slf4j;
 import org.eclipse.rdf4j.rio.RDFFormat;
+import org.eclipse.rdf4j.rio.RDFHandlerException;
+import org.eclipse.rdf4j.rio.RDFParseException;
 import org.eclipse.rdf4j.rio.RDFParser;
 import org.eclipse.rdf4j.rio.Rio;
 
@@ -27,10 +29,10 @@ public class ReadRdf4jDocument {
 
         try {
             parser.parse(inputStream, "");
-        } catch(Exception ex) {
+        } catch (RDFParseException | RDFHandlerException ex) {
             error.append("Erreur dans le contenu du fichier source");
             log.error(ex.getMessage());
-            throw new RuntimeException(ex);
+            throw new IOException(ex);
         }
 
         return skosXmlDocument;

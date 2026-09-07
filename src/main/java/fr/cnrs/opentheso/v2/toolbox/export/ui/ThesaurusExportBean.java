@@ -49,7 +49,7 @@ public class ThesaurusExportBean implements Serializable {
     private String csvDelimiter = ",";
     private String downloadMode = "skos";
     private List<String> selectedLanguageCodes = new ArrayList<>();
-    private List<NodeLangTheso> exportLanguages = Collections.emptyList();
+    private transient List<NodeLangTheso> exportLanguages = Collections.emptyList();
     private List<NodeGroup> groupList = Collections.emptyList();
     private List<String> selectedGroupIds = new ArrayList<>();
 

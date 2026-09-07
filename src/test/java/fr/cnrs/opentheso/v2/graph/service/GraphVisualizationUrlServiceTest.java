@@ -57,7 +57,7 @@ class GraphVisualizationUrlServiceTest {
     void resolveWorkLanguageForThesaurus_usesPreferenceWhenAvailable() {
         when(thesaurusWorkLanguageService.resolveForThesaurus("TH1")).thenReturn("en");
 
-        assertTrue("en".equals(service.resolveWorkLanguageForThesaurus("TH1")));
+        assertEquals("en", service.resolveWorkLanguageForThesaurus("TH1"));
     }
 
     @Test

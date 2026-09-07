@@ -14,6 +14,7 @@ import org.springframework.transaction.annotation.Transactional;
 
 import java.text.SimpleDateFormat;
 import java.util.Date;
+import java.util.Objects;
 import java.util.Optional;
 
 @Slf4j
@@ -133,7 +134,7 @@ public class PropositionMutationService {
             return;
         }
         try {
-            String thesaurusName = StringUtils.defaultString(submission.thesaurusTitle(), submission.thesaurusId());
+            String thesaurusName = Objects.toString(submission.thesaurusTitle(), submission.thesaurusId());
             String subject = "[Opentheso] Confirmation de l'envoi de votre proposition";
             String content = "<html><body>"
                     + "Cher(e) " + StringUtils.defaultString(submission.authorName()) + ",<br/>"
@@ -156,7 +157,7 @@ public class PropositionMutationService {
             return;
         }
         try {
-            String thesaurusName = StringUtils.defaultString(thesaurusTitle, proposition.getIdTheso());
+            String thesaurusName = Objects.toString(thesaurusTitle, proposition.getIdTheso());
             String subject = "[Opentheso] Résultat de votre proposition";
             String decision = approved
                     ? "a été acceptée par les administrateurs."

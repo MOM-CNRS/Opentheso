@@ -219,16 +219,16 @@ class ModifyThesaurusBeanTest {
 
     private void stubEditionBeanLookup(MockedStatic<FacesContext> faces) {
         stubFacesContext(faces);
-        when(application.evaluateExpressionGet(eq(facesContext), eq("#{v2EditionBean}"), eq(EditionBean.class)))
+        when(application.evaluateExpressionGet(facesContext, "#{v2EditionBean}", EditionBean.class))
                 .thenReturn(editionBean);
     }
 
     private void stubConsultationShellLookup(MockedStatic<FacesContext> faces) {
         stubFacesContext(faces);
         when(application.evaluateExpressionGet(
-                eq(facesContext),
-                eq("#{v2ConsultationShellBean}"),
-                eq(ConsultationShellBean.class)
+                facesContext,
+                "#{v2ConsultationShellBean}",
+                ConsultationShellBean.class
         )).thenReturn(consultationShellBean);
     }
 }

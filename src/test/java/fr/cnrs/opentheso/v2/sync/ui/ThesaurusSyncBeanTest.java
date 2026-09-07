@@ -228,7 +228,7 @@ class ThesaurusSyncBeanTest {
         bean.setSyncExecutor(command -> {
             // Leave running=true during nested start attempt
             ThesaurusSyncProgressTracker.ProgressState state = progressTracker.get(bean.getProgressKey());
-            assertTrue(state.running);
+            assertTrue(state.isRunning());
             bean.startSync(); // should no-op
             command.run();
         });
@@ -240,7 +240,7 @@ class ThesaurusSyncBeanTest {
 
     @Test
     void onProgressPoll_ignoresWhileStillRunning() {
-        progressTracker.start("manual").running = true;
+        progressTracker.start("manual").setRunning(true);
         bean.setProgressKey("manual");
 
         try (MockedStatic<MessageUtils> messages = mockStatic(MessageUtils.class)) {
@@ -348,8 +348,8 @@ class ThesaurusSyncBeanTest {
         assertEquals("", bean.getProgressDetail());
         var state = progressTracker.start("k");
         bean.setProgressKey("k");
-        state.total = 0;
-        state.processed = 3;
+        state.setTotal(0);
+        state.setProcessed(3);
         assertEquals("3 concept(s) traité(s)", bean.getProgressDetail());
     }
 

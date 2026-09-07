@@ -8,6 +8,7 @@ import fr.cnrs.opentheso.v2.shared.web.ApplicationUriService;
 import lombok.RequiredArgsConstructor;
 import org.apache.commons.collections4.CollectionUtils;
 import org.apache.commons.lang3.StringUtils;
+import org.apache.commons.lang3.Strings;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
 
@@ -26,10 +27,6 @@ public class ConceptFullReadService {
 
     /** Taille de page des NT (legacy {@code ConceptView#step}). */
     public static final int NARROWER_PAGE_SIZE = 40;
-
-    /** @deprecated préférer {@link #NARROWER_PAGE_SIZE} */
-    @Deprecated
-    public static final int FULL_CONCEPT_STEP = NARROWER_PAGE_SIZE;
 
     private final ConceptFullAssembler conceptFullAssembler;
     private final ThesaurusPreferenceService thesaurusPreferenceService;
@@ -144,7 +141,7 @@ public class ConceptFullReadService {
         }
         for (ConceptHierarchicalRelation relation : additional) {
             boolean alreadyPresent = fullConcept.getNarrowers().stream()
-                    .anyMatch(existing -> StringUtils.equals(existing.conceptId(), relation.conceptId()));
+                    .anyMatch(existing -> Strings.CS.equals(existing.conceptId(), relation.conceptId()));
             if (!alreadyPresent) {
                 fullConcept.getNarrowers().add(relation);
             }

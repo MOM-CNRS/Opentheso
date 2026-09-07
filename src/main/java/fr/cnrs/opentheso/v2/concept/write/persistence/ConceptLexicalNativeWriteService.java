@@ -9,6 +9,7 @@ import fr.cnrs.opentheso.v2.concept.write.model.command.UpdateSynonymCommand;
 import fr.cnrs.opentheso.v2.concept.write.model.command.UpdateTranslationCommand;
 import lombok.RequiredArgsConstructor;
 import org.apache.commons.lang3.StringUtils;
+import org.apache.commons.lang3.Strings;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
 
@@ -54,7 +55,7 @@ public class ConceptLexicalNativeWriteService {
         if (idTerm == null) {
             return MutationResult.failure(DB_COHERENCE_ERROR);
         }
-        if (!StringUtils.equals(command.oldValue(), command.newValue())) {
+        if (!Strings.CS.equals(command.oldValue(), command.newValue())) {
             if (!command.forced()) {
                 MutationResult duplicate = validateSynonymDuplicate(
                         command.thesaurusId(), command.lang(), command.newValue());

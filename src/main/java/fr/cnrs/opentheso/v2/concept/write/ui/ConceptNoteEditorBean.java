@@ -21,6 +21,7 @@ import lombok.Getter;
 import lombok.RequiredArgsConstructor;
 import lombok.Setter;
 import org.apache.commons.lang3.StringUtils;
+import org.apache.commons.lang3.Strings;
 import org.primefaces.PrimeFaces;
 
 import java.io.Serializable;
@@ -183,7 +184,7 @@ public class ConceptNoteEditorBean implements Serializable {
         // Ouvrir sur un type qui a déjà une note (active le bouton supprimer)
         for (ConceptNote note : thesaurusBrowseBean.getDisplayedNotes()) {
             if (note != null
-                    && StringUtils.equalsIgnoreCase(selectedLang, note.lang())
+                    && Strings.CI.equals(selectedLang, note.lang())
                     && StringUtils.isNotBlank(note.typeCode())) {
                 selectedTypeCode = note.typeCode();
                 return;

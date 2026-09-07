@@ -12,6 +12,7 @@ import fr.cnrs.opentheso.v2.shared.repository.EditionQueryRepository;
 import lombok.RequiredArgsConstructor;
 import org.apache.commons.collections4.CollectionUtils;
 import org.apache.commons.lang3.StringUtils;
+import org.apache.commons.lang3.Strings;
 import org.springframework.stereotype.Component;
 
 import java.util.List;
@@ -35,7 +36,7 @@ public class ConceptTransferWritePersistence {
                 || CollectionUtils.isEmpty(command.branchConceptIds())) {
             return MutationResult.validationError("Aucune sélection !");
         }
-        if (StringUtils.equalsIgnoreCase(command.sourceThesaurusId(), command.targetThesaurusId())) {
+        if (Strings.CI.equals(command.sourceThesaurusId(), command.targetThesaurusId())) {
             return MutationResult.validationError("Le thésaurus cible doit être différent du thésaurus source.");
         }
 
@@ -99,7 +100,7 @@ public class ConceptTransferWritePersistence {
     ) {
         String workLang = StringUtils.defaultIfBlank(lang, "fr");
         return editionQueryRepository.findAdminThesauriForUser(userId, superAdmin, workLang).stream()
-                .filter(row -> !StringUtils.equalsIgnoreCase(row.id(), currentThesaurusId))
+                .filter(row -> !Strings.CI.equals(row.id(), currentThesaurusId))
                 .map(row -> new ConceptWriteThesaurusOption(row.id(), row.title()))
                 .toList();
     }

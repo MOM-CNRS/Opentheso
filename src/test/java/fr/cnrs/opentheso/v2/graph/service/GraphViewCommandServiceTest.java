@@ -82,7 +82,7 @@ class GraphViewCommandServiceTest {
     @Test
     void updateView_updatesFieldsAndSaves() {
         var graphView = new GraphView();
-        when(graphViewRepository.getById(1)).thenReturn(graphView);
+        when(graphViewRepository.findById(1)).thenReturn(Optional.of(graphView));
 
         commandService.updateView(1, "Nouveau nom", "Nouvelle description");
 

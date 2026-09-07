@@ -48,9 +48,10 @@ class CandidatExportServiceTest {
         candidat.setIdConcepte("C1");
 
         when(skosConceptExportOperations.findThesaurusPreferences("TH1")).thenReturn(Optional.empty());
+        var candidates = List.of(candidat);
 
         assertThrows(IllegalStateException.class, () ->
-                service.exportPendingCandidates("TH1", List.of(candidat), "skos", null));
+                service.exportPendingCandidates("TH1", candidates, "skos", null));
     }
 
     @Test
@@ -90,8 +91,9 @@ class CandidatExportServiceTest {
         when(skosConceptExportOperations.findThesaurusPreferences("TH1")).thenReturn(Optional.of(preferences));
         when(skosConceptExportOperations.exportThesaurusScheme("TH1", preferences)).thenReturn(scheme);
         when(skosConceptExportOperations.exportConcept("TH1", "C1", true)).thenReturn(null);
+        var candidates = List.of(candidat);
 
         assertThrows(IllegalStateException.class, () ->
-                service.exportPendingCandidates("TH1", List.of(candidat), "skos", null));
+                service.exportPendingCandidates("TH1", candidates, "skos", null));
     }
 }

@@ -5,7 +5,6 @@ import jakarta.enterprise.context.ApplicationScoped;
 import jakarta.inject.Named;
 import lombok.RequiredArgsConstructor;
 import org.primefaces.extensions.event.ClipboardErrorEvent;
-import org.primefaces.extensions.event.ClipboardSuccessEvent;
 
 import java.io.Serializable;
 
@@ -16,7 +15,7 @@ public class ClipboardFeedbackBean implements Serializable {
 
     private final transient V2LocaleBean localeBean;
 
-    public void onSuccess(final ClipboardSuccessEvent successEvent) {
+    public void onSuccess() {
         MessageUtils.showInformationMessage(localeBean.getMsg("copied"));
     }
 

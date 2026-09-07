@@ -166,7 +166,7 @@ public class ConceptLifecycleWriteRepository {
                 .setParameter(NativeQueryParams.CONCEPT_ID, conceptId)
                 .getResultStream()
                 .findFirst()
-                .map(value -> (Boolean) value)
+                .map(Boolean.class::cast)
                 .orElse(false));
     }
 

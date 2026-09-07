@@ -2,6 +2,7 @@ package fr.cnrs.opentheso.v2.facet.ui;
 
 import fr.cnrs.opentheso.v2.concept.write.ui.WriteUiMessages;
 import fr.cnrs.opentheso.utils.MessageUtils;
+import fr.cnrs.opentheso.v2.concept.model.GroupTranslationItem;
 import fr.cnrs.opentheso.v2.concept.ui.ThesaurusBrowseBean;
 import fr.cnrs.opentheso.v2.concept.write.model.ConceptSearchSuggestion;
 import fr.cnrs.opentheso.v2.concept.write.model.ConceptWriteCollection;
@@ -554,7 +555,7 @@ public class FacetDetailEditorBean implements Serializable {
         );
         Set<String> usedLangs = thesaurusBrowseBean.getSelectedFacet() != null
                 ? thesaurusBrowseBean.getSelectedFacet().translations().stream()
-                .map(translation -> translation.lang())
+                .map(GroupTranslationItem::lang)
                 .collect(java.util.stream.Collectors.toCollection(HashSet::new))
                 : new HashSet<>();
         usedLangs.add(thesaurusContext.resolveWorkLanguage());

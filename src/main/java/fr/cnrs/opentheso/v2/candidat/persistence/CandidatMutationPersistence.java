@@ -13,6 +13,7 @@ import fr.cnrs.opentheso.entites.NoteType;
 import fr.cnrs.opentheso.entites.Preferences;
 import fr.cnrs.opentheso.entites.PreferredTerm;
 import fr.cnrs.opentheso.entites.TermHistorique;
+import fr.cnrs.opentheso.entites.User;
 import fr.cnrs.opentheso.models.alignment.AlignementElement;
 import fr.cnrs.opentheso.models.alignment.NodeAlignment;
 import fr.cnrs.opentheso.models.candidats.CandidatDto;
@@ -67,8 +68,6 @@ import org.apache.commons.lang3.StringUtils;
 import org.apache.commons.text.StringEscapeUtils;
 import org.springframework.stereotype.Component;
 import org.springframework.transaction.annotation.Transactional;
-import java.io.IOException;
-import java.sql.SQLException;
 import java.text.SimpleDateFormat;
 import java.util.ArrayList;
 import java.util.Comparator;
@@ -149,7 +148,7 @@ public class CandidatMutationPersistence {
         return candidatReadPersistence.loadAlignments(conceptId, thesaurusId);
     }
 
-    public void updateAlignment(AlignementElement element, String conceptId, String thesaurusId) {
+    public void updateAlignment(AlignementElement element) {
         var alignement = alignementRepository.findById(element.getIdAlignment());
         if (alignement.isEmpty()) {
             return;
@@ -175,7 +174,7 @@ public class CandidatMutationPersistence {
             String username,
             String thesaurusLang,
             String definition
-    ) throws SQLException, IOException {
+    ) {
         if (termRepository.existsPrefLabel(candidat.getNomPref().trim(), lang, thesaurusId)) {
             MessageUtils.showWarnMessage("Ce libellé préféré existe déjà");
             return false;
@@ -298,11 +297,7 @@ public class CandidatMutationPersistence {
                 concept.setTopConcept(false);
                 concept.setIdUser(userId);
                 concept.setStatus("CA");
-                try {
-                    idNewConcept = createCandidateConcept(concept);
-                } catch (SQLException e) {
-                    messages.append(ERROR_PREFIX).append(nodeCandidateOld.getIdCandidate());
-                }
+                idNewConcept = createCandidateConcept(concept);
                 if (idNewConcept == null) {
                     messages.append(ERROR_PREFIX).append(nodeCandidateOld.getIdCandidate());
                     continue;
@@ -315,12 +310,7 @@ public class CandidatMutationPersistence {
                         terme.setLexicalValue(nodeTraduction.getTitle().trim());
                         terme.setSource(STATUS_CANDIDAT);
                         terme.setStatus("D");
-                        try {
-                            idNewTerm = addTerm(terme, idNewConcept, userId);
-                        } catch (SQLException e) {
-                            messages.append(ERROR_PREFIX).append(nodeCandidateOld.getIdCandidate());
-                            continue;
-                        }
+                        idNewTerm = addTerm(terme, idNewConcept, userId);
                         first = false;
                     } else {
                         addTermTranslation(Term.builder()
@@ -343,8 +333,6 @@ public class CandidatMutationPersistence {
                             .date(new SimpleDateFormat("yyyy-MM-dd HH:mm").format(new Date()))
                             .build());
                 }
-                idNewConcept = null;
-                idNewTerm = null;
             }
             exist = false;
         }
@@ -408,7 +396,7 @@ public class CandidatMutationPersistence {
     }
 
     public String resolveUserName(int userId) {
-        return userRepository.findById(userId).map(user -> user.getUsername()).orElse("");
+        return userRepository.findById(userId).map(User::getUsername).orElse("");
     }
 
     public boolean termExists(String termId, String thesaurusId, String lang) {
@@ -473,7 +461,7 @@ public class CandidatMutationPersistence {
         return loadRelations(conceptId, thesaurusId, lang, "BT");
     }
 
-    public void deleteBroaderRelation(String conceptId, String thesaurusId, String targetConceptId, int userId) {
+    public void deleteBroaderRelation(String conceptId, String thesaurusId, String targetConceptId) {
         hierarchicalRelationshipRepository.deleteAllByIdThesaurusAndIdConcept1AndIdConcept2AndRole(
                 thesaurusId, conceptId, targetConceptId, "BT");
         hierarchicalRelationshipRepository.deleteAllByIdThesaurusAndIdConcept1AndIdConcept2AndRole(
@@ -488,7 +476,7 @@ public class CandidatMutationPersistence {
         return loadRelations(conceptId, thesaurusId, lang, "RT");
     }
 
-    public void deleteRelatedTerm(String conceptId, String thesaurusId, String targetConceptId, int userId) {
+    public void deleteRelatedTerm(String conceptId, String thesaurusId, String targetConceptId) {
         hierarchicalRelationshipRepository.deleteAllByIdThesaurusAndIdConcept1AndIdConcept2AndRole(
                 thesaurusId, conceptId, targetConceptId, "RT");
         hierarchicalRelationshipRepository.deleteAllByIdThesaurusAndIdConcept1AndIdConcept2AndRole(
@@ -683,7 +671,7 @@ public class CandidatMutationPersistence {
         loadDiscussionParticipants(conceptId, thesaurusId).forEach(participant ->
                 userRepository.findById(participant.getIdUser())
                         .filter(user -> Boolean.TRUE.equals(user.getAlertMail()))
-                        .map(user -> user.getMail())
+                        .map(User::getMail)
                         .filter(StringUtils::isNotBlank)
                         .ifPresent(mail -> sendMailAsync(mail, subject, body)));
     }
@@ -737,7 +725,7 @@ public class CandidatMutationPersistence {
         }
     }
 
-    private String createCandidateConcept(Concept concept) throws SQLException {
+    private String createCandidateConcept(Concept concept) {
         concept.setNotation(concept.getNotation() == null ? "" : concept.getNotation());
         concept.setIdArk(concept.getIdArk() == null ? "" : concept.getIdArk());
         var preference = preferencesRepository.findByIdThesaurus(concept.getIdThesaurus()).orElse(null);
@@ -788,7 +776,7 @@ public class CandidatMutationPersistence {
         return concept.getIdConcept();
     }
 
-    private String addTerm(Term term, String conceptId, int userId) throws SQLException {
+    private String addTerm(Term term, String conceptId, int userId) {
         String idTerm = generateNextTermId(term);
         var termSaved = termRepository.save(fr.cnrs.opentheso.entites.Term.builder()
                 .idTerm(idTerm)

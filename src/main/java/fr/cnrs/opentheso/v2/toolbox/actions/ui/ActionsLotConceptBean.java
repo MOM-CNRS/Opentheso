@@ -69,22 +69,22 @@ public class ActionsLotConceptBean implements Serializable {
     }
 
     public void onAddFileSelected() {
-        acceptFile(addUpload, addPanel, ActionsLotMessages.KIND_CONCEPTS, ActionsLotMessages.ACTION_IMPORT, ActionsLotMessages.FILE_LOADED);
+        acceptFile(addUpload, addPanel, ActionsLotMessages.ACTION_IMPORT, ActionsLotMessages.FILE_LOADED);
         addUpload = null;
     }
 
     public void onMergeFileSelected() {
-        acceptFile(mergeUpload, mergePanel, ActionsLotMessages.KIND_CONCEPTS, ActionsLotMessages.ACTION_REPLACE, ActionsLotMessages.FILE_LOADED);
+        acceptFile(mergeUpload, mergePanel, ActionsLotMessages.ACTION_REPLACE, ActionsLotMessages.FILE_LOADED);
         mergeUpload = null;
     }
 
     public void onDeprecateFileSelected() {
-        acceptFile(deprecateUpload, deprecatePanel, ActionsLotMessages.KIND_CONCEPTS, ActionsLotMessages.ACTION_DEPRECATE, ActionsLotMessages.FILE_LOADED);
+        acceptFile(deprecateUpload, deprecatePanel, ActionsLotMessages.ACTION_DEPRECATE, ActionsLotMessages.FILE_LOADED);
         deprecateUpload = null;
     }
 
     public void onCompareFileSelected() {
-        acceptFile(compareUpload, comparePanel, ActionsLotMessages.KIND_CONCEPTS, ActionsLotMessages.ACTION_COMPARE, "Fichier chargé — validez-le avant de comparer");
+        acceptFile(compareUpload, comparePanel, ActionsLotMessages.ACTION_COMPARE, "Fichier chargé — validez-le avant de comparer");
         compareUpload = null;
     }
 
@@ -128,7 +128,7 @@ public class ActionsLotConceptBean implements Serializable {
                     addPanel.getIdentifierType(),
                     requireThesaurusId()
             );
-            finishValidation(addPanel, ActionsLotMessages.ACTION_IMPORT, result, "concept(s) prêt(s) à importer");
+            finishValidation(addPanel, result, "concept(s) prêt(s) à importer");
         } finally {
             addPanel.setBusy(false);
             syncPanel(ActionsLotMessages.ACTION_IMPORT, addPanel);
@@ -145,7 +145,7 @@ public class ActionsLotConceptBean implements Serializable {
         }
         addPanel.setBusy(true);
         try {
-            finishApply(addPanel, ActionsLotMessages.ACTION_IMPORT, conceptService.applyAdd(
+            finishApply(addPanel, conceptService.applyAdd(
                     addPanel.getValidCandidates(),
                     addPanel.getFileBytes(),
                     addPanel.getChoiceDelimiter(),
@@ -170,7 +170,7 @@ public class ActionsLotConceptBean implements Serializable {
                     mergePanel.getChoiceDelimiter(),
                     requireThesaurusId()
             );
-            finishValidation(mergePanel, ActionsLotMessages.ACTION_REPLACE, result, "concept(s) prêt(s) à remplacer");
+            finishValidation(mergePanel, result, "concept(s) prêt(s) à remplacer");
         } finally {
             mergePanel.setBusy(false);
             syncPanel(ActionsLotMessages.ACTION_REPLACE, mergePanel);
@@ -187,7 +187,7 @@ public class ActionsLotConceptBean implements Serializable {
         }
         mergePanel.setBusy(true);
         try {
-            finishApply(mergePanel, ActionsLotMessages.ACTION_REPLACE, conceptService.applyMerge(
+            finishApply(mergePanel, conceptService.applyMerge(
                     mergePanel.getValidCandidates(),
                     mergePanel.getFileBytes(),
                     mergePanel.getChoiceDelimiter(),
@@ -212,7 +212,7 @@ public class ActionsLotConceptBean implements Serializable {
                     deprecatePanel.getIdentifierType(),
                     requireThesaurusId()
             );
-            finishValidation(deprecatePanel, ActionsLotMessages.ACTION_DEPRECATE, result, "concept(s) prêt(s) à rendre obsolète(s)");
+            finishValidation(deprecatePanel, result, "concept(s) prêt(s) à rendre obsolète(s)");
         } finally {
             deprecatePanel.setBusy(false);
             syncPanel(ActionsLotMessages.ACTION_DEPRECATE, deprecatePanel);
@@ -229,7 +229,7 @@ public class ActionsLotConceptBean implements Serializable {
         }
         deprecatePanel.setBusy(true);
         try {
-            finishApply(deprecatePanel, ActionsLotMessages.ACTION_DEPRECATE, conceptService.applyDeprecate(
+            finishApply(deprecatePanel, conceptService.applyDeprecate(
                     deprecatePanel.getValidCandidates(),
                     requireThesaurusId(),
                     userId
@@ -250,7 +250,7 @@ public class ActionsLotConceptBean implements Serializable {
                     comparePanel.getFileBytes(),
                     comparePanel.getChoiceDelimiter()
             );
-            finishValidation(comparePanel, ActionsLotMessages.ACTION_COMPARE, result, "libellé(s) prêt(s) à comparer");
+            finishValidation(comparePanel, result, "libellé(s) prêt(s) à comparer");
         } finally {
             comparePanel.setBusy(false);
             syncPanel(ActionsLotMessages.ACTION_COMPARE, comparePanel);
@@ -294,13 +294,12 @@ public class ActionsLotConceptBean implements Serializable {
     private <C extends java.io.Serializable> void acceptFile(
             Part part,
             ActionsLotImportPanelState<C> panel,
-            String obj,
             String op,
             String okMessage
     ) {
         try {
             byte[] bytes = readPart(part);
-            if (bytes == null) {
+            if (bytes.length == 0) {
                 panel.setGlobalError("Impossible de lire le fichier.");
                 return;
             }
@@ -328,7 +327,6 @@ public class ActionsLotConceptBean implements Serializable {
 
     private <C extends java.io.Serializable> void finishValidation(
             ActionsLotImportPanelState<C> panel,
-            String op,
             ActionsLotImportValidationResult<C> result,
             String okLabel
     ) {
@@ -343,7 +341,7 @@ public class ActionsLotConceptBean implements Serializable {
         }
     }
 
-    private <C extends java.io.Serializable> void finishApply(ActionsLotImportPanelState<C> panel, String op, ActionsLotApplyResult result) {
+    private <C extends java.io.Serializable> void finishApply(ActionsLotImportPanelState<C> panel, ActionsLotApplyResult result) {
         panel.applyResult(result);
         if (result.success()) {
             MessageUtils.showInformationMessage(result.message());

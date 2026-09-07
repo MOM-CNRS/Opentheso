@@ -107,88 +107,54 @@ public class ThesaurusCsvImportEngine {
 
 
     private String getNotes(ThesaurusCsvConceptObject conceptObject){
-        //Notes
-        //-- 'value@typeCode@lang@id_term'
-        String notes = null;
-        if (CollectionUtils.isNotEmpty(conceptObject.getNote())) {
-            notes = "";
-            for (ThesaurusCsvConceptLabel note : conceptObject.getNote()) {
-                notes += SEPERATEUR + note.getLabel()
-                        + SOUS_SEPERATEUR + "note"
-                        + SOUS_SEPERATEUR + note.getLang()
-                        + SOUS_SEPERATEUR + conceptObject.getIdConcept();
-            }
+        StringBuilder notes = new StringBuilder();
+        appendConceptNotes(notes, conceptObject.getNote(), "note", conceptObject.getIdConcept());
+        appendConceptNotes(notes, conceptObject.getDefinitions(), "definition", conceptObject.getIdConcept());
+        appendConceptNotes(notes, conceptObject.getChangeNotes(), "changeNote", conceptObject.getIdConcept());
+        appendConceptNotes(notes, conceptObject.getEditorialNotes(), "editorialNote", conceptObject.getIdConcept());
+        appendConceptNotes(notes, conceptObject.getHistoryNotes(), "historyNote", conceptObject.getIdConcept());
+        appendConceptNotes(notes, conceptObject.getScopeNotes(), "scopeNote", conceptObject.getIdConcept());
+        appendConceptNotes(notes, conceptObject.getExamples(), "example", conceptObject.getIdConcept());
+        return stripLeadingSeparator(notes);
+    }
+
+    private void appendConceptNotes(StringBuilder notes, List<ThesaurusCsvConceptLabel> labels, String type, String idConcept) {
+        if (CollectionUtils.isEmpty(labels)) {
+            return;
         }
-        if (CollectionUtils.isNotEmpty(conceptObject.getDefinitions())) {
-            if (notes == null) {
-                notes = "";
-            }
-            for (ThesaurusCsvConceptLabel definition : conceptObject.getDefinitions()) {
-                notes += SEPERATEUR + definition.getLabel()
-                        + SOUS_SEPERATEUR + "definition"
-                        + SOUS_SEPERATEUR + definition.getLang()
-                        + SOUS_SEPERATEUR + conceptObject.getIdConcept();
-            }
+        for (ThesaurusCsvConceptLabel label : labels) {
+            notes.append(SEPERATEUR).append(label.getLabel())
+                    .append(SOUS_SEPERATEUR).append(type)
+                    .append(SOUS_SEPERATEUR).append(label.getLang())
+                    .append(SOUS_SEPERATEUR).append(idConcept);
         }
-        if (CollectionUtils.isNotEmpty(conceptObject.getChangeNotes())) {
-            if (notes == null) {
-                notes = "";
-            }
-            for (ThesaurusCsvConceptLabel changeNote : conceptObject.getChangeNotes()) {
-                notes += SEPERATEUR + changeNote.getLabel()
-                        + SOUS_SEPERATEUR + "changeNote"
-                        + SOUS_SEPERATEUR + changeNote.getLang()
-                        + SOUS_SEPERATEUR + conceptObject.getIdConcept();
-            }
+    }
+
+    private void appendAlignments(StringBuilder alignements, List<String> uris, int idUser, int type, String idTheso, String idConcept) {
+        if (CollectionUtils.isEmpty(uris)) {
+            return;
         }
-        if (CollectionUtils.isNotEmpty(conceptObject.getEditorialNotes())) {
-            if (notes == null) {
-                notes = "";
-            }
-            for (ThesaurusCsvConceptLabel editorialNote : conceptObject.getEditorialNotes()) {
-                notes += SEPERATEUR + editorialNote.getLabel()
-                        + SOUS_SEPERATEUR + "editorialNote"
-                        + SOUS_SEPERATEUR + editorialNote.getLang()
-                        + SOUS_SEPERATEUR + conceptObject.getIdConcept();
-            }
+        for (String uri : uris) {
+            alignements.append(SEPERATEUR).append(idUser)
+                    .append(SOUS_SEPERATEUR).append("")
+                    .append(SOUS_SEPERATEUR).append("")
+                    .append(SOUS_SEPERATEUR).append(uri)
+                    .append(SOUS_SEPERATEUR).append(type)
+                    .append(SOUS_SEPERATEUR).append(idTheso)
+                    .append(SOUS_SEPERATEUR).append(idConcept);
         }
-        if (CollectionUtils.isNotEmpty(conceptObject.getHistoryNotes())) {
-            if (notes == null) {
-                notes = "";
-            }
-            for (ThesaurusCsvConceptLabel historyNote : conceptObject.getHistoryNotes()) {
-                notes += SEPERATEUR + historyNote.getLabel()
-                        + SOUS_SEPERATEUR + "historyNote"
-                        + SOUS_SEPERATEUR + historyNote.getLang()
-                        + SOUS_SEPERATEUR + conceptObject.getIdConcept();
-            }
+    }
+
+    private void appendRelationPair(StringBuilder relations, String id1, String role1, String id2, String role2) {
+        relations.append(SEPERATEUR).append(id1).append(SOUS_SEPERATEUR).append(role1).append(SOUS_SEPERATEUR).append(id2);
+        relations.append(SEPERATEUR).append(id2).append(SOUS_SEPERATEUR).append(role2).append(SOUS_SEPERATEUR).append(id1);
+    }
+
+    private static String stripLeadingSeparator(StringBuilder builder) {
+        if (builder.isEmpty()) {
+            return null;
         }
-        if (CollectionUtils.isNotEmpty(conceptObject.getScopeNotes())) {
-            if (notes == null) {
-                notes = "";
-            }
-            for (ThesaurusCsvConceptLabel scopeNote : conceptObject.getScopeNotes()) {
-                notes += SEPERATEUR + scopeNote.getLabel()
-                        + SOUS_SEPERATEUR + "scopeNote"
-                        + SOUS_SEPERATEUR + scopeNote.getLang()
-                        + SOUS_SEPERATEUR + conceptObject.getIdConcept();
-            }
-        }
-        if (CollectionUtils.isNotEmpty(conceptObject.getExamples())) {
-            if (notes == null) {
-                notes = "";
-            }
-            for (ThesaurusCsvConceptLabel example : conceptObject.getExamples()) {
-                notes += SEPERATEUR + example.getLabel()
-                        + SOUS_SEPERATEUR + "example"
-                        + SOUS_SEPERATEUR + example.getLang()
-                        + SOUS_SEPERATEUR + conceptObject.getIdConcept();
-            }
-        }
-        if (notes != null && notes.length() > 0) {
-            notes = notes.substring(SEPERATEUR.length(), notes.length());
-        } 
-        return notes;
+        return builder.substring(SEPERATEUR.length());
     }
 
     private void addExternalResources(String idTheso, String idConcept, ArrayList<String> externalResources) {
@@ -322,30 +288,31 @@ public class ThesaurusCsvImportEngine {
         String idConceptParent = conceptObject.getSuperOrdinate();
         if(StringUtils.isEmpty(idConceptParent)) return;
 
-        String labels = "";
+        StringBuilder labels = new StringBuilder();
         for (ThesaurusCsvConceptLabel prefLabel : conceptObject.getPrefLabels()) {
-            if(StringUtils.isEmpty(labels)){
-                labels = prefLabel.getLabel() + SOUS_SEPERATEUR + prefLabel.getLang();
+            if(labels.isEmpty()){
+                labels.append(prefLabel.getLabel()).append(SOUS_SEPERATEUR).append(prefLabel.getLang());
             } else {
-                labels = labels + SEPERATEUR + prefLabel.getLabel() + SOUS_SEPERATEUR + prefLabel.getLang();
+                labels.append(SEPERATEUR).append(prefLabel.getLabel()).append(SOUS_SEPERATEUR).append(prefLabel.getLang());
             }
         }
 
         String membres = null;
         if (CollectionUtils.isNotEmpty(conceptObject.getMembers())) {
-            membres = "";
+            StringBuilder membresBuilder = new StringBuilder();
             for (String member : conceptObject.getMembers()) {
-                if(StringUtils.isEmpty(membres)){
-                    membres = member;
+                if(membresBuilder.isEmpty()){
+                    membresBuilder.append(member);
                 } else {
-                    membres = membres + SEPERATEUR + member;
+                    membresBuilder.append(SEPERATEUR).append(member);
                 }
             }
+            membres = membresBuilder.toString();
         }
 
         var notes = getNotes(conceptObject);
 
-        conceptFacetRepository.addFacet(conceptObject.getIdConcept(), idUser, idTheso, idConceptParent, labels, membres, notes);
+        conceptFacetRepository.addFacet(conceptObject.getIdConcept(), idUser, idTheso, idConceptParent, labels.toString(), membres, notes);
     }    
 
     public boolean addConceptV2(String idTheso, ThesaurusCsvConceptObject conceptObject, int idUser, String formatDate) {
@@ -367,13 +334,15 @@ public class ThesaurusCsvImportEngine {
         if(conceptObject.isDeprecated()) {
             conceptStatus = "DEP";
             if (CollectionUtils.isNotEmpty(conceptObject.getReplacedBy())) {
+                StringBuilder replacedByBuilder = new StringBuilder();
                 for (String replace : conceptObject.getReplacedBy()) {
-                    if(StringUtils.isEmpty(replacedBy)) {
-                        replacedBy = replace;
+                    if(replacedByBuilder.isEmpty()) {
+                        replacedByBuilder.append(replace);
                     } else {
-                        replacedBy = replacedBy + SEPERATEUR + replace;
+                        replacedByBuilder.append(SEPERATEUR).append(replace);
                     }
                 }
+                replacedBy = replacedByBuilder.toString();
             }            
         }
         else
@@ -388,221 +357,122 @@ public class ThesaurusCsvImportEngine {
         //-- 'name1@@copyright1@@url1##name2@@copyright2@@url2'
         String images = null;
         if (CollectionUtils.isNotEmpty(conceptObject.getImages())) {
-            images = "";
+            StringBuilder imagesBuilder = new StringBuilder();
             for (NodeImage nodeImage : conceptObject.getImages()) {
                 if(nodeImage == null) continue;
                 if (StringUtils.isEmpty(nodeImage.getUri())) continue;
                 
-                if(StringUtils.isEmpty(images)) {
-                    images = nodeImage.getImageName() + SOUS_SEPERATEUR + nodeImage.getCopyRight() + SOUS_SEPERATEUR + nodeImage.getUri() + SOUS_SEPERATEUR + nodeImage.getCreator();
+                if(!imagesBuilder.isEmpty()) {
+                    imagesBuilder.append(SEPERATEUR);
                 }
-                else {    
-                    images = images + SEPERATEUR + nodeImage.getImageName() + SOUS_SEPERATEUR + nodeImage.getCopyRight() + SOUS_SEPERATEUR + nodeImage.getUri() + SOUS_SEPERATEUR + nodeImage.getCreator();
-                }
+                imagesBuilder.append(nodeImage.getImageName()).append(SOUS_SEPERATEUR)
+                        .append(nodeImage.getCopyRight()).append(SOUS_SEPERATEUR)
+                        .append(nodeImage.getUri()).append(SOUS_SEPERATEUR)
+                        .append(nodeImage.getCreator());
             }
+            images = imagesBuilder.toString();
         }
 
         // ALIGNEMENT
         //-- 'author@concept_target@thesaurus_target@uri_target@alignement_id_type@internal_id_thesaurus@internal_id_concept'
-        String alignements = null;
-        if (CollectionUtils.isNotEmpty(conceptObject.getExactMatchs())) {
-            alignements = "";
-            for (String uri : conceptObject.getExactMatchs()) {
-                alignements = alignements + SEPERATEUR + idUser
-                        + SOUS_SEPERATEUR + ""
-                        + SOUS_SEPERATEUR + ""
-                        + SOUS_SEPERATEUR + uri
-                        + SOUS_SEPERATEUR + 1
-                        + SOUS_SEPERATEUR + idTheso
-                        + SOUS_SEPERATEUR + conceptObject.getIdConcept();
-            }
-        }
-        if (CollectionUtils.isNotEmpty(conceptObject.getCloseMatchs())) {
-            if (alignements == null) {
-                alignements = "";
-            }
-            for (String uri : conceptObject.getCloseMatchs()) {
-                alignements = alignements + SEPERATEUR + idUser
-                        + SOUS_SEPERATEUR + ""
-                        + SOUS_SEPERATEUR + ""
-                        + SOUS_SEPERATEUR + uri
-                        + SOUS_SEPERATEUR + 2
-                        + SOUS_SEPERATEUR + idTheso
-                        + SOUS_SEPERATEUR + conceptObject.getIdConcept();
-            }
-        }
-        if (CollectionUtils.isNotEmpty(conceptObject.getBroadMatchs())) {
-            if (alignements == null) {
-                alignements = "";
-            }
-            for (String uri : conceptObject.getBroadMatchs()) {
-                alignements = alignements + SEPERATEUR + idUser
-                        + SOUS_SEPERATEUR + ""
-                        + SOUS_SEPERATEUR + ""
-                        + SOUS_SEPERATEUR + uri
-                        + SOUS_SEPERATEUR + 3
-                        + SOUS_SEPERATEUR + idTheso
-                        + SOUS_SEPERATEUR + conceptObject.getIdConcept();
-            }
-        }
-        if (CollectionUtils.isNotEmpty(conceptObject.getRelatedMatchs())) {
-            if (alignements == null) {
-                alignements = "";
-            }
-            for (String uri : conceptObject.getRelatedMatchs()) {
-                alignements = alignements + SEPERATEUR + idUser
-                        + SOUS_SEPERATEUR + ""
-                        + SOUS_SEPERATEUR + ""
-                        + SOUS_SEPERATEUR + uri
-                        + SOUS_SEPERATEUR + 4
-                        + SOUS_SEPERATEUR + idTheso
-                        + SOUS_SEPERATEUR + conceptObject.getIdConcept();
-            }
-        }
-        if (CollectionUtils.isNotEmpty(conceptObject.getNarrowMatchs())) {
-            if (alignements == null) {
-                alignements = "";
-            }
-            for (String uri : conceptObject.getNarrowMatchs()) {
-                alignements = alignements + SEPERATEUR + idUser
-                        + SOUS_SEPERATEUR + ""
-                        + SOUS_SEPERATEUR + ""
-                        + SOUS_SEPERATEUR + uri
-                        + SOUS_SEPERATEUR + 5
-                        + SOUS_SEPERATEUR + idTheso
-                        + SOUS_SEPERATEUR + conceptObject.getIdConcept();
-            }
-        }
-        if (alignements != null && alignements.length() > 0) {
-            alignements = alignements.substring(SEPERATEUR.length(), alignements.length());
-        }
+        StringBuilder alignementsBuilder = new StringBuilder();
+        appendAlignments(alignementsBuilder, conceptObject.getExactMatchs(), idUser, 1, idTheso, conceptObject.getIdConcept());
+        appendAlignments(alignementsBuilder, conceptObject.getCloseMatchs(), idUser, 2, idTheso, conceptObject.getIdConcept());
+        appendAlignments(alignementsBuilder, conceptObject.getBroadMatchs(), idUser, 3, idTheso, conceptObject.getIdConcept());
+        appendAlignments(alignementsBuilder, conceptObject.getRelatedMatchs(), idUser, 4, idTheso, conceptObject.getIdConcept());
+        appendAlignments(alignementsBuilder, conceptObject.getNarrowMatchs(), idUser, 5, idTheso, conceptObject.getIdConcept());
+        String alignements = stripLeadingSeparator(alignementsBuilder);
 
         String prefTerm = null;
         if (CollectionUtils.isNotEmpty(conceptObject.getPrefLabels())) {
-            prefTerm = "";
+            StringBuilder prefTermBuilder = new StringBuilder();
             for (ThesaurusCsvConceptLabel label : conceptObject.getPrefLabels()) {
-                prefTerm += SEPERATEUR + label.getLabel() + SOUS_SEPERATEUR + label.getLang();
+                prefTermBuilder.append(SEPERATEUR).append(label.getLabel()).append(SOUS_SEPERATEUR).append(label.getLang());
             }
-            if (prefTerm.length() > 0) {
-                prefTerm = prefTerm.substring(SEPERATEUR.length(), prefTerm.length());
-            }
+            prefTerm = stripLeadingSeparator(prefTermBuilder);
         }
 
         //Non Pref Term
         //-- 'id_term@lexicalValue@lang@id_thesaurus@source@status@hiden'
-        String nonPrefTerm = null;
+        StringBuilder nonPrefTermBuilder = new StringBuilder();
         if (CollectionUtils.isNotEmpty(conceptObject.getAltLabels())) {
-            nonPrefTerm = "";
             for (ThesaurusCsvConceptLabel label : conceptObject.getAltLabels()) {
-                nonPrefTerm = nonPrefTerm + SEPERATEUR + conceptObject.getIdConcept()
-                        + SOUS_SEPERATEUR + label.getLabel()
-                        + SOUS_SEPERATEUR + label.getLang()
-                        + SOUS_SEPERATEUR + idTheso
-                        + SOUS_SEPERATEUR + idUser
-                        + SOUS_SEPERATEUR + "USE"
-                        + SOUS_SEPERATEUR + false;
+                nonPrefTermBuilder.append(SEPERATEUR).append(conceptObject.getIdConcept())
+                        .append(SOUS_SEPERATEUR).append(label.getLabel())
+                        .append(SOUS_SEPERATEUR).append(label.getLang())
+                        .append(SOUS_SEPERATEUR).append(idTheso)
+                        .append(SOUS_SEPERATEUR).append(idUser)
+                        .append(SOUS_SEPERATEUR).append("USE")
+                        .append(SOUS_SEPERATEUR).append(false);
             }
         }
 
         if (CollectionUtils.isNotEmpty(conceptObject.getAltLabels())) {
-            if (nonPrefTerm == null) {
-                nonPrefTerm = "";
-            }
             for (ThesaurusCsvConceptLabel altLabel : conceptObject.getHiddenLabels()) {
-                nonPrefTerm = nonPrefTerm + SEPERATEUR + conceptObject.getIdConcept()
-                        + SOUS_SEPERATEUR + altLabel.getLabel()
-                        + SOUS_SEPERATEUR + altLabel.getLang()
-                        + SOUS_SEPERATEUR + idTheso
-                        + SOUS_SEPERATEUR + idUser
-                        + SOUS_SEPERATEUR + "Hiddden"
-                        + SOUS_SEPERATEUR + true;
+                nonPrefTermBuilder.append(SEPERATEUR).append(conceptObject.getIdConcept())
+                        .append(SOUS_SEPERATEUR).append(altLabel.getLabel())
+                        .append(SOUS_SEPERATEUR).append(altLabel.getLang())
+                        .append(SOUS_SEPERATEUR).append(idTheso)
+                        .append(SOUS_SEPERATEUR).append(idUser)
+                        .append(SOUS_SEPERATEUR).append("Hiddden")
+                        .append(SOUS_SEPERATEUR).append(true);
             }
         }
-        if (nonPrefTerm != null && nonPrefTerm.length() > 0) {
-            nonPrefTerm = nonPrefTerm.substring(SEPERATEUR.length(), nonPrefTerm.length());
-        }
+        String nonPrefTerm = stripLeadingSeparator(nonPrefTermBuilder);
 
         //Relation
         //-- 'id_concept1@role@id_concept2'
-        String relations = null;
+        StringBuilder relationsBuilder = new StringBuilder();
         if (CollectionUtils.isNotEmpty(conceptObject.getBroaders())) {
-            relations = "";
             isTopConcept = false;
             for (String idConcept2 : conceptObject.getBroaders()) {
-                relations += SEPERATEUR + conceptObject.getIdConcept()
-                        + SOUS_SEPERATEUR + "BT"
-                        + SOUS_SEPERATEUR + idConcept2;
-                relations += SEPERATEUR + idConcept2
-                        + SOUS_SEPERATEUR + "NT"
-                        + SOUS_SEPERATEUR + conceptObject.getIdConcept();                
+                appendRelationPair(relationsBuilder, conceptObject.getIdConcept(), "BT", idConcept2, "NT");
             }
         }
         if (CollectionUtils.isNotEmpty(conceptObject.getNarrowers())) {
-            if (relations == null) {
-                relations = "";
-            }
             for (String idConcept2 : conceptObject.getNarrowers()) {
-                relations += SEPERATEUR + conceptObject.getIdConcept()
-                        + SOUS_SEPERATEUR + "NT"
-                        + SOUS_SEPERATEUR + idConcept2;
-                relations += SEPERATEUR + idConcept2
-                        + SOUS_SEPERATEUR + "BT"
-                        + SOUS_SEPERATEUR + conceptObject.getIdConcept();                
+                appendRelationPair(relationsBuilder, conceptObject.getIdConcept(), "NT", idConcept2, "BT");
             }
         }
         if (CollectionUtils.isNotEmpty(conceptObject.getRelateds())) {
-            if (relations == null) {
-                relations = "";
-            }
             for (String idConcept2 : conceptObject.getRelateds()) {
-                relations += SEPERATEUR + conceptObject.getIdConcept()
-                        + SOUS_SEPERATEUR + "RT"
-                        + SOUS_SEPERATEUR + idConcept2;
-                relations += SEPERATEUR + idConcept2
-                        + SOUS_SEPERATEUR + "RT"
-                        + SOUS_SEPERATEUR + conceptObject.getIdConcept();                
+                appendRelationPair(relationsBuilder, conceptObject.getIdConcept(), "RT", idConcept2, "RT");
             }
         }
-        if (relations != null && relations.length() > 0) {
-            relations = relations.substring(SEPERATEUR.length(), relations.length());
-        }
+        String relations = stripLeadingSeparator(relationsBuilder);
 
         //CustomRelation
         //-- 'id_concept1@role@id_concept2'
-        String customRelations = null;        
+        StringBuilder customRelationsBuilder = new StringBuilder();
         if (CollectionUtils.isNotEmpty(conceptObject.getCustomRelations())) {
-            customRelations = "";
             for (NodeIdValue nodeIdValue  : conceptObject.getCustomRelations()) {
-                customRelations += SEPERATEUR + conceptObject.getIdConcept()
-                        + SOUS_SEPERATEUR + nodeIdValue.getValue()
-                        + SOUS_SEPERATEUR + nodeIdValue.getId();
+                customRelationsBuilder.append(SEPERATEUR).append(conceptObject.getIdConcept())
+                        .append(SOUS_SEPERATEUR).append(nodeIdValue.getValue())
+                        .append(SOUS_SEPERATEUR).append(nodeIdValue.getId());
             }
-        }    
-        if (customRelations != null && customRelations.length() > 0) {
-            customRelations = customRelations.substring(SEPERATEUR.length(), customRelations.length());
-        }        
+        }
+        String customRelations = stripLeadingSeparator(customRelationsBuilder);
 
         //Notes
         //-- 'value@typeCode@lang@id_term'
         String notes = getNotes(conceptObject);
 
-        String gps = null;
+        StringBuilder gpsBuilder = new StringBuilder();
         if (StringUtils.isNotEmpty(conceptObject.getLatitude())) {
-            gps = conceptObject.getLatitude() + SOUS_SEPERATEUR + conceptObject.getLongitude();
+            gpsBuilder.append(conceptObject.getLatitude()).append(SOUS_SEPERATEUR).append(conceptObject.getLongitude());
         }
         if (StringUtils.isNotEmpty(conceptObject.getGps())) {
-            if (gps == null) {
-                gps = "";
-            } else {
-                gps += gps + SEPERATEUR;
+            if (!gpsBuilder.isEmpty()) {
+                gpsBuilder.append(gpsBuilder.toString()).append(SEPERATEUR);
             }
             var gpsList = ThesaurusCsvGpsParser.readGps(conceptObject.getGps(), "", "");
             if (CollectionUtils.isNotEmpty(gpsList)) {
                 for (Gps gpsValue : gpsList) {
-                    gps += SEPERATEUR + gpsValue.getLatitude() + SOUS_SEPERATEUR + gpsValue.getLongitude();
+                    gpsBuilder.append(SEPERATEUR).append(gpsValue.getLatitude()).append(SOUS_SEPERATEUR).append(gpsValue.getLongitude());
                 }
             }
         }
+        String gps = gpsBuilder.isEmpty() ? null : gpsBuilder.toString();
 
         try {
             if (dateFormat == null) {

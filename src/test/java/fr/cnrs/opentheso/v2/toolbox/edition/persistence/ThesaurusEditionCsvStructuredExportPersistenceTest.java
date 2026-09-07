@@ -15,7 +15,6 @@ import java.util.List;
 import static org.junit.jupiter.api.Assertions.assertEquals;
 import static org.junit.jupiter.api.Assertions.assertNull;
 import static org.mockito.ArgumentMatchers.anyString;
-import static org.mockito.ArgumentMatchers.eq;
 import static org.mockito.Mockito.never;
 import static org.mockito.Mockito.verify;
 import static org.mockito.Mockito.when;
@@ -80,7 +79,7 @@ class ThesaurusEditionCsvStructuredExportPersistenceTest {
                 .thenReturn(List.of(childView("C2", "L2")));
         when(hierarchicalRelationshipRepository.findChildrenWithPreferredTerm("C2", "fr", "TH1"))
                 .thenReturn(List.of(childView("C3", "L3")));
-        when(hierarchicalRelationshipRepository.findChildrenWithPreferredTerm(eq("C3"), eq("fr"), eq("TH1")))
+        when(hierarchicalRelationshipRepository.findChildrenWithPreferredTerm("C3", "fr", "TH1"))
                 .thenReturn(List.of());
 
         String[][] matrix = persistence.buildStructuredMatrix("TH1", "fr");

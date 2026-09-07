@@ -69,7 +69,7 @@ public class ActionsLotAlignmentService {
         WorkshopCsvReader reader = new WorkshopCsvReader(delimiter);
         List<NodeAlignmentImport> imports;
         try {
-            ArrayList<String> headers;
+            List<String> headers;
             try (Reader headerReader = new InputStreamReader(new ByteArrayInputStream(content), StandardCharsets.UTF_8)) {
                 headers = reader.readHeadersFileAlignment(headerReader);
             }

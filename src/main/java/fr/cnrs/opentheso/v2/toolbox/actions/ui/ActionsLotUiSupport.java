@@ -46,7 +46,7 @@ final class ActionsLotUiSupport {
     static void loadFile(Part upload, ActionsLotImportPanelState<?> panel, Runnable update, String successToast) {
         try {
             byte[] bytes = readPart(upload);
-            if (bytes == null) {
+            if (bytes.length == 0) {
                 panel.setGlobalError("Impossible de lire le fichier.");
                 return;
             }
@@ -62,7 +62,7 @@ final class ActionsLotUiSupport {
 
     static byte[] readPart(Part part) throws IOException {
         if (part == null || part.getSize() <= 0) {
-            return null;
+            return new byte[0];
         }
         return part.getInputStream().readAllBytes();
     }

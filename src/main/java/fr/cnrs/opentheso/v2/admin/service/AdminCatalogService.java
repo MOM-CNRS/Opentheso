@@ -35,7 +35,7 @@ public class AdminCatalogService {
 
     @Transactional(readOnly = true)
     public List<AdminUserMembership> listAllUsers(boolean superAdmin) {
-        SuperAdminAccessPolicy.requireSuperAdmin(superAdmin);
+        SuperAdminAccessPolicy.requireResolvedSuperAdmin(superAdmin);
         return adminQueryRepository.findAllUsers().stream()
                 .map(AdminMapper::toUserMembership)
                 .toList();
@@ -43,7 +43,7 @@ public class AdminCatalogService {
 
     @Transactional(readOnly = true)
     public List<AdminUserMembership> searchUsers(boolean superAdmin, String mail, String username) {
-        SuperAdminAccessPolicy.requireSuperAdmin(superAdmin);
+        SuperAdminAccessPolicy.requireResolvedSuperAdmin(superAdmin);
         String mailCriteria = mail == null ? "" : mail.trim();
         String usernameCriteria = username == null ? "" : username.trim();
         return adminQueryRepository.searchUsersByMailAndUsername(mailCriteria, usernameCriteria).stream()
@@ -53,7 +53,7 @@ public class AdminCatalogService {
 
     @Transactional(readOnly = true)
     public List<ProjectSummary> listAllProjects(boolean superAdmin) {
-        SuperAdminAccessPolicy.requireSuperAdmin(superAdmin);
+        SuperAdminAccessPolicy.requireResolvedSuperAdmin(superAdmin);
         return projectAdminQueryRepository.findAllProjects().stream()
                 .map(AdminMapper::toProjectSummary)
                 .toList();
@@ -61,7 +61,7 @@ public class AdminCatalogService {
 
     @Transactional(readOnly = true)
     public List<ProjectSummary> searchProjects(boolean superAdmin, String query) {
-        SuperAdminAccessPolicy.requireSuperAdmin(superAdmin);
+        SuperAdminAccessPolicy.requireResolvedSuperAdmin(superAdmin);
         if (query == null || query.isBlank()) {
             return List.of();
         }
@@ -72,7 +72,7 @@ public class AdminCatalogService {
 
     @Transactional(readOnly = true)
     public List<AdminThesaurusOption> listThesauriOfProject(boolean superAdmin, int projectId) {
-        SuperAdminAccessPolicy.requireSuperAdmin(superAdmin);
+        SuperAdminAccessPolicy.requireResolvedSuperAdmin(superAdmin);
         return projectAdminQueryRepository.findThesauriOfProject(projectId, defaultWorkLanguage).stream()
                 .map(AdminMapper::toThesaurusOption)
                 .toList();
@@ -80,7 +80,7 @@ public class AdminCatalogService {
 
     @Transactional(readOnly = true)
     public List<AssignableRole> listAssignableRoles(boolean superAdmin) {
-        SuperAdminAccessPolicy.requireSuperAdmin(superAdmin);
+        SuperAdminAccessPolicy.requireResolvedSuperAdmin(superAdmin);
         return projectAdminQueryRepository.findAssignableRolesFrom(ProjectAccessPolicy.ROLE_SUPER_ADMIN).stream()
                 .map(ProjectMapper::toAssignableRole)
                 .toList();
@@ -88,7 +88,7 @@ public class AdminCatalogService {
 
     @Transactional(readOnly = true)
     public List<AdminThesaurus> listAllThesauri(boolean superAdmin, String workLanguage) {
-        SuperAdminAccessPolicy.requireSuperAdmin(superAdmin);
+        SuperAdminAccessPolicy.requireResolvedSuperAdmin(superAdmin);
         String lang = workLanguage != null ? workLanguage : defaultWorkLanguage;
         return adminQueryRepository.findAllThesauri(lang).stream()
                 .map(AdminMapper::toThesaurus)
@@ -101,7 +101,7 @@ public class AdminCatalogService {
 
     @Transactional
     public void moveThesaurus(boolean superAdmin, String thesaurusId, int targetProjectId) {
-        SuperAdminAccessPolicy.requireSuperAdmin(superAdmin);
+        SuperAdminAccessPolicy.requireResolvedSuperAdmin(superAdmin);
         projectLookupService.requireEntity(targetProjectId);
         projectMembershipRepository.moveThesaurus(thesaurusId, targetProjectId);
     }

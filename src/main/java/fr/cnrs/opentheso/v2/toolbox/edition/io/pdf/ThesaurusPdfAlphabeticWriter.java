@@ -35,10 +35,10 @@ public class ThesaurusPdfAlphabeticWriter {
     private final ThesaurusEditionPdfUriResolver uriResolver;
     private final ToolboxPreferencePersistence toolboxPreferencePersistence;
 
-    private final static String TAB_NIVEAU = "    ";
-    private final static String ID = TAB_NIVEAU + "ID: ";
-    private final static String USE = TAB_NIVEAU + "USE: ";
-    private final static String GPS = TAB_NIVEAU + "GPS: ";
+    private static final String TAB_NIVEAU = "    ";
+    private static final String ID = TAB_NIVEAU + "ID: ";
+    private static final String USE = TAB_NIVEAU + "USE: ";
+    private static final String GPS = TAB_NIVEAU + "GPS: ";
 
     private boolean isToogleExportImage;
     private Preferences exportPreferences;
@@ -83,7 +83,7 @@ public class ThesaurusPdfAlphabeticWriter {
 
         String idFromUri = concept.getIdentifier();
         if(addLabels(paragraphs, concept.getLabelsList(), codeLanguage1, codeLanguage2, idFromUri, concept.getArkId(), writePdfSettings, traductions)) {
-            paragraphs.add(new Paragraph(ID + idFromUri, writePdfSettings.textFont));
+            paragraphs.add(new Paragraph(ID + idFromUri, writePdfSettings.getTextFont()));
             addRelations(paragraphs, concept.getRelationsList(), writePdfSettings, labels);
             addDocuments(paragraphs, concept.getDocumentationsList(), traductions.get(idFromUri), codeLanguage1, codeLanguage2, writePdfSettings);
             addMatchs(paragraphs, concept.getMatchList(), writePdfSettings);
@@ -148,14 +148,14 @@ public class ThesaurusPdfAlphabeticWriter {
         }
         if (label.getProperty() == SKOSProperty.PREF_LABEL && !prefIsTrad) {
             Paragraph paragraph = new Paragraph();
-            Anchor anchor = new Anchor(labelValue, writePdfSettings.termFont);
+            Anchor anchor = new Anchor(labelValue, writePdfSettings.getTermFont());
             anchor.setReference(uriResolver.getUriForConcept(
                     exportPreferences, exportThesaurusId, idFromUri, idArk, idArk));
             anchor.setName(idFromUri);
             paragraph.add(anchor);
             paragraphs.add(paragraph);
         } else if (label.getProperty() == SKOSProperty.ALT_LABEL && !altIsTrad) {
-            paragraphs.add(new Paragraph(USE + labelValue, writePdfSettings.textFont));
+            paragraphs.add(new Paragraph(USE + labelValue, writePdfSettings.getTextFont()));
         }
         return altLabelWrite;
     }
@@ -163,8 +163,7 @@ public class ThesaurusPdfAlphabeticWriter {
     private void addRelations(List<Paragraph> paragraphs, List<SKOSRelation> relations, ThesaurusPdfSettings writePdfSettings, HashMap<String, String> labels) {
 
         if (CollectionUtils.isNotEmpty(relations)) {
-            relations.stream()
-                    .forEach(relation -> {
+            relations.forEach(relation -> {
                         switch (relation.getProperty()) {
                     case SKOSProperty.INSCHEME:
                         break;
@@ -192,7 +191,7 @@ public class ThesaurusPdfAlphabeticWriter {
         if(!StringUtils.isEmpty(targetName)
                 && StringUtils.isNotEmpty(writePdfSettings.getCodeRelation(relation.getProperty()))) {
             Chunk chunk = new Chunk(TAB_NIVEAU + writePdfSettings.getCodeRelation(relation.getProperty())
-                    + ": " + targetName, writePdfSettings.relationFont);
+                    + ": " + targetName, writePdfSettings.getRelationFont());
             chunk.setLocalGoto(relation.getLocalIdentifier());
             paragraphs.add(new Paragraph(chunk));
         }
@@ -231,16 +230,16 @@ public class ThesaurusPdfAlphabeticWriter {
         }
         if (!docIsTrad) {
             paragraphs.add(new Paragraph(TAB_NIVEAU + writePdfSettings.getDocTypeName(document.getProperty())
-                    + ": " + docText, writePdfSettings.textFont));
+                    + ": " + docText, writePdfSettings.getTextFont()));
         }
     }
 
     private void addMatchs(List<Paragraph> paragraphs, List<SKOSMatch> matchs, ThesaurusPdfSettings writePdfSettings) {
 
         if (CollectionUtils.isNotEmpty(matchs)) {
-            matchs.stream().forEach(match
+            matchs.forEach(match
                     -> paragraphs.add(new Paragraph(TAB_NIVEAU + writePdfSettings.getMatchTypeName(match.getProperty())
-                            + ": " + match.getValue(), writePdfSettings.textFont))
+                            + ": " + match.getValue(), writePdfSettings.getTextFont()))
             );
         }
     }
@@ -248,7 +247,7 @@ public class ThesaurusPdfAlphabeticWriter {
     private void addGpsCoordiantes(List<Paragraph> paragraphs, List<SKOSGPSCoordinates> skosGpsCoordinates, ThesaurusPdfSettings writePdfSettings) {
 
         if (CollectionUtils.isNotEmpty(skosGpsCoordinates)) {
-            paragraphs.add(new Paragraph(GPS + formatCoordonnees(skosGpsCoordinates), writePdfSettings.textFont));
+            paragraphs.add(new Paragraph(GPS + formatCoordonnees(skosGpsCoordinates), writePdfSettings.getTextFont()));
         }
     }
 

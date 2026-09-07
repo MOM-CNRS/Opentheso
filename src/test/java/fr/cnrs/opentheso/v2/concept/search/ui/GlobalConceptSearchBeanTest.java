@@ -23,7 +23,6 @@ import java.util.List;
 
 import static org.junit.jupiter.api.Assertions.assertEquals;
 import static org.junit.jupiter.api.Assertions.assertTrue;
-import static org.mockito.ArgumentMatchers.eq;
 import static org.mockito.Mockito.mockStatic;
 import static org.mockito.Mockito.when;
 
@@ -69,11 +68,11 @@ class GlobalConceptSearchBeanTest {
         when(consultationShellBean.getSearchableThesaurusIds()).thenReturn(List.of("TH1"));
         when(userSession.isLoggedIn()).thenReturn(true);
         when(conceptSearchService.autocomplete(
-                eq("chat"),
-                eq(ConceptSearchMode.FULL_TEXT),
-                eq("TH1"),
-                eq("fr"),
-                eq(false)
+                "chat",
+                ConceptSearchMode.FULL_TEXT,
+                "TH1",
+                "fr",
+                false
         )).thenReturn(List.of(new ConceptSearchSuggestion("C1", "chat", "", ConceptSearchKind.CONCEPT, false)));
 
         var suggestions = bean.complete("chat");
@@ -96,11 +95,11 @@ class GlobalConceptSearchBeanTest {
         when(consultationShellBean.getSearchableThesaurusIds()).thenReturn(List.of("TH1"));
         when(userSession.isLoggedIn()).thenReturn(false);
         when(conceptSearchService.search(
-                eq("chat"),
-                eq(ConceptSearchMode.FULL_TEXT),
-                eq("TH1"),
-                eq("fr"),
-                eq(true)
+                "chat",
+                ConceptSearchMode.FULL_TEXT,
+                "TH1",
+                "fr",
+                true
         )).thenReturn(List.of(
                 new ConceptSearchResult("TH1", "C1", "chat", "fr", false, Collections.emptyList(), Collections.emptyList(), Collections.emptyList()),
                 new ConceptSearchResult("TH1", "C2", "chaton", "fr", false, Collections.emptyList(), Collections.emptyList(), Collections.emptyList())

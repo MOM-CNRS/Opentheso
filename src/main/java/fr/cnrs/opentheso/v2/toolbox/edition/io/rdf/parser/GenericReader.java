@@ -5,7 +5,7 @@ import fr.cnrs.opentheso.models.nodes.DcElement;
 import fr.cnrs.opentheso.utils.DateUtils;
 import fr.cnrs.opentheso.models.skosapi.SKOSProperty;
 import fr.cnrs.opentheso.models.skosapi.SKOSResource;
-import org.apache.commons.lang3.StringUtils;
+import org.apache.commons.lang3.Strings;
 
 import org.eclipse.rdf4j.model.IRI;
 import org.eclipse.rdf4j.model.Literal;
@@ -68,10 +68,10 @@ public class GenericReader {
             default:
                 break;
 
-            /// ajout des créativecommons
-            /// ajout des dcterms
+            // ajout des créativecommons
+            // ajout des dcterms
         }
-        if(StringUtils.contains(predicate.getNamespace(), "purl.org/dc/terms")){
+        if(Strings.CS.contains(predicate.getNamespace(), "purl.org/dc/terms")){
             String dcLang;
             try {
                 switch (literal.getDatatype().getLocalName()) {
@@ -90,6 +90,7 @@ public class GenericReader {
                 }
                 
             } catch (Exception e) {
+                // datatype DCMI non géré : élément ignoré
             }
         }
     }

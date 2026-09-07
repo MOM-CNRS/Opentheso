@@ -14,7 +14,6 @@ import java.util.Optional;
 import static org.junit.jupiter.api.Assertions.assertEquals;
 import static org.mockito.ArgumentMatchers.anyInt;
 import static org.mockito.ArgumentMatchers.anyString;
-import static org.mockito.ArgumentMatchers.eq;
 import static org.mockito.Mockito.never;
 import static org.mockito.Mockito.verify;
 import static org.mockito.Mockito.when;
@@ -51,7 +50,7 @@ class ConceptNoteNativeWriteServiceTest {
 
         assertEquals(MutationOutcome.OK, result.outcome());
         verify(conceptNoteWriteRepository).insertNote(
-                eq("C1"), eq("TH1"), eq("fr"), eq("note"), eq("Hello"), eq("src"), eq(7));
+                "C1", "TH1", "fr", "note", "Hello", "src", 7);
         verify(conceptWritePostMutationRepository).touchConcept("TH1", "C1", 7);
         verify(conceptWritePostMutationRepository).saveContributorDcTerm("TH1", "C1", "admin");
     }

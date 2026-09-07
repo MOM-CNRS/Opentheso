@@ -100,7 +100,7 @@ public class ThesaurusPdfHierarchicalWriter {
                 }
 
                 Paragraph paragraph = new Paragraph();
-                Anchor anchor = new Anchor(name + " (" + conceptID + ")", writePdfSettings.termFont);
+                Anchor anchor = new Anchor(name + " (" + conceptID + ")", writePdfSettings.getTermFont());
                 anchor.setReference(uriResolver.getUriForConcept(
                         exportPreferences, exportThesaurusId, concept.getIdentifier(), concept.getArkId(), concept.getArkId()));
                 paragraph.add(anchor);
@@ -134,7 +134,7 @@ public class ThesaurusPdfHierarchicalWriter {
             }
 
             Paragraph paragraph = new Paragraph();
-            Anchor anchor = new Anchor(indentation + name + " (" + idFils + ")", writePdfSettings.textFont);
+            Anchor anchor = new Anchor(indentation + name + " (" + idFils + ")", writePdfSettings.getTextFont());
             idArk = uriResolver.getIdArk(exportPreferences, exportThesaurusId, idFils);
             anchor.setReference(uriResolver.getUriForConcept(exportPreferences, exportThesaurusId, idFils, idArk, idArk));
             paragraph.add(anchor);
@@ -165,11 +165,7 @@ public class ThesaurusPdfHierarchicalWriter {
     }
 
     private String getSpace(String indentation) {
-        String space = "";
-        for (int i = 0; i < indentation.length(); i++) {
-            space += " ";
-        }
-        return space;
+        return " ".repeat(indentation.length());
     }
 
     private void addNotes(List<Paragraph> paragraphs, String space, ArrayList<String> idToDoc, ArrayList<Integer> idTradDiff, ThesaurusPdfSettings writePdfSettings) {
@@ -181,15 +177,15 @@ public class ThesaurusPdfHierarchicalWriter {
 
         AtomicInteger docWrite = new AtomicInteger();
         if (CollectionUtils.isNotEmpty(idToDoc)) {
-            idToDoc.stream().forEach(document  -> {
-                paragraphs.add(new Paragraph(space + document, writePdfSettings.hieraInfoFont));
+            idToDoc.forEach(document  -> {
+                paragraphs.add(new Paragraph(space + document, writePdfSettings.getHieraInfoFont()));
                 docWrite.getAndIncrement();
             });
         }
 
         if (docWrite.get() < docCount) {
             for (int i = 0; i < docCount; i++) {
-                paragraphs.add(new Paragraph(space + "-", writePdfSettings.hieraInfoFont));
+                paragraphs.add(new Paragraph(space + "-", writePdfSettings.getHieraInfoFont()));
             }
         }
     }
@@ -197,13 +193,13 @@ public class ThesaurusPdfHierarchicalWriter {
     private void addMatchs(List<Paragraph> paragraphs, ArrayList<String> matchs, String space, ThesaurusPdfSettings writePdfSettings) {
 
         if (CollectionUtils.isNotEmpty(matchs)) {
-            matchs.stream().forEach(match -> paragraphs.add(new Paragraph(space + match, writePdfSettings.hieraInfoFont)));
+            matchs.forEach(match -> paragraphs.add(new Paragraph(space + match, writePdfSettings.getHieraInfoFont())));
         }
     }
 
     private void addGpsCoordiantes(List<Paragraph> paragraphs, List<String> gps, String space, ThesaurusPdfSettings writePdfSettings) {
         if (CollectionUtils.isNotEmpty(gps)) {
-            paragraphs.add(new Paragraph(space + "GPS : (" + gps.stream().collect(Collectors.joining(", ")) + ")", writePdfSettings.hieraInfoFont));
+            paragraphs.add(new Paragraph(space + "GPS : (" + gps.stream().collect(Collectors.joining(", ")) + ")", writePdfSettings.getHieraInfoFont()));
         }
     }
 }

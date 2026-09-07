@@ -20,6 +20,7 @@ import fr.cnrs.opentheso.v2.concept.model.ConceptUriLabel;
 import fr.cnrs.opentheso.v2.concept.policy.ConceptStatusPolicy;
 import org.apache.commons.collections4.CollectionUtils;
 import org.apache.commons.lang3.StringUtils;
+import org.apache.commons.lang3.Strings;
 
 import java.util.ArrayList;
 import java.util.List;
@@ -250,7 +251,7 @@ public final class ConceptMapper {
             return;
         }
         source.stream()
-                .filter(note -> allLangs || StringUtils.equalsIgnoreCase(note.getIdLang(), lang))
+                .filter(note -> allLangs || Strings.CI.equals(note.getIdLang(), lang))
                 .map(note -> new ConceptNote(
                         String.valueOf(note.getIdNote()),
                         typeCode,
@@ -272,7 +273,7 @@ public final class ConceptMapper {
             return;
         }
         source.stream()
-                .filter(label -> allLangs || StringUtils.equalsIgnoreCase(label.getIdLang(), lang))
+                .filter(label -> allLangs || Strings.CI.equals(label.getIdLang(), lang))
                 .map(label -> new ConceptLabel(
                         StringUtils.defaultString(label.getIdLang()),
                         StringUtils.defaultString(label.getLabel()),
@@ -321,7 +322,7 @@ public final class ConceptMapper {
                 uri,
                 typeLabel,
                 StringUtils.defaultString(item.getLabel()),
-                StringUtils.startsWithIgnoreCase(uri, "http"),
+                Strings.CI.startsWith(uri, "http"),
                 typeId
         );
     }

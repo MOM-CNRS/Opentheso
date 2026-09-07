@@ -28,6 +28,7 @@ public final class ConceptFlagSupport {
                 return contextPath + resourcePath;
             }
         } catch (Exception ignored) {
+            // Flag file is optional; fall back to the default image.
         }
         return contextPath + NO_FLAG;
     }

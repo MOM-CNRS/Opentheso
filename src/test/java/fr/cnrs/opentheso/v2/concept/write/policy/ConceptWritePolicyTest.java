@@ -13,7 +13,6 @@ import org.mockito.junit.jupiter.MockitoExtension;
 
 import static org.junit.jupiter.api.Assertions.assertFalse;
 import static org.junit.jupiter.api.Assertions.assertTrue;
-import static org.mockito.ArgumentMatchers.eq;
 import static org.mockito.Mockito.lenient;
 import static org.mockito.Mockito.when;
 
@@ -53,7 +52,7 @@ class ConceptWritePolicyTest {
 
     @Test
     void canRenamePreferredLabel_requiresStructurePermission() {
-        when(rightsService.can(eq(userSession), eq(Permission.MUTATE_CONCEPT_STRUCTURE), eq(AuthTarget.thesaurus("TH1"))))
+        when(rightsService.can(userSession, Permission.MUTATE_CONCEPT_STRUCTURE, AuthTarget.thesaurus("TH1")))
                 .thenReturn(false);
 
         assertFalse(policy.canRenamePreferredLabel(userSession, false));

@@ -96,8 +96,7 @@ public class PropositionBean implements Serializable {
     }
 
     public void toggleShowAll() {
-        refreshPendingCount();
-        loadPropositionList();
+        refresh();
     }
 
     private void loadPropositionList() {
@@ -231,6 +230,7 @@ public class PropositionBean implements Serializable {
             case "refuserProposition" -> refuseSelected();
             case "supprimerProposition" -> deleteSelected();
             default -> {
+                // Unknown confirm actions are ignored.
             }
         }
         pendingAction = null;

@@ -406,7 +406,6 @@ public class ConceptReadService {
                 buildIdentifiers(
                         thesaurusId,
                         conceptId,
-                        lang,
                         base.summary(),
                         preferences,
                         exportIds,
@@ -645,7 +644,6 @@ public class ConceptReadService {
     private ConceptIdentifiers buildIdentifiers(
             String thesaurusId,
             String conceptId,
-            String lang,
             ConceptSummary summary,
             ThesaurusPreferences preferences,
             ConceptDetailEnrichmentService.ConceptExportIds exportIds,

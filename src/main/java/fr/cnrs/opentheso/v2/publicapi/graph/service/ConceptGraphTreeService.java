@@ -1,5 +1,6 @@
 package fr.cnrs.opentheso.v2.publicapi.graph.service;
 
+import fr.cnrs.opentheso.entites.ThesaurusLabel;
 import fr.cnrs.opentheso.repositories.ConceptRepository;
 import fr.cnrs.opentheso.repositories.ThesaurusLabelRepository;
 import fr.cnrs.opentheso.v2.concept.io.rdf.ConceptSkosRdfExportEngine;
@@ -32,7 +33,7 @@ public class ConceptGraphTreeService {
     public D3jsTreeNodeResponse buildThesaurusTree(String thesaurusId, String lang, boolean limit) {
         String workLang = resolveLang(thesaurusId, lang);
         String title = thesaurusLabelRepository.findByIdThesaurusAndLang(thesaurusId, workLang)
-                .map(label -> label.getTitle())
+                .map(ThesaurusLabel::getTitle)
                 .orElse(thesaurusId);
         String url = buildThesaurusUrl(thesaurusId);
 

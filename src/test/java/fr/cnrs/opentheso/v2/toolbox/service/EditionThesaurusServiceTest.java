@@ -16,7 +16,6 @@ import java.util.List;
 
 import static org.junit.jupiter.api.Assertions.assertEquals;
 import static org.junit.jupiter.api.Assertions.assertThrows;
-import static org.junit.jupiter.api.Assertions.assertTrue;
 import static org.mockito.ArgumentMatchers.any;
 import static org.mockito.ArgumentMatchers.eq;
 import static org.mockito.Mockito.never;
@@ -55,7 +54,7 @@ class EditionThesaurusServiceTest {
         assertEquals(1, result.size());
         assertEquals("TH1", result.get(0).id());
         assertEquals("Thésaurus test", result.get(0).title());
-        assertTrue(result.get(0).privateThesaurus() == false);
+        assertEquals(false, result.get(0).privateThesaurus());
     }
 
     @Test

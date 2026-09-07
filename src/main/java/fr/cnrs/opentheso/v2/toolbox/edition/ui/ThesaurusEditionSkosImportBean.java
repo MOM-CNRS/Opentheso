@@ -62,7 +62,7 @@ public class ThesaurusEditionSkosImportBean implements Serializable {
     private List<LanguageOption> allLangs = Collections.emptyList();
     private List<ProjectOption> projects = Collections.emptyList();
     private boolean superAdmin;
-    private SKOSXmlDocument skosXmlDocument;
+    private transient SKOSXmlDocument skosXmlDocument;
 
     public void init() {
         if (!toolboxAccessPolicy.canCreateOrImportThesaurus(userSession)) {
@@ -103,7 +103,7 @@ public class ThesaurusEditionSkosImportBean implements Serializable {
         }
         return allLangs.stream()
                 .map(LanguageOption::code)
-                .filter(code -> "fr".equalsIgnoreCase(code))
+                .filter("fr"::equalsIgnoreCase)
                 .findFirst()
                 .orElse(allLangs.get(0).code());
     }

@@ -279,7 +279,7 @@ class ConsultationShellBeanTest {
     }
 
     @Test
-    void onProjectChange_clearsInvalidThesaurusAndLoadsProjectHome() throws Exception {
+    void onProjectChange_clearsInvalidThesaurusAndLoadsProjectHome() {
         consultationShellBean.setSelectedThesaurusId("TH1");
         consultationShellBean.setSelectedProjectId(42);
         when(userSession.isLoggedIn()).thenReturn(false);

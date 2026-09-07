@@ -72,9 +72,14 @@ public class ConceptTreeConsultationService {
     }
 
     private ConceptTreeNodeData toConceptTreeNodeFromRow(ConceptTreeRow row, boolean sortByNotation) {
-        String nodeType = ConceptStatusPolicy.isDeprecated(row.status())
-                ? "deprecated"
-                : (row.hasChildren() ? "concept" : "file");
+        String nodeType;
+        if (ConceptStatusPolicy.isDeprecated(row.status())) {
+            nodeType = "deprecated";
+        } else if (row.hasChildren()) {
+            nodeType = "concept";
+        } else {
+            nodeType = "file";
+        }
         return new ConceptTreeNodeData(
                 row.conceptId(),
                 defaultLabel(row.conceptId(), row.label()),

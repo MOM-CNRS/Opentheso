@@ -163,7 +163,7 @@ public class ConceptCopyBetweenThesaurusWritePersistence {
             int userId,
             Preferences preferences,
             String identifierType
-    ) throws Exception {
+    ) {
         thesaurusEditionSkosImportEngine.setInfos("yyyy-MM-dd", userId, -1, "");
         thesaurusEditionSkosImportEngine.setSelectedIdentifier(identifierType);
         thesaurusEditionSkosImportEngine.setPrefixHandle("");

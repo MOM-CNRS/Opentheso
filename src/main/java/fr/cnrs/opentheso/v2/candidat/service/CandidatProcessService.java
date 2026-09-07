@@ -39,13 +39,13 @@ public class CandidatProcessService {
     }
 
     public void afterCandidateAccepted(CandidatDto candidate, int userId, String contributorName, Preferences preferences) {
-        applyAcceptedMetadata(candidate, userId, contributorName);
+        applyContributorMetadata(candidate, userId, contributorName);
         candidatProcessPersistence.generatePersistentIds(preferences, candidate);
         conceptTreeRefreshSupport.refreshConceptTree();
     }
 
     public void afterCandidateRejected(CandidatDto candidate, int userId, String contributorName) {
-        applyRejectedMetadata(candidate, userId, contributorName);
+        applyContributorMetadata(candidate, userId, contributorName);
     }
 
     /**
@@ -70,7 +70,7 @@ public class CandidatProcessService {
             if (candidatProcessPersistence.insertCandidate(candidate, adminMessage, userId)) {
                 return candidate;
             }
-            applyAcceptedMetadata(candidate, userId, contributorName);
+            applyContributorMetadata(candidate, userId, contributorName);
             accepted.add(candidate);
         }
         if (!accepted.isEmpty()) {
@@ -99,7 +99,7 @@ public class CandidatProcessService {
             if (candidatProcessPersistence.rejectCandidate(candidate, adminMessage, userId)) {
                 return candidate;
             }
-            applyRejectedMetadata(candidate, userId, contributorName);
+            applyContributorMetadata(candidate, userId, contributorName);
         }
         return null;
     }
@@ -142,17 +142,7 @@ public class CandidatProcessService {
         return candidatProcessPersistence.sendMail(mail, subject, htmlBody);
     }
 
-    private void applyAcceptedMetadata(CandidatDto candidate, int userId, String contributorName) {
-        candidatProcessPersistence.updateConceptDate(candidate.getIdThesaurus(), candidate.getIdConcepte(), userId);
-        conceptDcTermRepository.save(ConceptDcTerm.builder()
-                .name(DCMIResource.CONTRIBUTOR)
-                .value(contributorName)
-                .idConcept(candidate.getIdConcepte())
-                .idThesaurus(candidate.getIdThesaurus())
-                .build());
-    }
-
-    private void applyRejectedMetadata(CandidatDto candidate, int userId, String contributorName) {
+    private void applyContributorMetadata(CandidatDto candidate, int userId, String contributorName) {
         candidatProcessPersistence.updateConceptDate(candidate.getIdThesaurus(), candidate.getIdConcepte(), userId);
         conceptDcTermRepository.save(ConceptDcTerm.builder()
                 .name(DCMIResource.CONTRIBUTOR)

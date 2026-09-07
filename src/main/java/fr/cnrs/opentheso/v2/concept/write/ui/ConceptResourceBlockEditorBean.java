@@ -271,7 +271,7 @@ public class ConceptResourceBlockEditorBean implements Serializable {
         if (gpsText == null) {
             return false;
         }
-        if (org.apache.commons.lang3.StringUtils.equals(gpsText, formatGps(current.getGpsPoints()))) {
+        if (org.apache.commons.lang3.Strings.CS.equals(gpsText, formatGps(current.getGpsPoints()))) {
             return true;
         }
         return applyResult(conceptMediaMutationService.replaceGpsCoordinates(
@@ -562,7 +562,7 @@ public class ConceptResourceBlockEditorBean implements Serializable {
         if (detail == null || detail.getSummary() == null) {
             return false;
         }
-        return org.apache.commons.lang3.StringUtils.equals(editingConceptId, detail.getSummary().getConceptId());
+        return org.apache.commons.lang3.Strings.CS.equals(editingConceptId, detail.getSummary().getConceptId());
     }
 
     private static List<ExternalResourceEditRow> copyResources(ConceptDetail detail) {
@@ -624,7 +624,7 @@ public class ConceptResourceBlockEditorBean implements Serializable {
 
     private static ConceptExternalResourceItem resourceByUri(ConceptDetail detail, String uri) {
         for (ConceptExternalResourceItem item : safeResources(detail)) {
-            if (org.apache.commons.lang3.StringUtils.equals(
+            if (org.apache.commons.lang3.Strings.CS.equals(
                     org.apache.commons.lang3.StringUtils.trimToEmpty(item.uri()), uri)) {
                 return item;
             }
@@ -633,28 +633,28 @@ public class ConceptResourceBlockEditorBean implements Serializable {
     }
 
     private static boolean imageUnchanged(ConceptImageItem previous, ImageEditRow row) {
-        return org.apache.commons.lang3.StringUtils.equals(
+        return org.apache.commons.lang3.Strings.CS.equals(
                 org.apache.commons.lang3.StringUtils.trimToEmpty(previous.uri()), row.getUri())
-                && org.apache.commons.lang3.StringUtils.equals(
+                && org.apache.commons.lang3.Strings.CS.equals(
                         org.apache.commons.lang3.StringUtils.trimToEmpty(previous.imageName()), row.getName())
-                && org.apache.commons.lang3.StringUtils.equals(
+                && org.apache.commons.lang3.Strings.CS.equals(
                         org.apache.commons.lang3.StringUtils.trimToEmpty(previous.creator()), row.getCreator())
-                && org.apache.commons.lang3.StringUtils.equals(
+                && org.apache.commons.lang3.Strings.CS.equals(
                         org.apache.commons.lang3.StringUtils.trimToEmpty(previous.copyright()), row.getCopyright());
     }
 
     private static boolean resourceUnchanged(ConceptExternalResourceItem previous, ExternalResourceEditRow row) {
-        return org.apache.commons.lang3.StringUtils.equals(
+        return org.apache.commons.lang3.Strings.CS.equals(
                 org.apache.commons.lang3.StringUtils.trimToEmpty(previous.uri()), row.getUri())
-                && org.apache.commons.lang3.StringUtils.equals(
+                && org.apache.commons.lang3.Strings.CS.equals(
                         org.apache.commons.lang3.StringUtils.trimToEmpty(previous.description()),
                         org.apache.commons.lang3.StringUtils.trimToEmpty(row.getDescription()));
     }
 
     private static boolean samePoint(GpsEditRow left, GpsEditRow right) {
-        return org.apache.commons.lang3.StringUtils.equals(
+        return org.apache.commons.lang3.Strings.CS.equals(
                 normalizeCoord(left.getLatitude()), normalizeCoord(right.getLatitude()))
-                && org.apache.commons.lang3.StringUtils.equals(
+                && org.apache.commons.lang3.Strings.CS.equals(
                         normalizeCoord(left.getLongitude()), normalizeCoord(right.getLongitude()));
     }
 
@@ -671,13 +671,13 @@ public class ConceptResourceBlockEditorBean implements Serializable {
 
     static String normalizeCoord(String raw) {
         String text = org.apache.commons.lang3.StringUtils.trimToEmpty(raw).replace(",", ".");
-        if (text.matches("-?[0-9]+")) {
+        if (text.matches("-?\\d+")) {
             return text + ".0";
         }
         return text;
     }
 
     private static boolean isCoord(String value) {
-        return value.matches("-?[0-9]+\\.[0-9]+");
+        return value.matches("-?\\d+\\.\\d+");
     }
 }

@@ -18,6 +18,7 @@ import org.apache.commons.collections4.CollectionUtils;
 import org.apache.commons.lang3.StringUtils;
 
 import java.io.ByteArrayInputStream;
+import java.io.IOException;
 import java.io.InputStreamReader;
 import java.io.Reader;
 import java.io.Serializable;
@@ -87,7 +88,7 @@ public class ConceptListCsvImportBean implements Serializable {
     public void setFlashToken(String flashToken) {
         run.setFlashToken(flashToken);
     }
-    private List<CsvReadHelper.ConceptObject> conceptObjects = new ArrayList<>();
+    private transient List<CsvReadHelper.ConceptObject> conceptObjects = new ArrayList<>();
     private transient Part csvUpload;
     private byte[] csvBytes;
 
@@ -237,7 +238,7 @@ public class ConceptListCsvImportBean implements Serializable {
         return StringUtils.isBlank(warning);
     }
 
-    private void loadFromBytes(byte[] bytes) throws Exception {
+    private void loadFromBytes(byte[] bytes) throws IOException {
         CsvReadHelper csvReadHelper = new CsvReadHelper(delimiterCsv);
         try (Reader reader1 = new InputStreamReader(new ByteArrayInputStream(bytes), StandardCharsets.UTF_8);
              Reader reader2 = new InputStreamReader(new ByteArrayInputStream(bytes), StandardCharsets.UTF_8)) {

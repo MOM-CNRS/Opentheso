@@ -1,5 +1,7 @@
 package fr.cnrs.opentheso.v2.sync.service;
 
+import lombok.Getter;
+import lombok.Setter;
 import org.springframework.stereotype.Component;
 
 import java.util.concurrent.ConcurrentHashMap;
@@ -15,10 +17,10 @@ public class ThesaurusSyncProgressTracker {
 
     public ProgressState start(String key) {
         ProgressState state = new ProgressState();
-        state.running = true;
-        state.progressVisible = true;
-        state.progressValue = 1;
-        state.statusMessage = "Préparation de la synchronisation…";
+        state.setRunning(true);
+        state.setProgressVisible(true);
+        state.setProgressValue(1);
+        state.setStatusMessage("Préparation de la synchronisation…");
         states.put(key, state);
         return state;
     }
@@ -30,7 +32,7 @@ public class ThesaurusSyncProgressTracker {
     public void finish(String key) {
         ProgressState state = states.get(key);
         if (state != null) {
-            state.running = false;
+            state.setRunning(false);
         }
     }
 
@@ -38,19 +40,21 @@ public class ThesaurusSyncProgressTracker {
         states.remove(key);
     }
 
+    @Getter
+    @Setter
     public static final class ProgressState {
-        public volatile boolean running;
-        public volatile boolean progressVisible;
-        public volatile int progressValue;
-        public volatile int processed;
-        public volatile int total;
-        public volatile int skipped;
-        public volatile int propositions;
-        public volatile int candidates;
-        public volatile int errors;
-        public volatile String statusMessage = "";
-        public volatile boolean lastSyncFailed;
-        public volatile String lastSyncError;
-        public volatile boolean completionNotified;
+        private volatile boolean running;
+        private volatile boolean progressVisible;
+        private volatile int progressValue;
+        private volatile int processed;
+        private volatile int total;
+        private volatile int skipped;
+        private volatile int propositions;
+        private volatile int candidates;
+        private volatile int errors;
+        private volatile String statusMessage = "";
+        private volatile boolean lastSyncFailed;
+        private volatile String lastSyncError;
+        private volatile boolean completionNotified;
     }
 }

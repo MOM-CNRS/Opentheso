@@ -48,7 +48,7 @@ public class ThesaurusEditionCsvStructuredImportBean implements Serializable {
 
     private List<LanguageOption> allLangs = Collections.emptyList();
     private List<ProjectOption> projects = Collections.emptyList();
-    private NodeTree root;
+    private transient NodeTree root;
 
     public void init() {
         if (!toolboxAccessPolicy.canCreateOrImportThesaurus(userSession)) {
@@ -74,7 +74,7 @@ public class ThesaurusEditionCsvStructuredImportBean implements Serializable {
         }
         return allLangs.stream()
                 .map(LanguageOption::code)
-                .filter(code -> "fr".equalsIgnoreCase(code))
+                .filter("fr"::equalsIgnoreCase)
                 .findFirst()
                 .orElse(allLangs.get(0).code());
     }

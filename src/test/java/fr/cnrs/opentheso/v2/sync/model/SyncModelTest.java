@@ -57,7 +57,8 @@ class SyncModelTest {
         assertTrue(payload.prefLabels().isEmpty());
         assertTrue(payload.altLabels().isEmpty());
         assertTrue(payload.notes().isEmpty());
-        assertThrows(UnsupportedOperationException.class, () -> payload.prefLabels().put("fr", "x"));
+        var prefLabels = payload.prefLabels();
+        assertThrows(UnsupportedOperationException.class, () -> prefLabels.put("fr", "x"));
     }
 
     @Test

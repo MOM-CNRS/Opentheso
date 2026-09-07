@@ -185,7 +185,7 @@ class CandidatMutationServiceTest {
     }
 
     @Test
-    void remainingDelegates_forwardToPersistence() throws Exception {
+    void remainingDelegates_forwardToPersistence() {
         when(candidatMutationPersistence.deleteAlignment(3, "TH1")).thenReturn(true);
         when(candidatMutationPersistence.updateCandidateStatus("TH1", "C1", 2)).thenReturn(true);
         when(candidatMutationPersistence.hasVote("TH1", "C1", 7, "n1", fr.cnrs.opentheso.models.candidats.enumeration.VoteType.CANDIDAT)).thenReturn(true);
@@ -223,10 +223,10 @@ class CandidatMutationServiceTest {
         service.addSynonym("syn", "TH1", "fr", "T1");
         service.deleteSynonym("T1", "TH1", "fr", "syn");
         service.addBroaderRelation("C1", "TH1", "P1");
-        service.deleteBroaderRelation("C1", "TH1", "P1", 7);
+        service.deleteBroaderRelation("C1", "TH1", "P1");
         service.addRelatedTerm("C1", "TH1", "R1");
-        service.deleteRelatedTerm("C1", "TH1", "R1", 7);
-        service.updateAlignment(null, "C1", "TH1");
+        service.deleteRelatedTerm("C1", "TH1", "R1");
+        service.updateAlignment(null);
 
         verify(candidatMutationPersistence).updateCandidateDetails(any());
         verify(candidatMutationPersistence).addCollection("G1", "TH1", "C1");

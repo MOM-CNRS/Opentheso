@@ -22,6 +22,7 @@ import lombok.Getter;
 import lombok.RequiredArgsConstructor;
 import lombok.Setter;
 import org.apache.commons.lang3.StringUtils;
+import org.apache.commons.lang3.Strings;
 import org.primefaces.PrimeFaces;
 import org.springframework.beans.factory.ObjectProvider;
 
@@ -62,8 +63,8 @@ public class ConceptDeeplTranslateBean implements Serializable {
     private String conceptLabel;
     private boolean facetNoteMode;
 
-    private List<Language> sourceLangs = Collections.emptyList();
-    private List<Language> targetLangs = Collections.emptyList();
+    private transient List<Language> sourceLangs = Collections.emptyList();
+    private transient List<Language> targetLangs = Collections.emptyList();
 
     public boolean isDeeplAvailable() {
         if (!conceptWritePolicy.canMutateLexicalContent(userSession, isSelectedDeprecated())) {
@@ -102,7 +103,7 @@ public class ConceptDeeplTranslateBean implements Serializable {
         fromLang = note.lang();
         fromLangLabel = resolveLanguageLabel(fromLang);
 
-        if (StringUtils.equalsIgnoreCase(fromLang, normalizeIdLang(toLang))) {
+        if (Strings.CI.equals(fromLang, normalizeIdLang(toLang))) {
             toLang = "fr";
         }
         retrieveExistingTranslatedText();
@@ -135,7 +136,7 @@ public class ConceptDeeplTranslateBean implements Serializable {
         fromLang = note.lang();
         fromLangLabel = resolveLanguageLabel(fromLang);
 
-        if (StringUtils.equalsIgnoreCase(fromLang, normalizeIdLang(toLang))) {
+        if (Strings.CI.equals(fromLang, normalizeIdLang(toLang))) {
             toLang = "fr";
         }
         retrieveExistingTranslatedText();

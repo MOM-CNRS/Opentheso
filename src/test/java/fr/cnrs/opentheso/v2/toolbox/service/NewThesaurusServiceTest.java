@@ -70,28 +70,22 @@ class NewThesaurusServiceTest {
 
     @Test
     void create_validatesTitle() {
-        assertThrows(
-                InvalidToolboxDataException.class,
-                () -> service.create(new NewThesaurusRequest(" ", "", "fr", null), "admin")
-        );
+        var request = new NewThesaurusRequest(" ", "", "fr", null);
+        assertThrows(InvalidToolboxDataException.class, () -> service.create(request, "admin"));
     }
 
     @Test
     void create_validatesLanguage() {
-        assertThrows(
-                InvalidToolboxDataException.class,
-                () -> service.create(new NewThesaurusRequest("Titre", ""," ", null), "admin")
-        );
+        var request = new NewThesaurusRequest("Titre", "", " ", null);
+        assertThrows(InvalidToolboxDataException.class, () -> service.create(request, "admin"));
     }
 
     @Test
     void create_failsWhenThesaurusCannotBeCreated() {
         when(toolboxThesaurusPersistence.createThesaurusId()).thenReturn(null);
+        var request = new NewThesaurusRequest("Test", "", "fr", null);
 
-        assertThrows(
-                InvalidToolboxDataException.class,
-                () -> service.create(new NewThesaurusRequest("Test", "","fr", null), "admin")
-        );
+        assertThrows(InvalidToolboxDataException.class, () -> service.create(request, "admin"));
     }
 
     @Test

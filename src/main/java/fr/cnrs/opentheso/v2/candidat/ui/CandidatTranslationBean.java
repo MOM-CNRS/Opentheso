@@ -33,8 +33,13 @@ public class CandidatTranslationBean implements Serializable {
     private final transient UserSession userSession;
     private final transient V2LocaleBean localeBean;
 
-    private String langage, traduction, langageOld, traductionOld, newLangage, newTraduction;
-    private List<NodeLangTheso> nodeLanguesFiltered;
+    private String langage;
+    private String traduction;
+    private String langageOld;
+    private String traductionOld;
+    private String newLangage;
+    private String newTraduction;
+    private transient List<NodeLangTheso> nodeLanguesFiltered;
 
     public void init(TraductionDto traductionDto) {
         langage = traductionDto.getLangue();

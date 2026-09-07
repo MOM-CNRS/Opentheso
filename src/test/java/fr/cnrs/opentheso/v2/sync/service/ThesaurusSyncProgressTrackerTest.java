@@ -23,10 +23,10 @@ class ThesaurusSyncProgressTrackerTest {
     void start_storesRunningVisibleStateWithInitialMessage() {
         var state = tracker.start("job-1");
 
-        assertTrue(state.running);
-        assertTrue(state.progressVisible);
-        assertEquals(1, state.progressValue);
-        assertEquals("Préparation de la synchronisation…", state.statusMessage);
+        assertTrue(state.isRunning());
+        assertTrue(state.isProgressVisible());
+        assertEquals(1, state.getProgressValue());
+        assertEquals("Préparation de la synchronisation…", state.getStatusMessage());
         assertSame(state, tracker.get("job-1"));
     }
 
@@ -38,14 +38,14 @@ class ThesaurusSyncProgressTrackerTest {
     @Test
     void finish_marksNotRunningButKeepsProgress() {
         var state = tracker.start("job-1");
-        state.progressValue = 80;
-        state.statusMessage = "Lot 1 envoyé";
+        state.setProgressValue(80);
+        state.setStatusMessage("Lot 1 envoyé");
 
         tracker.finish("job-1");
 
-        assertFalse(state.running);
-        assertEquals(80, tracker.get("job-1").progressValue);
-        assertEquals("Lot 1 envoyé", tracker.get("job-1").statusMessage);
+        assertFalse(state.isRunning());
+        assertEquals(80, tracker.get("job-1").getProgressValue());
+        assertEquals("Lot 1 envoyé", tracker.get("job-1").getStatusMessage());
     }
 
     @Test
@@ -63,11 +63,11 @@ class ThesaurusSyncProgressTrackerTest {
 
     @Test
     void start_overwritesPreviousStateForSameKey() {
-        tracker.start("job-1").progressValue = 50;
+        tracker.start("job-1").setProgressValue(50);
         var second = tracker.start("job-1");
 
         assertNotNull(second);
-        assertEquals(1, second.progressValue);
-        assertTrue(second.running);
+        assertEquals(1, second.getProgressValue());
+        assertTrue(second.isRunning());
     }
 }

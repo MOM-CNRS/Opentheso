@@ -25,7 +25,6 @@ import java.util.ArrayList;
 import java.util.Collections;
 import java.util.Date;
 import java.util.List;
-import java.util.stream.Collectors;
 
 @Getter
 @Setter
@@ -52,11 +51,11 @@ public class StatisticsBean implements Serializable {
     private Date endDate;
     private Date lastModification;
 
-    private ConceptStatisticData selectedConcept;
-    private List<GenericStatistiqueData> collectionStatistics = Collections.emptyList();
-    private List<ConceptStatisticData> conceptStatistics = Collections.emptyList();
-    private List<fr.cnrs.opentheso.models.thesaurus.NodeLangTheso> languages = Collections.emptyList();
-    private List<DomaineDto> collections = Collections.emptyList();
+    private transient ConceptStatisticData selectedConcept;
+    private transient List<GenericStatistiqueData> collectionStatistics = Collections.emptyList();
+    private transient List<ConceptStatisticData> conceptStatistics = Collections.emptyList();
+    private transient List<fr.cnrs.opentheso.models.thesaurus.NodeLangTheso> languages = Collections.emptyList();
+    private transient List<DomaineDto> collections = Collections.emptyList();
 
     private String conceptsChartModel = emptyChartModel();
     private String synonymsChartModel = emptyChartModel();
@@ -192,7 +191,7 @@ public class StatisticsBean implements Serializable {
             return List.of();
         }
         if ("%".equals(query)) {
-            return collections.stream().map(DomaineDto::getName).collect(Collectors.toList());
+            return collections.stream().map(DomaineDto::getName).toList();
         }
         return collections.stream()
                 .filter(item -> item.getName() != null && item.getName().toLowerCase().startsWith(query.toLowerCase()))
@@ -322,6 +321,7 @@ public class StatisticsBean implements Serializable {
                 case 3 -> values.add(row.getTermesNonTraduitsNbr());
                 case 4 -> values.add(row.getNotesNbr());
                 default -> {
+                    // No chart series for unknown statistic models.
                 }
             }
             labels.add(row.getCollection());

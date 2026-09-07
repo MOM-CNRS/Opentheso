@@ -22,6 +22,7 @@ import lombok.Getter;
 import lombok.RequiredArgsConstructor;
 import lombok.Setter;
 import org.apache.commons.lang3.StringUtils;
+import org.apache.commons.lang3.Strings;
 
 import java.io.Serializable;
 import java.util.ArrayList;
@@ -174,7 +175,7 @@ public class ConceptRelationBlockEditorBean implements Serializable {
                                 thesaurusId, conceptId, targetId, userId, contributor)),
                 dirty);
         dirty = deleted.dirty();
-        hierarchicalDirty = hierarchicalDirty || deleted.applied();
+        hierarchicalDirty = deleted.applied();
         if (!deleted.ok()) {
             treeReload = hierarchicalDirty;
             return;
@@ -375,7 +376,7 @@ public class ConceptRelationBlockEditorBean implements Serializable {
         if (detail == null || detail.getSummary() == null) {
             return false;
         }
-        return StringUtils.equals(editingConceptId, detail.getSummary().getConceptId());
+        return Strings.CS.equals(editingConceptId, detail.getSummary().getConceptId());
     }
 
     private String resolveLang(ConceptDetail detail) {

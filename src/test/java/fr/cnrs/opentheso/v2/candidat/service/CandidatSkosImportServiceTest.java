@@ -17,7 +17,6 @@ import java.util.ArrayList;
 import java.util.concurrent.atomic.AtomicInteger;
 
 import static org.junit.jupiter.api.Assertions.assertEquals;
-import static org.mockito.ArgumentMatchers.eq;
 import static org.mockito.Mockito.verify;
 
 @ExtendWith(MockitoExtension.class)
@@ -60,7 +59,7 @@ class CandidatSkosImportServiceTest {
                 (current, total) -> progress.set(current * 100 / total)
         );
 
-        verify(conceptSkosRdfImportEngine).configureImport(eq("yyyy-MM-dd"), eq(7), eq(-1), eq("fr"), eq(preferences));
+        verify(conceptSkosRdfImportEngine).configureImport("yyyy-MM-dd", 7, -1, "fr", preferences);
         verify(conceptSkosRdfImportEngine).setImportDocument(document);
         verify(conceptSkosRdfImportEngine).importConcept(withLabel, "TH1", true);
         verify(conceptSkosRdfImportEngine).importConcept(withoutLabel, "TH1", true);

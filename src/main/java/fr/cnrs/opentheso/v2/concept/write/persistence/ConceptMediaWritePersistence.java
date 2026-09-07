@@ -84,8 +84,8 @@ public class ConceptMediaWritePersistence {
         }
         var existing = imagesRepository.findById(command.imageId()).orElse(null);
         if (existing == null
-                || !org.apache.commons.lang3.StringUtils.equals(existing.getIdConcept(), command.conceptId())
-                || !org.apache.commons.lang3.StringUtils.equals(existing.getIdThesaurus(), command.thesaurusId())) {
+                || !org.apache.commons.lang3.Strings.CS.equals(existing.getIdConcept(), command.conceptId())
+                || !org.apache.commons.lang3.Strings.CS.equals(existing.getIdThesaurus(), command.thesaurusId())) {
             return MutationResult.validationError(NO_IMAGE_SELECTED);
         }
         existing.setImageCreator(command.creator());

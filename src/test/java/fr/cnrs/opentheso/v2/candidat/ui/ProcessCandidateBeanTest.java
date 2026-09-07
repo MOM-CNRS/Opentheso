@@ -85,7 +85,7 @@ class ProcessCandidateBeanTest {
     }
 
     @Test
-    void insertCandidat_rejectsWhenNoSelection() throws Exception {
+    void insertCandidat_rejectsWhenNoSelection() {
         bean.insertCandidat();
 
         messageUtilsStatic.verify(() -> MessageUtils.showErrorMessage("Pas de candidat sélectionné"));
@@ -93,7 +93,7 @@ class ProcessCandidateBeanTest {
     }
 
     @Test
-    void insertCandidat_showsErrorWhenPersistenceFails() throws Exception {
+    void insertCandidat_showsErrorWhenPersistenceFails() {
         bean.reset(candidat());
         when(userSession.getCurrentUserId()).thenReturn(7);
         when(candidatProcessService.insertCandidate(any(), any(), eq(7))).thenReturn(true);
@@ -105,7 +105,7 @@ class ProcessCandidateBeanTest {
     }
 
     @Test
-    void insertCandidat_acceptsAndNotifiesAuthorWhenAlertEnabled() throws Exception {
+    void insertCandidat_acceptsAndNotifiesAuthorWhenAlertEnabled() {
         bean.reset(candidat());
         when(userSession.getCurrentUserId()).thenReturn(7);
         when(userSession.getCurrentUsername()).thenReturn("admin");
@@ -125,7 +125,7 @@ class ProcessCandidateBeanTest {
     }
 
     @Test
-    void insertCandidat_skipsMailWhenAlertDisabled() throws Exception {
+    void insertCandidat_skipsMailWhenAlertDisabled() {
         bean.reset(candidat());
         when(userSession.getCurrentUserId()).thenReturn(7);
         when(candidatProcessService.insertCandidate(any(), any(), eq(7))).thenReturn(false);
@@ -139,14 +139,14 @@ class ProcessCandidateBeanTest {
     }
 
     @Test
-    void rejectCandidat_rejectsWhenNoSelection() throws Exception {
+    void rejectCandidat_rejectsWhenNoSelection() {
         bean.rejectCandidat();
 
         messageUtilsStatic.verify(() -> MessageUtils.showErrorMessage("Pas de candidat sélectionné"));
     }
 
     @Test
-    void rejectCandidat_showsErrorWhenPersistenceFails() throws Exception {
+    void rejectCandidat_showsErrorWhenPersistenceFails() {
         bean.reset(candidat());
         when(userSession.getCurrentUserId()).thenReturn(7);
         when(candidatProcessService.rejectCandidate(any(), any(), eq(7))).thenReturn(true);
@@ -158,7 +158,7 @@ class ProcessCandidateBeanTest {
     }
 
     @Test
-    void rejectCandidat_rejectsAndRefreshesList() throws Exception {
+    void rejectCandidat_rejectsAndRefreshesList() {
         bean.reset(candidat());
         when(userSession.getCurrentUserId()).thenReturn(7);
         when(userSession.getCurrentUsername()).thenReturn("admin");
@@ -173,7 +173,7 @@ class ProcessCandidateBeanTest {
     }
 
     @Test
-    void insertListCandidat_rejectsWhenNoCandidatesSelected() throws Exception {
+    void insertListCandidat_rejectsWhenNoCandidatesSelected() {
         when(candidatBean.getSelectedCandidates()).thenReturn(List.of());
 
         bean.insertListCandidat();
@@ -183,7 +183,7 @@ class ProcessCandidateBeanTest {
     }
 
     @Test
-    void insertListCandidat_resolvesPreferencesAndAcceptsAllCandidates() throws Exception {
+    void insertListCandidat_resolvesPreferencesAndAcceptsAllCandidates() {
         var candidate1 = candidat();
         when(candidatBean.getSelectedCandidates()).thenReturn(List.of(candidate1));
         when(userSession.getCurrentUserId()).thenReturn(7);
@@ -204,7 +204,7 @@ class ProcessCandidateBeanTest {
     }
 
     @Test
-    void insertListCandidat_stopsOnFirstInsertionFailure() throws Exception {
+    void insertListCandidat_stopsOnFirstInsertionFailure() {
         var candidate1 = candidat();
         when(candidatBean.getSelectedCandidates()).thenReturn(List.of(candidate1));
         when(userSession.getCurrentUserId()).thenReturn(7);
@@ -223,7 +223,7 @@ class ProcessCandidateBeanTest {
     }
 
     @Test
-    void rejectCandidatList_rejectsWhenNoCandidatesSelected() throws Exception {
+    void rejectCandidatList_rejectsWhenNoCandidatesSelected() {
         when(candidatBean.getSelectedCandidates()).thenReturn(null);
 
         bean.rejectCandidatList();
@@ -232,7 +232,7 @@ class ProcessCandidateBeanTest {
     }
 
     @Test
-    void rejectCandidatList_rejectsAllSelectedCandidates() throws Exception {
+    void rejectCandidatList_rejectsAllSelectedCandidates() {
         var candidate1 = candidat();
         when(candidatBean.getSelectedCandidates()).thenReturn(List.of(candidate1));
         when(userSession.getCurrentUserId()).thenReturn(7);

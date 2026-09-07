@@ -38,10 +38,12 @@ public final class GpsTextParser {
             List<Gps> gpsList
     ) {
         List<String> tokens = splitOnWhitespace(group);
-        for (int i = 0; i + 1 < tokens.size(); i++) {
+        int i = 0;
+        while (i + 1 < tokens.size()) {
             Double latitude = parseDecimal(tokens.get(i));
             Double longitude = parseDecimal(tokens.get(i + 1));
             if (latitude == null || longitude == null) {
+                i++;
                 continue;
             }
             Gps gps = new Gps();
@@ -51,7 +53,7 @@ public final class GpsTextParser {
             gps.setLatitude(latitude);
             gps.setLongitude(longitude);
             gpsList.add(gps);
-            i++;
+            i += 2;
         }
     }
 

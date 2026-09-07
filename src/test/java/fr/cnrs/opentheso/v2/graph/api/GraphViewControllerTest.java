@@ -127,9 +127,10 @@ class GraphViewControllerTest {
         var view = new GraphViewSummary(3, "Vue", "desc");
         when(graphViewReadService.requireViewForUser(3, 7)).thenReturn(view);
         when(graphViewCommandService.addExportEntry(3, "TH1", "C1")).thenReturn(false);
+        var request = new AddGraphExportRequest("TH1", "C1");
 
         assertThrows(InvalidGraphDataException.class,
-                () -> controller.addExport("api-key", null, 3, new AddGraphExportRequest("TH1", "C1")));
+                () -> controller.addExport("api-key", null, 3, request));
     }
 
     @Test

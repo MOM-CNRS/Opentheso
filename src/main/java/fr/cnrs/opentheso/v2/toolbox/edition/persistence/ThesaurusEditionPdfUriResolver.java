@@ -6,6 +6,7 @@ import fr.cnrs.opentheso.repositories.ConceptRepository;
 import jakarta.faces.context.FacesContext;
 import lombok.RequiredArgsConstructor;
 import org.apache.commons.lang3.StringUtils;
+import org.apache.commons.lang3.Strings;
 import org.springframework.stereotype.Component;
 
 @Component
@@ -46,9 +47,9 @@ public class ThesaurusEditionPdfUriResolver {
     private String resolveBasePath(Preferences preferences) {
         if (FacesContext.getCurrentInstance() == null) {
             if (StringUtils.isNotEmpty(preferences.getOriginalUri())) {
-                return StringUtils.removeEnd(preferences.getOriginalUri(), "/");
+                return Strings.CS.removeEnd(preferences.getOriginalUri(), "/");
             }
-            return StringUtils.removeEnd(StringUtils.defaultString(preferences.getCheminSite()), "/");
+            return Strings.CS.removeEnd(StringUtils.defaultString(preferences.getCheminSite()), "/");
         }
         var externalContext = FacesContext.getCurrentInstance().getExternalContext();
         return externalContext.getRequestHeaderMap().get("origin")

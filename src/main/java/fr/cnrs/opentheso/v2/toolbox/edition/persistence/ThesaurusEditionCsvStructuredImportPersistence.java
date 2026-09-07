@@ -217,11 +217,11 @@ public class ThesaurusEditionCsvStructuredImportPersistence {
         if (row < matrix.length && column < matrix[row].length) {
             while (matrix[row][column] != null) {
                 if (matrix[row][column - 1] != null
-                        && matrix[row][column - 1].length() > 0
+                        && !matrix[row][column - 1].isEmpty()
                         && !matrix[row][column - 1].equals(element.getPreferredTerm())) {
                     break;
                 }
-                if (matrix[row][column].length() > 0) {
+                if (!matrix[row][column].isEmpty()) {
                     element.getChildrens().add(createTree(matrix, row, column));
                 }
                 row++;

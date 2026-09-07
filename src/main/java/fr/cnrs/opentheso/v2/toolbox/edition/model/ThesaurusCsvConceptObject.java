@@ -52,7 +52,7 @@ public class ThesaurusCsvConceptObject implements Serializable {
     private ArrayList<String> subGroups;
     private ArrayList<String> replacedBy;
 
-    private ArrayList<NodeImage> images;
+    private transient ArrayList<NodeImage> images;
     private ArrayList<String> externalResources;
     private ArrayList<String> memberOfFacets;
 

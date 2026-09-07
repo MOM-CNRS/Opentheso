@@ -8,7 +8,7 @@ import org.springframework.transaction.PlatformTransactionManager;
 import org.springframework.transaction.support.TransactionTemplate;
 
 import java.util.List;
-import java.util.function.BiConsumer;
+import java.util.function.ObjIntConsumer;
 import java.util.function.Supplier;
 
 /**
@@ -37,7 +37,7 @@ public class ThesaurusImportBatchSupport {
         newTemplate().executeWithoutResult(status -> work.run());
     }
 
-    public <T> int forEachBatched(List<T> items, BiConsumer<List<T>, Integer> batchConsumer) {
+    public <T> int forEachBatched(List<T> items, ObjIntConsumer<List<T>> batchConsumer) {
         if (items == null || items.isEmpty()) {
             return 0;
         }

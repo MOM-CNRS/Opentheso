@@ -15,6 +15,7 @@ import fr.cnrs.opentheso.v2.concept.alignment.model.AlignmentProposition;
 import lombok.RequiredArgsConstructor;
 import org.apache.commons.collections4.CollectionUtils;
 import org.apache.commons.lang3.StringUtils;
+import org.apache.commons.lang3.Strings;
 import org.springframework.stereotype.Component;
 
 import java.util.ArrayList;
@@ -47,7 +48,7 @@ public class AlignmentPropositionEnricher {
 
         List<String> allLangs = persistence.loadThesaurusLanguages(thesaurusId);
         List<String> otherLangs = new ArrayList<>(allLangs);
-        otherLangs.removeIf(lang -> StringUtils.equalsIgnoreCase(lang, currentLang));
+        otherLangs.removeIf(lang -> Strings.CI.equals(lang, currentLang));
 
         List<NodeTermTraduction> localTraductions = persistence.loadTranslations(thesaurusId, proposition.getConceptId());
         List<NodeNote> localNotes = persistence.loadNotes(proposition.getConceptId(), thesaurusId);
@@ -127,10 +128,10 @@ public class AlignmentPropositionEnricher {
             }
             boolean skip = false;
             for (NodeTermTraduction localTraduction : local) {
-                if (!StringUtils.equalsIgnoreCase(candidate.getIdLang(), localTraduction.getLang())) {
+                if (!Strings.CI.equals(candidate.getIdLang(), localTraduction.getLang())) {
                     continue;
                 }
-                if (StringUtils.equalsIgnoreCase(
+                if (Strings.CI.equals(
                         candidate.getGettedValue().trim(),
                         StringUtils.defaultString(localTraduction.getLexicalValue()).trim())) {
                     skip = true;
@@ -171,10 +172,10 @@ public class AlignmentPropositionEnricher {
                 continue;
             }
             if (StringUtils.isNotBlank(candidate.getIdLang())
-                    && !StringUtils.equalsIgnoreCase(candidate.getIdLang(), note.getLang())) {
+                    && !Strings.CI.equals(candidate.getIdLang(), note.getLang())) {
                 continue;
             }
-            if (StringUtils.equalsIgnoreCase(
+            if (Strings.CI.equals(
                     candidate.getGettedValue().trim(),
                     StringUtils.defaultString(note.getLexicalValue()).trim())) {
                 return true;
@@ -195,7 +196,7 @@ public class AlignmentPropositionEnricher {
                 continue;
             }
             boolean exists = localImages.stream().anyMatch(image ->
-                    StringUtils.equalsIgnoreCase(
+                    Strings.CI.equals(
                             StringUtils.defaultString(image.getUri()).trim(),
                             candidate.getGettedValue().trim()));
             if (!exists) {

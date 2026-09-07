@@ -1,5 +1,6 @@
 package fr.cnrs.opentheso.v2.sync.service;
 
+import fr.cnrs.opentheso.entites.Concept;
 import fr.cnrs.opentheso.entites.Preferences;
 import fr.cnrs.opentheso.repositories.ConceptRepository;
 import fr.cnrs.opentheso.v2.sync.model.SyncBatchRequest;
@@ -218,7 +219,7 @@ public class ThesaurusSyncSendService {
 
     private List<String> listAllConceptIds(String thesaurusId) {
         return conceptRepository.findAllByIdThesaurusAndStatusNot(thesaurusId, "CA").stream()
-                .map(concept -> concept.getIdConcept())
+                .map(Concept::getIdConcept)
                 .toList();
     }
 

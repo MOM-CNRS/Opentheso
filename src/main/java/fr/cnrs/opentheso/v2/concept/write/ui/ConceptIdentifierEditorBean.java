@@ -343,12 +343,12 @@ public class ConceptIdentifierEditorBean implements Serializable {
     }
 
     public void submitGenerateArkForConceptsWithoutArk() {
-        String thesaurusId = thesaurusContext.resolveThesaurusId();
-        if (!isArkBatchGenerationAvailable() || StringUtils.isBlank(thesaurusId)) {
+        String resolvedThesaurusId = thesaurusContext.resolveThesaurusId();
+        if (!isArkBatchGenerationAvailable() || StringUtils.isBlank(resolvedThesaurusId)) {
             MessageUtils.showErrorMessage(unauthorized());
             return;
         }
-        List<String> conceptIds = conceptRepository.findAllIdConceptsWithoutArk(thesaurusId);
+        List<String> conceptIds = conceptRepository.findAllIdConceptsWithoutArk(resolvedThesaurusId);
         if (CollectionUtils.isEmpty(conceptIds)) {
             MessageUtils.showInformationMessage(msg("v2.concept.arkNoneFlash", "Aucun concept sans ARK"));
             return;
@@ -414,12 +414,12 @@ public class ConceptIdentifierEditorBean implements Serializable {
     }
 
     public void submitGenerateHandleForConceptsWithoutHandle() {
-        String thesaurusId = thesaurusContext.resolveThesaurusId();
-        if (!isHandleGenerationAvailable() || StringUtils.isBlank(thesaurusId)) {
+        String resolvedThesaurusId = thesaurusContext.resolveThesaurusId();
+        if (!isHandleGenerationAvailable() || StringUtils.isBlank(resolvedThesaurusId)) {
             MessageUtils.showErrorMessage(unauthorized());
             return;
         }
-        List<String> conceptIds = conceptRepository.findAllIdsWithoutHandle(thesaurusId);
+        List<String> conceptIds = conceptRepository.findAllIdsWithoutHandle(resolvedThesaurusId);
         if (CollectionUtils.isEmpty(conceptIds)) {
             MessageUtils.showInformationMessage(msg("v2.concept.handleNoneFlash", "Aucun concept sans Handle"));
             return;
@@ -428,12 +428,12 @@ public class ConceptIdentifierEditorBean implements Serializable {
     }
 
     public void submitGenerateAllHandle() {
-        String thesaurusId = thesaurusContext.resolveThesaurusId();
-        if (!isHandleGenerationAvailable() || StringUtils.isBlank(thesaurusId)) {
+        String resolvedThesaurusId = thesaurusContext.resolveThesaurusId();
+        if (!isHandleGenerationAvailable() || StringUtils.isBlank(resolvedThesaurusId)) {
             MessageUtils.showErrorMessage(unauthorized());
             return;
         }
-        submitGenerateHandleForConcepts(loadAllConceptIds(thesaurusId));
+        submitGenerateHandleForConcepts(loadAllConceptIds(resolvedThesaurusId));
     }
 
     private void submitGenerateArkForConcepts(List<String> conceptIds, boolean allowed) {
@@ -458,8 +458,8 @@ public class ConceptIdentifierEditorBean implements Serializable {
         handleMutationResult(conceptIdentifierMutationService.generateHandle(command));
     }
 
-    private List<String> loadAllConceptIds(String thesaurusId) {
-        List<Concept> concepts = conceptRepository.findAllByIdThesaurusAndStatusNot(thesaurusId, "CA");
+    private List<String> loadAllConceptIds(String resolvedThesaurusId) {
+        List<Concept> concepts = conceptRepository.findAllByIdThesaurusAndStatusNot(resolvedThesaurusId, "CA");
         if (CollectionUtils.isEmpty(concepts)) {
             return Collections.emptyList();
         }
@@ -490,12 +490,12 @@ public class ConceptIdentifierEditorBean implements Serializable {
     }
 
     private void loadMissingArkIds() {
-        String thesaurusId = thesaurusContext.resolveThesaurusId();
-        if (!isArkBatchGenerationAvailable() || StringUtils.isBlank(thesaurusId)) {
+        String resolvedThesaurusId = thesaurusContext.resolveThesaurusId();
+        if (!isArkBatchGenerationAvailable() || StringUtils.isBlank(resolvedThesaurusId)) {
             missingArkIds = Collections.emptyList();
             return;
         }
-        List<String> ids = conceptRepository.findAllIdConceptsWithoutArk(thesaurusId);
+        List<String> ids = conceptRepository.findAllIdConceptsWithoutArk(resolvedThesaurusId);
         missingArkIds = ids == null ? Collections.emptyList() : List.copyOf(ids);
     }
 
@@ -510,12 +510,12 @@ public class ConceptIdentifierEditorBean implements Serializable {
     }
 
     private String resolveArkIdFromStore() {
-        String thesaurusId = thesaurusContext.resolveThesaurusId();
+        String resolvedThesaurusId = thesaurusContext.resolveThesaurusId();
         String conceptId = requireConceptId();
-        if (StringUtils.isAnyBlank(thesaurusId, conceptId)) {
+        if (StringUtils.isAnyBlank(resolvedThesaurusId, conceptId)) {
             return "";
         }
-        return conceptRepository.findByIdConceptAndIdThesaurus(conceptId, thesaurusId)
+        return conceptRepository.findByIdConceptAndIdThesaurus(conceptId, resolvedThesaurusId)
                 .map(concept -> StringUtils.defaultString(concept.getIdArk()))
                 .orElse("");
     }
@@ -555,13 +555,13 @@ public class ConceptIdentifierEditorBean implements Serializable {
     }
 
     private void loadBranchConceptIds() {
-        String thesaurusId = thesaurusContext.resolveThesaurusId();
+        String resolvedThesaurusId = thesaurusContext.resolveThesaurusId();
         String conceptId = requireConceptId();
-        if (StringUtils.isAnyBlank(thesaurusId, conceptId)) {
+        if (StringUtils.isAnyBlank(resolvedThesaurusId, conceptId)) {
             branchConceptIds = Collections.emptyList();
             return;
         }
-        List<String> ids = branchConceptSupport.collectBranchConceptIds(thesaurusId, conceptId);
+        List<String> ids = branchConceptSupport.collectBranchConceptIds(resolvedThesaurusId, conceptId);
         branchConceptIds = ids == null ? Collections.emptyList() : List.copyOf(ids);
     }
 
@@ -571,13 +571,13 @@ public class ConceptIdentifierEditorBean implements Serializable {
         if (branchConceptIds == null || branchConceptIds.isEmpty()) {
             return;
         }
-        String thesaurusId = thesaurusContext.resolveThesaurusId();
-        if (StringUtils.isBlank(thesaurusId)) {
+        String resolvedThesaurusId = thesaurusContext.resolveThesaurusId();
+        if (StringUtils.isBlank(resolvedThesaurusId)) {
             branchArkMissing = branchConceptIds.size();
             return;
         }
         List<Object[]> rows = conceptRepository.findArkFromIdConcepts(
-                Set.copyOf(branchConceptIds), thesaurusId);
+                Set.copyOf(branchConceptIds), resolvedThesaurusId);
         Set<String> withArk = new HashSet<>();
         if (rows != null) {
             for (Object[] row : rows) {
@@ -598,12 +598,12 @@ public class ConceptIdentifierEditorBean implements Serializable {
     private void loadAllConceptsForArk() {
         allArkMissing = 0;
         allArkExisting = 0;
-        String thesaurusId = thesaurusContext.resolveThesaurusId();
-        if (!isArkBatchGenerationAvailable() || StringUtils.isBlank(thesaurusId)) {
+        String resolvedThesaurusId = thesaurusContext.resolveThesaurusId();
+        if (!isArkBatchGenerationAvailable() || StringUtils.isBlank(resolvedThesaurusId)) {
             allConceptIds = Collections.emptyList();
             return;
         }
-        List<Concept> concepts = conceptRepository.findAllByIdThesaurusAndStatusNot(thesaurusId, "CA");
+        List<Concept> concepts = conceptRepository.findAllByIdThesaurusAndStatusNot(resolvedThesaurusId, "CA");
         if (CollectionUtils.isEmpty(concepts)) {
             allConceptIds = Collections.emptyList();
             return;
@@ -631,11 +631,11 @@ public class ConceptIdentifierEditorBean implements Serializable {
      * sans cache V2 — pour que {@code use_openark} soit toujours à jour.
      */
     private Preferences loadPreferences() {
-        String thesaurusId = thesaurusContext.resolveThesaurusId();
-        if (StringUtils.isBlank(thesaurusId)) {
+        String resolvedThesaurusId = thesaurusContext.resolveThesaurusId();
+        if (StringUtils.isBlank(resolvedThesaurusId)) {
             return null;
         }
-        return preferencesRepository.findByIdThesaurus(thesaurusId).orElse(null);
+        return preferencesRepository.findByIdThesaurus(resolvedThesaurusId).orElse(null);
     }
 
     private String requireConceptId() {

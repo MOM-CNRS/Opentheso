@@ -22,6 +22,7 @@ import lombok.Setter;
 import org.apache.commons.collections4.CollectionUtils;
 import org.apache.commons.lang3.ObjectUtils;
 import org.apache.commons.lang3.StringUtils;
+import org.apache.commons.lang3.Strings;
 
 import java.io.IOException;
 import java.io.Serializable;
@@ -73,22 +74,22 @@ public class CandidatAutoAlignmentEngine implements Serializable {
     private String thesaurusId;
     private String currentLang;
 
-    private AlignementSource selectedAlignementSource;
-    private NodeAlignment selectedNodeAlignment;
+    private transient AlignementSource selectedAlignementSource;
+    private transient NodeAlignment selectedNodeAlignment;
 
     private List<NodeTermTraduction> nodeTermTraductions = new ArrayList<>();
     private List<NodeNote> nodeNotes = new ArrayList<>();
-    private List<NodeImage> nodeImages = new ArrayList<>();
+    private transient List<NodeImage> nodeImages = new ArrayList<>();
     private List<String> thesaurusUsedLanguageWithoutCurrentLang = new ArrayList<>();
     private List<String> thesaurusUsedLanguage = new ArrayList<>();
     private List<SelectedResource> traductionsOfAlignment = new ArrayList<>();
     private List<SelectedResource> descriptionsOfAlignment = new ArrayList<>();
     private List<SelectedResource> imagesOfAlignment = new ArrayList<>();
-    private List<NodeAlignmentSmall> nodeAlignmentSmall = new ArrayList<>();
-    private List<NodeAlignment> existingAlignments = new ArrayList<>();
-    private List<NodeAlignment> listAlignValues = new ArrayList<>();
-    private List<AlignementSource> alignementSources = new ArrayList<>();
-    private List<Map.Entry<String, String>> alignmentTypes = new ArrayList<>();
+    private transient List<NodeAlignmentSmall> nodeAlignmentSmall = new ArrayList<>();
+    private transient List<NodeAlignment> existingAlignments = new ArrayList<>();
+    private transient List<NodeAlignment> listAlignValues = new ArrayList<>();
+    private transient List<AlignementSource> alignementSources = new ArrayList<>();
+    private transient List<Map.Entry<String, String>> alignmentTypes = new ArrayList<>();
 
     public void prepare(String conceptLabel, String conceptId, String thesaurusId, String lang) {
         this.thesaurusId = thesaurusId;
@@ -108,7 +109,7 @@ public class CandidatAutoAlignmentEngine implements Serializable {
     public void searchAlignments() {
         reset();
         selectedAlignementSource = CollectionUtils.emptyIfNull(alignementSources).stream()
-                .filter(source -> StringUtils.equalsIgnoreCase(source.getSource(), selectedAlignement))
+                .filter(source -> Strings.CI.equals(source.getSource(), selectedAlignement))
                 .findFirst()
                 .map(AlignementSource::new)
                 .orElse(null);
@@ -244,12 +245,11 @@ public class CandidatAutoAlignmentEngine implements Serializable {
             return;
         }
 
-        if ("GeoNames".equalsIgnoreCase(selectedNodeAlignment.getThesaurus_target())) {
-            if (!persistence.insertGpsCoordinates(
-                    conceptId, thesaurusId, selectedNodeAlignment.getLat(), selectedNodeAlignment.getLng())) {
-                MessageUtils.showErrorMessage("L'ajout des coordonnées GPS a échoué !");
-                return;
-            }
+        if ("GeoNames".equalsIgnoreCase(selectedNodeAlignment.getThesaurus_target())
+                && !persistence.insertGpsCoordinates(
+                conceptId, thesaurusId, selectedNodeAlignment.getLat(), selectedNodeAlignment.getLng())) {
+            MessageUtils.showErrorMessage("L'ajout des coordonnées GPS a échoué !");
+            return;
         }
 
         persistence.touchConcept(thesaurusId, conceptId, userId);

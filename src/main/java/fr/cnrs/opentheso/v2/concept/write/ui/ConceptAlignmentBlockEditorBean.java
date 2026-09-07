@@ -21,6 +21,7 @@ import lombok.Getter;
 import lombok.RequiredArgsConstructor;
 import lombok.Setter;
 import org.apache.commons.lang3.StringUtils;
+import org.apache.commons.lang3.Strings;
 
 import java.io.Serializable;
 import java.util.ArrayList;
@@ -286,7 +287,7 @@ public class ConceptAlignmentBlockEditorBean implements Serializable {
         if (detail == null || detail.getSummary() == null) {
             return false;
         }
-        return StringUtils.equals(editingConceptId, detail.getSummary().getConceptId());
+        return Strings.CS.equals(editingConceptId, detail.getSummary().getConceptId());
     }
 
     private static List<AlignmentBlockEditRow> copyRows(ConceptDetail detail) {

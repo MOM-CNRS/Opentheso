@@ -128,11 +128,15 @@ public class ConceptMaintenanceEditorBean implements Serializable {
             var preview = restoreThesaurusService.previewLoopRelations(thesaurusId, id);
             branchCount = preview.branchSize();
             loopCount = preview.loopCount();
-            run.succeed(repairedCount <= 0
-                    ? msg("v2.concept.loopNone", "Aucune relation en boucle à corriger")
-                    : repairedCount == 1
-                    ? msg("v2.concept.loopFixedOne", "1 relation en boucle supprimée")
-                    : msg("v2.concept.loopFixedMany", "{0} relations en boucle supprimées", repairedCount));
+            String message;
+            if (repairedCount <= 0) {
+                message = msg("v2.concept.loopNone", "Aucune relation en boucle à corriger");
+            } else if (repairedCount == 1) {
+                message = msg("v2.concept.loopFixedOne", "1 relation en boucle supprimée");
+            } else {
+                message = msg("v2.concept.loopFixedMany", "{0} relations en boucle supprimées", repairedCount);
+            }
+            run.succeed(message);
             return true;
         } catch (Exception e) {
             run.fail(StringUtils.defaultIfBlank(e.getMessage(), msg("v2.concept.loopFailed", "La réparation a échoué")));

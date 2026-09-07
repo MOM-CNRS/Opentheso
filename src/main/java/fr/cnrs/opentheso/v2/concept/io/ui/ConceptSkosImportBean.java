@@ -45,7 +45,7 @@ public class ConceptSkosImportBean implements Serializable {
     private int progressValue;
 
     private List<CandidatImportLanguage> allLangs;
-    private SKOSXmlDocument skosXmlDocument;
+    private transient SKOSXmlDocument skosXmlDocument;
 
     public void init() {
         thesaurusContext.syncFromViewParams();

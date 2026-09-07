@@ -35,7 +35,7 @@ public class EditLanguageEditor implements Serializable {
     }
 
     public String getValue() {
-        return displayLabel;
+        return getDisplayLabel();
     }
 
     public String getLabel() {

@@ -86,7 +86,7 @@ class ConceptAlignmentAutoSearchBeanTest {
         when(conceptAlignmentAdminService.listActiveSources("TH1")).thenReturn(List.of(wikidata()));
         when(conceptAlignmentAdminService.findActiveSource("TH1", 4)).thenReturn(wikidata());
         when(conceptAlignmentAdminService.searchPropositionsForConcept(
-                eq("TH1"), eq("fr"), eq("C1"), eq("Chat"), eq(wikidata())
+                "TH1", "fr", "C1", "Chat", wikidata()
         )).thenReturn(List.of(hit("http://www.wikidata.org/entity/Q1", "Cat")));
 
         bean.startSearching();
@@ -107,7 +107,7 @@ class ConceptAlignmentAutoSearchBeanTest {
         when(conceptAlignmentAdminService.listActiveSources("TH1")).thenReturn(List.of(wikidata()));
         when(conceptAlignmentAdminService.findActiveSource("TH1", 4)).thenReturn(wikidata());
         when(conceptAlignmentAdminService.searchPropositionsForConcept(
-                eq("TH1"), eq("fr"), eq("C1"), eq("Chat"), eq(wikidata())
+                "TH1", "fr", "C1", "Chat", wikidata()
         )).thenReturn(List.of());
 
         bean.startSearching();
@@ -136,7 +136,7 @@ class ConceptAlignmentAutoSearchBeanTest {
         when(conceptAlignmentAdminService.listActiveSources("TH1")).thenReturn(List.of(wikidata()));
         when(conceptAlignmentAdminService.findActiveSource("TH1", 4)).thenReturn(wikidata());
         when(conceptAlignmentAdminService.searchPropositionsForConcept(
-                eq("TH1"), eq("fr"), eq("C1"), eq("Chat"), eq(wikidata())
+                "TH1", "fr", "C1", "Chat", wikidata()
         )).thenReturn(List.of(hit("http://www.wikidata.org/entity/Q1", "Cat")));
 
         bean.startSearching();
@@ -166,7 +166,7 @@ class ConceptAlignmentAutoSearchBeanTest {
         when(conceptAlignmentAdminService.listActiveSources("TH1")).thenReturn(List.of(wikidata()));
         when(conceptAlignmentAdminService.findActiveSource("TH1", 4)).thenReturn(wikidata());
         when(conceptAlignmentAdminService.searchPropositionsForConcept(
-                eq("TH1"), eq("fr"), eq("C1"), eq("Chat"), eq(wikidata())
+                "TH1", "fr", "C1", "Chat", wikidata()
         )).thenReturn(List.of(hit("http://www.wikidata.org/entity/Q1", "Cat")));
         when(conceptAlignmentAdminService.acceptProposition(
                 eq("TH1"),

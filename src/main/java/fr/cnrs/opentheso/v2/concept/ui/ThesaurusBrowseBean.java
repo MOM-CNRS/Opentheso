@@ -45,6 +45,7 @@ import lombok.RequiredArgsConstructor;
 import lombok.Setter;
 import lombok.extern.slf4j.Slf4j;
 import org.apache.commons.lang3.StringUtils;
+import org.apache.commons.lang3.Strings;
 import org.primefaces.PrimeFaces;
 import org.primefaces.event.NodeExpandEvent;
 import org.primefaces.event.NodeSelectEvent;
@@ -91,10 +92,10 @@ public class ThesaurusBrowseBean implements Serializable, ConceptNavigationSuppo
     private String conceptIdFromUri;
     private String groupIdFromUri;
     private String facetIdFromUri;
-    private TreeNode<Object> conceptRoot;
-    private TreeNode<Object> collectionRoot;
-    private TreeNode<Object> arbreRoot;
-    private TreeNode<Object> selectedNode;
+    private transient TreeNode<Object> conceptRoot;
+    private transient TreeNode<Object> collectionRoot;
+    private transient TreeNode<Object> arbreRoot;
+    private transient TreeNode<Object> selectedNode;
     private ConceptDetail selectedConcept;
     private ConceptFullSnapshot selectedFullConcept;
     private List<ConceptCorpusLinkItem> displayedCorpusLinks = Collections.emptyList();
@@ -447,10 +448,10 @@ public class ThesaurusBrowseBean implements Serializable, ConceptNavigationSuppo
         updateTreeNodeLabelRecursive(conceptRoot, conceptId, newLabel);
         updateTreeNodeLabelRecursive(arbreRoot, conceptId, newLabel);
         updateTreeNodeLabelRecursive(collectionRoot, conceptId, newLabel);
-        if (selectedNode instanceof DefaultTreeNode defaultNode
+        if (selectedNode instanceof DefaultTreeNode<?> defaultNode
                 && defaultNode.getData() instanceof ConceptTreeNodeData data
                 && conceptId.equalsIgnoreCase(data.nodeId())) {
-            defaultNode.setData(new ConceptTreeNodeData(
+            replaceTreeNodeData(defaultNode, new ConceptTreeNodeData(
                     data.nodeId(),
                     newLabel,
                     data.notation(),
@@ -464,10 +465,10 @@ public class ThesaurusBrowseBean implements Serializable, ConceptNavigationSuppo
         if (node == null) {
             return;
         }
-        if (node instanceof DefaultTreeNode defaultNode
+        if (node instanceof DefaultTreeNode<?> defaultNode
                 && defaultNode.getData() instanceof ConceptTreeNodeData data
                 && conceptId.equalsIgnoreCase(data.nodeId())) {
-            defaultNode.setData(new ConceptTreeNodeData(
+            replaceTreeNodeData(defaultNode, new ConceptTreeNodeData(
                     data.nodeId(),
                     newLabel,
                     data.notation(),
@@ -519,7 +520,7 @@ public class ThesaurusBrowseBean implements Serializable, ConceptNavigationSuppo
     }
 
     private void updateSelectedTreeNodeNotation(String conceptId, String notation) {
-        if (!(selectedNode instanceof DefaultTreeNode defaultNode)) {
+        if (!(selectedNode instanceof DefaultTreeNode<?> defaultNode)) {
             return;
         }
         if (!(defaultNode.getData() instanceof ConceptTreeNodeData data)) {
@@ -528,13 +529,18 @@ public class ThesaurusBrowseBean implements Serializable, ConceptNavigationSuppo
         if (!conceptId.equalsIgnoreCase(data.nodeId())) {
             return;
         }
-        defaultNode.setData(new ConceptTreeNodeData(
+        replaceTreeNodeData(defaultNode, new ConceptTreeNodeData(
                 data.nodeId(),
                 data.label(),
                 notation,
                 data.nodeType(),
                 data.hasChildren()
         ));
+    }
+
+    @SuppressWarnings("unchecked")
+    private static void replaceTreeNodeData(DefaultTreeNode<?> node, ConceptTreeNodeData data) {
+        ((DefaultTreeNode<Object>) node).setData(data);
     }
 
     @Override
@@ -629,7 +635,7 @@ public class ThesaurusBrowseBean implements Serializable, ConceptNavigationSuppo
     }
 
     public boolean isPropositionAuthorized() {
-        return suggestionEnabled;
+        return isSuggestionEnabled();
     }
 
     /**
@@ -1051,12 +1057,12 @@ public class ThesaurusBrowseBean implements Serializable, ConceptNavigationSuppo
     }
 
     public boolean hasNotesOfType(String typeCode) {
-        return displayedNotes.stream().anyMatch(note -> StringUtils.equals(note.typeCode(), typeCode));
+        return displayedNotes.stream().anyMatch(note -> Strings.CS.equals(note.typeCode(), typeCode));
     }
 
     public List<ConceptNote> notesOfType(String typeCode) {
         return displayedNotes.stream()
-                .filter(note -> StringUtils.equals(note.typeCode(), typeCode))
+                .filter(note -> Strings.CS.equals(note.typeCode(), typeCode))
                 .toList();
     }
 
@@ -1065,7 +1071,7 @@ public class ThesaurusBrowseBean implements Serializable, ConceptNavigationSuppo
             return false;
         }
         return selectedFacet.notes().stream()
-                .anyMatch(note -> StringUtils.equals(note.typeCode(), typeCode));
+                .anyMatch(note -> Strings.CS.equals(note.typeCode(), typeCode));
     }
 
     public List<ConceptNote> facetNotesOfType(String typeCode) {
@@ -1073,7 +1079,7 @@ public class ThesaurusBrowseBean implements Serializable, ConceptNavigationSuppo
             return List.of();
         }
         return selectedFacet.notes().stream()
-                .filter(note -> StringUtils.equals(note.typeCode(), typeCode))
+                .filter(note -> Strings.CS.equals(note.typeCode(), typeCode))
                 .toList();
     }
 
@@ -1236,10 +1242,10 @@ public class ThesaurusBrowseBean implements Serializable, ConceptNavigationSuppo
             return (TreeNode<Object>) parent;
         }
         String targetId = pathIds.get(depth);
-        if (parent instanceof DefaultTreeNode defaultParent && !isRootNode(defaultParent)) {
-            ensureChildrenLoaded(defaultParent, mode);
+        if (parent instanceof DefaultTreeNode<?> defaultParent && !isRootNode(defaultParent)) {
+            ensureChildrenLoaded((DefaultTreeNode<Object>) defaultParent, mode);
             defaultParent.setExpanded(true);
-        } else if (parent instanceof DefaultTreeNode rootNode && isRootNode(rootNode)) {
+        } else if (parent instanceof DefaultTreeNode<?> rootNode && isRootNode(rootNode)) {
             rootNode.setExpanded(true);
         }
         for (Object childObject : parent.getChildren()) {
@@ -1270,7 +1276,7 @@ public class ThesaurusBrowseBean implements Serializable, ConceptNavigationSuppo
         }
     }
 
-    private boolean isRootNode(DefaultTreeNode<Object> node) {
+    private boolean isRootNode(TreeNode<?> node) {
         return node.getData() instanceof ConceptTreeNodeData data && "root".equals(data.nodeType());
     }
 
@@ -1343,7 +1349,7 @@ public class ThesaurusBrowseBean implements Serializable, ConceptNavigationSuppo
 
     private void addLazyPlaceholderIfNeeded(DefaultTreeNode<Object> node, ConceptTreeNodeData data) {
         if (data.hasChildren()) {
-            new DefaultTreeNode("default", ConceptTreeNodeData.dummy(), node);
+            new DefaultTreeNode<>("default", ConceptTreeNodeData.dummy(), node);
         }
     }
 

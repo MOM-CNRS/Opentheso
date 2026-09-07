@@ -5,6 +5,7 @@ import jakarta.faces.context.FacesContext;
 import jakarta.servlet.http.HttpServletRequest;
 import jakarta.servlet.http.HttpServletResponse;
 import jakarta.servlet.http.HttpSession;
+import org.springframework.beans.factory.annotation.Value;
 import org.springframework.stereotype.Service;
 
 import java.io.IOException;
@@ -16,13 +17,25 @@ import java.io.IOException;
 @Service
 public class SessionLifecycleService {
 
-    public static final String HOME_PATH = "/v2";
-    public static final String EXPIRE_PATH = "/v2/session/expire";
     public static final String PARAM_SESSION_EXPIRED = "sessionExpired";
     public static final String PARAM_LOGOUT = "logout";
 
+    private final String homePath;
+    private final String expirePath;
+
+    public SessionLifecycleService(
+            @Value("${opentheso.v2.home-path}") String homePath,
+            @Value("${opentheso.v2.expire-path}") String expirePath) {
+        this.homePath = homePath;
+        this.expirePath = expirePath;
+    }
+
+    public String homePath() {
+        return homePath;
+    }
+
     public String homeUrl(String contextPath) {
-        return normalizeContextPath(contextPath) + HOME_PATH;
+        return normalizeContextPath(contextPath) + homePath;
     }
 
     public String homeUrlWithSessionExpired(String contextPath) {
@@ -34,7 +47,7 @@ public class SessionLifecycleService {
     }
 
     public String expireUrl(String contextPath) {
-        return normalizeContextPath(contextPath) + EXPIRE_PATH;
+        return normalizeContextPath(contextPath) + expirePath;
     }
 
     public void invalidateQuietly(HttpSession session) {

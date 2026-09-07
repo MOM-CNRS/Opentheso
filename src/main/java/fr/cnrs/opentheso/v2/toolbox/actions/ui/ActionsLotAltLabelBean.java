@@ -113,7 +113,7 @@ public class ActionsLotAltLabelBean implements Serializable {
     public void onDeleteFileSelected() {
         try {
             byte[] bytes = readPart(deleteUpload);
-            if (bytes == null) {
+            if (bytes.length == 0) {
                 deletePanel.setGlobalError("Impossible de lire le fichier.");
                 return;
             }

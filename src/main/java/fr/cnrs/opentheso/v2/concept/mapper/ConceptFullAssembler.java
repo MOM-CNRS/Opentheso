@@ -282,6 +282,7 @@ public class ConceptFullAssembler {
                 case "scopeNote" -> scopeNotes.add(note);
                 case "historyNote" -> historyNotes.add(note);
                 default -> {
+                    // Unknown note type; ignore it rather than fail the snapshot.
                 }
             }
         }
@@ -386,6 +387,7 @@ public class ConceptFullAssembler {
                 case 4 -> related.add(item);
                 case 5 -> narrow.add(item);
                 default -> {
+                    // Unknown alignment type; ignore it rather than fail the snapshot.
                 }
             }
         }

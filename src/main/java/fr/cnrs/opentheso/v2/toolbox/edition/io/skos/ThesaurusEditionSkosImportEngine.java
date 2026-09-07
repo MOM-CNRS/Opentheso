@@ -52,7 +52,6 @@ import org.springframework.dao.DataIntegrityViolationException;
 import org.springframework.stereotype.Component;
 import org.springframework.transaction.annotation.Transactional;
 
-import java.sql.SQLException;
 import java.text.ParseException;
 import java.text.SimpleDateFormat;
 import java.util.ArrayList;
@@ -100,10 +99,15 @@ public class ThesaurusEditionSkosImportEngine {
 
 
     private final Set<String> idGroups = new HashSet<>();
-    private int idUser, idGroupUser;
+    private int idUser;
+    private int idGroupUser;
     private final Set<String> idLangsFound = new HashSet<>();
     private Set<String> hasTopConcceptList = new HashSet<>();
-    private String langueSource, formatDate, selectedIdentifier, prefixHandle, prefixDoi;
+    private String langueSource;
+    private String formatDate;
+    private String selectedIdentifier;
+    private String prefixHandle;
+    private String prefixDoi;
     private Preferences nodePreference;
     private StringBuilder message = new StringBuilder();
     private HashMap<String, String> memberHashMap = new HashMap<>();
@@ -133,7 +137,7 @@ public class ThesaurusEditionSkosImportEngine {
         this.importAsMaster = false;
     }
 
-    public String addThesaurus() throws SQLException {
+    public String addThesaurus() {
 
         SKOSResource conceptScheme = skosXmlDocument.getConceptScheme();
         if (conceptScheme == null) {
@@ -189,7 +193,7 @@ public class ThesaurusEditionSkosImportEngine {
                         .dataType(dcElement.getType())
                         .build());
             } catch (DataIntegrityViolationException e) {
-
+                // terme DC déjà présent : ignoré
             }
         }
 
@@ -437,7 +441,7 @@ public class ThesaurusEditionSkosImportEngine {
         preferencesRepository.save(nodePreference);
     }
 
-    private void setOriginalUri(String idTheso, String uri) {
+    private void setOriginalUri(String uri) {
 
         if (nodePreference == null) {
             return;
@@ -448,7 +452,7 @@ public class ThesaurusEditionSkosImportEngine {
         preferencesRepository.save(nodePreference);
     }
 
-    public void addGroups(ArrayList<SKOSResource> groupResource, String idTheso) {
+    public void addGroups(List<SKOSResource> groupResource, String idTheso) {
 
         for (SKOSResource group : groupResource) {
 
@@ -652,14 +656,16 @@ public class ThesaurusEditionSkosImportEngine {
         //-- 'url1##url2'
         String images = null;
         if (CollectionUtils.isNotEmpty(conceptResource.getNodeImages())) {
-            images = "";
+            StringBuilder imagesBuilder = new StringBuilder();
             for (NodeImage nodeImage : conceptResource.getNodeImages()) {
                 if (StringUtils.isNotEmpty(nodeImage.getUri())) {
-                    images = images + SEPERATEUR + nodeImage.getImageName() + SOUS_SEPERATEUR + nodeImage.getCopyRight() + SOUS_SEPERATEUR + nodeImage.getUri();
+                    imagesBuilder.append(SEPERATEUR).append(nodeImage.getImageName())
+                            .append(SOUS_SEPERATEUR).append(nodeImage.getCopyRight())
+                            .append(SOUS_SEPERATEUR).append(nodeImage.getUri());
                 }
             }
-            if (!images.isEmpty()) {
-                images = images.substring(SEPERATEUR.length());
+            if (!imagesBuilder.isEmpty()) {
+                images = imagesBuilder.substring(SEPERATEUR.length());
             }
         }
 
@@ -667,24 +673,24 @@ public class ThesaurusEditionSkosImportEngine {
         //-- 'author@concept_target@thesaurus_target@uri_target@alignement_id_type@internal_id_thesaurus@internal_id_concept'
         String alignements = null;
         if (CollectionUtils.isNotEmpty(conceptResource.getMatchList())) {
-            alignements = "";
+            StringBuilder alignementsBuilder = new StringBuilder();
             for (SKOSMatch match : conceptResource.getMatchList()) {
-                int id_type = -1;
-                id_type = switch (match.getProperty()) {
+                int idType = switch (match.getProperty()) {
                     case SKOSProperty.CLOSE_MATCH -> 2;
                     case SKOSProperty.EXACT_MATCH -> 1;
                     case SKOSProperty.BROAD_MATCH -> 3;
                     case SKOSProperty.NARROWER_MATCH -> 5;
                     case SKOSProperty.RELATED_MATCH -> 4;
-                    default -> id_type;
+                    default -> -1;
                 };
 
-                alignements = alignements + SEPERATEUR + idUser + SOUS_SEPERATEUR + "" + SOUS_SEPERATEUR + ""
-                        + SOUS_SEPERATEUR + match.getValue() + SOUS_SEPERATEUR + id_type
-                        + SOUS_SEPERATEUR + idTheso + SOUS_SEPERATEUR + idConcept;
+                alignementsBuilder.append(SEPERATEUR).append(idUser).append(SOUS_SEPERATEUR).append("")
+                        .append(SOUS_SEPERATEUR).append("")
+                        .append(SOUS_SEPERATEUR).append(match.getValue()).append(SOUS_SEPERATEUR).append(idType)
+                        .append(SOUS_SEPERATEUR).append(idTheso).append(SOUS_SEPERATEUR).append(idConcept);
             }
-            if (!alignements.isEmpty()) {
-                alignements = alignements.substring(SEPERATEUR.length());
+            if (!alignementsBuilder.isEmpty()) {
+                alignements = alignementsBuilder.substring(SEPERATEUR.length());
             }
         }
 
@@ -693,11 +699,11 @@ public class ThesaurusEditionSkosImportEngine {
         String nonPrefTerm = null;
         String prefTerm = null;
         if (CollectionUtils.isNotEmpty(conceptResource.getLabelsList())) {
-            nonPrefTerm = "";
-            prefTerm = "";
+            StringBuilder nonPrefTermBuilder = new StringBuilder();
+            StringBuilder prefTermBuilder = new StringBuilder();
             for (SKOSLabel label : conceptResource.getLabelsList()) {
                 if (label.getProperty() == SKOSProperty.PREF_LABEL) {
-                    prefTerm += SEPERATEUR + label.getLabel() + SOUS_SEPERATEUR + label.getLanguage();
+                    prefTermBuilder.append(SEPERATEUR).append(label.getLabel()).append(SOUS_SEPERATEUR).append(label.getLanguage());
                 } else {
                     String status = null;
                     boolean hiden = false;
@@ -707,21 +713,21 @@ public class ThesaurusEditionSkosImportEngine {
                         status = "Hidden";
                         hiden = true;
                     }
-                    nonPrefTerm += SEPERATEUR + idConcept
-                            + SOUS_SEPERATEUR + label.getLabel()
-                            + SOUS_SEPERATEUR + label.getLanguage()
-                            + SOUS_SEPERATEUR + idTheso
-                            + SOUS_SEPERATEUR + idUser
-                            + SOUS_SEPERATEUR + status
-                            + SOUS_SEPERATEUR + hiden;
+                    nonPrefTermBuilder.append(SEPERATEUR).append(idConcept)
+                            .append(SOUS_SEPERATEUR).append(label.getLabel())
+                            .append(SOUS_SEPERATEUR).append(label.getLanguage())
+                            .append(SOUS_SEPERATEUR).append(idTheso)
+                            .append(SOUS_SEPERATEUR).append(idUser)
+                            .append(SOUS_SEPERATEUR).append(status)
+                            .append(SOUS_SEPERATEUR).append(hiden);
                 }
                 appendNewLang(label.getLanguage());
             }
-            if (!nonPrefTerm.isEmpty()) {
-                nonPrefTerm = nonPrefTerm.substring(SEPERATEUR.length());
+            if (!nonPrefTermBuilder.isEmpty()) {
+                nonPrefTerm = nonPrefTermBuilder.substring(SEPERATEUR.length());
             }
-            if (!prefTerm.isEmpty()) {
-                prefTerm = prefTerm.substring(SEPERATEUR.length());
+            if (!prefTermBuilder.isEmpty()) {
+                prefTerm = prefTermBuilder.substring(SEPERATEUR.length());
             }
         }
 
@@ -730,7 +736,7 @@ public class ThesaurusEditionSkosImportEngine {
         String relations = null;
         boolean isSchemeTopConcept = hasTopConcceptList.contains(conceptResource.getUri());
         if (CollectionUtils.isNotEmpty(conceptResource.getRelationsList())) {
-            relations = "";
+            StringBuilder relationsBuilder = new StringBuilder();
             for (SKOSRelation relation : conceptResource.getRelationsList()) {
                 String role = switch (relation.getProperty()) {
                     case SKOSProperty.NARROWER -> "NT";
@@ -760,11 +766,12 @@ public class ThesaurusEditionSkosImportEngine {
                 };
 
                 if (!role.isEmpty()) {
-                    relations = relations + SEPERATEUR + idConcept + SOUS_SEPERATEUR + role + SOUS_SEPERATEUR + getOriginalId(relation.getTargetUri());
+                    relationsBuilder.append(SEPERATEUR).append(idConcept).append(SOUS_SEPERATEUR).append(role)
+                            .append(SOUS_SEPERATEUR).append(getOriginalId(relation.getTargetUri()));
                 }
             }
-            if (!relations.isEmpty()) {
-                relations = relations.substring(SEPERATEUR.length());
+            if (!relationsBuilder.isEmpty()) {
+                relations = relationsBuilder.substring(SEPERATEUR.length());
             }
         }
         if (isSchemeTopConcept) {
@@ -778,17 +785,17 @@ public class ThesaurusEditionSkosImportEngine {
         //-- 'value@typeCode@lang@id_term'
         String notes = null;
         if (CollectionUtils.isNotEmpty(conceptResource.getDocumentationsList())) {
-            notes = "";
+            StringBuilder notesBuilder = new StringBuilder();
             for (SKOSDocumentation documentation : conceptResource.getDocumentationsList()) {
                 String noteTypeCode = toNoteTypeCode(documentation.getProperty());
 
-                notes += SEPERATEUR + documentation.getText()
-                        + SOUS_SEPERATEUR + noteTypeCode
-                        + SOUS_SEPERATEUR + documentation.getLanguage()
-                        + SOUS_SEPERATEUR + idConcept;
+                notesBuilder.append(SEPERATEUR).append(documentation.getText())
+                        .append(SOUS_SEPERATEUR).append(noteTypeCode)
+                        .append(SOUS_SEPERATEUR).append(documentation.getLanguage())
+                        .append(SOUS_SEPERATEUR).append(idConcept);
             }
-            if (notes.length() > 0) {
-                notes = notes.substring(SEPERATEUR.length());
+            if (!notesBuilder.isEmpty()) {
+                notes = notesBuilder.substring(SEPERATEUR.length());
             }
         }
 
@@ -805,21 +812,19 @@ public class ThesaurusEditionSkosImportEngine {
             if (uri == null || uri.isEmpty()) {
                 uri = conceptResource.getUri();
             }
-            setOriginalUri(idTheso, uri);
+            setOriginalUri(uri);
         }
 
         String isReplacedBy = null;
         if (CollectionUtils.isNotEmpty(conceptResource.getsKOSReplaces())) {
+            StringBuilder isReplacedByBuilder = new StringBuilder();
             for (SKOSReplaces replace : conceptResource.getsKOSReplaces()) {
                 if (SKOSProperty.IS_REPLACED_BY == replace.getProperty()) {
-                    if (isReplacedBy == null) {
-                        isReplacedBy = "";
-                    }
-                    isReplacedBy = isReplacedBy + SEPERATEUR + getOriginalId(replace.getTargetUri());
+                    isReplacedByBuilder.append(SEPERATEUR).append(getOriginalId(replace.getTargetUri()));
                 }
             }
-            if (isReplacedBy != null && isReplacedBy.length() > 0) {
-                isReplacedBy = isReplacedBy.substring(SEPERATEUR.length());
+            if (!isReplacedByBuilder.isEmpty()) {
+                isReplacedBy = isReplacedByBuilder.substring(SEPERATEUR.length());
             }
         }
 
@@ -845,36 +850,35 @@ public class ThesaurusEditionSkosImportEngine {
             Logger.getLogger(ThesaurusEditionSkosImportEngine.class.getName()).log(Level.SEVERE, null, ex);
         }
 
-        String dcterms = null;
+        StringBuilder dctermsBuilder = new StringBuilder();
         for (SKOSAgent agent : conceptResource.getAgentList()) {
             switch (agent.getProperty()) {
                 case SKOSProperty.CREATOR:
-                    if (StringUtils.isEmpty(dcterms)) {
-                        dcterms = "creator@@" + agent.getAgent() + "@@fr";//agent.getLang;
-                    } else {
-                        dcterms = dcterms + "##" + "creator@@" + agent.getAgent() + "@@fr";//agent.getLang;                    
+                    if (!dctermsBuilder.isEmpty()) {
+                        dctermsBuilder.append("##");
                     }
+                    dctermsBuilder.append("creator@@").append(agent.getAgent()).append("@@fr");
                     break;
                 case SKOSProperty.CONTRIBUTOR:
-                    if (StringUtils.isEmpty(dcterms)) {
-                        dcterms = "contributor@@" + agent.getAgent() + "@@fr";//agent.getLang;
-                    } else {
-                        dcterms = dcterms + "##" + "contributor@@" + agent.getAgent() + "@@fr";//agent.getLang;                    
+                    if (!dctermsBuilder.isEmpty()) {
+                        dctermsBuilder.append("##");
                     }
+                    dctermsBuilder.append("contributor@@").append(agent.getAgent()).append("@@fr");
                     break;
                 default:
                     break;
             }
         }
+        String dcterms = dctermsBuilder.isEmpty() ? null : dctermsBuilder.toString();
 
         String gps = null;
         if (CollectionUtils.isNotEmpty(conceptResource.getGpsCoordinates())) {
-            gps = "";
+            StringBuilder gpsBuilder = new StringBuilder();
             for (SKOSGPSCoordinates gpsValue : conceptResource.getGpsCoordinates()) {
-                gps += SEPERATEUR + gpsValue.getLat() + SOUS_SEPERATEUR + gpsValue.getLon();
+                gpsBuilder.append(SEPERATEUR).append(gpsValue.getLat()).append(SOUS_SEPERATEUR).append(gpsValue.getLon());
             }
 
-            gps = gps.substring(SEPERATEUR.length());
+            gps = gpsBuilder.substring(SEPERATEUR.length());
         }
 
         conceptRepository.addNewConcept(
@@ -920,7 +924,7 @@ public class ThesaurusEditionSkosImportEngine {
         }
     }
 
-    public void addFoafImages(ArrayList<SKOSResource> foafImages, String idTheso) {
+    public void addFoafImages(List<SKOSResource> foafImages, String idTheso) {
 
         for (SKOSResource sKOSResource : foafImages) {
             if (sKOSResource.getFoafImage() == null) {
@@ -940,7 +944,7 @@ public class ThesaurusEditionSkosImportEngine {
         }
     }
 
-    public void addFacetsV2(ArrayList<SKOSResource> facetResources, String idTheso) {
+    public void addFacetsV2(List<SKOSResource> facetResources, String idTheso) {
 
         for (SKOSResource facetSKOSResource : facetResources) {
 
@@ -964,24 +968,22 @@ public class ThesaurusEditionSkosImportEngine {
                 continue;
             }
 
-            String labels = "";
+            StringBuilder labels = new StringBuilder();
             for (SKOSLabel sKOSLabel : facetSKOSResource.getLabelsList()) {
-                labels = labels + SEPERATEUR + sKOSLabel.getLabel() + SOUS_SEPERATEUR + sKOSLabel.getLanguage();
+                labels.append(SEPERATEUR).append(sKOSLabel.getLabel()).append(SOUS_SEPERATEUR).append(sKOSLabel.getLanguage());
             }
-            if (!labels.isEmpty()) {
-                labels = labels.substring(2);
-            }
+            String labelsValue = labels.isEmpty() ? "" : labels.substring(2);
 
             String membres = null;
             if (CollectionUtils.isNotEmpty(facetSKOSResource.getRelationsList())) {
-                membres = "";
+                StringBuilder membresBuilder = new StringBuilder();
                 for (SKOSRelation member : facetSKOSResource.getRelationsList()) {
                     if (member.getProperty() == SKOSProperty.MEMBER) {
-                        membres = membres + SEPERATEUR + getOriginalId(member.getTargetUri());
+                        membresBuilder.append(SEPERATEUR).append(getOriginalId(member.getTargetUri()));
                     }
                 }
-                if (!membres.isEmpty()) {
-                    membres = membres.substring(2);
+                if (!membresBuilder.isEmpty()) {
+                    membres = membresBuilder.substring(2);
                 }
             }
 
@@ -989,21 +991,21 @@ public class ThesaurusEditionSkosImportEngine {
             //-- 'value@typeCode@lang@id_term'
             String notes = null;
             if (CollectionUtils.isNotEmpty(facetSKOSResource.getDocumentationsList())) {
-                notes = "";
+                StringBuilder notesBuilder = new StringBuilder();
                 for (SKOSDocumentation documentation : facetSKOSResource.getDocumentationsList()) {
                     String noteTypeCode = toNoteTypeCode(documentation.getProperty());
 
-                    notes += SEPERATEUR + documentation.getText()
-                            + SOUS_SEPERATEUR + noteTypeCode
-                            + SOUS_SEPERATEUR + documentation.getLanguage()
-                            + SOUS_SEPERATEUR + idFacet;
+                    notesBuilder.append(SEPERATEUR).append(documentation.getText())
+                            .append(SOUS_SEPERATEUR).append(noteTypeCode)
+                            .append(SOUS_SEPERATEUR).append(documentation.getLanguage())
+                            .append(SOUS_SEPERATEUR).append(idFacet);
                 }
-                if (notes.length() > 0) {
-                    notes = notes.substring(SEPERATEUR.length());
+                if (!notesBuilder.isEmpty()) {
+                    notes = notesBuilder.substring(SEPERATEUR.length());
                 }
             }
 
-            String safeLabels = StringUtils.isNotEmpty(labels) ? labels.replace("'", "''") : null;
+            String safeLabels = StringUtils.isNotEmpty(labelsValue) ? labelsValue.replace("'", "''") : null;
             String safeNotes  = StringUtils.isNotEmpty(notes) ? notes.replace("'", "''") : null;
             conceptFacetRepository.addFacet(idFacet, idUser, idTheso, idConceptParent, safeLabels, membres, safeNotes);
         }
@@ -1031,25 +1033,21 @@ public class ThesaurusEditionSkosImportEngine {
             }
             pass = true;
         }
-        if (!pass) {
-            if (uri.contains("idg=")) {
-                if (uri.contains("&")) {
-                    uri = uri.substring(uri.indexOf("idg=") + 4, uri.indexOf("&"));
-                } else {
-                    uri = uri.substring(uri.indexOf("idg=") + 4);
-                }
-                pass = true;
+        if (!pass && uri.contains("idg=")) {
+            if (uri.contains("&")) {
+                uri = uri.substring(uri.indexOf("idg=") + 4, uri.indexOf("&"));
+            } else {
+                uri = uri.substring(uri.indexOf("idg=") + 4);
             }
+            pass = true;
         }
-        if (!pass) {
-            if (uri.contains("idf=")) {
-                if (uri.contains("&")) {
-                    uri = uri.substring(uri.indexOf("idf=") + 4, uri.indexOf("&"));
-                } else {
-                    uri = uri.substring(uri.indexOf("idf=") + 4);
-                }
-                pass = true;
+        if (!pass && uri.contains("idf=")) {
+            if (uri.contains("&")) {
+                uri = uri.substring(uri.indexOf("idf=") + 4, uri.indexOf("&"));
+            } else {
+                uri = uri.substring(uri.indexOf("idf=") + 4);
             }
+            pass = true;
         }
         if (!pass) {
             if (uri.contains("#")) {
@@ -1070,7 +1068,7 @@ public class ThesaurusEditionSkosImportEngine {
 
         originalId = skosXmlDocument.getEquivalenceUriArkHandle().get(uri);
         if (originalId == null) {
-            if (message.length() != 0) {
+            if (!message.isEmpty()) {
                 message.append(System.lineSeparator());
             }
             message.append("Identifiant (DC:Identifier) non détecté pour l'URL:");

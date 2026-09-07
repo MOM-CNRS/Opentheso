@@ -23,9 +23,7 @@ public class SuperAdminAccessPolicy {
         }
     }
 
-    /** @deprecated préférer {@link #requireSuperAdmin(Integer)} */
-    @Deprecated
-    public static void requireSuperAdmin(boolean superAdmin) {
+    public static void requireResolvedSuperAdmin(boolean superAdmin) {
         if (!superAdmin) {
             throw new AdminAccessDeniedException();
         }

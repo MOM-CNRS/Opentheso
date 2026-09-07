@@ -1,5 +1,6 @@
 package fr.cnrs.opentheso.v2.publicapi.reconciliation.api;
 
+import com.fasterxml.jackson.core.JsonProcessingException;
 import fr.cnrs.opentheso.v2.publicapi.reconciliation.service.ReconciliationPublicService;
 import io.swagger.v3.oas.annotations.Operation;
 import io.swagger.v3.oas.annotations.tags.Tag;
@@ -41,7 +42,7 @@ public class ReconciliationPublicController {
             @PathVariable String lang,
             @RequestParam String queries,
             HttpServletRequest request
-    ) throws Exception {
+    ) throws JsonProcessingException {
         return reconciliationPublicService.reconcile(baseUrl(request), thesaurusId, lang, queries);
     }
 
@@ -51,7 +52,7 @@ public class ReconciliationPublicController {
             @PathVariable String thesaurusId,
             @PathVariable String lang,
             @RequestParam String extend
-    ) throws Exception {
+    ) throws JsonProcessingException {
         return reconciliationPublicService.extend(thesaurusId, lang, extend);
     }
 

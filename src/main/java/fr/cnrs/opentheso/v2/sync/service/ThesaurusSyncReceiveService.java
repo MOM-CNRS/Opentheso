@@ -179,7 +179,7 @@ public class ThesaurusSyncReceiveService {
             String workLang,
             SyncConceptPayload incoming,
             User user
-    ) throws Exception {
+    ) {
         String prefLabel = resolveConceptLabel(incoming, workLang, null);
         if (StringUtils.isBlank(prefLabel)) {
             return SyncConceptResult.error(incoming.identifier(), "Impossible de créer un candidat sans libellé préféré");

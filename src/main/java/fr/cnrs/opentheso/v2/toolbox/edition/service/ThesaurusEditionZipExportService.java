@@ -44,7 +44,7 @@ public class ThesaurusEditionZipExportService {
             char delimiter,
             List<String> selectedLanguageCodes,
             boolean clearHtml
-    ) throws Exception {
+    ) throws IOException {
         return exportEachGroupAsCsvZip(
                 thesaurusId, thesaurusTitle, delimiter, selectedLanguageCodes, clearHtml, List.of()
         );
@@ -57,16 +57,22 @@ public class ThesaurusEditionZipExportService {
             List<String> selectedLanguageCodes,
             boolean clearHtml,
             List<String> restrictGroupIds
-    ) throws Exception {
+    ) throws IOException {
         return exportZip(
                 thesaurusId,
                 thesaurusTitle,
                 ".csv",
                 restrictGroupIds,
                 (groupId, groupLabel) -> {
-                    var document = thesaurusSkosDocumentBuilder.buildDocumentByGroup(thesaurusId, groupId, clearHtml);
-                    var languages = resolveLanguages(thesaurusId, selectedLanguageCodes);
-                    return thesaurusCsvWriter.writeCsv(document, languages, delimiter);
+                    try {
+                        var document = thesaurusSkosDocumentBuilder.buildDocumentByGroup(thesaurusId, groupId, clearHtml);
+                        var languages = resolveLanguages(thesaurusId, selectedLanguageCodes);
+                        return thesaurusCsvWriter.writeCsv(document, languages, delimiter);
+                    } catch (IOException e) {
+                        throw e;
+                    } catch (Exception e) {
+                        throw new IllegalStateException(e);
+                    }
                 }
         );
     }
@@ -76,7 +82,7 @@ public class ThesaurusEditionZipExportService {
             String thesaurusTitle,
             String formatCode,
             boolean clearHtml
-    ) throws Exception {
+    ) throws IOException {
         return exportEachGroupAsSkosZip(thesaurusId, thesaurusTitle, formatCode, clearHtml, List.of());
     }
 
@@ -86,7 +92,7 @@ public class ThesaurusEditionZipExportService {
             String formatCode,
             boolean clearHtml,
             List<String> restrictGroupIds
-    ) throws Exception {
+    ) throws IOException {
         var resolved = SkosRdfFormatSupport.resolveExportFormat(formatCode);
         return exportZip(
                 thesaurusId,
@@ -94,12 +100,18 @@ public class ThesaurusEditionZipExportService {
                 resolved.extension(),
                 restrictGroupIds,
                 (groupId, groupLabel) -> {
-                    var document = thesaurusSkosDocumentBuilder.buildDocumentByGroup(thesaurusId, groupId, clearHtml);
-                    try (var output = new ByteArrayOutputStream()) {
-                        var serializer = new ThesaurusSkosSerializer(document);
-                        Rio.write(serializer.getModel(), output, resolved.rdfFormat());
-                        serializer.closeCache();
-                        return output.toByteArray();
+                    try {
+                        var document = thesaurusSkosDocumentBuilder.buildDocumentByGroup(thesaurusId, groupId, clearHtml);
+                        try (var output = new ByteArrayOutputStream()) {
+                            var serializer = new ThesaurusSkosSerializer(document);
+                            Rio.write(serializer.getModel(), output, resolved.rdfFormat());
+                            serializer.closeCache();
+                            return output.toByteArray();
+                        }
+                    } catch (IOException e) {
+                        throw e;
+                    } catch (Exception e) {
+                        throw new IllegalStateException(e);
                     }
                 }
         );
@@ -111,7 +123,7 @@ public class ThesaurusEditionZipExportService {
             String extension,
             List<String> restrictGroupIds,
             GroupExporter exporter
-    ) throws Exception {
+    ) throws IOException {
         List<NodeGroup> groups = toolboxExportPersistence.loadConceptGroups(thesaurusId);
         if (CollectionUtils.isNotEmpty(restrictGroupIds)) {
             var wanted = restrictGroupIds.stream()
@@ -200,6 +212,6 @@ public class ThesaurusEditionZipExportService {
 
     @FunctionalInterface
     private interface GroupExporter {
-        byte[] export(String groupId, String groupLabel) throws Exception;
+        byte[] export(String groupId, String groupLabel) throws IOException;
     }
 }

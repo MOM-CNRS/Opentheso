@@ -24,9 +24,6 @@ import static org.mockito.Mockito.mock;
  */
 class ThesaurusEditionSampleFilesValidationTest {
 
-    @TempDir
-    Path tempDir;
-
     @Test
     void sampleFlatCsv_parsesSuccessfully() throws IOException {
         byte[] content = readSample("samples/sampleCSV.csv");

@@ -142,18 +142,18 @@ public class ThesaurusSyncBean implements Serializable {
      */
     public void onProgressPoll() {
         ProgressState state = currentState();
-        if (state == null || state.running || state.completionNotified) {
+        if (state == null || state.isRunning() || state.isCompletionNotified()) {
             return;
         }
-        state.completionNotified = true;
-        if (state.lastSyncFailed) {
-            MessageUtils.showErrorMessage(StringUtils.defaultIfBlank(state.lastSyncError, "Erreur de synchronisation"));
+        state.setCompletionNotified(true);
+        if (state.isLastSyncFailed()) {
+            MessageUtils.showErrorMessage(StringUtils.defaultIfBlank(state.getLastSyncError(), "Erreur de synchronisation"));
         } else {
             MessageUtils.showInformationMessage(
-                    "Sync terminée — propositions: " + state.propositions
-                            + ", candidats: " + state.candidates
-                            + ", ignorés: " + state.skipped
-                            + ", erreurs: " + state.errors);
+                    "Sync terminée — propositions: " + state.getPropositions()
+                            + ", candidats: " + state.getCandidates()
+                            + ", ignorés: " + state.getSkipped()
+                            + ", erreurs: " + state.getErrors());
         }
         PrimeFaces.current().ajax().update("messageIndex");
     }
@@ -171,52 +171,52 @@ public class ThesaurusSyncBean implements Serializable {
 
     public boolean isRunning() {
         ProgressState state = currentState();
-        return state != null && state.running;
+        return state != null && state.isRunning();
     }
 
     public boolean isProgressVisible() {
         ProgressState state = currentState();
-        return state != null && state.progressVisible;
+        return state != null && state.isProgressVisible();
     }
 
     public int getProgressValue() {
         ProgressState state = currentState();
-        return state == null ? 0 : state.progressValue;
+        return state == null ? 0 : state.getProgressValue();
     }
 
     public int getProcessed() {
         ProgressState state = currentState();
-        return state == null ? 0 : state.processed;
+        return state == null ? 0 : state.getProcessed();
     }
 
     public int getTotal() {
         ProgressState state = currentState();
-        return state == null ? 0 : state.total;
+        return state == null ? 0 : state.getTotal();
     }
 
     public int getSkipped() {
         ProgressState state = currentState();
-        return state == null ? 0 : state.skipped;
+        return state == null ? 0 : state.getSkipped();
     }
 
     public int getPropositions() {
         ProgressState state = currentState();
-        return state == null ? 0 : state.propositions;
+        return state == null ? 0 : state.getPropositions();
     }
 
     public int getCandidates() {
         ProgressState state = currentState();
-        return state == null ? 0 : state.candidates;
+        return state == null ? 0 : state.getCandidates();
     }
 
     public int getErrors() {
         ProgressState state = currentState();
-        return state == null ? 0 : state.errors;
+        return state == null ? 0 : state.getErrors();
     }
 
     public String getStatusMessage() {
         ProgressState state = currentState();
-        return state == null ? "" : StringUtils.defaultString(state.statusMessage);
+        return state == null ? "" : StringUtils.defaultString(state.getStatusMessage());
     }
 
     public String getFormattedLastSyncAt() {
@@ -252,29 +252,29 @@ public class ThesaurusSyncBean implements Serializable {
                     syncComment,
                     createCandidatesFlag,
                     progress -> {
-                        state.total = progress.total();
-                        state.processed = progress.processed();
-                        state.skipped = progress.skipped();
-                        state.propositions = progress.propositions();
-                        state.candidates = progress.candidates();
-                        state.errors = progress.errors();
-                        state.progressValue = Math.max(1, Math.min(99, progress.percent()));
-                        state.statusMessage = StringUtils.defaultIfBlank(
-                                progress.message(), "Synchronisation en cours…");
+                        state.setTotal(progress.total());
+                        state.setProcessed(progress.processed());
+                        state.setSkipped(progress.skipped());
+                        state.setPropositions(progress.propositions());
+                        state.setCandidates(progress.candidates());
+                        state.setErrors(progress.errors());
+                        state.setProgressValue(Math.max(1, Math.min(99, progress.percent())));
+                        state.setStatusMessage(StringUtils.defaultIfBlank(
+                                progress.message(), "Synchronisation en cours…"));
                     }
             );
-            state.progressValue = 100;
-            state.statusMessage = "Synchronisation terminée";
-            state.lastSyncFailed = false;
+            state.setProgressValue(100);
+            state.setStatusMessage("Synchronisation terminée");
+            state.setLastSyncFailed(false);
             refreshConceptCountQuietly();
         } catch (InvalidToolboxDataException ex) {
-            state.lastSyncFailed = true;
-            state.lastSyncError = ex.getMessage();
-            state.statusMessage = ex.getMessage();
+            state.setLastSyncFailed(true);
+            state.setLastSyncError(ex.getMessage());
+            state.setStatusMessage(ex.getMessage());
         } catch (Exception ex) {
-            state.lastSyncFailed = true;
-            state.lastSyncError = StringUtils.defaultIfBlank(ex.getMessage(), "Erreur de synchronisation");
-            state.statusMessage = state.lastSyncError;
+            state.setLastSyncFailed(true);
+            state.setLastSyncError(StringUtils.defaultIfBlank(ex.getMessage(), "Erreur de synchronisation"));
+            state.setStatusMessage(state.getLastSyncError());
         } finally {
             progressTracker.finish(key);
         }

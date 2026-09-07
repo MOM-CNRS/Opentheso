@@ -28,6 +28,7 @@ import lombok.Getter;
 import lombok.RequiredArgsConstructor;
 import lombok.Setter;
 import org.apache.commons.lang3.StringUtils;
+import org.apache.commons.lang3.Strings;
 
 import java.io.Serializable;
 import java.util.ArrayList;
@@ -134,17 +135,17 @@ public class ConceptTreeDragDropBean implements Serializable {
         if (!cutOn || !isCutActionsAvailable() || !conceptSelectionContext.hasSelection()) {
             return false;
         }
-        if (!StringUtils.equals(cutThesaurusId, thesaurusContext.resolveThesaurusId())) {
+        if (!Strings.CS.equals(cutThesaurusId, thesaurusContext.resolveThesaurusId())) {
             return false;
         }
-        return !StringUtils.equalsIgnoreCase(cutConceptId, conceptSelectionContext.getConceptId());
+        return !Strings.CI.equals(cutConceptId, conceptSelectionContext.getConceptId());
     }
 
     public boolean isPasteAtRootAvailable() {
         if (!cutOn || !isCutActionsAvailable()) {
             return false;
         }
-        if (!StringUtils.equals(cutThesaurusId, thesaurusContext.resolveThesaurusId())) {
+        if (!Strings.CS.equals(cutThesaurusId, thesaurusContext.resolveThesaurusId())) {
             return false;
         }
         return !cutWasTopConcept;
@@ -368,7 +369,7 @@ public class ConceptTreeDragDropBean implements Serializable {
                 : localeMsg("v2.tree.dnd.moved")
                         .replace("{0}", StringUtils.defaultString(dragLabel))
                         .replace("{1}", StringUtils.defaultString(dropLabel));
-        boolean wasCutPaste = cutOn && StringUtils.equalsIgnoreCase(cutConceptId, movedId);
+        boolean wasCutPaste = cutOn && Strings.CI.equals(cutConceptId, movedId);
         lastMovedId = movedId;
         lastMovedType = "concept";
         resetDialogState();

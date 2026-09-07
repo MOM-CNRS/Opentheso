@@ -80,7 +80,7 @@ public class ThesaurusEditionCsvImportBean implements Serializable {
         }
         return allLangs.stream()
                 .map(LanguageOption::code)
-                .filter(code -> "fr".equalsIgnoreCase(code))
+                .filter("fr"::equalsIgnoreCase)
                 .findFirst()
                 .orElse(allLangs.get(0).code());
     }

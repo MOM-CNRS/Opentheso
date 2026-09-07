@@ -47,18 +47,20 @@ class ThesaurusSyncControllerTest {
     @Test
     void syncConcepts_rejectsMissingAuthenticatedUser() {
         when(request.getAttribute("authenticatedUser")).thenReturn(null);
+        var body = emptyBody();
 
         assertThrows(ApiKeyInvalidException.class, () ->
-                controller.syncConcepts(request, "TH_MASTER", emptyBody()));
+                controller.syncConcepts(request, "TH_MASTER", body));
     }
 
     @Test
     void syncConcepts_rejectsUnauthorizedWriter() {
         when(request.getAttribute("authenticatedUser")).thenReturn(user);
         when(thesaurusWriteAuthorizationService.canUserWrite(3, "TH_MASTER")).thenReturn(false);
+        var body = emptyBody();
 
         assertThrows(UserCantWriteOnThesaurusException.class, () ->
-                controller.syncConcepts(request, "TH_MASTER", emptyBody()));
+                controller.syncConcepts(request, "TH_MASTER", body));
     }
 
     @Test

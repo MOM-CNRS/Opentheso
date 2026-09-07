@@ -90,7 +90,7 @@ public class ConceptSearchHydrationService {
 
     private ConceptSearchResult buildConceptSearch(String conceptId, String thesaurusId, String lang) {
         boolean deprecated = conceptSearchQueryRepository.findConceptStatus(conceptId, thesaurusId)
-                .map(status -> "dep".equalsIgnoreCase(status))
+                .map("dep"::equalsIgnoreCase)
                 .orElse(false);
         String preferredLabel = conceptFullQueryRepository.findPreferredLabel(conceptId, thesaurusId, lang)
                 .map(row -> stringAt(row, 0))

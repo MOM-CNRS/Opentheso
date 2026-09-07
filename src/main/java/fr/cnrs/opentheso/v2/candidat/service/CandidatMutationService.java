@@ -20,8 +20,6 @@ import fr.cnrs.opentheso.v2.candidat.persistence.CandidatMutationPersistence;
 import lombok.RequiredArgsConstructor;
 import org.springframework.stereotype.Service;
 
-import java.io.IOException;
-import java.sql.SQLException;
 import java.util.List;
 
 @Service
@@ -47,8 +45,8 @@ public class CandidatMutationService {
         return candidatMutationPersistence.loadAlignments(conceptId, thesaurusId);
     }
 
-    public void updateAlignment(AlignementElement element, String conceptId, String thesaurusId) {
-        candidatMutationPersistence.updateAlignment(element, conceptId, thesaurusId);
+    public void updateAlignment(AlignementElement element) {
+        candidatMutationPersistence.updateAlignment(element);
     }
 
     public boolean saveNewCandidat(
@@ -59,7 +57,7 @@ public class CandidatMutationService {
             String username,
             String thesaurusLang,
             String definition
-    ) throws SQLException, IOException {
+    ) {
         return candidatMutationPersistence.saveNewCandidat(candidat, thesaurusId, lang, userId, username, thesaurusLang, definition);
     }
 
@@ -79,15 +77,15 @@ public class CandidatMutationService {
         return candidatMutationPersistence.migrateOldCandidates(thesaurusId, userId);
     }
 
-    public boolean hasVote(String thesaurusId, String conceptId, int userId, String noteId, VoteType type) throws SQLException {
+    public boolean hasVote(String thesaurusId, String conceptId, int userId, String noteId, VoteType type) {
         return candidatMutationPersistence.hasVote(thesaurusId, conceptId, userId, noteId, type);
     }
 
-    public void removeVote(String thesaurusId, String conceptId, int userId, String noteId, VoteType type) throws SQLException {
+    public void removeVote(String thesaurusId, String conceptId, int userId, String noteId, VoteType type) {
         candidatMutationPersistence.removeVote(thesaurusId, conceptId, userId, noteId, type);
     }
 
-    public void addVote(String thesaurusId, String conceptId, int userId, String noteId, VoteType type) throws SQLException {
+    public void addVote(String thesaurusId, String conceptId, int userId, String noteId, VoteType type) {
         candidatMutationPersistence.addVote(thesaurusId, conceptId, userId, noteId, type);
     }
 
@@ -144,7 +142,7 @@ public class CandidatMutationService {
                 .build());
     }
 
-    public void addBroaderRelation(String conceptId, String thesaurusId, String targetConceptId) throws SQLException {
+    public void addBroaderRelation(String conceptId, String thesaurusId, String targetConceptId) {
         candidatMutationPersistence.addBroaderRelation(conceptId, thesaurusId, targetConceptId);
     }
 
@@ -152,11 +150,11 @@ public class CandidatMutationService {
         return candidatMutationPersistence.loadBroaderRelations(conceptId, thesaurusId, lang);
     }
 
-    public void deleteBroaderRelation(String conceptId, String thesaurusId, String targetConceptId, int userId) throws SQLException {
-        candidatMutationPersistence.deleteBroaderRelation(conceptId, thesaurusId, targetConceptId, userId);
+    public void deleteBroaderRelation(String conceptId, String thesaurusId, String targetConceptId) {
+        candidatMutationPersistence.deleteBroaderRelation(conceptId, thesaurusId, targetConceptId);
     }
 
-    public void addRelatedTerm(String conceptId, String thesaurusId, String targetConceptId) throws SQLException {
+    public void addRelatedTerm(String conceptId, String thesaurusId, String targetConceptId) {
         candidatMutationPersistence.addRelatedTerm(conceptId, thesaurusId, targetConceptId);
     }
 
@@ -164,8 +162,8 @@ public class CandidatMutationService {
         return candidatMutationPersistence.loadRelatedTerms(conceptId, thesaurusId, lang);
     }
 
-    public void deleteRelatedTerm(String conceptId, String thesaurusId, String targetConceptId, int userId) throws SQLException {
-        candidatMutationPersistence.deleteRelatedTerm(conceptId, thesaurusId, targetConceptId, userId);
+    public void deleteRelatedTerm(String conceptId, String thesaurusId, String targetConceptId) {
+        candidatMutationPersistence.deleteRelatedTerm(conceptId, thesaurusId, targetConceptId);
     }
 
     public List<NoteType> loadNoteTypes() {

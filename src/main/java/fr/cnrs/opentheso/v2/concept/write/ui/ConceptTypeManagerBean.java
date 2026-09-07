@@ -16,6 +16,7 @@ import lombok.RequiredArgsConstructor;
 import lombok.Setter;
 import org.apache.commons.collections4.CollectionUtils;
 import org.apache.commons.lang3.StringUtils;
+import org.apache.commons.lang3.Strings;
 
 import java.io.Serializable;
 import java.util.ArrayList;
@@ -41,9 +42,9 @@ public class ConceptTypeManagerBean implements Serializable {
 
     private final DialogRunState run = new DialogRunState();
 
-    private List<NodeConceptType> conceptTypes = new ArrayList<>();
-    private NodeConceptType conceptTypeToAdd = new NodeConceptType();
-    private NodeConceptType conceptTypeToDelete;
+    private transient List<NodeConceptType> conceptTypes = new ArrayList<>();
+    private transient NodeConceptType conceptTypeToAdd = new NodeConceptType();
+    private transient NodeConceptType conceptTypeToDelete;
     private boolean dirty;
 
     public String getErrorMessage() {
@@ -66,7 +67,7 @@ public class ConceptTypeManagerBean implements Serializable {
     public boolean isPendingDelete(NodeConceptType type) {
         return conceptTypeToDelete != null
                 && type != null
-                && StringUtils.equals(conceptTypeToDelete.getCode(), type.getCode());
+                && Strings.CS.equals(conceptTypeToDelete.getCode(), type.getCode());
     }
 
     public void prepareManage() {

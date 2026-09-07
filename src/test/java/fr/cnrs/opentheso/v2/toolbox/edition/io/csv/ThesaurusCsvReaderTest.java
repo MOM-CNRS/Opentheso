@@ -37,10 +37,12 @@ class ThesaurusCsvReaderTest {
     @Test
     void readHeadersFileAlignment_excludesLocalIdColumn_caseInsensitive() {
         ThesaurusCsvReader reader = new ThesaurusCsvReader(',');
-        String csv = "localId,skos:exactMatch,skos:closeMatch\n"
-                + "C1,http://example.com/c1,http://example.com/c1close\n";
+        String csv = """
+                localId,skos:exactMatch,skos:closeMatch
+                C1,http://example.com/c1,http://example.com/c1close
+                """;
 
-        ArrayList<String> headers = reader.readHeadersFileAlignment(new StringReader(csv));
+        ArrayList<String> headers = new ArrayList<>(reader.readHeadersFileAlignment(new StringReader(csv)));
 
         assertNotNull(headers);
         // CSVParser#getHeaderMap() does not guarantee insertion order, so compare as a set
@@ -51,9 +53,11 @@ class ThesaurusCsvReaderTest {
     @Test
     void readFileAlignment_parsesUriAndDefaultsToExactMatchType() {
         ThesaurusCsvReader reader = new ThesaurusCsvReader(',');
-        String csv = "localId,skos:exactMatch\n"
-                + "C1,http://example.com/c1\n";
-        ArrayList<String> headers = reader.readHeadersFileAlignment(new StringReader(csv));
+        String csv = """
+                localId,skos:exactMatch
+                C1,http://example.com/c1
+                """;
+        ArrayList<String> headers = new ArrayList<>(reader.readHeadersFileAlignment(new StringReader(csv)));
 
         boolean ok = reader.readFileAlignment(new StringReader(csv), headers);
 
@@ -71,9 +75,11 @@ class ThesaurusCsvReaderTest {
     @Test
     void readFileAlignment_explicitAlignmentTypeSuffix_isHonored() {
         ThesaurusCsvReader reader = new ThesaurusCsvReader(',');
-        String csv = "localId,skos:closeMatch\n"
-                + "C1,http://example.com/c1##2\n";
-        ArrayList<String> headers = reader.readHeadersFileAlignment(new StringReader(csv));
+        String csv = """
+                localId,skos:closeMatch
+                C1,http://example.com/c1##2
+                """;
+        ArrayList<String> headers = new ArrayList<>(reader.readHeadersFileAlignment(new StringReader(csv)));
 
         boolean ok = reader.readFileAlignment(new StringReader(csv), headers);
 
@@ -88,9 +94,11 @@ class ThesaurusCsvReaderTest {
     @Test
     void readFileAlignment_dropsRecordAndSetsMessage_whenUriIsInvalid() {
         ThesaurusCsvReader reader = new ThesaurusCsvReader(',');
-        String csv = "localId,skos:exactMatch\n"
-                + "C1,not-a-valid-uri\n";
-        ArrayList<String> headers = reader.readHeadersFileAlignment(new StringReader(csv));
+        String csv = """
+                localId,skos:exactMatch
+                C1,not-a-valid-uri
+                """;
+        ArrayList<String> headers = new ArrayList<>(reader.readHeadersFileAlignment(new StringReader(csv)));
 
         boolean ok = reader.readFileAlignment(new StringReader(csv), headers);
 
@@ -108,8 +116,10 @@ class ThesaurusCsvReaderTest {
     @Test
     void readFileAlignmentToDelete_parsesLocalIdAndUriToRemove() {
         ThesaurusCsvReader reader = new ThesaurusCsvReader(',');
-        String csv = "localId,Uri\n"
-                + "C1,http://example.com/toDelete\n";
+        String csv = """
+                localId,Uri
+                C1,http://example.com/toDelete
+                """;
 
         boolean ok = reader.readFileAlignmentToDelete(new StringReader(csv));
 
@@ -124,8 +134,10 @@ class ThesaurusCsvReaderTest {
     @Test
     void readFileAlignmentToDelete_skipsRecordsWithoutLocalId() {
         ThesaurusCsvReader reader = new ThesaurusCsvReader(',');
-        String csv = "localId,Uri\n"
-                + ",http://example.com/orphan\n";
+        String csv = """
+                localId,Uri
+                ,http://example.com/orphan
+                """;
 
         boolean ok = reader.readFileAlignmentToDelete(new StringReader(csv));
 
@@ -142,7 +154,7 @@ class ThesaurusCsvReaderTest {
         ThesaurusCsvReader reader = new ThesaurusCsvReader(',');
         String csv = "localid,skos:related\nC1,C2\n";
 
-        ArrayList<String> headers = reader.readHeadersFileRelated(new StringReader(csv));
+        ArrayList<String> headers = new ArrayList<>(reader.readHeadersFileRelated(new StringReader(csv)));
 
         // CSVParser#getHeaderMap() does not guarantee insertion order, so compare as a set
         assertEquals(Set.of("localid", "skos:related"), Set.copyOf(headers));
@@ -152,13 +164,14 @@ class ThesaurusCsvReaderTest {
     @Test
     void readFileRelated_parsesPairsAndDeduplicates() {
         ThesaurusCsvReader reader = new ThesaurusCsvReader(',');
-        String csv = "localid,skos:related\n"
-                + "C1,C2\n"
-                + "C1,C3\n"
-                + "C1,C2\n"; // duplicate of the first row, must not be counted twice
-        ArrayList<String> headers = reader.readHeadersFileRelated(new StringReader(csv));
+        String csv = """
+                localid,skos:related
+                C1,C2
+                C1,C3
+                C1,C2
+                """; // duplicate of the first row, must not be counted twice
 
-        boolean ok = reader.readFileRelated(new StringReader(csv), headers);
+        boolean ok = reader.readFileRelated(new StringReader(csv));
 
         assertTrue(ok);
         List<NodeIdValue> values = reader.getNodeIdValues();
@@ -171,11 +184,13 @@ class ThesaurusCsvReaderTest {
     @Test
     void readFileRelated_skipsBlankIdsOrValues() {
         ThesaurusCsvReader reader = new ThesaurusCsvReader(',');
-        String csv = "localid,skos:related\n"
-                + ",C2\n"
-                + "C1,\n";
+        String csv = """
+                localid,skos:related
+                ,C2
+                C1,
+                """;
 
-        boolean ok = reader.readFileRelated(new StringReader(csv), new ArrayList<>());
+        boolean ok = reader.readFileRelated(new StringReader(csv));
 
         assertTrue(ok);
         assertTrue(reader.getNodeIdValues().isEmpty());
@@ -188,8 +203,10 @@ class ThesaurusCsvReaderTest {
     @Test
     void readFileNote_parsesNoteDefinitionAndScopeNote_forDeclaredLangs() {
         ThesaurusCsvReader reader = new ThesaurusCsvReader(',');
-        String csv = "localid,skos:note@fr,skos:definition@fr\n"
-                + "C1,Une note,Une definition\n";
+        String csv = """
+                localid,skos:note@fr,skos:definition@fr
+                C1,Une note,Une definition
+                """;
 
         // production code always primes `langs` via setLangs() on a fresh reader before parsing
         assertTrue(reader.setLangs(new StringReader(csv)));
@@ -212,8 +229,10 @@ class ThesaurusCsvReaderTest {
     @Test
     void readFileNote_splitsMultipleValuesOnDoubleHash() {
         ThesaurusCsvReader reader = new ThesaurusCsvReader(',');
-        String csv = "localid,skos:note@fr\n"
-                + "C1,premiere note##deuxieme note\n";
+        String csv = """
+                localid,skos:note@fr
+                C1,premiere note##deuxieme note
+                """;
 
         assertTrue(reader.setLangs(new StringReader(csv)));
         boolean ok = reader.readFileNote(new StringReader(csv));
@@ -228,8 +247,10 @@ class ThesaurusCsvReaderTest {
     @Test
     void readFileNote_skipsRecordsWithoutLocalId() {
         ThesaurusCsvReader reader = new ThesaurusCsvReader(',');
-        String csv = "localid,skos:note@fr\n"
-                + ",Une note orpheline\n";
+        String csv = """
+                localid,skos:note@fr
+                ,Une note orpheline
+                """;
 
         assertTrue(reader.setLangs(new StringReader(csv)));
         boolean ok = reader.readFileNote(new StringReader(csv));
@@ -245,8 +266,10 @@ class ThesaurusCsvReaderTest {
     @Test
     void readFileTraduction_parsesPrefLabelForRequestedLang() {
         ThesaurusCsvReader reader = new ThesaurusCsvReader(',');
-        String csv = "localid,skos:prefLabel@fr\n"
-                + "C1,Chien\n";
+        String csv = """
+                localid,skos:prefLabel@fr
+                C1,Chien
+                """;
 
         boolean ok = reader.readFileTraduction(new StringReader(csv), "fr");
 
@@ -261,8 +284,10 @@ class ThesaurusCsvReaderTest {
     void readFileTraduction_skipsRecordsWithoutPrefLabelForLang() {
         ThesaurusCsvReader reader = new ThesaurusCsvReader(',');
         // the column exists for "en" but we ask for "fr", which is absent -> no match
-        String csv = "localid,skos:prefLabel@en\n"
-                + "C1,Dog\n";
+        String csv = """
+                localid,skos:prefLabel@en
+                C1,Dog
+                """;
 
         boolean ok = reader.readFileTraduction(new StringReader(csv), "fr");
 
@@ -277,8 +302,10 @@ class ThesaurusCsvReaderTest {
     @Test
     void readFile_nominal_parsesIdentifierTypeLabelsAndBroader() {
         ThesaurusCsvReader reader = new ThesaurusCsvReader(',');
-        String csv = "identifier,rdf:type,skos:prefLabel@fr,skos:altLabel@fr,skos:broader\n"
-                + "concept1,skos:Concept,Chat,Minou##Matou,broaderId1\n";
+        String csv = """
+                identifier,rdf:type,skos:prefLabel@fr,skos:altLabel@fr,skos:broader
+                concept1,skos:Concept,Chat,Minou##Matou,broaderId1
+                """;
 
         assertTrue(reader.setLangs(new StringReader(csv)));
         assertEquals(List.of("fr"), reader.getLangs());
@@ -306,8 +333,10 @@ class ThesaurusCsvReaderTest {
     @Test
     void readFile_derivesIdentifierFromUri_whenIdentifierColumnAbsent() {
         ThesaurusCsvReader reader = new ThesaurusCsvReader(',');
-        String csv = "URI,rdf:type,skos:prefLabel@fr\n"
-                + "http://thesaurus.example.com/page/concept#concept42,skos:Concept,Chat\n";
+        String csv = """
+                URI,rdf:type,skos:prefLabel@fr
+                http://thesaurus.example.com/page/concept#concept42,skos:Concept,Chat
+                """;
 
         assertTrue(reader.setLangs(new StringReader(csv)));
         boolean ok = reader.readFile(new StringReader(csv), false);
@@ -324,8 +353,10 @@ class ThesaurusCsvReaderTest {
     void readFile_missingIdentifierAndUri_producesErrorMessage_andSkipsRecord() {
         ThesaurusCsvReader reader = new ThesaurusCsvReader(',');
         // no "identifier" and no "URI" column at all -> a concept id can never be resolved
-        String csv = "rdf:type,skos:prefLabel@fr\n"
-                + "skos:Concept,Chat\n";
+        String csv = """
+                rdf:type,skos:prefLabel@fr
+                skos:Concept,Chat
+                """;
 
         // even without lang columns to discover, setLangs must still be called once so the
         // internal `langs` field is a non-null (possibly empty) list before readFile runs
@@ -346,10 +377,12 @@ class ThesaurusCsvReaderTest {
     @Test
     void semicolonDelimiter_isHonoredByHeaderAndDataParsing() {
         ThesaurusCsvReader reader = new ThesaurusCsvReader(';');
-        String csv = "localId;skos:exactMatch\n"
-                + "C1;http://example.com/c1\n";
+        String csv = """
+                localId;skos:exactMatch
+                C1;http://example.com/c1
+                """;
 
-        ArrayList<String> headers = reader.readHeadersFileAlignment(new StringReader(csv));
+        ArrayList<String> headers = new ArrayList<>(reader.readHeadersFileAlignment(new StringReader(csv)));
         assertEquals(List.of("skos:exactMatch"), headers);
 
         boolean ok = reader.readFileAlignment(new StringReader(csv), headers);

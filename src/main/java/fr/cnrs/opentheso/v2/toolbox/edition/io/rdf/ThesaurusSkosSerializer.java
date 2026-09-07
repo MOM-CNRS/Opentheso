@@ -43,10 +43,10 @@ import java.util.List;
 @Slf4j
 public class ThesaurusSkosSerializer {
 
-    public final static String DELIMINATE = "##";
-    public final static String STATUS_TAG = "status";
-    public final static String DISCUSSION_TAG = "message";
-    public final static String VOTE_TAG = "vote";
+    public static final String DELIMINATE = "##";
+    public static final String STATUS_TAG = "status";
+    public static final String DISCUSSION_TAG = "message";
+    public static final String VOTE_TAG = "vote";
 
     private Model model;
     private ModelBuilder builder;
@@ -216,18 +216,18 @@ public class ThesaurusSkosSerializer {
     private void writeGPS(SKOSResource resource) {
         if (CollectionUtils.isNotEmpty(resource.getGpsCoordinates())) {
 
-            String str = "";
-            String wktLiteralValue = "";
+            StringBuilder str = new StringBuilder();
+            String wktLiteralValue;
             switch(getGpsMode(resource.getGpsCoordinates())) {
                 case "POLYGONE":
                     for (SKOSGPSCoordinates gps : resource.getGpsCoordinates()) {
-                        str = str + ", " + gps.getLat() + " " + gps.getLon();
+                        str.append(", ").append(gps.getLat()).append(" ").append(gps.getLon());
                     }
                     wktLiteralValue = "Polygon((" + str.substring(2) + "))";
                     break;
                 case "POLYLINE":
                     for (SKOSGPSCoordinates gps : resource.getGpsCoordinates()) {
-                        str = str + ", " + gps.getLat() + " " + gps.getLon();
+                        str.append(", ").append(gps.getLat()).append(" ").append(gps.getLon());
                     }
                     wktLiteralValue = "MultiPoint((" + str.substring(2) + "))";
                     break;
@@ -442,7 +442,7 @@ public class ThesaurusSkosSerializer {
             builder.add(DCTERMS.SOURCE, resource.getThesaurus().getSource());
         }
         
-        /// Ecriture des DCMI, à terme, ca doit remplacer les lignes au dessus
+        // Ecriture des DCMI, à terme, ca doit remplacer les lignes au dessus
         for (DcElement dcElement : resource.getThesaurus().getDcElement()) {
             switch (dcElement.getName()) {
                 case "title":

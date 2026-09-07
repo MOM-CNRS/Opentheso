@@ -75,11 +75,7 @@ public class LoginBean implements Serializable {
             }
             sessionAuthenticatedUserSource.setUserId(user.id());
             password = null;
-            try {
-                consultationShellBean.load();
-            } catch (RuntimeException ex) {
-                log.warn("Session chargée après connexion, mais le shell n'a pas pu se rafraîchir", ex);
-            }
+            refreshConsultationShell();
             FacesContext.getCurrentInstance().addMessage(null, new FacesMessage(
                     FacesMessage.SEVERITY_INFO,
                     v2LocaleBean.getMsg("connect.welcome"),
@@ -116,8 +112,16 @@ public class LoginBean implements Serializable {
             ctx = "";
         }
         sessionLifecycleService.invalidateCurrentFacesSessionQuietly();
-        externalContext.redirect(ctx + "/v2");
+        externalContext.redirect(sessionLifecycleService.homeUrl(ctx));
         facesContext.responseComplete();
+    }
+
+    private void refreshConsultationShell() {
+        try {
+            consultationShellBean.load();
+        } catch (RuntimeException ex) {
+            log.warn("Session chargée après connexion, mais le shell n'a pas pu se rafraîchir", ex);
+        }
     }
 
     private void reloadCurrentView() {
@@ -135,7 +139,7 @@ public class LoginBean implements Serializable {
         }
         String path = externalContext.getRequestServletPath();
         if (path == null || path.isBlank()) {
-            path = "/v2";
+            path = sessionLifecycleService.homePath();
         }
         String query = null;
         if (externalContext.getRequest() instanceof HttpServletRequest httpRequest) {

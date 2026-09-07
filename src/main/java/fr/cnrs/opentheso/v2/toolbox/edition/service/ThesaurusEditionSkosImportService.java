@@ -20,7 +20,6 @@ import org.springframework.stereotype.Service;
 
 import java.io.IOException;
 import java.io.InputStream;
-import java.sql.SQLException;
 import java.util.ArrayList;
 import java.util.List;
 import java.util.Optional;
@@ -125,7 +124,7 @@ public class ThesaurusEditionSkosImportService {
             String prefixDoi,
             String persistentNameThesaurus,
             boolean importAsMaster
-    ) throws SQLException {
+    ) {
         var preferences = new Preferences();
         preferences.setSourceLang(StringUtils.defaultIfBlank(sourceLang, "fr"));
         preferences.setPreferredName(persistentNameThesaurus);
@@ -175,7 +174,7 @@ public class ThesaurusEditionSkosImportService {
             String prefixDoi,
             Preferences preferences,
             boolean importAsMaster
-    ) throws SQLException {
+    ) {
         int groupId = projectGroupId == null ? -1 : projectGroupId;
         thesaurusEditionSkosImportEngine.setInfos(formatDate, userId, groupId, sourceLang);
         thesaurusEditionSkosImportEngine.setSelectedIdentifier(selectedIdentifier);
@@ -185,21 +184,7 @@ public class ThesaurusEditionSkosImportService {
         thesaurusEditionSkosImportEngine.setImportAsMaster(importAsMaster);
         thesaurusEditionSkosImportEngine.setRdf4jThesaurus(document);
 
-        String thesaurusId;
-        try {
-            thesaurusId = importBatchSupport.inTransaction(() -> {
-                try {
-                    return thesaurusEditionSkosImportEngine.addThesaurus();
-                } catch (SQLException e) {
-                    throw new IllegalStateException(e);
-                }
-            });
-        } catch (IllegalStateException ex) {
-            if (ex.getCause() instanceof SQLException sqlException) {
-                throw sqlException;
-            }
-            throw ex;
-        }
+        String thesaurusId = importBatchSupport.inTransaction(thesaurusEditionSkosImportEngine::addThesaurus);
         if (thesaurusId == null) {
             return null;
         }

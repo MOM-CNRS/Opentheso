@@ -42,8 +42,15 @@ public class ConceptHandleConnectionService {
 
     private final HandleClient handleClient;
 
-    private int responseMsg, index;
-    private String pathKey, pass, adminHandle, prefix, privatePrefix, serverHandle, message;
+    private int responseMsg;
+    private int index;
+    private String pathKey;
+    private String pass;
+    private String adminHandle;
+    private String prefix;
+    private String privatePrefix;
+    private String serverHandle;
+    private String message;
     private AdminRecord admin;
     private PublicKeyAuthenticationInfo auth;
     private HandleResolver resolver;
@@ -152,7 +159,7 @@ public class ConceptHandleConnectionService {
         var newId = nodePreference.getPrefixIdHandle() + "/" + nodePreference.getPrivatePrefixHandle() + getNewHandleId(nodePreference);
 
         log.debug("avant l'appel à HandleClient");
-        var jsonData = handleClient.getJsonData(nodePreference.getCheminSite() + privateUri);//"?idc=" + idConcept + "&idt=" + idThesaurus);
+        var jsonData = handleClient.getJsonData(nodePreference.getCheminSite() + privateUri);
         log.debug("avant le put ");
         var idHandle = handleClient.putHandle(nodePreference.getPassHandle(), nodePreference.getPathKeyHandle(),
                 nodePreference.getPathCertHandle(), nodePreference.getUrlApiHandle(), newId, jsonData);
@@ -219,16 +226,20 @@ public class ConceptHandleConnectionService {
         }
 
         boolean first = true;
+        StringBuilder failedIds = new StringBuilder();
         for (String idHandle : tabIdHandle) {
             var status = handleClient.deleteHandle(nodePreference.getPassHandle(), nodePreference.getPathKeyHandle(),
                     nodePreference.getPathCertHandle(), nodePreference.getUrlApiHandle(), idHandle);
             if (!status) {
                 if (first) {
-                    message = "Id handle non supprimé :\n ";
+                    failedIds.append("Id handle non supprimé :\n ");
                     first = false;
                 }
-                message = message + idHandle + " ## ";
+                failedIds.append(idHandle).append(" ## ");
             }
+        }
+        if (!failedIds.isEmpty()) {
+            message = failedIds.toString();
         }
         return true;
     }

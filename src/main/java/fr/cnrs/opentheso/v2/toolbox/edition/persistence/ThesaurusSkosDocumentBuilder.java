@@ -38,7 +38,6 @@ import org.jsoup.Jsoup;
 import org.springframework.stereotype.Component;
 import org.springframework.transaction.annotation.Transactional;
 
-import java.sql.SQLException;
 import java.text.SimpleDateFormat;
 import java.util.ArrayList;
 import java.util.Collection;
@@ -182,7 +181,7 @@ public class ThesaurusSkosDocumentBuilder {
         return writeGroupInfo(resource, thesaurusId, groupId, preferences, baseUrl, new HashMap<>());
     }
 
-    public List<SKOSResource> getAllFacettes(String idThesaurus, String baseUrl, String originalUri, Preferences nodePreference) throws Exception {
+    public List<SKOSResource> getAllFacettes(String idThesaurus, String baseUrl, String originalUri, Preferences nodePreference) {
 
         var projections = exportRepository.getAllFacettes(idThesaurus, baseUrl);
         List<SKOSResource> result = new ArrayList<>();
@@ -266,7 +265,7 @@ public class ThesaurusSkosDocumentBuilder {
 
         for (SkosConceptProjection p : projections) {
             result.add(buildConceptFromProjection(
-                    p, idThesaurus, baseUrl, originalUri, nodePreference, filterHtmlCharacter
+                    p, idThesaurus, originalUri, nodePreference, filterHtmlCharacter
             ));
         }
         return result;
@@ -344,7 +343,6 @@ public class ThesaurusSkosDocumentBuilder {
                 result.add(buildConceptFromProjection(
                         projection,
                         thesaurusId,
-                        baseUrl,
                         preferences.getOriginalUri(),
                         preferences,
                         filterHtmlCharacter
@@ -361,7 +359,6 @@ public class ThesaurusSkosDocumentBuilder {
     private SKOSResource buildConceptFromProjection(
             SkosConceptProjection p,
             String idThesaurus,
-            String baseUrl,
             String originalUri,
             Preferences nodePreference,
             boolean filterHtmlCharacter
@@ -659,7 +656,7 @@ public class ThesaurusSkosDocumentBuilder {
             try {
                 for (String tab : tabs) {
                     sKOSResource.addMatch(tab.trim(), type);
-                    //    log.info(textBrut);
+
                 }
             } catch (Exception e) {
                 log.error("Erreur export Concept _ alignement = " + sKOSResource.getIdentifier() + "  " + textBrut );
@@ -667,7 +664,7 @@ public class ThesaurusSkosDocumentBuilder {
         }
     }
 
-    private void addDocumentation(String textBrut, SKOSResource sKOSResource, int type) throws SQLException {
+    private void addDocumentation(String textBrut, SKOSResource sKOSResource, int type) {
 
         if (StringUtils.isNotEmpty(textBrut)) {
             String[] tabs = textBrut.split(SEPARATOR);

@@ -4,6 +4,7 @@ import fr.cnrs.opentheso.client.ArkApiClient;
 import fr.cnrs.opentheso.client.ArkApiException;
 import fr.cnrs.opentheso.entites.Concept;
 import fr.cnrs.opentheso.entites.Preferences;
+import fr.cnrs.opentheso.entites.User;
 import fr.cnrs.opentheso.models.nodes.NodeIdValue;
 import fr.cnrs.opentheso.models.concept.NodeMetaData;
 import fr.cnrs.opentheso.repositories.ConceptRepository;
@@ -20,6 +21,7 @@ import fr.cnrs.opentheso.ws.dto.DeleteArkResponse;
 import lombok.extern.slf4j.Slf4j;
 import org.apache.commons.collections4.CollectionUtils;
 import org.apache.commons.lang3.StringUtils;
+import org.apache.commons.lang3.Strings;
 import org.springframework.beans.factory.annotation.Value;
 import org.springframework.stereotype.Service;
 
@@ -281,7 +283,7 @@ public class ConceptArkWriteService {
     }
 
     private static String normalizeOpenArkServerUrl(String serverUrl) {
-        return StringUtils.removeEnd(StringUtils.trimToEmpty(serverUrl), "/");
+        return Strings.CS.removeEnd(StringUtils.trimToEmpty(serverUrl), "/");
     }
 
     private static boolean hasHttpScheme(String serverUrl) {
@@ -393,7 +395,7 @@ public class ConceptArkWriteService {
             return "";
         }
         return userRepository.findById(concept.getContributor())
-                .map(user -> user.getUsername())
+                .map(User::getUsername)
                 .orElse("");
     }
 

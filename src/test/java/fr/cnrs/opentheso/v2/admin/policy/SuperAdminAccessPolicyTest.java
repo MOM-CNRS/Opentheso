@@ -10,11 +10,11 @@ class SuperAdminAccessPolicyTest {
 
     @Test
     void requireSuperAdmin_allowsSuperAdmin() {
-        assertDoesNotThrow(() -> SuperAdminAccessPolicy.requireSuperAdmin(true));
+        assertDoesNotThrow(() -> SuperAdminAccessPolicy.requireResolvedSuperAdmin(true));
     }
 
     @Test
     void requireSuperAdmin_rejectsNonSuperAdmin() {
-        assertThrows(AdminAccessDeniedException.class, () -> SuperAdminAccessPolicy.requireSuperAdmin(false));
+        assertThrows(AdminAccessDeniedException.class, () -> SuperAdminAccessPolicy.requireResolvedSuperAdmin(false));
     }
 }

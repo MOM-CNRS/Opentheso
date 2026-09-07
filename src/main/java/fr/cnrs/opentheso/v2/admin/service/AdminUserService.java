@@ -48,7 +48,7 @@ public class AdminUserService {
             String password,
             String passwordConfirmation
     ) {
-        SuperAdminAccessPolicy.requireSuperAdmin(superAdmin);
+        SuperAdminAccessPolicy.requireResolvedSuperAdmin(superAdmin);
         String validUsername = ProfileValidator.requireUsername(username);
         String validEmail = ProfileValidator.requireEmail(email);
         ensureUsernameAvailable(validUsername);
@@ -78,7 +78,7 @@ public class AdminUserService {
             String email,
             boolean alertMail
     ) {
-        SuperAdminAccessPolicy.requireSuperAdmin(superAdmin);
+        SuperAdminAccessPolicy.requireResolvedSuperAdmin(superAdmin);
         String validUsername = ProfileValidator.requireUsername(username);
         String validEmail = ProfileValidator.requireEmail(email);
         var current = userProfileService.getProfile(userId);
@@ -95,7 +95,7 @@ public class AdminUserService {
 
     @Transactional
     public void updatePassword(boolean superAdmin, int userId, String password, String confirmation) {
-        SuperAdminAccessPolicy.requireSuperAdmin(superAdmin);
+        SuperAdminAccessPolicy.requireResolvedSuperAdmin(superAdmin);
         userLookupService.requireEntity(userId); // existence check only — no profile needed
         PasswordPolicy.validate(password, confirmation);
         userCommandRepository.updatePassword(userId, passwordEncoder.encode(password));
@@ -109,7 +109,7 @@ public class AdminUserService {
             boolean keyNeverExpire,
             LocalDate keyExpiresAt
     ) {
-        SuperAdminAccessPolicy.requireSuperAdmin(superAdmin);
+        SuperAdminAccessPolicy.requireResolvedSuperAdmin(superAdmin);
         userLookupService.requireEntity(userId);
 
         // L'autorisation repose sur key_never_expire OU key_expires_at (ApiKeyPolicy).
@@ -131,7 +131,7 @@ public class AdminUserService {
 
     @Transactional
     public void deleteUser(boolean superAdmin, int userId, int callerId) {
-        SuperAdminAccessPolicy.requireSuperAdmin(superAdmin);
+        SuperAdminAccessPolicy.requireResolvedSuperAdmin(superAdmin);
         if (callerId == userId) {
             throw new InvalidProfileDataException("Vous ne pouvez pas supprimer votre propre compte.");
         }

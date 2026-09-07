@@ -38,7 +38,6 @@ public class ThesaurusEditionCsvImportPersistence {
                 return ThesaurusEditionCsvParseResult.error(csvReader.getMessage());
             }
             // Relire depuis le début du même buffer pour le corps (évite un second décodage du flux source)
-            reader.close();
         } catch (Exception ex) {
             return ThesaurusEditionCsvParseResult.error(ex.getMessage());
         }

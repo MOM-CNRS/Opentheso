@@ -19,7 +19,7 @@ public class SessionExpireController {
 
     private final SessionLifecycleService sessionLifecycleService;
 
-    @GetMapping(SessionLifecycleService.EXPIRE_PATH)
+    @GetMapping("${opentheso.v2.expire-path}")
     public void expire(HttpServletRequest request, HttpServletResponse response) throws IOException {
         sessionLifecycleService.expireAndRedirect(request, response);
     }

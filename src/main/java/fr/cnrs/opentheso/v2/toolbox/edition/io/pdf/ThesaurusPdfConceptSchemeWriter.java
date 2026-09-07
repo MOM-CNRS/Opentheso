@@ -57,7 +57,7 @@ public class ThesaurusPdfConceptSchemeWriter {
     private Paragraph createTitle(SKOSXmlDocument xmlDocument, SKOSLabel label, String codeLang, ThesaurusPdfSettings writePdfSettings) {
 
         Paragraph paragraph = new Paragraph();
-        Anchor anchor = new Anchor(label.getLabel() + " (" + codeLang + ")", writePdfSettings.titleFont);
+        Anchor anchor = new Anchor(label.getLabel() + " (" + codeLang + ")", writePdfSettings.getTitleFont());
         anchor.setReference(xmlDocument.getConceptScheme().getUri());
         paragraph.add(anchor);
         return paragraph;

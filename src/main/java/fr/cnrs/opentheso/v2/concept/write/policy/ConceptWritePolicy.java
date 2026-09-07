@@ -64,20 +64,8 @@ public class ConceptWritePolicy {
         return rightsService.can(userSession, Permission.MANAGE_THESAURUS, currentThesaurusTarget());
     }
 
-    /** @deprecated préférer {@link #canMutateIdentifiers(UserSession)} */
-    @Deprecated
-    public boolean canMutateIdentifiers(UserSession userSession, boolean canManageThesaurus) {
-        return userSession != null && userSession.isLoggedIn() && canManageThesaurus;
-    }
-
     public boolean canTransferConcept(UserSession userSession) {
         return canMutateIdentifiers(userSession);
-    }
-
-    /** @deprecated préférer {@link #canTransferConcept(UserSession)} */
-    @Deprecated
-    public boolean canTransferConcept(UserSession userSession, boolean canManageThesaurus) {
-        return canMutateIdentifiers(userSession, canManageThesaurus);
     }
 
     private AuthTarget currentThesaurusTarget() {

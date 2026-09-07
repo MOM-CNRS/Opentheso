@@ -22,6 +22,7 @@ import lombok.RequiredArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
 import org.apache.commons.collections4.CollectionUtils;
 import org.apache.commons.lang3.StringUtils;
+import org.apache.commons.lang3.Strings;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
 
@@ -426,7 +427,7 @@ public class ConceptAlignmentAdminService {
         for (int i = 0; i < limit; i++) {
             NodeAlignment hit = outcome.results().get(i);
             String targetUri = StringUtils.defaultString(hit.getUri_target());
-            boolean sameUri = existingUris.stream().anyMatch(uri -> StringUtils.equalsIgnoreCase(uri, targetUri));
+            boolean sameUri = existingUris.stream().anyMatch(uri -> Strings.CI.equals(uri, targetUri));
             hits.add(AlignmentProposition.builder()
                     .conceptId(conceptId)
                     .localLabel(StringUtils.defaultString(label))
@@ -457,7 +458,7 @@ public class ConceptAlignmentAdminService {
             if (alignment == null) {
                 continue;
             }
-            boolean sameSource = StringUtils.equalsIgnoreCase(sourceName, alignment.sourceName())
+            boolean sameSource = Strings.CI.equals(sourceName, alignment.sourceName())
                     || (StringUtils.isNotBlank(sourceHost)
                     && sourceHost.equalsIgnoreCase(hostOf(alignment.uri())));
             if (sameSource) {
@@ -492,7 +493,7 @@ public class ConceptAlignmentAdminService {
             if (row.isPlaceholder()) {
                 continue;
             }
-            boolean sameSource = StringUtils.equalsIgnoreCase(row.sourceName(), source.getSource())
+            boolean sameSource = Strings.CI.equals(row.sourceName(), source.getSource())
                     || (StringUtils.isNotBlank(sourceHost) && sourceHost.equalsIgnoreCase(hostOf(row.targetUri())));
             if (sameSource) {
                 existingByConcept.putIfAbsent(row.conceptId(), row);
@@ -573,7 +574,7 @@ public class ConceptAlignmentAdminService {
         var existing = alignementRepository.findAllAlignmentsByConceptAndThesaurus(
                 proposition.getConceptId(), thesaurusId);
         for (var projection : existing) {
-            boolean sameSource = StringUtils.equalsIgnoreCase(
+            boolean sameSource = Strings.CI.equals(
                     StringUtils.defaultString(projection.getThesaurus_target()),
                     StringUtils.defaultString(proposition.getSourceName()))
                     || (StringUtils.isNotBlank(sourceHost)

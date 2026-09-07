@@ -1,5 +1,6 @@
 package fr.cnrs.opentheso.v2.concept.export.service;
 
+import com.itextpdf.text.DocumentException;
 import fr.cnrs.opentheso.models.skosapi.SKOSXmlDocument;
 import fr.cnrs.opentheso.models.thesaurus.NodeLangTheso;
 import fr.cnrs.opentheso.v2.concept.export.model.SelectionExportJob;
@@ -22,6 +23,7 @@ import org.primefaces.model.StreamedContent;
 import org.springframework.stereotype.Service;
 
 import java.io.ByteArrayOutputStream;
+import java.io.IOException;
 import java.io.InputStream;
 import java.util.ArrayList;
 import java.util.LinkedHashSet;
@@ -96,7 +98,7 @@ public class SelectionExportService {
     }
 
     private void exportSelection(SelectionExportRequest request, String thesaurusId, String format, SelectionExportJob job)
-            throws Exception {
+            throws DocumentException, IOException {
         int selectedCount = countIds(request.conceptIds());
         job.enterPhase(0, "resolve", "Préparer", request.includeDescendants()
                 ? "Recherche des termes spécifiques de " + conceptsLabel(selectedCount) + "…"
@@ -107,11 +109,12 @@ public class SelectionExportService {
             throw new IllegalStateException("Aucun concept à exporter");
         }
         int extra = Math.max(0, ids.size() - selectedCount);
-        job.progress(1, 1, extra > 0
-                ? selectedCount + " sélectionné" + (selectedCount > 1 ? "s" : "")
-                + " + " + extra + " descendant" + (extra > 1 ? "s" : "")
-                + " → " + conceptsLabel(ids.size())
-                : conceptsLabel(ids.size()) + " à exporter");
+        String selectedLabel = selectedCount + " sélectionné" + (selectedCount > 1 ? "s" : "");
+        String extraLabel = extra + " descendant" + (extra > 1 ? "s" : "");
+        String progressLabel = extra > 0
+                ? selectedLabel + " + " + extraLabel + " → " + conceptsLabel(ids.size())
+                : conceptsLabel(ids.size()) + " à exporter";
+        job.progress(1, 1, progressLabel);
         throwIfCancelled(job);
 
         if (FORMAT_CSV_ID.equals(format) || FORMAT_CSV_DEPRECATED.equals(format) || FORMAT_CSV_STRUCTURED.equals(format)) {
@@ -146,8 +149,7 @@ public class SelectionExportService {
         writeDocument(request, thesaurusId, format, document, conceptCount, true, job);
     }
 
-    private void exportWholeSpecial(SelectionExportRequest request, String thesaurusId, String format, SelectionExportJob job)
-            throws Exception {
+    private void exportWholeSpecial(SelectionExportRequest request, String thesaurusId, String format, SelectionExportJob job) {
         exportSpecialCsv(request, thesaurusId, format, List.of(), job);
     }
 
@@ -157,7 +159,7 @@ public class SelectionExportService {
             String format,
             List<String> selectionIds,
             SelectionExportJob job
-    ) throws Exception {
+    ) {
         String lang = firstLanguage(request, thesaurusId);
         char delimiter = CsvDelimiterSupport.resolveDelimiter(request.csvDelimiter());
         boolean whole = request.wholeThesaurus() || selectionIds.isEmpty();
@@ -189,7 +191,7 @@ public class SelectionExportService {
     }
 
     private void exportZipByCollection(SelectionExportRequest request, String format, SelectionExportJob job)
-            throws Exception {
+            throws IOException {
         String thesaurusId = request.thesaurusId();
         job.enterPhase(1, "read", "Lire", "Export d'une archive par collection…");
         job.progress(0, 1, "Lecture des collections…");
@@ -232,7 +234,7 @@ public class SelectionExportService {
             int conceptCount,
             boolean whole,
             SelectionExportJob job
-    ) throws Exception {
+    ) throws DocumentException, IOException {
         job.enterPhase(3, PHASE_WRITE, PHASE_FILE, "Écriture " + formatLabel(format) + " · " + conceptsLabel(conceptCount) + "…");
         throwIfCancelled(job);
         job.progress(0, 1, "Écriture " + formatLabel(format) + "…");
@@ -308,7 +310,7 @@ public class SelectionExportService {
             SelectionExportJob job,
             int conceptCount,
             boolean whole
-    ) throws Exception {
+    ) throws DocumentException, IOException {
         String lang1 = StringUtils.defaultIfBlank(request.language1(), firstLanguage(request, thesaurusId));
         if (StringUtils.isBlank(lang1)) {
             throw new IllegalStateException("Langue principale manquante");
@@ -401,7 +403,7 @@ public class SelectionExportService {
         return SelectionExportFileNames.build(request.thesaurusTitle(), thesaurusId, whole, extension);
     }
 
-    private static byte[] readStreamed(StreamedContent streamed) throws Exception {
+    private static byte[] readStreamed(StreamedContent streamed) throws IOException {
         if (streamed == null || streamed.getStream() == null) {
             throw new IllegalStateException("Export ZIP vide");
         }

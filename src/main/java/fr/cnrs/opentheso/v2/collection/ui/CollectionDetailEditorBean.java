@@ -19,6 +19,7 @@ import fr.cnrs.opentheso.v2.collection.write.model.command.UpdateCollectionNotat
 import fr.cnrs.opentheso.v2.collection.write.model.command.UpdateCollectionTranslationCommand;
 import fr.cnrs.opentheso.v2.collection.write.model.command.UpdateCollectionTypeCommand;
 import fr.cnrs.opentheso.v2.collection.write.service.CollectionMutationService;
+import fr.cnrs.opentheso.v2.concept.model.GroupTranslationItem;
 import fr.cnrs.opentheso.v2.concept.ui.ThesaurusBrowseBean;
 import fr.cnrs.opentheso.v2.concept.write.model.ConceptSearchSuggestion;
 import fr.cnrs.opentheso.v2.concept.write.model.ConceptWriteCollection;
@@ -72,7 +73,7 @@ public class CollectionDetailEditorBean implements Serializable {
     private boolean applyToBranch;
     private List<ConceptWriteLanguage> availableLanguages = Collections.emptyList();
     private List<ConceptWriteLanguage> availableTranslationLanguages = Collections.emptyList();
-    private List<ConceptGroupType> groupTypes = Collections.emptyList();
+    private transient List<ConceptGroupType> groupTypes = Collections.emptyList();
     private List<TranslationEditRow> translationsToEdit = Collections.emptyList();
 
     public static class TranslationEditRow implements Serializable {
@@ -432,7 +433,7 @@ public class CollectionDetailEditorBean implements Serializable {
         );
         Set<String> usedLangs = thesaurusBrowseBean.getSelectedGroup() != null
                 ? thesaurusBrowseBean.getSelectedGroup().translations().stream()
-                .map(translation -> translation.lang())
+                .map(GroupTranslationItem::lang)
                 .collect(java.util.stream.Collectors.toCollection(HashSet::new))
                 : new HashSet<>();
         usedLangs.add(thesaurusContext.resolveWorkLanguage());

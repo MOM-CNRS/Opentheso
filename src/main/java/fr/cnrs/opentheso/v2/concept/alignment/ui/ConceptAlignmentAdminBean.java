@@ -20,6 +20,7 @@ import lombok.Getter;
 import lombok.RequiredArgsConstructor;
 import lombok.Setter;
 import org.apache.commons.lang3.StringUtils;
+import org.apache.commons.lang3.Strings;
 import org.primefaces.PrimeFaces;
 import org.springframework.beans.factory.ObjectProvider;
 
@@ -337,12 +338,12 @@ public class ConceptAlignmentAdminBean implements Serializable {
             return;
         }
         propositions = new ArrayList<>(propositions.stream()
-                .filter(item -> !(StringUtils.equals(item.getConceptId(), proposition.getConceptId())
-                        && StringUtils.equals(item.getTargetUri(), proposition.getTargetUri())))
+                .filter(item -> !(Strings.CS.equals(item.getConceptId(), proposition.getConceptId())
+                        && Strings.CS.equals(item.getTargetUri(), proposition.getTargetUri())))
                 .toList());
         if (selectedProposition != null
-                && StringUtils.equals(selectedProposition.getConceptId(), proposition.getConceptId())
-                && StringUtils.equals(selectedProposition.getTargetUri(), proposition.getTargetUri())) {
+                && Strings.CS.equals(selectedProposition.getConceptId(), proposition.getConceptId())
+                && Strings.CS.equals(selectedProposition.getTargetUri(), proposition.getTargetUri())) {
             selectedProposition = null;
         }
     }

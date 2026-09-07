@@ -53,6 +53,11 @@ public class ThesaurusMaintenancePersistence {
     private final TermRepository termRepository;
     private final ToolboxPreferencePersistence toolboxPreferencePersistence;
 
+    private static final String SITEMAP_HEADER = """
+            <?xml version="1.0" encoding="UTF-8"?>
+            <urlset xmlns="http://www.sitemaps.org/schemas/sitemap/0.9">
+            """;
+
     @Transactional
     public int correctDisplayTopTerm(String thesaurusId) {
         int modified = thesaurusRepository.resetTopConceptsWithRelations(thesaurusId);
@@ -185,7 +190,7 @@ public class ThesaurusMaintenancePersistence {
             return "";
         }
         var conceptIds = loadAllConceptIds(thesaurusId);
-        return getHeader() + getDatas(conceptIds, thesaurusId, baseUrl) + "</urlset>";
+        return SITEMAP_HEADER + getDatas(conceptIds, thesaurusId, baseUrl) + "</urlset>";
     }
 
     private void cleanThesaurus(String thesaurusId) {
@@ -447,13 +452,6 @@ public class ThesaurusMaintenancePersistence {
     private String getUri(String idConcept, String idTheso, String baseUrl) {
         String path = StringUtils.defaultIfBlank(baseUrl, originBaseUrl()).replaceAll("/$", "");
         return path + "/?idc=" + idConcept + "&amp;idt=" + idTheso;
-    }
-
-    private String getHeader() {
-        return """
-                <?xml version="1.0" encoding="UTF-8"?>
-                <urlset xmlns="http://www.sitemaps.org/schemas/sitemap/0.9">
-                """;
     }
 
     private String getLine(String url, String date) {

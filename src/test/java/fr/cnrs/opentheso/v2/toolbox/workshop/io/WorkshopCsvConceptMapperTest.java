@@ -23,7 +23,86 @@ class WorkshopCsvConceptMapperTest {
     }
 
     @Test
-    void toEditionModel_copiesAllScalarAndListFields() {
+    void toEditionModel_copiesScalarFields() {
+        ThesaurusCsvConceptObject source = fullyPopulatedSource();
+        ThesaurusCsvConceptObject target = WorkshopCsvConceptMapper.toEditionModel(source);
+
+        assertNotNull(target);
+        assertEquals("C1", target.getIdConcept());
+        assertEquals("http://example.com/c1", target.getUri());
+        assertEquals("local1", target.getLocalId());
+        assertEquals("ark1", target.getArkId());
+        assertEquals("term1", target.getIdTerm());
+        assertEquals("skos:concept", target.getType());
+        assertEquals("people", target.getConceptType());
+        assertTrue(target.isDeprecated());
+        assertEquals("N1", target.getNotation());
+        assertEquals("48.85", target.getLatitude());
+        assertEquals("2.35", target.getLongitude());
+        assertEquals("48.85,2.35", target.getGps());
+        assertEquals("facetParent", target.getSuperOrdinate());
+        assertEquals("2024-01-01", target.getCreated());
+        assertEquals("2024-02-02", target.getModified());
+    }
+
+    @Test
+    void toEditionModel_copiesLabelsAndNotes() {
+        ThesaurusCsvConceptObject source = fullyPopulatedSource();
+        ThesaurusCsvConceptObject target = WorkshopCsvConceptMapper.toEditionModel(source);
+
+        assertEquals(1, target.getPrefLabels().size());
+        assertEquals("Chat", target.getPrefLabels().get(0).getLabel());
+        assertEquals("fr", target.getPrefLabels().get(0).getLang());
+
+        assertEquals(1, target.getAltLabels().size());
+        assertEquals("Minou", target.getAltLabels().get(0).getLabel());
+
+        assertEquals(1, target.getHiddenLabels().size());
+        assertEquals("Chah", target.getHiddenLabels().get(0).getLabel());
+
+        assertEquals(1, target.getNote().size());
+        assertEquals("une note", target.getNote().get(0).getLabel());
+
+        assertEquals(1, target.getDefinitions().size());
+        assertEquals(1, target.getScopeNotes().size());
+        assertEquals(1, target.getExamples().size());
+        assertEquals(1, target.getHistoryNotes().size());
+        assertEquals(1, target.getChangeNotes().size());
+        assertEquals(1, target.getEditorialNotes().size());
+    }
+
+    @Test
+    void toEditionModel_copiesRelationsMatchesAndResources() {
+        ThesaurusCsvConceptObject source = fullyPopulatedSource();
+        ThesaurusCsvConceptObject target = WorkshopCsvConceptMapper.toEditionModel(source);
+
+        assertEquals(source.getBroaders(), target.getBroaders());
+        assertEquals(source.getNarrowers(), target.getNarrowers());
+        assertEquals(source.getRelateds(), target.getRelateds());
+        assertEquals(1, target.getCustomRelations().size());
+        assertEquals("customId", target.getCustomRelations().get(0).getId());
+
+        assertEquals(source.getExactMatchs(), target.getExactMatchs());
+        assertEquals(source.getCloseMatchs(), target.getCloseMatchs());
+        assertEquals(source.getBroadMatchs(), target.getBroadMatchs());
+        assertEquals(source.getNarrowMatchs(), target.getNarrowMatchs());
+        assertEquals(source.getRelatedMatchs(), target.getRelatedMatchs());
+
+        assertEquals(source.getMembers(), target.getMembers());
+        assertEquals(source.getSubGroups(), target.getSubGroups());
+        assertEquals(source.getReplacedBy(), target.getReplacedBy());
+
+        assertEquals(1, target.getImages().size());
+        assertEquals("http://example.com/photo.jpg", target.getImages().get(0).getUri());
+
+        assertEquals(source.getExternalResources(), target.getExternalResources());
+        assertEquals(source.getMemberOfFacets(), target.getMemberOfFacets());
+
+        assertEquals(1, target.getAlignments().size());
+        assertEquals("http://example.com/toDelete", target.getAlignments().get(0).getValue());
+    }
+
+    private static ThesaurusCsvConceptObject fullyPopulatedSource() {
         ThesaurusCsvConceptObject source = new ThesaurusCsvConceptObject();
         source.setIdConcept("C1");
         source.setUri("http://example.com/c1");
@@ -114,70 +193,7 @@ class WorkshopCsvConceptMapperTest {
         source.getMemberOfFacets().add("facet1");
 
         source.getAlignments().add(new NodeIdValue("", "http://example.com/toDelete"));
-
-        ThesaurusCsvConceptObject target = WorkshopCsvConceptMapper.toEditionModel(source);
-
-        assertNotNull(target);
-        assertEquals("C1", target.getIdConcept());
-        assertEquals("http://example.com/c1", target.getUri());
-        assertEquals("local1", target.getLocalId());
-        assertEquals("ark1", target.getArkId());
-        assertEquals("term1", target.getIdTerm());
-        assertEquals("skos:concept", target.getType());
-        assertEquals("people", target.getConceptType());
-        assertTrue(target.isDeprecated());
-        assertEquals("N1", target.getNotation());
-        assertEquals("48.85", target.getLatitude());
-        assertEquals("2.35", target.getLongitude());
-        assertEquals("48.85,2.35", target.getGps());
-        assertEquals("facetParent", target.getSuperOrdinate());
-        assertEquals("2024-01-01", target.getCreated());
-        assertEquals("2024-02-02", target.getModified());
-
-        assertEquals(1, target.getPrefLabels().size());
-        assertEquals("Chat", target.getPrefLabels().get(0).getLabel());
-        assertEquals("fr", target.getPrefLabels().get(0).getLang());
-
-        assertEquals(1, target.getAltLabels().size());
-        assertEquals("Minou", target.getAltLabels().get(0).getLabel());
-
-        assertEquals(1, target.getHiddenLabels().size());
-        assertEquals("Chah", target.getHiddenLabels().get(0).getLabel());
-
-        assertEquals(1, target.getNote().size());
-        assertEquals("une note", target.getNote().get(0).getLabel());
-
-        assertEquals(1, target.getDefinitions().size());
-        assertEquals(1, target.getScopeNotes().size());
-        assertEquals(1, target.getExamples().size());
-        assertEquals(1, target.getHistoryNotes().size());
-        assertEquals(1, target.getChangeNotes().size());
-        assertEquals(1, target.getEditorialNotes().size());
-
-        assertEquals(source.getBroaders(), target.getBroaders());
-        assertEquals(source.getNarrowers(), target.getNarrowers());
-        assertEquals(source.getRelateds(), target.getRelateds());
-        assertEquals(1, target.getCustomRelations().size());
-        assertEquals("customId", target.getCustomRelations().get(0).getId());
-
-        assertEquals(source.getExactMatchs(), target.getExactMatchs());
-        assertEquals(source.getCloseMatchs(), target.getCloseMatchs());
-        assertEquals(source.getBroadMatchs(), target.getBroadMatchs());
-        assertEquals(source.getNarrowMatchs(), target.getNarrowMatchs());
-        assertEquals(source.getRelatedMatchs(), target.getRelatedMatchs());
-
-        assertEquals(source.getMembers(), target.getMembers());
-        assertEquals(source.getSubGroups(), target.getSubGroups());
-        assertEquals(source.getReplacedBy(), target.getReplacedBy());
-
-        assertEquals(1, target.getImages().size());
-        assertEquals("http://example.com/photo.jpg", target.getImages().get(0).getUri());
-
-        assertEquals(source.getExternalResources(), target.getExternalResources());
-        assertEquals(source.getMemberOfFacets(), target.getMemberOfFacets());
-
-        assertEquals(1, target.getAlignments().size());
-        assertEquals("http://example.com/toDelete", target.getAlignments().get(0).getValue());
+        return source;
     }
 
     @Test

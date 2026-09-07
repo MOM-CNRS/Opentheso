@@ -30,7 +30,6 @@ import static org.mockito.ArgumentMatchers.any;
 import static org.mockito.ArgumentMatchers.anyBoolean;
 import static org.mockito.ArgumentMatchers.anyInt;
 import static org.mockito.ArgumentMatchers.anyString;
-import static org.mockito.ArgumentMatchers.eq;
 import static org.mockito.Mockito.never;
 import static org.mockito.Mockito.verify;
 import static org.mockito.Mockito.when;
@@ -74,14 +73,14 @@ class AdminUserServiceTest {
         when(userCommandRepository.existsByMailIgnoreCase("alice@test.fr")).thenReturn(false);
         when(passwordEncoder.encode("Secret1!")).thenReturn("encoded");
         when(userCommandRepository.createUser(
-                eq("alice"),
-                eq("alice@test.fr"),
-                eq("encoded"),
-                eq(false),
-                eq(null),
-                eq(true),
-                eq(false),
-                eq(true)
+                "alice",
+                "alice@test.fr",
+                "encoded",
+                false,
+                null,
+                true,
+                false,
+                true
         )).thenReturn(42);
 
         CreatedAdminUser created = adminUserService.createUser(

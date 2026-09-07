@@ -324,7 +324,7 @@ class CandidatMutationPersistenceTest {
     }
 
     @Test
-    void saveNewCandidat_rejectsExistingPreferredLabel() throws Exception {
+    void saveNewCandidat_rejectsExistingPreferredLabel() {
         var candidat = new CandidatDto();
         candidat.setNomPref("Existing label");
         when(termRepository.existsPrefLabel("Existing label", "fr", "TH1")).thenReturn(true);
@@ -336,7 +336,7 @@ class CandidatMutationPersistenceTest {
     }
 
     @Test
-    void saveNewCandidat_rejectsExistingSynonym() throws Exception {
+    void saveNewCandidat_rejectsExistingSynonym() {
         var candidat = new CandidatDto();
         candidat.setNomPref("New label");
         when(termRepository.existsPrefLabel("New label", "fr", "TH1")).thenReturn(false);
@@ -349,7 +349,7 @@ class CandidatMutationPersistenceTest {
     }
 
     @Test
-    void saveNewCandidat_createsConceptTermAndDefinitionNote() throws Exception {
+    void saveNewCandidat_createsConceptTermAndDefinitionNote() {
         var candidat = new CandidatDto();
         candidat.setNomPref("New label");
         when(termRepository.existsPrefLabel("New label", "fr", "TH1")).thenReturn(false);
@@ -593,7 +593,7 @@ class CandidatMutationPersistenceTest {
 
     @Test
     void deleteBroaderRelation_deletesBtAndNtRelations() {
-        persistence.deleteBroaderRelation("C1", "TH1", "C2", 7);
+        persistence.deleteBroaderRelation("C1", "TH1", "C2");
 
         verify(hierarchicalRelationshipRepository).deleteAllByIdThesaurusAndIdConcept1AndIdConcept2AndRole("TH1", "C1", "C2", "BT");
         verify(hierarchicalRelationshipRepository).deleteAllByIdThesaurusAndIdConcept1AndIdConcept2AndRole("TH1", "C2", "C1", "NT");
@@ -610,7 +610,7 @@ class CandidatMutationPersistenceTest {
 
     @Test
     void deleteRelatedTerm_deletesBothDirections() {
-        persistence.deleteRelatedTerm("C1", "TH1", "C2", 7);
+        persistence.deleteRelatedTerm("C1", "TH1", "C2");
 
         verify(hierarchicalRelationshipRepository).deleteAllByIdThesaurusAndIdConcept1AndIdConcept2AndRole("TH1", "C1", "C2", "RT");
         verify(hierarchicalRelationshipRepository).deleteAllByIdThesaurusAndIdConcept1AndIdConcept2AndRole("TH1", "C2", "C1", "RT");

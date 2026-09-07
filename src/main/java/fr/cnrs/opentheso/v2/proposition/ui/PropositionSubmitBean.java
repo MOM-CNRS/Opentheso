@@ -2,6 +2,7 @@ package fr.cnrs.opentheso.v2.proposition.ui;
 
 import fr.cnrs.opentheso.utils.MessageUtils;
 import fr.cnrs.opentheso.v2.concept.model.ConceptDetail;
+import fr.cnrs.opentheso.v2.concept.model.ConceptNote;
 import fr.cnrs.opentheso.v2.concept.service.ConceptReadService;
 import fr.cnrs.opentheso.v2.concept.session.ConceptSelectionContext;
 import fr.cnrs.opentheso.v2.concept.write.model.ConceptWriteLanguage;
@@ -22,6 +23,7 @@ import lombok.Getter;
 import lombok.RequiredArgsConstructor;
 import lombok.Setter;
 import org.apache.commons.lang3.StringUtils;
+import org.apache.commons.lang3.Strings;
 import org.primefaces.PrimeFaces;
 
 import java.io.Serializable;
@@ -134,7 +136,7 @@ public class PropositionSubmitBean implements Serializable {
             option.setLabel(PropositionFieldCategory.forNoteType(typeCode).name());
             String existingValue = detail.notes().stream()
                     .filter(note -> typeCode.equals(note.typeCode()))
-                    .map(note -> note.value())
+                    .map(ConceptNote::value)
                     .findFirst()
                     .orElse(null);
             option.setValue(existingValue);
@@ -221,9 +223,13 @@ public class PropositionSubmitBean implements Serializable {
     public void prepareAddNote() {
         newNoteTypeCode = "note";
         newNoteValue = "";
-        newNoteLang = conceptSelectionContext.hasSelection()
-                ? conceptSelectionContext.getSummary().lang()
-                : (availableLanguages.isEmpty() ? null : availableLanguages.get(0).code());
+        if (conceptSelectionContext.hasSelection()) {
+            newNoteLang = conceptSelectionContext.getSummary().lang();
+        } else if (availableLanguages.isEmpty()) {
+            newNoteLang = null;
+        } else {
+            newNoteLang = availableLanguages.get(0).code();
+        }
     }
 
     public void prepareEditNote(PropositionNoteOption option) {
@@ -282,8 +288,8 @@ public class PropositionSubmitBean implements Serializable {
         String value = newSynonymValue.trim();
         boolean duplicate = synonymOptions.stream().anyMatch(option ->
                 !option.isToRemove()
-                        && StringUtils.equalsIgnoreCase(option.getLang(), lang)
-                        && StringUtils.equalsIgnoreCase(option.getValue(), value));
+                        && Strings.CI.equals(option.getLang(), lang)
+                        && Strings.CI.equals(option.getValue(), value));
         if (duplicate) {
             MessageUtils.showWarnMessage("Cette variante existe déjà");
             return;
@@ -307,7 +313,7 @@ public class PropositionSubmitBean implements Serializable {
             PrimeFaces.current().executeScript("PF('v2PropRenameSynonym').hide();");
             return;
         }
-        boolean valueChanged = !StringUtils.equals(
+        boolean valueChanged = !Strings.CS.equals(
                 StringUtils.defaultString(option.getOldValue()).trim(),
                 StringUtils.defaultString(option.getValue()).trim());
         boolean hiddenChanged = option.isHidden() != option.isOldHidden();
@@ -356,7 +362,7 @@ public class PropositionSubmitBean implements Serializable {
             PrimeFaces.current().executeScript("PF('v2PropRenameTraduction').hide();");
             return;
         }
-        boolean valueChanged = !StringUtils.equals(
+        boolean valueChanged = !Strings.CS.equals(
                 StringUtils.defaultString(option.getOldValue()).trim(),
                 StringUtils.defaultString(option.getValue()).trim());
         option.setToUpdate(valueChanged);

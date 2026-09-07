@@ -42,7 +42,7 @@ public class CandidatImportBean implements Serializable {
     private boolean loadDone;
 
     private List<CandidatImportLanguage> allLangs;
-    private SKOSXmlDocument skosXmlDocument;
+    private transient SKOSXmlDocument skosXmlDocument;
 
     public void init() {
         thesaurusContext.syncFromViewParams();

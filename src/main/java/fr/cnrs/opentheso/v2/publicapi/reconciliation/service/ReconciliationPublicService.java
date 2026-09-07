@@ -1,8 +1,10 @@
 package fr.cnrs.opentheso.v2.publicapi.reconciliation.service;
 
+import com.fasterxml.jackson.core.JsonProcessingException;
 import com.fasterxml.jackson.databind.JsonNode;
 import com.fasterxml.jackson.databind.ObjectMapper;
 import fr.cnrs.opentheso.v2.concept.model.ConceptDetail;
+import fr.cnrs.opentheso.v2.concept.model.ConceptNote;
 import fr.cnrs.opentheso.v2.concept.service.ConceptReadService;
 import org.apache.commons.lang3.StringUtils;
 import org.apache.commons.text.similarity.LevenshteinDistance;
@@ -74,7 +76,7 @@ public class ReconciliationPublicService {
         );
     }
 
-    public Map<String, Object> reconcile(String baseUrl, String thesaurusId, String lang, String queriesJson) throws Exception {
+    public Map<String, Object> reconcile(String baseUrl, String thesaurusId, String lang, String queriesJson) throws JsonProcessingException {
         JsonNode root = objectMapper.readTree(queriesJson);
         Map<String, Object> response = new LinkedHashMap<>();
 
@@ -89,7 +91,7 @@ public class ReconciliationPublicService {
         return response;
     }
 
-    public Map<String, Object> extend(String thesaurusId, String lang, String extendJson) throws Exception {
+    public Map<String, Object> extend(String thesaurusId, String lang, String extendJson) throws JsonProcessingException {
         JsonNode json = objectMapper.readTree(extendJson);
 
         List<String> ids = new ArrayList<>();
@@ -193,7 +195,7 @@ public class ReconciliationPublicService {
     private String firstDefinition(ConceptDetail detail) {
         return detail.notesOfType("definition").stream()
                 .findFirst()
-                .map(note -> note.value())
+                .map(ConceptNote::value)
                 .orElse("");
     }
 

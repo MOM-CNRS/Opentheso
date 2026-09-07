@@ -37,7 +37,7 @@ class ApiKeyLookupServiceTest {
     }
 
     @Test
-    void findUserIdByApiKey_returnsMatchingUser() throws Exception {
+    void findUserIdByApiKey_returnsMatchingUser() {
         when(userProfileRepository.findAllWithApiKeys()).thenReturn(List.of(
                 new Object[]{1, "enc1"},
                 new Object[]{2, "enc2"}
@@ -51,7 +51,7 @@ class ApiKeyLookupServiceTest {
     }
 
     @Test
-    void findUserIdByApiKey_ignoresMalformedKeys() throws Exception {
+    void findUserIdByApiKey_ignoresMalformedKeys() {
         when(userProfileRepository.findAllWithApiKeys()).thenReturn(Collections.singletonList(new Object[]{1, "enc1"}));
         when(apiKeyCipher.decrypt("enc1")).thenThrow(new RuntimeException("bad key"));
 

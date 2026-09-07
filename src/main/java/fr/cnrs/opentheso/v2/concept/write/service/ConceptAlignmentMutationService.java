@@ -16,6 +16,7 @@ import fr.cnrs.opentheso.v2.concept.write.model.command.UpdateAlignmentCommand;
 import fr.cnrs.opentheso.v2.concept.write.persistence.ConceptWritePostMutationRepository;
 import lombok.RequiredArgsConstructor;
 import org.apache.commons.lang3.StringUtils;
+import org.apache.commons.lang3.Strings;
 import org.springframework.dao.DataIntegrityViolationException;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
@@ -45,7 +46,7 @@ public class ConceptAlignmentMutationService {
     public List<ConceptWriteAlignmentType> listAlignmentTypes() {
         return alignementTypeRepository.findAll().stream()
                 .map(type -> new ConceptWriteAlignmentType(type.getId(), type.getLabel(), type.getLabelSkos()))
-                .sorted((a, b) -> StringUtils.compareIgnoreCase(a.getLabel(), b.getLabel()))
+                .sorted((a, b) -> Strings.CI.compare(a.getLabel(), b.getLabel()))
                 .toList();
     }
 
@@ -187,7 +188,7 @@ public class ConceptAlignmentMutationService {
         List<NodeAlignmentProjection> remaining =
                 alignementRepository.findAllAlignmentsByConceptAndThesaurus(conceptId, thesaurusId);
         for (NodeAlignmentProjection row : remaining) {
-            if (row != null && StringUtils.equalsIgnoreCase(source, row.getThesaurus_target())) {
+            if (row != null && Strings.CI.equals(source, row.getThesaurus_target())) {
                 return true;
             }
         }

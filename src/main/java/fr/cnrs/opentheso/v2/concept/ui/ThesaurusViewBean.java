@@ -37,6 +37,7 @@ import lombok.Getter;
 import lombok.RequiredArgsConstructor;
 import lombok.Setter;
 import org.apache.commons.lang3.StringUtils;
+import org.apache.commons.lang3.Strings;
 
 import java.io.Serializable;
 import java.text.NumberFormat;
@@ -635,7 +636,7 @@ public class ThesaurusViewBean implements Serializable {
     }
 
     private static boolean matchesNoteLang(String noteLang, String selected) {
-        return StringUtils.equalsIgnoreCase(
+        return Strings.CI.equals(
                 StringUtils.trimToEmpty(noteLang),
                 StringUtils.trimToEmpty(selected)
         );
@@ -666,7 +667,7 @@ public class ThesaurusViewBean implements Serializable {
 
     public List<ConceptNote> notesOfType(String typeCode) {
         return getDisplayedNotes().stream()
-                .filter(note -> StringUtils.equals(note.typeCode(), typeCode))
+                .filter(note -> Strings.CS.equals(note.typeCode(), typeCode))
                 .toList();
     }
 

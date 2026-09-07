@@ -16,7 +16,7 @@ import java.util.function.Function;
 @Slf4j
 public class StatisticsReportCsvWriter {
 
-    private final String separator = ";";
+    private static final String SEPARATOR = ";";
     private BufferedWriter writer;
     private ByteArrayOutputStream output;
 
@@ -24,7 +24,7 @@ public class StatisticsReportCsvWriter {
         writeCSV(
                 datas,
                 "Collection;Concepts;Synonymes;Termes non traduits;Notes;Align Wikidata;Total align",
-                data -> String.join(separator,
+                data -> String.join(SEPARATOR,
                         data.getCollection(),
                         String.valueOf(data.getConceptsNbr()),
                         String.valueOf(data.getSynonymesNbr()),
@@ -39,7 +39,7 @@ public class StatisticsReportCsvWriter {
         writeCSV(
                 datas,
                 "IdConcept;Label;Type;Date création;Date modification;Utilisateur",
-                data -> String.join(separator,
+                data -> String.join(SEPARATOR,
                         data.getIdConcept(),
                         data.getLabel(),
                         data.getType(),

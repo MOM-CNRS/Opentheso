@@ -1,47 +1,26 @@
 package fr.cnrs.opentheso.v2.proposition.model;
 
 import org.junit.jupiter.api.Test;
+import org.junit.jupiter.params.ParameterizedTest;
+import org.junit.jupiter.params.provider.CsvSource;
 
 import static org.junit.jupiter.api.Assertions.assertEquals;
-import static org.junit.jupiter.api.Assertions.assertFalse;
-import static org.junit.jupiter.api.Assertions.assertTrue;
 
 class PropositionNoteOptionTest {
 
-    @Test
-    void hasChanged_isFalseWhenValueMatchesOldValue() {
+    @ParameterizedTest
+    @CsvSource(value = {
+            "Un chat, Un chat, false",
+            "Un chat noir, Un chat, true",
+            "NULL, '', false",
+            "'  Un chat  ', Un chat, false"
+    }, nullValues = "NULL")
+    void hasChanged_comparesTrimmedValues(String value, String oldValue, boolean expected) {
         var note = new PropositionNoteOption();
-        note.setValue("Un chat");
-        note.setOldValue("Un chat");
+        note.setValue(value);
+        note.setOldValue(oldValue);
 
-        assertFalse(note.hasChanged());
-    }
-
-    @Test
-    void hasChanged_isTrueWhenValueDiffersFromOldValue() {
-        var note = new PropositionNoteOption();
-        note.setValue("Un chat noir");
-        note.setOldValue("Un chat");
-
-        assertTrue(note.hasChanged());
-    }
-
-    @Test
-    void hasChanged_treatsNullAsBlank() {
-        var note = new PropositionNoteOption();
-        note.setValue(null);
-        note.setOldValue("");
-
-        assertFalse(note.hasChanged());
-    }
-
-    @Test
-    void hasChanged_ignoresSurroundingWhitespace() {
-        var note = new PropositionNoteOption();
-        note.setValue("  Un chat  ");
-        note.setOldValue("Un chat");
-
-        assertFalse(note.hasChanged());
+        assertEquals(expected, note.hasChanged());
     }
 
     @Test

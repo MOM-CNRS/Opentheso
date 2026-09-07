@@ -104,10 +104,7 @@ class CandidatBeanTest {
 
     @Test
     void isScreenAvailable_falseWhenNotContributor() {
-        when(candidatAccessPolicy.canAccessModule(userSession, "TH1")).thenReturn(false);
-        when(thesaurusContext.resolveThesaurusId()).thenReturn("TH1");
-
-        assertFalse(bean.isScreenAvailable());
+        isScreenAvailable_falseWhenNotLoggedIn();
     }
 
     @Test
@@ -195,7 +192,7 @@ class CandidatBeanTest {
     void deleteSelectedCandidate_doesNothingWhenNoSelection() {
         bean.setSelectedCandidates(List.of());
 
-        bean.deleteSelectedCandidate(7);
+        bean.deleteSelectedCandidate();
 
         verify(candidatMutationService, never()).deleteConcept(any(), any());
     }
@@ -205,7 +202,7 @@ class CandidatBeanTest {
         bean.setSelectedCandidates(List.of(candidat()));
         when(candidatMutationService.deleteConcept("C1", "TH1")).thenReturn(false);
 
-        bean.deleteSelectedCandidate(7);
+        bean.deleteSelectedCandidate();
 
         messageUtilsStatic.verify(() -> MessageUtils.showErrorMessage("Erreur de suppression"));
     }
@@ -217,7 +214,7 @@ class CandidatBeanTest {
         when(candidatReadService.loadByStatus(any(), any(), anyInt())).thenReturn(List.of());
         when(candidatMutationService.loadUsedLanguages(any(), any())).thenReturn(List.of());
 
-        bean.deleteSelectedCandidate(7);
+        bean.deleteSelectedCandidate();
 
         messageUtilsStatic.verify(() -> MessageUtils.showInformationMessage("Candidats supprimés"));
     }
@@ -226,7 +223,7 @@ class CandidatBeanTest {
     void deleteCandidate_doesNothingWhenNoCandidateSelected() {
         bean.setCandidatSelected(null);
 
-        bean.deleteCandidate(7);
+        bean.deleteCandidate();
 
         verify(candidatMutationService, never()).deleteConcept(any(), any());
     }
@@ -238,7 +235,7 @@ class CandidatBeanTest {
         when(candidatReadService.loadByStatus(any(), any(), anyInt())).thenReturn(List.of());
         when(candidatMutationService.loadUsedLanguages(any(), any())).thenReturn(List.of());
 
-        bean.deleteCandidate(7);
+        bean.deleteCandidate();
 
         messageUtilsStatic.verify(() -> MessageUtils.showInformationMessage("Candidat supprimé"));
     }
@@ -377,7 +374,7 @@ class CandidatBeanTest {
         bean.setShowCandidatActivate(true);
         bean.setIsNewCandidatActivate(true);
 
-        bean.setIsListCandidatsActivate(true);
+        bean.setIsListCandidatsActivate();
 
         assertTrue(bean.isListCandidatsActivate());
         assertFalse(bean.isShowCandidatActivate());
@@ -386,7 +383,7 @@ class CandidatBeanTest {
     }
 
     @Test
-    void saveConcept_warnsWhenLabelBlank() throws Exception {
+    void saveConcept_warnsWhenLabelBlank() {
         var candidat = candidat();
         candidat.setNomPref("");
         bean.setCandidatSelected(candidat);
@@ -398,7 +395,7 @@ class CandidatBeanTest {
     }
 
     @Test
-    void saveConcept_warnsWhenNoThesaurusPreferences() throws Exception {
+    void saveConcept_warnsWhenNoThesaurusPreferences() {
         bean.setCandidatSelected(candidat());
         when(preferencesJpaRepository.findByIdThesaurus("TH1")).thenReturn(Optional.empty());
         when(localeBean.getMsg("candidat.save.msg2")).thenReturn("Préférences manquantes");
@@ -409,7 +406,7 @@ class CandidatBeanTest {
     }
 
     @Test
-    void saveConcept_savesNewCandidateWhenNoInitialCandidat() throws Exception {
+    void saveConcept_savesNewCandidateWhenNoInitialCandidat() {
         bean.setCandidatSelected(candidat());
         bean.setInitialCandidat(null);
         bean.setDefinition("Une définition");
@@ -428,7 +425,7 @@ class CandidatBeanTest {
     }
 
     @Test
-    void addVote_addsVoteWhenNoneExists() throws Exception {
+    void addVote_addsVoteWhenNoneExists() {
         var candidat = candidat();
         bean.setCandidatSelected(candidat);
         when(userSession.getCurrentUserId()).thenReturn(7);
@@ -441,7 +438,7 @@ class CandidatBeanTest {
     }
 
     @Test
-    void addVote_removesVoteWhenAlreadyVoted() throws Exception {
+    void addVote_removesVoteWhenAlreadyVoted() {
         var candidat = candidat();
         bean.setCandidatSelected(candidat);
         when(userSession.getCurrentUserId()).thenReturn(7);
@@ -539,7 +536,7 @@ class CandidatBeanTest {
     }
 
     @Test
-    void reactivateRejectedCandidat_showsErrorWhenUpdateFails() throws Exception {
+    void reactivateRejectedCandidat_showsErrorWhenUpdateFails() {
         bean.setCandidatSelected(candidat());
         when(candidatMutationService.updateCandidateStatus("TH1", "C1", 1)).thenReturn(false);
 
@@ -549,7 +546,7 @@ class CandidatBeanTest {
     }
 
     @Test
-    void reactivateRejectedCandidat_reactivatesSuccessfully() throws Exception {
+    void reactivateRejectedCandidat_reactivatesSuccessfully() {
         bean.setCandidatSelected(candidat());
         when(candidatMutationService.updateCandidateStatus("TH1", "C1", 1)).thenReturn(true);
         when(candidatReadService.loadByStatus(any(), any(), anyInt())).thenReturn(List.of());
@@ -601,7 +598,7 @@ class CandidatBeanTest {
 
         bean.updateAlignement();
 
-        verify(candidatMutationService).updateAlignment(any(AlignementElement.class), eq("C1"), eq("TH1"));
+        verify(candidatMutationService).updateAlignment(any(AlignementElement.class));
         messageUtilsStatic.verify(() -> MessageUtils.showInformationMessage("Alignement mise à jour avec succès !"));
     }
 

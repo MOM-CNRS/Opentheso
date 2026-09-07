@@ -17,10 +17,7 @@ public class ThesaurusManager {
             case SKOSProperty.FACET:
                 sKOSXmlDocument.addFacet(skosResource);
                 break;
-            case SKOSProperty.CONCEPT_GROUP:
-            case SKOSProperty.COLLECTION:
-            case SKOSProperty.THEME:
-            case SKOSProperty.MICROTHESAURUS:
+            case SKOSProperty.CONCEPT_GROUP, SKOSProperty.COLLECTION, SKOSProperty.THEME, SKOSProperty.MICROTHESAURUS:
                 sKOSXmlDocument.addGroup(skosResource);
                 break;
             case SKOSProperty.CONCEPT:
