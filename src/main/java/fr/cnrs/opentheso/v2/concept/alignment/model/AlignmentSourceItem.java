@@ -29,7 +29,7 @@ public class AlignmentSourceItem implements Serializable {
             String sourceType,
             String url
     ) {
-        this(sourceId, label, description, selected, global, sourceType, url, null);
+        this(sourceId, label, description, selected, global, new SourceDetails(sourceType, url, null));
     }
 
     public AlignmentSourceItem(
@@ -38,18 +38,19 @@ public class AlignmentSourceItem implements Serializable {
             String description,
             boolean selected,
             boolean global,
-            String sourceType,
-            String url,
-            String thesaurusOwner
+            SourceDetails details
     ) {
         this.sourceId = sourceId;
         this.label = label;
         this.description = description;
         this.selected = selected;
         this.global = global;
-        this.sourceType = sourceType;
-        this.url = url;
-        this.thesaurusOwner = thesaurusOwner;
+        this.sourceType = details == null ? null : details.sourceType();
+        this.url = details == null ? null : details.url();
+        this.thesaurusOwner = details == null ? null : details.thesaurusOwner();
+    }
+
+    public record SourceDetails(String sourceType, String url, String thesaurusOwner) {
     }
 
     public boolean isLocalSource() {

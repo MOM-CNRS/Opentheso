@@ -160,35 +160,9 @@ public class ActionsLotNoteService {
         int rejected = 0;
 
         for (ActionsLotNoteCandidate candidate : candidates) {
-            if (candidate == null || StringUtils.isBlank(candidate.value()) || StringUtils.isBlank(candidate.typeCode())) {
-                rejected++;
-                continue;
-            }
-            if (clearBefore && clearedConcepts.add(candidate.conceptId())) {
-                persistence.deleteNotes(candidate.conceptId(), thesaurusId);
-            }
-            if (!clearBefore && persistence.isNoteExist(
-                    candidate.conceptId(),
-                    thesaurusId,
-                    candidate.lang(),
-                    candidate.value(),
-                    candidate.typeCode()
-            )) {
-                rejected++;
-                continue;
-            }
-            try {
-                persistence.addNote(
-                        candidate.conceptId(),
-                        candidate.lang(),
-                        thesaurusId,
-                        candidate.value(),
-                        candidate.typeCode(),
-                        "import",
-                        userId
-                );
+            if (applyNoteCandidate(candidate, thesaurusId, userId, clearBefore, clearedConcepts)) {
                 applied++;
-            } catch (Exception ex) {
+            } else {
                 rejected++;
             }
         }
@@ -200,6 +174,44 @@ public class ActionsLotNoteService {
                 applied,
                 rejected
         );
+    }
+
+    private boolean applyNoteCandidate(
+            ActionsLotNoteCandidate candidate,
+            String thesaurusId,
+            int userId,
+            boolean clearBefore,
+            Set<String> clearedConcepts
+    ) {
+        if (candidate == null || StringUtils.isBlank(candidate.value()) || StringUtils.isBlank(candidate.typeCode())) {
+            return false;
+        }
+        if (clearBefore && clearedConcepts.add(candidate.conceptId())) {
+            persistence.deleteNotes(candidate.conceptId(), thesaurusId);
+        }
+        if (!clearBefore && persistence.isNoteExist(
+                candidate.conceptId(),
+                thesaurusId,
+                candidate.lang(),
+                candidate.value(),
+                candidate.typeCode()
+        )) {
+            return false;
+        }
+        try {
+            persistence.addNote(
+                    candidate.conceptId(),
+                    candidate.lang(),
+                    thesaurusId,
+                    candidate.value(),
+                    candidate.typeCode(),
+                    "import",
+                    userId
+            );
+            return true;
+        } catch (Exception ex) {
+            return false;
+        }
     }
 
     public byte[] templateBytes() {

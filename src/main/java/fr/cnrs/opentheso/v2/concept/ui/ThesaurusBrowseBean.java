@@ -1157,21 +1157,24 @@ public class ThesaurusBrowseBean implements Serializable, ConceptNavigationSuppo
         }
 
         clearAllLeftTreeSelections();
+        selectSingleTreeNode(findExpandedConceptNode(conceptId));
+    }
 
-        TreeNode<Object> found = null;
+    private TreeNode<Object> findExpandedConceptNode(String conceptId) {
         for (List<String> pathIds : resolveAllConceptPathIds(conceptId)) {
-            if (pathIds.isEmpty()) {
-                continue;
-            }
-            found = expandPath(conceptRoot, pathIds, 0, LeftTreeMode.CONCEPT);
+            TreeNode<Object> found = expandIfPathPresent(pathIds);
             if (found != null) {
-                break;
+                return found;
             }
         }
-        if (found == null) {
-            found = expandPath(conceptRoot, List.of(conceptId), 0, LeftTreeMode.CONCEPT);
+        return expandPath(conceptRoot, List.of(conceptId), 0, LeftTreeMode.CONCEPT);
+    }
+
+    private TreeNode<Object> expandIfPathPresent(List<String> pathIds) {
+        if (pathIds.isEmpty()) {
+            return null;
         }
-        selectSingleTreeNode(found);
+        return expandPath(conceptRoot, pathIds, 0, LeftTreeMode.CONCEPT);
     }
 
     /**
@@ -1249,23 +1252,36 @@ public class ThesaurusBrowseBean implements Serializable, ConceptNavigationSuppo
             rootNode.setExpanded(true);
         }
         for (Object childObject : parent.getChildren()) {
-            if (!(childObject instanceof TreeNode<?> child)) {
-                continue;
+            TreeNode<Object> found = matchAndExpandChild(childObject, targetId, pathIds, depth, mode);
+            if (found != null) {
+                return found;
             }
-            if (!(child.getData() instanceof ConceptTreeNodeData data) || data.isDummy()) {
-                continue;
-            }
-            if (!targetId.equalsIgnoreCase(data.nodeId())) {
-                continue;
-            }
-            boolean last = depth == pathIds.size() - 1;
-            child.setExpanded(!last);
-            if (last) {
-                return (TreeNode<Object>) child;
-            }
-            return expandPath(child, pathIds, depth + 1, mode);
         }
         return null;
+    }
+
+    private TreeNode<Object> matchAndExpandChild(
+            Object childObject,
+            String targetId,
+            List<String> pathIds,
+            int depth,
+            LeftTreeMode mode
+    ) {
+        if (!(childObject instanceof TreeNode<?> child)) {
+            return null;
+        }
+        if (!(child.getData() instanceof ConceptTreeNodeData data) || data.isDummy()) {
+            return null;
+        }
+        if (!targetId.equalsIgnoreCase(data.nodeId())) {
+            return null;
+        }
+        boolean last = depth == pathIds.size() - 1;
+        child.setExpanded(!last);
+        if (last) {
+            return (TreeNode<Object>) child;
+        }
+        return expandPath(child, pathIds, depth + 1, mode);
     }
 
     private void ensureChildrenLoaded(DefaultTreeNode<Object> parentNode, LeftTreeMode mode) {

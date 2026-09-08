@@ -3,6 +3,7 @@ package fr.cnrs.opentheso.v2.candidat.ui;
 import fr.cnrs.opentheso.entites.NoteType;
 import fr.cnrs.opentheso.models.notes.NodeNote;
 import fr.cnrs.opentheso.utils.MessageUtils;
+import fr.cnrs.opentheso.v2.candidat.persistence.CandidatMutationPersistence;
 import fr.cnrs.opentheso.v2.candidat.service.CandidatMutationService;
 import fr.cnrs.opentheso.v2.setting.ui.ThesaurusContext;
 import fr.cnrs.opentheso.v2.shared.ui.UserSession;
@@ -80,7 +81,7 @@ public class CandidatNoteBean implements Serializable {
     }
 
     public void updateNote() {
-        if (!candidatMutationService.updateCandidateNote(
+        if (!candidatMutationService.updateCandidateNote(new CandidatMutationPersistence.UpdateCandidateNoteRequest(
                 selectedNodeNote.getIdNote(),
                 selectedNodeNote.getIdConcept(),
                 selectedNodeNote.getLang(),
@@ -88,7 +89,7 @@ public class CandidatNoteBean implements Serializable {
                 selectedNodeNote.getLexicalValue(),
                 selectedNodeNote.getNoteSource(),
                 selectedNodeNote.getNoteTypeCode(),
-                requireUserId())) {
+                requireUserId()))) {
             MessageUtils.showErrorMessage("Erreur pendant la modification de la note !");
             return;
         }

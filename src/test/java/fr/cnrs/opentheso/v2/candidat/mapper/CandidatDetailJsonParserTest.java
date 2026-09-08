@@ -9,7 +9,7 @@ class CandidatDetailJsonParserTest {
 
     @Test
     void parse_readsCollectionsNotesAndVotes() {
-        var parsed = CandidatDetailJsonParser.parse(
+        var parsed = CandidatDetailJsonParser.parse(new CandidatDetailJsonParser.DetailJsonRequest(
                 "[{\"id\":\"G1\",\"value\":\"Collection 1\"}]",
                 "[{\"id\":\"BT1\",\"value\":\"Broader\"}]",
                 "[]",
@@ -18,7 +18,7 @@ class CandidatDetailJsonParserTest {
                 "[\"10\",\"11\"]",
                 "[{\"lang\":\"en\",\"lexicalValue\":\"Hello\",\"countryCode\":\"gb\"}]",
                 "[{\"idUser\":3,\"username\":\"alice\",\"value\":\"msg\",\"date\":\"2024-01-01\"}]"
-        );
+        ));
 
         assertEquals(1, parsed.collections().size());
         assertEquals("G1", parsed.collections().get(0).id());

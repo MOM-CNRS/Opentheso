@@ -30,6 +30,7 @@ import java.io.Serializable;
 import java.util.ArrayList;
 import java.util.LinkedHashSet;
 import java.util.List;
+import java.util.Optional;
 import java.util.Set;
 
 /**
@@ -285,11 +286,20 @@ public class ConceptResourceBlockEditorBean implements Serializable {
             int userId,
             String contributor
     ) {
-        List<ImageEditRow> images = normalizedImages();
-        if (images == null) {
+        Optional<List<ImageEditRow>> images = normalizedImages();
+        if (images.isEmpty()) {
             return false;
         }
-        boolean dirty = false;
+        ResourceWriteContext ctx = new ResourceWriteContext(thesaurusId, conceptId, userId, contributor);
+        DirtyUpdate dirty = deleteRemovedImages(current, images.get(), ctx, false);
+        if (!dirty.ok) {
+            return false;
+        }
+        return upsertImages(current, images.get(), ctx, dirty.dirty).ok;
+    }
+
+    private DirtyUpdate deleteRemovedImages(
+            ConceptDetail current, List<ImageEditRow> images, ResourceWriteContext ctx, boolean dirty) {
         Set<Integer> keptImageIds = new LinkedHashSet<>();
         for (ImageEditRow row : images) {
             if (row.getId() > 0) {
@@ -297,39 +307,60 @@ public class ConceptResourceBlockEditorBean implements Serializable {
             }
         }
         for (ConceptImageItem old : safeImages(current)) {
-            if (old.id() > 0 && !keptImageIds.contains(old.id())) {
-                MutationResult deleted = conceptMediaMutationService.deleteImage(new DeleteConceptImageCommand(
-                        thesaurusId, conceptId, userId, contributor, old.uri()));
-                if (!applyResult(deleted, dirty)) {
-                    return false;
-                }
-                dirty = true;
+            DirtyUpdate next = deleteRemovedImage(old, keptImageIds, ctx, dirty);
+            if (!next.ok) {
+                return DirtyUpdate.fail();
             }
+            dirty = next.dirty;
         }
+        return DirtyUpdate.of(dirty);
+    }
+
+    private DirtyUpdate deleteRemovedImage(
+            ConceptImageItem old, Set<Integer> keptImageIds, ResourceWriteContext ctx, boolean dirty) {
+        if (old.id() <= 0 || keptImageIds.contains(old.id())) {
+            return DirtyUpdate.of(dirty);
+        }
+        MutationResult deleted = conceptMediaMutationService.deleteImage(new DeleteConceptImageCommand(
+                ctx.thesaurusId(), ctx.conceptId(), ctx.userId(), ctx.contributor(), old.uri()));
+        if (!applyResult(deleted, dirty)) {
+            return DirtyUpdate.fail();
+        }
+        return DirtyUpdate.of(true);
+    }
+
+    private DirtyUpdate upsertImages(
+            ConceptDetail current, List<ImageEditRow> images, ResourceWriteContext ctx, boolean dirty) {
         for (ImageEditRow row : images) {
-            if (row.getId() > 0) {
-                ConceptImageItem previous = imageById(current, row.getId());
-                if (previous != null && imageUnchanged(previous, row)) {
-                    continue;
-                }
-                MutationResult updated = conceptMediaMutationService.updateImage(new UpdateConceptImageCommand(
-                        thesaurusId, conceptId, userId, contributor,
-                        row.getId(), row.getUri(), row.getName(), row.getCreator(), row.getCopyright()));
-                if (!applyResult(updated, dirty)) {
-                    return false;
-                }
-                dirty = true;
-            } else {
-                MutationResult added = conceptMediaMutationService.addImage(new AddConceptImageCommand(
-                        thesaurusId, conceptId, userId, contributor,
-                        row.getUri(), row.getName(), row.getCreator(), row.getCopyright()));
-                if (!applyResult(added, dirty)) {
-                    return false;
-                }
-                dirty = true;
+            DirtyUpdate next = upsertImage(current, row, ctx, dirty);
+            if (!next.ok) {
+                return DirtyUpdate.fail();
             }
+            dirty = next.dirty;
         }
-        return true;
+        return DirtyUpdate.of(dirty);
+    }
+
+    private DirtyUpdate upsertImage(
+            ConceptDetail current, ImageEditRow row, ResourceWriteContext ctx, boolean dirty) {
+        MutationResult result;
+        if (row.getId() > 0) {
+            ConceptImageItem previous = imageById(current, row.getId());
+            if (previous != null && imageUnchanged(previous, row)) {
+                return DirtyUpdate.of(dirty);
+            }
+            result = conceptMediaMutationService.updateImage(new UpdateConceptImageCommand(
+                    ctx.thesaurusId(), ctx.conceptId(), ctx.userId(), ctx.contributor(),
+                    row.getId(), row.getUri(), row.getName(), row.getCreator(), row.getCopyright()));
+        } else {
+            result = conceptMediaMutationService.addImage(new AddConceptImageCommand(
+                    ctx.thesaurusId(), ctx.conceptId(), ctx.userId(), ctx.contributor(),
+                    row.getUri(), row.getName(), row.getCreator(), row.getCopyright()));
+        }
+        if (!applyResult(result, dirty)) {
+            return DirtyUpdate.fail();
+        }
+        return DirtyUpdate.of(true);
     }
 
     private boolean persistLinks(
@@ -339,11 +370,24 @@ public class ConceptResourceBlockEditorBean implements Serializable {
             int userId,
             String contributor
     ) {
-        List<ExternalResourceEditRow> resources = normalizedResources();
-        if (resources == null) {
+        Optional<List<ExternalResourceEditRow>> resources = normalizedResources();
+        if (resources.isEmpty()) {
             return false;
         }
-        boolean dirty = false;
+        ResourceWriteContext ctx = new ResourceWriteContext(thesaurusId, conceptId, userId, contributor);
+        DirtyUpdate dirty = deleteRemovedLinks(current, resources.get(), ctx, false);
+        if (!dirty.ok) {
+            return false;
+        }
+        return upsertLinks(current, resources.get(), ctx, dirty.dirty).ok;
+    }
+
+    private DirtyUpdate deleteRemovedLinks(
+            ConceptDetail current,
+            List<ExternalResourceEditRow> resources,
+            ResourceWriteContext ctx,
+            boolean dirty
+    ) {
         Set<String> keptResourceUris = new LinkedHashSet<>();
         for (ExternalResourceEditRow row : resources) {
             String key = org.apache.commons.lang3.StringUtils.trimToEmpty(row.getOldUri());
@@ -352,104 +396,146 @@ public class ConceptResourceBlockEditorBean implements Serializable {
             }
         }
         for (ConceptExternalResourceItem old : safeResources(current)) {
-            String uri = org.apache.commons.lang3.StringUtils.trimToEmpty(old.uri());
-            if (!uri.isEmpty() && !keptResourceUris.contains(uri)) {
-                MutationResult deleted = conceptMediaMutationService.deleteExternalResource(
-                        new DeleteExternalResourceCommand(thesaurusId, conceptId, userId, contributor, uri));
-                if (!applyResult(deleted, dirty)) {
-                    return false;
-                }
-                dirty = true;
+            DirtyUpdate next = deleteRemovedLink(old, keptResourceUris, ctx, dirty);
+            if (!next.ok) {
+                return DirtyUpdate.fail();
             }
+            dirty = next.dirty;
         }
-        for (ExternalResourceEditRow row : resources) {
-            String oldUri = org.apache.commons.lang3.StringUtils.trimToEmpty(row.getOldUri());
-            if (oldUri.isEmpty()) {
-                MutationResult added = conceptMediaMutationService.addExternalResource(new AddExternalResourceCommand(
-                        thesaurusId, conceptId, userId, contributor, row.getUri(), row.getDescription()));
-                if (!applyResult(added, dirty)) {
-                    return false;
-                }
-                dirty = true;
-            } else {
-                ConceptExternalResourceItem previous = resourceByUri(current, oldUri);
-                if (previous != null && resourceUnchanged(previous, row)) {
-                    continue;
-                }
-                MutationResult updated = conceptMediaMutationService.updateExternalResource(
-                        new UpdateExternalResourceCommand(
-                                thesaurusId, conceptId, userId, contributor,
-                                oldUri, row.getUri(), row.getDescription()));
-                if (!applyResult(updated, dirty)) {
-                    return false;
-                }
-                dirty = true;
-            }
-        }
-        return true;
+        return DirtyUpdate.of(dirty);
     }
 
-    private List<ExternalResourceEditRow> normalizedResources() {
+    private DirtyUpdate deleteRemovedLink(
+            ConceptExternalResourceItem old, Set<String> keptResourceUris, ResourceWriteContext ctx, boolean dirty) {
+        String uri = org.apache.commons.lang3.StringUtils.trimToEmpty(old.uri());
+        if (uri.isEmpty() || keptResourceUris.contains(uri)) {
+            return DirtyUpdate.of(dirty);
+        }
+        MutationResult deleted = conceptMediaMutationService.deleteExternalResource(
+                new DeleteExternalResourceCommand(
+                        ctx.thesaurusId(), ctx.conceptId(), ctx.userId(), ctx.contributor(), uri));
+        if (!applyResult(deleted, dirty)) {
+            return DirtyUpdate.fail();
+        }
+        return DirtyUpdate.of(true);
+    }
+
+    private DirtyUpdate upsertLinks(
+            ConceptDetail current,
+            List<ExternalResourceEditRow> resources,
+            ResourceWriteContext ctx,
+            boolean dirty
+    ) {
+        for (ExternalResourceEditRow row : resources) {
+            DirtyUpdate next = upsertLink(current, row, ctx, dirty);
+            if (!next.ok) {
+                return DirtyUpdate.fail();
+            }
+            dirty = next.dirty;
+        }
+        return DirtyUpdate.of(dirty);
+    }
+
+    private DirtyUpdate upsertLink(
+            ConceptDetail current, ExternalResourceEditRow row, ResourceWriteContext ctx, boolean dirty) {
+        String oldUri = org.apache.commons.lang3.StringUtils.trimToEmpty(row.getOldUri());
+        MutationResult result;
+        if (oldUri.isEmpty()) {
+            result = conceptMediaMutationService.addExternalResource(new AddExternalResourceCommand(
+                    ctx.thesaurusId(), ctx.conceptId(), ctx.userId(), ctx.contributor(),
+                    row.getUri(), row.getDescription()));
+        } else {
+            ConceptExternalResourceItem previous = resourceByUri(current, oldUri);
+            if (previous != null && resourceUnchanged(previous, row)) {
+                return DirtyUpdate.of(dirty);
+            }
+            result = conceptMediaMutationService.updateExternalResource(
+                    new UpdateExternalResourceCommand(
+                            ctx.thesaurusId(), ctx.conceptId(), ctx.userId(), ctx.contributor(),
+                            oldUri, row.getUri(), row.getDescription()));
+        }
+        if (!applyResult(result, dirty)) {
+            return DirtyUpdate.fail();
+        }
+        return DirtyUpdate.of(true);
+    }
+
+    private Optional<List<ExternalResourceEditRow>> normalizedResources() {
         List<ExternalResourceEditRow> cleaned = new ArrayList<>();
         Set<String> seen = new LinkedHashSet<>();
         for (ExternalResourceEditRow row : resourceRows) {
-            if (row == null) {
-                continue;
+            if (!acceptResourceRow(row, cleaned, seen)) {
+                return Optional.empty();
             }
-            String uri = org.apache.commons.lang3.StringUtils.trimToEmpty(row.getUri());
-            String description = org.apache.commons.lang3.StringUtils.trimToEmpty(row.getDescription());
-            String oldUri = org.apache.commons.lang3.StringUtils.trimToEmpty(row.getOldUri());
-            if (uri.isEmpty() && description.isEmpty() && oldUri.isEmpty()) {
-                continue;
-            }
-            if (uri.isEmpty()) {
-                errorMessage = "L'URI de la ressource est obligatoire.";
-                return null;
-            }
-            if (!StringUtils.urlValidator(uri)) {
-                errorMessage = "L'URL n'est pas valide !";
-                return null;
-            }
-            if (!seen.add(uri)) {
-                errorMessage = "Chaque URI de ressource doit être unique.";
-                return null;
-            }
-            ExternalResourceEditRow copy = new ExternalResourceEditRow(oldUri, description);
-            copy.setOldUri(oldUri);
-            copy.setUri(uri);
-            copy.setDescription(description);
-            cleaned.add(copy);
         }
-        return cleaned;
+        return Optional.of(cleaned);
     }
 
-    private List<ImageEditRow> normalizedImages() {
+    private boolean acceptResourceRow(
+            ExternalResourceEditRow row, List<ExternalResourceEditRow> cleaned, Set<String> seen) {
+        if (row == null) {
+            return true;
+        }
+        String uri = org.apache.commons.lang3.StringUtils.trimToEmpty(row.getUri());
+        String description = org.apache.commons.lang3.StringUtils.trimToEmpty(row.getDescription());
+        String oldUri = org.apache.commons.lang3.StringUtils.trimToEmpty(row.getOldUri());
+        if (uri.isEmpty() && description.isEmpty() && oldUri.isEmpty()) {
+            return true;
+        }
+        if (uri.isEmpty()) {
+            errorMessage = "L'URI de la ressource est obligatoire.";
+            return false;
+        }
+        if (!StringUtils.urlValidator(uri)) {
+            errorMessage = "L'URL n'est pas valide !";
+            return false;
+        }
+        if (!seen.add(uri)) {
+            errorMessage = "Chaque URI de ressource doit être unique.";
+            return false;
+        }
+        ExternalResourceEditRow copy = new ExternalResourceEditRow(oldUri, description);
+        copy.setOldUri(oldUri);
+        copy.setUri(uri);
+        copy.setDescription(description);
+        cleaned.add(copy);
+        return true;
+    }
+
+    private Optional<List<ImageEditRow>> normalizedImages() {
         List<ImageEditRow> cleaned = new ArrayList<>();
         Set<String> seen = new LinkedHashSet<>();
         for (ImageEditRow row : imageRows) {
-            if (row == null) {
-                continue;
+            if (!acceptImageRow(row, cleaned, seen)) {
+                return Optional.empty();
             }
-            String uri = org.apache.commons.lang3.StringUtils.trimToEmpty(row.getUri());
-            String name = org.apache.commons.lang3.StringUtils.trimToEmpty(row.getName());
-            String creator = org.apache.commons.lang3.StringUtils.trimToEmpty(row.getCreator());
-            String copyright = org.apache.commons.lang3.StringUtils.trimToEmpty(row.getCopyright());
-            if (uri.isEmpty() && name.isEmpty() && creator.isEmpty() && copyright.isEmpty() && row.getId() <= 0) {
-                continue;
-            }
-            if (uri.isEmpty()) {
-                errorMessage = "L'URI de l'image est obligatoire.";
-                return null;
-            }
-            if (!seen.add(uri)) {
-                errorMessage = "Chaque URI d'image doit être unique.";
-                return null;
-            }
-            ImageEditRow copy = new ImageEditRow(row.getId(), uri, name, creator, copyright);
-            copy.setOldUri(org.apache.commons.lang3.StringUtils.trimToEmpty(row.getOldUri()));
-            cleaned.add(copy);
         }
-        return cleaned;
+        return Optional.of(cleaned);
+    }
+
+    private boolean acceptImageRow(ImageEditRow row, List<ImageEditRow> cleaned, Set<String> seen) {
+        if (row == null) {
+            return true;
+        }
+        String uri = org.apache.commons.lang3.StringUtils.trimToEmpty(row.getUri());
+        String name = org.apache.commons.lang3.StringUtils.trimToEmpty(row.getName());
+        String creator = org.apache.commons.lang3.StringUtils.trimToEmpty(row.getCreator());
+        String copyright = org.apache.commons.lang3.StringUtils.trimToEmpty(row.getCopyright());
+        if (uri.isEmpty() && name.isEmpty() && creator.isEmpty() && copyright.isEmpty() && row.getId() <= 0) {
+            return true;
+        }
+        if (uri.isEmpty()) {
+            errorMessage = "L'URI de l'image est obligatoire.";
+            return false;
+        }
+        if (!seen.add(uri)) {
+            errorMessage = "Chaque URI d'image doit être unique.";
+            return false;
+        }
+        ImageEditRow copy = new ImageEditRow(row.getId(), uri, name, creator, copyright);
+        copy.setOldUri(org.apache.commons.lang3.StringUtils.trimToEmpty(row.getOldUri()));
+        cleaned.add(copy);
+        return true;
     }
 
     private String serializeGps() {
@@ -679,5 +765,8 @@ public class ConceptResourceBlockEditorBean implements Serializable {
 
     private static boolean isCoord(String value) {
         return value.matches("-?\\d+\\.\\d+");
+    }
+
+    private record ResourceWriteContext(String thesaurusId, String conceptId, int userId, String contributor) {
     }
 }

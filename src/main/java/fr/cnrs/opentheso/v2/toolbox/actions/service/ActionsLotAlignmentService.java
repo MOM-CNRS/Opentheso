@@ -64,109 +64,141 @@ public class ActionsLotAlignmentService {
         if (StringUtils.isBlank(thesaurusId)) {
             return ActionsLotValidationResult.failure(ActionsLotMessages.NO_THESAURUS);
         }
+        AlignmentImportParse parsed = readImportRows(content, choiceDelimiter);
+        if (parsed.failure() != null) {
+            return parsed.failure();
+        }
+        return collectImportCandidates(parsed.imports(), identifierType, thesaurusId);
+    }
 
+    private AlignmentImportParse readImportRows(byte[] content, int choiceDelimiter) {
         char delimiter = CsvDelimiterSupport.resolveDelimiter(choiceDelimiter);
         WorkshopCsvReader reader = new WorkshopCsvReader(delimiter);
-        List<NodeAlignmentImport> imports;
         try {
             List<String> headers;
             try (Reader headerReader = new InputStreamReader(new ByteArrayInputStream(content), StandardCharsets.UTF_8)) {
                 headers = reader.readHeadersFileAlignment(headerReader);
             }
             if (headers == null || headers.isEmpty()) {
-                return ActionsLotValidationResult.failure(StringUtils.defaultIfBlank(
+                return AlignmentImportParse.fail(StringUtils.defaultIfBlank(
                         reader.getMessage(),
                         "En-têtes CSV introuvables. Attendu : localId + colonnes de sources."
                 ));
             }
             try (Reader bodyReader = new InputStreamReader(new ByteArrayInputStream(content), StandardCharsets.UTF_8)) {
                 if (!reader.readFileAlignment(bodyReader, headers)) {
-                    return ActionsLotValidationResult.failure(StringUtils.defaultIfBlank(
+                    return AlignmentImportParse.fail(StringUtils.defaultIfBlank(
                             reader.getMessage(),
                             "Lecture CSV impossible. Vérifiez le séparateur."
                     ));
                 }
             }
-            imports = reader.getNodeAlignmentImports();
+            List<NodeAlignmentImport> imports = reader.getNodeAlignmentImports();
+            if (imports == null || imports.isEmpty()) {
+                return AlignmentImportParse.fail(StringUtils.defaultIfBlank(
+                        reader.getMessage(),
+                        "Aucune ligne d'alignement lue. Vérifiez le séparateur et les en-têtes."
+                ));
+            }
+            return AlignmentImportParse.ok(imports);
         } catch (Exception ex) {
-            return ActionsLotValidationResult.failure("Erreur de lecture : " + ex.getMessage());
+            return AlignmentImportParse.fail("Erreur de lecture : " + ex.getMessage());
         }
+    }
 
-        if (imports == null || imports.isEmpty()) {
-            return ActionsLotValidationResult.failure(StringUtils.defaultIfBlank(
-                    reader.getMessage(),
-                    "Aucune ligne d'alignement lue. Vérifiez le séparateur et les en-têtes."
-            ));
-        }
-
+    private ActionsLotValidationResult collectImportCandidates(
+            List<NodeAlignmentImport> imports,
+            String identifierType,
+            String thesaurusId
+    ) {
         List<ActionsLotLineError> errors = new ArrayList<>();
         List<ActionsLotAlignmentCandidate> valid = new ArrayList<>();
         int ignored = 0;
-        int line = 1; // header
+        int line = 1;
+        Map<String, String> resolved = persistence.resolveConceptIds(collectImportLocalIds(imports), identifierType, thesaurusId);
+        for (NodeAlignmentImport row : imports) {
+            line++;
+            collectImportRow(row, line, resolved, errors, valid);
+        }
+        return new ActionsLotValidationResult(
+                true, null, imports.size(), valid.size(), errors.size(), ignored, errors, valid
+        );
+    }
 
+    private static Set<String> collectImportLocalIds(List<NodeAlignmentImport> imports) {
         Set<String> localIds = new HashSet<>();
         for (NodeAlignmentImport row : imports) {
             if (row != null && StringUtils.isNotBlank(row.getLocalId())) {
                 localIds.add(row.getLocalId().trim());
             }
         }
-        Map<String, String> resolved = persistence.resolveConceptIds(localIds, identifierType, thesaurusId);
+        return localIds;
+    }
 
-        for (NodeAlignmentImport row : imports) {
-            line++;
-            if (row == null) {
+    private static void collectImportRow(
+            NodeAlignmentImport row,
+            int line,
+            Map<String, String> resolved,
+            List<ActionsLotLineError> errors,
+            List<ActionsLotAlignmentCandidate> valid
+    ) {
+        if (row == null) {
+            return;
+        }
+        String localId = StringUtils.trimToEmpty(row.getLocalId());
+        if (StringUtils.isBlank(localId)) {
+            errors.add(new ActionsLotLineError(line, "— (vide)", LOCAL_ID, "Identifiant obligatoire manquant"));
+            return;
+        }
+        String conceptId = resolved.get(localId);
+        if (StringUtils.isBlank(conceptId)) {
+            errors.add(new ActionsLotLineError(line, localId, LOCAL_ID, "Identifiant introuvable dans le thésaurus"));
+            return;
+        }
+        List<NodeAlignmentSmall> alignments = row.getNodeAlignmentSmalls();
+        if (alignments == null || alignments.isEmpty()) {
+            errors.add(new ActionsLotLineError(line, localId, "URI", "Aucune URI d'alignement sur cette ligne"));
+            return;
+        }
+        boolean anyUri = appendImportAlignments(alignments, line, localId, conceptId, valid);
+        if (!anyUri) {
+            errors.add(new ActionsLotLineError(line, localId, "URI", "URI cible vide"));
+        }
+    }
+
+    private static boolean appendImportAlignments(
+            List<NodeAlignmentSmall> alignments,
+            int line,
+            String localId,
+            String conceptId,
+            List<ActionsLotAlignmentCandidate> valid
+    ) {
+        boolean anyUri = false;
+        for (NodeAlignmentSmall alignment : alignments) {
+            if (alignment == null || StringUtils.isBlank(alignment.getUri_target())) {
                 continue;
             }
-            String localId = StringUtils.trimToEmpty(row.getLocalId());
-            if (StringUtils.isBlank(localId)) {
-                errors.add(new ActionsLotLineError(line, "— (vide)", LOCAL_ID, "Identifiant obligatoire manquant"));
-                continue;
-            }
-            String conceptId = resolved.get(localId);
-            if (StringUtils.isBlank(conceptId)) {
-                errors.add(new ActionsLotLineError(
-                        line,
-                        localId,
-                        LOCAL_ID,
-                        "Identifiant introuvable dans le thésaurus"
-                ));
-                continue;
-            }
-            List<NodeAlignmentSmall> alignments = row.getNodeAlignmentSmalls();
-            if (alignments == null || alignments.isEmpty()) {
-                errors.add(new ActionsLotLineError(line, localId, "URI", "Aucune URI d'alignement sur cette ligne"));
-                continue;
-            }
-            boolean anyUri = false;
-            for (NodeAlignmentSmall alignment : alignments) {
-                if (alignment == null || StringUtils.isBlank(alignment.getUri_target())) {
-                    continue;
-                }
-                anyUri = true;
-                valid.add(new ActionsLotAlignmentCandidate(
-                        line,
-                        localId,
-                        conceptId,
-                        alignment.getUri_target().trim(),
-                        StringUtils.defaultString(alignment.getSource()),
-                        alignment.getAlignement_id_type() > 0 ? alignment.getAlignement_id_type() : 1
-                ));
-            }
-            if (!anyUri) {
-                errors.add(new ActionsLotLineError(line, localId, "URI", "URI cible vide"));
-            }
+            anyUri = true;
+            valid.add(new ActionsLotAlignmentCandidate(
+                    line,
+                    localId,
+                    conceptId,
+                    alignment.getUri_target().trim(),
+                    StringUtils.defaultString(alignment.getSource()),
+                    alignment.getAlignement_id_type() > 0 ? alignment.getAlignement_id_type() : 1
+            ));
+        }
+        return anyUri;
+    }
+
+    private record AlignmentImportParse(List<NodeAlignmentImport> imports, ActionsLotValidationResult failure) {
+        private static AlignmentImportParse ok(List<NodeAlignmentImport> imports) {
+            return new AlignmentImportParse(imports, null);
         }
 
-        return new ActionsLotValidationResult(
-                true,
-                null,
-                imports.size(),
-                valid.size(),
-                errors.size(),
-                ignored,
-                errors,
-                valid
-        );
+        private static AlignmentImportParse fail(String message) {
+            return new AlignmentImportParse(List.of(), ActionsLotValidationResult.failure(message));
+        }
     }
 
     public ActionsLotValidationResult validateDelete(
@@ -181,90 +213,122 @@ public class ActionsLotAlignmentService {
         if (StringUtils.isBlank(thesaurusId)) {
             return ActionsLotValidationResult.failure(ActionsLotMessages.NO_THESAURUS);
         }
+        AlignmentDeleteParse parsed = readDeleteRows(content, choiceDelimiter);
+        if (parsed.failure() != null) {
+            return parsed.failure();
+        }
+        return collectDeleteCandidates(parsed.rows(), identifierType, thesaurusId);
+    }
 
+    private AlignmentDeleteParse readDeleteRows(byte[] content, int choiceDelimiter) {
         char delimiter = CsvDelimiterSupport.resolveDelimiter(choiceDelimiter);
         WorkshopCsvReader reader = new WorkshopCsvReader(delimiter);
-        List<ThesaurusCsvConceptObject> rows;
         try (Reader bodyReader = new InputStreamReader(new ByteArrayInputStream(content), StandardCharsets.UTF_8)) {
             if (!reader.readFileAlignmentToDelete(bodyReader)) {
-                return ActionsLotValidationResult.failure(StringUtils.defaultIfBlank(
+                return AlignmentDeleteParse.fail(StringUtils.defaultIfBlank(
                         reader.getMessage(),
                         "Lecture CSV impossible. Vérifiez le séparateur (colonnes localId, URI)."
                 ));
             }
-            rows = reader.getConceptObjects();
+            List<ThesaurusCsvConceptObject> rows = reader.getConceptObjects();
+            if (rows == null || rows.isEmpty()) {
+                return AlignmentDeleteParse.fail("Aucune ligne lue. Vérifiez le séparateur et les en-têtes localId / URI.");
+            }
+            return AlignmentDeleteParse.ok(rows);
         } catch (Exception ex) {
-            return ActionsLotValidationResult.failure("Erreur de lecture : " + ex.getMessage());
+            return AlignmentDeleteParse.fail("Erreur de lecture : " + ex.getMessage());
         }
+    }
 
-        if (rows == null || rows.isEmpty()) {
-            return ActionsLotValidationResult.failure("Aucune ligne lue. Vérifiez le séparateur et les en-têtes localId / URI.");
-        }
-
+    private ActionsLotValidationResult collectDeleteCandidates(
+            List<ThesaurusCsvConceptObject> rows,
+            String identifierType,
+            String thesaurusId
+    ) {
         List<ActionsLotLineError> errors = new ArrayList<>();
         List<ActionsLotAlignmentCandidate> valid = new ArrayList<>();
-        int ignored = 0;
+        int[] ignored = {0};
         int line = 1;
+        Map<String, String> resolved = persistence.resolveConceptIds(collectDeleteLocalIds(rows), identifierType, thesaurusId);
+        for (ThesaurusCsvConceptObject row : rows) {
+            line++;
+            collectDeleteRow(row, line, resolved, errors, valid, ignored);
+        }
+        return new ActionsLotValidationResult(
+                true, null, rows.size(), valid.size(), errors.size(), ignored[0], errors, valid
+        );
+    }
 
+    private static Set<String> collectDeleteLocalIds(List<ThesaurusCsvConceptObject> rows) {
         Set<String> localIds = new HashSet<>();
         for (ThesaurusCsvConceptObject row : rows) {
             if (row != null && StringUtils.isNotBlank(row.getLocalId())) {
                 localIds.add(row.getLocalId().trim());
             }
         }
-        Map<String, String> resolved = persistence.resolveConceptIds(localIds, identifierType, thesaurusId);
+        return localIds;
+    }
 
-        for (ThesaurusCsvConceptObject row : rows) {
-            line++;
-            if (row == null) {
+    private static void collectDeleteRow(
+            ThesaurusCsvConceptObject row,
+            int line,
+            Map<String, String> resolved,
+            List<ActionsLotLineError> errors,
+            List<ActionsLotAlignmentCandidate> valid,
+            int[] ignored
+    ) {
+        if (row == null) {
+            return;
+        }
+        String localId = StringUtils.trimToEmpty(row.getLocalId());
+        if (StringUtils.isBlank(localId)) {
+            errors.add(new ActionsLotLineError(line, "— (vide)", LOCAL_ID, "Identifiant obligatoire manquant"));
+            return;
+        }
+        String conceptId = resolved.get(localId);
+        if (StringUtils.isBlank(conceptId)) {
+            ignored[0]++;
+            return;
+        }
+        List<NodeIdValue> alignments = row.getAlignments();
+        if (alignments == null || alignments.isEmpty()) {
+            errors.add(new ActionsLotLineError(line, localId, "URI", "URI manquante"));
+            return;
+        }
+        boolean anyUri = appendDeleteAlignments(alignments, line, localId, conceptId, valid);
+        if (!anyUri) {
+            errors.add(new ActionsLotLineError(line, localId, "URI", "URI manquante"));
+        }
+    }
+
+    private static boolean appendDeleteAlignments(
+            List<NodeIdValue> alignments,
+            int line,
+            String localId,
+            String conceptId,
+            List<ActionsLotAlignmentCandidate> valid
+    ) {
+        boolean anyUri = false;
+        for (NodeIdValue alignment : alignments) {
+            if (alignment == null || StringUtils.isBlank(alignment.getValue())) {
                 continue;
             }
-            String localId = StringUtils.trimToEmpty(row.getLocalId());
-            if (StringUtils.isBlank(localId)) {
-                errors.add(new ActionsLotLineError(line, "— (vide)", LOCAL_ID, "Identifiant obligatoire manquant"));
-                continue;
-            }
-            String conceptId = resolved.get(localId);
-            if (StringUtils.isBlank(conceptId)) {
-                // règle legacy / maquette : ligne ignorée si l'id n'existe pas
-                ignored++;
-                continue;
-            }
-            List<NodeIdValue> alignments = row.getAlignments();
-            if (alignments == null || alignments.isEmpty()) {
-                errors.add(new ActionsLotLineError(line, localId, "URI", "URI manquante"));
-                continue;
-            }
-            boolean anyUri = false;
-            for (NodeIdValue alignment : alignments) {
-                if (alignment == null || StringUtils.isBlank(alignment.getValue())) {
-                    continue;
-                }
-                anyUri = true;
-                valid.add(new ActionsLotAlignmentCandidate(
-                        line,
-                        localId,
-                        conceptId,
-                        alignment.getValue().trim(),
-                        "",
-                        0
-                ));
-            }
-            if (!anyUri) {
-                errors.add(new ActionsLotLineError(line, localId, "URI", "URI manquante"));
-            }
+            anyUri = true;
+            valid.add(new ActionsLotAlignmentCandidate(
+                    line, localId, conceptId, alignment.getValue().trim(), "", 0
+            ));
+        }
+        return anyUri;
+    }
+
+    private record AlignmentDeleteParse(List<ThesaurusCsvConceptObject> rows, ActionsLotValidationResult failure) {
+        private static AlignmentDeleteParse ok(List<ThesaurusCsvConceptObject> rows) {
+            return new AlignmentDeleteParse(rows, null);
         }
 
-        return new ActionsLotValidationResult(
-                true,
-                null,
-                rows.size(),
-                valid.size(),
-                errors.size(),
-                ignored,
-                errors,
-                valid
-        );
+        private static AlignmentDeleteParse fail(String message) {
+            return new AlignmentDeleteParse(List.of(), ActionsLotValidationResult.failure(message));
+        }
     }
 
     @Transactional
@@ -357,7 +421,7 @@ public class ActionsLotAlignmentService {
                 thesaurusId, resolveExportBranchIds(thesaurusId, branchConceptId));
 
         byte[] csv = thesaurusCsvWriter.writeCsvForAlignment(listAlignments, alignmentSource.trim());
-        if (csv == null) {
+        if (csv == null || csv.length == 0) {
             throw new IllegalStateException("Échec de la génération du CSV.");
         }
         return csv;

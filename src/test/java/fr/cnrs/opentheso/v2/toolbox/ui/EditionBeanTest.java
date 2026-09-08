@@ -79,19 +79,23 @@ class EditionBeanTest {
     @BeforeEach
     void setUp() {
         bean = new EditionBean(
-                userSession,
-                toolboxAccessPolicy,
-                thesaurusContext,
-                localeBean,
-                editionThesaurusService,
-                consultationShellBean,
-                newThesaurusBean,
-                modifyThesaurusBean,
-                thesaurusExportBean,
-                skosImportBean,
-                csvImportBean,
-                csvStructuredImportBean,
-                thesaurusSyncBean
+                new EditionSessionCollaborators(
+                        userSession,
+                        toolboxAccessPolicy,
+                        thesaurusContext,
+                        localeBean,
+                        editionThesaurusService,
+                        consultationShellBean
+                ),
+                new EditionChildBeans(
+                        newThesaurusBean,
+                        modifyThesaurusBean,
+                        thesaurusExportBean,
+                        skosImportBean,
+                        csvImportBean,
+                        csvStructuredImportBean,
+                        thesaurusSyncBean
+                )
         );
     }
 

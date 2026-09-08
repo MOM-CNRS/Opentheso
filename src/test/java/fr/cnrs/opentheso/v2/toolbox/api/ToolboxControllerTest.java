@@ -13,9 +13,9 @@ import org.junit.jupiter.api.extension.ExtendWith;
 import org.mockito.Mock;
 import org.mockito.junit.jupiter.MockitoExtension;
 
+import java.time.Instant;
 import java.time.LocalDateTime;
 import java.time.Month;
-import java.util.Date;
 import java.util.List;
 
 import static org.junit.jupiter.api.Assertions.assertEquals;
@@ -65,7 +65,7 @@ class ToolboxControllerTest {
     @Test
     void statisticsSummary_returnsCounts() {
         when(thesaurusStatisticsService.loadSummary("TH1")).thenReturn(
-                new StatisticsSummary(new EditionStatistics(10, 2, 1), Date.from(java.time.Instant.parse("2024-06-15T12:00:00Z"))));
+                new StatisticsSummary(new EditionStatistics(10, 2, 1), Instant.parse("2024-06-15T12:00:00Z")));
 
         var response = controller.statisticsSummary("api-key", null, "TH1");
 

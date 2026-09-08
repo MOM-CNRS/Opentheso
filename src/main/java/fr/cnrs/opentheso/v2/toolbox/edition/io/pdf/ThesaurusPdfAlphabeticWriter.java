@@ -57,107 +57,130 @@ public class ThesaurusPdfAlphabeticWriter {
         HashMap<String, List<Integer>> traductions = new HashMap<>();
         HashMap<String, String> labels = new HashMap<>();
 
-        traitement(paragraphs, false, codeLanguage1, codeLanguage2, writePdfSettings, concepts, resourceChecked, traductions, labels);
+        AlphabeticWriteState state = new AlphabeticWriteState(resourceChecked, traductions, labels);
+        traitement(paragraphs, false, codeLanguage1, codeLanguage2, writePdfSettings, concepts, state);
 
         if (StringUtils.isNotEmpty(codeLanguage2)) {
-            traitement(paragraphTradList, true, codeLanguage2, codeLanguage1, writePdfSettings, concepts, resourceChecked, traductions, labels);
+            traitement(paragraphTradList, true, codeLanguage2, codeLanguage1, writePdfSettings, concepts, state);
         }
     }
 
     private void traitement(List<Paragraph> paragraphs, boolean isTrad, String codeLanguage1, String codeLanguage2,
-                            ThesaurusPdfSettings writePdfSettings, ArrayList<SKOSResource> concepts, List<String> resourceChecked,
-                            HashMap<String, List<Integer>> traductions, HashMap<String, String> labels) {
+                            ThesaurusPdfSettings writePdfSettings, ArrayList<SKOSResource> concepts, AlphabeticWriteState state) {
 
         // Trier les concepts selon leurs labels
         System.setProperty("java.util.Arrays.useLegacyMergeSort", "true");
-        Collections.sort(concepts, sortAlphabeticInLang(isTrad, codeLanguage1, codeLanguage2, labels, traductions, resourceChecked));
+        Collections.sort(concepts, sortAlphabeticInLang(
+                isTrad, codeLanguage1, codeLanguage2, state.labels(), state.traductions(), state.resourceChecked()));
 
-        // Construire la liste des concepts sous forme d'une suite des paragraphs
+        AlphabeticTermContext context = new AlphabeticTermContext(
+                paragraphs, codeLanguage1, codeLanguage2, writePdfSettings, state);
         for (SKOSResource concept : concepts) {
-            writeTerm(concept, paragraphs, codeLanguage1, codeLanguage2, writePdfSettings, traductions, labels);
+            writeTerm(concept, context);
         }
     }
 
-    private void writeTerm(SKOSResource concept, List<Paragraph> paragraphs, String codeLanguage1, String codeLanguage2,
-                           ThesaurusPdfSettings writePdfSettings, HashMap<String, List<Integer>> traductions, HashMap<String, String> labels) {
-
+    private void writeTerm(SKOSResource concept, AlphabeticTermContext context) {
         String idFromUri = concept.getIdentifier();
-        if(addLabels(paragraphs, concept.getLabelsList(), codeLanguage1, codeLanguage2, idFromUri, concept.getArkId(), writePdfSettings, traductions)) {
-            paragraphs.add(new Paragraph(ID + idFromUri, writePdfSettings.getTextFont()));
-            addRelations(paragraphs, concept.getRelationsList(), writePdfSettings, labels);
-            addDocuments(paragraphs, concept.getDocumentationsList(), traductions.get(idFromUri), codeLanguage1, codeLanguage2, writePdfSettings);
-            addMatchs(paragraphs, concept.getMatchList(), writePdfSettings);
-            addGpsCoordiantes(paragraphs, concept.getGpsCoordinates(), writePdfSettings);
+        if (addLabels(concept.getLabelsList(), idFromUri, concept.getArkId(), context)) {
+            context.paragraphs().add(new Paragraph(ID + idFromUri, context.writePdfSettings().getTextFont()));
+            addRelations(context.paragraphs(), concept.getRelationsList(), context.writePdfSettings(), context.state().labels());
+            addDocuments(context.paragraphs(), concept.getDocumentationsList(), context.state().traductions().get(idFromUri),
+                    context.codeLanguage1(), context.codeLanguage2(), context.writePdfSettings());
+            addMatchs(context.paragraphs(), concept.getMatchList(), context.writePdfSettings());
+            addGpsCoordiantes(context.paragraphs(), concept.getGpsCoordinates(), context.writePdfSettings());
             if (isToogleExportImage) {
-                ThesaurusPdfImageEmbedder.addImages(paragraphs, concept.getNodeImages(), 11f, writePdfSettings);
+                ThesaurusPdfImageEmbedder.addImages(context.paragraphs(), concept.getNodeImages(), 11f, context.writePdfSettings());
             }
         }
     }
 
-    private boolean addLabels(List<Paragraph> paragraphs, ArrayList<SKOSLabel> labels, String codeLanguage1,
-            String codeLanguage2, String idFromUri, String idArk, ThesaurusPdfSettings writePdfSettings, HashMap<String, List<Integer>> traductions) {
+    private boolean addLabels(ArrayList<SKOSLabel> labels, String idFromUri, String idArk, AlphabeticTermContext context) {
         boolean added = false;
         int altLabelCount = 0;
-        if (CollectionUtils.isNotEmpty(traductions.get(idFromUri))) {
-            altLabelCount = (int) traductions.get(idFromUri).stream().filter(trad -> trad == SKOSProperty.ALT_LABEL).count();
+        List<Integer> trads = context.state().traductions().get(idFromUri);
+        if (CollectionUtils.isNotEmpty(trads)) {
+            altLabelCount = (int) trads.stream().filter(trad -> trad == SKOSProperty.ALT_LABEL).count();
         }
 
         int altLabelWrite = 0;
         for (SKOSLabel label : labels) {
-            if (!label.getLanguage().equals(codeLanguage1) && !label.getLanguage().equals(codeLanguage2)) {
+            if (!label.getLanguage().equals(context.codeLanguage1()) && !label.getLanguage().equals(context.codeLanguage2())) {
                 continue;
             }
             added = true;
-            altLabelWrite = appendLabel(
-                    paragraphs, label, codeLanguage1, idFromUri, idArk, writePdfSettings,
-                    traductions, altLabelCount, altLabelWrite);
+            altLabelWrite = appendLabel(label, idFromUri, idArk, context, altLabelCount, altLabelWrite);
         }
         return added;
     }
 
     private int appendLabel(
-            List<Paragraph> paragraphs,
             SKOSLabel label,
-            String codeLanguage1,
             String idFromUri,
             String idArk,
-            ThesaurusPdfSettings writePdfSettings,
-            HashMap<String, List<Integer>> traductions,
+            AlphabeticTermContext context,
             int altLabelCount,
             int altLabelWrite
     ) {
-        String labelValue;
-        boolean prefIsTrad = false;
-        boolean altIsTrad = false;
-        if (label.getLanguage().equals(codeLanguage1)) {
-            labelValue = label.getLabel();
-        } else {
-            List<Integer> langs = traductions.get(idFromUri);
-            if (CollectionUtils.isNotEmpty(langs)) {
-                if (langs.contains(SKOSProperty.PREF_LABEL) && label.getProperty() == SKOSProperty.PREF_LABEL) {
-                    prefIsTrad = true;
-                }
-                if (langs.contains(SKOSProperty.ALT_LABEL) && label.getProperty() == SKOSProperty.ALT_LABEL) {
-                    if (altLabelCount > altLabelWrite) {
-                        altIsTrad = true;
-                    }
-                    altLabelWrite++;
-                }
-            }
-            labelValue = "-";
-        }
-        if (label.getProperty() == SKOSProperty.PREF_LABEL && !prefIsTrad) {
+        LabelRenderState renderState = resolveLabelRenderState(label, idFromUri, context, altLabelCount, altLabelWrite);
+        if (label.getProperty() == SKOSProperty.PREF_LABEL && !renderState.prefIsTrad()) {
             Paragraph paragraph = new Paragraph();
-            Anchor anchor = new Anchor(labelValue, writePdfSettings.getTermFont());
+            Anchor anchor = new Anchor(renderState.labelValue(), context.writePdfSettings().getTermFont());
             anchor.setReference(uriResolver.getUriForConcept(
                     exportPreferences, exportThesaurusId, idFromUri, idArk, idArk));
             anchor.setName(idFromUri);
             paragraph.add(anchor);
-            paragraphs.add(paragraph);
-        } else if (label.getProperty() == SKOSProperty.ALT_LABEL && !altIsTrad) {
-            paragraphs.add(new Paragraph(USE + labelValue, writePdfSettings.getTextFont()));
+            context.paragraphs().add(paragraph);
+        } else if (label.getProperty() == SKOSProperty.ALT_LABEL && !renderState.altIsTrad()) {
+            context.paragraphs().add(new Paragraph(USE + renderState.labelValue(), context.writePdfSettings().getTextFont()));
         }
-        return altLabelWrite;
+        return renderState.altLabelWrite();
+    }
+
+    private LabelRenderState resolveLabelRenderState(
+            SKOSLabel label,
+            String idFromUri,
+            AlphabeticTermContext context,
+            int altLabelCount,
+            int altLabelWrite
+    ) {
+        if (label.getLanguage().equals(context.codeLanguage1())) {
+            return new LabelRenderState(label.getLabel(), false, false, altLabelWrite);
+        }
+        boolean prefIsTrad = false;
+        boolean altIsTrad = false;
+        List<Integer> langs = context.state().traductions().get(idFromUri);
+        if (CollectionUtils.isNotEmpty(langs)) {
+            if (langs.contains(SKOSProperty.PREF_LABEL) && label.getProperty() == SKOSProperty.PREF_LABEL) {
+                prefIsTrad = true;
+            }
+            if (langs.contains(SKOSProperty.ALT_LABEL) && label.getProperty() == SKOSProperty.ALT_LABEL) {
+                if (altLabelCount > altLabelWrite) {
+                    altIsTrad = true;
+                }
+                altLabelWrite++;
+            }
+        }
+        return new LabelRenderState("-", prefIsTrad, altIsTrad, altLabelWrite);
+    }
+
+    private record AlphabeticWriteState(
+            List<String> resourceChecked,
+            HashMap<String, List<Integer>> traductions,
+            HashMap<String, String> labels
+    ) {
+    }
+
+    private record AlphabeticTermContext(
+            List<Paragraph> paragraphs,
+            String codeLanguage1,
+            String codeLanguage2,
+            ThesaurusPdfSettings writePdfSettings,
+            AlphabeticWriteState state
+    ) {
+    }
+
+    private record LabelRenderState(String labelValue, boolean prefIsTrad, boolean altIsTrad, int altLabelWrite) {
     }
 
     private void addRelations(List<Paragraph> paragraphs, List<SKOSRelation> relations, ThesaurusPdfSettings writePdfSettings, HashMap<String, String> labels) {

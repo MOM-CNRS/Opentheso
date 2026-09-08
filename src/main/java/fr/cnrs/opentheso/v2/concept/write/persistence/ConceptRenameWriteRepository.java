@@ -6,7 +6,7 @@ import jakarta.persistence.PersistenceContext;
 import org.springframework.stereotype.Repository;
 import org.springframework.transaction.annotation.Transactional;
 
-import java.util.Date;
+import java.time.Instant;
 import java.util.Optional;
 
 @Repository
@@ -88,7 +88,7 @@ public class ConceptRenameWriteRepository {
             int userId
     ) {
         String idTerm = generateNextIdTerm(thesaurusId);
-        Date now = new Date();
+        Instant now = Instant.now();
         entityManager.createNativeQuery("""
                         INSERT INTO term (
                             id_term, lexical_value, lang, id_thesaurus,

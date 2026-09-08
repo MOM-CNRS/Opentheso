@@ -36,10 +36,16 @@ import org.apache.commons.lang3.StringUtils;
 import org.apache.commons.text.StringEscapeUtils;
 import org.springframework.stereotype.Component;
 
-import java.text.ParseException;
-import java.text.SimpleDateFormat;
+import fr.cnrs.opentheso.v2.shared.time.V2Dates;
+
+import java.time.Instant;
+import java.time.LocalDate;
+import java.time.LocalDateTime;
+import java.time.format.DateTimeFormatter;
+import java.time.format.DateTimeParseException;
+import java.time.temporal.ChronoField;
+import java.time.temporal.TemporalAccessor;
 import java.util.ArrayList;
-import java.util.Date;
 import java.util.List;
 import java.util.logging.Level;
 import java.util.logging.Logger;
@@ -71,11 +77,11 @@ public class ThesaurusCsvImportEngine {
     private Preferences nodePreference;
     private String formatDate;
     private int idUser;
-    private SimpleDateFormat dateFormat;
+    private DateTimeFormatter dateFormatter;
 
     public void setFormatDate(String formatDate) {
         this.formatDate = formatDate;
-        this.dateFormat = new SimpleDateFormat(StringUtils.defaultIfBlank(formatDate, DEFAULT_DATE_FORMAT));
+        this.dateFormatter = DateTimeFormatter.ofPattern(StringUtils.defaultIfBlank(formatDate, DEFAULT_DATE_FORMAT));
     }
 
     public String createThesaurus(String thesoName, String idLang, int idProject, String userName) {
@@ -208,22 +214,9 @@ public class ThesaurusCsvImportEngine {
             conceptGroupConceptRepository.saveAll(links);
         }
         
-        if (StringUtils.isEmpty(formatDate)) {
-            formatDate = DEFAULT_DATE_FORMAT;
-            dateFormat = new SimpleDateFormat(formatDate);
-        }
-        Date created = null;
-        Date modified = null;
-
-        try {
-            if(conceptObject.getCreated() != null && !conceptObject.getCreated().isEmpty())
-                created = dateFormat.parse(conceptObject.getCreated());
-            if(conceptObject.getModified() != null && !conceptObject.getModified().isEmpty())
-                modified = dateFormat.parse(conceptObject.getModified());            
-        } catch (ParseException ex) {
-            Logger.getLogger(ThesaurusCsvImportEngine.class.getName()).log(Level.SEVERE, null, ex);
-        }        
-        
+        ensureDateFormatter();
+        Instant created = parseToInstant(conceptObject.getCreated());
+        Instant modified = parseToInstant(conceptObject.getModified());
         insertGroup(idGroup, idTheso, "", "C", conceptObject.getNotation(), created, modified);
 
         fr.cnrs.opentheso.models.group.ConceptGroupLabel conceptGroupLabel = new fr.cnrs.opentheso.models.group.ConceptGroupLabel();
@@ -269,8 +262,8 @@ public class ThesaurusCsvImportEngine {
                     .identifier(identifier)
                     .noteSource("")
                     .idUser(idUser)
-                    .created(new Date())
-                    .modified(new Date())
+                    .created(V2Dates.nowUtilDate())
+                    .modified(V2Dates.nowUtilDate())
                     .build());
         }
     }
@@ -316,84 +309,89 @@ public class ThesaurusCsvImportEngine {
     }    
 
     public boolean addConceptV2(String idTheso, ThesaurusCsvConceptObject conceptObject, int idUser, String formatDate) {
-
-        // Membres ou appartenance aux groupes
         if (!addMembers(idTheso, conceptObject)) {
             return false;
         }
+        String prefTerm = buildCsvPrefTerm(conceptObject);
+        try {
+            persistCsvConcept(idTheso, conceptObject, idUser, formatDate, prefTerm);
+        } catch (Exception e) {
+            log.error("Erreur lors de l'appel à opentheso_add_new_concept pour le concept {} : {}", conceptObject.getIdConcept(), e.getMessage(), e);
+            message += "Erreur concept : " + prefTerm + " (" + conceptObject.getIdConcept() + ")\n";
+            return false;
+        }
+        addExternalResources(idTheso, conceptObject.getIdConcept(), conceptObject.getExternalResources());
+        return true;
+    }
 
-        String conceptStatus;
-        String conceptType;
-        String idHandle = "";
-        String idDoi = "";
-        boolean isTopConcept = true;
-        
+    private ConceptStatus resolveCsvConceptStatus(ThesaurusCsvConceptObject conceptObject) {
+        if (!conceptObject.isDeprecated()) {
+            return new ConceptStatus("D", null);
+        }
         String replacedBy = null;
-        
-        // le status du concept (déprécié ...)
-        if(conceptObject.isDeprecated()) {
-            conceptStatus = "DEP";
-            if (CollectionUtils.isNotEmpty(conceptObject.getReplacedBy())) {
-                StringBuilder replacedByBuilder = new StringBuilder();
-                for (String replace : conceptObject.getReplacedBy()) {
-                    if(replacedByBuilder.isEmpty()) {
-                        replacedByBuilder.append(replace);
-                    } else {
-                        replacedByBuilder.append(SEPERATEUR).append(replace);
-                    }
+        if (CollectionUtils.isNotEmpty(conceptObject.getReplacedBy())) {
+            StringBuilder replacedByBuilder = new StringBuilder();
+            for (String replace : conceptObject.getReplacedBy()) {
+                if (replacedByBuilder.isEmpty()) {
+                    replacedByBuilder.append(replace);
+                } else {
+                    replacedByBuilder.append(SEPERATEUR).append(replace);
                 }
-                replacedBy = replacedByBuilder.toString();
-            }            
-        }
-        else
-            conceptStatus= "D";
-        
-        // concept type
-        conceptType = conceptObject.getConceptType();
-        if(StringUtils.isEmpty(conceptType)) 
-            conceptType = "concept";
-
-        // IMAGES
-        //-- 'name1@@copyright1@@url1##name2@@copyright2@@url2'
-        String images = null;
-        if (CollectionUtils.isNotEmpty(conceptObject.getImages())) {
-            StringBuilder imagesBuilder = new StringBuilder();
-            for (NodeImage nodeImage : conceptObject.getImages()) {
-                if(nodeImage == null) continue;
-                if (StringUtils.isEmpty(nodeImage.getUri())) continue;
-                
-                if(!imagesBuilder.isEmpty()) {
-                    imagesBuilder.append(SEPERATEUR);
-                }
-                imagesBuilder.append(nodeImage.getImageName()).append(SOUS_SEPERATEUR)
-                        .append(nodeImage.getCopyRight()).append(SOUS_SEPERATEUR)
-                        .append(nodeImage.getUri()).append(SOUS_SEPERATEUR)
-                        .append(nodeImage.getCreator());
             }
-            images = imagesBuilder.toString();
+            replacedBy = replacedByBuilder.toString();
         }
+        return new ConceptStatus("DEP", replacedBy);
+    }
 
-        // ALIGNEMENT
-        //-- 'author@concept_target@thesaurus_target@uri_target@alignement_id_type@internal_id_thesaurus@internal_id_concept'
+    private String buildCsvImages(ThesaurusCsvConceptObject conceptObject) {
+        if (CollectionUtils.isEmpty(conceptObject.getImages())) {
+            return null;
+        }
+        StringBuilder imagesBuilder = new StringBuilder();
+        for (NodeImage nodeImage : conceptObject.getImages()) {
+            appendCsvImage(imagesBuilder, nodeImage);
+        }
+        return imagesBuilder.toString();
+    }
+
+    private void appendCsvImage(StringBuilder imagesBuilder, NodeImage nodeImage) {
+        if (nodeImage == null) {
+            return;
+        }
+        if (StringUtils.isEmpty(nodeImage.getUri())) {
+            return;
+        }
+        if (!imagesBuilder.isEmpty()) {
+            imagesBuilder.append(SEPERATEUR);
+        }
+        imagesBuilder.append(nodeImage.getImageName()).append(SOUS_SEPERATEUR)
+                .append(nodeImage.getCopyRight()).append(SOUS_SEPERATEUR)
+                .append(nodeImage.getUri()).append(SOUS_SEPERATEUR)
+                .append(nodeImage.getCreator());
+    }
+
+    private String buildCsvAlignments(String idTheso, ThesaurusCsvConceptObject conceptObject, int idUser) {
         StringBuilder alignementsBuilder = new StringBuilder();
         appendAlignments(alignementsBuilder, conceptObject.getExactMatchs(), idUser, 1, idTheso, conceptObject.getIdConcept());
         appendAlignments(alignementsBuilder, conceptObject.getCloseMatchs(), idUser, 2, idTheso, conceptObject.getIdConcept());
         appendAlignments(alignementsBuilder, conceptObject.getBroadMatchs(), idUser, 3, idTheso, conceptObject.getIdConcept());
         appendAlignments(alignementsBuilder, conceptObject.getRelatedMatchs(), idUser, 4, idTheso, conceptObject.getIdConcept());
         appendAlignments(alignementsBuilder, conceptObject.getNarrowMatchs(), idUser, 5, idTheso, conceptObject.getIdConcept());
-        String alignements = stripLeadingSeparator(alignementsBuilder);
+        return stripLeadingSeparator(alignementsBuilder);
+    }
 
-        String prefTerm = null;
-        if (CollectionUtils.isNotEmpty(conceptObject.getPrefLabels())) {
-            StringBuilder prefTermBuilder = new StringBuilder();
-            for (ThesaurusCsvConceptLabel label : conceptObject.getPrefLabels()) {
-                prefTermBuilder.append(SEPERATEUR).append(label.getLabel()).append(SOUS_SEPERATEUR).append(label.getLang());
-            }
-            prefTerm = stripLeadingSeparator(prefTermBuilder);
+    private String buildCsvPrefTerm(ThesaurusCsvConceptObject conceptObject) {
+        if (CollectionUtils.isEmpty(conceptObject.getPrefLabels())) {
+            return null;
         }
+        StringBuilder prefTermBuilder = new StringBuilder();
+        for (ThesaurusCsvConceptLabel label : conceptObject.getPrefLabels()) {
+            prefTermBuilder.append(SEPERATEUR).append(label.getLabel()).append(SOUS_SEPERATEUR).append(label.getLang());
+        }
+        return stripLeadingSeparator(prefTermBuilder);
+    }
 
-        //Non Pref Term
-        //-- 'id_term@lexicalValue@lang@id_thesaurus@source@status@hiden'
+    private String buildCsvNonPrefTerm(String idTheso, ThesaurusCsvConceptObject conceptObject, int idUser) {
         StringBuilder nonPrefTermBuilder = new StringBuilder();
         if (CollectionUtils.isNotEmpty(conceptObject.getAltLabels())) {
             for (ThesaurusCsvConceptLabel label : conceptObject.getAltLabels()) {
@@ -406,7 +404,6 @@ public class ThesaurusCsvImportEngine {
                         .append(SOUS_SEPERATEUR).append(false);
             }
         }
-
         if (CollectionUtils.isNotEmpty(conceptObject.getAltLabels())) {
             for (ThesaurusCsvConceptLabel altLabel : conceptObject.getHiddenLabels()) {
                 nonPrefTermBuilder.append(SEPERATEUR).append(conceptObject.getIdConcept())
@@ -418,13 +415,12 @@ public class ThesaurusCsvImportEngine {
                         .append(SOUS_SEPERATEUR).append(true);
             }
         }
-        String nonPrefTerm = stripLeadingSeparator(nonPrefTermBuilder);
+        return stripLeadingSeparator(nonPrefTermBuilder);
+    }
 
-        //Relation
-        //-- 'id_concept1@role@id_concept2'
+    private String buildCsvRelations(ThesaurusCsvConceptObject conceptObject) {
         StringBuilder relationsBuilder = new StringBuilder();
         if (CollectionUtils.isNotEmpty(conceptObject.getBroaders())) {
-            isTopConcept = false;
             for (String idConcept2 : conceptObject.getBroaders()) {
                 appendRelationPair(relationsBuilder, conceptObject.getIdConcept(), "BT", idConcept2, "NT");
             }
@@ -439,24 +435,22 @@ public class ThesaurusCsvImportEngine {
                 appendRelationPair(relationsBuilder, conceptObject.getIdConcept(), "RT", idConcept2, "RT");
             }
         }
-        String relations = stripLeadingSeparator(relationsBuilder);
+        return stripLeadingSeparator(relationsBuilder);
+    }
 
-        //CustomRelation
-        //-- 'id_concept1@role@id_concept2'
+    private String buildCsvCustomRelations(ThesaurusCsvConceptObject conceptObject) {
         StringBuilder customRelationsBuilder = new StringBuilder();
         if (CollectionUtils.isNotEmpty(conceptObject.getCustomRelations())) {
-            for (NodeIdValue nodeIdValue  : conceptObject.getCustomRelations()) {
+            for (NodeIdValue nodeIdValue : conceptObject.getCustomRelations()) {
                 customRelationsBuilder.append(SEPERATEUR).append(conceptObject.getIdConcept())
                         .append(SOUS_SEPERATEUR).append(nodeIdValue.getValue())
                         .append(SOUS_SEPERATEUR).append(nodeIdValue.getId());
             }
         }
-        String customRelations = stripLeadingSeparator(customRelationsBuilder);
+        return stripLeadingSeparator(customRelationsBuilder);
+    }
 
-        //Notes
-        //-- 'value@typeCode@lang@id_term'
-        String notes = getNotes(conceptObject);
-
+    private String buildCsvGps(ThesaurusCsvConceptObject conceptObject) {
         StringBuilder gpsBuilder = new StringBuilder();
         if (StringUtils.isNotEmpty(conceptObject.getLatitude())) {
             gpsBuilder.append(conceptObject.getLatitude()).append(SOUS_SEPERATEUR).append(conceptObject.getLongitude());
@@ -472,46 +466,45 @@ public class ThesaurusCsvImportEngine {
                 }
             }
         }
-        String gps = gpsBuilder.isEmpty() ? null : gpsBuilder.toString();
+        return gpsBuilder.isEmpty() ? null : gpsBuilder.toString();
+    }
 
-        try {
-            if (dateFormat == null) {
-                dateFormat = new SimpleDateFormat(StringUtils.defaultIfBlank(formatDate, DEFAULT_DATE_FORMAT));
-            }
-            conceptRepository.addNewConcept(
-                    idTheso,
-                    conceptObject.getIdConcept(),
-                    idUser,
-                    conceptStatus,
-                    conceptType,
-                    conceptObject.getNotation(),
-                    conceptObject.getArkId(),
-                    isTopConcept,
-                    idHandle,
-                    idDoi,
-                    (prefTerm == null ? null : prefTerm),
-                    relations,
-                    customRelations,
-                    (notes == null ? null : notes),
-                    (nonPrefTerm == null ? null : nonPrefTerm),
-                    (alignements == null ? null : alignements),
-                    images,
-                    replacedBy,
-                    gps != null,
-                    gps,
-                    toSqlDate(conceptObject.getCreated() == null ? null : dateFormat.parse(conceptObject.getCreated())),
-                    toSqlDate(conceptObject.getModified() == null ? null : dateFormat.parse(conceptObject.getModified())),
-                    null);
-
-        } catch (Exception e) {
-            log.error("Erreur lors de l'appel à opentheso_add_new_concept pour le concept {} : {}", conceptObject.getIdConcept(), e.getMessage(), e);
-            message += "Erreur concept : " + prefTerm + " (" + conceptObject.getIdConcept() + ")\n";
-            return false;
+    private void persistCsvConcept(
+            String idTheso, ThesaurusCsvConceptObject conceptObject, int idUser, String formatDate, String prefTerm) {
+        ensureDateFormatter(formatDate);
+        ConceptStatus status = resolveCsvConceptStatus(conceptObject);
+        String gps = buildCsvGps(conceptObject);
+        String conceptType = conceptObject.getConceptType();
+        if (StringUtils.isEmpty(conceptType)) {
+            conceptType = "concept";
         }
+        conceptRepository.addNewConcept(
+                idTheso,
+                conceptObject.getIdConcept(),
+                idUser,
+                status.conceptStatus(),
+                conceptType,
+                conceptObject.getNotation(),
+                conceptObject.getArkId(),
+                CollectionUtils.isEmpty(conceptObject.getBroaders()),
+                "",
+                "",
+                prefTerm,
+                buildCsvRelations(conceptObject),
+                buildCsvCustomRelations(conceptObject),
+                getNotes(conceptObject),
+                buildCsvNonPrefTerm(idTheso, conceptObject, idUser),
+                buildCsvAlignments(idTheso, conceptObject, idUser),
+                buildCsvImages(conceptObject),
+                status.replacedBy(),
+                gps != null,
+                gps,
+                V2Dates.toSqlDate(parseToInstant(conceptObject.getCreated())),
+                V2Dates.toSqlDate(parseToInstant(conceptObject.getModified())),
+                null);
+    }
 
-
-        addExternalResources(idTheso, conceptObject.getIdConcept(), conceptObject.getExternalResources());        
-        return true;
+    private record ConceptStatus(String conceptStatus, String replacedBy) {
     }
 
     public void addLangsToThesaurus(List<String> langs, String idTheso) {
@@ -548,7 +541,8 @@ public class ThesaurusCsvImportEngine {
     }
 
     private void insertGroup(String idGroup, String idThesaurus, String idArk, String typeCode, String notation,
-                             Date created, Date modified) {
+                             Instant created, Instant modified) {
+        Instant now = V2Dates.nowInstant();
         conceptGroupRepository.save(ConceptGroup.builder()
                 .id(conceptGroupRepository.getNextConceptGroupSequence().intValue())
                 .idGroup(idGroup.toLowerCase())
@@ -558,8 +552,8 @@ public class ThesaurusCsvImportEngine {
                 .notation(notation)
                 .idHandle("")
                 .idDoi("")
-                .created(created == null ? new Date() : created)
-                .modified(modified == null ? new Date() : modified)
+                .created(V2Dates.toUtilDate(created == null ? now : created))
+                .modified(V2Dates.toUtilDate(modified == null ? now : modified))
                 .build());
     }
 
@@ -570,8 +564,8 @@ public class ThesaurusCsvImportEngine {
                 .lang(conceptGroupLabel.getLang())
                 .idThesaurus(conceptGroupLabel.getIdthesaurus())
                 .idGroup(conceptGroupLabel.getIdgroup().toLowerCase())
-                .created(new Date())
-                .modified(new Date())
+                .created(V2Dates.nowUtilDate())
+                .modified(V2Dates.nowUtilDate())
                 .build());
         conceptGroupLabelHistoriqueRepository.save(ConceptGroupLabelHistorique.builder()
                 .lexicalValue(conceptGroupLabel.getLexicalValue())
@@ -579,11 +573,38 @@ public class ThesaurusCsvImportEngine {
                 .idThesaurus(conceptGroupLabel.getIdthesaurus())
                 .idGroup(conceptGroupLabel.getIdgroup().toLowerCase())
                 .idUser(userId)
-                .modified(new Date())
+                .modified(V2Dates.nowUtilDate())
                 .build());
     }
 
-    private static java.sql.Date toSqlDate(Date date) {
-        return date == null ? null : new java.sql.Date(date.getTime());
+    private void ensureDateFormatter() {
+        ensureDateFormatter(formatDate);
     }
+
+    private void ensureDateFormatter(String pattern) {
+        if (dateFormatter == null) {
+            dateFormatter = DateTimeFormatter.ofPattern(StringUtils.defaultIfBlank(pattern, DEFAULT_DATE_FORMAT));
+        }
+    }
+
+    private Instant parseToInstant(String value) {
+        if (StringUtils.isBlank(value)) {
+            return null;
+        }
+        try {
+            TemporalAccessor parsed = dateFormatter.parse(value);
+            if (parsed.isSupported(ChronoField.INSTANT_SECONDS)) {
+                return Instant.from(parsed);
+            }
+            if (parsed.isSupported(ChronoField.EPOCH_DAY)) {
+                return LocalDate.from(parsed).atStartOfDay(V2Dates.zone()).toInstant();
+            }
+            return LocalDateTime.from(parsed).atZone(V2Dates.zone()).toInstant();
+        } catch (DateTimeParseException ex) {
+            Logger.getLogger(ThesaurusCsvImportEngine.class.getName()).log(Level.SEVERE, null, ex);
+            return null;
+        }
+    }
+
+
 }

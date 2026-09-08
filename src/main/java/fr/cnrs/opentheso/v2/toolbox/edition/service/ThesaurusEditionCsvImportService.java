@@ -36,12 +36,9 @@ public class ThesaurusEditionCsvImportService {
             int userId,
             String userName,
             boolean superAdmin,
-            Integer projectGroupId,
-            List<ThesaurusCsvConceptObject> conceptObjects,
-            List<String> languages,
-            String persistentNameThesaurus
+            CsvImportExtras extras
     ) {
-        Integer groupId = projectGroupId;
+        Integer groupId = extras.projectGroupId();
         if (!superAdmin && groupId == null) {
             NewThesaurusFormOptions options = newThesaurusService.loadFormOptions(userId, false);
             if (options.projects().size() == 1) {
@@ -56,9 +53,11 @@ public class ThesaurusEditionCsvImportService {
                 groupId,
                 userId,
                 userName,
-                conceptObjects,
-                languages,
-                persistentNameThesaurus
+                new ThesaurusEditionCsvImportPersistence.CsvImportPayload(
+                        extras.conceptObjects(),
+                        extras.languages(),
+                        extras.persistentNameThesaurus()
+                )
         );
 
         if (!result.isSuccess()) {
@@ -78,5 +77,13 @@ public class ThesaurusEditionCsvImportService {
     }
 
     public record CsvImportOutcome(String thesaurusId, int importedConcepts, String message) {
+    }
+
+    public record CsvImportExtras(
+            Integer projectGroupId,
+            List<ThesaurusCsvConceptObject> conceptObjects,
+            List<String> languages,
+            String persistentNameThesaurus
+    ) {
     }
 }

@@ -56,108 +56,11 @@ public class ActionsLotAltLabelService {
         if (StringUtils.isBlank(thesaurusId)) {
             return ActionsLotAltLabelValidationResult.failure(ActionsLotMessages.NO_THESAURUS);
         }
-
-        char delimiter = CsvDelimiterSupport.resolveDelimiter(choiceDelimiter);
-        WorkshopCsvReader reader = new WorkshopCsvReader(delimiter);
-        List<ThesaurusCsvConceptObject> rows;
-        try {
-            try (Reader headerReader = new InputStreamReader(new ByteArrayInputStream(content), StandardCharsets.UTF_8)) {
-                if (!reader.setLangs(headerReader)) {
-                    return ActionsLotAltLabelValidationResult.failure(StringUtils.defaultIfBlank(
-                            reader.getMessage(),
-                            "Aucune colonne de langue détectée. Attendu : skos:altLabel@fr, skos:altLabel@en…"
-                    ));
-                }
-            }
-            reader.setConceptObjects(new ArrayList<>());
-            try (Reader bodyReader = new InputStreamReader(new ByteArrayInputStream(content), StandardCharsets.UTF_8)) {
-                if (!reader.readFileAltlabel(bodyReader)) {
-                    return ActionsLotAltLabelValidationResult.failure(StringUtils.defaultIfBlank(
-                            reader.getMessage(),
-                            "Lecture CSV impossible. Vérifiez le séparateur."
-                    ));
-                }
-            }
-            rows = reader.getConceptObjects();
-        } catch (Exception ex) {
-            return ActionsLotAltLabelValidationResult.failure("Erreur de lecture : " + ex.getMessage());
+        AltLabelParse parsed = readAltLabelRows(content, choiceDelimiter);
+        if (parsed.failure() != null) {
+            return parsed.failure();
         }
-
-        if (rows == null || rows.isEmpty()) {
-            return ActionsLotAltLabelValidationResult.failure(
-                    "Aucune ligne lue. Vérifiez le séparateur et les en-têtes (localId, skos:altLabel@xx)."
-            );
-        }
-
-        List<ActionsLotLineError> errors = new ArrayList<>();
-        List<ActionsLotAltLabelCandidate> valid = new ArrayList<>();
-        int ignored = 0;
-        int line = 1;
-
-        Set<String> localIds = new HashSet<>();
-        for (ThesaurusCsvConceptObject row : rows) {
-            if (row != null && StringUtils.isNotBlank(row.getIdConcept())) {
-                localIds.add(row.getIdConcept().trim());
-            }
-        }
-        Map<String, String> resolved = persistence.resolveConceptIds(localIds, identifierType, thesaurusId);
-        Map<String, fr.cnrs.opentheso.entites.PreferredTerm> preferredTerms =
-                persistence.findPreferredTermsByConceptIds(resolved.values(), thesaurusId);
-
-        for (ThesaurusCsvConceptObject row : rows) {
-            line++;
-            if (row == null) {
-                continue;
-            }
-            String localId = StringUtils.trimToEmpty(row.getIdConcept());
-            if (StringUtils.isBlank(localId)) {
-                errors.add(new ActionsLotLineError(line, "— (vide)", LOCAL_ID, "Identifiant obligatoire manquant"));
-                continue;
-            }
-            String conceptId = resolved.get(localId);
-            if (StringUtils.isBlank(conceptId)) {
-                if (rejectMissingConcept) {
-                    errors.add(new ActionsLotLineError(
-                            line, localId, LOCAL_ID, "Identifiant introuvable dans le thésaurus"
-                    ));
-                } else {
-                    ignored++;
-                }
-                continue;
-            }
-            if (!preferredTerms.containsKey(conceptId)) {
-                errors.add(new ActionsLotLineError(
-                        line, localId, LOCAL_ID, "Terme préférentiel introuvable pour ce concept"
-                ));
-                continue;
-            }
-            List<ThesaurusCsvConceptLabel> altLabels = row.getAltLabels();
-            if (altLabels == null || altLabels.isEmpty()) {
-                errors.add(new ActionsLotLineError(line, localId, "skos:altLabel", "Aucun synonyme sur cette ligne"));
-                continue;
-            }
-            boolean any = false;
-            for (ThesaurusCsvConceptLabel altLabel : altLabels) {
-                if (altLabel == null || StringUtils.isBlank(altLabel.getLabel())) {
-                    continue;
-                }
-                any = true;
-                valid.add(new ActionsLotAltLabelCandidate(
-                        line,
-                        localId,
-                        conceptId,
-                        altLabel.getLabel().trim(),
-                        StringUtils.defaultIfBlank(altLabel.getLang(), "fr")
-                ));
-            }
-            if (!any) {
-                errors.add(new ActionsLotLineError(line, localId, "skos:altLabel", "Aucun synonyme sur cette ligne"));
-            }
-        }
-
-        return new ActionsLotAltLabelValidationResult(
-                true, null, rows.size(), valid.size(), errors.size(), ignored, errors, valid
-        );
+        return collectAltLabelCandidates(parsed.rows(), identifierType, thesaurusId, rejectMissingConcept);
     }
 
     @Transactional
@@ -183,28 +86,7 @@ public class ActionsLotAltLabelService {
         );
 
         for (ActionsLotAltLabelCandidate candidate : candidates) {
-            if (candidate == null || StringUtils.isBlank(candidate.label())) {
-                rejected++;
-                continue;
-            }
-            var preferredTerm = Optional.ofNullable(preferredTerms.get(candidate.conceptId()));
-            if (preferredTerm.isEmpty()) {
-                rejected++;
-                continue;
-            }
-            if (clearBefore && clearedConcepts.add(candidate.conceptId())) {
-                persistence.deleteAllByConceptAndThesaurus(candidate.conceptId(), thesaurusId);
-            }
-            Term term = Term.builder()
-                    .idTerm(preferredTerm.get().getIdTerm())
-                    .lexicalValue(candidate.label())
-                    .lang(candidate.lang())
-                    .idThesaurus(thesaurusId)
-                    .source("import")
-                    .status("")
-                    .hidden(false)
-                    .build();
-            if (persistence.addNonPreferredTerm(term, userId)) {
+            if (applyImportCandidate(candidate, thesaurusId, userId, clearBefore, clearedConcepts, preferredTerms)) {
                 applied++;
             } else {
                 rejected++;
@@ -240,23 +122,11 @@ public class ActionsLotAltLabelService {
                 thesaurusId
         );
         for (ActionsLotAltLabelCandidate candidate : candidates) {
-            if (candidate == null || StringUtils.isBlank(candidate.label())) {
+            if (applyDeleteCandidate(candidate, thesaurusId, userId, preferredTerms)) {
+                applied++;
+            } else {
                 rejected++;
-                continue;
             }
-            var preferredTerm = Optional.ofNullable(preferredTerms.get(candidate.conceptId()));
-            if (preferredTerm.isEmpty()) {
-                rejected++;
-                continue;
-            }
-            persistence.deleteNonPreferredTerm(
-                    preferredTerm.get().getIdTerm(),
-                    candidate.lang(),
-                    candidate.label(),
-                    thesaurusId,
-                    userId
-            );
-            applied++;
         }
 
         return new ActionsLotApplyResult(
@@ -270,5 +140,198 @@ public class ActionsLotAltLabelService {
 
     public byte[] templateBytes() {
         return TEMPLATE.getBytes(StandardCharsets.UTF_8);
+    }
+
+    private AltLabelParse readAltLabelRows(byte[] content, int choiceDelimiter) {
+        char delimiter = CsvDelimiterSupport.resolveDelimiter(choiceDelimiter);
+        WorkshopCsvReader reader = new WorkshopCsvReader(delimiter);
+        try {
+            try (Reader headerReader = new InputStreamReader(new ByteArrayInputStream(content), StandardCharsets.UTF_8)) {
+                if (!reader.setLangs(headerReader)) {
+                    return AltLabelParse.fail(StringUtils.defaultIfBlank(
+                            reader.getMessage(),
+                            "Aucune colonne de langue détectée. Attendu : skos:altLabel@fr, skos:altLabel@en…"
+                    ));
+                }
+            }
+            reader.setConceptObjects(new ArrayList<>());
+            try (Reader bodyReader = new InputStreamReader(new ByteArrayInputStream(content), StandardCharsets.UTF_8)) {
+                if (!reader.readFileAltlabel(bodyReader)) {
+                    return AltLabelParse.fail(StringUtils.defaultIfBlank(
+                            reader.getMessage(),
+                            "Lecture CSV impossible. Vérifiez le séparateur."
+                    ));
+                }
+            }
+            List<ThesaurusCsvConceptObject> rows = reader.getConceptObjects();
+            if (rows == null || rows.isEmpty()) {
+                return AltLabelParse.fail(
+                        "Aucune ligne lue. Vérifiez le séparateur et les en-têtes (localId, skos:altLabel@xx)."
+                );
+            }
+            return AltLabelParse.ok(rows);
+        } catch (Exception ex) {
+            return AltLabelParse.fail("Erreur de lecture : " + ex.getMessage());
+        }
+    }
+
+    private ActionsLotAltLabelValidationResult collectAltLabelCandidates(
+            List<ThesaurusCsvConceptObject> rows,
+            String identifierType,
+            String thesaurusId,
+            boolean rejectMissingConcept
+    ) {
+        List<ActionsLotLineError> errors = new ArrayList<>();
+        List<ActionsLotAltLabelCandidate> valid = new ArrayList<>();
+        int ignored = 0;
+        int line = 1;
+        Set<String> localIds = new HashSet<>();
+        for (ThesaurusCsvConceptObject row : rows) {
+            if (row != null && StringUtils.isNotBlank(row.getIdConcept())) {
+                localIds.add(row.getIdConcept().trim());
+            }
+        }
+        Map<String, String> resolved = persistence.resolveConceptIds(localIds, identifierType, thesaurusId);
+        Map<String, fr.cnrs.opentheso.entites.PreferredTerm> preferredTerms =
+                persistence.findPreferredTermsByConceptIds(resolved.values(), thesaurusId);
+        for (ThesaurusCsvConceptObject row : rows) {
+            line++;
+            ignored += collectAltLabelRow(row, line, resolved, preferredTerms, rejectMissingConcept, errors, valid);
+        }
+        return new ActionsLotAltLabelValidationResult(
+                true, null, rows.size(), valid.size(), errors.size(), ignored, errors, valid
+        );
+    }
+
+    private static int collectAltLabelRow(
+            ThesaurusCsvConceptObject row,
+            int line,
+            Map<String, String> resolved,
+            Map<String, fr.cnrs.opentheso.entites.PreferredTerm> preferredTerms,
+            boolean rejectMissingConcept,
+            List<ActionsLotLineError> errors,
+            List<ActionsLotAltLabelCandidate> valid
+    ) {
+        if (row == null) {
+            return 0;
+        }
+        String localId = StringUtils.trimToEmpty(row.getIdConcept());
+        if (StringUtils.isBlank(localId)) {
+            errors.add(new ActionsLotLineError(line, "— (vide)", LOCAL_ID, "Identifiant obligatoire manquant"));
+            return 0;
+        }
+        String conceptId = resolved.get(localId);
+        if (StringUtils.isBlank(conceptId)) {
+            if (rejectMissingConcept) {
+                errors.add(new ActionsLotLineError(
+                        line, localId, LOCAL_ID, "Identifiant introuvable dans le thésaurus"
+                ));
+                return 0;
+            }
+            return 1;
+        }
+        if (!preferredTerms.containsKey(conceptId)) {
+            errors.add(new ActionsLotLineError(
+                    line, localId, LOCAL_ID, "Terme préférentiel introuvable pour ce concept"
+            ));
+            return 0;
+        }
+        List<ThesaurusCsvConceptLabel> altLabels = row.getAltLabels();
+        if (altLabels == null || altLabels.isEmpty()) {
+            errors.add(new ActionsLotLineError(line, localId, "skos:altLabel", "Aucun synonyme sur cette ligne"));
+            return 0;
+        }
+        boolean any = appendAltLabels(altLabels, line, localId, conceptId, valid);
+        if (!any) {
+            errors.add(new ActionsLotLineError(line, localId, "skos:altLabel", "Aucun synonyme sur cette ligne"));
+        }
+        return 0;
+    }
+
+    private static boolean appendAltLabels(
+            List<ThesaurusCsvConceptLabel> altLabels,
+            int line,
+            String localId,
+            String conceptId,
+            List<ActionsLotAltLabelCandidate> valid
+    ) {
+        boolean any = false;
+        for (ThesaurusCsvConceptLabel altLabel : altLabels) {
+            if (altLabel == null || StringUtils.isBlank(altLabel.getLabel())) {
+                continue;
+            }
+            any = true;
+            valid.add(new ActionsLotAltLabelCandidate(
+                    line,
+                    localId,
+                    conceptId,
+                    altLabel.getLabel().trim(),
+                    StringUtils.defaultIfBlank(altLabel.getLang(), "fr")
+            ));
+        }
+        return any;
+    }
+
+    private boolean applyImportCandidate(
+            ActionsLotAltLabelCandidate candidate,
+            String thesaurusId,
+            int userId,
+            boolean clearBefore,
+            Set<String> clearedConcepts,
+            Map<String, fr.cnrs.opentheso.entites.PreferredTerm> preferredTerms
+    ) {
+        if (candidate == null || StringUtils.isBlank(candidate.label())) {
+            return false;
+        }
+        var preferredTerm = Optional.ofNullable(preferredTerms.get(candidate.conceptId()));
+        if (preferredTerm.isEmpty()) {
+            return false;
+        }
+        if (clearBefore && clearedConcepts.add(candidate.conceptId())) {
+            persistence.deleteAllByConceptAndThesaurus(candidate.conceptId(), thesaurusId);
+        }
+        Term term = Term.builder()
+                .idTerm(preferredTerm.get().getIdTerm())
+                .lexicalValue(candidate.label())
+                .lang(candidate.lang())
+                .idThesaurus(thesaurusId)
+                .source("import")
+                .status("")
+                .hidden(false)
+                .build();
+        return persistence.addNonPreferredTerm(term, userId);
+    }
+
+    private boolean applyDeleteCandidate(
+            ActionsLotAltLabelCandidate candidate,
+            String thesaurusId,
+            int userId,
+            Map<String, fr.cnrs.opentheso.entites.PreferredTerm> preferredTerms
+    ) {
+        if (candidate == null || StringUtils.isBlank(candidate.label())) {
+            return false;
+        }
+        var preferredTerm = Optional.ofNullable(preferredTerms.get(candidate.conceptId()));
+        if (preferredTerm.isEmpty()) {
+            return false;
+        }
+        persistence.deleteNonPreferredTerm(
+                preferredTerm.get().getIdTerm(),
+                candidate.lang(),
+                candidate.label(),
+                thesaurusId,
+                userId
+        );
+        return true;
+    }
+
+    private record AltLabelParse(List<ThesaurusCsvConceptObject> rows, ActionsLotAltLabelValidationResult failure) {
+        private static AltLabelParse ok(List<ThesaurusCsvConceptObject> rows) {
+            return new AltLabelParse(rows, null);
+        }
+
+        private static AltLabelParse fail(String message) {
+            return new AltLabelParse(List.of(), ActionsLotAltLabelValidationResult.failure(message));
+        }
     }
 }

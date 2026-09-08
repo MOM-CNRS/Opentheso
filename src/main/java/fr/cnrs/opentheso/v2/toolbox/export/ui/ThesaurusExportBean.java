@@ -33,15 +33,8 @@ import java.util.List;
 @Named("v2ThesaurusExportBean")
 public class ThesaurusExportBean implements Serializable {
 
-    private final transient ThesaurusEditionSkosExportService thesaurusEditionSkosExportService;
-    private final transient ThesaurusEditionCsvExportService thesaurusEditionCsvExportService;
-    private final transient ThesaurusEditionCsvIdExportService thesaurusEditionCsvIdExportService;
-    private final transient ThesaurusEditionCsvStructuredExportService thesaurusEditionCsvStructuredExportService;
-    private final transient ThesaurusEditionPdfExportService thesaurusEditionPdfExportService;
-    private final transient ThesaurusEditionCsvDeprecatedExportService thesaurusEditionCsvDeprecatedExportService;
-    private final transient ThesaurusEditionZipExportService thesaurusEditionZipExportService;
-    private final transient ToolboxExportPersistence toolboxExportPersistence;
-    private final transient ToolboxPreferencePersistence toolboxPreferencePersistence;
+    private final transient ThesaurusExportServices exportServices;
+    private final transient ThesaurusExportPersistenceSupport persistenceSupport;
 
     private String thesaurusId;
     private String thesaurusTitle;
@@ -66,25 +59,11 @@ public class ThesaurusExportBean implements Serializable {
     private String deprecatedLanguage;
 
     public ThesaurusExportBean(
-            ThesaurusEditionSkosExportService thesaurusEditionSkosExportService,
-            ThesaurusEditionCsvExportService thesaurusEditionCsvExportService,
-            ThesaurusEditionCsvIdExportService thesaurusEditionCsvIdExportService,
-            ThesaurusEditionCsvStructuredExportService thesaurusEditionCsvStructuredExportService,
-            ThesaurusEditionPdfExportService thesaurusEditionPdfExportService,
-            ThesaurusEditionCsvDeprecatedExportService thesaurusEditionCsvDeprecatedExportService,
-            ThesaurusEditionZipExportService thesaurusEditionZipExportService,
-            ToolboxExportPersistence toolboxExportPersistence,
-            ToolboxPreferencePersistence toolboxPreferencePersistence
+            ThesaurusExportServices exportServices,
+            ThesaurusExportPersistenceSupport persistenceSupport
     ) {
-        this.thesaurusEditionSkosExportService = thesaurusEditionSkosExportService;
-        this.thesaurusEditionCsvExportService = thesaurusEditionCsvExportService;
-        this.thesaurusEditionCsvIdExportService = thesaurusEditionCsvIdExportService;
-        this.thesaurusEditionCsvStructuredExportService = thesaurusEditionCsvStructuredExportService;
-        this.thesaurusEditionPdfExportService = thesaurusEditionPdfExportService;
-        this.thesaurusEditionCsvDeprecatedExportService = thesaurusEditionCsvDeprecatedExportService;
-        this.thesaurusEditionZipExportService = thesaurusEditionZipExportService;
-        this.toolboxExportPersistence = toolboxExportPersistence;
-        this.toolboxPreferencePersistence = toolboxPreferencePersistence;
+        this.exportServices = exportServices;
+        this.persistenceSupport = persistenceSupport;
     }
 
     public void init(String thesaurusId, String thesaurusTitle) {
@@ -130,7 +109,7 @@ public class ThesaurusExportBean implements Serializable {
         resetCommon(thesaurusId, thesaurusTitle);
         this.csvDelimiter = ";";
         this.downloadMode = "deprecated";
-        exportLanguages = thesaurusEditionCsvExportService.listExportLanguages(thesaurusId);
+        exportLanguages = exportServices.csvExportService().listExportLanguages(thesaurusId);
         this.deprecatedLanguage = resolveDefaultLanguage();
     }
 
@@ -175,14 +154,14 @@ public class ThesaurusExportBean implements Serializable {
         }
         try {
             if (exportByGroup) {
-                return thesaurusEditionZipExportService.exportEachGroupAsSkosZip(
+                return exportServices.zipExportService().exportEachGroupAsSkosZip(
                         thesaurusId,
                         thesaurusTitle,
                         formatCode,
                         clearHtml
                 );
             }
-            return thesaurusEditionSkosExportService.exportThesaurus(
+            return exportServices.skosExportService().exportThesaurus(
                     thesaurusId,
                     thesaurusTitle,
                     formatCode,
@@ -200,7 +179,7 @@ public class ThesaurusExportBean implements Serializable {
         }
         try {
             if (exportByGroup) {
-                return thesaurusEditionZipExportService.exportEachGroupAsCsvZip(
+                return exportServices.zipExportService().exportEachGroupAsCsvZip(
                         thesaurusId,
                         thesaurusTitle,
                         CsvDelimiterSupport.resolveDelimiter(csvDelimiter),
@@ -208,7 +187,7 @@ public class ThesaurusExportBean implements Serializable {
                         clearHtml
                 );
             }
-            return thesaurusEditionCsvExportService.exportThesaurus(
+            return exportServices.csvExportService().exportThesaurus(
                     thesaurusId,
                     thesaurusTitle,
                     CsvDelimiterSupport.resolveDelimiter(csvDelimiter),
@@ -226,7 +205,7 @@ public class ThesaurusExportBean implements Serializable {
             return null;
         }
         try {
-            return thesaurusEditionCsvIdExportService.exportThesaurus(
+            return exportServices.csvIdExportService().exportThesaurus(
                     thesaurusId,
                     thesaurusTitle,
                     csvIdLanguage,
@@ -245,7 +224,7 @@ public class ThesaurusExportBean implements Serializable {
             return null;
         }
         try {
-            return thesaurusEditionCsvStructuredExportService.exportThesaurus(
+            return exportServices.csvStructuredExportService().exportThesaurus(
                     thesaurusId,
                     thesaurusTitle,
                     structuredCsvLanguage
@@ -261,7 +240,7 @@ public class ThesaurusExportBean implements Serializable {
             return null;
         }
         try {
-            return thesaurusEditionPdfExportService.exportThesaurus(
+            return exportServices.pdfExportService().exportThesaurus(
                     thesaurusId,
                     thesaurusTitle,
                     pdfLanguage1,
@@ -281,7 +260,7 @@ public class ThesaurusExportBean implements Serializable {
             return null;
         }
         try {
-            return thesaurusEditionCsvDeprecatedExportService.exportThesaurus(
+            return exportServices.csvDeprecatedExportService().exportThesaurus(
                     thesaurusId,
                     thesaurusTitle,
                     deprecatedLanguage,
@@ -308,16 +287,16 @@ public class ThesaurusExportBean implements Serializable {
     }
 
     private void loadLanguagesAndGroups() {
-        exportLanguages = thesaurusEditionCsvExportService.listExportLanguages(thesaurusId);
+        exportLanguages = exportServices.csvExportService().listExportLanguages(thesaurusId);
         selectedLanguageCodes = new ArrayList<>(exportLanguages.stream().map(NodeLangTheso::getCode).toList());
-        groupList = toolboxExportPersistence.loadConceptGroups(thesaurusId);
+        groupList = persistenceSupport.toolboxExportPersistence().loadConceptGroups(thesaurusId);
         selectedGroupIds = new ArrayList<>(groupList.stream()
                 .map(group -> group.getConceptGroup().getIdGroup())
                 .toList());
     }
 
     private String resolveDefaultLanguage() {
-        String workLang = toolboxPreferencePersistence.getWorkLanguage(thesaurusId);
+        String workLang = persistenceSupport.toolboxPreferencePersistence().getWorkLanguage(thesaurusId);
         if (StringUtils.isNotBlank(workLang)) {
             return workLang;
         }
@@ -330,4 +309,25 @@ public class ThesaurusExportBean implements Serializable {
                 : List.of();
         return new ThesaurusEditionExportOptions(filterByGroup, groups, clearHtml);
     }
+}
+
+@org.springframework.stereotype.Component
+@org.springframework.context.annotation.Scope("prototype")
+record ThesaurusExportServices(
+        ThesaurusEditionSkosExportService skosExportService,
+        ThesaurusEditionCsvExportService csvExportService,
+        ThesaurusEditionCsvIdExportService csvIdExportService,
+        ThesaurusEditionCsvStructuredExportService csvStructuredExportService,
+        ThesaurusEditionPdfExportService pdfExportService,
+        ThesaurusEditionCsvDeprecatedExportService csvDeprecatedExportService,
+        ThesaurusEditionZipExportService zipExportService
+) {
+}
+
+@org.springframework.stereotype.Component
+@org.springframework.context.annotation.Scope("prototype")
+record ThesaurusExportPersistenceSupport(
+        ToolboxExportPersistence toolboxExportPersistence,
+        ToolboxPreferencePersistence toolboxPreferencePersistence
+) {
 }

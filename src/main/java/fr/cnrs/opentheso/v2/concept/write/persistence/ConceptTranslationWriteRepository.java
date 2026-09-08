@@ -6,7 +6,7 @@ import jakarta.persistence.PersistenceContext;
 import org.springframework.stereotype.Repository;
 import org.springframework.transaction.annotation.Transactional;
 
-import java.util.Date;
+import java.time.Instant;
 
 @Repository
 public class ConceptTranslationWriteRepository {
@@ -37,8 +37,8 @@ public class ConceptTranslationWriteRepository {
                 .setParameter("lang", lang)
                 .setParameter(NativeQueryParams.THESAURUS_ID, thesaurusId)
                 .setParameter(NativeQueryParams.USER_ID, userId)
-                .setParameter("created", new Date())
-                .setParameter(NativeQueryParams.MODIFIED, new Date())
+                .setParameter("created", Instant.now())
+                .setParameter(NativeQueryParams.MODIFIED, Instant.now())
                 .executeUpdate();
         insertHistory(idTerm, lexicalValue, thesaurusId, lang, userId, "New");
     }
@@ -62,7 +62,7 @@ public class ConceptTranslationWriteRepository {
                         """)
                 .setParameter(NativeQueryParams.LEXICAL_VALUE, lexicalValue)
                 .setParameter(NativeQueryParams.USER_ID, userId)
-                .setParameter(NativeQueryParams.MODIFIED, new Date())
+                .setParameter(NativeQueryParams.MODIFIED, Instant.now())
                 .setParameter(NativeQueryParams.ID_TERM, idTerm)
                 .setParameter(NativeQueryParams.THESAURUS_ID, thesaurusId)
                 .setParameter("lang", lang)
@@ -112,7 +112,7 @@ public class ConceptTranslationWriteRepository {
                 .setParameter(NativeQueryParams.THESAURUS_ID, thesaurusId)
                 .setParameter(NativeQueryParams.USER_ID, userId)
                 .setParameter("action", action)
-                .setParameter(NativeQueryParams.MODIFIED, new Date())
+                .setParameter(NativeQueryParams.MODIFIED, Instant.now())
                 .executeUpdate();
     }
 }

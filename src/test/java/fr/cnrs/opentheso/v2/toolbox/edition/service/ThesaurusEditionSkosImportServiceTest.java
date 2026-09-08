@@ -67,11 +67,7 @@ class ThesaurusEditionSkosImportServiceTest {
                 true,
                 12,
                 "fr",
-                "ark",
-                "",
-                "",
-                "",
-                false
+                new ThesaurusEditionSkosImportService.SkosImportOptions("ark", "", "", "", false)
         );
 
         assertEquals("TH99", thesaurusId);
@@ -94,11 +90,7 @@ class ThesaurusEditionSkosImportServiceTest {
                 false,
                 null,
                 "fr",
-                "sans",
-                "",
-                "",
-                "",
-                false
+                new ThesaurusEditionSkosImportService.SkosImportOptions("sans", "", "", "", false)
         );
 
         assertEquals("TH5", thesaurusId);
@@ -119,11 +111,7 @@ class ThesaurusEditionSkosImportServiceTest {
                 true,
                 12,
                 "fr",
-                "sans",
-                "",
-                "",
-                "",
-                true
+                new ThesaurusEditionSkosImportService.SkosImportOptions("sans", "", "", "", true)
         );
 
         assertEquals("TH100", thesaurusId);
@@ -144,11 +132,7 @@ class ThesaurusEditionSkosImportServiceTest {
                 true,
                 12,
                 "fr",
-                "sans",
-                "",
-                "",
-                "",
-                true
+                new ThesaurusEditionSkosImportService.SkosImportOptions("sans", "", "", "", true)
         );
 
         verify(thesaurusEditionSkosImportEngine).setImportAsMaster(false);
@@ -160,9 +144,9 @@ class ThesaurusEditionSkosImportServiceTest {
         when(thesaurusEditionSkosImportEngine.addThesaurus()).thenReturn(null);
         when(thesaurusEditionSkosImportEngine.getMessage()).thenReturn(new StringBuilder("Erreur SKOS"));
 
+        var options = new ThesaurusEditionSkosImportService.SkosImportOptions("sans", "", "", "", false);
         assertThrows(IllegalStateException.class, () -> service.importNewThesaurus(
-                document, "yyyy-MM-dd", 7, true, null, "fr",
-                "sans", "", "", "", false
+                document, "yyyy-MM-dd", 7, true, null, "fr", options
         ));
     }
 

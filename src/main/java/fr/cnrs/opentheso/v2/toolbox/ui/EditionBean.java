@@ -36,12 +36,8 @@ import java.util.List;
 @Named("v2EditionBean")
 public class EditionBean implements Serializable {
 
-    private final transient UserSession userSession;
-    private final transient ToolboxAccessPolicy toolboxAccessPolicy;
-    private final transient ThesaurusContext thesaurusContext;
-    private final transient V2LocaleBean localeBean;
-    private final transient EditionThesaurusService editionThesaurusService;
-    private final transient ConsultationShellBean consultationShellBean;
+    private final transient EditionSessionCollaborators session;
+    private final transient EditionChildBeans children;
 
     private EditionView currentView = EditionView.LIST;
     private List<EditionThesaurusSummary> thesaurusList = Collections.emptyList();
@@ -51,48 +47,67 @@ public class EditionBean implements Serializable {
     private String thesaurusTitleToDelete;
     private boolean deletePerennialIdentifiers;
 
-    private final transient NewThesaurusBean newThesaurusBean;
-    private final transient ModifyThesaurusBean modifyThesaurusBean;
-    private final transient ThesaurusExportBean thesaurusExportBean;
-    private final transient ThesaurusEditionSkosImportBean skosImportBean;
-    private final transient ThesaurusEditionCsvImportBean csvImportBean;
-    private final transient ThesaurusEditionCsvStructuredImportBean csvStructuredImportBean;
-    private final transient ThesaurusSyncBean thesaurusSyncBean;
-
     private EditionThesaurusSummary selectedThesaurusForAction;
 
-    public EditionBean(
-            UserSession userSession,
-            ToolboxAccessPolicy toolboxAccessPolicy,
-            ThesaurusContext thesaurusContext,
-            V2LocaleBean localeBean,
-            EditionThesaurusService editionThesaurusService,
-            ConsultationShellBean consultationShellBean,
-            NewThesaurusBean newThesaurusBean,
-            ModifyThesaurusBean modifyThesaurusBean,
-            ThesaurusExportBean thesaurusExportBean,
-            ThesaurusEditionSkosImportBean skosImportBean,
-            ThesaurusEditionCsvImportBean csvImportBean,
-            ThesaurusEditionCsvStructuredImportBean csvStructuredImportBean,
-            ThesaurusSyncBean thesaurusSyncBean
-    ) {
-        this.userSession = userSession;
-        this.toolboxAccessPolicy = toolboxAccessPolicy;
-        this.thesaurusContext = thesaurusContext;
-        this.localeBean = localeBean;
-        this.editionThesaurusService = editionThesaurusService;
-        this.consultationShellBean = consultationShellBean;
-        this.newThesaurusBean = newThesaurusBean;
-        this.modifyThesaurusBean = modifyThesaurusBean;
-        this.thesaurusExportBean = thesaurusExportBean;
-        this.skosImportBean = skosImportBean;
-        this.csvImportBean = csvImportBean;
-        this.csvStructuredImportBean = csvStructuredImportBean;
-        this.thesaurusSyncBean = thesaurusSyncBean;
+    public EditionBean(EditionSessionCollaborators session, EditionChildBeans children) {
+        this.session = session;
+        this.children = children;
+    }
+
+    public UserSession getUserSession() {
+        return session.userSession();
+    }
+
+    public ToolboxAccessPolicy getToolboxAccessPolicy() {
+        return session.toolboxAccessPolicy();
+    }
+
+    public ThesaurusContext getThesaurusContext() {
+        return session.thesaurusContext();
+    }
+
+    public V2LocaleBean getLocaleBean() {
+        return session.localeBean();
+    }
+
+    public EditionThesaurusService getEditionThesaurusService() {
+        return session.editionThesaurusService();
+    }
+
+    public ConsultationShellBean getConsultationShellBean() {
+        return session.consultationShellBean();
+    }
+
+    public NewThesaurusBean getNewThesaurusBean() {
+        return children.newThesaurusBean();
+    }
+
+    public ModifyThesaurusBean getModifyThesaurusBean() {
+        return children.modifyThesaurusBean();
+    }
+
+    public ThesaurusExportBean getThesaurusExportBean() {
+        return children.thesaurusExportBean();
+    }
+
+    public ThesaurusEditionSkosImportBean getSkosImportBean() {
+        return children.skosImportBean();
+    }
+
+    public ThesaurusEditionCsvImportBean getCsvImportBean() {
+        return children.csvImportBean();
+    }
+
+    public ThesaurusEditionCsvStructuredImportBean getCsvStructuredImportBean() {
+        return children.csvStructuredImportBean();
+    }
+
+    public ThesaurusSyncBean getThesaurusSyncBean() {
+        return children.thesaurusSyncBean();
     }
 
     public void load() {
-        thesaurusContext.syncFromViewParams();
+        session.thesaurusContext().syncFromViewParams();
         resetToListView();
         if (!canAccessScreen()) {
             thesaurusList = Collections.emptyList();
@@ -107,7 +122,7 @@ public class EditionBean implements Serializable {
     }
 
     public boolean isCanCreateOrImport() {
-        return toolboxAccessPolicy.canCreateOrImportThesaurus(userSession);
+        return session.toolboxAccessPolicy().canCreateOrImportThesaurus(session.userSession());
     }
 
     public boolean isListView() {
@@ -182,7 +197,7 @@ public class EditionBean implements Serializable {
         if (!isCanCreateOrImport()) {
             return;
         }
-        newThesaurusBean.prepareForm();
+        children.newThesaurusBean().prepareForm();
         currentView = EditionView.NEW;
     }
 
@@ -190,7 +205,7 @@ public class EditionBean implements Serializable {
         if (!isCanCreateOrImport()) {
             return;
         }
-        skosImportBean.init();
+        children.skosImportBean().init();
         currentView = EditionView.IMPORT_SKOS;
     }
 
@@ -198,7 +213,7 @@ public class EditionBean implements Serializable {
         if (!isCanCreateOrImport()) {
             return;
         }
-        csvImportBean.init();
+        children.csvImportBean().init();
         currentView = EditionView.IMPORT_CSV;
     }
 
@@ -206,7 +221,7 @@ public class EditionBean implements Serializable {
         if (!isCanCreateOrImport()) {
             return;
         }
-        csvStructuredImportBean.init();
+        children.csvStructuredImportBean().init();
         currentView = EditionView.IMPORT_CSV_STRUCTURE;
     }
 
@@ -215,7 +230,7 @@ public class EditionBean implements Serializable {
             return;
         }
         selectedThesaurusForAction = thesaurus;
-        modifyThesaurusBean.load(thesaurus.id());
+        children.modifyThesaurusBean().load(thesaurus.id());
         currentView = EditionView.MODIFY;
     }
 
@@ -223,7 +238,7 @@ public class EditionBean implements Serializable {
         if (!canAccessScreen() || StringUtils.isBlank(thesaurusId)) {
             return;
         }
-        modifyThesaurusBean.load(thesaurusId);
+        children.modifyThesaurusBean().load(thesaurusId);
         currentView = EditionView.MODIFY;
     }
 
@@ -231,7 +246,7 @@ public class EditionBean implements Serializable {
         if (!canAccessScreen() || StringUtils.isBlank(thesaurusId)) {
             return;
         }
-        thesaurusSyncBean.init(thesaurusId);
+        children.thesaurusSyncBean().init(thesaurusId);
         currentView = EditionView.SYNC;
     }
 
@@ -242,17 +257,17 @@ public class EditionBean implements Serializable {
             return;
         }
         if (exportView == EditionView.EXPORT_SKOS) {
-            thesaurusExportBean.init(thesaurus.id(), thesaurus.title());
+            children.thesaurusExportBean().init(thesaurus.id(), thesaurus.title());
         } else if (exportView == EditionView.EXPORT_CSV) {
-            thesaurusExportBean.initCsv(thesaurus.id(), thesaurus.title());
+            children.thesaurusExportBean().initCsv(thesaurus.id(), thesaurus.title());
         } else if (exportView == EditionView.EXPORT_CSV_ID) {
-            thesaurusExportBean.initCsvById(thesaurus.id(), thesaurus.title());
+            children.thesaurusExportBean().initCsvById(thesaurus.id(), thesaurus.title());
         } else if (exportView == EditionView.EXPORT_CSV_STRUCTURE) {
-            thesaurusExportBean.initCsvStructured(thesaurus.id(), thesaurus.title());
+            children.thesaurusExportBean().initCsvStructured(thesaurus.id(), thesaurus.title());
         } else if (exportView == EditionView.EXPORT_PDF) {
-            thesaurusExportBean.initPdf(thesaurus.id(), thesaurus.title());
+            children.thesaurusExportBean().initPdf(thesaurus.id(), thesaurus.title());
         } else if (exportView == EditionView.EXPORT_DEPRECATED) {
-            thesaurusExportBean.initDeprecated(thesaurus.id(), thesaurus.title());
+            children.thesaurusExportBean().initDeprecated(thesaurus.id(), thesaurus.title());
         }
     }
 
@@ -271,9 +286,9 @@ public class EditionBean implements Serializable {
             return;
         }
         try {
-            editionThesaurusService.deleteThesaurus(thesaurusIdToDelete, deletePerennialIdentifiers);
-            if (thesaurusContext.matchesCurrentThesaurus(thesaurusIdToDelete)) {
-                thesaurusContext.clearSelection();
+            session.editionThesaurusService().deleteThesaurus(thesaurusIdToDelete, deletePerennialIdentifiers);
+            if (session.thesaurusContext().matchesCurrentThesaurus(thesaurusIdToDelete)) {
+                session.thesaurusContext().clearSelection();
             }
             thesaurusIdToDelete = null;
             thesaurusTitleToDelete = null;
@@ -287,13 +302,13 @@ public class EditionBean implements Serializable {
     }
 
     public void showThesaurusStatistics(EditionThesaurusSummary thesaurus) {
-        var stats = editionThesaurusService.loadStatistics(thesaurus.id());
+        var stats = session.editionThesaurusService().loadStatistics(thesaurus.id());
         var message = new FacesMessage(
                 FacesMessage.SEVERITY_INFO,
-                localeBean.getMsg("info"),
-                localeBean.getMsg("candidat.total_concepts") + " = " + stats.conceptCount() + "\n"
-                        + localeBean.getMsg("candidat.titre") + " = " + stats.candidateCount() + "\n"
-                        + localeBean.getMsg("search.deprecated") + " = " + stats.deprecatedCount()
+                session.localeBean().getMsg("info"),
+                session.localeBean().getMsg("candidat.total_concepts") + " = " + stats.conceptCount() + "\n"
+                        + session.localeBean().getMsg("candidat.titre") + " = " + stats.candidateCount() + "\n"
+                        + session.localeBean().getMsg("search.deprecated") + " = " + stats.deprecatedCount()
         );
         FacesContext.getCurrentInstance().addMessage(null, message);
     }
@@ -304,15 +319,40 @@ public class EditionBean implements Serializable {
     }
 
     private void refreshThesaurusList() {
-        thesaurusList = editionThesaurusService.listAdminThesauri(
-                userSession.getCurrentUserId(),
-                userSession.isSuperAdmin()
+        thesaurusList = session.editionThesaurusService().listAdminThesauri(
+                session.userSession().getCurrentUserId(),
+                session.userSession().isSuperAdmin()
         );
         filteredThesaurusList = null;
-        consultationShellBean.refreshHeaderCatalog();
+        session.consultationShellBean().refreshHeaderCatalog();
     }
 
     private boolean canAccessScreen() {
-        return toolboxAccessPolicy.canAccessEditionScreen(userSession);
+        return session.toolboxAccessPolicy().canAccessEditionScreen(session.userSession());
     }
+}
+
+@org.springframework.stereotype.Component
+@org.springframework.context.annotation.Scope("prototype")
+record EditionSessionCollaborators(
+        UserSession userSession,
+        ToolboxAccessPolicy toolboxAccessPolicy,
+        ThesaurusContext thesaurusContext,
+        V2LocaleBean localeBean,
+        EditionThesaurusService editionThesaurusService,
+        ConsultationShellBean consultationShellBean
+) {
+}
+
+@org.springframework.stereotype.Component
+@org.springframework.context.annotation.Scope("prototype")
+record EditionChildBeans(
+        NewThesaurusBean newThesaurusBean,
+        ModifyThesaurusBean modifyThesaurusBean,
+        ThesaurusExportBean thesaurusExportBean,
+        ThesaurusEditionSkosImportBean skosImportBean,
+        ThesaurusEditionCsvImportBean csvImportBean,
+        ThesaurusEditionCsvStructuredImportBean csvStructuredImportBean,
+        ThesaurusSyncBean thesaurusSyncBean
+) {
 }

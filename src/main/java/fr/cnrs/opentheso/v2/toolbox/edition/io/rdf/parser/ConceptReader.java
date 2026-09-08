@@ -21,8 +21,14 @@ import java.util.regex.Pattern;
 public class ConceptReader {
 
     public void readGeneric(SKOSXmlDocument sKOSXmlDocument, SKOSResource skosConcept, IRI predicate, Literal literal, String lang) {
+        String localName = predicate.getLocalName();
+        readGenericLabels(skosConcept, localName, literal, lang);
+        readGenericNotes(skosConcept, localName, literal, lang);
+        readGenericOther(sKOSXmlDocument, skosConcept, localName, literal);
+    }
 
-        switch (predicate.getLocalName()) {
+    private void readGenericLabels(SKOSResource skosConcept, String localName, Literal literal, String lang) {
+        switch (localName) {
             case "prefLabel":
                 skosConcept.addLabel(literal.getLabel(), lang, SKOSProperty.PREF_LABEL);
                 break;
@@ -32,7 +38,13 @@ public class ConceptReader {
             case "hiddenLabel":
                 skosConcept.addLabel(literal.getLabel(), lang, SKOSProperty.HIDDEN_LABEL);
                 break;
+            default:
+                break;
+        }
+    }
 
+    private void readGenericNotes(SKOSResource skosConcept, String localName, Literal literal, String lang) {
+        switch (localName) {
             case "definition":
                 skosConcept.addDocumentation(literal.getLabel(), lang, SKOSProperty.DEFINITION);
                 break;
@@ -54,12 +66,16 @@ public class ConceptReader {
             case "note":
                 skosConcept.addDocumentation(literal.getLabel(), lang, SKOSProperty.NOTE);
                 break;
-            //DcSource
             case "source":
                 skosConcept.addDcRelations(literal.getLabel());
                 break;
+            default:
+                break;
+        }
+    }
 
-            //Image
+    private void readGenericOther(SKOSXmlDocument sKOSXmlDocument, SKOSResource skosConcept, String localName, Literal literal) {
+        switch (localName) {
             case "Image":
                 NodeImage nodeImage = new NodeImage();
                 nodeImage.setImageName("");
@@ -67,98 +83,37 @@ public class ConceptReader {
                 nodeImage.setUri(literal.getLabel());
                 skosConcept.addNodeImage(nodeImage);
                 break;
-
-            //Replaces
             case "replaces":
                 skosConcept.addReplaces(literal.getLabel(), SKOSProperty.REPLACES);
                 break;
             case "isReplacedBy":
                 skosConcept.addReplaces(literal.getLabel(), SKOSProperty.IS_REPLACED_BY);
                 break;
-
-            //deprecated
             case "deprecated":
                 skosConcept.setStatus(SKOSProperty.DEPRECATED);
                 break;
-
-            //GPSCoordinates
             case "P625":
-                if (literal.getLabel().startsWith("Point")) {
-                    Pattern pattern = Pattern.compile("Point\\((-?\\d+\\.\\d+) (-?\\d+\\.\\d+)\\)");
-                    Matcher matcher = pattern.matcher(literal.getLabel());
-
-                    if (matcher.find()) {
-                        SKOSGPSCoordinates element = new SKOSGPSCoordinates();
-                        element.setLat(matcher.group(1));
-                        element.setLon(matcher.group(2));
-                        skosConcept.getGpsCoordinates().add(element);
-                    }
-                } else {
-                    Pattern pattern = Pattern.compile("\\(([^)]+)\\)");
-                    Matcher matcher = pattern.matcher(literal.getLabel());
-
-                    while (matcher.find()) {
-                        String coordinates = matcher.group(1).substring(1);
-                        String[] parts = coordinates.split(", ");
-
-                        for (String part : parts) {
-                            String[] values = part.split(" ");
-                            if (values.length == 2) {
-                                SKOSGPSCoordinates element = new SKOSGPSCoordinates();
-                                element.setLat(values[0]);
-                                element.setLon(values[1]);
-                                skosConcept.getGpsCoordinates().add(element);
-                            }
-                        }
-                    }
-                }
+                readGenericGpsPoint(skosConcept, literal.getLabel());
                 break;
             case "lat":
-                if (skosConcept.getGpsCoordinates().stream().anyMatch(element -> element.getLat() == null)) {
-                    for (SKOSGPSCoordinates element : skosConcept.getGpsCoordinates()) {
-                        if (element.getLat() == null) {
-                            element.setLat(literal.getLabel());
-                            break;
-                        }
-                    }
-                } else {
-                    SKOSGPSCoordinates element = new SKOSGPSCoordinates();
-                    element.setLat(literal.getLabel());
-                    skosConcept.getGpsCoordinates().add(element);
-                }
+                applyGenericLatitude(skosConcept, literal.getLabel());
                 break;
-
             case "long":
-                if (skosConcept.getGpsCoordinates().stream().anyMatch(element -> element.getLon() == null)) {
-                    for (SKOSGPSCoordinates element : skosConcept.getGpsCoordinates()) {
-                        if (element.getLon() == null) {
-                            element.setLon(literal.getLabel());
-                            break;
-                        }
-                    }
-                } else {
-                    SKOSGPSCoordinates element = new SKOSGPSCoordinates();
-                    element.setLon(literal.getLabel());
-                    skosConcept.getGpsCoordinates().add(element);
-                }
+                applyGenericLongitude(skosConcept, literal.getLabel());
                 break;
-            //Notation
             case "notation":
                 skosConcept.addNotation(literal.getLabel());
                 break;
-            //identifier
             case "identifier":
                 skosConcept.setIdentifier(literal.getLabel());
                 sKOSXmlDocument.getEquivalenceUriArkHandle().put(skosConcept.getUri(), literal.getLabel());
                 break;
-
             case "created":
                 skosConcept.addDate(literal.getLabel(), SKOSProperty.CREATED);
                 break;
             case "modified":
                 skosConcept.addDate(literal.getLabel(), SKOSProperty.MODIFIED);
                 break;
-
             case "creator":
                 skosConcept.addAgent(literal.getLabel(), SKOSProperty.CREATOR);
                 break;
@@ -168,6 +123,65 @@ public class ConceptReader {
             default:
                 break;
         }
+    }
+
+    private void readGenericGpsPoint(SKOSResource skosConcept, String label) {
+        if (label.startsWith("Point")) {
+            Matcher matcher = Pattern.compile("Point\\((-?\\d+\\.\\d+) (-?\\d+\\.\\d+)\\)").matcher(label);
+            if (matcher.find()) {
+                SKOSGPSCoordinates element = new SKOSGPSCoordinates();
+                element.setLat(matcher.group(1));
+                element.setLon(matcher.group(2));
+                skosConcept.getGpsCoordinates().add(element);
+            }
+            return;
+        }
+        Matcher matcher = Pattern.compile("\\(([^)]+)\\)").matcher(label);
+        while (matcher.find()) {
+            addGenericGpsParts(skosConcept, matcher.group(1).substring(1).split(", "));
+        }
+    }
+
+    private void addGenericGpsParts(SKOSResource skosConcept, String[] parts) {
+        for (String part : parts) {
+            String[] values = part.split(" ");
+            if (values.length == 2) {
+                SKOSGPSCoordinates element = new SKOSGPSCoordinates();
+                element.setLat(values[0]);
+                element.setLon(values[1]);
+                skosConcept.getGpsCoordinates().add(element);
+            }
+        }
+    }
+
+    private void applyGenericLatitude(SKOSResource skosConcept, String latitude) {
+        if (skosConcept.getGpsCoordinates().stream().anyMatch(element -> element.getLat() == null)) {
+            for (SKOSGPSCoordinates element : skosConcept.getGpsCoordinates()) {
+                if (element.getLat() == null) {
+                    element.setLat(latitude);
+                    return;
+                }
+            }
+            return;
+        }
+        SKOSGPSCoordinates element = new SKOSGPSCoordinates();
+        element.setLat(latitude);
+        skosConcept.getGpsCoordinates().add(element);
+    }
+
+    private void applyGenericLongitude(SKOSResource skosConcept, String longitude) {
+        if (skosConcept.getGpsCoordinates().stream().anyMatch(element -> element.getLon() == null)) {
+            for (SKOSGPSCoordinates element : skosConcept.getGpsCoordinates()) {
+                if (element.getLon() == null) {
+                    element.setLon(longitude);
+                    return;
+                }
+            }
+            return;
+        }
+        SKOSGPSCoordinates element = new SKOSGPSCoordinates();
+        element.setLon(longitude);
+        skosConcept.getGpsCoordinates().add(element);
     }
 
 

@@ -6,7 +6,7 @@ import jakarta.persistence.PersistenceContext;
 import org.springframework.stereotype.Repository;
 import org.springframework.transaction.annotation.Transactional;
 
-import java.util.Date;
+import java.time.Instant;
 import java.util.List;
 import java.util.Optional;
 
@@ -79,7 +79,7 @@ public class ConceptLifecycleWriteRepository {
                 .setParameter(NativeQueryParams.CONCEPT_ID, concept.conceptId())
                 .setParameter(NativeQueryParams.THESAURUS_ID, concept.thesaurusId())
                 .setParameter("idArk", concept.idArk())
-                .setParameter(NativeQueryParams.MODIFIED, new Date())
+                .setParameter(NativeQueryParams.MODIFIED, Instant.now())
                 .setParameter("status", concept.status())
                 .setParameter("notation", concept.notation())
                 .setParameter("topConcept", concept.topConcept())
@@ -106,7 +106,7 @@ public class ConceptLifecycleWriteRepository {
                 .setParameter(NativeQueryParams.DEPRECATED_CONCEPT_ID, deprecatedConceptId)
                 .setParameter("replacementConceptId", replacementConceptId)
                 .setParameter(NativeQueryParams.THESAURUS_ID, thesaurusId)
-                .setParameter(NativeQueryParams.MODIFIED, new Date())
+                .setParameter(NativeQueryParams.MODIFIED, Instant.now())
                 .setParameter(NativeQueryParams.USER_ID, userId)
                 .executeUpdate();
     }

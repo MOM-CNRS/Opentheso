@@ -578,21 +578,30 @@ public class ConceptIdentifierEditorBean implements Serializable {
         }
         List<Object[]> rows = conceptRepository.findArkFromIdConcepts(
                 Set.copyOf(branchConceptIds), resolvedThesaurusId);
-        Set<String> withArk = new HashSet<>();
-        if (rows != null) {
-            for (Object[] row : rows) {
-                if (row == null || row.length < 2) {
-                    continue;
-                }
-                String id = row[0] != null ? String.valueOf(row[0]) : "";
-                String ark = row[1] != null ? String.valueOf(row[1]) : "";
-                if (StringUtils.isNotBlank(id) && StringUtils.isNotBlank(ark)) {
-                    withArk.add(id);
-                }
-            }
-        }
-        branchArkExisting = withArk.size();
+        branchArkExisting = countRowsWithArk(rows);
         branchArkMissing = Math.max(0, branchConceptIds.size() - branchArkExisting);
+    }
+
+    private static int countRowsWithArk(List<Object[]> rows) {
+        if (rows == null) {
+            return 0;
+        }
+        Set<String> withArk = new HashSet<>();
+        for (Object[] row : rows) {
+            addArkId(withArk, row);
+        }
+        return withArk.size();
+    }
+
+    private static void addArkId(Set<String> withArk, Object[] row) {
+        if (row == null || row.length < 2) {
+            return;
+        }
+        String id = row[0] != null ? String.valueOf(row[0]) : "";
+        String ark = row[1] != null ? String.valueOf(row[1]) : "";
+        if (StringUtils.isNotBlank(id) && StringUtils.isNotBlank(ark)) {
+            withArk.add(id);
+        }
     }
 
     private void loadAllConceptsForArk() {

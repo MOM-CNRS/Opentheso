@@ -15,7 +15,8 @@ import org.apache.commons.collections4.CollectionUtils;
 import org.apache.commons.lang3.StringUtils;
 import org.springframework.stereotype.Repository;
 
-import java.sql.Timestamp;
+import fr.cnrs.opentheso.v2.shared.time.V2Dates;
+
 import java.time.LocalDateTime;
 import java.util.Collections;
 import java.util.HashSet;
@@ -260,7 +261,7 @@ public class CandidatQueryRepository {
                     .setParameter("lang", language)
                     .setParameter(NativeQueryParams.USER_ID, userId)
                     .getSingleResult();
-            var parsed = CandidatDetailJsonParser.parse(
+            var parsed = CandidatDetailJsonParser.parse(new CandidatDetailJsonParser.DetailJsonRequest(
                     stringValue(row[2]),
                     stringValue(row[3]),
                     stringValue(row[4]),
@@ -269,7 +270,7 @@ public class CandidatQueryRepository {
                     stringValue(row[7]),
                     stringValue(row[8]),
                     stringValue(row[9])
-            );
+            ));
             return Optional.of(new CandidatDetailBundle(
                     row[0] != null ? (String) row[0] : null,
                     toBoolean(row[1]),
@@ -564,15 +565,6 @@ public class CandidatQueryRepository {
     }
 
     private LocalDateTime toLocalDateTime(Object value) {
-        if (value == null) {
-            return null;
-        }
-        if (value instanceof Timestamp timestamp) {
-            return timestamp.toLocalDateTime();
-        }
-        if (value instanceof java.util.Date date) {
-            return new Timestamp(date.getTime()).toLocalDateTime();
-        }
-        return null;
+        return V2Dates.toLocalDateTime(value);
     }
 }

@@ -20,8 +20,8 @@ import org.apache.commons.lang3.Strings;
 import org.springframework.dao.DataIntegrityViolationException;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
+import fr.cnrs.opentheso.v2.shared.time.V2Dates;
 
-import java.util.Date;
 import java.util.List;
 
 /**
@@ -79,7 +79,7 @@ public class ConceptAlignmentMutationService {
             return MutationResult.duplicate("Cette URI est déjà alignée avec un autre type d'équivalence !");
         }
 
-        var now = new Date();
+        var now = V2Dates.nowUtilDate();
         try {
             alignementRepository.save(Alignement.builder()
                     .author(command.userId())
@@ -144,7 +144,7 @@ public class ConceptAlignmentMutationService {
         entity.setThesaurusTarget(source);
         entity.setAlignementType(alignementType.get());
         entity.setUrlAvailable(true);
-        entity.setModified(new Date());
+        entity.setModified(V2Dates.nowUtilDate());
         try {
             alignementRepository.save(entity);
         } catch (DataIntegrityViolationException e) {

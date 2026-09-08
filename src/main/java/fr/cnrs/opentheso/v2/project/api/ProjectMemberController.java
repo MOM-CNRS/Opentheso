@@ -70,7 +70,7 @@ public class ProjectMemberController {
     ) {
         int callerId = projectAuthSupport.resolveUserId(xApiKey, legacyApiKey);
         var profile = userProfileService.getProfile(callerId);
-        CreatedProjectMember created = projectMemberService.createMember(
+        CreatedProjectMember created = projectMemberService.createMember(new ProjectMemberService.CreateMemberRequest(
                 callerId,
                 profile.superAdmin(),
                 projectId,
@@ -84,7 +84,7 @@ public class ProjectMemberController {
                 request.password(),
                 request.passwordConfirmation(),
                 request.creationMode()
-        );
+        ));
         return new CreatedProjectMemberResponse(created.userId(), created.username(), created.email());
     }
 
@@ -142,7 +142,7 @@ public class ProjectMemberController {
     ) {
         int callerId = projectAuthSupport.resolveUserId(xApiKey, legacyApiKey);
         var profile = userProfileService.getProfile(callerId);
-        projectMemberService.updateLimitedMemberRole(
+        projectMemberService.updateLimitedMemberRole(new ProjectMemberService.UpdateLimitedMemberRoleRequest(
                 callerId,
                 profile.superAdmin(),
                 projectId,
@@ -151,7 +151,7 @@ public class ProjectMemberController {
                 request.newRoleId(),
                 request.thesaurusId(),
                 request.limitedOnThesaurus()
-        );
+        ));
         return ResponseEntity.noContent().build();
     }
 
@@ -198,7 +198,7 @@ public class ProjectMemberController {
     ) {
         int callerId = projectAuthSupport.resolveUserId(xApiKey, legacyApiKey);
         var profile = userProfileService.getProfile(callerId);
-        projectMemberService.updateMemberProfile(
+        projectMemberService.updateMemberProfile(new ProjectMemberService.UpdateMemberProfileRequest(
                 callerId,
                 profile.superAdmin(),
                 projectId,
@@ -208,7 +208,7 @@ public class ProjectMemberController {
                 request.alertMail(),
                 request.institution(),
                 request.active()
-        );
+        ));
         return ResponseEntity.noContent().build();
     }
 

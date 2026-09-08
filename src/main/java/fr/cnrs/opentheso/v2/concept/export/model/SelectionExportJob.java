@@ -208,10 +208,10 @@ public class SelectionExportJob {
             try {
                 return Files.readAllBytes(file);
             } catch (IOException ex) {
-                return null;
+                return new byte[0];
             }
         }
-        return null;
+        return new byte[0];
     }
 
     public synchronized Path getFile() {

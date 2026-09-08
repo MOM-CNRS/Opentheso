@@ -215,7 +215,7 @@ public class CandidatAutoAlignmentEngine implements Serializable {
             return;
         }
 
-        if (!persistence.addAlignment(
+        if (!persistence.addAlignment(new CandidatAutoAlignmentPersistence.AddAlignmentRequest(
                 userId,
                 selectedNodeAlignment.getConcept_target(),
                 selectedNodeAlignment.getThesaurus_target(),
@@ -224,7 +224,7 @@ public class CandidatAutoAlignmentEngine implements Serializable {
                 conceptId,
                 thesaurusId,
                 selectedAlignementSource.getId()
-        )) {
+        ))) {
             MessageUtils.showErrorMessage("L'ajout de l'alignement a échoué !");
             return;
         }
@@ -353,75 +353,102 @@ public class CandidatAutoAlignmentEngine implements Serializable {
             throw new IOException("Entity not found: " + qid);
         }
 
-        entity.path("labels").fieldNames().forEachRemaining(lang -> {
-            if (thesaurusUsedLanguage.contains(lang.toLowerCase())) {
-                String val = entity.path("labels").path(lang).path(KEY_VALUE).asText(null);
-                if (val != null) {
-                    SelectedResource selectedResource = new SelectedResource();
-                    boolean added = false;
-                    for (NodeTermTraduction nodeTermTraduction : nodeTermTraductions) {
-                        if (lang.equalsIgnoreCase(nodeTermTraduction.getLang())) {
-                            if (val.trim().equalsIgnoreCase(nodeTermTraduction.getLexicalValue().trim())) {
-                                added = true;
-                                break;
-                            }
-                            selectedResource.setLocalValue(nodeTermTraduction.getLexicalValue().trim());
-                        }
-                    }
-                    if (!added) {
-                        selectedResource.setIdLang(lang);
-                        selectedResource.setGettedValue(val);
-                        traductionsOfAlignment.add(selectedResource);
-                    }
-                }
-            }
-        });
+        collectWikidataLabels(entity);
+        collectWikidataDescriptions(entity);
+        collectWikidataImages(entity);
+    }
 
-        entity.path("descriptions").fieldNames().forEachRemaining(lang -> {
-            if (thesaurusUsedLanguage.contains(lang.toLowerCase())) {
-                String val = entity.path("descriptions").path(lang).path(KEY_VALUE).asText(null);
-                if (val != null) {
-                    SelectedResource selectedResource = new SelectedResource();
-                    boolean added = false;
-                    for (NodeNote nodeNote : nodeNotes) {
-                        if ("definition".equalsIgnoreCase(nodeNote.getNoteTypeCode())
-                                && lang.equalsIgnoreCase(nodeNote.getLang())) {
-                            if (val.equalsIgnoreCase(nodeNote.getLexicalValue().trim())) {
-                                added = true;
-                                break;
-                            }
-                            selectedResource.setLocalValue(nodeNote.getLexicalValue().trim());
-                        }
-                    }
-                    if (!added) {
-                        selectedResource.setIdLang(lang);
-                        selectedResource.setGettedValue(val);
-                        descriptionsOfAlignment.add(selectedResource);
-                    }
-                }
-            }
-        });
+    private void collectWikidataLabels(JsonNode entity) {
+        entity.path("labels").fieldNames().forEachRemaining(lang -> addWikidataLabel(entity, lang));
+    }
 
-        JsonNode claims = entity.path("claims");
-        for (JsonNode claim : claims.path("P18")) {
-            JsonNode valNode = claim.path("mainsnak").path("datavalue").path(KEY_VALUE);
-            if (valNode.isTextual()) {
-                boolean added = false;
-                String filename = valNode.asText();
-                for (NodeImage nodeImage : nodeImages) {
-                    if (commonsFilePathUrl(filename).equalsIgnoreCase(nodeImage.getUri().trim())) {
-                        added = true;
-                        break;
-                    }
-                }
-                if (!added) {
-                    SelectedResource selectedResource = new SelectedResource();
-                    selectedResource.setLocalValue(commonsFilePathUrl(filename));
-                    selectedResource.setGettedValue(commonsFilePathUrl(filename));
-                    imagesOfAlignment.add(selectedResource);
-                }
+    private void addWikidataLabel(JsonNode entity, String lang) {
+        if (!thesaurusUsedLanguage.contains(lang.toLowerCase())) {
+            return;
+        }
+        String val = entity.path("labels").path(lang).path(KEY_VALUE).asText(null);
+        if (val == null) {
+            return;
+        }
+        SelectedResource selectedResource = new SelectedResource();
+        if (isExistingTranslation(lang, val, selectedResource)) {
+            return;
+        }
+        selectedResource.setIdLang(lang);
+        selectedResource.setGettedValue(val);
+        traductionsOfAlignment.add(selectedResource);
+    }
+
+    private boolean isExistingTranslation(String lang, String val, SelectedResource selectedResource) {
+        for (NodeTermTraduction nodeTermTraduction : nodeTermTraductions) {
+            if (!lang.equalsIgnoreCase(nodeTermTraduction.getLang())) {
+                continue;
+            }
+            if (val.trim().equalsIgnoreCase(nodeTermTraduction.getLexicalValue().trim())) {
+                return true;
+            }
+            selectedResource.setLocalValue(nodeTermTraduction.getLexicalValue().trim());
+        }
+        return false;
+    }
+
+    private void collectWikidataDescriptions(JsonNode entity) {
+        entity.path("descriptions").fieldNames().forEachRemaining(lang -> addWikidataDescription(entity, lang));
+    }
+
+    private void addWikidataDescription(JsonNode entity, String lang) {
+        if (!thesaurusUsedLanguage.contains(lang.toLowerCase())) {
+            return;
+        }
+        String val = entity.path("descriptions").path(lang).path(KEY_VALUE).asText(null);
+        if (val == null) {
+            return;
+        }
+        SelectedResource selectedResource = new SelectedResource();
+        if (isExistingDefinition(lang, val, selectedResource)) {
+            return;
+        }
+        selectedResource.setIdLang(lang);
+        selectedResource.setGettedValue(val);
+        descriptionsOfAlignment.add(selectedResource);
+    }
+
+    private boolean isExistingDefinition(String lang, String val, SelectedResource selectedResource) {
+        for (NodeNote nodeNote : nodeNotes) {
+            if (!"definition".equalsIgnoreCase(nodeNote.getNoteTypeCode())
+                    || !lang.equalsIgnoreCase(nodeNote.getLang())) {
+                continue;
+            }
+            if (val.equalsIgnoreCase(nodeNote.getLexicalValue().trim())) {
+                return true;
+            }
+            selectedResource.setLocalValue(nodeNote.getLexicalValue().trim());
+        }
+        return false;
+    }
+
+    private void collectWikidataImages(JsonNode entity) {
+        for (JsonNode claim : entity.path("claims").path("P18")) {
+            addWikidataImage(claim);
+        }
+    }
+
+    private void addWikidataImage(JsonNode claim) {
+        JsonNode valNode = claim.path("mainsnak").path("datavalue").path(KEY_VALUE);
+        if (!valNode.isTextual()) {
+            return;
+        }
+        String filename = valNode.asText();
+        String url = commonsFilePathUrl(filename);
+        for (NodeImage nodeImage : nodeImages) {
+            if (url.equalsIgnoreCase(nodeImage.getUri().trim())) {
+                return;
             }
         }
+        SelectedResource selectedResource = new SelectedResource();
+        selectedResource.setLocalValue(url);
+        selectedResource.setGettedValue(url);
+        imagesOfAlignment.add(selectedResource);
     }
 
     private String commonsFilePathUrl(String filename) {

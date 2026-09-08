@@ -65,10 +65,10 @@ class ProjectMemberControllerTest {
 
     @Test
     void createMember_delegatesToService() {
-        when(projectMemberService.createMember(
+        when(projectMemberService.createMember(new ProjectMemberService.CreateMemberRequest(
                 1, false, 3, "bob", "bob@example.com", "CNRS", true, 4, false, List.of(),
                 "Abcd1234!", "Abcd1234!", "DIRECT"
-        )).thenReturn(new CreatedProjectMember(12, "bob", "bob@example.com"));
+        ))).thenReturn(new CreatedProjectMember(12, "bob", "bob@example.com"));
 
         var response = projectMemberController.createMember(
                 "key", null, 3,
@@ -111,7 +111,8 @@ class ProjectMemberControllerTest {
         );
 
         assertEquals(HttpStatus.NO_CONTENT, response.getStatusCode());
-        verify(projectMemberService).updateLimitedMemberRole(1, false, 3, 10, 4, 3, "TH1", true);
+        verify(projectMemberService).updateLimitedMemberRole(new ProjectMemberService.UpdateLimitedMemberRoleRequest(
+                1, false, 3, 10, 4, 3, "TH1", true));
     }
 
     @Test
@@ -138,9 +139,9 @@ class ProjectMemberControllerTest {
         );
 
         assertEquals(HttpStatus.NO_CONTENT, response.getStatusCode());
-        verify(projectMemberService).updateMemberProfile(
+        verify(projectMemberService).updateMemberProfile(new ProjectMemberService.UpdateMemberProfileRequest(
                 1, false, 3, 10, "bob", "bob@example.com", true, "CNRS", true
-        );
+        ));
     }
 
     @Test

@@ -13,7 +13,6 @@ import lombok.extern.slf4j.Slf4j;
 import org.apache.commons.collections4.CollectionUtils;
 import org.springframework.stereotype.Component;
 
-import java.util.Date;
 import java.util.List;
 
 @Slf4j
@@ -37,8 +36,8 @@ public class ToolboxThesaurusPersistence {
                 .idThesaurus(idThesaurus)
                 .idArk("")
                 .isPrivate(true)
-                .created(new Date())
-                .modified(new Date())
+                .created(V2Dates.nowUtilDate())
+                .modified(V2Dates.nowUtilDate())
                 .build());
         return idThesaurus;
     }

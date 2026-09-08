@@ -4,6 +4,7 @@ import fr.cnrs.opentheso.entites.NoteType;
 import fr.cnrs.opentheso.models.candidats.CandidatDto;
 import fr.cnrs.opentheso.models.notes.NodeNote;
 import fr.cnrs.opentheso.utils.MessageUtils;
+import fr.cnrs.opentheso.v2.candidat.persistence.CandidatMutationPersistence;
 import fr.cnrs.opentheso.v2.candidat.service.CandidatMutationService;
 import fr.cnrs.opentheso.v2.setting.ui.ThesaurusContext;
 import fr.cnrs.opentheso.v2.shared.ui.UserSession;
@@ -104,13 +105,15 @@ class CandidatNoteBeanTest {
         bean.setSelectedNodeNote(note);
         when(thesaurusContext.resolveThesaurusId()).thenReturn("TH1");
         when(userSession.getCurrentUserId()).thenReturn(7);
-        when(candidatMutationService.updateCandidateNote(5, "C1", "fr", "TH1", "V", null, "note", 7)).thenReturn(true);
+        when(candidatMutationService.updateCandidateNote(new CandidatMutationPersistence.UpdateCandidateNoteRequest(
+                5, "C1", "fr", "TH1", "V", null, "note", 7))).thenReturn(true);
         when(candidatBean.getCandidatSelected()).thenReturn(candidatWithLang("fr"));
         when(candidatMutationService.loadNoteTypes()).thenReturn(List.of());
 
         bean.addNewNote();
 
-        verify(candidatMutationService).updateCandidateNote(5, "C1", "fr", "TH1", "V", null, "note", 7);
+        verify(candidatMutationService).updateCandidateNote(new CandidatMutationPersistence.UpdateCandidateNoteRequest(
+                5, "C1", "fr", "TH1", "V", null, "note", 7));
     }
 
     @Test
@@ -138,7 +141,8 @@ class CandidatNoteBeanTest {
         bean.setSelectedNodeNote(note);
         when(thesaurusContext.resolveThesaurusId()).thenReturn("TH1");
         when(userSession.getCurrentUserId()).thenReturn(7);
-        when(candidatMutationService.updateCandidateNote(9, "C1", "fr", "TH1", "V", null, "note", 7)).thenReturn(false);
+        when(candidatMutationService.updateCandidateNote(new CandidatMutationPersistence.UpdateCandidateNoteRequest(
+                9, "C1", "fr", "TH1", "V", null, "note", 7))).thenReturn(false);
 
         bean.updateNote();
 

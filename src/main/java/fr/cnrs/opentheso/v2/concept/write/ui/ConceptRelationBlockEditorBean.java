@@ -107,10 +107,7 @@ public class ConceptRelationBlockEditorBean implements Serializable {
     }
 
     public void setSelectedBroaderJson(String json) {
-        List<FacetEditRow> parsed = ConceptLabelBlockEditorBean.parseFacetsJson(json);
-        if (parsed != null) {
-            selectedBroader = parsed;
-        }
+        ConceptLabelBlockEditorBean.parseFacetsJson(json).ifPresent(parsed -> selectedBroader = parsed);
     }
 
     public String getSelectedNarrowerJson() {
@@ -118,10 +115,7 @@ public class ConceptRelationBlockEditorBean implements Serializable {
     }
 
     public void setSelectedNarrowerJson(String json) {
-        List<FacetEditRow> parsed = ConceptLabelBlockEditorBean.parseFacetsJson(json);
-        if (parsed != null) {
-            selectedNarrower = parsed;
-        }
+        ConceptLabelBlockEditorBean.parseFacetsJson(json).ifPresent(parsed -> selectedNarrower = parsed);
     }
 
     public String getSelectedRelatedJson() {
@@ -129,10 +123,7 @@ public class ConceptRelationBlockEditorBean implements Serializable {
     }
 
     public void setSelectedRelatedJson(String json) {
-        List<FacetEditRow> parsed = ConceptLabelBlockEditorBean.parseFacetsJson(json);
-        if (parsed != null) {
-            selectedRelated = parsed;
-        }
+        ConceptLabelBlockEditorBean.parseFacetsJson(json).ifPresent(parsed -> selectedRelated = parsed);
     }
 
     public void save() {
@@ -258,23 +249,35 @@ public class ConceptRelationBlockEditorBean implements Serializable {
             Function<String, MutationResult> deleter,
             boolean dirty
     ) {
-        boolean applied = false;
+        MutationPass pass = new MutationPass(dirty, false, true);
         List<ConceptRelation> relations = current == null ? List.of() : current;
         for (ConceptRelation relation : relations) {
-            if (relation == null || StringUtils.isBlank(relation.getConceptId())) {
-                continue;
+            MutationPass next = deleteUnselectedRelation(relation, newIds, deleter, pass);
+            if (!next.ok()) {
+                return next;
             }
-            if (newIds.contains(normalizeId(relation.getConceptId()))) {
-                continue;
-            }
-            MutationResult removed = deleter.apply(relation.getConceptId());
-            if (!applyResult(removed, dirty)) {
-                return new MutationPass(dirty, applied, false);
-            }
-            dirty = true;
-            applied = true;
+            pass = next;
         }
-        return new MutationPass(dirty, applied, true);
+        return pass;
+    }
+
+    private MutationPass deleteUnselectedRelation(
+            ConceptRelation relation,
+            Set<String> newIds,
+            Function<String, MutationResult> deleter,
+            MutationPass pass
+    ) {
+        if (relation == null || StringUtils.isBlank(relation.getConceptId())) {
+            return pass;
+        }
+        if (newIds.contains(normalizeId(relation.getConceptId()))) {
+            return pass;
+        }
+        MutationResult removed = deleter.apply(relation.getConceptId());
+        if (!applyResult(removed, pass.dirty())) {
+            return new MutationPass(pass.dirty(), pass.applied(), false);
+        }
+        return new MutationPass(true, true, true);
     }
 
     private MutationPass applyAdds(
@@ -283,23 +286,35 @@ public class ConceptRelationBlockEditorBean implements Serializable {
             Function<String, MutationResult> adder,
             boolean dirty
     ) {
-        boolean applied = false;
+        MutationPass pass = new MutationPass(dirty, false, true);
         Set<String> oldIds = normalizedIds(current);
         for (FacetEditRow row : selected) {
-            if (row == null || StringUtils.isBlank(row.getId())) {
-                continue;
+            MutationPass next = addSelectedRelation(row, oldIds, adder, pass);
+            if (!next.ok()) {
+                return next;
             }
-            if (oldIds.contains(normalizeId(row.getId()))) {
-                continue;
-            }
-            MutationResult added = adder.apply(row.getId());
-            if (!applyResult(added, dirty)) {
-                return new MutationPass(dirty, applied, false);
-            }
-            dirty = true;
-            applied = true;
+            pass = next;
         }
-        return new MutationPass(dirty, applied, true);
+        return pass;
+    }
+
+    private MutationPass addSelectedRelation(
+            FacetEditRow row,
+            Set<String> oldIds,
+            Function<String, MutationResult> adder,
+            MutationPass pass
+    ) {
+        if (row == null || StringUtils.isBlank(row.getId())) {
+            return pass;
+        }
+        if (oldIds.contains(normalizeId(row.getId()))) {
+            return pass;
+        }
+        MutationResult added = adder.apply(row.getId());
+        if (!applyResult(added, pass.dirty())) {
+            return new MutationPass(pass.dirty(), pass.applied(), false);
+        }
+        return new MutationPass(true, true, true);
     }
 
     private boolean applyResult(MutationResult result, boolean dirty) {

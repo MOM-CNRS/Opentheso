@@ -59,6 +59,17 @@ public class ThesaurusEditionCsvStructuredImportPersistence {
 
         int maxColumns = lines.stream().mapToInt(row -> row.length).max().orElse(0);
         String[][] matrix = new String[lines.size() + 1][maxColumns + 1];
+        int total = fillMatrix(lines, matrix, maxColumns);
+        var root = buildRoot(matrix);
+
+        if (CollectionUtils.isEmpty(root.getChildrens())) {
+            return ThesaurusEditionStructuredParseResult.error("Aucun concept détecté dans le fichier");
+        }
+
+        return new ThesaurusEditionStructuredParseResult(root, total, null);
+    }
+
+    private int fillMatrix(List<String[]> lines, String[][] matrix, int maxColumns) {
         int total = 0;
         for (int i = 0; i < lines.size(); i++) {
             for (int j = 0; j < maxColumns; j++) {
@@ -70,19 +81,17 @@ public class ThesaurusEditionCsvStructuredImportPersistence {
                 }
             }
         }
+        return total;
+    }
 
+    private NodeTree buildRoot(String[][] matrix) {
         var root = new NodeTree();
         for (int i = 0; i < matrix.length; i++) {
             if (StringUtils.isNotEmpty(matrix[i][0])) {
                 root.getChildrens().add(createTree(matrix, i, 0));
             }
         }
-
-        if (CollectionUtils.isEmpty(root.getChildrens())) {
-            return ThesaurusEditionStructuredParseResult.error("Aucun concept détecté dans le fichier");
-        }
-
-        return new ThesaurusEditionStructuredParseResult(root, total, null);
+        return root;
     }
 
     public ThesaurusEditionStructuredImportResult importNewThesaurus(

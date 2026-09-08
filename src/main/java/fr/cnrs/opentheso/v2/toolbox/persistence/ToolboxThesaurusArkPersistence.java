@@ -26,46 +26,51 @@ public class ToolboxThesaurusArkPersistence {
             log.error("Erreur: Veuillez paramétrer les préférences pour ce thésaurus !!");
             return null;
         }
-
         String currentArk = toolboxThesaurusPersistence.findArkId(thesaurusId);
         if (preferences.isUseArk()) {
-            ArkHelper2 arkHelper2 = new ArkHelper2(preferences);
-            if (!arkHelper2.login()) {
-                MessageUtils.showErrorMessage("Erreur de connexion Ark !!");
-                return null;
-            }
-            var nodeMetaData = new NodeMetaData();
-            nodeMetaData.setDcElementsList(new ArrayList<>());
-            nodeMetaData.setTitle(thesaurusId);
-            nodeMetaData.setSource(preferences.getPreferredName());
-            nodeMetaData.setCreator("");
-            var privateUri = "?idt=" + thesaurusId;
-            if (StringUtils.isEmpty(currentArk)) {
-                if (!arkHelper2.addArk(privateUri, nodeMetaData)) {
-                    log.error("{} idThesaurus = {}", arkHelper2.getMessage(), thesaurusId);
-                    return null;
-                }
-                if (toolboxThesaurusPersistence.updateArkId(thesaurusId, arkHelper2.getIdArk())) {
-                    return null;
-                }
-                return arkHelper2.getIdArk();
-            }
-            return currentArk;
+            return generateRemoteArk(preferences, thesaurusId, currentArk);
         }
         if (preferences.isUseArkLocal()) {
-            String idArk = currentArk;
-            if (StringUtils.isEmpty(idArk)) {
-                idArk = ToolsHelper.getNewId(preferences.getSizeIdArkLocal(), preferences.isUppercaseForArk(), true);
-                idArk = preferences.getNaanArkLocal() + "/" + preferences.getPrefixArkLocal() + idArk;
-                if (toolboxThesaurusPersistence.updateArkId(thesaurusId, idArk)) {
-                    return null;
-                }
-                MessageUtils.showInformationMessage("L'identifiant Ark a bien été généré !!");
-            } else {
-                MessageUtils.showInformationMessage("Ark existe déjà, pas de changement !!");
-            }
-            return StringUtils.isEmpty(idArk) ? "" : idArk;
+            return generateLocalArk(preferences, thesaurusId, currentArk);
         }
         return null;
+    }
+
+    private String generateRemoteArk(Preferences preferences, String thesaurusId, String currentArk) {
+        ArkHelper2 arkHelper2 = new ArkHelper2(preferences);
+        if (!arkHelper2.login()) {
+            MessageUtils.showErrorMessage("Erreur de connexion Ark !!");
+            return null;
+        }
+        if (StringUtils.isNotEmpty(currentArk)) {
+            return currentArk;
+        }
+        var nodeMetaData = new NodeMetaData();
+        nodeMetaData.setDcElementsList(new ArrayList<>());
+        nodeMetaData.setTitle(thesaurusId);
+        nodeMetaData.setSource(preferences.getPreferredName());
+        nodeMetaData.setCreator("");
+        if (!arkHelper2.addArk("?idt=" + thesaurusId, nodeMetaData)) {
+            log.error("{} idThesaurus = {}", arkHelper2.getMessage(), thesaurusId);
+            return null;
+        }
+        if (toolboxThesaurusPersistence.updateArkId(thesaurusId, arkHelper2.getIdArk())) {
+            return null;
+        }
+        return arkHelper2.getIdArk();
+    }
+
+    private String generateLocalArk(Preferences preferences, String thesaurusId, String currentArk) {
+        if (StringUtils.isNotEmpty(currentArk)) {
+            MessageUtils.showInformationMessage("Ark existe déjà, pas de changement !!");
+            return currentArk;
+        }
+        String idArk = ToolsHelper.getNewId(preferences.getSizeIdArkLocal(), preferences.isUppercaseForArk(), true);
+        idArk = preferences.getNaanArkLocal() + "/" + preferences.getPrefixArkLocal() + idArk;
+        if (toolboxThesaurusPersistence.updateArkId(thesaurusId, idArk)) {
+            return null;
+        }
+        MessageUtils.showInformationMessage("L'identifiant Ark a bien été généré !!");
+        return StringUtils.isEmpty(idArk) ? "" : idArk;
     }
 }

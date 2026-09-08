@@ -27,7 +27,8 @@ import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
 
 import java.io.ByteArrayInputStream;
-import java.util.Date;
+import java.time.Instant;
+import java.time.LocalDate;
 import java.util.List;
 
 @Service
@@ -101,7 +102,7 @@ public class ThesaurusStatisticsService {
     @Transactional(readOnly = true)
     public StatisticsSummary loadSummary(String thesaurusId) {
         int[] stats = editionQueryRepository.countAllConceptStats(thesaurusId);
-        Date lastModification = toolboxStatisticsPersistence.loadLastModification(thesaurusId);
+        Instant lastModification = toolboxStatisticsPersistence.loadLastModification(thesaurusId);
         return new StatisticsSummary(
                 new EditionStatistics(stats[0], stats[1], stats[2]),
                 lastModification
@@ -112,8 +113,8 @@ public class ThesaurusStatisticsService {
     public List<ConceptStatisticData> loadConceptStatistics(
             String thesaurusId,
             String language,
-            Date startDate,
-            Date endDate,
+            LocalDate startDate,
+            LocalDate endDate,
             String collectionId,
             String resultLimit
     ) {

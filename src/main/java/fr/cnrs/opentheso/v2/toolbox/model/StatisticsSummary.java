@@ -1,10 +1,10 @@
 package fr.cnrs.opentheso.v2.toolbox.model;
 
-import java.util.Date;
+import java.time.Instant;
 import java.io.Serializable;
 
 public record StatisticsSummary(
         EditionStatistics counts,
-        Date lastModification
+        Instant lastModification
 ) implements Serializable {
 }

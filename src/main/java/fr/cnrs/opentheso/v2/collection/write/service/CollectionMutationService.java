@@ -29,9 +29,9 @@ import org.apache.commons.collections4.CollectionUtils;
 import org.apache.commons.lang3.StringUtils;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
+import fr.cnrs.opentheso.v2.shared.time.V2Dates;
 
 import java.util.ArrayList;
-import java.util.Date;
 import java.util.List;
 import java.util.Optional;
 
@@ -63,7 +63,7 @@ public class CollectionMutationService {
         }
         var label = labels.get(0);
         label.setLexicalValue(fr.cnrs.opentheso.utils.StringUtils.convertString(command.label()));
-        label.setModified(new Date());
+        label.setModified(V2Dates.nowUtilDate());
         conceptGroupLabelRepository.save(label);
         touchCollection(command.thesaurusId(), command.collectionId());
         return MutationResult.ok("La collection a bien été modifiée");
@@ -82,7 +82,7 @@ public class CollectionMutationService {
             return MutationResult.duplicate(NOTATION_DUPLICATE);
         }
         group.get().setNotation(notation);
-        group.get().setModified(new Date());
+        group.get().setModified(V2Dates.nowUtilDate());
         conceptGroupRepository.save(group.get());
         return MutationResult.ok("La notation a bien été modifiée");
     }
@@ -98,7 +98,7 @@ public class CollectionMutationService {
             return MutationResult.validationError(COLLECTION_NOT_FOUND);
         }
         group.get().setIdTypeCode(command.typeCode());
-        group.get().setModified(new Date());
+        group.get().setModified(V2Dates.nowUtilDate());
         conceptGroupRepository.save(group.get());
         return MutationResult.ok("Le type a bien été modifié");
     }
@@ -131,8 +131,8 @@ public class CollectionMutationService {
                 .idThesaurus(command.thesaurusId())
                 .lang(command.lang())
                 .lexicalValue(fr.cnrs.opentheso.utils.StringUtils.convertString(command.label()))
-                .created(new Date())
-                .modified(new Date())
+                .created(V2Dates.nowUtilDate())
+                .modified(V2Dates.nowUtilDate())
                 .build());
         touchCollection(command.thesaurusId(), command.collectionId());
         return MutationResult.ok("Traduction ajoutée avec succès");
@@ -150,7 +150,7 @@ public class CollectionMutationService {
         }
         var label = labels.get(0);
         label.setLexicalValue(fr.cnrs.opentheso.utils.StringUtils.convertString(command.label()));
-        label.setModified(new Date());
+        label.setModified(V2Dates.nowUtilDate());
         conceptGroupLabelRepository.save(label);
         touchCollection(command.thesaurusId(), command.collectionId());
         return MutationResult.ok("Traduction modifiée avec succès");
@@ -335,16 +335,16 @@ public class CollectionMutationService {
                 .notation(StringUtils.defaultString(notation))
                 .idHandle("")
                 .idDoi("")
-                .created(new Date())
-                .modified(new Date())
+                .created(V2Dates.nowUtilDate())
+                .modified(V2Dates.nowUtilDate())
                 .build());
         conceptGroupLabelRepository.save(ConceptGroupLabel.builder()
                 .idGroup(collectionId)
                 .idThesaurus(thesaurusId)
                 .lang(lang)
                 .lexicalValue(fr.cnrs.opentheso.utils.StringUtils.convertString(label))
-                .created(new Date())
-                .modified(new Date())
+                .created(V2Dates.nowUtilDate())
+                .modified(V2Dates.nowUtilDate())
                 .build());
         return collectionId;
     }

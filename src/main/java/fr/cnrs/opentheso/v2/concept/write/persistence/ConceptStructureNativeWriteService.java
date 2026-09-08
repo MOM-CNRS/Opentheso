@@ -31,37 +31,41 @@ public class ConceptStructureNativeWriteService {
     @Transactional
     public MutationResult addChildConcept(AddChildConceptCommand command) {
         return createConcept(
-                command.thesaurusId(),
-                command.lang(),
-                command.userId(),
-                command.contributorName(),
-                command.preferredLabel(),
-                command.notation(),
-                command.customConceptId(),
-                command.source(),
-                command.groupId(),
-                command.forcedDuplicate(),
-                false,
-                command.parentConceptId(),
-                command.narrowerRelationType());
+                new CreateConceptFields(
+                        command.thesaurusId(),
+                        command.lang(),
+                        command.userId(),
+                        command.contributorName(),
+                        command.preferredLabel(),
+                        command.notation(),
+                        command.customConceptId()),
+                new CreateConceptOptions(
+                        command.source(),
+                        command.groupId(),
+                        command.forcedDuplicate(),
+                        false,
+                        command.parentConceptId(),
+                        command.narrowerRelationType()));
     }
 
     @Transactional
     public MutationResult addTopConcept(AddTopConceptCommand command) {
         return createConcept(
-                command.thesaurusId(),
-                command.lang(),
-                command.userId(),
-                command.contributorName(),
-                command.preferredLabel(),
-                command.notation(),
-                command.customConceptId(),
-                command.source(),
-                command.groupId(),
-                command.forcedDuplicate(),
-                true,
-                null,
-                null);
+                new CreateConceptFields(
+                        command.thesaurusId(),
+                        command.lang(),
+                        command.userId(),
+                        command.contributorName(),
+                        command.preferredLabel(),
+                        command.notation(),
+                        command.customConceptId()),
+                new CreateConceptOptions(
+                        command.source(),
+                        command.groupId(),
+                        command.forcedDuplicate(),
+                        true,
+                        null,
+                        null));
     }
 
     @Transactional
@@ -85,14 +89,93 @@ public class ConceptStructureNativeWriteService {
         return MutationResult.ok("Le concept a bien été supprimé");
     }
 
-    private MutationResult createConcept(
+    private MutationResult createConcept(CreateConceptFields fields, CreateConceptOptions options) {
+        MutationResult validation = validateNewConceptFields(
+                fields.thesaurusId(),
+                fields.lang(),
+                fields.preferredLabel(),
+                fields.notation(),
+                fields.customConceptId(),
+                options.forcedDuplicate());
+        if (validation != null) {
+            return validation;
+        }
+
+        String conceptId = conceptCreationWriteRepository.generateConceptId(
+                fields.thesaurusId(), fields.customConceptId());
+        if (StringUtils.isBlank(conceptId)
+                || conceptCreationWriteRepository.existsConcept(fields.thesaurusId(), conceptId)) {
+            return MutationResult.failure(options.topConcept()
+                    ? "Erreur pendant la création du concept"
+                    : "Erreur pendant l'enregistrement du nouveau concept !");
+        }
+
+        String normalizedNotation = StringUtils.defaultString(fields.notation()).trim();
+        String normalizedLabel = fr.cnrs.opentheso.utils.StringUtils.convertString(fields.preferredLabel().trim());
+
+        conceptCreationWriteRepository.insertConcept(
+                conceptId,
+                fields.thesaurusId(),
+                DEFAULT_STATUS,
+                normalizedNotation,
+                options.topConcept(),
+                fields.userId());
+        var snapshot = new ConceptSnapshot(
+                conceptId, fields.thesaurusId(), "", DEFAULT_STATUS, normalizedNotation, options.topConcept());
+        conceptLifecycleWriteRepository.insertConceptHistory(
+                snapshot, fields.userId(), StringUtils.defaultString(options.groupId()));
+        conceptRenameWriteRepository.createPreferredTermForConcept(
+                conceptId,
+                fields.thesaurusId(),
+                fields.lang(),
+                normalizedLabel,
+                StringUtils.defaultString(options.source()),
+                fields.userId());
+
+        if (!options.topConcept() && options.parentConceptId() != null) {
+            String relationType = StringUtils.defaultIfBlank(options.narrowerRelationType(), "NT");
+            String inverseRelation = inverseNtRole(relationType);
+            conceptRelationWriteRepository.addHierarchicalLink(
+                    options.parentConceptId(), conceptId, fields.thesaurusId(), relationType, fields.userId());
+            conceptRelationWriteRepository.addHierarchicalLink(
+                    conceptId, options.parentConceptId(), fields.thesaurusId(), inverseRelation, fields.userId());
+        }
+
+        if (StringUtils.isNotBlank(options.groupId())) {
+            conceptCreationWriteRepository.linkConceptToGroup(options.groupId(), conceptId, fields.thesaurusId());
+        }
+
+        try {
+            conceptIdentifierAssignmentService.assignIdentifiers(fields.thesaurusId(), conceptId, fields.lang());
+        } catch (RuntimeException exception) {
+            String detail = StringUtils.defaultIfBlank(
+                    exception.getMessage(),
+                    options.topConcept()
+                            ? "Erreur pendant la création du concept"
+                            : "Erreur pendant l'enregistrement du nouveau concept !");
+            return MutationResult.failure(detail);
+        }
+
+        conceptWritePostMutationRepository.saveCreatorDcTerm(
+                fields.thesaurusId(), conceptId, StringUtils.defaultString(fields.contributorName()));
+
+        return MutationResult.ok(
+                options.topConcept() ? "Le top concept a bien été ajouté" : "Le concept a bien été ajouté",
+                conceptId);
+    }
+
+    private record CreateConceptFields(
             String thesaurusId,
             String lang,
             int userId,
             String contributorName,
             String preferredLabel,
             String notation,
-            String customConceptId,
+            String customConceptId
+    ) {
+    }
+
+    private record CreateConceptOptions(
             String source,
             String groupId,
             boolean forcedDuplicate,
@@ -100,65 +183,6 @@ public class ConceptStructureNativeWriteService {
             String parentConceptId,
             String narrowerRelationType
     ) {
-        MutationResult validation = validateNewConceptFields(
-                thesaurusId, lang, preferredLabel, notation, customConceptId, forcedDuplicate);
-        if (validation != null) {
-            return validation;
-        }
-
-        String conceptId = conceptCreationWriteRepository.generateConceptId(thesaurusId, customConceptId);
-        if (StringUtils.isBlank(conceptId) || conceptCreationWriteRepository.existsConcept(thesaurusId, conceptId)) {
-            return MutationResult.failure(topConcept
-                    ? "Erreur pendant la création du concept"
-                    : "Erreur pendant l'enregistrement du nouveau concept !");
-        }
-
-        String normalizedNotation = StringUtils.defaultString(notation).trim();
-        String normalizedLabel = fr.cnrs.opentheso.utils.StringUtils.convertString(preferredLabel.trim());
-
-        conceptCreationWriteRepository.insertConcept(
-                conceptId, thesaurusId, DEFAULT_STATUS, normalizedNotation, topConcept, userId);
-        var snapshot = new ConceptSnapshot(conceptId, thesaurusId, "", DEFAULT_STATUS, normalizedNotation, topConcept);
-        conceptLifecycleWriteRepository.insertConceptHistory(
-                snapshot, userId, StringUtils.defaultString(groupId));
-        conceptRenameWriteRepository.createPreferredTermForConcept(
-                conceptId,
-                thesaurusId,
-                lang,
-                normalizedLabel,
-                StringUtils.defaultString(source),
-                userId);
-
-        if (!topConcept && parentConceptId != null) {
-            String relationType = StringUtils.defaultIfBlank(narrowerRelationType, "NT");
-            String inverseRelation = inverseNtRole(relationType);
-            conceptRelationWriteRepository.addHierarchicalLink(
-                    parentConceptId, conceptId, thesaurusId, relationType, userId);
-            conceptRelationWriteRepository.addHierarchicalLink(
-                    conceptId, parentConceptId, thesaurusId, inverseRelation, userId);
-        }
-
-        if (StringUtils.isNotBlank(groupId)) {
-            conceptCreationWriteRepository.linkConceptToGroup(groupId, conceptId, thesaurusId);
-        }
-
-        try {
-            conceptIdentifierAssignmentService.assignIdentifiers(thesaurusId, conceptId, lang);
-        } catch (RuntimeException exception) {
-            String detail = StringUtils.defaultIfBlank(
-                    exception.getMessage(),
-                    topConcept
-                            ? "Erreur pendant la création du concept"
-                            : "Erreur pendant l'enregistrement du nouveau concept !");
-            return MutationResult.failure(detail);
-        }
-
-        conceptWritePostMutationRepository.saveCreatorDcTerm(
-                thesaurusId, conceptId, StringUtils.defaultString(contributorName));
-
-        return MutationResult.ok(
-                topConcept ? "Le top concept a bien été ajouté" : "Le concept a bien été ajouté",
-                conceptId);
     }
 
     private boolean deleteSingleConcept(String thesaurusId, String conceptId) {

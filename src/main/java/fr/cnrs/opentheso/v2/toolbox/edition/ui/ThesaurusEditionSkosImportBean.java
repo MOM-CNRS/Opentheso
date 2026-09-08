@@ -197,11 +197,13 @@ public class ThesaurusEditionSkosImportBean implements Serializable {
                     superAdmin,
                     projectId,
                     selectedLang,
-                    selectedIdentifier,
-                    prefixHandle,
-                    prefixDoi,
-                    persistentNameThesaurus,
-                    asMaster
+                    new ThesaurusEditionSkosImportService.SkosImportOptions(
+                            selectedIdentifier,
+                            prefixHandle,
+                            prefixDoi,
+                            persistentNameThesaurus,
+                            asMaster
+                    )
             );
             progressValue = 100;
             FacesContext.getCurrentInstance().addMessage(null, new FacesMessage(

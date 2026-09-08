@@ -36,7 +36,30 @@ public class AdminUserService {
     private final RightsService rightsService;
 
     @Transactional
-    public CreatedAdminUser createUser(
+    public CreatedAdminUser createUser(CreateUserRequest request) {
+        SuperAdminAccessPolicy.requireResolvedSuperAdmin(request.superAdmin());
+        String validUsername = ProfileValidator.requireUsername(request.username());
+        String validEmail = ProfileValidator.requireEmail(request.email());
+        ensureUsernameAvailable(validUsername);
+        ensureEmailAvailable(validEmail);
+
+        PasswordPolicy.validate(request.password(), request.passwordConfirmation());
+        int userId = userCommandRepository.createUser(new UserCommandRepository.CreateUserRequest(
+                validUsername,
+                validEmail,
+                passwordEncoder.encode(request.password()),
+                request.alertMail(),
+                null,
+                true,
+                false,
+                true
+        ));
+        assignInitialRole(userId, request.roleId(), request.projectId(), request.limitedOnThesaurus(), request.thesaurusIds());
+        log.info("Utilisateur id={} créé par un super-administrateur", userId);
+        return new CreatedAdminUser(userId, validUsername, validEmail);
+    }
+
+    public record CreateUserRequest(
             boolean superAdmin,
             String username,
             String email,
@@ -48,26 +71,6 @@ public class AdminUserService {
             String password,
             String passwordConfirmation
     ) {
-        SuperAdminAccessPolicy.requireResolvedSuperAdmin(superAdmin);
-        String validUsername = ProfileValidator.requireUsername(username);
-        String validEmail = ProfileValidator.requireEmail(email);
-        ensureUsernameAvailable(validUsername);
-        ensureEmailAvailable(validEmail);
-
-        PasswordPolicy.validate(password, passwordConfirmation);
-        int userId = userCommandRepository.createUser(
-                validUsername,
-                validEmail,
-                passwordEncoder.encode(password),
-                alertMail,
-                null,
-                true,
-                false,
-                true
-        );
-        assignInitialRole(userId, roleId, projectId, limitedOnThesaurus, thesaurusIds);
-        log.info("Utilisateur id={} créé par un super-administrateur", userId);
-        return new CreatedAdminUser(userId, validUsername, validEmail);
     }
 
     @Transactional

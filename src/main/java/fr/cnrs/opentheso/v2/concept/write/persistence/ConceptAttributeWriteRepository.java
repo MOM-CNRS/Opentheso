@@ -6,7 +6,7 @@ import jakarta.persistence.PersistenceContext;
 import org.springframework.stereotype.Repository;
 import org.springframework.transaction.annotation.Transactional;
 
-import java.util.Date;
+import java.time.Instant;
 
 @Repository
 public class ConceptAttributeWriteRepository {
@@ -40,7 +40,7 @@ public class ConceptAttributeWriteRepository {
                           AND id_concept = :conceptId
                         """)
                 .setParameter("notation", notation)
-                .setParameter(NativeQueryParams.MODIFIED, new Date())
+                .setParameter(NativeQueryParams.MODIFIED, Instant.now())
                 .setParameter(NativeQueryParams.THESAURUS_ID, thesaurusId)
                 .setParameter(NativeQueryParams.CONCEPT_ID, conceptId)
                 .executeUpdate() > 0;
@@ -56,7 +56,7 @@ public class ConceptAttributeWriteRepository {
                           AND id_concept = :conceptId
                         """)
                 .setParameter("conceptType", conceptTypeCode)
-                .setParameter(NativeQueryParams.MODIFIED, new Date())
+                .setParameter(NativeQueryParams.MODIFIED, Instant.now())
                 .setParameter(NativeQueryParams.THESAURUS_ID, thesaurusId)
                 .setParameter(NativeQueryParams.CONCEPT_ID, conceptId)
                 .executeUpdate();

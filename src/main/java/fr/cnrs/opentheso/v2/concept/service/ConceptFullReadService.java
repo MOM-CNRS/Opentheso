@@ -2,6 +2,7 @@ package fr.cnrs.opentheso.v2.concept.service;
 
 import fr.cnrs.opentheso.v2.concept.model.ConceptFullSnapshot;
 import fr.cnrs.opentheso.v2.concept.model.ConceptHierarchicalRelation;
+import fr.cnrs.opentheso.v2.concept.mapper.ConceptAssemblePaging;
 import fr.cnrs.opentheso.v2.concept.mapper.ConceptFullAssembler;
 import fr.cnrs.opentheso.v2.setting.service.ThesaurusPreferenceService;
 import fr.cnrs.opentheso.v2.shared.web.ApplicationUriService;
@@ -75,9 +76,7 @@ public class ConceptFullReadService {
                 thesaurusId,
                 conceptId,
                 lang,
-                offset,
-                pageFetchSize(),
-                authenticated,
+                new ConceptAssemblePaging(offset, pageFetchSize(), authenticated),
                 preferences,
                 applicationBaseUrl,
                 includeCandidates
@@ -123,9 +122,7 @@ public class ConceptFullReadService {
                 thesaurusId,
                 conceptId,
                 lang,
-                offset,
-                pageFetchSize(),
-                authenticated,
+                new ConceptAssemblePaging(offset, pageFetchSize(), authenticated),
                 preferences,
                 applicationBaseUrl
         );
@@ -135,7 +132,7 @@ public class ConceptFullReadService {
         if (fullConcept == null || CollectionUtils.isEmpty(additional)) {
             return;
         }
-        if (fullConcept.getNarrowers() == null) {
+        if (CollectionUtils.isEmpty(fullConcept.getNarrowers())) {
             fullConcept.setNarrowers(new ArrayList<>(additional));
             return;
         }

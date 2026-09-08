@@ -37,7 +37,7 @@ class ConceptIdentifierWritePersistenceTest {
     void generateArk_success_returnsOk() {
         when(preferencesRepository.findByIdThesaurus("TH1"))
                 .thenReturn(Optional.of(Preferences.builder().idThesaurus("TH1").build()));
-        when(conceptArkWriteService.generateArkIds("TH1", List.of("C1"), "fr")).thenReturn(null);
+        when(conceptArkWriteService.generateArkIds("TH1", List.of("C1"), "fr")).thenReturn(List.of());
 
         var result = persistence.generateArk(new GenerateArkCommand("TH1", "fr", List.of("C1")));
 
@@ -48,7 +48,7 @@ class ConceptIdentifierWritePersistenceTest {
     void generateArk_batchSuccess_returnsOk() {
         when(preferencesRepository.findByIdThesaurus("TH1"))
                 .thenReturn(Optional.of(Preferences.builder().idThesaurus("TH1").build()));
-        when(conceptArkWriteService.generateArkIds("TH1", List.of("C1", "C2"), "fr")).thenReturn(null);
+        when(conceptArkWriteService.generateArkIds("TH1", List.of("C1", "C2"), "fr")).thenReturn(List.of());
 
         var result = persistence.generateArk(new GenerateArkCommand("TH1", "fr", List.of("C1", "C2")));
 

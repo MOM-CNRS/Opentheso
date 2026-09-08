@@ -17,18 +17,24 @@ public final class GpsTextParser {
         }
         int from = 0;
         while (from < gpsValue.length()) {
-            int open = gpsValue.indexOf('(', from);
-            if (open < 0) {
-                break;
-            }
-            int close = gpsValue.indexOf(')', open + 1);
+            int close = nextGroupEnd(gpsValue, from);
             if (close < 0) {
                 break;
             }
+            int open = gpsValue.indexOf('(', from);
             addCoordinatePairs(gpsValue.substring(open + 1, close), thesaurusId, conceptId, gpsList);
             from = close + 1;
         }
         return gpsList;
+    }
+
+    /** @return closing ')' index of the next "(...)" group, or -1 when none remains */
+    private static int nextGroupEnd(String gpsValue, int from) {
+        int open = gpsValue.indexOf('(', from);
+        if (open < 0) {
+            return -1;
+        }
+        return gpsValue.indexOf(')', open + 1);
     }
 
     private static void addCoordinatePairs(

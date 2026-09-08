@@ -18,9 +18,7 @@ import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
 
 import java.time.LocalDateTime;
-import java.time.ZoneId;
 import java.util.ArrayList;
-import java.util.Date;
 import java.util.List;
 import java.util.function.Consumer;
 
@@ -213,8 +211,7 @@ public class ThesaurusSyncSendService {
             // Pas encore de baseline (ni import récent, ni sync) → rien à synchroniser.
             return List.of();
         }
-        Date since = Date.from(lastSyncAt.atZone(ZoneId.systemDefault()).toInstant());
-        return conceptRepository.findConceptIdsChangedSince(thesaurusId, since);
+        return conceptRepository.findConceptIdsChangedSince(thesaurusId, V2Dates.toUtilDate(lastSyncAt));
     }
 
     private List<String> listAllConceptIds(String thesaurusId) {

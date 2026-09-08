@@ -27,6 +27,7 @@ import java.util.ArrayList;
 import java.util.LinkedHashSet;
 import java.util.List;
 import java.util.Locale;
+import java.util.Optional;
 import java.util.Set;
 import java.util.stream.Collectors;
 
@@ -99,10 +100,7 @@ public class ConceptCustomRelationBlockEditorBean implements Serializable {
     }
 
     public void setSelectedRelationsJson(String json) {
-        List<CustomRelationEditRow> parsed = parseJson(json);
-        if (parsed != null) {
-            selectedRelations = parsed;
-        }
+        parseJson(json).ifPresent(parsed -> selectedRelations = parsed);
     }
 
     public void save() {
@@ -131,51 +129,92 @@ public class ConceptCustomRelationBlockEditorBean implements Serializable {
             return;
         }
 
-        boolean dirty = false;
+        CustomRelationWriteContext ctx = new CustomRelationWriteContext(
+                thesaurusId, conceptId, userId, contributor);
         List<ConceptCustomRelationItem> currentRelations = current.getCustomRelations() == null
                 ? List.of()
                 : current.getCustomRelations();
 
-        for (ConceptCustomRelationItem relation : currentRelations) {
-            if (relation == null || StringUtils.isBlank(relation.getTargetConceptId())) {
-                continue;
-            }
-            if (newIds.contains(normalizeId(relation.getTargetConceptId()))) {
-                continue;
-            }
-            MutationResult removed = conceptRelationMutationService.deleteCustomRelation(
-                    new DeleteCustomRelationCommand(
-                            thesaurusId,
-                            conceptId,
-                            relation.getTargetConceptId(),
-                            relation.getRelationCode(),
-                            relation.isReciprocal(),
-                            userId,
-                            contributor));
-            if (!applyResult(removed, dirty)) {
-                return;
-            }
-            dirty = true;
+        DirtyUpdate dirty = removeUnselectedRelations(currentRelations, newIds, ctx, false);
+        if (!dirty.ok) {
+            return;
         }
-
-        Set<String> oldIds = normalizedIds(currentRelations);
-        for (CustomRelationEditRow row : selectedRelations) {
-            if (row == null || StringUtils.isBlank(row.getId())) {
-                continue;
-            }
-            if (oldIds.contains(normalizeId(row.getId()))) {
-                continue;
-            }
-            MutationResult added = conceptRelationMutationService.addCustomRelation(
-                    new AddCustomRelationCommand(
-                            thesaurusId, conceptId, row.getId(), userId, contributor));
-            if (!applyResult(added, dirty)) {
-                return;
-            }
-            dirty = true;
+        if (!addSelectedRelations(normalizedIds(currentRelations), ctx, dirty.dirty).ok) {
+            return;
         }
 
         finishSuccess();
+    }
+
+    private DirtyUpdate removeUnselectedRelations(
+            List<ConceptCustomRelationItem> currentRelations,
+            Set<String> newIds,
+            CustomRelationWriteContext ctx,
+            boolean dirty
+    ) {
+        for (ConceptCustomRelationItem relation : currentRelations) {
+            DirtyUpdate next = removeUnselectedRelation(relation, newIds, ctx, dirty);
+            if (!next.ok) {
+                return DirtyUpdate.fail();
+            }
+            dirty = next.dirty;
+        }
+        return DirtyUpdate.of(dirty);
+    }
+
+    private DirtyUpdate removeUnselectedRelation(
+            ConceptCustomRelationItem relation,
+            Set<String> newIds,
+            CustomRelationWriteContext ctx,
+            boolean dirty
+    ) {
+        if (relation == null || StringUtils.isBlank(relation.getTargetConceptId())) {
+            return DirtyUpdate.of(dirty);
+        }
+        if (newIds.contains(normalizeId(relation.getTargetConceptId()))) {
+            return DirtyUpdate.of(dirty);
+        }
+        MutationResult removed = conceptRelationMutationService.deleteCustomRelation(
+                new DeleteCustomRelationCommand(
+                        ctx.thesaurusId(),
+                        ctx.conceptId(),
+                        relation.getTargetConceptId(),
+                        relation.getRelationCode(),
+                        relation.isReciprocal(),
+                        ctx.userId(),
+                        ctx.contributor()));
+        if (!applyResult(removed, dirty)) {
+            return DirtyUpdate.fail();
+        }
+        return DirtyUpdate.of(true);
+    }
+
+    private DirtyUpdate addSelectedRelations(Set<String> oldIds, CustomRelationWriteContext ctx, boolean dirty) {
+        for (CustomRelationEditRow row : selectedRelations) {
+            DirtyUpdate next = addSelectedRelation(row, oldIds, ctx, dirty);
+            if (!next.ok) {
+                return DirtyUpdate.fail();
+            }
+            dirty = next.dirty;
+        }
+        return DirtyUpdate.of(dirty);
+    }
+
+    private DirtyUpdate addSelectedRelation(
+            CustomRelationEditRow row, Set<String> oldIds, CustomRelationWriteContext ctx, boolean dirty) {
+        if (row == null || StringUtils.isBlank(row.getId())) {
+            return DirtyUpdate.of(dirty);
+        }
+        if (oldIds.contains(normalizeId(row.getId()))) {
+            return DirtyUpdate.of(dirty);
+        }
+        MutationResult added = conceptRelationMutationService.addCustomRelation(
+                new AddCustomRelationCommand(
+                        ctx.thesaurusId(), ctx.conceptId(), row.getId(), ctx.userId(), ctx.contributor()));
+        if (!applyResult(added, dirty)) {
+            return DirtyUpdate.fail();
+        }
+        return DirtyUpdate.of(true);
     }
 
     private boolean applyResult(MutationResult result, boolean dirty) {
@@ -258,18 +297,7 @@ public class ConceptCustomRelationBlockEditorBean implements Serializable {
         List<CustomRelationEditRow> rows = new ArrayList<>();
         LinkedHashSet<String> seen = new LinkedHashSet<>();
         for (ConceptCustomRelationItem relation : relations) {
-            if (relation == null || StringUtils.isBlank(relation.getTargetConceptId())) {
-                continue;
-            }
-            if (!seen.add(normalizeId(relation.getTargetConceptId()))) {
-                continue;
-            }
-            rows.add(new CustomRelationEditRow(
-                    relation.getTargetConceptId(),
-                    relation.getTargetLabel(),
-                    relation.getRelationCode(),
-                    relation.getRelationLabel(),
-                    relation.isReciprocal()));
+            addCopiedRelation(rows, seen, relation);
         }
         return rows;
     }
@@ -298,40 +326,60 @@ public class ConceptCustomRelationBlockEditorBean implements Serializable {
         return sb.append(']').toString();
     }
 
-    static List<CustomRelationEditRow> parseJson(String raw) {
+    static Optional<List<CustomRelationEditRow>> parseJson(String raw) {
         if (raw == null) {
-            return null;
+            return Optional.empty();
         }
         String trimmed = raw.trim();
         if (trimmed.isEmpty() || "[]".equals(trimmed)) {
-            return new ArrayList<>();
+            return Optional.of(new ArrayList<>());
         }
         try {
             JsonNode root = JSON.readTree(trimmed);
             if (!root.isArray()) {
-                return null;
+                return Optional.empty();
             }
             List<CustomRelationEditRow> rows = new ArrayList<>();
             LinkedHashSet<String> seen = new LinkedHashSet<>();
             for (JsonNode node : root) {
-                if (node == null || !node.isObject()) {
-                    continue;
-                }
-                String id = node.path("id").asText("");
-                if (StringUtils.isBlank(id) || !seen.add(normalizeId(id))) {
-                    continue;
-                }
-                rows.add(new CustomRelationEditRow(
-                        id,
-                        node.path("label").asText(""),
-                        node.path("role").asText(""),
-                        node.path("roleLabel").asText(""),
-                        node.path("reciprocal").asBoolean(false)));
+                addParsedRelation(rows, seen, node);
             }
-            return rows;
+            return Optional.of(rows);
         } catch (Exception ignored) {
-            return null;
+            return Optional.empty();
         }
+    }
+
+    private static void addCopiedRelation(
+            List<CustomRelationEditRow> rows, Set<String> seen, ConceptCustomRelationItem relation) {
+        if (relation == null || StringUtils.isBlank(relation.getTargetConceptId())) {
+            return;
+        }
+        if (!seen.add(normalizeId(relation.getTargetConceptId()))) {
+            return;
+        }
+        rows.add(new CustomRelationEditRow(
+                relation.getTargetConceptId(),
+                relation.getTargetLabel(),
+                relation.getRelationCode(),
+                relation.getRelationLabel(),
+                relation.isReciprocal()));
+    }
+
+    private static void addParsedRelation(List<CustomRelationEditRow> rows, Set<String> seen, JsonNode node) {
+        if (node == null || !node.isObject()) {
+            return;
+        }
+        String id = node.path("id").asText("");
+        if (StringUtils.isBlank(id) || !seen.add(normalizeId(id))) {
+            return;
+        }
+        rows.add(new CustomRelationEditRow(
+                id,
+                node.path("label").asText(""),
+                node.path("role").asText(""),
+                node.path("roleLabel").asText(""),
+                node.path("reciprocal").asBoolean(false)));
     }
 
     private static String jsonQuote(String value) {
@@ -345,5 +393,8 @@ public class ConceptCustomRelationBlockEditorBean implements Serializable {
 
     private static String normalizeId(String id) {
         return StringUtils.isBlank(id) ? "" : id.trim().toLowerCase(Locale.ROOT);
+    }
+
+    private record CustomRelationWriteContext(String thesaurusId, String conceptId, int userId, String contributor) {
     }
 }

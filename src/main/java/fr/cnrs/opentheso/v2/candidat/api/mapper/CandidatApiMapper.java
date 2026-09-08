@@ -2,9 +2,8 @@ package fr.cnrs.opentheso.v2.candidat.api.mapper;
 
 import fr.cnrs.opentheso.models.candidats.CandidatDto;
 import fr.cnrs.opentheso.v2.candidat.api.dto.CandidateSummaryResponse;
+import fr.cnrs.opentheso.v2.shared.time.V2Dates;
 
-import java.time.Instant;
-import java.util.Date;
 import java.util.List;
 
 public final class CandidatApiMapper {
@@ -23,11 +22,7 @@ public final class CandidatApiMapper {
                 candidat.getLang(),
                 candidat.getStatut(),
                 candidat.getCreatedBy(),
-                toInstant(candidat.getCreationDate())
+                V2Dates.toInstant(candidat.getCreationDate())
         );
-    }
-
-    private static Instant toInstant(Date date) {
-        return date == null ? null : date.toInstant();
     }
 }

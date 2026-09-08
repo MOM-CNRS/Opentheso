@@ -275,21 +275,7 @@ public class ActionsLotConceptService {
         Set<String> existing = persistence.findExistingIdSet(identifiers, thesaurusId);
         for (ThesaurusCsvConceptObject row : parsed.rows) {
             line++;
-            if (row == null) {
-                continue;
-            }
-            String identifier = StringUtils.trimToEmpty(row.getIdConcept());
-            if (StringUtils.isBlank(identifier)) {
-                errors.add(new ActionsLotLineError(line, ActionsLotMessages.EMPTY_PLACEHOLDER, ActionsLotMessages.IDENTIFIER, ActionsLotMessages.IDENTIFIER_REQUIRED));
-                continue;
-            }
-            if (!existing.contains(identifier)) {
-                errors.add(new ActionsLotLineError(
-                        line, identifier, ActionsLotMessages.IDENTIFIER, "Identifiant introuvable dans le thésaurus"
-                ));
-                continue;
-            }
-            valid.add(new ActionsLotConceptCandidate(line, identifier, ActionsLotMessages.SKOS_CONCEPT));
+            collectMergeRow(row, line, existing, errors, valid);
         }
         return new ActionsLotImportValidationResult<>(
                 true, null, parsed.rows.size(), valid.size(), errors.size(), 0, errors, valid
@@ -596,59 +582,9 @@ public class ActionsLotConceptService {
         List<NodeCompareTheso> rows = new ArrayList<>();
         Set<String> hitIds = new HashSet<>();
         for (ActionsLotCompareCandidate candidate : candidates) {
-            if (candidate == null || StringUtils.isBlank(candidate.originalPrefLabel())) {
-                continue;
-            }
-            List<NodeSearchMini> hits = switch (mode) {
-                case "containsExactWord" -> persistence.searchExactMatch(
-                        candidate.originalPrefLabel(), lang, thesaurusId, false
-                );
-                case "startWith" -> persistence.searchStartWith(
-                        candidate.originalPrefLabel(), lang, thesaurusId, false
-                );
-                case "elastic" -> persistence.searchFullTextElastic(
-                        candidate.originalPrefLabel(), lang, thesaurusId, false
-                );
-                default -> persistence.searchExactTermForAutocompletion(
-                        candidate.originalPrefLabel(), lang, thesaurusId
-                );
-            };
-            boolean written = false;
-            if (hits != null) {
-                for (NodeSearchMini hit : hits) {
-                    if (hit == null || !(hit.isConcept() || hit.isAltLabel())) {
-                        continue;
-                    }
-                    written = true;
-                    NodeCompareTheso row = new NodeCompareTheso();
-                    row.setOriginalPrefLabel(candidate.originalPrefLabel());
-                    row.setIdConcept(hit.getIdConcept());
-                    row.setPrefLabel(hit.getPrefLabel());
-                    row.setAltLabel(hit.getAltLabelValue());
-                    if (StringUtils.isNotBlank(hit.getIdConcept())) {
-                        hitIds.add(hit.getIdConcept());
-                    }
-                    rows.add(row);
-                }
-            }
-            if (!written) {
-                NodeCompareTheso row = new NodeCompareTheso();
-                row.setOriginalPrefLabel(candidate.originalPrefLabel());
-                rows.add(row);
-            }
+            appendCompareRows(candidate, mode, lang, thesaurusId, rows, hitIds);
         }
-        if (!hitIds.isEmpty()) {
-            var concepts = persistence.findConceptsByIds(hitIds, thesaurusId);
-            for (NodeCompareTheso row : rows) {
-                if (row == null || StringUtils.isBlank(row.getIdConcept())) {
-                    continue;
-                }
-                var concept = concepts.get(row.getIdConcept());
-                if (concept != null) {
-                    row.setIdArk(concept.getIdArk());
-                }
-            }
-        }
+        attachCompareArks(rows, hitIds, thesaurusId);
         byte[] csv = thesaurusCsvWriter.writeCsvFromNodeCompareTheso(rows, lang);
         return csv == null ? new byte[0] : csv;
     }
@@ -667,6 +603,103 @@ public class ActionsLotConceptService {
 
     public byte[] compareTemplateBytes() {
         return COMPARE_TEMPLATE.getBytes(StandardCharsets.UTF_8);
+    }
+
+    private static void collectMergeRow(
+            ThesaurusCsvConceptObject row,
+            int line,
+            Set<String> existing,
+            List<ActionsLotLineError> errors,
+            List<ActionsLotConceptCandidate> valid
+    ) {
+        if (row == null) {
+            return;
+        }
+        String identifier = StringUtils.trimToEmpty(row.getIdConcept());
+        if (StringUtils.isBlank(identifier)) {
+            errors.add(new ActionsLotLineError(
+                    line, ActionsLotMessages.EMPTY_PLACEHOLDER, ActionsLotMessages.IDENTIFIER, ActionsLotMessages.IDENTIFIER_REQUIRED
+            ));
+            return;
+        }
+        if (!existing.contains(identifier)) {
+            errors.add(new ActionsLotLineError(
+                    line, identifier, ActionsLotMessages.IDENTIFIER, "Identifiant introuvable dans le thésaurus"
+            ));
+            return;
+        }
+        valid.add(new ActionsLotConceptCandidate(line, identifier, ActionsLotMessages.SKOS_CONCEPT));
+    }
+
+    private void appendCompareRows(
+            ActionsLotCompareCandidate candidate,
+            String mode,
+            String lang,
+            String thesaurusId,
+            List<NodeCompareTheso> rows,
+            Set<String> hitIds
+    ) {
+        if (candidate == null || StringUtils.isBlank(candidate.originalPrefLabel())) {
+            return;
+        }
+        List<NodeSearchMini> hits = searchCompareHits(candidate.originalPrefLabel(), mode, lang, thesaurusId);
+        boolean written = false;
+        if (hits != null) {
+            for (NodeSearchMini hit : hits) {
+                written |= appendCompareHit(candidate.originalPrefLabel(), hit, rows, hitIds);
+            }
+        }
+        if (!written) {
+            NodeCompareTheso row = new NodeCompareTheso();
+            row.setOriginalPrefLabel(candidate.originalPrefLabel());
+            rows.add(row);
+        }
+    }
+
+    private List<NodeSearchMini> searchCompareHits(String label, String mode, String lang, String thesaurusId) {
+        return switch (mode) {
+            case "containsExactWord" -> persistence.searchExactMatch(label, lang, thesaurusId, false);
+            case "startWith" -> persistence.searchStartWith(label, lang, thesaurusId, false);
+            case "elastic" -> persistence.searchFullTextElastic(label, lang, thesaurusId, false);
+            default -> persistence.searchExactTermForAutocompletion(label, lang, thesaurusId);
+        };
+    }
+
+    private static boolean appendCompareHit(
+            String originalPrefLabel,
+            NodeSearchMini hit,
+            List<NodeCompareTheso> rows,
+            Set<String> hitIds
+    ) {
+        if (hit == null || !(hit.isConcept() || hit.isAltLabel())) {
+            return false;
+        }
+        NodeCompareTheso row = new NodeCompareTheso();
+        row.setOriginalPrefLabel(originalPrefLabel);
+        row.setIdConcept(hit.getIdConcept());
+        row.setPrefLabel(hit.getPrefLabel());
+        row.setAltLabel(hit.getAltLabelValue());
+        if (StringUtils.isNotBlank(hit.getIdConcept())) {
+            hitIds.add(hit.getIdConcept());
+        }
+        rows.add(row);
+        return true;
+    }
+
+    private void attachCompareArks(List<NodeCompareTheso> rows, Set<String> hitIds, String thesaurusId) {
+        if (hitIds.isEmpty()) {
+            return;
+        }
+        var concepts = persistence.findConceptsByIds(hitIds, thesaurusId);
+        for (NodeCompareTheso row : rows) {
+            if (row == null || StringUtils.isBlank(row.getIdConcept())) {
+                continue;
+            }
+            var concept = concepts.get(row.getIdConcept());
+            if (concept != null) {
+                row.setIdArk(concept.getIdArk());
+            }
+        }
     }
 
     private static Set<Integer> acceptedCandidateLines(List<ActionsLotConceptCandidate> candidates) {

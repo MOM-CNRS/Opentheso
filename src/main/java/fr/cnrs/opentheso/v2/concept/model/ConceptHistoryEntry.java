@@ -1,13 +1,13 @@
 package fr.cnrs.opentheso.v2.concept.model;
 
-import java.util.Date;
 import java.io.Serializable;
+import java.time.Instant;
 
 public record ConceptHistoryEntry(
         String value,
         String lang,
         String action,
-        Date date,
+        Instant date,
         String user,
         String noteType,
         String role
@@ -25,7 +25,7 @@ public record ConceptHistoryEntry(
         return action;
     }
 
-    public Date getDate() {
+    public Instant getDate() {
         return date;
     }
 

@@ -46,51 +46,18 @@ public class ConceptRelationNativeWriteService {
         if (StringUtils.isBlank(command.conceptId())) {
             return MutationResult.validationError("Aucune sélection !");
         }
-        List<String> toDetach = command.broaderIdsToDetach() == null
-                ? List.of()
-                : command.broaderIdsToDetach().stream().filter(StringUtils::isNotBlank).distinct().toList();
+        List<String> toDetach = normalizeDetachIds(command.broaderIdsToDetach());
         String newBroaderId = StringUtils.trimToNull(command.newBroaderId());
 
-        if (newBroaderId != null) {
-            if (command.conceptId().equalsIgnoreCase(newBroaderId)) {
-                return MutationResult.validationError(RELATION_NOT_ALLOWED);
-            }
-            List<String> branchIds = branchConceptSupport.collectBranchConceptIds(
-                    command.thesaurusId(), command.conceptId());
-            if (branchIds.contains(newBroaderId)) {
-                return MutationResult.validationError(RELATION_NOT_ALLOWED);
-            }
-            if (conceptRelationWriteRepository.hasRelatedRelation(
-                    command.conceptId(), newBroaderId, command.thesaurusId())) {
-                return MutationResult.validationError(RELATION_NOT_ALLOWED);
-            }
-            boolean willDetachTarget = toDetach.stream().anyMatch(id -> id.equalsIgnoreCase(newBroaderId));
-            if (!willDetachTarget
-                    && conceptRelationWriteRepository.hasHierarchicalRelation(
-                            command.conceptId(), newBroaderId, command.thesaurusId())) {
-                return MutationResult.validationError(RELATION_NOT_ALLOWED);
-            }
+        MutationResult invalidTarget = validateNewBroader(command, newBroaderId, toDetach);
+        if (invalidTarget != null) {
+            return invalidTarget;
         }
 
-        for (String oldBroaderId : toDetach) {
-            conceptRelationWriteRepository.deleteBroaderRelation(
-                    command.conceptId(), oldBroaderId, command.thesaurusId(), command.userId());
-        }
-
-        if (newBroaderId != null) {
-            conceptRelationWriteRepository.addBroaderRelation(
-                    command.conceptId(), newBroaderId, command.thesaurusId(), command.userId());
-            if (conceptLifecycleWriteRepository.isTopConcept(command.thesaurusId(), command.conceptId())
-                    && !conceptLifecycleWriteRepository.setTopConcept(
-                            command.thesaurusId(), command.conceptId(), false)) {
-                return MutationResult.failure(
-                        TOP_CONCEPT_REMOVE_ERROR);
-            }
-        } else if (!conceptRelationWriteRepository.hasBroaderRelation(command.conceptId(), command.thesaurusId())
-                && !conceptLifecycleWriteRepository.setTopConcept(
-                        command.thesaurusId(), command.conceptId(), true)) {
-            return MutationResult.failure(
-                    TOP_CONCEPT_ADD_ERROR);
+        detachBroaders(command, toDetach);
+        MutationResult attachError = attachOrPromoteTop(command, newBroaderId);
+        if (attachError != null) {
+            return attachError;
         }
 
         return finalizeMutation(
@@ -100,6 +67,68 @@ public class ConceptRelationNativeWriteService {
                 command.contributorName(),
                 "Concept déplacé avec succès"
         );
+    }
+
+    private static List<String> normalizeDetachIds(List<String> broaderIdsToDetach) {
+        if (broaderIdsToDetach == null) {
+            return List.of();
+        }
+        return broaderIdsToDetach.stream().filter(StringUtils::isNotBlank).distinct().toList();
+    }
+
+    private MutationResult validateNewBroader(
+            ReparentConceptCommand command,
+            String newBroaderId,
+            List<String> toDetach
+    ) {
+        if (newBroaderId == null) {
+            return null;
+        }
+        if (command.conceptId().equalsIgnoreCase(newBroaderId)) {
+            return MutationResult.validationError(RELATION_NOT_ALLOWED);
+        }
+        List<String> branchIds = branchConceptSupport.collectBranchConceptIds(
+                command.thesaurusId(), command.conceptId());
+        if (branchIds.contains(newBroaderId)) {
+            return MutationResult.validationError(RELATION_NOT_ALLOWED);
+        }
+        if (conceptRelationWriteRepository.hasRelatedRelation(
+                command.conceptId(), newBroaderId, command.thesaurusId())) {
+            return MutationResult.validationError(RELATION_NOT_ALLOWED);
+        }
+        boolean willDetachTarget = toDetach.stream().anyMatch(id -> id.equalsIgnoreCase(newBroaderId));
+        if (!willDetachTarget
+                && conceptRelationWriteRepository.hasHierarchicalRelation(
+                        command.conceptId(), newBroaderId, command.thesaurusId())) {
+            return MutationResult.validationError(RELATION_NOT_ALLOWED);
+        }
+        return null;
+    }
+
+    private void detachBroaders(ReparentConceptCommand command, List<String> toDetach) {
+        for (String oldBroaderId : toDetach) {
+            conceptRelationWriteRepository.deleteBroaderRelation(
+                    command.conceptId(), oldBroaderId, command.thesaurusId(), command.userId());
+        }
+    }
+
+    private MutationResult attachOrPromoteTop(ReparentConceptCommand command, String newBroaderId) {
+        if (newBroaderId != null) {
+            conceptRelationWriteRepository.addBroaderRelation(
+                    command.conceptId(), newBroaderId, command.thesaurusId(), command.userId());
+            if (conceptLifecycleWriteRepository.isTopConcept(command.thesaurusId(), command.conceptId())
+                    && !conceptLifecycleWriteRepository.setTopConcept(
+                            command.thesaurusId(), command.conceptId(), false)) {
+                return MutationResult.failure(TOP_CONCEPT_REMOVE_ERROR);
+            }
+            return null;
+        }
+        if (!conceptRelationWriteRepository.hasBroaderRelation(command.conceptId(), command.thesaurusId())
+                && !conceptLifecycleWriteRepository.setTopConcept(
+                        command.thesaurusId(), command.conceptId(), true)) {
+            return MutationResult.failure(TOP_CONCEPT_ADD_ERROR);
+        }
+        return null;
     }
 
     @Transactional

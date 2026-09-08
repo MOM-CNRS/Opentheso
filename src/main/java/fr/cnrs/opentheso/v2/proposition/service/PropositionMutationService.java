@@ -12,8 +12,9 @@ import org.apache.commons.lang3.StringUtils;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
 
-import java.text.SimpleDateFormat;
-import java.util.Date;
+import java.time.Instant;
+import java.time.ZoneId;
+import java.time.format.DateTimeFormatter;
 import java.util.Objects;
 import java.util.Optional;
 
@@ -77,7 +78,7 @@ public class PropositionMutationService {
                 .idTheso(submission.thesaurusId())
                 .lang(submission.lang())
                 .status(PropositionStatusEnum.ENVOYER.name())
-                .date(new SimpleDateFormat(DATE_PATTERN).format(new Date()))
+                .date(DateTimeFormatter.ofPattern(DATE_PATTERN).withZone(ZoneId.systemDefault()).format(Instant.now()))
                 .build();
 
         var saved = propositionModificationRepository.save(proposition);
@@ -124,7 +125,7 @@ public class PropositionMutationService {
             proposition.setStatus(status.name());
             proposition.setApprouvePar(reviewerName);
             proposition.setAdminComment(adminComment);
-            proposition.setDate(new SimpleDateFormat(DATE_PATTERN).format(new Date()));
+            proposition.setDate(DateTimeFormatter.ofPattern(DATE_PATTERN).withZone(ZoneId.systemDefault()).format(Instant.now()));
             propositionModificationRepository.save(proposition);
         });
     }

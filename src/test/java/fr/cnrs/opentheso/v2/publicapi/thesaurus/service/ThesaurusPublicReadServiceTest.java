@@ -25,7 +25,7 @@ import org.junit.jupiter.api.extension.ExtendWith;
 import org.mockito.Mock;
 import org.mockito.junit.jupiter.MockitoExtension;
 
-import java.util.Date;
+import java.time.Instant;
 import java.util.List;
 import java.util.Optional;
 
@@ -127,12 +127,12 @@ class ThesaurusPublicReadServiceTest {
 
     @Test
     void lastUpdate_returnsMappedInstant() {
-        var date = new Date(1_700_000_000_000L);
-        when(thesaurusHomeQueryRepository.findLastModificationDate("TH1")).thenReturn(Optional.of(date));
+        var lastModification = Instant.ofEpochMilli(1_700_000_000_000L);
+        when(thesaurusHomeQueryRepository.findLastModificationDate("TH1")).thenReturn(Optional.of(lastModification));
 
         var response = service.lastUpdate("TH1");
 
-        assertEquals(date.toInstant(), response.lastModification());
+        assertEquals(lastModification, response.lastModification());
     }
 
     @Test

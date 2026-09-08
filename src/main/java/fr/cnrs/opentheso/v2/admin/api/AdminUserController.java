@@ -44,7 +44,7 @@ public class AdminUserController {
     ) {
         int callerId = adminAuthSupport.resolveUserId(xApiKey, legacyApiKey);
         var profile = userProfileService.getProfile(callerId);
-        var created = adminUserService.createUser(
+        var created = adminUserService.createUser(new AdminUserService.CreateUserRequest(
                 profile.superAdmin(),
                 request.username(),
                 request.email(),
@@ -55,7 +55,7 @@ public class AdminUserController {
                 request.thesaurusIds(),
                 request.password(),
                 request.passwordConfirmation()
-        );
+        ));
         return new CreatedAdminUserResponse(created.userId(), created.username(), created.email());
     }
 

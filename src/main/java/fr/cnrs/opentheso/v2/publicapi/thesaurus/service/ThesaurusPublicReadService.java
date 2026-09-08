@@ -79,7 +79,7 @@ public class ThesaurusPublicReadService {
 
     public ThesaurusLastUpdateResponse lastUpdate(String thesaurusId) {
         return thesaurusHomeQueryRepository.findLastModificationDate(thesaurusId)
-                .map(date -> new ThesaurusLastUpdateResponse(date.toInstant()))
+                .map(ThesaurusLastUpdateResponse::new)
                 .orElseThrow(() -> new PublicResourceNotFoundException("Aucune date de modification pour le thésaurus " + thesaurusId));
     }
 

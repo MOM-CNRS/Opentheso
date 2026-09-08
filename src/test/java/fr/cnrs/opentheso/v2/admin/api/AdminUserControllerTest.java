@@ -44,7 +44,7 @@ class AdminUserControllerTest {
     void createUser_delegatesToService() {
         when(adminAuthSupport.resolveUserId("key", null)).thenReturn(1);
         when(userProfileService.getProfile(1)).thenReturn(superAdminProfile(1));
-        when(adminUserService.createUser(
+        when(adminUserService.createUser(new AdminUserService.CreateUserRequest(
                 true,
                 "alice",
                 "alice@test.fr",
@@ -55,7 +55,7 @@ class AdminUserControllerTest {
                 List.of(),
                 "Secret1!",
                 "Secret1!"
-        )).thenReturn(new CreatedAdminUser(10, "alice", "alice@test.fr"));
+        ))).thenReturn(new CreatedAdminUser(10, "alice", "alice@test.fr"));
 
         var request = new CreateAdminUserRequest(
                 "alice",

@@ -149,7 +149,8 @@ class CandidatMutationPersistenceTest {
     void updateCandidateNote_returnsFalseWhenNoteNotFound() {
         when(noteRepository.findByIdAndIdThesaurus(1, "TH1")).thenReturn(Optional.empty());
 
-        assertFalse(persistence.updateCandidateNote(1, "C1", "fr", "TH1", "text", "src", "note", 7));
+        assertFalse(persistence.updateCandidateNote(new CandidatMutationPersistence.UpdateCandidateNoteRequest(
+                1, "C1", "fr", "TH1", "text", "src", "note", 7)));
         verify(noteRepository, never()).save(any());
     }
 
@@ -158,7 +159,8 @@ class CandidatMutationPersistenceTest {
         var note = Note.builder().id(1).lexicalValue("Old").build();
         when(noteRepository.findByIdAndIdThesaurus(1, "TH1")).thenReturn(Optional.of(note));
 
-        assertTrue(persistence.updateCandidateNote(1, "C1", "fr", "TH1", "New", "src", "note", 7));
+        assertTrue(persistence.updateCandidateNote(new CandidatMutationPersistence.UpdateCandidateNoteRequest(
+                1, "C1", "fr", "TH1", "New", "src", "note", 7)));
         assertEquals("New", note.getLexicalValue());
         verify(noteRepository).save(note);
         verify(noteHistoriqueRepository).save(any());

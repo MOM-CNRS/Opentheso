@@ -140,7 +140,8 @@ class CandidatAutoAlignmentPersistenceTest {
     void addAlignment_shortCircuitsWhenAlignmentAlreadyExists() {
         when(alignementRepository.existsByConceptThesaurusTypeAndUri("TH1", "C1", 2, "http://x")).thenReturn(true);
 
-        assertTrue(persistence.addAlignment(7, "C2", "TH2", "http://x", 2, "C1", "TH1", 0));
+        assertTrue(persistence.addAlignment(new CandidatAutoAlignmentPersistence.AddAlignmentRequest(
+                7, "C2", "TH2", "http://x", 2, "C1", "TH1", 0)));
         verify(alignementRepository, never()).save(any());
     }
 
@@ -149,7 +150,8 @@ class CandidatAutoAlignmentPersistenceTest {
         when(alignementRepository.existsByConceptThesaurusTypeAndUri("TH1", "C1", 2, "http://x")).thenReturn(false);
         when(alignementTypeRepository.findById(2)).thenReturn(Optional.empty());
 
-        assertFalse(persistence.addAlignment(7, "C2", "TH2", "http://x", 2, "C1", "TH1", 0));
+        assertFalse(persistence.addAlignment(new CandidatAutoAlignmentPersistence.AddAlignmentRequest(
+                7, "C2", "TH2", "http://x", 2, "C1", "TH1", 0)));
         verify(alignementRepository, never()).save(any());
     }
 
@@ -158,7 +160,8 @@ class CandidatAutoAlignmentPersistenceTest {
         when(alignementRepository.existsByConceptThesaurusTypeAndUri("TH1", "C1", 2, "http://x")).thenReturn(false);
         when(alignementTypeRepository.findById(2)).thenReturn(Optional.of(new AlignementType()));
 
-        assertTrue(persistence.addAlignment(7, "C2", "TH2", "http://x", 2, "C1", "TH1", 0));
+        assertTrue(persistence.addAlignment(new CandidatAutoAlignmentPersistence.AddAlignmentRequest(
+                7, "C2", "TH2", "http://x", 2, "C1", "TH1", 0)));
 
         ArgumentCaptor<Alignement> captor = ArgumentCaptor.forClass(Alignement.class);
         verify(alignementRepository).save(captor.capture());
@@ -173,7 +176,8 @@ class CandidatAutoAlignmentPersistenceTest {
         when(alignementTypeRepository.findById(2)).thenReturn(Optional.of(new AlignementType()));
         when(alignementSourceRepository.findById(5)).thenReturn(Optional.of(new fr.cnrs.opentheso.entites.AlignementSource()));
 
-        assertTrue(persistence.addAlignment(7, "C2", "TH2", "http://x", 2, "C1", "TH1", 5));
+        assertTrue(persistence.addAlignment(new CandidatAutoAlignmentPersistence.AddAlignmentRequest(
+                7, "C2", "TH2", "http://x", 2, "C1", "TH1", 5)));
 
         verify(alignementSourceRepository).findById(5);
         verify(alignementRepository).save(any(Alignement.class));

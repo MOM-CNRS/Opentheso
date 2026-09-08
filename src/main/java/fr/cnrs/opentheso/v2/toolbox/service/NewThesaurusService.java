@@ -8,6 +8,7 @@ import fr.cnrs.opentheso.v2.toolbox.exception.InvalidToolboxDataException;
 import fr.cnrs.opentheso.v2.toolbox.mapper.ToolboxMapper;
 import fr.cnrs.opentheso.v2.toolbox.model.NewThesaurusFormOptions;
 import fr.cnrs.opentheso.v2.toolbox.model.NewThesaurusRequest;
+import fr.cnrs.opentheso.v2.shared.time.V2Dates;
 import fr.cnrs.opentheso.v2.toolbox.persistence.ToolboxPreferencePersistence;
 import fr.cnrs.opentheso.v2.toolbox.persistence.ToolboxThesaurusPersistence;
 import lombok.RequiredArgsConstructor;
@@ -21,8 +22,7 @@ import fr.cnrs.opentheso.entites.ThesaurusDcTerm;
 import fr.cnrs.opentheso.models.concept.DCMIResource;
 import fr.cnrs.opentheso.models.nodes.DcElement;
 
-import java.text.SimpleDateFormat;
-import java.util.Date;
+import java.time.format.DateTimeFormatter;
 
 @Slf4j
 @Service
@@ -84,7 +84,7 @@ public class NewThesaurusService {
         createAndSaveDcTerm(
                 thesaurusId,
                 DCMIResource.CREATED,
-                new SimpleDateFormat("yyyy-MM-dd").format(new Date()),
+                DateTimeFormatter.ISO_LOCAL_DATE.format(V2Dates.nowDate()),
                 "",
                 "date"
         );

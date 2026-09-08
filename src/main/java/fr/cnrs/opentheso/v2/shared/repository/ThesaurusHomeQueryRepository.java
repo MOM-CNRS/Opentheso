@@ -10,14 +10,10 @@ import jakarta.persistence.Query;
 import org.apache.commons.lang3.StringUtils;
 import org.springframework.stereotype.Repository;
 
-import java.sql.Timestamp;
 import java.time.Instant;
-import java.time.LocalDateTime;
 import java.time.YearMonth;
-import java.time.ZoneId;
 import java.util.ArrayList;
 import java.util.Collections;
-import java.util.Date;
 import java.util.LinkedHashMap;
 import java.util.List;
 import java.util.Map;
@@ -423,7 +419,7 @@ public class ThesaurusHomeQueryRepository {
         return count != null ? count.intValue() : 0;
     }
 
-    public Optional<Date> findLastModificationDate(String thesaurusId) {
+    public Optional<Instant> findLastModificationDate(String thesaurusId) {
         String sql = """
                 SELECT c.modified
                 FROM concept c
@@ -440,7 +436,7 @@ public class ThesaurusHomeQueryRepository {
         if (rows.isEmpty() || rows.get(0) == null) {
             return Optional.empty();
         }
-        Date date = toDate(rows.get(0));
+        Instant date = toInstant(rows.get(0));
         return date != null ? Optional.of(date) : Optional.empty();
     }
 
@@ -604,7 +600,7 @@ public class ThesaurusHomeQueryRepository {
         if (rows.isEmpty()) {
             return LastModifiedConceptsBundle.empty();
         }
-        Date lastModified = toDate(rows.get(0)[2]);
+        Instant lastModified = toInstant(rows.get(0)[2]);
         List<ConceptLinkItem> concepts = rows.stream()
                 .map(row -> new ConceptLinkItem(
                         row[0] != null ? (String) row[0] : "",
@@ -615,7 +611,7 @@ public class ThesaurusHomeQueryRepository {
         return new LastModifiedConceptsBundle(lastModified, concepts);
     }
 
-    public record LastModifiedConceptsBundle(Date lastModified, List<ConceptLinkItem> concepts) {
+    public record LastModifiedConceptsBundle(Instant lastModified, List<ConceptLinkItem> concepts) {
         public static LastModifiedConceptsBundle empty() {
             return new LastModifiedConceptsBundle(null, Collections.emptyList());
         }
@@ -661,19 +657,7 @@ public class ThesaurusHomeQueryRepository {
         }
     }
 
-    private Date toDate(Object value) {
-        if (value instanceof Date date) {
-            return date;
-        }
-        if (value instanceof Timestamp timestamp) {
-            return new Date(timestamp.getTime());
-        }
-        if (value instanceof Instant instant) {
-            return Date.from(instant);
-        }
-        if (value instanceof LocalDateTime localDateTime) {
-            return Date.from(localDateTime.atZone(ZoneId.systemDefault()).toInstant());
-        }
-        return null;
+    private Instant toInstant(Object value) {
+        return V2Dates.toInstant(value);
     }
 }

@@ -6,7 +6,7 @@ import jakarta.persistence.PersistenceContext;
 import org.springframework.stereotype.Repository;
 import org.springframework.transaction.annotation.Transactional;
 
-import java.util.Date;
+import java.time.Instant;
 import java.util.Optional;
 
 @Repository
@@ -124,7 +124,7 @@ public class ConceptNoteWriteRepository {
             String noteSource,
             int userId
     ) {
-        Date now = new Date();
+        Instant now = Instant.now();
         entityManager.createNativeQuery("""
                         INSERT INTO note (
                             notetypecode, id_thesaurus, lang, lexicalvalue,
@@ -164,7 +164,7 @@ public class ConceptNoteWriteRepository {
                         """)
                 .setParameter(NativeQueryParams.LEXICAL_VALUE, lexicalValue)
                 .setParameter("noteSource", noteSource)
-                .setParameter(NativeQueryParams.MODIFIED, new Date())
+                .setParameter(NativeQueryParams.MODIFIED, Instant.now())
                 .setParameter("noteId", noteId)
                 .setParameter(NativeQueryParams.THESAURUS_ID, thesaurusId)
                 .executeUpdate();
@@ -210,7 +210,7 @@ public class ConceptNoteWriteRepository {
                 .setParameter(NativeQueryParams.LEXICAL_VALUE, lexicalValue)
                 .setParameter("action", action)
                 .setParameter(NativeQueryParams.USER_ID, userId)
-                .setParameter(NativeQueryParams.MODIFIED, new Date())
+                .setParameter(NativeQueryParams.MODIFIED, Instant.now())
                 .executeUpdate();
     }
 }

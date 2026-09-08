@@ -300,8 +300,8 @@ class ConceptAlignmentAdminServiceTest {
                 .latitude(48.8)
                 .longitude(2.3)
                 .build();
-        when(candidatAutoAlignmentPersistence.addAlignment(7, "Paris", "GeoNames",
-                "http://geonames.org/1", 1, "C1", "TH1", 9)).thenReturn(true);
+        when(candidatAutoAlignmentPersistence.addAlignment(new CandidatAutoAlignmentPersistence.AddAlignmentRequest(
+                7, "Paris", "GeoNames", "http://geonames.org/1", 1, "C1", "TH1", 9))).thenReturn(true);
         when(candidatAutoAlignmentPersistence.addSelectedTranslations(any(), any(), eq(7), any())).thenReturn(true);
         when(candidatAutoAlignmentPersistence.addSelectedDefinitions(any(), any(), eq(7), any(), any())).thenReturn(true);
         when(candidatAutoAlignmentPersistence.addSelectedImages(any(), any(), eq(7), any(), any(), any())).thenReturn(true);

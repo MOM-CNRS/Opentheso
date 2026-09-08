@@ -140,16 +140,19 @@ public class ConceptAlignmentAdminService {
                 .forEach(projection -> selectedIds.add(projection.getId_alignement_source()));
 
         return alignementSourceRepository.findByIsGlobalTrueOrIdThesaurusOwner(thesaurusId).stream()
-                .map(source -> new AlignmentSourceItem(
-                        source.getId(),
-                        source.getSource(),
-                        StringUtils.defaultString(source.getDescription()),
-                        selectedIds.contains(source.getId()),
-                        Boolean.TRUE.equals(source.getIsGlobal()),
-                        StringUtils.defaultString(source.getSourceFilter()),
-                        StringUtils.defaultString(source.getRequete()),
-                        source.getIdThesaurusOwner()
-                ))
+                .map(source -> {
+                    AlignmentSourceItem item = new AlignmentSourceItem(
+                            source.getId(),
+                            source.getSource(),
+                            StringUtils.defaultString(source.getDescription()),
+                            selectedIds.contains(source.getId()),
+                            Boolean.TRUE.equals(source.getIsGlobal()),
+                            StringUtils.defaultString(source.getSourceFilter()),
+                            StringUtils.defaultString(source.getRequete())
+                    );
+                    item.setThesaurusOwner(source.getIdThesaurusOwner());
+                    return item;
+                })
                 .toList();
     }
 
@@ -290,14 +293,15 @@ public class ConceptAlignmentAdminService {
         int typeId = proposition.getAlignmentTypeId() > 0 ? proposition.getAlignmentTypeId() : 1;
         if (proposition.getSourceId() > 0) {
             if (!candidatAutoAlignmentPersistence.addAlignment(
-                    userId,
-                    proposition.getTargetLabel(),
-                    proposition.getSourceName(),
-                    proposition.getTargetUri(),
-                    typeId,
-                    proposition.getConceptId(),
-                    thesaurusId,
-                    proposition.getSourceId())) {
+                    new CandidatAutoAlignmentPersistence.AddAlignmentRequest(
+                            userId,
+                            proposition.getTargetLabel(),
+                            proposition.getSourceName(),
+                            proposition.getTargetUri(),
+                            typeId,
+                            proposition.getConceptId(),
+                            thesaurusId,
+                            proposition.getSourceId()))) {
                 return false;
             }
         } else {
@@ -487,46 +491,69 @@ public class ConceptAlignmentAdminService {
         if (source == null || summaryRows == null || StringUtils.isAnyBlank(thesaurusId, lang)) {
             return List.of();
         }
+        List<AlignmentProposition> comparisons = new ArrayList<>();
+        for (AlignmentAdminRow existing : indexExistingAlignments(summaryRows, source).values()) {
+            comparisons.add(buildComparison(thesaurusId, lang, source, existing));
+        }
+        return comparisons;
+    }
+
+    private Map<String, AlignmentAdminRow> indexExistingAlignments(
+            List<AlignmentAdminRow> summaryRows,
+            AlignementSource source
+    ) {
         String sourceHost = hostOf(source.getRequete());
         Map<String, AlignmentAdminRow> existingByConcept = new LinkedHashMap<>();
         for (AlignmentAdminRow row : summaryRows) {
-            if (row.isPlaceholder()) {
-                continue;
-            }
-            boolean sameSource = Strings.CI.equals(row.sourceName(), source.getSource())
-                    || (StringUtils.isNotBlank(sourceHost) && sourceHost.equalsIgnoreCase(hostOf(row.targetUri())));
-            if (sameSource) {
+            if (rowMatchesSource(row, source, sourceHost)) {
                 existingByConcept.putIfAbsent(row.conceptId(), row);
             }
         }
+        return existingByConcept;
+    }
 
-        List<AlignmentProposition> comparisons = new ArrayList<>();
-        for (AlignmentAdminRow existing : existingByConcept.values()) {
-            var outcome = alignmentAutoExternalSearch.search(
-                    source,
-                    new AlignmentAutoExternalSearch.SearchContext(
-                            thesaurusId, existing.conceptId(), existing.conceptLabel(), lang, "", ""
-                    )
-            );
-            NodeAlignment best = (outcome.results() == null || outcome.results().isEmpty())
-                    ? null
-                    : outcome.results().get(0);
-            comparisons.add(AlignmentProposition.builder()
-                    .conceptId(existing.conceptId())
-                    .localLabel(existing.conceptLabel())
-                    .localDefinition("")
-                    .targetLabel(best != null ? StringUtils.defaultString(best.getConcept_target()) : "")
-                    .targetUri(best != null
-                            ? StringUtils.defaultString(best.getUri_target())
-                            : StringUtils.defaultString(existing.targetUri()))
-                    .targetDefinition(best != null ? StringUtils.defaultString(best.getDef_target()) : "")
-                    .sourceName(source.getSource())
-                    .sourceId(source.getId())
-                    .alignmentTypeId(existing.typeId() > 0 ? existing.typeId() : 1)
-                    .alreadyAligned(true)
-                    .build());
+    private boolean rowMatchesSource(AlignmentAdminRow row, AlignementSource source, String sourceHost) {
+        if (row.isPlaceholder()) {
+            return false;
         }
-        return comparisons;
+        return Strings.CI.equals(row.sourceName(), source.getSource())
+                || (StringUtils.isNotBlank(sourceHost) && sourceHost.equalsIgnoreCase(hostOf(row.targetUri())));
+    }
+
+    private AlignmentProposition buildComparison(
+            String thesaurusId,
+            String lang,
+            AlignementSource source,
+            AlignmentAdminRow existing
+    ) {
+        var outcome = alignmentAutoExternalSearch.search(
+                source,
+                new AlignmentAutoExternalSearch.SearchContext(
+                        thesaurusId, existing.conceptId(), existing.conceptLabel(), lang, "", ""
+                )
+        );
+        NodeAlignment best = firstSearchResult(outcome);
+        return AlignmentProposition.builder()
+                .conceptId(existing.conceptId())
+                .localLabel(existing.conceptLabel())
+                .localDefinition("")
+                .targetLabel(best != null ? StringUtils.defaultString(best.getConcept_target()) : "")
+                .targetUri(best != null
+                        ? StringUtils.defaultString(best.getUri_target())
+                        : StringUtils.defaultString(existing.targetUri()))
+                .targetDefinition(best != null ? StringUtils.defaultString(best.getDef_target()) : "")
+                .sourceName(source.getSource())
+                .sourceId(source.getId())
+                .alignmentTypeId(existing.typeId() > 0 ? existing.typeId() : 1)
+                .alreadyAligned(true)
+                .build();
+    }
+
+    private static NodeAlignment firstSearchResult(AlignmentAutoExternalSearch.SearchOutcome outcome) {
+        if (outcome.results() == null || outcome.results().isEmpty()) {
+            return null;
+        }
+        return outcome.results().get(0);
     }
 
     private Map<String, List<AlignmentAdminRow>> loadAlignmentsGrouped(

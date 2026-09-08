@@ -7,8 +7,8 @@ import jakarta.persistence.PersistenceContext;
 import org.springframework.stereotype.Repository;
 import org.springframework.transaction.annotation.Transactional;
 
+import java.time.Instant;
 import java.util.ArrayList;
-import java.util.Date;
 import java.util.List;
 import java.util.Optional;
 
@@ -117,7 +117,7 @@ public class ConceptCreationWriteRepository {
             boolean topConcept,
             int userId
     ) {
-        Date now = new Date();
+        Instant now = Instant.now();
         entityManager.createNativeQuery("""
                         INSERT INTO concept (
                             id_concept, id_thesaurus, id_ark, created, modified, status,

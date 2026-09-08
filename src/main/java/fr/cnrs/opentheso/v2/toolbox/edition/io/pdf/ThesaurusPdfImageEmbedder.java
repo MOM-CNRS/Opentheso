@@ -37,24 +37,29 @@ final class ThesaurusPdfImageEmbedder {
         }
         paragraphs.add(new Paragraph(Chunk.NEWLINE));
         for (NodeImage imageElement : images) {
-            String uri = imageElement != null ? StringUtils.trimToNull(imageElement.getUri()) : null;
-            if (uri == null) {
-                paragraphs.add(new Paragraph("Image invalide : URI manquante"));
-                continue;
+            appendImage(paragraphs, imageElement, horizontalOffset, writePdfSettings);
+        }
+    }
+
+    private static void appendImage(List<Paragraph> paragraphs, NodeImage imageElement, float horizontalOffset,
+                                    ThesaurusPdfSettings writePdfSettings) {
+        String uri = imageElement != null ? StringUtils.trimToNull(imageElement.getUri()) : null;
+        if (uri == null) {
+            paragraphs.add(new Paragraph("Image invalide : URI manquante"));
+            return;
+        }
+        try {
+            Image image = loadImage(uri);
+            float scaleFactor = writePdfSettings.resiseImage(image);
+            if (scaleFactor <= 0) {
+                paragraphs.add(new Paragraph("Erreur de redimensionnement de l'image : " + uri));
+                return;
             }
-            try {
-                Image image = loadImage(uri);
-                float scaleFactor = writePdfSettings.resiseImage(image);
-                if (scaleFactor <= 0) {
-                    paragraphs.add(new Paragraph("Erreur de redimensionnement de l'image : " + uri));
-                    continue;
-                }
-                image.scaleAbsolute(image.getWidth() / scaleFactor, image.getHeight() / scaleFactor);
-                paragraphs.add(new Paragraph(new Chunk(image, horizontalOffset, 0, true)));
-            } catch (Exception ex) {
-                log.warn("Impossible d'intégrer l'image PDF depuis {}: {}", uri, ex.toString());
-                paragraphs.add(new Paragraph("Erreur de téléchargement de l'image (image vide) : " + uri));
-            }
+            image.scaleAbsolute(image.getWidth() / scaleFactor, image.getHeight() / scaleFactor);
+            paragraphs.add(new Paragraph(new Chunk(image, horizontalOffset, 0, true)));
+        } catch (Exception ex) {
+            log.warn("Impossible d'intégrer l'image PDF depuis {}: {}", uri, ex.toString());
+            paragraphs.add(new Paragraph("Erreur de téléchargement de l'image (image vide) : " + uri));
         }
     }
 

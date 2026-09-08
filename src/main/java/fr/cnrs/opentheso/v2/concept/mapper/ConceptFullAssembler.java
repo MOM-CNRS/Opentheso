@@ -19,7 +19,8 @@ import org.apache.commons.collections4.CollectionUtils;
 import org.apache.commons.lang3.StringUtils;
 import org.springframework.stereotype.Component;
 
-import java.sql.Date;
+import java.time.Instant;
+import java.time.LocalDate;
 import java.util.ArrayList;
 import java.util.Collections;
 import java.util.Comparator;
@@ -39,67 +40,38 @@ public class ConceptFullAssembler {
             String thesaurusId,
             String conceptId,
             String lang,
-            int narrowerOffset,
-            int narrowerLimit,
-            boolean includePrivateGroups,
+            ConceptAssemblePaging paging,
             ThesaurusPreferences preferences,
             String applicationBaseUrl
     ) {
-        if (StringUtils.isAnyBlank(thesaurusId, conceptId, lang)) {
-            return Optional.empty();
-        }
-        return assemble(
-                thesaurusId,
-                conceptId,
-                lang,
-                narrowerOffset,
-                narrowerLimit,
-                includePrivateGroups,
-                preferences,
-                applicationBaseUrl,
-                false
-        );
+        return assemble(thesaurusId, conceptId, lang, paging, preferences, applicationBaseUrl, false);
     }
 
     public Optional<ConceptFullSnapshot> assemble(
             String thesaurusId,
             String conceptId,
             String lang,
-            int narrowerOffset,
-            int narrowerLimit,
-            boolean includePrivateGroups,
+            ConceptAssemblePaging paging,
             ThesaurusPreferences preferences,
             String applicationBaseUrl,
             boolean includeCandidates
     ) {
-        if (StringUtils.isAnyBlank(thesaurusId, conceptId, lang)) {
+        if (paging == null || StringUtils.isAnyBlank(thesaurusId, conceptId, lang)) {
             return Optional.empty();
         }
         return conceptFullQueryRepository.findConceptCore(conceptId, thesaurusId, includeCandidates)
-                .map(core -> buildNode(
-                        core,
-                        thesaurusId,
-                        conceptId,
-                        lang,
-                        narrowerOffset,
-                        narrowerLimit,
-                        includePrivateGroups,
-                        preferences,
-                        applicationBaseUrl
-                ));
+                .map(core -> buildNode(core, thesaurusId, conceptId, lang, paging, preferences, applicationBaseUrl));
     }
 
     public List<ConceptHierarchicalRelation> assembleNarrowerRelations(
             String thesaurusId,
             String conceptId,
             String lang,
-            int offset,
-            int limit,
-            boolean includePrivateGroups,
+            ConceptAssemblePaging paging,
             ThesaurusPreferences preferences,
             String applicationBaseUrl
     ) {
-        if (StringUtils.isAnyBlank(thesaurusId, conceptId, lang) || limit <= 0) {
+        if (paging == null || StringUtils.isAnyBlank(thesaurusId, conceptId, lang) || paging.narrowerLimit() <= 0) {
             return Collections.emptyList();
         }
         List<ConceptHierarchicalRelation> relations = mapNarrowerRelations(
@@ -107,9 +79,9 @@ public class ConceptFullAssembler {
                         conceptId,
                         thesaurusId,
                         lang,
-                        includePrivateGroups,
-                        offset,
-                        limit
+                        paging.includePrivateGroups(),
+                        paging.narrowerOffset(),
+                        paging.narrowerLimit()
                 ),
                 thesaurusId,
                 preferences,
@@ -123,9 +95,7 @@ public class ConceptFullAssembler {
             String thesaurusId,
             String conceptId,
             String lang,
-            int narrowerOffset,
-            int narrowerLimit,
-            boolean includePrivateGroups,
+            ConceptAssemblePaging paging,
             ThesaurusPreferences preferences,
             String applicationBaseUrl
     ) {
@@ -149,7 +119,7 @@ public class ConceptFullAssembler {
         // Comme legacy (ResourceService / SQL opentheso_get_concept) : toujours charger
         // creator/contributors depuis concept_dcterms ; l'affichage est filtré côté UI.
         concept.setCreatorName(conceptFullQueryRepository.findCreator(conceptId, thesaurusId).orElse(null));
-        concept.setContributorName(nullIfEmpty(conceptFullQueryRepository.findContributors(conceptId, thesaurusId)));
+        concept.setContributorName(emptyIfNull(conceptFullQueryRepository.findContributors(conceptId, thesaurusId)));
 
         concept.setPrefLabel(mapPreferredLabel(conceptId, thesaurusId, lang));
         concept.setAltLabels(mapAltLabels(conceptId, thesaurusId, lang, false));
@@ -160,7 +130,8 @@ public class ConceptFullAssembler {
 
         mapNotes(concept, conceptId, thesaurusId);
         concept.setBroaders(mapNarrowerRelations(
-                conceptFullQueryRepository.findBroaderRelations(conceptId, thesaurusId, lang, includePrivateGroups),
+                conceptFullQueryRepository.findBroaderRelations(
+                        conceptId, thesaurusId, lang, paging.includePrivateGroups()),
                 thesaurusId,
                 preferences,
                 applicationBaseUrl
@@ -176,9 +147,9 @@ public class ConceptFullAssembler {
                         conceptId,
                         thesaurusId,
                         lang,
-                        includePrivateGroups,
-                        narrowerOffset,
-                        narrowerLimit
+                        paging.includePrivateGroups(),
+                        paging.narrowerOffset(),
+                        paging.narrowerLimit()
                 ),
                 thesaurusId,
                 preferences,
@@ -227,9 +198,6 @@ public class ConceptFullAssembler {
                     parseInt(stringAt(row, 2))
             ));
         }
-        if (labels.isEmpty()) {
-            return null;
-        }
         Collections.sort(labels);
         return labels;
     }
@@ -245,7 +213,7 @@ public class ConceptFullAssembler {
                     stringAt(row, 4)
             ));
         }
-        return labels.isEmpty() ? null : labels;
+        return labels;
     }
 
     private List<ConceptTermLabel> mapAltTranslations(String conceptId, String thesaurusId, String lang, boolean hidden) {
@@ -259,7 +227,7 @@ public class ConceptFullAssembler {
                     ""
             ));
         }
-        return labels.isEmpty() ? null : labels;
+        return labels;
     }
 
     private void mapNotes(ConceptFullSnapshot concept, String conceptId, String thesaurusId) {
@@ -286,13 +254,13 @@ public class ConceptFullAssembler {
                 }
             }
         }
-        concept.setNotes(nullIfEmpty(notes));
-        concept.setDefinitions(nullIfEmpty(definitions));
-        concept.setExamples(nullIfEmpty(examples));
-        concept.setEditorialNotes(nullIfEmpty(editorialNotes));
-        concept.setChangeNotes(nullIfEmpty(changeNotes));
-        concept.setScopeNotes(nullIfEmpty(scopeNotes));
-        concept.setHistoryNotes(nullIfEmpty(historyNotes));
+        concept.setNotes(notes);
+        concept.setDefinitions(definitions);
+        concept.setExamples(examples);
+        concept.setEditorialNotes(editorialNotes);
+        concept.setChangeNotes(changeNotes);
+        concept.setScopeNotes(scopeNotes);
+        concept.setHistoryNotes(historyNotes);
     }
 
     private ConceptSnapshotNote toConceptNote(Object[] row) {
@@ -311,7 +279,7 @@ public class ConceptFullAssembler {
             String applicationBaseUrl
     ) {
         if (rows.isEmpty()) {
-            return null;
+            return List.of();
         }
         Set<ConceptHierarchicalRelation> relations = new LinkedHashSet<>();
         for (Object[] row : rows) {
@@ -343,7 +311,7 @@ public class ConceptFullAssembler {
             String applicationBaseUrl
     ) {
         if (rows.isEmpty()) {
-            return null;
+            return List.of();
         }
         List<ConceptUriLabel> items = new ArrayList<>();
         for (Object[] row : rows) {
@@ -391,11 +359,11 @@ public class ConceptFullAssembler {
                 }
             }
         }
-        concept.setExactMatchs(nullIfEmpty(exact));
-        concept.setCloseMatchs(nullIfEmpty(close));
-        concept.setBroadMatchs(nullIfEmpty(broad));
-        concept.setRelatedMatchs(nullIfEmpty(related));
-        concept.setNarrowMatchs(nullIfEmpty(narrow));
+        concept.setExactMatchs(exact);
+        concept.setCloseMatchs(close);
+        concept.setBroadMatchs(broad);
+        concept.setRelatedMatchs(related);
+        concept.setNarrowMatchs(narrow);
     }
 
     private List<ConceptGpsPoint> mapGps(String conceptId, String thesaurusId) {
@@ -407,7 +375,7 @@ public class ConceptFullAssembler {
                     parseInt(stringAt(row, 2))
             ));
         }
-        return points.isEmpty() ? null : points;
+        return points;
     }
 
     private List<ConceptUriLabel> mapGroupMemberships(
@@ -433,9 +401,6 @@ public class ConceptFullAssembler {
                     stringAt(row, 4)
             ));
         }
-        if (members.isEmpty()) {
-            return null;
-        }
         Collections.sort(members);
         return members;
     }
@@ -452,7 +417,7 @@ public class ConceptFullAssembler {
                     stringAt(row, 3)
             ));
         }
-        return images.isEmpty() ? null : images;
+        return images;
     }
 
     private List<ConceptUriLabel> mapFacets(String conceptId, String thesaurusId, String lang) {
@@ -463,9 +428,6 @@ public class ConceptFullAssembler {
                 continue;
             }
             facets.add(new ConceptUriLabel("", facetId, stringAt(row, 1)));
-        }
-        if (facets.isEmpty()) {
-            return null;
         }
         Collections.sort(facets);
         return facets;
@@ -527,13 +489,16 @@ public class ConceptFullAssembler {
         if (value == null) {
             return null;
         }
-        if (value instanceof Date sqlDate) {
-            return sqlDate.toString();
+        if (value instanceof Instant instant) {
+            return instant.toString();
+        }
+        if (value instanceof LocalDate localDate) {
+            return localDate.toString();
         }
         return value.toString();
     }
 
-    private static <T> List<T> nullIfEmpty(List<T> values) {
-        return CollectionUtils.isEmpty(values) ? null : values;
+    private static <T> List<T> emptyIfNull(List<T> values) {
+        return values == null ? List.of() : values;
     }
 }

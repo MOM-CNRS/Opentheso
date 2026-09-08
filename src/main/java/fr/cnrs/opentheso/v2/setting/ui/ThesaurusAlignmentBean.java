@@ -294,9 +294,7 @@ public class ThesaurusAlignmentBean implements Serializable {
                 StringUtils.defaultString(newAlignmentSourceDescription).trim(),
                 newAlignmentSourceSelected,
                 false,
-                type,
-                url,
-                settingsAccess.getThesaurusId()
+                new AlignmentSourceItem.SourceDetails(type, url, settingsAccess.getThesaurusId())
         );
         if (isAlignmentOpenthesoType()) {
             draftAlignmentRemoteThesaurusIds.put(draftId, newAlignmentSourceThesaurusId.trim());
@@ -456,9 +454,8 @@ public class ThesaurusAlignmentBean implements Serializable {
                     item.getDescription(),
                     item.isSelected(),
                     item.isGlobal(),
-                    item.getSourceType(),
-                    item.getUrl(),
-                    item.getThesaurusOwner()
+                    new AlignmentSourceItem.SourceDetails(
+                            item.getSourceType(), item.getUrl(), item.getThesaurusOwner())
             ));
         }
         return copy;

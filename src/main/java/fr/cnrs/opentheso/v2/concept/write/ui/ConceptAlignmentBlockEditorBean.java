@@ -27,6 +27,7 @@ import java.io.Serializable;
 import java.util.ArrayList;
 import java.util.LinkedHashSet;
 import java.util.List;
+import java.util.Optional;
 import java.util.Set;
 
 /**
@@ -135,92 +136,139 @@ public class ConceptAlignmentBlockEditorBean implements Serializable {
             return;
         }
 
+        Optional<List<AlignmentBlockEditRow>> kept = collectKeptRows();
+        if (kept.isEmpty()) {
+            return;
+        }
+
+        AlignmentWriteContext ctx = new AlignmentWriteContext(
+                thesaurusViewBean.getId(),
+                current.getSummary().getConceptId(),
+                userId,
+                StringUtils.defaultString(userSession.getCurrentUsername()));
+        DirtyUpdate dirty = deleteRemovedAlignments(current, ctx, keptAlignmentIds(kept.get()), false);
+        if (!dirty.ok) {
+            return;
+        }
+        if (!persistKeptAlignments(kept.get(), ctx, dirty.dirty).ok) {
+            return;
+        }
+
+        finishSuccess();
+    }
+
+    private Optional<List<AlignmentBlockEditRow>> collectKeptRows() {
         List<AlignmentBlockEditRow> kept = new ArrayList<>();
         Set<String> seenUris = new LinkedHashSet<>();
         for (AlignmentBlockEditRow row : rows) {
-            if (row == null) {
-                continue;
+            if (!acceptKeptRow(row, kept, seenUris)) {
+                return Optional.empty();
             }
-            String uri = StringUtils.trimToEmpty(row.getUri());
-            if (uri.isEmpty()) {
-                if (row.isExisting()) {
-                    errorMessage = "L'URI est obligatoire !";
-                    return;
-                }
-                continue;
-            }
-            if (row.getTypeId() <= 0) {
-                errorMessage = "Le type d'alignement est obligatoire !";
-                return;
-            }
-            String uriKey = uri.toLowerCase();
-            if (!seenUris.add(uriKey)) {
-                errorMessage = "Chaque URI ne peut apparaître qu'une fois.";
-                return;
-            }
-            kept.add(row);
         }
+        return Optional.of(kept);
+    }
 
-        String thesaurusId = thesaurusViewBean.getId();
-        String conceptId = current.getSummary().getConceptId();
-        String contributor = StringUtils.defaultString(userSession.getCurrentUsername());
+    private boolean acceptKeptRow(
+            AlignmentBlockEditRow row, List<AlignmentBlockEditRow> kept, Set<String> seenUris) {
+        if (row == null) {
+            return true;
+        }
+        String uri = StringUtils.trimToEmpty(row.getUri());
+        if (uri.isEmpty()) {
+            if (row.isExisting()) {
+                errorMessage = "L'URI est obligatoire !";
+                return false;
+            }
+            return true;
+        }
+        if (row.getTypeId() <= 0) {
+            errorMessage = "Le type d'alignement est obligatoire !";
+            return false;
+        }
+        if (!seenUris.add(uri.toLowerCase())) {
+            errorMessage = "Chaque URI ne peut apparaître qu'une fois.";
+            return false;
+        }
+        kept.add(row);
+        return true;
+    }
+
+    private static Set<Integer> keptAlignmentIds(List<AlignmentBlockEditRow> kept) {
         Set<Integer> keptIds = new LinkedHashSet<>();
         for (AlignmentBlockEditRow row : kept) {
             if (row.isExisting() && row.getAlignmentId() > 0) {
                 keptIds.add(row.getAlignmentId());
             }
         }
+        return keptIds;
+    }
 
-        boolean dirty = false;
+    private DirtyUpdate deleteRemovedAlignments(
+            ConceptDetail current, AlignmentWriteContext ctx, Set<Integer> keptIds, boolean dirty) {
         for (ConceptAlignment alignment : flatten(current)) {
-            int id = parseAlignmentId(alignment.id());
-            if (id <= 0 || keptIds.contains(id)) {
-                continue;
+            DirtyUpdate next = deleteRemovedAlignment(alignment, ctx, keptIds, dirty);
+            if (!next.ok) {
+                return DirtyUpdate.fail();
             }
-            MutationResult deleted = conceptAlignmentMutationService.deleteAlignment(
-                    new DeleteAlignmentCommand(thesaurusId, conceptId, id, userId, contributor));
-            if (!applyResult(deleted, dirty)) {
-                return;
-            }
-            dirty = true;
+            dirty = next.dirty;
         }
+        return DirtyUpdate.of(dirty);
+    }
 
+    private DirtyUpdate deleteRemovedAlignment(
+            ConceptAlignment alignment, AlignmentWriteContext ctx, Set<Integer> keptIds, boolean dirty) {
+        int id = parseAlignmentId(alignment.id());
+        if (id <= 0 || keptIds.contains(id)) {
+            return DirtyUpdate.of(dirty);
+        }
+        MutationResult deleted = conceptAlignmentMutationService.deleteAlignment(
+                new DeleteAlignmentCommand(ctx.thesaurusId(), ctx.conceptId(), id, ctx.userId(), ctx.contributor()));
+        if (!applyResult(deleted, dirty)) {
+            return DirtyUpdate.fail();
+        }
+        return DirtyUpdate.of(true);
+    }
+
+    private DirtyUpdate persistKeptAlignments(
+            List<AlignmentBlockEditRow> kept, AlignmentWriteContext ctx, boolean dirty) {
         for (AlignmentBlockEditRow row : kept) {
-            if (row.isExisting() && row.getAlignmentId() > 0) {
-                MutationResult updated = conceptAlignmentMutationService.updateAlignment(
-                        new UpdateAlignmentCommand(
-                                thesaurusId,
-                                conceptId,
-                                row.getAlignmentId(),
-                                row.getTypeId(),
-                                row.getUri(),
-                                StringUtils.trimToEmpty(row.getSource()),
-                                userId,
-                                contributor
-                        ));
-                if (!applyResult(updated, dirty)) {
-                    return;
-                }
-                dirty = true;
-            } else {
-                MutationResult added = conceptAlignmentMutationService.addManualAlignment(
-                        new AddManualAlignmentCommand(
-                                thesaurusId,
-                                conceptId,
-                                row.getTypeId(),
-                                row.getUri(),
-                                StringUtils.trimToEmpty(row.getSource()),
-                                userId,
-                                contributor
-                        ));
-                if (!applyResult(added, dirty)) {
-                    return;
-                }
-                dirty = true;
+            DirtyUpdate next = persistKeptAlignment(row, ctx, dirty);
+            if (!next.ok) {
+                return DirtyUpdate.fail();
             }
+            dirty = next.dirty;
         }
+        return DirtyUpdate.of(dirty);
+    }
 
-        finishSuccess();
+    private DirtyUpdate persistKeptAlignment(AlignmentBlockEditRow row, AlignmentWriteContext ctx, boolean dirty) {
+        MutationResult result;
+        if (row.isExisting() && row.getAlignmentId() > 0) {
+            result = conceptAlignmentMutationService.updateAlignment(
+                    new UpdateAlignmentCommand(
+                            ctx.thesaurusId(),
+                            ctx.conceptId(),
+                            row.getAlignmentId(),
+                            row.getTypeId(),
+                            row.getUri(),
+                            StringUtils.trimToEmpty(row.getSource()),
+                            ctx.userId(),
+                            ctx.contributor()));
+        } else {
+            result = conceptAlignmentMutationService.addManualAlignment(
+                    new AddManualAlignmentCommand(
+                            ctx.thesaurusId(),
+                            ctx.conceptId(),
+                            row.getTypeId(),
+                            row.getUri(),
+                            StringUtils.trimToEmpty(row.getSource()),
+                            ctx.userId(),
+                            ctx.contributor()));
+        }
+        if (!applyResult(result, dirty)) {
+            return DirtyUpdate.fail();
+        }
+        return DirtyUpdate.of(true);
     }
 
     private AlignmentBlockEditRow newRow() {
@@ -323,5 +371,8 @@ public class ConceptAlignmentBlockEditorBean implements Serializable {
             return 0;
         }
         return Integer.parseInt(rawId.trim());
+    }
+
+    private record AlignmentWriteContext(String thesaurusId, String conceptId, int userId, String contributor) {
     }
 }

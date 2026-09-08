@@ -47,83 +47,11 @@ public class ActionsLotCollectionService {
         if (StringUtils.isBlank(thesaurusId)) {
             return ActionsLotImportValidationResult.failure(ActionsLotMessages.NO_THESAURUS);
         }
-
-        char delimiter = CsvDelimiterSupport.resolveDelimiter(choiceDelimiter);
-        WorkshopCsvReader reader = new WorkshopCsvReader(delimiter);
-        List<NodeIdValue> rows;
-        try {
-            try (Reader bodyReader = new InputStreamReader(new ByteArrayInputStream(content), StandardCharsets.UTF_8)) {
-                if (!reader.readFileCollection(bodyReader)) {
-                    return ActionsLotImportValidationResult.failure(
-                            "Lecture CSV impossible. Vérifiez le séparateur et les en-têtes (localId, skos:member)."
-                    );
-                }
-            }
-            rows = reader.getNodeIdValues();
-        } catch (Exception ex) {
-            return ActionsLotImportValidationResult.failure("Erreur de lecture : " + ex.getMessage());
+        CollectionParse parsed = readCollectionRows(content, choiceDelimiter);
+        if (parsed.failure() != null) {
+            return parsed.failure();
         }
-
-        if (rows == null || rows.isEmpty()) {
-            return ActionsLotImportValidationResult.failure(
-                    "Aucune ligne lue. Vérifiez le séparateur et les en-têtes (localId, skos:member)."
-            );
-        }
-
-        List<ActionsLotLineError> errors = new ArrayList<>();
-        List<ActionsLotCollectionCandidate> valid = new ArrayList<>();
-        int line = 1;
-
-        Set<String> localIds = new HashSet<>();
-        Set<String> groupIds = new HashSet<>();
-        for (NodeIdValue row : rows) {
-            if (row == null) {
-                continue;
-            }
-            if (StringUtils.isNotBlank(row.getId())) {
-                localIds.add(row.getId().trim());
-            }
-            if (StringUtils.isNotBlank(row.getValue())) {
-                groupIds.add(row.getValue().trim());
-            }
-        }
-        Map<String, String> resolved = persistence.resolveConceptIds(localIds, identifierType, thesaurusId);
-        Set<String> existingGroups = persistence.findExistingGroupIdSet(groupIds, thesaurusId);
-
-        for (NodeIdValue row : rows) {
-            line++;
-            if (row == null) {
-                continue;
-            }
-            String localId = StringUtils.trimToEmpty(row.getId());
-            if (StringUtils.isBlank(localId)) {
-                errors.add(new ActionsLotLineError(line, "— (vide)", "localId", "Identifiant obligatoire manquant"));
-                continue;
-            }
-            String conceptId = resolved.get(localId);
-            if (StringUtils.isBlank(conceptId)) {
-                errors.add(new ActionsLotLineError(
-                        line, localId, "localId", "Identifiant introuvable dans le thésaurus"
-                ));
-                continue;
-            }
-            String groupId = StringUtils.trimToEmpty(row.getValue());
-            if (StringUtils.isBlank(groupId)) {
-                errors.add(new ActionsLotLineError(line, localId, "skos:member", "Collection obligatoire manquante"));
-                continue;
-            }
-            if (!existingGroups.contains(groupId)) {
-                errors.add(new ActionsLotLineError(
-                        line, localId, "skos:member", "Collection introuvable dans le thésaurus"
-                ));
-                continue;
-            }
-            valid.add(new ActionsLotCollectionCandidate(line, localId, conceptId, groupId));
-        }
-
-        return new ActionsLotImportValidationResult<>(
-                true, null, rows.size(), valid.size(), errors.size(), 0, errors, valid
-        );
+        return collectCollectionCandidates(parsed.rows(), identifierType, thesaurusId);
     }
 
     @Transactional
@@ -167,5 +95,107 @@ public class ActionsLotCollectionService {
 
     public byte[] templateBytes() {
         return TEMPLATE.getBytes(StandardCharsets.UTF_8);
+    }
+
+    private CollectionParse readCollectionRows(byte[] content, int choiceDelimiter) {
+        char delimiter = CsvDelimiterSupport.resolveDelimiter(choiceDelimiter);
+        WorkshopCsvReader reader = new WorkshopCsvReader(delimiter);
+        try {
+            try (Reader bodyReader = new InputStreamReader(new ByteArrayInputStream(content), StandardCharsets.UTF_8)) {
+                if (!reader.readFileCollection(bodyReader)) {
+                    return CollectionParse.fail(
+                            "Lecture CSV impossible. Vérifiez le séparateur et les en-têtes (localId, skos:member)."
+                    );
+                }
+            }
+            List<NodeIdValue> rows = reader.getNodeIdValues();
+            if (rows == null || rows.isEmpty()) {
+                return CollectionParse.fail(
+                        "Aucune ligne lue. Vérifiez le séparateur et les en-têtes (localId, skos:member)."
+                );
+            }
+            return CollectionParse.ok(rows);
+        } catch (Exception ex) {
+            return CollectionParse.fail("Erreur de lecture : " + ex.getMessage());
+        }
+    }
+
+    private ActionsLotImportValidationResult<ActionsLotCollectionCandidate> collectCollectionCandidates(
+            List<NodeIdValue> rows,
+            String identifierType,
+            String thesaurusId
+    ) {
+        List<ActionsLotLineError> errors = new ArrayList<>();
+        List<ActionsLotCollectionCandidate> valid = new ArrayList<>();
+        int line = 1;
+        Set<String> localIds = new HashSet<>();
+        Set<String> groupIds = new HashSet<>();
+        for (NodeIdValue row : rows) {
+            if (row == null) {
+                continue;
+            }
+            if (StringUtils.isNotBlank(row.getId())) {
+                localIds.add(row.getId().trim());
+            }
+            if (StringUtils.isNotBlank(row.getValue())) {
+                groupIds.add(row.getValue().trim());
+            }
+        }
+        Map<String, String> resolved = persistence.resolveConceptIds(localIds, identifierType, thesaurusId);
+        Set<String> existingGroups = persistence.findExistingGroupIdSet(groupIds, thesaurusId);
+        for (NodeIdValue row : rows) {
+            line++;
+            collectCollectionRow(row, line, resolved, existingGroups, errors, valid);
+        }
+        return new ActionsLotImportValidationResult<>(
+                true, null, rows.size(), valid.size(), errors.size(), 0, errors, valid
+        );
+    }
+
+    private static void collectCollectionRow(
+            NodeIdValue row,
+            int line,
+            Map<String, String> resolved,
+            Set<String> existingGroups,
+            List<ActionsLotLineError> errors,
+            List<ActionsLotCollectionCandidate> valid
+    ) {
+        if (row == null) {
+            return;
+        }
+        String localId = StringUtils.trimToEmpty(row.getId());
+        if (StringUtils.isBlank(localId)) {
+            errors.add(new ActionsLotLineError(line, "— (vide)", "localId", "Identifiant obligatoire manquant"));
+            return;
+        }
+        String conceptId = resolved.get(localId);
+        if (StringUtils.isBlank(conceptId)) {
+            errors.add(new ActionsLotLineError(
+                    line, localId, "localId", "Identifiant introuvable dans le thésaurus"
+            ));
+            return;
+        }
+        String groupId = StringUtils.trimToEmpty(row.getValue());
+        if (StringUtils.isBlank(groupId)) {
+            errors.add(new ActionsLotLineError(line, localId, "skos:member", "Collection obligatoire manquante"));
+            return;
+        }
+        if (!existingGroups.contains(groupId)) {
+            errors.add(new ActionsLotLineError(
+                    line, localId, "skos:member", "Collection introuvable dans le thésaurus"
+            ));
+            return;
+        }
+        valid.add(new ActionsLotCollectionCandidate(line, localId, conceptId, groupId));
+    }
+
+    private record CollectionParse(List<NodeIdValue> rows, ActionsLotImportValidationResult<ActionsLotCollectionCandidate> failure) {
+        private static CollectionParse ok(List<NodeIdValue> rows) {
+            return new CollectionParse(rows, null);
+        }
+
+        private static CollectionParse fail(String message) {
+            return new CollectionParse(List.of(), ActionsLotImportValidationResult.failure(message));
+        }
     }
 }

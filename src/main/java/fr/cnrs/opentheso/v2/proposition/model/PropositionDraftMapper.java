@@ -9,16 +9,15 @@ public final class PropositionDraftMapper {
     private PropositionDraftMapper() {
     }
 
-    public static PropositionDraft toDraft(
-            String conceptId,
-            String thesaurusId,
-            String lang,
-            String currentPreferredLabel,
-            String proposedPreferredLabel,
-            List<PropositionSynonymOption> synonymOptions,
-            List<PropositionTranslationOption> translationOptions,
-            List<PropositionNoteOption> noteOptions
-    ) {
+    public static PropositionDraft toDraft(ToDraftRequest request) {
+        String conceptId = request.conceptId();
+        String thesaurusId = request.thesaurusId();
+        String lang = request.lang();
+        String currentPreferredLabel = request.currentPreferredLabel();
+        String proposedPreferredLabel = request.proposedPreferredLabel();
+        List<PropositionSynonymOption> synonymOptions = request.synonymOptions();
+        List<PropositionTranslationOption> translationOptions = request.translationOptions();
+        List<PropositionNoteOption> noteOptions = request.noteOptions();
         var draft = new PropositionDraft();
         draft.setConceptId(conceptId);
         draft.setThesaurusId(thesaurusId);
@@ -63,6 +62,18 @@ public final class PropositionDraftMapper {
         }
 
         return draft;
+    }
+
+    public record ToDraftRequest(
+            String conceptId,
+            String thesaurusId,
+            String lang,
+            String currentPreferredLabel,
+            String proposedPreferredLabel,
+            List<PropositionSynonymOption> synonymOptions,
+            List<PropositionTranslationOption> translationOptions,
+            List<PropositionNoteOption> noteOptions
+    ) {
     }
 
     private static PropositionFieldChange toSynonymChange(PropositionSynonymOption option) {

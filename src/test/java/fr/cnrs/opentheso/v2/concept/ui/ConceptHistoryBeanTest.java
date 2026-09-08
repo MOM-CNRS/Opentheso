@@ -9,7 +9,7 @@ import org.junit.jupiter.api.extension.ExtendWith;
 import org.mockito.Mock;
 import org.mockito.junit.jupiter.MockitoExtension;
 
-import java.util.Date;
+import java.time.Instant;
 import java.util.List;
 
 import static org.junit.jupiter.api.Assertions.assertEquals;
@@ -35,7 +35,7 @@ class ConceptHistoryBeanTest {
     @Test
     void load_withValidIds_delegatesToHistoryReadService() {
         var overview = new ConceptHistoryOverview(
-                List.of(new ConceptHistoryEntry("Label", "fr", "CREATE", Date.from(java.time.Instant.parse("2024-06-15T12:00:00Z")), "admin", null, null)),
+                List.of(new ConceptHistoryEntry("Label", "fr", "CREATE", Instant.parse("2024-06-15T12:00:00Z"), "admin", null, null)),
                 List.of(),
                 List.of(),
                 List.of()

@@ -143,20 +143,7 @@ public class ActionsLotArkService {
         );
 
         for (ActionsLotArkCandidate candidate : candidates) {
-            if (candidate == null || StringUtils.isBlank(candidate.arkId())) {
-                rejected++;
-                continue;
-            }
-            var concept = concepts.get(candidate.conceptId());
-            if (concept == null) {
-                rejected++;
-                continue;
-            }
-            if (!clearBefore && StringUtils.isNotEmpty(concept.getIdArk())) {
-                rejected++;
-                continue;
-            }
-            if (persistence.updateArkIdOfConcept(candidate.conceptId(), thesaurusId, candidate.arkId())) {
+            if (applyArkCandidate(candidate, thesaurusId, clearBefore, concepts)) {
                 applied++;
             } else {
                 rejected++;
@@ -170,6 +157,25 @@ public class ActionsLotArkService {
                 applied,
                 rejected
         );
+    }
+
+    private boolean applyArkCandidate(
+            ActionsLotArkCandidate candidate,
+            String thesaurusId,
+            boolean clearBefore,
+            java.util.Map<String, fr.cnrs.opentheso.models.concept.Concept> concepts
+    ) {
+        if (candidate == null || StringUtils.isBlank(candidate.arkId())) {
+            return false;
+        }
+        var concept = concepts.get(candidate.conceptId());
+        if (concept == null) {
+            return false;
+        }
+        if (!clearBefore && StringUtils.isNotEmpty(concept.getIdArk())) {
+            return false;
+        }
+        return persistence.updateArkIdOfConcept(candidate.conceptId(), thesaurusId, candidate.arkId());
     }
 
     public byte[] templateBytes() {

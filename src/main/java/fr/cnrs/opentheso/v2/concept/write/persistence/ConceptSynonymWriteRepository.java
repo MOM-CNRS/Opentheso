@@ -6,7 +6,7 @@ import jakarta.persistence.PersistenceContext;
 import org.springframework.stereotype.Repository;
 import org.springframework.transaction.annotation.Transactional;
 
-import java.util.Date;
+import java.time.Instant;
 
 @Repository
 public class ConceptSynonymWriteRepository {
@@ -42,8 +42,8 @@ public class ConceptSynonymWriteRepository {
                 .setParameter(NativeQueryParams.THESAURUS_ID, thesaurusId)
                 .setParameter("status", hidden ? "Hidden" : "USE")
                 .setParameter(NativeQueryParams.HIDDEN, hidden)
-                .setParameter("created", new Date())
-                .setParameter(NativeQueryParams.MODIFIED, new Date())
+                .setParameter("created", Instant.now())
+                .setParameter(NativeQueryParams.MODIFIED, Instant.now())
                 .executeUpdate();
         insertHistory(idTerm, lexicalValue, thesaurusId, lang, userId, hidden, "ADD");
         return true;
@@ -71,7 +71,7 @@ public class ConceptSynonymWriteRepository {
                         """)
                 .setParameter("newValue", newValue)
                 .setParameter(NativeQueryParams.HIDDEN, hidden)
-                .setParameter(NativeQueryParams.MODIFIED, new Date())
+                .setParameter(NativeQueryParams.MODIFIED, Instant.now())
                 .setParameter(NativeQueryParams.ID_TERM, idTerm)
                 .setParameter(NativeQueryParams.THESAURUS_ID, thesaurusId)
                 .setParameter("lang", lang)
@@ -103,7 +103,7 @@ public class ConceptSynonymWriteRepository {
                           AND lexical_value = :value
                         """)
                 .setParameter(NativeQueryParams.HIDDEN, hidden)
-                .setParameter(NativeQueryParams.MODIFIED, new Date())
+                .setParameter(NativeQueryParams.MODIFIED, Instant.now())
                 .setParameter(NativeQueryParams.ID_TERM, idTerm)
                 .setParameter(NativeQueryParams.THESAURUS_ID, thesaurusId)
                 .setParameter("lang", lang)
@@ -179,7 +179,7 @@ public class ConceptSynonymWriteRepository {
                 .setParameter(NativeQueryParams.USER_ID, userId)
                 .setParameter(NativeQueryParams.HIDDEN, hidden)
                 .setParameter("action", action)
-                .setParameter(NativeQueryParams.MODIFIED, new Date())
+                .setParameter(NativeQueryParams.MODIFIED, Instant.now())
                 .executeUpdate();
     }
 }

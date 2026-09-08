@@ -175,9 +175,8 @@ public class CandidatMutationService {
         candidatMutationPersistence.addOrUpdateCandidateNote(identifier, idLang, idThesaurus, note, noteTypeCode, noteSource, idUser);
     }
 
-    public boolean updateCandidateNote(int idNote, String idConcept, String idLang, String idThesaurus,
-                                        String note, String noteSource, String noteTypeCode, int idUser) {
-        return candidatMutationPersistence.updateCandidateNote(idNote, idConcept, idLang, idThesaurus, note, noteSource, noteTypeCode, idUser);
+    public boolean updateCandidateNote(CandidatMutationPersistence.UpdateCandidateNoteRequest request) {
+        return candidatMutationPersistence.updateCandidateNote(request);
     }
 
     public void deleteCandidateNote(int idNote, String identifier, String idLang, String idThesaurus,

@@ -82,10 +82,11 @@ class CandidatMutationServiceTest {
 
     @Test
     void updateCandidateNote_delegatesToPersistence() {
-        when(candidatMutationPersistence.updateCandidateNote(1, "C1", "fr", "TH1", "note", "src", "note", 7))
-                .thenReturn(true);
+        var request = new CandidatMutationPersistence.UpdateCandidateNoteRequest(
+                1, "C1", "fr", "TH1", "note", "src", "note", 7);
+        when(candidatMutationPersistence.updateCandidateNote(request)).thenReturn(true);
 
-        assertTrue(service.updateCandidateNote(1, "C1", "fr", "TH1", "note", "src", "note", 7));
+        assertTrue(service.updateCandidateNote(request));
     }
 
     @Test

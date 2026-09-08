@@ -59,7 +59,6 @@ import java.util.ArrayList;
 import java.util.Objects;
 import java.util.Collection;
 import java.util.Collections;
-import java.util.Date;
 import java.util.HashMap;
 import java.util.HashSet;
 import java.util.List;
@@ -187,8 +186,8 @@ public class WorkshopBulkImportPersistence {
                 .identifier(identifier)
                 .noteSource(noteSource)
                 .idUser(idUser)
-                .created(new Date())
-                .modified(new Date())
+                .created(V2Dates.nowUtilDate())
+                .modified(V2Dates.nowUtilDate())
                 .build());
     }
 
@@ -224,8 +223,8 @@ public class WorkshopBulkImportPersistence {
                 .internalIdConcept(idConcept)
                 .internalIdThesaurus(idThesaurus)
                 .alignementSource(alignementSource.orElse(null))
-                .created(new Date())
-                .modified(new Date())
+                .created(V2Dates.nowUtilDate())
+                .modified(V2Dates.nowUtilDate())
                 .build());
         return true;
     }
@@ -300,7 +299,7 @@ public class WorkshopBulkImportPersistence {
     }
 
     public boolean updateArkIdOfConcept(String idConcept, String idThesaurus, String idArk) {
-        conceptRepository.setIdArk(idArk, new Date(), idConcept, idThesaurus);
+        conceptRepository.setIdArk(idArk, V2Dates.nowUtilDate(), idConcept, idThesaurus);
         return true;
     }
 
@@ -328,7 +327,7 @@ public class WorkshopBulkImportPersistence {
                 .idConcept2(idConceptReplaceBy)
                 .idThesaurus(idThesaurus)
                 .idUser(idUser)
-                .modified(new Date())
+                .modified(V2Dates.nowUtilDate())
                 .build());
     }
 
@@ -346,8 +345,8 @@ public class WorkshopBulkImportPersistence {
                         .lexicalValue((String) row[2])
                         .lang((String) row[3])
                         .idThesaurus((String) row[4])
-                        .created(Date.from((Instant) row[5]))
-                        .modified(Date.from((Instant) row[6]))
+                        .created(V2Dates.toUtilDate((Instant) row[5]))
+                        .modified(V2Dates.toUtilDate((Instant) row[6]))
                         .source((String) row[7])
                         .status((String) row[8])
                         .contributor(row[9] != null ? (Integer) row[9] : -1)
@@ -387,8 +386,8 @@ public class WorkshopBulkImportPersistence {
                 .status("")
                 .contributor(idUser)
                 .creator(idUser)
-                .created(new Date())
-                .modified(new Date())
+                .created(V2Dates.nowUtilDate())
+                .modified(V2Dates.nowUtilDate())
                 .build());
         termHistoriqueRepository.save(TermHistorique.builder()
                 .idTerm(termSaved.getIdTerm())
@@ -410,7 +409,7 @@ public class WorkshopBulkImportPersistence {
         }
         term.get().setLexicalValue(fr.cnrs.opentheso.utils.StringUtils.convertString(label));
         term.get().setContributor(idUser);
-        term.get().setModified(new Date());
+        term.get().setModified(V2Dates.nowUtilDate());
         termRepository.save(term.get());
         termHistoriqueRepository.save(TermHistorique.builder()
                 .idTerm(term.get().getIdTerm())
@@ -437,8 +436,8 @@ public class WorkshopBulkImportPersistence {
                 .source(term.getSource())
                 .status(term.getStatus())
                 .hiden(term.isHidden())
-                .created(new Date())
-                .modified(new Date())
+                .created(V2Dates.nowUtilDate())
+                .modified(V2Dates.nowUtilDate())
                 .build());
         saveNonPreferredTrace(term.getIdTerm(), term.getLexicalValue(), term.getIdThesaurus(), term.getLang(), idUser, term.isHidden(), "ADD");
         return true;
@@ -644,49 +643,72 @@ public class WorkshopBulkImportPersistence {
         if (unique.isEmpty() || StringUtils.isBlank(thesaurusId)) {
             return Map.of();
         }
-        Map<String, String> resolved = new HashMap<>();
         if ("ark".equalsIgnoreCase(identifierType)) {
-            for (Set<String> chunk : chunks(unique)) {
-                resolved.putAll(getIdConceptsFromArkIds(chunk, thesaurusId));
-            }
-            for (String localId : unique) {
-                if (!resolved.containsKey(localId)) {
-                    String conceptId = getIdConceptFromArkId(localId, thesaurusId);
-                    if (StringUtils.isNotBlank(conceptId)) {
-                        resolved.put(localId, conceptId);
-                    }
-                }
-            }
-            return resolved;
+            return resolveConceptIdsByArk(unique, thesaurusId);
         }
         if ("handle".equalsIgnoreCase(identifierType)) {
-            Set<String> lowers = new HashSet<>();
-            for (String localId : unique) {
-                lowers.add(localId.toLowerCase());
-            }
-            Map<String, String> byLower = new HashMap<>();
-            for (Set<String> chunk : chunks(lowers)) {
-                List<Object[]> rows = conceptRepository.findConceptIdsByHandles(chunk);
-                if (rows == null) {
-                    continue;
-                }
-                for (Object[] row : rows) {
-                    if (row != null && row.length >= 2 && row[0] != null && row[1] != null) {
-                        byLower.put(String.valueOf(row[0]), String.valueOf(row[1]));
-                    }
-                }
-            }
-            for (String localId : unique) {
-                String conceptId = byLower.get(localId.toLowerCase());
-                if (StringUtils.isBlank(conceptId)) {
-                    conceptId = getIdConceptFromHandleId(localId);
-                }
-                if (StringUtils.isNotBlank(conceptId)) {
-                    resolved.put(localId, conceptId);
-                }
-            }
-            return resolved;
+            return resolveConceptIdsByHandle(unique);
         }
+        return resolveConceptIdsByLocalId(unique, thesaurusId);
+    }
+
+    private Map<String, String> resolveConceptIdsByArk(Set<String> unique, String thesaurusId) {
+        Map<String, String> resolved = new HashMap<>();
+        for (Set<String> chunk : chunks(unique)) {
+            resolved.putAll(getIdConceptsFromArkIds(chunk, thesaurusId));
+        }
+        for (String localId : unique) {
+            if (resolved.containsKey(localId)) {
+                continue;
+            }
+            String conceptId = getIdConceptFromArkId(localId, thesaurusId);
+            if (StringUtils.isNotBlank(conceptId)) {
+                resolved.put(localId, conceptId);
+            }
+        }
+        return resolved;
+    }
+
+    private Map<String, String> resolveConceptIdsByHandle(Set<String> unique) {
+        Map<String, String> resolved = new HashMap<>();
+        Map<String, String> byLower = loadHandleConceptIds(unique);
+        for (String localId : unique) {
+            String conceptId = byLower.get(localId.toLowerCase());
+            if (StringUtils.isBlank(conceptId)) {
+                conceptId = getIdConceptFromHandleId(localId);
+            }
+            if (StringUtils.isNotBlank(conceptId)) {
+                resolved.put(localId, conceptId);
+            }
+        }
+        return resolved;
+    }
+
+    private Map<String, String> loadHandleConceptIds(Set<String> unique) {
+        Set<String> lowers = new HashSet<>();
+        for (String localId : unique) {
+            lowers.add(localId.toLowerCase());
+        }
+        Map<String, String> byLower = new HashMap<>();
+        for (Set<String> chunk : chunks(lowers)) {
+            putHandleRows(conceptRepository.findConceptIdsByHandles(chunk), byLower);
+        }
+        return byLower;
+    }
+
+    private static void putHandleRows(List<Object[]> rows, Map<String, String> byLower) {
+        if (rows == null) {
+            return;
+        }
+        for (Object[] row : rows) {
+            if (row != null && row.length >= 2 && row[0] != null && row[1] != null) {
+                byLower.put(String.valueOf(row[0]), String.valueOf(row[1]));
+            }
+        }
+    }
+
+    private Map<String, String> resolveConceptIdsByLocalId(Set<String> unique, String thesaurusId) {
+        Map<String, String> resolved = new HashMap<>();
         Set<String> existing = findExistingIdSet(unique, thesaurusId);
         for (String localId : unique) {
             if (existing.contains(localId)) {
@@ -885,8 +907,8 @@ public class WorkshopBulkImportPersistence {
                 .idConcept(concept.getIdConcept())
                 .idThesaurus(concept.getIdThesaurus())
                 .idArk(concept.getIdArk())
-                .created(new Date())
-                .modified(new Date())
+                .created(V2Dates.nowUtilDate())
+                .modified(V2Dates.nowUtilDate())
                 .status(concept.getStatus())
                 .notation(concept.getNotation())
                 .topConcept(concept.isTopConcept())
@@ -930,8 +952,8 @@ public class WorkshopBulkImportPersistence {
                 .status(term.getStatus())
                 .contributor(idUser)
                 .creator(idUser)
-                .created(new Date())
-                .modified(new Date())
+                .created(V2Dates.nowUtilDate())
+                .modified(V2Dates.nowUtilDate())
                 .build());
         termHistoriqueRepository.save(TermHistorique.builder()
                 .idTerm(termSaved.getIdTerm())
@@ -963,7 +985,7 @@ public class WorkshopBulkImportPersistence {
                 .idConcept1(relationship.getIdConcept1())
                 .idConcept2(relationship.getIdConcept2())
                 .idThesaurus(relationship.getIdThesaurus())
-                .modified(new Date())
+                .modified(V2Dates.nowUtilDate())
                 .idUser(idUser)
                 .action("ADD")
                 .role(relationship.getRole())
@@ -980,7 +1002,7 @@ public class WorkshopBulkImportPersistence {
                 .topConcept(concept.isTopConcept())
                 .idGroup(concept.getIdGroup() == null ? "" : concept.getIdGroup())
                 .idUser(idUser)
-                .modified(new Date())
+                .modified(V2Dates.nowUtilDate())
                 .build());
     }
 
@@ -1001,7 +1023,7 @@ public class WorkshopBulkImportPersistence {
                 .idUser(idUser)
                 .hiden(isHidden)
                 .action(action)
-                .modified(new Date())
+                .modified(V2Dates.nowUtilDate())
                 .status("")
                 .source("")
                 .build());

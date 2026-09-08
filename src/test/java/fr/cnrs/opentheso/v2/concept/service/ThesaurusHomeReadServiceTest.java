@@ -14,8 +14,8 @@ import org.junit.jupiter.api.extension.ExtendWith;
 import org.mockito.Mock;
 import org.mockito.junit.jupiter.MockitoExtension;
 
+import java.time.Instant;
 import java.util.Collections;
-import java.util.Date;
 import java.util.List;
 import java.util.Optional;
 
@@ -51,7 +51,7 @@ class ThesaurusHomeReadServiceTest {
         when(thesaurusHomeQueryRepository.findProjectName("TH1")).thenReturn(Optional.of("Projet A"));
         when(thesaurusHomeQueryRepository.findLastModifiedConceptsBundle("TH1", "fr"))
                 .thenReturn(new ThesaurusHomeQueryRepository.LastModifiedConceptsBundle(
-                        new Date(1_700_000_000_000L),
+                        Instant.ofEpochMilli(1_700_000_000_000L),
                         List.of(new ConceptLinkItem("C1", "Chat"))
                 ));
         when(thesaurusHomeQueryRepository.findMetadata("TH1"))

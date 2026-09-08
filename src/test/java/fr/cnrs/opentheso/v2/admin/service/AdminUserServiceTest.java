@@ -27,7 +27,6 @@ import java.time.Month;
 import static org.junit.jupiter.api.Assertions.assertEquals;
 import static org.junit.jupiter.api.Assertions.assertThrows;
 import static org.mockito.ArgumentMatchers.any;
-import static org.mockito.ArgumentMatchers.anyBoolean;
 import static org.mockito.ArgumentMatchers.anyInt;
 import static org.mockito.ArgumentMatchers.anyString;
 import static org.mockito.Mockito.never;
@@ -72,7 +71,7 @@ class AdminUserServiceTest {
         when(userCommandRepository.existsByUsernameIgnoreCase("alice")).thenReturn(false);
         when(userCommandRepository.existsByMailIgnoreCase("alice@test.fr")).thenReturn(false);
         when(passwordEncoder.encode("Secret1!")).thenReturn("encoded");
-        when(userCommandRepository.createUser(
+        when(userCommandRepository.createUser(new UserCommandRepository.CreateUserRequest(
                 "alice",
                 "alice@test.fr",
                 "encoded",
@@ -81,9 +80,9 @@ class AdminUserServiceTest {
                 true,
                 false,
                 true
-        )).thenReturn(42);
+        ))).thenReturn(42);
 
-        CreatedAdminUser created = adminUserService.createUser(
+        CreatedAdminUser created = adminUserService.createUser(new AdminUserService.CreateUserRequest(
                 true,
                 "alice",
                 "alice@test.fr",
@@ -94,7 +93,7 @@ class AdminUserServiceTest {
                 null,
                 "Secret1!",
                 "Secret1!"
-        );
+        ));
 
         assertEquals(42, created.userId());
         verify(projectMembershipRepository).assignProjectRole(42, ProjectAccessPolicy.ROLE_ADMIN, 5);
@@ -105,10 +104,10 @@ class AdminUserServiceTest {
         when(userCommandRepository.existsByUsernameIgnoreCase("root")).thenReturn(false);
         when(userCommandRepository.existsByMailIgnoreCase("root@test.fr")).thenReturn(false);
         when(passwordEncoder.encode(anyString())).thenReturn("encoded");
-        when(userCommandRepository.createUser(anyString(), anyString(), anyString(), anyBoolean(), any(), anyBoolean(), anyBoolean(), anyBoolean()))
+        when(userCommandRepository.createUser(any(UserCommandRepository.CreateUserRequest.class)))
                 .thenReturn(1);
 
-        adminUserService.createUser(
+        adminUserService.createUser(new AdminUserService.CreateUserRequest(
                 true,
                 "root",
                 "root@test.fr",
@@ -119,7 +118,7 @@ class AdminUserServiceTest {
                 null,
                 "Secret1!",
                 "Secret1!"
-        );
+        ));
 
         verify(userCommandRepository).setSuperAdmin(1, true);
         verify(projectMembershipRepository, never()).assignProjectRole(anyInt(), anyInt(), anyInt());
@@ -127,7 +126,7 @@ class AdminUserServiceTest {
 
     @Test
     void createUser_rejectsNonSuperAdmin() {
-        assertThrows(AdminAccessDeniedException.class, () -> adminUserService.createUser(
+        var request = new AdminUserService.CreateUserRequest(
                 false,
                 "alice",
                 "alice@test.fr",
@@ -138,7 +137,8 @@ class AdminUserServiceTest {
                 null,
                 "Secret1!",
                 "Secret1!"
-        ));
+        );
+        assertThrows(AdminAccessDeniedException.class, () -> adminUserService.createUser(request));
     }
 
     @Test
@@ -146,10 +146,10 @@ class AdminUserServiceTest {
         when(userCommandRepository.existsByUsernameIgnoreCase("bob")).thenReturn(false);
         when(userCommandRepository.existsByMailIgnoreCase("bob@test.fr")).thenReturn(false);
         when(passwordEncoder.encode(anyString())).thenReturn("encoded");
-        when(userCommandRepository.createUser(anyString(), anyString(), anyString(), anyBoolean(), any(), anyBoolean(), anyBoolean(), anyBoolean()))
+        when(userCommandRepository.createUser(any(UserCommandRepository.CreateUserRequest.class)))
                 .thenReturn(7);
 
-        assertThrows(InvalidProjectDataException.class, () -> adminUserService.createUser(
+        var request = new AdminUserService.CreateUserRequest(
                 true,
                 "bob",
                 "bob@test.fr",
@@ -160,7 +160,8 @@ class AdminUserServiceTest {
                 null,
                 "Secret1!",
                 "Secret1!"
-        ));
+        );
+        assertThrows(InvalidProjectDataException.class, () -> adminUserService.createUser(request));
     }
 
     @Test

@@ -3,14 +3,14 @@ package fr.cnrs.opentheso.v2.concept.service;
 import fr.cnrs.opentheso.v2.concept.model.ConceptHistoryEntry;
 import fr.cnrs.opentheso.v2.concept.model.ConceptHistoryOverview;
 import fr.cnrs.opentheso.v2.shared.repository.HistoryQueryRepository;
+import fr.cnrs.opentheso.v2.shared.time.V2Dates;
 import lombok.RequiredArgsConstructor;
 import org.apache.commons.lang3.StringUtils;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
 
-import java.sql.Timestamp;
+import java.time.Instant;
 import java.util.Collections;
-import java.util.Date;
 import java.util.List;
 
 @Service
@@ -47,7 +47,7 @@ public class ConceptHistoryReadService {
                         stringAt(row, 0),
                         stringAt(row, 1),
                         stringAt(row, 2),
-                        toDate(row, 3),
+                        toInstant(row, 3),
                         stringAt(row, 4),
                         null,
                         null
@@ -61,7 +61,7 @@ public class ConceptHistoryReadService {
                         stringAt(row, 0),
                         null,
                         stringAt(row, 2),
-                        toDate(row, 3),
+                        toInstant(row, 3),
                         stringAt(row, 4),
                         null,
                         stringAt(row, 1)
@@ -75,7 +75,7 @@ public class ConceptHistoryReadService {
                         stringAt(row, 0),
                         stringAt(row, 2),
                         stringAt(row, 3),
-                        toDate(row, 4),
+                        toInstant(row, 4),
                         stringAt(row, 5),
                         stringAt(row, 1),
                         null
@@ -90,17 +90,10 @@ public class ConceptHistoryReadService {
         return String.valueOf(row[index]);
     }
 
-    private static Date toDate(Object[] row, int index) {
+    private static Instant toInstant(Object[] row, int index) {
         if (row == null || index >= row.length || row[index] == null) {
             return null;
         }
-        Object value = row[index];
-        if (value instanceof Date date) {
-            return date;
-        }
-        if (value instanceof Timestamp timestamp) {
-            return new Date(timestamp.getTime());
-        }
-        return null;
+        return V2Dates.toInstant(row[index]);
     }
 }

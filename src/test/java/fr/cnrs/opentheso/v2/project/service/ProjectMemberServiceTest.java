@@ -28,7 +28,6 @@ import java.util.Set;
 import static org.junit.jupiter.api.Assertions.assertEquals;
 import static org.junit.jupiter.api.Assertions.assertThrows;
 import static org.mockito.ArgumentMatchers.any;
-import static org.mockito.ArgumentMatchers.anyBoolean;
 import static org.mockito.ArgumentMatchers.anyInt;
 import static org.mockito.ArgumentMatchers.anyString;
 import static org.mockito.Mockito.never;
@@ -102,15 +101,15 @@ class ProjectMemberServiceTest {
         when(userCommandRepository.existsByUsernameIgnoreCase("bob")).thenReturn(false);
         when(userCommandRepository.existsByMailIgnoreCase("bob@example.com")).thenReturn(false);
         when(passwordEncoder.encode("Abcd1234!")).thenReturn("encoded");
-        when(userCommandRepository.createUser(
+        when(userCommandRepository.createUser(new UserCommandRepository.CreateUserRequest(
                 "bob", "bob@example.com", "encoded", true, "CNRS",
                 true, false, true
-        )).thenReturn(12);
+        ))).thenReturn(12);
 
-        CreatedProjectMember created = projectMemberService.createMember(
+        CreatedProjectMember created = projectMemberService.createMember(new ProjectMemberService.CreateMemberRequest(
                 5, false, 3, "bob", "bob@example.com", "CNRS", true, 4, false, List.of(),
                 "Abcd1234!", "Abcd1234!", "DIRECT"
-        );
+        ));
 
         assertEquals(12, created.userId());
         verify(projectMembershipRepository).assignProjectRole(12, 4, 3);
@@ -122,14 +121,13 @@ class ProjectMemberServiceTest {
         when(userCommandRepository.existsByUsernameIgnoreCase("bob")).thenReturn(false);
         when(userCommandRepository.existsByMailIgnoreCase("bob@example.com")).thenReturn(false);
         when(passwordEncoder.encode(anyString())).thenReturn("encoded");
-        when(userCommandRepository.createUser(anyString(), anyString(), anyString(), anyBoolean(),
-                any(), anyBoolean(), anyBoolean(), anyBoolean())).thenReturn(12);
+        when(userCommandRepository.createUser(any(UserCommandRepository.CreateUserRequest.class))).thenReturn(12);
         when(projectAdminQueryRepository.findThesauriNotInProject(List.of("TH1"), 3)).thenReturn(Set.of());
 
-        projectMemberService.createMember(
+        projectMemberService.createMember(new ProjectMemberService.CreateMemberRequest(
                 5, false, 3, "bob", "bob@example.com", null, false, 4, true, List.of("TH1"),
                 "Abcd1234!", "Abcd1234!", "DIRECT"
-        );
+        ));
 
         verify(projectMembershipRepository).replaceLimitedRoles(12, 4, 3, List.of("TH1"));
         verify(projectMembershipRepository, never()).assignProjectRole(anyInt(), anyInt(), anyInt());
@@ -241,9 +239,9 @@ class ProjectMemberServiceTest {
                 new UserProfile(10, "bob", "bob@example.com", true, false, true, null, true)
         );
 
-        projectMemberService.updateMemberProfile(
+        projectMemberService.updateMemberProfile(new ProjectMemberService.UpdateMemberProfileRequest(
                 5, false, 3, 10, "bob2", "bob2@example.com", false, "CNRS", true
-        );
+        ));
 
         verify(userCommandRepository).updateUserProfile(10, "bob2", "bob2@example.com", false, "CNRS", true);
     }

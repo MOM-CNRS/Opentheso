@@ -32,7 +32,20 @@ public final class CandidatDetailJsonParser {
     ) {
     }
 
-    public static ParsedDetail parse(
+    public static ParsedDetail parse(DetailJsonRequest request) {
+        return new ParsedDetail(
+                parseIdValues(request.collectionsJson()),
+                parseIdValues(request.broaderJson()),
+                parseIdValues(request.relatedJson()),
+                parseStringList(request.synonymsJson()),
+                parseNotes(request.notesJson()),
+                parseNoteVoteIds(request.noteVoteIdsJson()),
+                parseTranslations(request.translationsJson()),
+                parseMessages(request.messagesJson())
+        );
+    }
+
+    public record DetailJsonRequest(
             String collectionsJson,
             String broaderJson,
             String relatedJson,
@@ -42,16 +55,6 @@ public final class CandidatDetailJsonParser {
             String translationsJson,
             String messagesJson
     ) {
-        return new ParsedDetail(
-                parseIdValues(collectionsJson),
-                parseIdValues(broaderJson),
-                parseIdValues(relatedJson),
-                parseStringList(synonymsJson),
-                parseNotes(notesJson),
-                parseNoteVoteIds(noteVoteIdsJson),
-                parseTranslations(translationsJson),
-                parseMessages(messagesJson)
-        );
     }
 
     private static List<CandidatIdValueRow> parseIdValues(String json) {

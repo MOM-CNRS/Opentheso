@@ -143,20 +143,7 @@ public class ActionsLotNotationService {
         );
 
         for (ActionsLotNotationCandidate candidate : candidates) {
-            if (candidate == null || StringUtils.isBlank(candidate.notation())) {
-                rejected++;
-                continue;
-            }
-            var concept = concepts.get(candidate.conceptId());
-            if (concept == null) {
-                rejected++;
-                continue;
-            }
-            if (!clearBefore && StringUtils.isNotEmpty(concept.getNotation())) {
-                rejected++;
-                continue;
-            }
-            if (persistence.updateNotation(candidate.conceptId(), thesaurusId, candidate.notation())) {
+            if (applyNotationCandidate(candidate, thesaurusId, clearBefore, concepts)) {
                 applied++;
             } else {
                 rejected++;
@@ -170,6 +157,25 @@ public class ActionsLotNotationService {
                 applied,
                 rejected
         );
+    }
+
+    private boolean applyNotationCandidate(
+            ActionsLotNotationCandidate candidate,
+            String thesaurusId,
+            boolean clearBefore,
+            java.util.Map<String, fr.cnrs.opentheso.models.concept.Concept> concepts
+    ) {
+        if (candidate == null || StringUtils.isBlank(candidate.notation())) {
+            return false;
+        }
+        var concept = concepts.get(candidate.conceptId());
+        if (concept == null) {
+            return false;
+        }
+        if (!clearBefore && StringUtils.isNotEmpty(concept.getNotation())) {
+            return false;
+        }
+        return persistence.updateNotation(candidate.conceptId(), thesaurusId, candidate.notation());
     }
 
     public byte[] templateBytes() {

@@ -15,6 +15,7 @@ import fr.cnrs.opentheso.v2.publicapi.exception.PublicResourceNotFoundException;
 import fr.cnrs.opentheso.v2.setting.service.ThesaurusWorkLanguageService;
 import fr.cnrs.opentheso.v2.shared.io.SkosRdfFormatSupport;
 import fr.cnrs.opentheso.v2.shared.io.SkosRdfFormatSupport.ExportResult;
+import fr.cnrs.opentheso.v2.shared.time.V2Dates;
 import lombok.RequiredArgsConstructor;
 import org.apache.commons.lang3.StringUtils;
 import org.springframework.stereotype.Service;
@@ -22,7 +23,6 @@ import org.springframework.stereotype.Service;
 import java.io.IOException;
 import java.time.LocalDate;
 import java.time.ZoneOffset;
-import java.util.Date;
 import java.util.LinkedHashSet;
 import java.util.List;
 import java.util.Set;
@@ -69,8 +69,9 @@ public class ConceptPublicExportService {
     public ExportResult exportModifiedSince(String thesaurusId, String dateStr, String formatCode) throws IOException {
         try {
             LocalDate localDate = LocalDate.parse(dateStr);
-            Date startDate = Date.from(localDate.atStartOfDay(ZoneOffset.UTC).toInstant());
-            List<String> conceptIds = conceptRepository.findConceptsModifiedSince(thesaurusId, startDate);
+            List<String> conceptIds = conceptRepository.findConceptsModifiedSince(
+                    thesaurusId,
+                    V2Dates.toUtilDate(localDate.atStartOfDay(ZoneOffset.UTC).toInstant()));
             return exportConceptIds(thesaurusId, new LinkedHashSet<>(conceptIds), formatCode);
         } catch (java.time.format.DateTimeParseException ex) {
             throw new IllegalArgumentException("Format de date invalide : " + dateStr, ex);

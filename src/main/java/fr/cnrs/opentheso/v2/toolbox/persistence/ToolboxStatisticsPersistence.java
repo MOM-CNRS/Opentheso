@@ -13,6 +13,7 @@ import fr.cnrs.opentheso.repositories.ConceptRepository;
 import fr.cnrs.opentheso.repositories.ConceptStatusRepository;
 import fr.cnrs.opentheso.repositories.NoteRepository;
 import fr.cnrs.opentheso.v2.toolbox.export.StatisticsReportCsvWriter;
+import fr.cnrs.opentheso.v2.shared.time.V2Dates;
 import lombok.RequiredArgsConstructor;
 import org.apache.commons.collections4.CollectionUtils;
 import org.apache.commons.lang3.ObjectUtils;
@@ -20,10 +21,11 @@ import org.apache.commons.lang3.StringUtils;
 import org.springframework.data.domain.PageRequest;
 import org.springframework.stereotype.Component;
 
-import java.text.SimpleDateFormat;
+import java.time.Instant;
+import java.time.LocalDate;
+import java.time.format.DateTimeFormatter;
 import java.util.ArrayList;
 import java.util.Comparator;
-import java.util.Date;
 import java.util.HashMap;
 import java.util.List;
 import java.util.Locale;
@@ -32,6 +34,9 @@ import java.util.Map;
 @Component
 @RequiredArgsConstructor
 public class ToolboxStatisticsPersistence {
+
+    private static final DateTimeFormatter STATISTIC_DATE =
+            DateTimeFormatter.ofPattern("yyyy-MM-dd").withZone(V2Dates.zone());
 
     private final ToolboxThesaurusPersistence toolboxThesaurusPersistence;
     private final ToolboxStatisticsQueryRepository toolboxStatisticsQueryRepository;
@@ -92,11 +97,11 @@ public class ToolboxStatisticsPersistence {
         return result;
     }
 
-    public Date loadLastModification(String thesaurusId) {
+    public Instant loadLastModification(String thesaurusId) {
         try {
             var dates = conceptRepository.findLastModifiedDates(thesaurusId, PageRequest.of(0, 1));
-            if (!dates.isEmpty()) {
-                return dates.get(0);
+            if (!dates.isEmpty() && dates.get(0) != null) {
+                return V2Dates.toInstant(dates.get(0));
             }
         } catch (Exception e) {
             // ignored
@@ -107,8 +112,8 @@ public class ToolboxStatisticsPersistence {
     public List<ConceptStatisticData> loadConceptStatistics(
             String thesaurusId,
             String language,
-            Date startDate,
-            Date endDate,
+            LocalDate startDate,
+            LocalDate endDate,
             String collectionId,
             String resultLimit
     ) {
@@ -119,16 +124,18 @@ public class ToolboxStatisticsPersistence {
             limit = 100;
         }
 
+        var start = V2Dates.toUtilDate(startDate);
+        var end = V2Dates.toUtilDate(endDate);
         List<ConceptGroupProjection> rows;
-        if (ObjectUtils.isEmpty(startDate) || ObjectUtils.isEmpty(endDate)) {
+        if (ObjectUtils.isEmpty(start) || ObjectUtils.isEmpty(end)) {
             rows = StringUtils.isEmpty(collectionId)
                     ? conceptStatusRepository.findRecentConceptsByLangAndThesaurus(thesaurusId, language, limit)
                     : conceptStatusRepository.findConceptsByGroupAndLang(thesaurusId, language, collectionId, limit);
         } else {
             rows = StringUtils.isEmpty(collectionId)
-                    ? conceptStatusRepository.findConceptsModifiedBetween(thesaurusId, language, startDate, endDate, limit)
+                    ? conceptStatusRepository.findConceptsModifiedBetween(thesaurusId, language, start, end, limit)
                     : conceptStatusRepository.findConceptsByGroupLangDate(
-                            thesaurusId, language, collectionId, startDate, endDate, limit);
+                            thesaurusId, language, collectionId, start, end, limit);
         }
         return mapConceptStatistics(rows);
     }
@@ -182,12 +189,11 @@ public class ToolboxStatisticsPersistence {
         if (CollectionUtils.isEmpty(rows)) {
             return List.of();
         }
-        var dataFormat = new SimpleDateFormat("yyyy-MM-dd");
         return rows.stream()
                 .map(element -> ConceptStatisticData.builder()
                         .idConcept(element.getIdConcept())
-                        .dateCreation(formatStatisticDate(dataFormat, element.getCreated()))
-                        .dateModification(formatStatisticDate(dataFormat, element.getModified()))
+                        .dateCreation(formatStatisticDate(element.getCreated()))
+                        .dateModification(formatStatisticDate(element.getModified()))
                         .label(element.getLexicalValue())
                         .utilisateur(element.getUsername())
                         .type("skos:prefLabel")
@@ -195,8 +201,9 @@ public class ToolboxStatisticsPersistence {
                 .toList();
     }
 
-    private static String formatStatisticDate(SimpleDateFormat dataFormat, Date date) {
-        return ObjectUtils.isEmpty(date) ? null : dataFormat.format(date);
+    private static String formatStatisticDate(Object date) {
+        Instant instant = V2Dates.toInstant(date);
+        return instant == null ? null : STATISTIC_DATE.format(instant);
     }
 
     private static String normalizeGroupKey(String groupId) {

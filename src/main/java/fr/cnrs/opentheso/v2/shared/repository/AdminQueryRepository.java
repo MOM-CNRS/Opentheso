@@ -2,11 +2,11 @@ package fr.cnrs.opentheso.v2.shared.repository;
 
 import fr.cnrs.opentheso.v2.shared.repository.projection.AdminThesaurusRow;
 import fr.cnrs.opentheso.v2.shared.repository.projection.AdminUserRow;
+import fr.cnrs.opentheso.v2.shared.time.V2Dates;
 import jakarta.persistence.EntityManager;
 import jakarta.persistence.PersistenceContext;
 import org.springframework.stereotype.Repository;
 
-import java.sql.Timestamp;
 import java.time.LocalDateTime;
 import java.util.List;
 
@@ -118,12 +118,7 @@ public class AdminQueryRepository {
     }
 
     private AdminThesaurusRow toAdminThesaurusRow(Object[] row) {
-        LocalDateTime createdAt = null;
-        if (row[5] instanceof Timestamp timestamp) {
-            createdAt = timestamp.toLocalDateTime();
-        } else if (row[5] instanceof LocalDateTime localDateTime) {
-            createdAt = localDateTime;
-        }
+        LocalDateTime createdAt = toLocalDateTime(row[5]);
         return new AdminThesaurusRow(
                 (String) row[0],
                 (String) row[1],
@@ -132,5 +127,9 @@ public class AdminQueryRepository {
                 row[4] != null && (Boolean) row[4],
                 createdAt
         );
+    }
+
+    private static LocalDateTime toLocalDateTime(Object value) {
+        return V2Dates.toLocalDateTime(value);
     }
 }

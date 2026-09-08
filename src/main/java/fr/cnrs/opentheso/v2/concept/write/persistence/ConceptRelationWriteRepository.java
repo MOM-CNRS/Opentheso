@@ -6,7 +6,7 @@ import jakarta.persistence.PersistenceContext;
 import org.springframework.stereotype.Repository;
 import org.springframework.transaction.annotation.Transactional;
 
-import java.util.Date;
+import java.time.Instant;
 import java.util.List;
 
 @Repository
@@ -278,7 +278,7 @@ public class ConceptRelationWriteRepository {
                 .setParameter(NativeQueryParams.CONCEPT_ID2, conceptId2)
                 .setParameter(NativeQueryParams.THESAURUS_ID, thesaurusId)
                 .setParameter("role", role)
-                .setParameter(NativeQueryParams.MODIFIED, new Date())
+                .setParameter(NativeQueryParams.MODIFIED, Instant.now())
                 .setParameter(NativeQueryParams.USER_ID, userId)
                 .setParameter("action", action)
                 .executeUpdate();

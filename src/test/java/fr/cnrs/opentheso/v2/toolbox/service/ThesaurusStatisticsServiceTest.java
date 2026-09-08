@@ -18,8 +18,8 @@ import org.junit.jupiter.api.extension.ExtendWith;
 import org.mockito.Mock;
 import org.mockito.junit.jupiter.MockitoExtension;
 
+import java.time.Instant;
 import java.time.YearMonth;
-import java.util.Date;
 import java.util.List;
 
 import static org.junit.jupiter.api.Assertions.assertEquals;
@@ -50,7 +50,7 @@ class ThesaurusStatisticsServiceTest {
 
     @Test
     void loadSummary_aggregatesCounts() {
-        var lastModification = Date.from(java.time.Instant.parse("2024-06-15T12:00:00Z"));
+        var lastModification = Instant.parse("2024-06-15T12:00:00Z");
         when(editionQueryRepository.countAllConceptStats("TH1")).thenReturn(new int[]{10, 2, 1});
         when(toolboxStatisticsPersistence.loadLastModification("TH1")).thenReturn(lastModification);
 

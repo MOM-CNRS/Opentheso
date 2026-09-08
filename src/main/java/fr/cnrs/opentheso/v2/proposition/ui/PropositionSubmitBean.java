@@ -434,7 +434,7 @@ public class PropositionSubmitBean implements Serializable {
             return false;
         }
 
-        var draft = PropositionDraftMapper.toDraft(
+        var draft = PropositionDraftMapper.toDraft(new PropositionDraftMapper.ToDraftRequest(
                 summary.conceptId(),
                 thesaurusId,
                 lang,
@@ -443,7 +443,7 @@ public class PropositionSubmitBean implements Serializable {
                 synonymOptions,
                 translationOptions,
                 noteOptions
-        );
+        ));
         propositionDraftService.saveDraftDetails(createdId.get(), draft);
 
         comment = "";

@@ -32,6 +32,7 @@ import java.util.LinkedHashSet;
 import java.util.List;
 import java.util.Locale;
 import java.util.Map;
+import java.util.Optional;
 import java.util.Set;
 import java.util.stream.Collectors;
 
@@ -157,133 +158,250 @@ public class ConceptTranslationBlockEditorBean implements Serializable {
         }
 
         String workLang = resolveWorkLang(current);
+        Optional<Map<String, TranslationBlockEditRow>> selected = collectSelectedTranslations(workLang);
+        if (selected.isEmpty()) {
+            return;
+        }
+        persistTranslationChanges(current, workLang, selected.get(), userId);
+    }
+
+    private Optional<Map<String, TranslationBlockEditRow>> collectSelectedTranslations(String workLang) {
         Map<String, TranslationBlockEditRow> selected = new LinkedHashMap<>();
         for (TranslationBlockEditRow row : rows) {
-            if (row == null) {
-                continue;
-            }
-            String lang = normalizeLang(row.getLang());
-            String value = StringUtils.trimToEmpty(row.getValue());
-            if (lang.isEmpty()) {
-                errorMessage = "Aucune langue sélectionnée !";
-                return;
-            }
-            if (lang.equals(normalizeLang(workLang))) {
-                errorMessage = "La langue de travail s'édite dans le bloc Libellé.";
-                return;
-            }
-            if (value.isEmpty()) {
-                errorMessage = "La valeur est obligatoire !";
-                return;
-            }
-            if (selected.put(lang, row) != null) {
-                errorMessage = "Chaque langue ne peut apparaître qu'une fois.";
-                return;
-            }
-            List<String> alts = ConceptLabelBlockEditorBean.parseCsv(row.getAlts());
-            if (alts.stream().anyMatch(alt -> alt.equalsIgnoreCase(value))) {
-                errorMessage = "Une forme alternative ne peut pas être identique au libellé.";
-                return;
+            if (!acceptSelectedTranslation(row, workLang, selected)) {
+                return Optional.empty();
             }
         }
+        return Optional.of(selected);
+    }
 
-        String thesaurusId = thesaurusViewBean.getId();
-        String conceptId = current.getSummary().getConceptId();
-        String contributor = StringUtils.defaultString(userSession.getCurrentUsername());
+    private boolean acceptSelectedTranslation(
+            TranslationBlockEditRow row, String workLang, Map<String, TranslationBlockEditRow> selected) {
+        if (row == null) {
+            return true;
+        }
+        String lang = normalizeLang(row.getLang());
+        String value = StringUtils.trimToEmpty(row.getValue());
+        if (lang.isEmpty()) {
+            errorMessage = "Aucune langue sélectionnée !";
+            return false;
+        }
+        if (lang.equals(normalizeLang(workLang))) {
+            errorMessage = "La langue de travail s'édite dans le bloc Libellé.";
+            return false;
+        }
+        if (value.isEmpty()) {
+            errorMessage = "La valeur est obligatoire !";
+            return false;
+        }
+        if (selected.put(lang, row) != null) {
+            errorMessage = "Chaque langue ne peut apparaître qu'une fois.";
+            return false;
+        }
+        List<String> alts = ConceptLabelBlockEditorBean.parseCsv(row.getAlts());
+        if (alts.stream().anyMatch(alt -> alt.equalsIgnoreCase(value))) {
+            errorMessage = "Une forme alternative ne peut pas être identique au libellé.";
+            return false;
+        }
+        return true;
+    }
+
+    private void persistTranslationChanges(
+            ConceptDetail current,
+            String workLang,
+            Map<String, TranslationBlockEditRow> selected,
+            int userId
+    ) {
+        TranslationWriteContext ctx = new TranslationWriteContext(
+                thesaurusViewBean.getId(),
+                current.getSummary().getConceptId(),
+                userId,
+                StringUtils.defaultString(userSession.getCurrentUsername()));
         Map<String, String> oldPrefs = preferredByLang(current, workLang);
         Map<String, List<String>> oldAlts = altsByLang(current, workLang);
-        boolean dirty = false;
+        DirtyUpdate dirty = removeUnselectedLangs(ctx, selected, oldPrefs, oldAlts, false);
+        if (!dirty.ok) {
+            return;
+        }
+        if (!persistSelectedTranslations(ctx, selected, oldPrefs, oldAlts, dirty.dirty).ok) {
+            return;
+        }
+        finishSuccess();
+    }
 
+    private DirtyUpdate removeUnselectedLangs(
+            TranslationWriteContext ctx,
+            Map<String, TranslationBlockEditRow> selected,
+            Map<String, String> oldPrefs,
+            Map<String, List<String>> oldAlts,
+            boolean dirty
+    ) {
         LinkedHashSet<String> removedLangs = new LinkedHashSet<>();
         removedLangs.addAll(oldPrefs.keySet());
         removedLangs.addAll(oldAlts.keySet());
         removedLangs.removeAll(selected.keySet());
         for (String lang : removedLangs) {
-            if (!syncAlts(thesaurusId, conceptId, lang, userId, contributor,
-                    oldAlts.getOrDefault(lang, List.of()), List.of(), dirty)) {
-                return;
+            DirtyUpdate next = removeUnselectedLang(ctx, lang, oldPrefs, oldAlts, dirty);
+            if (!next.ok) {
+                return DirtyUpdate.fail();
             }
-            dirty = dirty || !oldAlts.getOrDefault(lang, List.of()).isEmpty();
-            if (!oldPrefs.containsKey(lang)) {
-                continue;
-            }
-            MutationResult deleted = conceptLexicalMutationService.deleteTranslation(
-                    new DeleteTranslationCommand(thesaurusId, conceptId, lang, userId, contributor));
-            if (!applyResult(deleted, dirty)) {
-                return;
-            }
-            dirty = true;
+            dirty = next.dirty;
         }
-
-        for (TranslationBlockEditRow row : selected.values()) {
-            String lang = normalizeLang(row.getLang());
-            String value = StringUtils.trimToEmpty(row.getValue());
-            List<String> newAlts = ConceptLabelBlockEditorBean.parseCsv(row.getAlts());
-            List<String> previousAlts = oldAlts.getOrDefault(lang, List.of());
-            if (!oldPrefs.containsKey(lang)) {
-                MutationResult added = conceptLexicalMutationService.addTranslation(
-                        new AddTranslationCommand(thesaurusId, conceptId, lang, value, userId, contributor));
-                if (!applyResult(added, dirty)) {
-                    return;
-                }
-                dirty = true;
-                if (!syncAlts(thesaurusId, conceptId, lang, userId, contributor, previousAlts, newAlts, dirty)) {
-                    return;
-                }
-                continue;
-            }
-            if (!Strings.CS.equals(oldPrefs.get(lang), value)) {
-                MutationResult updated = conceptLexicalMutationService.updateTranslation(
-                        new UpdateTranslationCommand(thesaurusId, conceptId, lang, value, userId, contributor));
-                if (!applyResult(updated, dirty)) {
-                    return;
-                }
-                dirty = true;
-            }
-            if (!syncAlts(thesaurusId, conceptId, lang, userId, contributor, previousAlts, newAlts, dirty)) {
-                return;
-            }
-            dirty = dirty || !previousAlts.equals(newAlts);
-        }
-
-        finishSuccess();
+        return DirtyUpdate.of(dirty);
     }
 
-    private boolean syncAlts(
-            String thesaurusId,
-            String conceptId,
+    private DirtyUpdate removeUnselectedLang(
+            TranslationWriteContext ctx,
             String lang,
-            int userId,
-            String contributor,
-            List<String> oldAlts,
+            Map<String, String> oldPrefs,
+            Map<String, List<String>> oldAlts,
+            boolean dirty
+    ) {
+        List<String> previousAlts = oldAlts.getOrDefault(lang, List.of());
+        if (!syncAlts(new TranslationAltSync(ctx, lang, previousAlts, List.of(), dirty))) {
+            return DirtyUpdate.fail();
+        }
+        dirty = dirty || !previousAlts.isEmpty();
+        if (!oldPrefs.containsKey(lang)) {
+            return DirtyUpdate.of(dirty);
+        }
+        MutationResult deleted = conceptLexicalMutationService.deleteTranslation(
+                new DeleteTranslationCommand(
+                        ctx.thesaurusId(), ctx.conceptId(), lang, ctx.userId(), ctx.contributor()));
+        if (!applyResult(deleted, dirty)) {
+            return DirtyUpdate.fail();
+        }
+        return DirtyUpdate.of(true);
+    }
+
+    private DirtyUpdate persistSelectedTranslations(
+            TranslationWriteContext ctx,
+            Map<String, TranslationBlockEditRow> selected,
+            Map<String, String> oldPrefs,
+            Map<String, List<String>> oldAlts,
+            boolean dirty
+    ) {
+        for (TranslationBlockEditRow row : selected.values()) {
+            DirtyUpdate next = persistSelectedTranslation(ctx, row, oldPrefs, oldAlts, dirty);
+            if (!next.ok) {
+                return DirtyUpdate.fail();
+            }
+            dirty = next.dirty;
+        }
+        return DirtyUpdate.of(dirty);
+    }
+
+    private DirtyUpdate persistSelectedTranslation(
+            TranslationWriteContext ctx,
+            TranslationBlockEditRow row,
+            Map<String, String> oldPrefs,
+            Map<String, List<String>> oldAlts,
+            boolean dirty
+    ) {
+        String lang = normalizeLang(row.getLang());
+        String value = StringUtils.trimToEmpty(row.getValue());
+        List<String> newAlts = ConceptLabelBlockEditorBean.parseCsv(row.getAlts());
+        List<String> previousAlts = oldAlts.getOrDefault(lang, List.of());
+        if (!oldPrefs.containsKey(lang)) {
+            return persistNewTranslation(ctx, lang, value, previousAlts, newAlts, dirty);
+        }
+        return persistExistingTranslation(ctx, lang, value, oldPrefs.get(lang), previousAlts, newAlts, dirty);
+    }
+
+    private DirtyUpdate persistNewTranslation(
+            TranslationWriteContext ctx,
+            String lang,
+            String value,
+            List<String> previousAlts,
             List<String> newAlts,
             boolean dirty
     ) {
-        Set<String> oldSet = new LinkedHashSet<>(oldAlts);
-        Set<String> newSet = new LinkedHashSet<>(newAlts);
-        for (String value : oldAlts) {
-            if (newSet.contains(value)) {
-                continue;
-            }
-            MutationResult deleted = conceptLexicalMutationService.deleteSynonym(
-                    new DeleteSynonymCommand(thesaurusId, conceptId, lang, value, userId, contributor));
-            if (!applyResult(deleted, dirty)) {
-                return false;
+        MutationResult added = conceptLexicalMutationService.addTranslation(
+                new AddTranslationCommand(
+                        ctx.thesaurusId(), ctx.conceptId(), lang, value, ctx.userId(), ctx.contributor()));
+        if (!applyResult(added, dirty)) {
+            return DirtyUpdate.fail();
+        }
+        dirty = true;
+        if (!syncAlts(new TranslationAltSync(ctx, lang, previousAlts, newAlts, dirty))) {
+            return DirtyUpdate.fail();
+        }
+        return DirtyUpdate.of(dirty);
+    }
+
+    private DirtyUpdate persistExistingTranslation(
+            TranslationWriteContext ctx,
+            String lang,
+            String value,
+            String oldPref,
+            List<String> previousAlts,
+            List<String> newAlts,
+            boolean dirty
+    ) {
+        if (!Strings.CS.equals(oldPref, value)) {
+            MutationResult updated = conceptLexicalMutationService.updateTranslation(
+                    new UpdateTranslationCommand(
+                            ctx.thesaurusId(), ctx.conceptId(), lang, value, ctx.userId(), ctx.contributor()));
+            if (!applyResult(updated, dirty)) {
+                return DirtyUpdate.fail();
             }
             dirty = true;
         }
-        for (String value : newAlts) {
-            if (oldSet.contains(value)) {
-                continue;
-            }
-            MutationResult added = conceptLexicalMutationService.addSynonym(
-                    new AddSynonymCommand(thesaurusId, conceptId, lang, value, false, userId, contributor, false));
-            if (!applyResult(added, dirty)) {
+        if (!syncAlts(new TranslationAltSync(ctx, lang, previousAlts, newAlts, dirty))) {
+            return DirtyUpdate.fail();
+        }
+        return DirtyUpdate.of(dirty || !previousAlts.equals(newAlts));
+    }
+
+    private boolean syncAlts(TranslationAltSync request) {
+        Set<String> oldSet = new LinkedHashSet<>(request.oldAlts());
+        Set<String> newSet = new LinkedHashSet<>(request.newAlts());
+        boolean dirty = request.dirty();
+        for (String value : request.oldAlts()) {
+            DirtyUpdate next = deleteRemovedAlt(request, value, newSet, dirty);
+            if (!next.ok) {
                 return false;
             }
-            dirty = true;
+            dirty = next.dirty;
+        }
+        for (String value : request.newAlts()) {
+            DirtyUpdate next = addMissingAlt(request, value, oldSet, dirty);
+            if (!next.ok) {
+                return false;
+            }
+            dirty = next.dirty;
         }
         return true;
+    }
+
+    private DirtyUpdate deleteRemovedAlt(
+            TranslationAltSync request, String value, Set<String> newSet, boolean dirty) {
+        if (newSet.contains(value)) {
+            return DirtyUpdate.of(dirty);
+        }
+        MutationResult deleted = conceptLexicalMutationService.deleteSynonym(
+                new DeleteSynonymCommand(
+                        request.ctx().thesaurusId(), request.ctx().conceptId(), request.lang(), value,
+                        request.ctx().userId(), request.ctx().contributor()));
+        if (!applyResult(deleted, dirty)) {
+            return DirtyUpdate.fail();
+        }
+        return DirtyUpdate.of(true);
+    }
+
+    private DirtyUpdate addMissingAlt(
+            TranslationAltSync request, String value, Set<String> oldSet, boolean dirty) {
+        if (oldSet.contains(value)) {
+            return DirtyUpdate.of(dirty);
+        }
+        MutationResult added = conceptLexicalMutationService.addSynonym(
+                new AddSynonymCommand(
+                        request.ctx().thesaurusId(), request.ctx().conceptId(), request.lang(), value, false,
+                        request.ctx().userId(), request.ctx().contributor(), false));
+        if (!applyResult(added, dirty)) {
+            return DirtyUpdate.fail();
+        }
+        return DirtyUpdate.of(true);
     }
 
     private boolean applyResult(MutationResult result, boolean dirty) {
@@ -392,16 +510,20 @@ public class ConceptTranslationBlockEditorBean implements Serializable {
             return byLang;
         }
         for (ConceptLabel label : detail.getTranslations()) {
-            if (label == null || !label.isPreferred() || StringUtils.isBlank(label.getLang())) {
-                continue;
-            }
-            String lang = normalizeLang(label.getLang());
-            if (lang.equals(work)) {
-                continue;
-            }
-            byLang.putIfAbsent(lang, StringUtils.defaultString(label.getValue()));
+            acceptPreferredLabel(label, work, byLang);
         }
         return byLang;
+    }
+
+    private static void acceptPreferredLabel(ConceptLabel label, String work, Map<String, String> byLang) {
+        if (label == null || !label.isPreferred() || StringUtils.isBlank(label.getLang())) {
+            return;
+        }
+        String lang = normalizeLang(label.getLang());
+        if (lang.equals(work)) {
+            return;
+        }
+        byLang.putIfAbsent(lang, StringUtils.defaultString(label.getValue()));
     }
 
     private static Map<String, List<String>> altsByLang(ConceptDetail detail, String workLang) {
@@ -411,23 +533,39 @@ public class ConceptTranslationBlockEditorBean implements Serializable {
             return byLang;
         }
         for (ConceptLabel label : detail.getTranslations()) {
-            if (label == null || label.isPreferred() || label.isHidden() || StringUtils.isBlank(label.getLang())) {
-                continue;
-            }
-            String lang = normalizeLang(label.getLang());
-            if (lang.equals(work)) {
-                continue;
-            }
-            String value = StringUtils.trimToEmpty(label.getValue());
-            if (value.isEmpty()) {
-                continue;
-            }
-            byLang.computeIfAbsent(lang, key -> new ArrayList<>()).add(value);
+            acceptAltLabel(label, work, byLang);
         }
         return byLang;
     }
 
+    private static void acceptAltLabel(ConceptLabel label, String work, Map<String, List<String>> byLang) {
+        if (label == null || label.isPreferred() || label.isHidden() || StringUtils.isBlank(label.getLang())) {
+            return;
+        }
+        String lang = normalizeLang(label.getLang());
+        if (lang.equals(work)) {
+            return;
+        }
+        String value = StringUtils.trimToEmpty(label.getValue());
+        if (value.isEmpty()) {
+            return;
+        }
+        byLang.computeIfAbsent(lang, key -> new ArrayList<>()).add(value);
+    }
+
     private static String normalizeLang(String lang) {
         return StringUtils.isBlank(lang) ? "" : lang.trim().toLowerCase(Locale.ROOT);
+    }
+
+    record TranslationWriteContext(String thesaurusId, String conceptId, int userId, String contributor) {
+    }
+
+    record TranslationAltSync(
+            TranslationWriteContext ctx,
+            String lang,
+            List<String> oldAlts,
+            List<String> newAlts,
+            boolean dirty
+    ) {
     }
 }

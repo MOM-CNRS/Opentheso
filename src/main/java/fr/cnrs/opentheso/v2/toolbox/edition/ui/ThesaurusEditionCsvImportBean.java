@@ -139,10 +139,12 @@ public class ThesaurusEditionCsvImportBean implements Serializable {
                     userId,
                     userSession.getCurrentUsername(),
                     superAdmin,
-                    projectId,
-                    conceptObjects,
-                    detectedLangs,
-                    persistentNameThesaurus
+                    new ThesaurusEditionCsvImportService.CsvImportExtras(
+                            projectId,
+                            conceptObjects,
+                            detectedLangs,
+                            persistentNameThesaurus
+                    )
             );
 
             String detail = "Total importé : " + outcome.importedConcepts();

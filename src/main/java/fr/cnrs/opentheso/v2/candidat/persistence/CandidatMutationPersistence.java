@@ -71,7 +71,6 @@ import org.springframework.transaction.annotation.Transactional;
 import java.text.SimpleDateFormat;
 import java.util.ArrayList;
 import java.util.Comparator;
-import java.util.Date;
 import java.util.List;
 
 @Slf4j
@@ -162,7 +161,7 @@ public class CandidatMutationPersistence {
         entity.setThesaurusTarget(element.getThesaurus_target());
         entity.setUriTarget(fr.cnrs.opentheso.utils.StringUtils.convertString(element.getTargetUri()));
         entity.setAlignementType(alignementType.get());
-        entity.setModified(new Date());
+        entity.setModified(V2Dates.nowUtilDate());
         alignementRepository.save(entity);
     }
 
@@ -207,8 +206,8 @@ public class CandidatMutationPersistence {
                 .lexicalValue(candidat.getNomPref().trim())
                 .source(STATUS_CANDIDAT)
                 .status("D")
-                .created(new Date())
-                .modified(new Date())
+                .created(V2Dates.nowUtilDate())
+                .modified(V2Dates.nowUtilDate())
                 .build(), idNewConcept, userId);
         candidat.setIdTerm(termId);
         addNote(idNewConcept, thesaurusLang, thesaurusId, definition, "definition", "", userId);
@@ -276,67 +275,92 @@ public class CandidatMutationPersistence {
             }
         }
 
-        boolean exist = false;
-        boolean first = true;
-        Concept concept = new Concept();
-        String idNewConcept = null;
-        String idNewTerm = null;
-        Term terme = new Term();
-
         for (NodeCandidateOld nodeCandidateOld : nodeCandidateOlds) {
-            for (NodeTraductionCandidat nodeTraduction : nodeCandidateOld.getNodeTraductions()) {
-                if (termRepository.existsPrefLabel(nodeTraduction.getTitle().trim(), nodeTraduction.getIdLang(), thesaurusId)) {
-                    messages.append("Candidat existe : ").append(nodeTraduction.getTitle());
-                    exist = true;
-                    break;
-                }
-            }
-            if (!exist) {
-                concept.setIdConcept(null);
-                concept.setIdThesaurus(thesaurusId);
-                concept.setTopConcept(false);
-                concept.setIdUser(userId);
-                concept.setStatus("CA");
-                idNewConcept = createCandidateConcept(concept);
-                if (idNewConcept == null) {
-                    messages.append(ERROR_PREFIX).append(nodeCandidateOld.getIdCandidate());
-                    continue;
-                }
-                for (NodeTraductionCandidat nodeTraduction : nodeCandidateOld.getNodeTraductions()) {
-                    if (first) {
-                        terme.setIdThesaurus(thesaurusId);
-                        terme.setLang(nodeTraduction.getIdLang());
-                        terme.setContributor(userId);
-                        terme.setLexicalValue(nodeTraduction.getTitle().trim());
-                        terme.setSource(STATUS_CANDIDAT);
-                        terme.setStatus("D");
-                        idNewTerm = addTerm(terme, idNewConcept, userId);
-                        first = false;
-                    } else {
-                        addTermTranslation(Term.builder()
-                                .idTerm(idNewTerm)
-                                .idThesaurus(thesaurusId)
-                                .lang(nodeTraduction.getIdLang())
-                                .lexicalValue(nodeTraduction.getTitle())
-                                .source(STATUS_CANDIDAT)
-                                .status("D")
-                                .build(), userId);
-                    }
-                }
-                first = true;
-                for (NodeProposition nodeProposition : nodeCandidateOld.getNodePropositions()) {
-                    candidatMessageRepository.save(CandidatMessages.builder()
-                            .value(nodeProposition.getNote())
-                            .idUser(nodeProposition.getIdUser())
-                            .idThesaurus(thesaurusId)
-                            .idConcept(idNewConcept)
-                            .date(new SimpleDateFormat("yyyy-MM-dd HH:mm").format(new Date()))
-                            .build());
-                }
-            }
-            exist = false;
+            migrateOldCandidate(nodeCandidateOld, thesaurusId, userId, messages);
         }
         return "Import réussi\n" + messages;
+    }
+
+    private void migrateOldCandidate(
+            NodeCandidateOld nodeCandidateOld,
+            String thesaurusId,
+            int userId,
+            StringBuilder messages
+    ) {
+        if (oldCandidateLabelExists(nodeCandidateOld, thesaurusId, messages)) {
+            return;
+        }
+        Concept concept = new Concept();
+        concept.setIdConcept(null);
+        concept.setIdThesaurus(thesaurusId);
+        concept.setTopConcept(false);
+        concept.setIdUser(userId);
+        concept.setStatus("CA");
+        String idNewConcept = createCandidateConcept(concept);
+        if (idNewConcept == null) {
+            messages.append(ERROR_PREFIX).append(nodeCandidateOld.getIdCandidate());
+            return;
+        }
+        addOldCandidateTerms(nodeCandidateOld, thesaurusId, userId, idNewConcept);
+        addOldCandidateMessages(nodeCandidateOld, thesaurusId, idNewConcept);
+    }
+
+    private boolean oldCandidateLabelExists(
+            NodeCandidateOld nodeCandidateOld,
+            String thesaurusId,
+            StringBuilder messages
+    ) {
+        for (NodeTraductionCandidat nodeTraduction : nodeCandidateOld.getNodeTraductions()) {
+            if (termRepository.existsPrefLabel(nodeTraduction.getTitle().trim(), nodeTraduction.getIdLang(), thesaurusId)) {
+                messages.append("Candidat existe : ").append(nodeTraduction.getTitle());
+                return true;
+            }
+        }
+        return false;
+    }
+
+    private void addOldCandidateTerms(
+            NodeCandidateOld nodeCandidateOld,
+            String thesaurusId,
+            int userId,
+            String idNewConcept
+    ) {
+        boolean first = true;
+        String idNewTerm = null;
+        for (NodeTraductionCandidat nodeTraduction : nodeCandidateOld.getNodeTraductions()) {
+            if (first) {
+                Term terme = new Term();
+                terme.setIdThesaurus(thesaurusId);
+                terme.setLang(nodeTraduction.getIdLang());
+                terme.setContributor(userId);
+                terme.setLexicalValue(nodeTraduction.getTitle().trim());
+                terme.setSource(STATUS_CANDIDAT);
+                terme.setStatus("D");
+                idNewTerm = addTerm(terme, idNewConcept, userId);
+                first = false;
+            } else {
+                addTermTranslation(Term.builder()
+                        .idTerm(idNewTerm)
+                        .idThesaurus(thesaurusId)
+                        .lang(nodeTraduction.getIdLang())
+                        .lexicalValue(nodeTraduction.getTitle())
+                        .source(STATUS_CANDIDAT)
+                        .status("D")
+                        .build(), userId);
+            }
+        }
+    }
+
+    private void addOldCandidateMessages(NodeCandidateOld nodeCandidateOld, String thesaurusId, String idNewConcept) {
+        for (NodeProposition nodeProposition : nodeCandidateOld.getNodePropositions()) {
+            candidatMessageRepository.save(CandidatMessages.builder()
+                    .value(nodeProposition.getNote())
+                    .idUser(nodeProposition.getIdUser())
+                    .idThesaurus(thesaurusId)
+                    .idConcept(idNewConcept)
+                    .date(new SimpleDateFormat("yyyy-MM-dd HH:mm").format(V2Dates.nowUtilDate()))
+                    .build());
+        }
     }
 
     public boolean hasVote(String thesaurusId, String conceptId, int userId, String noteId, VoteType type) {
@@ -417,8 +441,8 @@ public class CandidatMutationPersistence {
                 .status(term.getStatus())
                 .contributor(term.getContributor())
                 .creator(term.getCreator())
-                .created(new Date())
-                .modified(new Date())
+                .created(V2Dates.nowUtilDate())
+                .modified(V2Dates.nowUtilDate())
                 .build());
     }
 
@@ -429,8 +453,8 @@ public class CandidatMutationPersistence {
                 .idThesaurus(thesaurusId)
                 .hiden(false)
                 .idTerm(termId)
-                .created(new Date())
-                .modified(new Date())
+                .created(V2Dates.nowUtilDate())
+                .modified(V2Dates.nowUtilDate())
                 .build());
     }
 
@@ -546,25 +570,44 @@ public class CandidatMutationPersistence {
                     .identifier(identifier)
                     .noteSource(noteSource)
                     .idUser(idUser)
-                    .created(new Date())
-                    .modified(new Date())
+                    .created(V2Dates.nowUtilDate())
+                    .modified(V2Dates.nowUtilDate())
                     .build());
         }
         addNoteHistorique(identifier, idLang, idThesaurus, note, noteTypeCode, "add", idUser);
     }
 
-    public boolean updateCandidateNote(int idNote, String idConcept, String idLang, String idThesaurus,
-                                        String note, String noteSource, String noteTypeCode, int idUser) {
-        var noteValue = noteRepository.findByIdAndIdThesaurus(idNote, idThesaurus);
+    public boolean updateCandidateNote(UpdateCandidateNoteRequest request) {
+        var noteValue = noteRepository.findByIdAndIdThesaurus(request.idNote(), request.idThesaurus());
         if (noteValue.isEmpty()) {
             return false;
         }
-        noteValue.get().setLexicalValue(fr.cnrs.opentheso.utils.StringUtils.clearNoteFromP(note));
-        noteValue.get().setNoteSource(noteSource);
-        noteValue.get().setModified(new Date());
+        noteValue.get().setLexicalValue(fr.cnrs.opentheso.utils.StringUtils.clearNoteFromP(request.note()));
+        noteValue.get().setNoteSource(request.noteSource());
+        noteValue.get().setModified(V2Dates.nowUtilDate());
         noteRepository.save(noteValue.get());
-        addNoteHistorique(idConcept, normalizeIdLang(idLang), idThesaurus, note, noteTypeCode, "update", idUser);
+        addNoteHistorique(
+                request.idConcept(),
+                normalizeIdLang(request.idLang()),
+                request.idThesaurus(),
+                request.note(),
+                request.noteTypeCode(),
+                "update",
+                request.idUser()
+        );
         return true;
+    }
+
+    public record UpdateCandidateNoteRequest(
+            int idNote,
+            String idConcept,
+            String idLang,
+            String idThesaurus,
+            String note,
+            String noteSource,
+            String noteTypeCode,
+            int idUser
+    ) {
     }
 
     public void deleteCandidateNote(int idNote, String identifier, String idLang, String idThesaurus,
@@ -630,7 +673,7 @@ public class CandidatMutationPersistence {
                 .idConcept(conceptId)
                 .idThesaurus(thesaurusId)
                 .idUser(userId)
-                .date(new SimpleDateFormat("yyyy-MM-dd HH:mm").format(new Date()))
+                .date(new SimpleDateFormat("yyyy-MM-dd HH:mm").format(V2Dates.nowUtilDate()))
                 .build());
     }
 
@@ -701,7 +744,7 @@ public class CandidatMutationPersistence {
                 .actionPerformed(action)
                 .idUser(idUser)
                 .notetypecode(noteTypeCode)
-                .modified(new Date())
+                .modified(V2Dates.nowUtilDate())
                 .build());
     }
 
@@ -721,7 +764,7 @@ public class CandidatMutationPersistence {
             }
             var idArk = ToolsHelper.getNewId(preferences.getSizeIdArkLocal(), preferences.isUppercaseForArk(), true);
             idArk = preferences.getNaanArkLocal() + "/" + preferences.getPrefixArkLocal() + idArk;
-            conceptRepository.setIdArk(idArk, new Date(), conceptId, thesaurusId);
+            conceptRepository.setIdArk(idArk, V2Dates.nowUtilDate(), conceptId, thesaurusId);
         }
     }
 
@@ -743,8 +786,8 @@ public class CandidatMutationPersistence {
                 .idConcept(concept.getIdConcept())
                 .idThesaurus(concept.getIdThesaurus())
                 .idArk(concept.getIdArk())
-                .created(new Date())
-                .modified(new Date())
+                .created(V2Dates.nowUtilDate())
+                .modified(V2Dates.nowUtilDate())
                 .status(concept.getStatus())
                 .notation(concept.getNotation())
                 .topConcept(concept.isTopConcept())
@@ -764,13 +807,13 @@ public class CandidatMutationPersistence {
                 .topConcept(concept.isTopConcept())
                 .idGroup(concept.getIdGroup() == null ? "" : concept.getIdGroup())
                 .idUser(concept.getIdUser())
-                .modified(new Date())
+                .modified(V2Dates.nowUtilDate())
                 .build());
         candidatStatusRepository.save(CandidatStatus.builder()
                 .idConcept(concept.getIdConcept())
                 .idThesaurus(concept.getIdThesaurus())
                 .idUser(concept.getIdUser())
-                .date(new Date())
+                .date(V2Dates.nowUtilDate())
                 .status(statusRepository.findById(1).orElse(null))
                 .build());
         return concept.getIdConcept();
@@ -787,8 +830,8 @@ public class CandidatMutationPersistence {
                 .status(term.getStatus())
                 .contributor(userId)
                 .creator(userId)
-                .created(new Date())
-                .modified(new Date())
+                .created(V2Dates.nowUtilDate())
+                .modified(V2Dates.nowUtilDate())
                 .build());
         termHistoriqueRepository.save(TermHistorique.builder()
                 .idTerm(termSaved.getIdTerm())
@@ -819,8 +862,8 @@ public class CandidatMutationPersistence {
                 .status(term.getStatus())
                 .contributor(term.getContributor())
                 .creator(term.getCreator())
-                .created(new Date())
-                .modified(new Date())
+                .created(V2Dates.nowUtilDate())
+                .modified(V2Dates.nowUtilDate())
                 .build());
         termHistoriqueRepository.save(TermHistorique.builder()
                 .idTerm(term.getIdTerm())
@@ -848,8 +891,8 @@ public class CandidatMutationPersistence {
                 .identifier(identifier)
                 .noteSource(noteSource)
                 .idUser(userId)
-                .created(new Date())
-                .modified(new Date())
+                .created(V2Dates.nowUtilDate())
+                .modified(V2Dates.nowUtilDate())
                 .build());
     }
 

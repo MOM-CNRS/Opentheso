@@ -50,12 +50,17 @@ import org.apache.commons.lang3.StringUtils;
 import org.apache.commons.text.StringEscapeUtils;
 import org.springframework.dao.DataIntegrityViolationException;
 import org.springframework.stereotype.Component;
-import org.springframework.transaction.annotation.Transactional;
 
-import java.text.ParseException;
-import java.text.SimpleDateFormat;
+import fr.cnrs.opentheso.v2.shared.time.V2Dates;
+
+import java.time.Instant;
+import java.time.LocalDate;
+import java.time.LocalDateTime;
+import java.time.format.DateTimeFormatter;
+import java.time.format.DateTimeParseException;
+import java.time.temporal.ChronoField;
+import java.time.temporal.TemporalAccessor;
 import java.util.ArrayList;
-import java.util.Date;
 import java.util.HashMap;
 import java.util.HashSet;
 import java.util.List;
@@ -114,7 +119,7 @@ public class ThesaurusEditionSkosImportEngine {
     private HashMap<String, String> groupSubGroup = new HashMap<>(); // pour garder en mémoire les relations de types (member) pour détecter ce qui est groupe ou concept
     private final List<ConceptGroupConcept> pendingGroupConcepts = new ArrayList<>();
     private SKOSXmlDocument skosXmlDocument;
-    private SimpleDateFormat dateFormat;
+    private DateTimeFormatter dateFormatter;
     boolean isFirst = true;
     /** Rôle à appliquer à l'import (false = esclave par défaut). */
     private boolean importAsMaster;
@@ -133,7 +138,7 @@ public class ThesaurusEditionSkosImportEngine {
         this.groupSubGroup.clear();
         this.pendingGroupConcepts.clear();
         this.message = new StringBuilder();
-        this.dateFormat = new SimpleDateFormat(StringUtils.defaultIfBlank(formatDate, "yyyy-MM-dd"));
+        this.dateFormatter = DateTimeFormatter.ofPattern(StringUtils.defaultIfBlank(formatDate, "yyyy-MM-dd"));
         this.importAsMaster = false;
     }
 
@@ -146,20 +151,7 @@ public class ThesaurusEditionSkosImportEngine {
         }
 
         Thesaurus thesaurus = conceptScheme.getThesaurus();
-
-        String creator = "";
-        String contributor = "";
-
-        for (SKOSAgent agent : conceptScheme.getAgentList()) {
-            if (agent.getProperty() == SKOSProperty.CREATOR) {
-                creator = agent.getAgent();
-            } else if (agent.getProperty() == SKOSProperty.CONTRIBUTOR) {
-                contributor = agent.getAgent();
-            }
-        }
-
-        thesaurus.setCreator(creator);
-        thesaurus.setContributor(contributor);
+        applyConceptSchemeAgents(conceptScheme, thesaurus);
 
         String idTheso1;
         langueSource = StringUtils.defaultIfBlank(normalizeLangCode(langueSource), "fr");
@@ -181,66 +173,8 @@ public class ThesaurusEditionSkosImportEngine {
         thesaurus.setId_thesaurus(idTheso1);
         thesaurus.setTitle(displayTitle);
 
-        // intégration des métadonnées DC (created/modified : une seule valeur, la plus récente)
-        for (DcElement dcElement : dedupeSingularThesaurusDcTerms(
-                skosXmlDocument.getConceptScheme().getThesaurus().getDcElement())) {
-            try {
-                thesaurusDcTermRepository.save(ThesaurusDcTerm.builder()
-                        .idThesaurus(idTheso1)
-                        .name(dcElement.getName())
-                        .value(dcElement.getValue())
-                        .language(dcElement.getLanguage())
-                        .dataType(dcElement.getType())
-                        .build());
-            } catch (DataIntegrityViolationException e) {
-                // terme DC déjà présent : ignoré
-            }
-        }
-
-        // boucler pour les traductions (skos:prefLabel du ConceptScheme)
-        boolean titlePersisted = false;
-        boolean sourceLangTitlePersisted = false;
-        java.util.Set<String> persistedLangs = new java.util.HashSet<>();
-        for (SKOSLabel label : skosXmlDocument.getConceptScheme().getLabelsList()) {
-            if (StringUtils.isBlank(label.getLabel()) || looksLikeUri(label.getLabel())) {
-                continue;
-            }
-            String labelLang = normalizeLangCode(label.getLanguage());
-            if (!persistedLangs.add(labelLang)) {
-                continue;
-            }
-            thesaurus.setTitle(label.getLabel().trim());
-            thesaurus.setLanguage(labelLang);
-            toolboxThesaurusPersistence.addTranslation(thesaurus);
-            titlePersisted = true;
-            if (langueSource.equalsIgnoreCase(labelLang)) {
-                sourceLangTitlePersisted = true;
-                displayTitle = label.getLabel().trim();
-            }
-        }
-
-        // Cas dcterms:title sans prefLabel : persister quand même le titre détecté
-        if (!titlePersisted && StringUtils.isNotBlank(displayTitle)) {
-            thesaurus.setTitle(displayTitle);
-            thesaurus.setLanguage(langueSource);
-            toolboxThesaurusPersistence.addTranslation(thesaurus);
-            titlePersisted = true;
-            sourceLangTitlePersisted = true;
-        }
-
-        if (!titlePersisted) {
-            thesaurus.setTitle(displayTitle);
-            thesaurus.setLanguage(langueSource);
-            toolboxThesaurusPersistence.addTranslation(thesaurus);
-            sourceLangTitlePersisted = true;
-        }
-
-        // Les listes UI lisent le titre via preferences.source_lang : garantir une ligne pour cette langue
-        if (!sourceLangTitlePersisted) {
-            thesaurus.setTitle(displayTitle);
-            thesaurus.setLanguage(langueSource);
-            toolboxThesaurusPersistence.addTranslation(thesaurus);
-        }
+        persistConceptSchemeDcTerms(idTheso1);
+        displayTitle = persistConceptSchemeTitles(thesaurus, displayTitle);
 
         // ajouter le thésaurus dans le group de l'utilisateur
         if (idGroupUser != -1) { // si le groupeUser = - 1, c'est le cas d'un SuperAdmin, alors on n'intègre pas le thésaurus dans un groupUser
@@ -258,6 +192,94 @@ public class ThesaurusEditionSkosImportEngine {
         initPreferencesThesaurus(idTheso1, displayTitle);
         captureMasterLinkFromConceptScheme(conceptScheme, idTheso1);
         return idTheso1;
+    }
+
+    private void applyConceptSchemeAgents(SKOSResource conceptScheme, Thesaurus thesaurus) {
+        String creator = "";
+        String contributor = "";
+        for (SKOSAgent agent : conceptScheme.getAgentList()) {
+            if (agent.getProperty() == SKOSProperty.CREATOR) {
+                creator = agent.getAgent();
+            } else if (agent.getProperty() == SKOSProperty.CONTRIBUTOR) {
+                contributor = agent.getAgent();
+            }
+        }
+        thesaurus.setCreator(creator);
+        thesaurus.setContributor(contributor);
+    }
+
+    private void persistConceptSchemeDcTerms(String idTheso) {
+        for (DcElement dcElement : dedupeSingularThesaurusDcTerms(
+                skosXmlDocument.getConceptScheme().getThesaurus().getDcElement())) {
+            try {
+                thesaurusDcTermRepository.save(ThesaurusDcTerm.builder()
+                        .idThesaurus(idTheso)
+                        .name(dcElement.getName())
+                        .value(dcElement.getValue())
+                        .language(dcElement.getLanguage())
+                        .dataType(dcElement.getType())
+                        .build());
+            } catch (DataIntegrityViolationException e) {
+                // terme DC déjà présent : ignoré
+            }
+        }
+    }
+
+    private String persistConceptSchemeTitles(Thesaurus thesaurus, String displayTitle) {
+        TitlePersistState state = persistPrefLabelTitles(thesaurus, displayTitle);
+        if (!state.titlePersisted() && StringUtils.isNotBlank(state.displayTitle())) {
+            persistFallbackTitle(thesaurus, state.displayTitle());
+            return state.displayTitle();
+        }
+        if (!state.titlePersisted()) {
+            persistFallbackTitle(thesaurus, state.displayTitle());
+            return state.displayTitle();
+        }
+        if (!state.sourceLangTitlePersisted()) {
+            persistFallbackTitle(thesaurus, state.displayTitle());
+        }
+        return state.displayTitle();
+    }
+
+    private TitlePersistState persistPrefLabelTitles(Thesaurus thesaurus, String displayTitle) {
+        boolean titlePersisted = false;
+        boolean sourceLangTitlePersisted = false;
+        Set<String> persistedLangs = new HashSet<>();
+        for (SKOSLabel label : skosXmlDocument.getConceptScheme().getLabelsList()) {
+            String updatedTitle = persistOnePrefLabel(thesaurus, label, persistedLangs);
+            if (updatedTitle == null) {
+                continue;
+            }
+            titlePersisted = true;
+            if (langueSource.equalsIgnoreCase(normalizeLangCode(label.getLanguage()))) {
+                sourceLangTitlePersisted = true;
+                displayTitle = updatedTitle;
+            }
+        }
+        return new TitlePersistState(titlePersisted, sourceLangTitlePersisted, displayTitle);
+    }
+
+    private String persistOnePrefLabel(Thesaurus thesaurus, SKOSLabel label, Set<String> persistedLangs) {
+        if (StringUtils.isBlank(label.getLabel()) || looksLikeUri(label.getLabel())) {
+            return null;
+        }
+        String labelLang = normalizeLangCode(label.getLanguage());
+        if (!persistedLangs.add(labelLang)) {
+            return null;
+        }
+        thesaurus.setTitle(label.getLabel().trim());
+        thesaurus.setLanguage(labelLang);
+        toolboxThesaurusPersistence.addTranslation(thesaurus);
+        return label.getLabel().trim();
+    }
+
+    private void persistFallbackTitle(Thesaurus thesaurus, String displayTitle) {
+        thesaurus.setTitle(displayTitle);
+        thesaurus.setLanguage(langueSource);
+        toolboxThesaurusPersistence.addTranslation(thesaurus);
+    }
+
+    private record TitlePersistState(boolean titlePersisted, boolean sourceLangTitlePersisted, String displayTitle) {
     }
 
     private void captureMasterLinkFromConceptScheme(SKOSResource conceptScheme, String localThesaurusId) {
@@ -316,34 +338,52 @@ public class ThesaurusEditionSkosImportEngine {
     }
 
     private String resolveImportDisplayTitle(SKOSResource conceptScheme, String dctermsTitle, String idTheso) {
-        if (conceptScheme.getLabelsList() != null) {
-            for (SKOSLabel label : conceptScheme.getLabelsList()) {
-                if (StringUtils.isBlank(label.getLabel()) || looksLikeUri(label.getLabel())) {
-                    continue;
-                }
-                if (langueSource.equalsIgnoreCase(normalizeLangCode(label.getLanguage()))) {
-                    return label.getLabel().trim();
-                }
-            }
-            for (SKOSLabel label : conceptScheme.getLabelsList()) {
-                if (StringUtils.isNotBlank(label.getLabel()) && !looksLikeUri(label.getLabel())) {
-                    return label.getLabel().trim();
-                }
-            }
+        String fromLabels = findDisplayTitleFromLabels(conceptScheme);
+        if (fromLabels != null) {
+            return fromLabels;
         }
         if (StringUtils.isNotBlank(dctermsTitle)) {
             return dctermsTitle.trim();
         }
-        if (conceptScheme.getThesaurus() != null && CollectionUtils.isNotEmpty(conceptScheme.getThesaurus().getDcElement())) {
-            for (DcElement dcElement : conceptScheme.getThesaurus().getDcElement()) {
-                if ("title".equalsIgnoreCase(dcElement.getName())
-                        && StringUtils.isNotBlank(dcElement.getValue())
-                        && !looksLikeUri(dcElement.getValue())) {
-                    return dcElement.getValue().trim();
-                }
-            }
+        String fromDc = findDisplayTitleFromDc(conceptScheme);
+        if (fromDc != null) {
+            return fromDc;
         }
         return "theso_" + idTheso;
+    }
+
+    private String findDisplayTitleFromLabels(SKOSResource conceptScheme) {
+        if (conceptScheme.getLabelsList() == null) {
+            return null;
+        }
+        for (SKOSLabel label : conceptScheme.getLabelsList()) {
+            if (StringUtils.isBlank(label.getLabel()) || looksLikeUri(label.getLabel())) {
+                continue;
+            }
+            if (langueSource.equalsIgnoreCase(normalizeLangCode(label.getLanguage()))) {
+                return label.getLabel().trim();
+            }
+        }
+        for (SKOSLabel label : conceptScheme.getLabelsList()) {
+            if (StringUtils.isNotBlank(label.getLabel()) && !looksLikeUri(label.getLabel())) {
+                return label.getLabel().trim();
+            }
+        }
+        return null;
+    }
+
+    private String findDisplayTitleFromDc(SKOSResource conceptScheme) {
+        if (conceptScheme.getThesaurus() == null || CollectionUtils.isEmpty(conceptScheme.getThesaurus().getDcElement())) {
+            return null;
+        }
+        for (DcElement dcElement : conceptScheme.getThesaurus().getDcElement()) {
+            if ("title".equalsIgnoreCase(dcElement.getName())
+                    && StringUtils.isNotBlank(dcElement.getValue())
+                    && !looksLikeUri(dcElement.getValue())) {
+                return dcElement.getValue().trim();
+            }
+        }
+        return null;
     }
 
     private String normalizeLangCode(String lang) {
@@ -453,117 +493,102 @@ public class ThesaurusEditionSkosImportEngine {
     }
 
     public void addGroups(List<SKOSResource> groupResource, String idTheso) {
-
         for (SKOSResource group : groupResource) {
-
-            SKOSNotation notation = null;
-            String idSubGroup;
-            String idSubConcept;
-
-            var idGroup = getIdFromUri(group.getUri());
-            if (idGroup == null || idGroup.isEmpty()) {
-                idGroup = group.getUri();
-            }
-
-            var notationList = group.getNotationList();
-            if (notationList != null && !notationList.isEmpty()) {
-                notation = notationList.get(0);
-            }
-
-            var notationValue = notation == null ? "" : notation.getNotation();
-
-            var type = switch (group.getProperty()) {
-                case SKOSProperty.COLLECTION -> "C";
-                case SKOSProperty.CONCEPT_GROUP -> "G";
-                case SKOSProperty.THEME -> "T";
-                default -> "MT";
-            };
-
-            String idArkHandle = null;
-            // option cochée
-            if (!StringUtils.isEmpty(selectedIdentifier)) {
-                if (selectedIdentifier.equalsIgnoreCase("ark")) {
-                    idArkHandle = getIdArkFromUri(group.getUri());
-                }
-                if (selectedIdentifier.equalsIgnoreCase(IDENTIFIER_HANDLE)) {
-                    idArkHandle = getIdHandleFromUri(group.getUri());
-                }
-                if (selectedIdentifier.equalsIgnoreCase("doi")) {
-                    idArkHandle = getIdDoiFromUri(group.getUri());
-                }
-            }
-
-            if (idArkHandle == null) {
-                idArkHandle = "";
-            }
-
-            if (StringUtils.isEmpty(formatDate)) {
-                formatDate = "dd-mm-yyyy";
-                dateFormat = new SimpleDateFormat(formatDate);
-            }
-            Date created = null;
-            Date modified = null;
-
-            for (SKOSDate sKOSDate : group.getDateList()) {
-                try {
-                    if (!StringUtils.isEmpty(sKOSDate.getDate())) {
-                        if (sKOSDate.getProperty() == SKOSProperty.CREATED) {
-                            created = dateFormat.parse(sKOSDate.getDate());
-                        }
-                        if (sKOSDate.getProperty() == SKOSProperty.MODIFIED) {
-                            modified = dateFormat.parse(sKOSDate.getDate());
-                        }
-                    }
-                } catch (ParseException ex) {
-                    Logger.getLogger(ThesaurusEditionSkosImportEngine.class.getName()).log(Level.SEVERE, null, ex);
-                }
-            }
-
-            try {
-                insertGroup(idGroup, idTheso, idArkHandle, type, notationValue, created, modified);
-            } catch (Exception ex) {
-                log.error(ex.getMessage());
-                insertGroup(idGroup, idTheso, idArkHandle, type, notationValue, created, modified);
-            }
-            idGroups.add(idGroup);
-
-            // group/sous_group — memberships différés (évite double insert + N+1)
-            for (SKOSRelation relation : group.getRelationsList()) {
-                int prop = relation.getProperty();
-                switch (prop) {
-                    case SKOSProperty.SUBGROUP:
-                        idSubGroup = getIdFromUri(relation.getTargetUri());
-                        addSubGroup(idGroup, idSubGroup, idTheso);
-                        break;
-                    case SKOSProperty.MEMBER:
-                        // Récupération de l'Id d'origine sauvegardé à l'import (idArk -> identifier)
-                        idSubConcept = getOriginalId(relation.getTargetUri());
-                        groupSubGroup.put(idSubConcept, idGroup);
-                        break;
-                    default:
-                        break;
-                }
-            }
-
-            for (SKOSLabel label : group.getLabelsList()) {
-                // ajouter les traductions des Groupes
-                ConceptGroupLabel conceptGroupLabel = new ConceptGroupLabel();
-                conceptGroupLabel.setIdgroup(idGroup);
-                conceptGroupLabel.setIdthesaurus(idTheso);
-                conceptGroupLabel.setLang(label.getLanguage());
-                conceptGroupLabel.setLexicalValue(label.getLabel());
-
-                addGroupTraduction(conceptGroupLabel, idUser);
-            }
-
-            for (SKOSDocumentation documentation : group.getDocumentationsList()) {
-                String noteTypeCode = toNoteTypeCode(documentation.getProperty());
-
-                addGroupNote(idGroup, documentation.getLanguage(), idTheso, documentation.getText(), noteTypeCode);
-            }
+            addOneGroup(group, idTheso);
         }
         addGroupConceptGroup(idTheso);
         flushPendingGroupConcepts();
+    }
+
+    private void addOneGroup(SKOSResource group, String idTheso) {
+        var idGroup = getIdFromUri(group.getUri());
+        if (idGroup == null || idGroup.isEmpty()) {
+            idGroup = group.getUri();
+        }
+        String notationValue = firstNotationValue(group);
+        String type = groupTypeCode(group.getProperty());
+        String idArkHandle = resolveSelectedIdentifier(group.getUri());
+        ParsedDates dates = parseSkosDates(group.getDateList());
+        try {
+            insertGroup(idGroup, idTheso, idArkHandle, type, notationValue, dates.created(), dates.modified());
+        } catch (Exception ex) {
+            log.error(ex.getMessage());
+            insertGroup(idGroup, idTheso, idArkHandle, type, notationValue, dates.created(), dates.modified());
+        }
+        idGroups.add(idGroup);
+        addGroupRelations(group, idGroup, idTheso);
+        addGroupLabels(group, idGroup, idTheso);
+        addGroupNotesFromResource(group, idGroup, idTheso);
+    }
+
+    private String firstNotationValue(SKOSResource group) {
+        var notationList = group.getNotationList();
+        if (notationList == null || notationList.isEmpty()) {
+            return "";
+        }
+        SKOSNotation notation = notationList.get(0);
+        return notation == null ? "" : notation.getNotation();
+    }
+
+    private String groupTypeCode(int property) {
+        return switch (property) {
+            case SKOSProperty.COLLECTION -> "C";
+            case SKOSProperty.CONCEPT_GROUP -> "G";
+            case SKOSProperty.THEME -> "T";
+            default -> "MT";
+        };
+    }
+
+    private String resolveSelectedIdentifier(String uri) {
+        if (StringUtils.isEmpty(selectedIdentifier)) {
+            return "";
+        }
+        String idArkHandle = null;
+        if (selectedIdentifier.equalsIgnoreCase("ark")) {
+            idArkHandle = getIdArkFromUri(uri);
+        }
+        if (selectedIdentifier.equalsIgnoreCase(IDENTIFIER_HANDLE)) {
+            idArkHandle = getIdHandleFromUri(uri);
+        }
+        if (selectedIdentifier.equalsIgnoreCase("doi")) {
+            idArkHandle = getIdDoiFromUri(uri);
+        }
+        return idArkHandle == null ? "" : idArkHandle;
+    }
+
+    private void addGroupRelations(SKOSResource group, String idGroup, String idTheso) {
+        for (SKOSRelation relation : group.getRelationsList()) {
+            addOneGroupRelation(relation, idGroup, idTheso);
+        }
+    }
+
+    private void addOneGroupRelation(SKOSRelation relation, String idGroup, String idTheso) {
+        int prop = relation.getProperty();
+        if (prop == SKOSProperty.SUBGROUP) {
+            addSubGroup(idGroup, getIdFromUri(relation.getTargetUri()), idTheso);
+            return;
+        }
+        if (prop == SKOSProperty.MEMBER) {
+            groupSubGroup.put(getOriginalId(relation.getTargetUri()), idGroup);
+        }
+    }
+
+    private void addGroupLabels(SKOSResource group, String idGroup, String idTheso) {
+        for (SKOSLabel label : group.getLabelsList()) {
+            ConceptGroupLabel conceptGroupLabel = new ConceptGroupLabel();
+            conceptGroupLabel.setIdgroup(idGroup);
+            conceptGroupLabel.setIdthesaurus(idTheso);
+            conceptGroupLabel.setLang(label.getLanguage());
+            conceptGroupLabel.setLexicalValue(label.getLabel());
+            addGroupTraduction(conceptGroupLabel, idUser);
+        }
+    }
+
+    private void addGroupNotesFromResource(SKOSResource group, String idGroup, String idTheso) {
+        for (SKOSDocumentation documentation : group.getDocumentationsList()) {
+            addGroupNote(idGroup, documentation.getLanguage(), idTheso, documentation.getText(),
+                    toNoteTypeCode(documentation.getProperty()));
+        }
     }
 
     private String toNoteTypeCode(int prop) {
@@ -626,145 +651,143 @@ public class ThesaurusEditionSkosImportEngine {
 
     private void addConceptV2(SKOSResource conceptResource, String idTheso, String forcedStatus) {
         String idConcept = resolveConceptId(conceptResource);
+        rememberOriginalUriIfFirst(conceptResource);
+        SkosLabelPayload labels = buildSkosLabels(conceptResource, idTheso, idConcept);
+        SkosRelationPayload relations = buildSkosRelations(conceptResource, idConcept);
+        ParsedDates dates = parseSkosDates(conceptResource.getDateList());
+        String gps = buildSkosGps(conceptResource);
+        conceptRepository.addNewConcept(
+                idTheso,
+                idConcept,
+                idUser,
+                resolveSkosConceptStatus(conceptResource, forcedStatus),
+                "concept",
+                lastNotation(conceptResource),
+                "ark".equalsIgnoreCase(selectedIdentifier) ? getIdArkFromUri(conceptResource.getUri()) : "",
+                relations.isTopConcept(),
+                IDENTIFIER_HANDLE.equalsIgnoreCase(selectedIdentifier) ? getIdHandleFromUri(conceptResource.getUri()) : "",
+                "doi".equalsIgnoreCase(selectedIdentifier) ? getIdDoiFromUri(conceptResource.getUri()) : "",
+                labels.prefTerm(),
+                relations.relations(),
+                null,
+                buildSkosNotes(conceptResource, idConcept),
+                labels.nonPrefTerm(),
+                buildSkosAlignments(conceptResource, idTheso, idConcept),
+                buildSkosImages(conceptResource),
+                buildSkosReplacedBy(conceptResource),
+                gps != null,
+                gps,
+                V2Dates.toSqlDate(dates.created()),
+                V2Dates.toSqlDate(dates.modified()),
+                buildSkosDcterms(conceptResource));
+        addExternalResources(idTheso, idConcept, conceptResource.getDcRelations());
+    }
 
-        String conceptStatus = "";
+    private String resolveSkosConceptStatus(SKOSResource conceptResource, String forcedStatus) {
         if (StringUtils.isNotEmpty(forcedStatus)) {
-            conceptStatus = forcedStatus;
-        } else if (conceptResource.getStatus() == SKOSProperty.DEPRECATED) {
-            conceptStatus = "dep";
+            return forcedStatus;
         }
+        return conceptResource.getStatus() == SKOSProperty.DEPRECATED ? "dep" : "";
+    }
 
-        // option cochée
-        String idArk = "";
-        if ("ark".equalsIgnoreCase(selectedIdentifier)) {
-            idArk = getIdArkFromUri(conceptResource.getUri());
+    private void rememberOriginalUriIfFirst(SKOSResource conceptResource) {
+        if (!isFirst) {
+            return;
         }
-
-        String idHandle = "";
-        if (IDENTIFIER_HANDLE.equalsIgnoreCase(selectedIdentifier)) {
-            idHandle = getIdHandleFromUri(conceptResource.getUri());
+        isFirst = false;
+        String uri = conceptResource.getUri().substring(0, conceptResource.getUri().lastIndexOf("/"));
+        if (uri == null || uri.isEmpty()) {
+            uri = conceptResource.getUri();
         }
+        setOriginalUri(uri);
+    }
 
-        String idDoi = "";
-        if ("doi".equalsIgnoreCase(selectedIdentifier)) {
-            idDoi = getIdDoiFromUri(conceptResource.getUri());
+    private String buildSkosImages(SKOSResource conceptResource) {
+        if (CollectionUtils.isEmpty(conceptResource.getNodeImages())) {
+            return null;
         }
+        StringBuilder imagesBuilder = new StringBuilder();
+        for (NodeImage nodeImage : conceptResource.getNodeImages()) {
+            if (StringUtils.isNotEmpty(nodeImage.getUri())) {
+                imagesBuilder.append(SEPERATEUR).append(nodeImage.getImageName())
+                        .append(SOUS_SEPERATEUR).append(nodeImage.getCopyRight())
+                        .append(SOUS_SEPERATEUR).append(nodeImage.getUri());
+            }
+        }
+        return imagesBuilder.isEmpty() ? null : imagesBuilder.substring(SEPERATEUR.length());
+    }
 
+    private String buildSkosAlignments(SKOSResource conceptResource, String idTheso, String idConcept) {
+        if (CollectionUtils.isEmpty(conceptResource.getMatchList())) {
+            return null;
+        }
+        StringBuilder alignementsBuilder = new StringBuilder();
+        for (SKOSMatch match : conceptResource.getMatchList()) {
+            int idType = switch (match.getProperty()) {
+                case SKOSProperty.CLOSE_MATCH -> 2;
+                case SKOSProperty.EXACT_MATCH -> 1;
+                case SKOSProperty.BROAD_MATCH -> 3;
+                case SKOSProperty.NARROWER_MATCH -> 5;
+                case SKOSProperty.RELATED_MATCH -> 4;
+                default -> -1;
+            };
+            alignementsBuilder.append(SEPERATEUR).append(idUser).append(SOUS_SEPERATEUR).append("")
+                    .append(SOUS_SEPERATEUR).append("")
+                    .append(SOUS_SEPERATEUR).append(match.getValue()).append(SOUS_SEPERATEUR).append(idType)
+                    .append(SOUS_SEPERATEUR).append(idTheso).append(SOUS_SEPERATEUR).append(idConcept);
+        }
+        return alignementsBuilder.isEmpty() ? null : alignementsBuilder.substring(SEPERATEUR.length());
+    }
+
+    private SkosLabelPayload buildSkosLabels(SKOSResource conceptResource, String idTheso, String idConcept) {
+        if (CollectionUtils.isEmpty(conceptResource.getLabelsList())) {
+            return new SkosLabelPayload(null, null);
+        }
+        StringBuilder nonPrefTermBuilder = new StringBuilder();
+        StringBuilder prefTermBuilder = new StringBuilder();
+        for (SKOSLabel label : conceptResource.getLabelsList()) {
+            appendSkosLabel(label, idTheso, idConcept, prefTermBuilder, nonPrefTermBuilder);
+        }
+        return new SkosLabelPayload(
+                prefTermBuilder.isEmpty() ? null : prefTermBuilder.substring(SEPERATEUR.length()),
+                nonPrefTermBuilder.isEmpty() ? null : nonPrefTermBuilder.substring(SEPERATEUR.length())
+        );
+    }
+
+    private void appendSkosLabel(SKOSLabel label, String idTheso, String idConcept,
+                                 StringBuilder prefTermBuilder, StringBuilder nonPrefTermBuilder) {
+        if (label.getProperty() == SKOSProperty.PREF_LABEL) {
+            prefTermBuilder.append(SEPERATEUR).append(label.getLabel()).append(SOUS_SEPERATEUR).append(label.getLanguage());
+        } else {
+            String status = null;
+            boolean hiden = false;
+            if (label.getProperty() == SKOSProperty.ALT_LABEL) {
+                status = "USE";
+            } else if (label.getProperty() == SKOSProperty.HIDDEN_LABEL) {
+                status = "Hidden";
+                hiden = true;
+            }
+            nonPrefTermBuilder.append(SEPERATEUR).append(idConcept)
+                    .append(SOUS_SEPERATEUR).append(label.getLabel())
+                    .append(SOUS_SEPERATEUR).append(label.getLanguage())
+                    .append(SOUS_SEPERATEUR).append(idTheso)
+                    .append(SOUS_SEPERATEUR).append(idUser)
+                    .append(SOUS_SEPERATEUR).append(status)
+                    .append(SOUS_SEPERATEUR).append(hiden);
+        }
+        appendNewLang(label.getLanguage());
+    }
+
+    private SkosRelationPayload buildSkosRelations(SKOSResource conceptResource, String idConcept) {
         boolean isTopConcept = true;
-
-        // IMAGES
-        //-- 'url1##url2'
-        String images = null;
-        if (CollectionUtils.isNotEmpty(conceptResource.getNodeImages())) {
-            StringBuilder imagesBuilder = new StringBuilder();
-            for (NodeImage nodeImage : conceptResource.getNodeImages()) {
-                if (StringUtils.isNotEmpty(nodeImage.getUri())) {
-                    imagesBuilder.append(SEPERATEUR).append(nodeImage.getImageName())
-                            .append(SOUS_SEPERATEUR).append(nodeImage.getCopyRight())
-                            .append(SOUS_SEPERATEUR).append(nodeImage.getUri());
-                }
-            }
-            if (!imagesBuilder.isEmpty()) {
-                images = imagesBuilder.substring(SEPERATEUR.length());
-            }
-        }
-
-        // ALIGNEMENT
-        //-- 'author@concept_target@thesaurus_target@uri_target@alignement_id_type@internal_id_thesaurus@internal_id_concept'
-        String alignements = null;
-        if (CollectionUtils.isNotEmpty(conceptResource.getMatchList())) {
-            StringBuilder alignementsBuilder = new StringBuilder();
-            for (SKOSMatch match : conceptResource.getMatchList()) {
-                int idType = switch (match.getProperty()) {
-                    case SKOSProperty.CLOSE_MATCH -> 2;
-                    case SKOSProperty.EXACT_MATCH -> 1;
-                    case SKOSProperty.BROAD_MATCH -> 3;
-                    case SKOSProperty.NARROWER_MATCH -> 5;
-                    case SKOSProperty.RELATED_MATCH -> 4;
-                    default -> -1;
-                };
-
-                alignementsBuilder.append(SEPERATEUR).append(idUser).append(SOUS_SEPERATEUR).append("")
-                        .append(SOUS_SEPERATEUR).append("")
-                        .append(SOUS_SEPERATEUR).append(match.getValue()).append(SOUS_SEPERATEUR).append(idType)
-                        .append(SOUS_SEPERATEUR).append(idTheso).append(SOUS_SEPERATEUR).append(idConcept);
-            }
-            if (!alignementsBuilder.isEmpty()) {
-                alignements = alignementsBuilder.substring(SEPERATEUR.length());
-            }
-        }
-
-        //Non Pref Term
-        //-- 'id_term@lexicalValue@lang@id_thesaurus@source@status@hiden'
-        String nonPrefTerm = null;
-        String prefTerm = null;
-        if (CollectionUtils.isNotEmpty(conceptResource.getLabelsList())) {
-            StringBuilder nonPrefTermBuilder = new StringBuilder();
-            StringBuilder prefTermBuilder = new StringBuilder();
-            for (SKOSLabel label : conceptResource.getLabelsList()) {
-                if (label.getProperty() == SKOSProperty.PREF_LABEL) {
-                    prefTermBuilder.append(SEPERATEUR).append(label.getLabel()).append(SOUS_SEPERATEUR).append(label.getLanguage());
-                } else {
-                    String status = null;
-                    boolean hiden = false;
-                    if (label.getProperty() == SKOSProperty.ALT_LABEL) {
-                        status = "USE";
-                    } else if (label.getProperty() == SKOSProperty.HIDDEN_LABEL) {
-                        status = "Hidden";
-                        hiden = true;
-                    }
-                    nonPrefTermBuilder.append(SEPERATEUR).append(idConcept)
-                            .append(SOUS_SEPERATEUR).append(label.getLabel())
-                            .append(SOUS_SEPERATEUR).append(label.getLanguage())
-                            .append(SOUS_SEPERATEUR).append(idTheso)
-                            .append(SOUS_SEPERATEUR).append(idUser)
-                            .append(SOUS_SEPERATEUR).append(status)
-                            .append(SOUS_SEPERATEUR).append(hiden);
-                }
-                appendNewLang(label.getLanguage());
-            }
-            if (!nonPrefTermBuilder.isEmpty()) {
-                nonPrefTerm = nonPrefTermBuilder.substring(SEPERATEUR.length());
-            }
-            if (!prefTermBuilder.isEmpty()) {
-                prefTerm = prefTermBuilder.substring(SEPERATEUR.length());
-            }
-        }
-
-        //Relation
-        //-- 'id_concept1@role@id_concept2'
         String relations = null;
-        boolean isSchemeTopConcept = hasTopConcceptList.contains(conceptResource.getUri());
         if (CollectionUtils.isNotEmpty(conceptResource.getRelationsList())) {
             StringBuilder relationsBuilder = new StringBuilder();
             for (SKOSRelation relation : conceptResource.getRelationsList()) {
-                String role = switch (relation.getProperty()) {
-                    case SKOSProperty.NARROWER -> "NT";
-                    case SKOSProperty.NARROWER_GENERIC -> "NTG";
-                    case SKOSProperty.NARROWER_PARTITIVE -> "NTP";
-                    case SKOSProperty.NARROWER_INSTANTIAL -> "NTI";
-                    case SKOSProperty.BROADER -> {
-                        isTopConcept = false;
-                        yield "BT";
-                    }
-                    case SKOSProperty.BROADER_GENERIC -> {
-                        isTopConcept = false;
-                        yield "BTG";
-                    }
-                    case SKOSProperty.BROADER_INSTANTIAL -> {
-                        isTopConcept = false;
-                        yield "BTI";
-                    }
-                    case SKOSProperty.BROADER_PARTITIVE -> {
-                        isTopConcept = false;
-                        yield "BTP";
-                    }
-                    case SKOSProperty.RELATED -> "RT";
-                    case SKOSProperty.RELATED_HAS_PART -> "RHP";
-                    case SKOSProperty.RELATED_PART_OF -> "RPO";
-                    default -> "";
-                };
-
+                String role = roleForRelation(relation.getProperty());
+                if (isBroaderRole(role)) {
+                    isTopConcept = false;
+                }
                 if (!role.isEmpty()) {
                     relationsBuilder.append(SEPERATEUR).append(idConcept).append(SOUS_SEPERATEUR).append(role)
                             .append(SOUS_SEPERATEUR).append(getOriginalId(relation.getTargetUri()));
@@ -774,139 +797,109 @@ public class ThesaurusEditionSkosImportEngine {
                 relations = relationsBuilder.substring(SEPERATEUR.length());
             }
         }
-        if (isSchemeTopConcept) {
+        if (hasTopConcceptList.contains(conceptResource.getUri())) {
             isTopConcept = true;
         }
+        return new SkosRelationPayload(relations, isTopConcept);
+    }
 
-        //CustomRelation
-        String customRelations = null;
+    private String roleForRelation(int property) {
+        return switch (property) {
+            case SKOSProperty.NARROWER -> "NT";
+            case SKOSProperty.NARROWER_GENERIC -> "NTG";
+            case SKOSProperty.NARROWER_PARTITIVE -> "NTP";
+            case SKOSProperty.NARROWER_INSTANTIAL -> "NTI";
+            case SKOSProperty.BROADER -> "BT";
+            case SKOSProperty.BROADER_GENERIC -> "BTG";
+            case SKOSProperty.BROADER_INSTANTIAL -> "BTI";
+            case SKOSProperty.BROADER_PARTITIVE -> "BTP";
+            case SKOSProperty.RELATED -> "RT";
+            case SKOSProperty.RELATED_HAS_PART -> "RHP";
+            case SKOSProperty.RELATED_PART_OF -> "RPO";
+            default -> "";
+        };
+    }
 
-        //Notes
-        //-- 'value@typeCode@lang@id_term'
-        String notes = null;
-        if (CollectionUtils.isNotEmpty(conceptResource.getDocumentationsList())) {
-            StringBuilder notesBuilder = new StringBuilder();
-            for (SKOSDocumentation documentation : conceptResource.getDocumentationsList()) {
-                String noteTypeCode = toNoteTypeCode(documentation.getProperty());
+    private boolean isBroaderRole(String role) {
+        return "BT".equals(role) || "BTG".equals(role) || "BTI".equals(role) || "BTP".equals(role);
+    }
 
-                notesBuilder.append(SEPERATEUR).append(documentation.getText())
-                        .append(SOUS_SEPERATEUR).append(noteTypeCode)
-                        .append(SOUS_SEPERATEUR).append(documentation.getLanguage())
-                        .append(SOUS_SEPERATEUR).append(idConcept);
-            }
-            if (!notesBuilder.isEmpty()) {
-                notes = notesBuilder.substring(SEPERATEUR.length());
-            }
+    private String buildSkosNotes(SKOSResource conceptResource, String idConcept) {
+        if (CollectionUtils.isEmpty(conceptResource.getDocumentationsList())) {
+            return null;
         }
+        StringBuilder notesBuilder = new StringBuilder();
+        for (SKOSDocumentation documentation : conceptResource.getDocumentationsList()) {
+            notesBuilder.append(SEPERATEUR).append(documentation.getText())
+                    .append(SOUS_SEPERATEUR).append(toNoteTypeCode(documentation.getProperty()))
+                    .append(SOUS_SEPERATEUR).append(documentation.getLanguage())
+                    .append(SOUS_SEPERATEUR).append(idConcept);
+        }
+        return notesBuilder.isEmpty() ? null : notesBuilder.substring(SEPERATEUR.length());
+    }
 
+    private String lastNotation(SKOSResource conceptResource) {
         String notationConcept = "";
         if (CollectionUtils.isNotEmpty(conceptResource.getNotationList())) {
             for (SKOSNotation notation : conceptResource.getNotationList()) {
                 notationConcept = notation.getNotation();
             }
         }
+        return notationConcept;
+    }
 
-        if (isFirst) {
-            isFirst = false;
-            String uri = conceptResource.getUri().substring(0, conceptResource.getUri().lastIndexOf("/"));
-            if (uri == null || uri.isEmpty()) {
-                uri = conceptResource.getUri();
-            }
-            setOriginalUri(uri);
+    private String buildSkosReplacedBy(SKOSResource conceptResource) {
+        if (CollectionUtils.isEmpty(conceptResource.getsKOSReplaces())) {
+            return null;
         }
-
-        String isReplacedBy = null;
-        if (CollectionUtils.isNotEmpty(conceptResource.getsKOSReplaces())) {
-            StringBuilder isReplacedByBuilder = new StringBuilder();
-            for (SKOSReplaces replace : conceptResource.getsKOSReplaces()) {
-                if (SKOSProperty.IS_REPLACED_BY == replace.getProperty()) {
-                    isReplacedByBuilder.append(SEPERATEUR).append(getOriginalId(replace.getTargetUri()));
-                }
-            }
-            if (!isReplacedByBuilder.isEmpty()) {
-                isReplacedBy = isReplacedByBuilder.substring(SEPERATEUR.length());
+        StringBuilder isReplacedByBuilder = new StringBuilder();
+        for (SKOSReplaces replace : conceptResource.getsKOSReplaces()) {
+            if (SKOSProperty.IS_REPLACED_BY == replace.getProperty()) {
+                isReplacedByBuilder.append(SEPERATEUR).append(getOriginalId(replace.getTargetUri()));
             }
         }
+        return isReplacedByBuilder.isEmpty() ? null : isReplacedByBuilder.substring(SEPERATEUR.length());
+    }
 
-        Date created = null;
-        Date modified = null;
-
-        if (StringUtils.isEmpty(formatDate)) {
-            formatDate = "dd-mm-yyyy";
-            dateFormat = new SimpleDateFormat(formatDate);
-        }
-        try {
-            for (SKOSDate date : conceptResource.getDateList()) {
-                if (date.getDate() != null && !date.getDate().isEmpty()) {
-                    if (date.getProperty() == SKOSProperty.CREATED) {
-                        created = dateFormat.parse(date.getDate());
-                    }
-                    if ((date.getProperty() == SKOSProperty.MODIFIED)) {
-                        modified = dateFormat.parse(date.getDate());
-                    }
-                }
-            }
-        } catch (ParseException ex) {
-            Logger.getLogger(ThesaurusEditionSkosImportEngine.class.getName()).log(Level.SEVERE, null, ex);
-        }
-
+    private String buildSkosDcterms(SKOSResource conceptResource) {
         StringBuilder dctermsBuilder = new StringBuilder();
         for (SKOSAgent agent : conceptResource.getAgentList()) {
-            switch (agent.getProperty()) {
-                case SKOSProperty.CREATOR:
-                    if (!dctermsBuilder.isEmpty()) {
-                        dctermsBuilder.append("##");
-                    }
-                    dctermsBuilder.append("creator@@").append(agent.getAgent()).append("@@fr");
-                    break;
-                case SKOSProperty.CONTRIBUTOR:
-                    if (!dctermsBuilder.isEmpty()) {
-                        dctermsBuilder.append("##");
-                    }
-                    dctermsBuilder.append("contributor@@").append(agent.getAgent()).append("@@fr");
-                    break;
-                default:
-                    break;
-            }
+            appendSkosAgent(dctermsBuilder, agent);
         }
-        String dcterms = dctermsBuilder.isEmpty() ? null : dctermsBuilder.toString();
+        return dctermsBuilder.isEmpty() ? null : dctermsBuilder.toString();
+    }
 
-        String gps = null;
-        if (CollectionUtils.isNotEmpty(conceptResource.getGpsCoordinates())) {
-            StringBuilder gpsBuilder = new StringBuilder();
-            for (SKOSGPSCoordinates gpsValue : conceptResource.getGpsCoordinates()) {
-                gpsBuilder.append(SEPERATEUR).append(gpsValue.getLat()).append(SOUS_SEPERATEUR).append(gpsValue.getLon());
+    private void appendSkosAgent(StringBuilder dctermsBuilder, SKOSAgent agent) {
+        if (agent.getProperty() == SKOSProperty.CREATOR) {
+            if (!dctermsBuilder.isEmpty()) {
+                dctermsBuilder.append("##");
             }
-
-            gps = gpsBuilder.substring(SEPERATEUR.length());
+            dctermsBuilder.append("creator@@").append(agent.getAgent()).append("@@fr");
+            return;
         }
+        if (agent.getProperty() == SKOSProperty.CONTRIBUTOR) {
+            if (!dctermsBuilder.isEmpty()) {
+                dctermsBuilder.append("##");
+            }
+            dctermsBuilder.append("contributor@@").append(agent.getAgent()).append("@@fr");
+        }
+    }
 
-        conceptRepository.addNewConcept(
-                idTheso,
-                idConcept,
-                idUser,
-                conceptStatus,
-                "concept",
-                notationConcept,
-                idArk,
-                isTopConcept,
-                idHandle,
-                idDoi,
-                prefTerm,
-                relations,
-                customRelations,
-                notes,
-                nonPrefTerm,
-                alignements,
-                images,
-                isReplacedBy,
-                gps != null,
-                gps,
-                toSqlDate(created),
-                toSqlDate(modified),
-                dcterms);
+    private String buildSkosGps(SKOSResource conceptResource) {
+        if (CollectionUtils.isEmpty(conceptResource.getGpsCoordinates())) {
+            return null;
+        }
+        StringBuilder gpsBuilder = new StringBuilder();
+        for (SKOSGPSCoordinates gpsValue : conceptResource.getGpsCoordinates()) {
+            gpsBuilder.append(SEPERATEUR).append(gpsValue.getLat()).append(SOUS_SEPERATEUR).append(gpsValue.getLon());
+        }
+        return gpsBuilder.substring(SEPERATEUR.length());
+    }
 
-        addExternalResources(idTheso, idConcept, conceptResource.getDcRelations());
+    private record SkosLabelPayload(String prefTerm, String nonPrefTerm) {
+    }
+
+    private record SkosRelationPayload(String relations, boolean isTopConcept) {
     }
 
     private void addExternalResources(String idTheso, String idConcept, ArrayList<String> externalRelations) {
@@ -945,70 +938,73 @@ public class ThesaurusEditionSkosImportEngine {
     }
 
     public void addFacetsV2(List<SKOSResource> facetResources, String idTheso) {
-
         for (SKOSResource facetSKOSResource : facetResources) {
-
-            String idFacet = getIdFromUri(facetSKOSResource.getUri());
-            if (idFacet == null) {
-                continue;
-            }
-
-            if (CollectionUtils.isEmpty(facetSKOSResource.getLabelsList())) {
-                continue;
-            }
-
-            String idConceptParent = null;
-            for (SKOSRelation relation : facetSKOSResource.getRelationsList()) {
-                if (relation.getProperty() == SKOSProperty.SUPER_ORDINATE) {
-                    idConceptParent = getOriginalId(relation.getTargetUri());
-                    break;
-                }
-            }
-            if (idConceptParent == null) {
-                continue;
-            }
-
-            StringBuilder labels = new StringBuilder();
-            for (SKOSLabel sKOSLabel : facetSKOSResource.getLabelsList()) {
-                labels.append(SEPERATEUR).append(sKOSLabel.getLabel()).append(SOUS_SEPERATEUR).append(sKOSLabel.getLanguage());
-            }
-            String labelsValue = labels.isEmpty() ? "" : labels.substring(2);
-
-            String membres = null;
-            if (CollectionUtils.isNotEmpty(facetSKOSResource.getRelationsList())) {
-                StringBuilder membresBuilder = new StringBuilder();
-                for (SKOSRelation member : facetSKOSResource.getRelationsList()) {
-                    if (member.getProperty() == SKOSProperty.MEMBER) {
-                        membresBuilder.append(SEPERATEUR).append(getOriginalId(member.getTargetUri()));
-                    }
-                }
-                if (!membresBuilder.isEmpty()) {
-                    membres = membresBuilder.substring(2);
-                }
-            }
-
-            //Notes
-            //-- 'value@typeCode@lang@id_term'
-            String notes = null;
-            if (CollectionUtils.isNotEmpty(facetSKOSResource.getDocumentationsList())) {
-                StringBuilder notesBuilder = new StringBuilder();
-                for (SKOSDocumentation documentation : facetSKOSResource.getDocumentationsList()) {
-                    String noteTypeCode = toNoteTypeCode(documentation.getProperty());
-
-                    notesBuilder.append(SEPERATEUR).append(documentation.getText())
-                            .append(SOUS_SEPERATEUR).append(noteTypeCode)
-                            .append(SOUS_SEPERATEUR).append(documentation.getLanguage())
-                            .append(SOUS_SEPERATEUR).append(idFacet);
-                }
-                if (!notesBuilder.isEmpty()) {
-                    notes = notesBuilder.substring(SEPERATEUR.length());
-                }
-            }
-
-            String safeLabels = StringUtils.isNotEmpty(labelsValue) ? labelsValue.replace("'", "''") : null;
-            String safeNotes  = StringUtils.isNotEmpty(notes) ? notes.replace("'", "''") : null;
-            conceptFacetRepository.addFacet(idFacet, idUser, idTheso, idConceptParent, safeLabels, membres, safeNotes);
+            addOneFacet(facetSKOSResource, idTheso);
         }
+    }
+
+    private void addOneFacet(SKOSResource facetSKOSResource, String idTheso) {
+        String idFacet = getIdFromUri(facetSKOSResource.getUri());
+        if (idFacet == null) {
+            return;
+        }
+        if (CollectionUtils.isEmpty(facetSKOSResource.getLabelsList())) {
+            return;
+        }
+        String idConceptParent = findSuperOrdinate(facetSKOSResource);
+        if (idConceptParent == null) {
+            return;
+        }
+        String labelsValue = buildFacetLabels(facetSKOSResource);
+        String notes = buildFacetNotes(facetSKOSResource, idFacet);
+        String safeLabels = StringUtils.isNotEmpty(labelsValue) ? labelsValue.replace("'", "''") : null;
+        String safeNotes = StringUtils.isNotEmpty(notes) ? notes.replace("'", "''") : null;
+        conceptFacetRepository.addFacet(idFacet, idUser, idTheso, idConceptParent, safeLabels,
+                buildFacetMembers(facetSKOSResource), safeNotes);
+    }
+
+    private String findSuperOrdinate(SKOSResource facetSKOSResource) {
+        for (SKOSRelation relation : facetSKOSResource.getRelationsList()) {
+            if (relation.getProperty() == SKOSProperty.SUPER_ORDINATE) {
+                return getOriginalId(relation.getTargetUri());
+            }
+        }
+        return null;
+    }
+
+    private String buildFacetLabels(SKOSResource facetSKOSResource) {
+        StringBuilder labels = new StringBuilder();
+        for (SKOSLabel sKOSLabel : facetSKOSResource.getLabelsList()) {
+            labels.append(SEPERATEUR).append(sKOSLabel.getLabel()).append(SOUS_SEPERATEUR).append(sKOSLabel.getLanguage());
+        }
+        return labels.isEmpty() ? "" : labels.substring(2);
+    }
+
+    private String buildFacetMembers(SKOSResource facetSKOSResource) {
+        if (CollectionUtils.isEmpty(facetSKOSResource.getRelationsList())) {
+            return null;
+        }
+        StringBuilder membresBuilder = new StringBuilder();
+        for (SKOSRelation member : facetSKOSResource.getRelationsList()) {
+            if (member.getProperty() == SKOSProperty.MEMBER) {
+                membresBuilder.append(SEPERATEUR).append(getOriginalId(member.getTargetUri()));
+            }
+        }
+        return membresBuilder.isEmpty() ? null : membresBuilder.substring(2);
+    }
+
+    private String buildFacetNotes(SKOSResource facetSKOSResource, String idFacet) {
+        if (CollectionUtils.isEmpty(facetSKOSResource.getDocumentationsList())) {
+            return null;
+        }
+        StringBuilder notesBuilder = new StringBuilder();
+        for (SKOSDocumentation documentation : facetSKOSResource.getDocumentationsList()) {
+            notesBuilder.append(SEPERATEUR).append(documentation.getText())
+                    .append(SOUS_SEPERATEUR).append(toNoteTypeCode(documentation.getProperty()))
+                    .append(SOUS_SEPERATEUR).append(documentation.getLanguage())
+                    .append(SOUS_SEPERATEUR).append(idFacet);
+        }
+        return notesBuilder.isEmpty() ? null : notesBuilder.substring(SEPERATEUR.length());
     }
 
     private void appendNewLang(String idLang) {
@@ -1022,41 +1018,33 @@ public class ThesaurusEditionSkosImportEngine {
     }
 
     private String getIdFromUri(String uri) {
-        boolean pass = false;
+        String extracted = extractQueryId(uri, "idc=");
+        if (extracted == null) {
+            extracted = extractQueryId(uri, "idg=");
+        }
+        if (extracted == null) {
+            extracted = extractQueryId(uri, "idf=");
+        }
+        if (extracted == null) {
+            extracted = uri.contains("#")
+                    ? uri.substring(uri.indexOf("#") + 1)
+                    : uri.substring(uri.lastIndexOf("/") + 1);
+        }
+        return fr.cnrs.opentheso.utils.StringUtils.normalizeStringForIdentifier(extracted);
+    }
 
-        if (uri.contains("idc=")) {
-            if (uri.contains("&")) {
-                String str = uri.substring(uri.indexOf("idc="));
-                uri = str.substring(4, str.indexOf("&"));
-            } else {
-                uri = uri.substring(uri.indexOf("idc=") + 4);
-            }
-            pass = true;
+    private String extractQueryId(String uri, String key) {
+        if (!uri.contains(key)) {
+            return null;
         }
-        if (!pass && uri.contains("idg=")) {
-            if (uri.contains("&")) {
-                uri = uri.substring(uri.indexOf("idg=") + 4, uri.indexOf("&"));
-            } else {
-                uri = uri.substring(uri.indexOf("idg=") + 4);
-            }
-            pass = true;
+        if ("idc=".equals(key) && uri.contains("&")) {
+            String str = uri.substring(uri.indexOf(key));
+            return str.substring(4, str.indexOf("&"));
         }
-        if (!pass && uri.contains("idf=")) {
-            if (uri.contains("&")) {
-                uri = uri.substring(uri.indexOf("idf=") + 4, uri.indexOf("&"));
-            } else {
-                uri = uri.substring(uri.indexOf("idf=") + 4);
-            }
-            pass = true;
+        if (uri.contains("&")) {
+            return uri.substring(uri.indexOf(key) + key.length(), uri.indexOf("&"));
         }
-        if (!pass) {
-            if (uri.contains("#")) {
-                uri = uri.substring(uri.indexOf("#") + 1);
-            } else {
-                uri = uri.substring(uri.lastIndexOf("/") + 1);
-            }
-        }
-        return fr.cnrs.opentheso.utils.StringUtils.normalizeStringForIdentifier(uri);
+        return uri.substring(uri.indexOf(key) + key.length());
     }
 
     private String getOriginalId(String uri) {
@@ -1161,8 +1149,8 @@ public class ThesaurusEditionSkosImportEngine {
     }
 
     private void insertGroup(String idGroup, String idThesaurus, String idArk, String typeCode, String notation,
-                             Date created, Date modified) {
-        // Import nouveau thésaurus : pas de find préalable
+                             Instant created, Instant modified) {
+        Instant now = V2Dates.nowInstant();
         conceptGroupRepository.save(ConceptGroup.builder()
                 .id(conceptGroupRepository.getNextConceptGroupSequence().intValue())
                 .idGroup(idGroup.toLowerCase())
@@ -1172,8 +1160,8 @@ public class ThesaurusEditionSkosImportEngine {
                 .notation(notation)
                 .idHandle("")
                 .idDoi("")
-                .created(created == null ? new Date() : created)
-                .modified(modified == null ? new Date() : modified)
+                .created(V2Dates.toUtilDate(created == null ? now : created))
+                .modified(V2Dates.toUtilDate(modified == null ? now : modified))
                 .build());
     }
 
@@ -1209,8 +1197,8 @@ public class ThesaurusEditionSkosImportEngine {
                 .lang(conceptGroupLabel.getLang())
                 .idThesaurus(conceptGroupLabel.getIdthesaurus())
                 .idGroup(conceptGroupLabel.getIdgroup().toLowerCase())
-                .created(new Date())
-                .modified(new Date())
+                .created(V2Dates.nowUtilDate())
+                .modified(V2Dates.nowUtilDate())
                 .build());
         conceptGroupLabelHistoriqueRepository.save(ConceptGroupLabelHistorique.builder()
                 .lexicalValue(conceptGroupLabel.getLexicalValue())
@@ -1218,7 +1206,7 @@ public class ThesaurusEditionSkosImportEngine {
                 .idThesaurus(conceptGroupLabel.getIdthesaurus())
                 .idGroup(conceptGroupLabel.getIdgroup().toLowerCase())
                 .idUser(userId)
-                .modified(new Date())
+                .modified(V2Dates.nowUtilDate())
                 .build());
     }
 
@@ -1235,13 +1223,65 @@ public class ThesaurusEditionSkosImportEngine {
                 .identifier(idGroup)
                 .noteSource("")
                 .idUser(idUser)
-                .created(new Date())
-                .modified(new Date())
+                .created(V2Dates.nowUtilDate())
+                .modified(V2Dates.nowUtilDate())
                 .build());
     }
 
-    /** PostgreSQL attend des {@code date} ; {@link java.util.Date} est envoyé en type unknown. */
-    private static java.sql.Date toSqlDate(Date date) {
-        return date == null ? null : new java.sql.Date(date.getTime());
+    private ParsedDates parseSkosDates(List<SKOSDate> dates) {
+        ensureDateFormatter();
+        Instant created = null;
+        Instant modified = null;
+        if (dates == null) {
+            return new ParsedDates(null, null);
+        }
+        for (SKOSDate date : dates) {
+            if (date.getDate() == null || date.getDate().isEmpty()) {
+                continue;
+            }
+            Instant parsed = parseToInstant(date.getDate());
+            if (date.getProperty() == SKOSProperty.CREATED) {
+                created = parsed;
+            }
+            if (date.getProperty() == SKOSProperty.MODIFIED) {
+                modified = parsed;
+            }
+        }
+        return new ParsedDates(created, modified);
+    }
+
+    private void ensureDateFormatter() {
+        if (dateFormatter != null) {
+            return;
+        }
+        if (StringUtils.isEmpty(formatDate)) {
+            formatDate = "dd-mm-yyyy";
+        }
+        dateFormatter = DateTimeFormatter.ofPattern(formatDate);
+    }
+
+    private Instant parseToInstant(String value) {
+        if (StringUtils.isBlank(value)) {
+            return null;
+        }
+        try {
+            TemporalAccessor parsed = dateFormatter.parse(value);
+            if (parsed.isSupported(ChronoField.INSTANT_SECONDS)) {
+                return Instant.from(parsed);
+            }
+            if (parsed.isSupported(ChronoField.EPOCH_DAY)) {
+                return LocalDate.from(parsed).atStartOfDay(V2Dates.zone()).toInstant();
+            }
+            return LocalDateTime.from(parsed).atZone(V2Dates.zone()).toInstant();
+        } catch (DateTimeParseException ex) {
+            Logger.getLogger(ThesaurusEditionSkosImportEngine.class.getName()).log(Level.SEVERE, null, ex);
+            return null;
+        }
+    }
+
+
+    /** PostgreSQL attend des {@code date} ; {@link Instant} est converti en type date. */
+
+    private record ParsedDates(Instant created, Instant modified) {
     }
 }

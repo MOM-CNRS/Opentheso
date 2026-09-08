@@ -5,13 +5,13 @@ import fr.cnrs.opentheso.v2.shared.repository.projection.EditionThesaurusDetails
 import fr.cnrs.opentheso.v2.shared.repository.projection.EditionThesaurusRow;
 import fr.cnrs.opentheso.v2.shared.repository.projection.LanguageOptionRow;
 import fr.cnrs.opentheso.v2.shared.repository.projection.ProjectSummaryRow;
+import fr.cnrs.opentheso.v2.shared.time.V2Dates;
 import jakarta.persistence.EntityManager;
 import jakarta.persistence.PersistenceContext;
 import org.apache.commons.lang3.StringUtils;
 import org.springframework.stereotype.Repository;
 import org.springframework.transaction.annotation.Transactional;
 
-import java.sql.Timestamp;
 import java.time.LocalDateTime;
 import java.util.List;
 import java.util.Optional;
@@ -228,17 +228,16 @@ public class EditionQueryRepository {
     }
 
     private EditionThesaurusRow toEditionThesaurusRow(Object[] row) {
-        LocalDateTime createdAt = null;
-        if (row[3] instanceof Timestamp timestamp) {
-            createdAt = timestamp.toLocalDateTime();
-        } else if (row[3] instanceof LocalDateTime localDateTime) {
-            createdAt = localDateTime;
-        }
+        LocalDateTime createdAt = toLocalDateTime(row[3]);
         return new EditionThesaurusRow(
                 (String) row[0],
                 row[1] != null ? (String) row[1] : (String) row[0],
                 row[2] != null && (Boolean) row[2],
                 createdAt
         );
+    }
+
+    private static LocalDateTime toLocalDateTime(Object value) {
+        return V2Dates.toLocalDateTime(value);
     }
 }

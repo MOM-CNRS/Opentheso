@@ -77,7 +77,7 @@ class CandidatReadServiceTest {
         candidat.setLang("fr");
         candidat.setUserId(5);
 
-        var parsed = CandidatDetailJsonParser.parse(
+        var parsed = CandidatDetailJsonParser.parse(new CandidatDetailJsonParser.DetailJsonRequest(
                 "[{\"id\":\"G1\",\"value\":\"Domaine\"}]",
                 "[{\"id\":\"BT1\",\"value\":\"Parent\"}]",
                 "[]",
@@ -86,7 +86,7 @@ class CandidatReadServiceTest {
                 "[]",
                 "[]",
                 "[]"
-        );
+        ));
         when(candidatQueryRepository.findCandidateDetailBundle("TH1", "C1", "fr", 5))
                 .thenReturn(Optional.of(new CandidatDetailBundle("T1", true, parsed)));
         when(candidatReadPersistence.loadAlignments("C1", "TH1")).thenReturn(List.of());

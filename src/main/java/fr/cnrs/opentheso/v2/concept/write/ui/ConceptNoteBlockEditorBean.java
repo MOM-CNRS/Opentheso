@@ -30,6 +30,7 @@ import java.util.LinkedHashSet;
 import java.util.List;
 import java.util.Locale;
 import java.util.Map;
+import java.util.Optional;
 import java.util.Set;
 
 /**
@@ -76,7 +77,7 @@ public class ConceptNoteBlockEditorBean implements Serializable {
     }
 
     public boolean isCanAddRow() {
-        return isEditing() && firstFreeCombo() != null;
+        return isEditing() && firstFreeCombo().isPresent();
     }
 
     public void startEditing() {
@@ -109,11 +110,11 @@ public class ConceptNoteBlockEditorBean implements Serializable {
         if (!isEditing()) {
             return;
         }
-        String[] combo = firstFreeCombo();
-        if (combo == null) {
+        Optional<String[]> combo = firstFreeCombo();
+        if (combo.isEmpty()) {
             return;
         }
-        rows.add(new NoteBlockEditRow(0, combo[0], combo[1], "", "", false));
+        rows.add(new NoteBlockEditRow(0, combo.get()[0], combo.get()[1], "", "", false));
     }
 
     public void removeRow(int index) {
@@ -165,75 +166,130 @@ public class ConceptNoteBlockEditorBean implements Serializable {
             return;
         }
 
-        Map<String, NoteBlockEditRow> selected = new LinkedHashMap<>();
-        Set<Integer> keptIds = new LinkedHashSet<>();
-        for (NoteBlockEditRow row : rows) {
-            if (row == null) {
-                continue;
-            }
-            String type = normalizeType(row.getTypeCode());
-            String lang = normalizeLang(row.getLang());
-            String value = StringUtils.trimToEmpty(row.getValue());
-            if (type.isEmpty()) {
-                errorMessage = "Aucun type sélectionné !";
-                return;
-            }
-            if (lang.isEmpty()) {
-                errorMessage = "Aucune langue sélectionnée !";
-                return;
-            }
-            if (value.isEmpty()) {
-                errorMessage = "La note ne doit pas être vide !";
-                return;
-            }
-            if (selected.put(comboKey(type, lang), row) != null) {
-                errorMessage = "Chaque type ne peut apparaître qu'une fois par langue.";
-                return;
-            }
-            if (row.getNoteId() > 0) {
-                keptIds.add(row.getNoteId());
-            }
+        SelectedNotes selected = collectSelectedNotes();
+        if (selected == null) {
+            return;
         }
 
-        String thesaurusId = thesaurusViewBean.getId();
-        String conceptId = current.getSummary().getConceptId();
-        String contributor = StringUtils.defaultString(userSession.getCurrentUsername());
+        NoteWriteContext ctx = new NoteWriteContext(
+                thesaurusViewBean.getId(),
+                current.getSummary().getConceptId(),
+                userId,
+                StringUtils.defaultString(userSession.getCurrentUsername()));
         Map<Integer, ConceptNote> oldById = notesById(current);
-        boolean dirty = false;
-
-        for (ConceptNote old : oldById.values()) {
-            int noteId = parseNoteId(old.id());
-            if (noteId <= 0 || keptIds.contains(noteId)) {
-                continue;
-            }
-            MutationResult deleted = conceptNoteMutationService.deleteNote(new DeleteNoteCommand(
-                    thesaurusId, conceptId, noteId, old.lang(), old.typeCode(), userId, contributor));
-            if (!applyResult(deleted, dirty)) {
-                return;
-            }
-            dirty = true;
+        DirtyUpdate dirty = deleteRemovedNotes(oldById, selected.keptIds(), ctx, false);
+        if (!dirty.ok) {
+            return;
         }
-
-        for (NoteBlockEditRow row : selected.values()) {
-            String type = normalizeType(row.getTypeCode());
-            String lang = normalizeLang(row.getLang());
-            String value = StringUtils.trimToEmpty(row.getValue());
-            String source = StringUtils.trimToEmpty(row.getSource());
-            ConceptNote previous = row.getNoteId() > 0 ? oldById.get(row.getNoteId()) : null;
-            if (previous != null
-                    && Strings.CS.equals(StringUtils.trimToEmpty(previous.value()), value)
-                    && Strings.CS.equals(StringUtils.trimToEmpty(previous.source()), source)) {
-                continue;
-            }
-            MutationResult upserted = conceptNoteMutationService.upsertNote(new UpsertNoteCommand(
-                    thesaurusId, conceptId, lang, type, value, source, userId, contributor));
-            if (!applyResult(upserted, dirty)) {
-                return;
-            }
-            dirty = true;
+        if (!upsertSelectedNotes(selected.rows(), oldById, ctx, dirty.dirty).ok) {
+            return;
         }
 
         finishSuccess();
+    }
+
+    private SelectedNotes collectSelectedNotes() {
+        Map<String, NoteBlockEditRow> selected = new LinkedHashMap<>();
+        Set<Integer> keptIds = new LinkedHashSet<>();
+        for (NoteBlockEditRow row : rows) {
+            if (!acceptSelectedNote(row, selected, keptIds)) {
+                return null;
+            }
+        }
+        return new SelectedNotes(selected, keptIds);
+    }
+
+    private boolean acceptSelectedNote(
+            NoteBlockEditRow row, Map<String, NoteBlockEditRow> selected, Set<Integer> keptIds) {
+        if (row == null) {
+            return true;
+        }
+        String type = normalizeType(row.getTypeCode());
+        String lang = normalizeLang(row.getLang());
+        String value = StringUtils.trimToEmpty(row.getValue());
+        if (type.isEmpty()) {
+            errorMessage = "Aucun type sélectionné !";
+            return false;
+        }
+        if (lang.isEmpty()) {
+            errorMessage = "Aucune langue sélectionnée !";
+            return false;
+        }
+        if (value.isEmpty()) {
+            errorMessage = "La note ne doit pas être vide !";
+            return false;
+        }
+        if (selected.put(comboKey(type, lang), row) != null) {
+            errorMessage = "Chaque type ne peut apparaître qu'une fois par langue.";
+            return false;
+        }
+        if (row.getNoteId() > 0) {
+            keptIds.add(row.getNoteId());
+        }
+        return true;
+    }
+
+    private DirtyUpdate deleteRemovedNotes(
+            Map<Integer, ConceptNote> oldById, Set<Integer> keptIds, NoteWriteContext ctx, boolean dirty) {
+        for (ConceptNote old : oldById.values()) {
+            DirtyUpdate next = deleteRemovedNote(old, keptIds, ctx, dirty);
+            if (!next.ok) {
+                return DirtyUpdate.fail();
+            }
+            dirty = next.dirty;
+        }
+        return DirtyUpdate.of(dirty);
+    }
+
+    private DirtyUpdate deleteRemovedNote(
+            ConceptNote old, Set<Integer> keptIds, NoteWriteContext ctx, boolean dirty) {
+        int noteId = parseNoteId(old.id());
+        if (noteId <= 0 || keptIds.contains(noteId)) {
+            return DirtyUpdate.of(dirty);
+        }
+        MutationResult deleted = conceptNoteMutationService.deleteNote(new DeleteNoteCommand(
+                ctx.thesaurusId(), ctx.conceptId(), noteId, old.lang(), old.typeCode(),
+                ctx.userId(), ctx.contributor()));
+        if (!applyResult(deleted, dirty)) {
+            return DirtyUpdate.fail();
+        }
+        return DirtyUpdate.of(true);
+    }
+
+    private DirtyUpdate upsertSelectedNotes(
+            Map<String, NoteBlockEditRow> selected,
+            Map<Integer, ConceptNote> oldById,
+            NoteWriteContext ctx,
+            boolean dirty
+    ) {
+        for (NoteBlockEditRow row : selected.values()) {
+            DirtyUpdate next = upsertSelectedNote(row, oldById, ctx, dirty);
+            if (!next.ok) {
+                return DirtyUpdate.fail();
+            }
+            dirty = next.dirty;
+        }
+        return DirtyUpdate.of(dirty);
+    }
+
+    private DirtyUpdate upsertSelectedNote(
+            NoteBlockEditRow row, Map<Integer, ConceptNote> oldById, NoteWriteContext ctx, boolean dirty) {
+        String type = normalizeType(row.getTypeCode());
+        String lang = normalizeLang(row.getLang());
+        String value = StringUtils.trimToEmpty(row.getValue());
+        String source = StringUtils.trimToEmpty(row.getSource());
+        ConceptNote previous = row.getNoteId() > 0 ? oldById.get(row.getNoteId()) : null;
+        if (previous != null
+                && Strings.CS.equals(StringUtils.trimToEmpty(previous.value()), value)
+                && Strings.CS.equals(StringUtils.trimToEmpty(previous.source()), source)) {
+            return DirtyUpdate.of(dirty);
+        }
+        MutationResult upserted = conceptNoteMutationService.upsertNote(new UpsertNoteCommand(
+                ctx.thesaurusId(), ctx.conceptId(), lang, type, value, source, ctx.userId(), ctx.contributor()));
+        if (!applyResult(upserted, dirty)) {
+            return DirtyUpdate.fail();
+        }
+        return DirtyUpdate.of(true);
     }
 
     private boolean applyResult(MutationResult result, boolean dirty) {
@@ -293,7 +349,7 @@ public class ConceptNoteBlockEditorBean implements Serializable {
         return Strings.CS.equals(editingConceptId, detail.getSummary().getConceptId());
     }
 
-    private String[] firstFreeCombo() {
+    private Optional<String[]> firstFreeCombo() {
         Set<String> taken = usedCombosExcluding(null);
         for (ConceptWriteLanguage lang : languagesWorkFirst()) {
             if (lang == null || StringUtils.isBlank(lang.code())) {
@@ -304,11 +360,11 @@ public class ConceptNoteBlockEditorBean implements Serializable {
                     continue;
                 }
                 if (!taken.contains(comboKey(type.code(), lang.code()))) {
-                    return new String[] { type.code(), lang.code() };
+                    return Optional.of(new String[] { type.code(), lang.code() });
                 }
             }
         }
-        return null;
+        return Optional.empty();
     }
 
     private List<ConceptWriteLanguage> languagesWorkFirst() {
@@ -439,5 +495,11 @@ public class ConceptNoteBlockEditorBean implements Serializable {
 
     private static String normalizeLang(String lang) {
         return StringUtils.isBlank(lang) ? "" : lang.trim().toLowerCase(Locale.ROOT);
+    }
+
+    private record NoteWriteContext(String thesaurusId, String conceptId, int userId, String contributor) {
+    }
+
+    private record SelectedNotes(Map<String, NoteBlockEditRow> rows, Set<Integer> keptIds) {
     }
 }

@@ -19,14 +19,13 @@ import fr.cnrs.opentheso.ws.dto.ArkResponse;
 import fr.cnrs.opentheso.ws.dto.DeleteArkRequest;
 import fr.cnrs.opentheso.ws.dto.DeleteArkResponse;
 import lombok.extern.slf4j.Slf4j;
-import org.apache.commons.collections4.CollectionUtils;
 import org.apache.commons.lang3.StringUtils;
 import org.apache.commons.lang3.Strings;
 import org.springframework.beans.factory.annotation.Value;
 import org.springframework.stereotype.Service;
+import fr.cnrs.opentheso.v2.shared.time.V2Dates;
 
 import java.util.ArrayList;
-import java.util.Date;
 import java.util.List;
 
 @Slf4j
@@ -74,8 +73,10 @@ public class ConceptArkWriteService {
         }
         if (preferences.isUseArk()) {
             List<NodeIdValue> result = generateRemoteArkIds(thesaurusId, List.of(conceptId), lang, preferences);
-            if (result != null && CollectionUtils.isEmpty(result)) {
-                throw new IllegalStateException("La création du Ark local a échoué");
+            if (result != null && !result.isEmpty()) {
+                throw new IllegalStateException(StringUtils.defaultIfBlank(
+                        result.get(0).getValue(),
+                        "La création du Ark a échoué"));
             }
         }
         if (preferences.isUseArkLocal() && !generateLocalArkIds(thesaurusId, List.of(conceptId))) {
@@ -184,14 +185,11 @@ public class ConceptArkWriteService {
                 String title = resolvePreferredLabel(conceptId, thesaurusId, lang);
                 String creator = resolveCreatorName(concept);
                 String idArk = concept.getIdArk();
+                OpenArkCall call = new OpenArkCall(naan, url, title, creator, preferences, serverUrl, apiKey);
                 if (StringUtils.isBlank(idArk)) {
-                    createOrRecoverOpenArk(
-                            conceptId, thesaurusId, naan, url, title, creator,
-                            preferences, serverUrl, apiKey, errors);
+                    createOrRecoverOpenArk(conceptId, thesaurusId, call, errors);
                 } else {
-                    updateOrPushOpenArk(
-                            idArk, naan, url, title, creator,
-                            preferences, serverUrl, apiKey);
+                    updateOrPushOpenArk(idArk, call);
                 }
             } catch (ArkApiException | IllegalStateException | IllegalArgumentException ex) {
                 log.warn("Échec génération OpenArk pour {} : {}", conceptId, ex.getMessage());
@@ -204,18 +202,12 @@ public class ConceptArkWriteService {
     private void createOrRecoverOpenArk(
             String conceptId,
             String thesaurusId,
-            int naan,
-            String url,
-            String title,
-            String creator,
-            Preferences preferences,
-            String serverUrl,
-            String apiKey,
+            OpenArkCall call,
             List<NodeIdValue> errors
     ) {
-        if (arkApiClient.arkExistsByUrl(naan, url, serverUrl)) {
+        if (arkApiClient.arkExistsByUrl(call.naan(), call.url(), call.serverUrl())) {
             ArkResponse arkResponse = arkApiClient.getArkByNaanAndUrlWithApiKey(
-                    naan, url, serverUrl, apiKey);
+                    call.naan(), call.url(), call.serverUrl(), call.apiKey());
             if (arkResponse != null && arkResponse.getArk() != null) {
                 updateArkId(conceptId, thesaurusId, arkResponse.getArk().getArkId());
             } else {
@@ -224,7 +216,9 @@ public class ConceptArkWriteService {
             return;
         }
         ArkResponse response = arkApiClient.createArk(
-                openArkRequest("", naan, preferences, url, title, creator), serverUrl, apiKey);
+                openArkRequest("", call.naan(), call.preferences(), call.url(), call.title(), call.creator()),
+                call.serverUrl(),
+                call.apiKey());
         if (response == null || response.getArk() == null) {
             errors.add(errorValue(conceptId, "La création OpenArk n'a renvoyé aucun identifiant"));
             return;
@@ -232,24 +226,19 @@ public class ConceptArkWriteService {
         updateArkId(conceptId, thesaurusId, response.getArk().getArkId());
     }
 
-    private void updateOrPushOpenArk(
-            String idArk,
-            int naan,
-            String url,
-            String title,
-            String creator,
-            Preferences preferences,
-            String serverUrl,
-            String apiKey
-    ) {
-        if (arkApiClient.arkExistsById(idArk, naan, serverUrl)) {
+    private void updateOrPushOpenArk(String idArk, OpenArkCall call) {
+        if (arkApiClient.arkExistsById(idArk, call.naan(), call.serverUrl())) {
             arkApiClient.updateArk(
-                    openArkRequest(idArk, naan, preferences, url, title, creator), serverUrl, apiKey);
+                    openArkRequest(idArk, call.naan(), call.preferences(), call.url(), call.title(), call.creator()),
+                    call.serverUrl(),
+                    call.apiKey());
             return;
         }
         String arkIdWithoutNaan = idArk.contains("/") ? idArk.split("/", 2)[1] : idArk;
         arkApiClient.createArk(
-                openArkRequest(arkIdWithoutNaan, naan, preferences, url, title, creator), serverUrl, apiKey);
+                openArkRequest(arkIdWithoutNaan, call.naan(), call.preferences(), call.url(), call.title(), call.creator()),
+                call.serverUrl(),
+                call.apiKey());
     }
 
     private static ArkRequest openArkRequest(
@@ -306,7 +295,7 @@ public class ConceptArkWriteService {
                 nodeIdValues.add(errorValue("", "La création du Ark local a échoué"));
                 return nodeIdValues;
             }
-            return null;
+            return List.of();
         }
 
         ArkHelper2 arkHelper2 = new ArkHelper2(preferences);
@@ -320,44 +309,89 @@ public class ConceptArkWriteService {
         }
 
         for (String conceptId : conceptIds) {
-            var conceptOpt = conceptRepository.findByIdConceptAndIdThesaurus(conceptId, thesaurusId);
-            if (conceptOpt.isEmpty()) {
-                nodeIdValues.add(errorValue(conceptId, "Erreur: ce concept n'existe pas"));
-                continue;
-            }
-            Concept concept = conceptOpt.get();
-            NodeMetaData nodeMetaData = new NodeMetaData();
-            nodeMetaData.setDcElementsList(new ArrayList<>());
-            nodeMetaData.setTitle(resolvePreferredLabel(conceptId, thesaurusId, lang));
-            nodeMetaData.setSource(preferences.getPreferredName());
-            nodeMetaData.setCreator(resolveCreatorName(concept));
-
-            String privateUri = "?idc=" + conceptId + "&idt=" + thesaurusId;
-            if (StringUtils.isBlank(concept.getIdArk())) {
-                if (!arkHelper2.addArk(privateUri, nodeMetaData)) {
-                    nodeIdValues.add(errorValue(conceptId, "Erreur: La création Ark a échoué: " + arkHelper2.getMessage()));
-                    continue;
-                }
-                updateArkId(conceptId, thesaurusId, arkHelper2.getIdArk());
-                continue;
-            }
-            if (arkHelper2.isArkExistOnServer(concept.getIdArk())) {
-                if (!arkHelper2.updateArk(concept.getIdArk(), privateUri, nodeMetaData)) {
-                    nodeIdValues.add(errorValue(conceptId,
-                            "Erreur: Ark existe sur le serveur, mais la mise à jour a échoué : " + arkHelper2.getMessage()));
-                }
-                continue;
-            }
-            if (!arkHelper2.addArkWithProvidedId(concept.getIdArk(), privateUri, nodeMetaData)) {
-                nodeIdValues.add(errorValue(conceptId,
-                        "Erreur: Ark n'existe pas sur le serveur, mais la création a échoué : " + arkHelper2.getMessage()));
-                continue;
-            }
-            if (StringUtils.isNotBlank(arkHelper2.getIdArk())) {
-                updateArkId(conceptId, thesaurusId, arkHelper2.getIdArk());
-            }
+            addRemoteArkForConcept(conceptId, thesaurusId, lang, preferences, arkHelper2, nodeIdValues);
         }
-        return nodeIdValues.isEmpty() ? null : nodeIdValues;
+        return nodeIdValues;
+    }
+
+    private void addRemoteArkForConcept(
+            String conceptId,
+            String thesaurusId,
+            String lang,
+            Preferences preferences,
+            ArkHelper2 arkHelper2,
+            List<NodeIdValue> nodeIdValues
+    ) {
+        var conceptOpt = conceptRepository.findByIdConceptAndIdThesaurus(conceptId, thesaurusId);
+        if (conceptOpt.isEmpty()) {
+            nodeIdValues.add(errorValue(conceptId, "Erreur: ce concept n'existe pas"));
+            return;
+        }
+        Concept concept = conceptOpt.get();
+        NodeMetaData nodeMetaData = new NodeMetaData();
+        nodeMetaData.setDcElementsList(new ArrayList<>());
+        nodeMetaData.setTitle(resolvePreferredLabel(conceptId, thesaurusId, lang));
+        nodeMetaData.setSource(preferences.getPreferredName());
+        nodeMetaData.setCreator(resolveCreatorName(concept));
+
+        String privateUri = "?idc=" + conceptId + "&idt=" + thesaurusId;
+        if (StringUtils.isBlank(concept.getIdArk())) {
+            createBlankRemoteArk(conceptId, thesaurusId, privateUri, nodeMetaData, arkHelper2, nodeIdValues);
+            return;
+        }
+        if (arkHelper2.isArkExistOnServer(concept.getIdArk())) {
+            updateExistingRemoteArk(conceptId, concept.getIdArk(), privateUri, nodeMetaData, arkHelper2, nodeIdValues);
+            return;
+        }
+        pushProvidedRemoteArk(conceptId, thesaurusId, concept.getIdArk(), privateUri, nodeMetaData, arkHelper2, nodeIdValues);
+    }
+
+    private void createBlankRemoteArk(
+            String conceptId,
+            String thesaurusId,
+            String privateUri,
+            NodeMetaData nodeMetaData,
+            ArkHelper2 arkHelper2,
+            List<NodeIdValue> nodeIdValues
+    ) {
+        if (!arkHelper2.addArk(privateUri, nodeMetaData)) {
+            nodeIdValues.add(errorValue(conceptId, "Erreur: La création Ark a échoué: " + arkHelper2.getMessage()));
+            return;
+        }
+        updateArkId(conceptId, thesaurusId, arkHelper2.getIdArk());
+    }
+
+    private void updateExistingRemoteArk(
+            String conceptId,
+            String idArk,
+            String privateUri,
+            NodeMetaData nodeMetaData,
+            ArkHelper2 arkHelper2,
+            List<NodeIdValue> nodeIdValues
+    ) {
+        if (!arkHelper2.updateArk(idArk, privateUri, nodeMetaData)) {
+            nodeIdValues.add(errorValue(conceptId,
+                    "Erreur: Ark existe sur le serveur, mais la mise à jour a échoué : " + arkHelper2.getMessage()));
+        }
+    }
+
+    private void pushProvidedRemoteArk(
+            String conceptId,
+            String thesaurusId,
+            String idArk,
+            String privateUri,
+            NodeMetaData nodeMetaData,
+            ArkHelper2 arkHelper2,
+            List<NodeIdValue> nodeIdValues
+    ) {
+        if (!arkHelper2.addArkWithProvidedId(idArk, privateUri, nodeMetaData)) {
+            nodeIdValues.add(errorValue(conceptId,
+                    "Erreur: Ark n'existe pas sur le serveur, mais la création a échoué : " + arkHelper2.getMessage()));
+            return;
+        }
+        if (StringUtils.isNotBlank(arkHelper2.getIdArk())) {
+            updateArkId(conceptId, thesaurusId, arkHelper2.getIdArk());
+        }
     }
 
     private boolean generateLocalArkIds(String thesaurusId, List<String> conceptIds) {
@@ -378,7 +412,18 @@ public class ConceptArkWriteService {
     }
 
     private void updateArkId(String conceptId, String thesaurusId, String arkId) {
-        conceptRepository.setIdArk(arkId, new Date(), conceptId, thesaurusId);
+        conceptRepository.setIdArk(arkId, V2Dates.nowUtilDate(), conceptId, thesaurusId);
+    }
+
+    private record OpenArkCall(
+            int naan,
+            String url,
+            String title,
+            String creator,
+            Preferences preferences,
+            String serverUrl,
+            String apiKey
+    ) {
     }
 
     private Concept requireConcept(String conceptId, String thesaurusId) {

@@ -5,6 +5,7 @@ import fr.cnrs.opentheso.v2.candidat.model.CandidatBoardItem;
 import fr.cnrs.opentheso.v2.candidat.model.CandidatStatusCode;
 import fr.cnrs.opentheso.v2.candidat.service.CandidatReadService;
 import fr.cnrs.opentheso.v2.concept.ui.ThesaurusViewBean;
+import fr.cnrs.opentheso.v2.shared.time.V2Dates;
 import fr.cnrs.opentheso.v2.shared.ui.UserSession;
 import jakarta.faces.view.ViewScoped;
 import jakarta.inject.Named;
@@ -14,9 +15,10 @@ import lombok.Setter;
 import org.apache.commons.lang3.StringUtils;
 
 import java.io.Serializable;
-import java.text.SimpleDateFormat;
+import java.time.Instant;
+import java.time.ZoneId;
+import java.time.format.DateTimeFormatter;
 import java.util.Collections;
-import java.util.Date;
 import java.util.List;
 
 /**
@@ -174,7 +176,7 @@ public class CandidatBoardBean implements Serializable {
     private CandidatBoardItem toItem(CandidatDto dto, String openType) {
         String title = StringUtils.defaultIfBlank(dto.getNomPref(), dto.getIdConcepte());
         String author = StringUtils.defaultIfBlank(dto.getCreatedBy(), "—");
-        String date = formatDate(dto.getCreationDate());
+        String date = formatDate(V2Dates.toInstant(dto.getCreationDate()));
         String meta = StringUtils.isBlank(date) ? author : author + " · " + date;
         int up = Math.max(0, dto.getNbrVote());
         int down = Math.max(0, dto.getNbrNoteVote());
@@ -187,11 +189,11 @@ public class CandidatBoardBean implements Serializable {
         );
     }
 
-    private String formatDate(Date date) {
-        if (date == null) {
+    private String formatDate(Instant instant) {
+        if (instant == null) {
             return "";
         }
-        return new SimpleDateFormat("yyyy-MM-dd").format(date);
+        return DateTimeFormatter.ofPattern("yyyy-MM-dd").withZone(ZoneId.systemDefault()).format(instant);
     }
 
     private List<CandidatBoardItem> itemsFor(String tab) {

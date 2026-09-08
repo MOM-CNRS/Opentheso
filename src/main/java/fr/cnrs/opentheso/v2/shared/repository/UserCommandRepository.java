@@ -106,16 +106,7 @@ public class UserCommandRepository {
     }
 
     @Transactional
-    public int createUser(
-            String username,
-            String mail,
-            String password,
-            boolean alertMail,
-            String institution,
-            boolean active,
-            boolean passToModify,
-            boolean verified
-    ) {
+    public int createUser(CreateUserRequest request) {
         String sql = """
                 INSERT INTO users (
                     username, password, mail, alertmail, issuperadmin, active,
@@ -128,16 +119,28 @@ public class UserCommandRepository {
                 RETURNING id_user
                 """;
         Number id = (Number) entityManager.createNativeQuery(sql)
-                .setParameter(NativeQueryParams.USERNAME, username)
-                .setParameter("password", password != null ? password : "")
-                .setParameter("mail", mail)
-                .setParameter("alertMail", alertMail)
-                .setParameter("active", active)
-                .setParameter("passToModify", passToModify)
-                .setParameter("verified", verified)
-                .setParameter("institution", institution)
+                .setParameter(NativeQueryParams.USERNAME, request.username())
+                .setParameter("password", request.password() != null ? request.password() : "")
+                .setParameter("mail", request.mail())
+                .setParameter("alertMail", request.alertMail())
+                .setParameter("active", request.active())
+                .setParameter("passToModify", request.passToModify())
+                .setParameter("verified", request.verified())
+                .setParameter("institution", request.institution())
                 .getSingleResult();
         return id.intValue();
+    }
+
+    public record CreateUserRequest(
+            String username,
+            String mail,
+            String password,
+            boolean alertMail,
+            String institution,
+            boolean active,
+            boolean passToModify,
+            boolean verified
+    ) {
     }
 
     @Transactional

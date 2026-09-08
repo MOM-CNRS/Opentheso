@@ -206,7 +206,7 @@ class AllUsersBeanTest {
 
             allUsersBean.createUser();
 
-            verify(adminUserService).createUser(
+            verify(adminUserService).createUser(new AdminUserService.CreateUserRequest(
                     true,
                     "bob",
                     "bob@test.fr",
@@ -217,7 +217,7 @@ class AllUsersBeanTest {
                     List.of(),
                     "Secret1!",
                     "Secret1!"
-            );
+            ));
             verify(adminCatalogService).listAllUsers(true);
         }
     }
@@ -245,7 +245,7 @@ class AllUsersBeanTest {
 
             allUsersBean.createUser();
 
-            verify(adminUserService).createUser(
+            verify(adminUserService).createUser(new AdminUserService.CreateUserRequest(
                     true,
                     "bob",
                     "bob@test.fr",
@@ -256,7 +256,7 @@ class AllUsersBeanTest {
                     List.of("TH1", "TH2"),
                     "Secret1!",
                     "Secret1!"
-            );
+            ));
         }
     }
 }

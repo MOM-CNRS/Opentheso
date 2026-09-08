@@ -70,6 +70,10 @@
         <sonar.coverage.exclusions>**/AlignmentPropositionEnricher.java,**/ConceptCorpusSearchService.java,**/ui/**,**/*Bean.java,**/*Engine.java,**/persistence/**,**/model/**,**/workshop/**,**/config/**,**/*Controller.java,**/edition/io/**,**/candidat/alignment/**</sonar.coverage.exclusions>
         <!-- Évite le hang du scanner Maven sur la détection Git (macOS). -->
         <sonar.scm.disabled>true</sonar.scm.disabled>
+        <!-- V2Dates est le pont volontaire util.Date/sql.Date vers JPA/JDBC legacy. -->
+        <sonar.issue.ignore.multicriteria>e1</sonar.issue.ignore.multicriteria>
+        <sonar.issue.ignore.multicriteria.e1.ruleKey>java:S2143</sonar.issue.ignore.multicriteria.e1.ruleKey>
+        <sonar.issue.ignore.multicriteria.e1.resourceKey>**/shared/time/V2Dates.java</sonar.issue.ignore.multicriteria.e1.resourceKey>
     </properties>
 
     <dependencyManagement>

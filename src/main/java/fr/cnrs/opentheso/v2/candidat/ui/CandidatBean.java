@@ -15,15 +15,17 @@ import fr.cnrs.opentheso.v2.candidat.service.CandidatMutationService;
 import fr.cnrs.opentheso.v2.candidat.service.CandidatReadService;
 import fr.cnrs.opentheso.v2.shared.repository.PreferencesJpaRepository;
 import fr.cnrs.opentheso.v2.setting.ui.ThesaurusContext;
+import fr.cnrs.opentheso.v2.shared.time.V2Dates;
 import fr.cnrs.opentheso.v2.shared.ui.UserSession;
 import fr.cnrs.opentheso.v2.shared.ui.V2LocaleBean;
 import fr.cnrs.opentheso.utils.MessageUtils;
 
 import java.io.Serializable;
-import java.text.SimpleDateFormat;
+import java.time.Instant;
+import java.time.ZoneId;
+import java.time.format.DateTimeFormatter;
 import java.util.ArrayList;
 import java.util.Collections;
-import java.util.Date;
 import java.util.List;
 import java.util.Arrays;
 import java.util.stream.Collectors;
@@ -1005,10 +1007,15 @@ public class CandidatBean implements Serializable {
     }
 
 
-    public String formatDate(Date date) {
-        if (date == null) {
+    public String formatDate(Instant instant) {
+        if (instant == null) {
             return "";
         }
-        return new SimpleDateFormat("dd/MM/yyyy HH:mm").format(date);
+        return DateTimeFormatter.ofPattern("dd/MM/yyyy HH:mm").withZone(ZoneId.systemDefault()).format(instant);
+    }
+
+    /** Accepts legacy creation/insertion dates from {@code CandidatDto} (JSF EL). */
+    public String formatDate(Object date) {
+        return formatDate(V2Dates.toInstant(date));
     }
 }

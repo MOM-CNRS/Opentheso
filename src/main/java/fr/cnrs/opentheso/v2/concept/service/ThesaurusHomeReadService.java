@@ -13,7 +13,6 @@ import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
 
 import java.time.Instant;
-import java.util.Date;
 import java.util.Objects;
 
 @Service
@@ -37,12 +36,11 @@ public class ThesaurusHomeReadService {
         String permalinkUrl = buildPermalinkUrl(thesaurusId, preferences, arkId, baseUrl);
         String permalinkLabel = buildPermalinkLabel(thesaurusId, preferences, arkId, baseUrl);
         var lastModifiedBundle = thesaurusHomeQueryRepository.findLastModifiedConceptsBundle(thesaurusId, workLang);
-        Date lastModified = lastModifiedBundle.lastModified();
-        if (lastModified == null) {
-            lastModified = thesaurusHomeQueryRepository.findLastModificationDate(thesaurusId).orElse(null);
+        Instant lastModifiedAt = lastModifiedBundle.lastModified();
+        if (lastModifiedAt == null) {
+            lastModifiedAt = thesaurusHomeQueryRepository.findLastModificationDate(thesaurusId)
+                    .orElse(null);
         }
-
-        Instant lastModifiedAt = lastModified == null ? null : lastModified.toInstant();
         String lastModifiedExact = RelativeTimeFormat.exact(lastModifiedAt);
         return new ThesaurusHomeOverview(
                 title,
@@ -100,4 +98,5 @@ public class ThesaurusHomeReadService {
                 ""
         );
     }
+
 }

@@ -83,30 +83,44 @@ public class ThesaurusEditionSkosImportService {
             return null;
         }
         SKOSResource conceptScheme = document.getConceptScheme();
-        String lang = StringUtils.defaultIfBlank(sourceLang, "fr");
-        if (conceptScheme.getLabelsList() != null) {
-            for (SKOSLabel label : conceptScheme.getLabelsList()) {
-                if (StringUtils.isNotBlank(label.getLabel())
-                        && lang.equalsIgnoreCase(StringUtils.defaultString(label.getLanguage()))) {
-                    return label.getLabel().trim();
-                }
-            }
-            for (SKOSLabel label : conceptScheme.getLabelsList()) {
-                if (StringUtils.isNotBlank(label.getLabel())) {
-                    return label.getLabel().trim();
-                }
+        String fromLabels = findTitleFromLabels(conceptScheme, StringUtils.defaultIfBlank(sourceLang, "fr"));
+        if (fromLabels != null) {
+            return fromLabels;
+        }
+        return findTitleFromThesaurus(conceptScheme);
+    }
+
+    private String findTitleFromLabels(SKOSResource conceptScheme, String lang) {
+        if (conceptScheme.getLabelsList() == null) {
+            return null;
+        }
+        for (SKOSLabel label : conceptScheme.getLabelsList()) {
+            if (StringUtils.isNotBlank(label.getLabel())
+                    && lang.equalsIgnoreCase(StringUtils.defaultString(label.getLanguage()))) {
+                return label.getLabel().trim();
             }
         }
-        if (conceptScheme.getThesaurus() != null) {
-            if (StringUtils.isNotBlank(conceptScheme.getThesaurus().getTitle())) {
-                return conceptScheme.getThesaurus().getTitle().trim();
+        for (SKOSLabel label : conceptScheme.getLabelsList()) {
+            if (StringUtils.isNotBlank(label.getLabel())) {
+                return label.getLabel().trim();
             }
-            if (conceptScheme.getThesaurus().getDcElement() != null) {
-                for (DcElement dcElement : conceptScheme.getThesaurus().getDcElement()) {
-                    if ("title".equalsIgnoreCase(dcElement.getName()) && StringUtils.isNotBlank(dcElement.getValue())) {
-                        return dcElement.getValue().trim();
-                    }
-                }
+        }
+        return null;
+    }
+
+    private String findTitleFromThesaurus(SKOSResource conceptScheme) {
+        if (conceptScheme.getThesaurus() == null) {
+            return null;
+        }
+        if (StringUtils.isNotBlank(conceptScheme.getThesaurus().getTitle())) {
+            return conceptScheme.getThesaurus().getTitle().trim();
+        }
+        if (conceptScheme.getThesaurus().getDcElement() == null) {
+            return null;
+        }
+        for (DcElement dcElement : conceptScheme.getThesaurus().getDcElement()) {
+            if ("title".equalsIgnoreCase(dcElement.getName()) && StringUtils.isNotBlank(dcElement.getValue())) {
+                return dcElement.getValue().trim();
             }
         }
         return null;
@@ -119,30 +133,15 @@ public class ThesaurusEditionSkosImportService {
             boolean superAdmin,
             Integer projectGroupId,
             String sourceLang,
-            String selectedIdentifier,
-            String prefixHandle,
-            String prefixDoi,
-            String persistentNameThesaurus,
-            boolean importAsMaster
+            SkosImportOptions options
     ) {
         var preferences = new Preferences();
         preferences.setSourceLang(StringUtils.defaultIfBlank(sourceLang, "fr"));
-        preferences.setPreferredName(persistentNameThesaurus);
+        preferences.setPreferredName(options.persistentNameThesaurus());
 
-        Integer groupId = projectGroupId;
-        if (!superAdmin && groupId == null) {
-            NewThesaurusFormOptions options = newThesaurusService.loadFormOptions(userId, false);
-            if (options.projects().size() == 1) {
-                groupId = options.projects().get(0).id();
-            }
-        }
-
-        // Nouveau thésaurus → toujours esclave ; existant → choix utilisateur
-        boolean asMaster = false;
-        if (importAsMaster) {
-            Optional<String> existing = findExistingThesaurusId(document, groupId, sourceLang);
-            asMaster = existing.isPresent();
-        }
+        Integer groupId = resolveProjectGroup(userId, superAdmin, projectGroupId);
+        boolean asMaster = options.importAsMaster()
+                && findExistingThesaurusId(document, groupId, sourceLang).isPresent();
 
         String thesaurusId = importSkosDocument(
                 document,
@@ -150,11 +149,13 @@ public class ThesaurusEditionSkosImportService {
                 userId,
                 groupId,
                 StringUtils.defaultIfBlank(sourceLang, "fr"),
-                StringUtils.defaultIfBlank(selectedIdentifier, "sans"),
-                StringUtils.defaultIfBlank(prefixHandle, ""),
-                StringUtils.defaultIfBlank(prefixDoi, ""),
-                preferences,
-                asMaster
+                new SkosDocumentImportOptions(
+                        StringUtils.defaultIfBlank(options.selectedIdentifier(), "sans"),
+                        StringUtils.defaultIfBlank(options.prefixHandle(), ""),
+                        StringUtils.defaultIfBlank(options.prefixDoi(), ""),
+                        preferences,
+                        asMaster
+                )
         );
 
         if (thesaurusId == null) {
@@ -163,72 +164,89 @@ public class ThesaurusEditionSkosImportService {
         return thesaurusId;
     }
 
+    private Integer resolveProjectGroup(int userId, boolean superAdmin, Integer projectGroupId) {
+        Integer groupId = projectGroupId;
+        if (!superAdmin && groupId == null) {
+            NewThesaurusFormOptions formOptions = newThesaurusService.loadFormOptions(userId, false);
+            if (formOptions.projects().size() == 1) {
+                groupId = formOptions.projects().get(0).id();
+            }
+        }
+        return groupId;
+    }
+
     private String importSkosDocument(
             SKOSXmlDocument document,
             String formatDate,
             int userId,
             Integer projectGroupId,
             String sourceLang,
-            String selectedIdentifier,
-            String prefixHandle,
-            String prefixDoi,
-            Preferences preferences,
-            boolean importAsMaster
+            SkosDocumentImportOptions options
     ) {
-        int groupId = projectGroupId == null ? -1 : projectGroupId;
-        thesaurusEditionSkosImportEngine.setInfos(formatDate, userId, groupId, sourceLang);
-        thesaurusEditionSkosImportEngine.setSelectedIdentifier(selectedIdentifier);
-        thesaurusEditionSkosImportEngine.setPrefixHandle(prefixHandle);
-        thesaurusEditionSkosImportEngine.setPrefixDoi(prefixDoi);
-        thesaurusEditionSkosImportEngine.setNodePreference(preferences);
-        thesaurusEditionSkosImportEngine.setImportAsMaster(importAsMaster);
-        thesaurusEditionSkosImportEngine.setRdf4jThesaurus(document);
-
+        configureEngine(document, formatDate, userId, projectGroupId, sourceLang, options);
         String thesaurusId = importBatchSupport.inTransaction(thesaurusEditionSkosImportEngine::addThesaurus);
         if (thesaurusId == null) {
             return null;
         }
+        importConcepts(document, thesaurusId);
+        importRelatedResources(document, thesaurusId);
+        return thesaurusId;
+    }
 
+    private void configureEngine(
+            SKOSXmlDocument document,
+            String formatDate,
+            int userId,
+            Integer projectGroupId,
+            String sourceLang,
+            SkosDocumentImportOptions options
+    ) {
+        int groupId = projectGroupId == null ? -1 : projectGroupId;
+        thesaurusEditionSkosImportEngine.setInfos(formatDate, userId, groupId, sourceLang);
+        thesaurusEditionSkosImportEngine.setSelectedIdentifier(options.selectedIdentifier());
+        thesaurusEditionSkosImportEngine.setPrefixHandle(options.prefixHandle());
+        thesaurusEditionSkosImportEngine.setPrefixDoi(options.prefixDoi());
+        thesaurusEditionSkosImportEngine.setNodePreference(options.preferences());
+        thesaurusEditionSkosImportEngine.setImportAsMaster(options.importAsMaster());
+        thesaurusEditionSkosImportEngine.setRdf4jThesaurus(document);
+    }
+
+    private void importConcepts(SKOSXmlDocument document, String thesaurusId) {
         var concepts = document.getConceptList();
-        if (concepts != null && !concepts.isEmpty()) {
-            List<SKOSResource> withLabels = new ArrayList<>();
-            for (SKOSResource resource : concepts) {
-                if (!resource.getLabelsList().isEmpty()) {
-                    withLabels.add(resource);
-                }
-            }
-            String finalThesaurusId = thesaurusId;
-            importBatchSupport.forEachBatched(withLabels, (batch, ignored) -> {
-                for (SKOSResource resource : batch) {
-                    thesaurusEditionSkosImportEngine.addConceptV2(resource, finalThesaurusId);
-                }
-            });
+        if (concepts == null || concepts.isEmpty()) {
+            return;
         }
+        List<SKOSResource> withLabels = new ArrayList<>();
+        for (SKOSResource resource : concepts) {
+            if (!resource.getLabelsList().isEmpty()) {
+                withLabels.add(resource);
+            }
+        }
+        importBatchSupport.forEachBatched(withLabels, (batch, ignored) -> {
+            for (SKOSResource resource : batch) {
+                thesaurusEditionSkosImportEngine.addConceptV2(resource, thesaurusId);
+            }
+        });
+    }
 
-        String finalThesaurusId = thesaurusId;
+    private void importRelatedResources(SKOSXmlDocument document, String thesaurusId) {
         importBatchSupport.inTransaction(() -> {
             var facets = document.getFacetList();
             if (facets != null) {
-                thesaurusEditionSkosImportEngine.addFacetsV2(new ArrayList<>(facets), finalThesaurusId);
+                thesaurusEditionSkosImportEngine.addFacetsV2(new ArrayList<>(facets), thesaurusId);
             }
-
             var groups = document.getGroupList();
             if (groups != null) {
-                thesaurusEditionSkosImportEngine.addGroups(new ArrayList<>(groups), finalThesaurusId);
+                thesaurusEditionSkosImportEngine.addGroups(new ArrayList<>(groups), thesaurusId);
             }
-
-            thesaurusEditionSkosImportEngine.addLangsToThesaurus(finalThesaurusId);
-
+            thesaurusEditionSkosImportEngine.addLangsToThesaurus(thesaurusId);
             var foafImages = document.getFoafImage();
             if (foafImages != null) {
-                thesaurusEditionSkosImportEngine.addFoafImages(new ArrayList<>(foafImages), finalThesaurusId);
+                thesaurusEditionSkosImportEngine.addFoafImages(new ArrayList<>(foafImages), thesaurusId);
             }
             importBatchSupport.flushAndClear();
-            // Baseline sync : l'import n'est pas une modification locale à pousser vers le maître.
-            toolboxPreferencePersistence.updateLastSyncAt(finalThesaurusId, V2Dates.nowDateTime());
+            toolboxPreferencePersistence.updateLastSyncAt(thesaurusId, V2Dates.nowDateTime());
         });
-
-        return thesaurusId;
     }
 
     private String getLastErrorMessage() {
@@ -238,5 +256,23 @@ public class ThesaurusEditionSkosImportService {
     }
 
     public record SkosLoadResult(SKOSXmlDocument document, String uri, int totalConcepts) {
+    }
+
+    public record SkosImportOptions(
+            String selectedIdentifier,
+            String prefixHandle,
+            String prefixDoi,
+            String persistentNameThesaurus,
+            boolean importAsMaster
+    ) {
+    }
+
+    private record SkosDocumentImportOptions(
+            String selectedIdentifier,
+            String prefixHandle,
+            String prefixDoi,
+            Preferences preferences,
+            boolean importAsMaster
+    ) {
     }
 }

@@ -23,56 +23,97 @@ public final class ConceptLabelSort {
     private static int naturalCompare(String left, String right, boolean ignoreCase) {
         String a = ignoreCase ? left.toLowerCase() : left;
         String b = ignoreCase ? right.toLowerCase() : right;
+        NaturalCompareState state = new NaturalCompareState();
         int minSize = Math.min(a.length(), b.length());
-        boolean asNumeric = false;
-        int lastNumericCompare = 0;
         for (int i = 0; i < minSize; i++) {
-            char aChar = a.charAt(i);
-            char bChar = b.charAt(i);
-            boolean aNumber = aChar >= '0' && aChar <= '9';
-            boolean bNumber = bChar >= '0' && bChar <= '9';
-            if (asNumeric) {
-                if (aNumber && bNumber) {
-                    if (lastNumericCompare == 0) {
-                        lastNumericCompare = aChar - bChar;
-                    }
-                } else if (aNumber) {
-                    return 1;
-                } else if (bNumber) {
-                    return -1;
-                } else if (lastNumericCompare == 0) {
-                    if (aChar != bChar) {
-                        return aChar - bChar;
-                    }
-                    asNumeric = false;
-                } else {
-                    return lastNumericCompare;
-                }
-            } else if (aNumber && bNumber) {
-                asNumeric = true;
-                if (lastNumericCompare == 0) {
-                    lastNumericCompare = aChar - bChar;
-                }
-            } else if (aChar != bChar) {
-                return aChar - bChar;
+            Integer result = compareAt(a.charAt(i), b.charAt(i), state);
+            if (result != null) {
+                return result;
             }
         }
-        if (asNumeric) {
-            if (a.length() > b.length()
-                    && a.charAt(b.length()) >= '0'
-                    && a.charAt(b.length()) <= '9') {
-                return 1;
-            }
-            if (b.length() > a.length()
-                    && b.charAt(a.length()) >= '0'
-                    && b.charAt(a.length()) <= '9') {
-                return -1;
-            }
-            if (lastNumericCompare == 0) {
-                return a.length() - b.length();
-            }
-            return lastNumericCompare;
+        if (state.asNumeric) {
+            return finishNumericCompare(a, b, state.lastNumericCompare);
         }
         return a.length() - b.length();
+    }
+
+    private static Integer compareAt(char aChar, char bChar, NaturalCompareState state) {
+        boolean aNumber = isDigit(aChar);
+        boolean bNumber = isDigit(bChar);
+        if (state.asNumeric) {
+            return compareInNumericMode(aChar, bChar, aNumber, bNumber, state);
+        }
+        return compareInTextMode(aChar, bChar, aNumber, bNumber, state);
+    }
+
+    private static Integer compareInNumericMode(
+            char aChar,
+            char bChar,
+            boolean aNumber,
+            boolean bNumber,
+            NaturalCompareState state
+    ) {
+        if (aNumber && bNumber) {
+            if (state.lastNumericCompare == 0) {
+                state.lastNumericCompare = aChar - bChar;
+            }
+            return null;
+        }
+        if (aNumber) {
+            return 1;
+        }
+        if (bNumber) {
+            return -1;
+        }
+        if (state.lastNumericCompare == 0) {
+            if (aChar != bChar) {
+                return aChar - bChar;
+            }
+            state.asNumeric = false;
+            return null;
+        }
+        return state.lastNumericCompare;
+    }
+
+    private static Integer compareInTextMode(
+            char aChar,
+            char bChar,
+            boolean aNumber,
+            boolean bNumber,
+            NaturalCompareState state
+    ) {
+        if (aNumber && bNumber) {
+            state.asNumeric = true;
+            if (state.lastNumericCompare == 0) {
+                state.lastNumericCompare = aChar - bChar;
+            }
+            return null;
+        }
+        if (aChar != bChar) {
+            return aChar - bChar;
+        }
+        return null;
+    }
+
+    private static int finishNumericCompare(String a, String b, int lastNumericCompare) {
+        if (a.length() > b.length() && isDigit(a.charAt(b.length()))) {
+            return 1;
+        }
+        if (b.length() > a.length() && isDigit(b.charAt(a.length()))) {
+            return -1;
+        }
+        if (lastNumericCompare == 0) {
+            return a.length() - b.length();
+        }
+        return lastNumericCompare;
+    }
+
+    private static boolean isDigit(char value) {
+        return value >= '0' && value <= '9';
+    }
+
+    private static final class NaturalCompareState {
+        private boolean asNumeric;
+        private int lastNumericCompare;
     }
 }

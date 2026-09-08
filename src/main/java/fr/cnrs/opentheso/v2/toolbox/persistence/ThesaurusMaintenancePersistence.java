@@ -22,6 +22,7 @@ import org.apache.commons.collections4.CollectionUtils;
 import org.apache.commons.lang3.StringUtils;
 import org.springframework.stereotype.Component;
 import org.springframework.transaction.annotation.Transactional;
+import fr.cnrs.opentheso.v2.shared.time.V2Dates;
 
 import java.io.BufferedWriter;
 import java.io.File;
@@ -31,7 +32,6 @@ import java.net.URI;
 import java.nio.charset.StandardCharsets;
 import java.nio.file.Files;
 import java.util.ArrayList;
-import java.util.Date;
 import java.util.LinkedHashSet;
 import java.util.List;
 import java.util.Objects;
@@ -90,31 +90,7 @@ public class ThesaurusMaintenancePersistence {
     @Transactional
     public void switchRolesFromTermToConcept(String thesaurusId, String workLanguage) {
         for (String conceptId : loadAllConceptIds(thesaurusId)) {
-            var concept = conceptRepository.findByIdConceptAndIdThesaurus(conceptId, thesaurusId).orElse(null);
-            if (concept == null) {
-                continue;
-            }
-            var preferredTerm = preferredTermRepository.findByIdThesaurusAndIdConcept(thesaurusId, conceptId).orElse(null);
-            if (preferredTerm == null) {
-                continue;
-            }
-            var term = termRepository.findByIdTermAndIdThesaurusAndLang(
-                    preferredTerm.getIdTerm(), thesaurusId, workLanguage).orElse(null);
-            if (term == null) {
-                continue;
-            }
-            boolean changed = false;
-            if (term.getCreator() != null && term.getCreator() > 0) {
-                concept.setCreator(term.getCreator());
-                changed = true;
-            }
-            if (term.getContributor() != null && term.getContributor() > 0) {
-                concept.setContributor(term.getContributor());
-                changed = true;
-            }
-            if (changed) {
-                conceptRepository.save(concept);
-            }
+            switchRolesForConcept(conceptId, thesaurusId, workLanguage);
         }
     }
 
@@ -136,7 +112,7 @@ public class ThesaurusMaintenancePersistence {
                 continue;
             }
             if (overwrite || StringUtils.isEmpty(concept.getIdArk())) {
-                conceptRepository.setIdArk(naan.trim() + "/" + safePrefix + conceptId, new Date(), conceptId, thesaurusId);
+                conceptRepository.setIdArk(naan.trim() + "/" + safePrefix + conceptId, V2Dates.nowUtilDate(), conceptId, thesaurusId);
                 count++;
             }
         }
@@ -158,7 +134,7 @@ public class ThesaurusMaintenancePersistence {
             if (overwrite || StringUtils.isEmpty(concept.getIdArk())) {
                 var idArk = ToolsHelper.getNewId(preference.getSizeIdArkLocal(), preference.isUppercaseForArk(), true);
                 var urlArk = preference.getNaanArkLocal() + "/" + preference.getPrefixArkLocal() + idArk;
-                conceptRepository.setIdArk(urlArk, new Date(), conceptId, thesaurusId);
+                conceptRepository.setIdArk(urlArk, V2Dates.nowUtilDate(), conceptId, thesaurusId);
                 count++;
             }
         }
@@ -248,48 +224,99 @@ public class ThesaurusMaintenancePersistence {
 
     private boolean doReorganizingThesaurus(String thesaurusId) {
         for (String idConcept : loadAllConceptIds(thesaurusId)) {
-            List<HierarchicalRelationship> btRelations = loadBtRelations(idConcept, thesaurusId);
-            List<HierarchicalRelationship> ntParentRelations = loadNtParentRelations(idConcept, thesaurusId);
-
-            if (btRelations.isEmpty() && ntParentRelations.isEmpty()) {
-                if (!isTopConcept(idConcept, thesaurusId)) {
-                    conceptRepository.setTopConceptTag(true, idConcept, thesaurusId);
-                }
-                continue;
-            }
-
-            Set<String> existingBtKeys = btRelations.stream()
-                    .map(rel -> relationKey(rel.getIdConcept2(), rel.getRole()))
-                    .collect(Collectors.toSet());
-            Set<String> existingNtParentKeys = ntParentRelations.stream()
-                    .map(rel -> relationKey(rel.getIdConcept1(), rel.getRole()))
-                    .collect(Collectors.toSet());
-
-            for (HierarchicalRelationship ntParent : ntParentRelations) {
-                String expectedBtRole = inverseHierarchicalRole(ntParent.getRole());
-                if (expectedBtRole == null) {
-                    continue;
-                }
-                String key = relationKey(ntParent.getIdConcept1(), expectedBtRole);
-                if (!existingBtKeys.contains(key)) {
-                    saveRelationIfAbsent(idConcept, thesaurusId, expectedBtRole, ntParent.getIdConcept1());
-                    existingBtKeys.add(key);
-                }
-            }
-
-            for (HierarchicalRelationship bt : btRelations) {
-                String expectedNtRole = inverseHierarchicalRole(bt.getRole());
-                if (expectedNtRole == null) {
-                    continue;
-                }
-                String key = relationKey(bt.getIdConcept2(), expectedNtRole);
-                if (!existingNtParentKeys.contains(key)) {
-                    saveRelationIfAbsent(bt.getIdConcept2(), thesaurusId, expectedNtRole, idConcept);
-                    existingNtParentKeys.add(key);
-                }
-            }
+            reorganizeConceptRelations(idConcept, thesaurusId);
         }
         return true;
+    }
+
+    private void reorganizeConceptRelations(String idConcept, String thesaurusId) {
+        List<HierarchicalRelationship> btRelations = loadBtRelations(idConcept, thesaurusId);
+        List<HierarchicalRelationship> ntParentRelations = loadNtParentRelations(idConcept, thesaurusId);
+        if (btRelations.isEmpty() && ntParentRelations.isEmpty()) {
+            if (!isTopConcept(idConcept, thesaurusId)) {
+                conceptRepository.setTopConceptTag(true, idConcept, thesaurusId);
+            }
+            return;
+        }
+        Set<String> existingBtKeys = btRelations.stream()
+                .map(rel -> relationKey(rel.getIdConcept2(), rel.getRole()))
+                .collect(Collectors.toSet());
+        Set<String> existingNtParentKeys = ntParentRelations.stream()
+                .map(rel -> relationKey(rel.getIdConcept1(), rel.getRole()))
+                .collect(Collectors.toSet());
+        completeMissingBtRelations(idConcept, thesaurusId, ntParentRelations, existingBtKeys);
+        completeMissingNtRelations(idConcept, thesaurusId, btRelations, existingNtParentKeys);
+    }
+
+    private void completeMissingBtRelations(
+            String idConcept,
+            String thesaurusId,
+            List<HierarchicalRelationship> ntParentRelations,
+            Set<String> existingBtKeys
+    ) {
+        for (HierarchicalRelationship ntParent : ntParentRelations) {
+            addInverseIfMissing(idConcept, thesaurusId, ntParent.getRole(), ntParent.getIdConcept1(), existingBtKeys);
+        }
+    }
+
+    private void completeMissingNtRelations(
+            String idConcept,
+            String thesaurusId,
+            List<HierarchicalRelationship> btRelations,
+            Set<String> existingNtParentKeys
+    ) {
+        for (HierarchicalRelationship bt : btRelations) {
+            addInverseIfMissing(bt.getIdConcept2(), thesaurusId, bt.getRole(), idConcept, existingNtParentKeys);
+        }
+    }
+
+    private void addInverseIfMissing(
+            String concept1,
+            String thesaurusId,
+            String role,
+            String concept2,
+            Set<String> existingKeys
+    ) {
+        String expectedRole = inverseHierarchicalRole(role);
+        if (expectedRole == null) {
+            return;
+        }
+        // existingBtKeys : (parent, BTx) ; existingNtParentKeys : (parent, NTx)
+        String parentId = expectedRole.startsWith("BT") ? concept2 : concept1;
+        String key = relationKey(parentId, expectedRole);
+        if (existingKeys.contains(key)) {
+            return;
+        }
+        saveRelationIfAbsent(concept1, thesaurusId, expectedRole, concept2);
+        existingKeys.add(key);
+    }
+
+    private void switchRolesForConcept(String conceptId, String thesaurusId, String workLanguage) {
+        var concept = conceptRepository.findByIdConceptAndIdThesaurus(conceptId, thesaurusId).orElse(null);
+        if (concept == null) {
+            return;
+        }
+        var preferredTerm = preferredTermRepository.findByIdThesaurusAndIdConcept(thesaurusId, conceptId).orElse(null);
+        if (preferredTerm == null) {
+            return;
+        }
+        var term = termRepository.findByIdTermAndIdThesaurusAndLang(
+                preferredTerm.getIdTerm(), thesaurusId, workLanguage).orElse(null);
+        if (term == null) {
+            return;
+        }
+        boolean changed = false;
+        if (term.getCreator() != null && term.getCreator() > 0) {
+            concept.setCreator(term.getCreator());
+            changed = true;
+        }
+        if (term.getContributor() != null && term.getContributor() > 0) {
+            concept.setContributor(term.getContributor());
+            changed = true;
+        }
+        if (changed) {
+            conceptRepository.save(concept);
+        }
     }
 
     private int deleteConceptsWithEmptyRelation(String thesaurusId) {

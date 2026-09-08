@@ -21,9 +21,10 @@ import org.primefaces.model.StreamedContent;
 
 import java.io.ByteArrayInputStream;
 import java.io.Serializable;
+import java.time.Instant;
+import java.time.LocalDate;
 import java.util.ArrayList;
 import java.util.Collections;
-import java.util.Date;
 import java.util.List;
 
 @Getter
@@ -47,9 +48,9 @@ public class StatisticsBean implements Serializable {
     private int conceptCount;
     private int candidateCount;
     private int deprecatedCount;
-    private Date startDate;
-    private Date endDate;
-    private Date lastModification;
+    private LocalDate startDate;
+    private LocalDate endDate;
+    private Instant lastModification;
 
     private transient ConceptStatisticData selectedConcept;
     private transient List<GenericStatistiqueData> collectionStatistics = Collections.emptyList();

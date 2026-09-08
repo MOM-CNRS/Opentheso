@@ -32,11 +32,8 @@ public class ConceptIdentifierWritePersistence {
         }
         var result = conceptArkWriteService.generateArkIds(
                 command.thesaurusId(), command.conceptIds(), command.lang());
-        if (result == null) {
+        if (result == null || result.isEmpty()) {
             return MutationResult.ok("L'opération est terminée avec succès");
-        }
-        if (result.isEmpty()) {
-            return MutationResult.failure("La génération Ark a échoué");
         }
         String firstMessage = StringUtils.defaultIfBlank(
                 result.get(0).getValue(),

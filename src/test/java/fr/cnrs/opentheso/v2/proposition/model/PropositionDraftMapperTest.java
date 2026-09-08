@@ -12,18 +12,18 @@ class PropositionDraftMapperTest {
 
     @Test
     void toDraft_ignoresUnchangedPreferredLabel() {
-        var draft = PropositionDraftMapper.toDraft(
+        var draft = PropositionDraftMapper.toDraft(new PropositionDraftMapper.ToDraftRequest(
                 "C1", "TH1", "fr", "Old label", "Old label",
-                List.of(), List.of(), List.of());
+                List.of(), List.of(), List.of()));
 
         assertNull(draft.getPreferredLabelChange());
     }
 
     @Test
     void toDraft_detectsPreferredLabelChange() {
-        var draft = PropositionDraftMapper.toDraft(
+        var draft = PropositionDraftMapper.toDraft(new PropositionDraftMapper.ToDraftRequest(
                 "C1", "TH1", "fr", "Old label", "New label",
-                List.of(), List.of(), List.of());
+                List.of(), List.of(), List.of()));
 
         assertEquals(PropositionFieldAction.UPDATE, draft.getPreferredLabelChange().action());
         assertEquals("New label", draft.getPreferredLabelChange().value());
@@ -32,9 +32,9 @@ class PropositionDraftMapperTest {
 
     @Test
     void toDraft_ignoresBlankPreferredLabel() {
-        var draft = PropositionDraftMapper.toDraft(
+        var draft = PropositionDraftMapper.toDraft(new PropositionDraftMapper.ToDraftRequest(
                 "C1", "TH1", "fr", "Old label", "  ",
-                List.of(), List.of(), List.of());
+                List.of(), List.of(), List.of()));
 
         assertNull(draft.getPreferredLabelChange());
     }
@@ -63,9 +63,9 @@ class PropositionDraftMapperTest {
         untouched.setValue("Inchangé");
         untouched.setOldValue("Inchangé");
 
-        var draft = PropositionDraftMapper.toDraft(
+        var draft = PropositionDraftMapper.toDraft(new PropositionDraftMapper.ToDraftRequest(
                 "C1", "TH1", "fr", "Label", "Label",
-                List.of(toAdd, toUpdate, toRemove, untouched), List.of(), List.of());
+                List.of(toAdd, toUpdate, toRemove, untouched), List.of(), List.of()));
 
         assertEquals(3, draft.getSynonymChanges().size());
         assertEquals(PropositionFieldAction.ADD, draft.getSynonymChanges().get(0).action());
@@ -80,9 +80,9 @@ class PropositionDraftMapperTest {
         toAdd.setValue("New value");
         toAdd.setToAdd(true);
 
-        var draft = PropositionDraftMapper.toDraft(
+        var draft = PropositionDraftMapper.toDraft(new PropositionDraftMapper.ToDraftRequest(
                 "C1", "TH1", "fr", "Label", "Label",
-                List.of(), List.of(toAdd), List.of());
+                List.of(), List.of(toAdd), List.of()));
 
         assertEquals(1, draft.getTranslationChanges().size());
         assertEquals(PropositionFieldCategory.TRADUCTION, draft.getTranslationChanges().get(0).category());
@@ -110,9 +110,9 @@ class PropositionDraftMapperTest {
         unchanged.setOldValue("Same");
         unchanged.setValue("Same");
 
-        var draft = PropositionDraftMapper.toDraft(
+        var draft = PropositionDraftMapper.toDraft(new PropositionDraftMapper.ToDraftRequest(
                 "C1", "TH1", "fr", "Label", "Label",
-                List.of(), List.of(), List.of(added, updated, removed, unchanged));
+                List.of(), List.of(), List.of(added, updated, removed, unchanged)));
 
         assertEquals(PropositionFieldAction.ADD, draft.getNoteChange("definition").action());
         assertEquals(PropositionFieldAction.UPDATE, draft.getNoteChange("note").action());
@@ -122,9 +122,9 @@ class PropositionDraftMapperTest {
 
     @Test
     void toDraft_returnsEmptyDraftWhenNothingChanged() {
-        var draft = PropositionDraftMapper.toDraft(
+        var draft = PropositionDraftMapper.toDraft(new PropositionDraftMapper.ToDraftRequest(
                 "C1", "TH1", "fr", "Label", "Label",
-                List.of(), List.of(), List.of());
+                List.of(), List.of(), List.of()));
 
         assertTrue(draft.isEmpty());
     }

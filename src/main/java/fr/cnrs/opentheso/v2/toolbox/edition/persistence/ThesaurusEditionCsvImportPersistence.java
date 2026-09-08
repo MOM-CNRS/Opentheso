@@ -74,11 +74,9 @@ public class ThesaurusEditionCsvImportPersistence {
             Integer projectGroupId,
             int userId,
             String userName,
-            List<ThesaurusCsvConceptObject> conceptObjects,
-            List<String> languages,
-            String persistentNameThesaurus
+            CsvImportPayload payload
     ) {
-        if (CollectionUtils.isEmpty(conceptObjects)) {
+        if (CollectionUtils.isEmpty(payload.conceptObjects())) {
             return ThesaurusEditionCsvImportResult.error("Aucun concept à importer");
         }
 
@@ -86,65 +84,17 @@ public class ThesaurusEditionCsvImportPersistence {
         String normalizedSourceLang = StringUtils.defaultIfBlank(sourceLang, "fr");
         String normalizedFormatDate = StringUtils.defaultIfBlank(formatDate, "yyyy-MM-dd");
 
-        String thesaurusId = importBatchSupport.inTransaction(() -> {
-            String id = thesaurusCsvImportEngine.createThesaurus(
-                    StringUtils.defaultString(thesaurusName),
-                    normalizedSourceLang,
-                    projectId,
-                    userName
-            );
-            if (StringUtils.isBlank(id)) {
-                return null;
-            }
-            String resolvedName;
-            if(StringUtils.isBlank(persistentNameThesaurus)) {
-                resolvedName = StringUtils.defaultIfBlank(thesaurusName, "theso_" + id);
-            } else {
-                resolvedName = persistentNameThesaurus;
-            }
-            if (CollectionUtils.isNotEmpty(languages)) {
-                thesaurusCsvImportEngine.addLangsToThesaurus(languages, id);
-            }
-            toolboxPreferencePersistence.initPreferences(id, normalizedSourceLang);
-            toolboxPreferencePersistence.updatePreferredName(id, resolvedName);
-            thesaurusCsvImportEngine.setNodePreference(toolboxPreferencePersistence.findPreferences(id));
-            thesaurusCsvImportEngine.setFormatDate(normalizedFormatDate);
-            thesaurusCsvImportEngine.setIdUser(userId);
-            return id;
-        });
+        String thesaurusId = importBatchSupport.inTransaction(() ->
+                createImportedThesaurus(thesaurusName, normalizedSourceLang, projectId, userName,
+                        normalizedFormatDate, userId, payload));
 
         if (StringUtils.isBlank(thesaurusId)) {
             return ThesaurusEditionCsvImportResult.error("Erreur lors de la création du thésaurus");
         }
 
         AtomicInteger importedConcepts = new AtomicInteger();
-        String finalThesaurusId = thesaurusId;
-        importBatchSupport.forEachBatched(conceptObjects, (batch, ignored) -> {
-            for (var conceptObject : batch) {
-                switch (StringUtils.defaultString(conceptObject.getType()).trim().toLowerCase()) {
-                    case "skos:concept" -> {
-                        if (thesaurusCsvImportEngine.addConceptV2(
-                                finalThesaurusId,
-                                conceptObject,
-                                userId,
-                                normalizedFormatDate
-                        )) {
-                            importedConcepts.incrementAndGet();
-                        }
-                    }
-                    case "skos:collection" -> {
-                        thesaurusCsvImportEngine.addGroup(finalThesaurusId, conceptObject);
-                        for (String subGroup : conceptObject.getSubGroups()) {
-                            thesaurusCsvImportEngine.addSubGroup(conceptObject.getIdConcept(), subGroup, finalThesaurusId);
-                        }
-                    }
-                    case "skos-thes:thesaurusarray" -> thesaurusCsvImportEngine.addFacets(conceptObject, finalThesaurusId);
-                    default -> {
-                        // ignore unknown types
-                    }
-                }
-            }
-        });
+        importBatchSupport.forEachBatched(payload.conceptObjects(), (batch, ignored) ->
+                importConceptBatch(thesaurusId, batch, userId, normalizedFormatDate, importedConcepts));
 
         toolboxPreferencePersistence.updateLastSyncAt(thesaurusId, V2Dates.nowDateTime());
 
@@ -153,5 +103,82 @@ public class ThesaurusEditionCsvImportPersistence {
                 importedConcepts.get(),
                 StringUtils.defaultString(thesaurusCsvImportEngine.getMessage())
         );
+    }
+
+    private String createImportedThesaurus(
+            String thesaurusName,
+            String normalizedSourceLang,
+            int projectId,
+            String userName,
+            String normalizedFormatDate,
+            int userId,
+            CsvImportPayload payload
+    ) {
+        String id = thesaurusCsvImportEngine.createThesaurus(
+                StringUtils.defaultString(thesaurusName),
+                normalizedSourceLang,
+                projectId,
+                userName
+        );
+        if (StringUtils.isBlank(id)) {
+            return null;
+        }
+        String resolvedName = StringUtils.isBlank(payload.persistentNameThesaurus())
+                ? StringUtils.defaultIfBlank(thesaurusName, "theso_" + id)
+                : payload.persistentNameThesaurus();
+        if (CollectionUtils.isNotEmpty(payload.languages())) {
+            thesaurusCsvImportEngine.addLangsToThesaurus(payload.languages(), id);
+        }
+        toolboxPreferencePersistence.initPreferences(id, normalizedSourceLang);
+        toolboxPreferencePersistence.updatePreferredName(id, resolvedName);
+        thesaurusCsvImportEngine.setNodePreference(toolboxPreferencePersistence.findPreferences(id));
+        thesaurusCsvImportEngine.setFormatDate(normalizedFormatDate);
+        thesaurusCsvImportEngine.setIdUser(userId);
+        return id;
+    }
+
+    private void importConceptBatch(
+            String thesaurusId,
+            List<ThesaurusCsvConceptObject> batch,
+            int userId,
+            String normalizedFormatDate,
+            AtomicInteger importedConcepts
+    ) {
+        for (var conceptObject : batch) {
+            importOneConcept(thesaurusId, conceptObject, userId, normalizedFormatDate, importedConcepts);
+        }
+    }
+
+    private void importOneConcept(
+            String thesaurusId,
+            ThesaurusCsvConceptObject conceptObject,
+            int userId,
+            String normalizedFormatDate,
+            AtomicInteger importedConcepts
+    ) {
+        switch (StringUtils.defaultString(conceptObject.getType()).trim().toLowerCase()) {
+            case "skos:concept" -> {
+                if (thesaurusCsvImportEngine.addConceptV2(thesaurusId, conceptObject, userId, normalizedFormatDate)) {
+                    importedConcepts.incrementAndGet();
+                }
+            }
+            case "skos:collection" -> {
+                thesaurusCsvImportEngine.addGroup(thesaurusId, conceptObject);
+                for (String subGroup : conceptObject.getSubGroups()) {
+                    thesaurusCsvImportEngine.addSubGroup(conceptObject.getIdConcept(), subGroup, thesaurusId);
+                }
+            }
+            case "skos-thes:thesaurusarray" -> thesaurusCsvImportEngine.addFacets(conceptObject, thesaurusId);
+            default -> {
+                // ignore unknown types
+            }
+        }
+    }
+
+    public record CsvImportPayload(
+            List<ThesaurusCsvConceptObject> conceptObjects,
+            List<String> languages,
+            String persistentNameThesaurus
+    ) {
     }
 }

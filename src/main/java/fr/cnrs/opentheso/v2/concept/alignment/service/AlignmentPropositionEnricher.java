@@ -123,29 +123,47 @@ public class AlignmentPropositionEnricher {
     ) {
         List<SelectedResource> result = new ArrayList<>();
         for (SelectedResource candidate : remote) {
-            if (candidate == null || StringUtils.isBlank(candidate.getGettedValue())) {
-                continue;
-            }
-            boolean skip = false;
-            for (NodeTermTraduction localTraduction : local) {
-                if (!Strings.CI.equals(candidate.getIdLang(), localTraduction.getLang())) {
-                    continue;
-                }
-                if (Strings.CI.equals(
-                        candidate.getGettedValue().trim(),
-                        StringUtils.defaultString(localTraduction.getLexicalValue()).trim())) {
-                    skip = true;
-                } else {
-                    candidate.setLocalValue(localTraduction.getLexicalValue());
-                }
-                break;
-            }
-            if (!skip) {
-                candidate.setSelected(true);
-                result.add(candidate);
-            }
+            addIfNewTraduction(candidate, local, result);
         }
         return result;
+    }
+
+    private static void addIfNewTraduction(
+            SelectedResource candidate,
+            List<NodeTermTraduction> local,
+            List<SelectedResource> result
+    ) {
+        if (candidate == null || StringUtils.isBlank(candidate.getGettedValue())) {
+            return;
+        }
+        if (skipExistingTraduction(candidate, local)) {
+            return;
+        }
+        candidate.setSelected(true);
+        result.add(candidate);
+    }
+
+    private static boolean skipExistingTraduction(SelectedResource candidate, List<NodeTermTraduction> local) {
+        for (NodeTermTraduction localTraduction : local) {
+            MatchProbe skip = matchLocalTraduction(candidate, localTraduction);
+            if (skip.decided()) {
+                return skip.isMatch();
+            }
+        }
+        return false;
+    }
+
+    private static MatchProbe matchLocalTraduction(SelectedResource candidate, NodeTermTraduction localTraduction) {
+        if (!Strings.CI.equals(candidate.getIdLang(), localTraduction.getLang())) {
+            return MatchProbe.UNDECIDED;
+        }
+        if (Strings.CI.equals(
+                candidate.getGettedValue().trim(),
+                StringUtils.defaultString(localTraduction.getLexicalValue()).trim())) {
+            return MatchProbe.MATCHED;
+        }
+        candidate.setLocalValue(localTraduction.getLexicalValue());
+        return MatchProbe.NOT_MATCHED;
     }
 
     private static List<SelectedResource> reconcileDefinitions(
@@ -154,36 +172,68 @@ public class AlignmentPropositionEnricher {
     ) {
         List<SelectedResource> result = new ArrayList<>();
         for (SelectedResource candidate : remote) {
-            if (candidate == null || StringUtils.isBlank(candidate.getGettedValue())) {
-                continue;
-            }
-            if (definitionAlreadyPresent(candidate, localNotes)) {
-                continue;
-            }
-            candidate.setSelected(true);
-            result.add(candidate);
+            addIfNewDefinition(candidate, localNotes, result);
         }
         return result;
     }
 
+    private static void addIfNewDefinition(
+            SelectedResource candidate,
+            List<NodeNote> localNotes,
+            List<SelectedResource> result
+    ) {
+        if (candidate == null || StringUtils.isBlank(candidate.getGettedValue())) {
+            return;
+        }
+        if (definitionAlreadyPresent(candidate, localNotes)) {
+            return;
+        }
+        candidate.setSelected(true);
+        result.add(candidate);
+    }
+
     private static boolean definitionAlreadyPresent(SelectedResource candidate, List<NodeNote> localNotes) {
         for (NodeNote note : localNotes) {
-            if (!"definition".equalsIgnoreCase(note.getNoteTypeCode())) {
-                continue;
+            MatchProbe matched = matchDefinitionNote(candidate, note);
+            if (matched.decided()) {
+                return matched.isMatch();
             }
-            if (StringUtils.isNotBlank(candidate.getIdLang())
-                    && !Strings.CI.equals(candidate.getIdLang(), note.getLang())) {
-                continue;
-            }
-            if (Strings.CI.equals(
-                    candidate.getGettedValue().trim(),
-                    StringUtils.defaultString(note.getLexicalValue()).trim())) {
-                return true;
-            }
-            candidate.setLocalValue(note.getLexicalValue());
-            return false;
         }
         return false;
+    }
+
+    private static MatchProbe matchDefinitionNote(SelectedResource candidate, NodeNote note) {
+        if (!"definition".equalsIgnoreCase(note.getNoteTypeCode())) {
+            return MatchProbe.UNDECIDED;
+        }
+        if (StringUtils.isNotBlank(candidate.getIdLang())
+                && !Strings.CI.equals(candidate.getIdLang(), note.getLang())) {
+            return MatchProbe.UNDECIDED;
+        }
+        if (Strings.CI.equals(
+                candidate.getGettedValue().trim(),
+                StringUtils.defaultString(note.getLexicalValue()).trim())) {
+            return MatchProbe.MATCHED;
+        }
+        candidate.setLocalValue(note.getLexicalValue());
+        return MatchProbe.NOT_MATCHED;
+    }
+
+    /**
+     * Tri-state probe: undecided continues the loop; matched / notMatched ends it.
+     */
+    private enum MatchProbe {
+        UNDECIDED,
+        MATCHED,
+        NOT_MATCHED;
+
+        boolean decided() {
+            return this != UNDECIDED;
+        }
+
+        boolean isMatch() {
+            return this == MATCHED;
+        }
     }
 
     private static List<SelectedResource> reconcileImages(

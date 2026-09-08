@@ -407,29 +407,30 @@ public class ThesaurusCsvReader {
                     .setIgnoreEmptyLines(true).setIgnoreHeaderCase(true).setTrim(true).build();
 
             CSVParser cSVParser = cSVFormat.parse(in);
-            String value;
             nodeIdValues = new ArrayList<>();
             for (CSVRecord csvRecord : cSVParser) {
-                NodeIdValue nodeIdValue = new NodeIdValue();
-                // setId, si l'identifiant n'est pas renseigné, on récupère un NULL 
-                value = optionalColumn(csvRecord, COL_LOCAL_ID);
-                if (value == null) {
-                    continue;
-                }
-                nodeIdValue.setId(value);
-                // on récupère les uris à supprimer
-                value = optionalColumn(csvRecord, "arkId");
-                if (value == null) {
-                    continue;
-                }
-                nodeIdValue.setValue(value.trim());
-                nodeIdValues.add(nodeIdValue);
+                addArkRecord(csvRecord);
             }
             return true;
         } catch (IOException ex) {
             java.util.logging.Logger.getLogger(ThesaurusCsvReader.class.getName()).log(Level.SEVERE, null, ex);
         }
         return false;
+    }
+
+    private void addArkRecord(CSVRecord csvRecord) {
+        String value = optionalColumn(csvRecord, COL_LOCAL_ID);
+        if (value == null) {
+            return;
+        }
+        NodeIdValue nodeIdValue = new NodeIdValue();
+        nodeIdValue.setId(value);
+        value = optionalColumn(csvRecord, "arkId");
+        if (value == null) {
+            return;
+        }
+        nodeIdValue.setValue(value.trim());
+        nodeIdValues.add(nodeIdValue);
     }
 
     public boolean readFileAlignmentToDelete(Reader in) {
@@ -548,26 +549,8 @@ public class ThesaurusCsvReader {
             try (CSVParser csvParser = headerFormat().parse(in)) {
                 nodeIdValues = new ArrayList<>();
 
-                // Parcourir les enregistrements CSV
                 for (CSVRecord csvRecord : csvParser) {
-                    NodeIdValue nodeIdValue = new NodeIdValue();
-
-                    // Récupérer l'identifiant "localId"
-                    String value = csvRecord.get(COL_LOCAL_ID);
-                    if (value == null || value.isBlank()) {
-                        continue; // Si vide, passer à l'enregistrement suivant
-                    }
-                    nodeIdValue.setId(value);
-
-                    // Récupérer la notation "skos:notation"
-                    value = csvRecord.get("skos:notation");
-                    if (value == null || value.isBlank()) {
-                        continue; // Si vide, passer à l'enregistrement suivant
-                    }
-                    nodeIdValue.setValue(value.trim());
-
-                    // Ajouter l'objet à la liste
-                    nodeIdValues.add(nodeIdValue);
+                    addNotationRecord(csvRecord);
                 }
             }
             return true;
@@ -579,7 +562,22 @@ public class ThesaurusCsvReader {
         }
         return false;
 
-    }    
+    }
+
+    private void addNotationRecord(CSVRecord csvRecord) {
+        String value = csvRecord.get(COL_LOCAL_ID);
+        if (value == null || value.isBlank()) {
+            return;
+        }
+        NodeIdValue nodeIdValue = new NodeIdValue();
+        nodeIdValue.setId(value);
+        value = csvRecord.get("skos:notation");
+        if (value == null || value.isBlank()) {
+            return;
+        }
+        nodeIdValue.setValue(value.trim());
+        nodeIdValues.add(nodeIdValue);
+    }
 
     /**
      * permet de lire un fichier CSV complet pour importer les alignements
@@ -590,30 +588,31 @@ public class ThesaurusCsvReader {
     public boolean readFileCollection(Reader in) {
         try {
             CSVParser cSVParser = headerFormat().parse(in);
-            String value;
             nodeIdValues = new ArrayList<>();
             for (CSVRecord csvRecord : cSVParser) {
-                NodeIdValue nodeIdValue = new NodeIdValue();
-                // setId, si l'identifiant n'est pas renseigné, on récupère un NULL 
-                value = optionalColumn(csvRecord, COL_LOCAL_ID);
-                if (value == null) {
-                    continue;
-                }
-                nodeIdValue.setId(value);
-                // on récupère les ids des collections à ajouter au concept
-                value = optionalColumn(csvRecord, COL_SKOS_MEMBER);
-                if (value == null) {
-                    continue;
-                }
-                nodeIdValue.setValue(value.trim());
-                nodeIdValues.add(nodeIdValue);
+                addCollectionRecord(csvRecord);
             }
             return true;
         } catch (IOException ex) {
             java.util.logging.Logger.getLogger(ThesaurusCsvReader.class.getName()).log(Level.SEVERE, null, ex);
         }
         return false;
-    }       
+    }
+
+    private void addCollectionRecord(CSVRecord csvRecord) {
+        String value = optionalColumn(csvRecord, COL_LOCAL_ID);
+        if (value == null) {
+            return;
+        }
+        NodeIdValue nodeIdValue = new NodeIdValue();
+        nodeIdValue.setId(value);
+        value = optionalColumn(csvRecord, COL_SKOS_MEMBER);
+        if (value == null) {
+            return;
+        }
+        nodeIdValue.setValue(value.trim());
+        nodeIdValues.add(nodeIdValue);
+    }
     
     public List<String> readHeadersFileAlignment(Reader in){
         try {
@@ -664,20 +663,7 @@ public class ThesaurusCsvReader {
             Map<String, Set<String>> relatedById = new HashMap<>();
 
             for (CSVRecord csvRecord : parser) {
-
-                String id = optionalColumn(csvRecord, COL_LOCAL_ID);
-                String related = optionalColumn(csvRecord, "skos:related");
-                if (id == null || related == null) {
-                    continue;
-                }
-
-                if (StringUtils.isBlank(id) || StringUtils.isBlank(related)) {
-                    continue;
-                }
-
-                relatedById
-                        .computeIfAbsent(id, k -> new HashSet<>())
-                        .add(related);
+                addRelatedRecord(relatedById, csvRecord);
             }
 
             // Si tu as besoin d'une structure finale plate (id, value)
@@ -696,6 +682,17 @@ public class ThesaurusCsvReader {
         return false;
     }
 
+    private void addRelatedRecord(Map<String, Set<String>> relatedById, CSVRecord csvRecord) {
+        String id = optionalColumn(csvRecord, COL_LOCAL_ID);
+        String related = optionalColumn(csvRecord, "skos:related");
+        if (id == null || related == null) {
+            return;
+        }
+        if (StringUtils.isBlank(id) || StringUtils.isBlank(related)) {
+            return;
+        }
+        relatedById.computeIfAbsent(id, k -> new HashSet<>()).add(related);
+    }
 
     /**
      * permet de lire un fichier CSV complet pour importer les alignements
@@ -922,53 +919,37 @@ public class ThesaurusCsvReader {
         try {
             CSVParser cSVParser = headerFormat().parse(in);
 
-            String idConcept;
             nodeReplaceValueByValues = new ArrayList<>();
             for (CSVRecord csvRecord : cSVParser) {
-                // setId, si l'identifiant n'est pas renseigné, on récupère un NULL 
-                idConcept = localIdOrWarn(csvRecord);
-                if (idConcept == null || idConcept.isEmpty()) {
-                    continue;
-                }
-                for (String idLang1 : usedLangs) {
-                    NodeReplaceValueByValue nodeReplaceValueByValue = new NodeReplaceValueByValue();
-                    // on récupère les prefLabels 
-                    nodeReplaceValueByValue = getValueAndPropertyPrefLabel(nodeReplaceValueByValue, csvRecord, idLang1);     
-                    if (nodeReplaceValueByValue != null) {
-                        nodeReplaceValueByValue.setIdConcept(idConcept);
-                        nodeReplaceValueByValues.add(nodeReplaceValueByValue);
-                    }
-                    NodeReplaceValueByValue nodeReplaceValueByValue2 = new NodeReplaceValueByValue();
-                    // on récupère les altLabels 
-                    nodeReplaceValueByValue2 = getValueAndPropertyAltLabel(nodeReplaceValueByValue2, csvRecord, idLang1);     
-                    if (nodeReplaceValueByValue2 != null) {
-                        nodeReplaceValueByValue2.setIdConcept(idConcept);
-                        nodeReplaceValueByValues.add(nodeReplaceValueByValue2);
-                    }   
-                    NodeReplaceValueByValue nodeReplaceValueByValue3 = new NodeReplaceValueByValue();
-                    // on récupère les définitions
-                    nodeReplaceValueByValue3 = getValueAndPropertyDefinition(nodeReplaceValueByValue3, csvRecord, idLang1);     
-                    if (nodeReplaceValueByValue3 != null) {
-                        nodeReplaceValueByValue3.setIdConcept(idConcept);
-                        nodeReplaceValueByValues.add(nodeReplaceValueByValue3);
-                    }                     
-                    
-                }
-                 // on récupère les BTs 
-                NodeReplaceValueByValue nodeReplaceValueByValue = new NodeReplaceValueByValue();
-                nodeReplaceValueByValue = getValueAndPropertyBT(nodeReplaceValueByValue, csvRecord);     
-                if (nodeReplaceValueByValue != null) {
-                    nodeReplaceValueByValue.setIdConcept(idConcept);
-                    nodeReplaceValueByValues.add(nodeReplaceValueByValue);
-                }                  
-                 
+                addReplaceValueRecord(csvRecord, usedLangs);
             }
             return true;
         } catch (IOException ex) {
             java.util.logging.Logger.getLogger(ThesaurusCsvReader.class.getName()).log(Level.SEVERE, null, ex);
         }
         return false;
-    }    
+    }
+
+    private void addReplaceValueRecord(CSVRecord csvRecord, List<String> usedLangs) {
+        String idConcept = localIdOrWarn(csvRecord);
+        if (idConcept == null || idConcept.isEmpty()) {
+            return;
+        }
+        for (String idLang1 : usedLangs) {
+            addReplaceValueIfPresent(getValueAndPropertyPrefLabel(new NodeReplaceValueByValue(), csvRecord, idLang1), idConcept);
+            addReplaceValueIfPresent(getValueAndPropertyAltLabel(new NodeReplaceValueByValue(), csvRecord, idLang1), idConcept);
+            addReplaceValueIfPresent(getValueAndPropertyDefinition(new NodeReplaceValueByValue(), csvRecord, idLang1), idConcept);
+        }
+        addReplaceValueIfPresent(getValueAndPropertyBT(new NodeReplaceValueByValue(), csvRecord), idConcept);
+    }
+
+    private void addReplaceValueIfPresent(NodeReplaceValueByValue nodeReplaceValueByValue, String idConcept) {
+        if (nodeReplaceValueByValue == null) {
+            return;
+        }
+        nodeReplaceValueByValue.setIdConcept(idConcept);
+        nodeReplaceValueByValues.add(nodeReplaceValueByValue);
+    }
     
     private NodeReplaceValueByValue getValueAndPropertyPrefLabel(NodeReplaceValueByValue nodeReplaceValueByValue, CSVRecord csvRecord,
             String idLang) {
@@ -1066,26 +1047,37 @@ public class ThesaurusCsvReader {
             CSVParser cSVParser = headerFormat().parse(in);
             Map<String, Integer> headers = cSVParser.getHeaderMap();
 
-            String[] values;
             for (String columnName : headers.keySet()) {
-                if (columnName.contains("@")) {
-                    values = columnName.split("@");
-                    if (values[1] != null && !langs.contains(values[1])) {
-                        langs.add(values[1]);
-                    }
-                }
-                if (columnName.contains("customRelationId")) {
-                    values = columnName.split(":");
-                    if(values.length < 2) continue;
-                    if (values[1] != null && !customRelations.contains(values[1])) {
-                        customRelations.add(values[1]);
-                    }
-                }                
+                collectLangFromHeader(columnName);
+                collectCustomRelationFromHeader(columnName);
             }
         } catch (IOException ex) {
             java.util.logging.Logger.getLogger(ThesaurusCsvReader.class.getName()).log(Level.SEVERE, null, ex);
         }
         return !langs.isEmpty();
+    }
+
+    private void collectLangFromHeader(String columnName) {
+        if (!columnName.contains("@")) {
+            return;
+        }
+        String[] values = columnName.split("@");
+        if (values[1] != null && !langs.contains(values[1])) {
+            langs.add(values[1]);
+        }
+    }
+
+    private void collectCustomRelationFromHeader(String columnName) {
+        if (!columnName.contains("customRelationId")) {
+            return;
+        }
+        String[] values = columnName.split(":");
+        if (values.length < 2) {
+            return;
+        }
+        if (values[1] != null && !customRelations.contains(values[1])) {
+            customRelations.add(values[1]);
+        }
     }
 
     public String getLangOfValue(Reader in) {
@@ -1170,7 +1162,6 @@ public class ThesaurusCsvReader {
                 conceptObject = getMemberOfFacet(conceptObject, csvRecord);
 
                 conceptObjects.add(conceptObject);
-                uri1 = null;
             }
             return true;
         } catch (IOException ex) {
@@ -1190,97 +1181,9 @@ public class ThesaurusCsvReader {
         try {
             CSVParser cSVParser = headerFormat().parse(in);            
 
-            String uri1 = null;
             StringBuilder missingIds = new StringBuilder(message);
             for (CSVRecord csvRecord : cSVParser) {
-                ThesaurusCsvConceptObject conceptObject = new ThesaurusCsvConceptObject();
-
-                // setId, si l'identifiant n'est pas renseigné, on récupère un NULL 
-                // puis on génère un nouvel identifiant
-                uri1 = optionalColumn(csvRecord, "URI");
-                conceptObject.setUri(uri1);
-
-                if (csvRecord.isMapped(COL_IDENTIFIER)) {
-                    assignIdFromIdentifierColumn(conceptObject, csvRecord, uri1);
-                } else {
-                    assignIdFromUriColumn(conceptObject, csvRecord);
-                }
-                if(StringUtils.isEmpty(conceptObject.getIdConcept())){
-                    missingIds.append("\nconcept sans Id : ").append(csvRecord);
-                    continue;
-                }
-
-                // on récupère l'id Ark s'il existe
-                conceptObject = getArkId(conceptObject, csvRecord);
-
-                // on récupère les labels
-                conceptObject = getLabels(conceptObject, csvRecord, readEmptyData);
-
-                // on récupère les notes
-                conceptObject = getNotes(conceptObject, csvRecord, readEmptyData);
-
-                // on récupère le type de l'enregistrement (concept, collection)
-                conceptObject.setType(getType(csvRecord));
-                
-                // on récupérer du concept (People, qualifier ...)
-                conceptObject.setConceptType(getConceptType(csvRecord));
-
-                // on récupère la notation
-                conceptObject.setNotation(getNotation(csvRecord));
-
-                // on récupère les relations (BT, NT, RT)
-                conceptObject = getRelations(conceptObject, csvRecord);
-
-                // on récupère les relations (BT, NT, RT)
-                conceptObject = getCustomRelations(conceptObject, csvRecord);                
-                
-                // on récupère les alignements 
-                conceptObject = getAlignments(conceptObject, csvRecord, readEmptyData);
-
-                // on récupère la localisation
-                conceptObject = getGps(conceptObject, csvRecord);
-                conceptObject = getGeoLocalisation(conceptObject, csvRecord, readEmptyData);
-
-                
-                
-                // on récupère les membres (l'appartenance du concept à un groupe, collection ...
-                if("skos:Concept".equalsIgnoreCase(conceptObject.getType())){                
-                    conceptObject = getMembers(conceptObject, csvRecord);
-                }
-                if("skos:collection".equalsIgnoreCase(conceptObject.getType())){                
-                    conceptObject = getMembers(conceptObject, csvRecord);
-                }                
-                
-                // récupération des sous groupes
-                if("skos:Collection".equalsIgnoreCase(conceptObject.getType())){
-                    conceptObject = getSubGroups(conceptObject, csvRecord);
-                }
-                
-                // récupération des membres d'une Facette
-                if("skos-thes:ThesaurusArray".equalsIgnoreCase(conceptObject.getType())){
-                    conceptObject = getMembersOfFacet(conceptObject, csvRecord);
-                    
-                    // récupération du parent de la facette
-                    conceptObject = getSuperOrdinate(conceptObject, csvRecord);
-                }                
-                
-                // définir si le concept est déprécié (Obsolète) et s'il a un concept de remplacement 
-                if("skos:Concept".equalsIgnoreCase(conceptObject.getType())){
-                    conceptObject = setDeprecatedConcept(conceptObject, csvRecord);
-                }                
-                
-                // récupération des resources Externes
-                conceptObject = getExternalResources(conceptObject, csvRecord);
-                
-                
-                // on récupère la date
-                conceptObject = getDates(conceptObject, csvRecord);
-                
-                // on récupère les images 
-                conceptObject = getFoafImages(conceptObject, csvRecord);
-
-                conceptObjects.add(conceptObject);
-                uri1 = null;
+                addThesaurusRecord(csvRecord, readEmptyData, missingIds);
             }
             message = missingIds.toString();
             return true;
@@ -1288,6 +1191,58 @@ public class ThesaurusCsvReader {
             java.util.logging.Logger.getLogger(ThesaurusCsvReader.class.getName()).log(Level.SEVERE, null, ex);
         }
         return false;
+    }
+
+    private void addThesaurusRecord(CSVRecord csvRecord, boolean readEmptyData, StringBuilder missingIds) {
+        ThesaurusCsvConceptObject conceptObject = new ThesaurusCsvConceptObject();
+        String uri1 = optionalColumn(csvRecord, "URI");
+        conceptObject.setUri(uri1);
+
+        if (csvRecord.isMapped(COL_IDENTIFIER)) {
+            assignIdFromIdentifierColumn(conceptObject, csvRecord, uri1);
+        } else {
+            assignIdFromUriColumn(conceptObject, csvRecord);
+        }
+        if (StringUtils.isEmpty(conceptObject.getIdConcept())) {
+            missingIds.append("\nconcept sans Id : ").append(csvRecord);
+            return;
+        }
+
+        getArkId(conceptObject, csvRecord);
+        getLabels(conceptObject, csvRecord, readEmptyData);
+        getNotes(conceptObject, csvRecord, readEmptyData);
+        conceptObject.setType(getType(csvRecord));
+        conceptObject.setConceptType(getConceptType(csvRecord));
+        conceptObject.setNotation(getNotation(csvRecord));
+        getRelations(conceptObject, csvRecord);
+        getCustomRelations(conceptObject, csvRecord);
+        getAlignments(conceptObject, csvRecord, readEmptyData);
+        getGps(conceptObject, csvRecord);
+        getGeoLocalisation(conceptObject, csvRecord, readEmptyData);
+        populateTypedFields(conceptObject, csvRecord);
+        getExternalResources(conceptObject, csvRecord);
+        getDates(conceptObject, csvRecord);
+        getFoafImages(conceptObject, csvRecord);
+        conceptObjects.add(conceptObject);
+    }
+
+    private void populateTypedFields(ThesaurusCsvConceptObject conceptObject, CSVRecord csvRecord) {
+        if ("skos:Concept".equalsIgnoreCase(conceptObject.getType())) {
+            getMembers(conceptObject, csvRecord);
+        }
+        if ("skos:collection".equalsIgnoreCase(conceptObject.getType())) {
+            getMembers(conceptObject, csvRecord);
+        }
+        if ("skos:Collection".equalsIgnoreCase(conceptObject.getType())) {
+            getSubGroups(conceptObject, csvRecord);
+        }
+        if ("skos-thes:ThesaurusArray".equalsIgnoreCase(conceptObject.getType())) {
+            getMembersOfFacet(conceptObject, csvRecord);
+            getSuperOrdinate(conceptObject, csvRecord);
+        }
+        if ("skos:Concept".equalsIgnoreCase(conceptObject.getType())) {
+            setDeprecatedConcept(conceptObject, csvRecord);
+        }
     }
 
     /**
@@ -1473,45 +1428,40 @@ public class ThesaurusCsvReader {
      * @return
      */
     private String getId(String uri) {
-        String id;
-
         if (uri == null || uri.isEmpty()) {
             return null;
         }
-        if (uri.contains("idf=")) {
-            if (uri.contains("&")) {
-                id = uri.substring(uri.indexOf("idf=") + 4, uri.indexOf("&"));
-            } else {
-                id = uri.substring(uri.indexOf("idf=") + 4, uri.length());
-            }
-        } else {
-            if (uri.contains("idg=")) {
-                if (uri.contains("&")) {
-                    id = uri.substring(uri.indexOf("idg=") + 4, uri.indexOf("&"));
-                } else {
-                    id = uri.substring(uri.indexOf("idg=") + 4, uri.length());
-                }
-            } else {
-                if (uri.contains("idc=")) {
-                    if (uri.contains("&")) {
-                        id = uri.substring(uri.indexOf("idc=") + 4, uri.indexOf("&"));
-                    } else {
-                        id = uri.substring(uri.indexOf("idc=") + 4, uri.length());
-                    }
-                } else {
-                    if (uri.contains("#")) {
-                        id = uri.substring(uri.indexOf("#") + 1, uri.length());
-                    } else {
-                        if(uri.contains("ark:/")){
-                            id = uri.substring(uri.indexOf("ark:/")+5 , uri.length());
-                        } else 
-                            id = uri.substring(uri.lastIndexOf("/") + 1, uri.length());
-                    }
-                }
-            }
+        String id = extractIdFromQuery(uri, "idf=");
+        if (id == null) {
+            id = extractIdFromQuery(uri, "idg=");
         }
-        
+        if (id == null) {
+            id = extractIdFromQuery(uri, "idc=");
+        }
+        if (id == null) {
+            id = extractIdFromPath(uri);
+        }
         return fr.cnrs.opentheso.utils.StringUtils.normalizeStringForIdentifier(id);
+    }
+
+    private String extractIdFromQuery(String uri, String key) {
+        if (!uri.contains(key)) {
+            return null;
+        }
+        if (uri.contains("&")) {
+            return uri.substring(uri.indexOf(key) + key.length(), uri.indexOf("&"));
+        }
+        return uri.substring(uri.indexOf(key) + key.length(), uri.length());
+    }
+
+    private String extractIdFromPath(String uri) {
+        if (uri.contains("#")) {
+            return uri.substring(uri.indexOf("#") + 1, uri.length());
+        }
+        if (uri.contains("ark:/")) {
+            return uri.substring(uri.indexOf("ark:/") + 5, uri.length());
+        }
+        return uri.substring(uri.lastIndexOf("/") + 1, uri.length());
     }
 
     /**

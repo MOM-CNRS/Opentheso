@@ -122,7 +122,8 @@ class ThesaurusAlignmentBeanTest {
         grantEdit();
         when(userSession.isSuperAdmin()).thenReturn(false);
         AlignmentSourceItem global = new AlignmentSourceItem(
-                8, "Wikidata", "", true, true, "wikidata", "https://wikidata.org/", "other");
+                8, "Wikidata", "", true, true,
+                new AlignmentSourceItem.SourceDetails("wikidata", "https://wikidata.org/", "other"));
 
         bean.prepareEditAlignmentSource(global);
 
@@ -134,7 +135,8 @@ class ThesaurusAlignmentBeanTest {
         grantEdit();
         when(userSession.isSuperAdmin()).thenReturn(true);
         AlignmentSourceItem global = new AlignmentSourceItem(
-                8, "Wikidata", "", true, true, "wikidata", "https://wikidata.org/", "other");
+                8, "Wikidata", "", true, true,
+                new AlignmentSourceItem.SourceDetails("wikidata", "https://wikidata.org/", "other"));
 
         bean.prepareEditAlignmentSource(global);
 

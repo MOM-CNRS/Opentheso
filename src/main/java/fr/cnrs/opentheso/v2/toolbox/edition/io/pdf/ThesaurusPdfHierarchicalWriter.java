@@ -59,109 +59,128 @@ public class ThesaurusPdfHierarchicalWriter {
 
         List<SKOSResource> concepts = xmlDocument.getConceptList();
 
-        traitement(paragraphs, codeLanguage1, codeLanguage2, false, notes, concepts, labels, idToChildId,
-                writePdfSettings, gps, matchs, images, notesDiff, resourceChecked);
+        HierarchicalWriteContext context = new HierarchicalWriteContext(
+                new HierarchicalTreeState(labels, idToChildId, resourceChecked, writePdfSettings),
+                new HierarchicalDetails(matchs, images, gps, notesDiff));
+        traitement(paragraphs, codeLanguage1, codeLanguage2, false, notes, concepts, context);
 
         if (StringUtils.isNotEmpty(codeLanguage2)) {
-            traitement(paragraphTradList, codeLanguage2, codeLanguage1, true, notesTraduction, concepts, labels,
-                    idToChildId, writePdfSettings, gps, matchs, images, notesDiff, resourceChecked);
+            traitement(paragraphTradList, codeLanguage2, codeLanguage1, true, notesTraduction, concepts, context);
         }
     }
 
     private void traitement(List<Paragraph> paragraphs, String codeLanguage1, String codeLanguage2, boolean isTrad,
                             HashMap<String, ArrayList<String>> idToDoc, List<SKOSResource> concepts,
-                            HashMap<String, String> labels, HashMap<String, List<String>> idToChildId,
-                            ThesaurusPdfSettings writePdfSettings, HashMap<String, List<String>> gps,
-                            HashMap<String, ArrayList<String>> matchs, HashMap<String, ArrayList<NodeImage>> images,
-                            HashMap<String, ArrayList<Integer>> notesDiff, ArrayList<String> resourceChecked) {
+                            HierarchicalWriteContext context) {
 
         System.setProperty("java.util.Arrays.useLegacyMergeSort", "true");
-        Collections.sort(concepts, sortForHiera(isTrad, codeLanguage1, codeLanguage2, labels,
-                idToChildId, idToDoc, matchs, gps, images, resourceChecked, notesDiff, termLookup));
+        Collections.sort(concepts, sortForHiera(isTrad, codeLanguage1, codeLanguage2, context.tree().labels(),
+                context.tree().idToChildId(), idToDoc, context.details().matchs(), context.details().gps(),
+                context.details().images(), context.tree().resourceChecked(), context.details().notesDiff(), termLookup));
 
         for (SKOSResource concept : concepts) {
-
-            boolean isAtRoot = true;
-            String conceptID = concept.getIdentifier();
-            Iterator<String> i = idToChildId.keySet().iterator();
-            while (i.hasNext()) {
-                List<String> valeur = idToChildId.get(i.next());
-                for (String id : valeur) {
-                    if (id.equals(conceptID)) {
-                        isAtRoot = false;
-                    }
-                }
-            }
-
-            if (isAtRoot) {
-                String name = labels.get(conceptID);
-                if (name == null) {
-                    name = "";
-                }
-
-                Paragraph paragraph = new Paragraph();
-                Anchor anchor = new Anchor(name + " (" + conceptID + ")", writePdfSettings.getTermFont());
-                anchor.setReference(uriResolver.getUriForConcept(
-                        exportPreferences, exportThesaurusId, concept.getIdentifier(), concept.getArkId(), concept.getArkId()));
-                paragraph.add(anchor);
-                paragraphs.add(paragraph);
-
-                String indentation = "";
-                addConceptDetails(conceptID, indentation, paragraphs, idToDoc, writePdfSettings, gps, images, matchs, notesDiff);
-                addConcept(conceptID, indentation, paragraphs, idToDoc, labels, idToChildId, writePdfSettings, gps, images, matchs, notesDiff);
-            }
+            writeRootConcept(concept, paragraphs, idToDoc, context);
         }
     }
 
+    private void writeRootConcept(SKOSResource concept, List<Paragraph> paragraphs,
+                                  HashMap<String, ArrayList<String>> idToDoc, HierarchicalWriteContext context) {
+        String conceptID = concept.getIdentifier();
+        if (!isAtRoot(conceptID, context.tree().idToChildId())) {
+            return;
+        }
+        String name = context.tree().labels().get(conceptID);
+        if (name == null) {
+            name = "";
+        }
 
-    private void addConcept(String id, String indentation, List<Paragraph> paragraphs, HashMap<String, ArrayList<String>> idToDoc,
-                            HashMap<String, String> labels, HashMap<String, List<String>> idToChildId,
-                            ThesaurusPdfSettings writePdfSettings, HashMap<String, List<String>> gps,
-                            HashMap<String, ArrayList<NodeImage>> images, HashMap<String, ArrayList<String>> matchs,
-                            HashMap<String, ArrayList<Integer>> notesDiff) {
+        Paragraph paragraph = new Paragraph();
+        Anchor anchor = new Anchor(name + " (" + conceptID + ")", context.tree().writePdfSettings().getTermFont());
+        anchor.setReference(uriResolver.getUriForConcept(
+                exportPreferences, exportThesaurusId, concept.getIdentifier(), concept.getArkId(), concept.getArkId()));
+        paragraph.add(anchor);
+        paragraphs.add(paragraph);
+
+        String indentation = "";
+        addConceptDetails(conceptID, indentation, paragraphs, idToDoc, context);
+        addConcept(conceptID, indentation, paragraphs, idToDoc, context);
+    }
+
+    private boolean isAtRoot(String conceptID, HashMap<String, List<String>> idToChildId) {
+        Iterator<String> i = idToChildId.keySet().iterator();
+        while (i.hasNext()) {
+            List<String> valeur = idToChildId.get(i.next());
+            for (String id : valeur) {
+                if (id.equals(conceptID)) {
+                    return false;
+                }
+            }
+        }
+        return true;
+    }
+
+    private void addConcept(String id, String indentation, List<Paragraph> paragraphs,
+                            HashMap<String, ArrayList<String>> idToDoc, HierarchicalWriteContext context) {
 
         indentation += ".......";
 
-        List<String> childList = idToChildId.get(id);
+        List<String> childList = context.tree().idToChildId().get(id);
         if (childList == null) {
             return;
         }
         String idArk;
         for (String idFils : childList) {
-            String name = labels.get(idFils);
+            String name = context.tree().labels().get(idFils);
             if (name == null) {
                 name = "";
             }
 
             Paragraph paragraph = new Paragraph();
-            Anchor anchor = new Anchor(indentation + name + " (" + idFils + ")", writePdfSettings.getTextFont());
+            Anchor anchor = new Anchor(indentation + name + " (" + idFils + ")", context.tree().writePdfSettings().getTextFont());
             idArk = uriResolver.getIdArk(exportPreferences, exportThesaurusId, idFils);
             anchor.setReference(uriResolver.getUriForConcept(exportPreferences, exportThesaurusId, idFils, idArk, idArk));
             paragraph.add(anchor);
             paragraphs.add(paragraph);
 
-            addConceptDetails(idFils, indentation, paragraphs, idToDoc, writePdfSettings, gps, images, matchs, notesDiff);
-            addConcept(idFils, indentation, paragraphs, idToDoc, labels, idToChildId, writePdfSettings, gps, images, matchs, notesDiff);
+            addConceptDetails(idFils, indentation, paragraphs, idToDoc, context);
+            addConcept(idFils, indentation, paragraphs, idToDoc, context);
         }
     }
 
-    private void addConceptDetails(String key, String indentation, List<Paragraph> paragraphs, HashMap<String,
-            ArrayList<String>> idToDoc, ThesaurusPdfSettings writePdfSettings, HashMap<String, List<String>> gps,
-            HashMap<String, ArrayList<NodeImage>> images, HashMap<String, ArrayList<String>> matchs,
-            HashMap<String, ArrayList<Integer>> notesDiff) {
+    private void addConceptDetails(String key, String indentation, List<Paragraph> paragraphs,
+                                   HashMap<String, ArrayList<String>> idToDoc, HierarchicalWriteContext context) {
 
         String space = getSpace(indentation);
-        addNotes(paragraphs, space, idToDoc.get(key), notesDiff.get(key), writePdfSettings);
-        addMatchs(paragraphs, matchs.get(key), space, writePdfSettings);
-        addGpsCoordiantes(paragraphs, gps.get(key), space, writePdfSettings);
+        addNotes(paragraphs, space, idToDoc.get(key), context.details().notesDiff().get(key), context.tree().writePdfSettings());
+        addMatchs(paragraphs, context.details().matchs().get(key), space, context.tree().writePdfSettings());
+        addGpsCoordiantes(paragraphs, context.details().gps().get(key), space, context.tree().writePdfSettings());
         if (isToogleExportImage) {
             ThesaurusPdfImageEmbedder.addImages(
                     paragraphs,
-                    images.get(key),
+                    context.details().images().get(key),
                     indentation.length() * 2.9f,
-                    writePdfSettings
+                    context.tree().writePdfSettings()
             );
         }
+    }
+
+    private record HierarchicalTreeState(
+            HashMap<String, String> labels,
+            HashMap<String, List<String>> idToChildId,
+            ArrayList<String> resourceChecked,
+            ThesaurusPdfSettings writePdfSettings
+    ) {
+    }
+
+    private record HierarchicalDetails(
+            HashMap<String, ArrayList<String>> matchs,
+            HashMap<String, ArrayList<NodeImage>> images,
+            HashMap<String, List<String>> gps,
+            HashMap<String, ArrayList<Integer>> notesDiff
+    ) {
+    }
+
+    private record HierarchicalWriteContext(HierarchicalTreeState tree, HierarchicalDetails details) {
     }
 
     private String getSpace(String indentation) {

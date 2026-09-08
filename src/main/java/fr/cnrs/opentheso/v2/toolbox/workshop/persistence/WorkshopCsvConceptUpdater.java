@@ -46,7 +46,6 @@ import org.apache.commons.text.StringEscapeUtils;
 import org.springframework.stereotype.Component;
 
 import java.util.ArrayList;
-import java.util.Date;
 import java.util.List;
 
 @Component
@@ -211,10 +210,12 @@ public class WorkshopCsvConceptUpdater {
                             nodeReplaceValueByValue.getIdConcept(),
                             nodeReplaceValueByValue.getIdLang(),
                             idTheso,
-                            nodeReplaceValueByValue.getNewValue(),
-                            "",
-                            NOTE_DEFINITION,
-                            idUser
+                            new NoteUpdate(
+                                    nodeReplaceValueByValue.getNewValue(),
+                                    "",
+                                    NOTE_DEFINITION,
+                                    idUser
+                            )
                     )) {
                         addMessage("Rename definition error :", nodeReplaceValueByValue);
                     }
@@ -535,7 +536,7 @@ public class WorkshopCsvConceptUpdater {
         }
         term.get().setLexicalValue(fr.cnrs.opentheso.utils.StringUtils.convertString(label));
         term.get().setContributor(idUser);
-        term.get().setModified(new Date());
+        term.get().setModified(V2Dates.nowUtilDate());
         termRepository.save(term.get());
         termHistoriqueRepository.save(TermHistorique.builder()
                 .idTerm(term.get().getIdTerm())
@@ -561,8 +562,8 @@ public class WorkshopCsvConceptUpdater {
                 .status("")
                 .contributor(idUser)
                 .creator(idUser)
-                .created(new Date())
-                .modified(new Date())
+                .created(V2Dates.nowUtilDate())
+                .modified(V2Dates.nowUtilDate())
                 .build());
         termHistoriqueRepository.save(TermHistorique.builder()
                 .idTerm(termSaved.getIdTerm())
@@ -593,8 +594,8 @@ public class WorkshopCsvConceptUpdater {
                 .source(term.getSource())
                 .status(term.getStatus())
                 .hiden(term.isHidden())
-                .created(new Date())
-                .modified(new Date())
+                .created(V2Dates.nowUtilDate())
+                .modified(V2Dates.nowUtilDate())
                 .build());
         saveNonPreferredTrace(term.getIdTerm(), term.getLexicalValue(), term.getIdThesaurus(), term.getLang(), idUser, term.isHidden(), "ADD");
         return true;
@@ -630,7 +631,7 @@ public class WorkshopCsvConceptUpdater {
         }
         nonPreferredTerm.get().setLexicalValue(newValue);
         nonPreferredTerm.get().setHiden(isHidden);
-        nonPreferredTerm.get().setModified(new Date());
+        nonPreferredTerm.get().setModified(V2Dates.nowUtilDate());
         nonPreferredTermRepository.save(nonPreferredTerm.get());
         saveNonPreferredTrace(idTerm, newValue, idTheso, idLang, idUser, isHidden, "update");
         return true;
@@ -653,7 +654,7 @@ public class WorkshopCsvConceptUpdater {
                 .idUser(idUser)
                 .hiden(isHidden)
                 .action(action)
-                .modified(new Date())
+                .modified(V2Dates.nowUtilDate())
                 .status("")
                 .source("")
                 .build());
@@ -690,8 +691,8 @@ public class WorkshopCsvConceptUpdater {
                     .identifier(identifier)
                     .noteSource(noteSource)
                     .idUser(idUser)
-                    .created(new Date())
-                    .modified(new Date())
+                    .created(V2Dates.nowUtilDate())
+                    .modified(V2Dates.nowUtilDate())
                     .build());
         }
     }
@@ -724,25 +725,33 @@ public class WorkshopCsvConceptUpdater {
         return note.isEmpty() ? -1 : note.get(0).getId();
     }
 
+    private record NoteUpdate(String note, String noteSource, String noteTypeCode, int idUser) {
+    }
+
     private boolean updateNote(
             int idNote,
             String idConcept,
             String idLang,
             String idThesaurus,
-            String note,
-            String noteSource,
-            String noteTypeCode,
-            int idUser
+            NoteUpdate update
     ) {
         var noteValue = noteRepository.findByIdAndIdThesaurus(idNote, idThesaurus);
         if (noteValue.isEmpty()) {
             return false;
         }
-        noteValue.get().setLexicalValue(fr.cnrs.opentheso.utils.StringUtils.clearNoteFromP(note));
-        noteValue.get().setNoteSource(noteSource);
-        noteValue.get().setModified(new Date());
+        noteValue.get().setLexicalValue(fr.cnrs.opentheso.utils.StringUtils.clearNoteFromP(update.note()));
+        noteValue.get().setNoteSource(update.noteSource());
+        noteValue.get().setModified(V2Dates.nowUtilDate());
         noteRepository.save(noteValue.get());
-        addConceptNoteHistorique(idConcept, normalizeIdLang(idLang), idThesaurus, note, noteTypeCode, "update", idUser);
+        addConceptNoteHistorique(
+                idConcept,
+                normalizeIdLang(idLang),
+                idThesaurus,
+                update.note(),
+                update.noteTypeCode(),
+                "update",
+                update.idUser()
+        );
         return true;
     }
 
@@ -763,7 +772,7 @@ public class WorkshopCsvConceptUpdater {
                 .actionPerformed(actionPerformed)
                 .idUser(idUser)
                 .notetypecode(noteTypeCode)
-                .modified(new Date())
+                .modified(V2Dates.nowUtilDate())
                 .build());
     }
 
@@ -799,8 +808,8 @@ public class WorkshopCsvConceptUpdater {
                 .internalIdConcept(idConcept)
                 .internalIdThesaurus(idThesaurus)
                 .alignementSource(alignementSource.orElse(null))
-                .created(new Date())
-                .modified(new Date())
+                .created(V2Dates.nowUtilDate())
+                .modified(V2Dates.nowUtilDate())
                 .build());
         return true;
     }
@@ -857,7 +866,7 @@ public class WorkshopCsvConceptUpdater {
                 .idConcept1(idConcept1)
                 .idConcept2(idConcept2)
                 .idThesaurus(idThesaurus)
-                .modified(new Date())
+                .modified(V2Dates.nowUtilDate())
                 .idUser(idUser)
                 .action(action)
                 .role(role)

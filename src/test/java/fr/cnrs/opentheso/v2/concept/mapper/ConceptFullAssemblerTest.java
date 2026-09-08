@@ -44,7 +44,7 @@ class ConceptFullAssemblerTest {
                 .thenReturn(Collections.emptyList());
 
         Optional<ConceptFullSnapshot> loaded = assembler.assemble(
-                "TH1", "C1", "fr", 0, 41, true, null, "http://localhost/"
+                "TH1", "C1", "fr", new ConceptAssemblePaging(0, 41, true), null, "http://localhost/"
         );
 
         assertTrue(loaded.isPresent());
@@ -67,7 +67,7 @@ class ConceptFullAssemblerTest {
                         .build()));
 
         Optional<ConceptFullSnapshot> loaded = assembler.assemble(
-                "TH1", "C1", "fr", 0, 41, true, null, "http://localhost/"
+                "TH1", "C1", "fr", new ConceptAssemblePaging(0, 41, true), null, "http://localhost/"
         );
 
         assertTrue(loaded.isPresent());
@@ -78,8 +78,10 @@ class ConceptFullAssemblerTest {
 
     @Test
     void assemble_blankIdentifiers_returnsEmpty() {
-        assertTrue(assembler.assemble("", "C1", "fr", 0, 10, true, null, "http://localhost/").isEmpty());
-        assertTrue(assembler.assemble("TH1", "", "fr", 0, 10, true, null, "http://localhost/", true).isEmpty());
+        assertTrue(assembler.assemble(
+                "", "C1", "fr", new ConceptAssemblePaging(0, 10, true), null, "http://localhost/").isEmpty());
+        assertTrue(assembler.assemble(
+                "TH1", "", "fr", new ConceptAssemblePaging(0, 10, true), null, "http://localhost/", true).isEmpty());
     }
 
     @Test
@@ -138,7 +140,7 @@ class ConceptFullAssemblerTest {
                 .thenReturn(Collections.emptyList());
 
         Optional<ConceptFullSnapshot> loaded = assembler.assemble(
-                "TH1", "C1", "fr", 0, 41, true, null, "http://localhost/"
+                "TH1", "C1", "fr", new ConceptAssemblePaging(0, 41, true), null, "http://localhost/"
         );
 
         assertTrue(loaded.isPresent());
@@ -158,7 +160,8 @@ class ConceptFullAssemblerTest {
 
     @Test
     void assembleNarrowerRelations_returnsEmptyWhenLimitInvalid() {
-        assertTrue(assembler.assembleNarrowerRelations("TH1", "C1", "fr", 0, 0, true, null, "http://x").isEmpty());
+        assertTrue(assembler.assembleNarrowerRelations(
+                "TH1", "C1", "fr", new ConceptAssemblePaging(0, 0, true), null, "http://x").isEmpty());
     }
 
     @Test
@@ -167,7 +170,8 @@ class ConceptFullAssemblerTest {
                 eq("C1"), eq("TH1"), eq("fr"), anyBoolean(), anyInt(), anyInt()
         )).thenReturn(rows(new Object[]{"Enfant", "N1", "NT", "", "", ""}));
 
-        var relations = assembler.assembleNarrowerRelations("TH1", "C1", "fr", 0, 10, true, null, "http://x");
+        var relations = assembler.assembleNarrowerRelations(
+                "TH1", "C1", "fr", new ConceptAssemblePaging(0, 10, true), null, "http://x");
 
         assertEquals(1, relations.size());
         assertEquals("N1", relations.get(0).conceptId());

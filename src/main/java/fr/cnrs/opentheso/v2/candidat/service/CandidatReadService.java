@@ -70,7 +70,7 @@ public class CandidatReadService {
         var alignments = candidatReadPersistence.loadAlignments(conceptId, thesaurusId);
         var images = candidatReadPersistence.loadExternalImages(thesaurusId, conceptId);
 
-        CandidatDetailMapper.applyDetails(
+        CandidatDetailMapper.applyDetails(new CandidatDetailMapper.ApplyDetailsRequest(
                 candidat,
                 bundle.preferredTermId(),
                 detail.collections(),
@@ -85,7 +85,7 @@ public class CandidatReadService {
                 alignments,
                 images,
                 userId
-        );
+        ));
     }
 
     @Transactional(readOnly = true)

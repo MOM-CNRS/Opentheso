@@ -23,8 +23,8 @@ import org.apache.commons.collections4.CollectionUtils;
 import org.apache.commons.lang3.StringUtils;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
+import fr.cnrs.opentheso.v2.shared.time.V2Dates;
 
-import java.util.Date;
 import java.util.List;
 
 @Service
@@ -48,7 +48,7 @@ public class FacetMutationService {
         }
         var entity = label.get();
         entity.setLexicalValue(fr.cnrs.opentheso.utils.StringUtils.convertString(command.label()));
-        entity.setModified(new Date());
+        entity.setModified(V2Dates.nowUtilDate());
         nodeLabelRepository.save(entity);
         return MutationResult.ok("La facette a bien été modifiée");
     }
@@ -134,8 +134,8 @@ public class FacetMutationService {
                 .idThesaurus(command.thesaurusId())
                 .lang(command.lang())
                 .lexicalValue(fr.cnrs.opentheso.utils.StringUtils.convertString(command.label()))
-                .created(new Date())
-                .modified(new Date())
+                .created(V2Dates.nowUtilDate())
+                .modified(V2Dates.nowUtilDate())
                 .build());
         return MutationResult.ok("Traduction ajoutée avec succès");
     }
@@ -152,7 +152,7 @@ public class FacetMutationService {
         }
         var entity = label.get();
         entity.setLexicalValue(fr.cnrs.opentheso.utils.StringUtils.convertString(command.label()));
-        entity.setModified(new Date());
+        entity.setModified(V2Dates.nowUtilDate());
         nodeLabelRepository.save(entity);
         return MutationResult.ok("Traduction modifiée avec succès");
     }
@@ -186,8 +186,8 @@ public class FacetMutationService {
                 .idThesaurus(command.thesaurusId())
                 .lang(command.lang())
                 .lexicalValue(lexicalValue)
-                .created(new Date())
-                .modified(new Date())
+                .created(V2Dates.nowUtilDate())
+                .modified(V2Dates.nowUtilDate())
                 .build());
         thesaurusArrayRepository.save(ThesaurusArray.builder()
                 .idThesaurus(command.thesaurusId())

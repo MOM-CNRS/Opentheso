@@ -5,9 +5,9 @@ import fr.cnrs.opentheso.v2.toolbox.model.EditionThesaurusSummary;
 import fr.cnrs.opentheso.v2.toolbox.model.StatisticsSummary;
 import org.junit.jupiter.api.Test;
 
+import java.time.Instant;
 import java.time.LocalDateTime;
 import java.time.Month;
-import java.util.Date;
 import java.util.List;
 
 import static org.junit.jupiter.api.Assertions.assertEquals;
@@ -17,7 +17,7 @@ class ToolboxApiMapperTest {
 
     @Test
     void toSummaryResponse_mapsCounts() {
-        var summary = new StatisticsSummary(new EditionStatistics(8, 2, 1), new Date(1_700_000_000_000L));
+        var summary = new StatisticsSummary(new EditionStatistics(8, 2, 1), Instant.ofEpochMilli(1_700_000_000_000L));
 
         var response = ToolboxApiMapper.toSummaryResponse(summary);
 

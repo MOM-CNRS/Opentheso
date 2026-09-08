@@ -2,10 +2,8 @@ package fr.cnrs.opentheso.v2.candidat.mapper;
 
 import fr.cnrs.opentheso.models.candidats.CandidatDto;
 import fr.cnrs.opentheso.v2.shared.repository.projection.CandidatListRow;
+import fr.cnrs.opentheso.v2.shared.time.V2Dates;
 
-import java.sql.Timestamp;
-import java.time.LocalDateTime;
-import java.util.Date;
 import java.util.List;
 
 public final class CandidatMapper {
@@ -22,8 +20,8 @@ public final class CandidatMapper {
     public static CandidatDto toCandidatDto(CandidatListRow row, String thesaurusId, int statusId) {
         return CandidatDto.builder()
                 .idConcepte(row.idConcept())
-                .creationDate(toDate(row.createdAt()))
-                .insertionDate(toDate(row.modifiedAt()))
+                .creationDate(V2Dates.toUtilDate(row.createdAt()))
+                .insertionDate(V2Dates.toUtilDate(row.modifiedAt()))
                 .statut(String.valueOf(statusId))
                 .createdById(row.createdById())
                 .createdByIdAdmin(row.createdByAdminId() == null ? -1 : row.createdByAdminId())
@@ -38,12 +36,5 @@ public final class CandidatMapper {
                 .nbrNoteVote(row.noteVoteCount())
                 .alignments(List.of())
                 .build();
-    }
-
-    private static Date toDate(LocalDateTime value) {
-        if (value == null) {
-            return null;
-        }
-        return Timestamp.valueOf(value);
     }
 }

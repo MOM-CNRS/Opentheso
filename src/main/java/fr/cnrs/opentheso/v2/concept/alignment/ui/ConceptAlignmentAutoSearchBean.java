@@ -8,6 +8,7 @@ import fr.cnrs.opentheso.v2.concept.alignment.service.ConceptAlignmentAdminServi
 import fr.cnrs.opentheso.v2.concept.model.ConceptAlignment;
 import fr.cnrs.opentheso.v2.concept.model.ConceptAlignmentGroup;
 import fr.cnrs.opentheso.v2.concept.model.ConceptDetail;
+import fr.cnrs.opentheso.v2.concept.model.ConceptNote;
 import fr.cnrs.opentheso.v2.concept.session.ConceptSelectionContext;
 import fr.cnrs.opentheso.v2.concept.ui.ThesaurusViewBean;
 import fr.cnrs.opentheso.v2.concept.write.model.ConceptWriteAlignmentType;
@@ -471,20 +472,33 @@ public class ConceptAlignmentAutoSearchBean implements Serializable {
         String lang = StringUtils.defaultString(detail.getSummary().getLang());
         String fallback = "";
         for (var note : detail.getNotes()) {
-            if (note == null || !"definition".equalsIgnoreCase(note.typeCode())) {
-                continue;
+            String preferred = preferredDefinition(note, lang);
+            if (preferred != null) {
+                return preferred;
             }
-            if (StringUtils.isBlank(note.value())) {
-                continue;
-            }
-            if (Strings.CI.equals(lang, note.lang())) {
-                return note.value();
-            }
-            if (fallback.isEmpty()) {
-                fallback = note.value();
-            }
+            fallback = firstFallbackDefinition(note, fallback);
         }
         return fallback;
+    }
+
+    private static String preferredDefinition(ConceptNote note, String lang) {
+        if (!isUsableDefinition(note)) {
+            return null;
+        }
+        return Strings.CI.equals(lang, note.lang()) ? note.value() : null;
+    }
+
+    private static String firstFallbackDefinition(ConceptNote note, String fallback) {
+        if (!fallback.isEmpty() || !isUsableDefinition(note)) {
+            return fallback;
+        }
+        return note.value();
+    }
+
+    private static boolean isUsableDefinition(ConceptNote note) {
+        return note != null
+                && "definition".equalsIgnoreCase(note.typeCode())
+                && StringUtils.isNotBlank(note.value());
     }
 
     private static int parseAlignmentId(String rawId) {

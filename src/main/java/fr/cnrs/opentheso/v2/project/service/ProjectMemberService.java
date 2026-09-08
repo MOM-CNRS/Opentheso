@@ -56,7 +56,33 @@ public class ProjectMemberService {
     }
 
     @Transactional
-    public CreatedProjectMember createMember(
+    public CreatedProjectMember createMember(CreateMemberRequest request) {
+        AdminContext context = requireProjectAdmin(request.callerId(), request.superAdmin(), request.projectId());
+        validateAssignableRole(context, request.roleId());
+        String validUsername = ProfileValidator.requireUsername(request.username());
+        String validEmail = ProfileValidator.requireEmail(request.email());
+        ensureUsernameAvailable(validUsername);
+        ensureEmailAvailable(validEmail);
+
+        if (request.limitedOnThesaurus()) {
+            requireThesaurusIds(request.projectId(), request.thesaurusIds());
+        }
+
+        int userId = createUserAccount(
+                validUsername,
+                validEmail,
+                request.institution(),
+                request.alertMail(),
+                request.password(),
+                request.passwordConfirmation(),
+                request.creationMode()
+        );
+        assignMembership(userId, request.roleId(), request.projectId(), request.limitedOnThesaurus(), request.thesaurusIds());
+        log.info("Utilisateur id={} créé et ajouté au projet id={} par l'utilisateur id={}", userId, request.projectId(), request.callerId());
+        return new CreatedProjectMember(userId, validUsername, validEmail);
+    }
+
+    public record CreateMemberRequest(
             int callerId,
             boolean superAdmin,
             int projectId,
@@ -71,29 +97,6 @@ public class ProjectMemberService {
             String passwordConfirmation,
             String creationMode
     ) {
-        AdminContext context = requireProjectAdmin(callerId, superAdmin, projectId);
-        validateAssignableRole(context, roleId);
-        String validUsername = ProfileValidator.requireUsername(username);
-        String validEmail = ProfileValidator.requireEmail(email);
-        ensureUsernameAvailable(validUsername);
-        ensureEmailAvailable(validEmail);
-
-        if (limitedOnThesaurus) {
-            requireThesaurusIds(projectId, thesaurusIds);
-        }
-
-        int userId = createUserAccount(
-                validUsername,
-                validEmail,
-                institution,
-                alertMail,
-                password,
-                passwordConfirmation,
-                creationMode
-        );
-        assignMembership(userId, roleId, projectId, limitedOnThesaurus, thesaurusIds);
-        log.info("Utilisateur id={} créé et ajouté au projet id={} par l'utilisateur id={}", userId, projectId, callerId);
-        return new CreatedProjectMember(userId, validUsername, validEmail);
     }
 
     @Transactional
@@ -139,7 +142,27 @@ public class ProjectMemberService {
     }
 
     @Transactional
-    public void updateLimitedMemberRole(
+    public void updateLimitedMemberRole(UpdateLimitedMemberRoleRequest request) {
+        AdminContext context = requireProjectAdmin(request.callerId(), request.superAdmin(), request.projectId());
+        validateAssignableRole(context, request.newRoleId());
+        ensureUserExists(request.userId());
+        if (request.limitedOnThesaurus()) {
+            if (!projectMembershipRepository.isThesaurusInProject(request.thesaurusId(), request.projectId())) {
+                throw new InvalidProjectDataException("Le thésaurus n'appartient pas à ce projet.");
+            }
+            projectMembershipRepository.deleteLimitedRole(
+                    request.userId(), request.oldRoleId(), request.projectId(), request.thesaurusId());
+            projectMembershipRepository.assignLimitedRole(
+                    request.userId(), request.newRoleId(), request.projectId(), request.thesaurusId());
+        } else {
+            projectMembershipRepository.deleteAllLimitedRoles(request.userId(), request.projectId());
+            projectMembershipRepository.assignProjectRole(request.userId(), request.newRoleId(), request.projectId());
+        }
+        rightsService.invalidate(request.userId());
+        log.info("Rôle limité mis à jour pour l'utilisateur id={} sur le thésaurus {}", request.userId(), request.thesaurusId());
+    }
+
+    public record UpdateLimitedMemberRoleRequest(
             int callerId,
             boolean superAdmin,
             int projectId,
@@ -149,21 +172,6 @@ public class ProjectMemberService {
             String thesaurusId,
             boolean limitedOnThesaurus
     ) {
-        AdminContext context = requireProjectAdmin(callerId, superAdmin, projectId);
-        validateAssignableRole(context, newRoleId);
-        ensureUserExists(userId);
-        if (limitedOnThesaurus) {
-            if (!projectMembershipRepository.isThesaurusInProject(thesaurusId, projectId)) {
-                throw new InvalidProjectDataException("Le thésaurus n'appartient pas à ce projet.");
-            }
-            projectMembershipRepository.deleteLimitedRole(userId, oldRoleId, projectId, thesaurusId);
-            projectMembershipRepository.assignLimitedRole(userId, newRoleId, projectId, thesaurusId);
-        } else {
-            projectMembershipRepository.deleteAllLimitedRoles(userId, projectId);
-            projectMembershipRepository.assignProjectRole(userId, newRoleId, projectId);
-        }
-        rightsService.invalidate(userId);
-        log.info("Rôle limité mis à jour pour l'utilisateur id={} sur le thésaurus {}", userId, thesaurusId);
     }
 
     @Transactional
@@ -203,7 +211,25 @@ public class ProjectMemberService {
     }
 
     @Transactional
-    public void updateMemberProfile(
+    public void updateMemberProfile(UpdateMemberProfileRequest request) {
+        requireProjectAdmin(request.callerId(), request.superAdmin(), request.projectId());
+        String validUsername = ProfileValidator.requireUsername(request.username());
+        String validEmail = ProfileValidator.requireEmail(request.email());
+        var current = userProfileService.getProfile(request.userId());
+        if (!current.username().equalsIgnoreCase(validUsername)
+                && userCommandRepository.existsByUsernameIgnoreCase(validUsername)) {
+            throw new InvalidProjectDataException("Ce pseudo est déjà utilisé.");
+        }
+        if (!current.email().equalsIgnoreCase(validEmail)
+                && userCommandRepository.existsByMailIgnoreCase(validEmail)) {
+            throw new InvalidProjectDataException("Cet email est déjà utilisé.");
+        }
+        userCommandRepository.updateUserProfile(
+                request.userId(), validUsername, validEmail, request.alertMail(), request.institution(), request.active());
+        log.info("Profil mis à jour pour l'utilisateur id={} par l'administrateur id={}", request.userId(), request.callerId());
+    }
+
+    public record UpdateMemberProfileRequest(
             int callerId,
             boolean superAdmin,
             int projectId,
@@ -214,20 +240,6 @@ public class ProjectMemberService {
             String institution,
             boolean active
     ) {
-        requireProjectAdmin(callerId, superAdmin, projectId);
-        String validUsername = ProfileValidator.requireUsername(username);
-        String validEmail = ProfileValidator.requireEmail(email);
-        var current = userProfileService.getProfile(userId);
-        if (!current.username().equalsIgnoreCase(validUsername)
-                && userCommandRepository.existsByUsernameIgnoreCase(validUsername)) {
-            throw new InvalidProjectDataException("Ce pseudo est déjà utilisé.");
-        }
-        if (!current.email().equalsIgnoreCase(validEmail)
-                && userCommandRepository.existsByMailIgnoreCase(validEmail)) {
-            throw new InvalidProjectDataException("Cet email est déjà utilisé.");
-        }
-        userCommandRepository.updateUserProfile(userId, validUsername, validEmail, alertMail, institution, active);
-        log.info("Profil mis à jour pour l'utilisateur id={} par l'administrateur id={}", userId, callerId);
     }
 
     @Transactional
@@ -280,9 +292,9 @@ public class ProjectMemberService {
             String creationMode
     ) {
         if ("EMAIL".equalsIgnoreCase(creationMode)) {
-            int userId = userCommandRepository.createUser(
+            int userId = userCommandRepository.createUser(new UserCommandRepository.CreateUserRequest(
                     username, email, "", alertMail, institution, false, true, false
-            );
+            ));
             try {
                 accountPasswordResetService.requestPasswordReset(email, true);
             } catch (Exception e) {
@@ -291,7 +303,7 @@ public class ProjectMemberService {
             return userId;
         }
         PasswordPolicy.validate(password, passwordConfirmation);
-        return userCommandRepository.createUser(
+        return userCommandRepository.createUser(new UserCommandRepository.CreateUserRequest(
                 username,
                 email,
                 passwordEncoder.encode(password),
@@ -300,7 +312,7 @@ public class ProjectMemberService {
                 true,
                 false,
                 true
-        );
+        ));
     }
 
     private void assignMembership(

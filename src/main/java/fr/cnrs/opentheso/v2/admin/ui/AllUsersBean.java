@@ -150,7 +150,7 @@ public class AllUsersBean implements Serializable {
             return;
         }
         try {
-            adminUserService.createUser(
+            adminUserService.createUser(new AdminUserService.CreateUserRequest(
                     true,
                     newUsername,
                     newEmail,
@@ -161,7 +161,7 @@ public class AllUsersBean implements Serializable {
                     newSelectedThesaurusIds,
                     newPassword,
                     newPasswordConfirmation
-            );
+            ));
             MessageUtils.showInformationMessage(localeBean.getMsg("profile.userCreatedSuccess"));
             prepareCreateDialog();
             load();

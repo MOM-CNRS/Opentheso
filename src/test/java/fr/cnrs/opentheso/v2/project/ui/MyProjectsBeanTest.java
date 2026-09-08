@@ -332,7 +332,8 @@ class MyProjectsBeanTest {
             messages.verify(() -> MessageUtils.showInformationMessage("project.memberProfileUpdatedSuccess"));
         }
 
-        verify(projectMemberService).updateMemberProfile(5, false, 3, 7, "bob2", "bob2@test.fr", true, "CNRS", true);
+        verify(projectMemberService).updateMemberProfile(new ProjectMemberService.UpdateMemberProfileRequest(
+                5, false, 3, 7, "bob2", "bob2@test.fr", true, "CNRS", true));
     }
 
     @Test
@@ -380,7 +381,8 @@ class MyProjectsBeanTest {
             messages.verify(() -> MessageUtils.showInformationMessage("project.limitedRoleUpdatedSuccess"));
         }
 
-        verify(projectMemberService).updateLimitedMemberRole(5, false, 3, 7, 3, 3, "TH1", true);
+        verify(projectMemberService).updateLimitedMemberRole(new ProjectMemberService.UpdateLimitedMemberRoleRequest(
+                5, false, 3, 7, 3, 3, "TH1", true));
     }
 
     @Test

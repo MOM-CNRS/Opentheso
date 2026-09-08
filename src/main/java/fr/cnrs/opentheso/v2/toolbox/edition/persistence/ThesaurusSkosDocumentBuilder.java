@@ -387,50 +387,13 @@ public class ThesaurusSkosDocumentBuilder {
 
             addRelationsGiven(p.getRelated(), sKOSResource);
 
-            var note = p.getDefinition();
-            if(StringUtils.isNotEmpty(note)){
-                if(filterHtmlCharacter)
-                    note = Jsoup.parse(note).text();
-                addDocumentation(note, sKOSResource, SKOSProperty.DEFINITION);
-            }
-
-            note = p.getNote();
-            if(StringUtils.isNotEmpty(note)){
-                if(filterHtmlCharacter)
-                    note = Jsoup.parse(note).text();
-                addDocumentation(note, sKOSResource, SKOSProperty.NOTE);
-            }
-
-            note = p.getEditorialnote();
-            if(StringUtils.isNotEmpty(note)){
-                if(filterHtmlCharacter)
-                    note = Jsoup.parse(note).text();
-                addDocumentation(note, sKOSResource, SKOSProperty.EDITORIAL_NOTE);
-            }
-            note = p.getSecopenote();
-            if(StringUtils.isNotEmpty(note)){
-                if(filterHtmlCharacter)
-                    note = Jsoup.parse(note).text();
-                addDocumentation(note, sKOSResource, SKOSProperty.SCOPE_NOTE);
-            }
-            note = p.getHistorynote();
-            if(StringUtils.isNotEmpty(note)){
-                if(filterHtmlCharacter)
-                    note = Jsoup.parse(note).text();
-                addDocumentation(note, sKOSResource, SKOSProperty.HISTORY_NOTE);
-            }
-            note = p.getExample();
-            if(StringUtils.isNotEmpty(note)){
-                if(filterHtmlCharacter)
-                    note = Jsoup.parse(note).text();
-                addDocumentation(note, sKOSResource, SKOSProperty.EXAMPLE);
-            }
-            note = p.getChangenote();
-            if(StringUtils.isNotEmpty(note)){
-                if(filterHtmlCharacter)
-                    note = Jsoup.parse(note).text();
-                addDocumentation(note, sKOSResource, SKOSProperty.CHANGE_NOTE);
-            }
+            addFilteredDocumentation(p.getDefinition(), sKOSResource, SKOSProperty.DEFINITION, filterHtmlCharacter);
+            addFilteredDocumentation(p.getNote(), sKOSResource, SKOSProperty.NOTE, filterHtmlCharacter);
+            addFilteredDocumentation(p.getEditorialnote(), sKOSResource, SKOSProperty.EDITORIAL_NOTE, filterHtmlCharacter);
+            addFilteredDocumentation(p.getSecopenote(), sKOSResource, SKOSProperty.SCOPE_NOTE, filterHtmlCharacter);
+            addFilteredDocumentation(p.getHistorynote(), sKOSResource, SKOSProperty.HISTORY_NOTE, filterHtmlCharacter);
+            addFilteredDocumentation(p.getExample(), sKOSResource, SKOSProperty.EXAMPLE, filterHtmlCharacter);
+            addFilteredDocumentation(p.getChangenote(), sKOSResource, SKOSProperty.CHANGE_NOTE, filterHtmlCharacter);
 
             addAlignementGiven(p.getBroadMatch(), sKOSResource, SKOSProperty.BROAD_MATCH);
             addAlignementGiven(p.getCloseMatch(), sKOSResource, SKOSProperty.CLOSE_MATCH);
@@ -475,16 +438,26 @@ public class ThesaurusSkosDocumentBuilder {
                 }
             }
 
-            SimpleDateFormat dateFormat = new SimpleDateFormat("yyyy-MM-dd");
-            if (ObjectUtils.isNotEmpty(p.getCreated())) {
-                sKOSResource.addDate(dateFormat.format(p.getCreated()), SKOSProperty.CREATED);
-            }
-
-            if (ObjectUtils.isNotEmpty(p.getModified())) {
-                sKOSResource.addDate(dateFormat.format(p.getModified()), SKOSProperty.MODIFIED);
-            }
-
+            addProjectionDates(sKOSResource, p);
             return sKOSResource;
+    }
+
+    private void addFilteredDocumentation(String note, SKOSResource resource, int property, boolean filterHtmlCharacter) {
+        if (StringUtils.isEmpty(note)) {
+            return;
+        }
+        String value = filterHtmlCharacter ? Jsoup.parse(note).text() : note;
+        addDocumentation(value, resource, property);
+    }
+
+    private void addProjectionDates(SKOSResource resource, SkosConceptProjection p) {
+        SimpleDateFormat dateFormat = new SimpleDateFormat("yyyy-MM-dd");
+        if (ObjectUtils.isNotEmpty(p.getCreated())) {
+            resource.addDate(dateFormat.format(p.getCreated()), SKOSProperty.CREATED);
+        }
+        if (ObjectUtils.isNotEmpty(p.getModified())) {
+            resource.addDate(dateFormat.format(p.getModified()), SKOSProperty.MODIFIED);
+        }
     }
 
     private String getUriForFacette(String idFacet, String idTheso, String originalUri) {
@@ -736,24 +709,8 @@ public class ThesaurusSkosDocumentBuilder {
         );
 
         for (String lang : thesaurusLabelRepository.findDistinctLangByIdThesaurus(thesaurusId)) {
-            thesaurusLabelRepository.findByIdThesaurusAndLang(thesaurusId, lang).ifPresent(label -> {
-                if (label.getCreator() != null && !"null".equalsIgnoreCase(label.getCreator())) {
-                    conceptScheme.addAgent(label.getCreator(), SKOSProperty.CREATOR);
-                }
-                if (label.getContributor() != null && !"null".equalsIgnoreCase(label.getContributor())) {
-                    conceptScheme.addAgent(label.getContributor(), SKOSProperty.CONTRIBUTOR);
-                }
-                if (label.getTitle() != null && label.getLang() != null) {
-                    conceptScheme.addLabel(label.getTitle(), label.getLang(), SKOSProperty.PREF_LABEL);
-                }
-                if (label.getCreated() != null) {
-                    conceptScheme.addDate(label.getCreated().toString(), SKOSProperty.CREATED);
-                }
-                if (label.getModified() != null) {
-                    conceptScheme.addDate(label.getModified().toString(), SKOSProperty.MODIFIED);
-                }
-                conceptScheme.setThesaurus(toThesaurusModel(label));
-            });
+            thesaurusLabelRepository.findByIdThesaurusAndLang(thesaurusId, lang)
+                    .ifPresent(label -> applyConceptSchemeLabel(conceptScheme, label));
         }
 
         if (conceptScheme.getThesaurus() == null) {
@@ -791,6 +748,25 @@ public class ThesaurusSkosDocumentBuilder {
         );
 
         return conceptScheme;
+    }
+
+    private void applyConceptSchemeLabel(SKOSResource conceptScheme, ThesaurusLabel label) {
+        if (label.getCreator() != null && !"null".equalsIgnoreCase(label.getCreator())) {
+            conceptScheme.addAgent(label.getCreator(), SKOSProperty.CREATOR);
+        }
+        if (label.getContributor() != null && !"null".equalsIgnoreCase(label.getContributor())) {
+            conceptScheme.addAgent(label.getContributor(), SKOSProperty.CONTRIBUTOR);
+        }
+        if (label.getTitle() != null && label.getLang() != null) {
+            conceptScheme.addLabel(label.getTitle(), label.getLang(), SKOSProperty.PREF_LABEL);
+        }
+        if (label.getCreated() != null) {
+            conceptScheme.addDate(label.getCreated().toString(), SKOSProperty.CREATED);
+        }
+        if (label.getModified() != null) {
+            conceptScheme.addDate(label.getModified().toString(), SKOSProperty.MODIFIED);
+        }
+        conceptScheme.setThesaurus(toThesaurusModel(label));
     }
 
     private Thesaurus toThesaurusModel(ThesaurusLabel label) {

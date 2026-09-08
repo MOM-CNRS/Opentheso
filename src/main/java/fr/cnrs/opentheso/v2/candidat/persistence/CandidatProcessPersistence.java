@@ -78,7 +78,7 @@ public class CandidatProcessPersistence {
         }
         if (preferences.isUseArk()) {
             var result = conceptArkWriteService.generateArkIds(thesaurusId, conceptIds, lang);
-            if (CollectionUtils.isEmpty(result)) {
+            if (result != null && !result.isEmpty()) {
                 log.error("La création Ark a échoué pour le lot ({} concepts)", conceptIds.size());
             }
         }

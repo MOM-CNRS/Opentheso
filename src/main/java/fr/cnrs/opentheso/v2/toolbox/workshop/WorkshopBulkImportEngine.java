@@ -309,54 +309,65 @@ public class WorkshopBulkImportEngine implements Serializable {
             event.setPhaseId(PhaseId.INVOKE_APPLICATION);
             event.queue();
         } else {
-            List<String> headerSourceAlignList;
-
-            WorkshopCsvReader csvReadHelper = new WorkshopCsvReader(delimiterCsv);
-            try (Reader reader1 = new InputStreamReader(event.getFile().getInputStream())) {
-                headerSourceAlignList = csvReadHelper.readHeadersFileAlignment(reader1);
-                if (headerSourceAlignList == null || headerSourceAlignList.isEmpty()) {
-                    error.append(csvReadHelper.getMessage());
-                    return;
-                }
-            } catch (Exception e) {
-                haveError = true;
-                error.append(System.lineSeparator());
-                error.append(e.toString());
-                return;
-            }
-
-            try (Reader reader = new InputStreamReader(event.getFile().getInputStream())) {
-
-                if (!csvReadHelper.readFileAlignment(reader, headerSourceAlignList)) {
-                    error.append(csvReadHelper.getMessage());
-                }
-
-                warning = csvReadHelper.getMessage();
-                nodeAlignmentImports = csvReadHelper.getNodeAlignmentImports();
-                if (nodeAlignmentImports != null) {
-                    if (nodeAlignmentImports.isEmpty()) {
-                        haveError = true;
-                        error.append(csvReadHelper.getMessage());
-                        error.append(System.lineSeparator());
-                        error.append("La lecture a échouée, vérifiez peut être le séparateur des colonnes !!");
-                        warning = "";
-                    } else {
-                        total = nodeAlignmentImports.size();
-                        uri = "";
-                        loadDone = true;
-                        bddInsertEnable = true;
-                        info = FILE_LOADED_MSG;
-                        PrimeFaces.current().executeScript(WAIT_DIALOG_HIDE);
-                    }
-                }
-            } catch (Exception e) {
-                haveError = true;
-                error.append(System.lineSeparator());
-                error.append(e.toString());
-            } finally {
-                showError();
-            }
+            processAlignmentCsv(event);
         }
+        PrimeFaces.current().executeScript(WAIT_DIALOG_HIDE);
+    }
+
+    private void processAlignmentCsv(FileUploadEvent event) {
+        WorkshopCsvReader csvReadHelper = new WorkshopCsvReader(delimiterCsv);
+        List<String> headerSourceAlignList = readAlignmentHeaders(event, csvReadHelper);
+        if (headerSourceAlignList == null || headerSourceAlignList.isEmpty()) {
+            return;
+        }
+        try (Reader reader = new InputStreamReader(event.getFile().getInputStream())) {
+            if (!csvReadHelper.readFileAlignment(reader, headerSourceAlignList)) {
+                error.append(csvReadHelper.getMessage());
+            }
+            warning = csvReadHelper.getMessage();
+            nodeAlignmentImports = csvReadHelper.getNodeAlignmentImports();
+            acceptMaybeEmptyAlignmentList(csvReadHelper);
+        } catch (Exception e) {
+            haveError = true;
+            error.append(System.lineSeparator());
+            error.append(e.toString());
+        } finally {
+            showError();
+        }
+    }
+
+    private List<String> readAlignmentHeaders(FileUploadEvent event, WorkshopCsvReader csvReadHelper) {
+        try (Reader reader1 = new InputStreamReader(event.getFile().getInputStream())) {
+            List<String> headers = csvReadHelper.readHeadersFileAlignment(reader1);
+            if (headers == null || headers.isEmpty()) {
+                error.append(csvReadHelper.getMessage());
+            }
+            return headers;
+        } catch (Exception e) {
+            haveError = true;
+            error.append(System.lineSeparator());
+            error.append(e.toString());
+            return List.of();
+        }
+    }
+
+    private void acceptMaybeEmptyAlignmentList(WorkshopCsvReader csvReadHelper) {
+        if (nodeAlignmentImports == null) {
+            return;
+        }
+        if (nodeAlignmentImports.isEmpty()) {
+            haveError = true;
+            error.append(csvReadHelper.getMessage());
+            error.append(System.lineSeparator());
+            error.append("La lecture a échouée, vérifiez peut être le séparateur des colonnes !!");
+            warning = "";
+            return;
+        }
+        total = nodeAlignmentImports.size();
+        uri = "";
+        loadDone = true;
+        bddInsertEnable = true;
+        info = FILE_LOADED_MSG;
         PrimeFaces.current().executeScript(WAIT_DIALOG_HIDE);
     }
 
@@ -371,54 +382,65 @@ public class WorkshopBulkImportEngine implements Serializable {
             event.setPhaseId(PhaseId.INVOKE_APPLICATION);
             event.queue();
         } else {
-            List<String> headerRelatedList;
-
-            WorkshopCsvReader csvReadHelper = new WorkshopCsvReader(delimiterCsv);
-            try (Reader reader1 = new InputStreamReader(event.getFile().getInputStream())) {
-                headerRelatedList = csvReadHelper.readHeadersFileRelated(reader1);
-                if (headerRelatedList == null || headerRelatedList.isEmpty()) {
-                    error.append(csvReadHelper.getMessage());
-                    return;
-                }
-            } catch (Exception e) {
-                haveError = true;
-                error.append(System.lineSeparator());
-                error.append(e.toString());
-                return;
-            }
-
-            try (Reader reader = new InputStreamReader(event.getFile().getInputStream())) {
-
-                if (!csvReadHelper.readFileRelated(reader)) {
-                    error.append(csvReadHelper.getMessage());
-                }
-
-                warning = csvReadHelper.getMessage();
-                nodeIdValues = csvReadHelper.getNodeIdValues();
-                if (nodeIdValues != null) {
-                    if (nodeIdValues.isEmpty()) {
-                        haveError = true;
-                        error.append(csvReadHelper.getMessage());
-                        error.append(System.lineSeparator());
-                        error.append("La lecture a échouée, vérifiez peut être le séparateur des colonnes !!");
-                        warning = "";
-                    } else {
-                        total = nodeIdValues.size();
-                        uri = "";
-                        loadDone = true;
-                        bddInsertEnable = true;
-                        info = FILE_LOADED_MSG;
-                        PrimeFaces.current().executeScript(WAIT_DIALOG_HIDE);
-                    }
-                }
-            } catch (Exception e) {
-                haveError = true;
-                error.append(System.lineSeparator());
-                error.append(e.toString());
-            } finally {
-                showError();
-            }
+            processRelatedCsv(event);
         }
+        PrimeFaces.current().executeScript(WAIT_DIALOG_HIDE);
+    }
+
+    private void processRelatedCsv(FileUploadEvent event) {
+        WorkshopCsvReader csvReadHelper = new WorkshopCsvReader(delimiterCsv);
+        List<String> headerRelatedList = readRelatedHeaders(event, csvReadHelper);
+        if (headerRelatedList == null || headerRelatedList.isEmpty()) {
+            return;
+        }
+        try (Reader reader = new InputStreamReader(event.getFile().getInputStream())) {
+            if (!csvReadHelper.readFileRelated(reader)) {
+                error.append(csvReadHelper.getMessage());
+            }
+            warning = csvReadHelper.getMessage();
+            nodeIdValues = csvReadHelper.getNodeIdValues();
+            acceptMaybeEmptyRelatedList(csvReadHelper);
+        } catch (Exception e) {
+            haveError = true;
+            error.append(System.lineSeparator());
+            error.append(e.toString());
+        } finally {
+            showError();
+        }
+    }
+
+    private List<String> readRelatedHeaders(FileUploadEvent event, WorkshopCsvReader csvReadHelper) {
+        try (Reader reader1 = new InputStreamReader(event.getFile().getInputStream())) {
+            List<String> headers = csvReadHelper.readHeadersFileRelated(reader1);
+            if (headers == null || headers.isEmpty()) {
+                error.append(csvReadHelper.getMessage());
+            }
+            return headers;
+        } catch (Exception e) {
+            haveError = true;
+            error.append(System.lineSeparator());
+            error.append(e.toString());
+            return List.of();
+        }
+    }
+
+    private void acceptMaybeEmptyRelatedList(WorkshopCsvReader csvReadHelper) {
+        if (nodeIdValues == null) {
+            return;
+        }
+        if (nodeIdValues.isEmpty()) {
+            haveError = true;
+            error.append(csvReadHelper.getMessage());
+            error.append(System.lineSeparator());
+            error.append("La lecture a échouée, vérifiez peut être le séparateur des colonnes !!");
+            warning = "";
+            return;
+        }
+        total = nodeIdValues.size();
+        uri = "";
+        loadDone = true;
+        bddInsertEnable = true;
+        info = FILE_LOADED_MSG;
         PrimeFaces.current().executeScript(WAIT_DIALOG_HIDE);
     }
 
@@ -433,49 +455,57 @@ public class WorkshopBulkImportEngine implements Serializable {
             event.setPhaseId(PhaseId.INVOKE_APPLICATION);
             event.queue();
         } else {
-            WorkshopCsvReader csvReadHelper = new WorkshopCsvReader(delimiterCsv);
-            // première lecrture pour charger les langues
-            try (Reader reader1 = new InputStreamReader(event.getFile().getInputStream())) {
-                if (!csvReadHelper.setLangs(reader1)) {
+            processConceptCsv(event);
+        }
+    }
+
+    private void processConceptCsv(FileUploadEvent event) {
+        WorkshopCsvReader csvReadHelper = new WorkshopCsvReader(delimiterCsv);
+        try (Reader reader1 = new InputStreamReader(event.getFile().getInputStream())) {
+            if (!csvReadHelper.setLangs(reader1)) {
+                error.append(csvReadHelper.getMessage());
+            }
+            try (Reader reader2 = new InputStreamReader(event.getFile().getInputStream())) {
+                if (!csvReadHelper.readFile(reader2, false)) {
                     error.append(csvReadHelper.getMessage());
                 }
-                //deuxième lecture pour les données
-                try (Reader reader2 = new InputStreamReader(event.getFile().getInputStream())) {
-                    // false to not read empty data
-                    if (!csvReadHelper.readFile(reader2, false)) {
-                        error.append(csvReadHelper.getMessage());
-                    }
-
-                    warning = csvReadHelper.getMessage();
-                    conceptObjects = csvReadHelper.getConceptObjects();
-                    if (conceptObjects != null && !conceptObjects.isEmpty()
-                            && conceptObjects.get(0).getPrefLabels() != null) {
-                        if (conceptObjects.get(0).getPrefLabels().isEmpty()) {
-                            haveError = true;
-                            error.append(System.lineSeparator());
-                            error.append("La lecture a échouée, vérifiez le séparateur des colonnes !!");
-                            warning = "";
-                        } else {
-                            langs = csvReadHelper.getLangs();
-                            total = conceptObjects.size();
-                            uri = "";
-                            loadDone = true;
-                            bddInsertEnable = true;
-                            info = FILE_LOADED_MSG;
-                        }
-                    }
-                    total = conceptObjects == null ? 0 : conceptObjects.size();
-                }
-                PrimeFaces.current().executeScript(WAIT_DIALOG_HIDE);
-            } catch (Exception e) {
-                haveError = true;
-                error.append(System.lineSeparator());
-                error.append(e.toString());
-            } finally {
-                showError();
+                acceptConceptCsvRead(csvReadHelper);
             }
             PrimeFaces.current().executeScript(WAIT_DIALOG_HIDE);
+        } catch (Exception e) {
+            haveError = true;
+            error.append(System.lineSeparator());
+            error.append(e.toString());
+        } finally {
+            showError();
         }
+        PrimeFaces.current().executeScript(WAIT_DIALOG_HIDE);
+    }
+
+    private void acceptConceptCsvRead(WorkshopCsvReader csvReadHelper) {
+        warning = csvReadHelper.getMessage();
+        conceptObjects = csvReadHelper.getConceptObjects();
+        if (conceptObjects != null && !conceptObjects.isEmpty()
+                && conceptObjects.get(0).getPrefLabels() != null) {
+            acceptConceptPrefLabels(csvReadHelper);
+        }
+        total = conceptObjects == null ? 0 : conceptObjects.size();
+    }
+
+    private void acceptConceptPrefLabels(WorkshopCsvReader csvReadHelper) {
+        if (conceptObjects.get(0).getPrefLabels().isEmpty()) {
+            haveError = true;
+            error.append(System.lineSeparator());
+            error.append("La lecture a échouée, vérifiez le séparateur des colonnes !!");
+            warning = "";
+            return;
+        }
+        langs = csvReadHelper.getLangs();
+        total = conceptObjects.size();
+        uri = "";
+        loadDone = true;
+        bddInsertEnable = true;
+        info = FILE_LOADED_MSG;
     }
 
     /**
@@ -822,35 +852,12 @@ public class WorkshopBulkImportEngine implements Serializable {
         initError();
 
         ArrayList<NodeIdValue> listAlignments = new ArrayList<>();
-        List<String> branchIds;
-        List<NodeAlignmentSmall> nodeAlignmentSmalls;
         try {
-            if (StringUtils.isEmpty(selectedConcept)) {
-                // on exporte tous les alignements
-                branchIds = persistence.getAllIdConceptOfThesaurus(idTheso);
-            } else {
-                // on exporte la branche
-                if (!persistence.isIdExiste(selectedConcept, idTheso)) {
-                    error.append("L'identifiant n'existe pas !!");
-                    showError();
-                    return null;
-                }
-                branchIds = persistence.getIdsOfBranch(selectedConcept, idTheso);
+            List<String> branchIds = new ArrayList<>();
+            if (!loadAlignmentBranchIds(idTheso, branchIds)) {
+                return null;
             }
-            if (branchIds != null) {
-                for (String idConcept : branchIds) {
-                    nodeAlignmentSmalls = persistence.getAllAlignmentsOfConcept(idConcept, idTheso);
-                    if (!nodeAlignmentSmalls.isEmpty()) {
-                        for (NodeAlignmentSmall nodeAlignmentSmall : nodeAlignmentSmalls) {
-                            NodeIdValue nodeIdValue = new NodeIdValue();
-                            nodeIdValue.setId(idConcept);
-                            nodeIdValue.setValue(nodeAlignmentSmall.getUri_target());
-                            listAlignments.add(nodeIdValue);
-                            total++;
-                        }
-                    }
-                }
-            }
+            collectAlignments(branchIds, idTheso, listAlignments);
             log.error(persistence.getMessage());
 
             loadDone = false;
@@ -872,6 +879,46 @@ public class WorkshopBulkImportEngine implements Serializable {
             showError();
         }
         return null;
+    }
+
+    private boolean loadAlignmentBranchIds(String idTheso, List<String> branchIds) {
+        if (StringUtils.isEmpty(selectedConcept)) {
+            addAllIfPresent(branchIds, persistence.getAllIdConceptOfThesaurus(idTheso));
+            return true;
+        }
+        if (!persistence.isIdExiste(selectedConcept, idTheso)) {
+            error.append("L'identifiant n'existe pas !!");
+            showError();
+            return false;
+        }
+        addAllIfPresent(branchIds, persistence.getIdsOfBranch(selectedConcept, idTheso));
+        return true;
+    }
+
+    private static void addAllIfPresent(List<String> target, List<String> source) {
+        if (source != null) {
+            target.addAll(source);
+        }
+    }
+
+    private void collectAlignments(List<String> branchIds, String idTheso, List<NodeIdValue> listAlignments) {
+        for (String idConcept : branchIds) {
+            addAlignmentsOfConcept(idConcept, idTheso, listAlignments);
+        }
+    }
+
+    private void addAlignmentsOfConcept(String idConcept, String idTheso, List<NodeIdValue> listAlignments) {
+        List<NodeAlignmentSmall> nodeAlignmentSmalls = persistence.getAllAlignmentsOfConcept(idConcept, idTheso);
+        if (nodeAlignmentSmalls.isEmpty()) {
+            return;
+        }
+        for (NodeAlignmentSmall nodeAlignmentSmall : nodeAlignmentSmalls) {
+            NodeIdValue nodeIdValue = new NodeIdValue();
+            nodeIdValue.setId(idConcept);
+            nodeIdValue.setValue(nodeAlignmentSmall.getUri_target());
+            listAlignments.add(nodeIdValue);
+            total++;
+        }
     }
 
     /**
@@ -900,56 +947,12 @@ public class WorkshopBulkImportEngine implements Serializable {
 
         PrimeFaces.current().executeScript("PF('waitDialog').show();");
 
-        List<NodeSearchMini> nodeSearchMinis = new ArrayList<>();
-
         List<NodeCompareTheso> nodeCompareThesosTemp = new ArrayList<>();
-        boolean writtenInfo;
 
         // mise à jouor des concepts
         try {
             for (NodeCompareTheso nodeCompareTheso : nodeCompareThesos) {
-                writtenInfo = false;
-                if (nodeCompareTheso == null) {
-                    continue;
-                }
-                if (StringUtils.isEmpty(nodeCompareTheso.getOriginalPrefLabel())) {
-                    continue;
-                }
-                switch (selectedSearchType) {
-                    case "exactWord":
-                        nodeSearchMinis = persistence.searchExactTermForAutocompletion(nodeCompareTheso.getOriginalPrefLabel(), idLang, idTheso);
-                        break;
-                    case "containsExactWord":
-                        nodeSearchMinis = persistence.searchExactMatch(nodeCompareTheso.getOriginalPrefLabel(), idLang, idTheso, false);
-                        break;
-                    case "startWith":
-                        nodeSearchMinis = persistence.searchStartWith(nodeCompareTheso.getOriginalPrefLabel(), idLang, idTheso, false);
-                        break;
-                    case "elastic":
-                        nodeSearchMinis = persistence.searchFullTextElastic(nodeCompareTheso.getOriginalPrefLabel(), idLang, idTheso, false);
-                        break;
-                    default:
-                        break;
-                }
-
-                for (NodeSearchMini nodeSearchMini : nodeSearchMinis) {
-                    if (nodeSearchMini.isConcept() || nodeSearchMini.isAltLabel()) {
-                        writtenInfo = true;
-                        var concept = persistence.getConcept(nodeSearchMini.getIdConcept(), idTheso);
-                        NodeCompareTheso nodeCompareTheso2 = new NodeCompareTheso();
-                        nodeCompareTheso2.setOriginalPrefLabel(nodeCompareTheso.getOriginalPrefLabel());
-                        nodeCompareTheso2.setIdConcept(nodeSearchMini.getIdConcept());
-                        nodeCompareTheso2.setPrefLabel(nodeSearchMini.getPrefLabel());
-                        nodeCompareTheso2.setAltLabel(nodeSearchMini.getAltLabelValue());
-                        nodeCompareTheso2.setIdArk(concept.getIdArk());
-                        nodeCompareThesosTemp.add(nodeCompareTheso2);
-                    }
-                }
-                if (!writtenInfo) {
-                    NodeCompareTheso nodeCompareTheso2 = new NodeCompareTheso();
-                    nodeCompareTheso2.setOriginalPrefLabel(nodeCompareTheso.getOriginalPrefLabel());
-                    nodeCompareThesosTemp.add(nodeCompareTheso2);
-                }
+                compareOneLabel(nodeCompareTheso, idTheso, nodeCompareThesosTemp);
             }
             nodeCompareThesos = nodeCompareThesosTemp;
             total = nodeCompareThesos.size();
@@ -972,6 +975,54 @@ public class WorkshopBulkImportEngine implements Serializable {
             showError();
         }
         return null;
+    }
+
+    private void compareOneLabel(NodeCompareTheso nodeCompareTheso, String idTheso, List<NodeCompareTheso> results) {
+        if (nodeCompareTheso == null) {
+            return;
+        }
+        if (StringUtils.isEmpty(nodeCompareTheso.getOriginalPrefLabel())) {
+            return;
+        }
+        List<NodeSearchMini> matches = searchCompareMatches(nodeCompareTheso.getOriginalPrefLabel(), idTheso);
+        if (!appendCompareMatches(nodeCompareTheso, idTheso, matches, results)) {
+            NodeCompareTheso unmatched = new NodeCompareTheso();
+            unmatched.setOriginalPrefLabel(nodeCompareTheso.getOriginalPrefLabel());
+            results.add(unmatched);
+        }
+    }
+
+    private List<NodeSearchMini> searchCompareMatches(String prefLabel, String idTheso) {
+        return switch (selectedSearchType) {
+            case "exactWord" -> persistence.searchExactTermForAutocompletion(prefLabel, idLang, idTheso);
+            case "containsExactWord" -> persistence.searchExactMatch(prefLabel, idLang, idTheso, false);
+            case "startWith" -> persistence.searchStartWith(prefLabel, idLang, idTheso, false);
+            case "elastic" -> persistence.searchFullTextElastic(prefLabel, idLang, idTheso, false);
+            default -> List.of();
+        };
+    }
+
+    private boolean appendCompareMatches(
+            NodeCompareTheso source,
+            String idTheso,
+            List<NodeSearchMini> matches,
+            List<NodeCompareTheso> results
+    ) {
+        boolean writtenInfo = false;
+        for (NodeSearchMini nodeSearchMini : matches) {
+            if (nodeSearchMini.isConcept() || nodeSearchMini.isAltLabel()) {
+                writtenInfo = true;
+                var concept = persistence.getConcept(nodeSearchMini.getIdConcept(), idTheso);
+                NodeCompareTheso match = new NodeCompareTheso();
+                match.setOriginalPrefLabel(source.getOriginalPrefLabel());
+                match.setIdConcept(nodeSearchMini.getIdConcept());
+                match.setPrefLabel(nodeSearchMini.getPrefLabel());
+                match.setAltLabel(nodeSearchMini.getAltLabelValue());
+                match.setIdArk(concept.getIdArk());
+                results.add(match);
+            }
+        }
+        return writtenInfo;
     }
 
     private StreamedContent streamedCsvContent(ByteArrayInputStream input) {
@@ -1028,47 +1079,11 @@ public class WorkshopBulkImportEngine implements Serializable {
 
         initError();
 
-        String idConcept;
-        String idConceptReplacedBy;
         try {
             for (NodeDeprecated nodeDeprecated : nodeDeprecateds) {
-                if (nodeDeprecated == null) {
-                    continue;
-                }
-                if (StringUtils.isEmpty(nodeDeprecated.getDeprecatedId())) {
-                    continue;
-                }
-                idConcept = getIdConcept(nodeDeprecated.getDeprecatedId(), idTheso);
-                if (idConcept == null || idConcept.isEmpty()) {
-                    continue;
-                }
-                if (!persistence.isIdExiste(idConcept, idTheso)) {
-                    continue;
-                }
-                if (!persistence.deprecateConcept(idConcept, idTheso, idUser1)) {
-                    error.append("ce concept n'a pas été déprécié : ");
-                    error.append(idConcept);
+                if (!deprecateOneConcept(nodeDeprecated, idTheso, idUser1)) {
                     return;
                 }
-                if (!StringUtils.isEmpty(nodeDeprecated.getReplacedById())) {
-                    idConceptReplacedBy = getIdConcept(nodeDeprecated.getReplacedById(), idTheso);
-                    persistence.addReplacedBy(idConcept, idTheso, idConceptReplacedBy, idUser1);
-                }
-
-                if (!persistence.isNoteExist(idConcept, idTheso, nodeDeprecated.getNoteLang(), nodeDeprecated.getNote(), "note")) {
-                    persistence.addNote(idConcept, nodeDeprecated.getNoteLang(), idTheso, nodeDeprecated.getNote(), "note", "", idUser1);
-                }
-
-                persistence.updateDateOfConcept(thesaurusId, idConcept, idUser1);
-
-                persistence.save(ConceptDcTerm.builder()
-                        .name(DCMIResource.CONTRIBUTOR)
-                        .value(persistence.getUserDisplayName(userId))
-                        .idConcept(idConcept)
-                        .idThesaurus(thesaurusId)
-                        .build());
-
-                total++;
             }
             log.error(persistence.getMessage());
 
@@ -1087,6 +1102,47 @@ public class WorkshopBulkImportEngine implements Serializable {
         }
 
         conceptObjects = null;
+    }
+
+    private boolean deprecateOneConcept(NodeDeprecated nodeDeprecated, String idTheso, int idUser1) {
+        if (nodeDeprecated == null) {
+            return true;
+        }
+        if (StringUtils.isEmpty(nodeDeprecated.getDeprecatedId())) {
+            return true;
+        }
+        String idConcept = getIdConcept(nodeDeprecated.getDeprecatedId(), idTheso);
+        if (idConcept == null || idConcept.isEmpty()) {
+            return true;
+        }
+        if (!persistence.isIdExiste(idConcept, idTheso)) {
+            return true;
+        }
+        if (!persistence.deprecateConcept(idConcept, idTheso, idUser1)) {
+            error.append("ce concept n'a pas été déprécié : ");
+            error.append(idConcept);
+            return false;
+        }
+        persistDeprecationExtras(nodeDeprecated, idTheso, idConcept, idUser1);
+        total++;
+        return true;
+    }
+
+    private void persistDeprecationExtras(NodeDeprecated nodeDeprecated, String idTheso, String idConcept, int idUser1) {
+        if (!StringUtils.isEmpty(nodeDeprecated.getReplacedById())) {
+            String idConceptReplacedBy = getIdConcept(nodeDeprecated.getReplacedById(), idTheso);
+            persistence.addReplacedBy(idConcept, idTheso, idConceptReplacedBy, idUser1);
+        }
+        if (!persistence.isNoteExist(idConcept, idTheso, nodeDeprecated.getNoteLang(), nodeDeprecated.getNote(), "note")) {
+            persistence.addNote(idConcept, nodeDeprecated.getNoteLang(), idTheso, nodeDeprecated.getNote(), "note", "", idUser1);
+        }
+        persistence.updateDateOfConcept(thesaurusId, idConcept, idUser1);
+        persistence.save(ConceptDcTerm.builder()
+                .name(DCMIResource.CONTRIBUTOR)
+                .value(persistence.getUserDisplayName(userId))
+                .idConcept(idConcept)
+                .idThesaurus(thesaurusId)
+                .build());
     }
 
     /**
@@ -1115,52 +1171,9 @@ public class WorkshopBulkImportEngine implements Serializable {
 
         initError();
 
-        String idConcept;
-        // mise à jouor des concepts
         try {
             for (NodeReplaceValueByValue nodeReplaceValueByValue : nodeReplaceValueByValues) {
-                if (nodeReplaceValueByValue == null) {
-                    continue;
-                }
-                if (nodeReplaceValueByValue.getIdConcept() == null || nodeReplaceValueByValue.getIdConcept().isEmpty()) {
-                    continue;
-                }
-                idConcept = getIdConcept(nodeReplaceValueByValue.getIdConcept(), idTheso);
-                if (idConcept == null || idConcept.isEmpty()) {
-                    continue;
-                }
-                nodeReplaceValueByValue.setIdConcept(idConcept);
-                // controle pour vérifier l'existance de l'Id
-                if (!persistence.isIdExiste(idConcept, thesaurusId)) {
-                    continue;
-                }
-
-                if (nodeReplaceValueByValue.getSKOSProperty() == SKOSProperty.BROADER) {
-                    String oldBt = null;
-                    if (!StringUtils.isEmpty(nodeReplaceValueByValue.getOldValue())) {
-                        oldBt = getIdConcept(nodeReplaceValueByValue.getOldValue(), idTheso);
-                    }
-                    String newBt = getIdConcept(nodeReplaceValueByValue.getNewValue(), idTheso);
-                    if (StringUtils.isEmpty(newBt)) {
-                        continue;
-                    }
-                    nodeReplaceValueByValue.setOldValue(oldBt);
-                    nodeReplaceValueByValue.setNewValue(newBt);
-                }
-                if (StringUtils.isEmpty(nodeReplaceValueByValue.getNewValue())) {
-                    continue;
-                }
-                if (persistence.updateConceptValueByNewValue(idTheso, nodeReplaceValueByValue, idUser1)) {
-                    total++;
-                    persistence.updateDateOfConcept(idTheso, idConcept, userId);
-
-                    persistence.save(ConceptDcTerm.builder()
-                            .name(DCMIResource.CONTRIBUTOR)
-                            .value(persistence.getUserDisplayName(userId))
-                            .idConcept(idConcept)
-                            .idThesaurus(idTheso)
-                            .build());
-                }
+                replaceOneValue(nodeReplaceValueByValue, idTheso, idUser1);
             }
             log.error(persistence.getMessage());
 
@@ -1179,6 +1192,61 @@ public class WorkshopBulkImportEngine implements Serializable {
         }
 
         conceptObjects = null;
+    }
+
+    private void replaceOneValue(NodeReplaceValueByValue nodeReplaceValueByValue, String idTheso, int idUser1) {
+        if (nodeReplaceValueByValue == null) {
+            return;
+        }
+        if (nodeReplaceValueByValue.getIdConcept() == null || nodeReplaceValueByValue.getIdConcept().isEmpty()) {
+            return;
+        }
+        String idConcept = getIdConcept(nodeReplaceValueByValue.getIdConcept(), idTheso);
+        if (idConcept == null || idConcept.isEmpty()) {
+            return;
+        }
+        nodeReplaceValueByValue.setIdConcept(idConcept);
+        if (!persistence.isIdExiste(idConcept, thesaurusId)) {
+            return;
+        }
+        if (!prepareBroaderReplacement(nodeReplaceValueByValue, idTheso)) {
+            return;
+        }
+        if (StringUtils.isEmpty(nodeReplaceValueByValue.getNewValue())) {
+            return;
+        }
+        persistReplacedValue(nodeReplaceValueByValue, idTheso, idConcept, idUser1);
+    }
+
+    private boolean prepareBroaderReplacement(NodeReplaceValueByValue nodeReplaceValueByValue, String idTheso) {
+        if (nodeReplaceValueByValue.getSKOSProperty() != SKOSProperty.BROADER) {
+            return true;
+        }
+        String oldBt = null;
+        if (!StringUtils.isEmpty(nodeReplaceValueByValue.getOldValue())) {
+            oldBt = getIdConcept(nodeReplaceValueByValue.getOldValue(), idTheso);
+        }
+        String newBt = getIdConcept(nodeReplaceValueByValue.getNewValue(), idTheso);
+        if (StringUtils.isEmpty(newBt)) {
+            return false;
+        }
+        nodeReplaceValueByValue.setOldValue(oldBt);
+        nodeReplaceValueByValue.setNewValue(newBt);
+        return true;
+    }
+
+    private void persistReplacedValue(NodeReplaceValueByValue nodeReplaceValueByValue, String idTheso, String idConcept, int idUser1) {
+        if (!persistence.updateConceptValueByNewValue(idTheso, nodeReplaceValueByValue, idUser1)) {
+            return;
+        }
+        total++;
+        persistence.updateDateOfConcept(idTheso, idConcept, userId);
+        persistence.save(ConceptDcTerm.builder()
+                .name(DCMIResource.CONTRIBUTOR)
+                .value(persistence.getUserDisplayName(userId))
+                .idConcept(idConcept)
+                .idThesaurus(idTheso)
+                .build());
     }
 
     private String getIdConcept(String idToFind, String idTheso) {
@@ -1294,36 +1362,42 @@ public class WorkshopBulkImportEngine implements Serializable {
         }
         try {
             for (NodeIdValue nodeIdValue : nodeIdValues) {
-                if (nodeIdValue == null) {
-                    continue;
-                }
-                if (nodeIdValue.getId() == null || nodeIdValue.getId().isEmpty()) {
-                    continue;
-                }
-                // controle pour vérifier l'existance de l'Id
-                if (!persistence.isIdExiste(nodeIdValue.getId(), thesaurusId)) {
-                    continue;
-                }
-
-                if (clearBefore) {
-                    if (persistence.updateArkIdOfConcept(nodeIdValue.getId(), thesaurusId, nodeIdValue.getValue())) {
-                        total++;
-                    }
-                } else {
-                    var concept = persistence.getConcept(nodeIdValue.getId(), thesaurusId);
-                    if (StringUtils.isEmpty(concept.getIdArk())
-                            && persistence.updateArkIdOfConcept(nodeIdValue.getId(), thesaurusId, nodeIdValue.getValue())) {
-                        total++;
-                    }
-                }
-                progressStep++;
-                progress = progressPercent(progressStep, total);
+                importOneArk(nodeIdValue);
             }
             completeListImport("import réussi, Arks importés = " + total);
         } catch (Exception e) {
             failListImport(e);
         } finally {
             showError();
+        }
+    }
+
+    private void importOneArk(NodeIdValue nodeIdValue) {
+        if (nodeIdValue == null) {
+            return;
+        }
+        if (nodeIdValue.getId() == null || nodeIdValue.getId().isEmpty()) {
+            return;
+        }
+        if (!persistence.isIdExiste(nodeIdValue.getId(), thesaurusId)) {
+            return;
+        }
+        persistArkIfAllowed(nodeIdValue);
+        progressStep++;
+        progress = progressPercent(progressStep, total);
+    }
+
+    private void persistArkIfAllowed(NodeIdValue nodeIdValue) {
+        if (clearBefore) {
+            if (persistence.updateArkIdOfConcept(nodeIdValue.getId(), thesaurusId, nodeIdValue.getValue())) {
+                total++;
+            }
+            return;
+        }
+        var concept = persistence.getConcept(nodeIdValue.getId(), thesaurusId);
+        if (StringUtils.isEmpty(concept.getIdArk())
+                && persistence.updateArkIdOfConcept(nodeIdValue.getId(), thesaurusId, nodeIdValue.getValue())) {
+            total++;
         }
     }
 
@@ -1447,38 +1521,9 @@ public class WorkshopBulkImportEngine implements Serializable {
         if (!beginListImport(nodeIdValues != null && !nodeIdValues.isEmpty())) {
             return;
         }
-        String idConcept = null;
-        Term term = null;
-        int idUser = userId;
         try {
             for (NodeIdValue nodeIdValue : nodeIdValues) {
-                if (nodeIdValue == null) {
-                    continue;
-                }
-                if (nodeIdValue.getId() == null || nodeIdValue.getId().isEmpty()) {
-                    continue;
-                }
-                idConcept = resolveExistingConceptId(nodeIdValue.getId());
-                if (idConcept == null) {
-                    continue;
-                }
-
-                if(StringUtils.isBlank(nodeIdValue.getValue())) continue;
-
-                //traductions
-
-                term = persistence.getThisTerm(idConcept, thesaurusId, lang);
-                if(term == null || StringUtils.isBlank(term.getLexicalValue())) {
-                    PreferredTerm preferredTerm = persistence.getPreferredTermByThesaurusAndConcept(thesaurusId, idConcept);
-                    persistence.addTermTraduction(nodeIdValue.getValue(), preferredTerm.getIdTerm(), lang, thesaurusId, idUser);
-                    total++;
-                } else {
-                    persistence.updateTermTraduction(nodeIdValue.getValue(), term.getIdTerm(), lang, thesaurusId, idUser);
-                    total++;
-                }
-
-                progressStep++;
-                progress = progressPercent(progressStep, total);
+                importOneTraduction(nodeIdValue);
             }
             completeListImport("import réussi, notes importées = " + total);
         } catch (Exception e) {
@@ -1486,6 +1531,36 @@ public class WorkshopBulkImportEngine implements Serializable {
         } finally {
             showError();
         }
+    }
+
+    private void importOneTraduction(NodeIdValue nodeIdValue) {
+        if (nodeIdValue == null) {
+            return;
+        }
+        if (nodeIdValue.getId() == null || nodeIdValue.getId().isEmpty()) {
+            return;
+        }
+        String idConcept = resolveExistingConceptId(nodeIdValue.getId());
+        if (idConcept == null) {
+            return;
+        }
+        if (StringUtils.isBlank(nodeIdValue.getValue())) {
+            return;
+        }
+        persistTraduction(idConcept, nodeIdValue.getValue());
+        progressStep++;
+        progress = progressPercent(progressStep, total);
+    }
+
+    private void persistTraduction(String idConcept, String value) {
+        Term term = persistence.getThisTerm(idConcept, thesaurusId, lang);
+        if (term == null || StringUtils.isBlank(term.getLexicalValue())) {
+            PreferredTerm preferredTerm = persistence.getPreferredTermByThesaurusAndConcept(thesaurusId, idConcept);
+            persistence.addTermTraduction(value, preferredTerm.getIdTerm(), lang, thesaurusId, userId);
+        } else {
+            persistence.updateTermTraduction(value, term.getIdTerm(), lang, thesaurusId, userId);
+        }
+        total++;
     }
 
     /**
@@ -1496,91 +1571,9 @@ public class WorkshopBulkImportEngine implements Serializable {
         if (!beginListImport(conceptObjects != null && !conceptObjects.isEmpty())) {
             return;
         }
-        String idConcept = null;
         try {
             for (ThesaurusCsvConceptObject conceptObject : conceptObjects) {
-                if (conceptObject == null) {
-                    continue;
-                }
-                if (conceptObject.getIdConcept() == null || conceptObject.getIdConcept().isEmpty()) {
-                    continue;
-                }
-                idConcept = resolveExistingConceptId(conceptObject.getIdConcept());
-                if (idConcept == null) {
-                    continue;
-                }
-
-                if (clearBefore) {
-                    persistence.deleteNotes(idConcept, thesaurusId);
-                }
-
-                //definition
-                for (ThesaurusCsvConceptLabel definition : conceptObject.getDefinitions()) {
-                    if (!persistence.isNoteExist(idConcept, thesaurusId, definition.getLang(),
-                            definition.getLabel(), "definition")) {
-                        persistence.addNote(idConcept, definition.getLang(),
-                                thesaurusId, definition.getLabel(), "definition", "", -1);
-                        total++;
-                    }
-                }
-                // historyNote
-                for (ThesaurusCsvConceptLabel historyNote : conceptObject.getHistoryNotes()) {
-                    if (!persistence.isNoteExist(idConcept, thesaurusId, historyNote.getLang(),
-                            historyNote.getLabel(), "historyNote")) {
-                        persistence.addNote(idConcept, historyNote.getLang(),
-                                thesaurusId, historyNote.getLabel(), "historyNote", "", -1);
-                        total++;
-                    }
-                }
-                // changeNote
-                for (ThesaurusCsvConceptLabel changeNote : conceptObject.getChangeNotes()) {
-                    if (!persistence.isNoteExist(idConcept, thesaurusId, changeNote.getLang(),
-                            changeNote.getLabel(), "changeNote")) {
-                        persistence.addNote(idConcept, changeNote.getLang(),
-                                thesaurusId, changeNote.getLabel(), "changeNote", "", -1);
-                        total++;
-                    }
-                }
-                // editorialNote
-                for (ThesaurusCsvConceptLabel editorialNote : conceptObject.getEditorialNotes()) {
-                    if (!persistence.isNoteExist(idConcept, thesaurusId, editorialNote.getLang(),
-                            editorialNote.getLabel(), "editorialNote")) {
-                        persistence.addNote(idConcept, editorialNote.getLang(),
-                                thesaurusId, editorialNote.getLabel(), "editorialNote", "", -1);
-                        total++;
-                    }
-                }
-                // example
-                for (ThesaurusCsvConceptLabel example : conceptObject.getExamples()) {
-                    if (!persistence.isNoteExist(idConcept, thesaurusId, example.getLang(),
-                            example.getLabel(), "example")) {
-                        persistence.addNote(idConcept, example.getLang(),
-                                thesaurusId, example.getLabel(), "example", "", -1);
-                        total++;
-                    }
-                }
-
-                //pour Concept
-                // note
-                for (ThesaurusCsvConceptLabel note : conceptObject.getNote()) {
-                    if (!persistence.isNoteExist(idConcept, thesaurusId, note.getLang(), note.getLabel(), "note")) {
-                        persistence.addNote(idConcept, note.getLang(), thesaurusId, note.getLabel(), "note", "", -1);
-                        total++;
-                    }
-                }
-                // scopeNote
-                for (ThesaurusCsvConceptLabel scopeNote : conceptObject.getScopeNotes()) {
-                    if (!persistence.isNoteExist(idConcept, thesaurusId, scopeNote.getLang(),
-                            scopeNote.getLabel(), "scopeNote")) {
-                        persistence.addNote(
-                                idConcept, scopeNote.getLang(),
-                                thesaurusId, scopeNote.getLabel(), "scopeNote", "", -1);
-                        total++;
-                    }
-                }
-
-                progressStep++;
-                progress = progressPercent(progressStep, total);
+                importNotesForConcept(conceptObject);
             }
             completeListImport("import réussi, notes importées = " + total);
         } catch (Exception e) {
@@ -1588,6 +1581,49 @@ public class WorkshopBulkImportEngine implements Serializable {
         } finally {
             showError();
         }
+    }
+
+    private void importNotesForConcept(ThesaurusCsvConceptObject conceptObject) {
+        if (conceptObject == null) {
+            return;
+        }
+        if (conceptObject.getIdConcept() == null || conceptObject.getIdConcept().isEmpty()) {
+            return;
+        }
+        String idConcept = resolveExistingConceptId(conceptObject.getIdConcept());
+        if (idConcept == null) {
+            return;
+        }
+        persistNotesForConcept(idConcept, conceptObject);
+        progressStep++;
+        progress = progressPercent(progressStep, total);
+    }
+
+    private void persistNotesForConcept(String idConcept, ThesaurusCsvConceptObject conceptObject) {
+        if (clearBefore) {
+            persistence.deleteNotes(idConcept, thesaurusId);
+        }
+        addMissingNotes(idConcept, conceptObject.getDefinitions(), "definition");
+        addMissingNotes(idConcept, conceptObject.getHistoryNotes(), "historyNote");
+        addMissingNotes(idConcept, conceptObject.getChangeNotes(), "changeNote");
+        addMissingNotes(idConcept, conceptObject.getEditorialNotes(), "editorialNote");
+        addMissingNotes(idConcept, conceptObject.getExamples(), "example");
+        addMissingNotes(idConcept, conceptObject.getNote(), "note");
+        addMissingNotes(idConcept, conceptObject.getScopeNotes(), "scopeNote");
+    }
+
+    private void addMissingNotes(String idConcept, List<ThesaurusCsvConceptLabel> notes, String noteType) {
+        for (ThesaurusCsvConceptLabel note : notes) {
+            addMissingNote(idConcept, note, noteType);
+        }
+    }
+
+    private void addMissingNote(String idConcept, ThesaurusCsvConceptLabel note, String noteType) {
+        if (persistence.isNoteExist(idConcept, thesaurusId, note.getLang(), note.getLabel(), noteType)) {
+            return;
+        }
+        persistence.addNote(idConcept, note.getLang(), thesaurusId, note.getLabel(), noteType, "", -1);
+        total++;
     }
 
     /**
@@ -1598,38 +1634,43 @@ public class WorkshopBulkImportEngine implements Serializable {
         if (!beginListImport(conceptObjects != null && !conceptObjects.isEmpty())) {
             return;
         }
-        String idConcept = null;
         try {
             for (ThesaurusCsvConceptObject conceptObject : conceptObjects) {
-                if (conceptObject == null) {
-                    continue;
-                }
-                if (conceptObject.getIdConcept() == null || conceptObject.getIdConcept().isEmpty()) {
-                    continue;
-                }
-                idConcept = resolveExistingConceptId(conceptObject.getIdConcept());
-                if (idConcept == null) {
-                    continue;
-                }
-
-                //Suppression des synonymes
-                var preferredTerm = persistence.findByIdThesaurusAndIdConcept(thesaurusId, idConcept);
-                if (preferredTerm.isPresent()) {
-                    for (ThesaurusCsvConceptLabel altLabel : conceptObject.getAltLabels()) {
-                        persistence.deleteNonPreferredTerm(preferredTerm.get().getIdTerm(), altLabel.getLang(),
-                                altLabel.getLabel(), thesaurusId, userId);
-                        total++;
-                    }
-                }
-
-                progressStep++;
-                progress = progressPercent(progressStep, total);
+                deleteAltLabelsForConcept(conceptObject);
             }
             completeListImport("Suppression réussie, synonymes importés = " + total);
         } catch (Exception e) {
             failListImport(e);
         } finally {
             showError();
+        }
+    }
+
+    private void deleteAltLabelsForConcept(ThesaurusCsvConceptObject conceptObject) {
+        if (conceptObject == null) {
+            return;
+        }
+        if (conceptObject.getIdConcept() == null || conceptObject.getIdConcept().isEmpty()) {
+            return;
+        }
+        String idConcept = resolveExistingConceptId(conceptObject.getIdConcept());
+        if (idConcept == null) {
+            return;
+        }
+        persistDeletedAltLabels(idConcept, conceptObject);
+        progressStep++;
+        progress = progressPercent(progressStep, total);
+    }
+
+    private void persistDeletedAltLabels(String idConcept, ThesaurusCsvConceptObject conceptObject) {
+        var preferredTerm = persistence.findByIdThesaurusAndIdConcept(thesaurusId, idConcept);
+        if (preferredTerm.isEmpty()) {
+            return;
+        }
+        for (ThesaurusCsvConceptLabel altLabel : conceptObject.getAltLabels()) {
+            persistence.deleteNonPreferredTerm(preferredTerm.get().getIdTerm(), altLabel.getLang(),
+                    altLabel.getLabel(), thesaurusId, userId);
+            total++;
         }
     }
 
@@ -1641,50 +1682,54 @@ public class WorkshopBulkImportEngine implements Serializable {
         if (!beginListImport(conceptObjects != null && !conceptObjects.isEmpty())) {
             return;
         }
-        String idConcept = null;
         try {
             for (ThesaurusCsvConceptObject conceptObject : conceptObjects) {
-                if (conceptObject == null) {
-                    continue;
-                }
-                if (conceptObject.getIdConcept() == null || conceptObject.getIdConcept().isEmpty()) {
-                    continue;
-                }
-                idConcept = resolveExistingConceptId(conceptObject.getIdConcept());
-                if (idConcept == null) {
-                    continue;
-                }
-
-                if (clearBefore) {
-                    persistence.deleteAllByConceptAndThesaurus(idConcept, thesaurusId);
-                }
-
-                //ajout des synonymes
-                var preferredTerm = persistence.findByIdThesaurusAndIdConcept(thesaurusId, idConcept);
-                if (preferredTerm.isPresent()) {
-                    for (ThesaurusCsvConceptLabel altLabel : conceptObject.getAltLabels()) {
-                        Term term = Term.builder()
-                                .idTerm(preferredTerm.get().getIdTerm())
-                                .lexicalValue(altLabel.getLabel())
-                                .lang(altLabel.getLang())
-                                .idThesaurus(thesaurusId)
-                                .source("import")
-                                .status("")
-                                .hidden(false)
-                                .build();
-                        persistence.addNonPreferredTerm(term, userId);
-                        total++;
-                    }
-                }
-
-                progressStep++;
-                progress = progressPercent(progressStep, total);
+                addAltLabelsForConcept(conceptObject);
             }
             completeListImport("import réussi, synonymes importés = " + total);
         } catch (Exception e) {
             failListImport(e);
         } finally {
             showError();
+        }
+    }
+
+    private void addAltLabelsForConcept(ThesaurusCsvConceptObject conceptObject) {
+        if (conceptObject == null) {
+            return;
+        }
+        if (conceptObject.getIdConcept() == null || conceptObject.getIdConcept().isEmpty()) {
+            return;
+        }
+        String idConcept = resolveExistingConceptId(conceptObject.getIdConcept());
+        if (idConcept == null) {
+            return;
+        }
+        persistAltLabels(idConcept, conceptObject);
+        progressStep++;
+        progress = progressPercent(progressStep, total);
+    }
+
+    private void persistAltLabels(String idConcept, ThesaurusCsvConceptObject conceptObject) {
+        if (clearBefore) {
+            persistence.deleteAllByConceptAndThesaurus(idConcept, thesaurusId);
+        }
+        var preferredTerm = persistence.findByIdThesaurusAndIdConcept(thesaurusId, idConcept);
+        if (preferredTerm.isEmpty()) {
+            return;
+        }
+        for (ThesaurusCsvConceptLabel altLabel : conceptObject.getAltLabels()) {
+            Term term = Term.builder()
+                    .idTerm(preferredTerm.get().getIdTerm())
+                    .lexicalValue(altLabel.getLabel())
+                    .lang(altLabel.getLang())
+                    .idThesaurus(thesaurusId)
+                    .source("import")
+                    .status("")
+                    .hidden(false)
+                    .build();
+            persistence.addNonPreferredTerm(term, userId);
+            total++;
         }
     }
 
@@ -1696,38 +1741,9 @@ public class WorkshopBulkImportEngine implements Serializable {
         if (!beginListImport(conceptObjects != null && !conceptObjects.isEmpty(), null, true)) {
             return;
         }
-        String idConcept = null;
-
         try {
             for (ThesaurusCsvConceptObject conceptObject : conceptObjects) {
-                if (conceptObject == null) {
-                    continue;
-                }
-                if (conceptObject.getLocalId() == null || conceptObject.getLocalId().isEmpty()) {
-                    continue;
-                }
-                if (conceptObject.getImages() == null || conceptObject.getImages().isEmpty()) {
-                    continue;
-                }
-                idConcept = resolveExistingConceptId(conceptObject.getLocalId());
-                if (idConcept == null) {
-                    continue;
-                }
-
-                for (NodeImage nodeImage : conceptObject.getImages()) {
-                    if (nodeImage == null) {
-                        continue;
-                    }
-                    if (!fr.cnrs.opentheso.utils.StringUtils.urlValidator(nodeImage.getUri())) {
-                        error.append("URL non valide : ");
-                        error.append(uri);
-                        continue;
-                    }
-                    persistence.addExternalImage(idConcept, thesaurusId, nodeImage.getImageName(),
-                            nodeImage.getCopyRight(), nodeImage.getUri(), nodeImage.getCreator(),
-                            userId);
-                    total++;
-                }
+                importImagesForConcept(conceptObject);
             }
             PrimeFaces.current().executeScript(WAIT_DIALOG_HIDE);
             loadDone = false;
@@ -1744,6 +1760,40 @@ public class WorkshopBulkImportEngine implements Serializable {
         PrimeFaces.current().executeScript(WAIT_DIALOG_HIDE);
     }
 
+    private void importImagesForConcept(ThesaurusCsvConceptObject conceptObject) {
+        if (conceptObject == null) {
+            return;
+        }
+        if (conceptObject.getLocalId() == null || conceptObject.getLocalId().isEmpty()) {
+            return;
+        }
+        if (conceptObject.getImages() == null || conceptObject.getImages().isEmpty()) {
+            return;
+        }
+        String idConcept = resolveExistingConceptId(conceptObject.getLocalId());
+        if (idConcept == null) {
+            return;
+        }
+        for (NodeImage nodeImage : conceptObject.getImages()) {
+            importOneImage(idConcept, nodeImage);
+        }
+    }
+
+    private void importOneImage(String idConcept, NodeImage nodeImage) {
+        if (nodeImage == null) {
+            return;
+        }
+        if (!fr.cnrs.opentheso.utils.StringUtils.urlValidator(nodeImage.getUri())) {
+            error.append("URL non valide : ");
+            error.append(uri);
+            return;
+        }
+        persistence.addExternalImage(idConcept, thesaurusId, nodeImage.getImageName(),
+                nodeImage.getCopyRight(), nodeImage.getUri(), nodeImage.getCreator(),
+                userId);
+        total++;
+    }
+
     /**
      * permet d'ajouter une liste de notations en CSV au thésaurus
      *
@@ -1752,36 +1802,42 @@ public class WorkshopBulkImportEngine implements Serializable {
         if (!beginListImport(nodeIdValues != null && !nodeIdValues.isEmpty())) {
             return;
         }
-        String idConcept = null;
         try {
             for (NodeIdValue nodeIdValue : nodeIdValues) {
-                if (nodeIdValue == null) {
-                    continue;
-                }
-                idConcept = resolveExistingConceptId(nodeIdValue.getId());
-                if (idConcept == null) {
-                    continue;
-                }
-
-                if (clearBefore) {
-                    if (persistence.updateNotation(idConcept, thesaurusId, nodeIdValue.getValue())) {
-                        total++;
-                    }
-                } else {
-                    var concept = persistence.getConcept(idConcept, thesaurusId);
-                    if (StringUtils.isEmpty(concept.getNotation())
-                            && persistence.updateNotation(idConcept, thesaurusId, nodeIdValue.getValue())) {
-                        total++;
-                    }
-                }
-                progressStep++;
-                progress = progressPercent(progressStep, total);
+                importOneNotation(nodeIdValue);
             }
             completeListImport("import réussi, notations importées = " + total);
         } catch (Exception e) {
             failListImport(e);
         } finally {
             showError();
+        }
+    }
+
+    private void importOneNotation(NodeIdValue nodeIdValue) {
+        if (nodeIdValue == null) {
+            return;
+        }
+        String idConcept = resolveExistingConceptId(nodeIdValue.getId());
+        if (idConcept == null) {
+            return;
+        }
+        persistNotationIfAllowed(idConcept, nodeIdValue.getValue());
+        progressStep++;
+        progress = progressPercent(progressStep, total);
+    }
+
+    private void persistNotationIfAllowed(String idConcept, String notation) {
+        if (clearBefore) {
+            if (persistence.updateNotation(idConcept, thesaurusId, notation)) {
+                total++;
+            }
+            return;
+        }
+        var concept = persistence.getConcept(idConcept, thesaurusId);
+        if (StringUtils.isEmpty(concept.getNotation())
+                && persistence.updateNotation(idConcept, thesaurusId, notation)) {
+            total++;
         }
     }
 
@@ -1793,23 +1849,9 @@ public class WorkshopBulkImportEngine implements Serializable {
         if (!beginListImport(nodeIdValues != null && !nodeIdValues.isEmpty())) {
             return;
         }
-        String idConcept = null;
         try {
             for (NodeIdValue nodeIdValue : nodeIdValues) {
-                if (nodeIdValue == null) {
-                    continue;
-                }
-                idConcept = resolveExistingConceptId(nodeIdValue.getId());
-                if (idConcept == null) {
-                    continue;
-                }
-
-                // addConceptToGroup
-                if (persistence.addConceptGroupConcept(nodeIdValue.getValue(), idConcept, thesaurusId)) {
-                    total++;
-                }
-                progressStep++;
-                progress = progressPercent(progressStep, total);
+                importOneCollection(nodeIdValue);
             }
             completeListImport("import réussi, notations importées = " + total);
         } catch (Exception e) {
@@ -1817,6 +1859,21 @@ public class WorkshopBulkImportEngine implements Serializable {
         } finally {
             showError();
         }
+    }
+
+    private void importOneCollection(NodeIdValue nodeIdValue) {
+        if (nodeIdValue == null) {
+            return;
+        }
+        String idConcept = resolveExistingConceptId(nodeIdValue.getId());
+        if (idConcept == null) {
+            return;
+        }
+        if (persistence.addConceptGroupConcept(nodeIdValue.getValue(), idConcept, thesaurusId)) {
+            total++;
+        }
+        progressStep++;
+        progress = progressPercent(progressStep, total);
     }
 
     /**
@@ -1846,39 +1903,8 @@ public class WorkshopBulkImportEngine implements Serializable {
                 existingIds.addAll(persistence.findExistingIds(new HashSet<>(batch), thesaurusId));
             }
 
-            // Traiter chaque NodeIdValue
             for (NodeIdValue nodeIdValue : nodeIdValues) {
-                if (nodeIdValue == null || nodeIdValue.getId() == null || nodeIdValue.getId().isBlank()) {
-                    continue;
-                }
-
-                String nodeId = nodeIdValue.getId();
-
-                // Si l'id n'existe pas en base, on ignore
-                if (!existingIds.contains(nodeId)) {
-                    continue;
-                }
-
-                if (StringUtils.isBlank(nodeId)) {
-                    continue;
-                }
-
-                // Ajouter relation RT dans les deux sens
-                relationsToSave.add(HierarchicalRelationship.builder()
-                        .idConcept1(nodeId)
-                        .idConcept2(nodeIdValue.getValue())
-                        .idThesaurus(thesaurusId)
-                        .role("RT")
-                        .build());
-
-                relationsToSave.add(HierarchicalRelationship.builder()
-                        .idConcept1(nodeIdValue.getValue())
-                        .idConcept2(nodeId)
-                        .idThesaurus(thesaurusId)
-                        .role("RT")
-                        .build());
-
-                total++;
+                addRelatedPair(nodeIdValue, existingIds, relationsToSave);
             }
 
             // Insert en lot → énorme gain de performance
@@ -1896,6 +1922,36 @@ public class WorkshopBulkImportEngine implements Serializable {
         PrimeFaces.current().executeScript(WAIT_DIALOG_HIDE);
     }
 
+    private void addRelatedPair(
+            NodeIdValue nodeIdValue,
+            Set<String> existingIds,
+            List<HierarchicalRelationship> relationsToSave
+    ) {
+        if (nodeIdValue == null || nodeIdValue.getId() == null || nodeIdValue.getId().isBlank()) {
+            return;
+        }
+        String nodeId = nodeIdValue.getId();
+        if (!existingIds.contains(nodeId)) {
+            return;
+        }
+        if (StringUtils.isBlank(nodeId)) {
+            return;
+        }
+        relationsToSave.add(HierarchicalRelationship.builder()
+                .idConcept1(nodeId)
+                .idConcept2(nodeIdValue.getValue())
+                .idThesaurus(thesaurusId)
+                .role("RT")
+                .build());
+        relationsToSave.add(HierarchicalRelationship.builder()
+                .idConcept1(nodeIdValue.getValue())
+                .idConcept2(nodeId)
+                .idThesaurus(thesaurusId)
+                .role("RT")
+                .build());
+        total++;
+    }
+
     /**
      * permet d'ajouter une liste d'alignements en CSV au thésaurus
      *
@@ -1904,40 +1960,9 @@ public class WorkshopBulkImportEngine implements Serializable {
         if (!beginListImport(nodeAlignmentImports != null && !nodeAlignmentImports.isEmpty(), NO_VALUES_MSG, true)) {
             return;
         }
-        String idConcept = null;
-        NodeAlignment nodeAlignment = new NodeAlignment();
-
         try {
             for (NodeAlignmentImport nodeAlignmentImport : nodeAlignmentImports) {
-                if (nodeAlignmentImport == null) {
-                    continue;
-                }
-                if (nodeAlignmentImport.getLocalId() == null || nodeAlignmentImport.getLocalId().isEmpty()) {
-                    continue;
-                }
-                idConcept = resolveExistingConceptId(nodeAlignmentImport.getLocalId());
-                if (idConcept == null) {
-                    continue;
-                }
-
-                for (NodeAlignmentSmall nodeAlignmentSmall : nodeAlignmentImport.getNodeAlignmentSmalls()) {
-                    if (nodeAlignmentSmall == null) {
-                        continue;
-                    }
-                    if (nodeAlignmentSmall.getUri_target() == null || nodeAlignmentSmall.getUri_target().isEmpty()) {
-                        continue;
-                    }
-                    nodeAlignment.setId_author(userId);
-                    nodeAlignment.setConcept_target("");
-                    nodeAlignment.setThesaurus_target(nodeAlignmentSmall.getSource());
-                    nodeAlignment.setInternal_id_concept(idConcept);
-                    nodeAlignment.setInternal_id_thesaurus(thesaurusId);
-                    nodeAlignment.setAlignement_id_type(nodeAlignmentSmall.getAlignement_id_type());
-                    nodeAlignment.setUri_target(nodeAlignmentSmall.getUri_target());
-                    if (persistence.addNewAlignment(nodeAlignment)) {
-                        total++;
-                    }
-                }
+                importAlignmentsForConcept(nodeAlignmentImport);
             }
             PrimeFaces.current().executeScript(WAIT_DIALOG_HIDE);
             completeListImport("import réussi, alignements importés = " + total);
@@ -1949,6 +1974,42 @@ public class WorkshopBulkImportEngine implements Serializable {
         PrimeFaces.current().executeScript(WAIT_DIALOG_HIDE);
     }
 
+    private void importAlignmentsForConcept(NodeAlignmentImport nodeAlignmentImport) {
+        if (nodeAlignmentImport == null) {
+            return;
+        }
+        if (nodeAlignmentImport.getLocalId() == null || nodeAlignmentImport.getLocalId().isEmpty()) {
+            return;
+        }
+        String idConcept = resolveExistingConceptId(nodeAlignmentImport.getLocalId());
+        if (idConcept == null) {
+            return;
+        }
+        for (NodeAlignmentSmall nodeAlignmentSmall : nodeAlignmentImport.getNodeAlignmentSmalls()) {
+            importOneAlignment(idConcept, nodeAlignmentSmall);
+        }
+    }
+
+    private void importOneAlignment(String idConcept, NodeAlignmentSmall nodeAlignmentSmall) {
+        if (nodeAlignmentSmall == null) {
+            return;
+        }
+        if (nodeAlignmentSmall.getUri_target() == null || nodeAlignmentSmall.getUri_target().isEmpty()) {
+            return;
+        }
+        NodeAlignment nodeAlignment = new NodeAlignment();
+        nodeAlignment.setId_author(userId);
+        nodeAlignment.setConcept_target("");
+        nodeAlignment.setThesaurus_target(nodeAlignmentSmall.getSource());
+        nodeAlignment.setInternal_id_concept(idConcept);
+        nodeAlignment.setInternal_id_thesaurus(thesaurusId);
+        nodeAlignment.setAlignement_id_type(nodeAlignmentSmall.getAlignement_id_type());
+        nodeAlignment.setUri_target(nodeAlignmentSmall.getUri_target());
+        if (persistence.addNewAlignment(nodeAlignment)) {
+            total++;
+        }
+    }
+
     /**
      * permet de supprimer une liste d'alignements en CSV du thésaurus
      *
@@ -1957,28 +2018,30 @@ public class WorkshopBulkImportEngine implements Serializable {
         if (!beginListImport(conceptObjects != null && !conceptObjects.isEmpty(), NO_VALUES_MSG)) {
             return;
         }
-        String idConcept = null;
-
         try {
             for (ThesaurusCsvConceptObject conceptObject : conceptObjects) {
-                if (conceptObject.getLocalId() == null || conceptObject.getLocalId().isEmpty()) {
-                    continue;
-                }
-                idConcept = resolveExistingConceptId(conceptObject.getLocalId());
-                if (idConcept == null) {
-                    continue;
-                }
-                for (NodeIdValue nodeIdValue : conceptObject.getAlignments()) {
-                    if (persistence.deleteAlignmentByUri(nodeIdValue.getValue().trim(), idConcept, thesaurusId)) {
-                        total++;
-                    }
-                }
+                deleteAlignmentsForConcept(conceptObject);
             }
             completeListImport("Suppression réussi, alignements supprimés = " + total);
         } catch (Exception e) {
             failListImport(e);
         } finally {
             showError();
+        }
+    }
+
+    private void deleteAlignmentsForConcept(ThesaurusCsvConceptObject conceptObject) {
+        if (conceptObject.getLocalId() == null || conceptObject.getLocalId().isEmpty()) {
+            return;
+        }
+        String idConcept = resolveExistingConceptId(conceptObject.getLocalId());
+        if (idConcept == null) {
+            return;
+        }
+        for (NodeIdValue nodeIdValue : conceptObject.getAlignments()) {
+            if (persistence.deleteAlignmentByUri(nodeIdValue.getValue().trim(), idConcept, thesaurusId)) {
+                total++;
+            }
         }
     }
 // End of Wikidata alignment import.
@@ -2006,55 +2069,10 @@ public class WorkshopBulkImportEngine implements Serializable {
 
         // préparer les préférences du thésaurus, on récupérer les préférences du thésaurus en cours
         persistence.setFormatDate(formatDate);
-        String idConcept;
-        String idGroup;
         total = 0;
         try {
             for (ThesaurusCsvConceptObject conceptObject : conceptObjects) {
-                if (conceptObject == null) {
-                    continue;
-                }
-                if ("skos:collection".equalsIgnoreCase(conceptObject.getType())) {
-                        if (conceptObject.getIdConcept() == null || conceptObject.getIdConcept().isEmpty()) {
-                            conceptObject.setIdConcept(null);
-                        } else {
-                            idGroup = getIdGroup(conceptObject.getIdConcept(), idTheso);
-                            if (idGroup == null || idGroup.isEmpty()) {
-                                continue;
-                            }
-                            conceptObject.setIdConcept(idGroup);
-                            // controle pour vérifier l'existance de l'Id
-                            if (persistence.isIdGroupExiste(idGroup, idTheso)) {
-                                continue;
-                            }
-                        }
-                        if (persistence.addGroup(idTheso, WorkshopCsvConceptMapper.toEditionModel(conceptObject))) {
-                            total++;
-                        }
-
-                        // ajout des liens pour les sous groupes
-                        for (String subGroup : conceptObject.getSubGroups()) {
-                            persistence.addSubGroup(conceptObject.getIdConcept(), subGroup, idTheso);
-                            total++;
-                        }
-                } else {
-                        if (conceptObject.getIdConcept() == null || conceptObject.getIdConcept().isEmpty()) {
-                            conceptObject.setIdConcept(null);
-                        } else {
-                            idConcept = getIdConcept(conceptObject.getIdConcept(), idTheso);
-                            if (idConcept == null || idConcept.isEmpty()) {
-                                continue;
-                            }
-                            conceptObject.setIdConcept(idConcept);
-                            // controle pour vérifier l'existance de l'Id
-                            if (persistence.isIdExiste(conceptObject.getIdConcept(), idTheso)) {
-                                continue;
-                            }
-                        }
-                        if (persistence.addConceptV2(idTheso, WorkshopCsvConceptMapper.toEditionModel(conceptObject), userId, DATE_FORMAT)) {
-                            total++;
-                        }
-                }
+                importOneCsvRow(conceptObject, idTheso);
             }
             loadDone = false;
             importDone = true;
@@ -2073,6 +2091,65 @@ public class WorkshopBulkImportEngine implements Serializable {
         } finally {
             showError();
         }
+    }
+
+    private void importOneCsvRow(ThesaurusCsvConceptObject conceptObject, String idTheso) {
+        if (conceptObject == null) {
+            return;
+        }
+        if ("skos:collection".equalsIgnoreCase(conceptObject.getType())) {
+            importCsvCollection(conceptObject, idTheso);
+        } else {
+            importCsvConcept(conceptObject, idTheso);
+        }
+    }
+
+    private void importCsvCollection(ThesaurusCsvConceptObject conceptObject, String idTheso) {
+        if (!prepareNewGroupId(conceptObject, idTheso)) {
+            return;
+        }
+        if (persistence.addGroup(idTheso, WorkshopCsvConceptMapper.toEditionModel(conceptObject))) {
+            total++;
+        }
+        for (String subGroup : conceptObject.getSubGroups()) {
+            persistence.addSubGroup(conceptObject.getIdConcept(), subGroup, idTheso);
+            total++;
+        }
+    }
+
+    private boolean prepareNewGroupId(ThesaurusCsvConceptObject conceptObject, String idTheso) {
+        if (conceptObject.getIdConcept() == null || conceptObject.getIdConcept().isEmpty()) {
+            conceptObject.setIdConcept(null);
+            return true;
+        }
+        String idGroup = getIdGroup(conceptObject.getIdConcept(), idTheso);
+        if (idGroup == null || idGroup.isEmpty()) {
+            return false;
+        }
+        conceptObject.setIdConcept(idGroup);
+        return !persistence.isIdGroupExiste(idGroup, idTheso);
+    }
+
+    private void importCsvConcept(ThesaurusCsvConceptObject conceptObject, String idTheso) {
+        if (!prepareNewConceptId(conceptObject, idTheso)) {
+            return;
+        }
+        if (persistence.addConceptV2(idTheso, WorkshopCsvConceptMapper.toEditionModel(conceptObject), userId, DATE_FORMAT)) {
+            total++;
+        }
+    }
+
+    private boolean prepareNewConceptId(ThesaurusCsvConceptObject conceptObject, String idTheso) {
+        if (conceptObject.getIdConcept() == null || conceptObject.getIdConcept().isEmpty()) {
+            conceptObject.setIdConcept(null);
+            return true;
+        }
+        String idConcept = getIdConcept(conceptObject.getIdConcept(), idTheso);
+        if (idConcept == null || idConcept.isEmpty()) {
+            return false;
+        }
+        conceptObject.setIdConcept(idConcept);
+        return !persistence.isIdExiste(conceptObject.getIdConcept(), idTheso);
     }
 
     private static double progressPercent(int step, int denominator) {

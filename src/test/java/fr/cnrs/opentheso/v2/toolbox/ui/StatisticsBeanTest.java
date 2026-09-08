@@ -19,7 +19,7 @@ import org.mockito.Mock;
 import org.mockito.MockedStatic;
 import org.mockito.junit.jupiter.MockitoExtension;
 
-import java.util.Date;
+import java.time.Instant;
 import java.util.List;
 
 import static org.junit.jupiter.api.Assertions.assertEquals;
@@ -108,7 +108,7 @@ class StatisticsBeanTest {
         var row = GenericStatistiqueData.builder().collection("Collection A").build();
         when(thesaurusStatisticsService.loadCollectionStatistics("TH1", "fr")).thenReturn(List.of(row));
         when(thesaurusStatisticsService.loadSummary("TH1"))
-                .thenReturn(new StatisticsSummary(ToolboxTestFixtures.sampleStatistics(), Date.from(java.time.Instant.parse("2024-06-15T12:00:00Z"))));
+                .thenReturn(new StatisticsSummary(ToolboxTestFixtures.sampleStatistics(), Instant.parse("2024-06-15T12:00:00Z")));
 
         try (var primeFaces = PrimeFacesTestSupport.open()) {
             bean.applyLanguageSelection();

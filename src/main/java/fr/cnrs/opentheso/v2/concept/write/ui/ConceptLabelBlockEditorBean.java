@@ -33,6 +33,7 @@ import java.io.Serializable;
 import java.util.ArrayList;
 import java.util.LinkedHashSet;
 import java.util.List;
+import java.util.Optional;
 import java.util.Set;
 import java.util.stream.Collectors;
 
@@ -115,10 +116,7 @@ public class ConceptLabelBlockEditorBean implements Serializable {
     }
 
     public void setSelectedFacetsJson(String json) {
-        List<FacetEditRow> parsed = parseFacetsJson(json);
-        if (parsed != null) {
-            selectedFacets = parsed;
-        }
+        parseFacetsJson(json).ifPresent(parsed -> selectedFacets = parsed);
     }
 
     public void save() {
@@ -132,146 +130,274 @@ public class ConceptLabelBlockEditorBean implements Serializable {
     private void saveInternal(boolean forced) {
         duplicateWarning = false;
         errorMessage = "";
-        if (!isEditable() || !isEditing()) {
+        if (!prepareLabelSave()) {
             return;
         }
-        Integer userId = userSession.getCurrentUserId();
-        if (userId == null) {
+        persistLabelChanges(forced);
+    }
+
+    private boolean prepareLabelSave() {
+        if (!isEditable() || !isEditing()) {
+            return false;
+        }
+        if (userSession.getCurrentUserId() == null) {
             errorMessage = WriteUiMessages.UNAUTHORIZED_FALLBACK;
-            return;
+            return false;
         }
         ConceptDetail current = thesaurusViewBean.getSelectedConcept();
         if (current == null || current.getSummary() == null) {
             errorMessage = WriteUiMessages.UNAUTHORIZED_FALLBACK;
-            return;
+            return false;
         }
-        String pref = StringUtils.trimToEmpty(preferredLabel);
-        if (pref.isEmpty()) {
+        if (StringUtils.trimToEmpty(preferredLabel).isEmpty()) {
             errorMessage = "Le libellé est obligatoire.";
-            return;
+            return false;
         }
-        List<String> newAlts = parseCsv(altLabels);
-        List<String> newHidden = parseCsv(hiddenLabels);
-        if (hasOverlap(newAlts, newHidden)) {
+        if (hasOverlap(parseCsv(altLabels), parseCsv(hiddenLabels))) {
             errorMessage = "Une forme ne peut pas être à la fois alternative et cachée.";
+            return false;
+        }
+        return true;
+    }
+
+    private void persistLabelChanges(boolean forced) {
+        ConceptDetail current = thesaurusViewBean.getSelectedConcept();
+        LabelWriteContext ctx = new LabelWriteContext(
+                thesaurusViewBean.getId(),
+                current.getSummary().getConceptId(),
+                resolveLang(current),
+                userSession.getCurrentUserId(),
+                StringUtils.defaultString(userSession.getCurrentUsername()),
+                forced);
+        DirtyUpdate dirty = renamePreferredIfNeeded(current, ctx, false);
+        if (!dirty.ok) {
             return;
         }
+        dirty = syncSynonyms(current, ctx, dirty.dirty);
+        if (!dirty.ok) {
+            return;
+        }
+        if (!syncFacets(current, ctx, dirty.dirty).ok) {
+            return;
+        }
+        finishSuccess();
+    }
 
-        String thesaurusId = thesaurusViewBean.getId();
-        String conceptId = current.getSummary().getConceptId();
-        String lang = resolveLang(current);
-        String contributor = StringUtils.defaultString(userSession.getCurrentUsername());
+    private DirtyUpdate renamePreferredIfNeeded(ConceptDetail current, LabelWriteContext ctx, boolean dirty) {
+        String pref = StringUtils.trimToEmpty(preferredLabel);
         String currentPref = StringUtils.trimToEmpty(current.getSummary().getPreferredLabel());
-        boolean dirty = false;
+        if (Strings.CS.equals(pref, currentPref)) {
+            return DirtyUpdate.of(dirty);
+        }
+        MutationResult renamed = conceptLifecycleMutationService.renamePreferredLabel(
+                new RenamePreferredLabelCommand(
+                        ctx.thesaurusId(),
+                        ctx.conceptId(),
+                        ctx.lang(),
+                        ctx.userId(),
+                        ctx.contributor(),
+                        pref,
+                        "",
+                        ctx.forced()));
+        if (!applyResult(renamed, dirty)) {
+            return DirtyUpdate.fail();
+        }
+        return DirtyUpdate.of(true);
+    }
 
-        if (!Strings.CS.equals(pref, currentPref)) {
-            MutationResult renamed = conceptLifecycleMutationService.renamePreferredLabel(
-                    new RenamePreferredLabelCommand(
-                            thesaurusId,
-                            conceptId,
-                            lang,
-                            userId,
-                            contributor,
-                            pref,
-                            "",
-                            forced
-                    ));
-            if (!applyResult(renamed, dirty)) {
-                return;
-            }
-            dirty = true;
+    private DirtyUpdate syncSynonyms(ConceptDetail current, LabelWriteContext ctx, boolean dirty) {
+        SynonymSets sets = SynonymSets.from(
+                orEmpty(current.getSynonyms()),
+                orEmpty(current.getHiddenSynonyms()),
+                parseCsv(altLabels),
+                parseCsv(hiddenLabels));
+        DirtyUpdate next = deleteRemovedSynonyms(ctx, sets, dirty);
+        if (!next.ok) {
+            return DirtyUpdate.fail();
         }
+        dirty = next.dirty;
+        next = hideExistingAlts(ctx, sets, dirty);
+        if (!next.ok) {
+            return DirtyUpdate.fail();
+        }
+        dirty = next.dirty;
+        next = unhideExistingHidden(ctx, sets, dirty);
+        if (!next.ok) {
+            return DirtyUpdate.fail();
+        }
+        dirty = next.dirty;
+        next = addMissingAlts(ctx, sets, dirty);
+        if (!next.ok) {
+            return DirtyUpdate.fail();
+        }
+        return addMissingHidden(ctx, sets, next.dirty);
+    }
 
-        List<String> oldAlts = orEmpty(current.getSynonyms());
-        List<String> oldHidden = orEmpty(current.getHiddenSynonyms());
-        Set<String> oldAltSet = new LinkedHashSet<>(oldAlts);
-        Set<String> oldHiddenSet = new LinkedHashSet<>(oldHidden);
-        Set<String> newAltSet = new LinkedHashSet<>(newAlts);
-        Set<String> newHiddenSet = new LinkedHashSet<>(newHidden);
-        Set<String> oldAll = union(oldAltSet, oldHiddenSet);
-        Set<String> newAll = union(newAltSet, newHiddenSet);
+    private DirtyUpdate deleteRemovedSynonyms(LabelWriteContext ctx, SynonymSets sets, boolean dirty) {
+        for (String value : sets.oldAll()) {
+            DirtyUpdate next = deleteRemovedSynonym(ctx, value, sets.newAll(), dirty);
+            if (!next.ok) {
+                return DirtyUpdate.fail();
+            }
+            dirty = next.dirty;
+        }
+        return DirtyUpdate.of(dirty);
+    }
 
-        for (String value : oldAll) {
-            if (!newAll.contains(value)) {
-                MutationResult deleted = conceptLexicalMutationService.deleteSynonym(new DeleteSynonymCommand(
-                        thesaurusId, conceptId, lang, value, userId, contributor));
-                if (!applyResult(deleted, dirty)) {
-                    return;
-                }
-                dirty = true;
-            }
+    private DirtyUpdate deleteRemovedSynonym(LabelWriteContext ctx, String value, Set<String> newAll, boolean dirty) {
+        if (newAll.contains(value)) {
+            return DirtyUpdate.of(dirty);
         }
-        for (String value : oldAltSet) {
-            if (newHiddenSet.contains(value) && !newAltSet.contains(value)) {
-                MutationResult updated = conceptLexicalMutationService.updateSynonym(new UpdateSynonymCommand(
-                        thesaurusId, conceptId, lang, value, value, true, userId, contributor, forced));
-                if (!applyResult(updated, dirty)) {
-                    return;
-                }
-                dirty = true;
-            }
+        MutationResult deleted = conceptLexicalMutationService.deleteSynonym(new DeleteSynonymCommand(
+                ctx.thesaurusId(), ctx.conceptId(), ctx.lang(), value, ctx.userId(), ctx.contributor()));
+        if (!applyResult(deleted, dirty)) {
+            return DirtyUpdate.fail();
         }
-        for (String value : oldHiddenSet) {
-            if (newAltSet.contains(value) && !newHiddenSet.contains(value)) {
-                MutationResult updated = conceptLexicalMutationService.updateSynonym(new UpdateSynonymCommand(
-                        thesaurusId, conceptId, lang, value, value, false, userId, contributor, forced));
-                if (!applyResult(updated, dirty)) {
-                    return;
-                }
-                dirty = true;
-            }
-        }
-        for (String value : newAlts) {
-            if (!oldAll.contains(value)) {
-                MutationResult added = conceptLexicalMutationService.addSynonym(new AddSynonymCommand(
-                        thesaurusId, conceptId, lang, value, false, userId, contributor, forced));
-                if (!applyResult(added, dirty)) {
-                    return;
-                }
-                dirty = true;
-            }
-        }
-        for (String value : newHidden) {
-            if (!oldAll.contains(value)) {
-                MutationResult added = conceptLexicalMutationService.addSynonym(new AddSynonymCommand(
-                        thesaurusId, conceptId, lang, value, true, userId, contributor, forced));
-                if (!applyResult(added, dirty)) {
-                    return;
-                }
-                dirty = true;
-            }
-        }
+        return DirtyUpdate.of(true);
+    }
 
+    private DirtyUpdate hideExistingAlts(LabelWriteContext ctx, SynonymSets sets, boolean dirty) {
+        for (String value : sets.oldAltSet()) {
+            DirtyUpdate next = hideExistingAlt(ctx, value, sets, dirty);
+            if (!next.ok) {
+                return DirtyUpdate.fail();
+            }
+            dirty = next.dirty;
+        }
+        return DirtyUpdate.of(dirty);
+    }
+
+    private DirtyUpdate hideExistingAlt(LabelWriteContext ctx, String value, SynonymSets sets, boolean dirty) {
+        if (!sets.newHiddenSet().contains(value) || sets.newAltSet().contains(value)) {
+            return DirtyUpdate.of(dirty);
+        }
+        return applySynonymUpdate(ctx, value, true, dirty);
+    }
+
+    private DirtyUpdate unhideExistingHidden(LabelWriteContext ctx, SynonymSets sets, boolean dirty) {
+        for (String value : sets.oldHiddenSet()) {
+            DirtyUpdate next = unhideExistingHiddenValue(ctx, value, sets, dirty);
+            if (!next.ok) {
+                return DirtyUpdate.fail();
+            }
+            dirty = next.dirty;
+        }
+        return DirtyUpdate.of(dirty);
+    }
+
+    private DirtyUpdate unhideExistingHiddenValue(LabelWriteContext ctx, String value, SynonymSets sets, boolean dirty) {
+        if (!sets.newAltSet().contains(value) || sets.newHiddenSet().contains(value)) {
+            return DirtyUpdate.of(dirty);
+        }
+        return applySynonymUpdate(ctx, value, false, dirty);
+    }
+
+    private DirtyUpdate applySynonymUpdate(LabelWriteContext ctx, String value, boolean hidden, boolean dirty) {
+        MutationResult updated = conceptLexicalMutationService.updateSynonym(new UpdateSynonymCommand(
+                ctx.thesaurusId(), ctx.conceptId(), ctx.lang(), value, value, hidden,
+                ctx.userId(), ctx.contributor(), ctx.forced()));
+        if (!applyResult(updated, dirty)) {
+            return DirtyUpdate.fail();
+        }
+        return DirtyUpdate.of(true);
+    }
+
+    private DirtyUpdate addMissingAlts(LabelWriteContext ctx, SynonymSets sets, boolean dirty) {
+        for (String value : sets.newAlts()) {
+            DirtyUpdate next = addMissingSynonym(ctx, value, false, sets.oldAll(), dirty);
+            if (!next.ok) {
+                return DirtyUpdate.fail();
+            }
+            dirty = next.dirty;
+        }
+        return DirtyUpdate.of(dirty);
+    }
+
+    private DirtyUpdate addMissingHidden(LabelWriteContext ctx, SynonymSets sets, boolean dirty) {
+        for (String value : sets.newHidden()) {
+            DirtyUpdate next = addMissingSynonym(ctx, value, true, sets.oldAll(), dirty);
+            if (!next.ok) {
+                return DirtyUpdate.fail();
+            }
+            dirty = next.dirty;
+        }
+        return DirtyUpdate.of(dirty);
+    }
+
+    private DirtyUpdate addMissingSynonym(
+            LabelWriteContext ctx, String value, boolean hidden, Set<String> oldAll, boolean dirty) {
+        if (oldAll.contains(value)) {
+            return DirtyUpdate.of(dirty);
+        }
+        MutationResult added = conceptLexicalMutationService.addSynonym(new AddSynonymCommand(
+                ctx.thesaurusId(), ctx.conceptId(), ctx.lang(), value, hidden,
+                ctx.userId(), ctx.contributor(), ctx.forced()));
+        if (!applyResult(added, dirty)) {
+            return DirtyUpdate.fail();
+        }
+        return DirtyUpdate.of(true);
+    }
+
+    private DirtyUpdate syncFacets(ConceptDetail current, LabelWriteContext ctx, boolean dirty) {
         Set<String> oldFacetIds = current.getFacets() == null
                 ? Set.of()
                 : current.getFacets().stream()
                         .map(ConceptRelation::getConceptId)
                         .filter(StringUtils::isNotBlank)
                         .collect(Collectors.toCollection(LinkedHashSet::new));
-        Set<String> newFacetIds = selectedFacetIds();
-        for (String facetId : oldFacetIds) {
-            if (!newFacetIds.contains(facetId)) {
-                MutationResult removed = facetMutationService.removeMember(
-                        new RemoveFacetMemberCommand(thesaurusId, facetId, conceptId, false));
-                if (!applyResult(removed, dirty)) {
-                    return;
-                }
-                dirty = true;
-            }
+        DirtyUpdate next = removeUnselectedFacets(ctx, oldFacetIds, selectedFacetIds(), dirty);
+        if (!next.ok) {
+            return DirtyUpdate.fail();
         }
-        for (FacetEditRow row : selectedFacets) {
-            if (row == null || StringUtils.isBlank(row.getId()) || oldFacetIds.contains(row.getId())) {
-                continue;
-            }
-            MutationResult added = facetMutationService.addMember(
-                    new AddFacetMemberCommand(thesaurusId, row.getId(), conceptId, false));
-            if (!applyResult(added, dirty)) {
-                return;
-            }
-            dirty = true;
-        }
+        return addSelectedFacets(ctx, oldFacetIds, next.dirty);
+    }
 
-        finishSuccess();
+    private DirtyUpdate removeUnselectedFacets(
+            LabelWriteContext ctx, Set<String> oldFacetIds, Set<String> newFacetIds, boolean dirty) {
+        for (String facetId : oldFacetIds) {
+            DirtyUpdate next = removeUnselectedFacet(ctx, facetId, newFacetIds, dirty);
+            if (!next.ok) {
+                return DirtyUpdate.fail();
+            }
+            dirty = next.dirty;
+        }
+        return DirtyUpdate.of(dirty);
+    }
+
+    private DirtyUpdate removeUnselectedFacet(
+            LabelWriteContext ctx, String facetId, Set<String> newFacetIds, boolean dirty) {
+        if (newFacetIds.contains(facetId)) {
+            return DirtyUpdate.of(dirty);
+        }
+        MutationResult removed = facetMutationService.removeMember(
+                new RemoveFacetMemberCommand(ctx.thesaurusId(), facetId, ctx.conceptId(), false));
+        if (!applyResult(removed, dirty)) {
+            return DirtyUpdate.fail();
+        }
+        return DirtyUpdate.of(true);
+    }
+
+    private DirtyUpdate addSelectedFacets(LabelWriteContext ctx, Set<String> oldFacetIds, boolean dirty) {
+        for (FacetEditRow row : selectedFacets) {
+            DirtyUpdate next = addSelectedFacet(ctx, row, oldFacetIds, dirty);
+            if (!next.ok) {
+                return DirtyUpdate.fail();
+            }
+            dirty = next.dirty;
+        }
+        return DirtyUpdate.of(dirty);
+    }
+
+    private DirtyUpdate addSelectedFacet(LabelWriteContext ctx, FacetEditRow row, Set<String> oldFacetIds, boolean dirty) {
+        if (row == null || StringUtils.isBlank(row.getId()) || oldFacetIds.contains(row.getId())) {
+            return DirtyUpdate.of(dirty);
+        }
+        MutationResult added = facetMutationService.addMember(
+                new AddFacetMemberCommand(ctx.thesaurusId(), row.getId(), ctx.conceptId(), false));
+        if (!applyResult(added, dirty)) {
+            return DirtyUpdate.fail();
+        }
+        return DirtyUpdate.of(true);
     }
 
     private boolean applyResult(MutationResult result, boolean dirty) {
@@ -377,36 +503,39 @@ public class ConceptLabelBlockEditorBean implements Serializable {
         return sb.append(']').toString();
     }
 
-    static List<FacetEditRow> parseFacetsJson(String raw) {
+    static Optional<List<FacetEditRow>> parseFacetsJson(String raw) {
         if (raw == null) {
-            return null;
+            return Optional.empty();
         }
         String trimmed = raw.trim();
         if (trimmed.isEmpty() || "[]".equals(trimmed)) {
-            return new ArrayList<>();
+            return Optional.of(new ArrayList<>());
         }
         try {
             JsonNode root = FACET_JSON.readTree(trimmed);
             if (!root.isArray()) {
-                return null;
+                return Optional.empty();
             }
             List<FacetEditRow> rows = new ArrayList<>();
             LinkedHashSet<String> seen = new LinkedHashSet<>();
             for (JsonNode node : root) {
-                if (node == null || !node.isObject()) {
-                    continue;
-                }
-                String id = node.path("id").asText("");
-                if (StringUtils.isBlank(id) || !seen.add(id)) {
-                    continue;
-                }
-                String label = node.path("label").asText("");
-                rows.add(new FacetEditRow(id, label));
+                addParsedFacet(rows, seen, node);
             }
-            return rows;
+            return Optional.of(rows);
         } catch (Exception ignored) {
-            return null;
+            return Optional.empty();
         }
+    }
+
+    private static void addParsedFacet(List<FacetEditRow> rows, Set<String> seen, JsonNode node) {
+        if (node == null || !node.isObject()) {
+            return;
+        }
+        String id = node.path("id").asText("");
+        if (StringUtils.isBlank(id) || !seen.add(id)) {
+            return;
+        }
+        rows.add(new FacetEditRow(id, node.path("label").asText("")));
     }
 
     private static String jsonQuote(String value) {
@@ -490,5 +619,43 @@ public class ConceptLabelBlockEditorBean implements Serializable {
         LinkedHashSet<String> all = new LinkedHashSet<>(left);
         all.addAll(right);
         return all;
+    }
+
+    private record LabelWriteContext(
+            String thesaurusId,
+            String conceptId,
+            String lang,
+            int userId,
+            String contributor,
+            boolean forced
+    ) {
+    }
+
+    private record SynonymSets(
+            List<String> newAlts,
+            List<String> newHidden,
+            Set<String> oldAltSet,
+            Set<String> oldHiddenSet,
+            Set<String> newAltSet,
+            Set<String> newHiddenSet
+    ) {
+        static SynonymSets from(
+                List<String> oldAlts, List<String> oldHidden, List<String> newAlts, List<String> newHidden) {
+            return new SynonymSets(
+                    newAlts,
+                    newHidden,
+                    new LinkedHashSet<>(oldAlts),
+                    new LinkedHashSet<>(oldHidden),
+                    new LinkedHashSet<>(newAlts),
+                    new LinkedHashSet<>(newHidden));
+        }
+
+        Set<String> oldAll() {
+            return union(oldAltSet, oldHiddenSet);
+        }
+
+        Set<String> newAll() {
+            return union(newAltSet, newHiddenSet);
+        }
     }
 }

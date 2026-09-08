@@ -186,7 +186,7 @@ public class MyProjectsBean implements Serializable {
             return;
         }
         try {
-            projectMemberService.createMember(
+            projectMemberService.createMember(new ProjectMemberService.CreateMemberRequest(
                     userId,
                     userSession.isSuperAdmin(),
                     selectedProjectId,
@@ -200,7 +200,7 @@ public class MyProjectsBean implements Serializable {
                     memberPassword1,
                     memberPassword2,
                     memberCreationMode
-            );
+            ));
             if (EMAIL.equalsIgnoreCase(memberCreationMode)) {
                 MessageUtils.showInformationMessage(
                         "Un mail a été envoyé pour définir le mot de passe et activer le compte"
@@ -324,7 +324,7 @@ public class MyProjectsBean implements Serializable {
             return;
         }
         try {
-            projectMemberService.updateMemberProfile(
+            projectMemberService.updateMemberProfile(new ProjectMemberService.UpdateMemberProfileRequest(
                     userId,
                     userSession.isSuperAdmin(),
                     selectedProjectId,
@@ -334,7 +334,7 @@ public class MyProjectsBean implements Serializable {
                     editProfileAlertMail,
                     editProfileInstitution,
                     editProfileActive
-            );
+            ));
             MessageUtils.showInformationMessage(localeBean.getMsg("project.memberProfileUpdatedSuccess"));
             reloadDashboard(userId);
             PrimeFaces.current().executeScript("PF('v2EditMemberProfile').hide();");
@@ -388,7 +388,7 @@ public class MyProjectsBean implements Serializable {
             return;
         }
         try {
-            projectMemberService.updateLimitedMemberRole(
+            projectMemberService.updateLimitedMemberRole(new ProjectMemberService.UpdateLimitedMemberRoleRequest(
                     userId,
                     userSession.isSuperAdmin(),
                     selectedProjectId,
@@ -397,7 +397,7 @@ public class MyProjectsBean implements Serializable {
                     editLimitedNewRoleId,
                     editLimitedThesaurusId,
                     editLimitedKeepRestricted
-            );
+            ));
             MessageUtils.showInformationMessage(localeBean.getMsg("project.limitedRoleUpdatedSuccess"));
             reloadDashboard(userId);
             PrimeFaces.current().executeScript("PF('v2EditLimitedRole').hide();");

@@ -81,7 +81,22 @@ public final class CandidatDetailMapper {
                 broaderByConcept.getOrDefault(candidat.getIdConcepte(), List.of())));
     }
 
-    public static void applyDetails(
+    public static void applyDetails(ApplyDetailsRequest request) {
+        CandidatDto candidat = request.candidat();
+        candidat.setIdTerm(request.preferredTermId());
+        candidat.setCollections(toNodeIdValues(request.collections()));
+        candidat.setTermesGenerique(toNodeIdValues(request.broaderRelations()));
+        candidat.setTermesAssocies(toNodeIdValues(request.relatedRelations()));
+        candidat.setEmployePourList(new ArrayList<>(request.synonyms()));
+        candidat.setNodeNotes(toNodeNotes(request.notes(), request.votedNoteIds()));
+        candidat.setTraductions(toTraductions(request.translations()));
+        candidat.setMessages(toMessages(request.messages(), request.currentUserId()));
+        candidat.setVoted(request.voted());
+        candidat.setAlignments(request.alignments());
+        candidat.setImages(request.images());
+    }
+
+    public record ApplyDetailsRequest(
             CandidatDto candidat,
             String preferredTermId,
             List<CandidatIdValueRow> collections,
@@ -97,17 +112,6 @@ public final class CandidatDetailMapper {
             List<NodeImage> images,
             int currentUserId
     ) {
-        candidat.setIdTerm(preferredTermId);
-        candidat.setCollections(toNodeIdValues(collections));
-        candidat.setTermesGenerique(toNodeIdValues(broaderRelations));
-        candidat.setTermesAssocies(toNodeIdValues(relatedRelations));
-        candidat.setEmployePourList(new ArrayList<>(synonyms));
-        candidat.setNodeNotes(toNodeNotes(notes, votedNoteIds));
-        candidat.setTraductions(toTraductions(translations));
-        candidat.setMessages(toMessages(messages, currentUserId));
-        candidat.setVoted(voted);
-        candidat.setAlignments(alignments);
-        candidat.setImages(images);
     }
 
     public static List<String> extractConceptIds(List<CandidatDto> candidates) {

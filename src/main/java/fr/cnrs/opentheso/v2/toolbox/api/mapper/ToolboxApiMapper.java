@@ -7,7 +7,6 @@ import fr.cnrs.opentheso.v2.toolbox.model.EditionStatistics;
 import fr.cnrs.opentheso.v2.toolbox.model.EditionThesaurusSummary;
 import fr.cnrs.opentheso.v2.toolbox.model.StatisticsSummary;
 
-import java.util.Date;
 import java.util.List;
 
 public final class ToolboxApiMapper {
@@ -39,11 +38,7 @@ public final class ToolboxApiMapper {
     public static StatisticsSummaryResponse toSummaryResponse(StatisticsSummary summary) {
         return new StatisticsSummaryResponse(
                 toStatisticsResponse(summary.counts()),
-                toInstant(summary.lastModification())
+                summary.lastModification()
         );
-    }
-
-    private static java.time.Instant toInstant(Date date) {
-        return date == null ? null : date.toInstant();
     }
 }

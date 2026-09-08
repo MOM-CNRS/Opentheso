@@ -152,7 +152,7 @@ public class SelectionExportController {
                 length = Files.size(path);
             } else {
                 byte[] content = job.getContent();
-                if (content == null) {
+                if (content == null || content.length == 0) {
                     return ResponseEntity.notFound().build();
                 }
                 body = new ByteArrayResource(content);

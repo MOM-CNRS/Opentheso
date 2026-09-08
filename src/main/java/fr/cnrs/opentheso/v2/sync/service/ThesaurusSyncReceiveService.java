@@ -65,7 +65,7 @@ public class ThesaurusSyncReceiveService {
         boolean createCandidates = request.shouldCreateCandidates();
         List<SyncConceptResult> results = new ArrayList<>();
         for (SyncConceptPayload concept : request.concepts()) {
-            results.add(processOne(
+            results.add(processOne(new ProcessOneRequest(
                     masterThesaurusId,
                     workLang,
                     concept,
@@ -74,12 +74,44 @@ public class ThesaurusSyncReceiveService {
                     comment,
                     createCandidates,
                     user
-            ));
+            )));
         }
         return SyncBatchResponse.from(results);
     }
 
-    private SyncConceptResult processOne(
+    private SyncConceptResult processOne(ProcessOneRequest request) {
+        SyncConceptPayload incoming = request.incoming();
+        if (incoming == null || StringUtils.isBlank(incoming.identifier())) {
+            return SyncConceptResult.error(null, "Concept sans identifiant");
+        }
+        try {
+            Optional<String> matchedId = resolveMasterConceptId(request.masterThesaurusId(), incoming);
+            if (matchedId.isEmpty()) {
+                if (!request.createCandidates()) {
+                    return SyncConceptResult.skipped(
+                            incoming.identifier(),
+                            null,
+                            "Création de candidat désactivée");
+                }
+                return createCandidate(request.masterThesaurusId(), request.workLang(), incoming, request.user());
+            }
+            return createPropositionIfNeeded(
+                    request.masterThesaurusId(),
+                    matchedId.get(),
+                    request.workLang(),
+                    incoming,
+                    request.authorName(),
+                    request.authorEmail(),
+                    request.comment()
+            );
+        } catch (Exception ex) {
+            log.warn("Sync concept {} failed: {}", incoming.identifier(), ex.getMessage());
+            return SyncConceptResult.error(incoming.identifier(),
+                    StringUtils.defaultIfBlank(ex.getMessage(), "Erreur de synchronisation"));
+        }
+    }
+
+    private record ProcessOneRequest(
             String masterThesaurusId,
             String workLang,
             SyncConceptPayload incoming,
@@ -89,34 +121,6 @@ public class ThesaurusSyncReceiveService {
             boolean createCandidates,
             User user
     ) {
-        if (incoming == null || StringUtils.isBlank(incoming.identifier())) {
-            return SyncConceptResult.error(null, "Concept sans identifiant");
-        }
-        try {
-            Optional<String> matchedId = resolveMasterConceptId(masterThesaurusId, incoming);
-            if (matchedId.isEmpty()) {
-                if (!createCandidates) {
-                    return SyncConceptResult.skipped(
-                            incoming.identifier(),
-                            null,
-                            "Création de candidat désactivée");
-                }
-                return createCandidate(masterThesaurusId, workLang, incoming, user);
-            }
-            return createPropositionIfNeeded(
-                    masterThesaurusId,
-                    matchedId.get(),
-                    workLang,
-                    incoming,
-                    authorName,
-                    authorEmail,
-                    comment
-            );
-        } catch (Exception ex) {
-            log.warn("Sync concept {} failed: {}", incoming.identifier(), ex.getMessage());
-            return SyncConceptResult.error(incoming.identifier(),
-                    StringUtils.defaultIfBlank(ex.getMessage(), "Erreur de synchronisation"));
-        }
     }
 
     private Optional<String> resolveMasterConceptId(String masterThesaurusId, SyncConceptPayload incoming) {

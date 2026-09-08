@@ -30,9 +30,9 @@ import org.apache.commons.lang3.ObjectUtils;
 import org.apache.commons.text.StringEscapeUtils;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
+import fr.cnrs.opentheso.v2.shared.time.V2Dates;
 
 import java.util.ArrayList;
-import java.util.Date;
 import java.util.HashMap;
 import java.util.List;
 import java.util.Map;
@@ -160,7 +160,42 @@ public class CandidatAutoAlignmentPersistence {
     }
 
     @Transactional
-    public boolean addAlignment(
+    public boolean addAlignment(AddAlignmentRequest request) {
+        String thesaurusTarget = StringUtils.convertString(request.thesaurusTarget());
+        String uriTarget = StringUtils.convertString(request.uriTarget());
+        String conceptTarget = StringUtils.convertString(request.conceptTarget());
+
+        if (alignementRepository.existsByConceptThesaurusTypeAndUri(
+                request.thesaurusId(), request.conceptId(), request.alignmentTypeId(), uriTarget)) {
+            return true;
+        }
+
+        var alignementType = alignementTypeRepository.findById(request.alignmentTypeId());
+        if (alignementType.isEmpty()) {
+            return false;
+        }
+
+        Optional<fr.cnrs.opentheso.entites.AlignementSource> source = request.alignmentSourceId() > 0
+                ? alignementSourceRepository.findById(request.alignmentSourceId())
+                : Optional.empty();
+
+        alignementRepository.save(Alignement.builder()
+                .author(request.userId())
+                .conceptTarget(conceptTarget)
+                .thesaurusTarget(thesaurusTarget)
+                .uriTarget(uriTarget)
+                .urlAvailable(true)
+                .alignementType(alignementType.get())
+                .internalIdConcept(request.conceptId())
+                .internalIdThesaurus(request.thesaurusId())
+                .alignementSource(source.orElse(null))
+                .created(V2Dates.nowUtilDate())
+                .modified(V2Dates.nowUtilDate())
+                .build());
+        return true;
+    }
+
+    public record AddAlignmentRequest(
             int userId,
             String conceptTarget,
             String thesaurusTarget,
@@ -170,37 +205,6 @@ public class CandidatAutoAlignmentPersistence {
             String thesaurusId,
             int alignmentSourceId
     ) {
-        thesaurusTarget = StringUtils.convertString(thesaurusTarget);
-        uriTarget = StringUtils.convertString(uriTarget);
-        conceptTarget = StringUtils.convertString(conceptTarget);
-
-        if (alignementRepository.existsByConceptThesaurusTypeAndUri(thesaurusId, conceptId, alignmentTypeId, uriTarget)) {
-            return true;
-        }
-
-        var alignementType = alignementTypeRepository.findById(alignmentTypeId);
-        if (alignementType.isEmpty()) {
-            return false;
-        }
-
-        Optional<fr.cnrs.opentheso.entites.AlignementSource> source = alignmentSourceId > 0
-                ? alignementSourceRepository.findById(alignmentSourceId)
-                : Optional.empty();
-
-        alignementRepository.save(Alignement.builder()
-                .author(userId)
-                .conceptTarget(conceptTarget)
-                .thesaurusTarget(thesaurusTarget)
-                .uriTarget(uriTarget)
-                .urlAvailable(true)
-                .alignementType(alignementType.get())
-                .internalIdConcept(conceptId)
-                .internalIdThesaurus(thesaurusId)
-                .alignementSource(source.orElse(null))
-                .created(new Date())
-                .modified(new Date())
-                .build());
-        return true;
     }
 
     @Transactional
@@ -240,34 +244,7 @@ public class CandidatAutoAlignmentPersistence {
             List<SelectedResource> definitions
     ) {
         for (SelectedResource selectedResource : definitions) {
-            if (!selectedResource.isSelected()) {
-                continue;
-            }
-            String lang = normalizeLang(selectedResource.getIdLang());
-            String noteValue = StringUtils.clearNoteFromP(
-                    StringUtils.clearValue(StringEscapeUtils.unescapeXml(selectedResource.getGettedValue())));
-            if (isNoteDuplicate(conceptId, thesaurusId, lang, noteValue, NOTE_DEFINITION)) {
-                continue;
-            }
-            var existing = noteRepository.findAllByIdentifierAndIdThesaurusAndNoteTypeCodeAndLang(
-                    conceptId, thesaurusId, NOTE_DEFINITION, lang);
-            if (!existing.isEmpty()) {
-                existing.get(0).setLexicalValue(noteValue);
-                existing.get(0).setNoteSource(noteSource);
-                noteRepository.save(existing.get(0));
-            } else {
-                noteRepository.save(Note.builder()
-                        .noteTypeCode(NOTE_DEFINITION)
-                        .idThesaurus(thesaurusId)
-                        .lang(lang)
-                        .lexicalValue(noteValue)
-                        .identifier(conceptId)
-                        .noteSource(noteSource)
-                        .idUser(userId)
-                        .created(new Date())
-                        .modified(new Date())
-                        .build());
-            }
+            addSelectedDefinition(conceptId, thesaurusId, userId, noteSource, selectedResource);
         }
         return true;
     }
@@ -322,6 +299,43 @@ public class CandidatAutoAlignmentPersistence {
     @Transactional
     public void touchConcept(String thesaurusId, String conceptId, int userId) {
         conceptWritePostMutationRepository.touchConcept(thesaurusId, conceptId, userId);
+    }
+
+    private void addSelectedDefinition(
+            String conceptId,
+            String thesaurusId,
+            int userId,
+            String noteSource,
+            SelectedResource selectedResource
+    ) {
+        if (!selectedResource.isSelected()) {
+            return;
+        }
+        String lang = normalizeLang(selectedResource.getIdLang());
+        String noteValue = StringUtils.clearNoteFromP(
+                StringUtils.clearValue(StringEscapeUtils.unescapeXml(selectedResource.getGettedValue())));
+        if (isNoteDuplicate(conceptId, thesaurusId, lang, noteValue, NOTE_DEFINITION)) {
+            return;
+        }
+        var existing = noteRepository.findAllByIdentifierAndIdThesaurusAndNoteTypeCodeAndLang(
+                conceptId, thesaurusId, NOTE_DEFINITION, lang);
+        if (!existing.isEmpty()) {
+            existing.get(0).setLexicalValue(noteValue);
+            existing.get(0).setNoteSource(noteSource);
+            noteRepository.save(existing.get(0));
+            return;
+        }
+        noteRepository.save(Note.builder()
+                .noteTypeCode(NOTE_DEFINITION)
+                .idThesaurus(thesaurusId)
+                .lang(lang)
+                .lexicalValue(noteValue)
+                .identifier(conceptId)
+                .noteSource(noteSource)
+                .idUser(userId)
+                .created(V2Dates.nowUtilDate())
+                .modified(V2Dates.nowUtilDate())
+                .build());
     }
 
     private boolean isNoteDuplicate(String conceptId, String thesaurusId, String lang, String note, String typeCode) {

@@ -45,15 +45,19 @@ class ThesaurusExportBeanTest {
     @BeforeEach
     void setUp() {
         bean = new ThesaurusExportBean(
-                thesaurusEditionSkosExportService,
-                thesaurusEditionCsvExportService,
-                thesaurusEditionCsvIdExportService,
-                thesaurusEditionCsvStructuredExportService,
-                thesaurusEditionPdfExportService,
-                thesaurusEditionCsvDeprecatedExportService,
-                thesaurusEditionZipExportService,
-                toolboxExportPersistence,
-                toolboxPreferencePersistence
+                new ThesaurusExportServices(
+                        thesaurusEditionSkosExportService,
+                        thesaurusEditionCsvExportService,
+                        thesaurusEditionCsvIdExportService,
+                        thesaurusEditionCsvStructuredExportService,
+                        thesaurusEditionPdfExportService,
+                        thesaurusEditionCsvDeprecatedExportService,
+                        thesaurusEditionZipExportService
+                ),
+                new ThesaurusExportPersistenceSupport(
+                        toolboxExportPersistence,
+                        toolboxPreferencePersistence
+                )
         );
     }
 

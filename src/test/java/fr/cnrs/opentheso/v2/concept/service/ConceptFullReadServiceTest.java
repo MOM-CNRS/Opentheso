@@ -2,6 +2,7 @@ package fr.cnrs.opentheso.v2.concept.service;
 
 import fr.cnrs.opentheso.v2.concept.model.ConceptFullSnapshot;
 import fr.cnrs.opentheso.v2.concept.model.ConceptHierarchicalRelation;
+import fr.cnrs.opentheso.v2.concept.mapper.ConceptAssemblePaging;
 import fr.cnrs.opentheso.v2.concept.mapper.ConceptFullAssembler;
 import fr.cnrs.opentheso.v2.setting.service.ThesaurusPreferenceService;
 import fr.cnrs.opentheso.v2.shared.web.ApplicationUriService;
@@ -52,9 +53,7 @@ class ConceptFullReadServiceTest {
                 "TH1",
                 "C1",
                 "fr",
-                0,
-                ConceptFullReadService.NARROWER_PAGE_SIZE + 1,
-                true,
+                new ConceptAssemblePaging(0, ConceptFullReadService.NARROWER_PAGE_SIZE + 1, true),
                 null,
                 "http://localhost",
                 false
@@ -74,9 +73,7 @@ class ConceptFullReadServiceTest {
                 "TH1",
                 "C1",
                 "fr",
-                41,
-                ConceptFullReadService.NARROWER_PAGE_SIZE + 1,
-                false,
+                new ConceptAssemblePaging(41, ConceptFullReadService.NARROWER_PAGE_SIZE + 1, false),
                 null,
                 "http://localhost"
         )).thenReturn(List.of(new ConceptHierarchicalRelation("", "C2", "Child", "NT")));

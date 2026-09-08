@@ -94,10 +94,7 @@ public class ConceptCollectionBlockEditorBean implements Serializable {
     }
 
     public void setSelectedCollectionsJson(String json) {
-        List<FacetEditRow> parsed = ConceptLabelBlockEditorBean.parseFacetsJson(json);
-        if (parsed != null) {
-            selectedCollections = parsed;
-        }
+        ConceptLabelBlockEditorBean.parseFacetsJson(json).ifPresent(parsed -> selectedCollections = parsed);
     }
 
     public void save() {
@@ -138,39 +135,74 @@ public class ConceptCollectionBlockEditorBean implements Serializable {
                 : current.getCollections();
         Set<String> oldIds = normalizedIds(currentCollections);
         Set<String> newIds = selectedCollectionIds();
-        boolean dirty = false;
+        CollectionWriteContext ctx = new CollectionWriteContext(thesaurusId, conceptId, userId, contributor);
+        DirtyUpdate dirty = removeUnselectedCollections(currentCollections, newIds, ctx, false);
+        if (!dirty.ok) {
+            return false;
+        }
+        return addSelectedCollections(oldIds, ctx, dirty.dirty).ok;
+    }
 
+    private DirtyUpdate removeUnselectedCollections(
+            List<ConceptRelation> currentCollections,
+            Set<String> newIds,
+            CollectionWriteContext ctx,
+            boolean dirty
+    ) {
         for (ConceptRelation collection : currentCollections) {
-            if (collection == null || StringUtils.isBlank(collection.getConceptId())) {
-                continue;
+            DirtyUpdate next = removeUnselectedCollection(collection, newIds, ctx, dirty);
+            if (!next.ok) {
+                return DirtyUpdate.fail();
             }
-            if (newIds.contains(normalizeId(collection.getConceptId()))) {
-                continue;
-            }
-            MutationResult removed = conceptCollectionMutationService.removeFromCollection(
-                    new RemoveConceptFromCollectionCommand(
-                            thesaurusId, conceptId, userId, contributor, collection.getConceptId(), false));
-            if (!applyResult(removed, dirty)) {
-                return false;
-            }
-            dirty = true;
+            dirty = next.dirty;
         }
+        return DirtyUpdate.of(dirty);
+    }
+
+    private DirtyUpdate removeUnselectedCollection(
+            ConceptRelation collection, Set<String> newIds, CollectionWriteContext ctx, boolean dirty) {
+        if (collection == null || StringUtils.isBlank(collection.getConceptId())) {
+            return DirtyUpdate.of(dirty);
+        }
+        if (newIds.contains(normalizeId(collection.getConceptId()))) {
+            return DirtyUpdate.of(dirty);
+        }
+        MutationResult removed = conceptCollectionMutationService.removeFromCollection(
+                new RemoveConceptFromCollectionCommand(
+                        ctx.thesaurusId(), ctx.conceptId(), ctx.userId(), ctx.contributor(),
+                        collection.getConceptId(), false));
+        if (!applyResult(removed, dirty)) {
+            return DirtyUpdate.fail();
+        }
+        return DirtyUpdate.of(true);
+    }
+
+    private DirtyUpdate addSelectedCollections(Set<String> oldIds, CollectionWriteContext ctx, boolean dirty) {
         for (FacetEditRow row : selectedCollections) {
-            if (row == null || StringUtils.isBlank(row.getId())) {
-                continue;
+            DirtyUpdate next = addSelectedCollection(row, oldIds, ctx, dirty);
+            if (!next.ok) {
+                return DirtyUpdate.fail();
             }
-            if (oldIds.contains(normalizeId(row.getId()))) {
-                continue;
-            }
-            MutationResult added = conceptCollectionMutationService.addToCollection(
-                    new AddConceptToCollectionCommand(
-                            thesaurusId, conceptId, userId, contributor, row.getId(), false));
-            if (!applyResult(added, dirty)) {
-                return false;
-            }
-            dirty = true;
+            dirty = next.dirty;
         }
-        return true;
+        return DirtyUpdate.of(dirty);
+    }
+
+    private DirtyUpdate addSelectedCollection(
+            FacetEditRow row, Set<String> oldIds, CollectionWriteContext ctx, boolean dirty) {
+        if (row == null || StringUtils.isBlank(row.getId())) {
+            return DirtyUpdate.of(dirty);
+        }
+        if (oldIds.contains(normalizeId(row.getId()))) {
+            return DirtyUpdate.of(dirty);
+        }
+        MutationResult added = conceptCollectionMutationService.addToCollection(
+                new AddConceptToCollectionCommand(
+                        ctx.thesaurusId(), ctx.conceptId(), ctx.userId(), ctx.contributor(), row.getId(), false));
+        if (!applyResult(added, dirty)) {
+            return DirtyUpdate.fail();
+        }
+        return DirtyUpdate.of(true);
     }
 
     private boolean applyResult(MutationResult result, boolean dirty) {
@@ -262,5 +294,8 @@ public class ConceptCollectionBlockEditorBean implements Serializable {
 
     private static String normalizeId(String id) {
         return StringUtils.isBlank(id) ? "" : id.trim().toLowerCase(Locale.ROOT);
+    }
+
+    private record CollectionWriteContext(String thesaurusId, String conceptId, int userId, String contributor) {
     }
 }

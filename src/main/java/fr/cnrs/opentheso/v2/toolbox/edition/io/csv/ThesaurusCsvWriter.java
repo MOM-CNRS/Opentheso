@@ -176,25 +176,10 @@ public class ThesaurusCsvWriter {
     private void writeResource(ArrayList<Object> csvRow, CSVPrinter csvFilePrinter,
             SKOSResource skosResource, String type, List<String> langs) throws IOException {
 
-        //URI + rdf:type
         csvRow.add(skosResource.getUri());
         csvRow.add(type);
-
-        //localURI
         csvRow.add(skosResource.getLocalUri());
-
-        // identifier and arkId
-        if (StringUtils.isNoneEmpty(skosResource.getIdentifier())) {
-            csvRow.add(skosResource.getIdentifier());
-        } else {
-            csvRow.add("");
-        }
-
-        if (skosResource.getArkId() != null && !skosResource.getArkId().isEmpty()) {
-            csvRow.add(skosResource.getArkId());
-        } else {
-            csvRow.add("");
-        }
+        addIdentifierColumns(csvRow, skosResource);
 
         //skos:prefLabel
         for (String lang : langs) {
@@ -227,19 +212,7 @@ public class ThesaurusCsvWriter {
         //narrowerId
         csvRow.add(getRelationGivenValueId(skosResource.getRelationsList(), SKOSProperty.NARROWER));
 
-        //broader
-        var broader = getRelationGivenValue(skosResource.getRelationsList(), SKOSProperty.BROADER);
-        if (StringUtils.isEmpty(broader)) {
-            csvRow.add("");
-        } else {
-            csvRow.add(broader);
-        }
-        //broaderId
-        var broaderId = getRelationGivenValueId(skosResource.getRelationsList(), SKOSProperty.BROADER);
-        if (StringUtils.isEmpty(broaderId)) {
-            broaderId = "";
-        }
-        csvRow.add(broaderId);
+        addBroaderColumns(csvRow, skosResource);
 
         //related
         csvRow.add(getRelationGivenValue(skosResource.getRelationsList(), SKOSProperty.RELATED));
@@ -251,23 +224,7 @@ public class ThesaurusCsvWriter {
         //closeMatch
         csvRow.add(getAlligementValue(skosResource.getMatchList(), SKOSProperty.CLOSE_MATCH));
 
-        if (CollectionUtils.isNotEmpty(skosResource.getGpsCoordinates()) && skosResource.getGpsCoordinates().size() == 1) {
-            //geo:lat
-            csvRow.add(getLatValue(skosResource.getGpsCoordinates().get(0)));
-            //geo:long
-            csvRow.add(getLongValue(skosResource.getGpsCoordinates().get(0)));
-        } else {
-            //geo:lat
-            csvRow.add("");
-            //geo:long
-            csvRow.add("");
-        }
-        //GPS
-        if (CollectionUtils.isNotEmpty(skosResource.getGpsCoordinates()) && skosResource.getGpsCoordinates().size() > 1) {
-            csvRow.add(getGpsValue(skosResource.getGpsCoordinates()));
-        } else {
-            csvRow.add("");
-        }
+        addGpsColumns(csvRow, skosResource);
         
         //skos:member (pour les concepts pour ajouter l'info de l'appartenance du concept à une collection)
         //skos:member (pour les Facettes et collections pour ajouter qui sont les membres)        
@@ -282,11 +239,7 @@ public class ThesaurusCsvWriter {
 
         csvRow.add(getFacettesOfConceptParentId(skosResource.getRelationsList()));
 
-        // owl:deprecated pour les concepts dépréciés
-        if(skosResource.getStatus() == SKOSProperty.DEPRECATED)
-            csvRow.add("true");
-        else
-            csvRow.add("false");
+        csvRow.add(skosResource.getStatus() == SKOSProperty.DEPRECATED ? "true" : "false");
         // dcterms:isReplacedBy pour référencer les concepts qui remplacent celui qui est déprécié 
         csvRow.add(getReplaceBy(skosResource.getsKOSReplaces()));    
         
@@ -308,6 +261,41 @@ public class ThesaurusCsvWriter {
 
         csvFilePrinter.printRecord(csvRow);
         csvRow.clear();
+    }
+
+    private static void addIdentifierColumns(ArrayList<Object> csvRow, SKOSResource skosResource) {
+        if (StringUtils.isNoneEmpty(skosResource.getIdentifier())) {
+            csvRow.add(skosResource.getIdentifier());
+        } else {
+            csvRow.add("");
+        }
+        if (skosResource.getArkId() != null && !skosResource.getArkId().isEmpty()) {
+            csvRow.add(skosResource.getArkId());
+        } else {
+            csvRow.add("");
+        }
+    }
+
+    private void addBroaderColumns(ArrayList<Object> csvRow, SKOSResource skosResource) {
+        var broader = getRelationGivenValue(skosResource.getRelationsList(), SKOSProperty.BROADER);
+        csvRow.add(StringUtils.isEmpty(broader) ? "" : broader);
+        var broaderId = getRelationGivenValueId(skosResource.getRelationsList(), SKOSProperty.BROADER);
+        csvRow.add(StringUtils.isEmpty(broaderId) ? "" : broaderId);
+    }
+
+    private void addGpsColumns(ArrayList<Object> csvRow, SKOSResource skosResource) {
+        if (CollectionUtils.isNotEmpty(skosResource.getGpsCoordinates()) && skosResource.getGpsCoordinates().size() == 1) {
+            csvRow.add(getLatValue(skosResource.getGpsCoordinates().get(0)));
+            csvRow.add(getLongValue(skosResource.getGpsCoordinates().get(0)));
+        } else {
+            csvRow.add("");
+            csvRow.add("");
+        }
+        if (CollectionUtils.isNotEmpty(skosResource.getGpsCoordinates()) && skosResource.getGpsCoordinates().size() > 1) {
+            csvRow.add(getGpsValue(skosResource.getGpsCoordinates()));
+        } else {
+            csvRow.add("");
+        }
     }
     
     private String getExternalReources(ArrayList<String> externalResources) {
@@ -579,7 +567,7 @@ public class ThesaurusCsvWriter {
                 csvFilePrinter.printRecord(header);
 
                 if (candidatDtos == null || candidatDtos.isEmpty()) {
-                    return null;
+                    return new byte[0];
                 }
 
                 // écritures des données
@@ -591,7 +579,7 @@ public class ThesaurusCsvWriter {
             return os.toByteArray();
         } catch (IOException e) {
             log.warn(CSV_EXPORT_ERROR, e);
-            return null;
+            return new byte[0];
         }
     }
 
@@ -622,7 +610,7 @@ public class ThesaurusCsvWriter {
             return os.toByteArray();
         } catch (IOException e) {
             log.warn(CSV_EXPORT_ERROR, e);
-            return null;
+            return new byte[0];
         }
     }
 
@@ -651,7 +639,7 @@ public class ThesaurusCsvWriter {
             return os.toByteArray();
         } catch (IOException e) {
             log.warn(CSV_EXPORT_ERROR, e);
-            return null;
+            return new byte[0];
         }
     }
 
@@ -684,7 +672,7 @@ public class ThesaurusCsvWriter {
             return os.toByteArray();
         } catch (IOException e) {
             log.warn(CSV_EXPORT_ERROR, e);
-            return null;
+            return new byte[0];
         }
     }
 
