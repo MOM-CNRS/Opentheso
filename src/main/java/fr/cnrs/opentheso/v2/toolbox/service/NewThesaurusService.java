@@ -1,14 +1,19 @@
 package fr.cnrs.opentheso.v2.toolbox.service;
 
+import fr.cnrs.opentheso.entites.ThesaurusDcTerm;
 import fr.cnrs.opentheso.entites.UserGroupThesaurus;
+import fr.cnrs.opentheso.models.concept.DCMIResource;
+import fr.cnrs.opentheso.models.nodes.DcElement;
 import fr.cnrs.opentheso.repositories.ThesaurusDcTermRepository;
+import fr.cnrs.opentheso.v2.project.policy.ProjectAccessPolicy;
 import fr.cnrs.opentheso.v2.shared.repository.EditionQueryRepository;
 import fr.cnrs.opentheso.v2.shared.repository.ProjectAdminQueryRepository;
+import fr.cnrs.opentheso.v2.shared.repository.ProjectMembershipRepository;
+import fr.cnrs.opentheso.v2.shared.time.V2Dates;
 import fr.cnrs.opentheso.v2.toolbox.exception.InvalidToolboxDataException;
 import fr.cnrs.opentheso.v2.toolbox.mapper.ToolboxMapper;
 import fr.cnrs.opentheso.v2.toolbox.model.NewThesaurusFormOptions;
 import fr.cnrs.opentheso.v2.toolbox.model.NewThesaurusRequest;
-import fr.cnrs.opentheso.v2.shared.time.V2Dates;
 import fr.cnrs.opentheso.v2.toolbox.persistence.ToolboxPreferencePersistence;
 import fr.cnrs.opentheso.v2.toolbox.persistence.ToolboxThesaurusPersistence;
 import lombok.RequiredArgsConstructor;
@@ -17,10 +22,6 @@ import org.apache.commons.lang3.StringUtils;
 import org.springframework.dao.DataIntegrityViolationException;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
-
-import fr.cnrs.opentheso.entites.ThesaurusDcTerm;
-import fr.cnrs.opentheso.models.concept.DCMIResource;
-import fr.cnrs.opentheso.models.nodes.DcElement;
 
 import java.time.format.DateTimeFormatter;
 
@@ -33,6 +34,7 @@ public class NewThesaurusService {
 
     private final EditionQueryRepository editionQueryRepository;
     private final ProjectAdminQueryRepository projectAdminQueryRepository;
+    private final ProjectMembershipRepository projectMembershipRepository;
     private final ToolboxThesaurusPersistence toolboxThesaurusPersistence;
     private final ToolboxPreferencePersistence toolboxPreferencePersistence;
     private final ThesaurusDcTermRepository thesaurusDcTermRepository;
@@ -52,6 +54,11 @@ public class NewThesaurusService {
 
     @Transactional
     public String create(NewThesaurusRequest request, String creatorName) {
+        return create(request, creatorName, null);
+    }
+
+    @Transactional
+    public String create(NewThesaurusRequest request, String creatorName, Integer creatorUserId) {
         validate(request);
 
         String thesaurusId = toolboxThesaurusPersistence.createThesaurusId();
@@ -65,6 +72,7 @@ public class NewThesaurusService {
         thesaurus.setId_thesaurus(thesaurusId);
         thesaurus.setTitle(request.title());
         thesaurus.setLanguage(request.language());
+        thesaurus.setPublisher(StringUtils.defaultString(request.organization()));
         toolboxThesaurusPersistence.addTranslation(thesaurus);
 
         if (request.projectId() != null) {
@@ -74,13 +82,24 @@ public class NewThesaurusService {
                             .idGroup(request.projectId())
                             .build()
             );
+            ensureCreatorMembership(creatorUserId, request.projectId(), thesaurusId);
         }
 
         toolboxPreferencePersistence.initPreferences(thesaurusId, request.language());
         toolboxPreferencePersistence.updatePreferredName(thesaurusId, request.persistentNameThesaurus());
+        toolboxThesaurusPersistence.setVisibility(thesaurusId, request.privateThesaurus());
         createAndSaveDcTerm(thesaurusId, DCMIResource.CREATOR, creatorName, "", DCMI_TYPE_STRING);
         createAndSaveDcTerm(thesaurusId, DCMIResource.TITLE, request.title(), request.language(), DCMI_TYPE_STRING);
         createAndSaveDcTerm(thesaurusId, DCMIResource.LANGUAGE, request.language(), "", DCMI_TYPE_STRING);
+        if (StringUtils.isNotBlank(request.organization())) {
+            createAndSaveDcTerm(
+                    thesaurusId,
+                    DCMIResource.PUBLISHER,
+                    request.organization(),
+                    request.language(),
+                    DCMI_TYPE_STRING
+            );
+        }
         createAndSaveDcTerm(
                 thesaurusId,
                 DCMIResource.CREATED,
@@ -91,6 +110,28 @@ public class NewThesaurusService {
 
         log.info("Thésaurus {} créé par {}", thesaurusId, creatorName);
         return thesaurusId;
+    }
+
+    /**
+     * Sans rôle projet, le thésaurus n'apparaît pas dans « Mes thésaurus »
+     * (cas typique du super-admin). On pose alors un rôle admin limité.
+     */
+    private void ensureCreatorMembership(Integer creatorUserId, int projectId, String thesaurusId) {
+        if (creatorUserId == null || creatorUserId < 0) {
+            return;
+        }
+        if (projectAdminQueryRepository.findCallerRoleOnProject(creatorUserId, projectId).isPresent()) {
+            return;
+        }
+        if (projectMembershipRepository.hasLimitedRoleOnThesaurus(creatorUserId, thesaurusId)) {
+            return;
+        }
+        projectMembershipRepository.assignLimitedRole(
+                creatorUserId,
+                ProjectAccessPolicy.ROLE_ADMIN,
+                projectId,
+                thesaurusId
+        );
     }
 
     private void validate(NewThesaurusRequest request) {

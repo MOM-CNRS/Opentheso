@@ -71,7 +71,11 @@ public class NewThesaurusBean implements Serializable {
             return;
         }
         try {
-            newThesaurusService.create(editor.toRequest(), userSession.getCurrentUsername());
+            newThesaurusService.create(
+                    editor.toRequest(),
+                    userSession.getCurrentUsername(),
+                    userSession.getCurrentUserId()
+            );
             MessageUtils.showInformationMessage("Thesaurus ajouté avec succès");
             refreshMenuThesaurusList();
             editionBean().showList();

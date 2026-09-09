@@ -16,6 +16,8 @@ public class NewThesaurusEditor implements Serializable {
     private String persistentNameThesaurus = "";
     private String selectedLanguage;
     private String selectedProjectId = "";
+    private boolean privateThesaurus;
+    private String organization = "";
 
     public static NewThesaurusEditor empty() {
         return new NewThesaurusEditor();
@@ -34,7 +36,9 @@ public class NewThesaurusEditor implements Serializable {
                 StringUtils.trimToEmpty(title),
                 StringUtils.trimToEmpty(persistentNameThesaurus),
                 selectedLanguage,
-                projectId
+                projectId,
+                privateThesaurus,
+                StringUtils.trimToEmpty(organization)
         );
     }
 }

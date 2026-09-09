@@ -15,6 +15,11 @@ public record ProjectOption(
         return String.valueOf(id);
     }
 
+    /** Accesseur EL record ({@code proj.idAsString()}). */
+    public String idAsString() {
+        return String.valueOf(id);
+    }
+
     public String getName() {
         return name;
     }

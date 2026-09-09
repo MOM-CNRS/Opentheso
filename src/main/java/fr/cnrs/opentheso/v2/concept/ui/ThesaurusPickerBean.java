@@ -1,10 +1,16 @@
 package fr.cnrs.opentheso.v2.concept.ui;
 
+import fr.cnrs.opentheso.utils.MessageUtils;
 import fr.cnrs.opentheso.v2.concept.model.ThesaurusPickerRow;
 import fr.cnrs.opentheso.v2.concept.service.ConsultationCatalogService;
 import fr.cnrs.opentheso.v2.shared.ui.UserSession;
 import fr.cnrs.opentheso.v2.shared.ui.V2LocaleBean;
 import fr.cnrs.opentheso.v2.shared.ui.V2NavigationBean;
+import fr.cnrs.opentheso.v2.toolbox.exception.InvalidToolboxDataException;
+import fr.cnrs.opentheso.v2.toolbox.model.LanguageOption;
+import fr.cnrs.opentheso.v2.toolbox.model.ProjectOption;
+import fr.cnrs.opentheso.v2.toolbox.service.NewThesaurusService;
+import fr.cnrs.opentheso.v2.toolbox.ui.NewThesaurusEditor;
 import jakarta.annotation.PostConstruct;
 import jakarta.faces.context.FacesContext;
 import jakarta.faces.view.ViewScoped;
@@ -18,6 +24,7 @@ import org.apache.commons.lang3.Strings;
 import java.io.IOException;
 import java.io.Serializable;
 import java.util.ArrayList;
+import java.util.Collections;
 import java.util.Comparator;
 import java.util.List;
 import java.util.Locale;
@@ -52,6 +59,7 @@ public class ThesaurusPickerBean implements Serializable {
     private final transient UserSession userSession;
     private final transient V2LocaleBean v2LocaleBean;
     private final transient V2NavigationBean v2NavigationBean;
+    private final transient NewThesaurusService newThesaurusService;
 
     private List<ThesaurusPickerRow> rows = List.of();
     private String query = "";
@@ -66,6 +74,12 @@ public class ThesaurusPickerBean implements Serializable {
     private String filterProjects = "";
     private String filterOrg = "";
     private String filterLang = "";
+
+    private boolean createMode;
+    private NewThesaurusEditor createEditor = NewThesaurusEditor.empty();
+    private List<LanguageOption> createLanguages = Collections.emptyList();
+    private List<ProjectOption> createProjects = Collections.emptyList();
+    private boolean createSuperAdmin;
 
     @PostConstruct
     public void init() {
@@ -382,8 +396,119 @@ public class ThesaurusPickerBean implements Serializable {
         return ctx + "/v2/index.xhtml?idt=" + thesaurusId.trim();
     }
 
-    public void createThesaurus() throws IOException {
-        v2NavigationBean.redirectToEdition();
+    public void createThesaurus() {
+        if (!isCanCreateThesaurus()) {
+            return;
+        }
+        if (newThesaurusService == null) {
+            MessageUtils.showErrorMessage("Service de création indisponible — rechargez la page.");
+            return;
+        }
+        Integer userId = userSession.getCurrentUserId();
+        var options = newThesaurusService.loadFormOptions(
+                userId != null ? userId : -1,
+                userSession.isSuperAdmin()
+        );
+        createEditor = NewThesaurusEditor.empty();
+        createLanguages = options.languages() != null ? options.languages() : Collections.emptyList();
+        createProjects = options.projects() != null ? options.projects() : Collections.emptyList();
+        createSuperAdmin = options.superAdmin();
+        if (!createLanguages.isEmpty()) {
+            String uiLang = v2LocaleBean.getIdLangue();
+            boolean uiFound = createLanguages.stream().anyMatch(l -> Strings.CI.equals(l.code(), uiLang));
+            createEditor.setSelectedLanguage(uiFound ? uiLang : createLanguages.get(0).code());
+        }
+        if (!createSuperAdmin && createProjects.size() == 1) {
+            createEditor.setSelectedProjectId(String.valueOf(createProjects.get(0).id()));
+        }
+        createMode = true;
+        columnsMenuOpen = false;
+    }
+
+    public void cancelCreateThesaurus() {
+        createMode = false;
+        createEditor = NewThesaurusEditor.empty();
+        createLanguages = Collections.emptyList();
+        createProjects = Collections.emptyList();
+    }
+
+    public void submitCreateThesaurus() throws IOException {
+        if (!isCanCreateThesaurus()) {
+            return;
+        }
+        if (createEditor == null || StringUtils.isBlank(createEditor.getTitle())) {
+            MessageUtils.showErrorMessage("Le nom du thésaurus est obligatoire.");
+            return;
+        }
+        try {
+            String thesaurusId = newThesaurusService.create(
+                    createEditor.toRequest(),
+                    StringUtils.defaultIfBlank(userSession.getCurrentUsername(), "user"),
+                    userSession.getCurrentUserId()
+            );
+            MessageUtils.showInformationMessage("Thésaurus créé avec succès");
+            createMode = false;
+            load();
+            openThesaurus(thesaurusId);
+        } catch (InvalidToolboxDataException e) {
+            MessageUtils.showErrorMessage(e.getMessage());
+        }
+    }
+
+    public void choosePublicVisibility() {
+        createEditor.setPrivateThesaurus(false);
+    }
+
+    public void choosePrivateVisibility() {
+        createEditor.setPrivateThesaurus(true);
+    }
+
+    public String getCreateVisibility() {
+        return createEditor != null && createEditor.isPrivateThesaurus() ? "private" : "public";
+    }
+
+    public void setCreateVisibility(String visibility) {
+        if (createEditor == null) {
+            createEditor = NewThesaurusEditor.empty();
+        }
+        createEditor.setPrivateThesaurus(Strings.CI.equals(visibility, "private"));
+    }
+
+    public void selectCreateLanguage() {
+        if (createEditor == null) {
+            createEditor = NewThesaurusEditor.empty();
+        }
+        FacesContext faces = FacesContext.getCurrentInstance();
+        String code = faces != null
+                ? faces.getExternalContext().getRequestParameterMap().get("createLangCode")
+                : null;
+        createEditor.setSelectedLanguage(StringUtils.defaultString(code));
+    }
+
+    public void selectCreateLanguage(String code) {
+        if (createEditor == null) {
+            createEditor = NewThesaurusEditor.empty();
+        }
+        createEditor.setSelectedLanguage(StringUtils.defaultString(code));
+    }
+
+    public boolean isCreateLanguageSelected(String code) {
+        return createEditor != null && Strings.CI.equals(createEditor.getSelectedLanguage(), code);
+    }
+
+    public String getCreateSelectedLanguageFlag() {
+        return languageFlag(createEditor != null ? createEditor.getSelectedLanguage() : null);
+    }
+
+    public String getCreateSelectedLanguageLabel() {
+        return languageLabel(createEditor != null ? createEditor.getSelectedLanguage() : null);
+    }
+
+    public String languageOptionForCreate(LanguageOption lang) {
+        if (lang == null) {
+            return "";
+        }
+        return languageOptionLabel(lang.code());
     }
 
     private void moveColumn(String key, int delta) {

@@ -14,6 +14,8 @@ class NewThesaurusEditorTest {
         assertEquals("", editor.getTitle());
         assertNull(editor.getSelectedLanguage());
         assertEquals("", editor.getSelectedProjectId());
+        assertEquals("", editor.getOrganization());
+        assertEquals(false, editor.isPrivateThesaurus());
     }
 
     @Test
@@ -22,12 +24,14 @@ class NewThesaurusEditorTest {
         editor.setTitle("  Mon thésaurus  ");
         editor.setSelectedLanguage("fr");
         editor.setSelectedProjectId("");
+        editor.setOrganization("  CNRS  ");
 
         var request = editor.toRequest();
 
         assertEquals("Mon thésaurus", request.title());
         assertEquals("fr", request.language());
         assertNull(request.projectId());
+        assertEquals("CNRS", request.organization());
     }
 
     @Test

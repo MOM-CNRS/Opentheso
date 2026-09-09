@@ -10,7 +10,8 @@
   <ui:define name="detail"/>
   <ui:define name="main">
     <h:form id="thesaurusPickerForm" prependId="false" styleClass="tp-form-root">
-      <div class="tp">
+      <h:panelGroup id="tpRoot" layout="block" styleClass="tp#{v2ThesaurusPickerBean.createMode ? ' tp--create' : ''}">
+        <ui:fragment rendered="#{not v2ThesaurusPickerBean.createMode}">
         <div class="tp-gov">
           <a class="tp-gov-mark" href="#{request.contextPath}/v2/thesauri"
              title="Retour à l'accueil — Ministère de la Culture">
@@ -29,7 +30,9 @@
             culture.gouv.fr<span class="gv-ext" aria-hidden="true">↗</span>
           </a>
         </div>
+        </ui:fragment>
 
+        <ui:fragment rendered="#{not v2ThesaurusPickerBean.createMode}">
         <div class="tp-head">
           <div>
             <h1 class="tp-title">OpenTheso</h1>
@@ -290,7 +293,133 @@
             </table>
           </h:panelGroup>
         </div>
+        </ui:fragment>
 
+        <ui:fragment rendered="#{v2ThesaurusPickerBean.createMode}">
+          <h:commandLink styleClass="bo-back" title="Retour à la liste"
+                         action="#{v2ThesaurusPickerBean.cancelCreateThesaurus}"
+                         onclick="return window.tpAnimateBackToList &amp;&amp; window.tpAnimateBackToList(this);">
+            <svg viewBox="0 0 24 24" aria-hidden="true"><path d="M19 12H5"/><path d="m12 19-7-7 7-7"/></svg>
+          </h:commandLink>
+          <div class="tp-head">
+            <div>
+              <h1 class="tp-title">Nouveau thésaurus</h1>
+              <p class="tp-sub">Renseignez les informations principales, puis créez le thésaurus.</p>
+            </div>
+          </div>
+          <div class="tp-form">
+            <div class="tp-form-card">
+              <div class="tp-form-row">
+                <label class="tp-form-l" for="tpCreateTitle">Nom <span class="tp-req">*</span></label>
+                <h:inputText id="tpCreateTitle"
+                             styleClass="tp-form-i"
+                             value="#{v2ThesaurusPickerBean.createEditor.title}"
+                             pt:placeholder="Ex. PACTOLS, GeoEthno…"
+                             pt:oninput="window.tpSyncCreateSubmit &amp;&amp; window.tpSyncCreateSubmit();"/>
+              </div>
+              <div class="tp-form-row">
+                <label class="tp-form-l" for="tpCreateAcronym">Acronyme</label>
+                <h:inputText id="tpCreateAcronym"
+                             styleClass="tp-form-i"
+                             value="#{v2ThesaurusPickerBean.createEditor.persistentNameThesaurus}"
+                             pt:placeholder="Nom pérenne ou acronyme (optionnel)"/>
+              </div>
+              <div class="tp-form-row">
+                <label class="tp-form-l" for="tpCreateOrg">Organisation</label>
+                <h:inputText id="tpCreateOrg"
+                             styleClass="tp-form-i"
+                             value="#{v2ThesaurusPickerBean.createEditor.organization}"
+                             pt:placeholder="Ex. Ministère de la Culture, CNRS…"/>
+              </div>
+              <div class="tp-form-row">
+                <span class="tp-form-l">Langue source <span class="tp-req">*</span></span>
+                <h:panelGroup id="tpCreateLangUi" layout="block" styleClass="tp-lang-pick">
+                  <button type="button"
+                          class="tree-lang-btn tp-lang-btn"
+                          data-act="tp-lang-toggle"
+                          title="Langue source"
+                          aria-haspopup="listbox"
+                          aria-expanded="false">
+                    <span class="tree-lang-flag" aria-hidden="true">#{v2ThesaurusPickerBean.createSelectedLanguageFlag}</span>
+                    <span class="tree-lang-name">#{v2ThesaurusPickerBean.createSelectedLanguageLabel}</span>
+                    <span class="tree-lang-code">#{v2ThesaurusPickerBean.createEditor.selectedLanguage}</span>
+                    <span class="tree-lang-caret" aria-hidden="true">▾</span>
+                  </button>
+                  <div class="tree-lang-menu tp-lang-menu" role="listbox" aria-label="Langue source">
+                    <div class="tree-lang-menu-h">Langue source</div>
+                    <ui:repeat value="#{v2ThesaurusPickerBean.createLanguages}" var="lg">
+                      <h:commandLink styleClass="tree-lang-opt#{v2ThesaurusPickerBean.isCreateLanguageSelected(lg.code) ? ' is-on' : ''}"
+                                     action="#{v2ThesaurusPickerBean.selectCreateLanguage}">
+                        <f:param name="createLangCode" value="#{lg.code}"/>
+                        <f:ajax execute="@this" render="tpCreateLangUi"/>
+                        <span class="tree-lang-opt-flag" aria-hidden="true">#{v2ThesaurusPickerBean.languageFlag(lg.code)}</span>
+                        <span class="tree-lang-opt-name">#{v2ThesaurusPickerBean.languageLabel(lg.code)}</span>
+                        <span class="tree-lang-opt-code">#{lg.code}</span>
+                        <span class="tree-lang-opt-check" aria-hidden="true">✓</span>
+                      </h:commandLink>
+                    </ui:repeat>
+                  </div>
+                </h:panelGroup>
+              </div>
+              <div class="tp-form-row">
+                <label class="tp-form-l" for="tpCreateProject">Projet</label>
+                <h:selectOneMenu id="tpCreateProject"
+                                 styleClass="tp-form-i"
+                                 value="#{v2ThesaurusPickerBean.createEditor.selectedProjectId}">
+                  <f:selectItem itemValue="" itemLabel="#{v2ThesaurusPickerBean.createSuperAdmin ? 'Aucun projet…' : 'Choisir un projet…'}"/>
+                  <f:selectItems value="#{v2ThesaurusPickerBean.createProjects}"
+                                 var="proj"
+                                 itemValue="#{proj.idAsString()}"
+                                 itemLabel="#{proj.name}"/>
+                </h:selectOneMenu>
+              </div>
+              <div class="tp-form-row">
+                <span class="tp-form-l">Visibilité</span>
+                <h:panelGroup id="tpCreateVis" layout="block" styleClass="tp-form-radios">
+                  <h:commandLink styleClass="tp-form-radio#{not v2ThesaurusPickerBean.createEditor.privateThesaurus ? ' is-on' : ''}"
+                                 action="#{v2ThesaurusPickerBean.choosePublicVisibility}">
+                    <f:ajax execute="@this" render="tpCreateVis"/>
+                    <span class="tp-radio-ui" aria-hidden="true"></span>
+                    <svg viewBox="0 0 24 24" aria-hidden="true"><circle cx="12" cy="12" r="9"/><path d="M3 12h18M12 3a14 14 0 0 1 0 18M12 3a14 14 0 0 0 0 18"/></svg>
+                    <span><b>Public</b> — consultation ouverte</span>
+                  </h:commandLink>
+                  <h:commandLink styleClass="tp-form-radio#{v2ThesaurusPickerBean.createEditor.privateThesaurus ? ' is-on' : ''}"
+                                 action="#{v2ThesaurusPickerBean.choosePrivateVisibility}">
+                    <f:ajax execute="@this" render="tpCreateVis"/>
+                    <span class="tp-radio-ui" aria-hidden="true"></span>
+                    <svg viewBox="0 0 24 24" aria-hidden="true"><rect x="5" y="11" width="14" height="10" rx="2"/><path d="M8 11V8a4 4 0 0 1 8 0v3"/></svg>
+                    <span><b>Privé</b> — accès restreint</span>
+                  </h:commandLink>
+                </h:panelGroup>
+              </div>
+            </div>
+            <div class="tp-form-run">
+              <h:commandButton id="tpCreateCancel"
+                               styleClass="tp-form-cancel"
+                               value="Annuler"
+                               action="#{v2ThesaurusPickerBean.cancelCreateThesaurus}"
+                               immediate="true"
+                               onclick="return window.tpAnimateBackToList &amp;&amp; window.tpAnimateBackToList(this);"/>
+              <button type="button"
+                      id="tpCreateAsk"
+                      class="tp-form-submit#{empty v2ThesaurusPickerBean.createEditor.title ? ' is-disabled' : ''}"
+                      aria-disabled="#{empty v2ThesaurusPickerBean.createEditor.title ? 'true' : 'false'}"
+                      onclick="return window.tpAskCreate &amp;&amp; window.tpAskCreate(this);">
+                <svg viewBox="0 0 24 24" aria-hidden="true"><path d="M12 5v14"/><path d="M5 12h14"/></svg>
+                <span>Créer le thésaurus</span>
+              </button>
+              <h:commandLink id="tpCreateSubmit"
+                             styleClass="tp-create-go"
+                             action="#{v2ThesaurusPickerBean.submitCreateThesaurus}"
+                             tabindex="-1"
+                             aria-hidden="true">
+                <h:outputText value="Créer"/>
+              </h:commandLink>
+            </div>
+          </div>
+        </ui:fragment>
+
+        <ui:fragment rendered="#{not v2ThesaurusPickerBean.createMode}">
         <footer class="gv">
           <img class="gv-mark" src="#{request.contextPath}/resources/img/logo_Opentheso2.png" alt="OpenTheso"/>
           <nav class="gv-mentions" aria-label="Informations légales">
@@ -306,6 +435,19 @@
             <a href="https://www.data.gouv.fr" target="_blank" rel="noreferrer">data.gouv.fr<span class="gv-ext" aria-hidden="true">↗</span></a>
           </nav>
         </footer>
+        </ui:fragment>
+      </h:panelGroup>
+      <div class="block-overlay confirm-overlay" id="tpCreateConfirm" hidden="hidden"
+           data-act="tp-create-dismiss" role="presentation">
+        <div class="confirm-modal" role="dialog" aria-modal="true"
+             aria-labelledby="tpCreateConfirmTitle" data-act="tp-create-modal">
+          <div class="confirm-h" id="tpCreateConfirmTitle">Créer le thésaurus</div>
+          <p class="confirm-p" id="tpCreateConfirmText">Confirmer la création de ce thésaurus ?</p>
+          <div class="confirm-actions">
+            <button type="button" class="bo-btn ghost confirm-cancel" data-act="tp-create-dismiss">Annuler</button>
+            <button type="button" class="bo-btn primary" data-act="tp-create-ok">Créer</button>
+          </div>
+        </div>
       </div>
       <div id="tpLoading" class="tp-loading" hidden="hidden" aria-live="polite" aria-busy="false">
         <div class="tp-loading-card">
@@ -316,13 +458,84 @@
     </h:form>
     <script type="text/javascript">
       //<![CDATA[
-      window.tpShowLoading = function () {
+      window.tpShowLoading = function (msg) {
         var el = document.getElementById('tpLoading');
         if (!el) return true;
+        var txt = el.querySelector('.tp-loading-txt');
+        if (txt && msg) txt.textContent = msg;
         el.hidden = false;
         el.setAttribute('aria-busy', 'true');
         document.body.classList.add('tp-is-loading');
         return true;
+      };
+      window.tpSyncCreateSubmit = function () {
+        var title = document.getElementById('tpCreateTitle');
+        var btn = document.getElementById('tpCreateAsk');
+        if (!title || !btn) return;
+        var ok = !!(title.value && title.value.trim());
+        btn.classList.toggle('is-disabled', !ok);
+        btn.setAttribute('aria-disabled', ok ? 'false' : 'true');
+        btn.disabled = !ok;
+      };
+      window.tpAskCreate = function (btn) {
+        if (btn && (btn.classList.contains('is-disabled') || btn.disabled || btn.getAttribute('aria-disabled') === 'true')) {
+          return false;
+        }
+        var title = document.getElementById('tpCreateTitle');
+        var name = title && title.value ? title.value.trim() : '';
+        if (!name) {
+          window.tpSyncCreateSubmit && window.tpSyncCreateSubmit();
+          return false;
+        }
+        var text = document.getElementById('tpCreateConfirmText');
+        if (text) {
+          text.textContent = 'Confirmer la création du thésaurus « ' + name + ' » ?';
+        }
+        if (typeof showConfirm === 'function') {
+          showConfirm('#tpCreateConfirm');
+        } else {
+          var dlg = document.getElementById('tpCreateConfirm');
+          if (dlg) dlg.hidden = false;
+        }
+        return false;
+      };
+      window.tpConfirmCreateOk = function () {
+        if (typeof hideConfirm === 'function') {
+          hideConfirm('#tpCreateConfirm');
+        } else {
+          var dlg = document.getElementById('tpCreateConfirm');
+          if (dlg) dlg.hidden = true;
+        }
+        window.tpShowLoading('Création du thésaurus…');
+        var go = document.getElementById('tpCreateSubmit');
+        if (go) go.click();
+        return false;
+      };
+      window.tpDismissCreateConfirm = function () {
+        if (typeof hideConfirm === 'function') {
+          hideConfirm('#tpCreateConfirm');
+        } else {
+          var dlg = document.getElementById('tpCreateConfirm');
+          if (dlg) dlg.hidden = true;
+        }
+        return false;
+      };
+      window.tpAnimateBackToList = function (el) {
+        if (!el) return true;
+        if (el.getAttribute('data-tp-leaving') === '1') return true;
+        var root = document.getElementById('tpRoot');
+        if (root) root.classList.add('tp--leaving');
+        el.classList.add('is-leaving');
+        el.setAttribute('data-tp-leaving', '1');
+        window.setTimeout(function () {
+          if (el.tagName === 'INPUT' || el.tagName === 'BUTTON') {
+            el.removeAttribute('onclick');
+            el.click();
+          } else {
+            el.click();
+          }
+        }, 220);
+        return false;
       };
       window.tpToggleLangs = function (btn, evt) {
         if (evt) {
@@ -338,6 +551,56 @@
         btn.textContent = expanded ? '−' : (btn.getAttribute('data-more') || '+');
         return false;
       };
+      document.addEventListener('click', function (e) {
+        var actEl = e.target.closest && e.target.closest('[data-act]');
+        var act = actEl ? actEl.getAttribute('data-act') : '';
+        if (act === 'tp-create-dismiss') {
+          e.preventDefault();
+          window.tpDismissCreateConfirm();
+          return;
+        }
+        if (act === 'tp-create-ok') {
+          e.preventDefault();
+          window.tpConfirmCreateOk();
+          return;
+        }
+        if (act === 'tp-create-modal') {
+          e.stopPropagation();
+          return;
+        }
+        var toggle = e.target.closest && e.target.closest('[data-act="tp-lang-toggle"]');
+        if (toggle) {
+          e.preventDefault();
+          e.stopPropagation();
+          var open = !toggle.classList.contains('is-open');
+          document.querySelectorAll('.tp-lang-btn.is-open').forEach(function (b) {
+            b.classList.remove('is-open');
+            b.setAttribute('aria-expanded', 'false');
+          });
+          if (open) {
+            toggle.classList.add('is-open');
+            toggle.setAttribute('aria-expanded', 'true');
+          }
+          return;
+        }
+        if (e.target.closest && e.target.closest('.tp-lang-menu')) {
+          return;
+        }
+        document.querySelectorAll('.tp-lang-btn.is-open').forEach(function (b) {
+          b.classList.remove('is-open');
+          b.setAttribute('aria-expanded', 'false');
+        });
+      });
+      document.addEventListener('keydown', function (e) {
+        if (e.key !== 'Escape') return;
+        var dlg = document.getElementById('tpCreateConfirm');
+        if (dlg && !dlg.hidden) {
+          window.tpDismissCreateConfirm();
+        }
+      });
+      document.addEventListener('DOMContentLoaded', function () {
+        window.tpSyncCreateSubmit && window.tpSyncCreateSubmit();
+      });
       //]]>
     </script>
   </ui:define>

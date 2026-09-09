@@ -79,6 +79,18 @@ public class ProjectMembershipRepository {
                 .executeUpdate();
     }
 
+    public boolean hasLimitedRoleOnThesaurus(int userId, String thesaurusId) {
+        return Boolean.TRUE.equals(entityManager.createNativeQuery("""
+                        SELECT EXISTS(
+                            SELECT 1 FROM user_role_only_on
+                            WHERE id_user = :userId AND id_theso = :thesaurusId
+                        )
+                        """)
+                .setParameter(NativeQueryParams.USER_ID, userId)
+                .setParameter(NativeQueryParams.THESAURUS_ID, thesaurusId)
+                .getSingleResult());
+    }
+
     @Transactional
     public void deleteLimitedRole(int userId, int roleId, int projectId, String thesaurusId) {
         entityManager.createNativeQuery("""

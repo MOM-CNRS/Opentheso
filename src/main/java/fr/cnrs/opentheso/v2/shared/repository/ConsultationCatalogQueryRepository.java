@@ -154,20 +154,40 @@ public class ConsultationCatalogQueryRepository {
                 ),
                 member_roles AS (
                     SELECT
-                        ugt.id_thesaurus,
-                        MIN(user_roles.id_role) AS id_role
-                    FROM user_group_thesaurus ugt
-                    JOIN (
-                        SELECT id_group, id_role
-                        FROM user_role_group
-                        WHERE id_user = CAST(:userId AS integer)
+                        roles.id_thesaurus,
+                        MIN(roles.id_role) AS id_role
+                    FROM (
+                        SELECT
+                            ugt.id_thesaurus,
+                            urg.id_role
+                        FROM user_role_group urg
+                        JOIN user_group_thesaurus ugt ON ugt.id_group = urg.id_group
+                        WHERE urg.id_user = CAST(:userId AS integer)
+
                         UNION ALL
-                        SELECT id_group, id_role
-                        FROM user_role_only_on
-                        WHERE id_user = CAST(:userId AS integer)
-                    ) user_roles ON user_roles.id_group = ugt.id_group
+
+                        SELECT
+                            uro.id_theso AS id_thesaurus,
+                            uro.id_role
+                        FROM user_role_only_on uro
+                        WHERE uro.id_user = CAST(:userId AS integer)
+                          AND uro.id_theso IS NOT NULL
+                          AND BTRIM(uro.id_theso) <> ''
+
+                        UNION ALL
+
+                        -- Créateur (ex. super-admin sans ligne user_role_*)
+                        SELECT
+                            tl.id_thesaurus,
+                            2 AS id_role
+                        FROM thesaurus_label tl
+                        JOIN users u ON LOWER(BTRIM(u.username)) = LOWER(BTRIM(tl.creator))
+                        WHERE u.id_user = CAST(:userId AS integer)
+                          AND tl.creator IS NOT NULL
+                          AND BTRIM(tl.creator) <> ''
+                    ) roles
                     WHERE CAST(:userId AS integer) >= 0
-                    GROUP BY ugt.id_thesaurus
+                    GROUP BY roles.id_thesaurus
                 )
                 SELECT
                     titled.id_thesaurus,

@@ -25,10 +25,14 @@ body[data-page="thesauri"] .view-lang-refresh{ display:contents; }
 body[data-page="thesauri"] .thesaurus{ background: var(--surface); }
 
 .tp-form-root{ display:contents; }
-a.tp-c-name-in, a.tp-th-l, a.tp-tab, a.tp-edit, a.tp-search-x, a.tp-gov-lk, a.tp-gov-mark{
+a.tp-c-name-in, a.tp-th-l, a.tp-tab, a.tp-edit, a.tp-search-x, a.tp-gov-lk, a.tp-gov-mark, a.bo-back, a.tp-form-radio, a.tp-form-submit, a.tree-lang-opt{
   text-decoration:none; color:inherit;
 }
 a.tp-create{ text-decoration:none; }
+a.tp-form-submit, a.tp-form-submit:link, a.tp-form-submit:visited{
+  color:#fff!important; text-decoration:none!important;
+}
+a.tp-form-submit:hover, a.tp-form-submit:active{ color:#fff!important; text-decoration:none!important; }
 a.tp-tab{ color: var(--ink-2); }
 button.tp-create, input.tp-create[type="submit"]{
   appearance:none; -webkit-appearance:none;
@@ -230,33 +234,66 @@ select.tp-fi--lang{width:100%;min-width:0;max-width:100%}
 .tp-edit--ro{cursor:default;border-style:dashed;opacity:.6}
 .tp-edit--ro:hover{border-color:var(--line);color:var(--ink-3);background:var(--surface)}
 .tp-empty-row td{text-align:center;color:var(--ink-3);padding:34px;font-size:13.5px}
-/* Formulaire de création */
+/* Formulaire de création — maquette */
 .tp--create{max-width:760px;height:auto;overflow-y:auto;display:block;padding:34px 40px 80px}
-.tp--create .bo-back{left:76px}
+body[data-page="thesauri"] .tp--create .bo-back{left:76px;top:26px}
 .tp-form{margin-top:4px}
 .tp-form-card{background:var(--surface);border:1px solid var(--line);border-radius:14px;padding:8px 22px;box-shadow:var(--shadow-sm)}
 .tp-form-row{display:flex;align-items:flex-start;gap:20px;padding:16px 0;border-bottom:1px solid var(--line-2)}
 .tp-form-row:last-child{border-bottom:0}
 .tp-form-l{flex:0 0 190px;font-size:13.5px;font-weight:600;color:var(--ink);padding-top:9px}
 .tp-req{color:var(--accent)}
-.tp-form-i{flex:1;height:40px;border:1px solid var(--line);border-radius:9px;padding:0 12px;font:inherit;font-size:14px;color:var(--ink);background:var(--bg);outline:none}
+.tp-form-i{flex:1;width:100%;min-width:0;height:40px;border:1px solid var(--line);border-radius:9px;padding:0 12px;font:inherit;font-size:14px;color:var(--ink);background:var(--bg);outline:none;box-sizing:border-box}
 .tp-form-i:focus{border-color:var(--accent-line);box-shadow:0 0 0 3px var(--accent-soft)}
-select.tp-form-i{cursor:pointer}
-.tp-form-radios{flex:1;display:flex;flex-direction:column;gap:9px}
-.tp-form-radio{display:flex;align-items:center;gap:11px;border:1px solid var(--line);border-radius:10px;padding:12px 14px;cursor:pointer;transition:all .12s}
+select.tp-form-i{cursor:pointer;appearance:auto}
+.tp-lang-pick{flex:1;min-width:0;position:relative}
+.tp-lang-btn{width:100%;justify-content:flex-start;height:40px;padding:0 12px;border:1px solid var(--line);border-radius:9px;background:var(--bg);box-shadow:none}
+.tp-lang-btn .tree-lang-name{flex:1;min-width:0;text-align:left;font-size:14px;font-weight:500;color:var(--ink);overflow:hidden;text-overflow:ellipsis;white-space:nowrap}
+.tp-lang-btn .tree-lang-code{margin-left:auto}
+.tp-lang-btn:hover,.tp-lang-btn.is-open{border-color:var(--accent-line);box-shadow:0 0 0 3px var(--accent-soft)}
+.tp-lang-menu{display:none;position:absolute;top:calc(100% + 6px);left:0;right:auto;min-width:100%;z-index:40;max-height:280px;overflow:auto;
+  background:var(--surface);border:1px solid var(--line);border-radius:12px;box-shadow:var(--shadow-lg);padding:8px;margin-top:0}
+.tp-lang-btn.is-open + .tp-lang-menu{display:block}
+.tp-form-radios{flex:1;display:flex;flex-direction:column;gap:9px;min-width:0}
+.tp-form-radio{display:flex;align-items:center;gap:11px;border:1px solid var(--line);border-radius:10px;padding:12px 14px;cursor:pointer;transition:all .12s;background:var(--surface);text-decoration:none;color:inherit}
 .tp-form-radio:hover{border-color:var(--accent-line)}
 .tp-form-radio.is-on{border-color:var(--accent);background:var(--accent-soft)}
-.tp-form-radio input{accent-color:var(--accent);width:16px;height:16px;flex:0 0 auto}
+.tp-radio-ui{width:16px;height:16px;border:1.5px solid var(--ink-3);border-radius:50%;flex:0 0 auto;position:relative;background:var(--surface)}
+.tp-form-radio.is-on .tp-radio-ui{border-color:var(--accent)}
+.tp-form-radio.is-on .tp-radio-ui::after{content:"";position:absolute;inset:3px;border-radius:50%;background:var(--accent)}
 .tp-form-radio span{display:inline-flex;align-items:center;gap:8px;font-size:13.5px;color:var(--ink-2)}
 .tp-form-radio b{color:var(--ink);font-weight:600}
 .tp-form-radio svg{width:15px;height:15px;stroke:var(--accent);fill:none;stroke-width:2;stroke-linecap:round;stroke-linejoin:round;flex:0 0 auto}
 .tp-form-run{display:flex;justify-content:flex-end;gap:11px;margin-top:22px}
 .tp-form-cancel{border:1px solid var(--line);background:var(--surface);color:var(--ink-2);border-radius:10px;padding:11px 20px;font:inherit;font-size:14px;font-weight:600;cursor:pointer}
 .tp-form-cancel:hover{border-color:var(--ink-4);color:var(--ink)}
-.tp-form-submit{display:inline-flex;align-items:center;gap:8px;background:var(--accent);color:#fff;border:0;border-radius:10px;padding:11px 22px;font:inherit;font-size:14px;font-weight:600;cursor:pointer;box-shadow:var(--shadow-sm)}
-.tp-form-submit:hover:not(:disabled){filter:brightness(1.07)}
-.tp-form-submit:disabled{opacity:.45;cursor:not-allowed}
+.tp-form-submit{display:inline-flex;align-items:center;gap:8px;background:var(--accent);color:#fff!important;border:0;border-radius:10px;padding:11px 22px;font:inherit;font-size:14px;font-weight:600;cursor:pointer;box-shadow:var(--shadow-sm);text-decoration:none!important}
+.tp-form-submit:hover:not(.is-disabled){filter:brightness(1.07);color:#fff!important;text-decoration:none!important}
+.tp-form-submit.is-disabled,.tp-form-submit[aria-disabled="true"]{opacity:.45;cursor:not-allowed;pointer-events:none;filter:none;box-shadow:none}
 .tp-form-submit svg{width:16px;height:16px;stroke:currentColor;fill:none;stroke-width:2.2;stroke-linecap:round;stroke-linejoin:round}
+.tp-create-go{position:absolute!important;width:1px!important;height:1px!important;padding:0!important;margin:-1px!important;overflow:hidden!important;clip:rect(0,0,0,0)!important;border:0!important;white-space:nowrap!important}
+body[data-page="thesauri"] .tp--create .bo-back{
+  transition:transform .16s ease,border-color .16s ease,background-color .16s ease,color .16s ease,box-shadow .16s ease
+}
+body[data-page="thesauri"] .tp--create .bo-back:hover{
+  transform:translateX(-2px)
+}
+body[data-page="thesauri"] .tp--create .bo-back:active,
+body[data-page="thesauri"] .tp--create .bo-back.is-leaving{
+  transform:scale(.92) translateX(-3px)
+}
+.tp--create.tp--leaving{
+  animation:tp-leave .22s ease forwards;
+  pointer-events:none
+}
+@keyframes tp-leave{
+  from{opacity:1;transform:none}
+  to{opacity:0;transform:translateX(-14px)}
+}
+@media (prefers-reduced-motion:reduce){
+  .tp--create.tp--leaving{animation:none;opacity:.6}
+  body[data-page="thesauri"] .tp--create .bo-back{transition:none}
+}
 /* ACC-4 — identité de l'État : bloc-marque EN HAUT de l'écran amont (prescription DSFR),
    pied de page réduit à la ligne légale obligatoire. Rien de tout ça dans un thésaurus. */
 .tp-gov{display:flex;align-items:center;gap:16px;padding:10px 40px;border-bottom:1px solid var(--line);background:var(--surface);flex:0 0 auto;
@@ -277,7 +314,7 @@ select.tp-form-i{cursor:pointer}
 .gv-mentions a:hover,.gv-links a:hover{color:var(--accent)}
 .gv-lic{font-size:11px;color:var(--ink-4)}
 .gv-ext{font-size:9px;color:var(--ink-4)}
-@media (max-width:820px){.tp--create .bo-back{left:14px}}
+@media (max-width:820px){body[data-page="thesauri"] .tp--create .bo-back{left:14px;top:14px}}
 @media (max-width:900px){.tp{padding:24px 20px 70px}.tp-form-row{flex-direction:column;gap:8px}.tp-form-l{padding-top:0}}
 @media (max-width:820px){.tp-gov{margin:-20px -18px 16px;padding:9px 18px}.gv{padding:9px 18px;margin:0 -18px}.gv-links{margin-left:0}}
 @media (max-width:740px){

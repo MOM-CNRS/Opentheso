@@ -6,6 +6,8 @@ public record NewThesaurusRequest(
         String title,
         String persistentNameThesaurus,
         String language,
-        Integer projectId
+        Integer projectId,
+        boolean privateThesaurus,
+        String organization
 ) implements Serializable {
 }

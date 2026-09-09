@@ -100,6 +100,7 @@
         </ui:fragment>
         </div>
       </div>
+      <ui:fragment rendered="#{v2UserSession.loggedIn}">
       <div class="thesaurus-item">
         <button type="button" class="thesaurus-btn" data-act="thesaurus" data-thesaurus="projects"
                 title="#{v2LocaleBean.getMsg('v2.nav.projects')}" aria-label="#{v2LocaleBean.getMsg('v2.nav.projects')}" aria-expanded="false">
@@ -137,7 +138,7 @@
             </div>
           </a>
         </div>
-        <h:outputLink value="project/projets.xhtml" styleClass="menu-foot" rendered="#{v2UserSession.loggedIn}">
+        <h:outputLink value="project/projets.xhtml" styleClass="menu-foot">
           <svg viewBox="0 0 24 24" aria-hidden="true"><path d="M15 3h6v6"/><path d="M10 14 21 3"/><path d="M18 13v6a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2V8a2 2 0 0 1 2-2h6"/></svg>
           #{v2LocaleBean.getMsg('v2.nav.manageAccess')}
         </h:outputLink>
@@ -156,6 +157,7 @@
           <a class="admin-tile" href="toolbox/statistiques.xhtml"><svg viewBox="0 0 24 24" aria-hidden="true"><path d="M22 12h-4l-3 8L9 4l-3 8H2"/></svg><span>#{v2LocaleBean.getMsg('v2.nav.stats')}</span></a>
         </div></div>
       </div>
+      </ui:fragment>
     </div>
     <div class="thesaurus-spacer"></div>
     <div class="thesaurus-group">

@@ -111,14 +111,14 @@ class NewThesaurusBeanTest {
              MockedStatic<MessageUtils> messages = mockStatic(MessageUtils.class);
              var primeFaces = PrimeFacesTestSupport.open()) {
             stubFacesLookups(faces);
-            when(newThesaurusService.create(any(), eq("admin"))).thenReturn("th1");
+            when(newThesaurusService.create(any(), eq("admin"), eq(2))).thenReturn("th1");
 
             bean.create();
         }
 
         verify(editionBean).showList();
         verify(consultationShellBean).refreshHeaderCatalog();
-        verify(newThesaurusService).create(any(), eq("admin"));
+        verify(newThesaurusService).create(any(), eq("admin"), eq(2));
     }
 
     @Test
@@ -127,13 +127,13 @@ class NewThesaurusBeanTest {
         bean.getEditor().setTitle("Nouveau");
         bean.getEditor().setSelectedLanguage("fr");
         doThrow(new InvalidToolboxDataException("La langue est obligatoire"))
-                .when(newThesaurusService).create(any(), eq("admin"));
+                .when(newThesaurusService).create(any(), eq("admin"), eq(2));
 
         try (MockedStatic<MessageUtils> messages = mockStatic(MessageUtils.class)) {
             bean.create();
         }
 
-        verify(newThesaurusService).create(any(), eq("admin"));
+        verify(newThesaurusService).create(any(), eq("admin"), eq(2));
     }
 
     @Test
@@ -142,7 +142,7 @@ class NewThesaurusBeanTest {
 
         bean.create();
 
-        verify(newThesaurusService, org.mockito.Mockito.never()).create(any(), any());
+        verify(newThesaurusService, org.mockito.Mockito.never()).create(any(), any(), any());
     }
 
     @Test
@@ -167,6 +167,7 @@ class NewThesaurusBeanTest {
     private void stubCreateAccessWithUsername() {
         when(toolboxAccessPolicy.canCreateOrImportThesaurus(userSession)).thenReturn(true);
         when(userSession.getCurrentUsername()).thenReturn("admin");
+        when(userSession.getCurrentUserId()).thenReturn(2);
     }
 
     private void stubEditionBeanLookup(MockedStatic<FacesContext> faces) {
