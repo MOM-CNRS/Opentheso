@@ -23,12 +23,13 @@ public class JsfPrettyUrlFilter extends OncePerRequestFilter {
     private static final String V2_PREVIEW_PREFIX = "/v2-preview";
 
     private static final Map<String, String> FORWARD_TARGETS = Map.ofEntries(
-            Map.entry("/", "/index.xhtml"),
+            Map.entry("/", "/v2/thesauri.xhtml"),
             Map.entry("/reset-password", "/reset-password.xhtml"),
             Map.entry("/profile", "/profile/myAccount.xhtml"),
             Map.entry("/candidat", "/candidat/candidat.xhtml"),
             Map.entry("/toolbox/edition", "/toolbox/edition.xhtml"),
             Map.entry("/v2", "/v2/index.xhtml"),
+            Map.entry("/v2/thesauri", "/v2/thesauri.xhtml"),
             Map.entry(V2_PREVIEW_PREFIX, "/v2/index.xhtml")
     );
 

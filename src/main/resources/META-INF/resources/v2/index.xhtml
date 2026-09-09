@@ -5,10 +5,22 @@
                 template="/v2/includes/layout.xhtml">
   <ui:param name="v2Page" value="accueil"/>
   <ui:define name="viewActions">
+    <f:viewParam name="idt" value="#{v2ThesaurusContext.idThesoFromUri}"/>
+    <f:viewAction action="#{v2ConsultationShellBean.applyThesaurusFromUrl}" onPostback="false"/>
+    <f:viewAction action="#{v2ThesaurusViewBean.showThesaurusHome}" onPostback="false"/>
     <f:viewAction action="#{v2ThesaurusViewBean.restoreOpenedConcept}" onPostback="false"/>
   </ui:define>
   <ui:define name="title">OpenTheso — #{v2ThesaurusViewBean.title}</ui:define>
   <ui:define name="main">
-          <ui:include src="/v2/includes/home.xhtml"/>
+          <ui:fragment rendered="#{empty v2ThesaurusViewBean.id}">
+            <div class="empty">
+              <div class="empty-ico">◆</div>
+              <p class="empty-t">Aucun thésaurus sélectionné</p>
+              <p class="empty-s"><a href="#{request.contextPath}/v2/thesauri">Choisir un thésaurus</a></p>
+            </div>
+          </ui:fragment>
+          <ui:fragment rendered="#{not empty v2ThesaurusViewBean.id}">
+            <ui:include src="/v2/includes/home.xhtml"/>
+          </ui:fragment>
   </ui:define>
 </ui:composition>

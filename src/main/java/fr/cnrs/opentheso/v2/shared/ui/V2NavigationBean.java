@@ -35,6 +35,11 @@ public class V2NavigationBean implements Serializable {
         redirect("/v2");
     }
 
+    public void redirectToThesaurusPicker() throws IOException {
+        activePageName = "thesaurusPickerV2";
+        redirect("/v2/thesauri");
+    }
+
     public void redirectToCandidat() throws IOException {
         requireThesaurus();
         activePageName = "candidatV2";

@@ -116,4 +116,112 @@ public class ConsultationCatalogQueryRepository {
         }
         return List.copyOf(unique.values());
     }
+
+    /**
+     * Liste enrichie pour l'écran de sélection de thésaurus (publics + membres).
+     */
+    @SuppressWarnings("unchecked")
+    public List<Object[]> findPickerThesaurusRows(Integer userId, boolean superAdmin, String lang) {
+        // Sentinelle : un userId null non typé fait échouer PostgreSQL (42P18).
+        int resolvedUserId = userId == null ? -1 : userId;
+        String sql = """
+                WITH titled AS (
+                    SELECT
+                        t.id_thesaurus,
+                        COALESCE(tl_sub.title, t.id_thesaurus) AS title,
+                        COALESCE(t."private", false) AS is_private,
+                        t.created,
+                        COALESCE(p.source_lang, CAST(:lang AS text)) AS source_lang,
+                        COALESCE(tl_sub.subject, '') AS domain,
+                        COALESCE(tl_sub.publisher, '') AS organization,
+                        COALESCE(tl_sub.coverage, '') AS chronology
+                    FROM thesaurus t
+                    LEFT JOIN preferences p ON p.id_thesaurus = t.id_thesaurus
+                    LEFT JOIN LATERAL (
+                        SELECT tl.title, tl.subject, tl.publisher, tl.coverage
+                        FROM thesaurus_label tl
+                        WHERE tl.id_thesaurus = t.id_thesaurus
+                          AND tl.title IS NOT NULL
+                          AND BTRIM(tl.title) <> ''
+                        ORDER BY
+                          CASE
+                            WHEN tl.lang = COALESCE(p.source_lang, CAST(:lang AS text)) THEN 0
+                            WHEN tl.lang = CAST(:lang AS text) THEN 1
+                            ELSE 2
+                          END
+                        LIMIT 1
+                    ) tl_sub ON true
+                ),
+                member_roles AS (
+                    SELECT
+                        ugt.id_thesaurus,
+                        MIN(user_roles.id_role) AS id_role
+                    FROM user_group_thesaurus ugt
+                    JOIN (
+                        SELECT id_group, id_role
+                        FROM user_role_group
+                        WHERE id_user = CAST(:userId AS integer)
+                        UNION ALL
+                        SELECT id_group, id_role
+                        FROM user_role_only_on
+                        WHERE id_user = CAST(:userId AS integer)
+                    ) user_roles ON user_roles.id_group = ugt.id_group
+                    WHERE CAST(:userId AS integer) >= 0
+                    GROUP BY ugt.id_thesaurus
+                )
+                SELECT
+                    titled.id_thesaurus,
+                    titled.title,
+                    titled.is_private,
+                    titled.created,
+                    CASE
+                        WHEN member_roles.id_thesaurus IS NOT NULL THEN 'member'
+                        ELSE 'public'
+                    END AS access_kind,
+                    COALESCE((
+                        SELECT COUNT(c.id_concept)
+                        FROM concept c
+                        WHERE c.id_thesaurus = titled.id_thesaurus
+                          AND COALESCE(c.status, '') <> 'CA'
+                    ), 0) AS term_count,
+                    COALESCE((
+                        SELECT string_agg(DISTINCT ugl.label_group, ', ' ORDER BY ugl.label_group)
+                        FROM user_group_thesaurus ugt
+                        JOIN user_group_label ugl ON ugl.id_group = ugt.id_group
+                        WHERE ugt.id_thesaurus = titled.id_thesaurus
+                    ), '') AS projects,
+                    COALESCE((
+                        SELECT string_agg(DISTINCT tl.lang, ',' ORDER BY tl.lang)
+                        FROM thesaurus_label tl
+                        WHERE tl.id_thesaurus = titled.id_thesaurus
+                          AND tl.lang IS NOT NULL
+                          AND BTRIM(tl.lang) <> ''
+                    ), '') AS langs,
+                    titled.domain,
+                    titled.organization,
+                    titled.chronology,
+                    member_roles.id_role
+                FROM titled
+                LEFT JOIN member_roles ON member_roles.id_thesaurus = titled.id_thesaurus
+                WHERE
+                    (
+                        CAST(:userId AS integer) < 0
+                        AND titled.is_private = false
+                    )
+                    OR (
+                        CAST(:userId AS integer) >= 0
+                        AND (
+                            CAST(:superAdmin AS boolean) = true
+                            OR member_roles.id_thesaurus IS NOT NULL
+                            OR titled.is_private = false
+                        )
+                    )
+                ORDER BY LOWER(titled.title), titled.id_thesaurus
+                """;
+        return entityManager.createNativeQuery(sql)
+                .setParameter(NativeQueryParams.USER_ID, resolvedUserId)
+                .setParameter("superAdmin", superAdmin)
+                .setParameter("lang", lang)
+                .getResultList();
+    }
 }

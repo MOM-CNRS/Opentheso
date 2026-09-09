@@ -36,7 +36,7 @@ import java.util.Map;
  * Comportement aligné sur le legacy {@code SelectedTheso} :
  * <ul>
  *   <li>changement de projet → AJAX (rafraîchit la liste des thésaurus + contenu)</li>
- *   <li>changement de thésaurus → redirect HTTP vers {@code /v2}</li>
+ *   <li>changement de thésaurus → redirect HTTP vers {@code /v2} (arbre)</li>
  * </ul>
  */
 @Getter
@@ -47,8 +47,6 @@ import java.util.Map;
 public class ConsultationShellBean implements Serializable {
 
     private static final int ALL_PROJECTS_ID = -1;
-    /** Vue JSF concrète du front v2, pas la pretty URL. */
-    private static final String BROWSE_VIEW = "/v2/index.xhtml";
 
     private final transient ConsultationCatalogService consultationCatalogService;
     private final transient ThesaurusContext thesaurusContext;
@@ -97,6 +95,36 @@ public class ConsultationShellBean implements Serializable {
         }
         syncHomePanels();
         refreshBrowseState();
+    }
+
+    /**
+     * Applique {@code ?idt=} (sélection depuis le picker ou lien profond),
+     * puis positionne l'écran sur l'accueil détail du thésaurus.
+     */
+    public void applyThesaurusFromUrl() {
+        String idFromUri = StringUtils.trimToNull(thesaurusContext.getIdThesoFromUri());
+        if (idFromUri == null) {
+            FacesContext facesContext = FacesContext.getCurrentInstance();
+            if (facesContext != null) {
+                idFromUri = StringUtils.trimToNull(
+                        facesContext.getExternalContext().getRequestParameterMap().get("idt"));
+            }
+        }
+        if (idFromUri == null) {
+            return;
+        }
+        selectedThesaurusId = idFromUri;
+        thesaurusContext.setIdThesoFromUri(null);
+        thesaurusContext.setFromUrl(false);
+        // Le catalogue shell peut être vide / filtré par projet : on le recharge
+        // pour récupérer titre + langue source, sinon fallback selectThesaurus(id).
+        refreshCatalog();
+        applyThesaurusSelection(selectedThesaurusId);
+        conceptSelectionContext.clear();
+        conceptTreeRefreshState.requestRefresh();
+        syncSelectionFromContext();
+        syncHomePanels();
+        safeClearSearchResults();
     }
 
     /**
@@ -338,7 +366,14 @@ public class ConsultationShellBean implements Serializable {
             return;
         }
         ExternalContext context = facesContext.getExternalContext();
-        String url = context.getRequestContextPath() + BROWSE_VIEW + "?_=" + System.currentTimeMillis();
+        String thesaurusId = StringUtils.trimToEmpty(thesaurusContext.resolveThesaurusId());
+        String url = context.getRequestContextPath() + "/v2/index.xhtml";
+        if (StringUtils.isNotBlank(thesaurusId)) {
+            url += "?idt=" + java.net.URLEncoder.encode(thesaurusId, java.nio.charset.StandardCharsets.UTF_8)
+                    + "&_=" + System.currentTimeMillis();
+        } else {
+            url += "?_=" + System.currentTimeMillis();
+        }
         if (PrimeFaces.current().isAjaxRequest()) {
             PrimeFaces.current().executeScript("window.location.assign('" + url + "');");
             return;

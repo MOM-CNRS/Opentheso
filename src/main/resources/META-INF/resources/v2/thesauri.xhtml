@@ -1,0 +1,344 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<ui:composition xmlns="http://www.w3.org/1999/xhtml"
+                xmlns:ui="http://xmlns.jcp.org/jsf/facelets"
+                xmlns:h="http://xmlns.jcp.org/jsf/html"
+                xmlns:f="http://xmlns.jcp.org/jsf/core"
+                xmlns:pt="http://xmlns.jcp.org/jsf/passthrough"
+                template="/v2/includes/layout.xhtml">
+  <ui:param name="v2Page" value="thesauri"/>
+  <ui:define name="title">OpenTheso — Sélection de thésaurus</ui:define>
+  <ui:define name="detail"/>
+  <ui:define name="main">
+    <h:form id="thesaurusPickerForm" prependId="false" styleClass="tp-form-root">
+      <div class="tp">
+        <div class="tp-gov">
+          <a class="tp-gov-mark" href="#{request.contextPath}/v2/thesauri"
+             title="Retour à l'accueil — Ministère de la Culture">
+            <span class="tp-marianne" aria-hidden="true">
+              <span class="tp-marianne-bars"><i/><i/><i/></span>
+              <span class="tp-marianne-txt">
+                <b>République</b>
+                <b>Française</b>
+              </span>
+            </span>
+          </a>
+          <div class="tp-gov-brand">
+            <span class="gv-min">Ministère<br/>de la Culture</span>
+          </div>
+          <a class="tp-gov-lk" href="https://www.culture.gouv.fr" target="_blank" rel="noreferrer">
+            culture.gouv.fr<span class="gv-ext" aria-hidden="true">↗</span>
+          </a>
+        </div>
+
+        <div class="tp-head">
+          <div>
+            <h1 class="tp-title">OpenTheso</h1>
+            <p class="tp-sub">Sélectionnez un thésaurus pour l'ouvrir, ou créez-en un nouveau.</p>
+          </div>
+        </div>
+
+        <div class="tp-bar">
+          <div class="tp-search">
+            <span class="tp-search-ico" aria-hidden="true">
+              <svg viewBox="0 0 24 24"><circle cx="11" cy="11" r="7"/><path d="m20 20-3-3"/></svg>
+            </span>
+            <h:inputText id="tpQuery"
+                         value="#{v2ThesaurusPickerBean.query}"
+                         styleClass="tp-search-input"
+                         pt:placeholder="Rechercher un thésaurus (nom, domaine, organisation, projet…)"
+                         pt:spellcheck="false">
+              <f:ajax event="keyup" delay="200" execute="@this" render="tpTabs tpTableWrap"/>
+            </h:inputText>
+            <h:commandLink styleClass="tp-search-x"
+                           rendered="#{not empty v2ThesaurusPickerBean.query}"
+                           title="Effacer"
+                           action="#{v2ThesaurusPickerBean.clearQuery()}">
+              <f:ajax execute="@this" render="tpQuery tpTabs tpTableWrap"/>
+              <h:outputText value="×"/>
+            </h:commandLink>
+          </div>
+          <h:commandLink styleClass="tp-create"
+                         rendered="#{v2ThesaurusPickerBean.canCreateThesaurus}"
+                         action="#{v2ThesaurusPickerBean.createThesaurus}">
+            <svg class="tp-create-ico" viewBox="0 0 24 24" aria-hidden="true">
+              <path d="M12 5v14"/><path d="M5 12h14"/>
+            </svg>
+            <h:outputText value="Créer un thésaurus"/>
+          </h:commandLink>
+        </div>
+
+        <h:panelGroup id="tpTabs" layout="block" styleClass="tp-tabs#{v2ThesaurusPickerBean.loggedIn ? '' : ' is-guest'}">
+          <ui:fragment rendered="#{v2ThesaurusPickerBean.loggedIn}">
+            <h:commandLink styleClass="tp-tab#{v2ThesaurusPickerBean.activeTab eq 'all' ? ' is-on' : ''}"
+                           action="#{v2ThesaurusPickerBean.selectTab('all')}">
+              <f:ajax execute="@this" render="tpTabs tpTableWrap"/>
+              <h:outputText value="Tous"/>
+              <span class="tp-tab-n">#{v2ThesaurusPickerBean.queryMatchCount}</span>
+            </h:commandLink>
+            <h:commandLink styleClass="tp-tab#{v2ThesaurusPickerBean.activeTab eq 'member' ? ' is-on' : ''}"
+                           action="#{v2ThesaurusPickerBean.selectTab('member')}">
+              <f:ajax execute="@this" render="tpTabs tpTableWrap"/>
+              <svg viewBox="0 0 24 24" aria-hidden="true"><path d="M21 2l-2 2m-7.6 7.6L3 21l3-1 1-3 7.4-7.4M14 6l4 4"/></svg>
+              <h:outputText value="Mes thésaurus"/>
+              <span class="tp-tab-n">#{v2ThesaurusPickerBean.memberCount}</span>
+            </h:commandLink>
+            <h:commandLink styleClass="tp-tab#{v2ThesaurusPickerBean.activeTab eq 'public' ? ' is-on' : ''}"
+                           action="#{v2ThesaurusPickerBean.selectTab('public')}">
+              <f:ajax execute="@this" render="tpTabs tpTableWrap"/>
+              <svg viewBox="0 0 24 24" aria-hidden="true"><circle cx="12" cy="12" r="9"/><path d="M3 12h18M12 3a14 14 0 0 1 0 18M12 3a14 14 0 0 0 0 18"/></svg>
+              <h:outputText value="Publics"/>
+              <span class="tp-tab-n">#{v2ThesaurusPickerBean.publicCount}</span>
+            </h:commandLink>
+          </ui:fragment>
+        </h:panelGroup>
+
+        <div class="tp-body">
+          <h:panelGroup id="tpTableWrap" layout="block" styleClass="tp-table-wrap">
+            <table class="tp-table">
+              <thead>
+                <tr>
+                  <th class="tp-th tp-th--cfg">
+                    <span class="tp-cols">
+                      <h:commandLink styleClass="tp-cfg-btn#{v2ThesaurusPickerBean.columnsMenuOpen ? ' is-on' : ''}"
+                                     title="Configurer les colonnes (affichage &amp; ordre)"
+                                     action="#{v2ThesaurusPickerBean.toggleColumnsMenu}">
+                        <f:ajax execute="@this" render="tpTableWrap"/>
+                        <svg viewBox="0 0 24 24" aria-hidden="true">
+                          <circle cx="12" cy="12" r="3"/>
+                          <path d="M19.4 15a1.7 1.7 0 0 0 .3 1.8l.1.1a2 2 0 1 1-2.8 2.8l-.1-.1a1.7 1.7 0 0 0-1.8-.3 1.7 1.7 0 0 0-1 1.5V21a2 2 0 1 1-4 0v-.1a1.7 1.7 0 0 0-1-1.5 1.7 1.7 0 0 0-1.8.3l-.1.1a2 2 0 1 1-2.8-2.8l.1-.1a1.7 1.7 0 0 0 .3-1.8 1.7 1.7 0 0 0-1.5-1H3a2 2 0 1 1 0-4h.1a1.7 1.7 0 0 0 1.5-1 1.7 1.7 0 0 0-.3-1.8l-.1-.1a2 2 0 1 1 2.8-2.8l.1.1a1.7 1.7 0 0 0 1.8.3H9a1.7 1.7 0 0 0 1-1.5V3a2 2 0 1 1 4 0v.1a1.7 1.7 0 0 0 1 1.5 1.7 1.7 0 0 0 1.8-.3l.1-.1a2 2 0 1 1 2.8 2.8l-.1.1a1.7 1.7 0 0 0-.3 1.8V9a1.7 1.7 0 0 0 1.5 1H21a2 2 0 1 1 0 4h-.1a1.7 1.7 0 0 0-1.5 1z"/>
+                        </svg>
+                      </h:commandLink>
+                      <ui:fragment rendered="#{v2ThesaurusPickerBean.columnsMenuOpen}">
+                        <div class="tp-cols-menu">
+                          <div class="tp-cols-h">Colonnes du tableau<span>ordre &amp; affichage</span></div>
+                          <div class="tp-cols-list">
+                            <ui:repeat value="#{v2ThesaurusPickerBean.columnCfg}" var="col" varStatus="st">
+                              <div class="tp-cols-row">
+                                <span class="tp-cols-grip" aria-hidden="true">⋮⋮</span>
+                                <label class="tp-cols-lbl">
+                                  <h:selectBooleanCheckbox value="#{col.on}" disabled="#{col.nameLocked}">
+                                    <f:ajax event="change" render="tpTableWrap"/>
+                                  </h:selectBooleanCheckbox>
+                                  <span>#{v2ThesaurusPickerBean.getColumnLabel(col.key)}</span>
+                                </label>
+                                <span class="tp-cols-ord">
+                                  <h:commandButton styleClass="tp-cols-mv" value="▲"
+                                                   disabled="#{st.first}"
+                                                   action="#{v2ThesaurusPickerBean.moveColumnUp(col.key)}">
+                                    <f:ajax execute="@this" render="tpTableWrap"/>
+                                  </h:commandButton>
+                                  <h:commandButton styleClass="tp-cols-mv" value="▼"
+                                                   disabled="#{st.last}"
+                                                   action="#{v2ThesaurusPickerBean.moveColumnDown(col.key)}">
+                                    <f:ajax execute="@this" render="tpTableWrap"/>
+                                  </h:commandButton>
+                                </span>
+                              </div>
+                            </ui:repeat>
+                          </div>
+                          <h:commandButton styleClass="tp-cols-reset" value="Réinitialiser"
+                                           action="#{v2ThesaurusPickerBean.resetColumns}">
+                            <f:ajax execute="@this" render="tpTableWrap"/>
+                          </h:commandButton>
+                        </div>
+                      </ui:fragment>
+                    </span>
+                  </th>
+                  <ui:repeat value="#{v2ThesaurusPickerBean.visibleColumns}" var="col">
+                    <th class="tp-th#{v2ThesaurusPickerBean.isColumnGrow(col.key) ? ' tp-th--grow' : ''}#{col.key eq 'name' ? ' tp-th--name' : ''}#{v2ThesaurusPickerBean.isSortedBy(col.key) ? ' is-sorted' : ''}">
+                      <h:commandLink styleClass="tp-th-l" action="#{v2ThesaurusPickerBean.toggleSort(col.key)}">
+                        <f:ajax execute="@this" render="tpTableWrap"/>
+                        <span>#{v2ThesaurusPickerBean.getColumnLabel(col.key)}</span>
+                        <ui:fragment rendered="#{v2ThesaurusPickerBean.isSortedBy(col.key)}">
+                          <span class="tp-th-s">#{v2ThesaurusPickerBean.sortAscending ? '▲' : '▼'}</span>
+                        </ui:fragment>
+                      </h:commandLink>
+                    </th>
+                  </ui:repeat>
+                  <th class="tp-th tp-th--edit"/>
+                </tr>
+                <tr class="tp-filters">
+                  <th class="tp-th--cfg"/>
+                  <ui:repeat value="#{v2ThesaurusPickerBean.visibleColumns}" var="col">
+                    <th class="#{col.key eq 'name' ? 'tp-fth--name' : ''}">
+                      <ui:fragment rendered="#{col.key eq 'name'}">
+                        <h:inputText styleClass="tp-fi" value="#{v2ThesaurusPickerBean.filterName}" pt:placeholder="Filtrer…">
+                          <f:ajax event="keyup" delay="200" execute="@this" render="tpTableWrap"/>
+                        </h:inputText>
+                      </ui:fragment>
+                      <ui:fragment rendered="#{col.key eq 'domain'}">
+                        <h:inputText styleClass="tp-fi" value="#{v2ThesaurusPickerBean.filterDomain}" pt:placeholder="Filtrer…">
+                          <f:ajax event="keyup" delay="200" execute="@this" render="tpTableWrap"/>
+                        </h:inputText>
+                      </ui:fragment>
+                      <ui:fragment rendered="#{col.key eq 'projects'}">
+                        <h:inputText styleClass="tp-fi" value="#{v2ThesaurusPickerBean.filterProjects}" pt:placeholder="Filtrer…">
+                          <f:ajax event="keyup" delay="200" execute="@this" render="tpTableWrap"/>
+                        </h:inputText>
+                      </ui:fragment>
+                      <ui:fragment rendered="#{col.key eq 'org'}">
+                        <h:inputText styleClass="tp-fi" value="#{v2ThesaurusPickerBean.filterOrg}" pt:placeholder="Filtrer…">
+                          <f:ajax event="keyup" delay="200" execute="@this" render="tpTableWrap"/>
+                        </h:inputText>
+                      </ui:fragment>
+                      <ui:fragment rendered="#{col.key eq 'lang'}">
+                        <h:selectOneMenu styleClass="tp-fi tp-fi--lang" value="#{v2ThesaurusPickerBean.filterLang}">
+                          <f:selectItem itemValue="" itemLabel="Toutes ▾"/>
+                          <f:selectItems value="#{v2ThesaurusPickerBean.availableLanguages}" var="lg"
+                                         itemValue="#{lg}"
+                                         itemLabel="#{v2ThesaurusPickerBean.languageOptionLabel(lg)}"/>
+                          <f:ajax event="change" execute="@this" render="tpTableWrap"/>
+                        </h:selectOneMenu>
+                      </ui:fragment>
+                    </th>
+                  </ui:repeat>
+                  <th class="tp-th--edit"/>
+                </tr>
+              </thead>
+              <tbody>
+                <ui:fragment rendered="#{empty v2ThesaurusPickerBean.filteredRows}">
+                  <tr class="tp-empty-row">
+                    <td colspan="#{v2ThesaurusPickerBean.emptyColspan}">Aucun thésaurus ne correspond.</td>
+                  </tr>
+                </ui:fragment>
+                <ui:repeat value="#{v2ThesaurusPickerBean.filteredRows}" var="row">
+                  <tr class="tp-row" tabindex="0">
+                    <td class="tp-c-cfg"/>
+                    <ui:repeat value="#{v2ThesaurusPickerBean.visibleColumns}" var="col">
+                      <ui:fragment rendered="#{col.key eq 'name'}">
+                        <td data-label="Thésaurus" class="tp-c-name tp-col-name">
+                          <h:commandLink styleClass="tp-c-name-in" action="#{v2ThesaurusPickerBean.openThesaurus}"
+                                         onclick="return window.tpShowLoading &amp;&amp; window.tpShowLoading();">
+                            <f:param name="openThesaurusId" value="#{row.id}"/>
+                            <span class="tp-name">#{row.name}</span>
+                            <span class="tp-id">#{row.id}</span>
+                          </h:commandLink>
+                        </td>
+                      </ui:fragment>
+                      <ui:fragment rendered="#{col.key eq 'access'}">
+                        <td data-label="Accès" class="tp-c-access">
+                          <span class="tp-badge #{row.accessBadgeClass}" title="#{row.accessTitle}">
+                            <ui:fragment rendered="#{row.access eq 'member'}">
+                              <svg viewBox="0 0 24 24" aria-hidden="true"><path d="M21 2l-2 2m-7.6 7.6L3 21l3-1 1-3 7.4-7.4M14 6l4 4"/></svg>
+                            </ui:fragment>
+                            <ui:fragment rendered="#{row.access ne 'member' and not row.privateThesaurus}">
+                              <svg viewBox="0 0 24 24" aria-hidden="true"><circle cx="12" cy="12" r="9"/><path d="M3 12h18M12 3a14 14 0 0 1 0 18M12 3a14 14 0 0 0 0 18"/></svg>
+                            </ui:fragment>
+                            <ui:fragment rendered="#{row.access ne 'member' and row.privateThesaurus}">
+                              <svg viewBox="0 0 24 24" aria-hidden="true"><rect x="5" y="11" width="14" height="10" rx="2"/><path d="M8 11V8a4 4 0 0 1 8 0v3"/></svg>
+                            </ui:fragment>
+                            <span class="tp-badge-lbl">#{row.accessLabel}</span>
+                          </span>
+                        </td>
+                      </ui:fragment>
+                      <ui:fragment rendered="#{col.key eq 'terms'}">
+                        <td data-label="Termes" class="tp-num">#{row.termsLabel}</td>
+                      </ui:fragment>
+                      <ui:fragment rendered="#{col.key eq 'created'}">
+                        <td data-label="Créé le" class="tp-mono">#{row.createdLabel}</td>
+                      </ui:fragment>
+                      <ui:fragment rendered="#{col.key eq 'domain'}">
+                        <td data-label="Domaine">#{empty row.domain ? '—' : row.domain}</td>
+                      </ui:fragment>
+                      <ui:fragment rendered="#{col.key eq 'projects'}">
+                        <td data-label="Projets">#{empty row.projects ? '—' : row.projects}</td>
+                      </ui:fragment>
+                      <ui:fragment rendered="#{col.key eq 'org'}">
+                        <td data-label="Organisation">#{empty row.organization ? '—' : row.organization}</td>
+                      </ui:fragment>
+                      <ui:fragment rendered="#{col.key eq 'chrono'}">
+                        <td data-label="Chronologie" class="tp-mono">#{empty row.chronology ? '—' : row.chronology}</td>
+                      </ui:fragment>
+                      <ui:fragment rendered="#{col.key eq 'lang'}">
+                        <td data-label="Langues" class="tp-c-lang" title="#{v2ThesaurusPickerBean.languagesTitle(row.languages)}">
+                          <span class="tp-langs-in">
+                            <ui:repeat value="#{row.languages}" var="lang" varStatus="langSt">
+                              <span class="tp-lang#{v2ThesaurusPickerBean.isCollapsedLanguage(row.languages, langSt.index) ? ' tp-lang--extra' : ''}"
+                                    title="#{v2ThesaurusPickerBean.languageLabel(lang)}">
+                                <span class="tp-lang-fl" aria-hidden="true">#{v2ThesaurusPickerBean.languageFlag(lang)}</span>
+                                <span class="tp-lang-code">#{lang}</span>
+                              </span>
+                            </ui:repeat>
+                            <ui:fragment rendered="#{v2ThesaurusPickerBean.hiddenLanguageCount(row.languages) gt 0}">
+                              <button type="button"
+                                      class="tp-lang tp-lang--more"
+                                      data-more="+#{v2ThesaurusPickerBean.hiddenLanguageCount(row.languages)}"
+                                      aria-expanded="false"
+                                      title="Afficher toutes les langues"
+                                      onclick="return window.tpToggleLangs(this, event);">
+                                +#{v2ThesaurusPickerBean.hiddenLanguageCount(row.languages)}
+                              </button>
+                            </ui:fragment>
+                            <ui:fragment rendered="#{empty row.languages}">
+                              <span class="tp-lang-empty">—</span>
+                            </ui:fragment>
+                          </span>
+                        </td>
+                      </ui:fragment>
+                    </ui:repeat>
+                    <td class="tp-c-edit">
+                      <h:commandLink styleClass="tp-edit" title="Ouvrir ce thésaurus"
+                                     action="#{v2ThesaurusPickerBean.openThesaurus}"
+                                     onclick="return window.tpShowLoading &amp;&amp; window.tpShowLoading();">
+                        <f:param name="openThesaurusId" value="#{row.id}"/>
+                        <svg viewBox="0 0 24 24" aria-hidden="true"><path d="M12 20h9"/><path d="M16.5 3.5a2.1 2.1 0 0 1 3 3L7 19l-4 1 1-4Z"/></svg>
+                      </h:commandLink>
+                    </td>
+                  </tr>
+                </ui:repeat>
+              </tbody>
+            </table>
+          </h:panelGroup>
+        </div>
+
+        <footer class="gv">
+          <img class="gv-mark" src="#{request.contextPath}/resources/img/logo_Opentheso2.png" alt="OpenTheso"/>
+          <nav class="gv-mentions" aria-label="Informations légales">
+            <a href="#">Mentions légales</a>
+            <a href="#">Données personnelles</a>
+            <a href="#">Accessibilité : partiellement conforme</a>
+            <span class="gv-lic">Code sous licence CeCILL</span>
+          </nav>
+          <nav class="gv-links" aria-label="Sites publics">
+            <a href="https://www.legifrance.gouv.fr" target="_blank" rel="noreferrer">legifrance.gouv.fr<span class="gv-ext" aria-hidden="true">↗</span></a>
+            <a href="https://www.info.gouv.fr" target="_blank" rel="noreferrer">info.gouv.fr<span class="gv-ext" aria-hidden="true">↗</span></a>
+            <a href="https://www.service-public.fr" target="_blank" rel="noreferrer">service-public.fr<span class="gv-ext" aria-hidden="true">↗</span></a>
+            <a href="https://www.data.gouv.fr" target="_blank" rel="noreferrer">data.gouv.fr<span class="gv-ext" aria-hidden="true">↗</span></a>
+          </nav>
+        </footer>
+      </div>
+      <div id="tpLoading" class="tp-loading" hidden="hidden" aria-live="polite" aria-busy="false">
+        <div class="tp-loading-card">
+          <span class="tp-loading-spin" aria-hidden="true"></span>
+          <span class="tp-loading-txt">Ouverture du thésaurus…</span>
+        </div>
+      </div>
+    </h:form>
+    <script type="text/javascript">
+      //<![CDATA[
+      window.tpShowLoading = function () {
+        var el = document.getElementById('tpLoading');
+        if (!el) return true;
+        el.hidden = false;
+        el.setAttribute('aria-busy', 'true');
+        document.body.classList.add('tp-is-loading');
+        return true;
+      };
+      window.tpToggleLangs = function (btn, evt) {
+        if (evt) {
+          evt.preventDefault();
+          evt.stopPropagation();
+        }
+        if (!btn) return false;
+        var wrap = btn.closest('.tp-langs-in');
+        if (!wrap) return false;
+        var expanded = wrap.classList.toggle('is-expanded');
+        btn.setAttribute('aria-expanded', expanded ? 'true' : 'false');
+        btn.setAttribute('title', expanded ? 'Réduire la liste des langues' : 'Afficher toutes les langues');
+        btn.textContent = expanded ? '−' : (btn.getAttribute('data-more') || '+');
+        return false;
+      };
+      //]]>
+    </script>
+  </ui:define>
+</ui:composition>

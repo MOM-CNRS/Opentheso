@@ -68,6 +68,7 @@ public class ThesaurusViewBean implements Serializable {
     private final transient ToolboxAccessPolicy toolboxAccessPolicy;
     private final transient ConceptSelectionContext conceptSelectionContext;
     private final transient ThesaurusSearchLanguageSync thesaurusSearchLanguageSync;
+    private final transient ConsultationShellBean consultationShellBean;
     private ThesaurusHomeOverview homeOverview;
     private List<ThesaurusLanguage> languages;
     private String selectedLang;
@@ -129,6 +130,35 @@ public class ThesaurusViewBean implements Serializable {
 
     public void ensureSessionThesaurus() {
         sessionReady = true;
+        applyThesaurusIdFromRequest();
+    }
+
+    /**
+     * Applique {@code ?idt=} même si les {@code f:viewAction} du template n'ont pas tourné.
+     */
+    private void applyThesaurusIdFromRequest() {
+        FacesContext facesContext = FacesContext.getCurrentInstance();
+        if (facesContext == null) {
+            return;
+        }
+        String idt = StringUtils.trimToNull(
+                facesContext.getExternalContext().getRequestParameterMap().get("idt"));
+        if (idt == null) {
+            return;
+        }
+        String current = thesaurusContext.resolveThesaurusId();
+        if (idt.equalsIgnoreCase(StringUtils.defaultString(current))) {
+            return;
+        }
+        thesaurusContext.selectThesaurus(idt);
+        conceptSelectionContext.clear();
+        invalidateHomeOverview();
+        invalidateTree();
+        homeHtml = null;
+        languages = null;
+        selectedLang = null;
+        canEdit = null;
+        consultationShellBean.setSelectedThesaurusId(idt);
     }
 
     public String getId() {
@@ -479,6 +509,27 @@ public class ThesaurusViewBean implements Serializable {
 
     public void openSelectedNode() {
         openTreeNode(openId, openType);
+    }
+
+    /**
+     * Accueil détail du thésaurus (pas de concept ouvert) — utilisé depuis le picker.
+     */
+    public void showThesaurusHome() {
+        selectedConcept = null;
+        selectedFacet = null;
+        selectedKind = "";
+        selectedId = "";
+        detailRequested = false;
+        revealId = "";
+        revealedConceptId = "";
+        resetConceptExtras();
+        conceptSelectionContext.clear();
+        invalidateHomeOverview();
+        invalidateTree();
+        homeHtml = null;
+        canEdit = null;
+        languages = null;
+        selectedLang = null;
     }
 
     public void openTreeNode(String id, String nodeType) {

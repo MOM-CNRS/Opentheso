@@ -10,8 +10,9 @@ class JsfPrettyUrlFilterTest {
     @Test
     void prettyUrlsForwardToJsfViews() {
         assertEquals("/v2/index.xhtml", JsfPrettyUrlFilter.resolveForwardTarget("/v2"));
+        assertEquals("/v2/thesauri.xhtml", JsfPrettyUrlFilter.resolveForwardTarget("/v2/thesauri"));
         assertEquals("/v2/index.xhtml", JsfPrettyUrlFilter.resolveForwardTarget("/v2-preview"));
-        assertEquals("/index.xhtml", JsfPrettyUrlFilter.resolveForwardTarget("/"));
+        assertEquals("/v2/thesauri.xhtml", JsfPrettyUrlFilter.resolveForwardTarget("/"));
     }
 
     @Test

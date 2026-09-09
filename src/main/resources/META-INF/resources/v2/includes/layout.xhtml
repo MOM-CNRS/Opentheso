@@ -6,7 +6,9 @@
       xmlns:f="http://xmlns.jcp.org/jsf/core"
       lang="#{v2LocaleBean.idLangue}">
 <f:metadata>
+  <f:viewParam name="idt" value="#{v2ThesaurusContext.idThesoFromUri}"/>
   <f:viewAction action="#{v2LocaleBean.applyToView}"/>
+  <f:viewAction action="#{v2ConsultationShellBean.applyThesaurusFromUrl}" onPostback="false"/>
   <f:viewAction action="#{v2ThesaurusViewBean.ensureSessionThesaurus}"/>
   <ui:insert name="viewActions"/>
 </f:metadata>
@@ -21,6 +23,7 @@
   <link href="https://fonts.googleapis.com/css2?family=IBM+Plex+Mono:wght@400;500;600&amp;family=IBM+Plex+Sans:wght@400;500;600;700&amp;display=swap" rel="stylesheet"/>
   <link rel="stylesheet" href="#{request.contextPath}/resources/css/v2-prototype-recherche.css?v=#{v2Assets.v}"/>
   <link rel="stylesheet" href="#{request.contextPath}/resources/css/v2.css?v=#{v2Assets.v}"/>
+  <link rel="stylesheet" href="#{request.contextPath}/resources/css/v2-thesaurus-picker.css?v=#{v2Assets.v}"/>
 </head>
 <body data-page="#{v2Page}" data-ctx="#{request.contextPath}"
       data-logged-in="#{v2UserSession.loggedIn ? '1' : '0'}"
