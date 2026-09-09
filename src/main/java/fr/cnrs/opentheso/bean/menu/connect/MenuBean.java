@@ -91,7 +91,7 @@ public class MenuBean implements Serializable {
         propositionBean.setRubriqueVisible(false);
         consultationVersionSwitchSupport.syncV2FromLegacy();
         ExternalContext context = FacesContext.getCurrentInstance().getExternalContext();
-        context.redirect(context.getRequestContextPath() + "/v2");
+        context.redirect(context.getRequestContextPath() + "/v2/thesauri");
     }
 
     public void redirectToThesaurusLegacyFromV2() throws IOException {

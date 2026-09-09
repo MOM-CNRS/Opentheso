@@ -31,8 +31,8 @@ public class V2NavigationBean implements Serializable {
     private String activePageName = "thesaurusV2";
 
     public void redirectToThesaurus() throws IOException {
-        activePageName = "thesaurusV2";
-        redirect("/v2");
+        activePageName = "thesaurusPickerV2";
+        redirect("/v2/thesauri");
     }
 
     public void redirectToThesaurusPicker() throws IOException {
@@ -146,7 +146,7 @@ public class V2NavigationBean implements Serializable {
 
     private void requireThesaurus() throws IOException {
         if (StringUtils.isBlank(thesaurusContext.resolveThesaurusId())) {
-            redirect("/v2");
+            redirect("/v2/thesauri");
         }
     }
 

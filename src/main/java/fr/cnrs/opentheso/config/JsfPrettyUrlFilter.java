@@ -28,9 +28,9 @@ public class JsfPrettyUrlFilter extends OncePerRequestFilter {
             Map.entry("/profile", "/profile/myAccount.xhtml"),
             Map.entry("/candidat", "/candidat/candidat.xhtml"),
             Map.entry("/toolbox/edition", "/toolbox/edition.xhtml"),
-            Map.entry("/v2", "/v2/index.xhtml"),
+            Map.entry("/v2", "/v2/thesauri.xhtml"),
             Map.entry("/v2/thesauri", "/v2/thesauri.xhtml"),
-            Map.entry(V2_PREVIEW_PREFIX, "/v2/index.xhtml")
+            Map.entry(V2_PREVIEW_PREFIX, "/v2/thesauri.xhtml")
     );
 
     /** Anciennes pages plates `/v2-preview/*.xhtml` → arborescence `/v2/`. */
