@@ -1,0 +1,269 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<ui:composition xmlns="http://www.w3.org/1999/xhtml"
+                xmlns:ui="http://xmlns.jcp.org/jsf/facelets"
+                xmlns:h="http://xmlns.jcp.org/jsf/html"
+                xmlns:f="http://xmlns.jcp.org/jsf/core"
+                xmlns:pt="http://xmlns.jcp.org/jsf/passthrough"
+                template="/v2/includes/layout.xhtml">
+  <ui:param name="v2Page" value="admin-instance"/>
+  <ui:define name="title">OpenTheso — Administration de l'instance</ui:define>
+  <ui:define name="detail"/>
+  <ui:define name="main">
+    <h:form id="instanceAdminForm" prependId="false" styleClass="ia-form-root">
+      <ui:fragment rendered="#{not v2UserSession.canAccessSuperAdminScreen()}">
+        <div class="bo bo-solo">
+          <div class="bo-head">
+            <div>
+              <h1 class="bo-title">Accès refusé</h1>
+              <p class="bo-sub">Réservé aux super-administrateurs.</p>
+            </div>
+          </div>
+        </div>
+      </ui:fragment>
+
+      <ui:fragment rendered="#{v2UserSession.canAccessSuperAdminScreen()}">
+        <h:panelGroup id="iaRoot" layout="block" styleClass="bo bo-solo">
+          <nav class="bc" aria-label="Fil d'Ariane">
+            <h:commandLink styleClass="bc-lk" action="#{v2NavigationBean.redirectToThesaurusPicker}">
+              Thésaurus
+            </h:commandLink>
+            <span class="bc-sep" aria-hidden="true">›</span>
+            <ui:fragment rendered="#{v2InstanceAdminBean.home}">
+              <span class="bc-cur" aria-current="page">Administration de l'instance</span>
+            </ui:fragment>
+            <ui:fragment rendered="#{not v2InstanceAdminBean.home}">
+              <h:commandLink styleClass="bc-lk" action="#{v2InstanceAdminBean.openHome}">
+                <f:ajax execute="@this" render="iaRoot"/>
+                Administration de l'instance
+              </h:commandLink>
+              <span class="bc-sep" aria-hidden="true">›</span>
+              <ui:fragment rendered="#{not v2InstanceAdminBean.thesaurusMembers}">
+                <span class="bc-cur" aria-current="page">#{v2InstanceAdminBean.sectionLabel}</span>
+              </ui:fragment>
+              <ui:fragment rendered="#{v2InstanceAdminBean.thesaurusMembers}">
+                <h:commandLink styleClass="bc-lk"
+                               action="#{v2InstanceAdminBean.openSection('thes')}">
+                  <f:ajax execute="@this" render="iaRoot"/>
+                  #{v2InstanceAdminBean.sectionLabel}
+                </h:commandLink>
+                <span class="bc-sep" aria-hidden="true">›</span>
+                <span class="bc-cur" aria-current="page">#{v2InstanceAdminBean.pageTitle}</span>
+              </ui:fragment>
+            </ui:fragment>
+          </nav>
+
+          <ui:fragment rendered="#{v2InstanceAdminBean.home}">
+            <h:commandLink styleClass="bo-back"
+                           title="#{v2InstanceAdminBean.backTitle}"
+                           action="#{v2NavigationBean.redirectToThesaurusPicker}"
+                           onclick="return window.iaAnimateLeave &amp;&amp; window.iaAnimateLeave(this);">
+              <svg viewBox="0 0 24 24" aria-hidden="true"><path d="M19 12H5"/><path d="m12 19-7-7 7-7"/></svg>
+            </h:commandLink>
+          </ui:fragment>
+          <ui:fragment rendered="#{not v2InstanceAdminBean.home}">
+            <h:commandLink styleClass="bo-back"
+                           title="#{v2InstanceAdminBean.backTitle}"
+                           action="#{v2InstanceAdminBean.goBack}"
+                           onclick="return window.iaAnimateLeave &amp;&amp; window.iaAnimateLeave(this);">
+              <f:ajax execute="@this" render="iaRoot" onevent="iaOnBackAjax"/>
+              <svg viewBox="0 0 24 24" aria-hidden="true"><path d="M19 12H5"/><path d="m12 19-7-7 7-7"/></svg>
+            </h:commandLink>
+          </ui:fragment>
+
+          <div class="bo-head">
+            <div>
+              <h1 class="bo-title">#{v2InstanceAdminBean.pageTitle}</h1>
+              <ui:fragment rendered="#{v2InstanceAdminBean.home}">
+                <p class="bo-sub">#{v2InstanceAdminBean.homeSubtitle}</p>
+                <div class="ia-head-meta">
+                  <span class="ia-chip"><b>#{v2InstanceAdminBean.accountCount}</b> comptes</span>
+                  <span class="ia-chip"><b>#{v2InstanceAdminBean.thesaurusCount}</b> thésaurus</span>
+                </div>
+              </ui:fragment>
+              <ui:fragment rendered="#{v2InstanceAdminBean.usersSection}">
+                <p class="bo-sub">#{v2InstanceAdminBean.filteredAccountCount} compte(s) affiché(s)</p>
+              </ui:fragment>
+              <ui:fragment rendered="#{v2InstanceAdminBean.thesauriSection}">
+                <p class="bo-sub">#{v2InstanceAdminBean.thesaurusCount} thésaurus sur l'instance</p>
+              </ui:fragment>
+            </div>
+          </div>
+
+          <div class="bo-full">
+            <ui:fragment rendered="#{v2InstanceAdminBean.home}">
+              <div class="spl">
+                <h:commandLink styleClass="spl-row" action="#{v2InstanceAdminBean.openSection('users')}">
+                  <f:ajax execute="@this" render="iaRoot"/>
+                  <span class="spl-ico" aria-hidden="true">
+                    <svg viewBox="0 0 24 24"><path d="M16 21v-1.5a4 4 0 0 0-4-4H6a4 4 0 0 0-4 4V21"/><circle cx="9" cy="7" r="3.5"/><path d="M22 21v-1.5a4 4 0 0 0-3-3.85"/><path d="M16 3.3a4 4 0 0 1 0 7.4"/></svg>
+                  </span>
+                  <span class="spl-tx">
+                    <span class="spl-t">Utilisateurs</span>
+                    <span class="spl-d">Comptes de l'instance et rôle au niveau de l'application.</span>
+                  </span>
+                  <span class="spl-go" aria-hidden="true"><svg viewBox="0 0 24 24"><path d="m9 18 6-6-6-6"/></svg></span>
+                </h:commandLink>
+                <h:commandLink styleClass="spl-row" action="#{v2InstanceAdminBean.openSection('thes')}">
+                  <f:ajax execute="@this" render="iaRoot"/>
+                  <span class="spl-ico" aria-hidden="true">
+                    <svg viewBox="0 0 24 24"><path d="m16 6 4 14"/><path d="M12 6v14"/><path d="M8 8v12"/><path d="M4 4v16"/></svg>
+                  </span>
+                  <span class="spl-tx">
+                    <span class="spl-t">Thésaurus &amp; membres</span>
+                    <span class="spl-d">Thésaurus de l'instance, leurs membres et leurs rôles.</span>
+                  </span>
+                  <span class="spl-go" aria-hidden="true"><svg viewBox="0 0 24 24"><path d="m9 18 6-6-6-6"/></svg></span>
+                </h:commandLink>
+                <h:commandLink styleClass="spl-row" action="#{v2InstanceAdminBean.openSection('server')}">
+                  <f:ajax execute="@this" render="iaRoot"/>
+                  <span class="spl-ico" aria-hidden="true">
+                    <svg viewBox="0 0 24 24"><path d="M4 21v-7M4 10V3M12 21v-9M12 8V3M20 21v-5M20 12V3M1 14h6M9 8h6M17 16h6"/></svg>
+                  </span>
+                  <span class="spl-tx">
+                    <span class="spl-t">Paramètres serveur</span>
+                    <span class="spl-d">ARK / handle, API, sauvegardes, courriel sortant.</span>
+                  </span>
+                  <span class="spl-go" aria-hidden="true"><svg viewBox="0 0 24 24"><path d="m9 18 6-6-6-6"/></svg></span>
+                </h:commandLink>
+                <h:commandLink styleClass="spl-row" action="#{v2InstanceAdminBean.openSection('stats')}">
+                  <f:ajax execute="@this" render="iaRoot"/>
+                  <span class="spl-ico" aria-hidden="true">
+                    <svg viewBox="0 0 24 24"><path d="M22 12h-4l-3 8L9 4l-3 8H2"/></svg>
+                  </span>
+                  <span class="spl-tx">
+                    <span class="spl-t">Statistiques de l'instance</span>
+                    <span class="spl-d">Activité tous thésaurus confondus, comptes actifs.</span>
+                  </span>
+                  <span class="spl-go" aria-hidden="true"><svg viewBox="0 0 24 24"><path d="m9 18 6-6-6-6"/></svg></span>
+                </h:commandLink>
+              </div>
+            </ui:fragment>
+
+            <ui:fragment rendered="#{v2InstanceAdminBean.usersSection}">
+              <div class="ia-pane">
+                <div class="bo-card">
+                  <div class="bo-card-h">
+                    <span class="bo-card-t">Comptes</span>
+                    <span class="right ia-h-act">
+                      <h:inputText id="iaUserQuery"
+                                   value="#{v2InstanceAdminBean.userQuery}"
+                                   styleClass="st-input ia-q"
+                                   pt:placeholder="Rechercher un nom, un courriel…"
+                                   pt:aria-label="Rechercher un compte">
+                        <f:ajax event="keyup" delay="200" execute="@this" render="iaUsersTable"/>
+                      </h:inputText>
+                    </span>
+                  </div>
+                  <div class="bo-card-b">
+                    <h:panelGroup id="iaUsersTable" layout="block" styleClass="ia-scroll">
+                      <ui:fragment rendered="#{not empty v2InstanceAdminBean.filteredAccounts}">
+                        <table class="st-table ia-tab ia-tab-u">
+                          <thead>
+                            <tr>
+                              <th>Nom</th>
+                              <th>Courriel</th>
+                              <th>Organisme</th>
+                              <th>Rôle application</th>
+                              <th>Dernière connexion</th>
+                            </tr>
+                          </thead>
+                          <tbody>
+                            <ui:repeat value="#{v2InstanceAdminBean.filteredAccounts}" var="u">
+                              <tr>
+                                <td data-label="Nom"><b>#{u.username}</b></td>
+                                <td data-label="Courriel" class="is-mono ia-mail">#{empty u.email ? '—' : u.email}</td>
+                                <td data-label="Organisme">#{empty u.organization ? '—' : u.organization}</td>
+                                <td data-label="Rôle">
+                                  <span class="ia-role#{u.appRoleKey eq 'super_admin' ? ' ia-role--super' : ' ia-role--user'}">#{u.appRoleLabel}</span>
+                                </td>
+                                <td data-label="Connexion" class="is-mono">#{v2InstanceAdminBean.formatLastLogin(u)}</td>
+                              </tr>
+                            </ui:repeat>
+                          </tbody>
+                        </table>
+                      </ui:fragment>
+                      <ui:fragment rendered="#{empty v2InstanceAdminBean.filteredAccounts}">
+                        <div class="ia-empty">
+                          <div class="ia-empty-t">Aucun compte trouvé</div>
+                          <div class="ia-empty-d">Modifiez la recherche ou vérifiez qu’il existe des utilisateurs actifs.</div>
+                        </div>
+                      </ui:fragment>
+                    </h:panelGroup>
+                  </div>
+                </div>
+              </div>
+            </ui:fragment>
+
+            <ui:fragment rendered="#{v2InstanceAdminBean.thesauriSection}">
+              <div class="ia-pane">
+                <div class="bo-card">
+                  <div class="bo-card-h"><span class="bo-card-t">Thésaurus de l'instance</span></div>
+                  <div class="bo-card-b">
+                    <div class="ia-scroll">
+                      <ui:fragment rendered="#{not empty v2InstanceAdminBean.thesauri}">
+                        <table class="st-table ia-tab ia-tab-t">
+                          <thead>
+                            <tr>
+                              <th>Thésaurus</th>
+                              <th>Projet</th>
+                              <th>Visibilité</th>
+                              <th></th>
+                            </tr>
+                          </thead>
+                          <tbody>
+                            <ui:repeat value="#{v2InstanceAdminBean.thesauri}" var="t">
+                              <tr>
+                                <td data-label="Thésaurus"><b>#{t.title}</b></td>
+                                <td data-label="Projet">#{empty t.projectName ? '—' : t.projectName}</td>
+                                <td data-label="Visibilité">
+                                  <span class="ia-vis#{t.privateThesaurus ? ' is-private' : ''}">#{t.privateThesaurus ? 'Privé' : 'Public'}</span>
+                                </td>
+                                <td class="st-td-act" data-label="">
+                                  <h:commandLink styleClass="bo-btn ghost sm"
+                                                 action="#{v2InstanceAdminBean.openThesaurusMembers(t.id)}">
+                                    <f:ajax execute="@this" render="iaRoot"/>
+                                    Gérer les membres
+                                  </h:commandLink>
+                                </td>
+                              </tr>
+                            </ui:repeat>
+                          </tbody>
+                        </table>
+                      </ui:fragment>
+                      <ui:fragment rendered="#{empty v2InstanceAdminBean.thesauri}">
+                        <div class="ia-empty">
+                          <div class="ia-empty-t">Aucun thésaurus</div>
+                          <div class="ia-empty-d">Créez un thésaurus depuis l’écran de sélection pour le voir ici.</div>
+                        </div>
+                      </ui:fragment>
+                    </div>
+                  </div>
+                </div>
+              </div>
+            </ui:fragment>
+
+            <ui:fragment rendered="#{v2InstanceAdminBean.thesaurusMembers}">
+              <div class="bo-todo-box">
+                <div class="bo-todo-t">Membres — à brancher</div>
+                <div class="bo-todo-d">
+                  La gestion des membres par thésaurus suivra la maquette
+                  (rôles limités / projet). Pattern : retour vers « Thésaurus &amp; membres ».
+                </div>
+              </div>
+            </ui:fragment>
+
+            <ui:fragment rendered="#{v2InstanceAdminBean.placeholderSection}">
+              <div class="bo-todo-box">
+                <div class="bo-todo-t">#{v2InstanceAdminBean.sectionLabel} — à construire</div>
+                <div class="bo-todo-d">
+                  Cette sous-page reste à spécifier. Le pattern est posé :
+                  page d'administration → sous-pages en cartes → détail en pleine largeur avec retour.
+                </div>
+              </div>
+            </ui:fragment>
+          </div>
+        </h:panelGroup>
+      </ui:fragment>
+    </h:form>
+  </ui:define>
+</ui:composition>

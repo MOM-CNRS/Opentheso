@@ -4,6 +4,7 @@ import fr.cnrs.opentheso.v2.admin.mapper.AdminMapper;
 import fr.cnrs.opentheso.v2.admin.model.AdminThesaurus;
 import fr.cnrs.opentheso.v2.admin.model.AdminThesaurusOption;
 import fr.cnrs.opentheso.v2.admin.model.AdminUserMembership;
+import fr.cnrs.opentheso.v2.admin.model.InstanceAdminAccount;
 import fr.cnrs.opentheso.v2.admin.policy.SuperAdminAccessPolicy;
 import fr.cnrs.opentheso.v2.project.mapper.ProjectMapper;
 import fr.cnrs.opentheso.v2.project.model.AssignableRole;
@@ -39,6 +40,12 @@ public class AdminCatalogService {
         return adminQueryRepository.findAllUsers().stream()
                 .map(AdminMapper::toUserMembership)
                 .toList();
+    }
+
+    @Transactional(readOnly = true)
+    public List<InstanceAdminAccount> listInstanceAccounts(boolean superAdmin) {
+        SuperAdminAccessPolicy.requireResolvedSuperAdmin(superAdmin);
+        return adminQueryRepository.findInstanceAccounts();
     }
 
     @Transactional(readOnly = true)

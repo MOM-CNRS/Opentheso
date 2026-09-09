@@ -102,6 +102,14 @@
       </div>
       <ui:fragment rendered="#{v2UserSession.loggedIn}">
       <div class="thesaurus-item">
+        <h:outputLink value="#{request.contextPath}/v2/admin/instance"
+                      styleClass="thesaurus-btn#{v2Page eq 'admin-instance' ? ' is-on' : ''}"
+                      title="Administration de l'instance"
+                      rendered="#{v2UserSession.superAdmin}"
+                      onclick="return window.iaAnimateRailToAdmin &amp;&amp; window.iaAnimateRailToAdmin(this, event);">
+          <svg viewBox="0 0 24 24" aria-hidden="true"><path d="M12 22c4.5-1.6 8-4.4 8-9V5.5l-8-3-8 3V13c0 4.6 3.5 7.4 8 9Z"/></svg>
+        </h:outputLink>
+        <ui:fragment rendered="#{not v2UserSession.superAdmin}">
         <button type="button" class="thesaurus-btn" data-act="thesaurus" data-thesaurus="projects"
                 title="#{v2LocaleBean.getMsg('v2.nav.projects')}" aria-label="#{v2LocaleBean.getMsg('v2.nav.projects')}" aria-expanded="false">
           <svg viewBox="0 0 24 24" aria-hidden="true"><path d="M16 21v-1.5a4 4 0 0 0-4-4H6a4 4 0 0 0-4 4V21"/><circle cx="9" cy="7" r="3.5"/><path d="M22 21v-1.5a4 4 0 0 0-3-3.85"/><path d="M16 3.3a4 4 0 0 1 0 7.4"/></svg>
@@ -116,46 +124,13 @@
               <div class="proj-sub">Gestionnaire · 438 concepts</div>
             </div>
           </a>
-          <a class="proj-row" href="project/projets.xhtml">
-            <span class="proj-dot" style="background:#2f5fd0"></span>
-            <div class="proj-main">
-              <div class="proj-name">GeoEthno</div>
-              <div class="proj-sub">Contributeur · 4120 concepts</div>
-            </div>
-          </a>
-          <a class="proj-row" href="project/projets.xhtml">
-            <span class="proj-dot" style="background:#9a3b2e"></span>
-            <div class="proj-main">
-              <div class="proj-name">Thésaurus-W</div>
-              <div class="proj-sub">Lecteur · 1860 concepts</div>
-            </div>
-          </a>
-          <a class="proj-row" href="project/projets.xhtml">
-            <span class="proj-dot" style="background:#5b4bb8"></span>
-            <div class="proj-main">
-              <div class="proj-name">Garnier — Matériaux</div>
-              <div class="proj-sub">Contributeur · 980 concepts</div>
-            </div>
-          </a>
         </div>
         <h:outputLink value="project/projets.xhtml" styleClass="menu-foot">
           <svg viewBox="0 0 24 24" aria-hidden="true"><path d="M15 3h6v6"/><path d="M10 14 21 3"/><path d="M18 13v6a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2V8a2 2 0 0 1 2-2h6"/></svg>
           #{v2LocaleBean.getMsg('v2.nav.manageAccess')}
         </h:outputLink>
         </div>
-      </div>
-      <div class="thesaurus-item">
-        <button type="button" class="thesaurus-btn" data-act="thesaurus" data-thesaurus="admin" title="#{v2LocaleBean.getMsg('v2.nav.admin')}" aria-label="#{v2LocaleBean.getMsg('v2.nav.admin')}" aria-expanded="false">
-          <svg viewBox="0 0 24 24" aria-hidden="true"><path d="M12 22c4.5-1.6 8-4.4 8-9V5.5l-8-3-8 3V13c0 4.6 3.5 7.4 8 9Z"/></svg>
-        </button>
-        <div class="menu-pop menu-pop--top" id="menu-admin">
-        <div class="menu-h">#{v2LocaleBean.getMsg('v2.nav.admin')}<ui:fragment rendered="#{v2UserSession.superAdmin}"><span class="sa-badge">#{v2LocaleBean.getMsg('v2.profile.role.superAdmin')}</span></ui:fragment></div>
-        <div class="admin-grid">
-          <a class="admin-tile" href="admin/utilisateurs.xhtml"><svg viewBox="0 0 24 24" aria-hidden="true"><path d="M16 21v-1.5a4 4 0 0 0-4-4H6a4 4 0 0 0-4 4V21"/><circle cx="9" cy="7" r="3.5"/><path d="M22 21v-1.5a4 4 0 0 0-3-3.85"/><path d="M16 3.3a4 4 0 0 1 0 7.4"/></svg><span>#{v2LocaleBean.getMsg('v2.nav.users')}</span></a>
-          <a class="admin-tile" href="admin/projets.xhtml"><svg viewBox="0 0 24 24" aria-hidden="true"><path d="M20 17a2 2 0 0 0 2-2V9a2 2 0 0 0-2-2h-3.9a2 2 0 0 1-1.69-.9l-.81-1.2A2 2 0 0 0 11.93 4H8a2 2 0 0 0-2 2v9a2 2 0 0 0 2 2Z"/><path d="M2 8v11a2 2 0 0 0 2 2h14"/></svg><span>#{v2LocaleBean.getMsg('v2.nav.adminProjects')}</span></a>
-          <a class="admin-tile" href="admin/thesauri.xhtml"><svg viewBox="0 0 24 24" aria-hidden="true"><path d="m16 6 4 14"/><path d="M12 6v14"/><path d="M8 8v12"/><path d="M4 4v16"/></svg><span>#{v2LocaleBean.getMsg('menu.thesaurus')}</span></a>
-          <a class="admin-tile" href="toolbox/statistiques.xhtml"><svg viewBox="0 0 24 24" aria-hidden="true"><path d="M22 12h-4l-3 8L9 4l-3 8H2"/></svg><span>#{v2LocaleBean.getMsg('v2.nav.stats')}</span></a>
-        </div></div>
+        </ui:fragment>
       </div>
       </ui:fragment>
     </div>

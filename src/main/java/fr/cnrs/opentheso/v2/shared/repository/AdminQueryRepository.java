@@ -1,10 +1,12 @@
 package fr.cnrs.opentheso.v2.shared.repository;
 
+import fr.cnrs.opentheso.v2.admin.model.InstanceAdminAccount;
 import fr.cnrs.opentheso.v2.shared.repository.projection.AdminThesaurusRow;
 import fr.cnrs.opentheso.v2.shared.repository.projection.AdminUserRow;
 import fr.cnrs.opentheso.v2.shared.time.V2Dates;
 import jakarta.persistence.EntityManager;
 import jakarta.persistence.PersistenceContext;
+import org.apache.commons.lang3.StringUtils;
 import org.springframework.stereotype.Repository;
 
 import java.time.LocalDateTime;
@@ -77,6 +79,27 @@ public class AdminQueryRepository {
         return rows.stream().map(this::toAdminUserRow).toList();
     }
 
+    /**
+     * Comptes uniques de l'instance (écran Administration de l'instance / Utilisateurs).
+     */
+    @SuppressWarnings("unchecked")
+    public List<InstanceAdminAccount> findInstanceAccounts() {
+        String sql = """
+                SELECT
+                    u.id_user,
+                    u.username,
+                    COALESCE(u.mail, '') AS mail,
+                    COALESCE(u.institution, '') AS organization,
+                    u.last_login,
+                    COALESCE(u.issuperadmin, false) AS is_super_admin
+                FROM users u
+                WHERE COALESCE(u.active, true) = true
+                ORDER BY LOWER(u.username)
+                """;
+        List<Object[]> rows = entityManager.createNativeQuery(sql).getResultList();
+        return rows.stream().map(this::toInstanceAdminAccount).toList();
+    }
+
     @SuppressWarnings("unchecked")
     public List<AdminThesaurusRow> findAllThesauri(String lang) {
         String sql = """
@@ -114,6 +137,21 @@ public class AdminQueryRepository {
                 row[3] != null ? (String) row[3] : "",
                 ((Number) row[4]).intValue(),
                 row[5] != null ? (String) row[5] : ""
+        );
+    }
+
+    private InstanceAdminAccount toInstanceAdminAccount(Object[] row) {
+        boolean superAdmin = row[5] instanceof Boolean bool ? bool : Boolean.parseBoolean(String.valueOf(row[5]));
+        String roleKey = superAdmin ? "super_admin" : "user";
+        String roleLabel = superAdmin ? "Super admin" : "Utilisateur";
+        return new InstanceAdminAccount(
+                ((Number) row[0]).intValue(),
+                StringUtils.defaultString((String) row[1]),
+                StringUtils.defaultString((String) row[2]),
+                StringUtils.defaultString((String) row[3]),
+                toLocalDateTime(row[4]),
+                roleKey,
+                roleLabel
         );
     }
 

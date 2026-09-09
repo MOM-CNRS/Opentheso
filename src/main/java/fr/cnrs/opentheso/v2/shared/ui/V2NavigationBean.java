@@ -63,7 +63,12 @@ public class V2NavigationBean implements Serializable {
 
     public void redirectToAllUsers() throws IOException {
         activePageName = "usersV2";
-        redirect("/v2/admin/utilisateurs.xhtml");
+        redirect("/v2/admin/instance");
+    }
+
+    public void redirectToInstanceAdmin() throws IOException {
+        activePageName = "instanceAdminV2";
+        redirect("/v2/admin/instance");
     }
 
     public void redirectToAllProjects() throws IOException {

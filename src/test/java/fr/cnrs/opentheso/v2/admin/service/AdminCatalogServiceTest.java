@@ -75,6 +75,24 @@ class AdminCatalogServiceTest {
     }
 
     @Test
+    void listInstanceAccounts_returnsAccountsForSuperAdmin() {
+        when(adminQueryRepository.findInstanceAccounts()).thenReturn(List.of(
+                new fr.cnrs.opentheso.v2.admin.model.InstanceAdminAccount(
+                        1, "alice", "a@x.fr", "CNRS", null, "user", "Utilisateur")
+        ));
+
+        var accounts = adminCatalogService.listInstanceAccounts(true);
+
+        assertEquals(1, accounts.size());
+        assertEquals("alice", accounts.get(0).username());
+    }
+
+    @Test
+    void listInstanceAccounts_rejectsNonSuperAdmin() {
+        assertThrows(AdminAccessDeniedException.class, () -> adminCatalogService.listInstanceAccounts(false));
+    }
+
+    @Test
     void searchUsers_returnsMatchingUsersForSuperAdmin() {
         when(adminQueryRepository.searchUsersByMailAndUsername("alice@example.com", "ali"))
                 .thenReturn(List.of(new AdminUserRow(1, "alice", 2, "Projet A", 3, "Manager")));

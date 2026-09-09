@@ -30,6 +30,7 @@ public class JsfPrettyUrlFilter extends OncePerRequestFilter {
             Map.entry("/toolbox/edition", "/toolbox/edition.xhtml"),
             Map.entry("/v2", "/v2/thesauri.xhtml"),
             Map.entry("/v2/thesauri", "/v2/thesauri.xhtml"),
+            Map.entry("/v2/admin/instance", "/v2/admin/instance.xhtml"),
             Map.entry(V2_PREVIEW_PREFIX, "/v2/thesauri.xhtml")
     );
 

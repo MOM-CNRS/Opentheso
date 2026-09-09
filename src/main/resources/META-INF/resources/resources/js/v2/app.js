@@ -1502,3 +1502,80 @@ if (SCREEN === "preference" && location.hash) {
   setTimeout(scrollToPrefHash, 80);
   setTimeout(scrollToPrefHash, 250);
 }
+
+/* ── Transitions subtiles : rail admin + bouton retour ── */
+(function () {
+  const LEAVE_MS = 220;
+
+  function reducedMotion() {
+    return window.matchMedia && window.matchMedia("(prefers-reduced-motion: reduce)").matches;
+  }
+
+  function leaveRoot() {
+    return document.getElementById("iaRoot")
+      || document.getElementById("tpRoot")
+      || document.getElementById("previewView")
+      || document.querySelector(".main");
+  }
+
+  /**
+   * Anime une sortie légère puis poursuit la navigation (lien ou 2e clic JSF).
+   * opts.href : navigation URL après l'animation
+   */
+  window.iaAnimateLeave = function (el, opts) {
+    opts = opts || {};
+    if (el && el.getAttribute("data-ia-leaving") === "1") {
+      return true;
+    }
+    if (el) {
+      el.classList.add("is-leaving");
+      el.setAttribute("data-ia-leaving", "1");
+    }
+    const root = leaveRoot();
+    if (root) root.classList.add("ia--leaving");
+    document.body.classList.add("ia-nav-leaving");
+
+    const delay = reducedMotion() ? 0 : LEAVE_MS;
+    window.setTimeout(function () {
+      document.body.classList.remove("ia-nav-leaving");
+      if (opts.href) {
+        window.location.href = opts.href;
+        return;
+      }
+      if (!el) return;
+      if (typeof el.click === "function") {
+        el.click();
+      }
+    }, delay);
+    return false;
+  };
+
+  window.iaAnimateRailToAdmin = function (el, evt) {
+    if (evt) {
+      evt.preventDefault();
+      evt.stopPropagation();
+    }
+    if (!el) return false;
+    if (el.getAttribute("data-ia-leaving") === "1") {
+      return true;
+    }
+    el.classList.add("is-nav-pulse", "is-leaving");
+    return window.iaAnimateLeave(el, { href: el.href || el.getAttribute("href") });
+  };
+
+  window.iaOnBackAjax = function (data) {
+    if (!data || data.status !== "success") return;
+    const root = document.getElementById("iaRoot");
+    if (!root) return;
+    root.classList.remove("ia--leaving", "ia--enter");
+    void root.offsetWidth;
+    root.classList.add("ia--enter");
+  };
+
+  document.addEventListener("DOMContentLoaded", function () {
+    if (document.body && document.body.getAttribute("data-page") === "admin-instance") {
+      const adminBtn = document.querySelector('.thesaurus a.thesaurus-btn[title="Administration de l\'instance"]');
+      if (adminBtn) adminBtn.classList.add("is-on");
+    }
+  });
+})();
