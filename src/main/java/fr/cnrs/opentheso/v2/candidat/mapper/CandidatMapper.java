@@ -34,6 +34,7 @@ public final class CandidatMapper {
                 .nbrDemande(row.propositionCount())
                 .nbrVote(row.candidateVoteCount())
                 .nbrNoteVote(row.noteVoteCount())
+                .nbrDownVote(row.downVoteCount())
                 .alignments(List.of())
                 .build();
     }

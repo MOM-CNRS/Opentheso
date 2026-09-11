@@ -18,6 +18,9 @@ import java.io.Serializable;
 @ViewScoped
 @RequiredArgsConstructor
 @Named("v2ImageCandidatBean")
+/**
+ * V1-ported bean: not wired to V2 Facelets yet; kept for tests / future UI.
+ */
 public class CandidatImageBean implements Serializable {
 
     private final transient CandidatBean candidatBean;

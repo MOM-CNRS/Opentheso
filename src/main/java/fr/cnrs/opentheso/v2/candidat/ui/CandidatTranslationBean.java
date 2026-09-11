@@ -24,6 +24,9 @@ import java.util.List;
 @ViewScoped
 @RequiredArgsConstructor
 @Named("v2TraductionCandidatBean")
+/**
+ * V1-ported bean: not wired to V2 Facelets yet; kept for tests / future UI.
+ */
 public class CandidatTranslationBean implements Serializable {
 
     private static final String CONTAINER_INDEX = "containerIndex";

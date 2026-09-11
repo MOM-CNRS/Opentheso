@@ -796,6 +796,14 @@ public class ThesaurusViewBean implements Serializable {
         return isCandidateSelected() && candidateRejected;
     }
 
+    /** Après réactivation : force le mode « en attente » côté sélection arbre/fiche. */
+    public void markSelectedCandidatePending() {
+        candidateRejected = false;
+        if (selectedConcept != null) {
+            selectedKind = ConceptTreeNodeKinds.CANDIDAT;
+        }
+    }
+
     public boolean isFacetSelected() {
         return ConceptTreeNodeKinds.FACET.equals(selectedKind) && selectedFacet != null;
     }

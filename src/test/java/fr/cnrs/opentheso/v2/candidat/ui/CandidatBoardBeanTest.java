@@ -2,9 +2,16 @@ package fr.cnrs.opentheso.v2.candidat.ui;
 
 import fr.cnrs.opentheso.models.candidats.CandidatDto;
 import fr.cnrs.opentheso.v2.candidat.model.CandidatStatusCode;
+import fr.cnrs.opentheso.v2.candidat.policy.CandidatAccessPolicy;
+import fr.cnrs.opentheso.v2.candidat.service.CandidatExportService;
+import fr.cnrs.opentheso.v2.candidat.service.CandidatProcessService;
 import fr.cnrs.opentheso.v2.candidat.service.CandidatReadService;
+import fr.cnrs.opentheso.v2.candidat.service.CandidatSkosImportService;
 import fr.cnrs.opentheso.v2.concept.ui.ThesaurusViewBean;
+import fr.cnrs.opentheso.v2.setting.ui.ThesaurusContext;
+import fr.cnrs.opentheso.v2.shared.session.ThesaurusPreferencesProvider;
 import fr.cnrs.opentheso.v2.shared.ui.UserSession;
+import fr.cnrs.opentheso.v2.shared.ui.V2LocaleBean;
 import org.junit.jupiter.api.BeforeEach;
 import org.junit.jupiter.api.Test;
 import org.junit.jupiter.api.extension.ExtendWith;
@@ -34,13 +41,38 @@ class CandidatBoardBeanTest {
     @Mock
     private CandidatReadService candidatReadService;
     @Mock
+    private CandidatProcessService candidatProcessService;
+    @Mock
+    private CandidatExportService candidatExportService;
+    @Mock
+    private CandidatSkosImportService candidatSkosImportService;
+    @Mock
+    private CandidatAccessPolicy candidatAccessPolicy;
+    @Mock
+    private ThesaurusPreferencesProvider thesaurusPreferencesProvider;
+    @Mock
+    private ThesaurusContext thesaurusContext;
+    @Mock
     private UserSession userSession;
+    @Mock
+    private V2LocaleBean localeBean;
 
     private CandidatBoardBean bean;
 
     @BeforeEach
     void setUp() {
-        bean = new CandidatBoardBean(thesaurusViewBean, candidatReadService, userSession);
+        bean = new CandidatBoardBean(
+                thesaurusViewBean,
+                candidatReadService,
+                candidatProcessService,
+                candidatExportService,
+                candidatSkosImportService,
+                candidatAccessPolicy,
+                thesaurusPreferencesProvider,
+                thesaurusContext,
+                userSession,
+                localeBean
+        );
         when(thesaurusViewBean.getId()).thenReturn("TH1");
         when(thesaurusViewBean.getSelectedLang()).thenReturn("fr");
     }

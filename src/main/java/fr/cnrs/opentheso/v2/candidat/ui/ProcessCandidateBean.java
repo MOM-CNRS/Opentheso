@@ -72,7 +72,7 @@ public class ProcessCandidateBean implements Serializable {
         }
 
         int userId = requireUserId();
-        if (candidatProcessService.insertCandidate(selectedCandidate, adminMessage, userId)) {
+        if (candidatProcessService.insertCandidate(selectedCandidate, adminMessage, userId).isFailure()) {
             MessageUtils.showErrorMessage("Erreur d'insertion");
             return;
         }
@@ -107,7 +107,7 @@ public class ProcessCandidateBean implements Serializable {
         }
 
         int userId = requireUserId();
-        if (candidatProcessService.rejectCandidate(selectedCandidate, adminMessage, userId)) {
+        if (candidatProcessService.rejectCandidate(selectedCandidate, adminMessage, userId).isFailure()) {
             MessageUtils.showErrorMessage("Erreur d'insertion");
             return;
         }
@@ -216,43 +216,15 @@ public class ProcessCandidateBean implements Serializable {
     }
 
     private void sendMailCandidateAccepted(String mail, CandidatDto candidat) {
-        if (adminMessage == null) {
-            adminMessage = "";
-        }
-        String thesaurusTitle = resolveThesaurusTitle();
-        var subject = "[" + thesaurusTitle + "] Confirmation de l'acceptation de votre candidat (" + candidat.getNomPref() + ")";
-        var contentFile = "<html><body>"
-                + "Cher(e) " + candidat.getCreatedBy() + ", <br/> "
-                + "<p> Votre candidat a été accepté par nos administrateurs, il est désormais intégré au thésaurus "
-                + thesaurusTitle + "<br/></p>"
-                + "Nous vous remercions de votre contribution à l'enrichissement du thésaurus <b>" + thesaurusTitle + "</b> "
-                + "(concept : <a href=\"" + getPath() + "/?idc=" + candidat.getIdConcepte()
-                + "&idt=" + candidat.getIdThesaurus() + "\">" + candidat.getNomPref() + "</a>). "
-                + "Message de l'administrateur : " + adminMessage
-                + "<br/><br/> Cordialement,<br/>"
-                + "L'équipe " + thesaurusTitle + ".<br/> <img src=\"" + getPath()
-                + "/resources/img/icon_opentheso2.png\" height=\"106\"></body></html>";
-
-        if (candidatProcessService.sendMail(mail, subject, contentFile)) {
+        if (!candidatProcessService.sendAcceptedMail(
+                mail, candidat, adminMessage, resolveThesaurusTitle(), getPath())) {
             MessageUtils.showErrorMessage("!! votre propostion n'a pas été envoyée !!");
         }
     }
 
     private boolean sendMailCandidateRejected(String mail, CandidatDto candidat) {
-        if (adminMessage == null) {
-            adminMessage = "";
-        }
-        String thesaurusTitle = resolveThesaurusTitle();
-        var subject = "[" + thesaurusTitle + "] Refus de votre candidat (" + candidat.getNomPref() + ")";
-        var contentFile = "<html><body>"
-                + "Cher(e) " + candidat.getCreatedBy() + ", <br/> "
-                + "<p> Votre candidat a été refusé par nos administrateurs, il n'a pas été intégré au thésaurus "
-                + thesaurusTitle + "<br/></p>"
-                + "Message de l'administrateur : " + adminMessage
-                + "<br/>L'équipe " + thesaurusTitle + ".<br/> <img src=\"" + getPath()
-                + "/resources/img/icon_opentheso2.png\" height=\"106\"></body></html>";
-
-        if (!candidatProcessService.sendMail(mail, subject, contentFile)) {
+        if (!candidatProcessService.sendRejectedMail(
+                mail, candidat, adminMessage, resolveThesaurusTitle(), getPath())) {
             MessageUtils.showErrorMessage("!! votre propostion n'a pas été envoyée !!");
             return false;
         }

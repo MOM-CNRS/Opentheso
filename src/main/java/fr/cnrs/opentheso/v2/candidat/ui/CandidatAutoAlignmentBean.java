@@ -17,6 +17,9 @@ import java.util.Map;
 @SessionScoped
 @Named("v2CandidatAutoAlignmentBean")
 @RequiredArgsConstructor
+/**
+ * V1-ported bean: not wired to V2 Facelets yet; kept for tests / future UI.
+ */
 public class CandidatAutoAlignmentBean implements Serializable {
 
     private final transient CandidatAutoAlignmentEngine candidatAutoAlignmentEngine;

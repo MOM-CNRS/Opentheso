@@ -1,5 +1,7 @@
 package fr.cnrs.opentheso.v2.graph.service;
 
+import fr.cnrs.opentheso.entites.Preferences;
+import fr.cnrs.opentheso.repositories.PreferencesRepository;
 import fr.cnrs.opentheso.v2.concept.policy.ConceptStatusPolicy;
 import fr.cnrs.opentheso.v2.graph.model.GraphGlobeNode;
 import fr.cnrs.opentheso.v2.graph.model.GraphGlobeResponse;
@@ -23,13 +25,16 @@ public class GraphGlobeConsultationService {
 
     private final GraphGlobeQueryRepository graphGlobeQueryRepository;
     private final AuthenticatedUserSource authenticatedUserSource;
+    private final PreferencesRepository preferencesRepository;
 
     public GraphGlobeConsultationService(
             GraphGlobeQueryRepository graphGlobeQueryRepository,
-            AuthenticatedUserSource authenticatedUserSource
+            AuthenticatedUserSource authenticatedUserSource,
+            PreferencesRepository preferencesRepository
     ) {
         this.graphGlobeQueryRepository = graphGlobeQueryRepository;
         this.authenticatedUserSource = authenticatedUserSource;
+        this.preferencesRepository = preferencesRepository;
     }
 
     @Transactional(readOnly = true)
@@ -37,7 +42,7 @@ public class GraphGlobeConsultationService {
         if (StringUtils.isAnyBlank(thesaurusId, lang)) {
             return new GraphGlobeResponse(List.of(), false);
         }
-        boolean includeCandidates = authenticatedUserSource.isLoggedIn();
+        boolean includeCandidates = shouldIncludeCandidates(thesaurusId);
         List<Object[]> raw = graphGlobeQueryRepository.findGlobeConcepts(
                 thesaurusId, lang, includeCandidates, MAX_NODES + 1);
         boolean truncated = raw.size() > MAX_NODES;
@@ -90,6 +95,15 @@ public class GraphGlobeConsultationService {
                 List.copyOf(narrower),
                 List.copyOf(related)
         );
+    }
+
+    private boolean shouldIncludeCandidates(String thesaurusId) {
+        if (authenticatedUserSource.isLoggedIn()) {
+            return true;
+        }
+        return preferencesRepository.findByIdThesaurus(thesaurusId)
+                .map(Preferences::isShowCandidatesToGuests)
+                .orElse(false);
     }
 
     private static GraphNeighborhoodResponse emptyNeighborhood(String conceptId) {

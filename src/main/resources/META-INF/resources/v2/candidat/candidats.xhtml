@@ -22,7 +22,7 @@
                 </div>
                 <a class="bo-btn primary sm cand-new" href="candidat/candidats.xhtml?new=1">+ Nouveau candidat</a>
               </div>
-              <h:form id="candBoardForm" styleClass="cand-form">
+              <h:form id="candBoardForm" styleClass="cand-form" enctype="multipart/form-data">
               <h:inputHidden id="activeTab" value="#{v2CandidatBoardBean.activeTab}"/>
               <div class="cand-board" id="candBoard" data-tab="#{v2CandidatBoardBean.activeTab}">
                 <div class="cand-toolbar">
@@ -44,17 +44,52 @@
                     <h:commandButton id="candSearchGo" value="Rechercher"
                                      styleClass="bo-btn ghost sm cand-search-go"
                                      action="#{v2CandidatBoardBean.search}">
-                      <f:ajax execute="@form" render="candTabs candPanes candMineBox"/>
+                      <f:ajax execute="@form" render="candTabs candPanes candMineBox candBoardTools"/>
                     </h:commandButton>
                     <h:panelGroup id="candMineBox">
                       <ui:fragment rendered="#{v2CandidatBoardBean.loggedIn}">
                         <label class="cand-mine#{v2CandidatBoardBean.mineOnly ? ' is-on' : ''}">
                           <h:selectBooleanCheckbox id="candMine" value="#{v2CandidatBoardBean.mineOnly}">
                             <f:ajax event="change" execute="@form" listener="#{v2CandidatBoardBean.toggleMine}"
-                                    render="candTabs candPanes candMineBox"/>
+                                    render="candTabs candPanes candMineBox candBoardTools"/>
                           </h:selectBooleanCheckbox>
                           Mes candidats
                         </label>
+                      </ui:fragment>
+                    </h:panelGroup>
+                    <h:panelGroup id="candBoardTools">
+                      <ui:fragment rendered="#{v2CandidatBoardBean.canExport}">
+                        <h:commandButton id="candExportSkos"
+                                         value="#{v2LocaleBean.getMsg('v2.candidat.board.export')}"
+                                         styleClass="bo-btn ghost sm"
+                                         action="#{v2CandidatBoardBean.exportPendingSkos}"/>
+                      </ui:fragment>
+                      <ui:fragment rendered="#{v2CandidatBoardBean.canImport}">
+                        <h:inputFile id="candImportFile" styleClass="bo-file-input"
+                                     value="#{v2CandidatBoardBean.importUpload}"/>
+                        <h:commandButton id="candImportSkos"
+                                         value="#{v2LocaleBean.getMsg('v2.candidat.board.import')}"
+                                         styleClass="bo-btn ghost sm"
+                                         action="#{v2CandidatBoardBean.importSkos}">
+                          <f:ajax execute="@form" render="candTabs candPanes candBoardTools"/>
+                        </h:commandButton>
+                      </ui:fragment>
+                      <ui:fragment rendered="#{v2CandidatBoardBean.canProcess and v2CandidatBoardBean.activeTab eq 'attente'}">
+                        <h:inputText id="candBatchMsg" value="#{v2CandidatBoardBean.batchMessage}"
+                                     styleClass="st-input"
+                                     pt:placeholder="#{v2LocaleBean.getMsg('v2.candidat.board.batchMessage')}"/>
+                        <h:commandButton id="candAcceptSelected"
+                                         value="#{v2LocaleBean.getMsg('v2.candidat.board.acceptSelected')}"
+                                         styleClass="bo-btn primary sm"
+                                         action="#{v2CandidatBoardBean.acceptSelected}">
+                          <f:ajax execute="@form" render="candTabs candPanes candBoardTools"/>
+                        </h:commandButton>
+                        <h:commandButton id="candRejectSelected"
+                                         value="#{v2LocaleBean.getMsg('v2.candidat.board.rejectSelected')}"
+                                         styleClass="bo-btn ghost sm"
+                                         action="#{v2CandidatBoardBean.rejectSelected}">
+                          <f:ajax execute="@form" render="candTabs candPanes candBoardTools"/>
+                        </h:commandButton>
                       </ui:fragment>
                     </h:panelGroup>
                   </div>
@@ -68,12 +103,22 @@
                     </div>
                   </ui:fragment>
                   <ui:repeat value="#{v2CandidatBoardBean.pending}" var="item">
+                    <div class="cand-row-wrap">
+                      <ui:fragment rendered="#{v2CandidatBoardBean.canProcess}">
+                        <h:commandLink styleClass="cand-row-check#{v2CandidatBoardBean.isSelected(item.conceptId) ? ' is-on' : ''}"
+                                       action="#{v2CandidatBoardBean.toggleSelect(item.conceptId)}"
+                                       title="Sélectionner">
+                          <f:ajax execute="@this" render="candBoardTools candPanes"/>
+                          <span aria-hidden="true">#{v2CandidatBoardBean.isSelected(item.conceptId) ? '☑' : '☐'}</span>
+                        </h:commandLink>
+                      </ui:fragment>
                     <a class="cand-row" href="thesaurus/consultation.xhtml?id=#{item.conceptId}&amp;type=#{item.openType}&amp;from=candidats"
                        data-act="open" data-id="#{item.conceptId}" data-type="#{item.openType}" title="#{item.title}">
                       <span class="cand-row-t">#{item.title}</span>
                       <span class="cand-row-m">#{item.meta}</span>
                       <span class="cand-row-v">#{item.votes}</span>
                     </a>
+                    </div>
                   </ui:repeat>
                   <ui:fragment rendered="#{v2CandidatBoardBean.isCapped('attente')}">
                     <div class="cand-cap">Affichage limité aux 400 plus récents (#{v2CandidatBoardBean.pendingCount} au total).</div>
@@ -125,11 +170,17 @@
           <div class="view-panel" id="viewDraft">
             <div class="bo">
               <a class="bo-back" href="candidat/candidats.xhtml" title="Retour à la liste"><svg viewBox="0 0 24 24" aria-hidden="true"><path d="M19 12H5"/><path d="m12 19-7-7 7-7"/></svg></a>
+            <h:form id="candDraftForm" prependId="false" styleClass="cand-draft-form">
             <div class="cv is-on" data-status="candidat">
               <div class="cv-path" id="draftPathBox" hidden="hidden"><span class="path" id="draftPathLabel"></span></div>
               <div class="cv-head">
                 <h1 class="cv-pref">
-                  <input class="cv-draft-input" id="draftTitle" placeholder="Intitulé du candidat…" aria-label="Intitulé du candidat" autocomplete="off"/>
+                  <h:inputText id="draftTitle" styleClass="cv-draft-input"
+                               value="#{v2CandidateDraftBean.title}"
+                               pt:placeholder="Intitulé du candidat…"
+                               pt:aria-label="Intitulé du candidat"
+                               pt:autocomplete="off"
+                               pt:oninput="if(window.syncDraftPrefMirror)syncDraftPrefMirror()"/>
                   <span class="cv-lang">fr</span>
                 </h1>
               </div>
@@ -146,11 +197,15 @@
                     </div>
                     <div class="crow">
                       <div class="crow-lbl">Formes alternatives</div>
-                      <div class="crow-val"><input class="st-input" id="draftAlts" placeholder="synonymes, séparés par des virgules"/></div>
+                      <div class="crow-val"><h:inputText id="draftAlts" styleClass="st-input"
+                                                          value="#{v2CandidateDraftBean.alternatives}"
+                                                          pt:placeholder="synonymes, séparés par des virgules"/></div>
                     </div>
                     <div class="crow">
                       <div class="crow-lbl">Formes cachées</div>
-                      <div class="crow-val"><input class="st-input" id="draftHidden" placeholder="formes cachées, séparées par des virgules"/></div>
+                      <div class="crow-val"><h:inputText id="draftHidden" styleClass="st-input"
+                                                          value="#{v2CandidateDraftBean.hiddenForms}"
+                                                          pt:placeholder="formes cachées, séparées par des virgules"/></div>
                     </div>
                   </div>
                 </section>
@@ -185,6 +240,7 @@
                             </button>
                           </div>
                           <input type="hidden" id="draftCollIds" value=""/>
+                          <h:inputHidden id="draftCollIdsBound" value="#{v2CandidateDraftBean.collectionIds}"/>
                         </div>
                       </div>
                     </div>
@@ -195,15 +251,21 @@
                   <div class="cblock-body">
                     <div class="crow crow-rel">
                       <div class="crow-lbl"><span class="rel-code rel-bt">TG</span>Concept générique</div>
-                      <div class="crow-val"><input class="st-input" id="draftBt" placeholder="Terme générique…"/></div>
+                      <div class="crow-val"><h:inputText id="draftBt" styleClass="st-input"
+                                                          value="#{v2CandidateDraftBean.broaderTerm}"
+                                                          pt:placeholder="Terme générique…"/></div>
                     </div>
                     <div class="crow crow-rel">
                       <div class="crow-lbl"><span class="rel-code rel-nt">TS</span>Concept spécifique</div>
-                      <div class="crow-val"><input class="st-input" id="draftNt" placeholder="Terme(s) spécifique(s)…"/></div>
+                      <div class="crow-val"><h:inputText id="draftNt" styleClass="st-input"
+                                                          value="#{v2CandidateDraftBean.narrowerTerms}"
+                                                          pt:placeholder="Terme(s) spécifique(s)…"/></div>
                     </div>
                     <div class="crow crow-rel">
                       <div class="crow-lbl"><span class="rel-code rel-rt">TA</span>Concept associé</div>
-                      <div class="crow-val"><input class="st-input" id="draftRt" placeholder="Terme(s) associé(s)…"/></div>
+                      <div class="crow-val"><h:inputText id="draftRt" styleClass="st-input"
+                                                          value="#{v2CandidateDraftBean.relatedTerms}"
+                                                          pt:placeholder="Terme(s) associé(s)…"/></div>
                     </div>
                   </div>
                 </section>
@@ -220,10 +282,10 @@
                   <div class="cblock-head">Traductions<div class="cblock-tools"><button type="button" class="cblock-gear" title="Agrandir" data-act="cblock-expand">⤢</button></div></div>
                   <div class="cblock-body">
                     <div class="crow"><div class="crow-lbl"><span class="tr-flag">🇫🇷</span> Français</div><div class="crow-val"><input class="st-input" id="draftTrFr" placeholder="(intitulé saisi ci-dessus)"/></div></div>
-                    <div class="crow"><div class="crow-lbl"><span class="tr-flag">🇬🇧</span> Anglais</div><div class="crow-val"><input class="st-input" id="draftTrEn" placeholder="Traduction…"/></div></div>
-                    <div class="crow"><div class="crow-lbl"><span class="tr-flag">🇩🇪</span> Allemand</div><div class="crow-val"><input class="st-input" id="draftTrDe" placeholder="Traduction…"/></div></div>
-                    <div class="crow"><div class="crow-lbl"><span class="tr-flag">🇪🇸</span> Espagnol</div><div class="crow-val"><input class="st-input" id="draftTrEs" placeholder="Traduction…"/></div></div>
-                    <div class="crow"><div class="crow-lbl"><span class="tr-flag">🇮🇹</span> Italien</div><div class="crow-val"><input class="st-input" id="draftTrIt" placeholder="Traduction…"/></div></div>
+                    <div class="crow"><div class="crow-lbl"><span class="tr-flag">🇬🇧</span> Anglais</div><div class="crow-val"><h:inputText id="draftTrEn" styleClass="st-input" value="#{v2CandidateDraftBean.translationEn}" pt:placeholder="Traduction…"/></div></div>
+                    <div class="crow"><div class="crow-lbl"><span class="tr-flag">🇩🇪</span> Allemand</div><div class="crow-val"><h:inputText id="draftTrDe" styleClass="st-input" value="#{v2CandidateDraftBean.translationDe}" pt:placeholder="Traduction…"/></div></div>
+                    <div class="crow"><div class="crow-lbl"><span class="tr-flag">🇪🇸</span> Espagnol</div><div class="crow-val"><h:inputText id="draftTrEs" styleClass="st-input" value="#{v2CandidateDraftBean.translationEs}" pt:placeholder="Traduction…"/></div></div>
+                    <div class="crow"><div class="crow-lbl"><span class="tr-flag">🇮🇹</span> Italien</div><div class="crow-val"><h:inputText id="draftTrIt" styleClass="st-input" value="#{v2CandidateDraftBean.translationIt}" pt:placeholder="Traduction…"/></div></div>
                   </div>
                 </section>
                 <section class="cblock">
@@ -231,11 +293,15 @@
                   <div class="cblock-body">
                     <div class="note-grp">
                       <div class="note-grp-t">Définition</div>
-                      <textarea class="disc-input" id="draftDef" placeholder="Définition du concept…"></textarea>
+                      <h:inputTextarea id="draftDef" styleClass="disc-input"
+                                        value="#{v2CandidateDraftBean.definition}"
+                                        pt:placeholder="Définition du concept…"/>
                     </div>
                     <div class="note-grp">
                       <div class="note-grp-t">Note d'application</div>
-                      <textarea class="disc-input" id="draftScope" placeholder="Note d'application…"></textarea>
+                      <h:inputTextarea id="draftScope" styleClass="disc-input"
+                                        value="#{v2CandidateDraftBean.scopeNote}"
+                                        pt:placeholder="Note d'application…"/>
                     </div>
                   </div>
                 </section>
@@ -317,11 +383,23 @@
                 </section>
               </div>
               <div class="cand-draft-actions">
-                <button type="button" class="bo-btn primary sm" id="draftCreate" data-act="cand-resolve" data-kind="créé" disabled="disabled">Créer le candidat</button>
-                <button type="button" class="bo-btn ghost sm" data-act="cand-resolve" data-kind="annulé">Annuler</button>
+                <ui:fragment rendered="#{v2CandidateDraftBean.canCreate}">
+                  <h:commandButton id="draftCreate" styleClass="bo-btn primary sm"
+                                   value="#{v2LocaleBean.getMsg('v2.candidat.draft.create')}"
+                                   action="#{v2CandidateDraftBean.create}"
+                                   disabled="#{empty v2CandidateDraftBean.title}">
+                    <f:ajax execute="@form" render="@form"/>
+                  </h:commandButton>
+                </ui:fragment>
+                <h:commandButton id="draftCancel" styleClass="bo-btn ghost sm"
+                                 value="#{v2LocaleBean.getMsg('v2.candidat.draft.cancel')}"
+                                 action="#{v2CandidateDraftBean.cancel}" immediate="true">
+                  <f:ajax execute="@this" render="@form" onevent="function(d){if(d.status==='success'&amp;&amp;window.resolveDraftUi)window.resolveDraftUi('annulé');}"/>
+                </h:commandButton>
                 <span class="cand-draft-hint">Échap pour annuler · Ctrl+Entrée pour créer</span>
               </div>
             </div>
+            </h:form>
             </div>
           </div>
   </ui:define>

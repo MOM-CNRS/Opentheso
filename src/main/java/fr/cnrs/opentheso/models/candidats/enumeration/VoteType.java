@@ -3,7 +3,8 @@ package fr.cnrs.opentheso.models.candidats.enumeration;
 public enum VoteType {
 
     CANDIDAT("CA"),
-    NOTE("NT");
+    NOTE("NT"),
+    CONTRE("CN");
 
     private String label;
 

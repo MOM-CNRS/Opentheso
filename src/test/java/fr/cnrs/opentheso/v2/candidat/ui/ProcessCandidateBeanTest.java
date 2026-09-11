@@ -3,6 +3,7 @@ package fr.cnrs.opentheso.v2.candidat.ui;
 import fr.cnrs.opentheso.entites.Preferences;
 import fr.cnrs.opentheso.models.candidats.CandidatDto;
 import fr.cnrs.opentheso.utils.MessageUtils;
+import fr.cnrs.opentheso.v2.candidat.model.CandidateProcessOutcome;
 import fr.cnrs.opentheso.v2.candidat.service.CandidatProcessService;
 import fr.cnrs.opentheso.v2.setting.ui.ThesaurusContext;
 import fr.cnrs.opentheso.v2.shared.session.ThesaurusPreferencesProvider;
@@ -96,7 +97,7 @@ class ProcessCandidateBeanTest {
     void insertCandidat_showsErrorWhenPersistenceFails() {
         bean.reset(candidat());
         when(userSession.getCurrentUserId()).thenReturn(7);
-        when(candidatProcessService.insertCandidate(any(), any(), eq(7))).thenReturn(true);
+        when(candidatProcessService.insertCandidate(any(), any(), eq(7))).thenReturn(CandidateProcessOutcome.fail());
 
         bean.insertCandidat();
 
@@ -109,15 +110,15 @@ class ProcessCandidateBeanTest {
         bean.reset(candidat());
         when(userSession.getCurrentUserId()).thenReturn(7);
         when(userSession.getCurrentUsername()).thenReturn("admin");
-        when(candidatProcessService.insertCandidate(any(), any(), eq(7))).thenReturn(false);
+        when(candidatProcessService.insertCandidate(any(), any(), eq(7))).thenReturn(CandidateProcessOutcome.ok());
         when(candidatProcessService.isAlertMailEnabled(3)).thenReturn(true);
         when(candidatProcessService.resolveUserMail(3)).thenReturn("author@example.com");
-        when(candidatProcessService.sendMail(any(), any(), any())).thenReturn(false);
+        when(candidatProcessService.sendAcceptedMail(any(), any(), any(), any(), any())).thenReturn(true);
         when(thesaurusPreferencesProvider.findPreferences("TH1")).thenReturn(Optional.of(new Preferences()));
 
         bean.insertCandidat();
 
-        verify(candidatProcessService).sendMail(eq("author@example.com"), any(), any());
+        verify(candidatProcessService).sendAcceptedMail(eq("author@example.com"), any(), any(), any(), any());
         verify(candidatProcessService).afterCandidateAccepted(any(), eq(7), eq("admin"), any(Preferences.class));
         verify(candidatBean).initCandidatModule();
         messageUtilsStatic.verify(() -> MessageUtils.showInformationMessage("Candidat inséré avec succès"));
@@ -128,13 +129,13 @@ class ProcessCandidateBeanTest {
     void insertCandidat_skipsMailWhenAlertDisabled() {
         bean.reset(candidat());
         when(userSession.getCurrentUserId()).thenReturn(7);
-        when(candidatProcessService.insertCandidate(any(), any(), eq(7))).thenReturn(false);
+        when(candidatProcessService.insertCandidate(any(), any(), eq(7))).thenReturn(CandidateProcessOutcome.ok());
         when(candidatProcessService.isAlertMailEnabled(3)).thenReturn(false);
         when(thesaurusPreferencesProvider.findPreferences("TH1")).thenReturn(Optional.empty());
 
         bean.insertCandidat();
 
-        verify(candidatProcessService, never()).sendMail(any(), any(), any());
+        verify(candidatProcessService, never()).sendAcceptedMail(any(), any(), any(), any(), any());
         verify(candidatProcessService, never()).afterCandidateAccepted(any(), org.mockito.ArgumentMatchers.anyInt(), any(), any());
     }
 
@@ -149,7 +150,7 @@ class ProcessCandidateBeanTest {
     void rejectCandidat_showsErrorWhenPersistenceFails() {
         bean.reset(candidat());
         when(userSession.getCurrentUserId()).thenReturn(7);
-        when(candidatProcessService.rejectCandidate(any(), any(), eq(7))).thenReturn(true);
+        when(candidatProcessService.rejectCandidate(any(), any(), eq(7))).thenReturn(CandidateProcessOutcome.fail());
 
         bean.rejectCandidat();
 
@@ -162,7 +163,7 @@ class ProcessCandidateBeanTest {
         bean.reset(candidat());
         when(userSession.getCurrentUserId()).thenReturn(7);
         when(userSession.getCurrentUsername()).thenReturn("admin");
-        when(candidatProcessService.rejectCandidate(any(), any(), eq(7))).thenReturn(false);
+        when(candidatProcessService.rejectCandidate(any(), any(), eq(7))).thenReturn(CandidateProcessOutcome.ok());
         when(candidatProcessService.isAlertMailEnabled(3)).thenReturn(false);
 
         bean.rejectCandidat();

@@ -24,6 +24,8 @@
        data-flash-align-token="#{v2ConceptAlignmentAutoSearchBean.flashToken}"
        data-flash-align-edit="#{v2ConceptAlignmentBlockEditorBean.flashMessage}"
        data-flash-align-edit-token="#{v2ConceptAlignmentBlockEditorBean.flashToken}"
+       data-flash-cand="#{v2CandidateFicheBean.flashMessage}"
+       data-flash-cand-token="#{v2CandidateFicheBean.flashToken}"
        data-rel-tree="#{v2ConceptRelationBlockEditorBean.treeReload ? '1' : ''}"
        data-msg-fold="#{v2LocaleBean.getMsg('v2.block.collapse')}"
        data-msg-unfold="#{v2LocaleBean.getMsg('v2.block.expand')}">
@@ -125,6 +127,7 @@
       </div>
     </ui:fragment>
     <div class="cv-blocks">
+      <ui:include src="candidate-governance.xhtml"/>
       <section class="cblock#{v2ConceptLabelBlockEditorBean.editing ? ' is-editing' : ''}" data-card-id="contexte">
         <div class="cblock-head"><span class="cblock-drag" role="button" tabindex="0" title="Glisser pour réordonner" aria-label="Réordonner ce bloc"><svg class="cblock-grip" viewBox="0 0 8 14" aria-hidden="true" focusable="false"><circle cx="2" cy="2" r="1.35"/><circle cx="6" cy="2" r="1.35"/><circle cx="2" cy="7" r="1.35"/><circle cx="6" cy="7" r="1.35"/><circle cx="2" cy="12" r="1.35"/><circle cx="6" cy="12" r="1.35"/></svg></span><span class="cblock-title">Libellé</span><div class="cblock-tools"><h:commandButton id="labelEditStart" value="✎" styleClass="cblock-gear" title="#{v2LocaleBean.getMsg('v2.edit')}" rendered="#{v2ConceptLabelBlockEditorBean.editable and not v2ConceptLabelBlockEditorBean.editing}" action="#{v2ConceptLabelBlockEditorBean.startEditing}"><f:ajax execute="@this" render=":previewDetailForm:previewDetail"/></h:commandButton><button type="button" class="cblock-gear cblock-fold" data-act="cblock-fold" title="#{v2LocaleBean.getMsg('v2.block.collapse')}" aria-expanded="true" aria-label="#{v2LocaleBean.getMsg('v2.block.collapse')}"><svg viewBox="0 0 24 24" aria-hidden="true"><path d="m6 9 6 6 6-6"/></svg></button></div></div>
         <div class="cblock-body">

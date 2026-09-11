@@ -1,5 +1,7 @@
 package fr.cnrs.opentheso.v2.concept.service;
 
+import fr.cnrs.opentheso.entites.Preferences;
+import fr.cnrs.opentheso.repositories.PreferencesRepository;
 import fr.cnrs.opentheso.v2.candidat.model.CandidatStatusCode;
 import fr.cnrs.opentheso.v2.concept.model.ConceptTableRow;
 import fr.cnrs.opentheso.v2.concept.model.ConceptTableRowsResponse;
@@ -26,13 +28,16 @@ public class ConceptTableConsultationService {
 
     private final ConceptTableQueryRepository conceptTableQueryRepository;
     private final AuthenticatedUserSource authenticatedUserSource;
+    private final PreferencesRepository preferencesRepository;
 
     public ConceptTableConsultationService(
             ConceptTableQueryRepository conceptTableQueryRepository,
-            AuthenticatedUserSource authenticatedUserSource
+            AuthenticatedUserSource authenticatedUserSource,
+            PreferencesRepository preferencesRepository
     ) {
         this.conceptTableQueryRepository = conceptTableQueryRepository;
         this.authenticatedUserSource = authenticatedUserSource;
+        this.preferencesRepository = preferencesRepository;
     }
 
     @Transactional(readOnly = true)
@@ -40,7 +45,7 @@ public class ConceptTableConsultationService {
         if (StringUtils.isAnyBlank(thesaurusId, lang)) {
             return new ConceptTableRowsResponse(List.of(), false);
         }
-        boolean includeCandidates = authenticatedUserSource.isLoggedIn();
+        boolean includeCandidates = shouldIncludeCandidates(thesaurusId);
         List<Object[]> raw = conceptTableQueryRepository.findTableConceptRows(
                 thesaurusId, lang, includeCandidates, MAX_ROWS + 1);
         boolean truncated = raw.size() > MAX_ROWS;
@@ -143,6 +148,15 @@ public class ConceptTableConsultationService {
             return "Concept";
         }
         return typeCode;
+    }
+
+    private boolean shouldIncludeCandidates(String thesaurusId) {
+        if (authenticatedUserSource.isLoggedIn()) {
+            return true;
+        }
+        return preferencesRepository.findByIdThesaurus(thesaurusId)
+                .map(Preferences::isShowCandidatesToGuests)
+                .orElse(false);
     }
 
     private static String str(Object[] row, int index) {

@@ -5,6 +5,7 @@ import fr.cnrs.opentheso.v2.candidat.mapper.CandidatDetailJsonParser.ParsedDetai
 public record CandidatDetailBundle(
         String preferredTermId,
         boolean voted,
+        boolean downVoted,
         ParsedDetail detail
 ) {
 }

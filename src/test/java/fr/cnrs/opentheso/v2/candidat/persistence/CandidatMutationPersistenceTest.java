@@ -2,7 +2,6 @@ package fr.cnrs.opentheso.v2.candidat.persistence;
 
 import fr.cnrs.opentheso.entites.CandidatMessages;
 import fr.cnrs.opentheso.entites.CandidatStatus;
-import fr.cnrs.opentheso.entites.CandidatVote;
 import fr.cnrs.opentheso.entites.Concept;
 import fr.cnrs.opentheso.entites.HierarchicalRelationship;
 import fr.cnrs.opentheso.entites.ImageExterne;
@@ -96,6 +95,8 @@ class CandidatMutationPersistenceTest {
     @Mock private NoteHistoriqueRepository noteHistoriqueRepository;
     @Mock private ImagesRepository imagesRepository;
     @Mock private SystemMailSender systemMailSender;
+    @Mock private CandidatVotePersistence candidatVotePersistence;
+    @Mock private CandidatLifecyclePersistence candidatLifecyclePersistence;
 
     @InjectMocks
     private CandidatMutationPersistence persistence;
@@ -415,37 +416,29 @@ class CandidatMutationPersistenceTest {
 
     @Test
     void updateCandidateStatus_returnsFalseWhenCandidateStatusMissing() {
-        when(candidatStatusRepository.findAllByIdConceptAndIdThesaurus("C1", "TH1")).thenReturn(Optional.empty());
+        when(candidatLifecyclePersistence.updateCandidateStatus("TH1", "C1", 1)).thenReturn(false);
 
         assertFalse(persistence.updateCandidateStatus("TH1", "C1", 1));
     }
 
     @Test
     void updateCandidateStatus_returnsFalseWhenTargetStatusMissing() {
-        when(candidatStatusRepository.findAllByIdConceptAndIdThesaurus("C1", "TH1"))
-                .thenReturn(Optional.of(new CandidatStatus()));
-        when(statusRepository.findById(9)).thenReturn(Optional.empty());
+        when(candidatLifecyclePersistence.updateCandidateStatus("TH1", "C1", 9)).thenReturn(false);
 
         assertFalse(persistence.updateCandidateStatus("TH1", "C1", 9));
     }
 
     @Test
     void updateCandidateStatus_updatesStatusWhenFound() {
-        var candidatStatus = new CandidatStatus();
-        when(candidatStatusRepository.findAllByIdConceptAndIdThesaurus("C1", "TH1"))
-                .thenReturn(Optional.of(candidatStatus));
-        var newStatus = new Status();
-        when(statusRepository.findById(1)).thenReturn(Optional.of(newStatus));
+        when(candidatLifecyclePersistence.updateCandidateStatus("TH1", "C1", 1)).thenReturn(true);
 
         assertTrue(persistence.updateCandidateStatus("TH1", "C1", 1));
-        assertEquals(newStatus, candidatStatus.getStatus());
-        verify(candidatStatusRepository).save(candidatStatus);
+        verify(candidatLifecyclePersistence).updateCandidateStatus("TH1", "C1", 1);
     }
 
     @Test
     void hasVote_returnsTrueWhenVoteExists() {
-        when(candidatVoteRepository.findAllByIdConceptAndIdThesaurusAndIdUserAndIdNoteAndTypeVote(
-                "C1", "TH1", 7, "1", "CA")).thenReturn(List.of(new CandidatVote()));
+        when(candidatVotePersistence.hasVote("TH1", "C1", 7, "1", VoteType.CANDIDAT)).thenReturn(true);
 
         assertTrue(persistence.hasVote("TH1", "C1", 7, "1", VoteType.CANDIDAT));
     }
@@ -454,18 +447,14 @@ class CandidatMutationPersistenceTest {
     void addVote_savesVote() {
         persistence.addVote("TH1", "C1", 7, "1", VoteType.CANDIDAT);
 
-        ArgumentCaptor<CandidatVote> captor = ArgumentCaptor.forClass(CandidatVote.class);
-        verify(candidatVoteRepository).save(captor.capture());
-        assertEquals("C1", captor.getValue().getIdConcept());
-        assertEquals("CA", captor.getValue().getTypeVote());
+        verify(candidatVotePersistence).addVote("TH1", "C1", 7, "1", VoteType.CANDIDAT);
     }
 
     @Test
     void removeVote_delegatesToRepository() {
         persistence.removeVote("TH1", "C1", 7, "1", VoteType.CANDIDAT);
 
-        verify(candidatVoteRepository).deleteAllByIdUserAndIdConceptAndIdThesaurusAndTypeVoteAndIdNote(
-                7, "C1", "TH1", "CA", "1");
+        verify(candidatVotePersistence).removeVote("TH1", "C1", 7, "1", VoteType.CANDIDAT);
     }
 
     @Test
@@ -619,47 +608,38 @@ class CandidatMutationPersistenceTest {
     }
 
     @Test
-    void insertCandidate_returnsFalseAndUpdatesStatusWhenCandidateFound() {
+    void insertCandidate_returnsOkWhenCandidateFound() {
         var candidat = new CandidatDto();
         candidat.setIdConcepte("C1");
         candidat.setIdThesaurus("TH1");
-        var candidatStatus = new CandidatStatus();
-        when(candidatStatusRepository.findByIdConcept("C1")).thenReturn(Optional.of(candidatStatus));
-        when(statusRepository.findById(2)).thenReturn(Optional.of(new Status()));
+        when(candidatLifecyclePersistence.insertCandidate(candidat, "Bravo", 7))
+                .thenReturn(fr.cnrs.opentheso.v2.candidat.model.CandidateProcessOutcome.ok());
 
-        assertFalse(persistence.insertCandidate(candidat, "Bravo", 7));
-
-        assertEquals("Bravo", candidatStatus.getMessage());
-        assertEquals(7, candidatStatus.getIdUserAdmin());
-        verify(candidatStatusRepository).save(candidatStatus);
-        verify(conceptRepository).setStatus("D", "C1", "TH1");
+        assertTrue(persistence.insertCandidate(candidat, "Bravo", 7).success());
+        verify(candidatLifecyclePersistence).insertCandidate(candidat, "Bravo", 7);
     }
 
     @Test
-    void insertCandidate_returnsTrueWhenCandidateNotFound() {
-        when(candidatStatusRepository.findByIdConcept("C1")).thenReturn(Optional.empty());
-
+    void insertCandidate_returnsFailWhenCandidateNotFound() {
         var candidat = new CandidatDto();
         candidat.setIdConcepte("C1");
         candidat.setIdThesaurus("TH1");
+        when(candidatLifecyclePersistence.insertCandidate(candidat, "msg", 7))
+                .thenReturn(fr.cnrs.opentheso.v2.candidat.model.CandidateProcessOutcome.fail());
 
-        assertTrue(persistence.insertCandidate(candidat, "msg", 7));
-        verify(conceptRepository, never()).setStatus(any(), any(), any());
+        assertTrue(persistence.insertCandidate(candidat, "msg", 7).isFailure());
     }
 
     @Test
-    void rejectCandidate_updatesStatusToRefused() {
+    void rejectCandidate_delegatesToLifecyclePersistence() {
         var candidat = new CandidatDto();
         candidat.setIdConcepte("C1");
         candidat.setIdThesaurus("TH1");
-        var candidatStatus = new CandidatStatus();
-        when(candidatStatusRepository.findByIdConcept("C1")).thenReturn(Optional.of(candidatStatus));
-        when(statusRepository.findById(3)).thenReturn(Optional.of(new Status()));
+        when(candidatLifecyclePersistence.rejectCandidate(candidat, "Nope", 7))
+                .thenReturn(fr.cnrs.opentheso.v2.candidat.model.CandidateProcessOutcome.ok());
 
-        assertFalse(persistence.rejectCandidate(candidat, "Nope", 7));
-
-        assertEquals("Nope", candidatStatus.getMessage());
-        verify(candidatStatusRepository).save(candidatStatus);
+        assertTrue(persistence.rejectCandidate(candidat, "Nope", 7).success());
+        verify(candidatLifecyclePersistence).rejectCandidate(candidat, "Nope", 7);
     }
 
     @Test

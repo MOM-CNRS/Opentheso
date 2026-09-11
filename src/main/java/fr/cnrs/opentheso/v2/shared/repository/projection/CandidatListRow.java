@@ -15,6 +15,7 @@ public record CandidatListRow(
         int messageCount,
         int propositionCount,
         int candidateVoteCount,
-        int noteVoteCount
+        int noteVoteCount,
+        int downVoteCount
 ) {
 }

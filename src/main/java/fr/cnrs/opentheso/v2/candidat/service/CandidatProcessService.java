@@ -5,10 +5,12 @@ import fr.cnrs.opentheso.entites.Preferences;
 import fr.cnrs.opentheso.models.candidats.CandidatDto;
 import fr.cnrs.opentheso.models.concept.DCMIResource;
 import fr.cnrs.opentheso.repositories.ConceptDcTermRepository;
+import fr.cnrs.opentheso.v2.candidat.model.CandidateProcessOutcome;
 import fr.cnrs.opentheso.v2.candidat.persistence.CandidatProcessPersistence;
 import fr.cnrs.opentheso.v2.shared.session.ConceptTreeRefreshSupport;
 import lombok.RequiredArgsConstructor;
 import org.apache.commons.collections4.CollectionUtils;
+import org.apache.commons.lang3.StringUtils;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
 
@@ -30,11 +32,11 @@ public class CandidatProcessService {
         return candidatProcessPersistence.exportProcessedCandidatesCsv(candidates);
     }
 
-    public boolean insertCandidate(CandidatDto candidate, String adminMessage, int userId) {
+    public CandidateProcessOutcome insertCandidate(CandidatDto candidate, String adminMessage, int userId) {
         return candidatProcessPersistence.insertCandidate(candidate, adminMessage, userId);
     }
 
-    public boolean rejectCandidate(CandidatDto candidate, String adminMessage, int userId) {
+    public CandidateProcessOutcome rejectCandidate(CandidatDto candidate, String adminMessage, int userId) {
         return candidatProcessPersistence.rejectCandidate(candidate, adminMessage, userId);
     }
 
@@ -67,7 +69,7 @@ public class CandidatProcessService {
         }
         List<CandidatDto> accepted = new ArrayList<>(candidates.size());
         for (CandidatDto candidate : candidates) {
-            if (candidatProcessPersistence.insertCandidate(candidate, adminMessage, userId)) {
+            if (candidatProcessPersistence.insertCandidate(candidate, adminMessage, userId).isFailure()) {
                 return candidate;
             }
             applyContributorMetadata(candidate, userId, contributorName);
@@ -96,7 +98,7 @@ public class CandidatProcessService {
             return null;
         }
         for (CandidatDto candidate : candidates) {
-            if (candidatProcessPersistence.rejectCandidate(candidate, adminMessage, userId)) {
+            if (candidatProcessPersistence.rejectCandidate(candidate, adminMessage, userId).isFailure()) {
                 return candidate;
             }
             applyContributorMetadata(candidate, userId, contributorName);
@@ -140,6 +142,64 @@ public class CandidatProcessService {
 
     public boolean sendMail(String mail, String subject, String htmlBody) {
         return candidatProcessPersistence.sendMail(mail, subject, htmlBody);
+    }
+
+    /**
+     * @return {@code true} si le mail a été envoyé avec succès
+     */
+    public boolean sendAcceptedMail(
+            String mail,
+            CandidatDto candidat,
+            String adminMessage,
+            String thesaurusTitle,
+            String appBaseUrl
+    ) {
+        if (StringUtils.isBlank(mail) || candidat == null) {
+            return false;
+        }
+        String message = adminMessage == null ? "" : adminMessage;
+        String title = thesaurusTitle == null ? "" : thesaurusTitle;
+        String baseUrl = appBaseUrl == null ? "" : appBaseUrl;
+        var subject = "[" + title + "] Confirmation de l'acceptation de votre candidat (" + candidat.getNomPref() + ")";
+        var contentFile = "<html><body>"
+                + "Cher(e) " + candidat.getCreatedBy() + ", <br/> "
+                + "<p> Votre candidat a été accepté par nos administrateurs, il est désormais intégré au thésaurus "
+                + title + "<br/></p>"
+                + "Nous vous remercions de votre contribution à l'enrichissement du thésaurus <b>" + title + "</b> "
+                + "(concept : <a href=\"" + baseUrl + "/?idc=" + candidat.getIdConcepte()
+                + "&idt=" + candidat.getIdThesaurus() + "\">" + candidat.getNomPref() + "</a>). "
+                + "Message de l'administrateur : " + message
+                + "<br/><br/> Cordialement,<br/>"
+                + "L'équipe " + title + ".<br/> <img src=\"" + baseUrl
+                + "/resources/img/icon_opentheso2.png\" height=\"106\"></body></html>";
+        return sendMail(mail, subject, contentFile);
+    }
+
+    /**
+     * @return {@code true} si le mail a été envoyé avec succès
+     */
+    public boolean sendRejectedMail(
+            String mail,
+            CandidatDto candidat,
+            String adminMessage,
+            String thesaurusTitle,
+            String appBaseUrl
+    ) {
+        if (StringUtils.isBlank(mail) || candidat == null) {
+            return false;
+        }
+        String message = adminMessage == null ? "" : adminMessage;
+        String title = thesaurusTitle == null ? "" : thesaurusTitle;
+        String baseUrl = appBaseUrl == null ? "" : appBaseUrl;
+        var subject = "[" + title + "] Refus de votre candidat (" + candidat.getNomPref() + ")";
+        var contentFile = "<html><body>"
+                + "Cher(e) " + candidat.getCreatedBy() + ", <br/> "
+                + "<p> Votre candidat a été refusé par nos administrateurs, il n'a pas été intégré au thésaurus "
+                + title + "<br/></p>"
+                + "Message de l'administrateur : " + message
+                + "<br/>L'équipe " + title + ".<br/> <img src=\"" + baseUrl
+                + "/resources/img/icon_opentheso2.png\" height=\"106\"></body></html>";
+        return sendMail(mail, subject, contentFile);
     }
 
     private void applyContributorMetadata(CandidatDto candidate, int userId, String contributorName) {

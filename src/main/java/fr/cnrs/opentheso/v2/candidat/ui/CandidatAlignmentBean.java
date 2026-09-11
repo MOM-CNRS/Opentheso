@@ -27,6 +27,9 @@ import java.util.List;
 @ViewScoped
 @Named("v2CandidatAlignmentBean")
 @RequiredArgsConstructor
+/**
+ * V1-ported bean: not wired to V2 Facelets yet; kept for tests / future UI.
+ */
 public class CandidatAlignmentBean implements Serializable {
 
     private final transient ConceptAlignmentMutationService conceptAlignmentMutationService;

@@ -71,6 +71,7 @@ public class PreferenceEditor implements Serializable {
     private String deeplApiKey;
     private boolean webservices;
     private boolean kohaLink;
+    private boolean showCandidatesToGuests;
 
     private String newPassArk;
     private String newPassHandle;
@@ -132,6 +133,7 @@ public class PreferenceEditor implements Serializable {
         editor.setDeeplApiKey("");
         editor.setWebservices(preferences.webservices());
         editor.setKohaLink(preferences.kohaLink());
+        editor.setShowCandidatesToGuests(preferences.showCandidatesToGuests());
         editor.setLanguages(new ArrayList<>(preferences.languages()));
         return editor;
     }
@@ -190,6 +192,7 @@ public class PreferenceEditor implements Serializable {
                 naanOpenArk,
                 prefixOpenArk,
                 apiKeyOpenArk,
+                showCandidatesToGuests,
                 languages
         );
     }

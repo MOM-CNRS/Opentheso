@@ -140,4 +140,8 @@ public class Preferences {
     /** Date/heure de la dernière synchronisation réussie vers le maître. */
     @Column(name = "last_sync_at")
     private java.time.LocalDateTime lastSyncAt;
+
+    /** Afficher les candidats aux invités (consultation publique). */
+    @Column(name = "show_candidates_to_guests")
+    private boolean showCandidatesToGuests;
 }

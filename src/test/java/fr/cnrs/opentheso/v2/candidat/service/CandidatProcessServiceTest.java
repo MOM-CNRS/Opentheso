@@ -5,6 +5,7 @@ import fr.cnrs.opentheso.entites.Preferences;
 import fr.cnrs.opentheso.models.candidats.CandidatDto;
 import fr.cnrs.opentheso.models.concept.DCMIResource;
 import fr.cnrs.opentheso.repositories.ConceptDcTermRepository;
+import fr.cnrs.opentheso.v2.candidat.model.CandidateProcessOutcome;
 import fr.cnrs.opentheso.v2.candidat.persistence.CandidatProcessPersistence;
 import fr.cnrs.opentheso.v2.shared.session.ConceptTreeRefreshSupport;
 import org.junit.jupiter.api.BeforeEach;
@@ -81,8 +82,8 @@ class CandidatProcessServiceTest {
         c2.setIdThesaurus("TH1");
         c2.setIdConcepte("C2");
         var preferences = Preferences.builder().build();
-        when(candidatProcessPersistence.insertCandidate(c1, "ok", 7)).thenReturn(false);
-        when(candidatProcessPersistence.insertCandidate(c2, "ok", 7)).thenReturn(false);
+        when(candidatProcessPersistence.insertCandidate(c1, "ok", 7)).thenReturn(CandidateProcessOutcome.ok());
+        when(candidatProcessPersistence.insertCandidate(c2, "ok", 7)).thenReturn(CandidateProcessOutcome.ok());
 
         assertNull(service.acceptCandidatesBatch(List.of(c1, c2), "ok", 7, "admin", preferences));
 

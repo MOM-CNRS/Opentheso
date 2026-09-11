@@ -92,6 +92,7 @@ public final class CandidatDetailMapper {
         candidat.setTraductions(toTraductions(request.translations()));
         candidat.setMessages(toMessages(request.messages(), request.currentUserId()));
         candidat.setVoted(request.voted());
+        candidat.setDownVoted(request.downVoted());
         candidat.setAlignments(request.alignments());
         candidat.setImages(request.images());
     }
@@ -108,6 +109,7 @@ public final class CandidatDetailMapper {
             List<CandidatTranslationRow> translations,
             List<CandidatDiscussionRow> messages,
             boolean voted,
+            boolean downVoted,
             List<NodeAlignment> alignments,
             List<NodeImage> images,
             int currentUserId

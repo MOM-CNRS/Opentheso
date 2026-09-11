@@ -10,6 +10,7 @@ import fr.cnrs.opentheso.v2.concept.model.BreadcrumbStep;
 import fr.cnrs.opentheso.v2.concept.model.ConceptCustomRelationItem;
 import fr.cnrs.opentheso.v2.concept.model.ConceptDetail;
 import fr.cnrs.opentheso.v2.concept.model.LeftTreeMode;
+import fr.cnrs.opentheso.repositories.PreferencesRepository;
 import fr.cnrs.opentheso.v2.setting.model.ExportUriType;
 import fr.cnrs.opentheso.v2.setting.service.ThesaurusPreferenceService;
 import fr.cnrs.opentheso.v2.shared.repository.ConceptQueryRepository;
@@ -53,6 +54,8 @@ class ConceptReadServiceTest {
     private ApplicationUriService applicationUriService;
     @Mock
     private AuthenticatedUserSource authenticatedUserSource;
+    @Mock
+    private PreferencesRepository preferencesRepository;
 
     private ConceptReadService service;
 
@@ -65,10 +68,13 @@ class ConceptReadServiceTest {
                 conceptBreadcrumbReadService,
                 thesaurusPreferenceService,
                 applicationUriService,
-                authenticatedUserSource
+                authenticatedUserSource,
+                preferencesRepository
         );
         lenient().when(conceptTreeConsultationService.sortNodes(any(), anyBoolean()))
                 .thenAnswer(invocation -> invocation.getArgument(0));
+        lenient().when(preferencesRepository.findByIdThesaurus(any()))
+                .thenReturn(Optional.empty());
     }
 
     @Test

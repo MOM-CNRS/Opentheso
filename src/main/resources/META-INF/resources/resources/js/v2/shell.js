@@ -1700,7 +1700,8 @@ function applyConceptLabelUi(source) {
     { msg: cv.getAttribute("data-flash-note"), token: cv.getAttribute("data-flash-note-token"), kind: "note" },
     { msg: cv.getAttribute("data-flash-res"), token: cv.getAttribute("data-flash-res-token"), kind: "res" },
     { msg: cv.getAttribute("data-flash-align"), token: cv.getAttribute("data-flash-align-token"), kind: "align" },
-    { msg: cv.getAttribute("data-flash-align-edit"), token: cv.getAttribute("data-flash-align-edit-token"), kind: "alignEdit" }
+    { msg: cv.getAttribute("data-flash-align-edit"), token: cv.getAttribute("data-flash-align-edit-token"), kind: "alignEdit" },
+    { msg: cv.getAttribute("data-flash-cand"), token: cv.getAttribute("data-flash-cand-token"), kind: "cand" }
   ];
   flashes.forEach((item) => {
     if (!item.msg || !item.token) return;
@@ -2405,19 +2406,45 @@ function syncDraftPrefMirror() {
 function resolveDraft(kind) {
   if (kind === "créé") {
     const title = $("#draftTitle");
-    if (!title || !title.value.trim()) {
+    if (!title || !String(title.value || "").trim()) {
       if (title) title.focus();
       toast("Indiquez un intitulé pour créer le candidat", { soft: true });
       return;
     }
+    const collIds = $("#draftCollIds");
+    const collBound = $("#draftCollIdsBound");
+    if (collIds && collBound) collBound.value = collIds.value || "";
+    const createBtn = $("#draftCreate");
+    if (createBtn) {
+      createBtn.disabled = false;
+      createBtn.click();
+      return;
+    }
   }
+  if (kind === "annulé") {
+    const cancelBtn = $("#draftCancel");
+    if (cancelBtn) {
+      cancelBtn.click();
+      return;
+    }
+  }
+  resolveDraftUi(kind);
+}
+
+function resolveDraftUi(kind) {
   state.draft = false;
-  toast(kind === "créé" ? "Candidat créé · en attente de validation" : "Création annulée");
+  if (kind === "créé") {
+    toast("Candidat créé · en attente de validation");
+  }
   if (SCREEN === "candidats") {
     showPanel(".view-panel", "viewCandList");
     return;
   }
   paint();
+}
+if (typeof window !== "undefined") {
+  window.resolveDraftUi = resolveDraftUi;
+  window.syncDraftPrefMirror = syncDraftPrefMirror;
 }
 
 function showHomePanel(panel) {
@@ -2570,6 +2597,8 @@ function expandConceptBlock(gear) {
 }
 
 const CARD_IDS = ["contexte", "collections", "relations", "traductions", "notes", "ressources", "alignement", "identifiants", "temporel"];
+/** Blocs gouvernance candidat : toujours juste après la bannière (hors réordonnancement fiche). */
+const GOVERNANCE_CARD_ORDER = { candVotes: -2, candDiscussion: -1 };
 
 function isCardLayoutEditable() {
   return document.body.getAttribute("data-logged-in") === "1";
@@ -2876,6 +2905,10 @@ function applyConceptCardOrder(root) {
   const scope = root || document;
   scope.querySelectorAll(".cv-blocks .cblock[data-card-id]").forEach((el) => {
     const id = el.getAttribute("data-card-id");
+    if (Object.prototype.hasOwnProperty.call(GOVERNANCE_CARD_ORDER, id)) {
+      el.style.order = String(GOVERNANCE_CARD_ORDER[id]);
+      return;
+    }
     const i = order.indexOf(id);
     el.style.order = String(i < 0 ? 99 : i);
   });

@@ -126,4 +126,7 @@ public class PreferencesEntity {
 
     @Column(name = "last_sync_at")
     private java.time.LocalDateTime lastSyncAt;
+
+    @Column(name = "show_candidates_to_guests")
+    private boolean showCandidatesToGuests;
 }

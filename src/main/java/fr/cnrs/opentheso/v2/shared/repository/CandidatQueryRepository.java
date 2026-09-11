@@ -56,7 +56,8 @@ public class CandidatQueryRepository {
                     COALESCE(msg.message_count, 0) AS message_count,
                     COALESCE(prop.proposition_count, 0) AS proposition_count,
                     COALESCE(v_ca.candidate_vote_count, 0) AS candidate_vote_count,
-                    COALESCE(v_nt.note_vote_count, 0) AS note_vote_count
+                    COALESCE(v_nt.note_vote_count, 0) AS note_vote_count,
+                    COALESCE(v_cn.down_vote_count, 0) AS down_vote_count
                 FROM candidat_status cs
                 JOIN concept c
                     ON cs.id_concept = c.id_concept
@@ -96,6 +97,13 @@ public class CandidatQueryRepository {
                       AND cv.id_thesaurus = cs.id_thesaurus
                       AND cv.type_vote = 'NT'
                 ) v_nt ON true
+                LEFT JOIN LATERAL (
+                    SELECT COUNT(*)::int AS down_vote_count
+                    FROM candidat_vote cv
+                    WHERE cv.id_concept = cs.id_concept
+                      AND cv.id_thesaurus = cs.id_thesaurus
+                      AND cv.type_vote = 'CN'
+                ) v_cn ON true
                 WHERE cs.id_thesaurus = :thesaurusId
                   AND cs.id_status = :statusId
                   AND (
@@ -135,6 +143,104 @@ public class CandidatQueryRepository {
         return result != null ? result.intValue() : 0;
     }
 
+    /**
+     * Charge un candidat (tous statuts) pour la fiche consultation.
+     */
+    public Optional<CandidatConceptRow> findCandidateByConceptId(String thesaurusId, String conceptId, String lang) {
+        if (StringUtils.isAnyBlank(thesaurusId, conceptId)) {
+            return Optional.empty();
+        }
+        String language = StringUtils.isBlank(lang) ? "fr" : lang;
+        String sql = """
+                SELECT
+                    cs.id_status,
+                    cs.id_concept,
+                    c.created,
+                    c.modified,
+                    cs.id_user,
+                    cs.id_user_admin,
+                    cs.message,
+                    COALESCE(pref.lexical_value, '') AS preferred_label,
+                    COALESCE(u_creator.username, :unknownUser) AS created_by,
+                    COALESCE(u_admin.username, :unknownUser) AS created_by_admin,
+                    COALESCE(msg.message_count, 0) AS message_count,
+                    COALESCE(prop.proposition_count, 0) AS proposition_count,
+                    COALESCE(v_ca.candidate_vote_count, 0) AS candidate_vote_count,
+                    COALESCE(v_nt.note_vote_count, 0) AS note_vote_count,
+                    COALESCE(v_cn.down_vote_count, 0) AS down_vote_count
+                FROM candidat_status cs
+                JOIN concept c
+                    ON cs.id_concept = c.id_concept
+                    AND cs.id_thesaurus = c.id_thesaurus
+                LEFT JOIN preferred_term pt
+                    ON pt.id_concept = c.id_concept
+                    AND pt.id_thesaurus = c.id_thesaurus
+                LEFT JOIN term pref
+                    ON pref.id_term = pt.id_term
+                    AND pref.id_thesaurus = pt.id_thesaurus
+                    AND pref.lang = :lang
+                LEFT JOIN users u_creator ON u_creator.id_user = cs.id_user
+                LEFT JOIN users u_admin ON u_admin.id_user = cs.id_user_admin
+                LEFT JOIN LATERAL (
+                    SELECT COUNT(*)::int AS message_count
+                    FROM candidat_messages cm
+                    WHERE cm.id_concept = cs.id_concept
+                      AND cm.id_thesaurus = cs.id_thesaurus
+                ) msg ON true
+                LEFT JOIN LATERAL (
+                    SELECT COUNT(*)::int AS proposition_count
+                    FROM proposition p
+                    WHERE p.id_concept = cs.id_concept
+                      AND p.id_thesaurus = cs.id_thesaurus
+                ) prop ON true
+                LEFT JOIN LATERAL (
+                    SELECT COUNT(*)::int AS candidate_vote_count
+                    FROM candidat_vote cv
+                    WHERE cv.id_concept = cs.id_concept
+                      AND cv.id_thesaurus = cs.id_thesaurus
+                      AND cv.type_vote = 'CA'
+                ) v_ca ON true
+                LEFT JOIN LATERAL (
+                    SELECT COUNT(*)::int AS note_vote_count
+                    FROM candidat_vote cv
+                    WHERE cv.id_concept = cs.id_concept
+                      AND cv.id_thesaurus = cs.id_thesaurus
+                      AND cv.type_vote = 'NT'
+                ) v_nt ON true
+                LEFT JOIN LATERAL (
+                    SELECT COUNT(*)::int AS down_vote_count
+                    FROM candidat_vote cv
+                    WHERE cv.id_concept = cs.id_concept
+                      AND cv.id_thesaurus = cs.id_thesaurus
+                      AND cv.type_vote = 'CN'
+                ) v_cn ON true
+                WHERE cs.id_thesaurus = :thesaurusId
+                  AND cs.id_concept = :conceptId
+                ORDER BY cs.date DESC NULLS LAST
+                LIMIT 1
+                """;
+        try {
+            Object[] row = (Object[]) entityManager.createNativeQuery(sql)
+                    .setParameter(NativeQueryParams.THESAURUS_ID, thesaurusId)
+                    .setParameter(NativeQueryParams.CONCEPT_ID, conceptId)
+                    .setParameter("lang", language)
+                    .setParameter("unknownUser", UNKNOWN_USER)
+                    .getSingleResult();
+            if (row == null || row.length < 15) {
+                return Optional.empty();
+            }
+            int statusId = row[0] != null ? ((Number) row[0]).intValue() : 0;
+            Object[] listCols = new Object[14];
+            System.arraycopy(row, 1, listCols, 0, 14);
+            return Optional.of(new CandidatConceptRow(statusId, toCandidatListRow(listCols)));
+        } catch (NoResultException ex) {
+            return Optional.empty();
+        }
+    }
+
+    public record CandidatConceptRow(int statusId, CandidatListRow listRow) {
+    }
+
     public Optional<CandidatDetailBundle> findCandidateDetailBundle(
             String thesaurusId,
             String conceptId,
@@ -157,6 +263,14 @@ public class CandidatQueryRepository {
                           AND cv.id_user = :userId
                           AND cv.type_vote = 'CA'
                     ) AS voted,
+                    EXISTS (
+                        SELECT 1
+                        FROM candidat_vote cv
+                        WHERE cv.id_concept = :conceptId
+                          AND cv.id_thesaurus = :thesaurusId
+                          AND cv.id_user = :userId
+                          AND cv.type_vote = 'CN'
+                    ) AS down_voted,
                     (SELECT COALESCE(json_agg(json_build_object(
                             'id', cgc.idgroup,
                             'value', COALESCE(cgl.lexicalvalue, cgc.idgroup)
@@ -262,18 +376,19 @@ public class CandidatQueryRepository {
                     .setParameter(NativeQueryParams.USER_ID, userId)
                     .getSingleResult();
             var parsed = CandidatDetailJsonParser.parse(new CandidatDetailJsonParser.DetailJsonRequest(
-                    stringValue(row[2]),
                     stringValue(row[3]),
                     stringValue(row[4]),
                     stringValue(row[5]),
                     stringValue(row[6]),
                     stringValue(row[7]),
                     stringValue(row[8]),
-                    stringValue(row[9])
+                    stringValue(row[9]),
+                    stringValue(row[10])
             ));
             return Optional.of(new CandidatDetailBundle(
                     row[0] != null ? (String) row[0] : null,
                     toBoolean(row[1]),
+                    toBoolean(row[2]),
                     parsed
             ));
         } catch (NoResultException ex) {
@@ -560,7 +675,8 @@ public class CandidatQueryRepository {
                 row[9] != null ? ((Number) row[9]).intValue() : 0,
                 row[10] != null ? ((Number) row[10]).intValue() : 0,
                 row[11] != null ? ((Number) row[11]).intValue() : 0,
-                row[12] != null ? ((Number) row[12]).intValue() : 0
+                row[12] != null ? ((Number) row[12]).intValue() : 0,
+                row[13] != null ? ((Number) row[13]).intValue() : 0
         );
     }
 

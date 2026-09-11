@@ -52,4 +52,37 @@ class CandidatAccessPolicyTest {
         assertFalse(policy.hasSelectedThesaurus(" "));
         assertTrue(policy.hasSelectedThesaurus("TH1"));
     }
+
+    @Test
+    void canCreate_requiresLoginAndContributeRight() {
+        when(userSession.isLoggedIn()).thenReturn(true);
+        when(rightsService.can(userSession, Permission.ACCESS_CANDIDAT, AuthTarget.thesaurus("TH1")))
+                .thenReturn(true);
+
+        assertTrue(policy.canCreate(userSession, "TH1"));
+        assertTrue(policy.canVote(userSession, "TH1"));
+        assertTrue(policy.canDiscuss(userSession, "TH1"));
+    }
+
+    @Test
+    void canProcess_blocksCreatorAndRequiresAdmin() {
+        when(userSession.isLoggedIn()).thenReturn(true);
+        when(userSession.getCurrentUserId()).thenReturn(7);
+        when(rightsService.can(7, Permission.SUPER_ADMIN)).thenReturn(false);
+        when(rightsService.canOnThesaurus(7, Permission.MANAGE_THESAURUS, "TH1")).thenReturn(true);
+
+        assertFalse(policy.canProcess(userSession, "TH1", 7));
+        assertTrue(policy.canProcess(userSession, "TH1", 3));
+        assertTrue(policy.canReactivate(userSession, "TH1"));
+        assertTrue(policy.canDelete(userSession, "TH1"));
+        assertTrue(policy.canImport(userSession, "TH1"));
+    }
+
+    @Test
+    void canExport_usesAccessModule() {
+        when(rightsService.can(userSession, Permission.ACCESS_CANDIDAT, AuthTarget.thesaurus("TH1")))
+                .thenReturn(true);
+
+        assertTrue(policy.canExport(userSession, "TH1"));
+    }
 }

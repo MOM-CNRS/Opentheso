@@ -28,7 +28,8 @@ class CandidatMapperTest {
                 3,
                 2,
                 5,
-                1
+                1,
+                4
         );
 
         var dto = CandidatMapper.toCandidatDto(row, "TH1", CandidatStatusCode.PENDING);
@@ -44,6 +45,7 @@ class CandidatMapperTest {
         assertEquals(2, dto.getNbrDemande());
         assertEquals(5, dto.getNbrVote());
         assertEquals(1, dto.getNbrNoteVote());
+        assertEquals(4, dto.getNbrDownVote());
         assertEquals(String.valueOf(CandidatStatusCode.PENDING), dto.getStatut());
         assertTrue(dto.getAlignments().isEmpty());
     }
@@ -51,8 +53,8 @@ class CandidatMapperTest {
     @Test
     void toCandidatDtos_mapsAllRows() {
         var rows = List.of(
-                new CandidatListRow("C1", null, null, 1, null, "", "A", "u1", "Utilisateur inconnu", 0, 0, 0, 0),
-                new CandidatListRow("C2", null, null, 2, null, "", "B", "u2", "Utilisateur inconnu", 0, 0, 0, 0)
+                new CandidatListRow("C1", null, null, 1, null, "", "A", "u1", "Utilisateur inconnu", 0, 0, 0, 0, 0),
+                new CandidatListRow("C2", null, null, 2, null, "", "B", "u2", "Utilisateur inconnu", 0, 0, 0, 0, 0)
         );
 
         var dtos = CandidatMapper.toCandidatDtos(rows, "TH1", CandidatStatusCode.ACCEPTED);

@@ -2,7 +2,6 @@ package fr.cnrs.opentheso.v2.candidat.persistence;
 
 import fr.cnrs.opentheso.entites.CandidatMessages;
 import fr.cnrs.opentheso.entites.CandidatStatus;
-import fr.cnrs.opentheso.entites.CandidatVote;
 import fr.cnrs.opentheso.entites.ConceptGroupConcept;
 import fr.cnrs.opentheso.entites.HierarchicalRelationship;
 import fr.cnrs.opentheso.entites.ImageExterne;
@@ -57,6 +56,7 @@ import fr.cnrs.opentheso.repositories.TermRepository;
 import fr.cnrs.opentheso.repositories.UserRepository;
 import fr.cnrs.opentheso.utils.MessageUtils;
 import fr.cnrs.opentheso.utils.ToolsHelper;
+import fr.cnrs.opentheso.v2.candidat.model.CandidateProcessOutcome;
 import fr.cnrs.opentheso.v2.concept.write.persistence.ConceptDeletionWriteRepository;
 import fr.cnrs.opentheso.v2.shared.mail.SystemMailSender;
 import fr.cnrs.opentheso.v2.shared.time.V2Dates;
@@ -110,6 +110,8 @@ public class CandidatMutationPersistence {
     private final NoteHistoriqueRepository noteHistoriqueRepository;
     private final ImagesRepository imagesRepository;
     private final SystemMailSender systemMailSender;
+    private final CandidatVotePersistence candidatVotePersistence;
+    private final CandidatLifecyclePersistence candidatLifecyclePersistence;
 
     @Transactional
     public boolean deleteConcept(String conceptId, String thesaurusId) {
@@ -242,17 +244,7 @@ public class CandidatMutationPersistence {
     }
 
     public boolean updateCandidateStatus(String thesaurusId, String conceptId, int status) {
-        var candidatStatus = candidatStatusRepository.findAllByIdConceptAndIdThesaurus(conceptId, thesaurusId);
-        if (candidatStatus.isEmpty()) {
-            return false;
-        }
-        var newStatus = statusRepository.findById(status);
-        if (newStatus.isEmpty()) {
-            return false;
-        }
-        candidatStatus.get().setStatus(newStatus.get());
-        candidatStatusRepository.save(candidatStatus.get());
-        return true;
+        return candidatLifecyclePersistence.updateCandidateStatus(thesaurusId, conceptId, status);
     }
 
     public String migrateOldCandidates(String thesaurusId, int userId) {
@@ -364,23 +356,15 @@ public class CandidatMutationPersistence {
     }
 
     public boolean hasVote(String thesaurusId, String conceptId, int userId, String noteId, VoteType type) {
-        return CollectionUtils.isNotEmpty(candidatVoteRepository.findAllByIdConceptAndIdThesaurusAndIdUserAndIdNoteAndTypeVote(
-                conceptId, thesaurusId, userId, noteId, type.getLabel()));
+        return candidatVotePersistence.hasVote(thesaurusId, conceptId, userId, noteId, type);
     }
 
     public void removeVote(String thesaurusId, String conceptId, int userId, String noteId, VoteType type) {
-        candidatVoteRepository.deleteAllByIdUserAndIdConceptAndIdThesaurusAndTypeVoteAndIdNote(
-                userId, conceptId, thesaurusId, type.getLabel(), noteId);
+        candidatVotePersistence.removeVote(thesaurusId, conceptId, userId, noteId, type);
     }
 
     public void addVote(String thesaurusId, String conceptId, int userId, String noteId, VoteType type) {
-        candidatVoteRepository.save(CandidatVote.builder()
-                .idConcept(conceptId)
-                .idThesaurus(thesaurusId)
-                .idUser(userId)
-                .idNote(noteId)
-                .typeVote(type.getLabel())
-                .build());
+        candidatVotePersistence.addVote(thesaurusId, conceptId, userId, noteId, type);
     }
 
     public List<NodeIdValue> searchCollections(String thesaurusId, String lang, String query) {
@@ -507,33 +491,12 @@ public class CandidatMutationPersistence {
                 thesaurusId, targetConceptId, conceptId, "RT");
     }
 
-    public boolean insertCandidate(CandidatDto candidatDto, String adminMessage, int userId) {
-        var candidatStatus = candidatStatusRepository.findByIdConcept(candidatDto.getIdConcepte());
-        if (candidatStatus.isPresent()) {
-            // Statut "accepté" (id=2) : cache JPA de 1er niveau dans un lot transactionnel.
-            candidatStatus.get().setStatus(statusRepository.findById(2).orElse(null));
-            candidatStatus.get().setMessage(adminMessage);
-            candidatStatus.get().setIdUserAdmin(userId);
-            candidatStatusRepository.save(candidatStatus.get());
-            conceptRepository.setStatus("D", candidatDto.getIdConcepte(), candidatDto.getIdThesaurus());
-            conceptRepository.setTopConceptTag(CollectionUtils.isEmpty(candidatDto.getTermesGenerique()),
-                    candidatDto.getIdConcepte(), candidatDto.getIdThesaurus());
-            return false;
-        }
-        return true;
+    public CandidateProcessOutcome insertCandidate(CandidatDto candidatDto, String adminMessage, int userId) {
+        return candidatLifecyclePersistence.insertCandidate(candidatDto, adminMessage, userId);
     }
 
-    public boolean rejectCandidate(CandidatDto candidatDto, String adminMessage, int userId) {
-        var candidatStatus = candidatStatusRepository.findByIdConcept(candidatDto.getIdConcepte());
-        if (candidatStatus.isPresent()) {
-            // Statut "rejeté" (id=3) : cache JPA de 1er niveau dans un lot transactionnel.
-            candidatStatus.get().setStatus(statusRepository.findById(3).orElse(null));
-            candidatStatus.get().setMessage(adminMessage);
-            candidatStatus.get().setIdUserAdmin(userId);
-            candidatStatusRepository.save(candidatStatus.get());
-            return false;
-        }
-        return true;
+    public CandidateProcessOutcome rejectCandidate(CandidatDto candidatDto, String adminMessage, int userId) {
+        return candidatLifecyclePersistence.rejectCandidate(candidatDto, adminMessage, userId);
     }
 
     public List<NoteType> loadNoteTypes() {

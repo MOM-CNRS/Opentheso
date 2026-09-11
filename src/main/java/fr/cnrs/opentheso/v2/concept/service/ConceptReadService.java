@@ -1,5 +1,7 @@
 package fr.cnrs.opentheso.v2.concept.service;
 
+import fr.cnrs.opentheso.entites.Preferences;
+import fr.cnrs.opentheso.repositories.PreferencesRepository;
 import fr.cnrs.opentheso.v2.concept.model.ConceptFullSnapshot;
 import fr.cnrs.opentheso.v2.concept.model.CorpusSearchContext;
 import fr.cnrs.opentheso.v2.concept.policy.ConceptUriBuilder;
@@ -46,6 +48,7 @@ public class ConceptReadService {
     private final ThesaurusPreferenceService thesaurusPreferenceService;
     private final ApplicationUriService applicationUriService;
     private final AuthenticatedUserSource authenticatedUserSource;
+    private final PreferencesRepository preferencesRepository;
 
     @Transactional(readOnly = true)
     public List<ConceptTreeNodeData> loadRootNodes(String thesaurusId, String lang) {
@@ -86,12 +89,11 @@ public class ConceptReadService {
     }
 
     private List<ConceptTreeNodeData> loadRootConceptNodes(String thesaurusId, String lang, boolean sortByNotation) {
-        boolean authenticated = authenticatedUserSource.isLoggedIn();
         return conceptTreeConsultationService.loadTopConcepts(
                 thesaurusId,
                 lang,
                 sortByNotation,
-                authenticated
+                shouldIncludeCandidates(thesaurusId)
         );
     }
 
@@ -140,7 +142,7 @@ public class ConceptReadService {
                     parentType,
                     lang,
                     sortByNotation,
-                    authenticatedUserSource.isLoggedIn()
+                    shouldIncludeCandidates(thesaurusId)
             );
         }
         return conceptQueryRepository.findChildConcepts(parentId, thesaurusId, lang).stream()
@@ -172,8 +174,8 @@ public class ConceptReadService {
         if (StringUtils.isBlank(thesaurusId)) {
             return Collections.emptyList();
         }
-        // Invités : même arbre, sans les candidats (statut CA). Connectés : tout, candidats inclus.
-        boolean includeCandidates = authenticatedUserSource.isLoggedIn();
+        // Invités : candidats exclus sauf si preferences.showCandidatesToGuests.
+        boolean includeCandidates = shouldIncludeCandidates(thesaurusId);
         var nodes = new ArrayList<ConceptTreeNodeData>();
         for (var row : conceptQueryRepository.findTreeRootConcepts(thesaurusId, lang, includeCandidates)) {
             nodes.add(toThesaurusTreeNode(row));
@@ -219,7 +221,7 @@ public class ConceptReadService {
             }
             return conceptTreeConsultationService.sortNodes(members, sortByNotation);
         }
-        boolean includeCandidates = authenticatedUserSource.isLoggedIn();
+        boolean includeCandidates = shouldIncludeCandidates(thesaurusId);
         var nodes = new ArrayList<ConceptTreeNodeData>();
         for (var row : conceptQueryRepository.findTreeChildConcepts(thesaurusId, parentId, lang, includeCandidates)) {
             nodes.add(toThesaurusTreeNode(row));
@@ -713,6 +715,18 @@ public class ConceptReadService {
     private boolean isSortByNotation(String thesaurusId, String lang) {
         ThesaurusPreferences preferences = thesaurusPreferenceService.loadPreferencesOrNull(thesaurusId, lang);
         return preferences != null && preferences.sortByNotation();
+    }
+
+    private boolean shouldIncludeCandidates(String thesaurusId) {
+        if (authenticatedUserSource.isLoggedIn()) {
+            return true;
+        }
+        if (StringUtils.isBlank(thesaurusId)) {
+            return false;
+        }
+        return preferencesRepository.findByIdThesaurus(thesaurusId)
+                .map(Preferences::isShowCandidatesToGuests)
+                .orElse(false);
     }
 
     @Transactional(readOnly = true)

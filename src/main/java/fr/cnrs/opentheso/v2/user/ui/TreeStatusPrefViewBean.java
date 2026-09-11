@@ -2,6 +2,8 @@ package fr.cnrs.opentheso.v2.user.ui;
 
 import com.fasterxml.jackson.core.JsonProcessingException;
 import com.fasterxml.jackson.databind.ObjectMapper;
+import fr.cnrs.opentheso.entites.Preferences;
+import fr.cnrs.opentheso.repositories.PreferencesRepository;
 import fr.cnrs.opentheso.v2.setting.ui.ThesaurusContext;
 import fr.cnrs.opentheso.v2.shared.repository.ConceptQueryRepository;
 import fr.cnrs.opentheso.v2.shared.session.AuthenticatedUserSource;
@@ -31,6 +33,7 @@ public class TreeStatusPrefViewBean {
     private final TreeStatusPrefService treeStatusPrefService;
     private final ConceptQueryRepository conceptQueryRepository;
     private final ThesaurusContext thesaurusContext;
+    private final PreferencesRepository preferencesRepository;
     private final ObjectMapper objectMapper;
 
     private TreeStatusPref pref;
@@ -95,7 +98,7 @@ public class TreeStatusPrefViewBean {
     private TreeStatusPref pref() {
         if (pref == null) {
             if (!authenticatedUserSource.isLoggedIn()) {
-                pref = TreeStatusPref.guestDefaults();
+                pref = guestPref();
             } else {
                 Integer userId = authenticatedUserSource.getUserId().orElse(null);
                 TreeStatusPref loaded = userId == null
@@ -113,6 +116,24 @@ public class TreeStatusPrefViewBean {
             }
         }
         return pref;
+    }
+
+    private TreeStatusPref guestPref() {
+        TreeStatusPref guest = TreeStatusPref.guestDefaults();
+        String thesaurusId = thesaurusContext.getCurrentThesaurusId();
+        if (StringUtils.isBlank(thesaurusId)) {
+            return guest;
+        }
+        boolean showCandidates = preferencesRepository.findByIdThesaurus(thesaurusId)
+                .map(Preferences::isShowCandidatesToGuests)
+                .orElse(false);
+        if (!showCandidates) {
+            return guest;
+        }
+        var selected = new LinkedHashSet<>(
+                guest.selected() == null ? Set.of() : guest.selected());
+        selected.add(TreeStatusIds.CANDIDAT);
+        return new TreeStatusPref(Set.copyOf(selected));
     }
 
     private Map<String, Integer> counts() {

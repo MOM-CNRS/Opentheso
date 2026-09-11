@@ -52,7 +52,7 @@ class CandidatReadServiceTest {
         when(candidatQueryRepository.findCandidatesByStatus("TH1", "fr", 1, "chien"))
                 .thenReturn(List.of(new CandidatListRow(
                         "C1", null, null, 4, null, "", "chien", "user", "Utilisateur inconnu",
-                        0, 0, 0, 0
+                        0, 0, 0, 0, 0
                 )));
 
         var result = service.searchByStatus("TH1", "fr", 1, "chien");
@@ -88,7 +88,7 @@ class CandidatReadServiceTest {
                 "[]"
         ));
         when(candidatQueryRepository.findCandidateDetailBundle("TH1", "C1", "fr", 5))
-                .thenReturn(Optional.of(new CandidatDetailBundle("T1", true, parsed)));
+                .thenReturn(Optional.of(new CandidatDetailBundle("T1", true, false, parsed)));
         when(candidatReadPersistence.loadAlignments("C1", "TH1")).thenReturn(List.of());
         when(candidatReadPersistence.loadExternalImages("TH1", "C1")).thenReturn(List.of());
 
@@ -96,6 +96,7 @@ class CandidatReadServiceTest {
 
         assertEquals("T1", candidat.getIdTerm());
         assertTrue(candidat.isVoted());
+        assertFalse(candidat.isDownVoted());
         assertEquals("G1", candidat.getCollections().get(0).getId());
         assertEquals("BT1", candidat.getTermesGenerique().get(0).getId());
         assertEquals(List.of("syn"), candidat.getEmployePourList());

@@ -140,6 +140,7 @@ public final class SettingApiMapper {
                 current.naanOpenArk(),
                 current.prefixOpenArk(),
                 current.apiKeyOpenArk(),
+                current.showCandidatesToGuests(),
                 current.languages()
         );
     }
@@ -203,6 +204,7 @@ public final class SettingApiMapper {
                 coalesce(request.naanOpenArk(), current.naanOpenArk()),
                 coalesce(request.prefixOpenArk(), current.prefixOpenArk()),
                 current.apiKeyOpenArk(),
+                current.showCandidatesToGuests(),
                 current.languages()
         );
     }

@@ -1,5 +1,6 @@
 package fr.cnrs.opentheso.v2.graph.service;
 
+import fr.cnrs.opentheso.repositories.PreferencesRepository;
 import fr.cnrs.opentheso.v2.graph.model.GraphGlobeNode;
 import fr.cnrs.opentheso.v2.shared.repository.GraphGlobeQueryRepository;
 import fr.cnrs.opentheso.v2.shared.session.AuthenticatedUserSource;
@@ -11,12 +12,15 @@ import org.mockito.junit.jupiter.MockitoExtension;
 
 import java.util.ArrayList;
 import java.util.List;
+import java.util.Optional;
 
 import static org.junit.jupiter.api.Assertions.assertEquals;
 import static org.junit.jupiter.api.Assertions.assertFalse;
 import static org.junit.jupiter.api.Assertions.assertTrue;
+import static org.mockito.ArgumentMatchers.any;
 import static org.mockito.ArgumentMatchers.anyInt;
 import static org.mockito.ArgumentMatchers.eq;
+import static org.mockito.Mockito.lenient;
 import static org.mockito.Mockito.verify;
 import static org.mockito.Mockito.when;
 
@@ -27,12 +31,16 @@ class GraphGlobeConsultationServiceTest {
     private GraphGlobeQueryRepository graphGlobeQueryRepository;
     @Mock
     private AuthenticatedUserSource authenticatedUserSource;
+    @Mock
+    private PreferencesRepository preferencesRepository;
 
     private GraphGlobeConsultationService service;
 
     @BeforeEach
     void setUp() {
-        service = new GraphGlobeConsultationService(graphGlobeQueryRepository, authenticatedUserSource);
+        service = new GraphGlobeConsultationService(
+                graphGlobeQueryRepository, authenticatedUserSource, preferencesRepository);
+        lenient().when(preferencesRepository.findByIdThesaurus(any())).thenReturn(Optional.empty());
     }
 
     @Test

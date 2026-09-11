@@ -43,8 +43,10 @@ public class CandidatDto implements Serializable {
     private int nbrParticipant;
     private boolean voted;
     private boolean noteVoted;
+    private boolean downVoted;
     private int nbrVote;
     private int nbrNoteVote;
+    private int nbrDownVote;
 
     private String noteApplication;
     private List<String> defenitions;

@@ -166,7 +166,8 @@ document.addEventListener("keydown", (e) => {
   }
   if (hideConfirm("#aboutSaveConfirm") || hideConfirm("#logoutConfirm") || hideConfirm("#stSaveConfirm")
       || hideConfirm("#previewCorpusCreateConfirm") || hideConfirm("#stLeaveConfirm")
-      || hideConfirm("#alignDeleteConfirm") || hideConfirm("#alignReplaceConfirm")) {
+      || hideConfirm("#alignDeleteConfirm") || hideConfirm("#alignReplaceConfirm")
+      || hideConfirm("#candReactivateConfirm") || hideConfirm("#candDeleteConfirm")) {
     settingsLeaveAction = null;
     e.preventDefault();
   }
@@ -780,6 +781,38 @@ document.addEventListener("click", (e) => {
   } else if (act === "align-replace-dismiss") {
     hideConfirm("#alignReplaceConfirm");
   } else if (act === "align-replace-modal") {
+    return;
+  } else if (act === "cand-reactivate-ask") {
+    e.preventDefault();
+    showConfirm("#candReactivateConfirm");
+    return;
+  } else if (act === "cand-reactivate-dismiss") {
+    e.preventDefault();
+    hideConfirm("#candReactivateConfirm");
+    return;
+  } else if (act === "cand-reactivate-modal") {
+    return;
+  } else if (act === "cand-reactivate-go") {
+    e.preventDefault();
+    hideConfirm("#candReactivateConfirm");
+    const btn = document.querySelector("[id$='candReactivateGo']");
+    if (btn) btn.click();
+    return;
+  } else if (act === "cand-delete-ask") {
+    e.preventDefault();
+    showConfirm("#candDeleteConfirm");
+    return;
+  } else if (act === "cand-delete-dismiss") {
+    e.preventDefault();
+    hideConfirm("#candDeleteConfirm");
+    return;
+  } else if (act === "cand-delete-modal") {
+    return;
+  } else if (act === "cand-delete-go") {
+    e.preventDefault();
+    hideConfirm("#candDeleteConfirm");
+    const btn = document.querySelector("[id$='candDeleteGo']");
+    if (btn) btn.click();
     return;
   } else if (act === "ui-lang") {
     e.preventDefault();

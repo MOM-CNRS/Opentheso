@@ -19,4 +19,8 @@ public class CandidatAuthSupport {
     public void requireContributor(int userId, String thesaurusId) {
         thesaurusScopedAuthSupport.requireThesaurusContributor(userId, thesaurusId);
     }
+
+    public void requireManager(int userId, String thesaurusId) {
+        thesaurusScopedAuthSupport.requireThesaurusManager(userId, thesaurusId);
+    }
 }

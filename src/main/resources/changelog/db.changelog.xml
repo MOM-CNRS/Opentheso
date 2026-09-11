@@ -312,4 +312,9 @@
         <sqlFile path="v26/26-08_07.sql" relativeToChangelogFile="true" splitStatements="false"/>
     </changeSet>
 
+    <changeSet id="26.09.01" author="Firas">
+        <comment>Show candidates to guests preference on thesaurus preferences</comment>
+        <sqlFile path="v26/26-09_01.sql" relativeToChangelogFile="true" splitStatements="false"/>
+    </changeSet>
+
 </databaseChangeLog>

@@ -14,6 +14,7 @@ import org.springframework.transaction.annotation.Transactional;
 import java.util.Collections;
 import java.util.List;
 import java.util.Map;
+import java.util.Optional;
 
 @Service
 @RequiredArgsConstructor
@@ -51,6 +52,22 @@ public class CandidatReadService {
     }
 
     @Transactional(readOnly = true)
+    public Optional<CandidatDto> findByConceptId(String thesaurusId, String conceptId, String lang, Integer userId) {
+        if (StringUtils.isAnyBlank(thesaurusId, conceptId)) {
+            return Optional.empty();
+        }
+        return candidatQueryRepository.findCandidateByConceptId(thesaurusId, conceptId, lang)
+                .map(row -> {
+                    CandidatDto dto = CandidatMapper.toCandidatDto(
+                            row.listRow(), thesaurusId, row.statusId());
+                    dto.setLang(StringUtils.defaultIfBlank(lang, "fr"));
+                    dto.setUserId(userId == null ? 0 : userId);
+                    loadDetails(dto, thesaurusId);
+                    return dto;
+                });
+    }
+
+    @Transactional(readOnly = true)
     public void loadDetails(CandidatDto candidat, String thesaurusId) {
         if (candidat == null || StringUtils.isBlank(candidat.getIdConcepte()) || StringUtils.isBlank(thesaurusId)) {
             return;
@@ -82,6 +99,7 @@ public class CandidatReadService {
                 detail.translations(),
                 detail.messages(),
                 bundle.voted(),
+                bundle.downVoted(),
                 alignments,
                 images,
                 userId

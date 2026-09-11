@@ -55,6 +55,7 @@ public record ThesaurusPreferences(
         String naanOpenArk,
         String prefixOpenArk,
         String apiKeyOpenArk,
+        boolean showCandidatesToGuests,
         List<ThesaurusLanguage> languages
 ) implements Serializable {
 }

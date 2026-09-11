@@ -112,6 +112,7 @@ class SettingApiMapperTest {
                 false, null,
                 true, false,
                 false, null, null, null, null,
+                false,
                 null
         );
 

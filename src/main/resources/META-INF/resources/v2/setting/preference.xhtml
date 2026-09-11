@@ -257,6 +257,17 @@
                   <div class="bo-card-b st-form">
                     <div class="st-toggle-row">
                       <div class="st-toggle-main">
+                        <div class="st-toggle-l">#{v2LocaleBean.getMsg('v2.candidat.pref.showToGuests')}</div>
+                        <div class="st-toggle-d">#{v2LocaleBean.getMsg('v2.candidat.pref.showToGuests.help')}</div>
+                      </div>
+                      <label class="st-sw">
+                        <h:selectBooleanCheckbox styleClass="st-sw-input"
+                                                 value="#{v2ThesaurusPreferenceBean.preference.showCandidatesToGuests}"
+                                                 title="#{v2LocaleBean.getMsg('v2.candidat.pref.showToGuests')}"/>
+                      </label>
+                    </div>
+                    <div class="st-toggle-row">
+                      <div class="st-toggle-main">
                         <div class="st-toggle-l">Afficher la note historique</div>
                         <div class="st-toggle-d">Rend la note historique visible côté consultation.</div>
                       </div>

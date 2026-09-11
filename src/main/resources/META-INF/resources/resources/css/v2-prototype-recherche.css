@@ -1059,10 +1059,38 @@ a.ari-add svg,button.ari-add svg{width:13px;height:13px;stroke:currentColor;fill
 .cand-banner-t{font-size:13.5px;font-weight:700;color:#a8551a}
 .cand-banner-s{font-size:12px;color:var(--ink-3);margin-top:1px}
 .cand-banner-sep{margin:0 7px;opacity:.5}
-.cand-banner-actions{display:flex;gap:8px;flex:0 0 auto}
+.cand-banner-actions{display:flex;gap:8px;flex:0 0 auto;align-items:center}
 .cand-banner-actions .bo-btn.ghost{background:var(--surface);border:1px solid var(--line)}
 .cand-banner-actions .bo-btn.ghost.danger{color:var(--danger);border-color:rgba(181,52,31,.35)}
 .cand-banner-actions .bo-btn.ghost.danger:hover,.cand-banner-actions .bo-btn.ghost.danger.is-on{background:var(--danger);color:#fff;border-color:var(--danger)}
+.cand-banner .cand-ctx{margin-top:0;z-index:12}
+.cand-banner .cand-ctx a.th-create-btn{
+  text-decoration:none;color:inherit;
+  width:34px;height:34px;border-radius:9px;
+  background:var(--surface);border:1px solid var(--line);color:var(--ink-2)
+}
+.cand-banner .cand-ctx .th-create-btn svg{
+  width:16px;height:16px;stroke:currentColor;fill:currentColor;stroke-width:0
+}
+.cand-banner .cand-ctx .th-create-btn.is-open{
+  border-color:var(--accent);color:#fff;background:var(--accent);
+  box-shadow:0 0 0 4px var(--accent-soft)
+}
+.cand-banner .cand-ctx .th-create-btn.is-open svg{transform:none}
+.cand-banner .cand-ctx .th-create-menu{
+  display:none;min-width:236px
+}
+.cand-banner .cand-ctx .th-create-btn.is-open + .th-create-menu,
+.cand-banner .cand-ctx .th-create-menu.is-open{
+  display:block;animation:thCreatePop .22s cubic-bezier(.22,.8,.28,1)
+}
+.cand-banner .cand-ctx .th-create-item{align-items:flex-start}
+.cand-banner-reason{
+  margin-top:8px;padding:8px 10px;border-radius:8px;
+  background:rgba(181,52,31,.06);border:1px solid rgba(181,52,31,.18);
+  font-size:12.5px;color:var(--ink-2);line-height:1.4
+}
+.cand-banner-reason b{color:var(--danger);font-weight:700;margin-right:4px}
 .cand-banner-reject{margin-top:11px;padding-top:11px;border-top:1px solid rgba(252,177,144,.45);display:flex;flex-direction:column;gap:10px}
 .votes{display:flex;flex-direction:column;gap:10px}
 .votes-bar{display:flex;height:9px;border-radius:5px;overflow:hidden;background:var(--surface-2)}
@@ -1421,6 +1449,8 @@ body.is-gps-lightbox{overflow:hidden}
   background:rgba(255,255,255,.12);border:0;cursor:pointer;flex:0 0 auto}
 .gps-lightbox-close:hover{background:rgba(255,255,255,.22)}
 .cv-blocks{display:flex;flex-direction:column}
+/* Bannière candidat toujours en tête (Votes/Discussion sont épinglés à -2/-1). */
+.cv-blocks > .cand-banner{order:-10}
 .cblock-title{flex:1;min-width:0}
 .cblock-drag{color:var(--ink-3);width:26px;height:28px;border-radius:6px;display:grid;place-items:center;
   cursor:grab;margin-left:-6px;flex:0 0 auto;background:none;border:none;padding:0}
@@ -2072,7 +2102,9 @@ label.st-sw{display:inline-block;margin:0}
   display:flex;justify-content:center;pointer-events:none}
 .fsave-btn{pointer-events:auto;display:inline-flex;align-items:center;gap:8px;background:var(--accent);color:#fff;
   font-size:14px;font-weight:600;padding:12px 24px;border-radius:10px;
-  box-shadow:0 12px 30px rgba(31,122,92,.34),0 3px 10px rgba(20,40,32,.18);transition:filter .12s,transform .12s}
+  box-shadow:0 12px 30px rgba(31,122,92,.34),0 3px 10px rgba(20,40,32,.18);transition:filter .12s,transform .12s;
+  text-decoration:none;border:0;cursor:pointer}
+a.fsave-btn{color:#fff;text-decoration:none}
 .fsave-btn:hover{filter:brightness(1.06)}
 .fsave-btn:active{transform:translateY(1px)}
 .fsave-btn svg{width:16px;height:16px;stroke:currentColor;fill:none;stroke-width:2.4;stroke-linecap:round;stroke-linejoin:round}

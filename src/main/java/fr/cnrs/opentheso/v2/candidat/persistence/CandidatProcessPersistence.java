@@ -6,6 +6,7 @@ import fr.cnrs.opentheso.models.candidats.CandidatDto;
 import fr.cnrs.opentheso.repositories.ConceptRepository;
 import fr.cnrs.opentheso.repositories.UserRepository;
 import fr.cnrs.opentheso.v2.candidat.export.ProcessedCandidatesCsvWriter;
+import fr.cnrs.opentheso.v2.candidat.model.CandidateProcessOutcome;
 import fr.cnrs.opentheso.v2.concept.identifier.ConceptArkWriteService;
 import fr.cnrs.opentheso.v2.concept.identifier.ConceptHandleWriteService;
 import fr.cnrs.opentheso.v2.shared.mail.SystemMailSender;
@@ -22,6 +23,7 @@ import java.util.List;
 public class CandidatProcessPersistence {
 
     private final CandidatMutationPersistence candidatMutationPersistence;
+    private final CandidatLifecyclePersistence candidatLifecyclePersistence;
     private final ConceptRepository conceptRepository;
     private final UserRepository userRepository;
     private final ConceptHandleWriteService conceptHandleWriteService;
@@ -32,12 +34,12 @@ public class CandidatProcessPersistence {
         return new ProcessedCandidatesCsvWriter().write(candidates, ';');
     }
 
-    public boolean insertCandidate(CandidatDto candidate, String adminMessage, int userId) {
-        return candidatMutationPersistence.insertCandidate(candidate, adminMessage, userId);
+    public CandidateProcessOutcome insertCandidate(CandidatDto candidate, String adminMessage, int userId) {
+        return candidatLifecyclePersistence.insertCandidate(candidate, adminMessage, userId);
     }
 
-    public boolean rejectCandidate(CandidatDto candidate, String adminMessage, int userId) {
-        return candidatMutationPersistence.rejectCandidate(candidate, adminMessage, userId);
+    public CandidateProcessOutcome rejectCandidate(CandidatDto candidate, String adminMessage, int userId) {
+        return candidatLifecyclePersistence.rejectCandidate(candidate, adminMessage, userId);
     }
 
     public void updateConceptDate(String thesaurusId, String conceptId, int userId) {

@@ -1,0 +1,270 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<ui:composition xmlns="http://www.w3.org/1999/xhtml"
+                xmlns:ui="http://xmlns.jcp.org/jsf/facelets"
+                xmlns:h="http://xmlns.jcp.org/jsf/html"
+                xmlns:f="http://xmlns.jcp.org/jsf/core"
+                xmlns:pt="http://xmlns.jcp.org/jsf/passthrough">
+  <!-- Gouvernance candidat — maquette : banner + votes + discussion -->
+  <ui:fragment rendered="#{v2CandidateFicheBean.active}">
+    <div class="cand-banner#{v2CandidateFicheBean.rejectMode ? ' is-open' : ''}">
+      <div class="cand-banner-row">
+        <span class="cand-banner-dot" aria-hidden="true"></span>
+        <div class="cand-banner-main">
+          <div class="cand-banner-t">
+            <ui:fragment rendered="#{v2CandidateFicheBean.pending}">
+              #{v2LocaleBean.getMsg('v2.candidat.banner.pending')}
+            </ui:fragment>
+            <ui:fragment rendered="#{v2CandidateFicheBean.rejected}">
+              #{v2LocaleBean.getMsg('v2.candidat.banner.rejected')}
+            </ui:fragment>
+          </div>
+          <div class="cand-banner-s">
+            #{v2LocaleBean.getMsg('v2.candidat.banner.proposedBy')}
+            <b>#{v2CandidateFicheBean.proposedBy}</b>
+            #{v2LocaleBean.getMsg('v2.candidat.banner.on')}
+            #{v2CandidateFicheBean.proposedOn}
+            <span class="cand-banner-sep">·</span>
+            <span title="#{v2LocaleBean.getMsg('v2.candidat.votes.title')}">▲ #{v2CandidateFicheBean.votesUp} ▼ #{v2CandidateFicheBean.votesDown}</span>
+            <span class="cand-banner-sep">·</span>
+            <span title="#{v2LocaleBean.getMsg('v2.candidat.discussion.title')}">✉ #{v2CandidateFicheBean.messageCount}</span>
+          </div>
+          <ui:fragment rendered="#{v2CandidateFicheBean.rejected and not empty v2CandidateFicheBean.adminMessage}">
+            <div class="cand-banner-reason">
+              <b>#{v2LocaleBean.getMsg('v2.candidat.reject.reason')}</b>
+              #{v2CandidateFicheBean.adminMessage}
+            </div>
+          </ui:fragment>
+        </div>
+        <div class="cand-banner-actions">
+          <ui:fragment rendered="#{v2CandidateFicheBean.pending and v2CandidateFicheBean.canProcess}">
+            <h:commandLink styleClass="bo-btn primary sm"
+                           action="#{v2CandidateFicheBean.insertCandidate}">
+              <f:ajax execute="@this" render=":previewDetailForm:previewDetail :previewTree"/>
+              ✓ #{v2LocaleBean.getMsg('v2.candidat.action.insert')}
+            </h:commandLink>
+            <h:commandLink styleClass="bo-btn ghost danger sm#{v2CandidateFicheBean.rejectMode ? ' is-on' : ''}"
+                           action="#{v2CandidateFicheBean.toggleRejectMode}">
+              <f:ajax execute="@this" render=":previewDetailForm:previewDetail"/>
+              ✕ #{v2LocaleBean.getMsg('v2.candidat.action.reject')}
+            </h:commandLink>
+          </ui:fragment>
+          <ui:fragment rendered="#{v2CandidateFicheBean.canReactivate}">
+            <button type="button" class="bo-btn primary sm" data-act="cand-reactivate-ask">
+              #{v2LocaleBean.getMsg('v2.candidat.action.reactivate')}
+            </button>
+          </ui:fragment>
+          <ui:fragment rendered="#{v2CandidateFicheBean.canDelete or v2CandidateFicheBean.canExport}">
+            <div class="th-create cand-ctx">
+              <h:commandLink styleClass="th-create-btn#{v2CandidateFicheBean.actionsOpen ? ' is-open' : ''}"
+                             action="#{v2CandidateFicheBean.toggleActions}"
+                             title="#{v2LocaleBean.getMsg('v2.candidat.actions')}"
+                             pt:aria-label="#{v2LocaleBean.getMsg('v2.candidat.actions')}"
+                             pt:aria-haspopup="menu"
+                             pt:aria-expanded="#{v2CandidateFicheBean.actionsOpen}">
+                <f:ajax execute="@this" render=":previewDetailForm:previewDetail"/>
+                <svg viewBox="0 0 24 24" aria-hidden="true">
+                  <circle cx="12" cy="5" r="1.6"/>
+                  <circle cx="12" cy="12" r="1.6"/>
+                  <circle cx="12" cy="19" r="1.6"/>
+                </svg>
+              </h:commandLink>
+              <div class="th-create-menu#{v2CandidateFicheBean.actionsOpen ? ' is-open' : ''}"
+                   role="menu"
+                   aria-label="#{v2LocaleBean.getMsg('v2.candidat.actions')}">
+                <div class="th-create-menu-h">#{v2LocaleBean.getMsg('v2.candidat.actions')}</div>
+                <ui:fragment rendered="#{v2CandidateFicheBean.canExport}">
+                  <h:commandLink styleClass="th-create-item" role="menuitem"
+                                 action="#{v2CandidateFicheBean.exportSkos}"
+                                 title="#{v2LocaleBean.getMsg('v2.candidat.action.exportSkos')}">
+                    <span class="th-create-ico" aria-hidden="true">
+                      <svg viewBox="0 0 24 24"><path d="M21 15v4a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2v-4"/><path d="M7 10l5 5 5-5"/><path d="M12 15V3"/></svg>
+                    </span>
+                    <span class="th-create-txt">
+                      <span class="th-create-name">#{v2LocaleBean.getMsg('v2.candidat.action.exportSkos')}</span>
+                      <span class="th-create-hint">#{v2LocaleBean.getMsg('v2.candidat.action.exportSkos.hint')}</span>
+                    </span>
+                  </h:commandLink>
+                </ui:fragment>
+                <ui:fragment rendered="#{v2CandidateFicheBean.canDelete}">
+                  <button type="button" class="th-create-item is-danger" role="menuitem"
+                          data-act="cand-delete-ask"
+                          title="#{v2LocaleBean.getMsg('v2.candidat.action.delete')}">
+                    <span class="th-create-ico" aria-hidden="true">
+                      <svg viewBox="0 0 24 24"><path d="M3 6h18"/><path d="M8 6V4h8v2"/><path d="M19 6l-1 14H6L5 6"/><path d="M10 11v6"/><path d="M14 11v6"/></svg>
+                    </span>
+                    <span class="th-create-txt">
+                      <span class="th-create-name">#{v2LocaleBean.getMsg('v2.candidat.action.delete')}</span>
+                      <span class="th-create-hint">#{v2LocaleBean.getMsg('v2.candidat.action.delete.hint')}</span>
+                    </span>
+                  </button>
+                </ui:fragment>
+              </div>
+            </div>
+          </ui:fragment>
+        </div>
+      </div>
+      <ui:fragment rendered="#{v2CandidateFicheBean.rejectMode}">
+        <div class="cand-banner-reject">
+          <h:inputTextarea styleClass="disc-input"
+                           value="#{v2CandidateFicheBean.rejectReason}"
+                           pt:placeholder="#{v2LocaleBean.getMsg('v2.candidat.reject.placeholder')}"/>
+          <div class="cand-decide-actions">
+            <h:commandLink styleClass="bo-btn danger sm"
+                           action="#{v2CandidateFicheBean.confirmReject}">
+              <f:ajax execute="@form" render=":previewDetailForm:previewDetail :previewTree"/>
+              #{v2LocaleBean.getMsg('v2.candidat.reject.confirm')}
+            </h:commandLink>
+            <h:commandLink styleClass="bo-btn ghost sm"
+                           action="#{v2CandidateFicheBean.cancelReject}">
+              <f:ajax execute="@this" render=":previewDetailForm:previewDetail"/>
+              #{v2LocaleBean.getMsg('v2.cancel')}
+            </h:commandLink>
+          </div>
+        </div>
+      </ui:fragment>
+    </div>
+
+    <ui:fragment rendered="#{v2CandidateFicheBean.pending}">
+      <section class="cblock" data-card-id="candVotes">
+        <div class="cblock-head">
+          <span class="cblock-title">#{v2LocaleBean.getMsg('v2.candidat.votes.title')}</span>
+        </div>
+        <div class="cblock-body">
+          <div class="votes">
+            <div class="votes-bar" aria-hidden="true">
+              <span class="votes-fill up" style="width:#{v2CandidateFicheBean.votesUpPercent}%"></span>
+              <span class="votes-fill down" style="width:#{v2CandidateFicheBean.votesDownPercent}%"></span>
+            </div>
+            <div class="votes-counts">
+              <span class="votes-c up">▲ #{v2CandidateFicheBean.votesUp} #{v2LocaleBean.getMsg('v2.candidat.votes.up')}</span>
+              <span class="votes-c down">▼ #{v2CandidateFicheBean.votesDown} #{v2LocaleBean.getMsg('v2.candidat.votes.down')}</span>
+            </div>
+            <ui:fragment rendered="#{v2CandidateFicheBean.canVote}">
+              <div class="votes-actions">
+                <h:commandLink styleClass="vote-btn up#{v2CandidateFicheBean.votedUp ? ' is-on' : ''}"
+                               action="#{v2CandidateFicheBean.toggleVoteUp}">
+                  <f:ajax execute="@this" render=":previewDetailForm:previewDetail"/>
+                  ▲ #{v2LocaleBean.getMsg('v2.candidat.votes.voteUp')}
+                </h:commandLink>
+                <h:commandLink styleClass="vote-btn down#{v2CandidateFicheBean.votedDown ? ' is-on' : ''}"
+                               action="#{v2CandidateFicheBean.toggleVoteDown}">
+                  <f:ajax execute="@this" render=":previewDetailForm:previewDetail"/>
+                  ▼ #{v2LocaleBean.getMsg('v2.candidat.votes.voteDown')}
+                </h:commandLink>
+              </div>
+            </ui:fragment>
+            <div class="votes-note">#{v2LocaleBean.getMsg('v2.candidat.votes.hint')}</div>
+          </div>
+        </div>
+      </section>
+
+      <section class="cblock" data-card-id="candDiscussion">
+        <div class="cblock-head">
+          <span class="cblock-title">
+            #{v2LocaleBean.getMsg('v2.candidat.discussion.title')}
+            <ui:fragment rendered="#{v2CandidateFicheBean.messageCount gt 0}">
+              (#{v2CandidateFicheBean.messageCount})
+            </ui:fragment>
+          </span>
+        </div>
+        <div class="cblock-body">
+          <div class="disc">
+            <ui:fragment rendered="#{empty v2CandidateFicheBean.messages}">
+              <div class="muted">#{v2LocaleBean.getMsg('v2.candidat.discussion.empty')}</div>
+            </ui:fragment>
+            <ui:fragment rendered="#{not empty v2CandidateFicheBean.messages}">
+              <div class="disc-thread">
+                <ui:repeat value="#{v2CandidateFicheBean.messages}" var="msg">
+                  <div class="disc-msg">
+                    <div class="disc-msg-h">
+                      <span class="disc-u">#{msg.nom}</span>
+                      <span class="disc-d">#{msg.date}</span>
+                    </div>
+                    <p class="disc-t">#{msg.msg}</p>
+                  </div>
+                </ui:repeat>
+              </div>
+            </ui:fragment>
+            <ui:fragment rendered="#{v2CandidateFicheBean.canDiscuss}">
+              <div class="disc-compose">
+                <h:inputTextarea styleClass="disc-input"
+                                 value="#{v2CandidateFicheBean.message}"
+                                 pt:placeholder="#{v2LocaleBean.getMsg('v2.candidat.discussion.placeholder')}"/>
+                <div class="disc-foot">
+                  <span class="disc-parts">
+                    #{v2CandidateFicheBean.participantCount}
+                    #{v2LocaleBean.getMsg('v2.candidat.discussion.participants')}
+                  </span>
+                  <h:commandLink styleClass="bo-btn primary sm"
+                                 action="#{v2CandidateFicheBean.sendMessage}">
+                    <f:ajax execute="@form" render=":previewDetailForm:previewDetail"/>
+                    #{v2LocaleBean.getMsg('v2.candidat.discussion.send')}
+                  </h:commandLink>
+                </div>
+              </div>
+            </ui:fragment>
+          </div>
+        </div>
+      </section>
+    </ui:fragment>
+
+    <ui:fragment rendered="#{v2CandidateFicheBean.pending and v2CandidateFicheBean.canProcess}">
+      <div class="fsave">
+        <h:commandLink styleClass="fsave-btn"
+                       action="#{v2CandidateFicheBean.insertCandidate}">
+          <f:ajax execute="@this" render=":previewDetailForm:previewDetail :previewTree"/>
+          <svg viewBox="0 0 24 24" aria-hidden="true"><path d="M20 6 9 17l-5-5"/></svg>
+          #{v2LocaleBean.getMsg('v2.candidat.action.validate')}
+        </h:commandLink>
+      </div>
+    </ui:fragment>
+
+    <ui:fragment rendered="#{v2CandidateFicheBean.canReactivate}">
+      <h:commandButton id="candReactivateGo" style="display:none"
+                       action="#{v2CandidateFicheBean.reactivateCandidate}">
+        <f:ajax execute="@this" render=":previewDetailForm:previewDetail :previewTree"/>
+      </h:commandButton>
+      <div class="block-overlay confirm-overlay" id="candReactivateConfirm" hidden="hidden"
+           data-act="cand-reactivate-dismiss" role="presentation">
+        <div class="confirm-modal" role="dialog" aria-modal="true"
+             aria-labelledby="candReactivateConfirmTitle" data-act="cand-reactivate-modal">
+          <div class="confirm-h" id="candReactivateConfirmTitle">
+            #{v2LocaleBean.getMsg('v2.candidat.reactivate.confirmTitle')}
+          </div>
+          <p class="confirm-p">#{v2LocaleBean.getMsg('v2.candidat.reactivate.confirm')}</p>
+          <div class="confirm-actions">
+            <button type="button" class="bo-btn ghost confirm-cancel"
+                    data-act="cand-reactivate-dismiss">#{v2LocaleBean.getMsg('v2.cancel')}</button>
+            <button type="button" class="bo-btn primary" data-act="cand-reactivate-go">
+              #{v2LocaleBean.getMsg('v2.candidat.action.reactivate')}
+            </button>
+          </div>
+        </div>
+      </div>
+    </ui:fragment>
+
+    <ui:fragment rendered="#{v2CandidateFicheBean.canDelete}">
+      <h:commandButton id="candDeleteGo" style="display:none"
+                       action="#{v2CandidateFicheBean.deleteCandidate}">
+        <f:ajax execute="@this"/>
+      </h:commandButton>
+      <div class="block-overlay confirm-overlay" id="candDeleteConfirm" hidden="hidden"
+           data-act="cand-delete-dismiss" role="presentation">
+        <div class="confirm-modal" role="dialog" aria-modal="true"
+             aria-labelledby="candDeleteConfirmTitle" data-act="cand-delete-modal">
+          <div class="confirm-h" id="candDeleteConfirmTitle">
+            #{v2LocaleBean.getMsg('v2.candidat.delete.confirmTitle')}
+          </div>
+          <p class="confirm-p">#{v2LocaleBean.getMsg('v2.candidat.delete.confirm')}</p>
+          <div class="confirm-actions">
+            <button type="button" class="bo-btn ghost confirm-cancel"
+                    data-act="cand-delete-dismiss">#{v2LocaleBean.getMsg('v2.cancel')}</button>
+            <button type="button" class="bo-btn danger" data-act="cand-delete-go">
+              #{v2LocaleBean.getMsg('v2.candidat.action.delete')}
+            </button>
+          </div>
+        </div>
+      </div>
+    </ui:fragment>
+  </ui:fragment>
+</ui:composition>
