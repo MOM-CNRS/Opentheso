@@ -17,6 +17,9 @@ public final class TreeStatusIds {
 
     public static final Set<String> DEFAULT_SELECTED = Set.of(VALIDE, INSERE, CANDIDAT);
 
+    /** Même sélection que par défaut, sans les candidats (visiteurs). */
+    public static final Set<String> GUEST_SELECTED = Set.of(VALIDE, INSERE);
+
     public static final Map<String, List<String>> GROUPS = Map.of(
             "actif", List.of(VALIDE, INSERE),
             CANDIDAT, List.of(CANDIDAT),

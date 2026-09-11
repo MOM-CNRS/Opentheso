@@ -80,7 +80,6 @@ class InstanceAdminBeanTest {
 
     @Test
     void goBack_fromMembers_returnsToThesauriList() {
-        when(userSession.canAccessSuperAdminScreen()).thenReturn(true);
         bean.setSection(InstanceAdminBean.SECTION_THESAURI);
         bean.setOpenThesaurusId("th1");
 

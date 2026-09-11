@@ -17,8 +17,10 @@ import org.springframework.stereotype.Component;
 
 import java.util.ArrayList;
 import java.util.HashMap;
+import java.util.LinkedHashSet;
 import java.util.List;
 import java.util.Map;
+import java.util.Set;
 
 @Component("v2TreeStatusBean")
 @Scope(value = "request", proxyMode = ScopedProxyMode.TARGET_CLASS)
@@ -92,8 +94,23 @@ public class TreeStatusPrefViewBean {
 
     private TreeStatusPref pref() {
         if (pref == null) {
-            Integer userId = authenticatedUserSource.getUserId().orElse(null);
-            pref = userId == null ? TreeStatusPref.defaults() : treeStatusPrefService.getPref(userId);
+            if (!authenticatedUserSource.isLoggedIn()) {
+                pref = TreeStatusPref.guestDefaults();
+            } else {
+                Integer userId = authenticatedUserSource.getUserId().orElse(null);
+                TreeStatusPref loaded = userId == null
+                        ? TreeStatusPref.defaults()
+                        : treeStatusPrefService.getPref(userId);
+                // Connecté : les candidats restent visibles avec le reste des concepts.
+                if (!loaded.contains(TreeStatusIds.CANDIDAT)) {
+                    var selected = new LinkedHashSet<>(
+                            loaded.selected() == null ? Set.of() : loaded.selected());
+                    selected.add(TreeStatusIds.CANDIDAT);
+                    pref = new TreeStatusPref(Set.copyOf(selected));
+                } else {
+                    pref = loaded;
+                }
+            }
         }
         return pref;
     }

@@ -993,7 +993,11 @@ public class ConceptQueryRepository {
     }
 
     public List<ConceptTreeRow> findTreeRootConcepts(String thesaurusId, String lang) {
-        List<Object[]> rows = em.createNativeQuery("""
+        return findTreeRootConcepts(thesaurusId, lang, true);
+    }
+
+    public List<ConceptTreeRow> findTreeRootConcepts(String thesaurusId, String lang, boolean includeCandidates) {
+        StringBuilder sql = new StringBuilder("""
             SELECT c.id_concept,
                    COALESCE(c.notation, '') AS notation,
                    COALESCE(t.lexical_value, c.id_concept) AS label,
@@ -1021,6 +1025,11 @@ public class ConceptQueryRepository {
                 ON cs.id_concept = c.id_concept
                 AND cs.id_thesaurus = c.id_thesaurus
             WHERE c.id_thesaurus = :thesaurusId
+            """);
+        if (!includeCandidates) {
+            sql.append(" AND UPPER(TRIM(c.status)) <> 'CA' ");
+        }
+        sql.append("""
               AND (
                   c.top_concept = true
                   OR NOT EXISTS (
@@ -1033,17 +1042,27 @@ public class ConceptQueryRepository {
               )
             ORDER BY c.notation, label
             LIMIT 4000
-            """)
+            """);
+        List<Object[]> rows = em.createNativeQuery(sql.toString())
                 .setParameter(NativeQueryParams.THESAURUS_ID, thesaurusId)
                 .setParameter("lang", lang)
                 .setParameter(NativeQueryParams.REJECTED, CandidatStatusCode.REJECTED)
                 .setParameter(NativeQueryParams.ACCEPTED, CandidatStatusCode.ACCEPTED)
                 .getResultList();
-        return withBulkHasChildren(thesaurusId, toConceptTreeRows(rows), true);
+        return withBulkHasChildren(thesaurusId, toConceptTreeRows(rows), includeCandidates);
     }
 
     public List<ConceptTreeRow> findTreeChildConcepts(String thesaurusId, String parentId, String lang) {
-        List<Object[]> rows = em.createNativeQuery("""
+        return findTreeChildConcepts(thesaurusId, parentId, lang, true);
+    }
+
+    public List<ConceptTreeRow> findTreeChildConcepts(
+            String thesaurusId,
+            String parentId,
+            String lang,
+            boolean includeCandidates
+    ) {
+        StringBuilder sql = new StringBuilder("""
             SELECT c.id_concept,
                    COALESCE(c.notation, '') AS notation,
                    COALESCE(t.lexical_value, c.id_concept) AS label,
@@ -1062,6 +1081,11 @@ public class ConceptQueryRepository {
                            WHERE child_hr.id_concept1 = c.id_concept
                              AND child_hr.id_thesaurus = :thesaurusId
                              AND child_hr.role LIKE 'NT%'
+            """);
+        if (!includeCandidates) {
+            sql.append("                             AND child.status <> 'CA'\n");
+        }
+        sql.append("""
                        )
                        OR EXISTS(
                            SELECT 1
@@ -1081,12 +1105,23 @@ public class ConceptQueryRepository {
                 ON t.id_term = pt.id_term
                 AND t.id_thesaurus = c.id_thesaurus
                 AND t.lang = :lang
-            LEFT JOIN candidat_status cs
+            LEFT JOIN (
+                SELECT DISTINCT ON (id_thesaurus, id_concept)
+                       id_thesaurus, id_concept, id_status
+                FROM candidat_status
+                WHERE id_thesaurus = :thesaurusId
+                ORDER BY id_thesaurus, id_concept, date DESC NULLS LAST
+            ) cs
                 ON cs.id_concept = c.id_concept
                 AND cs.id_thesaurus = c.id_thesaurus
             WHERE hr.id_thesaurus = :thesaurusId
               AND hr.id_concept1 = :parentId
               AND hr.role LIKE 'NT%'
+            """);
+        if (!includeCandidates) {
+            sql.append(" AND UPPER(TRIM(c.status)) <> 'CA' ");
+        }
+        sql.append("""
               AND NOT EXISTS (
                   SELECT 1
                   FROM concept_facet cf
@@ -1100,7 +1135,8 @@ public class ConceptQueryRepository {
               )
             ORDER BY c.notation, label
             LIMIT 4000
-            """)
+            """);
+        List<Object[]> rows = em.createNativeQuery(sql.toString())
                 .setParameter(NativeQueryParams.THESAURUS_ID, thesaurusId)
                 .setParameter(NativeQueryParams.PARENT_ID, parentId)
                 .setParameter("lang", lang)
@@ -1289,7 +1325,7 @@ public class ConceptQueryRepository {
             List<String> parentIds,
             boolean includeAllStatuses
     ) {
-        List<String> found = em.createNativeQuery("""
+        StringBuilder sql = new StringBuilder("""
                 SELECT DISTINCT parent_id
                 FROM (
                     SELECT hr.id_concept1 AS parent_id
@@ -1300,17 +1336,21 @@ public class ConceptQueryRepository {
                     WHERE hr.id_thesaurus = :thesaurusId
                       AND hr.role LIKE 'NT%'
                       AND hr.id_concept1 IN (:parentIds)
-                      AND (:includeAllStatuses = true OR child.status <> 'CA')
+                """);
+        if (!includeAllStatuses) {
+            sql.append(" AND child.status <> 'CA' ");
+        }
+        sql.append("""
                     UNION
                     SELECT ta.id_concept_parent AS parent_id
                     FROM thesaurus_array ta
                     WHERE ta.id_thesaurus = :thesaurusId
                       AND ta.id_concept_parent IN (:parentIds)
                 ) parents
-                """)
+                """);
+        List<String> found = em.createNativeQuery(sql.toString())
                 .setParameter(NativeQueryParams.THESAURUS_ID, thesaurusId)
                 .setParameter("parentIds", parentIds)
-                .setParameter("includeAllStatuses", includeAllStatuses)
                 .getResultList();
         Set<String> result = new HashSet<>(found.size());
         for (Object value : found) {

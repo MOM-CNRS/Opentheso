@@ -313,7 +313,15 @@ function renderStatusForest(nodes) {
 function loadStatusForest() {
   const box = statusForestHost();
   if (!box) return;
-  const statuses = Object.keys(STATUS_FOREST).filter((s) => state.statusSet.has(s)).join(",");
+  const statuses = Object.keys(STATUS_FOREST)
+    .filter((s) => state.statusSet.has(s))
+    .filter((s) => s !== "candidat" || document.body.getAttribute("data-logged-in") === "1")
+    .join(",");
+  if (!statuses) {
+    box.innerHTML = '<div class="tree-empty">Aucun concept pour les statuts sélectionnés.</div>';
+    box.hidden = false;
+    return;
+  }
   const key = thesaurusId() + "|" + thesaurusLang() + "|" + statuses
     + "|" + (state.candBy || "") + "|" + (state.candFrom || "") + "|" + (state.candTo || "");
   if (loadStatusForest._key === key && box.childElementCount && !box.hidden) return;

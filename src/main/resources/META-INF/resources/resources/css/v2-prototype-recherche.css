@@ -315,10 +315,13 @@ a.menu-foot{text-decoration:none;color:var(--accent)}
 .tn-row.is-candidate .tn-ico{color:var(--candidat);opacity:.9}
 .tn-row.is-candidate.is-active{background:rgba(252,177,144,.18)}
 .tn-row.is-candidate.is-active .tn-label{color:#a8551a}
-.tn-facet{font-size:11px;color:#3d5a80;flex:0 0 auto;line-height:1}
-.tn-row.is-facet .tn-label{color:#3d5a80}
-.tn-row.is-facet.is-active{background:rgba(61,90,128,.1)}
-.tn-row.is-facet.is-active .tn-label{color:#2f4666;font-weight:600}
+.tn-facet-ico{flex:0 0 auto;display:grid;place-items:center;color:var(--ink-4)}
+.tn-facet-ico svg{width:13px;height:13px;stroke:currentColor;fill:none;stroke-width:1.7;stroke-linecap:round;stroke-linejoin:round}
+.tn-row.is-facet:hover .tn-facet-ico{color:var(--accent)}
+.tn-row.is-facet .tn-label{color:var(--ink-2)}
+.tn-row.is-facet.is-active{background:var(--accent-soft)}
+.tn-row.is-facet.is-active .tn-label{color:var(--accent);font-weight:600}
+.tn-row.is-facet.is-active .tn-facet-ico{color:var(--accent)}
 .tree-empty{padding:28px 18px;color:var(--ink-3);font-size:13.5px;line-height:1.45}
 .tn-row{align-items:center}
 .tn-rowmain{display:flex;align-items:center;flex:1;min-width:0}

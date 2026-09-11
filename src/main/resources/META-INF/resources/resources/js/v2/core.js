@@ -33,18 +33,33 @@ var GROUPS = {
 };
 var TREE_STATUS_ALL = ["valide", "insere", "candidat", "rejete", "deprecie"];
 var TREE_STATUS_DEFAULT = ["valide", "insere", "candidat"];
+var TREE_STATUS_GUEST_DEFAULT = ["valide", "insere"];
 var TABLE_COL_ALL = ["status", "type", "notation", "path"];
 var TABLE_COL_DEFAULT = TABLE_COL_ALL.slice();
+
+function isTreeLoggedIn() {
+  return document.body.getAttribute("data-logged-in") === "1";
+}
 
 function readTreeStatusPref() {
   try {
     const raw = JSON.parse(document.body.getAttribute("data-tree-status") || "");
     const list = raw && Array.isArray(raw.selected) ? raw.selected
       : (Array.isArray(raw) ? raw : null);
-    if (!list) return TREE_STATUS_DEFAULT.slice();
-    return list.filter((s) => TREE_STATUS_ALL.indexOf(s) >= 0);
+    if (!list) {
+      return isTreeLoggedIn() ? TREE_STATUS_DEFAULT.slice() : TREE_STATUS_GUEST_DEFAULT.slice();
+    }
+    const filtered = list.filter((s) => TREE_STATUS_ALL.indexOf(s) >= 0);
+    if (!isTreeLoggedIn()) {
+      return filtered.filter((s) => s !== "candidat");
+    }
+    // Connecté : garder la préférence, mais toujours montrer les candidats avec le reste.
+    if (filtered.indexOf("candidat") < 0) {
+      filtered.push("candidat");
+    }
+    return filtered;
   } catch (e) {
-    return TREE_STATUS_DEFAULT.slice();
+    return isTreeLoggedIn() ? TREE_STATUS_DEFAULT.slice() : TREE_STATUS_GUEST_DEFAULT.slice();
   }
 }
 

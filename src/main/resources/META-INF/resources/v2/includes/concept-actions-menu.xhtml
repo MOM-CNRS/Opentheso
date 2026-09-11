@@ -16,7 +16,6 @@
          aria-label="#{v2LocaleBean.getMsg('rightbody.concept.global_actions')}">
 
       <ui:fragment rendered="#{v2ConceptLifecycleEditorBean.activeConceptWriteAvailable
-          or v2ThesaurusViewBean.customRelationVisible
           or v2FacetDetailEditorBean.managerActionsAvailable}">
         <div class="th-create-menu-h">#{v2LocaleBean.getMsg('v2.home.create')}</div>
         <h:commandLink styleClass="th-create-item" role="menuitem"

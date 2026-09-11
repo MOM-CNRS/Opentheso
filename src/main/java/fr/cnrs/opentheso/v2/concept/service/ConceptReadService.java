@@ -172,8 +172,10 @@ public class ConceptReadService {
         if (StringUtils.isBlank(thesaurusId)) {
             return Collections.emptyList();
         }
+        // Invités : même arbre, sans les candidats (statut CA). Connectés : tout, candidats inclus.
+        boolean includeCandidates = authenticatedUserSource.isLoggedIn();
         var nodes = new ArrayList<ConceptTreeNodeData>();
-        for (var row : conceptQueryRepository.findTreeRootConcepts(thesaurusId, lang)) {
+        for (var row : conceptQueryRepository.findTreeRootConcepts(thesaurusId, lang, includeCandidates)) {
             nodes.add(toThesaurusTreeNode(row));
         }
         return conceptTreeConsultationService.sortNodes(nodes, sortByNotation);
@@ -217,8 +219,9 @@ public class ConceptReadService {
             }
             return conceptTreeConsultationService.sortNodes(members, sortByNotation);
         }
+        boolean includeCandidates = authenticatedUserSource.isLoggedIn();
         var nodes = new ArrayList<ConceptTreeNodeData>();
-        for (var row : conceptQueryRepository.findTreeChildConcepts(thesaurusId, parentId, lang)) {
+        for (var row : conceptQueryRepository.findTreeChildConcepts(thesaurusId, parentId, lang, includeCandidates)) {
             nodes.add(toThesaurusTreeNode(row));
         }
         for (var facet : conceptQueryRepository.findFacetsOfConceptForTree(thesaurusId, parentId, lang)) {

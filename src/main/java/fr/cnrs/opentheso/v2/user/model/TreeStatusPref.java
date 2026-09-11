@@ -9,6 +9,10 @@ public record TreeStatusPref(Set<String> selected) implements Serializable {
         return new TreeStatusPref(TreeStatusIds.DEFAULT_SELECTED);
     }
 
+    public static TreeStatusPref guestDefaults() {
+        return new TreeStatusPref(TreeStatusIds.GUEST_SELECTED);
+    }
+
     public boolean contains(String statusId) {
         return selected != null && selected.contains(statusId);
     }

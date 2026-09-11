@@ -76,6 +76,8 @@ class ThesaurusViewBeanTest {
     private ConceptSelectionContext conceptSelectionContext;
     @Mock
     private ThesaurusSearchLanguageSync thesaurusSearchLanguageSync;
+    @Mock
+    private ConsultationShellBean consultationShellBean;
 
     private ThesaurusContext thesaurusContext;
     private ThesaurusViewBean bean;
@@ -95,7 +97,8 @@ class ThesaurusViewBeanTest {
                 v2LocaleBean,
                 toolboxAccessPolicy,
                 conceptSelectionContext,
-                thesaurusSearchLanguageSync
+                thesaurusSearchLanguageSync,
+                consultationShellBean
         );
     }
 

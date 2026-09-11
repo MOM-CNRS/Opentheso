@@ -122,7 +122,7 @@
                           <span class="stk-n">#{v2TreeStatusBean.count('insere')}</span>
                         </button></div>
                       
-                    </div><div class="stk-group#{v2TreeStatusBean.groupOn('candidat') ? ' on' : ''}" data-group="candidat">
+                    </div><ui:fragment rendered="#{v2UserSession.loggedIn}"><div class="stk-group#{v2TreeStatusBean.groupOn('candidat') ? ' on' : ''}" data-group="candidat">
                       <button type="button" class="stk-ghead#{v2TreeStatusBean.groupOn('candidat') ? ' on' : ''}" data-act="st-group" data-group="candidat">
                         <span class="stk-box">#{v2TreeStatusBean.groupOn('candidat') ? '✓' : ''}</span>
                         <span class="stk-glabel">#{v2LocaleBean.getMsg('v2.view.status.candidat')}</span>
@@ -161,7 +161,7 @@
                       </div>
                       <button type="button" class="cf-clear" id="cfClear" hidden="hidden" data-act="cf-clear">#{v2LocaleBean.getMsg('v2.view.cand.clear')}</button>
                     </div>
-                    </div><div class="stk-group#{v2TreeStatusBean.groupOn('inactif') ? ' on' : ''}" data-group="inactif">
+                    </div></ui:fragment><div class="stk-group#{v2TreeStatusBean.groupOn('inactif') ? ' on' : ''}" data-group="inactif">
                       <button type="button" class="stk-ghead#{v2TreeStatusBean.groupOn('inactif') ? ' on' : ''}" data-act="st-group" data-group="inactif">
                         <span class="stk-box#{v2TreeStatusBean.groupMixed('inactif') ? ' mixed' : ''}">#{v2TreeStatusBean.groupMixed('inactif') ? '–' : (v2TreeStatusBean.groupOn('inactif') ? '✓' : '')}</span>
                         <span class="stk-glabel">#{v2LocaleBean.getMsg('v2.view.status.inactif')}</span>
@@ -235,7 +235,9 @@
                 </div>
               </div>
             </div>
-            <a class="view-add" id="viewAdd" href="candidat/candidats.xhtml?new=1" title="Créer un candidat (sans emplacement)">+</a>
+            <ui:fragment rendered="#{v2UserSession.loggedIn}">
+              <a class="view-add" id="viewAdd" href="candidat/candidats.xhtml?new=1" title="Créer un candidat (sans emplacement)">+</a>
+            </ui:fragment>
           </div>
         </div>
 

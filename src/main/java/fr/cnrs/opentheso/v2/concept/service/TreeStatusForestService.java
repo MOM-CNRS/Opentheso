@@ -3,6 +3,8 @@ package fr.cnrs.opentheso.v2.concept.service;
 import fr.cnrs.opentheso.v2.concept.api.dto.TreeStatusForestNode;
 import fr.cnrs.opentheso.v2.concept.model.ConceptLabelSort;
 import fr.cnrs.opentheso.v2.shared.repository.ConceptQueryRepository;
+import fr.cnrs.opentheso.v2.shared.session.AuthenticatedUserSource;
+import fr.cnrs.opentheso.v2.user.model.TreeStatusIds;
 import org.apache.commons.lang3.StringUtils;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
@@ -22,9 +24,14 @@ import fr.cnrs.opentheso.v2.concept.model.ConceptTreeNodeKinds;
 public class TreeStatusForestService {
 
     private final ConceptQueryRepository conceptQueryRepository;
+    private final AuthenticatedUserSource authenticatedUserSource;
 
-    public TreeStatusForestService(ConceptQueryRepository conceptQueryRepository) {
+    public TreeStatusForestService(
+            ConceptQueryRepository conceptQueryRepository,
+            AuthenticatedUserSource authenticatedUserSource
+    ) {
         this.conceptQueryRepository = conceptQueryRepository;
+        this.authenticatedUserSource = authenticatedUserSource;
     }
 
     @Transactional(readOnly = true)
@@ -37,6 +44,10 @@ public class TreeStatusForestService {
             if (StringUtils.isNotBlank(status)) {
                 selected.add(status.trim());
             }
+        }
+        // Invité : on exclut uniquement le statut candidat ; valide / inséré / rejeté / déprécié restent.
+        if (!authenticatedUserSource.isLoggedIn()) {
+            selected.remove(TreeStatusIds.CANDIDAT);
         }
         if (selected.isEmpty()) {
             return List.of();

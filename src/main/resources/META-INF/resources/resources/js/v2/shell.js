@@ -1696,7 +1696,6 @@ function applyConceptLabelUi(source) {
     { msg: cv.getAttribute("data-flash"), token: cv.getAttribute("data-flash-token"), kind: "label" },
     { msg: cv.getAttribute("data-flash-coll"), token: cv.getAttribute("data-flash-coll-token"), kind: "coll" },
     { msg: cv.getAttribute("data-flash-rel"), token: cv.getAttribute("data-flash-rel-token"), kind: "rel" },
-    { msg: cv.getAttribute("data-flash-crel"), token: cv.getAttribute("data-flash-crel-token"), kind: "crel" },
     { msg: cv.getAttribute("data-flash-tr"), token: cv.getAttribute("data-flash-tr-token"), kind: "tr" },
     { msg: cv.getAttribute("data-flash-note"), token: cv.getAttribute("data-flash-note-token"), kind: "note" },
     { msg: cv.getAttribute("data-flash-res"), token: cv.getAttribute("data-flash-res-token"), kind: "res" },
@@ -1753,11 +1752,6 @@ function applyConceptLabelUi(source) {
     closeCvCollPicker();
     closeCrelPicker();
     bindRelPickers();
-  } else if (card === "relPerso") {
-    closeLabelFacetPicker();
-    closeCvCollPicker();
-    closeAllRelPickers();
-    bindCrelPicker();
   } else if (card === "traductions") {
     closeLabelFacetPicker();
     closeCvCollPicker();
@@ -2575,7 +2569,7 @@ function expandConceptBlock(gear) {
   ov.setAttribute("aria-hidden", "false");
 }
 
-const CARD_IDS = ["contexte", "collections", "relations", "relPerso", "traductions", "notes", "ressources", "alignement", "identifiants", "temporel"];
+const CARD_IDS = ["contexte", "collections", "relations", "traductions", "notes", "ressources", "alignement", "identifiants", "temporel"];
 
 function isCardLayoutEditable() {
   return document.body.getAttribute("data-logged-in") === "1";

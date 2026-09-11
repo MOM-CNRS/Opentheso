@@ -27,16 +27,20 @@
           </h:commandLink>
           <span class="tn-label" data-act="open" data-id="#{node.id}" data-type="#{node.nodeType}"
                 role="button" tabindex="0">
+            <ui:fragment rendered="#{node.facet}">
+              <span class="tn-facet-ico" title="Facette" aria-hidden="true">
+                <svg viewBox="0 0 24 24"><path d="m12 2 9 5-9 5-9-5 9-5Z"/><path d="m3 12 9 5 9-5"/><path d="m3 17 9 5 9-5"/></svg>
+              </span>
+            </ui:fragment>
             <ui:fragment rendered="#{v2ThesaurusViewBean.sortByNotation and not empty node.notation}">
               <span class="tn-nota">#{node.notation}</span>
             </ui:fragment>
             <span class="tn-textwrap"><span class="tn-text">#{node.label}</span></span>
             <ui:fragment rendered="#{node.candidate}"><span class="tn-dot" title="#{v2LocaleBean.getMsg('v2.concept.badge.candidate')}"></span></ui:fragment>
             <ui:fragment rendered="#{node.rejected}"><span class="tn-tag">#{v2LocaleBean.getMsg('v2.concept.badge.rejected')}</span></ui:fragment>
-            <ui:fragment rendered="#{node.facet}"><span class="tn-facet" title="Facette">◇</span></ui:fragment>
           </span>
         </div>
-        <ui:fragment rendered="#{not node.facet}">
+        <ui:fragment rendered="#{not node.facet and v2UserSession.loggedIn}">
           <button type="button" class="tn-add" data-act="create" data-id="#{node.id}"
                   data-pref="#{node.label}" data-path="#{node.path}"
                   title="Proposer un candidat sous « #{node.label} »">+</button>
