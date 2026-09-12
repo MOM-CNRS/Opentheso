@@ -3,6 +3,7 @@ package fr.cnrs.opentheso.v2.concept.ui;
 import fr.cnrs.opentheso.utils.MessageUtils;
 import fr.cnrs.opentheso.v2.concept.model.ConsultationProjectOption;
 import fr.cnrs.opentheso.v2.concept.model.ConsultationThesaurusOption;
+import fr.cnrs.opentheso.v2.concept.policy.ThesaurusConsultationAccessPolicy;
 import fr.cnrs.opentheso.v2.concept.service.ConsultationCatalogService;
 import fr.cnrs.opentheso.v2.concept.session.ConceptSelectionContext;
 import fr.cnrs.opentheso.v2.shared.session.ConceptTreeRefreshState;
@@ -59,10 +60,13 @@ public class ConsultationShellBean implements Serializable {
     private final transient RightsService rightsService;
     private final transient ConsultationProjectHomeBean consultationProjectHomeBean;
     private final ConceptTreeRefreshState conceptTreeRefreshState;
+    private final transient ThesaurusConsultationAccessPolicy thesaurusConsultationAccessPolicy;
 
     private int selectedProjectId = ALL_PROJECTS_ID;
     private String selectedThesaurusId;
     private String platformHomeHtml;
+    /** Invité (ou non-membre) a tenté d'ouvrir un thésaurus privé. */
+    private boolean thesaurusAccessDenied;
 
     private List<ConsultationProjectOption> projects = Collections.emptyList();
     private List<ConsultationThesaurusOption> thesaurusOptions = Collections.emptyList();
@@ -102,6 +106,8 @@ public class ConsultationShellBean implements Serializable {
      * puis positionne l'écran sur l'accueil détail du thésaurus.
      */
     public void applyThesaurusFromUrl() {
+        // Reset à chaque requête : évite un écran « Accès refusé » collant en session.
+        thesaurusAccessDenied = false;
         String idFromUri = StringUtils.trimToNull(thesaurusContext.getIdThesoFromUri());
         if (idFromUri == null) {
             FacesContext facesContext = FacesContext.getCurrentInstance();
@@ -206,6 +212,7 @@ public class ConsultationShellBean implements Serializable {
 
     public void afterLogout() {
         refreshCatalog();
+        thesaurusAccessDenied = false;
         String currentThesaurusId = thesaurusContext.resolveThesaurusId();
         if (StringUtils.isNotBlank(currentThesaurusId)
                 && thesaurusOptions.stream().noneMatch(option -> option.id().equals(currentThesaurusId))) {
@@ -336,15 +343,67 @@ public class ConsultationShellBean implements Serializable {
     }
 
     private void applyThesaurusSelection(String thesaurusId) {
+        if (StringUtils.isBlank(thesaurusId)) {
+            clearThesaurusSelection();
+            thesaurusAccessDenied = false;
+            return;
+        }
         ConsultationThesaurusOption option = thesaurusOptions.stream()
                 .filter(item -> item.id().equals(thesaurusId))
                 .findFirst()
                 .orElse(null);
+        boolean listed = option != null;
+        if (!thesaurusConsultationAccessPolicy.canConsult(thesaurusId, listed)) {
+            denyThesaurusAccess();
+            return;
+        }
+        thesaurusAccessDenied = false;
         if (option != null) {
             thesaurusContext.selectThesaurus(option.id(), option.title(), option.defaultLang());
         } else {
             thesaurusContext.selectThesaurus(thesaurusId);
         }
+    }
+
+    /**
+     * Sélection depuis une URL ({@code ?idt=}) avec contrôle d'accès.
+     *
+     * @return {@code false} si accès refusé (thésaurus privé inaccessible)
+     */
+    public boolean trySelectThesaurusForConsultation(String thesaurusId) {
+        if (StringUtils.isBlank(thesaurusId)) {
+            return false;
+        }
+        refreshThesaurusOptions();
+        applyThesaurusSelection(thesaurusId);
+        syncSelectionFromContext();
+        return !thesaurusAccessDenied && hasSelectedThesaurus();
+    }
+
+    private void denyThesaurusAccess() {
+        thesaurusAccessDenied = true;
+        clearThesaurusSelection();
+    }
+
+    /** Quitte l'écran Accès refusé (picker thésaurus, etc.). */
+    public void clearThesaurusAccessDenied() {
+        thesaurusAccessDenied = false;
+    }
+
+    /**
+     * Action du bouton retour sur la page Accès refusé :
+     * nettoie l'état session puis redirige vers le picker.
+     */
+    public void dismissThesaurusAccessDenied() throws IOException {
+        thesaurusAccessDenied = false;
+        clearThesaurusSelection();
+        thesaurusContext.setIdThesoFromUri(null);
+        FacesContext facesContext = FacesContext.getCurrentInstance();
+        if (facesContext == null || facesContext.getResponseComplete()) {
+            return;
+        }
+        ExternalContext context = facesContext.getExternalContext();
+        context.redirect(context.getRequestContextPath() + "/v2/thesauri");
     }
 
     /** Recharge l'état ViewScoped après changement de projet (réponse AJAX). */

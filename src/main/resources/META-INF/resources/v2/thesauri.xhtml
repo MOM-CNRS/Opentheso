@@ -6,6 +6,9 @@
                 xmlns:pt="http://xmlns.jcp.org/jsf/passthrough"
                 template="/v2/includes/layout.xhtml">
   <ui:param name="v2Page" value="thesauri"/>
+  <ui:define name="viewActions">
+    <f:viewAction action="#{v2ConsultationShellBean.clearThesaurusAccessDenied}" onPostback="false"/>
+  </ui:define>
   <ui:define name="title">OpenTheso — Sélection de thésaurus</ui:define>
   <ui:define name="detail"/>
   <ui:define name="main">

@@ -150,7 +150,9 @@ public class ThesaurusViewBean implements Serializable {
         if (idt.equalsIgnoreCase(StringUtils.defaultString(current))) {
             return;
         }
-        thesaurusContext.selectThesaurus(idt);
+        if (!consultationShellBean.trySelectThesaurusForConsultation(idt)) {
+            return;
+        }
         conceptSelectionContext.clear();
         invalidateHomeOverview();
         invalidateTree();
@@ -158,7 +160,6 @@ public class ThesaurusViewBean implements Serializable {
         languages = null;
         selectedLang = null;
         canEdit = null;
-        consultationShellBean.setSelectedThesaurusId(idt);
     }
 
     public String getId() {

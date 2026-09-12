@@ -22,7 +22,6 @@
         <java.version>17</java.version>
         <project.build.sourceEncoding>UTF-8</project.build.sourceEncoding>
         <project.reporting.outputEncoding>UTF-8</project.reporting.outputEncoding>
-
         <joinfaces.version>6.1.0</joinfaces.version>
         <primefaces.version>15.0.16</primefaces.version>
         <primefaces-extensions.version>15.0.16</primefaces-extensions.version>
@@ -30,7 +29,6 @@
         <postgresql.version>42.7.11</postgresql.version>
         <liquibase.version>4.29.0</liquibase.version>
         <springdoc.version>3.1.0</springdoc.version>
-
         <poi.version>4.1.1</poi.version>
         <commons-compress.version>1.27.1</commons-compress.version>
         <commons-csv.version>1.11.0</commons-csv.version>
@@ -55,7 +53,6 @@
 
         <jacoco.version>0.8.12</jacoco.version>
         <sonar.maven.plugin.version>4.0.0.4121</sonar.maven.plugin.version>
-
         <!-- Analyse SonarQube limitée à fr.cnrs.opentheso.v2 (pas le legacy). -->
         <sonar.projectKey>opentheso</sonar.projectKey>
         <sonar.projectName>OpenTheso (v2)</sonar.projectName>
@@ -842,5 +839,4 @@
             </build>
         </profile>
     </profiles>
-
 </project>

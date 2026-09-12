@@ -11,14 +11,12 @@
   <ui:define name="main">
     <h:form id="instanceAdminForm" prependId="false" styleClass="ia-form-root">
       <ui:fragment rendered="#{not v2UserSession.canAccessSuperAdminScreen()}">
-        <div class="bo bo-solo">
-          <div class="bo-head">
-            <div>
-              <h1 class="bo-title">Accès refusé</h1>
-              <p class="bo-sub">Réservé aux super-administrateurs.</p>
-            </div>
-          </div>
-        </div>
+        <ui:include src="/v2/includes/access-denied.xhtml">
+          <ui:param name="deniedKicker" value="#{v2LocaleBean.getMsg('v2.admin.accessDenied.kicker')}"/>
+          <ui:param name="deniedTitle" value="#{v2LocaleBean.getMsg('v2.admin.accessDenied.title')}"/>
+          <ui:param name="deniedSub" value="#{v2LocaleBean.getMsg('v2.admin.accessDenied.sub')}"/>
+          <ui:param name="deniedBackLabel" value="#{v2LocaleBean.getMsg('v2.admin.accessDenied.back')}"/>
+        </ui:include>
       </ui:fragment>
 
       <ui:fragment rendered="#{v2UserSession.canAccessSuperAdminScreen()}">

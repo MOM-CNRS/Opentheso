@@ -90,6 +90,7 @@ public class ThesaurusPickerBean implements Serializable {
     }
 
     public void load() {
+        consultationShellBean.clearThesaurusAccessDenied();
         consultationShellBean.load();
         rows = consultationCatalogService.listPickerThesauri(
                 userSession.isLoggedIn() ? userSession.getCurrentUserId() : null,

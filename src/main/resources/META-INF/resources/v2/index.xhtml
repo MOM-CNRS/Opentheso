@@ -1,6 +1,7 @@
 <?xml version="1.0" encoding="UTF-8"?>
 <ui:composition xmlns="http://www.w3.org/1999/xhtml"
                 xmlns:ui="http://xmlns.jcp.org/jsf/facelets"
+                xmlns:h="http://xmlns.jcp.org/jsf/html"
                 xmlns:f="http://xmlns.jcp.org/jsf/core"
                 template="/v2/includes/layout.xhtml">
   <ui:param name="v2Page" value="accueil"/>
@@ -10,16 +11,31 @@
     <f:viewAction action="#{v2ThesaurusViewBean.showThesaurusHome}" onPostback="false"/>
     <f:viewAction action="#{v2ThesaurusViewBean.restoreOpenedConcept}" onPostback="false"/>
   </ui:define>
-  <ui:define name="title">OpenTheso — #{v2ThesaurusViewBean.title}</ui:define>
+  <ui:define name="title">OpenTheso — #{v2ConsultationShellBean.thesaurusAccessDenied ? v2LocaleBean.getMsg('v2.thesaurus.accessDenied.title') : v2ThesaurusViewBean.title}</ui:define>
+  <ui:define name="detail">
+    <ui:fragment rendered="#{not v2ConsultationShellBean.thesaurusAccessDenied}">
+      <ui:include src="/v2/includes/detail.xhtml"/>
+    </ui:fragment>
+  </ui:define>
   <ui:define name="main">
-          <ui:fragment rendered="#{empty v2ThesaurusViewBean.id}">
+          <ui:fragment rendered="#{v2ConsultationShellBean.thesaurusAccessDenied}">
+            <h:form id="thesaurusAccessDeniedForm" prependId="false">
+              <ui:include src="/v2/includes/access-denied.xhtml">
+                <ui:param name="deniedKicker" value="#{v2LocaleBean.getMsg('v2.thesaurus.accessDenied.kicker')}"/>
+                <ui:param name="deniedTitle" value="#{v2LocaleBean.getMsg('v2.thesaurus.accessDenied.title')}"/>
+                <ui:param name="deniedSub" value="#{v2LocaleBean.getMsg('v2.thesaurus.accessDenied.sub')}"/>
+                <ui:param name="deniedBackLabel" value="#{v2LocaleBean.getMsg('v2.thesaurus.accessDenied.back')}"/>
+              </ui:include>
+            </h:form>
+          </ui:fragment>
+          <ui:fragment rendered="#{not v2ConsultationShellBean.thesaurusAccessDenied and empty v2ThesaurusViewBean.id}">
             <div class="empty">
               <div class="empty-ico">◆</div>
               <p class="empty-t">Aucun thésaurus sélectionné</p>
               <p class="empty-s"><a href="#{request.contextPath}/v2/thesauri">Choisir un thésaurus</a></p>
             </div>
           </ui:fragment>
-          <ui:fragment rendered="#{not empty v2ThesaurusViewBean.id}">
+          <ui:fragment rendered="#{not v2ConsultationShellBean.thesaurusAccessDenied and not empty v2ThesaurusViewBean.id}">
             <ui:include src="/v2/includes/home.xhtml"/>
           </ui:fragment>
   </ui:define>

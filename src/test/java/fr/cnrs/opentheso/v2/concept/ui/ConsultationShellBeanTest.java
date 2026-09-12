@@ -2,6 +2,7 @@ package fr.cnrs.opentheso.v2.concept.ui;
 
 import fr.cnrs.opentheso.utils.MessageUtils;
 import fr.cnrs.opentheso.v2.concept.model.ConsultationThesaurusOption;
+import fr.cnrs.opentheso.v2.concept.policy.ThesaurusConsultationAccessPolicy;
 import fr.cnrs.opentheso.v2.concept.service.ConsultationCatalogService;
 import fr.cnrs.opentheso.v2.concept.session.ConceptSelectionContext;
 import fr.cnrs.opentheso.v2.setting.ui.ThesaurusContext;
@@ -60,6 +61,8 @@ class ConsultationShellBeanTest {
     @Mock
     private ConceptTreeRefreshState conceptTreeRefreshState;
     @Mock
+    private ThesaurusConsultationAccessPolicy thesaurusConsultationAccessPolicy;
+    @Mock
     private FacesContext facesContext;
     @Mock
     private ExternalContext externalContext;
@@ -79,7 +82,8 @@ class ConsultationShellBeanTest {
                 sessionLifecycleService,
                 rightsService,
                 consultationProjectHomeBean,
-                conceptTreeRefreshState
+                conceptTreeRefreshState,
+                thesaurusConsultationAccessPolicy
         );
     }
 
@@ -324,6 +328,7 @@ class ConsultationShellBeanTest {
         when(consultationCatalogService.listProjects(null, false)).thenReturn(List.of());
         when(consultationCatalogService.listThesauri(null, false, -1, "fr"))
                 .thenReturn(List.of(new ConsultationThesaurusOption("TH1", "Title", "fr")));
+        when(thesaurusConsultationAccessPolicy.canConsult("TH1", true)).thenReturn(true);
 
         when(facesContext.getExternalContext()).thenReturn(externalContext);
         when(externalContext.getRequestContextPath()).thenReturn("");
@@ -346,5 +351,68 @@ class ConsultationShellBeanTest {
             verify(primeFacesInstance).executeScript(
                     org.mockito.ArgumentMatchers.contains("window.location.assign"));
         }
+    }
+
+    @Test
+    void trySelectThesaurusForConsultation_deniesPrivateOutsideCatalog() {
+        when(userSession.isLoggedIn()).thenReturn(false);
+        when(userSession.isSuperAdmin()).thenReturn(false);
+        when(v2LocaleBean.getIdLangue()).thenReturn("fr");
+        when(consultationCatalogService.listThesauri(null, false, -1, "fr")).thenReturn(List.of());
+        when(thesaurusConsultationAccessPolicy.canConsult("PRIV", false)).thenReturn(false);
+
+        assertFalse(consultationShellBean.trySelectThesaurusForConsultation("PRIV"));
+        assertTrue(consultationShellBean.isThesaurusAccessDenied());
+        verify(thesaurusContext).clearSelection();
+    }
+
+    @Test
+    void trySelectThesaurusForConsultation_allowsListedThesaurus() {
+        when(userSession.isLoggedIn()).thenReturn(false);
+        when(userSession.isSuperAdmin()).thenReturn(false);
+        when(v2LocaleBean.getIdLangue()).thenReturn("fr");
+        when(consultationCatalogService.listThesauri(null, false, -1, "fr"))
+                .thenReturn(List.of(new ConsultationThesaurusOption("TH1", "Public", "fr")));
+        when(thesaurusConsultationAccessPolicy.canConsult("TH1", true)).thenReturn(true);
+        when(thesaurusContext.resolveThesaurusId()).thenReturn("TH1");
+
+        assertTrue(consultationShellBean.trySelectThesaurusForConsultation("TH1"));
+        assertFalse(consultationShellBean.isThesaurusAccessDenied());
+        verify(thesaurusContext).selectThesaurus("TH1", "Public", "fr");
+    }
+
+    @Test
+    void applyThesaurusFromUrl_withoutIdt_clearsAccessDeniedFlag() {
+        consultationShellBean.setThesaurusAccessDenied(true);
+        when(thesaurusContext.getIdThesoFromUri()).thenReturn(null);
+
+        try (MockedStatic<FacesContext> faces = mockStatic(FacesContext.class)) {
+            faces.when(FacesContext::getCurrentInstance).thenReturn(facesContext);
+            when(facesContext.getExternalContext()).thenReturn(externalContext);
+            when(externalContext.getRequestParameterMap()).thenReturn(Map.of());
+
+            consultationShellBean.applyThesaurusFromUrl();
+        }
+
+        assertFalse(consultationShellBean.isThesaurusAccessDenied());
+    }
+
+    @Test
+    void dismissThesaurusAccessDenied_clearsStateAndRedirects() throws Exception {
+        consultationShellBean.setThesaurusAccessDenied(true);
+
+        try (MockedStatic<FacesContext> faces = mockStatic(FacesContext.class)) {
+            faces.when(FacesContext::getCurrentInstance).thenReturn(facesContext);
+            when(facesContext.getExternalContext()).thenReturn(externalContext);
+            when(facesContext.getResponseComplete()).thenReturn(false);
+            when(externalContext.getRequestContextPath()).thenReturn("/ot");
+
+            consultationShellBean.dismissThesaurusAccessDenied();
+        }
+
+        assertFalse(consultationShellBean.isThesaurusAccessDenied());
+        verify(thesaurusContext).clearSelection();
+        verify(thesaurusContext).setIdThesoFromUri(null);
+        verify(externalContext).redirect("/ot/v2/thesauri");
     }
 }

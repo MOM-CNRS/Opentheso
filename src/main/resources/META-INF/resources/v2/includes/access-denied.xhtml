@@ -1,0 +1,31 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<ui:composition xmlns="http://www.w3.org/1999/xhtml"
+                xmlns:ui="http://xmlns.jcp.org/jsf/facelets"
+                xmlns:h="http://xmlns.jcp.org/jsf/html">
+  <!--
+    Paramètres attendus :
+      deniedKicker, deniedTitle, deniedSub, deniedBackLabel
+    Doit être placé dans un h:form (commandLink).
+  -->
+  <div class="bo bo-solo ia-denied">
+    <section class="ia-denied-panel" aria-labelledby="iaDeniedTitle">
+      <div class="ia-denied-mark" aria-hidden="true">
+        <svg viewBox="0 0 24 24">
+          <rect x="5" y="11" width="14" height="10" rx="2"/>
+          <path d="M8 11V8a4 4 0 0 1 8 0v3"/>
+          <circle cx="12" cy="16" r="1.2"/>
+        </svg>
+      </div>
+      <p class="ia-denied-kicker">#{deniedKicker}</p>
+      <h1 class="ia-denied-title" id="iaDeniedTitle">#{deniedTitle}</h1>
+      <p class="ia-denied-sub">#{deniedSub}</p>
+      <div class="ia-denied-actions">
+        <h:commandLink styleClass="bo-btn primary"
+                       action="#{v2ConsultationShellBean.dismissThesaurusAccessDenied}">
+          <svg viewBox="0 0 24 24" aria-hidden="true"><path d="M19 12H5"/><path d="m12 19-7-7 7-7"/></svg>
+          <h:outputText value="#{deniedBackLabel}"/>
+        </h:commandLink>
+      </div>
+    </section>
+  </div>
+</ui:composition>
