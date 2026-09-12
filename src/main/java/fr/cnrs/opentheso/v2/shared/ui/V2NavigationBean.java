@@ -1,6 +1,7 @@
 package fr.cnrs.opentheso.v2.shared.ui;
 
 import fr.cnrs.opentheso.config.SessionConfig;
+import fr.cnrs.opentheso.v2.concept.ui.ConsultationShellBean;
 import fr.cnrs.opentheso.v2.setting.ui.ThesaurusContext;
 import fr.cnrs.opentheso.v2.shared.session.SessionLifecycleService;
 import fr.cnrs.opentheso.v2.shared.web.ApplicationUriService;
@@ -22,11 +23,14 @@ import java.io.Serializable;
 public class V2NavigationBean implements Serializable {
 
     private static final String PREFERENCE_XHTML = "/v2/setting/preference.xhtml";
+    private static final String INSTANCE_ADMIN_PATH = "/v2/admin/instance";
 
     private final transient ThesaurusContext thesaurusContext;
     private final transient SessionConfig sessionConfig;
     private final transient SessionLifecycleService sessionLifecycleService;
     private final transient ApplicationUriService applicationUriService;
+    private final transient UserSession userSession;
+    private final transient ConsultationShellBean consultationShellBean;
 
     private String activePageName = "thesaurusV2";
 
@@ -36,6 +40,7 @@ public class V2NavigationBean implements Serializable {
     }
 
     public void redirectToThesaurusPicker() throws IOException {
+        consultationShellBean.clearThesaurusAccessDenied();
         activePageName = "thesaurusPickerV2";
         redirect("/v2/thesauri");
     }
@@ -62,13 +67,16 @@ public class V2NavigationBean implements Serializable {
     }
 
     public void redirectToAllUsers() throws IOException {
-        activePageName = "usersV2";
-        redirect("/v2/admin/instance");
+        redirectToInstanceAdmin();
     }
 
     public void redirectToInstanceAdmin() throws IOException {
+        if (!userSession.canAccessSuperAdminScreen()) {
+            redirect("/v2/thesauri");
+            return;
+        }
         activePageName = "instanceAdminV2";
-        redirect("/v2/admin/instance");
+        redirect(INSTANCE_ADMIN_PATH);
     }
 
     public void redirectToAllProjects() throws IOException {

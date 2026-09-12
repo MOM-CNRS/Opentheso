@@ -105,11 +105,11 @@
         <h:outputLink value="#{request.contextPath}/v2/admin/instance"
                       styleClass="thesaurus-btn#{v2Page eq 'admin-instance' ? ' is-on' : ''}"
                       title="Administration de l'instance"
-                      rendered="#{v2UserSession.superAdmin}"
+                      rendered="#{v2UserSession.canAccessSuperAdminScreen()}"
                       onclick="return window.iaAnimateRailToAdmin &amp;&amp; window.iaAnimateRailToAdmin(this, event);">
           <svg viewBox="0 0 24 24" aria-hidden="true"><path d="M12 22c4.5-1.6 8-4.4 8-9V5.5l-8-3-8 3V13c0 4.6 3.5 7.4 8 9Z"/></svg>
         </h:outputLink>
-        <ui:fragment rendered="#{not v2UserSession.superAdmin}">
+        <ui:fragment rendered="#{not v2UserSession.canAccessSuperAdminScreen()}">
         <button type="button" class="thesaurus-btn" data-act="thesaurus" data-thesaurus="projects"
                 title="#{v2LocaleBean.getMsg('v2.nav.projects')}" aria-label="#{v2LocaleBean.getMsg('v2.nav.projects')}" aria-expanded="false">
           <svg viewBox="0 0 24 24" aria-hidden="true"><path d="M16 21v-1.5a4 4 0 0 0-4-4H6a4 4 0 0 0-4 4V21"/><circle cx="9" cy="7" r="3.5"/><path d="M22 21v-1.5a4 4 0 0 0-3-3.85"/><path d="M16 3.3a4 4 0 0 1 0 7.4"/></svg>

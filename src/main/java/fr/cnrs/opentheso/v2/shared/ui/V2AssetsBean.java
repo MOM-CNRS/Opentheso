@@ -12,7 +12,7 @@ public class V2AssetsBean implements Serializable {
 
     private static final long serialVersionUID = 1L;
 
-    public static final String VERSION = "cv-80";
+    public static final String VERSION = "cv-84";
 
     public String getV() {
         return VERSION;

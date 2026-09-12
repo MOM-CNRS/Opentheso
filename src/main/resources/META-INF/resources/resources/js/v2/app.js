@@ -1597,12 +1597,25 @@ if (SCREEN === "preference" && location.hash) {
   };
 
   window.iaOnBackAjax = function (data) {
-    if (!data || data.status !== "success") return;
+    if (!data) return;
     const root = document.getElementById("iaRoot");
-    if (!root) return;
-    root.classList.remove("ia--leaving", "ia--enter");
-    void root.offsetWidth;
-    root.classList.add("ia--enter");
+    const clearLeaving = function () {
+      document.body.classList.remove("ia-nav-leaving");
+      document.querySelectorAll(".ia--leaving").forEach(function (el) {
+        el.classList.remove("ia--leaving");
+      });
+    };
+    if (data.status === "error") {
+      clearLeaving();
+      return;
+    }
+    if (data.status === "success") {
+      clearLeaving();
+      if (!root) return;
+      root.classList.remove("ia--enter");
+      void root.offsetWidth;
+      root.classList.add("ia--enter");
+    }
   };
 
   document.addEventListener("DOMContentLoaded", function () {

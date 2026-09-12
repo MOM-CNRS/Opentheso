@@ -21,7 +21,7 @@
       <p class="ia-denied-sub">#{deniedSub}</p>
       <div class="ia-denied-actions">
         <h:commandLink styleClass="bo-btn primary"
-                       action="#{v2ConsultationShellBean.dismissThesaurusAccessDenied}">
+                       action="#{v2NavigationBean.redirectToThesaurusPicker}">
           <svg viewBox="0 0 24 24" aria-hidden="true"><path d="M19 12H5"/><path d="m12 19-7-7 7-7"/></svg>
           <h:outputText value="#{deniedBackLabel}"/>
         </h:commandLink>

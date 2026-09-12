@@ -6,11 +6,14 @@
                 xmlns:pt="http://xmlns.jcp.org/jsf/passthrough"
                 template="/v2/includes/layout.xhtml">
   <ui:param name="v2Page" value="admin-instance"/>
+  <ui:define name="viewActions">
+    <f:viewAction action="#{v2InstanceAdminBean.init}" onPostback="false"/>
+  </ui:define>
   <ui:define name="title">OpenTheso — Administration de l'instance</ui:define>
   <ui:define name="detail"/>
   <ui:define name="main">
     <h:form id="instanceAdminForm" prependId="false" styleClass="ia-form-root">
-      <ui:fragment rendered="#{not v2UserSession.canAccessSuperAdminScreen()}">
+      <ui:fragment rendered="#{not v2InstanceAdminBean.accessAllowed}">
         <ui:include src="/v2/includes/access-denied.xhtml">
           <ui:param name="deniedKicker" value="#{v2LocaleBean.getMsg('v2.admin.accessDenied.kicker')}"/>
           <ui:param name="deniedTitle" value="#{v2LocaleBean.getMsg('v2.admin.accessDenied.title')}"/>
@@ -19,7 +22,7 @@
         </ui:include>
       </ui:fragment>
 
-      <ui:fragment rendered="#{v2UserSession.canAccessSuperAdminScreen()}">
+      <ui:fragment rendered="#{v2InstanceAdminBean.accessAllowed}">
         <h:panelGroup id="iaRoot" layout="block" styleClass="bo bo-solo">
           <nav class="bc" aria-label="Fil d'Ariane">
             <h:commandLink styleClass="bc-lk" action="#{v2NavigationBean.redirectToThesaurusPicker}">
@@ -30,20 +33,13 @@
               <span class="bc-cur" aria-current="page">Administration de l'instance</span>
             </ui:fragment>
             <ui:fragment rendered="#{not v2InstanceAdminBean.home}">
-              <h:commandLink styleClass="bc-lk" action="#{v2InstanceAdminBean.openHome}">
-                <f:ajax execute="@this" render="iaRoot"/>
-                Administration de l'instance
-              </h:commandLink>
+              <a class="bc-lk" href="#{v2InstanceAdminBean.homeUrl}">Administration de l'instance</a>
               <span class="bc-sep" aria-hidden="true">›</span>
               <ui:fragment rendered="#{not v2InstanceAdminBean.thesaurusMembers}">
                 <span class="bc-cur" aria-current="page">#{v2InstanceAdminBean.sectionLabel}</span>
               </ui:fragment>
               <ui:fragment rendered="#{v2InstanceAdminBean.thesaurusMembers}">
-                <h:commandLink styleClass="bc-lk"
-                               action="#{v2InstanceAdminBean.openSection('thes')}">
-                  <f:ajax execute="@this" render="iaRoot"/>
-                  #{v2InstanceAdminBean.sectionLabel}
-                </h:commandLink>
+                <a class="bc-lk" href="#{v2InstanceAdminBean.sectionUrl('thes')}">#{v2InstanceAdminBean.sectionLabel}</a>
                 <span class="bc-sep" aria-hidden="true">›</span>
                 <span class="bc-cur" aria-current="page">#{v2InstanceAdminBean.pageTitle}</span>
               </ui:fragment>
@@ -51,19 +47,27 @@
           </nav>
 
           <ui:fragment rendered="#{v2InstanceAdminBean.home}">
-            <h:commandLink styleClass="bo-back"
+            <h:commandLink id="iaBackHome"
+                           styleClass="bo-back"
                            title="#{v2InstanceAdminBean.backTitle}"
-                           action="#{v2NavigationBean.redirectToThesaurusPicker}"
-                           onclick="return window.iaAnimateLeave &amp;&amp; window.iaAnimateLeave(this);">
+                           action="#{v2NavigationBean.redirectToThesaurusPicker}">
               <svg viewBox="0 0 24 24" aria-hidden="true"><path d="M19 12H5"/><path d="m12 19-7-7 7-7"/></svg>
             </h:commandLink>
           </ui:fragment>
-          <ui:fragment rendered="#{not v2InstanceAdminBean.home}">
-            <h:commandLink styleClass="bo-back"
+          <ui:fragment rendered="#{not v2InstanceAdminBean.home and not v2InstanceAdminBean.createUserOpen}">
+            <a id="iaBack"
+               class="bo-back"
+               href="#{v2InstanceAdminBean.backHref}"
+               title="#{v2InstanceAdminBean.backTitle}">
+              <svg viewBox="0 0 24 24" aria-hidden="true"><path d="M19 12H5"/><path d="m12 19-7-7 7-7"/></svg>
+            </a>
+          </ui:fragment>
+          <ui:fragment rendered="#{not v2InstanceAdminBean.home and v2InstanceAdminBean.createUserOpen}">
+            <h:commandLink id="iaBackCloseCreate"
+                           styleClass="bo-back"
                            title="#{v2InstanceAdminBean.backTitle}"
-                           action="#{v2InstanceAdminBean.goBack}"
-                           onclick="return window.iaAnimateLeave &amp;&amp; window.iaAnimateLeave(this);">
-              <f:ajax execute="@this" render="iaRoot" onevent="iaOnBackAjax"/>
+                           action="#{v2InstanceAdminBean.closeCreateUser}">
+              <f:ajax execute="@this" render="iaRoot"/>
               <svg viewBox="0 0 24 24" aria-hidden="true"><path d="M19 12H5"/><path d="m12 19-7-7 7-7"/></svg>
             </h:commandLink>
           </ui:fragment>
@@ -90,8 +94,7 @@
           <div class="bo-full">
             <ui:fragment rendered="#{v2InstanceAdminBean.home}">
               <div class="spl">
-                <h:commandLink styleClass="spl-row" action="#{v2InstanceAdminBean.openSection('users')}">
-                  <f:ajax execute="@this" render="iaRoot"/>
+                <a class="spl-row" href="#{v2InstanceAdminBean.sectionUrl('users')}">
                   <span class="spl-ico" aria-hidden="true">
                     <svg viewBox="0 0 24 24"><path d="M16 21v-1.5a4 4 0 0 0-4-4H6a4 4 0 0 0-4 4V21"/><circle cx="9" cy="7" r="3.5"/><path d="M22 21v-1.5a4 4 0 0 0-3-3.85"/><path d="M16 3.3a4 4 0 0 1 0 7.4"/></svg>
                   </span>
@@ -100,9 +103,8 @@
                     <span class="spl-d">Comptes de l'instance et rôle au niveau de l'application.</span>
                   </span>
                   <span class="spl-go" aria-hidden="true"><svg viewBox="0 0 24 24"><path d="m9 18 6-6-6-6"/></svg></span>
-                </h:commandLink>
-                <h:commandLink styleClass="spl-row" action="#{v2InstanceAdminBean.openSection('thes')}">
-                  <f:ajax execute="@this" render="iaRoot"/>
+                </a>
+                <a class="spl-row" href="#{v2InstanceAdminBean.sectionUrl('thes')}">
                   <span class="spl-ico" aria-hidden="true">
                     <svg viewBox="0 0 24 24"><path d="m16 6 4 14"/><path d="M12 6v14"/><path d="M8 8v12"/><path d="M4 4v16"/></svg>
                   </span>
@@ -111,9 +113,8 @@
                     <span class="spl-d">Thésaurus de l'instance, leurs membres et leurs rôles.</span>
                   </span>
                   <span class="spl-go" aria-hidden="true"><svg viewBox="0 0 24 24"><path d="m9 18 6-6-6-6"/></svg></span>
-                </h:commandLink>
-                <h:commandLink styleClass="spl-row" action="#{v2InstanceAdminBean.openSection('server')}">
-                  <f:ajax execute="@this" render="iaRoot"/>
+                </a>
+                <a class="spl-row" href="#{v2InstanceAdminBean.sectionUrl('server')}">
                   <span class="spl-ico" aria-hidden="true">
                     <svg viewBox="0 0 24 24"><path d="M4 21v-7M4 10V3M12 21v-9M12 8V3M20 21v-5M20 12V3M1 14h6M9 8h6M17 16h6"/></svg>
                   </span>
@@ -122,9 +123,8 @@
                     <span class="spl-d">ARK / handle, API, sauvegardes, courriel sortant.</span>
                   </span>
                   <span class="spl-go" aria-hidden="true"><svg viewBox="0 0 24 24"><path d="m9 18 6-6-6-6"/></svg></span>
-                </h:commandLink>
-                <h:commandLink styleClass="spl-row" action="#{v2InstanceAdminBean.openSection('stats')}">
-                  <f:ajax execute="@this" render="iaRoot"/>
+                </a>
+                <a class="spl-row" href="#{v2InstanceAdminBean.sectionUrl('stats')}">
                   <span class="spl-ico" aria-hidden="true">
                     <svg viewBox="0 0 24 24"><path d="M22 12h-4l-3 8L9 4l-3 8H2"/></svg>
                   </span>
@@ -133,26 +133,102 @@
                     <span class="spl-d">Activité tous thésaurus confondus, comptes actifs.</span>
                   </span>
                   <span class="spl-go" aria-hidden="true"><svg viewBox="0 0 24 24"><path d="m9 18 6-6-6-6"/></svg></span>
-                </h:commandLink>
+                </a>
               </div>
             </ui:fragment>
 
             <ui:fragment rendered="#{v2InstanceAdminBean.usersSection}">
               <div class="ia-pane">
                 <div class="bo-card">
-                  <div class="bo-card-h">
+                  <div class="bo-card-h ia-card-h-users">
                     <span class="bo-card-t">Comptes</span>
-                    <span class="right ia-h-act">
+                    <div class="ia-toolbar">
                       <h:inputText id="iaUserQuery"
                                    value="#{v2InstanceAdminBean.userQuery}"
                                    styleClass="st-input ia-q"
-                                   pt:placeholder="Rechercher un nom, un courriel…"
-                                   pt:aria-label="Rechercher un compte">
+                                   pt:placeholder="#{v2LocaleBean.getMsg('v2.admin.users.search.placeholder')}"
+                                   pt:aria-label="#{v2LocaleBean.getMsg('v2.admin.users.search.placeholder')}">
                         <f:ajax event="keyup" delay="200" execute="@this" render="iaUsersTable"/>
                       </h:inputText>
-                    </span>
+                      <h:commandLink styleClass="bo-btn primary sm"
+                                     action="#{v2InstanceAdminBean.openCreateUser}"
+                                     rendered="#{not v2InstanceAdminBean.createUserOpen}">
+                        <f:ajax execute="@this" render="iaRoot"/>
+                        <svg viewBox="0 0 24 24" aria-hidden="true"><path d="M12 5v14"/><path d="M5 12h14"/></svg>
+                        #{v2LocaleBean.getMsg('v2.admin.users.create')}
+                      </h:commandLink>
+                    </div>
                   </div>
                   <div class="bo-card-b">
+                    <ui:fragment rendered="#{v2InstanceAdminBean.createUserOpen}">
+                      <div class="ia-create">
+                        <div class="ia-create-h">
+                          <div>
+                            <div class="ia-create-t">#{v2LocaleBean.getMsg('v2.admin.users.create.title')}</div>
+                            <div class="ia-create-d">#{v2LocaleBean.getMsg('v2.admin.users.create.sub')}</div>
+                          </div>
+                        </div>
+                        <ui:fragment rendered="#{not empty v2InstanceAdminBean.createUserError}">
+                          <div class="ia-create-err" role="alert">#{v2InstanceAdminBean.createUserError}</div>
+                        </ui:fragment>
+                        <div class="ia-create-grid">
+                          <label class="ia-field">
+                            <span class="ia-field-l">#{v2LocaleBean.getMsg('v2.admin.users.create.username')}</span>
+                            <h:inputText id="iaNewUsername"
+                                         value="#{v2InstanceAdminBean.newUsername}"
+                                         styleClass="st-input"
+                                         pt:autocomplete="username"/>
+                          </label>
+                          <label class="ia-field">
+                            <span class="ia-field-l">#{v2LocaleBean.getMsg('v2.admin.users.create.email')}</span>
+                            <h:inputText id="iaNewEmail"
+                                         value="#{v2InstanceAdminBean.newEmail}"
+                                         styleClass="st-input"
+                                         pt:type="email"
+                                         pt:autocomplete="email"/>
+                          </label>
+                          <label class="ia-field">
+                            <span class="ia-field-l">#{v2LocaleBean.getMsg('v2.admin.users.create.password')}</span>
+                            <h:inputSecret id="iaNewPassword"
+                                           value="#{v2InstanceAdminBean.newPassword}"
+                                           styleClass="st-input"
+                                           redisplay="true"
+                                           pt:autocomplete="new-password"/>
+                          </label>
+                          <label class="ia-field">
+                            <span class="ia-field-l">#{v2LocaleBean.getMsg('v2.admin.users.create.passwordConfirm')}</span>
+                            <h:inputSecret id="iaNewPasswordConfirm"
+                                           value="#{v2InstanceAdminBean.newPasswordConfirmation}"
+                                           styleClass="st-input"
+                                           redisplay="true"
+                                           pt:autocomplete="new-password"/>
+                          </label>
+                        </div>
+                        <p class="ia-create-hint">#{v2LocaleBean.getMsg('v2.admin.users.create.passwordHint')}</p>
+                        <div class="ia-create-opts">
+                          <label class="ia-check">
+                            <h:selectBooleanCheckbox id="iaNewAlertMail" value="#{v2InstanceAdminBean.newAlertMail}"/>
+                            <span>#{v2LocaleBean.getMsg('v2.admin.users.create.alertMail')}</span>
+                          </label>
+                          <label class="ia-check">
+                            <h:selectBooleanCheckbox id="iaNewSuperAdmin" value="#{v2InstanceAdminBean.newSuperAdmin}"/>
+                            <span>#{v2LocaleBean.getMsg('v2.admin.users.create.superAdmin')}</span>
+                          </label>
+                        </div>
+                        <div class="ia-create-actions">
+                          <h:commandLink styleClass="bo-btn ghost"
+                                         action="#{v2InstanceAdminBean.closeCreateUser}">
+                            <f:ajax execute="@this" render="iaRoot"/>
+                            #{v2LocaleBean.getMsg('v2.admin.users.create.cancel')}
+                          </h:commandLink>
+                          <h:commandLink styleClass="bo-btn primary"
+                                         action="#{v2InstanceAdminBean.createUser}">
+                            <f:ajax execute="@form" render="iaRoot"/>
+                            #{v2LocaleBean.getMsg('v2.admin.users.create.submit')}
+                          </h:commandLink>
+                        </div>
+                      </div>
+                    </ui:fragment>
                     <h:panelGroup id="iaUsersTable" layout="block" styleClass="ia-scroll">
                       <ui:fragment rendered="#{not empty v2InstanceAdminBean.filteredAccounts}">
                         <table class="st-table ia-tab ia-tab-u">
@@ -217,11 +293,10 @@
                                   <span class="ia-vis#{t.privateThesaurus ? ' is-private' : ''}">#{t.privateThesaurus ? 'Privé' : 'Public'}</span>
                                 </td>
                                 <td class="st-td-act" data-label="">
-                                  <h:commandLink styleClass="bo-btn ghost sm"
-                                                 action="#{v2InstanceAdminBean.openThesaurusMembers(t.id)}">
-                                    <f:ajax execute="@this" render="iaRoot"/>
+                                  <a class="bo-btn ghost sm"
+                                     href="#{v2InstanceAdminBean.thesaurusMembersUrl(t.id)}">
                                     Gérer les membres
-                                  </h:commandLink>
+                                  </a>
                                 </td>
                               </tr>
                             </ui:repeat>

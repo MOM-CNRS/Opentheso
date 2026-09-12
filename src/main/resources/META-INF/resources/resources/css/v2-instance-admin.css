@@ -15,9 +15,11 @@ body[data-page="admin-instance"] .main{overflow:auto;min-width:0;flex:1;backgrou
   radial-gradient(900px 380px at 100% 0%, rgba(31,122,92,.04), transparent 50%),
   var(--bg)}
 body[data-page="admin-instance"] #previewView{height:100%;overflow:auto}
-body[data-page="admin-instance"] .view-lang-refresh{display:contents}
+body[data-page="admin-instance"] .view-lang-refresh{display:block;width:100%;min-height:100%}
 
-.ia-form-root{display:contents}
+/* display:contents sur <form> casse les clics après un re-rendu AJAX (éléments
+   dynamiques plus associés au formulaire). Garder un vrai bloc. */
+.ia-form-root{display:block;width:100%;min-height:100%;margin:0;padding:0;border:0}
 a.spl-row,a.bc-lk,a.bo-back,a.bo-btn{color:inherit;text-decoration:none}
 .muted{color:var(--ink-3);font-size:13px;padding:12px 4px}
 .st-td-act{text-align:right;white-space:nowrap}
@@ -41,18 +43,19 @@ body[data-page="admin-instance"] .bo-back,
   width:40px;height:40px;border-radius:11px;
   border:1px solid var(--line);background:var(--surface);color:var(--ink-2);
   box-shadow:var(--shadow-sm);
+  pointer-events:auto !important;z-index:2;cursor:pointer;
   transition:border-color .18s ease, color .18s ease, background .18s ease, transform .18s ease, box-shadow .18s ease
 }
 .bo-solo>.bo-back svg{
   width:18px;height:18px;stroke:currentColor;fill:none;stroke-width:2.1;
-  stroke-linecap:round;stroke-linejoin:round
+  stroke-linecap:round;stroke-linejoin:round;pointer-events:none
 }
 .bo-solo>.bo-back:hover{
   border-color:var(--accent-line);color:var(--accent);background:var(--accent-soft);
   box-shadow:var(--shadow-md);transform:translateX(-2px)
 }
 .bo-solo>.bo-back:active{transform:translateX(-2px) scale(.97)}
-.bo-solo>.bo-head{grid-row:2;padding:0;margin:0 0 22px;align-items:flex-end;gap:12px}
+.bo-solo>.bo-head{grid-row:2;padding:0;margin:0 0 22px;display:flex;align-items:flex-end;justify-content:space-between;gap:12px}
 .bo-solo>.bo-full{grid-row:3;grid-column:2}
 
 body[data-page="admin-instance"] .bo-title{
@@ -230,18 +233,110 @@ body[data-page="admin-instance"] .bo-card-t{
 body[data-page="admin-instance"] .bo-card-h .right{margin-left:auto}
 body[data-page="admin-instance"] .bo-card-b{padding:0}
 
+/* Search + « Nouvel utilisateur » on one row (override .st-input{width:100%}) */
+body[data-page="admin-instance"] .ia-card-h-users{
+  flex-wrap:nowrap !important;
+  align-items:center;
+  gap:12px
+}
+body[data-page="admin-instance"] .ia-card-h-users .bo-card-t{
+  flex:0 0 auto
+}
+body[data-page="admin-instance"] .ia-toolbar{
+  margin-left:auto;
+  display:inline-flex !important;
+  flex-direction:row !important;
+  align-items:center;
+  justify-content:flex-end;
+  gap:10px;
+  flex:0 1 auto;
+  min-width:0;
+  max-width:100%;
+  flex-wrap:nowrap !important
+}
+body[data-page="admin-instance"] .ia-toolbar .ia-q.st-input,
+body[data-page="admin-instance"] .ia-toolbar input.ia-q{
+  width:220px !important;
+  max-width:min(220px, 42vw) !important;
+  min-width:0 !important;
+  flex:0 1 220px !important;
+  height:36px;
+  box-sizing:border-box;
+  border-radius:10px !important;
+  border:1px solid var(--line) !important;
+  background:var(--surface) !important;
+  padding:8px 12px !important;
+  font-size:13.5px !important;
+  transition:border-color .15s ease, box-shadow .15s ease
+}
+body[data-page="admin-instance"] .ia-toolbar .ia-q:focus,
+body[data-page="admin-instance"] .ia-toolbar .ia-q:focus-visible{
+  border-color:var(--accent) !important;
+  box-shadow:0 0 0 3px var(--accent-soft) !important;
+  outline:none
+}
+body[data-page="admin-instance"] .ia-toolbar > .bo-btn,
+body[data-page="admin-instance"] .ia-toolbar a.bo-btn{
+  display:inline-flex !important;
+  flex:0 0 auto !important;
+  align-items:center;
+  align-self:center;
+  height:36px;
+  gap:6px;
+  white-space:nowrap;
+  box-sizing:border-box
+}
+body[data-page="admin-instance"] .ia-toolbar .bo-btn svg{width:15px;height:15px}
+
 .ia-h-act{display:inline-flex;align-items:center;gap:10px;flex-wrap:wrap}
 .ia-h-act .ia-q,
 .ia-q{
-  width:min(240px, 100%);min-width:0;
+  width:min(280px, 100%);min-width:0;
   border-radius:10px !important;border:1px solid var(--line) !important;
   background:var(--surface) !important;padding:8px 12px !important;
-  font-size:13.5px !important;transition:border-color .15s ease, box-shadow .15s ease
+  font-size:13.5px !important;
+  transition:border-color .15s ease, box-shadow .15s ease
 }
 .ia-q:focus,
 .ia-q:focus-visible{
   border-color:var(--accent) !important;
   box-shadow:0 0 0 3px var(--accent-soft) !important;outline:none
+}
+
+.ia-create{
+  padding:18px 16px 16px;border-bottom:1px solid var(--line-2);
+  background:linear-gradient(180deg,rgba(31,122,92,.04),transparent 70%)
+}
+.ia-create-h{margin-bottom:14px}
+.ia-create-t{font-size:15px;font-weight:700;color:var(--ink);letter-spacing:-.01em}
+.ia-create-d{margin-top:4px;font-size:13px;color:var(--ink-3);line-height:1.45;max-width:40rem}
+.ia-create-err{
+  margin:0 0 12px;padding:10px 12px;border-radius:10px;
+  background:rgba(181,52,31,.08);border:1px solid rgba(181,52,31,.22);
+  color:#9a2f1c;font-size:13.5px;font-weight:600;line-height:1.4
+}
+.ia-create-grid{
+  display:grid;grid-template-columns:repeat(2,minmax(0,1fr));gap:12px 14px
+}
+.ia-field{display:flex;flex-direction:column;gap:6px;min-width:0}
+.ia-field-l{font-size:12px;font-weight:650;color:var(--ink-2)}
+.ia-create .st-input{
+  width:100%;border-radius:10px;border:1px solid var(--line);
+  background:var(--surface);padding:9px 12px;font-size:13.5px
+}
+.ia-create .st-input:focus,
+.ia-create .st-input:focus-visible{
+  border-color:var(--accent);box-shadow:0 0 0 3px var(--accent-soft);outline:none
+}
+.ia-create-hint{margin:10px 0 0;font-size:12.5px;color:var(--ink-3);line-height:1.4}
+.ia-create-opts{display:flex;flex-wrap:wrap;gap:12px 18px;margin-top:14px}
+.ia-check{
+  display:inline-flex;align-items:center;gap:8px;
+  font-size:13.5px;color:var(--ink-2);cursor:pointer;user-select:none
+}
+.ia-check input{width:16px;height:16px;accent-color:var(--accent)}
+.ia-create-actions{
+  display:flex;justify-content:flex-end;flex-wrap:wrap;gap:8px;margin-top:16px
 }
 
 .ia-scroll{overflow-x:auto;-webkit-overflow-scrolling:touch}
@@ -327,8 +422,7 @@ body[data-page="admin-instance"] .bo-btn.ghost.sm:active{transform:scale(.98)}
 #tpRoot.ia--leaving,
 #previewView.ia--leaving,
 .main.ia--leaving{
-  animation:iaLeave .22s ease forwards;
-  pointer-events:none
+  animation:iaLeave .22s ease forwards
 }
 #iaRoot.ia--enter{
   animation:iaPageIn .34s cubic-bezier(.22,1,.36,1) both
@@ -368,9 +462,30 @@ body[data-page="admin-instance"] .bo-back.is-leaving,
   .bo-solo>.bo-head{grid-row:3;margin-bottom:16px}
   .bo-solo>.bo-full{grid-row:4}
   .bo-solo>.bo-head{flex-direction:column;align-items:flex-start}
+  body[data-page="admin-instance"] .ia-card-h-users{
+    flex-wrap:wrap !important
+  }
+  body[data-page="admin-instance"] .ia-toolbar{
+    width:100%;
+    margin-left:0;
+    flex:1 1 100%;
+    justify-content:flex-start
+  }
+  body[data-page="admin-instance"] .ia-toolbar .ia-q.st-input,
+  body[data-page="admin-instance"] .ia-toolbar input.ia-q{
+    flex:1 1 auto !important;
+    width:auto !important;
+    max-width:none !important
+  }
+  body[data-page="admin-instance"] .ia-toolbar > .bo-btn,
+  body[data-page="admin-instance"] .ia-toolbar a.bo-btn{
+    flex:0 0 auto !important
+  }
   .ia-h-act{width:100%}
-  .ia-h-act .ia-q,.ia-q{width:100%}
-  body[data-page="admin-instance"] .bo-card-h{align-items:stretch}
+  .ia-create-grid{grid-template-columns:1fr}
+  .ia-create-actions{justify-content:stretch}
+  .ia-create-actions .bo-btn{flex:1;justify-content:center}
+  body[data-page="admin-instance"] .bo-card-h{align-items:center}
   body[data-page="admin-instance"] .bo-card-h .right{margin-left:0;width:100%}
 
   /* Tables → cards on small screens */

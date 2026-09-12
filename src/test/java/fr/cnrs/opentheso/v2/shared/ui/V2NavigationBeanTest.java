@@ -1,6 +1,7 @@
 package fr.cnrs.opentheso.v2.shared.ui;
 
 import fr.cnrs.opentheso.config.SessionConfig;
+import fr.cnrs.opentheso.v2.concept.ui.ConsultationShellBean;
 import fr.cnrs.opentheso.v2.setting.ui.ThesaurusContext;
 import fr.cnrs.opentheso.v2.shared.session.SessionLifecycleService;
 import fr.cnrs.opentheso.v2.shared.web.ApplicationUriService;
@@ -15,6 +16,8 @@ import org.mockito.junit.jupiter.MockitoExtension;
 
 import static org.junit.jupiter.api.Assertions.assertEquals;
 import static org.mockito.Mockito.mockStatic;
+import static org.mockito.Mockito.never;
+import static org.mockito.Mockito.verify;
 import static org.mockito.Mockito.when;
 
 @ExtendWith(MockitoExtension.class)
@@ -29,6 +32,10 @@ class V2NavigationBeanTest {
     @Mock
     private ApplicationUriService applicationUriService;
     @Mock
+    private UserSession userSession;
+    @Mock
+    private ConsultationShellBean consultationShellBean;
+    @Mock
     private FacesContext facesContext;
     @Mock
     private ExternalContext externalContext;
@@ -37,7 +44,14 @@ class V2NavigationBeanTest {
 
     @BeforeEach
     void setUp() {
-        navigationBean = new V2NavigationBean(thesaurusContext, sessionConfig, sessionLifecycleService, applicationUriService);
+        navigationBean = new V2NavigationBean(
+                thesaurusContext,
+                sessionConfig,
+                sessionLifecycleService,
+                applicationUriService,
+                userSession,
+                consultationShellBean
+        );
     }
 
     @Test
@@ -76,5 +90,35 @@ class V2NavigationBeanTest {
 
         assertEquals("http://localhost/graphql", navigationBean.getGraphQlUrl());
         assertEquals("http://localhost/graphiql.html", navigationBean.getGraphiqlUrl());
+    }
+
+    @Test
+    void redirectToInstanceAdmin_allowsSuperAdmin() throws Exception {
+        when(userSession.canAccessSuperAdminScreen()).thenReturn(true);
+        when(facesContext.getExternalContext()).thenReturn(externalContext);
+        when(externalContext.getRequestContextPath()).thenReturn("/ot");
+
+        try (MockedStatic<FacesContext> faces = mockStatic(FacesContext.class)) {
+            faces.when(FacesContext::getCurrentInstance).thenReturn(facesContext);
+            navigationBean.redirectToInstanceAdmin();
+        }
+
+        verify(externalContext).redirect("/ot/v2/admin/instance");
+        assertEquals("instanceAdminV2", navigationBean.getActivePageName());
+    }
+
+    @Test
+    void redirectToInstanceAdmin_deniesNonSuperAdmin() throws Exception {
+        when(userSession.canAccessSuperAdminScreen()).thenReturn(false);
+        when(facesContext.getExternalContext()).thenReturn(externalContext);
+        when(externalContext.getRequestContextPath()).thenReturn("/ot");
+
+        try (MockedStatic<FacesContext> faces = mockStatic(FacesContext.class)) {
+            faces.when(FacesContext::getCurrentInstance).thenReturn(facesContext);
+            navigationBean.redirectToInstanceAdmin();
+        }
+
+        verify(externalContext).redirect("/ot/v2/thesauri");
+        verify(externalContext, never()).redirect("/ot/v2/admin/instance");
     }
 }
