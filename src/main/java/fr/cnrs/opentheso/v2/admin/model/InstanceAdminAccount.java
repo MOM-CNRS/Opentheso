@@ -10,7 +10,10 @@ public record InstanceAdminAccount(
         String organization,
         LocalDateTime lastLogin,
         String appRoleKey,
-        String appRoleLabel
+        String appRoleLabel,
+        boolean active,
+        int projectCount,
+        String projectsSummary
 ) implements Serializable {
 
     public int getUserId() {
@@ -39,5 +42,17 @@ public record InstanceAdminAccount(
 
     public String getAppRoleLabel() {
         return appRoleLabel;
+    }
+
+    public boolean isActive() {
+        return active;
+    }
+
+    public int getProjectCount() {
+        return projectCount;
+    }
+
+    public String getProjectsSummary() {
+        return projectsSummary;
     }
 }

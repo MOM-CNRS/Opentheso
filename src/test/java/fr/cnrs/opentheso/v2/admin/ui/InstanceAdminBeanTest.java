@@ -6,9 +6,12 @@ import fr.cnrs.opentheso.v2.admin.model.InstanceAdminAccount;
 import fr.cnrs.opentheso.v2.admin.service.AdminCatalogService;
 import fr.cnrs.opentheso.v2.admin.service.AdminUserService;
 import fr.cnrs.opentheso.v2.project.policy.ProjectAccessPolicy;
+import fr.cnrs.opentheso.v2.shared.repository.UserCommandRepository;
 import fr.cnrs.opentheso.v2.shared.ui.UserSession;
 import fr.cnrs.opentheso.v2.shared.ui.V2LocaleBean;
 import fr.cnrs.opentheso.v2.user.exception.InvalidProfileDataException;
+import fr.cnrs.opentheso.v2.user.model.UserProfile;
+import fr.cnrs.opentheso.v2.user.service.UserProfileService;
 import org.junit.jupiter.api.BeforeEach;
 import org.junit.jupiter.api.Test;
 import org.junit.jupiter.api.extension.ExtendWith;
@@ -42,12 +45,23 @@ class InstanceAdminBeanTest {
     private AdminCatalogService adminCatalogService;
     @Mock
     private AdminUserService adminUserService;
+    @Mock
+    private UserProfileService userProfileService;
+    @Mock
+    private UserCommandRepository userCommandRepository;
 
     private InstanceAdminBean bean;
 
     @BeforeEach
     void setUp() {
-        bean = new InstanceAdminBean(userSession, v2LocaleBean, adminCatalogService, adminUserService);
+        bean = new InstanceAdminBean(
+                userSession,
+                v2LocaleBean,
+                adminCatalogService,
+                adminUserService,
+                userProfileService,
+                userCommandRepository
+        );
     }
 
     @Test
@@ -55,9 +69,7 @@ class InstanceAdminBeanTest {
         when(userSession.canAccessSuperAdminScreen()).thenReturn(true);
         when(userSession.isSuperAdmin()).thenReturn(true);
         when(v2LocaleBean.getIdLangue()).thenReturn("fr");
-        when(adminCatalogService.listInstanceAccounts(true)).thenReturn(List.of(
-                new InstanceAdminAccount(1, "admin", "a@x.fr", "CNRS", LocalDateTime.now(), "super_admin", "Super admin")
-        ));
+        when(adminCatalogService.listInstanceAccounts(true)).thenReturn(List.of(account(1, "admin", true)));
         when(adminCatalogService.listAllThesauri(true, "fr")).thenReturn(List.of(
                 new AdminThesaurus("th1", "PACTOLS", 1, "Frantiq", false, null)
         ));
@@ -98,6 +110,9 @@ class InstanceAdminBeanTest {
     @Test
     void openCreateUser_preparesEmptyForm() {
         when(userSession.canAccessSuperAdminScreen()).thenReturn(true);
+        when(userSession.isSuperAdmin()).thenReturn(true);
+        when(adminCatalogService.listAllProjects(true)).thenReturn(Collections.emptyList());
+        when(adminCatalogService.listProjectAssignableRoles(true)).thenReturn(Collections.emptyList());
 
         bean.openCreateUser();
 
@@ -105,6 +120,11 @@ class InstanceAdminBeanTest {
         assertNull(bean.getNewUsername());
         assertNull(bean.getCreateUserError());
         assertFalse(bean.isNewSuperAdmin());
+        assertFalse(bean.isNewApiKeyAuthorized());
+        assertTrue(bean.isNewActive());
+        assertEquals(AdminUserService.CREATION_MODE_DIRECT, bean.getNewCreationMode());
+        assertEquals(0, bean.getNewProjectMemberships().size());
+        assertEquals(ProjectAccessPolicy.ROLE_CONTRIBUTOR, bean.getDraftRoleId());
     }
 
     @Test
@@ -112,17 +132,22 @@ class InstanceAdminBeanTest {
         when(userSession.canAccessSuperAdminScreen()).thenReturn(true);
         when(userSession.isSuperAdmin()).thenReturn(true);
         when(v2LocaleBean.getIdLangue()).thenReturn("fr");
-        when(v2LocaleBean.getMsg("profile.userCreatedSuccess")).thenReturn("ok");
+        when(v2LocaleBean.getMsg("v2.admin.users.create.success")).thenReturn("created");
         when(adminUserService.createUser(any())).thenReturn(new CreatedAdminUser(9, "alice", "a@t.fr"));
         when(adminCatalogService.listInstanceAccounts(true)).thenReturn(List.of());
         when(adminCatalogService.listAllThesauri(true, "fr")).thenReturn(List.of());
+        when(adminCatalogService.listAllProjects(true)).thenReturn(List.of());
+        when(adminCatalogService.listProjectAssignableRoles(true)).thenReturn(List.of());
 
         bean.setSection(InstanceAdminBean.SECTION_USERS);
         bean.openCreateUser();
         bean.setNewUsername("alice");
         bean.setNewEmail("a@t.fr");
+        bean.setNewInstitution("CNRS");
         bean.setNewPassword("Secret1!");
         bean.setNewPasswordConfirmation("Secret1!");
+        bean.getNewProjectMemberships().add(
+                new fr.cnrs.opentheso.v2.admin.model.NewUserProjectMembership(5, ProjectAccessPolicy.ROLE_ADMIN));
 
         bean.createUser();
 
@@ -130,9 +155,13 @@ class InstanceAdminBeanTest {
                 ArgumentCaptor.forClass(AdminUserService.CreateUserRequest.class);
         verify(adminUserService).createUser(captor.capture());
         assertEquals("alice", captor.getValue().username());
-        assertEquals("a@t.fr", captor.getValue().email());
+        assertEquals("CNRS", captor.getValue().institution());
+        assertTrue(captor.getValue().active());
         assertNull(captor.getValue().roleId());
+        assertEquals(1, captor.getValue().projectRoles().size());
         assertFalse(bean.isCreateUserOpen());
+        assertEquals("created", bean.getFlashMessage());
+        assertFalse(bean.isFlashError());
         verify(adminCatalogService).listInstanceAccounts(true);
     }
 
@@ -141,10 +170,12 @@ class InstanceAdminBeanTest {
         when(userSession.canAccessSuperAdminScreen()).thenReturn(true);
         when(userSession.isSuperAdmin()).thenReturn(true);
         when(v2LocaleBean.getIdLangue()).thenReturn("fr");
-        when(v2LocaleBean.getMsg("profile.userCreatedSuccess")).thenReturn("ok");
+        when(v2LocaleBean.getMsg("v2.admin.users.create.success")).thenReturn("created");
         when(adminUserService.createUser(any())).thenReturn(new CreatedAdminUser(9, "bob", "b@t.fr"));
         when(adminCatalogService.listInstanceAccounts(true)).thenReturn(Collections.emptyList());
         when(adminCatalogService.listAllThesauri(true, "fr")).thenReturn(Collections.emptyList());
+        when(adminCatalogService.listAllProjects(true)).thenReturn(List.of());
+        when(adminCatalogService.listProjectAssignableRoles(true)).thenReturn(List.of());
 
         bean.openCreateUser();
         bean.setNewUsername("bob");
@@ -152,6 +183,7 @@ class InstanceAdminBeanTest {
         bean.setNewPassword("Secret1!");
         bean.setNewPasswordConfirmation("Secret1!");
         bean.setNewSuperAdmin(true);
+        bean.setNewApiKeyAuthorized(true);
 
         bean.createUser();
 
@@ -159,12 +191,16 @@ class InstanceAdminBeanTest {
                 ArgumentCaptor.forClass(AdminUserService.CreateUserRequest.class);
         verify(adminUserService).createUser(captor.capture());
         assertEquals(ProjectAccessPolicy.ROLE_SUPER_ADMIN, captor.getValue().roleId());
+        assertTrue(captor.getValue().apiKeyAuthorized());
+        assertTrue(captor.getValue().projectRoles().isEmpty());
     }
 
     @Test
     void createUser_keepsFormOpenOnValidationError() {
         when(userSession.canAccessSuperAdminScreen()).thenReturn(true);
         when(userSession.isSuperAdmin()).thenReturn(true);
+        when(adminCatalogService.listAllProjects(true)).thenReturn(List.of());
+        when(adminCatalogService.listProjectAssignableRoles(true)).thenReturn(List.of());
         when(adminUserService.createUser(any())).thenThrow(new InvalidProfileDataException("Déjà utilisé"));
 
         bean.openCreateUser();
@@ -172,6 +208,7 @@ class InstanceAdminBeanTest {
         bean.setNewEmail("a@t.fr");
         bean.setNewPassword("Secret1!");
         bean.setNewPasswordConfirmation("Secret1!");
+        bean.setNewSuperAdmin(true);
 
         bean.createUser();
 
@@ -183,6 +220,9 @@ class InstanceAdminBeanTest {
     @Test
     void goBack_fromCreateUser_closesForm() {
         when(userSession.canAccessSuperAdminScreen()).thenReturn(true);
+        when(userSession.isSuperAdmin()).thenReturn(true);
+        when(adminCatalogService.listAllProjects(true)).thenReturn(List.of());
+        when(adminCatalogService.listProjectAssignableRoles(true)).thenReturn(List.of());
         bean.setSection(InstanceAdminBean.SECTION_USERS);
         bean.openCreateUser();
 
@@ -209,19 +249,7 @@ class InstanceAdminBeanTest {
         bean.goBack();
 
         assertTrue(bean.isThesauriSection());
-    }
-
-    @Test
-    void applySectionFromRequest_opensUsers() {
-        when(userSession.canAccessSuperAdminScreen()).thenReturn(true);
-        when(userSession.isSuperAdmin()).thenReturn(true);
-        when(v2LocaleBean.getIdLangue()).thenReturn("fr");
-        when(adminCatalogService.listInstanceAccounts(true)).thenReturn(Collections.emptyList());
-        when(adminCatalogService.listAllThesauri(true, "fr")).thenReturn(Collections.emptyList());
-
-        bean.applySectionFromRequest(InstanceAdminBean.SECTION_USERS, null);
-
-        assertTrue(bean.isUsersSection());
+        assertNull(bean.getOpenThesaurusId());
     }
 
     @Test
@@ -246,5 +274,233 @@ class InstanceAdminBeanTest {
         assertEquals("/v2/admin/instance?section=users", bean.sectionUrl(InstanceAdminBean.SECTION_USERS));
         assertEquals("/v2/admin/instance", bean.getHomeUrl());
         assertEquals("/v2/admin/instance?section=thes&th=th1", bean.thesaurusMembersUrl("th1"));
+    }
+
+    @Test
+    void openEditUser_loadsProfileAndMemberships() {
+        when(userSession.canAccessSuperAdminScreen()).thenReturn(true);
+        when(userSession.isSuperAdmin()).thenReturn(true);
+        when(userProfileService.getProfile(7)).thenReturn(
+                new UserProfile(7, "alice", "a@t.fr", true, false, true, null, false));
+        when(userCommandRepository.findInstitution(7)).thenReturn("CNRS");
+        when(userCommandRepository.isActive(7)).thenReturn(true);
+        when(adminUserService.listProjectRoles(true, 7)).thenReturn(List.of(
+                new AdminUserService.ProjectRoleAssignment(5, ProjectAccessPolicy.ROLE_MANAGER)
+        ));
+        when(adminCatalogService.listAllProjects(true)).thenReturn(List.of());
+        when(adminCatalogService.listProjectAssignableRoles(true)).thenReturn(List.of());
+
+        bean.openEditUser(7);
+
+        assertTrue(bean.isEditUserOpen());
+        assertEquals(7, bean.getEditUserId());
+        assertEquals("alice", bean.getEditUsername());
+        assertEquals("CNRS", bean.getEditInstitution());
+        assertTrue(bean.isEditApiKeyAuthorized());
+        assertEquals(1, bean.getEditProjectMemberships().size());
+        assertEquals(5, bean.getEditProjectMemberships().get(0).getProjectId());
+        assertFalse(bean.isCreateUserOpen());
+    }
+
+    @Test
+    void closeDeleteConfirm_fromEdit_keepsEditFormOpen() {
+        when(userSession.canAccessSuperAdminScreen()).thenReturn(true);
+        when(userSession.isSuperAdmin()).thenReturn(true);
+        when(userSession.getCurrentUserId()).thenReturn(1);
+        when(userProfileService.getProfile(7)).thenReturn(
+                new UserProfile(7, "alice", "a@t.fr", true, false, true, null, false));
+        when(userCommandRepository.findInstitution(7)).thenReturn("CNRS");
+        when(userCommandRepository.isActive(7)).thenReturn(true);
+        when(adminUserService.listProjectRoles(true, 7)).thenReturn(List.of());
+        when(adminCatalogService.listAllProjects(true)).thenReturn(List.of());
+        when(adminCatalogService.listProjectAssignableRoles(true)).thenReturn(List.of());
+
+        bean.openEditUser(7);
+        bean.openDeleteConfirmFromEdit();
+
+        assertTrue(bean.isDeleteConfirmOpen());
+        assertTrue(bean.isEditUserOpen());
+        assertEquals(7, bean.getDeleteUserId());
+        assertEquals("alice", bean.getDeleteUsername());
+
+        bean.closeDeleteConfirm();
+
+        assertFalse(bean.isDeleteConfirmOpen());
+        assertTrue(bean.isEditUserOpen());
+        assertEquals(7, bean.getEditUserId());
+        assertEquals("alice", bean.getEditUsername());
+    }
+
+    @Test
+    void updateUser_savesAtomicRequest() {
+        when(userSession.canAccessSuperAdminScreen()).thenReturn(true);
+        when(userSession.isSuperAdmin()).thenReturn(true);
+        when(userSession.getCurrentUserId()).thenReturn(1);
+        when(v2LocaleBean.getIdLangue()).thenReturn("fr");
+        when(v2LocaleBean.getMsg("v2.admin.users.edit.success")).thenReturn("updated");
+        when(userProfileService.getProfile(7)).thenReturn(
+                new UserProfile(7, "alice", "a@t.fr", false, false, true, null, false));
+        when(userCommandRepository.findInstitution(7)).thenReturn("CNRS");
+        when(userCommandRepository.isActive(7)).thenReturn(true);
+        when(adminUserService.listProjectRoles(true, 7)).thenReturn(List.of());
+        when(adminCatalogService.listAllProjects(true)).thenReturn(List.of());
+        when(adminCatalogService.listProjectAssignableRoles(true)).thenReturn(List.of());
+        when(adminCatalogService.listInstanceAccounts(true)).thenReturn(Collections.emptyList());
+        when(adminCatalogService.listAllThesauri(true, "fr")).thenReturn(Collections.emptyList());
+
+        bean.openEditUser(7);
+        bean.setEditUsername("alice2");
+        bean.setEditEmail("a2@t.fr");
+        bean.setEditInstitution("INRAP");
+        bean.setEditAlertMail(true);
+        bean.setEditSuperAdmin(true);
+        bean.setEditPassword("Secret1!");
+        bean.setEditPasswordConfirmation("Secret1!");
+        bean.setEditApiKeyAuthorized(true);
+
+        bean.updateUser();
+
+        ArgumentCaptor<AdminUserService.UpdateUserRequest> captor =
+                ArgumentCaptor.forClass(AdminUserService.UpdateUserRequest.class);
+        verify(adminUserService).updateUser(captor.capture());
+        assertEquals("alice2", captor.getValue().username());
+        assertEquals("INRAP", captor.getValue().institution());
+        assertTrue(captor.getValue().makeSuperAdmin());
+        assertEquals("Secret1!", captor.getValue().password());
+        assertTrue(captor.getValue().apiKeyAuthorized());
+        assertFalse(bean.isEditUserOpen());
+        assertEquals("updated", bean.getFlashMessage());
+        assertFalse(bean.isFlashError());
+    }
+
+    @Test
+    void updateUser_blocksSelfSuperAdminRemoval() {
+        when(userSession.canAccessSuperAdminScreen()).thenReturn(true);
+        when(userSession.isSuperAdmin()).thenReturn(true);
+        when(userSession.getCurrentUserId()).thenReturn(7);
+        when(v2LocaleBean.getMsg("v2.admin.users.edit.selfSuperAdmin")).thenReturn("forbidden");
+        when(userProfileService.getProfile(7)).thenReturn(
+                new UserProfile(7, "me", "me@t.fr", false, true, true, null, false));
+        when(userCommandRepository.findInstitution(7)).thenReturn(null);
+        when(userCommandRepository.isActive(7)).thenReturn(true);
+        when(adminUserService.listProjectRoles(true, 7)).thenReturn(List.of());
+        when(adminCatalogService.listAllProjects(true)).thenReturn(List.of());
+        when(adminCatalogService.listProjectAssignableRoles(true)).thenReturn(List.of());
+
+        bean.openEditUser(7);
+        bean.setEditSuperAdmin(false);
+
+        bean.updateUser();
+
+        assertTrue(bean.isEditUserOpen());
+        assertEquals("forbidden", bean.getEditUserError());
+        verify(adminUserService, never()).updateUser(any(AdminUserService.UpdateUserRequest.class));
+    }
+
+    @Test
+    void goBack_fromEditUser_closesForm() {
+        when(userSession.canAccessSuperAdminScreen()).thenReturn(true);
+        when(userSession.isSuperAdmin()).thenReturn(true);
+        when(userProfileService.getProfile(7)).thenReturn(
+                new UserProfile(7, "alice", "a@t.fr", false, false, true, null, false));
+        when(userCommandRepository.findInstitution(7)).thenReturn(null);
+        when(userCommandRepository.isActive(7)).thenReturn(true);
+        when(adminUserService.listProjectRoles(true, 7)).thenReturn(List.of());
+        when(adminCatalogService.listAllProjects(true)).thenReturn(List.of());
+        when(adminCatalogService.listProjectAssignableRoles(true)).thenReturn(List.of());
+        bean.setSection(InstanceAdminBean.SECTION_USERS);
+        bean.openEditUser(7);
+
+        bean.goBack();
+
+        assertFalse(bean.isEditUserOpen());
+        assertTrue(bean.isUsersSection());
+    }
+
+    @Test
+    void toggleUsersSort_switchesColumnAndDirection() {
+        bean.toggleUsersSort("email");
+        assertTrue(bean.isUsersSortedBy("email"));
+        assertTrue(bean.isUsersSortAscending());
+
+        bean.toggleUsersSort("email");
+        assertFalse(bean.isUsersSortAscending());
+
+        bean.toggleUsersSort("name");
+        assertTrue(bean.isUsersSortedBy("name"));
+        assertTrue(bean.isUsersSortAscending());
+    }
+
+    @Test
+    void filteredAccounts_applyQueryRoleAndStatusFilters() {
+        bean.setAccounts(List.of(
+                account(1, "alice", true, "super_admin"),
+                account(2, "bob", false, "user"),
+                account(3, "carol", true, "user")
+        ));
+
+        bean.setUserQuery("bob");
+        assertEquals(1, bean.getFilteredAccountCount());
+        assertEquals("bob", bean.getFilteredAccounts().get(0).username());
+
+        bean.setUserQuery("");
+        bean.setUsersRoleFilter("super_admin");
+        assertEquals(1, bean.getFilteredAccountCount());
+        assertEquals("alice", bean.getFilteredAccounts().get(0).username());
+
+        bean.setUsersRoleFilter("");
+        bean.setUsersStatusFilter("inactive");
+        assertEquals(1, bean.getFilteredAccountCount());
+        assertEquals("bob", bean.getFilteredAccounts().get(0).username());
+
+        bean.setUsersStatusFilter("active");
+        assertEquals(2, bean.getFilteredAccountCount());
+    }
+
+    @Test
+    void pagedAccounts_respectPageSizeAndNavigation() {
+        bean.setAccounts(List.of(
+                account(1, "a", true, "user"),
+                account(2, "b", true, "user"),
+                account(3, "c", true, "user"),
+                account(4, "d", true, "user"),
+                account(5, "e", true, "user")
+        ));
+        bean.setUsersPageSize(2);
+        bean.onUsersPageSizeChange();
+
+        assertEquals(3, bean.getUsersPageCount());
+        assertEquals(List.of("a", "b"), bean.getPagedAccounts().stream().map(InstanceAdminAccount::username).toList());
+        assertEquals(1, bean.getUsersPageFrom());
+        assertEquals(2, bean.getUsersPageTo());
+
+        bean.nextUsersPage();
+        assertEquals(1, bean.getUsersPage());
+        assertEquals(List.of("c", "d"), bean.getPagedAccounts().stream().map(InstanceAdminAccount::username).toList());
+
+        bean.setUsersPageSize(10);
+        bean.onUsersPageSizeChange();
+        assertEquals(0, bean.getUsersPage());
+        assertEquals(5, bean.getPagedAccounts().size());
+        assertEquals(1, bean.getUsersPageCount());
+    }
+
+    private static InstanceAdminAccount account(int id, String username, boolean active) {
+        return account(id, username, active, "super_admin");
+    }
+
+    private static InstanceAdminAccount account(int id, String username, boolean active, String roleKey) {
+        return new InstanceAdminAccount(
+                id,
+                username,
+                username + "@x.fr",
+                "CNRS",
+                LocalDateTime.now(),
+                roleKey,
+                roleKey,
+                active,
+                0,
+                ""
+        );
     }
 }

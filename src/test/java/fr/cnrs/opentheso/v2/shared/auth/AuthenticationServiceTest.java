@@ -58,6 +58,7 @@ class AuthenticationServiceTest {
 
         assertEquals(new AuthenticatedUser(7, "alice"), authenticated.orElseThrow());
         verify(userCommandRepository, never()).updatePassword(eq(7), anyString());
+        verify(userCommandRepository).updateLastLogin(7);
     }
 
     @Test
@@ -72,5 +73,6 @@ class AuthenticationServiceTest {
 
         assertEquals(new AuthenticatedUser(8, "bob"), authenticated.orElseThrow());
         verify(userCommandRepository).updatePassword(8, "$2a$10$new");
+        verify(userCommandRepository).updateLastLogin(8);
     }
 }

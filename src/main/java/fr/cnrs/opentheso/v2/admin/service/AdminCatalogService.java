@@ -93,6 +93,18 @@ public class AdminCatalogService {
                 .toList();
     }
 
+    /** Rôles projet uniquement : administrateur (2), manager (3), contributeur (4). */
+    @Transactional(readOnly = true)
+    public List<AssignableRole> listProjectAssignableRoles(boolean superAdmin) {
+        SuperAdminAccessPolicy.requireResolvedSuperAdmin(superAdmin);
+        return projectAdminQueryRepository.findAssignableRolesFrom(ProjectAccessPolicy.ROLE_ADMIN).stream()
+                .map(ProjectMapper::toAssignableRole)
+                .filter(role -> role.id() == ProjectAccessPolicy.ROLE_ADMIN
+                        || role.id() == ProjectAccessPolicy.ROLE_MANAGER
+                        || role.id() == ProjectAccessPolicy.ROLE_CONTRIBUTOR)
+                .toList();
+    }
+
     @Transactional(readOnly = true)
     public List<AdminThesaurus> listAllThesauri(boolean superAdmin, String workLanguage) {
         SuperAdminAccessPolicy.requireResolvedSuperAdmin(superAdmin);

@@ -13,6 +13,27 @@ public class ProjectMembershipRepository {
     @PersistenceContext
     private EntityManager entityManager;
 
+    public record ProjectRoleRow(int projectId, int roleId) {
+    }
+
+    @SuppressWarnings("unchecked")
+    public List<ProjectRoleRow> findProjectRolesForUser(int userId) {
+        List<Object[]> rows = entityManager.createNativeQuery("""
+                        SELECT id_group, id_role
+                        FROM user_role_group
+                        WHERE id_user = :userId
+                        ORDER BY id_group
+                        """)
+                .setParameter(NativeQueryParams.USER_ID, userId)
+                .getResultList();
+        return rows.stream()
+                .map(row -> new ProjectRoleRow(
+                        ((Number) row[0]).intValue(),
+                        ((Number) row[1]).intValue()
+                ))
+                .toList();
+    }
+
     @Transactional
     public void assignProjectRole(int userId, int roleId, int projectId) {
         entityManager.createNativeQuery("""

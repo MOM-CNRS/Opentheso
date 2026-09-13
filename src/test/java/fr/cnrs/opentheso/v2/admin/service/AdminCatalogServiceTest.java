@@ -78,7 +78,7 @@ class AdminCatalogServiceTest {
     void listInstanceAccounts_returnsAccountsForSuperAdmin() {
         when(adminQueryRepository.findInstanceAccounts()).thenReturn(List.of(
                 new fr.cnrs.opentheso.v2.admin.model.InstanceAdminAccount(
-                        1, "alice", "a@x.fr", "CNRS", null, "user", "Utilisateur")
+                        1, "alice", "a@x.fr", "CNRS", null, "user", "user", true, 0, "")
         ));
 
         var accounts = adminCatalogService.listInstanceAccounts(true);

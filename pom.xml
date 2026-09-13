@@ -25,7 +25,7 @@
         <joinfaces.version>6.1.0</joinfaces.version>
         <primefaces.version>15.0.16</primefaces.version>
         <primefaces-extensions.version>15.0.16</primefaces-extensions.version>
-        <lombok.version>1.18.36</lombok.version>
+        <lombok.version>1.18.48</lombok.version>
         <postgresql.version>42.7.11</postgresql.version>
         <liquibase.version>4.29.0</liquibase.version>
         <springdoc.version>3.1.0</springdoc.version>

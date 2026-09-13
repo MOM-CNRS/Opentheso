@@ -5,6 +5,7 @@ import fr.cnrs.opentheso.v2.shared.repository.UserAuthQueryRepository;
 import fr.cnrs.opentheso.v2.shared.repository.UserCommandRepository;
 import fr.cnrs.opentheso.v2.shared.repository.projection.UserCredentialRow;
 import lombok.RequiredArgsConstructor;
+import lombok.extern.slf4j.Slf4j;
 import org.apache.commons.lang3.StringUtils;
 import org.springframework.security.crypto.password.PasswordEncoder;
 import org.springframework.stereotype.Service;
@@ -12,6 +13,7 @@ import org.springframework.transaction.annotation.Transactional;
 
 import java.util.Optional;
 
+@Slf4j
 @Service
 @RequiredArgsConstructor
 public class AuthenticationService {
@@ -47,6 +49,17 @@ public class AuthenticationService {
             }
         }
 
-        return matches ? Optional.of(new AuthenticatedUser(row.userId(), row.username())) : Optional.empty();
+        return matches
+                ? Optional.of(touchLastLogin(new AuthenticatedUser(row.userId(), row.username())))
+                : Optional.empty();
+    }
+
+    private AuthenticatedUser touchLastLogin(AuthenticatedUser user) {
+        try {
+            userCommandRepository.updateLastLogin(user.id());
+        } catch (RuntimeException ex) {
+            log.warn("Connexion ok, mais last_login n'a pas pu être mis à jour pour id={}", user.id(), ex);
+        }
+        return user;
     }
 }

@@ -42,6 +42,22 @@ public class UserCommandRepository {
     }
 
     @SuppressWarnings("unchecked")
+    public boolean isActive(int userId) {
+        String sql = "SELECT COALESCE(active, true) FROM users WHERE id_user = :userId";
+        List<Object> result = entityManager.createNativeQuery(sql)
+                .setParameter(NativeQueryParams.USER_ID, userId)
+                .getResultList();
+        if (result.isEmpty() || result.get(0) == null) {
+            return true;
+        }
+        Object value = result.get(0);
+        if (value instanceof Boolean bool) {
+            return bool;
+        }
+        return Boolean.parseBoolean(String.valueOf(value));
+    }
+
+    @SuppressWarnings("unchecked")
     public List<UserSearchRow> searchByUsernameLike(String username, int limit) {
         String sql = """
                 SELECT id_user, username, mail
@@ -214,6 +230,17 @@ public class UserCommandRepository {
                 .setParameter(NativeQueryParams.USER_ID, userId)
                 .executeUpdate();
         entityManager.createNativeQuery("DELETE FROM users WHERE id_user = :userId")
+                .setParameter(NativeQueryParams.USER_ID, userId)
+                .executeUpdate();
+    }
+
+    @Transactional
+    public void updateLastLogin(int userId) {
+        entityManager.createNativeQuery("""
+                        UPDATE users
+                        SET last_login = CURRENT_TIMESTAMP
+                        WHERE id_user = :userId
+                        """)
                 .setParameter(NativeQueryParams.USER_ID, userId)
                 .executeUpdate();
     }

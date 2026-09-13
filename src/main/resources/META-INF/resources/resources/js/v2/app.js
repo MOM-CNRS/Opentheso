@@ -1622,6 +1622,108 @@ if (SCREEN === "preference" && location.hash) {
     if (document.body && document.body.getAttribute("data-page") === "admin-instance") {
       const adminBtn = document.querySelector('.thesaurus a.thesaurus-btn[title="Administration de l\'instance"]');
       if (adminBtn) adminBtn.classList.add("is-on");
+      iaConsumeFlash();
     }
   });
+
+  function iaConsumeFlash() {
+    const live = document.getElementById("iaFlashLive");
+    if (!live || typeof window.toast !== "function") return;
+    const msg = live.getAttribute("data-ia-flash");
+    const token = live.getAttribute("data-ia-flash-token");
+    const error = live.getAttribute("data-ia-flash-error") === "true";
+    if (!msg || !token) return;
+    if (window._iaFlashToken === token) return;
+    window._iaFlashToken = token;
+    window.toast(msg, error ? { error: true } : undefined);
+  }
+
+  function iaUsersListBusy(on) {
+    const toolbar = document.getElementById("iaUsersToolbar");
+    const table = document.getElementById("iaUsersTable");
+    clearTimeout(window._iaUsersBusyTimer);
+    [toolbar, table].forEach(function (el) {
+      if (!el) return;
+      el.classList.toggle("is-busy", !!on);
+      if (on) el.setAttribute("aria-busy", "true");
+      else el.removeAttribute("aria-busy");
+    });
+    if (on) {
+      window._iaUsersBusyTimer = setTimeout(function () {
+        iaUsersListBusy(false);
+        window._iaUsersFilterBusy = false;
+      }, 8000);
+    }
+  }
+
+  window.iaClickProxy = function (id) {
+    const go = document.getElementById(id);
+    if (!go) return false;
+    // Déclencher le handler Mojarra du bouton (onclick généré) : un
+    // faces.ajax.request manuel sans event 'action' n'invoque pas l'action.
+    if (typeof go.click === "function") {
+      go.click();
+    }
+    return false;
+  };
+
+  window.iaQueueUserAction = function (el) {
+    if (!el || window._iaUsersFilterBusy) return false;
+    const action = el.getAttribute("data-ia-action");
+    const userId = el.getAttribute("data-ia-user-id");
+    const username = el.getAttribute("data-ia-username") || "";
+    const actionInput = document.getElementById("iaPendingUserAction");
+    const idInput = document.getElementById("iaPendingActionUserId");
+    const nameInput = document.getElementById("iaPendingActionUsername");
+    const go = document.getElementById("iaUserActionGo");
+    if (!action || !userId || !actionInput || !idInput || !go) return false;
+    actionInput.value = action;
+    idInput.value = String(userId);
+    if (nameInput) nameInput.value = username;
+    go.click();
+    return false;
+  };
+
+  window.iaUsersListAjaxGate = function (data) {
+    if (!data) return;
+    const src = data.source;
+    const srcId = (src && (src.id || (src.getAttribute && src.getAttribute("id")))) || "";
+    if (data.status === "begin") {
+      window._iaUsersFilterBusy = true;
+      iaUsersListBusy(true);
+      if (srcId.indexOf("iaUserQuery") >= 0) {
+        const input = document.getElementById("iaUserQuery");
+        if (input && typeof input.selectionStart === "number") {
+          window._iaUsersQueryCaret = input.selectionStart;
+        }
+      }
+      return;
+    }
+    if (data.status === "complete" || data.status === "error") {
+      window._iaUsersFilterBusy = false;
+      iaUsersListBusy(false);
+      if (srcId.indexOf("iaUserQuery") >= 0) {
+        const input = document.getElementById("iaUserQuery");
+        if (input) {
+          input.focus();
+          const caret = window._iaUsersQueryCaret;
+          if (typeof caret === "number" && input.setSelectionRange) {
+            try { input.setSelectionRange(caret, caret); } catch (ex) {}
+          }
+        }
+      }
+    }
+  };
+
+  function iaOnAjaxFlash(data) {
+    if (!data || data.status !== "success") return;
+    if (!document.body || document.body.getAttribute("data-page") !== "admin-instance") return;
+    iaConsumeFlash();
+  }
+
+  if (window.faces && faces.ajax && typeof faces.ajax.addOnEvent === "function") {
+    faces.ajax.addOnEvent(iaOnAjaxFlash);
+  } else if (window.jsf && jsf.ajax && typeof jsf.ajax.addOnEvent === "function") {
+    jsf.ajax.addOnEvent(iaOnAjaxFlash);
+  }
 })();

@@ -5,6 +5,7 @@ import fr.cnrs.opentheso.v2.admin.api.dto.CreatedAdminUserResponse;
 import fr.cnrs.opentheso.v2.admin.api.dto.UpdateAdminApiKeyRequest;
 import fr.cnrs.opentheso.v2.admin.api.dto.UpdateAdminUserRequest;
 import fr.cnrs.opentheso.v2.admin.service.AdminUserService;
+import fr.cnrs.opentheso.v2.shared.api.ApiHeaders;
 import fr.cnrs.opentheso.v2.user.api.dto.ChangePasswordRequest;
 import fr.cnrs.opentheso.v2.user.service.UserProfileService;
 import io.swagger.v3.oas.annotations.Operation;
@@ -22,7 +23,8 @@ import org.springframework.web.bind.annotation.RequestBody;
 import org.springframework.web.bind.annotation.RequestHeader;
 import org.springframework.web.bind.annotation.RequestMapping;
 import org.springframework.web.bind.annotation.RestController;
-import fr.cnrs.opentheso.v2.shared.api.ApiHeaders;
+
+import java.util.List;
 
 @RestController
 @RequestMapping("/openapi/v2/admin/users")
@@ -44,6 +46,9 @@ public class AdminUserController {
     ) {
         int callerId = adminAuthSupport.resolveUserId(xApiKey, legacyApiKey);
         var profile = userProfileService.getProfile(callerId);
+        List<AdminUserService.ProjectRoleAssignment> projectRoles = request.projectRoles().stream()
+                .map(r -> new AdminUserService.ProjectRoleAssignment(r.projectId(), r.roleId()))
+                .toList();
         var created = adminUserService.createUser(new AdminUserService.CreateUserRequest(
                 profile.superAdmin(),
                 request.username(),
@@ -54,13 +59,20 @@ public class AdminUserController {
                 request.limitedOnThesaurus(),
                 request.thesaurusIds(),
                 request.password(),
-                request.passwordConfirmation()
+                request.passwordConfirmation(),
+                projectRoles,
+                request.apiKeyAuthorized(),
+                request.apiKeyNeverExpire(),
+                request.apiKeyExpiresAt(),
+                request.institution(),
+                request.creationMode(),
+                request.active()
         ));
         return new CreatedAdminUserResponse(created.userId(), created.username(), created.email());
     }
 
     @PutMapping(value = "/{userId}", consumes = MediaType.APPLICATION_JSON_VALUE)
-    @Operation(summary = "Modifier un utilisateur", description = "Met à jour le pseudo, l'email et les alertes.")
+    @Operation(summary = "Modifier un utilisateur", description = "Met à jour le profil, les projets et éventuellement la clé API.")
     public ResponseEntity<Void> updateUser(
             @RequestHeader(value = ApiHeaders.X_API_KEY, required = false) String xApiKey,
             @RequestHeader(value = ApiHeaders.API_KEY, required = false) String legacyApiKey,
@@ -69,13 +81,31 @@ public class AdminUserController {
     ) {
         int callerId = adminAuthSupport.resolveUserId(xApiKey, legacyApiKey);
         var profile = userProfileService.getProfile(callerId);
-        adminUserService.updateUser(
+        boolean makeSuperAdmin = request.makeSuperAdmin() != null
+                ? request.makeSuperAdmin()
+                : userProfileService.getProfile(userId).superAdmin();
+        List<AdminUserService.ProjectRoleAssignment> projectRoles = request.projectRoles() == null
+                ? null
+                : request.projectRoles().stream()
+                .map(r -> new AdminUserService.ProjectRoleAssignment(r.projectId(), r.roleId()))
+                .toList();
+        adminUserService.updateUser(new AdminUserService.UpdateUserRequest(
                 profile.superAdmin(),
                 userId,
+                callerId,
                 request.username(),
                 request.email(),
-                request.alertMail()
-        );
+                request.alertMail(),
+                request.institution(),
+                request.active(),
+                makeSuperAdmin,
+                request.password(),
+                request.passwordConfirmation(),
+                projectRoles,
+                request.apiKeyAuthorized(),
+                request.apiKeyNeverExpire(),
+                request.apiKeyExpiresAt()
+        ));
         return ResponseEntity.noContent().build();
     }
 

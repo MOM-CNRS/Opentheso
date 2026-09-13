@@ -91,9 +91,16 @@ public class AdminQueryRepository {
                     COALESCE(u.mail, '') AS mail,
                     COALESCE(u.institution, '') AS organization,
                     u.last_login,
-                    COALESCE(u.issuperadmin, false) AS is_super_admin
+                    COALESCE(u.issuperadmin, false) AS is_super_admin,
+                    COALESCE(u.active, true) AS active,
+                    (SELECT COUNT(*)::int
+                     FROM user_role_group urg
+                     WHERE urg.id_user = u.id_user) AS project_count,
+                    (SELECT string_agg(ugl.label_group, ', ' ORDER BY LOWER(ugl.label_group))
+                     FROM user_role_group urg
+                     JOIN user_group_label ugl ON ugl.id_group = urg.id_group
+                     WHERE urg.id_user = u.id_user) AS projects_summary
                 FROM users u
-                WHERE COALESCE(u.active, true) = true
                 ORDER BY LOWER(u.username)
                 """;
         List<Object[]> rows = entityManager.createNativeQuery(sql).getResultList();
@@ -142,8 +149,9 @@ public class AdminQueryRepository {
 
     private InstanceAdminAccount toInstanceAdminAccount(Object[] row) {
         boolean superAdmin = row[5] instanceof Boolean bool ? bool : Boolean.parseBoolean(String.valueOf(row[5]));
+        boolean active = row[6] instanceof Boolean bool ? bool : Boolean.parseBoolean(String.valueOf(row[6]));
+        int projectCount = row[7] instanceof Number number ? number.intValue() : 0;
         String roleKey = superAdmin ? "super_admin" : "user";
-        String roleLabel = superAdmin ? "Super admin" : "Utilisateur";
         return new InstanceAdminAccount(
                 ((Number) row[0]).intValue(),
                 StringUtils.defaultString((String) row[1]),
@@ -151,7 +159,10 @@ public class AdminQueryRepository {
                 StringUtils.defaultString((String) row[3]),
                 toLocalDateTime(row[4]),
                 roleKey,
-                roleLabel
+                roleKey,
+                active,
+                projectCount,
+                StringUtils.defaultString((String) row[8])
         );
     }
 
