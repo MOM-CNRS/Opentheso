@@ -29,6 +29,9 @@ services:
       SPRING_DATASOURCE_PASSWORD: ${DB_PASSWORD}
       CRYPTO_KEY: ${CRYPTO_KEY:?set CRYPTO_KEY in docker/.env}
       CRYPTO_OPENARK_KEY: ${CRYPTO_OPENARK_KEY:?set CRYPTO_OPENARK_KEY in docker/.env}
+      # JAVA_TOOL_OPTIONS is read by the JVM itself, so the exec-form CMD needs no change
+      JAVA_TOOL_OPTIONS: ${JAVA_TOOL_OPTIONS}
+      MAX_UPLOAD_SIZE: ${MAX_UPLOAD_SIZE}
 
 volumes:
   opentheso-data:

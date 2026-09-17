@@ -37,8 +37,8 @@ spring:
   servlet:
     multipart:
       enabled: true
-      max-file-size: 100MB  # Définit la taille max d'un fichier
-      max-request-size: 100MB  # Taille totale max de la requête
+      max-file-size: ${MAX_UPLOAD_SIZE:100MB}
+      max-request-size: ${MAX_UPLOAD_SIZE:100MB}
   datasource:
     url: jdbc:postgresql://localhost:5432/opentheso
     password: opentheso
