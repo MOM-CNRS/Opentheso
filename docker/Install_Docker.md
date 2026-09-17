@@ -1,20 +1,15 @@
 # Mini documentation : Comment utiliser et lancer le Docker
 
-## 1. Construire l'image
+## 1. Lancer l'environnement complet
 
-À la racine du projet (là où se trouve le Dockerfile) :
-
-``` bash
-docker build -t opentheso:local .
-```
-
-## 2. Lancer l'environnement complet
+Depuis le dossier `docker/`. Le build Maven se fait dans un container de build
+(première étape du Dockerfile), aucun JDK ni Maven n'est requis sur la machine.
 
 ``` bash
-docker compose up -d
+docker compose -f Docker-compose.yml up -d
 ```
 
-## 3. Vérifier que les services tournent
+## 2. Vérifier que les services tournent
 
 ``` bash
 docker ps
@@ -23,49 +18,43 @@ docker ps
 Vous devriez voir : - un container `opentheso-db` - un container
 `opentheso`
 
-## 4. Logs de l'application
+## 3. Logs de l'application
 
 ``` bash
 docker logs -f opentheso
 ```
 
-## 5. Accéder à l'application
-
-Si vous publiez le port 8099 :
+## 4. Accéder à l'application
 
 ➡️ http://localhost:8099/
 
-## 6. Arrêter les services
+## 5. Arrêter les services
 
 ``` bash
-docker compose down
+docker compose -f Docker-compose.yml down      # garde la base
+docker compose -f Docker-compose.yml down -v   # supprime aussi la base
 ```
 
-## 7. Forcer la reconstruction
+## 6. Forcer la reconstruction
 
 ``` bash
-docker compose build --no-cache
-docker compose up -d
+docker compose -f Docker-compose.yml build --no-cache
+docker compose -f Docker-compose.yml up -d
 ```
 
 ## /////// English version ////////
 # Mini Documentation: How to Use and Run Docker
 
-## 1. Build the Image
+## 1. Start the Full Environment
 
-At the root of the project (where the Dockerfile is located):
-
-``` bash
-docker build -t opentheso:local .
-```
-
-## 2. Start the Full Environment
+From the `docker/` directory. The Maven build runs in a build container (first
+stage of the Dockerfile), so no local JDK or Maven is needed.
 
 ``` bash
-docker compose up -d
+docker compose -f Docker-compose.yml up -d
 ```
 
-## 3. Check That the Services Are Running
+## 2. Check That the Services Are Running
 
 ``` bash
 docker ps
@@ -73,27 +62,26 @@ docker ps
 
 You should see: - a container `opentheso-db` - a container `opentheso`
 
-## 4. View Application Logs
+## 3. View Application Logs
 
 ``` bash
 docker logs -f opentheso
 ```
 
-## 5. Access the Application
-
-If port 8099 is published:
+## 4. Access the Application
 
 ➡️ http://localhost:8099/
 
-## 6. Stop the Services
+## 5. Stop the Services
 
 ``` bash
-docker compose down
+docker compose -f Docker-compose.yml down      # keeps the database
+docker compose -f Docker-compose.yml down -v   # also drops the database
 ```
 
-## 7. Force a Rebuild
+## 6. Force a Rebuild
 
 ``` bash
-docker compose build --no-cache
-docker compose up -d
+docker compose -f Docker-compose.yml build --no-cache
+docker compose -f Docker-compose.yml up -d
 ```

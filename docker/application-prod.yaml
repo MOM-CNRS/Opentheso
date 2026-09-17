@@ -27,6 +27,8 @@ management:
   health:
     neo4j:
       enabled: false
+    mail:
+      enabled: false # the SMTP host below is a placeholder and is not reachable
 
 spring:
   application:
@@ -52,6 +54,15 @@ spring:
   liquibase:
     enabled: true
     change-log: classpath:/changelog/db.changelog.xml
+  mail:
+    host: ${smpt.hostname}
+    port: ${smpt.portNumber}
+    protocol: ${smpt.protocol}
+    properties:
+      mail.smtp.auth: ${smpt.authorization}
+      mail.smtp.starttls.enable: false
+    default-encoding: UTF-8
+
   graphql:
     graphiql:
       enabled: true
@@ -60,6 +71,12 @@ spring:
 
 settings:
   workLanguage: fr
+
+# 32 characters exactly. No default: startup fails loudly if these are not supplied.
+crypto:
+  key: ${CRYPTO_KEY}
+  openark:
+    key: ${CRYPTO_OPENARK_KEY}
 
 certificats:
   admpriv: ./certificats/admpriv.bin

@@ -8,19 +8,29 @@ services:
       POSTGRES_DB: opentheso
     volumes:
       - opentheso-data:/var/lib/postgresql/data
+    healthcheck:
+      test: ["CMD-SHELL", "pg_isready -U opentheso"]
+      interval: 5s
+      retries: 10
 
   opentheso:
-    build: .
+    build:
+      context: ..
+      dockerfile: docker/Dockerfile
     image: opentheso:local
     depends_on:
-      - opentheso-db
+      opentheso-db:
+        condition: service_healthy
     ports:
-      - "8099:8080" # ou 8099 est le port d'écoute dans application-prod.yaml
+      - "8099:8099" # port d'écoute dans application-prod.yaml
     environment:
       SPRING_DATASOURCE_URL: jdbc:postgresql://opentheso-db:5432/opentheso
       SPRING_DATASOURCE_USERNAME: opentheso
       SPRING_DATASOURCE_PASSWORD: opentheso
+      # throwaway keys for local evaluation only - 32 chars exactly.
+      # Supply real ones from a secret store for any deployment reachable by others.
+      CRYPTO_KEY: ${CRYPTO_KEY:-01234567890123456789012345678901}
+      CRYPTO_OPENARK_KEY: ${CRYPTO_OPENARK_KEY:-01234567890123456789012345678901}
 
 volumes:
   opentheso-data:
-

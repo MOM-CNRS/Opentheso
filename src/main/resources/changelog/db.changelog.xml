@@ -217,6 +217,12 @@
     <changeSet id="26.03.01" author="Miled">
         <sqlFile path="../changelog/v26/26-03_01.sql" relativeToChangelogFile="true" splitStatements="false"/>
     </changeSet>
+    <!-- the baseline dump and the changesets above insert explicit ids without bumping the
+         sequences, so the nextval-based inserts below collide. Resync before they run. -->
+    <changeSet id="fix-sequences" author="local" runAlways="true">
+        <sqlFile path="database/fix-sequences.sql" relativeToChangelogFile="true" splitStatements="false"/>
+    </changeSet>
+
     <changeSet id="26.03.03" author="Miled">
         <sqlFile path="v26/26-03_03.sql" relativeToChangelogFile="true" splitStatements="false"/>
     </changeSet>

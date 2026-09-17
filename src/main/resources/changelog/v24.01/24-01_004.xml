@@ -5,6 +5,13 @@
                                        http://www.liquibase.org/xml/ns/dbchangelog/dbchangelog-4.0.xsd">
 
     <changeSet author="Miled" id="v24.01.004">
+        <!-- already present in the baseline dump installed by createdb -->
+        <preConditions onFail="MARK_RAN">
+            <not>
+                <columnExists tableName="thesaurus_array" columnName="created"/>
+            </not>
+        </preConditions>
+
         <addColumn tableName="thesaurus_array">
             <column name="created" type="timestamp with time zone"/>   
         </addColumn>        
