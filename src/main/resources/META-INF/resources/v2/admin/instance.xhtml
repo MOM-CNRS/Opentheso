@@ -914,11 +914,260 @@
             </ui:fragment>
 
             <ui:fragment rendered="#{v2InstanceAdminBean.thesaurusMembers}">
-              <div class="bo-todo-box">
-                <div class="bo-todo-t">Membres — à brancher</div>
-                <div class="bo-todo-d">
-                  La gestion des membres par thésaurus suivra la maquette
-                  (rôles limités / projet). Pattern : retour vers « Thésaurus &amp; membres ».
+              <div class="ia-pane">
+                <div class="bo-card">
+                  <div class="bo-card-h ia-card-h-users">
+                    <div class="ia-members-head">
+                      <span class="bo-card-t">#{v2LocaleBean.getMsg('v2.admin.members.title')}</span>
+                      <ui:fragment rendered="#{v2InstanceAdminBean.openThesaurus ne null}">
+                        <div class="ia-members-meta">
+                          <span>#{v2InstanceAdminBean.openThesaurus.title}</span>
+                          <ui:fragment rendered="#{not empty v2InstanceAdminBean.openThesaurus.projectName}">
+                            <span class="ia-members-meta-sep">·</span>
+                            <span>#{v2InstanceAdminBean.openThesaurus.projectName}</span>
+                          </ui:fragment>
+                        </div>
+                      </ui:fragment>
+                    </div>
+                    <ui:fragment rendered="#{not v2InstanceAdminBean.addMemberOpen and v2InstanceAdminBean.memberEditUserId eq null}">
+                      <div class="ia-toolbar" id="iaMembersToolbar">
+                        <h:inputText id="iaMembersQuery"
+                                     value="#{v2InstanceAdminBean.membersQuery}"
+                                     styleClass="st-input ia-q"
+                                     pt:placeholder="#{v2LocaleBean.getMsg('v2.admin.members.filter.searchPh')}"
+                                     pt:aria-label="#{v2LocaleBean.getMsg('v2.admin.members.filter.search')}">
+                          <f:ajax event="keyup" execute="@this"
+                                  listener="#{v2InstanceAdminBean.onMembersFilterChange}"
+                                  render="iaMembersMeta iaMembersTable"
+                                  delay="200"/>
+                        </h:inputText>
+                        <h:panelGroup layout="block" styleClass="ia-toolbar-actions">
+                          <h:selectOneMenu id="iaMembersRoleFilter"
+                                           value="#{v2InstanceAdminBean.membersRoleFilter}"
+                                           styleClass="st-input ia-select ia-filter-select"
+                                           pt:aria-label="#{v2LocaleBean.getMsg('v2.admin.members.col.role')}">
+                            <f:selectItem itemValue="" itemLabel="#{v2LocaleBean.getMsg('v2.admin.members.filter.allRoles')}"/>
+                            <f:selectItem itemValue="#{v2InstanceAdminBean.roleAdminId}"
+                                          itemLabel="#{v2LocaleBean.getMsg('v2.admin.users.role.admin')}"/>
+                            <f:selectItem itemValue="#{v2InstanceAdminBean.roleManagerId}"
+                                          itemLabel="#{v2LocaleBean.getMsg('v2.admin.users.role.manager')}"/>
+                            <f:selectItem itemValue="#{v2InstanceAdminBean.roleContributorId}"
+                                          itemLabel="#{v2LocaleBean.getMsg('v2.admin.users.role.contributor')}"/>
+                            <f:ajax event="valueChange" execute="@this"
+                                    listener="#{v2InstanceAdminBean.onMembersFilterChange}"
+                                    render="iaMembersMeta iaMembersTable"/>
+                          </h:selectOneMenu>
+                          <h:selectOneMenu id="iaMembersStatusFilter"
+                                           value="#{v2InstanceAdminBean.membersStatusFilter}"
+                                           styleClass="st-input ia-select ia-filter-select"
+                                           pt:aria-label="#{v2LocaleBean.getMsg('v2.admin.members.col.status')}">
+                            <f:selectItem itemValue=""
+                                          itemLabel="#{v2LocaleBean.getMsg('v2.admin.users.filter.status.all')}"/>
+                            <f:selectItem itemValue="active"
+                                          itemLabel="#{v2LocaleBean.getMsg('v2.admin.users.filter.status.active')}"/>
+                            <f:selectItem itemValue="inactive"
+                                          itemLabel="#{v2LocaleBean.getMsg('v2.admin.users.filter.status.inactive')}"/>
+                            <f:ajax event="valueChange" execute="@this"
+                                    listener="#{v2InstanceAdminBean.onMembersFilterChange}"
+                                    render="iaMembersMeta iaMembersTable"/>
+                          </h:selectOneMenu>
+                          <h:commandButton id="iaMemberAddOpen"
+                                           styleClass="bo-btn primary sm ia-create-btn"
+                                           value="#{v2LocaleBean.getMsg('v2.admin.members.add')}"
+                                           action="#{v2InstanceAdminBean.openAddMember}"
+                                           immediate="true">
+                            <f:ajax execute="@this" render="iaShell"/>
+                          </h:commandButton>
+                        </h:panelGroup>
+                      </div>
+                    </ui:fragment>
+                  </div>
+                  <div class="bo-card-b">
+                    <ui:fragment rendered="#{v2InstanceAdminBean.addMemberOpen}">
+                      <h:panelGroup id="iaMemberAddPane" layout="block" styleClass="ia-create ia-member-add">
+                        <div class="ia-create-h">
+                          <div>
+                            <div class="ia-create-t">#{v2LocaleBean.getMsg('v2.admin.members.add.title')}</div>
+                            <div class="ia-create-d">#{v2LocaleBean.getMsg('v2.admin.members.add.sub')}</div>
+                          </div>
+                        </div>
+                        <ui:fragment rendered="#{not empty v2InstanceAdminBean.addMemberError}">
+                          <div class="ia-create-err" role="alert">#{v2InstanceAdminBean.addMemberError}</div>
+                        </ui:fragment>
+                        <div class="ia-member-search">
+                          <label class="ia-field">
+                            <span class="ia-field-l">#{v2LocaleBean.getMsg('v2.admin.members.add.search')}</span>
+                            <div class="ia-member-search-row">
+                              <h:inputText id="iaMemberSearchQ"
+                                           value="#{v2InstanceAdminBean.memberSearchQuery}"
+                                           styleClass="st-input"
+                                           pt:placeholder="#{v2LocaleBean.getMsg('v2.admin.members.add.searchPh')}"/>
+                              <h:commandButton styleClass="bo-btn ghost sm"
+                                               value="#{v2LocaleBean.getMsg('v2.admin.members.add.searchGo')}"
+                                               action="#{v2InstanceAdminBean.searchMemberCandidates}">
+                                <f:ajax execute="iaMemberAddPane" render="iaMemberAddPane"/>
+                              </h:commandButton>
+                            </div>
+                          </label>
+                          <ui:fragment rendered="#{not empty v2InstanceAdminBean.memberSearchResults}">
+                            <div class="ia-member-hits" role="listbox">
+                              <ui:repeat value="#{v2InstanceAdminBean.memberSearchResults}" var="hit">
+                                <h:commandLink styleClass="ia-member-hit#{v2InstanceAdminBean.selectedMemberUserId ne null and v2InstanceAdminBean.selectedMemberUserId eq hit.userId ? ' is-on' : ''}"
+                                               action="#{v2InstanceAdminBean.selectMemberCandidate(hit.userId, hit.username)}">
+                                  <f:ajax execute="@this" render="iaMemberAddPane"/>
+                                  <span class="ia-member-hit-name">#{hit.username}</span>
+                                  <span class="ia-member-hit-mail">#{hit.email}</span>
+                                </h:commandLink>
+                              </ui:repeat>
+                            </div>
+                          </ui:fragment>
+                          <ui:fragment rendered="#{v2InstanceAdminBean.selectedMemberUserId ne null}">
+                            <div class="ia-member-picked">
+                              <span>#{v2LocaleBean.getMsg('v2.admin.members.add.selected')}</span>
+                              <b>#{v2InstanceAdminBean.selectedMemberUsername}</b>
+                              <h:commandLink styleClass="ia-chip-x"
+                                             title="#{v2LocaleBean.getMsg('v2.admin.members.add.clear')}"
+                                             action="#{v2InstanceAdminBean.clearSelectedMemberCandidate}">
+                                <f:ajax execute="@this" render="iaMemberAddPane"/>
+                                <svg viewBox="0 0 24 24" aria-hidden="true"><path d="M18 6 6 18M6 6l12 12"/></svg>
+                              </h:commandLink>
+                            </div>
+                          </ui:fragment>
+                          <label class="ia-field" style="max-width:240px">
+                            <span class="ia-field-l">#{v2LocaleBean.getMsg('v2.admin.members.col.role')}</span>
+                            <h:selectOneMenu id="iaAddMemberRole"
+                                             value="#{v2InstanceAdminBean.addMemberRoleId}"
+                                             styleClass="st-input ia-select">
+                              <f:selectItem itemValue="#{v2InstanceAdminBean.roleAdminId}"
+                                            itemLabel="#{v2LocaleBean.getMsg('v2.admin.users.role.admin')}"/>
+                              <f:selectItem itemValue="#{v2InstanceAdminBean.roleManagerId}"
+                                            itemLabel="#{v2LocaleBean.getMsg('v2.admin.users.role.manager')}"/>
+                              <f:selectItem itemValue="#{v2InstanceAdminBean.roleContributorId}"
+                                            itemLabel="#{v2LocaleBean.getMsg('v2.admin.users.role.contributor')}"/>
+                            </h:selectOneMenu>
+                          </label>
+                        </div>
+                        <div class="ia-create-actions">
+                          <button type="button"
+                                  class="bo-btn ghost"
+                                  onclick="return iaClickProxy('iaMemberAddCancelGo');">
+                            #{v2LocaleBean.getMsg('v2.admin.members.add.cancel')}
+                          </button>
+                          <h:commandButton styleClass="bo-btn primary"
+                                           value="#{v2LocaleBean.getMsg('v2.admin.members.add.submit')}"
+                                           action="#{v2InstanceAdminBean.addThesaurusMember}">
+                            <f:ajax execute="iaMemberAddPane" render="iaShell"/>
+                          </h:commandButton>
+                        </div>
+                      </h:panelGroup>
+                    </ui:fragment>
+
+                    <ui:fragment rendered="#{v2InstanceAdminBean.memberEditUserId ne null}">
+                      <h:panelGroup id="iaMemberEditPane" layout="block" styleClass="ia-create ia-member-add">
+                        <div class="ia-create-h">
+                          <div>
+                            <div class="ia-create-t">#{v2LocaleBean.getMsg('v2.admin.members.edit.title')}</div>
+                            <div class="ia-create-d">
+                              #{v2LocaleBean.getMsg('v2.admin.members.edit.sub')}
+                              <b>#{v2InstanceAdminBean.memberEditUsername}</b>
+                            </div>
+                          </div>
+                        </div>
+                        <label class="ia-field" style="max-width:240px">
+                          <span class="ia-field-l">#{v2LocaleBean.getMsg('v2.admin.members.col.role')}</span>
+                          <h:selectOneMenu id="iaEditMemberRole"
+                                           value="#{v2InstanceAdminBean.memberEditRoleId}"
+                                           styleClass="st-input ia-select">
+                            <f:selectItem itemValue="#{v2InstanceAdminBean.roleAdminId}"
+                                          itemLabel="#{v2LocaleBean.getMsg('v2.admin.users.role.admin')}"/>
+                            <f:selectItem itemValue="#{v2InstanceAdminBean.roleManagerId}"
+                                          itemLabel="#{v2LocaleBean.getMsg('v2.admin.users.role.manager')}"/>
+                            <f:selectItem itemValue="#{v2InstanceAdminBean.roleContributorId}"
+                                          itemLabel="#{v2LocaleBean.getMsg('v2.admin.users.role.contributor')}"/>
+                          </h:selectOneMenu>
+                        </label>
+                        <div class="ia-create-actions">
+                          <button type="button"
+                                  class="bo-btn ghost"
+                                  onclick="return iaClickProxy('iaMemberEditCancelGo');">
+                            #{v2LocaleBean.getMsg('v2.admin.members.edit.cancel')}
+                          </button>
+                          <h:commandButton styleClass="bo-btn primary"
+                                           value="#{v2LocaleBean.getMsg('v2.admin.members.edit.submit')}"
+                                           action="#{v2InstanceAdminBean.saveMemberEditRole}">
+                            <f:ajax execute="iaMemberEditPane" render="iaShell"/>
+                          </h:commandButton>
+                        </div>
+                      </h:panelGroup>
+                    </ui:fragment>
+
+                    <ui:fragment rendered="#{not v2InstanceAdminBean.addMemberOpen and v2InstanceAdminBean.memberEditUserId eq null}">
+                      <h:panelGroup id="iaMembersMeta" layout="block" styleClass="ia-members-count">
+                        #{v2InstanceAdminBean.filteredThesaurusMemberCount}
+                        #{v2LocaleBean.getMsg('v2.admin.members.count')}
+                      </h:panelGroup>
+                      <h:panelGroup id="iaMembersTable" layout="block" styleClass="ia-scroll">
+                        <ui:fragment rendered="#{not empty v2InstanceAdminBean.filteredThesaurusMembers}">
+                          <table class="st-table ia-tab ia-tab-m">
+                            <thead>
+                              <tr>
+                                <th>#{v2LocaleBean.getMsg('v2.admin.members.col.name')}</th>
+                                <th>#{v2LocaleBean.getMsg('v2.admin.members.col.role')}</th>
+                                <th>#{v2LocaleBean.getMsg('v2.admin.members.col.scope')}</th>
+                                <th>#{v2LocaleBean.getMsg('v2.admin.members.col.status')}</th>
+                                <th></th>
+                              </tr>
+                            </thead>
+                            <tbody>
+                              <ui:repeat value="#{v2InstanceAdminBean.filteredThesaurusMembers}" var="m">
+                                <tr class="#{m.active ? '' : 'ia-row-inactive'}">
+                                  <td data-label="#{v2LocaleBean.getMsg('v2.admin.members.col.name')}"><b>#{m.username}</b></td>
+                                  <td data-label="#{v2LocaleBean.getMsg('v2.admin.members.col.role')}">#{v2InstanceAdminBean.memberRoleLabel(m)}</td>
+                                  <td data-label="#{v2LocaleBean.getMsg('v2.admin.members.col.scope')}">
+                                    <span class="ia-scope#{m.projectWide ? ' is-project' : ' is-limited'}">
+                                      #{v2InstanceAdminBean.memberScopeLabel(m)}
+                                    </span>
+                                  </td>
+                                  <td data-label="#{v2LocaleBean.getMsg('v2.admin.members.col.status')}">
+                                    <span class="ia-status#{m.active ? ' ia-status--on' : ' ia-status--off'}">
+                                      #{m.active
+                                        ? v2LocaleBean.getMsg('v2.admin.users.status.active')
+                                        : v2LocaleBean.getMsg('v2.admin.users.status.inactive')}
+                                    </span>
+                                  </td>
+                                  <td class="st-td-act" data-label="">
+                                    <ui:fragment rendered="#{not m.projectWide}">
+                                      <div class="ia-row-acts">
+                                        <h:commandButton styleClass="bo-btn ghost sm"
+                                                         value="#{v2LocaleBean.getMsg('v2.admin.members.edit')}"
+                                                         action="#{v2InstanceAdminBean.openMemberEditRole(m.userId, m.roleId, m.username)}"
+                                                         immediate="true">
+                                          <f:ajax execute="@this" render="iaShell"/>
+                                        </h:commandButton>
+                                        <h:commandButton styleClass="bo-btn ghost sm ia-icon-btn is-danger"
+                                                         title="#{v2LocaleBean.getMsg('v2.admin.members.remove')}"
+                                                         value="×"
+                                                         action="#{v2InstanceAdminBean.openMemberRemoveConfirm(m.userId, m.roleId, m.username)}"
+                                                         immediate="true">
+                                          <f:ajax execute="@this" render="iaShell"/>
+                                        </h:commandButton>
+                                      </div>
+                                    </ui:fragment>
+                                  </td>
+                                </tr>
+                              </ui:repeat>
+                            </tbody>
+                          </table>
+                        </ui:fragment>
+                        <ui:fragment rendered="#{empty v2InstanceAdminBean.filteredThesaurusMembers}">
+                          <div class="ia-empty">
+                            <div class="ia-empty-t">#{v2LocaleBean.getMsg('v2.admin.members.empty.title')}</div>
+                            <div class="ia-empty-d">#{v2LocaleBean.getMsg('v2.admin.members.empty.sub')}</div>
+                          </div>
+                        </ui:fragment>
+                      </h:panelGroup>
+                    </ui:fragment>
+                  </div>
                 </div>
               </div>
             </ui:fragment>
@@ -988,6 +1237,34 @@
               </div>
             </ui:fragment>
           </h:panelGroup>
+          <h:panelGroup id="iaMemberRemoveConfirmWrap" layout="block">
+            <ui:fragment rendered="#{v2InstanceAdminBean.memberRemoveConfirmOpen}">
+              <div class="block-overlay confirm-overlay ia-confirm-overlay" id="iaMemberRemoveConfirm" role="presentation">
+                <div class="confirm-modal" role="dialog" aria-modal="true"
+                     aria-labelledby="iaMemberRemoveConfirmTitle">
+                  <div class="confirm-h" id="iaMemberRemoveConfirmTitle">
+                    #{v2LocaleBean.getMsg('v2.admin.members.remove.title')}
+                  </div>
+                  <p class="confirm-p">
+                    #{v2LocaleBean.getMsg('v2.admin.members.remove.confirm')}
+                    <b>#{v2InstanceAdminBean.memberRemoveUsername}</b>
+                  </p>
+                  <div class="confirm-actions">
+                    <button type="button"
+                            class="bo-btn ghost confirm-cancel"
+                            onclick="return iaClickProxy('iaMemberRemoveCancelGo');">
+                      #{v2LocaleBean.getMsg('v2.admin.members.remove.cancel')}
+                    </button>
+                    <button type="button"
+                            class="bo-btn primary danger"
+                            onclick="return iaClickProxy('iaMemberRemoveGo');">
+                      #{v2LocaleBean.getMsg('v2.admin.members.remove.submit')}
+                    </button>
+                  </div>
+                </div>
+              </div>
+            </ui:fragment>
+          </h:panelGroup>
           <!-- Proxies stables (hors fragment conditionnel) : les boutons AJAX
                injectés dans l'overlay ne déclenchent plus correctement le form. -->
           <div class="ia-ajax-proxy" aria-hidden="true">
@@ -1014,6 +1291,33 @@
             <h:commandButton id="iaDeleteConfirmGo"
                              value="go"
                              action="#{v2InstanceAdminBean.confirmDeleteUser}"
+                             pt:data-ia-render="iaShell">
+              <f:ajax execute="@this" render="iaShell"/>
+            </h:commandButton>
+            <h:commandButton id="iaMemberRemoveCancelGo"
+                             value="go"
+                             action="#{v2InstanceAdminBean.closeMemberRemoveConfirm}"
+                             immediate="true"
+                             pt:data-ia-render="iaShell">
+              <f:ajax execute="@this" render="iaShell"/>
+            </h:commandButton>
+            <h:commandButton id="iaMemberRemoveGo"
+                             value="go"
+                             action="#{v2InstanceAdminBean.confirmRemoveThesaurusMember}"
+                             pt:data-ia-render="iaShell">
+              <f:ajax execute="@this" render="iaShell"/>
+            </h:commandButton>
+            <h:commandButton id="iaMemberAddCancelGo"
+                             value="go"
+                             action="#{v2InstanceAdminBean.closeAddMember}"
+                             immediate="true"
+                             pt:data-ia-render="iaShell">
+              <f:ajax execute="@this" render="iaShell"/>
+            </h:commandButton>
+            <h:commandButton id="iaMemberEditCancelGo"
+                             value="go"
+                             action="#{v2InstanceAdminBean.closeMemberEditRole}"
+                             immediate="true"
                              pt:data-ia-render="iaShell">
               <f:ajax execute="@this" render="iaShell"/>
             </h:commandButton>

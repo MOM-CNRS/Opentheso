@@ -11,6 +11,7 @@ import org.junit.jupiter.api.Test;
 import org.junit.jupiter.api.extension.ExtendWith;
 import org.mockito.Mock;
 import org.mockito.junit.jupiter.MockitoExtension;
+import org.springframework.context.MessageSource;
 import org.springframework.test.util.ReflectionTestUtils;
 
 import java.util.List;
@@ -31,6 +32,8 @@ class ConsultationCatalogServiceTest {
     private ProjectAdminQueryRepository projectAdminQueryRepository;
     @Mock
     private AdminQueryRepository adminQueryRepository;
+    @Mock
+    private MessageSource messageSource;
 
     private ConsultationCatalogService service;
 
@@ -40,7 +43,8 @@ class ConsultationCatalogServiceTest {
                 consultationCatalogQueryRepository,
                 projectAdminService,
                 projectAdminQueryRepository,
-                adminQueryRepository
+                adminQueryRepository,
+                messageSource
         );
         ReflectionTestUtils.setField(service, "defaultWorkLanguage", "fr");
     }

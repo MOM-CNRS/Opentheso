@@ -1,0 +1,114 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<ui:composition xmlns="http://www.w3.org/1999/xhtml"
+                xmlns:ui="http://xmlns.jcp.org/jsf/facelets"
+                xmlns:h="http://xmlns.jcp.org/jsf/html"
+                xmlns:f="http://xmlns.jcp.org/jsf/core"
+                xmlns:pt="http://xmlns.jcp.org/jsf/passthrough">
+      <div class="block-overlay confirm-overlay" id="tpCreateConfirm" hidden="hidden"
+           data-act="tp-create-dismiss" role="presentation">
+        <div class="confirm-modal" role="dialog" aria-modal="true"
+             aria-labelledby="tpCreateConfirmTitle" data-act="tp-create-modal">
+          <div class="confirm-h" id="tpCreateConfirmTitle">#{v2LocaleBean.getMsg('v2.picker.create.submit')}</div>
+          <p class="confirm-p" id="tpCreateConfirmText">#{v2LocaleBean.getMsg('v2.picker.create.confirm')}</p>
+          <div class="confirm-actions">
+            <button type="button" class="bo-btn ghost confirm-cancel" data-act="tp-create-dismiss">#{v2LocaleBean.getMsg('v2.picker.create.cancel')}</button>
+            <button type="button" class="bo-btn primary" data-act="tp-create-ok">#{v2LocaleBean.getMsg('v2.picker.create.submit')}</button>
+          </div>
+        </div>
+      </div>
+      <div id="tpExportMeta" hidden="hidden" data-active="0" aria-hidden="true"></div>
+      <h:panelGroup id="tpDeleteConfirmPanel" layout="block">
+        <div class="block-overlay confirm-overlay" id="tpDeleteConfirm" hidden="hidden"
+             data-act="tp-delete-dismiss" role="presentation"
+             data-ready="#{v2ThesaurusPickerBean.deleteReady}">
+          <div class="confirm-modal is-del tp-delete-modal" role="dialog" aria-modal="true"
+               aria-labelledby="tpDeleteConfirmTitle" data-act="tp-delete-modal">
+            <div class="tp-delete-head">
+              <span class="tp-delete-ico" aria-hidden="true">
+                <svg viewBox="0 0 24 24"><path d="M3 6h18"/><path d="M8 6V4h8v2"/><path d="M19 6l-1 14H6L5 6"/><path d="M10 11v6M14 11v6"/></svg>
+              </span>
+              <div class="confirm-h" id="tpDeleteConfirmTitle">#{v2LocaleBean.getMsg('v2.picker.delete.confirmTitle')}</div>
+            </div>
+            <p class="confirm-p">
+              #{v2LocaleBean.getMsg('v2.picker.delete.confirm')}
+              <strong>#{v2ThesaurusPickerBean.deleteThesaurusTitle}</strong>
+              <span class="tp-mono"> (#{v2ThesaurusPickerBean.deleteThesaurusId})</span>
+            </p>
+            <label class="tp-delete-check">
+              <h:selectBooleanCheckbox id="tpDeletePerennial"
+                                       value="#{v2ThesaurusPickerBean.deletePerennialIdentifiers}"/>
+              <span>#{v2LocaleBean.getMsg('v2.picker.delete.perennial')}</span>
+            </label>
+            <div class="confirm-actions tp-delete-actions">
+              <button type="button"
+                      class="bo-btn ghost confirm-cancel tp-delete-cancel"
+                      data-act="tp-delete-dismiss">
+                #{v2LocaleBean.getMsg('v2.picker.delete.cancel')}
+              </button>
+              <button type="button"
+                      class="bo-btn danger tp-delete-go"
+                      data-act="tp-delete-ok">
+                #{v2LocaleBean.getMsg('v2.picker.delete.submit')}
+              </button>
+            </div>
+          </div>
+        </div>
+        <h:commandLink id="tpDeleteCancel"
+                       styleClass="tp-create-go"
+                       action="#{v2ThesaurusPickerBean.cancelDeleteThesaurus}"
+                       immediate="true"
+                       tabindex="-1"
+                       aria-hidden="true">
+          <h:outputText value="#{v2LocaleBean.getMsg('v2.picker.delete.cancel')}"/>
+        </h:commandLink>
+        <h:commandLink id="tpDeleteSubmit"
+                       styleClass="tp-create-go"
+                       action="#{v2ThesaurusPickerBean.deleteThesaurus}"
+                       tabindex="-1"
+                       aria-hidden="true">
+          <h:outputText value="#{v2LocaleBean.getMsg('v2.picker.delete.submit')}"/>
+        </h:commandLink>
+      </h:panelGroup>
+      <div id="tpLoading" class="tp-loading" hidden="hidden" aria-live="polite" aria-busy="false"
+           data-progress-url="#{request.contextPath}/api/v2/thesaurus-import/progress"
+           data-step-prepare="#{v2LocaleBean.getMsg('v2.picker.import.progress.step.prepare')}"
+           data-step-create="#{v2LocaleBean.getMsg('v2.picker.import.progress.step.create')}"
+           data-step-concepts="#{v2LocaleBean.getMsg('v2.picker.import.progress.step.concepts')}"
+           data-step-finalize="#{v2LocaleBean.getMsg('v2.picker.import.progress.step.finalize')}"
+           data-done="#{v2LocaleBean.getMsg('v2.picker.import.progress.done')}"
+           data-meta-tpl="#{v2LocaleBean.getMsg('v2.picker.import.progress.conceptsMeta')}"
+           data-eta-tpl="#{v2LocaleBean.getMsg('v2.picker.import.progress.eta')}"
+           data-eta-sec-tpl="#{v2LocaleBean.getMsg('v2.picker.import.progress.etaSeconds')}"
+           data-eta-min-tpl="#{v2LocaleBean.getMsg('v2.picker.import.progress.etaMinutes')}"
+           data-rate-tpl="#{v2LocaleBean.getMsg('v2.picker.import.progress.rate')}">
+        <div class="tp-loading-card tp-prog-card">
+          <div class="tp-prog-simple">
+            <span class="tp-loading-spin" aria-hidden="true"></span>
+            <span class="tp-loading-txt">Ouverture du thésaurus…</span>
+          </div>
+          <div class="tp-prog-import">
+            <div class="tp-prog-h">
+              <span class="tp-prog-t" id="tpProgTitle">#{v2LocaleBean.getMsg('v2.picker.import.running')}</span>
+              <span class="tp-prog-pct" id="tpProgPct">0%</span>
+            </div>
+            <div class="tp-prog-track" id="tpProgTrack" role="progressbar" aria-valuemin="0" aria-valuemax="100" aria-valuenow="0">
+              <span class="tp-prog-fill" id="tpProgFill"></span>
+            </div>
+            <div class="tp-prog-meta" id="tpProgMeta" hidden="hidden">
+              <span class="tp-prog-count" id="tpProgCount"></span>
+              <span class="tp-prog-sep" aria-hidden="true">·</span>
+              <span class="tp-prog-eta" id="tpProgEta"></span>
+              <span class="tp-prog-sep" aria-hidden="true">·</span>
+              <span class="tp-prog-rate" id="tpProgRate"></span>
+            </div>
+            <div class="tp-prog-detail" id="tpProgDetail"></div>
+            <ol class="tp-prog-steps" aria-label="#{v2LocaleBean.getMsg('v2.picker.import.progress.steps')}">
+              <li data-step="0">#{v2LocaleBean.getMsg('v2.picker.import.progress.step.prepare')}</li>
+              <li data-step="1">#{v2LocaleBean.getMsg('v2.picker.import.progress.step.create')}</li>
+              <li data-step="2">#{v2LocaleBean.getMsg('v2.picker.import.progress.step.concepts')}</li>
+              <li data-step="3">#{v2LocaleBean.getMsg('v2.picker.import.progress.step.finalize')}</li>
+            </ol>
+          </div>
+        </div>
+      </div>
+</ui:composition>

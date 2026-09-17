@@ -1,0 +1,77 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<ui:composition xmlns="http://www.w3.org/1999/xhtml"
+                xmlns:ui="http://xmlns.jcp.org/jsf/facelets"
+                xmlns:h="http://xmlns.jcp.org/jsf/html"
+                xmlns:f="http://xmlns.jcp.org/jsf/core"
+                xmlns:pt="http://xmlns.jcp.org/jsf/passthrough">
+    <h:form id="thesaurusExportForm" prependId="false"
+            styleClass="tp-form-root"
+            rendered="#{v2ThesaurusPickerBean.exportMode}">
+      <div id="tpExportRoot"
+           class="tp tp--create tp--export"
+           data-tp-screen="export"
+           data-thesaurus-id="#{v2ThesaurusPickerExportBean.thesaurusId}"
+           data-thesaurus-title="#{v2ThesaurusPickerExportBean.thesaurusTitle}"
+           data-concept-count="#{v2ThesaurusPickerExportBean.conceptCount}">
+        <button type="button"
+                class="bo-back"
+                title="#{v2LocaleBean.getMsg('v2.picker.export.back')}"
+                aria-label="#{v2LocaleBean.getMsg('v2.picker.export.back')}"
+                onclick="return window.tpAnimateBackToList &amp;&amp; window.tpAnimateBackToList(this, document.getElementById('tpExportCancel'));">
+          <svg viewBox="0 0 24 24" aria-hidden="true"><path d="M19 12H5"/><path d="m12 19-7-7 7-7"/></svg>
+        </button>
+
+        <div class="tp-head">
+          <div class="tp-head-copy">
+            <h1 class="tp-title">#{v2LocaleBean.getMsg('v2.picker.export.title')}</h1>
+            <p class="tp-sub">#{v2LocaleBean.getMsg('v2.picker.export.subtitle')}</p>
+          </div>
+        </div>
+
+        <div class="tp-io-identity" aria-label="#{v2LocaleBean.getMsg('v2.picker.export.thesaurus')}">
+          <span class="tp-io-identity-ico" aria-hidden="true">
+            <svg viewBox="0 0 24 24">
+              <path d="M21 15v4a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2v-4"/>
+              <path d="m17 8-5-5-5 5"/>
+              <path d="M12 3v12"/>
+            </svg>
+          </span>
+          <div class="tp-io-identity-body">
+            <span class="tp-io-identity-l">#{v2LocaleBean.getMsg('v2.picker.export.thesaurus')}</span>
+            <strong class="tp-io-identity-t">#{v2ThesaurusPickerExportBean.thesaurusTitle}</strong>
+            <span class="tp-io-identity-id">#{v2ThesaurusPickerExportBean.thesaurusId}</span>
+          </div>
+          <ui:fragment rendered="#{v2ThesaurusPickerExportBean.conceptCount gt 0}">
+            <div class="tp-io-identity-stat" title="#{v2LocaleBean.getMsg('v2.picker.export.concepts')}">
+              <b>#{v2ThesaurusPickerExportBean.conceptCountLabel}</b>
+              <span>#{v2LocaleBean.getMsg('v2.picker.export.concepts')}</span>
+            </div>
+          </ui:fragment>
+        </div>
+
+        <div class="tp-form tp-export-layout">
+          <div class="tp-export-main">
+            <div class="tp-form-card tp-export-card">
+              <div id="tpExportHost" class="tp-export-host"></div>
+            </div>
+            <div class="tp-form-run tp-export-run">
+              <button type="button"
+                      class="tp-form-cancel"
+                      onclick="return window.tpAnimateBackToList &amp;&amp; window.tpAnimateBackToList(this, document.getElementById('tpExportCancel'));">
+                #{v2LocaleBean.getMsg('v2.picker.export.back')}
+              </button>
+              <h:commandButton id="tpExportCancel"
+                               styleClass="tp-create-go"
+                               value="#{v2LocaleBean.getMsg('v2.picker.export.back')}"
+                               action="#{v2ThesaurusPickerBean.cancelExportThesaurus}"
+                               immediate="true"
+                               tabindex="-1"
+                               aria-hidden="true">
+              </h:commandButton>
+              <div id="tpExportActions" class="tp-export-actions" aria-label="#{v2LocaleBean.getMsg('v2.picker.export.title')}"></div>
+            </div>
+          </div>
+        </div>
+      </div>
+    </h:form>
+</ui:composition>

@@ -3,7 +3,6 @@ package fr.cnrs.opentheso.v2.concept.model;
 import java.io.Serializable;
 import java.time.LocalDate;
 import java.util.List;
-import java.util.Locale;
 
 /**
  * Ligne de la page de sélection de thésaurus (maquette {@code ThesaurusPicker}).
@@ -28,16 +27,23 @@ public record ThesaurusPickerRow(
         return "member".equalsIgnoreCase(access);
     }
 
+    /** Accesseur EL record ({@code row.member} → {@code member()}). */
+    public boolean member() {
+        return isMember();
+    }
+
     /** Thésaurus en consultation publique ({@code private = false}), indépendamment du rôle utilisateur. */
     public boolean isPublicAccess() {
         return !privateThesaurus;
     }
 
-    /** Libellé d'accès pour l'affichage (EL : {@code row.accessLabel}). */
+    /** Accesseur EL record ({@code row.publicAccess} → {@code publicAccess()}). */
+    public boolean publicAccess() {
+        return isPublicAccess();
+    }
+
+    /** Libellé d'accès = visibilité du thésaurus (EL : {@code row.accessLabel}). */
     public String accessLabel() {
-        if (isMember()) {
-            return (role == null || role.isBlank()) ? "Membre" : role;
-        }
         return privateThesaurus ? "Privé" : "Public";
     }
 
@@ -45,18 +51,8 @@ public record ThesaurusPickerRow(
         return accessLabel();
     }
 
-    /** Classe CSS du badge (EL : {@code row.accessBadgeClass}). */
+    /** Classe CSS du badge de visibilité (EL : {@code row.accessBadgeClass}). */
     public String accessBadgeClass() {
-        if (isMember()) {
-            String key = roleKey == null ? "" : roleKey;
-            return switch (key) {
-                case "superAdmin" -> "tp-badge--super";
-                case "admin" -> "tp-badge--admin";
-                case "manager" -> "tp-badge--manager";
-                case "contributor" -> "tp-badge--contributor";
-                default -> "tp-badge--member";
-            };
-        }
         return privateThesaurus ? "tp-badge--private" : "tp-badge--public";
     }
 
@@ -65,9 +61,6 @@ public record ThesaurusPickerRow(
     }
 
     public String accessTitle() {
-        if (isMember()) {
-            return "Vous êtes " + accessLabel().toLowerCase(Locale.ROOT);
-        }
         if (privateThesaurus) {
             return "Thésaurus privé";
         }
@@ -146,5 +139,57 @@ public record ThesaurusPickerRow(
 
     public boolean isPrivateThesaurus() {
         return privateThesaurus;
+    }
+
+    /** Rôle affiché (colonne Rôle / tri). */
+    public String roleLabel() {
+        return role == null ? "" : role;
+    }
+
+    public String getRoleLabel() {
+        return roleLabel();
+    }
+
+    public boolean hasRole() {
+        return role != null && !role.isBlank();
+    }
+
+    public boolean getHasRole() {
+        return hasRole();
+    }
+
+    /** Droit d'édition / suppression depuis la liste (admin, manager, super-admin). */
+    public boolean canManage() {
+        String key = roleKey == null ? "" : roleKey;
+        return switch (key) {
+            case "superAdmin", "admin", "manager" -> true;
+            default -> false;
+        };
+    }
+
+    public String roleBadgeClass() {
+        String key = roleKey == null ? "" : roleKey;
+        return switch (key) {
+            case "superAdmin" -> "tp-badge--super";
+            case "admin" -> "tp-badge--admin";
+            case "manager" -> "tp-badge--manager";
+            case "contributor" -> "tp-badge--contributor";
+            default -> hasRole() ? "tp-badge--member" : "";
+        };
+    }
+
+    public String getRoleBadgeClass() {
+        return roleBadgeClass();
+    }
+
+    public String roleTitle() {
+        if (!hasRole()) {
+            return "Aucun rôle sur ce thésaurus";
+        }
+        return "Votre rôle : " + roleLabel();
+    }
+
+    public String getRoleTitle() {
+        return roleTitle();
     }
 }

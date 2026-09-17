@@ -4,6 +4,7 @@
       xmlns:ui="http://xmlns.jcp.org/jsf/facelets"
       xmlns:h="http://xmlns.jcp.org/jsf/html"
       xmlns:f="http://xmlns.jcp.org/jsf/core"
+      xmlns:pt="http://xmlns.jcp.org/jsf/passthrough"
       lang="#{v2LocaleBean.idLangue}">
 <f:metadata>
   <f:viewParam name="idt" value="#{v2ThesaurusContext.idThesoFromUri}"/>
@@ -12,38 +13,39 @@
   <f:viewAction action="#{v2ThesaurusViewBean.ensureSessionThesaurus}"/>
   <ui:insert name="viewActions"/>
 </f:metadata>
-<head>
+<h:head>
   <meta charset="UTF-8"/>
   <meta name="viewport" content="width=device-width, initial-scale=1.0"/>
   <title><ui:insert name="title">OpenTheso</ui:insert></title>
   <base href="#{request.contextPath}/v2/"/>
-  <link rel="icon" href="#{request.contextPath}/resources/img/icon_opentheso2.png"/>
+  <link rel="icon" type="image/png" href="#{request.contextPath}/resources/img/O.png"/>
+  <link rel="apple-touch-icon" href="#{request.contextPath}/resources/img/O.png"/>
   <link rel="preconnect" href="https://fonts.googleapis.com"/>
   <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin=""/>
-  <link href="https://fonts.googleapis.com/css2?family=IBM+Plex+Mono:wght@400;500;600&amp;family=IBM+Plex+Sans:wght@400;500;600;700&amp;display=swap" rel="stylesheet"/>
+  <link href="https://fonts.googleapis.com/css2?family=IBM+Plex+Sans:ital,wght@0,400;0,500;0,600;0,700;1,400&amp;family=IBM+Plex+Mono:wght@400;500;600&amp;display=swap" rel="stylesheet"/>
   <link rel="stylesheet" href="#{request.contextPath}/resources/css/v2-prototype-recherche.css?v=#{v2Assets.v}"/>
   <link rel="stylesheet" href="#{request.contextPath}/resources/css/v2.css?v=#{v2Assets.v}"/>
   <link rel="stylesheet" href="#{request.contextPath}/resources/css/v2-thesaurus-picker.css?v=#{v2Assets.v}"/>
   <link rel="stylesheet" href="#{request.contextPath}/resources/css/v2-instance-admin.css?v=#{v2Assets.v}"/>
-</head>
-<body data-page="#{v2Page}" data-ctx="#{request.contextPath}"
-      data-logged-in="#{v2UserSession.loggedIn ? '1' : '0'}"
-      data-tree-dnd="#{v2ConceptTreeDragDropBean.cutActionsAvailable ? '1' : '0'}"
-      data-username="#{v2UserSession.loggedIn ? v2UserSession.currentUsername : ''}"
-      data-card-layout="#{v2ConceptBlockLayoutBean.layoutJson}"
-      data-tree-status="#{v2TreeStatusBean.selectedJson}"
-      data-table-cols="#{v2TableColBean.selectedJson}"
-      data-msg-copied="#{v2LocaleBean.getMsg('v2.copied')}"
-      data-msg-link="#{v2LocaleBean.getMsg('v2.home.linkPrompt')}"
-      data-leaflet-js="#{resource['webjars:leaflet/1.8.0/leaflet.js']}"
-      data-leaflet-css="#{resource['webjars:leaflet/1.8.0/leaflet.css']}">
+</h:head>
+<h:body pt:data-page="#{v2Page}" pt:data-ctx="#{request.contextPath}"
+      pt:data-logged-in="#{v2UserSession.loggedIn ? '1' : '0'}"
+      pt:data-tree-dnd="#{v2ConceptTreeDragDropBean.cutActionsAvailable ? '1' : '0'}"
+      pt:data-username="#{v2UserSession.loggedIn ? v2UserSession.currentUsername : ''}"
+      pt:data-card-layout="#{v2ConceptBlockLayoutBean.layoutJson}"
+      pt:data-tree-status="#{v2TreeStatusBean.selectedJson}"
+      pt:data-table-cols="#{v2TableColBean.selectedJson}"
+      pt:data-msg-copied="#{v2LocaleBean.getMsg('v2.copied')}"
+      pt:data-msg-link="#{v2LocaleBean.getMsg('v2.home.linkPrompt')}"
+      pt:data-leaflet-js="#{resource['webjars:leaflet/1.8.0/leaflet.js']}"
+      pt:data-leaflet-css="#{resource['webjars:leaflet/1.8.0/leaflet.css']}">
 <div class="app" id="app">
-  <ui:include src="thesaurus.xhtml"/>
+  <ui:include src="/v2/includes/thesaurus.xhtml"/>
   <div class="sb-scrim" id="sbScrim" hidden="hidden" data-act="sb-dismiss"></div>
   <div class="main">
     <div class="panes">
       <ui:insert name="sidebar">
-        <ui:include src="sidebar.xhtml"/>
+        <ui:include src="/v2/includes/sidebar.xhtml"/>
       </ui:insert>
       <div class="resizer" id="resizer" role="separator" aria-orientation="vertical"
            title="Glisser pour redimensionner · double-clic pour réinitialiser">
@@ -54,7 +56,7 @@
           <h:panelGroup id="previewWorkLangRefresh" layout="block" styleClass="view-lang-refresh">
             <ui:insert name="main"/>
             <ui:insert name="detail">
-              <ui:include src="detail.xhtml"/>
+              <ui:include src="/v2/includes/detail.xhtml"/>
             </ui:insert>
           </h:panelGroup>
         </div>
@@ -93,5 +95,5 @@
 <script src="#{request.contextPath}/resources/js/v2/ark-progress.js?v=#{v2Assets.v}"></script>
 <script src="#{request.contextPath}/resources/js/v2/theso-ac.js?v=#{v2Assets.v}"></script>
 <script src="#{request.contextPath}/resources/js/v2/app.js?v=#{v2Assets.v}"></script>
-</body>
+</h:body>
 </html>

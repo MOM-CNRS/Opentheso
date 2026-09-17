@@ -1,42 +1,505 @@
 <?xml version="1.0" encoding="UTF-8"?>
 <ui:composition xmlns="http://www.w3.org/1999/xhtml"
                 xmlns:ui="http://xmlns.jcp.org/jsf/facelets"
+                xmlns:h="http://xmlns.jcp.org/jsf/html"
+                xmlns:f="http://xmlns.jcp.org/jsf/core"
+                xmlns:pt="http://xmlns.jcp.org/jsf/passthrough"
                 template="/v2/includes/layout.xhtml">
   <ui:param name="v2Page" value="projets"/>
   <ui:define name="title">OpenTheso — Mes projets</ui:define>
+  <ui:define name="viewActions">
+    <f:viewAction action="#{v2MyProjectsBean.load}" onPostback="false"/>
+  </ui:define>
+  <ui:define name="detail"/>
   <ui:define name="main">
+    <h:form id="myProjectsForm" prependId="false">
+      <ui:fragment rendered="#{not v2UserSession.loggedIn}">
+        <ui:include src="/v2/includes/access-denied.xhtml">
+          <ui:param name="deniedKicker" value="#{v2LocaleBean.getMsg('v2.projects.accessDenied.kicker')}"/>
+          <ui:param name="deniedTitle" value="#{v2LocaleBean.getMsg('v2.projects.accessDenied.title')}"/>
+          <ui:param name="deniedSub" value="#{v2LocaleBean.getMsg('v2.projects.accessDenied.sub')}"/>
+          <ui:param name="deniedBackLabel" value="#{v2LocaleBean.getMsg('v2.projects.accessDenied.back')}"/>
+        </ui:include>
+      </ui:fragment>
 
-          <div class="view-panel is-on">
-            <div class="bo">
-              <a class="bo-back" href="index.xhtml" title="Retour à l'accueil thésaurus"><svg viewBox="0 0 24 24" aria-hidden="true"><path d="M19 12H5"/><path d="m12 19-7-7 7-7"/></svg></a>
-              <div class="bo-head"><div><h1 class="bo-title">Profil / Mes projets</h1><p class="bo-sub">Projets auxquels vous avez accès.</p></div></div>
-              <div class="bo-full st-scope"><div class="boc-grid boc-grid-1">
-                  <a class="boc-item" href="index.xhtml">
-                    <span class="proj-dot" style="background:#1f7a5c"></span>
-                    <span class="boc-l">PACTOLS<small style="display:block;font-weight:400;color:var(--ink-3)">Gestionnaire · 438 concepts</small></span>
-                    <span class="st-card-tag">actif</span>
-                    <span class="boc-go"><svg viewBox="0 0 24 24" aria-hidden="true"><path d="M5 12h14"/><path d="m12 5 7 7-7 7"/></svg></span>
-                  </a>
-                  <a class="boc-item" href="project/projets.xhtml">
-                    <span class="proj-dot" style="background:#2f5fd0"></span>
-                    <span class="boc-l">GeoEthno<small style="display:block;font-weight:400;color:var(--ink-3)">Contributeur · 4120 concepts</small></span>
-                    
-                    <span class="boc-go"><svg viewBox="0 0 24 24" aria-hidden="true"><path d="M5 12h14"/><path d="m12 5 7 7-7 7"/></svg></span>
-                  </a>
-                  <a class="boc-item" href="project/projets.xhtml">
-                    <span class="proj-dot" style="background:#9a3b2e"></span>
-                    <span class="boc-l">Thésaurus-W<small style="display:block;font-weight:400;color:var(--ink-3)">Lecteur · 1860 concepts</small></span>
-                    
-                    <span class="boc-go"><svg viewBox="0 0 24 24" aria-hidden="true"><path d="M5 12h14"/><path d="m12 5 7 7-7 7"/></svg></span>
-                  </a>
-                  <a class="boc-item" href="project/projets.xhtml">
-                    <span class="proj-dot" style="background:#5b4bb8"></span>
-                    <span class="boc-l">Garnier — Matériaux<small style="display:block;font-weight:400;color:var(--ink-3)">Contributeur · 980 concepts</small></span>
-                    
-                    <span class="boc-go"><svg viewBox="0 0 24 24" aria-hidden="true"><path d="M5 12h14"/><path d="m12 5 7 7-7 7"/></svg></span>
-                  </a></div></div>
-              
+      <ui:fragment rendered="#{v2UserSession.loggedIn}">
+        <h:panelGroup id="mpShell" layout="block" styleClass="view-panel is-on">
+          <div class="bo bo-solo">
+            <ui:fragment rendered="#{v2MyProjectsBean.listView}">
+              <a class="bo-back" href="#{request.contextPath}/v2/index.xhtml"
+                 title="#{v2LocaleBean.getMsg('v2.projects.backHome')}">
+                <svg viewBox="0 0 24 24" aria-hidden="true"><path d="M19 12H5"/><path d="m12 19-7-7 7-7"/></svg>
+              </a>
+            </ui:fragment>
+            <ui:fragment rendered="#{not v2MyProjectsBean.listView}">
+              <h:commandLink styleClass="bo-back"
+                             title="#{v2LocaleBean.getMsg('v2.projects.backList')}"
+                             action="#{v2MyProjectsBean.backToList}"
+                             immediate="true">
+                <f:ajax execute="@this" render="mpShell"/>
+                <svg viewBox="0 0 24 24" aria-hidden="true"><path d="M19 12H5"/><path d="m12 19-7-7 7-7"/></svg>
+              </h:commandLink>
+            </ui:fragment>
+
+            <div class="bo-head">
+              <div>
+                <h1 class="bo-title">#{v2LocaleBean.getMsg('v2.projects.title')}</h1>
+                <p class="bo-sub">
+                  <ui:fragment rendered="#{v2MyProjectsBean.listView}">
+                    #{v2LocaleBean.getMsg('v2.projects.subtitle')}
+                  </ui:fragment>
+                  <ui:fragment rendered="#{not v2MyProjectsBean.listView and v2MyProjectsBean.dashboard ne null}">
+                    #{v2MyProjectsBean.dashboard.projectName()}
+                  </ui:fragment>
+                  <ui:fragment rendered="#{not v2MyProjectsBean.listView and v2MyProjectsBean.dashboard eq null}">
+                    #{v2LocaleBean.getMsg('v2.projects.noAdminRights')}
+                  </ui:fragment>
+                </p>
+              </div>
+              <ui:fragment rendered="#{v2MyProjectsBean.listView and v2MyProjectsBean.superAdmin}">
+                <h:commandButton styleClass="bo-btn primary sm"
+                                 value="#{v2LocaleBean.getMsg('v2.projects.create')}"
+                                 action="#{v2MyProjectsBean.openCreatePanel}"
+                                 immediate="true">
+                  <f:ajax execute="@this" render="mpShell"/>
+                </h:commandButton>
+              </ui:fragment>
+              <ui:fragment rendered="#{v2MyProjectsBean.projectAdminScreen and v2MyProjectsBean.activePanel eq null}">
+                <div class="ia-toolbar-actions">
+                  <h:commandButton styleClass="bo-btn ghost sm"
+                                   value="#{v2LocaleBean.getMsg('v2.projects.rename')}"
+                                   action="#{v2MyProjectsBean.openRenamePanel}"
+                                   immediate="true">
+                    <f:ajax execute="@this" render="mpShell"/>
+                  </h:commandButton>
+                  <h:commandButton styleClass="bo-btn primary sm"
+                                   value="#{v2LocaleBean.getMsg('v2.projects.addMember')}"
+                                   action="#{v2MyProjectsBean.openAddExistingPanel}"
+                                   immediate="true">
+                    <f:ajax execute="@this" render="mpShell"/>
+                  </h:commandButton>
+                </div>
+              </ui:fragment>
+            </div>
+
+            <div class="bo-full st-scope">
+              <ui:fragment rendered="#{v2MyProjectsBean.activePanel eq 'create'}">
+                <div class="bo-card ia-create">
+                  <div class="bo-card-h"><span class="bo-card-t">#{v2LocaleBean.getMsg('v2.projects.create')}</span></div>
+                  <div class="bo-card-b">
+                    <ui:fragment rendered="#{not empty v2MyProjectsBean.panelError}">
+                      <div class="ia-create-err" role="alert">#{v2MyProjectsBean.panelError}</div>
+                    </ui:fragment>
+                    <label class="ia-field">
+                      <span class="ia-field-l">#{v2LocaleBean.getMsg('v2.projects.name')}</span>
+                      <h:inputText value="#{v2MyProjectsBean.newProjectName}" styleClass="st-input"/>
+                    </label>
+                    <div class="ia-create-actions">
+                      <h:commandButton styleClass="bo-btn ghost"
+                                       value="#{v2LocaleBean.getMsg('v2.projects.cancel')}"
+                                       action="#{v2MyProjectsBean.closeActivePanel}"
+                                       immediate="true">
+                        <f:ajax execute="@this" render="mpShell"/>
+                      </h:commandButton>
+                      <h:commandButton styleClass="bo-btn primary"
+                                       value="#{v2LocaleBean.getMsg('v2.projects.createSubmit')}"
+                                       action="#{v2MyProjectsBean.createProject}">
+                        <f:ajax execute="@form" render="mpShell"/>
+                      </h:commandButton>
+                    </div>
+                  </div>
+                </div>
+              </ui:fragment>
+
+              <ui:fragment rendered="#{v2MyProjectsBean.activePanel eq 'rename'}">
+                <div class="bo-card ia-create">
+                  <div class="bo-card-h"><span class="bo-card-t">#{v2LocaleBean.getMsg('v2.projects.rename')}</span></div>
+                  <div class="bo-card-b">
+                    <ui:fragment rendered="#{not empty v2MyProjectsBean.panelError}">
+                      <div class="ia-create-err" role="alert">#{v2MyProjectsBean.panelError}</div>
+                    </ui:fragment>
+                    <label class="ia-field">
+                      <span class="ia-field-l">#{v2LocaleBean.getMsg('v2.projects.name')}</span>
+                      <h:inputText value="#{v2MyProjectsBean.renameProjectLabel}" styleClass="st-input"/>
+                    </label>
+                    <div class="ia-create-actions">
+                      <h:commandButton styleClass="bo-btn ghost"
+                                       value="#{v2LocaleBean.getMsg('v2.projects.cancel')}"
+                                       action="#{v2MyProjectsBean.closeActivePanel}"
+                                       immediate="true">
+                        <f:ajax execute="@this" render="mpShell"/>
+                      </h:commandButton>
+                      <h:commandButton styleClass="bo-btn primary"
+                                       value="#{v2LocaleBean.getMsg('v2.projects.renameSubmit')}"
+                                       action="#{v2MyProjectsBean.renameProject}">
+                        <f:ajax execute="@form" render="mpShell"/>
+                      </h:commandButton>
+                    </div>
+                  </div>
+                </div>
+              </ui:fragment>
+
+              <ui:fragment rendered="#{v2MyProjectsBean.activePanel eq 'addExisting'}">
+                <div class="bo-card ia-create">
+                  <div class="bo-card-h"><span class="bo-card-t">#{v2LocaleBean.getMsg('v2.projects.addMember')}</span></div>
+                  <div class="bo-card-b">
+                    <ui:fragment rendered="#{not empty v2MyProjectsBean.panelError}">
+                      <div class="ia-create-err" role="alert">#{v2MyProjectsBean.panelError}</div>
+                    </ui:fragment>
+                    <label class="ia-field">
+                      <span class="ia-field-l">#{v2LocaleBean.getMsg('v2.projects.searchUser')}</span>
+                      <div class="ia-member-search-row">
+                        <h:inputText value="#{v2MyProjectsBean.existingUserQuery}"
+                                     styleClass="st-input"
+                                     pt:placeholder="#{v2LocaleBean.getMsg('v2.projects.searchUserPh')}"/>
+                        <h:commandButton styleClass="bo-btn ghost sm"
+                                         value="#{v2LocaleBean.getMsg('v2.projects.searchGo')}"
+                                         action="#{v2MyProjectsBean.searchExistingUserHits}">
+                          <f:ajax execute="@form" render="mpShell"/>
+                        </h:commandButton>
+                      </div>
+                    </label>
+                    <ui:fragment rendered="#{not empty v2MyProjectsBean.existingUserHits}">
+                      <div class="ia-member-hits" role="listbox">
+                        <ui:repeat value="#{v2MyProjectsBean.existingUserHits}" var="hit">
+                          <h:commandLink styleClass="ia-member-hit#{v2MyProjectsBean.selectedExistingUser ne null and v2MyProjectsBean.selectedExistingUser.userId eq hit.userId ? ' is-on' : ''}"
+                                         action="#{v2MyProjectsBean.pickExistingUser(hit.userId, hit.username, hit.email)}">
+                            <f:ajax execute="@this" render="mpShell"/>
+                            <span class="ia-member-hit-name">#{hit.username}</span>
+                            <span class="ia-member-hit-mail">#{hit.email}</span>
+                          </h:commandLink>
+                        </ui:repeat>
+                      </div>
+                    </ui:fragment>
+                    <ui:fragment rendered="#{v2MyProjectsBean.selectedExistingUser ne null}">
+                      <div class="ia-member-picked">
+                        <span>#{v2LocaleBean.getMsg('v2.projects.selected')}</span>
+                        <b>#{v2MyProjectsBean.selectedExistingUser.username}</b>
+                        <h:commandLink styleClass="ia-chip-x"
+                                       action="#{v2MyProjectsBean.clearPickedExistingUser}">
+                          <f:ajax execute="@this" render="mpShell"/>
+                          <svg viewBox="0 0 24 24" aria-hidden="true"><path d="M18 6 6 18M6 6l12 12"/></svg>
+                        </h:commandLink>
+                      </div>
+                    </ui:fragment>
+                    <label class="ia-field" style="max-width:240px">
+                      <span class="ia-field-l">#{v2LocaleBean.getMsg('v2.projects.role')}</span>
+                      <h:selectOneMenu value="#{v2MyProjectsBean.existingMemberRoleId}" styleClass="st-input ia-select">
+                        <f:selectItems value="#{v2MyProjectsBean.assignableRoles}" var="r"
+                                       itemValue="#{r.id}" itemLabel="#{r.name}"/>
+                      </h:selectOneMenu>
+                    </label>
+                    <div class="ia-create-actions">
+                      <h:commandButton styleClass="bo-btn ghost"
+                                       value="#{v2LocaleBean.getMsg('v2.projects.cancel')}"
+                                       action="#{v2MyProjectsBean.closeActivePanel}"
+                                       immediate="true">
+                        <f:ajax execute="@this" render="mpShell"/>
+                      </h:commandButton>
+                      <h:commandButton styleClass="bo-btn primary"
+                                       value="#{v2LocaleBean.getMsg('v2.projects.addMemberSubmit')}"
+                                       action="#{v2MyProjectsBean.addExistingMember}">
+                        <f:ajax execute="@form" render="mpShell"/>
+                      </h:commandButton>
+                    </div>
+                  </div>
+                </div>
+              </ui:fragment>
+
+              <ui:fragment rendered="#{v2MyProjectsBean.activePanel eq 'editMemberRole'}">
+                <div class="bo-card ia-create">
+                  <div class="bo-card-h">
+                    <span class="bo-card-t">#{v2LocaleBean.getMsg('v2.projects.editRole')} — #{v2MyProjectsBean.editMemberUsername}</span>
+                  </div>
+                  <div class="bo-card-b">
+                    <ui:fragment rendered="#{not empty v2MyProjectsBean.panelError}">
+                      <div class="ia-create-err" role="alert">#{v2MyProjectsBean.panelError}</div>
+                    </ui:fragment>
+                    <label class="ia-field" style="max-width:240px">
+                      <span class="ia-field-l">#{v2LocaleBean.getMsg('v2.projects.role')}</span>
+                      <h:selectOneMenu value="#{v2MyProjectsBean.editMemberRoleId}" styleClass="st-input ia-select">
+                        <f:selectItems value="#{v2MyProjectsBean.assignableRoles}" var="r"
+                                       itemValue="#{r.id}" itemLabel="#{r.name}"/>
+                      </h:selectOneMenu>
+                    </label>
+                    <div class="ia-create-actions">
+                      <h:commandButton styleClass="bo-btn ghost"
+                                       value="#{v2LocaleBean.getMsg('v2.projects.cancel')}"
+                                       action="#{v2MyProjectsBean.closeActivePanel}"
+                                       immediate="true">
+                        <f:ajax execute="@this" render="mpShell"/>
+                      </h:commandButton>
+                      <h:commandButton styleClass="bo-btn primary"
+                                       value="#{v2LocaleBean.getMsg('v2.projects.save')}"
+                                       action="#{v2MyProjectsBean.submitUpdateMemberRole}">
+                        <f:ajax execute="@form" render="mpShell"/>
+                      </h:commandButton>
+                    </div>
+                  </div>
+                </div>
+              </ui:fragment>
+
+              <ui:fragment rendered="#{v2MyProjectsBean.activePanel eq 'removeMember'}">
+                <div class="bo-card ia-create">
+                  <div class="bo-card-h"><span class="bo-card-t">#{v2LocaleBean.getMsg('v2.projects.removeMember')}</span></div>
+                  <div class="bo-card-b">
+                    <p>#{v2LocaleBean.getMsg('v2.projects.removeMemberConfirm')} <b>#{v2MyProjectsBean.memberToRemoveName}</b></p>
+                    <div class="ia-create-actions">
+                      <h:commandButton styleClass="bo-btn ghost"
+                                       value="#{v2LocaleBean.getMsg('v2.projects.cancel')}"
+                                       action="#{v2MyProjectsBean.closeActivePanel}"
+                                       immediate="true">
+                        <f:ajax execute="@this" render="mpShell"/>
+                      </h:commandButton>
+                      <h:commandButton styleClass="bo-btn primary danger"
+                                       value="#{v2LocaleBean.getMsg('v2.projects.removeSubmit')}"
+                                       action="#{v2MyProjectsBean.submitRemoveMember}">
+                        <f:ajax execute="@this" render="mpShell"/>
+                      </h:commandButton>
+                    </div>
+                  </div>
+                </div>
+              </ui:fragment>
+
+              <ui:fragment rendered="#{v2MyProjectsBean.activePanel eq 'editLimited'}">
+                <div class="bo-card ia-create">
+                  <div class="bo-card-h">
+                    <span class="bo-card-t">#{v2LocaleBean.getMsg('v2.projects.editLimited')} — #{v2MyProjectsBean.editLimitedUsername}</span>
+                  </div>
+                  <div class="bo-card-b">
+                    <p class="bo-sub">#{v2MyProjectsBean.editLimitedThesaurusName}</p>
+                    <ui:fragment rendered="#{not empty v2MyProjectsBean.panelError}">
+                      <div class="ia-create-err" role="alert">#{v2MyProjectsBean.panelError}</div>
+                    </ui:fragment>
+                    <label class="ia-field" style="max-width:240px">
+                      <span class="ia-field-l">#{v2LocaleBean.getMsg('v2.projects.role')}</span>
+                      <h:selectOneMenu value="#{v2MyProjectsBean.editLimitedNewRoleId}" styleClass="st-input ia-select">
+                        <f:selectItems value="#{v2MyProjectsBean.assignableRoles}" var="r"
+                                       itemValue="#{r.id}" itemLabel="#{r.name}"/>
+                      </h:selectOneMenu>
+                    </label>
+                    <div class="ia-create-actions">
+                      <h:commandButton styleClass="bo-btn ghost"
+                                       value="#{v2LocaleBean.getMsg('v2.projects.cancel')}"
+                                       action="#{v2MyProjectsBean.closeActivePanel}"
+                                       immediate="true">
+                        <f:ajax execute="@this" render="mpShell"/>
+                      </h:commandButton>
+                      <h:commandButton styleClass="bo-btn primary"
+                                       value="#{v2LocaleBean.getMsg('v2.projects.save')}"
+                                       action="#{v2MyProjectsBean.submitUpdateLimitedRole}">
+                        <f:ajax execute="@form" render="mpShell"/>
+                      </h:commandButton>
+                    </div>
+                  </div>
+                </div>
+              </ui:fragment>
+
+              <ui:fragment rendered="#{v2MyProjectsBean.activePanel eq 'removeLimited'}">
+                <div class="bo-card ia-create">
+                  <div class="bo-card-h"><span class="bo-card-t">#{v2LocaleBean.getMsg('v2.projects.removeLimited')}</span></div>
+                  <div class="bo-card-b">
+                    <p>
+                      #{v2LocaleBean.getMsg('v2.projects.removeLimitedConfirm')}
+                      <b>#{v2MyProjectsBean.limitedRoleToRemoveUsername}</b>
+                      (#{v2MyProjectsBean.limitedRoleToRemoveThesaurusName})
+                    </p>
+                    <div class="ia-create-actions">
+                      <h:commandButton styleClass="bo-btn ghost"
+                                       value="#{v2LocaleBean.getMsg('v2.projects.cancel')}"
+                                       action="#{v2MyProjectsBean.closeActivePanel}"
+                                       immediate="true">
+                        <f:ajax execute="@this" render="mpShell"/>
+                      </h:commandButton>
+                      <h:commandButton styleClass="bo-btn primary danger"
+                                       value="#{v2LocaleBean.getMsg('v2.projects.removeSubmit')}"
+                                       action="#{v2MyProjectsBean.submitRemoveLimitedRole}">
+                        <f:ajax execute="@this" render="mpShell"/>
+                      </h:commandButton>
+                    </div>
+                  </div>
+                </div>
+              </ui:fragment>
+
+              <ui:fragment rendered="#{v2MyProjectsBean.listView and v2MyProjectsBean.activePanel eq null}">
+                <ui:fragment rendered="#{empty v2MyProjectsBean.projects}">
+                  <div class="ia-empty">
+                    <div class="ia-empty-t">#{v2LocaleBean.getMsg('v2.projects.empty.title')}</div>
+                    <div class="ia-empty-d">#{v2LocaleBean.getMsg('v2.projects.empty.sub')}</div>
+                  </div>
+                </ui:fragment>
+                <div class="boc-grid boc-grid-1">
+                  <ui:repeat value="#{v2MyProjectsBean.projects}" var="p">
+                    <h:commandLink styleClass="boc-item boc-nav"
+                                   action="#{v2MyProjectsBean.selectProject(p.id)}">
+                      <f:ajax execute="@this" render="mpShell"/>
+                      <span class="proj-dot" style="background:#{v2MyProjectsBean.projectDotColor(p.id)}"></span>
+                      <span class="boc-l">#{p.name}</span>
+                      <span class="boc-go"><svg viewBox="0 0 24 24" aria-hidden="true"><path d="M5 12h14"/><path d="m12 5 7 7-7 7"/></svg></span>
+                    </h:commandLink>
+                  </ui:repeat>
+                </div>
+              </ui:fragment>
+
+              <ui:fragment rendered="#{not v2MyProjectsBean.listView and v2MyProjectsBean.dashboard eq null and v2MyProjectsBean.activePanel eq null}">
+                <div class="ia-empty">
+                  <div class="ia-empty-t">#{v2LocaleBean.getMsg('v2.projects.noAdminRights')}</div>
+                  <div class="ia-empty-d">#{v2LocaleBean.getMsg('v2.projects.noAdminRights.sub')}</div>
+                </div>
+              </ui:fragment>
+
+              <ui:fragment rendered="#{v2MyProjectsBean.projectAdminScreen and v2MyProjectsBean.activePanel eq null}">
+                <div class="ia-mode-tabs" role="tablist" style="margin-bottom:14px">
+                  <h:commandButton styleClass="ia-mode-opt#{v2MyProjectsBean.activeSectionIndex eq 0 ? ' is-on' : ''}"
+                                   value="#{v2LocaleBean.getMsg('v2.projects.tab.thesauri')} (#{v2MyProjectsBean.dashboard.thesauri().size()})"
+                                   action="#{v2MyProjectsBean.setActiveSectionIndex(0)}"
+                                   immediate="true">
+                    <f:ajax execute="@this" render="mpShell"/>
+                  </h:commandButton>
+                  <h:commandButton styleClass="ia-mode-opt#{v2MyProjectsBean.activeSectionIndex eq 1 ? ' is-on' : ''}"
+                                   value="#{v2LocaleBean.getMsg('v2.projects.tab.members')} (#{v2MyProjectsBean.dashboard.members().size()})"
+                                   action="#{v2MyProjectsBean.setActiveSectionIndex(1)}"
+                                   immediate="true">
+                    <f:ajax execute="@this" render="mpShell"/>
+                  </h:commandButton>
+                  <h:commandButton styleClass="ia-mode-opt#{v2MyProjectsBean.activeSectionIndex eq 2 ? ' is-on' : ''}"
+                                   value="#{v2LocaleBean.getMsg('v2.projects.tab.limited')} (#{v2MyProjectsBean.dashboard.limitedMembers().size()})"
+                                   action="#{v2MyProjectsBean.setActiveSectionIndex(2)}"
+                                   immediate="true">
+                    <f:ajax execute="@this" render="mpShell"/>
+                  </h:commandButton>
+                </div>
+
+                <ui:fragment rendered="#{v2MyProjectsBean.activeSectionIndex eq 0}">
+                  <div class="bo-card">
+                    <div class="bo-card-b ia-scroll">
+                      <ui:fragment rendered="#{empty v2MyProjectsBean.dashboard.thesauri()}">
+                        <div class="ia-empty"><div class="ia-empty-d">#{v2LocaleBean.getMsg('v2.projects.thesauri.empty')}</div></div>
+                      </ui:fragment>
+                      <ui:fragment rendered="#{not empty v2MyProjectsBean.dashboard.thesauri()}">
+                        <table class="st-table ia-tab">
+                          <thead>
+                            <tr>
+                              <th>Id</th>
+                              <th>#{v2LocaleBean.getMsg('v2.projects.col.thesaurus')}</th>
+                            </tr>
+                          </thead>
+                          <tbody>
+                            <ui:repeat value="#{v2MyProjectsBean.dashboard.thesauri()}" var="th">
+                              <tr>
+                                <td><code>#{th.id()}</code></td>
+                                <td>
+                                  <b class="#{th.privateThesaurus() ? 'ia-private' : ''}">#{th.title()}</b>
+                                </td>
+                              </tr>
+                            </ui:repeat>
+                          </tbody>
+                        </table>
+                      </ui:fragment>
+                    </div>
+                  </div>
+                </ui:fragment>
+
+                <ui:fragment rendered="#{v2MyProjectsBean.activeSectionIndex eq 1}">
+                  <div class="bo-card">
+                    <div class="bo-card-b ia-scroll">
+                      <ui:fragment rendered="#{empty v2MyProjectsBean.dashboard.members()}">
+                        <div class="ia-empty"><div class="ia-empty-d">#{v2LocaleBean.getMsg('v2.projects.members.empty')}</div></div>
+                      </ui:fragment>
+                      <ui:fragment rendered="#{not empty v2MyProjectsBean.dashboard.members()}">
+                        <table class="st-table ia-tab">
+                          <thead>
+                            <tr>
+                              <th>#{v2LocaleBean.getMsg('v2.projects.col.user')}</th>
+                              <th>#{v2LocaleBean.getMsg('v2.projects.role')}</th>
+                              <th></th>
+                            </tr>
+                          </thead>
+                          <tbody>
+                            <ui:repeat value="#{v2MyProjectsBean.dashboard.members()}" var="m">
+                              <tr class="#{m.active() ? '' : 'ia-row-inactive'}">
+                                <td><b>#{m.username()}</b></td>
+                                <td>#{m.roleName()}</td>
+                                <td class="st-td-act">
+                                  <ui:fragment rendered="#{v2MyProjectsBean.currentUserId ne m.userId()}">
+                                    <div class="ia-row-acts">
+                                      <h:commandButton styleClass="bo-btn ghost sm"
+                                                       value="#{v2LocaleBean.getMsg('v2.projects.editRole')}"
+                                                       action="#{v2MyProjectsBean.openEditMemberRolePanel(m)}"
+                                                       immediate="true">
+                                        <f:ajax execute="@this" render="mpShell"/>
+                                      </h:commandButton>
+                                      <h:commandButton styleClass="bo-btn ghost sm ia-icon-btn is-danger"
+                                                       title="#{v2LocaleBean.getMsg('v2.projects.removeMember')}"
+                                                       value="×"
+                                                       action="#{v2MyProjectsBean.openRemoveMemberPanel(m)}"
+                                                       immediate="true">
+                                        <f:ajax execute="@this" render="mpShell"/>
+                                      </h:commandButton>
+                                    </div>
+                                  </ui:fragment>
+                                </td>
+                              </tr>
+                            </ui:repeat>
+                          </tbody>
+                        </table>
+                      </ui:fragment>
+                    </div>
+                  </div>
+                </ui:fragment>
+
+                <ui:fragment rendered="#{v2MyProjectsBean.activeSectionIndex eq 2}">
+                  <div class="bo-card">
+                    <div class="bo-card-b ia-scroll">
+                      <ui:fragment rendered="#{empty v2MyProjectsBean.dashboard.limitedMembers()}">
+                        <div class="ia-empty"><div class="ia-empty-d">#{v2LocaleBean.getMsg('v2.projects.limited.empty')}</div></div>
+                      </ui:fragment>
+                      <ui:fragment rendered="#{not empty v2MyProjectsBean.dashboard.limitedMembers()}">
+                        <table class="st-table ia-tab">
+                          <thead>
+                            <tr>
+                              <th>#{v2LocaleBean.getMsg('v2.projects.col.user')}</th>
+                              <th>#{v2LocaleBean.getMsg('v2.projects.role')}</th>
+                              <th>#{v2LocaleBean.getMsg('v2.projects.col.thesaurus')}</th>
+                              <th></th>
+                            </tr>
+                          </thead>
+                          <tbody>
+                            <ui:repeat value="#{v2MyProjectsBean.dashboard.limitedMembers()}" var="lm">
+                              <tr class="#{lm.active() ? '' : 'ia-row-inactive'}">
+                                <td><b>#{lm.username()}</b></td>
+                                <td>#{lm.roleName()}</td>
+                                <td>#{lm.thesaurusName()}</td>
+                                <td class="st-td-act">
+                                  <div class="ia-row-acts">
+                                    <h:commandButton styleClass="bo-btn ghost sm"
+                                                     value="#{v2LocaleBean.getMsg('v2.projects.editRole')}"
+                                                     action="#{v2MyProjectsBean.openEditLimitedPanel(lm)}"
+                                                     immediate="true">
+                                      <f:ajax execute="@this" render="mpShell"/>
+                                    </h:commandButton>
+                                    <h:commandButton styleClass="bo-btn ghost sm ia-icon-btn is-danger"
+                                                     title="#{v2LocaleBean.getMsg('v2.projects.removeLimited')}"
+                                                     value="×"
+                                                     action="#{v2MyProjectsBean.openRemoveLimitedPanel(lm)}"
+                                                     immediate="true">
+                                      <f:ajax execute="@this" render="mpShell"/>
+                                    </h:commandButton>
+                                  </div>
+                                </td>
+                              </tr>
+                            </ui:repeat>
+                          </tbody>
+                        </table>
+                      </ui:fragment>
+                    </div>
+                  </div>
+                </ui:fragment>
+              </ui:fragment>
             </div>
           </div>
+        </h:panelGroup>
+      </ui:fragment>
+    </h:form>
   </ui:define>
 </ui:composition>

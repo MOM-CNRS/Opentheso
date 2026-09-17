@@ -68,10 +68,10 @@
              data-flash-nt-token="#{v2ConceptLifecycleEditorBean.createFlashToken}"
              data-cut-id="#{v2ConceptTreeDragDropBean.cutOn ? v2ConceptTreeDragDropBean.cutConceptId : ''}">
           <ui:fragment rendered="#{v2ThesaurusViewBean.conceptSelected or v2ThesaurusViewBean.candidateSelected}">
-            <ui:include src="concept-form.xhtml"/>
+            <ui:include src="/v2/includes/concept-form.xhtml"/>
           </ui:fragment>
           <ui:fragment rendered="#{v2ThesaurusViewBean.facetSelected}">
-            <ui:include src="facet-form.xhtml"/>
+            <ui:include src="/v2/includes/facet-form.xhtml"/>
           </ui:fragment>
           <ui:fragment rendered="#{v2ThesaurusViewBean.detailRequested and not v2ThesaurusViewBean.detailVisible}">
             <div class="empty">

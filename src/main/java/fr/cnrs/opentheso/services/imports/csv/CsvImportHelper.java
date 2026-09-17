@@ -1525,6 +1525,7 @@ public class CsvImportHelper {
     }
 
     private static java.sql.Date toSqlDate(Date date) {
-        return date == null ? null : new java.sql.Date(date.getTime());
+        return fr.cnrs.opentheso.v2.shared.time.V2Dates.toSqlDate(
+                fr.cnrs.opentheso.v2.shared.time.V2Dates.toInstant(date));
     }
 }

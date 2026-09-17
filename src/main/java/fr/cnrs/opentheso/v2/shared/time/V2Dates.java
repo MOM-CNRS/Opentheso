@@ -90,8 +90,17 @@ public final class V2Dates {
         return instant == null ? null : java.util.Date.from(instant);
     }
 
+    /**
+     * Date calendaire pure ({@code yyyy-MM-dd}) pour JDBC / procédures PostgreSQL {@code date}.
+     * Évite {@code new java.sql.Date(epochMilli)} qui, via le fuseau JVM, produit un binding
+     * typé {@code unknown} (ex. {@code '2026-02-27 +01'}) et fait échouer
+     * {@code opentheso_add_new_concept}.
+     */
     public static java.sql.Date toSqlDate(Instant instant) {
-        return instant == null ? null : new java.sql.Date(instant.toEpochMilli());
+        if (instant == null) {
+            return null;
+        }
+        return java.sql.Date.valueOf(LocalDate.ofInstant(instant, zone()));
     }
 
     public static java.util.Date toUtilDate(LocalDate date) {

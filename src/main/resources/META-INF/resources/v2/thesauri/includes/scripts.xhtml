@@ -1,0 +1,1039 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<ui:composition xmlns="http://www.w3.org/1999/xhtml"
+                xmlns:ui="http://xmlns.jcp.org/jsf/facelets"
+                xmlns:h="http://xmlns.jcp.org/jsf/html"
+                xmlns:f="http://xmlns.jcp.org/jsf/core"
+                xmlns:pt="http://xmlns.jcp.org/jsf/passthrough">
+    <script type="text/javascript">
+      //<![CDATA[
+      window.tpShowLoading = function (msg, asImport) {
+        var el = document.getElementById('tpLoading');
+        if (!el) return true;
+        el.classList.toggle('is-import', !!asImport);
+        var title = document.getElementById('tpProgTitle');
+        var simpleTxt = el.querySelector('.tp-loading-txt');
+        if (asImport) {
+          if (title && msg) title.textContent = msg;
+        } else if (simpleTxt && msg) {
+          simpleTxt.textContent = msg;
+        } else if (simpleTxt && !msg) {
+          simpleTxt.textContent = 'Ouverture du thésaurus…';
+        }
+        el.hidden = false;
+        el.removeAttribute('hidden');
+        el.setAttribute('aria-busy', 'true');
+        document.body.classList.add('tp-is-loading');
+        if (window._tpLoadingSafety) {
+          window.clearTimeout(window._tpLoadingSafety);
+        }
+        // Filet de sécurité : ne jamais laisser l'overlay bloquer l'UI.
+        window._tpLoadingSafety = window.setTimeout(function () {
+          window.tpCleanupUiLocks && window.tpCleanupUiLocks();
+        }, asImport ? 180000 : 8000);
+        return true;
+      };
+      window.tpHideLoading = function () {
+        window.tpStopImportProgress && window.tpStopImportProgress();
+        window._tpProgShown = 0;
+        if (window._tpLoadingSafety) {
+          window.clearTimeout(window._tpLoadingSafety);
+          window._tpLoadingSafety = null;
+        }
+        var el = document.getElementById('tpLoading');
+        if (el) {
+          el.hidden = true;
+          el.setAttribute('hidden', 'hidden');
+          el.setAttribute('aria-busy', 'false');
+          el.classList.remove('is-import');
+        }
+        document.body.classList.remove('tp-is-loading');
+      };
+      window.tpFmtTpl = function (tpl, a, b) {
+        if (!tpl) return '';
+        return String(tpl).replace('{0}', a == null ? '' : String(a)).replace('{1}', b == null ? '' : String(b));
+      };
+      window.tpFmtEta = function (box, etaSeconds) {
+        if (etaSeconds == null || etaSeconds < 0) return '';
+        if (etaSeconds < 60) {
+          return window.tpFmtTpl(box.getAttribute('data-eta-tpl'),
+            window.tpFmtTpl(box.getAttribute('data-eta-sec-tpl'), Math.max(1, Math.round(etaSeconds))));
+        }
+        var mins = Math.max(1, Math.round(etaSeconds / 60));
+        return window.tpFmtTpl(box.getAttribute('data-eta-tpl'),
+          window.tpFmtTpl(box.getAttribute('data-eta-min-tpl'), mins));
+      };
+      window.tpFmtRate = function (box, rate) {
+        if (!rate || rate <= 0) return '';
+        var shown = rate >= 10 ? Math.round(rate) : (Math.round(rate * 10) / 10);
+        return window.tpFmtTpl(box.getAttribute('data-rate-tpl'), shown);
+      };
+      window.tpPaintImportProgress = function (pct, step, message, done, total, etaSeconds, ratePerSec) {
+        var fill = document.getElementById('tpProgFill');
+        var track = document.getElementById('tpProgTrack');
+        var pctEl = document.getElementById('tpProgPct');
+        var title = document.getElementById('tpProgTitle');
+        var detail = document.getElementById('tpProgDetail');
+        var meta = document.getElementById('tpProgMeta');
+        var countEl = document.getElementById('tpProgCount');
+        var etaEl = document.getElementById('tpProgEta');
+        var rateEl = document.getElementById('tpProgRate');
+        var box = document.getElementById('tpLoading');
+        var clamped = Math.max(0, Math.min(100, Number(pct) || 0));
+        if (window._tpProgShown == null || clamped >= window._tpProgShown) {
+          window._tpProgShown = clamped;
+        } else {
+          clamped = window._tpProgShown;
+        }
+        if (fill) fill.style.width = clamped + '%';
+        if (track) track.setAttribute('aria-valuenow', String(Math.round(clamped)));
+        if (pctEl) pctEl.textContent = Math.round(clamped) + '%';
+        if (title && message) title.textContent = message;
+        var hasCount = total > 0 && done >= 0;
+        var etaTxt = box ? window.tpFmtEta(box, etaSeconds) : '';
+        var rateTxt = box ? window.tpFmtRate(box, ratePerSec) : '';
+        if (meta && countEl) {
+          if (hasCount) {
+            countEl.textContent = window.tpFmtTpl(box.getAttribute('data-meta-tpl'), done, total);
+            if (etaEl) {
+              etaEl.textContent = etaTxt;
+              etaEl.hidden = !etaTxt;
+            }
+            if (rateEl) {
+              rateEl.textContent = rateTxt;
+              rateEl.hidden = !rateTxt;
+            }
+            meta.querySelectorAll('.tp-prog-sep').forEach(function (sep, idx) {
+              if (idx === 0) sep.hidden = !etaTxt && !rateTxt;
+              if (idx === 1) sep.hidden = !etaTxt || !rateTxt;
+            });
+            meta.hidden = false;
+            if (detail) {
+              detail.textContent = '';
+              detail.hidden = true;
+            }
+          } else {
+            meta.hidden = true;
+            if (detail) {
+              detail.textContent = message && step >= 3 ? message : '';
+              detail.hidden = !detail.textContent;
+            }
+          }
+        } else if (detail) {
+          if (hasCount) {
+            detail.textContent = done + ' / ' + total + (etaTxt ? ' · ' + etaTxt : '') + (rateTxt ? ' · ' + rateTxt : '');
+            detail.hidden = false;
+          } else {
+            detail.textContent = '';
+            detail.hidden = true;
+          }
+        }
+        if (box) {
+          box.querySelectorAll('.tp-prog-steps li').forEach(function (li) {
+            var s = Number(li.getAttribute('data-step'));
+            li.classList.toggle('is-done', s < step || clamped >= 100);
+            li.classList.toggle('is-on', s === step && clamped < 100);
+          });
+        }
+      };
+      window.tpStartImportProgress = function () {
+        window.tpStopImportProgress && window.tpStopImportProgress();
+        window._tpProgShown = 0;
+        var box = document.getElementById('tpLoading');
+        if (!box) return;
+        var url = box.getAttribute('data-progress-url');
+        window.tpPaintImportProgress(2, 0, box.getAttribute('data-step-prepare') || 'Préparation…', 0, 0, -1, 0);
+        if (!url) return;
+        window._tpImportPoll = window.setInterval(function () {
+          fetch(url, { credentials: 'same-origin', headers: { 'Accept': 'application/json' } })
+            .then(function (r) { return r.ok ? r.json() : null; })
+            .then(function (data) {
+              if (!data) return;
+              window.tpPaintImportProgress(
+                data.percent,
+                data.step,
+                data.message || '',
+                data.done,
+                data.total,
+                data.etaSeconds,
+                data.ratePerSec
+              );
+              if (!data.running && (data.percent >= 100 || data.error || data.phase === 'done' || data.phase === 'error')) {
+                window.tpStopImportProgress && window.tpStopImportProgress();
+              }
+            })
+            .catch(function () { /* ignore transient poll errors */ });
+        }, 400);
+      };
+      window.tpStopImportProgress = function () {
+        if (window._tpImportPoll) {
+          clearInterval(window._tpImportPoll);
+          window._tpImportPoll = 0;
+        }
+      };
+      window.tpPrepareImportSubmit = function (btn) {
+        window.tpSyncImportSubmit && window.tpSyncImportSubmit();
+        if (!btn || btn.classList.contains('is-disabled')) return false;
+        var file = document.getElementById('tpImportFile');
+        if (file) file.disabled = true;
+        window.tpShowLoading(btn.getAttribute('data-loading-msg') || 'Import…', true);
+        window.tpStartImportProgress();
+        return true;
+      };
+      window.tpImportAnalyzingMsg = function () {
+        var root = document.getElementById('tpImportRoot');
+        return (root && root.getAttribute('data-msg-analyzing')) || 'Analyse du fichier…';
+      };
+      window.tpBeginImportAnalyze = function () {
+        try { sessionStorage.setItem('tp.import.focus', '1'); } catch (err) { /* ignore */ }
+        window.tpShowLoading(window.tpImportAnalyzingMsg(), false);
+        return true;
+      };
+      window.tpGuessImportFormat = function (fileName, current) {
+        var n = String(fileName || '').toLowerCase();
+        if (/\.(csv|tsv|txt)$/.test(n)) {
+          return current === 'csvStructured' ? 'csvStructured' : 'csv';
+        }
+        if (/\.(rdf|xml|ttl|json|jsonld|owl)$/.test(n)) {
+          return 'skos';
+        }
+        return null;
+      };
+      window.tpOptimisticImportFile = function (file) {
+        var zone = document.getElementById('tpImportFileBlock');
+        if (!zone || !file) return;
+        zone.classList.add('has-file', 'is-pending');
+        zone.classList.remove('is-analyzed', 'needs-reanalyze');
+        var n = zone.querySelector('.tp-drop-file-n');
+        var m = zone.querySelector('.tp-drop-file-m');
+        var root = document.getElementById('tpImportRoot');
+        if (n) n.textContent = file.name;
+        if (m) m.textContent = (root && root.getAttribute('data-msg-pending')) || 'Analyse en cours…';
+        if (root) {
+          root.setAttribute('data-has-upload', 'true');
+          root.setAttribute('data-load-done', 'false');
+        }
+        window.tpSyncImportSubmit && window.tpSyncImportSubmit();
+      };
+      window.tpMarkImportNeedsReanalyze = function () {
+        var zone = document.getElementById('tpImportFileBlock');
+        var root = document.getElementById('tpImportRoot');
+        if (!zone || !zone.classList.contains('has-file')) return;
+        if (!root || root.getAttribute('data-load-done') !== 'true') return;
+        zone.classList.add('needs-reanalyze');
+        var btn = document.getElementById('tpImportAnalyze');
+        if (btn) btn.classList.add('is-attention');
+      };
+      window.tpSyncImportSubmit = function () {
+        var btn = document.getElementById('tpImportGo');
+        var root = document.getElementById('tpImportRoot');
+        if (!btn || !root) return;
+        var formatEl = document.getElementById('tpImportFormat');
+        var format = formatEl && formatEl.value ? formatEl.value : 'skos';
+        var zone = document.getElementById('tpImportFileBlock');
+        var hasFile = (root.getAttribute('data-has-upload') === 'true')
+          || !!(zone && zone.classList.contains('has-file'));
+        var loadDone = root.getAttribute('data-load-done') === 'true';
+        var preview = document.getElementById('tpImportPreview');
+        if (preview && preview.querySelector('.tp-import-stat')) {
+          loadDone = true;
+        }
+        var ok = hasFile && loadDone;
+        if (format === 'csv' || format === 'csvStructured') {
+          var name = document.getElementById('tpImportName');
+          ok = ok && !!(name && name.value && name.value.trim());
+        }
+        btn.classList.toggle('is-disabled', !ok);
+        btn.classList.toggle('is-ready-pulse', ok);
+        btn.setAttribute('aria-disabled', ok ? 'false' : 'true');
+      };
+      window.tpPolishImportPage = function () {
+        var root = document.getElementById('tpImportRoot');
+        if (!root) return;
+        window.tpSyncImportSubmit && window.tpSyncImportSubmit();
+        var more = document.getElementById('tpImportMore');
+        if (more && more.classList.contains('is-open')) {
+          more.open = true;
+        }
+        var shouldFocus = false;
+        try {
+          shouldFocus = sessionStorage.getItem('tp.import.focus') === '1';
+          if (shouldFocus) sessionStorage.removeItem('tp.import.focus');
+        } catch (err) { /* ignore */ }
+        if (root.getAttribute('data-load-done') === 'true') {
+          var preview = document.getElementById('tpImportPreview');
+          if (preview) {
+            preview.classList.add('is-ready');
+            if (shouldFocus) {
+              window.setTimeout(function () {
+                preview.scrollIntoView({ behavior: 'smooth', block: 'nearest' });
+              }, 80);
+            }
+          }
+          var formatEl = document.getElementById('tpImportFormat');
+          var format = formatEl && formatEl.value ? formatEl.value : 'skos';
+          var name = document.getElementById('tpImportName');
+          if (shouldFocus && name && (format === 'csv' || format === 'csvStructured') && !String(name.value || '').trim()) {
+            window.setTimeout(function () { name.focus(); }, 120);
+          }
+        }
+        var alert = root.querySelector('.tp-form-alert');
+        if (alert) alert.classList.add('is-enter');
+      };
+      window.tpMountExportPage = function () {
+        var root = document.getElementById('tpExportRoot');
+        if (!root) {
+          window.closePickerThesaurusExport && window.closePickerThesaurusExport();
+          return;
+        }
+        window.openPickerThesaurusExport && window.openPickerThesaurusExport(
+          root.getAttribute('data-thesaurus-id'),
+          root.getAttribute('data-thesaurus-title'),
+          root.getAttribute('data-concept-count')
+        );
+      };
+      window.TP_COLS_KEY = 'opentheso.tp.cols.v1';
+      window.tpReadColumnPrefs = function () {
+        try {
+          var raw = localStorage.getItem(window.TP_COLS_KEY);
+          if (!raw) return null;
+          var parsed = JSON.parse(raw);
+          if (!parsed || typeof parsed !== 'object') return null;
+          return {
+            order: Array.isArray(parsed.order) ? parsed.order : [],
+            on: parsed.on && typeof parsed.on === 'object' ? parsed.on : {}
+          };
+        } catch (err) {
+          return null;
+        }
+      };
+      window.tpWriteColumnPrefs = function (prefs) {
+        try {
+          localStorage.setItem(window.TP_COLS_KEY, JSON.stringify(prefs || { order: [], on: {} }));
+        } catch (err) { /* ignore quota */ }
+      };
+      window.tpCollectColumnPrefs = function () {
+        var order = [];
+        var on = {};
+        document.querySelectorAll('.tp-cols-row[data-col-key]').forEach(function (row) {
+          var key = row.getAttribute('data-col-key');
+          if (!key) return;
+          order.push(key);
+          var cb = row.querySelector('input[type="checkbox"]');
+          on[key] = cb ? !!cb.checked : true;
+        });
+        if (!order.length) {
+          document.querySelectorAll('.tp-table thead tr:first-child th[data-col]').forEach(function (th) {
+            var key = th.getAttribute('data-col');
+            if (!key) return;
+            order.push(key);
+            on[key] = !th.classList.contains('is-col-off');
+          });
+        }
+        return { order: order, on: on };
+      };
+      window.tpApplyColumnVisibility = function (prefs) {
+        if (!prefs || !prefs.on) return;
+        Object.keys(prefs.on).forEach(function (key) {
+          var show = !!prefs.on[key];
+          document.querySelectorAll('.tp-table [data-col="' + key + '"]').forEach(function (el) {
+            el.classList.toggle('is-col-off', !show);
+          });
+          document.querySelectorAll('.tp-cols-row[data-col-key="' + key + '"] input[type="checkbox"]').forEach(function (cb) {
+            if (cb.disabled) return;
+            cb.checked = show;
+          });
+        });
+      };
+      window.tpReorderByKeys = function (parent, selector, order, attr) {
+        if (!parent || !order || !order.length) return;
+        var nodes = Array.prototype.slice.call(parent.querySelectorAll(selector));
+        if (!nodes.length) return;
+        var byKey = {};
+        nodes.forEach(function (el) {
+          var key = el.getAttribute(attr);
+          if (key) byKey[key] = el;
+        });
+        var anchor = nodes[0];
+        order.forEach(function (key) {
+          var el = byKey[key];
+          if (!el) return;
+          parent.insertBefore(el, anchor);
+          anchor = el.nextSibling;
+        });
+      };
+      window.tpApplyColumnOrder = function (prefs) {
+        if (!prefs || !prefs.order || !prefs.order.length) return;
+        var order = prefs.order;
+        var table = document.querySelector('.tp-table');
+        if (table) {
+          var headRows = table.querySelectorAll('thead tr');
+          headRows.forEach(function (tr) {
+            window.tpReorderByKeys(tr, 'th[data-col]', order, 'data-col');
+          });
+          table.querySelectorAll('tbody tr.tp-row').forEach(function (tr) {
+            window.tpReorderByKeys(tr, 'td[data-col]', order, 'data-col');
+          });
+        }
+        var menu = document.querySelector('.tp-cols-list');
+        if (menu) {
+          window.tpReorderByKeys(menu, '.tp-cols-row[data-col-key]', order, 'data-col-key');
+        }
+      };
+      window.tpLoadColumnPrefs = function () {
+        if (window._tpColumnMutating) return;
+        var prefs = window.tpReadColumnPrefs();
+        if (!prefs) return;
+        window.tpApplyColumnOrder(prefs);
+        window.tpApplyColumnVisibility(prefs);
+      };
+      window.tpSubmitRefresh = function () {
+        var btn = document.getElementById('tpRefresh');
+        if (btn) {
+          btn.click();
+          return false;
+        }
+        return true;
+      };
+      window.tpSyncSearchClear = function (input) {
+        var box = document.getElementById('tpSearch') || (input && input.closest && input.closest('.tp-search'));
+        if (!box) return;
+        var val = '';
+        if (input && input.value != null) {
+          val = input.value;
+        } else {
+          var field = box.querySelector('.tp-search-input');
+          val = field ? field.value : '';
+        }
+        box.classList.toggle('has-query', String(val).trim().length > 0);
+      };
+      window.tpSaveColumnPrefs = function () {
+        window.tpWriteColumnPrefs(window.tpCollectColumnPrefs());
+      };
+      window.tpOnColumnToggle = function (cb) {
+        if (!cb) return;
+        var key = cb.getAttribute('data-col-key');
+        if (!key) {
+          var row = cb.closest('[data-col-key]');
+          key = row ? row.getAttribute('data-col-key') : '';
+        }
+        if (!key) return;
+        var show = !!cb.checked;
+        document.querySelectorAll('.tp-table [data-col="' + key + '"]').forEach(function (el) {
+          el.classList.toggle('is-col-off', !show);
+        });
+        window.tpSaveColumnPrefs();
+      };
+      window.tpResetColumnPrefs = function () {
+        try { localStorage.removeItem(window.TP_COLS_KEY); } catch (err) {}
+      };
+      window.tpToggleMobileFilters = function () {
+        var btn = document.getElementById('tpMobileFiltersBtn');
+        var panel = document.getElementById('tpMobileFiltersPanel');
+        if (!btn || !panel) return false;
+        var open = panel.classList.toggle('is-open');
+        panel.hidden = !open;
+        btn.setAttribute('aria-expanded', open ? 'true' : 'false');
+        return false;
+      };
+      window.tpOpenRowThesaurus = function (row) {
+        if (!row) return;
+        var open = row.querySelector('a.tp-c-name-in, a.tp-act--open');
+        if (!open) return;
+        open.click();
+      };
+      window.TP_TAB_GLIDER_KEY = 'opentheso.tp.tabGlider';
+      window.tpTabGliderMetrics = function (tabs, tab) {
+        if (!tabs || !tab) return null;
+        var tabsRect = tabs.getBoundingClientRect();
+        var tabRect = tab.getBoundingClientRect();
+        return {
+          x: Math.round((tabRect.left - tabsRect.left + tabs.scrollLeft) * 100) / 100,
+          y: Math.round((tabRect.top - tabsRect.top + tabs.scrollTop) * 100) / 100,
+          w: Math.round(tabRect.width * 100) / 100,
+          h: Math.round(tabRect.height * 100) / 100
+        };
+      };
+      window.tpEnsureTabGlider = function (tabs) {
+        if (!tabs) return null;
+        var glider = tabs.querySelector('.tp-tabs-glider');
+        if (glider) return glider;
+        glider = document.createElement('span');
+        glider.className = 'tp-tabs-glider';
+        glider.setAttribute('aria-hidden', 'true');
+        tabs.insertBefore(glider, tabs.firstChild);
+        return glider;
+      };
+      window.tpMoveTabGlider = function (tabs, tab, animate) {
+        var glider = window.tpEnsureTabGlider(tabs);
+        var metrics = window.tpTabGliderMetrics(tabs, tab);
+        if (!glider || !metrics) return;
+        if (!animate) {
+          glider.style.transition = 'none';
+        } else {
+          glider.style.transition = '';
+        }
+        glider.style.width = metrics.w + 'px';
+        glider.style.height = metrics.h + 'px';
+        glider.style.transform = 'translate3d(' + metrics.x + 'px,' + metrics.y + 'px,0)';
+        if (!animate) {
+          void glider.offsetWidth;
+          glider.style.transition = '';
+        }
+        glider.classList.add('is-ready');
+      };
+      window.tpRowMatchesTab = function (row, tab) {
+        if (!row) return false;
+        if (!tab || tab === 'all') return true;
+        if (tab === 'member') return row.getAttribute('data-tp-member') === 'true';
+        if (tab === 'public') return row.getAttribute('data-tp-public') === 'true';
+        return true;
+      };
+      window.tpApplyTabFilter = function (tab) {
+        var visible = 0;
+        document.querySelectorAll('tr.tp-row').forEach(function (row) {
+          var show = window.tpRowMatchesTab(row, tab);
+          row.classList.toggle('is-tab-off', !show);
+          if (show) visible += 1;
+        });
+        var tabEmpty = document.getElementById('tpTabEmpty');
+        var catalogEmpty = document.querySelector('.tp-empty-row--catalog');
+        if (tabEmpty) {
+          var showTabEmpty = visible === 0 && !catalogEmpty;
+          tabEmpty.hidden = !showTabEmpty;
+          if (showTabEmpty) tabEmpty.removeAttribute('hidden');
+          else tabEmpty.setAttribute('hidden', 'hidden');
+        }
+      };
+      window.tpSelectTab = function (tabEl) {
+        if (!tabEl) return false;
+        var tabs = tabEl.closest('.tp-tabs');
+        if (!tabs || tabs.classList.contains('is-guest')) return false;
+        var tab = tabEl.getAttribute('data-tp-tab') || 'all';
+        var current = tabs.querySelector('.tp-tab.is-on');
+        if (current === tabEl) return false;
+        var allTabs = Array.prototype.slice.call(tabs.querySelectorAll('.tp-tab[data-tp-tab]'));
+        var fromIdx = current ? allTabs.indexOf(current) : 0;
+        var toIdx = allTabs.indexOf(tabEl);
+        var dir = toIdx >= fromIdx ? 'right' : 'left';
+        allTabs.forEach(function (el) { el.classList.remove('is-on'); });
+        tabEl.classList.add('is-on');
+        window.tpMoveTabGlider(tabs, tabEl, true);
+        var hidden = document.getElementById('tpActiveTab');
+        if (hidden) hidden.value = tab;
+        window.tpApplyTabFilter(tab);
+        var wrap = document.getElementById('tpTableWrap');
+        if (wrap) {
+          wrap.classList.remove('is-tab-switch', 'is-tab-left', 'is-tab-right');
+          void wrap.offsetWidth;
+          wrap.classList.add('is-tab-switch', dir === 'right' ? 'is-tab-right' : 'is-tab-left');
+        }
+        return false;
+      };
+      window.tpBindTabs = function () {
+        var tabs = document.getElementById('tpTabs') || document.querySelector('.tp-tabs:not(.is-guest)');
+        if (!tabs || tabs.classList.contains('is-guest')) return;
+        var active = tabs.querySelector('.tp-tab.is-on') || tabs.querySelector('.tp-tab[data-tp-tab]');
+        if (!active) return;
+        window.tpEnsureTabGlider(tabs);
+        window.tpMoveTabGlider(tabs, active, false);
+        var tab = active.getAttribute('data-tp-tab') || 'all';
+        window.tpApplyTabFilter(tab);
+        if (!tabs.dataset.tpTabsBound) {
+          tabs.dataset.tpTabsBound = '1';
+          window.addEventListener('resize', function () {
+            var on = tabs.querySelector('.tp-tab.is-on');
+            if (on) window.tpMoveTabGlider(tabs, on, false);
+          });
+        }
+      };
+      window.tpEnsureImportFormatGlider = function (bar) {
+        if (!bar) return null;
+        var glider = bar.querySelector('.tp-import-formats-glider');
+        if (glider) return glider;
+        glider = document.createElement('span');
+        glider.className = 'tp-import-formats-glider';
+        glider.setAttribute('aria-hidden', 'true');
+        bar.insertBefore(glider, bar.firstChild);
+        return glider;
+      };
+      window.tpMoveImportFormatGlider = function (bar, btn, animate) {
+        var glider = window.tpEnsureImportFormatGlider(bar);
+        var metrics = window.tpTabGliderMetrics(bar, btn);
+        if (!glider || !metrics) return;
+        if (!animate) glider.style.transition = 'none';
+        else glider.style.transition = '';
+        glider.style.width = metrics.w + 'px';
+        glider.style.height = metrics.h + 'px';
+        glider.style.transform = 'translate3d(' + metrics.x + 'px,' + metrics.y + 'px,0)';
+        if (!animate) {
+          void glider.offsetWidth;
+          glider.style.transition = '';
+        }
+        glider.classList.add('is-ready');
+      };
+      window.tpApplyImportFormat = function (format) {
+        var root = document.getElementById('tpImportRoot');
+        if (!root) return;
+        var isSkos = format === 'skos';
+        root.querySelectorAll('[data-tp-fmt-panel]').forEach(function (panel) {
+          var kind = panel.getAttribute('data-tp-fmt-panel');
+          var show = isSkos ? kind === 'skos' : kind === 'csv';
+          panel.classList.toggle('is-off', !show);
+        });
+        var bar = document.getElementById('tpImportFormats');
+        var zone = document.getElementById('tpImportFileBlock');
+        var file = document.getElementById('tpImportFile');
+        var hint = zone && zone.querySelector('.tp-drop-s');
+        if (bar) {
+          var accept = isSkos
+            ? bar.getAttribute('data-accept-skos')
+            : bar.getAttribute('data-accept-csv');
+          var hintTxt = isSkos
+            ? bar.getAttribute('data-hint-skos')
+            : bar.getAttribute('data-hint-csv');
+          if (zone && accept) zone.setAttribute('data-accept', accept);
+          if (file && accept) file.setAttribute('accept', accept);
+          if (hint && hintTxt) hint.textContent = hintTxt;
+        }
+      };
+      window.tpSelectImportFormat = function (btn, opts) {
+        if (!btn) return false;
+        opts = opts || {};
+        var bar = btn.closest('.tp-import-formats') || document.getElementById('tpImportFormats');
+        if (!bar) return false;
+        var format = btn.getAttribute('data-tp-format') || 'skos';
+        var current = bar.querySelector('.tp-import-fmt.is-on');
+        if (current === btn && !opts.force) return false;
+        var all = Array.prototype.slice.call(bar.querySelectorAll('.tp-import-fmt[data-tp-format]'));
+        var fromIdx = current ? all.indexOf(current) : 0;
+        var toIdx = all.indexOf(btn);
+        var dir = toIdx >= fromIdx ? 'right' : 'left';
+        all.forEach(function (el) { el.classList.remove('is-on'); });
+        btn.classList.add('is-on');
+        window.tpMoveImportFormatGlider(bar, btn, true);
+        var hidden = document.getElementById('tpImportFormat');
+        if (hidden) hidden.value = format;
+        window.tpApplyImportFormat(format);
+        var zone = document.getElementById('tpImportFileBlock');
+        var hadFile = !!(zone && zone.classList.contains('has-file'));
+        var preview = document.getElementById('tpImportPreview');
+        var existing = document.getElementById('tpImportExisting');
+        if (preview) {
+          preview.style.display = 'none';
+          preview.classList.remove('is-ready');
+        }
+        if (existing) existing.style.display = 'none';
+        var root = document.getElementById('tpImportRoot');
+        if (root) {
+          root.setAttribute('data-load-done', 'false');
+          root.setAttribute('data-import-ready', 'false');
+        }
+        var body = document.getElementById('tpImportPanel');
+        if (body) {
+          body.classList.add('tp-import-body');
+          body.classList.remove('is-fmt-switch', 'is-fmt-left');
+          void body.offsetWidth;
+          body.classList.add('is-fmt-switch');
+          if (dir === 'left') body.classList.add('is-fmt-left');
+        }
+        if (hadFile && !opts.keepFile) {
+          var clearBtn = document.getElementById('tpImportClearFile');
+          if (clearBtn) {
+            window.setTimeout(function () { clearBtn.click(); }, 220);
+          } else if (zone) {
+            zone.classList.remove('has-file', 'is-analyzed', 'is-pending', 'needs-reanalyze');
+            var file = document.getElementById('tpImportFile');
+            if (file) file.value = '';
+          }
+        }
+        window.tpSyncImportSubmit && window.tpSyncImportSubmit();
+        return false;
+      };
+      window.tpBindImportFormats = function () {
+        var bar = document.getElementById('tpImportFormats');
+        if (!bar) return;
+        var active = bar.querySelector('.tp-import-fmt.is-on') || bar.querySelector('.tp-import-fmt[data-tp-format]');
+        if (!active) return;
+        window.tpEnsureImportFormatGlider(bar);
+        window.tpMoveImportFormatGlider(bar, active, false);
+        window.tpApplyImportFormat(active.getAttribute('data-tp-format') || 'skos');
+        if (!bar.dataset.tpFmtBound) {
+          bar.dataset.tpFmtBound = '1';
+          window.addEventListener('resize', function () {
+            var on = bar.querySelector('.tp-import-fmt.is-on');
+            if (on) window.tpMoveImportFormatGlider(bar, on, false);
+          });
+        }
+      };
+      window.tpBindRowKeyboard = function () {
+        document.querySelectorAll('tr.tp-row').forEach(function (row) {
+          if (row.dataset.tpKeyBound === '1') return;
+          row.dataset.tpKeyBound = '1';
+          row.setAttribute('title', row.getAttribute('title') || 'Voir les détails du thésaurus');
+          row.addEventListener('click', function (e) {
+            if (e.target && e.target.closest('a,button,input,select,textarea,label,.tp-row-acts')) return;
+            e.preventDefault();
+            window.tpOpenRowThesaurus(row);
+          });
+          row.addEventListener('keydown', function (e) {
+            if (e.key !== 'Enter' && e.key !== ' ') return;
+            if (e.target && e.target !== row && e.target.closest('a,button,input,select,textarea,label,.tp-row-acts')) return;
+            e.preventDefault();
+            window.tpOpenRowThesaurus(row);
+          });
+        });
+      };
+      window.tpConsumeListFlash = function () {
+        var root = document.getElementById('tpRoot');
+        if (!root || typeof window.toast !== 'function') return;
+        var msg = root.getAttribute('data-flash');
+        var token = root.getAttribute('data-flash-token');
+        var error = root.getAttribute('data-flash-error') === 'true';
+        if (!msg || !token) return;
+        if (window._tpFlashToken === token) return;
+        window._tpFlashToken = token;
+        window.toast(msg, error ? { error: true } : undefined);
+      };
+      window.tpSyncCreateSubmit = function () {
+        var title = document.getElementById('tpCreateTitle');
+        var btn = document.getElementById('tpCreateAsk');
+        if (!title || !btn) return;
+        var ok = !!(title.value && title.value.trim());
+        btn.classList.toggle('is-disabled', !ok);
+        btn.setAttribute('aria-disabled', ok ? 'false' : 'true');
+        btn.disabled = !ok;
+      };
+      window.tpAskCreate = function (btn) {
+        if (btn && (btn.classList.contains('is-disabled') || btn.disabled || btn.getAttribute('aria-disabled') === 'true')) {
+          return false;
+        }
+        var title = document.getElementById('tpCreateTitle');
+        var name = title && title.value ? title.value.trim() : '';
+        if (!name) {
+          window.tpSyncCreateSubmit && window.tpSyncCreateSubmit();
+          return false;
+        }
+        var text = document.getElementById('tpCreateConfirmText');
+        if (text) {
+          text.textContent = 'Confirmer la création du thésaurus « ' + name + ' » ?';
+        }
+        if (typeof showConfirm === 'function') {
+          showConfirm('#tpCreateConfirm');
+        } else {
+          var dlg = document.getElementById('tpCreateConfirm');
+          if (dlg) dlg.hidden = false;
+        }
+        return false;
+      };
+      window.tpConfirmCreateOk = function () {
+        if (typeof hideConfirm === 'function') {
+          hideConfirm('#tpCreateConfirm');
+        } else {
+          var dlg = document.getElementById('tpCreateConfirm');
+          if (dlg) dlg.hidden = true;
+        }
+        window.tpShowLoading('Création du thésaurus…');
+        var go = document.getElementById('tpCreateSubmit');
+        if (go) go.click();
+        return false;
+      };
+      window.tpDismissCreateConfirm = function () {
+        if (typeof hideConfirm === 'function') {
+          hideConfirm('#tpCreateConfirm');
+        } else {
+          var dlg = document.getElementById('tpCreateConfirm');
+          if (dlg) dlg.hidden = true;
+        }
+        return false;
+      };
+      window.tpShowDeleteConfirm = function () {
+        var dlg = document.getElementById('tpDeleteConfirm');
+        if (!dlg || dlg.getAttribute('data-ready') !== 'true') return;
+        dlg.classList.remove('is-off');
+        dlg.removeAttribute('hidden');
+        dlg.hidden = false;
+        if (typeof showConfirm === 'function') {
+          showConfirm('#tpDeleteConfirm');
+        }
+      };
+      window.tpHideDeleteConfirm = function () {
+        var dlg = document.getElementById('tpDeleteConfirm');
+        if (dlg) {
+          dlg.hidden = true;
+          dlg.setAttribute('hidden', 'hidden');
+          dlg.classList.add('is-off');
+          dlg.setAttribute('data-ready', 'false');
+        }
+        if (typeof hideConfirm === 'function') {
+          hideConfirm('#tpDeleteConfirm');
+        }
+      };
+      window.tpCleanupUiLocks = function () {
+        if (window._tpLoadingSafety) {
+          window.clearTimeout(window._tpLoadingSafety);
+          window._tpLoadingSafety = null;
+        }
+        if (window._tpLeavingSafety) {
+          window.clearTimeout(window._tpLeavingSafety);
+          window._tpLeavingSafety = null;
+        }
+        // Ne pas fermer la confirmation de suppression : elle est pilotée par le bean
+        // (data-ready) et serait sinon refermée juste après le postback (pageshow).
+        window.tpDismissCreateConfirm && window.tpDismissCreateConfirm();
+        window.tpHideLoading && window.tpHideLoading();
+        document.body.classList.remove('tp-is-loading', 'is-export-lock', 'tp-export-open');
+        document.body.removeAttribute('aria-busy');
+        var loading = document.getElementById('tpLoading');
+        if (loading) {
+          loading.hidden = true;
+          loading.setAttribute('hidden', 'hidden');
+          loading.classList.remove('is-import');
+          loading.setAttribute('aria-busy', 'false');
+        }
+        document.querySelectorAll('.tp.tp--leaving, .tp--leaving').forEach(function (node) {
+          node.classList.remove('tp--leaving');
+          node.style.pointerEvents = '';
+        });
+        document.querySelectorAll('[data-tp-leaving="1"], .is-leaving').forEach(function (node) {
+          node.removeAttribute('data-tp-leaving');
+          node.classList.remove('is-leaving');
+        });
+        var createConfirm = document.getElementById('tpCreateConfirm');
+        if (createConfirm) {
+          createConfirm.hidden = true;
+          createConfirm.setAttribute('hidden', 'hidden');
+        }
+      };
+      window.tpOpenDeleteConfirmIfReady = function () {
+        var panel = document.getElementById('tpDeleteConfirm');
+        if (!panel || panel.getAttribute('data-ready') !== 'true') return false;
+        window.tpShowDeleteConfirm && window.tpShowDeleteConfirm();
+        return true;
+      };
+      window.tpDismissDeleteConfirm = function () {
+        window.tpHideDeleteConfirm && window.tpHideDeleteConfirm();
+        var cancel = document.getElementById('tpDeleteCancel');
+        if (cancel) cancel.click();
+        return false;
+      };
+      window.tpConfirmDeleteOk = function () {
+        // Fermer le calque, puis lancer le postback via le lien caché.
+        window.tpHideDeleteConfirm && window.tpHideDeleteConfirm();
+        var go = document.getElementById('tpDeleteSubmit');
+        if (go) go.click();
+        return false;
+      };
+      window.tpAnimateBackToList = function (el, submitEl) {
+        if (!el) return true;
+        if (el.getAttribute('data-tp-leaving') === '1') return true;
+        if (window.exportBusy) return false;
+        window.closePickerThesaurusExport && window.closePickerThesaurusExport();
+        var root = (el.closest && el.closest('.tp'))
+          || document.getElementById('tpImportRoot')
+          || document.getElementById('tpExportRoot')
+          || document.getElementById('tpRoot');
+        if (root) root.classList.add('tp--leaving');
+        el.classList.add('is-leaving');
+        el.setAttribute('data-tp-leaving', '1');
+        var target = submitEl || el;
+        if (window._tpLeavingSafety) {
+          window.clearTimeout(window._tpLeavingSafety);
+        }
+        window._tpLeavingSafety = window.setTimeout(function () {
+          window.tpCleanupUiLocks && window.tpCleanupUiLocks();
+        }, 2500);
+        window.setTimeout(function () {
+          if (!target || !document.body.contains(target)) {
+            window.tpCleanupUiLocks && window.tpCleanupUiLocks();
+            return;
+          }
+          // Déclencher le cancel en postback complet (pas d'ajax sur cette page).
+          if (root) root.style.pointerEvents = 'auto';
+          try {
+            target.click();
+          } catch (err) {
+            window.tpCleanupUiLocks && window.tpCleanupUiLocks();
+          }
+        }, 220);
+        return false;
+      };
+      window.tpToggleLangs = function (btn, evt) {
+        if (evt) {
+          evt.preventDefault();
+          evt.stopPropagation();
+        }
+        if (!btn) return false;
+        var wrap = btn.closest('.tp-langs-in');
+        if (!wrap) return false;
+        var expanded = wrap.classList.toggle('is-expanded');
+        btn.setAttribute('aria-expanded', expanded ? 'true' : 'false');
+        btn.setAttribute('title', expanded ? 'Réduire la liste des langues' : 'Afficher toutes les langues');
+        btn.textContent = expanded ? '−' : (btn.getAttribute('data-more') || '+');
+        return false;
+      };
+      document.addEventListener('click', function (e) {
+        var actEl = e.target.closest && e.target.closest('[data-act]');
+        var act = actEl ? actEl.getAttribute('data-act') : '';
+        if (act === 'tp-create-dismiss') {
+          e.preventDefault();
+          window.tpDismissCreateConfirm();
+          return;
+        }
+        if (act === 'tp-delete-dismiss') {
+          e.preventDefault();
+          window.tpDismissDeleteConfirm && window.tpDismissDeleteConfirm();
+          return;
+        }
+        if (act === 'tp-delete-ok') {
+          e.preventDefault();
+          window.tpConfirmDeleteOk && window.tpConfirmDeleteOk();
+          return;
+        }
+        if (act === 'tp-create-ok') {
+          e.preventDefault();
+          window.tpConfirmCreateOk();
+          return;
+        }
+        if (act === 'tp-create-modal') {
+          e.stopPropagation();
+          return;
+        }
+        if (act === 'tp-delete-modal') {
+          e.stopPropagation();
+          return;
+        }
+        var toggle = e.target.closest && e.target.closest('[data-act="tp-lang-toggle"]');
+        if (toggle) {
+          e.preventDefault();
+          e.stopPropagation();
+          var open = !toggle.classList.contains('is-open');
+          document.querySelectorAll('.tp-lang-btn.is-open').forEach(function (b) {
+            b.classList.remove('is-open');
+            b.setAttribute('aria-expanded', 'false');
+          });
+          if (open) {
+            toggle.classList.add('is-open');
+            toggle.setAttribute('aria-expanded', 'true');
+          }
+          return;
+        }
+        if (e.target.closest && e.target.closest('.tp-lang-menu')) {
+          return;
+        }
+        document.querySelectorAll('.tp-lang-btn.is-open').forEach(function (b) {
+          b.classList.remove('is-open');
+          b.setAttribute('aria-expanded', 'false');
+        });
+      });
+      document.addEventListener('keydown', function (e) {
+        if (e.key !== 'Escape') return;
+        var del = document.getElementById('tpDeleteConfirm');
+        if (del && !del.hidden) {
+          window.tpDismissDeleteConfirm && window.tpDismissDeleteConfirm();
+          return;
+        }
+        var dlg = document.getElementById('tpCreateConfirm');
+        if (dlg && !dlg.hidden) {
+          window.tpDismissCreateConfirm();
+        }
+      });
+      document.addEventListener('DOMContentLoaded', function () {
+        window.tpCleanupUiLocks && window.tpCleanupUiLocks();
+        window.tpSyncCreateSubmit && window.tpSyncCreateSubmit();
+        window.tpSyncImportSubmit && window.tpSyncImportSubmit();
+        window.tpBindImportDrop && window.tpBindImportDrop();
+        window.tpApplyPlaceholders && window.tpApplyPlaceholders();
+        window.tpLoadColumnPrefs && window.tpLoadColumnPrefs();
+        window.tpBindRowKeyboard && window.tpBindRowKeyboard();
+        window.tpBindTabs && window.tpBindTabs();
+        window.tpBindImportFormats && window.tpBindImportFormats();
+        window.tpPolishImportPage && window.tpPolishImportPage();
+        window.tpSyncSearchClear && window.tpSyncSearchClear();
+        window.tpConsumeListFlash && window.tpConsumeListFlash();
+        window.tpMountExportPage && window.tpMountExportPage();
+        window.tpOpenDeleteConfirmIfReady && window.tpOpenDeleteConfirmIfReady();
+        var loadingEl = document.getElementById('tpLoading');
+        if (loadingEl && !loadingEl.dataset.tpDismissBound) {
+          loadingEl.dataset.tpDismissBound = '1';
+          loadingEl.addEventListener('click', function (ev) {
+            if (loadingEl.classList.contains('is-import')) return;
+            if (ev.target === loadingEl) {
+              window.tpCleanupUiLocks && window.tpCleanupUiLocks();
+            }
+          });
+        }
+      });
+      window.addEventListener('pageshow', function () {
+        window.tpCleanupUiLocks && window.tpCleanupUiLocks();
+        window.tpOpenDeleteConfirmIfReady && window.tpOpenDeleteConfirmIfReady();
+      });
+      window.tpApplyPlaceholders = function () {
+        document.querySelectorAll('input[data-ph], textarea[data-ph]').forEach(function (el) {
+          var ph = el.getAttribute('data-ph');
+          if (ph) el.setAttribute('placeholder', ph);
+        });
+      };
+      window.tpBindImportDrop = function () {
+        document.querySelectorAll('[data-tp-drop="1"]').forEach(function (zone) {
+          var wrap = zone.closest('.tp-import-dropzone');
+          var input = wrap && wrap.querySelector('input[type="file"]');
+          if (!input) {
+            var forId = zone.getAttribute('for');
+            input = forId ? document.getElementById(forId) : null;
+          }
+          if (!input) return;
+          var accept = wrap && wrap.getAttribute('data-accept');
+          if (accept) input.setAttribute('accept', accept);
+          if (input.dataset.tpFileBound !== '1') {
+            input.dataset.tpFileBound = '1';
+            input.addEventListener('change', function () {
+              if (!input.files || !input.files.length) return;
+              var file = input.files[0];
+              var formatEl = document.getElementById('tpImportFormat');
+              var current = formatEl && formatEl.value ? formatEl.value : 'skos';
+              var guessed = window.tpGuessImportFormat && window.tpGuessImportFormat(file.name, current);
+              if (guessed && guessed !== current) {
+                var bar = document.getElementById('tpImportFormats');
+                var fmtBtn = bar && bar.querySelector('.tp-import-fmt[data-tp-format="' + guessed + '"]');
+                if (fmtBtn) {
+                  window.tpSelectImportFormat(fmtBtn, { keepFile: true, force: true });
+                }
+              }
+              window.tpOptimisticImportFile && window.tpOptimisticImportFile(file);
+              var commit = document.getElementById('tpImportFileCommit');
+              if (commit) commit.click();
+            });
+          }
+          if (zone.dataset.dropBound === '1') return;
+          zone.dataset.dropBound = '1';
+          ['dragenter', 'dragover'].forEach(function (ev) {
+            zone.addEventListener(ev, function (e) {
+              e.preventDefault();
+              e.stopPropagation();
+              zone.classList.add('is-drag');
+            });
+          });
+          ['dragleave', 'drop'].forEach(function (ev) {
+            zone.addEventListener(ev, function (e) {
+              e.preventDefault();
+              e.stopPropagation();
+              zone.classList.remove('is-drag');
+            });
+          });
+          zone.addEventListener('drop', function (e) {
+            var files = e.dataTransfer && e.dataTransfer.files;
+            if (!files || !files.length) return;
+            try {
+              var dt = new DataTransfer();
+              dt.items.add(files[0]);
+              input.files = dt.files;
+            } catch (err) {
+              return;
+            }
+            input.dispatchEvent(new Event('change', { bubbles: true }));
+          });
+        });
+      };
+      //]]>
+    </script>
+</ui:composition>

@@ -16,6 +16,16 @@
   --v2-bp-wide:1100px;
 }
 
+/* Typo globale V2 = maquette (IBM Plex) — après le thème PrimeFaces. */
+html{
+  --font-family:var(--sans,"IBM Plex Sans",system-ui,sans-serif);
+}
+body,
+body .ui-widget,
+.ui-widget{
+  font-family:var(--sans,"IBM Plex Sans",system-ui,sans-serif);
+}
+
 .menu-pop{display:none}
 .thesaurus-btn.is-on + .menu-pop{display:block}
 
@@ -399,9 +409,36 @@ button.st-hint{background:none;border:none;padding:0;cursor:pointer;font:inherit
 
 a.th-id,a.thesaurus-logo,a.thesaurus-btn,a.boc-item,a.boc,a.bo-back,a.empty-link,a.menu-row,a.menu-foot,a.admin-tile,a.proj-row,a.view-pick-item,a.view-add,a.cand-row,a.bo-btn,a.abt-save,a.abt-cancel,a.tn-caret,a.cv-back-graph{color:inherit;text-decoration:none}
 a.th-id{flex:1}
-.login-form .st-input{max-width:none;margin:0}
+.login-form .st-input{
+  max-width:none;margin:0;width:100%;box-sizing:border-box;
+  min-height:38px;padding:9px 12px;border-radius:9px;
+  font-family:var(--sans,"IBM Plex Sans",system-ui,sans-serif);
+  font-size:13.5px;font-weight:450;font-style:normal;
+  line-height:1.35;letter-spacing:.01em;text-transform:none;
+  color:var(--ink);background:var(--surface);
+  transition:border-color .14s ease,box-shadow .14s ease,background-color .14s ease
+}
+.login-form .st-input::placeholder{
+  font-family:inherit;font-size:inherit;font-weight:400;
+  letter-spacing:.01em;text-transform:none;
+  color:var(--ink-4);opacity:.9
+}
+.login-form .st-input:hover{border-color:color-mix(in srgb,var(--line) 55%, var(--accent) 45%)}
+.login-form .st-input:focus{
+  outline:none;border-color:var(--accent-line);
+  box-shadow:0 0 0 3px var(--accent-soft);background:var(--surface)
+}
 .login-form .st-input.is-invalid{border-color:#9a3b2e;box-shadow:0 0 0 3px rgba(154,59,46,.12)}
-.login-l{display:block;font-size:11px;font-weight:600;color:var(--ink-3);margin:8px 0 4px}
+.login-form input[type="password"].st-input,
+.login-form input[type="text"].st-input{
+  font-family:var(--sans,"IBM Plex Sans",system-ui,sans-serif)
+}
+.login-l{
+  display:block;margin:10px 0 5px;
+  font-family:var(--sans,"IBM Plex Sans",system-ui,sans-serif);
+  font-size:12px;font-weight:600;letter-spacing:.015em;
+  text-transform:none;color:var(--ink-3)
+}
 .login-alert{display:flex;align-items:flex-start;gap:8px;margin:0 0 10px;padding:8px 10px;
   border-radius:8px;border:1px solid rgba(154,59,46,.22);background:#f8ecea;color:#8a3429;
   font-size:12.5px;line-height:1.4}

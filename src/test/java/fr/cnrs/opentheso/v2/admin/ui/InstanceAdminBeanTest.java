@@ -3,9 +3,11 @@ package fr.cnrs.opentheso.v2.admin.ui;
 import fr.cnrs.opentheso.v2.admin.model.AdminThesaurus;
 import fr.cnrs.opentheso.v2.admin.model.CreatedAdminUser;
 import fr.cnrs.opentheso.v2.admin.model.InstanceAdminAccount;
+import fr.cnrs.opentheso.v2.admin.model.ThesaurusMember;
 import fr.cnrs.opentheso.v2.admin.service.AdminCatalogService;
 import fr.cnrs.opentheso.v2.admin.service.AdminUserService;
 import fr.cnrs.opentheso.v2.project.policy.ProjectAccessPolicy;
+import fr.cnrs.opentheso.v2.project.service.ProjectMemberService;
 import fr.cnrs.opentheso.v2.shared.repository.UserCommandRepository;
 import fr.cnrs.opentheso.v2.shared.ui.UserSession;
 import fr.cnrs.opentheso.v2.shared.ui.V2LocaleBean;
@@ -46,6 +48,8 @@ class InstanceAdminBeanTest {
     @Mock
     private AdminUserService adminUserService;
     @Mock
+    private ProjectMemberService projectMemberService;
+    @Mock
     private UserProfileService userProfileService;
     @Mock
     private UserCommandRepository userCommandRepository;
@@ -59,6 +63,7 @@ class InstanceAdminBeanTest {
                 v2LocaleBean,
                 adminCatalogService,
                 adminUserService,
+                projectMemberService,
                 userProfileService,
                 userCommandRepository
         );
@@ -483,6 +488,111 @@ class InstanceAdminBeanTest {
         assertEquals(0, bean.getUsersPage());
         assertEquals(5, bean.getPagedAccounts().size());
         assertEquals(1, bean.getUsersPageCount());
+    }
+
+    @Test
+    void openThesaurusMembers_loadsAndFiltersMembers() {
+        when(userSession.canAccessSuperAdminScreen()).thenReturn(true);
+        when(userSession.isSuperAdmin()).thenReturn(true);
+        when(v2LocaleBean.getIdLangue()).thenReturn("fr");
+        when(adminCatalogService.listAllThesauri(true, "fr")).thenReturn(List.of(
+                new AdminThesaurus("th1", "PACTOLS", 5, "Frantiq", false, null)
+        ));
+        when(adminCatalogService.listInstanceAccounts(true)).thenReturn(List.of());
+        when(adminCatalogService.listThesaurusMembers(true, "th1", 5, "fr")).thenReturn(List.of(
+                new ThesaurusMember(2, "alice", true, ProjectAccessPolicy.ROLE_MANAGER, "Manager", false),
+                new ThesaurusMember(3, "bob", true, ProjectAccessPolicy.ROLE_ADMIN, "Admin", true)
+        ));
+
+        bean.reload();
+        bean.openThesaurusMembers("th1");
+
+        assertTrue(bean.isThesaurusMembers());
+        assertEquals(2, bean.getFilteredThesaurusMembers().size());
+
+        bean.setMembersScopeFilter("limited");
+        assertEquals(1, bean.getFilteredThesaurusMembers().size());
+        assertEquals("alice", bean.getFilteredThesaurusMembers().get(0).username());
+
+        bean.setMembersScopeFilter("");
+        bean.setMembersQuery("bob");
+        assertEquals(1, bean.getFilteredThesaurusMembers().size());
+        assertEquals("bob", bean.getFilteredThesaurusMembers().get(0).username());
+    }
+
+    @Test
+    void closeMemberRemoveConfirm_keepsMembersView() {
+        when(userSession.canAccessSuperAdminScreen()).thenReturn(true);
+        when(userSession.isSuperAdmin()).thenReturn(true);
+        when(v2LocaleBean.getIdLangue()).thenReturn("fr");
+        when(adminCatalogService.listAllThesauri(true, "fr")).thenReturn(List.of(
+                new AdminThesaurus("th1", "PACTOLS", 5, "Frantiq", false, null)
+        ));
+        when(adminCatalogService.listInstanceAccounts(true)).thenReturn(List.of());
+        when(adminCatalogService.listThesaurusMembers(true, "th1", 5, "fr")).thenReturn(List.of());
+
+        bean.reload();
+        bean.openThesaurusMembers("th1");
+        bean.openMemberRemoveConfirm(9, ProjectAccessPolicy.ROLE_CONTRIBUTOR, "carol");
+
+        assertTrue(bean.isMemberRemoveConfirmOpen());
+        bean.closeMemberRemoveConfirm();
+        assertFalse(bean.isMemberRemoveConfirmOpen());
+        assertTrue(bean.isThesaurusMembers());
+        assertEquals("th1", bean.getOpenThesaurusId());
+    }
+
+    @Test
+    void closeAddMember_restoresListAndKeepsFilters() {
+        when(userSession.canAccessSuperAdminScreen()).thenReturn(true);
+        when(userSession.isSuperAdmin()).thenReturn(true);
+        when(v2LocaleBean.getIdLangue()).thenReturn("fr");
+        when(adminCatalogService.listAllThesauri(true, "fr")).thenReturn(List.of(
+                new AdminThesaurus("th1", "PACTOLS", 5, "Frantiq", false, null)
+        ));
+        when(adminCatalogService.listInstanceAccounts(true)).thenReturn(List.of());
+        when(adminCatalogService.listThesaurusMembers(true, "th1", 5, "fr")).thenReturn(List.of(
+                new ThesaurusMember(2, "alice", true, ProjectAccessPolicy.ROLE_MANAGER, "Manager", false),
+                new ThesaurusMember(3, "bob", false, ProjectAccessPolicy.ROLE_ADMIN, "Admin", true)
+        ));
+
+        bean.reload();
+        bean.openThesaurusMembers("th1");
+        bean.setMembersQuery("ali");
+        bean.setMembersRoleFilter(String.valueOf(ProjectAccessPolicy.ROLE_MANAGER));
+        bean.setMembersStatusFilter("active");
+        bean.openAddMember();
+        bean.selectMemberCandidate(9, "carol");
+
+        assertTrue(bean.isAddMemberOpen());
+        assertEquals(9, bean.getSelectedMemberUserId());
+
+        bean.closeAddMember();
+
+        assertFalse(bean.isAddMemberOpen());
+        assertNull(bean.getSelectedMemberUserId());
+        assertEquals("ali", bean.getMembersQuery());
+        assertEquals(String.valueOf(ProjectAccessPolicy.ROLE_MANAGER), bean.getMembersRoleFilter());
+        assertEquals("active", bean.getMembersStatusFilter());
+        assertTrue(bean.isThesaurusMembers());
+        assertEquals("th1", bean.getOpenThesaurusId());
+        assertEquals(1, bean.getFilteredThesaurusMembers().size());
+        assertEquals("alice", bean.getFilteredThesaurusMembers().get(0).username());
+    }
+
+    @Test
+    void memberScopeLabel_distinguishesLimitedAndProjectWide() {
+        when(v2LocaleBean.getMsg("v2.admin.members.scope.limited")).thenReturn("Thésaurus uniquement");
+        when(v2LocaleBean.getMsg("v2.admin.members.inherited")).thenReturn("Via le projet");
+
+        assertEquals(
+                "Thésaurus uniquement",
+                bean.memberScopeLabel(new ThesaurusMember(1, "a", true, 4, "Contributor", false))
+        );
+        assertEquals(
+                "Via le projet",
+                bean.memberScopeLabel(new ThesaurusMember(2, "b", true, 2, "Admin", true))
+        );
     }
 
     private static InstanceAdminAccount account(int id, String username, boolean active) {

@@ -171,17 +171,32 @@ function treeMeta() {
   return document.getElementById("previewTreeMeta") || treePanel();
 }
 
+function pickerExportMeta() {
+  const el = document.getElementById("tpExportMeta");
+  if (!el || el.getAttribute("data-active") !== "1") return null;
+  return el;
+}
+
 function thesaurusTitle() {
+  const picker = pickerExportMeta();
+  if (picker) return picker.getAttribute("data-thesaurus-title") || "";
   const el = treeMeta();
   return (el && el.getAttribute("data-thesaurus-title")) || "";
 }
 
 function thesaurusId() {
+  const picker = pickerExportMeta();
+  if (picker) return picker.getAttribute("data-thesaurus-id") || "";
   const el = treeMeta();
   return (el && el.getAttribute("data-thesaurus-id")) || "";
 }
 
 function thesaurusConceptCount() {
+  const picker = pickerExportMeta();
+  if (picker) {
+    const n = Number(picker.getAttribute("data-concept-count"));
+    return Number.isFinite(n) && n > 0 ? n : 0;
+  }
   const el = treeMeta();
   const n = Number(el && el.getAttribute("data-concept-count"));
   return Number.isFinite(n) && n > 0 ? n : 0;

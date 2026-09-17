@@ -1,0 +1,474 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<ui:composition xmlns="http://www.w3.org/1999/xhtml"
+                xmlns:ui="http://xmlns.jcp.org/jsf/facelets"
+                xmlns:h="http://xmlns.jcp.org/jsf/html"
+                xmlns:f="http://xmlns.jcp.org/jsf/core"
+                xmlns:pt="http://xmlns.jcp.org/jsf/passthrough">
+        <ui:fragment rendered="#{v2ThesaurusPickerBean.listMode}">
+        <div class="tp-gov">
+          <a class="tp-gov-mark" href="#{request.contextPath}/v2/thesauri"
+             title="Retour à l'accueil — Ministère de la Culture">
+            <span class="tp-marianne" aria-hidden="true">
+              <span class="tp-marianne-bars"><i/><i/><i/></span>
+              <span class="tp-marianne-txt">
+                <b>République</b>
+                <b>Française</b>
+              </span>
+            </span>
+          </a>
+          <div class="tp-gov-brand">
+            <span class="gv-min">Ministère<br/>de la Culture</span>
+          </div>
+          <a class="tp-gov-lk" href="https://www.culture.gouv.fr" target="_blank" rel="noreferrer">
+            culture.gouv.fr<span class="gv-ext" aria-hidden="true">↗</span>
+          </a>
+        </div>
+        </ui:fragment>
+
+        <ui:fragment rendered="#{v2ThesaurusPickerBean.listMode}">
+        <div class="tp-hero">
+          <div class="tp-head">
+            <div class="tp-head-copy">
+              <h1 class="tp-title tp-title--logo">
+                <img src="#{request.contextPath}/resources/img/Opentheso.png"
+                     alt="OpenTheso"
+                     width="420"
+                     height="94"/>
+              </h1>
+              <p class="tp-sub">#{v2LocaleBean.getMsg('v2.picker.subtitle')}</p>
+            </div>
+          </div>
+
+          <div class="tp-bar">
+          <div class="tp-search#{not empty v2ThesaurusPickerBean.query ? ' has-query' : ''}"
+               id="tpSearch"
+               role="search">
+            <span class="tp-search-ico" aria-hidden="true">
+              <svg viewBox="0 0 24 24"><circle cx="11" cy="11" r="7"/><path d="m20 20-3-3"/></svg>
+            </span>
+            <h:inputText id="tpQuery"
+                         value="#{v2ThesaurusPickerBean.query}"
+                         styleClass="tp-search-input"
+                         pt:data-ph="#{v2LocaleBean.getMsg('v2.picker.search.placeholder')}"
+                         pt:spellcheck="false"
+                         pt:autocomplete="off"
+                         pt:enterkeyhint="search"
+                         pt:aria-label="#{v2LocaleBean.getMsg('v2.picker.search.placeholder')}"
+                         pt:oninput="window.tpSyncSearchClear &amp;&amp; window.tpSyncSearchClear(this)"
+                         pt:onkeydown="if(event.key==='Enter'){event.preventDefault();return window.tpSubmitRefresh&amp;&amp;window.tpSubmitRefresh();}">
+            </h:inputText>
+            <h:commandButton id="tpRefresh"
+                             styleClass="tp-create-go"
+                             value="ok"
+                             tabindex="-1"
+                             aria-hidden="true"/>
+            <span class="tp-search-hint" aria-hidden="true">↵</span>
+            <h:commandLink styleClass="tp-search-x"
+                           title="#{v2LocaleBean.getMsg('v2.picker.search.clear')}"
+                           pt:aria-label="#{v2LocaleBean.getMsg('v2.picker.search.clear')}"
+                           action="#{v2ThesaurusPickerBean.clearQuery()}">
+              <svg viewBox="0 0 24 24" aria-hidden="true"><path d="M18 6 6 18M6 6l12 12"/></svg>
+            </h:commandLink>
+          </div>
+          <div class="tp-bar-actions">
+            <h:commandLink styleClass="tp-import"
+                           rendered="#{v2ThesaurusPickerBean.canImportThesaurus}"
+                           action="#{v2ThesaurusPickerBean.openImportThesaurus}">
+              <svg class="tp-create-ico" viewBox="0 0 24 24" aria-hidden="true">
+                <path d="M21 15v4a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2v-4"/>
+                <path d="M7 10l5 5 5-5"/>
+                <path d="M12 15V3"/>
+              </svg>
+              <h:outputText value="#{v2LocaleBean.getMsg('v2.picker.import')}"/>
+            </h:commandLink>
+            <h:commandLink styleClass="tp-create"
+                           rendered="#{v2ThesaurusPickerBean.canCreateThesaurus}"
+                           action="#{v2ThesaurusPickerBean.createThesaurus}">
+              <svg class="tp-create-ico" viewBox="0 0 24 24" aria-hidden="true">
+                <path d="M12 5v14"/><path d="M5 12h14"/>
+              </svg>
+              <h:outputText value="#{v2LocaleBean.getMsg('v2.picker.create')}"/>
+            </h:commandLink>
+          </div>
+        </div>
+
+        <h:panelGroup id="tpTabs" layout="block" styleClass="tp-tabs#{v2ThesaurusPickerBean.loggedIn ? '' : ' is-guest'}">
+          <h:inputHidden id="tpActiveTab" value="#{v2ThesaurusPickerBean.activeTab}"/>
+          <ui:fragment rendered="#{v2ThesaurusPickerBean.loggedIn}">
+            <button type="button"
+                    class="tp-tab#{v2ThesaurusPickerBean.activeTab eq 'all' ? ' is-on' : ''}"
+                    data-tp-tab="all"
+                    onclick="return window.tpSelectTab &amp;&amp; window.tpSelectTab(this);">
+              <h:outputText value="#{v2LocaleBean.getMsg('v2.picker.tab.all')}"/>
+              <span class="tp-tab-n">#{v2ThesaurusPickerBean.queryMatchCount}</span>
+            </button>
+            <button type="button"
+                    class="tp-tab#{v2ThesaurusPickerBean.activeTab eq 'member' ? ' is-on' : ''}"
+                    data-tp-tab="member"
+                    onclick="return window.tpSelectTab &amp;&amp; window.tpSelectTab(this);">
+              <svg viewBox="0 0 24 24" aria-hidden="true"><path d="M21 2l-2 2m-7.6 7.6L3 21l3-1 1-3 7.4-7.4M14 6l4 4"/></svg>
+              <h:outputText value="#{v2LocaleBean.getMsg('v2.picker.tab.member')}"/>
+              <span class="tp-tab-n">#{v2ThesaurusPickerBean.memberCount}</span>
+            </button>
+            <button type="button"
+                    class="tp-tab#{v2ThesaurusPickerBean.activeTab eq 'public' ? ' is-on' : ''}"
+                    data-tp-tab="public"
+                    onclick="return window.tpSelectTab &amp;&amp; window.tpSelectTab(this);">
+              <svg viewBox="0 0 24 24" aria-hidden="true"><circle cx="12" cy="12" r="9"/><path d="M3 12h18M12 3a14 14 0 0 1 0 18M12 3a14 14 0 0 0 0 18"/></svg>
+              <h:outputText value="#{v2LocaleBean.getMsg('v2.picker.tab.public')}"/>
+              <span class="tp-tab-n">#{v2ThesaurusPickerBean.publicCount}</span>
+            </button>
+          </ui:fragment>
+        </h:panelGroup>
+        </div>
+
+        <div class="tp-body">
+          <div class="tp-mobile-filters">
+            <button type="button"
+                    class="tp-mobile-filters-btn"
+                    id="tpMobileFiltersBtn"
+                    aria-expanded="false"
+                    aria-controls="tpMobileFiltersPanel"
+                    onclick="return window.tpToggleMobileFilters &amp;&amp; window.tpToggleMobileFilters();">
+              <svg viewBox="0 0 24 24" aria-hidden="true"><path d="M4 6h16M7 12h10M10 18h4"/></svg>
+              <span>#{v2LocaleBean.getMsg('v2.picker.mobile.filters')}</span>
+            </button>
+            <div class="tp-mobile-filters-panel" id="tpMobileFiltersPanel" hidden="hidden">
+              <label class="tp-mobile-f">
+                <span>#{v2LocaleBean.getMsg('v2.picker.col.name')}</span>
+                <h:inputText styleClass="tp-fi" value="#{v2ThesaurusPickerBean.filterName}"
+                             pt:data-ph="#{v2LocaleBean.getMsg('v2.picker.filters')}"
+                             pt:onkeydown="if(event.key==='Enter'){event.preventDefault();return window.tpSubmitRefresh&amp;&amp;window.tpSubmitRefresh();}">
+                </h:inputText>
+              </label>
+              <label class="tp-mobile-f">
+                <span>#{v2LocaleBean.getMsg('v2.picker.col.domain')}</span>
+                <h:inputText styleClass="tp-fi" value="#{v2ThesaurusPickerBean.filterDomain}"
+                             pt:data-ph="#{v2LocaleBean.getMsg('v2.picker.filters')}"
+                             pt:onkeydown="if(event.key==='Enter'){event.preventDefault();return window.tpSubmitRefresh&amp;&amp;window.tpSubmitRefresh();}">
+                </h:inputText>
+              </label>
+              <label class="tp-mobile-f">
+                <span>#{v2LocaleBean.getMsg('v2.picker.col.projects')}</span>
+                <h:inputText styleClass="tp-fi" value="#{v2ThesaurusPickerBean.filterProjects}"
+                             pt:data-ph="#{v2LocaleBean.getMsg('v2.picker.filters')}"
+                             pt:onkeydown="if(event.key==='Enter'){event.preventDefault();return window.tpSubmitRefresh&amp;&amp;window.tpSubmitRefresh();}">
+                </h:inputText>
+              </label>
+              <label class="tp-mobile-f">
+                <span>#{v2LocaleBean.getMsg('v2.picker.col.org')}</span>
+                <h:inputText styleClass="tp-fi" value="#{v2ThesaurusPickerBean.filterOrg}"
+                             pt:data-ph="#{v2LocaleBean.getMsg('v2.picker.filters')}"
+                             pt:onkeydown="if(event.key==='Enter'){event.preventDefault();return window.tpSubmitRefresh&amp;&amp;window.tpSubmitRefresh();}">
+                </h:inputText>
+              </label>
+              <label class="tp-mobile-f">
+                <span>#{v2LocaleBean.getMsg('v2.picker.col.lang')}</span>
+                <h:selectOneMenu styleClass="tp-fi tp-fi--lang" value="#{v2ThesaurusPickerBean.filterLang}"
+                                 pt:onchange="window.tpSubmitRefresh&amp;&amp;window.tpSubmitRefresh();">
+                  <f:selectItem itemValue="" itemLabel="Toutes ▾"/>
+                  <f:selectItems value="#{v2ThesaurusPickerBean.availableLanguages}" var="lg"
+                                 itemValue="#{lg}"
+                                 itemLabel="#{v2ThesaurusPickerBean.languageOptionLabel(lg)}"/>
+                </h:selectOneMenu>
+              </label>
+            </div>
+          </div>
+          <h:panelGroup id="tpTableWrap" layout="block"
+                        styleClass="tp-table-wrap#{v2ThesaurusPickerBean.listLoading ? ' is-loading' : ''}">
+            <table class="tp-table">
+              <thead>
+                <tr>
+                  <th class="tp-th tp-th--cfg">
+                    <span class="tp-cols">
+                      <h:commandLink styleClass="tp-cfg-btn#{v2ThesaurusPickerBean.columnsMenuOpen ? ' is-on' : ''}"
+                                     title="#{v2LocaleBean.getMsg('v2.picker.cols.config')}"
+                                     pt:aria-expanded="#{v2ThesaurusPickerBean.columnsMenuOpen}"
+                                     pt:aria-haspopup="true"
+                                     action="#{v2ThesaurusPickerBean.toggleColumnsMenu}">
+                        <svg viewBox="0 0 24 24" aria-hidden="true">
+                          <circle cx="12" cy="12" r="3"/>
+                          <path d="M19.4 15a1.7 1.7 0 0 0 .3 1.8l.1.1a2 2 0 1 1-2.8 2.8l-.1-.1a1.7 1.7 0 0 0-1.8-.3 1.7 1.7 0 0 0-1 1.5V21a2 2 0 1 1-4 0v-.1a1.7 1.7 0 0 0-1-1.5 1.7 1.7 0 0 0-1.8.3l-.1.1a2 2 0 1 1-2.8-2.8l.1-.1a1.7 1.7 0 0 0 .3-1.8 1.7 1.7 0 0 0-1.5-1H3a2 2 0 1 1 0-4h.1a1.7 1.7 0 0 0 1.5-1 1.7 1.7 0 0 0-.3-1.8l-.1-.1a2 2 0 1 1 2.8-2.8l.1.1a1.7 1.7 0 0 0 1.8.3H9a1.7 1.7 0 0 0 1-1.5V3a2 2 0 1 1 4 0v.1a1.7 1.7 0 0 0 1 1.5 1.7 1.7 0 0 0 1.8-.3l.1-.1a2 2 0 1 1 2.8 2.8l-.1.1a1.7 1.7 0 0 0-.3 1.8V9a1.7 1.7 0 0 0 1.5 1H21a2 2 0 1 1 0 4h-.1a1.7 1.7 0 0 0-1.5 1z"/>
+                        </svg>
+                      </h:commandLink>
+                      <ui:fragment rendered="#{v2ThesaurusPickerBean.columnsMenuOpen}">
+                        <div class="tp-cols-menu">
+                          <div class="tp-cols-h">#{v2LocaleBean.getMsg('v2.picker.cols.title')}<span>#{v2LocaleBean.getMsg('v2.picker.cols.hint')}</span></div>
+                          <div class="tp-cols-list">
+                            <ui:repeat value="#{v2ThesaurusPickerBean.columnCfg}" var="col" varStatus="st">
+                              <div class="tp-cols-row" data-col-key="#{col.key}">
+                                <label class="tp-cols-lbl">
+                                  <h:selectBooleanCheckbox value="#{col.on}" disabled="#{col.nameLocked}"
+                                                           styleClass="tp-cols-cb"
+                                                           pt:data-col-key="#{col.key}"
+                                                           pt:onchange="window.tpOnColumnToggle &amp;&amp; window.tpOnColumnToggle(this);">
+                                  </h:selectBooleanCheckbox>
+                                  <span>#{v2ThesaurusPickerBean.getColumnLabel(col.key)}</span>
+                                </label>
+                                <span class="tp-cols-ord">
+                                  <h:commandButton styleClass="tp-cols-mv" value="▲"
+                                                   disabled="#{st.first}"
+                                                   action="#{v2ThesaurusPickerBean.moveColumnUp(col.key)}">
+                                  </h:commandButton>
+                                  <h:commandButton styleClass="tp-cols-mv" value="▼"
+                                                   disabled="#{st.last}"
+                                                   action="#{v2ThesaurusPickerBean.moveColumnDown(col.key)}">
+                                  </h:commandButton>
+                                </span>
+                              </div>
+                            </ui:repeat>
+                          </div>
+                          <h:commandButton styleClass="tp-cols-reset"
+                                           value="#{v2LocaleBean.getMsg('v2.picker.cols.reset')}"
+                                           action="#{v2ThesaurusPickerBean.resetColumns}"
+                                           onclick="window.tpResetColumnPrefs &amp;&amp; window.tpResetColumnPrefs();">
+                          </h:commandButton>
+                        </div>
+                      </ui:fragment>
+                    </span>
+                  </th>
+                  <ui:repeat value="#{v2ThesaurusPickerBean.columnCfg}" var="col">
+                    <th class="tp-th#{v2ThesaurusPickerBean.isColumnGrow(col.key) ? ' tp-th--grow' : ''}#{col.key eq 'name' ? ' tp-th--name' : ''}#{v2ThesaurusPickerBean.isSortedBy(col.key) ? ' is-sorted' : ''}#{col.on ? '' : ' is-col-off'}"
+                        data-col="#{col.key}"
+                        aria-sort="#{v2ThesaurusPickerBean.getAriaSort(col.key)}">
+                      <h:commandLink styleClass="tp-th-l" action="#{v2ThesaurusPickerBean.toggleSort(col.key)}">
+                        <span>#{v2ThesaurusPickerBean.getColumnLabel(col.key)}</span>
+                        <ui:fragment rendered="#{v2ThesaurusPickerBean.isSortedBy(col.key)}">
+                          <span class="tp-th-s">#{v2ThesaurusPickerBean.sortAscending ? '▲' : '▼'}</span>
+                        </ui:fragment>
+                      </h:commandLink>
+                    </th>
+                  </ui:repeat>
+                  <ui:fragment rendered="#{v2ThesaurusPickerBean.loggedIn}">
+                    <th class="tp-th tp-th--edit"/>
+                  </ui:fragment>
+                </tr>
+                <tr class="tp-filters">
+                  <th class="tp-th--cfg"/>
+                  <ui:repeat value="#{v2ThesaurusPickerBean.columnCfg}" var="col">
+                    <th class="#{col.key eq 'name' ? 'tp-fth--name' : ''}#{col.on ? '' : ' is-col-off'}" data-col="#{col.key}">
+                      <ui:fragment rendered="#{col.key eq 'name'}">
+                        <h:inputText styleClass="tp-fi" value="#{v2ThesaurusPickerBean.filterName}"
+                                     pt:data-ph="#{v2LocaleBean.getMsg('v2.picker.filters')}"
+                                     pt:onkeydown="if(event.key==='Enter'){event.preventDefault();return window.tpSubmitRefresh&amp;&amp;window.tpSubmitRefresh();}">
+                        </h:inputText>
+                      </ui:fragment>
+                      <ui:fragment rendered="#{col.key eq 'domain'}">
+                        <h:inputText styleClass="tp-fi" value="#{v2ThesaurusPickerBean.filterDomain}"
+                                     pt:data-ph="#{v2LocaleBean.getMsg('v2.picker.filters')}"
+                                     pt:onkeydown="if(event.key==='Enter'){event.preventDefault();return window.tpSubmitRefresh&amp;&amp;window.tpSubmitRefresh();}">
+                        </h:inputText>
+                      </ui:fragment>
+                      <ui:fragment rendered="#{col.key eq 'projects'}">
+                        <h:inputText styleClass="tp-fi" value="#{v2ThesaurusPickerBean.filterProjects}"
+                                     pt:data-ph="#{v2LocaleBean.getMsg('v2.picker.filters')}"
+                                     pt:onkeydown="if(event.key==='Enter'){event.preventDefault();return window.tpSubmitRefresh&amp;&amp;window.tpSubmitRefresh();}">
+                        </h:inputText>
+                      </ui:fragment>
+                      <ui:fragment rendered="#{col.key eq 'org'}">
+                        <h:inputText styleClass="tp-fi" value="#{v2ThesaurusPickerBean.filterOrg}"
+                                     pt:data-ph="#{v2LocaleBean.getMsg('v2.picker.filters')}"
+                                     pt:onkeydown="if(event.key==='Enter'){event.preventDefault();return window.tpSubmitRefresh&amp;&amp;window.tpSubmitRefresh();}">
+                        </h:inputText>
+                      </ui:fragment>
+                      <ui:fragment rendered="#{col.key eq 'lang'}">
+                        <h:selectOneMenu styleClass="tp-fi tp-fi--lang" value="#{v2ThesaurusPickerBean.filterLang}"
+                                         pt:onchange="window.tpSubmitRefresh&amp;&amp;window.tpSubmitRefresh();">
+                          <f:selectItem itemValue="" itemLabel="Toutes ▾"/>
+                          <f:selectItems value="#{v2ThesaurusPickerBean.availableLanguages}" var="lg"
+                                         itemValue="#{lg}"
+                                         itemLabel="#{v2ThesaurusPickerBean.languageOptionLabel(lg)}"/>
+                        </h:selectOneMenu>
+                      </ui:fragment>
+                    </th>
+                  </ui:repeat>
+                  <ui:fragment rendered="#{v2ThesaurusPickerBean.loggedIn}">
+                    <th class="tp-th--edit" title="#{v2LocaleBean.getMsg('v2.picker.actions')}"/>
+                  </ui:fragment>
+                </tr>
+              </thead>
+              <tbody>
+                <ui:fragment rendered="#{empty v2ThesaurusPickerBean.catalogRows}">
+                  <tr class="tp-empty-row tp-empty-row--catalog">
+                    <td colspan="#{v2ThesaurusPickerBean.emptyColspan}">
+                      <div class="tp-empty">
+                        <span class="tp-empty-ico" aria-hidden="true">
+                          <svg viewBox="0 0 24 24"><path d="M4 19.5A2.5 2.5 0 0 1 6.5 17H20"/><path d="M6.5 2H20v20H6.5A2.5 2.5 0 0 1 4 19.5v-15A2.5 2.5 0 0 1 6.5 2z"/><path d="M8 7h8M8 11h6"/></svg>
+                        </span>
+                        <p>#{empty v2ThesaurusPickerBean.rows ? v2LocaleBean.getMsg('v2.picker.empty.none') : v2LocaleBean.getMsg('v2.picker.empty.nomatch')}</p>
+                        <ui:fragment rendered="#{empty v2ThesaurusPickerBean.rows and (v2ThesaurusPickerBean.canCreateThesaurus or v2ThesaurusPickerBean.canImportThesaurus)}">
+                          <div class="tp-empty-acts">
+                            <h:commandLink styleClass="tp-empty-cta"
+                                           rendered="#{v2ThesaurusPickerBean.canImportThesaurus}"
+                                           action="#{v2ThesaurusPickerBean.openImportThesaurus}">
+                              <h:outputText value="#{v2LocaleBean.getMsg('v2.picker.import')}"/>
+                            </h:commandLink>
+                            <h:commandLink styleClass="tp-empty-cta tp-empty-cta--primary"
+                                           rendered="#{v2ThesaurusPickerBean.canCreateThesaurus}"
+                                           action="#{v2ThesaurusPickerBean.createThesaurus}">
+                              <h:outputText value="#{v2LocaleBean.getMsg('v2.picker.create')}"/>
+                            </h:commandLink>
+                          </div>
+                        </ui:fragment>
+                      </div>
+                    </td>
+                  </tr>
+                </ui:fragment>
+                <tr class="tp-empty-row tp-empty-row--tab" id="tpTabEmpty" hidden="hidden">
+                  <td colspan="#{v2ThesaurusPickerBean.emptyColspan}">
+                    <div class="tp-empty">
+                      <span class="tp-empty-ico" aria-hidden="true">
+                        <svg viewBox="0 0 24 24"><path d="M4 19.5A2.5 2.5 0 0 1 6.5 17H20"/><path d="M6.5 2H20v20H6.5A2.5 2.5 0 0 1 4 19.5v-15A2.5 2.5 0 0 1 6.5 2z"/><path d="M8 7h8M8 11h6"/></svg>
+                      </span>
+                      <p>#{v2LocaleBean.getMsg('v2.picker.empty.nomatch')}</p>
+                    </div>
+                  </td>
+                </tr>
+                <ui:repeat value="#{v2ThesaurusPickerBean.catalogRows}" var="row">
+                  <tr class="tp-row#{(v2ThesaurusPickerBean.activeTab eq 'member' and not row.member) or (v2ThesaurusPickerBean.activeTab eq 'public' and not row.publicAccess) ? ' is-tab-off' : ''}"
+                      tabindex="0" role="link"
+                      title="#{v2LocaleBean.getMsg('v2.picker.open')} — #{row.name}"
+                      data-tp-member="#{row.member}"
+                      data-tp-public="#{row.publicAccess}">
+                    <td class="tp-c-cfg"/>
+                    <ui:repeat value="#{v2ThesaurusPickerBean.columnCfg}" var="col">
+                      <ui:fragment rendered="#{col.key eq 'name'}">
+                        <td data-label="Thésaurus" data-col="name" class="tp-c-name tp-col-name#{col.on ? '' : ' is-col-off'}">
+                          <a class="tp-c-name-in" href="#{v2ThesaurusPickerBean.browseUrl(row.id)}"
+                             onclick="return window.tpShowLoading &amp;&amp; window.tpShowLoading();">
+                            <span class="tp-name">#{row.name}</span>
+                            <span class="tp-id">#{row.id}</span>
+                          </a>
+                        </td>
+                      </ui:fragment>
+                      <ui:fragment rendered="#{col.key eq 'access'}">
+                        <td data-label="Accès" data-col="access" class="tp-c-access#{col.on ? '' : ' is-col-off'}">
+                          <span class="tp-badge #{row.accessBadgeClass}" title="#{row.accessTitle}">
+                            <ui:fragment rendered="#{not row.privateThesaurus}">
+                              <svg viewBox="0 0 24 24" aria-hidden="true"><circle cx="12" cy="12" r="9"/><path d="M3 12h18M12 3a14 14 0 0 1 0 18M12 3a14 14 0 0 0 0 18"/></svg>
+                            </ui:fragment>
+                            <ui:fragment rendered="#{row.privateThesaurus}">
+                              <svg viewBox="0 0 24 24" aria-hidden="true"><rect x="5" y="11" width="14" height="10" rx="2"/><path d="M8 11V8a4 4 0 0 1 8 0v3"/></svg>
+                            </ui:fragment>
+                            <span class="tp-badge-lbl">#{row.accessLabel}</span>
+                          </span>
+                        </td>
+                      </ui:fragment>
+                      <ui:fragment rendered="#{col.key eq 'role'}">
+                        <td data-label="Rôle" data-col="role" class="tp-c-role#{col.on ? '' : ' is-col-off'}">
+                          <ui:fragment rendered="#{row.hasRole}">
+                            <span class="tp-badge #{row.roleBadgeClass}" title="#{row.roleTitle}">
+                              <svg viewBox="0 0 24 24" aria-hidden="true"><path d="M21 2l-2 2m-7.6 7.6L3 21l3-1 1-3 7.4-7.4M14 6l4 4"/></svg>
+                              <span class="tp-badge-lbl">#{row.roleLabel}</span>
+                            </span>
+                          </ui:fragment>
+                          <ui:fragment rendered="#{not row.hasRole}">
+                            <span class="tp-role-empty" title="#{row.roleTitle}">—</span>
+                          </ui:fragment>
+                        </td>
+                      </ui:fragment>
+                      <ui:fragment rendered="#{col.key eq 'terms'}">
+                        <td data-label="Termes" data-col="terms" class="tp-num#{col.on ? '' : ' is-col-off'}">#{row.termsLabel}</td>
+                      </ui:fragment>
+                      <ui:fragment rendered="#{col.key eq 'created'}">
+                        <td data-label="Créé le" data-col="created" class="tp-mono#{col.on ? '' : ' is-col-off'}">#{row.createdLabel}</td>
+                      </ui:fragment>
+                      <ui:fragment rendered="#{col.key eq 'domain'}">
+                        <td data-label="Domaine" data-col="domain" class="#{col.on ? '' : 'is-col-off'}">#{empty row.domain ? '—' : row.domain}</td>
+                      </ui:fragment>
+                      <ui:fragment rendered="#{col.key eq 'projects'}">
+                        <td data-label="Projets" data-col="projects" class="#{col.on ? '' : 'is-col-off'}">#{empty row.projects ? '—' : row.projects}</td>
+                      </ui:fragment>
+                      <ui:fragment rendered="#{col.key eq 'org'}">
+                        <td data-label="Organisation" data-col="org" class="#{col.on ? '' : 'is-col-off'}">#{empty row.organization ? '—' : row.organization}</td>
+                      </ui:fragment>
+                      <ui:fragment rendered="#{col.key eq 'chrono'}">
+                        <td data-label="Chronologie" data-col="chrono" class="tp-mono#{col.on ? '' : ' is-col-off'}">#{empty row.chronology ? '—' : row.chronology}</td>
+                      </ui:fragment>
+                      <ui:fragment rendered="#{col.key eq 'lang'}">
+                        <td data-label="Langues" data-col="lang" class="tp-c-lang#{col.on ? '' : ' is-col-off'}" title="#{v2ThesaurusPickerBean.languagesTitle(row.languages)}">
+                          <span class="tp-langs-in">
+                            <ui:repeat value="#{row.languages}" var="lang" varStatus="langSt">
+                              <span class="tp-lang#{v2ThesaurusPickerBean.isCollapsedLanguage(row.languages, langSt.index) ? ' tp-lang--extra' : ''}"
+                                    title="#{v2ThesaurusPickerBean.languageLabel(lang)}">
+                                <span class="tp-lang-fl" aria-hidden="true">#{v2ThesaurusPickerBean.languageFlag(lang)}</span>
+                                <span class="tp-lang-code">#{lang}</span>
+                              </span>
+                            </ui:repeat>
+                            <ui:fragment rendered="#{v2ThesaurusPickerBean.hiddenLanguageCount(row.languages) gt 0}">
+                              <button type="button"
+                                      class="tp-lang tp-lang--more"
+                                      data-more="+#{v2ThesaurusPickerBean.hiddenLanguageCount(row.languages)}"
+                                      aria-expanded="false"
+                                      title="Afficher toutes les langues"
+                                      onclick="return window.tpToggleLangs(this, event);">
+                                +#{v2ThesaurusPickerBean.hiddenLanguageCount(row.languages)}
+                              </button>
+                            </ui:fragment>
+                            <ui:fragment rendered="#{empty row.languages}">
+                              <span class="tp-lang-empty">—</span>
+                            </ui:fragment>
+                          </span>
+                        </td>
+                      </ui:fragment>
+                    </ui:repeat>
+                    <ui:fragment rendered="#{v2ThesaurusPickerBean.loggedIn}">
+                    <td class="tp-c-edit" data-label="#{v2LocaleBean.getMsg('v2.picker.actions')}">
+                      <div class="tp-row-acts">
+                        <h:commandLink styleClass="tp-act tp-act--export"
+                                       title="#{v2LocaleBean.getMsg('v2.picker.export')}"
+                                       action="#{v2ThesaurusPickerBean.openExportThesaurus}">
+                          <f:param name="exportThesaurusId" value="#{row.id}"/>
+                          <svg viewBox="0 0 24 24" aria-hidden="true">
+                            <path d="M21 15v4a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2v-4"/>
+                            <path d="m17 8-5-5-5 5"/>
+                            <path d="M12 3v12"/>
+                          </svg>
+                        </h:commandLink>
+
+                        <ui:fragment rendered="#{v2ThesaurusPickerBean.canManageRow(row)}">
+                          <h:commandLink styleClass="tp-act tp-act--edit"
+                                         title="#{v2LocaleBean.getMsg('v2.picker.edit')}"
+                                         action="#{v2ThesaurusPickerBean.openEditThesaurus}">
+                            <f:param name="editThesaurusId" value="#{row.id}"/>
+                            <svg viewBox="0 0 24 24" aria-hidden="true"><path d="M12 20h9"/><path d="M16.5 3.5a2.1 2.1 0 0 1 3 0L7 19l-4 1 1-4Z"/></svg>
+                          </h:commandLink>
+                          <h:commandLink styleClass="tp-act tp-act--del"
+                                         title="#{v2LocaleBean.getMsg('v2.picker.delete')}"
+                                         action="#{v2ThesaurusPickerBean.prepareDeleteThesaurus}">
+                            <f:param name="deleteThesaurusId" value="#{row.id}"/>
+                            <svg viewBox="0 0 24 24" aria-hidden="true"><path d="M3 6h18"/><path d="M8 6V4h8v2"/><path d="M19 6l-1 14H6L5 6"/><path d="M10 11v6M14 11v6"/></svg>
+                          </h:commandLink>
+                        </ui:fragment>
+                      </div>
+                    </td>
+                    </ui:fragment>
+                  </tr>
+                </ui:repeat>
+              </tbody>
+            </table>
+          </h:panelGroup>
+        </div>
+        </ui:fragment>
+        <ui:fragment rendered="#{v2ThesaurusPickerBean.listMode}">
+        <footer class="gv">
+          <img class="gv-mark"
+               src="#{request.contextPath}/resources/img/Opentheso.png"
+               alt="OpenTheso"
+               width="180"
+               height="40"/>
+          <nav class="gv-mentions" aria-label="Informations légales">
+            <a href="#">Mentions légales</a>
+            <a href="#">Données personnelles</a>
+            <a href="#">Accessibilité : partiellement conforme</a>
+            <span class="gv-lic">Code sous licence CeCILL</span>
+          </nav>
+          <nav class="gv-links" aria-label="Sites publics">
+            <a href="https://www.legifrance.gouv.fr" target="_blank" rel="noreferrer">legifrance.gouv.fr<span class="gv-ext" aria-hidden="true">↗</span></a>
+            <a href="https://www.info.gouv.fr" target="_blank" rel="noreferrer">info.gouv.fr<span class="gv-ext" aria-hidden="true">↗</span></a>
+            <a href="https://www.service-public.fr" target="_blank" rel="noreferrer">service-public.fr<span class="gv-ext" aria-hidden="true">↗</span></a>
+            <a href="https://www.data.gouv.fr" target="_blank" rel="noreferrer">data.gouv.fr<span class="gv-ext" aria-hidden="true">↗</span></a>
+          </nav>
+        </footer>
+        </ui:fragment>
+</ui:composition>

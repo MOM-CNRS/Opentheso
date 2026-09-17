@@ -5,6 +5,7 @@ import fr.cnrs.opentheso.v2.admin.model.AdminThesaurus;
 import fr.cnrs.opentheso.v2.admin.model.AdminThesaurusOption;
 import fr.cnrs.opentheso.v2.admin.model.AdminUserMembership;
 import fr.cnrs.opentheso.v2.admin.model.InstanceAdminAccount;
+import fr.cnrs.opentheso.v2.admin.model.ThesaurusMember;
 import fr.cnrs.opentheso.v2.admin.policy.SuperAdminAccessPolicy;
 import fr.cnrs.opentheso.v2.project.mapper.ProjectMapper;
 import fr.cnrs.opentheso.v2.project.model.AssignableRole;
@@ -19,8 +20,12 @@ import org.springframework.beans.factory.annotation.Value;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
 
+import java.util.ArrayList;
 import java.util.Comparator;
 import java.util.List;
+import java.util.Locale;
+import java.util.Set;
+import java.util.stream.Collectors;
 
 @Service
 @RequiredArgsConstructor
@@ -116,6 +121,57 @@ public class AdminCatalogService {
                         Comparator.nullsLast(Comparator.reverseOrder())
                 ))
                 .toList();
+    }
+
+    /**
+     * Membres du thésaurus : rôles limités sur ce thésaurus + membres du projet (accès hérité).
+     * Si un utilisateur a les deux, seule la ligne limitée est conservée.
+     */
+    @Transactional(readOnly = true)
+    public List<ThesaurusMember> listThesaurusMembers(
+            boolean superAdmin,
+            String thesaurusId,
+            int projectId,
+            String workLanguage
+    ) {
+        SuperAdminAccessPolicy.requireResolvedSuperAdmin(superAdmin);
+        String lang = workLanguage != null ? workLanguage : defaultWorkLanguage;
+
+        var limited = projectAdminQueryRepository.findLimitedMembersOfProject(projectId, lang).stream()
+                .filter(row -> thesaurusId != null && thesaurusId.equalsIgnoreCase(row.thesaurusId()))
+                .map(row -> new ThesaurusMember(
+                        row.userId(),
+                        row.username(),
+                        row.active(),
+                        row.roleId(),
+                        row.roleName(),
+                        false
+                ))
+                .toList();
+
+        Set<Integer> limitedIds = limited.stream()
+                .map(ThesaurusMember::userId)
+                .collect(Collectors.toSet());
+
+        var projectWide = projectAdminQueryRepository
+                .findMembersOfProject(projectId, ProjectAccessPolicy.ROLE_ADMIN)
+                .stream()
+                .filter(row -> !limitedIds.contains(row.userId()))
+                .map(row -> new ThesaurusMember(
+                        row.userId(),
+                        row.username(),
+                        row.active(),
+                        row.roleId(),
+                        row.roleName(),
+                        true
+                ))
+                .toList();
+
+        ArrayList<ThesaurusMember> all = new ArrayList<>(limited.size() + projectWide.size());
+        all.addAll(limited);
+        all.addAll(projectWide);
+        all.sort(Comparator.comparing(m -> m.username() == null ? "" : m.username().toLowerCase(Locale.ROOT)));
+        return List.copyOf(all);
     }
 
     @Transactional

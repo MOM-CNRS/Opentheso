@@ -77,7 +77,7 @@
         <ui:fragment rendered="#{v2ThesaurusViewBean.selectedConceptDeprecated}"><span class="cv-status is-dep">#{v2LocaleBean.getMsg('v2.concept.badge.deprecated')}</span></ui:fragment>
       </h1>
       <ui:fragment rendered="#{v2ThesaurusViewBean.conceptActionsVisible}">
-        <ui:include src="concept-actions-menu.xhtml"/>
+        <ui:include src="/v2/includes/concept-actions-menu.xhtml"/>
       </ui:fragment>
       </div>
     </div>
@@ -127,7 +127,7 @@
       </div>
     </ui:fragment>
     <div class="cv-blocks">
-      <ui:include src="candidate-governance.xhtml"/>
+      <ui:include src="/v2/includes/candidate-governance.xhtml"/>
       <section class="cblock#{v2ConceptLabelBlockEditorBean.editing ? ' is-editing' : ''}" data-card-id="contexte">
         <div class="cblock-head"><span class="cblock-drag" role="button" tabindex="0" title="Glisser pour réordonner" aria-label="Réordonner ce bloc"><svg class="cblock-grip" viewBox="0 0 8 14" aria-hidden="true" focusable="false"><circle cx="2" cy="2" r="1.35"/><circle cx="6" cy="2" r="1.35"/><circle cx="2" cy="7" r="1.35"/><circle cx="6" cy="7" r="1.35"/><circle cx="2" cy="12" r="1.35"/><circle cx="6" cy="12" r="1.35"/></svg></span><span class="cblock-title">Libellé</span><div class="cblock-tools"><h:commandButton id="labelEditStart" value="✎" styleClass="cblock-gear" title="#{v2LocaleBean.getMsg('v2.edit')}" rendered="#{v2ConceptLabelBlockEditorBean.editable and not v2ConceptLabelBlockEditorBean.editing}" action="#{v2ConceptLabelBlockEditorBean.startEditing}"><f:ajax execute="@this" render=":previewDetailForm:previewDetail"/></h:commandButton><button type="button" class="cblock-gear cblock-fold" data-act="cblock-fold" title="#{v2LocaleBean.getMsg('v2.block.collapse')}" aria-expanded="true" aria-label="#{v2LocaleBean.getMsg('v2.block.collapse')}"><svg viewBox="0 0 24 24" aria-hidden="true"><path d="m6 9 6 6 6-6"/></svg></button></div></div>
         <div class="cblock-body">
@@ -408,7 +408,7 @@
           <div class="crow crow-rel cblock-edit-row">
             <div class="crow-lbl"><span class="rel-code rel-bt">TG</span>Concept générique</div>
             <div class="crow-val">
-              <ui:include src="relation-pick.xhtml">
+              <ui:include src="/v2/includes/relation-pick.xhtml">
                 <ui:param name="kind" value="Bt"/>
                 <ui:param name="kindLower" value="bt"/>
                 <ui:param name="placeholder" value="Rechercher un concept générique…"/>
@@ -419,7 +419,7 @@
           <div class="crow crow-rel cblock-edit-row">
             <div class="crow-lbl"><span class="rel-code rel-nt">TS</span>Concept spécifique</div>
             <div class="crow-val">
-              <ui:include src="relation-pick.xhtml">
+              <ui:include src="/v2/includes/relation-pick.xhtml">
                 <ui:param name="kind" value="Nt"/>
                 <ui:param name="kindLower" value="nt"/>
                 <ui:param name="placeholder" value="Rechercher un concept spécifique…"/>
@@ -430,7 +430,7 @@
           <div class="crow crow-rel cblock-edit-row">
             <div class="crow-lbl"><span class="rel-code rel-rt">TA</span>Concept associé</div>
             <div class="crow-val">
-              <ui:include src="relation-pick.xhtml">
+              <ui:include src="/v2/includes/relation-pick.xhtml">
                 <ui:param name="kind" value="Rt"/>
                 <ui:param name="kindLower" value="rt"/>
                 <ui:param name="placeholder" value="Rechercher un concept associé…"/>
@@ -1538,5 +1538,5 @@
       </section>
     </div>
   </div>
-  <ui:include src="concept-actions-dialogs.xhtml"/>
+  <ui:include src="/v2/includes/concept-actions-dialogs.xhtml"/>
 </ui:composition>

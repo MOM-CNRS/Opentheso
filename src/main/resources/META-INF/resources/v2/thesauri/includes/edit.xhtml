@@ -1,0 +1,89 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<ui:composition xmlns="http://www.w3.org/1999/xhtml"
+                xmlns:ui="http://xmlns.jcp.org/jsf/facelets"
+                xmlns:h="http://xmlns.jcp.org/jsf/html"
+                xmlns:f="http://xmlns.jcp.org/jsf/core"
+                xmlns:pt="http://xmlns.jcp.org/jsf/passthrough">
+        <ui:fragment rendered="#{v2ThesaurusPickerBean.editMode}">
+          <button type="button"
+                  class="bo-back"
+                  title="#{v2LocaleBean.getMsg('v2.picker.edit.back')}"
+                  aria-label="#{v2LocaleBean.getMsg('v2.picker.edit.back')}"
+                  onclick="return window.tpAnimateBackToList &amp;&amp; window.tpAnimateBackToList(this, document.getElementById('tpEditCancel'));">
+            <svg viewBox="0 0 24 24" aria-hidden="true"><path d="M19 12H5"/><path d="m12 19-7-7 7-7"/></svg>
+          </button>
+          <div class="tp-head">
+            <div>
+              <h1 class="tp-title">#{v2LocaleBean.getMsg('v2.picker.edit.title')}</h1>
+              <p class="tp-sub">#{v2LocaleBean.getMsg('v2.picker.edit.subtitle')}</p>
+            </div>
+          </div>
+          <div class="tp-form">
+            <h:panelGroup id="tpEditAlerts" layout="block">
+              <ui:fragment rendered="#{not empty v2ThesaurusPickerBean.editError}">
+                <div class="tp-alert is-err" role="alert">#{v2ThesaurusPickerBean.editError}</div>
+              </ui:fragment>
+            </h:panelGroup>
+            <div class="tp-form-card">
+              <div class="tp-form-row">
+                <span class="tp-form-l">#{v2LocaleBean.getMsg('v2.picker.edit.id')}</span>
+                <div class="tp-form-ro"><code>#{v2ThesaurusPickerBean.editThesaurusId}</code></div>
+              </div>
+              <div class="tp-form-row">
+                <label class="tp-form-l" for="tpEditTitle">#{v2LocaleBean.getMsg('v2.picker.edit.name')} <span class="tp-req">*</span></label>
+                <h:inputText id="tpEditTitle"
+                             styleClass="tp-form-i"
+                             value="#{v2ThesaurusPickerBean.editTitle}"
+                             pt:placeholder="#{v2LocaleBean.getMsg('v2.picker.edit.namePh')}"/>
+              </div>
+              <div class="tp-form-row">
+                <span class="tp-form-l">#{v2LocaleBean.getMsg('v2.picker.edit.lang')}</span>
+                <div class="tp-form-ro">
+                  <span class="tp-lang-inline">
+                    <span aria-hidden="true">#{v2ThesaurusPickerBean.languageFlag(v2ThesaurusPickerBean.editLanguage)}</span>
+                    <span>#{v2ThesaurusPickerBean.languageLabel(v2ThesaurusPickerBean.editLanguage)}</span>
+                    <span class="tp-mono">(#{v2ThesaurusPickerBean.editLanguage})</span>
+                  </span>
+                </div>
+              </div>
+              <div class="tp-form-row">
+                <span class="tp-form-l">#{v2LocaleBean.getMsg('v2.picker.edit.visibility')}</span>
+                <h:panelGroup id="tpEditVis" layout="block" styleClass="tp-form-radios">
+                  <h:commandLink styleClass="tp-form-radio#{not v2ThesaurusPickerBean.editPrivateThesaurus ? ' is-on' : ''}"
+                                 action="#{v2ThesaurusPickerBean.chooseEditPublicVisibility}">
+                    <span class="tp-radio-ui" aria-hidden="true"></span>
+                    <svg viewBox="0 0 24 24" aria-hidden="true"><circle cx="12" cy="12" r="9"/><path d="M3 12h18M12 3a14 14 0 0 1 0 18M12 3a14 14 0 0 0 0 18"/></svg>
+                    <span><b>#{v2LocaleBean.getMsg('v2.picker.edit.public')}</b> — #{v2LocaleBean.getMsg('v2.picker.edit.publicHint')}</span>
+                  </h:commandLink>
+                  <h:commandLink styleClass="tp-form-radio#{v2ThesaurusPickerBean.editPrivateThesaurus ? ' is-on' : ''}"
+                                 action="#{v2ThesaurusPickerBean.chooseEditPrivateVisibility}">
+                    <span class="tp-radio-ui" aria-hidden="true"></span>
+                    <svg viewBox="0 0 24 24" aria-hidden="true"><rect x="5" y="11" width="14" height="10" rx="2"/><path d="M8 11V8a4 4 0 0 1 8 0v3"/></svg>
+                    <span><b>#{v2LocaleBean.getMsg('v2.picker.edit.private')}</b> — #{v2LocaleBean.getMsg('v2.picker.edit.privateHint')}</span>
+                  </h:commandLink>
+                </h:panelGroup>
+              </div>
+            </div>
+            <div class="tp-form-run">
+              <button type="button"
+                      class="tp-form-cancel"
+                      onclick="return window.tpAnimateBackToList &amp;&amp; window.tpAnimateBackToList(this, document.getElementById('tpEditCancel'));">
+                #{v2LocaleBean.getMsg('v2.picker.edit.cancel')}
+              </button>
+              <h:commandButton id="tpEditCancel"
+                               styleClass="tp-create-go"
+                               value="#{v2LocaleBean.getMsg('v2.picker.edit.cancel')}"
+                               action="#{v2ThesaurusPickerBean.cancelEditThesaurus}"
+                               immediate="true"
+                               tabindex="-1"
+                               aria-hidden="true">
+              </h:commandButton>
+              <h:commandButton id="tpEditSave"
+                               styleClass="tp-form-submit"
+                               value="#{v2LocaleBean.getMsg('v2.picker.edit.save')}"
+                               action="#{v2ThesaurusPickerBean.submitEditThesaurus}">
+              </h:commandButton>
+            </div>
+          </div>
+        </ui:fragment>
+</ui:composition>

@@ -11,6 +11,8 @@ import fr.cnrs.opentheso.v2.shared.time.V2Dates;
 import lombok.RequiredArgsConstructor;
 import org.apache.commons.lang3.StringUtils;
 import org.springframework.beans.factory.annotation.Value;
+import org.springframework.context.MessageSource;
+import org.springframework.context.i18n.LocaleContextHolder;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
 
@@ -27,6 +29,7 @@ public class ConsultationCatalogService {
     private final ProjectAdminService projectAdminService;
     private final ProjectAdminQueryRepository projectAdminQueryRepository;
     private final AdminQueryRepository adminQueryRepository;
+    private final MessageSource messageSource;
 
     @Value("${settings.workLanguage:fr}")
     private String defaultWorkLanguage;
@@ -133,14 +136,21 @@ public class ConsultationCatalogService {
         };
     }
 
-    private static String roleLabelFromKey(String roleKey) {
-        return switch (StringUtils.defaultString(roleKey)) {
+    private String roleLabelFromKey(String roleKey) {
+        String key = StringUtils.defaultIfBlank(roleKey, "member");
+        String fallback = switch (key) {
             case "superAdmin" -> "Super-admin";
             case "admin" -> "Administrateur";
             case "manager" -> "Gestionnaire";
             case "contributor" -> "Contributeur";
             default -> "Membre";
         };
+        return messageSource.getMessage(
+                "v2.picker.role." + key,
+                null,
+                fallback,
+                LocaleContextHolder.getLocale()
+        );
     }
 
     private static boolean toBoolean(Object value) {

@@ -115,6 +115,39 @@ public class ProjectMemberService {
         log.info("Utilisateur id={} ajouté au projet id={} par l'utilisateur id={}", userId, projectId, callerId);
     }
 
+    /**
+     * Ajoute un utilisateur existant avec un rôle limité à un thésaurus du projet.
+     */
+    @Transactional
+    public void addLimitedExistingMember(
+            int callerId,
+            boolean superAdmin,
+            int projectId,
+            int userId,
+            int roleId,
+            String thesaurusId
+    ) {
+        AdminContext context = requireProjectAdmin(callerId, superAdmin, projectId);
+        validateAssignableRole(context, roleId);
+        ensureUserExists(userId);
+        requireThesaurusIds(projectId, List.of(thesaurusId));
+        if (projectMembershipRepository.hasLimitedRoleOnThesaurus(userId, thesaurusId)) {
+            throw new InvalidProjectDataException("Cet utilisateur a déjà un rôle limité sur ce thésaurus.");
+        }
+        boolean hasProjectWideRole = projectAdminQueryRepository.findMembersOfProject(
+                        projectId, ProjectAccessPolicy.ROLE_ADMIN)
+                .stream()
+                .anyMatch(row -> row.userId() == userId);
+        if (hasProjectWideRole) {
+            throw new InvalidProjectDataException(
+                    "Cet utilisateur a déjà un accès à tout le projet (tous les thésaurus).");
+        }
+        projectMembershipRepository.assignLimitedRole(userId, roleId, projectId, thesaurusId);
+        rightsService.invalidate(userId);
+        log.info("Utilisateur id={} ajouté en rôle limité sur thésaurus {} (projet id={})",
+                userId, thesaurusId, projectId);
+    }
+
     @Transactional
     public void updateMemberRole(
             int callerId,

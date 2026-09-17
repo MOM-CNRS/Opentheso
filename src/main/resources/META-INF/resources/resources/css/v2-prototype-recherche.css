@@ -10,15 +10,29 @@
   --shadow-sm:0 1px 2px rgba(0,0,0,.04), 0 1px 1px rgba(0,0,0,.03);
   --shadow-md:0 4px 16px rgba(16,24,20,.08), 0 1px 3px rgba(16,24,20,.06);
   --shadow-lg:0 12px 40px rgba(16,24,20,.14), 0 2px 8px rgba(16,24,20,.08);
-  --mono:"IBM Plex Mono",ui-monospace,monospace;
+  /* Maquette https://opentheso.cesar-lacombe.workers.dev/ — IBM Plex */
   --sans:"IBM Plex Sans",system-ui,sans-serif;
+  --mono:"IBM Plex Mono",ui-monospace,monospace;
+  /* Écrase le token PrimeFaces Saga (--font-family: system/Roboto). */
+  --font-family:var(--sans);
 }
 *{box-sizing:border-box}
 html,body{margin:0;height:100%}
 body{
-  font-family:"IBM Plex Sans",system-ui,sans-serif;
+  font-family:var(--sans);
   color:var(--ink); background:var(--bg);
-  -webkit-font-smoothing:antialiased; font-size:15px; line-height:1.45;
+  -webkit-font-smoothing:antialiased; -moz-osx-font-smoothing:grayscale;
+  font-size:15px; line-height:1.45;
+}
+/* PrimeFaces : body .ui-widget utilise -apple-system/Roboto — forcer Plex. */
+body .ui-widget,
+.ui-widget,
+.ui-widget input,
+.ui-widget select,
+.ui-widget textarea,
+.ui-widget button,
+.ui-widget .ui-widget{
+  font-family:var(--sans);
 }
 button{font-family:inherit;cursor:pointer;border:none;background:none;color:inherit}
 mark.hl{background:var(--accent-soft);color:var(--accent);border-radius:3px;padding:0 .5px;font-weight:600}
@@ -1190,6 +1204,8 @@ a.ari-add svg,button.ari-add svg{width:13px;height:13px;stroke:currentColor;fill
 
 .xexp-sum{margin:0;font-size:13px;font-weight:700;color:var(--ink);letter-spacing:-.01em}
 .xexp-est{margin:0;font-size:11px;color:var(--ink-3);line-height:1.35}
+.xexp-sec{display:flex;flex-direction:column;gap:8px;margin:0;padding:0;border:0}
+.xexp-sec-h{margin:0;font-size:10.5px;font-weight:700;letter-spacing:.05em;text-transform:uppercase;color:var(--ink-3)}
 .xkind{display:flex;gap:4px}
 .xkind-b{flex:1;height:30px;border-radius:7px;font-size:11.5px;font-weight:700;color:var(--ink-2);
   background:var(--surface);border:1px solid var(--line);
@@ -1210,6 +1226,59 @@ a.ari-add svg,button.ari-add svg{width:13px;height:13px;stroke:currentColor;fill
   font-size:12px;font-weight:600;color:var(--ink);text-align:left;width:100%;background:none;border:none}
 .xpick-i:hover{background:var(--surface-2)}
 .xpick-i.is-on{color:var(--accent);background:var(--accent-soft)}
+.xrow--langs{gap:8px}
+.xlang-head{display:flex;align-items:center;gap:8px;flex-wrap:wrap}
+.xlang-head .xrow-l{margin:0}
+.xlang-meta{font-family:var(--mono,ui-monospace,monospace);font-size:11px;font-weight:600;
+  color:var(--ink-3);margin-right:auto}
+.xlang-tools{display:inline-flex;align-items:center;gap:4px}
+.xlang-tool{appearance:none;border:0;background:none;padding:2px 6px;border-radius:6px;
+  font:inherit;font-size:11.5px;font-weight:650;color:var(--accent);cursor:pointer}
+.xlang-tool:hover{background:var(--accent-soft)}
+.xcsv-lang-pick{position:relative;width:100%}
+.xcsv-lang-btn{
+  display:flex;align-items:center;gap:10px;width:100%;height:40px;padding:0 12px;
+  border:1px solid var(--line);border-radius:9px;background:var(--bg);
+  box-shadow:none;cursor:pointer;text-align:left
+}
+.xcsv-lang-btn:hover{border-color:var(--accent-line);background:var(--surface)}
+.xcsv-lang-btn.is-open{border-color:var(--accent);box-shadow:0 0 0 3px var(--accent-soft)}
+.xcsv-lang-btn.is-empty .tree-lang-name{color:var(--ink-3);font-weight:500}
+.xcsv-lang-flags{display:inline-flex;align-items:center;gap:2px;flex:0 0 auto;min-width:1.2rem}
+.xcsv-lang-fl{font-size:15px;line-height:1}
+.xcsv-lang-more{font-family:var(--mono);font-size:10px;font-weight:700;color:var(--accent);margin-left:2px}
+.xcsv-lang-btn .tree-lang-name{flex:1;min-width:0;overflow:hidden;text-overflow:ellipsis;white-space:nowrap;
+  font-size:13.5px;font-weight:600;color:var(--ink)}
+.xcsv-lang-btn .tree-lang-caret{margin-left:auto;flex:0 0 auto}
+.xcsv-lang-menu{
+  left:0;right:0;min-width:100%;max-height:260px;overflow:auto;z-index:80;padding:6px;border-radius:12px
+}
+.xcsv-lang-btn.is-open + .xcsv-lang-menu{display:block}
+.xcsv-lang-menu .tree-lang-opt{width:100%;border-radius:8px}
+.xcsv-lang-menu .xlang-work{
+  flex:0 0 auto;font-size:10px;font-weight:700;letter-spacing:.02em;text-transform:uppercase;
+  color:var(--accent);background:var(--accent-soft);border-radius:999px;padding:2px 6px
+}
+.xrow--pdf-langs{gap:10px}
+.xpdf-lang{display:flex;flex-direction:column;gap:5px}
+.xpdf-lang-pick{position:relative;width:100%}
+.xpdf-lang-btn{
+  display:flex;align-items:center;gap:8px;width:100%;height:36px;padding:0 10px;
+  border:1px solid var(--line);border-radius:8px;background:var(--surface);
+  box-shadow:none;cursor:pointer;text-align:left
+}
+.xpdf-lang-btn:hover{border-color:var(--accent-line);background:var(--surface)}
+.xpdf-lang-btn.is-open{border-color:var(--accent);box-shadow:0 0 0 3px var(--accent-soft)}
+.xpdf-lang-btn .tree-lang-flag{font-size:15px;line-height:1;flex:0 0 auto}
+.xpdf-lang-btn .tree-lang-name{flex:1;min-width:0;overflow:hidden;text-overflow:ellipsis;white-space:nowrap;
+  font-size:12.5px;font-weight:600;color:var(--ink)}
+.xpdf-lang-btn.is-empty .tree-lang-name{color:var(--ink-3);font-weight:500}
+.xpdf-lang-btn .tree-lang-code{margin-left:0;flex:0 0 auto}
+.xpdf-lang-btn .tree-lang-caret{margin-left:auto;flex:0 0 auto}
+.xpdf-lang-menu{
+  left:0;right:0;min-width:100%;max-height:220px;overflow:auto;z-index:80
+}
+.xpdf-lang-btn.is-open + .xpdf-lang-menu{display:block}
 .xfmt{display:flex;flex-direction:column;gap:4px}
 .xfmt.is-off{opacity:.55;pointer-events:none}
 .xfmt-card{display:grid;grid-template-columns:1fr auto;grid-template-areas:"n ext" "d ext";

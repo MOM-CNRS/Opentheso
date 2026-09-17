@@ -28,7 +28,9 @@ import java.time.Month;
 import java.util.List;
 
 import static org.junit.jupiter.api.Assertions.assertEquals;
+import static org.junit.jupiter.api.Assertions.assertFalse;
 import static org.junit.jupiter.api.Assertions.assertThrows;
+import static org.junit.jupiter.api.Assertions.assertTrue;
 import static org.mockito.Mockito.verify;
 import static org.mockito.Mockito.when;
 
@@ -201,5 +203,29 @@ class AdminCatalogServiceTest {
         adminCatalogService.moveThesaurus(true, "th1", 3);
 
         verify(projectMembershipRepository).moveThesaurus("th1", 3);
+    }
+
+    @Test
+    void listThesaurusMembers_mergesLimitedAndProjectWide() {
+        when(projectAdminQueryRepository.findLimitedMembersOfProject(5, "fr")).thenReturn(List.of(
+                new fr.cnrs.opentheso.v2.shared.repository.projection.ProjectLimitedMemberRow(
+                        2, "alice", true, 3, "Manager", "th1", "PACTOLS"),
+                new fr.cnrs.opentheso.v2.shared.repository.projection.ProjectLimitedMemberRow(
+                        9, "zoe", true, 4, "Contributor", "th2", "Other")
+        ));
+        when(projectAdminQueryRepository.findMembersOfProject(5, 2)).thenReturn(List.of(
+                new fr.cnrs.opentheso.v2.shared.repository.projection.ProjectMemberRow(
+                        2, "alice", true, 2, "Admin"),
+                new fr.cnrs.opentheso.v2.shared.repository.projection.ProjectMemberRow(
+                        3, "bob", true, 4, "Contributor")
+        ));
+
+        var members = adminCatalogService.listThesaurusMembers(true, "th1", 5, "fr");
+
+        assertEquals(2, members.size());
+        assertEquals("alice", members.get(0).username());
+        assertFalse(members.get(0).projectWide());
+        assertEquals("bob", members.get(1).username());
+        assertTrue(members.get(1).projectWide());
     }
 }

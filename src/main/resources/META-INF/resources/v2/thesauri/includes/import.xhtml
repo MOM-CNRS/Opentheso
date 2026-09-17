@@ -1,0 +1,326 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<ui:composition xmlns="http://www.w3.org/1999/xhtml"
+                xmlns:ui="http://xmlns.jcp.org/jsf/facelets"
+                xmlns:h="http://xmlns.jcp.org/jsf/html"
+                xmlns:f="http://xmlns.jcp.org/jsf/core"
+                xmlns:pt="http://xmlns.jcp.org/jsf/passthrough">
+    <h:form id="thesaurusImportForm" prependId="false"
+            styleClass="tp-form-root tp-form-root--file"
+            enctype="multipart/form-data"
+            rendered="#{v2ThesaurusPickerBean.importMode}">
+      <div id="tpImportRoot" class="tp tp--create tp--import" data-tp-screen="import"
+           data-load-done="#{v2ThesaurusPickerImportBean.loadDone}"
+           data-has-upload="#{v2ThesaurusPickerImportBean.hasUpload}"
+           data-import-ready="#{v2ThesaurusPickerImportBean.importReady}"
+           data-msg-analyzing="#{v2LocaleBean.getMsg('v2.picker.import.analyzing')}"
+           data-msg-pending="#{v2LocaleBean.getMsg('v2.picker.import.filePending')}">
+        <button type="button"
+                class="bo-back"
+                title="#{v2LocaleBean.getMsg('v2.picker.import.back')}"
+                aria-label="#{v2LocaleBean.getMsg('v2.picker.import.back')}"
+                onclick="return window.tpAnimateBackToList &amp;&amp; window.tpAnimateBackToList(this, document.getElementById('tpImportCancel'));">
+          <svg viewBox="0 0 24 24" aria-hidden="true"><path d="M19 12H5"/><path d="m12 19-7-7 7-7"/></svg>
+        </button>
+        <div class="tp-head">
+          <div class="tp-head-copy">
+            <h1 class="tp-title">#{v2LocaleBean.getMsg('v2.picker.import.title')}</h1>
+            <p class="tp-sub">#{v2LocaleBean.getMsg('v2.picker.import.subtitle')}</p>
+          </div>
+        </div>
+
+        <div class="tp-io-identity" aria-label="#{v2LocaleBean.getMsg('v2.picker.import.title')}">
+          <span class="tp-io-identity-ico" aria-hidden="true">
+            <svg viewBox="0 0 24 24">
+              <path d="M21 15v4a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2v-4"/>
+              <path d="m7 10 5 5 5-5"/>
+              <path d="M12 15V3"/>
+            </svg>
+          </span>
+          <div class="tp-io-identity-body">
+            <span class="tp-io-identity-l">#{v2LocaleBean.getMsg('v2.picker.import.format')}</span>
+            <strong class="tp-io-identity-t">#{v2LocaleBean.getMsg('v2.picker.import.bannerTitle')}</strong>
+            <span class="tp-io-identity-id">#{v2LocaleBean.getMsg('v2.picker.import.bannerHint')}</span>
+          </div>
+          <ui:fragment rendered="#{v2ThesaurusPickerImportBean.loadDone}">
+            <div class="tp-io-identity-stat" title="#{v2LocaleBean.getMsg('v2.picker.import.preview')}">
+              <b>#{v2ThesaurusPickerImportBean.totalConcepts}</b>
+              <span>#{v2LocaleBean.getMsg('v2.picker.import.concepts')}</span>
+            </div>
+          </ui:fragment>
+        </div>
+
+        <h:panelGroup id="tpImportPanel" layout="block" styleClass="tp-form tp-import-layout">
+          <div class="tp-import-main">
+          <div class="tp-form-card tp-import-card">
+            <h:panelGroup id="tpImportAlerts" layout="block">
+            <ui:fragment rendered="#{not empty v2ThesaurusPickerImportBean.error}">
+              <div class="tp-form-alert is-err is-enter" role="alert">#{v2ThesaurusPickerImportBean.error}</div>
+            </ui:fragment>
+            <ui:fragment rendered="#{not empty v2ThesaurusPickerImportBean.info}">
+              <div class="tp-form-alert is-ok is-enter" role="status">#{v2ThesaurusPickerImportBean.info}</div>
+            </ui:fragment>
+            </h:panelGroup>
+
+            <div class="tp-form-row tp-form-row--formats">
+              <div class="tp-import-formats"
+                   id="tpImportFormats"
+                   role="tablist"
+                   data-accept-skos=".rdf,.xml,.ttl,.json,.jsonld,.owl,application/rdf+xml,text/turtle,application/ld+json"
+                   data-accept-csv=".csv,.tsv,.txt,text/csv,text/tab-separated-values,text/plain"
+                   data-hint-skos="#{v2LocaleBean.getMsg('v2.picker.import.acceptSkos')}"
+                   data-hint-csv="#{v2LocaleBean.getMsg('v2.picker.import.acceptCsv')}">
+                <h:inputHidden id="tpImportFormat" value="#{v2ThesaurusPickerImportBean.format}"/>
+                <button type="button"
+                        class="tp-import-fmt#{v2ThesaurusPickerImportBean.isFormat('skos') ? ' is-on' : ''}"
+                        data-tp-format="skos"
+                        onclick="return window.tpSelectImportFormat &amp;&amp; window.tpSelectImportFormat(this);">
+                  <h:outputText value="SKOS / RDF"/>
+                </button>
+                <button type="button"
+                        class="tp-import-fmt#{v2ThesaurusPickerImportBean.isFormat('csv') ? ' is-on' : ''}"
+                        data-tp-format="csv"
+                        onclick="return window.tpSelectImportFormat &amp;&amp; window.tpSelectImportFormat(this);">
+                  <h:outputText value="CSV"/>
+                </button>
+                <button type="button"
+                        class="tp-import-fmt#{v2ThesaurusPickerImportBean.isFormat('csvStructured') ? ' is-on' : ''}"
+                        data-tp-format="csvStructured"
+                        onclick="return window.tpSelectImportFormat &amp;&amp; window.tpSelectImportFormat(this);">
+                  <h:outputText value="#{v2LocaleBean.getMsg('v2.picker.import.csvStructured')}"/>
+                </button>
+              </div>
+            </div>
+
+            <div class="tp-form-row tp-fmt-panel#{v2ThesaurusPickerImportBean.isFormat('skos') ? '' : ' is-off'}"
+                 data-tp-fmt-panel="skos">
+              <label class="tp-form-l" for="tpImportSkosType">#{v2LocaleBean.getMsg('v2.picker.import.skosType')}</label>
+              <h:selectOneMenu id="tpImportSkosType" styleClass="tp-form-i"
+                               value="#{v2ThesaurusPickerImportBean.skosTypeImport}"
+                               pt:onchange="window.tpMarkImportNeedsReanalyze &amp;&amp; window.tpMarkImportNeedsReanalyze();">
+                <f:selectItem itemValue="#{0}" itemLabel="RDF/XML"/>
+                <f:selectItem itemValue="#{1}" itemLabel="JSON-LD"/>
+                <f:selectItem itemValue="#{2}" itemLabel="Turtle"/>
+                <f:selectItem itemValue="#{3}" itemLabel="RDF/JSON"/>
+              </h:selectOneMenu>
+            </div>
+
+            <div class="tp-form-row">
+              <span class="tp-form-l">#{v2LocaleBean.getMsg('v2.picker.import.file')} <span class="tp-req">*</span></span>
+              <h:panelGroup id="tpImportFileBlock" layout="block"
+                            styleClass="tp-import-dropzone#{not empty v2ThesaurusPickerImportBean.uploadedFileName ? ' has-file' : ''}#{v2ThesaurusPickerImportBean.loadDone ? ' is-analyzed' : ''}"
+                            pt:data-accept="#{v2ThesaurusPickerImportBean.fileAccept}">
+                <label class="tp-drop tp-drop-empty" for="tpImportFile" data-tp-drop="1">
+                  <span class="tp-drop-ico" aria-hidden="true">
+                    <svg viewBox="0 0 24 24"><path d="M21 15v4a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2v-4"/><path d="M17 8l-5-5-5 5"/><path d="M12 3v12"/></svg>
+                  </span>
+                  <span class="tp-drop-t">#{v2LocaleBean.getMsg('v2.picker.import.drop')}
+                    <span class="tp-drop-lk">#{v2LocaleBean.getMsg('v2.picker.import.browse')}</span>
+                  </span>
+                  <span class="tp-drop-s">#{v2ThesaurusPickerImportBean.fileAcceptHint}</span>
+                </label>
+                <h:inputFile id="tpImportFile" styleClass="tp-file-input"
+                             value="#{v2ThesaurusPickerImportBean.upload}"/>
+                <h:commandButton id="tpImportFileCommit"
+                                 styleClass="tp-file-commit"
+                                 style="display:none"
+                                 action="#{v2ThesaurusPickerImportBean.onFileSelected}"
+                                 onclick="return window.tpBeginImportAnalyze &amp;&amp; window.tpBeginImportAnalyze();">
+                </h:commandButton>
+                <div class="tp-drop tp-drop-filled">
+                  <span class="tp-drop-file-ico" aria-hidden="true">
+                    <svg viewBox="0 0 24 24"><path d="M14 3v5h5"/><path d="M14 3H6a2 2 0 0 0-2 2v14a2 2 0 0 0 2 2h12a2 2 0 0 0 2-2V8z"/></svg>
+                  </span>
+                  <div class="tp-drop-file">
+                    <div class="tp-drop-file-n">#{v2ThesaurusPickerImportBean.uploadedFileName}</div>
+                    <div class="tp-drop-file-m">#{v2ThesaurusPickerImportBean.uploadedFileMeta}</div>
+                  </div>
+                  <h:commandButton id="tpImportAnalyze"
+                                   styleClass="tp-drop-reanalyze#{v2ThesaurusPickerImportBean.loadDone ? '' : ' is-primary-analyze'}"
+                                   value="#{v2ThesaurusPickerImportBean.loadDone ? v2LocaleBean.getMsg('v2.picker.import.reanalyze') : v2LocaleBean.getMsg('v2.picker.import.load')}"
+                                   action="#{v2ThesaurusPickerImportBean.loadFile}"
+                                   title="#{v2LocaleBean.getMsg('v2.picker.import.load')}"
+                                   onclick="return window.tpBeginImportAnalyze &amp;&amp; window.tpBeginImportAnalyze();">
+                  </h:commandButton>
+                  <span class="tp-drop-x" title="#{v2LocaleBean.getMsg('v2.picker.import.clearFile')}">
+                    <h:commandButton id="tpImportClearFile"
+                                     styleClass="tp-drop-x-in"
+                                     action="#{v2ThesaurusPickerImportBean.clearUploadedFile}"
+                                     value="×"
+                                     title="#{v2LocaleBean.getMsg('v2.picker.import.clearFile')}"
+                                     aria-label="#{v2LocaleBean.getMsg('v2.picker.import.clearFile')}"
+                                     onclick="window.tpShowLoading &amp;&amp; window.tpShowLoading(null, false); return true;">
+                    </h:commandButton>
+                    <span class="tp-drop-x-ui" aria-hidden="true">
+                      <svg viewBox="0 0 24 24"><path d="M18 6 6 18M6 6l12 12"/></svg>
+                    </span>
+                  </span>
+                </div>
+              </h:panelGroup>
+            </div>
+
+            <h:panelGroup id="tpImportPreview" layout="block"
+                          styleClass="#{v2ThesaurusPickerImportBean.loadDone ? 'is-ready' : ''}">
+            <ui:fragment rendered="#{v2ThesaurusPickerImportBean.loadDone}">
+              <div class="tp-form-row tp-form-row--preview">
+                <span class="tp-form-l">#{v2LocaleBean.getMsg('v2.picker.import.preview')}</span>
+                <div class="tp-import-preview">
+                  <div class="tp-import-stat">
+                    <b>#{v2ThesaurusPickerImportBean.totalConcepts}</b>
+                    <span>#{v2LocaleBean.getMsg('v2.picker.import.concepts')}</span>
+                  </div>
+                  <ui:fragment rendered="#{not empty v2ThesaurusPickerImportBean.skosUri}">
+                    <div class="tp-import-meta">URI · #{v2ThesaurusPickerImportBean.skosUri}</div>
+                  </ui:fragment>
+                  <ui:fragment rendered="#{not empty v2ThesaurusPickerImportBean.csvWarning}">
+                    <div class="tp-import-meta is-warn">#{v2ThesaurusPickerImportBean.csvWarning}</div>
+                  </ui:fragment>
+                  <ui:fragment rendered="#{v2ThesaurusPickerImportBean.importReady}">
+                    <div class="tp-import-meta is-ready">#{v2LocaleBean.getMsg('v2.picker.import.readyHint')}</div>
+                  </ui:fragment>
+                </div>
+              </div>
+            </ui:fragment>
+            </h:panelGroup>
+
+            <h:panelGroup id="tpImportExisting" layout="block">
+              <ui:fragment rendered="#{v2ThesaurusPickerImportBean.existingThesaurusDetected}">
+                <div class="tp-form-row">
+                  <span class="tp-form-l">#{v2LocaleBean.getMsg('v2.picker.import.existing')}</span>
+                  <div class="tp-import-existing">
+                    <p>#{v2LocaleBean.getMsg('v2.picker.import.existingHint')}
+                      <code>#{v2ThesaurusPickerImportBean.existingThesaurusId}</code>
+                    </p>
+                    <label class="tp-import-check">
+                      <h:selectBooleanCheckbox id="tpImportAsMaster"
+                                               value="#{v2ThesaurusPickerImportBean.importAsMaster}"/>
+                      <span>#{v2LocaleBean.getMsg('v2.picker.import.asMaster')}</span>
+                    </label>
+                  </div>
+                </div>
+              </ui:fragment>
+            </h:panelGroup>
+
+            <div class="tp-fmt-panel#{v2ThesaurusPickerImportBean.isFormat('skos') ? ' is-off' : ''}"
+                 data-tp-fmt-panel="csv">
+              <div class="tp-form-row">
+                <label class="tp-form-l" for="tpImportName">#{v2LocaleBean.getMsg('v2.picker.import.name')} <span class="tp-req">*</span></label>
+                <h:inputText id="tpImportName" styleClass="tp-form-i"
+                             value="#{v2ThesaurusPickerImportBean.thesaurusName}"
+                             pt:placeholder="Ex. PACTOLS…"
+                             pt:oninput="window.tpSyncImportSubmit &amp;&amp; window.tpSyncImportSubmit();"/>
+              </div>
+              <div class="tp-form-row">
+                <label class="tp-form-l" for="tpImportDelim">#{v2LocaleBean.getMsg('v2.picker.import.delimiter')}</label>
+                <h:selectOneMenu id="tpImportDelim" styleClass="tp-form-i"
+                                 value="#{v2ThesaurusPickerImportBean.csvDelimiter}"
+                                 pt:onchange="window.tpMarkImportNeedsReanalyze &amp;&amp; window.tpMarkImportNeedsReanalyze();">
+                  <f:selectItem itemValue="#{0}" itemLabel=","/>
+                  <f:selectItem itemValue="#{1}" itemLabel=";"/>
+                  <f:selectItem itemValue="#{2}" itemLabel="Tab"/>
+                </h:selectOneMenu>
+              </div>
+            </div>
+
+            <div class="tp-form-row">
+              <span class="tp-form-l">#{v2LocaleBean.getMsg('v2.picker.import.sourceLang')} <span class="tp-req">*</span></span>
+              <h:panelGroup id="tpImportLangUi" layout="block" styleClass="tp-lang-pick">
+                <button type="button"
+                        class="tree-lang-btn tp-lang-btn"
+                        data-act="tp-lang-toggle"
+                        title="#{v2LocaleBean.getMsg('v2.picker.import.sourceLang')}"
+                        aria-haspopup="listbox"
+                        aria-expanded="false">
+                  <span class="tree-lang-flag" aria-hidden="true">#{v2ThesaurusPickerBean.languageFlag(v2ThesaurusPickerImportBean.selectedLang)}</span>
+                  <span class="tree-lang-name">#{v2ThesaurusPickerBean.languageLabel(v2ThesaurusPickerImportBean.selectedLang)}</span>
+                  <span class="tree-lang-code">#{v2ThesaurusPickerImportBean.selectedLang}</span>
+                  <span class="tree-lang-caret" aria-hidden="true">▾</span>
+                </button>
+                <div class="tree-lang-menu tp-lang-menu" role="listbox"
+                     aria-label="#{v2LocaleBean.getMsg('v2.picker.import.sourceLang')}">
+                  <div class="tree-lang-menu-h">#{v2LocaleBean.getMsg('v2.picker.import.sourceLang')}</div>
+                  <ui:repeat value="#{v2ThesaurusPickerImportBean.languages}" var="lg">
+                    <h:commandLink styleClass="tree-lang-opt#{v2ThesaurusPickerImportBean.isLanguageSelected(lg.code) ? ' is-on' : ''}"
+                                   action="#{v2ThesaurusPickerImportBean.selectLanguage}"
+                                   onclick="window.tpShowLoading &amp;&amp; window.tpShowLoading(null, false);">
+                      <f:param name="importLangCode" value="#{lg.code}"/>
+                      <span class="tree-lang-opt-flag" aria-hidden="true">#{v2ThesaurusPickerBean.languageFlag(lg.code)}</span>
+                      <span class="tree-lang-opt-name">#{v2ThesaurusPickerBean.languageLabel(lg.code)}</span>
+                      <span class="tree-lang-opt-code">#{lg.code}</span>
+                      <span class="tree-lang-opt-check" aria-hidden="true">✓</span>
+                    </h:commandLink>
+                  </ui:repeat>
+                </div>
+              </h:panelGroup>
+            </div>
+
+            <div class="tp-form-row">
+              <label class="tp-form-l" for="tpImportProject">#{v2LocaleBean.getMsg('v2.picker.import.project')}</label>
+              <h:selectOneMenu id="tpImportProject" styleClass="tp-form-i"
+                               value="#{v2ThesaurusPickerImportBean.selectedProjectId}">
+                <f:selectItem itemValue=""
+                              itemLabel="#{v2ThesaurusPickerImportBean.superAdmin ? v2LocaleBean.getMsg('v2.picker.import.noProject') : v2LocaleBean.getMsg('v2.picker.import.chooseProject')}"/>
+                <f:selectItems value="#{v2ThesaurusPickerImportBean.projects}" var="proj"
+                               itemValue="#{proj.idAsString()}" itemLabel="#{proj.name}"/>
+              </h:selectOneMenu>
+            </div>
+
+            <details class="tp-import-more#{(not empty v2ThesaurusPickerImportBean.persistentName) or (v2ThesaurusPickerImportBean.isFormat('skos') and v2ThesaurusPickerImportBean.selectedIdentifier ne 'sans') ? ' is-open' : ''}"
+                     id="tpImportMore">
+              <summary class="tp-import-more-sum">
+                <span>#{v2LocaleBean.getMsg('v2.picker.import.advanced')}</span>
+                <span class="tp-import-more-caret" aria-hidden="true">▾</span>
+              </summary>
+              <div class="tp-import-more-body">
+                <div class="tp-form-row">
+                  <label class="tp-form-l" for="tpImportAcronym">#{v2LocaleBean.getMsg('v2.picker.import.acronym')}</label>
+                  <h:inputText id="tpImportAcronym" styleClass="tp-form-i"
+                               value="#{v2ThesaurusPickerImportBean.persistentName}"
+                               pt:placeholder="#{v2LocaleBean.getMsg('v2.picker.import.acronymPh')}"/>
+                </div>
+
+                <div class="tp-form-row tp-fmt-panel#{v2ThesaurusPickerImportBean.isFormat('skos') ? '' : ' is-off'}"
+                     data-tp-fmt-panel="skos">
+                  <label class="tp-form-l" for="tpImportIdType">#{v2LocaleBean.getMsg('v2.picker.import.idType')}</label>
+                  <h:selectOneMenu id="tpImportIdType" styleClass="tp-form-i"
+                                   value="#{v2ThesaurusPickerImportBean.selectedIdentifier}">
+                    <f:selectItem itemValue="sans" itemLabel="#{v2LocaleBean.getMsg('v2.picker.import.id.none')}"/>
+                    <f:selectItem itemValue="ark" itemLabel="ARK"/>
+                    <f:selectItem itemValue="handle" itemLabel="Handle"/>
+                    <f:selectItem itemValue="doi" itemLabel="DOI"/>
+                  </h:selectOneMenu>
+                </div>
+              </div>
+            </details>
+          </div>
+          <div class="tp-form-run tp-import-run">
+            <button type="button"
+                    class="tp-form-cancel"
+                    onclick="return window.tpAnimateBackToList &amp;&amp; window.tpAnimateBackToList(this, document.getElementById('tpImportCancel'));">
+              #{v2LocaleBean.getMsg('v2.picker.import.back')}
+            </button>
+            <h:commandButton id="tpImportCancel"
+                             styleClass="tp-create-go"
+                             value="#{v2LocaleBean.getMsg('v2.picker.import.cancel')}"
+                             action="#{v2ThesaurusPickerBean.cancelImportThesaurus}"
+                             immediate="true"
+                             tabindex="-1"
+                             aria-hidden="true">
+            </h:commandButton>
+            <div class="tp-import-actions">
+              <h:panelGroup id="tpImportSubmit" layout="span">
+              <h:commandButton id="tpImportGo"
+                               styleClass="tp-form-submit#{v2ThesaurusPickerImportBean.importReady ? ' is-ready-pulse' : ' is-disabled'}"
+                               value="#{v2LocaleBean.getMsg('v2.picker.import.submit')}"
+                               action="#{v2ThesaurusPickerImportBean.submitImport}"
+                               pt:data-loading-msg="#{v2LocaleBean.getMsg('v2.picker.import.running')}"
+                               pt:aria-disabled="#{v2ThesaurusPickerImportBean.importReady ? 'false' : 'true'}"
+                               onclick="return window.tpPrepareImportSubmit &amp;&amp; window.tpPrepareImportSubmit(this);">
+              </h:commandButton>
+              </h:panelGroup>
+            </div>
+          </div>
+          </div>
+        </h:panelGroup>
+      </div>
+    </h:form>
+</ui:composition>

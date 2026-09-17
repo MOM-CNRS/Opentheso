@@ -1,0 +1,136 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<ui:composition xmlns="http://www.w3.org/1999/xhtml"
+                xmlns:ui="http://xmlns.jcp.org/jsf/facelets"
+                xmlns:h="http://xmlns.jcp.org/jsf/html"
+                xmlns:f="http://xmlns.jcp.org/jsf/core"
+                xmlns:pt="http://xmlns.jcp.org/jsf/passthrough">
+        <ui:fragment rendered="#{v2ThesaurusPickerBean.createMode}">
+          <button type="button"
+                  class="bo-back"
+                  title="#{v2LocaleBean.getMsg('v2.picker.create.back')}"
+                  aria-label="#{v2LocaleBean.getMsg('v2.picker.create.back')}"
+                  onclick="return window.tpAnimateBackToList &amp;&amp; window.tpAnimateBackToList(this, document.getElementById('tpCreateCancel'));">
+            <svg viewBox="0 0 24 24" aria-hidden="true"><path d="M19 12H5"/><path d="m12 19-7-7 7-7"/></svg>
+          </button>
+          <div class="tp-head">
+            <div>
+              <h1 class="tp-title">#{v2LocaleBean.getMsg('v2.picker.create.title')}</h1>
+              <p class="tp-sub">#{v2LocaleBean.getMsg('v2.picker.create.subtitle')}</p>
+            </div>
+          </div>
+          <div class="tp-form">
+            <div class="tp-form-card">
+              <div class="tp-form-row">
+                <label class="tp-form-l" for="tpCreateTitle">Nom <span class="tp-req">*</span></label>
+                <h:inputText id="tpCreateTitle"
+                             styleClass="tp-form-i"
+                             value="#{v2ThesaurusPickerBean.createEditor.title}"
+                             pt:placeholder="Ex. PACTOLS, GeoEthno…"
+                             pt:oninput="window.tpSyncCreateSubmit &amp;&amp; window.tpSyncCreateSubmit();"/>
+              </div>
+              <div class="tp-form-row">
+                <label class="tp-form-l" for="tpCreateAcronym">Acronyme</label>
+                <h:inputText id="tpCreateAcronym"
+                             styleClass="tp-form-i"
+                             value="#{v2ThesaurusPickerBean.createEditor.persistentNameThesaurus}"
+                             pt:placeholder="Nom pérenne ou acronyme (optionnel)"/>
+              </div>
+              <div class="tp-form-row">
+                <label class="tp-form-l" for="tpCreateOrg">Organisation</label>
+                <h:inputText id="tpCreateOrg"
+                             styleClass="tp-form-i"
+                             value="#{v2ThesaurusPickerBean.createEditor.organization}"
+                             pt:placeholder="Ex. Ministère de la Culture, CNRS…"/>
+              </div>
+              <div class="tp-form-row">
+                <span class="tp-form-l">Langue source <span class="tp-req">*</span></span>
+                <h:panelGroup id="tpCreateLangUi" layout="block" styleClass="tp-lang-pick">
+                  <button type="button"
+                          class="tree-lang-btn tp-lang-btn"
+                          data-act="tp-lang-toggle"
+                          title="Langue source"
+                          aria-haspopup="listbox"
+                          aria-expanded="false">
+                    <span class="tree-lang-flag" aria-hidden="true">#{v2ThesaurusPickerBean.createSelectedLanguageFlag}</span>
+                    <span class="tree-lang-name">#{v2ThesaurusPickerBean.createSelectedLanguageLabel}</span>
+                    <span class="tree-lang-code">#{v2ThesaurusPickerBean.createEditor.selectedLanguage}</span>
+                    <span class="tree-lang-caret" aria-hidden="true">▾</span>
+                  </button>
+                  <div class="tree-lang-menu tp-lang-menu" role="listbox" aria-label="Langue source">
+                    <div class="tree-lang-menu-h">Langue source</div>
+                    <ui:repeat value="#{v2ThesaurusPickerBean.createLanguages}" var="lg">
+                      <h:commandLink styleClass="tree-lang-opt#{v2ThesaurusPickerBean.isCreateLanguageSelected(lg.code) ? ' is-on' : ''}"
+                                     action="#{v2ThesaurusPickerBean.selectCreateLanguage}">
+                        <f:param name="createLangCode" value="#{lg.code}"/>
+                        <span class="tree-lang-opt-flag" aria-hidden="true">#{v2ThesaurusPickerBean.languageFlag(lg.code)}</span>
+                        <span class="tree-lang-opt-name">#{v2ThesaurusPickerBean.languageLabel(lg.code)}</span>
+                        <span class="tree-lang-opt-code">#{lg.code}</span>
+                        <span class="tree-lang-opt-check" aria-hidden="true">✓</span>
+                      </h:commandLink>
+                    </ui:repeat>
+                  </div>
+                </h:panelGroup>
+              </div>
+              <div class="tp-form-row">
+                <label class="tp-form-l" for="tpCreateProject">Projet</label>
+                <h:selectOneMenu id="tpCreateProject"
+                                 styleClass="tp-form-i"
+                                 value="#{v2ThesaurusPickerBean.createEditor.selectedProjectId}">
+                  <f:selectItem itemValue="" itemLabel="#{v2ThesaurusPickerBean.createSuperAdmin ? 'Aucun projet…' : 'Choisir un projet…'}"/>
+                  <f:selectItems value="#{v2ThesaurusPickerBean.createProjects}"
+                                 var="proj"
+                                 itemValue="#{proj.idAsString()}"
+                                 itemLabel="#{proj.name}"/>
+                </h:selectOneMenu>
+              </div>
+              <div class="tp-form-row">
+                <span class="tp-form-l">Visibilité</span>
+                <h:panelGroup id="tpCreateVis" layout="block" styleClass="tp-form-radios">
+                  <h:commandLink styleClass="tp-form-radio#{not v2ThesaurusPickerBean.createEditor.privateThesaurus ? ' is-on' : ''}"
+                                 action="#{v2ThesaurusPickerBean.choosePublicVisibility}">
+                    <span class="tp-radio-ui" aria-hidden="true"></span>
+                    <svg viewBox="0 0 24 24" aria-hidden="true"><circle cx="12" cy="12" r="9"/><path d="M3 12h18M12 3a14 14 0 0 1 0 18M12 3a14 14 0 0 0 0 18"/></svg>
+                    <span><b>Public</b> — consultation ouverte</span>
+                  </h:commandLink>
+                  <h:commandLink styleClass="tp-form-radio#{v2ThesaurusPickerBean.createEditor.privateThesaurus ? ' is-on' : ''}"
+                                 action="#{v2ThesaurusPickerBean.choosePrivateVisibility}">
+                    <span class="tp-radio-ui" aria-hidden="true"></span>
+                    <svg viewBox="0 0 24 24" aria-hidden="true"><rect x="5" y="11" width="14" height="10" rx="2"/><path d="M8 11V8a4 4 0 0 1 8 0v3"/></svg>
+                    <span><b>Privé</b> — accès restreint</span>
+                  </h:commandLink>
+                </h:panelGroup>
+              </div>
+            </div>
+            <div class="tp-form-run">
+              <button type="button"
+                      class="tp-form-cancel"
+                      onclick="return window.tpAnimateBackToList &amp;&amp; window.tpAnimateBackToList(this, document.getElementById('tpCreateCancel'));">
+                #{v2LocaleBean.getMsg('v2.picker.create.cancel')}
+              </button>
+              <h:commandButton id="tpCreateCancel"
+                               styleClass="tp-create-go"
+                               value="#{v2LocaleBean.getMsg('v2.picker.create.cancel')}"
+                               action="#{v2ThesaurusPickerBean.cancelCreateThesaurus}"
+                               immediate="true"
+                               tabindex="-1"
+                               aria-hidden="true">
+              </h:commandButton>
+              <button type="button"
+                      id="tpCreateAsk"
+                      class="tp-form-submit#{empty v2ThesaurusPickerBean.createEditor.title ? ' is-disabled' : ''}"
+                      aria-disabled="#{empty v2ThesaurusPickerBean.createEditor.title ? 'true' : 'false'}"
+                      onclick="return window.tpAskCreate &amp;&amp; window.tpAskCreate(this);">
+                <svg viewBox="0 0 24 24" aria-hidden="true"><path d="M12 5v14"/><path d="M5 12h14"/></svg>
+                <span>#{v2LocaleBean.getMsg('v2.picker.create.submit')}</span>
+              </button>
+              <h:commandLink id="tpCreateSubmit"
+                             styleClass="tp-create-go"
+                             action="#{v2ThesaurusPickerBean.submitCreateThesaurus}"
+                             tabindex="-1"
+                             aria-hidden="true">
+                <h:outputText value="#{v2LocaleBean.getMsg('v2.picker.create.submit')}"/>
+              </h:commandLink>
+            </div>
+          </div>
+        </ui:fragment>
+</ui:composition>

@@ -145,7 +145,7 @@
     </div>
     <h:commandButton id="cvAddNtAfterClose" styleClass="preview-open-btn cv-after-close" style="display:none"
                      action="#{v2ConceptFicheMenuBean.afterAddChild}">
-      <ui:include src="cv-menu-ajax.xhtml"/>
+      <ui:include src="/v2/includes/cv-menu-ajax.xhtml"/>
     </h:commandButton>
   </div>
 
@@ -238,7 +238,7 @@
     </div>
     <h:commandButton id="cvEditTypeAfterClose" styleClass="preview-open-btn cv-after-close" style="display:none"
                      action="#{v2ConceptFicheMenuBean.afterEditConceptType}">
-      <ui:include src="cv-menu-ajax.xhtml"/>
+      <ui:include src="/v2/includes/cv-menu-ajax.xhtml"/>
     </h:commandButton>
   </div>
 
@@ -370,7 +370,7 @@
     </div>
     <h:commandButton id="cvTypesAfterClose" styleClass="preview-open-btn cv-after-close" style="display:none"
                      action="#{v2ConceptFicheMenuBean.afterManageConceptTypes}">
-      <ui:include src="cv-menu-ajax.xhtml"/>
+      <ui:include src="/v2/includes/cv-menu-ajax.xhtml"/>
     </h:commandButton>
   </div>
 
@@ -443,7 +443,7 @@
       </div>
       <div class="confirm-actions">
         <h:commandLink styleClass="abt-cancel" action="#{v2ConceptFicheMenuBean.cancelPaste}">
-          <ui:include src="cv-menu-ajax.xhtml"/>
+          <ui:include src="/v2/includes/cv-menu-ajax.xhtml"/>
           #{v2LocaleBean.getMsg('v2.cancel')}
         </h:commandLink>
         <h:commandLink styleClass="abt-save" action="#{v2ConceptFicheMenuBean.submitPaste}">
@@ -470,7 +470,7 @@
       <div class="confirm-actions">
         <button type="button" class="abt-cancel confirm-cancel" data-act="cv-dlg-dismiss">#{v2LocaleBean.getMsg('v2.cancel')}</button>
         <h:commandLink styleClass="abt-save" action="#{v2ConceptFicheMenuBean.cancelCut}">
-          <ui:include src="cv-menu-ajax.xhtml"/>
+          <ui:include src="/v2/includes/cv-menu-ajax.xhtml"/>
           #{v2LocaleBean.getMsg('v2.tree.dnd.cancelCutConfirm')}
         </h:commandLink>
       </div>
@@ -550,7 +550,7 @@
             </label>
           </div>
         </div>
-        <ui:include src="cv-ark-progress.xhtml">
+        <ui:include src="/v2/includes/cv-ark-progress.xhtml">
           <ui:param name="step1" value="#{v2LocaleBean.getMsg('v2.concept.delProgPrep')}"/>
           <ui:param name="step1Detail" value="#{v2LocaleBean.getMsg('v2.concept.delProgPrepD')}"/>
           <ui:param name="step2" value="#{v2LocaleBean.getMsg('v2.concept.delProgFix')}"/>
@@ -574,7 +574,7 @@
     </div>
     <h:commandButton id="cvDeleteAfterClose" styleClass="preview-open-btn cv-after-close" style="display:none"
                      action="#{v2ConceptFicheMenuBean.afterDelete}">
-      <ui:include src="cv-menu-ajax.xhtml"/>
+      <ui:include src="/v2/includes/cv-menu-ajax.xhtml"/>
     </h:commandButton>
   </div>
 
@@ -586,7 +586,7 @@
       <div class="confirm-actions">
         <button type="button" class="abt-cancel confirm-cancel" data-act="cv-dlg-dismiss">#{v2LocaleBean.getMsg('v2.cancel')}</button>
         <h:commandLink styleClass="abt-save" action="#{v2ConceptFicheMenuBean.submitDeprecate}">
-          <ui:include src="cv-menu-ajax.xhtml"/>
+          <ui:include src="/v2/includes/cv-menu-ajax.xhtml"/>
           #{v2LocaleBean.getMsg('rightbody.concept.deprecate_concept')}
         </h:commandLink>
       </div>
@@ -896,7 +896,7 @@
           <div class="cv-dlg-card-h">#{v2LocaleBean.getMsg('v2.concept.arkConcept')}</div>
           <div class="cv-dlg-branch">
             <strong>#{v2ConceptIdentifierEditorBean.currentConceptLabel}</strong>
-            <ui:include src="cv-ark-provider.xhtml"/>
+            <ui:include src="/v2/includes/cv-ark-provider.xhtml"/>
           </div>
           <div class="cv-dlg-meta">
             <div class="cv-dlg-meta-row">
@@ -949,7 +949,7 @@
             </ui:fragment>
           </h:panelGroup>
         </div>
-        <ui:include src="cv-ark-progress.xhtml">
+        <ui:include src="/v2/includes/cv-ark-progress.xhtml">
           <ui:param name="step1" value="#{v2LocaleBean.getMsg('v2.concept.arkProgPrep')}"/>
           <ui:param name="step1Detail" value="#{v2LocaleBean.getMsg('v2.concept.arkProgPrepD')}"/>
           <ui:param name="step2" value="#{v2LocaleBean.getMsg('v2.concept.arkProgServer')}"/>
@@ -974,7 +974,7 @@
     </div>
     <h:commandButton id="cvArkAfterClose" styleClass="preview-open-btn cv-after-close" style="display:none"
                      action="#{v2ConceptFicheMenuBean.afterGenerateArk}">
-      <ui:include src="cv-menu-ajax.xhtml"/>
+      <ui:include src="/v2/includes/cv-menu-ajax.xhtml"/>
     </h:commandButton>
   </div>
 
@@ -998,7 +998,7 @@
           <div class="cv-dlg-card-h">#{v2LocaleBean.getMsg('v2.concept.arkMissingScope')}</div>
           <div class="cv-dlg-branch">
             <strong>#{v2ConceptIdentifierEditorBean.thesaurusLabel}</strong>
-            <ui:include src="cv-ark-provider.xhtml"/>
+            <ui:include src="/v2/includes/cv-ark-provider.xhtml"/>
           </div>
           <h:panelGroup id="cvArkMissingLive" layout="block" styleClass="cv-ark-live">
             <span hidden="hidden"
@@ -1045,7 +1045,7 @@
             </ui:fragment>
           </h:panelGroup>
         </div>
-        <ui:include src="cv-ark-progress.xhtml">
+        <ui:include src="/v2/includes/cv-ark-progress.xhtml">
           <ui:param name="step1" value="#{v2LocaleBean.getMsg('v2.concept.arkProgPrep')}"/>
           <ui:param name="step1Detail" value="#{v2LocaleBean.getMsg('v2.concept.arkProgPrepD')}"/>
           <ui:param name="step2" value="#{v2LocaleBean.getMsg('v2.concept.arkProgServer')}"/>
@@ -1074,7 +1074,7 @@
       <div class="confirm-actions">
         <button type="button" class="abt-cancel confirm-cancel" data-act="cv-dlg-dismiss">#{v2LocaleBean.getMsg('v2.cancel')}</button>
         <h:commandLink styleClass="abt-save is-danger" action="#{v2ConceptFicheMenuBean.submitDeleteArk}">
-          <ui:include src="cv-menu-ajax.xhtml"/>
+          <ui:include src="/v2/includes/cv-menu-ajax.xhtml"/>
           #{v2LocaleBean.getMsg('rightbody.concept.delete_ark')}
         </h:commandLink>
       </div>
@@ -1100,7 +1100,7 @@
           <div class="cv-dlg-card-h">#{v2LocaleBean.getMsg('v2.concept.arkBranchScope')}</div>
           <div class="cv-dlg-branch">
             <strong>#{v2ConceptIdentifierEditorBean.currentConceptLabel}</strong>
-            <ui:include src="cv-ark-provider.xhtml"/>
+            <ui:include src="/v2/includes/cv-ark-provider.xhtml"/>
           </div>
           <h:panelGroup id="cvArkBranchLive" layout="block" styleClass="cv-ark-live">
             <span hidden="hidden"
@@ -1157,7 +1157,7 @@
             </ui:fragment>
           </h:panelGroup>
         </div>
-        <ui:include src="cv-ark-progress.xhtml">
+        <ui:include src="/v2/includes/cv-ark-progress.xhtml">
           <ui:param name="step1" value="#{v2LocaleBean.getMsg('v2.concept.arkProgPrep')}"/>
           <ui:param name="step1Detail" value="#{v2LocaleBean.getMsg('v2.concept.arkProgPrepD')}"/>
           <ui:param name="step2" value="#{v2LocaleBean.getMsg('v2.concept.arkProgServer')}"/>
@@ -1207,7 +1207,7 @@
           <div class="cv-dlg-card-h">#{v2LocaleBean.getMsg('v2.concept.arkAllScope')}</div>
           <div class="cv-dlg-branch">
             <strong>#{v2ConceptIdentifierEditorBean.thesaurusLabel}</strong>
-            <ui:include src="cv-ark-provider.xhtml"/>
+            <ui:include src="/v2/includes/cv-ark-provider.xhtml"/>
           </div>
           <h:panelGroup id="cvArkAllLive" layout="block" styleClass="cv-ark-live">
             <span hidden="hidden"
@@ -1264,7 +1264,7 @@
             </ui:fragment>
           </h:panelGroup>
         </div>
-        <ui:include src="cv-ark-progress.xhtml">
+        <ui:include src="/v2/includes/cv-ark-progress.xhtml">
           <ui:param name="step1" value="#{v2LocaleBean.getMsg('v2.concept.arkProgPrep')}"/>
           <ui:param name="step1Detail" value="#{v2LocaleBean.getMsg('v2.concept.arkProgPrepD')}"/>
           <ui:param name="step2" value="#{v2LocaleBean.getMsg('v2.concept.arkProgServer')}"/>
@@ -1302,7 +1302,7 @@
       <div class="confirm-actions">
         <button type="button" class="abt-cancel confirm-cancel" data-act="cv-dlg-dismiss">#{v2LocaleBean.getMsg('v2.cancel')}</button>
         <h:commandLink styleClass="abt-save" action="#{v2ConceptFicheMenuBean.submitGenerateHandle}">
-          <ui:include src="cv-menu-ajax.xhtml"/>
+          <ui:include src="/v2/includes/cv-menu-ajax.xhtml"/>
           #{v2LocaleBean.getMsg('rightbody.concept.generate_handle')}
         </h:commandLink>
       </div>
@@ -1315,7 +1315,7 @@
       <div class="confirm-actions">
         <button type="button" class="abt-cancel confirm-cancel" data-act="cv-dlg-dismiss">#{v2LocaleBean.getMsg('v2.cancel')}</button>
         <h:commandLink styleClass="abt-save is-danger" action="#{v2ConceptFicheMenuBean.submitDeleteHandle}">
-          <ui:include src="cv-menu-ajax.xhtml"/>
+          <ui:include src="/v2/includes/cv-menu-ajax.xhtml"/>
           #{v2LocaleBean.getMsg('rightbody.concept.delete_handle')}
         </h:commandLink>
       </div>
@@ -1327,7 +1327,7 @@
       <div class="confirm-actions">
         <button type="button" class="abt-cancel confirm-cancel" data-act="cv-dlg-dismiss">#{v2LocaleBean.getMsg('v2.cancel')}</button>
         <h:commandLink styleClass="abt-save" action="#{v2ConceptFicheMenuBean.submitGenerateHandleBranch}">
-          <ui:include src="cv-menu-ajax.xhtml"/>
+          <ui:include src="/v2/includes/cv-menu-ajax.xhtml"/>
           #{v2LocaleBean.getMsg('rightbody.concept.generate_handle_for_branch')}
         </h:commandLink>
       </div>
@@ -1501,7 +1501,7 @@
             </table>
           </div>
         </details>
-        <ui:include src="cv-ark-progress.xhtml">
+        <ui:include src="/v2/includes/cv-ark-progress.xhtml">
           <ui:param name="step1" value="#{v2LocaleBean.getMsg('v2.concept.csvProgPrep')}"/>
           <ui:param name="step1Detail" value="#{v2LocaleBean.getMsg('v2.concept.csvProgPrepD')}"/>
           <ui:param name="step2" value="#{v2LocaleBean.getMsg('v2.concept.csvProgImport')}"/>
@@ -1529,7 +1529,7 @@
     </div>
     <h:commandButton id="cvCsvAfterClose" styleClass="preview-open-btn cv-after-close" style="display:none"
                      action="#{v2ConceptFicheMenuBean.afterImportCsv}">
-      <ui:include src="cv-menu-ajax.xhtml"/>
+      <ui:include src="/v2/includes/cv-menu-ajax.xhtml"/>
     </h:commandButton>
   </div>
 
@@ -1599,7 +1599,7 @@
             </ui:fragment>
           </h:panelGroup>
         </div>
-        <ui:include src="cv-ark-progress.xhtml">
+        <ui:include src="/v2/includes/cv-ark-progress.xhtml">
           <ui:param name="step1" value="#{v2LocaleBean.getMsg('v2.concept.loopProgPrep')}"/>
           <ui:param name="step1Detail" value="#{v2LocaleBean.getMsg('v2.concept.loopProgPrepD')}"/>
           <ui:param name="step2" value="#{v2LocaleBean.getMsg('v2.concept.loopProgFix')}"/>
@@ -1623,7 +1623,7 @@
     </div>
     <h:commandButton id="cvLoopAfterClose" styleClass="preview-open-btn cv-after-close" style="display:none"
                      action="#{v2ConceptFicheMenuBean.afterRepairLoopedRelationships}">
-      <ui:include src="cv-menu-ajax.xhtml"/>
+      <ui:include src="/v2/includes/cv-menu-ajax.xhtml"/>
     </h:commandButton>
   </div>
 </ui:composition>

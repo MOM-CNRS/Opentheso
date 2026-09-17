@@ -185,11 +185,11 @@ public class ThesaurusEditionSkosImportEngine {
         for (SKOSRelation relation : skosXmlDocument.getConceptScheme().getRelationsList()) {
             hasTopConcceptList.add(relation.getTargetUri());
         }
-        initPreferencesThesaurus(
-                idTheso1,
-                nodePreference.getPreferredName() == null ? displayTitle : nodePreference.getPreferredName()
-        );
-        initPreferencesThesaurus(idTheso1, displayTitle);
+        String preferredTitle = displayTitle;
+        if (nodePreference != null && StringUtils.isNotBlank(nodePreference.getPreferredName())) {
+            preferredTitle = nodePreference.getPreferredName();
+        }
+        initPreferencesThesaurus(idTheso1, preferredTitle);
         captureMasterLinkFromConceptScheme(conceptScheme, idTheso1);
         return idTheso1;
     }

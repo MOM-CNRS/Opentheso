@@ -3,12 +3,15 @@ package fr.cnrs.opentheso.v2.concept.ui;
 import fr.cnrs.opentheso.utils.MessageUtils;
 import fr.cnrs.opentheso.v2.concept.model.ThesaurusPickerRow;
 import fr.cnrs.opentheso.v2.concept.service.ConsultationCatalogService;
+import fr.cnrs.opentheso.v2.setting.service.ThesaurusAccessService;
 import fr.cnrs.opentheso.v2.shared.ui.UserSession;
 import fr.cnrs.opentheso.v2.shared.ui.V2LocaleBean;
 import fr.cnrs.opentheso.v2.shared.ui.V2NavigationBean;
 import fr.cnrs.opentheso.v2.toolbox.exception.InvalidToolboxDataException;
 import fr.cnrs.opentheso.v2.toolbox.model.LanguageOption;
 import fr.cnrs.opentheso.v2.toolbox.model.ProjectOption;
+import fr.cnrs.opentheso.v2.toolbox.service.EditionThesaurusService;
+import fr.cnrs.opentheso.v2.toolbox.service.ModifyThesaurusService;
 import fr.cnrs.opentheso.v2.toolbox.service.NewThesaurusService;
 import fr.cnrs.opentheso.v2.toolbox.ui.NewThesaurusEditor;
 import jakarta.annotation.PostConstruct;
@@ -43,15 +46,16 @@ public class ThesaurusPickerBean implements Serializable {
     public static final String TAB_PUBLIC = "public";
 
     private static final List<ColumnDef> COLUMN_DEFS = List.of(
-            new ColumnDef("name", "Nom du thésaurus", true, true),
-            new ColumnDef("access", "Accès", false, false),
-            new ColumnDef("terms", "Termes", false, false),
-            new ColumnDef("created", "Créé le", false, false),
-            new ColumnDef("domain", "Domaine", true, false),
-            new ColumnDef("projects", "Projets", true, false),
-            new ColumnDef("org", "Organisation", true, false),
-            new ColumnDef("chrono", "Chronologie", false, false),
-            new ColumnDef("lang", "Langues", false, false)
+            new ColumnDef("name", "v2.picker.col.name", true, true),
+            new ColumnDef("access", "v2.picker.col.access", false, false),
+            new ColumnDef("role", "v2.picker.col.role", false, false),
+            new ColumnDef("terms", "v2.picker.col.terms", false, false),
+            new ColumnDef("created", "v2.picker.col.created", false, false),
+            new ColumnDef("domain", "v2.picker.col.domain", true, false),
+            new ColumnDef("projects", "v2.picker.col.projects", true, false),
+            new ColumnDef("org", "v2.picker.col.org", true, false),
+            new ColumnDef("chrono", "v2.picker.col.chrono", false, false),
+            new ColumnDef("lang", "v2.picker.col.lang", false, false)
     );
 
     private final transient ConsultationCatalogService consultationCatalogService;
@@ -60,12 +64,24 @@ public class ThesaurusPickerBean implements Serializable {
     private final transient V2LocaleBean v2LocaleBean;
     private final transient V2NavigationBean v2NavigationBean;
     private final transient NewThesaurusService newThesaurusService;
+    private final transient ThesaurusPickerImportBean thesaurusPickerImportBean;
+    private final transient ThesaurusPickerExportBean thesaurusPickerExportBean;
+    private final transient ThesaurusAccessService thesaurusAccessService;
+    private final transient ModifyThesaurusService modifyThesaurusService;
+    private final transient EditionThesaurusService editionThesaurusService;
 
     private List<ThesaurusPickerRow> rows = List.of();
     private String query = "";
     private String activeTab = TAB_ALL;
     private String sortColumn = "name";
     private boolean sortAscending = true;
+    private boolean listLoading;
+
+    private transient List<ThesaurusPickerRow> filteredRowsCache;
+    private transient String filterCacheKey;
+    private int cachedMemberCount = -1;
+    private int cachedPublicCount = -1;
+    private int cachedQueryMatchCount = -1;
 
     private List<ColumnCfg> columnCfg = defaultColumnCfg();
     private boolean columnsMenuOpen;
@@ -81,28 +97,67 @@ public class ThesaurusPickerBean implements Serializable {
     private List<ProjectOption> createProjects = Collections.emptyList();
     private boolean createSuperAdmin;
 
+    private boolean editMode;
+    private String editThesaurusId;
+    private String editTitle;
+    private String editLanguage;
+    private boolean editPrivateThesaurus;
+    private String editError;
+
+    private String deleteThesaurusId;
+    private String deleteThesaurusTitle;
+    private boolean deletePerennialIdentifiers;
+
+    /** Toast ponctuel sur la liste (import / suppression / actions). */
+    private String listFlashMessage;
+    private String listFlashToken;
+    private boolean listFlashError;
+
     @PostConstruct
     public void init() {
         if (!userSession.isLoggedIn()) {
             activeTab = TAB_PUBLIC;
+            applyGuestColumnDefaults();
         }
         load();
     }
 
     public void load() {
-        consultationShellBean.clearThesaurusAccessDenied();
-        consultationShellBean.load();
-        rows = consultationCatalogService.listPickerThesauri(
-                userSession.isLoggedIn() ? userSession.getCurrentUserId() : null,
-                userSession.isSuperAdmin(),
-                v2LocaleBean.getIdLangue()
-        );
+        listLoading = true;
+        try {
+            consultationShellBean.clearThesaurusAccessDenied();
+            rows = consultationCatalogService.listPickerThesauri(
+                    userSession.isLoggedIn() ? userSession.getCurrentUserId() : null,
+                    userSession.isSuperAdmin(),
+                    v2LocaleBean.getIdLangue()
+            );
+            invalidateFilterCache();
+        } finally {
+            listLoading = false;
+        }
     }
 
     public List<ThesaurusPickerRow> getFilteredRows() {
+        String key = buildFilterCacheKey();
+        if (filteredRowsCache != null && Strings.CS.equals(key, filterCacheKey)) {
+            return filteredRowsCache;
+        }
+        String needle = normalize(query);
+        filteredRowsCache = getCatalogRows().stream()
+                .filter(row -> matchesTab(row, activeTab))
+                .toList();
+        filterCacheKey = key;
+        cachedQueryMatchCount = (int) rows.stream().filter(row -> matchesQuery(row, needle)).count();
+        return filteredRowsCache;
+    }
+
+    /**
+     * Lignes après recherche / filtres colonnes, sans filtre d'onglet.
+     * L'onglet est appliqué côté client pour une animation fluide.
+     */
+    public List<ThesaurusPickerRow> getCatalogRows() {
         String needle = normalize(query);
         return rows.stream()
-                .filter(row -> matchesTab(row, activeTab))
                 .filter(row -> matchesQuery(row, needle))
                 .filter(this::matchesColumnFilters)
                 .sorted(comparator())
@@ -110,17 +165,51 @@ public class ThesaurusPickerBean implements Serializable {
     }
 
     public int getMemberCount() {
-        return (int) rows.stream().filter(ThesaurusPickerRow::isMember).count();
+        if (cachedMemberCount < 0) {
+            cachedMemberCount = (int) rows.stream().filter(ThesaurusPickerRow::isMember).count();
+        }
+        return cachedMemberCount;
     }
 
     public int getPublicCount() {
-        return (int) rows.stream().filter(ThesaurusPickerRow::isPublicAccess).count();
+        if (cachedPublicCount < 0) {
+            cachedPublicCount = (int) rows.stream().filter(ThesaurusPickerRow::isPublicAccess).count();
+        }
+        return cachedPublicCount;
     }
 
     /** Nombre de lignes après recherche, tous onglets confondus (badge « Tous »). */
     public int getQueryMatchCount() {
-        String needle = normalize(query);
-        return (int) rows.stream().filter(row -> matchesQuery(row, needle)).count();
+        String key = buildFilterCacheKey();
+        if (cachedQueryMatchCount < 0 || !Strings.CS.equals(key, filterCacheKey)) {
+            getFilteredRows();
+        }
+        if (cachedQueryMatchCount < 0) {
+            String needle = normalize(query);
+            cachedQueryMatchCount = (int) rows.stream().filter(row -> matchesQuery(row, needle)).count();
+        }
+        return cachedQueryMatchCount;
+    }
+
+    private void invalidateFilterCache() {
+        filteredRowsCache = null;
+        filterCacheKey = null;
+        cachedMemberCount = -1;
+        cachedPublicCount = -1;
+        cachedQueryMatchCount = -1;
+    }
+
+    private String buildFilterCacheKey() {
+        return System.identityHashCode(rows)
+                + "|" + StringUtils.defaultString(query)
+                + "|" + StringUtils.defaultString(activeTab)
+                + "|" + StringUtils.defaultString(filterName)
+                + "|" + StringUtils.defaultString(filterDomain)
+                + "|" + StringUtils.defaultString(filterProjects)
+                + "|" + StringUtils.defaultString(filterOrg)
+                + "|" + StringUtils.defaultString(filterLang)
+                + "|" + StringUtils.defaultString(sortColumn)
+                + "|" + sortAscending;
     }
 
     public int getFilteredCount() {
@@ -128,7 +217,15 @@ public class ThesaurusPickerBean implements Serializable {
     }
 
     public int getEmptyColspan() {
-        return getVisibleColumns().size() + 2;
+        // cfg + colonnes visibles + actions (connecté uniquement)
+        return getColumnCfg().size() + 1 + (isLoggedIn() ? 1 : 0);
+    }
+
+    public String getAriaSort(String column) {
+        if (!isSortedBy(column)) {
+            return "none";
+        }
+        return sortAscending ? "ascending" : "descending";
     }
 
     public boolean isLoggedIn() {
@@ -139,22 +236,122 @@ public class ThesaurusPickerBean implements Serializable {
         return userSession.isLoggedIn();
     }
 
+    public boolean isCanImportThesaurus() {
+        return thesaurusPickerImportBean != null && thesaurusPickerImportBean.isCanImportThesaurus();
+    }
+
+    public boolean isImportMode() {
+        return thesaurusPickerImportBean != null && thesaurusPickerImportBean.isImportMode();
+    }
+
+    public boolean isExportMode() {
+        return thesaurusPickerExportBean != null && thesaurusPickerExportBean.isExportMode();
+    }
+
+    public boolean isListMode() {
+        return !createMode && !editMode && !isImportMode() && !isExportMode();
+    }
+
+    public boolean canManageRow(ThesaurusPickerRow row) {
+        if (row == null || !userSession.isLoggedIn()) {
+            return false;
+        }
+        if (userSession.isSuperAdmin()) {
+            return true;
+        }
+        return row.canManage();
+    }
+
+    private boolean assertCanManage(String thesaurusId) {
+        if (StringUtils.isBlank(thesaurusId)) {
+            return false;
+        }
+        Integer userId = userSession.getCurrentUserId();
+        if (userId == null) {
+            return false;
+        }
+        return thesaurusAccessService.canManageThesaurus(userId, userSession.isSuperAdmin(), thesaurusId.trim());
+    }
+
+    public void openImportThesaurus() {
+        if (!isCanImportThesaurus()) {
+            return;
+        }
+        cancelCreateThesaurus();
+        cancelEditThesaurus();
+        cancelExportThesaurus();
+        columnsMenuOpen = false;
+        thesaurusPickerImportBean.open();
+    }
+
+    public void cancelImportThesaurus() {
+        if (thesaurusPickerImportBean != null) {
+            thesaurusPickerImportBean.cancel();
+        }
+    }
+
+    public void openExportThesaurus() {
+        FacesContext faces = FacesContext.getCurrentInstance();
+        String thesaurusId = faces != null
+                ? faces.getExternalContext().getRequestParameterMap().get("exportThesaurusId")
+                : null;
+        openExportThesaurus(thesaurusId);
+    }
+
+    public void openExportThesaurus(String thesaurusId) {
+        if (!isLoggedIn() || StringUtils.isBlank(thesaurusId) || thesaurusPickerExportBean == null) {
+            return;
+        }
+        String id = thesaurusId.trim();
+        ThesaurusPickerRow match = rows == null ? null : rows.stream()
+                .filter(row -> Strings.CS.equals(row.id(), id))
+                .findFirst()
+                .orElse(null);
+        String title = match != null ? match.name() : id;
+        long terms = match != null ? match.terms() : 0L;
+        cancelCreateThesaurus();
+        cancelEditThesaurus();
+        cancelImportThesaurus();
+        columnsMenuOpen = false;
+        thesaurusPickerExportBean.open(id, title, terms);
+    }
+
+    public void cancelExportThesaurus() {
+        if (thesaurusPickerExportBean != null) {
+            thesaurusPickerExportBean.cancel();
+        }
+    }
+
     public List<ColumnCfg> getColumnCfg() {
-        return columnCfg;
+        if (isLoggedIn()) {
+            return columnCfg;
+        }
+        return columnCfg.stream()
+                .filter(c -> !isGuestHiddenColumn(c.getKey()))
+                .toList();
     }
 
     public List<ColumnCfg> getVisibleColumns() {
-        return columnCfg.stream().filter(ColumnCfg::isOn).toList();
+        return columnCfg.stream()
+                .filter(ColumnCfg::isOn)
+                .filter(c -> isLoggedIn() || !isGuestHiddenColumn(c.getKey()))
+                .toList();
     }
 
     public boolean isColumnVisible(String key) {
+        if (!isLoggedIn() && isGuestHiddenColumn(key)) {
+            return false;
+        }
         return columnCfg.stream().anyMatch(c -> c.isOn() && Strings.CS.equals(c.getKey(), key));
     }
 
     public String getColumnLabel(String key) {
         return COLUMN_DEFS.stream()
                 .filter(d -> Strings.CS.equals(d.key(), key))
-                .map(ColumnDef::label)
+                .map(def -> {
+                    String msg = v2LocaleBean.getMsg(def.labelKey());
+                    return StringUtils.isNotBlank(msg) ? msg : key;
+                })
                 .findFirst()
                 .orElse(key);
     }
@@ -219,40 +416,10 @@ public class ThesaurusPickerBean implements Serializable {
         if (code.isEmpty()) {
             return "";
         }
-        return switch (code) {
-            case "fr" -> "Français";
-            case "en" -> "English";
-            case "de" -> "Deutsch";
-            case "es" -> "Español";
-            case "it" -> "Italiano";
-            case "nl" -> "Nederlands";
-            case "pt" -> "Português";
-            case "ar" -> "العربية";
-            case "ca" -> "Català";
-            case "eu" -> "Euskara";
-            case "el" -> "Ελληνικά";
-            case "la" -> "Latina";
-            case "zh" -> "中文";
-            case "ja" -> "日本語";
-            case "ru" -> "Русский";
-            case "pl" -> "Polski";
-            case "tr" -> "Türkçe";
-            case "sv" -> "Svenska";
-            case "da" -> "Dansk";
-            case "no", "nb", "nn" -> "Norsk";
-            case "fi" -> "Suomi";
-            case "cs" -> "Čeština";
-            case "hu" -> "Magyar";
-            case "ro" -> "Română";
-            case "uk" -> "Українська";
-            case "he" -> "עברית";
-            case "fa" -> "فارسی";
-            case "hi" -> "हिन्दी";
-            case "ko" -> "한국어";
-            case "gl" -> "Galego";
-            case "cy" -> "Cymraeg";
-            default -> code.toUpperCase(Locale.ROOT);
-        };
+        Locale ui = Locale.forLanguageTag(StringUtils.defaultIfBlank(v2LocaleBean.getIdLangue(), "fr"));
+        Locale langLocale = Locale.forLanguageTag(code);
+        String display = langLocale.getDisplayLanguage(ui);
+        return StringUtils.isNotBlank(display) ? StringUtils.capitalize(display) : code.toUpperCase(Locale.ROOT);
     }
 
     /** Libellé du filtre : 🇫🇷 Français */
@@ -319,20 +486,24 @@ public class ThesaurusPickerBean implements Serializable {
     public void selectTab(String tab) {
         if (TAB_MEMBER.equals(tab) || TAB_PUBLIC.equals(tab) || TAB_ALL.equals(tab)) {
             activeTab = tab;
+            invalidateFilterCache();
         }
     }
 
     public void clearQuery() {
         query = "";
+        invalidateFilterCache();
     }
 
     public void toggleSort(String column) {
         if (Strings.CS.equals(sortColumn, column)) {
             sortAscending = !sortAscending;
+            invalidateFilterCache();
             return;
         }
         sortColumn = column;
         sortAscending = true;
+        invalidateFilterCache();
     }
 
     public boolean isSortedBy(String column) {
@@ -369,6 +540,45 @@ public class ThesaurusPickerBean implements Serializable {
 
     public void resetColumns() {
         columnCfg = defaultColumnCfg();
+        if (!isLoggedIn()) {
+            applyGuestColumnDefaults();
+        }
+        invalidateFilterCache();
+    }
+
+    private void applyGuestColumnDefaults() {
+        for (ColumnCfg cfg : columnCfg) {
+            if (isGuestHiddenColumn(cfg.getKey())) {
+                cfg.setOn(false);
+            }
+        }
+        if (isGuestHiddenColumn(sortColumn)) {
+            sortColumn = "name";
+            sortAscending = true;
+        }
+    }
+
+    private static boolean isGuestHiddenColumn(String key) {
+        return "access".equals(key) || "role".equals(key);
+    }
+
+    public void showListFlash(String message) {
+        showListFlash(message, false);
+    }
+
+    public void showListFlash(String message, boolean error) {
+        if (StringUtils.isBlank(message)) {
+            return;
+        }
+        listFlashMessage = message.trim();
+        listFlashToken = Long.toString(System.currentTimeMillis());
+        listFlashError = error;
+    }
+
+    public void clearListFlash() {
+        listFlashMessage = null;
+        listFlashToken = null;
+        listFlashError = false;
     }
 
     public void openThesaurus() throws IOException {
@@ -401,6 +611,9 @@ public class ThesaurusPickerBean implements Serializable {
         if (!isCanCreateThesaurus()) {
             return;
         }
+        cancelImportThesaurus();
+        cancelEditThesaurus();
+        cancelExportThesaurus();
         if (newThesaurusService == null) {
             MessageUtils.showErrorMessage("Service de création indisponible — rechargez la page.");
             return;
@@ -433,12 +646,170 @@ public class ThesaurusPickerBean implements Serializable {
         createProjects = Collections.emptyList();
     }
 
+    public void openEditThesaurus() {
+        FacesContext faces = FacesContext.getCurrentInstance();
+        String thesaurusId = faces != null
+                ? faces.getExternalContext().getRequestParameterMap().get("editThesaurusId")
+                : null;
+        openEditThesaurus(thesaurusId);
+    }
+
+    public void openEditThesaurus(String thesaurusId) {
+        editError = null;
+        if (StringUtils.isBlank(thesaurusId) || !assertCanManage(thesaurusId)) {
+            MessageUtils.showErrorMessage(v2LocaleBean.getMsg("v2.picker.edit.denied"));
+            return;
+        }
+        try {
+            var details = modifyThesaurusService.loadDetails(thesaurusId.trim());
+            cancelCreateThesaurus();
+            cancelImportThesaurus();
+            cancelExportThesaurus();
+            editThesaurusId = details.id();
+            editTitle = StringUtils.defaultString(details.title());
+            editLanguage = StringUtils.defaultIfBlank(details.sourceLang(), v2LocaleBean.getIdLangue());
+            editPrivateThesaurus = details.privateThesaurus();
+            editMode = true;
+            columnsMenuOpen = false;
+        } catch (InvalidToolboxDataException ex) {
+            MessageUtils.showErrorMessage(StringUtils.defaultIfBlank(
+                    ex.getMessage(), v2LocaleBean.getMsg("v2.picker.edit.failed")));
+        }
+    }
+
+    public void cancelEditThesaurus() {
+        editMode = false;
+        editThesaurusId = null;
+        editTitle = null;
+        editLanguage = null;
+        editPrivateThesaurus = false;
+        editError = null;
+    }
+
+    public void chooseEditPublicVisibility() {
+        editPrivateThesaurus = false;
+    }
+
+    public void chooseEditPrivateVisibility() {
+        editPrivateThesaurus = true;
+    }
+
+    public void submitEditThesaurus() {
+        editError = null;
+        if (!editMode || StringUtils.isBlank(editThesaurusId) || !assertCanManage(editThesaurusId)) {
+            editError = v2LocaleBean.getMsg("v2.picker.edit.denied");
+            return;
+        }
+        if (StringUtils.isBlank(editTitle)) {
+            editError = v2LocaleBean.getMsg("v2.picker.edit.titleRequired");
+            return;
+        }
+        try {
+            String creator = StringUtils.defaultIfBlank(userSession.getCurrentUsername(), "user");
+            modifyThesaurusService.updateLanguage(
+                    editThesaurusId,
+                    StringUtils.defaultIfBlank(editLanguage, v2LocaleBean.getIdLangue()),
+                    editTitle.trim(),
+                    creator
+            );
+            modifyThesaurusService.changeVisibility(editThesaurusId, editPrivateThesaurus);
+            String ok = v2LocaleBean.getMsg("v2.picker.edit.success");
+            MessageUtils.showInformationMessage(ok);
+            showListFlash(ok);
+            cancelEditThesaurus();
+            load();
+        } catch (InvalidToolboxDataException ex) {
+            editError = StringUtils.defaultIfBlank(ex.getMessage(), v2LocaleBean.getMsg("v2.picker.edit.failed"));
+        }
+    }
+
+    public void prepareDeleteThesaurus() {
+        FacesContext faces = FacesContext.getCurrentInstance();
+        String thesaurusId = faces != null
+                ? faces.getExternalContext().getRequestParameterMap().get("deleteThesaurusId")
+                : null;
+        prepareDeleteThesaurus(thesaurusId);
+    }
+
+    public void prepareDeleteThesaurus(String thesaurusId) {
+        deleteThesaurusId = null;
+        deleteThesaurusTitle = null;
+        deletePerennialIdentifiers = false;
+        if (StringUtils.isBlank(thesaurusId) || !assertCanManage(thesaurusId)) {
+            MessageUtils.showErrorMessage(v2LocaleBean.getMsg("v2.picker.delete.denied"));
+            return;
+        }
+        String id = thesaurusId.trim();
+        deleteThesaurusId = id;
+        deleteThesaurusTitle = rows.stream()
+                .filter(row -> Strings.CS.equals(row.id(), id))
+                .map(ThesaurusPickerRow::name)
+                .filter(StringUtils::isNotBlank)
+                .findFirst()
+                .orElse(id);
+        try {
+            var details = modifyThesaurusService.loadDetails(id);
+            if (StringUtils.isNotBlank(details.title())) {
+                deleteThesaurusTitle = details.title();
+            }
+        } catch (InvalidToolboxDataException ignored) {
+            // keep list title / id
+        }
+    }
+
+    public void deleteThesaurus() {
+        if (StringUtils.isBlank(deleteThesaurusId) || !assertCanManage(deleteThesaurusId)) {
+            String denied = v2LocaleBean.getMsg("v2.picker.delete.denied");
+            MessageUtils.showErrorMessage(denied);
+            showListFlash(denied, true);
+            clearDeleteState();
+            return;
+        }
+        String id = deleteThesaurusId;
+        String title = StringUtils.defaultIfBlank(deleteThesaurusTitle, id);
+        try {
+            editionThesaurusService.deleteThesaurus(id, deletePerennialIdentifiers);
+            if (consultationShellBean != null
+                    && Strings.CS.equals(consultationShellBean.getSelectedThesaurusId(), id)) {
+                consultationShellBean.setSelectedThesaurusId(null);
+            }
+            String ok = v2LocaleBean.getMsg("v2.picker.delete.success") + " (« " + title + " »)";
+            MessageUtils.showInformationMessage(ok);
+            showListFlash(ok, false);
+            clearDeleteState();
+            if (editMode && Strings.CS.equals(editThesaurusId, id)) {
+                cancelEditThesaurus();
+            }
+            load();
+        } catch (InvalidToolboxDataException ex) {
+            String fail = StringUtils.defaultIfBlank(
+                    ex.getMessage(), v2LocaleBean.getMsg("v2.picker.delete.failed"));
+            MessageUtils.showErrorMessage(fail);
+            showListFlash(fail, true);
+            clearDeleteState();
+        }
+    }
+
+    public void cancelDeleteThesaurus() {
+        clearDeleteState();
+    }
+
+    private void clearDeleteState() {
+        deleteThesaurusId = null;
+        deleteThesaurusTitle = null;
+        deletePerennialIdentifiers = false;
+    }
+
+    public boolean isDeleteReady() {
+        return StringUtils.isNotBlank(deleteThesaurusId);
+    }
+
     public void submitCreateThesaurus() throws IOException {
         if (!isCanCreateThesaurus()) {
             return;
         }
         if (createEditor == null || StringUtils.isBlank(createEditor.getTitle())) {
-            MessageUtils.showErrorMessage("Le nom du thésaurus est obligatoire.");
+            MessageUtils.showErrorMessage(v2LocaleBean.getMsg("v2.picker.create.nameRequired"));
             return;
         }
         try {
@@ -447,7 +818,9 @@ public class ThesaurusPickerBean implements Serializable {
                     StringUtils.defaultIfBlank(userSession.getCurrentUsername(), "user"),
                     userSession.getCurrentUserId()
             );
-            MessageUtils.showInformationMessage("Thésaurus créé avec succès");
+            String ok = v2LocaleBean.getMsg("v2.picker.create.success");
+            MessageUtils.showInformationMessage(ok);
+            showListFlash(ok);
             createMode = false;
             load();
             openThesaurus(thesaurusId);
@@ -584,8 +957,9 @@ public class ThesaurusPickerBean implements Serializable {
                     ThesaurusPickerRow::created, Comparator.nullsLast(Comparator.naturalOrder()));
             case "projects" -> Comparator.comparing(
                     row -> StringUtils.defaultString(row.projects()), String.CASE_INSENSITIVE_ORDER);
-            case "access" -> Comparator.comparing(
-                    row -> StringUtils.defaultString(row.access()), String.CASE_INSENSITIVE_ORDER);
+            case "access" -> Comparator.comparing(ThesaurusPickerRow::isPrivateThesaurus);
+            case "role" -> Comparator.comparing(
+                    row -> StringUtils.defaultString(row.roleLabel()), String.CASE_INSENSITIVE_ORDER);
             case "domain" -> Comparator.comparing(
                     row -> StringUtils.defaultString(row.domain()), String.CASE_INSENSITIVE_ORDER);
             case "org" -> Comparator.comparing(
@@ -613,7 +987,7 @@ public class ThesaurusPickerBean implements Serializable {
         return StringUtils.defaultString(value).toLowerCase(Locale.ROOT).trim();
     }
 
-    private record ColumnDef(String key, String label, boolean filterable, boolean grow) {
+    private record ColumnDef(String key, String labelKey, boolean filterable, boolean grow) {
     }
 
     @Getter

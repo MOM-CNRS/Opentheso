@@ -256,6 +256,52 @@ class ProjectMemberServiceTest {
         verify(projectMembershipRepository).deleteLimitedRole(10, 4, 3, "TH1");
     }
 
+    @Test
+    void addLimitedExistingMember_assignsLimitedRole() {
+        stubProjectAdmin(5, 3, 2);
+        when(userLookupService.requireEntity(16)).thenReturn(new UserEntity());
+        when(projectAdminQueryRepository.findThesauriNotInProject(List.of("TH1"), 3)).thenReturn(Set.of());
+        when(projectMembershipRepository.hasLimitedRoleOnThesaurus(16, "TH1")).thenReturn(false);
+        when(projectAdminQueryRepository.findMembersOfProject(3, 2)).thenReturn(List.of());
+
+        projectMemberService.addLimitedExistingMember(5, false, 3, 16, 4, "TH1");
+
+        verify(projectMembershipRepository).assignLimitedRole(16, 4, 3, "TH1");
+        verify(rightsService).invalidate(16);
+    }
+
+    @Test
+    void addLimitedExistingMember_throwsWhenAlreadyLimitedOnThesaurus() {
+        stubProjectAdmin(5, 3, 2);
+        when(userLookupService.requireEntity(16)).thenReturn(new UserEntity());
+        when(projectAdminQueryRepository.findThesauriNotInProject(List.of("TH1"), 3)).thenReturn(Set.of());
+        when(projectMembershipRepository.hasLimitedRoleOnThesaurus(16, "TH1")).thenReturn(true);
+
+        InvalidProjectDataException ex = assertThrows(InvalidProjectDataException.class,
+                () -> projectMemberService.addLimitedExistingMember(5, false, 3, 16, 4, "TH1"));
+
+        assertEquals("Cet utilisateur a déjà un rôle limité sur ce thésaurus.", ex.getMessage());
+        verify(projectMembershipRepository, never()).assignLimitedRole(anyInt(), anyInt(), anyInt(), anyString());
+    }
+
+    @Test
+    void addLimitedExistingMember_throwsWhenAlreadyProjectWide() {
+        stubProjectAdmin(5, 3, 2);
+        when(userLookupService.requireEntity(16)).thenReturn(new UserEntity());
+        when(projectAdminQueryRepository.findThesauriNotInProject(List.of("TH1"), 3)).thenReturn(Set.of());
+        when(projectMembershipRepository.hasLimitedRoleOnThesaurus(16, "TH1")).thenReturn(false);
+        when(projectAdminQueryRepository.findMembersOfProject(3, 2)).thenReturn(List.of(
+                new fr.cnrs.opentheso.v2.shared.repository.projection.ProjectMemberRow(
+                        16, "dave", true, 2, "Admin")
+        ));
+
+        InvalidProjectDataException ex = assertThrows(InvalidProjectDataException.class,
+                () -> projectMemberService.addLimitedExistingMember(5, false, 3, 16, 4, "TH1"));
+
+        assertEquals("Cet utilisateur a déjà un accès à tout le projet (tous les thésaurus).", ex.getMessage());
+        verify(projectMembershipRepository, never()).assignLimitedRole(anyInt(), anyInt(), anyInt(), anyString());
+    }
+
     private void stubProjectAdmin(int callerId, int projectId, int roleId) {
         when(projectLookupService.requireAccessibleProject(callerId, false, projectId))
                 .thenReturn(buildProject(projectId, "Projet"));

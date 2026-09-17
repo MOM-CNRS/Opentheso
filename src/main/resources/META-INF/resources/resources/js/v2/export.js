@@ -11,6 +11,9 @@ let exportPollStarted = 0;
 let exportOptionsCache = { languages: [], groups: [], workLanguage: "fr" };
 const EXPORT_PREFS_KEY = "ot-export-prefs";
 const EXPORT_POLL_MAX_MS = 15 * 60 * 1000;
+let pickerExportMode = false;
+let bulkExportHome = null;
+let pickerExportPrevAll = false;
 
 window.addEventListener("beforeunload", (e) => {
   if (!exportBusy) return;
@@ -92,11 +95,93 @@ function exportPdfType() {
 }
 
 function selectedExportLangCodes() {
-  return $$("#bulkExportLangs .xpick-i.is-on").map(el => el.getAttribute("data-code")).filter(Boolean);
+  return $$("#bulkExportLangs .tree-lang-opt.is-on").map(el => el.getAttribute("data-code")).filter(Boolean);
 }
 
 function selectedExportGroupIds() {
   return $$("#bulkExportGroups .xpick-i.is-on").map(el => el.getAttribute("data-id")).filter(Boolean);
+}
+
+/** Drapeau emoji à partir d’un code ISO 639-1 (même mapping que ThesaurusPickerBean). */
+function exportLangFlag(code) {
+  let c = String(code || "").trim().toLowerCase();
+  if (c.indexOf("-") >= 0) c = c.slice(0, c.indexOf("-"));
+  if (!c) return "🏳️";
+  const region = ({
+    en: "gb", ar: "sa", zh: "cn", ja: "jp", ko: "kr", el: "gr", uk: "ua",
+    cs: "cz", da: "dk", sv: "se", nb: "no", nn: "no", no: "no", he: "il",
+    fa: "ir", hi: "in", eu: "es", ca: "es", gl: "es", cy: "gb", pt: "pt", la: "va"
+  })[c] || (c.length === 2 ? c : "");
+  if (!/^[a-z]{2}$/.test(region)) return "🏳️";
+  return String.fromCodePoint(0x1F1E6 + (region.charCodeAt(0) - 97), 0x1F1E6 + (region.charCodeAt(1) - 97));
+}
+
+function csvLangOptions() {
+  return $$("#bulkExportLangs .tree-lang-opt[data-code]");
+}
+
+function setExportLangSelection(all) {
+  csvLangOptions().forEach(btn => {
+    btn.classList.toggle("is-on", !!all);
+    btn.setAttribute("aria-selected", all ? "true" : "false");
+  });
+  refreshExportLangMeta();
+}
+
+function closeExportCsvLangPicker(exceptBtn) {
+  /* Sur la page export picker, la liste CSV reste toujours ouverte. */
+  if (pickerExportMode) return;
+  $$(".xcsv-lang-btn.is-open").forEach(btn => {
+    if (exceptBtn && btn === exceptBtn) return;
+    btn.classList.remove("is-open");
+    btn.setAttribute("aria-expanded", "false");
+  });
+}
+
+function paintCsvLangSummary() {
+  const flagsEl = $("#bulkExportLangFlags");
+  const summaryEl = $("#bulkExportLangSummary");
+  const btn = $("#bulkExportLangBtn");
+  const opts = csvLangOptions();
+  const selected = opts.filter(el => el.classList.contains("is-on"));
+  const total = opts.length;
+  const n = selected.length;
+  if (flagsEl) {
+    if (!n) {
+      flagsEl.textContent = "🏳️";
+    } else {
+      flagsEl.innerHTML = selected.slice(0, 3).map(el => {
+        const code = el.getAttribute("data-code") || "";
+        return "<span class=\"xcsv-lang-fl\">" + exportLangFlag(code) + "</span>";
+      }).join("") + (n > 3 ? "<span class=\"xcsv-lang-more\">+" + (n - 3) + "</span>" : "");
+    }
+  }
+  if (summaryEl) {
+    if (!total) summaryEl.textContent = "Aucune langue";
+    else if (!n) summaryEl.textContent = "Aucune sélectionnée";
+    else if (n === total) summaryEl.textContent = "Toutes les langues";
+    else if (n === 1) {
+      const only = selected[0];
+      summaryEl.textContent = only.getAttribute("data-label") || only.getAttribute("data-code") || "1 langue";
+    } else {
+      summaryEl.textContent = n + " langues sélectionnées";
+    }
+  }
+  if (btn) {
+    btn.classList.toggle("is-empty", !n);
+    btn.setAttribute("aria-label", summaryEl ? summaryEl.textContent : "Langues");
+  }
+}
+
+function refreshExportLangMeta() {
+  const meta = $("#bulkExportLangMeta");
+  const total = csvLangOptions().length;
+  const n = selectedExportLangCodes().length;
+  if (meta) {
+    if (!total) meta.textContent = "";
+    else meta.textContent = n + " / " + total;
+  }
+  paintCsvLangSummary();
 }
 
 function initExportPanel() {
@@ -166,12 +251,28 @@ function loadExportOptions() {
 function renderExportOptions() {
   const langs = exportOptionsCache.languages || [];
   const groups = exportOptionsCache.groups || [];
+  const work = String(exportOptionsCache.workLanguage || "").toLowerCase();
   const langBox = $("#bulkExportLangs");
   if (langBox) {
-    langBox.innerHTML = langs.map(lang =>
-      "<button type=\"button\" class=\"xpick-i is-on\" data-act=\"export-lang\" data-code=\"" +
-      escapeHtml(lang.code || "") + "\">" + escapeHtml(lang.label || lang.code || "") + "</button>"
-    ).join("");
+    langBox.innerHTML =
+      "<div class=\"tree-lang-menu-h\">Langues à exporter</div>" +
+      langs.map(lang => {
+        const code = String(lang.code || "").trim();
+        const label = String(lang.label || code || "").trim();
+        const isWork = code.toLowerCase() === work && !!work;
+        return "<button type=\"button\" class=\"tree-lang-opt is-on\"" +
+          " data-act=\"export-lang\" data-code=\"" + escapeHtml(code) + "\"" +
+          " data-label=\"" + escapeHtml(label || code) + "\"" +
+          " role=\"option\" aria-selected=\"true\"" +
+          " title=\"" + escapeHtml(label + (code ? " (" + code + ")" : "")) + "\">" +
+          "<span class=\"tree-lang-opt-flag\" aria-hidden=\"true\">" + exportLangFlag(code) + "</span>" +
+          "<span class=\"tree-lang-opt-name\">" + escapeHtml(label || code) + "</span>" +
+          "<span class=\"tree-lang-opt-code\">" + escapeHtml((code || "").toUpperCase()) + "</span>" +
+          (isWork ? "<span class=\"xlang-work\">travail</span>" : "") +
+          "<span class=\"tree-lang-opt-check\" aria-hidden=\"true\">✓</span>" +
+          "</button>";
+      }).join("");
+    refreshExportLangMeta();
   }
   const groupBox = $("#bulkExportGroups");
   if (groupBox) {
@@ -180,18 +281,94 @@ function renderExportOptions() {
       escapeHtml(group.id || "") + "\">" + escapeHtml(group.label || group.id || "") + "</button>"
     ).join("");
   }
-  fillLangSelect($("#bulkExportLang1"), langs, exportOptionsCache.workLanguage, false);
-  fillLangSelect($("#bulkExportLang2"), langs, "", true);
+  fillPdfLangPickers(langs, exportOptionsCache.workLanguage);
 }
 
-function fillLangSelect(sel, langs, current, withEmpty) {
-  if (!sel) return;
-  const opts = (withEmpty ? [{ code: "", label: "—" }] : []).concat(langs);
-  sel.innerHTML = opts.map(lang =>
-    "<option value=\"" + escapeHtml(lang.code || "") + "\"" +
-    ((lang.code || "") === (current || "") ? " selected=\"selected\"" : "") + ">" +
-    escapeHtml(lang.label || lang.code || "—") + "</option>"
-  ).join("");
+function closeExportPdfLangPickers(exceptBtn) {
+  $$(".xpdf-lang-btn.is-open").forEach(btn => {
+    if (exceptBtn && btn === exceptBtn) return;
+    btn.classList.remove("is-open");
+    btn.setAttribute("aria-expanded", "false");
+  });
+}
+
+function pdfLangPickerEls(slot) {
+  const n = String(slot || "");
+  return {
+    hidden: $("#bulkExportLang" + n),
+    btn: $("#bulkExportLang" + n + "Btn"),
+    menu: $("#bulkExportLang" + n + "Menu"),
+    pick: $("#bulkExportLang" + n + "Pick")
+  };
+}
+
+function paintPdfLangButton(slot, code, label) {
+  const { btn } = pdfLangPickerEls(slot);
+  if (!btn) return;
+  const flag = btn.querySelector(".tree-lang-flag");
+  const name = btn.querySelector(".tree-lang-name");
+  const codeEl = btn.querySelector(".tree-lang-code");
+  const empty = !code;
+  if (flag) flag.textContent = empty ? "🏳️" : exportLangFlag(code);
+  if (name) name.textContent = empty ? "—" : (label || code);
+  if (codeEl) {
+    codeEl.textContent = empty ? "" : String(code).toUpperCase();
+    codeEl.hidden = empty;
+  }
+  btn.classList.toggle("is-empty", empty);
+  btn.setAttribute("aria-label", empty
+    ? (slot === 2 ? "Langue 2 — aucune" : "Langue 1")
+    : ((label || code) + " (" + code + ")"));
+}
+
+function setPdfLangValue(slot, code, label) {
+  const { hidden, menu } = pdfLangPickerEls(slot);
+  if (hidden) hidden.value = code || "";
+  paintPdfLangButton(slot, code || "", label || "");
+  if (menu) {
+    $$(".tree-lang-opt", menu).forEach(opt => {
+      const on = (opt.getAttribute("data-code") || "") === (code || "");
+      opt.classList.toggle("is-on", on);
+      opt.setAttribute("aria-selected", on ? "true" : "false");
+    });
+  }
+}
+
+function fillPdfLangPickers(langs, workLanguage) {
+  const list = langs || [];
+  const work = String(workLanguage || "").toLowerCase();
+  const default1 = list.find(l => String(l.code || "").toLowerCase() === work) || list[0] || { code: "", label: "—" };
+  const prev1 = ($("#bulkExportLang1") && $("#bulkExportLang1").value) || "";
+  const prev2 = ($("#bulkExportLang2") && $("#bulkExportLang2").value) || "";
+  const keep1 = list.find(l => String(l.code || "") === prev1) || default1;
+  const keep2 = list.find(l => String(l.code || "") === prev2);
+
+  [1, 2].forEach(slot => {
+    const { menu } = pdfLangPickerEls(slot);
+    if (!menu) return;
+    const withEmpty = slot === 2;
+    const opts = (withEmpty ? [{ code: "", label: "Aucune" }] : []).concat(list);
+    menu.innerHTML =
+      "<div class=\"tree-lang-menu-h\">Langue " + slot + "</div>" +
+      opts.map(lang => {
+        const code = String(lang.code || "");
+        const label = String(lang.label || (code ? code : "Aucune"));
+        return "<button type=\"button\" class=\"tree-lang-opt\"" +
+          " data-act=\"export-pdf-lang\" data-slot=\"" + slot + "\"" +
+          " data-code=\"" + escapeHtml(code) + "\"" +
+          " data-label=\"" + escapeHtml(label) + "\"" +
+          " role=\"option\" aria-selected=\"false\">" +
+          "<span class=\"tree-lang-opt-flag\" aria-hidden=\"true\">" +
+          (code ? exportLangFlag(code) : "—") + "</span>" +
+          "<span class=\"tree-lang-opt-name\">" + escapeHtml(label) + "</span>" +
+          (code ? "<span class=\"tree-lang-opt-code\">" + escapeHtml(code.toUpperCase()) + "</span>" : "") +
+          "<span class=\"tree-lang-opt-check\" aria-hidden=\"true\">✓</span>" +
+          "</button>";
+      }).join("");
+  });
+
+  setPdfLangValue(1, keep1.code || "", keep1.label || keep1.code || "");
+  setPdfLangValue(2, keep2 ? (keep2.code || "") : "", keep2 ? (keep2.label || keep2.code || "") : "");
 }
 
 function showExportFold(el, on) {
@@ -219,16 +396,18 @@ function applyExportOptionVisibility() {
   const skosOrCsvFull = kind === "skos" || fmt === "csv";
   showExportFold($("#bulkExportSkosFmts"), kind === "skos");
   showExportFold($("#bulkExportCsvFmts"), kind === "csv");
+  showExportFold($("#bulkExportPdfFmts"), pdf);
   showExportFold($("#bulkExportDescRow"), !whole && fmt !== "csv-structured");
   showExportFold($("#bulkExportHtmlRow"), skosOrCsvFull || pdf);
   showExportFold($("#bulkExportZipRow"), whole && skosOrCsvFull);
   showExportFold($("#bulkExportDelimRow"), csv);
   showExportFold($("#bulkExportLangRow"), fmt === "csv");
-  showExportFold($("#bulkExportPdfRow"), pdf);
   showExportFold($("#bulkExportPdfLangRow"), pdf);
   showExportFold($("#bulkExportImgRow"), pdf);
   const groupFilter = exportSwitchOn("bulkExportGroup");
   showExportFold($("#bulkExportGroupsWrap"), groupFilter);
+  const more = $("#bulkExportMore");
+  if (more && groupFilter) more.open = true;
   const help = $("#bulkExportHelp");
   if (help) {
     if (whole) help.textContent = "L’export porte sur l’ensemble du thésaurus.";
@@ -249,16 +428,18 @@ function scrollExportPanelBottom() {
 }
 
 function refreshExportSummary() {
-  const n = selectedCount();
-  const exact = state.selected.size;
   const whole = !!state.selectedAllThesaurus;
+  const exact = state.selected.size;
+  const n = whole ? Math.max(selectedCount(), thesaurusConceptCount()) : selectedCount();
   const desc = exportIncludeDescendants();
   const sum = $("#bulkExportSum");
   const est = $("#bulkExportEst");
   applyExportOptionVisibility();
   if (sum) {
-    if (whole) sum.textContent = n + " concept" + (n > 1 ? "s" : "") + " · thésaurus entier";
-    else if (desc) sum.textContent = n + " concept" + (n > 1 ? "s" : "") + " à exporter";
+    if (whole) {
+      if (n > 0) sum.textContent = n.toLocaleString("fr-FR") + " concept" + (n > 1 ? "s" : "") + " · thésaurus entier";
+      else sum.textContent = "Export du thésaurus entier";
+    } else if (desc) sum.textContent = n + " concept" + (n > 1 ? "s" : "") + " à exporter";
     else sum.textContent = exact + " concept" + (exact > 1 ? "s" : "") + " sélectionné" + (exact > 1 ? "s" : "");
   }
   if (est) {
@@ -550,6 +731,13 @@ function startSelectionExport() {
     showExportError("Choisissez au moins une collection");
     return;
   }
+  if (exportKindOf(exportFormat()) === "csv") {
+    const langChoices = csvLangOptions();
+    if (langChoices.length && !selectedExportLangCodes().length) {
+      showExportError("Choisissez au moins une langue");
+      return;
+    }
+  }
   try {
     startSelectionExportRequest(theso, whole, ids, filterByGroup && groupIds.length > 0, groupIds);
   } catch (err) {
@@ -633,7 +821,14 @@ function cancelSelectionExport(andBack) {
   setExportBusy(false);
   const finish = () => {
     setExportPanes(true, false);
-    if (andBack) bulkMode("acts");
+    if (andBack) {
+      if (pickerExportMode) {
+        // Page d'export : rester sur l'écran et réafficher les options.
+        resetExportPanelForNewExport();
+      } else {
+        bulkMode("acts");
+      }
+    }
   };
   if (!wasBusy) {
     finish();
@@ -645,3 +840,100 @@ function cancelSelectionExport(andBack) {
     headers: { Accept: "application/json" }
   }).catch(() => {}).finally(finish);
 }
+
+function syncPickerExportChrome() {
+  const panel = $("#bulkExport");
+  if (!panel) return;
+  const back = panel.querySelector("[data-act='bulk-export-back']");
+  const title = panel.querySelector(".bulksel-ft");
+  if (pickerExportMode) {
+    if (back) back.hidden = true;
+    if (title) title.hidden = true;
+  } else {
+    if (back) back.hidden = false;
+    if (title) {
+      title.hidden = false;
+      title.textContent = "Exporter la sélection";
+    }
+  }
+}
+
+function relocatePickerExportRunBar(toPage) {
+  const panel = $("#bulkExport");
+  const run = panel && (panel.querySelector(".bulksel-run") || document.querySelector(".tp-export-actions .bulksel-run"));
+  const slot = document.getElementById("tpExportActions");
+  if (!run) return;
+  if (toPage && slot) {
+    if (run.parentElement !== slot) slot.appendChild(run);
+    return;
+  }
+  if (panel && run.parentElement !== panel) panel.appendChild(run);
+}
+
+function openPickerThesaurusExport(id, title, terms) {
+  const thesoId = (id || "").trim();
+  if (!thesoId) return false;
+  const host = document.getElementById("tpExportHost");
+  const meta = document.getElementById("tpExportMeta");
+  const panel = $("#bulkExport");
+  if (!host || !meta || !panel) return false;
+
+  if (pickerExportMode && exportBusy) return false;
+
+  meta.setAttribute("data-active", "1");
+  meta.setAttribute("data-thesaurus-id", thesoId);
+  meta.setAttribute("data-thesaurus-title", title || thesoId);
+  meta.setAttribute("data-concept-count", String(Number(terms) > 0 ? Number(terms) : 0));
+
+  if (!bulkExportHome) {
+    bulkExportHome = { parent: panel.parentElement, next: panel.nextSibling };
+  }
+  if (panel.parentElement !== host) {
+    host.appendChild(panel);
+  }
+  panel.hidden = false;
+  panel.classList.add("tp-export-panel");
+  relocatePickerExportRunBar(true);
+
+  pickerExportPrevAll = !!state.selectedAllThesaurus;
+  state.selectedAllThesaurus = true;
+  pickerExportMode = true;
+  syncPickerExportChrome();
+  resetExportPanelForNewExport();
+  return false;
+}
+
+function closePickerThesaurusExport() {
+  if (!pickerExportMode) return;
+  if (exportBusy) {
+    cancelSelectionExport(false);
+  }
+  const meta = document.getElementById("tpExportMeta");
+  const panel = $("#bulkExport");
+  if (meta) {
+    meta.setAttribute("data-active", "0");
+    meta.removeAttribute("data-thesaurus-id");
+    meta.removeAttribute("data-thesaurus-title");
+    meta.removeAttribute("data-concept-count");
+  }
+  relocatePickerExportRunBar(false);
+  if (panel) {
+    panel.classList.remove("tp-export-panel");
+    panel.hidden = true;
+    if (bulkExportHome && bulkExportHome.parent) {
+      if (bulkExportHome.next && bulkExportHome.next.parentNode === bulkExportHome.parent) {
+        bulkExportHome.parent.insertBefore(panel, bulkExportHome.next);
+      } else {
+        bulkExportHome.parent.appendChild(panel);
+      }
+    }
+  }
+  bulkExportHome = null;
+  state.selectedAllThesaurus = pickerExportPrevAll;
+  pickerExportPrevAll = false;
+  pickerExportMode = false;
+  syncPickerExportChrome();
+}
+
+window.openPickerThesaurusExport = openPickerThesaurusExport;
+window.closePickerThesaurusExport = closePickerThesaurusExport;

@@ -7,6 +7,7 @@ import fr.cnrs.opentheso.models.skosapi.SKOSResource;
 import fr.cnrs.opentheso.models.skosapi.SKOSXmlDocument;
 import fr.cnrs.opentheso.repositories.ThesaurusLabelRepository;
 import fr.cnrs.opentheso.v2.concept.io.rdf.parser.ReadRdf4jDocument;
+import fr.cnrs.opentheso.v2.concept.service.ThesaurusPickerImportProgressContext;
 import fr.cnrs.opentheso.v2.shared.io.SkosRdfFormatSupport;
 import fr.cnrs.opentheso.v2.toolbox.edition.io.skos.ThesaurusEditionSkosImportEngine;
 import fr.cnrs.opentheso.v2.toolbox.edition.support.ThesaurusImportBatchSupport;
@@ -184,6 +185,7 @@ public class ThesaurusEditionSkosImportService {
             SkosDocumentImportOptions options
     ) {
         configureEngine(document, formatDate, userId, projectGroupId, sourceLang, options);
+        ThesaurusPickerImportProgressContext.reportPhase("create");
         String thesaurusId = importBatchSupport.inTransaction(thesaurusEditionSkosImportEngine::addThesaurus);
         if (thesaurusId == null) {
             return null;
@@ -222,10 +224,14 @@ public class ThesaurusEditionSkosImportService {
                 withLabels.add(resource);
             }
         }
+        int total = withLabels.size();
+        java.util.concurrent.atomic.AtomicInteger done = new java.util.concurrent.atomic.AtomicInteger();
+        ThesaurusPickerImportProgressContext.report(0, total, "concepts");
         importBatchSupport.forEachBatched(withLabels, (batch, ignored) -> {
             for (SKOSResource resource : batch) {
                 thesaurusEditionSkosImportEngine.addConceptV2(resource, thesaurusId);
             }
+            ThesaurusPickerImportProgressContext.report(done.addAndGet(batch.size()), total, "concepts");
         });
     }
 
@@ -233,15 +239,19 @@ public class ThesaurusEditionSkosImportService {
         importBatchSupport.inTransaction(() -> {
             var facets = document.getFacetList();
             if (facets != null) {
+                ThesaurusPickerImportProgressContext.reportPhase("finalize.facets");
                 thesaurusEditionSkosImportEngine.addFacetsV2(new ArrayList<>(facets), thesaurusId);
             }
             var groups = document.getGroupList();
             if (groups != null) {
+                ThesaurusPickerImportProgressContext.reportPhase("finalize.groups");
                 thesaurusEditionSkosImportEngine.addGroups(new ArrayList<>(groups), thesaurusId);
             }
+            ThesaurusPickerImportProgressContext.reportPhase("finalize.langs");
             thesaurusEditionSkosImportEngine.addLangsToThesaurus(thesaurusId);
             var foafImages = document.getFoafImage();
             if (foafImages != null) {
+                ThesaurusPickerImportProgressContext.reportPhase("finalize.images");
                 thesaurusEditionSkosImportEngine.addFoafImages(new ArrayList<>(foafImages), thesaurusId);
             }
             importBatchSupport.flushAndClear();

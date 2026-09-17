@@ -61,7 +61,7 @@
             </h:form>
           </div>
 
-          <ui:include src="searchbox.xhtml"/>
+          <ui:include src="/v2/includes/searchbox.xhtml"/>
 
           <div class="view-pick-row">
             <div class="view-pick" id="viewPick" data-view="arbo">
@@ -267,7 +267,7 @@
                 <ui:fragment rendered="#{v2ThesaurusViewBean.treeEmpty}">
                   <div class="tree-empty">Aucun concept à afficher dans cette langue.</div>
                 </ui:fragment>
-                <ui:include src="tree-nodes.xhtml"/>
+                <ui:include src="/v2/includes/tree-nodes.xhtml"/>
               </h:panelGroup>
             </h:form>
             </div>
@@ -4352,6 +4352,8 @@
             <div class="xexp-pane is-on" id="bulkExportOpts">
               <div class="xexp-pane-in">
             <p class="xexp-est" id="bulkExportEst"></p>
+            <section class="xexp-sec xexp-sec--format" aria-labelledby="bulkExportFormatLbl">
+              <h3 class="xexp-sec-h" id="bulkExportFormatLbl">Format</h3>
             <div class="xkind" id="bulkExportKinds" role="tablist" aria-label="Famille de format">
               <button type="button" class="xkind-b is-on" data-act="export-kind" data-kind="skos">SKOS</button>
               <button type="button" class="xkind-b" data-act="export-kind" data-kind="csv">CSV</button>
@@ -4377,7 +4379,18 @@
                 </div>
               </div>
             </div>
+            <div class="xexp-fold is-off" id="bulkExportPdfFmts" aria-hidden="true">
+              <div class="xexp-fold-in">
+                <div class="xfmt-row" role="radiogroup" aria-label="Type PDF">
+                  <button type="button" class="xchip is-on" data-act="export-pdf-type" data-pdf="hierarchical">Hiérarchique</button>
+                  <button type="button" class="xchip" data-act="export-pdf-type" data-pdf="alphabetical">Alphabétique</button>
+                </div>
+              </div>
+            </div>
+            </section>
             <p class="bulksel-help" id="bulkExportHelp">Choisissez un format, les options, puis générez le fichier.</p>
+            <section class="xexp-sec xexp-sec--opts xexp-core" aria-labelledby="bulkExportOptsLbl">
+              <h3 class="xexp-sec-h" id="bulkExportOptsLbl">Options</h3>
             <div class="xexp-fold" id="bulkExportDescRow">
               <div class="xexp-fold-in">
                 <div class="xopt" data-act="export-desc">
@@ -4389,6 +4402,103 @@
                 </div>
               </div>
             </div>
+            <div class="xexp-fold is-off" id="bulkExportDelimRow" aria-hidden="true">
+              <div class="xexp-fold-in">
+                <div class="xrow xrow--delim">
+                  <span class="xrow-l">Séparateur</span>
+                  <div class="xfmt-row xfmt-row--inline" role="radiogroup" aria-label="Séparateur CSV">
+                    <button type="button" class="xchip is-on" data-act="export-delim" data-delim=",">,</button>
+                    <button type="button" class="xchip" data-act="export-delim" data-delim=";">;</button>
+                    <button type="button" class="xchip" data-act="export-delim" data-delim="tab">Tab</button>
+                  </div>
+                </div>
+              </div>
+            </div>
+            <div class="xexp-fold is-off" id="bulkExportLangRow" aria-hidden="true">
+              <div class="xexp-fold-in">
+                <div class="xrow xrow--langs">
+                  <div class="xlang-head">
+                    <span class="xrow-l">Langues</span>
+                    <span class="xlang-meta" id="bulkExportLangMeta" aria-live="polite"></span>
+                    <div class="xlang-tools">
+                      <button type="button" class="xlang-tool" data-act="export-lang-all">Toutes</button>
+                      <button type="button" class="xlang-tool" data-act="export-lang-none">Aucune</button>
+                    </div>
+                  </div>
+                  <div class="tree-lang xcsv-lang-pick" id="bulkExportLangPick">
+                    <button type="button"
+                            class="tree-lang-btn xcsv-lang-btn"
+                            id="bulkExportLangBtn"
+                            data-act="export-csv-lang-toggle"
+                            aria-haspopup="listbox"
+                            aria-expanded="false"
+                            aria-controls="bulkExportLangs">
+                      <span class="xcsv-lang-flags" id="bulkExportLangFlags" aria-hidden="true"></span>
+                      <span class="tree-lang-name" id="bulkExportLangSummary">Toutes les langues</span>
+                      <span class="tree-lang-caret" aria-hidden="true">▾</span>
+                    </button>
+                    <div class="tree-lang-menu xcsv-lang-menu"
+                         id="bulkExportLangs"
+                         role="listbox"
+                         aria-multiselectable="true"
+                         aria-label="Langues à exporter"></div>
+                  </div>
+                </div>
+              </div>
+            </div>
+            <div class="xexp-fold is-off" id="bulkExportPdfLangRow" aria-hidden="true">
+              <div class="xexp-fold-in">
+                <div class="xrow xrow--pdf-langs">
+                  <div class="xpdf-lang">
+                    <span class="xrow-l" id="bulkExportLang1Lbl">Langue 1</span>
+                    <div class="tree-lang xpdf-lang-pick" id="bulkExportLang1Pick">
+                      <input type="hidden" id="bulkExportLang1" value=""/>
+                      <button type="button"
+                              class="tree-lang-btn xpdf-lang-btn"
+                              id="bulkExportLang1Btn"
+                              data-act="export-pdf-lang-toggle"
+                              data-slot="1"
+                              aria-labelledby="bulkExportLang1Lbl"
+                              aria-haspopup="listbox"
+                              aria-expanded="false">
+                        <span class="tree-lang-flag" aria-hidden="true">🏳️</span>
+                        <span class="tree-lang-name">—</span>
+                        <span class="tree-lang-code"></span>
+                        <span class="tree-lang-caret" aria-hidden="true">▾</span>
+                      </button>
+                      <div class="tree-lang-menu xpdf-lang-menu" id="bulkExportLang1Menu" role="listbox" aria-labelledby="bulkExportLang1Lbl"></div>
+                    </div>
+                  </div>
+                  <div class="xpdf-lang">
+                    <span class="xrow-l" id="bulkExportLang2Lbl">Langue 2</span>
+                    <div class="tree-lang xpdf-lang-pick" id="bulkExportLang2Pick">
+                      <input type="hidden" id="bulkExportLang2" value=""/>
+                      <button type="button"
+                              class="tree-lang-btn xpdf-lang-btn"
+                              id="bulkExportLang2Btn"
+                              data-act="export-pdf-lang-toggle"
+                              data-slot="2"
+                              aria-labelledby="bulkExportLang2Lbl"
+                              aria-haspopup="listbox"
+                              aria-expanded="false">
+                        <span class="tree-lang-flag" aria-hidden="true">🏳️</span>
+                        <span class="tree-lang-name">—</span>
+                        <span class="tree-lang-code"></span>
+                        <span class="tree-lang-caret" aria-hidden="true">▾</span>
+                      </button>
+                      <div class="tree-lang-menu xpdf-lang-menu" id="bulkExportLang2Menu" role="listbox" aria-labelledby="bulkExportLang2Lbl"></div>
+                    </div>
+                  </div>
+                </div>
+              </div>
+            </div>
+            </section>
+            <details class="xexp-more tp-import-more" id="bulkExportMore">
+              <summary class="tp-import-more-sum">
+                <span class="xexp-more-l">Options avancées</span>
+                <span class="tp-import-more-caret" aria-hidden="true">▾</span>
+              </summary>
+              <div class="tp-import-more-body xexp-more-body">
             <div class="xexp-fold" id="bulkExportHtmlRow">
               <div class="xexp-fold-in">
                 <div class="xopt" data-act="export-html">
@@ -4427,47 +4537,6 @@
                 </div>
               </div>
             </div>
-            <div class="xexp-fold is-off" id="bulkExportDelimRow" aria-hidden="true">
-              <div class="xexp-fold-in">
-                <div class="xrow">
-                  <span class="xrow-l">Séparateur CSV</span>
-                  <div class="xfmt-row">
-                    <button type="button" class="xchip is-on" data-act="export-delim" data-delim=",">,</button>
-                    <button type="button" class="xchip" data-act="export-delim" data-delim=";">;</button>
-                    <button type="button" class="xchip" data-act="export-delim" data-delim="tab">tab</button>
-                  </div>
-                </div>
-              </div>
-            </div>
-            <div class="xexp-fold is-off" id="bulkExportLangRow" aria-hidden="true">
-              <div class="xexp-fold-in">
-                <div class="xrow">
-                  <span class="xrow-l">Langues</span>
-                  <div class="xpick" id="bulkExportLangs"></div>
-                </div>
-              </div>
-            </div>
-            <div class="xexp-fold is-off" id="bulkExportPdfRow" aria-hidden="true">
-              <div class="xexp-fold-in">
-                <div class="xrow">
-                  <span class="xrow-l">Type PDF</span>
-                  <div class="xfmt-row">
-                    <button type="button" class="xchip is-on" data-act="export-pdf-type" data-pdf="hierarchical">Hiérarchique</button>
-                    <button type="button" class="xchip" data-act="export-pdf-type" data-pdf="alphabetical">Alphabétique</button>
-                  </div>
-                </div>
-              </div>
-            </div>
-            <div class="xexp-fold is-off" id="bulkExportPdfLangRow" aria-hidden="true">
-              <div class="xexp-fold-in">
-                <div class="xrow">
-                  <label class="xrow-l" for="bulkExportLang1">Langue 1</label>
-                  <select class="xsel" id="bulkExportLang1"></select>
-                  <label class="xrow-l" for="bulkExportLang2">Langue 2</label>
-                  <select class="xsel" id="bulkExportLang2"></select>
-                </div>
-              </div>
-            </div>
             <div class="xexp-fold is-off" id="bulkExportImgRow" aria-hidden="true">
               <div class="xexp-fold-in">
                 <div class="xopt" data-act="export-img">
@@ -4479,6 +4548,8 @@
                 </div>
               </div>
             </div>
+              </div>
+            </details>
               </div>
             </div>
             <div class="xprog" id="bulkExportProg" aria-hidden="true">

@@ -1,5 +1,6 @@
 package fr.cnrs.opentheso.v2.toolbox.edition.persistence;
 
+import fr.cnrs.opentheso.v2.concept.service.ThesaurusPickerImportProgressContext;
 import fr.cnrs.opentheso.v2.toolbox.edition.io.csv.ThesaurusCsvImportEngine;
 import fr.cnrs.opentheso.v2.toolbox.edition.io.csv.ThesaurusCsvReader;
 import fr.cnrs.opentheso.v2.toolbox.edition.model.ThesaurusCsvConceptObject;
@@ -84,6 +85,7 @@ public class ThesaurusEditionCsvImportPersistence {
         String normalizedSourceLang = StringUtils.defaultIfBlank(sourceLang, "fr");
         String normalizedFormatDate = StringUtils.defaultIfBlank(formatDate, "yyyy-MM-dd");
 
+        ThesaurusPickerImportProgressContext.reportPhase("create");
         String thesaurusId = importBatchSupport.inTransaction(() ->
                 createImportedThesaurus(thesaurusName, normalizedSourceLang, projectId, userName,
                         normalizedFormatDate, userId, payload));
@@ -92,10 +94,15 @@ public class ThesaurusEditionCsvImportPersistence {
             return ThesaurusEditionCsvImportResult.error("Erreur lors de la création du thésaurus");
         }
 
+        int total = payload.conceptObjects().size();
         AtomicInteger importedConcepts = new AtomicInteger();
-        importBatchSupport.forEachBatched(payload.conceptObjects(), (batch, ignored) ->
-                importConceptBatch(thesaurusId, batch, userId, normalizedFormatDate, importedConcepts));
+        ThesaurusPickerImportProgressContext.report(0, total, "concepts");
+        importBatchSupport.forEachBatched(payload.conceptObjects(), (batch, ignored) -> {
+            importConceptBatch(thesaurusId, batch, userId, normalizedFormatDate, importedConcepts);
+            ThesaurusPickerImportProgressContext.report(importedConcepts.get(), total, "concepts");
+        });
 
+        ThesaurusPickerImportProgressContext.reportPhase("finalize");
         toolboxPreferencePersistence.updateLastSyncAt(thesaurusId, V2Dates.nowDateTime());
 
         return new ThesaurusEditionCsvImportResult(

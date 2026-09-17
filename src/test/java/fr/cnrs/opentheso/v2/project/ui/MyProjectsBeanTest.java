@@ -119,6 +119,34 @@ class MyProjectsBeanTest {
     }
 
     @Test
+    void selectProject_loadsDashboardAndLeavesListView() {
+        when(userSession.getCurrentUserId()).thenReturn(5);
+        ProjectDashboard dashboard = buildDashboard();
+        when(projectAdminService.loadDashboard(5, 3, "fr")).thenReturn(dashboard);
+
+        myProjectsBean.selectProject(3);
+
+        assertEquals(3, myProjectsBean.getSelectedProjectId());
+        assertFalse(myProjectsBean.isListView());
+        assertEquals(dashboard, myProjectsBean.getDashboard());
+        assertTrue(myProjectsBean.isProjectAdminScreen());
+    }
+
+    @Test
+    void backToList_clearsSelection() {
+        myProjectsBean.setSelectedProjectId(3);
+        myProjectsBean.setDashboard(buildDashboard());
+        myProjectsBean.setActivePanel("rename");
+
+        myProjectsBean.backToList();
+
+        assertNull(myProjectsBean.getSelectedProjectId());
+        assertNull(myProjectsBean.getDashboard());
+        assertTrue(myProjectsBean.isListView());
+        assertNull(myProjectsBean.getActivePanel());
+    }
+
+    @Test
     void createProject_refreshesListAndShowsSuccessMessage() {
         when(userSession.getCurrentUserId()).thenReturn(5);
         when(userSession.isSuperAdmin()).thenReturn(true);

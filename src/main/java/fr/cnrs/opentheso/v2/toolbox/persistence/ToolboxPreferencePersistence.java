@@ -15,6 +15,15 @@ public class ToolboxPreferencePersistence {
     private final PreferencesRepository preferencesRepository;
 
     public void initPreferences(String thesaurusId, String workLanguage) {
+        if (StringUtils.isBlank(thesaurusId)) {
+            return;
+        }
+        // Idempotent : un thésaurus n'a qu'une ligne preferences (contrainte id_thesaurus).
+        if (preferencesRepository.findByIdThesaurus(thesaurusId).isPresent()) {
+            log.debug("Préférences déjà présentes pour le thésaurus {}, initialisation ignorée", thesaurusId);
+            return;
+        }
+
         String basePreferredName = thesaurusId;
         String preferredName = basePreferredName;
         int index = 1;

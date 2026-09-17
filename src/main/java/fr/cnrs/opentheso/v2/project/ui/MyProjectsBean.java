@@ -22,7 +22,6 @@ import jakarta.inject.Named;
 import lombok.Getter;
 import lombok.Setter;
 import lombok.extern.slf4j.Slf4j;
-import org.primefaces.PrimeFaces;
 
 import java.io.Serializable;
 import java.util.ArrayList;
@@ -104,6 +103,21 @@ public class MyProjectsBean implements Serializable {
     private String thesaurusToMoveTitle;
     private Integer moveTargetProjectId;
 
+    /** V2 panel: null | create | rename | addExisting | editMemberRole | removeMember | editLimited | removeLimited */
+    private String activePanel;
+    private String existingUserQuery = "";
+    private List<UserSearchResult> existingUserHits = Collections.emptyList();
+    private String panelError;
+    private int activeSectionIndex;
+
+    private static final String PANEL_CREATE = "create";
+    private static final String PANEL_RENAME = "rename";
+    private static final String PANEL_ADD_EXISTING = "addExisting";
+    private static final String PANEL_EDIT_MEMBER_ROLE = "editMemberRole";
+    private static final String PANEL_REMOVE_MEMBER = "removeMember";
+    private static final String PANEL_EDIT_LIMITED = "editLimited";
+    private static final String PANEL_REMOVE_LIMITED = "removeLimited";
+
     public MyProjectsBean(
             UserSession userSession,
             V2LocaleBean localeBean,
@@ -136,11 +150,107 @@ public class MyProjectsBean implements Serializable {
 
     public void onProjectChanged() {
         Integer userId = userSession.getCurrentUserId();
+        closeActivePanel();
         if (userId == null || selectedProjectId == null) {
             dashboard = null;
             return;
         }
         loadDashboard(userId);
+    }
+
+    public void selectProject(int projectId) {
+        selectedProjectId = projectId;
+        activeSectionIndex = 0;
+        onProjectChanged();
+    }
+
+    public void backToList() {
+        selectedProjectId = null;
+        dashboard = null;
+        closeActivePanel();
+    }
+
+    public void closeActivePanel() {
+        activePanel = null;
+        panelError = null;
+        existingUserQuery = "";
+        existingUserHits = Collections.emptyList();
+    }
+
+    public void openCreatePanel() {
+        prepareCreateDialog();
+        activePanel = PANEL_CREATE;
+        panelError = null;
+    }
+
+    public void openRenamePanel() {
+        prepareRenameDialog();
+        activePanel = PANEL_RENAME;
+        panelError = null;
+    }
+
+    public void openAddExistingPanel() {
+        prepareAddExistingMemberDialog();
+        existingUserQuery = "";
+        existingUserHits = Collections.emptyList();
+        activePanel = PANEL_ADD_EXISTING;
+        panelError = null;
+    }
+
+    public void searchExistingUserHits() {
+        panelError = null;
+        try {
+            existingUserHits = searchExistingUsers(existingUserQuery);
+        } catch (InvalidProjectDataException | ProjectAccessDeniedException e) {
+            panelError = e.getMessage();
+            existingUserHits = Collections.emptyList();
+        }
+    }
+
+    public void pickExistingUser(int userId, String username, String email) {
+        selectedExistingUser = new UserSearchResult(userId, username, email);
+        panelError = null;
+    }
+
+    public void clearPickedExistingUser() {
+        selectedExistingUser = null;
+    }
+
+    public void openEditMemberRolePanel(ProjectMember member) {
+        prepareEditMemberRole(member);
+        activePanel = PANEL_EDIT_MEMBER_ROLE;
+        panelError = null;
+    }
+
+    public void openRemoveMemberPanel(ProjectMember member) {
+        prepareRemoveMember(member);
+        activePanel = PANEL_REMOVE_MEMBER;
+        panelError = null;
+    }
+
+    public void openEditLimitedPanel(LimitedProjectMember member) {
+        prepareEditLimitedRole(member);
+        activePanel = PANEL_EDIT_LIMITED;
+        panelError = null;
+    }
+
+    public void openRemoveLimitedPanel(LimitedProjectMember member) {
+        prepareRemoveLimitedRole(member);
+        activePanel = PANEL_REMOVE_LIMITED;
+        panelError = null;
+    }
+
+    public boolean isPanel(String name) {
+        return name != null && name.equals(activePanel);
+    }
+
+    public boolean isListView() {
+        return selectedProjectId == null;
+    }
+
+    public String projectDotColor(int projectId) {
+        String[] palette = {"#1f7a5c", "#2f5fd0", "#9a3b2e", "#5b4bb8", "#b45309", "#0f766e"};
+        return palette[Math.floorMod(projectId, palette.length)];
     }
 
     public void prepareCreateDialog() {
@@ -210,9 +320,10 @@ public class MyProjectsBean implements Serializable {
             }
             prepareNewMemberDialog();
             reloadDashboard(userId);
-            PrimeFaces.current().executeScript("PF('v2NewProjectMember').hide();");
+            closeActivePanel();
             refreshPage();
         } catch (InvalidProjectDataException | ProjectAccessDeniedException e) {
+            panelError = e.getMessage();
             MessageUtils.showErrorMessage(e.getMessage());
         }
     }
@@ -223,6 +334,7 @@ public class MyProjectsBean implements Serializable {
             return;
         }
         if (selectedExistingUser == null) {
+            panelError = "Aucun utilisateur à ajouter";
             MessageUtils.showErrorMessage("Aucun utilisateur à ajouter");
             return;
         }
@@ -237,9 +349,10 @@ public class MyProjectsBean implements Serializable {
             MessageUtils.showInformationMessage("L'utilisateur a été ajouté avec succès");
             prepareAddExistingMemberDialog();
             reloadDashboard(userId);
-            PrimeFaces.current().executeScript("PF('v2AddExistingMember').hide();");
+            closeActivePanel();
             refreshPage();
         } catch (InvalidProjectDataException | ProjectAccessDeniedException e) {
+            panelError = e.getMessage();
             MessageUtils.showErrorMessage(e.getMessage());
         }
     }
@@ -277,9 +390,10 @@ public class MyProjectsBean implements Serializable {
             );
             MessageUtils.showInformationMessage(localeBean.getMsg("project.memberRoleUpdatedSuccess"));
             reloadDashboard(userId);
-            PrimeFaces.current().executeScript("PF('v2EditMemberRole').hide();");
+            closeActivePanel();
             refreshPage();
         } catch (InvalidProjectDataException | ProjectAccessDeniedException e) {
+            panelError = e.getMessage();
             MessageUtils.showErrorMessage(e.getMessage());
         }
     }
@@ -298,9 +412,10 @@ public class MyProjectsBean implements Serializable {
             projectMemberService.removeMember(userId, userSession.isSuperAdmin(), selectedProjectId, memberToRemoveId);
             MessageUtils.showInformationMessage(localeBean.getMsg("project.memberRemovedSuccess"));
             reloadDashboard(userId);
-            PrimeFaces.current().executeScript("PF('v2RemoveMember').hide();");
+            closeActivePanel();
             refreshPage();
         } catch (InvalidProjectDataException | ProjectAccessDeniedException e) {
+            panelError = e.getMessage();
             MessageUtils.showErrorMessage(e.getMessage());
         }
     }
@@ -337,9 +452,10 @@ public class MyProjectsBean implements Serializable {
             ));
             MessageUtils.showInformationMessage(localeBean.getMsg("project.memberProfileUpdatedSuccess"));
             reloadDashboard(userId);
-            PrimeFaces.current().executeScript("PF('v2EditMemberProfile').hide();");
+            closeActivePanel();
             refreshPage();
         } catch (InvalidProjectDataException | ProjectAccessDeniedException e) {
+            panelError = e.getMessage();
             MessageUtils.showErrorMessage(e.getMessage());
         }
     }
@@ -366,8 +482,10 @@ public class MyProjectsBean implements Serializable {
                     memberResetPassword2
             );
             MessageUtils.showInformationMessage(localeBean.getMsg("project.memberPasswordUpdatedSuccess"));
-            PrimeFaces.current().executeScript("PF('v2ResetMemberPassword').hide();");
+            closeActivePanel();
+            refreshPage();
         } catch (InvalidProjectDataException | ProjectAccessDeniedException e) {
+            panelError = e.getMessage();
             MessageUtils.showErrorMessage(e.getMessage());
         }
     }
@@ -400,9 +518,10 @@ public class MyProjectsBean implements Serializable {
             ));
             MessageUtils.showInformationMessage(localeBean.getMsg("project.limitedRoleUpdatedSuccess"));
             reloadDashboard(userId);
-            PrimeFaces.current().executeScript("PF('v2EditLimitedRole').hide();");
+            closeActivePanel();
             refreshPage();
         } catch (InvalidProjectDataException | ProjectAccessDeniedException e) {
+            panelError = e.getMessage();
             MessageUtils.showErrorMessage(e.getMessage());
         }
     }
@@ -431,9 +550,10 @@ public class MyProjectsBean implements Serializable {
             );
             MessageUtils.showInformationMessage(localeBean.getMsg("project.limitedRoleRemovedSuccess"));
             reloadDashboard(userId);
-            PrimeFaces.current().executeScript("PF('v2RemoveLimitedRole').hide();");
+            closeActivePanel();
             refreshPage();
         } catch (InvalidProjectDataException | ProjectAccessDeniedException e) {
+            panelError = e.getMessage();
             MessageUtils.showErrorMessage(e.getMessage());
         }
     }
@@ -458,9 +578,10 @@ public class MyProjectsBean implements Serializable {
                     userId, userSession.isSuperAdmin(), selectedProjectId, thesaurusToMoveId, moveTargetProjectId);
             MessageUtils.showInformationMessage(localeBean.getMsg("project.thesaurusMovedSuccess"));
             reloadDashboard(userId);
-            PrimeFaces.current().executeScript("PF('v2MoveProjectThesaurus').hide();");
+            closeActivePanel();
             refreshPage();
         } catch (InvalidProjectDataException | ProjectAccessDeniedException e) {
+            panelError = e.getMessage();
             MessageUtils.showErrorMessage(e.getMessage());
         }
     }
@@ -504,9 +625,10 @@ public class MyProjectsBean implements Serializable {
             MessageUtils.showInformationMessage(localeBean.getMsg("project.createdSuccess"));
             prepareCreateDialog();
             load();
-            PrimeFaces.current().executeScript("PF('v2NewProject').hide();");
+            closeActivePanel();
             refreshPage();
         } catch (InvalidProjectDataException e) {
+            panelError = e.getMessage();
             MessageUtils.showErrorMessage(e.getMessage());
         }
     }
@@ -526,9 +648,10 @@ public class MyProjectsBean implements Serializable {
             MessageUtils.showInformationMessage(localeBean.getMsg("project.renamedSuccess"));
             prepareRenameDialog();
             load();
-            PrimeFaces.current().executeScript("PF('v2RenameProject').hide();");
+            closeActivePanel();
             refreshPage();
         } catch (InvalidProjectDataException | ProjectAccessDeniedException e) {
+            panelError = e.getMessage();
             MessageUtils.showErrorMessage(e.getMessage());
         }
     }
@@ -574,6 +697,7 @@ public class MyProjectsBean implements Serializable {
         dashboard = null;
         newProjectName = null;
         renameProjectLabel = null;
+        closeActivePanel();
     }
 
     private Integer requireConnectedUserId() {
@@ -585,6 +709,6 @@ public class MyProjectsBean implements Serializable {
     }
 
     private void refreshPage() {
-        PrimeFaces.current().ajax().update("containerIndex");
+        // V2 pages re-render via f:ajax; data is already reloaded by callers.
     }
 }

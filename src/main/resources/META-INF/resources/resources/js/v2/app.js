@@ -241,6 +241,8 @@ document.addEventListener("click", (e) => {
     if ($("#voWrap") && !$("#voWrap").contains(e.target)) $("#voGear") && $("#voGear").classList.remove("is-on");
     if ($("#viewPick") && !$("#viewPick").contains(e.target)) $("#viewPickBtn") && $("#viewPickBtn").classList.remove("is-open");
     if ($("#previewTermLangUi") && !$("#previewTermLangUi").contains(e.target)) closeTreeLang();
+    if (!e.target.closest(".xpdf-lang-pick")) closeExportPdfLangPickers();
+    if (!e.target.closest(".xcsv-lang-pick")) closeExportCsvLangPicker();
     if ($("#cvCtx") && !$("#cvCtx").contains(e.target)) closeCvCtx();
     if ($("#cfCombo") && !$("#cfCombo").contains(e.target)) $("#cfCombo").classList.remove("open");
     return;
@@ -248,6 +250,10 @@ document.addEventListener("click", (e) => {
   if ($("#cfCombo") && !$("#cfCombo").contains(e.target)) $("#cfCombo").classList.remove("open");
   const act = t.getAttribute("data-act");
   if (act !== "term-lang-toggle" && act !== "term-lang") closeTreeLang();
+  if (act !== "export-pdf-lang-toggle" && act !== "export-pdf-lang") closeExportPdfLangPickers();
+  if (act !== "export-csv-lang-toggle" && act !== "export-lang" && act !== "export-lang-all" && act !== "export-lang-none") {
+    closeExportCsvLangPicker();
+  }
   if (act !== "cv-ctx-toggle") closeCvCtx();
   if (act === "sb-toggle") {
     e.preventDefault();
@@ -958,6 +964,45 @@ document.addEventListener("click", (e) => {
   } else if (act === "export-lang" || act === "export-group-id") {
     if (exportBusy) return;
     t.classList.toggle("is-on");
+    if (act === "export-lang") {
+      e.preventDefault();
+      t.setAttribute("aria-selected", t.classList.contains("is-on") ? "true" : "false");
+      refreshExportLangMeta();
+    }
+  } else if (act === "export-lang-all") {
+    if (exportBusy) return;
+    e.preventDefault();
+    setExportLangSelection(true);
+  } else if (act === "export-lang-none") {
+    if (exportBusy) return;
+    e.preventDefault();
+    setExportLangSelection(false);
+  } else if (act === "export-csv-lang-toggle") {
+    if (exportBusy) return;
+    e.preventDefault();
+    /* Page export : liste CSV déjà ouverte en permanence. */
+    if (t.closest(".tp-export-host")) return;
+    const open = !t.classList.contains("is-open");
+    closeExportCsvLangPicker(open ? t : null);
+    closeExportPdfLangPickers();
+    t.classList.toggle("is-open", open);
+    t.setAttribute("aria-expanded", open ? "true" : "false");
+  } else if (act === "export-pdf-lang-toggle") {
+    if (exportBusy) return;
+    e.preventDefault();
+    const open = !t.classList.contains("is-open");
+    closeExportPdfLangPickers(open ? t : null);
+    closeExportCsvLangPicker();
+    t.classList.toggle("is-open", open);
+    t.setAttribute("aria-expanded", open ? "true" : "false");
+  } else if (act === "export-pdf-lang") {
+    if (exportBusy) return;
+    e.preventDefault();
+    const slot = parseInt(t.getAttribute("data-slot") || "0", 10);
+    const code = t.getAttribute("data-code") || "";
+    const label = t.getAttribute("data-label") || code;
+    if (slot === 1 || slot === 2) setPdfLangValue(slot, code, label);
+    closeExportPdfLangPickers();
   } else if (act === "export-run") {
     e.preventDefault();
     startSelectionExport();
