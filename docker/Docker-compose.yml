@@ -3,13 +3,13 @@ services:
     image: postgres:17
     restart: always
     environment:
-      POSTGRES_USER: opentheso
-      POSTGRES_PASSWORD: opentheso
-      POSTGRES_DB: opentheso
+      POSTGRES_USER: ${DB_USER:?missing docker/.env - copy .env.example to .env}
+      POSTGRES_PASSWORD: ${DB_PASSWORD}
+      POSTGRES_DB: ${DB_NAME}
     volumes:
       - opentheso-data:/var/lib/postgresql/data
     healthcheck:
-      test: ["CMD-SHELL", "pg_isready -U opentheso"]
+      test: ["CMD-SHELL", "pg_isready -U ${DB_USER}"]
       interval: 5s
       retries: 10
 
@@ -22,15 +22,13 @@ services:
       opentheso-db:
         condition: service_healthy
     ports:
-      - "8099:8099" # port d'écoute dans application-prod.yaml
+      - "${APP_PORT}:8099" # le container écoute toujours sur 8099 (application-prod.yaml)
     environment:
-      SPRING_DATASOURCE_URL: jdbc:postgresql://opentheso-db:5432/opentheso
-      SPRING_DATASOURCE_USERNAME: opentheso
-      SPRING_DATASOURCE_PASSWORD: opentheso
-      # throwaway keys for local evaluation only - 32 chars exactly.
-      # Supply real ones from a secret store for any deployment reachable by others.
-      CRYPTO_KEY: ${CRYPTO_KEY:-01234567890123456789012345678901}
-      CRYPTO_OPENARK_KEY: ${CRYPTO_OPENARK_KEY:-01234567890123456789012345678901}
+      SPRING_DATASOURCE_URL: jdbc:postgresql://${DB_HOST}:${DB_PORT}/${DB_NAME}
+      SPRING_DATASOURCE_USERNAME: ${DB_USER}
+      SPRING_DATASOURCE_PASSWORD: ${DB_PASSWORD}
+      CRYPTO_KEY: ${CRYPTO_KEY:?set CRYPTO_KEY in docker/.env}
+      CRYPTO_OPENARK_KEY: ${CRYPTO_OPENARK_KEY:?set CRYPTO_OPENARK_KEY in docker/.env}
 
 volumes:
   opentheso-data:
