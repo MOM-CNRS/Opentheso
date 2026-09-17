@@ -219,7 +219,7 @@
     </changeSet>
     <!-- the baseline dump and the changesets above insert explicit ids without bumping the
          sequences, so the nextval-based inserts below collide. Resync before they run. -->
-    <changeSet id="fix-sequences" author="local" runAlways="true">
+    <changeSet id="fix-sequences" author="local">
         <sqlFile path="database/fix-sequences.sql" relativeToChangelogFile="true" splitStatements="false"/>
     </changeSet>
 
