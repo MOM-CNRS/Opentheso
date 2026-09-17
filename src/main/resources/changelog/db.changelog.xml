@@ -246,5 +246,18 @@
         <sqlFile path="v26/26-08_01.sql" relativeToChangelogFile="true" splitStatements="false"/>
     </changeSet>
 
+    <!-- language belongs in the thesaurus_dcterms key; without it any multilingual
+         thesaurus whose dcterms value repeats across languages fails to import. -->
+    <changeSet id="thesaurus-dcterms-language-key" author="local">
+        <sqlFile path="database/thesaurus-dcterms-language-key.sql" relativeToChangelogFile="true"/>
+        <rollback>
+            <!-- Fails loudly if rows that only the wider key allows have since been
+                 written. That is the correct outcome: they cannot be represented under
+                 the narrow key, and dropping them silently would lose metadata. -->
+            DROP INDEX IF EXISTS thesaurus_dcterms_uniquekey;
+            ALTER TABLE thesaurus_dcterms
+                ADD CONSTRAINT thesaurus_dcterms_uniquekey UNIQUE (id_thesaurus, name, value);
+        </rollback>
+    </changeSet>
 
 </databaseChangeLog>
