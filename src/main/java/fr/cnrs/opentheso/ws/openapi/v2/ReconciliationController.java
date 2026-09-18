@@ -7,141 +7,169 @@ import fr.cnrs.opentheso.models.concept.NodeAutoCompletion;
 import fr.cnrs.opentheso.models.concept.NodeFullConcept;
 import fr.cnrs.opentheso.ws.api.RestRDFHelper;
 import io.swagger.v3.oas.annotations.Operation;
-import io.swagger.v3.oas.annotations.security.SecurityRequirement;
 import io.swagger.v3.oas.annotations.tags.Tag;
-import jdk.jfr.Description;
 import org.apache.commons.text.similarity.LevenshteinDistance;
+import org.springframework.beans.factory.annotation.Value;
+import org.springframework.http.MediaType;
 import org.springframework.http.ResponseEntity;
 import org.springframework.web.bind.annotation.*;
+import org.springframework.web.util.HtmlUtils;
 
 import java.util.*;
 
 @RestController
 @RequestMapping("/api/v2")
 @Tag(name = "Api v2")
-
+@CrossOrigin(origins = "*")
 public class ReconciliationController {
 
     private final RestRDFHelper restRDFHelper;
     private final ObjectMapper mapper = new ObjectMapper();
     private final LevenshteinDistance levenshtein = new LevenshteinDistance();
 
+    /**
+     * URL publique de l'instance (sans slash final), injectée depuis application.yaml :
+     *
+     * opentheso:
+     *   public-base-url: ${OPENTHESO_PUBLIC_BASE_URL:http://localhost:8099}
+     */
+    @Value("${opentheso.public-base-url}")
+    private String baseUrl;
+
     public ReconciliationController(RestRDFHelper restRDFHelper) {
         this.restRDFHelper = restRDFHelper;
+    }
+
+    private String base() {
+        return (baseUrl != null && baseUrl.endsWith("/"))
+                ? baseUrl.substring(0, baseUrl.length() - 1)
+                : baseUrl;
     }
 
     // =========================================================
     // 1. METADATA (IMPORTANT OPENREFINE ENTRY POINT)
     // =========================================================
-    @GetMapping("/{thesaurus}/{lang}/reconcile")
+    @GetMapping(value = "/{thesaurus}/{lang}/reconcile", produces = MediaType.APPLICATION_JSON_VALUE)
     @Operation(
-            summary = "OpenRefine - Reconcile",
-            description = "Pour la reconciliation avec OpenRefine."
+            summary = "OpenRefine - Reconcile metadata",
+            description = "Manifeste de service pour la réconciliation avec OpenRefine."
     )
     public Map<String, Object> metadata(@PathVariable String thesaurus, @PathVariable String lang) {
-        return Map.of(
-                "name", "Opentheso Reconciliation Service",
-                "versions", List.of("1.0"),
 
-                "identifierSpace", "http://localhost:8099/",
-                "schemaSpace", "http://localhost:8099/schema/",
+        String base = base();
 
-                "defaultTypes", List.of(
-                        Map.of("id", "concept", "name", "Concept")
+        Map<String, Object> manifest = new LinkedHashMap<>();
+        manifest.put("name", "Opentheso Reconciliation Service");
+        manifest.put("versions", List.of("0.2"));
+
+        manifest.put("identifierSpace", base + "/");
+        manifest.put("schemaSpace", base + "/schema/");
+
+        manifest.put("defaultTypes", List.of(
+                Map.of("id", "concept", "name", "Concept")
+        ));
+
+        manifest.put("view", Map.of(
+                "url", base + "/?idc={{id}}&idt=" + thesaurus
+        ));
+
+        manifest.put("suggest", Map.of(
+                "entity", Map.of(
+                        "service_url", base + "/api/v2/" + thesaurus + "/" + lang,
+                        "service_path", "/suggest/entity"
                 ),
-
-                // IMPORTANT : URL TEMPLATE multi-thésaurus
-                "view", Map.of(
-                        "url", "http://localhost:8099/?idc={{id}}&idt=" + thesaurus
-                ),
-
-                "suggest", Map.of(
-                        "entity", Map.of(
-                                "service_url", "http://localhost:8099/api/v2/" + thesaurus + "/" + lang,
-                                "service_path", "/suggest/entity"
-                        ),
-                        "property", Map.of(
-                                "service_url", "http://localhost:8099/api/v2",
-                                "service_path", "/suggest/properties"
-                        )
-                ),
-
-                "extend", Map.of(
-                        "propose_properties", Map.of(
-                                "service_url", "http://localhost:8099/api/v2",
-                                "service_path", "/propose_properties"
-                        )
-                ),
-
-                "preview", Map.of(
-                        "url",
-                        "http://localhost:8099/api/v2/"
-                                + "preview/"
-                                + thesaurus + "/"
-                                + "{{id}}",
-                        "height", 120,
-                        "width", 400
-                ),
-
-                // IMPORTANT : propriétés utilisables dans OpenRefine UI
-                "properties", List.of(
-                        Map.of("id", "thesaurus", "name", "Thesaurus"),
-                        Map.of("id", "lang", "name", "Language")
+                "property", Map.of(
+                        "service_url", base + "/api/v2",
+                        "service_path", "/suggest/properties"
                 )
-        );
+        ));
+
+        manifest.put("extend", Map.of(
+                "propose_properties", Map.of(
+                        "service_url", base + "/api/v2",
+                        "service_path", "/propose_properties"
+                )
+        ));
+
+        manifest.put("preview", Map.of(
+                "url", base + "/api/v2/preview/" + thesaurus + "/{{id}}",
+                "height", 120,
+                "width", 400
+        ));
+
+        manifest.put("properties", List.of(
+                Map.of("id", "thesaurus", "name", "Thesaurus"),
+                Map.of("id", "lang", "name", "Language")
+        ));
+
+        return manifest;
     }
 
     // =========================================================
-    // 2. RECONCILIATION CORE
+    // 2 & 3. RECONCILE / EXTEND (POST unique)
     // =========================================================
     @PostMapping(
             value = "/{thesaurus}/{lang}/reconcile",
-            consumes = "application/x-www-form-urlencoded"
+            consumes = MediaType.APPLICATION_FORM_URLENCODED_VALUE,
+            produces = MediaType.APPLICATION_JSON_VALUE
     )
     @Operation(
-            summary = "OpenRefine - Reconcile",
-            description = "Pour la reconciliation avec OpenRefine."
+            summary = "OpenRefine - Reconcile / Extend",
+            description = "Réconciliation ou enrichissement des concepts, selon le paramètre présent."
     )
-    public Map<String, Object> reconcile(
+    public Map<String, Object> reconcilePost(
+            @PathVariable String thesaurus,
+            @PathVariable String lang,
+            @RequestParam(required = false) String queries,
+            @RequestParam(required = false) String extend
+    ) throws Exception {
+
+        if (extend != null) {
+            return doExtend(thesaurus, lang, extend);
+        }
+        if (queries != null) {
+            return doReconcile(thesaurus, lang, queries);
+        }
+        // certains clients interrogent le endpoint en POST sans corps
+        return metadata(thesaurus, lang);
+    }
+
+    // Certains clients (et versions d'OpenRefine) envoient "queries" en GET
+    @GetMapping(
+            value = "/{thesaurus}/{lang}/reconcile",
+            params = "queries",
+            produces = MediaType.APPLICATION_JSON_VALUE
+    )
+    public Map<String, Object> reconcileGet(
             @PathVariable String thesaurus,
             @PathVariable String lang,
             @RequestParam String queries
     ) throws Exception {
+        return doReconcile(thesaurus, lang, queries);
+    }
+
+    private Map<String, Object> doReconcile(String thesaurus, String lang, String queries) throws Exception {
 
         JsonNode root = mapper.readTree(queries);
         Map<String, Object> response = new LinkedHashMap<>();
 
-        root.fieldNames().forEachRemaining(key -> {
-
+        Iterator<String> keys = root.fieldNames();
+        while (keys.hasNext()) {
+            String key = keys.next();
             JsonNode q = root.get(key);
             String query = q.path("query").asText("");
+            int limit = q.path("limit").asInt(10);
 
             List<NodeAutoCompletion> data =
                     restRDFHelper.searchAutoCompletionWS(query, lang, null, thesaurus, true);
 
-            response.put(key, buildResult(data, query, thesaurus, false));
-        });
+            response.put(key, buildResult(data, query, thesaurus, false, limit));
+        }
 
         return response;
     }
 
-    // =========================================================
-// 3. EXTEND permet de récuperer les informations pour un concept reconcilié
-// =========================================================
-    @PostMapping(
-            value = "/{thesaurus}/{lang}/reconcile",
-            params = "extend",
-            consumes = "application/x-www-form-urlencoded"
-    )
-    @Operation(
-            summary = "OpenRefine - Extend (stable version)",
-            description = "Enrichissement stable des concepts reconciliés (ordre indépendant de l'UI)."
-    )
-    public Map<String, Object> extend(
-            @PathVariable String thesaurus,
-            @PathVariable String lang,
-            @RequestParam String extend
-    ) throws Exception {
+    private Map<String, Object> doExtend(String thesaurus, String lang, String extend) throws Exception {
 
         JsonNode json = mapper.readTree(extend);
 
@@ -150,17 +178,15 @@ public class ReconciliationController {
         // =========================
         List<String> ids = new ArrayList<>();
         JsonNode idsNode = json.get("ids");
-
         if (idsNode != null && idsNode.isArray()) {
             idsNode.forEach(n -> ids.add(n.asText()));
         }
 
         // =========================
-        // PROPERTIES (RAW FROM OPENREFINE)
+        // PROPERTIES (ORDRE CANONIQUE)
         // =========================
         List<String> requestedProps = new ArrayList<>();
         JsonNode propsNode = json.get("properties");
-
         if (propsNode != null && propsNode.isArray()) {
             propsNode.forEach(p -> {
                 JsonNode idNode = p.get("id");
@@ -170,32 +196,29 @@ public class ReconciliationController {
             });
         }
 
-        // =========================
-        // CANONICAL ORDER (IMPORTANT FIX)
-        // =========================
-        List<String> canonicalOrder = List.of(
-                "prefLabel",
-                "description",
-                "aliases",
-                "ark",
-                "uri"
-        );
-
+        List<String> canonicalOrder = List.of("prefLabel", "description", "aliases", "ark", "uri");
         List<String> props = canonicalOrder.stream()
                 .filter(requestedProps::contains)
                 .toList();
 
         // =========================
-        // RESULT
+        // ROWS
         // =========================
         Map<String, Object> rows = new LinkedHashMap<>();
+        String base = base();
 
         for (String id : ids) {
 
-            NodeFullConcept concept =
-                    restRDFHelper.getNodeFullConcept(thesaurus, id, lang);
-
+            NodeFullConcept concept = restRDFHelper.getNodeFullConcept(thesaurus, id, lang);
             Map<String, Object> row = new LinkedHashMap<>();
+
+            if (concept == null) {
+                for (String p : canonicalOrder) {
+                    row.put(p, List.of(Map.of("str", "")));
+                }
+                rows.put(id, row);
+                continue;
+            }
 
             for (String prop : props) {
 
@@ -207,8 +230,7 @@ public class ReconciliationController {
                         String label = concept.getPrefLabel() != null
                                 ? concept.getPrefLabel().getLabel()
                                 : "";
-
-                        values.add(Map.of("str", label));
+                        values.add(Map.of("str", label != null ? label : ""));
                     }
 
                     case "description" -> {
@@ -217,50 +239,36 @@ public class ReconciliationController {
                     }
 
                     case "aliases" -> {
-
                         if (concept.getAltLabels() != null && !concept.getAltLabels().isEmpty()) {
-
                             for (var a : concept.getAltLabels()) {
                                 if (a != null && isValid(a.getLabel())) {
                                     values.add(Map.of("str", a.getLabel()));
                                 }
                             }
                         }
-
                         if (values.isEmpty()) {
                             values.add(Map.of("str", ""));
                         }
                     }
 
-                    case "ark" -> {
-                        values.add(Map.of(
-                                "str",
-                                isValid(concept.getPermanentId())
-                                        ? concept.getPermanentId()
-                                        : ""
-                        ));
-                    }
+                    case "ark" -> values.add(Map.of(
+                            "str",
+                            isValid(concept.getPermanentId()) ? concept.getPermanentId() : ""
+                    ));
 
                     case "uri" -> {
-
                         String uri = isValid(concept.getPermanentId())
                                 ? concept.getPermanentId()
-                                : "http://localhost:8099/?idc="
-                                  + id
-                                  + "&idt="
-                                  + thesaurus;
-
+                                : base + "/?idc=" + id + "&idt=" + thesaurus;
                         values.add(Map.of("str", uri));
                     }
 
                     default -> values.add(Map.of("str", ""));
                 }
 
-                // IMPORTANT : toujours écrire la clé (pas conditionnel)
                 row.put(prop, values);
             }
 
-            // IMPORTANT : garantir complétude même si OpenRefine change l’ordre
             for (String p : canonicalOrder) {
                 row.putIfAbsent(p, List.of(Map.of("str", "")));
             }
@@ -268,9 +276,6 @@ public class ReconciliationController {
             rows.put(id, row);
         }
 
-        // =========================
-        // META (FIXED ORDER TOO)
-        // =========================
         List<Map<String, Object>> meta = List.of(
                 Map.of("id", "prefLabel", "name", "Preferred label"),
                 Map.of("id", "description", "name", "Definition"),
@@ -279,11 +284,12 @@ public class ReconciliationController {
                 Map.of("id", "uri", "name", "URI")
         );
 
-        return Map.of(
-                "meta", meta,
-                "rows", rows
-        );
+        Map<String, Object> result = new LinkedHashMap<>();
+        result.put("meta", meta);
+        result.put("rows", rows);
+        return result;
     }
+
     private boolean isValid(String s) {
         return s != null && !s.isBlank();
     }
@@ -291,10 +297,10 @@ public class ReconciliationController {
     // =========================================================
     // 4. SUGGEST ENTITY
     // =========================================================
-    @GetMapping("/{thesaurus}/{lang}/suggest/entity")
+    @GetMapping(value = "/{thesaurus}/{lang}/suggest/entity", produces = MediaType.APPLICATION_JSON_VALUE)
     @Operation(
-            summary = "OpenRefine - Reconcile",
-            description = "Pour la reconciliation avec OpenRefine."
+            summary = "OpenRefine - Suggest entity",
+            description = "Auto-complétion pour la réconciliation avec OpenRefine."
     )
     public Map<String, Object> suggestEntity(
             @PathVariable String thesaurus,
@@ -313,9 +319,7 @@ public class ReconciliationController {
             }
         }
 
-        result.sort((a, b) ->
-                Integer.compare((int) b.get("score"), (int) a.get("score"))
-        );
+        result.sort((a, b) -> Integer.compare((int) b.get("score"), (int) a.get("score")));
 
         return Map.of("result", result);
     }
@@ -323,94 +327,53 @@ public class ReconciliationController {
     // =========================================================
     // 5. PROPERTIES
     // =========================================================
-    @GetMapping("/suggest/properties")
+    @GetMapping(value = "/suggest/properties", produces = MediaType.APPLICATION_JSON_VALUE)
     public Map<String, Object> suggestProperties() {
-
-        return Map.of(
-                "result", List.of(
-
-                        Map.of(
-                                "id", "prefLabel",
-                                "name", "Preferred label"
-                        ),
-
-                        Map.of(
-                                "id", "description",
-                                "name", "Description"
-                        ),
-
-                        Map.of(
-                                "id", "aliases",
-                                "name", "Alternative labels"
-                        ),
-
-                        Map.of(
-                                "id", "ark",
-                                "name", "ARK Identifier"
-                        ),
-
-                        Map.of(
-                                "id", "uri",
-                                "name", "URI"
-                        )
-                )
-        );
+        return Map.of("result", propertyList());
     }
 
-    @GetMapping("/propose_properties")
+    @GetMapping(value = "/propose_properties", produces = MediaType.APPLICATION_JSON_VALUE)
     public Map<String, Object> propose() {
+        Map<String, Object> result = new LinkedHashMap<>();
+        result.put("type", Map.of("id", "concept", "name", "Concept"));
+        result.put("properties", propertyList());
+        return result;
+    }
 
-        return Map.of(
-
-                "type",
-                Map.of(
-                        "id", "concept",
-                        "name", "Concept"
-                ),
-
-                "properties", List.of(
-
-                        Map.of(
-                                "id", "prefLabel",
-                                "name", "Preferred label"
-                        ),
-
-                        Map.of(
-                                "id", "description",
-                                "name", "Description"
-                        ),
-
-                        Map.of(
-                                "id", "aliases",
-                                "name", "Alternative labels"
-                        ),
-
-                        Map.of(
-                                "id", "ark",
-                                "name", "ARK Identifier"
-                        ),
-
-                        Map.of(
-                                "id", "uri",
-                                "name", "URI"
-                        )
-                )
+    private List<Map<String, String>> propertyList() {
+        return List.of(
+                Map.of("id", "prefLabel", "name", "Preferred label"),
+                Map.of("id", "description", "name", "Description"),
+                Map.of("id", "aliases", "name", "Alternative labels"),
+                Map.of("id", "ark", "name", "ARK Identifier"),
+                Map.of("id", "uri", "name", "URI")
         );
     }
 
-
-    @GetMapping(value = "/preview/{thesaurus}/{id}", produces = "text/html")
+    // =========================================================
+    // 6. PREVIEW
+    // =========================================================
+    @GetMapping(value = "/preview/{thesaurus}/{id}", produces = MediaType.TEXT_HTML_VALUE)
     @Operation(
-            summary = "OpenRefine - Reconcile",
-            description = "Pour la reconciliation avec OpenRefine."
+            summary = "OpenRefine - Preview",
+            description = "Aperçu HTML affiché dans l'iframe de réconciliation OpenRefine."
     )
     public ResponseEntity<String> preview(
             @PathVariable String thesaurus,
             @PathVariable String id
     ) {
 
-        NodeFullConcept c =
-                restRDFHelper.getNodeFullConcept(thesaurus, id, "fr");
+        NodeFullConcept c = restRDFHelper.getNodeFullConcept(thesaurus, id, "fr");
+
+        String label = "";
+        String definition = "";
+
+        if (c != null) {
+            if (c.getPrefLabel() != null) {
+                label = safe(c.getPrefLabel().getLabel());
+            }
+            definition = safeNote(c.getDefinitions());
+        }
 
         String html =
                 "<!DOCTYPE html>" +
@@ -426,34 +389,37 @@ public class ReconciliationController {
                         "</style>" +
                         "</head>" +
                         "<body>" +
-                        "<h4>" + safe(c.getPrefLabel().getLabel()) + "</h4>" +
-                        "<p>" + safeNote(c.getDefinitions()) + "</p>" +
+                        "<h4>" + HtmlUtils.htmlEscape(label) + "</h4>" +
+                        "<p>" + HtmlUtils.htmlEscape(definition) + "</p>" +
                         "<hr/>" +
-                        "<small>ID: " + id + "</small>" +
+                        "<small>ID: " + HtmlUtils.htmlEscape(id) + "</small>" +
                         "</body></html>";
 
         return ResponseEntity.ok()
-                .header("Content-Security-Policy", "frame-ancestors 'self' *")
+                .header("Content-Security-Policy", "frame-ancestors *")
                 .body(html);
     }
 
     private String safe(String s) {
         return s == null ? "" : s;
     }
+
     private String safeNote(List<ConceptNote> notes) {
-        if(notes == null || notes.isEmpty()) { return ""; }
+        if (notes == null || notes.isEmpty()) {
+            return "";
+        }
         return notes.get(0).getLabel();
     }
 
-
     // =========================================================
-    // 6. RESULT BUILDER
+    // 7. RESULT BUILDER
     // =========================================================
     private Map<String, Object> buildResult(
             List<NodeAutoCompletion> data,
             String query,
             String thesaurus,
-            boolean suggestMode
+            boolean suggestMode,
+            int limit
     ) {
 
         List<Map<String, Object>> results = new ArrayList<>();
@@ -464,7 +430,46 @@ public class ReconciliationController {
             }
         }
 
+        results.sort((a, b) -> Integer.compare((int) b.get("score"), (int) a.get("score")));
+
+        if (limit > 0 && results.size() > limit) {
+            results = new ArrayList<>(results.subList(0, limit));
+        }
+
+        markBestMatch(results);
+
         return Map.of("result", results);
+    }
+
+    /**
+     * Ne marque "match": true que si un seul candidat dépasse le seuil,
+     * ou si le premier score dépasse nettement le second (évite les faux
+     * appariements automatiques entre homonymes proches).
+     */
+    private void markBestMatch(List<Map<String, Object>> results) {
+
+        for (Map<String, Object> r : results) {
+            r.put("match", false);
+        }
+
+        if (results.isEmpty()) {
+            return;
+        }
+
+        int top = (int) results.get(0).get("score");
+        if (top < 95) {
+            return;
+        }
+
+        if (results.size() == 1) {
+            results.get(0).put("match", true);
+            return;
+        }
+
+        int second = (int) results.get(1).get("score");
+        if (top - second >= 10) {
+            results.get(0).put("match", true);
+        }
     }
 
     private Map<String, Object> buildConcept(
@@ -475,6 +480,7 @@ public class ReconciliationController {
     ) {
 
         int score = computeScore(c.getPrefLabel(), query, suggestMode);
+        String base = base();
 
         Map<String, Object> m = new LinkedHashMap<>();
 
@@ -484,23 +490,22 @@ public class ReconciliationController {
         m.put("id", c.getIdConcept());
         m.put("name", c.getPrefLabel());
         m.put("score", score);
-        m.put("match", score >= 95);
+        m.put("match", false); // ajusté ensuite par markBestMatch()
 
         m.put("type", List.of(
                 Map.of("id", "concept", "name", "Concept")
         ));
 
         // =========================
-        // STABLE URI (IMPORTANT)
+        // URI STABLE (ARK en priorité si disponible)
         // =========================
-        m.put("uri",
-                "http://localhost:8099/resource/"
-                        + thesaurus + "/"
-                        + c.getIdConcept()
-        );
+        boolean hasArk = c.getIdArk() != null && !c.getIdArk().isBlank();
 
-        // optional ARK
-        if (c.getIdArk() != null && !c.getIdArk().isBlank()) {
+        m.put("uri", hasArk
+                ? c.getIdArk()
+                : base + "/resource/" + thesaurus + "/" + c.getIdConcept());
+
+        if (hasArk) {
             m.put("persistentIdentifier", c.getIdArk());
         }
 
@@ -527,13 +532,10 @@ public class ReconciliationController {
         }
 
         // =========================
-        // PREVIEW (IMPORTANT FIX)
+        // PREVIEW
         // =========================
         m.put("preview", Map.of(
-                "url",
-                "http://localhost:8099/api/v2/preview/"
-                        + thesaurus + "/"
-                        + c.getIdConcept(),
+                "url", base + "/api/v2/preview/" + thesaurus + "/" + c.getIdConcept(),
                 "height", 120,
                 "width", 400
         ));
@@ -542,7 +544,7 @@ public class ReconciliationController {
     }
 
     // =========================================================
-    // 7. SCORE ENGINE
+    // 8. SCORE ENGINE
     // =========================================================
     private int computeScore(String label, String query, boolean suggestMode) {
 
@@ -556,7 +558,6 @@ public class ReconciliationController {
         if (!suggestMode) {
             int max = Math.max(l.length(), q.length());
             int dist = levenshtein.apply(l, q);
-
             double sim = 1.0 - ((double) dist / max);
             return (int) (sim * 100);
         }
@@ -564,13 +565,7 @@ public class ReconciliationController {
         // =========================
         // SUGGEST MODE (REBALANCED)
         // =========================
-
         int score;
-
-        // 1. base discrimination forte
-        if (l.equals(q)) {
-            return 100;
-        }
 
         if (l.startsWith(q)) {
             score = 90;
@@ -580,12 +575,10 @@ public class ReconciliationController {
             score = 25;
         }
 
-        // 2. boost exact prefix length match (important)
         if (l.startsWith(q) && l.length() == q.length()) {
             score += 5;
         }
 
-        // 3. penalties faibles MAIS pas cumulatives fortes
         if (l.equals(q + "s")) {
             score -= 8;
         }
@@ -594,19 +587,17 @@ public class ReconciliationController {
             score -= 12;
         }
 
-        // 4. Levenshtein léger (ne doit PAS écraser le score)
         int dist = levenshtein.apply(l, q);
         score -= Math.min(dist, 10);
 
-        // 5. NORMALISATION (IMPORTANT)
         return Math.max(0, Math.min(score, 100));
     }
 
     private String normalize(String s) {
         return (s == null) ? "" :
                 s.toLowerCase()
-                .trim()
-                .replaceAll("[_\\-]", " ")
-                .replaceAll("\\s+", " ");
+                        .trim()
+                        .replaceAll("[_\\-]", " ")
+                        .replaceAll("\\s+", " ");
     }
 }
