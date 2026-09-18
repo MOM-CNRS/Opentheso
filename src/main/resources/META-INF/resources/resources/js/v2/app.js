@@ -1712,6 +1712,24 @@ if (SCREEN === "preference" && location.hash) {
     return false;
   };
 
+  window.iaFocusNewProject = function (data) {
+    if (!data || data.status !== "success") return;
+    const input = document.getElementById("iaNewProjectName");
+    if (!input) return;
+    input.focus();
+    if (typeof input.select === "function") {
+      try { input.select(); } catch (ex) {}
+    }
+  };
+
+  window.iaNewProjectKeydown = function (event) {
+    if (!event || event.key !== "Enter") return true;
+    event.preventDefault();
+    const go = document.getElementById("iaNewProjectSubmit");
+    if (go && typeof go.click === "function") go.click();
+    return false;
+  };
+
   window.iaQueueUserAction = function (el) {
     if (!el || window._iaUsersFilterBusy) return false;
     const action = el.getAttribute("data-ia-action");

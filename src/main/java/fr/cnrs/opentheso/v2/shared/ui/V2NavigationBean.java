@@ -81,7 +81,7 @@ public class V2NavigationBean implements Serializable {
 
     public void redirectToAllProjects() throws IOException {
         activePageName = "projectsV2";
-        redirect("/v2/admin/projets.xhtml");
+        redirect("/v2/admin/projets");
     }
 
     public void redirectToAllThesauri() throws IOException {

@@ -258,7 +258,7 @@ button.tp-create, input.tp-create[type="submit"]{
   border-radius:10px;background:linear-gradient(180deg,#27936f 0%,var(--accent) 100%);
   box-shadow:0 4px 12px rgba(31,122,92,.22);
   transform:translate3d(0,0,0);pointer-events:none;will-change:transform,width;
-  transition:transform .42s cubic-bezier(.22,1,.36,1),width .42s cubic-bezier(.22,1,.36,1),height .42s cubic-bezier(.22,1,.36,1),opacity .18s ease;
+  transition:transform .28s cubic-bezier(.22,1,.36,1),width .28s cubic-bezier(.22,1,.36,1),height .28s cubic-bezier(.22,1,.36,1),opacity .16s ease;
   opacity:0
 }
 .tp-import-formats-glider.is-ready{opacity:1}
@@ -281,8 +281,6 @@ button.tp-create, input.tp-create[type="submit"]{
   background:transparent;color:#fff
 }
 .tp-fmt-panel.is-off{display:none!important}
-.tp-import-body.is-fmt-switch{animation:tp-tab-content-right .36s cubic-bezier(.22,1,.36,1)}
-.tp-import-body.is-fmt-switch.is-fmt-left{animation-name:tp-tab-content-left}
 .tp-import-dropzone{flex:1;min-width:0;position:relative}
 .tp-file-input{position:absolute;width:1px;height:1px;opacity:0;overflow:hidden;clip:rect(0,0,0,0)}
 .tp-drop{width:100%;border:1.5px dashed color-mix(in srgb,var(--line) 70%, var(--accent) 30%);border-radius:12px;padding:24px 18px;text-align:center;background:linear-gradient(180deg, var(--surface-2,var(--bg)), rgba(255,255,255,.55));transition:border-color .14s,background .14s,transform .14s,box-shadow .14s;cursor:pointer;display:block;box-sizing:border-box}
@@ -387,7 +385,7 @@ button.tp-create, input.tp-create[type="submit"]{
   .tp-search{transition:none;transform:none!important}
   .tp-search-ico{transition:none;transform:none!important}
   .tp-tab,.tp-chip,.tp-tab-n,.tp-tabs-glider,.tp-import-formats-glider,.tp-import-fmt{transition:none!important}
-  .tp-tab.is-on.is-tab-pop,.tp-table-wrap.is-tab-switch,.tp-table-wrap.is-tab-right,.tp-table-wrap.is-tab-left,.tp-import-body.is-fmt-switch{animation:none}
+  .tp-tab.is-on.is-tab-pop,.tp-table-wrap.is-tab-switch,.tp-table-wrap.is-tab-right,.tp-table-wrap.is-tab-left{animation:none}
   .tp-form-alert.is-enter,#tpImportPreview.is-ready .tp-form-row--preview,.tp--import .tp-form-submit.is-ready-pulse,.tp-import-dropzone.is-pending .tp-drop-filled,.tp-import-more-body{animation:none!important}
 }
 @media (max-width:640px){

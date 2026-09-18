@@ -269,7 +269,7 @@ public class MenuBean implements Serializable {
         propositionBean.searchNewPropositions();
         propositionBean.setRubriqueVisible(false);
         ExternalContext context = FacesContext.getCurrentInstance().getExternalContext();
-        context.redirect(context.getRequestContextPath() + "/v2/admin/projets.xhtml");
+        context.redirect(context.getRequestContextPath() + "/v2/admin/projets");
     }
 
     public void redirectToThesauriV2Page() throws IOException {

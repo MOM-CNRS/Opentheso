@@ -1,0 +1,186 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<ui:composition xmlns="http://www.w3.org/1999/xhtml"
+                xmlns:ui="http://xmlns.jcp.org/jsf/facelets"
+                xmlns:h="http://xmlns.jcp.org/jsf/html"
+                xmlns:f="http://xmlns.jcp.org/jsf/core"
+                xmlns:pt="http://xmlns.jcp.org/jsf/passthrough">
+  <div class="ia-pane ia-proj-pane">
+    <div class="bo-card ia-proj-card">
+      <ui:fragment rendered="#{not v2InstanceAdminBean.createProjectOpen and not v2InstanceAdminBean.renameProjectOpen}">
+        <div class="bo-card-h ia-card-h-users ia-proj-card-h">
+          <div class="ia-toolbar ia-proj-toolbar">
+            <div class="ia-proj-search" role="search">
+              <span class="ia-proj-search-ico" aria-hidden="true">
+                <svg viewBox="0 0 24 24"><circle cx="11" cy="11" r="7"/><path d="m20 20-3-3"/></svg>
+              </span>
+              <h:inputText id="iaProjectQuery"
+                           value="#{v2InstanceAdminBean.projectQuery}"
+                           styleClass="st-input ia-q ia-proj-search-input"
+                           pt:placeholder="#{v2LocaleBean.getMsg('v2.admin.projects.search.placeholder')}"
+                           pt:aria-label="#{v2LocaleBean.getMsg('v2.admin.projects.search.placeholder')}"
+                           pt:autocomplete="off"
+                           pt:spellcheck="false"
+                           pt:enterkeyhint="search"
+                           pt:onkeydown="if(event.key==='Enter'){event.preventDefault();var b=document.getElementById('iaProjectSearchGo');if(b)b.click();return false;}"/>
+              <h:commandButton id="iaProjectSearchGo"
+                               styleClass="ia-sr-only"
+                               value="ok"
+                               tabindex="-1"
+                               aria-hidden="true"/>
+            </div>
+            <h:commandLink styleClass="bo-btn primary sm ia-create-btn ia-proj-create-btn"
+                           action="#{v2InstanceAdminBean.openCreateProject}">
+              <svg viewBox="0 0 24 24" aria-hidden="true"><path d="M12 5v14"/><path d="M5 12h14"/></svg>
+              #{v2LocaleBean.getMsg('v2.admin.projects.create')}
+            </h:commandLink>
+          </div>
+        </div>
+      </ui:fragment>
+
+      <div class="bo-card-b">
+        <ui:fragment rendered="#{v2InstanceAdminBean.createProjectOpen}">
+          <div class="ia-create ia-proj-form">
+            <div class="ia-create-h">
+              <span class="ia-proj-form-ico" aria-hidden="true">
+                <svg viewBox="0 0 24 24"><path d="M22 19a2 2 0 0 1-2 2H4a2 2 0 0 1-2-2V5a2 2 0 0 1 2-2h5l2 3h9a2 2 0 0 1 2 2z"/></svg>
+              </span>
+              <div>
+                <div class="ia-create-t">#{v2LocaleBean.getMsg('v2.admin.projects.create.title')}</div>
+                <div class="ia-create-d">#{v2LocaleBean.getMsg('v2.admin.section.projects.desc')}</div>
+              </div>
+            </div>
+            <ui:fragment rendered="#{not empty v2InstanceAdminBean.projectFormError}">
+              <div class="ia-create-err" role="alert">#{v2InstanceAdminBean.projectFormError}</div>
+            </ui:fragment>
+            <label class="ia-field">
+              <span class="ia-field-l">#{v2LocaleBean.getMsg('v2.admin.projects.field.name')}</span>
+              <h:inputText id="iaNewProjectName"
+                           value="#{v2InstanceAdminBean.newProjectName}"
+                           styleClass="st-input"
+                           pt:autocomplete="off"
+                           pt:autofocus="autofocus"
+                           pt:placeholder="#{v2LocaleBean.getMsg('v2.admin.projects.field.name')}"/>
+            </label>
+            <div class="ia-create-actions">
+              <h:commandButton styleClass="bo-btn ghost"
+                               value="#{v2LocaleBean.getMsg('v2.admin.projects.cancel')}"
+                               action="#{v2InstanceAdminBean.closeCreateProject}"
+                               immediate="true"/>
+              <h:commandButton id="iaNewProjectSubmit"
+                               styleClass="bo-btn primary"
+                               value="#{v2LocaleBean.getMsg('v2.admin.projects.create.submit')}"
+                               action="#{v2InstanceAdminBean.createProject}"/>
+            </div>
+          </div>
+        </ui:fragment>
+
+        <ui:fragment rendered="#{v2InstanceAdminBean.renameProjectOpen}">
+          <div class="ia-create ia-proj-form">
+            <div class="ia-create-h">
+              <span class="ia-proj-form-ico" aria-hidden="true">
+                <svg viewBox="0 0 24 24">
+                  <path d="M12 20h9"/>
+                  <path d="M16.5 3.5a2.1 2.1 0 0 1 3 3L7 19l-4 1 1-4Z"/>
+                </svg>
+              </span>
+              <div>
+                <div class="ia-create-t">#{v2LocaleBean.getMsg('v2.admin.projects.rename.title')}</div>
+                <div class="ia-create-d">#{v2LocaleBean.getMsg('v2.admin.projects.field.name')}</div>
+              </div>
+            </div>
+            <ui:fragment rendered="#{not empty v2InstanceAdminBean.projectFormError}">
+              <div class="ia-create-err" role="alert">#{v2InstanceAdminBean.projectFormError}</div>
+            </ui:fragment>
+            <label class="ia-field">
+              <span class="ia-field-l">#{v2LocaleBean.getMsg('v2.admin.projects.field.name')}</span>
+              <h:inputText id="iaRenameProjectName"
+                           value="#{v2InstanceAdminBean.renameProjectLabel}"
+                           styleClass="st-input"
+                           pt:autocomplete="off"
+                           pt:autofocus="autofocus"/>
+            </label>
+            <div class="ia-create-actions">
+              <h:commandButton styleClass="bo-btn ghost"
+                               value="#{v2LocaleBean.getMsg('v2.admin.projects.cancel')}"
+                               action="#{v2InstanceAdminBean.closeRenameProject}"
+                               immediate="true"/>
+              <h:commandButton styleClass="bo-btn primary"
+                               value="#{v2LocaleBean.getMsg('v2.admin.projects.rename.submit')}"
+                               action="#{v2InstanceAdminBean.renameProject}"/>
+            </div>
+          </div>
+        </ui:fragment>
+
+        <ui:fragment rendered="#{not v2InstanceAdminBean.createProjectOpen and not v2InstanceAdminBean.renameProjectOpen}">
+          <div class="ia-scroll ia-proj-scroll">
+            <ui:fragment rendered="#{not empty v2InstanceAdminBean.filteredProjects}">
+              <ul class="ia-proj-list" role="list">
+                <ui:repeat value="#{v2InstanceAdminBean.filteredProjects}" var="p">
+                  <li class="ia-proj-row">
+                    <a class="ia-proj-main"
+                       href="#{v2InstanceAdminBean.projectThesauriUrl(p.id)}"
+                       title="#{v2LocaleBean.getMsg('v2.admin.projects.viewThesauri')}">
+                      <span class="ia-proj-avatar" aria-hidden="true">
+                        <svg viewBox="0 0 24 24"><path d="M22 19a2 2 0 0 1-2 2H4a2 2 0 0 1-2-2V5a2 2 0 0 1 2-2h5l2 3h9a2 2 0 0 1 2 2z"/></svg>
+                      </span>
+                      <span class="ia-proj-copy">
+                        <span class="ia-proj-name">#{p.name}</span>
+                        <span class="ia-proj-meta">
+                          <span class="ia-proj-badge">#{p.thesaurusCount}</span>
+                          #{v2LocaleBean.getMsg('v2.admin.projects.col.thesauri')}
+                        </span>
+                      </span>
+                      <span class="ia-proj-chev" aria-hidden="true">
+                        <svg viewBox="0 0 24 24"><path d="m9 18 6-6-6-6"/></svg>
+                      </span>
+                    </a>
+                    <div class="ia-row-acts ia-proj-acts">
+                      <h:commandLink styleClass="bo-btn ghost sm ia-icon-btn"
+                                     title="#{v2LocaleBean.getMsg('v2.admin.projects.rename')}"
+                                     aria-label="#{v2LocaleBean.getMsg('v2.admin.projects.rename')}"
+                                     action="#{v2InstanceAdminBean.openRenameProject}">
+                        <f:param name="iaProjectId" value="#{p.id}"/>
+                        <f:param name="iaProjectName" value="#{p.name}"/>
+                        <svg viewBox="0 0 24 24" aria-hidden="true">
+                          <path d="M12 20h9"/>
+                          <path d="M16.5 3.5a2.1 2.1 0 0 1 3 3L7 19l-4 1 1-4Z"/>
+                        </svg>
+                      </h:commandLink>
+                      <h:commandLink styleClass="bo-btn ghost sm ia-icon-btn is-danger"
+                                     title="#{v2LocaleBean.getMsg('v2.admin.projects.delete')}"
+                                     aria-label="#{v2LocaleBean.getMsg('v2.admin.projects.delete')}"
+                                     action="#{v2InstanceAdminBean.openDeleteProjectConfirm}">
+                        <f:param name="iaProjectId" value="#{p.id}"/>
+                        <f:param name="iaProjectName" value="#{p.name}"/>
+                        <svg viewBox="0 0 24 24" aria-hidden="true">
+                          <path d="M3 6h18"/>
+                          <path d="M8 6V4h8v2"/>
+                          <path d="M19 6l-1 14H6L5 6"/>
+                          <path d="M10 11v6M14 11v6"/>
+                        </svg>
+                      </h:commandLink>
+                    </div>
+                  </li>
+                </ui:repeat>
+              </ul>
+            </ui:fragment>
+            <ui:fragment rendered="#{empty v2InstanceAdminBean.filteredProjects}">
+              <div class="ia-empty ia-proj-empty">
+                <span class="ia-proj-empty-ico" aria-hidden="true">
+                  <svg viewBox="0 0 24 24"><path d="M22 19a2 2 0 0 1-2 2H4a2 2 0 0 1-2-2V5a2 2 0 0 1 2-2h5l2 3h9a2 2 0 0 1 2 2z"/></svg>
+                </span>
+                <div class="ia-empty-t">#{v2LocaleBean.getMsg('v2.admin.projects.empty.title')}</div>
+                <div class="ia-empty-d">#{v2LocaleBean.getMsg('v2.admin.projects.empty.sub')}</div>
+                <h:commandLink styleClass="bo-btn primary sm ia-proj-empty-cta"
+                               action="#{v2InstanceAdminBean.openCreateProject}">
+                  <svg viewBox="0 0 24 24" aria-hidden="true"><path d="M12 5v14"/><path d="M5 12h14"/></svg>
+                  #{v2LocaleBean.getMsg('v2.admin.projects.create')}
+                </h:commandLink>
+              </div>
+            </ui:fragment>
+          </div>
+        </ui:fragment>
+      </div>
+    </div>
+  </div>
+</ui:composition>

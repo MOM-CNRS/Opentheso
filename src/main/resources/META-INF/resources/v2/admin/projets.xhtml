@@ -1,38 +1,126 @@
 <?xml version="1.0" encoding="UTF-8"?>
 <ui:composition xmlns="http://www.w3.org/1999/xhtml"
                 xmlns:ui="http://xmlns.jcp.org/jsf/facelets"
+                xmlns:h="http://xmlns.jcp.org/jsf/html"
+                xmlns:f="http://xmlns.jcp.org/jsf/core"
+                xmlns:pt="http://xmlns.jcp.org/jsf/passthrough"
                 template="/v2/includes/layout.xhtml">
-  <ui:param name="v2Page" value="admin-projects"/>
-  <ui:define name="title">OpenTheso — Projets</ui:define>
+  <!-- Même data-page que l’admin instance pour réutiliser CSS/JS (sans Ajax sur ce formulaire). -->
+  <ui:param name="v2Page" value="admin-instance"/>
+  <ui:define name="title">OpenTheso — Gestion des projets</ui:define>
+  <ui:define name="viewActions">
+    <f:viewAction action="#{v2InstanceAdminBean.initProjectsPage}" onPostback="false"/>
+  </ui:define>
+  <ui:define name="detail"/>
   <ui:define name="main">
+    <h:form id="projectsAdminForm" prependId="false" styleClass="ia-form-root">
+      <ui:fragment rendered="#{not v2InstanceAdminBean.accessAllowed}">
+        <ui:include src="/v2/includes/access-denied.xhtml">
+          <ui:param name="deniedKicker" value="#{v2LocaleBean.getMsg('v2.admin.accessDenied.kicker')}"/>
+          <ui:param name="deniedTitle" value="#{v2LocaleBean.getMsg('v2.admin.accessDenied.title')}"/>
+          <ui:param name="deniedSub" value="#{v2LocaleBean.getMsg('v2.admin.accessDenied.sub')}"/>
+          <ui:param name="deniedBackLabel" value="#{v2LocaleBean.getMsg('v2.admin.accessDenied.back')}"/>
+        </ui:include>
+      </ui:fragment>
 
-          <div class="view-panel is-on">
-            <div class="bo">
-              <a class="bo-back" href="index.xhtml" title="Retour à l'accueil thésaurus"><svg viewBox="0 0 24 24" aria-hidden="true"><path d="M19 12H5"/><path d="m12 19-7-7 7-7"/></svg></a>
-              <div class="bo-head"><div><h1 class="bo-title">Administration / Projets</h1><p class="bo-sub">Tous les projets de la plateforme (démo).</p></div></div>
-              <div class="bo-full st-scope"><div class="cand-pane is-on">
-                  <div class="cand-row is-plain">
-                    <span class="cand-row-t">PACTOLS</span>
-                    <span class="cand-row-m">Gestionnaire</span>
-                    <span class="cand-row-v">438</span>
+      <ui:fragment rendered="#{v2InstanceAdminBean.accessAllowed}">
+        <div class="ia-shell">
+          <div class="bo bo-solo">
+            <span id="iaFlashLive"
+                  hidden="hidden"
+                  data-ia-flash="#{v2InstanceAdminBean.flashMessage}"
+                  data-ia-flash-token="#{v2InstanceAdminBean.flashToken}"
+                  data-ia-flash-error="#{v2InstanceAdminBean.flashError}"></span>
+            <nav class="bc" aria-label="Fil d'Ariane">
+              <h:commandLink styleClass="bc-lk" action="#{v2NavigationBean.redirectToThesaurusPicker}">
+                Thésaurus
+              </h:commandLink>
+              <span class="bc-sep" aria-hidden="true">›</span>
+              <a class="bc-lk" href="#{v2InstanceAdminBean.homeUrl}">Administration de l'instance</a>
+              <span class="bc-sep" aria-hidden="true">›</span>
+              <span class="bc-cur" aria-current="page">#{v2LocaleBean.getMsg('v2.admin.section.projects')}</span>
+            </nav>
+
+            <ui:fragment rendered="#{not v2InstanceAdminBean.createProjectOpen and not v2InstanceAdminBean.renameProjectOpen}">
+              <a id="iaBack"
+                 class="bo-back"
+                 href="#{v2InstanceAdminBean.homeUrl}"
+                 title="#{v2LocaleBean.getMsg('v2.admin.back.admin')}">
+                <svg viewBox="0 0 24 24" aria-hidden="true"><path d="M19 12H5"/><path d="m12 19-7-7 7-7"/></svg>
+              </a>
+            </ui:fragment>
+            <ui:fragment rendered="#{v2InstanceAdminBean.createProjectOpen or v2InstanceAdminBean.renameProjectOpen}">
+              <h:commandButton id="iaBackCloseProjectForm"
+                               styleClass="bo-back"
+                               title="#{v2LocaleBean.getMsg('v2.admin.projects.cancel')}"
+                               value="←"
+                               action="#{v2InstanceAdminBean.closeProjectForms}"
+                               immediate="true"/>
+            </ui:fragment>
+
+            <div class="bo-head">
+              <div>
+                <h1 class="bo-title">
+                  #{v2InstanceAdminBean.createProjectOpen
+                      ? v2LocaleBean.getMsg('v2.admin.projects.create.title')
+                      : (v2InstanceAdminBean.renameProjectOpen
+                          ? v2LocaleBean.getMsg('v2.admin.projects.rename.title')
+                          : v2LocaleBean.getMsg('v2.admin.section.projects'))}
+                </h1>
+                <ui:fragment rendered="#{not v2InstanceAdminBean.createProjectOpen and not v2InstanceAdminBean.renameProjectOpen}">
+                  <p class="bo-sub">#{v2LocaleBean.getMsg('v2.admin.section.projects.desc')}</p>
+                  <div class="ia-head-meta">
+                    <span class="ia-chip"><b>#{v2InstanceAdminBean.filteredProjectCount}</b> #{v2LocaleBean.getMsg('v2.admin.projects.chip')}</span>
                   </div>
-                  <div class="cand-row is-plain">
-                    <span class="cand-row-t">GeoEthno</span>
-                    <span class="cand-row-m">Contributeur</span>
-                    <span class="cand-row-v">4120</span>
-                  </div>
-                  <div class="cand-row is-plain">
-                    <span class="cand-row-t">Thésaurus-W</span>
-                    <span class="cand-row-m">Lecteur</span>
-                    <span class="cand-row-v">1860</span>
-                  </div>
-                  <div class="cand-row is-plain">
-                    <span class="cand-row-t">Garnier — Matériaux</span>
-                    <span class="cand-row-m">Contributeur</span>
-                    <span class="cand-row-v">980</span>
-                  </div></div></div>
-              
+                </ui:fragment>
+              </div>
+            </div>
+
+            <div class="bo-full">
+              <ui:include src="/v2/admin/includes/projects-panel.xhtml"/>
             </div>
           </div>
+
+          <h:panelGroup id="iaDeleteProjectConfirmWrap" layout="block">
+            <ui:fragment rendered="#{v2InstanceAdminBean.deleteProjectConfirmOpen}">
+              <div class="block-overlay confirm-overlay ia-confirm-overlay" id="iaDeleteProjectConfirm" role="presentation">
+                <div class="confirm-modal" role="dialog" aria-modal="true"
+                     aria-labelledby="iaDeleteProjectConfirmTitle">
+                  <div class="confirm-h" id="iaDeleteProjectConfirmTitle">
+                    #{v2LocaleBean.getMsg('v2.admin.projects.delete.title')}
+                  </div>
+                  <p class="confirm-p">
+                    #{v2LocaleBean.getMsg('v2.admin.projects.delete.confirm')}
+                    <b>#{v2InstanceAdminBean.deleteProjectName}</b>
+                  </p>
+                  <div class="confirm-actions">
+                    <button type="button"
+                            class="bo-btn ghost confirm-cancel"
+                            onclick="return iaClickProxy('iaDeleteProjectCancelGo');">
+                      #{v2LocaleBean.getMsg('v2.admin.projects.delete.cancel')}
+                    </button>
+                    <button type="button"
+                            class="bo-btn primary danger"
+                            onclick="return iaClickProxy('iaDeleteProjectConfirmGo');">
+                      #{v2LocaleBean.getMsg('v2.admin.projects.delete.submit')}
+                    </button>
+                  </div>
+                </div>
+              </div>
+            </ui:fragment>
+          </h:panelGroup>
+          <!-- Proxies stables hors fragment conditionnel (sinon le postback JSF échoue). -->
+          <div class="ia-ajax-proxy" aria-hidden="true">
+            <h:commandButton id="iaDeleteProjectCancelGo"
+                             value="go"
+                             action="#{v2InstanceAdminBean.closeDeleteProjectConfirm}"
+                             immediate="true"/>
+            <h:commandButton id="iaDeleteProjectConfirmGo"
+                             value="go"
+                             action="#{v2InstanceAdminBean.confirmDeleteProject}"/>
+          </div>
+        </div>
+      </ui:fragment>
+    </h:form>
   </ui:define>
 </ui:composition>

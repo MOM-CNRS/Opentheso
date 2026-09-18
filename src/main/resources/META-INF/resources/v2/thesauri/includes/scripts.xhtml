@@ -605,12 +605,9 @@
         var current = bar.querySelector('.tp-import-fmt.is-on');
         if (current === btn && !opts.force) return false;
         var all = Array.prototype.slice.call(bar.querySelectorAll('.tp-import-fmt[data-tp-format]'));
-        var fromIdx = current ? all.indexOf(current) : 0;
-        var toIdx = all.indexOf(btn);
-        var dir = toIdx >= fromIdx ? 'right' : 'left';
         all.forEach(function (el) { el.classList.remove('is-on'); });
         btn.classList.add('is-on');
-        window.tpMoveImportFormatGlider(bar, btn, true);
+        window.tpMoveImportFormatGlider(bar, btn, !opts.instant);
         var hidden = document.getElementById('tpImportFormat');
         if (hidden) hidden.value = format;
         window.tpApplyImportFormat(format);
@@ -628,18 +625,10 @@
           root.setAttribute('data-load-done', 'false');
           root.setAttribute('data-import-ready', 'false');
         }
-        var body = document.getElementById('tpImportPanel');
-        if (body) {
-          body.classList.add('tp-import-body');
-          body.classList.remove('is-fmt-switch', 'is-fmt-left');
-          void body.offsetWidth;
-          body.classList.add('is-fmt-switch');
-          if (dir === 'left') body.classList.add('is-fmt-left');
-        }
         if (hadFile && !opts.keepFile) {
           var clearBtn = document.getElementById('tpImportClearFile');
           if (clearBtn) {
-            window.setTimeout(function () { clearBtn.click(); }, 220);
+            clearBtn.click();
           } else if (zone) {
             zone.classList.remove('has-file', 'is-analyzed', 'is-pending', 'needs-reanalyze');
             var file = document.getElementById('tpImportFile');

@@ -18,6 +18,7 @@ public class PageRedirectConfig implements WebMvcConfigurer {
         registry.addViewController("/v2").setViewName("forward:/v2/thesauri.xhtml");
         registry.addViewController("/v2/thesauri").setViewName("forward:/v2/thesauri.xhtml");
         registry.addViewController("/v2/admin/instance").setViewName("forward:/v2/admin/instance.xhtml");
+        registry.addViewController("/v2/admin/projets").setViewName("forward:/v2/admin/projets.xhtml");
         registry.addViewController("/v2-preview").setViewName("forward:/v2/thesauri.xhtml");
         registry.setOrder(Ordered.HIGHEST_PRECEDENCE);
     }

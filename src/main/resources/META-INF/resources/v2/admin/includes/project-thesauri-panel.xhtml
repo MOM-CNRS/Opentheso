@@ -1,0 +1,257 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<ui:composition xmlns="http://www.w3.org/1999/xhtml"
+                xmlns:ui="http://xmlns.jcp.org/jsf/facelets"
+                xmlns:h="http://xmlns.jcp.org/jsf/html"
+                xmlns:f="http://xmlns.jcp.org/jsf/core"
+                xmlns:pt="http://xmlns.jcp.org/jsf/passthrough">
+<ui:fragment rendered="#{v2InstanceAdminBean.projectThesauri}">
+              <div class="ia-pane">
+                <div class="bo-card">
+                  <div class="bo-card-h ia-card-h-users">
+                    <div class="ia-members-head">
+                      <span class="bo-card-t">
+                        #{v2InstanceAdminBean.addThesaurusOpen
+                            ? v2LocaleBean.getMsg('v2.admin.projects.thesauri.add.title')
+                            : (v2InstanceAdminBean.editThesaurusOpen
+                                ? v2LocaleBean.getMsg('v2.admin.projects.thesauri.edit.title')
+                                : v2LocaleBean.getMsg('v2.admin.projects.thesauri.title'))}
+                      </span>
+                      <ui:fragment rendered="#{v2InstanceAdminBean.openProject ne null and not v2InstanceAdminBean.addThesaurusOpen and not v2InstanceAdminBean.editThesaurusOpen}">
+                        <div class="ia-members-meta">
+                          <span>#{v2InstanceAdminBean.openProject.name}</span>
+                          <span class="ia-members-meta-sep">·</span>
+                          <span>#{v2InstanceAdminBean.openProject.thesaurusCount}
+                            #{v2LocaleBean.getMsg('v2.admin.projects.col.thesauri')}</span>
+                        </div>
+                      </ui:fragment>
+                    </div>
+                    <ui:fragment rendered="#{not v2InstanceAdminBean.addThesaurusOpen and not v2InstanceAdminBean.editThesaurusOpen}">
+                      <div class="ia-toolbar">
+                        <h:commandLink styleClass="bo-btn primary sm ia-create-btn"
+                                       action="#{v2InstanceAdminBean.openAddThesaurus}">
+                          <f:ajax execute="@this" render="iaShell"/>
+                          #{v2LocaleBean.getMsg('v2.admin.projects.thesauri.add')}
+                        </h:commandLink>
+                      </div>
+                    </ui:fragment>
+                  </div>
+                  <div class="bo-card-b">
+                    <ui:fragment rendered="#{v2InstanceAdminBean.addThesaurusOpen}">
+                      <h:panelGroup id="iaAddThesaurusPane" layout="block" styleClass="ia-create ia-add-thesaurus">
+                        <div class="ia-create-h">
+                          <div>
+                            <div class="ia-create-t">#{v2LocaleBean.getMsg('v2.admin.projects.thesauri.add.title')}</div>
+                            <div class="ia-create-d">#{v2LocaleBean.getMsg('v2.admin.projects.thesauri.add.sub')}</div>
+                          </div>
+                        </div>
+                        <ui:fragment rendered="#{not empty v2InstanceAdminBean.thesaurusFormError}">
+                          <div class="ia-create-err" role="alert">#{v2InstanceAdminBean.thesaurusFormError}</div>
+                        </ui:fragment>
+                        <div class="ia-member-search">
+                          <div class="ia-member-search-row">
+                            <h:inputText id="iaAddThesaurusQuery"
+                                         value="#{v2InstanceAdminBean.addThesaurusQuery}"
+                                         styleClass="st-input"
+                                         pt:placeholder="#{v2LocaleBean.getMsg('v2.admin.projects.thesauri.add.search')}"
+                                         pt:aria-label="#{v2LocaleBean.getMsg('v2.admin.projects.thesauri.add.search')}"
+                                         pt:autocomplete="off"
+                                         pt:onkeydown="if(event.key==='Enter'){event.preventDefault();var b=document.getElementById('iaAddThesaurusSearchGo');if(b)b.click();return false;}"/>
+                            <h:commandButton id="iaAddThesaurusSearchGo"
+                                             styleClass="bo-btn ghost sm"
+                                             value="#{v2LocaleBean.getMsg('v2.admin.projects.thesauri.add.filter')}">
+                              <f:ajax execute="iaAddThesaurusPane" render="iaAddThesaurusPane"/>
+                            </h:commandButton>
+                          </div>
+                          <ui:fragment rendered="#{not empty v2InstanceAdminBean.filteredAssignableThesauri}">
+                            <div class="ia-add-th-actions">
+                              <h:commandLink styleClass="bo-btn ghost sm"
+                                             action="#{v2InstanceAdminBean.selectAllFilteredAssignableThesauri}">
+                                <f:ajax execute="@this" render="iaAddThesaurusPane"/>
+                                #{v2LocaleBean.getMsg('v2.admin.projects.thesauri.add.selectAll')}
+                              </h:commandLink>
+                            </div>
+                            <div class="ia-member-hits ia-add-th-hits" role="listbox" aria-multiselectable="true">
+                              <ui:repeat value="#{v2InstanceAdminBean.filteredAssignableThesauri}" var="hit">
+                                <h:commandLink styleClass="ia-member-hit ia-add-th-hit#{v2InstanceAdminBean.isAddThesaurusSelected(hit.id) ? ' is-on' : ''}"
+                                               action="#{v2InstanceAdminBean.selectAddThesaurus(hit.id)}"
+                                               pt:role="option"
+                                               pt:aria-selected="#{v2InstanceAdminBean.isAddThesaurusSelected(hit.id)}">
+                                  <f:ajax execute="@this" render="iaAddThesaurusPane"/>
+                                  <span class="ia-add-th-check" aria-hidden="true">
+                                    <svg viewBox="0 0 24 24"><path d="M5 12l5 5L20 7"/></svg>
+                                  </span>
+                                  <span class="ia-add-th-label">#{hit.title} (#{hit.id})</span>
+                                </h:commandLink>
+                              </ui:repeat>
+                            </div>
+                          </ui:fragment>
+                          <ui:fragment rendered="#{empty v2InstanceAdminBean.filteredAssignableThesauri}">
+                            <div class="ia-empty" style="padding:20px 8px">
+                              <div class="ia-empty-t">#{v2LocaleBean.getMsg('v2.admin.projects.thesauri.add.empty.title')}</div>
+                              <div class="ia-empty-d">#{v2LocaleBean.getMsg('v2.admin.projects.thesauri.add.empty.sub')}</div>
+                            </div>
+                          </ui:fragment>
+                          <ui:fragment rendered="#{not empty v2InstanceAdminBean.selectedAddThesauri}">
+                            <div class="ia-add-th-sel">
+                              <div class="ia-add-th-sel-h">
+                                <div class="ia-add-th-sel-title">
+                                  <span class="ia-add-th-sel-ico" aria-hidden="true">
+                                    <svg viewBox="0 0 24 24"><path d="M5 12l5 5L20 7"/></svg>
+                                  </span>
+                                  <span class="ia-add-th-sel-t">#{v2LocaleBean.getMsg('v2.admin.projects.thesauri.add.selectionTitle')}</span>
+                                  <span class="ia-add-th-sel-n">#{v2InstanceAdminBean.selectedAddThesaurusCount}</span>
+                                </div>
+                                <h:commandLink styleClass="bo-btn ghost sm ia-add-th-sel-clear"
+                                               action="#{v2InstanceAdminBean.clearAddThesaurusSelection}"
+                                               immediate="true">
+                                  <f:ajax execute="@this" render="iaAddThesaurusPane"/>
+                                  #{v2LocaleBean.getMsg('v2.admin.projects.thesauri.add.clear')}
+                                </h:commandLink>
+                              </div>
+                              <ul class="ia-add-th-sel-list" role="list">
+                                <ui:repeat value="#{v2InstanceAdminBean.selectedAddThesauri}" var="picked">
+                                  <li class="ia-add-th-sel-item">
+                                    <span class="ia-add-th-sel-avatar" aria-hidden="true">
+                                      <svg viewBox="0 0 24 24"><path d="m16 6 4 14"/><path d="M12 6v14"/><path d="M8 8v12"/><path d="M4 4v16"/></svg>
+                                    </span>
+                                    <span class="ia-add-th-sel-copy">
+                                      <span class="ia-add-th-sel-name">#{picked.title} (#{picked.id})</span>
+                                    </span>
+                                    <h:commandLink styleClass="ia-add-th-sel-x"
+                                                   title="#{v2LocaleBean.getMsg('v2.admin.projects.thesauri.add.unselect')}"
+                                                   aria-label="#{v2LocaleBean.getMsg('v2.admin.projects.thesauri.add.unselect')}"
+                                                   action="#{v2InstanceAdminBean.selectAddThesaurus(picked.id)}">
+                                      <f:ajax execute="@this" render="iaAddThesaurusPane"/>
+                                      <svg viewBox="0 0 24 24" aria-hidden="true"><path d="M18 6 6 18M6 6l12 12"/></svg>
+                                    </h:commandLink>
+                                  </li>
+                                </ui:repeat>
+                              </ul>
+                            </div>
+                          </ui:fragment>
+                        </div>
+                        <div class="ia-create-actions">
+                          <h:commandLink styleClass="bo-btn ghost"
+                                         action="#{v2InstanceAdminBean.closeAddThesaurus}"
+                                         immediate="true">
+                            <f:ajax execute="@this" render="iaShell"/>
+                            #{v2LocaleBean.getMsg('v2.admin.projects.cancel')}
+                          </h:commandLink>
+                          <h:commandLink styleClass="bo-btn primary"
+                                         action="#{v2InstanceAdminBean.addExistingThesaurus}">
+                            <f:ajax execute="iaAddThesaurusPane" render="iaShell"/>
+                            #{v2LocaleBean.getMsg('v2.admin.projects.thesauri.add.submit')}
+                          </h:commandLink>
+                        </div>
+                      </h:panelGroup>
+                    </ui:fragment>
+
+                    <ui:fragment rendered="#{v2InstanceAdminBean.editThesaurusOpen}">
+                      <div class="ia-create">
+                        <ui:fragment rendered="#{not empty v2InstanceAdminBean.thesaurusFormError}">
+                          <div class="ia-create-err" role="alert">#{v2InstanceAdminBean.thesaurusFormError}</div>
+                        </ui:fragment>
+                        <label class="ia-field">
+                          <span>#{v2LocaleBean.getMsg('v2.admin.projects.thesauri.field.title')}</span>
+                          <h:inputText id="iaEditThesaurusTitle"
+                                       value="#{v2InstanceAdminBean.editThesaurusTitle}"
+                                       styleClass="st-input"
+                                       pt:autocomplete="off"/>
+                        </label>
+                        <label class="ia-check">
+                          <h:selectBooleanCheckbox id="iaEditThesaurusPrivate" value="#{v2InstanceAdminBean.editThesaurusPrivate}"/>
+                          <span>#{v2LocaleBean.getMsg('v2.admin.projects.thesauri.field.private')}</span>
+                        </label>
+                        <div class="ia-create-actions">
+                          <h:commandLink styleClass="bo-btn ghost"
+                                         action="#{v2InstanceAdminBean.closeEditThesaurus}"
+                                         immediate="true">
+                            #{v2LocaleBean.getMsg('v2.admin.projects.cancel')}
+                          </h:commandLink>
+                          <h:commandLink styleClass="bo-btn primary"
+                                         action="#{v2InstanceAdminBean.saveEditThesaurus}">
+                            #{v2LocaleBean.getMsg('v2.admin.projects.thesauri.edit.submit')}
+                          </h:commandLink>
+                        </div>
+                      </div>
+                    </ui:fragment>
+
+                    <ui:fragment rendered="#{not v2InstanceAdminBean.addThesaurusOpen and not v2InstanceAdminBean.editThesaurusOpen}">
+                      <div class="ia-scroll">
+                        <ui:fragment rendered="#{not empty v2InstanceAdminBean.openProjectThesauri}">
+                          <table class="st-table ia-tab ia-tab-t">
+                            <thead>
+                              <tr>
+                                <th>#{v2LocaleBean.getMsg('v2.admin.projects.thesauri.col.name')}</th>
+                                <th>#{v2LocaleBean.getMsg('v2.admin.projects.thesauri.col.visibility')}</th>
+                                <th></th>
+                              </tr>
+                            </thead>
+                            <tbody>
+                              <ui:repeat value="#{v2InstanceAdminBean.openProjectThesauri}" var="t">
+                                <tr>
+                                  <td data-label="#{v2LocaleBean.getMsg('v2.admin.projects.thesauri.col.name')}">
+                                    <b>#{t.title}</b>
+                                  </td>
+                                  <td data-label="#{v2LocaleBean.getMsg('v2.admin.projects.thesauri.col.visibility')}">
+                                    <span class="ia-vis#{t.privateThesaurus ? ' is-private' : ''}">
+                                      #{t.privateThesaurus
+                                          ? v2LocaleBean.getMsg('v2.admin.projects.thesauri.private')
+                                          : v2LocaleBean.getMsg('v2.admin.projects.thesauri.public')}
+                                    </span>
+                                  </td>
+                                  <td class="st-td-act" data-label="">
+                                    <div class="ia-row-acts">
+                                      <a class="bo-btn ghost sm"
+                                         href="#{v2InstanceAdminBean.thesaurusMembersUrl(t.id)}">
+                                        #{v2LocaleBean.getMsg('v2.admin.projects.thesauri.members')}
+                                      </a>
+                                      <h:commandLink styleClass="bo-btn ghost sm ia-icon-btn"
+                                                     title="#{v2LocaleBean.getMsg('v2.admin.projects.thesauri.edit')}"
+                                                     aria-label="#{v2LocaleBean.getMsg('v2.admin.projects.thesauri.edit')}"
+                                                     action="#{v2InstanceAdminBean.openEditThesaurus}">
+                                        <f:param name="iaThesaurusId" value="#{t.id}"/>
+                                        <svg viewBox="0 0 24 24" aria-hidden="true">
+                                          <path d="M12 20h9"/>
+                                          <path d="M16.5 3.5a2.1 2.1 0 0 1 3 3L7 19l-4 1 1-4Z"/>
+                                        </svg>
+                                      </h:commandLink>
+                                      <h:commandLink styleClass="bo-btn ghost sm ia-icon-btn is-danger"
+                                                     title="#{v2LocaleBean.getMsg('v2.admin.projects.thesauri.delete')}"
+                                                     aria-label="#{v2LocaleBean.getMsg('v2.admin.projects.thesauri.delete')}"
+                                                     action="#{v2InstanceAdminBean.openDeleteThesaurusConfirm}">
+                                        <f:param name="iaThesaurusId" value="#{t.id}"/>
+                                        <f:param name="iaThesaurusTitle" value="#{t.title}"/>
+                                        <svg viewBox="0 0 24 24" aria-hidden="true">
+                                          <path d="M3 6h18"/>
+                                          <path d="M8 6V4h8v2"/>
+                                          <path d="M19 6l-1 14H6L5 6"/>
+                                          <path d="M10 11v6M14 11v6"/>
+                                        </svg>
+                                      </h:commandLink>
+                                    </div>
+                                  </td>
+                                </tr>
+                              </ui:repeat>
+                            </tbody>
+                          </table>
+                        </ui:fragment>
+                        <ui:fragment rendered="#{empty v2InstanceAdminBean.openProjectThesauri}">
+                          <div class="ia-empty">
+                            <div class="ia-empty-t">#{v2LocaleBean.getMsg('v2.admin.projects.thesauri.empty.title')}</div>
+                            <div class="ia-empty-d">#{v2LocaleBean.getMsg('v2.admin.projects.thesauri.empty.sub')}</div>
+                            <h:commandLink styleClass="bo-btn primary sm"
+                                           style="margin-top:14px"
+                                           action="#{v2InstanceAdminBean.openAddThesaurus}">
+                              <f:ajax execute="@this" render="iaShell"/>
+                              #{v2LocaleBean.getMsg('v2.admin.projects.thesauri.add')}
+                            </h:commandLink>
+                          </div>
+                        </ui:fragment>
+                      </div>
+                    </ui:fragment>
+                  </div>
+                </div>
+              </div>
+            </ui:fragment>
+</ui:composition>

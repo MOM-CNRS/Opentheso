@@ -13,6 +13,8 @@ class JsfPrettyUrlFilterTest {
         assertEquals("/v2/thesauri.xhtml", JsfPrettyUrlFilter.resolveForwardTarget("/v2/thesauri"));
         assertEquals("/v2/thesauri.xhtml", JsfPrettyUrlFilter.resolveForwardTarget("/v2-preview"));
         assertEquals("/v2/thesauri.xhtml", JsfPrettyUrlFilter.resolveForwardTarget("/"));
+        assertEquals("/v2/admin/instance.xhtml", JsfPrettyUrlFilter.resolveForwardTarget("/v2/admin/instance"));
+        assertEquals("/v2/admin/projets.xhtml", JsfPrettyUrlFilter.resolveForwardTarget("/v2/admin/projets"));
     }
 
     @Test

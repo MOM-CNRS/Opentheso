@@ -1,5 +1,6 @@
 package fr.cnrs.opentheso.v2.admin.ui;
 
+import fr.cnrs.opentheso.v2.admin.model.AdminProject;
 import fr.cnrs.opentheso.v2.admin.model.AdminThesaurus;
 import fr.cnrs.opentheso.v2.admin.model.InstanceAdminAccount;
 import fr.cnrs.opentheso.v2.admin.model.NewUserProjectMembership;
@@ -12,10 +13,14 @@ import fr.cnrs.opentheso.v2.project.model.AssignableRole;
 import fr.cnrs.opentheso.v2.project.model.ProjectSummary;
 import fr.cnrs.opentheso.v2.project.model.UserSearchResult;
 import fr.cnrs.opentheso.v2.project.policy.ProjectAccessPolicy;
+import fr.cnrs.opentheso.v2.project.service.ProjectManagementService;
 import fr.cnrs.opentheso.v2.project.service.ProjectMemberService;
 import fr.cnrs.opentheso.v2.shared.repository.UserCommandRepository;
 import fr.cnrs.opentheso.v2.shared.ui.UserSession;
 import fr.cnrs.opentheso.v2.shared.ui.V2LocaleBean;
+import fr.cnrs.opentheso.v2.toolbox.exception.InvalidToolboxDataException;
+import fr.cnrs.opentheso.v2.toolbox.service.EditionThesaurusService;
+import fr.cnrs.opentheso.v2.toolbox.service.ModifyThesaurusService;
 import fr.cnrs.opentheso.v2.user.exception.InvalidPasswordException;
 import fr.cnrs.opentheso.v2.user.exception.InvalidProfileDataException;
 import fr.cnrs.opentheso.v2.user.policy.ApiKeyPolicy;
@@ -30,6 +35,7 @@ import lombok.Setter;
 import org.apache.commons.lang3.StringUtils;
 import org.apache.commons.lang3.Strings;
 
+import java.io.IOException;
 import java.io.Serializable;
 import java.net.URLEncoder;
 import java.nio.charset.StandardCharsets;
@@ -38,6 +44,7 @@ import java.time.format.DateTimeFormatter;
 import java.util.ArrayList;
 import java.util.Collections;
 import java.util.Comparator;
+import java.util.HashMap;
 import java.util.HashSet;
 import java.util.List;
 import java.util.Locale;
@@ -53,11 +60,11 @@ public class InstanceAdminBean implements Serializable {
 
     public static final String SECTION_USERS = "users";
     public static final String SECTION_THESAURI = "thes";
-    public static final String SECTION_SERVER = "server";
+    public static final String SECTION_PROJECTS = "projects";
     public static final String SECTION_STATS = "stats";
 
     private static final Set<String> KNOWN_SECTIONS = Set.of(
-            SECTION_USERS, SECTION_THESAURI, SECTION_SERVER, SECTION_STATS
+            SECTION_USERS, SECTION_THESAURI, SECTION_PROJECTS, SECTION_STATS
     );
     private static final DateTimeFormatter LAST_LOGIN_FMT = DateTimeFormatter.ofPattern("yyyy-MM-dd");
     private static final List<Integer> USERS_PAGE_SIZE_OPTIONS = List.of(10, 25, 50, 100);
@@ -68,6 +75,9 @@ public class InstanceAdminBean implements Serializable {
     private final transient AdminCatalogService adminCatalogService;
     private final transient AdminUserService adminUserService;
     private final transient ProjectMemberService projectMemberService;
+    private final transient ProjectManagementService projectManagementService;
+    private final transient ModifyThesaurusService modifyThesaurusService;
+    private final transient EditionThesaurusService editionThesaurusService;
     private final transient UserProfileService userProfileService;
     private final transient UserCommandRepository userCommandRepository;
 
@@ -83,6 +93,32 @@ public class InstanceAdminBean implements Serializable {
 
     private List<InstanceAdminAccount> accounts = Collections.emptyList();
     private List<AdminThesaurus> thesauri = Collections.emptyList();
+    private List<AdminProject> projects = Collections.emptyList();
+    private Integer openProjectId;
+    private String projectQuery = "";
+    private boolean createProjectOpen;
+    private String newProjectName;
+    private boolean renameProjectOpen;
+    private Integer renameProjectId;
+    private String renameProjectLabel;
+    private String projectFormError;
+    private boolean deleteProjectConfirmOpen;
+    private Integer deleteProjectId;
+    private String deleteProjectName;
+
+    private boolean addThesaurusOpen;
+    private String addThesaurusQuery = "";
+    private List<String> selectedAddThesaurusIds = new ArrayList<>();
+    private String thesaurusFormError;
+    private boolean editThesaurusOpen;
+    private String editThesaurusId;
+    private String editThesaurusTitle;
+    private boolean editThesaurusPrivate;
+    private boolean deleteThesaurusConfirmOpen;
+    private String deleteThesaurusId;
+    private String deleteThesaurusTitle;
+    private boolean deleteThesaurusPerennial;
+
     private List<ThesaurusMember> thesaurusMembersList = Collections.emptyList();
     private String membersQuery = "";
     private String membersRoleFilter = "";
@@ -185,15 +221,29 @@ public class InstanceAdminBean implements Serializable {
         boolean superAdmin = userSession.isSuperAdmin();
         accounts = adminCatalogService.listInstanceAccounts(superAdmin);
         thesauri = adminCatalogService.listAllThesauri(superAdmin, v2LocaleBean.getIdLangue());
+        projects = buildAdminProjects(adminCatalogService.listAllProjects(superAdmin), thesauri);
         usersPage = 0;
     }
 
     public void openHome() {
         section = null;
         openThesaurusId = null;
+        openProjectId = null;
         userQuery = "";
+        projectQuery = "";
         closeUserForms();
+        closeProjectForms();
         clearMemberState();
+    }
+
+    /** Page dédiée Gestion des projets (formulaire isolé, sans Ajax). */
+    public void initProjectsPage() {
+        if (!isAccessAllowed()) {
+            clear();
+            return;
+        }
+        reload();
+        openSection(SECTION_PROJECTS);
     }
 
     public void openSection(String key) {
@@ -202,10 +252,13 @@ public class InstanceAdminBean implements Serializable {
         }
         section = key;
         openThesaurusId = null;
+        openProjectId = null;
         userQuery = "";
+        projectQuery = "";
         closeUserForms();
+        closeProjectForms();
         clearMemberState();
-        if (SECTION_USERS.equals(key) || SECTION_THESAURI.equals(key)) {
+        if (SECTION_USERS.equals(key) || SECTION_THESAURI.equals(key) || SECTION_PROJECTS.equals(key)) {
             reload();
         }
     }
@@ -249,6 +302,15 @@ public class InstanceAdminBean implements Serializable {
             closeUserForms();
             return;
         }
+        if (createProjectOpen || renameProjectOpen || deleteProjectConfirmOpen
+                || addThesaurusOpen || editThesaurusOpen || deleteThesaurusConfirmOpen) {
+            closeProjectForms();
+            return;
+        }
+        if (openProjectId != null) {
+            openProjectId = null;
+            return;
+        }
         if (StringUtils.isNotBlank(openThesaurusId)) {
             openThesaurusId = null;
             clearMemberState();
@@ -263,9 +325,16 @@ public class InstanceAdminBean implements Serializable {
         return contextPath() + "/v2/admin/instance";
     }
 
+    public String getProjectsListUrl() {
+        return contextPath() + "/v2/admin/projets";
+    }
+
     public String sectionUrl(String key) {
         if (StringUtils.isBlank(key)) {
             return getHomeUrl();
+        }
+        if (SECTION_PROJECTS.equals(key)) {
+            return getProjectsListUrl();
         }
         return getHomeUrl() + "?section=" + encode(key);
     }
@@ -277,9 +346,19 @@ public class InstanceAdminBean implements Serializable {
         return sectionUrl(SECTION_THESAURI) + "&th=" + encode(thesaurusId);
     }
 
+    public String projectThesauriUrl(int projectId) {
+        if (projectId <= 0) {
+            return getProjectsListUrl();
+        }
+        return getHomeUrl() + "?section=" + encode(SECTION_PROJECTS) + "&project=" + projectId;
+    }
+
     public String getBackHref() {
         if (isThesaurusMembers()) {
             return sectionUrl(SECTION_THESAURI);
+        }
+        if (isProjectThesauri()) {
+            return sectionUrl(SECTION_PROJECTS);
         }
         if (!isHome()) {
             return getHomeUrl();
@@ -825,6 +904,14 @@ public class InstanceAdminBean implements Serializable {
         return SECTION_USERS.equals(section);
     }
 
+    public boolean isProjectsSection() {
+        return SECTION_PROJECTS.equals(section) && openProjectId == null;
+    }
+
+    public boolean isProjectThesauri() {
+        return SECTION_PROJECTS.equals(section) && openProjectId != null;
+    }
+
     public boolean isThesauriSection() {
         return SECTION_THESAURI.equals(section) && StringUtils.isBlank(openThesaurusId);
     }
@@ -834,12 +921,19 @@ public class InstanceAdminBean implements Serializable {
     }
 
     public boolean isPlaceholderSection() {
-        return SECTION_SERVER.equals(section) || SECTION_STATS.equals(section);
+        return SECTION_STATS.equals(section);
+    }
+
+    public boolean isProjectFormOpen() {
+        return renameProjectOpen || addThesaurusOpen || editThesaurusOpen;
     }
 
     public String getPageTitle() {
         if (isThesaurusMembers()) {
             return v2LocaleBean.getMsg("v2.admin.members.of") + " " + thesaurusTitle(openThesaurusId);
+        }
+        if (isProjectThesauri()) {
+            return v2LocaleBean.getMsg("v2.admin.projects.thesauri.of") + " " + projectName(openProjectId);
         }
         if (isHome()) {
             return v2LocaleBean.getMsg("v2.admin.instance.title");
@@ -853,6 +947,9 @@ public class InstanceAdminBean implements Serializable {
         }
         if (deleteConfirmOpen) {
             return v2LocaleBean.getMsg("v2.admin.users.delete.cancel");
+        }
+        if (deleteProjectConfirmOpen) {
+            return v2LocaleBean.getMsg("v2.admin.projects.delete.cancel");
         }
         if (memberRemoveConfirmOpen) {
             return v2LocaleBean.getMsg("v2.admin.members.remove.cancel");
@@ -868,6 +965,18 @@ public class InstanceAdminBean implements Serializable {
         }
         if (editUserOpen) {
             return v2LocaleBean.getMsg("v2.admin.users.edit.cancel");
+        }
+        if (createProjectOpen) {
+            return v2LocaleBean.getMsg("v2.admin.projects.cancel");
+        }
+        if (renameProjectOpen || addThesaurusOpen || editThesaurusOpen) {
+            return v2LocaleBean.getMsg("v2.admin.projects.cancel");
+        }
+        if (deleteThesaurusConfirmOpen) {
+            return v2LocaleBean.getMsg("v2.admin.projects.thesauri.delete.cancel");
+        }
+        if (isProjectThesauri()) {
+            return v2LocaleBean.getMsg("v2.admin.back.to") + " " + sectionLabel(SECTION_PROJECTS);
         }
         if (isThesaurusMembers()) {
             return v2LocaleBean.getMsg("v2.admin.back.to") + " " + sectionLabel(SECTION_THESAURI);
@@ -1069,6 +1178,530 @@ public class InstanceAdminBean implements Serializable {
 
     public int getThesaurusCount() {
         return thesauri == null ? 0 : thesauri.size();
+    }
+
+    public int getProjectCount() {
+        return projects == null ? 0 : projects.size();
+    }
+
+    public List<AdminProject> getFilteredProjects() {
+        String needle = normalize(projectQuery);
+        if (StringUtils.isBlank(needle) || projects == null) {
+            return projects == null ? List.of() : projects;
+        }
+        return projects.stream()
+                .filter(p -> normalize(p.name()).contains(needle) || String.valueOf(p.id()).contains(needle))
+                .toList();
+    }
+
+    public int getFilteredProjectCount() {
+        return getFilteredProjects().size();
+    }
+
+    public void openCreateProject() {
+        if (!isAccessAllowed()) {
+            return;
+        }
+        closeRenameProject();
+        closeDeleteProjectConfirm();
+        openProjectId = null;
+        createProjectOpen = true;
+        newProjectName = "";
+        projectFormError = null;
+    }
+
+    public void closeCreateProject() {
+        createProjectOpen = false;
+        newProjectName = null;
+        projectFormError = null;
+    }
+
+    public void createProject() {
+        if (!isAccessAllowed()) {
+            return;
+        }
+        Integer callerId = userSession.getCurrentUserId();
+        if (callerId == null) {
+            return;
+        }
+        try {
+            var created = projectManagementService.createProject(
+                    callerId, userSession.isSuperAdmin(), newProjectName);
+            flashInfo(v2LocaleBean.getMsg("v2.admin.projects.create.success"));
+            closeCreateProject();
+            reload();
+            // Garder la liste : le projet vient d’être ajouté dans le tableau.
+            openProjectId = null;
+        } catch (InvalidProjectDataException | ProjectAccessDeniedException e) {
+            projectFormError = e.getMessage();
+        }
+    }
+
+    public void openRenameProject() {
+        Integer projectId = readRequestInt("iaProjectId");
+        String projectName = readRequestParam("iaProjectName");
+        if (projectId == null) {
+            return;
+        }
+        openRenameProject(projectId, projectName);
+    }
+
+    public void openRenameProject(int projectId, String projectName) {
+        if (!isAccessAllowed()) {
+            return;
+        }
+        closeCreateProject();
+        closeDeleteProjectConfirm();
+        openProjectId = null;
+        renameProjectOpen = true;
+        renameProjectId = projectId;
+        renameProjectLabel = StringUtils.defaultString(projectName);
+        projectFormError = null;
+    }
+
+    public void closeRenameProject() {
+        renameProjectOpen = false;
+        renameProjectId = null;
+        renameProjectLabel = null;
+        projectFormError = null;
+    }
+
+    public void renameProject() {
+        if (!isAccessAllowed() || renameProjectId == null) {
+            return;
+        }
+        Integer callerId = userSession.getCurrentUserId();
+        if (callerId == null) {
+            return;
+        }
+        try {
+            projectManagementService.renameProject(
+                    callerId,
+                    userSession.isSuperAdmin(),
+                    renameProjectId,
+                    renameProjectLabel
+            );
+            int projectId = renameProjectId;
+            flashInfo(v2LocaleBean.getMsg("v2.admin.projects.rename.success"));
+            closeRenameProject();
+            reload();
+            openProjectThesauri(projectId);
+        } catch (InvalidProjectDataException | ProjectAccessDeniedException e) {
+            projectFormError = e.getMessage();
+        }
+    }
+
+    public void openDeleteProjectConfirm() {
+        Integer projectId = readRequestInt("iaProjectId");
+        String projectName = readRequestParam("iaProjectName");
+        if (projectId == null) {
+            return;
+        }
+        openDeleteProjectConfirm(projectId, projectName);
+    }
+
+    public void openDeleteProjectConfirm(int projectId, String projectName) {
+        if (!isAccessAllowed()) {
+            return;
+        }
+        closeCreateProject();
+        closeRenameProject();
+        deleteProjectConfirmOpen = true;
+        deleteProjectId = projectId;
+        deleteProjectName = projectName;
+    }
+
+    public void closeDeleteProjectConfirm() {
+        deleteProjectConfirmOpen = false;
+        deleteProjectId = null;
+        deleteProjectName = null;
+    }
+
+    public void confirmDeleteProject() {
+        if (!isAccessAllowed() || deleteProjectId == null) {
+            return;
+        }
+        Integer callerId = userSession.getCurrentUserId();
+        if (callerId == null) {
+            return;
+        }
+        try {
+            projectManagementService.deleteProject(callerId, userSession.isSuperAdmin(), deleteProjectId);
+            flashInfo(v2LocaleBean.getMsg("v2.admin.projects.delete.success"));
+            closeDeleteProjectConfirm();
+            reload();
+        } catch (InvalidProjectDataException | ProjectAccessDeniedException e) {
+            flashError(e.getMessage());
+            closeDeleteProjectConfirm();
+        }
+    }
+
+    public void openProjectThesauri() {
+        Integer projectId = readRequestInt("iaProjectId");
+        if (projectId == null) {
+            return;
+        }
+        openProjectThesauri(projectId);
+    }
+
+    public void openProjectThesauri(int projectId) {
+        if (!isAccessAllowed() || projectId <= 0) {
+            return;
+        }
+        section = SECTION_PROJECTS;
+        openProjectId = projectId;
+        closeUserForms();
+        closeCreateProject();
+        closeRenameProject();
+        closeDeleteProjectConfirm();
+        closeThesaurusForms();
+        if (projects == null || projects.isEmpty() || thesauri == null) {
+            reload();
+        }
+    }
+
+    public void closeProjectForms() {
+        closeCreateProject();
+        closeRenameProject();
+        closeDeleteProjectConfirm();
+        closeThesaurusForms();
+    }
+
+    public void openAddThesaurus() {
+        if (!isAccessAllowed() || openProjectId == null) {
+            return;
+        }
+        closeEditThesaurus();
+        closeDeleteThesaurusConfirm();
+        addThesaurusQuery = "";
+        selectedAddThesaurusIds = new ArrayList<>();
+        thesaurusFormError = null;
+        addThesaurusOpen = true;
+    }
+
+    public void closeAddThesaurus() {
+        addThesaurusOpen = false;
+        addThesaurusQuery = "";
+        selectedAddThesaurusIds = new ArrayList<>();
+        thesaurusFormError = null;
+    }
+
+    public void selectAddThesaurus() {
+        String thesaurusId = readRequestParam("iaThesaurusId");
+        if (StringUtils.isBlank(thesaurusId)) {
+            return;
+        }
+        selectAddThesaurus(thesaurusId);
+    }
+
+    public void selectAddThesaurus(String thesaurusId) {
+        if (!isAccessAllowed() || StringUtils.isBlank(thesaurusId) || !addThesaurusOpen) {
+            return;
+        }
+        String id = thesaurusId.trim();
+        boolean assignable = getAssignableThesauri().stream()
+                .anyMatch(t -> Strings.CI.equals(t.id(), id));
+        if (!assignable) {
+            return;
+        }
+        if (selectedAddThesaurusIds == null) {
+            selectedAddThesaurusIds = new ArrayList<>();
+        }
+        int existing = indexOfSelectedAddThesaurus(id);
+        if (existing >= 0) {
+            selectedAddThesaurusIds.remove(existing);
+        } else {
+            selectedAddThesaurusIds.add(id);
+        }
+        thesaurusFormError = null;
+    }
+
+    public void selectAllFilteredAssignableThesauri() {
+        if (!isAccessAllowed() || !addThesaurusOpen) {
+            return;
+        }
+        if (selectedAddThesaurusIds == null) {
+            selectedAddThesaurusIds = new ArrayList<>();
+        }
+        for (AdminThesaurus thesaurus : getFilteredAssignableThesauri()) {
+            if (thesaurus == null || StringUtils.isBlank(thesaurus.id())) {
+                continue;
+            }
+            if (indexOfSelectedAddThesaurus(thesaurus.id()) < 0) {
+                selectedAddThesaurusIds.add(thesaurus.id());
+            }
+        }
+        thesaurusFormError = null;
+    }
+
+    public void clearAddThesaurusSelection() {
+        selectedAddThesaurusIds = new ArrayList<>();
+        thesaurusFormError = null;
+    }
+
+    public boolean isAddThesaurusSelected(String thesaurusId) {
+        return indexOfSelectedAddThesaurus(thesaurusId) >= 0;
+    }
+
+    public void addExistingThesaurus() {
+        if (!isAccessAllowed() || openProjectId == null) {
+            return;
+        }
+        List<String> selected = selectedAddThesaurusIds == null
+                ? List.of()
+                : selectedAddThesaurusIds.stream()
+                        .filter(StringUtils::isNotBlank)
+                        .map(String::trim)
+                        .distinct()
+                        .toList();
+        if (selected.isEmpty()) {
+            thesaurusFormError = v2LocaleBean.getMsg("v2.admin.projects.thesauri.add.required");
+            return;
+        }
+        Set<String> assignableIds = new HashSet<>();
+        for (AdminThesaurus thesaurus : getAssignableThesauri()) {
+            if (thesaurus != null && StringUtils.isNotBlank(thesaurus.id())) {
+                assignableIds.add(thesaurus.id());
+            }
+        }
+        List<String> toMove = selected.stream()
+                .filter(id -> assignableIds.stream().anyMatch(a -> Strings.CI.equals(a, id)))
+                .toList();
+        if (toMove.isEmpty()) {
+            thesaurusFormError = v2LocaleBean.getMsg("v2.admin.projects.thesauri.add.required");
+            return;
+        }
+        try {
+            boolean superAdmin = userSession.isSuperAdmin();
+            for (String thesaurusId : toMove) {
+                adminCatalogService.moveThesaurus(superAdmin, thesaurusId, openProjectId);
+            }
+            flashInfo(toMove.size() == 1
+                    ? v2LocaleBean.getMsg("v2.admin.projects.thesauri.add.success")
+                    : v2LocaleBean.getMsg("v2.admin.projects.thesauri.add.successMany"));
+            closeAddThesaurus();
+            reload();
+        } catch (RuntimeException e) {
+            thesaurusFormError = StringUtils.defaultIfBlank(
+                    e.getMessage(),
+                    v2LocaleBean.getMsg("v2.admin.projects.thesauri.add.failed")
+            );
+        }
+    }
+
+    public List<AdminThesaurus> getAssignableThesauri() {
+        if (openProjectId == null || thesauri == null) {
+            return List.of();
+        }
+        return thesauri.stream()
+                .filter(t -> t != null && t.projectId() != openProjectId)
+                .sorted(Comparator.comparing(AdminThesaurus::title, String.CASE_INSENSITIVE_ORDER))
+                .toList();
+    }
+
+    public List<AdminThesaurus> getFilteredAssignableThesauri() {
+        List<AdminThesaurus> assignable = getAssignableThesauri();
+        String q = normalize(addThesaurusQuery);
+        if (q.isEmpty()) {
+            return assignable;
+        }
+        return assignable.stream()
+                .filter(t -> matchesAssignableQuery(t, q))
+                .toList();
+    }
+
+    public List<AdminThesaurus> getSelectedAddThesauri() {
+        if (selectedAddThesaurusIds == null || selectedAddThesaurusIds.isEmpty() || thesauri == null) {
+            return List.of();
+        }
+        List<AdminThesaurus> selected = new ArrayList<>();
+        for (String id : selectedAddThesaurusIds) {
+            thesauri.stream()
+                    .filter(t -> Strings.CI.equals(t.id(), id))
+                    .findFirst()
+                    .ifPresent(selected::add);
+        }
+        return selected;
+    }
+
+    public int getSelectedAddThesaurusCount() {
+        return selectedAddThesaurusIds == null ? 0 : selectedAddThesaurusIds.size();
+    }
+
+    public String thesaurusProjectLabel(AdminThesaurus thesaurus) {
+        if (thesaurus == null) {
+            return "";
+        }
+        if (thesaurus.projectId() <= 0 || StringUtils.isBlank(thesaurus.projectName())) {
+            return v2LocaleBean.getMsg("v2.admin.projects.thesauri.add.noProject");
+        }
+        return thesaurus.projectName();
+    }
+
+    private int indexOfSelectedAddThesaurus(String thesaurusId) {
+        if (selectedAddThesaurusIds == null || StringUtils.isBlank(thesaurusId)) {
+            return -1;
+        }
+        for (int i = 0; i < selectedAddThesaurusIds.size(); i++) {
+            if (Strings.CI.equals(selectedAddThesaurusIds.get(i), thesaurusId)) {
+                return i;
+            }
+        }
+        return -1;
+    }
+
+    private static boolean matchesAssignableQuery(AdminThesaurus thesaurus, String q) {
+        if (thesaurus == null) {
+            return false;
+        }
+        return normalize(thesaurus.title()).contains(q)
+                || normalize(thesaurus.id()).contains(q)
+                || normalize(thesaurus.projectName()).contains(q);
+    }
+
+    public void openEditThesaurus() {
+        String thesaurusId = readRequestParam("iaThesaurusId");
+        if (StringUtils.isBlank(thesaurusId)) {
+            return;
+        }
+        openEditThesaurus(thesaurusId);
+    }
+
+    public void openEditThesaurus(String thesaurusId) {
+        if (!isAccessAllowed() || StringUtils.isBlank(thesaurusId) || openProjectId == null) {
+            return;
+        }
+        closeAddThesaurus();
+        closeDeleteThesaurusConfirm();
+        try {
+            var details = modifyThesaurusService.loadDetails(thesaurusId.trim());
+            editThesaurusId = details.id();
+            editThesaurusTitle = StringUtils.defaultString(details.title());
+            editThesaurusPrivate = details.privateThesaurus();
+            thesaurusFormError = null;
+            editThesaurusOpen = true;
+        } catch (InvalidToolboxDataException e) {
+            flashError(StringUtils.defaultIfBlank(
+                    e.getMessage(), v2LocaleBean.getMsg("v2.admin.projects.thesauri.edit.failed")));
+        }
+    }
+
+    public void closeEditThesaurus() {
+        editThesaurusOpen = false;
+        editThesaurusId = null;
+        editThesaurusTitle = null;
+        editThesaurusPrivate = false;
+        thesaurusFormError = null;
+    }
+
+    public void saveEditThesaurus() {
+        if (!isAccessAllowed() || StringUtils.isBlank(editThesaurusId)) {
+            return;
+        }
+        String title = StringUtils.trimToNull(editThesaurusTitle);
+        if (title == null) {
+            thesaurusFormError = v2LocaleBean.getMsg("v2.admin.projects.thesauri.edit.titleRequired");
+            return;
+        }
+        try {
+            String creator = StringUtils.defaultIfBlank(userSession.getCurrentUsername(), "admin");
+            String language = v2LocaleBean.getIdLangue();
+            try {
+                var details = modifyThesaurusService.loadDetails(editThesaurusId);
+                if (StringUtils.isNotBlank(details.sourceLang())) {
+                    language = details.sourceLang();
+                }
+            } catch (InvalidToolboxDataException ignored) {
+                // keep UI language
+            }
+            modifyThesaurusService.updateLanguage(editThesaurusId, language, title, creator);
+            modifyThesaurusService.changeVisibility(editThesaurusId, editThesaurusPrivate);
+            flashInfo(v2LocaleBean.getMsg("v2.admin.projects.thesauri.edit.success"));
+            closeEditThesaurus();
+            reload();
+        } catch (InvalidToolboxDataException e) {
+            thesaurusFormError = e.getMessage();
+        }
+    }
+
+    public void openDeleteThesaurusConfirm() {
+        String thesaurusId = readRequestParam("iaThesaurusId");
+        String thesaurusTitle = readRequestParam("iaThesaurusTitle");
+        if (StringUtils.isBlank(thesaurusId)) {
+            return;
+        }
+        openDeleteThesaurusConfirm(thesaurusId, thesaurusTitle);
+    }
+
+    public void openDeleteThesaurusConfirm(String thesaurusId, String thesaurusTitle) {
+        if (!isAccessAllowed() || StringUtils.isBlank(thesaurusId)) {
+            return;
+        }
+        closeAddThesaurus();
+        closeEditThesaurus();
+        deleteThesaurusConfirmOpen = true;
+        deleteThesaurusId = thesaurusId.trim();
+        deleteThesaurusTitle = StringUtils.defaultIfBlank(thesaurusTitle, deleteThesaurusId);
+        deleteThesaurusPerennial = false;
+    }
+
+    public void closeDeleteThesaurusConfirm() {
+        deleteThesaurusConfirmOpen = false;
+        deleteThesaurusId = null;
+        deleteThesaurusTitle = null;
+        deleteThesaurusPerennial = false;
+    }
+
+    public void confirmDeleteThesaurus() {
+        if (!isAccessAllowed() || StringUtils.isBlank(deleteThesaurusId)) {
+            return;
+        }
+        try {
+            editionThesaurusService.deleteThesaurus(deleteThesaurusId, deleteThesaurusPerennial);
+            flashInfo(v2LocaleBean.getMsg("v2.admin.projects.thesauri.delete.success"));
+            closeDeleteThesaurusConfirm();
+            reload();
+        } catch (InvalidToolboxDataException e) {
+            flashError(e.getMessage());
+            closeDeleteThesaurusConfirm();
+        }
+    }
+
+    public void closeThesaurusForms() {
+        closeAddThesaurus();
+        closeEditThesaurus();
+        closeDeleteThesaurusConfirm();
+    }
+
+    public String projectName(Integer projectId) {
+        if (projectId == null || projectId <= 0 || projects == null) {
+            return "";
+        }
+        return projects.stream()
+                .filter(p -> p.id() == projectId)
+                .map(AdminProject::name)
+                .findFirst()
+                .orElse(String.valueOf(projectId));
+    }
+
+    public AdminProject getOpenProject() {
+        if (openProjectId == null || projects == null) {
+            return null;
+        }
+        return projects.stream()
+                .filter(p -> p.id() == openProjectId)
+                .findFirst()
+                .orElse(null);
+    }
+
+    public List<AdminThesaurus> getOpenProjectThesauri() {
+        if (openProjectId == null || thesauri == null) {
+            return List.of();
+        }
+        return thesauri.stream()
+                .filter(t -> t.projectId() == openProjectId)
+                .sorted(Comparator.comparing(AdminThesaurus::title, String.CASE_INSENSITIVE_ORDER))
+                .toList();
     }
 
     public String getHomeSubtitle() {
@@ -1398,12 +2031,40 @@ public class InstanceAdminBean implements Serializable {
     }
 
     void applySectionFromRequest(String sectionParam, String thesaurusId) {
+        applySectionFromRequest(sectionParam, thesaurusId, null);
+    }
+
+    void applySectionFromRequest(String sectionParam, String thesaurusId, String projectId) {
         if (StringUtils.isBlank(sectionParam) || !KNOWN_SECTIONS.contains(sectionParam)) {
+            return;
+        }
+        if (SECTION_PROJECTS.equals(sectionParam) && StringUtils.isBlank(projectId)) {
+            redirectToProjectsListPage();
             return;
         }
         openSection(sectionParam);
         if (SECTION_THESAURI.equals(sectionParam) && StringUtils.isNotBlank(thesaurusId)) {
             openThesaurusMembers(thesaurusId);
+        }
+        if (SECTION_PROJECTS.equals(sectionParam) && StringUtils.isNotBlank(projectId)) {
+            try {
+                openProjectThesauri(Integer.parseInt(projectId.trim()));
+            } catch (NumberFormatException ignored) {
+                // ignore invalid project id
+            }
+        }
+    }
+
+    private void redirectToProjectsListPage() {
+        FacesContext facesContext = FacesContext.getCurrentInstance();
+        if (facesContext == null) {
+            return;
+        }
+        try {
+            facesContext.getExternalContext().redirect(getProjectsListUrl());
+            facesContext.responseComplete();
+        } catch (IOException ignored) {
+            openSection(SECTION_PROJECTS);
         }
     }
 
@@ -1413,7 +2074,7 @@ public class InstanceAdminBean implements Serializable {
             return;
         }
         Map<String, String> params = facesContext.getExternalContext().getRequestParameterMap();
-        applySectionFromRequest(params.get("section"), params.get("th"));
+        applySectionFromRequest(params.get("section"), params.get("th"), params.get("project"));
     }
 
     private String contextPath() {
@@ -1431,13 +2092,17 @@ public class InstanceAdminBean implements Serializable {
     private void clear() {
         section = null;
         openThesaurusId = null;
+        openProjectId = null;
         userQuery = "";
+        projectQuery = "";
         accounts = Collections.emptyList();
         thesauri = Collections.emptyList();
+        projects = Collections.emptyList();
         clearMemberState();
         createProjects = Collections.emptyList();
         createProjectRoles = Collections.emptyList();
         closeUserForms();
+        closeProjectForms();
     }
 
     private void loadCreateCatalog() {
@@ -1531,10 +2196,29 @@ public class InstanceAdminBean implements Serializable {
         return switch (key) {
             case SECTION_USERS -> v2LocaleBean.getMsg("v2.admin.section.users");
             case SECTION_THESAURI -> v2LocaleBean.getMsg("v2.admin.section.thesauri");
-            case SECTION_SERVER -> v2LocaleBean.getMsg("v2.admin.section.server");
+            case SECTION_PROJECTS -> v2LocaleBean.getMsg("v2.admin.section.projects");
             case SECTION_STATS -> v2LocaleBean.getMsg("v2.admin.section.stats");
             default -> key;
         };
+    }
+
+    private static List<AdminProject> buildAdminProjects(List<ProjectSummary> summaries, List<AdminThesaurus> thesauriList) {
+        Map<Integer, Integer> counts = new HashMap<>();
+        if (thesauriList != null) {
+            for (AdminThesaurus thesaurus : thesauriList) {
+                if (thesaurus == null || thesaurus.projectId() <= 0) {
+                    continue;
+                }
+                counts.merge(thesaurus.projectId(), 1, Integer::sum);
+            }
+        }
+        if (summaries == null || summaries.isEmpty()) {
+            return List.of();
+        }
+        return summaries.stream()
+                .map(p -> new AdminProject(p.id(), p.name(), counts.getOrDefault(p.id(), 0)))
+                .sorted(Comparator.comparing(AdminProject::name, String.CASE_INSENSITIVE_ORDER))
+                .toList();
     }
 
     private static String normalize(String value) {

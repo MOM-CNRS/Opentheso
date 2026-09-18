@@ -6,11 +6,16 @@ import fr.cnrs.opentheso.v2.admin.model.InstanceAdminAccount;
 import fr.cnrs.opentheso.v2.admin.model.ThesaurusMember;
 import fr.cnrs.opentheso.v2.admin.service.AdminCatalogService;
 import fr.cnrs.opentheso.v2.admin.service.AdminUserService;
+import fr.cnrs.opentheso.v2.project.model.ProjectSummary;
 import fr.cnrs.opentheso.v2.project.policy.ProjectAccessPolicy;
+import fr.cnrs.opentheso.v2.project.service.ProjectManagementService;
 import fr.cnrs.opentheso.v2.project.service.ProjectMemberService;
 import fr.cnrs.opentheso.v2.shared.repository.UserCommandRepository;
 import fr.cnrs.opentheso.v2.shared.ui.UserSession;
 import fr.cnrs.opentheso.v2.shared.ui.V2LocaleBean;
+import fr.cnrs.opentheso.v2.toolbox.model.EditionThesaurusDetails;
+import fr.cnrs.opentheso.v2.toolbox.service.EditionThesaurusService;
+import fr.cnrs.opentheso.v2.toolbox.service.ModifyThesaurusService;
 import fr.cnrs.opentheso.v2.user.exception.InvalidProfileDataException;
 import fr.cnrs.opentheso.v2.user.model.UserProfile;
 import fr.cnrs.opentheso.v2.user.service.UserProfileService;
@@ -50,6 +55,12 @@ class InstanceAdminBeanTest {
     @Mock
     private ProjectMemberService projectMemberService;
     @Mock
+    private ProjectManagementService projectManagementService;
+    @Mock
+    private ModifyThesaurusService modifyThesaurusService;
+    @Mock
+    private EditionThesaurusService editionThesaurusService;
+    @Mock
     private UserProfileService userProfileService;
     @Mock
     private UserCommandRepository userCommandRepository;
@@ -64,6 +75,9 @@ class InstanceAdminBeanTest {
                 adminCatalogService,
                 adminUserService,
                 projectMemberService,
+                projectManagementService,
+                modifyThesaurusService,
+                editionThesaurusService,
                 userProfileService,
                 userCommandRepository
         );
@@ -78,11 +92,16 @@ class InstanceAdminBeanTest {
         when(adminCatalogService.listAllThesauri(true, "fr")).thenReturn(List.of(
                 new AdminThesaurus("th1", "PACTOLS", 1, "Frantiq", false, null)
         ));
+        when(adminCatalogService.listAllProjects(true)).thenReturn(List.of(
+                new ProjectSummary(1, "Frantiq")
+        ));
 
         bean.init();
 
         assertEquals(1, bean.getAccounts().size());
         assertEquals(1, bean.getThesauri().size());
+        assertEquals(1, bean.getProjects().size());
+        assertEquals(1, bean.getProjects().get(0).thesaurusCount());
         assertTrue(bean.isHome());
         assertTrue(bean.isAccessAllowed());
     }
@@ -105,11 +124,186 @@ class InstanceAdminBeanTest {
         when(v2LocaleBean.getIdLangue()).thenReturn("fr");
         when(adminCatalogService.listInstanceAccounts(true)).thenReturn(List.of());
         when(adminCatalogService.listAllThesauri(true, "fr")).thenReturn(List.of());
+        when(adminCatalogService.listAllProjects(true)).thenReturn(List.of());
 
         bean.openSection(InstanceAdminBean.SECTION_USERS);
 
         assertTrue(bean.isUsersSection());
         verify(adminCatalogService).listInstanceAccounts(true);
+    }
+
+    @Test
+    void openSection_projects_reloadsAndSetsSection() {
+        when(userSession.canAccessSuperAdminScreen()).thenReturn(true);
+        when(userSession.isSuperAdmin()).thenReturn(true);
+        when(v2LocaleBean.getIdLangue()).thenReturn("fr");
+        when(adminCatalogService.listInstanceAccounts(true)).thenReturn(List.of());
+        when(adminCatalogService.listAllThesauri(true, "fr")).thenReturn(List.of());
+        when(adminCatalogService.listAllProjects(true)).thenReturn(List.of(new ProjectSummary(2, "PACTOLS")));
+        when(v2LocaleBean.getMsg("v2.admin.section.projects")).thenReturn("Gestion des projets");
+
+        bean.openSection(InstanceAdminBean.SECTION_PROJECTS);
+
+        assertTrue(bean.isProjectsSection());
+        assertEquals(1, bean.getProjects().size());
+        assertEquals("Gestion des projets", bean.getSectionLabel());
+    }
+
+    @Test
+    void createProject_staysOnProjectsList() {
+        when(userSession.canAccessSuperAdminScreen()).thenReturn(true);
+        when(userSession.isSuperAdmin()).thenReturn(true);
+        when(userSession.getCurrentUserId()).thenReturn(1);
+        when(v2LocaleBean.getIdLangue()).thenReturn("fr");
+        when(v2LocaleBean.getMsg("v2.admin.projects.create.success")).thenReturn("ok");
+        when(adminCatalogService.listInstanceAccounts(true)).thenReturn(List.of());
+        when(adminCatalogService.listAllThesauri(true, "fr")).thenReturn(List.of());
+        when(adminCatalogService.listAllProjects(true)).thenReturn(
+                List.of(new ProjectSummary(2, "PACTOLS")),
+                List.of(new ProjectSummary(2, "PACTOLS"), new ProjectSummary(9, "Nouveau"))
+        );
+        when(projectManagementService.createProject(1, true, "Nouveau"))
+                .thenReturn(new ProjectSummary(9, "Nouveau"));
+
+        bean.openSection(InstanceAdminBean.SECTION_PROJECTS);
+        bean.openCreateProject();
+        assertTrue(bean.isCreateProjectOpen());
+        assertFalse(bean.isProjectFormOpen());
+
+        bean.setNewProjectName("Nouveau");
+        bean.createProject();
+
+        assertFalse(bean.isCreateProjectOpen());
+        assertNull(bean.getOpenProjectId());
+        assertTrue(bean.isProjectsSection());
+        assertEquals(2, bean.getProjects().size());
+        verify(projectManagementService).createProject(1, true, "Nouveau");
+    }
+
+    @Test
+    void openProjectThesauri_listsThesauriOfProject() {
+        when(userSession.canAccessSuperAdminScreen()).thenReturn(true);
+        when(userSession.isSuperAdmin()).thenReturn(true);
+        when(v2LocaleBean.getIdLangue()).thenReturn("fr");
+        when(v2LocaleBean.getMsg("v2.admin.projects.thesauri.of")).thenReturn("Thésaurus de");
+        when(adminCatalogService.listInstanceAccounts(true)).thenReturn(List.of());
+        when(adminCatalogService.listAllProjects(true)).thenReturn(List.of(new ProjectSummary(5, "Frantiq")));
+        when(adminCatalogService.listAllThesauri(true, "fr")).thenReturn(List.of(
+                new AdminThesaurus("th1", "PACTOLS", 5, "Frantiq", false, null),
+                new AdminThesaurus("th2", "Other", 9, "Elsewhere", true, null)
+        ));
+
+        bean.reload();
+        bean.openProjectThesauri(5);
+
+        assertTrue(bean.isProjectThesauri());
+        assertFalse(bean.isProjectsSection());
+        assertEquals(1, bean.getOpenProjectThesauri().size());
+        assertEquals("PACTOLS", bean.getOpenProjectThesauri().get(0).title());
+        assertEquals("Thésaurus de Frantiq", bean.getPageTitle());
+        assertTrue(bean.projectThesauriUrl(5).endsWith("section=projects&project=5"));
+    }
+
+    @Test
+    void addExistingThesaurus_movesSelectedThesaurusIntoOpenProject() {
+        when(userSession.canAccessSuperAdminScreen()).thenReturn(true);
+        when(userSession.isSuperAdmin()).thenReturn(true);
+        when(v2LocaleBean.getIdLangue()).thenReturn("fr");
+        when(v2LocaleBean.getMsg("v2.admin.projects.thesauri.add.successMany")).thenReturn("ok");
+        when(adminCatalogService.listInstanceAccounts(true)).thenReturn(List.of());
+        when(adminCatalogService.listAllProjects(true)).thenReturn(List.of(new ProjectSummary(5, "Frantiq")));
+        when(adminCatalogService.listAllThesauri(true, "fr")).thenReturn(List.of(
+                new AdminThesaurus("th1", "PACTOLS", 5, "Frantiq", false, null),
+                new AdminThesaurus("th2", "Elsewhere", 9, "Other", true, null),
+                new AdminThesaurus("th3", "Orphan", 0, null, false, null)
+        ));
+
+        bean.reload();
+        bean.openProjectThesauri(5);
+        bean.openAddThesaurus();
+        bean.selectAddThesaurus("th2");
+        bean.selectAddThesaurus("th3");
+        bean.addExistingThesaurus();
+
+        assertFalse(bean.isAddThesaurusOpen());
+        verify(adminCatalogService).moveThesaurus(true, "th2", 5);
+        verify(adminCatalogService).moveThesaurus(true, "th3", 5);
+        verify(adminCatalogService, org.mockito.Mockito.atLeast(2)).listAllThesauri(true, "fr");
+    }
+
+    @Test
+    void selectAddThesaurus_togglesMultiSelection() {
+        when(userSession.canAccessSuperAdminScreen()).thenReturn(true);
+        when(userSession.isSuperAdmin()).thenReturn(true);
+        when(v2LocaleBean.getIdLangue()).thenReturn("fr");
+        when(adminCatalogService.listInstanceAccounts(true)).thenReturn(List.of());
+        when(adminCatalogService.listAllProjects(true)).thenReturn(List.of(new ProjectSummary(5, "Frantiq")));
+        when(adminCatalogService.listAllThesauri(true, "fr")).thenReturn(List.of(
+                new AdminThesaurus("th2", "Elsewhere", 9, "Other", true, null),
+                new AdminThesaurus("th3", "Orphan", 0, null, false, null)
+        ));
+
+        bean.reload();
+        bean.openProjectThesauri(5);
+        bean.openAddThesaurus();
+        bean.selectAddThesaurus("th2");
+        bean.selectAddThesaurus("th3");
+        assertEquals(2, bean.getSelectedAddThesaurusCount());
+        assertTrue(bean.isAddThesaurusSelected("th2"));
+
+        bean.selectAddThesaurus("th2");
+        assertEquals(1, bean.getSelectedAddThesaurusCount());
+        assertFalse(bean.isAddThesaurusSelected("th2"));
+
+        bean.selectAllFilteredAssignableThesauri();
+        assertEquals(2, bean.getSelectedAddThesaurusCount());
+        bean.clearAddThesaurusSelection();
+        assertEquals(0, bean.getSelectedAddThesaurusCount());
+    }
+
+    @Test
+    void filteredAssignableThesauri_excludesCurrentProject() {
+        when(userSession.canAccessSuperAdminScreen()).thenReturn(true);
+        when(userSession.isSuperAdmin()).thenReturn(true);
+        when(v2LocaleBean.getIdLangue()).thenReturn("fr");
+        when(adminCatalogService.listInstanceAccounts(true)).thenReturn(List.of());
+        when(adminCatalogService.listAllProjects(true)).thenReturn(List.of(new ProjectSummary(5, "Frantiq")));
+        when(adminCatalogService.listAllThesauri(true, "fr")).thenReturn(List.of(
+                new AdminThesaurus("th1", "PACTOLS", 5, "Frantiq", false, null),
+                new AdminThesaurus("th2", "Elsewhere", 9, "Other", true, null),
+                new AdminThesaurus("th3", "Orphan", 0, null, false, null)
+        ));
+
+        bean.reload();
+        bean.openProjectThesauri(5);
+
+        assertEquals(2, bean.getAssignableThesauri().size());
+        bean.setAddThesaurusQuery("orph");
+        assertEquals(1, bean.getFilteredAssignableThesauri().size());
+        assertEquals("th3", bean.getFilteredAssignableThesauri().get(0).id());
+    }
+
+    @Test
+    void openEditThesaurus_loadsDetails() {
+        when(userSession.canAccessSuperAdminScreen()).thenReturn(true);
+        when(userSession.isSuperAdmin()).thenReturn(true);
+        when(v2LocaleBean.getIdLangue()).thenReturn("fr");
+        when(adminCatalogService.listInstanceAccounts(true)).thenReturn(List.of());
+        when(adminCatalogService.listAllProjects(true)).thenReturn(List.of(new ProjectSummary(5, "Frantiq")));
+        when(adminCatalogService.listAllThesauri(true, "fr")).thenReturn(List.of(
+                new AdminThesaurus("th1", "PACTOLS", 5, "Frantiq", false, null)
+        ));
+        when(modifyThesaurusService.loadDetails("th1")).thenReturn(
+                new EditionThesaurusDetails("th1", "PACTOLS", null, true, "fr")
+        );
+
+        bean.reload();
+        bean.openProjectThesauri(5);
+        bean.openEditThesaurus("th1");
+
+        assertTrue(bean.isEditThesaurusOpen());
+        assertEquals("PACTOLS", bean.getEditThesaurusTitle());
+        assertTrue(bean.isEditThesaurusPrivate());
     }
 
     @Test
@@ -499,6 +693,7 @@ class InstanceAdminBeanTest {
                 new AdminThesaurus("th1", "PACTOLS", 5, "Frantiq", false, null)
         ));
         when(adminCatalogService.listInstanceAccounts(true)).thenReturn(List.of());
+        when(adminCatalogService.listAllProjects(true)).thenReturn(List.of());
         when(adminCatalogService.listThesaurusMembers(true, "th1", 5, "fr")).thenReturn(List.of(
                 new ThesaurusMember(2, "alice", true, ProjectAccessPolicy.ROLE_MANAGER, "Manager", false),
                 new ThesaurusMember(3, "bob", true, ProjectAccessPolicy.ROLE_ADMIN, "Admin", true)
@@ -529,6 +724,7 @@ class InstanceAdminBeanTest {
                 new AdminThesaurus("th1", "PACTOLS", 5, "Frantiq", false, null)
         ));
         when(adminCatalogService.listInstanceAccounts(true)).thenReturn(List.of());
+        when(adminCatalogService.listAllProjects(true)).thenReturn(List.of());
         when(adminCatalogService.listThesaurusMembers(true, "th1", 5, "fr")).thenReturn(List.of());
 
         bean.reload();
@@ -551,6 +747,7 @@ class InstanceAdminBeanTest {
                 new AdminThesaurus("th1", "PACTOLS", 5, "Frantiq", false, null)
         ));
         when(adminCatalogService.listInstanceAccounts(true)).thenReturn(List.of());
+        when(adminCatalogService.listAllProjects(true)).thenReturn(List.of());
         when(adminCatalogService.listThesaurusMembers(true, "th1", 5, "fr")).thenReturn(List.of(
                 new ThesaurusMember(2, "alice", true, ProjectAccessPolicy.ROLE_MANAGER, "Manager", false),
                 new ThesaurusMember(3, "bob", false, ProjectAccessPolicy.ROLE_ADMIN, "Admin", true)
