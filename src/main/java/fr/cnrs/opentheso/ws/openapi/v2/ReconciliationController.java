@@ -28,12 +28,11 @@ public class ReconciliationController {
     private final LevenshteinDistance levenshtein = new LevenshteinDistance();
 
     /**
-     * URL publique de l'instance (sans slash final), injectée depuis application.yaml :
-     *
-     * opentheso:
-     *   public-base-url: ${OPENTHESO_PUBLIC_BASE_URL:http://localhost:8099}
+     * URL publique de l'instance (sans slash final).
+     * Surcharge possible via {@code opentheso.public-base-url}
+     * ou la variable d'environnement {@code OPENTHESO_PUBLIC_BASE_URL}.
      */
-    @Value("${opentheso.public-base-url}")
+    @Value("${opentheso.public-base-url:http://localhost:8099}")
     private String baseUrl;
 
     public ReconciliationController(RestRDFHelper restRDFHelper) {

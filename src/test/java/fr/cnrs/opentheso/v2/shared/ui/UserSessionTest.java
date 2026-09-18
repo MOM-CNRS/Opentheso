@@ -95,4 +95,25 @@ class UserSessionTest {
         when(rightsService.can(userSession, Permission.SUPER_ADMIN)).thenReturn(true);
         assertTrue(userSession.canAccessSuperAdminScreen());
     }
+
+    @Test
+    void getCurrentUserInitials_fromFirstAndLastName() {
+        when(authenticatedUserSource.isLoggedIn()).thenReturn(true);
+        when(authenticatedUserSource.getUserId()).thenReturn(Optional.of(42));
+        when(sessionUserService.load(42)).thenReturn(
+                new SessionUser(42, "Camille Roussel", "c@b.c", false, true, true, true)
+        );
+
+        assertEquals("CR", userSession.getCurrentUserInitials());
+    }
+
+    @Test
+    void initialsFromDisplayName_supportsDottedUsername() {
+        assertEquals("CR", UserSession.initialsFromDisplayName("c.roussel"));
+        assertEquals("BN", UserSession.initialsFromDisplayName("blandine.nouvel"));
+        assertEquals("AM", UserSession.initialsFromDisplayName("anais.mauriceau"));
+        assertEquals("JD", UserSession.initialsFromDisplayName("jean-dupont"));
+        assertEquals("AD", UserSession.initialsFromDisplayName("admin"));
+        assertEquals("?", UserSession.initialsFromDisplayName(" "));
+    }
 }

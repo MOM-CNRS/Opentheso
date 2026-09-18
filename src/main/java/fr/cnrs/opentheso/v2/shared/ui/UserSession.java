@@ -10,6 +10,8 @@ import jakarta.inject.Named;
 import lombok.RequiredArgsConstructor;
 
 import java.io.Serializable;
+import java.util.ArrayList;
+import java.util.Locale;
 import java.util.Optional;
 
 /**
@@ -80,16 +82,37 @@ public class UserSession implements Serializable {
     }
 
     public String getCurrentUserInitials() {
-        String name = getCurrentUsername();
+        return initialsFromDisplayName(getCurrentUsername());
+    }
+
+    static String initialsFromDisplayName(String name) {
         if (name == null || name.isBlank()) {
             return "?";
         }
-        String[] parts = name.trim().split("\\s+");
-        if (parts.length >= 2 && !parts[0].isEmpty() && !parts[1].isEmpty()) {
-            return (parts[0].substring(0, 1) + parts[1].substring(0, 1)).toUpperCase();
+        String[] parts = name.trim().split("[.\\s_-]+");
+        ArrayList<String> tokens = new ArrayList<>();
+        for (String part : parts) {
+            if (part != null && !part.isBlank()) {
+                tokens.add(part);
+            }
         }
-        String token = parts[0];
-        return token.length() >= 2 ? token.substring(0, 2).toUpperCase() : token.toUpperCase();
+        if (tokens.isEmpty()) {
+            return "?";
+        }
+        if (tokens.size() >= 2) {
+            return (firstLetter(tokens.get(0)) + firstLetter(tokens.get(tokens.size() - 1)))
+                    .toUpperCase(Locale.ROOT);
+        }
+        String token = tokens.get(0);
+        if (token.length() >= 2) {
+            return token.substring(0, 2).toUpperCase(Locale.ROOT);
+        }
+        return token.toUpperCase(Locale.ROOT);
+    }
+
+    private static String firstLetter(String value) {
+        int cp = value.codePointAt(0);
+        return new String(Character.toChars(Character.toUpperCase(cp)));
     }
 
     public String getCurrentRoleLabel() {

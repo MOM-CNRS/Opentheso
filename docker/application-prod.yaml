@@ -24,6 +24,9 @@ app:
   neo4j:
     enabled: false
 
+opentheso:
+  public-base-url: ${OPENTHESO_PUBLIC_BASE_URL:http://localhost:8099}
+
 management:
   health:
     neo4j:

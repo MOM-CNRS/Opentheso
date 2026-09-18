@@ -44,11 +44,16 @@ mark.hl{background:var(--accent-soft);color:var(--accent);border-radius:3px;padd
 /* ───────── Thesaurus : Nav opentheso ───────── */
 .thesaurus{flex:0 0 60px;background:var(--surface);border-right:1px solid var(--line);
   display:flex;flex-direction:column;align-items:center;gap:9px;padding:14px 0 16px;z-index:35}
-.thesaurus-logo{width:40px;height:40px;border-radius:11px;background:var(--accent);color:var(--accent);
-  display:grid;place-items:center;margin-bottom:5px;box-shadow:var(--shadow-sm)}
-.thesaurus-logo .logo-mark{width:24px;height:24px}
-.thesaurus-logo .logo-disc{fill:#fff}
-.thesaurus-logo .logo-seg{fill:currentColor}
+.thesaurus-logo{
+  width:40px;height:40px;border-radius:11px;overflow:hidden;
+  display:grid;place-items:center;margin-bottom:5px;
+  box-shadow:var(--shadow-sm);flex:0 0 auto
+}
+.thesaurus-logo img{
+  width:40px;height:40px;display:block;object-fit:cover;border-radius:11px
+}
+.thesaurus-logo:hover{filter:brightness(1.06)}
+.thesaurus-logo:active{transform:scale(.96)}
 .thesaurus-group{display:flex;flex-direction:column;align-items:center;gap:7px}
 .thesaurus-spacer{flex:1}
 .thesaurus-item{position:relative;display:grid;place-items:center}
@@ -59,6 +64,20 @@ mark.hl{background:var(--accent-soft);color:var(--accent);border-radius:3px;padd
 .thesaurus-flag{font-size:19px;line-height:1}
 .thesaurus-ver{font-family:var(--mono);font-size:9px;color:var(--ink-4);margin-top:3px;letter-spacing:.02em}
 .thesaurus-btn.is-on{background:var(--accent-soft);color:var(--accent)}
+.thesaurus-btn.is-avatar{
+  background:var(--accent-soft);color:var(--accent);
+  font-weight:700;font-size:12.5px;letter-spacing:.02em;line-height:1
+}
+.thesaurus-btn.is-avatar:hover{
+  background:color-mix(in srgb, var(--accent-soft) 72%, var(--accent));
+  color:var(--accent)
+}
+.thesaurus-btn.is-avatar.is-on{
+  background:var(--accent);color:#fff
+}
+.thesaurus-avatar{
+  display:inline-grid;place-items:center;pointer-events:none;user-select:none
+}
 
 /* ── Popovers du thesaurus ── */
 .menu-pop{position:absolute;left:calc(100% + 12px);width:264px;z-index:60;opacity:1;

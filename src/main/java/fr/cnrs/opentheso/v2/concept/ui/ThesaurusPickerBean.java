@@ -144,6 +144,8 @@ public class ThesaurusPickerBean implements Serializable {
         }
         String needle = normalize(query);
         filteredRowsCache = getCatalogRows().stream()
+                .filter(this::matchesColumnFilters)
+                .filter(row -> matchesQuery(row, needle))
                 .filter(row -> matchesTab(row, activeTab))
                 .toList();
         filterCacheKey = key;
@@ -152,16 +154,63 @@ public class ThesaurusPickerBean implements Serializable {
     }
 
     /**
-     * Lignes après recherche / filtres colonnes, sans filtre d'onglet.
-     * L'onglet est appliqué côté client pour une animation fluide.
+     * Toutes les lignes triées (filtres colonnes / recherche / onglet côté client).
      */
     public List<ThesaurusPickerRow> getCatalogRows() {
-        String needle = normalize(query);
         return rows.stream()
-                .filter(row -> matchesQuery(row, needle))
-                .filter(this::matchesColumnFilters)
                 .sorted(comparator())
                 .toList();
+    }
+
+    /** Texte indexé pour le filtre de recherche client (liste des thésaurus). */
+    public String searchText(ThesaurusPickerRow row) {
+        if (row == null) {
+            return "";
+        }
+        return normalize(row.name())
+                + " "
+                + normalize(row.id())
+                + " "
+                + normalize(row.projects())
+                + " "
+                + normalize(row.domain())
+                + " "
+                + normalize(row.organization())
+                + " "
+                + normalize(row.chronology());
+    }
+
+    public String colFilterName(ThesaurusPickerRow row) {
+        if (row == null) {
+            return "";
+        }
+        return normalize(row.name()) + " " + normalize(row.id());
+    }
+
+    public String colFilterDomain(ThesaurusPickerRow row) {
+        return row == null ? "" : normalize(row.domain());
+    }
+
+    public String colFilterProjects(ThesaurusPickerRow row) {
+        return row == null ? "" : normalize(row.projects());
+    }
+
+    public String colFilterOrg(ThesaurusPickerRow row) {
+        return row == null ? "" : normalize(row.organization());
+    }
+
+    public String colFilterLangs(ThesaurusPickerRow row) {
+        if (row == null || row.languages() == null || row.languages().isEmpty()) {
+            return "";
+        }
+        StringBuilder sb = new StringBuilder();
+        for (String lang : row.languages()) {
+            if (sb.length() > 0) {
+                sb.append(' ');
+            }
+            sb.append(normalize(lang));
+        }
+        return sb.toString();
     }
 
     public int getMemberCount() {

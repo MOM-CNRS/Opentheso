@@ -127,92 +127,72 @@ button.tp-create, input.tp-create[type="submit"]{
   display:flex;gap:12px;margin-bottom:18px;flex:0 0 auto;align-items:stretch
 }
 .tp-search{
-  flex:1;min-width:0;display:flex;align-items:center;gap:10px;
-  background:
-    linear-gradient(180deg, rgba(255,255,255,.92) 0%, rgba(248,250,248,.96) 100%);
-  border:1px solid color-mix(in srgb,var(--line) 82%, var(--accent) 18%);
-  border-radius:16px;
-  padding:6px 8px 6px 8px;min-height:56px;
-  box-shadow:
-    0 1px 0 rgba(255,255,255,.7) inset,
-    0 8px 24px rgba(16,24,20,.04),
-    var(--shadow-sm);
-  transition:border-color .18s ease,box-shadow .18s ease,background .18s ease,transform .18s ease
-}
-.tp-search:hover{
-  border-color:color-mix(in srgb,var(--line) 45%, var(--accent) 55%);
-  box-shadow:
-    0 1px 0 rgba(255,255,255,.75) inset,
-    0 10px 28px rgba(31,122,92,.07),
-    var(--shadow-sm)
-}
-.tp-search:focus-within{
-  border-color:var(--accent-line);
+  position:relative;
+  flex:1;min-width:0;display:flex;align-items:center;gap:8px;
   background:#fff;
-  box-shadow:
-    0 0 0 3px var(--accent-soft),
-    0 1px 0 rgba(255,255,255,.9) inset,
-    0 12px 28px rgba(31,122,92,.1);
-  transform:translateY(-1px)
+  border:0!important;
+  outline:none;
+  border-radius:12px;
+  padding:0 10px 0 14px;min-height:52px;
+  box-shadow:none
 }
+.tp-search:hover,
+.tp-search:focus-within,
 .tp-search.has-query{
-  border-color:color-mix(in srgb,var(--accent-line) 70%, var(--line) 30%);
-  background:#fff
+  border:0!important;
+  outline:none;
+  box-shadow:none
 }
 .tp-search-ico{
-  flex:0 0 auto;display:inline-grid;place-items:center;
-  width:40px;height:40px;margin-left:2px;border-radius:12px;
-  color:var(--ink-3);
-  background:color-mix(in srgb,var(--surface-2,var(--bg)) 70%, var(--accent-soft) 30%);
-  border:1px solid color-mix(in srgb,var(--line) 75%, transparent);
-  transition:color .16s ease,background .16s ease,border-color .16s ease,transform .16s ease
+  flex:0 0 auto;display:inline-flex;align-items:center;justify-content:center;
+  width:20px;height:20px;color:var(--ink-3);pointer-events:none;z-index:0
 }
 .tp-search:focus-within .tp-search-ico,
 .tp-search.has-query .tp-search-ico{
-  color:var(--accent);
-  background:var(--accent-soft);
-  border-color:var(--accent-line);
-  transform:scale(1.02)
+  color:var(--ink-2)
 }
-.tp-search-ico svg{width:18px;height:18px;stroke:currentColor;fill:none;stroke-width:2;stroke-linecap:round;stroke-linejoin:round}
-.tp-search-input{
-  flex:1;min-width:0;border:0;background:transparent;outline:none;
+.tp-search-ico svg{
+  width:18px;height:18px;stroke:currentColor;fill:none;stroke-width:2;
+  stroke-linecap:round;stroke-linejoin:round
+}
+.tp-search-input,
+.tp-search input.tp-search-input,
+.tp-search input[type="text"]{
+  position:relative;z-index:1;
+  flex:1;min-width:0;border:0!important;background:transparent;
+  outline:none!important;box-shadow:none!important;
+  -webkit-appearance:none;appearance:none;
+  pointer-events:auto;
   font-family:var(--sans,"IBM Plex Sans",system-ui,sans-serif);
   font-size:15px;font-weight:450;font-style:normal;
-  line-height:1.35;letter-spacing:.01em;text-transform:none;
-  color:var(--ink);height:44px;padding:0 4px 0 2px
+  line-height:1.35;letter-spacing:.005em;text-transform:none;
+  color:var(--ink);height:48px;padding:0;caret-color:var(--ink)
+}
+.tp-search-input:focus,
+.tp-search-input:focus-visible,
+.tp-search input.tp-search-input:focus,
+.tp-search input.tp-search-input:focus-visible,
+.tp-search input[type="text"]:focus,
+.tp-search input[type="text"]:focus-visible{
+  border:0!important;outline:none!important;box-shadow:none!important
 }
 .tp-search-input::placeholder{
   font-family:inherit;font-size:inherit;font-weight:400;
-  letter-spacing:.01em;text-transform:none;
-  color:var(--ink-4);opacity:.92
+  letter-spacing:.005em;text-transform:none;
+  color:var(--ink-4);opacity:.9
 }
-.tp-search-hint{
-  flex:0 0 auto;display:none;align-items:center;justify-content:center;
-  min-width:28px;height:28px;padding:0 7px;margin-right:2px;
-  border-radius:8px;border:1px solid var(--line);
-  background:var(--surface-2,var(--bg));color:var(--ink-4);
-  font-family:var(--sans,"IBM Plex Sans",system-ui,sans-serif);
-  font-size:12px;font-weight:600;line-height:1;opacity:.7
-}
-.tp-search:focus-within:not(.has-query) .tp-search-hint{display:inline-flex}
 .tp-search-x{
-  flex:0 0 auto;display:inline-grid;place-items:center;
-  width:36px;height:36px;margin-right:2px;border-radius:11px;
+  flex:0 0 auto;display:none;place-items:center;
+  width:32px;height:32px;border-radius:8px;
   border:1px solid transparent;background:transparent;color:var(--ink-3);
-  opacity:0;pointer-events:none;transform:scale(.9);
-  transition:opacity .16s ease,transform .16s ease,background .14s ease,color .14s ease,border-color .14s ease;
   text-decoration:none!important
 }
-.tp-search.has-query .tp-search-x,
-.tp-search:focus-within.has-query .tp-search-x{
-  opacity:1;pointer-events:auto;transform:scale(1)
-}
+.tp-search.has-query .tp-search-x{display:inline-grid}
 .tp-search-x:hover,.tp-search-x:focus-visible{
-  background:var(--accent-soft);color:var(--accent);border-color:var(--accent-line);outline:none
+  background:var(--surface-2,var(--bg));color:var(--ink);border-color:var(--line);outline:none
 }
 .tp-search-x:focus-visible{box-shadow:0 0 0 2px var(--accent-soft)}
-.tp-search-x svg{width:15px;height:15px;stroke:currentColor;fill:none;stroke-width:2.1;stroke-linecap:round;stroke-linejoin:round}
+.tp-search-x svg{width:14px;height:14px;stroke:currentColor;fill:none;stroke-width:2.1;stroke-linecap:round;stroke-linejoin:round}
 .tp-create,.tp-create:link,.tp-create:visited{
   flex:0 0 auto;display:inline-flex;align-items:center;gap:8px;height:52px;
   background:linear-gradient(180deg, #27936f 0%, var(--accent) 100%);color:#fff!important;border:0;border-radius:14px;padding:0 20px;
@@ -323,9 +303,8 @@ button.tp-create, input.tp-create[type="submit"]{
 .tp-form-alert.is-ok{background:color-mix(in srgb, var(--ok, #1a7f4e) 12%, transparent);color:var(--ok, #1a7f4e)}
 @media (max-width:720px){
   .tp-bar{flex-wrap:wrap;gap:10px;align-items:stretch}
-  .tp-search{flex:1 1 100%;min-height:52px;border-radius:14px;padding:5px 6px 5px 6px}
-  .tp-search-input{height:42px;font-size:16px}
-  .tp-search-hint{display:none!important}
+  .tp-search{flex:1 1 100%;min-height:48px;border-radius:12px;padding:0 8px 0 12px}
+  .tp-search-input{height:44px;font-size:16px}
   .tp-bar-actions{width:100%}
   .tp-import,.tp-create{flex:1;justify-content:center;height:48px}
   .tp-tabs{width:100%}
@@ -382,8 +361,7 @@ button.tp-create, input.tp-create[type="submit"]{
 @media (prefers-reduced-motion:reduce){
   .tp-prog-fill{transition:none}
   .tp-hero,.tp-table-wrap,.tp-gov{animation:none}
-  .tp-search{transition:none;transform:none!important}
-  .tp-search-ico{transition:none;transform:none!important}
+  .tp-search{transition:none}
   .tp-tab,.tp-chip,.tp-tab-n,.tp-tabs-glider,.tp-import-formats-glider,.tp-import-fmt{transition:none!important}
   .tp-tab.is-on.is-tab-pop,.tp-table-wrap.is-tab-switch,.tp-table-wrap.is-tab-right,.tp-table-wrap.is-tab-left{animation:none}
   .tp-form-alert.is-enter,#tpImportPreview.is-ready .tp-form-row--preview,.tp--import .tp-form-submit.is-ready-pulse,.tp-import-dropzone.is-pending .tp-drop-filled,.tp-import-more-body{animation:none!important}
@@ -451,7 +429,9 @@ button.tp-tab{appearance:none;-webkit-appearance:none;margin:0;line-height:1.2}
 .tp-tab.is-on.is-tab-pop{animation:tp-tab-pop .32s cubic-bezier(.2,.8,.2,1)}
 .tp-tab-n{font-size:11.5px;font-weight:700;background:var(--surface-2);color:var(--ink-3);border-radius:999px;padding:1px 8px;min-width:20px;text-align:center;transition:background .18s ease,color .18s ease,transform .2s ease}
 .tp-tab.is-on .tp-tab-n{background:rgba(255,255,255,.22);color:#fff}
-.tp-table tbody tr.tp-row.is-tab-off{display:none!important}
+.tp-table tbody tr.tp-row.is-tab-off,
+.tp-table tbody tr.tp-row.is-query-off,
+.tp-table tbody tr.tp-row.is-col-filter-off{display:none!important}
 .tp-table-wrap.is-tab-switch{animation:tp-tab-content .36s cubic-bezier(.22,1,.36,1)}
 .tp-table-wrap.is-tab-switch.is-tab-right{animation-name:tp-tab-content-right}
 .tp-table-wrap.is-tab-switch.is-tab-left{animation-name:tp-tab-content-left}

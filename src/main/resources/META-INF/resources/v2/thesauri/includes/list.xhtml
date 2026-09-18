@@ -55,20 +55,20 @@
                          pt:enterkeyhint="search"
                          pt:aria-label="#{v2LocaleBean.getMsg('v2.picker.search.placeholder')}"
                          pt:oninput="window.tpSyncSearchClear &amp;&amp; window.tpSyncSearchClear(this)"
-                         pt:onkeydown="if(event.key==='Enter'){event.preventDefault();return window.tpSubmitRefresh&amp;&amp;window.tpSubmitRefresh();}">
+                         pt:onkeydown="if(event.key==='Enter'){event.preventDefault();return false;}">
             </h:inputText>
             <h:commandButton id="tpRefresh"
                              styleClass="tp-create-go"
                              value="ok"
                              tabindex="-1"
                              aria-hidden="true"/>
-            <span class="tp-search-hint" aria-hidden="true">↵</span>
-            <h:commandLink styleClass="tp-search-x"
-                           title="#{v2LocaleBean.getMsg('v2.picker.search.clear')}"
-                           pt:aria-label="#{v2LocaleBean.getMsg('v2.picker.search.clear')}"
-                           action="#{v2ThesaurusPickerBean.clearQuery()}">
+            <a href="#"
+               class="tp-search-x"
+               title="#{v2LocaleBean.getMsg('v2.picker.search.clear')}"
+               aria-label="#{v2LocaleBean.getMsg('v2.picker.search.clear')}"
+               onclick="return window.tpClearSearch &amp;&amp; window.tpClearSearch();">
               <svg viewBox="0 0 24 24" aria-hidden="true"><path d="M18 6 6 18M6 6l12 12"/></svg>
-            </h:commandLink>
+            </a>
           </div>
           <div class="tp-bar-actions">
             <h:commandLink styleClass="tp-import"
@@ -138,34 +138,43 @@
                 <span>#{v2LocaleBean.getMsg('v2.picker.col.name')}</span>
                 <h:inputText styleClass="tp-fi" value="#{v2ThesaurusPickerBean.filterName}"
                              pt:data-ph="#{v2LocaleBean.getMsg('v2.picker.filters')}"
-                             pt:onkeydown="if(event.key==='Enter'){event.preventDefault();return window.tpSubmitRefresh&amp;&amp;window.tpSubmitRefresh();}">
+                             pt:data-tp-filter="name"
+                             pt:oninput="window.tpOnColFilter &amp;&amp; window.tpOnColFilter(this)"
+                             pt:onkeydown="if(event.key==='Enter'){event.preventDefault();return false;}">
                 </h:inputText>
               </label>
               <label class="tp-mobile-f">
                 <span>#{v2LocaleBean.getMsg('v2.picker.col.domain')}</span>
                 <h:inputText styleClass="tp-fi" value="#{v2ThesaurusPickerBean.filterDomain}"
                              pt:data-ph="#{v2LocaleBean.getMsg('v2.picker.filters')}"
-                             pt:onkeydown="if(event.key==='Enter'){event.preventDefault();return window.tpSubmitRefresh&amp;&amp;window.tpSubmitRefresh();}">
+                             pt:data-tp-filter="domain"
+                             pt:oninput="window.tpOnColFilter &amp;&amp; window.tpOnColFilter(this)"
+                             pt:onkeydown="if(event.key==='Enter'){event.preventDefault();return false;}">
                 </h:inputText>
               </label>
               <label class="tp-mobile-f">
                 <span>#{v2LocaleBean.getMsg('v2.picker.col.projects')}</span>
                 <h:inputText styleClass="tp-fi" value="#{v2ThesaurusPickerBean.filterProjects}"
                              pt:data-ph="#{v2LocaleBean.getMsg('v2.picker.filters')}"
-                             pt:onkeydown="if(event.key==='Enter'){event.preventDefault();return window.tpSubmitRefresh&amp;&amp;window.tpSubmitRefresh();}">
+                             pt:data-tp-filter="projects"
+                             pt:oninput="window.tpOnColFilter &amp;&amp; window.tpOnColFilter(this)"
+                             pt:onkeydown="if(event.key==='Enter'){event.preventDefault();return false;}">
                 </h:inputText>
               </label>
               <label class="tp-mobile-f">
                 <span>#{v2LocaleBean.getMsg('v2.picker.col.org')}</span>
                 <h:inputText styleClass="tp-fi" value="#{v2ThesaurusPickerBean.filterOrg}"
                              pt:data-ph="#{v2LocaleBean.getMsg('v2.picker.filters')}"
-                             pt:onkeydown="if(event.key==='Enter'){event.preventDefault();return window.tpSubmitRefresh&amp;&amp;window.tpSubmitRefresh();}">
+                             pt:data-tp-filter="org"
+                             pt:oninput="window.tpOnColFilter &amp;&amp; window.tpOnColFilter(this)"
+                             pt:onkeydown="if(event.key==='Enter'){event.preventDefault();return false;}">
                 </h:inputText>
               </label>
               <label class="tp-mobile-f">
                 <span>#{v2LocaleBean.getMsg('v2.picker.col.lang')}</span>
                 <h:selectOneMenu styleClass="tp-fi tp-fi--lang" value="#{v2ThesaurusPickerBean.filterLang}"
-                                 pt:onchange="window.tpSubmitRefresh&amp;&amp;window.tpSubmitRefresh();">
+                                 pt:data-tp-filter="lang"
+                                 pt:onchange="window.tpOnColFilter &amp;&amp; window.tpOnColFilter(this);">
                   <f:selectItem itemValue="" itemLabel="Toutes ▾"/>
                   <f:selectItems value="#{v2ThesaurusPickerBean.availableLanguages}" var="lg"
                                  itemValue="#{lg}"
@@ -250,30 +259,39 @@
                       <ui:fragment rendered="#{col.key eq 'name'}">
                         <h:inputText styleClass="tp-fi" value="#{v2ThesaurusPickerBean.filterName}"
                                      pt:data-ph="#{v2LocaleBean.getMsg('v2.picker.filters')}"
-                                     pt:onkeydown="if(event.key==='Enter'){event.preventDefault();return window.tpSubmitRefresh&amp;&amp;window.tpSubmitRefresh();}">
+                                     pt:data-tp-filter="name"
+                                     pt:oninput="window.tpOnColFilter &amp;&amp; window.tpOnColFilter(this)"
+                                     pt:onkeydown="if(event.key==='Enter'){event.preventDefault();return false;}">
                         </h:inputText>
                       </ui:fragment>
                       <ui:fragment rendered="#{col.key eq 'domain'}">
                         <h:inputText styleClass="tp-fi" value="#{v2ThesaurusPickerBean.filterDomain}"
                                      pt:data-ph="#{v2LocaleBean.getMsg('v2.picker.filters')}"
-                                     pt:onkeydown="if(event.key==='Enter'){event.preventDefault();return window.tpSubmitRefresh&amp;&amp;window.tpSubmitRefresh();}">
+                                     pt:data-tp-filter="domain"
+                                     pt:oninput="window.tpOnColFilter &amp;&amp; window.tpOnColFilter(this)"
+                                     pt:onkeydown="if(event.key==='Enter'){event.preventDefault();return false;}">
                         </h:inputText>
                       </ui:fragment>
                       <ui:fragment rendered="#{col.key eq 'projects'}">
                         <h:inputText styleClass="tp-fi" value="#{v2ThesaurusPickerBean.filterProjects}"
                                      pt:data-ph="#{v2LocaleBean.getMsg('v2.picker.filters')}"
-                                     pt:onkeydown="if(event.key==='Enter'){event.preventDefault();return window.tpSubmitRefresh&amp;&amp;window.tpSubmitRefresh();}">
+                                     pt:data-tp-filter="projects"
+                                     pt:oninput="window.tpOnColFilter &amp;&amp; window.tpOnColFilter(this)"
+                                     pt:onkeydown="if(event.key==='Enter'){event.preventDefault();return false;}">
                         </h:inputText>
                       </ui:fragment>
                       <ui:fragment rendered="#{col.key eq 'org'}">
                         <h:inputText styleClass="tp-fi" value="#{v2ThesaurusPickerBean.filterOrg}"
                                      pt:data-ph="#{v2LocaleBean.getMsg('v2.picker.filters')}"
-                                     pt:onkeydown="if(event.key==='Enter'){event.preventDefault();return window.tpSubmitRefresh&amp;&amp;window.tpSubmitRefresh();}">
+                                     pt:data-tp-filter="org"
+                                     pt:oninput="window.tpOnColFilter &amp;&amp; window.tpOnColFilter(this)"
+                                     pt:onkeydown="if(event.key==='Enter'){event.preventDefault();return false;}">
                         </h:inputText>
                       </ui:fragment>
                       <ui:fragment rendered="#{col.key eq 'lang'}">
                         <h:selectOneMenu styleClass="tp-fi tp-fi--lang" value="#{v2ThesaurusPickerBean.filterLang}"
-                                         pt:onchange="window.tpSubmitRefresh&amp;&amp;window.tpSubmitRefresh();">
+                                         pt:data-tp-filter="lang"
+                                         pt:onchange="window.tpOnColFilter &amp;&amp; window.tpOnColFilter(this);">
                           <f:selectItem itemValue="" itemLabel="Toutes ▾"/>
                           <f:selectItems value="#{v2ThesaurusPickerBean.availableLanguages}" var="lg"
                                          itemValue="#{lg}"
@@ -329,7 +347,13 @@
                       tabindex="0" role="link"
                       title="#{v2LocaleBean.getMsg('v2.picker.open')} — #{row.name}"
                       data-tp-member="#{row.member}"
-                      data-tp-public="#{row.publicAccess}">
+                      data-tp-public="#{row.publicAccess}"
+                      data-tp-search="#{v2ThesaurusPickerBean.searchText(row)}"
+                      data-tp-f-name="#{v2ThesaurusPickerBean.colFilterName(row)}"
+                      data-tp-f-domain="#{v2ThesaurusPickerBean.colFilterDomain(row)}"
+                      data-tp-f-projects="#{v2ThesaurusPickerBean.colFilterProjects(row)}"
+                      data-tp-f-org="#{v2ThesaurusPickerBean.colFilterOrg(row)}"
+                      data-tp-f-langs="#{v2ThesaurusPickerBean.colFilterLangs(row)}">
                     <td class="tp-c-cfg"/>
                     <ui:repeat value="#{v2ThesaurusPickerBean.columnCfg}" var="col">
                       <ui:fragment rendered="#{col.key eq 'name'}">

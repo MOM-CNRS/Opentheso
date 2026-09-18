@@ -388,11 +388,117 @@
       };
       window.tpSubmitRefresh = function () {
         var btn = document.getElementById('tpRefresh');
+        var form = document.getElementById('thesaurusPickerForm');
+        if (btn && form && typeof form.requestSubmit === 'function') {
+          form.requestSubmit(btn);
+          return false;
+        }
         if (btn) {
           btn.click();
           return false;
         }
+        if (form) {
+          form.submit();
+          return false;
+        }
         return true;
+      };
+      window.tpCurrentQuery = function () {
+        var input = document.getElementById('tpQuery') || document.querySelector('.tp-search-input');
+        return input && input.value != null ? String(input.value).trim().toLowerCase() : '';
+      };
+      window.tpColFilterValue = function (key) {
+        var best = '';
+        document.querySelectorAll('.tp-fi[data-tp-filter="' + key + '"]').forEach(function (el) {
+          var v = el && el.value != null ? String(el.value).trim() : '';
+          if (v) best = v;
+        });
+        return best.toLowerCase();
+      };
+      window.tpOnColFilter = function (el) {
+        if (!el) return;
+        var key = el.getAttribute('data-tp-filter');
+        if (!key) return;
+        var val = el.value != null ? el.value : '';
+        document.querySelectorAll('.tp-fi[data-tp-filter="' + key + '"]').forEach(function (other) {
+          if (other !== el) other.value = val;
+        });
+        window.tpApplyListFilters && window.tpApplyListFilters();
+      };
+      window.tpRowMatchesQuery = function (row, needle) {
+        if (!needle) return true;
+        if (!row) return false;
+        var hay = row.getAttribute('data-tp-search') || '';
+        return hay.indexOf(needle) !== -1;
+      };
+      window.tpRowMatchesColFilters = function (row) {
+        if (!row) return false;
+        var name = window.tpColFilterValue('name');
+        if (name) {
+          var hayName = row.getAttribute('data-tp-f-name') || '';
+          if (hayName.indexOf(name) === -1) return false;
+        }
+        var domain = window.tpColFilterValue('domain');
+        if (domain) {
+          var hayDomain = row.getAttribute('data-tp-f-domain') || '';
+          if (hayDomain.indexOf(domain) === -1) return false;
+        }
+        var projects = window.tpColFilterValue('projects');
+        if (projects) {
+          var hayProjects = row.getAttribute('data-tp-f-projects') || '';
+          if (hayProjects.indexOf(projects) === -1) return false;
+        }
+        var org = window.tpColFilterValue('org');
+        if (org) {
+          var hayOrg = row.getAttribute('data-tp-f-org') || '';
+          if (hayOrg.indexOf(org) === -1) return false;
+        }
+        var lang = window.tpColFilterValue('lang');
+        if (lang) {
+          var hayLangs = ' ' + (row.getAttribute('data-tp-f-langs') || '') + ' ';
+          if (hayLangs.indexOf(' ' + lang + ' ') === -1) return false;
+        }
+        return true;
+      };
+      window.tpApplyListFilters = function () {
+        var tabs = document.getElementById('tpTabs') || document.querySelector('.tp-tabs');
+        var active = tabs && tabs.querySelector('.tp-tab.is-on');
+        var hidden = document.getElementById('tpActiveTab');
+        var tab = (active && active.getAttribute('data-tp-tab'))
+          || (hidden && hidden.value)
+          || 'all';
+        var needle = window.tpCurrentQuery();
+        var visible = 0;
+        var queryMatches = 0;
+        document.querySelectorAll('tr.tp-row').forEach(function (row) {
+          var matchQ = window.tpRowMatchesQuery(row, needle);
+          var matchC = window.tpRowMatchesColFilters(row);
+          var matchT = window.tpRowMatchesTab(row, tab);
+          if (matchQ && matchC) queryMatches += 1;
+          row.classList.toggle('is-query-off', !matchQ);
+          row.classList.toggle('is-col-filter-off', !matchC);
+          row.classList.toggle('is-tab-off', !matchT);
+          if (matchQ && matchC && matchT) visible += 1;
+        });
+        var allCount = document.querySelector('.tp-tab[data-tp-tab="all"] .tp-tab-n');
+        if (allCount) allCount.textContent = String(queryMatches);
+        var tabEmpty = document.getElementById('tpTabEmpty');
+        var catalogEmpty = document.querySelector('.tp-empty-row--catalog');
+        if (tabEmpty) {
+          var showTabEmpty = visible === 0 && !catalogEmpty;
+          tabEmpty.hidden = !showTabEmpty;
+          if (showTabEmpty) tabEmpty.removeAttribute('hidden');
+          else tabEmpty.setAttribute('hidden', 'hidden');
+        }
+      };
+      window.tpClearSearch = function () {
+        var input = document.getElementById('tpQuery') || document.querySelector('.tp-search-input');
+        if (input) {
+          input.value = '';
+          input.focus();
+        }
+        window.tpSyncSearchClear(input);
+        return false;
       };
       window.tpSyncSearchClear = function (input) {
         var box = document.getElementById('tpSearch') || (input && input.closest && input.closest('.tp-search'));
@@ -405,6 +511,7 @@
           val = field ? field.value : '';
         }
         box.classList.toggle('has-query', String(val).trim().length > 0);
+        window.tpApplyListFilters && window.tpApplyListFilters();
       };
       window.tpSaveColumnPrefs = function () {
         window.tpWriteColumnPrefs(window.tpCollectColumnPrefs());
@@ -489,20 +596,7 @@
         return true;
       };
       window.tpApplyTabFilter = function (tab) {
-        var visible = 0;
-        document.querySelectorAll('tr.tp-row').forEach(function (row) {
-          var show = window.tpRowMatchesTab(row, tab);
-          row.classList.toggle('is-tab-off', !show);
-          if (show) visible += 1;
-        });
-        var tabEmpty = document.getElementById('tpTabEmpty');
-        var catalogEmpty = document.querySelector('.tp-empty-row--catalog');
-        if (tabEmpty) {
-          var showTabEmpty = visible === 0 && !catalogEmpty;
-          tabEmpty.hidden = !showTabEmpty;
-          if (showTabEmpty) tabEmpty.removeAttribute('hidden');
-          else tabEmpty.setAttribute('hidden', 'hidden');
-        }
+        window.tpApplyListFilters && window.tpApplyListFilters();
       };
       window.tpSelectTab = function (tabEl) {
         if (!tabEl) return false;

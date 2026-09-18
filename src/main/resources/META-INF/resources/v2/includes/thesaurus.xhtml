@@ -6,10 +6,11 @@
 
   <nav class="thesaurus" id="navThesaurus" aria-label="Navigation OpenTheso">
     <a class="thesaurus-logo" href="#{request.contextPath}/v2/thesauri" title="OpenTheso — sélection de thésaurus" aria-label="OpenTheso">
-      <svg viewBox="0 0 24 24" aria-hidden="true" class="logo-mark">
-        <circle cx="12" cy="12" r="8.2" class="logo-disc"/>
-        <path class="logo-seg" d="M12 3.8c-2.5 1.9-4 4.8-4 8.2s1.5 6.3 4 8.2c2.5-1.9 4-4.8 4-8.2s-1.5-6.3-4-8.2Z"/>
-      </svg>
+      <img src="#{request.contextPath}/resources/img/O_blanc_arrondi.png"
+           alt="OpenTheso"
+           width="40"
+           height="40"
+           decoding="async"/>
     </a>
     <button type="button" class="thesaurus-btn sb-rail-btn" id="sbOpenBtn" data-act="sb-toggle"
             title="#{v2LocaleBean.getMsg('v2.shell.treeOpen')}"
@@ -21,12 +22,17 @@
     </button>
     <div class="thesaurus-group">
       <div class="thesaurus-item">
-        <button type="button" class="thesaurus-btn#{not v2UserSession.loggedIn and not empty v2LoginBean.loginError ? ' is-on' : ''}"
+        <button type="button" class="thesaurus-btn#{v2UserSession.loggedIn ? ' is-avatar' : ''}#{not v2UserSession.loggedIn and not empty v2LoginBean.loginError ? ' is-on' : ''}"
                 data-act="thesaurus" data-thesaurus="account"
                 title="#{v2UserSession.loggedIn ? v2LocaleBean.getMsg('v2.nav.account') : v2LocaleBean.getMsg('menu.login')}"
                 aria-label="#{v2UserSession.loggedIn ? v2LocaleBean.getMsg('v2.nav.account') : v2LocaleBean.getMsg('menu.login')}"
                 aria-expanded="#{not v2UserSession.loggedIn and not empty v2LoginBean.loginError}">
-          <svg viewBox="0 0 24 24" aria-hidden="true"><path d="M19 21v-1.5a4 4 0 0 0-4-4H9a4 4 0 0 0-4 4V21"/><circle cx="12" cy="7" r="4"/></svg>
+          <ui:fragment rendered="#{not v2UserSession.loggedIn}">
+            <svg viewBox="0 0 24 24" aria-hidden="true"><path d="M19 21v-1.5a4 4 0 0 0-4-4H9a4 4 0 0 0-4 4V21"/><circle cx="12" cy="7" r="4"/></svg>
+          </ui:fragment>
+          <ui:fragment rendered="#{v2UserSession.loggedIn}">
+            <span class="thesaurus-avatar" aria-hidden="true">#{v2UserSession.currentUserInitials}</span>
+          </ui:fragment>
         </button>
         <div class="menu-pop menu-pop--top#{not v2UserSession.loggedIn ? ' menu-pop--login' : ''}" id="menu-account">
         <ui:fragment rendered="#{not v2UserSession.loggedIn}">

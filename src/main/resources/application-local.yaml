@@ -103,6 +103,7 @@ settings:
   workLanguage: fr
 
 opentheso:
+  public-base-url: ${OPENTHESO_PUBLIC_BASE_URL:http://localhost:8099}
   concept-write:
     native-persistence-enabled: true
   auth:
