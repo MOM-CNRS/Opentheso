@@ -6,13 +6,51 @@
                 xmlns:pt="http://xmlns.jcp.org/jsf/passthrough">
     <script type="text/javascript">
       //<![CDATA[
-      window.tpShowLoading = function (msg, asImport) {
+      window.tpApplyProgressSteps = function (mode) {
+        var box = document.getElementById('tpLoading');
+        if (!box) return;
+        var exportMode = mode === 'export';
+        var labels = exportMode
+          ? [
+              box.getAttribute('data-export-step-0'),
+              box.getAttribute('data-export-step-1'),
+              box.getAttribute('data-export-step-2'),
+              box.getAttribute('data-export-step-3')
+            ]
+          : [
+              box.getAttribute('data-step-prepare'),
+              box.getAttribute('data-step-create'),
+              box.getAttribute('data-step-concepts'),
+              box.getAttribute('data-step-finalize')
+            ];
+        box.querySelectorAll('.tp-prog-steps li').forEach(function (li, idx) {
+          if (labels[idx]) li.textContent = labels[idx];
+        });
+        var list = box.querySelector('.tp-prog-steps');
+        if (list) {
+          list.setAttribute(
+            'aria-label',
+            box.getAttribute(exportMode ? 'data-export-steps' : 'data-import-steps') || ''
+          );
+        }
+        box.setAttribute(
+          'data-active-meta-tpl',
+          box.getAttribute(exportMode ? 'data-export-meta-tpl' : 'data-meta-tpl') || box.getAttribute('data-meta-tpl') || ''
+        );
+      };
+      window.tpShowLoading = function (msg, mode) {
         var el = document.getElementById('tpLoading');
         if (!el) return true;
-        el.classList.toggle('is-import', !!asImport);
+        var asExport = mode === 'export';
+        var asRich = mode === true || mode === 'import' || asExport;
+        el.classList.toggle('is-import', asRich && !asExport);
+        el.classList.toggle('is-export', asExport);
+        if (asRich) {
+          window.tpApplyProgressSteps(asExport ? 'export' : 'import');
+        }
         var title = document.getElementById('tpProgTitle');
         var simpleTxt = el.querySelector('.tp-loading-txt');
-        if (asImport) {
+        if (asRich) {
           if (title && msg) title.textContent = msg;
         } else if (simpleTxt && msg) {
           simpleTxt.textContent = msg;
@@ -29,7 +67,7 @@
         // Filet de sécurité : ne jamais laisser l'overlay bloquer l'UI.
         window._tpLoadingSafety = window.setTimeout(function () {
           window.tpCleanupUiLocks && window.tpCleanupUiLocks();
-        }, asImport ? 180000 : 8000);
+        }, asRich ? (asExport ? 900000 : 180000) : 8000);
         return true;
       };
       window.tpHideLoading = function () {
@@ -45,6 +83,8 @@
           el.setAttribute('hidden', 'hidden');
           el.setAttribute('aria-busy', 'false');
           el.classList.remove('is-import');
+          el.classList.remove('is-export');
+          window.tpApplyProgressSteps('import');
         }
         document.body.classList.remove('tp-is-loading');
       };
@@ -93,7 +133,11 @@
         var rateTxt = box ? window.tpFmtRate(box, ratePerSec) : '';
         if (meta && countEl) {
           if (hasCount) {
-            countEl.textContent = window.tpFmtTpl(box.getAttribute('data-meta-tpl'), done, total);
+            countEl.textContent = window.tpFmtTpl(
+              box.getAttribute('data-active-meta-tpl') || box.getAttribute('data-meta-tpl'),
+              done,
+              total
+            );
             if (etaEl) {
               etaEl.textContent = etaTxt;
               etaEl.hidden = !etaTxt;
@@ -871,6 +915,7 @@
           loading.hidden = true;
           loading.setAttribute('hidden', 'hidden');
           loading.classList.remove('is-import');
+          loading.classList.remove('is-export');
           loading.setAttribute('aria-busy', 'false');
         }
         document.querySelectorAll('.tp.tp--leaving, .tp--leaving').forEach(function (node) {

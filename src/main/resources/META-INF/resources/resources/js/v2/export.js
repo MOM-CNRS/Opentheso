@@ -494,13 +494,76 @@ function setExportBusy(on, keepProgress) {
   else if (keepProgress) setExportActions("done");
   else setExportActions("idle");
   if (exportBusy) {
+    showExportOverlay();
     const prog = $("#bulkExportProg");
     requestAnimationFrame(() => {
-      if (prog) prog.scrollIntoView({ block: "nearest", behavior: "smooth" });
+      if (prog && !usesExportOverlay()) prog.scrollIntoView({ block: "nearest", behavior: "smooth" });
     });
   } else {
+    hideExportOverlay(!!keepProgress);
     refreshExportSummary();
   }
+}
+
+function usesExportOverlay() {
+  return !!(document.getElementById("tpLoading") && document.getElementById("tpExportHost"));
+}
+
+function showExportOverlay(msg) {
+  if (!usesExportOverlay() || !window.tpShowLoading) return;
+  const box = document.getElementById("tpLoading");
+  const title = msg
+    || (box && box.getAttribute("data-export-running"))
+    || "Export du thésaurus…";
+  if (!box.classList.contains("is-export") || box.hidden) {
+    window.tpShowLoading(title, "export");
+  } else if (title) {
+    const t = document.getElementById("tpProgTitle");
+    if (t) t.textContent = title;
+  }
+}
+
+function hideExportOverlay(keepBriefly) {
+  if (!usesExportOverlay() || !window.tpHideLoading) return;
+  const box = document.getElementById("tpLoading");
+  if (!box || !box.classList.contains("is-export")) return;
+  if (window._tpExportOverlayHide) {
+    window.clearTimeout(window._tpExportOverlayHide);
+    window._tpExportOverlayHide = 0;
+  }
+  if (keepBriefly) {
+    window._tpExportOverlayHide = window.setTimeout(() => {
+      window.tpHideLoading && window.tpHideLoading();
+      window._tpExportOverlayHide = 0;
+    }, 700);
+    return;
+  }
+  window.tpHideLoading();
+}
+
+function paintExportOverlay(data) {
+  if (!usesExportOverlay() || !window.tpPaintImportProgress) return;
+  const box = document.getElementById("tpLoading");
+  const pct = Math.max(0, Math.min(100, Number(data && data.progress) || 0));
+  const phaseCount = Math.max(1, Number(data && data.phaseCount) || 4);
+  const idx = Number(data && data.phaseIndex);
+  const phaseIndex = Number.isFinite(idx) ? Math.max(0, Math.min(phaseCount - 1, idx)) : 0;
+  const done = Number(data && data.done) || 0;
+  const total = Number(data && data.total) || 0;
+  const doneAll = data && data.status === "done";
+  const message = doneAll
+    ? ((box && box.getAttribute("data-export-done")) || "Export terminé")
+    : ((data && data.message) || (data && data.phaseLabel) || "");
+  showExportOverlay(message || ((box && box.getAttribute("data-export-running")) || "Export…"));
+  window.tpPaintImportProgress(
+    doneAll ? 100 : pct,
+    doneAll ? phaseCount - 1 : phaseIndex,
+    message,
+    done,
+    total,
+    -1,
+    0
+  );
 }
 
 function setExportActions(mode) {
@@ -610,6 +673,7 @@ function paintExportProgress(data) {
     else if (!on) li.classList.remove("is-enter");
   });
   lastExportPhase = phaseIndex;
+  paintExportOverlay(data);
 }
 
 function replayExportAnim(el, cls) {

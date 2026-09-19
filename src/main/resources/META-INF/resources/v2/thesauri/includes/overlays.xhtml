@@ -75,8 +75,17 @@
            data-step-create="#{v2LocaleBean.getMsg('v2.picker.import.progress.step.create')}"
            data-step-concepts="#{v2LocaleBean.getMsg('v2.picker.import.progress.step.concepts')}"
            data-step-finalize="#{v2LocaleBean.getMsg('v2.picker.import.progress.step.finalize')}"
+           data-import-steps="#{v2LocaleBean.getMsg('v2.picker.import.progress.steps')}"
            data-done="#{v2LocaleBean.getMsg('v2.picker.import.progress.done')}"
+           data-export-running="#{v2LocaleBean.getMsg('v2.picker.export.running')}"
+           data-export-done="#{v2LocaleBean.getMsg('v2.picker.export.progress.done')}"
+           data-export-steps="#{v2LocaleBean.getMsg('v2.picker.export.progress.steps')}"
+           data-export-step-0="#{v2LocaleBean.getMsg('v2.picker.export.progress.step.prepare')}"
+           data-export-step-1="#{v2LocaleBean.getMsg('v2.picker.export.progress.step.read')}"
+           data-export-step-2="#{v2LocaleBean.getMsg('v2.picker.export.progress.step.build')}"
+           data-export-step-3="#{v2LocaleBean.getMsg('v2.picker.export.progress.step.file')}"
            data-meta-tpl="#{v2LocaleBean.getMsg('v2.picker.import.progress.conceptsMeta')}"
+           data-export-meta-tpl="#{v2LocaleBean.getMsg('v2.picker.export.progress.conceptsMeta')}"
            data-eta-tpl="#{v2LocaleBean.getMsg('v2.picker.import.progress.eta')}"
            data-eta-sec-tpl="#{v2LocaleBean.getMsg('v2.picker.import.progress.etaSeconds')}"
            data-eta-min-tpl="#{v2LocaleBean.getMsg('v2.picker.import.progress.etaMinutes')}"
@@ -102,7 +111,7 @@
               <span class="tp-prog-rate" id="tpProgRate"></span>
             </div>
             <div class="tp-prog-detail" id="tpProgDetail"></div>
-            <ol class="tp-prog-steps" aria-label="#{v2LocaleBean.getMsg('v2.picker.import.progress.steps')}">
+            <ol class="tp-prog-steps" id="tpProgSteps" aria-label="#{v2LocaleBean.getMsg('v2.picker.import.progress.steps')}">
               <li data-step="0">#{v2LocaleBean.getMsg('v2.picker.import.progress.step.prepare')}</li>
               <li data-step="1">#{v2LocaleBean.getMsg('v2.picker.import.progress.step.create')}</li>
               <li data-step="2">#{v2LocaleBean.getMsg('v2.picker.import.progress.step.concepts')}</li>

@@ -333,11 +333,14 @@ button.tp-create, input.tp-create[type="submit"]{
   background:var(--surface);border:1px solid var(--line);box-shadow:var(--shadow-lg);
   animation:tp-rise-in .22s ease-out}
 .tp-prog-card{display:flex;flex-direction:column;align-items:stretch;gap:10px;min-width:min(280px,92vw);padding:18px 20px}
-.tp-loading.is-import .tp-prog-card{min-width:min(460px,94vw)}
+.tp-loading.is-import .tp-prog-card,
+.tp-loading.is-export .tp-prog-card{min-width:min(460px,94vw)}
 .tp-prog-simple{display:inline-flex;align-items:center;gap:12px}
 .tp-prog-import{display:none;flex-direction:column;gap:10px}
-.tp-loading.is-import .tp-prog-simple{display:none}
-.tp-loading.is-import .tp-prog-import{display:flex}
+.tp-loading.is-import .tp-prog-simple,
+.tp-loading.is-export .tp-prog-simple{display:none}
+.tp-loading.is-import .tp-prog-import,
+.tp-loading.is-export .tp-prog-import{display:flex}
 .tp-prog-h{display:flex;align-items:baseline;justify-content:space-between;gap:12px}
 .tp-prog-t{font-size:14px;font-weight:650;color:var(--ink-2);line-height:1.35}
 .tp-prog-pct{flex:0 0 auto;font-family:var(--mono,"IBM Plex Mono",ui-monospace,monospace);font-size:15px;font-weight:700;color:var(--accent);letter-spacing:.02em}
@@ -367,7 +370,8 @@ button.tp-create, input.tp-create[type="submit"]{
   .tp-form-alert.is-enter,#tpImportPreview.is-ready .tp-form-row--preview,.tp--import .tp-form-submit.is-ready-pulse,.tp-import-dropzone.is-pending .tp-drop-filled,.tp-import-more-body{animation:none!important}
 }
 @media (max-width:640px){
-  .tp-loading.is-import .tp-prog-card{min-width:min(100vw - 24px,94vw);padding:16px;gap:8px}
+  .tp-loading.is-import .tp-prog-card,
+  .tp-loading.is-export .tp-prog-card{min-width:min(100vw - 24px,94vw);padding:16px;gap:8px}
   .tp-prog-steps{flex-wrap:wrap;gap:4px}
   .tp-prog-steps li{flex:1 1 calc(50% - 4px);font-size:10px;padding:7px 4px}
   .tp-prog-meta{font-size:11px}
@@ -1441,9 +1445,10 @@ body[data-page="thesauri"] .tp--create .bo-back.is-leaving{
 }
 .tp-export-host #bulkExport:not(.is-busy) #bulkExportCancel{display:none}
 .tp-export-host .xprog{
-  margin-top:12px;padding:18px;border-radius:14px;border:1px solid var(--line);
-  background:linear-gradient(180deg, var(--surface) 0%, var(--bg) 100%);
-  box-shadow:var(--shadow-sm);animation:tp-alert-in .34s cubic-bezier(.22,1,.36,1)
+  display:none!important
+}
+body[data-page="thesauri"] .tp--export .xprog{
+  display:none!important
 }
 .tp-export-host .xerr{margin:10px 0 0;font-size:13px;color:var(--danger,#b42318)}
 @media (max-width:640px){
