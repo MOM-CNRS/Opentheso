@@ -264,6 +264,15 @@
               </h:selectOneMenu>
             </div>
 
+            <div class="tp-form-row">
+              <span class="tp-form-l">#{v2LocaleBean.getMsg('v2.picker.import.visibility')}</span>
+              <label class="tp-import-check">
+                <h:selectBooleanCheckbox id="tpImportPrivate"
+                                         value="#{v2ThesaurusPickerImportBean.privateThesaurus}"/>
+                <span>#{v2LocaleBean.getMsg('v2.picker.import.private')}</span>
+              </label>
+            </div>
+
             <details class="tp-import-more#{(not empty v2ThesaurusPickerImportBean.persistentName) or (v2ThesaurusPickerImportBean.isFormat('skos') and v2ThesaurusPickerImportBean.selectedIdentifier ne 'sans') ? ' is-open' : ''}"
                      id="tpImportMore">
               <summary class="tp-import-more-sum">

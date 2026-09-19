@@ -57,6 +57,10 @@ public class V2NavigationBean implements Serializable {
     }
 
     public void redirectToMyProfile() throws IOException {
+        if (!userSession.isLoggedIn()) {
+            redirect("/v2/thesauri");
+            return;
+        }
         activePageName = "myAccountV2";
         redirect("/v2/user/compte.xhtml");
     }

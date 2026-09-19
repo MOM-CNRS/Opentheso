@@ -485,20 +485,29 @@ function setExportFormat(fmt) {
 
 function setExportBusy(on, keepProgress) {
   exportBusy = !!on;
-  document.body.classList.toggle("is-export-lock", exportBusy);
+  const overlay = usesExportOverlay();
+  // Sur la page thesauri : uniquement l'overlay tpLoading (comme l'import).
+  // Pas de barre inline ni de flou is-export-lock en plus.
+  document.body.classList.toggle("is-export-lock", exportBusy && !overlay);
   document.body.setAttribute("aria-busy", exportBusy ? "true" : "false");
   const panel = $("#bulkExport");
   if (panel) panel.classList.toggle("is-busy", exportBusy);
-  setExportPanes(!exportBusy, exportBusy || !!keepProgress);
+  if (overlay) {
+    setExportPanes(true, false);
+  } else {
+    setExportPanes(!exportBusy, exportBusy || !!keepProgress);
+  }
   if (exportBusy) setExportActions("busy");
   else if (keepProgress) setExportActions("done");
   else setExportActions("idle");
   if (exportBusy) {
     showExportOverlay();
-    const prog = $("#bulkExportProg");
-    requestAnimationFrame(() => {
-      if (prog && !usesExportOverlay()) prog.scrollIntoView({ block: "nearest", behavior: "smooth" });
-    });
+    if (!overlay) {
+      const prog = $("#bulkExportProg");
+      requestAnimationFrame(() => {
+        if (prog) prog.scrollIntoView({ block: "nearest", behavior: "smooth" });
+      });
+    }
   } else {
     hideExportOverlay(!!keepProgress);
     refreshExportSummary();
@@ -615,6 +624,11 @@ function showExportError(msg) {
 let lastExportPhase = -1;
 
 function paintExportProgress(data) {
+  // Page export thesauri : progression uniquement dans tpLoading (même UX que l'import).
+  if (usesExportOverlay()) {
+    paintExportOverlay(data);
+    return;
+  }
   const prog = $("#bulkExportProg");
   if (prog) {
     prog.classList.remove("is-wait");

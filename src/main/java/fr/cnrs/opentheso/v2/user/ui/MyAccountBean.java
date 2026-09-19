@@ -128,6 +128,8 @@ public class MyAccountBean implements Serializable {
             profile = userProfileService.updateIdentity(userId, editableUsername, editableEmail);
             userSession.refreshDisplayName(profile.username());
             userSession.refreshEmail(profile.email());
+            profile = userProfileService.updateAlertMail(userId, editableAlertMail);
+            userSession.refreshAlertMail(profile.alertMail());
             if (changingPassword) {
                 userPasswordService.changePassword(userId, newPassword, passwordConfirmation);
             }
@@ -152,18 +154,69 @@ public class MyAccountBean implements Serializable {
         return localeBean.getMsg("v2.profile.role." + roleName);
     }
 
+    /**
+     * Rôles distincts occupés sur les thésaurus (libellés localisés), triés du plus élevé au plus bas.
+     */
+    public List<String> getUniqueRoleLabels() {
+        doLoad();
+        if (projectRoles == null || projectRoles.isEmpty()) {
+            return Collections.emptyList();
+        }
+        var uniqueRoleNames = new java.util.LinkedHashSet<String>();
+        for (ProjectRoleOverview project : projectRoles) {
+            if (project.thesaurusRoles() == null) {
+                continue;
+            }
+            for (var role : project.thesaurusRoles()) {
+                if (StringUtils.isNotBlank(role.roleName())) {
+                    uniqueRoleNames.add(role.roleName().trim());
+                }
+            }
+        }
+        return uniqueRoleNames.stream()
+                .sorted(java.util.Comparator.comparingInt(MyAccountBean::roleRank))
+                .map(this::labelForRole)
+                .filter(StringUtils::isNotBlank)
+                .toList();
+    }
+
+    private static int roleRank(String roleName) {
+        return switch (roleName) {
+            case "superAdmin" -> 1;
+            case "admin" -> 2;
+            case "manager" -> 3;
+            case "contributor" -> 4;
+            default -> 50;
+        };
+    }
+
+    public String getApiKeyDisplay() {
+        if (StringUtils.isNotBlank(apiKeyPlain)) {
+            return apiKeyPlain;
+        }
+        if (profile != null && profile.hasApiKey()) {
+            return localeBean.getMsg("v2.profile.api.masked");
+        }
+        return localeBean.getMsg("v2.profile.api.none");
+    }
+
     public void regenerateApiKey() {
+        identitySaveError = false;
+        identitySaveMessage = "";
         Integer userId = requireConnectedUserId();
         if (userId == null) {
+            identitySaveError = true;
+            identitySaveMessage = localeBean.getMsg("profile.userNotConnected");
             return;
         }
         try {
             var result = userApiKeyService.regenerateApiKey(userId);
             profile = result.profile();
             apiKeyPlain = result.plainTextKey();
-            MessageUtils.showInformationMessage(localeBean.getMsg("profile.apiKeySavedSuccess"));
+            identitySaveMessage = localeBean.getMsg("profile.apiKeySavedSuccess");
         } catch (ApiKeyRegenerationException e) {
-            MessageUtils.showErrorMessage(e.getMessage());
+            identitySaveError = true;
+            identitySaveMessage = e.getMessage();
         }
     }
 
@@ -187,7 +240,7 @@ public class MyAccountBean implements Serializable {
         return ApiKeyPolicy.isSectionVisible(profile);
     }
 
-    public boolean canRegenerateApiKey() {
+    public boolean isCanRegenerateApiKey() {
         return userApiKeyService.canRegenerateApiKey(profile);
     }
 

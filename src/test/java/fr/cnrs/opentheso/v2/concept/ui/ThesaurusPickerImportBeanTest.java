@@ -9,6 +9,7 @@ import fr.cnrs.opentheso.v2.toolbox.edition.service.ThesaurusEditionSkosImportSe
 import fr.cnrs.opentheso.v2.toolbox.model.LanguageOption;
 import fr.cnrs.opentheso.v2.toolbox.model.NewThesaurusFormOptions;
 import fr.cnrs.opentheso.v2.toolbox.model.ProjectOption;
+import fr.cnrs.opentheso.v2.toolbox.persistence.ToolboxThesaurusPersistence;
 import fr.cnrs.opentheso.v2.toolbox.policy.ToolboxAccessPolicy;
 import fr.cnrs.opentheso.v2.toolbox.service.NewThesaurusService;
 import org.junit.jupiter.api.BeforeEach;
@@ -41,6 +42,8 @@ class ThesaurusPickerImportBeanTest {
     @Mock
     private NewThesaurusService newThesaurusService;
     @Mock
+    private ToolboxThesaurusPersistence toolboxThesaurusPersistence;
+    @Mock
     private ThesaurusEditionSkosImportService skosImportService;
     @Mock
     private ThesaurusEditionCsvImportService csvImportService;
@@ -64,6 +67,7 @@ class ThesaurusPickerImportBeanTest {
                 v2LocaleBean,
                 toolboxAccessPolicy,
                 newThesaurusService,
+                toolboxThesaurusPersistence,
                 skosImportService,
                 csvImportService,
                 csvStructuredImportService,

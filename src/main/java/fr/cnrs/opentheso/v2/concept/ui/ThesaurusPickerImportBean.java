@@ -14,6 +14,7 @@ import fr.cnrs.opentheso.v2.toolbox.edition.service.ThesaurusEditionSkosImportSe
 import fr.cnrs.opentheso.v2.toolbox.edition.support.CsvDelimiterSupport;
 import fr.cnrs.opentheso.v2.toolbox.model.LanguageOption;
 import fr.cnrs.opentheso.v2.toolbox.model.ProjectOption;
+import fr.cnrs.opentheso.v2.toolbox.persistence.ToolboxThesaurusPersistence;
 import fr.cnrs.opentheso.v2.toolbox.policy.ToolboxAccessPolicy;
 import fr.cnrs.opentheso.v2.toolbox.service.NewThesaurusService;
 import jakarta.faces.context.FacesContext;
@@ -61,6 +62,7 @@ public class ThesaurusPickerImportBean implements Serializable {
     private final transient V2LocaleBean v2LocaleBean;
     private final transient ToolboxAccessPolicy toolboxAccessPolicy;
     private final transient NewThesaurusService newThesaurusService;
+    private final transient ToolboxThesaurusPersistence toolboxThesaurusPersistence;
     private final transient ThesaurusEditionSkosImportService skosImportService;
     private final transient ThesaurusEditionCsvImportService csvImportService;
     private final transient ThesaurusEditionCsvStructuredImportService csvStructuredImportService;
@@ -88,6 +90,8 @@ public class ThesaurusPickerImportBean implements Serializable {
     private boolean existingThesaurusDetected;
     private String existingThesaurusId;
     private boolean importAsMaster;
+    /** {@code true} = privé, {@code false} = public (défaut). */
+    private boolean privateThesaurus;
 
     private transient Part upload;
     /** Chemin absolu du fichier temporaire d'upload (sous {@code java.io.tmpdir/opentheso-import/}). */
@@ -595,7 +599,7 @@ public class ThesaurusPickerImportBean implements Serializable {
         }
         Integer projectId = parseProjectId();
         boolean asMaster = existingThesaurusDetected && importAsMaster;
-        return skosImportService.importNewThesaurus(
+        String thesaurusId = skosImportService.importNewThesaurus(
                 skosDocument,
                 formatDate,
                 userId,
@@ -610,6 +614,8 @@ public class ThesaurusPickerImportBean implements Serializable {
                         asMaster
                 )
         );
+        applyVisibility(thesaurusId);
+        return thesaurusId;
     }
 
     private String submitCsv(int userId) {
@@ -630,6 +636,7 @@ public class ThesaurusPickerImportBean implements Serializable {
                         persistentName
                 )
         );
+        applyVisibility(outcome.thesaurusId());
         return outcome.thesaurusId();
     }
 
@@ -646,7 +653,15 @@ public class ThesaurusPickerImportBean implements Serializable {
                 parseProjectId(),
                 structuredRoot
         );
+        applyVisibility(outcome.thesaurusId());
         return outcome.thesaurusId();
+    }
+
+    private void applyVisibility(String thesaurusId) {
+        if (StringUtils.isBlank(thesaurusId)) {
+            return;
+        }
+        toolboxThesaurusPersistence.setVisibility(thesaurusId, privateThesaurus);
     }
 
     private void detectExistingSkosThesaurus() {
@@ -764,6 +779,8 @@ public class ThesaurusPickerImportBean implements Serializable {
         prefixHandle = "";
         prefixDoi = "";
         selectedProjectId = null;
+        privateThesaurus = false;
+        importAsMaster = false;
         clearLoadedFile();
     }
 

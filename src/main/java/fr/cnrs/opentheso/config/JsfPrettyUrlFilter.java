@@ -50,6 +50,7 @@ public class JsfPrettyUrlFilter extends OncePerRequestFilter {
             Map.entry("/candidats.xhtml", "/v2/candidat/candidats.xhtml"),
             Map.entry("/graphe.xhtml", "/v2/graph/graphe.xhtml"),
             Map.entry("/compte.xhtml", "/v2/user/compte.xhtml"),
+            Map.entry("/preference-user.xhtml", "/v2/user/preference.xhtml"),
             Map.entry("/projets.xhtml", "/v2/project/projets.xhtml"),
             Map.entry("/admin-utilisateurs.xhtml", "/v2/admin/utilisateurs.xhtml"),
             Map.entry("/admin-projets.xhtml", "/v2/admin/projets.xhtml"),

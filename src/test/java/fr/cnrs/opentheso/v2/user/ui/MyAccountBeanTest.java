@@ -7,6 +7,8 @@ import fr.cnrs.opentheso.v2.user.exception.ApiKeyRegenerationException;
 import fr.cnrs.opentheso.v2.user.exception.InvalidProfileDataException;
 import fr.cnrs.opentheso.v2.user.model.ApiKeyGenerationResult;
 import fr.cnrs.opentheso.v2.user.model.ProfileWithRoles;
+import fr.cnrs.opentheso.v2.user.model.ProjectRoleOverview;
+import fr.cnrs.opentheso.v2.user.model.ThesaurusRoleOverview;
 import fr.cnrs.opentheso.v2.user.model.UserProfile;
 import fr.cnrs.opentheso.v2.user.service.UserApiKeyService;
 import fr.cnrs.opentheso.v2.user.service.UserPasswordService;
@@ -58,6 +60,10 @@ class MyAccountBeanTest {
     void setUp() {
         lenient().when(localeBean.getMsg(org.mockito.ArgumentMatchers.anyString()))
                 .thenAnswer(invocation -> invocation.getArgument(0));
+        lenient().when(userProfileService.updateAlertMail(
+                        org.mockito.ArgumentMatchers.anyInt(),
+                        org.mockito.ArgumentMatchers.anyBoolean()))
+                .thenAnswer(inv -> PROFILE);
         myAccountBean = new MyAccountBean(
                 userSession,
                 localeBean,
@@ -116,13 +122,38 @@ class MyAccountBeanTest {
     }
 
     @Test
+    void uniqueRoleLabels_deduplicatesAndOrdersByPrivilege() {
+        when(userSession.getCurrentUserId()).thenReturn(5);
+        when(userProfileService.getProfileWithRoles(5)).thenReturn(new ProfileWithRoles(
+                PROFILE,
+                List.of(
+                        new ProjectRoleOverview(1, "P1", List.of(
+                                new ThesaurusRoleOverview("A", "Th A", "contributor"),
+                                new ThesaurusRoleOverview("B", "Th B", "admin")
+                        )),
+                        new ProjectRoleOverview(2, "P2", List.of(
+                                new ThesaurusRoleOverview("C", "Th C", "admin"),
+                                new ThesaurusRoleOverview("D", "Th D", "manager")
+                        ))
+                )
+        ));
+
+        myAccountBean.load();
+
+        assertEquals(
+                List.of("v2.profile.role.admin", "v2.profile.role.manager", "v2.profile.role.contributor"),
+                myAccountBean.getUniqueRoleLabels()
+        );
+    }
+
+    @Test
     void jsfHelpers_detectExpiredKey() {
         myAccountBean.setProfile(new UserProfile(
                 5, "alice", "alice@example.com", true, false, false, LocalDate.of(2000, Month.JANUARY, 1), true
         ));
 
         assertTrue(myAccountBean.isKeyExpired());
-        assertFalse(myAccountBean.canRegenerateApiKey());
+        assertFalse(myAccountBean.isCanRegenerateApiKey());
     }
 
     @Test
@@ -296,11 +327,11 @@ class MyAccountBeanTest {
                 new ApiKeyGenerationResult("plain-key", PROFILE)
         );
 
-        try (MockedStatic<MessageUtils> messages = mockStatic(MessageUtils.class)) {
-            myAccountBean.regenerateApiKey();
-        }
+        myAccountBean.regenerateApiKey();
 
         assertEquals("plain-key", myAccountBean.getApiKeyPlain());
+        assertFalse(myAccountBean.isIdentitySaveError());
+        assertEquals("profile.apiKeySavedSuccess", myAccountBean.getIdentitySaveMessage());
     }
 
     @Test
@@ -309,10 +340,10 @@ class MyAccountBeanTest {
         when(userApiKeyService.regenerateApiKey(5))
                 .thenThrow(new ApiKeyRegenerationException("Clé expirée"));
 
-        try (MockedStatic<MessageUtils> messages = mockStatic(MessageUtils.class)) {
-            myAccountBean.regenerateApiKey();
-            messages.verify(() -> MessageUtils.showErrorMessage("Clé expirée"));
-        }
+        myAccountBean.regenerateApiKey();
+
+        assertTrue(myAccountBean.isIdentitySaveError());
+        assertEquals("Clé expirée", myAccountBean.getIdentitySaveMessage());
     }
 
     @Test
