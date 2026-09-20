@@ -410,7 +410,7 @@ public class ConsultationShellBean implements Serializable {
     private void refreshBrowseState() {
         invokeViewAction("#{v2ThesaurusBrowseBean.load()}");
         invokeViewAction("#{v2ConceptSearchBean.syncFromContext()}");
-        invokeViewAction("#{v2PropositionBean.refreshPendingCount()}");
+        invokeViewAction("#{v2PropositionBean.refreshBadgeCount()}");
     }
 
     /**
@@ -453,7 +453,7 @@ public class ConsultationShellBean implements Serializable {
     /** Comme legacy {@code propositionBean.searchNewPropositions()} — best effort. */
     private void safeRefreshPropositions() {
         try {
-            invokeViewAction("#{v2PropositionBean.refreshPendingCount()}");
+            invokeViewAction("#{v2PropositionBean.refreshBadgeCount()}");
         } catch (RuntimeException ignored) {
             // ne pas bloquer la navigation
         }

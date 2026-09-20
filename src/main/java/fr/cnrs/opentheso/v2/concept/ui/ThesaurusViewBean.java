@@ -535,11 +535,13 @@ public class ThesaurusViewBean implements Serializable {
         canEdit = null;
         languages = null;
         selectedLang = null;
+        refreshPropositionBadge();
     }
 
     public void openTreeNode(String id, String nodeType) {
         if (propositionBean != null) {
             propositionBean.clearConsultation();
+            propositionBean.refreshBadgeCount();
         }
         detailRequested = true;
         selectedId = StringUtils.trimToEmpty(id);
@@ -1119,6 +1121,16 @@ public class ThesaurusViewBean implements Serializable {
             );
         }
         return homeOverview;
+    }
+
+    public void refreshHomeOverview() {
+        invalidateHomeOverview();
+    }
+
+    private void refreshPropositionBadge() {
+        if (propositionBean != null) {
+            propositionBean.refreshBadgeCount();
+        }
     }
 
     private void invalidateHomeOverview() {

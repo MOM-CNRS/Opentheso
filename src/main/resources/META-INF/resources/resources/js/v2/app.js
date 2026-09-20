@@ -377,6 +377,11 @@ document.addEventListener("click", (e) => {
     closeExportCsvLangPicker();
   }
   if (act !== "cv-ctx-toggle") closeCvCtx();
+  if (act === "th-dc-toggle") {
+    e.preventDefault();
+    toggleThDcPanel(t);
+    return;
+  }
   if (act === "sb-toggle") {
     e.preventDefault();
     closeThesaurus();
@@ -1453,6 +1458,7 @@ function onV2Ajax(data) {
         return;
       }
       syncAboutFold();
+      restoreThDcPanel();
       markAboutVisualEmpty();
       maybeRememberAboutBaseline();
       refreshAboutFmtState();
@@ -1470,6 +1476,39 @@ if (window.faces && faces.ajax) {
 } else if (window.jsf && jsf.ajax) {
   jsf.ajax.addOnEvent(onV2Ajax);
 }
+
+const TH_DC_OPEN_KEY = "v2-th-dc-open";
+
+function applyThDcOpen(root, open) {
+  if (!root) return;
+  root.classList.toggle("is-open", open);
+  const btn = root.querySelector("[data-act='th-dc-toggle']");
+  if (btn) btn.setAttribute("aria-expanded", open ? "true" : "false");
+}
+
+function toggleThDcPanel(t) {
+  const root = t.closest(".th-dc");
+  if (!root) return;
+  const open = !root.classList.contains("is-open");
+  applyThDcOpen(root, open);
+  try {
+    sessionStorage.setItem(TH_DC_OPEN_KEY, open ? "1" : "0");
+  } catch (ex) {}
+}
+
+function restoreThDcPanel() {
+  const root = document.querySelector("#previewMetadataForm .th-dc");
+  if (!root) return;
+  let open = root.classList.contains("is-editing");
+  if (!open) {
+    try {
+      open = sessionStorage.getItem(TH_DC_OPEN_KEY) === "1";
+    } catch (ex) {}
+  }
+  applyThDcOpen(root, open);
+}
+
+restoreThDcPanel();
 
 function scrollToPrefHash() {
   const id = (location.hash || "").replace(/^#/, "");

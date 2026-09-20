@@ -49,29 +49,152 @@
                       </ui:repeat>
                     </div>
                   </h:panelGroup>
-                  <h:panelGroup rendered="#{v2ThesaurusViewBean.metadataPresent}" layout="block">
-                    <details class="th-dc">
-                      <summary>#{v2LocaleBean.getMsg('v2.home.metadata')}</summary>
-                      <table class="th-dc-table">
-                        <thead>
-                          <tr>
-                            <th>#{v2LocaleBean.getMsg('v2.home.dc.property')}</th>
-                            <th>#{v2LocaleBean.getMsg('v2.home.dc.value')}</th>
-                            <th>#{v2LocaleBean.getMsg('v2.home.dc.lang')}</th>
-                          </tr>
-                        </thead>
-                        <tbody>
-                          <ui:repeat value="#{v2ThesaurusViewBean.metadata}" var="dc">
+                  <h:form id="previewMetadataForm" rendered="#{v2ThesaurusMetadataBean.sectionVisible}"
+                          styleClass="th-dc-form">
+                    <div class="th-dc#{v2ThesaurusMetadataBean.editing ? ' is-editing is-open' : ''}">
+                      <div class="th-dc-head">
+                        <button type="button" class="th-dc-toggle" data-act="th-dc-toggle"
+                                aria-expanded="#{v2ThesaurusMetadataBean.editing ? 'true' : 'false'}"
+                                aria-controls="previewMetadataBody">
+                          <svg class="th-dc-chevron" viewBox="0 0 24 24" aria-hidden="true">
+                            <path d="m6 9 6 6 6-6"/>
+                          </svg>
+                          <span class="th-dc-title">#{v2LocaleBean.getMsg('v2.home.metadata')}</span>
+                        </button>
+                        <div class="th-dc-head-actions">
+                          <h:commandButton value="#{v2LocaleBean.getMsg('v2.edit')}"
+                                           styleClass="bo-btn ghost sm"
+                                           rendered="#{v2ThesaurusMetadataBean.editable and not v2ThesaurusMetadataBean.editing}"
+                                           action="#{v2ThesaurusMetadataBean.startEditing}">
+                            <f:ajax execute="@this" render="@form"/>
+                          </h:commandButton>
+                          <h:commandButton value="#{v2LocaleBean.getMsg('v2.home.metadata.done')}"
+                                           styleClass="bo-btn ghost sm"
+                                           rendered="#{v2ThesaurusMetadataBean.editing}"
+                                           action="#{v2ThesaurusMetadataBean.cancelEditing}">
+                            <f:ajax execute="@this" render="@form"/>
+                          </h:commandButton>
+                        </div>
+                      </div>
+                      <div class="th-dc-body" id="previewMetadataBody">
+                        <div class="th-dc-body-in">
+                      <h:messages id="previewMetadataMsgs" infoClass="th-dc-msg" errorClass="th-dc-msg is-error"
+                                  warnClass="th-dc-msg" globalOnly="true"/>
+                      <h:panelGroup rendered="#{not v2ThesaurusMetadataBean.editing}">
+                          <table class="th-dc-table">
+                            <thead>
+                              <tr>
+                                <th>#{v2LocaleBean.getMsg('v2.home.dc.property')}</th>
+                                <th>#{v2LocaleBean.getMsg('v2.home.dc.value')}</th>
+                                <th>#{v2LocaleBean.getMsg('v2.home.dc.lang')}</th>
+                                <th>#{v2LocaleBean.getMsg('v2.home.dc.type')}</th>
+                              </tr>
+                            </thead>
+                            <tbody>
+                              <tr>
+                                <td>#{v2LocaleBean.getMsg('v2.home.dc.master')}</td>
+                                <td>
+                                  <h:outputText value="#{v2LocaleBean.getMsg('v2.home.metadata.masterYes')}"
+                                                rendered="#{v2ThesaurusMetadataBean.masterThesaurus}"/>
+                                  <h:outputText value="#{v2LocaleBean.getMsg('v2.home.metadata.masterNo')}"
+                                                rendered="#{not v2ThesaurusMetadataBean.masterThesaurus}"/>
+                                </td>
+                                <td>—</td>
+                                <td>#{v2LocaleBean.getMsg('v2.home.dc.boolean')}</td>
+                              </tr>
+                              <ui:repeat value="#{v2ThesaurusViewBean.metadata}" var="dc">
+                                <tr>
+                                  <td>#{dc.name}</td>
+                                  <td>#{dc.value}</td>
+                                  <td>#{dc.language}</td>
+                                  <td>#{dc.type}</td>
+                                </tr>
+                              </ui:repeat>
+                            </tbody>
+                          </table>
+                      </h:panelGroup>
+                      <h:panelGroup rendered="#{v2ThesaurusMetadataBean.editing}" layout="block">
+                        <table class="th-dc-table th-dc-edit">
+                          <thead>
                             <tr>
-                              <td>#{dc.name}</td>
-                              <td>#{dc.value}</td>
-                              <td>#{dc.language}</td>
+                              <th>#{v2LocaleBean.getMsg('v2.home.dc.property')}</th>
+                              <th>#{v2LocaleBean.getMsg('v2.home.dc.value')}</th>
+                              <th>#{v2LocaleBean.getMsg('v2.home.dc.lang')}</th>
+                              <th>#{v2LocaleBean.getMsg('v2.home.dc.type')}</th>
+                              <th class="th-dc-actions">#{v2LocaleBean.getMsg('v2.home.metadata.actions')}</th>
                             </tr>
-                          </ui:repeat>
-                        </tbody>
-                      </table>
-                    </details>
-                  </h:panelGroup>
+                          </thead>
+                          <tbody>
+                            <ui:repeat value="#{v2ThesaurusMetadataBean.rows}" var="row">
+                              <tr>
+                                <td>
+                                  <h:selectOneMenu value="#{row.name}" styleClass="st-input th-dc-select"
+                                                   disabled="#{v2ThesaurusMetadataBean.masterRow(row)}">
+                                    <f:selectItems value="#{v2ThesaurusMetadataBean.dcmiResources}"/>
+                                    <f:ajax event="change" execute="@this"
+                                            listener="#{v2ThesaurusMetadataBean.onPropertyChanged(row)}"
+                                            render="@form"/>
+                                  </h:selectOneMenu>
+                                </td>
+                                <td>
+                                  <h:selectOneMenu value="#{row.value}" styleClass="st-input th-dc-select"
+                                                   rendered="#{v2ThesaurusMetadataBean.booleanRow(row)}">
+                                    <f:selectItem itemValue="true" itemLabel="#{v2LocaleBean.getMsg('v2.home.metadata.masterYes')}"/>
+                                    <f:selectItem itemValue="false" itemLabel="#{v2LocaleBean.getMsg('v2.home.metadata.masterNo')}"/>
+                                  </h:selectOneMenu>
+                                  <h:inputText value="#{row.value}" styleClass="st-input th-dc-value"
+                                               rendered="#{not v2ThesaurusMetadataBean.booleanRow(row)}"/>
+                                </td>
+                                <td>
+                                  <h:selectOneMenu value="#{row.language}" styleClass="st-input th-dc-select"
+                                                   disabled="#{v2ThesaurusMetadataBean.booleanRow(row)}">
+                                    <f:selectItem itemValue="" itemLabel="—"/>
+                                    <f:selectItems value="#{v2ThesaurusMetadataBean.languages}"
+                                                   var="lg" itemValue="#{lg.code}" itemLabel="#{lg.value}"/>
+                                    <f:ajax event="change" execute="@this"
+                                            listener="#{v2ThesaurusMetadataBean.clearTypeIfLanguaged(row)}"
+                                            render="@form"/>
+                                  </h:selectOneMenu>
+                                </td>
+                                <td>
+                                  <h:selectOneMenu value="#{row.type}" styleClass="st-input th-dc-select"
+                                                   disabled="#{v2ThesaurusMetadataBean.masterRow(row)}">
+                                    <f:selectItem itemValue="" itemLabel="—"/>
+                                    <f:selectItems value="#{v2ThesaurusMetadataBean.dcmiTypes}"/>
+                                    <f:ajax event="change" execute="@this"
+                                            listener="#{v2ThesaurusMetadataBean.clearLanguageIfTyped(row)}"
+                                            render="@form"/>
+                                  </h:selectOneMenu>
+                                </td>
+                                <td class="th-dc-actions">
+                                  <h:commandButton value="#{v2LocaleBean.getMsg('v2.save')}"
+                                                   styleClass="bo-btn primary sm"
+                                                   action="#{v2ThesaurusMetadataBean.saveRow(row)}">
+                                    <f:ajax execute="@form" render="@form"/>
+                                  </h:commandButton>
+                                  <h:commandButton value="#{v2LocaleBean.getMsg('v2.home.metadata.delete')}"
+                                                   styleClass="bo-btn ghost sm th-dc-del"
+                                                   rendered="#{not v2ThesaurusMetadataBean.masterRow(row)}"
+                                                   action="#{v2ThesaurusMetadataBean.deleteRow(row)}">
+                                    <f:ajax execute="@this" render="@form"/>
+                                  </h:commandButton>
+                                </td>
+                              </tr>
+                            </ui:repeat>
+                          </tbody>
+                        </table>
+                        <div class="th-dc-foot">
+                          <h:commandButton value="#{v2LocaleBean.getMsg('v2.home.metadata.add')}"
+                                           styleClass="bo-btn ghost sm"
+                                           action="#{v2ThesaurusMetadataBean.addRow}">
+                            <f:ajax execute="@this" render="@form"/>
+                          </h:commandButton>
+                        </div>
+                      </h:panelGroup>
+                        </div>
+                      </div>
+                    </div>
+                  </h:form>
                 </h:panelGroup>
               </h:panelGroup>
               <h:form id="previewAboutForm">
@@ -246,7 +369,9 @@
                   <a class="boc-item" href="toolbox/atelier.xhtml?obj=notations"><span class="boc-v" aria-hidden="true"><svg viewBox="0 0 24 24"><path d="M4 7h16"/><path d="M4 12h10"/><path d="M4 17h7"/><path d="M16 17h4"/><path d="M18 15v4"/></svg></span><span class="boc-l">#{v2LocaleBean.getMsg('v2.home.workshop.notations')}</span><span class="boc-go"><svg viewBox="0 0 24 24" aria-hidden="true"><path d="M5 12h14"/><path d="m12 5 7 7-7 7"/></svg></span></a>
                   <a class="boc-item" href="toolbox/atelier.xhtml?obj=collections"><span class="boc-v" aria-hidden="true"><svg viewBox="0 0 24 24"><path d="M4 7h6l2 2h8v10H4z"/></svg></span><span class="boc-l">#{v2LocaleBean.getMsg('v2.home.workshop.collections')}</span><span class="boc-go"><svg viewBox="0 0 24 24" aria-hidden="true"><path d="M5 12h14"/><path d="m12 5 7 7-7 7"/></svg></span></a>
                   <a class="boc-item" href="toolbox/atelier.xhtml?obj=concepts"><span class="boc-v" aria-hidden="true"><svg viewBox="0 0 24 24"><path d="M12 3v18"/><path d="M5 8h14"/><path d="M8 8v5a4 4 0 0 0 8 0V8"/></svg></span><span class="boc-l">#{v2LocaleBean.getMsg('v2.home.workshop.concepts')}</span><span class="boc-go"><svg viewBox="0 0 24 24" aria-hidden="true"><path d="M5 12h14"/><path d="m12 5 7 7-7 7"/></svg></span></a>
-                  <a class="boc-item" href="toolbox/synchronisation.xhtml"><span class="boc-v" aria-hidden="true"><svg viewBox="0 0 24 24"><path d="M21 12a9 9 0 0 1-15.5 6.4L3 16"/><path d="M3 21v-5h5"/><path d="M3 12a9 9 0 0 1 15.5-6.4L21 8"/><path d="M21 3v5h-5"/></svg></span><span class="boc-l">#{v2LocaleBean.getMsg('v2.home.workshop.sync')}</span><span class="boc-go"><svg viewBox="0 0 24 24" aria-hidden="true"><path d="M5 12h14"/><path d="m12 5 7 7-7 7"/></svg></span></a>
+                  <ui:fragment rendered="#{v2ThesaurusSyncBean.shortcutVisible}">
+                  <a class="boc-item" href="toolbox/synchronisation.xhtml#{empty v2ThesaurusViewBean.id ? '' : '?idt='}#{v2ThesaurusViewBean.id}"><span class="boc-v" aria-hidden="true"><svg viewBox="0 0 24 24"><path d="M21 12a9 9 0 0 1-15.5 6.4L3 16"/><path d="M3 21v-5h5"/><path d="M3 12a9 9 0 0 1 15.5-6.4L21 8"/><path d="M21 3v5h-5"/></svg></span><span class="boc-l">#{v2LocaleBean.getMsg('v2.home.workshop.sync')}</span><span class="boc-go"><svg viewBox="0 0 24 24" aria-hidden="true"><path d="M5 12h14"/><path d="m12 5 7 7-7 7"/></svg></span></a>
+                  </ui:fragment>
                 </div>
               </h:panelGroup>
               <ui:fragment rendered="#{v2ThesaurusViewBean.statisticsBlockVisible}">

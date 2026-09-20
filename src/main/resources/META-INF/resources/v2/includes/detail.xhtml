@@ -8,7 +8,7 @@
     <h:inputHidden id="openType" value="#{v2ThesaurusViewBean.openType}"/>
     <h:commandButton id="openBtn" value="Ouvrir" styleClass="preview-open-btn"
                      action="#{v2ThesaurusViewBean.openSelectedNode}">
-      <f:ajax execute="@form" render=":previewDetailForm:previewDetail"/>
+      <f:ajax execute="@form" render=":previewDetailForm:previewDetail :previewPropBadge"/>
     </h:commandButton>
   </h:form>
   <h:form id="previewTreeDropForm" styleClass="preview-open-form">

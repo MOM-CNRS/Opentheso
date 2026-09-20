@@ -24,6 +24,7 @@ import java.util.Optional;
 import java.util.concurrent.atomic.AtomicReference;
 
 import static org.junit.jupiter.api.Assertions.assertEquals;
+import static org.junit.jupiter.api.Assertions.assertFalse;
 import static org.junit.jupiter.api.Assertions.assertThrows;
 import static org.junit.jupiter.api.Assertions.assertTrue;
 import static org.mockito.ArgumentMatchers.any;
@@ -57,6 +58,21 @@ class ThesaurusSyncSendServiceTest {
                 payloadBuilder,
                 remoteClient
         );
+    }
+
+    @Test
+    void isSlaveThesaurus_falseForMasterOrMissing() {
+        when(toolboxPreferencePersistence.findPreferences("TH1"))
+                .thenReturn(Preferences.builder().idThesaurus("TH1").master(true).build());
+        assertFalse(service.isSlaveThesaurus("TH1"));
+
+        when(toolboxPreferencePersistence.findPreferences("TH2"))
+                .thenReturn(Preferences.builder().idThesaurus("TH2").master(false).build());
+        assertTrue(service.isSlaveThesaurus("TH2"));
+
+        when(toolboxPreferencePersistence.findPreferences("TH3")).thenReturn(null);
+        assertFalse(service.isSlaveThesaurus("TH3"));
+        assertFalse(service.isSlaveThesaurus(" "));
     }
 
     @Test

@@ -63,6 +63,15 @@ public class ThesaurusSyncSendService {
         );
     }
 
+    @Transactional(readOnly = true)
+    public boolean isSlaveThesaurus(String thesaurusId) {
+        if (StringUtils.isBlank(thesaurusId)) {
+            return false;
+        }
+        Preferences prefs = toolboxPreferencePersistence.findPreferences(thesaurusId);
+        return prefs != null && !prefs.isMaster();
+    }
+
     /**
      * Charge la config sync d'un esclave sans exiger que le lien maître soit déjà renseigné.
      */

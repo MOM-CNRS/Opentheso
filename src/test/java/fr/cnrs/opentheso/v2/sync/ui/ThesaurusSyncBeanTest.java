@@ -2,6 +2,7 @@ package fr.cnrs.opentheso.v2.sync.ui;
 
 import fr.cnrs.opentheso.utils.MessageUtils;
 import fr.cnrs.opentheso.v2.setting.service.ThesaurusAccessService;
+import fr.cnrs.opentheso.v2.setting.ui.ThesaurusContext;
 import fr.cnrs.opentheso.v2.shared.ui.UserSession;
 import fr.cnrs.opentheso.v2.sync.model.SyncBatchResponse;
 import fr.cnrs.opentheso.v2.sync.model.SyncConceptResult;
@@ -44,6 +45,8 @@ class ThesaurusSyncBeanTest {
     private UserSession userSession;
     @Mock
     private ThesaurusAccessService thesaurusAccessService;
+    @Mock
+    private ThesaurusContext thesaurusContext;
 
     private ThesaurusSyncProgressTracker progressTracker;
     private ThesaurusSyncBean bean;
@@ -52,7 +55,7 @@ class ThesaurusSyncBeanTest {
     void setUp() {
         progressTracker = new ThesaurusSyncProgressTracker();
         bean = new ThesaurusSyncBean(
-                thesaurusSyncSendService, progressTracker, userSession, thesaurusAccessService);
+                thesaurusSyncSendService, progressTracker, userSession, thesaurusAccessService, thesaurusContext);
         bean.setSyncExecutor(Runnable::run);
     }
 
@@ -159,8 +162,13 @@ class ThesaurusSyncBeanTest {
                 new ThesaurusSyncSendService.SyncPreparation(
                         "TH1", "https://master.example", "TH_MASTER", "api-key", 0, "fr", LocalDateTime.of(2024, Month.JUNE, 15, 12, 0)));
 
+        bean.setMasterServerUrl("https://master.example");
+        bean.setMasterThesaurusId("TH_MASTER");
+        bean.setMasterApiKey("api-key");
         bean.startSync();
 
+        verify(thesaurusSyncSendService).saveMasterLink(
+                "TH1", "https://master.example", "TH_MASTER", "api-key");
         assertFalse(bean.isRunning());
         assertEquals(100, bean.getProgressValue());
         assertEquals(1, bean.getSkipped());
@@ -186,6 +194,9 @@ class ThesaurusSyncBeanTest {
         when(thesaurusSyncSendService.runSync(anyString(), anyString(), anyString(), any(), anyBoolean(), any()))
                 .thenThrow(new InvalidToolboxDataException("API key manquante"));
 
+        bean.setMasterServerUrl("https://master.example");
+        bean.setMasterThesaurusId("TH_MASTER");
+        bean.setMasterApiKey("api-key");
         bean.startSync();
 
         assertEquals("API key manquante", bean.getStatusMessage());
@@ -206,6 +217,48 @@ class ThesaurusSyncBeanTest {
         bean.saveMasterLink();
 
         verify(thesaurusSyncSendService, never()).saveMasterLink(anyString(), any(), any(), any());
+    }
+
+    @Test
+    void startSync_persistsEditedUrlBeforeRunning() {
+        stubAccess(true);
+        bean.setThesaurusId("TH1");
+        bean.setMasterServerUrl("https://nouveau.example");
+        bean.setMasterThesaurusId("TH_MASTER");
+        bean.setMasterApiKey("api-key");
+        bean.setComment("sync");
+        when(userSession.getCurrentUserId()).thenReturn(2);
+        when(userSession.getCurrentUsername()).thenReturn("alice");
+        when(userSession.getCurrentUserEmail()).thenReturn("a@b.fr");
+        when(thesaurusSyncSendService.runSync(anyString(), anyString(), anyString(), any(), anyBoolean(), any()))
+                .thenReturn(SyncBatchResponse.from(List.of()));
+        when(thesaurusSyncSendService.prepare("TH1")).thenReturn(
+                new ThesaurusSyncSendService.SyncPreparation(
+                        "TH1", "https://nouveau.example", "TH_MASTER", "api-key", 0, "fr", null));
+
+        bean.startSync();
+
+        verify(thesaurusSyncSendService).saveMasterLink(
+                "TH1", "https://nouveau.example", "TH_MASTER", "api-key");
+        verify(thesaurusSyncSendService).runSync(eq("TH1"), eq("alice"), eq("a@b.fr"), eq("sync"), eq(false), any());
+    }
+
+    @Test
+    void startSync_abortsWhenPersistFails() {
+        stubAccess(true);
+        bean.setThesaurusId("TH1");
+        bean.setMasterServerUrl("https://nouveau.example");
+        org.mockito.Mockito.doThrow(new InvalidToolboxDataException("Lien maître invalide"))
+                .when(thesaurusSyncSendService)
+                .saveMasterLink(eq("TH1"), any(), any(), any());
+
+        try (MockedStatic<MessageUtils> messages = mockStatic(MessageUtils.class)) {
+            bean.startSync();
+            messages.verify(() -> MessageUtils.showErrorMessage("Lien maître invalide"));
+        }
+
+        verify(thesaurusSyncSendService, never()).runSync(anyString(), any(), any(), any(), anyBoolean(), any());
+        assertFalse(bean.isProgressVisible());
     }
 
     @Test
@@ -335,6 +388,45 @@ class ThesaurusSyncBeanTest {
 
         assertFalse(bean.isFormAvailable());
         verify(thesaurusSyncSendService, never()).loadConfig(anyString());
+    }
+
+    @Test
+    void ensureOpened_loadsFromThesaurusContext() {
+        stubAccess(true);
+        when(thesaurusContext.resolveThesaurusId()).thenReturn("TH1");
+        when(thesaurusSyncSendService.loadConfig("TH1")).thenReturn(new ThesaurusSyncSendService.SyncConfig(
+                "https://master.example", "TH_MASTER", "api-key", null));
+        when(thesaurusSyncSendService.prepare("TH1")).thenReturn(new ThesaurusSyncSendService.SyncPreparation(
+                "TH1", "https://master.example", "TH_MASTER", "api-key", 2, "fr", null));
+
+        try (MockedStatic<MessageUtils> ignored = mockStatic(MessageUtils.class)) {
+            bean.ensureOpened();
+            bean.ensureOpened();
+        }
+
+        assertTrue(bean.isFormAvailable());
+        verify(thesaurusSyncSendService).loadConfig("TH1");
+    }
+
+    @Test
+    void ensureOpened_skipsWhenAlreadyRunning() {
+        progressTracker.start("running").setRunning(true);
+        bean.setProgressKey("running");
+
+        bean.ensureOpened();
+
+        verify(thesaurusSyncSendService, never()).loadConfig(anyString());
+    }
+
+    @Test
+    void isShortcutVisible_requiresSlaveAndManageRights() {
+        stubAccess(true);
+        when(thesaurusContext.resolveThesaurusId()).thenReturn("TH1");
+        when(thesaurusSyncSendService.isSlaveThesaurus("TH1")).thenReturn(true);
+        assertTrue(bean.isShortcutVisible());
+
+        when(thesaurusSyncSendService.isSlaveThesaurus("TH1")).thenReturn(false);
+        assertFalse(bean.isShortcutVisible());
     }
 
     @Test

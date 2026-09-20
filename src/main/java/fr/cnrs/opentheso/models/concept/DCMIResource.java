@@ -63,13 +63,15 @@ public class DCMIResource {
     public static final String IS_REQUIRED_BY = "isRequiredBy";    
     public static final String LICENSE = "license";      
     public static final String REPLACES = "replaces";     
-    public static final String ALTERNATIVE = "alternative";      
+    public static final String ALTERNATIVE = "alternative";
+    public static final String MAITRE = "maitre";
     
     /// Les types de données
     public static final String TYPE_DATE = "date";
     public static final String TYPE_LANGUE = "langString";
     public static final String TYPE_STRING = "string";    
-    public static final String TYPE_RESOURCE = "resource";     
+    public static final String TYPE_RESOURCE = "resource";
+    public static final String TYPE_BOOLEAN = "boolean";
     
     public List<String> getAllResources(){
         List allResources = new ArrayList();
@@ -95,7 +97,8 @@ public class DCMIResource {
         allResources.add("isRequiredBy");    
         allResources.add("license"); 
         allResources.add("replaces");  
-        allResources.add("alternative");        
+        allResources.add("alternative");
+        allResources.add("maitre");
         return allResources;
     }
     
@@ -103,7 +106,8 @@ public class DCMIResource {
         List allTypes = new ArrayList();
         allTypes.add("date");
         allTypes.add("string"); 
-        allTypes.add("resource");     
+        allTypes.add("resource");
+        allTypes.add("boolean");
         return allTypes;
     }    
     

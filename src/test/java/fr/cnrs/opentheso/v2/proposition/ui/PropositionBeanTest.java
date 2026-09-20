@@ -260,6 +260,20 @@ class PropositionBeanTest {
     }
 
     @Test
+    void refreshBadgeCount_updatesCountsWithoutLoadingList() {
+        when(thesaurusContext.resolveThesaurusId()).thenReturn("TH1");
+        when(propositionReadService.countPending("TH1")).thenReturn(3);
+        when(propositionReadService.countAll("TH1")).thenReturn(8);
+
+        bean.refreshBadgeCount();
+
+        assertEquals(3, bean.getPendingCount());
+        assertEquals(8, bean.getTotalCount());
+        verify(propositionReadService, never()).listPending("TH1");
+        verify(propositionReadService, never()).listAll("TH1");
+    }
+
+    @Test
     void refreshPendingCount_reloadsListWhenThesaurusChanges() {
         var first = new PropositionSummary(1, "TH1", "C1", "Old", "Author", "a@b.fr", "ENVOYER", "01-01-2024", "fr", "fr");
         var second = new PropositionSummary(2, "TH2", "C2", "New", "Author", "a@b.fr", "ENVOYER", "01-01-2024", "fr", "fr");

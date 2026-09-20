@@ -658,29 +658,27 @@ class InstanceAdminBeanTest {
 
     @Test
     void pagedAccounts_respectPageSizeAndNavigation() {
-        bean.setAccounts(List.of(
-                account(1, "a", true, "user"),
-                account(2, "b", true, "user"),
-                account(3, "c", true, "user"),
-                account(4, "d", true, "user"),
-                account(5, "e", true, "user")
-        ));
-        bean.setUsersPageSize(2);
+        bean.setAccounts(java.util.stream.IntStream.rangeClosed(1, 25)
+                .mapToObj(i -> account(i, String.format("u%02d", i), true, "user"))
+                .toList());
+        bean.setUsersPageSize(10);
         bean.onUsersPageSizeChange();
 
         assertEquals(3, bean.getUsersPageCount());
-        assertEquals(List.of("a", "b"), bean.getPagedAccounts().stream().map(InstanceAdminAccount::username).toList());
+        assertEquals(List.of("u01", "u02", "u03", "u04", "u05", "u06", "u07", "u08", "u09", "u10"),
+                bean.getPagedAccounts().stream().map(InstanceAdminAccount::username).toList());
         assertEquals(1, bean.getUsersPageFrom());
-        assertEquals(2, bean.getUsersPageTo());
+        assertEquals(10, bean.getUsersPageTo());
 
         bean.nextUsersPage();
         assertEquals(1, bean.getUsersPage());
-        assertEquals(List.of("c", "d"), bean.getPagedAccounts().stream().map(InstanceAdminAccount::username).toList());
+        assertEquals(List.of("u11", "u12", "u13", "u14", "u15", "u16", "u17", "u18", "u19", "u20"),
+                bean.getPagedAccounts().stream().map(InstanceAdminAccount::username).toList());
 
-        bean.setUsersPageSize(10);
+        bean.setUsersPageSize(25);
         bean.onUsersPageSizeChange();
         assertEquals(0, bean.getUsersPage());
-        assertEquals(5, bean.getPagedAccounts().size());
+        assertEquals(25, bean.getPagedAccounts().size());
         assertEquals(1, bean.getUsersPageCount());
     }
 

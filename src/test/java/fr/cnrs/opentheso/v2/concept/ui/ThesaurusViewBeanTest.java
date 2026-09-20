@@ -428,6 +428,19 @@ class ThesaurusViewBeanTest {
     }
 
     @Test
+    void refreshHomeOverview_reloadsCachedHome() {
+        thesaurusContext.selectThesaurus("th17", "Pactols_Lieux", "fr");
+        when(thesaurusHomeReadService.loadOverview("th17", "fr", "Pactols_Lieux"))
+                .thenReturn(overview("Pactols_Lieux", 10, "FRANTIQ", "<p>Ancien</p>"))
+                .thenReturn(overview("Pactols_Lieux", 10, "FRANTIQ", "<p>Nouveau</p>"));
+
+        assertEquals("<p>Ancien</p>", bean.getHomePageHtml());
+        bean.refreshHomeOverview();
+        assertEquals("<p>Nouveau</p>", bean.getHomePageHtml());
+        verify(thesaurusHomeReadService, times(2)).loadOverview("th17", "fr", "Pactols_Lieux");
+    }
+
+    @Test
     void canEdit_requiresAdminOnThesaurus() {
         thesaurusContext.selectThesaurus("th17", "Pactols_Lieux", "fr");
         when(userSession.getCurrentUserId()).thenReturn(9);
@@ -535,6 +548,7 @@ class ThesaurusViewBeanTest {
         verify(conceptReadService).countBranchConcepts("th17", "c1");
         verify(conceptSelectionContext).update(eq("th17"), any(ConceptDetail.class));
         verify(propositionBean).clearConsultation();
+        verify(propositionBean).refreshBadgeCount();
     }
 
     @Test

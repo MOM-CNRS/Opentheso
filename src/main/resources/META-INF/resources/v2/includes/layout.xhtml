@@ -12,7 +12,7 @@
   <f:viewAction action="#{v2LocaleBean.applyToView}"/>
   <f:viewAction action="#{v2ConsultationShellBean.applyThesaurusFromUrl}" onPostback="false"/>
   <f:viewAction action="#{v2ThesaurusViewBean.ensureSessionThesaurus}"/>
-  <f:viewAction action="#{v2PropositionBean.refreshPendingCount}" onPostback="false"/>
+  <f:viewAction action="#{v2PropositionBean.refreshBadgeCount}" onPostback="false"/>
   <f:viewAction action="#{v2PropositionBean.openDedicatedReview}" onPostback="false"/>
   <ui:insert name="viewActions"/>
 </f:metadata>
@@ -42,6 +42,7 @@
       pt:data-msg-link="#{v2LocaleBean.getMsg('v2.home.linkPrompt')}"
       pt:data-leaflet-js="#{resource['webjars:leaflet/1.8.0/leaflet.js']}"
       pt:data-leaflet-css="#{resource['webjars:leaflet/1.8.0/leaflet.css']}">
+<f:event type="preRenderView" listener="#{v2PropositionBean.refreshBadgeCount}"/>
 <f:event type="preRenderView" listener="#{v2PropositionBean.openDedicatedReview}"/>
 <div class="app" id="app">
   <ui:include src="/v2/includes/thesaurus.xhtml"/>

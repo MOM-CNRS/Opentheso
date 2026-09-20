@@ -5,19 +5,24 @@
                 xmlns:f="http://xmlns.jcp.org/jsf/core"
                 template="/v2/includes/layout.xhtml">
   <ui:param name="v2Page" value="synchronisation"/>
-  <ui:define name="title">OpenTheso — Synchronisation</ui:define>
+  <ui:define name="title">OpenTheso — #{v2LocaleBean.getMsg('v2.home.workshop.sync')}</ui:define>
   <ui:define name="viewActions">
-    <f:viewAction action="#{v2ThesaurusSyncBean.init(v2ThesaurusViewBean.id)}" onPostback="false"/>
+    <f:viewAction action="#{v2ThesaurusSyncBean.ensureOpened}" onPostback="false"/>
   </ui:define>
+  <ui:define name="sidebar"/>
   <ui:define name="detail"/>
   <ui:define name="main">
+          <f:event type="preRenderView" listener="#{v2ThesaurusSyncBean.ensureOpened}"/>
 
           <div class="view-panel is-on" id="viewSync">
-            <div class="bo">
-              <a class="bo-back" href="index.xhtml" title="Retour à l'accueil thésaurus"><svg viewBox="0 0 24 24" aria-hidden="true"><path d="M19 12H5"/><path d="m12 19-7-7 7-7"/></svg></a>
+            <div class="bo bo-solo">
+              <a class="bo-back" href="index.xhtml#{empty v2ThesaurusViewBean.id ? '' : '?idt='}#{v2ThesaurusViewBean.id}"
+                 title="#{v2LocaleBean.getMsg('v2.proposition.board.backHome')}">
+                <svg viewBox="0 0 24 24" aria-hidden="true"><path d="M19 12H5"/><path d="m12 19-7-7 7-7"/></svg>
+              </a>
               <div class="bo-head"><div>
-                <h1 class="bo-title">Synchronisation du thésaurus</h1>
-                <p class="bo-sub">Envoi des concepts de #{v2ThesaurusViewBean.title} vers le thésaurus maître.</p>
+                <h1 class="bo-title">#{v2LocaleBean.getMsg('v2.home.workshop.sync')}</h1>
+                <p class="bo-sub">#{v2LocaleBean.getMsg('v2.sync.subtitle')} #{v2ThesaurusViewBean.title}.</p>
               </div></div>
               <div class="bo-full st-scope">
                 <h:form id="previewSyncForm" prependId="false">
@@ -26,50 +31,50 @@
                     <h:panelGroup rendered="#{not v2ThesaurusSyncBean.formAvailable}" layout="block">
                       <div class="mc-note">
                         <svg viewBox="0 0 24 24" aria-hidden="true"><path d="M10.3 3.9 1.8 18a2 2 0 0 0 1.7 3h17a2 2 0 0 0 1.7-3L13.7 3.9a2 2 0 0 0-3.4 0z"/><path d="M12 9v4"/><path d="M12 17h.01"/></svg>
-                        <span>La synchronisation est disponible uniquement pour un thésaurus esclave, avec un rôle de gestion.</span>
+                        <span>#{v2LocaleBean.getMsg('v2.sync.unavailable')}</span>
                       </div>
                     </h:panelGroup>
                     <h:panelGroup rendered="#{v2ThesaurusSyncBean.formAvailable}" layout="block">
                       <div class="bo-card">
-                        <div class="bo-card-h"><span class="bo-card-t">Lien vers le thésaurus maître</span></div>
+                        <div class="bo-card-h"><span class="bo-card-t">#{v2LocaleBean.getMsg('toolbox.syncWithMaster')}</span></div>
                         <div class="bo-card-b st-form">
                           <div class="st-row">
-                            <div class="st-row-l">URL du serveur maître</div>
+                            <div class="st-row-l">#{v2LocaleBean.getMsg('toolbox.masterServerUrl')}</div>
                             <div class="st-row-c">
                               <h:inputText styleClass="st-input" value="#{v2ThesaurusSyncBean.masterServerUrl}"
                                            disabled="#{v2ThesaurusSyncBean.running}"/>
                             </div>
                           </div>
                           <div class="st-row">
-                            <div class="st-row-l">Identifiant du thésaurus maître</div>
+                            <div class="st-row-l">#{v2LocaleBean.getMsg('toolbox.masterThesaurusId')}</div>
                             <div class="st-row-c">
                               <h:inputText styleClass="st-input" value="#{v2ThesaurusSyncBean.masterThesaurusId}"
                                            disabled="#{v2ThesaurusSyncBean.running}"/>
                             </div>
                           </div>
                           <div class="st-row">
-                            <div class="st-row-l">Clé API du serveur maître</div>
+                            <div class="st-row-l">#{v2LocaleBean.getMsg('toolbox.masterApiKey')}</div>
                             <div class="st-row-c">
                               <h:inputSecret styleClass="st-input" value="#{v2ThesaurusSyncBean.masterApiKey}"
                                              redisplay="true" disabled="#{v2ThesaurusSyncBean.running}"/>
                             </div>
                           </div>
                           <div class="st-row">
-                            <div class="st-row-l">Dernière synchronisation</div>
+                            <div class="st-row-l">#{v2LocaleBean.getMsg('toolbox.lastSyncAt')}</div>
                             <div class="st-row-c st-static">
                               <h:outputText value="#{v2ThesaurusSyncBean.formattedLastSyncAt}"
                                             rendered="#{not empty v2ThesaurusSyncBean.formattedLastSyncAt}"/>
-                              <h:outputText value="jamais"
+                              <h:outputText value="#{v2LocaleBean.getMsg('v2.sync.never')}"
                                             rendered="#{empty v2ThesaurusSyncBean.formattedLastSyncAt}"/>
                             </div>
                           </div>
                           <div class="sync-actions">
-                            <h:commandButton value="Enregistrer le lien" styleClass="bo-btn ghost"
+                            <h:commandButton value="#{v2LocaleBean.getMsg('v2.sync.saveLink')}" styleClass="bo-btn ghost"
                                              action="#{v2ThesaurusSyncBean.saveMasterLink}"
                                              disabled="#{v2ThesaurusSyncBean.running}">
                               <f:ajax execute="@form" render="previewSyncBox messageIndex"/>
                             </h:commandButton>
-                            <h:commandButton value="Actualiser le décompte" styleClass="bo-btn ghost"
+                            <h:commandButton value="#{v2LocaleBean.getMsg('v2.sync.refreshCount')}" styleClass="bo-btn ghost"
                                              action="#{v2ThesaurusSyncBean.refreshPreparation}"
                                              disabled="#{v2ThesaurusSyncBean.running}">
                               <f:ajax execute="@form" render="previewSyncBox messageIndex"/>
@@ -78,16 +83,16 @@
                         </div>
                       </div>
                       <div class="bo-card">
-                        <div class="bo-card-h"><span class="bo-card-t">Lancer la synchronisation</span></div>
+                        <div class="bo-card-h"><span class="bo-card-t">#{v2LocaleBean.getMsg('toolbox.startSync')}</span></div>
                         <div class="bo-card-b st-form">
                           <div class="st-row">
-                            <div class="st-row-l">Concepts à synchroniser</div>
+                            <div class="st-row-l">#{v2LocaleBean.getMsg('toolbox.conceptsToSync')}</div>
                             <div class="st-row-c st-static">#{v2ThesaurusSyncBean.conceptCount}</div>
                           </div>
                           <div class="st-toggle-row">
                             <div class="st-toggle-main">
-                              <div class="st-toggle-l">Candidats</div>
-                              <div class="st-toggle-d">Créer des candidats pour les nouveaux concepts</div>
+                              <div class="st-toggle-l">#{v2LocaleBean.getMsg('toolbox.syncCreateCandidatesLabel')}</div>
+                              <div class="st-toggle-d">#{v2LocaleBean.getMsg('toolbox.syncCreateCandidates')}</div>
                             </div>
                             <label class="st-sw">
                               <h:selectBooleanCheckbox styleClass="st-sw-input"
@@ -96,7 +101,7 @@
                             </label>
                           </div>
                           <div class="st-row">
-                            <div class="st-row-l">Commentaire</div>
+                            <div class="st-row-l">#{v2LocaleBean.getMsg('toolbox.syncComment')}</div>
                             <div class="st-row-c">
                               <h:inputTextarea styleClass="st-input sync-comment"
                                                value="#{v2ThesaurusSyncBean.comment}"
@@ -119,14 +124,14 @@
                             </div>
                             <div class="sync-progress-d">#{v2ThesaurusSyncBean.progressDetail}</div>
                             <div class="sync-kpis">
-                              <span>Propositions : #{v2ThesaurusSyncBean.propositions}</span>
-                              <span>Candidats : #{v2ThesaurusSyncBean.candidates}</span>
-                              <span>Ignorés : #{v2ThesaurusSyncBean.skipped}</span>
-                              <span>Erreurs : #{v2ThesaurusSyncBean.errors}</span>
+                              <span>#{v2LocaleBean.getMsg('toolbox.syncPropositions')} : #{v2ThesaurusSyncBean.propositions}</span>
+                              <span>#{v2LocaleBean.getMsg('toolbox.syncCandidates')} : #{v2ThesaurusSyncBean.candidates}</span>
+                              <span>#{v2LocaleBean.getMsg('toolbox.syncSkipped')} : #{v2ThesaurusSyncBean.skipped}</span>
+                              <span>#{v2LocaleBean.getMsg('toolbox.syncErrors')} : #{v2ThesaurusSyncBean.errors}</span>
                             </div>
                           </h:panelGroup>
                           <div class="sync-actions">
-                            <h:commandButton value="Lancer la synchronisation" styleClass="bo-btn primary"
+                            <h:commandButton value="#{v2LocaleBean.getMsg('toolbox.startSync')}" styleClass="bo-btn primary"
                                              action="#{v2ThesaurusSyncBean.startSync}"
                                              disabled="#{v2ThesaurusSyncBean.running}">
                               <f:ajax execute="@form" render="previewSyncBox messageIndex" onevent="onPreviewSyncPoll"/>

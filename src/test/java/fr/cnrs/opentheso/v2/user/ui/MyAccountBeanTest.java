@@ -212,9 +212,9 @@ class MyAccountBeanTest {
         when(userSession.getCurrentUserId()).thenReturn(5);
         myAccountBean.setEditableUsername("bob");
         myAccountBean.setEditableEmail("bob@example.com");
-        when(userProfileService.updateIdentity(5, "bob", "bob@example.com")).thenReturn(
-                new UserProfile(5, "bob", "bob@example.com", true, false, true, null, true)
-        );
+        var updated = new UserProfile(5, "bob", "bob@example.com", true, false, true, null, true);
+        when(userProfileService.updateIdentity(5, "bob", "bob@example.com")).thenReturn(updated);
+        when(userProfileService.updateAlertMail(5, false)).thenReturn(updated);
 
         myAccountBean.saveIdentity();
 

@@ -28,6 +28,7 @@ import lombok.Setter;
 import org.apache.commons.collections4.CollectionUtils;
 import org.apache.commons.lang3.StringUtils;
 import org.apache.commons.lang3.Strings;
+import org.primefaces.PrimeFaces;
 import org.springframework.beans.factory.ObjectProvider;
 
 import java.io.IOException;
@@ -101,13 +102,22 @@ public class PropositionBean implements Serializable {
     }
 
     /**
+     * Badge header uniquement : met à jour les compteurs sans recharger la liste.
+     */
+    public void refreshBadgeCount() {
+        String thesaurusId = currentThesaurusId();
+        pendingCount = propositionReadService.countPending(thesaurusId);
+        totalCount = propositionReadService.countAll(thesaurusId);
+        requestBadgeUpdate();
+    }
+
+    /**
      * Badge header. Recharge aussi la liste si le thésaurus a changé ou si la
      * session n'a encore aucune ligne (ouverture de la boîte).
      */
     public void refreshPendingCount() {
+        refreshBadgeCount();
         String thesaurusId = currentThesaurusId();
-        pendingCount = propositionReadService.countPending(thesaurusId);
-        totalCount = propositionReadService.countAll(thesaurusId);
         if (StringUtils.isBlank(thesaurusId) || !isManagerOnCurrentThesaurus()) {
             propositions = Collections.emptyList();
             loadedThesaurusId = null;
@@ -115,6 +125,16 @@ public class PropositionBean implements Serializable {
         }
         if (!Strings.CI.equals(loadedThesaurusId, thesaurusId) || propositions.isEmpty()) {
             loadPropositionList(thesaurusId);
+        }
+    }
+
+    private void requestBadgeUpdate() {
+        try {
+            if (PrimeFaces.current().isAjaxRequest()) {
+                PrimeFaces.current().ajax().update("previewPropBadge");
+            }
+        } catch (RuntimeException ignored) {
+            // Hors requête AJAX PrimeFaces (f:ajax, tests, rendu initial).
         }
     }
 

@@ -2,6 +2,7 @@ package fr.cnrs.opentheso.v2.sync.ui;
 
 import fr.cnrs.opentheso.utils.MessageUtils;
 import fr.cnrs.opentheso.v2.setting.service.ThesaurusAccessService;
+import fr.cnrs.opentheso.v2.setting.ui.ThesaurusContext;
 import fr.cnrs.opentheso.v2.shared.ui.UserSession;
 import fr.cnrs.opentheso.v2.sync.model.SyncBatchResponse;
 import fr.cnrs.opentheso.v2.sync.service.ThesaurusSyncProgressTracker;
@@ -42,6 +43,7 @@ public class ThesaurusSyncBean implements Serializable {
     private final transient ThesaurusSyncProgressTracker progressTracker;
     private final transient UserSession userSession;
     private final transient ThesaurusAccessService thesaurusAccessService;
+    private final transient ThesaurusContext thesaurusContext;
 
     /** Remplaçable en test pour exécuter la sync de façon synchrone. */
     private transient Executor syncExecutor = DEFAULT_SYNC_EXECUTOR;
@@ -60,19 +62,46 @@ public class ThesaurusSyncBean implements Serializable {
     private String progressKey;
 
     private SyncBatchResponse lastResponse;
+    private boolean initialized;
+    private boolean slaveThesaurus;
+    private String openedThesaurusId;
+
+    /**
+     * Ouverture de {@code toolbox/synchronisation.xhtml}.
+     * {@code ui:insert name="viewActions"} est souvent ignoré : appeler depuis {@code preRenderView}.
+     */
+    public void ensureOpened() {
+        FacesContext faces = FacesContext.getCurrentInstance();
+        if (faces != null && faces.isPostback()) {
+            return;
+        }
+        if (isRunning()) {
+            return;
+        }
+        String id = StringUtils.trimToNull(thesaurusContext.resolveThesaurusId());
+        if (initialized && StringUtils.equals(openedThesaurusId, id)) {
+            return;
+        }
+        init(id);
+    }
 
     public void init(String thesaurusId) {
-        this.thesaurusId = thesaurusId;
+        this.thesaurusId = StringUtils.trimToNull(thesaurusId);
+        this.openedThesaurusId = this.thesaurusId;
+        initialized = true;
+        slaveThesaurus = false;
         clearProgress();
         lastResponse = null;
         createCandidates = true;
         comment = "Synchronisation depuis le thésaurus esclave";
         if (!canManage()) {
             clear();
+            initialized = true;
             return;
         }
         try {
             var config = thesaurusSyncSendService.loadConfig(thesaurusId);
+            slaveThesaurus = true;
             masterServerUrl = config.masterServerUrl();
             masterThesaurusId = config.masterThesaurusId();
             applyStoredApiKey(config.masterApiKey());
@@ -92,15 +121,9 @@ public class ThesaurusSyncBean implements Serializable {
         if (!canManage() || isRunning()) {
             return;
         }
-        try {
-            String apiKeyToSave = ApiKeyDisplayMask.resolveForPersist(masterApiKey, storedMasterApiKey);
-            thesaurusSyncSendService.saveMasterLink(
-                    thesaurusId, masterServerUrl, masterThesaurusId, apiKeyToSave);
-            applyStoredApiKey(apiKeyToSave);
+        if (persistMasterLink()) {
             MessageUtils.showInformationMessage("Lien vers le thésaurus maître enregistré");
             refreshConceptCountQuietly();
-        } catch (InvalidToolboxDataException e) {
-            MessageUtils.showErrorMessage(e.getMessage());
         }
     }
 
@@ -123,6 +146,9 @@ public class ThesaurusSyncBean implements Serializable {
         if (!canManage() || isRunning()) {
             return;
         }
+        if (!persistMasterLink()) {
+            return;
+        }
         progressKey = buildProgressKey();
         ProgressState state = progressTracker.start(progressKey);
 
@@ -135,11 +161,36 @@ public class ThesaurusSyncBean implements Serializable {
 
         resolveSyncExecutor().execute(() -> runSyncInBackground(
                 key, state, syncThesaurusId, authorName, authorEmail, syncComment, createCandidatesFlag));
+        notifyIfFinished();
     }
 
     /**
      * Appelé par {@code p:poll} pour rafraîchir la barre et notifier la fin de sync.
      */
+    private boolean persistMasterLink() {
+        try {
+            String apiKeyToSave = ApiKeyDisplayMask.resolveForPersist(masterApiKey, storedMasterApiKey);
+            thesaurusSyncSendService.saveMasterLink(
+                    thesaurusId, masterServerUrl, masterThesaurusId, apiKeyToSave);
+            applyStoredApiKey(apiKeyToSave);
+            return true;
+        } catch (InvalidToolboxDataException e) {
+            MessageUtils.showErrorMessage(e.getMessage());
+            return false;
+        }
+    }
+
+    /**
+     * Une sync trop rapide (lien invalide, aucun concept) se termine avant le premier poll :
+     * afficher le résultat sur la même requête AJAX.
+     */
+    private void notifyIfFinished() {
+        if (FacesContext.getCurrentInstance() == null) {
+            return;
+        }
+        onProgressPoll();
+    }
+
     public void onProgressPoll() {
         ProgressState state = currentState();
         if (state == null || state.isRunning() || state.isCompletionNotified()) {
@@ -166,7 +217,12 @@ public class ThesaurusSyncBean implements Serializable {
     }
 
     public boolean isFormAvailable() {
-        return StringUtils.isNotBlank(thesaurusId) && canManage();
+        return StringUtils.isNotBlank(thesaurusId) && canManage() && slaveThesaurus;
+    }
+
+    public boolean isShortcutVisible() {
+        String id = StringUtils.trimToNull(thesaurusContext.resolveThesaurusId());
+        return canManage(id) && thesaurusSyncSendService.isSlaveThesaurus(id);
     }
 
     public boolean isRunning() {
@@ -328,6 +384,7 @@ public class ThesaurusSyncBean implements Serializable {
     private void clear() {
         clearProgress();
         thesaurusId = null;
+        slaveThesaurus = false;
         masterServerUrl = null;
         masterThesaurusId = null;
         applyStoredApiKey(null);
@@ -336,13 +393,17 @@ public class ThesaurusSyncBean implements Serializable {
     }
 
     private boolean canManage() {
-        if (!userSession.isLoggedIn() || StringUtils.isBlank(thesaurusId)) {
+        return canManage(thesaurusId);
+    }
+
+    private boolean canManage(String id) {
+        if (!userSession.isLoggedIn() || StringUtils.isBlank(id)) {
             return false;
         }
         return thesaurusAccessService.canManageThesaurus(
                 userSession.getCurrentUserId(),
                 userSession.isSuperAdmin(),
-                thesaurusId
+                id
         );
     }
 
