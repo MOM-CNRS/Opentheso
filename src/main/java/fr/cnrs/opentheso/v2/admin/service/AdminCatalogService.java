@@ -7,6 +7,7 @@ import fr.cnrs.opentheso.v2.admin.model.AdminUserMembership;
 import fr.cnrs.opentheso.v2.admin.model.InstanceAdminAccount;
 import fr.cnrs.opentheso.v2.admin.model.ThesaurusMember;
 import fr.cnrs.opentheso.v2.admin.policy.SuperAdminAccessPolicy;
+import fr.cnrs.opentheso.v2.project.exception.InvalidProjectDataException;
 import fr.cnrs.opentheso.v2.project.mapper.ProjectMapper;
 import fr.cnrs.opentheso.v2.project.model.AssignableRole;
 import fr.cnrs.opentheso.v2.project.model.ProjectSummary;
@@ -179,5 +180,15 @@ public class AdminCatalogService {
         SuperAdminAccessPolicy.requireResolvedSuperAdmin(superAdmin);
         projectLookupService.requireEntity(targetProjectId);
         projectMembershipRepository.moveThesaurus(thesaurusId, targetProjectId);
+    }
+
+    @Transactional
+    public void removeThesaurusFromProject(boolean superAdmin, String thesaurusId, int projectId) {
+        SuperAdminAccessPolicy.requireResolvedSuperAdmin(superAdmin);
+        projectLookupService.requireEntity(projectId);
+        if (!projectMembershipRepository.isThesaurusInProject(thesaurusId, projectId)) {
+            throw new InvalidProjectDataException("Le thésaurus n'appartient pas à ce projet.");
+        }
+        projectMembershipRepository.removeThesaurusFromProject(thesaurusId, projectId);
     }
 }

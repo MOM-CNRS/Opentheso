@@ -222,6 +222,26 @@ class ProjectMemberServiceTest {
     }
 
     @Test
+    void removeThesaurusFromProject_unlinksThesaurusWithoutDeletingIt() {
+        stubProjectAdmin(5, 3, 2);
+        when(projectMembershipRepository.isThesaurusInProject("TH1", 3)).thenReturn(true);
+
+        projectMemberService.removeThesaurusFromProject(5, false, 3, "TH1");
+
+        verify(projectMembershipRepository).removeThesaurusFromProject("TH1", 3);
+    }
+
+    @Test
+    void removeThesaurusFromProject_rejectsThesaurusNotInProject() {
+        stubProjectAdmin(5, 3, 2);
+        when(projectMembershipRepository.isThesaurusInProject("TH1", 3)).thenReturn(false);
+
+        assertThrows(InvalidProjectDataException.class,
+                () -> projectMemberService.removeThesaurusFromProject(5, false, 3, "TH1"));
+        verify(projectMembershipRepository, never()).removeThesaurusFromProject(anyString(), anyInt());
+    }
+
+    @Test
     void setMemberPassword_encodesAndStoresPassword() {
         stubProjectAdmin(5, 3, 2);
         when(userLookupService.requireEntity(10)).thenReturn(new UserEntity());

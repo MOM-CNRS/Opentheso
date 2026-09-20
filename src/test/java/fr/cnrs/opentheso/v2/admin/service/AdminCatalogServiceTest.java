@@ -206,6 +206,26 @@ class AdminCatalogServiceTest {
     }
 
     @Test
+    void removeThesaurusFromProject_unlinksThesaurusWithoutDeletingIt() {
+        when(projectLookupService.requireEntity(3)).thenReturn(new ProjectEntity());
+        when(projectMembershipRepository.isThesaurusInProject("th1", 3)).thenReturn(true);
+
+        adminCatalogService.removeThesaurusFromProject(true, "th1", 3);
+
+        verify(projectMembershipRepository).removeThesaurusFromProject("th1", 3);
+    }
+
+    @Test
+    void removeThesaurusFromProject_rejectsThesaurusNotInProject() {
+        when(projectLookupService.requireEntity(3)).thenReturn(new ProjectEntity());
+        when(projectMembershipRepository.isThesaurusInProject("th1", 3)).thenReturn(false);
+
+        assertThrows(fr.cnrs.opentheso.v2.project.exception.InvalidProjectDataException.class,
+                () -> adminCatalogService.removeThesaurusFromProject(true, "th1", 3));
+        verify(projectMembershipRepository, org.mockito.Mockito.never()).removeThesaurusFromProject("th1", 3);
+    }
+
+    @Test
     void listThesaurusMembers_mergesLimitedAndProjectWide() {
         when(projectAdminQueryRepository.findLimitedMembersOfProject(5, "fr")).thenReturn(List.of(
                 new fr.cnrs.opentheso.v2.shared.repository.projection.ProjectLimitedMemberRow(

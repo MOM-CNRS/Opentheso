@@ -1268,19 +1268,17 @@
                     #{v2LocaleBean.getMsg('v2.admin.projects.thesauri.delete.confirm')}
                     <b>#{v2InstanceAdminBean.deleteThesaurusTitle}</b>
                   </p>
-                  <label class="ia-check" style="margin:10px 0 4px">
-                    <h:selectBooleanCheckbox id="iaDeleteThesaurusPerennial"
-                                             value="#{v2InstanceAdminBean.deleteThesaurusPerennial}"/>
-                    <span>#{v2LocaleBean.getMsg('v2.admin.projects.thesauri.delete.perennial')}</span>
-                  </label>
                   <div class="confirm-actions">
-                    <h:commandButton styleClass="bo-btn ghost confirm-cancel"
-                                     value="#{v2LocaleBean.getMsg('v2.admin.projects.thesauri.delete.cancel')}"
-                                     action="#{v2InstanceAdminBean.closeDeleteThesaurusConfirm}"
-                                     immediate="true"/>
-                    <h:commandButton styleClass="bo-btn primary danger"
-                                     value="#{v2LocaleBean.getMsg('v2.admin.projects.thesauri.delete.submit')}"
-                                     action="#{v2InstanceAdminBean.confirmDeleteThesaurus}"/>
+                    <button type="button"
+                            class="bo-btn ghost confirm-cancel"
+                            onclick="return iaClickProxy('iaDeleteThesaurusCancelGo');">
+                      #{v2LocaleBean.getMsg('v2.admin.projects.thesauri.delete.cancel')}
+                    </button>
+                    <button type="button"
+                            class="bo-btn primary danger"
+                            onclick="return iaClickProxy('iaDeleteThesaurusConfirmGo');">
+                      #{v2LocaleBean.getMsg('v2.admin.projects.thesauri.delete.submit')}
+                    </button>
                   </div>
                 </div>
               </div>
@@ -1340,6 +1338,19 @@
             <h:commandButton id="iaDeleteConfirmGo"
                              value="go"
                              action="#{v2InstanceAdminBean.confirmDeleteUser}"
+                             pt:data-ia-render="iaShell">
+              <f:ajax execute="@this" render="iaShell"/>
+            </h:commandButton>
+            <h:commandButton id="iaDeleteThesaurusCancelGo"
+                             value="go"
+                             action="#{v2InstanceAdminBean.closeDeleteThesaurusConfirm}"
+                             immediate="true"
+                             pt:data-ia-render="iaShell">
+              <f:ajax execute="@this" render="iaShell"/>
+            </h:commandButton>
+            <h:commandButton id="iaDeleteThesaurusConfirmGo"
+                             value="go"
+                             action="#{v2InstanceAdminBean.confirmDeleteThesaurus}"
                              pt:data-ia-render="iaShell">
               <f:ajax execute="@this" render="iaShell"/>
             </h:commandButton>

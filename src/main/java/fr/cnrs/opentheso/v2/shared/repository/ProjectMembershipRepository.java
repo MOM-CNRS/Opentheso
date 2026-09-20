@@ -181,6 +181,24 @@ public class ProjectMembershipRepository {
     }
 
     @Transactional
+    public void removeThesaurusFromProject(String thesaurusId, int projectId) {
+        entityManager.createNativeQuery("""
+                        DELETE FROM user_role_only_on
+                        WHERE id_theso = :thesaurusId AND id_group = :projectId
+                        """)
+                .setParameter(NativeQueryParams.THESAURUS_ID, thesaurusId)
+                .setParameter(NativeQueryParams.PROJECT_ID, projectId)
+                .executeUpdate();
+        entityManager.createNativeQuery("""
+                        DELETE FROM user_group_thesaurus
+                        WHERE id_thesaurus = :thesaurusId AND id_group = :projectId
+                        """)
+                .setParameter(NativeQueryParams.THESAURUS_ID, thesaurusId)
+                .setParameter(NativeQueryParams.PROJECT_ID, projectId)
+                .executeUpdate();
+    }
+
+    @Transactional
     public void deleteProjectMemberships(int projectId) {
         entityManager.createNativeQuery("DELETE FROM user_role_group WHERE id_group = :projectId")
                 .setParameter(NativeQueryParams.PROJECT_ID, projectId)

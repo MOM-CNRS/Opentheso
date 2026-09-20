@@ -103,7 +103,10 @@ public class MyProjectsBean implements Serializable {
     private String thesaurusToMoveTitle;
     private Integer moveTargetProjectId;
 
-    /** V2 panel: null | create | rename | addExisting | editMemberRole | removeMember | editLimited | removeLimited */
+    private String thesaurusToRemoveId;
+    private String thesaurusToRemoveTitle;
+
+    /** V2 panel: null | create | rename | addExisting | editMemberRole | removeMember | editLimited | removeLimited | removeThesaurus */
     private String activePanel;
     private String existingUserQuery = "";
     private List<UserSearchResult> existingUserHits = Collections.emptyList();
@@ -117,6 +120,7 @@ public class MyProjectsBean implements Serializable {
     private static final String PANEL_REMOVE_MEMBER = "removeMember";
     private static final String PANEL_EDIT_LIMITED = "editLimited";
     private static final String PANEL_REMOVE_LIMITED = "removeLimited";
+    private static final String PANEL_REMOVE_THESAURUS = "removeThesaurus";
 
     public MyProjectsBean(
             UserSession userSession,
@@ -238,6 +242,34 @@ public class MyProjectsBean implements Serializable {
         prepareRemoveLimitedRole(member);
         activePanel = PANEL_REMOVE_LIMITED;
         panelError = null;
+    }
+
+    public void openRemoveThesaurusPanel(ProjectThesaurus thesaurus) {
+        thesaurusToRemoveId = thesaurus.id();
+        thesaurusToRemoveTitle = thesaurus.title();
+        activePanel = PANEL_REMOVE_THESAURUS;
+        panelError = null;
+    }
+
+    public void submitRemoveThesaurus() {
+        Integer userId = requireConnectedUserId();
+        if (userId == null || selectedProjectId == null
+                || thesaurusToRemoveId == null || thesaurusToRemoveId.isBlank()) {
+            return;
+        }
+        try {
+            projectMemberService.removeThesaurusFromProject(
+                    userId, userSession.isSuperAdmin(), selectedProjectId, thesaurusToRemoveId);
+            MessageUtils.showInformationMessage(localeBean.getMsg("project.thesaurusRemovedSuccess"));
+            thesaurusToRemoveId = null;
+            thesaurusToRemoveTitle = null;
+            reloadDashboard(userId);
+            closeActivePanel();
+            refreshPage();
+        } catch (InvalidProjectDataException | ProjectAccessDeniedException e) {
+            panelError = e.getMessage();
+            MessageUtils.showErrorMessage(e.getMessage());
+        }
     }
 
     public boolean isPanel(String name) {

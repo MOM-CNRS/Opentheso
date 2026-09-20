@@ -442,6 +442,33 @@ class MyProjectsBeanTest {
     }
 
     @Test
+    void openRemoveThesaurusPanel_populatesConfirmationFields() {
+        myProjectsBean.openRemoveThesaurusPanel(new ProjectThesaurus("TH1", "Thésaurus 1", false));
+
+        assertEquals("TH1", myProjectsBean.getThesaurusToRemoveId());
+        assertEquals("Thésaurus 1", myProjectsBean.getThesaurusToRemoveTitle());
+        assertEquals("removeThesaurus", myProjectsBean.getActivePanel());
+    }
+
+    @Test
+    void submitRemoveThesaurus_success_callsService() {
+        when(userSession.getCurrentUserId()).thenReturn(5);
+        when(userSession.isSuperAdmin()).thenReturn(true);
+        myProjectsBean.setSelectedProjectId(3);
+        myProjectsBean.openRemoveThesaurusPanel(new ProjectThesaurus("TH1", "Thésaurus 1", false));
+        when(projectAdminService.loadDashboard(5, 3, "fr")).thenReturn(buildDashboard());
+
+        try (MockedStatic<MessageUtils> messages = mockStatic(MessageUtils.class);
+             MockedStatic<PrimeFaces> primeFaces = mockPrimeFaces()) {
+            myProjectsBean.submitRemoveThesaurus();
+            messages.verify(() -> MessageUtils.showInformationMessage("project.thesaurusRemovedSuccess"));
+        }
+
+        verify(projectMemberService).removeThesaurusFromProject(5, true, 3, "TH1");
+        assertNull(myProjectsBean.getActivePanel());
+    }
+
+    @Test
     void prepareMoveThesaurus_populatesTargetFields() {
         var thesaurus = new ProjectThesaurus("TH1", "Thésaurus 1", false);
 

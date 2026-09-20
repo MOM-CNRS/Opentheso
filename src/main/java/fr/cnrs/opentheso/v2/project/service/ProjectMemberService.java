@@ -315,6 +315,21 @@ public class ProjectMemberService {
         log.info("Thésaurus {} déplacé du projet id={} vers id={}", thesaurusId, projectId, targetProjectId);
     }
 
+    @Transactional
+    public void removeThesaurusFromProject(
+            int callerId,
+            boolean superAdmin,
+            int projectId,
+            String thesaurusId
+    ) {
+        requireProjectAdmin(callerId, superAdmin, projectId);
+        if (!projectMembershipRepository.isThesaurusInProject(thesaurusId, projectId)) {
+            throw new InvalidProjectDataException("Le thésaurus n'appartient pas à ce projet.");
+        }
+        projectMembershipRepository.removeThesaurusFromProject(thesaurusId, projectId);
+        log.info("Thésaurus {} retiré du projet id={}", thesaurusId, projectId);
+    }
+
     private int createUserAccount(
             String username,
             String email,

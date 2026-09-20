@@ -14,7 +14,6 @@ import fr.cnrs.opentheso.v2.shared.repository.UserCommandRepository;
 import fr.cnrs.opentheso.v2.shared.ui.UserSession;
 import fr.cnrs.opentheso.v2.shared.ui.V2LocaleBean;
 import fr.cnrs.opentheso.v2.toolbox.model.EditionThesaurusDetails;
-import fr.cnrs.opentheso.v2.toolbox.service.EditionThesaurusService;
 import fr.cnrs.opentheso.v2.toolbox.service.ModifyThesaurusService;
 import fr.cnrs.opentheso.v2.user.exception.InvalidProfileDataException;
 import fr.cnrs.opentheso.v2.user.model.UserProfile;
@@ -59,8 +58,6 @@ class InstanceAdminBeanTest {
     @Mock
     private ModifyThesaurusService modifyThesaurusService;
     @Mock
-    private EditionThesaurusService editionThesaurusService;
-    @Mock
     private UserProfileService userProfileService;
     @Mock
     private UserCommandRepository userCommandRepository;
@@ -77,7 +74,6 @@ class InstanceAdminBeanTest {
                 projectMemberService,
                 projectManagementService,
                 modifyThesaurusService,
-                editionThesaurusService,
                 userProfileService,
                 userCommandRepository
         );
@@ -229,6 +225,28 @@ class InstanceAdminBeanTest {
         verify(adminCatalogService).moveThesaurus(true, "th2", 5);
         verify(adminCatalogService).moveThesaurus(true, "th3", 5);
         verify(adminCatalogService, org.mockito.Mockito.atLeast(2)).listAllThesauri(true, "fr");
+    }
+
+    @Test
+    void confirmDeleteThesaurus_removesThesaurusFromProjectOnly() {
+        when(userSession.canAccessSuperAdminScreen()).thenReturn(true);
+        when(userSession.isSuperAdmin()).thenReturn(true);
+        when(v2LocaleBean.getIdLangue()).thenReturn("fr");
+        when(v2LocaleBean.getMsg("v2.admin.projects.thesauri.delete.success")).thenReturn("removed");
+        when(adminCatalogService.listInstanceAccounts(true)).thenReturn(List.of());
+        when(adminCatalogService.listAllProjects(true)).thenReturn(List.of(new ProjectSummary(5, "Frantiq")));
+        when(adminCatalogService.listAllThesauri(true, "fr")).thenReturn(List.of(
+                new AdminThesaurus("th1", "PACTOLS", 5, "Frantiq", false, null)
+        ));
+
+        bean.reload();
+        bean.openProjectThesauri(5);
+        bean.openDeleteThesaurusConfirm("th1", "PACTOLS");
+        bean.confirmDeleteThesaurus();
+
+        verify(adminCatalogService).removeThesaurusFromProject(true, "th1", 5);
+        assertFalse(bean.isDeleteThesaurusConfirmOpen());
+        assertNull(bean.getDeleteThesaurusId());
     }
 
     @Test

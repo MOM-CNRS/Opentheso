@@ -19,7 +19,6 @@ import fr.cnrs.opentheso.v2.shared.repository.UserCommandRepository;
 import fr.cnrs.opentheso.v2.shared.ui.UserSession;
 import fr.cnrs.opentheso.v2.shared.ui.V2LocaleBean;
 import fr.cnrs.opentheso.v2.toolbox.exception.InvalidToolboxDataException;
-import fr.cnrs.opentheso.v2.toolbox.service.EditionThesaurusService;
 import fr.cnrs.opentheso.v2.toolbox.service.ModifyThesaurusService;
 import fr.cnrs.opentheso.v2.user.exception.InvalidPasswordException;
 import fr.cnrs.opentheso.v2.user.exception.InvalidProfileDataException;
@@ -77,7 +76,6 @@ public class InstanceAdminBean implements Serializable {
     private final transient ProjectMemberService projectMemberService;
     private final transient ProjectManagementService projectManagementService;
     private final transient ModifyThesaurusService modifyThesaurusService;
-    private final transient EditionThesaurusService editionThesaurusService;
     private final transient UserProfileService userProfileService;
     private final transient UserCommandRepository userCommandRepository;
 
@@ -117,7 +115,6 @@ public class InstanceAdminBean implements Serializable {
     private boolean deleteThesaurusConfirmOpen;
     private String deleteThesaurusId;
     private String deleteThesaurusTitle;
-    private boolean deleteThesaurusPerennial;
 
     private List<ThesaurusMember> thesaurusMembersList = Collections.emptyList();
     private String membersQuery = "";
@@ -1642,26 +1639,25 @@ public class InstanceAdminBean implements Serializable {
         deleteThesaurusConfirmOpen = true;
         deleteThesaurusId = thesaurusId.trim();
         deleteThesaurusTitle = StringUtils.defaultIfBlank(thesaurusTitle, deleteThesaurusId);
-        deleteThesaurusPerennial = false;
     }
 
     public void closeDeleteThesaurusConfirm() {
         deleteThesaurusConfirmOpen = false;
         deleteThesaurusId = null;
         deleteThesaurusTitle = null;
-        deleteThesaurusPerennial = false;
     }
 
     public void confirmDeleteThesaurus() {
-        if (!isAccessAllowed() || StringUtils.isBlank(deleteThesaurusId)) {
+        if (!isAccessAllowed() || StringUtils.isBlank(deleteThesaurusId) || openProjectId == null) {
             return;
         }
         try {
-            editionThesaurusService.deleteThesaurus(deleteThesaurusId, deleteThesaurusPerennial);
+            adminCatalogService.removeThesaurusFromProject(
+                    userSession.isSuperAdmin(), deleteThesaurusId, openProjectId);
             flashInfo(v2LocaleBean.getMsg("v2.admin.projects.thesauri.delete.success"));
             closeDeleteThesaurusConfirm();
             reload();
-        } catch (InvalidToolboxDataException e) {
+        } catch (InvalidProjectDataException | ProjectAccessDeniedException e) {
             flashError(e.getMessage());
             closeDeleteThesaurusConfirm();
         }

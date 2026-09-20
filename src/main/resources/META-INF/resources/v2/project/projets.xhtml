@@ -295,6 +295,28 @@
                 </div>
               </ui:fragment>
 
+              <ui:fragment rendered="#{v2MyProjectsBean.activePanel eq 'removeThesaurus'}">
+                <div class="bo-card ia-create">
+                  <div class="bo-card-h"><span class="bo-card-t">#{v2LocaleBean.getMsg('v2.projects.removeThesaurus')}</span></div>
+                  <div class="bo-card-b">
+                    <p>#{v2LocaleBean.getMsg('v2.projects.removeThesaurusConfirm')} <b>#{v2MyProjectsBean.thesaurusToRemoveTitle}</b></p>
+                    <div class="ia-create-actions">
+                      <h:commandButton styleClass="bo-btn ghost"
+                                       value="#{v2LocaleBean.getMsg('v2.projects.cancel')}"
+                                       action="#{v2MyProjectsBean.closeActivePanel}"
+                                       immediate="true">
+                        <f:ajax execute="@this" render="mpShell"/>
+                      </h:commandButton>
+                      <h:commandButton styleClass="bo-btn primary danger"
+                                       value="#{v2LocaleBean.getMsg('v2.projects.removeSubmit')}"
+                                       action="#{v2MyProjectsBean.submitRemoveThesaurus}">
+                        <f:ajax execute="@this" render="mpShell"/>
+                      </h:commandButton>
+                    </div>
+                  </div>
+                </div>
+              </ui:fragment>
+
               <ui:fragment rendered="#{v2MyProjectsBean.activePanel eq 'removeLimited'}">
                 <div class="bo-card ia-create">
                   <div class="bo-card-h"><span class="bo-card-t">#{v2LocaleBean.getMsg('v2.projects.removeLimited')}</span></div>
@@ -382,6 +404,7 @@
                             <tr>
                               <th>Id</th>
                               <th>#{v2LocaleBean.getMsg('v2.projects.col.thesaurus')}</th>
+                              <th></th>
                             </tr>
                           </thead>
                           <tbody>
@@ -390,6 +413,17 @@
                                 <td><code>#{th.id()}</code></td>
                                 <td>
                                   <b class="#{th.privateThesaurus() ? 'ia-private' : ''}">#{th.title()}</b>
+                                </td>
+                                <td class="st-td-act">
+                                  <div class="ia-row-acts">
+                                    <h:commandButton styleClass="bo-btn ghost sm ia-icon-btn is-danger"
+                                                     title="#{v2LocaleBean.getMsg('v2.projects.removeThesaurus')}"
+                                                     value="×"
+                                                     action="#{v2MyProjectsBean.openRemoveThesaurusPanel(th)}"
+                                                     immediate="true">
+                                      <f:ajax execute="@this" render="mpShell"/>
+                                    </h:commandButton>
+                                  </div>
                                 </td>
                               </tr>
                             </ui:repeat>
