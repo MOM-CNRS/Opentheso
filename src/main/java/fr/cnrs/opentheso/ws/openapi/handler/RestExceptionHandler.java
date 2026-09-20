@@ -4,6 +4,7 @@ import fr.cnrs.opentheso.v2.setting.exception.InvalidSettingDataException;
 import fr.cnrs.opentheso.v2.setting.exception.SettingAccessDeniedException;
 import fr.cnrs.opentheso.v2.shared.exception.ModuleAccessDeniedException;
 import fr.cnrs.opentheso.v2.candidat.exception.CandidateNotFoundException;
+import fr.cnrs.opentheso.v2.proposition.exception.PropositionNotFoundException;
 import fr.cnrs.opentheso.v2.graph.exception.GraphViewNotFoundException;
 import fr.cnrs.opentheso.v2.graph.exception.InvalidGraphDataException;
 import fr.cnrs.opentheso.v2.toolbox.exception.ToolboxAccessDeniedException;
@@ -264,6 +265,17 @@ public class RestExceptionHandler {
         problem.setInstance(URI.create(request.getRequestURI()));
         problem.setProperty("timestamp", OffsetDateTime.now());
         problem.setProperty("errorCode", "CANDIDATE_NOT_FOUND");
+        return problem;
+    }
+
+    @ExceptionHandler(PropositionNotFoundException.class)
+    public ProblemDetail handlePropositionNotFound(PropositionNotFoundException ex, HttpServletRequest request) {
+        ProblemDetail problem = ProblemDetail.forStatus(HttpStatus.NOT_FOUND);
+        problem.setTitle("Proposition not found");
+        problem.setDetail(ex.getMessage());
+        problem.setInstance(URI.create(request.getRequestURI()));
+        problem.setProperty("timestamp", OffsetDateTime.now());
+        problem.setProperty("errorCode", "PROPOSITION_NOT_FOUND");
         return problem;
     }
 

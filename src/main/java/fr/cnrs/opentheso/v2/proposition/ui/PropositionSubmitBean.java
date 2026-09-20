@@ -15,13 +15,16 @@ import fr.cnrs.opentheso.v2.proposition.model.PropositionSynonymOption;
 import fr.cnrs.opentheso.v2.proposition.model.PropositionTranslationOption;
 import fr.cnrs.opentheso.v2.proposition.service.PropositionDraftService;
 import fr.cnrs.opentheso.v2.proposition.service.PropositionMutationService;
+import fr.cnrs.opentheso.v2.proposition.policy.PropositionAccessPolicy;
 import fr.cnrs.opentheso.v2.setting.ui.ThesaurusContext;
 import fr.cnrs.opentheso.v2.shared.ui.UserSession;
+import fr.cnrs.opentheso.v2.shared.ui.V2LocaleBean;
 import jakarta.faces.view.ViewScoped;
 import jakarta.inject.Named;
 import lombok.Getter;
 import lombok.RequiredArgsConstructor;
 import lombok.Setter;
+import lombok.extern.slf4j.Slf4j;
 import org.apache.commons.lang3.StringUtils;
 import org.apache.commons.lang3.Strings;
 import org.primefaces.PrimeFaces;
@@ -32,6 +35,7 @@ import java.util.List;
 import java.util.Set;
 import java.util.stream.Collectors;
 
+@Slf4j
 @Getter
 @Setter
 @ViewScoped
@@ -48,11 +52,25 @@ public class PropositionSubmitBean implements Serializable {
     private final transient ConceptReadService conceptReadService;
     private final transient ConceptLexicalMutationService conceptLexicalMutationService;
     private final transient ThesaurusContext thesaurusContext;
+    private final transient PropositionAccessPolicy propositionAccessPolicy;
     private final transient UserSession userSession;
+    private final transient V2LocaleBean localeBean;
+    private final transient PropositionBean propositionBean;
+
+    @Getter(lombok.AccessLevel.NONE)
+    private boolean composing;
+    private String composingConceptId;
+    private Boolean suggestionEnabled;
+
+    @Getter
+    private String flashMessage = "";
+    @Getter
+    private long flashToken;
 
     private String authorName;
     private String authorEmail;
     private String comment;
+    private boolean commentInvalid;
 
     private String currentPreferredLabel;
     private String proposedPreferredLabel;
@@ -75,8 +93,55 @@ public class PropositionSubmitBean implements Serializable {
     private String newNoteLang;
     private String newNoteValue;
 
+    /**
+     * Préférence thésaurus « Activer les propositions » (lazy, invalidée à chaque open).
+     */
+    public boolean isSuggestionEnabled() {
+        if (suggestionEnabled == null) {
+            suggestionEnabled = propositionAccessPolicy.isSuggestionEnabled(
+                    thesaurusContext.resolveThesaurusId(),
+                    thesaurusContext.resolveWorkLanguage());
+        }
+        return suggestionEnabled;
+    }
+
+    public boolean isComposing() {
+        if (!composing) {
+            return false;
+        }
+        if (!conceptSelectionContext.hasSelection()
+                || !Strings.CS.equals(composingConceptId, conceptSelectionContext.getConceptId())) {
+            composing = false;
+            composingConceptId = null;
+            return false;
+        }
+        return true;
+    }
+
+    public void open() {
+        suggestionEnabled = null;
+        if (!propositionAccessPolicy.canSubmit(
+                userSession,
+                thesaurusContext.resolveThesaurusId(),
+                thesaurusContext.resolveWorkLanguage())
+                || !conceptSelectionContext.hasSelection()) {
+            return;
+        }
+        prepare();
+        composing = true;
+        composingConceptId = conceptSelectionContext.getConceptId();
+    }
+
+    public void cancel() {
+        composing = false;
+        composingConceptId = null;
+        comment = "";
+        commentInvalid = false;
+    }
+
     public void prepare() {
         comment = "";
+        commentInvalid = false;
         if (userSession.isLoggedIn()) {
             authorName = userSession.getCurrentUsername();
             authorEmail = userSession.getCurrentUserEmail();
@@ -146,9 +211,11 @@ public class PropositionSubmitBean implements Serializable {
 
         if (!availableLanguages.isEmpty()) {
             newSynonymLang = availableLanguages.get(0).code();
-            newTranslationLang = availableLanguages.get(0).code();
-            newNoteLang = conceptSelectionContext.getSummary().lang();
+            newNoteLang = conceptSelectionContext.hasSelection()
+                    ? conceptSelectionContext.getSummary().lang()
+                    : availableLanguages.get(0).code();
         }
+        syncNewTranslationLang();
     }
 
     public boolean isPreferredLabelChanged() {
@@ -203,7 +270,7 @@ public class PropositionSubmitBean implements Serializable {
             return;
         }
         proposedPreferredLabel = renameDraftLabel.trim();
-        PrimeFaces.current().executeScript("PF('v2PropRenameLabel').hide();");
+        hideDialog("v2PropRenameLabel");
     }
 
     public void prepareAddSynonym() {
@@ -238,7 +305,7 @@ public class PropositionSubmitBean implements Serializable {
 
     public void confirmEditNote() {
         noteBeingEdited = null;
-        PrimeFaces.current().executeScript("PF('v2PropEditNote').hide();");
+        hideDialog("v2PropEditNote");
     }
 
     public void clearNote(PropositionNoteOption option) {
@@ -266,7 +333,7 @@ public class PropositionSubmitBean implements Serializable {
         }
         target.setValue(newNoteValue.trim());
         newNoteValue = null;
-        PrimeFaces.current().executeScript("PF('v2PropAddNote').hide();");
+        hideDialog("v2PropAddNote");
     }
 
     private PropositionSynonymOption seedSynonym(String value, boolean hidden) {
@@ -302,7 +369,7 @@ public class PropositionSubmitBean implements Serializable {
         synonymOptions.add(option);
         newSynonymValue = null;
         newSynonymHidden = false;
-        PrimeFaces.current().executeScript("PF('v2PropAddSynonym').hide();");
+        hideDialog("v2PropAddSynonym");
     }
 
     public void applySynonymEdit(PropositionSynonymOption option) {
@@ -310,7 +377,7 @@ public class PropositionSubmitBean implements Serializable {
             return;
         }
         if (option.isToAdd() || option.getOldValue() == null) {
-            PrimeFaces.current().executeScript("PF('v2PropRenameSynonym').hide();");
+            hideDialog("v2PropRenameSynonym");
             return;
         }
         boolean valueChanged = !Strings.CS.equals(
@@ -319,7 +386,7 @@ public class PropositionSubmitBean implements Serializable {
         boolean hiddenChanged = option.isHidden() != option.isOldHidden();
         option.setToUpdate(valueChanged || hiddenChanged);
         option.setToRemove(false);
-        PrimeFaces.current().executeScript("PF('v2PropRenameSynonym').hide();");
+        hideDialog("v2PropRenameSynonym");
     }
 
     public void removeSynonymOption(PropositionSynonymOption option) {
@@ -351,7 +418,8 @@ public class PropositionSubmitBean implements Serializable {
         translationOptions.add(option);
         newTranslationLang = null;
         newTranslationValue = null;
-        PrimeFaces.current().executeScript("PF('v2PropAddTraduction').hide();");
+        syncNewTranslationLang();
+        hideDialog("v2PropAddTraduction");
     }
 
     public void applyTranslationEdit(PropositionTranslationOption option) {
@@ -359,7 +427,7 @@ public class PropositionSubmitBean implements Serializable {
             return;
         }
         if (option.isToAdd() || option.getOldValue() == null) {
-            PrimeFaces.current().executeScript("PF('v2PropRenameTraduction').hide();");
+            hideDialog("v2PropRenameTraduction");
             return;
         }
         boolean valueChanged = !Strings.CS.equals(
@@ -367,7 +435,7 @@ public class PropositionSubmitBean implements Serializable {
                 StringUtils.defaultString(option.getValue()).trim());
         option.setToUpdate(valueChanged);
         option.setToRemove(false);
-        PrimeFaces.current().executeScript("PF('v2PropRenameTraduction').hide();");
+        hideDialog("v2PropRenameTraduction");
     }
 
     public void removeTranslationOption(PropositionTranslationOption option) {
@@ -395,27 +463,42 @@ public class PropositionSubmitBean implements Serializable {
         return labelChanged || synonymChanged || translationChanged || noteChanged;
     }
 
+    /**
+     * Action Facelets (void) : un {@code boolean} en outcome casse l'AJAX JSF (« true »/« false »).
+     */
+    public void send() {
+        submit();
+    }
+
     public boolean submit() {
+        flashMessage = "";
+        commentInvalid = false;
+        if (!propositionAccessPolicy.canSubmit(
+                userSession,
+                thesaurusContext.resolveThesaurusId(),
+                thesaurusContext.resolveWorkLanguage())) {
+            return reject("La suggestion est désactivée pour le thésaurus dans lequel la proposition sélectionnée appartient !");
+        }
         if (!conceptSelectionContext.hasSelection()) {
-            MessageUtils.showErrorMessage("Aucun concept sélectionné");
-            return false;
+            return reject("Aucun concept sélectionné");
         }
         var summary = conceptSelectionContext.getSummary();
         if (StringUtils.isBlank(authorName)) {
-            MessageUtils.showWarnMessage("Veuillez saisir votre nom");
-            return false;
+            return reject("Veuillez saisir votre nom");
         }
         if (StringUtils.isBlank(authorEmail)) {
-            MessageUtils.showWarnMessage("Veuillez saisir votre adresse email");
-            return false;
+            return reject("Veuillez saisir votre adresse email");
         }
         if (StringUtils.isBlank(comment)) {
-            MessageUtils.showWarnMessage("Veuillez saisir votre proposition");
-            return false;
+            commentInvalid = true;
+            return reject(localeBean.getMsg("v2.proposition.submit.commentRequired"));
         }
 
         String thesaurusId = thesaurusContext.resolveThesaurusId();
         String lang = summary.lang();
+        if (StringUtils.isAnyBlank(thesaurusId, summary.conceptId(), lang)) {
+            return reject("Impossible d'envoyer la proposition : concept ou thésaurus manquant");
+        }
 
         var submission = new PropositionSubmission(
                 thesaurusId,
@@ -428,26 +511,84 @@ public class PropositionSubmitBean implements Serializable {
                 StringUtils.defaultString(comment)
         );
 
-        var createdId = propositionMutationService.submitDraft(submission);
-        if (createdId.isEmpty()) {
-            MessageUtils.showWarnMessage("Vous avez déjà une proposition en cours pour ce concept");
-            return false;
+        try {
+            var createdId = propositionMutationService.submitDraft(submission);
+            if (createdId.isEmpty()) {
+                return reject("L'enregistrement de la proposition a échoué");
+            }
+
+            synonymOptions.forEach(this::syncSynonymFlags);
+            translationOptions.forEach(this::syncTranslationFlags);
+
+            var draft = PropositionDraftMapper.toDraft(new PropositionDraftMapper.ToDraftRequest(
+                    summary.conceptId(),
+                    thesaurusId,
+                    lang,
+                    currentPreferredLabel,
+                    proposedPreferredLabel,
+                    synonymOptions,
+                    translationOptions,
+                    noteOptions
+            ));
+            propositionDraftService.saveDraftDetails(createdId.get(), draft);
+        } catch (RuntimeException ex) {
+            log.error("Échec de l'enregistrement de la proposition pour le concept {}", summary.conceptId(), ex);
+            return reject("L'enregistrement de la proposition a échoué");
         }
 
-        var draft = PropositionDraftMapper.toDraft(new PropositionDraftMapper.ToDraftRequest(
-                summary.conceptId(),
-                thesaurusId,
-                lang,
-                currentPreferredLabel,
-                proposedPreferredLabel,
-                synonymOptions,
-                translationOptions,
-                noteOptions
-        ));
-        propositionDraftService.saveDraftDetails(createdId.get(), draft);
-
         comment = "";
-        MessageUtils.showInformationMessage("Votre proposition a bien été envoyée");
+        composing = false;
+        composingConceptId = null;
+        flashMessage = "Votre proposition a bien été envoyée";
+        flashToken = System.currentTimeMillis();
+        propositionBean.refreshPendingCount();
+        MessageUtils.showInformationMessage(flashMessage);
         return true;
+    }
+
+    private boolean reject(String message) {
+        flashMessage = message;
+        flashToken = System.currentTimeMillis();
+        MessageUtils.showWarnMessage(message);
+        return false;
+    }
+
+    private void syncNewTranslationLang() {
+        List<ConceptWriteLanguage> free = getLanguagesWithoutTranslation();
+        if (free.isEmpty()) {
+            newTranslationLang = null;
+            return;
+        }
+        boolean currentValid = free.stream()
+                .anyMatch(lang -> Strings.CI.equals(lang.code(), newTranslationLang));
+        if (!currentValid) {
+            newTranslationLang = free.get(0).code();
+        }
+    }
+
+    private void syncSynonymFlags(PropositionSynonymOption option) {
+        if (option == null || option.isToRemove() || option.isToAdd()) {
+            return;
+        }
+        boolean valueChanged = !Strings.CS.equals(
+                StringUtils.defaultString(option.getOldValue()).trim(),
+                StringUtils.defaultString(option.getValue()).trim());
+        boolean hiddenChanged = option.isHidden() != option.isOldHidden();
+        option.setToUpdate(valueChanged || hiddenChanged);
+    }
+
+    private void syncTranslationFlags(PropositionTranslationOption option) {
+        if (option == null || option.isToRemove() || option.isToAdd()) {
+            return;
+        }
+        boolean valueChanged = !Strings.CS.equals(
+                StringUtils.defaultString(option.getOldValue()).trim(),
+                StringUtils.defaultString(option.getValue()).trim());
+        option.setToUpdate(valueChanged);
+    }
+
+    private void hideDialog(String widgetVar) {
+        PrimeFaces.current().executeScript(
+                "try{var w=PF('" + widgetVar + "');if(w)w.hide();}catch(e){}");
     }
 }

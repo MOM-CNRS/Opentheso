@@ -6,6 +6,7 @@
   <ui:param name="v2Page" value="consultation"/>
   <ui:define name="viewActions">
     <f:viewAction action="#{v2ThesaurusViewBean.restoreOpenedConcept}" onPostback="false"/>
+    <f:viewAction action="#{v2PropositionBean.restoreFromRequest}" onPostback="false"/>
   </ui:define>
   <ui:define name="title">OpenTheso — Consultation</ui:define>
   <ui:define name="main">

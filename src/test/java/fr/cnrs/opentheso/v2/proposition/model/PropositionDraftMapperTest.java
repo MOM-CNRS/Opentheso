@@ -117,7 +117,23 @@ class PropositionDraftMapperTest {
         assertEquals(PropositionFieldAction.ADD, draft.getNoteChange("definition").action());
         assertEquals(PropositionFieldAction.UPDATE, draft.getNoteChange("note").action());
         assertEquals(PropositionFieldAction.DELETE, draft.getNoteChange("scopeNote").action());
+        assertEquals("Old scope", draft.getNoteChange("scopeNote").value());
         assertNull(draft.getNoteChange("example"));
+    }
+
+    @Test
+    void toDraft_usesOldValueWhenDeletedNoteValueIsNull() {
+        var removed = new PropositionNoteOption();
+        removed.setTypeCode("definition");
+        removed.setOldValue("Existing definition");
+        removed.setValue(null);
+
+        var draft = PropositionDraftMapper.toDraft(new PropositionDraftMapper.ToDraftRequest(
+                "C1", "TH1", "fr", "Label", "Label",
+                List.of(), List.of(), List.of(removed)));
+
+        assertEquals(PropositionFieldAction.DELETE, draft.getNoteChange("definition").action());
+        assertEquals("Existing definition", draft.getNoteChange("definition").value());
     }
 
     @Test

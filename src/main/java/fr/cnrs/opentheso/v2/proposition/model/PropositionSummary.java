@@ -5,7 +5,8 @@ import java.io.Serializable;
 
 /**
  * Résumé d'une proposition pour le tiroir latéral.
- * Accesseurs {@code getXxx()} pour l'EL JSF.
+ * {@code RecordELResolver} résout {@code #{item.envoyer}} via {@code envoyer()},
+ * pas via {@code isEnvoyer()}.
  */
 public record PropositionSummary(
         int id,
@@ -60,23 +61,64 @@ public record PropositionSummary(
         return flagCode;
     }
 
+    public boolean envoyer() {
+        return matches(PropositionStatusEnum.ENVOYER);
+    }
+
+    public boolean lu() {
+        return matches(PropositionStatusEnum.LU);
+    }
+
+    public boolean approuver() {
+        return matches(PropositionStatusEnum.APPROUVER);
+    }
+
+    public boolean refuser() {
+        return matches(PropositionStatusEnum.REFUSER);
+    }
+
+    public boolean pending() {
+        return envoyer() || lu();
+    }
+
+    /** Classe CSS pour le tableau de bord ({@code #{item.statusCss}}). */
+    public String statusCss() {
+        if (envoyer()) {
+            return "is-new";
+        }
+        if (lu()) {
+            return "is-read";
+        }
+        if (approuver()) {
+            return "is-approved";
+        }
+        if (refuser()) {
+            return "is-refused";
+        }
+        return "";
+    }
+
     public boolean isEnvoyer() {
-        return PropositionStatusEnum.ENVOYER.name().equalsIgnoreCase(status);
+        return envoyer();
     }
 
     public boolean isLu() {
-        return PropositionStatusEnum.LU.name().equalsIgnoreCase(status);
+        return lu();
     }
 
     public boolean isApprouver() {
-        return PropositionStatusEnum.APPROUVER.name().equalsIgnoreCase(status);
+        return approuver();
     }
 
     public boolean isRefuser() {
-        return PropositionStatusEnum.REFUSER.name().equalsIgnoreCase(status);
+        return refuser();
     }
 
     public boolean isPending() {
-        return isEnvoyer() || isLu();
+        return pending();
+    }
+
+    private boolean matches(PropositionStatusEnum expected) {
+        return expected.name().equalsIgnoreCase(status);
     }
 }

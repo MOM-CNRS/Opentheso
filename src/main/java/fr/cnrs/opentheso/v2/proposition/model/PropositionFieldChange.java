@@ -46,4 +46,41 @@ public record PropositionFieldChange(
     public boolean isDelete() {
         return action == PropositionFieldAction.DELETE;
     }
+
+    public boolean hasPrevious() {
+        return !previousDisplay().isBlank();
+    }
+
+    public boolean hasNext() {
+        return !nextDisplay().isBlank();
+    }
+
+    /** Valeur à afficher dans la colonne « ancien » (vide pour un ajout). */
+    public String previousDisplay() {
+        if (isAdd()) {
+            return "";
+        }
+        if (oldValue != null && !oldValue.isBlank()) {
+            return oldValue;
+        }
+        return value == null ? "" : value;
+    }
+
+    /** Valeur à afficher dans la colonne « nouveau » (vide pour une suppression). */
+    public String nextDisplay() {
+        if (isDelete()) {
+            return "";
+        }
+        return value == null ? "" : value;
+    }
+
+    public String actionCss() {
+        if (isAdd()) {
+            return "is-add";
+        }
+        if (isDelete()) {
+            return "is-delete";
+        }
+        return "is-update";
+    }
 }

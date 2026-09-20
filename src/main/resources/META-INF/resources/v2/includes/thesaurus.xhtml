@@ -2,7 +2,8 @@
 <ui:composition xmlns="http://www.w3.org/1999/xhtml"
                 xmlns:ui="http://xmlns.jcp.org/jsf/facelets"
                 xmlns:h="http://xmlns.jcp.org/jsf/html"
-                xmlns:f="http://xmlns.jcp.org/jsf/core">
+                xmlns:f="http://xmlns.jcp.org/jsf/core"
+                xmlns:pt="http://xmlns.jcp.org/jsf/passthrough">
 
   <nav class="thesaurus" id="navThesaurus" aria-label="Navigation OpenTheso">
     <a class="thesaurus-logo" href="#{request.contextPath}/v2/thesauri" title="OpenTheso — sélection de thésaurus" aria-label="OpenTheso">
@@ -138,6 +139,25 @@
         </div>
         </ui:fragment>
       </div>
+      <h:panelGroup id="previewPropBadge">
+        <ui:fragment rendered="#{v2PropositionBean.boardLinkVisible}">
+          <div class="thesaurus-item">
+            <h:form id="propNavForm" prependId="false" styleClass="prop-nav-form">
+              <h:commandLink id="v2NotificationProp"
+                             styleClass="thesaurus-btn prop-nav-btn#{v2Page eq 'propositions' ? ' is-on' : ''}#{v2PropositionBean.pendingCount gt 0 ? ' has-count' : ''}"
+                             action="#{v2PropositionBean.openBoard}"
+                             title="#{v2LocaleBean.getMsg('v2.proposition.board.title')}"
+                             pt:aria-label="#{v2LocaleBean.getMsg('v2.proposition.board.title')}">
+                <svg viewBox="0 0 24 24" aria-hidden="true"><path d="M4 4h16v16H4z"/><path d="m22 6-10 7L2 6"/></svg>
+                <ui:fragment rendered="#{v2PropositionBean.pendingCount gt 0}">
+                  <span class="prop-rail-n">#{v2PropositionBean.pendingCount}</span>
+                </ui:fragment>
+              </h:commandLink>
+              <input type="hidden" name="csrfToken" value="#{sessionScope.CSRF_TOKEN}"/>
+            </h:form>
+          </div>
+        </ui:fragment>
+      </h:panelGroup>
       </ui:fragment>
     </div>
     <div class="thesaurus-spacer"></div>

@@ -9,17 +9,21 @@ import fr.cnrs.opentheso.v2.concept.service.ConceptReadService;
 import fr.cnrs.opentheso.v2.concept.session.ConceptSelectionContext;
 import fr.cnrs.opentheso.v2.concept.write.model.ConceptWriteLanguage;
 import fr.cnrs.opentheso.v2.concept.write.service.ConceptLexicalMutationService;
+import fr.cnrs.opentheso.v2.proposition.model.PropositionSubmission;
 import fr.cnrs.opentheso.v2.proposition.model.PropositionSynonymOption;
 import fr.cnrs.opentheso.v2.proposition.model.PropositionTranslationOption;
 import fr.cnrs.opentheso.v2.proposition.service.PropositionDraftService;
 import fr.cnrs.opentheso.v2.proposition.service.PropositionMutationService;
+import fr.cnrs.opentheso.v2.proposition.policy.PropositionAccessPolicy;
 import fr.cnrs.opentheso.v2.setting.ui.ThesaurusContext;
 import fr.cnrs.opentheso.v2.shared.ui.UserSession;
+import fr.cnrs.opentheso.v2.shared.ui.V2LocaleBean;
 import fr.cnrs.opentheso.v2.test.support.PrimeFacesTestSupport;
 import org.junit.jupiter.api.AfterEach;
 import org.junit.jupiter.api.BeforeEach;
 import org.junit.jupiter.api.Test;
 import org.junit.jupiter.api.extension.ExtendWith;
+import org.mockito.ArgumentCaptor;
 import org.mockito.Mock;
 import org.mockito.MockedStatic;
 import org.mockito.junit.jupiter.MockitoExtension;
@@ -48,7 +52,10 @@ class PropositionSubmitBeanTest {
     @Mock private ConceptReadService conceptReadService;
     @Mock private ConceptLexicalMutationService conceptLexicalMutationService;
     @Mock private ThesaurusContext thesaurusContext;
+    @Mock private PropositionAccessPolicy propositionAccessPolicy;
     @Mock private UserSession userSession;
+    @Mock private V2LocaleBean localeBean;
+    @Mock private PropositionBean propositionBean;
 
     private PropositionSubmitBean bean;
     private MockedStatic<MessageUtils> messageUtilsStatic;
@@ -63,9 +70,14 @@ class PropositionSubmitBeanTest {
         primeFacesContext = PrimeFacesTestSupport.open();
         bean = new PropositionSubmitBean(
                 propositionMutationService, propositionDraftService, conceptSelectionContext,
-                conceptReadService, conceptLexicalMutationService, thesaurusContext, userSession);
+                conceptReadService, conceptLexicalMutationService, thesaurusContext,
+                propositionAccessPolicy, userSession, localeBean, propositionBean);
         lenient().when(conceptLexicalMutationService.listUsedLanguages(any(), any()))
                 .thenReturn(List.of(new ConceptWriteLanguage("fr", "Français")));
+        lenient().when(propositionAccessPolicy.canSubmit(any(), any(), any())).thenReturn(true);
+        lenient().when(propositionAccessPolicy.isSuggestionEnabled(any(), any())).thenReturn(true);
+        lenient().when(localeBean.getMsg("v2.proposition.submit.commentRequired"))
+                .thenReturn("Veuillez saisir un commentaire pour envoyer votre proposition.");
     }
 
     @AfterEach
@@ -107,6 +119,7 @@ class PropositionSubmitBeanTest {
         assertEquals(7, bean.getNoteOptions().size());
         assertEquals("Existing definition", bean.getNoteOptions().stream()
                 .filter(o -> "definition".equals(o.getTypeCode())).findFirst().orElseThrow().getValue());
+        assertEquals("fr", bean.getNewTranslationLang());
     }
 
     @Test
@@ -305,7 +318,8 @@ class PropositionSubmitBeanTest {
 
         bean.submit();
 
-        messageUtilsStatic.verify(() -> MessageUtils.showErrorMessage("Aucun concept sélectionné"));
+        messageUtilsStatic.verify(() -> MessageUtils.showWarnMessage("Aucun concept sélectionné"));
+        assertEquals("Aucun concept sélectionné", bean.getFlashMessage());
         verify(propositionMutationService, never()).submitDraft(any());
     }
 
@@ -318,7 +332,10 @@ class PropositionSubmitBeanTest {
 
         bean.submit();
 
-        messageUtilsStatic.verify(() -> MessageUtils.showWarnMessage("Veuillez saisir votre proposition"));
+        messageUtilsStatic.verify(() -> MessageUtils.showWarnMessage(
+                "Veuillez saisir un commentaire pour envoyer votre proposition."));
+        assertEquals("Veuillez saisir un commentaire pour envoyer votre proposition.", bean.getFlashMessage());
+        assertTrue(bean.isCommentInvalid());
         verify(propositionMutationService, never()).submitDraft(any());
     }
 
@@ -336,7 +353,7 @@ class PropositionSubmitBeanTest {
     }
 
     @Test
-    void submit_warnsWhenDuplicateProposition() {
+    void submit_warnsWhenSaveReturnsEmpty() {
         when(conceptSelectionContext.hasSelection()).thenReturn(true);
         when(conceptSelectionContext.getSummary()).thenReturn(SUMMARY);
         when(thesaurusContext.resolveThesaurusId()).thenReturn("TH1");
@@ -347,7 +364,7 @@ class PropositionSubmitBeanTest {
 
         bean.submit();
 
-        messageUtilsStatic.verify(() -> MessageUtils.showWarnMessage("Vous avez déjà une proposition en cours pour ce concept"));
+        messageUtilsStatic.verify(() -> MessageUtils.showWarnMessage("L'enregistrement de la proposition a échoué"));
         verify(propositionDraftService, never()).saveDraftDetails(anyInt(), any());
     }
 
@@ -363,8 +380,78 @@ class PropositionSubmitBeanTest {
 
         bean.submit();
 
+        ArgumentCaptor<PropositionSubmission> captor = ArgumentCaptor.forClass(PropositionSubmission.class);
+        verify(propositionMutationService).submitDraft(captor.capture());
+        assertTrue(captor.getValue().allowMultiplePending());
         verify(propositionDraftService).saveDraftDetails(eq(42), any());
+        verify(propositionBean).refreshPendingCount();
         messageUtilsStatic.verify(() -> MessageUtils.showInformationMessage("Votre proposition a bien été envoyée"));
         assertEquals("", bean.getComment());
+        assertFalse(bean.isComposing());
+        assertEquals("Votre proposition a bien été envoyée", bean.getFlashMessage());
+        assertTrue(bean.getFlashToken() > 0);
+    }
+
+    @Test
+    void submit_surfacesPersistFailure() {
+        when(conceptSelectionContext.hasSelection()).thenReturn(true);
+        when(conceptSelectionContext.getSummary()).thenReturn(SUMMARY);
+        when(thesaurusContext.resolveThesaurusId()).thenReturn("TH1");
+        bean.setAuthorName("Author");
+        bean.setComment("A comment");
+        bean.setAuthorEmail("a@b.fr");
+        when(propositionMutationService.submitDraft(any())).thenReturn(Optional.of(42));
+        org.mockito.Mockito.doThrow(new IllegalStateException("db"))
+                .when(propositionDraftService).saveDraftDetails(eq(42), any());
+
+        assertFalse(bean.submit());
+
+        assertEquals("L'enregistrement de la proposition a échoué", bean.getFlashMessage());
+        assertTrue(bean.getFlashToken() > 0);
+        messageUtilsStatic.verify(() -> MessageUtils.showWarnMessage(
+                "L'enregistrement de la proposition a échoué"));
+    }
+
+    @Test
+    void open_preparesFormWhenSuggestionEnabled() {
+        when(thesaurusContext.resolveThesaurusId()).thenReturn("TH1");
+        when(thesaurusContext.resolveWorkLanguage()).thenReturn("fr");
+        when(propositionAccessPolicy.canSubmit(any(), eq("TH1"), eq("fr"))).thenReturn(true);
+        when(conceptSelectionContext.hasSelection()).thenReturn(true);
+        when(conceptSelectionContext.getConceptId()).thenReturn("C1");
+        when(conceptSelectionContext.getSummary()).thenReturn(SUMMARY);
+        when(conceptReadService.loadDetail(any(), any(), any())).thenReturn(Optional.empty());
+
+        bean.open();
+
+        assertTrue(bean.isComposing());
+        assertEquals("Concept 1", bean.getCurrentPreferredLabel());
+    }
+
+    @Test
+    void open_ignoredWhenSuggestionDisabled() {
+        when(thesaurusContext.resolveThesaurusId()).thenReturn("TH1");
+        when(thesaurusContext.resolveWorkLanguage()).thenReturn("fr");
+        when(propositionAccessPolicy.canSubmit(any(), eq("TH1"), eq("fr"))).thenReturn(false);
+
+        bean.open();
+
+        assertFalse(bean.isComposing());
+    }
+
+    @Test
+    void cancel_exitsComposingMode() {
+        when(thesaurusContext.resolveThesaurusId()).thenReturn("TH1");
+        when(thesaurusContext.resolveWorkLanguage()).thenReturn("fr");
+        when(propositionAccessPolicy.canSubmit(any(), eq("TH1"), eq("fr"))).thenReturn(true);
+        when(conceptSelectionContext.hasSelection()).thenReturn(true);
+        when(conceptSelectionContext.getConceptId()).thenReturn("C1");
+        when(conceptSelectionContext.getSummary()).thenReturn(SUMMARY);
+        when(conceptReadService.loadDetail(any(), any(), any())).thenReturn(Optional.empty());
+        bean.open();
+
+        bean.cancel();
+
+        assertFalse(bean.isComposing());
     }
 }

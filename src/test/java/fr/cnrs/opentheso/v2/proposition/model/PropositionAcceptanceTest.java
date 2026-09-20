@@ -17,6 +17,15 @@ class PropositionAcceptanceTest {
     }
 
     @Test
+    void all_acceptsEveryCategory() {
+        var acceptance = PropositionAcceptance.all();
+
+        for (PropositionFieldCategory category : PropositionFieldCategory.values()) {
+            assertTrue(acceptance.isAccepted(category), category + " should be accepted");
+        }
+    }
+
+    @Test
     void isAccepted_mapsEachCategoryToItsOwnFlag() {
         assertTrue(new PropositionAcceptance(true, false, false, false, false, false, false, false, false, false)
                 .isAccepted(PropositionFieldCategory.NOM));

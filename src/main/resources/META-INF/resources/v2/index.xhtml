@@ -10,6 +10,7 @@
     <f:viewAction action="#{v2ConsultationShellBean.applyThesaurusFromUrl}" onPostback="false"/>
     <f:viewAction action="#{v2ThesaurusViewBean.showThesaurusHome}" onPostback="false"/>
     <f:viewAction action="#{v2ThesaurusViewBean.restoreOpenedConcept}" onPostback="false"/>
+    <f:viewAction action="#{v2PropositionBean.restoreFromRequest}" onPostback="false"/>
   </ui:define>
   <ui:define name="title">OpenTheso — #{v2ConsultationShellBean.thesaurusAccessDenied ? v2LocaleBean.getMsg('v2.thesaurus.accessDenied.title') : v2ThesaurusViewBean.title}</ui:define>
   <ui:define name="detail">

@@ -408,7 +408,7 @@ a.st-hint:hover{text-decoration:underline}
 .bo-toast[hidden]{display:none}
 button.st-hint{background:none;border:none;padding:0;cursor:pointer;font:inherit}
 
-a.th-id,a.thesaurus-logo,a.thesaurus-btn,a.boc-item,a.boc,a.bo-back,a.empty-link,a.menu-row,a.menu-foot,a.admin-tile,a.proj-row,a.view-pick-item,a.view-add,a.cand-row,a.bo-btn,a.abt-save,a.abt-cancel,a.tn-caret,a.cv-back-graph{color:inherit;text-decoration:none}
+a.th-id,a.thesaurus-logo,a.thesaurus-btn,a.boc-item,a.boc,a.bo-back,a.empty-link,a.menu-row,a.menu-foot,a.admin-tile,a.proj-row,a.view-pick-item,a.view-add,a.cand-row,a.prop-item,a.prop-tab,a.bo-btn,a.abt-save,a.abt-cancel,a.tn-caret,a.cv-back-graph{color:inherit;text-decoration:none}
 a.th-id{flex:1}
 .login-form .st-input{
   max-width:none;margin:0;width:100%;box-sizing:border-box;
@@ -674,11 +674,11 @@ button.coll-item{
   100%{transform:translateX(320%)}
 }
 @media (prefers-reduced-motion:reduce){
-  #viewLive.is-ready.is-opening .cv,#candPanes,.cand-row,.cand-tab{animation:none;transition:none}
+  #viewLive.is-ready.is-opening .cv,#candPanes,#propPanes,.cand-row,.prop-item,.cand-tab{animation:none;transition:none}
   #viewLive.is-loading #previewDetailState > .cv,
   #viewLive.is-loading #previewDetailState > .empty{opacity:1}
   .cv-progress::after{animation:none;width:100%}
-  .cand-row:active{transform:none}
+  .cand-row:active,.prop-item:active{transform:none}
 }
 .cv-count{font-family:var(--mono);font-size:13px;font-weight:500;color:var(--ink-4);white-space:nowrap}
 .tree-lang-form{margin-left:auto;flex:0 0 auto;position:relative;display:flex;align-items:center}
@@ -1316,6 +1316,66 @@ body[data-page="compte"] .bo.bo-solo,
 body[data-page="preference-user"] .bo.bo-solo{
   max-width:880px
 }
+
+/* Liste / revue de propositions : pas de panneau arbre */
+body[data-page="propositions"] .sidebar,
+body[data-page="propositions"] .resizer,
+body[data-page="propositions"] .sb-rail-btn,
+body[data-page="propositions"] .go-top,
+body[data-page="propositions"] .view-rail,
+body[data-page="propositions"] .fiche,
+body[data-page="propositions"] #conceptDetail,
+body[data-page="propositions"] .detail-panel,
+body[data-page="proposition-review"] .sidebar,
+body[data-page="proposition-review"] .resizer,
+body[data-page="proposition-review"] .sb-rail-btn,
+body[data-page="proposition-review"] .go-top,
+body[data-page="proposition-review"] .view-rail,
+body[data-page="proposition-review"] .fiche,
+body[data-page="proposition-review"] #conceptDetail,
+body[data-page="proposition-review"] .detail-panel{display:none !important}
+body[data-page="propositions"] .panes,
+body[data-page="proposition-review"] .panes{display:block;height:100%}
+body[data-page="propositions"] .content,
+body[data-page="proposition-review"] .content{
+  display:flex;flex-direction:column;width:100%;max-width:none;height:100%;min-width:0;overflow:auto
+}
+body[data-page="propositions"] .main,
+body[data-page="proposition-review"] .main{overflow:auto;min-width:0;flex:1;background:
+  radial-gradient(1200px 420px at 12% -10%, rgba(31,122,92,.07), transparent 55%),
+  radial-gradient(900px 380px at 100% 0%, rgba(31,122,92,.04), transparent 50%),
+  var(--bg)}
+body[data-page="propositions"] #previewView,
+body[data-page="proposition-review"] #previewView{height:100%;overflow:auto}
+body[data-page="propositions"] .view,
+body[data-page="propositions"] .content.is-full .view,
+body[data-page="proposition-review"] .view,
+body[data-page="proposition-review"] .content.is-full .view{padding:0}
+body[data-page="propositions"] .view-lang-refresh,
+body[data-page="proposition-review"] .view-lang-refresh{display:block;width:100%;min-height:100%}
+body[data-page="propositions"] #viewPropList,
+body[data-page="proposition-review"] #viewPropReview{
+  display:block;height:auto;min-height:100%;overflow:visible
+}
+body[data-page="propositions"] .bo.bo-solo,
+body[data-page="proposition-review"] .bo.bo-solo{max-width:920px}
+body[data-page="propositions"] .bo-solo > .bo-back,
+body[data-page="proposition-review"] .bo-solo > .bo-back{
+  position:static !important;left:auto !important;top:auto !important;
+  grid-row:1
+}
+body[data-page="propositions"] .bo-solo > .bo-head,
+body[data-page="proposition-review"] .bo-solo > .bo-head{
+  grid-row:1;align-items:flex-start;justify-content:flex-start;padding-left:0;margin-bottom:20px
+}
+body[data-page="propositions"] .bo-title,
+body[data-page="proposition-review"] .bo-title{
+  font-size:clamp(22px, 2.4vw, 28px);font-weight:700;letter-spacing:-.028em;line-height:1.15
+}
+body[data-page="propositions"] .bo-sub,
+body[data-page="proposition-review"] .bo-sub{
+  margin:8px 0 0;font-size:14px;line-height:1.45;color:var(--ink-3);max-width:42rem
+}
 /* Le bouton retour suit le layout bo-solo (pas le fixed calé sur l'arbre). */
 body[data-page="compte"] .bo-solo > .bo-back,
 body[data-page="preference-user"] .bo-solo > .bo-back{
@@ -1656,7 +1716,7 @@ html{height:100%}
   box-shadow:inset 3px 0 0 var(--accent);
   transition:background .16s ease,box-shadow .16s ease
 }
-.boc-item,.th-chip,.rel-term,.cand-row,.res,.menu-row,.proj-row{
+.boc-item,.th-chip,.rel-term,.cand-row,.prop-item,.res,.menu-row,.proj-row{
   transition:border-color .16s ease,background .16s ease,color .16s ease,transform .16s ease,box-shadow .16s ease
 }
 .cblock,.mg-kpi,.cs-metric,.bo-card,.mc-tool{
@@ -1796,6 +1856,7 @@ html{height:100%}
   .cand-row{flex-wrap:wrap;align-items:flex-start;gap:4px 10px}
   .cand-row-t{flex:1 1 100%;white-space:normal}
   .cand-row-m,.cand-row-v{white-space:normal}
+  .prop-item{align-items:flex-start}
   .cand-draft-actions{padding-bottom:calc(10px + env(safe-area-inset-bottom,0px))}
   .cand-banner-row{align-items:flex-start}
   .cand-banner-actions{width:100%}

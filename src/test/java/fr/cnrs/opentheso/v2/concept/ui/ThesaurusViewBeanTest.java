@@ -78,6 +78,8 @@ class ThesaurusViewBeanTest {
     private ThesaurusSearchLanguageSync thesaurusSearchLanguageSync;
     @Mock
     private ConsultationShellBean consultationShellBean;
+    @Mock
+    private fr.cnrs.opentheso.v2.proposition.ui.PropositionBean propositionBean;
 
     private ThesaurusContext thesaurusContext;
     private ThesaurusViewBean bean;
@@ -98,7 +100,8 @@ class ThesaurusViewBeanTest {
                 toolboxAccessPolicy,
                 conceptSelectionContext,
                 thesaurusSearchLanguageSync,
-                consultationShellBean
+                consultationShellBean,
+                propositionBean
         );
     }
 
@@ -531,6 +534,7 @@ class ThesaurusViewBeanTest {
         verify(conceptReadService).loadDetail("th17", "c1", "fr", true);
         verify(conceptReadService).countBranchConcepts("th17", "c1");
         verify(conceptSelectionContext).update(eq("th17"), any(ConceptDetail.class));
+        verify(propositionBean).clearConsultation();
     }
 
     @Test

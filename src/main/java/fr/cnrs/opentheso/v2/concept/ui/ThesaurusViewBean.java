@@ -48,6 +48,7 @@ import java.util.List;
 import java.util.Locale;
 import java.util.stream.Collectors;
 import fr.cnrs.opentheso.v2.concept.model.ConceptTreeNodeKinds;
+import fr.cnrs.opentheso.v2.proposition.ui.PropositionBean;
 
 /**
  * Façade de l'accueil thésaurus : lit / écrit {@link ThesaurusContext}.
@@ -69,6 +70,7 @@ public class ThesaurusViewBean implements Serializable {
     private final transient ConceptSelectionContext conceptSelectionContext;
     private final transient ThesaurusSearchLanguageSync thesaurusSearchLanguageSync;
     private final transient ConsultationShellBean consultationShellBean;
+    private final transient PropositionBean propositionBean;
     private ThesaurusHomeOverview homeOverview;
     private List<ThesaurusLanguage> languages;
     private String selectedLang;
@@ -79,6 +81,7 @@ public class ThesaurusViewBean implements Serializable {
     private Boolean breadcrumbEnabled;
     private Boolean sortByNotation;
     private Boolean customRelationVisible;
+    private Boolean suggestionEnabled;
     @Getter
     private boolean showAllNoteLanguages;
 
@@ -329,6 +332,7 @@ public class ThesaurusViewBean implements Serializable {
         invalidateTree();
         breadcrumbEnabled = null;
         customRelationVisible = null;
+        suggestionEnabled = null;
         if (editing) {
             homeHtml = thesaurusHomeWriteService.loadHtml(getId(), thesaurusContext.resolveWorkLanguage());
         }
@@ -534,6 +538,9 @@ public class ThesaurusViewBean implements Serializable {
     }
 
     public void openTreeNode(String id, String nodeType) {
+        if (propositionBean != null) {
+            propositionBean.clearConsultation();
+        }
         detailRequested = true;
         selectedId = StringUtils.trimToEmpty(id);
         selectedKind = "";
@@ -852,6 +859,17 @@ public class ThesaurusViewBean implements Serializable {
             customRelationVisible = preferences != null && preferences.useCustomRelation();
         }
         return customRelationVisible;
+    }
+
+    /**
+     * Préférence « Activer les propositions de modifications pour les concepts ».
+     */
+    public boolean isSuggestionEnabled() {
+        if (suggestionEnabled == null) {
+            ThesaurusPreferences preferences = loadThesaurusPreferences();
+            suggestionEnabled = preferences != null && preferences.suggestion();
+        }
+        return suggestionEnabled;
     }
 
     /**

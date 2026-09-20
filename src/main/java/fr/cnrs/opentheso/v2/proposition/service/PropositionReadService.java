@@ -16,6 +16,9 @@ import java.util.List;
 @RequiredArgsConstructor
 public class PropositionReadService {
 
+    /** Jamais ouverte / consultée. Une consultation passe le statut à {@code LU}. */
+    static final String NEW_STATUS = PropositionStatusEnum.ENVOYER.name();
+
     private final PropositionModificationRepository propositionModificationRepository;
 
     @Transactional(readOnly = true)
@@ -24,7 +27,15 @@ public class PropositionReadService {
             return 0;
         }
         return (int) propositionModificationRepository
-                .countByIdThesoAndStatus(thesaurusId, PropositionStatusEnum.ENVOYER.name());
+                .countByIdThesoAndStatus(thesaurusId, NEW_STATUS);
+    }
+
+    @Transactional(readOnly = true)
+    public int countAll(String thesaurusId) {
+        if (StringUtils.isBlank(thesaurusId)) {
+            return 0;
+        }
+        return (int) propositionModificationRepository.countByIdTheso(thesaurusId);
     }
 
     @Transactional(readOnly = true)
@@ -32,11 +43,9 @@ public class PropositionReadService {
         if (StringUtils.isBlank(thesaurusId)) {
             return List.of();
         }
-        return propositionModificationRepository
-                .findAllPropositionsByStatusAndTheso(PropositionStatusEnum.ENVOYER.name(), thesaurusId)
-                .stream()
-                .map(this::toSummary)
-                .toList();
+        return mappedForThesaurus(thesaurusId,
+                propositionModificationRepository.findAllPropositionsByStatusAndTheso(
+                        NEW_STATUS, thesaurusId));
     }
 
     @Transactional(readOnly = true)
@@ -44,20 +53,26 @@ public class PropositionReadService {
         if (StringUtils.isBlank(thesaurusId)) {
             return List.of();
         }
-        return propositionModificationRepository
-                .findAllPropositionsByTheso(thesaurusId)
-                .stream()
-                .map(this::toSummary)
-                .toList();
+        return mappedForThesaurus(thesaurusId,
+                propositionModificationRepository.findAllPropositionsByTheso(thesaurusId));
     }
 
     @Transactional(readOnly = true)
     public PropositionDetail findDetail(int propositionId) {
-        PropositionProjection projection = propositionModificationRepository.findProjectionById(propositionId);
-        if (projection == null) {
+        List<PropositionProjection> rows = propositionModificationRepository.findProjectionsById(propositionId);
+        if (rows == null || rows.isEmpty()) {
             return null;
         }
-        return toDetail(projection);
+        return toDetail(rows.get(0));
+    }
+
+    private List<PropositionSummary> mappedForThesaurus(
+            String thesaurusId, List<PropositionProjection> projections) {
+        return projections.stream()
+                .map(this::toSummary)
+                .filter(summary -> thesaurusId.equalsIgnoreCase(
+                        StringUtils.defaultString(summary.thesaurusId())))
+                .toList();
     }
 
     private PropositionSummary toSummary(PropositionProjection projection) {

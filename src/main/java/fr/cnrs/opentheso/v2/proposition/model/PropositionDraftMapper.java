@@ -56,8 +56,9 @@ public final class PropositionDraftMapper {
                 }
                 var action = resolveNoteAction(option);
                 var category = PropositionFieldCategory.forNoteType(option.getTypeCode());
+                String storedValue = StringUtils.defaultIfBlank(option.getValue(), option.getOldValue());
                 draft.setNoteChange(new PropositionFieldChange(
-                        category, action, lang, option.getValue(), option.getOldValue(), false));
+                        category, action, lang, storedValue, option.getOldValue(), false));
             }
         }
 
@@ -81,7 +82,7 @@ public final class PropositionDraftMapper {
                 PropositionFieldCategory.SYNONYME,
                 resolveAction(option.isToAdd(), option.isToRemove()),
                 option.getLang(),
-                option.getValue(),
+                StringUtils.defaultIfBlank(option.getValue(), option.getOldValue()),
                 option.getOldValue(),
                 option.isHidden()
         );
@@ -92,7 +93,7 @@ public final class PropositionDraftMapper {
                 PropositionFieldCategory.TRADUCTION,
                 resolveAction(option.isToAdd(), option.isToRemove()),
                 option.getLang(),
-                option.getValue(),
+                StringUtils.defaultIfBlank(option.getValue(), option.getOldValue()),
                 option.getOldValue(),
                 false
         );

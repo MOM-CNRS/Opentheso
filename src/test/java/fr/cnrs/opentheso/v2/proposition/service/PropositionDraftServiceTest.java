@@ -79,6 +79,20 @@ class PropositionDraftServiceTest {
     }
 
     @Test
+    void saveDraftDetails_storesEmptyStringWhenValueIsNull() {
+        var draft = new PropositionDraft();
+        draft.getTranslationChanges().add(new PropositionFieldChange(
+                PropositionFieldCategory.TRADUCTION, PropositionFieldAction.DELETE, "en", null, "English", false));
+
+        service.saveDraftDetails(7, draft);
+
+        ArgumentCaptor<PropositionModificationDetail> captor = ArgumentCaptor.forClass(PropositionModificationDetail.class);
+        verify(propositionModificationDetailRepository).save(captor.capture());
+        assertEquals("", captor.getValue().getValue());
+        assertEquals("English", captor.getValue().getOldValue());
+    }
+
+    @Test
     void loadDraftChanges_reconstructsDraftFromStoredDetails() {
         when(propositionModificationDetailRepository.findAllByIdProposition(7)).thenReturn(List.of(
                 PropositionModificationDetail.builder().idProposition(7).categorie("NOM").action("UPDATE")
@@ -212,5 +226,23 @@ class PropositionDraftServiceTest {
     void applyAcceptedChanges_returnsEmptyForNullDraftOrAcceptance() {
         assertTrue(service.applyAcceptedChanges(null, "TH1", "C1", "fr", 7, "admin", PropositionAcceptance.none()).isEmpty());
         assertTrue(service.applyAcceptedChanges(new PropositionDraft(), "TH1", "C1", "fr", 7, "admin", null).isEmpty());
+    }
+
+    @Test
+    void applyAcceptedChanges_deletesSynonymUsingOldValueWhenValueBlank() {
+        var draft = new PropositionDraft();
+        draft.getSynonymChanges().add(new PropositionFieldChange(
+                PropositionFieldCategory.SYNONYME, PropositionFieldAction.DELETE, "fr", "", "Old syn", false));
+
+        when(conceptLexicalMutationService.deleteSynonym(any(DeleteSynonymCommand.class)))
+                .thenReturn(MutationResult.ok("ok"));
+
+        var errors = service.applyAcceptedChanges(draft, "TH1", "C1", "fr", 7, "admin",
+                new PropositionAcceptance(false, true, false, false, false, false, false, false, false, false));
+
+        assertTrue(errors.isEmpty());
+        ArgumentCaptor<DeleteSynonymCommand> captor = ArgumentCaptor.forClass(DeleteSynonymCommand.class);
+        verify(conceptLexicalMutationService).deleteSynonym(captor.capture());
+        assertEquals("Old syn", captor.getValue().value());
     }
 }

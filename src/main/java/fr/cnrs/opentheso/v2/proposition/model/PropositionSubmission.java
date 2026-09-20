@@ -14,7 +14,7 @@ public record PropositionSubmission(
         boolean allowMultiplePending
 ) implements Serializable {
     /**
-     * Soumission UI classique : une seule proposition pending par auteur/concept/langue.
+     * Soumission UI : plusieurs propositions pending sont autorisées sur le même concept.
      */
     public PropositionSubmission(
             String thesaurusId,
@@ -27,6 +27,6 @@ public record PropositionSubmission(
             String comment
     ) {
         this(thesaurusId, thesaurusTitle, conceptId, conceptLabel, lang,
-                authorName, authorEmail, comment, false);
+                authorName, authorEmail, comment, true);
     }
 }

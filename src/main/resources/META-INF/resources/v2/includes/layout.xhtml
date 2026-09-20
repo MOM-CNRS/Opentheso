@@ -8,9 +8,12 @@
       lang="#{v2LocaleBean.idLangue}">
 <f:metadata>
   <f:viewParam name="idt" value="#{v2ThesaurusContext.idThesoFromUri}"/>
+  <f:viewParam name="prop" value="#{v2PropositionBean.requestedPropositionId}"/>
   <f:viewAction action="#{v2LocaleBean.applyToView}"/>
   <f:viewAction action="#{v2ConsultationShellBean.applyThesaurusFromUrl}" onPostback="false"/>
   <f:viewAction action="#{v2ThesaurusViewBean.ensureSessionThesaurus}"/>
+  <f:viewAction action="#{v2PropositionBean.refreshPendingCount}" onPostback="false"/>
+  <f:viewAction action="#{v2PropositionBean.openDedicatedReview}" onPostback="false"/>
   <ui:insert name="viewActions"/>
 </f:metadata>
 <h:head>
@@ -23,10 +26,10 @@
   <link rel="preconnect" href="https://fonts.googleapis.com"/>
   <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin=""/>
   <link href="https://fonts.googleapis.com/css2?family=IBM+Plex+Sans:ital,wght@0,400;0,500;0,600;0,700;1,400&amp;family=IBM+Plex+Mono:wght@400;500;600&amp;display=swap" rel="stylesheet"/>
-  <link rel="stylesheet" href="#{request.contextPath}/resources/css/v2-prototype-recherche.css?v=#{v2Assets.v}"/>
-  <link rel="stylesheet" href="#{request.contextPath}/resources/css/v2.css?v=#{v2Assets.v}"/>
-  <link rel="stylesheet" href="#{request.contextPath}/resources/css/v2-thesaurus-picker.css?v=#{v2Assets.v}"/>
-  <link rel="stylesheet" href="#{request.contextPath}/resources/css/v2-instance-admin.css?v=#{v2Assets.v}"/>
+  <link rel="stylesheet" href="#{request.contextPath}/resources/css/v2-prototype-recherche.css"/>
+  <link rel="stylesheet" href="#{request.contextPath}/resources/css/v2.css"/>
+  <link rel="stylesheet" href="#{request.contextPath}/resources/css/v2-thesaurus-picker.css"/>
+  <link rel="stylesheet" href="#{request.contextPath}/resources/css/v2-instance-admin.css"/>
 </h:head>
 <h:body pt:data-page="#{v2Page}" pt:data-ctx="#{request.contextPath}"
       pt:data-logged-in="#{v2UserSession.loggedIn ? '1' : '0'}"
@@ -39,6 +42,7 @@
       pt:data-msg-link="#{v2LocaleBean.getMsg('v2.home.linkPrompt')}"
       pt:data-leaflet-js="#{resource['webjars:leaflet/1.8.0/leaflet.js']}"
       pt:data-leaflet-css="#{resource['webjars:leaflet/1.8.0/leaflet.css']}">
+<f:event type="preRenderView" listener="#{v2PropositionBean.openDedicatedReview}"/>
 <div class="app" id="app">
   <ui:include src="/v2/includes/thesaurus.xhtml"/>
   <div class="sb-scrim" id="sbScrim" hidden="hidden" data-act="sb-dismiss"></div>
@@ -77,23 +81,23 @@
   <span class="app-toast-txt"></span>
 </div>
 <h:outputScript library="jakarta.faces" name="faces.js"/>
-<script src="#{request.contextPath}/resources/js/v2/core.js?v=#{v2Assets.v}"></script>
-<script src="#{request.contextPath}/resources/js/v2/settings.js?v=#{v2Assets.v}"></script>
-<script src="#{request.contextPath}/resources/js/v2/shell.js?v=#{v2Assets.v}"></script>
-<script src="#{request.contextPath}/resources/js/v2/search.js?v=#{v2Assets.v}"></script>
-<script src="#{request.contextPath}/resources/js/v2/tree.js?v=#{v2Assets.v}"></script>
-<script src="#{request.contextPath}/resources/js/v2/table.js?v=#{v2Assets.v}"></script>
-<script src="#{request.contextPath}/resources/js/v2/globe-ui.js?v=#{v2Assets.v}"></script>
-<script src="#{request.contextPath}/resources/js/v2/collections.js?v=#{v2Assets.v}"></script>
-<script src="#{request.contextPath}/resources/js/v2/selection.js?v=#{v2Assets.v}"></script>
-<script src="#{request.contextPath}/resources/js/v2/export.js?v=#{v2Assets.v}"></script>
-<script src="#{request.contextPath}/resources/js/v2/about.js?v=#{v2Assets.v}"></script>
-<script src="#{request.contextPath}/resources/js/v2/stats.js?v=#{v2Assets.v}"></script>
-<script src="#{request.contextPath}/resources/js/v2/shell-narrow.js?v=#{v2Assets.v}"></script>
-<script src="#{request.contextPath}/resources/js/v2/dialogs.js?v=#{v2Assets.v}"></script>
-<script src="#{request.contextPath}/resources/js/v2/add-nt.js?v=#{v2Assets.v}"></script>
-<script src="#{request.contextPath}/resources/js/v2/ark-progress.js?v=#{v2Assets.v}"></script>
-<script src="#{request.contextPath}/resources/js/v2/theso-ac.js?v=#{v2Assets.v}"></script>
-<script src="#{request.contextPath}/resources/js/v2/app.js?v=#{v2Assets.v}"></script>
+<script src="#{request.contextPath}/resources/js/v2/core.js"></script>
+<script src="#{request.contextPath}/resources/js/v2/settings.js"></script>
+<script src="#{request.contextPath}/resources/js/v2/shell.js"></script>
+<script src="#{request.contextPath}/resources/js/v2/search.js"></script>
+<script src="#{request.contextPath}/resources/js/v2/tree.js"></script>
+<script src="#{request.contextPath}/resources/js/v2/table.js"></script>
+<script src="#{request.contextPath}/resources/js/v2/globe-ui.js"></script>
+<script src="#{request.contextPath}/resources/js/v2/collections.js"></script>
+<script src="#{request.contextPath}/resources/js/v2/selection.js"></script>
+<script src="#{request.contextPath}/resources/js/v2/export.js"></script>
+<script src="#{request.contextPath}/resources/js/v2/about.js"></script>
+<script src="#{request.contextPath}/resources/js/v2/stats.js"></script>
+<script src="#{request.contextPath}/resources/js/v2/shell-narrow.js"></script>
+<script src="#{request.contextPath}/resources/js/v2/dialogs.js"></script>
+<script src="#{request.contextPath}/resources/js/v2/add-nt.js"></script>
+<script src="#{request.contextPath}/resources/js/v2/ark-progress.js"></script>
+<script src="#{request.contextPath}/resources/js/v2/theso-ac.js"></script>
+<script src="#{request.contextPath}/resources/js/v2/app.js"></script>
 </h:body>
 </html>

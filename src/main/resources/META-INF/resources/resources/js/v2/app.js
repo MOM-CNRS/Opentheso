@@ -62,10 +62,119 @@ function syncCandSearchClear() {
   if (clear) clear.hidden = !(input && input.value);
 }
 
+function syncPropSearchClear() {
+  const input = $("#propSearch");
+  const clear = $("#propSearchClear");
+  if (clear) clear.hidden = !(input && input.value);
+}
+
+function applyPropBoardFilter() {
+  const board = $("#propBoard");
+  if (!board) return;
+  const input = $("#propSearch");
+  const q = norm(input && input.value);
+  const items = $$(".prop-item", board);
+  let visible = 0;
+  items.forEach((row) => {
+    const hay = norm(row.getAttribute("data-search") || row.textContent);
+    const on = !q || hay.indexOf(q) >= 0;
+    row.hidden = !on;
+    if (on) visible += 1;
+  });
+  const empty = $("#propFilterEmpty");
+  if (empty) empty.hidden = !(q && items.length > 0 && visible === 0);
+  syncPropSearchClear();
+}
+
+function openPropDecisionConfirm(mode) {
+  const dlg = document.getElementById("propDecisionConfirm");
+  if (!dlg || typeof showConfirm !== "function") return;
+  const approve = mode === "approve";
+  dlg.setAttribute("data-mode", approve ? "approve" : "refuse");
+  const title = document.getElementById("propDecisionConfirmTitle");
+  const text = document.getElementById("propDecisionConfirmText");
+  if (title) {
+    title.textContent = dlg.getAttribute(approve ? "data-title-approve" : "data-title-refuse") || "";
+  }
+  if (text) {
+    text.textContent = dlg.getAttribute(approve ? "data-text-approve" : "data-text-refuse") || "";
+  }
+  showConfirm("#propDecisionConfirm");
+  const comment = document.getElementById("propReviewReply");
+  if (comment && typeof comment.focus === "function") {
+    window.setTimeout(() => comment.focus(), 0);
+  }
+}
+
+function propCommentField() {
+  return document.querySelector("#viewLive [id$='propComment']");
+}
+
+function clearPropCommentError() {
+  const comment = propCommentField();
+  const err = document.getElementById("propCommentError");
+  const row = comment && comment.closest(".crow");
+  if (comment) {
+    comment.classList.remove("is-invalid");
+    comment.setAttribute("aria-invalid", "false");
+  }
+  if (row) row.classList.remove("is-invalid");
+  if (err) err.classList.remove("is-on");
+}
+
+function markPropCommentError() {
+  const comment = propCommentField();
+  const err = document.getElementById("propCommentError");
+  const row = comment && comment.closest(".crow");
+  if (comment) {
+    comment.classList.add("is-invalid");
+    comment.setAttribute("aria-invalid", "true");
+    comment.focus();
+    if (typeof comment.scrollIntoView === "function") {
+      comment.scrollIntoView({ block: "center", behavior: "smooth" });
+    }
+  }
+  if (row) row.classList.add("is-invalid");
+  if (err) err.classList.add("is-on");
+}
+
+function ensurePropCommentFilled() {
+  const comment = propCommentField();
+  if (comment && comment.value.trim()) {
+    clearPropCommentError();
+    return true;
+  }
+  markPropCommentError();
+  return false;
+}
+
+function onPropBoardAjax(data) {
+  const panes = $("#propPanes");
+  if (data.status === "begin") {
+    if (panes) {
+      panes.classList.add("is-busy");
+      panes.setAttribute("aria-busy", "true");
+    }
+    return;
+  }
+  if (data.status === "success" || data.status === "complete") {
+    if (panes) {
+      panes.classList.remove("is-busy");
+      panes.removeAttribute("aria-busy");
+    }
+    applyPropBoardFilter();
+  }
+}
+window.onPropBoardAjax = onPropBoardAjax;
+
 document.addEventListener("keydown", (e) => {
   if (e.repeat || e.isComposing) return;
   if (onThesoAcKeydown(e)) return;
   if (e.key !== "Enter") return;
+  if (e.target && e.target.id === "propSearch") {
+    e.preventDefault();
+    return;
+  }
   if (!e.target.classList || !e.target.classList.contains("cand-search")) return;
   e.preventDefault();
   clearTimeout(triggerCandSearch._t);
@@ -97,6 +206,13 @@ document.addEventListener("keydown", (e) => {
       e.target.value = "";
       syncCandSearchClear();
       triggerCandSearch();
+      return;
+    }
+  }
+  if (e.target && e.target.id === "propSearch") {
+    if (e.target.value) {
+      e.target.value = "";
+      applyPropBoardFilter();
       return;
     }
   }
@@ -215,6 +331,12 @@ document.addEventListener("input", (e) => {
     clearTimeout(triggerCandSearch._t);
     triggerCandSearch._t = setTimeout(triggerCandSearch, 280);
   }
+  if (e.target && e.target.id === "propSearch") {
+    applyPropBoardFilter();
+  }
+  if (e.target && e.target.id && String(e.target.id).endsWith("propComment")) {
+    if (e.target.value && e.target.value.trim()) clearPropCommentError();
+  }
   if (e.target && e.target.classList && e.target.classList.contains("cv-theso-ac-q")) {
     scheduleThesoAc(e.target.closest(".cv-theso-ac"));
   }
@@ -286,6 +408,34 @@ document.addEventListener("click", (e) => {
   } else if (act === "label-save-dismiss") {
     hideConfirm("#labelSaveConfirm");
   } else if (act === "label-save-modal") {
+    return;
+  } else if (act === "prop-send-ask") {
+    e.preventDefault();
+    if (!ensurePropCommentFilled()) return;
+    showConfirm("#propSendConfirm");
+  } else if (act === "prop-send-dismiss") {
+    e.preventDefault();
+    hideConfirm("#propSendConfirm");
+  } else if (act === "prop-send-modal") {
+    return;
+  } else if (act === "prop-approve-ask") {
+    e.preventDefault();
+    openPropDecisionConfirm("approve");
+  } else if (act === "prop-refuse-ask") {
+    e.preventDefault();
+    openPropDecisionConfirm("refuse");
+  } else if (act === "prop-decision-dismiss" || act === "prop-approve-dismiss" || act === "prop-refuse-dismiss") {
+    e.preventDefault();
+    hideConfirm("#propDecisionConfirm");
+  } else if (act === "prop-decision-modal" || act === "prop-approve-modal" || act === "prop-refuse-modal") {
+    return;
+  } else if (act === "prop-delete-ask") {
+    e.preventDefault();
+    showConfirm("#propDeleteConfirm");
+  } else if (act === "prop-delete-dismiss") {
+    e.preventDefault();
+    hideConfirm("#propDeleteConfirm");
+  } else if (act === "prop-delete-modal") {
     return;
   } else if (act === "coll-save-ask") {
     showConfirm("#collSaveConfirm");
@@ -438,6 +588,9 @@ document.addEventListener("click", (e) => {
   else if (act === "back-cand-list") {
     e.preventDefault();
     backToCandList();
+  } else if (act === "back-prop-list") {
+    e.preventDefault();
+    backToPropList();
   }
   else if (act === "set-view") setView(t.getAttribute("data-view"));
   else if (act === "show") {
@@ -455,6 +608,13 @@ document.addEventListener("click", (e) => {
   else if (act === "bo-open") {
     const obj = t.getAttribute("data-obj");
     go("toolbox/atelier.xhtml" + (obj ? "?obj=" + encodeURIComponent(obj) : ""));
+  } else if (act === "prop-search-clear") {
+    const input = $("#propSearch");
+    if (input) {
+      input.value = "";
+      input.focus();
+    }
+    applyPropBoardFilter();
   } else if (act === "cand-search-clear") {
     const input = document.querySelector(".cand-search");
     if (input) {
@@ -1243,6 +1403,9 @@ function onV2Ajax(data) {
       if (srcId === "previewCorpusToggleGo" || srcId === "previewAlignToggleGo") {
         markSettingsDraft();
       }
+      if (srcId.indexOf("propTab") >= 0) {
+        applyPropBoardFilter();
+      }
       requestAnimationFrame(() => {
         const srcId = (data.source && data.source.id) || "";
         if (srcId.indexOf("clearRevealBtn") >= 0
@@ -1571,6 +1734,7 @@ requestAnimationFrame(() => {
   maybeRememberAboutBaseline();
   refreshAboutFmtState();
   syncCandSearchClear();
+  applyPropBoardFilter();
   if (window.syncViewRail) window.syncViewRail();
   scrollToPrefHash();
   if (SCREEN === "preference") rememberSettingsBaseline();

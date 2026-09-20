@@ -36,4 +36,16 @@ public class PropositionDraft implements Serializable {
                 && translationChanges.isEmpty()
                 && noteChanges.isEmpty();
     }
+
+    public void addChange(PropositionFieldChange change) {
+        if (change == null || change.category() == null) {
+            return;
+        }
+        switch (change.category()) {
+            case NOM -> preferredLabelChange = change;
+            case SYNONYME -> synonymChanges.add(change);
+            case TRADUCTION -> translationChanges.add(change);
+            default -> setNoteChange(change);
+        }
+    }
 }

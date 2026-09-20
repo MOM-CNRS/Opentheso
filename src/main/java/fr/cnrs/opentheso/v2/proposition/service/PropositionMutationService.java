@@ -32,7 +32,7 @@ public class PropositionMutationService {
     /**
      * Enregistre une nouvelle proposition d'amélioration (commentaire libre).
      *
-     * @return true si enregistrée, false si une proposition identique est déjà en cours.
+     * @return true si enregistrée, false si la soumission est invalide.
      */
     @Transactional
     public boolean submit(PropositionSubmission submission) {

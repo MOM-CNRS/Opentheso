@@ -8,6 +8,7 @@ import org.springframework.data.jpa.repository.Query;
 import org.springframework.data.repository.query.Param;
 import org.springframework.transaction.annotation.Transactional;
 
+import java.util.Collection;
 import java.util.List;
 
 
@@ -16,6 +17,10 @@ public interface PropositionModificationRepository extends JpaRepository<Proposi
     List<PropositionModification> findAllByIdThesoAndStatus(String idTheso, String status);
 
     long countByIdThesoAndStatus(String idTheso, String status);
+
+    long countByIdThesoAndStatusIn(String idTheso, Collection<String> statuses);
+
+    long countByIdTheso(String idTheso);
 
     @Modifying
     @Transactional
@@ -74,7 +79,7 @@ public interface PropositionModificationRepository extends JpaRepository<Proposi
                     LEFT JOIN preferred_term pre ON pro.id_concept = pre.id_concept AND pro.id_theso = pre.id_thesaurus
                     LEFT JOIN term t ON pre.id_term = t.id_term AND pro.lang = t.lang AND pro.id_theso = t.id_thesaurus
                     LEFT JOIN languages_iso639 l ON l.iso639_1 = t.lang
-        WHERE t.id_thesaurus LIKE :idTheso
+        WHERE pro.id_theso = :idTheso
         AND pro.status = :status
         ORDER BY pro.id DESC
     """, nativeQuery = true)
@@ -88,7 +93,7 @@ public interface PropositionModificationRepository extends JpaRepository<Proposi
                     LEFT JOIN preferred_term pre ON pro.id_concept = pre.id_concept AND pro.id_theso = pre.id_thesaurus
                     LEFT JOIN term t ON pre.id_term = t.id_term AND pro.lang = t.lang AND pro.id_theso = t.id_thesaurus
                     LEFT JOIN languages_iso639 l ON l.iso639_1 = t.lang
-        WHERE t.id_thesaurus LIKE :idTheso
+        WHERE pro.id_theso = :idTheso
         ORDER BY pro.id DESC
     """, nativeQuery = true)
     List<PropositionProjection> findAllPropositionsByTheso(@Param("idTheso") String idTheso);
@@ -101,9 +106,24 @@ public interface PropositionModificationRepository extends JpaRepository<Proposi
                     LEFT JOIN preferred_term pre ON pro.id_concept = pre.id_concept AND pro.id_theso = pre.id_thesaurus
                     LEFT JOIN term t ON pre.id_term = t.id_term AND pro.lang = t.lang AND pro.id_theso = t.id_thesaurus
                     LEFT JOIN languages_iso639 l ON l.iso639_1 = t.lang
-        WHERE pro.id = :id
+        WHERE pro.id_theso = :idTheso
+        AND pro.status IN ('ENVOYER', 'LU')
+        ORDER BY CASE WHEN pro.status = 'ENVOYER' THEN 0 ELSE 1 END, pro.id DESC
     """, nativeQuery = true)
-    PropositionProjection findProjectionById(@Param("id") Integer id);
+    List<PropositionProjection> findAllPendingByTheso(@Param("idTheso") String idTheso);
+
+    @Query(value = """
+        SELECT pro.id, pro.id_concept AS idConcept, pro.lang, pro.id_theso AS idTheso, pro.status, pro.date, pro.nom,
+            pro.email, pro.commentaire, pro.approuve_par AS approuvePar, pro.approuve_date AS approuveDate,
+            pro.admin_comment AS adminComment, t.lexical_value AS lexicalValue, l.code_pays AS codePays
+        FROM proposition_modification pro 
+                    LEFT JOIN preferred_term pre ON pro.id_concept = pre.id_concept AND pro.id_theso = pre.id_thesaurus
+                    LEFT JOIN term t ON pre.id_term = t.id_term AND pro.lang = t.lang AND pro.id_theso = t.id_thesaurus
+                    LEFT JOIN languages_iso639 l ON l.iso639_1 = t.lang
+        WHERE pro.id = :id
+        LIMIT 1
+    """, nativeQuery = true)
+    List<PropositionProjection> findProjectionsById(@Param("id") Integer id);
 
     @Query(value = """
         SELECT pro.id, pro.id_concept AS idConcept, pro.lang, pro.id_theso AS idTheso, pro.status, pro.date, pro.nom,

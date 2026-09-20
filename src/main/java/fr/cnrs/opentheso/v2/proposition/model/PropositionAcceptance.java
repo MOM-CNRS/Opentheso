@@ -19,6 +19,10 @@ public record PropositionAcceptance(
         return new PropositionAcceptance(false, false, false, false, false, false, false, false, false, false);
     }
 
+    public static PropositionAcceptance all() {
+        return new PropositionAcceptance(true, true, true, true, true, true, true, true, true, true);
+    }
+
     public boolean isAccepted(PropositionFieldCategory category) {
         return switch (category) {
             case NOM -> preferredLabel;

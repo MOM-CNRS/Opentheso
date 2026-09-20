@@ -46,7 +46,6 @@ class PropositionMutationServiceTest {
 
     @Test
     void submit_savesNewProposition() {
-        when(repository.findPendingByConcept("C1", "TH1", "fr")).thenReturn(null);
         when(repository.save(any())).thenAnswer(invocation -> invocation.getArgument(0));
 
         boolean saved = service.submit(submission("Please add a synonym", "a@b.fr"));
@@ -60,7 +59,6 @@ class PropositionMutationServiceTest {
 
     @Test
     void submitDraft_returnsCreatedPropositionId() {
-        when(repository.findPendingByConcept("C1", "TH1", "fr")).thenReturn(null);
         when(repository.save(any())).thenAnswer(invocation -> {
             PropositionModification entity = invocation.getArgument(0);
             entity.setId(42);
@@ -88,12 +86,24 @@ class PropositionMutationServiceTest {
     }
 
     @Test
-    void submit_rejectsDuplicateForSameAuthor() {
+    void submit_allowsSeveralPendingForSameConcept() {
+        when(repository.save(any())).thenAnswer(invocation -> invocation.getArgument(0));
+
+        assertTrue(service.submit(submission("First change", "a@b.fr")));
+        assertTrue(service.submit(submission("Second change", "a@b.fr")));
+        verify(repository, org.mockito.Mockito.times(2)).save(any());
+        verify(repository, never()).findPendingByConcept(any(), any(), any());
+    }
+
+    @Test
+    void submit_rejectsDuplicateWhenMultiplePendingDisabled() {
         PropositionProjection existing = org.mockito.Mockito.mock(PropositionProjection.class);
         when(existing.getEmail()).thenReturn("a@b.fr");
         when(repository.findPendingByConcept("C1", "TH1", "fr")).thenReturn(existing);
 
-        assertFalse(service.submit(submission("Another one", "a@b.fr")));
+        assertFalse(service.submit(new PropositionSubmission(
+                "TH1", "Test", "C1", "Concept 1", "fr", "Author", "a@b.fr",
+                "Another one", false)));
         verify(repository, never()).save(any());
     }
 

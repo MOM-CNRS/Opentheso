@@ -26,6 +26,8 @@
        data-flash-align-edit-token="#{v2ConceptAlignmentBlockEditorBean.flashToken}"
        data-flash-cand="#{v2CandidateFicheBean.flashMessage}"
        data-flash-cand-token="#{v2CandidateFicheBean.flashToken}"
+       data-flash-prop="#{not empty v2PropositionSubmitBean.flashMessage ? v2PropositionSubmitBean.flashMessage : v2PropositionBean.flashMessage}"
+       data-flash-prop-token="#{v2PropositionSubmitBean.flashToken gt 0 ? v2PropositionSubmitBean.flashToken : v2PropositionBean.flashToken}"
        data-rel-tree="#{v2ConceptRelationBlockEditorBean.treeReload ? '1' : ''}"
        data-msg-fold="#{v2LocaleBean.getMsg('v2.block.collapse')}"
        data-msg-unfold="#{v2LocaleBean.getMsg('v2.block.expand')}">
@@ -76,12 +78,41 @@
         <ui:fragment rendered="#{v2ThesaurusViewBean.rejectedSelected}"><span class="cv-status is-rej">#{v2LocaleBean.getMsg('v2.concept.badge.rejected')}</span></ui:fragment>
         <ui:fragment rendered="#{v2ThesaurusViewBean.selectedConceptDeprecated}"><span class="cv-status is-dep">#{v2LocaleBean.getMsg('v2.concept.badge.deprecated')}</span></ui:fragment>
       </h1>
-      <ui:fragment rendered="#{v2ThesaurusViewBean.conceptActionsVisible}">
+      <ui:fragment rendered="#{v2ThesaurusViewBean.conceptActionsVisible
+          and not v2PropositionBean.consultation
+          and not v2PropositionSubmitBean.composing}">
         <ui:include src="/v2/includes/concept-actions-menu.xhtml"/>
+      </ui:fragment>
+      <ui:fragment rendered="#{v2ThesaurusViewBean.suggestionEnabled
+          and v2ThesaurusViewBean.conceptSelected
+          and not v2ThesaurusViewBean.candidateSelected
+          and not v2PropositionSubmitBean.composing
+          and not v2PropositionBean.consultation}">
+        <h:commandLink id="propSuggestCta" styleClass="bo-btn ghost sm prop-cta"
+                       action="#{v2PropositionSubmitBean.open}"
+                       title="#{v2LocaleBean.getMsg('v2.proposition.cta.hint')}">
+          <f:ajax execute="@this" render=":previewDetailForm:previewDetail"/>
+          <svg viewBox="0 0 24 24" aria-hidden="true" width="14" height="14">
+            <path d="M12 20h9"/><path d="M16.5 3.5a2.12 2.12 0 0 1 3 3L7 19l-4 1 1-4Z"/>
+          </svg>
+          #{v2LocaleBean.getMsg('v2.proposition.cta')}
+        </h:commandLink>
       </ui:fragment>
       </div>
     </div>
-    <ui:fragment rendered="#{v2FacetDetailEditorBean.composing}">
+    <ui:fragment rendered="#{v2PropositionSubmitBean.composing}">
+      <h:panelGroup id="propComposePanel" layout="block" styleClass="cv-blocks prop-compose"
+                    pt:data-flash-prop="#{v2PropositionSubmitBean.flashMessage}"
+                    pt:data-flash-prop-token="#{v2PropositionSubmitBean.flashToken}">
+        <ui:include src="/v2/includes/proposition-submit.xhtml"/>
+      </h:panelGroup>
+    </ui:fragment>
+    <ui:fragment rendered="#{v2PropositionBean.consultation and not v2PropositionSubmitBean.composing}">
+      <div class="cv-blocks prop-review">
+        <ui:include src="/v2/includes/proposition-review.xhtml"/>
+      </div>
+    </ui:fragment>
+    <ui:fragment rendered="#{v2FacetDetailEditorBean.composing and not v2PropositionSubmitBean.composing and not v2PropositionBean.consultation}">
       <div class="cv-facet-composer" id="cvFacetComposer">
         <div class="cv-facet-composer-h">
           <span class="th-create-ico" aria-hidden="true">
@@ -126,6 +157,7 @@
         </div>
       </div>
     </ui:fragment>
+    <ui:fragment rendered="#{not v2PropositionSubmitBean.composing and not v2PropositionBean.consultation}">
     <div class="cv-blocks">
       <ui:include src="/v2/includes/candidate-governance.xhtml"/>
       <section class="cblock#{v2ConceptLabelBlockEditorBean.editing ? ' is-editing' : ''}" data-card-id="contexte">
@@ -1537,6 +1569,7 @@
         </div>
       </section>
     </div>
+    </ui:fragment>
   </div>
   <ui:include src="/v2/includes/concept-actions-dialogs.xhtml"/>
 </ui:composition>

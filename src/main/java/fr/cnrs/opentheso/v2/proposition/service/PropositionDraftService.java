@@ -23,6 +23,7 @@ import fr.cnrs.opentheso.v2.proposition.model.PropositionFieldAction;
 import fr.cnrs.opentheso.v2.proposition.model.PropositionFieldCategory;
 import fr.cnrs.opentheso.v2.proposition.model.PropositionFieldChange;
 import lombok.RequiredArgsConstructor;
+import org.apache.commons.lang3.StringUtils;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
 
@@ -143,7 +144,7 @@ public class PropositionDraftService {
                 .categorie(change.category().name())
                 .action(change.action().name())
                 .lang(change.lang())
-                .value(change.value())
+                .value(StringUtils.defaultString(change.value()))
                 .oldValue(change.oldValue())
                 .hiden(change.hidden())
                 .build());
@@ -157,7 +158,9 @@ public class PropositionDraftService {
             case UPDATE -> conceptLexicalMutationService.updateSynonym(new UpdateSynonymCommand(
                     thesaurusId, conceptId, change.lang(), change.oldValue(), change.value(), change.hidden(), userId, contributorName, false));
             case DELETE -> conceptLexicalMutationService.deleteSynonym(new DeleteSynonymCommand(
-                    thesaurusId, conceptId, change.lang(), change.value(), userId, contributorName));
+                    thesaurusId, conceptId, change.lang(),
+                    StringUtils.defaultIfBlank(change.value(), change.oldValue()),
+                    userId, contributorName));
         };
         collectError(result, errors);
     }

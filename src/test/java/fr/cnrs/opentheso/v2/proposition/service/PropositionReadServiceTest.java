@@ -31,6 +31,10 @@ class PropositionReadServiceTest {
     }
 
     private static PropositionProjection projection(int id, String status) {
+        return projection(id, status, "TH1");
+    }
+
+    private static PropositionProjection projection(int id, String status, String thesaurusId) {
         return new PropositionProjection() {
             @Override
             public Integer getId() {
@@ -49,7 +53,7 @@ class PropositionReadServiceTest {
 
             @Override
             public String getIdTheso() {
-                return "TH1";
+                return thesaurusId;
             }
 
             @Override
@@ -111,15 +115,28 @@ class PropositionReadServiceTest {
 
     @Test
     void countPending_delegatesToRepository() {
-        when(repository.countByIdThesoAndStatus("TH1", "ENVOYER")).thenReturn(2L);
+        when(repository.countByIdThesoAndStatus("TH1", PropositionReadService.NEW_STATUS))
+                .thenReturn(2L);
 
         assertEquals(2, service.countPending("TH1"));
     }
 
     @Test
+    void countAll_returnsZeroForBlankThesaurus() {
+        assertEquals(0, service.countAll(" "));
+    }
+
+    @Test
+    void countAll_delegatesToRepository() {
+        when(repository.countByIdTheso("TH1")).thenReturn(12L);
+
+        assertEquals(12, service.countAll("TH1"));
+    }
+
+    @Test
     void listPending_mapsSummaries() {
         PropositionProjection pending = projection(1, "ENVOYER");
-        when(repository.findAllPropositionsByStatusAndTheso("ENVOYER", "TH1"))
+        when(repository.findAllPropositionsByStatusAndTheso(PropositionReadService.NEW_STATUS, "TH1"))
                 .thenReturn(List.of(pending));
 
         var result = service.listPending("TH1");
@@ -127,6 +144,21 @@ class PropositionReadServiceTest {
         assertEquals(1, result.size());
         assertEquals("C1", result.get(0).conceptId());
         assertEquals("Concept 1", result.get(0).conceptLabel());
+    }
+
+    @Test
+    void listPending_keepsOnlyRowsOfRequestedThesaurus() {
+        when(repository.findAllPropositionsByStatusAndTheso(PropositionReadService.NEW_STATUS, "TH1"))
+                .thenReturn(List.of(
+                projection(1, "ENVOYER", "TH1"),
+                projection(2, "ENVOYER", "OTHER")
+        ));
+
+        var result = service.listPending("TH1");
+
+        assertEquals(1, result.size());
+        assertEquals(1, result.get(0).id());
+        assertEquals("TH1", result.get(0).thesaurusId());
     }
 
     @Test
@@ -149,7 +181,7 @@ class PropositionReadServiceTest {
     @Test
     void findDetail_mapsDetail() {
         PropositionProjection detailProjection = projection(5, "LU");
-        when(repository.findProjectionById(5)).thenReturn(detailProjection);
+        when(repository.findProjectionsById(5)).thenReturn(List.of(detailProjection));
 
         PropositionDetail detail = service.findDetail(5);
 
@@ -159,8 +191,19 @@ class PropositionReadServiceTest {
     }
 
     @Test
+    void findDetail_usesFirstRowWhenJoinDuplicates() {
+        when(repository.findProjectionsById(5)).thenReturn(List.of(
+                projection(5, "LU"),
+                projection(5, "LU")));
+
+        PropositionDetail detail = service.findDetail(5);
+
+        assertEquals(5, detail.id());
+    }
+
+    @Test
     void findDetail_returnsNullWhenMissing() {
-        when(repository.findProjectionById(99)).thenReturn(null);
+        when(repository.findProjectionsById(99)).thenReturn(List.of());
 
         assertNull(service.findDetail(99));
     }
