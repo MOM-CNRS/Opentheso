@@ -1,7 +1,9 @@
 package fr.cnrs.opentheso.v2.sync.ui;
 
 import fr.cnrs.opentheso.utils.MessageUtils;
+import fr.cnrs.opentheso.v2.setting.model.ThesaurusPreferences;
 import fr.cnrs.opentheso.v2.setting.service.ThesaurusAccessService;
+import fr.cnrs.opentheso.v2.setting.service.ThesaurusPreferenceService;
 import fr.cnrs.opentheso.v2.setting.ui.ThesaurusContext;
 import fr.cnrs.opentheso.v2.shared.ui.UserSession;
 import fr.cnrs.opentheso.v2.sync.model.SyncBatchResponse;
@@ -44,6 +46,7 @@ public class ThesaurusSyncBean implements Serializable {
     private final transient UserSession userSession;
     private final transient ThesaurusAccessService thesaurusAccessService;
     private final transient ThesaurusContext thesaurusContext;
+    private final transient ThesaurusPreferenceService thesaurusPreferenceService;
 
     /** Remplaçable en test pour exécuter la sync de façon synchrone. */
     private transient Executor syncExecutor = DEFAULT_SYNC_EXECUTOR;
@@ -222,7 +225,16 @@ public class ThesaurusSyncBean implements Serializable {
 
     public boolean isShortcutVisible() {
         String id = StringUtils.trimToNull(thesaurusContext.resolveThesaurusId());
-        return canManage(id) && thesaurusSyncSendService.isSlaveThesaurus(id);
+        if (!canManage(id) || !thesaurusSyncSendService.isSlaveThesaurus(id) || !isSynchronisationEnabled(id)) {
+            return false;
+        }
+        return true;
+    }
+
+    private boolean isSynchronisationEnabled(String thesaurusId) {
+        String workLang = StringUtils.defaultIfBlank(thesaurusContext.resolveWorkLanguage(), "fr");
+        ThesaurusPreferences preferences = thesaurusPreferenceService.loadPreferencesOrNull(thesaurusId, workLang);
+        return preferences != null && preferences.synchronisation();
     }
 
     public boolean isRunning() {

@@ -23,6 +23,7 @@ public record UpdateThesaurusPreferencesRequest(
         @Schema(description = "Nouvelle clé API Deepl (laisser vide pour conserver)") String deeplApiKey,
         Boolean webservices,
         Boolean kohaLink,
-        Boolean uppercaseForArk
+        Boolean uppercaseForArk,
+        Boolean synchronisation
 ) {
 }

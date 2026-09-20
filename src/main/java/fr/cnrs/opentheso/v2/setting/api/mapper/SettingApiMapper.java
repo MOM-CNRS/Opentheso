@@ -44,7 +44,8 @@ public final class SettingApiMapper {
                 StringUtils.isNotBlank(preferences.deeplApiKey()),
                 preferences.webservices(),
                 preferences.kohaLink(),
-                preferences.uppercaseForArk()
+                preferences.uppercaseForArk(),
+                preferences.synchronisation()
         );
     }
 
@@ -141,6 +142,7 @@ public final class SettingApiMapper {
                 current.prefixOpenArk(),
                 current.apiKeyOpenArk(),
                 current.showCandidatesToGuests(),
+                coalesce(request.synchronisation(), current.synchronisation()),
                 current.languages()
         );
     }
@@ -205,6 +207,7 @@ public final class SettingApiMapper {
                 coalesce(request.prefixOpenArk(), current.prefixOpenArk()),
                 current.apiKeyOpenArk(),
                 current.showCandidatesToGuests(),
+                current.synchronisation(),
                 current.languages()
         );
     }

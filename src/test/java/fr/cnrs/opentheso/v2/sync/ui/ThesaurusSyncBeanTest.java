@@ -1,7 +1,10 @@
 package fr.cnrs.opentheso.v2.sync.ui;
 
 import fr.cnrs.opentheso.utils.MessageUtils;
+import fr.cnrs.opentheso.v2.setting.fixtures.SettingTestFixtures;
+import fr.cnrs.opentheso.v2.setting.model.ThesaurusPreferences;
 import fr.cnrs.opentheso.v2.setting.service.ThesaurusAccessService;
+import fr.cnrs.opentheso.v2.setting.service.ThesaurusPreferenceService;
 import fr.cnrs.opentheso.v2.setting.ui.ThesaurusContext;
 import fr.cnrs.opentheso.v2.shared.ui.UserSession;
 import fr.cnrs.opentheso.v2.sync.model.SyncBatchResponse;
@@ -47,6 +50,8 @@ class ThesaurusSyncBeanTest {
     private ThesaurusAccessService thesaurusAccessService;
     @Mock
     private ThesaurusContext thesaurusContext;
+    @Mock
+    private ThesaurusPreferenceService thesaurusPreferenceService;
 
     private ThesaurusSyncProgressTracker progressTracker;
     private ThesaurusSyncBean bean;
@@ -55,7 +60,8 @@ class ThesaurusSyncBeanTest {
     void setUp() {
         progressTracker = new ThesaurusSyncProgressTracker();
         bean = new ThesaurusSyncBean(
-                thesaurusSyncSendService, progressTracker, userSession, thesaurusAccessService, thesaurusContext);
+                thesaurusSyncSendService, progressTracker, userSession, thesaurusAccessService, thesaurusContext,
+                thesaurusPreferenceService);
         bean.setSyncExecutor(Runnable::run);
     }
 
@@ -419,11 +425,18 @@ class ThesaurusSyncBeanTest {
     }
 
     @Test
-    void isShortcutVisible_requiresSlaveAndManageRights() {
+    void isShortcutVisible_requiresSlaveManageRightsAndPreference() {
         stubAccess(true);
         when(thesaurusContext.resolveThesaurusId()).thenReturn("TH1");
+        when(thesaurusContext.resolveWorkLanguage()).thenReturn("fr");
         when(thesaurusSyncSendService.isSlaveThesaurus("TH1")).thenReturn(true);
+        when(thesaurusPreferenceService.loadPreferencesOrNull("TH1", "fr"))
+                .thenReturn(preferencesWithSync(true));
         assertTrue(bean.isShortcutVisible());
+
+        when(thesaurusPreferenceService.loadPreferencesOrNull("TH1", "fr"))
+                .thenReturn(preferencesWithSync(false));
+        assertFalse(bean.isShortcutVisible());
 
         when(thesaurusSyncSendService.isSlaveThesaurus("TH1")).thenReturn(false);
         assertFalse(bean.isShortcutVisible());
@@ -450,5 +463,65 @@ class ThesaurusSyncBeanTest {
         when(userSession.getCurrentUserId()).thenReturn(2);
         when(userSession.isSuperAdmin()).thenReturn(false);
         when(thesaurusAccessService.canManageThesaurus(2, false, "TH1")).thenReturn(granted);
+    }
+
+    private static ThesaurusPreferences preferencesWithSync(boolean enabled) {
+        var base = SettingTestFixtures.samplePreferences();
+        return new ThesaurusPreferences(
+                base.thesaurusId(),
+                base.sourceLang(),
+                base.identifierType(),
+                base.cheminSite(),
+                base.idNaan(),
+                base.preferredName(),
+                base.originalUri(),
+                base.exportUriType(),
+                base.identifierServerType(),
+                base.useHandle(),
+                base.userHandle(),
+                base.passHandle(),
+                base.pathKeyHandle(),
+                base.pathCertHandle(),
+                base.urlApiHandle(),
+                base.prefixIdHandle(),
+                base.privatePrefixHandle(),
+                base.uriArk(),
+                base.useArk(),
+                base.serverArk(),
+                base.prefixArk(),
+                base.userArk(),
+                base.passArk(),
+                base.generateHandle(),
+                base.autoExpandTree(),
+                base.sortByNotation(),
+                base.treeCache(),
+                base.useArkLocal(),
+                base.naanArkLocal(),
+                base.prefixArkLocal(),
+                base.sizeIdArkLocal(),
+                base.breadcrumb(),
+                base.useConceptTree(),
+                base.displayUserName(),
+                base.suggestion(),
+                base.useCustomRelation(),
+                base.uppercaseForArk(),
+                base.showHistoryNote(),
+                base.showEditorialNote(),
+                base.useHandleWithCertificat(),
+                base.adminHandle(),
+                base.indexHandle(),
+                base.useDeeplTranslation(),
+                base.deeplApiKey(),
+                base.webservices(),
+                base.kohaLink(),
+                base.useOpenArk(),
+                base.serverOpenArk(),
+                base.naanOpenArk(),
+                base.prefixOpenArk(),
+                base.apiKeyOpenArk(),
+                base.showCandidatesToGuests(),
+                enabled,
+                base.languages()
+        );
     }
 }

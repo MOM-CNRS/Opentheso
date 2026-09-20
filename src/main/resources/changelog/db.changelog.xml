@@ -317,4 +317,9 @@
         <sqlFile path="v26/26-09_01.sql" relativeToChangelogFile="true" splitStatements="false"/>
     </changeSet>
 
+    <changeSet id="26.09.02" author="Firas">
+        <comment>Show thesaurus synchronisation shortcut on home workshop</comment>
+        <sqlFile path="v26/26-09_02.sql" relativeToChangelogFile="true" splitStatements="false"/>
+    </changeSet>
+
 </databaseChangeLog>

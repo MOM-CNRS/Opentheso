@@ -80,6 +80,7 @@ public final class SettingMapper {
                 entity.getPrefixOpenArk(),
                 entity.getApiKeyOpenArk(),
                 entity.isShowCandidatesToGuests(),
+                entity.isSynchronisation(),
                 languages
         );
     }
@@ -136,6 +137,7 @@ public final class SettingMapper {
         entity.setPrefixOpenArk(preferences.prefixOpenArk());
         entity.setApiKeyOpenArk(preferences.apiKeyOpenArk());
         entity.setShowCandidatesToGuests(preferences.showCandidatesToGuests());
+        entity.setSynchronisation(preferences.synchronisation());
     }
 
     public static ThesaurusCorpus toCorpus(CorpusLinkEntity entity) {

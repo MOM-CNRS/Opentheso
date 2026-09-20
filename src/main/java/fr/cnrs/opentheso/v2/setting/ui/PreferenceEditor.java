@@ -72,6 +72,7 @@ public class PreferenceEditor implements Serializable {
     private boolean webservices;
     private boolean kohaLink;
     private boolean showCandidatesToGuests;
+    private boolean synchronisation;
 
     private String newPassArk;
     private String newPassHandle;
@@ -134,6 +135,7 @@ public class PreferenceEditor implements Serializable {
         editor.setWebservices(preferences.webservices());
         editor.setKohaLink(preferences.kohaLink());
         editor.setShowCandidatesToGuests(preferences.showCandidatesToGuests());
+        editor.setSynchronisation(preferences.synchronisation());
         editor.setLanguages(new ArrayList<>(preferences.languages()));
         return editor;
     }
@@ -193,6 +195,7 @@ public class PreferenceEditor implements Serializable {
                 prefixOpenArk,
                 apiKeyOpenArk,
                 showCandidatesToGuests,
+                synchronisation,
                 languages
         );
     }

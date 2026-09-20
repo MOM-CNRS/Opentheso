@@ -1146,6 +1146,7 @@ class ThesaurusBrowseBeanTest {
                 base.prefixOpenArk(),
                 base.apiKeyOpenArk(),
                 base.showCandidatesToGuests(),
+                base.synchronisation(),
                 base.languages()
         );
     }

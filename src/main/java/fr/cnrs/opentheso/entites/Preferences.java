@@ -144,4 +144,8 @@ public class Preferences {
     /** Afficher les candidats aux invités (consultation publique). */
     @Column(name = "show_candidates_to_guests")
     private boolean showCandidatesToGuests;
+
+    /** Affiche le raccourci « Synchronisation du thésaurus » sur l'accueil. */
+    @Column(name = "synchronisation")
+    private boolean synchronisation;
 }

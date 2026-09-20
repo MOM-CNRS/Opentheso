@@ -75,6 +75,7 @@ public final class SettingTestFixtures {
                 null,
                 null,
                 false,
+                false,
                 List.of(sampleLanguage())
         );
     }

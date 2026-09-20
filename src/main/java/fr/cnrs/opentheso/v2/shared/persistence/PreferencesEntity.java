@@ -129,4 +129,7 @@ public class PreferencesEntity {
 
     @Column(name = "show_candidates_to_guests")
     private boolean showCandidatesToGuests;
+
+    @Column(name = "synchronisation")
+    private boolean synchronisation;
 }

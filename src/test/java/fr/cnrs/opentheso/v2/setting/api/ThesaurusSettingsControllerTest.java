@@ -75,7 +75,7 @@ class ThesaurusSettingsControllerTest {
                         "fr", "TH1", "http://site/", "http://origin",
                         ExportUriType.URI,
                         true, false, false, true, false, false, false, false, false, false, false,
-                        null, true, false, false
+                        null, true, false, false, false
                 )
         );
 

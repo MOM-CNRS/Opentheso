@@ -27,6 +27,7 @@ public record ThesaurusPreferencesResponse(
         boolean hasDeeplApiKey,
         boolean webservices,
         boolean kohaLink,
-        boolean uppercaseForArk
+        boolean uppercaseForArk,
+        boolean synchronisation
 ) {
 }
