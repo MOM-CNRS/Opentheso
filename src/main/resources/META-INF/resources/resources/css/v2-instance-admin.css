@@ -550,6 +550,14 @@ body[data-page="admin-instance"] .ia-toolbar .bo-btn svg{width:15px;height:15px}
 }
 .ia-check.is-disabled{opacity:.55;cursor:not-allowed}
 .ia-check.is-disabled input{cursor:not-allowed}
+.ia-theso-picks{
+  display:block;margin-top:8px;padding:8px 12px;
+  border:1px solid var(--line-2);border-radius:10px;
+  max-height:220px;overflow:auto;background:var(--surface,transparent)
+}
+.ia-theso-picks table{width:100%;border-collapse:collapse}
+.ia-theso-picks td{padding:5px 0;font-size:13px;color:var(--ink-2)}
+.ia-theso-picks input{margin-right:8px;accent-color:var(--accent)}
 .ia-proj{
   margin-top:18px;padding:14px;border:1px solid var(--line-2);border-radius:12px;
   background:rgba(31,122,92,.03)

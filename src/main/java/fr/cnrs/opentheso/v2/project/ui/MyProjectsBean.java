@@ -63,6 +63,8 @@ public class MyProjectsBean implements Serializable {
     private List<String> memberThesaurusIds;
     private UserSearchResult selectedExistingUser;
     private Integer existingMemberRoleId;
+    private boolean existingMemberLimitOnThesaurus;
+    private List<String> existingMemberThesaurusIds;
 
     private int editMemberUserId;
     private String editMemberUsername;
@@ -106,7 +108,7 @@ public class MyProjectsBean implements Serializable {
     private String thesaurusToRemoveId;
     private String thesaurusToRemoveTitle;
 
-    /** V2 panel: null | create | rename | addExisting | editMemberRole | removeMember | editLimited | removeLimited | removeThesaurus */
+    /** V2 panel: null | create | rename | createMember | addExisting | editMemberRole | removeMember | editLimited | removeLimited | removeThesaurus | moveThesaurus */
     private String activePanel;
     private String existingUserQuery = "";
     private List<UserSearchResult> existingUserHits = Collections.emptyList();
@@ -115,8 +117,10 @@ public class MyProjectsBean implements Serializable {
 
     private static final String PANEL_CREATE = "create";
     private static final String PANEL_RENAME = "rename";
+    private static final String PANEL_CREATE_MEMBER = "createMember";
     private static final String PANEL_ADD_EXISTING = "addExisting";
     private static final String PANEL_EDIT_MEMBER_ROLE = "editMemberRole";
+    private static final String PANEL_MOVE_THESAURUS = "moveThesaurus";
     private static final String PANEL_REMOVE_MEMBER = "removeMember";
     private static final String PANEL_EDIT_LIMITED = "editLimited";
     private static final String PANEL_REMOVE_LIMITED = "removeLimited";
@@ -193,11 +197,37 @@ public class MyProjectsBean implements Serializable {
         panelError = null;
     }
 
+    public void openCreateMemberPanel() {
+        prepareNewMemberDialog();
+        activePanel = PANEL_CREATE_MEMBER;
+        panelError = null;
+    }
+
+    public void selectMemberCreationModeDirect() {
+        memberCreationMode = "DIRECT";
+        updateMemberPasswordFields();
+    }
+
+    public void selectMemberCreationModeEmail() {
+        memberCreationMode = EMAIL;
+        updateMemberPasswordFields();
+    }
+
+    public boolean isMemberEmailInvite() {
+        return EMAIL.equalsIgnoreCase(memberCreationMode);
+    }
+
     public void openAddExistingPanel() {
         prepareAddExistingMemberDialog();
         existingUserQuery = "";
         existingUserHits = Collections.emptyList();
         activePanel = PANEL_ADD_EXISTING;
+        panelError = null;
+    }
+
+    public void openMoveThesaurusPanel(ProjectThesaurus thesaurus) {
+        prepareMoveThesaurus(thesaurus);
+        activePanel = PANEL_MOVE_THESAURUS;
         panelError = null;
     }
 
@@ -303,12 +333,14 @@ public class MyProjectsBean implements Serializable {
         memberPassword2 = null;
         memberRoleId = defaultAssignableRoleId();
         memberLimitOnThesaurus = false;
-        memberThesaurusIds = null;
+        memberThesaurusIds = new ArrayList<>();
     }
 
     public void prepareAddExistingMemberDialog() {
         selectedExistingUser = null;
         existingMemberRoleId = defaultAssignableRoleId();
+        existingMemberLimitOnThesaurus = false;
+        existingMemberThesaurusIds = new ArrayList<>();
     }
 
     public void updateMemberPasswordFields() {
@@ -318,7 +350,19 @@ public class MyProjectsBean implements Serializable {
 
     public void toggleMemberLimitThesaurus() {
         if (!memberLimitOnThesaurus) {
-            memberThesaurusIds = null;
+            memberThesaurusIds = new ArrayList<>();
+        }
+    }
+
+    public void toggleExistingMemberLimitThesaurus() {
+        if (!existingMemberLimitOnThesaurus) {
+            existingMemberThesaurusIds = new ArrayList<>();
+        }
+    }
+
+    public void toggleEditMemberLimitThesaurus() {
+        if (!editMemberLimitOnThesaurus) {
+            editMemberThesaurusIds = new ArrayList<>();
         }
     }
 
@@ -328,6 +372,7 @@ public class MyProjectsBean implements Serializable {
             return;
         }
         try {
+            boolean limited = memberLimitOnThesaurus && isMemberRoleLimitedSectionVisible();
             projectMemberService.createMember(new ProjectMemberService.CreateMemberRequest(
                     userId,
                     userSession.isSuperAdmin(),
@@ -337,18 +382,16 @@ public class MyProjectsBean implements Serializable {
                     memberInstitution,
                     memberAlertMail,
                     memberRoleId,
-                    memberLimitOnThesaurus,
-                    memberThesaurusIds,
+                    limited,
+                    limited ? memberThesaurusIds : List.of(),
                     memberPassword1,
                     memberPassword2,
                     memberCreationMode
             ));
-            if (EMAIL.equalsIgnoreCase(memberCreationMode)) {
-                MessageUtils.showInformationMessage(
-                        "Un mail a été envoyé pour définir le mot de passe et activer le compte"
-                );
+            if (isMemberEmailInvite()) {
+                MessageUtils.showInformationMessage(localeBean.getMsg("v2.projects.invite.successEmail"));
             } else {
-                MessageUtils.showInformationMessage(localeBean.getMsg("profile.userCreatedSuccess"));
+                MessageUtils.showInformationMessage(localeBean.getMsg("v2.projects.invite.success"));
             }
             prepareNewMemberDialog();
             reloadDashboard(userId);
@@ -371,12 +414,15 @@ public class MyProjectsBean implements Serializable {
             return;
         }
         try {
+            boolean limited = existingMemberLimitOnThesaurus && isExistingMemberLimitSectionVisible();
             projectMemberService.addExistingMember(
                     userId,
                     userSession.isSuperAdmin(),
                     selectedProjectId,
                     selectedExistingUser.userId(),
-                    existingMemberRoleId
+                    existingMemberRoleId,
+                    limited,
+                    limited ? existingMemberThesaurusIds : List.of()
             );
             MessageUtils.showInformationMessage("L'utilisateur a été ajouté avec succès");
             prepareAddExistingMemberDialog();
@@ -402,7 +448,7 @@ public class MyProjectsBean implements Serializable {
         editMemberUsername = member.username();
         editMemberRoleId = member.roleId();
         editMemberLimitOnThesaurus = false;
-        editMemberThesaurusIds = null;
+        editMemberThesaurusIds = new ArrayList<>();
     }
 
     public void submitUpdateMemberRole() {
@@ -411,14 +457,15 @@ public class MyProjectsBean implements Serializable {
             return;
         }
         try {
+            boolean limited = editMemberLimitOnThesaurus && isEditMemberLimitSectionVisible();
             projectMemberService.updateMemberRole(
                     userId,
                     userSession.isSuperAdmin(),
                     selectedProjectId,
                     editMemberUserId,
                     editMemberRoleId,
-                    editMemberLimitOnThesaurus,
-                    editMemberThesaurusIds
+                    limited,
+                    limited ? editMemberThesaurusIds : List.of()
             );
             MessageUtils.showInformationMessage(localeBean.getMsg("project.memberRoleUpdatedSuccess"));
             reloadDashboard(userId);
@@ -602,7 +649,8 @@ public class MyProjectsBean implements Serializable {
             return;
         }
         if (moveTargetProjectId == null) {
-            MessageUtils.showErrorMessage("Aucun projet sélectionné !!!");
+            panelError = localeBean.getMsg("v2.projects.moveThesaurusNoTarget");
+            MessageUtils.showErrorMessage(panelError);
             return;
         }
         try {
@@ -644,7 +692,15 @@ public class MyProjectsBean implements Serializable {
     }
 
     public boolean isMemberRoleLimitedSectionVisible() {
-        return memberRoleId != null && memberRoleId != ProjectAccessPolicy.ROLE_SUPER_ADMIN;
+        return isLimitSectionVisible(memberRoleId);
+    }
+
+    public boolean isExistingMemberLimitSectionVisible() {
+        return isLimitSectionVisible(existingMemberRoleId);
+    }
+
+    public boolean isEditMemberLimitSectionVisible() {
+        return isLimitSectionVisible(editMemberRoleId);
     }
 
     public void createProject() {
@@ -714,6 +770,10 @@ public class MyProjectsBean implements Serializable {
         if (selectedProjectId != null) {
             loadDashboard(userId);
         }
+    }
+
+    private static boolean isLimitSectionVisible(Integer roleId) {
+        return roleId != null && roleId != ProjectAccessPolicy.ROLE_SUPER_ADMIN;
     }
 
     private Integer defaultAssignableRoleId() {

@@ -101,6 +101,19 @@ public class ProjectMemberService {
 
     @Transactional
     public void addExistingMember(int callerId, boolean superAdmin, int projectId, int userId, int roleId) {
+        addExistingMember(callerId, superAdmin, projectId, userId, roleId, false, null);
+    }
+
+    @Transactional
+    public void addExistingMember(
+            int callerId,
+            boolean superAdmin,
+            int projectId,
+            int userId,
+            int roleId,
+            boolean limitedOnThesaurus,
+            List<String> thesaurusIds
+    ) {
         AdminContext context = requireProjectAdmin(callerId, superAdmin, projectId);
         validateAssignableRole(context, roleId);
         ensureUserExists(userId);
@@ -110,8 +123,10 @@ public class ProjectMemberService {
         if (projectAdminQueryRepository.isProjectAccessible(userId, projectId)) {
             throw new InvalidProjectDataException("Cet utilisateur est déjà membre de ce projet.");
         }
-        projectMembershipRepository.assignProjectRole(userId, roleId, projectId);
-        rightsService.invalidate(userId);
+        if (limitedOnThesaurus) {
+            requireThesaurusIds(projectId, thesaurusIds);
+        }
+        assignMembership(userId, roleId, projectId, limitedOnThesaurus, thesaurusIds);
         log.info("Utilisateur id={} ajouté au projet id={} par l'utilisateur id={}", userId, projectId, callerId);
     }
 

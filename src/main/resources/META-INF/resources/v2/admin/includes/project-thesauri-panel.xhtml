@@ -14,9 +14,11 @@
                             ? v2LocaleBean.getMsg('v2.admin.projects.thesauri.add.title')
                             : (v2InstanceAdminBean.editThesaurusOpen
                                 ? v2LocaleBean.getMsg('v2.admin.projects.thesauri.edit.title')
-                                : v2LocaleBean.getMsg('v2.admin.projects.thesauri.title'))}
+                                : (v2InstanceAdminBean.moveThesaurusOpen
+                                    ? v2LocaleBean.getMsg('v2.admin.projects.thesauri.move.title')
+                                    : v2LocaleBean.getMsg('v2.admin.projects.thesauri.title')))}
                       </span>
-                      <ui:fragment rendered="#{v2InstanceAdminBean.openProject ne null and not v2InstanceAdminBean.addThesaurusOpen and not v2InstanceAdminBean.editThesaurusOpen}">
+                      <ui:fragment rendered="#{v2InstanceAdminBean.openProject ne null and not v2InstanceAdminBean.addThesaurusOpen and not v2InstanceAdminBean.editThesaurusOpen and not v2InstanceAdminBean.moveThesaurusOpen}">
                         <div class="ia-members-meta">
                           <span>#{v2InstanceAdminBean.openProject.name}</span>
                           <span class="ia-members-meta-sep">·</span>
@@ -25,7 +27,7 @@
                         </div>
                       </ui:fragment>
                     </div>
-                    <ui:fragment rendered="#{not v2InstanceAdminBean.addThesaurusOpen and not v2InstanceAdminBean.editThesaurusOpen}">
+                    <ui:fragment rendered="#{not v2InstanceAdminBean.addThesaurusOpen and not v2InstanceAdminBean.editThesaurusOpen and not v2InstanceAdminBean.moveThesaurusOpen}">
                       <div class="ia-toolbar">
                         <h:commandLink styleClass="bo-btn primary sm ia-create-btn"
                                        action="#{v2InstanceAdminBean.openAddThesaurus}">
@@ -146,6 +148,47 @@
                       </h:panelGroup>
                     </ui:fragment>
 
+                    <ui:fragment rendered="#{v2InstanceAdminBean.moveThesaurusOpen}">
+                      <div class="ia-create">
+                        <ui:fragment rendered="#{not empty v2InstanceAdminBean.thesaurusFormError}">
+                          <div class="ia-create-err" role="alert">#{v2InstanceAdminBean.thesaurusFormError}</div>
+                        </ui:fragment>
+                        <p>#{v2LocaleBean.getMsg('v2.admin.projects.thesauri.move.confirm')}
+                          <b>#{v2InstanceAdminBean.moveThesaurusTitle}</b>
+                        </p>
+                        <ui:fragment rendered="#{empty v2InstanceAdminBean.moveTargetProjects}">
+                          <p class="ia-create-hint">#{v2LocaleBean.getMsg('v2.admin.projects.thesauri.move.empty')}</p>
+                        </ui:fragment>
+                        <ui:fragment rendered="#{not empty v2InstanceAdminBean.moveTargetProjects}">
+                          <label class="ia-field">
+                            <span>#{v2LocaleBean.getMsg('v2.admin.projects.thesauri.move.target')}</span>
+                            <h:selectOneMenu id="iaMoveThesaurusTarget"
+                                             value="#{v2InstanceAdminBean.moveTargetProjectId}"
+                                             styleClass="st-input ia-select">
+                              <f:selectItem itemValue="#{null}"
+                                            itemLabel="#{v2LocaleBean.getMsg('v2.admin.projects.thesauri.move.choose')}"/>
+                              <f:selectItems value="#{v2InstanceAdminBean.moveTargetProjects}" var="proj"
+                                             itemValue="#{proj.id}" itemLabel="#{proj.name}"/>
+                            </h:selectOneMenu>
+                          </label>
+                        </ui:fragment>
+                        <div class="ia-create-actions">
+                          <h:commandLink styleClass="bo-btn ghost"
+                                         action="#{v2InstanceAdminBean.closeMoveThesaurus}"
+                                         immediate="true">
+                            <f:ajax execute="@this" render="iaShell"/>
+                            #{v2LocaleBean.getMsg('v2.admin.projects.cancel')}
+                          </h:commandLink>
+                          <h:commandLink styleClass="bo-btn primary"
+                                         action="#{v2InstanceAdminBean.confirmMoveThesaurus}"
+                                         rendered="#{not empty v2InstanceAdminBean.moveTargetProjects}">
+                            <f:ajax execute="@form" render="iaShell"/>
+                            #{v2LocaleBean.getMsg('v2.admin.projects.thesauri.move.submit')}
+                          </h:commandLink>
+                        </div>
+                      </div>
+                    </ui:fragment>
+
                     <ui:fragment rendered="#{v2InstanceAdminBean.editThesaurusOpen}">
                       <div class="ia-create">
                         <ui:fragment rendered="#{not empty v2InstanceAdminBean.thesaurusFormError}">
@@ -176,7 +219,7 @@
                       </div>
                     </ui:fragment>
 
-                    <ui:fragment rendered="#{not v2InstanceAdminBean.addThesaurusOpen and not v2InstanceAdminBean.editThesaurusOpen}">
+                    <ui:fragment rendered="#{not v2InstanceAdminBean.addThesaurusOpen and not v2InstanceAdminBean.editThesaurusOpen and not v2InstanceAdminBean.moveThesaurusOpen}">
                       <div class="ia-scroll">
                         <ui:fragment rendered="#{not empty v2InstanceAdminBean.openProjectThesauri}">
                           <table class="st-table ia-tab ia-tab-t">
@@ -202,6 +245,13 @@
                                   </td>
                                   <td class="st-td-act" data-label="">
                                     <div class="ia-row-acts">
+                                      <h:commandLink styleClass="bo-btn ghost sm"
+                                                     action="#{v2InstanceAdminBean.openMoveThesaurus}">
+                                        <f:param name="iaThesaurusId" value="#{t.id}"/>
+                                        <f:param name="iaThesaurusTitle" value="#{t.title}"/>
+                                        <f:ajax execute="@this" render="iaShell"/>
+                                        #{v2LocaleBean.getMsg('v2.admin.projects.thesauri.move')}
+                                      </h:commandLink>
                                       <a class="bo-btn ghost sm"
                                          href="#{v2InstanceAdminBean.thesaurusMembersUrl(t.id)}">
                                         #{v2LocaleBean.getMsg('v2.admin.projects.thesauri.members')}

@@ -115,6 +115,10 @@ public class InstanceAdminBean implements Serializable {
     private boolean deleteThesaurusConfirmOpen;
     private String deleteThesaurusId;
     private String deleteThesaurusTitle;
+    private boolean moveThesaurusOpen;
+    private String moveThesaurusId;
+    private String moveThesaurusTitle;
+    private Integer moveTargetProjectId;
 
     private List<ThesaurusMember> thesaurusMembersList = Collections.emptyList();
     private String membersQuery = "";
@@ -300,7 +304,8 @@ public class InstanceAdminBean implements Serializable {
             return;
         }
         if (createProjectOpen || renameProjectOpen || deleteProjectConfirmOpen
-                || addThesaurusOpen || editThesaurusOpen || deleteThesaurusConfirmOpen) {
+                || addThesaurusOpen || editThesaurusOpen || deleteThesaurusConfirmOpen
+                || moveThesaurusOpen) {
             closeProjectForms();
             return;
         }
@@ -966,7 +971,7 @@ public class InstanceAdminBean implements Serializable {
         if (createProjectOpen) {
             return v2LocaleBean.getMsg("v2.admin.projects.cancel");
         }
-        if (renameProjectOpen || addThesaurusOpen || editThesaurusOpen) {
+        if (renameProjectOpen || addThesaurusOpen || editThesaurusOpen || moveThesaurusOpen) {
             return v2LocaleBean.getMsg("v2.admin.projects.cancel");
         }
         if (deleteThesaurusConfirmOpen) {
@@ -1370,6 +1375,7 @@ public class InstanceAdminBean implements Serializable {
         }
         closeEditThesaurus();
         closeDeleteThesaurusConfirm();
+        closeMoveThesaurus();
         addThesaurusQuery = "";
         selectedAddThesaurusIds = new ArrayList<>();
         thesaurusFormError = null;
@@ -1570,6 +1576,7 @@ public class InstanceAdminBean implements Serializable {
         }
         closeAddThesaurus();
         closeDeleteThesaurusConfirm();
+        closeMoveThesaurus();
         try {
             var details = modifyThesaurusService.loadDetails(thesaurusId.trim());
             editThesaurusId = details.id();
@@ -1636,6 +1643,7 @@ public class InstanceAdminBean implements Serializable {
         }
         closeAddThesaurus();
         closeEditThesaurus();
+        closeMoveThesaurus();
         deleteThesaurusConfirmOpen = true;
         deleteThesaurusId = thesaurusId.trim();
         deleteThesaurusTitle = StringUtils.defaultIfBlank(thesaurusTitle, deleteThesaurusId);
@@ -1667,6 +1675,65 @@ public class InstanceAdminBean implements Serializable {
         closeAddThesaurus();
         closeEditThesaurus();
         closeDeleteThesaurusConfirm();
+        closeMoveThesaurus();
+    }
+
+    public void openMoveThesaurus() {
+        String thesaurusId = readRequestParam("iaThesaurusId");
+        String thesaurusTitle = readRequestParam("iaThesaurusTitle");
+        if (StringUtils.isBlank(thesaurusId)) {
+            return;
+        }
+        openMoveThesaurus(thesaurusId, thesaurusTitle);
+    }
+
+    public void openMoveThesaurus(String thesaurusId, String thesaurusTitle) {
+        if (!isAccessAllowed() || StringUtils.isBlank(thesaurusId)) {
+            return;
+        }
+        closeAddThesaurus();
+        closeEditThesaurus();
+        closeDeleteThesaurusConfirm();
+        moveThesaurusOpen = true;
+        moveThesaurusId = thesaurusId.trim();
+        moveThesaurusTitle = StringUtils.defaultIfBlank(thesaurusTitle, moveThesaurusId);
+        moveTargetProjectId = null;
+        thesaurusFormError = null;
+    }
+
+    public void closeMoveThesaurus() {
+        moveThesaurusOpen = false;
+        moveThesaurusId = null;
+        moveThesaurusTitle = null;
+        moveTargetProjectId = null;
+        thesaurusFormError = null;
+    }
+
+    public void confirmMoveThesaurus() {
+        if (!isAccessAllowed() || StringUtils.isBlank(moveThesaurusId)) {
+            return;
+        }
+        if (moveTargetProjectId == null) {
+            thesaurusFormError = v2LocaleBean.getMsg("v2.admin.projects.thesauri.move.noTarget");
+            return;
+        }
+        try {
+            adminCatalogService.moveThesaurus(userSession.isSuperAdmin(), moveThesaurusId, moveTargetProjectId);
+            flashInfo(v2LocaleBean.getMsg("v2.admin.projects.thesauri.move.success"));
+            closeMoveThesaurus();
+            reload();
+        } catch (InvalidProjectDataException | ProjectAccessDeniedException e) {
+            thesaurusFormError = e.getMessage();
+        }
+    }
+
+    public List<AdminProject> getMoveTargetProjects() {
+        if (openProjectId == null || projects == null) {
+            return List.of();
+        }
+        return projects.stream()
+                .filter(project -> project.id() != openProjectId)
+                .toList();
     }
 
     public String projectName(Integer projectId) {

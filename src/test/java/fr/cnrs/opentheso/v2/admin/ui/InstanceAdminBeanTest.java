@@ -250,6 +250,32 @@ class InstanceAdminBeanTest {
     }
 
     @Test
+    void confirmMoveThesaurus_movesToSelectedProject() {
+        when(userSession.canAccessSuperAdminScreen()).thenReturn(true);
+        when(userSession.isSuperAdmin()).thenReturn(true);
+        when(v2LocaleBean.getIdLangue()).thenReturn("fr");
+        when(v2LocaleBean.getMsg("v2.admin.projects.thesauri.move.success")).thenReturn("moved");
+        when(adminCatalogService.listInstanceAccounts(true)).thenReturn(List.of());
+        when(adminCatalogService.listAllProjects(true)).thenReturn(List.of(
+                new ProjectSummary(5, "Frantiq"),
+                new ProjectSummary(9, "Autre")
+        ));
+        when(adminCatalogService.listAllThesauri(true, "fr")).thenReturn(List.of(
+                new AdminThesaurus("th1", "PACTOLS", 5, "Frantiq", false, null)
+        ));
+
+        bean.reload();
+        bean.openProjectThesauri(5);
+        bean.openMoveThesaurus("th1", "PACTOLS");
+        bean.setMoveTargetProjectId(9);
+        bean.confirmMoveThesaurus();
+
+        verify(adminCatalogService).moveThesaurus(true, "th1", 9);
+        assertFalse(bean.isMoveThesaurusOpen());
+        assertNull(bean.getMoveThesaurusId());
+    }
+
+    @Test
     void selectAddThesaurus_togglesMultiSelection() {
         when(userSession.canAccessSuperAdminScreen()).thenReturn(true);
         when(userSession.isSuperAdmin()).thenReturn(true);

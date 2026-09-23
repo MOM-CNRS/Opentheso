@@ -4,11 +4,13 @@ import fr.cnrs.opentheso.v2.shared.ui.V2LocaleBean;
 import fr.cnrs.opentheso.utils.MessageUtils;
 import fr.cnrs.opentheso.v2.project.exception.InvalidProjectDataException;
 import fr.cnrs.opentheso.v2.project.exception.ProjectAccessDeniedException;
+import fr.cnrs.opentheso.v2.project.model.AssignableRole;
 import fr.cnrs.opentheso.v2.project.model.LimitedProjectMember;
 import fr.cnrs.opentheso.v2.project.model.ProjectDashboard;
 import fr.cnrs.opentheso.v2.project.model.ProjectMember;
 import fr.cnrs.opentheso.v2.project.model.ProjectSummary;
 import fr.cnrs.opentheso.v2.project.model.ProjectThesaurus;
+import fr.cnrs.opentheso.v2.project.model.UserSearchResult;
 import fr.cnrs.opentheso.v2.project.service.ProjectAdminService;
 import fr.cnrs.opentheso.v2.project.service.ProjectManagementService;
 import fr.cnrs.opentheso.v2.project.service.ProjectMemberService;
@@ -292,7 +294,7 @@ class MyProjectsBeanTest {
             messages.verify(() -> MessageUtils.showInformationMessage("project.memberRoleUpdatedSuccess"));
         }
 
-        verify(projectMemberService).updateMemberRole(5, false, 3, 7, 3, false, null);
+        verify(projectMemberService).updateMemberRole(5, false, 3, 7, 3, false, List.of());
     }
 
     @Test
@@ -508,6 +510,80 @@ class MyProjectsBeanTest {
         }
 
         verify(projectMemberService).moveThesaurus(5, true, 3, "TH1", 9);
+    }
+
+    @Test
+    void openCreateMemberPanel_preparesInviteForm() {
+        myProjectsBean.setDashboard(new ProjectDashboard(
+                3, "Projet X", true, 2, List.of(), List.of(), List.of(),
+                List.of(new AssignableRole(4, "Contributeur"))
+        ));
+
+        myProjectsBean.openCreateMemberPanel();
+
+        assertEquals("createMember", myProjectsBean.getActivePanel());
+        assertEquals("EMAIL", myProjectsBean.getMemberCreationMode());
+        assertTrue(myProjectsBean.isMemberEmailInvite());
+        assertEquals(4, myProjectsBean.getMemberRoleId());
+        assertFalse(myProjectsBean.isMemberLimitOnThesaurus());
+    }
+
+    @Test
+    void createMember_success_callsServiceAndClosesPanel() {
+        when(userSession.getCurrentUserId()).thenReturn(5);
+        when(userSession.isSuperAdmin()).thenReturn(false);
+        myProjectsBean.setSelectedProjectId(3);
+        myProjectsBean.setDashboard(buildDashboard());
+        myProjectsBean.openCreateMemberPanel();
+        myProjectsBean.setMemberUsername("bob");
+        myProjectsBean.setMemberEmail("bob@test.fr");
+        myProjectsBean.setMemberRoleId(4);
+        myProjectsBean.setMemberCreationMode("DIRECT");
+        myProjectsBean.setMemberPassword1("Abcd1234!");
+        myProjectsBean.setMemberPassword2("Abcd1234!");
+        when(projectAdminService.loadDashboard(5, 3, "fr")).thenReturn(buildDashboard());
+
+        try (MockedStatic<MessageUtils> messages = mockStatic(MessageUtils.class);
+             MockedStatic<PrimeFaces> primeFaces = mockPrimeFaces()) {
+            myProjectsBean.createMember();
+            messages.verify(() -> MessageUtils.showInformationMessage("v2.projects.invite.success"));
+        }
+
+        verify(projectMemberService).createMember(new ProjectMemberService.CreateMemberRequest(
+                5, false, 3, "bob", "bob@test.fr", null, false, 4, false, List.of(),
+                "Abcd1234!", "Abcd1234!", "DIRECT"
+        ));
+        assertNull(myProjectsBean.getActivePanel());
+    }
+
+    @Test
+    void addExistingMember_withLimitedThesauri_callsService() {
+        when(userSession.getCurrentUserId()).thenReturn(5);
+        when(userSession.isSuperAdmin()).thenReturn(false);
+        myProjectsBean.setSelectedProjectId(3);
+        myProjectsBean.setDashboard(buildDashboard());
+        myProjectsBean.setSelectedExistingUser(new UserSearchResult(16, "bob", "bob@test.fr"));
+        myProjectsBean.setExistingMemberRoleId(4);
+        myProjectsBean.setExistingMemberLimitOnThesaurus(true);
+        myProjectsBean.setExistingMemberThesaurusIds(List.of("TH1"));
+        when(projectAdminService.loadDashboard(5, 3, "fr")).thenReturn(buildDashboard());
+
+        try (MockedStatic<MessageUtils> messages = mockStatic(MessageUtils.class);
+             MockedStatic<PrimeFaces> primeFaces = mockPrimeFaces()) {
+            myProjectsBean.addExistingMember();
+            messages.verify(() -> MessageUtils.showInformationMessage("L'utilisateur a été ajouté avec succès"));
+        }
+
+        verify(projectMemberService).addExistingMember(5, false, 3, 16, 4, true, List.of("TH1"));
+    }
+
+    @Test
+    void openMoveThesaurusPanel_opensMoveForm() {
+        myProjectsBean.openMoveThesaurusPanel(new ProjectThesaurus("TH1", "Thésaurus 1", false));
+
+        assertEquals("moveThesaurus", myProjectsBean.getActivePanel());
+        assertEquals("TH1", myProjectsBean.getThesaurusToMoveId());
+        assertEquals("Thésaurus 1", myProjectsBean.getThesaurusToMoveTitle());
     }
 
     @Test

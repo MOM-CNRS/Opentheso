@@ -1132,7 +1132,6 @@
                               <tr>
                                 <th>#{v2LocaleBean.getMsg('v2.admin.members.col.name')}</th>
                                 <th>#{v2LocaleBean.getMsg('v2.admin.members.col.role')}</th>
-                                <th>#{v2LocaleBean.getMsg('v2.admin.members.col.scope')}</th>
                                 <th>#{v2LocaleBean.getMsg('v2.admin.members.col.status')}</th>
                                 <th></th>
                               </tr>
@@ -1142,11 +1141,6 @@
                                 <tr class="#{m.active ? '' : 'ia-row-inactive'}">
                                   <td data-label="#{v2LocaleBean.getMsg('v2.admin.members.col.name')}"><b>#{m.username}</b></td>
                                   <td data-label="#{v2LocaleBean.getMsg('v2.admin.members.col.role')}">#{v2InstanceAdminBean.memberRoleLabel(m)}</td>
-                                  <td data-label="#{v2LocaleBean.getMsg('v2.admin.members.col.scope')}">
-                                    <span class="ia-scope#{m.projectWide ? ' is-project' : ' is-limited'}">
-                                      #{v2InstanceAdminBean.memberScopeLabel(m)}
-                                    </span>
-                                  </td>
                                   <td data-label="#{v2LocaleBean.getMsg('v2.admin.members.col.status')}">
                                     <span class="ia-status#{m.active ? ' ia-status--on' : ' ia-status--off'}">
                                       #{m.active

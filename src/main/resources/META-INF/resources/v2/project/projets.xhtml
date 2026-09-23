@@ -72,6 +72,12 @@
                                    immediate="true">
                     <f:ajax execute="@this" render="mpShell"/>
                   </h:commandButton>
+                  <h:commandButton styleClass="bo-btn ghost sm"
+                                   value="#{v2LocaleBean.getMsg('v2.projects.invite')}"
+                                   action="#{v2MyProjectsBean.openCreateMemberPanel}"
+                                   immediate="true">
+                    <f:ajax execute="@this" render="mpShell"/>
+                  </h:commandButton>
                   <h:commandButton styleClass="bo-btn primary sm"
                                    value="#{v2LocaleBean.getMsg('v2.projects.addMember')}"
                                    action="#{v2MyProjectsBean.openAddExistingPanel}"
@@ -139,6 +145,110 @@
                 </div>
               </ui:fragment>
 
+              <ui:fragment rendered="#{v2MyProjectsBean.activePanel eq 'createMember'}">
+                <div class="bo-card ia-create">
+                  <div class="bo-card-h"><span class="bo-card-t">#{v2LocaleBean.getMsg('v2.projects.invite')}</span></div>
+                  <div class="bo-card-b">
+                    <ui:fragment rendered="#{not empty v2MyProjectsBean.panelError}">
+                      <div class="ia-create-err" role="alert">#{v2MyProjectsBean.panelError}</div>
+                    </ui:fragment>
+                    <div class="ia-mode" role="group" aria-label="#{v2LocaleBean.getMsg('v2.projects.invite.mode')}">
+                      <h:commandButton value="#{v2LocaleBean.getMsg('v2.projects.invite.mode.direct')}"
+                                       styleClass="ia-mode-opt#{v2MyProjectsBean.memberEmailInvite ? '' : ' is-on'}"
+                                       action="#{v2MyProjectsBean.selectMemberCreationModeDirect}">
+                        <f:ajax execute="@this" render="mpShell"/>
+                      </h:commandButton>
+                      <h:commandButton value="#{v2LocaleBean.getMsg('v2.projects.invite.mode.email')}"
+                                       styleClass="ia-mode-opt#{v2MyProjectsBean.memberEmailInvite ? ' is-on' : ''}"
+                                       action="#{v2MyProjectsBean.selectMemberCreationModeEmail}">
+                        <f:ajax execute="@this" render="mpShell"/>
+                      </h:commandButton>
+                    </div>
+                    <p class="ia-mode-hint">
+                      #{v2MyProjectsBean.memberEmailInvite
+                          ? v2LocaleBean.getMsg('v2.projects.invite.mode.emailHint')
+                          : v2LocaleBean.getMsg('v2.projects.invite.mode.directHint')}
+                    </p>
+                    <div class="ia-create-grid">
+                      <label class="ia-field">
+                        <span class="ia-field-l">#{v2LocaleBean.getMsg('v2.projects.invite.username')}</span>
+                        <h:inputText value="#{v2MyProjectsBean.memberUsername}" styleClass="st-input"
+                                     pt:autocomplete="username"/>
+                      </label>
+                      <label class="ia-field">
+                        <span class="ia-field-l">#{v2LocaleBean.getMsg('v2.projects.invite.email')}</span>
+                        <h:inputText value="#{v2MyProjectsBean.memberEmail}" styleClass="st-input"
+                                     pt:type="email" pt:autocomplete="email"/>
+                      </label>
+                      <label class="ia-field">
+                        <span class="ia-field-l">#{v2LocaleBean.getMsg('v2.projects.invite.institution')}</span>
+                        <h:inputText value="#{v2MyProjectsBean.memberInstitution}" styleClass="st-input"/>
+                      </label>
+                      <ui:fragment rendered="#{not v2MyProjectsBean.memberEmailInvite}">
+                        <label class="ia-field">
+                          <span class="ia-field-l">#{v2LocaleBean.getMsg('v2.projects.invite.password')}</span>
+                          <h:inputSecret value="#{v2MyProjectsBean.memberPassword1}" styleClass="st-input"
+                                         redisplay="false" pt:autocomplete="new-password"/>
+                        </label>
+                        <label class="ia-field">
+                          <span class="ia-field-l">#{v2LocaleBean.getMsg('v2.projects.invite.passwordConfirm')}</span>
+                          <h:inputSecret value="#{v2MyProjectsBean.memberPassword2}" styleClass="st-input"
+                                         redisplay="false" pt:autocomplete="new-password"/>
+                        </label>
+                      </ui:fragment>
+                    </div>
+                    <label class="ia-check" style="margin-top:12px">
+                      <h:selectBooleanCheckbox value="#{v2MyProjectsBean.memberAlertMail}"/>
+                      <span>#{v2LocaleBean.getMsg('v2.projects.invite.alertMail')}</span>
+                    </label>
+                    <label class="ia-field" style="max-width:240px;margin-top:12px">
+                      <span class="ia-field-l">#{v2LocaleBean.getMsg('v2.projects.role')}</span>
+                      <h:selectOneMenu value="#{v2MyProjectsBean.memberRoleId}" styleClass="st-input ia-select">
+                        <f:selectItems value="#{v2MyProjectsBean.assignableRoles}" var="r"
+                                       itemValue="#{r.id}" itemLabel="#{r.name}"/>
+                        <f:ajax event="valueChange" execute="@this" render="mpInviteLimitBlock"/>
+                      </h:selectOneMenu>
+                    </label>
+                    <h:panelGroup id="mpInviteLimitBlock" layout="block">
+                      <ui:fragment rendered="#{v2MyProjectsBean.memberRoleLimitedSectionVisible}">
+                        <label class="ia-check" style="margin-top:12px"
+                               title="#{v2LocaleBean.getMsg('v2.projects.limitRoleHint')}">
+                          <h:selectBooleanCheckbox value="#{v2MyProjectsBean.memberLimitOnThesaurus}">
+                            <f:ajax event="valueChange" execute="@this"
+                                    listener="#{v2MyProjectsBean.toggleMemberLimitThesaurus}"
+                                    render="mpInviteLimitBlock"/>
+                          </h:selectBooleanCheckbox>
+                          <span>#{v2LocaleBean.getMsg('v2.projects.limitRole')}</span>
+                        </label>
+                        <ui:fragment rendered="#{v2MyProjectsBean.memberLimitOnThesaurus}">
+                          <div class="ia-field" style="margin-top:10px">
+                            <span class="ia-field-l">#{v2LocaleBean.getMsg('v2.projects.limitThesauri')}</span>
+                            <h:selectManyCheckbox value="#{v2MyProjectsBean.memberThesaurusIds}"
+                                                  layout="pageDirection" styleClass="ia-theso-picks">
+                              <f:selectItems value="#{v2MyProjectsBean.projectThesauri}" var="th"
+                                             itemValue="#{th.id}" itemLabel="#{th.title} (#{th.id})"/>
+                            </h:selectManyCheckbox>
+                          </div>
+                        </ui:fragment>
+                      </ui:fragment>
+                    </h:panelGroup>
+                    <div class="ia-create-actions">
+                      <h:commandButton styleClass="bo-btn ghost"
+                                       value="#{v2LocaleBean.getMsg('v2.projects.cancel')}"
+                                       action="#{v2MyProjectsBean.closeActivePanel}"
+                                       immediate="true">
+                        <f:ajax execute="@this" render="mpShell"/>
+                      </h:commandButton>
+                      <h:commandButton styleClass="bo-btn primary"
+                                       value="#{v2LocaleBean.getMsg('v2.projects.inviteSubmit')}"
+                                       action="#{v2MyProjectsBean.createMember}">
+                        <f:ajax execute="@form" render="mpShell"/>
+                      </h:commandButton>
+                    </div>
+                  </div>
+                </div>
+              </ui:fragment>
+
               <ui:fragment rendered="#{v2MyProjectsBean.activePanel eq 'addExisting'}">
                 <div class="bo-card ia-create">
                   <div class="bo-card-h"><span class="bo-card-t">#{v2LocaleBean.getMsg('v2.projects.addMember')}</span></div>
@@ -187,8 +297,32 @@
                       <h:selectOneMenu value="#{v2MyProjectsBean.existingMemberRoleId}" styleClass="st-input ia-select">
                         <f:selectItems value="#{v2MyProjectsBean.assignableRoles}" var="r"
                                        itemValue="#{r.id}" itemLabel="#{r.name}"/>
+                        <f:ajax event="valueChange" execute="@this" render="mpExistingLimitBlock"/>
                       </h:selectOneMenu>
                     </label>
+                    <h:panelGroup id="mpExistingLimitBlock" layout="block">
+                      <ui:fragment rendered="#{v2MyProjectsBean.existingMemberLimitSectionVisible}">
+                        <label class="ia-check" style="margin-top:12px"
+                               title="#{v2LocaleBean.getMsg('v2.projects.limitRoleHint')}">
+                          <h:selectBooleanCheckbox value="#{v2MyProjectsBean.existingMemberLimitOnThesaurus}">
+                            <f:ajax event="valueChange" execute="@this"
+                                    listener="#{v2MyProjectsBean.toggleExistingMemberLimitThesaurus}"
+                                    render="mpExistingLimitBlock"/>
+                          </h:selectBooleanCheckbox>
+                          <span>#{v2LocaleBean.getMsg('v2.projects.limitRole')}</span>
+                        </label>
+                        <ui:fragment rendered="#{v2MyProjectsBean.existingMemberLimitOnThesaurus}">
+                          <div class="ia-field" style="margin-top:10px">
+                            <span class="ia-field-l">#{v2LocaleBean.getMsg('v2.projects.limitThesauri')}</span>
+                            <h:selectManyCheckbox value="#{v2MyProjectsBean.existingMemberThesaurusIds}"
+                                                  layout="pageDirection" styleClass="ia-theso-picks">
+                              <f:selectItems value="#{v2MyProjectsBean.projectThesauri}" var="th"
+                                             itemValue="#{th.id}" itemLabel="#{th.title} (#{th.id})"/>
+                            </h:selectManyCheckbox>
+                          </div>
+                        </ui:fragment>
+                      </ui:fragment>
+                    </h:panelGroup>
                     <div class="ia-create-actions">
                       <h:commandButton styleClass="bo-btn ghost"
                                        value="#{v2LocaleBean.getMsg('v2.projects.cancel')}"
@@ -220,8 +354,32 @@
                       <h:selectOneMenu value="#{v2MyProjectsBean.editMemberRoleId}" styleClass="st-input ia-select">
                         <f:selectItems value="#{v2MyProjectsBean.assignableRoles}" var="r"
                                        itemValue="#{r.id}" itemLabel="#{r.name}"/>
+                        <f:ajax event="valueChange" execute="@this" render="mpEditLimitBlock"/>
                       </h:selectOneMenu>
                     </label>
+                    <h:panelGroup id="mpEditLimitBlock" layout="block">
+                      <ui:fragment rendered="#{v2MyProjectsBean.editMemberLimitSectionVisible}">
+                        <label class="ia-check" style="margin-top:12px"
+                               title="#{v2LocaleBean.getMsg('v2.projects.limitRoleHint')}">
+                          <h:selectBooleanCheckbox value="#{v2MyProjectsBean.editMemberLimitOnThesaurus}">
+                            <f:ajax event="valueChange" execute="@this"
+                                    listener="#{v2MyProjectsBean.toggleEditMemberLimitThesaurus}"
+                                    render="mpEditLimitBlock"/>
+                          </h:selectBooleanCheckbox>
+                          <span>#{v2LocaleBean.getMsg('v2.projects.limitRole')}</span>
+                        </label>
+                        <ui:fragment rendered="#{v2MyProjectsBean.editMemberLimitOnThesaurus}">
+                          <div class="ia-field" style="margin-top:10px">
+                            <span class="ia-field-l">#{v2LocaleBean.getMsg('v2.projects.limitThesauri')}</span>
+                            <h:selectManyCheckbox value="#{v2MyProjectsBean.editMemberThesaurusIds}"
+                                                  layout="pageDirection" styleClass="ia-theso-picks">
+                              <f:selectItems value="#{v2MyProjectsBean.projectThesauri}" var="th"
+                                             itemValue="#{th.id}" itemLabel="#{th.title} (#{th.id})"/>
+                            </h:selectManyCheckbox>
+                          </div>
+                        </ui:fragment>
+                      </ui:fragment>
+                    </h:panelGroup>
                     <div class="ia-create-actions">
                       <h:commandButton styleClass="bo-btn ghost"
                                        value="#{v2LocaleBean.getMsg('v2.projects.cancel')}"
@@ -288,6 +446,47 @@
                       <h:commandButton styleClass="bo-btn primary"
                                        value="#{v2LocaleBean.getMsg('v2.projects.save')}"
                                        action="#{v2MyProjectsBean.submitUpdateLimitedRole}">
+                        <f:ajax execute="@form" render="mpShell"/>
+                      </h:commandButton>
+                    </div>
+                  </div>
+                </div>
+              </ui:fragment>
+
+              <ui:fragment rendered="#{v2MyProjectsBean.activePanel eq 'moveThesaurus'}">
+                <div class="bo-card ia-create">
+                  <div class="bo-card-h"><span class="bo-card-t">#{v2LocaleBean.getMsg('v2.projects.moveThesaurus')}</span></div>
+                  <div class="bo-card-b">
+                    <ui:fragment rendered="#{not empty v2MyProjectsBean.panelError}">
+                      <div class="ia-create-err" role="alert">#{v2MyProjectsBean.panelError}</div>
+                    </ui:fragment>
+                    <p>#{v2LocaleBean.getMsg('v2.projects.moveThesaurusConfirm')}
+                      <b>#{v2MyProjectsBean.thesaurusToMoveTitle}</b>
+                    </p>
+                    <ui:fragment rendered="#{empty v2MyProjectsBean.moveTargetProjects}">
+                      <p class="ia-create-hint">#{v2LocaleBean.getMsg('v2.projects.moveThesaurusEmpty')}</p>
+                    </ui:fragment>
+                    <ui:fragment rendered="#{not empty v2MyProjectsBean.moveTargetProjects}">
+                      <label class="ia-field" style="max-width:320px">
+                        <span class="ia-field-l">#{v2LocaleBean.getMsg('v2.projects.moveThesaurusTarget')}</span>
+                        <h:selectOneMenu value="#{v2MyProjectsBean.moveTargetProjectId}" styleClass="st-input ia-select">
+                          <f:selectItem itemValue="#{null}" itemLabel="#{v2LocaleBean.getMsg('v2.projects.moveThesaurusChoose')}"/>
+                          <f:selectItems value="#{v2MyProjectsBean.moveTargetProjects}" var="proj"
+                                         itemValue="#{proj.id}" itemLabel="#{proj.name}"/>
+                        </h:selectOneMenu>
+                      </label>
+                    </ui:fragment>
+                    <div class="ia-create-actions">
+                      <h:commandButton styleClass="bo-btn ghost"
+                                       value="#{v2LocaleBean.getMsg('v2.projects.cancel')}"
+                                       action="#{v2MyProjectsBean.closeActivePanel}"
+                                       immediate="true">
+                        <f:ajax execute="@this" render="mpShell"/>
+                      </h:commandButton>
+                      <h:commandButton styleClass="bo-btn primary"
+                                       value="#{v2LocaleBean.getMsg('v2.projects.moveThesaurusSubmit')}"
+                                       action="#{v2MyProjectsBean.submitMoveThesaurus}"
+                                       disabled="#{empty v2MyProjectsBean.moveTargetProjects}">
                         <f:ajax execute="@form" render="mpShell"/>
                       </h:commandButton>
                     </div>
@@ -416,6 +615,12 @@
                                 </td>
                                 <td class="st-td-act">
                                   <div class="ia-row-acts">
+                                    <h:commandLink styleClass="bo-btn ghost sm"
+                                                   action="#{v2MyProjectsBean.openMoveThesaurusPanel(th)}"
+                                                   immediate="true">
+                                      <f:ajax execute="@this" render="mpShell"/>
+                                      #{v2LocaleBean.getMsg('v2.projects.moveThesaurus')}
+                                    </h:commandLink>
                                     <h:commandButton styleClass="bo-btn ghost sm ia-icon-btn is-danger"
                                                      title="#{v2LocaleBean.getMsg('v2.projects.removeThesaurus')}"
                                                      value="×"
