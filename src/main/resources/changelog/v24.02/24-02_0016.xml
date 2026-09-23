@@ -6,7 +6,14 @@
 
     
     <changeSet author="Miled" id="v24.02.016">
-        <addColumn tableName="external_images"> 
+        <!-- already present in the baseline dump installed by createdb -->
+        <preConditions onFail="MARK_RAN">
+            <not>
+                <columnExists tableName="external_images" columnName="image_creator"/>
+            </not>
+        </preConditions>
+
+        <addColumn tableName="external_images">
             <column name="image_creator" type="character varying"/>   
         </addColumn>         
     </changeSet>   

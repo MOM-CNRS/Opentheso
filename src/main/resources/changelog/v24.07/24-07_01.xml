@@ -6,6 +6,13 @@
 
 
     <changeSet id="v24.07.01" author="Jérémy">
+        <!-- already present in the baseline dump installed by createdb -->
+        <preConditions onFail="MARK_RAN">
+            <not>
+                <tableExists tableName="graph_view"/>
+            </not>
+        </preConditions>
+
         <createTable tableName="graph_view">
             <column name="id" type="int" autoIncrement="true">
                 <constraints primaryKey="true" nullable="false"/>

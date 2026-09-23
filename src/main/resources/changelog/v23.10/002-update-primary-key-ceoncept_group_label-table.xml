@@ -5,6 +5,16 @@
                                        http://www.liquibase.org/xml/ns/dbchangelog/dbchangelog-4.0.xsd">
 
     <changeSet id="v23.10.001" author="Firas">
+        <!-- already applied in the baseline dump installed by createdb -->
+        <preConditions onFail="MARK_RAN">
+            <sqlCheck expectedResult="0">
+                SELECT count(*) FROM information_schema.key_column_usage k
+                JOIN information_schema.table_constraints t USING (constraint_name)
+                WHERE t.table_name = 'concept_group_label' AND t.constraint_type = 'PRIMARY KEY'
+                  AND k.column_name = 'id'
+            </sqlCheck>
+        </preConditions>
+
         <dropPrimaryKey tableName="concept_group_label"/>
         <addPrimaryKey tableName="concept_group_label" columnNames="id"/>
     </changeSet>
