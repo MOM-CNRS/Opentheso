@@ -104,6 +104,118 @@
               </h:selectOneMenu>
             </div>
 
+            <div class="tp-fmt-panel#{v2ThesaurusPickerImportBean.isFormat('skos') ? ' is-off' : ''}"
+                 data-tp-fmt-panel="csv,csvStructured">
+              <div class="tp-form-row">
+                <label class="tp-form-l" for="tpImportName">#{v2LocaleBean.getMsg('v2.picker.import.name')} <span class="tp-req">*</span></label>
+                <h:inputText id="tpImportName" styleClass="tp-form-i"
+                             value="#{v2ThesaurusPickerImportBean.thesaurusName}"
+                             pt:placeholder="Ex. PACTOLS…"
+                             pt:oninput="window.tpSyncImportSubmit &amp;&amp; window.tpSyncImportSubmit();"/>
+              </div>
+              <div class="tp-form-row">
+                <label class="tp-form-l" for="tpImportDelim">#{v2LocaleBean.getMsg('v2.picker.import.delimiter')}</label>
+                <h:selectOneMenu id="tpImportDelim" styleClass="tp-form-i"
+                                 value="#{v2ThesaurusPickerImportBean.csvDelimiter}"
+                                 pt:onchange="window.tpMarkImportNeedsReanalyze &amp;&amp; window.tpMarkImportNeedsReanalyze();">
+                  <f:selectItem itemValue="#{0}" itemLabel=","/>
+                  <f:selectItem itemValue="#{1}" itemLabel=";"/>
+                  <f:selectItem itemValue="#{2}" itemLabel="Tab"/>
+                </h:selectOneMenu>
+              </div>
+            </div>
+
+            <div class="tp-form-row tp-fmt-panel#{v2ThesaurusPickerImportBean.isFormat('csvStructured') ? ' is-off' : ''}"
+                 data-tp-fmt-panel="skos,csv">
+              <label class="tp-form-l" for="tpImportDate">#{v2LocaleBean.getMsg('v2.picker.import.dateFormat')}</label>
+              <h:inputText id="tpImportDate" styleClass="tp-form-i"
+                           value="#{v2ThesaurusPickerImportBean.formatDate}"
+                           pt:placeholder="#{v2LocaleBean.getMsg('v2.picker.import.dateFormatPh')}"
+                           pt:onchange="window.tpMarkImportNeedsReanalyze &amp;&amp; window.tpMarkImportNeedsReanalyze();"/>
+            </div>
+
+            <div class="tp-form-row">
+              <span class="tp-form-l">#{v2LocaleBean.getMsg('v2.picker.import.sourceLang')} <span class="tp-req">*</span></span>
+              <h:panelGroup id="tpImportLangUi" layout="block" styleClass="tp-lang-pick">
+                <button type="button"
+                        class="tree-lang-btn tp-lang-btn"
+                        data-act="tp-lang-toggle"
+                        title="#{v2LocaleBean.getMsg('v2.picker.import.sourceLang')}"
+                        aria-haspopup="listbox"
+                        aria-expanded="false">
+                  <span class="tree-lang-flag" aria-hidden="true">#{v2ThesaurusPickerBean.languageFlag(v2ThesaurusPickerImportBean.selectedLang)}</span>
+                  <span class="tree-lang-name">#{v2ThesaurusPickerBean.languageLabel(v2ThesaurusPickerImportBean.selectedLang)}</span>
+                  <span class="tree-lang-code">#{v2ThesaurusPickerImportBean.selectedLang}</span>
+                  <span class="tree-lang-caret" aria-hidden="true">▾</span>
+                </button>
+                <div class="tree-lang-menu tp-lang-menu" role="listbox"
+                     aria-label="#{v2LocaleBean.getMsg('v2.picker.import.sourceLang')}">
+                  <div class="tree-lang-menu-h">#{v2LocaleBean.getMsg('v2.picker.import.sourceLang')}</div>
+                  <ui:repeat value="#{v2ThesaurusPickerImportBean.languages}" var="lg">
+                    <h:commandLink styleClass="tree-lang-opt#{v2ThesaurusPickerImportBean.isLanguageSelected(lg.code) ? ' is-on' : ''}"
+                                   action="#{v2ThesaurusPickerImportBean.selectLanguage}"
+                                   onclick="window.tpShowLoading &amp;&amp; window.tpShowLoading(null, false);">
+                      <f:param name="importLangCode" value="#{lg.code}"/>
+                      <span class="tree-lang-opt-flag" aria-hidden="true">#{v2ThesaurusPickerBean.languageFlag(lg.code)}</span>
+                      <span class="tree-lang-opt-name">#{v2ThesaurusPickerBean.languageLabel(lg.code)}</span>
+                      <span class="tree-lang-opt-code">#{lg.code}</span>
+                      <span class="tree-lang-opt-check" aria-hidden="true">✓</span>
+                    </h:commandLink>
+                  </ui:repeat>
+                </div>
+              </h:panelGroup>
+            </div>
+
+            <div class="tp-form-row tp-fmt-panel#{v2ThesaurusPickerImportBean.isFormat('csvStructured') ? ' is-off' : ''}"
+                 data-tp-fmt-panel="skos,csv">
+              <label class="tp-form-l" for="tpImportAcronym">#{v2LocaleBean.getMsg('v2.picker.import.acronym')}</label>
+              <h:inputText id="tpImportAcronym" styleClass="tp-form-i"
+                           value="#{v2ThesaurusPickerImportBean.persistentName}"
+                           pt:placeholder="#{v2LocaleBean.getMsg('v2.picker.import.acronymPh')}"/>
+            </div>
+
+            <div class="tp-fmt-panel#{v2ThesaurusPickerImportBean.isFormat('skos') ? '' : ' is-off'}"
+                 data-tp-fmt-panel="skos">
+              <div class="tp-form-row">
+                <label class="tp-form-l" for="tpImportIdType">#{v2LocaleBean.getMsg('v2.picker.import.idType')}</label>
+                <h:selectOneMenu id="tpImportIdType" styleClass="tp-form-i"
+                                 value="#{v2ThesaurusPickerImportBean.selectedIdentifier}"
+                                 pt:onchange="window.tpSyncImportIdType &amp;&amp; window.tpSyncImportIdType();">
+                  <f:selectItem itemValue="sans" itemLabel="#{v2LocaleBean.getMsg('v2.picker.import.id.none')}"/>
+                  <f:selectItem itemValue="ark" itemLabel="ARK"/>
+                  <f:selectItem itemValue="handle" itemLabel="Handle"/>
+                  <f:selectItem itemValue="doi" itemLabel="DOI"/>
+                </h:selectOneMenu>
+              </div>
+              <div id="tpImportHandlePrefixRow"
+                   class="tp-form-row#{v2ThesaurusPickerImportBean.selectedIdentifier eq 'handle' ? '' : ' is-off'}">
+                <label class="tp-form-l" for="tpImportHandlePrefix">#{v2LocaleBean.getMsg('v2.picker.import.handlePrefix')}</label>
+                <h:inputText id="tpImportHandlePrefix" styleClass="tp-form-i"
+                             value="#{v2ThesaurusPickerImportBean.prefixHandle}"
+                             pt:placeholder="#{v2LocaleBean.getMsg('v2.picker.import.handlePrefixPh')}"/>
+              </div>
+            </div>
+
+            <div class="tp-form-row">
+              <label class="tp-form-l" for="tpImportProject">#{v2LocaleBean.getMsg('v2.picker.import.project')}</label>
+              <h:selectOneMenu id="tpImportProject" styleClass="tp-form-i"
+                               value="#{v2ThesaurusPickerImportBean.selectedProjectId}">
+                <f:selectItem itemValue=""
+                              itemLabel="#{v2ThesaurusPickerImportBean.superAdmin ? v2LocaleBean.getMsg('v2.picker.import.noProject') : v2LocaleBean.getMsg('v2.picker.import.chooseProject')}"/>
+                <f:selectItems value="#{v2ThesaurusPickerImportBean.projects}" var="proj"
+                               itemValue="#{proj.idAsString()}" itemLabel="#{proj.name}"/>
+              </h:selectOneMenu>
+            </div>
+
+            <div class="tp-form-row">
+              <span class="tp-form-l">#{v2LocaleBean.getMsg('v2.picker.import.visibility')}</span>
+              <label class="tp-import-check">
+                <h:selectBooleanCheckbox id="tpImportPrivate"
+                                         value="#{v2ThesaurusPickerImportBean.privateThesaurus}"/>
+                <span>#{v2LocaleBean.getMsg('v2.picker.import.private')}</span>
+              </label>
+            </div>
+
             <div class="tp-form-row">
               <span class="tp-form-l">#{v2LocaleBean.getMsg('v2.picker.import.file')} <span class="tp-req">*</span></span>
               <h:panelGroup id="tpImportFileBlock" layout="block"
@@ -199,107 +311,6 @@
                 </div>
               </ui:fragment>
             </h:panelGroup>
-
-            <div class="tp-fmt-panel#{v2ThesaurusPickerImportBean.isFormat('skos') ? ' is-off' : ''}"
-                 data-tp-fmt-panel="csv">
-              <div class="tp-form-row">
-                <label class="tp-form-l" for="tpImportName">#{v2LocaleBean.getMsg('v2.picker.import.name')} <span class="tp-req">*</span></label>
-                <h:inputText id="tpImportName" styleClass="tp-form-i"
-                             value="#{v2ThesaurusPickerImportBean.thesaurusName}"
-                             pt:placeholder="Ex. PACTOLS…"
-                             pt:oninput="window.tpSyncImportSubmit &amp;&amp; window.tpSyncImportSubmit();"/>
-              </div>
-              <div class="tp-form-row">
-                <label class="tp-form-l" for="tpImportDelim">#{v2LocaleBean.getMsg('v2.picker.import.delimiter')}</label>
-                <h:selectOneMenu id="tpImportDelim" styleClass="tp-form-i"
-                                 value="#{v2ThesaurusPickerImportBean.csvDelimiter}"
-                                 pt:onchange="window.tpMarkImportNeedsReanalyze &amp;&amp; window.tpMarkImportNeedsReanalyze();">
-                  <f:selectItem itemValue="#{0}" itemLabel=","/>
-                  <f:selectItem itemValue="#{1}" itemLabel=";"/>
-                  <f:selectItem itemValue="#{2}" itemLabel="Tab"/>
-                </h:selectOneMenu>
-              </div>
-            </div>
-
-            <div class="tp-form-row">
-              <span class="tp-form-l">#{v2LocaleBean.getMsg('v2.picker.import.sourceLang')} <span class="tp-req">*</span></span>
-              <h:panelGroup id="tpImportLangUi" layout="block" styleClass="tp-lang-pick">
-                <button type="button"
-                        class="tree-lang-btn tp-lang-btn"
-                        data-act="tp-lang-toggle"
-                        title="#{v2LocaleBean.getMsg('v2.picker.import.sourceLang')}"
-                        aria-haspopup="listbox"
-                        aria-expanded="false">
-                  <span class="tree-lang-flag" aria-hidden="true">#{v2ThesaurusPickerBean.languageFlag(v2ThesaurusPickerImportBean.selectedLang)}</span>
-                  <span class="tree-lang-name">#{v2ThesaurusPickerBean.languageLabel(v2ThesaurusPickerImportBean.selectedLang)}</span>
-                  <span class="tree-lang-code">#{v2ThesaurusPickerImportBean.selectedLang}</span>
-                  <span class="tree-lang-caret" aria-hidden="true">▾</span>
-                </button>
-                <div class="tree-lang-menu tp-lang-menu" role="listbox"
-                     aria-label="#{v2LocaleBean.getMsg('v2.picker.import.sourceLang')}">
-                  <div class="tree-lang-menu-h">#{v2LocaleBean.getMsg('v2.picker.import.sourceLang')}</div>
-                  <ui:repeat value="#{v2ThesaurusPickerImportBean.languages}" var="lg">
-                    <h:commandLink styleClass="tree-lang-opt#{v2ThesaurusPickerImportBean.isLanguageSelected(lg.code) ? ' is-on' : ''}"
-                                   action="#{v2ThesaurusPickerImportBean.selectLanguage}"
-                                   onclick="window.tpShowLoading &amp;&amp; window.tpShowLoading(null, false);">
-                      <f:param name="importLangCode" value="#{lg.code}"/>
-                      <span class="tree-lang-opt-flag" aria-hidden="true">#{v2ThesaurusPickerBean.languageFlag(lg.code)}</span>
-                      <span class="tree-lang-opt-name">#{v2ThesaurusPickerBean.languageLabel(lg.code)}</span>
-                      <span class="tree-lang-opt-code">#{lg.code}</span>
-                      <span class="tree-lang-opt-check" aria-hidden="true">✓</span>
-                    </h:commandLink>
-                  </ui:repeat>
-                </div>
-              </h:panelGroup>
-            </div>
-
-            <div class="tp-form-row">
-              <label class="tp-form-l" for="tpImportProject">#{v2LocaleBean.getMsg('v2.picker.import.project')}</label>
-              <h:selectOneMenu id="tpImportProject" styleClass="tp-form-i"
-                               value="#{v2ThesaurusPickerImportBean.selectedProjectId}">
-                <f:selectItem itemValue=""
-                              itemLabel="#{v2ThesaurusPickerImportBean.superAdmin ? v2LocaleBean.getMsg('v2.picker.import.noProject') : v2LocaleBean.getMsg('v2.picker.import.chooseProject')}"/>
-                <f:selectItems value="#{v2ThesaurusPickerImportBean.projects}" var="proj"
-                               itemValue="#{proj.idAsString()}" itemLabel="#{proj.name}"/>
-              </h:selectOneMenu>
-            </div>
-
-            <div class="tp-form-row">
-              <span class="tp-form-l">#{v2LocaleBean.getMsg('v2.picker.import.visibility')}</span>
-              <label class="tp-import-check">
-                <h:selectBooleanCheckbox id="tpImportPrivate"
-                                         value="#{v2ThesaurusPickerImportBean.privateThesaurus}"/>
-                <span>#{v2LocaleBean.getMsg('v2.picker.import.private')}</span>
-              </label>
-            </div>
-
-            <details class="tp-import-more#{(not empty v2ThesaurusPickerImportBean.persistentName) or (v2ThesaurusPickerImportBean.isFormat('skos') and v2ThesaurusPickerImportBean.selectedIdentifier ne 'sans') ? ' is-open' : ''}"
-                     id="tpImportMore">
-              <summary class="tp-import-more-sum">
-                <span>#{v2LocaleBean.getMsg('v2.picker.import.advanced')}</span>
-                <span class="tp-import-more-caret" aria-hidden="true">▾</span>
-              </summary>
-              <div class="tp-import-more-body">
-                <div class="tp-form-row">
-                  <label class="tp-form-l" for="tpImportAcronym">#{v2LocaleBean.getMsg('v2.picker.import.acronym')}</label>
-                  <h:inputText id="tpImportAcronym" styleClass="tp-form-i"
-                               value="#{v2ThesaurusPickerImportBean.persistentName}"
-                               pt:placeholder="#{v2LocaleBean.getMsg('v2.picker.import.acronymPh')}"/>
-                </div>
-
-                <div class="tp-form-row tp-fmt-panel#{v2ThesaurusPickerImportBean.isFormat('skos') ? '' : ' is-off'}"
-                     data-tp-fmt-panel="skos">
-                  <label class="tp-form-l" for="tpImportIdType">#{v2LocaleBean.getMsg('v2.picker.import.idType')}</label>
-                  <h:selectOneMenu id="tpImportIdType" styleClass="tp-form-i"
-                                   value="#{v2ThesaurusPickerImportBean.selectedIdentifier}">
-                    <f:selectItem itemValue="sans" itemLabel="#{v2LocaleBean.getMsg('v2.picker.import.id.none')}"/>
-                    <f:selectItem itemValue="ark" itemLabel="ARK"/>
-                    <f:selectItem itemValue="handle" itemLabel="Handle"/>
-                    <f:selectItem itemValue="doi" itemLabel="DOI"/>
-                  </h:selectOneMenu>
-                </div>
-              </div>
-            </details>
           </div>
           <div class="tp-form-run tp-import-run">
             <button type="button"

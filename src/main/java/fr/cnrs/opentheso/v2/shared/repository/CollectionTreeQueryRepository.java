@@ -269,4 +269,21 @@ public class CollectionTreeQueryRepository {
                 .setParameter("lang", lang)
                 .getResultList();
     }
+
+    /** Colonnes : id, notetypecode, lang, lexicalvalue — pour l'édition des notes. */
+    @SuppressWarnings("unchecked")
+    public List<Object[]> findNotesByIdentifier(String identifier, String thesaurusId, String lang) {
+        return em.createNativeQuery("""
+            SELECT n.id, n.notetypecode, n.lang, n.lexicalvalue
+            FROM note n
+            WHERE LOWER(n.identifier) = LOWER(:groupId)
+              AND n.id_thesaurus = :thesaurusId
+              AND n.lang = :lang
+            ORDER BY n.notetypecode
+            """)
+                .setParameter(NativeQueryParams.GROUP_ID, identifier)
+                .setParameter(NativeQueryParams.THESAURUS_ID, thesaurusId)
+                .setParameter("lang", lang)
+                .getResultList();
+    }
 }

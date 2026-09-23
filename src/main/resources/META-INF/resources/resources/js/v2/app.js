@@ -414,34 +414,6 @@ document.addEventListener("click", (e) => {
     hideConfirm("#labelSaveConfirm");
   } else if (act === "label-save-modal") {
     return;
-  } else if (act === "prop-send-ask") {
-    e.preventDefault();
-    if (!ensurePropCommentFilled()) return;
-    showConfirm("#propSendConfirm");
-  } else if (act === "prop-send-dismiss") {
-    e.preventDefault();
-    hideConfirm("#propSendConfirm");
-  } else if (act === "prop-send-modal") {
-    return;
-  } else if (act === "prop-approve-ask") {
-    e.preventDefault();
-    openPropDecisionConfirm("approve");
-  } else if (act === "prop-refuse-ask") {
-    e.preventDefault();
-    openPropDecisionConfirm("refuse");
-  } else if (act === "prop-decision-dismiss" || act === "prop-approve-dismiss" || act === "prop-refuse-dismiss") {
-    e.preventDefault();
-    hideConfirm("#propDecisionConfirm");
-  } else if (act === "prop-decision-modal" || act === "prop-approve-modal" || act === "prop-refuse-modal") {
-    return;
-  } else if (act === "prop-delete-ask") {
-    e.preventDefault();
-    showConfirm("#propDeleteConfirm");
-  } else if (act === "prop-delete-dismiss") {
-    e.preventDefault();
-    hideConfirm("#propDeleteConfirm");
-  } else if (act === "prop-delete-modal") {
-    return;
   } else if (act === "coll-save-ask") {
     showConfirm("#collSaveConfirm");
   } else if (act === "coll-save-dismiss") {
@@ -593,9 +565,6 @@ document.addEventListener("click", (e) => {
   else if (act === "back-cand-list") {
     e.preventDefault();
     backToCandList();
-  } else if (act === "back-prop-list") {
-    e.preventDefault();
-    backToPropList();
   }
   else if (act === "set-view") setView(t.getAttribute("data-view"));
   else if (act === "show") {

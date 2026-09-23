@@ -41,8 +41,6 @@ function beginLiveOpen() {
   showPanel(".view-panel", "viewLive");
   const back = $("#liveBackList");
   if (back && fromCandList()) back.hidden = false;
-  const backProp = $("#liveBackPropList");
-  if (backProp && fromPropList()) backProp.hidden = false;
   paintListBack();
   const view = $("#previewView");
   if (view) view.scrollTop = 0;
@@ -1703,8 +1701,7 @@ function applyConceptLabelUi(source) {
     { msg: cv.getAttribute("data-flash-res"), token: cv.getAttribute("data-flash-res-token"), kind: "res" },
     { msg: cv.getAttribute("data-flash-align"), token: cv.getAttribute("data-flash-align-token"), kind: "align" },
     { msg: cv.getAttribute("data-flash-align-edit"), token: cv.getAttribute("data-flash-align-edit-token"), kind: "alignEdit" },
-    { msg: cv.getAttribute("data-flash-cand"), token: cv.getAttribute("data-flash-cand-token"), kind: "cand" },
-    { msg: cv.getAttribute("data-flash-prop"), token: cv.getAttribute("data-flash-prop-token"), kind: "prop" }
+    { msg: cv.getAttribute("data-flash-cand"), token: cv.getAttribute("data-flash-cand-token"), kind: "cand" }
   ];
   flashes.forEach((item) => {
     if (!item.msg || !item.token) return;
@@ -1899,47 +1896,6 @@ window.onLabelSave = function (data) {
   }
 }
 
-window.onPropSend = function (data) {
-  const btns = document.querySelectorAll("#propSendConfirm .abt-save");
-  if (data.status === "begin") {
-    if (typeof hideConfirm === "function") hideConfirm("#propSendConfirm");
-    btns.forEach((btn) => btn.classList.add("is-busy"));
-  }
-  if (data.status === "success" || data.status === "complete") {
-    btns.forEach((btn) => btn.classList.remove("is-busy", "is-click"));
-    const err = document.getElementById("propCommentError");
-    if (err && err.classList.contains("is-on")) {
-      const comment = document.querySelector("#viewLive [id$='propComment']");
-      if (comment && typeof comment.scrollIntoView === "function") {
-        comment.focus();
-        comment.scrollIntoView({ block: "center", behavior: "smooth" });
-      }
-    }
-  }
-  if (data.status === "error" && typeof toast === "function") {
-    btns.forEach((btn) => btn.classList.remove("is-busy", "is-click"));
-    toast("L'envoi de la proposition a échoué", { soft: true });
-  }
-}
-
-window.onPropReview = function (data) {
-  const btns = document.querySelectorAll(
-      "#propDecisionConfirm .abt-save, #propApproveConfirm .abt-save, #propRefuseConfirm .abt-save, #propDeleteConfirm .abt-save"
-  );
-  if (data.status === "begin") {
-    if (typeof hideConfirm === "function") {
-      hideConfirm("#propDecisionConfirm");
-      hideConfirm("#propApproveConfirm");
-      hideConfirm("#propRefuseConfirm");
-      hideConfirm("#propDeleteConfirm");
-    }
-    btns.forEach((btn) => btn.classList.add("is-busy"));
-  }
-  if (data.status === "success" || data.status === "complete") {
-    btns.forEach((btn) => btn.classList.remove("is-busy", "is-click"));
-  }
-}
-
 window.onAlignDelete = function (data) {
   const btns = document.querySelectorAll("#alignDeleteConfirm .abt-save");
   if (data.status === "begin") {
@@ -2092,28 +2048,11 @@ function fromCandList() {
       || new URLSearchParams(location.search).get("from") === "candidats";
 }
 
-function fromPropList() {
-  return SCREEN === "propositions"
-      || new URLSearchParams(location.search).get("from") === "propositions";
-}
-
 function paintListBack() {
-  const candBtn = $("#liveBackList");
-  if (candBtn) {
-    const showCand = fromCandList() && liveDetailRequested() && !state.home && !state.draft;
-    candBtn.hidden = !showCand;
-  }
-  const propBtn = $("#liveBackPropList");
-  if (propBtn) {
-    const showProp = fromPropList() && liveDetailRequested() && !state.home && !state.draft;
-    propBtn.hidden = !showProp;
-  }
-}
-
-function backToPropList() {
-  const btn = $("#liveBackPropList");
-  const href = btn && btn.getAttribute("href");
-  go(href || "proposition/propositions.xhtml");
+  const btn = $("#liveBackList");
+  if (!btn) return;
+  const show = fromCandList() && liveDetailRequested() && !state.home && !state.draft;
+  btn.hidden = !show;
 }
 
 function backToCandList() {

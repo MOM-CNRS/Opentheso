@@ -2,7 +2,6 @@ package fr.cnrs.opentheso.v2.concept.ui;
 
 import fr.cnrs.opentheso.v2.concept.alignment.ui.ConceptAlignmentAdminBean;
 import fr.cnrs.opentheso.v2.proposition.model.PropositionSummary;
-import fr.cnrs.opentheso.v2.proposition.policy.PropositionAccessPolicy;
 import fr.cnrs.opentheso.v2.proposition.ui.PropositionBean;
 import fr.cnrs.opentheso.v2.proposition.ui.PropositionSubmitBean;
 import fr.cnrs.opentheso.utils.MessageUtils;
@@ -89,7 +88,6 @@ public class ThesaurusBrowseBean implements Serializable, ConceptNavigationSuppo
     private final transient ObjectProvider<PropositionSubmitBean> propositionSubmitBean;
     private final transient ObjectProvider<PropositionBean> propositionBean;
     private final transient ObjectProvider<ThesaurusHomeEditorBean> thesaurusHomeEditorBean;
-    private final transient PropositionAccessPolicy propositionAccessPolicy;
 
     private String conceptIdFromUri;
     private String groupIdFromUri;
@@ -637,10 +635,7 @@ public class ThesaurusBrowseBean implements Serializable, ConceptNavigationSuppo
     }
 
     public boolean isPropositionAuthorized() {
-        return propositionAccessPolicy.canSubmit(
-                userSession,
-                thesaurusContext.resolveThesaurusId(),
-                thesaurusContext.resolveWorkLanguage());
+        return isSuggestionEnabled();
     }
 
     /**
@@ -648,7 +643,7 @@ public class ThesaurusBrowseBean implements Serializable, ConceptNavigationSuppo
      * prépare le formulaire et bascule sur l'onglet Suggestion.
      */
     public void openNouvelleProposition() {
-        if (!isPropositionAuthorized() || !isConceptPanel()) {
+        if (!suggestionEnabled || !isConceptPanel()) {
             return;
         }
         propositionBean.getObject().clearConsultation();
@@ -683,9 +678,9 @@ public class ThesaurusBrowseBean implements Serializable, ConceptNavigationSuppo
             thesaurusContext.changeWorkLanguage(proposition.lang().trim());
         }
 
-        if (!propositionAccessPolicy.canReview(
-                userSession, thesaurusId, thesaurusContext.resolveWorkLanguage())) {
+        if (!suggestionEnabled) {
             MessageUtils.showWarnMessage(
+                    // même message que legacy
                     "La suggestion est désactivée pour le thésaurus dans lequel la proposition sélectionnée appartient !"
             );
             return;

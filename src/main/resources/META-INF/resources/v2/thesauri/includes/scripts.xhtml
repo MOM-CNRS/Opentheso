@@ -714,10 +714,14 @@
         if (!root) return;
         var isSkos = format === 'skos';
         root.querySelectorAll('[data-tp-fmt-panel]').forEach(function (panel) {
-          var kind = panel.getAttribute('data-tp-fmt-panel');
-          var show = isSkos ? kind === 'skos' : kind === 'csv';
+          var kinds = (panel.getAttribute('data-tp-fmt-panel') || '')
+            .split(',')
+            .map(function (k) { return k.trim(); })
+            .filter(Boolean);
+          var show = kinds.indexOf(format) !== -1;
           panel.classList.toggle('is-off', !show);
         });
+        window.tpSyncImportIdType && window.tpSyncImportIdType();
         var bar = document.getElementById('tpImportFormats');
         var zone = document.getElementById('tpImportFileBlock');
         var file = document.getElementById('tpImportFile');
@@ -775,6 +779,13 @@
         }
         window.tpSyncImportSubmit && window.tpSyncImportSubmit();
         return false;
+      };
+      window.tpSyncImportIdType = function () {
+        var sel = document.getElementById('tpImportIdType');
+        var wrap = document.getElementById('tpImportHandlePrefixRow');
+        if (!wrap) return;
+        var value = sel ? String(sel.value || '').toLowerCase() : '';
+        wrap.classList.toggle('is-off', value !== 'handle');
       };
       window.tpBindImportFormats = function () {
         var bar = document.getElementById('tpImportFormats');

@@ -97,8 +97,6 @@ class ThesaurusBrowseBeanTest {
     @Mock
     private ObjectProvider<ThesaurusHomeEditorBean> thesaurusHomeEditorBean;
     @Mock
-    private fr.cnrs.opentheso.v2.proposition.policy.PropositionAccessPolicy propositionAccessPolicy;
-    @Mock
     private PropositionBean propositionBeanInstance;
 
     private ThesaurusBrowseBean bean;
@@ -124,8 +122,7 @@ class ThesaurusBrowseBeanTest {
                 conceptAlignmentAdminBean,
                 propositionSubmitBean,
                 propositionBean,
-                thesaurusHomeEditorBean,
-                propositionAccessPolicy
+                thesaurusHomeEditorBean
         );
     }
 

@@ -260,7 +260,8 @@ button.tp-create, input.tp-create[type="submit"]{
 .tp-import-formats:has(.tp-import-formats-glider.is-ready) .tp-import-fmt.is-on:hover{
   background:transparent;color:#fff
 }
-.tp-fmt-panel.is-off{display:none!important}
+.tp-fmt-panel.is-off,
+#tpImportHandlePrefixRow.is-off{display:none!important}
 .tp-import-dropzone{flex:1;min-width:0;position:relative}
 .tp-file-input{position:absolute;width:1px;height:1px;opacity:0;overflow:hidden;clip:rect(0,0,0,0)}
 .tp-drop{width:100%;border:1.5px dashed color-mix(in srgb,var(--line) 70%, var(--accent) 30%);border-radius:12px;padding:24px 18px;text-align:center;background:linear-gradient(180deg, var(--surface-2,var(--bg)), rgba(255,255,255,.55));transition:border-color .14s,background .14s,transform .14s,box-shadow .14s;cursor:pointer;display:block;box-sizing:border-box}
