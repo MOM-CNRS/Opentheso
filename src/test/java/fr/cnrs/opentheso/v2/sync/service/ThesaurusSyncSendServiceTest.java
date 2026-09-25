@@ -7,6 +7,8 @@ import fr.cnrs.opentheso.v2.sync.model.SyncBatchRequest;
 import fr.cnrs.opentheso.v2.sync.model.SyncBatchResponse;
 import fr.cnrs.opentheso.v2.sync.model.SyncConceptPayload;
 import fr.cnrs.opentheso.v2.sync.model.SyncConceptResult;
+import fr.cnrs.opentheso.v2.sync.model.SyncPendingConcept;
+import fr.cnrs.opentheso.v2.sync.repository.ThesaurusSyncQueryRepository;
 import fr.cnrs.opentheso.v2.toolbox.exception.InvalidToolboxDataException;
 import fr.cnrs.opentheso.v2.toolbox.persistence.ToolboxPreferencePersistence;
 import org.junit.jupiter.api.BeforeEach;
@@ -47,6 +49,8 @@ class ThesaurusSyncSendServiceTest {
     private ThesaurusSyncPayloadBuilder payloadBuilder;
     @Mock
     private ThesaurusSyncRemoteClient remoteClient;
+    @Mock
+    private ThesaurusSyncQueryRepository thesaurusSyncQueryRepository;
 
     private ThesaurusSyncSendService service;
 
@@ -56,7 +60,8 @@ class ThesaurusSyncSendServiceTest {
                 toolboxPreferencePersistence,
                 conceptRepository,
                 payloadBuilder,
-                remoteClient
+                remoteClient,
+                thesaurusSyncQueryRepository
         );
     }
 
@@ -97,10 +102,17 @@ class ThesaurusSyncSendServiceTest {
         when(toolboxPreferencePersistence.findPreferences("TH1")).thenReturn(slavePrefs(lastSync));
         when(conceptRepository.findConceptIdsChangedSince(eq("TH1"), any(Date.class)))
                 .thenReturn(List.of("C1", "C2"));
+        when(thesaurusSyncQueryRepository.findPendingConcepts(eq("TH1"), any(Date.class), eq("fr"), eq(300)))
+                .thenReturn(List.of(
+                        new SyncPendingConcept("C1", "Chat", List.of("prefLabel")),
+                        new SyncPendingConcept("C2", "Chien", List.of("note"))
+                ));
 
         var preparation = service.prepare("TH1", false);
 
         assertEquals(2, preparation.conceptCount());
+        assertEquals(2, preparation.pendingConcepts().size());
+        assertEquals("prefLabel", preparation.pendingConcepts().get(0).changedFields().get(0));
         assertEquals("https://master.example", preparation.masterServerUrl());
         assertEquals("TH_MASTER", preparation.masterThesaurusId());
         assertEquals("api-key", preparation.masterApiKey());
@@ -122,14 +134,19 @@ class ThesaurusSyncSendServiceTest {
     }
 
     @Test
-    void prepare_returnsZeroDirtyConceptsWhenNeverSynced() {
+    void prepare_countsAllConceptsWhenNeverSynced() {
         when(toolboxPreferencePersistence.findPreferences("TH1")).thenReturn(slavePrefs(null));
+        when(conceptRepository.findAllByIdThesaurusAndStatusNot("TH1", "CA"))
+                .thenReturn(List.of(
+                        Concept.builder().idConcept("C1").build(),
+                        Concept.builder().idConcept("C2").build()
+                ));
 
         var preparation = service.prepare("TH1", false);
 
-        assertEquals(0, preparation.conceptCount());
+        assertEquals(2, preparation.conceptCount());
         verify(conceptRepository, never()).findConceptIdsChangedSince(anyString(), any());
-        verify(conceptRepository, never()).findAllByIdThesaurusAndStatusNot(anyString(), anyString());
+        verify(conceptRepository).findAllByIdThesaurusAndStatusNot("TH1", "CA");
     }
 
     @Test
@@ -155,7 +172,7 @@ class ThesaurusSyncSendServiceTest {
 
         assertEquals(0, response.total());
         verify(remoteClient, never()).postBatch(anyString(), anyString(), any());
-        verify(toolboxPreferencePersistence, never()).updateLastSyncAt(anyString(), any());
+        verify(toolboxPreferencePersistence).updateLastSyncAt(eq("TH1"), any(LocalDateTime.class));
     }
 
     @Test
@@ -289,14 +306,45 @@ class ThesaurusSyncSendServiceTest {
     }
 
     @Test
-    void runSync_nullLastSyncDirty_returnsEmptyWithoutRemoteCall() {
+    void runSync_usesMasterLinkOverrideForEndpoint() {
+        when(toolboxPreferencePersistence.findPreferences("TH1"))
+                .thenReturn(slavePrefs(LocalDateTime.of(2026, Month.JANUARY, 1, 10, 0)));
+        when(conceptRepository.findConceptIdsChangedSince(eq("TH1"), any(Date.class)))
+                .thenReturn(List.of("C1"));
+        when(payloadBuilder.build("TH1", "C1", "fr")).thenReturn(Optional.of(
+                SyncConceptPayload.builder().identifier("C1").prefLabel("fr", "X").build()));
+        when(remoteClient.postBatch(anyString(), eq("new-key"), any()))
+                .thenReturn(SyncBatchResponse.from(List.of(SyncConceptResult.skipped("C1", "C1", "ok"))));
+
+        var override = new ThesaurusSyncSendService.SyncConfig(
+                "https://nouveau.example", "TH_NEW", "new-key", null);
+        service.runSync("TH1", "a", "a@b.fr", "c", true, override, null);
+
+        verify(remoteClient).postBatch(
+                eq("https://nouveau.example/api/v2/thesaurus/TH_NEW/sync/concepts"),
+                eq("new-key"),
+                any());
+    }
+
+    @Test
+    void runSync_firstSyncWithoutBaseline_sendsAllConcepts() {
         when(toolboxPreferencePersistence.findPreferences("TH1")).thenReturn(slavePrefs(null));
+        when(conceptRepository.findAllByIdThesaurusAndStatusNot("TH1", "CA"))
+                .thenReturn(List.of(Concept.builder().idConcept("C1").build()));
+        when(payloadBuilder.build("TH1", "C1", "fr")).thenReturn(Optional.of(
+                SyncConceptPayload.builder().identifier("C1").prefLabel("fr", "Chat").build()));
+        when(remoteClient.postBatch(anyString(), eq("api-key"), any()))
+                .thenReturn(SyncBatchResponse.from(List.of(SyncConceptResult.proposition("C1", "C1", 11))));
 
         SyncBatchResponse response = service.runSync("TH1", "a", "a@b.fr", "c", true, null);
 
-        assertEquals(0, response.total());
-        verify(remoteClient, never()).postBatch(anyString(), anyString(), any());
-        verify(toolboxPreferencePersistence, never()).updateLastSyncAt(anyString(), any());
+        assertEquals(1, response.propositionsCreated());
+        verify(conceptRepository, never()).findConceptIdsChangedSince(anyString(), any());
+        verify(remoteClient).postBatch(
+                eq("https://master.example/api/v2/thesaurus/TH_MASTER/sync/concepts"),
+                eq("api-key"),
+                any());
+        verify(toolboxPreferencePersistence).updateLastSyncAt(eq("TH1"), any(LocalDateTime.class));
     }
 
     @Test

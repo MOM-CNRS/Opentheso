@@ -361,7 +361,18 @@
                         <td data-label="Thésaurus" data-col="name" class="tp-c-name tp-col-name#{col.on ? '' : ' is-col-off'}">
                           <a class="tp-c-name-in" href="#{v2ThesaurusPickerBean.browseUrl(row.id)}"
                              onclick="return window.tpShowLoading &amp;&amp; window.tpShowLoading();">
-                            <span class="tp-name">#{row.name}</span>
+                            <span class="tp-name-wrap">
+                              <span class="tp-name">#{row.name}</span>
+                              <span class="tp-sync-ico #{row.syncBadgeClass}"
+                                    title="#{row.master ? v2LocaleBean.getMsg('v2.picker.sync.master') : v2LocaleBean.getMsg('v2.picker.sync.copy')}">
+                                <ui:fragment rendered="#{row.master}">
+                                  <svg viewBox="0 0 24 24" aria-hidden="true"><path d="M4 16h16l-1.6-8-4.4 3.2L12 6l-2 5.2L5.6 8z"/><path d="M6 16v3h12v-3"/></svg>
+                                </ui:fragment>
+                                <ui:fragment rendered="#{not row.master}">
+                                  <svg viewBox="0 0 24 24" aria-hidden="true"><rect x="8" y="8" width="11" height="13" rx="1.5"/><path d="M16 8V6.5A1.5 1.5 0 0 0 14.5 5H6.5A1.5 1.5 0 0 0 5 6.5v12A1.5 1.5 0 0 0 6.5 20H8"/></svg>
+                                </ui:fragment>
+                              </span>
+                            </span>
                             <span class="tp-id">#{row.id}</span>
                           </a>
                         </td>

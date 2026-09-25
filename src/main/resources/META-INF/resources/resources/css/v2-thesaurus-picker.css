@@ -628,8 +628,17 @@ button.tp-act{font:inherit;padding:0;appearance:none;-webkit-appearance:none}
 .tp-table tbody tr:last-child td{border-bottom:0}
 .tp-c-name{white-space:nowrap}
 .tp-dot{width:9px;height:9px;border-radius:50%;flex:0 0 auto}
+.tp-name-wrap{display:inline-flex;align-items:center;gap:6px;min-width:0}
 .tp-name{font-weight:650;color:var(--ink);font-size:14.5px;letter-spacing:-.01em}
 .tp-c-name-in:hover .tp-name{color:var(--accent)}
+.tp-sync-ico{
+  display:inline-flex;align-items:center;justify-content:center;flex:0 0 auto;
+  width:16px;height:16px;color:var(--ink-3)
+}
+.tp-sync-ico svg{width:14px;height:14px;stroke:currentColor;fill:none;stroke-width:2;
+  stroke-linecap:round;stroke-linejoin:round}
+.tp-sync-ico--master{color:#1d4e89}
+.tp-sync-ico--copy{color:#6b5428}
 .tp-id{opacity:.85}
 .tp-langs{font-size:11px;color:var(--ink-4);background:var(--surface-2);border-radius:5px;padding:1px 7px}
 .tp-c-lang{vertical-align:middle;white-space:nowrap}
@@ -1499,6 +1508,7 @@ body[data-page="thesauri"].is-export-lock .sidebar-body{
   }
   .tp-table tbody td.is-col-off{display:none!important}
   .tp-c-name-in{flex-direction:column;align-items:flex-start;gap:2px}
+  .tp-name-wrap{flex-wrap:wrap}
   .tp-name{font-size:15.5px;font-weight:700;line-height:1.3;white-space:normal}
   .tp-id{font-size:12px;color:var(--ink-3)}
   .tp-row-acts{gap:6px;justify-content:flex-end}

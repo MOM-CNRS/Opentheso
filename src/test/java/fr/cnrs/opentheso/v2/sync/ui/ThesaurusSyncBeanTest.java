@@ -9,6 +9,8 @@ import fr.cnrs.opentheso.v2.setting.ui.ThesaurusContext;
 import fr.cnrs.opentheso.v2.shared.ui.UserSession;
 import fr.cnrs.opentheso.v2.sync.model.SyncBatchResponse;
 import fr.cnrs.opentheso.v2.sync.model.SyncConceptResult;
+import fr.cnrs.opentheso.v2.sync.model.SyncFieldChange;
+import fr.cnrs.opentheso.v2.sync.model.SyncPendingConcept;
 import fr.cnrs.opentheso.v2.sync.service.ThesaurusSyncProgressTracker;
 import fr.cnrs.opentheso.v2.sync.service.ThesaurusSyncSendService;
 import fr.cnrs.opentheso.v2.toolbox.exception.InvalidToolboxDataException;
@@ -154,7 +156,7 @@ class ThesaurusSyncBeanTest {
         when(userSession.getCurrentUserEmail()).thenReturn("a@b.fr");
 
         doAnswer(invocation -> {
-            Consumer<ThesaurusSyncSendService.SyncProgress> consumer = invocation.getArgument(5);
+            Consumer<ThesaurusSyncSendService.SyncProgress> consumer = invocation.getArgument(6);
             consumer.accept(new ThesaurusSyncSendService.SyncProgress(
                     2, 2, 1, 1, 0, 0, "Lot 1 envoyé"));
             return SyncBatchResponse.from(List.of(
@@ -162,7 +164,7 @@ class ThesaurusSyncBeanTest {
                     SyncConceptResult.proposition("C2", "C2", 9)
             ));
         }).when(thesaurusSyncSendService).runSync(
-                eq("TH1"), eq("alice"), eq("a@b.fr"), eq("sync"), eq(false), any());
+                eq("TH1"), eq("alice"), eq("a@b.fr"), eq("sync"), eq(false), any(), any());
 
         when(thesaurusSyncSendService.prepare("TH1")).thenReturn(
                 new ThesaurusSyncSendService.SyncPreparation(
@@ -188,6 +190,12 @@ class ThesaurusSyncBeanTest {
             bean.onProgressPoll();
             messages.verify(() -> MessageUtils.showInformationMessage(anyString()));
         }
+        assertTrue(bean.isSyncSucceeded());
+        assertTrue(bean.isStartDisabled());
+        assertTrue(bean.isResultVisible());
+        assertFalse(bean.isResultTableVisible());
+        assertEquals(2, bean.getLastResults().size());
+        assertEquals("C2", bean.getLastResults().get(1).identifier());
     }
 
     @Test
@@ -197,7 +205,7 @@ class ThesaurusSyncBeanTest {
         when(userSession.getCurrentUserId()).thenReturn(2);
         when(userSession.getCurrentUsername()).thenReturn("alice");
         when(userSession.getCurrentUserEmail()).thenReturn("a@b.fr");
-        when(thesaurusSyncSendService.runSync(anyString(), anyString(), anyString(), any(), anyBoolean(), any()))
+        when(thesaurusSyncSendService.runSync(anyString(), anyString(), anyString(), any(), anyBoolean(), any(), any()))
                 .thenThrow(new InvalidToolboxDataException("API key manquante"));
 
         bean.setMasterServerUrl("https://master.example");
@@ -213,6 +221,8 @@ class ThesaurusSyncBeanTest {
             bean.onProgressPoll();
             messages.verify(() -> MessageUtils.showErrorMessage("API key manquante"));
         }
+        assertFalse(bean.isSyncSucceeded());
+        assertFalse(bean.isStartDisabled());
     }
 
     @Test
@@ -236,7 +246,7 @@ class ThesaurusSyncBeanTest {
         when(userSession.getCurrentUserId()).thenReturn(2);
         when(userSession.getCurrentUsername()).thenReturn("alice");
         when(userSession.getCurrentUserEmail()).thenReturn("a@b.fr");
-        when(thesaurusSyncSendService.runSync(anyString(), anyString(), anyString(), any(), anyBoolean(), any()))
+        when(thesaurusSyncSendService.runSync(anyString(), anyString(), anyString(), any(), anyBoolean(), any(), any()))
                 .thenReturn(SyncBatchResponse.from(List.of()));
         when(thesaurusSyncSendService.prepare("TH1")).thenReturn(
                 new ThesaurusSyncSendService.SyncPreparation(
@@ -246,7 +256,11 @@ class ThesaurusSyncBeanTest {
 
         verify(thesaurusSyncSendService).saveMasterLink(
                 "TH1", "https://nouveau.example", "TH_MASTER", "api-key");
-        verify(thesaurusSyncSendService).runSync(eq("TH1"), eq("alice"), eq("a@b.fr"), eq("sync"), eq(false), any());
+        org.mockito.ArgumentCaptor<ThesaurusSyncSendService.SyncConfig> linkCaptor =
+                org.mockito.ArgumentCaptor.forClass(ThesaurusSyncSendService.SyncConfig.class);
+        verify(thesaurusSyncSendService).runSync(
+                eq("TH1"), eq("alice"), eq("a@b.fr"), eq("sync"), eq(false), linkCaptor.capture(), any());
+        assertEquals("https://nouveau.example", linkCaptor.getValue().masterServerUrl());
     }
 
     @Test
@@ -263,7 +277,7 @@ class ThesaurusSyncBeanTest {
             messages.verify(() -> MessageUtils.showErrorMessage("Lien maître invalide"));
         }
 
-        verify(thesaurusSyncSendService, never()).runSync(anyString(), any(), any(), any(), anyBoolean(), any());
+        verify(thesaurusSyncSendService, never()).runSync(anyString(), any(), any(), any(), anyBoolean(), any(), any());
         assertFalse(bean.isProgressVisible());
     }
 
@@ -274,7 +288,7 @@ class ThesaurusSyncBeanTest {
         when(userSession.getCurrentUserId()).thenReturn(2);
         when(userSession.getCurrentUsername()).thenReturn("alice");
         when(userSession.getCurrentUserEmail()).thenReturn("a@b.fr");
-        when(thesaurusSyncSendService.runSync(anyString(), anyString(), anyString(), any(), anyBoolean(), any()))
+        when(thesaurusSyncSendService.runSync(anyString(), anyString(), anyString(), any(), anyBoolean(), any(), any()))
                 .thenAnswer(invocation -> {
                     // Keep first sync "running" from bean perspective by not finishing yet —
                     // with sync executor Runnable::run it finishes immediately, so start twice before second can run.
@@ -294,7 +308,7 @@ class ThesaurusSyncBeanTest {
 
         bean.startSync();
         verify(thesaurusSyncSendService, org.mockito.Mockito.times(1))
-                .runSync(anyString(), anyString(), anyString(), any(), anyBoolean(), any());
+                .runSync(anyString(), anyString(), anyString(), any(), anyBoolean(), any(), any());
     }
 
     @Test
@@ -315,7 +329,7 @@ class ThesaurusSyncBeanTest {
         when(userSession.getCurrentUserId()).thenReturn(2);
         when(userSession.getCurrentUsername()).thenReturn("alice");
         when(userSession.getCurrentUserEmail()).thenReturn("a@b.fr");
-        when(thesaurusSyncSendService.runSync(anyString(), anyString(), anyString(), any(), anyBoolean(), any()))
+        when(thesaurusSyncSendService.runSync(anyString(), anyString(), anyString(), any(), anyBoolean(), any(), any()))
                 .thenReturn(SyncBatchResponse.from(List.of()));
         when(thesaurusSyncSendService.prepare("TH1")).thenReturn(
                 new ThesaurusSyncSendService.SyncPreparation(
@@ -345,6 +359,99 @@ class ThesaurusSyncBeanTest {
             messages.verify(() -> MessageUtils.showInformationMessage(org.mockito.ArgumentMatchers.contains("8 concept")));
         }
         assertEquals(8, bean.getConceptCount());
+        assertFalse(bean.isSyncSucceeded());
+        assertFalse(bean.isStartDisabled());
+    }
+
+    @Test
+    void refreshPreparation_exposesPendingConceptsAndFieldLabels() {
+        stubAccess(true);
+        bean.setThesaurusId("TH1");
+        when(thesaurusSyncSendService.prepare("TH1")).thenReturn(
+                new ThesaurusSyncSendService.SyncPreparation(
+                        "TH1", "https://m", "THM", "k", 2, "fr", null,
+                        List.of(new SyncPendingConcept("C1", "Chat", List.of("prefLabel", "note")))));
+
+        try (MockedStatic<MessageUtils> ignored = mockStatic(MessageUtils.class)) {
+            bean.refreshPreparation();
+        }
+
+        assertTrue(bean.isPendingVisible());
+        assertFalse(bean.isPendingExpanded());
+        assertFalse(bean.isPendingTableVisible());
+        assertEquals(1, bean.getPendingConcepts().size());
+        assertEquals("C1", bean.getPendingConcepts().get(0).id());
+        assertEquals("Libellé préféré, Note", bean.pendingFieldsLabel(bean.getPendingConcepts().get(0)));
+        assertEquals(1, bean.getPendingHiddenCount());
+        assertEquals("Libellé préféré (fr) — Chat → Chat domestique",
+                bean.formatChange(new SyncFieldChange(
+                        "prefLabel", "fr", "UPDATE", "Chat", "Chat domestique")));
+
+        bean.togglePendingExpanded();
+        assertTrue(bean.isPendingTableVisible());
+    }
+
+    @Test
+    void pendingTable_isCollapsedByDefaultAndPaginates() {
+        stubAccess(true);
+        bean.setThesaurusId("TH1");
+        when(thesaurusSyncSendService.prepare("TH1")).thenReturn(
+                new ThesaurusSyncSendService.SyncPreparation(
+                        "TH1", "https://m", "THM", "k", 12, "fr", null, twelvePending()));
+
+        try (MockedStatic<MessageUtils> ignored = mockStatic(MessageUtils.class)) {
+            bean.refreshPreparation();
+        }
+
+        assertFalse(bean.isPendingTableVisible());
+        assertEquals(2, bean.getPendingPageCount());
+        assertEquals(10, bean.getPagedPendingConcepts().size());
+        assertEquals("C1", bean.getPagedPendingConcepts().get(0).id());
+        assertTrue(bean.isPendingPrevDisabled());
+        assertFalse(bean.isPendingNextDisabled());
+
+        bean.nextPendingPage();
+        assertEquals(2, bean.getPendingPageDisplay());
+        assertEquals(2, bean.getPagedPendingConcepts().size());
+        assertEquals("C11", bean.getPagedPendingConcepts().get(0).id());
+        assertTrue(bean.isPendingNextDisabled());
+
+        bean.previousPendingPage();
+        assertEquals(1, bean.getPendingPageDisplay());
+        assertEquals("C1", bean.getPagedPendingConcepts().get(0).id());
+    }
+
+    @Test
+    void startSync_disabledAfterSuccessfulCompletionUntilRefresh() {
+        stubAccess(true);
+        bean.setThesaurusId("TH1");
+        bean.setMasterServerUrl("https://m");
+        bean.setMasterThesaurusId("THM");
+        bean.setMasterApiKey("k");
+        when(userSession.getCurrentUserId()).thenReturn(2);
+        when(userSession.getCurrentUsername()).thenReturn("alice");
+        when(userSession.getCurrentUserEmail()).thenReturn("a@b.fr");
+        when(thesaurusSyncSendService.runSync(anyString(), anyString(), anyString(), any(), anyBoolean(), any(), any()))
+                .thenReturn(SyncBatchResponse.from(List.of()));
+        when(thesaurusSyncSendService.prepare("TH1")).thenReturn(
+                new ThesaurusSyncSendService.SyncPreparation(
+                        "TH1", "https://m", "THM", "k", 0, "fr", null));
+
+        bean.startSync();
+        try (var faces = PrimeFacesTestSupport.open();
+             MockedStatic<MessageUtils> ignored = mockStatic(MessageUtils.class)) {
+            bean.onProgressPoll();
+        }
+        assertTrue(bean.isStartDisabled());
+
+        bean.startSync();
+        verify(thesaurusSyncSendService, org.mockito.Mockito.times(1))
+                .runSync(anyString(), anyString(), anyString(), any(), anyBoolean(), any(), any());
+
+        try (MockedStatic<MessageUtils> ignored = mockStatic(MessageUtils.class)) {
+            bean.refreshPreparation();
+        }
+        assertFalse(bean.isStartDisabled());
     }
 
     @Test
@@ -356,7 +463,7 @@ class ThesaurusSyncBeanTest {
         when(userSession.getCurrentUserId()).thenReturn(2);
         when(userSession.getCurrentUsername()).thenReturn("alice");
         when(userSession.getCurrentUserEmail()).thenReturn("a@b.fr");
-        when(thesaurusSyncSendService.runSync(eq("TH1"), eq("alice"), eq("a@b.fr"), eq("c"), eq(false), any()))
+        when(thesaurusSyncSendService.runSync(eq("TH1"), eq("alice"), eq("a@b.fr"), eq("c"), eq(false), any(), any()))
                 .thenReturn(SyncBatchResponse.from(List.of()));
         when(thesaurusSyncSendService.prepare("TH1")).thenReturn(
                 new ThesaurusSyncSendService.SyncPreparation(
@@ -364,7 +471,7 @@ class ThesaurusSyncBeanTest {
 
         bean.startSync();
 
-        verify(thesaurusSyncSendService).runSync(eq("TH1"), eq("alice"), eq("a@b.fr"), eq("c"), eq(false), any());
+        verify(thesaurusSyncSendService).runSync(eq("TH1"), eq("alice"), eq("a@b.fr"), eq("c"), eq(false), any(), any());
     }
 
     @Test
@@ -374,7 +481,7 @@ class ThesaurusSyncBeanTest {
         when(userSession.getCurrentUserId()).thenReturn(2);
         when(userSession.getCurrentUsername()).thenReturn("alice");
         when(userSession.getCurrentUserEmail()).thenReturn("a@b.fr");
-        when(thesaurusSyncSendService.runSync(anyString(), anyString(), anyString(), any(), anyBoolean(), any()))
+        when(thesaurusSyncSendService.runSync(anyString(), anyString(), anyString(), any(), anyBoolean(), any(), any()))
                 .thenThrow(new IllegalStateException("unexpected"));
 
         bean.startSync();
@@ -425,20 +532,16 @@ class ThesaurusSyncBeanTest {
     }
 
     @Test
-    void isShortcutVisible_requiresSlaveManageRightsAndPreference() {
+    void isShortcutVisible_requiresManageRightsAndPreference() {
         stubAccess(true);
         when(thesaurusContext.resolveThesaurusId()).thenReturn("TH1");
         when(thesaurusContext.resolveWorkLanguage()).thenReturn("fr");
-        when(thesaurusSyncSendService.isSlaveThesaurus("TH1")).thenReturn(true);
         when(thesaurusPreferenceService.loadPreferencesOrNull("TH1", "fr"))
                 .thenReturn(preferencesWithSync(true));
         assertTrue(bean.isShortcutVisible());
 
         when(thesaurusPreferenceService.loadPreferencesOrNull("TH1", "fr"))
                 .thenReturn(preferencesWithSync(false));
-        assertFalse(bean.isShortcutVisible());
-
-        when(thesaurusSyncSendService.isSlaveThesaurus("TH1")).thenReturn(false);
         assertFalse(bean.isShortcutVisible());
     }
 
@@ -456,6 +559,12 @@ class ThesaurusSyncBeanTest {
         state.setTotal(0);
         state.setProcessed(3);
         assertEquals("3 concept(s) traité(s)", bean.getProgressDetail());
+    }
+
+    private static List<SyncPendingConcept> twelvePending() {
+        return java.util.stream.IntStream.rangeClosed(1, 12)
+                .mapToObj(i -> new SyncPendingConcept("C" + i, "Concept " + i, List.of("prefLabel")))
+                .toList();
     }
 
     private void stubAccess(boolean granted) {

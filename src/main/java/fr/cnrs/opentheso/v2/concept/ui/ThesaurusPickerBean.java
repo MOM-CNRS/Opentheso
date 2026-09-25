@@ -177,7 +177,9 @@ public class ThesaurusPickerBean implements Serializable {
                 + " "
                 + normalize(row.organization())
                 + " "
-                + normalize(row.chronology());
+                + normalize(row.chronology())
+                + " "
+                + (row.master() ? "maitre master" : "copie copy");
     }
 
     public String colFilterName(ThesaurusPickerRow row) {

@@ -272,6 +272,23 @@ function syncThesaurusPollTick() {
 window.onPreviewSyncPoll = function (data) {
   if (data.status === "success") syncThesaurusPollTick();
 };
+window.tpToggleSyncDiff = function (btn) {
+  if (!btn) return false;
+  var box = btn.closest(".sync-diff");
+  if (!box) return false;
+  var open = box.classList.toggle("is-open");
+  btn.setAttribute("aria-expanded", open ? "true" : "false");
+  var stack = btn.getAttribute("data-label-stack") || "Empiler";
+  var unstack = btn.getAttribute("data-label-unstack") || "Dépiler";
+  var label = open ? stack : unstack;
+  btn.title = label;
+  var act = btn.querySelector(".sync-diff-act");
+  if (act) act.textContent = label;
+  var hiddenId = btn.getAttribute("data-hidden");
+  var hidden = hiddenId ? document.getElementById(hiddenId) : null;
+  if (hidden) hidden.value = open ? "true" : "false";
+  return false;
+};
 document.addEventListener("keydown", (e) => {
   if (e.key !== "Escape") return;
   const overlay = $("#cblockOverlay");

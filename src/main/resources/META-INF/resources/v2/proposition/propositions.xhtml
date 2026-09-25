@@ -1,0 +1,204 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<ui:composition xmlns="http://www.w3.org/1999/xhtml"
+                xmlns:ui="http://xmlns.jcp.org/jsf/facelets"
+                xmlns:h="http://xmlns.jcp.org/jsf/html"
+                xmlns:f="http://xmlns.jcp.org/jsf/core"
+                xmlns:pt="http://xmlns.jcp.org/jsf/passthrough"
+                template="/v2/includes/layout.xhtml">
+  <ui:param name="v2Page" value="propositions"/>
+  <ui:define name="title">OpenTheso — #{v2LocaleBean.getMsg('v2.proposition.board.title')}</ui:define>
+  <ui:define name="viewActions">
+    <f:viewAction action="#{v2PropositionBean.refresh(v2ThesaurusViewBean.id)}" onPostback="false"/>
+  </ui:define>
+  <ui:define name="sidebar"/>
+  <ui:define name="detail"/>
+  <ui:define name="main">
+
+          <div class="view-panel is-on" id="viewPropList">
+            <div class="bo bo-solo prop-page">
+              <a class="bo-back" href="index.xhtml#{empty v2ThesaurusViewBean.id ? '' : '?idt='}#{v2ThesaurusViewBean.id}" title="#{v2LocaleBean.getMsg('v2.proposition.board.backHome')}">
+                <svg viewBox="0 0 24 24" aria-hidden="true"><path d="M19 12H5"/><path d="m12 19-7-7 7-7"/></svg>
+              </a>
+              <div class="bo-head">
+                <span class="bo-head-ico" aria-hidden="true">
+                  <svg viewBox="0 0 24 24"><path d="M4 4h16v16H4z"/><path d="m22 6-10 7L2 6"/></svg>
+                </span>
+                <div class="prop-head-copy">
+                  <h1 class="bo-title">#{v2LocaleBean.getMsg('v2.proposition.board.title')}</h1>
+                  <p class="bo-sub">#{v2LocaleBean.getMsg('v2.proposition.board.inboxHint')}</p>
+                  <ui:fragment rendered="#{v2PropositionBean.thesaurusSelected}">
+                    <div class="prop-head-meta">
+                      <span class="prop-chip is-theso" title="#{v2ThesaurusViewBean.title} · #{v2ThesaurusViewBean.id}">
+                        <svg viewBox="0 0 24 24" aria-hidden="true"><path d="m16 6 4 14"/><path d="M12 6v14"/><path d="M8 8v12"/><path d="M4 4v16"/></svg>
+                        <span class="prop-chip-t">#{v2ThesaurusViewBean.title}</span>
+                      </span>
+                      <span class="prop-chip#{v2PropositionBean.pendingCount gt 0 ? ' is-pending' : ''}">
+                        <b>#{v2PropositionBean.pendingCount}</b>
+                        #{v2LocaleBean.getMsg('v2.proposition.board.chipPending')}
+                      </span>
+                      <span class="prop-chip">
+                        <b>#{v2PropositionBean.totalCount}</b>
+                        #{v2LocaleBean.getMsg('v2.proposition.board.chipTotal')}
+                      </span>
+                    </div>
+                  </ui:fragment>
+                </div>
+              </div>
+
+              <ui:fragment rendered="#{not v2PropositionBean.thesaurusSelected}">
+                <div class="prop-state" role="status">
+                  <div class="prop-state-mark" aria-hidden="true">
+                    <svg viewBox="0 0 24 24">
+                      <path d="m16 6 4 14"/><path d="M12 6v14"/><path d="M8 8v12"/><path d="M4 4v16"/>
+                    </svg>
+                  </div>
+                  <p class="prop-state-t">#{v2LocaleBean.getMsg('v2.proposition.board.noThesaurus')}</p>
+                  <p class="prop-state-s">#{v2LocaleBean.getMsg('v2.proposition.board.noThesaurusHint')}</p>
+                  <a class="bo-btn primary sm" href="thesauri">#{v2LocaleBean.getMsg('v2.proposition.board.pickThesaurus')}</a>
+                </div>
+              </ui:fragment>
+
+              <ui:fragment rendered="#{v2PropositionBean.thesaurusSelected and not v2PropositionBean.managerOnCurrentThesaurus}">
+                <div class="prop-state" role="status">
+                  <div class="prop-state-mark" aria-hidden="true">
+                    <svg viewBox="0 0 24 24">
+                      <rect x="5" y="11" width="14" height="10" rx="2"/>
+                      <path d="M8 11V8a4 4 0 0 1 8 0v3"/>
+                    </svg>
+                  </div>
+                  <p class="prop-state-t">#{v2LocaleBean.getMsg('v2.proposition.board.unauthorized')}</p>
+                  <p class="prop-state-s">#{v2LocaleBean.getMsg('v2.proposition.board.unauthorizedHint')}</p>
+                </div>
+              </ui:fragment>
+
+              <ui:fragment rendered="#{v2PropositionBean.thesaurusSelected and v2PropositionBean.managerOnCurrentThesaurus}">
+              <h:form id="propBoardForm" prependId="false" styleClass="prop-form">
+              <div class="prop-board" id="propBoard"
+                   data-tab="#{v2PropositionBean.showAll ? 'toutes' : 'nouvelles'}">
+                <div class="prop-inbox">
+                <div class="prop-toolbar">
+                  <h:panelGroup id="propTabs" layout="block" styleClass="prop-seg" pt:role="tablist">
+                    <h:commandLink id="propTabNew"
+                                   styleClass="prop-tab#{not v2PropositionBean.showAll ? ' is-on' : ''}"
+                                   action="#{v2PropositionBean.showPendingOnly}"
+                                   pt:role="tab"
+                                   pt:aria-selected="#{not v2PropositionBean.showAll}">
+                      <f:ajax execute="@this" render="propTabs propPanes" onevent="onPropBoardAjax"/>
+                      #{v2LocaleBean.getMsg('v2.proposition.board.tab.new')}
+                      <span class="prop-tab-n">#{v2PropositionBean.pendingCount}</span>
+                    </h:commandLink>
+                    <h:commandLink id="propTabAll"
+                                   styleClass="prop-tab#{v2PropositionBean.showAll ? ' is-on' : ''}"
+                                   action="#{v2PropositionBean.showAllPropositions}"
+                                   pt:role="tab"
+                                   pt:aria-selected="#{v2PropositionBean.showAll}">
+                      <f:ajax execute="@this" render="propTabs propPanes" onevent="onPropBoardAjax"/>
+                      #{v2LocaleBean.getMsg('v2.proposition.board.tab.all')}
+                      <span class="prop-tab-n">#{v2PropositionBean.totalCount}</span>
+                    </h:commandLink>
+                  </h:panelGroup>
+                  <div class="prop-search-wrap">
+                    <svg class="prop-search-ico" viewBox="0 0 24 24" aria-hidden="true">
+                      <circle cx="11" cy="11" r="7"/><path d="m20 20-3-3"/>
+                    </svg>
+                    <input type="search" id="propSearch" class="st-input prop-search"
+                           placeholder="#{v2LocaleBean.getMsg('v2.proposition.board.search')}"
+                           autocomplete="off" spellcheck="false"
+                           aria-label="#{v2LocaleBean.getMsg('v2.proposition.board.search')}"/>
+                    <button type="button" class="prop-search-clear" id="propSearchClear" hidden="hidden"
+                            data-act="prop-search-clear"
+                            title="#{v2LocaleBean.getMsg('v2.proposition.board.searchClear')}"
+                            aria-label="#{v2LocaleBean.getMsg('v2.proposition.board.searchClear')}">×</button>
+                  </div>
+                </div>
+
+                <h:panelGroup id="propPanes" layout="block">
+                  <ui:fragment rendered="#{empty v2PropositionBean.propositions}">
+                    <div class="prop-state is-inset" role="status">
+                      <div class="prop-state-mark" aria-hidden="true">
+                        <svg viewBox="0 0 24 24"><path d="M4 4h16v16H4z"/><path d="m22 6-10 7L2 6"/></svg>
+                      </div>
+                      <p class="prop-state-t">
+                        #{v2PropositionBean.showAll
+                            ? v2LocaleBean.getMsg('v2.proposition.board.empty')
+                            : v2LocaleBean.getMsg('v2.proposition.board.emptyNew')}
+                      </p>
+                      <p class="prop-state-s">
+                        #{v2PropositionBean.showAll
+                            ? v2LocaleBean.getMsg('v2.proposition.board.emptyHint')
+                            : v2LocaleBean.getMsg('v2.proposition.board.emptyNewHint')}
+                      </p>
+                    </div>
+                  </ui:fragment>
+                  <ui:fragment rendered="#{not empty v2PropositionBean.propositions}">
+                    <div class="prop-inbox-h">
+                      <ui:fragment rendered="#{not v2PropositionBean.showAll}">
+                        <h:outputFormat value="#{v2LocaleBean.getMsg('v2.proposition.board.countNew')}">
+                          <f:param value="#{v2PropositionBean.propositions.size()}"/>
+                        </h:outputFormat>
+                      </ui:fragment>
+                      <ui:fragment rendered="#{v2PropositionBean.showAll}">
+                        <h:outputFormat value="#{v2LocaleBean.getMsg('v2.proposition.board.countAll')}">
+                          <f:param value="#{v2PropositionBean.propositions.size()}"/>
+                        </h:outputFormat>
+                      </ui:fragment>
+                    </div>
+                    <div class="prop-list" id="propList" role="list">
+                      <ui:repeat value="#{v2PropositionBean.propositions}" var="item">
+                        <a class="prop-item #{item.statusCss}"
+                           role="listitem"
+                           href="#{v2PropositionBean.consultationHref(item)}"
+                           title="#{item.conceptLabel} · #{item.conceptId}"
+                           data-search="#{item.conceptLabel} #{item.authorName} #{item.authorEmail} #{item.lang} #{item.conceptId} #{v2PropositionBean.statusLabel(item)}">
+                          <span class="prop-item-mark" aria-hidden="true">
+                            <ui:fragment rendered="#{item.envoyer}">
+                              <svg viewBox="0 0 24 24"><path d="M4 4h16v16H4z"/><path d="m22 6-10 7L2 6"/></svg>
+                            </ui:fragment>
+                            <ui:fragment rendered="#{item.lu}">
+                              <svg viewBox="0 0 24 24"><path d="M4 4h16v12H4z"/><path d="m22 6-10 7L2 6"/><path d="M8 12h8"/></svg>
+                            </ui:fragment>
+                            <ui:fragment rendered="#{item.approuver}">
+                              <svg viewBox="0 0 24 24"><path d="M20 6 9 17l-5-5"/></svg>
+                            </ui:fragment>
+                            <ui:fragment rendered="#{item.refuser}">
+                              <svg viewBox="0 0 24 24"><path d="M18 6 6 18"/><path d="m6 6 12 12"/></svg>
+                            </ui:fragment>
+                          </span>
+                          <span class="prop-item-body">
+                            <span class="prop-item-top">
+                              <span class="prop-item-title">#{item.conceptLabel}</span>
+                              <span class="prop-item-id">#{item.conceptId}</span>
+                            </span>
+                            <span class="prop-item-meta">
+                              <span class="prop-item-author" title="#{item.authorEmail}">#{item.authorName}</span>
+                              <span class="prop-item-sep" aria-hidden="true">·</span>
+                              <span>#{item.publishedAt}</span>
+                              <span class="prop-item-sep" aria-hidden="true">·</span>
+                              <span class="prop-item-lang">
+                                <span class="tr-flag">#{v2ThesaurusViewBean.flagEmoji(item.lang)}</span>
+                                #{item.lang}
+                              </span>
+                            </span>
+                          </span>
+                          <span class="prop-status #{item.statusCss}">#{v2PropositionBean.statusLabel(item)}</span>
+                          <span class="prop-item-go" aria-hidden="true">
+                            <svg viewBox="0 0 24 24"><path d="m9 18 6-6-6-6"/></svg>
+                          </span>
+                        </a>
+                      </ui:repeat>
+                    </div>
+                    <div class="prop-state is-inset prop-filter-empty" id="propFilterEmpty" hidden="hidden" role="status">
+                      <p class="prop-state-t">#{v2LocaleBean.getMsg('v2.proposition.board.filterEmpty')}</p>
+                      <p class="prop-state-s">#{v2LocaleBean.getMsg('v2.proposition.board.filterEmptyHint')}</p>
+                    </div>
+                  </ui:fragment>
+                </h:panelGroup>
+                </div>
+              </div>
+              </h:form>
+              </ui:fragment>
+            </div>
+          </div>
+
+  </ui:define>
+</ui:composition>

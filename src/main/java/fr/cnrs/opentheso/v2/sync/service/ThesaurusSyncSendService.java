@@ -8,6 +8,8 @@ import fr.cnrs.opentheso.v2.sync.model.SyncBatchResponse;
 import fr.cnrs.opentheso.v2.sync.model.SyncConceptOutcome;
 import fr.cnrs.opentheso.v2.sync.model.SyncConceptPayload;
 import fr.cnrs.opentheso.v2.sync.model.SyncConceptResult;
+import fr.cnrs.opentheso.v2.sync.model.SyncPendingConcept;
+import fr.cnrs.opentheso.v2.sync.repository.ThesaurusSyncQueryRepository;
 import fr.cnrs.opentheso.v2.toolbox.exception.InvalidToolboxDataException;
 import fr.cnrs.opentheso.v2.toolbox.persistence.ToolboxPreferencePersistence;
 import fr.cnrs.opentheso.v2.shared.time.V2Dates;
@@ -15,6 +17,7 @@ import lombok.RequiredArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
 import org.apache.commons.lang3.StringUtils;
 import org.springframework.stereotype.Service;
+import org.springframework.transaction.annotation.Propagation;
 import org.springframework.transaction.annotation.Transactional;
 
 import java.time.LocalDateTime;
@@ -33,6 +36,7 @@ public class ThesaurusSyncSendService {
     private final ConceptRepository conceptRepository;
     private final ThesaurusSyncPayloadBuilder payloadBuilder;
     private final ThesaurusSyncRemoteClient remoteClient;
+    private final ThesaurusSyncQueryRepository thesaurusSyncQueryRepository;
 
     @Transactional(readOnly = true)
     public SyncPreparation prepare(String slaveThesaurusId, boolean syncAll) {
@@ -49,9 +53,16 @@ public class ThesaurusSyncSendService {
         validateMasterLink(prefs);
 
         String workLang = StringUtils.defaultIfBlank(prefs.getSourceLang(), "fr");
-        List<String> conceptIds = syncAll
+        boolean firstSend = syncAll || prefs.getLastSyncAt() == null;
+        List<String> conceptIds = firstSend
                 ? listAllConceptIds(slaveThesaurusId)
                 : listConceptsToSync(slaveThesaurusId, prefs.getLastSyncAt());
+        List<SyncPendingConcept> pendingConcepts = thesaurusSyncQueryRepository.findPendingConcepts(
+                slaveThesaurusId,
+                firstSend ? null : V2Dates.toUtilDate(prefs.getLastSyncAt()),
+                workLang,
+                ThesaurusSyncQueryRepository.PREVIEW_LIMIT
+        );
         return new SyncPreparation(
                 slaveThesaurusId,
                 prefs.getMasterServerUrl(),
@@ -59,7 +70,8 @@ public class ThesaurusSyncSendService {
                 prefs.getMasterApiKey(),
                 conceptIds.size(),
                 workLang,
-                prefs.getLastSyncAt()
+                prefs.getLastSyncAt(),
+                pendingConcepts
         );
     }
 
@@ -86,6 +98,7 @@ public class ThesaurusSyncSendService {
         );
     }
 
+    @Transactional(propagation = Propagation.REQUIRES_NEW)
     public void saveMasterLink(
             String slaveThesaurusId,
             String masterServerUrl,
@@ -105,7 +118,19 @@ public class ThesaurusSyncSendService {
             boolean createCandidates,
             Consumer<SyncProgress> progressConsumer
     ) {
-        return runSync(slaveThesaurusId, authorName, authorEmail, comment, false, createCandidates, progressConsumer);
+        return runSync(slaveThesaurusId, authorName, authorEmail, comment, false, createCandidates, null, progressConsumer);
+    }
+
+    public SyncBatchResponse runSync(
+            String slaveThesaurusId,
+            String authorName,
+            String authorEmail,
+            String comment,
+            boolean createCandidates,
+            SyncConfig masterLink,
+            Consumer<SyncProgress> progressConsumer
+    ) {
+        return runSync(slaveThesaurusId, authorName, authorEmail, comment, false, createCandidates, masterLink, progressConsumer);
     }
 
     /**
@@ -120,9 +145,28 @@ public class ThesaurusSyncSendService {
             boolean createCandidates,
             Consumer<SyncProgress> progressConsumer
     ) {
+        return runSync(slaveThesaurusId, authorName, authorEmail, comment, syncAll, createCandidates, null, progressConsumer);
+    }
+
+    public SyncBatchResponse runSync(
+            String slaveThesaurusId,
+            String authorName,
+            String authorEmail,
+            String comment,
+            boolean syncAll,
+            boolean createCandidates,
+            SyncConfig masterLink,
+            Consumer<SyncProgress> progressConsumer
+    ) {
         Preferences prefs = requireSlavePreferences(slaveThesaurusId);
-        validateMasterLink(prefs);
-        if (StringUtils.isBlank(prefs.getMasterApiKey())) {
+        String masterServerUrl = firstNonBlank(
+                masterLink != null ? masterLink.masterServerUrl() : null, prefs.getMasterServerUrl());
+        String masterThesaurusId = firstNonBlank(
+                masterLink != null ? masterLink.masterThesaurusId() : null, prefs.getMasterThesaurusId());
+        String masterApiKey = firstNonBlank(
+                masterLink != null ? masterLink.masterApiKey() : null, prefs.getMasterApiKey());
+        validateMasterLink(masterServerUrl, masterThesaurusId);
+        if (StringUtils.isBlank(masterApiKey)) {
             throw new InvalidToolboxDataException("La clé API du serveur maître est obligatoire");
         }
 
@@ -133,6 +177,8 @@ public class ThesaurusSyncSendService {
 
         if (conceptIds.isEmpty()) {
             report(progressConsumer, new SyncProgress(0, 0, 0, 0, 0, 0, "Aucun concept à synchroniser"));
+            // Baseline posée même à vide, sinon le bouton reste bloqué sur « jamais ».
+            toolboxPreferencePersistence.updateLastSyncAt(slaveThesaurusId, V2Dates.nowDateTime());
             return SyncBatchResponse.from(List.of());
         }
 
@@ -140,7 +186,7 @@ public class ThesaurusSyncSendService {
                 conceptIds.size(), 0, 0, 0, 0, 0,
                 "Envoi de " + conceptIds.size() + " concept(s)…"));
 
-        String endpoint = buildEndpoint(prefs.getMasterServerUrl(), prefs.getMasterThesaurusId());
+        String endpoint = buildEndpoint(masterServerUrl, masterThesaurusId);
         List<SyncConceptResult> allResults = new ArrayList<>();
         int processed = 0;
         int batchNumber = 0;
@@ -186,7 +232,7 @@ public class ThesaurusSyncSendService {
                     payloads
             );
 
-            SyncBatchResponse batchResponse = remoteClient.postBatch(endpoint, prefs.getMasterApiKey(), request);
+            SyncBatchResponse batchResponse = remoteClient.postBatch(endpoint, masterApiKey, request);
             allResults.addAll(batchResponse.results());
             processed += batchIds.size();
 
@@ -217,8 +263,8 @@ public class ThesaurusSyncSendService {
 
     private List<String> listConceptsToSync(String thesaurusId, LocalDateTime lastSyncAt) {
         if (lastSyncAt == null) {
-            // Pas encore de baseline (ni import récent, ni sync) → rien à synchroniser.
-            return List.of();
+            // Première sync : envoyer tout le thésaurus, puis poser la baseline.
+            return listAllConceptIds(thesaurusId);
         }
         return conceptRepository.findConceptIdsChangedSince(thesaurusId, V2Dates.toUtilDate(lastSyncAt));
     }
@@ -235,18 +281,26 @@ public class ThesaurusSyncSendService {
             throw new InvalidToolboxDataException("Préférences introuvables pour le thésaurus");
         }
         if (prefs.isMaster()) {
-            throw new InvalidToolboxDataException("La synchronisation n'est disponible que pour un thésaurus esclave");
+            throw new InvalidToolboxDataException("La synchronisation n'est disponible que pour un thésaurus copie");
         }
         return prefs;
     }
 
     private void validateMasterLink(Preferences prefs) {
-        if (StringUtils.isBlank(prefs.getMasterServerUrl())) {
+        validateMasterLink(prefs.getMasterServerUrl(), prefs.getMasterThesaurusId());
+    }
+
+    private void validateMasterLink(String masterServerUrl, String masterThesaurusId) {
+        if (StringUtils.isBlank(masterServerUrl)) {
             throw new InvalidToolboxDataException("L'URL du serveur maître est obligatoire");
         }
-        if (StringUtils.isBlank(prefs.getMasterThesaurusId())) {
+        if (StringUtils.isBlank(masterThesaurusId)) {
             throw new InvalidToolboxDataException("L'identifiant du thésaurus maître est obligatoire");
         }
+    }
+
+    private static String firstNonBlank(String preferred, String fallback) {
+        return StringUtils.isNotBlank(preferred) ? preferred.trim() : fallback;
     }
 
     static String buildEndpoint(String masterServerUrl, String masterThesaurusId) {
@@ -288,8 +342,25 @@ public class ThesaurusSyncSendService {
             String masterApiKey,
             int conceptCount,
             String workLang,
-            LocalDateTime lastSyncAt
+            LocalDateTime lastSyncAt,
+            List<SyncPendingConcept> pendingConcepts
     ) {
+        public SyncPreparation {
+            pendingConcepts = pendingConcepts == null ? List.of() : List.copyOf(pendingConcepts);
+        }
+
+        public SyncPreparation(
+                String slaveThesaurusId,
+                String masterServerUrl,
+                String masterThesaurusId,
+                String masterApiKey,
+                int conceptCount,
+                String workLang,
+                LocalDateTime lastSyncAt
+        ) {
+            this(slaveThesaurusId, masterServerUrl, masterThesaurusId, masterApiKey,
+                    conceptCount, workLang, lastSyncAt, List.of());
+        }
     }
 
     public record SyncProgress(

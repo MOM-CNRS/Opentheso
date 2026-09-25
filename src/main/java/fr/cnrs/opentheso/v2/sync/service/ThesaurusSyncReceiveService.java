@@ -13,6 +13,7 @@ import fr.cnrs.opentheso.v2.sync.model.SyncBatchRequest;
 import fr.cnrs.opentheso.v2.sync.model.SyncBatchResponse;
 import fr.cnrs.opentheso.v2.sync.model.SyncConceptPayload;
 import fr.cnrs.opentheso.v2.sync.model.SyncConceptResult;
+import fr.cnrs.opentheso.v2.sync.model.SyncFieldChanges;
 import fr.cnrs.opentheso.v2.toolbox.persistence.ToolboxPreferencePersistence;
 import lombok.RequiredArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
@@ -57,7 +58,7 @@ public class ThesaurusSyncReceiveService {
                 user != null ? user.getMail() : "");
         String comment = StringUtils.defaultIfBlank(
                 request.comment(),
-                "Synchronisation depuis le thésaurus esclave"
+                "Synchronisation depuis le thésaurus copie"
                         + (StringUtils.isNotBlank(request.sourceThesaurusId())
                         ? " " + request.sourceThesaurusId()
                         : ""));
@@ -175,7 +176,13 @@ public class ThesaurusSyncReceiveService {
                     "Impossible de créer la proposition (données insuffisantes)");
         }
         propositionDraftService.saveDraftDetails(propositionId.get(), draft);
-        return SyncConceptResult.proposition(incoming.identifier(), conceptId, propositionId.get());
+        return SyncConceptResult.proposition(
+                incoming.identifier(),
+                conceptId,
+                propositionId.get(),
+                conceptLabel,
+                SyncFieldChanges.fromDraft(draft)
+        );
     }
 
     private SyncConceptResult createCandidate(
@@ -205,7 +212,7 @@ public class ThesaurusSyncReceiveService {
                     incoming.identifier(),
                     "Création du candidat refusée (libellé déjà présent ou erreur)");
         }
-        return SyncConceptResult.candidate(incoming.identifier(), candidat.getIdConcepte());
+        return SyncConceptResult.candidate(incoming.identifier(), candidat.getIdConcepte(), prefLabel);
     }
 
     private static String resolveConceptLabel(SyncConceptPayload incoming, String workLang, String fallback) {

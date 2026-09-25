@@ -121,6 +121,12 @@ class ThesaurusPickerBeanTest {
     }
 
     @Test
+    void searchText_includesMasterOrCopyHint() {
+        assertTrue(bean.searchText(sampleRows().get(0)).contains("master"));
+        assertTrue(bean.searchText(sampleRows().get(1)).contains("copie"));
+    }
+
+    @Test
     void openThesaurus_setsShellSelection() throws Exception {
         bean.openThesaurus("th-a");
         verify(consultationShellBean).setSelectedThesaurusId("th-a");
@@ -216,17 +222,17 @@ class ThesaurusPickerBeanTest {
                 new ThesaurusPickerRow(
                         "th-a", "Alpha", "member", "Manager", "manager",
                         10, LocalDate.of(2024, 1, 1), "P1", "Org", "Dom", "2020",
-                        List.of("fr"), false
+                        List.of("fr"), false, true
                 ),
                 new ThesaurusPickerRow(
                         "th-b", "Beta", "member", "Viewer", "viewer",
                         5, LocalDate.of(2024, 2, 1), "P1", "Org", "Dom", "2021",
-                        List.of("en"), true
+                        List.of("en"), true, false
                 ),
                 new ThesaurusPickerRow(
                         "th-c", "Gamma", "public", "—", "",
                         20, LocalDate.of(2023, 1, 1), "", "Org", "Dom", "",
-                        List.of("fr", "en"), false
+                        List.of("fr", "en"), false, false
                 )
         );
     }

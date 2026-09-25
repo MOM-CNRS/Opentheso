@@ -134,7 +134,8 @@ public class ConsultationCatalogQueryRepository {
                         COALESCE(p.source_lang, CAST(:lang AS text)) AS source_lang,
                         COALESCE(tl_sub.subject, '') AS domain,
                         COALESCE(tl_sub.publisher, '') AS organization,
-                        COALESCE(tl_sub.coverage, '') AS chronology
+                        COALESCE(tl_sub.coverage, '') AS chronology,
+                        COALESCE(p.is_master, false) AS is_master
                     FROM thesaurus t
                     LEFT JOIN preferences p ON p.id_thesaurus = t.id_thesaurus
                     LEFT JOIN LATERAL (
@@ -220,7 +221,8 @@ public class ConsultationCatalogQueryRepository {
                     titled.domain,
                     titled.organization,
                     titled.chronology,
-                    member_roles.id_role
+                    member_roles.id_role,
+                    titled.is_master
                 FROM titled
                 LEFT JOIN member_roles ON member_roles.id_thesaurus = titled.id_thesaurus
                 WHERE

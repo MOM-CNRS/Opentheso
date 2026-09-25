@@ -1,6 +1,7 @@
 package fr.cnrs.opentheso.v2.concept.service;
 
 import fr.cnrs.opentheso.v2.concept.model.ConsultationThesaurusOption;
+import fr.cnrs.opentheso.v2.concept.model.ThesaurusPickerRow;
 import fr.cnrs.opentheso.v2.project.service.ProjectAdminService;
 import fr.cnrs.opentheso.v2.shared.repository.AdminQueryRepository;
 import fr.cnrs.opentheso.v2.shared.repository.ConsultationCatalogQueryRepository;
@@ -17,6 +18,8 @@ import org.springframework.test.util.ReflectionTestUtils;
 import java.util.List;
 
 import static org.junit.jupiter.api.Assertions.assertEquals;
+import static org.junit.jupiter.api.Assertions.assertFalse;
+import static org.junit.jupiter.api.Assertions.assertTrue;
 import static org.mockito.Mockito.verify;
 import static org.mockito.Mockito.verifyNoInteractions;
 import static org.mockito.Mockito.when;
@@ -64,6 +67,26 @@ class ConsultationCatalogServiceTest {
         verify(projectAdminQueryRepository).findThesauriOfProject(7, "fr");
         verifyNoInteractions(adminQueryRepository);
         verifyNoInteractions(consultationCatalogQueryRepository);
+    }
+
+    @Test
+    void listPickerThesauri_mapsMasterFlag() {
+        Object[] masterRow = new Object[]{
+                "th-m", "Master", false, null, "public", 0L, "", "fr", "", "", "", null, true
+        };
+        Object[] slaveRow = new Object[]{
+                "th-s", "Slave", false, null, "public", 0L, "", "fr", "", "", "", null, false
+        };
+        when(consultationCatalogQueryRepository.findPickerThesaurusRows(1, false, "fr"))
+                .thenReturn(List.of(masterRow, slaveRow));
+
+        List<ThesaurusPickerRow> result = service.listPickerThesauri(1, false, "fr");
+
+        assertEquals(2, result.size());
+        assertTrue(result.get(0).master());
+        assertFalse(result.get(1).master());
+        assertEquals("tp-sync-ico--master", result.get(0).syncBadgeClass());
+        assertEquals("tp-sync-ico--copy", result.get(1).syncBadgeClass());
     }
 
     @Test

@@ -6,6 +6,7 @@ import lombok.RequiredArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
 import org.apache.commons.lang3.StringUtils;
 import org.springframework.stereotype.Component;
+import org.springframework.transaction.annotation.Transactional;
 
 @Slf4j
 @Component
@@ -70,6 +71,7 @@ public class ToolboxPreferencePersistence {
         return preference.map(Preferences::isMaster).orElse(false);
     }
 
+    @Transactional
     public void updateMasterLink(
             String thesaurusId,
             String masterServerUrl,
@@ -79,18 +81,14 @@ public class ToolboxPreferencePersistence {
         if (StringUtils.isBlank(thesaurusId)) {
             return;
         }
-        var preference = preferencesRepository.findByIdThesaurus(thesaurusId);
-        if (preference.isEmpty()) {
-            return;
-        }
-        Preferences prefs = preference.get();
-        prefs.setMasterServerUrl(StringUtils.trimToNull(masterServerUrl));
-        prefs.setMasterThesaurusId(StringUtils.trimToNull(masterThesaurusId));
+        String url = StringUtils.trimToNull(masterServerUrl);
+        String masterId = StringUtils.trimToNull(masterThesaurusId);
         if (masterApiKey != null) {
-            // Chaîne vide = effacer la clé ; null = ne pas toucher (non utilisé ici).
-            prefs.setMasterApiKey(StringUtils.trimToNull(masterApiKey));
+            preferencesRepository.updateMasterLink(
+                    thesaurusId, url, masterId, StringUtils.trimToNull(masterApiKey));
+        } else {
+            preferencesRepository.updateMasterLinkKeepApiKey(thesaurusId, url, masterId);
         }
-        preferencesRepository.save(prefs);
     }
 
     public void updateLastSyncAt(String thesaurusId, java.time.LocalDateTime lastSyncAt) {

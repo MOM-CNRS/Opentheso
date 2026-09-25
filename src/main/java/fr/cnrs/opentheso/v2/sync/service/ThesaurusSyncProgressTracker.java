@@ -1,9 +1,11 @@
 package fr.cnrs.opentheso.v2.sync.service;
 
+import fr.cnrs.opentheso.v2.sync.model.SyncConceptResult;
 import lombok.Getter;
 import lombok.Setter;
 import org.springframework.stereotype.Component;
 
+import java.util.List;
 import java.util.concurrent.ConcurrentHashMap;
 
 /**
@@ -56,5 +58,6 @@ public class ThesaurusSyncProgressTracker {
         private volatile boolean lastSyncFailed;
         private volatile String lastSyncError;
         private volatile boolean completionNotified;
+        private volatile List<SyncConceptResult> results = List.of();
     }
 }

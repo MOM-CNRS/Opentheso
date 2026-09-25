@@ -20,7 +20,8 @@ public record ThesaurusPickerRow(
         String domain,
         String chronology,
         List<String> languages,
-        boolean privateThesaurus
+        boolean privateThesaurus,
+        boolean master
 ) implements Serializable {
 
     public boolean isMember() {
@@ -139,6 +140,34 @@ public record ThesaurusPickerRow(
 
     public boolean isPrivateThesaurus() {
         return privateThesaurus;
+    }
+
+    public boolean isMaster() {
+        return master;
+    }
+
+    public String syncBadgeClass() {
+        return master ? "tp-sync-ico--master" : "tp-sync-ico--copy";
+    }
+
+    public String getSyncBadgeClass() {
+        return syncBadgeClass();
+    }
+
+    public String syncLabel() {
+        return master ? "Maître" : "Copie";
+    }
+
+    public String getSyncLabel() {
+        return syncLabel();
+    }
+
+    public String syncTitle() {
+        return syncLabel();
+    }
+
+    public String getSyncTitle() {
+        return syncTitle();
     }
 
     /** Rôle affiché (colonne Rôle / tri). */

@@ -40,6 +40,11 @@ public class ThesaurusPreferenceBean implements Serializable {
     private boolean preferenceSaveError;
 
     public void loadPage() {
+        if (!settingsAccess.isLoggedIn()) {
+            preference = new PreferenceEditor();
+            preferenceLoaded = true;
+            return;
+        }
         preferenceLoaded = false;
         ensurePreferencesLoaded();
         corpusBean.load();
@@ -123,6 +128,11 @@ public class ThesaurusPreferenceBean implements Serializable {
 
     private void ensurePreferencesLoaded() {
         if (preferenceLoaded && preference != null) {
+            return;
+        }
+        if (!settingsAccess.isLoggedIn()) {
+            preference = new PreferenceEditor();
+            preferenceLoaded = true;
             return;
         }
         String thesaurusId = settingsAccess.getThesaurusId();

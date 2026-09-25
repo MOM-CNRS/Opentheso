@@ -6,7 +6,17 @@
           <div class="view-panel is-on" id="viewHome">
             <div class="cv th-home">
               <h:panelGroup id="previewHomeHead" layout="block" styleClass="cv-head">
-                <h1 class="cv-pref">#{v2ThesaurusViewBean.title}<span class="cv-lang">#{v2ThesaurusViewBean.id}</span></h1>
+                <h1 class="cv-pref">
+                  <span class="cv-pref-label">#{v2ThesaurusViewBean.title}</span>
+                  <span class="cv-lang">#{v2ThesaurusViewBean.id}</span>
+                  <ui:fragment rendered="#{not empty v2ThesaurusViewBean.id and not v2ThesaurusMetadataBean.masterThesaurus}">
+                    <span class="cv-sync-ico"
+                          title="#{v2LocaleBean.getMsg('v2.home.sync.copy')}"
+                          aria-label="#{v2LocaleBean.getMsg('v2.home.sync.copy')}">
+                      <svg viewBox="0 0 24 24" aria-hidden="true"><rect x="8" y="8" width="11" height="13" rx="1.5"/><path d="M16 8V6.5A1.5 1.5 0 0 0 14.5 5H6.5A1.5 1.5 0 0 0 5 6.5v12A1.5 1.5 0 0 0 6.5 20H8"/></svg>
+                    </span>
+                  </ui:fragment>
+                </h1>
                 <h:panelGroup rendered="#{v2ThesaurusViewBean.identityCardVisible}" layout="block" styleClass="th-idcard">
                   <h:panelGroup layout="block" styleClass="th-id-grid"
                                 rendered="#{v2ThesaurusViewBean.projectNamePresent or v2ThesaurusViewBean.lastModifiedPresent or v2ThesaurusViewBean.permalinkPresent}">

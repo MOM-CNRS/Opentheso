@@ -37,6 +37,34 @@ public interface PreferencesRepository extends JpaRepository<Preferences, Intege
 
     Optional<Preferences> findByIdThesaurus(String idThesaurus);
 
+    @Modifying(clearAutomatically = true, flushAutomatically = true)
+    @Transactional
+    @Query("""
+            UPDATE Preferences p
+            SET p.masterServerUrl = :masterServerUrl,
+                p.masterThesaurusId = :masterThesaurusId,
+                p.masterApiKey = :masterApiKey
+            WHERE p.idThesaurus = :idThesaurus
+            """)
+    int updateMasterLink(
+            @Param("idThesaurus") String idThesaurus,
+            @Param("masterServerUrl") String masterServerUrl,
+            @Param("masterThesaurusId") String masterThesaurusId,
+            @Param("masterApiKey") String masterApiKey);
+
+    @Modifying(clearAutomatically = true, flushAutomatically = true)
+    @Transactional
+    @Query("""
+            UPDATE Preferences p
+            SET p.masterServerUrl = :masterServerUrl,
+                p.masterThesaurusId = :masterThesaurusId
+            WHERE p.idThesaurus = :idThesaurus
+            """)
+    int updateMasterLinkKeepApiKey(
+            @Param("idThesaurus") String idThesaurus,
+            @Param("masterServerUrl") String masterServerUrl,
+            @Param("masterThesaurusId") String masterThesaurusId);
+
     @Query("""
             select p.idThesaurus
             from Preferences p

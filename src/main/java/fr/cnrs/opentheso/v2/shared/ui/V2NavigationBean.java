@@ -94,16 +94,28 @@ public class V2NavigationBean implements Serializable {
     }
 
     public void redirectToPreference() throws IOException {
+        if (!userSession.isLoggedIn()) {
+            redirect("/v2/thesauri");
+            return;
+        }
         activePageName = "preferenceV2";
         redirect(buildSettingUrl(PREFERENCE_XHTML));
     }
 
     public void redirectToIdentifier() throws IOException {
+        if (!userSession.isLoggedIn()) {
+            redirect("/v2/thesauri");
+            return;
+        }
         activePageName = "identifierV2";
         redirect(buildSettingUrl(PREFERENCE_XHTML));
     }
 
     public void redirectToCorpus() throws IOException {
+        if (!userSession.isLoggedIn()) {
+            redirect("/v2/thesauri");
+            return;
+        }
         activePageName = "corpusV2";
         redirect(buildSettingUrl(PREFERENCE_XHTML));
     }

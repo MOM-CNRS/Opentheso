@@ -1,0 +1,331 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<ui:composition xmlns="http://www.w3.org/1999/xhtml"
+                xmlns:ui="http://xmlns.jcp.org/jsf/facelets"
+                xmlns:h="http://xmlns.jcp.org/jsf/html"
+                xmlns:f="http://xmlns.jcp.org/jsf/core"
+                xmlns:pt="http://xmlns.jcp.org/jsf/passthrough">
+
+  <div class="prop-banner">
+    <div class="prop-banner-row">
+      <span class="prop-banner-dot" aria-hidden="true"></span>
+      <div class="prop-banner-main">
+        <div class="prop-banner-t">#{v2LocaleBean.getMsg('v2.proposition.submit.title')}</div>
+        <div class="prop-banner-s">#{v2LocaleBean.getMsg('v2.proposition.submit.info')}</div>
+        <div class="prop-head-meta">
+          <span class="prop-chip is-theso">
+            <span class="prop-chip-t">#{v2PropositionSubmitBean.currentPreferredLabel}</span>
+          </span>
+          <span class="prop-chip">#{v2ThesaurusViewBean.selectedConcept.summary.lang}</span>
+        </div>
+      </div>
+      <div class="prop-banner-actions">
+        <h:commandLink styleClass="bo-btn ghost sm" immediate="true"
+                       action="#{v2PropositionSubmitBean.cancel}">
+          <f:ajax execute="@this" render=":previewDetailForm:previewDetail"/>
+          #{v2LocaleBean.getMsg('v2.cancel')}
+        </h:commandLink>
+      </div>
+    </div>
+  </div>
+
+  <section class="prop-compose-card is-required" data-card-id="prop-author">
+    <div class="prop-compose-card-h">
+      <div>
+        <div class="prop-compose-card-t">#{v2LocaleBean.getMsg('v2.proposition.submit.stepComment')}</div>
+        <p class="prop-compose-card-s">#{v2LocaleBean.getMsg('v2.proposition.submit.stepCommentHint')}</p>
+      </div>
+      <span class="prop-req is-on">#{v2LocaleBean.getMsg('v2.proposition.submit.required')}</span>
+    </div>
+    <div class="prop-compose-card-b">
+      <div class="prop-compose-field#{v2PropositionSubmitBean.commentInvalid ? ' is-invalid' : ''}">
+        <h:outputLabel styleClass="prop-compose-lbl" for="propComment">
+          #{v2LocaleBean.getMsg('proposition.commentaire')}
+          <span class="is-star" aria-hidden="true">*</span>
+        </h:outputLabel>
+        <h:inputTextarea id="propComment"
+                         styleClass="st-input prop-compose-comment#{v2PropositionSubmitBean.commentInvalid ? ' is-invalid' : ''}"
+                         value="#{v2PropositionSubmitBean.comment}" rows="5"
+                         pt:autocomplete="off"
+                         pt:aria-invalid="#{v2PropositionSubmitBean.commentInvalid}"
+                         pt:aria-describedby="propCommentError"
+                         pt:placeholder="#{v2LocaleBean.getMsg('v2.proposition.commentPlaceholder')}"/>
+        <p class="prop-field-error#{v2PropositionSubmitBean.commentInvalid ? ' is-on' : ''}"
+           id="propCommentError" role="alert">
+          #{v2LocaleBean.getMsg('v2.proposition.submit.commentRequired')}
+        </p>
+      </div>
+
+      <div class="prop-compose-id">
+        <div class="prop-compose-field">
+          <span class="prop-compose-lbl">
+            #{v2LocaleBean.getMsg('rightbody.conceptdialog.name')}
+            <span class="is-star" aria-hidden="true">*</span>
+          </span>
+          <ui:fragment rendered="#{v2PropositionSubmitBean.authorNameEditable}">
+            <h:inputText id="propAuthorName" styleClass="st-input"
+                         value="#{v2PropositionSubmitBean.authorName}"
+                         pt:autocomplete="name"/>
+          </ui:fragment>
+          <ui:fragment rendered="#{not v2PropositionSubmitBean.authorNameEditable}">
+            <span class="prop-compose-readonly">#{v2PropositionSubmitBean.authorName}</span>
+          </ui:fragment>
+        </div>
+        <div class="prop-compose-field">
+          <span class="prop-compose-lbl">
+            #{v2LocaleBean.getMsg('profile.email')}
+            <span class="is-star" aria-hidden="true">*</span>
+          </span>
+          <ui:fragment rendered="#{v2PropositionSubmitBean.authorEmailEditable}">
+            <h:inputText id="propAuthorEmail" styleClass="st-input"
+                         value="#{v2PropositionSubmitBean.authorEmail}"
+                         pt:autocomplete="email"/>
+          </ui:fragment>
+          <ui:fragment rendered="#{not v2PropositionSubmitBean.authorEmailEditable}">
+            <span class="prop-compose-readonly">#{v2PropositionSubmitBean.authorEmail}</span>
+          </ui:fragment>
+        </div>
+      </div>
+      <p class="prop-hint">#{v2LocaleBean.getMsg('v2.proposition.submit.mailHint')}</p>
+    </div>
+  </section>
+
+  <div class="prop-compose-section">
+    <div class="prop-compose-section-h">
+      <div>
+        <div class="prop-compose-card-t">#{v2LocaleBean.getMsg('v2.proposition.submit.stepChanges')}</div>
+        <p class="prop-compose-card-s">#{v2LocaleBean.getMsg('v2.proposition.submit.stepChangesHint')}</p>
+      </div>
+      <span class="prop-req is-off">#{v2LocaleBean.getMsg('v2.proposition.submit.optional')}</span>
+    </div>
+  </div>
+
+  <section class="prop-compose-card#{v2PropositionSubmitBean.preferredLabelChanged ? ' is-changed' : ''}" data-card-id="prop-label">
+    <div class="prop-compose-card-h">
+      <div>
+        <div class="prop-compose-card-t">#{v2LocaleBean.getMsg('proposition.renameLabel')}</div>
+        <p class="prop-compose-card-s">#{v2LocaleBean.getMsg('v2.proposition.submit.labelHint')}</p>
+      </div>
+    </div>
+    <div class="prop-compose-card-b">
+      <div class="prop-diff">
+        <div class="prop-diff-col is-old">
+          <div class="prop-diff-k">#{v2LocaleBean.getMsg('v2.proposition.field.current')}</div>
+          <div class="prop-diff-v">#{v2PropositionSubmitBean.currentPreferredLabel}</div>
+          <span class="val-lang">#{v2ThesaurusViewBean.selectedConcept.summary.lang}</span>
+        </div>
+        <span class="prop-diff-arrow" aria-hidden="true">
+          <svg viewBox="0 0 24 24"><path d="M5 12h14"/><path d="m13 6 6 6-6 6"/></svg>
+        </span>
+        <div class="prop-diff-col is-new">
+          <h:outputLabel styleClass="prop-diff-k" for="propPrefLabel">#{v2LocaleBean.getMsg('v2.proposition.field.proposed')}</h:outputLabel>
+          <h:inputText id="propPrefLabel" styleClass="st-input prop-diff-input"
+                       value="#{v2PropositionSubmitBean.proposedPreferredLabel}"
+                       pt:autocomplete="off"/>
+        </div>
+      </div>
+    </div>
+  </section>
+
+  <section class="prop-compose-card" data-card-id="prop-syn">
+    <div class="prop-compose-card-h">
+      <div class="prop-compose-card-t">#{v2LocaleBean.getMsg('proposition.synonyms')}</div>
+    </div>
+    <div class="prop-compose-card-b">
+      <ui:fragment rendered="#{empty v2PropositionSubmitBean.synonymOptions}">
+        <p class="prop-compose-empty">#{v2LocaleBean.getMsg('v2.proposition.submit.emptySynonyms')}</p>
+      </ui:fragment>
+      <ui:repeat value="#{v2PropositionSubmitBean.synonymOptions}" var="syn">
+        <div class="prop-compose-item#{syn.toRemove ? ' is-removed' : ''}#{syn.toAdd or syn.toUpdate ? ' is-changed' : ''}">
+          <ui:fragment rendered="#{not syn.toRemove}">
+            <div class="prop-compose-item-row">
+              <h:inputText styleClass="st-input" value="#{syn.value}" pt:autocomplete="off"/>
+              <h:commandLink styleClass="bo-btn ghost sm danger"
+                             action="#{v2PropositionSubmitBean.removeSynonymOption(syn)}">
+                <f:ajax execute="@this" render=":previewDetailForm:previewDetail"/>
+                #{v2LocaleBean.getMsg('btnDelete')}
+              </h:commandLink>
+            </div>
+            <div class="prop-compose-item-meta">
+              <span class="val-lang">#{syn.lang}</span>
+              <label class="prop-check">
+                <h:selectBooleanCheckbox value="#{syn.hidden}"/>
+                #{v2LocaleBean.getMsg('v2.proposition.hidden')}
+              </label>
+            </div>
+          </ui:fragment>
+          <ui:fragment rendered="#{syn.toRemove}">
+            <div class="prop-compose-item-row">
+              <span class="muted">#{syn.oldValue}</span>
+              <h:commandLink styleClass="bo-btn ghost sm"
+                             action="#{v2PropositionSubmitBean.undoRemoveSynonymOption(syn)}">
+                <f:ajax execute="@this" render=":previewDetailForm:previewDetail"/>
+                #{v2LocaleBean.getMsg('v2.proposition.undoRemove')}
+              </h:commandLink>
+            </div>
+            <div class="prop-compose-item-meta">
+              <span class="val-lang">#{syn.lang}</span>
+              <ui:fragment rendered="#{syn.hidden}">
+                <span class="prop-tag">#{v2LocaleBean.getMsg('v2.proposition.hidden')}</span>
+              </ui:fragment>
+            </div>
+          </ui:fragment>
+        </div>
+      </ui:repeat>
+      <div class="prop-compose-add">
+        <h:selectOneMenu id="propSynLang" styleClass="st-input"
+                         value="#{v2PropositionSubmitBean.newSynonymLang}">
+          <f:selectItem itemValue="" itemLabel="#{v2LocaleBean.getMsg('v2.proposition.submit.lang')}"/>
+          <f:selectItems value="#{v2PropositionSubmitBean.availableLanguages}"
+                         var="lg" itemValue="#{lg.code}" itemLabel="#{lg.label} (#{lg.code})"/>
+        </h:selectOneMenu>
+        <h:inputText id="propSynVal" styleClass="st-input"
+                     value="#{v2PropositionSubmitBean.newSynonymValue}"
+                     pt:autocomplete="off"
+                     pt:placeholder="#{v2LocaleBean.getMsg('v2.proposition.synonymPlaceholder')}"/>
+        <label class="prop-check">
+          <h:selectBooleanCheckbox id="propSynHidden" value="#{v2PropositionSubmitBean.newSynonymHidden}"/>
+          #{v2LocaleBean.getMsg('v2.proposition.hidden')}
+        </label>
+        <h:commandLink styleClass="bo-btn primary sm prop-compose-add-go"
+                       action="#{v2PropositionSubmitBean.addSynonymOption}">
+          <f:ajax execute="propSynLang propSynVal propSynHidden @this" render=":previewDetailForm:previewDetail"/>
+          #{v2LocaleBean.getMsg('v2.proposition.add')}
+        </h:commandLink>
+      </div>
+    </div>
+  </section>
+
+  <section class="prop-compose-card" data-card-id="prop-tr">
+    <div class="prop-compose-card-h">
+      <div class="prop-compose-card-t">#{v2LocaleBean.getMsg('proposition.translations')}</div>
+    </div>
+    <div class="prop-compose-card-b">
+      <ui:fragment rendered="#{empty v2PropositionSubmitBean.translationOptions}">
+        <p class="prop-compose-empty">#{v2LocaleBean.getMsg('v2.proposition.submit.emptyTranslations')}</p>
+      </ui:fragment>
+      <ui:repeat value="#{v2PropositionSubmitBean.translationOptions}" var="tr">
+        <div class="prop-compose-item#{tr.toRemove ? ' is-removed' : ''}#{tr.toAdd or tr.toUpdate ? ' is-changed' : ''}">
+          <ui:fragment rendered="#{not tr.toRemove}">
+            <div class="prop-compose-item-row">
+              <h:inputText styleClass="st-input" value="#{tr.value}" pt:autocomplete="off"/>
+              <h:commandLink styleClass="bo-btn ghost sm danger"
+                             action="#{v2PropositionSubmitBean.removeTranslationOption(tr)}">
+                <f:ajax execute="@this" render=":previewDetailForm:previewDetail"/>
+                #{v2LocaleBean.getMsg('btnDelete')}
+              </h:commandLink>
+            </div>
+            <div class="prop-compose-item-meta">
+              <span class="val-lang">#{tr.lang}</span>
+            </div>
+          </ui:fragment>
+          <ui:fragment rendered="#{tr.toRemove}">
+            <div class="prop-compose-item-row">
+              <span class="muted">#{tr.oldValue}</span>
+              <h:commandLink styleClass="bo-btn ghost sm"
+                             action="#{v2PropositionSubmitBean.undoRemoveTranslationOption(tr)}">
+                <f:ajax execute="@this" render=":previewDetailForm:previewDetail"/>
+                #{v2LocaleBean.getMsg('v2.proposition.undoRemove')}
+              </h:commandLink>
+            </div>
+            <div class="prop-compose-item-meta">
+              <span class="val-lang">#{tr.lang}</span>
+            </div>
+          </ui:fragment>
+        </div>
+      </ui:repeat>
+      <div class="prop-compose-add is-simple">
+        <h:selectOneMenu id="propTrLang" styleClass="st-input"
+                         value="#{v2PropositionSubmitBean.newTranslationLang}">
+          <f:selectItem itemValue="" itemLabel="#{v2LocaleBean.getMsg('v2.proposition.submit.lang')}"/>
+          <f:selectItems value="#{v2PropositionSubmitBean.languagesWithoutTranslation}"
+                         var="lg" itemValue="#{lg.code}" itemLabel="#{lg.label} (#{lg.code})"/>
+        </h:selectOneMenu>
+        <h:inputText id="propTrVal" styleClass="st-input"
+                     value="#{v2PropositionSubmitBean.newTranslationValue}"
+                     pt:autocomplete="off"
+                     pt:placeholder="#{v2LocaleBean.getMsg('v2.proposition.translationPlaceholder')}"/>
+        <h:commandLink styleClass="bo-btn primary sm prop-compose-add-go"
+                       action="#{v2PropositionSubmitBean.addTranslationOption}">
+          <f:ajax execute="propTrLang propTrVal @this" render=":previewDetailForm:previewDetail"/>
+          #{v2LocaleBean.getMsg('v2.proposition.add')}
+        </h:commandLink>
+      </div>
+    </div>
+  </section>
+
+  <section class="prop-compose-card" data-card-id="prop-notes">
+    <div class="prop-compose-card-h">
+      <div class="prop-compose-card-t">#{v2LocaleBean.getMsg('proposition.notes')}</div>
+    </div>
+    <div class="prop-compose-card-b">
+      <ui:fragment rendered="#{empty v2PropositionSubmitBean.visibleNoteOptions}">
+        <p class="prop-compose-empty">#{v2LocaleBean.getMsg('v2.proposition.submit.emptyNotes')}</p>
+      </ui:fragment>
+      <ui:repeat value="#{v2PropositionSubmitBean.visibleNoteOptions}" var="note">
+        <div class="prop-compose-item#{note.hasChanged() ? ' is-changed' : ''}">
+          <div class="prop-compose-item-meta">
+            <span class="prop-compose-lbl">#{v2LocaleBean.getMsg(note.messageKey)}</span>
+            <h:commandLink styleClass="bo-btn ghost sm danger"
+                           action="#{v2PropositionSubmitBean.clearNote(note)}">
+              <f:ajax execute="@this" render=":previewDetailForm:previewDetail"/>
+              #{v2LocaleBean.getMsg('btnDelete')}
+            </h:commandLink>
+          </div>
+          <h:inputTextarea styleClass="st-input prop-compose-note" value="#{note.value}" rows="3"/>
+        </div>
+      </ui:repeat>
+      <div class="prop-compose-add is-note">
+        <h:selectOneMenu id="propNoteType" styleClass="st-input"
+                         value="#{v2PropositionSubmitBean.newNoteTypeCode}">
+          <f:selectItem itemValue="note" itemLabel="#{v2LocaleBean.getMsg('rightbody.concept.note')}"/>
+          <f:selectItem itemValue="definition" itemLabel="#{v2LocaleBean.getMsg('rightbody.concept.definition')}"/>
+          <f:selectItem itemValue="scopeNote" itemLabel="#{v2LocaleBean.getMsg('rightbody.concept.scope_note')}"/>
+          <f:selectItem itemValue="example" itemLabel="#{v2LocaleBean.getMsg('rightbody.concept.example_note')}"/>
+          <f:selectItem itemValue="historyNote" itemLabel="#{v2LocaleBean.getMsg('rightbody.concept.history_note')}"/>
+          <f:selectItem itemValue="editorialNote" itemLabel="#{v2LocaleBean.getMsg('rightbody.concept.editorial_note')}"/>
+          <f:selectItem itemValue="changeNote" itemLabel="#{v2LocaleBean.getMsg('rightbody.concept.change_note')}"/>
+        </h:selectOneMenu>
+        <h:inputTextarea id="propNoteVal" styleClass="st-input"
+                         value="#{v2PropositionSubmitBean.newNoteValue}" rows="3"
+                         pt:placeholder="#{v2LocaleBean.getMsg('v2.proposition.notePlaceholder')}"/>
+        <h:commandLink styleClass="bo-btn primary sm prop-compose-add-go"
+                       action="#{v2PropositionSubmitBean.addNoteOption}">
+          <f:ajax execute="propNoteType propNoteVal @this" render=":previewDetailForm:previewDetail"/>
+          #{v2LocaleBean.getMsg('v2.proposition.add')}
+        </h:commandLink>
+      </div>
+    </div>
+  </section>
+
+  <div class="prop-compose-foot">
+    <h:commandLink styleClass="abt-cancel" immediate="true"
+                   action="#{v2PropositionSubmitBean.cancel}">
+      <f:ajax execute="@this" render=":previewDetailForm:previewDetail"/>
+      #{v2LocaleBean.getMsg('v2.cancel')}
+    </h:commandLink>
+    <button type="button" class="abt-save" data-act="prop-send-ask">
+      <svg viewBox="0 0 24 24" aria-hidden="true"><path d="M20 6 9 17l-5-5"/></svg>
+      <span class="abt-save-label">#{v2LocaleBean.getMsg('v2.proposition.submit.send')}</span>
+    </button>
+  </div>
+
+  <div class="block-overlay confirm-overlay" id="propSendConfirm" hidden="hidden"
+       data-act="prop-send-dismiss" role="presentation">
+    <div class="confirm-modal" role="dialog" aria-modal="true"
+         aria-labelledby="propSendConfirmTitle" data-act="prop-send-modal">
+      <div class="confirm-h" id="propSendConfirmTitle">#{v2LocaleBean.getMsg('v2.proposition.submit.confirmTitle')}</div>
+      <p class="confirm-p">#{v2LocaleBean.getMsg('v2.proposition.submit.confirm')}</p>
+      <div class="confirm-actions">
+        <button type="button" class="abt-cancel confirm-cancel"
+                data-act="prop-send-dismiss">#{v2LocaleBean.getMsg('v2.cancel')}</button>
+        <h:commandLink id="propSendOk" styleClass="abt-save abt-save-ok"
+                       action="#{v2PropositionSubmitBean.send}">
+          <f:ajax execute="@form" render=":previewDetailForm:previewDetail :previewPropBadge" onevent="onPropSend"/>
+          <svg viewBox="0 0 24 24" aria-hidden="true"><path d="M20 6 9 17l-5-5"/></svg>
+          <span class="abt-save-label">#{v2LocaleBean.getMsg('v2.proposition.submit.send')}</span>
+          <span class="abt-save-wait">#{v2LocaleBean.getMsg('v2.saving')}</span>
+        </h:commandLink>
+      </div>
+    </div>
+  </div>
+</ui:composition>

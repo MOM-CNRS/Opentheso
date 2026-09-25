@@ -12,7 +12,16 @@
   </ui:define>
   <ui:define name="detail"/>
   <ui:define name="main">
+    <h:form id="previewPrefDeniedForm" prependId="false" rendered="#{not v2UserSession.loggedIn}">
+      <ui:include src="/v2/includes/access-denied.xhtml">
+        <ui:param name="deniedKicker" value="#{v2LocaleBean.getMsg('v2.settings.accessDenied.kicker')}"/>
+        <ui:param name="deniedTitle" value="#{v2LocaleBean.getMsg('v2.settings.accessDenied.title')}"/>
+        <ui:param name="deniedSub" value="#{v2LocaleBean.getMsg('v2.settings.accessDenied.sub')}"/>
+        <ui:param name="deniedBackLabel" value="#{v2LocaleBean.getMsg('v2.settings.accessDenied.back')}"/>
+      </ui:include>
+    </h:form>
 
+    <ui:fragment rendered="#{v2UserSession.loggedIn}">
           <div class="view-panel is-on" id="viewSettings">
             <div class="bo">
               <a class="bo-back" href="#{v2ThesaurusViewBean.settingsReturnUrl}"
@@ -1080,5 +1089,6 @@
               </div>
             </div>
           </div>
+    </ui:fragment>
   </ui:define>
 </ui:composition>

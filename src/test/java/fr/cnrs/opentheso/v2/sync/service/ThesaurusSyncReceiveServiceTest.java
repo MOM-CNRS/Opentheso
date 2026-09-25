@@ -126,6 +126,10 @@ class ThesaurusSyncReceiveServiceTest {
         assertEquals(1, response.propositionsCreated());
         assertEquals(SyncConceptOutcome.PROPOSITION_CREATED, response.results().get(0).outcome());
         assertEquals(42, response.results().get(0).propositionId());
+        assertEquals("Chat domestique", response.results().get(0).label());
+        assertEquals(1, response.results().get(0).changes().size());
+        assertEquals("prefLabel", response.results().get(0).changes().get(0).field());
+        assertEquals("Chat", response.results().get(0).changes().get(0).oldValue());
         verify(propositionDraftService).saveDraftDetails(42, draft);
     }
 

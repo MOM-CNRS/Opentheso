@@ -33,6 +33,10 @@ public class SettingsAccess implements Serializable {
         return StringUtils.defaultString(thesaurusContext.getCurrentThesaurusTitle());
     }
 
+    public boolean isLoggedIn() {
+        return userSession.isLoggedIn();
+    }
+
     public boolean isCanEdit() {
         if (canEdit != null) {
             return canEdit;

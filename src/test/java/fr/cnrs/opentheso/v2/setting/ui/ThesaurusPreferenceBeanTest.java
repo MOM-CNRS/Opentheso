@@ -69,6 +69,7 @@ class ThesaurusPreferenceBeanTest {
                 alignmentBean,
                 thesaurusViewBean
         );
+        lenient().when(userSession.isLoggedIn()).thenReturn(true);
     }
 
     @Test
@@ -78,6 +79,18 @@ class ThesaurusPreferenceBeanTest {
         verify(corpusBean).load();
         verify(alignmentBean).load();
         verify(thesaurusViewBean).revealCurrentConceptInTree();
+    }
+
+    @Test
+    void loadPage_skipsWhenGuest() {
+        when(userSession.isLoggedIn()).thenReturn(false);
+
+        bean.loadPage();
+
+        verify(corpusBean, never()).load();
+        verify(alignmentBean, never()).load();
+        verify(thesaurusViewBean, never()).revealCurrentConceptInTree();
+        verify(thesaurusPreferenceService, never()).loadPreferencesOrNull(any(), any());
     }
 
     @Test

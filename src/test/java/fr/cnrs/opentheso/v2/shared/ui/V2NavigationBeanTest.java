@@ -121,4 +121,19 @@ class V2NavigationBeanTest {
         verify(externalContext).redirect("/ot/v2/thesauri");
         verify(externalContext, never()).redirect("/ot/v2/admin/instance");
     }
+
+    @Test
+    void redirectToPreference_deniesGuest() throws Exception {
+        when(userSession.isLoggedIn()).thenReturn(false);
+        when(facesContext.getExternalContext()).thenReturn(externalContext);
+        when(externalContext.getRequestContextPath()).thenReturn("/ot");
+
+        try (MockedStatic<FacesContext> faces = mockStatic(FacesContext.class)) {
+            faces.when(FacesContext::getCurrentInstance).thenReturn(facesContext);
+            navigationBean.redirectToPreference();
+        }
+
+        verify(externalContext).redirect("/ot/v2/thesauri");
+        verify(externalContext, never()).redirect("/ot/v2/setting/preference.xhtml");
+    }
 }
