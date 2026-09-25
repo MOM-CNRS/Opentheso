@@ -630,6 +630,7 @@ class ThesaurusSyncBeanTest {
                 base.apiKeyOpenArk(),
                 base.showCandidatesToGuests(),
                 enabled,
+                base.portail(),
                 base.languages()
         );
     }

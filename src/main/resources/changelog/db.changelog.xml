@@ -322,4 +322,14 @@
         <sqlFile path="v26/26-09_02.sql" relativeToChangelogFile="true" splitStatements="false"/>
     </changeSet>
 
+    <changeSet id="26.09.03" author="Firas">
+        <comment>HSPortal / OntoPortal publication settings on thesaurus preferences</comment>
+        <sqlFile path="v26/26-09_03.sql" relativeToChangelogFile="true" splitStatements="false"/>
+    </changeSet>
+
+    <changeSet id="26.09.04" author="Firas">
+        <comment>Show HSPortal publication shortcut on home workshop</comment>
+        <sqlFile path="v26/26-09_04.sql" relativeToChangelogFile="true" splitStatements="false"/>
+    </changeSet>
+
 </databaseChangeLog>

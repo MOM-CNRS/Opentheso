@@ -26,6 +26,22 @@ public class ThesaurusEditionSkosExportService {
         return exportThesaurus(thesaurusId, thesaurusTitle, formatCode, ThesaurusEditionExportOptions.full());
     }
 
+    public byte[] exportThesaurusBytes(String thesaurusId, String formatCode) throws Exception {
+        if (StringUtils.isBlank(thesaurusId)) {
+            throw new IllegalStateException("Thésaurus manquant");
+        }
+        var document = thesaurusSkosDocumentBuilder.buildDocument(thesaurusId, ThesaurusEditionExportOptions.full());
+        var resolved = SkosRdfFormatSupport.resolveExportFormat(formatCode);
+        try (var output = new ByteArrayOutputStream()) {
+            var serializer = new ThesaurusSkosSerializer(document);
+            Rio.write(serializer.getModel(), output, resolved.rdfFormat());
+            serializer.closeCache();
+            return output.toByteArray();
+        } catch (IOException ex) {
+            throw new IllegalStateException("Export SKOS impossible", ex);
+        }
+    }
+
     public StreamedContent exportThesaurus(
             String thesaurusId,
             String thesaurusTitle,

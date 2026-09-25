@@ -1,0 +1,362 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<ui:composition xmlns="http://www.w3.org/1999/xhtml"
+                xmlns:ui="http://xmlns.jcp.org/jsf/facelets"
+                xmlns:h="http://xmlns.jcp.org/jsf/html"
+                xmlns:f="http://xmlns.jcp.org/jsf/core"
+                template="/v2/includes/layout.xhtml">
+  <ui:param name="v2Page" value="portail"/>
+  <ui:define name="title">OpenTheso — #{v2LocaleBean.getMsg('v2.home.workshop.portal')}</ui:define>
+  <ui:define name="viewActions">
+    <f:viewAction action="#{v2ThesaurusPortalBean.ensureOpened}" onPostback="false"/>
+  </ui:define>
+  <ui:define name="sidebar"/>
+  <ui:define name="detail"/>
+  <ui:define name="main">
+          <f:event type="preRenderView" listener="#{v2ThesaurusPortalBean.ensureOpened}"/>
+
+          <div class="view-panel is-on" id="viewPortal">
+            <div class="bo bo-solo sy po">
+              <a class="bo-back" href="index.xhtml#{empty v2ThesaurusViewBean.id ? '' : '?idt='}#{v2ThesaurusViewBean.id}"
+                 title="#{v2LocaleBean.getMsg('v2.proposition.board.backHome')}">
+                <svg viewBox="0 0 24 24" aria-hidden="true"><path d="M19 12H5"/><path d="m12 19-7-7 7-7"/></svg>
+              </a>
+              <div class="bo-head sy-head">
+                <span class="bo-head-ico po-ico" aria-hidden="true">
+                  <svg viewBox="0 0 24 24">
+                    <path d="M12 3v12"/><path d="m7 10 5 5 5-5"/>
+                    <path d="M5 19h14"/>
+                  </svg>
+                </span>
+                <div class="sy-head-copy">
+                  <span class="sy-kicker">#{v2LocaleBean.getMsg('v2.portal.kicker')}</span>
+                  <h1 class="bo-title">#{v2LocaleBean.getMsg('v2.home.workshop.portal')}</h1>
+                </div>
+                <span class="sy-role po-role" title="HSPortal">
+                  <svg viewBox="0 0 24 24" aria-hidden="true"><circle cx="12" cy="12" r="9"/><path d="M3 12h18"/><path d="M12 3a14 14 0 0 1 0 18"/><path d="M12 3a14 14 0 0 0 0 18"/></svg>
+                  #{v2LocaleBean.getMsg('v2.portal.role')}
+                </span>
+              </div>
+              <div class="bo-full st-scope">
+                <h:form id="previewPortalForm" prependId="false">
+                  <h:messages id="messagePortal" infoClass="st-corpus-msg" errorClass="st-corpus-msg is-error" warnClass="st-corpus-msg"/>
+                  <h:panelGroup id="previewPortalBox" layout="block" styleClass="sy-box">
+                    <h:panelGroup rendered="#{not v2ThesaurusPortalBean.formAvailable}" layout="block">
+                      <div class="sy-empty">
+                        <svg viewBox="0 0 24 24" aria-hidden="true"><path d="M10.3 3.9 1.8 18a2 2 0 0 0 1.7 3h17a2 2 0 0 0 1.7-3L13.7 3.9a2 2 0 0 0-3.4 0z"/><path d="M12 9v4"/><path d="M12 17h.01"/></svg>
+                        <p>#{v2LocaleBean.getMsg('v2.portal.unavailable')}</p>
+                      </div>
+                    </h:panelGroup>
+                    <h:panelGroup rendered="#{v2ThesaurusPortalBean.formAvailable}" layout="block" styleClass="sy-flow po-flow">
+                      <div class="po-stats">
+                        <div class="sy-stat">
+                          <span class="sy-stat-l">#{v2LocaleBean.getMsg('v2.portal.lastSync')}</span>
+                          <strong class="sy-stat-v">
+                            <h:outputText value="#{v2ThesaurusPortalBean.formattedLastSyncAt}"
+                                          rendered="#{not empty v2ThesaurusPortalBean.formattedLastSyncAt}"/>
+                            <h:outputText value="#{v2LocaleBean.getMsg('v2.portal.never')}"
+                                          rendered="#{empty v2ThesaurusPortalBean.formattedLastSyncAt}"/>
+                          </strong>
+                        </div>
+                        <div class="sy-stat">
+                          <span class="sy-stat-l">#{v2LocaleBean.getMsg('v2.portal.destination')}</span>
+                          <strong class="sy-stat-v po-stat-mono">
+                            <h:outputText value="#{v2ThesaurusPortalBean.portalAcronym}"
+                                          rendered="#{not empty v2ThesaurusPortalBean.portalAcronym}"/>
+                            <h:outputText value="—"
+                                          rendered="#{empty v2ThesaurusPortalBean.portalAcronym}"/>
+                          </strong>
+                        </div>
+                        <div class="sy-stat">
+                          <span class="sy-stat-l">#{v2LocaleBean.getMsg('v2.portal.format')}</span>
+                          <strong class="sy-stat-v">#{v2LocaleBean.getMsg('v2.portal.format.skos')}</strong>
+                        </div>
+                      </div>
+
+                      <section class="sy-card">
+                        <header class="sy-card-h">
+                          <span class="sy-step">1</span>
+                          <div>
+                            <h2 class="sy-card-t">#{v2LocaleBean.getMsg('v2.portal.step.link')}</h2>
+                            <p class="sy-card-d">#{v2LocaleBean.getMsg('v2.portal.step.link.hint')}</p>
+                          </div>
+                        </header>
+                        <div class="sy-card-b">
+                          <div class="po-group">
+                            <h3 class="po-group-t">#{v2LocaleBean.getMsg('v2.portal.group.portal')}</h3>
+                            <div class="sy-grid">
+                              <label class="sy-field sy-field--wide">
+                                <span>#{v2LocaleBean.getMsg('v2.portal.url')}</span>
+                                <h:inputText id="portalUrl" styleClass="st-input"
+                                             value="#{v2ThesaurusPortalBean.portalUrl}"
+                                             disabled="#{v2ThesaurusPortalBean.running}"/>
+                              </label>
+                              <label class="sy-field">
+                                <span>#{v2LocaleBean.getMsg('v2.portal.acronym')}</span>
+                                <h:inputText id="portalAcronym" styleClass="st-input"
+                                             value="#{v2ThesaurusPortalBean.portalAcronym}"
+                                             disabled="#{v2ThesaurusPortalBean.running}"/>
+                              </label>
+                              <label class="sy-field">
+                                <span>#{v2LocaleBean.getMsg('v2.portal.username')}</span>
+                                <h:inputText id="portalUsername" styleClass="st-input"
+                                             value="#{v2ThesaurusPortalBean.portalUsername}"
+                                             disabled="#{v2ThesaurusPortalBean.running}"/>
+                              </label>
+                              <label class="sy-field sy-field--wide">
+                                <span>#{v2LocaleBean.getMsg('v2.portal.apiKey')}</span>
+                                <h:inputSecret id="portalApiKey" styleClass="st-input"
+                                               value="#{v2ThesaurusPortalBean.portalApiKey}"
+                                               redisplay="true"
+                                               disabled="#{v2ThesaurusPortalBean.running}"/>
+                              </label>
+                            </div>
+                          </div>
+                          <div class="po-group">
+                            <h3 class="po-group-t">#{v2LocaleBean.getMsg('v2.portal.group.contact')}</h3>
+                            <div class="sy-grid">
+                              <label class="sy-field">
+                                <span>#{v2LocaleBean.getMsg('v2.portal.contactName')}</span>
+                                <h:inputText id="portalContactName" styleClass="st-input"
+                                             value="#{v2ThesaurusPortalBean.portalContactName}"
+                                             disabled="#{v2ThesaurusPortalBean.running}"/>
+                              </label>
+                              <label class="sy-field">
+                                <span>#{v2LocaleBean.getMsg('v2.portal.contactEmail')}</span>
+                                <h:inputText id="portalContactEmail" styleClass="st-input"
+                                             value="#{v2ThesaurusPortalBean.portalContactEmail}"
+                                             disabled="#{v2ThesaurusPortalBean.running}"/>
+                              </label>
+                            </div>
+                          </div>
+                          <div class="sy-actions">
+                            <h:commandLink id="previewPortalSaveGo"
+                                           styleClass="abt-cancel#{v2ThesaurusPortalBean.running ? ' is-off' : ''}"
+                                           action="#{v2ThesaurusPortalBean.saveLink}"
+                                           disabled="#{v2ThesaurusPortalBean.running}">
+                              <f:ajax execute="portalUrl portalAcronym portalUsername portalApiKey portalContactName portalContactEmail @this"
+                                      render="previewPortalBox messagePortal"/>
+                              <svg viewBox="0 0 24 24" aria-hidden="true"><path d="M20 6 9 17l-5-5"/></svg>
+                              <span>#{v2LocaleBean.getMsg('v2.portal.saveLink')}</span>
+                            </h:commandLink>
+                          </div>
+                        </div>
+                      </section>
+
+                      <section class="sy-card po-send">
+                        <header class="sy-card-h">
+                          <span class="sy-step">2</span>
+                          <div>
+                            <h2 class="sy-card-t">#{v2LocaleBean.getMsg('v2.portal.step.publish')}</h2>
+                            <p class="sy-card-d">#{v2LocaleBean.getMsg('v2.portal.step.publish.hint')}</p>
+                          </div>
+                        </header>
+                        <div class="sy-card-b">
+                          <ol class="po-pipe" aria-label="#{v2LocaleBean.getMsg('v2.portal.step.publish')}">
+                            <li class="po-pipe-i#{v2ThesaurusPortalBean.pipeExportStyle}">
+                              <span class="po-pipe-n">1</span>
+                              <span>#{v2LocaleBean.getMsg('v2.portal.pipeline.export')}</span>
+                            </li>
+                            <li class="po-pipe-i#{v2ThesaurusPortalBean.pipeSendStyle}">
+                              <span class="po-pipe-n">2</span>
+                              <span>#{v2LocaleBean.getMsg('v2.portal.pipeline.send')}</span>
+                            </li>
+                            <li class="po-pipe-i#{v2ThesaurusPortalBean.pipeOnlineStyle}">
+                              <span class="po-pipe-n">3</span>
+                              <span>#{v2LocaleBean.getMsg('v2.portal.pipeline.online')}</span>
+                            </li>
+                          </ol>
+                          <span id="previewPortalState" hidden="hidden"
+                                data-running="#{v2ThesaurusPortalBean.running}"
+                                data-result="#{v2ThesaurusPortalBean.resultDialogVisible}"></span>
+                          <h:panelGroup rendered="#{v2ThesaurusPortalBean.progressVisible}" layout="block"
+                                        styleClass="po-progress">
+                            <div class="po-progress-t">
+                              <h:outputText value="#{v2LocaleBean.getMsg(v2ThesaurusPortalBean.statusMessage)}"
+                                            rendered="#{v2ThesaurusPortalBean.statusLocalized}"/>
+                              <h:outputText value="#{v2ThesaurusPortalBean.statusMessage}"
+                                            rendered="#{not v2ThesaurusPortalBean.statusLocalized}"/>
+                            </div>
+                            <div class="mg-bar-row">
+                              <div class="mg-bar-track" role="progressbar" aria-valuemin="0" aria-valuemax="100"
+                                   aria-valuenow="#{v2ThesaurusPortalBean.progressValue}"
+                                   aria-label="#{v2LocaleBean.getMsg('v2.portal.progress')}">
+                                <span class="mg-bar-fill" style="width: #{v2ThesaurusPortalBean.progressValue}%"></span>
+                              </div>
+                              <div class="mg-bar-n">#{v2ThesaurusPortalBean.progressValue}%</div>
+                            </div>
+                          </h:panelGroup>
+                          <div class="sy-actions sy-actions--run po-run">
+                            <button type="button" class="abt-save#{v2ThesaurusPortalBean.running ? ' is-off' : ''}"
+                                    data-act="portal-publish-ask"
+                                    aria-disabled="#{v2ThesaurusPortalBean.running}">
+                              <svg viewBox="0 0 24 24" aria-hidden="true"><path d="M12 3v12"/><path d="m7 10 5 5 5-5"/><path d="M5 19h14"/></svg>
+                              <span class="abt-save-label">#{v2LocaleBean.getMsg('v2.home.workshop.portal')}</span>
+                              <span class="abt-save-wait">#{v2LocaleBean.getMsg('v2.portal.publishing')}</span>
+                            </button>
+                            <button type="button" class="abt-save is-danger#{v2ThesaurusPortalBean.running ? ' is-off' : ''}"
+                                    data-act="portal-remove-ask"
+                                    aria-disabled="#{v2ThesaurusPortalBean.running}">
+                              <svg viewBox="0 0 24 24" aria-hidden="true"><path d="M3 6h18"/><path d="M8 6V4h8v2"/><path d="M19 6l-1 14H6L5 6"/></svg>
+                              <span class="abt-save-label">#{v2LocaleBean.getMsg('v2.portal.remove')}</span>
+                              <span class="abt-save-wait">#{v2LocaleBean.getMsg('v2.portal.removing')}</span>
+                            </button>
+                            <h:commandButton id="previewPortalPublishGo" value="publish" styleClass="st-jsf-go"
+                                             action="#{v2ThesaurusPortalBean.publish}">
+                              <f:ajax execute="portalUrl portalAcronym portalUsername portalApiKey portalContactName portalContactEmail @this"
+                                      render="previewPortalBox messagePortal"
+                                      onevent="onPreviewPortalPoll"/>
+                            </h:commandButton>
+                            <h:commandButton id="previewPortalRemoveGo" value="remove" styleClass="st-jsf-go"
+                                             action="#{v2ThesaurusPortalBean.removeFromPortal}">
+                              <f:ajax execute="portalUrl portalAcronym portalUsername portalApiKey portalContactName portalContactEmail @this"
+                                      render="previewPortalBox messagePortal"
+                                      onevent="onPreviewPortalPoll"/>
+                            </h:commandButton>
+                            <h:commandButton id="previewPortalPollGo" value="poll" styleClass="st-jsf-go"
+                                             action="#{v2ThesaurusPortalBean.onProgressPoll}">
+                              <f:ajax execute="@this" render="previewPortalBox messagePortal" onevent="onPreviewPortalPoll"/>
+                            </h:commandButton>
+                          </div>
+                          <h:panelGroup rendered="#{not empty v2ThesaurusPortalBean.ontologyUrl and not v2ThesaurusPortalBean.running}"
+                                        layout="block" styleClass="po-result">
+                            <div class="po-result-t">
+                              <svg viewBox="0 0 24 24" aria-hidden="true"><path d="M20 6 9 17l-5-5"/></svg>
+                              <strong>
+                                <h:outputText value="#{v2LocaleBean.getMsg('v2.portal.result.created')}"
+                                              rendered="#{v2ThesaurusPortalBean.createdOnPortal}"/>
+                                <h:outputText value="#{v2LocaleBean.getMsg('v2.portal.result.title')}"
+                                              rendered="#{not v2ThesaurusPortalBean.createdOnPortal}"/>
+                              </strong>
+                            </div>
+                            <a class="po-result-a" href="#{v2ThesaurusPortalBean.ontologyUrl}" target="_blank" rel="noopener noreferrer">
+                              #{v2LocaleBean.getMsg('v2.portal.open')}
+                              <svg viewBox="0 0 24 24" aria-hidden="true"><path d="M7 17 17 7"/><path d="M8 7h9v9"/></svg>
+                            </a>
+                          </h:panelGroup>
+                          <ui:fragment rendered="#{v2ThesaurusPortalBean.resultDialogVisible}">
+                            <div class="block-overlay confirm-overlay" id="previewPortalResult"
+                                 data-act="portal-result-dismiss" role="presentation">
+                              <div class="confirm-modal po-result-dlg#{v2ThesaurusPortalBean.resultDialogStyle}"
+                                   role="dialog" aria-modal="true"
+                                   aria-labelledby="previewPortalResultTitle"
+                                   data-act="portal-result-modal">
+                                <div class="po-result-head">
+                                  <span class="po-result-ico#{v2ThesaurusPortalBean.resultDialogStyle}" aria-hidden="true">
+                                    <ui:fragment rendered="#{not v2ThesaurusPortalBean.resultFailed}">
+                                      <svg viewBox="0 0 24 24"><path d="M20 6 9 17l-5-5"/></svg>
+                                    </ui:fragment>
+                                    <ui:fragment rendered="#{v2ThesaurusPortalBean.resultFailed}">
+                                      <svg viewBox="0 0 24 24"><path d="M12 9v4"/><path d="M12 17h.01"/><path d="M10.3 3.9 1.8 18a2 2 0 0 0 1.7 3h17a2 2 0 0 0 1.7-3L13.7 3.9a2 2 0 0 0-3.4 0z"/></svg>
+                                    </ui:fragment>
+                                  </span>
+                                  <div>
+                                    <div class="confirm-h" id="previewPortalResultTitle">
+                                      #{v2LocaleBean.getMsg(v2ThesaurusPortalBean.resultTitleKey)}
+                                    </div>
+                                    <p class="confirm-p">#{v2LocaleBean.getMsg(v2ThesaurusPortalBean.resultLeadKey)}</p>
+                                  </div>
+                                </div>
+                                <dl class="po-result-meta">
+                                  <div>
+                                    <dt>#{v2LocaleBean.getMsg('v2.portal.result.detail.destination')}</dt>
+                                    <dd class="po-stat-mono">
+                                      <h:outputText value="#{v2ThesaurusPortalBean.portalAcronym}"
+                                                    rendered="#{not empty v2ThesaurusPortalBean.portalAcronym}"/>
+                                      <h:outputText value="—"
+                                                    rendered="#{empty v2ThesaurusPortalBean.portalAcronym}"/>
+                                    </dd>
+                                  </div>
+                                  <div>
+                                    <dt>#{v2LocaleBean.getMsg('v2.portal.result.detail.portal')}</dt>
+                                    <dd>#{v2ThesaurusPortalBean.portalUrl}</dd>
+                                  </div>
+                                  <div>
+                                    <dt>#{v2LocaleBean.getMsg('v2.portal.result.detail.step')}</dt>
+                                    <dd>#{v2LocaleBean.getMsg(v2ThesaurusPortalBean.resolvedResultStepKey)}</dd>
+                                  </div>
+                                  <div>
+                                    <dt>#{v2LocaleBean.getMsg('v2.portal.result.detail.progress')}</dt>
+                                    <dd>#{v2ThesaurusPortalBean.resultProgress}%</dd>
+                                  </div>
+                                  <ui:fragment rendered="#{not v2ThesaurusPortalBean.resultFailed and not empty v2ThesaurusPortalBean.pullLocation}">
+                                    <div>
+                                      <dt>#{v2LocaleBean.getMsg('v2.portal.result.detail.pull')}</dt>
+                                      <dd>#{v2ThesaurusPortalBean.pullLocation}</dd>
+                                    </div>
+                                  </ui:fragment>
+                                  <ui:fragment rendered="#{not v2ThesaurusPortalBean.resultFailed and not empty v2ThesaurusPortalBean.formattedLastSyncAt}">
+                                    <div>
+                                      <dt>#{v2LocaleBean.getMsg('v2.portal.result.detail.date')}</dt>
+                                      <dd>#{v2ThesaurusPortalBean.formattedLastSyncAt}</dd>
+                                    </div>
+                                  </ui:fragment>
+                                  <ui:fragment rendered="#{v2ThesaurusPortalBean.resultFailed and not empty v2ThesaurusPortalBean.resultError}">
+                                    <div>
+                                      <dt>#{v2LocaleBean.getMsg('v2.portal.result.detail.error')}</dt>
+                                      <dd class="po-result-err">#{v2ThesaurusPortalBean.resultError}</dd>
+                                    </div>
+                                  </ui:fragment>
+                                </dl>
+                                <div class="confirm-actions">
+                                  <h:commandLink id="previewPortalResultCloseGo"
+                                                 styleClass="abt-cancel confirm-cancel"
+                                                 action="#{v2ThesaurusPortalBean.dismissResult}">
+                                    <f:ajax execute="@this" render="previewPortalBox"/>
+                                    <span>#{v2LocaleBean.getMsg('v2.portal.result.close')}</span>
+                                  </h:commandLink>
+                                  <h:outputLink value="#{v2ThesaurusPortalBean.ontologyUrl}"
+                                                styleClass="abt-save"
+                                                target="_blank"
+                                                rel="noopener noreferrer"
+                                                rendered="#{not v2ThesaurusPortalBean.resultFailed and not v2ThesaurusPortalBean.removedFromPortal and not empty v2ThesaurusPortalBean.ontologyUrl}">
+                                    <svg viewBox="0 0 24 24" aria-hidden="true"><path d="M7 17 17 7"/><path d="M8 7h9v9"/></svg>
+                                    <span>#{v2LocaleBean.getMsg('v2.portal.open')}</span>
+                                  </h:outputLink>
+                                </div>
+                              </div>
+                            </div>
+                          </ui:fragment>
+                        </div>
+                      </section>
+                    </h:panelGroup>
+                  </h:panelGroup>
+                  <div class="block-overlay confirm-overlay" id="previewPortalPublishConfirm" hidden="hidden"
+                       data-act="portal-publish-dismiss" role="presentation">
+                    <div class="confirm-modal" role="dialog" aria-modal="true"
+                         aria-labelledby="previewPortalPublishTitle" data-act="portal-publish-modal">
+                      <div class="confirm-h" id="previewPortalPublishTitle">#{v2LocaleBean.getMsg('v2.portal.publish.confirmTitle')}</div>
+                      <p class="confirm-p">#{v2LocaleBean.getMsg('v2.portal.publish.confirmLead')}</p>
+                      <div class="confirm-actions">
+                        <button type="button" class="abt-cancel confirm-cancel"
+                                data-act="portal-publish-dismiss">#{v2LocaleBean.getMsg('v2.cancel')}</button>
+                        <button type="button" class="abt-save abt-save-ok" data-act="portal-publish-go">
+                          <svg viewBox="0 0 24 24" aria-hidden="true"><path d="M12 3v12"/><path d="m7 10 5 5 5-5"/><path d="M5 19h14"/></svg>
+                          <span class="abt-save-label">#{v2LocaleBean.getMsg('v2.portal.publish.confirm')}</span>
+                          <span class="abt-save-wait">#{v2LocaleBean.getMsg('v2.portal.publishing')}</span>
+                        </button>
+                      </div>
+                    </div>
+                  </div>
+                  <div class="block-overlay confirm-overlay" id="previewPortalRemoveConfirm" hidden="hidden"
+                       data-act="portal-remove-dismiss" role="presentation">
+                    <div class="confirm-modal" role="dialog" aria-modal="true"
+                         aria-labelledby="previewPortalRemoveTitle" data-act="portal-remove-modal">
+                      <div class="confirm-h" id="previewPortalRemoveTitle">#{v2LocaleBean.getMsg('v2.portal.remove.confirmTitle')}</div>
+                      <p class="confirm-p">#{v2LocaleBean.getMsg('v2.portal.remove.confirmLead')}</p>
+                      <div class="confirm-actions">
+                        <button type="button" class="abt-cancel confirm-cancel"
+                                data-act="portal-remove-dismiss">#{v2LocaleBean.getMsg('v2.cancel')}</button>
+                        <button type="button" class="abt-save abt-save-ok is-danger" data-act="portal-remove-go">
+                          <svg viewBox="0 0 24 24" aria-hidden="true"><path d="M3 6h18"/><path d="M8 6V4h8v2"/><path d="M19 6l-1 14H6L5 6"/></svg>
+                          <span class="abt-save-label">#{v2LocaleBean.getMsg('v2.portal.remove.confirm')}</span>
+                          <span class="abt-save-wait">#{v2LocaleBean.getMsg('v2.portal.removing')}</span>
+                        </button>
+                      </div>
+                    </div>
+                  </div>
+                </h:form>
+              </div>
+            </div>
+          </div>
+  </ui:define>
+</ui:composition>

@@ -132,4 +132,28 @@ public class PreferencesEntity {
 
     @Column(name = "synchronisation")
     private boolean synchronisation;
+
+    @Column(name = "portail")
+    private boolean portail;
+
+    @Column(name = "portal_url")
+    private String portalUrl;
+
+    @Column(name = "portal_api_key")
+    private String portalApiKey;
+
+    @Column(name = "portal_acronym")
+    private String portalAcronym;
+
+    @Column(name = "portal_username")
+    private String portalUsername;
+
+    @Column(name = "portal_contact_name")
+    private String portalContactName;
+
+    @Column(name = "portal_contact_email")
+    private String portalContactEmail;
+
+    @Column(name = "portal_last_sync_at")
+    private java.time.LocalDateTime portalLastSyncAt;
 }

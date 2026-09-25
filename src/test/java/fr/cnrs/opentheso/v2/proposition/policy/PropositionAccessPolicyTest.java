@@ -187,7 +187,7 @@ class PropositionAccessPolicyTest {
                 "crt", "user", "pass", false, true, false, false, false,
                 null, null, null, true, false, false, suggestion, false,
                 false, false, false, false, null, null, false, null,
-                true, false, false, null, null, null, null, false, false,
+                true, false, false, null, null, null, null, false, false, false,
                 List.of(new ThesaurusLanguage(1L, "fr", "fr", "Thésaurus FR", "Français"))
         );
     }

@@ -159,6 +159,7 @@ class ThesaurusHomeReadServiceTest {
                 base.apiKeyOpenArk(),
                 base.showCandidatesToGuests(),
                 base.synchronisation(),
+                base.portail(),
                 base.languages()
         );
     }

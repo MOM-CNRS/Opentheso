@@ -272,6 +272,33 @@ function syncThesaurusPollTick() {
 window.onPreviewSyncPoll = function (data) {
   if (data.status === "success") syncThesaurusPollTick();
 };
+var portalPollTimer = null;
+function portalPublishPollTick() {
+  const state = document.getElementById("previewPortalState");
+  const running = !!(state && state.getAttribute("data-running") === "true");
+  if (!running) {
+    if (portalPollTimer) {
+      window.clearInterval(portalPollTimer);
+      portalPollTimer = null;
+    }
+    focusPortalResult();
+    return;
+  }
+  if (portalPollTimer) return;
+  portalPollTimer = window.setInterval(() => clickPreviewJsf("previewPortalPollGo"), 1000);
+}
+function focusPortalResult() {
+  const dlg = document.getElementById("previewPortalResult");
+  if (!dlg || dlg.classList.contains("is-off") || dlg.hidden) return;
+  const close = dlg.querySelector(".confirm-cancel");
+  if (close) close.focus();
+}
+function dismissPortalResult() {
+  clickPreviewJsf("previewPortalResultCloseGo");
+}
+window.onPreviewPortalPoll = function (data) {
+  if (data.status === "success") portalPublishPollTick();
+};
 window.tpToggleSyncDiff = function (btn) {
   if (!btn) return false;
   var box = btn.closest(".sync-diff");
@@ -294,6 +321,15 @@ document.addEventListener("keydown", (e) => {
   const overlay = $("#cblockOverlay");
   if (overlay && !overlay.hidden) {
     closeConceptBlockOverlay();
+    e.preventDefault();
+    return;
+  }
+  if (document.getElementById("previewPortalResult")) {
+    dismissPortalResult();
+    e.preventDefault();
+    return;
+  }
+  if (hideConfirm("#previewPortalPublishConfirm") || hideConfirm("#previewPortalRemoveConfirm")) {
     e.preventDefault();
     return;
   }
@@ -412,6 +448,35 @@ document.addEventListener("click", (e) => {
     closeThesaurus();
     if (askLeaveThen(() => showConfirm("#logoutConfirm"))) return;
     showConfirm("#logoutConfirm");
+  } else if (act === "portal-result-dismiss") {
+    e.preventDefault();
+    dismissPortalResult();
+  } else if (act === "portal-result-modal") {
+    return;
+  } else if (act === "portal-publish-ask") {
+    if (t.classList.contains("is-off")) return;
+    showConfirm("#previewPortalPublishConfirm");
+  } else if (act === "portal-publish-dismiss") {
+    e.preventDefault();
+    hideConfirm("#previewPortalPublishConfirm");
+  } else if (act === "portal-publish-modal") {
+    return;
+  } else if (act === "portal-publish-go") {
+    e.preventDefault();
+    hideConfirm("#previewPortalPublishConfirm");
+    clickPreviewJsf("previewPortalPublishGo");
+  } else if (act === "portal-remove-ask") {
+    if (t.classList.contains("is-off")) return;
+    showConfirm("#previewPortalRemoveConfirm");
+  } else if (act === "portal-remove-dismiss") {
+    e.preventDefault();
+    hideConfirm("#previewPortalRemoveConfirm");
+  } else if (act === "portal-remove-modal") {
+    return;
+  } else if (act === "portal-remove-go") {
+    e.preventDefault();
+    hideConfirm("#previewPortalRemoveConfirm");
+    clickPreviewJsf("previewPortalRemoveGo");
   } else if (act === "logout-dismiss") {
     hideConfirm("#logoutConfirm");
   } else if (act === "logout-modal") {
@@ -1716,6 +1781,9 @@ if (SCREEN === "atelier") {
 }
 if (SCREEN === "synchronisation") {
   syncThesaurusPollTick();
+}
+if (SCREEN === "portail") {
+  portalPublishPollTick();
 }
 if (SCREEN === "candidats" && (params.get("new") === "1" || params.get("pref") || params.get("path"))) {
   createCandidate({

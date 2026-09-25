@@ -28,6 +28,7 @@ public record ThesaurusPreferencesResponse(
         boolean webservices,
         boolean kohaLink,
         boolean uppercaseForArk,
-        boolean synchronisation
+        boolean synchronisation,
+        boolean portail
 ) {
 }

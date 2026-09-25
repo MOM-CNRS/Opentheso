@@ -8,6 +8,8 @@ import org.apache.commons.lang3.StringUtils;
 import org.springframework.stereotype.Component;
 import org.springframework.transaction.annotation.Transactional;
 
+import java.time.LocalDateTime;
+
 @Slf4j
 @Component
 @RequiredArgsConstructor
@@ -132,6 +134,48 @@ public class ToolboxPreferencePersistence {
 
     public Preferences findPreferences(String thesaurusId) {
         return preferencesRepository.findByIdThesaurus(thesaurusId).orElse(null);
+    }
+
+    @Transactional
+    public void updatePortalLink(
+            String thesaurusId,
+            String portalUrl,
+            String portalApiKey,
+            String portalAcronym,
+            String portalUsername,
+            String portalContactName,
+            String portalContactEmail
+    ) {
+        if (StringUtils.isBlank(thesaurusId)) {
+            return;
+        }
+        var preference = preferencesRepository.findByIdThesaurus(thesaurusId);
+        if (preference.isEmpty()) {
+            return;
+        }
+        Preferences prefs = preference.get();
+        prefs.setPortalUrl(StringUtils.trimToNull(portalUrl));
+        if (portalApiKey != null) {
+            prefs.setPortalApiKey(StringUtils.trimToNull(portalApiKey));
+        }
+        prefs.setPortalAcronym(StringUtils.trimToNull(portalAcronym));
+        prefs.setPortalUsername(StringUtils.trimToNull(portalUsername));
+        prefs.setPortalContactName(StringUtils.trimToNull(portalContactName));
+        prefs.setPortalContactEmail(StringUtils.trimToNull(portalContactEmail));
+        preferencesRepository.save(prefs);
+    }
+
+    @Transactional
+    public void updatePortalLastSyncAt(String thesaurusId, LocalDateTime lastSyncAt) {
+        if (StringUtils.isBlank(thesaurusId)) {
+            return;
+        }
+        var preference = preferencesRepository.findByIdThesaurus(thesaurusId);
+        if (preference.isEmpty()) {
+            return;
+        }
+        preference.get().setPortalLastSyncAt(lastSyncAt);
+        preferencesRepository.save(preference.get());
     }
 
     public void updatePreferredName(String thesaurusId, String preferredName) {

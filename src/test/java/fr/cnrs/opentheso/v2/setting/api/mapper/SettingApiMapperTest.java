@@ -43,7 +43,7 @@ class SettingApiMapperTest {
                 "en", "TH1", "http://new/", "http://origin",
                 ExportUriType.ARK,
                 false, true, true, false, true, false, true, false, true, false, false,
-                "new-deepl-key", false, true, true, true
+                "new-deepl-key", false, true, true, true, false
         );
 
         var merged = SettingApiMapper.mergePreferencesUpdate(current, request);
@@ -112,6 +112,7 @@ class SettingApiMapperTest {
                 false, null,
                 true, false,
                 false, null, null, null, null,
+                false,
                 false,
                 false,
                 null

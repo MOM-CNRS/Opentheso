@@ -268,6 +268,17 @@
                                                  title="#{v2LocaleBean.getMsg('v2.home.workshop.sync')}"/>
                       </label>
                     </div>
+                    <div class="st-toggle-row">
+                      <div class="st-toggle-main">
+                        <div class="st-toggle-l">#{v2LocaleBean.getMsg('v2.home.workshop.portal')}</div>
+                        <div class="st-toggle-d">#{v2LocaleBean.getMsg('v2.settings.portal.toggle.desc')}</div>
+                      </div>
+                      <label class="st-sw">
+                        <h:selectBooleanCheckbox styleClass="st-sw-input"
+                                                 value="#{v2ThesaurusPreferenceBean.preference.portail}"
+                                                 title="#{v2LocaleBean.getMsg('v2.home.workshop.portal')}"/>
+                      </label>
+                    </div>
                   </div>
                 </div>
                 <div class="bo-card">

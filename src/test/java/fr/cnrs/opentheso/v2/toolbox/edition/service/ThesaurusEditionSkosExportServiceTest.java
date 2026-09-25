@@ -15,6 +15,7 @@ import org.primefaces.model.StreamedContent;
 import static org.junit.jupiter.api.Assertions.assertEquals;
 import static org.junit.jupiter.api.Assertions.assertNotNull;
 import static org.junit.jupiter.api.Assertions.assertThrows;
+import static org.junit.jupiter.api.Assertions.assertTrue;
 import static org.mockito.ArgumentMatchers.any;
 import static org.mockito.ArgumentMatchers.eq;
 import static org.mockito.Mockito.when;
@@ -47,6 +48,22 @@ class ThesaurusEditionSkosExportServiceTest {
         assertNotNull(content);
         assertEquals("Animaux_TH1.rdf", content.getName());
         assertNotNull(content.getStream().get());
+    }
+
+    @Test
+    void exportThesaurusBytes_serializesRdfXml() throws Exception {
+        when(thesaurusSkosDocumentBuilder.buildDocument(eq("TH1"), any())).thenReturn(sampleDocument());
+
+        byte[] bytes = service.exportThesaurusBytes("TH1", "skos");
+
+        assertNotNull(bytes);
+        assertTrue(bytes.length > 0);
+        assertTrue(new String(bytes).contains("Chat") || bytes.length > 20);
+    }
+
+    @Test
+    void exportThesaurusBytes_rejectsBlankThesaurusId() {
+        assertThrows(IllegalStateException.class, () -> service.exportThesaurusBytes(" ", "skos"));
     }
 
     @Test

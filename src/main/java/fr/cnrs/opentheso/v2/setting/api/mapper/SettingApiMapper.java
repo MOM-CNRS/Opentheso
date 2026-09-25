@@ -45,7 +45,8 @@ public final class SettingApiMapper {
                 preferences.webservices(),
                 preferences.kohaLink(),
                 preferences.uppercaseForArk(),
-                preferences.synchronisation()
+                preferences.synchronisation(),
+                preferences.portail()
         );
     }
 
@@ -143,6 +144,7 @@ public final class SettingApiMapper {
                 current.apiKeyOpenArk(),
                 current.showCandidatesToGuests(),
                 coalesce(request.synchronisation(), current.synchronisation()),
+                coalesce(request.portail(), current.portail()),
                 current.languages()
         );
     }
@@ -208,6 +210,7 @@ public final class SettingApiMapper {
                 current.apiKeyOpenArk(),
                 current.showCandidatesToGuests(),
                 current.synchronisation(),
+                current.portail(),
                 current.languages()
         );
     }

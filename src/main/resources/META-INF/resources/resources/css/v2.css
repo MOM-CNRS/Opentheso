@@ -806,7 +806,7 @@ button.coll-item{
 .abt-save.is-busy{pointer-events:none;animation:login-busy .8s ease-in-out infinite}
 .abt-save.is-busy .abt-save-label{display:none}
 .abt-save.is-busy .abt-save-wait{display:inline}
-.abt-save.is-off{opacity:.42;pointer-events:none;box-shadow:none;filter:none;cursor:default}
+.abt-save.is-off,.abt-cancel.is-off{opacity:.42;pointer-events:none;box-shadow:none;filter:none;cursor:default}
 @media (prefers-reduced-motion:reduce){
   .abt-save,.abt-save.is-busy,.abt-save.is-click::after{animation:none;transition:none}
 }
@@ -1555,119 +1555,254 @@ input.bo-btn.primary:disabled,.bo-btn.primary:disabled{
   background:var(--ink-4);border-color:var(--ink-4);color:#fff
 }
 .st-static{padding-top:8px;font-size:13.5px;color:var(--ink-2)}
-body[data-page="synchronisation"] .sidebar,
-body[data-page="synchronisation"] .resizer,
-body[data-page="synchronisation"] .sb-rail-btn,
-body[data-page="synchronisation"] .go-top,
-body[data-page="synchronisation"] .view-rail,
-body[data-page="synchronisation"] .fiche,
-body[data-page="synchronisation"] #conceptDetail,
-body[data-page="synchronisation"] .detail-panel{display:none !important}
-body[data-page="synchronisation"] .panes{display:block;height:100%}
-body[data-page="synchronisation"] .content{
+body:is([data-page="synchronisation"],[data-page="portail"]) .sidebar,
+body:is([data-page="synchronisation"],[data-page="portail"]) .resizer,
+body:is([data-page="synchronisation"],[data-page="portail"]) .sb-rail-btn,
+body:is([data-page="synchronisation"],[data-page="portail"]) .go-top,
+body:is([data-page="synchronisation"],[data-page="portail"]) .view-rail,
+body:is([data-page="synchronisation"],[data-page="portail"]) .fiche,
+body:is([data-page="synchronisation"],[data-page="portail"]) #conceptDetail,
+body:is([data-page="synchronisation"],[data-page="portail"]) .detail-panel{display:none !important}
+body:is([data-page="synchronisation"],[data-page="portail"]) .panes{display:block;height:100%}
+body:is([data-page="synchronisation"],[data-page="portail"]) .content{
   display:flex;flex-direction:column;width:100%;max-width:none;height:100%;min-width:0;overflow:auto
 }
-body[data-page="synchronisation"] .main{
+body:is([data-page="synchronisation"],[data-page="portail"]) .main{
   overflow:auto;min-width:0;flex:1;background:
     radial-gradient(1200px 420px at 12% -10%, rgba(31,122,92,.07), transparent 55%),
     radial-gradient(900px 380px at 100% 0%, rgba(31,122,92,.04), transparent 50%),
     var(--bg)
 }
-body[data-page="synchronisation"] #previewView{height:100%;overflow:auto}
-body[data-page="synchronisation"] .view,
-body[data-page="synchronisation"] .content.is-full .view{padding:0}
-body[data-page="synchronisation"] .view-lang-refresh{display:block;width:100%;min-height:100%}
-body[data-page="synchronisation"] #viewSync{
+body:is([data-page="synchronisation"],[data-page="portail"]) #previewView{height:100%;overflow:auto}
+body:is([data-page="synchronisation"],[data-page="portail"]) .view,
+body:is([data-page="synchronisation"],[data-page="portail"]) .content.is-full .view{padding:0}
+body:is([data-page="synchronisation"],[data-page="portail"]) .view-lang-refresh{display:block;width:100%;min-height:100%}
+body:is([data-page="synchronisation"],[data-page="portail"]) #viewSync,
+body:is([data-page="synchronisation"],[data-page="portail"]) #viewPortal{
   display:block;height:auto;min-height:100%;overflow:visible
 }
-body[data-page="synchronisation"] .bo.bo-solo.sy{max-width:880px}
-body[data-page="synchronisation"] .bo-solo > .bo-back{
+body:is([data-page="synchronisation"],[data-page="portail"]) .bo.bo-solo.sy{max-width:880px}
+body:is([data-page="synchronisation"],[data-page="portail"]) .bo-solo > .bo-back{
   position:static !important;left:auto !important;top:auto !important;grid-row:2
 }
-body[data-page="synchronisation"] .bo-solo > .bo-head{
+body:is([data-page="synchronisation"],[data-page="portail"]) .bo-solo > .bo-head{
   grid-row:2;align-items:flex-start;justify-content:space-between;padding-left:0;margin-bottom:20px
 }
-body[data-page="synchronisation"] .bo-title{
+body:is([data-page="synchronisation"],[data-page="portail"]) .bo-title{
   font-size:clamp(22px, 2.4vw, 28px);font-weight:700;letter-spacing:-.028em;line-height:1.15
 }
-body[data-page="synchronisation"] .sy-head{align-items:flex-start;gap:16px}
-body[data-page="synchronisation"] .sy-head .bo-head-ico{flex:0 0 auto;margin-top:2px}
-body[data-page="synchronisation"] .sy-head-copy{min-width:0;flex:1}
-body[data-page="synchronisation"] .sy-kicker{
+body:is([data-page="synchronisation"],[data-page="portail"]) .sy-head{align-items:flex-start;gap:16px}
+body:is([data-page="synchronisation"],[data-page="portail"]) .sy-head .bo-head-ico{flex:0 0 auto;margin-top:2px}
+body:is([data-page="synchronisation"],[data-page="portail"]) .sy-head-copy{min-width:0;flex:1}
+body:is([data-page="synchronisation"],[data-page="portail"]) .sy-kicker{
   display:inline-block;font-size:11.5px;font-weight:700;letter-spacing:.06em;
   text-transform:uppercase;color:var(--accent);margin-bottom:6px
 }
-body[data-page="synchronisation"] .sy-head .bo-sub{margin-top:8px;max-width:38rem}
-body[data-page="synchronisation"] .sy-theso{
+body:is([data-page="synchronisation"],[data-page="portail"]) .sy-head .bo-sub{margin-top:8px;max-width:38rem}
+body:is([data-page="synchronisation"],[data-page="portail"]) .sy-theso{
   display:inline-flex;align-items:center;margin-top:10px;max-width:100%;
   padding:4px 9px;border-radius:999px;border:1px solid var(--line);
   background:var(--surface);font-size:12.5px;font-weight:650;color:var(--ink-2);
   overflow:hidden;text-overflow:ellipsis;white-space:nowrap
 }
-body[data-page="synchronisation"] .sy-role{
+body:is([data-page="synchronisation"],[data-page="portail"]) .sy-role{
   display:inline-flex;align-items:center;gap:7px;flex:0 0 auto;
   padding:6px 11px;border-radius:999px;font-size:12.5px;font-weight:700;
   background:#f4f1ea;color:#6b5428;border:1px solid #e0d4b8
 }
-body[data-page="synchronisation"] .sy-role svg{
+body:is([data-page="synchronisation"],[data-page="portail"]) .sy-role svg{
   width:14px;height:14px;stroke:currentColor;fill:none;stroke-width:2;
   stroke-linecap:round;stroke-linejoin:round
 }
-body[data-page="synchronisation"] .sy-flow{display:flex;flex-direction:column;gap:16px}
-body[data-page="synchronisation"] .sy-stats{display:grid;grid-template-columns:1fr 1fr;gap:10px}
-body[data-page="synchronisation"] .sy-stat{
+body:is([data-page="synchronisation"],[data-page="portail"]) .sy-flow{display:flex;flex-direction:column;gap:16px}
+body:is([data-page="synchronisation"],[data-page="portail"]) .sy-stats{display:grid;grid-template-columns:1fr 1fr;gap:10px}
+body:is([data-page="synchronisation"],[data-page="portail"]) .sy-stat{
   padding:14px 16px;border:1px solid var(--line);border-radius:14px;
   background:var(--surface);box-shadow:var(--shadow-sm,0 1px 2px rgba(20,24,28,.04))
 }
-body[data-page="synchronisation"] .sy-stat-l{
+body:is([data-page="synchronisation"],[data-page="portail"]) .sy-stat-l{
   display:block;font-size:11.5px;font-weight:600;color:var(--ink-3);
   letter-spacing:.02em;margin-bottom:4px
 }
-body[data-page="synchronisation"] .sy-stat-v{font-size:20px;letter-spacing:-.03em;color:var(--ink)}
-body[data-page="synchronisation"] .sy-card{
+body:is([data-page="synchronisation"],[data-page="portail"]) .sy-stat-v{font-size:20px;letter-spacing:-.03em;color:var(--ink)}
+body:is([data-page="synchronisation"],[data-page="portail"]) .sy-card{
   background:var(--surface);border:1px solid var(--line);border-radius:16px;
   box-shadow:var(--shadow-sm,0 1px 2px rgba(20,24,28,.04));overflow:hidden
 }
-body[data-page="synchronisation"] .sy-card-h{
+body:is([data-page="synchronisation"],[data-page="portail"]) .sy-card-h{
   display:flex;align-items:flex-start;gap:12px;padding:16px 18px 14px;
   border-bottom:1px solid var(--line-2);background:linear-gradient(180deg,var(--surface-2),var(--surface))
 }
-body[data-page="synchronisation"] .sy-step{
+body:is([data-page="synchronisation"],[data-page="portail"]) .sy-step{
   display:grid;place-items:center;width:28px;height:28px;flex:0 0 auto;
   border-radius:9px;background:var(--accent-soft);color:var(--accent);
   font-size:13px;font-weight:800
 }
-body[data-page="synchronisation"] .sy-card-t{margin:0;font-size:15.5px;font-weight:750;letter-spacing:-.02em}
-body[data-page="synchronisation"] .sy-card-d{margin:4px 0 0;font-size:12.5px;color:var(--ink-3);line-height:1.4}
-body[data-page="synchronisation"] .sy-card-b{padding:16px 18px 18px}
-body[data-page="synchronisation"] .sy-grid{display:grid;grid-template-columns:1fr 1fr;gap:14px 16px}
-body[data-page="synchronisation"] .sy-field{display:flex;flex-direction:column;gap:6px;min-width:0}
-body[data-page="synchronisation"] .sy-field--wide{grid-column:1 / -1}
-body[data-page="synchronisation"] .sy-field > span{font-size:12.5px;font-weight:650;color:var(--ink-2)}
-body[data-page="synchronisation"] .sy-field .st-input{max-width:none}
-body[data-page="synchronisation"] .sy-hint{
+body:is([data-page="synchronisation"],[data-page="portail"]) .sy-card-t{margin:0;font-size:15.5px;font-weight:750;letter-spacing:-.02em}
+body:is([data-page="synchronisation"],[data-page="portail"]) .sy-card-d{margin:4px 0 0;font-size:12.5px;color:var(--ink-3);line-height:1.4}
+body:is([data-page="synchronisation"],[data-page="portail"]) .sy-card-b{padding:16px 18px 18px}
+body:is([data-page="synchronisation"],[data-page="portail"]) .sy-grid{display:grid;grid-template-columns:1fr 1fr;gap:14px 16px}
+body:is([data-page="synchronisation"],[data-page="portail"]) .sy-field{display:flex;flex-direction:column;gap:6px;min-width:0}
+body:is([data-page="synchronisation"],[data-page="portail"]) .sy-field--wide{grid-column:1 / -1}
+body:is([data-page="synchronisation"],[data-page="portail"]) .sy-field > span{font-size:12.5px;font-weight:650;color:var(--ink-2)}
+body:is([data-page="synchronisation"],[data-page="portail"]) .sy-field .st-input{max-width:none}
+body:is([data-page="synchronisation"],[data-page="portail"]) .sy-hint{
   margin:12px 0 0;font-size:12.5px;color:var(--ink-3);line-height:1.45
 }
-body[data-page="synchronisation"] .sy-actions{display:flex;flex-wrap:wrap;gap:8px;margin-top:16px}
-body[data-page="synchronisation"] .sy-actions--run{padding-top:4px}
-body[data-page="synchronisation"] .sy-opt{margin-top:4px}
-body[data-page="synchronisation"] .sy-opt .st-toggle-row{border-bottom:0;padding:4px 0 12px}
-body[data-page="synchronisation"] .sy-empty{
+body:is([data-page="synchronisation"],[data-page="portail"]) .sy-progress{
+  margin:0 0 12px;padding:10px 12px;border-radius:10px;background:var(--accent-soft);color:var(--accent)
+}
+body:is([data-page="synchronisation"],[data-page="portail"]) .sy-progress .sy-hint{margin:0;color:inherit}
+body:is([data-page="synchronisation"],[data-page="portail"]) .sy-open{
+  color:var(--accent);font-weight:650;text-decoration:none
+}
+body:is([data-page="synchronisation"],[data-page="portail"]) .sy-open:hover{text-decoration:underline}
+body:is([data-page="synchronisation"],[data-page="portail"]) .sy-actions{display:flex;flex-wrap:wrap;gap:8px;margin-top:16px}
+body:is([data-page="synchronisation"],[data-page="portail"]) .sy-actions--run{padding-top:4px}
+body[data-page="portail"] .po-run .abt-save,
+body[data-page="portail"] .po-run .abt-save.is-danger{min-width:168px}
+body[data-page="portail"] .po-run .abt-save.is-danger,
+body[data-page="portail"] .confirm-modal .abt-save.is-danger{
+  box-shadow:0 1px 0 rgba(255,255,255,.16) inset, 0 8px 20px rgba(180,35,24,.24)
+}
+body[data-page="portail"] .po-run .abt-save.is-danger:hover,
+body[data-page="portail"] .po-run .abt-save.is-danger:focus,
+body[data-page="portail"] .confirm-modal .abt-save.is-danger:hover{
+  color:#fff;filter:brightness(1.06);
+  box-shadow:0 1px 0 rgba(255,255,255,.2) inset, 0 10px 24px rgba(180,35,24,.32)
+}
+body:is([data-page="synchronisation"],[data-page="portail"]) .sy-opt{margin-top:4px}
+body:is([data-page="synchronisation"],[data-page="portail"]) .sy-opt .st-toggle-row{border-bottom:0;padding:4px 0 12px}
+body:is([data-page="synchronisation"],[data-page="portail"]) .sy-empty{
   display:flex;align-items:flex-start;gap:12px;padding:16px 18px;
   border:1px dashed var(--line);border-radius:14px;background:var(--surface-2)
 }
-body[data-page="synchronisation"] .sy-empty svg{
+body:is([data-page="synchronisation"],[data-page="portail"]) .sy-empty svg{
   width:22px;height:22px;flex:0 0 auto;stroke:currentColor;fill:none;stroke-width:2;
   stroke-linecap:round;stroke-linejoin:round;color:#9a4d12;margin-top:1px
 }
-body[data-page="synchronisation"] .sy-empty p{margin:0;font-size:13.5px;line-height:1.45;color:var(--ink-2)}
+body:is([data-page="synchronisation"],[data-page="portail"]) .sy-empty p{margin:0;font-size:13.5px;line-height:1.45;color:var(--ink-2)}
 @media (max-width:720px){
-  body[data-page="synchronisation"] .sy-head{flex-wrap:wrap}
-  body[data-page="synchronisation"] .sy-role{margin-left:60px}
-  body[data-page="synchronisation"] .sy-stats,
-  body[data-page="synchronisation"] .sy-grid{grid-template-columns:1fr}
-  body[data-page="synchronisation"] .sy-card-h{padding:14px 14px 12px}
-  body[data-page="synchronisation"] .sy-card-b{padding:14px}
+  body:is([data-page="synchronisation"],[data-page="portail"]) .sy-head{flex-wrap:wrap}
+  body:is([data-page="synchronisation"],[data-page="portail"]) .sy-role{margin-left:60px}
+  body:is([data-page="synchronisation"],[data-page="portail"]) .sy-stats,
+  body:is([data-page="synchronisation"],[data-page="portail"]) .sy-grid{grid-template-columns:1fr}
+  body:is([data-page="synchronisation"],[data-page="portail"]) .sy-card-h{padding:14px 14px 12px}
+  body:is([data-page="synchronisation"],[data-page="portail"]) .sy-card-b{padding:14px}
+}
+body[data-page="portail"] .bo.bo-solo.sy.po{max-width:920px}
+body[data-page="portail"] .main{
+  background:
+    radial-gradient(1100px 460px at 8% -12%, rgba(36,99,140,.09), transparent 56%),
+    radial-gradient(820px 360px at 100% 4%, rgba(31,122,92,.05), transparent 52%),
+    var(--bg)
+}
+body[data-page="portail"] .po-ico{
+  display:grid;place-items:center;border:1px solid #c5dbe6;
+  background:linear-gradient(180deg,#e8f3f8,#d7e8f1);color:#1f5f7a
+}
+body[data-page="portail"] .po-role{
+  background:#eef5f8;color:#21586e;border-color:#c9dce5
+}
+body[data-page="portail"] .po-stats{
+  display:grid;grid-template-columns:1.2fr 1fr .8fr;gap:10px
+}
+body[data-page="portail"] .po-stat-mono{
+  font-family:var(--mono, ui-monospace, SFMono-Regular, Menlo, monospace);
+  font-size:16px;letter-spacing:.02em
+}
+body[data-page="portail"] .po-group + .po-group{
+  margin-top:18px;padding-top:16px;border-top:1px dashed var(--line)
+}
+body[data-page="portail"] .po-group-t{
+  margin:0 0 12px;font-size:12px;font-weight:750;letter-spacing:.04em;
+  text-transform:uppercase;color:var(--ink-3)
+}
+body[data-page="portail"] .po-pipe{
+  list-style:none;margin:0 0 16px;padding:0;display:flex;gap:8px;flex-wrap:wrap
+}
+body[data-page="portail"] .po-pipe-i{
+  display:inline-flex;align-items:center;gap:8px;flex:1 1 140px;
+  min-height:42px;padding:8px 10px;border-radius:12px;
+  background:var(--surface-2);border:1px solid var(--line-2);
+  font-size:12.5px;font-weight:650;color:var(--ink-2)
+}
+body[data-page="portail"] .po-pipe-n{
+  display:grid;place-items:center;width:22px;height:22px;flex:0 0 auto;
+  border-radius:7px;background:#d7e8f1;color:#1f5f7a;font-size:11.5px;font-weight:800
+}
+body[data-page="portail"] .po-pipe-i.is-on{
+  background:#e8f3f8;border-color:#9cc4d6;color:#1f5f7a
+}
+body[data-page="portail"] .po-pipe-i.is-done{
+  background:#eef8f1;border-color:#b7e0c7;color:#1f6b45
+}
+body[data-page="portail"] .po-pipe-i.is-on .po-pipe-n{background:#1f5f7a;color:#fff}
+body[data-page="portail"] .po-pipe-i.is-done .po-pipe-n{background:#1f6b45;color:#fff}
+body[data-page="portail"] .po-progress{
+  display:flex;flex-direction:column;gap:10px;margin:0 0 14px;
+  padding:12px 14px;border-radius:12px;background:#e8f3f8;color:#1f5f7a;
+  border:1px solid #c5dbe6
+}
+body[data-page="portail"] .po-progress-t{margin:0;font-size:13.5px;font-weight:650}
+body[data-page="portail"] .po-progress .mg-bar-track{background:#c5dbe6;height:10px}
+body[data-page="portail"] .po-progress .mg-bar-fill{background:#1f5f7a}
+body[data-page="portail"] .po-progress .mg-bar-n{color:#1f5f7a;font-weight:700}
+body[data-page="portail"] .po-result{
+  margin-top:16px;padding:14px 16px;border-radius:14px;
+  background:#eef8f1;border:1px solid #b7e0c7;display:flex;
+  align-items:center;justify-content:space-between;gap:12px;flex-wrap:wrap
+}
+body[data-page="portail"] .po-result-t{
+  display:flex;align-items:center;gap:8px;font-size:13.5px;color:#1f6b45
+}
+body[data-page="portail"] .po-result-t svg{
+  width:18px;height:18px;stroke:currentColor;fill:none;stroke-width:2.2;
+  stroke-linecap:round;stroke-linejoin:round
+}
+body[data-page="portail"] .po-result-a{
+  display:inline-flex;align-items:center;gap:6px;
+  color:#1f5f7a;font-weight:700;text-decoration:none;font-size:13px
+}
+body[data-page="portail"] .po-result-a:hover{text-decoration:underline}
+body[data-page="portail"] .po-result-a svg{
+  width:14px;height:14px;stroke:currentColor;fill:none;stroke-width:2;
+  stroke-linecap:round;stroke-linejoin:round
+}
+body[data-page="portail"] .po-result-dlg{
+  width:min(440px,92vw);gap:14px
+}
+body[data-page="portail"] .po-result-dlg.is-ok{border-top:4px solid #1f6b45}
+body[data-page="portail"] .po-result-dlg.is-err{border-top:4px solid #9b1c1c}
+body[data-page="portail"] .po-result-head{display:flex;align-items:flex-start;gap:12px}
+body[data-page="portail"] .po-result-ico{
+  display:grid;place-items:center;width:36px;height:36px;flex:0 0 auto;
+  border-radius:10px
+}
+body[data-page="portail"] .po-result-ico.is-ok{background:#eef8f1;color:#1f6b45}
+body[data-page="portail"] .po-result-ico.is-err{background:#fdecec;color:#9b1c1c}
+body[data-page="portail"] .po-result-ico svg{
+  width:18px;height:18px;stroke:currentColor;fill:none;stroke-width:2.2;
+  stroke-linecap:round;stroke-linejoin:round
+}
+body[data-page="portail"] .po-result-dlg .confirm-p{margin-top:4px}
+body[data-page="portail"] .po-result-meta{
+  margin:0;display:flex;flex-direction:column;gap:8px
+}
+body[data-page="portail"] .po-result-meta > div{
+  display:flex;align-items:flex-start;justify-content:space-between;gap:12px
+}
+body[data-page="portail"] .po-result-meta dt{
+  flex:0 0 auto;margin:0;font-size:12px;font-weight:650;color:var(--ink-3)
+}
+body[data-page="portail"] .po-result-meta dd{
+  margin:0;min-width:0;text-align:right;font-size:13px;font-weight:650;
+  color:var(--ink);overflow-wrap:anywhere
+}
+body[data-page="portail"] .po-result-err{color:#9b1c1c;font-weight:600}
+@media (max-width:720px){
+  body[data-page="portail"] .po-stats{grid-template-columns:1fr}
+  body[data-page="portail"] .po-pipe-i{flex:1 1 100%}
 }
 textarea.sync-comment{min-height:88px;max-width:none;resize:vertical}
 .sync-first-hint{margin:6px 0 0;font-size:12.5px;color:var(--ink-3);line-height:1.4;font-weight:500}

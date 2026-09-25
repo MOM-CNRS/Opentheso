@@ -24,6 +24,7 @@ public record UpdateThesaurusPreferencesRequest(
         Boolean webservices,
         Boolean kohaLink,
         Boolean uppercaseForArk,
-        Boolean synchronisation
+        Boolean synchronisation,
+        Boolean portail
 ) {
 }
