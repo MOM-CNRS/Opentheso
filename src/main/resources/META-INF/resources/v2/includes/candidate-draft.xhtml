@@ -1,0 +1,388 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<ui:composition xmlns="http://www.w3.org/1999/xhtml"
+                xmlns:ui="http://xmlns.jcp.org/jsf/facelets"
+                xmlns:h="http://xmlns.jcp.org/jsf/html"
+                xmlns:f="http://xmlns.jcp.org/jsf/core"
+                xmlns:pt="http://xmlns.jcp.org/jsf/passthrough">
+  <div class="view-panel" id="viewDraft"
+       data-loc-root="#{v2LocaleBean.getMsg('v2.candidat.draft.loc.root')}"
+       data-loc-under="#{v2LocaleBean.getMsg('v2.candidat.draft.loc.under')}"
+       data-more="#{v2LocaleBean.getMsg('v2.candidat.draft.more')}"
+       data-more-hide="#{v2LocaleBean.getMsg('v2.candidat.draft.more.hide')}"
+       data-created-msg="#{v2LocaleBean.getMsg('v2.candidat.draft.created')}"
+       data-confirm-create="#{v2LocaleBean.getMsg('v2.candidat.draft.confirm.create')}"
+       data-confirm-chain="#{v2LocaleBean.getMsg('v2.candidat.draft.confirm.chain')}"
+       data-confirm-go="#{v2LocaleBean.getMsg('v2.candidat.draft.create')}"
+       data-confirm-go-chain="#{v2LocaleBean.getMsg('v2.candidat.draft.chain')}">
+    <h:form id="candDraftForm" prependId="false" styleClass="cand-draft-form">
+      <span id="draftResult" hidden="hidden"
+            data-created="#{v2CandidateDraftBean.created ? '1' : '0'}"
+            data-chain="#{v2CandidateDraftBean.chainNext ? '1' : '0'}"></span>
+      <h:inputHidden id="draftCreateMode" value="#{v2CandidateDraftBean.createMode}"/>
+      <div class="cv is-on is-draft" data-status="candidat">
+        <div class="cv-head df-head">
+          <div class="df-title-row">
+            <span class="cv-dot" title="#{v2LocaleBean.getMsg('v2.create.candidat')}"></span>
+            <h1 class="cv-pref">
+              <h:inputText id="draftTitle" styleClass="cv-draft-input"
+                           value="#{v2CandidateDraftBean.title}"
+                           pt:placeholder="#{v2LocaleBean.getMsg('v2.candidat.draft.namePlaceholder')}"
+                           pt:aria-label="#{v2LocaleBean.getMsg('v2.candidat.draft.namePlaceholder')}"
+                           pt:autocomplete="off"
+                           pt:oninput="if(window.syncDraftPrefMirror)syncDraftPrefMirror()"/>
+            </h1>
+          </div>
+          <div class="df-err" id="draftTitleErr" hidden="hidden">#{v2LocaleBean.getMsg('v2.candidat.draft.nameRequired')}</div>
+          <div class="df-meta">
+            <span class="df-chip df-lang"
+                  title="#{v2ThesaurusViewBean.languageLabel(v2ConceptLifecycleEditorBean.workLanguage)}">
+              <span class="tr-flag" aria-hidden="true">#{v2ThesaurusViewBean.flagEmoji(v2ConceptLifecycleEditorBean.workLanguage)}</span>
+              <span class="df-lang-name">#{v2ThesaurusViewBean.languageLabel(v2ConceptLifecycleEditorBean.workLanguage)}</span>
+              <span class="df-lang-code">#{v2ConceptLifecycleEditorBean.workLanguage}</span>
+            </span>
+            <span class="df-chip cv-status">#{v2LocaleBean.getMsg('v2.candidat.draft.status')}</span>
+            <p class="cv-draft-loc" id="draftLoc">#{v2LocaleBean.getMsg('v2.candidat.draft.loc.root')}</p>
+          </div>
+        </div>
+
+        <div class="cv-blocks">
+          <section class="cblock">
+            <div class="cblock-head">#{v2LocaleBean.getMsg('v2.candidat.draft.def')}</div>
+            <div class="cblock-body">
+              <div class="crow">
+                <div class="crow-lbl">#{v2LocaleBean.getMsg('v2.candidat.draft.def')}</div>
+                <div class="crow-val">
+                  <h:inputTextarea id="draftDef" styleClass="disc-input"
+                                   value="#{v2CandidateDraftBean.definition}"
+                                   pt:placeholder="#{v2LocaleBean.getMsg('v2.candidat.draft.defPlaceholder')}"/>
+                </div>
+              </div>
+              <div class="df-warn" id="draftRootWarn">#{v2LocaleBean.getMsg('v2.candidat.draft.noBt')}</div>
+            </div>
+          </section>
+        </div>
+
+        <button type="button" class="df-more-toggle" id="draftMoreToggle" data-act="draft-more"
+                aria-expanded="false" aria-controls="draftMore">
+          <svg viewBox="0 0 24 24" aria-hidden="true"><path d="m9 18 6-6-6-6"/></svg>
+          <span id="draftMoreLabel">#{v2LocaleBean.getMsg('v2.candidat.draft.more')}</span>
+        </button>
+
+        <div class="cv-blocks" id="draftMore" hidden="hidden">
+          <section class="cblock">
+            <div class="cblock-head">#{v2LocaleBean.getMsg('v2.candidat.draft.labels')}</div>
+            <div class="cblock-body">
+              <div class="crow">
+                <div class="crow-lbl">#{v2LocaleBean.getMsg('v2.candidat.draft.alts')}</div>
+                <div class="crow-val">
+                  <h:inputText id="draftAlts" styleClass="st-input"
+                               value="#{v2CandidateDraftBean.alternatives}"
+                               pt:placeholder="#{v2LocaleBean.getMsg('v2.candidat.draft.altsHint')}"/>
+                </div>
+              </div>
+              <div class="crow">
+                <div class="crow-lbl">#{v2LocaleBean.getMsg('v2.candidat.draft.hidden')}</div>
+                <div class="crow-val">
+                  <h:inputText id="draftHidden" styleClass="st-input"
+                               value="#{v2CandidateDraftBean.hiddenForms}"
+                               pt:placeholder="#{v2LocaleBean.getMsg('v2.candidat.draft.hiddenHint')}"/>
+                </div>
+              </div>
+            </div>
+          </section>
+
+          <section class="cblock">
+            <div class="cblock-head">#{v2LocaleBean.getMsg('v2.candidat.draft.collections')}</div>
+            <div class="cblock-body">
+              <div class="crow">
+                <div class="crow-lbl">#{v2LocaleBean.getMsg('v2.candidat.draft.addCollection')}</div>
+                <div class="crow-val">
+                  <div class="coll-pick" id="draftCollPick">
+                    <div class="coll-pick-chips" id="draftCollChips" hidden="hidden"></div>
+                    <div class="search-field coll-pick-field" id="draftCollCombo">
+                      <span class="search-ico" aria-hidden="true">⌕</span>
+                      <input type="text" class="search-input" id="draftColl"
+                             placeholder="#{v2LocaleBean.getMsg('v2.candidat.draft.collectionPlaceholder')}"
+                             autocomplete="off" spellcheck="false"
+                             aria-autocomplete="list" aria-expanded="false"
+                             aria-controls="draftCollMenu"
+                             aria-label="#{v2LocaleBean.getMsg('v2.candidat.draft.addCollection')}"/>
+                      <button type="button" class="search-clear" id="draftCollClear" hidden="hidden"
+                              data-act="coll-pick-clear" title="#{v2LocaleBean.getMsg('v2.candidat.draft.cancel')}">×</button>
+                      <button type="button" class="coll-pick-caret" id="draftCollCaret"
+                              data-act="coll-pick-toggle" tabindex="-1"
+                              title="#{v2LocaleBean.getMsg('v2.candidat.draft.collections')}"
+                              aria-label="#{v2LocaleBean.getMsg('v2.candidat.draft.collections')}">
+                        <span aria-hidden="true">▾</span>
+                      </button>
+                    </div>
+                    <div class="ac" id="draftCollMenu" hidden="hidden" role="listbox">
+                      <div class="ac-empty">Aucune collection pour « <span id="draftCollQuery"></span> »</div>
+                      <div class="coll-ac-list" id="draftCollList"></div>
+                      <button type="button" class="ac-footer" id="draftCollMore" data-act="coll-pick-more">
+                        Voir les <strong id="draftCollCount">0</strong> collections<span class="ac-enter">↵</span>
+                      </button>
+                    </div>
+                    <input type="hidden" id="draftCollIds" value=""/>
+                    <h:inputHidden id="draftCollIdsBound" value="#{v2CandidateDraftBean.collectionIds}"/>
+                  </div>
+                </div>
+              </div>
+            </div>
+          </section>
+
+          <section class="cblock">
+            <div class="cblock-head">#{v2LocaleBean.getMsg('v2.candidat.draft.relations')}</div>
+            <div class="cblock-body">
+              <div class="re" id="draftRelEditor"
+                   data-none="#{v2LocaleBean.getMsg('v2.candidat.draft.rel.none')}"
+                   data-remove="#{v2LocaleBean.getMsg('v2.candidat.draft.rel.remove')}"
+                   data-exists="#{v2LocaleBean.getMsg('v2.candidat.draft.rel.exists')}">
+                <div class="re-rows" id="draftRelRows"></div>
+                <div class="re-row re-new" id="draftRelNew">
+                  <span class="re-type">
+                    <button type="button" class="re-pill rel-nt" id="draftRelKindBtn"
+                            data-act="draft-rel-kind-toggle" aria-haspopup="listbox" aria-expanded="false">
+                      TS<span class="re-caret" aria-hidden="true"></span>
+                    </button>
+                    <div class="re-menu" id="draftRelKindMenu" hidden="hidden" role="listbox">
+                      <button type="button" class="re-mi" role="option" data-act="draft-rel-kind" data-kind="bt">
+                        <span class="rel-code rel-bt">TG</span>#{v2LocaleBean.getMsg('v2.candidat.draft.bt')}
+                      </button>
+                      <button type="button" class="re-mi on" role="option" data-act="draft-rel-kind" data-kind="nt">
+                        <span class="rel-code rel-nt">TS</span>#{v2LocaleBean.getMsg('v2.candidat.draft.nt')}
+                      </button>
+                      <button type="button" class="re-mi" role="option" data-act="draft-rel-kind" data-kind="rt">
+                        <span class="rel-code rel-rt">TA</span>#{v2LocaleBean.getMsg('v2.candidat.draft.rt')}
+                      </button>
+                    </div>
+                  </span>
+                  <div class="re-field">
+                    <input type="text" class="st-input re-q" id="draftRelQ" autocomplete="off" spellcheck="false"
+                           placeholder="#{v2LocaleBean.getMsg('v2.candidat.draft.rel.add')}"
+                           aria-label="#{v2LocaleBean.getMsg('v2.candidat.draft.rel.add')}"/>
+                    <div class="re-drop" id="draftRelDrop" hidden="hidden"></div>
+                    <div class="re-none" id="draftRelEmpty" hidden="hidden">#{v2LocaleBean.getMsg('v2.candidat.draft.rel.none')}</div>
+                  </div>
+                </div>
+                <div class="re-msg re-error" id="draftRelMsg" hidden="hidden"></div>
+                <h:inputHidden id="draftBt" value="#{v2CandidateDraftBean.broaderTerm}"/>
+                <h:inputHidden id="draftNt" value="#{v2CandidateDraftBean.narrowerTerms}"/>
+                <h:inputHidden id="draftRt" value="#{v2CandidateDraftBean.relatedTerms}"/>
+              </div>
+            </div>
+          </section>
+
+          <section class="cblock">
+            <div class="cblock-head">#{v2LocaleBean.getMsg('v2.candidat.draft.translations')}</div>
+            <div class="cblock-body">
+              <div class="te" id="draftTrEditor"
+                   data-empty="#{v2LocaleBean.getMsg('v2.candidat.draft.tr.empty')}"
+                   data-drop="#{v2LocaleBean.getMsg('v2.candidat.draft.tr.drop')}"
+                   data-ph="#{v2LocaleBean.getMsg('v2.candidat.draft.tr.namePh')}"
+                   data-alt="#{v2LocaleBean.getMsg('v2.candidat.draft.tr.altPh')}"
+                   data-remove="#{v2LocaleBean.getMsg('v2.candidat.draft.tr.remove')}"
+                   data-no="#{v2LocaleBean.getMsg('v2.candidat.draft.tr.no')}"
+                   data-yes="#{v2LocaleBean.getMsg('v2.candidat.draft.tr.yes')}">
+                <div class="re-none" id="draftTrEmpty">#{v2LocaleBean.getMsg('v2.candidat.draft.tr.empty')}</div>
+                <div id="draftTrList"></div>
+                <div class="te-add">
+                  <div class="tp-lang-pick te-pick" id="draftTrPick">
+                    <button type="button"
+                            class="tree-lang-btn tp-lang-btn"
+                            id="draftTrBtn"
+                            data-act="draft-tr-toggle"
+                            title="#{v2LocaleBean.getMsg('v2.candidat.draft.tr.add')}"
+                            aria-label="#{v2LocaleBean.getMsg('v2.candidat.draft.tr.add')}"
+                            aria-haspopup="listbox"
+                            aria-expanded="false">
+                      <span class="tree-lang-flag" aria-hidden="true">🏳️</span>
+                      <span class="tree-lang-name">#{v2LocaleBean.getMsg('v2.candidat.draft.tr.add')}</span>
+                      <span class="tree-lang-caret" aria-hidden="true">▾</span>
+                    </button>
+                    <div class="tree-lang-menu tp-lang-menu" id="draftTrMenu" role="listbox"
+                         aria-label="#{v2LocaleBean.getMsg('v2.candidat.draft.tr.add')}">
+                      <div class="tree-lang-menu-h">#{v2LocaleBean.getMsg('v2.candidat.draft.tr.add')}</div>
+                      <ui:repeat value="#{v2CandidateDraftBean.translationLanguages}" var="lang">
+                        <button type="button"
+                                class="tree-lang-opt"
+                                data-act="draft-tr-add"
+                                data-lang="#{lang.code}"
+                                data-flag="#{v2ThesaurusViewBean.flagEmoji(lang.code)}"
+                                data-name="#{lang.value}"
+                                role="option"
+                                aria-selected="false">
+                          <span class="tree-lang-opt-flag" aria-hidden="true">#{v2ThesaurusViewBean.flagEmoji(lang.code)}</span>
+                          <span class="tree-lang-opt-name">#{lang.value}</span>
+                          <span class="tree-lang-opt-code">#{lang.code}</span>
+                        </button>
+                      </ui:repeat>
+                    </div>
+                  </div>
+                </div>
+                <h:inputHidden id="draftTrPayload" value="#{v2CandidateDraftBean.translationsPayload}"/>
+              </div>
+            </div>
+          </section>
+
+          <section class="cblock" id="draftNoteEditor"
+                   data-empty="#{v2LocaleBean.getMsg('v2.candidat.draft.note.empty')}"
+                   data-add="#{v2LocaleBean.getMsg('v2.candidat.draft.note.add')}"
+                   data-remove="#{v2LocaleBean.getMsg('v2.candidat.draft.note.remove')}"
+                   data-text-ph="#{v2LocaleBean.getMsg('v2.candidat.draft.note.textPh')}"
+                   data-source-ph="#{v2LocaleBean.getMsg('v2.candidat.draft.note.sourcePh')}"
+                   data-work-lang="#{v2ConceptLifecycleEditorBean.workLanguage}">
+            <div class="cblock-head">#{v2LocaleBean.getMsg('v2.candidat.draft.notes')}</div>
+            <div class="cblock-body">
+              <div class="note-edit" id="draftNoteList"></div>
+              <button type="button" class="note-add-btn" id="draftNoteAdd" data-act="draft-note-add">
+                #{v2LocaleBean.getMsg('v2.candidat.draft.note.add')}
+              </button>
+              <div id="draftNoteTypeOpts" hidden="hidden">
+                <ui:repeat value="#{v2CandidateDraftBean.draftNoteTypes}" var="type">
+                  <span data-code="#{type}" data-label="#{v2ThesaurusViewBean.noteTypeLabel(type)}"></span>
+                </ui:repeat>
+              </div>
+              <div id="draftNoteLangOpts" hidden="hidden">
+                <ui:repeat value="#{v2ThesaurusViewBean.languages}" var="lang">
+                  <span data-code="#{lang.code}"
+                        data-name="#{lang.value}"
+                        data-flag="#{v2ThesaurusViewBean.flagEmoji(lang.code)}"></span>
+                </ui:repeat>
+              </div>
+              <h:inputHidden id="draftNotesPayload" value="#{v2CandidateDraftBean.notesPayload}"/>
+            </div>
+          </section>
+
+          <section class="cblock" id="draftResEditor"
+                   data-link-ph="https://…"
+                   data-link-label="#{v2LocaleBean.getMsg('v2.candidat.draft.linkLabel')}"
+                   data-link-remove="#{v2LocaleBean.getMsg('v2.candidat.draft.removeLink')}"
+                   data-img-ph="https://…"
+                   data-img-name="#{v2LocaleBean.getMsg('v2.candidat.draft.imageName')}"
+                   data-img-creator="#{v2LocaleBean.getMsg('v2.candidat.draft.imageCreator')}"
+                   data-img-copy="#{v2LocaleBean.getMsg('v2.candidat.draft.imageCopyright')}"
+                   data-img-remove="#{v2LocaleBean.getMsg('v2.candidat.draft.removeImage')}"
+                   data-gps-lat="#{v2LocaleBean.getMsg('v2.candidat.draft.gpsLat')}"
+                   data-gps-lng="#{v2LocaleBean.getMsg('v2.candidat.draft.gpsLng')}"
+                   data-gps-remove="#{v2LocaleBean.getMsg('v2.candidat.draft.removeGps')}"
+                   data-gps-empty="#{v2LocaleBean.getMsg('v2.candidat.draft.gpsEmpty')}"
+                   data-img-open="#{v2LocaleBean.getMsg('v2.candidat.draft.imageOpen')}"
+                   data-img-orig="#{v2LocaleBean.getMsg('v2.candidat.draft.imageOrig')}">
+            <div class="cblock-head">#{v2LocaleBean.getMsg('v2.candidat.draft.external')}</div>
+            <div class="cblock-body">
+              <div class="crow">
+                <div class="crow-lbl">#{v2LocaleBean.getMsg('v2.candidat.draft.links')}</div>
+                <div class="crow-val">
+                  <div id="draftResLinks"></div>
+                  <button type="button" class="note-add-btn" data-act="draft-res-add">
+                    #{v2LocaleBean.getMsg('v2.candidat.draft.addLink')}
+                  </button>
+                </div>
+              </div>
+              <div class="crow crow-gallery">
+                <div class="crow-lbl">#{v2LocaleBean.getMsg('v2.candidat.draft.image')}</div>
+                <div class="crow-val">
+                  <div id="draftResImgs"></div>
+                  <button type="button" class="note-add-btn" data-act="draft-img-add">
+                    #{v2LocaleBean.getMsg('v2.candidat.draft.addImage')}
+                  </button>
+                </div>
+              </div>
+              <div class="crow crow-gps">
+                <div class="crow-lbl">#{v2LocaleBean.getMsg('v2.candidat.draft.gps')}</div>
+                <div class="crow-val">
+                  <div class="gps-map is-edit" id="draftGpsMap">
+                    <div class="gps-map-stage">
+                      <div class="gps-map-canvas" id="draftGpsCanvas" role="img"
+                           aria-label="#{v2LocaleBean.getMsg('v2.candidat.draft.gps')}"></div>
+                    </div>
+                    <div class="gps-map-meta">
+                      <span class="gps-map-badge" id="draftGpsBadge">#{v2LocaleBean.getMsg('v2.candidat.draft.gpsEmpty')}</span>
+                      <span class="gps-map-hint-inline">#{v2LocaleBean.getMsg('v2.candidat.draft.gpsHint')}</span>
+                    </div>
+                    <ol class="gps-map-pts" id="draftGpsPts"></ol>
+                    <div class="media-edit-actions">
+                      <button type="button" class="note-add-btn" data-act="draft-gps-add">
+                        #{v2LocaleBean.getMsg('v2.candidat.draft.addGps')}
+                      </button>
+                    </div>
+                  </div>
+                </div>
+              </div>
+            </div>
+          </section>
+        </div>
+
+        <div class="fsave">
+          <button type="button" class="bo-btn ghost" data-act="draft-leave">#{v2LocaleBean.getMsg('v2.candidat.draft.cancel')}</button>
+          <ui:fragment rendered="#{v2CandidateDraftBean.canCreate}">
+            <button type="button" class="bo-btn ghost" data-act="draft-create-ask" data-kind="chain">#{v2LocaleBean.getMsg('v2.candidat.draft.chain')}</button>
+            <button type="button" class="bo-btn primary" data-act="draft-create-ask" data-kind="create">#{v2LocaleBean.getMsg('v2.candidat.draft.create')}</button>
+            <h:commandButton id="draftCreateNext" styleClass="preview-open-btn" style="display:none"
+                             value="#{v2LocaleBean.getMsg('v2.candidat.draft.chain')}"
+                             action="#{v2CandidateDraftBean.createAndContinue}">
+              <f:ajax execute="@form" render="@form" onevent="onDraftCreateAjax"/>
+            </h:commandButton>
+            <h:commandButton id="draftCreate" styleClass="preview-open-btn" style="display:none"
+                             value="#{v2LocaleBean.getMsg('v2.candidat.draft.create')}"
+                             action="#{v2CandidateDraftBean.create}">
+              <f:ajax execute="@form" render="@form" onevent="onDraftCreateAjax"/>
+            </h:commandButton>
+          </ui:fragment>
+          <h:commandButton id="draftCancel" styleClass="preview-open-btn" style="display:none"
+                           value="#{v2LocaleBean.getMsg('v2.candidat.draft.cancel')}"
+                           action="#{v2CandidateDraftBean.cancel}" immediate="true">
+            <f:ajax execute="@this" render="@form" onevent="function(d){if(d.status==='success'&amp;&amp;window.resolveDraftUi)window.resolveDraftUi('annulé');}"/>
+          </h:commandButton>
+        </div>
+      </div>
+    </h:form>
+
+    <div class="block-overlay confirm-overlay" id="draftCreateConfirm" hidden="hidden"
+         data-act="draft-create-dismiss" role="presentation">
+      <div class="confirm-modal" role="dialog" aria-modal="true"
+           aria-labelledby="draftCreateTitle" data-act="draft-create-modal">
+        <div class="confirm-h" id="draftCreateTitle">#{v2LocaleBean.getMsg('v2.candidat.draft.confirm.title')}</div>
+        <p class="confirm-p" id="draftCreateText">#{v2LocaleBean.getMsg('v2.candidat.draft.confirm.create')}</p>
+        <div class="confirm-actions">
+          <button type="button" class="bo-btn ghost" data-act="draft-create-dismiss">#{v2LocaleBean.getMsg('v2.candidat.draft.cancel')}</button>
+          <button type="button" class="bo-btn primary" id="draftCreateGo" data-act="draft-create-go">#{v2LocaleBean.getMsg('v2.candidat.draft.create')}</button>
+        </div>
+      </div>
+    </div>
+    <div class="img-lightbox" id="draftImgLightbox" hidden="hidden"
+         data-act="draft-img-lightbox-dismiss" role="presentation" aria-hidden="true">
+      <div class="img-lightbox-frame" role="dialog" aria-modal="true"
+           aria-labelledby="draftImgLightboxCap" data-act="draft-img-lightbox-modal" tabindex="-1">
+        <div class="img-lightbox-stage">
+          <img id="draftImgLightboxImg" alt=""/>
+          <button type="button" class="img-gallery-nav img-gallery-prev" data-act="draft-img-lightbox-prev"
+                  title="#{v2LocaleBean.getMsg('v2.candidat.draft.imagePrev')}"
+                  aria-label="#{v2LocaleBean.getMsg('v2.candidat.draft.imagePrev')}">‹</button>
+          <button type="button" class="img-gallery-nav img-gallery-next" data-act="draft-img-lightbox-next"
+                  title="#{v2LocaleBean.getMsg('v2.candidat.draft.imageNext')}"
+                  aria-label="#{v2LocaleBean.getMsg('v2.candidat.draft.imageNext')}">›</button>
+        </div>
+        <div class="img-lightbox-bar">
+          <div class="img-lightbox-cap" id="draftImgLightboxCap"></div>
+          <a class="img-lightbox-orig" id="draftImgLightboxOrig" href="#" target="_blank" rel="noopener">#{v2LocaleBean.getMsg('v2.candidat.draft.imageOrig')}</a>
+          <button type="button" class="img-lightbox-close" data-act="draft-img-lightbox-close"
+                  title="#{v2LocaleBean.getMsg('v2.cancel')}" aria-label="#{v2LocaleBean.getMsg('v2.cancel')}">×</button>
+        </div>
+      </div>
+    </div>
+    <div class="block-overlay confirm-overlay" id="draftLeaveConfirm" hidden="hidden"
+         data-act="draft-leave-dismiss" role="presentation">
+      <div class="confirm-modal" role="dialog" aria-modal="true"
+           aria-labelledby="draftLeaveTitle" data-act="draft-leave-modal">
+        <div class="confirm-h" id="draftLeaveTitle">#{v2LocaleBean.getMsg('v2.candidat.draft.leave.title')}</div>
+        <p class="confirm-p mo-warn">#{v2LocaleBean.getMsg('v2.candidat.draft.leave.warn')}</p>
+        <div class="confirm-actions">
+          <button type="button" class="bo-btn ghost" data-act="draft-leave-stay">#{v2LocaleBean.getMsg('v2.candidat.draft.leave.stay')}</button>
+          <button type="button" class="bo-btn danger" data-act="draft-leave-quit">#{v2LocaleBean.getMsg('v2.candidat.draft.leave.quit')}</button>
+        </div>
+      </div>
+    </div>
+  </div>
+</ui:composition>

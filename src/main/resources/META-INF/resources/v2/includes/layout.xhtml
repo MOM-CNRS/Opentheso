@@ -97,6 +97,36 @@
       </div>
     </div>
   </div>
+  <div class="block-overlay confirm-overlay" id="createChooser" hidden="hidden"
+       data-act="create-dismiss" role="presentation"
+       data-can-cand="#{v2CandidateDraftBean.canCreate ? '1' : '0'}"
+       data-can-concept="#{v2ConceptLifecycleEditorBean.writeActionsAvailable ? '1' : '0'}"
+       data-need-parent="#{v2LocaleBean.getMsg('v2.create.concept.needParent')}">
+    <div class="confirm-modal is-create-chooser" role="dialog" aria-modal="true"
+         aria-labelledby="createChooserTitle" data-act="create-modal">
+      <div class="confirm-h" id="createChooserTitle">#{v2LocaleBean.getMsg('v2.home.create')}</div>
+      <div class="spl ck">
+        <button type="button" class="spl-row" data-act="create-pick" data-kind="concept">
+          <span class="spl-ico" aria-hidden="true"><svg viewBox="0 0 24 24"><path d="M20.59 13.41 13 21H4v-9l7.59-7.59a2 2 0 0 1 2.82 0l6.18 6.18a2 2 0 0 1 0 2.82z"/><circle cx="8.5" cy="8.5" r="1.2"/></svg></span>
+          <span class="spl-tx">
+            <span class="spl-t">#{v2LocaleBean.getMsg('v2.create.concept')}</span>
+            <span class="spl-d" data-ok="#{v2LocaleBean.getMsg('v2.create.concept.desc')}" data-lock="#{v2LocaleBean.getMsg('v2.create.concept.lock')}">#{v2LocaleBean.getMsg('v2.create.concept.desc')}</span>
+          </span>
+          <span class="spl-go" aria-hidden="true"><svg viewBox="0 0 24 24"><path d="m9 18 6-6-6-6"/></svg></span>
+          <span class="ck-lock" hidden="hidden" aria-hidden="true"><svg viewBox="0 0 24 24"><rect x="5" y="11" width="14" height="10" rx="2"/><path d="M8 11V8a4 4 0 0 1 8 0v3"/></svg></span>
+        </button>
+        <button type="button" class="spl-row" data-act="create-pick" data-kind="candidat">
+          <span class="spl-ico" aria-hidden="true"><svg viewBox="0 0 24 24"><path d="M12 5v14"/><path d="M5 12h14"/></svg></span>
+          <span class="spl-tx">
+            <span class="spl-t">#{v2LocaleBean.getMsg('v2.create.candidat')}</span>
+            <span class="spl-d" data-ok="#{v2LocaleBean.getMsg('v2.create.candidat.desc')}" data-lock="#{v2LocaleBean.getMsg('v2.create.candidat.lock')}">#{v2LocaleBean.getMsg('v2.create.candidat.desc')}</span>
+          </span>
+          <span class="spl-go" aria-hidden="true"><svg viewBox="0 0 24 24"><path d="m9 18 6-6-6-6"/></svg></span>
+          <span class="ck-lock" hidden="hidden" aria-hidden="true"><svg viewBox="0 0 24 24"><rect x="5" y="11" width="14" height="10" rx="2"/><path d="M8 11V8a4 4 0 0 1 8 0v3"/></svg></span>
+        </button>
+      </div>
+    </div>
+  </div>
 </ui:fragment>
 <h:outputScript library="jakarta.faces" name="faces.js"/>
 <script src="#{request.contextPath}/resources/js/v2/core.js"></script>

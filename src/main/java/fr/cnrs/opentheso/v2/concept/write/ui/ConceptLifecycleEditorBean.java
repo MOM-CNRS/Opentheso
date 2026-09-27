@@ -80,6 +80,7 @@ public class ConceptLifecycleEditorBean implements Serializable {
     private ConceptSearchSuggestion replacedBySearchSelected;
     private List<ConceptWriteCollection> availableCollections = Collections.emptyList();
     private List<ConceptWriteNtRelationType> ntRelationTypes = Collections.emptyList();
+    private boolean addAsTopConcept;
 
     public boolean isWriteActionsAvailable() {
         return conceptWritePolicy.canMutateConcept(userSession);
@@ -259,9 +260,13 @@ public class ConceptLifecycleEditorBean implements Serializable {
     }
 
     public boolean isCreateReady() {
-        return isActiveConceptWriteAvailable()
-                && conceptSelectionContext.hasSelection()
-                && StringUtils.isNotBlank(preferredLabel);
+        if (StringUtils.isBlank(preferredLabel)) {
+            return false;
+        }
+        if (addAsTopConcept) {
+            return isWriteActionsAvailable();
+        }
+        return isActiveConceptWriteAvailable() && conceptSelectionContext.hasSelection();
     }
 
     public boolean isCreateDirty() {
@@ -292,12 +297,8 @@ public class ConceptLifecycleEditorBean implements Serializable {
     }
 
     public void prepareAddChild() {
-        resetNewConceptForm();
-        createdCount = 0;
-        lastCreatedId = "";
-        lastCreatedLabel = "";
-        createdLabels = new ArrayList<>();
-        createRun.reset();
+        addAsTopConcept = false;
+        beginCreateSession();
         refreshCurrentPreferredLabel();
         loadCreationFormMetadata();
     }
@@ -311,8 +312,19 @@ public class ConceptLifecycleEditorBean implements Serializable {
     }
 
     public void prepareAddTopConcept() {
-        resetNewConceptForm();
+        addAsTopConcept = true;
+        beginCreateSession();
+        currentPreferredLabel = "";
         loadCreationFormMetadata();
+    }
+
+    private void beginCreateSession() {
+        resetNewConceptForm();
+        createdCount = 0;
+        lastCreatedId = "";
+        lastCreatedLabel = "";
+        createdLabels = new ArrayList<>();
+        createRun.reset();
     }
 
     private void loadCreationFormMetadata() {
@@ -422,6 +434,7 @@ public class ConceptLifecycleEditorBean implements Serializable {
         lastCreatedId = "";
         lastCreatedLabel = "";
         createdLabels = new ArrayList<>();
+        addAsTopConcept = false;
     }
 
     private void submitRenameInternal(boolean forced) {
@@ -520,13 +533,19 @@ public class ConceptLifecycleEditorBean implements Serializable {
     }
 
     private void submitAddTopConceptInternal(boolean forced) {
+        createRun.setErrorMessage(null);
+        createRun.clearFlash();
         if (!isWriteActionsAvailable()) {
-            legacyError(unauthorized());
+            createRun.setErrorMessage(unauthorized());
             return;
         }
         Integer userId = userSession.getCurrentUserId();
         if (userId == null) {
-            legacyError(unauthorized());
+            createRun.setErrorMessage(unauthorized());
+            return;
+        }
+        if (StringUtils.isBlank(preferredLabel)) {
+            createRun.setErrorMessage(msg("v2.concept.addLabelRequired", "Le libellé est obligatoire"));
             return;
         }
         var command = new AddTopConceptCommand(
@@ -542,15 +561,31 @@ public class ConceptLifecycleEditorBean implements Serializable {
                 forced
         );
         MutationResult result = conceptLifecycleMutationService.addTopConcept(command);
+        if (result == null) {
+            createRun.setErrorMessage(msg("v2.concept.addFailed", "La création a échoué"));
+            return;
+        }
         if (result.outcome() == MutationOutcome.DUPLICATE_LABEL) {
             duplicateLabelWarning = true;
-            MessageUtils.showWarnMessage(result.message());
+            createRun.setErrorMessage(StringUtils.defaultIfBlank(result.message(),
+                    msg("v2.concept.addDup", "Un libellé identique existe déjà")));
+            return;
+        }
+        if (!result.success()) {
+            duplicateLabelWarning = false;
+            createRun.setErrorMessage(StringUtils.defaultIfBlank(result.message(),
+                    msg("v2.concept.addFailed", "La création a échoué")));
             return;
         }
         duplicateLabelWarning = false;
-        if (handleLegacyMutationResult(result, result.createdConceptId(), MutationRefreshMode.STRUCTURAL)) {
-            legacyHide("v2AddTopConceptDlg");
-        }
+        lastCreatedId = StringUtils.defaultString(result.createdConceptId());
+        lastCreatedLabel = preferredLabel.trim();
+        createdCount++;
+        createdLabels.add(lastCreatedLabel);
+        createRun.flash(msg("v2.concept.addCreated", "Concept « {0} » créé", lastCreatedLabel));
+        preferredLabel = "";
+        notation = "";
+        customConceptId = "";
     }
 
     private enum MutationRefreshMode {

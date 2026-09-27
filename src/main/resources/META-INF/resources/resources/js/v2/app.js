@@ -3,14 +3,59 @@
  */
 "use strict";
 
+function isLoggedInUi() {
+  return (document.body && document.body.getAttribute("data-logged-in") === "1")
+    || !!document.querySelector('[data-thesaurus="account"].is-avatar')
+    || !!document.getElementById("menu-account");
+}
+
+function closeAccountMenu() {
+  const btn = document.querySelector('[data-thesaurus="account"]');
+  if (btn) {
+    btn.classList.remove("is-on");
+    btn.setAttribute("aria-expanded", "false");
+  }
+  ["menu-login", "menu-account"].forEach((id) => {
+    const pop = document.getElementById(id);
+    if (!pop) return;
+    pop.classList.remove("is-open", "is-forgot");
+  });
+}
+
+function openLoginMenu() {
+  const btn = document.querySelector('[data-thesaurus="account"]');
+  if (btn) {
+    btn.classList.add("is-on");
+    btn.setAttribute("aria-expanded", "true");
+  }
+  const login = document.getElementById("menu-login");
+  const account = document.getElementById("menu-account");
+  if (account) account.classList.remove("is-open", "is-forgot");
+  if (login) {
+    login.classList.remove("is-forgot");
+    login.classList.add("is-open");
+  }
+}
+
+function openAccountMenu() {
+  const btn = document.querySelector('[data-thesaurus="account"]');
+  if (btn) {
+    btn.classList.add("is-on");
+    btn.setAttribute("aria-expanded", "true");
+  }
+  const login = document.getElementById("menu-login");
+  const account = document.getElementById("menu-account");
+  if (login) login.classList.remove("is-open", "is-forgot");
+  if (account) account.classList.add("is-open");
+}
+
 function closeThesaurus() {
   $$(".thesaurus-btn.is-on").forEach(b => {
     if (b.id === "sbOpenBtn") return;
     b.classList.remove("is-on");
     b.setAttribute("aria-expanded", "false");
   });
-  const account = $("#menu-account");
-  if (account) account.classList.remove("is-forgot");
+  closeAccountMenu();
 }
 
 function closeTreeLang() {
@@ -19,6 +64,16 @@ function closeTreeLang() {
   btn.classList.remove("is-open");
   btn.setAttribute("aria-expanded", "false");
   return true;
+}
+
+function closeDraftTrLangMenu() {
+  if (typeof closeDraftTrLang === "function") return closeDraftTrLang();
+  return false;
+}
+
+function closeDraftNoteLangMenu() {
+  if (typeof closeDraftNoteLang === "function") return closeDraftNoteLang();
+  return false;
 }
 
 function closePrefLang() {
@@ -220,18 +275,28 @@ document.addEventListener("keydown", (e) => {
 });
 document.addEventListener("keydown", (e) => {
   if (e.repeat || e.isComposing) return;
+  if (e.key === "Enter" && e.target && e.target.id === "draftRelQ") {
+    e.preventDefault();
+    if (draftRelState.hits && draftRelState.hits[0]) {
+      addDraftRel(draftRelState.hits[0].id, draftRelState.hits[0].label);
+    }
+    return;
+  }
   if ((e.metaKey || e.ctrlKey) && e.key === "Enter") {
     const draft = $("#viewDraft");
     if (draft && draft.classList.contains("is-on")) {
-      const create = $("#draftCreate");
-      if (create && !create.disabled) create.click();
+      e.preventDefault();
+      requestDraftCreate("create");
     }
   }
   if (e.key !== "Escape") return;
   if (typeof closeImgLightbox === "function" && closeImgLightbox()) return;
+  if (typeof closeDraftImgLightbox === "function" && closeDraftImgLightbox()) return;
   if (typeof closeGpsLightbox === "function" && closeGpsLightbox()) return;
   if (typeof closeCollectionPicker === "function" && closeCollectionPicker()) return;
   if (closeTreeLang()) return;
+  if (closeDraftTrLangMenu()) return;
+  if (closeDraftNoteLangMenu()) return;
   if (closePrefLang()) return;
   if (closeCvCtx()) return;
   if (closeAnyThesoAc()) return;
@@ -255,12 +320,20 @@ document.addEventListener("keydown", (e) => {
       return;
     }
   }
-  if (SCREEN !== "candidats") return;
   const draft = $("#viewDraft");
   if (draft && draft.classList.contains("is-on")) {
-    resolveDraft("annulé");
+    if ($("#draftCreateConfirm") && !$("#draftCreateConfirm").hidden) {
+      hideDraftCreateConfirm();
+      return;
+    }
+    if ($("#draftLeaveConfirm") && !$("#draftLeaveConfirm").hidden) {
+      hideDraftLeave();
+      return;
+    }
+    requestDraftLeave();
     return;
   }
+  if (SCREEN !== "candidats") return;
   const live = $("#viewLive");
   if (live && live.classList.contains("is-on") && fromCandList()) {
     backToCandList();
@@ -275,23 +348,71 @@ document.addEventListener("keydown", (e) => {
   card.click();
 });
 
+function goAfterLogin(url) {
+  if (document.body) document.body.setAttribute("data-logged-in", "1");
+  closeAccountMenu();
+  const next = (url || "").trim() || window.location.href;
+  const sep = next.includes("?") ? "&" : "?";
+  window.location.replace(next + sep + "_r=" + Date.now());
+}
+
+function loginDoneTarget() {
+  const done = document.getElementById("previewLoginDone");
+  if (done && done.getAttribute("data-ok") === "1") {
+    return done.getAttribute("data-after-login") || "";
+  }
+  return null;
+}
+
 window.onPreviewLoginAjax = function (data) {
-  if (data.status !== "success") return;
-  const form = document.getElementById("previewLoginForm");
-  const btn = document.querySelector('[data-thesaurus="account"]');
-  if (!form || !btn) return;
-  btn.classList.add("is-on");
-  btn.setAttribute("aria-expanded", "true");
+  const go = document.querySelector("#previewLoginForm .login-go");
+  if (data.status === "begin") {
+    if (go) go.classList.add("is-busy");
+    return;
+  }
+  if (data.status === "complete") {
+    if (loginDoneTarget() !== null) closeAccountMenu();
+    return;
+  }
+  if (data.status === "success") {
+    const doneUrl = loginDoneTarget();
+    if (doneUrl !== null) {
+      goAfterLogin(doneUrl);
+      return;
+    }
+    const form = document.getElementById("previewLoginForm");
+    if (!form) {
+      goAfterLogin("");
+      return;
+    }
+    if (!form.classList.contains("is-error") && !form.querySelector(".login-alert")) {
+      goAfterLogin(form.getAttribute("data-after-login"));
+      return;
+    }
+    if (go) go.classList.remove("is-busy");
+    openLoginMenu();
+    return;
+  }
+  if (data.status === "error") {
+    const doneUrl = loginDoneTarget();
+    if (doneUrl !== null) {
+      goAfterLogin(doneUrl);
+      return;
+    }
+    if (go) go.classList.remove("is-busy");
+  }
 };
+document.addEventListener("DOMContentLoaded", function () {
+  if (document.body && document.body.getAttribute("data-logged-in") === "1") {
+    closeAccountMenu();
+  }
+});
+
 window.onPreviewForgotAjax = function (data) {
   if (data.status !== "success") return;
-  const pop = document.getElementById("menu-account");
-  const btn = document.querySelector('[data-thesaurus="account"]');
+  openLoginMenu();
+  const pop = document.getElementById("menu-login");
   if (pop) pop.classList.add("is-forgot");
-  if (btn) {
-    btn.classList.add("is-on");
-    btn.setAttribute("aria-expanded", "true");
-  }
 };
 
 let syncPollTimer = null;
@@ -378,6 +499,12 @@ document.addEventListener("keydown", (e) => {
     e.preventDefault();
     return;
   }
+  if (hideConfirm("#createChooser")) {
+    const add = document.getElementById("viewAdd");
+    if (add) add.setAttribute("aria-expanded", "false");
+    e.preventDefault();
+    return;
+  }
   if (hideConfirm("#aboutSaveConfirm") || hideConfirm("#logoutConfirm") || hideConfirm("#stSaveConfirm")
       || hideConfirm("#previewCorpusCreateConfirm") || hideConfirm("#stLeaveConfirm")
       || hideConfirm("#alignDeleteConfirm") || hideConfirm("#alignReplaceConfirm")
@@ -424,6 +551,23 @@ document.addEventListener("input", (e) => {
     refreshAboutSaveState();
   }
   if (e.target && e.target.id === "draftTitle") syncDraftPrefMirror();
+  if (e.target && e.target.id === "draftRelQ") scheduleDraftRelSearch();
+  if (e.target && e.target.closest && e.target.closest("#draftTrEditor") && e.target.getAttribute("data-lang")) {
+    const lang = e.target.getAttribute("data-lang");
+    if (e.target.classList.contains("te-alt")) setDraftTrAlt(lang, e.target.value);
+    else setDraftTrValue(lang, e.target.value);
+  }
+  if (e.target && e.target.getAttribute && e.target.getAttribute("data-res")) {
+    const kind = e.target.getAttribute("data-res");
+    const field = e.target.getAttribute("data-field");
+    const index = Number(e.target.getAttribute("data-index"));
+    if (kind === "link") setDraftResLink(index, field, e.target.value);
+    else if (kind === "image") setDraftResImage(index, field, e.target.value);
+    else if (kind === "gps") setDraftResGps(index, field, e.target.value);
+  }
+  if (e.target && e.target.getAttribute && e.target.getAttribute("data-note")) {
+    setDraftNoteField(Number(e.target.getAttribute("data-index")), e.target.getAttribute("data-note"), e.target.value);
+  }
   if (e.target && e.target.classList && e.target.classList.contains("cand-search")) {
     syncCandSearchClear();
     clearTimeout(triggerCandSearch._t);
@@ -437,6 +581,11 @@ document.addEventListener("input", (e) => {
   }
   if (e.target && e.target.classList && e.target.classList.contains("cv-theso-ac-q")) {
     scheduleThesoAc(e.target.closest(".cv-theso-ac"));
+  }
+});
+document.addEventListener("change", (e) => {
+  if (e.target && e.target.getAttribute && e.target.getAttribute("data-note") === "type") {
+    setDraftNoteField(Number(e.target.getAttribute("data-index")), "type", e.target.value);
   }
 });
 document.addEventListener("focusin", (e) => {
@@ -466,11 +615,19 @@ document.addEventListener("click", (e) => {
     if (!e.target.closest(".xcsv-lang-pick")) closeExportCsvLangPicker();
     if ($("#cvCtx") && !$("#cvCtx").contains(e.target)) closeCvCtx();
     if ($("#cfCombo") && !$("#cfCombo").contains(e.target)) $("#cfCombo").classList.remove("open");
+    if (!e.target.closest("#draftRelNew .re-type")) setDraftRelKindMenu(false);
+    if (!e.target.closest("#draftRelNew .re-field")) hideDraftRelDrop();
+    if (!e.target.closest("#draftTrPick")) closeDraftTrLangMenu();
+    if (!e.target.closest(".draft-note-lang")) closeDraftNoteLangMenu();
     return;
   }
   if ($("#cfCombo") && !$("#cfCombo").contains(e.target)) $("#cfCombo").classList.remove("open");
   const act = t.getAttribute("data-act");
+  if (act !== "draft-rel-kind-toggle" && act !== "draft-rel-kind") setDraftRelKindMenu(false);
+  if (act !== "draft-rel-hit") hideDraftRelDrop();
   if (act !== "term-lang-toggle" && act !== "term-lang") closeTreeLang();
+  if (act !== "draft-tr-toggle" && act !== "draft-tr-add") closeDraftTrLangMenu();
+  if (act !== "draft-note-lang-toggle" && act !== "draft-note-lang") closeDraftNoteLangMenu();
   if (act !== "pref-lang-toggle" && act !== "pref-lang") closePrefLang();
   if (act !== "export-pdf-lang-toggle" && act !== "export-pdf-lang") closeExportPdfLangPickers();
   if (act !== "export-csv-lang-toggle" && act !== "export-lang" && act !== "export-lang-all" && act !== "export-lang-none") {
@@ -681,21 +838,30 @@ document.addEventListener("click", (e) => {
     if (!on) {
       t.classList.add("is-on");
       t.setAttribute("aria-expanded", "true");
+      if (t.getAttribute("data-thesaurus") === "account") {
+        if (isLoggedInUi()) {
+          openAccountMenu();
+        } else {
+          openLoginMenu();
+        }
+      } else {
+        const pop = t.nextElementSibling;
+        if (pop) {
+          pop.classList.remove("is-forced-closed");
+          pop.hidden = false;
+        }
+      }
     }
   } else if (act === "login-forgot") {
     e.preventDefault();
-    const pop = $("#menu-account");
-    const btn = document.querySelector('[data-thesaurus="account"]');
+    openLoginMenu();
+    const pop = $("#menu-login");
     if (pop) pop.classList.add("is-forgot");
-    if (btn) {
-      btn.classList.add("is-on");
-      btn.setAttribute("aria-expanded", "true");
-    }
     const mail = document.getElementById("previewForgotMail");
     if (mail) window.setTimeout(() => mail.focus(), 0);
   } else if (act === "login-forgot-back") {
     e.preventDefault();
-    const pop = $("#menu-account");
+    const pop = $("#menu-login");
     if (pop) pop.classList.remove("is-forgot");
     const user = document.getElementById("previewLoginUser");
     if (user) window.setTimeout(() => user.focus(), 0);
@@ -922,9 +1088,95 @@ document.addEventListener("click", (e) => {
     $$("[data-act='density']").forEach(b => b.classList.toggle("is-on", b === t));
     paintSidebar();
   }     else if (act === "see-all") runSearch();
-  else if (act === "create") {
+  else if (act === "create-open") {
+    e.preventDefault();
     e.stopPropagation();
-    createCandidate(t);
+    showCreateChooser(t);
+  } else if (act === "create-dismiss") {
+    e.preventDefault();
+    hideCreateChooser();
+  } else if (act === "create-modal") {
+    return;
+  } else if (act === "create-pick") {
+    e.preventDefault();
+    if (t.classList.contains("is-locked") || t.disabled) return;
+    pickCreateKind(t.getAttribute("data-kind"));
+  } else if (act === "create") {
+    e.stopPropagation();
+    showCreateChooser(t);
+  } else if (act === "draft-more") {
+    const more = $("#draftMore");
+    setDraftMore(more && more.hidden);
+  } else if (act === "draft-create-ask") {
+    requestDraftCreate(t.getAttribute("data-kind"));
+  } else if (act === "draft-create-dismiss") {
+    hideDraftCreateConfirm();
+  } else if (act === "draft-create-modal") {
+    return;
+  } else if (act === "draft-create-go") {
+    confirmDraftCreate();
+  } else if (act === "draft-leave") {
+    requestDraftLeave();
+  } else if (act === "draft-leave-dismiss" || act === "draft-leave-stay") {
+    hideDraftLeave();
+  } else if (act === "draft-leave-modal") {
+    return;
+  } else if (act === "draft-leave-quit") {
+    resolveDraft("annulé");
+  } else if (act === "draft-rel-kind-toggle") {
+    const menu = $("#draftRelKindMenu");
+    setDraftRelKindMenu(menu && menu.hidden);
+  } else if (act === "draft-rel-kind") {
+    setDraftRelKind(t.getAttribute("data-kind"));
+  } else if (act === "draft-rel-remove") {
+    removeDraftRel(t.getAttribute("data-kind"), t.getAttribute("data-index"));
+  } else if (act === "draft-rel-hit") {
+    addDraftRel(t.getAttribute("data-id"), t.getAttribute("data-label"));
+  } else if (act === "draft-tr-ask") {
+    draftTrState.confirm = t.getAttribute("data-lang") || "";
+    paintDraftTr();
+  } else if (act === "draft-tr-keep") {
+    draftTrState.confirm = "";
+    paintDraftTr();
+  } else if (act === "draft-tr-drop") {
+    removeDraftTr(t.getAttribute("data-lang"));
+  } else if (act === "draft-tr-toggle") {
+    const btn = $("#draftTrBtn");
+    setDraftTrLangOpen(btn && !btn.classList.contains("is-open"));
+  } else if (act === "draft-tr-add") {
+    addDraftTr(t.getAttribute("data-lang"));
+  } else if (act === "draft-res-add") {
+    addDraftResLink();
+  } else if (act === "draft-res-remove") {
+    removeDraftResLink(Number(t.getAttribute("data-index")));
+  } else if (act === "draft-img-add") {
+    addDraftResImage();
+  } else if (act === "draft-img-remove") {
+    removeDraftResImage(Number(t.getAttribute("data-index")));
+  } else if (act === "draft-gps-add") {
+    addDraftResGps();
+  } else if (act === "draft-gps-remove") {
+    removeDraftResGps(Number(t.getAttribute("data-index")));
+  } else if (act === "draft-gps-goto") {
+    gotoDraftGps(Number(t.getAttribute("data-index")));
+  } else if (act === "draft-img-open") {
+    openDraftImgLightbox(Number(t.getAttribute("data-index")));
+  } else if (act === "draft-img-lightbox-prev") {
+    showDraftImgAt(draftImgView.index - 1);
+  } else if (act === "draft-img-lightbox-next") {
+    showDraftImgAt(draftImgView.index + 1);
+  } else if (act === "draft-img-lightbox-dismiss" || act === "draft-img-lightbox-close") {
+    closeDraftImgLightbox();
+  } else if (act === "draft-img-lightbox-modal") {
+    return;
+  } else if (act === "draft-note-add") {
+    addDraftNote();
+  } else if (act === "draft-note-remove") {
+    removeDraftNote(Number(t.getAttribute("data-index")));
+  } else if (act === "draft-note-lang-toggle") {
+    setDraftNoteLangOpen(Number(t.getAttribute("data-index")));
+  } else if (act === "draft-note-lang") {
+    setDraftNoteLang(Number(t.getAttribute("data-index")), t.getAttribute("data-lang"));
   } else if (act === "cand-resolve") {
     resolveDraft(t.getAttribute("data-kind"));
   }

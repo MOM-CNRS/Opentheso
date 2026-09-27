@@ -67,6 +67,8 @@ public class ConsultationShellBean implements Serializable {
     private String platformHomeHtml;
     /** Invité (ou non-membre) a tenté d'ouvrir un thésaurus privé. */
     private boolean thesaurusAccessDenied;
+    /** Thésaurus demandé avant le refus (réévalué après connexion). */
+    private String pendingConsultationThesaurusId;
 
     private List<ConsultationProjectOption> projects = Collections.emptyList();
     private List<ConsultationThesaurusOption> thesaurusOptions = Collections.emptyList();
@@ -83,6 +85,7 @@ public class ConsultationShellBean implements Serializable {
             thesaurusContext.setIdConceptFromUri(ssoConceptId);
         }
         refreshCatalog();
+        retryPendingConsultationAfterLogin();
         syncSelectionFromContext();
         syncHomePanels();
     }
@@ -115,6 +118,9 @@ public class ConsultationShellBean implements Serializable {
                 idFromUri = StringUtils.trimToNull(
                         facesContext.getExternalContext().getRequestParameterMap().get("idt"));
             }
+        }
+        if (idFromUri == null && userSession.isLoggedIn()) {
+            idFromUri = StringUtils.trimToNull(pendingConsultationThesaurusId);
         }
         if (idFromUri == null) {
             return;
@@ -168,6 +174,14 @@ public class ConsultationShellBean implements Serializable {
         navigateToBrowse();
     }
 
+    /** Identifiant à conserver dans l'URL après connexion (sélection ou refus en attente). */
+    public String resolveReloadThesaurusId() {
+        if (StringUtils.isNotBlank(selectedThesaurusId)) {
+            return selectedThesaurusId;
+        }
+        return StringUtils.trimToNull(pendingConsultationThesaurusId);
+    }
+
     public boolean isProjectSelected() {
         return selectedProjectId != ALL_PROJECTS_ID;
     }
@@ -213,6 +227,7 @@ public class ConsultationShellBean implements Serializable {
     public void afterLogout() {
         refreshCatalog();
         thesaurusAccessDenied = false;
+        pendingConsultationThesaurusId = null;
         String currentThesaurusId = thesaurusContext.resolveThesaurusId();
         if (StringUtils.isNotBlank(currentThesaurusId)
                 && thesaurusOptions.stream().noneMatch(option -> option.id().equals(currentThesaurusId))) {
@@ -352,11 +367,12 @@ public class ConsultationShellBean implements Serializable {
                 .filter(item -> item.id().equals(thesaurusId))
                 .findFirst()
                 .orElse(null);
-        boolean listed = option != null;
-        if (!thesaurusConsultationAccessPolicy.canConsult(thesaurusId, listed)) {
-            denyThesaurusAccess();
+        boolean canSee = option != null || isAuthorizedMember(thesaurusId);
+        if (!thesaurusConsultationAccessPolicy.canConsult(thesaurusId, canSee)) {
+            denyThesaurusAccess(thesaurusId);
             return;
         }
+        pendingConsultationThesaurusId = null;
         thesaurusAccessDenied = false;
         if (option != null) {
             thesaurusContext.selectThesaurus(option.id(), option.title(), option.defaultLang());
@@ -380,14 +396,39 @@ public class ConsultationShellBean implements Serializable {
         return !thesaurusAccessDenied && hasSelectedThesaurus();
     }
 
-    private void denyThesaurusAccess() {
+    private void denyThesaurusAccess(String thesaurusId) {
+        pendingConsultationThesaurusId = StringUtils.trimToNull(thesaurusId);
         thesaurusAccessDenied = true;
         clearThesaurusSelection();
+    }
+
+    /**
+     * Après connexion : le catalogue et les rôles ont changé, on réessaie
+     * le thésaurus privé refusé en invité.
+     */
+    private void retryPendingConsultationAfterLogin() {
+        if (!userSession.isLoggedIn() || StringUtils.isBlank(pendingConsultationThesaurusId)) {
+            return;
+        }
+        applyThesaurusSelection(pendingConsultationThesaurusId);
+    }
+
+    /** Membre (rôle sur le thésaurus) ou super-admin : consultation autorisée même hors catalogue. */
+    private boolean isAuthorizedMember(String thesaurusId) {
+        if (!userSession.isLoggedIn() || StringUtils.isBlank(thesaurusId)) {
+            return false;
+        }
+        if (userSession.isSuperAdmin()) {
+            return true;
+        }
+        Integer userId = userSession.getCurrentUserId();
+        return userId != null && rightsService.roleOnThesaurus(userId, thesaurusId).isPresent();
     }
 
     /** Quitte l'écran Accès refusé (picker thésaurus, etc.). */
     public void clearThesaurusAccessDenied() {
         thesaurusAccessDenied = false;
+        pendingConsultationThesaurusId = null;
     }
 
     /**
@@ -396,6 +437,7 @@ public class ConsultationShellBean implements Serializable {
      */
     public void dismissThesaurusAccessDenied() throws IOException {
         thesaurusAccessDenied = false;
+        pendingConsultationThesaurusId = null;
         clearThesaurusSelection();
         thesaurusContext.setIdThesoFromUri(null);
         FacesContext facesContext = FacesContext.getCurrentInstance();

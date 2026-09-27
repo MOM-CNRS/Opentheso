@@ -236,7 +236,10 @@
               </div>
             </div>
             <ui:fragment rendered="#{v2UserSession.loggedIn}">
-              <a class="view-add" id="viewAdd" href="candidat/candidats.xhtml?new=1" title="Créer un candidat (sans emplacement)">+</a>
+              <button type="button" class="view-add" id="viewAdd" data-act="create-open"
+                      title="#{v2LocaleBean.getMsg('v2.create.more')}"
+                      aria-label="#{v2LocaleBean.getMsg('v2.create.more')}"
+                      aria-haspopup="dialog" aria-expanded="false" aria-controls="createChooser">+</button>
             </ui:fragment>
           </div>
         </div>

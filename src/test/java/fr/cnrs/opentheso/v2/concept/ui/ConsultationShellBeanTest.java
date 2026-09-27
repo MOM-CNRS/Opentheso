@@ -24,6 +24,7 @@ import org.mockito.junit.jupiter.MockitoExtension;
 
 import java.util.List;
 import java.util.Map;
+import java.util.Optional;
 
 import static org.junit.jupiter.api.Assertions.assertEquals;
 import static org.junit.jupiter.api.Assertions.assertFalse;
@@ -395,6 +396,79 @@ class ConsultationShellBeanTest {
         }
 
         assertFalse(consultationShellBean.isThesaurusAccessDenied());
+    }
+
+    @Test
+    void trySelectThesaurusForConsultation_allowsMemberNotInCatalog() {
+        when(userSession.isLoggedIn()).thenReturn(true);
+        when(userSession.isSuperAdmin()).thenReturn(false);
+        when(userSession.getCurrentUserId()).thenReturn(5);
+        when(v2LocaleBean.getIdLangue()).thenReturn("fr");
+        when(consultationCatalogService.listThesauri(5, false, -1, "fr")).thenReturn(List.of());
+        when(rightsService.roleOnThesaurus(5, "PRIV")).thenReturn(Optional.of(4));
+        when(thesaurusConsultationAccessPolicy.canConsult("PRIV", true)).thenReturn(true);
+        when(thesaurusContext.resolveThesaurusId()).thenReturn("PRIV");
+
+        assertTrue(consultationShellBean.trySelectThesaurusForConsultation("PRIV"));
+        assertFalse(consultationShellBean.isThesaurusAccessDenied());
+        assertEquals(null, consultationShellBean.getPendingConsultationThesaurusId());
+        verify(thesaurusContext).selectThesaurus("PRIV");
+    }
+
+    @Test
+    void load_retriesPendingPrivateThesaurusAfterLogin() {
+        when(userSession.isLoggedIn()).thenReturn(false);
+        when(userSession.isSuperAdmin()).thenReturn(false);
+        when(v2LocaleBean.getIdLangue()).thenReturn("fr");
+        when(consultationCatalogService.listThesauri(null, false, -1, "fr")).thenReturn(List.of());
+        when(thesaurusConsultationAccessPolicy.canConsult("PRIV", false)).thenReturn(false);
+
+        assertFalse(consultationShellBean.trySelectThesaurusForConsultation("PRIV"));
+        assertTrue(consultationShellBean.isThesaurusAccessDenied());
+        assertEquals("PRIV", consultationShellBean.getPendingConsultationThesaurusId());
+
+        when(userSession.isLoggedIn()).thenReturn(true);
+        when(userSession.getCurrentUserId()).thenReturn(5);
+        when(consultationCatalogService.listProjects(5, false)).thenReturn(List.of());
+        when(consultationCatalogService.listThesauri(5, false, -1, "fr")).thenReturn(List.of());
+        when(rightsService.roleOnThesaurus(5, "PRIV")).thenReturn(Optional.of(3));
+        when(thesaurusConsultationAccessPolicy.canConsult("PRIV", true)).thenReturn(true);
+        when(thesaurusContext.resolveThesaurusId()).thenReturn("PRIV");
+        when(ssoSessionBridge.consumePendingThesaurusId()).thenReturn(null);
+        when(ssoSessionBridge.consumePendingConceptId()).thenReturn(null);
+
+        consultationShellBean.load();
+
+        assertFalse(consultationShellBean.isThesaurusAccessDenied());
+        assertEquals(null, consultationShellBean.getPendingConsultationThesaurusId());
+        verify(thesaurusContext).selectThesaurus("PRIV");
+    }
+
+    @Test
+    void applyThesaurusFromUrl_retriesPendingWhenLoggedIn() {
+        consultationShellBean.setThesaurusAccessDenied(true);
+        consultationShellBean.setPendingConsultationThesaurusId("PRIV");
+        when(thesaurusContext.getIdThesoFromUri()).thenReturn(null);
+        when(userSession.isLoggedIn()).thenReturn(true);
+        when(userSession.isSuperAdmin()).thenReturn(false);
+        when(userSession.getCurrentUserId()).thenReturn(5);
+        when(v2LocaleBean.getIdLangue()).thenReturn("fr");
+        when(consultationCatalogService.listProjects(5, false)).thenReturn(List.of());
+        when(consultationCatalogService.listThesauri(5, false, -1, "fr")).thenReturn(List.of());
+        when(rightsService.roleOnThesaurus(5, "PRIV")).thenReturn(Optional.of(4));
+        when(thesaurusConsultationAccessPolicy.canConsult("PRIV", true)).thenReturn(true);
+        when(thesaurusContext.resolveThesaurusId()).thenReturn("PRIV");
+
+        try (MockedStatic<FacesContext> faces = mockStatic(FacesContext.class)) {
+            faces.when(FacesContext::getCurrentInstance).thenReturn(facesContext);
+            when(facesContext.getExternalContext()).thenReturn(externalContext);
+            when(externalContext.getRequestParameterMap()).thenReturn(Map.of());
+
+            consultationShellBean.applyThesaurusFromUrl();
+        }
+
+        assertFalse(consultationShellBean.isThesaurusAccessDenied());
+        verify(thesaurusContext).selectThesaurus("PRIV");
     }
 
     @Test

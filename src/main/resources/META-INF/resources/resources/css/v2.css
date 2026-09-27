@@ -29,6 +29,11 @@ body .ui-widget,
 
 .menu-pop{display:none}
 .thesaurus-btn.is-on + .menu-pop{display:block}
+#menu-login,
+#menu-account{display:none !important}
+#menu-login.is-open,
+#menu-account.is-open{display:block !important}
+.thesaurus-auth{display:contents}
 
 .view-pick-menu{display:none}
 .view-pick-btn.is-open + .view-pick-menu{display:block}
@@ -469,9 +474,9 @@ a.th-id{flex:1}
 }
 .login-forgot:hover{text-decoration:underline}
 .login-forgot-back{margin-top:10px}
-#menu-account.is-forgot #previewLoginForm,
-#menu-account.is-forgot .login-sso{display:none}
-#menu-account:not(.is-forgot) #previewForgotForm{display:none}
+#menu-login.is-forgot #previewLoginForm,
+#menu-login.is-forgot .login-sso{display:none}
+#menu-login:not(.is-forgot) #previewForgotForm{display:none}
 
 .login-go,a.login-go{
   position:relative;overflow:hidden;
@@ -644,7 +649,8 @@ a.empty-link{color:var(--accent);font-weight:600}
   margin:18px -4px 0;padding:12px 4px 10px;background:linear-gradient(180deg,transparent,var(--bg) 18%);
   border-top:1px solid var(--line)}
 .cand-draft-hint{margin-left:auto;font-size:12px;color:var(--ink-4)}
-#viewDraft .cv-draft-input{flex:1 1 220px;min-width:0;width:100%;max-width:100%}
+#viewDraft .cv-pref{flex:1 1 auto;min-width:0;width:100%}
+#viewDraft .cv-draft-input{flex:1 1 auto;min-width:0;width:100%;max-width:100%}
 #viewDraft .st-input,#viewDraft .disc-input{max-width:none}
 #viewLive{position:relative}
 button.copy-btn{
@@ -656,13 +662,13 @@ button.coll-item{
 }
 #viewLive.is-loading #previewDetailState > .cv,
 #viewLive.is-loading #previewDetailState > .empty{
-  opacity:.38;pointer-events:none;transition:opacity .16s ease
+  opacity:1;pointer-events:none;transition:none
 }
 #viewLive.is-loading .confirm-overlay:not([hidden]){pointer-events:auto}
-#viewLive.is-ready.is-opening .cv{animation:cv-in .22s cubic-bezier(.22,.8,.28,1)}
+#viewLive.is-ready.is-opening .cv{animation:none}
 .cv-progress{display:none;position:sticky;top:0;z-index:8;height:2px;margin:0 0 10px;
   background:var(--line);overflow:hidden;border-radius:2px}
-#viewLive.is-loading .cv-progress{display:block}
+#viewLive.is-loading .cv-progress{display:none}
 .cv-progress::after{content:"";display:block;height:100%;width:36%;border-radius:2px;
   background:var(--accent);animation:cv-indet .9s ease infinite}
 @keyframes cv-in{
@@ -920,6 +926,16 @@ a.path-link:focus-visible{outline:2px solid var(--accent);outline-offset:2px}
 .cv-cut-bar .th-create-ico{margin-top:0}
 .cv-cut-bar-txt{display:flex;flex-direction:column;gap:2px;min-width:0;font-size:13px;line-height:1.35;color:var(--ink-2)}
 .cv-cut-bar-txt strong{font-size:13.5px;font-weight:650;color:var(--ink)}
+.confirm-modal.is-create-chooser{width:min(440px,92vw);gap:14px}
+.ck{display:flex;flex-direction:column;gap:10px;margin-top:2px}
+.ck .spl-row{padding:14px 16px;animation:none;transform:none}
+.ck .spl-row.is-locked{opacity:.55;cursor:not-allowed;background:var(--surface-2)}
+.ck .spl-row.is-locked:hover{border-color:var(--line);box-shadow:var(--shadow-sm);transform:none;background:var(--surface-2)}
+.ck .spl-row.is-locked .spl-ico{background:var(--surface);color:var(--ink-3)}
+.ck .spl-row.is-locked .spl-go{display:none}
+.ck-lock{color:var(--ink-3);display:grid;place-items:center;flex:0 0 auto}
+.ck-lock[hidden]{display:none!important}
+.ck-lock svg{width:18px;height:18px;stroke:currentColor;fill:none;stroke-width:1.9;stroke-linecap:round;stroke-linejoin:round}
 .confirm-modal.is-form{width:min(460px,92vw)}
 .confirm-modal.is-paste{width:min(520px,92vw);max-height:min(86vh,720px);overflow:hidden;gap:16px;padding:20px 20px 16px}
 .confirm-modal.is-theso{width:min(560px,94vw);max-height:min(88vh,760px);overflow:hidden;gap:16px;padding:20px 20px 16px}
@@ -2180,6 +2196,10 @@ html{height:100%}
     padding-bottom:calc(60px + env(safe-area-inset-bottom,0px))
   }
   .thesaurus-btn.is-on + .menu-pop{display:block}
+  #menu-login:not(.is-open),
+  #menu-account:not(.is-open){display:none !important}
+  #menu-login.is-open,
+  #menu-account.is-open{display:block !important}
   .view,.content.is-full .view{padding:14px 12px calc(24px + env(safe-area-inset-bottom,0px))}
   .cv-pref{font-size:22px}
   .cblock{padding:4px 14px 12px}
@@ -2219,6 +2239,28 @@ html{height:100%}
   .bo-valid-sum{flex-wrap:wrap;gap:10px 16px}
   .bo-cfg{flex-direction:column}
   .fsave{left:0;bottom:calc(70px + env(safe-area-inset-bottom,0px))}
+  #viewDraft.view-panel{padding-bottom:148px}
+  #viewDraft .fsave{
+    left:0;right:0;
+    bottom:calc(56px + env(safe-area-inset-bottom,0px));
+    z-index:50;
+    display:grid;
+    grid-template-columns:1fr 1fr;
+    align-items:stretch;
+    gap:8px;
+    padding:10px 12px 12px;
+    background:var(--bg);
+    border-top:1px solid var(--line);
+    box-shadow:0 -8px 24px rgba(16,24,20,.08);
+    pointer-events:auto
+  }
+  #viewDraft .fsave .bo-btn{
+    width:100%;min-height:44px;padding:10px 12px;font-size:13.5px;
+    line-height:1.25;white-space:normal;text-align:center;box-shadow:none
+  }
+  #viewDraft .fsave .bo-btn[data-act="draft-leave"]{order:1}
+  #viewDraft .fsave .bo-btn[data-kind="create"]{order:2}
+  #viewDraft .fsave .bo-btn[data-kind="chain"]{order:3;grid-column:1 / -1}
   .flat-foot{justify-content:center}
   .flat-pagesz{width:100%;justify-content:space-between}
   .mc-tool{padding:10px}
@@ -2232,6 +2274,14 @@ html{height:100%}
     padding-bottom:calc(60px + env(safe-area-inset-bottom,0px));
     box-shadow:0 -12px 40px rgba(16,24,20,.18)
   }
+}
+
+@media (max-width:380px){
+  #viewDraft.view-panel{padding-bottom:196px}
+  #viewDraft .fsave{grid-template-columns:1fr}
+  #viewDraft .fsave .bo-btn[data-kind="create"]{order:1}
+  #viewDraft .fsave .bo-btn[data-kind="chain"]{order:2;grid-column:auto}
+  #viewDraft .fsave .bo-btn[data-act="draft-leave"]{order:3}
 }
 
 @keyframes v2-pop-up{

@@ -2,13 +2,24 @@
 <ui:composition xmlns="http://www.w3.org/1999/xhtml"
                 xmlns:ui="http://xmlns.jcp.org/jsf/facelets"
                 xmlns:h="http://xmlns.jcp.org/jsf/html"
-                xmlns:f="http://xmlns.jcp.org/jsf/core">
+                xmlns:f="http://xmlns.jcp.org/jsf/core"
+                xmlns:pt="http://xmlns.jcp.org/jsf/passthrough">
   <h:form id="previewOpenForm" styleClass="preview-open-form">
     <h:inputHidden id="openId" value="#{v2ThesaurusViewBean.openId}"/>
     <h:inputHidden id="openType" value="#{v2ThesaurusViewBean.openType}"/>
     <h:commandButton id="openBtn" value="Ouvrir" styleClass="preview-open-btn"
                      action="#{v2ThesaurusViewBean.openSelectedNode}">
       <f:ajax execute="@form" render=":previewDetailForm:previewDetail :previewPropBadge"/>
+    </h:commandButton>
+    <h:commandButton id="createConceptChildGo" value="+" styleClass="preview-open-btn"
+                     pt:data-create="concept-child"
+                     action="#{v2ConceptFicheMenuBean.prepareAddChild}">
+      <f:ajax execute="@this" render=":previewDetailForm:previewDetail" onevent="onCvMenuAjax"/>
+    </h:commandButton>
+    <h:commandButton id="createConceptTopGo" value="+" styleClass="preview-open-btn"
+                     pt:data-create="concept-top"
+                     action="#{v2ConceptFicheMenuBean.prepareAddTopConcept}">
+      <f:ajax execute="@this" render=":previewDetailForm:previewDetail" onevent="onCvMenuAjax"/>
     </h:commandButton>
   </h:form>
   <h:form id="previewTreeDropForm" styleClass="preview-open-form">
@@ -86,7 +97,11 @@
               <p class="empty-s">Ce concept, candidat ou cette facette n'est pas disponible dans la langue courante.</p>
             </div>
           </ui:fragment>
+          <ui:fragment rendered="#{not empty v2ConceptFicheMenuBean.dialogToReopen}">
+            <span hidden="hidden" data-cv-dlg="#{v2ConceptFicheMenuBean.dialogToReopen}"></span>
+          </ui:fragment>
         </div>
+        <ui:include src="/v2/includes/concept-actions-dialogs.xhtml"/>
       </h:panelGroup>
     </h:form>
   </div>

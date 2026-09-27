@@ -7,7 +7,9 @@ import fr.cnrs.opentheso.v2.shared.auth.AuthenticatedUser;
 import fr.cnrs.opentheso.v2.shared.auth.AuthenticationService;
 import fr.cnrs.opentheso.v2.shared.session.SessionAuthenticatedUserSource;
 import fr.cnrs.opentheso.v2.shared.session.SessionLifecycleService;
+import jakarta.faces.context.ExternalContext;
 import jakarta.faces.context.FacesContext;
+import jakarta.faces.context.PartialViewContext;
 import org.junit.jupiter.api.BeforeEach;
 import org.junit.jupiter.api.Test;
 import org.junit.jupiter.api.extension.ExtendWith;
@@ -17,6 +19,7 @@ import org.mockito.junit.jupiter.MockitoExtension;
 
 import java.util.Optional;
 
+import static org.junit.jupiter.api.Assertions.assertEquals;
 import static org.junit.jupiter.api.Assertions.assertNull;
 import static org.mockito.Mockito.mockStatic;
 import static org.mockito.Mockito.never;
@@ -42,6 +45,10 @@ class LoginBeanTest {
     private SessionLifecycleService sessionLifecycleService;
     @Mock
     private FacesContext facesContext;
+    @Mock
+    private ExternalContext externalContext;
+    @Mock
+    private PartialViewContext partialViewContext;
 
     private LoginBean loginBean;
 
@@ -87,6 +94,53 @@ class LoginBeanTest {
         verify(sessionAuthenticatedUserSource).setUserId(7);
         verify(consultationShellBean).load();
         assertNull(loginBean.getPassword());
+    }
+
+    @Test
+    void login_onAjaxSuccess_setsAfterLoginUrlWithoutHttpRedirect() throws Exception {
+        loginBean.setUsername("alice");
+        loginBean.setPassword("secret");
+        when(authenticationService.authenticate("alice", "secret"))
+                .thenReturn(Optional.of(new AuthenticatedUser(7, "alice")));
+        when(v2LocaleBean.getMsg("connect.welcome")).thenReturn("Bienvenue");
+        when(facesContext.getExternalContext()).thenReturn(externalContext);
+        when(facesContext.getPartialViewContext()).thenReturn(partialViewContext);
+        when(partialViewContext.isAjaxRequest()).thenReturn(true);
+        when(externalContext.getRequestContextPath()).thenReturn("/ot");
+        when(externalContext.getRequestServletPath()).thenReturn("/v2/index.xhtml");
+        when(consultationShellBean.resolveReloadThesaurusId()).thenReturn("TH1");
+
+        try (MockedStatic<FacesContext> faces = mockStatic(FacesContext.class)) {
+            faces.when(FacesContext::getCurrentInstance).thenReturn(facesContext);
+            loginBean.login();
+        }
+
+        org.junit.jupiter.api.Assertions.assertTrue(
+                loginBean.getAfterLoginUrl().startsWith("/ot/v2/index.xhtml?idt=TH1&_r="));
+        verify(externalContext, never()).redirect(org.mockito.ArgumentMatchers.anyString());
+    }
+
+    @Test
+    void login_onFullPostback_redirectsToFreshView() throws Exception {
+        loginBean.setUsername("alice");
+        loginBean.setPassword("secret");
+        when(authenticationService.authenticate("alice", "secret"))
+                .thenReturn(Optional.of(new AuthenticatedUser(7, "alice")));
+        when(v2LocaleBean.getMsg("connect.welcome")).thenReturn("Bienvenue");
+        when(facesContext.getExternalContext()).thenReturn(externalContext);
+        when(facesContext.getPartialViewContext()).thenReturn(partialViewContext);
+        when(partialViewContext.isAjaxRequest()).thenReturn(false);
+        when(externalContext.getRequestContextPath()).thenReturn("/ot");
+        when(externalContext.getRequestServletPath()).thenReturn("/v2/index.xhtml");
+        when(consultationShellBean.resolveReloadThesaurusId()).thenReturn(null);
+
+        try (MockedStatic<FacesContext> faces = mockStatic(FacesContext.class)) {
+            faces.when(FacesContext::getCurrentInstance).thenReturn(facesContext);
+            loginBean.login();
+        }
+
+        verify(externalContext).redirect(org.mockito.ArgumentMatchers.argThat(
+                url -> url != null && url.startsWith("/ot/v2/index.xhtml?_r=")));
     }
 
     @Test

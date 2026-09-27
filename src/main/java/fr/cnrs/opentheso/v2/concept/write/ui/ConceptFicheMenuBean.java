@@ -45,11 +45,24 @@ public class ConceptFicheMenuBean implements Serializable {
         openDialog("cvDlgAddNt");
     }
 
+    public void prepareAddTopConcept() {
+        lifecycleEditorBean.prepareAddTopConcept();
+        openDialog("cvDlgAddNt");
+    }
+
     public void submitAddChild() {
+        if (lifecycleEditorBean.isAddAsTopConcept()) {
+            lifecycleEditorBean.submitAddTopConcept();
+            return;
+        }
         lifecycleEditorBean.submitAddChild();
     }
 
     public void submitAddChildForced() {
+        if (lifecycleEditorBean.isAddAsTopConcept()) {
+            lifecycleEditorBean.submitAddTopConceptForced();
+            return;
+        }
         lifecycleEditorBean.submitAddChildForced();
     }
 

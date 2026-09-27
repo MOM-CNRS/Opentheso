@@ -329,6 +329,10 @@ public class CandidatBoardBean implements Serializable {
         return userSession != null && userSession.isLoggedIn();
     }
 
+    public boolean isCanCreate() {
+        return candidatAccessPolicy.canCreate(userSession, thesaurusViewBean.getId());
+    }
+
     public boolean isCapped(String tab) {
         ensureLoaded();
         int shown = itemsFor(tab).size();

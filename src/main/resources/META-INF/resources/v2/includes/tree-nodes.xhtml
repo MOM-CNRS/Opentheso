@@ -41,9 +41,9 @@
           </span>
         </div>
         <ui:fragment rendered="#{not node.facet and v2UserSession.loggedIn}">
-          <button type="button" class="tn-add" data-act="create" data-id="#{node.id}"
+          <button type="button" class="tn-add" data-act="create-open" data-id="#{node.id}"
                   data-pref="#{node.label}" data-path="#{node.path}"
-                  title="Proposer un candidat sous « #{node.label} »">+</button>
+                  title="#{v2LocaleBean.getMsg('v2.create.more')}">+</button>
         </ui:fragment>
       </div>
     </div>

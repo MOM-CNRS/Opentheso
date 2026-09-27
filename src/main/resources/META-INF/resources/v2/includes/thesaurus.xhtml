@@ -22,123 +22,135 @@
       <svg viewBox="0 0 24 24" aria-hidden="true"><path d="M8 6h13"/><path d="M8 12h13"/><path d="M8 18h13"/><path d="M3 6h.01"/><path d="M3 12h.01"/><path d="M3 18h.01"/></svg>
     </button>
     <div class="thesaurus-group">
-      <div class="thesaurus-item">
-        <button type="button" class="thesaurus-btn#{v2UserSession.loggedIn ? ' is-avatar' : ''}#{not v2UserSession.loggedIn and not empty v2LoginBean.loginError ? ' is-on' : ''}"
-                data-act="thesaurus" data-thesaurus="account"
-                title="#{v2UserSession.loggedIn ? v2LocaleBean.getMsg('v2.nav.account') : v2LocaleBean.getMsg('menu.login')}"
-                aria-label="#{v2UserSession.loggedIn ? v2LocaleBean.getMsg('v2.nav.account') : v2LocaleBean.getMsg('menu.login')}"
-                aria-expanded="#{not v2UserSession.loggedIn and not empty v2LoginBean.loginError}">
-          <ui:fragment rendered="#{not v2UserSession.loggedIn}">
-            <svg viewBox="0 0 24 24" aria-hidden="true"><path d="M19 21v-1.5a4 4 0 0 0-4-4H9a4 4 0 0 0-4 4V21"/><circle cx="12" cy="7" r="4"/></svg>
-          </ui:fragment>
+      <h:panelGroup id="previewHeaderAuth" layout="block" styleClass="thesaurus-auth">
+        <div class="thesaurus-item">
+          <button type="button" class="thesaurus-btn#{v2UserSession.loggedIn ? ' is-avatar' : ''}#{not v2UserSession.loggedIn and not empty v2LoginBean.loginError ? ' is-on' : ''}"
+                  data-act="thesaurus" data-thesaurus="account"
+                  title="#{v2UserSession.loggedIn ? v2LocaleBean.getMsg('v2.nav.account') : v2LocaleBean.getMsg('menu.login')}"
+                  aria-label="#{v2UserSession.loggedIn ? v2LocaleBean.getMsg('v2.nav.account') : v2LocaleBean.getMsg('menu.login')}"
+                  aria-expanded="#{not v2UserSession.loggedIn and not empty v2LoginBean.loginError}">
+            <ui:fragment rendered="#{not v2UserSession.loggedIn}">
+              <svg viewBox="0 0 24 24" aria-hidden="true"><path d="M19 21v-1.5a4 4 0 0 0-4-4H9a4 4 0 0 0-4 4V21"/><circle cx="12" cy="7" r="4"/></svg>
+            </ui:fragment>
+            <ui:fragment rendered="#{v2UserSession.loggedIn}">
+              <span class="thesaurus-avatar" aria-hidden="true">#{v2UserSession.currentUserInitials}</span>
+            </ui:fragment>
+          </button>
+          <div class="menu-pop menu-pop--top menu-pop--login#{not v2UserSession.loggedIn and not empty v2LoginBean.loginError ? ' is-open' : ''}"
+               id="menu-login">
+            <h:panelGroup id="previewLoginBox" layout="block">
+              <span id="previewLoginDone" hidden="hidden"
+                    data-ok="#{v2UserSession.loggedIn ? '1' : '0'}"
+                    data-after-login="#{v2LoginBean.afterLoginUrl}"></span>
+              <ui:fragment rendered="#{not v2UserSession.loggedIn}">
+                <h:form id="previewLoginForm" prependId="false"
+                        styleClass="login-form#{not empty v2LoginBean.loginError ? ' is-error' : ''}"
+                        pt:data-after-login="#{v2LoginBean.afterLoginUrl}">
+                  <div class="menu-h">#{v2LocaleBean.getMsg('menu.login')}</div>
+                  <h:panelGroup layout="block" styleClass="login-alert" rendered="#{not empty v2LoginBean.loginError}">
+                    <svg viewBox="0 0 24 24" aria-hidden="true"><path d="M10.3 3.9 1.8 18a2 2 0 0 0 1.7 3h17a2 2 0 0 0 1.7-3L13.7 3.9a2 2 0 0 0-3.4 0z"/><path d="M12 9v4"/><path d="M12 17h.01"/></svg>
+                    <span>#{v2LoginBean.loginError}</span>
+                  </h:panelGroup>
+                  <h:outputLabel for="previewLoginUser" styleClass="login-l" value="#{v2LocaleBean.getMsg('menu.username')}"/>
+                  <h:inputText id="previewLoginUser" value="#{v2LoginBean.username}"
+                               styleClass="st-input#{v2LoginBean.usernameInvalid ? ' is-invalid' : ''}"
+                               autocomplete="username"/>
+                  <h:outputLabel for="previewLoginPass" styleClass="login-l" value="#{v2LocaleBean.getMsg('menu.password')}"/>
+                  <h:inputSecret id="previewLoginPass" value="#{v2LoginBean.password}"
+                                 styleClass="st-input#{v2LoginBean.passwordInvalid ? ' is-invalid' : ''}"
+                                 autocomplete="current-password"
+                                 redisplay="false"/>
+                  <h:commandLink action="#{v2LoginBean.login}" styleClass="login-go">
+                    <svg viewBox="0 0 24 24" aria-hidden="true"><path d="M15 3h4a2 2 0 0 1 2 2v14a2 2 0 0 1-2 2h-4"/><path d="m10 17 5-5-5-5"/><path d="M15 12H3"/></svg>
+                    <span>#{v2LocaleBean.getMsg('menu.login')}</span>
+                  </h:commandLink>
+                  <button type="button" class="login-forgot" data-act="login-forgot">#{v2LocaleBean.getMsg('menu.forgotten_pass')}</button>
+                  <input type="hidden" name="csrfToken" value="#{sessionScope.CSRF_TOKEN}"/>
+                </h:form>
+                <h:form id="previewForgotForm" prependId="false" styleClass="login-form login-forgot-form">
+                  <div class="menu-h">#{v2LocaleBean.getMsg('menu.forgotten_pass')}</div>
+                  <h:panelGroup layout="block" styleClass="login-alert" rendered="#{not empty v2ForgotPasswordBean.error}">
+                    <svg viewBox="0 0 24 24" aria-hidden="true"><path d="M10.3 3.9 1.8 18a2 2 0 0 0 1.7 3h17a2 2 0 0 0 1.7-3L13.7 3.9a2 2 0 0 0-3.4 0z"/><path d="M12 9v4"/><path d="M12 17h.01"/></svg>
+                    <span>#{v2ForgotPasswordBean.error}</span>
+                  </h:panelGroup>
+                  <h:panelGroup layout="block" styleClass="login-msg-ok" rendered="#{not empty v2ForgotPasswordBean.message}">
+                    #{v2ForgotPasswordBean.message}
+                  </h:panelGroup>
+                  <h:outputLabel for="previewForgotMail" styleClass="login-l" value="#{v2LocaleBean.getMsg('v2.nav.email')}"/>
+                  <h:inputText id="previewForgotMail" value="#{v2ForgotPasswordBean.sendTo}"
+                               styleClass="st-input#{not empty v2ForgotPasswordBean.error ? ' is-invalid' : ''}"
+                               autocomplete="email"/>
+                  <h:commandLink actionListener="#{v2ForgotPasswordBean.sendMail}" styleClass="login-go">
+                    <f:ajax execute="@form" render="@form" onevent="onPreviewForgotAjax"/>
+                    <svg viewBox="0 0 24 24" aria-hidden="true"><path d="M22 2 11 13"/><path d="M22 2 15 22 11 13 2 9Z"/></svg>
+                    <span>#{v2LocaleBean.getMsg('v2.nav.send')}</span>
+                  </h:commandLink>
+                  <button type="button" class="menu-foot login-forgot-back" data-act="login-forgot-back">
+                    <svg viewBox="0 0 24 24" aria-hidden="true"><path d="M19 12H5"/><path d="m12 19-7-7 7-7"/></svg>
+                    #{v2LocaleBean.getMsg('v2.nav.backToLogin')}
+                  </button>
+                  <input type="hidden" name="csrfToken" value="#{sessionScope.CSRF_TOKEN}"/>
+                </h:form>
+                <h:outputLink value="#{request.contextPath}/oauth2/authorization/keycloak"
+                              styleClass="menu-foot login-sso"
+                              rendered="#{appConfigBean.keycloakEnabled}">
+                  #{v2LocaleBean.getMsg('v2.nav.sso')}
+                </h:outputLink>
+              </ui:fragment>
+            </h:panelGroup>
+          </div>
           <ui:fragment rendered="#{v2UserSession.loggedIn}">
-            <span class="thesaurus-avatar" aria-hidden="true">#{v2UserSession.currentUserInitials}</span>
+            <div class="menu-pop menu-pop--top" id="menu-account">
+              <div class="menu-h">#{v2LocaleBean.getMsg('v2.nav.account')}</div>
+              <div class="acct-head">
+                <span class="avatar">#{v2UserSession.currentUserInitials}</span>
+                <div class="acct-id">
+                  <div class="acct-name">#{v2UserSession.currentUsername}</div>
+                  <div class="acct-mail">#{v2UserSession.currentUserEmail}</div>
+                </div>
+              </div>
+              <div class="role-badge">#{v2UserSession.currentRoleLabel}</div>
+              <div class="menu-list">
+                <a class="menu-row" href="user/compte.xhtml"><svg viewBox="0 0 24 24" aria-hidden="true"><path d="M19 21v-1.5a4 4 0 0 0-4-4H9a4 4 0 0 0-4 4V21"/><circle cx="12" cy="7" r="4"/></svg><span>#{v2LocaleBean.getMsg('v2.nav.profile')}</span></a>
+                <a class="menu-row" href="user/preference.xhtml"><svg viewBox="0 0 24 24" aria-hidden="true"><path d="M4 21v-7M4 10V3M12 21v-9M12 8V3M20 21v-5M20 12V3M1 14h6M9 8h6M17 16h6"/></svg><span>#{v2LocaleBean.getMsg('menu.preference')}</span></a>
+              </div>
+            </div>
           </ui:fragment>
-        </button>
-        <div class="menu-pop menu-pop--top#{not v2UserSession.loggedIn ? ' menu-pop--login' : ''}" id="menu-account">
-        <ui:fragment rendered="#{not v2UserSession.loggedIn}">
-          <h:form id="previewLoginForm" prependId="false" styleClass="login-form#{not empty v2LoginBean.loginError ? ' is-error' : ''}">
-            <div class="menu-h">#{v2LocaleBean.getMsg('menu.login')}</div>
-            <h:panelGroup layout="block" styleClass="login-alert" rendered="#{not empty v2LoginBean.loginError}">
-              <svg viewBox="0 0 24 24" aria-hidden="true"><path d="M10.3 3.9 1.8 18a2 2 0 0 0 1.7 3h17a2 2 0 0 0 1.7-3L13.7 3.9a2 2 0 0 0-3.4 0z"/><path d="M12 9v4"/><path d="M12 17h.01"/></svg>
-              <span>#{v2LoginBean.loginError}</span>
-            </h:panelGroup>
-            <h:outputLabel for="previewLoginUser" styleClass="login-l" value="#{v2LocaleBean.getMsg('menu.username')}"/>
-            <h:inputText id="previewLoginUser" value="#{v2LoginBean.username}"
-                         styleClass="st-input#{v2LoginBean.usernameInvalid ? ' is-invalid' : ''}"
-                         autocomplete="username"/>
-            <h:outputLabel for="previewLoginPass" styleClass="login-l" value="#{v2LocaleBean.getMsg('menu.password')}"/>
-            <h:inputSecret id="previewLoginPass" value="#{v2LoginBean.password}"
-                           styleClass="st-input#{v2LoginBean.passwordInvalid ? ' is-invalid' : ''}"
-                           autocomplete="current-password"
-                           redisplay="false"/>
-            <h:commandLink actionListener="#{v2LoginBean.login}" styleClass="login-go">
-              <f:ajax execute="@form" render="@form" onevent="onPreviewLoginAjax"/>
-              <svg viewBox="0 0 24 24" aria-hidden="true"><path d="M15 3h4a2 2 0 0 1 2 2v14a2 2 0 0 1-2 2h-4"/><path d="m10 17 5-5-5-5"/><path d="M15 12H3"/></svg>
-              <span>#{v2LocaleBean.getMsg('menu.login')}</span>
-            </h:commandLink>
-            <button type="button" class="login-forgot" data-act="login-forgot">#{v2LocaleBean.getMsg('menu.forgotten_pass')}</button>
-            <input type="hidden" name="csrfToken" value="#{sessionScope.CSRF_TOKEN}"/>
-          </h:form>
-          <h:form id="previewForgotForm" prependId="false" styleClass="login-form login-forgot-form">
-            <div class="menu-h">#{v2LocaleBean.getMsg('menu.forgotten_pass')}</div>
-            <h:panelGroup layout="block" styleClass="login-alert" rendered="#{not empty v2ForgotPasswordBean.error}">
-              <svg viewBox="0 0 24 24" aria-hidden="true"><path d="M10.3 3.9 1.8 18a2 2 0 0 0 1.7 3h17a2 2 0 0 0 1.7-3L13.7 3.9a2 2 0 0 0-3.4 0z"/><path d="M12 9v4"/><path d="M12 17h.01"/></svg>
-              <span>#{v2ForgotPasswordBean.error}</span>
-            </h:panelGroup>
-            <h:panelGroup layout="block" styleClass="login-msg-ok" rendered="#{not empty v2ForgotPasswordBean.message}">
-              #{v2ForgotPasswordBean.message}
-            </h:panelGroup>
-            <h:outputLabel for="previewForgotMail" styleClass="login-l" value="#{v2LocaleBean.getMsg('v2.nav.email')}"/>
-            <h:inputText id="previewForgotMail" value="#{v2ForgotPasswordBean.sendTo}"
-                         styleClass="st-input#{not empty v2ForgotPasswordBean.error ? ' is-invalid' : ''}"
-                         autocomplete="email"/>
-            <h:commandLink actionListener="#{v2ForgotPasswordBean.sendMail}" styleClass="login-go">
-              <f:ajax execute="@form" render="@form" onevent="onPreviewForgotAjax"/>
-              <svg viewBox="0 0 24 24" aria-hidden="true"><path d="M22 2 11 13"/><path d="M22 2 15 22 11 13 2 9Z"/></svg>
-              <span>#{v2LocaleBean.getMsg('v2.nav.send')}</span>
-            </h:commandLink>
-            <button type="button" class="menu-foot login-forgot-back" data-act="login-forgot-back">
-              <svg viewBox="0 0 24 24" aria-hidden="true"><path d="M19 12H5"/><path d="m12 19-7-7 7-7"/></svg>
-              #{v2LocaleBean.getMsg('v2.nav.backToLogin')}
-            </button>
-            <input type="hidden" name="csrfToken" value="#{sessionScope.CSRF_TOKEN}"/>
-          </h:form>
-          <h:outputLink value="#{request.contextPath}/oauth2/authorization/keycloak"
-                        styleClass="menu-foot login-sso"
-                        rendered="#{appConfigBean.keycloakEnabled}">
-            #{v2LocaleBean.getMsg('v2.nav.sso')}
-          </h:outputLink>
-        </ui:fragment>
+        </div>
         <ui:fragment rendered="#{v2UserSession.loggedIn}">
-          <div class="menu-h">#{v2LocaleBean.getMsg('v2.nav.account')}</div>
-          <div class="acct-head">
-            <span class="avatar">#{v2UserSession.currentUserInitials}</span>
-            <div class="acct-id">
-              <div class="acct-name">#{v2UserSession.currentUsername}</div>
-              <div class="acct-mail">#{v2UserSession.currentUserEmail}</div>
-            </div>
-          </div>
-          <div class="role-badge">#{v2UserSession.currentRoleLabel}</div>
-          <div class="menu-list">
-            <a class="menu-row" href="user/compte.xhtml"><svg viewBox="0 0 24 24" aria-hidden="true"><path d="M19 21v-1.5a4 4 0 0 0-4-4H9a4 4 0 0 0-4 4V21"/><circle cx="12" cy="7" r="4"/></svg><span>#{v2LocaleBean.getMsg('v2.nav.profile')}</span></a>
-            <a class="menu-row" href="user/preference.xhtml"><svg viewBox="0 0 24 24" aria-hidden="true"><path d="M4 21v-7M4 10V3M12 21v-9M12 8V3M20 21v-5M20 12V3M1 14h6M9 8h6M17 16h6"/></svg><span>#{v2LocaleBean.getMsg('menu.preference')}</span></a>
+          <div class="thesaurus-item">
+            <h:outputLink value="#{request.contextPath}/v2/admin/instance"
+                          styleClass="thesaurus-btn#{v2Page eq 'admin-instance' ? ' is-on' : ''}"
+                          title="#{v2LocaleBean.getMsg('v2.admin.instance.title')}"
+                          rendered="#{v2UserSession.canAccessSuperAdminScreen()}"
+                          onclick="return window.iaAnimateRailToAdmin &amp;&amp; window.iaAnimateRailToAdmin(this, event);">
+              <svg viewBox="0 0 24 24" aria-hidden="true"><path d="M12 22c4.5-1.6 8-4.4 8-9V5.5l-8-3-8 3V13c0 4.6 3.5 7.4 8 9Z"/></svg>
+            </h:outputLink>
+            <ui:fragment rendered="#{not v2UserSession.canAccessSuperAdminScreen()}">
+              <button type="button" class="thesaurus-btn" data-act="thesaurus" data-thesaurus="projects"
+                      title="#{v2LocaleBean.getMsg('v2.nav.projects')}" aria-label="#{v2LocaleBean.getMsg('v2.nav.projects')}" aria-expanded="false">
+                <svg viewBox="0 0 24 24" aria-hidden="true"><path d="M16 21v-1.5a4 4 0 0 0-4-4H6a4 4 0 0 0-4 4V21"/><circle cx="9" cy="7" r="3.5"/><path d="M22 21v-1.5a4 4 0 0 0-3-3.85"/><path d="M16 3.3a4 4 0 0 1 0 7.4"/></svg>
+              </button>
+              <div class="menu-pop menu-pop--top" id="menu-projects">
+                <div class="menu-h">#{v2LocaleBean.getMsg('v2.nav.projects')}</div>
+                <div class="proj-list">
+                  <a class="proj-row is-active" href="index.xhtml">
+                    <span class="proj-dot" style="background:#1f7a5c"></span>
+                    <div class="proj-main">
+                      <div class="proj-name">PACTOLS<svg viewBox="0 0 24 24" aria-hidden="true"><path d="M20 6 9 17l-5-5"/></svg></div>
+                      <div class="proj-sub">Gestionnaire · 438 concepts</div>
+                    </div>
+                  </a>
+                </div>
+                <h:outputLink value="project/projets.xhtml" styleClass="menu-foot">
+                  <svg viewBox="0 0 24 24" aria-hidden="true"><path d="M15 3h6v6"/><path d="M10 14 21 3"/><path d="M18 13v6a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2V8a2 2 0 0 1 2-2h6"/></svg>
+                  #{v2LocaleBean.getMsg('v2.nav.manageAccess')}
+                </h:outputLink>
+              </div>
+            </ui:fragment>
           </div>
         </ui:fragment>
-        </div>
-      </div>
-      <ui:fragment rendered="#{v2UserSession.loggedIn}">
-      <div class="thesaurus-item">
-        <h:outputLink value="#{request.contextPath}/v2/admin/instance"
-                      styleClass="thesaurus-btn#{v2Page eq 'admin-instance' ? ' is-on' : ''}"
-                      title="Administration de l'instance"
-                      rendered="#{v2UserSession.canAccessSuperAdminScreen()}"
-                      onclick="return window.iaAnimateRailToAdmin &amp;&amp; window.iaAnimateRailToAdmin(this, event);">
-          <svg viewBox="0 0 24 24" aria-hidden="true"><path d="M12 22c4.5-1.6 8-4.4 8-9V5.5l-8-3-8 3V13c0 4.6 3.5 7.4 8 9Z"/></svg>
-        </h:outputLink>
-        <ui:fragment rendered="#{not v2UserSession.canAccessSuperAdminScreen()}">
-        <button type="button" class="thesaurus-btn" data-act="thesaurus" data-thesaurus="projects"
-                title="#{v2LocaleBean.getMsg('v2.nav.projects')}" aria-label="#{v2LocaleBean.getMsg('v2.nav.projects')}" aria-expanded="false">
-          <svg viewBox="0 0 24 24" aria-hidden="true"><path d="M16 21v-1.5a4 4 0 0 0-4-4H6a4 4 0 0 0-4 4V21"/><circle cx="9" cy="7" r="3.5"/><path d="M22 21v-1.5a4 4 0 0 0-3-3.85"/><path d="M16 3.3a4 4 0 0 1 0 7.4"/></svg>
-        </button>
-        <div class="menu-pop menu-pop--top" id="menu-projects">
-        <div class="menu-h">#{v2LocaleBean.getMsg('v2.nav.projects')}</div>
-        <div class="proj-list">
-          <a class="proj-row is-active" href="index.xhtml">
-            <span class="proj-dot" style="background:#1f7a5c"></span>
-            <div class="proj-main">
-              <div class="proj-name">PACTOLS<svg viewBox="0 0 24 24" aria-hidden="true"><path d="M20 6 9 17l-5-5"/></svg></div>
-              <div class="proj-sub">Gestionnaire · 438 concepts</div>
-            </div>
-          </a>
-        </div>
-        <h:outputLink value="project/projets.xhtml" styleClass="menu-foot">
-          <svg viewBox="0 0 24 24" aria-hidden="true"><path d="M15 3h6v6"/><path d="M10 14 21 3"/><path d="M18 13v6a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2V8a2 2 0 0 1 2-2h6"/></svg>
-          #{v2LocaleBean.getMsg('v2.nav.manageAccess')}
-        </h:outputLink>
-        </div>
-        </ui:fragment>
-      </div>
+      </h:panelGroup>
       <h:panelGroup id="previewPropBadge">
         <ui:fragment rendered="#{v2PropositionBean.boardLinkVisible}">
           <div class="thesaurus-item">
@@ -158,7 +170,6 @@
           </div>
         </ui:fragment>
       </h:panelGroup>
-      </ui:fragment>
     </div>
     <div class="thesaurus-spacer"></div>
     <div class="thesaurus-group">

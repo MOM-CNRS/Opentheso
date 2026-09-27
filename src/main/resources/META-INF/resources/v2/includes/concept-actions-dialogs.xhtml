@@ -14,7 +14,9 @@
           <svg viewBox="0 0 24 24"><path d="M4 20V8l8-4 8 4v12"/><path d="M4 8h16"/><path d="M12 4v16"/><path d="M9 12h6"/></svg>
         </span>
         <div class="th-create-txt">
-          <div class="confirm-h" id="cvDlgAddNtTitle">#{v2LocaleBean.getMsg('rightbody.conceptdialog.add_specific_concept')}</div>
+          <div class="confirm-h" id="cvDlgAddNtTitle">#{v2ConceptLifecycleEditorBean.addAsTopConcept
+              ? v2LocaleBean.getMsg('rightbody.concept.addTopConcept')
+              : v2LocaleBean.getMsg('rightbody.conceptdialog.add_specific_concept')}</div>
           <p class="th-create-hint">#{v2LocaleBean.getMsg('v2.concept.addHint')}</p>
         </div>
       </div>
@@ -26,10 +28,12 @@
                 data-add-nt-dirty="#{v2ConceptLifecycleEditorBean.createDirty}"
                 data-add-nt-dup="#{v2ConceptLifecycleEditorBean.duplicateLabelWarning}"></span>
           <div class="cv-add-composer">
+            <ui:fragment rendered="#{not v2ConceptLifecycleEditorBean.addAsTopConcept}">
             <div class="cv-add-composer-parent">
               <span>#{v2LocaleBean.getMsg('v2.concept.addScope')}</span>
               <strong>#{v2ConceptLifecycleEditorBean.currentPreferredLabel}</strong>
             </div>
+            </ui:fragment>
             <label class="cv-add-name">
               <span>#{v2LocaleBean.getMsg('v2.concept.addName')}
                 <em class="cv-facet-lang">#{v2ConceptLifecycleEditorBean.workLanguage}</em>
@@ -42,7 +46,9 @@
             </label>
             <div class="cv-add-preview" aria-live="polite">
               <div class="cv-add-preview-tree">
+                <ui:fragment rendered="#{not v2ConceptLifecycleEditorBean.addAsTopConcept}">
                 <div class="cv-add-preview-parent">#{v2ConceptLifecycleEditorBean.currentPreferredLabel}</div>
+                </ui:fragment>
                 <div class="cv-add-preview-child is-empty" id="cvAddNtPreview"
                      data-empty="#{v2LocaleBean.getMsg('v2.concept.addPreviewEmpty')}">#{v2LocaleBean.getMsg('v2.concept.addPreviewEmpty')}</div>
                 <div class="cv-add-preview-meta" id="cvAddNtMeta"></div>
@@ -62,6 +68,7 @@
               </div>
             </div>
           </ui:fragment>
+          <ui:fragment rendered="#{not v2ConceptLifecycleEditorBean.addAsTopConcept}">
           <div class="cv-dlg-field">
             <span>#{v2LocaleBean.getMsg('v2.concept.addRel')}</span>
             <h:inputHidden id="cvAddNtRel" value="#{v2ConceptLifecycleEditorBean.selectedNarrowerRelationType}"/>
@@ -78,6 +85,7 @@
               </ui:repeat>
             </div>
           </div>
+          </ui:fragment>
           <label class="cv-dlg-field">
             <span>#{v2LocaleBean.getMsg('v2.concept.addCollection')}</span>
             <h:selectOneMenu id="cvAddNtGroup" styleClass="st-input cv-add-nt-group"

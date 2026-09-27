@@ -9,6 +9,7 @@ import fr.cnrs.opentheso.v2.candidat.service.CandidatMutationService;
 import fr.cnrs.opentheso.v2.concept.ui.ThesaurusViewBean;
 import fr.cnrs.opentheso.v2.setting.ui.ThesaurusContext;
 import fr.cnrs.opentheso.v2.shared.session.ThesaurusPreferencesProvider;
+import fr.cnrs.opentheso.v2.setting.model.ThesaurusLanguage;
 import fr.cnrs.opentheso.v2.shared.ui.UserSession;
 import fr.cnrs.opentheso.v2.shared.ui.V2LocaleBean;
 import jakarta.faces.context.FacesContext;
@@ -20,6 +21,8 @@ import lombok.Setter;
 import org.apache.commons.lang3.StringUtils;
 
 import java.io.Serializable;
+import java.net.URLDecoder;
+import java.nio.charset.StandardCharsets;
 import java.util.ArrayList;
 import java.util.Arrays;
 import java.util.List;
@@ -45,52 +48,75 @@ public class CandidateDraftBean implements Serializable {
 
     private String title = "";
     private String definition = "";
-    private String scopeNote = "";
+    private String notesPayload = "";
     private String alternatives = "";
     private String hiddenForms = "";
     private String collectionIds = "";
     private String broaderTerm = "";
     private String narrowerTerms = "";
     private String relatedTerms = "";
-    private String translationEn = "";
-    private String translationDe = "";
-    private String translationEs = "";
-    private String translationIt = "";
+    private String translationsPayload = "";
     private String createdConceptId;
     private boolean created;
+    private boolean chainNext;
+    /** {@code create} ou {@code chain} — posé par le formulaire avant soumission. */
+    private String createMode = "create";
 
     public boolean isCanCreate() {
         return candidatAccessPolicy.canCreate(userSession, thesaurusViewBean.getId());
     }
 
+    public List<ThesaurusLanguage> getTranslationLanguages() {
+        return thesaurusViewBean.getLanguages().stream()
+                .filter(lang -> !thesaurusViewBean.currentWorkLangIs(lang.code()))
+                .toList();
+    }
+
+    public List<String> getDraftNoteTypes() {
+        return List.of("scopeNote", "example", "historyNote", "editorialNote", "changeNote");
+    }
+
     public void reset() {
+        resetFields();
+        broaderTerm = "";
+        createdConceptId = null;
+        created = false;
+        chainNext = false;
+        createMode = "create";
+    }
+
+    private void resetFields() {
         title = "";
         definition = "";
-        scopeNote = "";
+        notesPayload = "";
         alternatives = "";
         hiddenForms = "";
         collectionIds = "";
-        broaderTerm = "";
         narrowerTerms = "";
         relatedTerms = "";
-        translationEn = "";
-        translationDe = "";
-        translationEs = "";
-        translationIt = "";
-        createdConceptId = null;
-        created = false;
+        translationsPayload = "";
     }
 
     public void cancel() {
         reset();
     }
 
+    public void create() {
+        persist("chain".equalsIgnoreCase(StringUtils.trimToEmpty(createMode)));
+    }
+
+    public void createAndContinue() {
+        createMode = "chain";
+        persist(true);
+    }
+
     /**
      * Persiste le candidat draft. Appelé depuis le formulaire JSF.
      */
-    public void create() {
+    private void persist(boolean chain) {
         created = false;
         createdConceptId = null;
+        chainNext = chain;
         String thesaurusId = thesaurusViewBean.getId();
         if (!candidatAccessPolicy.canCreate(userSession, thesaurusId)) {
             MessageUtils.showErrorMessage(localeBean.getMsg("v2.candidat.draft.unauthorized"));
@@ -140,17 +166,17 @@ public class CandidateDraftBean implements Serializable {
                 candidat.getIdConcepte(), thesaurusId, userSession.getCurrentUsername());
         candidatMutationService.updateCandidateDetails(candidat);
 
-        if (StringUtils.isNotBlank(scopeNote)) {
+        for (DraftNote note : parseNotesPayload(notesPayload)) {
             candidatMutationService.addOrUpdateCandidateNote(
                     candidat.getIdConcepte(),
-                    lang,
+                    note.lang(),
                     thesaurusId,
-                    scopeNote.trim(),
-                    "scopeNote",
-                    "",
+                    note.value(),
+                    note.type(),
+                    note.source(),
                     userId);
         }
-        for (TraductionDto traduction : buildTranslations()) {
+        for (TraductionDto traduction : parseTranslationsPayload(translationsPayload)) {
             candidatMutationService.addCandidateTranslation(
                     fr.cnrs.opentheso.models.terms.Term.builder()
                             .lang(traduction.getLangue())
@@ -169,7 +195,14 @@ public class CandidateDraftBean implements Serializable {
         candidatBoardBean.load(thesaurusId);
         MessageUtils.showInformationMessage(localeBean.getMsg("v2.candidat.draft.created"));
 
-        // Redirect vers la fiche candidat créée
+        if (chain) {
+            String keepBt = broaderTerm;
+            resetFields();
+            broaderTerm = keepBt;
+            createMode = "create";
+            return;
+        }
+
         FacesContext faces = FacesContext.getCurrentInstance();
         if (faces != null && StringUtils.isNotBlank(createdConceptId)) {
             try {
@@ -212,16 +245,58 @@ public class CandidateDraftBean implements Serializable {
         return result;
     }
 
-    private List<TraductionDto> buildTranslations() {
+    static List<TraductionDto> parseTranslationsPayload(String payload) {
         List<TraductionDto> traductions = new ArrayList<>();
-        addTranslation(traductions, "en", translationEn);
-        addTranslation(traductions, "de", translationDe);
-        addTranslation(traductions, "es", translationEs);
-        addTranslation(traductions, "it", translationIt);
+        if (StringUtils.isBlank(payload)) {
+            return traductions;
+        }
+        for (String line : payload.split("\\R")) {
+            int tab = line.indexOf('\t');
+            if (tab <= 0) {
+                continue;
+            }
+            addTranslation(traductions, line.substring(0, tab).trim(), line.substring(tab + 1));
+        }
         return traductions;
     }
 
-    private void addTranslation(List<TraductionDto> list, String lang, String value) {
+    static List<DraftNote> parseNotesPayload(String payload) {
+        List<DraftNote> notes = new ArrayList<>();
+        if (StringUtils.isBlank(payload)) {
+            return notes;
+        }
+        for (String line : payload.split("\\R")) {
+            String[] parts = line.split("\\t", 4);
+            if (parts.length < 3) {
+                continue;
+            }
+            String type = StringUtils.trimToEmpty(parts[0]);
+            String lang = StringUtils.trimToEmpty(parts[1]);
+            String value = decodeNotePart(parts[2]);
+            String source = parts.length > 3 ? decodeNotePart(parts[3]) : "";
+            if (StringUtils.isAnyBlank(type, lang, value)) {
+                continue;
+            }
+            notes.add(new DraftNote(type, lang, value, source));
+        }
+        return notes;
+    }
+
+    private static String decodeNotePart(String raw) {
+        if (StringUtils.isBlank(raw)) {
+            return "";
+        }
+        try {
+            return URLDecoder.decode(raw, StandardCharsets.UTF_8).trim();
+        } catch (IllegalArgumentException ex) {
+            return raw.trim();
+        }
+    }
+
+    record DraftNote(String type, String lang, String value, String source) {
+    }
+
+    private static void addTranslation(List<TraductionDto> list, String lang, String value) {
         if (StringUtils.isBlank(value)) {
             return;
         }

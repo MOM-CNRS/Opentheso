@@ -152,4 +152,52 @@ class ConceptLifecycleEditorBeanCreateTest {
         assertEquals("Action non autorisée", bean.getCreateErrorMessage());
         verify(conceptLifecycleMutationService, never()).addChildConcept(any());
     }
+
+    @Test
+    void prepareTop_resetsFormWithoutParent() {
+        bean.prepareAddTopConcept();
+
+        assertTrue(bean.isAddAsTopConcept());
+        assertEquals("", bean.getPreferredLabel());
+        assertEquals("", bean.getCurrentPreferredLabel());
+        assertFalse(bean.isCreateDirty());
+        assertFalse(bean.isCreateReady());
+    }
+
+    @Test
+    void prepareChild_clearsTopFlag() {
+        bean.prepareAddTopConcept();
+        bean.prepareAddChild();
+
+        assertFalse(bean.isAddAsTopConcept());
+        assertEquals("France", bean.getCurrentPreferredLabel());
+    }
+
+    @Test
+    void submitTop_withoutLabel_keepsDialogOpen() {
+        bean.prepareAddTopConcept();
+
+        bean.submitAddTopConcept();
+
+        assertEquals("Le libellé est obligatoire", bean.getCreateErrorMessage());
+        verify(conceptLifecycleMutationService, never()).addTopConcept(any());
+    }
+
+    @Test
+    void submitTop_createsAndKeepsDialog() {
+        bean.prepareAddTopConcept();
+        bean.setPreferredLabel("Europe");
+        when(conceptLifecycleMutationService.addTopConcept(any()))
+                .thenReturn(MutationResult.ok("Le concept a bien été ajouté", "C9"));
+
+        bean.submitAddTopConcept();
+
+        assertTrue(bean.isCreateDirty());
+        assertEquals(1, bean.getCreatedCount());
+        assertEquals("C9", bean.getLastCreatedId());
+        assertEquals("Europe", bean.getLastCreatedLabel());
+        assertEquals("", bean.getPreferredLabel());
+        assertTrue(bean.getCreateFlashMessage().contains("Europe"));
+        verify(conceptNavigationSupport, never()).openConcept(any());
+    }
 }
