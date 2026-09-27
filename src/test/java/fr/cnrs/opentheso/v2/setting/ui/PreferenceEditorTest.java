@@ -8,6 +8,7 @@ import static org.junit.jupiter.api.Assertions.assertEquals;
 import static org.junit.jupiter.api.Assertions.assertFalse;
 import static org.junit.jupiter.api.Assertions.assertNotNull;
 import static org.junit.jupiter.api.Assertions.assertNull;
+import static org.junit.jupiter.api.Assertions.assertTrue;
 
 class PreferenceEditorTest {
 
@@ -39,6 +40,21 @@ class PreferenceEditorTest {
         assertEquals("secret", model.passArk());
         assertEquals(ExportUriType.ARK, model.exportUriType());
         assertFalse(model.generateHandle());
+    }
+
+    @Test
+    void numericIdentifierSwitch_mapsIdentifierType() {
+        PreferenceEditor editor = PreferenceEditor.from(SettingTestFixtures.samplePreferences());
+
+        assertEquals(2, editor.getIdentifierType());
+        assertTrue(editor.isNumericIdentifier());
+
+        editor.setNumericIdentifier(false);
+        assertEquals(1, editor.getIdentifierType());
+        assertFalse(editor.isNumericIdentifier());
+
+        editor.setNumericIdentifier(true);
+        assertEquals(2, editor.getIdentifierType());
     }
 
     @Test

@@ -82,6 +82,14 @@ public class PreferenceEditor implements Serializable {
 
     private List<ThesaurusLanguage> languages = new ArrayList<>();
 
+    public boolean isNumericIdentifier() {
+        return identifierType != null && identifierType == 2;
+    }
+
+    public void setNumericIdentifier(boolean numeric) {
+        this.identifierType = numeric ? 2 : 1;
+    }
+
     public static PreferenceEditor from(ThesaurusPreferences preferences) {
         PreferenceEditor editor = new PreferenceEditor();
         editor.setSourceLang(preferences.sourceLang());

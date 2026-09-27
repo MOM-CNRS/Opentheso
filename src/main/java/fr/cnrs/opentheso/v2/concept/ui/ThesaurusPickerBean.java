@@ -291,6 +291,10 @@ public class ThesaurusPickerBean implements Serializable {
         return thesaurusPickerImportBean != null && thesaurusPickerImportBean.isCanImportThesaurus();
     }
 
+    public boolean isCanAddThesaurus() {
+        return isCanCreateThesaurus() || isCanImportThesaurus();
+    }
+
     public boolean isImportMode() {
         return thesaurusPickerImportBean != null && thesaurusPickerImportBean.isImportMode();
     }

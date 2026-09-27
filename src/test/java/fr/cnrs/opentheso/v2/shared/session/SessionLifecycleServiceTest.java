@@ -21,7 +21,8 @@ import static org.mockito.Mockito.when;
 @ExtendWith(MockitoExtension.class)
 class SessionLifecycleServiceTest {
 
-    private final SessionLifecycleService service = new SessionLifecycleService("/v2/thesauri", "/v2/session/expire");
+    private final SessionLifecycleService service = new SessionLifecycleService(
+            "/v2/thesauri", "/v2/session/expire", "/v2/session/keep-alive");
 
     @Mock
     private HttpServletRequest request;
@@ -44,6 +45,17 @@ class SessionLifecycleServiceTest {
         assertEquals("/opentheso/v2/thesauri?logout=1", service.homeUrlWithLogout("/opentheso"));
         assertEquals("/opentheso/v2/session/expire", service.expireUrl("/opentheso"));
         assertEquals("/v2/session/expire", service.expireUrl(null));
+        assertEquals("/opentheso/v2/session/keep-alive", service.keepAliveUrl("/opentheso"));
+        assertEquals("/v2/session/keep-alive", service.keepAliveUrl(null));
+    }
+
+    @Test
+    void touch_isTrueOnlyWhenSessionExists() {
+        when(request.getSession(false)).thenReturn(session);
+        assertEquals(true, service.touch(request));
+        when(request.getSession(false)).thenReturn(null);
+        assertEquals(false, service.touch(request));
+        assertEquals(false, service.touch(null));
     }
 
     @Test

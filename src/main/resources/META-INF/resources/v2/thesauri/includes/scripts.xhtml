@@ -884,6 +884,38 @@
         }
         return false;
       };
+      window.tpShowAddChoose = function () {
+        var wrap = document.getElementById('tpAdd');
+        var menu = document.getElementById('tpAddMenu');
+        var btn = document.getElementById('tpAddBtn');
+        if (!wrap || !menu) return false;
+        wrap.classList.add('is-open');
+        menu.hidden = false;
+        menu.removeAttribute('hidden');
+        if (btn) btn.setAttribute('aria-expanded', 'true');
+        var first = menu.querySelector('.tp-add-opt');
+        if (first && first.focus) first.focus();
+        return false;
+      };
+      window.tpHideAddChoose = function () {
+        var wrap = document.getElementById('tpAdd');
+        var menu = document.getElementById('tpAddMenu');
+        var btn = document.getElementById('tpAddBtn');
+        if (wrap) wrap.classList.remove('is-open');
+        if (menu) {
+          menu.hidden = true;
+          menu.setAttribute('hidden', 'hidden');
+        }
+        if (btn) btn.setAttribute('aria-expanded', 'false');
+        return false;
+      };
+      window.tpToggleAddChoose = function () {
+        var wrap = document.getElementById('tpAdd');
+        if (wrap && wrap.classList.contains('is-open')) {
+          return window.tpHideAddChoose();
+        }
+        return window.tpShowAddChoose();
+      };
       window.tpShowDeleteConfirm = function () {
         var dlg = document.getElementById('tpDeleteConfirm');
         if (!dlg || dlg.getAttribute('data-ready') !== 'true') return;
@@ -1013,6 +1045,18 @@
       document.addEventListener('click', function (e) {
         var actEl = e.target.closest && e.target.closest('[data-act]');
         var act = actEl ? actEl.getAttribute('data-act') : '';
+        if (act === 'tp-add-open') {
+          e.preventDefault();
+          e.stopPropagation();
+          window.tpToggleAddChoose();
+          return;
+        }
+        if (e.target.closest && e.target.closest('.tp-add-menu')) {
+          return;
+        }
+        if (!e.target.closest || !e.target.closest('.tp-add')) {
+          window.tpHideAddChoose();
+        }
         if (act === 'tp-create-dismiss') {
           e.preventDefault();
           window.tpDismissCreateConfirm();
@@ -1066,6 +1110,11 @@
       });
       document.addEventListener('keydown', function (e) {
         if (e.key !== 'Escape') return;
+        var add = document.getElementById('tpAdd');
+        if (add && add.classList.contains('is-open')) {
+          window.tpHideAddChoose();
+          return;
+        }
         var del = document.getElementById('tpDeleteConfirm');
         if (del && !del.hidden) {
           window.tpDismissDeleteConfirm && window.tpDismissDeleteConfirm();

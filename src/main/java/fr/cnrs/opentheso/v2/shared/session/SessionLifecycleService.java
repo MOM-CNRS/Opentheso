@@ -22,12 +22,15 @@ public class SessionLifecycleService {
 
     private final String homePath;
     private final String expirePath;
+    private final String keepAlivePath;
 
     public SessionLifecycleService(
             @Value("${opentheso.v2.home-path}") String homePath,
-            @Value("${opentheso.v2.expire-path}") String expirePath) {
+            @Value("${opentheso.v2.expire-path}") String expirePath,
+            @Value("${opentheso.v2.keepalive-path}") String keepAlivePath) {
         this.homePath = homePath;
         this.expirePath = expirePath;
+        this.keepAlivePath = keepAlivePath;
     }
 
     public String homePath() {
@@ -48,6 +51,14 @@ public class SessionLifecycleService {
 
     public String expireUrl(String contextPath) {
         return normalizeContextPath(contextPath) + expirePath;
+    }
+
+    public String keepAliveUrl(String contextPath) {
+        return normalizeContextPath(contextPath) + keepAlivePath;
+    }
+
+    public boolean touch(HttpServletRequest request) {
+        return request != null && request.getSession(false) != null;
     }
 
     public void invalidateQuietly(HttpSession session) {

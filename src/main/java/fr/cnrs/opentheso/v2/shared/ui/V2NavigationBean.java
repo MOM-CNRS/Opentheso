@@ -173,6 +173,11 @@ public class V2NavigationBean implements Serializable {
         return sessionLifecycleService.expireUrl(context.getRequestContextPath());
     }
 
+    public String getSessionKeepAliveUrl() {
+        ExternalContext context = FacesContext.getCurrentInstance().getExternalContext();
+        return sessionLifecycleService.keepAliveUrl(context.getRequestContextPath());
+    }
+
     private void requireThesaurus() throws IOException {
         if (StringUtils.isBlank(thesaurusContext.resolveThesaurusId())) {
             redirect("/v2/thesauri");

@@ -128,21 +128,50 @@
                     <div class="st-row">
                       <div class="st-row-l">Langue par défaut</div>
                       <div class="st-row-c">
-                        <h:selectOneMenu id="previewPrefSourceLang" styleClass="st-input"
-                                         value="#{v2ThesaurusPreferenceBean.preference.sourceLang}">
-                          <f:selectItems value="#{v2ThesaurusPreferenceBean.preference.languages}" var="lang"
-                                         itemValue="#{lang.code}" itemLabel="#{lang.value} (#{lang.code})"/>
-                        </h:selectOneMenu>
+                        <h:inputHidden id="previewPrefSourceLang"
+                                       value="#{v2ThesaurusPreferenceBean.preference.sourceLang}"/>
+                        <div class="tp-lang-pick st-lang-pick" id="previewPrefSourceLangUi">
+                          <button type="button"
+                                  class="tree-lang-btn tp-lang-btn"
+                                  data-act="pref-lang-toggle"
+                                  title="Langue par défaut"
+                                  aria-haspopup="listbox"
+                                  aria-expanded="false">
+                            <span class="tree-lang-flag" aria-hidden="true">#{v2ThesaurusPreferenceBean.sourceLanguageFlag}</span>
+                            <span class="tree-lang-name">#{v2ThesaurusPreferenceBean.sourceLanguageLabel}</span>
+                            <span class="tree-lang-code">#{v2ThesaurusPreferenceBean.preference.sourceLang}</span>
+                            <span class="tree-lang-caret" aria-hidden="true">▾</span>
+                          </button>
+                          <div class="tree-lang-menu tp-lang-menu" role="listbox" aria-label="Langue par défaut">
+                            <div class="tree-lang-menu-h">Langue par défaut</div>
+                            <ui:repeat value="#{v2ThesaurusPreferenceBean.preference.languages}" var="lang">
+                              <button type="button"
+                                      class="tree-lang-opt#{v2ThesaurusPreferenceBean.isSourceLanguageSelected(lang.code) ? ' is-on' : ''}"
+                                      data-act="pref-lang"
+                                      data-lang="#{lang.code}"
+                                      role="option"
+                                      aria-selected="#{v2ThesaurusPreferenceBean.isSourceLanguageSelected(lang.code)}">
+                                <span class="tree-lang-opt-flag" aria-hidden="true">#{v2ThesaurusViewBean.flagEmoji(lang.code)}</span>
+                                <span class="tree-lang-opt-name">#{lang.value}</span>
+                                <span class="tree-lang-opt-code">#{lang.code}</span>
+                                <span class="tree-lang-opt-check" aria-hidden="true">✓</span>
+                              </button>
+                            </ui:repeat>
+                          </div>
+                        </div>
                       </div>
                     </div>
                     <div class="st-row">
                       <div class="st-row-l">Type d'identifiant</div>
-                      <div class="st-row-c">
-                        <h:selectOneMenu id="previewPrefIdentifierType" styleClass="st-input"
-                                         value="#{v2ThesaurusPreferenceBean.preference.identifierType}">
-                          <f:selectItem itemLabel="Alphanumérique" itemValue="#{v2ThesaurusPreferenceBean.identifierAlphanumeric}"/>
-                          <f:selectItem itemLabel="Numérique" itemValue="#{v2ThesaurusPreferenceBean.identifierNumeric}"/>
-                        </h:selectOneMenu>
+                      <div class="st-row-c st-id-type">
+                        <span class="st-id-type-off">Alphanumérique</span>
+                        <label class="st-sw">
+                          <h:selectBooleanCheckbox id="previewPrefIdentifierType"
+                                                   styleClass="st-sw-input"
+                                                   value="#{v2ThesaurusPreferenceBean.preference.numericIdentifier}"
+                                                   title="Type d'identifiant"/>
+                        </label>
+                        <span class="st-id-type-on">Numérique</span>
                       </div>
                     </div>
                     <div class="st-row">

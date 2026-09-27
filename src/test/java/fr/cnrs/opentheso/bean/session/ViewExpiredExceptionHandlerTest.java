@@ -50,7 +50,7 @@ class ViewExpiredExceptionHandlerTest {
         }
 
         verify(externalContext).invalidateSession();
-        verify(externalContext).redirect("/opentheso/index.xhtml?sessionExpired=1");
+        verify(externalContext).redirect("/opentheso/v2/thesauri?sessionExpired=1");
         verify(facesContext).responseComplete();
         verify(wrapped).handle();
     }
@@ -72,7 +72,7 @@ class ViewExpiredExceptionHandlerTest {
         }
 
         verify(externalContext, never()).invalidateSession();
-        verify(externalContext).redirect("/index.xhtml");
+        verify(externalContext).redirect("/v2/thesauri");
         verify(facesContext).responseComplete();
         verify(wrapped).handle();
     }
@@ -94,7 +94,7 @@ class ViewExpiredExceptionHandlerTest {
         }
 
         verify(externalContext).invalidateSession();
-        verify(externalContext).redirect("/index.xhtml?sessionExpired=1");
+        verify(externalContext).redirect("/v2/thesauri?sessionExpired=1");
     }
 
     @Test

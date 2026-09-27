@@ -72,24 +72,66 @@
             </a>
           </div>
           <div class="tp-bar-actions">
-            <h:commandLink styleClass="tp-import"
-                           rendered="#{v2ThesaurusPickerBean.canImportThesaurus}"
-                           action="#{v2ThesaurusPickerBean.openImportThesaurus}">
-              <svg class="tp-create-ico" viewBox="0 0 24 24" aria-hidden="true">
-                <path d="M21 15v4a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2v-4"/>
-                <path d="M7 10l5 5 5-5"/>
-                <path d="M12 15V3"/>
-              </svg>
-              <h:outputText value="#{v2LocaleBean.getMsg('v2.picker.import')}"/>
-            </h:commandLink>
-            <h:commandLink styleClass="tp-create"
-                           rendered="#{v2ThesaurusPickerBean.canCreateThesaurus}"
-                           action="#{v2ThesaurusPickerBean.createThesaurus}">
-              <svg class="tp-create-ico" viewBox="0 0 24 24" aria-hidden="true">
-                <path d="M12 5v14"/><path d="M5 12h14"/>
-              </svg>
-              <h:outputText value="#{v2LocaleBean.getMsg('v2.picker.create')}"/>
-            </h:commandLink>
+            <ui:fragment rendered="#{v2ThesaurusPickerBean.canAddThesaurus}">
+            <div class="tp-add" id="tpAdd">
+              <button type="button"
+                      class="tp-create"
+                      id="tpAddBtn"
+                      data-act="tp-add-open"
+                      title="#{v2LocaleBean.getMsg('v2.picker.add')}"
+                      aria-haspopup="menu"
+                      aria-expanded="false"
+                      aria-controls="tpAddMenu">
+                <svg class="tp-create-ico" viewBox="0 0 24 24" aria-hidden="true">
+                  <path d="M12 5v14"/><path d="M5 12h14"/>
+                </svg>
+                <span class="tp-create-lbl">#{v2LocaleBean.getMsg('v2.picker.add')}</span>
+                <svg class="tp-create-caret" viewBox="0 0 24 24" aria-hidden="true">
+                  <path d="m6 9 6 6 6-6"/>
+                </svg>
+              </button>
+              <div class="tp-add-menu" id="tpAddMenu" hidden="hidden" role="menu"
+                   aria-labelledby="tpAddBtn">
+                <div class="tp-add-menu-h">#{v2LocaleBean.getMsg('v2.picker.add.hint')}</div>
+                <h:commandLink styleClass="tp-add-opt"
+                               rendered="#{v2ThesaurusPickerBean.canCreateThesaurus}"
+                               action="#{v2ThesaurusPickerBean.createThesaurus}"
+                               pt:role="menuitem"
+                               onclick="window.tpShowLoading &amp;&amp; window.tpShowLoading(null, false);">
+                  <span class="tp-add-opt-ico" aria-hidden="true">
+                    <svg viewBox="0 0 24 24"><path d="M12 5v14"/><path d="M5 12h14"/></svg>
+                  </span>
+                  <span class="tp-add-opt-tx">
+                    <span class="tp-add-opt-t">#{v2LocaleBean.getMsg('v2.picker.add.create')}</span>
+                    <span class="tp-add-opt-d">#{v2LocaleBean.getMsg('v2.picker.add.create.desc')}</span>
+                  </span>
+                  <span class="tp-add-opt-go" aria-hidden="true">
+                    <svg viewBox="0 0 24 24"><path d="M5 12h14"/><path d="m12 5 7 7-7 7"/></svg>
+                  </span>
+                </h:commandLink>
+                <h:commandLink styleClass="tp-add-opt"
+                               rendered="#{v2ThesaurusPickerBean.canImportThesaurus}"
+                               action="#{v2ThesaurusPickerBean.openImportThesaurus}"
+                               pt:role="menuitem"
+                               onclick="window.tpShowLoading &amp;&amp; window.tpShowLoading(null, false);">
+                  <span class="tp-add-opt-ico is-import" aria-hidden="true">
+                    <svg viewBox="0 0 24 24">
+                      <path d="M21 15v4a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2v-4"/>
+                      <path d="M7 10l5 5 5-5"/>
+                      <path d="M12 15V3"/>
+                    </svg>
+                  </span>
+                  <span class="tp-add-opt-tx">
+                    <span class="tp-add-opt-t">#{v2LocaleBean.getMsg('v2.picker.add.import')}</span>
+                    <span class="tp-add-opt-d">#{v2LocaleBean.getMsg('v2.picker.add.import.desc')}</span>
+                  </span>
+                  <span class="tp-add-opt-go" aria-hidden="true">
+                    <svg viewBox="0 0 24 24"><path d="M5 12h14"/><path d="m12 5 7 7-7 7"/></svg>
+                  </span>
+                </h:commandLink>
+              </div>
+            </div>
+            </ui:fragment>
           </div>
         </div>
 
@@ -315,18 +357,13 @@
                           <svg viewBox="0 0 24 24"><path d="M4 19.5A2.5 2.5 0 0 1 6.5 17H20"/><path d="M6.5 2H20v20H6.5A2.5 2.5 0 0 1 4 19.5v-15A2.5 2.5 0 0 1 6.5 2z"/><path d="M8 7h8M8 11h6"/></svg>
                         </span>
                         <p>#{empty v2ThesaurusPickerBean.rows ? v2LocaleBean.getMsg('v2.picker.empty.none') : v2LocaleBean.getMsg('v2.picker.empty.nomatch')}</p>
-                        <ui:fragment rendered="#{empty v2ThesaurusPickerBean.rows and (v2ThesaurusPickerBean.canCreateThesaurus or v2ThesaurusPickerBean.canImportThesaurus)}">
+                        <ui:fragment rendered="#{empty v2ThesaurusPickerBean.rows and v2ThesaurusPickerBean.canAddThesaurus}">
                           <div class="tp-empty-acts">
-                            <h:commandLink styleClass="tp-empty-cta"
-                                           rendered="#{v2ThesaurusPickerBean.canImportThesaurus}"
-                                           action="#{v2ThesaurusPickerBean.openImportThesaurus}">
-                              <h:outputText value="#{v2LocaleBean.getMsg('v2.picker.import')}"/>
-                            </h:commandLink>
-                            <h:commandLink styleClass="tp-empty-cta tp-empty-cta--primary"
-                                           rendered="#{v2ThesaurusPickerBean.canCreateThesaurus}"
-                                           action="#{v2ThesaurusPickerBean.createThesaurus}">
-                              <h:outputText value="#{v2LocaleBean.getMsg('v2.picker.create')}"/>
-                            </h:commandLink>
+                            <button type="button"
+                                    class="tp-empty-cta tp-empty-cta--primary"
+                                    data-act="tp-add-open">
+                              <h:outputText value="#{v2LocaleBean.getMsg('v2.picker.add')}"/>
+                            </button>
                           </div>
                         </ui:fragment>
                       </div>

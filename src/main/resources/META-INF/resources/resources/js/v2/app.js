@@ -21,6 +21,44 @@ function closeTreeLang() {
   return true;
 }
 
+function closePrefLang() {
+  let closed = false;
+  $$(".st-lang-pick .tp-lang-btn.is-open").forEach((btn) => {
+    btn.classList.remove("is-open");
+    btn.setAttribute("aria-expanded", "false");
+    closed = true;
+  });
+  return closed;
+}
+
+function paintPrefSourceLang(opt) {
+  const pick = opt && opt.closest(".st-lang-pick");
+  if (!pick) return;
+  const lang = opt.getAttribute("data-lang") || "";
+  const hidden = document.getElementById("previewPrefSourceLang");
+  if (hidden) hidden.value = lang;
+  const btn = pick.querySelector(".tp-lang-btn");
+  const flag = opt.querySelector(".tree-lang-opt-flag");
+  const name = opt.querySelector(".tree-lang-opt-name");
+  const code = opt.querySelector(".tree-lang-opt-code");
+  if (btn) {
+    const flagEl = btn.querySelector(".tree-lang-flag");
+    const nameEl = btn.querySelector(".tree-lang-name");
+    const codeEl = btn.querySelector(".tree-lang-code");
+    if (flagEl && flag) flagEl.textContent = flag.textContent;
+    if (nameEl && name) nameEl.textContent = name.textContent;
+    if (codeEl && code) codeEl.textContent = code.textContent;
+    btn.classList.remove("is-open");
+    btn.setAttribute("aria-expanded", "false");
+  }
+  pick.querySelectorAll(".tree-lang-opt").forEach((item) => {
+    const on = item === opt;
+    item.classList.toggle("is-on", on);
+    item.setAttribute("aria-selected", on ? "true" : "false");
+  });
+  if (typeof markSettingsDraft === "function") markSettingsDraft();
+}
+
 function closeCvCtx() {
   const btn = $("#cvCtxBtn");
   if (!btn || !btn.classList.contains("is-open")) return false;
@@ -194,6 +232,7 @@ document.addEventListener("keydown", (e) => {
   if (typeof closeGpsLightbox === "function" && closeGpsLightbox()) return;
   if (typeof closeCollectionPicker === "function" && closeCollectionPicker()) return;
   if (closeTreeLang()) return;
+  if (closePrefLang()) return;
   if (closeCvCtx()) return;
   if (closeAnyThesoAc()) return;
   if (document.body.classList.contains("is-drawer")) {
@@ -318,6 +357,12 @@ window.tpToggleSyncDiff = function (btn) {
 };
 document.addEventListener("keydown", (e) => {
   if (e.key !== "Escape") return;
+  const sessionDlg = document.getElementById("sessionExpireConfirm");
+  if (sessionDlg && !sessionDlg.hidden) {
+    if (typeof window.v2SessionStay === "function") window.v2SessionStay();
+    e.preventDefault();
+    return;
+  }
   const overlay = $("#cblockOverlay");
   if (overlay && !overlay.hidden) {
     closeConceptBlockOverlay();
@@ -416,6 +461,7 @@ document.addEventListener("click", (e) => {
     if ($("#voWrap") && !$("#voWrap").contains(e.target)) $("#voGear") && $("#voGear").classList.remove("is-on");
     if ($("#viewPick") && !$("#viewPick").contains(e.target)) $("#viewPickBtn") && $("#viewPickBtn").classList.remove("is-open");
     if ($("#previewTermLangUi") && !$("#previewTermLangUi").contains(e.target)) closeTreeLang();
+    if (!e.target.closest(".st-lang-pick")) closePrefLang();
     if (!e.target.closest(".xpdf-lang-pick")) closeExportPdfLangPickers();
     if (!e.target.closest(".xcsv-lang-pick")) closeExportCsvLangPicker();
     if ($("#cvCtx") && !$("#cvCtx").contains(e.target)) closeCvCtx();
@@ -425,6 +471,7 @@ document.addEventListener("click", (e) => {
   if ($("#cfCombo") && !$("#cfCombo").contains(e.target)) $("#cfCombo").classList.remove("open");
   const act = t.getAttribute("data-act");
   if (act !== "term-lang-toggle" && act !== "term-lang") closeTreeLang();
+  if (act !== "pref-lang-toggle" && act !== "pref-lang") closePrefLang();
   if (act !== "export-pdf-lang-toggle" && act !== "export-pdf-lang") closeExportPdfLangPickers();
   if (act !== "export-csv-lang-toggle" && act !== "export-lang" && act !== "export-lang-all" && act !== "export-lang-none") {
     closeExportCsvLangPicker();
@@ -443,6 +490,16 @@ document.addEventListener("click", (e) => {
   } else if (act === "sb-dismiss") {
     e.preventDefault();
     closeSidebarDrawer();
+    return;
+  } else if (act === "session-stay" || act === "session-expire-dismiss") {
+    e.preventDefault();
+    if (typeof window.v2SessionStay === "function") window.v2SessionStay();
+    return;
+  } else if (act === "session-expire") {
+    e.preventDefault();
+    if (typeof window.v2SessionExpire === "function") window.v2SessionExpire();
+    return;
+  } else if (act === "session-expire-modal") {
     return;
   } else if (act === "logout-ask") {
     closeThesaurus();
@@ -1059,6 +1116,21 @@ document.addEventListener("click", (e) => {
     closeTreeLang();
     if (!lang || t.classList.contains("is-on")) return;
     clickPreviewJsf("previewTermLangGo", { termLang: lang });
+  } else if (act === "pref-lang-toggle") {
+    e.preventDefault();
+    const open = !t.classList.contains("is-open");
+    closeThesaurus();
+    closeTreeLang();
+    closePrefLang();
+    t.classList.toggle("is-open", open);
+    t.setAttribute("aria-expanded", open ? "true" : "false");
+  } else if (act === "pref-lang") {
+    e.preventDefault();
+    if (t.classList.contains("is-on")) {
+      closePrefLang();
+      return;
+    }
+    paintPrefSourceLang(t);
   } else if (act === "cv-ctx-toggle") {
     e.preventDefault();
     const open = !t.classList.contains("is-open");

@@ -73,6 +73,38 @@ public class ThesaurusPreferenceBean implements Serializable {
         return "/api/theso/" + editor.getPreferredName();
     }
 
+    public String getSourceLanguageFlag() {
+        PreferenceEditor editor = getPreference();
+        return thesaurusViewBean.flagEmoji(editor != null ? editor.getSourceLang() : null);
+    }
+
+    public String getSourceLanguageLabel() {
+        PreferenceEditor editor = getPreference();
+        return sourceLanguageLabel(editor != null ? editor.getSourceLang() : null);
+    }
+
+    public String sourceLanguageLabel(String code) {
+        if (StringUtils.isBlank(code)) {
+            return "";
+        }
+        PreferenceEditor editor = getPreference();
+        if (editor != null && editor.getLanguages() != null) {
+            for (ThesaurusLanguage lang : editor.getLanguages()) {
+                if (code.equalsIgnoreCase(lang.code()) && StringUtils.isNotBlank(lang.getValue())) {
+                    return lang.getValue();
+                }
+            }
+        }
+        return thesaurusViewBean.languageLabel(code);
+    }
+
+    public boolean isSourceLanguageSelected(String code) {
+        PreferenceEditor editor = getPreference();
+        return editor != null
+                && StringUtils.isNotBlank(code)
+                && code.equalsIgnoreCase(StringUtils.defaultString(editor.getSourceLang()));
+    }
+
     public void savePreferences() {
         preferenceSaveMessage = null;
         preferenceSaveError = false;

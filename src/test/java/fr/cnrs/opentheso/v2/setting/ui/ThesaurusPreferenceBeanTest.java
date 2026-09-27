@@ -103,6 +103,19 @@ class ThesaurusPreferenceBeanTest {
     }
 
     @Test
+    void sourceLanguagePicker_usesThesaurusLanguagesAndFlag() {
+        when(thesaurusPreferenceService.loadPreferencesOrNull("th17", "fr"))
+                .thenReturn(SettingTestFixtures.samplePreferences());
+        when(thesaurusViewBean.flagEmoji("fr")).thenReturn("🇫🇷");
+
+        assertEquals("🇫🇷", bean.getSourceLanguageFlag());
+        assertEquals("Français", bean.getSourceLanguageLabel());
+        assertTrue(bean.isSourceLanguageSelected("fr"));
+        assertFalse(bean.isSourceLanguageSelected("en"));
+        assertEquals("Français", bean.sourceLanguageLabel("fr"));
+    }
+
+    @Test
     void savePreferences_persistsDraftsThroughTransactionalService() {
         grantEdit();
         ThesaurusPreferences saved = SettingTestFixtures.samplePreferences();

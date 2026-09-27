@@ -11,7 +11,7 @@ server:
     session:
       cookie:
         name: ${random.value}
-      timeout: 30m
+      timeout: 3m
   error:
     path: /errorPages/error500.xhtml
     whitelabel:

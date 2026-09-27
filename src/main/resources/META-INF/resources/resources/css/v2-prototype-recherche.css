@@ -2,7 +2,7 @@
 :root{
   --accent:#1f7a5c; --accent-soft:rgba(31,122,92,.10); --accent-line:rgba(31,122,92,.22);
   --ink:#16191c; --ink-2:#4b5258; --ink-3:#838b91; --ink-4:#a7adb2;
-  --bg:#f4f5f3; --surface:#ffffff; --surface-2:#fafbfa;
+  --bg:#FFF6F8; --surface:#ffffff; --surface-2:#fafbfa;
   --line:#e6e8e6; --line-2:#eef0ee;
   --amber:#d9892a; --candidat:#fcb190;
   --danger:#b5341f; --danger-soft:rgba(181,52,31,.08);
@@ -17,10 +17,10 @@
   --font-family:var(--sans);
 }
 *{box-sizing:border-box}
-html,body{margin:0;height:100%}
+html,body{margin:0;height:100%;background:var(--bg)}
 body{
   font-family:var(--sans);
-  color:var(--ink); background:var(--bg);
+  color:var(--ink);
   -webkit-font-smoothing:antialiased; -moz-osx-font-smoothing:grayscale;
   font-size:15px; line-height:1.45;
 }
@@ -39,7 +39,8 @@ mark.hl{background:var(--accent-soft);color:var(--accent);border-radius:3px;padd
 ::highlight(query){color:var(--accent);background-color:var(--accent-soft)}
 
 #root,.app{height:100%}
-.app{display:flex}
+.app{display:flex;background:transparent}
+.main,.panes,.content,.view{background:transparent}
 
 /* ───────── Thesaurus : Nav opentheso ───────── */
 .thesaurus{flex:0 0 60px;background:var(--surface);border-right:1px solid var(--line);

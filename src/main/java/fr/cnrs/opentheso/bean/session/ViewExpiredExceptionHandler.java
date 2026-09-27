@@ -11,15 +11,17 @@ import jakarta.faces.context.ExternalContext;
 import jakarta.faces.context.FacesContext;
 import jakarta.faces.event.ExceptionQueuedEvent;
 import jakarta.faces.event.ExceptionQueuedEventContext;
+import fr.cnrs.opentheso.v2.shared.session.SessionLifecycleService;
 import jakarta.servlet.http.HttpSession;
 
 /**
  * Redirige proprement (y compris en AJAX PrimeFaces) lorsque la vue JSF a expiré.
- * Si la session HTTP est morte, on invalide et on marque {@code sessionExpired=1}.
+ * Si la session HTTP est morte, on invalide et on renvoie vers l'accueil V2
+ * avec {@code sessionExpired=1}.
  */
 public class ViewExpiredExceptionHandler extends ExceptionHandlerWrapper {
 
-    private static final String HOME_PATH = "/index.xhtml";
+    private static final String HOME_PATH = "/v2/thesauri";
 
     private final ExceptionHandler handler;
 
@@ -93,6 +95,6 @@ public class ViewExpiredExceptionHandler extends ExceptionHandlerWrapper {
             contextPath = "";
         }
         String base = contextPath + HOME_PATH;
-        return sessionExpired ? base + "?sessionExpired=1" : base;
+        return sessionExpired ? base + "?" + SessionLifecycleService.PARAM_SESSION_EXPIRED + "=1" : base;
     }
 }

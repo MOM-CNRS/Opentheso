@@ -1305,6 +1305,15 @@ body[data-page="preference-user"] #viewSettings.view-panel{
   display:block;height:auto;min-height:100%;overflow:visible
 }
 body[data-page="compte"] .go-top,
+body[data-page="preference"] .st-lang-pick{max-width:440px;width:100%}
+body[data-page="preference"] .st-id-type{display:flex;align-items:center;gap:10px;min-height:30px}
+body[data-page="preference"] .st-id-type .st-sw{margin-top:0}
+body[data-page="preference"] .st-id-type-off,
+body[data-page="preference"] .st-id-type-on{font-size:13px;color:var(--ink-3)}
+body[data-page="preference"] .st-id-type:not(:has(.st-sw-input:checked)) .st-id-type-off,
+body[data-page="preference"] .st-id-type:has(.st-sw-input:checked) .st-id-type-on{
+  color:var(--ink);font-weight:600
+}
 body[data-page="preference"] .go-top,
 body[data-page="preference-user"] .go-top{
   position:fixed;right:22px;bottom:22px;z-index:50;
@@ -1385,10 +1394,7 @@ body[data-page="proposition-review"] .content{
   display:flex;flex-direction:column;width:100%;max-width:none;height:100%;min-width:0;overflow:auto
 }
 body[data-page="propositions"] .main,
-body[data-page="proposition-review"] .main{overflow:auto;min-width:0;flex:1;background:
-  radial-gradient(1200px 420px at 12% -10%, rgba(31,122,92,.07), transparent 55%),
-  radial-gradient(900px 380px at 100% 0%, rgba(31,122,92,.04), transparent 50%),
-  var(--bg)}
+body[data-page="proposition-review"] .main{overflow:auto;min-width:0;flex:1;background:transparent}
 body[data-page="propositions"] #previewView,
 body[data-page="proposition-review"] #previewView{height:100%;overflow:auto}
 body[data-page="propositions"] .view,
@@ -1568,10 +1574,7 @@ body:is([data-page="synchronisation"],[data-page="portail"]) .content{
   display:flex;flex-direction:column;width:100%;max-width:none;height:100%;min-width:0;overflow:auto
 }
 body:is([data-page="synchronisation"],[data-page="portail"]) .main{
-  overflow:auto;min-width:0;flex:1;background:
-    radial-gradient(1200px 420px at 12% -10%, rgba(31,122,92,.07), transparent 55%),
-    radial-gradient(900px 380px at 100% 0%, rgba(31,122,92,.04), transparent 50%),
-    var(--bg)
+  overflow:auto;min-width:0;flex:1;background:transparent
 }
 body:is([data-page="synchronisation"],[data-page="portail"]) #previewView{height:100%;overflow:auto}
 body:is([data-page="synchronisation"],[data-page="portail"]) .view,
@@ -1692,10 +1695,7 @@ body:is([data-page="synchronisation"],[data-page="portail"]) .sy-empty p{margin:
 }
 body[data-page="portail"] .bo.bo-solo.sy.po{max-width:920px}
 body[data-page="portail"] .main{
-  background:
-    radial-gradient(1100px 460px at 8% -12%, rgba(36,99,140,.09), transparent 56%),
-    radial-gradient(820px 360px at 100% 4%, rgba(31,122,92,.05), transparent 52%),
-    var(--bg)
+  background:transparent
 }
 body[data-page="portail"] .po-ico{
   display:grid;place-items:center;border:1px solid #c5dbe6;

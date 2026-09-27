@@ -75,6 +75,19 @@ class V2NavigationBeanTest {
     }
 
     @Test
+    void getSessionKeepAliveUrl_usesLifecycleServiceAndContextPath() {
+        when(facesContext.getExternalContext()).thenReturn(externalContext);
+        when(externalContext.getRequestContextPath()).thenReturn("/opentheso");
+        when(sessionLifecycleService.keepAliveUrl("/opentheso")).thenReturn("/opentheso/v2/session/keep-alive");
+
+        try (MockedStatic<FacesContext> faces = mockStatic(FacesContext.class)) {
+            faces.when(FacesContext::getCurrentInstance).thenReturn(facesContext);
+
+            assertEquals("/opentheso/v2/session/keep-alive", navigationBean.getSessionKeepAliveUrl());
+        }
+    }
+
+    @Test
     void swaggerAndOpenApiUrls_delegateToApplicationUriService() {
         when(applicationUriService.resolveSwaggerUrl()).thenReturn("http://localhost/swagger-ui/index.html");
         when(applicationUriService.resolveOpenApiUrl()).thenReturn("http://localhost/openapi/v1");

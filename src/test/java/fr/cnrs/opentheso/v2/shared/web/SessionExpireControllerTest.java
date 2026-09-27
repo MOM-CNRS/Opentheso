@@ -9,7 +9,9 @@ import org.mockito.InjectMocks;
 import org.mockito.Mock;
 import org.mockito.junit.jupiter.MockitoExtension;
 
+import static org.junit.jupiter.api.Assertions.assertEquals;
 import static org.mockito.Mockito.verify;
+import static org.mockito.Mockito.when;
 
 @ExtendWith(MockitoExtension.class)
 class SessionExpireControllerTest {
@@ -29,5 +31,23 @@ class SessionExpireControllerTest {
         controller.expire(request, response);
 
         verify(sessionLifecycleService).expireAndRedirect(request, response);
+    }
+
+    @Test
+    void keepAlive_returnsNoContentWhenSessionExists() {
+        when(sessionLifecycleService.touch(request)).thenReturn(true);
+
+        var response = controller.keepAlive(request);
+
+        assertEquals(204, response.getStatusCode().value());
+    }
+
+    @Test
+    void keepAlive_returnsUnauthorizedWhenSessionMissing() {
+        when(sessionLifecycleService.touch(request)).thenReturn(false);
+
+        var response = controller.keepAlive(request);
+
+        assertEquals(401, response.getStatusCode().value());
     }
 }
