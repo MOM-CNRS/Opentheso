@@ -24,6 +24,9 @@ import org.apache.commons.lang3.StringUtils;
 import org.apache.commons.lang3.Strings;
 
 import java.io.Serializable;
+import java.net.URLDecoder;
+import java.net.URLEncoder;
+import java.nio.charset.StandardCharsets;
 import java.util.ArrayList;
 import java.util.LinkedHashMap;
 import java.util.LinkedHashSet;
@@ -59,6 +62,7 @@ public class ConceptNoteBlockEditorBean implements Serializable {
     private List<NoteBlockEditRow> rows = new ArrayList<>();
     private List<ConceptWriteNoteType> noteTypes = new ArrayList<>();
     private List<ConceptWriteLanguage> thesaurusLanguages = new ArrayList<>();
+    private String notesPayload = "";
     private String errorMessage;
     private String flashMessage;
     private String flashToken;
@@ -94,6 +98,7 @@ public class ConceptNoteBlockEditorBean implements Serializable {
         thesaurusLanguages = conceptWriteMetadataService.listUsedLanguages(
                 thesaurusViewBean.getId(), editingLang);
         rows = copyRows(detail);
+        notesPayload = "";
         errorMessage = "";
         flashMessage = "";
         flashToken = "";
@@ -122,6 +127,15 @@ public class ConceptNoteBlockEditorBean implements Serializable {
             return;
         }
         rows.remove(index);
+    }
+
+    public List<ConceptWriteLanguage> getPickerLanguages() {
+        List<ConceptWriteLanguage> langs = thesaurusLanguages == null
+                ? List.of()
+                : thesaurusLanguages;
+        return langs.stream()
+                .filter(lang -> lang != null && StringUtils.isNotBlank(lang.code()))
+                .toList();
     }
 
     public List<ConceptWriteNoteType> typesFor(NoteBlockEditRow row) {
@@ -165,6 +179,9 @@ public class ConceptNoteBlockEditorBean implements Serializable {
             errorMessage = WriteUiMessages.UNAUTHORIZED_FALLBACK;
             return;
         }
+        if (StringUtils.isNotBlank(notesPayload)) {
+            applyPayloadToRows();
+        }
 
         SelectedNotes selected = collectSelectedNotes();
         if (selected == null) {
@@ -207,16 +224,15 @@ public class ConceptNoteBlockEditorBean implements Serializable {
         String type = normalizeType(row.getTypeCode());
         String lang = normalizeLang(row.getLang());
         String value = StringUtils.trimToEmpty(row.getValue());
+        if (value.isEmpty()) {
+            return true;
+        }
         if (type.isEmpty()) {
             errorMessage = "Aucun type sélectionné !";
             return false;
         }
         if (lang.isEmpty()) {
             errorMessage = "Aucune langue sélectionnée !";
-            return false;
-        }
-        if (value.isEmpty()) {
-            errorMessage = "La note ne doit pas être vide !";
             return false;
         }
         if (selected.put(comboKey(type, lang), row) != null) {
@@ -334,6 +350,7 @@ public class ConceptNoteBlockEditorBean implements Serializable {
         rows = new ArrayList<>();
         noteTypes = new ArrayList<>();
         thesaurusLanguages = new ArrayList<>();
+        notesPayload = "";
         errorMessage = "";
         if (!keepFlash) {
             flashMessage = "";
@@ -482,6 +499,80 @@ public class ConceptNoteBlockEditorBean implements Serializable {
             return Integer.parseInt(id.trim());
         } catch (NumberFormatException ex) {
             return 0;
+        }
+    }
+
+    static String serializeRows(List<NoteBlockEditRow> source) {
+        if (source == null || source.isEmpty()) {
+            return "";
+        }
+        List<String> lines = new ArrayList<>();
+        for (NoteBlockEditRow row : source) {
+            if (row == null) {
+                continue;
+            }
+            String type = normalizeType(row.getTypeCode());
+            String lang = normalizeLang(row.getLang());
+            if (type.isEmpty() || lang.isEmpty()) {
+                continue;
+            }
+            lines.add(type + "\t" + lang + "\t"
+                    + encodeNotePart(row.getValue()) + "\t"
+                    + encodeNotePart(row.getSource()));
+        }
+        return String.join("\n", lines);
+    }
+
+    void applyPayloadToRows() {
+        Map<String, NoteBlockEditRow> previous = new LinkedHashMap<>();
+        for (NoteBlockEditRow row : rows) {
+            if (row == null) {
+                continue;
+            }
+            String type = normalizeType(row.getTypeCode());
+            String lang = normalizeLang(row.getLang());
+            if (!type.isEmpty() && !lang.isEmpty()) {
+                previous.putIfAbsent(comboKey(type, lang), row);
+            }
+        }
+        List<NoteBlockEditRow> parsed = new ArrayList<>();
+        LinkedHashSet<String> seen = new LinkedHashSet<>();
+        for (String line : StringUtils.defaultString(notesPayload).split("\\R")) {
+            if (StringUtils.isBlank(line)) {
+                continue;
+            }
+            String[] parts = line.split("\\t", 4);
+            String type = parts.length > 0 ? normalizeType(parts[0]) : "";
+            String lang = parts.length > 1 ? normalizeLang(parts[1]) : "";
+            String value = parts.length > 2 ? decodeNotePart(parts[2]) : "";
+            String source = parts.length > 3 ? decodeNotePart(parts[3]) : "";
+            if (type.isEmpty() || lang.isEmpty() || value.isEmpty() || !seen.add(comboKey(type, lang))) {
+                continue;
+            }
+            NoteBlockEditRow old = previous.get(comboKey(type, lang));
+            parsed.add(new NoteBlockEditRow(
+                    old == null ? 0 : old.getNoteId(),
+                    type,
+                    lang,
+                    value,
+                    source,
+                    old != null && old.isExisting()));
+        }
+        rows = parsed;
+    }
+
+    private static String encodeNotePart(String raw) {
+        return URLEncoder.encode(StringUtils.defaultString(raw), StandardCharsets.UTF_8);
+    }
+
+    private static String decodeNotePart(String raw) {
+        if (StringUtils.isBlank(raw)) {
+            return "";
+        }
+        try {
+            return URLDecoder.decode(raw, StandardCharsets.UTF_8).trim();
+        } catch (IllegalArgumentException ex) {
+            return raw.trim();
         }
     }
 

@@ -22,6 +22,7 @@ public class PrimeFacesConfig implements ServletContextAware {
         servletContext.setInitParameter("facelets.DEVELOPMENT", Boolean.TRUE.toString());
 
         servletContext.setInitParameter("jakarta.faces.DEFAULT_SUFFIX", ".xhtml");
+        servletContext.setInitParameter("jakarta.faces.FACELETS_ENCODING", "UTF-8");
         servletContext.setInitParameter("jakarta.faces.PROJECT_STAGE", "Development");
         servletContext.setInitParameter("jakarta.faces.FACELETS_REFRESH_PERIOD", "1");
         servletContext.setInitParameter("jakarta.faces.STATE_SAVING_METHOD", "server");

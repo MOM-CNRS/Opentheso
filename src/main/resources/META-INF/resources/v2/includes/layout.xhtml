@@ -6,6 +6,7 @@
       xmlns:f="http://xmlns.jcp.org/jsf/core"
       xmlns:pt="http://xmlns.jcp.org/jsf/passthrough"
       lang="#{v2LocaleBean.idLangue}">
+<f:view encoding="UTF-8" contentType="text/html">
 <f:metadata>
   <f:viewParam name="idt" value="#{v2ThesaurusContext.idThesoFromUri}"/>
   <f:viewParam name="prop" value="#{v2PropositionBean.requestedPropositionId}"/>
@@ -18,6 +19,7 @@
 </f:metadata>
 <h:head>
   <meta charset="UTF-8"/>
+  <meta http-equiv="Content-Type" content="text/html; charset=UTF-8"/>
   <meta name="viewport" content="width=device-width, initial-scale=1.0"/>
   <title><ui:insert name="title">OpenTheso</ui:insert></title>
   <base href="#{request.contextPath}/v2/"/>
@@ -101,6 +103,7 @@
        data-act="create-dismiss" role="presentation"
        data-can-cand="#{v2CandidateDraftBean.canCreate ? '1' : '0'}"
        data-can-concept="#{v2ConceptLifecycleEditorBean.writeActionsAvailable ? '1' : '0'}"
+       data-can-facet="#{v2FacetDetailEditorBean.managerActionsAvailable ? '1' : '0'}"
        data-need-parent="#{v2LocaleBean.getMsg('v2.create.concept.needParent')}">
     <div class="confirm-modal is-create-chooser" role="dialog" aria-modal="true"
          aria-labelledby="createChooserTitle" data-act="create-modal">
@@ -120,6 +123,18 @@
           <span class="spl-tx">
             <span class="spl-t">#{v2LocaleBean.getMsg('v2.create.candidat')}</span>
             <span class="spl-d" data-ok="#{v2LocaleBean.getMsg('v2.create.candidat.desc')}" data-lock="#{v2LocaleBean.getMsg('v2.create.candidat.lock')}">#{v2LocaleBean.getMsg('v2.create.candidat.desc')}</span>
+          </span>
+          <span class="spl-go" aria-hidden="true"><svg viewBox="0 0 24 24"><path d="m9 18 6-6-6-6"/></svg></span>
+          <span class="ck-lock" hidden="hidden" aria-hidden="true"><svg viewBox="0 0 24 24"><rect x="5" y="11" width="14" height="10" rx="2"/><path d="M8 11V8a4 4 0 0 1 8 0v3"/></svg></span>
+        </button>
+        <button type="button" class="spl-row" data-act="create-pick" data-kind="facet">
+          <span class="spl-ico" aria-hidden="true"><svg viewBox="0 0 24 24"><path d="M4 4h7v7H4z"/><path d="M13 4h7v7h-7z"/><path d="M4 13h7v7H4z"/><path d="M16.5 13v7"/><path d="M13 16.5h7"/></svg></span>
+          <span class="spl-tx">
+            <span class="spl-t">#{v2LocaleBean.getMsg('v2.create.facet')}</span>
+            <span class="spl-d"
+                  data-ok="#{v2LocaleBean.getMsg('v2.create.facet.desc')}"
+                  data-lock="#{v2LocaleBean.getMsg('v2.create.facet.lock')}"
+                  data-need-parent="#{v2LocaleBean.getMsg('v2.create.facet.needParent')}">#{v2LocaleBean.getMsg('v2.create.facet.desc')}</span>
           </span>
           <span class="spl-go" aria-hidden="true"><svg viewBox="0 0 24 24"><path d="m9 18 6-6-6-6"/></svg></span>
           <span class="ck-lock" hidden="hidden" aria-hidden="true"><svg viewBox="0 0 24 24"><rect x="5" y="11" width="14" height="10" rx="2"/><path d="M8 11V8a4 4 0 0 1 8 0v3"/></svg></span>
@@ -149,4 +164,5 @@
 <script src="#{request.contextPath}/resources/js/v2/session.js"></script>
 <script src="#{request.contextPath}/resources/js/v2/app.js"></script>
 </h:body>
+</f:view>
 </html>

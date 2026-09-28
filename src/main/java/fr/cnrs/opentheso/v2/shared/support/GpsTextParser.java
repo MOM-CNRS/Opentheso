@@ -66,20 +66,45 @@ public final class GpsTextParser {
     private static List<String> splitOnWhitespace(String value) {
         List<String> tokens = new ArrayList<>();
         int start = -1;
+        boolean decimalInToken = false;
         for (int i = 0; i < value.length(); i++) {
-            if (Character.isWhitespace(value.charAt(i))) {
+            char c = value.charAt(i);
+            if (isPairBreak(c, decimalInToken, i, value)) {
                 if (start >= 0) {
                     tokens.add(value.substring(start, i));
                     start = -1;
+                    decimalInToken = false;
                 }
-            } else if (start < 0) {
-                start = i;
+            } else {
+                if (start < 0) {
+                    start = i;
+                }
+                if (c == '.' || c == ',') {
+                    decimalInToken = true;
+                }
             }
         }
         if (start >= 0) {
             tokens.add(value.substring(start));
         }
         return tokens;
+    }
+
+    /**
+     * Comma + space is the pair delimiter used by the fiche ({@code 48.85 2.35, 48.9 2.4}).
+     * A comma inside a number without a prior decimal is a European decimal ({@code 45,1}).
+     */
+    private static boolean isPairBreak(char c, boolean decimalInToken, int index, String value) {
+        if (Character.isWhitespace(c)) {
+            return true;
+        }
+        if (c != ',') {
+            return false;
+        }
+        if (decimalInToken) {
+            return true;
+        }
+        return index + 1 < value.length() && Character.isWhitespace(value.charAt(index + 1));
     }
 
     private static Double parseDecimal(String token) {

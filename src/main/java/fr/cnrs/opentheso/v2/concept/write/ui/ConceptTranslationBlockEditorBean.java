@@ -61,6 +61,7 @@ public class ConceptTranslationBlockEditorBean implements Serializable {
     private String editingLang;
     private List<TranslationBlockEditRow> rows = new ArrayList<>();
     private List<ConceptWriteLanguage> thesaurusLanguages = new ArrayList<>();
+    private String translationsPayload = "";
     private String errorMessage;
     private String flashMessage;
     private String flashToken;
@@ -92,9 +93,11 @@ public class ConceptTranslationBlockEditorBean implements Serializable {
         }
         editingConceptId = detail.getSummary().getConceptId();
         editingLang = resolveWorkLang(detail);
-        thesaurusLanguages = conceptWriteMetadataService.listUsedLanguages(
+        List<ConceptWriteLanguage> langs = conceptWriteMetadataService.listUsedLanguages(
                 thesaurusViewBean.getId(), editingLang);
+        thesaurusLanguages = langs == null ? new ArrayList<>() : langs;
         rows = copyRows(detail, editingLang);
+        translationsPayload = "";
         errorMessage = "";
         flashMessage = "";
         flashToken = "";
@@ -123,6 +126,17 @@ public class ConceptTranslationBlockEditorBean implements Serializable {
             return;
         }
         rows.remove(index);
+    }
+
+    public List<ConceptWriteLanguage> getPickerLanguages() {
+        String work = normalizeLang(editingLang);
+        List<ConceptWriteLanguage> langs = thesaurusLanguages == null
+                ? List.of()
+                : thesaurusLanguages;
+        return langs.stream()
+                .filter(lang -> lang != null && StringUtils.isNotBlank(lang.code()))
+                .filter(lang -> !work.equals(normalizeLang(lang.code())))
+                .toList();
     }
 
     public List<ConceptWriteLanguage> languagesFor(TranslationBlockEditRow row) {
@@ -155,6 +169,9 @@ public class ConceptTranslationBlockEditorBean implements Serializable {
         if (current == null || current.getSummary() == null) {
             errorMessage = WriteUiMessages.UNAUTHORIZED_FALLBACK;
             return;
+        }
+        if (StringUtils.isNotBlank(translationsPayload)) {
+            applyPayloadToRows();
         }
 
         String workLang = resolveWorkLang(current);
@@ -191,8 +208,7 @@ public class ConceptTranslationBlockEditorBean implements Serializable {
             return false;
         }
         if (value.isEmpty()) {
-            errorMessage = "La valeur est obligatoire !";
-            return false;
+            return true;
         }
         if (selected.put(lang, row) != null) {
             errorMessage = "Chaque langue ne peut apparaître qu'une fois.";
@@ -445,6 +461,7 @@ public class ConceptTranslationBlockEditorBean implements Serializable {
         editingLang = null;
         rows = new ArrayList<>();
         thesaurusLanguages = new ArrayList<>();
+        translationsPayload = "";
         errorMessage = "";
         if (!keepFlash) {
             flashMessage = "";
@@ -551,6 +568,33 @@ public class ConceptTranslationBlockEditorBean implements Serializable {
             return;
         }
         byLang.computeIfAbsent(lang, key -> new ArrayList<>()).add(value);
+    }
+
+    void applyPayloadToRows() {
+        Map<String, Boolean> existingByLang = new LinkedHashMap<>();
+        for (TranslationBlockEditRow row : rows) {
+            if (row == null || StringUtils.isBlank(row.getLang())) {
+                continue;
+            }
+            existingByLang.put(normalizeLang(row.getLang()), row.isExisting());
+        }
+        List<TranslationBlockEditRow> parsed = new ArrayList<>();
+        LinkedHashSet<String> seen = new LinkedHashSet<>();
+        for (String line : StringUtils.defaultString(translationsPayload).split("\\R")) {
+            if (StringUtils.isBlank(line)) {
+                continue;
+            }
+            String[] parts = line.split("\\t", 3);
+            String lang = normalizeLang(parts[0]);
+            if (lang.isEmpty() || !seen.add(lang)) {
+                continue;
+            }
+            String value = parts.length > 1 ? parts[1] : "";
+            String alts = parts.length > 2 ? parts[2] : "";
+            parsed.add(new TranslationBlockEditRow(
+                    lang, value, alts, existingByLang.getOrDefault(lang, false)));
+        }
+        rows = parsed;
     }
 
     private static String normalizeLang(String lang) {

@@ -649,9 +649,11 @@ a.empty-link{color:var(--accent);font-weight:600}
   margin:18px -4px 0;padding:12px 4px 10px;background:linear-gradient(180deg,transparent,var(--bg) 18%);
   border-top:1px solid var(--line)}
 .cand-draft-hint{margin-left:auto;font-size:12px;color:var(--ink-4)}
-#viewDraft .cv-pref{flex:1 1 auto;min-width:0;width:100%}
-#viewDraft .cv-draft-input{flex:1 1 auto;min-width:0;width:100%;max-width:100%}
-#viewDraft .st-input,#viewDraft .disc-input{max-width:none}
+#viewDraft .cv-pref,#viewConceptDraft .cv-pref{flex:1 1 auto;min-width:0;width:100%}
+#viewDraft .cv-draft-input,#viewConceptDraft .cv-draft-input{flex:1 1 auto;min-width:0;width:100%;max-width:100%}
+#viewFacetDraft .cv-pref{display:flex;align-items:center;gap:12px;flex-wrap:wrap;width:100%;margin:0}
+#viewFacetDraft .cv-draft-input{flex:1 1 220px;min-width:180px;width:auto;max-width:none}
+#viewDraft .st-input,#viewDraft .disc-input,#viewConceptDraft .st-input,#viewConceptDraft .disc-input,#viewFacetDraft .st-input,#viewFacetDraft .disc-input{max-width:none}
 #viewLive{position:relative}
 button.copy-btn{
   border:0;background:none;cursor:pointer;display:inline-grid;place-items:center;padding:0;font:inherit
@@ -2239,8 +2241,8 @@ html{height:100%}
   .bo-valid-sum{flex-wrap:wrap;gap:10px 16px}
   .bo-cfg{flex-direction:column}
   .fsave{left:0;bottom:calc(70px + env(safe-area-inset-bottom,0px))}
-  #viewDraft.view-panel{padding-bottom:148px}
-  #viewDraft .fsave{
+  #viewDraft.view-panel,#viewConceptDraft.view-panel,#viewFacetDraft.view-panel{padding-bottom:148px}
+  #viewDraft .fsave,#viewConceptDraft .fsave,#viewFacetDraft .fsave{
     left:0;right:0;
     bottom:calc(56px + env(safe-area-inset-bottom,0px));
     z-index:50;
@@ -2254,13 +2256,19 @@ html{height:100%}
     box-shadow:0 -8px 24px rgba(16,24,20,.08);
     pointer-events:auto
   }
-  #viewDraft .fsave .bo-btn{
+  #viewDraft .fsave .bo-btn,#viewConceptDraft .fsave .bo-btn,#viewFacetDraft .fsave .bo-btn{
     width:100%;min-height:44px;padding:10px 12px;font-size:13.5px;
     line-height:1.25;white-space:normal;text-align:center;box-shadow:none
   }
-  #viewDraft .fsave .bo-btn[data-act="draft-leave"]{order:1}
-  #viewDraft .fsave .bo-btn[data-kind="create"]{order:2}
-  #viewDraft .fsave .bo-btn[data-kind="chain"]{order:3;grid-column:1 / -1}
+  #viewDraft .fsave .bo-btn[data-act="draft-leave"],
+  #viewConceptDraft .fsave .bo-btn[data-act="cpt-leave"],
+  #viewFacetDraft .fsave .bo-btn[data-act="fct-leave"]{order:1}
+  #viewDraft .fsave .bo-btn[data-kind="create"],
+  #viewConceptDraft .fsave .bo-btn[data-kind="create"],
+  #viewFacetDraft .fsave .bo-btn[data-kind="create"]{order:2}
+  #viewDraft .fsave .bo-btn[data-kind="chain"],
+  #viewConceptDraft .fsave .bo-btn[data-kind="chain"],
+  #viewFacetDraft .fsave .bo-btn[data-kind="chain"]{order:3;grid-column:1 / -1}
   .flat-foot{justify-content:center}
   .flat-pagesz{width:100%;justify-content:space-between}
   .mc-tool{padding:10px}
@@ -2277,11 +2285,17 @@ html{height:100%}
 }
 
 @media (max-width:380px){
-  #viewDraft.view-panel{padding-bottom:196px}
-  #viewDraft .fsave{grid-template-columns:1fr}
-  #viewDraft .fsave .bo-btn[data-kind="create"]{order:1}
-  #viewDraft .fsave .bo-btn[data-kind="chain"]{order:2;grid-column:auto}
-  #viewDraft .fsave .bo-btn[data-act="draft-leave"]{order:3}
+  #viewDraft.view-panel,#viewConceptDraft.view-panel,#viewFacetDraft.view-panel{padding-bottom:196px}
+  #viewDraft .fsave,#viewConceptDraft .fsave,#viewFacetDraft .fsave{grid-template-columns:1fr}
+  #viewDraft .fsave .bo-btn[data-kind="create"],
+  #viewConceptDraft .fsave .bo-btn[data-kind="create"],
+  #viewFacetDraft .fsave .bo-btn[data-kind="create"]{order:1}
+  #viewDraft .fsave .bo-btn[data-kind="chain"],
+  #viewConceptDraft .fsave .bo-btn[data-kind="chain"],
+  #viewFacetDraft .fsave .bo-btn[data-kind="chain"]{order:2;grid-column:auto}
+  #viewDraft .fsave .bo-btn[data-act="draft-leave"],
+  #viewConceptDraft .fsave .bo-btn[data-act="cpt-leave"],
+  #viewFacetDraft .fsave .bo-btn[data-act="fct-leave"]{order:3}
 }
 
 @keyframes v2-pop-up{

@@ -19,7 +19,7 @@ public class FilterConfig {
         FilterRegistrationBean<SsoTokenFilter> bean = new FilterRegistrationBean<>();
         bean.setFilter(new SsoTokenFilter(ssoTokenService));
         bean.addUrlPatterns("/*");
-        bean.setOrder(Ordered.HIGHEST_PRECEDENCE);
+        bean.setOrder(Ordered.HIGHEST_PRECEDENCE + 1);
         return bean;
     }
 }

@@ -85,6 +85,8 @@ var state = {
   home: true,
   conceptId: null,
   draft: false,
+  conceptDraft: false,
+  facetDraft: false,
   committed: "",
   selected: new Set(),
   subtreeSize: new Map(),

@@ -68,6 +68,10 @@ public class FacetDetailEditorBean implements Serializable {
 
     private String label;
     private String definition;
+    private String alternatives;
+    private String translationsPayload = "";
+    private String notesPayload = "";
+    private String membersPayload = "";
     private String parentConceptLabel;
     private String parentConceptId;
     private String createRunState = "";
@@ -76,6 +80,9 @@ public class FacetDetailEditorBean implements Serializable {
     private String createFlashToken;
     private String createdFacetId;
     private boolean composing;
+    private boolean created;
+    private boolean chainNext;
+    private String createMode = "create";
     private String translationLang;
     private String translationValue;
     private String selectedTranslationLang;
@@ -121,6 +128,28 @@ public class FacetDetailEditorBean implements Serializable {
 
     public boolean isManagerActionsAvailable() {
         return conceptWritePolicy.canMutateHierarchicalRelations(userSession, false);
+    }
+
+    public String getWorkLanguage() {
+        return StringUtils.defaultIfBlank(thesaurusContext.resolveWorkLanguage(), "fr");
+    }
+
+    public List<ConceptWriteLanguage> getTranslationLanguages() {
+        String work = getWorkLanguage();
+        List<ConceptWriteLanguage> langs = conceptWriteMetadataService.listUsedLanguages(
+                thesaurusContext.resolveThesaurusId(),
+                work
+        );
+        if (langs == null || langs.isEmpty()) {
+            return Collections.emptyList();
+        }
+        return langs.stream()
+                .filter(lang -> lang != null && !work.equalsIgnoreCase(lang.code()))
+                .toList();
+    }
+
+    public List<String> getDraftNoteTypes() {
+        return List.of("scopeNote", "example", "historyNote", "editorialNote", "changeNote");
     }
 
     public void prepareModify() {
@@ -274,7 +303,7 @@ public class FacetDetailEditorBean implements Serializable {
     }
 
     /**
-     * Création d'une facette sous le concept courant (menu contextuel fiche concept, comme legacy).
+     * Création d'une facette sous le concept courant (menu + de l'arbre).
      */
     public void prepareCreateUnderCurrentConcept() {
         resetCreateForm();
@@ -288,6 +317,72 @@ public class FacetDetailEditorBean implements Serializable {
         parentConceptLabel = StringUtils.isNotBlank(preferredLabel) ? preferredLabel : "(" + conceptId + ")";
         selectedParentConcept = new ConceptSearchSuggestion(conceptId, preferredLabel, "", false);
         composing = true;
+    }
+
+    /**
+     * Prépare le formulaire plein écran (parent déjà fourni par le menu +).
+     */
+    public void prepareFacetDraft() {
+        String parentId = StringUtils.trimToEmpty(parentConceptId);
+        String parentLabel = StringUtils.trimToEmpty(parentConceptLabel);
+        resetCreateForm();
+        parentConceptId = parentId;
+        parentConceptLabel = StringUtils.isNotBlank(parentLabel)
+                ? parentLabel
+                : (StringUtils.isNotBlank(parentId) ? "(" + parentId + ")" : "");
+        if (StringUtils.isNotBlank(parentId)) {
+            selectedParentConcept = new ConceptSearchSuggestion(parentId, parentConceptLabel, "", false);
+        }
+        composing = true;
+        created = false;
+        chainNext = false;
+        createMode = "create";
+    }
+
+    public void createFacetDraft() {
+        persistFacetDraft(false);
+    }
+
+    public void createFacetDraftAndContinue() {
+        persistFacetDraft(true);
+    }
+
+    public void cancelFacetDraft() {
+        resetCreateForm();
+        created = false;
+        chainNext = false;
+        createMode = "create";
+    }
+
+    private void persistFacetDraft(boolean chain) {
+        created = false;
+        chainNext = chain;
+        createMode = chain ? "chain" : "create";
+        String parentId = StringUtils.defaultString(parentConceptId);
+        String parentLabel = StringUtils.defaultString(parentConceptLabel);
+        submitCreate();
+        created = "done".equals(createRunState) && StringUtils.isNotBlank(createdFacetId);
+        if (!created) {
+            chainNext = false;
+            composing = true;
+            return;
+        }
+        thesaurusBrowseBean.invalidateConceptTree();
+        if (!chain) {
+            return;
+        }
+        String newId = createdFacetId;
+        resetCreateForm();
+        parentConceptId = parentId;
+        parentConceptLabel = parentLabel;
+        if (StringUtils.isNotBlank(parentId)) {
+            selectedParentConcept = new ConceptSearchSuggestion(parentId, parentLabel, "", false);
+        }
+        composing = true;
+        created = true;
+        chainNext = true;
+        createdFacetId = newId;
+        createMode = "chain";
     }
 
     public boolean isCreateReady() {
@@ -476,7 +571,7 @@ public class FacetDetailEditorBean implements Serializable {
                     : "Erreur pendant la création de la Facette !";
             return;
         }
-        persistOptionalDefinition(result.createdConceptId());
+        persistCreateExtras(result.createdConceptId());
         createdFacetId = StringUtils.defaultString(result.createdConceptId());
         createRunState = "done";
         composing = false;
@@ -490,8 +585,95 @@ public class FacetDetailEditorBean implements Serializable {
         composing = false;
     }
 
+    private void persistCreateExtras(String facetId) {
+        persistQuietly(() -> persistOptionalDefinition(facetId));
+        persistQuietly(() -> persistDraftTranslations(facetId));
+        persistQuietly(() -> persistDraftNotes(facetId));
+        persistQuietly(() -> persistDraftMembers(facetId));
+    }
+
+    private static void persistQuietly(Runnable action) {
+        try {
+            action.run();
+        } catch (RuntimeException ignored) {
+        }
+    }
+
     private void persistOptionalDefinition(String facetId) {
-        if (StringUtils.isBlank(definition) || StringUtils.isBlank(facetId)) {
+        persistOptionalTextNote(facetId, "definition", getWorkLanguage(), definition, null);
+    }
+
+    private void persistDraftTranslations(String facetId) {
+        if (StringUtils.isBlank(facetId) || StringUtils.isBlank(translationsPayload)) {
+            return;
+        }
+        String thesaurusId = thesaurusContext.resolveThesaurusId();
+        String work = getWorkLanguage();
+        for (String line : translationsPayload.split("\\R")) {
+            int tab = line.indexOf('\t');
+            if (tab <= 0) {
+                continue;
+            }
+            String lang = line.substring(0, tab).trim();
+            String value = line.substring(tab + 1).trim();
+            if (StringUtils.isAnyBlank(lang, value) || work.equalsIgnoreCase(lang)) {
+                continue;
+            }
+            facetMutationService.addTranslation(new AddFacetTranslationCommand(
+                    thesaurusId, facetId, lang, value));
+        }
+    }
+
+    private void persistDraftNotes(String facetId) {
+        if (StringUtils.isBlank(facetId) || StringUtils.isBlank(notesPayload)) {
+            return;
+        }
+        for (String line : notesPayload.split("\\R")) {
+            String[] parts = line.split("\\t", 4);
+            if (parts.length < 3) {
+                continue;
+            }
+            String type = StringUtils.trimToEmpty(parts[0]);
+            String lang = StringUtils.trimToEmpty(parts[1]);
+            String value = decodeNotePart(parts[2]);
+            String source = parts.length > 3 ? decodeNotePart(parts[3]) : "";
+            if (StringUtils.isAnyBlank(type, lang, value)) {
+                continue;
+            }
+            persistOptionalTextNote(facetId, type, lang, value, source);
+        }
+    }
+
+    private void persistDraftMembers(String facetId) {
+        if (StringUtils.isBlank(facetId) || StringUtils.isBlank(membersPayload)) {
+            return;
+        }
+        String thesaurusId = thesaurusContext.resolveThesaurusId();
+        for (String line : membersPayload.split("\\R")) {
+            String conceptId = line.contains("\t")
+                    ? line.substring(0, line.indexOf('\t')).trim()
+                    : line.trim();
+            if (StringUtils.isBlank(conceptId)) {
+                continue;
+            }
+            facetMutationService.addMember(new AddFacetMemberCommand(
+                    thesaurusId, facetId, conceptId, false));
+        }
+    }
+
+    private static String decodeNotePart(String raw) {
+        if (StringUtils.isBlank(raw)) {
+            return "";
+        }
+        try {
+            return java.net.URLDecoder.decode(raw, java.nio.charset.StandardCharsets.UTF_8).trim();
+        } catch (IllegalArgumentException ex) {
+            return raw.trim();
+        }
+    }
+
+    private void persistOptionalTextNote(String facetId, String noteType, String lang, String value, String source) {
+        if (StringUtils.isBlank(value) || StringUtils.isBlank(facetId)) {
             return;
         }
         Integer userId = userSession.getCurrentUserId();
@@ -501,10 +683,10 @@ public class FacetDetailEditorBean implements Serializable {
         conceptNoteMutationService.upsertNote(new UpsertNoteCommand(
                 thesaurusContext.resolveThesaurusId(),
                 facetId,
-                thesaurusContext.resolveWorkLanguage(),
-                "definition",
-                definition,
-                null,
+                StringUtils.defaultIfBlank(lang, getWorkLanguage()),
+                noteType,
+                value,
+                StringUtils.trimToNull(source),
                 userId,
                 StringUtils.defaultString(userSession.getCurrentUsername())
         ));
@@ -574,6 +756,10 @@ public class FacetDetailEditorBean implements Serializable {
     private void resetCreateForm() {
         label = "";
         definition = "";
+        alternatives = "";
+        translationsPayload = "";
+        notesPayload = "";
+        membersPayload = "";
         parentConceptLabel = "";
         parentConceptId = "";
         createdFacetId = "";
@@ -583,6 +769,9 @@ public class FacetDetailEditorBean implements Serializable {
         createFlashToken = null;
         selectedParentConcept = null;
         composing = false;
+        created = false;
+        chainNext = false;
+        createMode = "create";
     }
 
     private String resolveCreateParentId() {

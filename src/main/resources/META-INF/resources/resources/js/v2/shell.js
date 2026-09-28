@@ -1419,10 +1419,10 @@ function ensureLeaflet() {
 }
 
 function destroyGpsMap(slot) {
-  if (gpsMap[slot]) {
-    gpsMap[slot].remove();
-    gpsMap[slot] = null;
-  }
+  try {
+    if (gpsMap[slot]) gpsMap[slot].remove();
+  } catch (err) { /* ajax already replaced the map container */ }
+  gpsMap[slot] = null;
   if (slot === "mini") {
     gpsMap.miniEl = null;
     gpsMap.markersMini = [];
@@ -1726,8 +1726,8 @@ function applyConceptLabelUi(source) {
       el.textContent = pref;
     });
   }
-  bindImgGallery();
-  bindGpsMap();
+  try { bindImgGallery(); } catch (err) { /* gallery DOM already swapped by ajax */ }
+  try { bindGpsMap(); } catch (err) { /* leaflet container already swapped by ajax */ }
   const editing = document.querySelector("#viewLive .cblock.is-editing");
   if (!editing) {
     closeLabelFacetPicker();
@@ -1758,37 +1758,41 @@ function applyConceptLabelUi(source) {
     closeCvCollPicker();
     closeAllRelPickers();
     closeCrelPicker();
+    seedConceptTrFromHidden();
   } else if (card === "notes") {
     closeLabelFacetPicker();
     closeCvCollPicker();
     closeAllRelPickers();
     closeCrelPicker();
+    seedConceptNotesFromHidden();
   } else if (card === "ressources") {
     closeLabelFacetPicker();
     closeCvCollPicker();
     closeAllRelPickers();
     closeCrelPicker();
-    closeImgLightbox({ restoreFocus: false });
-    closeGpsLightbox({ restoreFocus: false });
+    try { closeImgLightbox({ restoreFocus: false }); } catch (err) { /* ignore */ }
+    try { closeGpsLightbox({ restoreFocus: false }); } catch (err) { /* ignore */ }
+    seedConceptResFromHidden();
+    requestAnimationFrame(seedConceptResFromHidden);
   } else if (card === "alignement") {
     closeLabelFacetPicker();
     closeCvCollPicker();
     closeAllRelPickers();
     closeCrelPicker();
   }
+  if (card !== "ressources") {
+    try { if (typeof destroyConceptResGpsMap === "function") destroyConceptResGpsMap(); } catch (err) { /* ignore */ }
+    try { if (typeof closeConceptResImgLightbox === "function") closeConceptResImgLightbox(); } catch (err) { /* ignore */ }
+  }
   playLabelBlockEnter(true);
   const sourceId = source && source.id ? String(source.id) : "";
   if (/gpsClickAdd|alignAutoStart|alignCompareStart|alignAutoAdd|alignDeleteSave|alignReplaceSave/.test(sourceId)) return;
-  if (/trAddRow|noteAddRow|resAddRow|imgAddRow|gpsAddRow/.test(sourceId)) {
-    const cards = editing.querySelectorAll(".tr-edit-card, .note-edit-card, .media-edit-card, .gps-edit-row");
-    const last = cards[cards.length - 1];
-    const added = last && last.querySelector(".tr-edit-value, .note-edit-value, .media-edit-uri, .gps-edit-coord");
-    if (added) added.focus({ preventScroll: true });
-    return;
-  }
   if (/trRemove|noteRemove|resRemove|imgRemove|gpsRemove/.test(sourceId)) return;
   if (editing.contains(document.activeElement)) return;
-  const input = editing.querySelector(".crow.is-editing .st-input")
+  const input = editing.querySelector("#cvTrList .st-input")
+      || editing.querySelector("#cvNoteBody textarea")
+      || editing.querySelector("#cvResLinks .st-input")
+      || editing.querySelector(".crow.is-editing .st-input")
       || editing.querySelector(".cblock-edit-row .st-input")
       || editing.querySelector(".search-input");
   if (input) input.focus({ preventScroll: true });
@@ -1812,8 +1816,8 @@ function playLabelBlockEnter(nowEditing) {
 }
 
 function interceptLabelEditSwap(e) {
-  const start = e.target.closest("[id$='labelEditStart'], [id$='collEditStart'], [id$='relEditStart'], [id$='crelEditStart'], [id$='trEditStart'], [id$='noteEditStart']");
-  const cancel = e.target.closest("[id$='labelEditCancel'], [id$='collEditCancel'], [id$='relEditCancel'], [id$='crelEditCancel'], [id$='trEditCancel'], [id$='noteEditCancel']");
+  const start = e.target.closest("[id$='labelEditStart'], [id$='collEditStart'], [id$='relEditStart'], [id$='crelEditStart'], [id$='trEditStart'], [id$='noteEditStart'], [id$='resEditStart']");
+  const cancel = e.target.closest("[id$='labelEditCancel'], [id$='collEditCancel'], [id$='relEditCancel'], [id$='crelEditCancel'], [id$='trEditCancel'], [id$='noteEditCancel'], [id$='resEditCancel']");
   const trigger = start || cancel;
   if (!trigger) return;
   const block = trigger.closest(".cblock")
@@ -1873,9 +1877,1001 @@ function restoreFicheScroll() {
   }, 80);
 }
 
+var cvTrState = { order: [], values: {}, alts: {}, confirm: "" };
+
+function trTextDir(code) {
+  return /^(ar|he|fa|ur)(-|$)/i.test(code || "") ? "rtl" : "ltr";
+}
+
+function jsField(id) {
+  return document.getElementById(id)
+    || document.getElementById("previewDetailForm:" + id)
+    || document.querySelector("[id$='" + id + "']");
+}
+
+function trLangAlready(order, code) {
+  const key = String(code || "").trim().toLowerCase();
+  if (!key) return false;
+  return (order || []).some((item) => String(item || "").trim().toLowerCase() === key);
+}
+
+function markUsedTrLangOpts(menuSel, order, usedTitle) {
+  const opts = $$(menuSel + " .tree-lang-opt");
+  opts.forEach((opt) => {
+    const used = trLangAlready(order, opt.getAttribute("data-lang"));
+    opt.hidden = false;
+    opt.disabled = used;
+    opt.classList.toggle("is-used", used);
+    opt.setAttribute("aria-disabled", used ? "true" : "false");
+    if (used && usedTitle) opt.setAttribute("title", usedTitle);
+    else opt.removeAttribute("title");
+  });
+  return opts;
+}
+
+function cvTrOpt(code) {
+  return $("#cvTrMenu") && $("#cvTrMenu").querySelector('.tree-lang-opt[data-lang="' + code + '"]');
+}
+
+function cvTrMeta(code) {
+  const opt = cvTrOpt(code);
+  return {
+    code: code,
+    flag: (opt && (opt.getAttribute("data-flag") || "").trim()) || "",
+    name: (opt && (opt.getAttribute("data-name") || "").trim()) || code
+  };
+}
+
+function closeConceptTrLang() {
+  const btn = $("#cvTrBtn");
+  if (!btn || !btn.classList.contains("is-open")) return false;
+  btn.classList.remove("is-open");
+  btn.setAttribute("aria-expanded", "false");
+  return true;
+}
+
+function setConceptTrLangOpen(open) {
+  const btn = $("#cvTrBtn");
+  if (!btn) return;
+  btn.classList.toggle("is-open", !!open);
+  btn.setAttribute("aria-expanded", open ? "true" : "false");
+}
+
+function syncConceptTrHidden() {
+  const el = jsField("cvTrPayload");
+  if (!el) return;
+  el.value = cvTrState.order.map((code) => {
+    return code + "\t"
+      + String(cvTrState.values[code] || "").replace(/\r?\n/g, " ")
+      + "\t"
+      + String(cvTrState.alts[code] || "").replace(/\r?\n/g, " ");
+  }).join("\n");
+}
+
+function seedConceptTrFromHidden() {
+  if (!$("#cvTrEditor")) return;
+  cvTrState = { order: [], values: {}, alts: {}, confirm: "" };
+  $$("#cvTrSeed [data-lang]").forEach((el) => {
+    const code = (el.getAttribute("data-lang") || "").trim();
+    if (!code || cvTrState.order.indexOf(code) >= 0) return;
+    cvTrState.order.push(code);
+    cvTrState.values[code] = el.getAttribute("data-value") || "";
+    cvTrState.alts[code] = el.getAttribute("data-alts") || "";
+  });
+  if (!cvTrState.order.length) {
+    String((jsField("cvTrPayload") && jsField("cvTrPayload").value) || "").split(/\r?\n/).forEach((line) => {
+      const parts = line.split("\t");
+      const code = (parts[0] || "").trim();
+      if (!code || cvTrState.order.indexOf(code) >= 0) return;
+      cvTrState.order.push(code);
+      cvTrState.values[code] = parts[1] || "";
+      cvTrState.alts[code] = parts.slice(2).join("\t");
+    });
+  }
+  syncConceptTrHidden();
+  paintConceptTr();
+}
+
+function addConceptTr(code) {
+  if (!code || trLangAlready(cvTrState.order, code)) return;
+  cvTrState.order.push(code);
+  if (cvTrState.values[code] == null) cvTrState.values[code] = "";
+  if (cvTrState.alts[code] == null) cvTrState.alts[code] = "";
+  cvTrState.confirm = "";
+  closeConceptTrLang();
+  syncConceptTrHidden();
+  paintConceptTr();
+  requestAnimationFrame(() => {
+    const input = $("#cvTrVal-" + code);
+    if (input) input.focus();
+  });
+}
+
+function askRemoveConceptTr(code) {
+  cvTrState.confirm = code || "";
+  paintConceptTr();
+}
+
+function keepConceptTr() {
+  cvTrState.confirm = "";
+  paintConceptTr();
+}
+
+function removeConceptTr(code) {
+  cvTrState.order = cvTrState.order.filter((item) => item !== code);
+  cvTrState.values[code] = "";
+  cvTrState.alts[code] = "";
+  cvTrState.confirm = "";
+  syncConceptTrHidden();
+  paintConceptTr();
+}
+
+function setConceptTrValue(code, value) {
+  cvTrState.values[code] = value;
+  syncConceptTrHidden();
+}
+
+function setConceptTrAlt(code, value) {
+  cvTrState.alts[code] = value;
+  syncConceptTrHidden();
+}
+
+function paintConceptTr() {
+  const list = $("#cvTrList");
+  const empty = $("#cvTrEmpty");
+  const editor = $("#cvTrEditor");
+  if (!list || !editor) return;
+  const ph = editor.getAttribute("data-ph") || "Nom en {0}…";
+  const altPh = editor.getAttribute("data-alt") || "";
+  const remove = editor.getAttribute("data-remove") || "";
+  const drop = editor.getAttribute("data-drop") || "";
+  const no = editor.getAttribute("data-no") || "Non";
+  const yes = editor.getAttribute("data-yes") || "Oui";
+  if (empty) empty.hidden = cvTrState.order.length > 0;
+  list.innerHTML = cvTrState.order.map((code) => {
+    const meta = cvTrMeta(code);
+    const placeholder = escapeHtml(ph.replace("{0}", String(meta.name || code).toLowerCase()));
+    const confirming = cvTrState.confirm === code;
+    const dir = trTextDir(code);
+    const actions = confirming
+      ? '<span class="te-confirm">' + escapeHtml(drop)
+        + '<button type="button" class="bo-btn ghost sm" data-act="cv-tr-keep">' + escapeHtml(no) + "</button>"
+        + '<button type="button" class="bo-btn primary sm" data-act="cv-tr-drop" data-lang="' + code + '">' + escapeHtml(yes) + "</button>"
+        + "</span>"
+      : '<button type="button" class="re-x te-x" data-act="cv-tr-ask" data-lang="' + code
+        + '" title="' + escapeHtml(remove) + '" aria-label="' + escapeHtml(remove) + '">×</button>';
+    const flag = meta.flag && meta.flag !== "🏳️"
+      ? '<span class="tr-flag">' + meta.flag + "</span>"
+      : '<span class="tr-code">' + escapeHtml(code) + "</span>";
+    return '<div class="te-lang">'
+      + '<div class="te-head">'
+      + flag
+      + '<span class="te-name">' + escapeHtml(meta.name) + "</span>"
+      + '<span class="te-code">' + escapeHtml(code) + "</span>"
+      + actions
+      + "</div>"
+      + '<input type="text" class="st-input" id="cvTrVal-' + code + '" lang="' + code + '" dir="' + dir
+      + '" data-lang="' + code + '" value="' + escapeHtml(cvTrState.values[code] || "")
+      + '" placeholder="' + placeholder + '" autocomplete="off"/>'
+      + '<input type="text" class="st-input te-alt" lang="' + code + '" dir="' + dir + '" data-lang="' + code
+      + '" value="' + escapeHtml(cvTrState.alts[code] || "") + '" placeholder="' + escapeHtml(altPh) + '" autocomplete="off"/>'
+      + "</div>";
+  }).join("");
+  markUsedTrLangOpts("#cvTrMenu", cvTrState.order, editor.getAttribute("data-used") || "");
+  const pick = $("#cvTrPick");
+  if (pick) pick.hidden = $$("#cvTrMenu .tree-lang-opt").length === 0;
+}
+
+var cvNoteState = { notes: [], tabs: [], lang: "", compare: false, typeOpen: false };
+
+function cvNoteTypes() {
+  return $$("#cvNoteTypeOpts [data-code]").map((el) => ({
+    code: el.getAttribute("data-code") || "",
+    label: el.getAttribute("data-label") || el.getAttribute("data-code") || ""
+  })).filter((item) => item.code);
+}
+
+function cvNoteLangs() {
+  return $$("#cvNoteLangOpts [data-code]").map((el) => ({
+    code: el.getAttribute("data-code") || "",
+    name: el.getAttribute("data-name") || el.getAttribute("data-code") || "",
+    flag: el.getAttribute("data-flag") || ""
+  })).filter((item) => item.code);
+}
+
+function cvNoteWorkLang() {
+  const editor = $("#cvNoteEditor");
+  const langs = cvNoteLangs();
+  return (editor && editor.getAttribute("data-work-lang")) || (langs[0] && langs[0].code) || "fr";
+}
+
+function cvNoteMeta(code) {
+  const langs = cvNoteLangs();
+  return langs.find((item) => String(item.code).toLowerCase() === String(code || "").toLowerCase())
+    || { code: code || "", name: code || "", flag: "" };
+}
+
+function cvNoteNorm(code) {
+  return String(code || "").trim().toLowerCase();
+}
+
+function cvNoteFilled(note) {
+  return !!(note && String(note.value || "").trim());
+}
+
+function cvNoteTabs() {
+  const work = cvNoteNorm(cvNoteWorkLang());
+  const seen = {};
+  const tabs = [];
+  function add(code) {
+    const key = cvNoteNorm(code);
+    if (!key || seen[key]) return;
+    seen[key] = true;
+    tabs.push(code);
+  }
+  add(work);
+  cvNoteState.notes.forEach((note) => add(note.lang));
+  (cvNoteState.tabs || []).forEach((code) => add(code));
+  return tabs;
+}
+
+function cvNoteOfLang(lang) {
+  const key = cvNoteNorm(lang);
+  return cvNoteState.notes
+    .map((note, index) => ({ note: note, index: index }))
+    .filter((item) => cvNoteNorm(item.note.lang) === key);
+}
+
+function cvNoteUsedTypes(lang, exceptIndex) {
+  const used = {};
+  cvNoteOfLang(lang).forEach((item) => {
+    if (item.index === exceptIndex) return;
+    if (item.note.type) used[item.note.type] = true;
+  });
+  return used;
+}
+
+function firstFreeConceptNoteType(lang) {
+  const used = cvNoteUsedTypes(lang, -1);
+  const types = cvNoteTypes();
+  return types.find((type) => !used[type.code]) || null;
+}
+
+function closeConceptNoteLang() {
+  const btn = $("#cvNoteBtn");
+  if (!btn || !btn.classList.contains("is-open")) return false;
+  btn.classList.remove("is-open");
+  btn.setAttribute("aria-expanded", "false");
+  return true;
+}
+
+function setConceptNoteLangOpen(open) {
+  const btn = $("#cvNoteBtn");
+  if (!btn) return;
+  btn.classList.toggle("is-open", !!open);
+  btn.setAttribute("aria-expanded", open ? "true" : "false");
+}
+
+function closeConceptNoteTypeMenu() {
+  if (!cvNoteState.typeOpen) return false;
+  cvNoteState.typeOpen = false;
+  const menu = $("#cvNoteTypeMenu");
+  if (menu) menu.remove();
+  return true;
+}
+
+function syncConceptNoteHidden() {
+  const el = jsField("cvNotePayload");
+  if (!el) return;
+  const lines = cvNoteState.notes.filter(cvNoteFilled).map((note) => {
+    return [note.type || "", note.lang || "", encodeURIComponent(note.value || ""), encodeURIComponent(note.source || "")].join("\t");
+  });
+  el.value = lines.length ? lines.join("\n") : "\t\t\t";
+}
+
+function seedConceptNotesFromHidden() {
+  const editor = $("#cvNoteEditor");
+  if (!editor) return;
+  if (cvNoteState.bound === editor) return;
+  const work = cvNoteWorkLang();
+  cvNoteState = { notes: [], tabs: [], lang: work, compare: false, typeOpen: false, bound: editor };
+  $$("#cvNoteSeed [data-lang]").forEach((el) => {
+    const type = (el.getAttribute("data-type") || "").trim();
+    const lang = (el.getAttribute("data-lang") || "").trim();
+    if (!type || !lang) return;
+    cvNoteState.notes.push({
+      type: type,
+      lang: lang,
+      value: el.getAttribute("data-value") || "",
+      source: el.getAttribute("data-source") || ""
+    });
+  });
+  const tabs = cvNoteTabs();
+  if (!tabs.some((code) => cvNoteNorm(code) === cvNoteNorm(cvNoteState.lang)) && tabs[0]) {
+    cvNoteState.lang = tabs[0];
+  }
+  syncConceptNoteHidden();
+  paintConceptNotes();
+}
+
+function setConceptNoteLang(code) {
+  if (!code) return;
+  cvNoteState.lang = code;
+  cvNoteState.typeOpen = false;
+  closeConceptNoteLang();
+  paintConceptNotes();
+}
+
+function addConceptNoteLang(code) {
+  if (!code) return;
+  if (!trLangAlready(cvNoteState.tabs.concat(cvNoteTabs()), code)) {
+    cvNoteState.tabs.push(code);
+  }
+  cvNoteState.lang = code;
+  cvNoteState.typeOpen = false;
+  closeConceptNoteLang();
+  syncConceptNoteHidden();
+  paintConceptNotes();
+}
+
+function toggleConceptNoteCompare() {
+  cvNoteState.compare = !cvNoteState.compare;
+  cvNoteState.typeOpen = false;
+  paintConceptNotes();
+}
+
+function addConceptNote() {
+  const lang = cvNoteState.lang || cvNoteWorkLang();
+  const free = cvNoteTypes().filter((type) => !cvNoteUsedTypes(lang, -1)[type.code]);
+  if (!free.length) return;
+  if (free.length === 1) {
+    addConceptNoteType(free[0].code);
+    return;
+  }
+  cvNoteState.typeOpen = !cvNoteState.typeOpen;
+  paintConceptNotes();
+}
+
+function addConceptNoteType(type) {
+  const lang = cvNoteState.lang || cvNoteWorkLang();
+  if (!type || cvNoteUsedTypes(lang, -1)[type]) {
+    cvNoteState.typeOpen = false;
+    paintConceptNotes();
+    return;
+  }
+  cvNoteState.notes.push({ type: type, lang: lang, value: "", source: "" });
+  cvNoteState.typeOpen = false;
+  syncConceptNoteHidden();
+  paintConceptNotes();
+  requestAnimationFrame(() => {
+    const input = $("#cvNoteVal-" + (cvNoteState.notes.length - 1));
+    if (input) input.focus();
+  });
+}
+
+function removeConceptNote(index) {
+  cvNoteState.notes.splice(index, 1);
+  cvNoteState.typeOpen = false;
+  syncConceptNoteHidden();
+  paintConceptNotes();
+}
+
+function setConceptNoteField(index, field, value) {
+  const note = cvNoteState.notes[index];
+  if (!note || !field) return;
+  if (field === "type") {
+    const used = cvNoteUsedTypes(note.lang, index);
+    if (used[value]) return;
+  }
+  note[field] = value;
+  syncConceptNoteHidden();
+  if (field === "type") paintConceptNotes();
+}
+
+function cvNoteCompareLang() {
+  const current = cvNoteNorm(cvNoteState.lang);
+  const work = cvNoteNorm(cvNoteWorkLang());
+  if (current !== work) return cvNoteWorkLang();
+  const tabs = cvNoteTabs();
+  return tabs.find((code) => cvNoteNorm(code) !== current) || "";
+}
+
+function paintNoteColHead(lang) {
+  const meta = cvNoteMeta(lang);
+  return '<div class="note-ed-colh">'
+    + (meta.flag ? '<span class="tr-flag">' + meta.flag + "</span>" : "")
+    + '<span>' + escapeHtml(meta.name || lang) + "</span>"
+    + '<span class="te-code">' + escapeHtml(lang) + "</span>"
+    + "</div>";
+}
+
+function paintNoteGhost(typeCode) {
+  const type = cvNoteTypes().find((item) => item.code === typeCode);
+  const label = (type && type.label) || typeCode || "";
+  return '<div class="note-ghost"><span class="note-ghost-t">' + escapeHtml(label) + "</span></div>";
+}
+
+function paintConceptNoteAdd(lang) {
+  const editor = $("#cvNoteEditor");
+  const add = (editor && editor.getAttribute("data-add")) || "";
+  const free = cvNoteTypes().filter((type) => !cvNoteUsedTypes(lang, -1)[type.code]);
+  if (!free.length) return "";
+  const menu = cvNoteState.typeOpen
+    ? '<div class="note-menu" id="cvNoteTypeMenu">'
+      + free.map((type) => '<button type="button" data-act="cv-note-add-type" data-type="'
+        + escapeHtml(type.code) + '">' + escapeHtml(type.label) + "</button>").join("")
+      + "</div>"
+    : "";
+  return '<div class="note-menu-w">'
+    + '<button type="button" class="note-ed-add" data-act="cv-note-add">' + escapeHtml(add) + "</button>"
+    + menu
+    + "</div>";
+}
+
+function paintConceptNoteCard(item, editable) {
+  const editor = $("#cvNoteEditor");
+  const remove = (editor && editor.getAttribute("data-remove")) || "";
+  const textPh = (editor && editor.getAttribute("data-text-ph")) || "";
+  const sourcePh = (editor && editor.getAttribute("data-source-ph")) || "";
+  const note = item.note;
+  const dir = trTextDir(note.lang);
+  const used = cvNoteUsedTypes(note.lang, item.index);
+  const typeOpts = cvNoteTypes()
+    .filter((type) => type.code === note.type || !used[type.code])
+    .map((type) => '<option value="' + escapeHtml(type.code) + '"' + (type.code === note.type ? " selected" : "") + ">"
+      + escapeHtml(type.label) + "</option>").join("");
+  const typeLabel = (cvNoteTypes().find((type) => type.code === note.type) || { label: note.type }).label;
+  if (!editable) {
+    const empty = !cvNoteFilled(note);
+    return '<div class="note-ref' + (empty ? " is-empty" : "") + '">'
+      + '<div class="note-c-h"><span class="note-c-type-lbl">' + escapeHtml(typeLabel) + "</span></div>"
+      + (empty
+        ? ""
+        : '<p class="cv-def" lang="' + escapeHtml(note.lang) + '" dir="' + dir + '">' + escapeHtml(note.value) + "</p>"
+          + (note.source ? '<span class="note-src">' + escapeHtml(note.source) + "</span>" : ""))
+      + "</div>";
+  }
+  return '<div class="note-c">'
+    + '<div class="note-c-h">'
+    + '<select class="note-c-type" data-cv-note="type" data-index="' + item.index + '" aria-label="Type">'
+    + typeOpts + "</select>"
+    + '<input type="text" class="note-c-src" data-cv-note="source" data-index="' + item.index
+    + '" value="' + escapeHtml(note.source || "") + '" placeholder="' + escapeHtml(sourcePh) + '" autocomplete="off"/>'
+    + '<button type="button" class="note-ed-x" data-act="cv-note-remove" data-index="' + item.index
+    + '" title="' + escapeHtml(remove) + '" aria-label="' + escapeHtml(remove) + '">×</button>'
+    + "</div>"
+    + '<textarea class="disc-input" id="cvNoteVal-' + item.index + '" data-cv-note="value" data-index="' + item.index
+    + '" rows="3" lang="' + escapeHtml(note.lang) + '" dir="' + dir + '" placeholder="' + escapeHtml(textPh) + '">'
+    + escapeHtml(note.value || "") + "</textarea>"
+    + "</div>";
+}
+
+function paintConceptNoteColumn(lang, editable) {
+  const items = cvNoteOfLang(lang);
+  let html = items.map((item) => paintConceptNoteCard(item, editable)).join("");
+  if (editable) html += paintConceptNoteAdd(lang);
+  return html;
+}
+
+function paintConceptNoteCompare(leftLang, rightLang) {
+  const typeOrder = cvNoteTypes().map((type) => type.code);
+  const leftItems = cvNoteOfLang(leftLang);
+  const rightItems = cvNoteOfLang(rightLang);
+  const seen = {};
+  const types = [];
+  function addType(code) {
+    if (!code || seen[code]) return;
+    seen[code] = true;
+    types.push(code);
+  }
+  typeOrder.forEach(addType);
+  leftItems.forEach((item) => addType(item.note.type));
+  rightItems.forEach((item) => addType(item.note.type));
+  const shown = types.filter((code) =>
+    leftItems.some((item) => item.note.type === code)
+    || rightItems.some((item) => item.note.type === code)
+  );
+  let html = '<div class="note-cmp-h">'
+    + paintNoteColHead(leftLang)
+    + paintNoteColHead(rightLang)
+    + "</div>";
+  if (!shown.length) {
+    const editor = $("#cvNoteEditor");
+    const empty = (editor && editor.getAttribute("data-empty")) || "";
+    html += '<div class="note-cmp-r">'
+      + '<div class="note-ghost"><span class="note-ghost-t">' + escapeHtml(empty) + "</span></div>"
+      + '<div class="note-ghost"><span class="note-ghost-t">' + escapeHtml(empty) + "</span></div>"
+      + "</div>";
+  } else {
+    html += shown.map((type) => {
+      const left = leftItems.find((item) => item.note.type === type);
+      const right = rightItems.find((item) => item.note.type === type);
+      return '<div class="note-cmp-r">'
+        + (left ? paintConceptNoteCard(left, true) : paintNoteGhost(type))
+        + (right ? paintConceptNoteCard(right, false) : paintNoteGhost(type))
+        + "</div>";
+    }).join("");
+  }
+  html += paintConceptNoteAdd(leftLang);
+  return html;
+}
+
+function paintConceptNotes() {
+  const tabsEl = $("#cvNoteTabs");
+  const body = $("#cvNoteBody");
+  const editor = $("#cvNoteEditor");
+  if (!tabsEl || !body || !editor) return;
+  const tabs = cvNoteTabs();
+  if (!cvNoteState.lang && tabs[0]) cvNoteState.lang = tabs[0];
+  tabsEl.innerHTML = tabs.map((code) => {
+    const meta = cvNoteMeta(code);
+    const count = cvNoteOfLang(code).filter((item) => cvNoteFilled(item.note)).length;
+    const on = cvNoteNorm(code) === cvNoteNorm(cvNoteState.lang);
+    return '<button type="button" class="note-ed-tab' + (on ? " on" : "") + '" data-act="cv-note-tab" data-lang="'
+      + escapeHtml(code) + '" role="tab" aria-selected="' + (on ? "true" : "false") + '">'
+      + (meta.flag ? '<span class="tr-flag">' + meta.flag + "</span>" : "")
+      + '<span>' + escapeHtml(meta.name || code) + "</span>"
+      + (count ? '<span class="note-ed-n">' + count + "</span>" : '<span class="note-ed-void" aria-hidden="true"></span>')
+      + "</button>";
+  }).join("");
+  const cmpBtn = $("#cvNoteCmp");
+  if (cmpBtn) {
+    cmpBtn.classList.toggle("on", !!cvNoteState.compare);
+    cmpBtn.hidden = tabs.length < 2;
+  }
+  const cmpLang = cvNoteState.compare ? cvNoteCompareLang() : "";
+  if (cvNoteState.compare && cmpLang) {
+    body.className = "note-cmp";
+    body.innerHTML = paintConceptNoteCompare(cvNoteState.lang, cmpLang);
+  } else {
+    body.className = "note-ed-mono";
+    body.innerHTML = paintConceptNoteColumn(cvNoteState.lang, true);
+  }
+  markUsedTrLangOpts("#cvNoteMenu", tabs, editor.getAttribute("data-used") || "");
+  const pick = $("#cvNotePick");
+  if (pick) pick.hidden = $$("#cvNoteMenu .tree-lang-opt").length === 0;
+}
+
+var cvResState = { links: [], images: [], gps: [], bound: null, painted: false };
+
+function cvResEditor() {
+  return document.querySelector("#viewLive #cvResEditor")
+      || document.getElementById("cvResEditor")
+      || jsField("cvResEditor");
+}
+
+function cvResNode(id) {
+  const editor = cvResEditor();
+  if (editor) {
+    const local = editor.querySelector("#" + id);
+    if (local) return local;
+  }
+  return document.getElementById(id) || jsField(id);
+}
+
+function cvResAttr(name, fallback) {
+  const root = cvResEditor();
+  return (root && root.getAttribute(name)) || fallback || "";
+}
+
+function encodeCvResPart(value) {
+  return encodeURIComponent(String(value == null ? "" : value));
+}
+
+function syncConceptResHidden() {
+  const linksEl = jsField("cvResLinksPayload");
+  const imgsEl = jsField("cvResImagesPayload");
+  const gpsEl = jsField("cvResGpsPayload");
+  if (linksEl) {
+    const lines = cvResState.links.map((item) =>
+      [encodeCvResPart(item.oldUri), encodeCvResPart(item.uri), encodeCvResPart(item.label)].join("\t"));
+    linksEl.value = lines.length ? lines.join("\n") : "__none__";
+  }
+  if (imgsEl) {
+    const lines = cvResState.images.map((item) =>
+      [encodeCvResPart(item.id || 0), encodeCvResPart(item.uri), encodeCvResPart(item.name),
+        encodeCvResPart(item.creator), encodeCvResPart(item.copyright)].join("\t"));
+    imgsEl.value = lines.length ? lines.join("\n") : "__none__";
+  }
+  if (gpsEl) {
+    const lines = cvResState.gps.map((item) =>
+      [encodeCvResPart(item.lat), encodeCvResPart(item.lng)].join("\t"));
+    gpsEl.value = lines.length ? lines.join("\n") : "__none__";
+  }
+}
+
+function seedConceptResFromHidden() {
+  const editor = cvResEditor();
+  if (!editor) {
+    try { destroyConceptResGpsMap(); } catch (err) { /* ignore */ }
+    try { closeConceptResImgLightbox(); } catch (err) { /* ignore */ }
+    cvResState = { links: [], images: [], gps: [], bound: null, painted: false };
+    return;
+  }
+  if (cvResState.bound === editor && cvResState.painted) return;
+  cvResState = { links: [], images: [], gps: [], bound: editor, painted: false };
+  $$("#cvResLinkSeed span", editor).forEach((el) => {
+    cvResState.links.push({
+      oldUri: el.getAttribute("data-old") || "",
+      uri: el.getAttribute("data-uri") || "",
+      label: el.getAttribute("data-label") || ""
+    });
+  });
+  $$("#cvResImgSeed span", editor).forEach((el) => {
+    cvResState.images.push({
+      id: el.getAttribute("data-id") || "0",
+      uri: el.getAttribute("data-uri") || "",
+      name: el.getAttribute("data-name") || "",
+      creator: el.getAttribute("data-creator") || "",
+      copyright: el.getAttribute("data-copy") || ""
+    });
+  });
+  $$("#cvResGpsSeed span", editor).forEach((el) => {
+    cvResState.gps.push({
+      lat: el.getAttribute("data-lat") || "",
+      lng: el.getAttribute("data-lng") || ""
+    });
+  });
+  paintConceptRes();
+  cvResState.painted = !!(cvResNode("cvResLinks") || cvResNode("cvResImgs") || cvResNode("cvResGpsPts"));
+  syncConceptResHidden();
+}
+
+function addConceptResLink() {
+  cvResState.links.push({ oldUri: "", uri: "", label: "" });
+  paintConceptRes();
+  cvResState.painted = true;
+  syncConceptResHidden();
+  requestAnimationFrame(() => {
+    const input = $("#cvResUri-" + (cvResState.links.length - 1));
+    if (input) input.focus();
+  });
+}
+
+function addConceptResImage() {
+  cvResState.images.push({ id: 0, uri: "", name: "", creator: "", copyright: "" });
+  paintConceptRes();
+  cvResState.painted = true;
+  syncConceptResHidden();
+  requestAnimationFrame(() => {
+    const input = $("#cvResImgUri-" + (cvResState.images.length - 1));
+    if (input) input.focus();
+  });
+}
+
+function addConceptResGps() {
+  cvResState.gps.push({ lat: "", lng: "" });
+  paintConceptRes();
+  cvResState.painted = true;
+  syncConceptResHidden();
+  requestAnimationFrame(() => {
+    const input = $("#cvResGpsLat-" + (cvResState.gps.length - 1));
+    if (input) input.focus();
+  });
+}
+
+function removeConceptResLink(index) {
+  cvResState.links.splice(index, 1);
+  paintConceptRes();
+  syncConceptResHidden();
+}
+
+function removeConceptResImage(index) {
+  cvResState.images.splice(index, 1);
+  paintConceptRes();
+  syncConceptResHidden();
+}
+
+function removeConceptResGps(index) {
+  cvResState.gps.splice(index, 1);
+  paintConceptRes();
+  syncConceptResHidden();
+}
+
+function setConceptResLink(index, field, value) {
+  const item = cvResState.links[index];
+  if (!item) return;
+  if (field === "label") item.label = value;
+  else item.uri = value;
+  syncConceptResHidden();
+}
+
+function setConceptResImage(index, field, value) {
+  const item = cvResState.images[index];
+  if (!item) return;
+  item[field] = value;
+  if (field === "uri") {
+    const preview = $("#cvResImgPreview-" + index);
+    const img = preview && preview.querySelector("img");
+    const ok = looksLikeUrl(value);
+    if (preview) preview.hidden = !ok;
+    if (img && ok) img.src = String(value || "").trim();
+  }
+  const cap = $("#cvResImgCap-" + index);
+  if (cap) cap.textContent = draftImgCaption(cvResState.images[index]);
+  syncConceptResHidden();
+}
+
+function setConceptResGps(index, field, value) {
+  const item = cvResState.gps[index];
+  if (item) item[field] = value;
+  const btn = $("#cvResGpsGoto-" + index);
+  if (btn && (field === "lat" || field === "lng")) {
+    btn.setAttribute("data-" + field, String(value || "").trim());
+  }
+  syncConceptResHidden();
+  scheduleConceptResGpsRefresh();
+}
+
+function paintConceptRes() {
+  const links = cvResNode("cvResLinks");
+  const images = cvResNode("cvResImgs");
+  const gps = cvResNode("cvResGpsPts");
+  if (!links && !images && !gps) return;
+  const linkPh = escapeHtml(cvResAttr("data-link-ph", "https://…"));
+  const linkLabel = escapeHtml(cvResAttr("data-link-label", "libellé optionnel"));
+  const linkRemove = escapeHtml(cvResAttr("data-link-remove", ""));
+  const imgPh = escapeHtml(cvResAttr("data-img-ph", "https://…"));
+  const imgName = escapeHtml(cvResAttr("data-img-name", "nom"));
+  const imgCreator = escapeHtml(cvResAttr("data-img-creator", "auteur"));
+  const imgCopy = escapeHtml(cvResAttr("data-img-copy", "copyright"));
+  const imgRemove = escapeHtml(cvResAttr("data-img-remove", ""));
+  const gpsLat = escapeHtml(cvResAttr("data-gps-lat", "latitude"));
+  const gpsLng = escapeHtml(cvResAttr("data-gps-lng", "longitude"));
+  const gpsRemove = escapeHtml(cvResAttr("data-gps-remove", ""));
+  const imgOpen = escapeHtml(cvResAttr("data-img-open", "Agrandir l'image"));
+  if (links) {
+    links.innerHTML = cvResState.links.map((item, index) => {
+      return '<div class="media-edit-card media-edit-link">'
+        + '<div class="media-edit-val">'
+        + '<input type="text" class="st-input media-edit-uri" id="cvResUri-' + index + '" data-cv-res="link" data-field="uri" data-index="' + index
+        + '" value="' + escapeHtml(item.uri || "") + '" placeholder="' + linkPh + '" autocomplete="off"/>'
+        + '<button type="button" class="note-edit-remove" data-act="cv-res-remove" data-index="' + index
+        + '" title="' + linkRemove + '" aria-label="' + linkRemove + '">×</button>'
+        + "</div>"
+        + '<input type="text" class="st-input" data-cv-res="link" data-field="label" data-index="' + index
+        + '" value="' + escapeHtml(item.label || "") + '" placeholder="' + linkLabel + '" autocomplete="off"/>'
+        + "</div>";
+    }).join("");
+  }
+  if (images) {
+    images.innerHTML = cvResState.images.map((item, index) => {
+      const src = String(item.uri || "").trim();
+      const show = looksLikeUrl(src);
+      const cap = escapeHtml(draftImgCaption(item));
+      return '<div class="media-edit-card media-edit-img is-preview">'
+        + '<button type="button" class="draft-img-preview" id="cvResImgPreview-' + index + '" data-act="cv-res-img-open" data-index="' + index
+        + '" title="' + imgOpen + '" aria-label="' + imgOpen + '"' + (show ? "" : " hidden=\"hidden\"") + ">"
+        + '<img src="' + escapeHtml(show ? src : "") + '" alt="" onerror="this.parentNode.hidden=true"/>'
+        + "</button>"
+        + '<div class="draft-img-cap" id="cvResImgCap-' + index + '">' + cap + "</div>"
+        + '<div class="media-edit-img-fields">'
+        + '<div class="media-edit-val">'
+        + '<input type="text" class="st-input media-edit-uri" id="cvResImgUri-' + index + '" data-cv-res="image" data-field="uri" data-index="' + index
+        + '" value="' + escapeHtml(item.uri || "") + '" placeholder="' + imgPh + '" autocomplete="off"/>'
+        + '<button type="button" class="note-edit-remove" data-act="cv-res-img-remove" data-index="' + index
+        + '" title="' + imgRemove + '" aria-label="' + imgRemove + '">×</button>'
+        + "</div>"
+        + '<div class="media-edit-img-meta">'
+        + '<input type="text" class="st-input" data-cv-res="image" data-field="name" data-index="' + index
+        + '" value="' + escapeHtml(item.name || "") + '" placeholder="' + imgName + '" autocomplete="off"/>'
+        + '<input type="text" class="st-input" data-cv-res="image" data-field="creator" data-index="' + index
+        + '" value="' + escapeHtml(item.creator || "") + '" placeholder="' + imgCreator + '" autocomplete="off"/>'
+        + '<input type="text" class="st-input" data-cv-res="image" data-field="copyright" data-index="' + index
+        + '" value="' + escapeHtml(item.copyright || "") + '" placeholder="' + imgCopy + '" autocomplete="off"/>'
+        + "</div></div></div>";
+    }).join("");
+  }
+  if (gps) {
+    gps.innerHTML = cvResState.gps.map((item, index) => {
+      return '<li class="gps-edit-row">'
+        + '<button type="button" class="gps-pt" id="cvResGpsGoto-' + index + '" data-act="cv-res-gps-goto" data-index="' + index
+        + '" data-lat="' + escapeHtml(item.lat || "") + '" data-lng="' + escapeHtml(item.lng || "") + '">'
+        + '<span class="gps-pt-n" aria-hidden="true">' + (index + 1) + "</span></button>"
+        + '<input type="text" class="st-input is-mono gps-edit-coord" id="cvResGpsLat-' + index + '" data-cv-res="gps" data-field="lat" data-index="' + index
+        + '" value="' + escapeHtml(item.lat || "") + '" placeholder="' + gpsLat + '" autocomplete="off"/>'
+        + '<input type="text" class="st-input is-mono gps-edit-coord" id="cvResGpsLng-' + index + '" data-cv-res="gps" data-field="lng" data-index="' + index
+        + '" value="' + escapeHtml(item.lng || "") + '" placeholder="' + gpsLng + '" autocomplete="off"/>'
+        + '<button type="button" class="note-edit-remove" data-act="cv-res-gps-remove" data-index="' + index
+        + '" title="' + gpsRemove + '" aria-label="' + gpsRemove + '">×</button>'
+        + "</li>";
+    }).join("");
+  }
+  scheduleConceptResGpsRefresh();
+}
+
+function cvResVisibleImages() {
+  return cvResState.images
+    .map((item, index) => ({ item: item, index: index }))
+    .filter((row) => looksLikeUrl(row.item.uri));
+}
+
+var cvResImgView = { index: 0 };
+
+function closeConceptResImgLightbox() {
+  const box = $("#cvResImgLightbox");
+  if (!box || box.hidden) return false;
+  box.hidden = true;
+  box.setAttribute("aria-hidden", "true");
+  document.body.classList.remove("is-img-lightbox");
+  return true;
+}
+
+function showConceptResImgAt(index) {
+  const items = cvResVisibleImages();
+  if (!items.length) return;
+  const n = items.length;
+  cvResImgView.index = ((index % n) + n) % n;
+  const row = items[cvResImgView.index];
+  const src = String(row.item.uri || "").trim();
+  const img = $("#cvResImgLightboxImg");
+  if (img) {
+    img.src = src;
+    img.alt = row.item.name || "";
+  }
+  const cap = $("#cvResImgLightboxCap");
+  if (cap) cap.textContent = draftImgCaption(row.item);
+  const orig = $("#cvResImgLightboxOrig");
+  if (orig) orig.href = src || "#";
+  const box = $("#cvResImgLightbox");
+  if (box) box.classList.toggle("is-single", n < 2);
+}
+
+function openConceptResImgLightbox(cardIndex) {
+  const items = cvResVisibleImages();
+  if (!items.length) return;
+  const pos = items.findIndex((row) => row.index === Number(cardIndex));
+  cvResImgView.index = pos >= 0 ? pos : 0;
+  const box = $("#cvResImgLightbox");
+  if (!box) return;
+  document.body.classList.add("is-img-lightbox");
+  box.hidden = false;
+  box.setAttribute("aria-hidden", "false");
+  showConceptResImgAt(cvResImgView.index);
+}
+
+var cvResGpsView = { map: null, layer: null, el: null, ignoreClick: false };
+
+function cvResGpsPoints() {
+  return cvResState.gps.map((item, index) => ({
+    index: index,
+    lat: parseFloat(String(item.lat || "").replace(",", ".")),
+    lng: parseFloat(String(item.lng || "").replace(",", "."))
+  })).filter((pt) => Number.isFinite(pt.lat) && Number.isFinite(pt.lng));
+}
+
+function destroyConceptResGpsMap() {
+  try {
+    if (cvResGpsView.layer && cvResGpsView.map) {
+      cvResGpsView.map.removeLayer(cvResGpsView.layer);
+    }
+  } catch (err) { /* ignore */ }
+  try {
+    if (cvResGpsView.map) cvResGpsView.map.remove();
+  } catch (err) { /* ajax already replaced the map container */ }
+  cvResGpsView.map = null;
+  cvResGpsView.layer = null;
+  cvResGpsView.el = null;
+}
+
+function ensureConceptResGpsMap() {
+  const canvas = cvResNode("cvResGpsCanvas") || $("#cvResGpsCanvas");
+  if (!canvas || !window.L) return null;
+  if (cvResGpsView.map && cvResGpsView.el === canvas) return cvResGpsView.map;
+  destroyConceptResGpsMap();
+  cvResGpsView.el = canvas;
+  cvResGpsView.map = L.map(canvas, {
+    scrollWheelZoom: false,
+    doubleClickZoom: false,
+    attributionControl: true
+  });
+  L.tileLayer("https://{s}.tile.openstreetmap.org/{z}/{x}/{y}.png", {
+    maxZoom: 19,
+    attribution: "© OpenStreetMap"
+  }).addTo(cvResGpsView.map);
+  cvResGpsView.map.setView([46.7, 2.5], 5);
+  cvResGpsView.map.on("dragstart", () => { cvResGpsView.ignoreClick = true; });
+  cvResGpsView.map.on("dragend", () => {
+    window.setTimeout(() => { cvResGpsView.ignoreClick = false; }, 220);
+  });
+  cvResGpsView.map.on("click", (e) => {
+    if (cvResGpsView.ignoreClick) return;
+    const lat = formatGpsNum(e.latlng.lat);
+    const lng = formatGpsNum(e.latlng.lng);
+    const last = cvResState.gps[cvResState.gps.length - 1];
+    if (last && !String(last.lat || "").trim() && !String(last.lng || "").trim()) {
+      last.lat = lat;
+      last.lng = lng;
+    } else {
+      cvResState.gps.push({ lat: lat, lng: lng });
+    }
+    paintConceptRes();
+    syncConceptResHidden();
+  });
+  return cvResGpsView.map;
+}
+
+function refreshConceptResGpsMap() {
+  const badge = cvResNode("cvResGpsBadge") || $("#cvResGpsBadge");
+  const points = cvResGpsPoints();
+  if (badge) {
+    badge.textContent = points.length
+      ? (points.length + " point" + (points.length > 1 ? "s" : ""))
+      : cvResAttr("data-gps-empty", "Cliquez pour poser un point");
+  }
+  const canvas = cvResNode("cvResGpsCanvas") || $("#cvResGpsCanvas");
+  if (!canvas) return;
+  ensureLeaflet().then(() => {
+    const map = ensureConceptResGpsMap();
+    if (!map) return;
+    if (cvResGpsView.layer) {
+      map.removeLayer(cvResGpsView.layer);
+      cvResGpsView.layer = null;
+    }
+    const layer = L.layerGroup().addTo(map);
+    cvResGpsView.layer = layer;
+    const accent = gpsAccent();
+    if (points.length >= 2) {
+      L.polyline(points.map((pt) => [pt.lat, pt.lng]), { color: accent, weight: 2.5 }).addTo(layer);
+    }
+    points.forEach((pt) => {
+      const marker = L.marker([pt.lat, pt.lng], {
+        draggable: true,
+        icon: L.divIcon({
+          className: "gps-pin",
+          html: '<span class="gps-pin-n">' + (pt.index + 1) + "</span>",
+          iconSize: [22, 22],
+          iconAnchor: [11, 11]
+        })
+      }).addTo(layer);
+      marker.on("click", () => gotoConceptResGps(pt.index));
+      marker.on("dragstart", () => { cvResGpsView.ignoreClick = true; });
+      marker.on("dragend", (ev) => {
+        const next = ev.target.getLatLng();
+        const row = cvResState.gps[pt.index];
+        if (row) {
+          row.lat = formatGpsNum(next.lat);
+          row.lng = formatGpsNum(next.lng);
+        }
+        const latIn = $("#cvResGpsLat-" + pt.index);
+        const lngIn = $("#cvResGpsLng-" + pt.index);
+        if (latIn) latIn.value = formatGpsNum(next.lat);
+        if (lngIn) lngIn.value = formatGpsNum(next.lng);
+        window.setTimeout(() => { cvResGpsView.ignoreClick = false; }, 220);
+        syncConceptResHidden();
+        scheduleConceptResGpsRefresh();
+      });
+    });
+    if (!points.length) map.setView([46.7, 2.5], 5);
+    else if (points.length === 1) map.setView([points[0].lat, points[0].lng], 14);
+    else map.fitBounds(L.latLngBounds(points.map((pt) => [pt.lat, pt.lng])).pad(0.14));
+    requestAnimationFrame(() => map.invalidateSize());
+    setTimeout(() => map.invalidateSize(), 260);
+  }).catch(() => {
+    if (canvas) {
+      canvas.classList.add("is-off");
+      canvas.textContent = "Carte indisponible";
+    }
+  });
+}
+
+function scheduleConceptResGpsRefresh() {
+  clearTimeout(scheduleConceptResGpsRefresh._t);
+  scheduleConceptResGpsRefresh._t = setTimeout(refreshConceptResGpsMap, 40);
+}
+
+function gotoConceptResGps(index) {
+  const item = cvResState.gps[index];
+  if (!item || !cvResGpsView.map) return;
+  const lat = parseFloat(String(item.lat || "").replace(",", "."));
+  const lng = parseFloat(String(item.lng || "").replace(",", "."));
+  if (!Number.isFinite(lat) || !Number.isFinite(lng)) return;
+  cvResGpsView.map.panTo([lat, lng]);
+}
+
 window.onLabelSave = function (data) {
   const btns = document.querySelectorAll(
-      "#labelSaveConfirm .abt-save, #collSaveConfirm .abt-save, #relSaveConfirm .abt-save, #crelSaveConfirm .abt-save, #trSaveConfirm .abt-save, #noteSaveConfirm .abt-save, #resLinkSaveConfirm .abt-save, #resImgSaveConfirm .abt-save, #resGpsSaveConfirm .abt-save, .cblock-edit-warn .abt-save"
+      "#labelSaveConfirm .abt-save, #collSaveConfirm .abt-save, #relSaveConfirm .abt-save, #crelSaveConfirm .abt-save, #trEditSave, #noteEditSave, #resEditSave, #resLinkSaveConfirm .abt-save, #resImgSaveConfirm .abt-save, #resGpsSaveConfirm .abt-save, .cblock-edit-warn .abt-save"
   );
   if (data.status === "begin") {
     if (typeof hideConfirm === "function") {
@@ -2131,6 +3127,18 @@ function paintMain() {
     showPanel(".view-panel", "viewSettings");
     return;
   }
+  if (state.conceptDraft && $("#viewConceptDraft")) {
+    showPanel(".view-panel", "viewConceptDraft");
+    paintGraphBack();
+    paintListBack();
+    return;
+  }
+  if (state.facetDraft && $("#viewFacetDraft")) {
+    showPanel(".view-panel", "viewFacetDraft");
+    paintGraphBack();
+    paintListBack();
+    return;
+  }
   if (state.draft && $("#viewDraft")) {
     showPanel(".view-panel", "viewDraft");
     paintGraphBack();
@@ -2331,6 +3339,8 @@ function openConcept(id, mode) {
   }
   state.home = false;
   state.draft = false;
+  state.conceptDraft = false;
+  state.facetDraft = false;
   state.conceptId = id;
   if (mode !== "stay") state.view = "arbo";
   syncConceptUrl(id, "");
@@ -2344,6 +3354,8 @@ function openHome() {
     state.home = true;
     state.conceptId = null;
     state.draft = false;
+    state.conceptDraft = false;
+    state.facetDraft = false;
     state.view = "arbo";
     highlightConcept(null);
     syncConceptUrl("", "");
@@ -2353,7 +3365,7 @@ function openHome() {
   go("index.xhtml");
 }
 
-var createChooserCtx = { id: "", pref: "", path: "" };
+var createChooserCtx = { id: "", pref: "", path: "", type: "", candidate: "" };
 
 function hideCreateChooser() {
   if (typeof hideConfirm === "function") hideConfirm("#createChooser");
@@ -2361,16 +3373,42 @@ function hideCreateChooser() {
   if (add) add.setAttribute("aria-expanded", "false");
 }
 
-function setCreateRowState(row, ok) {
+function setCreateRowState(row, ok, lockAttr) {
   if (!row) return;
   row.classList.toggle("is-locked", !ok);
   row.disabled = !ok;
   const desc = row.querySelector(".spl-d");
-  if (desc) desc.textContent = desc.getAttribute(ok ? "data-ok" : "data-lock") || desc.textContent;
+  if (desc) {
+    const key = ok ? "data-ok" : (lockAttr || "data-lock");
+    desc.textContent = desc.getAttribute(key) || desc.getAttribute("data-lock") || desc.textContent;
+  }
   const go = row.querySelector(".spl-go");
   const lock = row.querySelector(".ck-lock");
   if (go) go.hidden = !ok;
   if (lock) lock.hidden = ok;
+}
+
+function currentConceptParentId() {
+  const el = liveDetailState();
+  const kind = ((el && el.getAttribute("data-kind")) || "").toLowerCase();
+  const id = ((el && el.getAttribute("data-id")) || (!state.home && state.conceptId) || "").trim();
+  if (!id || kind !== "concept") return "";
+  return id;
+}
+
+function currentConceptParentLabel() {
+  const el = liveDetailState();
+  return ((el && el.getAttribute("data-pref")) || "").trim();
+}
+
+function createChooserParentId() {
+  const id = (createChooserCtx.id || "").trim();
+  if (id) {
+    const type = (createChooserCtx.type || "").toLowerCase();
+    if (createChooserCtx.candidate === "1" || type === "facet" || type === "candidat") return "";
+    return id;
+  }
+  return currentConceptParentId();
 }
 
 function showCreateChooser(src) {
@@ -2379,10 +3417,20 @@ function showCreateChooser(src) {
   createChooserCtx = {
     id: (src && src.getAttribute("data-id")) || "",
     pref: (src && src.getAttribute("data-pref")) || "",
-    path: (src && src.getAttribute("data-path")) || ""
+    path: (src && src.getAttribute("data-path")) || "",
+    type: (src && src.getAttribute("data-type")) || "",
+    candidate: (src && src.getAttribute("data-candidate")) || ""
   };
   dlg.querySelectorAll("[data-act='create-pick']").forEach((row) => {
     const kind = row.getAttribute("data-kind");
+    if (kind === "facet") {
+      const can = dlg.getAttribute("data-can-facet") === "1";
+      const parentId = createChooserParentId();
+      if (!can) setCreateRowState(row, false, "data-lock");
+      else if (!parentId) setCreateRowState(row, false, "data-need-parent");
+      else setCreateRowState(row, true);
+      return;
+    }
     const flag = kind === "concept" ? "data-can-concept" : "data-can-cand";
     setCreateRowState(row, dlg.getAttribute(flag) === "1");
   });
@@ -2408,8 +3456,7 @@ function runPendingCreate() {
   window._pendingCreate = null;
   if (!kind) return;
   if (kind === "facette") {
-    const link = document.querySelector('[data-create="facet"]');
-    if (link) link.click();
+    clickCreateFacet();
     return;
   }
   if (clickCreateConcept("child")) return;
@@ -2417,6 +3464,15 @@ function runPendingCreate() {
 }
 
 window.runPendingCreate = runPendingCreate;
+
+function clickCreateFacet() {
+  const btn = document.querySelector('[data-create="facet"], [id$="createFacetGo"]');
+  if (btn) {
+    btn.click();
+    return true;
+  }
+  return false;
+}
 
 function pickCreateKind(kind) {
   hideCreateChooser();
@@ -2431,21 +3487,27 @@ function pickCreateKind(kind) {
     });
     return;
   }
+  if (kind === "facet" || kind === "facette") {
+    const id = createChooserParentId();
+    if (!id) return;
+    createFacetDraft({
+      getAttribute: function (name) {
+        if (name === "data-pref") return createChooserCtx.pref || currentConceptParentLabel();
+        if (name === "data-id") return id;
+        return "";
+      }
+    });
+    return;
+  }
   if (kind !== "concept") return;
-  const id = createChooserCtx.id || (!state.home && state.conceptId) || "";
-  if (!id) {
-    clickCreateConcept("top");
-    return;
-  }
-  window._pendingCreate = "concept";
-  if (state.conceptId === id && liveDetailRequested()) {
-    runPendingCreate();
-    return;
-  }
-  if (!openLiveDetail(id, "concept")) {
-    window._pendingCreate = null;
-    clickCreateConcept("top");
-  }
+  createConceptDraft({
+    getAttribute: function (name) {
+      if (name === "data-pref") return createChooserCtx.pref;
+      if (name === "data-path") return createChooserCtx.path;
+      if (name === "data-id") return createChooserCtx.id || (!state.home && state.conceptId) || "";
+      return "";
+    }
+  });
 }
 
 var DRAFT_REL_META = {
@@ -2726,7 +3788,7 @@ function seedDraftTrFromHidden() {
 }
 
 function addDraftTr(code) {
-  if (!code || draftTrState.order.indexOf(code) >= 0) return;
+  if (!code || trLangAlready(draftTrState.order, code)) return;
   draftTrState.order.push(code);
   if (draftTrState.values[code] == null) draftTrState.values[code] = "";
   draftTrState.confirm = "";
@@ -2795,14 +3857,9 @@ function paintDraftTr() {
       + '" value="' + escapeHtml(draftTrState.alts[code] || "") + '" placeholder="' + escapeHtml(altPh) + '" autocomplete="off"/>'
       + "</div>";
   }).join("");
-  const opts = $$("#draftTrMenu .tree-lang-opt");
-  opts.forEach((opt) => {
-    const used = draftTrState.order.indexOf(opt.getAttribute("data-lang")) >= 0;
-    opt.hidden = used;
-    opt.disabled = used;
-  });
+  markUsedTrLangOpts("#draftTrMenu", draftTrState.order, editor.getAttribute("data-used") || "");
   const pick = $("#draftTrPick");
-  if (pick) pick.hidden = opts.length === 0 || opts.every((opt) => opt.hidden);
+  if (pick) pick.hidden = $$("#draftTrMenu .tree-lang-opt").length === 0;
 }
 
 var draftResState = { links: [], images: [], gps: [] };
@@ -3366,6 +4423,8 @@ function openNextDraftForm() {
   seedDraftRelFromHidden();
   state.home = false;
   state.draft = true;
+  state.conceptDraft = false;
+  state.facetDraft = false;
   state.conceptId = null;
   if (state.view !== "arbo" && state.view !== "tableau" && state.view !== "recherche") {
     state.view = "arbo";
@@ -3389,6 +4448,8 @@ function createCandidate(btn) {
   }
   state.home = false;
   state.draft = true;
+  state.conceptDraft = false;
+  state.facetDraft = false;
   state.conceptId = null;
   if (state.view !== "arbo" && state.view !== "tableau" && state.view !== "recherche") {
     state.view = "arbo";
@@ -3622,6 +4683,46 @@ if (typeof window !== "undefined") {
   window.hideDraftRelDrop = hideDraftRelDrop;
   window.resetDraftTr = resetDraftTr;
   window.seedDraftTrFromHidden = seedDraftTrFromHidden;
+  window.seedConceptTrFromHidden = seedConceptTrFromHidden;
+  window.addConceptTr = addConceptTr;
+  window.removeConceptTr = removeConceptTr;
+  window.askRemoveConceptTr = askRemoveConceptTr;
+  window.keepConceptTr = keepConceptTr;
+  window.setConceptTrValue = setConceptTrValue;
+  window.setConceptTrAlt = setConceptTrAlt;
+  window.paintConceptTr = paintConceptTr;
+  window.closeConceptTrLang = closeConceptTrLang;
+  window.setConceptTrLangOpen = setConceptTrLangOpen;
+  window.syncConceptTrHidden = syncConceptTrHidden;
+  window.seedConceptNotesFromHidden = seedConceptNotesFromHidden;
+  window.addConceptNoteLang = addConceptNoteLang;
+  window.setConceptNoteLang = setConceptNoteLang;
+  window.toggleConceptNoteCompare = toggleConceptNoteCompare;
+  window.addConceptNote = addConceptNote;
+  window.addConceptNoteType = addConceptNoteType;
+  window.removeConceptNote = removeConceptNote;
+  window.setConceptNoteField = setConceptNoteField;
+  window.paintConceptNotes = paintConceptNotes;
+  window.closeConceptNoteLang = closeConceptNoteLang;
+  window.setConceptNoteLangOpen = setConceptNoteLangOpen;
+  window.closeConceptNoteTypeMenu = closeConceptNoteTypeMenu;
+  window.syncConceptNoteHidden = syncConceptNoteHidden;
+  window.seedConceptResFromHidden = seedConceptResFromHidden;
+  window.syncConceptResHidden = syncConceptResHidden;
+  window.addConceptResLink = addConceptResLink;
+  window.addConceptResImage = addConceptResImage;
+  window.addConceptResGps = addConceptResGps;
+  window.removeConceptResLink = removeConceptResLink;
+  window.removeConceptResImage = removeConceptResImage;
+  window.removeConceptResGps = removeConceptResGps;
+  window.setConceptResLink = setConceptResLink;
+  window.setConceptResImage = setConceptResImage;
+  window.setConceptResGps = setConceptResGps;
+  window.openConceptResImgLightbox = openConceptResImgLightbox;
+  window.closeConceptResImgLightbox = closeConceptResImgLightbox;
+  window.showConceptResImgAt = showConceptResImgAt;
+  window.gotoConceptResGps = gotoConceptResGps;
+  window.destroyConceptResGpsMap = destroyConceptResGpsMap;
   window.addDraftTr = addDraftTr;
   window.removeDraftTr = removeDraftTr;
   window.setDraftTrValue = setDraftTrValue;
@@ -3653,6 +4754,880 @@ if (typeof window !== "undefined") {
   window.setDraftNoteLang = setDraftNoteLang;
   window.setDraftNoteLangOpen = setDraftNoteLangOpen;
   window.closeDraftNoteLang = closeDraftNoteLang;
+}
+
+function conceptDraftRoot() {
+  return $("#viewConceptDraft");
+}
+
+function conceptDraftFlagOn(el, attr) {
+  return !!(el && (el.getAttribute(attr) === "1" || el.getAttribute(attr) === "true"));
+}
+
+function setConceptDraftTitleError(on) {
+  const title = $("#cptTitle");
+  const err = $("#cptTitleErr");
+  if (title) title.classList.toggle("is-err", !!on);
+  if (err) err.hidden = !on;
+}
+
+function syncConceptDraftPref() {
+  setConceptDraftTitleError(false);
+}
+
+function syncConceptDraftLocation() {
+  const root = conceptDraftRoot();
+  const loc = $("#cptLoc");
+  const warn = $("#cptRootWarn");
+  const relRow = $("#cptRelRow");
+  const parent = String(($("#cptParentLabel") && $("#cptParentLabel").value) || "").trim();
+  if (loc && root) {
+    const tpl = root.getAttribute("data-loc-under") || "Créé sous « {0} »";
+    loc.textContent = parent
+      ? tpl.replace("{0}", parent)
+      : (root.getAttribute("data-loc-root") || loc.textContent);
+  }
+  if (warn) warn.hidden = !!parent;
+  if (relRow) relRow.hidden = !parent;
+  if (root) {
+    root.classList.toggle("is-under", !!parent);
+  }
+}
+
+function setConceptDraftMore(open) {
+  const root = conceptDraftRoot();
+  const more = $("#cptMore");
+  const toggle = $("#cptMoreToggle");
+  const label = $("#cptMoreLabel");
+  if (more) {
+    more.hidden = !open;
+    more.classList.toggle("is-off", !open);
+  }
+  if (toggle) {
+    toggle.classList.toggle("open", !!open);
+    toggle.setAttribute("aria-expanded", open ? "true" : "false");
+  }
+  if (label && root) {
+    label.textContent = root.getAttribute(open ? "data-more-hide" : "data-more") || label.textContent;
+  }
+}
+
+function prepareConceptDraftForm(parentName) {
+  const root = conceptDraftRoot();
+  if (!root) return;
+  ["cptTitle", "cptDef", "cptNotation", "cptCustomId"].forEach((id) => {
+    const el = $("#" + id);
+    if (el) el.value = "";
+  });
+  setConceptDraftMore(false);
+  setConceptDraftTitleError(false);
+  syncConceptDraftLocation();
+}
+
+function showConceptDraftPanel(parentName) {
+  state.home = false;
+  state.draft = false;
+  state.conceptDraft = true;
+  state.facetDraft = false;
+  state.conceptId = null;
+  if (state.view !== "arbo" && state.view !== "tableau" && state.view !== "recherche") {
+    state.view = "arbo";
+  }
+  prepareConceptDraftForm(parentName);
+  highlightConcept(null);
+  closeSearchUi();
+  showPanel(".view-panel", "viewConceptDraft");
+  requestAnimationFrame(() => { const t = $("#cptTitle"); if (t) t.focus(); });
+}
+
+function createConceptDraft(src) {
+  const parentName = ((src && src.getAttribute("data-pref")) || "").trim();
+  const parentId = ((src && src.getAttribute("data-id")) || "").trim();
+  if (!$("#viewConceptDraft")) {
+    const q = new URLSearchParams({ create: "concept" });
+    if (parentName) q.set("pref", parentName);
+    if (parentId) q.set("idc", parentId);
+    go("index.xhtml?" + q.toString());
+    return;
+  }
+  const idEl = $("#cptParentId");
+  const labEl = $("#cptParentLabel");
+  if (idEl) idEl.value = parentId;
+  if (labEl) labEl.value = parentName;
+  const go = $("#cptPrepare");
+  if (go) {
+    go.click();
+    return;
+  }
+  showConceptDraftPanel(parentName);
+}
+
+function onConceptDraftPrepare(data) {
+  if (data.status !== "success") return;
+  const parentName = String(($("#cptParentLabel") && $("#cptParentLabel").value) || "").trim();
+  showConceptDraftPanel(parentName);
+}
+window.onConceptDraftPrepare = onConceptDraftPrepare;
+
+function hideConceptDraftCreateConfirm() {
+  const dlg = $("#cptCreateConfirm");
+  if (dlg) dlg.hidden = true;
+}
+
+function hideConceptDraftLeave() {
+  const dlg = $("#cptLeaveConfirm");
+  if (dlg) dlg.hidden = true;
+}
+
+function requestConceptDraftCreate(kind) {
+  const title = $("#cptTitle");
+  if (!title || !String(title.value || "").trim()) {
+    setConceptDraftTitleError(true);
+    if (title) title.focus();
+    return;
+  }
+  setConceptDraftTitleError(false);
+  const root = conceptDraftRoot();
+  const dlg = $("#cptCreateConfirm");
+  const text = $("#cptCreateText");
+  const go = $("#cptCreateGo");
+  if (dlg && root) {
+    const name = String(title.value || "").trim();
+    const key = kind === "chain" ? "data-confirm-chain" : "data-confirm-create";
+    const tpl = root.getAttribute(key) || "";
+    if (text) text.textContent = tpl.replace("{0}", name);
+    if (go) go.textContent = root.getAttribute(kind === "chain" ? "data-confirm-go-chain" : "data-confirm-go") || go.textContent;
+    go && go.setAttribute("data-kind", kind === "chain" ? "chain" : "create");
+    dlg.hidden = false;
+    return;
+  }
+  confirmConceptDraftCreate(kind);
+}
+
+function confirmConceptDraftCreate(kind) {
+  hideConceptDraftCreateConfirm();
+  const mode = $("#cptCreateMode");
+  const resolved = kind || (($("#cptCreateGo") && $("#cptCreateGo").getAttribute("data-kind")) || "create");
+  if (mode) mode.value = resolved === "chain" ? "chain" : "create";
+  const createBtn = resolved === "chain"
+    ? ($("#cptCreateNext") || $("#cptCreate"))
+    : $("#cptCreate");
+  if (createBtn) createBtn.click();
+}
+
+function requestConceptDraftLeave() {
+  const title = $("#cptTitle");
+  const dirty = title && String(title.value || "").trim();
+  const dlg = $("#cptLeaveConfirm");
+  if (dirty && dlg) {
+    dlg.hidden = false;
+    return;
+  }
+  resolveConceptDraft("annulé");
+}
+
+function resolveConceptDraft(kind) {
+  if (kind === "annulé") {
+    hideConceptDraftLeave();
+    const cancelBtn = $("#cptCancel");
+    if (cancelBtn) {
+      cancelBtn.click();
+      return;
+    }
+  }
+  resolveConceptDraftUi(kind);
+}
+
+function onConceptDraftAjax(data) {
+  if (data.status !== "success") return;
+  const result = $("#cptResult");
+  if (conceptDraftFlagOn(result, "data-dup")) {
+    return;
+  }
+  if (!conceptDraftFlagOn(result, "data-created")) {
+    const title = $("#cptTitle");
+    if (title && !String(title.value || "").trim()) setConceptDraftTitleError(true);
+    return;
+  }
+  const root = conceptDraftRoot();
+  const msg = root && root.getAttribute("data-created-msg");
+  if (msg && typeof toast === "function") toast(msg, { soft: true });
+  if (conceptDraftFlagOn(result, "data-chain")) {
+    const parentName = String(($("#cptParentLabel") && $("#cptParentLabel").value) || "").trim();
+    showConceptDraftPanel(parentName);
+    return;
+  }
+  const createdId = result && result.getAttribute("data-id");
+  resolveConceptDraftUi("créé");
+  if (createdId && typeof openLiveDetail === "function") {
+    openLiveDetail(createdId, "concept");
+  } else if (createdId && typeof openConcept === "function") {
+    openConcept(createdId);
+  }
+}
+window.onConceptDraftAjax = onConceptDraftAjax;
+
+function resolveConceptDraftUi(kind) {
+  hideConceptDraftLeave();
+  hideConceptDraftCreateConfirm();
+  state.conceptDraft = false;
+  paint();
+}
+if (typeof window !== "undefined") {
+  window.resolveConceptDraftUi = resolveConceptDraftUi;
+  window.syncConceptDraftPref = syncConceptDraftPref;
+  window.syncConceptDraftLocation = syncConceptDraftLocation;
+  window.createConceptDraft = createConceptDraft;
+  window.requestConceptDraftCreate = requestConceptDraftCreate;
+  window.confirmConceptDraftCreate = confirmConceptDraftCreate;
+  window.requestConceptDraftLeave = requestConceptDraftLeave;
+  window.resolveConceptDraft = resolveConceptDraft;
+  window.setConceptDraftMore = setConceptDraftMore;
+}
+
+function facetDraftRoot() {
+  return $("#viewFacetDraft");
+}
+
+function facetDraftFlagOn(el, attr) {
+  return !!(el && (el.getAttribute(attr) === "1" || el.getAttribute(attr) === "true"));
+}
+
+function setFacetDraftTitleError(on) {
+  const title = $("#fctTitle");
+  const err = $("#fctTitleErr");
+  if (title) title.classList.toggle("is-err", !!on);
+  if (err) err.hidden = !on;
+}
+
+function syncFacetDraftPref() {
+  setFacetDraftTitleError(false);
+}
+
+function setFacetDraftMore(open) {
+  const root = facetDraftRoot();
+  const more = $("#fctMore");
+  const toggle = $("#fctMoreToggle");
+  const label = $("#fctMoreLabel");
+  if (more) {
+    more.hidden = !open;
+    more.classList.toggle("is-off", !open);
+  }
+  if (toggle) {
+    toggle.classList.toggle("open", !!open);
+    toggle.setAttribute("aria-expanded", open ? "true" : "false");
+  }
+  if (label && root) {
+    label.textContent = root.getAttribute(open ? "data-more-hide" : "data-more") || label.textContent;
+  }
+}
+
+function facetDraftDirty() {
+  const text = ["fctTitle", "fctDef", "fctAlts"].some((id) => {
+    const el = $("#" + id);
+    return el && String(el.value || "").trim();
+  });
+  return text || fctTrState.order.length > 0 || fctNoteState.notes.length > 0 || fctMemState.items.length > 0;
+}
+
+function prepareFacetDraftForm() {
+  const root = facetDraftRoot();
+  if (!root) return;
+  ["fctTitle", "fctDef", "fctAlts"].forEach((id) => {
+    const el = $("#" + id);
+    if (el) el.value = "";
+  });
+  resetFacetDraftTr();
+  resetFacetDraftNotes();
+  resetFacetDraftMem();
+  setFacetDraftMore(false);
+  setFacetDraftTitleError(false);
+}
+
+var fctTrState = { order: [], values: {}, alts: {}, confirm: "" };
+var fctNoteState = { notes: [], openLang: -1 };
+var fctMemState = { items: [], hits: [], seq: 0, timer: null };
+
+function fctTrOpt(code) {
+  return $("#fctTrMenu") && $("#fctTrMenu").querySelector('.tree-lang-opt[data-lang="' + code + '"]');
+}
+
+function fctTrMeta(code) {
+  const opt = fctTrOpt(code);
+  return {
+    code: code,
+    flag: (opt && (opt.getAttribute("data-flag") || "").trim()) || "",
+    name: (opt && (opt.getAttribute("data-name") || "").trim()) || code
+  };
+}
+
+function closeFacetDraftTrLang() {
+  const btn = $("#fctTrBtn");
+  if (!btn || !btn.classList.contains("is-open")) return false;
+  btn.classList.remove("is-open");
+  btn.setAttribute("aria-expanded", "false");
+  return true;
+}
+
+function setFacetDraftTrLangOpen(open) {
+  const btn = $("#fctTrBtn");
+  if (!btn) return;
+  btn.classList.toggle("is-open", !!open);
+  btn.setAttribute("aria-expanded", open ? "true" : "false");
+}
+
+function syncFacetDraftTrHidden() {
+  const el = $("#fctTrPayload");
+  if (!el) return;
+  el.value = fctTrState.order.map((code) => {
+    return code + "\t" + String(fctTrState.values[code] || "").replace(/\r?\n/g, " ");
+  }).join("\n");
+}
+
+function resetFacetDraftTr() {
+  fctTrState = { order: [], values: {}, alts: {}, confirm: "" };
+  const el = $("#fctTrPayload");
+  if (el) el.value = "";
+  closeFacetDraftTrLang();
+  paintFacetDraftTr();
+}
+
+function addFacetDraftTr(code) {
+  if (!code || trLangAlready(fctTrState.order, code)) return;
+  fctTrState.order.push(code);
+  if (fctTrState.values[code] == null) fctTrState.values[code] = "";
+  fctTrState.confirm = "";
+  closeFacetDraftTrLang();
+  syncFacetDraftTrHidden();
+  paintFacetDraftTr();
+  requestAnimationFrame(() => {
+    const input = $("#fctTrVal-" + code);
+    if (input) input.focus();
+  });
+}
+
+function askRemoveFacetDraftTr(code) {
+  fctTrState.confirm = code || "";
+  paintFacetDraftTr();
+}
+
+function keepFacetDraftTr() {
+  fctTrState.confirm = "";
+  paintFacetDraftTr();
+}
+
+function removeFacetDraftTr(code) {
+  fctTrState.order = fctTrState.order.filter((item) => item !== code);
+  fctTrState.values[code] = "";
+  fctTrState.alts[code] = "";
+  fctTrState.confirm = "";
+  syncFacetDraftTrHidden();
+  paintFacetDraftTr();
+}
+
+function setFacetDraftTrValue(code, value) {
+  fctTrState.values[code] = value;
+  syncFacetDraftTrHidden();
+}
+
+function setFacetDraftTrAlt(code, value) {
+  fctTrState.alts[code] = value;
+}
+
+function paintFacetDraftTr() {
+  const list = $("#fctTrList");
+  const empty = $("#fctTrEmpty");
+  const editor = $("#fctTrEditor");
+  if (!list || !editor) return;
+  const ph = editor.getAttribute("data-ph") || "Nom en {0}…";
+  const altPh = editor.getAttribute("data-alt") || "";
+  const remove = editor.getAttribute("data-remove") || "";
+  const drop = editor.getAttribute("data-drop") || "";
+  const no = editor.getAttribute("data-no") || "Non";
+  const yes = editor.getAttribute("data-yes") || "Oui";
+  if (empty) empty.hidden = fctTrState.order.length > 0;
+  list.innerHTML = fctTrState.order.map((code) => {
+    const meta = fctTrMeta(code);
+    const placeholder = escapeHtml(ph.replace("{0}", String(meta.name || code).toLowerCase()));
+    const confirming = fctTrState.confirm === code;
+    const actions = confirming
+      ? '<span class="te-confirm">' + escapeHtml(drop)
+        + '<button type="button" class="bo-btn ghost sm" data-act="fct-tr-keep">' + escapeHtml(no) + "</button>"
+        + '<button type="button" class="bo-btn primary sm" data-act="fct-tr-drop" data-lang="' + code + '">' + escapeHtml(yes) + "</button>"
+        + "</span>"
+      : '<button type="button" class="re-x te-x" data-act="fct-tr-ask" data-lang="' + code
+        + '" title="' + escapeHtml(remove) + '" aria-label="' + escapeHtml(remove) + '">×</button>';
+    return '<div class="te-lang">'
+      + '<div class="te-head">'
+      + (meta.flag ? '<span class="tr-flag">' + meta.flag + "</span>" : "")
+      + '<span class="te-name">' + escapeHtml(meta.name) + "</span>"
+      + '<span class="te-code">' + escapeHtml(code) + "</span>"
+      + actions
+      + "</div>"
+      + '<input type="text" class="st-input" id="fctTrVal-' + code + '" lang="' + code + '" data-lang="' + code
+      + '" value="' + escapeHtml(fctTrState.values[code] || "") + '" placeholder="' + placeholder + '" autocomplete="off"/>'
+      + '<input type="text" class="st-input te-alt" lang="' + code + '" data-lang="' + code
+      + '" value="' + escapeHtml(fctTrState.alts[code] || "") + '" placeholder="' + escapeHtml(altPh) + '" autocomplete="off"/>'
+      + "</div>";
+  }).join("");
+  markUsedTrLangOpts("#fctTrMenu", fctTrState.order, editor.getAttribute("data-used") || "");
+  const pick = $("#fctTrPick");
+  if (pick) pick.hidden = $$("#fctTrMenu .tree-lang-opt").length === 0;
+}
+
+function fctNoteTypes() {
+  return $$("#fctNoteTypeOpts [data-code]").map((el) => ({
+    code: el.getAttribute("data-code") || "",
+    label: el.getAttribute("data-label") || el.getAttribute("data-code") || ""
+  })).filter((item) => item.code);
+}
+
+function fctNoteLangs() {
+  return $$("#fctNoteLangOpts [data-code]").map((el) => ({
+    code: el.getAttribute("data-code") || "",
+    name: el.getAttribute("data-name") || el.getAttribute("data-code") || "",
+    flag: el.getAttribute("data-flag") || ""
+  })).filter((item) => item.code);
+}
+
+function fctNoteUsedKeys(exceptIndex) {
+  const used = {};
+  fctNoteState.notes.forEach((note, index) => {
+    if (index === exceptIndex) return;
+    used[note.type + "\t" + note.lang] = true;
+  });
+  return used;
+}
+
+function firstFreeFacetDraftNote() {
+  const types = fctNoteTypes();
+  const langs = fctNoteLangs();
+  const used = fctNoteUsedKeys(-1);
+  const work = ($("#fctNoteEditor") && $("#fctNoteEditor").getAttribute("data-work-lang")) || (langs[0] && langs[0].code) || "fr";
+  const preferred = ["scopeNote", "example", "historyNote", "editorialNote", "changeNote"];
+  const ordered = preferred.filter((code) => types.some((type) => type.code === code))
+    .concat(types.map((type) => type.code).filter((code) => preferred.indexOf(code) < 0));
+  const tryLangs = [work].concat(langs.map((lang) => lang.code).filter((code) => code !== work));
+  for (let i = 0; i < ordered.length; i++) {
+    for (let j = 0; j < tryLangs.length; j++) {
+      if (!used[ordered[i] + "\t" + tryLangs[j]]) {
+        return { type: ordered[i], lang: tryLangs[j] };
+      }
+    }
+  }
+  return null;
+}
+
+function syncFacetDraftNotesHidden() {
+  const el = $("#fctNotesPayload");
+  if (!el) return;
+  el.value = fctNoteState.notes.map((note) => {
+    return [note.type || "", note.lang || "", encodeURIComponent(note.value || ""), encodeURIComponent(note.source || "")].join("\t");
+  }).join("\n");
+}
+
+function resetFacetDraftNotes() {
+  fctNoteState = { notes: [], openLang: -1 };
+  const el = $("#fctNotesPayload");
+  if (el) el.value = "";
+  paintFacetDraftNotes();
+}
+
+function addFacetDraftNote() {
+  const next = firstFreeFacetDraftNote();
+  if (!next) return;
+  fctNoteState.notes.push({ type: next.type, lang: next.lang, value: "", source: "" });
+  fctNoteState.openLang = -1;
+  syncFacetDraftNotesHidden();
+  paintFacetDraftNotes();
+  requestAnimationFrame(() => {
+    const input = $("#fctNoteVal-" + (fctNoteState.notes.length - 1));
+    if (input) input.focus();
+  });
+}
+
+function removeFacetDraftNote(index) {
+  fctNoteState.notes.splice(index, 1);
+  fctNoteState.openLang = -1;
+  syncFacetDraftNotesHidden();
+  paintFacetDraftNotes();
+}
+
+function setFacetDraftNoteField(index, field, value) {
+  const note = fctNoteState.notes[index];
+  if (!note) return;
+  note[field] = value;
+  syncFacetDraftNotesHidden();
+  if (field === "type") paintFacetDraftNotes();
+}
+
+function setFacetDraftNoteLang(index, lang) {
+  const note = fctNoteState.notes[index];
+  if (!note || !lang) return;
+  note.lang = lang;
+  fctNoteState.openLang = -1;
+  syncFacetDraftNotesHidden();
+  paintFacetDraftNotes();
+}
+
+function closeFacetDraftNoteLang() {
+  if (fctNoteState.openLang < 0) return false;
+  fctNoteState.openLang = -1;
+  paintFacetDraftNotes();
+  return true;
+}
+
+function setFacetDraftNoteLangOpen(index) {
+  fctNoteState.openLang = fctNoteState.openLang === index ? -1 : index;
+  paintFacetDraftNotes();
+}
+
+function paintFacetDraftNotes() {
+  const list = $("#fctNoteList");
+  const add = $("#fctNoteAdd");
+  const editor = $("#fctNoteEditor");
+  if (!list || !editor) return;
+  const empty = editor.getAttribute("data-empty") || "";
+  const remove = editor.getAttribute("data-remove") || "";
+  const textPh = editor.getAttribute("data-text-ph") || "";
+  const sourcePh = editor.getAttribute("data-source-ph") || "";
+  const types = fctNoteTypes();
+  const langs = fctNoteLangs();
+  if (!fctNoteState.notes.length) {
+    list.innerHTML = empty ? '<div class="re-none">' + escapeHtml(empty) + "</div>" : "";
+  } else {
+    list.innerHTML = fctNoteState.notes.map((note, index) => {
+      const used = fctNoteUsedKeys(index);
+      const typeOpts = types.filter((type) => type.code === note.type || !used[type.code + "\t" + note.lang])
+        .map((type) => '<option value="' + escapeHtml(type.code) + '"' + (type.code === note.type ? " selected" : "") + ">"
+          + escapeHtml(type.label) + "</option>").join("");
+      const lang = langs.find((item) => item.code === note.lang) || { code: note.lang, name: note.lang, flag: "" };
+      const open = fctNoteState.openLang === index;
+      const langOpts = langs.filter((item) => item.code === note.lang || !used[note.type + "\t" + item.code])
+        .map((item) => '<button type="button" class="tree-lang-opt' + (item.code === note.lang ? " is-on" : "")
+          + '" data-act="fct-note-lang" data-index="' + index + '" data-lang="' + escapeHtml(item.code) + '" role="option">'
+          + '<span class="tree-lang-opt-flag" aria-hidden="true">' + (item.flag || "") + "</span>"
+          + '<span class="tree-lang-opt-name">' + escapeHtml(item.name) + "</span>"
+          + '<span class="tree-lang-opt-code">' + escapeHtml(item.code) + "</span>"
+          + '<span class="tree-lang-opt-check" aria-hidden="true">✓</span></button>').join("");
+      return '<div class="note-edit-card">'
+        + '<div class="note-edit-head">'
+        + '<select class="st-input note-type-select" data-fct-note="type" data-index="' + index + '" aria-label="Type">'
+        + typeOpts + "</select>"
+        + '<div class="tp-lang-pick draft-note-lang fct-note-lang' + (open ? " is-open" : "") + '">'
+        + '<button type="button" class="tree-lang-btn tp-lang-btn draft-note-lang-btn' + (open ? " is-open" : "")
+        + '" data-act="fct-note-lang-toggle" data-index="' + index + '" aria-haspopup="listbox" aria-expanded="' + (open ? "true" : "false") + '">'
+        + '<span class="tree-lang-flag" aria-hidden="true">' + (lang.flag || "🏳️") + "</span>"
+        + '<span class="tree-lang-name">' + escapeHtml(lang.name) + "</span>"
+        + '<span class="tree-lang-code">' + escapeHtml(lang.code) + "</span>"
+        + '<span class="tree-lang-caret" aria-hidden="true">▾</span></button>'
+        + (open ? '<div class="tree-lang-menu tp-lang-menu" role="listbox">' + langOpts + "</div>" : "")
+        + "</div>"
+        + '<button type="button" class="note-edit-remove" data-act="fct-note-remove" data-index="' + index
+        + '" title="' + escapeHtml(remove) + '" aria-label="' + escapeHtml(remove) + '">×</button>'
+        + "</div>"
+        + '<textarea class="st-input note-edit-value disc-input" id="fctNoteVal-' + index + '" data-fct-note="value" data-index="' + index
+        + '" rows="3" placeholder="' + escapeHtml(textPh) + '">' + escapeHtml(note.value || "") + "</textarea>"
+        + '<input type="text" class="st-input draft-note-source" data-fct-note="source" data-index="' + index
+        + '" value="' + escapeHtml(note.source || "") + '" placeholder="' + escapeHtml(sourcePh) + '" autocomplete="off"/>'
+        + "</div>";
+    }).join("");
+  }
+  if (add) add.hidden = !firstFreeFacetDraftNote();
+}
+
+function syncFacetDraftMemHidden() {
+  const el = $("#fctMembersPayload");
+  if (!el) return;
+  el.value = fctMemState.items.map((item) => (item.id || "") + "\t" + (item.label || "")).join("\n");
+}
+
+function resetFacetDraftMem() {
+  fctMemState = { items: [], hits: [], seq: 0, timer: null };
+  const el = $("#fctMembersPayload");
+  if (el) el.value = "";
+  const q = $("#fctMemQ");
+  if (q) q.value = "";
+  hideFacetDraftMemDrop();
+  paintFacetDraftMem();
+}
+
+function hideFacetDraftMemDrop() {
+  const drop = $("#fctMemDrop");
+  const empty = $("#fctMemEmpty");
+  if (drop) {
+    drop.hidden = true;
+    drop.innerHTML = "";
+  }
+  if (empty) empty.hidden = true;
+}
+
+function setFacetDraftMemMsg(text) {
+  const el = $("#fctMemMsg");
+  if (!el) return;
+  el.textContent = text || "";
+  el.hidden = !text;
+}
+
+function facetDraftMemAlready(id, label) {
+  return fctMemState.items.some((item) => item.id === id || (label && item.label === label));
+}
+
+function addFacetDraftMem(id, label) {
+  const editor = $("#fctMemEditor");
+  if (!id) return;
+  if (facetDraftMemAlready(id, label)) {
+    setFacetDraftMemMsg((editor && editor.getAttribute("data-exists")) || "");
+    return;
+  }
+  fctMemState.items.push({ id: id, label: label || id });
+  const q = $("#fctMemQ");
+  if (q) q.value = "";
+  fctMemState.hits = [];
+  hideFacetDraftMemDrop();
+  setFacetDraftMemMsg("");
+  syncFacetDraftMemHidden();
+  paintFacetDraftMem();
+}
+
+function removeFacetDraftMem(index) {
+  fctMemState.items.splice(Number(index), 1);
+  syncFacetDraftMemHidden();
+  paintFacetDraftMem();
+}
+
+function paintFacetDraftMem() {
+  const rows = $("#fctMemRows");
+  const editor = $("#fctMemEditor");
+  if (!rows || !editor) return;
+  const remove = editor.getAttribute("data-remove") || "";
+  rows.innerHTML = fctMemState.items.map((item, index) => (
+    '<div class="re-row">'
+    + '<span class="re-lbl">' + escapeHtml(item.label || item.id) + "</span>"
+    + '<button type="button" class="re-x" data-act="fct-mem-remove" data-index="' + index
+    + '" title="' + escapeHtml(remove) + '" aria-label="' + escapeHtml(remove) + '">×</button>'
+    + "</div>"
+  )).join("");
+}
+
+function searchFacetDraftMem(q) {
+  const seq = ++fctMemState.seq;
+  const ctx = document.body.getAttribute("data-ctx") || "";
+  const params = new URLSearchParams({
+    thesaurusId: thesaurusId() || "",
+    lang: thesaurusLang(),
+    q: q
+  });
+  fetch(ctx + "/v2/api/concepts/search?" + params.toString(), {
+    headers: { Accept: "application/json" }
+  }).then((res) => {
+    if (!res.ok) throw new Error("http");
+    return res.json();
+  }).then((items) => {
+    if (seq !== fctMemState.seq) return;
+    fctMemState.hits = (Array.isArray(items) ? items : []).filter((item) => {
+      const id = item && item.id ? String(item.id) : "";
+      const label = item && item.label ? String(item.label) : "";
+      return id && !facetDraftMemAlready(id, label);
+    }).slice(0, 6);
+    paintFacetDraftMemHits(q);
+  }).catch(() => {
+    if (seq !== fctMemState.seq) return;
+    fctMemState.hits = [];
+    paintFacetDraftMemHits(q);
+  });
+}
+
+function paintFacetDraftMemHits(q) {
+  const drop = $("#fctMemDrop");
+  const empty = $("#fctMemEmpty");
+  if (!drop) return;
+  if (fctMemState.hits.length) {
+    drop.hidden = false;
+    if (empty) empty.hidden = true;
+    drop.innerHTML = fctMemState.hits.map((hit) => (
+      '<button type="button" class="re-hit" data-act="fct-mem-hit" data-id="'
+      + escapeHtml(hit.id || "") + '" data-label="' + escapeHtml(hit.label || hit.id || "") + '">'
+      + '<span class="re-hit-l">' + escapeHtml(hit.label || hit.id || "") + "</span>"
+      + "</button>"
+    )).join("");
+    return;
+  }
+  drop.hidden = true;
+  drop.innerHTML = "";
+  if (empty) empty.hidden = String(q || "").trim().length < 2;
+}
+
+function scheduleFacetDraftMemSearch() {
+  const q = ($("#fctMemQ") && $("#fctMemQ").value.trim()) || "";
+  setFacetDraftMemMsg("");
+  if (fctMemState.timer) clearTimeout(fctMemState.timer);
+  if (q.length < 2) {
+    fctMemState.seq += 1;
+    fctMemState.hits = [];
+    hideFacetDraftMemDrop();
+    return;
+  }
+  fctMemState.timer = setTimeout(() => searchFacetDraftMem(q), 220);
+}
+
+function showFacetDraftPanel() {
+  state.home = false;
+  state.draft = false;
+  state.conceptDraft = false;
+  state.facetDraft = true;
+  state.conceptId = null;
+  if (state.view !== "arbo" && state.view !== "tableau" && state.view !== "recherche") {
+    state.view = "arbo";
+  }
+  prepareFacetDraftForm();
+  highlightConcept(null);
+  closeSearchUi();
+  showPanel(".view-panel", "viewFacetDraft");
+  requestAnimationFrame(() => { const t = $("#fctTitle"); if (t) t.focus(); });
+}
+
+function createFacetDraft(src) {
+  const parentName = ((src && src.getAttribute("data-pref")) || "").trim();
+  const parentId = ((src && src.getAttribute("data-id")) || "").trim();
+  if (!parentId) return;
+  if (!$("#viewFacetDraft")) {
+    const q = new URLSearchParams({ create: "facet" });
+    if (parentName) q.set("pref", parentName);
+    q.set("idc", parentId);
+    go("index.xhtml?" + q.toString());
+    return;
+  }
+  const idEl = $("#fctParentId");
+  const labEl = $("#fctParentLabel");
+  if (idEl) idEl.value = parentId;
+  if (labEl) labEl.value = parentName;
+  const go = $("#fctPrepare");
+  if (go) {
+    go.click();
+    return;
+  }
+  showFacetDraftPanel();
+}
+
+function onFacetDraftPrepare(data) {
+  if (data.status !== "success") return;
+  showFacetDraftPanel();
+}
+window.onFacetDraftPrepare = onFacetDraftPrepare;
+
+function hideFacetDraftCreateConfirm() {
+  const dlg = $("#fctCreateConfirm");
+  if (dlg) dlg.hidden = true;
+}
+
+function hideFacetDraftLeave() {
+  const dlg = $("#fctLeaveConfirm");
+  if (dlg) dlg.hidden = true;
+}
+
+function requestFacetDraftCreate() {
+  const title = $("#fctTitle");
+  if (!title || !String(title.value || "").trim()) {
+    setFacetDraftTitleError(true);
+    if (title) title.focus();
+    return;
+  }
+  setFacetDraftTitleError(false);
+  const root = facetDraftRoot();
+  const dlg = $("#fctCreateConfirm");
+  const text = $("#fctCreateText");
+  const go = $("#fctCreateGo");
+  if (dlg && root) {
+    const name = String(title.value || "").trim();
+    const tpl = root.getAttribute("data-confirm-create") || "";
+    if (text) text.textContent = tpl.replace("{0}", name);
+    if (go) go.textContent = root.getAttribute("data-confirm-go") || go.textContent;
+    dlg.hidden = false;
+    return;
+  }
+  confirmFacetDraftCreate();
+}
+
+function confirmFacetDraftCreate() {
+  hideFacetDraftCreateConfirm();
+  const createBtn = $("#fctCreate");
+  if (createBtn) createBtn.click();
+}
+
+function requestFacetDraftLeave() {
+  const dlg = $("#fctLeaveConfirm");
+  if (facetDraftDirty() && dlg) {
+    dlg.hidden = false;
+    return;
+  }
+  resolveFacetDraft("annulé");
+}
+
+function resolveFacetDraft(kind) {
+  if (kind === "annulé") {
+    hideFacetDraftLeave();
+    const cancelBtn = $("#fctCancel");
+    if (cancelBtn) {
+      cancelBtn.click();
+      return;
+    }
+  }
+  resolveFacetDraftUi(kind);
+}
+
+function onFacetDraftAjax(data) {
+  if (data.status !== "success") return;
+  const result = $("#fctResult");
+  if (!facetDraftFlagOn(result, "data-created")) {
+    const title = $("#fctTitle");
+    if (title && !String(title.value || "").trim()) setFacetDraftTitleError(true);
+    return;
+  }
+  const root = facetDraftRoot();
+  const msg = root && root.getAttribute("data-created-msg");
+  if (msg && typeof toast === "function") toast(msg, { soft: true });
+  const createdId = result && result.getAttribute("data-id");
+  resolveFacetDraftUi("créé");
+  if (createdId && typeof openLiveDetail === "function") {
+    openLiveDetail(createdId, "facet");
+  }
+}
+window.onFacetDraftAjax = onFacetDraftAjax;
+
+function resolveFacetDraftUi(kind) {
+  hideFacetDraftLeave();
+  hideFacetDraftCreateConfirm();
+  state.facetDraft = false;
+  paint();
+}
+if (typeof window !== "undefined") {
+  window.resolveFacetDraftUi = resolveFacetDraftUi;
+  window.syncFacetDraftPref = syncFacetDraftPref;
+  window.setFacetDraftMore = setFacetDraftMore;
+  window.setFacetDraftTrValue = setFacetDraftTrValue;
+  window.setFacetDraftTrAlt = setFacetDraftTrAlt;
+  window.setFacetDraftNoteField = setFacetDraftNoteField;
+  window.askRemoveFacetDraftTr = askRemoveFacetDraftTr;
+  window.keepFacetDraftTr = keepFacetDraftTr;
+  window.removeFacetDraftTr = removeFacetDraftTr;
+  window.setFacetDraftTrLangOpen = setFacetDraftTrLangOpen;
+  window.addFacetDraftTr = addFacetDraftTr;
+  window.closeFacetDraftTrLang = closeFacetDraftTrLang;
+  window.addFacetDraftNote = addFacetDraftNote;
+  window.removeFacetDraftNote = removeFacetDraftNote;
+  window.setFacetDraftNoteLangOpen = setFacetDraftNoteLangOpen;
+  window.setFacetDraftNoteLang = setFacetDraftNoteLang;
+  window.closeFacetDraftNoteLang = closeFacetDraftNoteLang;
+  window.addFacetDraftMem = addFacetDraftMem;
+  window.removeFacetDraftMem = removeFacetDraftMem;
+  window.hideFacetDraftMemDrop = hideFacetDraftMemDrop;
+  window.scheduleFacetDraftMemSearch = scheduleFacetDraftMemSearch;
+  window.createFacetDraft = createFacetDraft;
+  window.requestFacetDraftCreate = requestFacetDraftCreate;
+  window.confirmFacetDraftCreate = confirmFacetDraftCreate;
+  window.requestFacetDraftLeave = requestFacetDraftLeave;
+  window.resolveFacetDraft = resolveFacetDraft;
 }
 
 function showHomePanel(panel) {

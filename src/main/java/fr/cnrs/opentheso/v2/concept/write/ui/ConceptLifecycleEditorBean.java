@@ -81,6 +81,13 @@ public class ConceptLifecycleEditorBean implements Serializable {
     private List<ConceptWriteCollection> availableCollections = Collections.emptyList();
     private List<ConceptWriteNtRelationType> ntRelationTypes = Collections.emptyList();
     private boolean addAsTopConcept;
+    private String createParentId = "";
+    private String createParentLabel = "";
+    private String createMode = "create";
+    private String definition = "";
+    private boolean created;
+    private boolean chainNext;
+    private boolean creationMetadataLoaded;
 
     public boolean isWriteActionsAvailable() {
         return conceptWritePolicy.canMutateConcept(userSession);
@@ -96,6 +103,16 @@ public class ConceptLifecycleEditorBean implements Serializable {
 
     public boolean isStatusActionsAvailable() {
         return conceptWritePolicy.canMutateConceptStatus(userSession);
+    }
+
+    public List<ConceptWriteCollection> getAvailableCollections() {
+        ensureCreationFormMetadata();
+        return availableCollections;
+    }
+
+    public List<ConceptWriteNtRelationType> getNtRelationTypes() {
+        ensureCreationFormMetadata();
+        return ntRelationTypes;
     }
 
     public List<ConceptSearchSuggestion> autocompleteReplacedByTarget(String query) {
@@ -318,6 +335,53 @@ public class ConceptLifecycleEditorBean implements Serializable {
         loadCreationFormMetadata();
     }
 
+    public void prepareConceptDraft() {
+        addAsTopConcept = StringUtils.isBlank(createParentId);
+        beginCreateSession();
+        currentPreferredLabel = StringUtils.defaultString(createParentLabel);
+        loadCreationFormMetadata();
+    }
+
+    public void cancelConceptDraft() {
+        finishCreateAfterClose();
+        createParentId = "";
+        createParentLabel = "";
+        definition = "";
+        created = false;
+        chainNext = false;
+        createMode = "create";
+    }
+
+    public void createConceptDraft() {
+        persistConceptDraft("chain".equalsIgnoreCase(StringUtils.trimToEmpty(createMode)), false);
+    }
+
+    public void createConceptDraftAndContinue() {
+        createMode = "chain";
+        persistConceptDraft(true, false);
+    }
+
+    public void createConceptDraftForced() {
+        persistConceptDraft("chain".equalsIgnoreCase(StringUtils.trimToEmpty(createMode)), true);
+    }
+
+    private void persistConceptDraft(boolean chain, boolean forced) {
+        created = false;
+        chainNext = chain;
+        addAsTopConcept = StringUtils.isBlank(createParentId);
+        if (addAsTopConcept) {
+            submitAddTopConceptInternal(forced);
+        } else {
+            submitAddChildInternal(forced);
+        }
+        created = isCreateDirty() && StringUtils.isNotBlank(lastCreatedId) && !duplicateLabelWarning;
+        if (!created) {
+            chainNext = false;
+            return;
+        }
+        conceptNavigationSupport.invalidateConceptTree();
+    }
+
     private void beginCreateSession() {
         resetNewConceptForm();
         createdCount = 0;
@@ -327,10 +391,16 @@ public class ConceptLifecycleEditorBean implements Serializable {
         createRun.reset();
     }
 
+    private void ensureCreationFormMetadata() {
+        if (creationMetadataLoaded) {
+            return;
+        }
+        loadCreationFormMetadata();
+    }
+
     private void loadCreationFormMetadata() {
         String thesaurusId = thesaurusContext.resolveThesaurusId();
         String lang = thesaurusContext.resolveWorkLanguage();
-        availableCollections = Collections.emptyList();
         availableCollections = conceptWriteMetadataService.listCollections(thesaurusId, lang);
         ntRelationTypes = conceptWriteMetadataService.listNtRelationTypes();
         if (StringUtils.isBlank(selectedGroupId)) {
@@ -339,6 +409,7 @@ public class ConceptLifecycleEditorBean implements Serializable {
         if (StringUtils.isBlank(selectedNarrowerRelationType)) {
             selectedNarrowerRelationType = "NT";
         }
+        creationMetadataLoaded = true;
     }
 
     public void submitAddTopConcept() {
@@ -435,6 +506,11 @@ public class ConceptLifecycleEditorBean implements Serializable {
         lastCreatedLabel = "";
         createdLabels = new ArrayList<>();
         addAsTopConcept = false;
+        created = false;
+        chainNext = false;
+        createMode = "create";
+        definition = "";
+        creationMetadataLoaded = false;
     }
 
     private void submitRenameInternal(boolean forced) {
@@ -473,10 +549,30 @@ public class ConceptLifecycleEditorBean implements Serializable {
         }
     }
 
+    private String resolveCreateParentId() {
+        if (StringUtils.isNotBlank(createParentId)) {
+            return createParentId.trim();
+        }
+        if (conceptSelectionContext.hasSelection()) {
+            return conceptSelectionContext.getSummary().conceptId();
+        }
+        return "";
+    }
+
     private void submitAddChildInternal(boolean forced) {
         createRun.setErrorMessage(null);
         createRun.clearFlash();
-        if (!isActiveConceptWriteAvailable() || !conceptSelectionContext.hasSelection()) {
+        String parentId = resolveCreateParentId();
+        if (StringUtils.isBlank(parentId)) {
+            createRun.setErrorMessage(unauthorized());
+            return;
+        }
+        if (StringUtils.isNotBlank(createParentId)) {
+            if (!isWriteActionsAvailable()) {
+                createRun.setErrorMessage(unauthorized());
+                return;
+            }
+        } else if (!isActiveConceptWriteAvailable() || !conceptSelectionContext.hasSelection()) {
             createRun.setErrorMessage(unauthorized());
             return;
         }
@@ -489,10 +585,9 @@ public class ConceptLifecycleEditorBean implements Serializable {
             createRun.setErrorMessage(msg("v2.concept.addLabelRequired", "Le libellé est obligatoire"));
             return;
         }
-        var summary = conceptSelectionContext.getSummary();
         var command = new AddChildConceptCommand(
                 thesaurusContext.resolveThesaurusId(),
-                summary.conceptId(),
+                parentId,
                 thesaurusContext.resolveWorkLanguage(),
                 userId,
                 StringUtils.defaultString(userSession.getCurrentUsername()),
@@ -649,6 +744,7 @@ public class ConceptLifecycleEditorBean implements Serializable {
         notation = "";
         customConceptId = "";
         source = "";
+        definition = "";
         selectedGroupId = conceptSelectionContext.getDefaultGroupId();
         selectedNarrowerRelationType = "NT";
     }

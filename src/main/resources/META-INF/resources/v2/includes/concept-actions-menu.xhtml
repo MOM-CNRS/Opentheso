@@ -16,20 +16,24 @@
     <div class="th-create-menu cv-ctx-menu" role="menu"
          aria-label="#{v2LocaleBean.getMsg('rightbody.concept.global_actions')}">
 
-      <ui:fragment rendered="#{v2ConceptLifecycleEditorBean.activeConceptWriteAvailable
-          or v2FacetDetailEditorBean.managerActionsAvailable}">
-        <div class="th-create-menu-h">#{v2LocaleBean.getMsg('v2.home.create')}</div>
-        <h:commandLink styleClass="th-create-item" role="menuitem"
-                       rendered="#{v2ConceptLifecycleEditorBean.activeConceptWriteAvailable}"
-                       action="#{v2ConceptFicheMenuBean.prepareAddChild}"
-                       pt:data-create="concept"
-                       title="#{v2LocaleBean.getMsg('rightbody.concept.tooltip_new_concept')} #{v2ThesaurusViewBean.selectedConcept.summary.preferredLabel}">
-          <ui:include src="/v2/includes/cv-menu-ajax.xhtml"/>
+      <ui:fragment rendered="#{v2ThesaurusViewBean.suggestionEnabled
+          and v2ThesaurusViewBean.conceptSelected
+          and not v2ThesaurusViewBean.candidateSelected}">
+        <div class="th-create-menu-h">#{v2LocaleBean.getMsg('v2.proposition.submit.title')}</div>
+        <h:commandLink id="propSuggestCta" styleClass="th-create-item" role="menuitem"
+                       action="#{v2PropositionSubmitBean.open}"
+                       title="#{v2LocaleBean.getMsg('v2.proposition.cta.hint')}">
+          <f:ajax execute="@this" render=":previewDetailForm:previewDetail"/>
           <span class="th-create-ico" aria-hidden="true">
-            <svg viewBox="0 0 24 24"><path d="M4 20V8l8-4 8 4v12"/><path d="M4 8h16"/><path d="M12 4v16"/><path d="M9 12h6"/></svg>
+            <svg viewBox="0 0 24 24"><path d="M12 20h9"/><path d="M16.5 3.5a2.12 2.12 0 0 1 3 3L7 19l-4 1 1-4Z"/></svg>
           </span>
-          <span class="th-create-name">#{v2LocaleBean.getMsg('rightbody.concept.new_concept')}</span>
+          <span class="th-create-name">#{v2LocaleBean.getMsg('v2.proposition.cta.menu')}</span>
         </h:commandLink>
+      </ui:fragment>
+
+      <ui:fragment rendered="#{v2ConceptAttributeEditorBean.conceptTypeEditAvailable
+          or v2ConceptTypeManagerBean.manageAvailable}">
+        <div class="th-create-menu-h">#{v2LocaleBean.getMsg('v2.home.create')}</div>
         <h:commandLink styleClass="th-create-item" role="menuitem"
                        rendered="#{v2ConceptAttributeEditorBean.conceptTypeEditAvailable}"
                        action="#{v2ConceptFicheMenuBean.prepareEditConceptType}"
@@ -49,17 +53,6 @@
             <svg viewBox="0 0 24 24"><path d="M4 7h16v10H4z"/><path d="M8 7V5h8v2"/></svg>
           </span>
           <span class="th-create-name">#{v2LocaleBean.getMsg('concept.manageConceptType')}</span>
-        </h:commandLink>
-        <h:commandLink styleClass="th-create-item" role="menuitem"
-                       rendered="#{v2FacetDetailEditorBean.managerActionsAvailable}"
-                       action="#{v2ConceptFicheMenuBean.prepareCreateFacet}"
-                       pt:data-create="facet"
-                       title="#{v2LocaleBean.getMsg('rightbody.concept.tooltip_new_facet')} #{v2ThesaurusViewBean.selectedConcept.summary.preferredLabel}">
-          <ui:include src="/v2/includes/cv-menu-ajax.xhtml"/>
-          <span class="th-create-ico" aria-hidden="true">
-            <svg viewBox="0 0 24 24"><path d="M4 4h7v7H4z"/><path d="M13 4h7v7h-7z"/><path d="M4 13h7v7H4z"/><path d="M16.5 13v7"/><path d="M13 16.5h7"/></svg>
-          </span>
-          <span class="th-create-name">#{v2LocaleBean.getMsg('rightbody.concept.new_facet')}</span>
         </h:commandLink>
       </ui:fragment>
 

@@ -184,6 +184,59 @@ class ConceptLifecycleEditorBeanCreateTest {
     }
 
     @Test
+    void prepareDraft_withParent_createsChild() {
+        bean.setCreateParentId("C1");
+        bean.setCreateParentLabel("France");
+        bean.prepareConceptDraft();
+
+        assertFalse(bean.isAddAsTopConcept());
+        assertEquals("France", bean.getCurrentPreferredLabel());
+        assertEquals("C1", bean.getCreateParentId());
+    }
+
+    @Test
+    void prepareDraft_withoutParent_createsTop() {
+        bean.prepareConceptDraft();
+
+        assertTrue(bean.isAddAsTopConcept());
+        assertEquals("", bean.getCurrentPreferredLabel());
+    }
+
+    @Test
+    void submitDraft_usesExplicitParent() {
+        bean.setCreateParentId("C1");
+        bean.setCreateParentLabel("France");
+        bean.prepareConceptDraft();
+        bean.setPreferredLabel("Alsace");
+        when(conceptLifecycleMutationService.addChildConcept(any()))
+                .thenReturn(MutationResult.ok("Le concept a bien été ajouté", "C2"));
+
+        bean.createConceptDraft();
+
+        assertTrue(bean.isCreated());
+        assertEquals("C2", bean.getLastCreatedId());
+        assertFalse(bean.isChainNext());
+        verify(conceptLifecycleMutationService).addChildConcept(any());
+        verify(conceptNavigationSupport).invalidateConceptTree();
+    }
+
+    @Test
+    void submitDraftChain_keepsParent() {
+        bean.setCreateParentId("C1");
+        bean.setCreateParentLabel("France");
+        bean.prepareConceptDraft();
+        bean.setPreferredLabel("Alsace");
+        when(conceptLifecycleMutationService.addChildConcept(any()))
+                .thenReturn(MutationResult.ok("Le concept a bien été ajouté", "C2"));
+
+        bean.createConceptDraftAndContinue();
+
+        assertTrue(bean.isCreated());
+        assertTrue(bean.isChainNext());
+        assertEquals("C1", bean.getCreateParentId());
+    }
+
+    @Test
     void submitTop_createsAndKeepsDialog() {
         bean.prepareAddTopConcept();
         bean.setPreferredLabel("Europe");

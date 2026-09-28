@@ -595,6 +595,46 @@ class ThesaurusViewBeanTest {
         assertEquals(2, bean.getPreferredTranslations().size());
         assertEquals("Bronze metal", bean.altTranslationsLabel("en"));
         assertEquals("", bean.altTranslationsLabel("de"));
+
+        var items = bean.getTranslationViewItems();
+        assertEquals(2, items.size());
+        assertEquals("en", items.get(0).getLang());
+        assertEquals("Bronze metal", items.get(0).getAlts());
+        assertFalse(items.get(0).isTodo());
+        assertEquals("de", items.get(1).getLang());
+        assertFalse(items.get(1).isTodo());
+    }
+
+    @Test
+    void translationViewItems_skipWorkLanguageAndMarkBlankAsTodo() {
+        ConceptDetail detail = new ConceptDetail(
+                new ConceptSummary("c1", "th17", "Bronze", "fr", "C", "", "concept", "", "", "", ""),
+                Collections.emptyList(),
+                Collections.emptyList(),
+                Collections.emptyList(),
+                Collections.emptyList(),
+                Collections.emptyList(),
+                Collections.emptyList(),
+                List.of(
+                        new ConceptLabel("fr", "Bronze", true, false),
+                        new ConceptLabel("en", "", true, false)
+                ),
+                Collections.emptyList(),
+                Collections.emptyList(),
+                Collections.emptyList(),
+                Collections.emptyList(),
+                Collections.emptyList(),
+                Collections.emptyList()
+        );
+        ReflectionTestUtils.setField(bean, "selectedConcept", detail);
+        ReflectionTestUtils.setField(bean, "selectedLang", "fr");
+
+        var items = bean.getTranslationViewItems();
+        assertEquals(1, items.size());
+        assertEquals("en", items.get(0).getLang());
+        assertTrue(items.get(0).isTodo());
+        assertEquals("rtl", bean.textDirection("ar"));
+        assertEquals("ltr", bean.textDirection("en"));
     }
 
     @Test

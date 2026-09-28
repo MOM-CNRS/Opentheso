@@ -78,47 +78,22 @@ class ConceptResourceBlockEditorBeanTest {
     }
 
     @Test
-    void startEditingLinks_copiesOnlyResources() {
+    void startEditing_copiesAllSections() {
         when(thesaurusViewBean.getSelectedConcept()).thenReturn(fullDetail());
 
-        bean.startEditingLinks();
+        bean.startEditing();
 
+        assertTrue(bean.isEditing());
         assertTrue(bean.isEditingLinks());
-        assertFalse(bean.isEditingImages());
-        assertFalse(bean.isEditingGps());
+        assertTrue(bean.isEditingImages());
+        assertTrue(bean.isEditingGps());
         assertEquals(1, bean.getResourceRows().size());
         assertEquals("https://example.org/a", bean.getResourceRows().get(0).getUri());
-        assertTrue(bean.getImageRows().isEmpty());
-        assertTrue(bean.getGpsRows().isEmpty());
-        assertEquals("v2.concept.resource.links.confirmTitle", bean.getConfirmTitleKey());
-        verify(conceptSelectionContext).update("TH1", thesaurusViewBean.getSelectedConcept());
-    }
-
-    @Test
-    void startEditingImages_copiesOnlyImages() {
-        when(thesaurusViewBean.getSelectedConcept()).thenReturn(fullDetail());
-
-        bean.startEditingImages();
-
-        assertTrue(bean.isEditingImages());
         assertEquals(1, bean.getImageRows().size());
         assertEquals(4, bean.getImageRows().get(0).getId());
-        assertTrue(bean.getResourceRows().isEmpty());
-        assertTrue(bean.getGpsRows().isEmpty());
-        assertEquals("v2.concept.resource.images.confirm", bean.getConfirmMessageKey());
-    }
-
-    @Test
-    void startEditingGps_copiesOnlyCoordinates() {
-        when(thesaurusViewBean.getSelectedConcept()).thenReturn(fullDetail());
-
-        bean.startEditingGps();
-
-        assertTrue(bean.isEditingGps());
         assertEquals(1, bean.getGpsRows().size());
         assertEquals("48.85", bean.getGpsRows().get(0).getLatitude());
-        assertTrue(bean.getResourceRows().isEmpty());
-        assertTrue(bean.getImageRows().isEmpty());
+        verify(conceptSelectionContext).update("TH1", thesaurusViewBean.getSelectedConcept());
     }
 
     @Test
@@ -184,7 +159,7 @@ class ConceptResourceBlockEditorBeanTest {
         verify(conceptMediaMutationService, never()).replaceGpsCoordinates(any());
         verify(conceptMediaMutationService, never()).addImage(any());
         assertFalse(bean.isEditing());
-        assertEquals("Liens enregistrés", bean.getFlashMessage());
+        assertEquals("Ressources enregistrées", bean.getFlashMessage());
         verify(thesaurusViewBean).reloadSelectedConcept();
     }
 
@@ -225,7 +200,7 @@ class ConceptResourceBlockEditorBeanTest {
 
         verify(conceptMediaMutationService, never()).replaceGpsCoordinates(any());
         verify(conceptMediaMutationService, never()).addExternalResource(any());
-        assertEquals("Images enregistrées", bean.getFlashMessage());
+        assertEquals("Ressources enregistrées", bean.getFlashMessage());
     }
 
     @Test
@@ -248,7 +223,21 @@ class ConceptResourceBlockEditorBeanTest {
         assertEquals("(48.9 2.4)", gps.getValue().coordinatesText());
         verify(conceptMediaMutationService, never()).addImage(any());
         verify(conceptMediaMutationService, never()).addExternalResource(any());
-        assertEquals("Coordonnées GPS enregistrées", bean.getFlashMessage());
+        assertEquals("Ressources enregistrées", bean.getFlashMessage());
+    }
+
+    @Test
+    void save_keepsSeveralGpsPoints() {
+        when(thesaurusViewBean.getSelectedConcept()).thenReturn(detail(List.of(), List.of(), List.of()));
+        when(conceptMediaMutationService.replaceGpsCoordinates(any())).thenReturn(MutationResult.ok("ok"));
+
+        bean.startEditing();
+        bean.setGpsPayload("48.85\t2.35\n48.9\t2.4");
+        bean.save();
+
+        ArgumentCaptor<ReplaceGpsCoordinatesCommand> gps = ArgumentCaptor.forClass(ReplaceGpsCoordinatesCommand.class);
+        verify(conceptMediaMutationService).replaceGpsCoordinates(gps.capture());
+        assertEquals("(48.85 2.35, 48.9 2.4)", gps.getValue().coordinatesText());
     }
 
     @Test
@@ -301,6 +290,45 @@ class ConceptResourceBlockEditorBeanTest {
         assertEquals("L'URL n'est pas valide !", bean.getErrorMessage());
         verify(conceptMediaMutationService, never()).addExternalResource(any());
         assertTrue(bean.isEditing());
+    }
+
+    @Test
+    void save_appliesPayloads() {
+        when(thesaurusViewBean.getSelectedConcept()).thenReturn(detail(List.of(), List.of(), List.of()));
+        when(conceptMediaMutationService.addExternalResource(any())).thenReturn(MutationResult.ok("ok"));
+
+        bean.startEditing();
+        bean.setLinksPayload("\thttps://example.org/p\tPortail");
+        bean.setImagesPayload("\t\t\t\t");
+        bean.setGpsPayload("\t");
+        bean.save();
+
+        ArgumentCaptor<AddExternalResourceCommand> added = ArgumentCaptor.forClass(AddExternalResourceCommand.class);
+        verify(conceptMediaMutationService).addExternalResource(added.capture());
+        assertEquals("https://example.org/p", added.getValue().uri());
+        assertEquals("Portail", added.getValue().description());
+        verify(conceptMediaMutationService, never()).addImage(any());
+        verify(conceptMediaMutationService, never()).replaceGpsCoordinates(any());
+        assertFalse(bean.isEditing());
+    }
+
+    @Test
+    void save_clearsLinksWhenJsSendsEmptySentinel() {
+        when(thesaurusViewBean.getSelectedConcept()).thenReturn(detail(
+                List.of(new ConceptExternalResourceItem("https://example.org/old", "Ancien")),
+                List.of(),
+                List.of()
+        ));
+        when(conceptMediaMutationService.deleteExternalResource(any())).thenReturn(MutationResult.ok("ok"));
+
+        bean.startEditing();
+        bean.setLinksPayload("__none__");
+        bean.setImagesPayload("__none__");
+        bean.setGpsPayload("__none__");
+        bean.save();
+
+        verify(conceptMediaMutationService).deleteExternalResource(any());
+        assertFalse(bean.isEditing());
     }
 
     private ConceptDetail fullDetail() {

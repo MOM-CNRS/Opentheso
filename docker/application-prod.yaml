@@ -7,6 +7,10 @@ server:
   max-http-header-size: 256KB
   forward-headers-strategy: native
   servlet:
+    encoding:
+      charset: UTF-8
+      enabled: true
+      force: true
     context-path: /
     session:
       timeout: 120m

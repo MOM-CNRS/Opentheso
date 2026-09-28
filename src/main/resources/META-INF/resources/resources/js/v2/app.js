@@ -282,6 +282,13 @@ document.addEventListener("keydown", (e) => {
     }
     return;
   }
+  if (e.key === "Enter" && e.target && e.target.id === "fctMemQ") {
+    e.preventDefault();
+    if (fctMemState.hits && fctMemState.hits[0]) {
+      addFacetDraftMem(fctMemState.hits[0].id, fctMemState.hits[0].label);
+    }
+    return;
+  }
   if ((e.metaKey || e.ctrlKey) && e.key === "Enter") {
     const draft = $("#viewDraft");
     if (draft && draft.classList.contains("is-on")) {
@@ -296,7 +303,12 @@ document.addEventListener("keydown", (e) => {
   if (typeof closeCollectionPicker === "function" && closeCollectionPicker()) return;
   if (closeTreeLang()) return;
   if (closeDraftTrLangMenu()) return;
+  if (typeof closeConceptTrLang === "function" && closeConceptTrLang()) return;
+  if (typeof closeConceptNoteLang === "function" && closeConceptNoteLang()) return;
+  if (typeof closeConceptNoteTypeMenu === "function" && closeConceptNoteTypeMenu()) return;
+  if (typeof closeFacetDraftTrLang === "function" && closeFacetDraftTrLang()) return;
   if (closeDraftNoteLangMenu()) return;
+  if (typeof closeFacetDraftNoteLang === "function" && closeFacetDraftNoteLang()) return;
   if (closePrefLang()) return;
   if (closeCvCtx()) return;
   if (closeAnyThesoAc()) return;
@@ -552,10 +564,32 @@ document.addEventListener("input", (e) => {
   }
   if (e.target && e.target.id === "draftTitle") syncDraftPrefMirror();
   if (e.target && e.target.id === "draftRelQ") scheduleDraftRelSearch();
-  if (e.target && e.target.closest && e.target.closest("#draftTrEditor") && e.target.getAttribute("data-lang")) {
+  if (e.target && e.target.closest && e.target.closest("#cvTrEditor") && e.target.getAttribute("data-lang")) {
+    const lang = e.target.getAttribute("data-lang");
+    if (e.target.classList.contains("te-alt")) setConceptTrAlt(lang, e.target.value);
+    else setConceptTrValue(lang, e.target.value);
+  } else if (e.target && e.target.closest && e.target.closest("#fctTrEditor") && e.target.getAttribute("data-lang")) {
+    const lang = e.target.getAttribute("data-lang");
+    if (e.target.classList.contains("te-alt")) setFacetDraftTrAlt(lang, e.target.value);
+    else setFacetDraftTrValue(lang, e.target.value);
+  } else if (e.target && e.target.closest && e.target.closest("#cvNoteEditor") && e.target.getAttribute("data-cv-note")) {
+    const field = e.target.getAttribute("data-cv-note");
+    if (field && field !== "type") {
+      setConceptNoteField(Number(e.target.getAttribute("data-index")), field, e.target.value);
+    }
+  } else if (e.target && e.target.closest && e.target.closest("#draftTrEditor") && e.target.getAttribute("data-lang")) {
     const lang = e.target.getAttribute("data-lang");
     if (e.target.classList.contains("te-alt")) setDraftTrAlt(lang, e.target.value);
     else setDraftTrValue(lang, e.target.value);
+  }
+  if (e.target && e.target.id === "fctMemQ") scheduleFacetDraftMemSearch();
+  if (e.target && e.target.getAttribute && e.target.getAttribute("data-cv-res")) {
+    const kind = e.target.getAttribute("data-cv-res");
+    const field = e.target.getAttribute("data-field");
+    const index = Number(e.target.getAttribute("data-index"));
+    if (kind === "link") setConceptResLink(index, field, e.target.value);
+    else if (kind === "image") setConceptResImage(index, field, e.target.value);
+    else if (kind === "gps") setConceptResGps(index, field, e.target.value);
   }
   if (e.target && e.target.getAttribute && e.target.getAttribute("data-res")) {
     const kind = e.target.getAttribute("data-res");
@@ -565,7 +599,9 @@ document.addEventListener("input", (e) => {
     else if (kind === "image") setDraftResImage(index, field, e.target.value);
     else if (kind === "gps") setDraftResGps(index, field, e.target.value);
   }
-  if (e.target && e.target.getAttribute && e.target.getAttribute("data-note")) {
+  if (e.target && e.target.getAttribute && e.target.getAttribute("data-fct-note")) {
+    setFacetDraftNoteField(Number(e.target.getAttribute("data-index")), e.target.getAttribute("data-fct-note"), e.target.value);
+  } else if (e.target && e.target.getAttribute && e.target.getAttribute("data-note")) {
     setDraftNoteField(Number(e.target.getAttribute("data-index")), e.target.getAttribute("data-note"), e.target.value);
   }
   if (e.target && e.target.classList && e.target.classList.contains("cand-search")) {
@@ -584,7 +620,11 @@ document.addEventListener("input", (e) => {
   }
 });
 document.addEventListener("change", (e) => {
-  if (e.target && e.target.getAttribute && e.target.getAttribute("data-note") === "type") {
+  if (e.target && e.target.getAttribute && e.target.getAttribute("data-fct-note") === "type") {
+    setFacetDraftNoteField(Number(e.target.getAttribute("data-index")), "type", e.target.value);
+  } else if (e.target && e.target.getAttribute && e.target.getAttribute("data-cv-note") === "type") {
+    setConceptNoteField(Number(e.target.getAttribute("data-index")), "type", e.target.value);
+  } else if (e.target && e.target.getAttribute && e.target.getAttribute("data-note") === "type") {
     setDraftNoteField(Number(e.target.getAttribute("data-index")), "type", e.target.value);
   }
 });
@@ -603,9 +643,27 @@ document.addEventListener("focusout", (e) => {
 });
 document.addEventListener("selectionchange", refreshAboutFmtState);
 
+document.addEventListener("mousedown", (e) => {
+  if (e.target.closest("[id$='noteEditSave']") && typeof syncConceptNoteHidden === "function") {
+    syncConceptNoteHidden();
+  }
+  if (e.target.closest("[id$='trEditSave']") && typeof syncConceptTrHidden === "function") {
+    syncConceptTrHidden();
+  }
+  if (e.target.closest("[id$='resEditSave']") && typeof syncConceptResHidden === "function") {
+    syncConceptResHidden();
+  }
+}, true);
+
 document.addEventListener("click", (e) => {
   const t = e.target.closest("[data-act]");
   if (!t) {
+    if (e.target.closest("[id$='noteEditSave']") && typeof syncConceptNoteHidden === "function") {
+      syncConceptNoteHidden();
+    }
+    if (e.target.closest("[id$='resEditSave']") && typeof syncConceptResHidden === "function") {
+      syncConceptResHidden();
+    }
     if ($("#navThesaurus") && !$("#navThesaurus").contains(e.target)) closeThesaurus();
     if ($("#voWrap") && !$("#voWrap").contains(e.target)) $("#voGear") && $("#voGear").classList.remove("is-on");
     if ($("#viewPick") && !$("#viewPick").contains(e.target)) $("#viewPickBtn") && $("#viewPickBtn").classList.remove("is-open");
@@ -618,7 +676,13 @@ document.addEventListener("click", (e) => {
     if (!e.target.closest("#draftRelNew .re-type")) setDraftRelKindMenu(false);
     if (!e.target.closest("#draftRelNew .re-field")) hideDraftRelDrop();
     if (!e.target.closest("#draftTrPick")) closeDraftTrLangMenu();
+    if (!e.target.closest("#cvTrPick") && typeof closeConceptTrLang === "function") closeConceptTrLang();
+    if (!e.target.closest("#cvNotePick") && typeof closeConceptNoteLang === "function") closeConceptNoteLang();
+    if (!e.target.closest(".note-menu-w") && typeof closeConceptNoteTypeMenu === "function") closeConceptNoteTypeMenu();
+    if (!e.target.closest("#fctTrPick") && typeof closeFacetDraftTrLang === "function") closeFacetDraftTrLang();
     if (!e.target.closest(".draft-note-lang")) closeDraftNoteLangMenu();
+    if (!e.target.closest(".fct-note-lang") && typeof closeFacetDraftNoteLang === "function") closeFacetDraftNoteLang();
+    if (!e.target.closest("#fctMemNew .re-field") && typeof hideFacetDraftMemDrop === "function") hideFacetDraftMemDrop();
     return;
   }
   if ($("#cfCombo") && !$("#cfCombo").contains(e.target)) $("#cfCombo").classList.remove("open");
@@ -627,7 +691,13 @@ document.addEventListener("click", (e) => {
   if (act !== "draft-rel-hit") hideDraftRelDrop();
   if (act !== "term-lang-toggle" && act !== "term-lang") closeTreeLang();
   if (act !== "draft-tr-toggle" && act !== "draft-tr-add") closeDraftTrLangMenu();
+  if (act !== "cv-tr-toggle" && act !== "cv-tr-add" && typeof closeConceptTrLang === "function") closeConceptTrLang();
+  if (act !== "cv-note-toggle" && act !== "cv-note-add-lang" && typeof closeConceptNoteLang === "function") closeConceptNoteLang();
+  if (act !== "cv-note-add" && act !== "cv-note-add-type" && typeof closeConceptNoteTypeMenu === "function") closeConceptNoteTypeMenu();
+  if (act !== "fct-tr-toggle" && act !== "fct-tr-add" && typeof closeFacetDraftTrLang === "function") closeFacetDraftTrLang();
   if (act !== "draft-note-lang-toggle" && act !== "draft-note-lang") closeDraftNoteLangMenu();
+  if (act !== "fct-note-lang-toggle" && act !== "fct-note-lang" && typeof closeFacetDraftNoteLang === "function") closeFacetDraftNoteLang();
+  if (act !== "fct-mem-hit" && typeof hideFacetDraftMemDrop === "function") hideFacetDraftMemDrop();
   if (act !== "pref-lang-toggle" && act !== "pref-lang") closePrefLang();
   if (act !== "export-pdf-lang-toggle" && act !== "export-pdf-lang") closeExportPdfLangPickers();
   if (act !== "export-csv-lang-toggle" && act !== "export-lang" && act !== "export-lang-all" && act !== "export-lang-none") {
@@ -733,6 +803,69 @@ document.addEventListener("click", (e) => {
   } else if (act === "tr-save-dismiss") {
     hideConfirm("#trSaveConfirm");
   } else if (act === "tr-save-modal") {
+    return;
+  } else if (act === "cv-tr-ask") {
+    askRemoveConceptTr(t.getAttribute("data-lang"));
+  } else if (act === "cv-tr-keep") {
+    keepConceptTr();
+  } else if (act === "cv-tr-drop") {
+    removeConceptTr(t.getAttribute("data-lang"));
+  } else if (act === "cv-tr-toggle") {
+    const btn = $("#cvTrBtn");
+    setConceptTrLangOpen(btn && !btn.classList.contains("is-open"));
+  } else if (act === "cv-tr-add") {
+    if (t.disabled || t.classList.contains("is-used")) return;
+    addConceptTr(t.getAttribute("data-lang"));
+  } else if (act === "cv-note-tab") {
+    setConceptNoteLang(t.getAttribute("data-lang"));
+  } else if (act === "cv-note-cmp") {
+    toggleConceptNoteCompare();
+  } else if (act === "cv-note-toggle") {
+    const btn = $("#cvNoteBtn");
+    setConceptNoteLangOpen(btn && !btn.classList.contains("is-open"));
+  } else if (act === "cv-note-add-lang") {
+    if (t.disabled || t.classList.contains("is-used")) return;
+    addConceptNoteLang(t.getAttribute("data-lang"));
+  } else if (act === "cv-note-add") {
+    addConceptNote();
+  } else if (act === "cv-note-add-type") {
+    addConceptNoteType(t.getAttribute("data-type"));
+  } else if (act === "cv-note-remove") {
+    removeConceptNote(Number(t.getAttribute("data-index")));
+  } else if (act === "cv-res-add") {
+    e.preventDefault();
+    if (typeof addConceptResLink === "function") addConceptResLink();
+  } else if (act === "cv-res-remove") {
+    e.preventDefault();
+    if (typeof removeConceptResLink === "function") removeConceptResLink(Number(t.getAttribute("data-index")));
+  } else if (act === "cv-res-img-add") {
+    e.preventDefault();
+    if (typeof addConceptResImage === "function") addConceptResImage();
+  } else if (act === "cv-res-img-remove") {
+    e.preventDefault();
+    if (typeof removeConceptResImage === "function") removeConceptResImage(Number(t.getAttribute("data-index")));
+  } else if (act === "cv-res-gps-add") {
+    e.preventDefault();
+    if (typeof addConceptResGps === "function") addConceptResGps();
+  } else if (act === "cv-res-gps-remove") {
+    e.preventDefault();
+    if (typeof removeConceptResGps === "function") removeConceptResGps(Number(t.getAttribute("data-index")));
+  } else if (act === "cv-res-gps-goto") {
+    e.preventDefault();
+    if (typeof gotoConceptResGps === "function") gotoConceptResGps(Number(t.getAttribute("data-index")));
+  } else if (act === "cv-res-img-open") {
+    e.preventDefault();
+    if (typeof openConceptResImgLightbox === "function") openConceptResImgLightbox(Number(t.getAttribute("data-index")));
+  } else if (act === "cv-res-img-lightbox-prev") {
+    e.preventDefault();
+    if (typeof showConceptResImgAt === "function") showConceptResImgAt(cvResImgView.index - 1);
+  } else if (act === "cv-res-img-lightbox-next") {
+    e.preventDefault();
+    if (typeof showConceptResImgAt === "function") showConceptResImgAt(cvResImgView.index + 1);
+  } else if (act === "cv-res-img-lightbox-dismiss" || act === "cv-res-img-lightbox-close") {
+    e.preventDefault();
+    if (typeof closeConceptResImgLightbox === "function") closeConceptResImgLightbox();
+  } else if (act === "cv-res-img-lightbox-modal") {
     return;
   } else if (act === "align-save-ask") {
     showConfirm("#alignSaveConfirm");
@@ -1104,6 +1237,76 @@ document.addEventListener("click", (e) => {
   } else if (act === "create") {
     e.stopPropagation();
     showCreateChooser(t);
+  } else if (act === "cpt-more") {
+    const more = $("#cptMore");
+    setConceptDraftMore(more && more.hidden);
+  } else if (act === "cpt-create-ask") {
+    requestConceptDraftCreate(t.getAttribute("data-kind"));
+  } else if (act === "cpt-create-dismiss") {
+    hideConceptDraftCreateConfirm();
+  } else if (act === "cpt-create-modal") {
+    return;
+  } else if (act === "cpt-create-go") {
+    confirmConceptDraftCreate(t.getAttribute("data-kind"));
+  } else if (act === "cpt-leave") {
+    requestConceptDraftLeave();
+  } else if (act === "cpt-leave-dismiss" || act === "cpt-leave-stay") {
+    hideConceptDraftLeave();
+  } else if (act === "cpt-leave-modal") {
+    return;
+  } else if (act === "cpt-leave-quit") {
+    resolveConceptDraft("annulé");
+  } else if (act === "fct-more") {
+    const more = $("#fctMore");
+    setFacetDraftMore(more && more.hidden);
+  } else if (act === "fct-create-ask") {
+    requestFacetDraftCreate();
+  } else if (act === "fct-create-dismiss") {
+    hideFacetDraftCreateConfirm();
+  } else if (act === "fct-create-modal") {
+    return;
+  } else if (act === "fct-create-go") {
+    confirmFacetDraftCreate();
+  } else if (act === "fct-leave") {
+    requestFacetDraftLeave();
+  } else if (act === "fct-leave-dismiss" || act === "fct-leave-stay") {
+    hideFacetDraftLeave();
+  } else if (act === "fct-leave-modal") {
+    return;
+  } else if (act === "fct-leave-quit") {
+    resolveFacetDraft("annulé");
+  } else if (act === "fct-tr-ask") {
+    askRemoveFacetDraftTr(t.getAttribute("data-lang"));
+  } else if (act === "fct-tr-keep") {
+    keepFacetDraftTr();
+  } else if (act === "fct-tr-drop") {
+    removeFacetDraftTr(t.getAttribute("data-lang"));
+  } else if (act === "fct-tr-toggle") {
+    const btn = $("#fctTrBtn");
+    setFacetDraftTrLangOpen(btn && !btn.classList.contains("is-open"));
+  } else if (act === "fct-tr-add") {
+    if (t.disabled || t.classList.contains("is-used")) return;
+    addFacetDraftTr(t.getAttribute("data-lang"));
+  } else if (act === "fct-note-add") {
+    addFacetDraftNote();
+  } else if (act === "fct-note-remove") {
+    removeFacetDraftNote(Number(t.getAttribute("data-index")));
+  } else if (act === "fct-note-lang-toggle") {
+    setFacetDraftNoteLangOpen(Number(t.getAttribute("data-index")));
+  } else if (act === "fct-note-lang") {
+    setFacetDraftNoteLang(Number(t.getAttribute("data-index")), t.getAttribute("data-lang"));
+  } else if (act === "fct-mem-hit") {
+    addFacetDraftMem(t.getAttribute("data-id"), t.getAttribute("data-label"));
+  } else if (act === "fct-mem-remove") {
+    removeFacetDraftMem(t.getAttribute("data-index"));
+  } else if (act === "cpt-nt-rel") {
+    const hidden = $("#cptNtRel");
+    if (hidden) hidden.value = t.getAttribute("data-val") || "NT";
+    $$("#viewConceptDraft .cv-add-rel").forEach((btn) => {
+      const on = btn === t;
+      btn.classList.toggle("is-on", on);
+      btn.setAttribute("aria-selected", on ? "true" : "false");
+    });
   } else if (act === "draft-more") {
     const more = $("#draftMore");
     setDraftMore(more && more.hidden);
@@ -1144,6 +1347,7 @@ document.addEventListener("click", (e) => {
     const btn = $("#draftTrBtn");
     setDraftTrLangOpen(btn && !btn.classList.contains("is-open"));
   } else if (act === "draft-tr-add") {
+    if (t.disabled || t.classList.contains("is-used")) return;
     addDraftTr(t.getAttribute("data-lang"));
   } else if (act === "draft-res-add") {
     addDraftResLink();
@@ -2108,6 +2312,24 @@ if (SCREEN === "synchronisation") {
 }
 if (SCREEN === "portail") {
   portalPublishPollTick();
+}
+if ((IS_CONSULT || SCREEN === "accueil") && params.get("create") === "concept") {
+  createConceptDraft({
+    getAttribute: (name) => {
+      if (name === "data-pref") return params.get("pref") || "";
+      if (name === "data-id") return params.get("idc") || "";
+      return "";
+    }
+  });
+}
+if ((IS_CONSULT || SCREEN === "accueil") && params.get("create") === "facet") {
+  createFacetDraft({
+    getAttribute: (name) => {
+      if (name === "data-pref") return params.get("pref") || "";
+      if (name === "data-id") return params.get("idc") || "";
+      return "";
+    }
+  });
 }
 if (SCREEN === "candidats" && (params.get("new") === "1" || params.get("pref") || params.get("path"))) {
   createCandidate({

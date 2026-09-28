@@ -46,6 +46,7 @@ public class ConceptResourceBlockEditorBean implements Serializable {
     static final String CARD_LINKS = "resLiens";
     static final String CARD_IMAGES = "resImages";
     static final String CARD_GPS = "resGps";
+    static final String CARD_BLOCK = "ressources";
 
     private final transient ThesaurusViewBean thesaurusViewBean;
     private final transient ConceptMediaMutationService conceptMediaMutationService;
@@ -65,6 +66,9 @@ public class ConceptResourceBlockEditorBean implements Serializable {
     private String errorMessage;
     private String flashMessage;
     private String flashToken;
+    private String linksPayload = "";
+    private String imagesPayload = "";
+    private String gpsPayload = "";
 
     public boolean isEditable() {
         return thesaurusViewBean.getSelectedConcept() != null
@@ -80,15 +84,15 @@ public class ConceptResourceBlockEditorBean implements Serializable {
     }
 
     public boolean isEditingLinks() {
-        return isEditing() && CARD_LINKS.equals(thesaurusViewBean.getFicheEditCard());
+        return isEditing();
     }
 
     public boolean isEditingImages() {
-        return isEditing() && CARD_IMAGES.equals(thesaurusViewBean.getFicheEditCard());
+        return isEditing();
     }
 
     public boolean isEditingGps() {
-        return isEditing() && CARD_GPS.equals(thesaurusViewBean.getFicheEditCard());
+        return isEditing();
     }
 
     public boolean isCanClosePolygon() {
@@ -120,16 +124,20 @@ public class ConceptResourceBlockEditorBean implements Serializable {
         return "v2.concept.resource.links.confirm";
     }
 
+    public void startEditing() {
+        beginEditing(CARD_BLOCK);
+    }
+
     public void startEditingLinks() {
-        beginEditing(CARD_LINKS);
+        startEditing();
     }
 
     public void startEditingImages() {
-        beginEditing(CARD_IMAGES);
+        startEditing();
     }
 
     public void startEditingGps() {
-        beginEditing(CARD_GPS);
+        startEditing();
     }
 
     public void cancel() {
@@ -220,19 +228,14 @@ public class ConceptResourceBlockEditorBean implements Serializable {
         String thesaurusId = thesaurusViewBean.getId();
         String conceptId = current.getSummary().getConceptId();
         String contributor = org.apache.commons.lang3.StringUtils.defaultString(userSession.getCurrentUsername());
-        if (isEditingGps()) {
-            if (!persistGps(current, thesaurusId, conceptId, userId, contributor)) {
-                return;
-            }
-        } else if (isEditingImages()) {
-            if (!persistImages(current, thesaurusId, conceptId, userId, contributor)) {
-                return;
-            }
-        } else if (isEditingLinks()) {
-            if (!persistLinks(current, thesaurusId, conceptId, userId, contributor)) {
-                return;
-            }
-        } else {
+        applyPayloads();
+        if (!persistLinks(current, thesaurusId, conceptId, userId, contributor)) {
+            return;
+        }
+        if (!persistImages(current, thesaurusId, conceptId, userId, contributor)) {
+            return;
+        }
+        if (!persistGps(current, thesaurusId, conceptId, userId, contributor)) {
             return;
         }
         finishSuccess();
@@ -247,17 +250,20 @@ public class ConceptResourceBlockEditorBean implements Serializable {
             return;
         }
         editingConceptId = detail.getSummary().getConceptId();
-        editingSection = card;
-        resourceRows = CARD_LINKS.equals(card) ? copyResources(detail) : new ArrayList<>();
-        imageRows = CARD_IMAGES.equals(card) ? copyImages(detail) : new ArrayList<>();
-        gpsRows = CARD_GPS.equals(card) ? copyGps(detail) : new ArrayList<>();
+        editingSection = CARD_BLOCK;
+        resourceRows = copyResources(detail);
+        imageRows = copyImages(detail);
+        gpsRows = copyGps(detail);
+        linksPayload = "";
+        imagesPayload = "";
+        gpsPayload = "";
         clickLatitude = "";
         clickLongitude = "";
         errorMessage = "";
         flashMessage = "";
         flashToken = "";
         editing = true;
-        thesaurusViewBean.setFicheEditCard(card);
+        thesaurusViewBean.setFicheEditCard(CARD_BLOCK);
         conceptSelectionContext.update(thesaurusViewBean.getId(), detail);
     }
 
@@ -602,13 +608,7 @@ public class ConceptResourceBlockEditorBean implements Serializable {
             thesaurusViewBean.setFicheEditCard(null);
         }
         errorMessage = "";
-        if (CARD_IMAGES.equals(section)) {
-            flashMessage = "Images enregistrées";
-        } else if (CARD_GPS.equals(section)) {
-            flashMessage = "Coordonnées GPS enregistrées";
-        } else {
-            flashMessage = "Liens enregistrés";
-        }
+        flashMessage = "Ressources enregistrées";
         flashToken = String.valueOf(System.currentTimeMillis());
         thesaurusViewBean.reloadSelectedConcept();
         conceptSelectionContext.update(thesaurusViewBean.getId(), thesaurusViewBean.getSelectedConcept());
@@ -630,6 +630,9 @@ public class ConceptResourceBlockEditorBean implements Serializable {
         resourceRows = new ArrayList<>();
         imageRows = new ArrayList<>();
         gpsRows = new ArrayList<>();
+        linksPayload = "";
+        imagesPayload = "";
+        gpsPayload = "";
         clickLatitude = "";
         clickLongitude = "";
         errorMessage = "";
@@ -640,7 +643,105 @@ public class ConceptResourceBlockEditorBean implements Serializable {
     }
 
     private static boolean isResourceCard(String card) {
-        return CARD_LINKS.equals(card) || CARD_IMAGES.equals(card) || CARD_GPS.equals(card);
+        return CARD_BLOCK.equals(card)
+                || CARD_LINKS.equals(card)
+                || CARD_IMAGES.equals(card)
+                || CARD_GPS.equals(card);
+    }
+
+    void applyPayloads() {
+        // Tabs-only sentinels are blank for StringUtils but mean "empty list" from JS.
+        if (payloadPresent(linksPayload)) {
+            applyLinksPayload();
+        }
+        if (payloadPresent(imagesPayload)) {
+            applyImagesPayload();
+        }
+        if (payloadPresent(gpsPayload)) {
+            applyGpsPayload();
+        }
+    }
+
+    static boolean payloadPresent(String payload) {
+        return payload != null && !payload.isEmpty();
+    }
+
+    static boolean isClearedPayload(String payload) {
+        String text = org.apache.commons.lang3.StringUtils.trimToEmpty(payload);
+        return "__none__".equals(text)
+                || "\t\t".equals(payload)
+                || "\t\t\t\t".equals(payload)
+                || "\t".equals(payload);
+    }
+
+    void applyLinksPayload() {
+        resourceRows = new ArrayList<>();
+        if (isClearedPayload(linksPayload)) {
+            return;
+        }
+        for (String line : org.apache.commons.lang3.StringUtils.defaultString(linksPayload).split("\\R")) {
+            if (org.apache.commons.lang3.StringUtils.isBlank(line) || "\t\t".equals(line)) {
+                continue;
+            }
+            String[] parts = line.split("\\t", -1);
+            ExternalResourceEditRow row = new ExternalResourceEditRow();
+            row.setOldUri(decodePart(parts, 0));
+            row.setUri(decodePart(parts, 1));
+            row.setDescription(decodePart(parts, 2));
+            resourceRows.add(row);
+        }
+    }
+
+    void applyImagesPayload() {
+        imageRows = new ArrayList<>();
+        if (isClearedPayload(imagesPayload)) {
+            return;
+        }
+        for (String line : org.apache.commons.lang3.StringUtils.defaultString(imagesPayload).split("\\R")) {
+            if (org.apache.commons.lang3.StringUtils.isBlank(line) || "\t\t\t\t".equals(line)) {
+                continue;
+            }
+            String[] parts = line.split("\\t", -1);
+            int id = 0;
+            try {
+                id = Integer.parseInt(decodePart(parts, 0));
+            } catch (NumberFormatException ignored) {
+                id = 0;
+            }
+            imageRows.add(new ImageEditRow(
+                    id,
+                    decodePart(parts, 1),
+                    decodePart(parts, 2),
+                    decodePart(parts, 3),
+                    decodePart(parts, 4)));
+        }
+    }
+
+    void applyGpsPayload() {
+        gpsRows = new ArrayList<>();
+        if (isClearedPayload(gpsPayload)) {
+            return;
+        }
+        for (String line : org.apache.commons.lang3.StringUtils.defaultString(gpsPayload).split("\\R")) {
+            if (org.apache.commons.lang3.StringUtils.isBlank(line) || "\t".equals(line)) {
+                continue;
+            }
+            String[] parts = line.split("\\t", -1);
+            gpsRows.add(new GpsEditRow(decodePart(parts, 0), decodePart(parts, 1)));
+        }
+    }
+
+    private static String decodePart(String[] parts, int index) {
+        if (parts == null || index < 0 || index >= parts.length) {
+            return "";
+        }
+        try {
+            return java.net.URLDecoder.decode(
+                    org.apache.commons.lang3.StringUtils.defaultString(parts[index]),
+                    java.nio.charset.StandardCharsets.UTF_8);
+        } catch (IllegalArgumentException ex) {
+            return org.apache.commons.lang3.StringUtils.defaultString(parts[index]);
+        }
     }
 
     private boolean matchesCurrentConcept() {

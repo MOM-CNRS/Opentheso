@@ -713,6 +713,61 @@ public class ThesaurusViewBean implements Serializable {
                 .toList();
     }
 
+    /**
+     * Traductions affichées sur la fiche : hors langue courante, pastille « à compléter »
+     * si le libellé est vide (maquette EDT-9).
+     */
+    public List<TranslationViewItem> getTranslationViewItems() {
+        String work = StringUtils.defaultString(getSelectedLang()).trim().toLowerCase(Locale.ROOT);
+        List<TranslationViewItem> items = new ArrayList<>();
+        for (ConceptLabel label : getPreferredTranslations()) {
+            if (label == null || StringUtils.isBlank(label.lang())) {
+                continue;
+            }
+            if (work.equals(label.lang().trim().toLowerCase(Locale.ROOT))) {
+                continue;
+            }
+            items.add(new TranslationViewItem(
+                    label.lang(),
+                    StringUtils.defaultString(label.value()),
+                    altTranslationsLabel(label.lang()),
+                    StringUtils.isBlank(label.value())
+            ));
+        }
+        return items;
+    }
+
+    public boolean hasLanguageFlag(String lang) {
+        String emoji = flagEmoji(lang);
+        return StringUtils.isNotBlank(emoji) && !"🏳️".equals(emoji);
+    }
+
+    public String textDirection(String lang) {
+        String code = StringUtils.defaultString(lang).trim().toLowerCase(Locale.ROOT);
+        if (code.contains("-")) {
+            code = code.substring(0, code.indexOf('-'));
+        }
+        return switch (code) {
+            case "ar", "he", "fa", "ur" -> "rtl";
+            default -> "ltr";
+        };
+    }
+
+    @Getter
+    public static final class TranslationViewItem implements Serializable {
+        private final String lang;
+        private final String value;
+        private final String alts;
+        private final boolean todo;
+
+        public TranslationViewItem(String lang, String value, String alts, boolean todo) {
+            this.lang = lang;
+            this.value = value;
+            this.alts = alts;
+            this.todo = todo;
+        }
+    }
+
     public String altTranslationsLabel(String lang) {
         if (selectedConcept == null || selectedConcept.getTranslations() == null
                 || StringUtils.isBlank(lang)) {

@@ -10,7 +10,9 @@ import fr.cnrs.opentheso.v2.concept.write.service.ConceptNoteMutationService;
 import fr.cnrs.opentheso.v2.concept.write.service.ConceptWriteMetadataService;
 import fr.cnrs.opentheso.v2.concept.write.service.ConceptWriteSearchService;
 import fr.cnrs.opentheso.v2.facet.read.FacetReadService;
+import fr.cnrs.opentheso.v2.concept.write.model.command.UpsertNoteCommand;
 import fr.cnrs.opentheso.v2.facet.write.model.command.AddFacetMemberCommand;
+import fr.cnrs.opentheso.v2.facet.write.model.command.AddFacetTranslationCommand;
 import fr.cnrs.opentheso.v2.facet.write.model.command.CreateFacetCommand;
 import fr.cnrs.opentheso.v2.facet.write.service.FacetMutationService;
 import fr.cnrs.opentheso.v2.setting.ui.ThesaurusContext;
@@ -141,6 +143,74 @@ class FacetDetailEditorBeanTest {
         assertEquals("Le nom de la facette 'Par matériau' existe déjà !", bean.getCreateErrorMessage());
         assertTrue(bean.isComposing());
         verify(thesaurusBrowseBean, never()).focusFacet(any());
+    }
+
+    @Test
+    void prepareFacetDraft_keepsParentAndOpensComposer() {
+        bean.setParentConceptId("C9");
+        bean.setParentConceptLabel("Concept neuf");
+        bean.setLabel("Ancien nom");
+
+        bean.prepareFacetDraft();
+
+        assertEquals("C9", bean.getParentConceptId());
+        assertEquals("Concept neuf", bean.getParentConceptLabel());
+        assertEquals("C9", bean.getSelectedParentConcept().conceptId());
+        assertEquals("", bean.getLabel());
+        assertTrue(bean.isComposing());
+        assertFalse(bean.isCreated());
+        assertFalse(bean.isChainNext());
+    }
+
+    @Test
+    void createFacetDraft_marksCreatedAndInvalidatesTree() {
+        bean.setParentConceptId("C9");
+        bean.setLabel("Par matériau");
+        when(facetMutationService.createFacet(new CreateFacetCommand("TH1", "C9", "fr", "Par matériau")))
+                .thenReturn(MutationResult.ok("La facette a bien été créée", "F12"));
+
+        bean.createFacetDraft();
+
+        assertTrue(bean.isCreated());
+        assertFalse(bean.isChainNext());
+        assertEquals("F12", bean.getCreatedFacetId());
+        verify(thesaurusBrowseBean).invalidateConceptTree();
+    }
+
+    @Test
+    void createFacetDraft_persistsTranslationsNotesAndMembers() {
+        bean.setParentConceptId("C9");
+        bean.setLabel("Par matériau");
+        bean.setTranslationsPayload("fr\tIgnoré\nen\tBy material");
+        bean.setNotesPayload("scopeNote\ten\tHello%20world\tsrc");
+        bean.setMembersPayload("C2\tConcept deux");
+        when(userSession.getCurrentUserId()).thenReturn(7);
+        when(userSession.getCurrentUsername()).thenReturn("admin");
+        when(facetMutationService.createFacet(new CreateFacetCommand("TH1", "C9", "fr", "Par matériau")))
+                .thenReturn(MutationResult.ok("La facette a bien été créée", "F12"));
+
+        bean.createFacetDraft();
+
+        verify(facetMutationService).addTranslation(new AddFacetTranslationCommand("TH1", "F12", "en", "By material"));
+        verify(facetMutationService, never()).addTranslation(new AddFacetTranslationCommand("TH1", "F12", "fr", "Ignoré"));
+        verify(conceptNoteMutationService).upsertNote(new UpsertNoteCommand(
+                "TH1", "F12", "en", "scopeNote", "Hello world", "src", 7, "admin"));
+        verify(facetMutationService).addMember(new AddFacetMemberCommand("TH1", "F12", "C2", false));
+    }
+
+    @Test
+    void cancelFacetDraft_resetsForm() {
+        bean.setComposing(true);
+        bean.setParentConceptId("C9");
+        bean.setLabel("Par matériau");
+        bean.setCreated(true);
+
+        bean.cancelFacetDraft();
+
+        assertFalse(bean.isComposing());
+        assertFalse(bean.isCreated());
+        assertEquals("", bean.getLabel());
+        assertEquals("", bean.getParentConceptId());
     }
 
     @Test

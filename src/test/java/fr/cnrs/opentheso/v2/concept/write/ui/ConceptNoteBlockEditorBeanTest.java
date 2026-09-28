@@ -180,6 +180,37 @@ class ConceptNoteBlockEditorBeanTest {
         verify(thesaurusViewBean).reloadSelectedConcept();
     }
 
+    @Test
+    void save_appliesPayloadAndSkipsBlankValues() {
+        when(thesaurusViewBean.getSelectedConcept()).thenReturn(detail(List.of(
+                new ConceptNote("10", "definition", "fr", "Ancienne def", "src"),
+                new ConceptNote("11", "note", "fr", "Ancienne note")
+        )));
+        when(conceptNoteMutationService.deleteNote(any())).thenReturn(MutationResult.ok("ok"));
+        when(conceptNoteMutationService.upsertNote(any())).thenReturn(MutationResult.ok("ok"));
+        bean.startEditing();
+        bean.setNotesPayload(String.join("\n",
+                "definition\tfr\tNouvelle%20def\tsrc",
+                "note\tfr\t",
+                "definition\ten\tEnglish%20def\t"));
+
+        bean.save();
+
+        ArgumentCaptor<DeleteNoteCommand> deleted = ArgumentCaptor.forClass(DeleteNoteCommand.class);
+        verify(conceptNoteMutationService).deleteNote(deleted.capture());
+        assertEquals(11, deleted.getValue().noteId());
+
+        ArgumentCaptor<UpsertNoteCommand> upserted = ArgumentCaptor.forClass(UpsertNoteCommand.class);
+        verify(conceptNoteMutationService, times(2)).upsertNote(upserted.capture());
+        assertEquals("definition", upserted.getAllValues().get(0).typeCode());
+        assertEquals("fr", upserted.getAllValues().get(0).lang());
+        assertEquals("Nouvelle def", upserted.getAllValues().get(0).value());
+        assertEquals("definition", upserted.getAllValues().get(1).typeCode());
+        assertEquals("en", upserted.getAllValues().get(1).lang());
+        assertEquals("English def", upserted.getAllValues().get(1).value());
+        assertFalse(bean.isEditing());
+    }
+
     private static ConceptDetail detail(List<ConceptNote> notes) {
         return detail("C1", notes);
     }

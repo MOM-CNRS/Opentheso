@@ -203,6 +203,45 @@ class ConceptTranslationBlockEditorBeanTest {
         verify(thesaurusViewBean).reloadSelectedConcept();
     }
 
+    @Test
+    void save_appliesPayloadAndSkipsBlankValues() {
+        when(thesaurusViewBean.getSelectedConcept()).thenReturn(detail(List.of(
+                new ConceptLabel("en", "Cat", true, false),
+                new ConceptLabel("de", "Katze", true, false)
+        )));
+        when(conceptLexicalMutationService.deleteTranslation(any())).thenReturn(MutationResult.ok("ok"));
+        when(conceptLexicalMutationService.updateTranslation(any())).thenReturn(MutationResult.ok("ok"));
+        when(conceptLexicalMutationService.addTranslation(any())).thenReturn(MutationResult.ok("ok"));
+        when(conceptLexicalMutationService.addSynonym(any())).thenReturn(MutationResult.ok("ok"));
+        bean.startEditing();
+        bean.setTranslationsPayload("en\tFeline\tPuss\nde\t\nes\tGato\t");
+
+        bean.save();
+
+        ArgumentCaptor<UpdateTranslationCommand> updated =
+                ArgumentCaptor.forClass(UpdateTranslationCommand.class);
+        verify(conceptLexicalMutationService).updateTranslation(updated.capture());
+        assertEquals("en", updated.getValue().lang());
+        assertEquals("Feline", updated.getValue().value());
+
+        ArgumentCaptor<AddSynonymCommand> addedAlt =
+                ArgumentCaptor.forClass(AddSynonymCommand.class);
+        verify(conceptLexicalMutationService).addSynonym(addedAlt.capture());
+        assertEquals("Puss", addedAlt.getValue().value());
+
+        ArgumentCaptor<DeleteTranslationCommand> removed =
+                ArgumentCaptor.forClass(DeleteTranslationCommand.class);
+        verify(conceptLexicalMutationService).deleteTranslation(removed.capture());
+        assertEquals("de", removed.getValue().lang());
+
+        ArgumentCaptor<AddTranslationCommand> added =
+                ArgumentCaptor.forClass(AddTranslationCommand.class);
+        verify(conceptLexicalMutationService).addTranslation(added.capture());
+        assertEquals("es", added.getValue().lang());
+        assertEquals("Gato", added.getValue().value());
+        assertFalse(bean.isEditing());
+    }
+
     private static ConceptDetail detail(List<ConceptLabel> translations) {
         return detail("C1", translations);
     }
