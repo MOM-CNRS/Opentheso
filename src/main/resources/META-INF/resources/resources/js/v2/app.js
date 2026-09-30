@@ -282,6 +282,13 @@ document.addEventListener("keydown", (e) => {
     }
     return;
   }
+  if (e.key === "Enter" && e.target && e.target.id === "cvRelQ") {
+    e.preventDefault();
+    if (typeof addCvRel === "function" && cvRelState && cvRelState.hits && cvRelState.hits[0]) {
+      addCvRel(cvRelState.hits[0].id, cvRelState.hits[0].label);
+    }
+    return;
+  }
   if (e.key === "Enter" && e.target && e.target.id === "fctMemQ") {
     e.preventDefault();
     if (fctMemState.hits && fctMemState.hits[0]) {
@@ -564,6 +571,7 @@ document.addEventListener("input", (e) => {
   }
   if (e.target && e.target.id === "draftTitle") syncDraftPrefMirror();
   if (e.target && e.target.id === "draftRelQ") scheduleDraftRelSearch();
+  if (e.target && e.target.id === "cvRelQ" && typeof scheduleCvRelSearch === "function") scheduleCvRelSearch();
   if (e.target && e.target.closest && e.target.closest("#cvTrEditor") && e.target.getAttribute("data-lang")) {
     const lang = e.target.getAttribute("data-lang");
     if (e.target.classList.contains("te-alt")) setConceptTrAlt(lang, e.target.value);
@@ -653,6 +661,9 @@ document.addEventListener("mousedown", (e) => {
   if (e.target.closest("[id$='resEditSave']") && typeof syncConceptResHidden === "function") {
     syncConceptResHidden();
   }
+  if (e.target.closest("[id$='relEditSave']") && typeof syncCvRelHidden === "function") {
+    syncCvRelHidden();
+  }
 }, true);
 
 document.addEventListener("click", (e) => {
@@ -663,6 +674,9 @@ document.addEventListener("click", (e) => {
     }
     if (e.target.closest("[id$='resEditSave']") && typeof syncConceptResHidden === "function") {
       syncConceptResHidden();
+    }
+    if (e.target.closest("[id$='relEditSave']") && typeof syncCvRelHidden === "function") {
+      syncCvRelHidden();
     }
     if ($("#navThesaurus") && !$("#navThesaurus").contains(e.target)) closeThesaurus();
     if ($("#voWrap") && !$("#voWrap").contains(e.target)) $("#voGear") && $("#voGear").classList.remove("is-on");
@@ -675,6 +689,11 @@ document.addEventListener("click", (e) => {
     if ($("#cfCombo") && !$("#cfCombo").contains(e.target)) $("#cfCombo").classList.remove("open");
     if (!e.target.closest("#draftRelNew .re-type")) setDraftRelKindMenu(false);
     if (!e.target.closest("#draftRelNew .re-field")) hideDraftRelDrop();
+    if (!e.target.closest("#cvRelEditor .re-type") && typeof setCvRelKindMenu === "function") {
+      setCvRelKindMenu(false);
+      if (typeof setCvRelRowMenu === "function") setCvRelRowMenu(null);
+    }
+    if (!e.target.closest("#cvRelNew .re-field") && typeof hideCvRelDrop === "function") hideCvRelDrop();
     if (!e.target.closest("#draftTrPick")) closeDraftTrLangMenu();
     if (!e.target.closest("#cvTrPick") && typeof closeConceptTrLang === "function") closeConceptTrLang();
     if (!e.target.closest("#cvNotePick") && typeof closeConceptNoteLang === "function") closeConceptNoteLang();
@@ -689,6 +708,13 @@ document.addEventListener("click", (e) => {
   const act = t.getAttribute("data-act");
   if (act !== "draft-rel-kind-toggle" && act !== "draft-rel-kind") setDraftRelKindMenu(false);
   if (act !== "draft-rel-hit") hideDraftRelDrop();
+  if (act !== "cv-rel-kind-toggle" && act !== "cv-rel-kind"
+      && act !== "cv-rel-row-kind-toggle" && act !== "cv-rel-row-kind"
+      && typeof setCvRelKindMenu === "function") {
+    setCvRelKindMenu(false);
+    if (typeof setCvRelRowMenu === "function") setCvRelRowMenu(null);
+  }
+  if (act !== "cv-rel-hit" && typeof hideCvRelDrop === "function") hideCvRelDrop();
   if (act !== "term-lang-toggle" && act !== "term-lang") closeTreeLang();
   if (act !== "draft-tr-toggle" && act !== "draft-tr-add") closeDraftTrLangMenu();
   if (act !== "cv-tr-toggle" && act !== "cv-tr-add" && typeof closeConceptTrLang === "function") closeConceptTrLang();
@@ -761,6 +787,10 @@ document.addEventListener("click", (e) => {
     e.preventDefault();
     hideConfirm("#previewPortalRemoveConfirm");
     clickPreviewJsf("previewPortalRemoveGo");
+  } else if (act === "sync-solicit") {
+    e.preventDefault();
+    if (t.classList.contains("is-off")) return;
+    clickPreviewJsf("syncSolicitGo");
   } else if (act === "logout-dismiss") {
     hideConfirm("#logoutConfirm");
   } else if (act === "logout-modal") {
@@ -1335,6 +1365,32 @@ document.addEventListener("click", (e) => {
     removeDraftRel(t.getAttribute("data-kind"), t.getAttribute("data-index"));
   } else if (act === "draft-rel-hit") {
     addDraftRel(t.getAttribute("data-id"), t.getAttribute("data-label"));
+  } else if (act === "cv-rel-kind-toggle") {
+    e.preventDefault();
+    if (typeof setCvRelRowMenu === "function") setCvRelRowMenu(null);
+    const menu = $("#cvRelKindMenu");
+    if (typeof setCvRelKindMenu === "function") setCvRelKindMenu(menu && menu.hidden);
+  } else if (act === "cv-rel-kind") {
+    e.preventDefault();
+    if (typeof setCvRelKind === "function") setCvRelKind(t.getAttribute("data-kind"));
+  } else if (act === "cv-rel-row-kind-toggle") {
+    e.preventDefault();
+    if (typeof setCvRelKindMenu === "function") setCvRelKindMenu(false);
+    if (typeof setCvRelRowMenu === "function") {
+      const key = (t.getAttribute("data-kind") || "") + ":" + (t.getAttribute("data-index") || "");
+      setCvRelRowMenu(cvRelState && cvRelState.rowMenu === key ? null : key);
+    }
+  } else if (act === "cv-rel-row-kind") {
+    e.preventDefault();
+    if (typeof retypeCvRel === "function") {
+      retypeCvRel(t.getAttribute("data-from"), t.getAttribute("data-index"), t.getAttribute("data-kind"));
+    }
+  } else if (act === "cv-rel-remove") {
+    e.preventDefault();
+    if (typeof removeCvRel === "function") removeCvRel(t.getAttribute("data-kind"), t.getAttribute("data-index"));
+  } else if (act === "cv-rel-hit") {
+    e.preventDefault();
+    if (typeof addCvRel === "function") addCvRel(t.getAttribute("data-id"), t.getAttribute("data-label"));
   } else if (act === "draft-tr-ask") {
     draftTrState.confirm = t.getAttribute("data-lang") || "";
     paintDraftTr();

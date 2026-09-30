@@ -15,6 +15,7 @@ import org.springframework.transaction.annotation.Transactional;
 
 import java.util.ArrayList;
 import java.util.Collections;
+import java.util.LinkedHashSet;
 import java.util.List;
 import java.util.Optional;
 
@@ -103,6 +104,51 @@ public class ConceptFullReadService {
 
     public int pageFetchSize() {
         return NARROWER_PAGE_SIZE + 1;
+    }
+
+    /**
+     * Tous les termes spécifiques, au-delà de la page affichée en consultation.
+     */
+    @Transactional(readOnly = true)
+    public List<ConceptHierarchicalRelation> loadAllNarrowers(
+            String thesaurusId,
+            String conceptId,
+            String lang,
+            boolean authenticated
+    ) {
+        if (StringUtils.isAnyBlank(thesaurusId, conceptId, lang)) {
+            return List.of();
+        }
+        var preferences = thesaurusPreferenceService.loadPreferencesOrNull(thesaurusId, lang);
+        String applicationBaseUrl = applicationUriService.resolveApplicationBaseUrl();
+        List<ConceptHierarchicalRelation> all = new ArrayList<>();
+        LinkedHashSet<String> seen = new LinkedHashSet<>();
+        int offset = 0;
+        for (int page = 0; page < 250; page++) {
+            List<ConceptHierarchicalRelation> batch = conceptFullAssembler.assembleNarrowerRelations(
+                    thesaurusId,
+                    conceptId,
+                    lang,
+                    new ConceptAssemblePaging(offset, pageFetchSize(), authenticated),
+                    preferences,
+                    applicationBaseUrl
+            );
+            if (batch == null || batch.isEmpty()) {
+                break;
+            }
+            for (ConceptHierarchicalRelation relation : batch) {
+                if (relation == null || StringUtils.isBlank(relation.conceptId())
+                        || !seen.add(relation.conceptId())) {
+                    continue;
+                }
+                all.add(relation);
+            }
+            if (!hasMoreFromBatch(batch)) {
+                break;
+            }
+            offset = nextNarrowerOffset(offset);
+        }
+        return List.copyOf(all);
     }
 
     @Transactional(readOnly = true)

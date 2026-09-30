@@ -377,38 +377,112 @@
         <div class="cblock-head"><span class="cblock-drag" role="button" tabindex="0" title="Glisser pour réordonner" aria-label="Réordonner ce bloc"><svg class="cblock-grip" viewBox="0 0 8 14" aria-hidden="true" focusable="false"><circle cx="2" cy="2" r="1.35"/><circle cx="6" cy="2" r="1.35"/><circle cx="2" cy="7" r="1.35"/><circle cx="6" cy="7" r="1.35"/><circle cx="2" cy="12" r="1.35"/><circle cx="6" cy="12" r="1.35"/></svg></span><span class="cblock-title">Relations sémantiques</span><div class="cblock-tools"><h:commandButton id="relEditStart" value="✎" styleClass="cblock-gear" title="#{v2LocaleBean.getMsg('v2.edit')}" rendered="#{v2ConceptRelationBlockEditorBean.editable and not v2ConceptRelationBlockEditorBean.editing}" action="#{v2ConceptRelationBlockEditorBean.startEditing}"><f:ajax execute="@this" render=":previewDetailForm:previewDetail"/></h:commandButton><button type="button" class="cblock-gear cblock-fold" data-act="cblock-fold" title="#{v2LocaleBean.getMsg('v2.block.collapse')}" aria-expanded="true" aria-label="#{v2LocaleBean.getMsg('v2.block.collapse')}"><svg viewBox="0 0 24 24" aria-hidden="true"><path d="m6 9 6 6 6-6"/></svg></button></div></div>
         <div class="cblock-body">
           <ui:fragment rendered="#{v2ConceptRelationBlockEditorBean.editing}">
-          <div class="crow crow-rel cblock-edit-row">
-            <div class="crow-lbl"><span class="rel-code rel-bt">TG</span>Concept générique</div>
-            <div class="crow-val">
-              <ui:include src="/v2/includes/relation-pick.xhtml">
-                <ui:param name="kind" value="Bt"/>
-                <ui:param name="kindLower" value="bt"/>
-                <ui:param name="placeholder" value="Rechercher un concept générique…"/>
-                <ui:param name="jsonProperty" value="selectedBroaderJson"/>
-              </ui:include>
+          <div class="re" id="cvRelEditor"
+               data-none="#{v2LocaleBean.getMsg('v2.candidat.draft.rel.none')}"
+               data-remove="#{v2LocaleBean.getMsg('v2.candidat.draft.rel.remove')}"
+               data-exists="#{v2LocaleBean.getMsg('v2.candidat.draft.rel.exists')}"
+               data-self="#{v2LocaleBean.getMsg('v2.concept.rel.self')}"
+               data-other="#{v2LocaleBean.getMsg('v2.concept.rel.other')}"
+               data-loop-nt="#{v2LocaleBean.getMsg('v2.concept.rel.loopNt')}"
+               data-loop-bt="#{v2LocaleBean.getMsg('v2.concept.rel.loopBt')}"
+               data-poly="#{v2LocaleBean.getMsg('v2.concept.rel.poly')}"
+               data-kind-bt="#{v2LocaleBean.getMsg('v2.candidat.draft.bt')}"
+               data-kind-nt="#{v2LocaleBean.getMsg('v2.candidat.draft.nt')}"
+               data-kind-rt="#{v2LocaleBean.getMsg('v2.candidat.draft.rt')}">
+            <div class="re-rows" id="cvRelRows">
+              <div class="re-group" data-kind="bt">
+                <div class="re-group-h"><span class="rel-code rel-bt">TG</span>#{v2LocaleBean.getMsg('v2.candidat.draft.bt')}
+                  <ui:fragment rendered="#{not empty v2ConceptRelationBlockEditorBean.selectedBroader}">
+                    <span class="rel-count">#{v2ConceptRelationBlockEditorBean.selectedBroader.size()}</span>
+                  </ui:fragment>
+                </div>
+                <ui:repeat value="#{v2ConceptRelationBlockEditorBean.selectedBroader}" var="row">
+                  <div class="re-row" data-kind="bt" data-id="#{row.id}" data-label="#{row.displayLabel}">
+                    <span class="re-type"><span class="re-pill rel-bt">TG</span></span>
+                    <span class="re-lbl" title="#{row.displayLabel}">#{row.displayLabel}</span>
+                  </div>
+                </ui:repeat>
+                <ui:fragment rendered="#{empty v2ConceptRelationBlockEditorBean.selectedBroader}">
+                  <div class="re-empty"><span class="muted">—</span></div>
+                </ui:fragment>
+              </div>
+              <div class="re-group" data-kind="nt">
+                <div class="re-group-h"><span class="rel-code rel-nt">TS</span>#{v2LocaleBean.getMsg('v2.candidat.draft.nt')}
+                  <ui:fragment rendered="#{not empty v2ConceptRelationBlockEditorBean.selectedNarrower}">
+                    <span class="rel-count">#{v2ConceptRelationBlockEditorBean.selectedNarrower.size()}</span>
+                  </ui:fragment>
+                </div>
+                <ui:repeat value="#{v2ConceptRelationBlockEditorBean.selectedNarrower}" var="row">
+                  <div class="re-row" data-kind="nt" data-id="#{row.id}" data-label="#{row.displayLabel}">
+                    <span class="re-type"><span class="re-pill rel-nt">TS</span></span>
+                    <span class="re-lbl" title="#{row.displayLabel}">#{row.displayLabel}</span>
+                  </div>
+                </ui:repeat>
+                <ui:fragment rendered="#{empty v2ConceptRelationBlockEditorBean.selectedNarrower}">
+                  <div class="re-empty"><span class="muted">—</span></div>
+                </ui:fragment>
+              </div>
+              <div class="re-group" data-kind="rt">
+                <div class="re-group-h"><span class="rel-code rel-rt">TA</span>#{v2LocaleBean.getMsg('v2.candidat.draft.rt')}
+                  <ui:fragment rendered="#{not empty v2ConceptRelationBlockEditorBean.selectedRelated}">
+                    <span class="rel-count">#{v2ConceptRelationBlockEditorBean.selectedRelated.size()}</span>
+                  </ui:fragment>
+                </div>
+                <ui:repeat value="#{v2ConceptRelationBlockEditorBean.selectedRelated}" var="row">
+                  <div class="re-row" data-kind="rt" data-id="#{row.id}" data-label="#{row.displayLabel}">
+                    <span class="re-type"><span class="re-pill rel-rt">TA</span></span>
+                    <span class="re-lbl" title="#{row.displayLabel}">#{row.displayLabel}</span>
+                  </div>
+                </ui:repeat>
+                <ui:fragment rendered="#{empty v2ConceptRelationBlockEditorBean.selectedRelated}">
+                  <div class="re-empty"><span class="muted">—</span></div>
+                </ui:fragment>
+              </div>
             </div>
-          </div>
-          <div class="crow crow-rel cblock-edit-row">
-            <div class="crow-lbl"><span class="rel-code rel-nt">TS</span>Concept spécifique</div>
-            <div class="crow-val">
-              <ui:include src="/v2/includes/relation-pick.xhtml">
-                <ui:param name="kind" value="Nt"/>
-                <ui:param name="kindLower" value="nt"/>
-                <ui:param name="placeholder" value="Rechercher un concept spécifique…"/>
-                <ui:param name="jsonProperty" value="selectedNarrowerJson"/>
-              </ui:include>
+            <div class="re-row re-new" id="cvRelNew">
+              <span class="re-type">
+                <button type="button" class="re-pill rel-nt" id="cvRelKindBtn"
+                        data-act="cv-rel-kind-toggle" aria-haspopup="listbox" aria-expanded="false">
+                  TS<span class="re-caret" aria-hidden="true"></span>
+                </button>
+                <div class="re-menu" id="cvRelKindMenu" hidden="hidden" role="listbox">
+                  <button type="button" class="re-mi" role="option" data-act="cv-rel-kind" data-kind="bt">
+                    <span class="rel-code rel-bt">TG</span>#{v2LocaleBean.getMsg('v2.candidat.draft.bt')}
+                  </button>
+                  <button type="button" class="re-mi on" role="option" data-act="cv-rel-kind" data-kind="nt">
+                    <span class="rel-code rel-nt">TS</span>#{v2LocaleBean.getMsg('v2.candidat.draft.nt')}
+                  </button>
+                  <button type="button" class="re-mi" role="option" data-act="cv-rel-kind" data-kind="rt">
+                    <span class="rel-code rel-rt">TA</span>#{v2LocaleBean.getMsg('v2.candidat.draft.rt')}
+                  </button>
+                </div>
+              </span>
+              <div class="re-field">
+                <input type="text" class="st-input re-q" id="cvRelQ" autocomplete="off" spellcheck="false"
+                       placeholder="#{v2LocaleBean.getMsg('v2.candidat.draft.rel.add')}"
+                       aria-label="#{v2LocaleBean.getMsg('v2.candidat.draft.rel.add')}"/>
+                <div class="re-drop" id="cvRelDrop" hidden="hidden"></div>
+                <div class="re-none" id="cvRelEmpty" hidden="hidden">#{v2LocaleBean.getMsg('v2.candidat.draft.rel.none')}</div>
+              </div>
             </div>
-          </div>
-          <div class="crow crow-rel cblock-edit-row">
-            <div class="crow-lbl"><span class="rel-code rel-rt">TA</span>Concept associé</div>
-            <div class="crow-val">
-              <ui:include src="/v2/includes/relation-pick.xhtml">
-                <ui:param name="kind" value="Rt"/>
-                <ui:param name="kindLower" value="rt"/>
-                <ui:param name="placeholder" value="Rechercher un concept associé…"/>
-                <ui:param name="jsonProperty" value="selectedRelatedJson"/>
-              </ui:include>
+            <div class="re-msg" id="cvRelMsg" hidden="hidden"></div>
+            <div id="cvRelSeed" hidden="hidden">
+              <ui:repeat value="#{v2ConceptRelationBlockEditorBean.selectedBroader}" var="row">
+                <span data-kind="bt" data-id="#{row.id}" data-label="#{row.displayLabel}"></span>
+              </ui:repeat>
+              <ui:repeat value="#{v2ConceptRelationBlockEditorBean.selectedNarrower}" var="row">
+                <span data-kind="nt" data-id="#{row.id}" data-label="#{row.displayLabel}"></span>
+              </ui:repeat>
+              <ui:repeat value="#{v2ConceptRelationBlockEditorBean.selectedRelated}" var="row">
+                <span data-kind="rt" data-id="#{row.id}" data-label="#{row.displayLabel}"></span>
+              </ui:repeat>
             </div>
+            <h:inputHidden id="cvRelBtJson" pt:id="cvRelBtJson"
+                           value="#{v2ConceptRelationBlockEditorBean.selectedBroaderJson}"/>
+            <h:inputHidden id="cvRelNtJson" pt:id="cvRelNtJson"
+                           value="#{v2ConceptRelationBlockEditorBean.selectedNarrowerJson}"/>
+            <h:inputHidden id="cvRelRtJson" pt:id="cvRelRtJson"
+                           value="#{v2ConceptRelationBlockEditorBean.selectedRelatedJson}"/>
           </div>
           <ui:fragment rendered="#{not empty v2ConceptRelationBlockEditorBean.errorMessage}">
             <div class="cblock-edit-warn" role="alert">
@@ -416,37 +490,17 @@
             </div>
           </ui:fragment>
           <div class="cblock-edit-foot">
-            <h:commandLink id="relEditCancel" styleClass="abt-cancel" immediate="true"
+            <h:commandLink id="relEditCancel" styleClass="bo-btn ghost sm" immediate="true"
                            action="#{v2ConceptRelationBlockEditorBean.cancel}">
               <f:ajax execute="@this" render=":previewDetailForm:previewDetail"/>
-              <svg viewBox="0 0 24 24" aria-hidden="true"><path d="M18 6 6 18"/><path d="m6 6 12 12"/></svg>
               <span>#{v2LocaleBean.getMsg('v2.cancel')}</span>
             </h:commandLink>
-            <button type="button" class="abt-save" id="relSaveAsk"
-                    data-act="rel-save-ask">
-              <svg viewBox="0 0 24 24" aria-hidden="true"><path d="M20 6 9 17l-5-5"/></svg>
-              <span class="abt-save-label">#{v2LocaleBean.getMsg('v2.save')}</span>
-              <span class="abt-save-wait">#{v2LocaleBean.getMsg('v2.saving')}</span>
-            </button>
-          </div>
-          <div class="block-overlay confirm-overlay" id="relSaveConfirm" hidden="hidden"
-               data-act="rel-save-dismiss" role="presentation">
-            <div class="confirm-modal" role="dialog" aria-modal="true"
-                 aria-labelledby="relSaveConfirmTitle" data-act="rel-save-modal">
-              <div class="confirm-h" id="relSaveConfirmTitle">#{v2LocaleBean.getMsg('v2.concept.relation.confirmTitle')}</div>
-              <p class="confirm-p">#{v2LocaleBean.getMsg('v2.concept.relation.confirm')}</p>
-              <div class="confirm-actions">
-                <button type="button" class="abt-cancel confirm-cancel"
-                        data-act="rel-save-dismiss">#{v2LocaleBean.getMsg('v2.cancel')}</button>
-                <h:commandLink id="relEditSave" styleClass="abt-save abt-save-ok"
-                               action="#{v2ConceptRelationBlockEditorBean.save}">
-                  <f:ajax execute="@form" render=":previewDetailForm:previewDetail" onevent="onLabelSave"/>
-                  <svg viewBox="0 0 24 24" aria-hidden="true"><path d="M20 6 9 17l-5-5"/></svg>
-                  <span class="abt-save-label">#{v2LocaleBean.getMsg('v2.save')}</span>
-                  <span class="abt-save-wait">#{v2LocaleBean.getMsg('v2.saving')}</span>
-                </h:commandLink>
-              </div>
-            </div>
+            <h:commandLink id="relEditSave" styleClass="bo-btn primary sm"
+                           action="#{v2ConceptRelationBlockEditorBean.save}">
+              <f:ajax execute="cvRelBtJson cvRelNtJson cvRelRtJson @this"
+                      render=":previewDetailForm:previewDetail" onevent="onLabelSave"/>
+              <span>#{v2LocaleBean.getMsg('v2.concept.translation.done')}</span>
+            </h:commandLink>
           </div>
           </ui:fragment>
           <ui:fragment rendered="#{not v2ConceptRelationBlockEditorBean.editing}">
@@ -457,7 +511,7 @@
               <ui:fragment rendered="#{not empty v2ThesaurusViewBean.selectedConcept.broaderTerms}">
               <div class="rel-items">
                 <ui:repeat value="#{v2ThesaurusViewBean.selectedConcept.broaderTerms}" var="rel">
-                  <button type="button" class="rel-term" data-act="open" data-id="#{rel.conceptId}" data-type="concept">#{rel.displayLabel}</button>
+                  <button type="button" class="rel-term" data-act="open" data-id="#{rel.conceptId}" data-type="concept">#{rel.displayLabel}<ui:fragment rendered="#{not empty rel.role and rel.role ne 'BT'}"><span class="rel-btype">#{rel.role}</span></ui:fragment></button>
                 </ui:repeat>
               </div>
               </ui:fragment>
@@ -470,7 +524,7 @@
               <ui:fragment rendered="#{not empty v2ThesaurusViewBean.selectedConcept.narrowerTerms}">
               <div class="rel-items">
                 <ui:repeat value="#{v2ThesaurusViewBean.selectedConcept.narrowerTerms}" var="rel">
-                  <button type="button" class="rel-term" data-act="open" data-id="#{rel.conceptId}" data-type="concept">#{rel.displayLabel}</button>
+                  <button type="button" class="rel-term" data-act="open" data-id="#{rel.conceptId}" data-type="concept">#{rel.displayLabel}<ui:fragment rendered="#{not empty rel.role and rel.role ne 'NT'}"><span class="rel-btype">#{rel.role}</span></ui:fragment></button>
                 </ui:repeat>
               </div>
               </ui:fragment>
@@ -975,7 +1029,7 @@
 
 
       <section class="cblock#{v2ConceptAlignmentBlockEditorBean.editing or v2ConceptAlignmentAutoSearchBean.open ? ' is-editing' : ''}" data-card-id="alignement">
-        <div class="cblock-head"><span class="cblock-drag" role="button" tabindex="0" title="Glisser pour réordonner" aria-label="Réordonner ce bloc"><svg class="cblock-grip" viewBox="0 0 8 14" aria-hidden="true" focusable="false"><circle cx="2" cy="2" r="1.35"/><circle cx="6" cy="2" r="1.35"/><circle cx="2" cy="7" r="1.35"/><circle cx="6" cy="7" r="1.35"/><circle cx="2" cy="12" r="1.35"/><circle cx="6" cy="12" r="1.35"/></svg></span><span class="cblock-title">Alignement</span><div class="cblock-tools"><h:commandButton id="alignEditStart" value="✎" styleClass="cblock-gear" title="#{v2LocaleBean.getMsg('v2.edit')}" rendered="#{v2ConceptAlignmentBlockEditorBean.editable and not v2ConceptAlignmentBlockEditorBean.editing and not v2ConceptAlignmentAutoSearchBean.open}" action="#{v2ConceptAlignmentBlockEditorBean.startEditing}"><f:ajax execute="@this" render=":previewDetailForm:previewDetail"/></h:commandButton><button type="button" class="cblock-gear cblock-fold" data-act="cblock-fold" title="#{v2LocaleBean.getMsg('v2.block.collapse')}" aria-expanded="true" aria-label="#{v2LocaleBean.getMsg('v2.block.collapse')}"><svg viewBox="0 0 24 24" aria-hidden="true"><path d="m6 9 6 6 6-6"/></svg></button></div></div>
+        <div class="cblock-head"><span class="cblock-drag" role="button" tabindex="0" title="Glisser pour réordonner" aria-label="Réordonner ce bloc"><svg class="cblock-grip" viewBox="0 0 8 14" aria-hidden="true" focusable="false"><circle cx="2" cy="2" r="1.35"/><circle cx="6" cy="2" r="1.35"/><circle cx="2" cy="7" r="1.35"/><circle cx="6" cy="7" r="1.35"/><circle cx="2" cy="12" r="1.35"/><circle cx="6" cy="12" r="1.35"/></svg></span><span class="cblock-title">Alignement</span><div class="cblock-tools"><button type="button" class="cblock-gear cblock-fold" data-act="cblock-fold" title="#{v2LocaleBean.getMsg('v2.block.collapse')}" aria-expanded="true" aria-label="#{v2LocaleBean.getMsg('v2.block.collapse')}"><svg viewBox="0 0 24 24" aria-hidden="true"><path d="m6 9 6 6 6-6"/></svg></button></div></div>
         <div class="cblock-body">
           <ui:fragment rendered="#{v2ConceptAlignmentBlockEditorBean.editing}">
           <div class="align-edit">
@@ -1144,6 +1198,12 @@
               <span class="aa-ic" aria-hidden="true">⌕</span>
               <h:outputText value="#{v2LocaleBean.getMsg('alignment.automaticSearch')}"/>
             </h:commandLink>
+            <h:commandLink id="alignEditStart" styleClass="bo-btn sm align-manual"
+                           action="#{v2ConceptAlignmentBlockEditorBean.startEditing}">
+              <f:ajax execute="@this" render=":previewDetailForm:previewDetail"/>
+              <span class="aa-ic" aria-hidden="true">✎</span>
+              <h:outputText value="#{v2LocaleBean.getMsg('v2.concept.alignment.manual')}"/>
+            </h:commandLink>
             <h:commandLink id="alignCompareStart" styleClass="bo-btn sm#{v2ConceptAlignmentAutoSearchBean.open and v2ConceptAlignmentAutoSearchBean.comparing ? ' active' : ''}"
                            action="#{v2ConceptAlignmentAutoSearchBean.startComparing}">
               <f:ajax execute="@this" render=":previewDetailForm:previewDetail" onevent="onAlignAutoSearch"/>
@@ -1164,11 +1224,12 @@
                   #{v2LocaleBean.getMsg('v2.concept.alignment.searchTitle', v2ConceptAlignmentAutoSearchBean.searchLabel)}
                 </ui:fragment>
               </span>
-              <h:commandLink id="alignAutoCancel" styleClass="align-auto-x" immediate="true"
+              <h:commandLink id="alignAutoClose" styleClass="align-auto-close" immediate="true"
                              title="#{v2LocaleBean.getMsg('v2.concept.alignment.close')}"
+                             pt:aria-label="#{v2LocaleBean.getMsg('v2.concept.alignment.close')}"
                              action="#{v2ConceptAlignmentAutoSearchBean.cancel}">
                 <f:ajax execute="@this" render=":previewDetailForm:previewDetail"/>
-                <span>#{v2LocaleBean.getMsg('v2.concept.alignment.close')} ✕</span>
+                <svg viewBox="0 0 24 24" aria-hidden="true"><path d="M18 6 6 18"/><path d="m6 6 12 12"/></svg>
               </h:commandLink>
             </div>
             <ui:fragment rendered="#{not empty v2ConceptAlignmentAutoSearchBean.sources}">
@@ -1303,6 +1364,14 @@
               </ui:repeat>
             </div>
             </ui:fragment>
+            <div class="cblock-edit-foot align-auto-foot">
+              <h:commandLink id="alignAutoCancelFoot" styleClass="abt-cancel" immediate="true"
+                             action="#{v2ConceptAlignmentAutoSearchBean.cancel}">
+                <f:ajax execute="@this" render=":previewDetailForm:previewDetail"/>
+                <svg viewBox="0 0 24 24" aria-hidden="true"><path d="M18 6 6 18"/><path d="m6 6 12 12"/></svg>
+                <span>#{v2LocaleBean.getMsg('v2.concept.alignment.close')}</span>
+              </h:commandLink>
+            </div>
           </div>
           </ui:fragment>
         </div>

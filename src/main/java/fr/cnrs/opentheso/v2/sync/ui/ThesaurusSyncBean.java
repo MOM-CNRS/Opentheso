@@ -1,5 +1,6 @@
 package fr.cnrs.opentheso.v2.sync.ui;
 
+import fr.cnrs.opentheso.entites.User;
 import fr.cnrs.opentheso.utils.MessageUtils;
 import fr.cnrs.opentheso.v2.setting.model.ThesaurusPreferences;
 import fr.cnrs.opentheso.v2.setting.service.ThesaurusAccessService;
@@ -9,15 +10,18 @@ import fr.cnrs.opentheso.v2.shared.ui.UserSession;
 import fr.cnrs.opentheso.v2.sync.model.SyncBatchResponse;
 import fr.cnrs.opentheso.v2.sync.model.SyncConceptResult;
 import fr.cnrs.opentheso.v2.sync.model.SyncFieldChange;
+import fr.cnrs.opentheso.v2.sync.model.SyncIncomingRow;
 import fr.cnrs.opentheso.v2.sync.model.SyncPendingConcept;
 import fr.cnrs.opentheso.v2.sync.service.ThesaurusSyncProgressTracker;
 import fr.cnrs.opentheso.v2.sync.service.ThesaurusSyncProgressTracker.ProgressState;
+import fr.cnrs.opentheso.v2.sync.service.ThesaurusSyncPullService;
 import fr.cnrs.opentheso.v2.sync.service.ThesaurusSyncSendService;
 import fr.cnrs.opentheso.v2.sync.support.ApiKeyDisplayMask;
 import fr.cnrs.opentheso.v2.toolbox.exception.InvalidToolboxDataException;
 import fr.cnrs.opentheso.v2.toolbox.ui.EditionBean;
 import jakarta.faces.context.FacesContext;
 import jakarta.faces.view.ViewScoped;
+import jakarta.inject.Inject;
 import jakarta.inject.Named;
 import lombok.Getter;
 import lombok.RequiredArgsConstructor;
@@ -36,11 +40,15 @@ import java.util.concurrent.Executor;
 @Setter
 @ViewScoped
 @Named("v2ThesaurusSyncBean")
-@RequiredArgsConstructor
+@RequiredArgsConstructor(onConstructor_ = {@Inject})
 public class ThesaurusSyncBean implements Serializable {
 
     private static final DateTimeFormatter LAST_SYNC_FORMAT = DateTimeFormatter.ofPattern("dd/MM/yyyy HH:mm");
     static final int TABLE_PAGE_SIZE = 10;
+    static final String MODE_PUSH = "push";
+    static final String MODE_PULL = "pull";
+    static final String COMMENT_PUSH = "Synchronisation depuis le thésaurus copie";
+    static final String COMMENT_PULL = "Synchronisation depuis le thésaurus maître";
     private static final Executor DEFAULT_SYNC_EXECUTOR = command -> {
         Thread thread = new Thread(command, "thesaurus-sync");
         thread.setDaemon(true);
@@ -48,6 +56,7 @@ public class ThesaurusSyncBean implements Serializable {
     };
 
     private final transient ThesaurusSyncSendService thesaurusSyncSendService;
+    private final transient ThesaurusSyncPullService thesaurusSyncPullService;
     private final transient ThesaurusSyncProgressTracker progressTracker;
     private final transient UserSession userSession;
     private final transient ThesaurusAccessService thesaurusAccessService;
@@ -69,6 +78,11 @@ public class ThesaurusSyncBean implements Serializable {
     private List<SyncPendingConcept> pendingConcepts = List.of();
     private boolean pendingExpanded;
     private int pendingPage;
+    private String mode = MODE_PUSH;
+    private List<SyncIncomingRow> incomingRows = List.of();
+    private int incomingTotal;
+    private boolean incomingExpanded;
+    private int incomingPage;
     private boolean resultExpanded;
     private int resultPage;
     private boolean createCandidates;
@@ -112,8 +126,13 @@ public class ThesaurusSyncBean implements Serializable {
         resultExpanded = false;
         pendingPage = 0;
         resultPage = 0;
+        mode = MODE_PUSH;
+        incomingRows = List.of();
+        incomingTotal = 0;
+        incomingExpanded = false;
+        incomingPage = 0;
         createCandidates = true;
-        comment = "Synchronisation depuis le thésaurus copie";
+        comment = COMMENT_PUSH;
         if (!canManage()) {
             clear();
             initialized = true;
@@ -167,7 +186,7 @@ public class ThesaurusSyncBean implements Serializable {
     }
 
     public void startSync() {
-        if (!canManage() || isStartDisabled()) {
+        if (!canManage() || !isPushMode() || isStartDisabled()) {
             return;
         }
         String apiKeyToSave = ApiKeyDisplayMask.resolveForPersist(masterApiKey, storedMasterApiKey);
@@ -189,6 +208,150 @@ public class ThesaurusSyncBean implements Serializable {
         resolveSyncExecutor().execute(() -> runSyncInBackground(
                 key, state, syncThesaurusId, authorName, authorEmail, syncComment, createCandidatesFlag, masterLink));
         notifyIfFinished();
+    }
+
+    public void selectPushMode() {
+        if (isRunning()) {
+            return;
+        }
+        mode = MODE_PUSH;
+        if (COMMENT_PULL.equals(comment)) {
+            comment = COMMENT_PUSH;
+        }
+        syncSucceeded = false;
+    }
+
+    public void selectPullMode() {
+        if (isRunning()) {
+            return;
+        }
+        mode = MODE_PULL;
+        if (COMMENT_PUSH.equals(comment) || StringUtils.isBlank(comment)) {
+            comment = COMMENT_PULL;
+        }
+        syncSucceeded = false;
+    }
+
+    public boolean isPushMode() {
+        return !MODE_PULL.equals(mode);
+    }
+
+    public boolean isPullMode() {
+        return MODE_PULL.equals(mode);
+    }
+
+    public void solicitMaster() {
+        if (!canManage() || isRunning()) {
+            return;
+        }
+        if (!isPullMode()) {
+            MessageUtils.showErrorMessage(localeOrKey("v2.sync.pull.startDisabled"));
+            return;
+        }
+        if (!persistMasterLink()) {
+            return;
+        }
+        try {
+            var response = thesaurusSyncPullService.solicit(thesaurusId, currentMasterLink());
+            incomingTotal = response == null ? 0 : response.total();
+            List<SyncIncomingRow> rows = new ArrayList<>();
+            if (response != null && response.concepts() != null) {
+                for (SyncPendingConcept concept : response.concepts()) {
+                    rows.add(SyncIncomingRow.from(concept));
+                }
+            }
+            incomingRows = rows;
+            incomingPage = 0;
+            incomingExpanded = !rows.isEmpty();
+            syncSucceeded = false;
+            lastResponse = null;
+            if (incomingTotal <= 0) {
+                MessageUtils.showInformationMessage(localeOrKey("v2.sync.incoming.empty"));
+            } else {
+                MessageUtils.showInformationMessage(
+                        incomingTotal + " concept(s) modifié(s) sur le maître");
+            }
+        } catch (InvalidToolboxDataException ex) {
+            incomingRows = List.of();
+            incomingTotal = 0;
+            MessageUtils.showErrorMessage(ex.getMessage());
+        } catch (RuntimeException ex) {
+            incomingRows = List.of();
+            incomingTotal = 0;
+            MessageUtils.showErrorMessage(StringUtils.defaultIfBlank(
+                    ex.getMessage(), localeOrKey("v2.sync.solicit.failed")));
+        }
+    }
+
+    public void startPull() {
+        if (!canManage() || !isPullMode() || isPullStartDisabled()) {
+            return;
+        }
+        List<String> selectedIds = getSelectedIncomingIds();
+        if (selectedIds.isEmpty()) {
+            MessageUtils.showErrorMessage(localeOrKey("v2.sync.pull.startDisabled"));
+            return;
+        }
+        String apiKeyToSave = ApiKeyDisplayMask.resolveForPersist(masterApiKey, storedMasterApiKey);
+        if (!persistMasterLink()) {
+            return;
+        }
+        progressKey = buildProgressKey();
+        ProgressState state = progressTracker.start(progressKey);
+
+        final String syncThesaurusId = thesaurusId;
+        final String authorName = userSession.getCurrentUsername();
+        final String authorEmail = userSession.getCurrentUserEmail();
+        final String syncComment = comment;
+        final boolean createCandidatesFlag = createCandidates;
+        final String key = progressKey;
+        final ThesaurusSyncSendService.SyncConfig masterLink = new ThesaurusSyncSendService.SyncConfig(
+                masterServerUrl, masterThesaurusId, apiKeyToSave, lastSyncAt);
+        final User user = User.builder()
+                .id(userSession.getCurrentUserId())
+                .username(authorName)
+                .mail(authorEmail)
+                .build();
+
+        resolveSyncExecutor().execute(() -> runPullInBackground(
+                key,
+                state,
+                syncThesaurusId,
+                selectedIds,
+                authorName,
+                authorEmail,
+                syncComment,
+                createCandidatesFlag,
+                masterLink,
+                user
+        ));
+        notifyIfFinished();
+    }
+
+    public void selectAllIncoming() {
+        for (SyncIncomingRow row : incomingRows) {
+            row.setSelected(true);
+        }
+    }
+
+    public void selectNoneIncoming() {
+        for (SyncIncomingRow row : incomingRows) {
+            row.setSelected(false);
+        }
+    }
+
+    public List<String> getSelectedIncomingIds() {
+        List<String> ids = new ArrayList<>();
+        for (SyncIncomingRow row : incomingRows) {
+            if (row.isSelected() && StringUtils.isNotBlank(row.getId())) {
+                ids.add(row.getId());
+            }
+        }
+        return ids;
+    }
+
+    public int getSelectedIncomingCount() {
+        return getSelectedIncomingIds().size();
     }
 
     /**
@@ -272,6 +435,10 @@ public class ThesaurusSyncBean implements Serializable {
 
     public boolean isStartDisabled() {
         return isRunning() || syncSucceeded;
+    }
+
+    public boolean isPullStartDisabled() {
+        return isRunning() || syncSucceeded || getSelectedIncomingIds().isEmpty();
     }
 
     public boolean isProgressVisible() {
@@ -381,6 +548,70 @@ public class ThesaurusSyncBean implements Serializable {
         if (!isPendingNextDisabled()) {
             pendingPage++;
         }
+    }
+
+    public boolean isIncomingVisible() {
+        return incomingRows != null && !incomingRows.isEmpty();
+    }
+
+    public boolean isIncomingTableVisible() {
+        return isIncomingVisible() && incomingExpanded;
+    }
+
+    public void toggleIncomingExpanded() {
+        incomingExpanded = !incomingExpanded;
+    }
+
+    public List<SyncIncomingRow> getPagedIncomingRows() {
+        return pageOf(incomingRows, incomingPage);
+    }
+
+    public int getIncomingPageCount() {
+        return pageCount(incomingRows);
+    }
+
+    public int getIncomingPageDisplay() {
+        return getIncomingPageCount() == 0 ? 0 : incomingPage + 1;
+    }
+
+    public boolean isIncomingPagerVisible() {
+        return isIncomingVisible() && getIncomingPageCount() > 1;
+    }
+
+    public boolean isIncomingPrevDisabled() {
+        return incomingPage <= 0;
+    }
+
+    public boolean isIncomingNextDisabled() {
+        return incomingPage + 1 >= getIncomingPageCount();
+    }
+
+    public void previousIncomingPage() {
+        if (!isIncomingPrevDisabled()) {
+            incomingPage--;
+        }
+    }
+
+    public void nextIncomingPage() {
+        if (!isIncomingNextDisabled()) {
+            incomingPage++;
+        }
+    }
+
+    public int getIncomingHiddenCount() {
+        int shown = incomingRows == null ? 0 : incomingRows.size();
+        return Math.max(0, incomingTotal - shown);
+    }
+
+    public String incomingFieldsLabel(SyncIncomingRow row) {
+        if (row == null || row.getChangedFields() == null || row.getChangedFields().isEmpty()) {
+            return localeOrKey("v2.sync.field.unknown");
+        }
+        List<String> labels = new ArrayList<>();
+        for (String key : row.getChangedFields()) {
+            labels.add(fieldLabel(key));
+        }
+        return String.join(", ", labels);
     }
 
     public boolean isResultVisible() {
@@ -576,6 +807,9 @@ public class ThesaurusSyncBean implements Serializable {
             case "v2.sync.action.add" -> "ajout";
             case "v2.sync.action.update" -> "modification";
             case "v2.sync.action.delete" -> "suppression";
+            case "v2.sync.incoming.empty" -> "Aucun concept modifié sur le maître depuis la dernière synchronisation.";
+            case "v2.sync.pull.startDisabled" -> "Sélectionnez au moins un concept, ou la réception est déjà terminée.";
+            case "v2.sync.solicit.failed" -> "Impossible de solliciter le maître.";
             default -> key;
         };
     }
@@ -616,7 +850,6 @@ public class ThesaurusSyncBean implements Serializable {
             state.setProgressValue(100);
             state.setStatusMessage("Synchronisation terminée");
             state.setLastSyncFailed(false);
-            refreshConceptCountQuietly();
         } catch (InvalidToolboxDataException ex) {
             state.setLastSyncFailed(true);
             state.setLastSyncError(ex.getMessage());
@@ -628,6 +861,68 @@ public class ThesaurusSyncBean implements Serializable {
         } finally {
             progressTracker.finish(key);
         }
+    }
+
+    private void runPullInBackground(
+            String key,
+            ProgressState state,
+            String syncThesaurusId,
+            List<String> selectedIds,
+            String authorName,
+            String authorEmail,
+            String syncComment,
+            boolean createCandidatesFlag,
+            ThesaurusSyncSendService.SyncConfig masterLink,
+            User user
+    ) {
+        try {
+            SyncBatchResponse response = thesaurusSyncPullService.pull(
+                    syncThesaurusId,
+                    selectedIds,
+                    authorName,
+                    authorEmail,
+                    syncComment,
+                    createCandidatesFlag,
+                    masterLink,
+                    user,
+                    progress -> {
+                        state.setTotal(progress.total());
+                        state.setProcessed(progress.processed());
+                        state.setSkipped(progress.skipped());
+                        state.setPropositions(progress.propositions());
+                        state.setCandidates(progress.candidates());
+                        state.setErrors(progress.errors());
+                        state.setProgressValue(Math.max(1, Math.min(99, progress.percent())));
+                        state.setStatusMessage(StringUtils.defaultIfBlank(
+                                progress.message(), "Réception en cours…"));
+                    }
+            );
+            lastResponse = response;
+            resultPage = 0;
+            state.setResults(response == null || response.results() == null ? List.of() : response.results());
+            state.setProgressValue(100);
+            state.setStatusMessage("Réception terminée");
+            state.setLastSyncFailed(false);
+        } catch (InvalidToolboxDataException ex) {
+            state.setLastSyncFailed(true);
+            state.setLastSyncError(ex.getMessage());
+            state.setStatusMessage(ex.getMessage());
+        } catch (Exception ex) {
+            state.setLastSyncFailed(true);
+            state.setLastSyncError(StringUtils.defaultIfBlank(ex.getMessage(), "Erreur de synchronisation"));
+            state.setStatusMessage(state.getLastSyncError());
+        } finally {
+            progressTracker.finish(key);
+        }
+    }
+
+    private ThesaurusSyncSendService.SyncConfig currentMasterLink() {
+        return new ThesaurusSyncSendService.SyncConfig(
+                masterServerUrl,
+                masterThesaurusId,
+                ApiKeyDisplayMask.resolveForPersist(masterApiKey, storedMasterApiKey),
+                lastSyncAt
+        );
     }
 
     private ProgressState currentState() {
@@ -693,6 +988,11 @@ public class ThesaurusSyncBean implements Serializable {
         resultExpanded = false;
         pendingPage = 0;
         resultPage = 0;
+        mode = MODE_PUSH;
+        incomingRows = List.of();
+        incomingTotal = 0;
+        incomingExpanded = false;
+        incomingPage = 0;
     }
 
     private static <T> List<T> pageOf(List<T> items, int page) {

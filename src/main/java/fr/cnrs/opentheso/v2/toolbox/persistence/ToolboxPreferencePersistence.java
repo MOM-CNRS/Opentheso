@@ -93,6 +93,7 @@ public class ToolboxPreferencePersistence {
         }
     }
 
+    @Transactional
     public void updateLastSyncAt(String thesaurusId, java.time.LocalDateTime lastSyncAt) {
         if (StringUtils.isBlank(thesaurusId)) {
             return;

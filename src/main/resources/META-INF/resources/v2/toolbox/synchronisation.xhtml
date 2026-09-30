@@ -31,7 +31,10 @@
                 <div class="sy-head-copy">
                   <span class="sy-kicker">#{v2LocaleBean.getMsg('v2.sync.kicker')}</span>
                   <h1 class="bo-title">#{v2LocaleBean.getMsg('v2.home.workshop.sync')}</h1>
-                  <p class="bo-sub">#{v2LocaleBean.getMsg('v2.sync.subtitle')}</p>
+                  <p class="bo-sub">
+                    <ui:fragment rendered="#{v2ThesaurusSyncBean.pullMode}">#{v2LocaleBean.getMsg('v2.sync.subtitle.pull')}</ui:fragment>
+                    <ui:fragment rendered="#{not v2ThesaurusSyncBean.pullMode}">#{v2LocaleBean.getMsg('v2.sync.subtitle')}</ui:fragment>
+                  </p>
                   <ui:fragment rendered="#{not empty v2ThesaurusViewBean.title}">
                     <span class="sy-theso" title="#{v2ThesaurusViewBean.id}">#{v2ThesaurusViewBean.title}</span>
                   </ui:fragment>
@@ -45,6 +48,7 @@
               <div class="bo-full st-scope">
                 <h:form id="previewSyncForm" prependId="false">
                   <h:inputHidden id="syncPendingOpen" value="#{v2ThesaurusSyncBean.pendingExpanded}"/>
+                  <h:inputHidden id="syncIncomingOpen" value="#{v2ThesaurusSyncBean.incomingExpanded}"/>
                   <h:inputHidden id="syncResultOpen" value="#{v2ThesaurusSyncBean.resultExpanded}"/>
                   <h:messages id="messageIndex" infoClass="st-corpus-msg" errorClass="st-corpus-msg is-error" warnClass="st-corpus-msg"/>
                   <h:panelGroup id="previewSyncBox" layout="block" styleClass="sy-box">
@@ -55,6 +59,12 @@
                       </div>
                     </h:panelGroup>
                     <h:panelGroup rendered="#{v2ThesaurusSyncBean.formAvailable}" layout="block" styleClass="sy-flow">
+                      <h:commandButton id="syncEnterGo" value="save" styleClass="st-jsf-go"
+                                       action="#{v2ThesaurusSyncBean.saveMasterLink}"
+                                       disabled="#{v2ThesaurusSyncBean.running}">
+                        <f:ajax execute="syncMasterUrl syncMasterTheso syncMasterKey syncPendingOpen syncIncomingOpen syncResultOpen @this"
+                                render="previewSyncBox messageIndex"/>
+                      </h:commandButton>
                       <div class="sy-stats">
                         <div class="sy-stat">
                           <span class="sy-stat-l">#{v2LocaleBean.getMsg('toolbox.lastSyncAt')}</span>
@@ -66,9 +76,28 @@
                           </strong>
                         </div>
                         <div class="sy-stat">
-                          <span class="sy-stat-l">#{v2LocaleBean.getMsg('toolbox.conceptsToSync')}</span>
-                          <strong class="sy-stat-v">#{v2ThesaurusSyncBean.conceptCount}</strong>
+                          <span class="sy-stat-l">#{v2ThesaurusSyncBean.pullMode ? v2LocaleBean.getMsg('v2.sync.incoming.count') : v2LocaleBean.getMsg('toolbox.conceptsToSync')}</span>
+                          <strong class="sy-stat-v">#{v2ThesaurusSyncBean.pullMode ? v2ThesaurusSyncBean.incomingTotal : v2ThesaurusSyncBean.conceptCount}</strong>
                         </div>
+                      </div>
+
+                      <div class="sy-modes" role="tablist">
+                        <h:commandButton id="syncModePush"
+                                         value="#{v2LocaleBean.getMsg('v2.sync.mode.push')}"
+                                         styleClass="sy-mode#{v2ThesaurusSyncBean.pushMode ? ' is-on' : ''}"
+                                         action="#{v2ThesaurusSyncBean.selectPushMode}"
+                                         disabled="#{v2ThesaurusSyncBean.running}">
+                          <f:ajax execute="syncMasterUrl syncMasterTheso syncMasterKey syncCreateCandidates syncComment syncPendingOpen syncIncomingOpen syncResultOpen @this"
+                                  render="previewSyncBox messageIndex"/>
+                        </h:commandButton>
+                        <h:commandButton id="syncModePull"
+                                         value="#{v2LocaleBean.getMsg('v2.sync.mode.pull')}"
+                                         styleClass="sy-mode#{v2ThesaurusSyncBean.pullMode ? ' is-on' : ''}"
+                                         action="#{v2ThesaurusSyncBean.selectPullMode}"
+                                         disabled="#{v2ThesaurusSyncBean.running}">
+                          <f:ajax execute="syncMasterUrl syncMasterTheso syncMasterKey syncCreateCandidates syncComment syncPendingOpen syncIncomingOpen syncResultOpen @this"
+                                  render="previewSyncBox messageIndex"/>
+                        </h:commandButton>
                       </div>
 
                       <section class="sy-card">
@@ -100,20 +129,23 @@
                                              redisplay="true" disabled="#{v2ThesaurusSyncBean.running}"/>
                             </label>
                           </div>
-                          <ui:fragment rendered="#{empty v2ThesaurusSyncBean.formattedLastSyncAt}">
+                          <ui:fragment rendered="#{empty v2ThesaurusSyncBean.formattedLastSyncAt and v2ThesaurusSyncBean.pushMode}">
                             <p class="sy-hint">#{v2LocaleBean.getMsg('v2.sync.firstHint')}</p>
+                          </ui:fragment>
+                          <ui:fragment rendered="#{empty v2ThesaurusSyncBean.formattedLastSyncAt and v2ThesaurusSyncBean.pullMode}">
+                            <p class="sy-hint">#{v2LocaleBean.getMsg('v2.sync.firstHint.pull')}</p>
                           </ui:fragment>
                           <div class="sy-actions">
                             <h:commandButton value="#{v2LocaleBean.getMsg('v2.sync.saveLink')}" styleClass="bo-btn ghost"
                                              action="#{v2ThesaurusSyncBean.saveMasterLink}"
                                              disabled="#{v2ThesaurusSyncBean.running}">
-                              <f:ajax execute="syncMasterUrl syncMasterTheso syncMasterKey syncPendingOpen syncResultOpen @this"
+                              <f:ajax execute="syncMasterUrl syncMasterTheso syncMasterKey syncPendingOpen syncIncomingOpen syncResultOpen @this"
                                       render="previewSyncBox messageIndex"/>
                             </h:commandButton>
                             <h:commandButton value="#{v2LocaleBean.getMsg('v2.sync.refreshCount')}" styleClass="bo-btn ghost"
                                              action="#{v2ThesaurusSyncBean.refreshPreparation}"
                                              disabled="#{v2ThesaurusSyncBean.running}">
-                              <f:ajax execute="syncMasterUrl syncMasterTheso syncMasterKey syncPendingOpen syncResultOpen @this"
+                              <f:ajax execute="syncMasterUrl syncMasterTheso syncMasterKey syncPendingOpen syncIncomingOpen syncResultOpen @this"
                                       render="previewSyncBox messageIndex"/>
                             </h:commandButton>
                           </div>
@@ -124,12 +156,12 @@
                         <header class="sy-card-h">
                           <span class="sy-step">2</span>
                           <div>
-                            <h2 class="sy-card-t">#{v2LocaleBean.getMsg('v2.sync.step.run')}</h2>
-                            <p class="sy-card-d">#{v2LocaleBean.getMsg('v2.sync.step.run.hint')}</p>
+                            <h2 class="sy-card-t">#{v2ThesaurusSyncBean.pullMode ? v2LocaleBean.getMsg('v2.sync.step.pull') : v2LocaleBean.getMsg('v2.sync.step.run')}</h2>
+                            <p class="sy-card-d">#{v2ThesaurusSyncBean.pullMode ? v2LocaleBean.getMsg('v2.sync.step.pull.hint') : v2LocaleBean.getMsg('v2.sync.step.run.hint')}</p>
                           </div>
                         </header>
                         <div class="sy-card-b">
-                          <h:panelGroup rendered="#{v2ThesaurusSyncBean.pendingVisible}" layout="block"
+                          <h:panelGroup rendered="#{v2ThesaurusSyncBean.pushMode and v2ThesaurusSyncBean.pendingVisible}" layout="block"
                                         styleClass="sync-diff#{v2ThesaurusSyncBean.pendingExpanded ? ' is-open' : ''}">
                             <button type="button"
                                     class="sync-diff-toggle"
@@ -175,7 +207,7 @@
                                                  styleClass="bo-btn ghost sm"
                                                  action="#{v2ThesaurusSyncBean.previousPendingPage}"
                                                  disabled="#{v2ThesaurusSyncBean.pendingPrevDisabled}">
-                                  <f:ajax execute="syncPendingOpen syncResultOpen @this" render="previewSyncBox"/>
+                                  <f:ajax execute="syncPendingOpen syncIncomingOpen syncResultOpen @this" render="previewSyncBox"/>
                                 </h:commandButton>
                                 <span class="sync-pager-info">
                                   #{v2LocaleBean.getMsg('v2.sync.pager.page')}
@@ -185,12 +217,112 @@
                                                  styleClass="bo-btn ghost sm"
                                                  action="#{v2ThesaurusSyncBean.nextPendingPage}"
                                                  disabled="#{v2ThesaurusSyncBean.pendingNextDisabled}">
-                                  <f:ajax execute="syncPendingOpen syncResultOpen @this" render="previewSyncBox"/>
+                                  <f:ajax execute="syncPendingOpen syncIncomingOpen syncResultOpen @this" render="previewSyncBox"/>
                                 </h:commandButton>
                               </h:panelGroup>
                               <ui:fragment rendered="#{v2ThesaurusSyncBean.pendingHiddenCount gt 0}">
                                 <p class="sync-diff-more">#{v2ThesaurusSyncBean.pendingHiddenCount} #{v2LocaleBean.getMsg('v2.sync.pending.more')}</p>
                               </ui:fragment>
+                            </h:panelGroup>
+                          </h:panelGroup>
+
+                          <h:panelGroup rendered="#{v2ThesaurusSyncBean.pullMode}" layout="block" styleClass="sy-pull">
+                            <div class="sy-actions">
+                              <button type="button"
+                                      class="bo-btn ghost#{v2ThesaurusSyncBean.running ? ' is-off' : ''}"
+                                      data-act="sync-solicit"
+                                      aria-disabled="#{v2ThesaurusSyncBean.running}">
+                                #{v2LocaleBean.getMsg('v2.sync.solicit')}
+                              </button>
+                            </div>
+                            <h:panelGroup rendered="#{v2ThesaurusSyncBean.incomingVisible}" layout="block"
+                                          styleClass="sync-diff#{v2ThesaurusSyncBean.incomingExpanded ? ' is-open' : ''}">
+                              <button type="button"
+                                      class="sync-diff-toggle"
+                                      data-sync-diff="incoming"
+                                      data-hidden="syncIncomingOpen"
+                                      data-label-stack="#{v2LocaleBean.getMsg('v2.sync.toggle.stack')}"
+                                      data-label-unstack="#{v2LocaleBean.getMsg('v2.sync.toggle.unstack')}"
+                                      title="#{v2ThesaurusSyncBean.incomingExpanded ? v2LocaleBean.getMsg('v2.sync.toggle.stack') : v2LocaleBean.getMsg('v2.sync.toggle.unstack')}"
+                                      aria-expanded="#{v2ThesaurusSyncBean.incomingExpanded}"
+                                      onclick="return window.tpToggleSyncDiff(this);">
+                                <svg class="sync-diff-caret" viewBox="0 0 24 24" aria-hidden="true"><path d="m6 9 6 6 6-6"/></svg>
+                                <span class="sync-diff-h">#{v2LocaleBean.getMsg('v2.sync.incoming.title')}</span>
+                                <span class="sync-diff-n">#{v2ThesaurusSyncBean.incomingTotal}</span>
+                                <span class="sync-diff-act">#{v2ThesaurusSyncBean.incomingExpanded ? v2LocaleBean.getMsg('v2.sync.toggle.stack') : v2LocaleBean.getMsg('v2.sync.toggle.unstack')}</span>
+                              </button>
+                              <h:panelGroup layout="block" styleClass="sync-diff-body">
+                                <p class="sync-diff-d">#{v2LocaleBean.getMsg('v2.sync.incoming.hint')}</p>
+                                <div class="sy-select-bar">
+                                  <h:commandButton value="#{v2LocaleBean.getMsg('v2.sync.incoming.selectAll')}"
+                                                   styleClass="bo-btn ghost sm"
+                                                   action="#{v2ThesaurusSyncBean.selectAllIncoming}"
+                                                   disabled="#{v2ThesaurusSyncBean.running}">
+                                    <f:ajax execute="syncPendingOpen syncIncomingOpen syncResultOpen @this" render="previewSyncBox"/>
+                                  </h:commandButton>
+                                  <h:commandButton value="#{v2LocaleBean.getMsg('v2.sync.incoming.selectNone')}"
+                                                   styleClass="bo-btn ghost sm"
+                                                   action="#{v2ThesaurusSyncBean.selectNoneIncoming}"
+                                                   disabled="#{v2ThesaurusSyncBean.running}">
+                                    <f:ajax execute="syncPendingOpen syncIncomingOpen syncResultOpen @this" render="previewSyncBox"/>
+                                  </h:commandButton>
+                                  <h:panelGroup id="syncIncomingSelCount" styleClass="sync-pager-info">
+                                    #{v2ThesaurusSyncBean.selectedIncomingCount}
+                                    #{v2LocaleBean.getMsg('v2.sync.incoming.selected')}
+                                  </h:panelGroup>
+                                </div>
+                                <table class="st-table sync-diff-table">
+                                  <thead>
+                                    <tr>
+                                      <th class="sync-diff-check">#{v2LocaleBean.getMsg('v2.sync.col.select')}</th>
+                                      <th>#{v2LocaleBean.getMsg('v2.sync.col.concept')}</th>
+                                      <th>#{v2LocaleBean.getMsg('v2.sync.col.fields')}</th>
+                                    </tr>
+                                  </thead>
+                                  <tbody>
+                                    <ui:repeat value="#{v2ThesaurusSyncBean.pagedIncomingRows}" var="row">
+                                      <tr>
+                                        <td class="sync-diff-check">
+                                          <h:selectBooleanCheckbox id="syncIncomingSel" value="#{row.selected}"
+                                                                   disabled="#{v2ThesaurusSyncBean.running}">
+                                            <f:ajax execute="@this" render="syncIncomingSelCount previewSyncRunGo"/>
+                                          </h:selectBooleanCheckbox>
+                                        </td>
+                                        <td class="sync-diff-concept">
+                                          <span class="sync-diff-name">#{row.label}</span>
+                                          <span class="sync-diff-id">#{row.id}</span>
+                                        </td>
+                                        <td>
+                                          <ui:repeat value="#{row.changedFields}" var="field">
+                                            <span class="sync-chip">#{v2ThesaurusSyncBean.fieldLabel(field)}</span>
+                                          </ui:repeat>
+                                        </td>
+                                      </tr>
+                                    </ui:repeat>
+                                  </tbody>
+                                </table>
+                                <h:panelGroup rendered="#{v2ThesaurusSyncBean.incomingPagerVisible}" layout="block" styleClass="sync-pager">
+                                  <h:commandButton value="#{v2LocaleBean.getMsg('v2.sync.pager.prev')}"
+                                                   styleClass="bo-btn ghost sm"
+                                                   action="#{v2ThesaurusSyncBean.previousIncomingPage}"
+                                                   disabled="#{v2ThesaurusSyncBean.incomingPrevDisabled}">
+                                    <f:ajax execute="syncPendingOpen syncIncomingOpen syncResultOpen @this" render="previewSyncBox"/>
+                                  </h:commandButton>
+                                  <span class="sync-pager-info">
+                                    #{v2LocaleBean.getMsg('v2.sync.pager.page')}
+                                    #{v2ThesaurusSyncBean.incomingPageDisplay} / #{v2ThesaurusSyncBean.incomingPageCount}
+                                  </span>
+                                  <h:commandButton value="#{v2LocaleBean.getMsg('v2.sync.pager.next')}"
+                                                   styleClass="bo-btn ghost sm"
+                                                   action="#{v2ThesaurusSyncBean.nextIncomingPage}"
+                                                   disabled="#{v2ThesaurusSyncBean.incomingNextDisabled}">
+                                    <f:ajax execute="syncPendingOpen syncIncomingOpen syncResultOpen @this" render="previewSyncBox"/>
+                                  </h:commandButton>
+                                </h:panelGroup>
+                                <ui:fragment rendered="#{v2ThesaurusSyncBean.incomingHiddenCount gt 0}">
+                                  <p class="sync-diff-more">#{v2ThesaurusSyncBean.incomingHiddenCount} #{v2LocaleBean.getMsg('v2.sync.incoming.more')}</p>
+                                </ui:fragment>
+                              </h:panelGroup>
                             </h:panelGroup>
                           </h:panelGroup>
 
@@ -250,7 +382,7 @@
                               <span class="sync-diff-act">#{v2ThesaurusSyncBean.resultExpanded ? v2LocaleBean.getMsg('v2.sync.toggle.stack') : v2LocaleBean.getMsg('v2.sync.toggle.unstack')}</span>
                             </button>
                             <h:panelGroup layout="block" styleClass="sync-diff-body">
-                              <p class="sync-diff-d">#{v2LocaleBean.getMsg('v2.sync.result.hint')}</p>
+                              <p class="sync-diff-d">#{v2ThesaurusSyncBean.pullMode ? v2LocaleBean.getMsg('v2.sync.result.hint.pull') : v2LocaleBean.getMsg('v2.sync.result.hint')}</p>
                               <table class="st-table sync-diff-table">
                                 <thead>
                                   <tr>
@@ -293,7 +425,7 @@
                                                  styleClass="bo-btn ghost sm"
                                                  action="#{v2ThesaurusSyncBean.previousResultPage}"
                                                  disabled="#{v2ThesaurusSyncBean.resultPrevDisabled}">
-                                  <f:ajax execute="syncPendingOpen syncResultOpen @this" render="previewSyncBox"/>
+                                  <f:ajax execute="syncPendingOpen syncIncomingOpen syncResultOpen @this" render="previewSyncBox"/>
                                 </h:commandButton>
                                 <span class="sync-pager-info">
                                   #{v2LocaleBean.getMsg('v2.sync.pager.page')}
@@ -303,25 +435,41 @@
                                                  styleClass="bo-btn ghost sm"
                                                  action="#{v2ThesaurusSyncBean.nextResultPage}"
                                                  disabled="#{v2ThesaurusSyncBean.resultNextDisabled}">
-                                  <f:ajax execute="syncPendingOpen syncResultOpen @this" render="previewSyncBox"/>
+                                  <f:ajax execute="syncPendingOpen syncIncomingOpen syncResultOpen @this" render="previewSyncBox"/>
                                 </h:commandButton>
                               </h:panelGroup>
                             </h:panelGroup>
                           </h:panelGroup>
 
                           <div class="sy-actions sy-actions--run">
-                            <h:commandButton id="previewSyncStartGo"
-                                             value="#{v2LocaleBean.getMsg('toolbox.startSync')}"
-                                             styleClass="bo-btn primary"
-                                             title="#{v2ThesaurusSyncBean.syncSucceeded ? v2LocaleBean.getMsg('v2.sync.startDisabled') : v2LocaleBean.getMsg('toolbox.startSync')}"
-                                             action="#{v2ThesaurusSyncBean.startSync}"
-                                             disabled="#{v2ThesaurusSyncBean.startDisabled}">
-                              <f:ajax execute="syncMasterUrl syncMasterTheso syncMasterKey syncCreateCandidates syncComment syncPendingOpen syncResultOpen @this"
-                                      render="previewSyncBox messageIndex" onevent="onPreviewSyncPoll"/>
+                            <h:panelGroup id="previewSyncRunGo" layout="block" styleClass="sy-run-btns">
+                              <h:commandButton id="previewSyncStartGo"
+                                               value="#{v2LocaleBean.getMsg('toolbox.startSync')}"
+                                               styleClass="bo-btn primary#{v2ThesaurusSyncBean.pullMode ? ' is-off' : ''}"
+                                               title="#{v2ThesaurusSyncBean.syncSucceeded ? v2LocaleBean.getMsg('v2.sync.startDisabled') : v2LocaleBean.getMsg('toolbox.startSync')}"
+                                               action="#{v2ThesaurusSyncBean.startSync}"
+                                               disabled="#{v2ThesaurusSyncBean.startDisabled or v2ThesaurusSyncBean.pullMode}">
+                                <f:ajax execute="syncMasterUrl syncMasterTheso syncMasterKey syncCreateCandidates syncComment syncPendingOpen syncIncomingOpen syncResultOpen @this"
+                                        render="previewSyncBox messageIndex" onevent="onPreviewSyncPoll"/>
+                              </h:commandButton>
+                              <h:commandButton id="previewSyncPullGo"
+                                               value="#{v2LocaleBean.getMsg('v2.sync.pull.start')}"
+                                               styleClass="bo-btn primary#{v2ThesaurusSyncBean.pushMode ? ' is-off' : ''}"
+                                               title="#{v2ThesaurusSyncBean.pullStartDisabled ? v2LocaleBean.getMsg('v2.sync.pull.startDisabled') : v2LocaleBean.getMsg('v2.sync.pull.start')}"
+                                               action="#{v2ThesaurusSyncBean.startPull}"
+                                               disabled="#{v2ThesaurusSyncBean.pullStartDisabled or v2ThesaurusSyncBean.pushMode}">
+                                <f:ajax execute="syncMasterUrl syncMasterTheso syncMasterKey syncCreateCandidates syncComment syncPendingOpen syncIncomingOpen syncResultOpen @this"
+                                        render="previewSyncBox messageIndex" onevent="onPreviewSyncPoll"/>
+                              </h:commandButton>
+                            </h:panelGroup>
+                            <h:commandButton id="syncSolicitGo" value="solicit" styleClass="st-jsf-go"
+                                             action="#{v2ThesaurusSyncBean.solicitMaster}">
+                              <f:ajax execute="syncMasterUrl syncMasterTheso syncMasterKey syncPendingOpen syncIncomingOpen syncResultOpen @this"
+                                      render="previewSyncBox messageIndex"/>
                             </h:commandButton>
                             <h:commandButton id="previewSyncPollGo" value="poll" styleClass="st-jsf-go"
                                              action="#{v2ThesaurusSyncBean.onProgressPoll}">
-                              <f:ajax execute="syncPendingOpen syncResultOpen @this" render="previewSyncBox messageIndex" onevent="onPreviewSyncPoll"/>
+                              <f:ajax execute="syncPendingOpen syncIncomingOpen syncResultOpen @this" render="previewSyncBox messageIndex" onevent="onPreviewSyncPoll"/>
                             </h:commandButton>
                           </div>
                         </div>

@@ -8,10 +8,12 @@ import fr.cnrs.opentheso.v2.setting.service.ThesaurusPreferenceService;
 import fr.cnrs.opentheso.v2.setting.ui.ThesaurusContext;
 import fr.cnrs.opentheso.v2.shared.ui.UserSession;
 import fr.cnrs.opentheso.v2.sync.model.SyncBatchResponse;
+import fr.cnrs.opentheso.v2.sync.model.SyncChangesResponse;
 import fr.cnrs.opentheso.v2.sync.model.SyncConceptResult;
 import fr.cnrs.opentheso.v2.sync.model.SyncFieldChange;
 import fr.cnrs.opentheso.v2.sync.model.SyncPendingConcept;
 import fr.cnrs.opentheso.v2.sync.service.ThesaurusSyncProgressTracker;
+import fr.cnrs.opentheso.v2.sync.service.ThesaurusSyncPullService;
 import fr.cnrs.opentheso.v2.sync.service.ThesaurusSyncSendService;
 import fr.cnrs.opentheso.v2.toolbox.exception.InvalidToolboxDataException;
 import fr.cnrs.opentheso.v2.test.support.PrimeFacesTestSupport;
@@ -47,6 +49,8 @@ class ThesaurusSyncBeanTest {
     @Mock
     private ThesaurusSyncSendService thesaurusSyncSendService;
     @Mock
+    private ThesaurusSyncPullService thesaurusSyncPullService;
+    @Mock
     private UserSession userSession;
     @Mock
     private ThesaurusAccessService thesaurusAccessService;
@@ -62,7 +66,7 @@ class ThesaurusSyncBeanTest {
     void setUp() {
         progressTracker = new ThesaurusSyncProgressTracker();
         bean = new ThesaurusSyncBean(
-                thesaurusSyncSendService, progressTracker, userSession, thesaurusAccessService, thesaurusContext,
+                thesaurusSyncSendService, thesaurusSyncPullService, progressTracker, userSession, thesaurusAccessService, thesaurusContext,
                 thesaurusPreferenceService);
         bean.setSyncExecutor(Runnable::run);
     }
@@ -248,9 +252,6 @@ class ThesaurusSyncBeanTest {
         when(userSession.getCurrentUserEmail()).thenReturn("a@b.fr");
         when(thesaurusSyncSendService.runSync(anyString(), anyString(), anyString(), any(), anyBoolean(), any(), any()))
                 .thenReturn(SyncBatchResponse.from(List.of()));
-        when(thesaurusSyncSendService.prepare("TH1")).thenReturn(
-                new ThesaurusSyncSendService.SyncPreparation(
-                        "TH1", "https://nouveau.example", "TH_MASTER", "api-key", 0, "fr", null));
 
         bean.startSync();
 
@@ -282,6 +283,102 @@ class ThesaurusSyncBeanTest {
     }
 
     @Test
+    void selectPullMode_switchesCommentAndEnablesSolicit() {
+        assertTrue(bean.isPushMode());
+        bean.selectPullMode();
+        assertTrue(bean.isPullMode());
+        assertEquals(ThesaurusSyncBean.COMMENT_PULL, bean.getComment());
+        bean.selectPushMode();
+        assertTrue(bean.isPushMode());
+        assertEquals(ThesaurusSyncBean.COMMENT_PUSH, bean.getComment());
+    }
+
+    @Test
+    void solicitMaster_mapsRowsSelectedByDefault() {
+        stubAccess(true);
+        bean.setThesaurusId("TH1");
+        bean.setMasterServerUrl("https://master.example");
+        bean.setMasterThesaurusId("TH_MASTER");
+        bean.setMasterApiKey("api-key");
+        bean.selectPullMode();
+        when(thesaurusSyncPullService.solicit(eq("TH1"), any())).thenReturn(new SyncChangesResponse(
+                2,
+                List.of(
+                        new SyncPendingConcept("C1", "Chat", List.of("prefLabel")),
+                        new SyncPendingConcept("C2", "Chien", List.of("note"))
+                )
+        ));
+
+        try (MockedStatic<MessageUtils> messages = mockStatic(MessageUtils.class)) {
+            bean.solicitMaster();
+            messages.verify(() -> MessageUtils.showInformationMessage(anyString()));
+        }
+
+        assertEquals(2, bean.getIncomingTotal());
+        assertEquals(2, bean.getSelectedIncomingCount());
+        assertTrue(bean.getIncomingRows().get(0).isSelected());
+        assertTrue(bean.isIncomingVisible());
+        assertFalse(bean.isPullStartDisabled());
+    }
+
+    @Test
+    void solicitMaster_showsErrorWhenRemoteCallFailsUnexpectedly() {
+        stubAccess(true);
+        bean.setThesaurusId("TH1");
+        bean.setMasterServerUrl("https://master.example");
+        bean.setMasterThesaurusId("TH_MASTER");
+        bean.setMasterApiKey("api-key");
+        bean.selectPullMode();
+        when(thesaurusSyncPullService.solicit(eq("TH1"), any()))
+                .thenThrow(new IllegalStateException("timeout"));
+
+        try (MockedStatic<MessageUtils> messages = mockStatic(MessageUtils.class)) {
+            bean.solicitMaster();
+            messages.verify(() -> MessageUtils.showErrorMessage("timeout"));
+        }
+
+        assertEquals(0, bean.getIncomingTotal());
+        assertTrue(bean.getIncomingRows().isEmpty());
+    }
+
+    @Test
+    @SuppressWarnings("unchecked")
+    void startPull_sendsSelectedIdsOnly() {
+        stubAccess(true);
+        bean.setThesaurusId("TH1");
+        bean.setMasterServerUrl("https://master.example");
+        bean.setMasterThesaurusId("TH_MASTER");
+        bean.setMasterApiKey("api-key");
+        bean.setCreateCandidates(true);
+        bean.selectPullMode();
+        when(userSession.getCurrentUserId()).thenReturn(2);
+        when(userSession.getCurrentUsername()).thenReturn("alice");
+        when(userSession.getCurrentUserEmail()).thenReturn("a@b.fr");
+        when(thesaurusSyncPullService.solicit(eq("TH1"), any())).thenReturn(new SyncChangesResponse(
+                2,
+                List.of(
+                        new SyncPendingConcept("C1", "Chat", List.of("prefLabel")),
+                        new SyncPendingConcept("C2", "Chien", List.of("note"))
+                )
+        ));
+        when(thesaurusSyncPullService.pull(
+                eq("TH1"), any(), eq("alice"), eq("a@b.fr"), any(), anyBoolean(), any(), any(), any()))
+                .thenReturn(SyncBatchResponse.from(List.of(SyncConceptResult.proposition("C1", "C1", 3))));
+
+        try (MockedStatic<MessageUtils> ignored = mockStatic(MessageUtils.class)) {
+            bean.solicitMaster();
+        }
+        bean.getIncomingRows().get(1).setSelected(false);
+        bean.startPull();
+
+        org.mockito.ArgumentCaptor<List<String>> idsCaptor = org.mockito.ArgumentCaptor.forClass(List.class);
+        verify(thesaurusSyncPullService).pull(
+                eq("TH1"), idsCaptor.capture(), eq("alice"), eq("a@b.fr"), any(), eq(true), any(), any(), any());
+        assertEquals(List.of("C1"), idsCaptor.getValue());
+        assertTrue(bean.isSyncSucceeded() || bean.getProgressValue() == 100);
+    }
+
+    @Test
     void startSync_noopWhenAlreadyRunning() {
         stubAccess(true);
         bean.setThesaurusId("TH1");
@@ -294,9 +391,6 @@ class ThesaurusSyncBeanTest {
                     // with sync executor Runnable::run it finishes immediately, so start twice before second can run.
                     return SyncBatchResponse.from(List.of());
                 });
-        when(thesaurusSyncSendService.prepare("TH1")).thenReturn(
-                new ThesaurusSyncSendService.SyncPreparation(
-                        "TH1", "https://m", "THM", "k", 0, "fr", null));
 
         bean.setSyncExecutor(command -> {
             // Leave running=true during nested start attempt
@@ -465,9 +559,6 @@ class ThesaurusSyncBeanTest {
         when(userSession.getCurrentUserEmail()).thenReturn("a@b.fr");
         when(thesaurusSyncSendService.runSync(eq("TH1"), eq("alice"), eq("a@b.fr"), eq("c"), eq(false), any(), any()))
                 .thenReturn(SyncBatchResponse.from(List.of()));
-        when(thesaurusSyncSendService.prepare("TH1")).thenReturn(
-                new ThesaurusSyncSendService.SyncPreparation(
-                        "TH1", "https://m", "THM", "k", 0, "fr", null));
 
         bean.startSync();
 

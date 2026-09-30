@@ -413,7 +413,7 @@ a.st-hint:hover{text-decoration:underline}
 .bo-toast[hidden]{display:none}
 button.st-hint{background:none;border:none;padding:0;cursor:pointer;font:inherit}
 
-a.th-id,a.thesaurus-logo,a.thesaurus-btn,a.boc-item,a.boc,a.bo-back,a.empty-link,a.menu-row,a.menu-foot,a.admin-tile,a.proj-row,a.view-pick-item,a.view-add,a.cand-row,a.prop-item,a.prop-tab,a.bo-btn,a.abt-save,a.abt-cancel,a.tn-caret,a.cv-back-graph{color:inherit;text-decoration:none}
+a.th-id,a.thesaurus-logo,a.thesaurus-btn,a.boc-item,a.boc,a.bo-back,a.empty-link,a.menu-row,a.menu-foot,a.admin-tile,a.proj-row,a.view-pick-item,a.view-add,a.cand-row,a.prop-item,a.prop-tab,a.bo-btn,a.abt-save,a.abt-cancel,a.align-auto-close,a.tn-caret,a.cv-back-graph{color:inherit;text-decoration:none}
 a.th-id{flex:1}
 .login-form .st-input{
   max-width:none;margin:0;width:100%;box-sizing:border-box;
@@ -1637,6 +1637,23 @@ body:is([data-page="synchronisation"],[data-page="portail"]) .sy-role svg{
 }
 body:is([data-page="synchronisation"],[data-page="portail"]) .sy-flow{display:flex;flex-direction:column;gap:16px}
 body:is([data-page="synchronisation"],[data-page="portail"]) .sy-stats{display:grid;grid-template-columns:1fr 1fr;gap:10px}
+body:is([data-page="synchronisation"],[data-page="portail"]) .sy-modes{
+  display:flex;flex-wrap:wrap;gap:8px;padding:2px;border:1px solid var(--line);
+  border-radius:12px;background:var(--surface-2)
+}
+body:is([data-page="synchronisation"],[data-page="portail"]) .sy-mode{
+  flex:1 1 160px;margin:0;border:0;border-radius:10px;padding:9px 12px;
+  background:transparent;color:var(--ink-2);font:inherit;font-weight:650;font-size:13px;
+  cursor:pointer;-webkit-appearance:none;appearance:none
+}
+body:is([data-page="synchronisation"],[data-page="portail"]) .sy-mode.is-on{
+  background:var(--surface);color:var(--ink);box-shadow:0 0 0 1px var(--line)
+}
+body:is([data-page="synchronisation"],[data-page="portail"]) .sy-mode:disabled{opacity:.55;cursor:default}
+body:is([data-page="synchronisation"],[data-page="portail"]) .sy-select-bar{
+  display:flex;flex-wrap:wrap;align-items:center;gap:8px;margin:0 0 10px
+}
+body:is([data-page="synchronisation"],[data-page="portail"]) .sy-pull{margin-bottom:12px}
 body:is([data-page="synchronisation"],[data-page="portail"]) .sy-stat{
   padding:14px 16px;border:1px solid var(--line);border-radius:14px;
   background:var(--surface);box-shadow:var(--shadow-sm,0 1px 2px rgba(20,24,28,.04))
@@ -1680,6 +1697,8 @@ body:is([data-page="synchronisation"],[data-page="portail"]) .sy-open{
 body:is([data-page="synchronisation"],[data-page="portail"]) .sy-open:hover{text-decoration:underline}
 body:is([data-page="synchronisation"],[data-page="portail"]) .sy-actions{display:flex;flex-wrap:wrap;gap:8px;margin-top:16px}
 body:is([data-page="synchronisation"],[data-page="portail"]) .sy-actions--run{padding-top:4px}
+body:is([data-page="synchronisation"],[data-page="portail"]) .sy-run-btns{display:flex;flex-wrap:wrap;gap:8px}
+body:is([data-page="synchronisation"],[data-page="portail"]) .sy-run-btns .bo-btn.is-off{display:none!important}
 body[data-page="portail"] .po-run .abt-save,
 body[data-page="portail"] .po-run .abt-save.is-danger{min-width:168px}
 body[data-page="portail"] .po-run .abt-save.is-danger,
@@ -1859,6 +1878,8 @@ textarea.sync-comment{min-height:88px;max-width:none;resize:vertical}
 .sync-diff-table{width:100%;border-collapse:collapse}
 .sync-diff-table th,.sync-diff-table td{text-align:left;padding:8px 10px;border-bottom:1px solid var(--line-2);vertical-align:top}
 .sync-diff-table th{font-size:12px;color:var(--ink-3);font-weight:600}
+.sync-diff-check{width:44px;text-align:center;vertical-align:middle}
+.sync-diff-check input{margin:0}
 .sync-diff-concept{display:flex;flex-wrap:wrap;align-items:baseline;gap:6px 10px}
 .sync-diff-name{font-weight:600}
 .sync-diff-id{font-family:var(--mono);font-size:12px;color:var(--ink-3);white-space:nowrap}

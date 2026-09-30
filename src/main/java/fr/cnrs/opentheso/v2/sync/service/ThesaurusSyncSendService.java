@@ -19,7 +19,9 @@ import org.apache.commons.lang3.StringUtils;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Propagation;
 import org.springframework.transaction.annotation.Transactional;
+import org.springframework.web.util.UriUtils;
 
+import java.nio.charset.StandardCharsets;
 import java.time.LocalDateTime;
 import java.util.ArrayList;
 import java.util.List;
@@ -206,7 +208,11 @@ public class ThesaurusSyncSendService {
 
             List<SyncConceptPayload> payloads = new ArrayList<>();
             for (String conceptId : batchIds) {
-                payloadBuilder.build(slaveThesaurusId, conceptId, workLang).ifPresent(payloads::add);
+                payloadBuilder.build(slaveThesaurusId, conceptId, workLang).ifPresentOrElse(
+                        payloads::add,
+                        () -> allResults.add(SyncConceptResult.error(
+                                conceptId, "Concept introuvable ou illisible à l'envoi"))
+                );
             }
             if (payloads.isEmpty()) {
                 processed += batchIds.size();
@@ -217,7 +223,7 @@ public class ThesaurusSyncSendService {
                         count(allResults, SyncConceptOutcome.PROPOSITION_CREATED),
                         count(allResults, SyncConceptOutcome.CANDIDATE_CREATED),
                         count(allResults, SyncConceptOutcome.ERROR),
-                        "Lot " + batchNumber + " ignoré (payloads vides)"
+                        "Lot " + batchNumber + " : aucun concept lisible"
                 ));
                 continue;
             }
@@ -247,8 +253,10 @@ public class ThesaurusSyncSendService {
             ));
         }
 
-        toolboxPreferencePersistence.updateLastSyncAt(slaveThesaurusId, V2Dates.nowDateTime());
         SyncBatchResponse response = SyncBatchResponse.from(allResults);
+        if (response.errors() == 0) {
+            toolboxPreferencePersistence.updateLastSyncAt(slaveThesaurusId, V2Dates.nowDateTime());
+        }
         report(progressConsumer, new SyncProgress(
                 conceptIds.size(),
                 conceptIds.size(),
@@ -256,7 +264,9 @@ public class ThesaurusSyncSendService {
                 response.propositionsCreated(),
                 response.candidatesCreated(),
                 response.errors(),
-                "Synchronisation terminée"
+                response.errors() == 0
+                        ? "Synchronisation terminée"
+                        : "Synchronisation terminée avec " + response.errors() + " erreur(s)"
         ));
         return response;
     }
@@ -304,11 +314,21 @@ public class ThesaurusSyncSendService {
     }
 
     static String buildEndpoint(String masterServerUrl, String masterThesaurusId) {
+        return buildEndpoint(masterServerUrl, masterThesaurusId, "/sync/concepts");
+    }
+
+    static String buildEndpoint(String masterServerUrl, String masterThesaurusId, String path) {
         String base = masterServerUrl.trim();
         if (base.endsWith("/")) {
             base = base.substring(0, base.length() - 1);
         }
-        return base + "/api/v2/thesaurus/" + masterThesaurusId + "/sync/concepts";
+        String encodedId = UriUtils.encodePathSegment(
+                StringUtils.defaultString(masterThesaurusId), StandardCharsets.UTF_8);
+        String suffix = StringUtils.defaultIfBlank(path, "/sync/concepts");
+        if (!suffix.startsWith("/")) {
+            suffix = "/" + suffix;
+        }
+        return base + "/api/v2/thesaurus/" + encodedId + suffix;
     }
 
     private static int count(List<SyncConceptResult> results, SyncConceptOutcome outcome) {

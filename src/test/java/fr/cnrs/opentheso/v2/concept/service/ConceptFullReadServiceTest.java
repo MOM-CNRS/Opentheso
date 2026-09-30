@@ -12,12 +12,17 @@ import org.junit.jupiter.api.extension.ExtendWith;
 import org.mockito.Mock;
 import org.mockito.junit.jupiter.MockitoExtension;
 
+import java.util.ArrayList;
 import java.util.List;
 import java.util.Optional;
 
 import static org.junit.jupiter.api.Assertions.assertEquals;
 import static org.junit.jupiter.api.Assertions.assertFalse;
 import static org.junit.jupiter.api.Assertions.assertTrue;
+import static org.mockito.ArgumentMatchers.eq;
+import static org.mockito.ArgumentMatchers.isNull;
+import static org.mockito.Mockito.times;
+import static org.mockito.Mockito.verify;
 import static org.mockito.Mockito.when;
 
 @ExtendWith(MockitoExtension.class)
@@ -63,6 +68,50 @@ class ConceptFullReadServiceTest {
 
         assertTrue(loaded.isPresent());
         assertEquals("C1", loaded.get().getIdentifier());
+    }
+
+    @Test
+    void loadAllNarrowers_walksPagesUntilShortBatch() {
+        when(thesaurusPreferenceService.loadPreferencesOrNull("TH1", "fr")).thenReturn(null);
+        when(applicationUriService.resolveApplicationBaseUrl()).thenReturn("http://localhost");
+        List<ConceptHierarchicalRelation> firstPage = new ArrayList<>();
+        for (int i = 0; i < ConceptFullReadService.NARROWER_PAGE_SIZE + 1; i++) {
+            firstPage.add(new ConceptHierarchicalRelation("", "C" + i, "L" + i, "NT"));
+        }
+        List<ConceptHierarchicalRelation> secondPage = List.of(
+                new ConceptHierarchicalRelation("", "C41", "Last", "NT"));
+        when(conceptFullAssembler.assembleNarrowerRelations(
+                eq("TH1"),
+                eq("C1"),
+                eq("fr"),
+                eq(new ConceptAssemblePaging(0, ConceptFullReadService.NARROWER_PAGE_SIZE + 1, true)),
+                isNull(),
+                eq("http://localhost")
+        )).thenReturn(firstPage);
+        when(conceptFullAssembler.assembleNarrowerRelations(
+                eq("TH1"),
+                eq("C1"),
+                eq("fr"),
+                eq(new ConceptAssemblePaging(41, ConceptFullReadService.NARROWER_PAGE_SIZE + 1, true)),
+                isNull(),
+                eq("http://localhost")
+        )).thenReturn(secondPage);
+
+        List<ConceptHierarchicalRelation> loaded = service.loadAllNarrowers("TH1", "C1", "fr", true);
+
+        assertEquals(42, loaded.size());
+        assertEquals("C0", loaded.get(0).conceptId());
+        assertEquals("C40", loaded.get(40).conceptId());
+        assertEquals("C41", loaded.get(41).conceptId());
+        verify(conceptFullAssembler, times(2)).assembleNarrowerRelations(
+                eq("TH1"), eq("C1"), eq("fr"),
+                org.mockito.ArgumentMatchers.any(ConceptAssemblePaging.class),
+                isNull(), eq("http://localhost"));
+    }
+
+    @Test
+    void loadAllNarrowers_returnsEmptyWhenIdsBlank() {
+        assertTrue(service.loadAllNarrowers("", "C1", "fr", true).isEmpty());
     }
 
     @Test

@@ -3,6 +3,10 @@ package fr.cnrs.opentheso.v2.sync.service;
 import com.fasterxml.jackson.databind.ObjectMapper;
 import fr.cnrs.opentheso.v2.sync.model.SyncBatchRequest;
 import fr.cnrs.opentheso.v2.sync.model.SyncBatchResponse;
+import fr.cnrs.opentheso.v2.sync.model.SyncChangesRequest;
+import fr.cnrs.opentheso.v2.sync.model.SyncChangesResponse;
+import fr.cnrs.opentheso.v2.sync.model.SyncExportRequest;
+import fr.cnrs.opentheso.v2.sync.model.SyncExportResponse;
 import fr.cnrs.opentheso.v2.toolbox.exception.InvalidToolboxDataException;
 import org.apache.commons.lang3.StringUtils;
 import org.springframework.beans.factory.annotation.Autowired;
@@ -36,6 +40,20 @@ public class ThesaurusSyncHttpRemoteClient implements ThesaurusSyncRemoteClient 
 
     @Override
     public SyncBatchResponse postBatch(String endpoint, String apiKey, SyncBatchRequest request) {
+        return postJson(endpoint, apiKey, request, SyncBatchResponse.class);
+    }
+
+    @Override
+    public SyncChangesResponse postChanges(String endpoint, String apiKey, SyncChangesRequest request) {
+        return postJson(endpoint, apiKey, request, SyncChangesResponse.class);
+    }
+
+    @Override
+    public SyncExportResponse postExport(String endpoint, String apiKey, SyncExportRequest request) {
+        return postJson(endpoint, apiKey, request, SyncExportResponse.class);
+    }
+
+    private <T> T postJson(String endpoint, String apiKey, Object request, Class<T> type) {
         try {
             String json = objectMapper.writeValueAsString(request);
             HttpRequest httpRequest = HttpRequest.newBuilder()
@@ -47,7 +65,7 @@ public class ThesaurusSyncHttpRemoteClient implements ThesaurusSyncRemoteClient 
                     .build();
             HttpResponse<String> response = httpClient.send(httpRequest, HttpResponse.BodyHandlers.ofString());
             if (response.statusCode() >= 200 && response.statusCode() < 300) {
-                return objectMapper.readValue(response.body(), SyncBatchResponse.class);
+                return objectMapper.readValue(response.body(), type);
             }
             throw new InvalidToolboxDataException(
                     "Erreur HTTP " + response.statusCode() + " lors de l'appel au maître: "

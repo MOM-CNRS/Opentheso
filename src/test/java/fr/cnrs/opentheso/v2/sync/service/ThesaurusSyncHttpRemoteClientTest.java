@@ -3,8 +3,11 @@ package fr.cnrs.opentheso.v2.sync.service;
 import com.fasterxml.jackson.databind.ObjectMapper;
 import fr.cnrs.opentheso.v2.sync.model.SyncBatchRequest;
 import fr.cnrs.opentheso.v2.sync.model.SyncBatchResponse;
+import fr.cnrs.opentheso.v2.sync.model.SyncChangesRequest;
+import fr.cnrs.opentheso.v2.sync.model.SyncChangesResponse;
 import fr.cnrs.opentheso.v2.sync.model.SyncConceptPayload;
 import fr.cnrs.opentheso.v2.sync.model.SyncConceptResult;
+import fr.cnrs.opentheso.v2.sync.model.SyncPendingConcept;
 import fr.cnrs.opentheso.v2.toolbox.exception.InvalidToolboxDataException;
 import org.junit.jupiter.api.Test;
 import org.junit.jupiter.api.extension.ExtendWith;
@@ -131,5 +134,27 @@ class ThesaurusSyncHttpRemoteClientTest {
         assertEquals(List.of("my-key"), sent.headers().allValues("X-API-KEY"));
         assertEquals(List.of("application/json"), sent.headers().allValues("Content-Type"));
         assertEquals("POST", sent.method());
+    }
+
+    @Test
+    @SuppressWarnings("unchecked")
+    void postChanges_returnsDeserializedResponseOnHttp200() throws Exception {
+        ObjectMapper mapper = new ObjectMapper();
+        ThesaurusSyncHttpRemoteClient client = new ThesaurusSyncHttpRemoteClient(mapper, httpClient);
+        SyncChangesResponse expected = new SyncChangesResponse(
+                1, List.of(new SyncPendingConcept("C1", "Chat", List.of("prefLabel"))));
+        when(httpResponse.statusCode()).thenReturn(200);
+        when(httpResponse.body()).thenReturn(mapper.writeValueAsString(expected));
+        when(httpClient.send(any(HttpRequest.class), any(HttpResponse.BodyHandler.class)))
+                .thenReturn(httpResponse);
+
+        SyncChangesResponse response = client.postChanges(
+                "http://localhost/api/v2/thesaurus/TH/sync/changes",
+                "secret",
+                new SyncChangesRequest("2026-07-01T08:00", "fr")
+        );
+
+        assertEquals(1, response.total());
+        assertEquals("C1", response.concepts().get(0).id());
     }
 }

@@ -85,6 +85,14 @@ class ThesaurusSyncReceiveServiceTest {
     }
 
     @Test
+    void applyIncoming_doesNotRequireMasterRole() {
+        SyncBatchResponse response = service.applyIncoming("TH_COPY", emptyRequest(), user);
+
+        assertEquals(0, response.total());
+        verify(toolboxPreferencePersistence, never()).isMaster(anyString());
+    }
+
+    @Test
     void receiveBatch_returnsEmptyForEmptyPayload() {
         when(toolboxPreferencePersistence.isMaster("TH_MASTER")).thenReturn(true);
 

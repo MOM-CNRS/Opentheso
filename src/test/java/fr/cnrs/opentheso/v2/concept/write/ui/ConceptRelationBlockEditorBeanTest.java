@@ -1,8 +1,10 @@
 package fr.cnrs.opentheso.v2.concept.write.ui;
 
 import fr.cnrs.opentheso.v2.concept.model.ConceptDetail;
+import fr.cnrs.opentheso.v2.concept.model.ConceptHierarchicalRelation;
 import fr.cnrs.opentheso.v2.concept.model.ConceptRelation;
 import fr.cnrs.opentheso.v2.concept.model.ConceptSummary;
+import fr.cnrs.opentheso.v2.concept.service.ConceptFullReadService;
 import fr.cnrs.opentheso.v2.concept.session.ConceptSelectionContext;
 import fr.cnrs.opentheso.v2.concept.ui.ThesaurusViewBean;
 import fr.cnrs.opentheso.v2.concept.write.model.MutationResult;
@@ -50,6 +52,8 @@ class ConceptRelationBlockEditorBeanTest {
     private UserSession userSession;
     @Mock
     private ConceptSelectionContext conceptSelectionContext;
+    @Mock
+    private ConceptFullReadService conceptFullReadService;
 
     private ConceptRelationBlockEditorBean bean;
     private String ficheEditCard;
@@ -61,10 +65,14 @@ class ConceptRelationBlockEditorBeanTest {
                 conceptRelationMutationService,
                 conceptWritePolicy,
                 userSession,
-                conceptSelectionContext
+                conceptSelectionContext,
+                conceptFullReadService
         );
         lenient().when(conceptWritePolicy.canMutateHierarchicalRelations(eq(userSession), anyBoolean()))
                 .thenReturn(true);
+        lenient().when(userSession.isLoggedIn()).thenReturn(true);
+        lenient().when(conceptFullReadService.loadAllNarrowers(any(), any(), any(), anyBoolean()))
+                .thenReturn(List.of());
         lenient().when(thesaurusViewBean.getId()).thenReturn("TH1");
         lenient().when(thesaurusViewBean.getSelectedLang()).thenReturn("fr");
         lenient().when(thesaurusViewBean.isSelectedConceptDeprecated()).thenReturn(false);
@@ -92,6 +100,64 @@ class ConceptRelationBlockEditorBeanTest {
         assertEquals("R1", bean.getSelectedRelated().get(0).getId());
         assertEquals("[{\"id\":\"B1\",\"label\":\"Métal\"}]", bean.getSelectedBroaderJson());
         verify(conceptSelectionContext).update("TH1", thesaurusViewBean.getSelectedConcept());
+    }
+
+    @Test
+    void startEditing_loadsAllNarrowersBeyondFirstPage() {
+        when(thesaurusViewBean.getSelectedConcept()).thenReturn(detail(
+                List.of(),
+                List.of(new ConceptRelation("N1", "Bronze", null)),
+                List.of()));
+        when(conceptFullReadService.loadAllNarrowers("TH1", "C1", "fr", true)).thenReturn(List.of(
+                new ConceptHierarchicalRelation("", "N1", "Bronze", "NT"),
+                new ConceptHierarchicalRelation("", "N41", "Laiton", "NT")));
+
+        bean.startEditing();
+
+        assertEquals(2, bean.getSelectedNarrower().size());
+        assertEquals("N1", bean.getSelectedNarrower().get(0).getId());
+        assertEquals("N41", bean.getSelectedNarrower().get(1).getId());
+    }
+
+    @Test
+    void save_keepsNarrowersThatWereOnlyOnLaterPages() {
+        when(thesaurusViewBean.getSelectedConcept()).thenReturn(detail(
+                List.of(),
+                List.of(new ConceptRelation("N1", "Bronze", null)),
+                List.of()));
+        when(conceptFullReadService.loadAllNarrowers("TH1", "C1", "fr", true)).thenReturn(List.of(
+                new ConceptHierarchicalRelation("", "N1", "Bronze", "NT"),
+                new ConceptHierarchicalRelation("", "N41", "Laiton", "NT")));
+        bean.startEditing();
+        bean.setSelectedNarrowerJson("[{\"id\":\"N1\",\"label\":\"Bronze\"},{\"id\":\"N41\",\"label\":\"Laiton\"}]");
+
+        bean.save();
+
+        verify(conceptRelationMutationService, never()).addNarrowerRelation(any());
+        verify(conceptRelationMutationService, never()).deleteNarrowerRelation(any());
+        assertFalse(bean.isEditing());
+    }
+
+    @Test
+    void save_canDeleteNarrowerFromLaterPage() {
+        when(thesaurusViewBean.getSelectedConcept()).thenReturn(detail(
+                List.of(),
+                List.of(new ConceptRelation("N1", "Bronze", null)),
+                List.of()));
+        when(conceptFullReadService.loadAllNarrowers("TH1", "C1", "fr", true)).thenReturn(List.of(
+                new ConceptHierarchicalRelation("", "N1", "Bronze", "NT"),
+                new ConceptHierarchicalRelation("", "N41", "Laiton", "NT")));
+        when(conceptRelationMutationService.deleteNarrowerRelation(any())).thenReturn(MutationResult.ok("ok"));
+        bean.startEditing();
+        bean.setSelectedNarrowerJson("[{\"id\":\"N1\",\"label\":\"Bronze\"}]");
+
+        bean.save();
+
+        ArgumentCaptor<DeleteNarrowerRelationCommand> removedNt =
+                ArgumentCaptor.forClass(DeleteNarrowerRelationCommand.class);
+        verify(conceptRelationMutationService).deleteNarrowerRelation(removedNt.capture());
+        assertEquals("N41", removedNt.getValue().targetConceptId());
+        verify(conceptRelationMutationService, never()).addNarrowerRelation(any());
     }
 
     @Test
@@ -144,6 +210,19 @@ class ConceptRelationBlockEditorBeanTest {
         assertEquals("Un concept ne peut pas avoir plusieurs types de relation à la fois.", bean.getErrorMessage());
         verify(conceptRelationMutationService, never()).addBroaderRelation(any());
         verify(conceptRelationMutationService, never()).addRelatedRelation(any());
+    }
+
+    @Test
+    void save_rejectsSelfRelation() {
+        when(thesaurusViewBean.getSelectedConcept()).thenReturn(detail(List.of(), List.of(), List.of()));
+        bean.startEditing();
+        bean.setSelectedNarrowerJson("[{\"id\":\"C1\",\"label\":\"Moi\"}]");
+
+        bean.save();
+
+        assertTrue(bean.isEditing());
+        assertEquals("Un concept ne peut pas être en relation avec lui-même.", bean.getErrorMessage());
+        verify(conceptRelationMutationService, never()).addNarrowerRelation(any());
     }
 
     @Test

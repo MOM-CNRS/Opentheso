@@ -71,4 +71,13 @@ class SyncModelTest {
         prefs.put("fr", "Changed");
         assertEquals("Chat", payload.prefLabels().get("fr"));
     }
+
+    @Test
+    void incomingRow_isSelectedByDefault() {
+        SyncIncomingRow row = SyncIncomingRow.from(new SyncPendingConcept("C1", "Chat", List.of("note")));
+        assertTrue(row.isSelected());
+        assertEquals("C1", row.getId());
+        assertEquals("Chat", row.getLabel());
+        assertEquals(List.of("note"), row.getChangedFields());
+    }
 }

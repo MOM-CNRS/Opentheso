@@ -221,6 +221,22 @@ class ThesaurusSyncSendServiceTest {
     }
 
     @Test
+    void buildEndpoint_encodesThesaurusId() {
+        assertEquals(
+                "https://master.example/api/v2/thesaurus/TH%209/sync/concepts",
+                ThesaurusSyncSendService.buildEndpoint("https://master.example", "TH 9")
+        );
+    }
+
+    @Test
+    void buildEndpoint_appendsCustomPath() {
+        assertEquals(
+                "https://master.example/api/v2/thesaurus/TH9/sync/changes",
+                ThesaurusSyncSendService.buildEndpoint("https://master.example", "TH9", "/sync/changes")
+        );
+    }
+
+    @Test
     void buildEndpoint_keepsUrlWithoutTrailingSlash() {
         assertEquals(
                 "https://master.example/api/v2/thesaurus/TH9/sync/concepts",
@@ -368,7 +384,7 @@ class ThesaurusSyncSendServiceTest {
     }
 
     @Test
-    void runSync_skipsBatchWhenAllPayloadsEmpty_stillUpdatesLastSyncAt() {
+    void runSync_recordsErrorAndDoesNotUpdateLastSyncAtWhenPayloadMissing() {
         when(toolboxPreferencePersistence.findPreferences("TH1")).thenReturn(slavePrefs(null));
         when(conceptRepository.findAllByIdThesaurusAndStatusNot("TH1", "CA"))
                 .thenReturn(List.of(Concept.builder().idConcept("C1").build()));
@@ -376,9 +392,25 @@ class ThesaurusSyncSendServiceTest {
 
         SyncBatchResponse response = service.runSync("TH1", "a", "a@b.fr", "c", true, true, null);
 
-        assertEquals(0, response.total());
+        assertEquals(1, response.errors());
         verify(remoteClient, never()).postBatch(anyString(), anyString(), any());
-        verify(toolboxPreferencePersistence).updateLastSyncAt(eq("TH1"), any(LocalDateTime.class));
+        verify(toolboxPreferencePersistence, never()).updateLastSyncAt(anyString(), any());
+    }
+
+    @Test
+    void runSync_doesNotUpdateLastSyncAtWhenRemoteReturnsConceptErrors() {
+        when(toolboxPreferencePersistence.findPreferences("TH1")).thenReturn(slavePrefs(null));
+        when(conceptRepository.findAllByIdThesaurusAndStatusNot("TH1", "CA"))
+                .thenReturn(List.of(Concept.builder().idConcept("C1").build()));
+        when(payloadBuilder.build("TH1", "C1", "fr")).thenReturn(Optional.of(
+                SyncConceptPayload.builder().identifier("C1").prefLabel("fr", "X").build()));
+        when(remoteClient.postBatch(anyString(), eq("api-key"), any()))
+                .thenReturn(SyncBatchResponse.from(List.of(SyncConceptResult.error("C1", "échec maître"))));
+
+        SyncBatchResponse response = service.runSync("TH1", "a", "a@b.fr", "c", true, true, null);
+
+        assertEquals(1, response.errors());
+        verify(toolboxPreferencePersistence, never()).updateLastSyncAt(anyString(), any());
     }
 
     @Test

@@ -1,7 +1,9 @@
 package fr.cnrs.opentheso.v2.concept.write.ui;
 
 import fr.cnrs.opentheso.v2.concept.model.ConceptDetail;
+import fr.cnrs.opentheso.v2.concept.model.ConceptHierarchicalRelation;
 import fr.cnrs.opentheso.v2.concept.model.ConceptRelation;
+import fr.cnrs.opentheso.v2.concept.service.ConceptFullReadService;
 import fr.cnrs.opentheso.v2.concept.session.ConceptSelectionContext;
 import fr.cnrs.opentheso.v2.concept.ui.ThesaurusViewBean;
 import fr.cnrs.opentheso.v2.concept.write.model.MutationOutcome;
@@ -50,6 +52,7 @@ public class ConceptRelationBlockEditorBean implements Serializable {
     private final transient ConceptWritePolicy conceptWritePolicy;
     private final transient UserSession userSession;
     private final transient ConceptSelectionContext conceptSelectionContext;
+    private final transient ConceptFullReadService conceptFullReadService;
 
     @Getter(AccessLevel.NONE)
     private boolean editing;
@@ -58,6 +61,9 @@ public class ConceptRelationBlockEditorBean implements Serializable {
     private List<FacetEditRow> selectedBroader = new ArrayList<>();
     private List<FacetEditRow> selectedNarrower = new ArrayList<>();
     private List<FacetEditRow> selectedRelated = new ArrayList<>();
+    @Getter(AccessLevel.NONE)
+    @Setter(AccessLevel.NONE)
+    private List<ConceptRelation> baselineNarrower = new ArrayList<>();
     private String errorMessage;
     private String flashMessage;
     private String flashToken;
@@ -87,7 +93,7 @@ public class ConceptRelationBlockEditorBean implements Serializable {
         editingConceptId = detail.getSummary().getConceptId();
         editingLang = resolveLang(detail);
         selectedBroader = copyRelations(detail.getBroaderTerms());
-        selectedNarrower = copyRelations(detail.getNarrowerTerms());
+        selectedNarrower = copyRelations(loadAllNarrowerRelations(detail));
         selectedRelated = copyRelations(detail.getRelatedTerms());
         errorMessage = "";
         flashMessage = "";
@@ -173,7 +179,7 @@ public class ConceptRelationBlockEditorBean implements Serializable {
         }
 
         deleted = applyDeletes(
-                current.getNarrowerTerms(),
+                baselineNarrower,
                 narrowerIds,
                 targetId -> conceptRelationMutationService.deleteNarrowerRelation(
                         new DeleteNarrowerRelationCommand(
@@ -214,7 +220,7 @@ public class ConceptRelationBlockEditorBean implements Serializable {
         }
 
         added = applyAdds(
-                current.getNarrowerTerms(),
+                baselineNarrower,
                 selectedNarrower,
                 targetId -> conceptRelationMutationService.addNarrowerRelation(
                         new AddNarrowerRelationCommand(
@@ -356,7 +362,7 @@ public class ConceptRelationBlockEditorBean implements Serializable {
         }
         String selfId = normalizeId(conceptId);
         if (broaderIds.contains(selfId) || narrowerIds.contains(selfId) || relatedIds.contains(selfId)) {
-            errorMessage = "Relation non permise !";
+            errorMessage = "Un concept ne peut pas être en relation avec lui-même.";
             return false;
         }
         return true;
@@ -378,6 +384,7 @@ public class ConceptRelationBlockEditorBean implements Serializable {
         selectedBroader = new ArrayList<>();
         selectedNarrower = new ArrayList<>();
         selectedRelated = new ArrayList<>();
+        baselineNarrower = new ArrayList<>();
         errorMessage = "";
         treeReload = false;
         if (!keepFlash) {
@@ -418,6 +425,37 @@ public class ConceptRelationBlockEditorBean implements Serializable {
                 .map(ConceptRelationBlockEditorBean::normalizeId)
                 .filter(StringUtils::isNotBlank)
                 .collect(Collectors.toCollection(LinkedHashSet::new));
+    }
+
+    private List<ConceptRelation> loadAllNarrowerRelations(ConceptDetail detail) {
+        String thesaurusId = thesaurusViewBean.getId();
+        String conceptId = detail.getSummary() == null ? "" : detail.getSummary().getConceptId();
+        String lang = StringUtils.firstNonBlank(editingLang, resolveLang(detail), "fr");
+        List<ConceptHierarchicalRelation> all = conceptFullReadService.loadAllNarrowers(
+                thesaurusId, conceptId, lang, userSession.isLoggedIn());
+        if (all == null || all.isEmpty()) {
+            baselineNarrower = copyRelationModels(detail.getNarrowerTerms());
+            return baselineNarrower;
+        }
+        baselineNarrower = new ArrayList<>();
+        for (ConceptHierarchicalRelation relation : all) {
+            if (relation == null || StringUtils.isBlank(relation.conceptId())) {
+                continue;
+            }
+            baselineNarrower.add(new ConceptRelation(
+                    relation.conceptId(),
+                    StringUtils.defaultString(relation.label()),
+                    "",
+                    StringUtils.defaultString(relation.role())));
+        }
+        return baselineNarrower;
+    }
+
+    private static List<ConceptRelation> copyRelationModels(List<ConceptRelation> relations) {
+        if (relations == null || relations.isEmpty()) {
+            return new ArrayList<>();
+        }
+        return new ArrayList<>(relations);
     }
 
     private static List<FacetEditRow> copyRelations(List<ConceptRelation> relations) {

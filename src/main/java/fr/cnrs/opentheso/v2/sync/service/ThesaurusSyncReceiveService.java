@@ -44,12 +44,37 @@ public class ThesaurusSyncReceiveService {
         if (!toolboxPreferencePersistence.isMaster(masterThesaurusId)) {
             throw new IllegalStateException("Le thésaurus cible n'est pas configuré comme maître");
         }
+        return applyIncoming(
+                masterThesaurusId,
+                request,
+                user,
+                "Synchronisation depuis le thésaurus copie");
+    }
+
+    /**
+     * Applique un lot reçu sur le thésaurus local (copie ou maître).
+     * Utilisé par le pull maître → copie, sans exiger {@code is_master}.
+     */
+    @Transactional
+    public SyncBatchResponse applyIncoming(String thesaurusId, SyncBatchRequest request, User user) {
+        return applyIncoming(
+                thesaurusId,
+                request,
+                user,
+                "Synchronisation depuis le thésaurus maître");
+    }
+
+    private SyncBatchResponse applyIncoming(
+            String thesaurusId,
+            SyncBatchRequest request,
+            User user,
+            String defaultCommentPrefix
+    ) {
         if (request == null || request.concepts() == null || request.concepts().isEmpty()) {
             return SyncBatchResponse.from(List.of());
         }
-
         String workLang = StringUtils.defaultIfBlank(
-                toolboxPreferencePersistence.getWorkLanguage(masterThesaurusId), "fr");
+                toolboxPreferencePersistence.getWorkLanguage(thesaurusId), "fr");
         String authorName = StringUtils.defaultIfBlank(
                 request.authorName(),
                 user != null ? user.getUsername() : "sync");
@@ -58,16 +83,15 @@ public class ThesaurusSyncReceiveService {
                 user != null ? user.getMail() : "");
         String comment = StringUtils.defaultIfBlank(
                 request.comment(),
-                "Synchronisation depuis le thésaurus copie"
+                defaultCommentPrefix
                         + (StringUtils.isNotBlank(request.sourceThesaurusId())
                         ? " " + request.sourceThesaurusId()
                         : ""));
-
         boolean createCandidates = request.shouldCreateCandidates();
         List<SyncConceptResult> results = new ArrayList<>();
         for (SyncConceptPayload concept : request.concepts()) {
             results.add(processOne(new ProcessOneRequest(
-                    masterThesaurusId,
+                    thesaurusId,
                     workLang,
                     concept,
                     authorName,

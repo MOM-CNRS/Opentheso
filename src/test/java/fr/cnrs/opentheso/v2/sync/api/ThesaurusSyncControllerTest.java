@@ -4,7 +4,13 @@ import fr.cnrs.opentheso.entites.User;
 import fr.cnrs.opentheso.v2.shared.auth.ThesaurusWriteAuthorizationService;
 import fr.cnrs.opentheso.v2.sync.model.SyncBatchRequest;
 import fr.cnrs.opentheso.v2.sync.model.SyncBatchResponse;
+import fr.cnrs.opentheso.v2.sync.model.SyncChangesRequest;
+import fr.cnrs.opentheso.v2.sync.model.SyncChangesResponse;
 import fr.cnrs.opentheso.v2.sync.model.SyncConceptResult;
+import fr.cnrs.opentheso.v2.sync.model.SyncExportRequest;
+import fr.cnrs.opentheso.v2.sync.model.SyncExportResponse;
+import fr.cnrs.opentheso.v2.sync.model.SyncPendingConcept;
+import fr.cnrs.opentheso.v2.sync.service.ThesaurusSyncExportService;
 import fr.cnrs.opentheso.v2.sync.service.ThesaurusSyncReceiveService;
 import fr.cnrs.opentheso.ws.openapi.exception.ApiKeyInvalidException;
 import fr.cnrs.opentheso.ws.openapi.exception.UserCantWriteOnThesaurusException;
@@ -31,6 +37,8 @@ class ThesaurusSyncControllerTest {
     @Mock
     private ThesaurusSyncReceiveService thesaurusSyncReceiveService;
     @Mock
+    private ThesaurusSyncExportService thesaurusSyncExportService;
+    @Mock
     private ThesaurusWriteAuthorizationService thesaurusWriteAuthorizationService;
     @Mock
     private HttpServletRequest request;
@@ -40,7 +48,8 @@ class ThesaurusSyncControllerTest {
 
     @BeforeEach
     void setUp() {
-        controller = new ThesaurusSyncController(thesaurusSyncReceiveService, thesaurusWriteAuthorizationService);
+        controller = new ThesaurusSyncController(
+                thesaurusSyncReceiveService, thesaurusSyncExportService, thesaurusWriteAuthorizationService);
         user = User.builder().id(3).username("editor").mail("e@ex.com").build();
     }
 
@@ -90,6 +99,50 @@ class ThesaurusSyncControllerTest {
         assertEquals(HttpStatus.BAD_REQUEST, response.getStatusCode());
         assertEquals("not master", response.getBody());
         assertEquals(MediaType.TEXT_PLAIN, response.getHeaders().getContentType());
+    }
+
+    @Test
+    void listChanges_returnsOkOnSuccess() {
+        when(request.getAttribute("authenticatedUser")).thenReturn(user);
+        when(thesaurusWriteAuthorizationService.canUserWrite(3, "TH_MASTER")).thenReturn(true);
+        SyncChangesResponse body = new SyncChangesResponse(
+                1, List.of(new SyncPendingConcept("C1", "Chat", List.of("prefLabel"))));
+        when(thesaurusSyncExportService.listChanges("TH_MASTER", "2026-07-01T08:00", "fr")).thenReturn(body);
+
+        ResponseEntity<?> response = controller.listChanges(
+                request, "TH_MASTER", new SyncChangesRequest("2026-07-01T08:00", "fr"));
+
+        assertEquals(HttpStatus.OK, response.getStatusCode());
+        SyncChangesResponse payload = (SyncChangesResponse) response.getBody();
+        assertEquals(1, payload.total());
+        assertEquals("C1", payload.concepts().get(0).id());
+    }
+
+    @Test
+    void listChanges_returnsBadRequestWhenTargetNotMaster() {
+        when(request.getAttribute("authenticatedUser")).thenReturn(user);
+        when(thesaurusWriteAuthorizationService.canUserWrite(3, "TH_MASTER")).thenReturn(true);
+        when(thesaurusSyncExportService.listChanges("TH_MASTER", null, null))
+                .thenThrow(new IllegalStateException("not master"));
+
+        ResponseEntity<?> response = controller.listChanges(request, "TH_MASTER", null);
+
+        assertEquals(HttpStatus.BAD_REQUEST, response.getStatusCode());
+        assertEquals("not master", response.getBody());
+    }
+
+    @Test
+    void exportConcepts_returnsOkOnSuccess() {
+        when(request.getAttribute("authenticatedUser")).thenReturn(user);
+        when(thesaurusWriteAuthorizationService.canUserWrite(3, "TH_MASTER")).thenReturn(true);
+        SyncExportResponse body = new SyncExportResponse(List.of());
+        when(thesaurusSyncExportService.exportConcepts("TH_MASTER", List.of("C1"), "fr")).thenReturn(body);
+
+        ResponseEntity<?> response = controller.exportConcepts(
+                request, "TH_MASTER", new SyncExportRequest(List.of("C1"), "fr"));
+
+        assertEquals(HttpStatus.OK, response.getStatusCode());
+        verify(thesaurusSyncExportService).exportConcepts("TH_MASTER", List.of("C1"), "fr");
     }
 
     private static SyncBatchRequest emptyBody() {
