@@ -2242,6 +2242,24 @@ function applyConceptLabelUi(source) {
     closeAllRelPickers();
     closeCrelPicker();
     seedConceptTrFromHidden();
+  } else if (card === "f-tr") {
+    closeLabelFacetPicker();
+    closeCvCollPicker();
+    closeAllRelPickers();
+    closeCrelPicker();
+    seedFacetCardTrFromHidden();
+  } else if (card === "f-mem") {
+    closeLabelFacetPicker();
+    closeCvCollPicker();
+    closeAllRelPickers();
+    closeCrelPicker();
+    seedFacetCardMemFromHidden();
+  } else if (card === "f-notes") {
+    closeLabelFacetPicker();
+    closeCvCollPicker();
+    closeAllRelPickers();
+    closeCrelPicker();
+    seedFacetCardNotesFromHidden();
   } else if (card === "notes") {
     closeLabelFacetPicker();
     closeCvCollPicker();
@@ -2544,6 +2562,481 @@ function paintConceptTr() {
   markUsedTrLangOpts("#cvTrMenu", cvTrState.order, editor.getAttribute("data-used") || "");
   const pick = $("#cvTrPick");
   if (pick) pick.hidden = $$("#cvTrMenu .tree-lang-opt").length === 0;
+}
+
+var fcTrState = { order: [], values: {}, confirm: "" };
+
+function fcTrOpt(code) {
+  return $("#fcTrMenu") && $("#fcTrMenu").querySelector('.tree-lang-opt[data-lang="' + code + '"]');
+}
+
+function fcTrMeta(code) {
+  const opt = fcTrOpt(code);
+  return {
+    code: code,
+    flag: (opt && (opt.getAttribute("data-flag") || "").trim()) || "",
+    name: (opt && (opt.getAttribute("data-name") || "").trim()) || code
+  };
+}
+
+function closeFacetCardTrLang() {
+  const btn = $("#fcTrBtn");
+  if (!btn || !btn.classList.contains("is-open")) return false;
+  btn.classList.remove("is-open");
+  btn.setAttribute("aria-expanded", "false");
+  return true;
+}
+
+function setFacetCardTrLangOpen(open) {
+  const btn = $("#fcTrBtn");
+  if (!btn) return;
+  btn.classList.toggle("is-open", !!open);
+  btn.setAttribute("aria-expanded", open ? "true" : "false");
+}
+
+function syncFacetCardTrHidden() {
+  const el = jsField("fcTrPayload");
+  if (!el) return;
+  el.value = fcTrState.order.map((code) => {
+    return code + "\t" + String(fcTrState.values[code] || "").replace(/\r?\n/g, " ");
+  }).join("\n");
+}
+
+function seedFacetCardTrFromHidden() {
+  if (!$("#fcTrEditor")) return;
+  fcTrState = { order: [], values: {}, confirm: "" };
+  $$("#fcTrSeed [data-lang]").forEach((el) => {
+    const code = (el.getAttribute("data-lang") || "").trim();
+    if (!code || fcTrState.order.indexOf(code) >= 0) return;
+    fcTrState.order.push(code);
+    fcTrState.values[code] = el.getAttribute("data-value") || "";
+  });
+  if (!fcTrState.order.length) {
+    String((jsField("fcTrPayload") && jsField("fcTrPayload").value) || "").split(/\r?\n/).forEach((line) => {
+      const parts = line.split("\t");
+      const code = (parts[0] || "").trim();
+      if (!code || fcTrState.order.indexOf(code) >= 0) return;
+      fcTrState.order.push(code);
+      fcTrState.values[code] = parts.slice(1).join("\t");
+    });
+  }
+  syncFacetCardTrHidden();
+  paintFacetCardTr();
+}
+
+function addFacetCardTr(code) {
+  if (!code || trLangAlready(fcTrState.order, code)) return;
+  fcTrState.order.push(code);
+  if (fcTrState.values[code] == null) fcTrState.values[code] = "";
+  fcTrState.confirm = "";
+  closeFacetCardTrLang();
+  syncFacetCardTrHidden();
+  paintFacetCardTr();
+  requestAnimationFrame(() => {
+    const input = $("#fcTrVal-" + code);
+    if (input) input.focus();
+  });
+}
+
+function askRemoveFacetCardTr(code) {
+  fcTrState.confirm = code || "";
+  paintFacetCardTr();
+}
+
+function keepFacetCardTr() {
+  fcTrState.confirm = "";
+  paintFacetCardTr();
+}
+
+function removeFacetCardTr(code) {
+  fcTrState.order = fcTrState.order.filter((item) => item !== code);
+  fcTrState.values[code] = "";
+  fcTrState.confirm = "";
+  syncFacetCardTrHidden();
+  paintFacetCardTr();
+}
+
+function setFacetCardTrValue(code, value) {
+  fcTrState.values[code] = value;
+  syncFacetCardTrHidden();
+}
+
+function paintFacetCardTr() {
+  const list = $("#fcTrList");
+  const empty = $("#fcTrEmpty");
+  const editor = $("#fcTrEditor");
+  if (!list || !editor) return;
+  const ph = editor.getAttribute("data-ph") || "Nom en {0}…";
+  const remove = editor.getAttribute("data-remove") || "";
+  const drop = editor.getAttribute("data-drop") || "";
+  const no = editor.getAttribute("data-no") || "Non";
+  const yes = editor.getAttribute("data-yes") || "Oui";
+  if (empty) empty.hidden = fcTrState.order.length > 0;
+  list.innerHTML = fcTrState.order.map((code) => {
+    const meta = fcTrMeta(code);
+    const placeholder = escapeHtml(ph.replace("{0}", String(meta.name || code).toLowerCase()));
+    const confirming = fcTrState.confirm === code;
+    const dir = trTextDir(code);
+    const actions = confirming
+      ? '<span class="te-confirm">' + escapeHtml(drop)
+        + '<button type="button" class="bo-btn ghost sm" data-act="fc-tr-keep">' + escapeHtml(no) + "</button>"
+        + '<button type="button" class="bo-btn primary sm" data-act="fc-tr-drop" data-lang="' + code + '">' + escapeHtml(yes) + "</button>"
+        + "</span>"
+      : '<button type="button" class="re-x te-x" data-act="fc-tr-ask" data-lang="' + code
+        + '" title="' + escapeHtml(remove) + '" aria-label="' + escapeHtml(remove) + '">×</button>';
+    const flag = meta.flag && meta.flag !== "🏳️"
+      ? '<span class="tr-flag">' + meta.flag + "</span>"
+      : '<span class="tr-code">' + escapeHtml(code) + "</span>";
+    return '<div class="te-lang">'
+      + '<div class="te-head">'
+      + flag
+      + '<span class="te-name">' + escapeHtml(meta.name) + "</span>"
+      + '<span class="te-code">' + escapeHtml(code) + "</span>"
+      + actions
+      + "</div>"
+      + '<input type="text" class="st-input" id="fcTrVal-' + code + '" lang="' + code + '" dir="' + dir
+      + '" data-lang="' + code + '" value="' + escapeHtml(fcTrState.values[code] || "")
+      + '" placeholder="' + placeholder + '" autocomplete="off"/>'
+      + "</div>";
+  }).join("");
+  markUsedTrLangOpts("#fcTrMenu", fcTrState.order, editor.getAttribute("data-used") || "");
+  const pick = $("#fcTrPick");
+  if (pick) pick.hidden = $$("#fcTrMenu .tree-lang-opt").length === 0;
+}
+
+var fcMemState = { items: [], hits: [], seq: 0, timer: null };
+var fcNoteState = { notes: [], openLang: -1 };
+
+function syncFacetCardMemHidden() {
+  const el = jsField("fcMembersPayload");
+  if (!el) return;
+  el.value = fcMemState.items.map((item) => (item.id || "") + "\t" + (item.label || "")).join("\n");
+}
+
+function seedFacetCardMemFromHidden() {
+  if (!$("#fcMemEditor")) return;
+  fcMemState = { items: [], hits: [], seq: 0, timer: null };
+  $$("#fcMemSeed [data-id]").forEach((el) => {
+    const id = (el.getAttribute("data-id") || "").trim();
+    if (!id || fcMemState.items.some((item) => item.id === id)) return;
+    fcMemState.items.push({ id: id, label: el.getAttribute("data-label") || id });
+  });
+  if (!fcMemState.items.length) {
+    String((jsField("fcMembersPayload") && jsField("fcMembersPayload").value) || "").split(/\r?\n/).forEach((line) => {
+      const tab = line.indexOf("\t");
+      const id = (tab < 0 ? line : line.slice(0, tab)).trim();
+      const label = tab < 0 ? id : line.slice(tab + 1).trim();
+      if (!id || fcMemState.items.some((item) => item.id === id)) return;
+      fcMemState.items.push({ id: id, label: label || id });
+    });
+  }
+  const q = $("#fcMemQ");
+  if (q) q.value = "";
+  hideFacetCardMemDrop();
+  syncFacetCardMemHidden();
+  paintFacetCardMem();
+}
+
+function hideFacetCardMemDrop() {
+  const drop = $("#fcMemDrop");
+  const empty = $("#fcMemEmpty");
+  if (drop) {
+    drop.hidden = true;
+    drop.innerHTML = "";
+  }
+  if (empty) empty.hidden = true;
+}
+
+function setFacetCardMemMsg(text) {
+  const el = $("#fcMemMsg");
+  if (!el) return;
+  el.hidden = !text;
+  el.textContent = text || "";
+}
+
+function facetCardMemAlready(id, label) {
+  return fcMemState.items.some((item) => item.id === id || (label && item.label === label));
+}
+
+function addFacetCardMem(id, label) {
+  if (!id) return;
+  const editor = $("#fcMemEditor");
+  if (facetCardMemAlready(id, label)) {
+    setFacetCardMemMsg((editor && editor.getAttribute("data-exists")) || "");
+    return;
+  }
+  fcMemState.items.push({ id: id, label: label || id });
+  const q = $("#fcMemQ");
+  if (q) q.value = "";
+  fcMemState.hits = [];
+  hideFacetCardMemDrop();
+  setFacetCardMemMsg("");
+  syncFacetCardMemHidden();
+  paintFacetCardMem();
+}
+
+function removeFacetCardMem(index) {
+  fcMemState.items.splice(Number(index), 1);
+  setFacetCardMemMsg("");
+  syncFacetCardMemHidden();
+  paintFacetCardMem();
+}
+
+function paintFacetCardMem() {
+  const rows = $("#fcMemRows");
+  const editor = $("#fcMemEditor");
+  if (!rows || !editor) return;
+  const remove = editor.getAttribute("data-remove") || "";
+  rows.innerHTML = fcMemState.items.map((item, index) => (
+    '<div class="re-row">'
+    + '<span class="re-lbl">' + escapeHtml(item.label || item.id) + "</span>"
+    + '<button type="button" class="re-x" data-act="fc-mem-remove" data-index="' + index
+    + '" title="' + escapeHtml(remove) + '" aria-label="' + escapeHtml(remove) + '">×</button>'
+    + "</div>"
+  )).join("");
+}
+
+function searchFacetCardMem(q) {
+  const seq = ++fcMemState.seq;
+  const ctx = document.body.getAttribute("data-ctx") || "";
+  const params = new URLSearchParams({
+    thesaurusId: thesaurusId() || "",
+    lang: thesaurusLang(),
+    q: q
+  });
+  fetch(ctx + "/v2/api/concepts/search?" + params.toString(), {
+    headers: { Accept: "application/json" }
+  }).then((res) => {
+    if (!res.ok) throw new Error("http");
+    return res.json();
+  }).then((items) => {
+    if (seq !== fcMemState.seq) return;
+    fcMemState.hits = (Array.isArray(items) ? items : []).filter((item) => {
+      const id = item && item.id ? String(item.id) : "";
+      const label = item && item.label ? String(item.label) : "";
+      return id && !facetCardMemAlready(id, label);
+    }).slice(0, 6);
+    paintFacetCardMemHits(q);
+  }).catch(() => {
+    if (seq !== fcMemState.seq) return;
+    fcMemState.hits = [];
+    paintFacetCardMemHits(q);
+  });
+}
+
+function paintFacetCardMemHits(q) {
+  const drop = $("#fcMemDrop");
+  const empty = $("#fcMemEmpty");
+  if (!drop) return;
+  if (fcMemState.hits.length) {
+    drop.hidden = false;
+    if (empty) empty.hidden = true;
+    drop.innerHTML = fcMemState.hits.map((hit) => (
+      '<button type="button" class="re-hit" data-act="fc-mem-hit" data-id="'
+      + escapeHtml(hit.id || "") + '" data-label="' + escapeHtml(hit.label || hit.id || "") + '">'
+      + '<span class="re-hit-l">' + escapeHtml(hit.label || hit.id || "") + "</span>"
+      + "</button>"
+    )).join("");
+    return;
+  }
+  drop.hidden = true;
+  drop.innerHTML = "";
+  if (empty) empty.hidden = String(q || "").trim().length < 2;
+}
+
+function scheduleFacetCardMemSearch() {
+  const q = ($("#fcMemQ") && $("#fcMemQ").value.trim()) || "";
+  setFacetCardMemMsg("");
+  if (fcMemState.timer) clearTimeout(fcMemState.timer);
+  if (q.length < 2) {
+    fcMemState.seq += 1;
+    fcMemState.hits = [];
+    hideFacetCardMemDrop();
+    return;
+  }
+  fcMemState.timer = setTimeout(() => searchFacetCardMem(q), 220);
+}
+
+function fcNoteTypes() {
+  return $$("#fcNoteTypeOpts [data-code]").map((el) => ({
+    code: el.getAttribute("data-code") || "",
+    label: el.getAttribute("data-label") || el.getAttribute("data-code") || ""
+  })).filter((item) => item.code);
+}
+
+function fcNoteLangs() {
+  return $$("#fcNoteLangOpts [data-code]").map((el) => ({
+    code: el.getAttribute("data-code") || "",
+    name: el.getAttribute("data-name") || el.getAttribute("data-code") || "",
+    flag: el.getAttribute("data-flag") || ""
+  })).filter((item) => item.code);
+}
+
+function fcNoteUsedKeys(exceptIndex) {
+  const used = {};
+  fcNoteState.notes.forEach((note, index) => {
+    if (index === exceptIndex) return;
+    used[note.type + "\t" + note.lang] = true;
+  });
+  return used;
+}
+
+function firstFreeFacetCardNote() {
+  const types = fcNoteTypes();
+  const langs = fcNoteLangs();
+  const used = fcNoteUsedKeys(-1);
+  const work = ($("#fcNoteEditor") && $("#fcNoteEditor").getAttribute("data-work-lang")) || (langs[0] && langs[0].code) || "fr";
+  const tryLangs = [work].concat(langs.map((lang) => lang.code).filter((code) => code !== work));
+  for (let i = 0; i < types.length; i++) {
+    for (let j = 0; j < tryLangs.length; j++) {
+      if (!used[types[i].code + "\t" + tryLangs[j]]) {
+        return { type: types[i].code, lang: tryLangs[j] };
+      }
+    }
+  }
+  return null;
+}
+
+function syncFacetCardNotesHidden() {
+  const el = jsField("fcNotesPayload");
+  if (!el) return;
+  el.value = fcNoteState.notes.map((note) => {
+    return [note.type || "", note.lang || "", encodeURIComponent(note.value || ""), encodeURIComponent(note.source || "")].join("\t");
+  }).join("\n");
+}
+
+function seedFacetCardNotesFromHidden() {
+  if (!$("#fcNoteEditor")) return;
+  fcNoteState = { notes: [], openLang: -1 };
+  $$("#fcNoteSeed [data-lang]").forEach((el) => {
+    const type = (el.getAttribute("data-type") || "").trim();
+    const lang = (el.getAttribute("data-lang") || "").trim();
+    if (!type || !lang) return;
+    fcNoteState.notes.push({
+      type: type,
+      lang: lang,
+      value: el.getAttribute("data-value") || "",
+      source: el.getAttribute("data-source") || ""
+    });
+  });
+  if (!fcNoteState.notes.length) {
+    String((jsField("fcNotesPayload") && jsField("fcNotesPayload").value) || "").split(/\r?\n/).forEach((line) => {
+      const parts = line.split("\t");
+      const type = (parts[0] || "").trim();
+      const lang = (parts[1] || "").trim();
+      if (!type || !lang) return;
+      fcNoteState.notes.push({
+        type: type,
+        lang: lang,
+        value: decodeURIComponent(parts[2] || ""),
+        source: decodeURIComponent(parts[3] || "")
+      });
+    });
+  }
+  syncFacetCardNotesHidden();
+  paintFacetCardNotes();
+}
+
+function addFacetCardNote() {
+  const next = firstFreeFacetCardNote();
+  if (!next) return;
+  fcNoteState.notes.push({ type: next.type, lang: next.lang, value: "", source: "" });
+  fcNoteState.openLang = -1;
+  syncFacetCardNotesHidden();
+  paintFacetCardNotes();
+  requestAnimationFrame(() => {
+    const input = $("#fcNoteVal-" + (fcNoteState.notes.length - 1));
+    if (input) input.focus();
+  });
+}
+
+function removeFacetCardNote(index) {
+  fcNoteState.notes.splice(index, 1);
+  fcNoteState.openLang = -1;
+  syncFacetCardNotesHidden();
+  paintFacetCardNotes();
+}
+
+function setFacetCardNoteField(index, field, value) {
+  const note = fcNoteState.notes[index];
+  if (!note || !field) return;
+  note[field] = value;
+  syncFacetCardNotesHidden();
+}
+
+function setFacetCardNoteLang(index, code) {
+  const note = fcNoteState.notes[index];
+  if (!note || !code) return;
+  note.lang = code;
+  fcNoteState.openLang = -1;
+  syncFacetCardNotesHidden();
+  paintFacetCardNotes();
+}
+
+function closeFacetCardNoteLang() {
+  if (fcNoteState.openLang < 0) return false;
+  fcNoteState.openLang = -1;
+  paintFacetCardNotes();
+  return true;
+}
+
+function setFacetCardNoteLangOpen(index) {
+  fcNoteState.openLang = fcNoteState.openLang === index ? -1 : index;
+  paintFacetCardNotes();
+}
+
+function paintFacetCardNotes() {
+  const list = $("#fcNoteList");
+  const add = $("#fcNoteAdd");
+  const editor = $("#fcNoteEditor");
+  if (!list || !editor) return;
+  const empty = editor.getAttribute("data-empty") || "";
+  const remove = editor.getAttribute("data-remove") || "";
+  const textPh = editor.getAttribute("data-text-ph") || "";
+  const sourcePh = editor.getAttribute("data-source-ph") || "";
+  const types = fcNoteTypes();
+  const langs = fcNoteLangs();
+  if (!fcNoteState.notes.length) {
+    list.innerHTML = empty ? '<div class="re-none">' + escapeHtml(empty) + "</div>" : "";
+  } else {
+    list.innerHTML = fcNoteState.notes.map((note, index) => {
+      const used = fcNoteUsedKeys(index);
+      const typeOpts = types.filter((type) => type.code === note.type || !used[type.code + "\t" + note.lang])
+        .map((type) => '<option value="' + escapeHtml(type.code) + '"' + (type.code === note.type ? " selected" : "") + ">"
+          + escapeHtml(type.label) + "</option>").join("");
+      const lang = langs.find((item) => item.code === note.lang) || { code: note.lang, name: note.lang, flag: "" };
+      const open = fcNoteState.openLang === index;
+      const langOpts = langs.filter((item) => item.code === note.lang || !used[note.type + "\t" + item.code])
+        .map((item) => '<button type="button" class="tree-lang-opt' + (item.code === note.lang ? " is-on" : "")
+          + '" data-act="fc-note-lang" data-index="' + index + '" data-lang="' + escapeHtml(item.code) + '" role="option">'
+          + '<span class="tree-lang-opt-flag" aria-hidden="true">' + (item.flag || "") + "</span>"
+          + '<span class="tree-lang-opt-name">' + escapeHtml(item.name) + "</span>"
+          + '<span class="tree-lang-opt-code">' + escapeHtml(item.code) + "</span>"
+          + '<span class="tree-lang-opt-check" aria-hidden="true">✓</span></button>').join("");
+      return '<div class="note-edit-card">'
+        + '<div class="note-edit-head">'
+        + '<select class="st-input note-type-select" data-fc-note="type" data-index="' + index + '" aria-label="Type">'
+        + typeOpts + "</select>"
+        + '<div class="tp-lang-pick draft-note-lang fc-note-lang' + (open ? " is-open" : "") + '">'
+        + '<button type="button" class="tree-lang-btn tp-lang-btn draft-note-lang-btn' + (open ? " is-open" : "")
+        + '" data-act="fc-note-lang-toggle" data-index="' + index + '" aria-haspopup="listbox" aria-expanded="' + (open ? "true" : "false") + '">'
+        + '<span class="tree-lang-flag" aria-hidden="true">' + (lang.flag || "🏳️") + "</span>"
+        + '<span class="tree-lang-name">' + escapeHtml(lang.name) + "</span>"
+        + '<span class="tree-lang-code">' + escapeHtml(lang.code) + "</span>"
+        + '<span class="tree-lang-caret" aria-hidden="true">▾</span></button>'
+        + (open ? '<div class="tree-lang-menu tp-lang-menu" role="listbox">' + langOpts + "</div>" : "")
+        + "</div>"
+        + '<button type="button" class="note-edit-remove" data-act="fc-note-remove" data-index="' + index
+        + '" title="' + escapeHtml(remove) + '" aria-label="' + escapeHtml(remove) + '">×</button>'
+        + "</div>"
+        + '<textarea class="st-input note-edit-value disc-input" id="fcNoteVal-' + index + '" data-fc-note="value" data-index="' + index
+        + '" rows="3" placeholder="' + escapeHtml(textPh) + '">' + escapeHtml(note.value || "") + "</textarea>"
+        + '<input type="text" class="st-input draft-note-source" data-fc-note="source" data-index="' + index
+        + '" value="' + escapeHtml(note.source || "") + '" placeholder="' + escapeHtml(sourcePh) + '" autocomplete="off"/>'
+        + "</div>";
+    }).join("");
+  }
+  if (add) add.hidden = !firstFreeFacetCardNote();
 }
 
 var cvNoteState = { notes: [], tabs: [], lang: "", compare: false, typeOpen: false };
@@ -3355,7 +3848,7 @@ function gotoConceptResGps(index) {
 
 window.onLabelSave = function (data) {
   const btns = document.querySelectorAll(
-      "#labelSaveConfirm .abt-save, #collSaveConfirm .abt-save, #relSaveConfirm .abt-save, #crelSaveConfirm .abt-save, #trEditSave, #noteEditSave, #resEditSave, #relEditSave, #resLinkSaveConfirm .abt-save, #resImgSaveConfirm .abt-save, #resGpsSaveConfirm .abt-save, .cblock-edit-warn .abt-save"
+      "#labelSaveConfirm .abt-save, #collSaveConfirm .abt-save, #relSaveConfirm .abt-save, #crelSaveConfirm .abt-save, #trEditSave, #fcTrEditSave, #fcLabelEditSave, #fcMemEditSave, #fcNoteEditSave, #noteEditSave, #resEditSave, #relEditSave, #resLinkSaveConfirm .abt-save, #resImgSaveConfirm .abt-save, #resGpsSaveConfirm .abt-save, .cblock-edit-warn .abt-save"
   );
   if (data.status === "begin") {
     if (typeof hideConfirm === "function") {
@@ -3987,11 +4480,12 @@ function pickCreateKind(kind) {
     return;
   }
   if (kind !== "concept") return;
+  const parentId = createChooserParentId();
   createConceptDraft({
     getAttribute: function (name) {
-      if (name === "data-pref") return createChooserCtx.pref;
+      if (name === "data-pref") return createChooserCtx.pref || (parentId ? currentConceptParentLabel() : "");
       if (name === "data-path") return createChooserCtx.path;
-      if (name === "data-id") return createChooserCtx.id || (!state.home && state.conceptId) || "";
+      if (name === "data-id") return parentId;
       return "";
     }
   });
@@ -5171,6 +5665,31 @@ if (typeof window !== "undefined") {
   window.resetDraftTr = resetDraftTr;
   window.seedDraftTrFromHidden = seedDraftTrFromHidden;
   window.seedConceptTrFromHidden = seedConceptTrFromHidden;
+  window.seedFacetCardTrFromHidden = seedFacetCardTrFromHidden;
+  window.addFacetCardTr = addFacetCardTr;
+  window.removeFacetCardTr = removeFacetCardTr;
+  window.askRemoveFacetCardTr = askRemoveFacetCardTr;
+  window.keepFacetCardTr = keepFacetCardTr;
+  window.setFacetCardTrValue = setFacetCardTrValue;
+  window.paintFacetCardTr = paintFacetCardTr;
+  window.closeFacetCardTrLang = closeFacetCardTrLang;
+  window.setFacetCardTrLangOpen = setFacetCardTrLangOpen;
+  window.syncFacetCardTrHidden = syncFacetCardTrHidden;
+  window.seedFacetCardMemFromHidden = seedFacetCardMemFromHidden;
+  window.addFacetCardMem = addFacetCardMem;
+  window.removeFacetCardMem = removeFacetCardMem;
+  window.hideFacetCardMemDrop = hideFacetCardMemDrop;
+  window.scheduleFacetCardMemSearch = scheduleFacetCardMemSearch;
+  window.syncFacetCardMemHidden = syncFacetCardMemHidden;
+  window.seedFacetCardNotesFromHidden = seedFacetCardNotesFromHidden;
+  window.addFacetCardNote = addFacetCardNote;
+  window.removeFacetCardNote = removeFacetCardNote;
+  window.setFacetCardNoteField = setFacetCardNoteField;
+  window.setFacetCardNoteLang = setFacetCardNoteLang;
+  window.closeFacetCardNoteLang = closeFacetCardNoteLang;
+  window.setFacetCardNoteLangOpen = setFacetCardNoteLangOpen;
+  window.syncFacetCardNotesHidden = syncFacetCardNotesHidden;
+  window.paintFacetCardNotes = paintFacetCardNotes;
   window.addConceptTr = addConceptTr;
   window.removeConceptTr = removeConceptTr;
   window.askRemoveConceptTr = askRemoveConceptTr;
@@ -5351,12 +5870,9 @@ function createConceptDraft(src) {
   const labEl = $("#cptParentLabel");
   if (idEl) idEl.value = parentId;
   if (labEl) labEl.value = parentName;
-  const go = $("#cptPrepare");
-  if (go) {
-    go.click();
-    return;
-  }
   showConceptDraftPanel(parentName);
+  const go = $("#cptPrepare");
+  if (go) go.click();
 }
 
 function onConceptDraftPrepare(data) {
@@ -5542,7 +6058,7 @@ function prepareFacetDraftForm() {
 }
 
 var fctTrState = { order: [], values: {}, alts: {}, confirm: "" };
-var fctNoteState = { notes: [], openLang: -1 };
+var fctNoteState = { notes: [], tabs: [], lang: "", compare: false, typeOpen: false };
 var fctMemState = { items: [], hits: [], seq: 0, timer: null };
 
 function fctTrOpt(code) {
@@ -5687,54 +6203,142 @@ function fctNoteLangs() {
   })).filter((item) => item.code);
 }
 
-function fctNoteUsedKeys(exceptIndex) {
-  const used = {};
-  fctNoteState.notes.forEach((note, index) => {
-    if (index === exceptIndex) return;
-    used[note.type + "\t" + note.lang] = true;
-  });
-  return used;
+function fctNoteWorkLang() {
+  const editor = $("#fctNoteEditor");
+  const langs = fctNoteLangs();
+  return (editor && editor.getAttribute("data-work-lang")) || (langs[0] && langs[0].code) || "fr";
 }
 
-function firstFreeFacetDraftNote() {
-  const types = fctNoteTypes();
+function fctNoteMeta(code) {
   const langs = fctNoteLangs();
-  const used = fctNoteUsedKeys(-1);
-  const work = ($("#fctNoteEditor") && $("#fctNoteEditor").getAttribute("data-work-lang")) || (langs[0] && langs[0].code) || "fr";
-  const preferred = ["scopeNote", "example", "historyNote", "editorialNote", "changeNote"];
-  const ordered = preferred.filter((code) => types.some((type) => type.code === code))
-    .concat(types.map((type) => type.code).filter((code) => preferred.indexOf(code) < 0));
-  const tryLangs = [work].concat(langs.map((lang) => lang.code).filter((code) => code !== work));
-  for (let i = 0; i < ordered.length; i++) {
-    for (let j = 0; j < tryLangs.length; j++) {
-      if (!used[ordered[i] + "\t" + tryLangs[j]]) {
-        return { type: ordered[i], lang: tryLangs[j] };
-      }
-    }
+  return langs.find((item) => String(item.code).toLowerCase() === String(code || "").toLowerCase())
+    || { code: code || "", name: code || "", flag: "" };
+}
+
+function fctNoteNorm(code) {
+  return String(code || "").trim().toLowerCase();
+}
+
+function fctNoteFilled(note) {
+  return !!(note && String(note.value || "").trim());
+}
+
+function fctNoteTabs() {
+  const seen = {};
+  const tabs = [];
+  function add(code) {
+    const key = fctNoteNorm(code);
+    if (!key || seen[key]) return;
+    seen[key] = true;
+    tabs.push(code);
   }
-  return null;
+  add(fctNoteWorkLang());
+  fctNoteState.notes.forEach((note) => add(note.lang));
+  (fctNoteState.tabs || []).forEach((code) => add(code));
+  return tabs;
+}
+
+function fctNoteOfLang(lang) {
+  const key = fctNoteNorm(lang);
+  return fctNoteState.notes
+    .map((note, index) => ({ note: note, index: index }))
+    .filter((item) => fctNoteNorm(item.note.lang) === key);
+}
+
+function fctNoteUsedTypes(lang, exceptIndex) {
+  const used = {};
+  fctNoteOfLang(lang).forEach((item) => {
+    if (item.index === exceptIndex) return;
+    if (item.note.type) used[item.note.type] = true;
+  });
+  return used;
 }
 
 function syncFacetDraftNotesHidden() {
   const el = $("#fctNotesPayload");
   if (!el) return;
-  el.value = fctNoteState.notes.map((note) => {
+  el.value = fctNoteState.notes.filter(fctNoteFilled).map((note) => {
     return [note.type || "", note.lang || "", encodeURIComponent(note.value || ""), encodeURIComponent(note.source || "")].join("\t");
   }).join("\n");
 }
 
 function resetFacetDraftNotes() {
-  fctNoteState = { notes: [], openLang: -1 };
+  fctNoteState = { notes: [], tabs: [], lang: fctNoteWorkLang(), compare: false, typeOpen: false };
   const el = $("#fctNotesPayload");
   if (el) el.value = "";
   paintFacetDraftNotes();
 }
 
+function closeFacetDraftNoteLang() {
+  const btn = $("#fctNoteBtn");
+  if (!btn || !btn.classList.contains("is-open")) return false;
+  btn.classList.remove("is-open");
+  btn.setAttribute("aria-expanded", "false");
+  return true;
+}
+
+function setFacetDraftNoteLangOpen(open) {
+  const btn = $("#fctNoteBtn");
+  if (!btn) return;
+  btn.classList.toggle("is-open", !!open);
+  btn.setAttribute("aria-expanded", open ? "true" : "false");
+}
+
+function closeFacetDraftNoteTypeMenu() {
+  if (!fctNoteState.typeOpen) return false;
+  fctNoteState.typeOpen = false;
+  const menu = $("#fctNoteTypeMenu");
+  if (menu) menu.remove();
+  return true;
+}
+
+function setFacetDraftNoteLang(code) {
+  if (!code) return;
+  fctNoteState.lang = code;
+  fctNoteState.typeOpen = false;
+  closeFacetDraftNoteLang();
+  paintFacetDraftNotes();
+}
+
+function addFacetDraftNoteLang(code) {
+  if (!code) return;
+  if (!trLangAlready((fctNoteState.tabs || []).concat(fctNoteTabs()), code)) {
+    fctNoteState.tabs.push(code);
+  }
+  fctNoteState.lang = code;
+  fctNoteState.typeOpen = false;
+  closeFacetDraftNoteLang();
+  syncFacetDraftNotesHidden();
+  paintFacetDraftNotes();
+}
+
+function toggleFacetDraftNoteCompare() {
+  fctNoteState.compare = !fctNoteState.compare;
+  fctNoteState.typeOpen = false;
+  paintFacetDraftNotes();
+}
+
 function addFacetDraftNote() {
-  const next = firstFreeFacetDraftNote();
-  if (!next) return;
-  fctNoteState.notes.push({ type: next.type, lang: next.lang, value: "", source: "" });
-  fctNoteState.openLang = -1;
+  const lang = fctNoteState.lang || fctNoteWorkLang();
+  const free = fctNoteTypes().filter((type) => !fctNoteUsedTypes(lang, -1)[type.code]);
+  if (!free.length) return;
+  if (free.length === 1) {
+    addFacetDraftNoteType(free[0].code);
+    return;
+  }
+  fctNoteState.typeOpen = !fctNoteState.typeOpen;
+  paintFacetDraftNotes();
+}
+
+function addFacetDraftNoteType(type) {
+  const lang = fctNoteState.lang || fctNoteWorkLang();
+  if (!type || fctNoteUsedTypes(lang, -1)[type]) {
+    fctNoteState.typeOpen = false;
+    paintFacetDraftNotes();
+    return;
+  }
+  fctNoteState.notes.push({ type: type, lang: lang, value: "", source: "" });
+  fctNoteState.typeOpen = false;
   syncFacetDraftNotesHidden();
   paintFacetDraftNotes();
   requestAnimationFrame(() => {
@@ -5745,92 +6349,182 @@ function addFacetDraftNote() {
 
 function removeFacetDraftNote(index) {
   fctNoteState.notes.splice(index, 1);
-  fctNoteState.openLang = -1;
+  fctNoteState.typeOpen = false;
   syncFacetDraftNotesHidden();
   paintFacetDraftNotes();
 }
 
 function setFacetDraftNoteField(index, field, value) {
   const note = fctNoteState.notes[index];
-  if (!note) return;
+  if (!note || !field) return;
+  if (field === "type" && fctNoteUsedTypes(note.lang, index)[value]) return;
   note[field] = value;
   syncFacetDraftNotesHidden();
   if (field === "type") paintFacetDraftNotes();
 }
 
-function setFacetDraftNoteLang(index, lang) {
-  const note = fctNoteState.notes[index];
-  if (!note || !lang) return;
-  note.lang = lang;
-  fctNoteState.openLang = -1;
-  syncFacetDraftNotesHidden();
-  paintFacetDraftNotes();
+function fctNoteCompareLang() {
+  const current = fctNoteNorm(fctNoteState.lang);
+  const work = fctNoteNorm(fctNoteWorkLang());
+  if (current !== work) return fctNoteWorkLang();
+  return fctNoteTabs().find((code) => fctNoteNorm(code) !== current) || "";
 }
 
-function closeFacetDraftNoteLang() {
-  if (fctNoteState.openLang < 0) return false;
-  fctNoteState.openLang = -1;
-  paintFacetDraftNotes();
-  return true;
+function paintFacetDraftNoteColHead(lang) {
+  const meta = fctNoteMeta(lang);
+  return '<div class="note-ed-colh">'
+    + (meta.flag ? '<span class="tr-flag">' + meta.flag + "</span>" : "")
+    + "<span>" + escapeHtml(meta.name || lang) + "</span>"
+    + '<span class="te-code">' + escapeHtml(lang) + "</span>"
+    + "</div>";
 }
 
-function setFacetDraftNoteLangOpen(index) {
-  fctNoteState.openLang = fctNoteState.openLang === index ? -1 : index;
-  paintFacetDraftNotes();
+function paintFacetDraftNoteGhost(type) {
+  const label = ((fctNoteTypes().find((item) => item.code === type) || {}).label) || type || "";
+  return '<div class="note-ghost"><span class="note-ghost-t">' + escapeHtml(label) + "</span></div>";
 }
 
-function paintFacetDraftNotes() {
-  const list = $("#fctNoteList");
-  const add = $("#fctNoteAdd");
+function paintFacetDraftNoteAdd(lang) {
   const editor = $("#fctNoteEditor");
-  if (!list || !editor) return;
-  const empty = editor.getAttribute("data-empty") || "";
-  const remove = editor.getAttribute("data-remove") || "";
-  const textPh = editor.getAttribute("data-text-ph") || "";
-  const sourcePh = editor.getAttribute("data-source-ph") || "";
-  const types = fctNoteTypes();
-  const langs = fctNoteLangs();
-  if (!fctNoteState.notes.length) {
-    list.innerHTML = empty ? '<div class="re-none">' + escapeHtml(empty) + "</div>" : "";
+  const add = (editor && editor.getAttribute("data-add")) || "";
+  const free = fctNoteTypes().filter((type) => !fctNoteUsedTypes(lang, -1)[type.code]);
+  if (!free.length) return "";
+  const menu = fctNoteState.typeOpen
+    ? '<div class="note-menu" id="fctNoteTypeMenu">'
+      + free.map((type) => '<button type="button" data-act="fct-note-add-type" data-type="'
+        + escapeHtml(type.code) + '">' + escapeHtml(type.label) + "</button>").join("")
+      + "</div>"
+    : "";
+  return '<div class="note-menu-w">'
+    + '<button type="button" class="note-ed-add" data-act="fct-note-add">' + escapeHtml(add) + "</button>"
+    + menu
+    + "</div>";
+}
+
+function paintFacetDraftNoteCard(item, editable) {
+  const editor = $("#fctNoteEditor");
+  const remove = (editor && editor.getAttribute("data-remove")) || "";
+  const textPh = (editor && editor.getAttribute("data-text-ph")) || "";
+  const sourcePh = (editor && editor.getAttribute("data-source-ph")) || "";
+  const note = item.note;
+  const dir = typeof trTextDir === "function" ? trTextDir(note.lang) : "ltr";
+  const used = fctNoteUsedTypes(note.lang, item.index);
+  const typeOpts = fctNoteTypes()
+    .filter((type) => type.code === note.type || !used[type.code])
+    .map((type) => '<option value="' + escapeHtml(type.code) + '"' + (type.code === note.type ? " selected" : "") + ">"
+      + escapeHtml(type.label) + "</option>").join("");
+  const typeLabel = (fctNoteTypes().find((type) => type.code === note.type) || { label: note.type }).label;
+  if (!editable) {
+    const empty = !fctNoteFilled(note);
+    return '<div class="note-ref' + (empty ? " is-empty" : "") + '">'
+      + '<div class="note-c-h"><span class="note-c-type-lbl">' + escapeHtml(typeLabel) + "</span></div>"
+      + (empty
+        ? ""
+        : '<p class="cv-def" lang="' + escapeHtml(note.lang) + '" dir="' + dir + '">' + escapeHtml(note.value) + "</p>"
+          + (note.source ? '<span class="note-src">' + escapeHtml(note.source) + "</span>" : ""))
+      + "</div>";
+  }
+  return '<div class="note-c">'
+    + '<div class="note-c-h">'
+    + '<select class="note-c-type" data-fct-note="type" data-index="' + item.index + '" aria-label="Type">'
+    + typeOpts + "</select>"
+    + '<input type="text" class="note-c-src" data-fct-note="source" data-index="' + item.index
+    + '" value="' + escapeHtml(note.source || "") + '" placeholder="' + escapeHtml(sourcePh) + '" autocomplete="off"/>'
+    + '<button type="button" class="note-ed-x" data-act="fct-note-remove" data-index="' + item.index
+    + '" title="' + escapeHtml(remove) + '" aria-label="' + escapeHtml(remove) + '">×</button>'
+    + "</div>"
+    + '<textarea class="disc-input" id="fctNoteVal-' + item.index + '" data-fct-note="value" data-index="' + item.index
+    + '" rows="3" lang="' + escapeHtml(note.lang) + '" dir="' + dir + '" placeholder="' + escapeHtml(textPh) + '">'
+    + escapeHtml(note.value || "") + "</textarea>"
+    + "</div>";
+}
+
+function paintFacetDraftNoteColumn(lang, editable) {
+  const items = fctNoteOfLang(lang);
+  let html = items.map((item) => paintFacetDraftNoteCard(item, editable)).join("");
+  if (editable) html += paintFacetDraftNoteAdd(lang);
+  return html;
+}
+
+function paintFacetDraftNoteCompare(leftLang, rightLang) {
+  const typeOrder = fctNoteTypes().map((type) => type.code);
+  const leftItems = fctNoteOfLang(leftLang);
+  const rightItems = fctNoteOfLang(rightLang);
+  const seen = {};
+  const types = [];
+  function addType(code) {
+    if (!code || seen[code]) return;
+    seen[code] = true;
+    types.push(code);
+  }
+  typeOrder.forEach(addType);
+  leftItems.forEach((item) => addType(item.note.type));
+  rightItems.forEach((item) => addType(item.note.type));
+  const shown = types.filter((code) =>
+    leftItems.some((item) => item.note.type === code)
+    || rightItems.some((item) => item.note.type === code)
+  );
+  let html = '<div class="note-cmp-h">'
+    + paintFacetDraftNoteColHead(leftLang)
+    + paintFacetDraftNoteColHead(rightLang)
+    + "</div>";
+  if (!shown.length) {
+    const editor = $("#fctNoteEditor");
+    const empty = (editor && editor.getAttribute("data-empty")) || "";
+    html += '<div class="note-cmp-r">'
+      + '<div class="note-ghost"><span class="note-ghost-t">' + escapeHtml(empty) + "</span></div>"
+      + '<div class="note-ghost"><span class="note-ghost-t">' + escapeHtml(empty) + "</span></div>"
+      + "</div>";
   } else {
-    list.innerHTML = fctNoteState.notes.map((note, index) => {
-      const used = fctNoteUsedKeys(index);
-      const typeOpts = types.filter((type) => type.code === note.type || !used[type.code + "\t" + note.lang])
-        .map((type) => '<option value="' + escapeHtml(type.code) + '"' + (type.code === note.type ? " selected" : "") + ">"
-          + escapeHtml(type.label) + "</option>").join("");
-      const lang = langs.find((item) => item.code === note.lang) || { code: note.lang, name: note.lang, flag: "" };
-      const open = fctNoteState.openLang === index;
-      const langOpts = langs.filter((item) => item.code === note.lang || !used[note.type + "\t" + item.code])
-        .map((item) => '<button type="button" class="tree-lang-opt' + (item.code === note.lang ? " is-on" : "")
-          + '" data-act="fct-note-lang" data-index="' + index + '" data-lang="' + escapeHtml(item.code) + '" role="option">'
-          + '<span class="tree-lang-opt-flag" aria-hidden="true">' + (item.flag || "") + "</span>"
-          + '<span class="tree-lang-opt-name">' + escapeHtml(item.name) + "</span>"
-          + '<span class="tree-lang-opt-code">' + escapeHtml(item.code) + "</span>"
-          + '<span class="tree-lang-opt-check" aria-hidden="true">✓</span></button>').join("");
-      return '<div class="note-edit-card">'
-        + '<div class="note-edit-head">'
-        + '<select class="st-input note-type-select" data-fct-note="type" data-index="' + index + '" aria-label="Type">'
-        + typeOpts + "</select>"
-        + '<div class="tp-lang-pick draft-note-lang fct-note-lang' + (open ? " is-open" : "") + '">'
-        + '<button type="button" class="tree-lang-btn tp-lang-btn draft-note-lang-btn' + (open ? " is-open" : "")
-        + '" data-act="fct-note-lang-toggle" data-index="' + index + '" aria-haspopup="listbox" aria-expanded="' + (open ? "true" : "false") + '">'
-        + '<span class="tree-lang-flag" aria-hidden="true">' + (lang.flag || "🏳️") + "</span>"
-        + '<span class="tree-lang-name">' + escapeHtml(lang.name) + "</span>"
-        + '<span class="tree-lang-code">' + escapeHtml(lang.code) + "</span>"
-        + '<span class="tree-lang-caret" aria-hidden="true">▾</span></button>'
-        + (open ? '<div class="tree-lang-menu tp-lang-menu" role="listbox">' + langOpts + "</div>" : "")
-        + "</div>"
-        + '<button type="button" class="note-edit-remove" data-act="fct-note-remove" data-index="' + index
-        + '" title="' + escapeHtml(remove) + '" aria-label="' + escapeHtml(remove) + '">×</button>'
-        + "</div>"
-        + '<textarea class="st-input note-edit-value disc-input" id="fctNoteVal-' + index + '" data-fct-note="value" data-index="' + index
-        + '" rows="3" placeholder="' + escapeHtml(textPh) + '">' + escapeHtml(note.value || "") + "</textarea>"
-        + '<input type="text" class="st-input draft-note-source" data-fct-note="source" data-index="' + index
-        + '" value="' + escapeHtml(note.source || "") + '" placeholder="' + escapeHtml(sourcePh) + '" autocomplete="off"/>'
+    html += shown.map((type) => {
+      const left = leftItems.find((item) => item.note.type === type);
+      const right = rightItems.find((item) => item.note.type === type);
+      return '<div class="note-cmp-r">'
+        + (left ? paintFacetDraftNoteCard(left, true) : paintFacetDraftNoteGhost(type))
+        + (right ? paintFacetDraftNoteCard(right, false) : paintFacetDraftNoteGhost(type))
         + "</div>";
     }).join("");
   }
-  if (add) add.hidden = !firstFreeFacetDraftNote();
+  html += paintFacetDraftNoteAdd(leftLang);
+  return html;
+}
+
+function paintFacetDraftNotes() {
+  const tabsEl = $("#fctNoteTabs");
+  const body = $("#fctNoteBody");
+  const editor = $("#fctNoteEditor");
+  if (!tabsEl || !body || !editor) return;
+  const tabs = fctNoteTabs();
+  if (!fctNoteState.lang && tabs[0]) fctNoteState.lang = tabs[0];
+  tabsEl.innerHTML = tabs.map((code) => {
+    const meta = fctNoteMeta(code);
+    const count = fctNoteOfLang(code).filter((item) => fctNoteFilled(item.note)).length;
+    const on = fctNoteNorm(code) === fctNoteNorm(fctNoteState.lang);
+    return '<button type="button" class="note-ed-tab' + (on ? " on" : "") + '" data-act="fct-note-tab" data-lang="'
+      + escapeHtml(code) + '" role="tab" aria-selected="' + (on ? "true" : "false") + '">'
+      + (meta.flag ? '<span class="tr-flag">' + meta.flag + "</span>" : "")
+      + "<span>" + escapeHtml(meta.name || code) + "</span>"
+      + (count ? '<span class="note-ed-n">' + count + "</span>" : '<span class="note-ed-void" aria-hidden="true"></span>')
+      + "</button>";
+  }).join("");
+  const cmpBtn = $("#fctNoteCmp");
+  if (cmpBtn) {
+    cmpBtn.classList.toggle("on", !!fctNoteState.compare);
+    cmpBtn.hidden = tabs.length < 2;
+  }
+  const cmpLang = fctNoteState.compare ? fctNoteCompareLang() : "";
+  if (fctNoteState.compare && cmpLang) {
+    body.className = "note-cmp";
+    body.innerHTML = paintFacetDraftNoteCompare(fctNoteState.lang, cmpLang);
+  } else {
+    body.className = "note-ed-mono";
+    body.innerHTML = paintFacetDraftNoteColumn(fctNoteState.lang, true);
+  }
+  if (typeof markUsedTrLangOpts === "function") {
+    markUsedTrLangOpts("#fctNoteMenu", tabs, editor.getAttribute("data-used") || "");
+  }
+  const pick = $("#fctNotePick");
+  if (pick) pick.hidden = $$("#fctNoteMenu .tree-lang-opt").length === 0;
 }
 
 function syncFacetDraftMemHidden() {
@@ -5999,12 +6693,9 @@ function createFacetDraft(src) {
   const labEl = $("#fctParentLabel");
   if (idEl) idEl.value = parentId;
   if (labEl) labEl.value = parentName;
-  const go = $("#fctPrepare");
-  if (go) {
-    go.click();
-    return;
-  }
   showFacetDraftPanel();
+  const go = $("#fctPrepare");
+  if (go) go.click();
 }
 
 function onFacetDraftPrepare(data) {
@@ -6112,10 +6803,14 @@ if (typeof window !== "undefined") {
   window.addFacetDraftTr = addFacetDraftTr;
   window.closeFacetDraftTrLang = closeFacetDraftTrLang;
   window.addFacetDraftNote = addFacetDraftNote;
+  window.addFacetDraftNoteType = addFacetDraftNoteType;
+  window.addFacetDraftNoteLang = addFacetDraftNoteLang;
   window.removeFacetDraftNote = removeFacetDraftNote;
   window.setFacetDraftNoteLangOpen = setFacetDraftNoteLangOpen;
   window.setFacetDraftNoteLang = setFacetDraftNoteLang;
+  window.toggleFacetDraftNoteCompare = toggleFacetDraftNoteCompare;
   window.closeFacetDraftNoteLang = closeFacetDraftNoteLang;
+  window.closeFacetDraftNoteTypeMenu = closeFacetDraftNoteTypeMenu;
   window.addFacetDraftMem = addFacetDraftMem;
   window.removeFacetDraftMem = removeFacetDraftMem;
   window.hideFacetDraftMemDrop = hideFacetDraftMemDrop;

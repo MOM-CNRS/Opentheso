@@ -206,6 +206,15 @@ class ThesaurusPickerBeanTest {
     }
 
     @Test
+    void languageFlagAndLabel_stayReadableOutsideNativeSelect() {
+        String flag = bean.languageFlag("fr");
+        String name = bean.languageLabel("fr");
+        assertEquals("Français", name);
+        assertEquals(4, flag.length());
+        assertFalse(name.contains(flag));
+    }
+
+    @Test
     void canManageRow_respectsRoleAndLogin() {
         ThesaurusPickerRow managerRow = sampleRows().get(0);
         ThesaurusPickerRow guestRole = sampleRows().get(2);

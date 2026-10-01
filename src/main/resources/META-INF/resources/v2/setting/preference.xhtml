@@ -100,9 +100,12 @@
                 </h:commandButton>
                 <h:panelGroup id="previewSettingsBody" layout="block">
                 <div class="st-group-head" id="stPrefs">Préférences du thésaurus</div>
-                <div class="bo-card">
+                <div class="bo-card is-closed">
                   <div class="bo-card-h">
-                    <span class="bo-card-t">Général</span>
+                    <button type="button" class="st-card-tog" aria-expanded="false">
+                      <svg viewBox="0 0 24 24" aria-hidden="true"><path d="m9 18 6-6-6-6"/></svg>
+                      <span class="bo-card-t">Général</span>
+                    </button>
                   </div>
                   <div class="bo-card-b st-form">
                     <div class="st-row">
@@ -186,9 +189,12 @@
                     </div>
                   </div>
                 </div>
-                <div class="bo-card">
+                <div class="bo-card is-closed">
                   <div class="bo-card-h">
-                    <span class="bo-card-t">Affichage &amp; navigation</span>
+                    <button type="button" class="st-card-tog" aria-expanded="false">
+                      <svg viewBox="0 0 24 24" aria-hidden="true"><path d="m9 18 6-6-6-6"/></svg>
+                      <span class="bo-card-t">Affichage &amp; navigation</span>
+                    </button>
                   </div>
                   <div class="bo-card-b st-form">
                     <div class="st-toggle-row">
@@ -248,9 +254,12 @@
                     </div>
                   </div>
                 </div>
-                <div class="bo-card">
+                <div class="bo-card is-closed">
                   <div class="bo-card-h">
-                    <span class="bo-card-t">Collaboration &amp; suivi</span>
+                    <button type="button" class="st-card-tog" aria-expanded="false">
+                      <svg viewBox="0 0 24 24" aria-hidden="true"><path d="m9 18 6-6-6-6"/></svg>
+                      <span class="bo-card-t">Collaboration &amp; suivi</span>
+                    </button>
                   </div>
                   <div class="bo-card-b st-form">
                     <div class="st-toggle-row">
@@ -310,9 +319,12 @@
                     </div>
                   </div>
                 </div>
-                <div class="bo-card">
+                <div class="bo-card is-closed">
                   <div class="bo-card-h">
-                    <span class="bo-card-t">Publication au public</span>
+                    <button type="button" class="st-card-tog" aria-expanded="false">
+                      <svg viewBox="0 0 24 24" aria-hidden="true"><path d="m9 18 6-6-6-6"/></svg>
+                      <span class="bo-card-t">Publication au public</span>
+                    </button>
                   </div>
                   <div class="bo-card-b st-form">
                     <div class="st-toggle-row">
@@ -350,9 +362,12 @@
                     </div>
                   </div>
                 </div>
-                <div class="bo-card">
+                <div class="bo-card is-closed">
                   <div class="bo-card-h">
-                    <span class="bo-card-t">Intégrations</span>
+                    <button type="button" class="st-card-tog" aria-expanded="false">
+                      <svg viewBox="0 0 24 24" aria-hidden="true"><path d="m9 18 6-6-6-6"/></svg>
+                      <span class="bo-card-t">Intégrations</span>
+                    </button>
                   </div>
                   <div class="bo-card-b st-form">
                     <div class="st-integ#{v2ThesaurusPreferenceBean.preference.webservices ? ' on' : ''}">
@@ -408,9 +423,12 @@
                 </div>
                 <div class="st-group-head" id="stServers">Identifiants des serveurs</div>
                 <h:panelGroup id="previewPrefServers" layout="block">
-                <div class="bo-card st-server#{v2ThesaurusIdentifierBean.preference.useArk ? ' st-server-h' : ''}">
+                <div class="bo-card is-closed st-server#{v2ThesaurusIdentifierBean.preference.useArk ? ' st-server-h' : ''}">
                   <div class="bo-card-h">
-                    <span class="bo-card-t">Serveur Ark</span>
+                    <button type="button" class="st-card-tog" aria-expanded="false">
+                      <svg viewBox="0 0 24 24" aria-hidden="true"><path d="m9 18 6-6-6-6"/></svg>
+                      <span class="bo-card-t">Serveur Ark</span>
+                    </button>
                     <label class="st-sw">
                       <h:selectBooleanCheckbox id="previewUseArk" styleClass="st-sw-input"
                                                value="#{v2ThesaurusIdentifierBean.preference.useArk}"
@@ -467,10 +485,12 @@
                     </div>
                   </div>
                 </div>
-                <div class="bo-card st-server#{v2ThesaurusIdentifierBean.preference.useArkLocal ? ' st-server-h' : ''}">
+                <div class="bo-card is-closed st-server#{v2ThesaurusIdentifierBean.preference.useArkLocal ? ' st-server-h' : ''}">
                   <div class="bo-card-h">
-                    <span class="bo-card-t">Serveur Ark local</span>
-                    <span class="st-card-tag">Requis</span>
+                    <button type="button" class="st-card-tog" aria-expanded="false">
+                      <svg viewBox="0 0 24 24" aria-hidden="true"><path d="m9 18 6-6-6-6"/></svg>
+                      <span class="bo-card-t">Serveur Ark local</span>
+                    </button>
                     <label class="st-sw">
                       <h:selectBooleanCheckbox id="previewUseArkLocal" styleClass="st-sw-input"
                                                value="#{v2ThesaurusIdentifierBean.preference.useArkLocal}"
@@ -516,9 +536,12 @@
                     <div class="st-note">(*) La génération des identifiants ARK respecte l'algorithme de vérification NOID (NOID CHECK DIGIT ALGORITHM). Exemple : bLH-ZKKF563R-D</div>
                   </div>
                 </div>
-                <div class="bo-card st-server#{v2ThesaurusIdentifierBean.preference.useHandle ? ' st-server-h' : ''}">
+                <div class="bo-card is-closed st-server#{v2ThesaurusIdentifierBean.preference.useHandle ? ' st-server-h' : ''}">
                   <div class="bo-card-h">
-                    <span class="bo-card-t">Serveur Handle</span>
+                    <button type="button" class="st-card-tog" aria-expanded="false">
+                      <svg viewBox="0 0 24 24" aria-hidden="true"><path d="m9 18 6-6-6-6"/></svg>
+                      <span class="bo-card-t">Serveur Handle</span>
+                    </button>
                     <label class="st-sw">
                       <h:selectBooleanCheckbox id="previewUseHandle" styleClass="st-sw-input"
                                                value="#{v2ThesaurusIdentifierBean.preference.useHandle}"
@@ -604,9 +627,12 @@
                     </div>
                   </div>
                 </div>
-                <div class="bo-card st-server#{v2ThesaurusIdentifierBean.preference.useOpenArk ? ' st-server-h' : ''}">
+                <div class="bo-card is-closed st-server#{v2ThesaurusIdentifierBean.preference.useOpenArk ? ' st-server-h' : ''}">
                   <div class="bo-card-h">
-                    <span class="bo-card-t">Serveur OpenArk</span>
+                    <button type="button" class="st-card-tog" aria-expanded="false">
+                      <svg viewBox="0 0 24 24" aria-hidden="true"><path d="m9 18 6-6-6-6"/></svg>
+                      <span class="bo-card-t">Serveur OpenArk</span>
+                    </button>
                     <label class="st-sw">
                       <h:selectBooleanCheckbox id="previewUseOpenArk" styleClass="st-sw-input"
                                                value="#{v2ThesaurusIdentifierBean.preference.useOpenArk}"
@@ -663,9 +689,12 @@
                 <div class="st-group-head" id="stCorpus">Corpus liés</div>
                 <h:panelGroup id="previewCorpusBox" layout="block">
                 <h:panelGroup id="previewCorpusCard" layout="block">
-                <div class="bo-card">
+                <div class="bo-card is-closed">
                   <div class="bo-card-h">
-                    <span class="bo-card-t">Corpus liés</span>
+                    <button type="button" class="st-card-tog" aria-expanded="false">
+                      <svg viewBox="0 0 24 24" aria-hidden="true"><path d="m9 18 6-6-6-6"/></svg>
+                      <span class="bo-card-t">Corpus liés</span>
+                    </button>
                     <span class="right">
                       <button type="button" class="bo-btn ghost sm" data-act="preview-corpus-new"
                               title="Ajouter un nouveau corpus, lien vers les données">
@@ -890,9 +919,12 @@
                 <div class="st-group-head" id="stAlign">Sources d'alignement</div>
                 <h:panelGroup id="previewAlignBox" layout="block">
                 <h:panelGroup id="previewAlignCard" layout="block">
-                <div class="bo-card">
+                <div class="bo-card is-closed">
                   <div class="bo-card-h">
-                    <span class="bo-card-t">Sources d'alignement</span>
+                    <button type="button" class="st-card-tog" aria-expanded="false">
+                      <svg viewBox="0 0 24 24" aria-hidden="true"><path d="m9 18 6-6-6-6"/></svg>
+                      <span class="bo-card-t">Sources d'alignement</span>
+                    </button>
                     <span class="right">
                       <ui:fragment rendered="#{v2SettingsAccess.canEdit}">
                         <button type="button" class="bo-btn ghost sm" data-act="preview-align-new"
@@ -1115,14 +1147,14 @@
                 </h:form>
                 <div class="block-overlay confirm-overlay" id="stLeaveConfirm" hidden="hidden"
                      data-act="st-leave-dismiss" role="presentation">
-                  <div class="confirm-modal" role="dialog" aria-modal="true"
+                  <div class="confirm-modal st-leave-modal" role="dialog" aria-modal="true"
                        aria-labelledby="stLeaveConfirmTitle" data-act="st-leave-modal">
                     <div class="confirm-h" id="stLeaveConfirmTitle">Quitter sans enregistrer</div>
                     <p class="confirm-p">Les modifications des paramètres, corpus et sources d'alignement seront perdues.
                       Voulez-vous quitter la page sans enregistrer ?</p>
-                    <div class="confirm-actions">
+                    <div class="confirm-actions st-leave-actions">
                       <button type="button" class="bo-btn ghost confirm-cancel" data-act="st-leave-dismiss">Rester sur la page</button>
-                      <button type="button" class="bo-btn danger" data-act="st-leave-confirm">Quitter sans enregistrer</button>
+                      <button type="button" class="bo-btn danger st-leave-go" data-act="st-leave-confirm">Quitter sans enregistrer</button>
                     </div>
                   </div>
                 </div>

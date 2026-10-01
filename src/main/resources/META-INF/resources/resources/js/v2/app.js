@@ -296,6 +296,13 @@ document.addEventListener("keydown", (e) => {
     }
     return;
   }
+  if (e.key === "Enter" && e.target && e.target.id === "fcMemQ") {
+    e.preventDefault();
+    if (typeof addFacetCardMem === "function" && fcMemState && fcMemState.hits && fcMemState.hits[0]) {
+      addFacetCardMem(fcMemState.hits[0].id, fcMemState.hits[0].label);
+    }
+    return;
+  }
   if ((e.metaKey || e.ctrlKey) && e.key === "Enter") {
     const draft = $("#viewDraft");
     if (draft && draft.classList.contains("is-on")) {
@@ -451,6 +458,28 @@ function syncThesaurusPollTick() {
 window.onPreviewSyncPoll = function (data) {
   if (data.status === "success") syncThesaurusPollTick();
 };
+function setSyncSolicitBusy(on) {
+  const page = document.getElementById("viewSync");
+  const overlay = document.getElementById("syncSolicitBusy");
+  const btn = document.querySelector("[data-act='sync-solicit']");
+  if (page) {
+    page.classList.toggle("is-soliciting", !!on);
+    page.setAttribute("aria-busy", on ? "true" : "false");
+  }
+  if (overlay) overlay.hidden = !on;
+  if (btn) {
+    btn.classList.toggle("is-busy", !!on);
+    btn.setAttribute("aria-busy", on ? "true" : "false");
+    btn.setAttribute("aria-disabled", on ? "true" : (btn.classList.contains("is-off") ? "true" : "false"));
+  }
+}
+window.onPreviewSyncSolicit = function (data) {
+  if (data.status === "begin") setSyncSolicitBusy(true);
+  if (data.status === "success") setSyncSolicitBusy(false);
+  if (data.status === "complete") {
+    window.setTimeout(() => setSyncSolicitBusy(false), 30);
+  }
+};
 var portalPollTimer = null;
 function portalPublishPollTick() {
   const state = document.getElementById("previewPortalState");
@@ -527,7 +556,10 @@ document.addEventListener("keydown", (e) => {
   if (hideConfirm("#aboutSaveConfirm") || hideConfirm("#logoutConfirm") || hideConfirm("#stSaveConfirm")
       || hideConfirm("#previewCorpusCreateConfirm") || hideConfirm("#stLeaveConfirm")
       || hideConfirm("#alignDeleteConfirm") || hideConfirm("#alignReplaceConfirm")
-      || hideConfirm("#candReactivateConfirm") || hideConfirm("#candDeleteConfirm")) {
+      || hideConfirm("#candReactivateConfirm") || hideConfirm("#candDeleteConfirm")
+      || hideConfirm("#fcDeleteConfirm")
+      || hideConfirm("#cptCreateConfirm") || hideConfirm("#cptLeaveConfirm")
+      || hideConfirm("#fctCreateConfirm") || hideConfirm("#fctLeaveConfirm")) {
     settingsLeaveAction = null;
     e.preventDefault();
   }
@@ -576,6 +608,8 @@ document.addEventListener("input", (e) => {
     const lang = e.target.getAttribute("data-lang");
     if (e.target.classList.contains("te-alt")) setConceptTrAlt(lang, e.target.value);
     else setConceptTrValue(lang, e.target.value);
+  } else if (e.target && e.target.closest && e.target.closest("#fcTrEditor") && e.target.getAttribute("data-lang")) {
+    setFacetCardTrValue(e.target.getAttribute("data-lang"), e.target.value);
   } else if (e.target && e.target.closest && e.target.closest("#fctTrEditor") && e.target.getAttribute("data-lang")) {
     const lang = e.target.getAttribute("data-lang");
     if (e.target.classList.contains("te-alt")) setFacetDraftTrAlt(lang, e.target.value);
@@ -591,6 +625,7 @@ document.addEventListener("input", (e) => {
     else setDraftTrValue(lang, e.target.value);
   }
   if (e.target && e.target.id === "fctMemQ") scheduleFacetDraftMemSearch();
+  if (e.target && e.target.id === "fcMemQ" && typeof scheduleFacetCardMemSearch === "function") scheduleFacetCardMemSearch();
   if (e.target && e.target.getAttribute && e.target.getAttribute("data-cv-res")) {
     const kind = e.target.getAttribute("data-cv-res");
     const field = e.target.getAttribute("data-field");
@@ -609,6 +644,8 @@ document.addEventListener("input", (e) => {
   }
   if (e.target && e.target.getAttribute && e.target.getAttribute("data-fct-note")) {
     setFacetDraftNoteField(Number(e.target.getAttribute("data-index")), e.target.getAttribute("data-fct-note"), e.target.value);
+  } else if (e.target && e.target.getAttribute && e.target.getAttribute("data-fc-note")) {
+    setFacetCardNoteField(Number(e.target.getAttribute("data-index")), e.target.getAttribute("data-fc-note"), e.target.value);
   } else if (e.target && e.target.getAttribute && e.target.getAttribute("data-note")) {
     setDraftNoteField(Number(e.target.getAttribute("data-index")), e.target.getAttribute("data-note"), e.target.value);
   }
@@ -630,6 +667,9 @@ document.addEventListener("input", (e) => {
 document.addEventListener("change", (e) => {
   if (e.target && e.target.getAttribute && e.target.getAttribute("data-fct-note") === "type") {
     setFacetDraftNoteField(Number(e.target.getAttribute("data-index")), "type", e.target.value);
+  } else if (e.target && e.target.getAttribute && e.target.getAttribute("data-fc-note") === "type") {
+    setFacetCardNoteField(Number(e.target.getAttribute("data-index")), "type", e.target.value);
+    if (typeof paintFacetCardNotes === "function") paintFacetCardNotes();
   } else if (e.target && e.target.getAttribute && e.target.getAttribute("data-cv-note") === "type") {
     setConceptNoteField(Number(e.target.getAttribute("data-index")), "type", e.target.value);
   } else if (e.target && e.target.getAttribute && e.target.getAttribute("data-note") === "type") {
@@ -657,6 +697,15 @@ document.addEventListener("mousedown", (e) => {
   }
   if (e.target.closest("[id$='trEditSave']") && typeof syncConceptTrHidden === "function") {
     syncConceptTrHidden();
+  }
+  if (e.target.closest("[id$='fcTrEditSave']") && typeof syncFacetCardTrHidden === "function") {
+    syncFacetCardTrHidden();
+  }
+  if (e.target.closest("[id$='fcMemEditSave']") && typeof syncFacetCardMemHidden === "function") {
+    syncFacetCardMemHidden();
+  }
+  if (e.target.closest("[id$='fcNoteEditSave']") && typeof syncFacetCardNotesHidden === "function") {
+    syncFacetCardNotesHidden();
   }
   if (e.target.closest("[id$='resEditSave']") && typeof syncConceptResHidden === "function") {
     syncConceptResHidden();
@@ -696,12 +745,16 @@ document.addEventListener("click", (e) => {
     if (!e.target.closest("#cvRelNew .re-field") && typeof hideCvRelDrop === "function") hideCvRelDrop();
     if (!e.target.closest("#draftTrPick")) closeDraftTrLangMenu();
     if (!e.target.closest("#cvTrPick") && typeof closeConceptTrLang === "function") closeConceptTrLang();
+    if (!e.target.closest("#fcTrPick") && typeof closeFacetCardTrLang === "function") closeFacetCardTrLang();
     if (!e.target.closest("#cvNotePick") && typeof closeConceptNoteLang === "function") closeConceptNoteLang();
     if (!e.target.closest(".note-menu-w") && typeof closeConceptNoteTypeMenu === "function") closeConceptNoteTypeMenu();
     if (!e.target.closest("#fctTrPick") && typeof closeFacetDraftTrLang === "function") closeFacetDraftTrLang();
     if (!e.target.closest(".draft-note-lang")) closeDraftNoteLangMenu();
-    if (!e.target.closest(".fct-note-lang") && typeof closeFacetDraftNoteLang === "function") closeFacetDraftNoteLang();
+    if (!e.target.closest("#fctNotePick") && typeof closeFacetDraftNoteLang === "function") closeFacetDraftNoteLang();
+    if (!e.target.closest(".note-menu-w") && typeof closeFacetDraftNoteTypeMenu === "function") closeFacetDraftNoteTypeMenu();
     if (!e.target.closest("#fctMemNew .re-field") && typeof hideFacetDraftMemDrop === "function") hideFacetDraftMemDrop();
+    if (!e.target.closest("#fcMemNew .re-field") && typeof hideFacetCardMemDrop === "function") hideFacetCardMemDrop();
+    if (!e.target.closest(".fc-note-lang") && typeof closeFacetCardNoteLang === "function") closeFacetCardNoteLang();
     return;
   }
   if ($("#cfCombo") && !$("#cfCombo").contains(e.target)) $("#cfCombo").classList.remove("open");
@@ -718,12 +771,16 @@ document.addEventListener("click", (e) => {
   if (act !== "term-lang-toggle" && act !== "term-lang") closeTreeLang();
   if (act !== "draft-tr-toggle" && act !== "draft-tr-add") closeDraftTrLangMenu();
   if (act !== "cv-tr-toggle" && act !== "cv-tr-add" && typeof closeConceptTrLang === "function") closeConceptTrLang();
+  if (act !== "fc-tr-toggle" && act !== "fc-tr-add" && typeof closeFacetCardTrLang === "function") closeFacetCardTrLang();
   if (act !== "cv-note-toggle" && act !== "cv-note-add-lang" && typeof closeConceptNoteLang === "function") closeConceptNoteLang();
   if (act !== "cv-note-add" && act !== "cv-note-add-type" && typeof closeConceptNoteTypeMenu === "function") closeConceptNoteTypeMenu();
   if (act !== "fct-tr-toggle" && act !== "fct-tr-add" && typeof closeFacetDraftTrLang === "function") closeFacetDraftTrLang();
   if (act !== "draft-note-lang-toggle" && act !== "draft-note-lang") closeDraftNoteLangMenu();
-  if (act !== "fct-note-lang-toggle" && act !== "fct-note-lang" && typeof closeFacetDraftNoteLang === "function") closeFacetDraftNoteLang();
+  if (act !== "fct-note-toggle" && act !== "fct-note-add-lang" && typeof closeFacetDraftNoteLang === "function") closeFacetDraftNoteLang();
+  if (act !== "fct-note-add" && act !== "fct-note-add-type" && typeof closeFacetDraftNoteTypeMenu === "function") closeFacetDraftNoteTypeMenu();
   if (act !== "fct-mem-hit" && typeof hideFacetDraftMemDrop === "function") hideFacetDraftMemDrop();
+  if (act !== "fc-mem-hit" && typeof hideFacetCardMemDrop === "function") hideFacetCardMemDrop();
+  if (act !== "fc-note-lang-toggle" && act !== "fc-note-lang" && typeof closeFacetCardNoteLang === "function") closeFacetCardNoteLang();
   if (act !== "pref-lang-toggle" && act !== "pref-lang") closePrefLang();
   if (act !== "export-pdf-lang-toggle" && act !== "export-pdf-lang") closeExportPdfLangPickers();
   if (act !== "export-csv-lang-toggle" && act !== "export-lang" && act !== "export-lang-all" && act !== "export-lang-none") {
@@ -789,7 +846,11 @@ document.addEventListener("click", (e) => {
     clickPreviewJsf("previewPortalRemoveGo");
   } else if (act === "sync-solicit") {
     e.preventDefault();
-    if (t.classList.contains("is-off")) return;
+    if (t.classList.contains("is-off") || t.classList.contains("is-busy")) return;
+    const page = document.getElementById("viewSync");
+    if (page && page.classList.contains("is-soliciting")) return;
+    if (!document.getElementById("syncSolicitGo")) return;
+    setSyncSolicitBusy(true);
     clickPreviewJsf("syncSolicitGo");
   } else if (act === "logout-dismiss") {
     hideConfirm("#logoutConfirm");
@@ -846,6 +907,18 @@ document.addEventListener("click", (e) => {
   } else if (act === "cv-tr-add") {
     if (t.disabled || t.classList.contains("is-used")) return;
     addConceptTr(t.getAttribute("data-lang"));
+  } else if (act === "fc-tr-ask") {
+    askRemoveFacetCardTr(t.getAttribute("data-lang"));
+  } else if (act === "fc-tr-keep") {
+    keepFacetCardTr();
+  } else if (act === "fc-tr-drop") {
+    removeFacetCardTr(t.getAttribute("data-lang"));
+  } else if (act === "fc-tr-toggle") {
+    const btn = $("#fcTrBtn");
+    setFacetCardTrLangOpen(btn && !btn.classList.contains("is-open"));
+  } else if (act === "fc-tr-add") {
+    if (t.disabled || t.classList.contains("is-used")) return;
+    addFacetCardTr(t.getAttribute("data-lang"));
   } else if (act === "cv-note-tab") {
     setConceptNoteLang(t.getAttribute("data-lang"));
   } else if (act === "cv-note-cmp") {
@@ -930,8 +1003,10 @@ document.addEventListener("click", (e) => {
   } else if (act === "st-save-modal") {
     return;
   } else if (act === "st-leave-dismiss") {
-    settingsLeaveAction = null;
+    e.preventDefault();
+    dismissSettingsLeave();
   } else if (act === "st-leave-confirm") {
+    e.preventDefault();
     confirmSettingsLeave();
   } else if (act === "st-leave-modal") {
     return;
@@ -1262,8 +1337,10 @@ document.addEventListener("click", (e) => {
     return;
   } else if (act === "create-pick") {
     e.preventDefault();
+    e.stopPropagation();
     if (t.classList.contains("is-locked") || t.disabled) return;
     pickCreateKind(t.getAttribute("data-kind"));
+    return;
   } else if (act === "create") {
     e.stopPropagation();
     showCreateChooser(t);
@@ -1277,7 +1354,9 @@ document.addEventListener("click", (e) => {
   } else if (act === "cpt-create-modal") {
     return;
   } else if (act === "cpt-create-go") {
+    e.preventDefault();
     confirmConceptDraftCreate(t.getAttribute("data-kind"));
+    return;
   } else if (act === "cpt-leave") {
     requestConceptDraftLeave();
   } else if (act === "cpt-leave-dismiss" || act === "cpt-leave-stay") {
@@ -1296,7 +1375,9 @@ document.addEventListener("click", (e) => {
   } else if (act === "fct-create-modal") {
     return;
   } else if (act === "fct-create-go") {
+    e.preventDefault();
     confirmFacetDraftCreate();
+    return;
   } else if (act === "fct-leave") {
     requestFacetDraftLeave();
   } else if (act === "fct-leave-dismiss" || act === "fct-leave-stay") {
@@ -1317,18 +1398,38 @@ document.addEventListener("click", (e) => {
   } else if (act === "fct-tr-add") {
     if (t.disabled || t.classList.contains("is-used")) return;
     addFacetDraftTr(t.getAttribute("data-lang"));
+  } else if (act === "fct-note-tab") {
+    setFacetDraftNoteLang(t.getAttribute("data-lang"));
+  } else if (act === "fct-note-cmp") {
+    toggleFacetDraftNoteCompare();
+  } else if (act === "fct-note-toggle") {
+    const btn = $("#fctNoteBtn");
+    setFacetDraftNoteLangOpen(btn && !btn.classList.contains("is-open"));
+  } else if (act === "fct-note-add-lang") {
+    if (t.disabled || t.classList.contains("is-used")) return;
+    addFacetDraftNoteLang(t.getAttribute("data-lang"));
   } else if (act === "fct-note-add") {
     addFacetDraftNote();
+  } else if (act === "fct-note-add-type") {
+    addFacetDraftNoteType(t.getAttribute("data-type"));
   } else if (act === "fct-note-remove") {
     removeFacetDraftNote(Number(t.getAttribute("data-index")));
-  } else if (act === "fct-note-lang-toggle") {
-    setFacetDraftNoteLangOpen(Number(t.getAttribute("data-index")));
-  } else if (act === "fct-note-lang") {
-    setFacetDraftNoteLang(Number(t.getAttribute("data-index")), t.getAttribute("data-lang"));
   } else if (act === "fct-mem-hit") {
     addFacetDraftMem(t.getAttribute("data-id"), t.getAttribute("data-label"));
   } else if (act === "fct-mem-remove") {
     removeFacetDraftMem(t.getAttribute("data-index"));
+  } else if (act === "fc-note-add") {
+    addFacetCardNote();
+  } else if (act === "fc-note-remove") {
+    removeFacetCardNote(Number(t.getAttribute("data-index")));
+  } else if (act === "fc-note-lang-toggle") {
+    setFacetCardNoteLangOpen(Number(t.getAttribute("data-index")));
+  } else if (act === "fc-note-lang") {
+    setFacetCardNoteLang(Number(t.getAttribute("data-index")), t.getAttribute("data-lang"));
+  } else if (act === "fc-mem-hit") {
+    addFacetCardMem(t.getAttribute("data-id"), t.getAttribute("data-label"));
+  } else if (act === "fc-mem-remove") {
+    removeFacetCardMem(t.getAttribute("data-index"));
   } else if (act === "cpt-nt-rel") {
     const hidden = $("#cptNtRel");
     if (hidden) hidden.value = t.getAttribute("data-val") || "NT";
@@ -1603,6 +1704,22 @@ document.addEventListener("click", (e) => {
     e.preventDefault();
     hideConfirm("#candDeleteConfirm");
     const btn = document.querySelector("[id$='candDeleteGo']");
+    if (btn) btn.click();
+    return;
+  } else if (act === "fc-del-ask") {
+    e.preventDefault();
+    showConfirm("#fcDeleteConfirm");
+    return;
+  } else if (act === "fc-del-dismiss") {
+    e.preventDefault();
+    hideConfirm("#fcDeleteConfirm");
+    return;
+  } else if (act === "fc-del-modal") {
+    return;
+  } else if (act === "fc-del-go") {
+    e.preventDefault();
+    hideConfirm("#fcDeleteConfirm");
+    const btn = document.querySelector("[id$='fcDeleteGo']");
     if (btn) btn.click();
     return;
   } else if (act === "ui-lang") {
@@ -2047,6 +2164,7 @@ function onV2Ajax(data) {
         applyPropBoardFilter();
       }
       requestAnimationFrame(() => {
+        if (typeof restoreSettingsCards === "function") restoreSettingsCards();
         const srcId = (data.source && data.source.id) || "";
         if (srcId.indexOf("clearRevealBtn") >= 0
           || srcId.indexOf("candSearchGo") >= 0
@@ -2420,6 +2538,7 @@ if (IS_CONSULT || SCREEN === "accueil") {
   paint();
 }
 bindPrefSwitches();
+bindSettingsCards();
 bindViewRail();
 loadStatKpis();
 initSettingsLeaveGuard();

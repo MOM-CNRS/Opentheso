@@ -50,7 +50,8 @@
                   <h:inputHidden id="syncPendingOpen" value="#{v2ThesaurusSyncBean.pendingExpanded}"/>
                   <h:inputHidden id="syncIncomingOpen" value="#{v2ThesaurusSyncBean.incomingExpanded}"/>
                   <h:inputHidden id="syncResultOpen" value="#{v2ThesaurusSyncBean.resultExpanded}"/>
-                  <h:messages id="messageIndex" infoClass="st-corpus-msg" errorClass="st-corpus-msg is-error" warnClass="st-corpus-msg"/>
+                  <h:messages id="messageIndex" globalOnly="true" showSummary="false" showDetail="true"
+                              infoClass="st-corpus-msg" errorClass="st-corpus-msg is-error" warnClass="st-corpus-msg"/>
                   <h:panelGroup id="previewSyncBox" layout="block" styleClass="sy-box">
                     <h:panelGroup rendered="#{not v2ThesaurusSyncBean.formAvailable}" layout="block">
                       <div class="sy-empty">
@@ -229,12 +230,21 @@
                           <h:panelGroup rendered="#{v2ThesaurusSyncBean.pullMode}" layout="block" styleClass="sy-pull">
                             <div class="sy-actions">
                               <button type="button"
-                                      class="bo-btn ghost#{v2ThesaurusSyncBean.running ? ' is-off' : ''}"
+                                      class="bo-btn ghost sy-solicit#{v2ThesaurusSyncBean.running ? ' is-off' : ''}"
                                       data-act="sync-solicit"
                                       aria-disabled="#{v2ThesaurusSyncBean.running}">
-                                #{v2LocaleBean.getMsg('v2.sync.solicit')}
+                                <span class="sy-solicit-label">#{v2LocaleBean.getMsg('v2.sync.solicit')}</span>
+                                <span class="sy-solicit-wait">
+                                  <span class="mg-kpi-spin" aria-hidden="true"></span>
+                                  #{v2LocaleBean.getMsg('v2.sync.solicit.busy')}
+                                </span>
                               </button>
                             </div>
+                            <h:panelGroup rendered="#{v2ThesaurusSyncBean.incomingEmpty}" layout="block"
+                                          styleClass="sy-empty sy-empty--ok">
+                              <svg viewBox="0 0 24 24" aria-hidden="true"><path d="M20 6 9 17l-5-5"/></svg>
+                              <p>#{v2LocaleBean.getMsg('v2.sync.incoming.empty')}</p>
+                            </h:panelGroup>
                             <h:panelGroup rendered="#{v2ThesaurusSyncBean.incomingVisible}" layout="block"
                                           styleClass="sync-diff#{v2ThesaurusSyncBean.incomingExpanded ? ' is-open' : ''}">
                               <button type="button"
@@ -465,7 +475,7 @@
                             <h:commandButton id="syncSolicitGo" value="solicit" styleClass="st-jsf-go"
                                              action="#{v2ThesaurusSyncBean.solicitMaster}">
                               <f:ajax execute="syncMasterUrl syncMasterTheso syncMasterKey syncPendingOpen syncIncomingOpen syncResultOpen @this"
-                                      render="previewSyncBox messageIndex"/>
+                                      render="previewSyncBox messageIndex" onevent="onPreviewSyncSolicit"/>
                             </h:commandButton>
                             <h:commandButton id="previewSyncPollGo" value="poll" styleClass="st-jsf-go"
                                              action="#{v2ThesaurusSyncBean.onProgressPoll}">
@@ -477,6 +487,13 @@
                     </h:panelGroup>
                   </h:panelGroup>
                 </h:form>
+              </div>
+            </div>
+            <div id="syncSolicitBusy" class="sy-busy" hidden="hidden" role="status" aria-live="assertive"
+                 aria-labelledby="syncSolicitBusyTitle">
+              <div class="sy-busy-card">
+                <span class="mg-kpi-spin sy-busy-spin" aria-hidden="true"></span>
+                <p id="syncSolicitBusyTitle">#{v2LocaleBean.getMsg('v2.sync.solicit.busy')}</p>
               </div>
             </div>
           </div>

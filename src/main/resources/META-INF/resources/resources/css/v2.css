@@ -201,6 +201,23 @@ body.is-export-lock #bulkSel{
 #viewLive .cv-head{margin-bottom:22px}
 .preview-open-form{position:absolute;width:1px;height:1px;overflow:hidden;clip:rect(0,0,0,0);pointer-events:none}
 .cv-status.is-facet{color:#3d5a80;background:rgba(61,90,128,.12)}
+#viewLive .cv.is-facet .cv-facet-foot{
+  display:flex;justify-content:flex-end;margin-top:18px;padding:6px 0 2px
+}
+#viewLive .cv.is-facet .cv-facet-del-err{margin-top:8px}
+#viewLive .cv.is-facet .fc-del,
+#fcDeleteConfirm .fc-del-go{
+  min-height:40px;padding:8px 16px;border-radius:10px;font-weight:650;
+  background:linear-gradient(180deg,#c53a2e 0%,#b42318 100%);
+  color:#fff;border-color:#9b1c1c;
+  box-shadow:0 1px 0 rgba(255,255,255,.18) inset, 0 4px 14px rgba(180,35,24,.28)
+}
+#viewLive .cv.is-facet .fc-del:hover,
+#fcDeleteConfirm .fc-del-go:hover{
+  background:linear-gradient(180deg,#d14538 0%,#c53a2e 100%);
+  border-color:#8a1812;filter:none;color:#fff;
+  box-shadow:0 1px 0 rgba(255,255,255,.2) inset, 0 6px 16px rgba(180,35,24,.34)
+}
 .cv-status.is-dep{color:#9a3412;background:rgba(194,84,58,.12)}
 .cv-status.is-rej{color:#c2453a;background:rgba(194,69,58,.10)}
 #viewLive .draft-under{display:none}
@@ -404,6 +421,7 @@ body.hl-off mark.hl{background:transparent;color:inherit;font-weight:inherit;pad
 .st-integ:has(.st-sw-input:checked) .st-deepl-field{display:block}
 .view-panel:has(.fsave){padding-bottom:88px}
 .st-group-head{scroll-margin-top:24px}
+body[data-page="preference"] .st-scope .st-group-head{scroll-margin-top:64px}
 form.bo-card-b{margin:0}
 table.st-radios{display:flex;flex-wrap:wrap;gap:18px;margin-bottom:9px;border:0;width:auto;background:none}
 table.st-radios tbody,table.st-radios tr{display:contents}
@@ -570,6 +588,40 @@ a.th-id{flex:1}
 .confirm-h{font-size:15px;font-weight:700;color:var(--ink)}
 .confirm-p{margin:0;font-size:13.5px;line-height:1.45;color:var(--ink-2)}
 .confirm-actions{display:flex;justify-content:flex-end;align-items:center;gap:10px;margin-top:6px}
+.st-leave-modal{width:min(460px,92vw)}
+#stLeaveConfirm,
+#createChooser,
+#cptCreateConfirm,#cptLeaveConfirm,
+#fctCreateConfirm,#fctLeaveConfirm,
+#fcDeleteConfirm{z-index:420}
+body:has(#stLeaveConfirm:not([hidden])) .fsave,
+body:has(#stLeaveConfirm:not([hidden])) .go-top,
+body:has(#cptCreateConfirm:not([hidden])) .fsave,
+body:has(#cptLeaveConfirm:not([hidden])) .fsave,
+body:has(#fctCreateConfirm:not([hidden])) .fsave,
+body:has(#fctLeaveConfirm:not([hidden])) .fsave,
+body:has(#fcDeleteConfirm:not([hidden])) .fsave,
+body:has(#cptCreateConfirm:not([hidden])) .go-top,
+body:has(#cptLeaveConfirm:not([hidden])) .go-top,
+body:has(#fctCreateConfirm:not([hidden])) .go-top,
+body:has(#fctLeaveConfirm:not([hidden])) .go-top,
+body:has(#fcDeleteConfirm:not([hidden])) .go-top{pointer-events:none}
+.st-leave-actions{flex-wrap:wrap;gap:10px;margin-top:8px;padding-top:14px;border-top:1px solid var(--line)}
+.st-leave-actions .bo-btn{
+  min-height:40px;padding:8px 16px;justify-content:center;border-radius:10px;font-weight:650
+}
+button.bo-btn.danger.st-leave-go{
+  flex:1 1 auto;min-width:min(100%, 220px);
+  white-space:normal;text-align:center;line-height:1.25;
+  background:linear-gradient(180deg,#c53a2e 0%,#b42318 100%);
+  color:#fff;border-color:#9b1c1c;
+  box-shadow:0 1px 0 rgba(255,255,255,.18) inset, 0 4px 14px rgba(180,35,24,.28)
+}
+button.bo-btn.danger.st-leave-go:hover{
+  background:linear-gradient(180deg,#d14538 0%,#c53a2e 100%);
+  border-color:#8a1812;filter:none;color:#fff;
+  box-shadow:0 1px 0 rgba(255,255,255,.2) inset, 0 6px 16px rgba(180,35,24,.34)
+}
 .confirm-ok-form{display:contents}
 .confirm-modal a.bo-btn,.confirm-modal a.abt-save,.confirm-modal button.bo-btn.primary{color:#fff;text-decoration:none}
 .confirm-modal .abt-cancel{color:var(--ink-2)}
@@ -1600,8 +1652,35 @@ body:is([data-page="synchronisation"],[data-page="portail"]) .content.is-full .v
 body:is([data-page="synchronisation"],[data-page="portail"]) .view-lang-refresh{display:block;width:100%;min-height:100%}
 body:is([data-page="synchronisation"],[data-page="portail"]) #viewSync,
 body:is([data-page="synchronisation"],[data-page="portail"]) #viewPortal{
-  display:block;height:auto;min-height:100%;overflow:visible
+  display:block;height:auto;min-height:100%;overflow:visible;position:relative
 }
+body[data-page="synchronisation"] #viewSync.is-soliciting .bo.sy{
+  pointer-events:none;user-select:none
+}
+body[data-page="synchronisation"] .sy-busy{
+  display:none;position:absolute;inset:0;z-index:30;align-items:center;justify-content:center;
+  padding:24px;background:rgba(247,246,242,.72);backdrop-filter:blur(3px);-webkit-backdrop-filter:blur(3px)
+}
+body[data-page="synchronisation"] #viewSync.is-soliciting .sy-busy,
+body[data-page="synchronisation"] .sy-busy:not([hidden]){display:flex}
+body[data-page="synchronisation"] .sy-busy[hidden]{display:none!important}
+body[data-page="synchronisation"] .sy-busy-card{
+  display:flex;align-items:center;gap:12px;max-width:22rem;
+  padding:14px 18px;border-radius:14px;border:1px solid var(--line);
+  background:var(--surface);box-shadow:var(--shadow-lg,0 12px 32px rgba(20,24,28,.12))
+}
+body[data-page="synchronisation"] .sy-busy-spin{width:18px;height:18px;border-width:2.4px}
+body[data-page="synchronisation"] .sy-busy-card p{
+  margin:0;font-size:14px;font-weight:650;color:var(--ink);line-height:1.35
+}
+body[data-page="synchronisation"] .sy-solicit{min-width:12.5rem}
+body[data-page="synchronisation"] .sy-solicit-wait{display:none;align-items:center;gap:8px}
+body[data-page="synchronisation"] .sy-solicit-wait .mg-kpi-spin{width:13px;height:13px;border-width:2px}
+body[data-page="synchronisation"] .sy-solicit.is-busy{
+  pointer-events:none;opacity:.9
+}
+body[data-page="synchronisation"] .sy-solicit.is-busy .sy-solicit-label{display:none}
+body[data-page="synchronisation"] .sy-solicit.is-busy .sy-solicit-wait{display:inline-flex}
 body:is([data-page="synchronisation"],[data-page="portail"]) .bo.bo-solo.sy{max-width:880px}
 body:is([data-page="synchronisation"],[data-page="portail"]) .bo-solo > .bo-back{
   position:static !important;left:auto !important;top:auto !important;grid-row:2
@@ -1722,6 +1801,11 @@ body:is([data-page="synchronisation"],[data-page="portail"]) .sy-empty svg{
   stroke-linecap:round;stroke-linejoin:round;color:#9a4d12;margin-top:1px
 }
 body:is([data-page="synchronisation"],[data-page="portail"]) .sy-empty p{margin:0;font-size:13.5px;line-height:1.45;color:var(--ink-2)}
+body[data-page="synchronisation"] .sy-empty--ok{
+  margin-top:12px;border-style:solid;border-color:var(--accent-line,var(--line));background:var(--accent-soft,#f3f7f4)
+}
+body[data-page="synchronisation"] .sy-empty--ok svg{color:var(--accent)}
+body[data-page="synchronisation"] .sy-empty--ok p{color:var(--ink-2);font-weight:600}
 @media (max-width:720px){
   body:is([data-page="synchronisation"],[data-page="portail"]) .sy-head{flex-wrap:wrap}
   body:is([data-page="synchronisation"],[data-page="portail"]) .sy-role{margin-left:60px}
@@ -2233,6 +2317,9 @@ html{height:100%}
   .go-top{bottom:calc(72px + env(safe-area-inset-bottom,0px));min-width:44px}
   .img-lightbox{padding:12px}
   .confirm-modal{width:min(400px,calc(100vw - 16px));max-height:min(92dvh,820px);border-radius:16px}
+  .st-leave-modal{width:min(400px,calc(100vw - 16px))}
+  .st-leave-actions{flex-direction:column;align-items:stretch}
+  .st-leave-actions .bo-btn{width:100%;min-width:0}
   .th-dc-table,.st-table,.bo-fmt,.bo-errtbl,.acc-roles-table{display:block;overflow-x:auto;max-width:100%}
   .skos-links{flex-wrap:wrap}
   .bo-title{font-size:20px}

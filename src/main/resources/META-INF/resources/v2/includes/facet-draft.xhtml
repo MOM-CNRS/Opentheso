@@ -126,18 +126,56 @@
           </section>
 
           <section class="cblock" id="fctNoteEditor"
-                   data-empty="#{v2LocaleBean.getMsg('v2.candidat.draft.note.empty')}"
-                   data-add="#{v2LocaleBean.getMsg('v2.candidat.draft.note.add')}"
-                   data-remove="#{v2LocaleBean.getMsg('v2.candidat.draft.note.remove')}"
-                   data-text-ph="#{v2LocaleBean.getMsg('v2.candidat.draft.note.textPh')}"
-                   data-source-ph="#{v2LocaleBean.getMsg('v2.candidat.draft.note.sourcePh')}"
+                   data-empty="#{v2LocaleBean.getMsg('v2.concept.note.emptyLang')}"
+                   data-add="#{v2LocaleBean.getMsg('v2.concept.note.add')}"
+                   data-add-lang="#{v2LocaleBean.getMsg('v2.concept.note.addLang')}"
+                   data-compare="#{v2LocaleBean.getMsg('v2.concept.note.compare')}"
+                   data-remove="#{v2LocaleBean.getMsg('v2.concept.note.remove')}"
+                   data-text-ph="#{v2LocaleBean.getMsg('v2.concept.note.textPh')}"
+                   data-source-ph="#{v2LocaleBean.getMsg('v2.concept.note.sourcePh')}"
+                   data-used="#{v2LocaleBean.getMsg('v2.concept.note.langUsed')}"
                    data-work-lang="#{v2FacetDetailEditorBean.workLanguage}">
             <div class="cblock-head">#{v2LocaleBean.getMsg('v2.facet.draft.notes')}</div>
             <div class="cblock-body">
-              <div class="note-edit" id="fctNoteList"></div>
-              <button type="button" class="note-add-btn" id="fctNoteAdd" data-act="fct-note-add">
-                #{v2LocaleBean.getMsg('v2.candidat.draft.note.add')}
-              </button>
+              <div class="note-ed">
+                <div class="note-ed-bar">
+                  <div class="note-ed-tabs" id="fctNoteTabs" role="tablist"></div>
+                  <div class="note-ed-actions">
+                    <div class="note-ed-pick" id="fctNotePick">
+                      <button type="button"
+                              class="note-ed-addl"
+                              id="fctNoteBtn"
+                              data-act="fct-note-toggle"
+                              aria-haspopup="listbox"
+                              aria-expanded="false">
+                        #{v2LocaleBean.getMsg('v2.concept.note.addLang')}
+                      </button>
+                      <div class="tree-lang-menu tp-lang-menu" id="fctNoteMenu" role="listbox"
+                           aria-label="#{v2LocaleBean.getMsg('v2.concept.note.addLang')}">
+                        <div class="tree-lang-menu-h">#{v2LocaleBean.getMsg('v2.concept.note.addLang')}</div>
+                        <ui:repeat value="#{v2ThesaurusViewBean.languages}" var="lang">
+                          <button type="button"
+                                  class="tree-lang-opt"
+                                  data-act="fct-note-add-lang"
+                                  data-lang="#{lang.code}"
+                                  data-flag="#{v2ThesaurusViewBean.flagEmoji(lang.code)}"
+                                  data-name="#{lang.value}"
+                                  role="option"
+                                  aria-selected="false">
+                            <span class="tree-lang-opt-flag" aria-hidden="true">#{v2ThesaurusViewBean.flagEmoji(lang.code)}</span>
+                            <span class="tree-lang-opt-name">#{lang.value}</span>
+                            <span class="tree-lang-opt-code">#{lang.code}</span>
+                          </button>
+                        </ui:repeat>
+                      </div>
+                    </div>
+                    <button type="button" class="note-ed-cmp" id="fctNoteCmp" data-act="fct-note-cmp">
+                      #{v2LocaleBean.getMsg('v2.concept.note.compare')}
+                    </button>
+                  </div>
+                </div>
+                <div id="fctNoteBody"></div>
+              </div>
               <div id="fctNoteTypeOpts" hidden="hidden">
                 <ui:repeat value="#{v2FacetDetailEditorBean.draftNoteTypes}" var="type">
                   <span data-code="#{type}" data-label="#{v2ThesaurusViewBean.noteTypeLabel(type)}"></span>
@@ -208,7 +246,7 @@
         <div class="confirm-h" id="fctCreateTitle">#{v2LocaleBean.getMsg('v2.facet.draft.confirm.title')}</div>
         <p class="confirm-p" id="fctCreateText">#{v2LocaleBean.getMsg('v2.facet.draft.confirm.create')}</p>
         <div class="confirm-actions">
-          <button type="button" class="bo-btn ghost" data-act="fct-create-dismiss">#{v2LocaleBean.getMsg('v2.facet.draft.cancel')}</button>
+          <button type="button" class="bo-btn ghost confirm-cancel" data-act="fct-create-dismiss">#{v2LocaleBean.getMsg('v2.facet.draft.cancel')}</button>
           <button type="button" class="bo-btn primary" id="fctCreateGo" data-act="fct-create-go">#{v2LocaleBean.getMsg('v2.facet.draft.create')}</button>
         </div>
       </div>

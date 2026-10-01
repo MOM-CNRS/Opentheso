@@ -7,6 +7,7 @@ import fr.cnrs.opentheso.v2.concept.model.ConceptDetail;
 import fr.cnrs.opentheso.v2.concept.model.ConceptSummary;
 import fr.cnrs.opentheso.v2.concept.model.ConceptTreeNodeData;
 import fr.cnrs.opentheso.v2.concept.model.FacetDetailOverview;
+import fr.cnrs.opentheso.v2.concept.model.GroupTranslationItem;
 import fr.cnrs.opentheso.v2.concept.model.ThesaurusHomeOverview;
 import fr.cnrs.opentheso.v2.concept.model.ThesaurusMetadataItem;
 import fr.cnrs.opentheso.v2.concept.service.ConceptReadService;
@@ -635,6 +636,29 @@ class ThesaurusViewBeanTest {
         assertTrue(items.get(0).isTodo());
         assertEquals("rtl", bean.textDirection("ar"));
         assertEquals("ltr", bean.textDirection("en"));
+    }
+
+    @Test
+    void facetTranslationViewItems_markBlankAsTodoAndSkipWorkLanguage() {
+        ReflectionTestUtils.setField(bean, "selectedLang", "fr");
+        ReflectionTestUtils.setField(bean, "selectedFacet", new FacetDetailOverview(
+                "f1", "Techniques", "fr", "c1", "Adobe",
+                List.of(),
+                List.of(
+                        new GroupTranslationItem("fr", "Techniques"),
+                        new GroupTranslationItem("en", "Techniques"),
+                        new GroupTranslationItem("de", ""),
+                        new GroupTranslationItem("", "Ignoré")
+                ),
+                List.of()
+        ));
+
+        var items = bean.getFacetTranslationViewItems();
+        assertEquals(2, items.size());
+        assertEquals("en", items.get(0).getLang());
+        assertFalse(items.get(0).isTodo());
+        assertEquals("de", items.get(1).getLang());
+        assertTrue(items.get(1).isTodo());
     }
 
     @Test

@@ -11,6 +11,7 @@ import fr.cnrs.opentheso.v2.concept.model.ConceptNote;
 import fr.cnrs.opentheso.v2.concept.model.ConceptRelation;
 import fr.cnrs.opentheso.v2.concept.model.ConceptTreeNodeData;
 import fr.cnrs.opentheso.v2.concept.model.FacetDetailOverview;
+import fr.cnrs.opentheso.v2.concept.model.GroupTranslationItem;
 import fr.cnrs.opentheso.v2.concept.model.ConceptLinkItem;
 import fr.cnrs.opentheso.v2.concept.model.ThesaurusHomeOverview;
 import fr.cnrs.opentheso.v2.concept.model.ThesaurusMetadataItem;
@@ -732,6 +733,33 @@ public class ThesaurusViewBean implements Serializable {
                     StringUtils.defaultString(label.value()),
                     altTranslationsLabel(label.lang()),
                     StringUtils.isBlank(label.value())
+            ));
+        }
+        return items;
+    }
+
+    /**
+     * Traductions de la fiche facette : même présentation que le concept
+     * (hors langue courante déjà filtrée à la lecture).
+     */
+    public List<TranslationViewItem> getFacetTranslationViewItems() {
+        if (selectedFacet == null || selectedFacet.translations() == null) {
+            return List.of();
+        }
+        String work = StringUtils.defaultString(getSelectedLang()).trim().toLowerCase(Locale.ROOT);
+        List<TranslationViewItem> items = new ArrayList<>();
+        for (GroupTranslationItem tr : selectedFacet.translations()) {
+            if (tr == null || StringUtils.isBlank(tr.lang())) {
+                continue;
+            }
+            if (work.equals(tr.lang().trim().toLowerCase(Locale.ROOT))) {
+                continue;
+            }
+            items.add(new TranslationViewItem(
+                    tr.lang(),
+                    StringUtils.defaultString(tr.value()),
+                    "",
+                    StringUtils.isBlank(tr.value())
             ));
         }
         return items;

@@ -81,6 +81,7 @@ public class ThesaurusSyncBean implements Serializable {
     private String mode = MODE_PUSH;
     private List<SyncIncomingRow> incomingRows = List.of();
     private int incomingTotal;
+    private boolean incomingSolicited;
     private boolean incomingExpanded;
     private int incomingPage;
     private boolean resultExpanded;
@@ -129,6 +130,7 @@ public class ThesaurusSyncBean implements Serializable {
         mode = MODE_PUSH;
         incomingRows = List.of();
         incomingTotal = 0;
+        incomingSolicited = false;
         incomingExpanded = false;
         incomingPage = 0;
         createCandidates = true;
@@ -262,10 +264,12 @@ public class ThesaurusSyncBean implements Serializable {
             }
             incomingRows = rows;
             incomingPage = 0;
+            incomingSolicited = true;
             incomingExpanded = !rows.isEmpty();
             syncSucceeded = false;
             lastResponse = null;
-            if (incomingTotal <= 0) {
+            if (rows.isEmpty()) {
+                incomingTotal = 0;
                 MessageUtils.showInformationMessage(localeOrKey("v2.sync.incoming.empty"));
             } else {
                 MessageUtils.showInformationMessage(
@@ -274,10 +278,12 @@ public class ThesaurusSyncBean implements Serializable {
         } catch (InvalidToolboxDataException ex) {
             incomingRows = List.of();
             incomingTotal = 0;
+            incomingSolicited = false;
             MessageUtils.showErrorMessage(ex.getMessage());
         } catch (RuntimeException ex) {
             incomingRows = List.of();
             incomingTotal = 0;
+            incomingSolicited = false;
             MessageUtils.showErrorMessage(StringUtils.defaultIfBlank(
                     ex.getMessage(), localeOrKey("v2.sync.solicit.failed")));
         }
@@ -552,6 +558,10 @@ public class ThesaurusSyncBean implements Serializable {
 
     public boolean isIncomingVisible() {
         return incomingRows != null && !incomingRows.isEmpty();
+    }
+
+    public boolean isIncomingEmpty() {
+        return incomingSolicited && !isIncomingVisible();
     }
 
     public boolean isIncomingTableVisible() {
@@ -991,6 +1001,7 @@ public class ThesaurusSyncBean implements Serializable {
         mode = MODE_PUSH;
         incomingRows = List.of();
         incomingTotal = 0;
+        incomingSolicited = false;
         incomingExpanded = false;
         incomingPage = 0;
     }

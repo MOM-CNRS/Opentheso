@@ -11,6 +11,8 @@ import fr.cnrs.opentheso.v2.setting.service.ThesaurusPreferenceService;
 import fr.cnrs.opentheso.v2.setting.service.ThesaurusWorkLanguageService;
 import fr.cnrs.opentheso.v2.shared.session.ThesaurusSelectionService;
 import fr.cnrs.opentheso.v2.shared.ui.UserSession;
+import java.nio.file.Files;
+import java.nio.file.Path;
 import org.junit.jupiter.api.BeforeEach;
 import org.junit.jupiter.api.Test;
 import org.junit.jupiter.api.extension.ExtendWith;
@@ -146,6 +148,18 @@ class ThesaurusPreferenceBeanTest {
         verify(persistService, never()).saveAll(any(), any(), any(), any(), any(), any());
         assertTrue(bean.isPreferenceSaveError());
         assertTrue(bean.getPreferenceSaveMessage().contains("PreferredName"));
+    }
+
+    @Test
+    void settingsPage_keepsSyncToggleOnCollapsibleCards() throws Exception {
+        String xhtml = Files.readString(
+                Path.of("src/main/resources/META-INF/resources/v2/setting/preference.xhtml"));
+        assertTrue(xhtml.contains("class=\"st-card-tog\""));
+        assertTrue(xhtml.contains("bo-card is-closed"));
+        assertTrue(xhtml.contains("value=\"#{v2ThesaurusPreferenceBean.preference.synchronisation}\""));
+        assertTrue(xhtml.contains("v2.home.workshop.sync"));
+        assertTrue(xhtml.contains("class=\"bo-btn danger st-leave-go\""));
+        assertEquals(11, xhtml.split("class=\"st-card-tog\"", -1).length - 1);
     }
 
     @Test

@@ -318,7 +318,32 @@ class ThesaurusSyncBeanTest {
         assertEquals(2, bean.getSelectedIncomingCount());
         assertTrue(bean.getIncomingRows().get(0).isSelected());
         assertTrue(bean.isIncomingVisible());
+        assertFalse(bean.isIncomingEmpty());
         assertFalse(bean.isPullStartDisabled());
+    }
+
+    @Test
+    void solicitMaster_showsEmptyStateWhenMasterHasNoChanges() {
+        stubAccess(true);
+        bean.setThesaurusId("TH1");
+        bean.setMasterServerUrl("https://master.example");
+        bean.setMasterThesaurusId("TH_MASTER");
+        bean.setMasterApiKey("api-key");
+        bean.selectPullMode();
+        when(thesaurusSyncPullService.solicit(eq("TH1"), any()))
+                .thenReturn(new SyncChangesResponse(0, List.of()));
+
+        try (MockedStatic<MessageUtils> messages = mockStatic(MessageUtils.class)) {
+            bean.solicitMaster();
+            messages.verify(() -> MessageUtils.showInformationMessage(
+                    "Aucun concept modifié sur le maître depuis la dernière synchronisation."));
+        }
+
+        assertEquals(0, bean.getIncomingTotal());
+        assertTrue(bean.getIncomingRows().isEmpty());
+        assertTrue(bean.isIncomingEmpty());
+        assertFalse(bean.isIncomingVisible());
+        assertTrue(bean.isPullStartDisabled());
     }
 
     @Test

@@ -998,8 +998,8 @@ input.ia-ajax-proxy-btn,
   width:auto !important;min-width:72px;height:32px;padding:4px 8px !important;border-radius:8px !important;
   -webkit-appearance:menulist;appearance:menulist;font-size:13px !important
 }
-.bo-btn.danger{color:var(--danger, #b42318);border-color:color-mix(in srgb, var(--danger, #b42318) 35%, var(--line))}
-.bo-btn.primary.danger{background:var(--danger, #b42318);border-color:transparent;color:#fff}
+body[data-page="admin-instance"] .bo-btn.danger{color:var(--danger, #b42318);border-color:color-mix(in srgb, var(--danger, #b42318) 35%, var(--line))}
+body[data-page="admin-instance"] .bo-btn.primary.danger{background:var(--danger, #b42318);border-color:transparent;color:#fff}
 .ia-delete .ia-create-d b{color:var(--ink)}
 .ia-create-actions{
   display:flex;justify-content:flex-end;flex-wrap:wrap;gap:8px;margin-top:16px

@@ -6,19 +6,9 @@
                 xmlns:pt="http://xmlns.jcp.org/jsf/passthrough">
         <ui:fragment rendered="#{v2ThesaurusPickerBean.listMode}">
         <div class="tp-gov">
-          <a class="tp-gov-mark" href="#{request.contextPath}/v2/thesauri"
-             title="Retour à l'accueil — Ministère de la Culture">
-            <span class="tp-marianne" aria-hidden="true">
-              <span class="tp-marianne-bars"><i/><i/><i/></span>
-              <span class="tp-marianne-txt">
-                <b>République</b>
-                <b>Française</b>
-              </span>
-            </span>
-          </a>
-          <div class="tp-gov-brand">
-            <span class="gv-min">Ministère<br/>de la Culture</span>
-          </div>
+          <img class="tp-gov-mark"
+               src="#{request.contextPath}/resources/img/minist%C3%A8re%20de%20la%20culture.png"
+               alt="Ministère de la Culture"/>
           <a class="tp-gov-lk" href="https://www.culture.gouv.fr" target="_blank" rel="noreferrer">
             culture.gouv.fr<span class="gv-ext" aria-hidden="true">↗</span>
           </a>
@@ -215,14 +205,43 @@
               </label>
               <label class="tp-mobile-f">
                 <span>#{v2LocaleBean.getMsg('v2.picker.col.lang')}</span>
-                <h:selectOneMenu styleClass="tp-fi tp-fi--lang" value="#{v2ThesaurusPickerBean.filterLang}"
-                                 pt:data-tp-filter="lang"
-                                 pt:onchange="window.tpOnColFilter &amp;&amp; window.tpOnColFilter(this);">
-                  <f:selectItem itemValue="" itemLabel="Toutes ▾"/>
-                  <f:selectItems value="#{v2ThesaurusPickerBean.availableLanguages}" var="lg"
-                                 itemValue="#{lg}"
-                                 itemLabel="#{v2ThesaurusPickerBean.languageOptionLabel(lg)}"/>
-                </h:selectOneMenu>
+                <div class="tp-langf" data-all-label="#{v2LocaleBean.getMsg('v2.picker.filter.lang.all')}">
+                  <button type="button"
+                          class="tp-fi tp-langf-btn#{empty v2ThesaurusPickerBean.filterLang ? '' : ' has-val'}"
+                          data-act="tp-langf-toggle"
+                          title="#{v2LocaleBean.getMsg('v2.picker.col.lang')}"
+                          aria-haspopup="listbox"
+                          aria-expanded="false">
+                    <span class="tp-langf-fl" aria-hidden="true">#{empty v2ThesaurusPickerBean.filterLang ? '' : v2ThesaurusPickerBean.languageFlag(v2ThesaurusPickerBean.filterLang)}</span>
+                    <span class="tp-langf-lbl">#{empty v2ThesaurusPickerBean.filterLang ? v2LocaleBean.getMsg('v2.picker.filter.lang.all') : v2ThesaurusPickerBean.languageLabel(v2ThesaurusPickerBean.filterLang)}</span>
+                    <span class="tp-langf-caret" aria-hidden="true">▾</span>
+                  </button>
+                  <div class="tp-langf-menu" hidden="hidden" role="listbox"
+                       aria-label="#{v2LocaleBean.getMsg('v2.picker.col.lang')}">
+                    <button type="button"
+                            class="tp-langf-clear"
+                            data-act="tp-langf-pick"
+                            data-lang=""
+                            data-flag=""
+                            data-label="#{v2LocaleBean.getMsg('v2.picker.filter.lang.all')}">
+                      #{v2LocaleBean.getMsg('v2.picker.filter.lang.all')}
+                    </button>
+                    <ui:repeat value="#{v2ThesaurusPickerBean.availableLanguages}" var="lg">
+                      <button type="button"
+                              class="tp-langf-opt#{v2ThesaurusPickerBean.filterLang eq lg ? ' is-on' : ''}"
+                              data-act="tp-langf-pick"
+                              data-lang="#{lg}"
+                              data-flag="#{v2ThesaurusPickerBean.languageFlag(lg)}"
+                              data-label="#{v2ThesaurusPickerBean.languageLabel(lg)}">
+                        <span class="tp-langf-fl" aria-hidden="true">#{v2ThesaurusPickerBean.languageFlag(lg)}</span>
+                        <span class="tp-langf-name">#{v2ThesaurusPickerBean.languageLabel(lg)}</span>
+                      </button>
+                    </ui:repeat>
+                  </div>
+                  <h:inputHidden styleClass="tp-langf-val"
+                                 value="#{v2ThesaurusPickerBean.filterLang}"
+                                 pt:data-tp-filter="lang"/>
+                </div>
               </label>
             </div>
           </div>
@@ -332,14 +351,43 @@
                         </h:inputText>
                       </ui:fragment>
                       <ui:fragment rendered="#{col.key eq 'lang'}">
-                        <h:selectOneMenu styleClass="tp-fi tp-fi--lang" value="#{v2ThesaurusPickerBean.filterLang}"
-                                         pt:data-tp-filter="lang"
-                                         pt:onchange="window.tpOnColFilter &amp;&amp; window.tpOnColFilter(this);">
-                          <f:selectItem itemValue="" itemLabel="Toutes ▾"/>
-                          <f:selectItems value="#{v2ThesaurusPickerBean.availableLanguages}" var="lg"
-                                         itemValue="#{lg}"
-                                         itemLabel="#{v2ThesaurusPickerBean.languageOptionLabel(lg)}"/>
-                        </h:selectOneMenu>
+                        <div class="tp-langf" data-all-label="#{v2LocaleBean.getMsg('v2.picker.filter.lang.all')}">
+                          <button type="button"
+                                  class="tp-fi tp-langf-btn#{empty v2ThesaurusPickerBean.filterLang ? '' : ' has-val'}"
+                                  data-act="tp-langf-toggle"
+                                  title="#{v2LocaleBean.getMsg('v2.picker.col.lang')}"
+                                  aria-haspopup="listbox"
+                                  aria-expanded="false">
+                            <span class="tp-langf-fl" aria-hidden="true">#{empty v2ThesaurusPickerBean.filterLang ? '' : v2ThesaurusPickerBean.languageFlag(v2ThesaurusPickerBean.filterLang)}</span>
+                            <span class="tp-langf-lbl">#{empty v2ThesaurusPickerBean.filterLang ? v2LocaleBean.getMsg('v2.picker.filter.lang.all') : v2ThesaurusPickerBean.languageLabel(v2ThesaurusPickerBean.filterLang)}</span>
+                            <span class="tp-langf-caret" aria-hidden="true">▾</span>
+                          </button>
+                          <div class="tp-langf-menu" hidden="hidden" role="listbox"
+                               aria-label="#{v2LocaleBean.getMsg('v2.picker.col.lang')}">
+                            <button type="button"
+                                    class="tp-langf-clear"
+                                    data-act="tp-langf-pick"
+                                    data-lang=""
+                                    data-flag=""
+                                    data-label="#{v2LocaleBean.getMsg('v2.picker.filter.lang.all')}">
+                              #{v2LocaleBean.getMsg('v2.picker.filter.lang.all')}
+                            </button>
+                            <ui:repeat value="#{v2ThesaurusPickerBean.availableLanguages}" var="lg">
+                              <button type="button"
+                                      class="tp-langf-opt#{v2ThesaurusPickerBean.filterLang eq lg ? ' is-on' : ''}"
+                                      data-act="tp-langf-pick"
+                                      data-lang="#{lg}"
+                                      data-flag="#{v2ThesaurusPickerBean.languageFlag(lg)}"
+                                      data-label="#{v2ThesaurusPickerBean.languageLabel(lg)}">
+                                <span class="tp-langf-fl" aria-hidden="true">#{v2ThesaurusPickerBean.languageFlag(lg)}</span>
+                                <span class="tp-langf-name">#{v2ThesaurusPickerBean.languageLabel(lg)}</span>
+                              </button>
+                            </ui:repeat>
+                          </div>
+                          <h:inputHidden styleClass="tp-langf-val"
+                                         value="#{v2ThesaurusPickerBean.filterLang}"
+                                         pt:data-tp-filter="lang"/>
+                        </div>
                       </ui:fragment>
                     </th>
                   </ui:repeat>
@@ -525,11 +573,12 @@
         </ui:fragment>
         <ui:fragment rendered="#{v2ThesaurusPickerBean.listMode}">
         <footer class="gv">
-          <img class="gv-mark"
-               src="#{request.contextPath}/resources/img/Opentheso.png"
-               alt="OpenTheso"
-               width="180"
-               height="40"/>
+          <a class="gv-brand" href="https://www.culture.gouv.fr" target="_blank" rel="noreferrer"
+             title="Ministère de la Culture">
+            <img class="gv-mark"
+                 src="#{request.contextPath}/resources/img/minist%C3%A8re%20de%20la%20culture.png"
+                 alt="Ministère de la Culture"/>
+          </a>
           <nav class="gv-mentions" aria-label="Informations légales">
             <a href="#">Mentions légales</a>
             <a href="#">Données personnelles</a>

@@ -82,6 +82,9 @@ function confirmSettingsLeave() {
   if (typeof action === "function") action();
 }
 
+window.dismissSettingsLeave = dismissSettingsLeave;
+window.confirmSettingsLeave = confirmSettingsLeave;
+
 function go(url) {
   if (askLeaveThen(() => {
     allowSettingsLeave();
@@ -105,6 +108,49 @@ function bindPrefSwitches() {
     sync(input);
   });
   $$(".st-sw input[type='checkbox']").forEach(sync);
+}
+
+const settingsOpenCards = new Set();
+
+function settingsCardTitle(card) {
+  const title = card && card.querySelector(".st-card-tog .bo-card-t");
+  return title ? (title.textContent || "").trim() : "";
+}
+
+function applySettingsCardOpen(card, open) {
+  if (!card) return;
+  card.classList.toggle("is-closed", !open);
+  const tog = card.querySelector(".bo-card-h .st-card-tog");
+  if (tog) tog.setAttribute("aria-expanded", open ? "true" : "false");
+}
+
+function toggleSettingsCard(tog) {
+  const card = tog && tog.closest(".bo-card");
+  if (!card) return;
+  const open = card.classList.contains("is-closed");
+  applySettingsCardOpen(card, open);
+  const title = settingsCardTitle(card);
+  if (!title) return;
+  if (open) settingsOpenCards.add(title);
+  else settingsOpenCards.delete(title);
+}
+
+function restoreSettingsCards() {
+  if (SCREEN !== "preference") return;
+  $$(".st-scope .bo-card .st-card-tog").forEach((tog) => {
+    const card = tog.closest(".bo-card");
+    applySettingsCardOpen(card, settingsOpenCards.has(settingsCardTitle(card)));
+  });
+}
+
+function bindSettingsCards() {
+  if (SCREEN !== "preference") return;
+  document.addEventListener("click", (e) => {
+    const tog = e.target.closest && e.target.closest(".st-card-tog");
+    if (!tog || !tog.closest(".st-scope")) return;
+    e.preventDefault();
+    toggleSettingsCard(tog);
+  });
 }
 
 function initSettingsLeaveGuard() {
