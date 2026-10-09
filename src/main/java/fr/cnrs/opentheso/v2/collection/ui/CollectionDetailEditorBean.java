@@ -41,6 +41,7 @@ import org.primefaces.PrimeFaces;
 import java.io.Serializable;
 import java.util.Collections;
 import java.util.HashSet;
+import java.util.LinkedHashSet;
 import java.util.List;
 import java.util.Set;
 
@@ -62,6 +63,10 @@ public class CollectionDetailEditorBean implements Serializable {
     private final transient ThesaurusBrowseBean thesaurusBrowseBean;
 
     private String label;
+    private String bulkLabel = "";
+    private String bulkConceptIds = "";
+    private String bulkMessage = "";
+    private boolean bulkOk;
     private String notation;
     private String typeCode = "MT";
     private String translationLang;
@@ -341,6 +346,50 @@ public class CollectionDetailEditorBean implements Serializable {
         )), "v2MoveCollectionDlg");
     }
 
+    public void submitCreateFromSelection() {
+        bulkOk = false;
+        bulkMessage = "";
+        if (!isManagerActionsAvailable()) {
+            bulkMessage = WriteUiMessages.UNAUTHORIZED_FALLBACK;
+            return;
+        }
+        Integer userId = requireUserId();
+        if (userId == null) {
+            bulkMessage = WriteUiMessages.UNAUTHORIZED_FALLBACK;
+            return;
+        }
+        String name = StringUtils.trimToEmpty(bulkLabel);
+        if (StringUtils.isBlank(name)) {
+            bulkMessage = "Le nom de la collection est obligatoire.";
+            return;
+        }
+        List<String> conceptIds = parseBulkConceptIds(bulkConceptIds);
+        if (conceptIds.isEmpty()) {
+            bulkMessage = "Aucun concept à rattacher.";
+            return;
+        }
+        MutationResult result = collectionMutationService.createCollectionWithMembers(
+                new CreateCollectionCommand(
+                        thesaurusContext.resolveThesaurusId(),
+                        thesaurusContext.resolveWorkLanguage(),
+                        name,
+                        "",
+                        "MT",
+                        userId
+                ),
+                conceptIds
+        );
+        if (result == null || !result.success()) {
+            bulkMessage = result != null ? result.message() : "Erreur";
+            return;
+        }
+        thesaurusBrowseBean.invalidateCollectionTree();
+        bulkOk = true;
+        bulkMessage = result.message();
+        bulkLabel = "";
+        bulkConceptIds = "";
+    }
+
     public void submitCreateRoot() {
         if (!isManagerActionsAvailable()) {
             MessageUtils.showErrorMessage(WriteUiMessages.UNAUTHORIZED_FALLBACK);
@@ -455,5 +504,19 @@ public class CollectionDetailEditorBean implements Serializable {
 
     private Integer requireUserId() {
         return userSession.getCurrentUserId();
+    }
+
+    private static List<String> parseBulkConceptIds(String raw) {
+        if (StringUtils.isBlank(raw)) {
+            return List.of();
+        }
+        LinkedHashSet<String> ids = new LinkedHashSet<>();
+        for (String part : raw.split("[\\n\\r\\t,;]+")) {
+            String id = part.trim();
+            if (!id.isEmpty()) {
+                ids.add(id);
+            }
+        }
+        return List.copyOf(ids);
     }
 }

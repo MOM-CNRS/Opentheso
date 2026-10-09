@@ -50,6 +50,67 @@ function exportIncludeDescendants() {
   return !!(sw && sw.classList.contains("on"));
 }
 
+function selectedExportMembers() {
+  if (typeof selectedCollectionMembers === "function") return selectedCollectionMembers();
+  return Array.from((state && state.selected) || []);
+}
+
+function exportSelectionIds() {
+  const members = new Set(selectedExportMembers());
+  if (!members.size) return [];
+  if (exportIncludeDescendants() && typeof selectionRootIds === "function") {
+    return selectionRootIds().filter((id) => members.has(id));
+  }
+  return Array.from(members);
+}
+
+function canRunSelectionExport() {
+  if (pickerExportMode || (state && state.selectedAllThesaurus)) return true;
+  return selectedExportMembers().length > 0;
+}
+
+function paintExportMembers() {
+  const host = $("#bulkExportMembers");
+  const count = $("#bulkExportMemberN");
+  if (!host) return;
+  const esc = typeof escapeHtml === "function" ? escapeHtml : (v) => String(v);
+  const whole = !!(state && state.selectedAllThesaurus);
+  if (whole) {
+    const n = Math.max(selectedCount(), typeof thesaurusConceptCount === "function" ? thesaurusConceptCount() : 0);
+    host.innerHTML = '<p class="bap-members-empty">L’export portera sur l’ensemble du thésaurus.</p>';
+    if (count) count.textContent = n > 0 ? n.toLocaleString("fr-FR") + " concept" + (n > 1 ? "s" : "") : "thésaurus entier";
+    return;
+  }
+  const members = selectedExportMembers();
+  if (!members.length) {
+    host.innerHTML = '<p class="bap-members-empty">Aucun concept dans la sélection. Les facettes ne sont pas exportées.</p>';
+  } else {
+    const limit = 28;
+    const shown = members.slice(0, limit);
+    const extra = members.length - shown.length;
+    host.innerHTML = shown.map((id) => {
+      const node = typeof treeNodes === "function"
+        ? treeNodes().find((n) => n.getAttribute("data-id") === id)
+        : null;
+      const prefEl = node && node.querySelector(".tn-text");
+      const pref = ((prefEl && prefEl.textContent) || "").trim() || id;
+      return '<span class="bap-chip" title="' + esc(id) + '">' + esc(pref) + "</span>";
+    }).join("") + (extra > 0
+      ? '<span class="bap-chip bap-chip-more">+' + extra + "</span>"
+      : "");
+  }
+  if (count) {
+    const n = members.length;
+    count.textContent = n + " concept" + (n > 1 ? "s" : "");
+  }
+}
+
+function syncExportRun() {
+  const run = $("#bulkExportRun");
+  if (!run || exportBusy || run.hidden) return;
+  run.classList.toggle("is-off", !canRunSelectionExport());
+}
+
 function exportSwitchOn(id) {
   const sw = $("#" + id);
   return !!(sw && sw.classList.contains("on"));
@@ -411,13 +472,14 @@ function applyExportOptionVisibility() {
   const help = $("#bulkExportHelp");
   if (help) {
     if (whole) help.textContent = "L’export porte sur l’ensemble du thésaurus.";
-    else if (fmt === "csv-structured") help.textContent = "CSV structuré : arborescence des labels du thésaurus.";
+    else if (fmt === "csv-structured") help.textContent = "CSV structuré : arborescence des labels, sans option de descendants.";
+    else if (exportIncludeDescendants()) help.textContent = "Les termes spécifiques des concepts cochés seront inclus.";
     else help.textContent = "Choisissez un format, les options, puis générez le fichier.";
   }
 }
 
 function scrollExportPanelBottom() {
-  const bar = $("#bulkSel");
+  const bar = $("#previewView") || $("#viewBulk") || $("#bulkSel");
   if (!bar) return;
   const apply = () => { bar.scrollTop = bar.scrollHeight; };
   apply();
@@ -429,12 +491,14 @@ function scrollExportPanelBottom() {
 
 function refreshExportSummary() {
   const whole = !!state.selectedAllThesaurus;
-  const exact = state.selected.size;
+  const exact = selectedExportMembers().length;
   const n = whole ? Math.max(selectedCount(), thesaurusConceptCount()) : selectedCount();
   const desc = exportIncludeDescendants();
   const sum = $("#bulkExportSum");
   const est = $("#bulkExportEst");
   applyExportOptionVisibility();
+  paintExportMembers();
+  syncExportRun();
   if (sum) {
     if (whole) {
       if (n > 0) sum.textContent = n.toLocaleString("fr-FR") + " concept" + (n > 1 ? "s" : "") + " · thésaurus entier";
@@ -445,7 +509,7 @@ function refreshExportSummary() {
   if (est) {
     const count = whole ? Math.max(n, thesaurusConceptCount()) : n;
     let hint = formatLabelUi(exportFormat());
-    if (count >= 500) hint += " · volume élevé, quelques instants";
+    if (count >= 500) hint += " · volume élevé";
     else if (count >= 80) hint += " · quelques secondes";
     else hint += " · rapide";
     est.textContent = hint;
@@ -582,15 +646,9 @@ function setExportActions(mode) {
   if (cancel) {
     cancel.hidden = false;
     cancel.disabled = false;
-    if (mode === "done" || mode === "retry") {
-      cancel.textContent = "Fermer";
-      cancel.classList.toggle("primary", mode === "done");
-      cancel.classList.toggle("ghost", mode !== "done");
-    } else {
-      cancel.textContent = "Annuler";
-      cancel.classList.add("ghost");
-      cancel.classList.remove("primary");
-    }
+    cancel.textContent = (mode === "done" || mode === "retry") ? "Fermer" : "Annuler";
+    cancel.classList.add("ghost");
+    cancel.classList.remove("primary");
   }
   if (run) {
     run.hidden = mode === "done" || mode === "retry";
@@ -600,9 +658,11 @@ function setExportActions(mode) {
     run.classList.remove("ghost");
   }
   if (dl) {
-    dl.hidden = mode !== "retry";
+    dl.hidden = mode !== "retry" && mode !== "done";
     dl.disabled = false;
+    dl.classList.add("primary");
   }
+  if (mode === "idle") syncExportRun();
 }
 
 function showExportError(msg) {
@@ -795,9 +855,7 @@ function startSelectionExport() {
     return;
   }
   const whole = !!state.selectedAllThesaurus;
-  const ids = whole
-    ? []
-    : (exportIncludeDescendants() ? selectionRootIds() : Array.from(state.selected));
+  const ids = whole ? [] : exportSelectionIds();
   if (!whole && !ids.length) {
     showExportError("Aucun concept à exporter");
     return;

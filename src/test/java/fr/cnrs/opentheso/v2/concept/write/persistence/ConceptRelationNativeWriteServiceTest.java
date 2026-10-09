@@ -7,6 +7,7 @@ import fr.cnrs.opentheso.v2.concept.write.model.command.AddRelatedRelationComman
 import fr.cnrs.opentheso.v2.concept.write.model.command.ApplyNarrowerRelationToBranchCommand;
 import fr.cnrs.opentheso.v2.concept.write.model.command.DeleteBroaderRelationCommand;
 import fr.cnrs.opentheso.v2.concept.write.model.command.DeleteCustomRelationCommand;
+import fr.cnrs.opentheso.v2.concept.write.model.command.MoveConceptsUnderCommand;
 import fr.cnrs.opentheso.v2.concept.write.model.command.ReparentConceptCommand;
 import fr.cnrs.opentheso.v2.concept.write.model.command.UpdateNarrowerRelationTypeCommand;
 import org.junit.jupiter.api.Test;
@@ -226,6 +227,35 @@ class ConceptRelationNativeWriteServiceTest {
 
         assertEquals(MutationOutcome.VALIDATION_ERROR, result.outcome());
         verify(conceptRelationWriteRepository, never()).deleteBroaderRelation(
+                anyString(), anyString(), anyString(), anyInt());
+    }
+
+    @Test
+    void moveConceptsUnder_reparentsEachConcept() {
+        when(conceptRelationWriteRepository.listBroaderParentConceptIds("C1", "TH1")).thenReturn(List.of("OLD"));
+        when(conceptRelationWriteRepository.listBroaderParentConceptIds("C2", "TH1")).thenReturn(List.of("OLD"));
+        when(branchConceptSupport.collectBranchConceptIds("TH1", "C1")).thenReturn(List.of("C1"));
+        when(branchConceptSupport.collectBranchConceptIds("TH1", "C2")).thenReturn(List.of("C2"));
+        when(conceptRelationWriteRepository.hasRelatedRelation(anyString(), anyString(), anyString())).thenReturn(false);
+        when(conceptRelationWriteRepository.hasHierarchicalRelation(anyString(), anyString(), anyString())).thenReturn(false);
+        when(conceptLifecycleWriteRepository.isTopConcept(anyString(), anyString())).thenReturn(false);
+
+        var result = service.moveConceptsUnder(new MoveConceptsUnderCommand(
+                "TH1", List.of("C1", "C2", " "), "NEW", 7, "admin"));
+
+        assertEquals(MutationOutcome.OK, result.outcome());
+        assertEquals("2 concepts déplacés", result.message());
+        verify(conceptRelationWriteRepository).addBroaderRelation("C1", "NEW", "TH1", 7);
+        verify(conceptRelationWriteRepository).addBroaderRelation("C2", "NEW", "TH1", 7);
+    }
+
+    @Test
+    void moveConceptsUnder_rejectsEmptySelection() {
+        var result = service.moveConceptsUnder(new MoveConceptsUnderCommand(
+                "TH1", List.of("  "), null, 7, "admin"));
+
+        assertEquals(MutationOutcome.VALIDATION_ERROR, result.outcome());
+        verify(conceptRelationWriteRepository, never()).addBroaderRelation(
                 anyString(), anyString(), anyString(), anyInt());
     }
 }

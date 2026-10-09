@@ -2,6 +2,7 @@ package fr.cnrs.opentheso.v2.concept.write.service;
 
 import fr.cnrs.opentheso.v2.concept.write.model.MutationOutcome;
 import fr.cnrs.opentheso.v2.concept.write.model.MutationResult;
+import fr.cnrs.opentheso.v2.concept.write.model.command.ChangeConceptsStatusCommand;
 import fr.cnrs.opentheso.v2.concept.write.model.command.RenamePreferredLabelCommand;
 import fr.cnrs.opentheso.v2.concept.write.persistence.ConceptLifecycleNativeWriteService;
 import org.junit.jupiter.api.BeforeEach;
@@ -42,5 +43,17 @@ class ConceptLifecycleMutationServiceTest {
         assertTrue(result.success());
         assertEquals(MutationOutcome.OK, result.outcome());
         verify(conceptLifecycleNativeWriteService).renamePreferredLabel(command);
+    }
+
+    @Test
+    void changeConceptsStatus_delegatesToPersistence() {
+        var command = new ChangeConceptsStatusCommand("TH1", java.util.List.of("C1"), "approve", 42, "admin");
+        when(conceptLifecycleNativeWriteService.changeConceptsStatus(command))
+                .thenReturn(MutationResult.ok("1 candidat validé"));
+
+        var result = service.changeConceptsStatus(command);
+
+        assertTrue(result.success());
+        verify(conceptLifecycleNativeWriteService).changeConceptsStatus(command);
     }
 }

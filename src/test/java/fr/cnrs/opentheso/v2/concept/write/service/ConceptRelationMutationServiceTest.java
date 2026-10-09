@@ -6,6 +6,7 @@ import fr.cnrs.opentheso.v2.concept.write.model.command.AddBroaderRelationComman
 import fr.cnrs.opentheso.v2.concept.write.model.command.AddRelatedRelationCommand;
 import fr.cnrs.opentheso.v2.concept.write.model.command.ApplyNarrowerRelationToBranchCommand;
 import fr.cnrs.opentheso.v2.concept.write.model.command.DeleteNarrowerRelationCommand;
+import fr.cnrs.opentheso.v2.concept.write.model.command.MoveConceptsUnderCommand;
 import fr.cnrs.opentheso.v2.concept.write.model.command.UpdateNarrowerRelationTypeCommand;
 import fr.cnrs.opentheso.v2.concept.write.persistence.ConceptRelationNativeWriteService;
 import org.junit.jupiter.api.Test;
@@ -13,6 +14,8 @@ import org.junit.jupiter.api.extension.ExtendWith;
 import org.mockito.InjectMocks;
 import org.mockito.Mock;
 import org.mockito.junit.jupiter.MockitoExtension;
+
+import java.util.List;
 
 import static org.junit.jupiter.api.Assertions.assertEquals;
 import static org.mockito.Mockito.verify;
@@ -83,5 +86,17 @@ class ConceptRelationMutationServiceTest {
         service.applyNarrowerRelationToBranch(command);
 
         verify(conceptRelationNativeWriteService).applyNarrowerRelationToBranch(command);
+    }
+
+    @Test
+    void moveConceptsUnder_delegatesToPersistence() {
+        var command = new MoveConceptsUnderCommand("TH1", List.of("C1", "C2"), "NEW", 7, "admin");
+        when(conceptRelationNativeWriteService.moveConceptsUnder(command))
+                .thenReturn(MutationResult.ok("2 concepts déplacés"));
+
+        var result = service.moveConceptsUnder(command);
+
+        assertEquals(MutationOutcome.OK, result.outcome());
+        verify(conceptRelationNativeWriteService).moveConceptsUnder(command);
     }
 }

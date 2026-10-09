@@ -11,7 +11,9 @@ import fr.cnrs.opentheso.v2.concept.write.model.MutationResult;
 import fr.cnrs.opentheso.v2.concept.write.model.command.AddChildConceptCommand;
 import fr.cnrs.opentheso.v2.concept.write.model.command.AddReplacedByCommand;
 import fr.cnrs.opentheso.v2.concept.write.model.command.AddTopConceptCommand;
+import fr.cnrs.opentheso.v2.concept.ui.ThesaurusViewBean;
 import fr.cnrs.opentheso.v2.concept.write.model.command.ApproveConceptCommand;
+import fr.cnrs.opentheso.v2.concept.write.model.command.ChangeConceptsStatusCommand;
 import fr.cnrs.opentheso.v2.concept.write.model.command.DeleteConceptCommand;
 import fr.cnrs.opentheso.v2.concept.write.model.command.DeleteReplacedByCommand;
 import fr.cnrs.opentheso.v2.concept.write.model.command.DeprecateConceptCommand;
@@ -35,6 +37,7 @@ import org.primefaces.PrimeFaces;
 import java.io.Serializable;
 import java.util.ArrayList;
 import java.util.Collections;
+import java.util.LinkedHashSet;
 import java.util.List;
 
 @Getter
@@ -54,6 +57,7 @@ public class ConceptLifecycleEditorBean implements Serializable {
     private final transient ConceptWriteMetadataService conceptWriteMetadataService;
     private final transient BranchConceptSupport branchConceptSupport;
     private final transient V2LocaleBean v2LocaleBean;
+    private final transient ThesaurusViewBean thesaurusViewBean;
 
     private final DialogRunState createRun = new DialogRunState();
     private final DialogRunState deleteRun = new DialogRunState();
@@ -88,6 +92,10 @@ public class ConceptLifecycleEditorBean implements Serializable {
     private boolean created;
     private boolean chainNext;
     private boolean creationMetadataLoaded;
+    private String bulkStatusAction = "";
+    private String bulkConceptIds = "";
+    private String bulkStatusMessage = "";
+    private boolean bulkStatusOk;
 
     public boolean isWriteActionsAvailable() {
         return conceptWritePolicy.canMutateConcept(userSession);
@@ -103,6 +111,63 @@ public class ConceptLifecycleEditorBean implements Serializable {
 
     public boolean isStatusActionsAvailable() {
         return conceptWritePolicy.canMutateConceptStatus(userSession);
+    }
+
+    public void submitStatusFromSelection() {
+        bulkStatusOk = false;
+        bulkStatusMessage = "";
+        if (!isStatusActionsAvailable()) {
+            bulkStatusMessage = WriteUiMessages.UNAUTHORIZED_FALLBACK;
+            return;
+        }
+        Integer userId = userSession.getCurrentUserId();
+        if (userId == null) {
+            bulkStatusMessage = WriteUiMessages.UNAUTHORIZED_FALLBACK;
+            return;
+        }
+        List<String> conceptIds = parseBulkConceptIds(bulkConceptIds);
+        if (conceptIds.isEmpty()) {
+            bulkStatusMessage = "Aucun concept dans la sélection.";
+            return;
+        }
+        String action = StringUtils.trimToEmpty(bulkStatusAction).toLowerCase();
+        if (!"approve".equals(action) && !"deprecate".equals(action)) {
+            bulkStatusMessage = "Choisissez un statut.";
+            return;
+        }
+        MutationResult result = conceptLifecycleMutationService.changeConceptsStatus(
+                new ChangeConceptsStatusCommand(
+                        thesaurusContext.resolveThesaurusId(),
+                        conceptIds,
+                        action,
+                        userId,
+                        StringUtils.defaultString(userSession.getCurrentUsername())
+                )
+        );
+        if (result == null || !result.success()) {
+            bulkStatusMessage = result != null ? result.message() : "Le changement de statut a échoué";
+            return;
+        }
+        conceptNavigationSupport.invalidateConceptTree();
+        thesaurusViewBean.reloadTree();
+        bulkStatusOk = true;
+        bulkStatusMessage = result.message();
+        bulkStatusAction = "";
+        bulkConceptIds = "";
+    }
+
+    private static List<String> parseBulkConceptIds(String raw) {
+        if (StringUtils.isBlank(raw)) {
+            return List.of();
+        }
+        LinkedHashSet<String> ids = new LinkedHashSet<>();
+        for (String part : raw.split("[\\n\\r\\t,;]+")) {
+            String id = part.trim();
+            if (!id.isEmpty()) {
+                ids.add(id);
+            }
+        }
+        return List.copyOf(ids);
     }
 
     public List<ConceptWriteCollection> getAvailableCollections() {

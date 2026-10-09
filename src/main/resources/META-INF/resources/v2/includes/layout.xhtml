@@ -107,7 +107,12 @@
        data-need-parent="#{v2LocaleBean.getMsg('v2.create.concept.needParent')}">
     <div class="confirm-modal is-create-chooser" role="dialog" aria-modal="true"
          aria-labelledby="createChooserTitle" data-act="create-modal">
-      <div class="confirm-h" id="createChooserTitle">#{v2LocaleBean.getMsg('v2.home.create')}</div>
+      <div class="confirm-h-block">
+        <div class="confirm-h" id="createChooserTitle">#{v2LocaleBean.getMsg('v2.home.create')}</div>
+        <p class="confirm-s" id="createChooserSub"
+           data-root="#{v2LocaleBean.getMsg('v2.create.sub.root')}"
+           data-under="#{v2LocaleBean.getMsg('v2.create.sub.under')}"></p>
+      </div>
       <div class="spl ck">
         <button type="button" class="spl-row" data-act="create-pick" data-kind="concept">
           <span class="spl-ico" aria-hidden="true"><svg viewBox="0 0 24 24"><path d="M20.59 13.41 13 21H4v-9l7.59-7.59a2 2 0 0 1 2.82 0l6.18 6.18a2 2 0 0 1 0 2.82z"/><circle cx="8.5" cy="8.5" r="1.2"/></svg></span>

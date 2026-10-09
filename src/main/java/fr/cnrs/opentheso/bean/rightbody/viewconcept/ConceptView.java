@@ -53,6 +53,7 @@ import org.apache.commons.collections4.CollectionUtils;
 import org.apache.commons.lang3.ObjectUtils;
 import org.apache.commons.lang3.StringUtils;
 import org.primefaces.PrimeFaces;
+import org.primefaces.event.RowEditEvent;
 import org.primefaces.model.ResponsiveOption;
 import org.springframework.context.annotation.Scope;
 import org.springframework.context.annotation.ScopedProxyMode;
@@ -891,6 +892,21 @@ public class ConceptView implements Serializable {
         mapScripte = createMap(idThesaurus);
 
         FacesMessage msg = new FacesMessage("Nouvelle coordonnée ajoutée avec succès");
+        FacesContext.getCurrentInstance().addMessage(null, msg);
+    }
+
+    public void onRowEdit(RowEditEvent<Gps> event) {
+        Gps gps = event == null ? null : event.getObject();
+        if (gps == null) {
+            return;
+        }
+        gpsService.saveNewGps(gps);
+        FacesMessage msg = new FacesMessage("Coordonnée GPS modifiée avec succès");
+        FacesContext.getCurrentInstance().addMessage(null, msg);
+    }
+
+    public void onRowCancel(RowEditEvent<Gps> event) {
+        FacesMessage msg = new FacesMessage("Modification GPS annulée");
         FacesContext.getCurrentInstance().addMessage(null, msg);
     }
 

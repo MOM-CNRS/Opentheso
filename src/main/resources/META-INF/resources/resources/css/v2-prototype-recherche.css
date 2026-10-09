@@ -208,6 +208,36 @@ a.menu-foot{text-decoration:none;color:var(--accent)}
   padding:0 13px;height:32px;border-radius:var(--r-sm);white-space:nowrap;flex:0 0 auto}
 .search-go:hover{filter:brightness(1.06)}
 
+.search-assist{display:flex;align-items:center;gap:6px;flex-wrap:wrap;margin-top:6px;padding:0 2px}
+.search-hint{font-size:11px;font-weight:700;color:var(--accent);letter-spacing:.01em}
+.search-chip{height:24px;padding:0 8px;border-radius:999px;border:1px solid var(--line);
+  background:var(--surface);color:var(--ink-2);font-size:11px;font-weight:650}
+.search-chip[aria-pressed="true"]{background:var(--accent-soft);border-color:var(--accent-line);color:var(--accent)}
+.ac-programs[hidden],.ac-start[hidden]{display:none !important}
+.ac.is-programs .ac-empty,.ac.is-programs #acList,.ac.is-programs .ac-footer{display:none !important}
+.ac-start{display:flex;align-items:center;gap:6px;width:100%;text-align:left;
+  margin:2px 0 4px;padding:8px 12px;border-radius:8px;background:var(--accent-soft);
+  color:var(--accent);font-size:12.5px;font-weight:650}
+.ac-start:hover{filter:brightness(.98)}
+.rl-programs{margin-top:14px;text-align:left}
+.rl-idle .smm-item{border-radius:8px}
+.smm-item{display:flex;flex-direction:column;align-items:flex-start;gap:1px;width:100%;
+  text-align:left;padding:8px 10px;border:0;border-radius:8px;background:none;
+  font:inherit;color:var(--ink);cursor:pointer}
+.smm-item:hover,.smm-item.is-on{background:var(--accent-soft)}
+.smm-item.is-on .smm-l{color:var(--accent)}
+.smm-l{font-size:13px;font-weight:650}
+.smm-d{font-size:11.5px;color:var(--ink-3);line-height:1.35}
+.smm-sep{height:1px;background:var(--line);margin:4px 6px}
+.smm-h{font-size:10px;font-weight:700;letter-spacing:.05em;text-transform:uppercase;
+  color:var(--ink-4);padding:6px 10px 2px}
+.smm-check{flex-direction:row;align-items:center;justify-content:space-between}
+.smm-mark{display:none;color:var(--accent);font-weight:700}
+.smm-check[aria-pressed="true"] .smm-mark{display:inline}
+.smm-check[aria-pressed="true"] .smm-l{color:var(--accent)}
+.ac-row.is-dep .ac-pref,.rl-item.is-dep .rl-pref{color:#C63632;font-style:italic}
+.rl-head .rl-q{font-size:11.5px;color:var(--ink-3);overflow:hidden;text-overflow:ellipsis;white-space:nowrap;min-width:0}
+
 /* ───────── Autocomplete ───────── */
 .ac{
   position:absolute;top:calc(100% + 8px);left:0;right:0;z-index:40;
@@ -374,7 +404,7 @@ a.menu-foot{text-decoration:none;color:var(--accent)}
 .tn-row.is-sel{background:var(--accent-soft)}
 .tn-add{flex:0 0 auto;width:22px;height:22px;margin-right:6px;border-radius:6px;color:var(--ink-3);
   font-size:16px;line-height:1;display:grid;place-items:center;opacity:0;transition:opacity .1s}
-.tn-row:hover .tn-add{opacity:.7}
+.tn-row:hover .tn-add,.tn-row.is-active .tn-add{opacity:.7}
 .tn-add:hover{opacity:1;background:var(--accent-soft);color:var(--accent)}
 .tn-nota{font-family:var(--mono);font-size:12px;color:#2563eb;margin-right:6px;margin-left:0;flex:0 0 auto}
 .tn-row.is-active .tn-nota{color:var(--accent)}
@@ -1181,7 +1211,7 @@ a.ari-add svg,button.ari-add svg{width:13px;height:13px;stroke:currentColor;fill
 #viewDraft .draft-note-lang .tp-lang-menu, #viewFacetDraft .draft-note-lang .tp-lang-menu{z-index:50}
 #viewDraft .note-edit-value, #viewFacetDraft .note-edit-value{min-height:88px;width:100%;max-width:none}
 #viewDraft .draft-note-source, #viewFacetDraft .draft-note-source{width:100%;max-width:none}
-#viewDraft #draftNoteAdd, #viewFacetDraft #fctNoteAdd{margin-top:10px}
+#viewDraft #draftNoteAdd, #viewFacetDraft .note-ed-add{margin-top:10px}
 #viewDraft .df-err,#viewDraft .df-warn{font-size:13px;line-height:1.4}
 #viewDraft .cblock-head{font-size:12px;letter-spacing:.04em}
 #viewDraft .crow{align-items:flex-start}

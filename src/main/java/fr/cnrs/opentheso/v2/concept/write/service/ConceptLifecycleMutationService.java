@@ -5,6 +5,7 @@ import fr.cnrs.opentheso.v2.concept.write.model.command.AddChildConceptCommand;
 import fr.cnrs.opentheso.v2.concept.write.model.command.AddReplacedByCommand;
 import fr.cnrs.opentheso.v2.concept.write.model.command.AddTopConceptCommand;
 import fr.cnrs.opentheso.v2.concept.write.model.command.ApproveConceptCommand;
+import fr.cnrs.opentheso.v2.concept.write.model.command.ChangeConceptsStatusCommand;
 import fr.cnrs.opentheso.v2.concept.write.model.command.DeleteConceptCommand;
 import fr.cnrs.opentheso.v2.concept.write.model.command.DeleteReplacedByCommand;
 import fr.cnrs.opentheso.v2.concept.write.model.command.DeprecateConceptCommand;
@@ -50,6 +51,11 @@ public class ConceptLifecycleMutationService {
     @Transactional
     public MutationResult approveConcept(ApproveConceptCommand command) {
         return conceptLifecycleNativeWriteService.approveConcept(command);
+    }
+
+    @Transactional
+    public MutationResult changeConceptsStatus(ChangeConceptsStatusCommand command) {
+        return conceptLifecycleNativeWriteService.changeConceptsStatus(command);
     }
 
     @Transactional

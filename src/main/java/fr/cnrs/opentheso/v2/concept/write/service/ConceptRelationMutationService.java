@@ -11,6 +11,7 @@ import fr.cnrs.opentheso.v2.concept.write.model.command.DeleteBroaderRelationCom
 import fr.cnrs.opentheso.v2.concept.write.model.command.DeleteCustomRelationCommand;
 import fr.cnrs.opentheso.v2.concept.write.model.command.DeleteNarrowerRelationCommand;
 import fr.cnrs.opentheso.v2.concept.write.model.command.DeleteRelatedRelationCommand;
+import fr.cnrs.opentheso.v2.concept.write.model.command.MoveConceptsUnderCommand;
 import fr.cnrs.opentheso.v2.concept.write.model.command.ReparentConceptCommand;
 import fr.cnrs.opentheso.v2.concept.write.model.command.UpdateNarrowerRelationTypeCommand;
 import fr.cnrs.opentheso.v2.concept.write.persistence.ConceptRelationNativeWriteService;
@@ -30,6 +31,11 @@ public class ConceptRelationMutationService {
     @Transactional
     public MutationResult reparentConcept(ReparentConceptCommand command) {
         return conceptRelationNativeWriteService.reparentConcept(command);
+    }
+
+    @Transactional
+    public MutationResult moveConceptsUnder(MoveConceptsUnderCommand command) {
+        return conceptRelationNativeWriteService.moveConceptsUnder(command);
     }
 
     @Transactional

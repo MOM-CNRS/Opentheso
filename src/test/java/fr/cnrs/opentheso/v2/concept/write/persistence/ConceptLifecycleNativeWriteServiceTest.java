@@ -2,7 +2,10 @@ package fr.cnrs.opentheso.v2.concept.write.persistence;
 
 import fr.cnrs.opentheso.v2.concept.write.model.MutationOutcome;
 import fr.cnrs.opentheso.v2.concept.write.model.command.AddReplacedByCommand;
+import fr.cnrs.opentheso.v2.candidat.model.CandidatStatusCode;
+import fr.cnrs.opentheso.v2.candidat.persistence.CandidatLifecyclePersistence;
 import fr.cnrs.opentheso.v2.concept.write.model.command.ApproveConceptCommand;
+import fr.cnrs.opentheso.v2.concept.write.model.command.ChangeConceptsStatusCommand;
 import fr.cnrs.opentheso.v2.concept.write.model.command.DeleteReplacedByCommand;
 import fr.cnrs.opentheso.v2.concept.write.model.command.DeprecateConceptCommand;
 import fr.cnrs.opentheso.v2.concept.write.model.command.RenamePreferredLabelCommand;
@@ -37,6 +40,8 @@ class ConceptLifecycleNativeWriteServiceTest {
     private ConceptRelationWriteRepository conceptRelationWriteRepository;
     @Mock
     private ConceptWritePostMutationRepository conceptWritePostMutationRepository;
+    @Mock
+    private CandidatLifecyclePersistence candidatLifecyclePersistence;
 
     @InjectMocks
     private ConceptLifecycleNativeWriteService service;
@@ -79,6 +84,53 @@ class ConceptLifecycleNativeWriteServiceTest {
         assertEquals(MutationOutcome.OK, result.outcome());
         verify(conceptLifecycleWriteRepository).insertConceptHistory(snapshot, 7);
         verify(conceptWritePostMutationRepository).saveContributorDcTerm("TH1", "C1", "admin");
+    }
+
+    @Test
+    void changeConceptsStatus_approvesCandidatesAndSkipsValidated() {
+        var command = new ChangeConceptsStatusCommand("TH1", List.of("C1", "C2"), "approve", 7, "admin");
+        when(conceptLifecycleWriteRepository.loadConceptSnapshot("TH1", "C1"))
+                .thenReturn(Optional.of(new ConceptSnapshot("C1", "TH1", "", "CA", "", false)))
+                .thenReturn(Optional.of(new ConceptSnapshot("C1", "TH1", "", "D", "", false)));
+        when(conceptLifecycleWriteRepository.loadConceptSnapshot("TH1", "C2"))
+                .thenReturn(Optional.of(new ConceptSnapshot("C2", "TH1", "", "D", "", false)));
+        when(conceptLifecycleWriteRepository.updateConceptStatus("TH1", "C1", "D")).thenReturn(true);
+
+        var result = service.changeConceptsStatus(command);
+
+        assertEquals(MutationOutcome.OK, result.outcome());
+        assertEquals("1 candidat validé", result.message());
+        verify(candidatLifecyclePersistence).updateCandidateStatus("TH1", "C1", CandidatStatusCode.ACCEPTED);
+        verify(conceptLifecycleWriteRepository, never()).updateConceptStatus("TH1", "C2", "D");
+    }
+
+    @Test
+    void changeConceptsStatus_deprecatesActiveAndSkipsCandidates() {
+        var command = new ChangeConceptsStatusCommand("TH1", List.of("C1", "C2"), "deprecate", 7, "admin");
+        when(conceptLifecycleWriteRepository.loadConceptSnapshot("TH1", "C1"))
+                .thenReturn(Optional.of(new ConceptSnapshot("C1", "TH1", "", "D", "", false)))
+                .thenReturn(Optional.of(new ConceptSnapshot("C1", "TH1", "", "DEP", "", false)));
+        when(conceptLifecycleWriteRepository.loadConceptSnapshot("TH1", "C2"))
+                .thenReturn(Optional.of(new ConceptSnapshot("C2", "TH1", "", "CA", "", false)));
+        when(conceptLifecycleWriteRepository.updateConceptStatus("TH1", "C1", "DEP")).thenReturn(true);
+
+        var result = service.changeConceptsStatus(command);
+
+        assertEquals(MutationOutcome.OK, result.outcome());
+        assertEquals("1 concept rendu obsolète", result.message());
+        verify(conceptLifecycleWriteRepository, never()).updateConceptStatus("TH1", "C2", "DEP");
+    }
+
+    @Test
+    void changeConceptsStatus_rejectsWhenNothingApplies() {
+        var command = new ChangeConceptsStatusCommand("TH1", List.of("C1"), "approve", 7, "admin");
+        when(conceptLifecycleWriteRepository.loadConceptSnapshot("TH1", "C1"))
+                .thenReturn(Optional.of(new ConceptSnapshot("C1", "TH1", "", "D", "", false)));
+
+        var result = service.changeConceptsStatus(command);
+
+        assertEquals(MutationOutcome.VALIDATION_ERROR, result.outcome());
+        assertEquals("Aucun candidat à valider dans la sélection.", result.message());
     }
 
     @Test

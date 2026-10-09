@@ -152,6 +152,50 @@ class CollectionDetailEditorBeanTest {
     }
 
     @Test
+    void submitCreateFromSelection_rejectsBlankName() {
+        when(userSession.getCurrentUserId()).thenReturn(7);
+        bean.setBulkLabel("  ");
+        bean.setBulkConceptIds("C1");
+
+        bean.submitCreateFromSelection();
+
+        assertFalse(bean.isBulkOk());
+        assertEquals("Le nom de la collection est obligatoire.", bean.getBulkMessage());
+        verify(collectionMutationService, never()).createCollectionWithMembers(any(), any());
+    }
+
+    @Test
+    void submitCreateFromSelection_rejectsUnauthorized() {
+        when(conceptWritePolicy.canMutateHierarchicalRelations(userSession, false)).thenReturn(false);
+        bean.setBulkLabel("Architecture");
+        bean.setBulkConceptIds("C1");
+
+        bean.submitCreateFromSelection();
+
+        assertFalse(bean.isBulkOk());
+        assertEquals("Action non autorisée", bean.getBulkMessage());
+        verify(collectionMutationService, never()).createCollectionWithMembers(any(), any());
+    }
+
+    @Test
+    void submitCreateFromSelection_createsWithMembers() {
+        when(userSession.getCurrentUserId()).thenReturn(7);
+        bean.setBulkLabel("Architecture");
+        bean.setBulkConceptIds("C1\nC2,C1");
+        when(collectionMutationService.createCollectionWithMembers(any(), any()))
+                .thenReturn(MutationResult.ok("Collection « Architecture » créée · 2 concepts", "g9"));
+
+        bean.submitCreateFromSelection();
+
+        assertTrue(bean.isBulkOk());
+        assertEquals("Collection « Architecture » créée · 2 concepts", bean.getBulkMessage());
+        verify(collectionMutationService).createCollectionWithMembers(
+                new CreateCollectionCommand("TH1", "fr", "Architecture", "", "MT", 7),
+                List.of("C1", "C2"));
+        verify(thesaurusBrowseBean).invalidateCollectionTree();
+    }
+
+    @Test
     void submitModify_updatesTypeAndLabel() {
         when(userSession.getCurrentUserId()).thenReturn(7);
         when(thesaurusBrowseBean.getSelectedGroup()).thenReturn(GROUP);

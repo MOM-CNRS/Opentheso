@@ -1055,6 +1055,30 @@ public class DragAndDrop implements Serializable {
         }
     }
 
+    public String getNodeIdFromData(Object node) {
+        TreeNodeData data = treeNodeDataOf(node);
+        return data != null ? StringUtils.defaultString(data.getNodeId()) : "";
+    }
+
+    public String getNodeNameFromData(Object node) {
+        TreeNodeData data = treeNodeDataOf(node);
+        return data != null ? StringUtils.defaultString(data.getName()) : "";
+    }
+
+    public void validateCheck() {
+        // L'état des cases est lié au modèle ; la validité du collage est contrôlée au drop.
+    }
+
+    private TreeNodeData treeNodeDataOf(Object node) {
+        if (node instanceof TreeNode treeNode && treeNode.getData() instanceof TreeNodeData data) {
+            return data;
+        }
+        if (node instanceof TreeNodeData data) {
+            return data;
+        }
+        return null;
+    }
+
     public boolean isMoveConceptToConceptValid(String idTheso, String idConcept, String idConceptToAdd) {
 
         return idConcept.equalsIgnoreCase(idConceptToAdd)

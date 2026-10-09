@@ -260,6 +260,32 @@ function onPropBoardAjax(data) {
 }
 window.onPropBoardAjax = onPropBoardAjax;
 
+function onPropAjaxBusy(data, selector) {
+  const btns = document.querySelectorAll(selector);
+  if (data.status === "begin") {
+    if (typeof hideConfirm === "function") {
+      hideConfirm("#propDecisionConfirm");
+      hideConfirm("#propDeleteConfirm");
+      hideConfirm("#propSendConfirm");
+    }
+    btns.forEach((btn) => btn.classList.add("is-busy"));
+    return;
+  }
+  if (data.status === "success" || data.status === "complete") {
+    btns.forEach((btn) => btn.classList.remove("is-busy", "is-click"));
+  }
+}
+
+function onPropReview(data) {
+  onPropAjaxBusy(data, "#propDecisionConfirm .abt-save, #propDeleteConfirm .abt-save");
+}
+window.onPropReview = onPropReview;
+
+function onPropSend(data) {
+  onPropAjaxBusy(data, "#propSendConfirm .abt-save, [data-act='prop-send-ask']");
+}
+window.onPropSend = onPropSend;
+
 document.addEventListener("keydown", (e) => {
   if (e.repeat || e.isComposing) return;
   if (onThesoAcKeydown(e)) return;
@@ -558,8 +584,11 @@ document.addEventListener("keydown", (e) => {
       || hideConfirm("#alignDeleteConfirm") || hideConfirm("#alignReplaceConfirm")
       || hideConfirm("#candReactivateConfirm") || hideConfirm("#candDeleteConfirm")
       || hideConfirm("#fcDeleteConfirm")
+      || hideConfirm("#propDecisionConfirm") || hideConfirm("#propDeleteConfirm") || hideConfirm("#propSendConfirm")
       || hideConfirm("#cptCreateConfirm") || hideConfirm("#cptLeaveConfirm")
-      || hideConfirm("#fctCreateConfirm") || hideConfirm("#fctLeaveConfirm")) {
+      || hideConfirm("#fctCreateConfirm") || hideConfirm("#fctLeaveConfirm")
+      || hideConfirm("#bulkCollConfirm") || hideConfirm("#bulkMoveConfirm")
+      || hideConfirm("#bulkXferConfirm") || hideConfirm("#bulkStatusConfirm")) {
     settingsLeaveAction = null;
     e.preventDefault();
   }
@@ -1109,6 +1138,11 @@ document.addEventListener("click", (e) => {
     e.preventDefault();
     backToCandList();
   }
+  else if (act === "back-prop-list") {
+    e.preventDefault();
+    const href = t.getAttribute("href");
+    if (href) go(href);
+  }
   else if (act === "set-view") setView(t.getAttribute("data-view"));
   else if (act === "show") {
     e.preventDefault();
@@ -1153,6 +1187,12 @@ document.addEventListener("click", (e) => {
     }
     const hidden = document.getElementById("candBoardForm:activeTab");
     if (hidden) hidden.value = tab;
+    const tools = document.getElementById("candBoardForm:candBoardTools") || document.getElementById("candBoardTools");
+    if (tools) {
+      tools.querySelectorAll("[id$='candAcceptSelected'], [id$='candRejectSelected'], [id$='candBatchMsg']").forEach((el) => {
+        el.hidden = tab !== "attente";
+      });
+    }
   } else if (act === "bo-op") {
     setBatch(t.getAttribute("data-obj"), t.getAttribute("data-op"));
   } else if (act === "bo-acc") {
@@ -1192,6 +1232,10 @@ document.addEventListener("click", (e) => {
   } else if (act === "col-sort") {
     setCollectionSort(t.getAttribute("data-sort"));
   } else if (act === "open") {
+    if (t.closest("#ac") && typeof openSearchRow === "function") {
+      openSearchRow(t);
+      return;
+    }
     const candRow = t.closest("a.cand-row");
     const pathLink = t.closest("a.path-link");
     if ((candRow || pathLink) && (e.metaKey || e.ctrlKey || e.shiftKey)) return;
@@ -1706,6 +1750,40 @@ document.addEventListener("click", (e) => {
     const btn = document.querySelector("[id$='candDeleteGo']");
     if (btn) btn.click();
     return;
+  } else if (act === "prop-approve-ask") {
+    e.preventDefault();
+    openPropDecisionConfirm("approve");
+    return;
+  } else if (act === "prop-refuse-ask") {
+    e.preventDefault();
+    openPropDecisionConfirm("refuse");
+    return;
+  } else if (act === "prop-delete-ask") {
+    e.preventDefault();
+    showConfirm("#propDeleteConfirm");
+    return;
+  } else if (act === "prop-decision-dismiss") {
+    e.preventDefault();
+    hideConfirm("#propDecisionConfirm");
+    return;
+  } else if (act === "prop-decision-modal") {
+    return;
+  } else if (act === "prop-delete-dismiss") {
+    e.preventDefault();
+    hideConfirm("#propDeleteConfirm");
+    return;
+  } else if (act === "prop-delete-modal") {
+    return;
+  } else if (act === "prop-send-ask") {
+    e.preventDefault();
+    if (ensurePropCommentFilled()) showConfirm("#propSendConfirm");
+    return;
+  } else if (act === "prop-send-dismiss") {
+    e.preventDefault();
+    hideConfirm("#propSendConfirm");
+    return;
+  } else if (act === "prop-send-modal") {
+    return;
   } else if (act === "fc-del-ask") {
     e.preventDefault();
     showConfirm("#fcDeleteConfirm");
@@ -1828,6 +1906,8 @@ document.addEventListener("click", (e) => {
     pickThesoParent(t.closest(".cv-theso-ac"), t.getAttribute("data-id"), t.getAttribute("data-label"));
   } else if (act === "bulk-coll") bulkMode("coll");
   else if (act === "bulk-move") bulkMode("move");
+  else if (act === "bulk-xfer") bulkMode("xfer");
+  else if (act === "bulk-status") bulkMode("status");
   else if (act === "bulk-export") bulkMode("export");
   else if (act === "bulk-export-back") {
     if (exportBusy) return;
@@ -1926,30 +2006,49 @@ document.addEventListener("click", (e) => {
   } else if (act === "export-dl") downloadReadyExport();
   else if (act === "export-cancel") cancelSelectionExport(!exportBusy);
   else if (act === "bulk-back") bulkMode("acts");
-  else if (act === "bulk-status-menu") {
-    $("#bulkStatusMenu") && $("#bulkStatusMenu").classList.toggle("is-on");
-  } else if (act === "bulk-coll-run") {
-    const name = ($("#bulkCollName") && $("#bulkCollName").value.trim()) || "";
-    if (name) bulkAct("Collection « " + name + " » créée");
-  } else if (act === "bulk-move-pick") {
-    state.moveTarget = { id: t.getAttribute("data-id"), pref: t.getAttribute("data-pref") };
-    const box = $("#bulkMoveTarget");
-    const lab = $("#bulkMoveTargetL");
-    if (lab) lab.textContent = state.moveTarget.pref;
-    if (box) box.hidden = false;
-    $("#bulkMovePick") && ($("#bulkMovePick").hidden = true);
-    const run = $("#bulkMoveRun");
-    if (run) run.classList.remove("is-off");
+  else if (act === "bulk-coll-run") runBulkCollection();
+  else if (act === "bulk-coll-dismiss") hideBulkCollConfirm();
+  else if (act === "bulk-coll-modal") return;
+  else if (act === "bulk-coll-go") {
+    e.preventDefault();
+    confirmBulkCollection();
+    return;
+  }
+  else if (act === "bulk-move-pick") {
+    pickMoveTarget(t.getAttribute("data-id"), t.getAttribute("data-pref"));
   } else if (act === "bulk-move-clear") {
-    state.moveTarget = null;
-    $("#bulkMoveTarget") && ($("#bulkMoveTarget").hidden = true);
-    const q = $("#bulkMoveQ"); if (q) { q.value = ""; q.focus(); }
-    $("#bulkMoveRun") && $("#bulkMoveRun").classList.add("is-off");
-  } else if (act === "bulk-move-run") {
-    if (!state.moveTarget || $("#bulkMoveRun").classList.contains("is-off")) return;
-    const n = state.selected.size;
-    const s = n > 1 ? "s" : "";
-    bulkAct(n + " concept" + s + " déplacé" + s + " sous « " + state.moveTarget.pref + " »");
+    clearMoveTarget();
+  } else if (act === "bulk-move-run") runBulkMove();
+  else if (act === "bulk-move-dismiss") hideBulkMoveConfirm();
+  else if (act === "bulk-move-modal") return;
+  else if (act === "bulk-move-go") {
+    e.preventDefault();
+    confirmBulkMove();
+    return;
+  } else if (act === "bulk-xfer-pick") {
+    pickXferThesaurus(t.getAttribute("data-id"), t.getAttribute("data-name"));
+  } else if (act === "bulk-xfer-clear") {
+    resetXfer();
+  } else if (act === "bulk-xfer-parent-pick") {
+    pickXferParent(t.getAttribute("data-id"), t.getAttribute("data-pref"));
+  } else if (act === "bulk-xfer-parent-clear") {
+    clearXferParent();
+  } else if (act === "bulk-xfer-run") runBulkXfer();
+  else if (act === "bulk-xfer-dismiss") hideBulkXferConfirm();
+  else if (act === "bulk-xfer-modal") return;
+  else if (act === "bulk-xfer-go") {
+    e.preventDefault();
+    confirmBulkXfer();
+    return;
+  } else if (act === "bulk-status-pick") {
+    pickStatusAction(t.getAttribute("data-status"));
+  } else if (act === "bulk-status-run") runBulkStatus();
+  else if (act === "bulk-status-dismiss") hideBulkStatusConfirm();
+  else if (act === "bulk-status-modal") return;
+  else if (act === "bulk-status-go") {
+    e.preventDefault();
+    confirmBulkStatus();
+    return;
   }
 });
 
@@ -1961,8 +2060,7 @@ $("#voGear") && $("#voGear").addEventListener("click", (e) => {
   $("#voGear").classList.toggle("is-on");
 });
 $("#rlMore") && $("#rlMore").addEventListener("click", () => {
-  state.resultLimit += PAGE;
-  paintCommittedResults();
+  if (typeof loadMoreSearchResults === "function") loadMoreSearchResults();
 });
 
 const input = $("#searchInput"), clear = $("#searchClear"), field = $("#searchField");
@@ -1974,21 +2072,22 @@ if (input && field) {
   });
   input.addEventListener("focus", () => {
     field.classList.add("is-focused");
-    if (input.value) filterAc(input.value);
+    filterAc(input.value);
   });
   input.addEventListener("keydown", (e) => {
     if (e.key === "ArrowDown") {
       e.preventDefault();
-      if (input.value.trim()) filterAc(input.value);
       const downRows = shownAcRows();
-      setAcIdx(Math.min(state.acIdx + 1, Math.max(downRows.length - 1, -1)));
+      if (!downRows.length && input.value.trim()) filterAc(input.value);
+      setAcIdx(Math.min(state.acIdx + 1, Math.max(shownAcRows().length - 1, -1)));
     } else if (e.key === "ArrowUp") {
       e.preventDefault();
       setAcIdx(Math.max(state.acIdx - 1, -1));
     } else if (e.key === "Enter") {
+      e.preventDefault();
       const rows = shownAcRows();
-      if (state.acIdx >= 0 && rows[state.acIdx]) {
-        openConcept(rows[state.acIdx].getAttribute("data-id"), "jump");
+      if (state.acIdx >= 0 && rows[state.acIdx] && typeof openSearchRow === "function") {
+        openSearchRow(rows[state.acIdx]);
       } else runSearch();
     } else if (e.key === "Escape") {
       closeSearchUi();
@@ -2049,13 +2148,33 @@ if (moveQ) {
     }
   });
 }
-const collName = $("#bulkCollName");
-if (collName) {
-  collName.addEventListener("keydown", (e) => {
-    if (e.key === "Enter" && collName.value.trim()) {
-      const run = $('[data-act="bulk-coll-run"]');
-      if (run) run.click();
-    }
+  const collName = $("#bulkCollName");
+  if (collName) {
+    collName.addEventListener("input", () => {
+      if (typeof syncCollRun === "function") syncCollRun();
+      const err = $("#bulkCollErr");
+      if (err && !err.hidden) err.hidden = true;
+    });
+    collName.addEventListener("keydown", (e) => {
+      if (e.key === "Enter" && collName.value.trim()) {
+        const run = $("#bulkCollRun") || $('[data-act="bulk-coll-run"]');
+        if (run) run.click();
+      }
+    });
+  }
+const xferQ = $("#bulkXferQ");
+if (xferQ) {
+  xferQ.addEventListener("input", () => {
+    if (state.xferTarget) return;
+    fillXferPick(xferQ.value);
+  });
+}
+const xferPQ = $("#bulkXferPQ");
+if (xferPQ) {
+  xferPQ.addEventListener("input", () => {
+    if (!state.xferTarget || state.xferParent) return;
+    clearTimeout(xferPQ._t);
+    xferPQ._t = setTimeout(() => fillXferPick(xferPQ.value), 180);
   });
 }
 
@@ -2479,7 +2598,7 @@ document.addEventListener("click", function (e) {
 var params = new URLSearchParams(location.search);
 
 if (SCREEN === "atelier") {
-  setBatch(params.get("obj") || "alignements");
+  setBatch(params.get("obj") || "alignements", params.get("op"));
 }
 if (SCREEN === "synchronisation") {
   syncThesaurusPollTick();

@@ -10,6 +10,7 @@ import fr.cnrs.opentheso.v2.concept.write.model.command.DeleteBroaderRelationCom
 import fr.cnrs.opentheso.v2.concept.write.model.command.DeleteCustomRelationCommand;
 import fr.cnrs.opentheso.v2.concept.write.model.command.DeleteNarrowerRelationCommand;
 import fr.cnrs.opentheso.v2.concept.write.model.command.DeleteRelatedRelationCommand;
+import fr.cnrs.opentheso.v2.concept.write.model.command.MoveConceptsUnderCommand;
 import fr.cnrs.opentheso.v2.concept.write.model.command.ReparentConceptCommand;
 import fr.cnrs.opentheso.v2.concept.write.model.command.UpdateNarrowerRelationTypeCommand;
 import lombok.RequiredArgsConstructor;
@@ -17,6 +18,7 @@ import org.apache.commons.lang3.StringUtils;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
 
+import java.util.LinkedHashSet;
 import java.util.List;
 
 @Service
@@ -67,6 +69,62 @@ public class ConceptRelationNativeWriteService {
                 command.contributorName(),
                 "Concept déplacé avec succès"
         );
+    }
+
+    @Transactional
+    public MutationResult moveConceptsUnder(MoveConceptsUnderCommand command) {
+        List<String> conceptIds = normalizeMoveIds(command == null ? null : command.conceptIds());
+        if (conceptIds.isEmpty()) {
+            return MutationResult.validationError("Aucun concept à déplacer.");
+        }
+        String newBroaderId = command == null ? null : StringUtils.trimToNull(command.newBroaderId());
+        int moved = 0;
+        String lastError = null;
+        for (String conceptId : conceptIds) {
+            if (newBroaderId != null && conceptId.equalsIgnoreCase(newBroaderId)) {
+                continue;
+            }
+            List<String> current = conceptRelationWriteRepository.listBroaderParentConceptIds(
+                    conceptId, command.thesaurusId());
+            if (newBroaderId == null && current.isEmpty()) {
+                continue;
+            }
+            if (newBroaderId != null && current.size() == 1 && current.get(0).equalsIgnoreCase(newBroaderId)) {
+                continue;
+            }
+            MutationResult result = reparentConcept(new ReparentConceptCommand(
+                    command.thesaurusId(),
+                    conceptId,
+                    current,
+                    newBroaderId,
+                    command.userId(),
+                    command.contributorName()
+            ));
+            if (result != null && result.success()) {
+                moved += 1;
+            } else if (result != null) {
+                lastError = result.message();
+            }
+        }
+        if (moved == 0) {
+            return MutationResult.validationError(
+                    StringUtils.defaultIfBlank(lastError, "Aucun concept déplacé."));
+        }
+        String s = moved > 1 ? "s" : "";
+        return MutationResult.ok(moved + " concept" + s + " déplacé" + s);
+    }
+
+    private static List<String> normalizeMoveIds(List<String> raw) {
+        if (raw == null) {
+            return List.of();
+        }
+        LinkedHashSet<String> ids = new LinkedHashSet<>();
+        for (String part : raw) {
+            if (StringUtils.isNotBlank(part)) {
+                ids.add(part.trim());
+            }
+        }
+        return List.copyOf(ids);
     }
 
     private static List<String> normalizeDetachIds(List<String> broaderIdsToDetach) {

@@ -36,6 +36,7 @@ import jakarta.inject.Named;
 import lombok.Getter;
 import lombok.RequiredArgsConstructor;
 import lombok.Setter;
+import lombok.extern.slf4j.Slf4j;
 import org.apache.commons.lang3.StringUtils;
 import org.primefaces.PrimeFaces;
 
@@ -47,6 +48,7 @@ import java.util.Set;
 
 @Getter
 @Setter
+@Slf4j
 @ViewScoped
 @Named("v2FacetDetailEditorBean")
 @RequiredArgsConstructor
@@ -78,6 +80,7 @@ public class FacetDetailEditorBean implements Serializable {
     private String createErrorMessage;
     private String createFlashMessage;
     private String createFlashToken;
+    private boolean extrasPersistFailed;
     private String createdFacetId;
     private boolean composing;
     private boolean created;
@@ -535,6 +538,7 @@ public class FacetDetailEditorBean implements Serializable {
     public void submitCreate() {
         createErrorMessage = null;
         createdFacetId = "";
+        extrasPersistFailed = false;
         String parentId = resolveCreateParentId();
         if (!isManagerActionsAvailable() || StringUtils.isBlank(parentId)) {
             createRunState = STATUS_ERROR;
@@ -575,9 +579,13 @@ public class FacetDetailEditorBean implements Serializable {
         createdFacetId = StringUtils.defaultString(result.createdConceptId());
         createRunState = "done";
         composing = false;
-        flashCreateSuccess(StringUtils.isNotBlank(createdFacetId)
+        String success = StringUtils.isNotBlank(createdFacetId)
                 ? "Facette « " + label.trim() + " » créée"
-                : "La facette a bien été créée");
+                : "La facette a bien été créée";
+        if (extrasPersistFailed) {
+            success += " — certaines informations n'ont pas pu être enregistrées";
+        }
+        flashCreateSuccess(success);
     }
 
     public void cancelCreate() {
@@ -586,16 +594,19 @@ public class FacetDetailEditorBean implements Serializable {
     }
 
     private void persistCreateExtras(String facetId) {
-        persistQuietly(() -> persistOptionalDefinition(facetId));
-        persistQuietly(() -> persistDraftTranslations(facetId));
-        persistQuietly(() -> persistDraftNotes(facetId));
-        persistQuietly(() -> persistDraftMembers(facetId));
+        extrasPersistFailed = false;
+        persistQuietly("définition", () -> persistOptionalDefinition(facetId));
+        persistQuietly("traductions", () -> persistDraftTranslations(facetId));
+        persistQuietly("notes", () -> persistDraftNotes(facetId));
+        persistQuietly("membres", () -> persistDraftMembers(facetId));
     }
 
-    private static void persistQuietly(Runnable action) {
+    private void persistQuietly(String what, Runnable action) {
         try {
             action.run();
-        } catch (RuntimeException ignored) {
+        } catch (RuntimeException e) {
+            extrasPersistFailed = true;
+            log.warn("Échec de l'enregistrement des {} de la facette créée", what, e);
         }
     }
 
@@ -678,6 +689,9 @@ public class FacetDetailEditorBean implements Serializable {
         }
         Integer userId = userSession.getCurrentUserId();
         if (userId == null) {
+            if (StringUtils.isNotBlank(value)) {
+                throw new IllegalStateException("Session expirée : note non enregistrée");
+            }
             return;
         }
         conceptNoteMutationService.upsertNote(new UpsertNoteCommand(
@@ -767,6 +781,7 @@ public class FacetDetailEditorBean implements Serializable {
         createErrorMessage = null;
         createFlashMessage = null;
         createFlashToken = null;
+        extrasPersistFailed = false;
         selectedParentConcept = null;
         composing = false;
         created = false;

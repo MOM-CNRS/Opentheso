@@ -65,6 +65,10 @@ public class AddGroupBean implements Serializable {
             }
         }
     }
+
+    public void infos() {
+        MessageUtils.showInformationMessage("Rédiger une aide ici pour Ajouter un groupe !");
+    }
     
     public void addGroup() {
 

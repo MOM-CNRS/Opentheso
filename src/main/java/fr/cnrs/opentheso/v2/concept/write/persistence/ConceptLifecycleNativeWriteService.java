@@ -1,8 +1,12 @@
 package fr.cnrs.opentheso.v2.concept.write.persistence;
 
+import fr.cnrs.opentheso.v2.candidat.model.CandidatStatusCode;
+import fr.cnrs.opentheso.v2.candidat.persistence.CandidatLifecyclePersistence;
+import fr.cnrs.opentheso.v2.concept.policy.ConceptStatusPolicy;
 import fr.cnrs.opentheso.v2.concept.write.model.MutationResult;
 import fr.cnrs.opentheso.v2.concept.write.model.command.AddReplacedByCommand;
 import fr.cnrs.opentheso.v2.concept.write.model.command.ApproveConceptCommand;
+import fr.cnrs.opentheso.v2.concept.write.model.command.ChangeConceptsStatusCommand;
 import fr.cnrs.opentheso.v2.concept.write.model.command.DeleteReplacedByCommand;
 import fr.cnrs.opentheso.v2.concept.write.model.command.DeprecateConceptCommand;
 import fr.cnrs.opentheso.v2.concept.write.model.command.RenamePreferredLabelCommand;
@@ -11,6 +15,7 @@ import org.apache.commons.lang3.StringUtils;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
 
+import java.util.LinkedHashSet;
 import java.util.List;
 
 @Service
@@ -26,6 +31,7 @@ public class ConceptLifecycleNativeWriteService {
     private final ConceptTranslationWriteRepository conceptTranslationWriteRepository;
     private final ConceptRelationWriteRepository conceptRelationWriteRepository;
     private final ConceptWritePostMutationRepository conceptWritePostMutationRepository;
+    private final CandidatLifecyclePersistence candidatLifecyclePersistence;
 
     @Transactional
     public MutationResult renamePreferredLabel(RenamePreferredLabelCommand command) {
@@ -78,6 +84,37 @@ public class ConceptLifecycleNativeWriteService {
     }
 
     @Transactional
+    public MutationResult changeConceptsStatus(ChangeConceptsStatusCommand command) {
+        if (command == null || StringUtils.isBlank(command.thesaurusId())) {
+            return MutationResult.validationError("Thésaurus manquant");
+        }
+        if (!command.approve() && !command.deprecate()) {
+            return MutationResult.validationError("Choisissez un statut.");
+        }
+        List<String> conceptIds = uniqueIds(command.conceptIds());
+        if (conceptIds.isEmpty()) {
+            return MutationResult.validationError("Aucun concept dans la sélection.");
+        }
+        int applied = 0;
+        for (String conceptId : conceptIds) {
+            if (applyBulkStatus(command, conceptId)) {
+                applied++;
+            }
+        }
+        if (applied == 0) {
+            return MutationResult.validationError(command.approve()
+                    ? "Aucun candidat à valider dans la sélection."
+                    : "Aucun concept actif à rendre obsolète.");
+        }
+        if (command.approve()) {
+            return MutationResult.ok(applied + " candidat" + (applied > 1 ? "s" : "")
+                    + " validé" + (applied > 1 ? "s" : ""));
+        }
+        return MutationResult.ok(applied + " concept" + (applied > 1 ? "s" : "")
+                + " rendu" + (applied > 1 ? "s" : "") + " obsolète" + (applied > 1 ? "s" : ""));
+    }
+
+    @Transactional
     public MutationResult approveConcept(ApproveConceptCommand command) {
         List<String> replacementConceptIds = command.addReplacedByRelations()
                 ? conceptLifecycleWriteRepository.listReplacementConceptIds(
@@ -124,6 +161,51 @@ public class ConceptLifecycleNativeWriteService {
                 command.conceptId(), command.targetConceptId(), command.thesaurusId());
         finalizeMutation(command.thesaurusId(), command.conceptId(), command.userId(), command.contributorName());
         return MutationResult.ok("Relation supprimée avec succès");
+    }
+
+    private boolean applyBulkStatus(ChangeConceptsStatusCommand command, String conceptId) {
+        var snapshot = conceptLifecycleWriteRepository.loadConceptSnapshot(command.thesaurusId(), conceptId);
+        if (snapshot.isEmpty()) {
+            return false;
+        }
+        String current = StringUtils.trimToEmpty(snapshot.get().status());
+        if (command.approve()) {
+            if (!isCandidateStatus(current)) {
+                return false;
+            }
+            if (!applyStatusChange(command.thesaurusId(), conceptId, STATUS_ACTIVE, command.userId())) {
+                return false;
+            }
+            candidatLifecyclePersistence.updateCandidateStatus(
+                    command.thesaurusId(), conceptId, CandidatStatusCode.ACCEPTED);
+            finalizeMutation(command.thesaurusId(), conceptId, command.userId(), command.contributorName());
+            return true;
+        }
+        if (isCandidateStatus(current) || ConceptStatusPolicy.isDeprecated(current)) {
+            return false;
+        }
+        if (!applyStatusChange(command.thesaurusId(), conceptId, STATUS_DEPRECATED, command.userId())) {
+            return false;
+        }
+        finalizeMutation(command.thesaurusId(), conceptId, command.userId(), command.contributorName());
+        return true;
+    }
+
+    private static boolean isCandidateStatus(String status) {
+        return "CA".equalsIgnoreCase(status) || "candidat".equalsIgnoreCase(status);
+    }
+
+    private static List<String> uniqueIds(List<String> raw) {
+        LinkedHashSet<String> ids = new LinkedHashSet<>();
+        if (raw == null) {
+            return List.of();
+        }
+        for (String part : raw) {
+            if (StringUtils.isNotBlank(part)) {
+                ids.add(part.trim());
+            }
+        }
+        return List.copyOf(ids);
     }
 
     private boolean applyStatusChange(String thesaurusId, String conceptId, String status, int userId) {

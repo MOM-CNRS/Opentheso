@@ -199,6 +199,25 @@ class FacetDetailEditorBeanTest {
     }
 
     @Test
+    void createFacetDraft_warnsWhenNotesCannotBeSavedWithoutUser() {
+        bean.setParentConceptId("C9");
+        bean.setLabel("Par matériau");
+        bean.setDefinition("Une définition");
+        when(userSession.getCurrentUserId()).thenReturn(7);
+        when(userSession.getCurrentUsername()).thenReturn("admin");
+        when(conceptNoteMutationService.upsertNote(any())).thenThrow(new RuntimeException("db"));
+        when(facetMutationService.createFacet(new CreateFacetCommand("TH1", "C9", "fr", "Par matériau")))
+                .thenReturn(MutationResult.ok("La facette a bien été créée", "F12"));
+
+        bean.createFacetDraft();
+
+        assertTrue(bean.isCreated());
+        assertEquals("F12", bean.getCreatedFacetId());
+        assertTrue(String.valueOf(bean.getCreateFlashMessage()).contains("certaines informations"),
+                bean.getCreateFlashMessage());
+    }
+
+    @Test
     void cancelFacetDraft_resetsForm() {
         bean.setComposing(true);
         bean.setParentConceptId("C9");

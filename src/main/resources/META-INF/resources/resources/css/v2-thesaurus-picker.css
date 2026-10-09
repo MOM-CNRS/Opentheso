@@ -1240,10 +1240,13 @@ img.tp-gov-mark{display:block;width:160px;height:auto;max-width:none;max-height:
   display:flex!important;flex-direction:column;gap:0;width:100%;
   background:transparent;border:0;box-shadow:none;padding:0;margin:0;max-width:none
 }
-.tp-export-host .bulksel-fh{display:none!important}
+.tp-export-host .bulksel-fh,
+.tp-export-host .bap-form-head,
+.tp-export-host #bulkExportMembersCard{display:none!important}
 .tp-export-host .xexp-sum,
 .tp-export-host .xexp-est,
-.tp-export-host .bulksel-help{display:none!important}
+.tp-export-host .bulksel-help,
+.tp-export-host .bap-hint{display:none!important}
 .tp-export-host .xexp-pane,.tp-export-host .xexp-pane-in{display:flex;flex-direction:column;gap:0}
 .tp-export-host .xexp-pane-in{gap:18px}
 .tp-export-host .xexp-sec{

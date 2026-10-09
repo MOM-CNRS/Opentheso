@@ -1,0 +1,613 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<ui:composition xmlns="http://www.w3.org/1999/xhtml"
+                xmlns:ui="http://xmlns.jcp.org/jsf/facelets"
+                xmlns:h="http://xmlns.jcp.org/jsf/html"
+                xmlns:f="http://xmlns.jcp.org/jsf/core">
+  <div class="view-panel" id="viewBulk">
+    <div class="bap">
+      <div class="bap-head">
+        <h1 class="bap-title"><b id="bulkNMain">0</b> concept<span id="bulkPlural2">s</span> sélectionné<span id="bulkPlural3">s</span></h1>
+        <button type="button" class="bap-x" data-act="clear-sel" title="Tout désélectionner" aria-label="Tout désélectionner">
+          <svg viewBox="0 0 24 24" aria-hidden="true"><path d="M18 6 6 18"/><path d="M6 6l12 12"/></svg>
+        </button>
+      </div>
+
+      <div class="spl ck bap-list" id="bulkActs">
+        <button type="button" class="spl-row" data-act="bulk-coll">
+          <span class="spl-ico" aria-hidden="true"><svg viewBox="0 0 24 24"><rect x="3" y="4" width="18" height="16" rx="2"/><path d="M3 9h18"/><path d="M9 9v11"/></svg></span>
+          <span class="spl-tx">
+            <span class="spl-t">Créer une collection</span>
+            <span class="spl-d">Regroupe la sélection ; les concepts gardent leur place dans l'arbre.</span>
+          </span>
+          <span class="spl-go" aria-hidden="true"><svg viewBox="0 0 24 24"><path d="m9 18 6-6-6-6"/></svg></span>
+        </button>
+        <button type="button" class="spl-row" data-act="bulk-move">
+          <span class="spl-ico" aria-hidden="true"><svg viewBox="0 0 24 24"><path d="M5 12h14"/><path d="m12 5 7 7-7 7"/></svg></span>
+          <span class="spl-tx">
+            <span class="spl-t">Déplacer sous…</span>
+            <span class="spl-d">Change le terme générique, dans ce thésaurus — ou vers la racine.</span>
+          </span>
+          <span class="spl-go" aria-hidden="true"><svg viewBox="0 0 24 24"><path d="m9 18 6-6-6-6"/></svg></span>
+        </button>
+        <button type="button" class="spl-row" data-act="bulk-xfer">
+          <span class="spl-ico" aria-hidden="true"><svg viewBox="0 0 24 24"><path d="M17 8l4 4-4 4"/><path d="M3 12h18"/><path d="M7 8 3 12l4 4"/></svg></span>
+          <span class="spl-tx">
+            <span class="spl-t">Déplacer vers un autre thésaurus…</span>
+            <span class="spl-d">Seuls les thésaurus où vous avez le droit d'écriture sont proposés.</span>
+          </span>
+          <span class="spl-go" aria-hidden="true"><svg viewBox="0 0 24 24"><path d="m9 18 6-6-6-6"/></svg></span>
+        </button>
+        <div class="bap-sep"></div>
+        <button type="button" class="spl-row" data-act="bulk-status">
+          <span class="spl-ico" aria-hidden="true"><svg viewBox="0 0 24 24"><circle cx="12" cy="12" r="9"/><path d="M12 7v5l3 2"/></svg></span>
+          <span class="spl-tx">
+            <span class="spl-t">Changer le statut</span>
+            <span class="spl-d">Valider des candidats, ou rendre obsolète.</span>
+          </span>
+          <span class="spl-go" aria-hidden="true"><svg viewBox="0 0 24 24"><path d="m9 18 6-6-6-6"/></svg></span>
+        </button>
+        <button type="button" class="spl-row" data-act="bulk-export">
+          <span class="spl-ico" aria-hidden="true"><svg viewBox="0 0 24 24"><path d="M21 15v4a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2v-4"/><path d="M7 10l5 5 5-5"/><path d="M12 15V3"/></svg></span>
+          <span class="spl-tx">
+            <span class="spl-t">Exporter la sélection</span>
+            <span class="spl-d">Fichier SKOS, CSV ou PDF — avec ou sans termes spécifiques.</span>
+          </span>
+          <span class="spl-go" aria-hidden="true"><svg viewBox="0 0 24 24"><path d="m9 18 6-6-6-6"/></svg></span>
+        </button>
+      </div>
+
+      <div class="bulksel-form bap-form bap-form--coll" id="bulkColl" hidden="hidden">
+        <div class="bap-form-head">
+          <button type="button" class="bap-back" data-act="bulk-back" title="Retour" aria-label="Retour">
+            <svg viewBox="0 0 24 24" aria-hidden="true"><path d="M19 12H5"/><path d="m12 19-7-7 7-7"/></svg>
+          </button>
+          <span class="bap-form-ico" aria-hidden="true"><svg viewBox="0 0 24 24"><rect x="3" y="4" width="18" height="16" rx="2"/><path d="M3 9h18"/><path d="M9 9v11"/></svg></span>
+          <div class="bap-form-titles">
+            <h2 class="bap-form-title">Nouvelle collection</h2>
+            <p class="bap-form-sub">Regroupe les <b class="bap-form-n">0</b> concept<span class="bap-form-plural">s</span> sélectionné<span class="bap-form-plural">s</span> sans les déplacer dans l'arbre.</p>
+          </div>
+        </div>
+        <div class="bap-card">
+          <label class="bap-field" for="bulkCollName">
+            <span class="bap-field-l">Nom</span>
+            <input class="bulksel-input bap-input" id="bulkCollName" maxlength="255"
+                   placeholder="Ex. Architecture, Céramique…"
+                   autocomplete="off" aria-describedby="bulkCollErr bulkCollHint"/>
+          </label>
+          <p class="bap-field-err" id="bulkCollErr" hidden="hidden" role="alert"></p>
+          <div class="bap-members">
+            <div class="bap-members-h">
+              <span class="bap-field-l">Membres</span>
+              <span class="bap-members-n" id="bulkCollMemberN">0 concept</span>
+            </div>
+            <div class="bap-members-list" id="bulkCollMembers"></div>
+          </div>
+          <p class="bap-hint" id="bulkCollHint">
+            <svg viewBox="0 0 24 24" aria-hidden="true"><circle cx="12" cy="12" r="9"/><path d="M12 8h.01"/><path d="M11 12h1v4h1"/></svg>
+            <span>Les concepts gardent leur place dans l'arbre. La collection les relie seulement.</span>
+          </p>
+        </div>
+        <h:panelGroup id="previewBulkCollStatus" layout="block" styleClass="bap-coll-status#{v2CollectionDetailEditorBean.bulkOk ? ' is-ok' : ''}#{not empty v2CollectionDetailEditorBean.bulkMessage and not v2CollectionDetailEditorBean.bulkOk ? ' is-err' : ''}">
+          <h:outputText value="#{v2CollectionDetailEditorBean.bulkMessage}"/>
+        </h:panelGroup>
+        <div class="bap-form-run bulksel-run">
+          <button type="button" class="bo-btn ghost bulksel-btn" data-act="bulk-back">Annuler</button>
+          <button type="button" class="bo-btn primary bulksel-btn is-off" id="bulkCollRun" data-act="bulk-coll-run">Créer la collection</button>
+        </div>
+      </div>
+
+      <div class="bulksel-form bap-form bap-form--move" id="bulkMove" hidden="hidden">
+        <div class="bap-form-head">
+          <button type="button" class="bap-back" data-act="bulk-back" title="Retour" aria-label="Retour">
+            <svg viewBox="0 0 24 24" aria-hidden="true"><path d="M19 12H5"/><path d="m12 19-7-7 7-7"/></svg>
+          </button>
+          <span class="bap-form-ico" aria-hidden="true"><svg viewBox="0 0 24 24"><path d="M5 12h14"/><path d="m12 5 7 7-7 7"/></svg></span>
+          <div class="bap-form-titles">
+            <h2 class="bap-form-title">Déplacer sous…</h2>
+            <p class="bap-form-sub">Change le terme générique des <b class="bap-form-n">0</b> concept<span class="bap-form-plural">s</span> dans ce thésaurus.</p>
+          </div>
+        </div>
+        <div class="bap-card">
+          <div class="bap-members">
+            <div class="bap-members-h">
+              <span class="bap-field-l">À déplacer</span>
+              <span class="bap-members-n" id="bulkMoveMemberN">0 concept</span>
+            </div>
+            <div class="bap-members-list" id="bulkMoveMembers"></div>
+          </div>
+          <div class="bulksel-target" id="bulkMoveTarget" hidden="hidden">
+            <span class="bap-tgt-ico" aria-hidden="true"><svg viewBox="0 0 24 24"><path d="M5 12h14"/><path d="m12 5 7 7-7 7"/></svg></span>
+            <span class="bulksel-tgt-copy">
+              <span class="bulksel-tgt-k">Destination</span>
+              <span class="bulksel-tgt-l" id="bulkMoveTargetL"></span>
+            </span>
+            <button type="button" class="bulksel-tgt-x" data-act="bulk-move-clear" title="Changer" aria-label="Changer de destination">×</button>
+          </div>
+          <label class="bap-field" for="bulkMoveQ">
+            <span class="bap-field-l">Destination</span>
+            <input class="bulksel-input bap-input" id="bulkMoveQ" placeholder="Rechercher un terme ou choisir la racine…"
+                   autocomplete="off" aria-describedby="bulkMoveErr bulkMoveHint"/>
+          </label>
+          <div class="bulksel-pick" id="bulkMovePick"></div>
+          <p class="bap-field-err" id="bulkMoveErr" hidden="hidden" role="alert"></p>
+          <p class="bap-hint" id="bulkMoveHint">
+            <svg viewBox="0 0 24 24" aria-hidden="true"><circle cx="12" cy="12" r="9"/><path d="M12 8h.01"/><path d="M11 12h1v4h1"/></svg>
+            <span>Le déplacement remplace le ou les termes génériques actuels. Les facettes ne sont pas déplacées.</span>
+          </p>
+        </div>
+        <h:panelGroup id="previewBulkMoveStatus" layout="block" styleClass="bap-coll-status#{v2ConceptTreeDragDropBean.bulkMoveOk ? ' is-ok' : ''}#{not empty v2ConceptTreeDragDropBean.bulkMoveMessage and not v2ConceptTreeDragDropBean.bulkMoveOk ? ' is-err' : ''}">
+          <h:outputText value="#{v2ConceptTreeDragDropBean.bulkMoveMessage}"/>
+        </h:panelGroup>
+        <div class="bap-form-run bulksel-run">
+          <button type="button" class="bo-btn ghost bulksel-btn" data-act="bulk-back">Annuler</button>
+          <button type="button" class="bo-btn primary bulksel-btn is-off" id="bulkMoveRun" data-act="bulk-move-run">Déplacer</button>
+        </div>
+      </div>
+
+      <div class="bulksel-form bap-form bap-form--xfer" id="bulkXfer" hidden="hidden">
+        <div class="bap-form-head">
+          <button type="button" class="bap-back" data-act="bulk-back" title="Retour" aria-label="Retour">
+            <svg viewBox="0 0 24 24" aria-hidden="true"><path d="M19 12H5"/><path d="m12 19-7-7 7-7"/></svg>
+          </button>
+          <span class="bap-form-ico" aria-hidden="true"><svg viewBox="0 0 24 24"><path d="M17 8l4 4-4 4"/><path d="M3 12h18"/><path d="M7 8 3 12l4 4"/></svg></span>
+          <div class="bap-form-titles">
+            <h2 class="bap-form-title">Déplacer vers un autre thésaurus</h2>
+            <p class="bap-form-sub">Transfère les <b class="bap-form-n">0</b> concept<span class="bap-form-plural">s</span> (et leur branche) hors de ce thésaurus.</p>
+          </div>
+        </div>
+        <div class="bap-steps" id="bulkXferSteps" aria-hidden="true">
+          <span class="bap-step is-on" data-step="1">1 · Thésaurus</span>
+          <span class="bap-step-line"></span>
+          <span class="bap-step" data-step="2">2 · Destination</span>
+        </div>
+        <div class="bap-card">
+          <script type="application/json" id="bulkWritableThesauriJson"><h:outputText value="#{v2ConceptTransferEditorBean.availableThesauriJson}" escape="false"/></script>
+          <div class="bap-members">
+            <div class="bap-members-h">
+              <span class="bap-field-l">À transférer</span>
+              <span class="bap-members-n" id="bulkXferMemberN">0 concept</span>
+            </div>
+            <div class="bap-members-list" id="bulkXferMembers"></div>
+          </div>
+          <div class="bulksel-target" id="bulkXferTarget" hidden="hidden">
+            <span class="bap-tgt-ico" aria-hidden="true"><svg viewBox="0 0 24 24"><path d="M17 8l4 4-4 4"/><path d="M3 12h18"/></svg></span>
+            <span class="bulksel-tgt-copy">
+              <span class="bulksel-tgt-k">Thésaurus</span>
+              <span class="bulksel-tgt-l" id="bulkXferTargetL"></span>
+            </span>
+            <button type="button" class="bulksel-tgt-x" data-act="bulk-xfer-clear" title="Changer de thésaurus" aria-label="Changer de thésaurus">×</button>
+          </div>
+          <div class="bulksel-target" id="bulkXferParent" hidden="hidden">
+            <span class="bap-tgt-ico" aria-hidden="true"><svg viewBox="0 0 24 24"><path d="M5 12h14"/><path d="m12 5 7 7-7 7"/></svg></span>
+            <span class="bulksel-tgt-copy">
+              <span class="bulksel-tgt-k">Destination</span>
+              <span class="bulksel-tgt-l" id="bulkXferParentL"></span>
+            </span>
+            <button type="button" class="bulksel-tgt-x" data-act="bulk-xfer-parent-clear" title="Changer de destination" aria-label="Changer de destination">×</button>
+          </div>
+          <label class="bap-field" for="bulkXferQ">
+            <span class="bap-field-l">Thésaurus de destination</span>
+            <input class="bulksel-input bap-input" id="bulkXferQ" placeholder="Nom ou identifiant…"
+                   autocomplete="off" aria-describedby="bulkXferErr bulkXferHint"/>
+          </label>
+          <label class="bap-field" for="bulkXferPQ" id="bulkXferPQField" hidden="hidden">
+            <span class="bap-field-l">Concept d'accueil</span>
+            <input class="bulksel-input bap-input" id="bulkXferPQ" hidden="hidden"
+                   placeholder="Rechercher un terme ou choisir la racine…" autocomplete="off"/>
+          </label>
+          <div class="bulksel-pick" id="bulkXferPick">
+            <div class="bulksel-empty">Aucun thésaurus accessible en écriture.</div>
+          </div>
+          <p class="bap-field-err" id="bulkXferErr" hidden="hidden" role="alert"></p>
+          <p class="bap-hint" id="bulkXferHint">
+            <svg viewBox="0 0 24 24" aria-hidden="true"><circle cx="12" cy="12" r="9"/><path d="M12 8h.01"/><path d="M11 12h1v4h1"/></svg>
+            <span>Seuls les thésaurus où vous êtes administrateur apparaissent. Chaque concept part avec sa branche.</span>
+          </p>
+        </div>
+        <h:panelGroup id="previewBulkXferStatus" layout="block" styleClass="bap-coll-status#{v2ConceptTransferEditorBean.bulkXferOk ? ' is-ok' : ''}#{not empty v2ConceptTransferEditorBean.bulkXferMessage and not v2ConceptTransferEditorBean.bulkXferOk ? ' is-err' : ''}">
+          <h:outputText value="#{v2ConceptTransferEditorBean.bulkXferMessage}"/>
+        </h:panelGroup>
+        <div class="bap-form-run bulksel-run">
+          <button type="button" class="bo-btn ghost bulksel-btn" data-act="bulk-back">Annuler</button>
+          <button type="button" class="bo-btn primary bulksel-btn is-off" id="bulkXferRun" data-act="bulk-xfer-run">Déplacer</button>
+        </div>
+      </div>
+
+      <div class="bulksel-form bap-form bap-form--status" id="bulkStatus" hidden="hidden">
+        <div class="bap-form-head">
+          <button type="button" class="bap-back" data-act="bulk-back" title="Retour" aria-label="Retour">
+            <svg viewBox="0 0 24 24" aria-hidden="true"><path d="M19 12H5"/><path d="m12 19-7-7 7-7"/></svg>
+          </button>
+          <span class="bap-form-ico" aria-hidden="true"><svg viewBox="0 0 24 24"><circle cx="12" cy="12" r="9"/><path d="M12 7v5l3 2"/></svg></span>
+          <div class="bap-form-titles">
+            <h2 class="bap-form-title">Changer le statut</h2>
+            <p class="bap-form-sub">Appliqué aux <b class="bap-form-n">0</b> concept<span class="bap-form-plural">s</span> de la sélection — les facettes sont ignorées.</p>
+          </div>
+        </div>
+        <div class="bap-card">
+          <div class="bap-members">
+            <div class="bap-members-h">
+              <span class="bap-field-l">Concernés</span>
+              <span class="bap-members-n" id="bulkStatusMemberN">0 concept</span>
+            </div>
+            <div class="bap-members-list" id="bulkStatusMembers"></div>
+          </div>
+          <div class="bap-choices">
+            <button type="button" class="bap-choice" id="bulkStatusApprove" data-act="bulk-status-pick" data-status="approve">
+              <span class="spl-ico" aria-hidden="true"><svg viewBox="0 0 24 24"><path d="M20 6 9 17l-5-5"/></svg></span>
+              <span class="spl-tx">
+                <span class="spl-t">Valider les candidats</span>
+                <span class="spl-d">Passe un candidat au statut de concept validé.</span>
+              </span>
+            </button>
+            <button type="button" class="bap-choice" id="bulkStatusDeprecate" data-act="bulk-status-pick" data-status="deprecate">
+              <span class="spl-ico" aria-hidden="true"><svg viewBox="0 0 24 24"><circle cx="12" cy="12" r="9"/><path d="m9 9 6 6"/><path d="m15 9-6 6"/></svg></span>
+              <span class="spl-tx">
+                <span class="spl-t">Rendre obsolète</span>
+                <span class="spl-d">Déprécie les concepts validés, sans les supprimer.</span>
+              </span>
+            </button>
+          </div>
+          <p class="bap-field-err" id="bulkStatusErr" hidden="hidden" role="alert"></p>
+          <p class="bap-hint" id="bulkStatusHint">
+            <svg viewBox="0 0 24 24" aria-hidden="true"><circle cx="12" cy="12" r="9"/><path d="M12 8h.01"/><path d="M11 12h1v4h1"/></svg>
+            <span>Choisissez une action. Seuls les concepts au statut correspondant seront modifiés.</span>
+          </p>
+        </div>
+        <h:panelGroup id="previewBulkStatusStatus" layout="block" styleClass="bap-coll-status#{v2ConceptLifecycleEditorBean.bulkStatusOk ? ' is-ok' : ''}#{not empty v2ConceptLifecycleEditorBean.bulkStatusMessage and not v2ConceptLifecycleEditorBean.bulkStatusOk ? ' is-err' : ''}">
+          <h:outputText value="#{v2ConceptLifecycleEditorBean.bulkStatusMessage}"/>
+        </h:panelGroup>
+        <div class="bap-form-run bulksel-run">
+          <button type="button" class="bo-btn ghost bulksel-btn" data-act="bulk-back">Annuler</button>
+          <button type="button" class="bo-btn primary bulksel-btn is-off" id="bulkStatusRun" data-act="bulk-status-run">Appliquer</button>
+        </div>
+      </div>
+
+      <div class="bulksel-form bap-form bap-form--export" id="bulkExport" hidden="hidden">
+        <input type="hidden" id="previewExportCsrf" name="csrfToken" value="#{sessionScope.CSRF_TOKEN}"/>
+        <div class="bap-form-head bulksel-fh">
+          <button type="button" class="bap-back bulksel-back" data-act="bulk-export-back" title="Retour" aria-label="Retour">
+            <svg viewBox="0 0 24 24" aria-hidden="true"><path d="M19 12H5"/><path d="m12 19-7-7 7-7"/></svg>
+          </button>
+          <span class="bap-form-ico" aria-hidden="true"><svg viewBox="0 0 24 24"><path d="M21 15v4a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2v-4"/><path d="M7 10l5 5 5-5"/><path d="M12 15V3"/></svg></span>
+          <div class="bap-form-titles">
+            <h2 class="bap-form-title bulksel-ft">Exporter la sélection</h2>
+            <p class="bap-form-sub xexp-sum" id="bulkExportSum">Aucun concept.</p>
+          </div>
+        </div>
+        <div class="bap-card" id="bulkExportMembersCard">
+          <div class="bap-members">
+            <div class="bap-members-h">
+              <span class="bap-field-l">À exporter</span>
+              <span class="bap-members-n" id="bulkExportMemberN">0 concept</span>
+            </div>
+            <div class="bap-members-list" id="bulkExportMembers"></div>
+          </div>
+          <p class="bap-hint" id="bulkExportHint">
+            <svg viewBox="0 0 24 24" aria-hidden="true"><circle cx="12" cy="12" r="9"/><path d="M12 8h.01"/><path d="M11 12h1v4h1"/></svg>
+            <span id="bulkExportHelp">Choisissez un format, les options, puis générez le fichier.</span>
+          </p>
+        </div>
+        <div class="xexp-pane is-on bap-card" id="bulkExportOpts">
+          <div class="xexp-pane-in">
+            <section class="xexp-sec xexp-sec--format" aria-labelledby="bulkExportFormatLbl">
+              <div class="xexp-sec-head">
+                <h3 class="xexp-sec-h" id="bulkExportFormatLbl">Format</h3>
+                <p class="xexp-est" id="bulkExportEst"></p>
+              </div>
+              <div class="xkind" id="bulkExportKinds" role="tablist" aria-label="Famille de format">
+                <button type="button" class="xkind-b is-on" data-act="export-kind" data-kind="skos">SKOS</button>
+                <button type="button" class="xkind-b" data-act="export-kind" data-kind="csv">CSV</button>
+                <button type="button" class="xkind-b" data-act="export-kind" data-kind="pdf">PDF</button>
+              </div>
+              <div class="xexp-fold" id="bulkExportSkosFmts">
+                <div class="xexp-fold-in">
+                  <div class="xfmt-row" role="radiogroup" aria-label="Format SKOS">
+                    <button type="button" class="xchip is-on" data-act="export-fmt" data-fmt="rdf">RDF/XML</button>
+                    <button type="button" class="xchip" data-act="export-fmt" data-fmt="jsonld">JSON-LD</button>
+                    <button type="button" class="xchip" data-act="export-fmt" data-fmt="turtle">Turtle</button>
+                    <button type="button" class="xchip" data-act="export-fmt" data-fmt="json">JSON</button>
+                  </div>
+                </div>
+              </div>
+              <div class="xexp-fold is-off" id="bulkExportCsvFmts" aria-hidden="true">
+                <div class="xexp-fold-in">
+                  <div class="xfmt-row" role="radiogroup" aria-label="Format CSV">
+                    <button type="button" class="xchip" data-act="export-fmt" data-fmt="csv">Complet</button>
+                    <button type="button" class="xchip" data-act="export-fmt" data-fmt="csv-id">Réduit</button>
+                    <button type="button" class="xchip" data-act="export-fmt" data-fmt="csv-structured">Structuré</button>
+                    <button type="button" class="xchip" data-act="export-fmt" data-fmt="csv-deprecated">Dépréciés</button>
+                  </div>
+                </div>
+              </div>
+              <div class="xexp-fold is-off" id="bulkExportPdfFmts" aria-hidden="true">
+                <div class="xexp-fold-in">
+                  <div class="xfmt-row" role="radiogroup" aria-label="Type PDF">
+                    <button type="button" class="xchip is-on" data-act="export-pdf-type" data-pdf="hierarchical">Hiérarchique</button>
+                    <button type="button" class="xchip" data-act="export-pdf-type" data-pdf="alphabetical">Alphabétique</button>
+                  </div>
+                </div>
+              </div>
+            </section>
+            <section class="xexp-sec xexp-sec--opts xexp-core" aria-labelledby="bulkExportOptsLbl">
+              <h3 class="xexp-sec-h" id="bulkExportOptsLbl">Options</h3>
+              <div class="xexp-fold" id="bulkExportDescRow">
+                <div class="xexp-fold-in">
+                  <div class="xopt" data-act="export-desc">
+                    <span class="xopt-txt">
+                      <span class="xopt-t">Inclure les termes spécifiques</span>
+                      <span class="xopt-d">Descendants des concepts cochés</span>
+                    </span>
+                    <button type="button" class="vo-sw on" id="bulkExportDesc" role="switch" aria-checked="true"></button>
+                  </div>
+                </div>
+              </div>
+              <div class="xexp-fold is-off" id="bulkExportDelimRow" aria-hidden="true">
+                <div class="xexp-fold-in">
+                  <div class="xrow xrow--delim">
+                    <span class="xrow-l">Séparateur</span>
+                    <div class="xfmt-row xfmt-row--inline" role="radiogroup" aria-label="Séparateur CSV">
+                      <button type="button" class="xchip is-on" data-act="export-delim" data-delim=",">,</button>
+                      <button type="button" class="xchip" data-act="export-delim" data-delim=";">;</button>
+                      <button type="button" class="xchip" data-act="export-delim" data-delim="tab">Tab</button>
+                    </div>
+                  </div>
+                </div>
+              </div>
+              <div class="xexp-fold is-off" id="bulkExportLangRow" aria-hidden="true">
+                <div class="xexp-fold-in">
+                  <div class="xrow xrow--langs">
+                    <div class="xlang-head">
+                      <span class="xrow-l">Langues</span>
+                      <span class="xlang-meta" id="bulkExportLangMeta" aria-live="polite"></span>
+                      <div class="xlang-tools">
+                        <button type="button" class="xlang-tool" data-act="export-lang-all">Toutes</button>
+                        <button type="button" class="xlang-tool" data-act="export-lang-none">Aucune</button>
+                      </div>
+                    </div>
+                    <div class="tree-lang xcsv-lang-pick" id="bulkExportLangPick">
+                      <button type="button"
+                              class="tree-lang-btn xcsv-lang-btn"
+                              id="bulkExportLangBtn"
+                              data-act="export-csv-lang-toggle"
+                              aria-haspopup="listbox"
+                              aria-expanded="false"
+                              aria-controls="bulkExportLangs">
+                        <span class="xcsv-lang-flags" id="bulkExportLangFlags" aria-hidden="true"></span>
+                        <span class="tree-lang-name" id="bulkExportLangSummary">Toutes les langues</span>
+                        <span class="tree-lang-caret" aria-hidden="true">▾</span>
+                      </button>
+                      <div class="tree-lang-menu xcsv-lang-menu"
+                           id="bulkExportLangs"
+                           role="listbox"
+                           aria-multiselectable="true"
+                           aria-label="Langues à exporter"></div>
+                    </div>
+                  </div>
+                </div>
+              </div>
+              <div class="xexp-fold is-off" id="bulkExportPdfLangRow" aria-hidden="true">
+                <div class="xexp-fold-in">
+                  <div class="xrow xrow--pdf-langs">
+                    <div class="xpdf-lang">
+                      <span class="xrow-l" id="bulkExportLang1Lbl">Langue 1</span>
+                      <div class="tree-lang xpdf-lang-pick" id="bulkExportLang1Pick">
+                        <input type="hidden" id="bulkExportLang1" value=""/>
+                        <button type="button"
+                                class="tree-lang-btn xpdf-lang-btn"
+                                id="bulkExportLang1Btn"
+                                data-act="export-pdf-lang-toggle"
+                                data-slot="1"
+                                aria-labelledby="bulkExportLang1Lbl"
+                                aria-haspopup="listbox"
+                                aria-expanded="false">
+                          <span class="tree-lang-flag" aria-hidden="true">🏳️</span>
+                          <span class="tree-lang-name">—</span>
+                          <span class="tree-lang-code"></span>
+                          <span class="tree-lang-caret" aria-hidden="true">▾</span>
+                        </button>
+                        <div class="tree-lang-menu xpdf-lang-menu" id="bulkExportLang1Menu" role="listbox" aria-labelledby="bulkExportLang1Lbl"></div>
+                      </div>
+                    </div>
+                    <div class="xpdf-lang">
+                      <span class="xrow-l" id="bulkExportLang2Lbl">Langue 2</span>
+                      <div class="tree-lang xpdf-lang-pick" id="bulkExportLang2Pick">
+                        <input type="hidden" id="bulkExportLang2" value=""/>
+                        <button type="button"
+                                class="tree-lang-btn xpdf-lang-btn"
+                                id="bulkExportLang2Btn"
+                                data-act="export-pdf-lang-toggle"
+                                data-slot="2"
+                                aria-labelledby="bulkExportLang2Lbl"
+                                aria-haspopup="listbox"
+                                aria-expanded="false">
+                          <span class="tree-lang-flag" aria-hidden="true">🏳️</span>
+                          <span class="tree-lang-name">—</span>
+                          <span class="tree-lang-code"></span>
+                          <span class="tree-lang-caret" aria-hidden="true">▾</span>
+                        </button>
+                        <div class="tree-lang-menu xpdf-lang-menu" id="bulkExportLang2Menu" role="listbox" aria-labelledby="bulkExportLang2Lbl"></div>
+                      </div>
+                    </div>
+                  </div>
+                </div>
+              </div>
+            </section>
+            <details class="xexp-more tp-import-more" id="bulkExportMore">
+              <summary class="tp-import-more-sum">
+                <span class="xexp-more-l">Options avancées</span>
+                <span class="tp-import-more-caret" aria-hidden="true">▾</span>
+              </summary>
+              <div class="tp-import-more-body xexp-more-body">
+                <div class="xexp-fold" id="bulkExportHtmlRow">
+                  <div class="xexp-fold-in">
+                    <div class="xopt" data-act="export-html">
+                      <span class="xopt-txt">
+                        <span class="xopt-t">Enlever les balises HTML</span>
+                        <span class="xopt-d">Nettoie les notes</span>
+                      </span>
+                      <button type="button" class="vo-sw" id="bulkExportHtml" role="switch" aria-checked="false"></button>
+                    </div>
+                  </div>
+                </div>
+                <div class="xexp-fold" id="bulkExportGroupRow">
+                  <div class="xexp-fold-in">
+                    <div class="xopt" data-act="export-group">
+                      <span class="xopt-txt">
+                        <span class="xopt-t">Filtrer par collection</span>
+                        <span class="xopt-d">Limiter aux collections choisies</span>
+                      </span>
+                      <button type="button" class="vo-sw" id="bulkExportGroup" role="switch" aria-checked="false"></button>
+                    </div>
+                  </div>
+                </div>
+                <div class="xexp-fold is-off" id="bulkExportGroupsWrap" aria-hidden="true">
+                  <div class="xexp-fold-in">
+                    <div class="xpick" id="bulkExportGroups"></div>
+                  </div>
+                </div>
+                <div class="xexp-fold is-off" id="bulkExportZipRow" aria-hidden="true">
+                  <div class="xexp-fold-in">
+                    <div class="xopt" data-act="export-zip">
+                      <span class="xopt-txt">
+                        <span class="xopt-t">Un fichier par collection</span>
+                        <span class="xopt-d">Archive ZIP, thésaurus entier</span>
+                      </span>
+                      <button type="button" class="vo-sw" id="bulkExportZip" role="switch" aria-checked="false"></button>
+                    </div>
+                  </div>
+                </div>
+                <div class="xexp-fold is-off" id="bulkExportImgRow" aria-hidden="true">
+                  <div class="xexp-fold-in">
+                    <div class="xopt" data-act="export-img">
+                      <span class="xopt-txt">
+                        <span class="xopt-t">Inclure les images</span>
+                        <span class="xopt-d">Peut allonger l’export PDF</span>
+                      </span>
+                      <button type="button" class="vo-sw" id="bulkExportImg" role="switch" aria-checked="false"></button>
+                    </div>
+                  </div>
+                </div>
+              </div>
+            </details>
+          </div>
+        </div>
+        <div class="xprog" id="bulkExportProg" aria-hidden="true">
+          <div class="xprog-steps-wrap">
+            <span class="xprog-rail" aria-hidden="true"><span class="xprog-rail-fill" id="bulkExportRail"></span></span>
+            <ol class="xprog-steps" id="bulkExportSteps" aria-label="Étapes de l'export">
+              <li data-step="0"><span class="xprog-dot"></span><span>Préparer</span></li>
+              <li data-step="1"><span class="xprog-dot"></span><span>Lire</span></li>
+              <li data-step="2"><span class="xprog-dot"></span><span>Construire</span></li>
+              <li data-step="3"><span class="xprog-dot"></span><span>Fichier</span></li>
+            </ol>
+          </div>
+          <div class="xprog-head">
+            <div class="xprog-t" id="bulkExportProgT">Étape 1 / 4 — Préparer</div>
+            <div class="xprog-count" id="bulkExportCount" hidden="hidden"></div>
+          </div>
+          <div class="mg-bar-row">
+            <span class="mg-bar-track"><span class="mg-bar-fill" id="bulkExportFill" style="width:0%"></span></span>
+            <span class="mg-bar-n" id="bulkExportPct">0%</span>
+          </div>
+          <div class="xprog-d" id="bulkExportProgD"></div>
+        </div>
+        <p class="bap-field-err xerr" id="bulkExportErr" hidden="hidden" role="alert"></p>
+        <div class="bap-form-run bulksel-run">
+          <button type="button" class="bo-btn ghost bulksel-btn" id="bulkExportCancel" data-act="export-cancel">Annuler</button>
+          <button type="button" class="bo-btn primary bulksel-btn is-off" id="bulkExportRun" data-act="export-run">Générer</button>
+          <button type="button" class="bo-btn primary bulksel-btn" id="bulkExportDl" data-act="export-dl" hidden="hidden">Télécharger</button>
+        </div>
+      </div>
+
+      <h:form id="previewBulkCollForm" prependId="false" styleClass="preview-open-form">
+        <h:inputHidden id="previewBulkCollName" value="#{v2CollectionDetailEditorBean.bulkLabel}"/>
+        <h:inputHidden id="previewBulkCollIds" value="#{v2CollectionDetailEditorBean.bulkConceptIds}"/>
+        <h:commandButton id="previewBulkCollGo" value="créer"
+                         action="#{v2CollectionDetailEditorBean.submitCreateFromSelection}">
+          <f:ajax execute="@form" render=":previewBulkCollStatus" onevent="onBulkCollAjax"/>
+        </h:commandButton>
+      </h:form>
+
+      <div class="block-overlay confirm-overlay" id="bulkCollConfirm" hidden="hidden"
+           data-act="bulk-coll-dismiss" role="presentation">
+        <div class="confirm-modal" role="dialog" aria-modal="true"
+             aria-labelledby="bulkCollConfirmTitle" data-act="bulk-coll-modal">
+          <div class="confirm-h" id="bulkCollConfirmTitle">Créer cette collection ?</div>
+          <p class="confirm-p" id="bulkCollConfirmText">La collection sera créée et les concepts sélectionnés y seront rattachés.</p>
+          <div class="confirm-actions">
+            <button type="button" class="bo-btn ghost confirm-cancel" data-act="bulk-coll-dismiss">Annuler</button>
+            <button type="button" class="bo-btn primary" id="bulkCollConfirmGo" data-act="bulk-coll-go">Créer la collection</button>
+          </div>
+        </div>
+      </div>
+
+      <h:form id="previewBulkMoveForm" prependId="false" styleClass="preview-open-form">
+        <h:inputHidden id="previewBulkMoveTarget" value="#{v2ConceptTreeDragDropBean.bulkMoveTargetId}"/>
+        <h:inputHidden id="previewBulkMoveIds" value="#{v2ConceptTreeDragDropBean.bulkConceptIds}"/>
+        <h:commandButton id="previewBulkMoveGo" value="déplacer"
+                         action="#{v2ConceptTreeDragDropBean.submitMoveFromSelection}">
+          <f:ajax execute="@form" render=":previewBulkMoveStatus :previewTree" onevent="onBulkMoveAjax"/>
+        </h:commandButton>
+      </h:form>
+
+      <div class="block-overlay confirm-overlay" id="bulkMoveConfirm" hidden="hidden"
+           data-act="bulk-move-dismiss" role="presentation">
+        <div class="confirm-modal" role="dialog" aria-modal="true"
+             aria-labelledby="bulkMoveConfirmTitle" data-act="bulk-move-modal">
+          <div class="confirm-h" id="bulkMoveConfirmTitle">Déplacer ces concepts ?</div>
+          <p class="confirm-p" id="bulkMoveConfirmText">Les concepts sélectionnés changeront de terme générique.</p>
+          <div class="confirm-actions">
+            <button type="button" class="bo-btn ghost confirm-cancel" data-act="bulk-move-dismiss">Annuler</button>
+            <button type="button" class="bo-btn primary" id="bulkMoveConfirmGo" data-act="bulk-move-go">Déplacer</button>
+          </div>
+        </div>
+      </div>
+
+      <h:form id="previewBulkXferForm" prependId="false" styleClass="preview-open-form">
+        <h:inputHidden id="previewBulkXferTarget" value="#{v2ConceptTransferEditorBean.bulkTargetThesaurusId}"/>
+        <h:inputHidden id="previewBulkXferParent" value="#{v2ConceptTransferEditorBean.bulkParentConceptId}"/>
+        <h:inputHidden id="previewBulkXferIds" value="#{v2ConceptTransferEditorBean.bulkConceptIds}"/>
+        <h:commandButton id="previewBulkXferGo" value="déplacer"
+                         action="#{v2ConceptTransferEditorBean.submitMoveFromSelection}">
+          <f:ajax execute="@form" render=":previewBulkXferStatus :previewTree" onevent="onBulkXferAjax"/>
+        </h:commandButton>
+      </h:form>
+
+      <div class="block-overlay confirm-overlay" id="bulkXferConfirm" hidden="hidden"
+           data-act="bulk-xfer-dismiss" role="presentation">
+        <div class="confirm-modal" role="dialog" aria-modal="true"
+             aria-labelledby="bulkXferConfirmTitle" data-act="bulk-xfer-modal">
+          <div class="confirm-h" id="bulkXferConfirmTitle">Déplacer vers un autre thésaurus ?</div>
+          <p class="confirm-p" id="bulkXferConfirmText">Les concepts quitteront ce thésaurus avec leur branche.</p>
+          <div class="confirm-actions">
+            <button type="button" class="bo-btn ghost confirm-cancel" data-act="bulk-xfer-dismiss">Annuler</button>
+            <button type="button" class="bo-btn primary" id="bulkXferConfirmGo" data-act="bulk-xfer-go">Déplacer</button>
+          </div>
+        </div>
+      </div>
+
+      <h:form id="previewBulkStatusForm" prependId="false" styleClass="preview-open-form">
+        <h:inputHidden id="previewBulkStatusAction" value="#{v2ConceptLifecycleEditorBean.bulkStatusAction}"/>
+        <h:inputHidden id="previewBulkStatusIds" value="#{v2ConceptLifecycleEditorBean.bulkConceptIds}"/>
+        <h:commandButton id="previewBulkStatusGo" value="statut"
+                         action="#{v2ConceptLifecycleEditorBean.submitStatusFromSelection}">
+          <f:ajax execute="@form" render=":previewBulkStatusStatus :previewTree" onevent="onBulkStatusAjax"/>
+        </h:commandButton>
+      </h:form>
+
+      <div class="block-overlay confirm-overlay" id="bulkStatusConfirm" hidden="hidden"
+           data-act="bulk-status-dismiss" role="presentation">
+        <div class="confirm-modal" role="dialog" aria-modal="true"
+             aria-labelledby="bulkStatusConfirmTitle" data-act="bulk-status-modal">
+          <div class="confirm-h" id="bulkStatusConfirmTitle">Changer le statut ?</div>
+          <p class="confirm-p" id="bulkStatusConfirmText">Le statut des concepts concernés sera modifié.</p>
+          <div class="confirm-actions">
+            <button type="button" class="bo-btn ghost confirm-cancel" data-act="bulk-status-dismiss">Annuler</button>
+            <button type="button" class="bo-btn primary" id="bulkStatusConfirmGo" data-act="bulk-status-go">Appliquer</button>
+          </div>
+        </div>
+      </div>
+    </div>
+  </div>
+</ui:composition>

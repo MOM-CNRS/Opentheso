@@ -243,6 +243,31 @@ public class CollectionMutationService {
     }
 
     @Transactional
+    public MutationResult createCollectionWithMembers(CreateCollectionCommand command, List<String> conceptIds) {
+        MutationResult created = createCollection(command);
+        if (!created.success() || StringUtils.isBlank(created.createdConceptId())) {
+            return created;
+        }
+        String collectionId = created.createdConceptId();
+        int added = 0;
+        if (conceptIds != null) {
+            for (String conceptId : conceptIds) {
+                if (StringUtils.isBlank(conceptId)) {
+                    continue;
+                }
+                addMember(new AddMemberToCollectionCommand(
+                        command.thesaurusId(), collectionId, conceptId.trim(), false));
+                added += 1;
+            }
+        }
+        String s = added > 1 ? "s" : "";
+        return MutationResult.ok(
+                "Collection « " + command.label().trim() + " » créée · " + added + " concept" + s,
+                collectionId
+        );
+    }
+
+    @Transactional
     public MutationResult createSubgroup(CreateSubgroupCommand command) {
         if (StringUtils.isBlank(command.label())) {
             return MutationResult.validationError(LABEL_REQUIRED);

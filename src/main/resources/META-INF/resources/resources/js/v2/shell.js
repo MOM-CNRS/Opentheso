@@ -4,6 +4,13 @@
 "use strict";
 
 function closeSearchUi() {
+  const menu = $("#searchModeMenu");
+  const modeBtn = $("#searchModeBtn");
+  if (menu) menu.hidden = true;
+  if (modeBtn) {
+    modeBtn.setAttribute("aria-expanded", "false");
+    modeBtn.classList.remove("is-open");
+  }
   const box = $("#searchBox");
   if (box) box.classList.remove("is-open");
   const fld = $("#searchField");
@@ -2905,6 +2912,15 @@ function syncFacetCardNotesHidden() {
   }).join("\n");
 }
 
+function decodeNotePart(raw) {
+  const value = String(raw == null ? "" : raw);
+  try {
+    return decodeURIComponent(value);
+  } catch (err) {
+    return value;
+  }
+}
+
 function seedFacetCardNotesFromHidden() {
   if (!$("#fcNoteEditor")) return;
   fcNoteState = { notes: [], openLang: -1 };
@@ -2928,8 +2944,8 @@ function seedFacetCardNotesFromHidden() {
       fcNoteState.notes.push({
         type: type,
         lang: lang,
-        value: decodeURIComponent(parts[2] || ""),
-        source: decodeURIComponent(parts[3] || "")
+        value: decodeNotePart(parts[2] || ""),
+        source: decodeNotePart(parts[3] || "")
       });
     });
   }
@@ -4017,11 +4033,18 @@ function fromCandList() {
       || new URLSearchParams(location.search).get("from") === "candidats";
 }
 
+function fromPropList() {
+  return SCREEN === "propositions"
+      || SCREEN === "proposition-review"
+      || new URLSearchParams(location.search).get("from") === "propositions";
+}
+
 function paintListBack() {
-  const btn = $("#liveBackList");
-  if (!btn) return;
-  const show = fromCandList() && liveDetailRequested() && !state.home && !state.draft;
-  btn.hidden = !show;
+  const liveDetail = liveDetailRequested() && !state.home && !state.draft;
+  const cand = $("#liveBackList");
+  if (cand) cand.hidden = !(fromCandList() && liveDetail);
+  const prop = $("#liveBackPropList");
+  if (prop) prop.hidden = !(fromPropList() && liveDetail);
 }
 
 function backToCandList() {
@@ -4122,6 +4145,12 @@ function paintMain() {
     paintListBack();
     return;
   }
+  if (typeof bulkSelectionActive === "function" && bulkSelectionActive() && $("#viewBulk")) {
+    showPanel(".view-panel", "viewBulk");
+    paintGraphBack();
+    paintListBack();
+    return;
+  }
   const v = state.view;
   let id;
   if (v === "collection") {
@@ -4140,7 +4169,8 @@ function paintMain() {
   } else if (state.draft && (v === "arbo" || v === "tableau" || v === "recherche")) {
     id = "viewDraft";
   } else if (v === "recherche") {
-    if (!rankHits(state.committed).length) id = "viewNoResults";
+    if (state.conceptId && liveDetailRequested()) id = "viewLive";
+    else if (!rankHits(state.committed).length) id = "viewNoResults";
     else id = state.conceptId ? "viewConcept" : "viewEmpty";
   } else if (v === "tableau") {
     id = state.conceptId ? "viewConcept" : "viewEmpty";
@@ -4205,7 +4235,7 @@ function paintViewPick() {
 }
 
 function paintBadges() {
-  const n = rankHits(state.committed).length;
+  const n = state.searchTotal > 0 ? state.searchTotal : rankHits(state.committed).length;
   ["viewPickBadge", "viewMenuBadge"].forEach(id => {
     const el = $("#" + id);
     if (!el) return;
@@ -4230,7 +4260,7 @@ function setView(view) {
     go("graph/graphe.xhtml");
     return;
   }
-  if (!IS_CONSULT && view !== "arbo" && view !== "hyper") {
+  if (!IS_CONSULT && view !== "arbo" && view !== "hyper" && view !== "recherche") {
     go("thesaurus/consultation.xhtml?view=" + encodeURIComponent(view));
     return;
   }
@@ -4247,7 +4277,6 @@ function setView(view) {
     state.home = true;
   }
   if (view === "recherche") {
-    state.home = false;
     syncRechercheConcept();
     paintCommittedResults();
   }
@@ -4383,12 +4412,25 @@ function currentConceptParentLabel() {
 
 function createChooserParentId() {
   const id = (createChooserCtx.id || "").trim();
-  if (id) {
-    const type = (createChooserCtx.type || "").toLowerCase();
-    if (createChooserCtx.candidate === "1" || type === "facet" || type === "candidat") return "";
-    return id;
+  if (!id) return "";
+  const type = (createChooserCtx.type || "").toLowerCase();
+  if (createChooserCtx.candidate === "1" || type === "facet" || type === "candidat") return "";
+  return id;
+}
+
+function paintCreateChooserSub() {
+  const sub = document.getElementById("createChooserSub");
+  if (!sub) return;
+  const parentId = createChooserParentId();
+  const pref = (createChooserCtx.pref || "").trim();
+  const root = sub.getAttribute("data-root") || "";
+  const under = sub.getAttribute("data-under") || "";
+  if (parentId && pref && under) {
+    sub.textContent = under.replace("{0}", pref);
+  } else {
+    sub.textContent = root;
   }
-  return currentConceptParentId();
+  sub.hidden = !sub.textContent;
 }
 
 function showCreateChooser(src) {
@@ -4401,6 +4443,7 @@ function showCreateChooser(src) {
     type: (src && src.getAttribute("data-type")) || "",
     candidate: (src && src.getAttribute("data-candidate")) || ""
   };
+  paintCreateChooserSub();
   dlg.querySelectorAll("[data-act='create-pick']").forEach((row) => {
     const kind = row.getAttribute("data-kind");
     if (kind === "facet") {
@@ -5928,11 +5971,18 @@ function confirmConceptDraftCreate(kind) {
   if (createBtn) createBtn.click();
 }
 
+function conceptDraftDirty() {
+  const text = ["cptTitle", "cptDef", "cptNotation", "cptCustomId"].some((id) => {
+    const el = $("#" + id);
+    return el && String(el.value || "").trim();
+  });
+  const group = $("#cptGroup");
+  return text || !!(group && String(group.value || "").trim());
+}
+
 function requestConceptDraftLeave() {
-  const title = $("#cptTitle");
-  const dirty = title && String(title.value || "").trim();
   const dlg = $("#cptLeaveConfirm");
-  if (dirty && dlg) {
+  if (conceptDraftDirty() && dlg) {
     dlg.hidden = false;
     return;
   }
@@ -6153,7 +6203,6 @@ function paintFacetDraftTr() {
   const editor = $("#fctTrEditor");
   if (!list || !editor) return;
   const ph = editor.getAttribute("data-ph") || "Nom en {0}…";
-  const altPh = editor.getAttribute("data-alt") || "";
   const remove = editor.getAttribute("data-remove") || "";
   const drop = editor.getAttribute("data-drop") || "";
   const no = editor.getAttribute("data-no") || "Non";
@@ -6179,8 +6228,6 @@ function paintFacetDraftTr() {
       + "</div>"
       + '<input type="text" class="st-input" id="fctTrVal-' + code + '" lang="' + code + '" data-lang="' + code
       + '" value="' + escapeHtml(fctTrState.values[code] || "") + '" placeholder="' + placeholder + '" autocomplete="off"/>'
-      + '<input type="text" class="st-input te-alt" lang="' + code + '" data-lang="' + code
-      + '" value="' + escapeHtml(fctTrState.alts[code] || "") + '" placeholder="' + escapeHtml(altPh) + '" autocomplete="off"/>'
       + "</div>";
   }).join("");
   markUsedTrLangOpts("#fctTrMenu", fctTrState.order, editor.getAttribute("data-used") || "");
@@ -6739,6 +6786,9 @@ function requestFacetDraftCreate() {
 
 function confirmFacetDraftCreate() {
   hideFacetDraftCreateConfirm();
+  if (typeof syncFacetDraftNotesHidden === "function") syncFacetDraftNotesHidden();
+  if (typeof syncFacetDraftTrHidden === "function") syncFacetDraftTrHidden();
+  if (typeof syncFacetDraftMemHidden === "function") syncFacetDraftMemHidden();
   const createBtn = $("#fctCreate");
   if (createBtn) createBtn.click();
 }
@@ -6835,6 +6885,16 @@ function setBatch(obj, op) {
   if (!root || !obj) return;
   const firstSeg = $(`.bo-op-seg[data-obj="${CSS.escape(obj)}"]`);
   op = op || (firstSeg && firstSeg.getAttribute("data-op")) || "import";
+  const hasPanel = root.querySelector(
+      `.bo-panel[data-obj="${CSS.escape(obj)}"][data-op="${CSS.escape(op)}"], .bo-panel[data-obj="${CSS.escape(obj)}"]`
+  );
+  if (!hasPanel) {
+    const file = location.pathname.indexOf("actions-lot") >= 0 ? "actions-lot.xhtml" : "atelier.xhtml";
+    const q = "obj=" + encodeURIComponent(obj) + (op ? "&op=" + encodeURIComponent(op) : "");
+    if (typeof go === "function") go("toolbox/" + file + "?" + q);
+    else location.href = "toolbox/" + file + "?" + q;
+    return;
+  }
   root.setAttribute("data-obj", obj);
   root.setAttribute("data-op", op);
   $$(".bo-head[data-obj]").forEach(el => el.classList.toggle("is-on", el.getAttribute("data-obj") === obj));

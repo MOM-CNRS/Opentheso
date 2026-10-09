@@ -24,6 +24,7 @@ public class JsfPrettyUrlFilter extends OncePerRequestFilter {
 
     private static final Map<String, String> FORWARD_TARGETS = Map.ofEntries(
             Map.entry("/", "/v2/thesauri.xhtml"),
+            Map.entry("/index", "/index.xhtml"),
             Map.entry("/reset-password", "/reset-password.xhtml"),
             Map.entry("/profile", "/profile/myAccount.xhtml"),
             Map.entry("/candidat", "/candidat/candidat.xhtml"),
@@ -32,6 +33,25 @@ public class JsfPrettyUrlFilter extends OncePerRequestFilter {
             Map.entry("/v2/thesauri", "/v2/thesauri.xhtml"),
             Map.entry("/v2/admin/instance", "/v2/admin/instance.xhtml"),
             Map.entry("/v2/admin/projets", "/v2/admin/projets.xhtml"),
+            Map.entry("/v2/admin/thesauri", "/v2/admin/thesauri.xhtml"),
+            Map.entry("/v2/admin/utilisateurs", "/v2/admin/utilisateurs.xhtml"),
+            Map.entry("/v2/setting/preference", "/v2/setting/preference.xhtml"),
+            Map.entry("/v2/setting/identifiants", "/v2/setting/identifiants.xhtml"),
+            Map.entry("/v2/setting/corpus", "/v2/setting/corpus.xhtml"),
+            Map.entry("/v2/setting/parametres", "/v2/setting/parametres.xhtml"),
+            Map.entry("/v2/project/projets", "/v2/project/projets.xhtml"),
+            Map.entry("/v2/user/compte", "/v2/user/compte.xhtml"),
+            Map.entry("/v2/user/preference", "/v2/user/preference.xhtml"),
+            Map.entry("/v2/proposition/propositions", "/v2/proposition/propositions.xhtml"),
+            Map.entry("/v2/candidat/candidats", "/v2/candidat/candidats.xhtml"),
+            Map.entry("/v2/toolbox/atelier", "/v2/toolbox/atelier.xhtml"),
+            Map.entry("/v2/toolbox/maintenance", "/v2/toolbox/maintenance.xhtml"),
+            Map.entry("/v2/toolbox/statistiques", "/v2/toolbox/statistiques.xhtml"),
+            Map.entry("/v2/toolbox/synchronisation", "/v2/toolbox/synchronisation.xhtml"),
+            Map.entry("/v2/toolbox/portail", "/v2/toolbox/portail.xhtml"),
+            Map.entry("/v2/toolbox/actions-lot", "/v2/toolbox/actions-lot.xhtml"),
+            Map.entry("/v2/graph/graphe", "/v2/graph/graphe.xhtml"),
+            Map.entry("/v2/thesaurus/consultation", "/v2/thesaurus/consultation.xhtml"),
             Map.entry(V2_PREVIEW_PREFIX, "/v2/thesauri.xhtml")
     );
 

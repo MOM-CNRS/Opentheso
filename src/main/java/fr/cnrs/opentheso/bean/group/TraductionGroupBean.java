@@ -44,6 +44,10 @@ public class TraductionGroupBean implements Serializable {
         traductionValue = "";
     }
 
+    public void infos() {
+        MessageUtils.showInformationMessage("Rédiger une aide ici pour Traduction de groupe !");
+    }
+
     public void setLangWithNoTraduction() {
         
         nodeLangsFiltered.addAll(nodeLangs);

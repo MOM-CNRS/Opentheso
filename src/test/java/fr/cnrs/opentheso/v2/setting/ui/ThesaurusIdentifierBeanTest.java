@@ -57,7 +57,7 @@ class ThesaurusIdentifierBeanTest {
                 access, thesaurusContext, thesaurusPreferenceService, persistService, corpusBean, alignmentBean,
                 thesaurusViewBean);
         bean = new ThesaurusIdentifierBean(preferenceBean);
-        when(thesaurusPreferenceService.loadPreferencesOrNull("th17", "fr"))
+        lenient().when(thesaurusPreferenceService.loadPreferencesOrNull("th17", "fr"))
                 .thenReturn(SettingTestFixtures.samplePreferences());
         lenient().when(userSession.getCurrentUserId()).thenReturn(2);
         lenient().when(rightsService.canOnThesaurus(2, Permission.MANAGE_THESAURUS, "th17")).thenReturn(true);

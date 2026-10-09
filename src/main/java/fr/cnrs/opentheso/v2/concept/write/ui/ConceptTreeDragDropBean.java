@@ -5,9 +5,11 @@ import fr.cnrs.opentheso.v2.concept.model.ConceptRelation;
 import fr.cnrs.opentheso.v2.concept.service.ConceptReadService;
 import fr.cnrs.opentheso.v2.concept.session.ConceptSelectionContext;
 import fr.cnrs.opentheso.v2.concept.ui.ThesaurusBrowseBean;
+import fr.cnrs.opentheso.v2.concept.ui.ThesaurusViewBean;
 import fr.cnrs.opentheso.v2.concept.write.model.MutationResult;
 import fr.cnrs.opentheso.v2.concept.write.model.command.AddConceptToCollectionCommand;
 import fr.cnrs.opentheso.v2.concept.write.model.command.RemoveConceptFromCollectionCommand;
+import fr.cnrs.opentheso.v2.concept.write.model.command.MoveConceptsUnderCommand;
 import fr.cnrs.opentheso.v2.concept.write.model.command.ReparentConceptCommand;
 import fr.cnrs.opentheso.v2.concept.write.persistence.ConceptLifecycleWriteRepository;
 import fr.cnrs.opentheso.v2.concept.write.persistence.ConceptLexicalWriteRepository;
@@ -33,6 +35,7 @@ import org.apache.commons.lang3.Strings;
 import java.io.Serializable;
 import java.util.ArrayList;
 import java.util.Collections;
+import java.util.LinkedHashSet;
 import java.util.List;
 import fr.cnrs.opentheso.v2.concept.model.ConceptTreeNodeKinds;
 
@@ -61,6 +64,7 @@ public class ConceptTreeDragDropBean implements Serializable {
     private final transient UserSession userSession;
     private final transient V2LocaleBean localeBean;
     private final transient ThesaurusBrowseBean thesaurusBrowseBean;
+    private final transient ThesaurusViewBean thesaurusViewBean;
     private final transient ConceptSelectionContext conceptSelectionContext;
 
     private String dragConceptId;
@@ -97,6 +101,11 @@ public class ConceptTreeDragDropBean implements Serializable {
     private String flashMessage;
     private String flashToken;
 
+    private String bulkMoveTargetId = "";
+    private String bulkConceptIds = "";
+    private String bulkMoveMessage = "";
+    private boolean bulkMoveOk;
+
     @Getter
     @Setter
     public static class BroaderCutRow implements Serializable {
@@ -125,6 +134,50 @@ public class ConceptTreeDragDropBean implements Serializable {
 
     public boolean isDragDropEnabled() {
         return conceptWritePolicy.canMutateHierarchicalRelations(userSession, false);
+    }
+
+    public void submitMoveFromSelection() {
+        bulkMoveOk = false;
+        bulkMoveMessage = "";
+        if (!isDragDropEnabled()) {
+            bulkMoveMessage = WriteUiMessages.UNAUTHORIZED_FALLBACK;
+            return;
+        }
+        Integer userId = userSession.getCurrentUserId();
+        if (userId == null) {
+            bulkMoveMessage = WriteUiMessages.UNAUTHORIZED_FALLBACK;
+            return;
+        }
+        List<String> conceptIds = parseBulkConceptIds(bulkConceptIds);
+        if (conceptIds.isEmpty()) {
+            bulkMoveMessage = "Aucun concept à déplacer.";
+            return;
+        }
+        String target = StringUtils.trimToEmpty(bulkMoveTargetId);
+        if (target.isEmpty()) {
+            bulkMoveMessage = "Choisissez une destination.";
+            return;
+        }
+        String newBroaderId = "__root".equalsIgnoreCase(target) ? null : target;
+        MutationResult result = conceptRelationMutationService.moveConceptsUnder(
+                new MoveConceptsUnderCommand(
+                        thesaurusContext.resolveThesaurusId(),
+                        conceptIds,
+                        newBroaderId,
+                        userId,
+                        StringUtils.defaultString(userSession.getCurrentUsername())
+                )
+        );
+        if (result == null || !result.success()) {
+            bulkMoveMessage = result != null ? result.message() : ERROR_TITLE;
+            return;
+        }
+        thesaurusBrowseBean.invalidateConceptTree();
+        thesaurusViewBean.reloadTree();
+        bulkMoveOk = true;
+        bulkMoveMessage = result.message();
+        bulkMoveTargetId = "";
+        bulkConceptIds = "";
     }
 
     public boolean isCutActionsAvailable() {
@@ -546,5 +599,19 @@ public class ConceptTreeDragDropBean implements Serializable {
 
     private String localeMsg(String key) {
         return localeBean.getMsg(key);
+    }
+
+    private static List<String> parseBulkConceptIds(String raw) {
+        if (StringUtils.isBlank(raw)) {
+            return List.of();
+        }
+        LinkedHashSet<String> ids = new LinkedHashSet<>();
+        for (String part : raw.split("[\\n\\r\\t,;]+")) {
+            String id = part.trim();
+            if (!id.isEmpty()) {
+                ids.add(id);
+            }
+        }
+        return List.copyOf(ids);
     }
 }

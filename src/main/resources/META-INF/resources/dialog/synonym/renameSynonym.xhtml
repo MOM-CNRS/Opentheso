@@ -46,8 +46,9 @@
             <div style="width: 100%; text-align: right; margin-top: 25px; margin-bottom: 5px;">
                 <p:commandButton rendered="#{!synonymBean.duplicate}" value="#{langueBean.getMsg('btnCancel')}"
                                  icon="fas fa-undo-alt" styleClass="ui-button-secondary button" 
-                                 style="margin-right: 10px" ajax="true" process="@form" 
-                                 actionListener="PF('renameSynonym').hide();" update="containerIndex:idRenameSynonym"/>
+                                 style="margin-right: 10px" ajax="true" process="@this" 
+                                 oncomplete="PF('renameSynonym').hide();"
+                                 action="#{synonymBean.cancel()}" update="containerIndex:idRenameSynonym"/>
 
                 <p:commandButton rendered="#{!synonymBean.duplicate}" id="renameSynonymValidate"
                                  value="#{langueBean.getMsg('rightbody.conceptdialog.modify_all')}"
@@ -57,10 +58,10 @@
 
                 <!-- concept duppliqué, forcer la création ou annuler -->
                 <p:commandButton rendered="#{synonymBean.duplicate}" value="#{langueBean.getMsg('btnCancel')}" 
-                                 style="margin-right: 10px" actionListener="#{synonymBean.resetRenameEMAfterCancel()}"
-                                 action="#{synonymBean.cancel()}" icon="fas fa-undo-alt" styleClass="ui-button-secondary button" 
+                                 style="margin-right: 10px" action="#{synonymBean.cancel()}"
+                                 icon="fas fa-undo-alt" styleClass="ui-button-secondary button" 
                                  update="containerIndex:idRenameSynonym" oncomplete="PF('renameSynonym').hide();"
-                                 ajax="true" process="@form"/>
+                                 ajax="true" process="@this"/>
 
                 <p:commandButton rendered="#{synonymBean.duplicate}" value="#{langueBean.getMsg('rightbody.conceptdialog.force')}"
                                  update="messageIndex containerIndex:idRenameSynonym" oncomplete="PF('renameSynonym').show();"

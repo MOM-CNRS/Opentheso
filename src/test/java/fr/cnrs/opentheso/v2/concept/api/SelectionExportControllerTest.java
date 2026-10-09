@@ -95,6 +95,21 @@ class SelectionExportControllerTest {
     }
 
     @Test
+    void start_acceptsWholeThesaurusWithoutConceptIds() throws Exception {
+        CountDownLatch latch = new CountDownLatch(1);
+        doAnswer(invocation -> {
+            latch.countDown();
+            return null;
+        }).when(selectionExportService).export(any(), any());
+
+        var status = controller.start(SelectionExportRequest.of("TH1", List.of(), "rdf", false, true));
+
+        assertEquals("running", status.status());
+        assertTrue(latch.await(2, TimeUnit.SECONDS));
+        verify(selectionExportService).export(any(), any());
+    }
+
+    @Test
     void start_doesNotRestartARunningJob() {
         job.start(1, "Déjà en cours");
 

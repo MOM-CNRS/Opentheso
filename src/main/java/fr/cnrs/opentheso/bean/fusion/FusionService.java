@@ -19,15 +19,22 @@ import fr.cnrs.opentheso.services.imports.rdf4j.ImportRdf4jHelper;
 import fr.cnrs.opentheso.models.skosapi.SKOSResource;
 import fr.cnrs.opentheso.models.skosapi.SKOSXmlDocument;
 
-import lombok.Data;
+import fr.cnrs.opentheso.services.imports.rdf4j.ReadRDF4JNewGen;
+import fr.cnrs.opentheso.utils.MessageUtils;
+
+import jakarta.faces.event.PhaseId;
 import jakarta.inject.Named;
 import lombok.Getter;
 import lombok.RequiredArgsConstructor;
 import lombok.Setter;
 import org.apache.commons.collections4.CollectionUtils;
 import org.apache.commons.lang3.StringUtils;
+import org.eclipse.rdf4j.rio.RDFFormat;
 import org.primefaces.PrimeFaces;
+import org.primefaces.event.FileUploadEvent;
 import org.springframework.stereotype.Service;
+
+import java.io.InputStream;
 import java.io.Serializable;
 import java.util.ArrayList;
 import java.util.List;
@@ -52,9 +59,49 @@ public class FusionService implements Serializable {
 
     private String uri;
     private SKOSXmlDocument sourceSkos;
-    private boolean loadDone, fusionDone, fusionBtnEnable, total;
+    private boolean loadDone, fusionDone, fusionBtnEnable;
+    private int total;
     private List<String> conceptsAjoutes, conceptsModifies, conceptsExists;
 
+    public void importTheso(FileUploadEvent event) {
+        if (event == null || event.getFile() == null) {
+            return;
+        }
+        if (!PhaseId.INVOKE_APPLICATION.equals(event.getPhaseId())) {
+            event.setPhaseId(PhaseId.INVOKE_APPLICATION);
+            event.queue();
+            return;
+        }
+
+        loadDone = false;
+        fusionDone = false;
+        StringBuffer error = new StringBuffer();
+        try (InputStream is = event.getFile().getInputStream()) {
+            sourceSkos = new ReadRDF4JNewGen().readRdfFlux(is, detectRdfFormat(event.getFile().getFileName()), "fr", error);
+            uri = sourceSkos == null ? null : sourceSkos.getTitle();
+            total = sourceSkos == null || sourceSkos.getConceptList() == null ? 0 : sourceSkos.getConceptList().size();
+            loadDone = sourceSkos != null;
+            if (!error.isEmpty()) {
+                MessageUtils.showErrorMessage(error.toString());
+            }
+        } catch (Exception e) {
+            loadDone = false;
+            sourceSkos = null;
+            total = 0;
+            MessageUtils.showErrorMessage("Impossible de lire le fichier SKOS : " + e.getMessage());
+        }
+    }
+
+    private RDFFormat detectRdfFormat(String fileName) {
+        String name = StringUtils.defaultString(fileName).toLowerCase();
+        if (name.endsWith(".ttl")) {
+            return RDFFormat.TURTLE;
+        }
+        if (name.endsWith(".json") || name.endsWith(".jsonld")) {
+            return RDFFormat.JSONLD;
+        }
+        return RDFFormat.RDFXML;
+    }
 
     public void lancerFussion(NodeIdValue thesoSelected) {
 

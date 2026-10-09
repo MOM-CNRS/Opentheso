@@ -10,6 +10,7 @@ import fr.cnrs.opentheso.v2.concept.write.persistence.BranchConceptSupport;
 import fr.cnrs.opentheso.v2.concept.write.policy.ConceptWritePolicy;
 import fr.cnrs.opentheso.v2.concept.write.service.ConceptLifecycleMutationService;
 import fr.cnrs.opentheso.v2.concept.write.service.ConceptWriteMetadataService;
+import fr.cnrs.opentheso.v2.concept.ui.ThesaurusViewBean;
 import fr.cnrs.opentheso.v2.concept.write.service.ConceptWriteSearchService;
 import fr.cnrs.opentheso.v2.setting.ui.ThesaurusContext;
 import fr.cnrs.opentheso.v2.shared.ui.UserSession;
@@ -52,6 +53,8 @@ class ConceptLifecycleEditorBeanCreateTest {
     private ConceptWriteMetadataService conceptWriteMetadataService;
     @Mock
     private BranchConceptSupport branchConceptSupport;
+    @Mock
+    private ThesaurusViewBean thesaurusViewBean;
 
     private ConceptLifecycleEditorBean bean;
 
@@ -67,7 +70,8 @@ class ConceptLifecycleEditorBeanCreateTest {
                 conceptWriteSearchService,
                 conceptWriteMetadataService,
                 branchConceptSupport,
-                null
+                null,
+                thesaurusViewBean
         );
         lenient().when(conceptWritePolicy.canMutateActiveConcept(any(), anyBoolean())).thenReturn(true);
         lenient().when(conceptWritePolicy.canMutateConcept(userSession)).thenReturn(true);

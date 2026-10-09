@@ -38,6 +38,7 @@ import static org.junit.jupiter.api.Assertions.assertEquals;
 import static org.junit.jupiter.api.Assertions.assertTrue;
 import static org.mockito.ArgumentMatchers.any;
 import static org.mockito.Mockito.never;
+import static org.mockito.Mockito.times;
 import static org.mockito.Mockito.verify;
 import static org.mockito.Mockito.when;
 
@@ -164,6 +165,21 @@ class CollectionMutationServiceTest {
         assertEquals(MutationOutcome.OK, created.outcome());
         assertEquals("g42", created.createdConceptId());
         verify(collectionIdentifierAssignmentService).assignOnCreation("TH1", "g42", "Collection");
+    }
+
+    @Test
+    void createCollectionWithMembers_createsThenAddsEachConcept() {
+        when(conceptGroupRepository.getNextConceptGroupSequence()).thenReturn(7L);
+
+        var result = service.createCollectionWithMembers(
+                new CreateCollectionCommand("TH1", "fr", "Architecture", "", "MT", 7),
+                List.of("C1", "C2", "  "));
+
+        assertEquals(MutationOutcome.OK, result.outcome());
+        assertEquals("g7", result.createdConceptId());
+        assertTrue(result.message().contains("2 concept"));
+        verify(conceptGroupConceptRepository, times(2)).save(any());
+        verify(collectionIdentifierAssignmentService).assignOnCreation("TH1", "g7", "Architecture");
     }
 
     @Test

@@ -53,7 +53,7 @@
                             </p:column>
                             <p:column headerText="à couper" width="80">
                                 <p:selectBooleanCheckbox value="#{broader.selected}" >
-                                    <p:ajax listener="#{dragAndDrop.validateCheck()}"/>
+                                    <p:ajax listener="#{dragAndDrop.validateCheck}"/>
                                 </p:selectBooleanCheckbox>
                             </p:column>                                 
                         </p:dataTable>
@@ -83,7 +83,7 @@
                             </p:column>
                             <p:column headerText="à supprimer" width="80"  >
                                 <p:selectBooleanCheckbox value="#{group.selected}" >
-                                    <p:ajax listener="#{dragAndDrop.validateCheck()}"/>
+                                    <p:ajax listener="#{dragAndDrop.validateCheck}"/>
                                 </p:selectBooleanCheckbox> 
                             </p:column>
                         </p:dataTable>
@@ -111,7 +111,7 @@
                             </p:column>
                             <p:column headerText="à ajouter" width="80">
                                 <p:selectBooleanCheckbox value="#{group.selected}">
-                                    <p:ajax listener="#{dragAndDrop.validateCheck()}"/>
+                                    <p:ajax listener="#{dragAndDrop.validateCheck}"/>
                                 </p:selectBooleanCheckbox>
                             </p:column>
                         </p:dataTable>

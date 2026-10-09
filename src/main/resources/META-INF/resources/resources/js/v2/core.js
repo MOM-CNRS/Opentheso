@@ -109,7 +109,17 @@ var state = {
   showPath: true,
   highlight: true,
   density: "regular",
+  searchMode: "FULL_TEXT",
+  searchNote: false,
+  searchStartWithQuery: "",
+  searchAllLang: false,
+  searchHits: [],
+  searchTotal: 0,
+  searchTitle: "",
+  searchKind: "",
   moveTarget: null,
+  xferTarget: null,
+  xferParent: null,
   graphFront: true
 };
 
