@@ -5,6 +5,7 @@ import fr.cnrs.opentheso.v2.concept.search.model.ThesaurusBarSearchResponse;
 import fr.cnrs.opentheso.v2.concept.search.service.ThesaurusBarSearchService;
 import org.springframework.http.MediaType;
 import org.springframework.web.bind.annotation.GetMapping;
+import org.springframework.web.bind.annotation.PostMapping;
 import org.springframework.web.bind.annotation.RequestMapping;
 import org.springframework.web.bind.annotation.RequestParam;
 import org.springframework.web.bind.annotation.RestController;
@@ -39,6 +40,16 @@ public class ThesaurusBarSearchApiController {
             @RequestParam(required = false, defaultValue = "24") int limit
     ) {
         return thesaurusBarSearchService.search(thesaurusId, lang, q, parseMode(mode), offset, limit);
+    }
+
+    @PostMapping(value = "/thesaurus-search/select")
+    public void select(
+            @RequestParam(required = false) String thesaurusId,
+            @RequestParam(required = false) String lang,
+            @RequestParam(required = false) String q,
+            @RequestParam(required = false) String label
+    ) {
+        thesaurusBarSearchService.logSuggestionSelected(thesaurusId, lang, q, label);
     }
 
     @GetMapping(value = "/thesaurus-search/programmed", produces = MediaType.APPLICATION_JSON_VALUE)

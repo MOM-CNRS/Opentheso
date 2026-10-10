@@ -5,6 +5,7 @@ import fr.cnrs.opentheso.v2.concept.search.model.ConceptSearchMode;
 import fr.cnrs.opentheso.v2.concept.search.model.ConceptSearchResult;
 import fr.cnrs.opentheso.v2.concept.search.model.ConceptSearchSuggestion;
 import fr.cnrs.opentheso.v2.shared.session.AuthenticatedUserSource;
+import fr.cnrs.opentheso.v2.stats.service.StatEventService;
 import org.junit.jupiter.api.BeforeEach;
 import org.junit.jupiter.api.Test;
 import org.junit.jupiter.api.extension.ExtendWith;
@@ -32,13 +33,15 @@ class ThesaurusBarSearchServiceTest {
     private ConceptSearchHydrationService conceptSearchHydrationService;
     @Mock
     private AuthenticatedUserSource authenticatedUserSource;
+    @Mock
+    private StatEventService statEventService;
 
     private ThesaurusBarSearchService service;
 
     @BeforeEach
     void setUp() {
         service = new ThesaurusBarSearchService(
-                conceptSearchService, conceptSearchHydrationService, authenticatedUserSource);
+                conceptSearchService, conceptSearchHydrationService, authenticatedUserSource, statEventService);
     }
 
     @Test
@@ -77,6 +80,34 @@ class ThesaurusBarSearchServiceTest {
         assertTrue(response.hits().get(0).deprecated());
         assertEquals("", response.hits().get(0).path());
         verify(conceptSearchHydrationService, never()).hydrateAll(anyList(), eq("TH1"), isNull());
+        verify(statEventService, never()).logSearchNoResult(
+                org.mockito.ArgumentMatchers.any(),
+                org.mockito.ArgumentMatchers.anyInt(),
+                org.mockito.ArgumentMatchers.any(),
+                org.mockito.ArgumentMatchers.any(),
+                org.mockito.ArgumentMatchers.any());
+    }
+
+    @Test
+    void suggest_logsWhenNoResult() {
+        when(authenticatedUserSource.isLoggedIn()).thenReturn(true);
+        when(conceptSearchService.autocomplete("xyzzy", ConceptSearchMode.FULL_TEXT, "TH1", "fr", false))
+                .thenReturn(List.of());
+
+        service.suggest("TH1", "fr", "xyzzy", ConceptSearchMode.FULL_TEXT);
+
+        verify(statEventService).logSearchNoResult("xyzzy", 0, "TH1", null, "fr");
+    }
+
+    @Test
+    void search_logsAppliedResults() {
+        when(authenticatedUserSource.isLoggedIn()).thenReturn(true);
+        when(conceptSearchService.autocomplete("bronze", ConceptSearchMode.FULL_TEXT, "TH1", "fr", false))
+                .thenReturn(List.of(new ConceptSearchSuggestion("C1", "Bronze", "", ConceptSearchKind.CONCEPT, false)));
+
+        service.search("TH1", "fr", "bronze", ConceptSearchMode.FULL_TEXT, 0, 24);
+
+        verify(statEventService).logSearchApplied("bronze", 1, "TH1", null, "fr");
     }
 
     @Test

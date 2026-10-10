@@ -87,7 +87,8 @@ function suggestionHtml(hit) {
   const dep = hit.deprecated ? " is-dep" : "";
   const match = hit.via === "note" ? " match-note" : (hit.kind === "alt" ? " match-syn" : "");
   return '<button type="button" class="ac-row is-shown' + dep + match + '" data-act="open"'
-    + ' data-id="' + escapeHtml(hit.id) + '" data-type="' + type + '">'
+    + ' data-id="' + escapeHtml(hit.id) + '" data-type="' + type + '"'
+    + ' data-label="' + escapeHtml(hit.label || hit.id) + '">'
     + '<span class="ac-ico">' + hitIcon(hit.kind) + "</span>"
     + '<span class="ac-body"><span class="ac-pref">' + escapeHtml(hit.label || hit.id) + "</span>"
     + viaHtml(hit)
@@ -302,8 +303,23 @@ function syncRechercheConcept() {
   }
 }
 
+function logSearchSelection(query, label) {
+  const q = (query || "").trim();
+  const selected = (label || "").trim();
+  const theso = typeof thesaurusId === "function" ? thesaurusId() : "";
+  if (!theso || !q || !selected) return;
+  fetch(searchApi("/select", {
+    thesaurusId: theso,
+    lang: searchLangParam(),
+    q: q,
+    label: selected
+  }), { method: "POST", credentials: "same-origin", keepalive: true }).catch(() => {});
+}
+
 function openSearchRow(row) {
   if (!row) return;
+  const input = $("#searchInput");
+  logSearchSelection(input && input.value, row.getAttribute("data-label") || "");
   openSearchHit({
     id: row.getAttribute("data-id"),
     kind: row.getAttribute("data-type") === "group" ? "group"

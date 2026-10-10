@@ -31,6 +31,7 @@ import fr.cnrs.opentheso.v2.setting.service.ThesaurusPreferenceService;
 import fr.cnrs.opentheso.v2.setting.service.ThesaurusSearchLanguageSync;
 import fr.cnrs.opentheso.v2.setting.ui.ThesaurusContext;
 import fr.cnrs.opentheso.v2.shared.ui.UserSession;
+import fr.cnrs.opentheso.v2.stats.service.StatEventService;
 import jakarta.faces.component.UIComponent;
 import org.junit.jupiter.api.BeforeEach;
 import org.junit.jupiter.api.Test;
@@ -98,6 +99,8 @@ class ThesaurusBrowseBeanTest {
     private ObjectProvider<ThesaurusHomeEditorBean> thesaurusHomeEditorBean;
     @Mock
     private PropositionBean propositionBeanInstance;
+    @Mock
+    private StatEventService statEventService;
 
     private ThesaurusBrowseBean bean;
 
@@ -122,7 +125,8 @@ class ThesaurusBrowseBeanTest {
                 conceptAlignmentAdminBean,
                 propositionSubmitBean,
                 propositionBean,
-                thesaurusHomeEditorBean
+                thesaurusHomeEditorBean,
+                statEventService
         );
     }
 

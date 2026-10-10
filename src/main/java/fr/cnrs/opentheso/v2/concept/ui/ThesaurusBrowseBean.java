@@ -37,6 +37,7 @@ import fr.cnrs.opentheso.v2.setting.service.ThesaurusPreferenceService;
 import fr.cnrs.opentheso.v2.setting.service.ThesaurusSearchLanguageSync;
 import fr.cnrs.opentheso.v2.setting.ui.ThesaurusContext;
 import fr.cnrs.opentheso.v2.shared.ui.UserSession;
+import fr.cnrs.opentheso.v2.stats.service.StatEventService;
 import jakarta.faces.event.FacesEvent;
 import jakarta.faces.view.ViewScoped;
 import jakarta.inject.Named;
@@ -88,6 +89,7 @@ public class ThesaurusBrowseBean implements Serializable, ConceptNavigationSuppo
     private final transient ObjectProvider<PropositionSubmitBean> propositionSubmitBean;
     private final transient ObjectProvider<PropositionBean> propositionBean;
     private final transient ObjectProvider<ThesaurusHomeEditorBean> thesaurusHomeEditorBean;
+    private final transient StatEventService statEventService;
 
     private String conceptIdFromUri;
     private String groupIdFromUri;
@@ -764,6 +766,21 @@ public class ThesaurusBrowseBean implements Serializable, ConceptNavigationSuppo
             syncConceptTreeSelection(conceptId);
             scrollToSelectedNode();
         }
+        logConceptView();
+    }
+
+    private void logConceptView() {
+        if (selectedConcept == null || selectedConcept.summary() == null) {
+            return;
+        }
+        var summary = selectedConcept.summary();
+        statEventService.logConceptView(
+                summary.conceptId(),
+                summary.preferredLabel(),
+                summary.lang(),
+                thesaurusContext.resolveThesaurusId(),
+                thesaurusContext.getCurrentThesaurusTitle()
+        );
     }
 
     /**
@@ -890,6 +907,15 @@ public class ThesaurusBrowseBean implements Serializable, ConceptNavigationSuppo
                 groupId,
                 thesaurusContext.resolveWorkLanguage()
         ).orElse(null);
+        if (selectedGroup != null) {
+            statEventService.logCollectionView(
+                    selectedGroup.groupId(),
+                    selectedGroup.label(),
+                    selectedGroup.lang(),
+                    thesaurusContext.resolveThesaurusId(),
+                    thesaurusContext.getCurrentThesaurusTitle()
+            );
+        }
         if (!isSelectedNodeId(groupId)) {
             clearAllLeftTreeSelections();
         }

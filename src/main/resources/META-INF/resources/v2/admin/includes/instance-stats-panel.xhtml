@@ -1,0 +1,307 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<ui:composition xmlns="http://www.w3.org/1999/xhtml"
+                xmlns:ui="http://xmlns.jcp.org/jsf/facelets">
+<ui:fragment rendered="#{v2InstanceAdminBean.statsSection}">
+              <div class="ia-pane ia-dash is-need"
+                   id="iaDash"
+                   data-ctx="#{request.contextPath}"
+                   data-msg-empty-title="#{v2LocaleBean.getMsg('v2.admin.stats.empty.title')}"
+                   data-msg-empty-sub="#{v2LocaleBean.getMsg('v2.admin.stats.empty.sub')}"
+                   data-msg-load-title="#{v2LocaleBean.getMsg('v2.admin.stats.load.title')}"
+                   data-msg-load-sub="#{v2LocaleBean.getMsg('v2.admin.stats.load.sub')}"
+                   data-msg-none="#{v2LocaleBean.getMsg('v2.admin.stats.none')}"
+                   data-msg-zone-improve="#{v2LocaleBean.getMsg('v2.admin.stats.zone.improve')}"
+                   data-msg-zone-ok="#{v2LocaleBean.getMsg('v2.admin.stats.zone.ok')}"
+                   data-msg-zone-good="#{v2LocaleBean.getMsg('v2.admin.stats.zone.good')}"
+                   data-msg-zone-excellent="#{v2LocaleBean.getMsg('v2.admin.stats.zone.excellent')}"
+                   data-msg-avg="#{v2LocaleBean.getMsg('v2.admin.stats.avgLang')}"
+                   data-msg-csv="#{v2LocaleBean.getMsg('v2.admin.stats.drawer.csv')}"
+                   data-msg-click="#{v2LocaleBean.getMsg('v2.admin.stats.clickHint')}"
+                   data-msg-th-choose="#{v2LocaleBean.getMsg('v2.admin.stats.thesaurus.choose')}"
+                   data-msg-need-title="#{v2LocaleBean.getMsg('v2.admin.stats.need.title')}"
+                   data-msg-need-sub="#{v2LocaleBean.getMsg('v2.admin.stats.need.sub')}"
+                   data-msg-need-cta="#{v2LocaleBean.getMsg('v2.admin.stats.need.cta')}"
+                   data-msg-th-search="#{v2LocaleBean.getMsg('v2.admin.stats.thesaurus.search')}"
+                   data-msg-th-empty="#{v2LocaleBean.getMsg('v2.admin.stats.thesaurus.empty')}"
+                   data-msg-th-n="#{v2LocaleBean.getMsg('v2.admin.stats.thesaurus.n')}"
+                   data-msg-th-private="#{v2LocaleBean.getMsg('v2.admin.stats.thesaurus.private')}"
+                   data-msg-traffic-unit="#{v2LocaleBean.getMsg('v2.admin.stats.traffic.unit')}"
+                   data-msg-traffic-peak="#{v2LocaleBean.getMsg('v2.admin.stats.traffic.peak')}"
+                   data-msg-traffic-total="#{v2LocaleBean.getMsg('v2.admin.stats.traffic.total')}"
+                   data-msg-share="#{v2LocaleBean.getMsg('v2.admin.stats.share')}"
+                   data-msg-share-hint="#{v2LocaleBean.getMsg('v2.admin.stats.share.hint')}"
+                   data-msg-share-langs="#{v2LocaleBean.getMsg('v2.admin.stats.share.langs')}"
+                   data-msg-share-langs-hint="#{v2LocaleBean.getMsg('v2.admin.stats.share.langs.hint')}"
+                   data-msg-fs="#{v2LocaleBean.getMsg('v2.admin.stats.fs')}"
+                   data-msg-fs-exit="#{v2LocaleBean.getMsg('v2.admin.stats.fs.exit')}"
+                   data-msg-fs-esc="#{v2LocaleBean.getMsg('v2.admin.stats.fs.esc')}">
+
+                <div class="ia-dash-toolbar">
+                  <div class="ia-dash-toolbar-l">
+                    <span class="ia-dash-toolbar-k">#{v2LocaleBean.getMsg('v2.admin.stats.period')}</span>
+                    <div class="ia-dash-seg" role="group" aria-label="#{v2LocaleBean.getMsg('v2.admin.stats.period')}">
+                      <button type="button" class="ia-dash-chip" data-days="7">#{v2LocaleBean.getMsg('v2.admin.stats.period.7')}</button>
+                      <button type="button" class="ia-dash-chip is-on" data-days="30">#{v2LocaleBean.getMsg('v2.admin.stats.period.30')}</button>
+                      <button type="button" class="ia-dash-chip" data-days="90">#{v2LocaleBean.getMsg('v2.admin.stats.period.90')}</button>
+                      <button type="button" class="ia-dash-chip" data-days="365">#{v2LocaleBean.getMsg('v2.admin.stats.period.365')}</button>
+                    </div>
+                  </div>
+                  <div class="ia-dash-th" id="iaDashThesaurus">
+                    <span class="ia-dash-toolbar-k" id="iaDashThesaurusLbl">#{v2LocaleBean.getMsg('v2.admin.stats.thesaurus')}</span>
+                    <button type="button"
+                            class="ia-dash-th-btn"
+                            id="iaDashThesaurusBtn"
+                            aria-haspopup="listbox"
+                            aria-expanded="false"
+                            aria-labelledby="iaDashThesaurusLbl iaDashThesaurusTitle">
+                      <span class="ia-dash-th-btn-ico" aria-hidden="true">
+                        <svg viewBox="0 0 24 24"><path d="M4 19.5A2.5 2.5 0 0 1 6.5 17H20"/><path d="M6.5 2H20v20H6.5A2.5 2.5 0 0 1 4 19.5v-15A2.5 2.5 0 0 1 6.5 2z"/></svg>
+                      </span>
+                      <span class="ia-dash-th-btn-copy">
+                        <span class="ia-dash-th-btn-t" id="iaDashThesaurusTitle">#{v2LocaleBean.getMsg('v2.admin.stats.thesaurus.choose')}</span>
+                        <span class="ia-dash-th-btn-s" id="iaDashThesaurusSub"></span>
+                      </span>
+                      <span class="ia-dash-th-caret" aria-hidden="true">
+                        <svg viewBox="0 0 24 24"><path d="m6 9 6 6 6-6"/></svg>
+                      </span>
+                    </button>
+                    <div class="ia-dash-th-menu" id="iaDashThesaurusMenu" hidden="hidden">
+                      <div class="ia-dash-th-search">
+                        <svg viewBox="0 0 24 24" aria-hidden="true"><circle cx="11" cy="11" r="7"/><path d="m20 20-3.5-3.5"/></svg>
+                        <input type="search"
+                               id="iaDashThesaurusQuery"
+                               autocomplete="off"
+                               spellcheck="false"
+                               placeholder="#{v2LocaleBean.getMsg('v2.admin.stats.thesaurus.search')}"
+                               aria-label="#{v2LocaleBean.getMsg('v2.admin.stats.thesaurus.search')}"/>
+                      </div>
+                      <div class="ia-dash-th-list" id="iaDashThesaurusList" role="listbox"></div>
+                    </div>
+                  </div>
+                </div>
+
+                <div class="ia-dash-need" id="iaDashNeed">
+                  <span class="ia-dash-need-ico" aria-hidden="true">
+                    <svg viewBox="0 0 24 24"><path d="M4 19.5A2.5 2.5 0 0 1 6.5 17H20"/><path d="M6.5 2H20v20H6.5A2.5 2.5 0 0 1 4 19.5v-15A2.5 2.5 0 0 1 6.5 2z"/></svg>
+                  </span>
+                  <div class="ia-dash-need-copy">
+                    <div class="ia-dash-need-t">#{v2LocaleBean.getMsg('v2.admin.stats.need.title')}</div>
+                    <div class="ia-dash-need-d">#{v2LocaleBean.getMsg('v2.admin.stats.need.sub')}</div>
+                  </div>
+                  <button type="button" class="bo-btn primary sm" id="iaDashNeedCta">
+                    #{v2LocaleBean.getMsg('v2.admin.stats.need.cta')}
+                  </button>
+                </div>
+
+                <div class="ia-dash-kpis" id="iaDashKpis">
+                  <div class="ia-dash-kpi">
+                    <span class="ia-dash-kpi-ico" aria-hidden="true">
+                      <svg viewBox="0 0 24 24"><path d="M2 12s4-7 10-7 10 7 10 7-4 7-10 7S2 12 2 12Z"/><circle cx="12" cy="12" r="3"/></svg>
+                    </span>
+                    <div>
+                      <div class="ia-dash-kpi-n" data-dash-kpi="views" aria-busy="true"><span class="mg-kpi-spin" aria-hidden="true"></span></div>
+                      <div class="ia-dash-kpi-l">#{v2LocaleBean.getMsg('v2.admin.stats.kpi.views')}</div>
+                    </div>
+                  </div>
+                  <div class="ia-dash-kpi">
+                    <span class="ia-dash-kpi-ico" aria-hidden="true">
+                      <svg viewBox="0 0 24 24"><circle cx="11" cy="11" r="7"/><path d="m20 20-3.5-3.5"/></svg>
+                    </span>
+                    <div>
+                      <div class="ia-dash-kpi-n" data-dash-kpi="searches" aria-busy="true"><span class="mg-kpi-spin" aria-hidden="true"></span></div>
+                      <div class="ia-dash-kpi-l">#{v2LocaleBean.getMsg('v2.admin.stats.kpi.searches')}</div>
+                    </div>
+                  </div>
+                  <div class="ia-dash-kpi">
+                    <span class="ia-dash-kpi-ico" aria-hidden="true">
+                      <svg viewBox="0 0 24 24"><path d="M4 17 10 11 4 5"/><path d="M12 19h8"/></svg>
+                    </span>
+                    <div>
+                      <div class="ia-dash-kpi-n" data-dash-kpi="api" aria-busy="true"><span class="mg-kpi-spin" aria-hidden="true"></span></div>
+                      <div class="ia-dash-kpi-l">#{v2LocaleBean.getMsg('v2.admin.stats.kpi.api')}</div>
+                    </div>
+                  </div>
+                  <div class="ia-dash-kpi">
+                    <span class="ia-dash-kpi-ico" aria-hidden="true">
+                      <svg viewBox="0 0 24 24"><path d="m16 6 4 14"/><path d="M12 6v14"/><path d="M8 8v12"/><path d="M4 4v16"/></svg>
+                    </span>
+                    <div>
+                      <div class="ia-dash-kpi-n" data-dash-kpi="thesauri" aria-busy="true"><span class="mg-kpi-spin" aria-hidden="true"></span></div>
+                      <div class="ia-dash-kpi-l">#{v2LocaleBean.getMsg('v2.admin.stats.kpi.thesauri')}</div>
+                    </div>
+                  </div>
+                </div>
+
+                <div class="ia-dash-empty" id="iaDashEmpty" hidden="hidden">
+                  <span class="ia-dash-empty-ico" aria-hidden="true">
+                    <svg viewBox="0 0 24 24"><path d="M3 3v16a2 2 0 0 0 2 2h16"/><path d="m7 14 4-4 4 4 6-6"/></svg>
+                  </span>
+                  <div>
+                    <div class="ia-empty-t">#{v2LocaleBean.getMsg('v2.admin.stats.empty.title')}</div>
+                    <div class="ia-empty-d">#{v2LocaleBean.getMsg('v2.admin.stats.empty.sub')}</div>
+                  </div>
+                </div>
+
+                <article class="ia-dash-card ia-dash-quality" id="iaDashQuality" hidden="hidden">
+                  <header class="ia-dash-h">
+                    <span class="ia-dash-ico" aria-hidden="true">
+                      <svg viewBox="0 0 24 24"><path d="M12 3 4 7v5c0 5 3.4 8.7 8 9 4.6-.3 8-4 8-9V7Z"/></svg>
+                    </span>
+                    <div class="ia-dash-h-copy">
+                      <div class="ia-dash-h-t">#{v2LocaleBean.getMsg('v2.admin.stats.quality')}</div>
+                      <div class="ia-dash-h-d">#{v2LocaleBean.getMsg('v2.admin.stats.quality.hint')}</div>
+                    </div>
+                  </header>
+                  <div class="ia-dash-b">
+                    <div class="ia-dash-quality-hero">
+                      <div class="ia-dash-meter-wrap">
+                        <div class="ia-dash-meter" id="iaDashMeter" style="--p:0">
+                          <div class="ia-dash-score-n" id="iaDashScoreN">—</div>
+                        </div>
+                        <div class="ia-dash-score-z" id="iaDashScoreZ"></div>
+                      </div>
+                      <div class="ia-dash-bars" id="iaDashCriteria" aria-busy="true">
+                        <div class="ia-dash-loading"><span class="mg-kpi-spin" aria-hidden="true"></span></div>
+                      </div>
+                    </div>
+                    <div class="ia-dash-quality-split">
+                      <section class="ia-dash-tile">
+                        <div class="ia-dash-tile-h">
+                          <span>#{v2LocaleBean.getMsg('v2.admin.stats.languages')}</span>
+                          <span class="ia-dash-tile-hint">#{v2LocaleBean.getMsg('v2.admin.stats.clickHint')}</span>
+                        </div>
+                        <div class="ia-dash-langs" id="iaDashLangs"></div>
+                        <div class="ia-dash-bars" id="iaDashLangCov" aria-busy="true">
+                          <div class="ia-dash-loading"><span class="mg-kpi-spin" aria-hidden="true"></span></div>
+                        </div>
+                        <div class="ia-dash-avg" id="iaDashLangAvg"></div>
+                      </section>
+                      <section class="ia-dash-tile">
+                        <div class="ia-dash-tile-h">
+                          <span>#{v2LocaleBean.getMsg('v2.admin.stats.definitions')}</span>
+                          <span class="ia-dash-tile-hint">#{v2LocaleBean.getMsg('v2.admin.stats.clickHint')}</span>
+                        </div>
+                        <div class="ia-dash-bars" id="iaDashDefs" aria-busy="true">
+                          <div class="ia-dash-loading"><span class="mg-kpi-spin" aria-hidden="true"></span></div>
+                        </div>
+                      </section>
+                    </div>
+                  </div>
+                </article>
+
+                <div class="ia-dash-activity">
+                  <article class="ia-dash-card" id="iaDashTrafficCard">
+                    <header class="ia-dash-h">
+                      <span class="ia-dash-ico" aria-hidden="true">
+                        <svg viewBox="0 0 24 24"><path d="M3 3v16a2 2 0 0 0 2 2h16"/><path d="m19 9-5 5-4-4-3 3"/></svg>
+                      </span>
+                      <div class="ia-dash-h-copy">
+                        <div class="ia-dash-h-t">#{v2LocaleBean.getMsg('v2.admin.stats.traffic')}</div>
+                        <div class="ia-dash-h-d" id="iaDashTrafficCap">#{v2LocaleBean.getMsg('v2.admin.stats.traffic.hint')}</div>
+                      </div>
+                    </header>
+                    <div class="ia-dash-b">
+                      <div class="ia-dash-spark" id="iaDashTraffic" aria-busy="true">
+                        <div class="ia-dash-loading"><span class="mg-kpi-spin" aria-hidden="true"></span></div>
+                      </div>
+                    </div>
+                  </article>
+                  <article class="ia-dash-card" id="iaDashShareCard">
+                    <header class="ia-dash-h">
+                      <span class="ia-dash-ico" aria-hidden="true">
+                        <svg viewBox="0 0 24 24"><path d="M21.21 15.89A10 10 0 1 1 8 2.83"/><path d="M22 12A10 10 0 0 0 12 2v10Z"/></svg>
+                      </span>
+                      <div class="ia-dash-h-copy">
+                        <div class="ia-dash-h-t" id="iaDashShareTitle">#{v2LocaleBean.getMsg('v2.admin.stats.share')}</div>
+                        <div class="ia-dash-h-d" id="iaDashShareCap">#{v2LocaleBean.getMsg('v2.admin.stats.share.hint')}</div>
+                      </div>
+                    </header>
+                    <div class="ia-dash-b">
+                      <div class="ia-dash-bars" id="iaDashShare" aria-busy="true">
+                        <div class="ia-dash-loading"><span class="mg-kpi-spin" aria-hidden="true"></span></div>
+                      </div>
+                    </div>
+                  </article>
+                </div>
+
+                <div class="ia-dash-split">
+                  <article class="ia-dash-card">
+                    <header class="ia-dash-h">
+                      <span class="ia-dash-ico" aria-hidden="true">
+                        <svg viewBox="0 0 24 24"><path d="M8 6h13M8 12h13M8 18h13"/><path d="M3 6h.01M3 12h.01M3 18h.01"/></svg>
+                      </span>
+                      <div class="ia-dash-h-copy">
+                        <div class="ia-dash-h-t">#{v2LocaleBean.getMsg('v2.admin.stats.top')}</div>
+                        <div class="ia-dash-h-d">#{v2LocaleBean.getMsg('v2.admin.stats.top.hint')}</div>
+                      </div>
+                    </header>
+                    <div class="ia-dash-b ia-dash-b-list">
+                      <div class="ia-dash-list" id="iaDashTop" aria-busy="true">
+                        <div class="ia-dash-loading"><span class="mg-kpi-spin" aria-hidden="true"></span></div>
+                      </div>
+                    </div>
+                  </article>
+                  <article class="ia-dash-card">
+                    <header class="ia-dash-h ia-dash-h-stack">
+                      <div class="ia-dash-h-main">
+                        <span class="ia-dash-ico" aria-hidden="true">
+                          <svg viewBox="0 0 24 24"><circle cx="11" cy="11" r="7"/><path d="m20 20-3.5-3.5"/></svg>
+                        </span>
+                        <div class="ia-dash-h-copy">
+                          <div class="ia-dash-h-t">#{v2LocaleBean.getMsg('v2.admin.stats.searches')}</div>
+                          <div class="ia-dash-h-d">#{v2LocaleBean.getMsg('v2.admin.stats.searches.hint')}</div>
+                        </div>
+                      </div>
+                      <div class="ia-dash-seg ia-dash-seg-sm" id="iaDashSearchTabs">
+                        <button type="button" class="ia-dash-chip is-on" data-search="failed">#{v2LocaleBean.getMsg('v2.admin.stats.searches.failed')}</button>
+                        <button type="button" class="ia-dash-chip" data-search="synonyms">#{v2LocaleBean.getMsg('v2.admin.stats.searches.synonym')}</button>
+                        <button type="button" class="ia-dash-chip" data-search="global">#{v2LocaleBean.getMsg('v2.admin.stats.searches.global')}</button>
+                      </div>
+                    </header>
+                    <div class="ia-dash-b ia-dash-b-list">
+                      <div class="ia-dash-list" id="iaDashSearch" aria-busy="true">
+                        <div class="ia-dash-loading"><span class="mg-kpi-spin" aria-hidden="true"></span></div>
+                      </div>
+                    </div>
+                  </article>
+                </div>
+
+                <article class="ia-dash-card" id="iaDashApiCard">
+                  <header class="ia-dash-h">
+                    <span class="ia-dash-ico" aria-hidden="true">
+                      <svg viewBox="0 0 24 24"><path d="M4 17 10 11 4 5"/><path d="M12 19h8"/></svg>
+                    </span>
+                    <div class="ia-dash-h-copy">
+                      <div class="ia-dash-h-t">#{v2LocaleBean.getMsg('v2.admin.stats.api')}</div>
+                      <div class="ia-dash-h-d">#{v2LocaleBean.getMsg('v2.admin.stats.api.hint')}</div>
+                    </div>
+                  </header>
+                  <div class="ia-dash-b ia-dash-b-list">
+                    <div class="ia-dash-list ia-dash-api" id="iaDashApi" aria-busy="true">
+                      <div class="ia-dash-loading"><span class="mg-kpi-spin" aria-hidden="true"></span></div>
+                    </div>
+                  </div>
+                </article>
+              </div>
+
+              <div class="ia-dash-drawer" id="iaDashDrawer" hidden="hidden" role="dialog" aria-modal="true" aria-labelledby="iaDashDrawerTitle">
+                <div class="ia-dash-drawer-scrim" data-dash-close="1"></div>
+                <div class="ia-dash-drawer-panel">
+                  <div class="ia-dash-drawer-h">
+                    <div>
+                      <div class="ia-dash-drawer-t" id="iaDashDrawerTitle"></div>
+                      <div class="ia-dash-drawer-d" id="iaDashDrawerSub"></div>
+                    </div>
+                    <button type="button" class="ia-dash-drawer-x" data-dash-close="1" aria-label="#{v2LocaleBean.getMsg('v2.admin.stats.drawer.close')}">
+                      <svg viewBox="0 0 24 24" aria-hidden="true"><path d="M18 6 6 18M6 6l12 12"/></svg>
+                    </button>
+                  </div>
+                  <div class="ia-dash-drawer-b" id="iaDashDrawerBody"></div>
+                  <div class="ia-dash-drawer-f">
+                    <button type="button" class="bo-btn ghost sm" data-dash-close="1">#{v2LocaleBean.getMsg('v2.admin.stats.drawer.close')}</button>
+                    <button type="button" class="bo-btn primary sm" id="iaDashDrawerCsv">#{v2LocaleBean.getMsg('v2.admin.stats.drawer.csv')}</button>
+                  </div>
+                </div>
+              </div>
+</ui:fragment>
+</ui:composition>

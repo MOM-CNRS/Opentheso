@@ -10,6 +10,7 @@ import fr.cnrs.opentheso.v2.concept.ui.ConsultationShellBean;
 import fr.cnrs.opentheso.v2.setting.service.ThesaurusWorkLanguageService;
 import fr.cnrs.opentheso.v2.shared.ui.UserSession;
 import fr.cnrs.opentheso.v2.shared.ui.V2LocaleBean;
+import fr.cnrs.opentheso.v2.stats.service.StatEventService;
 import fr.cnrs.opentheso.v2.test.support.PrimeFacesTestSupport;
 import org.junit.jupiter.api.BeforeEach;
 import org.junit.jupiter.api.Test;
@@ -39,6 +40,8 @@ class GlobalConceptSearchBeanTest {
     private UserSession userSession;
     @Mock
     private V2LocaleBean v2LocaleBean;
+    @Mock
+    private StatEventService statEventService;
 
     private GlobalConceptSearchBean bean;
 
@@ -49,7 +52,8 @@ class GlobalConceptSearchBeanTest {
                 consultationShellBean,
                 thesaurusWorkLanguageService,
                 userSession,
-                v2LocaleBean
+                v2LocaleBean,
+                statEventService
         );
     }
 

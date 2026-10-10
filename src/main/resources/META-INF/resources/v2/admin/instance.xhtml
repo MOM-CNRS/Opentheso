@@ -25,7 +25,8 @@
 
       <ui:fragment rendered="#{v2InstanceAdminBean.accessAllowed}">
         <h:panelGroup id="iaShell" layout="block" styleClass="ia-shell">
-        <h:panelGroup id="iaRoot" layout="block" styleClass="bo bo-solo">
+        <h:panelGroup id="iaRoot" layout="block"
+                      styleClass="bo bo-solo#{v2InstanceAdminBean.statsSection ? ' ia-stats-wide' : ''}">
           <span id="iaFlashLive"
                 hidden="hidden"
                 data-ia-flash="#{v2InstanceAdminBean.flashMessage}"
@@ -112,6 +113,9 @@
               </ui:fragment>
               <ui:fragment rendered="#{v2InstanceAdminBean.thesauriSection}">
                 <p class="bo-sub">#{v2InstanceAdminBean.thesaurusCount} thésaurus sur l'instance</p>
+              </ui:fragment>
+              <ui:fragment rendered="#{v2InstanceAdminBean.statsSection}">
+                <p class="bo-sub">#{v2LocaleBean.getMsg('v2.admin.stats.sub')}</p>
               </ui:fragment>
             </div>
           </div>
@@ -1185,15 +1189,7 @@
               </div>
             </ui:fragment>
 
-            <ui:fragment rendered="#{v2InstanceAdminBean.placeholderSection}">
-              <div class="bo-todo-box">
-                <div class="bo-todo-t">#{v2InstanceAdminBean.sectionLabel} — à construire</div>
-                <div class="bo-todo-d">
-                  Cette sous-page reste à spécifier. Le pattern est posé :
-                  page d'administration → sous-pages en cartes → détail en pleine largeur avec retour.
-                </div>
-              </div>
-            </ui:fragment>
+            <ui:include src="/v2/admin/includes/instance-stats-panel.xhtml"/>
           </div>
         </h:panelGroup>
         <h:panelGroup id="iaConfirmLayer" layout="block" styleClass="ia-confirm-layer">

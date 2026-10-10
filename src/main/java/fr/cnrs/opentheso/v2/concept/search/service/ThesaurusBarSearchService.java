@@ -6,6 +6,7 @@ import fr.cnrs.opentheso.v2.concept.search.model.ConceptSearchSuggestion;
 import fr.cnrs.opentheso.v2.concept.search.model.ThesaurusBarSearchHit;
 import fr.cnrs.opentheso.v2.concept.search.model.ThesaurusBarSearchResponse;
 import fr.cnrs.opentheso.v2.shared.session.AuthenticatedUserSource;
+import fr.cnrs.opentheso.v2.stats.service.StatEventService;
 import lombok.RequiredArgsConstructor;
 import org.apache.commons.lang3.StringUtils;
 import org.springframework.stereotype.Service;
@@ -28,10 +29,15 @@ public class ThesaurusBarSearchService {
     private final ConceptSearchService conceptSearchService;
     private final ConceptSearchHydrationService conceptSearchHydrationService;
     private final AuthenticatedUserSource authenticatedUserSource;
+    private final StatEventService statEventService;
 
     @Transactional(readOnly = true)
     public ThesaurusBarSearchResponse suggest(String thesaurusId, String lang, String query, ConceptSearchMode mode) {
-        return page(thesaurusId, lang, query, mode, 0, SUGGEST_LIMIT);
+        ThesaurusBarSearchResponse response = page(thesaurusId, lang, query, mode, 0, SUGGEST_LIMIT);
+        if (response.total() == 0 && StringUtils.length(response.query()) >= 3) {
+            statEventService.logSearchNoResult(response.query(), 0, thesaurusId, null, resolveLang(lang));
+        }
+        return response;
     }
 
     @Transactional(readOnly = true)
@@ -43,7 +49,25 @@ public class ThesaurusBarSearchService {
             int offset,
             int limit
     ) {
-        return page(thesaurusId, lang, query, mode, offset, limit);
+        ThesaurusBarSearchResponse response = page(thesaurusId, lang, query, mode, offset, limit);
+        if (offset == 0 && StringUtils.isNotBlank(response.query())) {
+            if (response.total() == 0) {
+                statEventService.logSearchNoResult(
+                        response.query(), 0, thesaurusId, null, resolveLang(lang));
+            } else {
+                statEventService.logSearchApplied(
+                        response.query(), response.total(), thesaurusId, null, resolveLang(lang));
+            }
+        }
+        return response;
+    }
+
+    public void logSuggestionSelected(String thesaurusId, String lang, String query, String selectedLabel) {
+        if (StringUtils.isBlank(thesaurusId) || StringUtils.isBlank(query) || StringUtils.isBlank(selectedLabel)) {
+            return;
+        }
+        statEventService.logSearchResultSelected(
+                query.trim(), selectedLabel.trim(), thesaurusId, null, resolveLang(lang));
     }
 
     @Transactional(readOnly = true)

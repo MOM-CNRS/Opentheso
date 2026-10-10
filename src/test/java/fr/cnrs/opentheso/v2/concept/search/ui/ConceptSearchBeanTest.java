@@ -12,6 +12,7 @@ import fr.cnrs.opentheso.v2.setting.service.ThesaurusPreferenceService;
 import fr.cnrs.opentheso.v2.setting.ui.ThesaurusContext;
 import fr.cnrs.opentheso.v2.shared.ui.UserSession;
 import fr.cnrs.opentheso.v2.shared.ui.V2LocaleBean;
+import fr.cnrs.opentheso.v2.stats.service.StatEventService;
 import fr.cnrs.opentheso.v2.test.support.PrimeFacesTestSupport;
 import org.junit.jupiter.api.BeforeEach;
 import org.junit.jupiter.api.Test;
@@ -50,6 +51,8 @@ class ConceptSearchBeanTest {
     private V2LocaleBean v2LocaleBean;
     @Mock
     private ConceptNavigationSupport conceptNavigationSupport;
+    @Mock
+    private StatEventService statEventService;
 
     private ConceptSearchBean bean;
 
@@ -61,7 +64,8 @@ class ConceptSearchBeanTest {
                 thesaurusPreferenceService,
                 userSession,
                 v2LocaleBean,
-                conceptNavigationSupport
+                conceptNavigationSupport,
+                statEventService
         );
     }
 

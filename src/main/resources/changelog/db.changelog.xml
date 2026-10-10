@@ -332,4 +332,9 @@
         <sqlFile path="v26/26-09_04.sql" relativeToChangelogFile="true" splitStatements="false"/>
     </changeSet>
 
+    <changeSet id="26.10.01" author="Firas">
+        <comment>Instance dashboard usage events and daily concept-view aggregates</comment>
+        <sqlFile path="v26/26-10_01.sql" relativeToChangelogFile="true" splitStatements="false"/>
+    </changeSet>
+
 </databaseChangeLog>

@@ -11,6 +11,7 @@ import fr.cnrs.opentheso.v2.setting.service.ThesaurusPreferenceService;
 import fr.cnrs.opentheso.v2.setting.ui.ThesaurusContext;
 import fr.cnrs.opentheso.v2.shared.ui.UserSession;
 import fr.cnrs.opentheso.v2.shared.ui.V2LocaleBean;
+import fr.cnrs.opentheso.v2.stats.service.StatEventService;
 import jakarta.faces.view.ViewScoped;
 import jakarta.inject.Named;
 import lombok.Getter;
@@ -39,6 +40,7 @@ public class ConceptSearchBean implements Serializable {
     private final transient UserSession userSession;
     private final transient V2LocaleBean v2LocaleBean;
     private final transient ConceptNavigationSupport conceptNavigationSupport;
+    private final transient StatEventService statEventService;
 
     private String searchLang;
     private String searchValue;
@@ -78,13 +80,21 @@ public class ConceptSearchBean implements Serializable {
             return Collections.emptyList();
         }
         searchValue = query.trim();
-        return conceptSearchService.autocomplete(
+        var suggestions = conceptSearchService.autocomplete(
                 searchValue,
                 activeMode(),
                 thesaurusContext.resolveThesaurusId(),
                 searchLang,
                 !userSession.isLoggedIn()
         );
+        if (suggestions.isEmpty() && searchValue.length() >= 3) {
+            statEventService.logSearchNoResult(
+                    searchValue, 0,
+                    thesaurusContext.resolveThesaurusId(),
+                    thesaurusContext.getCurrentThesaurusTitle(),
+                    searchLang);
+        }
+        return suggestions;
     }
 
     public void onSuggestionSelect(SelectEvent<ConceptSearchSuggestion> event) {
@@ -102,6 +112,15 @@ public class ConceptSearchBean implements Serializable {
             resultsVisible = false;
             return;
         }
+        String selectedLabel = StringUtils.isNotBlank(suggestion.preferredLabel())
+                ? suggestion.preferredLabel()
+                : suggestion.altLabel();
+        statEventService.logSearchResultSelected(
+                searchValue,
+                selectedLabel,
+                thesaurusContext.resolveThesaurusId(),
+                thesaurusContext.getCurrentThesaurusTitle(),
+                searchLang);
         openConcept(suggestion.conceptId());
         results = conceptSearchService.search(
                 searchValue,
@@ -131,9 +150,20 @@ public class ConceptSearchBean implements Serializable {
         );
         if (results.isEmpty()) {
             resultsVisible = false;
+            statEventService.logSearchNoResult(
+                    searchValue, 0,
+                    thesaurusContext.resolveThesaurusId(),
+                    thesaurusContext.getCurrentThesaurusTitle(),
+                    searchLang);
             MessageUtils.showWarnMessage(v2LocaleBean.getMsg("search.noResult") + " !");
             return;
         }
+        statEventService.logSearchApplied(
+                searchValue,
+                results.size(),
+                thesaurusContext.resolveThesaurusId(),
+                thesaurusContext.getCurrentThesaurusTitle(),
+                searchLang);
         if (results.size() == 1) {
             openConcept(results.get(0).getConceptId());
             singleResultSelected = true;

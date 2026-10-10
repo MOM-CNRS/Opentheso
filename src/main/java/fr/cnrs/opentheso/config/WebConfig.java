@@ -1,6 +1,7 @@
 package fr.cnrs.opentheso.config;
 
 import fr.cnrs.opentheso.listeners.ApiKeyInterceptor;
+import fr.cnrs.opentheso.v2.stats.intercept.ApiStatInterceptor;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.context.annotation.Bean;
 import org.springframework.context.annotation.Configuration;
@@ -13,9 +14,14 @@ public class WebConfig implements WebMvcConfigurer {
 
     @Autowired
     private ApiKeyInterceptor apiKeyInterceptor; // ✅ injecter ton interceptor API Key
+    @Autowired
+    private ApiStatInterceptor apiStatInterceptor;
 
     @Override
     public void addInterceptors(InterceptorRegistry registry) {
+
+        registry.addInterceptor(apiStatInterceptor)
+                .addPathPatterns("/api/**", "/openapi/**");
 
         // 2️⃣ ApiKeyInterceptor sur toutes les routes /api/**
         // uniquement pour POST, PUT, DELETE (déjà géré dans l’interceptor)

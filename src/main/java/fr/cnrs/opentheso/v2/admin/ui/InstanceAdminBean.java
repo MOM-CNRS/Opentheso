@@ -922,8 +922,12 @@ public class InstanceAdminBean implements Serializable {
         return SECTION_THESAURI.equals(section) && StringUtils.isNotBlank(openThesaurusId);
     }
 
-    public boolean isPlaceholderSection() {
+    public boolean isStatsSection() {
         return SECTION_STATS.equals(section);
+    }
+
+    public boolean isPlaceholderSection() {
+        return false;
     }
 
     public boolean isProjectFormOpen() {

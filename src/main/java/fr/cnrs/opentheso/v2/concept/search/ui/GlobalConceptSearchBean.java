@@ -9,6 +9,7 @@ import fr.cnrs.opentheso.v2.concept.ui.ConsultationShellBean;
 import fr.cnrs.opentheso.v2.setting.service.ThesaurusWorkLanguageService;
 import fr.cnrs.opentheso.v2.shared.ui.UserSession;
 import fr.cnrs.opentheso.v2.shared.ui.V2LocaleBean;
+import fr.cnrs.opentheso.v2.stats.service.StatEventService;
 import jakarta.enterprise.context.SessionScoped;
 import jakarta.faces.context.ExternalContext;
 import jakarta.faces.context.FacesContext;
@@ -38,6 +39,7 @@ public class GlobalConceptSearchBean implements Serializable {
     private final transient ThesaurusWorkLanguageService thesaurusWorkLanguageService;
     private final transient UserSession userSession;
     private final transient V2LocaleBean v2LocaleBean;
+    private final transient StatEventService statEventService;
 
     private String searchLang;
     private String searchValue;
@@ -87,6 +89,13 @@ public class GlobalConceptSearchBean implements Serializable {
                 break;
             }
         }
+        if (suggestions.isEmpty() && searchValue.length() >= 3) {
+            String thesaurusId = thesaurusIds.get(0);
+            statEventService.logSearchNoResult(
+                    searchValue, 0, thesaurusId,
+                    consultationShellBean.resolveThesaurusTitle(thesaurusId),
+                    resolveLangForThesaurus(thesaurusId));
+        }
         return new ArrayList<>(suggestions);
     }
 
@@ -95,7 +104,17 @@ public class GlobalConceptSearchBean implements Serializable {
         if (suggestion == null) {
             return;
         }
-        selectConcept(suggestion.conceptId(), resolveThesaurusIdFromSuggestion(suggestion));
+        String thesaurusId = resolveThesaurusIdFromSuggestion(suggestion);
+        String selectedLabel = StringUtils.isNotBlank(suggestion.preferredLabel())
+                ? suggestion.preferredLabel()
+                : suggestion.altLabel();
+        statEventService.logSearchResultSelected(
+                searchValue,
+                selectedLabel,
+                thesaurusId,
+                consultationShellBean.resolveThesaurusTitle(thesaurusId),
+                resolveLangForThesaurus(thesaurusId));
+        selectConcept(suggestion.conceptId(), thesaurusId);
     }
 
     public void applySearch() throws IOException {
@@ -119,10 +138,21 @@ public class GlobalConceptSearchBean implements Serializable {
             ));
         }
         results = new ArrayList<>(merged);
+        String logThesaurusId = thesaurusIds.size() == 1 ? thesaurusIds.get(0) : null;
         if (results.isEmpty()) {
+            statEventService.logSearchNoResult(
+                    searchValue, 0, logThesaurusId,
+                    logThesaurusId == null ? null : consultationShellBean.resolveThesaurusTitle(logThesaurusId),
+                    searchLang);
             MessageUtils.showWarnMessage(v2LocaleBean.getMsg("search.noResult") + " !");
             return;
         }
+        statEventService.logSearchApplied(
+                searchValue,
+                results.size(),
+                logThesaurusId,
+                logThesaurusId == null ? null : consultationShellBean.resolveThesaurusTitle(logThesaurusId),
+                searchLang);
         if (results.size() == 1) {
             ConceptSearchResult result = results.get(0);
             selectConcept(result.getConceptId(), result.getThesaurusId());
