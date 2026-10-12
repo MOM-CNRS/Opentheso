@@ -97,7 +97,7 @@ function applySort(mode) {
   const box = treePanel();
   // Arbre JSF : l'ordre est celui du serveur, comme le PrimeFaces legacy.
   if (box && (box.id === "previewTree" || box.id === "previewTreeForm:previewTree")) {
-    $$(".vo-seg-b[data-sort]").forEach(b => b.classList.toggle("is-on", b.getAttribute("data-sort") === state.sort));
+    $$(".vo-sort-b[data-sort], .vo-seg-b[data-sort]").forEach(b => b.classList.toggle("is-on", b.getAttribute("data-sort") === state.sort));
     return;
   }
   const nota = state.sort === "nota";
@@ -116,7 +116,7 @@ function applySort(mode) {
   if (protoBox && nodes.length) {
     sortTreeRange(nodes).forEach(el => protoBox.appendChild(el));
   }
-  $$(".vo-seg-b[data-sort]").forEach(b => b.classList.toggle("is-on", b.getAttribute("data-sort") === state.sort));
+  $$(".vo-sort-b[data-sort], .vo-seg-b[data-sort]").forEach(b => b.classList.toggle("is-on", b.getAttribute("data-sort") === state.sort));
 }
 function revealTreeConcept(id) {
   const idEl = document.getElementById("previewTreeRevealForm:revealId");

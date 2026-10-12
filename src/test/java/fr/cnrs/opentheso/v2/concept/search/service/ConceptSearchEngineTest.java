@@ -128,6 +128,58 @@ class ConceptSearchEngineTest {
         assertEquals(List.of("A", "B"), engine.findConceptIds("full", ConceptSearchMode.FULL_TEXT, "TH1", "fr", false));
     }
 
+    @Test
+    void findConceptIds_intersectsLexicalAndNoteOperators() {
+        when(conceptSearchQueryRepository.searchPreferredTermsFullTextIds("obsidienne", "fr", "TH1", false))
+                .thenReturn(List.of("C1", "C2"));
+        when(conceptSearchQueryRepository.searchAltTermsFullTextIds("obsidienne", "fr", "TH1", false))
+                .thenReturn(List.of("C3"));
+        when(conceptSearchQueryRepository.findConceptIdsFromNotes("TH1", "fr", "assiette"))
+                .thenReturn(List.of("C1", "C9"));
+
+        assertEquals(
+                List.of("C1"),
+                engine.findConceptIds("obsidienne note:assiette", ConceptSearchMode.FULL_TEXT, "TH1", "fr", false)
+        );
+    }
+
+    @Test
+    void autocomplete_combinedOperators_keepsIntersectionInLeadOrder() {
+        when(conceptSearchQueryRepository.searchPreferredTermsFullText("obsidienne", "fr", "TH1", true))
+                .thenReturn(rows(
+                        new Object[] {"C2", "x", "obsidienne noire"},
+                        new Object[] {"C1", "x", "obsidienne"}
+                ));
+        when(conceptSearchQueryRepository.searchAltTermsFullText("obsidienne", "fr", "TH1", true))
+                .thenReturn(List.of());
+        when(conceptSearchQueryRepository.searchCollectionsByPrefix("obsidienne", "fr", "TH1")).thenReturn(List.of());
+        when(conceptSearchQueryRepository.searchFacetsByPrefix("obsidienne", "fr", "TH1")).thenReturn(List.of());
+        when(conceptSearchQueryRepository.searchPreferredTermsFullTextIds("obsidienne", "fr", "TH1", false))
+                .thenReturn(List.of("C1", "C2"));
+        when(conceptSearchQueryRepository.searchAltTermsFullTextIds("obsidienne", "fr", "TH1", false))
+                .thenReturn(List.of());
+        when(conceptSearchQueryRepository.findConceptIdsFromNotes("TH1", "fr", "assiette"))
+                .thenReturn(List.of("C1"));
+
+        List<ConceptSearchSuggestion> result = engine.autocomplete(
+                "obsidienne note:assiette", ConceptSearchMode.FULL_TEXT, "TH1", "fr", false
+        );
+
+        assertEquals(1, result.size());
+        assertEquals("C1", result.get(0).conceptId());
+    }
+
+    @Test
+    void autocomplete_noteOperatorAlone_searchesNotes() {
+        when(conceptSearchQueryRepository.searchNotes("assiette", "fr", "TH1"))
+                .thenReturn(rows(new Object[] {"C9", "assiette"}));
+        when(conceptSearchQueryRepository.findConceptIdsFromNotes("TH1", "fr", "assiette"))
+                .thenReturn(List.of("C9"));
+
+        assertEquals("C9", engine.autocomplete("note:assiette", ConceptSearchMode.FULL_TEXT, "TH1", "fr", false)
+                .get(0).conceptId());
+    }
+
     private static List<Object[]> rows(Object[]... values) {
         return Arrays.asList(values);
     }

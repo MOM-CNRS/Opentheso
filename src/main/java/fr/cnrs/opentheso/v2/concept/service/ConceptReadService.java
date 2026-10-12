@@ -12,6 +12,7 @@ import fr.cnrs.opentheso.v2.concept.model.ConceptCustomRelationItem;
 import fr.cnrs.opentheso.v2.concept.model.ConceptDetail;
 import fr.cnrs.opentheso.v2.concept.model.ConceptIdentifiers;
 import fr.cnrs.opentheso.v2.concept.model.ConceptSummary;
+import fr.cnrs.opentheso.v2.concept.model.ConceptSubtreeMember;
 import fr.cnrs.opentheso.v2.concept.model.ConceptTreeNodeData;
 import fr.cnrs.opentheso.v2.concept.model.ConceptTreeRow;
 import fr.cnrs.opentheso.v2.concept.policy.ConceptStatusPolicy;
@@ -32,9 +33,12 @@ import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
 
 import java.util.ArrayList;
+import java.util.Collection;
 import java.util.Collections;
+import java.util.LinkedHashSet;
 import java.util.List;
 import java.util.Optional;
+import java.util.Set;
 import fr.cnrs.opentheso.v2.concept.model.ConceptTreeNodeKinds;
 
 @Service
@@ -275,6 +279,118 @@ public class ConceptReadService {
             return conceptQueryRepository.countConceptsInGroup(thesaurusId, conceptId);
         }
         return 1 + conceptQueryRepository.countDescendantConcepts(thesaurusId, conceptId);
+    }
+
+    @Transactional(readOnly = true)
+    public List<ConceptSubtreeMember> listSubtreeMembers(
+            String thesaurusId,
+            Collection<String> rootIds,
+            String lang,
+            boolean wholeThesaurus
+    ) {
+        if (StringUtils.isBlank(thesaurusId)) {
+            return List.of();
+        }
+        String workLang = StringUtils.defaultIfBlank(lang, "fr");
+        if (wholeThesaurus) {
+            return toSubtreeMembers(
+                    conceptQueryRepository.findAllConceptMemberRows(thesaurusId, workLang),
+                    Set.of(),
+                    ConceptSubtreeMember.DIRECT
+            );
+        }
+        List<String> roots = rootIds == null ? List.of() : rootIds.stream()
+                .filter(StringUtils::isNotBlank)
+                .distinct()
+                .toList();
+        if (roots.isEmpty()) {
+            return List.of();
+        }
+        Set<String> groupIds = new LinkedHashSet<>();
+        for (String groupId : conceptQueryRepository.findExistingGroupIds(thesaurusId, roots)) {
+            if (StringUtils.isNotBlank(groupId)) {
+                groupIds.add(groupId.toLowerCase());
+            }
+        }
+        Set<String> direct = new LinkedHashSet<>();
+        List<String> groupRoots = new ArrayList<>();
+        for (String root : roots) {
+            if (groupIds.contains(root.toLowerCase())) {
+                groupRoots.add(root);
+            } else if (!ConceptTreeNodeKinds.FACET.equalsIgnoreCase(root)) {
+                direct.add(root);
+            }
+        }
+        if (!groupRoots.isEmpty()) {
+            direct.addAll(conceptQueryRepository.findConceptIdsInGroups(thesaurusId, groupRoots));
+        }
+        Set<String> all = new LinkedHashSet<>(direct);
+        if (!direct.isEmpty()) {
+            all.addAll(conceptQueryRepository.findDescendantConceptIds(thesaurusId, direct));
+        }
+        return toSubtreeMembers(
+                conceptQueryRepository.findConceptMemberRows(thesaurusId, all, workLang),
+                direct,
+                null
+        );
+    }
+
+    private static List<ConceptSubtreeMember> toSubtreeMembers(
+            List<Object[]> rows,
+            Set<String> directIds,
+            String forcedPlacement
+    ) {
+        if (rows == null || rows.isEmpty()) {
+            return List.of();
+        }
+        Set<String> directLower = new LinkedHashSet<>();
+        if (directIds != null) {
+            for (String id : directIds) {
+                if (StringUtils.isNotBlank(id)) {
+                    directLower.add(id.toLowerCase());
+                }
+            }
+        }
+        List<ConceptSubtreeMember> members = new ArrayList<>();
+        Set<String> seen = new LinkedHashSet<>();
+        for (Object[] row : rows) {
+            if (row == null || row.length < 3 || row[0] == null) {
+                continue;
+            }
+            String id = String.valueOf(row[0]);
+            if (!seen.add(id)) {
+                continue;
+            }
+            String label = row[1] == null ? id : String.valueOf(row[1]);
+            String dbStatus = row[2] == null ? "" : String.valueOf(row[2]);
+            int candidatStatus = row.length > 3 ? toInt(row[3]) : 0;
+            String placement = forcedPlacement != null
+                    ? forcedPlacement
+                    : (directLower.contains(id.toLowerCase())
+                            ? ConceptSubtreeMember.DIRECT
+                            : ConceptSubtreeMember.TRANSVERSAL);
+            members.add(new ConceptSubtreeMember(
+                    id,
+                    StringUtils.isBlank(label) ? id : label,
+                    ConceptTableConsultationService.uiStatus(dbStatus, candidatStatus),
+                    placement
+            ));
+        }
+        return List.copyOf(members);
+    }
+
+    private static int toInt(Object value) {
+        if (value instanceof Number number) {
+            return number.intValue();
+        }
+        if (value == null) {
+            return 0;
+        }
+        try {
+            return Integer.parseInt(value.toString());
+        } catch (NumberFormatException ignored) {
+            return 0;
+        }
     }
 
     private List<ConceptTreeNodeData> loadGroupChildren(

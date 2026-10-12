@@ -166,6 +166,56 @@ class ConceptReadServiceTest {
     }
 
     @Test
+    void listSubtreeMembers_includesDirectRootsAndTransversalDescendants() {
+        when(conceptQueryRepository.findExistingGroupIds(eq("TH1"), any())).thenReturn(List.of());
+        when(conceptQueryRepository.findDescendantConceptIds(eq("TH1"), any())).thenReturn(List.of("C2"));
+        when(conceptQueryRepository.findConceptMemberRows(eq("TH1"), any(), eq("fr"))).thenReturn(List.<Object[]>of(
+                new Object[]{"C1", "Parent", "D", 0},
+                new Object[]{"C2", "Child", "CA", 1}
+        ));
+
+        var members = service.listSubtreeMembers("TH1", List.of("C1"), "fr", false);
+
+        assertEquals(2, members.size());
+        assertEquals("C1", members.get(0).id());
+        assertEquals("direct", members.get(0).placement());
+        assertEquals("valide", members.get(0).status());
+        assertEquals("C2", members.get(1).id());
+        assertEquals("transversal", members.get(1).placement());
+        assertEquals("candidat", members.get(1).status());
+    }
+
+    @Test
+    void listSubtreeMembers_expandsGroupMembersAsDirect() {
+        when(conceptQueryRepository.findExistingGroupIds(eq("TH1"), any())).thenReturn(List.of("G1"));
+        when(conceptQueryRepository.findConceptIdsInGroups(eq("TH1"), any())).thenReturn(List.of("C1"));
+        when(conceptQueryRepository.findDescendantConceptIds(eq("TH1"), any())).thenReturn(List.of("C2"));
+        when(conceptQueryRepository.findConceptMemberRows(eq("TH1"), any(), eq("fr"))).thenReturn(List.<Object[]>of(
+                new Object[]{"C1", "Member", "D", 0},
+                new Object[]{"C2", "Desc", "D", 0}
+        ));
+
+        var members = service.listSubtreeMembers("TH1", List.of("G1"), "fr", false);
+
+        assertEquals(2, members.size());
+        assertEquals("direct", members.get(0).placement());
+        assertEquals("transversal", members.get(1).placement());
+    }
+
+    @Test
+    void listSubtreeMembers_wholeThesaurusUsesCatalogRows() {
+        when(conceptQueryRepository.findAllConceptMemberRows("TH1", "fr")).thenReturn(List.<Object[]>of(
+                new Object[]{"C1", "One", "D", 0}
+        ));
+
+        var members = service.listSubtreeMembers("TH1", List.of(), "fr", true);
+
+        assertEquals(1, members.size());
+        assertEquals("direct", members.get(0).placement());
+        verify(conceptQueryRepository, never()).findDescendantConceptIds(any(), any());
+    }
+
+    @Test
     void loadRootNodes_conceptTab_returnsTopConcepts() {
         when(authenticatedUserSource.isLoggedIn()).thenReturn(false);
         when(thesaurusPreferenceService.loadPreferencesOrNull("TH1", "fr")).thenReturn(null);

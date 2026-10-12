@@ -2,7 +2,8 @@
 <ui:composition xmlns="http://www.w3.org/1999/xhtml"
                 xmlns:ui="http://xmlns.jcp.org/jsf/facelets"
                 xmlns:h="http://xmlns.jcp.org/jsf/html"
-                xmlns:f="http://xmlns.jcp.org/jsf/core">
+                xmlns:f="http://xmlns.jcp.org/jsf/core"
+                xmlns:pt="http://xmlns.jcp.org/jsf/passthrough">
       <aside class="sidebar" id="sidebar">
         <div class="sidebar-head">
           <div class="th-id-row">
@@ -182,28 +183,66 @@
                     </div>
                   </div>
                 </div>
-                <div class="vo-pop-row" id="voSortRow">
-                  <span class="vo-pop-l">Tri</span>
-                  <h:form id="previewTreeSortForm" prependId="false" styleClass="vo-seg">
+                <div class="vo-sort" id="voSortRow">
+                  <div class="vo-sort-h">Tri</div>
+                  <h:form id="previewTreeSortForm" prependId="false" styleClass="vo-sort-opts">
                     <span id="previewTreeSortState" hidden="hidden"
                           data-tree-sort="#{v2ThesaurusViewBean.sortByNotation ? 'nota' : 'alpha'}"></span>
-                    <h:commandButton id="previewTreeSortAlphaGo" value="A→Z"
-                                     styleClass="vo-seg-b#{v2ThesaurusViewBean.sortByNotation ? '' : ' is-on'}"
-                                     action="#{v2ThesaurusViewBean.setAlphabeticSort}">
+                    <h:commandLink id="previewTreeSortAlphaGo"
+                                   styleClass="vo-sort-b#{v2ThesaurusViewBean.sortByNotation ? '' : ' is-on'}"
+                                   action="#{v2ThesaurusViewBean.setAlphabeticSort}"
+                                   pt:data-sort="alpha"
+                                   title="Trier par ordre alphabétique">
                       <f:ajax execute="@this" render="previewTreeSortForm :previewTree"/>
-                    </h:commandButton>
-                    <h:commandButton id="previewTreeSortNotaGo" value="Notation"
-                                     styleClass="vo-seg-b#{v2ThesaurusViewBean.sortByNotation ? ' is-on' : ''}"
-                                     action="#{v2ThesaurusViewBean.setNotationSort}">
+                      <span class="vo-sort-ico" aria-hidden="true">
+                        <svg viewBox="0 0 24 24"><path d="m3 16 4 4 4-4"/><path d="M7 20V4"/><path d="M11 4h10"/><path d="M11 8h7"/><path d="M11 12h4"/></svg>
+                      </span>
+                      <span class="vo-sort-copy">
+                        <span class="vo-sort-t">Alphabétique</span>
+                        <span class="vo-sort-d">A → Z, selon le libellé</span>
+                      </span>
+                      <span class="vo-sort-tick" aria-hidden="true"></span>
+                    </h:commandLink>
+                    <h:commandLink id="previewTreeSortNotaGo"
+                                   styleClass="vo-sort-b#{v2ThesaurusViewBean.sortByNotation ? ' is-on' : ''}"
+                                   action="#{v2ThesaurusViewBean.setNotationSort}"
+                                   pt:data-sort="nota"
+                                   title="Trier par notation">
                       <f:ajax execute="@this" render="previewTreeSortForm :previewTree"/>
-                    </h:commandButton>
+                      <span class="vo-sort-ico" aria-hidden="true">
+                        <svg viewBox="0 0 24 24"><path d="M4 6h16"/><path d="M4 12h10"/><path d="M4 18h16"/><path d="M16 10v8"/><path d="m13 15 3 3 3-3"/></svg>
+                      </span>
+                      <span class="vo-sort-copy">
+                        <span class="vo-sort-t">Notation</span>
+                        <span class="vo-sort-d">Code documentaire</span>
+                      </span>
+                      <span class="vo-sort-tick" aria-hidden="true"></span>
+                    </h:commandLink>
                   </h:form>
                 </div>
-                <div class="vo-pop-row" id="voColSortRow" hidden="hidden">
-                  <span class="vo-pop-l">Tri</span>
-                  <div class="vo-seg">
-                    <button type="button" class="vo-seg-b is-on" data-act="col-sort" data-sort="alpha">A→Z</button>
-                    <button type="button" class="vo-seg-b" data-act="col-sort" data-sort="nota">Notation</button>
+                <div class="vo-sort" id="voColSortRow" hidden="hidden">
+                  <div class="vo-sort-h">Tri</div>
+                  <div class="vo-sort-opts">
+                    <button type="button" class="vo-sort-b is-on" data-act="col-sort" data-sort="alpha" title="Trier par ordre alphabétique">
+                      <span class="vo-sort-ico" aria-hidden="true">
+                        <svg viewBox="0 0 24 24"><path d="m3 16 4 4 4-4"/><path d="M7 20V4"/><path d="M11 4h10"/><path d="M11 8h7"/><path d="M11 12h4"/></svg>
+                      </span>
+                      <span class="vo-sort-copy">
+                        <span class="vo-sort-t">Alphabétique</span>
+                        <span class="vo-sort-d">A → Z, selon le libellé</span>
+                      </span>
+                      <span class="vo-sort-tick" aria-hidden="true"></span>
+                    </button>
+                    <button type="button" class="vo-sort-b" data-act="col-sort" data-sort="nota" title="Trier par notation">
+                      <span class="vo-sort-ico" aria-hidden="true">
+                        <svg viewBox="0 0 24 24"><path d="M4 6h16"/><path d="M4 12h10"/><path d="M4 18h16"/><path d="M16 10v8"/><path d="m13 15 3 3 3-3"/></svg>
+                      </span>
+                      <span class="vo-sort-copy">
+                        <span class="vo-sort-t">Notation</span>
+                        <span class="vo-sort-d">Code documentaire</span>
+                      </span>
+                      <span class="vo-sort-tick" aria-hidden="true"></span>
+                    </button>
                   </div>
                 </div>
                 <div class="vo-pop-row" id="voSearchOpts" hidden="hidden">
@@ -342,7 +381,9 @@
             <table class="flat">
               <thead>
                 <tr>
-                  <th class="flat-check-h"><span class="tn-check" data-act="sel-all"></span></th>
+                  <ui:fragment rendered="#{v2ConsultationShellBean.adminOnCurrentThesaurus}">
+                    <th class="flat-check-h"><span class="tn-check" data-act="sel-all"></span></th>
+                  </ui:fragment>
                   <th class="flat-th is-sorted" data-act="tbl-sort" data-col="concept"><span class="flat-th-l">Concept</span><span class="flat-th-s">▲</span></th>
                   <th class="flat-th col-status" data-act="tbl-sort" data-col="status"><span class="flat-th-l">Statut</span><span class="flat-th-s">↕</span></th>
                   <th class="flat-th col-type" data-act="tbl-sort" data-col="type"><span class="flat-th-l">Type</span><span class="flat-th-s">↕</span></th>
@@ -352,7 +393,7 @@
               </thead>
               <tbody>
                 <tr class="flat-empty-row" data-empty="1">
-                  <td colspan="6">Aucun concept à afficher.</td>
+                  <td colspan="#{v2ConsultationShellBean.adminOnCurrentThesaurus ? 6 : 5}">Aucun concept à afficher.</td>
                 </tr>
               </tbody>
             </table>
@@ -372,6 +413,7 @@
           </div>
         </div>
 
+        <ui:fragment rendered="#{v2ConsultationShellBean.adminOnCurrentThesaurus}">
         <div class="bulksel bulksel-mini" id="bulkSel">
           <span class="bulksel-mini-n"><b id="bulkN">0</b> sélectionné<span id="bulkPlural">s</span></span>
           <button type="button" class="bulksel-all" data-act="sel-all-visible" title="Sélectionner tous les concepts du thésaurus">Tout</button>
@@ -379,5 +421,6 @@
             <svg viewBox="0 0 24 24" aria-hidden="true"><path d="M18 6 6 18"/><path d="M6 6l12 12"/></svg>
           </button>
         </div>
+        </ui:fragment>
       </aside>
 </ui:composition>

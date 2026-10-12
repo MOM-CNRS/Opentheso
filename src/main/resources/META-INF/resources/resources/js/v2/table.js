@@ -187,12 +187,15 @@ function tableRowHtml(row) {
   const candOn = escapeHtml(row.candidateOn || "");
   const cls = (status === "candidat" ? "is-candidate" : "")
     + (state.conceptId && state.conceptId === rawId ? " is-active" : "");
+  const check = (typeof canTreeSelect === "function" && !canTreeSelect())
+    ? ""
+    : '<td class="flat-check-c" data-act="sel-id" data-id="' + id + '"><span class="tn-check"></span></td>';
   return '<tr data-act="open" data-id="' + id + '" data-status="' + status
     + '" data-cand-by="' + candBy + '" data-cand-on="' + candOn
     + '" data-type="concept" data-s-concept="' + label + '" data-s-status="' + status
     + '" data-s-type="' + type + '" data-s-notation="' + escapeHtml(notation)
     + '" data-s-path="' + path + '" class="' + cls.trim() + '">'
-    + '<td class="flat-check-c" data-act="sel-id" data-id="' + id + '"><span class="tn-check"></span></td>'
+    + check
     + '<td class="flat-name"><span class="flat-text">' + label + "</span></td>"
     + '<td class="col-status"><span class="st-pill st-' + status + '"><span class="st-dot st-'
     + status + '"></span>' + statusLabel + "</span></td>"
@@ -213,7 +216,8 @@ function renderTablePage() {
   const start = (state.tblPage - 1) * size;
   const pageRows = filtered.slice(start, start + size);
   if (!filtered.length) {
-    body.innerHTML = '<tr class="flat-empty-row" data-empty="1"><td colspan="6">'
+    const cols = (typeof canTreeSelect === "function" && !canTreeSelect()) ? "5" : "6";
+    body.innerHTML = '<tr class="flat-empty-row" data-empty="1"><td colspan="' + cols + '">'
       + "Aucun concept ne correspond aux filtres.</td></tr>";
   } else {
     body.innerHTML = pageRows.map(tableRowHtml).join("");

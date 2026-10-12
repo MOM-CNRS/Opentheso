@@ -41,6 +41,10 @@ function isTreeLoggedIn() {
   return document.body.getAttribute("data-logged-in") === "1";
 }
 
+function canTreeSelect() {
+  return document.body.getAttribute("data-tree-select") === "1";
+}
+
 function readTreeStatusPref() {
   try {
     const raw = JSON.parse(document.body.getAttribute("data-tree-status") || "");
@@ -92,6 +96,9 @@ var state = {
   subtreeSize: new Map(),
   subtreeSizePending: new Map(),
   selectedAllThesaurus: false,
+  statusMemberList: [],
+  statusMemberKey: "",
+  statusMemberReq: 0,
   statusSet: new Set(readTreeStatusPref()),
   candBy: "",
   candFrom: "",
@@ -112,7 +119,6 @@ var state = {
   searchMode: "FULL_TEXT",
   searchNote: false,
   searchStartWithQuery: "",
-  searchAllLang: false,
   searchHits: [],
   searchTotal: 0,
   searchTitle: "",

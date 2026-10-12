@@ -215,7 +215,7 @@ function setCollectionSort(sort) {
   const next = sort === "nota" ? "nota" : "alpha";
   if (state.colSort === next) return;
   state.colSort = next;
-  $$("#voColSortRow .vo-seg-b").forEach(b => {
+  $$("#voColSortRow .vo-sort-b").forEach(b => {
     b.classList.toggle("is-on", b.getAttribute("data-sort") === next);
   });
   invalidateCollectionTree();

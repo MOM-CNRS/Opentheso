@@ -13,7 +13,6 @@ function searchMsg(name, fallback) {
 }
 
 function searchLangParam() {
-  if (state.searchAllLang) return "all";
   return (typeof thesaurusLang === "function" && thesaurusLang()) || "fr";
 }
 
@@ -46,10 +45,16 @@ function setAcIdx(i) {
   rows.forEach((row, n) => row.classList.toggle("is-active", n === i));
 }
 
-function hitIcon(kind) {
-  if (kind === "group") return "▤";
-  if (kind === "facet") return "◇";
-  return "◆";
+function hitKindLabel(kind) {
+  if (kind === "group") return searchMsg("data-kind-group", "Collection");
+  if (kind === "facet") return searchMsg("data-kind-facet", "Facette");
+  return searchMsg("data-kind-concept", "Concept");
+}
+
+function hitKindClass(kind) {
+  if (kind === "group") return "ac-kind-group";
+  if (kind === "facet") return "ac-kind-facet";
+  return "ac-kind-concept";
 }
 
 function hitNodeType(kind) {
@@ -65,7 +70,7 @@ function viaHtml(hit) {
   if (hit.kind === "alt" && hit.via) {
     const label = escapeHtml(searchMsg("data-msg-via-syn", "synonyme"));
     return '<span class="ac-via ac-via-syn is-on" data-q="' + escapeHtml(norm(hit.via)) + '">'
-      + label + " : <em>" + escapeHtml(hit.via) + "</em></span>";
+      + label + " <em>" + escapeHtml(hit.via) + "</em></span>";
   }
   return "";
 }
@@ -84,15 +89,23 @@ function resultViaHtml(hit) {
 
 function suggestionHtml(hit) {
   const type = hitNodeType(hit.kind);
+  const kind = hitKindClass(hit.kind);
+  const kindLabel = hitKindLabel(hit.kind);
   const dep = hit.deprecated ? " is-dep" : "";
   const match = hit.via === "note" ? " match-note" : (hit.kind === "alt" ? " match-syn" : "");
+  const extra = type !== "concept"
+    ? '<span class="ac-type">' + escapeHtml(kindLabel) + "</span>"
+    : "";
+  const via = viaHtml(hit);
+  const path = hit.path ? '<span class="path">' + escapeHtml(hit.path) + "</span>" : "";
+  const meta = via || path ? '<span class="ac-meta">' + via + path + "</span>" : "";
   return '<button type="button" class="ac-row is-shown' + dep + match + '" data-act="open"'
     + ' data-id="' + escapeHtml(hit.id) + '" data-type="' + type + '"'
     + ' data-label="' + escapeHtml(hit.label || hit.id) + '">'
-    + '<span class="ac-ico">' + hitIcon(hit.kind) + "</span>"
-    + '<span class="ac-body"><span class="ac-pref">' + escapeHtml(hit.label || hit.id) + "</span>"
-    + viaHtml(hit)
-    + (hit.path ? '<span class="path">' + escapeHtml(hit.path) + "</span>" : "")
+    + '<span class="ac-kind ' + kind + '" title="' + escapeHtml(kindLabel) + '" aria-hidden="true"></span>'
+    + '<span class="ac-body"><span class="ac-pref-row"><span class="ac-pref">'
+    + escapeHtml(hit.label || hit.id) + "</span>" + extra + "</span>"
+    + meta
     + "</span></button>";
 }
 
@@ -129,10 +142,73 @@ function unwrapQuotes(text) {
   return inner || null;
 }
 
+var SEARCH_OP_KEYS = "note|notes|id|ark|identifiant|notation|nota|pref|label|libelle|syn|alt|synonyme";
+
+function hasSearchOps(text) {
+  return new RegExp("(?:^|\\s)(" + SEARCH_OP_KEYS + ")\\s*:", "i").test(text || "");
+}
+
+function hasCompleteSearch(text) {
+  const raw = (text || "").trim();
+  if (!raw) return false;
+  if (!hasSearchOps(raw)) return true;
+  if (new RegExp("(?:^|\\s)(" + SEARCH_OP_KEYS + ")\\s*:\\s*\\S", "i").test(raw)) return true;
+  const rest = raw.replace(new RegExp("(?:^|\\s)(" + SEARCH_OP_KEYS + ")\\s*:", "gi"), " ").trim();
+  return rest.length > 0;
+}
+
+function paintOpChips(raw) {
+  $$("[data-search-op]").forEach((chip) => {
+    const key = chip.getAttribute("data-search-op");
+    if (!key) return;
+    const on = new RegExp("(?:^|\\s)" + key + "\\s*:", "i").test(raw || "");
+    chip.setAttribute("aria-pressed", on ? "true" : "false");
+  });
+}
+
+function insertSearchOp(key) {
+  const input = $("#searchInput");
+  if (!input || !key) return;
+  const re = new RegExp("(^|\\s)" + key + "\\s*:\\s*\\S*", "i");
+  let value = input.value || "";
+  if (re.test(value)) {
+    value = value.replace(re, "$1").replace(/\s+/g, " ").trim();
+    input.value = value;
+  } else {
+    value = value.replace(/\s+$/, "");
+    input.value = value ? value + " " + key + ":" : key + ":";
+  }
+  input.focus();
+  const pos = input.value.length;
+  try { input.setSelectionRange(pos, pos); } catch (_) {}
+  const live = input.value;
+  paintSearchHint(live);
+  if (hasCompleteSearch(live)) filterAc(live);
+  else showIncompleteOpHelp();
+}
+
+function showIncompleteOpHelp() {
+  const box = $("#searchBox");
+  const ac = $("#ac");
+  const list = $("#acList");
+  const programs = $("#acPrograms");
+  const start = $("#acStartWith");
+  const more = $("#acSeeAll");
+  if (list) list.innerHTML = "";
+  if (programs) programs.hidden = true;
+  if (start) start.hidden = true;
+  if (more) more.hidden = true;
+  state.acIdx = -1;
+  if (ac) ac.classList.remove("has-hits", "is-empty", "is-programs");
+  if (box) box.classList.add("is-open");
+  const input = $("#searchInput");
+  paintAcHead(input ? input.value : "", -1);
+}
+
 function activeSearch(raw) {
   const text = (raw || "").trim();
-  if (state.searchNote) {
-    return { mode: "NOTE", q: text, hint: searchMsg("data-hint-note", "Note") };
+  if (hasSearchOps(text)) {
+    return { mode: "FULL_TEXT", q: text, hint: searchMsg("data-hint-ops", "Combiné") };
   }
   const quoted = unwrapQuotes(text);
   if (quoted) {
@@ -155,11 +231,49 @@ function paintSearchHint(raw) {
   if (hint) hint.textContent = parsed.hint;
   const input = $("#searchInput");
   if (input) {
-    input.placeholder = state.searchNote
-      ? searchMsg("data-placeholder-note", "Rechercher dans les notes")
-      : searchMsg("data-placeholder", "Rechercher…");
+    input.placeholder = searchMsg("data-placeholder", "Rechercher…");
   }
+  paintOpChips(raw);
   return parsed;
+}
+
+function highlightNeedle(raw) {
+  const text = (raw || "").trim();
+  if (!text) return "";
+  if (!hasSearchOps(text)) {
+    return unwrapQuotes(text) || text;
+  }
+  const rest = text.replace(
+    new RegExp("(?:^|\\s)(" + SEARCH_OP_KEYS + ")\\s*:\\s*(?:\"[^\"]*\"|«[^»]*»|\\S+)", "gi"),
+    " "
+  ).trim();
+  if (rest) return unwrapQuotes(rest) || rest;
+  const match = text.match(
+    new RegExp("(?:^|\\s)(" + SEARCH_OP_KEYS + ")\\s*:\\s*(?:\"([^\"]+)\"|«([^»]+)»|(\\S+))", "i")
+  );
+  return (match && (match[2] || match[3] || match[4])) || text;
+}
+
+function paintAcHead(query, total) {
+  const head = $("#acHead");
+  const word = $("#acQuery");
+  const mode = $("#acHeadMode");
+  const count = $("#acHeadN");
+  const parsed = activeSearch(query || "");
+  const q = (query || "").trim();
+  if (word) word.textContent = q;
+  if (mode) {
+    mode.textContent = parsed.hint || "";
+    mode.hidden = !parsed.hint;
+  }
+  if (count) {
+    const n = typeof total === "number" ? total : -1;
+    count.hidden = n < 0;
+    if (n >= 0) {
+      count.textContent = n + " " + searchMsg("data-msg-results", "résultat(s)");
+    }
+  }
+  if (head) head.hidden = !q;
 }
 
 function showEmptySearchHelp() {
@@ -173,15 +287,16 @@ function showEmptySearchHelp() {
   const more = $("#acSeeAll");
   if (more) more.hidden = true;
   state.acIdx = -1;
-  if (!programs || !box || !ac) {
-    if (box) box.classList.remove("is-open");
-    if (ac) ac.classList.remove("is-programs", "has-hits", "is-empty");
-    return;
+  if (!box || !ac) return;
+  if (programs) {
+    programs.hidden = false;
+    ac.classList.add("is-programs");
+  } else {
+    ac.classList.remove("is-programs");
   }
-  programs.hidden = false;
-  ac.classList.add("is-programs");
   ac.classList.remove("has-hits", "is-empty");
   box.classList.add("is-open");
+  paintAcHead("", -1);
 }
 
 function paintSuggestions(data, query) {
@@ -195,8 +310,7 @@ function paintSuggestions(data, query) {
   const hits = (data && data.hits) || [];
   const total = (data && data.total) || hits.length;
   list.innerHTML = hits.map(suggestionHtml).join("");
-  const q = $("#acQuery");
-  if (q) q.textContent = query;
+  paintAcHead(query, total);
   ac.classList.toggle("has-hits", hits.length > 0);
   ac.classList.toggle("is-empty", hits.length === 0);
   box.classList.add("is-open");
@@ -204,7 +318,7 @@ function paintSuggestions(data, query) {
   const parsed = activeSearch(query);
   const offer = $("#acStartWith");
   const folded = norm(query.trim());
-  const canOffer = parsed.mode === "FULL_TEXT" && folded.length >= 2
+  const canOffer = parsed.mode === "FULL_TEXT" && !hasSearchOps(query) && folded.length >= 2
     && hits.some((hit) => norm(hit.label || "").startsWith(folded));
   if (offer) {
     offer.hidden = !canOffer;
@@ -223,16 +337,18 @@ function paintSuggestions(data, query) {
 function filterAc(query) {
   const q = (query || "").trim();
   clearTimeout(filterAc._t);
-  const box = $("#searchBox");
-  const ac = $("#ac");
   if (!q) {
     searchRequest += 1;
     paintSearchHint("");
     showEmptySearchHelp();
-    if (box && ac && !$("#acPrograms")) box.classList.remove("is-open");
     return;
   }
   paintSearchHint(q);
+  if (!hasCompleteSearch(q)) {
+    searchRequest += 1;
+    showIncompleteOpHelp();
+    return;
+  }
   filterAc._t = setTimeout(() => fetchSuggestions(q), 280);
 }
 
@@ -378,6 +494,11 @@ function runSearch() {
     showEmptySearchHelp();
     return;
   }
+  if (!hasCompleteSearch(raw)) {
+    paintSearchHint(raw);
+    showIncompleteOpHelp();
+    return;
+  }
   const parsed = paintSearchHint(raw);
   if (!parsed.q) return;
   const theso = typeof thesaurusId === "function" ? thesaurusId() : "";
@@ -449,26 +570,12 @@ function runProgrammedSearch(kind, title) {
 }
 
 function bindSearchModes() {
-  const note = $("#searchNoteToggle");
-  if (note) {
-    note.addEventListener("click", () => {
-      state.searchNote = !state.searchNote;
-      if (state.searchNote) state.searchStartWithQuery = "";
-      note.setAttribute("aria-pressed", state.searchNote ? "true" : "false");
-      const input = $("#searchInput");
-      paintSearchHint(input ? input.value : "");
-      if (input && input.value.trim()) filterAc(input.value);
+  $$("[data-search-op]").forEach((chip) => {
+    chip.addEventListener("click", () => {
+      state.searchStartWithQuery = "";
+      insertSearchOp(chip.getAttribute("data-search-op"));
     });
-  }
-  const allLang = $("#searchAllLang");
-  if (allLang) {
-    allLang.addEventListener("click", () => {
-      state.searchAllLang = !state.searchAllLang;
-      allLang.setAttribute("aria-pressed", state.searchAllLang ? "true" : "false");
-      const input = $("#searchInput");
-      if (input && input.value.trim()) filterAc(input.value);
-    });
-  }
+  });
   $$("[data-search-programmed]").forEach((item) => {
     item.addEventListener("click", () => {
       const label = item.querySelector(".smm-l");
@@ -480,10 +587,8 @@ function bindSearchModes() {
     start.addEventListener("click", () => {
       const input = $("#searchInput");
       const q = ((input && input.value) || "").trim();
-      if (!q) return;
-      state.searchNote = false;
+      if (!q || hasSearchOps(q)) return;
       state.searchStartWithQuery = q;
-      if (note) note.setAttribute("aria-pressed", "false");
       filterAc(q);
     });
   }
@@ -541,8 +646,9 @@ function paintQueryHighlight() {
   if (!state.highlight) return;
   const live = (($("#searchInput") && $("#searchInput").value) || "").trim();
   if (live && $("#searchBox") && $("#searchBox").classList.contains("is-open")) {
+    const needle = highlightNeedle(live);
     $$("#ac .ac-row.is-shown .ac-pref, #ac .ac-row.is-shown .ac-via-syn.is-on em").forEach(el => {
-      wrapQueryIn(el, live);
+      wrapQueryIn(el, needle);
     });
   }
   const committed = (state.committed || "").trim();
@@ -616,8 +722,10 @@ function statusForestNodeHtml(node) {
     + ' data-cand-on="' + escapeHtml(node.candidateOn || "") + '"'
     + ' data-key="' + escapeHtml(node.label || node.id) + '">'
     + '<div class="' + rowCls + '">'
-    + (inactive ? '<span class="tn-check is-off"></span>'
-      : '<span class="tn-check" data-act="sel-node" data-id="' + escapeHtml(node.id) + '"></span>')
+    + (typeof canTreeSelect === "function" && canTreeSelect()
+      ? (inactive ? '<span class="tn-check is-off"></span>'
+        : '<span class="tn-check" data-act="sel-node" data-id="' + escapeHtml(node.id) + '"></span>')
+      : "")
     + '<div class="tn-rowmain" style="padding-left:' + pad + 'px">'
     + '<button type="button" class="tn-caret' + (node.hasChildren ? "" : " is-empty") + '"'
     + ' data-act="sf-toggle" aria-label="Déplier">'

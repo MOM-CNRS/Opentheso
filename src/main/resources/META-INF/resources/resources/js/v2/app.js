@@ -1587,6 +1587,7 @@ document.addEventListener("click", (e) => {
   }
   else if (act === "sel-node") {
     e.stopPropagation();
+    if (typeof canTreeSelect === "function" && !canTreeSelect()) return;
     const tn = t.closest(".tn");
     if (!tn) return;
     const ids = collectIds(tn);
@@ -1603,16 +1604,19 @@ document.addEventListener("click", (e) => {
     refreshSubtreeCounts();
   } else if (act === "sel-id") {
     e.stopPropagation();
+    if (typeof canTreeSelect === "function" && !canTreeSelect()) return;
     const id = t.getAttribute("data-id");
     if (id) setSelectedIds([id], !state.selected.has(id));
   } else if (act === "sel-all") {
     e.stopPropagation();
+    if (typeof canTreeSelect === "function" && !canTreeSelect()) return;
     const rows = $$("#panelTable tr[data-id]:not(.is-status-off)");
     const ids = rows.map(r => r.getAttribute("data-id"));
     const allOn = ids.length > 0 && ids.every(id => state.selected.has(id));
     setSelectedIds(ids, !allOn);
   } else if (act === "sel-all-visible") {
     e.stopPropagation();
+    if (typeof canTreeSelect === "function" && !canTreeSelect()) return;
     selectAllVisible();
   } else if (act === "clear-sel") {
     clearSelection();

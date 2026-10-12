@@ -212,6 +212,7 @@ function paintSelectedId(id, on) {
 }
 
 function setSelectedIds(ids, on) {
+  if (on && typeof canTreeSelect === "function" && !canTreeSelect()) return;
   if (!on) state.selectedAllThesaurus = false;
   ids.forEach(id => {
     if (on) state.selected.add(id);
@@ -342,6 +343,7 @@ function refreshSubtreeCounts() {
 }
 
 function bulkSelectionActive() {
+  if (typeof canTreeSelect === "function" && !canTreeSelect()) return false;
   const n = selectedCount();
   return n > 0 && (state.view === "arbo" || state.view === "tableau" || state.view === "hyper")
       && !state.conceptDraft && !state.facetDraft && !state.draft;
@@ -389,8 +391,7 @@ function updateBulk() {
   if (exportPanel && !exportPanel.hidden) refreshExportSummary();
   const statusPanel = $("#bulkStatus");
   if (statusPanel && !statusPanel.hidden) {
-    paintStatusMembers();
-    syncStatusRun();
+    loadStatusMembers();
   }
   const settingsOn = $("#viewSettings") && $("#viewSettings").classList.contains("is-on");
   if (settingsOn || state.conceptDraft || state.facetDraft || state.draft) return;
@@ -419,6 +420,7 @@ function visibleSelectableIds() {
 }
 
 function selectAllVisible() {
+  if (typeof canTreeSelect === "function" && !canTreeSelect()) return;
   const ids = visibleSelectableIds();
   if (!ids.length) return;
   setSelectedIds(ids, true);
@@ -626,27 +628,164 @@ function bulkAct(label) {
   clearSelection();
 }
 
-function selectedStatusMembers(action) {
-  const members = selectedCollectionMembers();
-  if (!action) return members;
-  return members.filter((id) => {
-    if (typeof treeNodes !== "function") return true;
-    const node = treeNodes().find((n) => n.getAttribute("data-id") === id);
-    if (!node) return true;
-    const st = (node.getAttribute("data-status") || "").toLowerCase();
-    if (action === "approve") return st === "candidat";
-    if (action === "deprecate") return !st || st === "valide" || st === "insere";
-    return true;
+function statusMemberKey() {
+  const theso = typeof thesaurusId === "function" ? thesaurusId() : "";
+  const lang = typeof thesaurusLang === "function" ? thesaurusLang() : "fr";
+  if (state.selectedAllThesaurus) return theso + "|" + lang + "|*";
+  const roots = typeof selectionRootIds === "function" ? selectionRootIds() : selectedCollectionMembers();
+  return theso + "|" + lang + "|" + roots.slice().sort().join("\n");
+}
+
+function statusMatchesAction(status, action) {
+  const st = String(status || "").toLowerCase();
+  if (action === "approve") return st === "candidat";
+  if (action === "deprecate") return !st || st === "valide" || st === "insere";
+  return true;
+}
+
+function fallbackStatusMembers() {
+  return selectedCollectionMembers().map((id) => {
+    const node = typeof treeNodes === "function"
+      ? treeNodes().find((n) => n.getAttribute("data-id") === id)
+      : null;
+    const prefEl = node && node.querySelector(".tn-text");
+    return {
+      id: id,
+      label: ((prefEl && prefEl.textContent) || "").trim() || id,
+      status: ((node && node.getAttribute("data-status")) || "").toLowerCase(),
+      placement: "direct"
+    };
   });
+}
+
+function currentStatusMembers() {
+  if (state.statusMemberKey === statusMemberKey() && Array.isArray(state.statusMemberList)) {
+    return state.statusMemberList;
+  }
+  return fallbackStatusMembers();
+}
+
+function selectedStatusMembers(action) {
+  const seen = new Set();
+  const ids = [];
+  currentStatusMembers().forEach((member) => {
+    if (!member || !member.id || seen.has(member.id)) return;
+    if (action && !statusMatchesAction(member.status, action)) return;
+    seen.add(member.id);
+    ids.push(member.id);
+  });
+  return ids;
+}
+
+function statusMemberChips(members) {
+  const chips = [];
+  (members || []).forEach((member) => {
+    if (!member || !member.id) return;
+    const nodes = typeof treeNodes === "function"
+      ? treeNodes().filter((n) => n.getAttribute("data-id") === member.id)
+      : [];
+    if (nodes.length > 1) {
+      nodes.forEach((node, index) => {
+        const prefEl = node.querySelector(".tn-text");
+        const pref = ((prefEl && prefEl.textContent) || "").trim() || member.label || member.id;
+        const path = (node.getAttribute("data-key") || "").replace(/\//g, " · ");
+        chips.push({
+          id: member.id,
+          label: path || pref,
+          status: member.status,
+          placement: index === 0 ? "direct" : "transversal",
+          title: path || member.id
+        });
+      });
+      return;
+    }
+    const node = nodes[0];
+    const prefEl = node && node.querySelector(".tn-text");
+    chips.push({
+      id: member.id,
+      label: ((prefEl && prefEl.textContent) || "").trim() || member.label || member.id,
+      status: member.status,
+      placement: member.placement || "direct",
+      title: member.id
+    });
+  });
+  return chips;
+}
+
+function loadStatusMembers() {
+  const host = $("#bulkStatusMembers");
+  if (!host) return;
+  const key = statusMemberKey();
+  if (state.statusMemberKey === key && Array.isArray(state.statusMemberList)) {
+    paintStatusMembers();
+    syncStatusRun();
+    return;
+  }
+  const ctx = document.body.getAttribute("data-ctx") || "";
+  const theso = typeof thesaurusId === "function" ? thesaurusId() : "";
+  const lang = typeof thesaurusLang === "function" ? thesaurusLang() : "fr";
+  const params = new URLSearchParams();
+  if (theso) params.set("thesaurusId", theso);
+  if (lang) params.set("lang", lang);
+  if (state.selectedAllThesaurus) {
+    params.set("all", "true");
+  } else {
+    const roots = typeof selectionRootIds === "function" ? selectionRootIds() : selectedCollectionMembers();
+    if (roots.length) params.set("ids", roots.join(","));
+  }
+  const req = (state.statusMemberReq || 0) + 1;
+  state.statusMemberReq = req;
+  paintStatusMembers();
+  syncStatusRun();
+  if (!theso || (!state.selectedAllThesaurus && !params.get("ids"))) {
+    state.statusMemberKey = key;
+    state.statusMemberList = fallbackStatusMembers();
+    paintStatusMembers();
+    syncStatusRun();
+    return;
+  }
+  fetch(ctx + "/v2/api/subtree-members?" + params.toString(), {
+    credentials: "same-origin",
+    headers: { Accept: "application/json" }
+  }).then((res) => (res.ok ? res.json() : []))
+    .then((rows) => {
+      if (state.statusMemberReq !== req) return;
+      const list = Array.isArray(rows) ? rows : [];
+      const byId = new Map();
+      list.forEach((row) => {
+        if (!row || !row.id) return;
+        byId.set(row.id, {
+          id: row.id,
+          label: row.label || row.id,
+          status: String(row.status || "").toLowerCase(),
+          placement: row.placement === "transversal" ? "transversal" : "direct"
+        });
+      });
+      fallbackStatusMembers().forEach((member) => {
+        if (!byId.has(member.id)) byId.set(member.id, member);
+      });
+      state.statusMemberKey = key;
+      state.statusMemberList = [...byId.values()];
+      paintStatusMembers();
+      syncStatusRun();
+    })
+    .catch(() => {
+      if (state.statusMemberReq !== req) return;
+      state.statusMemberKey = key;
+      state.statusMemberList = fallbackStatusMembers();
+      paintStatusMembers();
+      syncStatusRun();
+    });
 }
 
 function resetStatus() {
   hideBulkStatusConfirm();
   state.bulkStatusAction = "";
+  state.statusMemberKey = "";
+  state.statusMemberList = [];
   $$("#bulkStatus .bap-choice").forEach((btn) => btn.classList.remove("is-on"));
   showStatusErr("");
-  paintStatusMembers();
-  syncStatusRun();
+  loadStatusMembers();
 }
 
 function paintStatusMembers() {
@@ -654,8 +793,8 @@ function paintStatusMembers() {
   const count = $("#bulkStatusMemberN");
   if (!host) return;
   const action = state.bulkStatusAction || "";
-  const members = selectedStatusMembers(action);
-  const all = selectedCollectionMembers();
+  const all = currentStatusMembers();
+  const members = action ? all.filter((member) => statusMatchesAction(member.status, action)) : all;
   const esc = typeof escapeHtml === "function" ? escapeHtml : (v) => String(v);
   if (!all.length) {
     host.innerHTML = '<p class="bap-members-empty">Aucun concept dans la sélection. Les facettes ne changent pas de statut.</p>';
@@ -664,21 +803,18 @@ function paintStatusMembers() {
       ? '<p class="bap-members-empty">Aucun candidat dans la sélection.</p>'
       : '<p class="bap-members-empty">Aucun concept validé à rendre obsolète.</p>';
   } else {
-    const shown = (action ? members : all).slice(0, 28);
-    const extra = (action ? members : all).length - shown.length;
-    host.innerHTML = shown.map((id) => {
-      const node = typeof treeNodes === "function"
-        ? treeNodes().find((n) => n.getAttribute("data-id") === id)
-        : null;
-      const prefEl = node && node.querySelector(".tn-text");
-      const pref = ((prefEl && prefEl.textContent) || "").trim() || id;
-      const st = ((node && node.getAttribute("data-status")) || "").toLowerCase();
-      const cls = st === "candidat" ? " is-candidate" : (st === "deprecie" ? " is-deprecated" : "");
-      return '<span class="bap-chip' + cls + '" title="' + esc(id) + '">' + esc(pref) + "</span>";
-    }).join("") + (extra > 0 ? '<span class="bap-chip bap-chip-more">+' + extra + "</span>" : "");
+    host.innerHTML = statusMemberChips(members).map((chip) => {
+      const st = String(chip.status || "").toLowerCase();
+      const cls = (st === "candidat" ? " is-candidate" : (st === "deprecie" ? " is-deprecated" : ""))
+        + (chip.placement === "transversal" ? " is-transvers" : "");
+      const title = chip.placement === "transversal"
+        ? (chip.title || chip.id) + " · transvers"
+        : (chip.title || chip.id);
+      return '<span class="bap-chip' + cls + '" title="' + esc(title) + '">' + esc(chip.label) + "</span>";
+    }).join("");
   }
   if (count) {
-    const n = (action ? members : all).length;
+    const n = members.length;
     count.textContent = n + " concept" + (n > 1 ? "s" : "");
   }
   const hint = $("#bulkStatusHint span");
@@ -689,11 +825,15 @@ function paintStatusMembers() {
   }
 }
 
+function statusMembersReady() {
+  return state.statusMemberKey === statusMemberKey() && Array.isArray(state.statusMemberList);
+}
+
 function syncStatusRun() {
   const run = $("#bulkStatusRun");
   if (!run) return;
   const action = state.bulkStatusAction || "";
-  run.classList.toggle("is-off", !action || !selectedStatusMembers(action).length);
+  run.classList.toggle("is-off", !action || !statusMembersReady() || !selectedStatusMembers(action).length);
 }
 
 function pickStatusAction(action) {

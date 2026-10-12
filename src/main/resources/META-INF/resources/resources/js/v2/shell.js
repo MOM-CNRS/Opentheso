@@ -4215,7 +4215,7 @@ function paintViewPick() {
   const colSortRow = $("#voColSortRow");
   if (colSortRow) {
     colSortRow.hidden = state.view !== "collection";
-    $$("#voColSortRow .vo-seg-b").forEach(b => {
+    $$("#voColSortRow .vo-sort-b").forEach(b => {
       b.classList.toggle("is-on", b.getAttribute("data-sort") === state.colSort);
     });
   }

@@ -6,10 +6,14 @@
        data-msg-via-syn="#{v2LocaleBean.getMsg('v2.search.viaSyn')}"
        data-msg-results="#{v2LocaleBean.getMsg('search.result_found')}"
        data-msg-none="#{v2LocaleBean.getMsg('search.noResult')}"
+       data-kind-concept="#{v2LocaleBean.getMsg('leftbody.concept')}"
+       data-kind-group="#{v2LocaleBean.getMsg('leftbody.collection')}"
+       data-kind-facet="#{v2LocaleBean.getMsg('leftbody.facet')}"
        data-hint-full="#{v2LocaleBean.getMsg('search.elastic')}"
        data-hint-exact="#{v2LocaleBean.getMsg('search.exact')}"
        data-hint-id="#{v2LocaleBean.getMsg('search.identifier')}"
        data-hint-note="#{v2LocaleBean.getMsg('search.note')}"
+       data-hint-ops="#{v2LocaleBean.getMsg('search.combined')}"
        data-hint-start="#{v2LocaleBean.getMsg('search.startWith')}"
        data-hint-start-offer="#{v2LocaleBean.getMsg('v2.search.startOffer')}"
        data-placeholder="#{v2LocaleBean.getMsg('search.search')}…"
@@ -18,22 +22,13 @@
       <input type="text" class="search-input" id="searchInput" autocomplete="off" spellcheck="false"
              placeholder="#{v2LocaleBean.getMsg('search.search')}…"
              aria-label="#{v2LocaleBean.getMsg('search.search')}"
-             aria-autocomplete="list" aria-controls="ac"/>
+             aria-autocomplete="list" aria-controls="acList"/>
       <button type="button" class="search-clear" id="searchClear" hidden="hidden"
               title="#{v2LocaleBean.getMsg('v2.search.clear')}"
               aria-label="#{v2LocaleBean.getMsg('v2.search.clear')}">×</button>
       <button type="button" class="search-go" id="searchGo">#{v2LocaleBean.getMsg('search.search')}</button>
     </div>
-    <div class="search-assist" id="searchAssist">
-      <span class="search-hint" id="searchModeHint">#{v2LocaleBean.getMsg('search.elastic')}</span>
-      <button type="button" class="search-chip" id="searchNoteToggle" aria-pressed="false">
-        #{v2LocaleBean.getMsg('search.note')}
-      </button>
-      <button type="button" class="search-chip" id="searchAllLang" aria-pressed="false">
-        #{v2LocaleBean.getMsg('search.any_language')}
-      </button>
-    </div>
-    <div class="ac" id="ac" role="listbox">
+    <div class="ac" id="ac">
       <ui:fragment rendered="#{v2UserSession.loggedIn}">
         <div class="ac-programs" id="acPrograms" hidden="hidden">
           <div class="smm-h">#{v2LocaleBean.getMsg('search.preprogrammedSearch')}</div>
@@ -63,16 +58,40 @@
           </button>
         </div>
       </ui:fragment>
-      <div class="ac-empty">#{v2LocaleBean.getMsg('search.noResult')} « <span id="acQuery"></span> »</div>
+      <div class="ac-head" id="acHead" hidden="hidden">
+        <div class="ac-head-main">
+          <span class="ac-head-word">« <b id="acQuery"></b> »</span>
+          <span class="ac-head-mode" id="acHeadMode"></span>
+        </div>
+        <span class="ac-head-n" id="acHeadN" hidden="hidden"></span>
+      </div>
+      <div class="ac-empty">
+        <p class="ac-empty-msg">#{v2LocaleBean.getMsg('search.noResult')}</p>
+      </div>
       <button type="button" class="ac-start" id="acStartWith" hidden="hidden">
-        <span id="acStartWithLabel">#{v2LocaleBean.getMsg('v2.search.startOffer')}</span>
-        « <span id="acStartWithQ"></span> »
+        <span class="ac-start-kicker" id="acStartWithLabel">#{v2LocaleBean.getMsg('v2.search.startOffer')}</span>
+        <span class="ac-start-q">« <b id="acStartWithQ"></b> »</span>
       </button>
-      <div id="acList"></div>
+      <div id="acList" role="listbox"></div>
       <button type="button" class="ac-footer" id="acSeeAll" hidden="hidden">
-        #{v2LocaleBean.getMsg('v2.search.seeAll')} <strong id="acSeeAllN"></strong>
+        <span>#{v2LocaleBean.getMsg('v2.search.seeAll')} <strong id="acSeeAllN"></strong></span>
         <span class="ac-enter">↵</span>
       </button>
+      <div class="ac-ops" id="searchOpsBar">
+        <span class="search-hint" id="searchModeHint">#{v2LocaleBean.getMsg('search.elastic')}</span>
+        <div class="search-ops" id="searchOps" role="group" aria-label="#{v2LocaleBean.getMsg('search.combined')}">
+          <button type="button" class="search-chip search-op" data-search-op="note" aria-pressed="false"
+                  title="#{v2LocaleBean.getMsg('search.op.note.title')}">note:</button>
+          <button type="button" class="search-chip search-op" data-search-op="id" aria-pressed="false"
+                  title="#{v2LocaleBean.getMsg('search.op.id.title')}">id:</button>
+          <button type="button" class="search-chip search-op" data-search-op="notation" aria-pressed="false"
+                  title="#{v2LocaleBean.getMsg('search.op.notation.title')}">notation:</button>
+          <button type="button" class="search-chip search-op" data-search-op="pref" aria-pressed="false"
+                  title="#{v2LocaleBean.getMsg('search.op.pref.title')}">pref:</button>
+          <button type="button" class="search-chip search-op" data-search-op="syn" aria-pressed="false"
+                  title="#{v2LocaleBean.getMsg('search.op.syn.title')}">syn:</button>
+        </div>
+      </div>
     </div>
   </div>
 </ui:composition>

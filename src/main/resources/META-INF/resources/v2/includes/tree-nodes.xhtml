@@ -15,8 +15,10 @@
          data-cand-by="#{node.candidateBy}"
          data-cand-on="#{node.candidateOn}">
       <div class="tn-row#{node.candidate ? ' is-candidate' : ''}#{node.rejected ? ' is-rejected' : ''}#{node.deprecated ? ' is-deprecated' : ''}#{node.facet ? ' is-facet' : ''}#{v2ThesaurusViewBean.revealedConceptId eq node.id ? ' is-active' : ''}">
-        <span class="tn-check" data-act="sel-node" data-id="#{node.id}" data-key="#{node.path}"
-              title="Sélectionner (avec ses enfants)"></span>
+        <ui:fragment rendered="#{v2ConsultationShellBean.adminOnCurrentThesaurus}">
+          <span class="tn-check" data-act="sel-node" data-id="#{node.id}" data-key="#{node.path}"
+                title="Sélectionner (avec ses enfants)"></span>
+        </ui:fragment>
         <div class="tn-rowmain" style="padding-left:#{node.pad}">
           <h:commandLink styleClass="tn-caret#{node.hasChildren ? '' : ' is-empty'}"
                          action="#{v2ThesaurusViewBean.toggleTreeNode(node.path)}"

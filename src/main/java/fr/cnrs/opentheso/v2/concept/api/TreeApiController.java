@@ -1,6 +1,7 @@
 package fr.cnrs.opentheso.v2.concept.api;
 
 import fr.cnrs.opentheso.v2.concept.api.dto.TreeStatusForestNode;
+import fr.cnrs.opentheso.v2.concept.model.ConceptSubtreeMember;
 import fr.cnrs.opentheso.v2.concept.service.ConceptReadService;
 import fr.cnrs.opentheso.v2.concept.service.TreeStatusForestService;
 import fr.cnrs.opentheso.v2.setting.ui.ThesaurusContext;
@@ -36,6 +37,31 @@ public class TreeApiController {
                 ? 0
                 : conceptReadService.countSubtreeConcepts(resolvedThesaurusId, id, nodeType);
         return Map.of("id", id, "size", size);
+    }
+
+    @GetMapping(value = "/subtree-members", produces = MediaType.APPLICATION_JSON_VALUE)
+    public List<ConceptSubtreeMember> subtreeMembers(
+            @RequestParam(required = false) String ids,
+            @RequestParam(required = false) String thesaurusId,
+            @RequestParam(required = false) String lang,
+            @RequestParam(required = false, defaultValue = "false") boolean all
+    ) {
+        String resolvedThesaurusId = StringUtils.firstNonBlank(thesaurusId, thesaurusContext.resolveThesaurusId());
+        if (StringUtils.isBlank(resolvedThesaurusId)) {
+            return List.of();
+        }
+        List<String> rootIds = StringUtils.isBlank(ids)
+                ? List.of()
+                : Arrays.stream(ids.split("[,\\s]+"))
+                        .map(String::trim)
+                        .filter(StringUtils::isNotBlank)
+                        .toList();
+        return conceptReadService.listSubtreeMembers(
+                resolvedThesaurusId,
+                rootIds,
+                StringUtils.firstNonBlank(lang, "fr"),
+                all
+        );
     }
 
     @GetMapping(value = "/tree-status-forest", produces = MediaType.APPLICATION_JSON_VALUE)

@@ -601,6 +601,104 @@ public class ConceptQueryRepository {
         return rows.stream().map(String::valueOf).toList();
     }
 
+    @SuppressWarnings("unchecked")
+    public List<String> findExistingGroupIds(String thesaurusId, Collection<String> ids) {
+        if (StringUtils.isBlank(thesaurusId) || ids == null || ids.isEmpty()) {
+            return List.of();
+        }
+        List<String> lowered = ids.stream()
+                .filter(StringUtils::isNotBlank)
+                .map(String::toLowerCase)
+                .distinct()
+                .toList();
+        if (lowered.isEmpty()) {
+            return List.of();
+        }
+        return em.createNativeQuery("""
+            SELECT cg.idgroup
+            FROM concept_group cg
+            WHERE cg.idthesaurus = :thesaurusId
+              AND LOWER(cg.idgroup) IN (:ids)
+            """)
+                .setParameter(NativeQueryParams.THESAURUS_ID, thesaurusId)
+                .setParameter("ids", lowered)
+                .getResultList()
+                .stream()
+                .map(String::valueOf)
+                .toList();
+    }
+
+    @SuppressWarnings("unchecked")
+    public List<Object[]> findConceptMemberRows(String thesaurusId, Collection<String> conceptIds, String lang) {
+        if (StringUtils.isBlank(thesaurusId) || conceptIds == null || conceptIds.isEmpty()) {
+            return List.of();
+        }
+        List<String> ids = conceptIds.stream()
+                .filter(StringUtils::isNotBlank)
+                .distinct()
+                .toList();
+        if (ids.isEmpty()) {
+            return List.of();
+        }
+        return em.createNativeQuery(conceptMemberSelectSql() + """
+            WHERE c.id_thesaurus = :thesaurusId
+              AND c.id_concept IN (:conceptIds)
+            ORDER BY label
+            """)
+                .setParameter(NativeQueryParams.THESAURUS_ID, thesaurusId)
+                .setParameter(NativeQueryParams.CONCEPT_IDS, ids)
+                .setParameter("lang", StringUtils.defaultIfBlank(lang, "fr"))
+                .getResultList();
+    }
+
+    @SuppressWarnings("unchecked")
+    public List<Object[]> findAllConceptMemberRows(String thesaurusId, String lang) {
+        if (StringUtils.isBlank(thesaurusId)) {
+            return List.of();
+        }
+        return em.createNativeQuery(conceptMemberSelectSql() + """
+            WHERE c.id_thesaurus = :thesaurusId
+              AND NOT EXISTS (
+                  SELECT 1
+                  FROM candidat_status cs2
+                  WHERE cs2.id_concept = c.id_concept
+                    AND cs2.id_thesaurus = c.id_thesaurus
+                    AND cs2.id_status = :rejected
+              )
+            ORDER BY label
+            """)
+                .setParameter(NativeQueryParams.THESAURUS_ID, thesaurusId)
+                .setParameter("lang", StringUtils.defaultIfBlank(lang, "fr"))
+                .setParameter(NativeQueryParams.REJECTED, CandidatStatusCode.REJECTED)
+                .getResultList();
+    }
+
+    private static String conceptMemberSelectSql() {
+        return """
+            SELECT c.id_concept,
+                   COALESCE(t.lexical_value, c.id_concept) AS label,
+                   c.status,
+                   COALESCE(cs.id_status, 0) AS candidat_status
+            FROM concept c
+            LEFT JOIN preferred_term pt
+                ON pt.id_concept = c.id_concept
+                AND pt.id_thesaurus = c.id_thesaurus
+            LEFT JOIN term t
+                ON t.id_term = pt.id_term
+                AND t.id_thesaurus = c.id_thesaurus
+                AND t.lang = :lang
+            LEFT JOIN (
+                SELECT DISTINCT ON (id_thesaurus, id_concept)
+                       id_thesaurus, id_concept, id_status
+                FROM candidat_status
+                WHERE id_thesaurus = :thesaurusId
+                ORDER BY id_thesaurus, id_concept, date DESC NULLS LAST
+            ) cs
+                ON cs.id_concept = c.id_concept
+                AND cs.id_thesaurus = c.id_thesaurus
+            """;
+    }
+
     public int countConceptsInGroup(String thesaurusId, String groupId) {
         Number count = (Number) em.createNativeQuery("""
             SELECT COUNT(c.id_concept)

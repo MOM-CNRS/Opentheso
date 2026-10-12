@@ -5,5 +5,8 @@ public enum ConceptSearchMode {
     START_WITH,
     EXACT,
     NOTE,
-    IDENTIFIER
+    IDENTIFIER,
+    PREFERRED,
+    SYNONYM,
+    NOTATION
 }

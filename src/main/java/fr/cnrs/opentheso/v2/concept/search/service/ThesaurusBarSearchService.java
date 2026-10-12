@@ -3,6 +3,7 @@ package fr.cnrs.opentheso.v2.concept.search.service;
 import fr.cnrs.opentheso.v2.concept.search.model.ConceptSearchMode;
 import fr.cnrs.opentheso.v2.concept.search.model.ConceptSearchResult;
 import fr.cnrs.opentheso.v2.concept.search.model.ConceptSearchSuggestion;
+import fr.cnrs.opentheso.v2.concept.search.model.ParsedSearchQuery;
 import fr.cnrs.opentheso.v2.concept.search.model.ThesaurusBarSearchHit;
 import fr.cnrs.opentheso.v2.concept.search.model.ThesaurusBarSearchResponse;
 import fr.cnrs.opentheso.v2.shared.session.AuthenticatedUserSource;
@@ -111,6 +112,9 @@ public class ThesaurusBarSearchService {
             return ThesaurusBarSearchResponse.empty(trimmed, active.name());
         }
         String resolved = resolveLang(lang);
+        ParsedSearchQuery parsed = SearchQueryParser.parse(trimmed);
+        boolean viaNote = active == ConceptSearchMode.NOTE
+                || parsed.clauses().stream().anyMatch(clause -> clause.mode() == ConceptSearchMode.NOTE);
         List<ConceptSearchSuggestion> all = conceptSearchService.autocomplete(
                 trimmed,
                 active,
@@ -125,7 +129,7 @@ public class ThesaurusBarSearchService {
         Map<String, ConceptSearchResult> hydrated = hydrate(window, thesaurusId, resolved);
         List<ThesaurusBarSearchHit> hits = new ArrayList<>(window.size());
         for (ConceptSearchSuggestion suggestion : window) {
-            hits.add(fromSuggestion(suggestion, hydrated.get(suggestion.conceptId()), active));
+            hits.add(fromSuggestion(suggestion, hydrated.get(suggestion.conceptId()), viaNote));
         }
         return new ThesaurusBarSearchResponse(trimmed, active.name(), "", all.size(), hits);
     }
@@ -159,17 +163,17 @@ public class ThesaurusBarSearchService {
     private static ThesaurusBarSearchHit fromSuggestion(
             ConceptSearchSuggestion suggestion,
             ConceptSearchResult hydrated,
-            ConceptSearchMode mode
+            boolean viaNote
     ) {
         String label = StringUtils.defaultIfBlank(
                 suggestion.preferredLabel(),
                 hydrated == null ? "" : hydrated.preferredLabel()
         );
         String via = "";
-        if (mode == ConceptSearchMode.NOTE) {
-            via = "note";
-        } else if (suggestion.isAltLabelMatch()) {
+        if (suggestion.isAltLabelMatch()) {
             via = StringUtils.defaultString(suggestion.altLabel());
+        } else if (viaNote) {
+            via = "note";
         }
         boolean deprecated = suggestion.deprecated() || (hydrated != null && hydrated.deprecated());
         String path = hydrated == null ? "" : joinPath(hydrated.broaderTerms());

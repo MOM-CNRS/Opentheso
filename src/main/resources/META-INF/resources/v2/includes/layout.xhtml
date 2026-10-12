@@ -35,6 +35,7 @@
 </h:head>
 <h:body pt:data-page="#{v2Page}" pt:data-ctx="#{request.contextPath}"
       pt:data-logged-in="#{v2UserSession.loggedIn ? '1' : '0'}"
+      pt:data-tree-select="#{v2ConsultationShellBean.adminOnCurrentThesaurus ? '1' : '0'}"
       pt:data-session-timeout="#{v2NavigationBean.sessionTimeoutInMilliseconds}"
       pt:data-session-expire="#{v2NavigationBean.sessionExpireUrl}"
       pt:data-session-keepalive="#{v2NavigationBean.sessionKeepAliveUrl}"

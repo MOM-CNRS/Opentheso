@@ -3,6 +3,8 @@ package fr.cnrs.opentheso.v2.concept.search.service;
 import fr.cnrs.opentheso.v2.concept.search.model.ConceptSearchKind;
 import fr.cnrs.opentheso.v2.concept.search.model.ConceptSearchMode;
 import fr.cnrs.opentheso.v2.concept.search.model.ConceptSearchSuggestion;
+import fr.cnrs.opentheso.v2.concept.search.model.ParsedSearchQuery;
+import fr.cnrs.opentheso.v2.concept.search.model.SearchClause;
 import fr.cnrs.opentheso.v2.concept.search.repository.ConceptSearchQueryRepository;
 import lombok.RequiredArgsConstructor;
 import org.apache.commons.lang3.StringUtils;
@@ -17,6 +19,17 @@ import java.util.List;
 @RequiredArgsConstructor
 public class ConceptSearchEngine {
 
+    private static final List<ConceptSearchMode> LEAD_ORDER = List.of(
+            ConceptSearchMode.FULL_TEXT,
+            ConceptSearchMode.EXACT,
+            ConceptSearchMode.START_WITH,
+            ConceptSearchMode.PREFERRED,
+            ConceptSearchMode.SYNONYM,
+            ConceptSearchMode.NOTE,
+            ConceptSearchMode.IDENTIFIER,
+            ConceptSearchMode.NOTATION
+    );
+
     private final ConceptSearchQueryRepository conceptSearchQueryRepository;
 
     public List<ConceptSearchSuggestion> autocomplete(
@@ -29,14 +42,13 @@ public class ConceptSearchEngine {
         if (StringUtils.isBlank(query) || StringUtils.isBlank(thesaurusId)) {
             return Collections.emptyList();
         }
+        ParsedSearchQuery parsed = SearchQueryParser.parse(query);
+        if (parsed.hasOperators()) {
+            return autocompleteCombined(parsed, thesaurusId, lang, anonymous);
+        }
         String normalizedQuery = normalizeQuery(query);
-        return switch (mode) {
-            case EXACT -> searchExactMatch(normalizedQuery, lang, thesaurusId);
-            case START_WITH -> searchStartWith(normalizedQuery, lang, thesaurusId);
-            case NOTE -> searchNotes(normalizedQuery, lang, thesaurusId);
-            case IDENTIFIER -> searchByAllId(normalizedQuery, lang, thesaurusId, anonymous);
-            case FULL_TEXT -> searchFullText(normalizedQuery, lang, thesaurusId);
-        };
+        ConceptSearchMode active = mode == null ? ConceptSearchMode.FULL_TEXT : mode;
+        return autocompleteClause(new SearchClause(active, normalizedQuery, ""), thesaurusId, lang, anonymous);
     }
 
     public List<String> findConceptIds(
@@ -49,20 +61,164 @@ public class ConceptSearchEngine {
         if (StringUtils.isBlank(thesaurusId)) {
             return Collections.emptyList();
         }
+        ParsedSearchQuery parsed = SearchQueryParser.parse(query);
+        if (parsed.hasOperators()) {
+            return findCombinedIds(parsed, thesaurusId, lang, anonymous);
+        }
         String normalizedQuery = StringUtils.defaultString(query).trim();
         LinkedHashSet<String> ids = new LinkedHashSet<>();
-        switch (mode) {
+        ConceptSearchMode active = mode == null ? ConceptSearchMode.FULL_TEXT : mode;
+        switch (active) {
             case IDENTIFIER -> ids.addAll(conceptSearchQueryRepository.searchForIds(normalizedQuery, thesaurusId));
             case NOTE -> ids.addAll(conceptSearchQueryRepository.findConceptIdsFromNotes(
                     thesaurusId, lang, normalizeQuery(normalizedQuery)
             ));
+            case NOTATION -> ids.addAll(conceptSearchQueryRepository.findConceptIdsByNotation(
+                    normalizeQuery(normalizedQuery), thesaurusId
+            ));
+            case PREFERRED -> ids.addAll(conceptSearchQueryRepository.searchPreferredTermsFullTextIds(
+                    normalizeQuery(normalizedQuery), lang, thesaurusId, anonymous
+            ));
+            case SYNONYM -> ids.addAll(conceptSearchQueryRepository.searchAltTermsFullTextIds(
+                    normalizeQuery(normalizedQuery), lang, thesaurusId, anonymous
+            ));
             case EXACT -> autocomplete(normalizedQuery, ConceptSearchMode.EXACT, thesaurusId, lang, anonymous)
-                    .forEach(item -> ids.add(item.conceptId()));
+                    .forEach(item -> addConceptId(ids, item));
             case START_WITH -> autocomplete(normalizedQuery, ConceptSearchMode.START_WITH, thesaurusId, lang, anonymous)
-                    .forEach(item -> ids.add(item.conceptId()));
+                    .forEach(item -> addConceptId(ids, item));
             case FULL_TEXT -> ids.addAll(searchFullTextIds(normalizedQuery, lang, thesaurusId, anonymous));
         }
         return new ArrayList<>(ids);
+    }
+
+    private List<ConceptSearchSuggestion> autocompleteCombined(
+            ParsedSearchQuery parsed,
+            String thesaurusId,
+            String lang,
+            boolean anonymous
+    ) {
+        if (parsed.isBlank()) {
+            return Collections.emptyList();
+        }
+        LinkedHashSet<String> allowed = intersectIds(parsed.clauses(), thesaurusId, lang, anonymous);
+        if (allowed.isEmpty()) {
+            return Collections.emptyList();
+        }
+        SearchClause lead = leadClause(parsed.clauses());
+        List<ConceptSearchSuggestion> ranked = autocompleteClause(lead, thesaurusId, lang, anonymous);
+        List<ConceptSearchSuggestion> filtered = new ArrayList<>();
+        LinkedHashSet<String> seen = new LinkedHashSet<>();
+        for (ConceptSearchSuggestion suggestion : ranked) {
+            if (suggestion.isGroup() || suggestion.isFacet()) {
+                continue;
+            }
+            String id = suggestion.conceptId();
+            if (allowed.contains(id) && seen.add(id)) {
+                filtered.add(suggestion);
+            }
+        }
+        return filtered;
+    }
+
+    private List<String> findCombinedIds(
+            ParsedSearchQuery parsed,
+            String thesaurusId,
+            String lang,
+            boolean anonymous
+    ) {
+        if (parsed.isBlank()) {
+            return Collections.emptyList();
+        }
+        return new ArrayList<>(intersectIds(parsed.clauses(), thesaurusId, lang, anonymous));
+    }
+
+    private LinkedHashSet<String> intersectIds(
+            List<SearchClause> clauses,
+            String thesaurusId,
+            String lang,
+            boolean anonymous
+    ) {
+        LinkedHashSet<String> allowed = null;
+        for (SearchClause clause : clauses) {
+            List<String> ids = findIdsForClause(clause, thesaurusId, lang, anonymous);
+            if (allowed == null) {
+                allowed = new LinkedHashSet<>(ids);
+            } else {
+                allowed.retainAll(ids);
+            }
+            if (allowed.isEmpty()) {
+                return allowed;
+            }
+        }
+        return allowed == null ? new LinkedHashSet<>() : allowed;
+    }
+
+    private List<String> findIdsForClause(
+            SearchClause clause,
+            String thesaurusId,
+            String lang,
+            boolean anonymous
+    ) {
+        String value = normalizeQuery(clause.value());
+        if (StringUtils.isBlank(value)) {
+            return Collections.emptyList();
+        }
+        LinkedHashSet<String> ids = new LinkedHashSet<>();
+        switch (clause.mode()) {
+            case IDENTIFIER -> ids.addAll(conceptSearchQueryRepository.searchForIds(value, thesaurusId));
+            case NOTE -> ids.addAll(conceptSearchQueryRepository.findConceptIdsFromNotes(thesaurusId, lang, value));
+            case NOTATION -> ids.addAll(conceptSearchQueryRepository.findConceptIdsByNotation(value, thesaurusId));
+            case PREFERRED -> ids.addAll(conceptSearchQueryRepository.searchPreferredTermsFullTextIds(
+                    value, lang, thesaurusId, anonymous
+            ));
+            case SYNONYM -> ids.addAll(conceptSearchQueryRepository.searchAltTermsFullTextIds(
+                    value, lang, thesaurusId, anonymous
+            ));
+            case FULL_TEXT -> ids.addAll(searchFullTextIds(value, lang, thesaurusId, anonymous));
+            case EXACT, START_WITH -> autocompleteClause(clause, thesaurusId, lang, anonymous)
+                    .forEach(item -> addConceptId(ids, item));
+        }
+        return new ArrayList<>(ids);
+    }
+
+    private List<ConceptSearchSuggestion> autocompleteClause(
+            SearchClause clause,
+            String thesaurusId,
+            String lang,
+            boolean anonymous
+    ) {
+        String value = normalizeQuery(clause.value());
+        if (StringUtils.isBlank(value)) {
+            return Collections.emptyList();
+        }
+        return switch (clause.mode()) {
+            case EXACT -> searchExactMatch(value, lang, thesaurusId);
+            case START_WITH -> searchStartWith(value, lang, thesaurusId);
+            case NOTE -> searchNotes(value, lang, thesaurusId);
+            case IDENTIFIER -> searchByAllId(value, lang, thesaurusId, anonymous);
+            case FULL_TEXT -> searchFullText(value, lang, thesaurusId);
+            case PREFERRED -> searchPreferred(value, lang, thesaurusId);
+            case SYNONYM -> searchSynonyms(value, lang, thesaurusId);
+            case NOTATION -> searchNotation(value, lang, thesaurusId);
+        };
+    }
+
+    private static SearchClause leadClause(List<SearchClause> clauses) {
+        for (ConceptSearchMode mode : LEAD_ORDER) {
+            for (SearchClause clause : clauses) {
+                if (clause.mode() == mode) {
+                    return clause;
+                }
+            }
+        }
+        return clauses.get(0);
+    }
+
+    private static void addConceptId(LinkedHashSet<String> ids, ConceptSearchSuggestion item) {
+        if (item == null || item.isGroup() || item.isFacet() || StringUtils.isBlank(item.conceptId())) {
+            return;
+        }
+        ids.add(item.conceptId());
     }
 
     private List<ConceptSearchSuggestion> searchStartWith(String value, String lang, String thesaurusId) {
@@ -105,46 +261,86 @@ public class ConceptSearchEngine {
         return results;
     }
 
+    private List<ConceptSearchSuggestion> searchPreferred(String value, String lang, String thesaurusId) {
+        boolean langSensitive = StringUtils.isNotBlank(lang);
+        List<ConceptSearchSuggestion> results = new ArrayList<>();
+        for (Object[] row : conceptSearchQueryRepository.searchPreferredTermsFullText(value, lang, thesaurusId, langSensitive)) {
+            addFullTextPreferred(results, row, value);
+        }
+        return results;
+    }
+
+    private List<ConceptSearchSuggestion> searchSynonyms(String value, String lang, String thesaurusId) {
+        boolean langSensitive = StringUtils.isNotBlank(lang);
+        List<ConceptSearchSuggestion> results = new ArrayList<>();
+        for (Object[] row : conceptSearchQueryRepository.searchAltTermsFullText(value, lang, thesaurusId, langSensitive)) {
+            addFullTextAlt(results, row, value);
+        }
+        return results;
+    }
+
+    private List<ConceptSearchSuggestion> searchNotation(String value, String lang, String thesaurusId) {
+        List<ConceptSearchSuggestion> results = new ArrayList<>();
+        for (Object[] row : conceptSearchQueryRepository.searchByNotation(value, lang, thesaurusId)) {
+            results.add(conceptSuggestion(
+                    stringAt(row, 0),
+                    stringAt(row, 1),
+                    "",
+                    ConceptSearchKind.CONCEPT,
+                    false
+            ));
+        }
+        return results;
+    }
+
     private List<ConceptSearchSuggestion> searchFullText(String value, String lang, String thesaurusId) {
         boolean langSensitive = StringUtils.isNotBlank(lang);
         List<ConceptSearchSuggestion> results = new ArrayList<>();
         for (Object[] row : conceptSearchQueryRepository.searchPreferredTermsFullText(value, lang, thesaurusId, langSensitive)) {
-            var suggestion = conceptSuggestion(
-                    stringAt(row, 0),
-                    stringAt(row, 2),
-                    "",
-                    ConceptSearchKind.CONCEPT,
-                    false
-            );
-            if (value.equalsIgnoreCase(suggestion.preferredLabel())) {
-                results.add(0, suggestion);
-            } else {
-                results.add(suggestion);
-            }
+            addFullTextPreferred(results, row, value);
         }
         for (Object[] row : conceptSearchQueryRepository.searchAltTermsFullText(value, lang, thesaurusId, langSensitive)) {
-            var suggestion = conceptSuggestion(
-                    stringAt(row, 0),
-                    stringAt(row, 3),
-                    stringAt(row, 2),
-                    ConceptSearchKind.ALT_LABEL,
-                    "DEP".equalsIgnoreCase(stringAt(row, 4))
-            );
-            if (value.equalsIgnoreCase(suggestion.altLabel())) {
-                if (results.isEmpty()) {
-                    results.add(0, suggestion);
-                } else if (results.get(0).preferredLabel().equalsIgnoreCase(value)) {
-                    results.add(1, suggestion);
-                } else {
-                    results.add(0, suggestion);
-                }
-            } else {
-                results.add(suggestion);
-            }
+            addFullTextAlt(results, row, value);
         }
         results.addAll(searchCollections(thesaurusId, value, lang));
         results.addAll(searchFacets(thesaurusId, value, lang));
         return results;
+    }
+
+    private void addFullTextPreferred(List<ConceptSearchSuggestion> results, Object[] row, String value) {
+        var suggestion = conceptSuggestion(
+                stringAt(row, 0),
+                stringAt(row, 2),
+                "",
+                ConceptSearchKind.CONCEPT,
+                false
+        );
+        if (value.equalsIgnoreCase(suggestion.preferredLabel())) {
+            results.add(0, suggestion);
+        } else {
+            results.add(suggestion);
+        }
+    }
+
+    private void addFullTextAlt(List<ConceptSearchSuggestion> results, Object[] row, String value) {
+        var suggestion = conceptSuggestion(
+                stringAt(row, 0),
+                stringAt(row, 3),
+                stringAt(row, 2),
+                ConceptSearchKind.ALT_LABEL,
+                "DEP".equalsIgnoreCase(stringAt(row, 4))
+        );
+        if (value.equalsIgnoreCase(suggestion.altLabel())) {
+            if (results.isEmpty()) {
+                results.add(0, suggestion);
+            } else if (results.get(0).preferredLabel().equalsIgnoreCase(value)) {
+                results.add(1, suggestion);
+            } else {
+                results.add(0, suggestion);
+            }
+        } else {
+            results.add(suggestion);
+        }
     }
 
     private List<String> searchFullTextIds(String value, String lang, String thesaurusId, boolean anonymous) {

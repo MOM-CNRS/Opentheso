@@ -129,7 +129,7 @@ public class ConceptSearchQueryRepository {
             JOIN preferred_term pt ON c.id_concept = pt.id_concept AND c.id_thesaurus = pt.id_thesaurus
             JOIN term t ON pt.id_term = t.id_term AND pt.id_thesaurus = t.id_thesaurus
             JOIN note n ON c.id_concept = n.identifier AND c.id_thesaurus = n.id_thesaurus AND n.lang = t.lang
-            WHERE n.lang = :lang
+            WHERE (:lang IS NULL OR n.lang = :lang)
               AND c.id_thesaurus = :thesaurusId
               AND (
                   unaccent(lower(n.lexicalvalue)) LIKE unaccent(lower(CONCAT(:value, '%')))
@@ -396,6 +396,49 @@ public class ConceptSearchQueryRepository {
                 .getResultList();
     }
 
+    public List<Object[]> searchByNotation(String value, String lang, String thesaurusId) {
+        return em.createNativeQuery("""
+            SELECT c.id_concept, COALESCE((
+                SELECT t.lexical_value
+                FROM preferred_term pt
+                JOIN term t ON t.id_term = pt.id_term AND t.id_thesaurus = pt.id_thesaurus
+                WHERE pt.id_concept = c.id_concept
+                  AND pt.id_thesaurus = c.id_thesaurus
+                  AND (:lang IS NULL OR t.lang = :lang)
+                LIMIT 1
+            ), c.notation, c.id_concept)
+            FROM concept c
+            WHERE c.id_thesaurus = :thesaurusId
+              AND c.status != 'CA'
+              AND c.notation IS NOT NULL
+              AND TRIM(c.notation) <> ''
+              AND unaccent(lower(c.notation)) LIKE unaccent(lower(CONCAT(:value, '%')))
+            ORDER BY unaccent(lower(c.notation))
+            LIMIT 50
+            """)
+                .setParameter(NativeQueryParams.VALUE, value)
+                .setParameter("lang", lang)
+                .setParameter(NativeQueryParams.THESAURUS_ID, thesaurusId)
+                .getResultList();
+    }
+
+    public List<String> findConceptIdsByNotation(String value, String thesaurusId) {
+        return em.createNativeQuery("""
+            SELECT c.id_concept
+            FROM concept c
+            WHERE c.id_thesaurus = :thesaurusId
+              AND c.status != 'CA'
+              AND c.notation IS NOT NULL
+              AND TRIM(c.notation) <> ''
+              AND unaccent(lower(c.notation)) LIKE unaccent(lower(CONCAT(:value, '%')))
+            ORDER BY unaccent(lower(c.notation))
+            LIMIT 50
+            """)
+                .setParameter(NativeQueryParams.VALUE, value)
+                .setParameter(NativeQueryParams.THESAURUS_ID, thesaurusId)
+                .getResultList();
+    }
+
     public List<String> findConceptIdsFromNotes(String thesaurusId, String lang, String rawValue) {
         if (StringUtils.isBlank(rawValue)) {
             return Collections.emptyList();
@@ -407,7 +450,7 @@ public class ConceptSearchQueryRepository {
             JOIN preferred_term pt ON pt.id_concept = n.identifier AND pt.id_thesaurus = n.id_thesaurus
             JOIN concept c ON c.id_concept = pt.id_concept AND c.id_thesaurus = pt.id_thesaurus
             WHERE n.id_thesaurus = :thesaurusId
-              AND n.lang = :lang
+              AND (:lang IS NULL OR n.lang = :lang)
               AND c.status != 'CA'
             """);
         List<String> params = new ArrayList<>();
