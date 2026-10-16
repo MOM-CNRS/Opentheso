@@ -272,6 +272,7 @@ public class EditConcept implements Serializable {
             MessageUtils.showWarnMessage("Le label '" + termFound.get().getLexicalValue() + "' existe déjà ! voulez-vous continuer ?");
             duplicate = true;
             PrimeFaces.current().ajax().update("containerIndex:renameConceptMessage");
+            PrimeFaces.current().executeScript("PF('renameConcept').show();");
             return;
         }
 

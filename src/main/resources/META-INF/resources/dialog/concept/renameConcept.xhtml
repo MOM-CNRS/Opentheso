@@ -38,7 +38,7 @@
                 <p:commandButton rendered="#{editConcept.duplicate}" styleClass="ui-button-success"
                                  value="#{langueBean.getMsg('rightbody.conceptdialog.force')}"
                                  update="messageIndex" oncomplete="PF('renameConcept').hide();"
-                                 ajax="true" process="@form" icon="pi pi-check" 
+                                 ajax="true" process="@form" icon="pi pi-check"
                                  style="background-color: red !important; border-color: red !important;"
                                  action="#{editConcept.updateForced(selectedThesaurus.currentIdTheso, selectedThesaurus.currentLang,
                                            currentUser.nodeUser.idUser)}"/>   
