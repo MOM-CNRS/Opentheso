@@ -301,6 +301,7 @@ class ThesaurusSyncReceiveServiceTest {
         ArgumentCaptor<PropositionSubmission> captor = ArgumentCaptor.forClass(PropositionSubmission.class);
         verify(propositionMutationService).submitDraft(captor.capture());
         assertTrue(captor.getValue().allowMultiplePending());
+        assertTrue(captor.getValue().fromSync());
     }
 
     @Test

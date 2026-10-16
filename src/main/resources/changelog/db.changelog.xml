@@ -337,4 +337,9 @@
         <sqlFile path="v26/26-10_01.sql" relativeToChangelogFile="true" splitStatements="false"/>
     </changeSet>
 
+    <changeSet id="26.10.02" author="Firas">
+        <comment>Proposition origin: synchronisation vs manual user request</comment>
+        <sqlFile path="v26/26-10_02.sql" relativeToChangelogFile="true" splitStatements="false"/>
+    </changeSet>
+
 </databaseChangeLog>

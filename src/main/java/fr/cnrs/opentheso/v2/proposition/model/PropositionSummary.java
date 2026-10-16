@@ -18,7 +18,8 @@ public record PropositionSummary(
         String status,
         String publishedAt,
         String lang,
-        String flagCode
+        String flagCode,
+        boolean fromSync
 ) implements Serializable {
 
     public int getId() {
@@ -59,6 +60,14 @@ public record PropositionSummary(
 
     public String getFlagCode() {
         return flagCode;
+    }
+
+    public boolean isFromSync() {
+        return fromSync;
+    }
+
+    public boolean getFromSync() {
+        return fromSync;
     }
 
     public boolean envoyer() {

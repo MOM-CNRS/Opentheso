@@ -325,7 +325,8 @@ public class PropositionBean implements Serializable {
                 detail.status(),
                 detail.publishedAt(),
                 detail.lang(),
-                detail.flagCode()
+                detail.flagCode(),
+                detail.fromSync()
         );
     }
 

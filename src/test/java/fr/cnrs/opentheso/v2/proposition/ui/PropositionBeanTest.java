@@ -58,11 +58,11 @@ class PropositionBeanTest {
 
     private static final PropositionDetail DETAIL = new PropositionDetail(
             5, "TH1", "C1", "Concept 1", "fr", "fr", "Author", "a@b.fr",
-            "comment", "ENVOYER", "01-01-2024", null, null);
+            "comment", "ENVOYER", "01-01-2024", null, null, false);
 
     private static final PropositionDetail DETAIL_LU = new PropositionDetail(
             5, "TH1", "C1", "Concept 1", "fr", "fr", "Author", "a@b.fr",
-            "comment", "LU", "01-01-2024", null, null);
+            "comment", "LU", "01-01-2024", null, null, false);
 
     @BeforeEach
     void setUp() {
@@ -82,7 +82,7 @@ class PropositionBeanTest {
 
     @Test
     void openReview_loadsDraftAndDefaultsAcceptedFlagsFromPresentChanges() {
-        var proposition = new PropositionSummary(5, "TH1", "C1", "Concept 1", "Author", "a@b.fr", "ENVOYER", "01-01-2024", "fr", "fr");
+        var proposition = new PropositionSummary(5, "TH1", "C1", "Concept 1", "Author", "a@b.fr", "ENVOYER", "01-01-2024", "fr", "fr", false);
         when(propositionReadService.findDetail(5)).thenReturn(DETAIL, DETAIL_LU);
         when(thesaurusContext.resolveThesaurusId()).thenReturn("TH1");
         stubManagerRights();
@@ -119,7 +119,7 @@ class PropositionBeanTest {
 
     @Test
     void approveSelected_appliesAcceptedChangesBeforeApproving() {
-        var proposition = new PropositionSummary(5, "TH1", "C1", "Concept 1", "Author", "a@b.fr", "ENVOYER", "01-01-2024", "fr", "fr");
+        var proposition = new PropositionSummary(5, "TH1", "C1", "Concept 1", "Author", "a@b.fr", "ENVOYER", "01-01-2024", "fr", "fr", false);
         when(propositionReadService.findDetail(5)).thenReturn(DETAIL, DETAIL_LU);
         when(thesaurusContext.resolveThesaurusId()).thenReturn("TH1");
         stubManagerRights();
@@ -145,7 +145,7 @@ class PropositionBeanTest {
 
     @Test
     void approveSelected_appliesOnlyCheckedReviewFields() {
-        var proposition = new PropositionSummary(5, "TH1", "C1", "Concept 1", "Author", "a@b.fr", "ENVOYER", "01-01-2024", "fr", "fr");
+        var proposition = new PropositionSummary(5, "TH1", "C1", "Concept 1", "Author", "a@b.fr", "ENVOYER", "01-01-2024", "fr", "fr", false);
         when(propositionReadService.findDetail(5)).thenReturn(DETAIL, DETAIL_LU);
         when(thesaurusContext.resolveThesaurusId()).thenReturn("TH1");
         stubManagerRights();
@@ -177,7 +177,7 @@ class PropositionBeanTest {
 
     @Test
     void approveSelected_doesNotApproveWhenApplyFails() {
-        var proposition = new PropositionSummary(5, "TH1", "C1", "Concept 1", "Author", "a@b.fr", "ENVOYER", "01-01-2024", "fr", "fr");
+        var proposition = new PropositionSummary(5, "TH1", "C1", "Concept 1", "Author", "a@b.fr", "ENVOYER", "01-01-2024", "fr", "fr", false);
         when(propositionReadService.findDetail(5)).thenReturn(DETAIL, DETAIL_LU);
         when(thesaurusContext.resolveThesaurusId()).thenReturn("TH1");
         stubManagerRights();
@@ -202,7 +202,7 @@ class PropositionBeanTest {
 
     @Test
     void approveSelected_skipsApplyWhenDraftEmpty() {
-        var proposition = new PropositionSummary(5, "TH1", "C1", "Concept 1", "Author", "a@b.fr", "ENVOYER", "01-01-2024", "fr", "fr");
+        var proposition = new PropositionSummary(5, "TH1", "C1", "Concept 1", "Author", "a@b.fr", "ENVOYER", "01-01-2024", "fr", "fr", false);
         when(propositionReadService.findDetail(5)).thenReturn(DETAIL, DETAIL_LU);
         when(thesaurusContext.resolveThesaurusId()).thenReturn("TH1");
         stubManagerRights();
@@ -242,7 +242,7 @@ class PropositionBeanTest {
 
     @Test
     void refresh_loadsOnlyTheSelectedThesaurusList() {
-        var current = new PropositionSummary(1, "TH1", "C1", "Concept 1", "Author", "a@b.fr", "ENVOYER", "01-01-2024", "fr", "fr");
+        var current = new PropositionSummary(1, "TH1", "C1", "Concept 1", "Author", "a@b.fr", "ENVOYER", "01-01-2024", "fr", "fr", false);
         when(thesaurusContext.resolveThesaurusId()).thenReturn("TH1");
         stubManagerRights();
         when(propositionReadService.countPending("TH1")).thenReturn(1);
@@ -275,8 +275,8 @@ class PropositionBeanTest {
 
     @Test
     void refreshPendingCount_reloadsListWhenThesaurusChanges() {
-        var first = new PropositionSummary(1, "TH1", "C1", "Old", "Author", "a@b.fr", "ENVOYER", "01-01-2024", "fr", "fr");
-        var second = new PropositionSummary(2, "TH2", "C2", "New", "Author", "a@b.fr", "ENVOYER", "01-01-2024", "fr", "fr");
+        var first = new PropositionSummary(1, "TH1", "C1", "Old", "Author", "a@b.fr", "ENVOYER", "01-01-2024", "fr", "fr", false);
+        var second = new PropositionSummary(2, "TH2", "C2", "New", "Author", "a@b.fr", "ENVOYER", "01-01-2024", "fr", "fr", false);
         stubManagerRights();
         when(thesaurusContext.resolveThesaurusId()).thenReturn("TH1");
         when(propositionReadService.countPending("TH1")).thenReturn(1);
@@ -299,7 +299,7 @@ class PropositionBeanTest {
 
     @Test
     void refresh_usesThesaurusViewBeanIdWhenContextIsStillEmpty() {
-        var current = new PropositionSummary(1, "TH1", "C1", "Concept 1", "Author", "a@b.fr", "ENVOYER", "01-01-2024", "fr", "fr");
+        var current = new PropositionSummary(1, "TH1", "C1", "Concept 1", "Author", "a@b.fr", "ENVOYER", "01-01-2024", "fr", "fr", false);
         stubManagerRights();
         when(thesaurusViewBean.getId()).thenReturn("TH1");
         when(propositionReadService.countPending("TH1")).thenReturn(1);
@@ -315,7 +315,7 @@ class PropositionBeanTest {
 
     @Test
     void refreshPendingCount_reloadsEmptySessionListForSameThesaurus() {
-        var current = new PropositionSummary(1, "TH1", "C1", "Concept 1", "Author", "a@b.fr", "ENVOYER", "01-01-2024", "fr", "fr");
+        var current = new PropositionSummary(1, "TH1", "C1", "Concept 1", "Author", "a@b.fr", "ENVOYER", "01-01-2024", "fr", "fr", false);
         stubManagerRights();
         when(thesaurusContext.resolveThesaurusId()).thenReturn("TH1");
         when(propositionReadService.countPending("TH1")).thenReturn(1);
@@ -330,7 +330,7 @@ class PropositionBeanTest {
 
     @Test
     void openBoard_refreshesListAndBothTabCounts() {
-        var current = new PropositionSummary(1, "TH1", "C1", "Concept 1", "Author", "a@b.fr", "ENVOYER", "01-01-2024", "fr", "fr");
+        var current = new PropositionSummary(1, "TH1", "C1", "Concept 1", "Author", "a@b.fr", "ENVOYER", "01-01-2024", "fr", "fr", false);
         stubManagerRights();
         when(thesaurusContext.resolveThesaurusId()).thenReturn("TH1");
         when(propositionReadService.countPending("TH1")).thenReturn(2);
@@ -425,7 +425,7 @@ class PropositionBeanTest {
 
     @Test
     void sameUser_hidesDecisionButtonsAndShowsAuthorMessage() {
-        var proposition = new PropositionSummary(5, "TH1", "C1", "Concept 1", "Author", "a@b.fr", "LU", "01-01-2024", "fr", "fr");
+        var proposition = new PropositionSummary(5, "TH1", "C1", "Concept 1", "Author", "a@b.fr", "LU", "01-01-2024", "fr", "fr", false);
         when(propositionReadService.findDetail(5)).thenReturn(DETAIL_LU);
         when(thesaurusContext.resolveThesaurusId()).thenReturn("TH1");
         stubManagerRights();
@@ -442,7 +442,7 @@ class PropositionBeanTest {
 
     @Test
     void approveSelected_doesNothingWhenAuthor() {
-        var proposition = new PropositionSummary(5, "TH1", "C1", "Concept 1", "Author", "a@b.fr", "LU", "01-01-2024", "fr", "fr");
+        var proposition = new PropositionSummary(5, "TH1", "C1", "Concept 1", "Author", "a@b.fr", "LU", "01-01-2024", "fr", "fr", false);
         when(propositionReadService.findDetail(5)).thenReturn(DETAIL_LU);
         when(thesaurusContext.resolveThesaurusId()).thenReturn("TH1");
         stubManagerRights();
@@ -461,7 +461,7 @@ class PropositionBeanTest {
 
     @Test
     void addReviewField_appendsAcceptedAddChange() {
-        var proposition = new PropositionSummary(5, "TH1", "C1", "Concept 1", "Author", "a@b.fr", "LU", "01-01-2024", "fr", "fr");
+        var proposition = new PropositionSummary(5, "TH1", "C1", "Concept 1", "Author", "a@b.fr", "LU", "01-01-2024", "fr", "fr", false);
         when(propositionReadService.findDetail(5)).thenReturn(DETAIL_LU);
         when(thesaurusContext.resolveThesaurusId()).thenReturn("TH1");
         stubManagerRights();
@@ -480,7 +480,7 @@ class PropositionBeanTest {
 
     @Test
     void removeReviewField_excludesValueFromApproval() {
-        var proposition = new PropositionSummary(5, "TH1", "C1", "Concept 1", "Author", "a@b.fr", "LU", "01-01-2024", "fr", "fr");
+        var proposition = new PropositionSummary(5, "TH1", "C1", "Concept 1", "Author", "a@b.fr", "LU", "01-01-2024", "fr", "fr", false);
         when(propositionReadService.findDetail(5)).thenReturn(DETAIL_LU);
         when(thesaurusContext.resolveThesaurusId()).thenReturn("TH1");
         stubManagerRights();
@@ -502,7 +502,7 @@ class PropositionBeanTest {
 
     @Test
     void showButtonDecision_trueWhenPending() {
-        var proposition = new PropositionSummary(5, "TH1", "C1", "Concept 1", "Author", "a@b.fr", "LU", "01-01-2024", "fr", "fr");
+        var proposition = new PropositionSummary(5, "TH1", "C1", "Concept 1", "Author", "a@b.fr", "LU", "01-01-2024", "fr", "fr", false);
         when(propositionReadService.findDetail(5)).thenReturn(DETAIL_LU);
         when(thesaurusContext.resolveThesaurusId()).thenReturn("TH1");
         stubManagerRights();

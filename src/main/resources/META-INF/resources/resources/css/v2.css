@@ -2014,7 +2014,8 @@ body[data-page="proposition-review"] .bo-solo > .bo-head{
 }
 body[data-page="propositions"] .bo-title,
 body[data-page="proposition-review"] .bo-title{
-  font-size:clamp(22px, 2.4vw, 28px);font-weight:700;letter-spacing:-.028em;line-height:1.15
+  font-size:clamp(22px, 2.4vw, 28px);font-weight:700;letter-spacing:-.028em;line-height:1.15;
+  display:inline-flex;align-items:center;gap:8px;flex-wrap:wrap
 }
 body[data-page="propositions"] .bo-sub,
 body[data-page="proposition-review"] .bo-sub{

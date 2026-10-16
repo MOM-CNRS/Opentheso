@@ -13,6 +13,7 @@ import java.time.Instant;
 import java.util.List;
 
 import static org.junit.jupiter.api.Assertions.assertEquals;
+import static org.junit.jupiter.api.Assertions.assertFalse;
 import static org.junit.jupiter.api.Assertions.assertNull;
 import static org.junit.jupiter.api.Assertions.assertTrue;
 import static org.mockito.Mockito.when;
@@ -35,6 +36,11 @@ class PropositionReadServiceTest {
     }
 
     private static PropositionProjection projection(int id, String status, String thesaurusId) {
+        return projection(id, status, thesaurusId, false, "Please improve");
+    }
+
+    private static PropositionProjection projection(
+            int id, String status, String thesaurusId, boolean fromSync, String comment) {
         return new PropositionProjection() {
             @Override
             public Integer getId() {
@@ -78,7 +84,7 @@ class PropositionReadServiceTest {
 
             @Override
             public String getCommentaire() {
-                return "Please improve";
+                return comment;
             }
 
             @Override
@@ -104,6 +110,11 @@ class PropositionReadServiceTest {
             @Override
             public String getCodePays() {
                 return "fr";
+            }
+
+            @Override
+            public Boolean getFromSync() {
+                return fromSync;
             }
         };
     }
@@ -188,6 +199,28 @@ class PropositionReadServiceTest {
         assertEquals(5, detail.id());
         assertEquals("Please improve", detail.comment());
         assertEquals("admin", detail.reviewedBy());
+        assertFalse(detail.fromSync());
+    }
+
+    @Test
+    void listPending_mapsSyncOriginFromFlag() {
+        when(repository.findAllPropositionsByStatusAndTheso(PropositionReadService.NEW_STATUS, "TH1"))
+                .thenReturn(List.of(projection(1, "ENVOYER", "TH1", true, "Please improve")));
+
+        var result = service.listPending("TH1");
+
+        assertEquals(1, result.size());
+        assertTrue(result.get(0).fromSync());
+    }
+
+    @Test
+    void findDetail_detectsLegacySyncComment() {
+        when(repository.findProjectionsById(5)).thenReturn(List.of(
+                projection(5, "LU", "TH1", false, "Synchronisation depuis le thésaurus maître")));
+
+        PropositionDetail detail = service.findDetail(5);
+
+        assertTrue(detail.fromSync());
     }
 
     @Test

@@ -1,7 +1,5 @@
 package fr.cnrs.opentheso.models;
 
-import org.springframework.beans.factory.annotation.Value;
-
 import java.time.Instant;
 
 public interface PropositionProjection {
@@ -23,5 +21,6 @@ public interface PropositionProjection {
     String getAdminComment();
     String getLexicalValue();
     String getCodePays();
+    Boolean getFromSync();
 }
 

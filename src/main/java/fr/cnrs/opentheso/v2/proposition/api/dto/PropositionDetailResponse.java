@@ -14,6 +14,7 @@ public record PropositionDetailResponse(
         @Schema(description = "Commentaire de la proposition") String comment,
         @Schema(description = "Date de publication") String publishedAt,
         @Schema(description = "Revue par") String reviewedBy,
-        @Schema(description = "Commentaire administrateur") String adminComment
+        @Schema(description = "Commentaire administrateur") String adminComment,
+        @Schema(description = "true si la proposition provient d'une synchronisation") boolean fromSync
 ) {
 }

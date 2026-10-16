@@ -27,7 +27,8 @@ public final class PropositionApiMapper {
                 toStatusLabel(summary.status()),
                 summary.authorName(),
                 summary.authorEmail(),
-                summary.publishedAt()
+                summary.publishedAt(),
+                summary.fromSync()
         );
     }
 
@@ -44,7 +45,8 @@ public final class PropositionApiMapper {
                 detail.comment(),
                 detail.publishedAt(),
                 detail.reviewedBy(),
-                detail.adminComment()
+                detail.adminComment(),
+                detail.fromSync()
         );
     }
 

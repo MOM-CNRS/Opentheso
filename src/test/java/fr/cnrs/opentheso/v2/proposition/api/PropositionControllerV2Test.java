@@ -27,6 +27,7 @@ import java.util.List;
 import java.util.Optional;
 
 import static org.junit.jupiter.api.Assertions.assertEquals;
+import static org.junit.jupiter.api.Assertions.assertFalse;
 import static org.junit.jupiter.api.Assertions.assertThrows;
 import static org.mockito.ArgumentMatchers.any;
 import static org.mockito.ArgumentMatchers.anyInt;
@@ -68,7 +69,7 @@ class PropositionControllerV2Test {
     void listPropositions_returnsPendingSummaries() {
         when(propositionReadService.listPending("TH1")).thenReturn(List.of(
                 new PropositionSummary(12, "TH1", "C1", "Label", "alice", "a@x.fr",
-                        "ENVOYER", "20-09-2026 09:00", "fr", "fr")
+                        "ENVOYER", "20-09-2026 09:00", "fr", "fr", false)
         ));
 
         var response = controller.listPropositions("api-key", null, "TH1", "pending");
@@ -76,6 +77,7 @@ class PropositionControllerV2Test {
         assertEquals(1, response.size());
         assertEquals(12, response.get(0).id());
         assertEquals("pending", response.get(0).status());
+        assertFalse(response.get(0).fromSync());
         verify(propositionAuthSupport).requireBoard(4, "TH1");
     }
 
@@ -200,6 +202,6 @@ class PropositionControllerV2Test {
     private static PropositionDetail detail(int id, String status, String thesaurusId) {
         return new PropositionDetail(
                 id, thesaurusId, "C1", "Label", "fr", "fr",
-                "alice", "a@x.fr", "comment", status, "20-09-2026 09:00", null, null);
+                "alice", "a@x.fr", "comment", status, "20-09-2026 09:00", null, null, false);
     }
 }

@@ -149,7 +149,7 @@
                            role="listitem"
                            href="#{v2PropositionBean.consultationHref(item)}"
                            title="#{item.conceptLabel} · #{item.conceptId}"
-                           data-search="#{item.conceptLabel} #{item.authorName} #{item.authorEmail} #{item.lang} #{item.conceptId} #{v2PropositionBean.statusLabel(item)}">
+                           data-search="#{item.conceptLabel} #{item.authorName} #{item.authorEmail} #{item.lang} #{item.conceptId} #{v2PropositionBean.statusLabel(item)} #{item.fromSync ? v2LocaleBean.getMsg('v2.proposition.origin.sync') : v2LocaleBean.getMsg('v2.proposition.origin.manual')}">
                           <span class="prop-item-mark" aria-hidden="true">
                             <ui:fragment rendered="#{item.envoyer}">
                               <svg viewBox="0 0 24 24"><path d="M4 4h16v16H4z"/><path d="m22 6-10 7L2 6"/></svg>
@@ -167,6 +167,9 @@
                           <span class="prop-item-body">
                             <span class="prop-item-top">
                               <span class="prop-item-title">#{item.conceptLabel}</span>
+                              <ui:include src="/v2/includes/proposition-origin.xhtml">
+                                <ui:param name="fromSync" value="#{item.fromSync}"/>
+                              </ui:include>
                               <span class="prop-item-id">#{item.conceptId}</span>
                             </span>
                             <span class="prop-item-meta">

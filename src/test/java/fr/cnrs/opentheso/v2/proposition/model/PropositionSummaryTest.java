@@ -48,8 +48,20 @@ class PropositionSummaryTest {
         assertFalse(refused.pending());
     }
 
+    @Test
+    void fromSync_isExposedForJsEl() {
+        var sync = new PropositionSummary(
+                1, "TH1", "C1", "Label", "alice", "a@x.fr", "ENVOYER", "01-01-2024", "fr", "fr", true);
+        var manual = summary("ENVOYER");
+
+        assertTrue(sync.fromSync());
+        assertTrue(sync.isFromSync());
+        assertTrue(sync.getFromSync());
+        assertFalse(manual.fromSync());
+    }
+
     private static PropositionSummary summary(String status) {
         return new PropositionSummary(
-                1, "TH1", "C1", "Label", "alice", "a@x.fr", status, "01-01-2024", "fr", "fr");
+                1, "TH1", "C1", "Label", "alice", "a@x.fr", status, "01-01-2024", "fr", "fr", false);
     }
 }

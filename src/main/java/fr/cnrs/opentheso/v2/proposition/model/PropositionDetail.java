@@ -19,7 +19,8 @@ public record PropositionDetail(
         String status,
         String publishedAt,
         String reviewedBy,
-        String adminComment
+        String adminComment,
+        boolean fromSync
 ) implements Serializable {
 
     public int getId() {
@@ -72,5 +73,13 @@ public record PropositionDetail(
 
     public String getAdminComment() {
         return adminComment;
+    }
+
+    public boolean isFromSync() {
+        return fromSync;
+    }
+
+    public boolean getFromSync() {
+        return fromSync;
     }
 }

@@ -79,6 +79,7 @@ public class PropositionMutationService {
                 .lang(submission.lang())
                 .status(PropositionStatusEnum.ENVOYER.name())
                 .date(DateTimeFormatter.ofPattern(DATE_PATTERN).withZone(ZoneId.systemDefault()).format(Instant.now()))
+                .fromSync(submission.fromSync())
                 .build();
 
         var saved = propositionModificationRepository.save(proposition);

@@ -10,6 +10,7 @@ public record PropositionSummaryResponse(
         @Schema(description = "Statut (pending / read / approved / refused)") String status,
         @Schema(description = "Auteur") String authorName,
         @Schema(description = "Email de l'auteur") String authorEmail,
-        @Schema(description = "Date de publication") String publishedAt
+        @Schema(description = "Date de publication") String publishedAt,
+        @Schema(description = "true si la proposition provient d'une synchronisation") boolean fromSync
 ) {
 }

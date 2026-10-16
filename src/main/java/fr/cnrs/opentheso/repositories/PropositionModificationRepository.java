@@ -54,7 +54,8 @@ public interface PropositionModificationRepository extends JpaRepository<Proposi
             pro.approuve_par AS approuvePar,
             pro.approuve_date AS approuveDate,
             pro.admin_comment AS adminComment,
-            term.lexical_value AS lexicalValue
+            term.lexical_value AS lexicalValue,
+            COALESCE(pro.from_sync, false) AS fromSync
         FROM proposition_modification pro
                 JOIN preferred_term pre ON pro.id_concept = pre.id_concept AND pro.id_theso = pre.id_thesaurus
                 JOIN term ON pre.id_term = term.id_term AND pre.id_thesaurus = term.id_thesaurus
@@ -74,7 +75,8 @@ public interface PropositionModificationRepository extends JpaRepository<Proposi
     @Query(value = """
         SELECT pro.id, pro.id_concept AS idConcept, pro.lang, pro.id_theso AS idTheso, pro.status, pro.date, pro.nom,
             pro.email, pro.commentaire, pro.approuve_par AS approuvePar, pro.approuve_date AS approuveDate,
-            pro.admin_comment AS adminComment, t.lexical_value AS lexicalValue, l.code_pays AS codePays
+            pro.admin_comment AS adminComment, t.lexical_value AS lexicalValue, l.code_pays AS codePays,
+            COALESCE(pro.from_sync, false) AS fromSync
         FROM proposition_modification pro 
                     LEFT JOIN preferred_term pre ON pro.id_concept = pre.id_concept AND pro.id_theso = pre.id_thesaurus
                     LEFT JOIN term t ON pre.id_term = t.id_term AND pro.lang = t.lang AND pro.id_theso = t.id_thesaurus
@@ -88,7 +90,8 @@ public interface PropositionModificationRepository extends JpaRepository<Proposi
     @Query(value = """
         SELECT pro.id, pro.id_concept AS idConcept, pro.lang, pro.id_theso AS idTheso, pro.status, pro.date, pro.nom,
             pro.email, pro.commentaire, pro.approuve_par AS approuvePar, pro.approuve_date AS approuveDate,
-            pro.admin_comment AS adminComment, t.lexical_value AS lexicalValue, l.code_pays AS codePays
+            pro.admin_comment AS adminComment, t.lexical_value AS lexicalValue, l.code_pays AS codePays,
+            COALESCE(pro.from_sync, false) AS fromSync
         FROM proposition_modification pro 
                     LEFT JOIN preferred_term pre ON pro.id_concept = pre.id_concept AND pro.id_theso = pre.id_thesaurus
                     LEFT JOIN term t ON pre.id_term = t.id_term AND pro.lang = t.lang AND pro.id_theso = t.id_thesaurus
@@ -101,7 +104,8 @@ public interface PropositionModificationRepository extends JpaRepository<Proposi
     @Query(value = """
         SELECT pro.id, pro.id_concept AS idConcept, pro.lang, pro.id_theso AS idTheso, pro.status, pro.date, pro.nom,
             pro.email, pro.commentaire, pro.approuve_par AS approuvePar, pro.approuve_date AS approuveDate,
-            pro.admin_comment AS adminComment, t.lexical_value AS lexicalValue, l.code_pays AS codePays
+            pro.admin_comment AS adminComment, t.lexical_value AS lexicalValue, l.code_pays AS codePays,
+            COALESCE(pro.from_sync, false) AS fromSync
         FROM proposition_modification pro 
                     LEFT JOIN preferred_term pre ON pro.id_concept = pre.id_concept AND pro.id_theso = pre.id_thesaurus
                     LEFT JOIN term t ON pre.id_term = t.id_term AND pro.lang = t.lang AND pro.id_theso = t.id_thesaurus
@@ -115,7 +119,8 @@ public interface PropositionModificationRepository extends JpaRepository<Proposi
     @Query(value = """
         SELECT pro.id, pro.id_concept AS idConcept, pro.lang, pro.id_theso AS idTheso, pro.status, pro.date, pro.nom,
             pro.email, pro.commentaire, pro.approuve_par AS approuvePar, pro.approuve_date AS approuveDate,
-            pro.admin_comment AS adminComment, t.lexical_value AS lexicalValue, l.code_pays AS codePays
+            pro.admin_comment AS adminComment, t.lexical_value AS lexicalValue, l.code_pays AS codePays,
+            COALESCE(pro.from_sync, false) AS fromSync
         FROM proposition_modification pro 
                     LEFT JOIN preferred_term pre ON pro.id_concept = pre.id_concept AND pro.id_theso = pre.id_thesaurus
                     LEFT JOIN term t ON pre.id_term = t.id_term AND pro.lang = t.lang AND pro.id_theso = t.id_thesaurus
@@ -128,7 +133,8 @@ public interface PropositionModificationRepository extends JpaRepository<Proposi
     @Query(value = """
         SELECT pro.id, pro.id_concept AS idConcept, pro.lang, pro.id_theso AS idTheso, pro.status, pro.date, pro.nom,
             pro.email, pro.commentaire, pro.approuve_par AS approuvePar, pro.approuve_date AS approuveDate,
-            pro.admin_comment AS adminComment, t.lexical_value AS lexicalValue, l.code_pays AS codePays
+            pro.admin_comment AS adminComment, t.lexical_value AS lexicalValue, l.code_pays AS codePays,
+            COALESCE(pro.from_sync, false) AS fromSync
         FROM proposition_modification pro 
                     LEFT JOIN preferred_term pre ON pro.id_concept = pre.id_concept AND pro.id_theso = pre.id_thesaurus
                     LEFT JOIN term t ON pre.id_term = t.id_term AND pro.lang = t.lang AND pro.id_theso = t.id_thesaurus

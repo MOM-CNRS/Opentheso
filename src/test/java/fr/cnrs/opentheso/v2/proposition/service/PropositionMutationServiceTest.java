@@ -55,6 +55,20 @@ class PropositionMutationServiceTest {
         verify(repository).save(captor.capture());
         assertEquals("ENVOYER", captor.getValue().getStatus());
         assertEquals("C1", captor.getValue().getIdConcept());
+        assertFalse(Boolean.TRUE.equals(captor.getValue().getFromSync()));
+    }
+
+    @Test
+    void submitDraft_persistsSyncOrigin() {
+        when(repository.save(any())).thenAnswer(invocation -> invocation.getArgument(0));
+
+        service.submitDraft(new PropositionSubmission(
+                "TH1", "Test", "C1", "Concept 1", "fr", "Author", "a@b.fr",
+                "Synchronisation depuis le thésaurus copie", true, true));
+
+        ArgumentCaptor<PropositionModification> captor = ArgumentCaptor.forClass(PropositionModification.class);
+        verify(repository).save(captor.capture());
+        assertTrue(captor.getValue().getFromSync());
     }
 
     @Test

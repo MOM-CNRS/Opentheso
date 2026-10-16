@@ -4,6 +4,7 @@ import fr.cnrs.opentheso.models.PropositionProjection;
 import fr.cnrs.opentheso.models.propositions.PropositionStatusEnum;
 import fr.cnrs.opentheso.repositories.PropositionModificationRepository;
 import fr.cnrs.opentheso.v2.proposition.model.PropositionDetail;
+import fr.cnrs.opentheso.v2.proposition.model.PropositionOrigin;
 import fr.cnrs.opentheso.v2.proposition.model.PropositionSummary;
 import lombok.RequiredArgsConstructor;
 import org.apache.commons.lang3.StringUtils;
@@ -86,7 +87,8 @@ public class PropositionReadService {
                 projection.getStatus(),
                 projection.getDate(),
                 projection.getLang(),
-                projection.getCodePays()
+                projection.getCodePays(),
+                PropositionOrigin.fromSync(projection.getFromSync(), projection.getCommentaire())
         );
     }
 
@@ -104,7 +106,8 @@ public class PropositionReadService {
                 projection.getStatus(),
                 projection.getDate(),
                 projection.getApprouvePar(),
-                projection.getAdminComment()
+                projection.getAdminComment(),
+                PropositionOrigin.fromSync(projection.getFromSync(), projection.getCommentaire())
         );
     }
 }

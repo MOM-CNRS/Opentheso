@@ -191,6 +191,7 @@ public class ThesaurusSyncReceiveService {
                 authorName,
                 authorEmail,
                 comment,
+                true,
                 true
         ));
         if (propositionId.isEmpty()) {
