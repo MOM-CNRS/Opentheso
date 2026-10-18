@@ -558,6 +558,7 @@ function setExportFormat(fmt) {
 }
 
 function setExportBusy(on, keepProgress) {
+  if (on) ensureExportProgressOverlay();
   exportBusy = !!on;
   const overlay = usesExportOverlay();
   // Sur la page thesauri : uniquement l'overlay tpLoading (comme l'import).
@@ -589,43 +590,137 @@ function setExportBusy(on, keepProgress) {
 }
 
 function usesExportOverlay() {
-  return !!(document.getElementById("tpLoading") && document.getElementById("tpExportHost"));
+  return !!document.getElementById("tpLoading");
+}
+
+function ensureExportProgressOverlay() {
+  if (document.getElementById("tpLoading")) return;
+  const box = document.createElement("div");
+  box.id = "tpLoading";
+  box.className = "tp-loading";
+  box.hidden = true;
+  box.setAttribute("hidden", "hidden");
+  box.setAttribute("aria-live", "polite");
+  box.setAttribute("aria-busy", "false");
+  box.setAttribute("data-export-running", "Export du thésaurus…");
+  box.setAttribute("data-export-done", "Export terminé");
+  box.setAttribute("data-export-meta-tpl", "{0} / {1} concepts");
+  box.setAttribute("data-meta-tpl", "{0} / {1} concepts");
+  box.setAttribute("data-active-meta-tpl", "{0} / {1} concepts");
+  box.setAttribute("data-eta-tpl", "≈ {0} restantes");
+  box.setAttribute("data-eta-sec-tpl", "{0} s");
+  box.setAttribute("data-eta-min-tpl", "{0} min");
+  box.setAttribute("data-rate-tpl", "{0}/s");
+  box.setAttribute("data-export-step-0", "Préparer");
+  box.setAttribute("data-export-step-1", "Lire");
+  box.setAttribute("data-export-step-2", "Construire");
+  box.setAttribute("data-export-step-3", "Fichier");
+  box.innerHTML = [
+    '<div class="tp-loading-card tp-prog-card">',
+    '<div class="tp-prog-import">',
+    '<div class="tp-prog-h"><span class="tp-prog-t" id="tpProgTitle">Export du thésaurus…</span><span class="tp-prog-pct" id="tpProgPct">0%</span></div>',
+    '<div class="tp-prog-track" id="tpProgTrack" role="progressbar" aria-valuemin="0" aria-valuemax="100" aria-valuenow="0"><span class="tp-prog-fill" id="tpProgFill"></span></div>',
+    '<div class="tp-prog-meta" id="tpProgMeta" hidden="hidden"><span class="tp-prog-count" id="tpProgCount"></span><span class="tp-prog-sep" aria-hidden="true">·</span><span class="tp-prog-eta" id="tpProgEta"></span><span class="tp-prog-sep" aria-hidden="true">·</span><span class="tp-prog-rate" id="tpProgRate"></span></div>',
+    '<div class="tp-prog-detail" id="tpProgDetail"></div>',
+    '<ol class="tp-prog-steps" id="tpProgSteps">',
+    '<li data-step="0">Préparer</li><li data-step="1">Lire</li><li data-step="2">Construire</li><li data-step="3">Fichier</li>',
+    '</ol>',
+    '<div class="tp-prog-actions"><button type="button" class="bo-btn ghost" id="tpProgCancel" hidden="hidden">Annuler</button></div>',
+    '</div></div>'
+  ].join("");
+  document.body.appendChild(box);
+  const cancel = box.querySelector("#tpProgCancel");
+  if (cancel) {
+    cancel.addEventListener("click", () => cancelSelectionExport(false));
+  }
+}
+
+function bindExportOverlayCancel() {
+  const btn = document.getElementById("tpProgCancel");
+  if (!btn || btn.getAttribute("data-export-bound") === "1") return;
+  btn.setAttribute("data-export-bound", "1");
+  btn.addEventListener("click", event => {
+    const box = document.getElementById("tpLoading");
+    if (!box || !box.classList.contains("is-export")) return;
+    event.preventDefault();
+    event.stopImmediatePropagation();
+    cancelSelectionExport(false);
+  }, true);
 }
 
 function showExportOverlay(msg) {
-  if (!usesExportOverlay() || !window.tpShowLoading) return;
+  ensureExportProgressOverlay();
+  if (!usesExportOverlay()) return;
   const box = document.getElementById("tpLoading");
   const title = msg
     || (box && box.getAttribute("data-export-running"))
     || "Export du thésaurus…";
-  if (!box.classList.contains("is-export") || box.hidden) {
-    window.tpShowLoading(title, "export");
-  } else if (title) {
+  if (window.tpShowLoading) {
+    if (!box.classList.contains("is-export") || box.hidden) {
+      window.tpShowLoading(title, "export");
+    } else if (title) {
+      const t = document.getElementById("tpProgTitle");
+      if (t) t.textContent = title;
+    }
+  } else {
+    box.classList.add("is-export");
+    box.hidden = false;
+    box.removeAttribute("hidden");
+    box.setAttribute("aria-busy", "true");
+    document.body.classList.add("tp-is-loading");
     const t = document.getElementById("tpProgTitle");
-    if (t) t.textContent = title;
+    if (t && title) t.textContent = title;
   }
+  bindExportOverlayCancel();
+  const cancel = document.getElementById("tpProgCancel");
+  if (cancel) {
+    if (!cancel.getAttribute("data-import-label")) {
+      cancel.setAttribute("data-import-label", cancel.textContent || "Annuler");
+    }
+    cancel.hidden = false;
+    cancel.disabled = false;
+    cancel.textContent = "Annuler";
+  }
+  const report = document.getElementById("tpProgReport");
+  if (report) report.hidden = true;
 }
 
 function hideExportOverlay(keepBriefly) {
-  if (!usesExportOverlay() || !window.tpHideLoading) return;
+  if (!usesExportOverlay()) return;
   const box = document.getElementById("tpLoading");
   if (!box || !box.classList.contains("is-export")) return;
   if (window._tpExportOverlayHide) {
     window.clearTimeout(window._tpExportOverlayHide);
     window._tpExportOverlayHide = 0;
   }
+  const hide = () => {
+    if (window.tpHideLoading) window.tpHideLoading();
+    else {
+      box.hidden = true;
+      box.setAttribute("hidden", "hidden");
+      box.setAttribute("aria-busy", "false");
+      box.classList.remove("is-export");
+      document.body.classList.remove("tp-is-loading");
+    }
+    const cancel = document.getElementById("tpProgCancel");
+    if (cancel) {
+      cancel.hidden = true;
+      const stored = cancel.getAttribute("data-label") || cancel.getAttribute("data-import-label");
+      if (stored) cancel.textContent = stored;
+    }
+  };
   if (keepBriefly) {
     window._tpExportOverlayHide = window.setTimeout(() => {
-      window.tpHideLoading && window.tpHideLoading();
+      hide();
       window._tpExportOverlayHide = 0;
     }, 700);
     return;
   }
-  window.tpHideLoading();
+  hide();
 }
 
 function paintExportOverlay(data) {
-  if (!usesExportOverlay() || !window.tpPaintImportProgress) return;
+  if (!usesExportOverlay()) return;
   const box = document.getElementById("tpLoading");
   const pct = Math.max(0, Math.min(100, Number(data && data.progress) || 0));
   const phaseCount = Math.max(1, Number(data && data.phaseCount) || 4);
@@ -637,16 +732,83 @@ function paintExportOverlay(data) {
   const message = doneAll
     ? ((box && box.getAttribute("data-export-done")) || "Export terminé")
     : ((data && data.message) || (data && data.phaseLabel) || "");
+  const pace = exportPace(data || {});
   showExportOverlay(message || ((box && box.getAttribute("data-export-running")) || "Export…"));
-  window.tpPaintImportProgress(
-    doneAll ? 100 : pct,
-    doneAll ? phaseCount - 1 : phaseIndex,
-    message,
-    done,
-    total,
-    -1,
-    0
-  );
+  if (window.tpPaintImportProgress) {
+    window.tpPaintImportProgress(
+      doneAll ? 100 : pct,
+      doneAll ? phaseCount - 1 : phaseIndex,
+      message,
+      done,
+      total,
+      pace.eta,
+      pace.rate
+    );
+    return;
+  }
+  paintExportCardFallback(box, doneAll ? 100 : pct, doneAll ? phaseCount - 1 : phaseIndex, message, done, total, pace);
+}
+
+function paintExportCardFallback(box, pct, step, message, done, total, pace) {
+  const clamped = Math.max(0, Math.min(100, Number(pct) || 0));
+  const fill = document.getElementById("tpProgFill");
+  const track = document.getElementById("tpProgTrack");
+  const pctEl = document.getElementById("tpProgPct");
+  const title = document.getElementById("tpProgTitle");
+  const meta = document.getElementById("tpProgMeta");
+  const countEl = document.getElementById("tpProgCount");
+  const etaEl = document.getElementById("tpProgEta");
+  const rateEl = document.getElementById("tpProgRate");
+  if (fill) fill.style.width = clamped + "%";
+  if (track) track.setAttribute("aria-valuenow", String(Math.round(clamped)));
+  if (pctEl) pctEl.textContent = Math.round(clamped) + "%";
+  if (title && message) title.textContent = message;
+  const hasCount = total > 0 && done >= 0;
+  const etaTxt = box && pace ? formatExportEta(box, pace.eta) : "";
+  const rateTxt = box && pace ? formatExportRate(box, pace.rate) : "";
+  if (meta && countEl) {
+    if (hasCount) {
+      countEl.textContent = fmtExportTpl(box.getAttribute("data-active-meta-tpl") || box.getAttribute("data-export-meta-tpl"), done, total);
+      if (etaEl) {
+        etaEl.textContent = etaTxt;
+        etaEl.hidden = !etaTxt;
+      }
+      if (rateEl) {
+        rateEl.textContent = rateTxt;
+        rateEl.hidden = !rateTxt;
+      }
+      meta.querySelectorAll(".tp-prog-sep").forEach((sep, idx) => {
+        if (idx === 0) sep.hidden = !etaTxt && !rateTxt;
+        if (idx === 1) sep.hidden = !etaTxt || !rateTxt;
+      });
+      meta.hidden = false;
+    } else {
+      meta.hidden = true;
+    }
+  }
+  if (box) {
+    box.querySelectorAll(".tp-prog-steps li").forEach(li => {
+      const s = Number(li.getAttribute("data-step"));
+      li.classList.toggle("is-done", s < step || clamped >= 100);
+      li.classList.toggle("is-on", s === step && clamped < 100);
+    });
+  }
+}
+
+function formatExportEta(box, etaSeconds) {
+  if (window.tpFmtEta) return window.tpFmtEta(box, etaSeconds);
+  if (etaSeconds == null || etaSeconds < 0) return "";
+  const amount = etaSeconds < 60
+    ? fmtExportTpl(box.getAttribute("data-eta-sec-tpl"), Math.max(1, Math.round(etaSeconds)))
+    : fmtExportTpl(box.getAttribute("data-eta-min-tpl"), Math.max(1, Math.round(etaSeconds / 60)));
+  return fmtExportTpl(box.getAttribute("data-eta-tpl"), amount);
+}
+
+function formatExportRate(box, rate) {
+  if (window.tpFmtRate) return window.tpFmtRate(box, rate);
+  if (!rate || rate <= 0) return "";
+  const shown = rate >= 10 ? Math.round(rate) : (Math.round(rate * 10) / 10);
+  return fmtExportTpl(box.getAttribute("data-rate-tpl"), shown);
 }
 
 function setExportActions(mode) {
@@ -692,6 +854,36 @@ function showExportError(msg) {
 }
 
 let lastExportPhase = -1;
+let exportConceptClock = { key: "", stamp: 0 };
+
+function exportPace(data) {
+  const done = Number(data && data.done) || 0;
+  const total = Number(data && data.total) || 0;
+  const phase = (data && data.phase) || "";
+  const counting = total > 0 && (phase === "read" || phase === "build" || phase === "write");
+  if (!counting) {
+    exportConceptClock = { key: "", stamp: 0 };
+    return { eta: -1, rate: 0 };
+  }
+  const key = phase + ":" + total;
+  if (exportConceptClock.key !== key) {
+    exportConceptClock = { key, stamp: Date.now() };
+  }
+  if (done <= 0) return { eta: -1, rate: 0 };
+  const elapsed = Math.max(1, Date.now() - exportConceptClock.stamp);
+  const rate = done * 1000 / elapsed;
+  const finished = data.status === "done" || done >= total;
+  const eta = !finished && rate > 0 && total > done
+    ? Math.max(1, Math.round((total - done) / rate))
+    : -1;
+  return { eta, rate: finished ? 0 : rate };
+}
+
+function fmtExportTpl(tpl, a, b) {
+  if (window.tpFmtTpl) return window.tpFmtTpl(tpl, a, b);
+  if (!tpl) return "";
+  return String(tpl).replace("{0}", a == null ? "" : String(a)).replace("{1}", b == null ? "" : String(b));
+}
 
 function paintExportProgress(data) {
   // Page export thesauri : progression uniquement dans tpLoading (même UX que l'import).
@@ -907,6 +1099,7 @@ function startSelectionExport() {
 function startSelectionExportRequest(theso, whole, ids, filterByGroup, groupIds) {
   exportDownloaded = false;
   exportRunStartedAt = 0;
+  exportConceptClock = { key: "", stamp: 0 };
   exportPollStarted = Date.now();
   showExportError("");
   setExportBusy(true);

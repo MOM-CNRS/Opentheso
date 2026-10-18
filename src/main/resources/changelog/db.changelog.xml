@@ -342,4 +342,9 @@
         <sqlFile path="v26/26-10_02.sql" relativeToChangelogFile="true" splitStatements="false"/>
     </changeSet>
 
+    <changeSet id="26.10.03" author="Firas">
+        <comment>Allow long Dublin Core values on thesaurus import</comment>
+        <sqlFile path="v26/26-10_03.sql" relativeToChangelogFile="true" splitStatements="false"/>
+    </changeSet>
+
 </databaseChangeLog>

@@ -48,7 +48,6 @@ import lombok.extern.slf4j.Slf4j;
 import org.apache.commons.collections4.CollectionUtils;
 import org.apache.commons.lang3.StringUtils;
 import org.apache.commons.text.StringEscapeUtils;
-import org.springframework.dao.DataIntegrityViolationException;
 import org.springframework.stereotype.Component;
 
 import fr.cnrs.opentheso.shared.time.Dates;
@@ -211,17 +210,13 @@ public class ThesaurusEditionSkosImportEngine {
     private void persistConceptSchemeDcTerms(String idTheso) {
         for (DcElement dcElement : dedupeSingularThesaurusDcTerms(
                 skosXmlDocument.getConceptScheme().getThesaurus().getDcElement())) {
-            try {
-                thesaurusDcTermRepository.save(ThesaurusDcTerm.builder()
-                        .idThesaurus(idTheso)
-                        .name(dcElement.getName())
-                        .value(dcElement.getValue())
-                        .language(dcElement.getLanguage())
-                        .dataType(dcElement.getType())
-                        .build());
-            } catch (DataIntegrityViolationException e) {
-                // terme DC déjà présent : ignoré
-            }
+            thesaurusDcTermRepository.save(ThesaurusDcTerm.builder()
+                    .idThesaurus(idTheso)
+                    .name(dcElement.getName())
+                    .value(dcElement.getValue())
+                    .language(dcElement.getLanguage())
+                    .dataType(dcElement.getType())
+                    .build());
         }
     }
 
@@ -416,24 +411,55 @@ public class ThesaurusEditionSkosImportEngine {
         }
         java.util.Map<String, DcElement> singularBest = new java.util.LinkedHashMap<>();
         java.util.List<DcElement> others = new java.util.ArrayList<>();
+        Set<String> seenNameAndValue = new HashSet<>();
         for (DcElement element : source) {
-            if (element == null || StringUtils.isBlank(element.getName())) {
+            DcElement cleaned = sanitizeThesaurusDcElement(element);
+            if (cleaned == null) {
                 continue;
             }
-            String name = element.getName().trim().toLowerCase();
+            String name = cleaned.getName().toLowerCase();
             if ("created".equals(name) || "modified".equals(name)) {
                 DcElement previous = singularBest.get(name);
-                if (previous == null || isNewerDcDate(element.getValue(), previous.getValue())) {
-                    singularBest.put(name, element);
+                if (previous == null || isNewerDcDate(cleaned.getValue(), previous.getValue())) {
+                    singularBest.put(name, cleaned);
                 }
-            } else {
-                others.add(element);
+                continue;
+            }
+            // La contrainte est (id_thesaurus, name, value), sans la langue.
+            if (seenNameAndValue.add(cleaned.getName() + "\u0001" + cleaned.getValue())) {
+                others.add(cleaned);
             }
         }
         java.util.List<DcElement> result = new java.util.ArrayList<>(others.size() + singularBest.size());
         result.addAll(others);
         result.addAll(singularBest.values());
         return result;
+    }
+
+    /**
+     * Nom et valeur sont obligatoires. Un octet NUL fait échouer PostgreSQL
+     * et annule toute la transaction d'import.
+     */
+    static DcElement sanitizeThesaurusDcElement(DcElement element) {
+        if (element == null) {
+            return null;
+        }
+        String name = StringUtils.trimToNull(stripNul(element.getName()));
+        String value = StringUtils.trimToNull(stripNul(element.getValue()));
+        if (name == null || value == null) {
+            return null;
+        }
+        element.setName(name);
+        element.setValue(value);
+        element.setLanguage(StringUtils.trimToNull(stripNul(element.getLanguage())));
+        return element;
+    }
+
+    private static String stripNul(String value) {
+        if (value == null || value.indexOf('\0') < 0) {
+            return value;
+        }
+        return value.replace("\0", "");
     }
 
     private static boolean isNewerDcDate(String candidate, String current) {

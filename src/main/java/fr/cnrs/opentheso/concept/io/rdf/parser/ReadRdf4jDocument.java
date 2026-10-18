@@ -8,6 +8,7 @@ import org.eclipse.rdf4j.rio.RDFHandlerException;
 import org.eclipse.rdf4j.rio.RDFParseException;
 import org.eclipse.rdf4j.rio.RDFParser;
 import org.eclipse.rdf4j.rio.Rio;
+import org.eclipse.rdf4j.rio.helpers.BasicParserSettings;
 
 import java.io.IOException;
 import java.io.InputStream;
@@ -20,6 +21,9 @@ public class ReadRdf4jDocument {
 
         SKOSXmlDocument skosXmlDocument = new SKOSXmlDocument();
         RDFParser parser = Rio.createParser(rdfFormat);
+        // Certains exports SKOS mettent du wikicode ([[File:…]]) dans une IRI.
+        // RDF4J interrompt alors tout le fichier. On conserve la valeur telle quelle.
+        parser.set(BasicParserSettings.VERIFY_URI_SYNTAX, false);
 
         if (RDFFormat.RDFJSON.equals(rdfFormat)) {
             parser.setRDFHandler(new ReadJsonFlux(skosXmlDocument, defaultLang));

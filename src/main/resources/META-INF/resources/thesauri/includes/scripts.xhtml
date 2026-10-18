@@ -42,9 +42,11 @@
         var el = document.getElementById('tpLoading');
         if (!el) return true;
         var asExport = mode === 'export';
-        var asRich = mode === true || mode === 'import' || asExport;
-        el.classList.toggle('is-import', asRich && !asExport);
+        var asDelete = mode === 'delete';
+        var asRich = mode === true || mode === 'import' || asExport || asDelete;
+        el.classList.toggle('is-import', asRich && !asExport && !asDelete);
         el.classList.toggle('is-export', asExport);
+        el.classList.toggle('is-delete', asDelete);
         if (asRich) {
           window.tpApplyProgressSteps(asExport ? 'export' : 'import');
         }
@@ -84,6 +86,7 @@
           el.setAttribute('aria-busy', 'false');
           el.classList.remove('is-import');
           el.classList.remove('is-export');
+          el.classList.remove('is-delete');
           window.tpApplyProgressSteps('import');
         }
         document.body.classList.remove('tp-is-loading');
@@ -1129,6 +1132,7 @@
           loading.setAttribute('hidden', 'hidden');
           loading.classList.remove('is-import');
           loading.classList.remove('is-export');
+          loading.classList.remove('is-delete');
           loading.setAttribute('aria-busy', 'false');
         }
         document.querySelectorAll('.tp.tp--leaving, .tp--leaving').forEach(function (node) {
@@ -1157,9 +1161,38 @@
         if (cancel) cancel.click();
         return false;
       };
+      window.tpShowDeleteProgress = function () {
+        var box = document.getElementById('tpLoading');
+        if (!box || !window.tpShowLoading) return;
+        var nameEl = document.querySelector('#tpDeleteConfirm strong');
+        var name = nameEl ? nameEl.textContent.trim() : '';
+        var msg = box.getAttribute('data-delete-running') || 'Suppression du thésaurus…';
+        if (name) msg = msg + ' « ' + name + ' »';
+        window.tpShowLoading(msg, 'delete');
+        var detail = document.getElementById('tpProgDetail');
+        var hint = box.getAttribute('data-delete-detail') || '';
+        if (detail) {
+          detail.hidden = !hint;
+          detail.textContent = hint;
+        }
+        var meta = document.getElementById('tpProgMeta');
+        if (meta) meta.hidden = true;
+        var steps = document.getElementById('tpProgSteps');
+        if (steps) steps.hidden = true;
+        var fill = document.getElementById('tpProgFill');
+        if (fill) {
+          fill.classList.add('is-indet');
+          fill.style.width = '';
+        }
+        var pct = document.getElementById('tpProgPct');
+        if (pct) pct.textContent = '';
+        var cancel = document.getElementById('tpProgCancel');
+        if (cancel) cancel.hidden = true;
+      };
       window.tpConfirmDeleteOk = function () {
-        // Fermer le calque, puis lancer le postback via le lien caché.
+        // Fermer le calque, afficher la progression, puis lancer le postback.
         window.tpHideDeleteConfirm && window.tpHideDeleteConfirm();
+        window.tpShowDeleteProgress && window.tpShowDeleteProgress();
         var go = document.getElementById('tpDeleteSubmit');
         if (go) go.click();
         return false;

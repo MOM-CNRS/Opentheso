@@ -417,7 +417,23 @@ a.tp-add-opt:hover .tp-add-opt-go{opacity:1;transform:translateX(0);color:var(--
 .tp-loading.is-import .tp-prog-simple,
 .tp-loading.is-export .tp-prog-simple{display:none}
 .tp-loading.is-import .tp-prog-import,
-.tp-loading.is-export .tp-prog-import{display:flex}
+.tp-loading.is-export .tp-prog-import,
+.tp-loading.is-delete .tp-prog-import{display:flex}
+.tp-loading.is-delete{z-index:420}
+.tp-loading.is-delete .tp-prog-card{min-width:min(460px,94vw)}
+.tp-loading.is-delete .tp-prog-simple{display:none}
+.tp-loading.is-delete .tp-prog-steps,
+.tp-loading.is-delete .tp-prog-meta,
+.tp-loading.is-delete .tp-prog-pct{display:none!important}
+.tp-loading.is-delete .tp-prog-detail{display:block;font-size:13px;line-height:1.45;color:var(--ink-3)}
+.tp-loading.is-delete .tp-prog-fill.is-indet{
+  width:38%;
+  animation:tp-indet 1.15s ease-in-out infinite;
+}
+@keyframes tp-indet{
+  0%{transform:translateX(-130%)}
+  100%{transform:translateX(340%)}
+}
 .tp-prog-h{display:flex;align-items:baseline;justify-content:space-between;gap:12px}
 .tp-prog-t{font-size:14px;font-weight:650;color:var(--ink-2);line-height:1.35}
 .tp-prog-pct{flex:0 0 auto;font-family:var(--mono,"IBM Plex Mono",ui-monospace,monospace);font-size:15px;font-weight:700;color:var(--accent);letter-spacing:.02em}

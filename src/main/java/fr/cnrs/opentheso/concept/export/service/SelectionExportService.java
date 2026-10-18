@@ -140,11 +140,24 @@ public class SelectionExportService {
                 request.groupIds(),
                 request.clearHtml()
         );
-        var document = thesaurusSkosDocumentBuilder.buildDocument(thesaurusId, options);
+        var document = thesaurusSkosDocumentBuilder.buildDocument(thesaurusId, options, (done, total) -> {
+            throwIfCancelled(job);
+            int safeTotal = Math.max(0, total);
+            if (done <= 0) {
+                job.progress(0, safeTotal, "Lecture de " + conceptsLabel(safeTotal) + "…");
+                return;
+            }
+            if (job.getPhaseIndex() < 2) {
+                job.enterPhase(2, PHASE_BUILD, PHASE_BUILD_LABEL, "Construction SKOS de " + conceptsLabel(safeTotal) + "…");
+            }
+            job.progress(done, safeTotal, "Concept " + done + " / " + safeTotal);
+        });
         throwIfCancelled(job);
         int conceptCount = document.getConceptList() == null ? 0 : document.getConceptList().size();
-        job.enterPhase(2, PHASE_BUILD, PHASE_BUILD_LABEL, "Assemblage SKOS de " + conceptsLabel(conceptCount) + "…");
-        job.progress(conceptCount, Math.max(1, conceptCount), "Assemblage SKOS terminé · " + conceptsLabel(conceptCount));
+        if (job.getPhaseIndex() < 2) {
+            job.enterPhase(2, PHASE_BUILD, PHASE_BUILD_LABEL, "Assemblage SKOS de " + conceptsLabel(conceptCount) + "…");
+        }
+        job.progress(conceptCount, Math.max(conceptCount, 1), "Assemblage SKOS terminé · " + conceptsLabel(conceptCount));
         throwIfCancelled(job);
         writeDocument(request, thesaurusId, format, document, conceptCount, true, job);
     }
@@ -237,7 +250,11 @@ public class SelectionExportService {
     ) throws DocumentException, IOException {
         job.enterPhase(3, PHASE_WRITE, PHASE_FILE, "Écriture " + formatLabel(format) + " · " + conceptsLabel(conceptCount) + "…");
         throwIfCancelled(job);
-        job.progress(0, 1, "Écriture " + formatLabel(format) + "…");
+        if (conceptCount > 0) {
+            job.progress(conceptCount, conceptCount, "Écriture " + formatLabel(format) + " · " + conceptsLabel(conceptCount) + "…");
+        } else {
+            job.progress(0, 0, "Écriture " + formatLabel(format) + "…");
+        }
         if ("csv".equals(format)) {
             completeCsv(request, thesaurusId, document, job, conceptCount, whole);
             return;

@@ -75,7 +75,16 @@ public class ThesaurusSkosDocumentBuilder {
 
     @Transactional(readOnly = true)
     public SKOSXmlDocument buildDocument(String thesaurusId, ThesaurusEditionExportOptions options) throws Exception {
-        return doBuildDocument(thesaurusId, options);
+        return doBuildDocument(thesaurusId, options, null);
+    }
+
+    @Transactional(readOnly = true)
+    public SKOSXmlDocument buildDocument(
+            String thesaurusId,
+            ThesaurusEditionExportOptions options,
+            java.util.function.BiConsumer<Integer, Integer> progress
+    ) throws Exception {
+        return doBuildDocument(thesaurusId, options, progress);
     }
 
     @Transactional(readOnly = true)
@@ -87,6 +96,14 @@ public class ThesaurusSkosDocumentBuilder {
     }
 
     private SKOSXmlDocument doBuildDocument(String thesaurusId, ThesaurusEditionExportOptions options) throws Exception {
+        return doBuildDocument(thesaurusId, options, null);
+    }
+
+    private SKOSXmlDocument doBuildDocument(
+            String thesaurusId,
+            ThesaurusEditionExportOptions options,
+            java.util.function.BiConsumer<Integer, Integer> progress
+    ) throws Exception {
         var preferences = toolboxPreferencePersistence.findPreferences(thesaurusId);
         if (preferences == null) {
             throw new IllegalStateException("Préférences du thésaurus introuvables");
@@ -101,8 +118,8 @@ public class ThesaurusSkosDocumentBuilder {
         document.setConceptScheme(exportConceptScheme(thesaurusId, preferences, baseUrl));
 
         List<SKOSResource> concepts = resolvedOptions.filterByGroup()
-                ? fillDocumentByGroups(document, thesaurusId, preferences, baseUrl, resolvedOptions)
-                : fillFullDocument(document, thesaurusId, preferences, baseUrl, resolvedOptions);
+                ? fillDocumentByGroups(document, thesaurusId, preferences, baseUrl, resolvedOptions, progress)
+                : fillFullDocument(document, thesaurusId, preferences, baseUrl, resolvedOptions, progress);
 
         for (SKOSResource concept : concepts) {
             document.addconcept(concept);
@@ -116,13 +133,14 @@ public class ThesaurusSkosDocumentBuilder {
             String thesaurusId,
             Preferences preferences,
             String baseUrl,
-            ThesaurusEditionExportOptions options
+            ThesaurusEditionExportOptions options,
+            java.util.function.BiConsumer<Integer, Integer> progress
     ) throws Exception {
         for (SKOSResource group : exportCollections(thesaurusId, preferences, baseUrl)) {
             document.addGroup(group);
         }
         List<SKOSResource> concepts = getAllConcepts(
-                thesaurusId, baseUrl, null, preferences.getOriginalUri(), preferences, options.clearHtml()
+                thesaurusId, baseUrl, null, preferences.getOriginalUri(), preferences, options.clearHtml(), progress
         );
         for (SKOSResource facet : getAllFacettes(thesaurusId, baseUrl, preferences.getOriginalUri(), preferences)) {
             document.addFacet(facet);
@@ -135,14 +153,20 @@ public class ThesaurusSkosDocumentBuilder {
             String thesaurusId,
             Preferences preferences,
             String baseUrl,
-            ThesaurusEditionExportOptions options
+            ThesaurusEditionExportOptions options,
+            java.util.function.BiConsumer<Integer, Integer> progress
     ) throws Exception {
         List<SKOSResource> concepts = new ArrayList<>();
+        int offset = 0;
         for (String groupId : options.selectedGroupIds()) {
             document.addGroup(exportCollectionById(thesaurusId, groupId, preferences, baseUrl));
-            concepts.addAll(getAllConcepts(
-                    thesaurusId, baseUrl, groupId, preferences.getOriginalUri(), preferences, options.clearHtml()
-            ));
+            int base = offset;
+            List<SKOSResource> groupConcepts = getAllConcepts(
+                    thesaurusId, baseUrl, groupId, preferences.getOriginalUri(), preferences, options.clearHtml(),
+                    progress == null ? null : (done, total) -> progress.accept(base + done, base + total)
+            );
+            concepts.addAll(groupConcepts);
+            offset += groupConcepts.size();
         }
         for (SKOSResource facet : getAllFacettes(thesaurusId, baseUrl, preferences.getOriginalUri(), preferences)) {
             if (isFacetInGroups(thesaurusId, facet.getIdentifier(), options.selectedGroupIds())) {
@@ -256,17 +280,44 @@ public class ThesaurusSkosDocumentBuilder {
 
     public List<SKOSResource> getAllConcepts(String idThesaurus, String baseUrl, String idGroup, String originalUri,
                                              Preferences nodePreference, boolean filterHtmlCharacter) throws Exception {
+        return getAllConcepts(idThesaurus, baseUrl, idGroup, originalUri, nodePreference, filterHtmlCharacter, null);
+    }
+
+    public List<SKOSResource> getAllConcepts(String idThesaurus, String baseUrl, String idGroup, String originalUri,
+                                             Preferences nodePreference, boolean filterHtmlCharacter,
+                                             java.util.function.BiConsumer<Integer, Integer> progress) throws Exception {
 
         List<SkosConceptProjection> projections = StringUtils.isEmpty(idGroup)
                 ? exportRepository.getAllConcepts(idThesaurus, baseUrl)
                 : exportRepository.getAllConceptsByGroup(idThesaurus, baseUrl, idGroup);
 
-        List<SKOSResource> result = new ArrayList<>();
+        return buildConceptsFromProjections(
+                projections, idThesaurus, originalUri, nodePreference, filterHtmlCharacter, progress
+        );
+    }
 
+    private List<SKOSResource> buildConceptsFromProjections(
+            List<SkosConceptProjection> projections,
+            String idThesaurus,
+            String originalUri,
+            Preferences nodePreference,
+            boolean filterHtmlCharacter,
+            java.util.function.BiConsumer<Integer, Integer> progress
+    ) throws Exception {
+        List<SKOSResource> result = new ArrayList<>(projections.size());
+        int total = projections.size();
+        int done = 0;
+        if (progress != null) {
+            progress.accept(0, total);
+        }
         for (SkosConceptProjection p : projections) {
             result.add(buildConceptFromProjection(
                     p, idThesaurus, originalUri, nodePreference, filterHtmlCharacter
             ));
+            done++;
+            if (progress != null) {
+                progress.accept(done, total);
+            }
         }
         return result;
     }

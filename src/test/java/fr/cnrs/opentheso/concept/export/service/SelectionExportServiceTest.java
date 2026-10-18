@@ -204,7 +204,7 @@ class SelectionExportServiceTest {
 
     @Test
     void export_writesWholeThesaurusCsv() throws Exception {
-        when(thesaurusSkosDocumentBuilder.buildDocument(eq("TH1"), any())).thenReturn(new SKOSXmlDocument());
+        when(thesaurusSkosDocumentBuilder.buildDocument(eq("TH1"), any(), any())).thenReturn(new SKOSXmlDocument());
         when(toolboxPreferencePersistence.getWorkLanguage("TH1")).thenReturn("fr");
         when(toolboxThesaurusPersistence.loadUsedLanguages("TH1", "fr"))
                 .thenReturn(List.of(NodeLangTheso.builder().code("fr").value("français").build()));
